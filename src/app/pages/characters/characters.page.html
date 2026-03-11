@@ -1,0 +1,121 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title>OPTC Character Vault</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="page-shell characters-shell">
+    <section class="hero-card glass-card">
+      <div class="hero-copy">
+        <div class="section-label">
+          <ion-icon [icon]="sparklesIcon"></ion-icon>
+          <span>Offline-first database</span>
+        </div>
+        <h1 class="section-title">Browse crews, filter fast, and prep teams without touching the network.</h1>
+        <p class="section-copy">
+          {{ summary()?.characterCount ?? 0 }} units, {{ summary()?.detailCount ?? 0 }} detailed records, and
+          {{ summary()?.rumbleCount ?? 0 }} rumble entries from the OPTC source repo.
+        </p>
+      </div>
+
+      <div class="hero-meta">
+        <div class="meta-pill">
+          <ion-icon [icon]="layersIcon"></ion-icon>
+          <span>{{ summary()?.availableTypes?.length ?? 0 }} types</span>
+        </div>
+        <div class="meta-pill">
+          <ion-icon [icon]="favoriteIcon"></ion-icon>
+          <span>{{ favoriteIds().length }} favorites</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="glass-card controls-card">
+      <ion-searchbar
+        class="vault-search"
+        [debounce]="150"
+        placeholder="Search names, classes, types..."
+        [value]="searchTerm()"
+        [searchIcon]="searchIcon"
+        (ionInput)="onSearchChange($event)"
+      ></ion-searchbar>
+
+      <div class="filter-group">
+        <span>Type</span>
+        <div class="filter-row">
+          <ion-chip
+            *ngFor="let item of summary()?.availableTypes ?? []"
+            [class.active]="selectedType() === item"
+            (click)="onTypeFilterChange(item)"
+          >
+            {{ item }}
+          </ion-chip>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <span>Class</span>
+        <div class="filter-row">
+          <ion-chip
+            *ngFor="let item of (summary()?.availableClasses ?? []).slice(0, 12)"
+            [class.active]="selectedClass() === item"
+            (click)="onClassFilterChange(item)"
+          >
+            {{ item }}
+          </ion-chip>
+        </div>
+      </div>
+    </section>
+
+    <section *ngIf="loading()" class="loading-card glass-card">
+      <ion-spinner name="crescent"></ion-spinner>
+      <span>Building the local index...</span>
+    </section>
+
+    <section *ngIf="!loading()" class="character-grid">
+      <article *ngFor="let character of characters(); trackBy: trackCharacter" class="character-card glass-card">
+        <a class="character-card__link" [routerLink]="['/characters', character.id]">
+          <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
+
+          <div class="character-card__content">
+            <div class="character-card__title-row">
+              <h2>{{ character.name }}</h2>
+              <button type="button" class="favorite-button" (click)="toggleFavorite(character.id, $event)">
+                <ion-icon [icon]="isFavorite(character.id) ? favoriteIcon : favoriteOutlineIcon"></ion-icon>
+              </button>
+            </div>
+
+            <div class="stat-row">
+              <span>{{ character.type }}</span>
+              <span>{{ character.primaryClass }}</span>
+              <span *ngIf="character.secondaryClass">{{ character.secondaryClass }}</span>
+            </div>
+
+            <div class="metrics-row">
+              <div>
+                <strong>{{ character.stats.max.hp }}</strong>
+                <span>HP</span>
+              </div>
+              <div>
+                <strong>{{ character.stats.max.atk }}</strong>
+                <span>ATK</span>
+              </div>
+              <div>
+                <strong>{{ character.stats.max.rcv }}</strong>
+                <span>RCV</span>
+              </div>
+            </div>
+          </div>
+        </a>
+      </article>
+    </section>
+
+    <div *ngIf="!loading() && hasMore()" class="load-more">
+      <ion-button fill="outline" color="light" [disabled]="loadingMore()" (click)="loadMore()">
+        <ion-spinner *ngIf="loadingMore()" slot="start" name="crescent"></ion-spinner>
+        Load more units
+      </ion-button>
+    </div>
+  </div>
+</ion-content>

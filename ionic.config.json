@@ -1,0 +1,13 @@
+{
+  "defaultProject": "optc-team-builder",
+  "projects": {
+    "optc-team-builder": {
+      "name": "optc-team-builder",
+      "root": "",
+      "type": "angular",
+      "integrations": {
+        "capacitor": {}
+      }
+    }
+  }
+}

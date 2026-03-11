@@ -1,0 +1,133 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title>Team Builder</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="page-shell team-shell">
+    <section class="glass-card team-form">
+      <div class="section-label">Crew Draft</div>
+      <div class="team-fields">
+        <ion-input
+          label="Crew name"
+          labelPlacement="stacked"
+          fill="outline"
+          [value]="teamName()"
+          (ionInput)="onTeamNameChange($event)"
+        ></ion-input>
+
+        <ion-select
+          interface="popover"
+          label="Ship"
+          labelPlacement="stacked"
+          fill="outline"
+          [value]="selectedShipId()"
+          (ionChange)="selectedShipId.set($event.detail.value)"
+        >
+          <ion-select-option [value]="null">No ship</ion-select-option>
+          <ion-select-option *ngFor="let ship of ships()" [value]="ship.id">
+            {{ ship.name }}
+          </ion-select-option>
+        </ion-select>
+      </div>
+
+      <ion-textarea
+        label="Notes"
+        labelPlacement="stacked"
+        fill="outline"
+        autoGrow="true"
+        [value]="notes()"
+        (ionInput)="onNotesChange($event)"
+      ></ion-textarea>
+
+      <div class="totals-grid">
+        <article class="total-card">
+          <span>HP</span>
+          <strong>{{ teamTotals().hp }}</strong>
+        </article>
+        <article class="total-card">
+          <span>ATK</span>
+          <strong>{{ teamTotals().atk }}</strong>
+        </article>
+        <article class="total-card">
+          <span>RCV</span>
+          <strong>{{ teamTotals().rcv }}</strong>
+        </article>
+        <article class="total-card">
+          <span>Cost</span>
+          <strong>{{ teamTotals().cost }}</strong>
+        </article>
+      </div>
+
+      <ion-button expand="block" color="warning" (click)="saveTeam()">Save team offline</ion-button>
+    </section>
+
+    <section class="glass-card slot-grid">
+      <div class="slot-grid__header">
+        <h2>Slots</h2>
+        <p>Select a slot and tap a character below.</p>
+      </div>
+
+      <div class="slots">
+        <button
+          type="button"
+          class="slot-card"
+          *ngFor="let slot of slotCharacters(); let index = index"
+          [class.active]="selectedSlotIndex() === index"
+          (click)="selectSlot(index)"
+        >
+          <img [src]="slot?.imageUrl ?? 'assets/placeholders/character-card.svg'" [alt]="slot?.name ?? 'Empty slot'" />
+          <strong>Slot {{ index + 1 }}</strong>
+          <span>{{ slot?.name ?? 'Empty' }}</span>
+          <small *ngIf="slot">{{ slot.type }} • {{ slot.primaryClass }}</small>
+          <small *ngIf="!slot">Tap to assign</small>
+        </button>
+      </div>
+    </section>
+
+    <section class="glass-card assign-panel">
+      <div class="slot-grid__header">
+        <h2>Assign character to slot {{ selectedSlotIndex() + 1 }}</h2>
+        <p>Search the offline index and tap once to place the unit.</p>
+      </div>
+
+      <ion-searchbar
+        [debounce]="150"
+        placeholder="Find a character for this slot"
+        (ionInput)="onSearchCandidates($event)"
+      ></ion-searchbar>
+
+      <div class="candidate-list">
+        <article *ngFor="let candidate of candidateCharacters()" class="candidate-card">
+          <img [src]="candidate.imageUrl" [alt]="candidate.name" />
+          <div>
+            <strong>{{ candidate.name }}</strong>
+            <span>{{ candidate.type }} • {{ candidate.primaryClass }}</span>
+          </div>
+          <div class="candidate-actions">
+            <ion-button size="small" fill="outline" color="light" (click)="assignCharacter(candidate)">Assign</ion-button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="glass-card saved-teams">
+      <div class="slot-grid__header">
+        <h2>Saved teams</h2>
+        <p>All locally persisted on-device.</p>
+      </div>
+
+      <ion-list lines="none">
+        <ion-item *ngFor="let team of savedTeams()">
+          <ion-label>
+            <h3>{{ team.name }}</h3>
+            <p>{{ team.notes || 'No notes yet.' }}</p>
+          </ion-label>
+          <ion-button fill="clear" color="light" (click)="loadTeam(team)">Load</ion-button>
+          <ion-button fill="clear" color="danger" (click)="deleteTeam(team.id)">Delete</ion-button>
+        </ion-item>
+      </ion-list>
+    </section>
+  </div>
+</ion-content>

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">OPTC Team Builder</string>
+    <string name="title_activity_main">OPTC Team Builder</string>
+    <string name="package_name">com.john.optcteambuilder</string>
+    <string name="custom_url_scheme">com.john.optcteambuilder</string>
+</resources>

@@ -1,0 +1,82 @@
+@use "./theme/variables";
+
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap");
+@import "@ionic/angular/css/core.css";
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/display.css";
+
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+
+:root {
+  color-scheme: dark;
+  font-family: "Outfit", sans-serif;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(245, 200, 76, 0.12), transparent 22%),
+    radial-gradient(circle at top right, rgba(76, 201, 240, 0.12), transparent 18%),
+    linear-gradient(180deg, #0d1324 0%, var(--app-surface) 100%);
+}
+
+body {
+  color: var(--app-ink);
+}
+
+ion-content {
+  --background: transparent;
+}
+
+.page-shell {
+  padding: 20px 16px 112px;
+}
+
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(var(--ion-color-secondary-rgb), 0.12);
+  color: var(--ion-color-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.section-title {
+  margin: 14px 0 8px;
+  color: var(--app-ink);
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  line-height: 1.05;
+}
+
+.section-copy {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.98rem;
+  line-height: 1.65;
+}
+
+.glass-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 28px;
+  background: var(--app-surface-card);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(22px);
+}
+
+img {
+  display: block;
+}

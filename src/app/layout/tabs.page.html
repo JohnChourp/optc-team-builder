@@ -1,0 +1,25 @@
+<ion-tabs>
+  <ion-router-outlet></ion-router-outlet>
+
+  <ion-tab-bar slot="bottom" class="tabs-bar">
+    <ion-tab-button tab="characters" href="/tabs/characters">
+      <ion-icon [icon]="charactersIcon"></ion-icon>
+      <ion-label>Characters</ion-label>
+    </ion-tab-button>
+
+    <ion-tab-button tab="team" href="/tabs/team-builder">
+      <ion-icon [icon]="teamIcon"></ion-icon>
+      <ion-label>Team</ion-label>
+    </ion-tab-button>
+
+    <ion-tab-button tab="collection" href="/tabs/collection">
+      <ion-icon [icon]="collectionIcon"></ion-icon>
+      <ion-label>Collection</ion-label>
+    </ion-tab-button>
+
+    <ion-tab-button tab="settings" href="/tabs/settings">
+      <ion-icon [icon]="settingsIcon"></ion-icon>
+      <ion-label>Offline</ion-label>
+    </ion-tab-button>
+  </ion-tab-bar>
+</ion-tabs>

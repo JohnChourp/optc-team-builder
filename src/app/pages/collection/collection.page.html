@@ -1,0 +1,72 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title>Collection</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="page-shell collection-shell">
+    <section class="glass-card summary-card">
+      <div>
+        <div class="section-label">Offline memory</div>
+        <h1 class="section-title">Favorites, recents, and saved crews stay on-device.</h1>
+      </div>
+      <div class="summary-stats">
+        <article>
+          <span>Favorites</span>
+          <strong>{{ favoriteCharacters().length }}</strong>
+        </article>
+        <article>
+          <span>Recents</span>
+          <strong>{{ recentCharacters().length }}</strong>
+        </article>
+        <article>
+          <span>Saved crews</span>
+          <strong>{{ savedTeams().length }}</strong>
+        </article>
+      </div>
+    </section>
+
+    <section class="glass-card section-card">
+      <div class="section-head">
+        <h2>Favorites</h2>
+        <ion-button fill="clear" color="light" [routerLink]="['/tabs/characters']">Back to browser</ion-button>
+      </div>
+
+      <div class="mini-grid">
+        <a *ngFor="let character of favoriteCharacters()" class="mini-card" [routerLink]="['/characters', character.id]">
+          <img [src]="character.imageUrl" [alt]="character.name" />
+          <strong>{{ character.name }}</strong>
+          <span>{{ character.type }} • {{ character.primaryClass }}</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="glass-card section-card">
+      <div class="section-head">
+        <h2>Recently viewed</h2>
+      </div>
+
+      <div class="mini-grid">
+        <a *ngFor="let character of recentCharacters()" class="mini-card" [routerLink]="['/characters', character.id]">
+          <img [src]="character.imageUrl" [alt]="character.name" />
+          <strong>{{ character.name }}</strong>
+          <span>{{ character.type }} • {{ character.primaryClass }}</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="glass-card section-card">
+      <div class="section-head">
+        <h2>Saved crews</h2>
+      </div>
+
+      <div class="saved-team-list">
+        <article *ngFor="let team of savedTeams()">
+          <strong>{{ team.name }}</strong>
+          <p>{{ team.notes || 'No notes yet.' }}</p>
+        </article>
+      </div>
+    </section>
+  </div>
+</ion-content>

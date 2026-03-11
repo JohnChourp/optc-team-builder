@@ -1,0 +1,16 @@
+.tabs-bar {
+  --background: rgba(9, 12, 24, 0.94);
+  --border: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+ion-tab-button {
+  --color: rgba(236, 240, 255, 0.64);
+  --color-selected: #f5c84c;
+  min-height: 60px;
+}
+
+ion-tab-button ion-label {
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+}

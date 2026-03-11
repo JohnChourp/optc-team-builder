@@ -1,0 +1,104 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/characters"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ character()?.name ?? 'Character' }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="page-shell detail-shell">
+    <section *ngIf="loading()" class="loading-card glass-card">
+      <ion-spinner name="crescent"></ion-spinner>
+      <span>Loading offline character record...</span>
+    </section>
+
+    <ng-container *ngIf="!loading() && character() as current">
+      <section class="hero-card glass-card">
+        <img [src]="current.detailImageUrl" [alt]="current.name" />
+
+        <div class="hero-copy">
+          <div class="section-label">{{ current.type }} • {{ current.primaryClass }}</div>
+          <h1 class="section-title">{{ current.name }}</h1>
+          <p class="section-copy">
+            Cost {{ current.cost }} • Max Lv {{ current.maxLevel }} • {{ current.stars }}★ unit
+          </p>
+
+          <div class="hero-actions">
+            <ion-button fill="solid" color="warning" (click)="toggleFavorite(current.id)">
+              <ion-icon slot="start" [icon]="isFavorite(current.id) ? favoriteIcon : favoriteOutlineIcon"></ion-icon>
+              {{ isFavorite(current.id) ? 'Favorited' : 'Add favorite' }}
+            </ion-button>
+            <ion-button fill="outline" color="light" [routerLink]="['/tabs/team-builder']">
+              Open team builder
+            </ion-button>
+          </div>
+        </div>
+      </section>
+
+      <section class="stats-grid">
+        <article class="glass-card stat-card">
+          <span>Max HP</span>
+          <strong>{{ current.stats.max.hp }}</strong>
+        </article>
+        <article class="glass-card stat-card">
+          <span>Max ATK</span>
+          <strong>{{ current.stats.max.atk }}</strong>
+        </article>
+        <article class="glass-card stat-card">
+          <span>Max RCV</span>
+          <strong>{{ current.stats.max.rcv }}</strong>
+        </article>
+      </section>
+
+      <section class="detail-grid">
+        <article class="glass-card detail-card" *ngIf="current.detail.captainAbility">
+          <h2>Captain Ability</h2>
+          <p>{{ current.detail.captainAbility }}</p>
+        </article>
+
+        <article class="glass-card detail-card" *ngIf="current.detail.specialText || current.detail.specialName">
+          <h2>Special</h2>
+          <strong *ngIf="current.detail.specialName">{{ current.detail.specialName }}</strong>
+          <p>{{ current.detail.specialText }}</p>
+          <small *ngIf="current.detail.specialNotes">{{ current.detail.specialNotes }}</small>
+        </article>
+
+        <article class="glass-card detail-card" *ngIf="current.detail.sailorAbilities.length">
+          <h2>Sailor Abilities</h2>
+          <ul>
+            <li *ngFor="let sailor of current.detail.sailorAbilities">{{ sailor }}</li>
+          </ul>
+        </article>
+
+        <article class="glass-card detail-card" *ngIf="current.detail.limitBreak.length">
+          <h2>Limit Break</h2>
+          <ul>
+            <li *ngFor="let entry of current.detail.limitBreak">{{ entry.description }}</li>
+          </ul>
+        </article>
+
+        <article class="glass-card detail-card" *ngIf="current.detail.potentialAbilities.length">
+          <h2>Potential Abilities</h2>
+          <ul>
+            <li *ngFor="let entry of current.detail.potentialAbilities">
+              <strong *ngIf="entry.Name">{{ entry.Name }}:</strong>
+              {{ (entry.description ?? []).join(' / ') }}
+            </li>
+          </ul>
+        </article>
+
+        <article class="glass-card detail-card" *ngIf="current.detail.supportData.length">
+          <h2>Support Data</h2>
+          <pre>{{ current.detail.supportData | json }}</pre>
+        </article>
+
+        <article class="glass-card detail-card" *ngIf="current.detail.rumbleData">
+          <h2>Rumble Data</h2>
+          <pre>{{ current.detail.rumbleData | json }}</pre>
+        </article>
+      </section>
+    </ng-container>
+  </div>
+</ion-content>

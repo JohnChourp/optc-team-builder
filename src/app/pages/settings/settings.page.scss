@@ -1,0 +1,64 @@
+.settings-shell {
+  display: grid;
+  gap: 18px;
+}
+
+.intro-card,
+.command-card,
+.pack-list,
+.legal-card {
+  padding: 18px;
+}
+
+.command-card code {
+  display: block;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #f5c84c;
+  font-family: "SF Mono", "Menlo", monospace;
+}
+
+.command-card {
+  display: grid;
+  gap: 10px;
+}
+
+.pack-list {
+  display: grid;
+  gap: 12px;
+}
+
+.pack-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.pack-card strong,
+.legal-card h2 {
+  color: #ffffff;
+}
+
+.pack-card span,
+.legal-card p {
+  display: block;
+  margin-top: 6px;
+  color: rgba(248, 251, 255, 0.58);
+}
+
+.pack-state {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(248, 251, 255, 0.72);
+}
+
+.pack-state.installed {
+  background: rgba(245, 200, 76, 0.16);
+  color: #f5c84c;
+}

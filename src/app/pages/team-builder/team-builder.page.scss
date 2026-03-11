@@ -1,0 +1,143 @@
+.team-shell {
+  display: grid;
+  gap: 18px;
+}
+
+.team-form,
+.slot-grid,
+.assign-panel,
+.saved-teams {
+  padding: 18px;
+}
+
+.team-fields,
+.totals-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.totals-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+.total-card {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.total-card span {
+  color: rgba(248, 251, 255, 0.58);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.total-card strong {
+  color: #ffffff;
+  font-size: 1.25rem;
+}
+
+.slot-grid__header {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.slot-grid__header h2,
+.slot-grid__header p {
+  margin: 0;
+}
+
+.slot-grid__header h2 {
+  color: #ffffff;
+}
+
+.slot-grid__header p {
+  color: rgba(248, 251, 255, 0.6);
+}
+
+.slots {
+  display: grid;
+  gap: 12px;
+}
+
+.slot-card {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #f8fbff;
+  text-align: left;
+}
+
+.slot-card.active {
+  border-color: rgba(245, 200, 76, 0.55);
+  box-shadow: 0 0 0 1px rgba(245, 200, 76, 0.16);
+}
+
+.slot-card img {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  object-fit: cover;
+}
+
+.slot-card strong,
+.slot-card span,
+.slot-card small {
+  grid-column: 2;
+}
+
+.candidate-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.candidate-card {
+  display: grid;
+  grid-template-columns: 60px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.candidate-card img {
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+.candidate-card strong,
+.candidate-card span {
+  display: block;
+}
+
+.candidate-card span {
+  color: rgba(248, 251, 255, 0.58);
+  font-size: 0.8rem;
+}
+
+.saved-teams ion-item {
+  --background: transparent;
+  --inner-padding-end: 0;
+}
+
+@media (min-width: 900px) {
+  .slots {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .totals-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

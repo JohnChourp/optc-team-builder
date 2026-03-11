@@ -1,0 +1,3190 @@
+{
+  "generatedAt": "2026-03-11T20:50:35.707Z",
+  "characters": [
+    {
+      "id": 1,
+      "name": "Monkey D. Luffy",
+      "type": "STR",
+      "primaryClass": "Fighter",
+      "secondaryClass": null,
+      "classes": [
+        "Fighter"
+      ],
+      "stars": 2,
+      "cost": 1,
+      "combo": 5,
+      "maxSockets": 0,
+      "evolutionStage": 5,
+      "maxLevel": 163,
+      "maxExperience": 42,
+      "minHp": 15,
+      "minAtk": 8,
+      "minRcv": 134,
+      "maxHp": 68,
+      "maxAtk": 15,
+      "maxRcv": 1,
+      "growth": 0,
+      "searchText": "monkey d. luffy str fighter",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0001.png",
+        "thumbnailJapan": "0/000/0001.png",
+        "fullTransparent": "0/000/0001.png"
+      },
+      "detail": {
+        "characterId": 1,
+        "captainAbility": null,
+        "specialName": "Spinning Gum Punch",
+        "specialText": "Deals 5x character's ATK in [STR] damage to one enemy",
+        "specialNotes": null,
+        "sailorAbilities": [],
+        "sailorNotes": null,
+        "limitBreak": [],
+        "potentialAbilities": [],
+        "supportData": [],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": null
+      }
+    },
+    {
+      "id": 2,
+      "name": "Monkey D. Luffy - Gum-Gum Pistol",
+      "type": "STR",
+      "primaryClass": "Fighter",
+      "secondaryClass": null,
+      "classes": [
+        "Fighter"
+      ],
+      "stars": 3,
+      "cost": 4,
+      "combo": 6,
+      "maxSockets": 0,
+      "evolutionStage": 20,
+      "maxLevel": 26184,
+      "maxExperience": 130,
+      "minHp": 76,
+      "minAtk": 14,
+      "minRcv": 510,
+      "maxHp": 249,
+      "maxAtk": 49,
+      "maxRcv": 0.7,
+      "growth": 0,
+      "searchText": "monkey d. luffy - gum-gum pistol str fighter",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0002.png",
+        "thumbnailJapan": "0/000/0002.png",
+        "fullTransparent": "0/000/0002.png"
+      },
+      "detail": {
+        "characterId": 2,
+        "captainAbility": "Boosts ATK of all characters by 1.5x",
+        "specialName": "Gum-Gum Pistol",
+        "specialText": "Deals 7x character's ATK in [STR] damage to one enemy",
+        "specialNotes": null,
+        "sailorAbilities": [],
+        "sailorNotes": null,
+        "limitBreak": [],
+        "potentialAbilities": [],
+        "supportData": [],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": null
+      }
+    },
+    {
+      "id": 3,
+      "name": "Monkey D. Luffy - Gum-Gum Bazooka",
+      "type": "STR",
+      "primaryClass": "Fighter",
+      "secondaryClass": null,
+      "classes": [
+        "Fighter"
+      ],
+      "stars": 4,
+      "cost": 7,
+      "combo": 6,
+      "maxSockets": 2,
+      "evolutionStage": 35,
+      "maxLevel": 136167,
+      "maxExperience": 404,
+      "minHp": 227,
+      "minAtk": 39,
+      "minRcv": 975,
+      "maxHp": 522,
+      "maxAtk": 105,
+      "maxRcv": 1,
+      "growth": 0,
+      "searchText": "monkey d. luffy - gum-gum bazooka str fighter",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0003.png",
+        "thumbnailJapan": "0/000/0003.png",
+        "fullTransparent": "0/000/0003.png"
+      },
+      "detail": {
+        "characterId": 3,
+        "captainAbility": "Boosts ATK of all characters by 1.5x",
+        "specialName": "Gum-Gum Bazooka",
+        "specialText": "Deals 15x character's ATK in [STR] damage to one enemy",
+        "specialNotes": null,
+        "sailorAbilities": [],
+        "sailorNotes": null,
+        "limitBreak": [],
+        "potentialAbilities": [],
+        "supportData": [],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": null
+      }
+    },
+    {
+      "id": 4,
+      "name": "Monkey D. Luffy - Gear 2",
+      "type": "STR",
+      "primaryClass": "Fighter",
+      "secondaryClass": "Free Spirit",
+      "classes": [
+        "Fighter",
+        "Free Spirit"
+      ],
+      "stars": 5,
+      "cost": 15,
+      "combo": 8,
+      "maxSockets": 3,
+      "evolutionStage": 99,
+      "maxLevel": 3000000,
+      "maxExperience": 902,
+      "minHp": 473,
+      "minAtk": 74,
+      "minRcv": 1772,
+      "maxHp": 1313,
+      "maxAtk": 227,
+      "maxRcv": 1,
+      "growth": 0,
+      "searchText": "monkey d. luffy - gear 2 str fighter free spirit",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0004.png",
+        "thumbnailJapan": "0/000/0004.png",
+        "fullTransparent": "0/000/0004.png"
+      },
+      "detail": {
+        "characterId": 4,
+        "captainAbility": "Boosts ATK of [STR] characters by 2x and ATK of all others by 1.5x",
+        "specialName": "Gum-Gum Twin Jet Pistol",
+        "specialText": "Deals 25x character's ATK in [STR] damage to one enemy",
+        "specialNotes": null,
+        "sailorAbilities": [
+          "Boosts base ATK of this character by 100 if this character is the last in the chain to attack",
+          "Makes [QCK] orbs beneficial for this character"
+        ],
+        "sailorNotes": "#{beneficial}",
+        "limitBreak": [
+          {
+            "description": "Reduce base Special Cooldown by 1 turn"
+          },
+          {
+            "description": "Boosts base ATK by 30"
+          },
+          {
+            "description": "Boosts base RCV by 20"
+          },
+          {
+            "description": "Acquire Potential 1: Enrage/Reduce Increase Damage Taken duration"
+          },
+          {
+            "description": "Boosts base HP by 30"
+          },
+          {
+            "description": "Boosts base RCV by 30"
+          },
+          {
+            "description": "Reduce base Special Cooldown by 1 turn"
+          },
+          {
+            "description": "Boosts base HP by 40"
+          },
+          {
+            "description": "Boosts base HP by 50"
+          },
+          {
+            "description": "Acquire Sailor Ability 1: Boosts base ATK of this character by 100 if this character is the last in the chain to attack"
+          },
+          {
+            "description": "Boosts base HP by 50"
+          },
+          {
+            "description": "Reduce base Special Cooldown by 1 turn"
+          },
+          {
+            "description": "Reduce base Special Cooldown by 1 turn"
+          },
+          {
+            "description": "Acquire Sailor Ability 2: Makes [QCK] orbs beneficial for this character"
+          },
+          {
+            "description": "Acquire Potential 2: Reduce No Healing duration"
+          }
+        ],
+        "potentialAbilities": [
+          {
+            "Name": "Enrage/Reduce Increase Damage Taken duration",
+            "description": [
+              "Boosts base ATK by 20 the turn after taking damage and reduces Increase Damage Taken duration by 1 turn",
+              "Boosts base ATK by 30 the turn after taking damage and reduces Increase Damage Taken duration by 1 turn",
+              "Boosts base ATK by 40 the turn after taking damage and reduces Increase Damage Taken duration by 1 turn",
+              "Boosts base ATK by 50 the turn after taking damage and reduces Increase Damage Taken duration by 1 turn",
+              "Boosts base ATK by 100 the turn after taking damage and reduces Increase Damage Taken duration by 2 turns"
+            ]
+          },
+          {
+            "Name": "Reduce No Healing duration",
+            "description": [
+              "Reduces No Healing duration by 1 turn",
+              "Reduces No Healing duration by 1 turn",
+              "Reduces No Healing duration by 2 turns",
+              "Reduces No Healing duration by 3 turns",
+              "Reduces No Healing duration by 4 turns"
+            ]
+          }
+        ],
+        "supportData": [
+          {
+            "Characters": "All characters",
+            "description": [
+              "Adds 1% of this character's base ATK to the supported character's base ATK",
+              "Adds 2% of this character's base ATK to the supported character's base ATK",
+              "Adds 3% of this character's base ATK to the supported character's base ATK",
+              "Adds 4% of this character's base ATK to the supported character's base ATK",
+              "Adds 5% of this character's base ATK to the supported character's base ATK"
+            ]
+          }
+        ],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": null
+      }
+    },
+    {
+      "id": 5,
+      "name": "Roronoa Zoro",
+      "type": "DEX",
+      "primaryClass": "Slasher",
+      "secondaryClass": null,
+      "classes": [
+        "Slasher"
+      ],
+      "stars": 3,
+      "cost": 4,
+      "combo": 6,
+      "maxSockets": 0,
+      "evolutionStage": 20,
+      "maxLevel": 26184,
+      "maxExperience": 126,
+      "minHp": 75,
+      "minAtk": 15,
+      "minRcv": 488,
+      "maxHp": 239,
+      "maxAtk": 56,
+      "maxRcv": 0.7,
+      "growth": 0,
+      "searchText": "roronoa zoro dex slasher",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0005.png",
+        "thumbnailJapan": "0/000/0005.png",
+        "fullTransparent": "0/000/0005.png"
+      },
+      "detail": {
+        "characterId": 5,
+        "captainAbility": "Boosts ATK of [DEX] characters by 1.5x",
+        "specialName": "Oni Giri",
+        "specialText": "Deals 7x character's ATK in [DEX] damage to one enemy",
+        "specialNotes": null,
+        "sailorAbilities": [],
+        "sailorNotes": null,
+        "limitBreak": [],
+        "potentialAbilities": [],
+        "supportData": [],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": null
+      }
+    },
+    {
+      "id": 6,
+      "name": "Roronoa Zoro - Three Thousand Worlds",
+      "type": "DEX",
+      "primaryClass": "Slasher",
+      "secondaryClass": "Driven",
+      "classes": [
+        "Slasher",
+        "Driven"
+      ],
+      "stars": 4,
+      "cost": 7,
+      "combo": 6,
+      "maxSockets": 2,
+      "evolutionStage": 35,
+      "maxLevel": 136167,
+      "maxExperience": 426,
+      "minHp": 222,
+      "minAtk": 37,
+      "minRcv": 899,
+      "maxHp": 515,
+      "maxAtk": 120,
+      "maxRcv": 1,
+      "growth": 0,
+      "searchText": "roronoa zoro - three thousand worlds dex slasher driven",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0006.png",
+        "thumbnailJapan": "0/000/0006.png",
+        "fullTransparent": "0/000/0006.png"
+      },
+      "detail": {
+        "characterId": 6,
+        "captainAbility": "Boosts ATK of [DEX] characters by 1.5x",
+        "specialName": "Three Thousand Worlds",
+        "specialText": "Deals 10x character's ATK in [DEX] damage to all enemies",
+        "specialNotes": null,
+        "sailorAbilities": [],
+        "sailorNotes": null,
+        "limitBreak": [],
+        "potentialAbilities": [],
+        "supportData": [],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": null
+      }
+    },
+    {
+      "id": 7,
+      "name": "Roronoa Zoro - Pound Phoenix",
+      "type": "DEX",
+      "primaryClass": "Slasher",
+      "secondaryClass": "Driven",
+      "classes": [
+        "Slasher",
+        "Driven"
+      ],
+      "stars": 4,
+      "cost": 9,
+      "combo": 4,
+      "maxSockets": 2,
+      "evolutionStage": 50,
+      "maxLevel": 392109,
+      "maxExperience": 462,
+      "minHp": 258,
+      "minAtk": 37,
+      "minRcv": 1216,
+      "maxHp": 694,
+      "maxAtk": 106,
+      "maxRcv": 1,
+      "growth": 0,
+      "searchText": "roronoa zoro - pound phoenix dex slasher driven",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0007.png",
+        "thumbnailJapan": "0/000/0007.png",
+        "fullTransparent": "0/000/0007.png"
+      },
+      "detail": {
+        "characterId": 7,
+        "captainAbility": "Boosts ATK of [DEX] characters by 1.5x",
+        "specialName": "108 Pound Phoenix",
+        "specialText": "Deals 10x character's ATK in [DEX] damage to all enemies",
+        "specialNotes": null,
+        "sailorAbilities": [],
+        "sailorNotes": null,
+        "limitBreak": [],
+        "potentialAbilities": [],
+        "supportData": [],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": null
+      }
+    },
+    {
+      "id": 8,
+      "name": "Roronoa Zoro - Ashura Ichibugin",
+      "type": "DEX",
+      "primaryClass": "Slasher",
+      "secondaryClass": "Driven",
+      "classes": [
+        "Slasher",
+        "Driven"
+      ],
+      "stars": 5,
+      "cost": 15,
+      "combo": 9,
+      "maxSockets": 3,
+      "evolutionStage": 99,
+      "maxLevel": 3000000,
+      "maxExperience": 724,
+      "minHp": 667,
+      "minAtk": 39,
+      "minRcv": 2232,
+      "maxHp": 1332,
+      "maxAtk": 144,
+      "maxRcv": 1,
+      "growth": 0,
+      "searchText": "roronoa zoro - ashura ichibugin dex slasher driven",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0008.png",
+        "thumbnailJapan": "0/000/0008.png",
+        "fullTransparent": "0/000/0008.png"
+      },
+      "detail": {
+        "characterId": 8,
+        "captainAbility": "Boosts ATK and HP of [DEX] characters by 2x",
+        "specialName": "Ashura Ichibugin",
+        "specialText": "Deals 15x character's ATK in [DEX] damage to all enemies",
+        "specialNotes": null,
+        "sailorAbilities": [
+          "Restores Special Cooldown of this character by 1 turn when it is rewinded",
+          "Boosts base ATK of [DEX] characters by 40"
+        ],
+        "sailorNotes": "#{rewind : 1}",
+        "limitBreak": [
+          {
+            "description": "Boosts base HP by 30"
+          },
+          {
+            "description": "Boosts base RCV by 10"
+          },
+          {
+            "description": "Boosts base HP by 40"
+          },
+          {
+            "description": "Acquire Potential 1: [QCK] Damage Reduction"
+          },
+          {
+            "description": "Boosts base ATK by 20"
+          },
+          {
+            "description": "Boosts base RCV by 20"
+          },
+          {
+            "description": "Acquire Sailor Ability 1: Restores Special Cooldown of this character by 1 turn when it is rewinded"
+          },
+          {
+            "description": "Boosts base RCV by 30"
+          },
+          {
+            "description": "Boosts base ATK by 30"
+          },
+          {
+            "description": "Boosts base HP by 50"
+          },
+          {
+            "description": "Boosts base ATK by 40"
+          },
+          {
+            "description": "Acquire Sailor Ability 2: Boosts base ATK of [DEX] characters by 40"
+          },
+          {
+            "description": "Boosts base HP by 70"
+          },
+          {
+            "description": "Acquire 1 additional Socket slot"
+          },
+          {
+            "description": "Acquire Potential 2: Critical Hit"
+          }
+        ],
+        "potentialAbilities": [
+          {
+            "Name": "[QCK] Damage Reduction",
+            "description": [
+              "Reduces damage taken from [QCK] characters by 1%",
+              "Reduces damage taken from [QCK] characters by 2%",
+              "Reduces damage taken from [QCK] characters by 3%",
+              "Reduces damage taken from [QCK] characters by 4%",
+              "Reduces damage taken from [QCK] characters by 5%"
+            ]
+          },
+          {
+            "Name": "Critical Hit",
+            "description": [
+              "If you hit a PERFECT with this character, there is a 10% chance to deal 3% of this character's attack in extra damage",
+              "If you hit a PERFECT with this character, there is a 10% chance to deal 5% of this character's attack in extra damage",
+              "If you hit a PERFECT with this character, there is a 15% chance to deal 5% of this character's attack in extra damage",
+              "If you hit a PERFECT with this character, there is a 20% chance to deal 5% of this character's attack in extra damage",
+              "If you hit a PERFECT with this character, there is a 40% chance to deal 7% of this character's attack in extra damage"
+            ]
+          }
+        ],
+        "supportData": [
+          {
+            "Characters": "[DEX] characters",
+            "description": [
+              "Adds 1% of this character's base ATK and HP to the supported character's base ATK and HP",
+              "Adds 1% of this character's base ATK and HP to the supported character's base ATK and HP",
+              "Adds 2% of this character's base ATK and HP to the supported character's base ATK and HP",
+              "Adds 3% of this character's base ATK and HP to the supported character's base ATK and HP",
+              "Adds 4% of this character's base ATK and HP to the supported character's base ATK and HP"
+            ]
+          }
+        ],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": null
+      }
+    },
+    {
+      "id": 9,
+      "name": "Nami",
+      "type": "INT",
+      "primaryClass": "Striker",
+      "secondaryClass": null,
+      "classes": [
+        "Striker"
+      ],
+      "stars": 3,
+      "cost": 4,
+      "combo": 4,
+      "maxSockets": 0,
+      "evolutionStage": 20,
+      "maxLevel": 26184,
+      "maxExperience": 72,
+      "minHp": 51,
+      "minAtk": 32,
+      "minRcv": 366,
+      "maxHp": 201,
+      "maxAtk": 89,
+      "maxRcv": 0.7,
+      "growth": 0,
+      "searchText": "nami int striker",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0009.png",
+        "thumbnailJapan": "0/000/0009.png",
+        "fullTransparent": "0/000/0009.png"
+      },
+      "detail": {
+        "characterId": 9,
+        "captainAbility": "Reduces damage received from [INT] enemies by 20%",
+        "specialName": "Cat Burglar",
+        "specialText": "Recovers 1,000 HP",
+        "specialNotes": null,
+        "sailorAbilities": [],
+        "sailorNotes": null,
+        "limitBreak": [],
+        "potentialAbilities": [],
+        "supportData": [],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": null
+      }
+    },
+    {
+      "id": 10,
+      "name": "Nami - Tornado Tempo",
+      "type": "INT",
+      "primaryClass": "Striker",
+      "secondaryClass": "Cerebral",
+      "classes": [
+        "Striker",
+        "Cerebral"
+      ],
+      "stars": 4,
+      "cost": 7,
+      "combo": 5,
+      "maxSockets": 2,
+      "evolutionStage": 35,
+      "maxLevel": 136167,
+      "maxExperience": 336,
+      "minHp": 192,
+      "minAtk": 62,
+      "minRcv": 783,
+      "maxHp": 453,
+      "maxAtk": 160,
+      "maxRcv": 1,
+      "growth": 0,
+      "searchText": "nami - tornado tempo int striker cerebral",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0010.png",
+        "thumbnailJapan": "0/000/0010.png",
+        "fullTransparent": "0/000/0010.png"
+      },
+      "detail": {
+        "characterId": 10,
+        "captainAbility": "Boosts ATK of [INT] characters by 1.5x",
+        "specialName": "Tornado Tempo",
+        "specialText": "Deals 15x character's ATK in [INT] damage to one enemy",
+        "specialNotes": null,
+        "sailorAbilities": [],
+        "sailorNotes": null,
+        "limitBreak": [],
+        "potentialAbilities": [],
+        "supportData": [],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": null
+      }
+    },
+    {
+      "id": 11,
+      "name": "Nami - Mirage Tempo",
+      "type": "INT",
+      "primaryClass": "Striker",
+      "secondaryClass": "Cerebral",
+      "classes": [
+        "Striker",
+        "Cerebral"
+      ],
+      "stars": 4,
+      "cost": 9,
+      "combo": 5,
+      "maxSockets": 2,
+      "evolutionStage": 50,
+      "maxLevel": 392109,
+      "maxExperience": 348,
+      "minHp": 201,
+      "minAtk": 75,
+      "minRcv": 840,
+      "maxHp": 543,
+      "maxAtk": 219,
+      "maxRcv": 1,
+      "growth": 0,
+      "searchText": "nami - mirage tempo int striker cerebral",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0011.png",
+        "thumbnailJapan": "0/000/0011.png",
+        "fullTransparent": "0/000/0011.png"
+      },
+      "detail": {
+        "characterId": 11,
+        "captainAbility": "Boosts ATK of [INT] characters by 1.5x",
+        "specialName": "Mirage Tempo",
+        "specialText": "Reduces damage received from [INT] enemies by 100% for 1 turn",
+        "specialNotes": null,
+        "sailorAbilities": [],
+        "sailorNotes": null,
+        "limitBreak": [],
+        "potentialAbilities": [],
+        "supportData": [],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": null
+      }
+    },
+    {
+      "id": 12,
+      "name": "Nami - Thunderbolt Tempo",
+      "type": "INT",
+      "primaryClass": "Striker",
+      "secondaryClass": "Cerebral",
+      "classes": [
+        "Striker",
+        "Cerebral"
+      ],
+      "stars": 5,
+      "cost": 15,
+      "combo": 4,
+      "maxSockets": 3,
+      "evolutionStage": 99,
+      "maxLevel": 3000000,
+      "maxExperience": 494,
+      "minHp": 437,
+      "minAtk": 154,
+      "minRcv": 1262,
+      "maxHp": 1088,
+      "maxAtk": 387,
+      "maxRcv": 1,
+      "growth": 0,
+      "searchText": "nami - thunderbolt tempo int striker cerebral",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0012.png",
+        "thumbnailJapan": "0/000/0012.png",
+        "fullTransparent": "0/000/0012.png"
+      },
+      "detail": {
+        "characterId": 12,
+        "captainAbility": "Boosts ATK and HP of [INT] characters by 1.5x",
+        "specialName": "Thunderbolt Tempo",
+        "specialText": "Deals 15x character's ATK in [INT] damage to all enemies",
+        "specialNotes": null,
+        "sailorAbilities": [
+          "Makes [RCV] orbs beneficial for [INT] characters",
+          "Boosts base ATK, HP and RCV of [INT] characters by 50"
+        ],
+        "sailorNotes": "#{beneficial}",
+        "limitBreak": [
+          {
+            "description": "Boosts base ATK by 10"
+          },
+          {
+            "description": "Boosts base RCV by 10"
+          },
+          {
+            "description": "Boosts base RCV by 10"
+          },
+          {
+            "description": "Acquire Potential 1: Pinch Healing"
+          },
+          {
+            "description": "Boosts base HP by 40"
+          },
+          {
+            "description": "Acquire Sailor Ability 1: Makes [RCV] orbs beneficial for [INT] characters"
+          },
+          {
+            "description": "Boosts base HP by 60"
+          },
+          {
+            "description": "Boosts base ATK by 40"
+          },
+          {
+            "description": "Boosts base RCV by 20"
+          },
+          {
+            "description": "Acquire 1 additional Socket slot"
+          },
+          {
+            "description": "Boosts base ATK by 50"
+          },
+          {
+            "description": "Boosts base RCV by 30"
+          },
+          {
+            "description": "Boosts base HP by 80"
+          },
+          {
+            "description": "Acquire Sailor Ability 2: Boosts base ATK, HP and RCV of [INT] characters by 50"
+          },
+          {
+            "description": "Acquire Potential 2: Reduce Slot Bind duration"
+          }
+        ],
+        "potentialAbilities": [
+          {
+            "Name": "Pinch Healing",
+            "description": [
+              "If HP is below 10% at the start of the turn, recovers 0.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
+              "If HP is below 15% at the start of the turn, recovers 0.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
+              "If HP is below 20% at the start of the turn, recovers 0.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
+              "If HP is below 30% at the start of the turn, recovers 0.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
+              "If HP is below 50% at the start of the turn, recovers 1x this character's RCV at the end of the turn for each time you hit a PERFECT with this character"
+            ]
+          },
+          {
+            "Name": "Reduce Slot Bind duration",
+            "description": [
+              "Reduces Slot Bind duration by 1 turn on this character",
+              "Reduces Slot Bind duration by 2 turns on this character",
+              "Reduces Slot Bind duration by 3 turns on this character",
+              "Reduces Slot Bind duration by 5 turns on this character",
+              "Reduces Slot Bind duration by 7 turns on this character"
+            ]
+          }
+        ],
+        "supportData": [
+          {
+            "Characters": "[INT] characters",
+            "description": [
+              "Adds 1% of this character's base ATK and RCV to the supported character's base ATK and RCV",
+              "Adds 1% of this character's base ATK and RCV to the supported character's base ATK and RCV",
+              "Adds 2% of this character's base ATK and RCV to the supported character's base ATK and RCV",
+              "Adds 3% of this character's base ATK and RCV to the supported character's base ATK and RCV",
+              "Adds 4% of this character's base ATK and RCV to the supported character's base ATK and RCV"
+            ]
+          }
+        ],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": null
+      }
+    },
+    {
+      "id": 13,
+      "name": "Usopp",
+      "type": "PSY",
+      "primaryClass": "Shooter",
+      "secondaryClass": null,
+      "classes": [
+        "Shooter"
+      ],
+      "stars": 3,
+      "cost": 4,
+      "combo": 5,
+      "maxSockets": 0,
+      "evolutionStage": 20,
+      "maxLevel": 26184,
+      "maxExperience": 50,
+      "minHp": 32,
+      "minAtk": 42,
+      "minRcv": 322,
+      "maxHp": 127,
+      "maxAtk": 121,
+      "maxRcv": 0.7,
+      "growth": 0,
+      "searchText": "usopp psy shooter",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0013.png",
+        "thumbnailJapan": "0/000/0013.png",
+        "fullTransparent": "0/000/0013.png"
+      },
+      "detail": {
+        "characterId": 13,
+        "captainAbility": "Boosts ATK of Shooter characters by 1.2x",
+        "specialName": "Liar",
+        "specialText": "Delays all enemies by 1 turn",
+        "specialNotes": null,
+        "sailorAbilities": [],
+        "sailorNotes": null,
+        "limitBreak": [],
+        "potentialAbilities": [],
+        "supportData": [],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": {
+          "ability": [
+            {
+              "effects": [
+                {
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 1,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "effects": [
+                {
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 2,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "effects": [
+                {
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 3,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "effects": [
+                {
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 4,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "effects": [
+                {
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 5,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "id": 13,
+          "pattern": [
+            {
+              "action": "attack",
+              "type": "Normal"
+            },
+            {
+              "action": "heal",
+              "area": "Self",
+              "level": 2
+            },
+            {
+              "action": "attack",
+              "type": "Power"
+            },
+            {
+              "action": "attack",
+              "type": "Normal"
+            }
+          ],
+          "special": [
+            {
+              "cooldown": 23,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 80,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "amount": 5,
+                  "effect": "damage",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  },
+                  "type": "fixed"
+                }
+              ]
+            },
+            {
+              "cooldown": 23,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 80,
+                  "duration": 11,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "amount": 5,
+                  "effect": "damage",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  },
+                  "type": "fixed"
+                }
+              ]
+            },
+            {
+              "cooldown": 23,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 80,
+                  "duration": 12,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "amount": 5,
+                  "effect": "damage",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  },
+                  "type": "fixed"
+                }
+              ]
+            },
+            {
+              "cooldown": 23,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 80,
+                  "duration": 13,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "amount": 5,
+                  "effect": "damage",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  },
+                  "type": "fixed"
+                }
+              ]
+            },
+            {
+              "cooldown": 23,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 80,
+                  "duration": 14,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "amount": 5,
+                  "effect": "damage",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  },
+                  "type": "fixed"
+                }
+              ]
+            },
+            {
+              "cooldown": 23,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 80,
+                  "duration": 15,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "amount": 5,
+                  "effect": "damage",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  },
+                  "type": "fixed"
+                }
+              ]
+            },
+            {
+              "cooldown": 23,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 80,
+                  "duration": 16,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "amount": 5,
+                  "effect": "damage",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  },
+                  "type": "fixed"
+                }
+              ]
+            },
+            {
+              "cooldown": 23,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 80,
+                  "duration": 17,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "amount": 5,
+                  "effect": "damage",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  },
+                  "type": "fixed"
+                }
+              ]
+            },
+            {
+              "cooldown": 23,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 80,
+                  "duration": 18,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "amount": 5,
+                  "effect": "damage",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  },
+                  "type": "fixed"
+                }
+              ]
+            },
+            {
+              "cooldown": 23,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 80,
+                  "duration": 19,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "amount": 5,
+                  "effect": "damage",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  },
+                  "type": "fixed"
+                }
+              ]
+            }
+          ],
+          "stats": {
+            "def": 164,
+            "rumbleType": "DBF",
+            "spd": 124
+          },
+          "target": {
+            "comparator": "lowest",
+            "criteria": "HP"
+          }
+        }
+      }
+    },
+    {
+      "id": 14,
+      "name": "Usopp - Tabasco Star",
+      "type": "PSY",
+      "primaryClass": "Shooter",
+      "secondaryClass": null,
+      "classes": [
+        "Shooter"
+      ],
+      "stars": 4,
+      "cost": 7,
+      "combo": 6,
+      "maxSockets": 2,
+      "evolutionStage": 35,
+      "maxLevel": 136167,
+      "maxExperience": 286,
+      "minHp": 148,
+      "minAtk": 85,
+      "minRcv": 627,
+      "maxHp": 240,
+      "maxAtk": 257,
+      "maxRcv": 1,
+      "growth": 0,
+      "searchText": "usopp - tabasco star psy shooter",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0014.png",
+        "thumbnailJapan": "0/000/0014.png",
+        "fullTransparent": "0/000/0014.png"
+      },
+      "detail": {
+        "characterId": 14,
+        "captainAbility": "Boosts ATK of [PSY] characters by 1.5x",
+        "specialName": "Tabasco Star",
+        "specialText": "Delays all enemies by 2 turns",
+        "specialNotes": null,
+        "sailorAbilities": [],
+        "sailorNotes": null,
+        "limitBreak": [],
+        "potentialAbilities": [],
+        "supportData": [],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": {
+          "ability": [
+            {
+              "effects": [
+                {
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 1,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "effects": [
+                {
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 2,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "effects": [
+                {
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 3,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "effects": [
+                {
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 4,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "effects": [
+                {
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 5,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "id": 14,
+          "pattern": [
+            {
+              "action": "attack",
+              "type": "Normal"
+            },
+            {
+              "action": "heal",
+              "area": "Self",
+              "level": 2
+            },
+            {
+              "action": "attack",
+              "type": "Power"
+            },
+            {
+              "action": "attack",
+              "type": "Normal"
+            }
+          ],
+          "special": [
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 59,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "duration": 15,
+                  "effect": "debuff",
+                  "level": 3,
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 63,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "duration": 15,
+                  "effect": "debuff",
+                  "level": 3,
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 67,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "duration": 15,
+                  "effect": "debuff",
+                  "level": 4,
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 71,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "duration": 15,
+                  "effect": "debuff",
+                  "level": 5,
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 75,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "duration": 15,
+                  "effect": "debuff",
+                  "level": 6,
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 79,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "duration": 15,
+                  "effect": "debuff",
+                  "level": 7,
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 83,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "duration": 15,
+                  "effect": "debuff",
+                  "level": 8,
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 87,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "duration": 15,
+                  "effect": "debuff",
+                  "level": 9,
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 91,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "duration": 15,
+                  "effect": "debuff",
+                  "level": 9,
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 96,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "duration": 15,
+                  "effect": "debuff",
+                  "level": 11,
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "stats": {
+            "def": 164,
+            "rumbleType": "DBF",
+            "spd": 124
+          },
+          "target": {
+            "comparator": "lowest",
+            "criteria": "HP"
+          }
+        }
+      }
+    },
+    {
+      "id": 15,
+      "name": "Usopp - Usopp Golden Pound",
+      "type": "PSY",
+      "primaryClass": "Shooter",
+      "secondaryClass": null,
+      "classes": [
+        "Shooter"
+      ],
+      "stars": 4,
+      "cost": 9,
+      "combo": 6,
+      "maxSockets": 2,
+      "evolutionStage": 50,
+      "maxLevel": 392109,
+      "maxExperience": 444,
+      "minHp": 237,
+      "minAtk": 47,
+      "minRcv": 1080,
+      "maxHp": 648,
+      "maxAtk": 144,
+      "maxRcv": 1,
+      "growth": 0,
+      "searchText": "usopp - usopp golden pound psy shooter",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0015.png",
+        "thumbnailJapan": "0/000/0015.png",
+        "fullTransparent": "0/000/0015.png"
+      },
+      "detail": {
+        "characterId": 15,
+        "captainAbility": "Boosts ATK of [PSY] characters by 1.5x",
+        "specialName": "Usopp Golden Pound",
+        "specialText": "Delays all enemies by 3 turns",
+        "specialNotes": null,
+        "sailorAbilities": [],
+        "sailorNotes": null,
+        "limitBreak": [],
+        "potentialAbilities": [],
+        "supportData": [],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": {
+          "ability": [
+            {
+              "effects": [
+                {
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 1,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "effects": [
+                {
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 2,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "effects": [
+                {
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 3,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "effects": [
+                {
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 4,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "effects": [
+                {
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 5,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "id": 15,
+          "pattern": [
+            {
+              "action": "attack",
+              "type": "Normal"
+            },
+            {
+              "action": "heal",
+              "area": "Self",
+              "level": 2
+            },
+            {
+              "action": "attack",
+              "type": "Power"
+            },
+            {
+              "action": "attack",
+              "type": "Normal"
+            }
+          ],
+          "special": [
+            {
+              "cooldown": 23,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 80,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "amount": 10,
+                  "effect": "damage",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  },
+                  "type": "fixed"
+                }
+              ]
+            },
+            {
+              "cooldown": 23,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 80,
+                  "duration": 11,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "amount": 10,
+                  "effect": "damage",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  },
+                  "type": "fixed"
+                }
+              ]
+            },
+            {
+              "cooldown": 23,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 80,
+                  "duration": 12,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "amount": 10,
+                  "effect": "damage",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  },
+                  "type": "fixed"
+                }
+              ]
+            },
+            {
+              "cooldown": 23,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 80,
+                  "duration": 13,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "amount": 10,
+                  "effect": "damage",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  },
+                  "type": "fixed"
+                }
+              ]
+            },
+            {
+              "cooldown": 23,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 80,
+                  "duration": 14,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "amount": 10,
+                  "effect": "damage",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  },
+                  "type": "fixed"
+                }
+              ]
+            },
+            {
+              "cooldown": 23,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 80,
+                  "duration": 15,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "amount": 10,
+                  "effect": "damage",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  },
+                  "type": "fixed"
+                }
+              ]
+            },
+            {
+              "cooldown": 23,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 80,
+                  "duration": 16,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "amount": 10,
+                  "effect": "damage",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  },
+                  "type": "fixed"
+                }
+              ]
+            },
+            {
+              "cooldown": 23,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 80,
+                  "duration": 17,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "amount": 10,
+                  "effect": "damage",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  },
+                  "type": "fixed"
+                }
+              ]
+            },
+            {
+              "cooldown": 23,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 80,
+                  "duration": 18,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "amount": 10,
+                  "effect": "damage",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  },
+                  "type": "fixed"
+                }
+              ]
+            },
+            {
+              "cooldown": 23,
+              "effects": [
+                {
+                  "attributes": [
+                    "Silence"
+                  ],
+                  "chance": 80,
+                  "duration": 20,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "amount": 10,
+                  "effect": "damage",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  },
+                  "type": "fixed"
+                }
+              ]
+            }
+          ],
+          "stats": {
+            "def": 164,
+            "rumbleType": "DBF",
+            "spd": 124
+          },
+          "target": {
+            "comparator": "lowest",
+            "criteria": "HP"
+          }
+        }
+      }
+    },
+    {
+      "id": 16,
+      "name": "Sogeking",
+      "type": "PSY",
+      "primaryClass": "Shooter",
+      "secondaryClass": null,
+      "classes": [
+        "Shooter"
+      ],
+      "stars": 5,
+      "cost": 15,
+      "combo": 7,
+      "maxSockets": 3,
+      "evolutionStage": 99,
+      "maxLevel": 3000000,
+      "maxExperience": 638,
+      "minHp": 260,
+      "minAtk": 189,
+      "minRcv": 1506,
+      "maxHp": 690,
+      "maxAtk": 479,
+      "maxRcv": 1,
+      "growth": 0,
+      "searchText": "sogeking psy shooter",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0016.png",
+        "thumbnailJapan": "0/000/0016.png",
+        "fullTransparent": "0/000/0016.png"
+      },
+      "detail": {
+        "characterId": 16,
+        "captainAbility": "Boosts ATK and HP of [PSY] characters by 1.5x",
+        "specialName": "Fire Bird Star",
+        "specialText": "Delays all enemies by 3 turns, deals 15x character's ATK in [PSY] damage to all enemies",
+        "specialNotes": null,
+        "sailorAbilities": [
+          "Boosts base ATK, HP and RCV of Shooter characters by 20"
+        ],
+        "sailorNotes": null,
+        "limitBreak": [
+          {
+            "description": "Boosts base RCV by 10"
+          },
+          {
+            "description": "Boosts base RCV by 20"
+          },
+          {
+            "description": "Boosts base RCV by 30"
+          },
+          {
+            "description": "Acquire Potential 1: Reduce No Healing duration"
+          },
+          {
+            "description": "Boosts base HP by 30"
+          },
+          {
+            "description": "Boosts base HP by 40"
+          },
+          {
+            "description": "Boosts base ATK by 20"
+          },
+          {
+            "description": "Boosts base ATK by 30"
+          },
+          {
+            "description": "Reduce base Special Cooldown by 1 turn"
+          },
+          {
+            "description": "Boosts base ATK by 40"
+          },
+          {
+            "description": "Acquire 1 additional Socket slot"
+          },
+          {
+            "description": "Boosts base HP by 60"
+          },
+          {
+            "description": "Boosts base HP by 80"
+          },
+          {
+            "description": "Acquire Sailor Ability 1: Boosts base ATK, HP and RCV of Shooter characters by 20"
+          },
+          {
+            "description": "Acquire Potential 2: Barrier Penetration"
+          }
+        ],
+        "potentialAbilities": [
+          {
+            "Name": "Reduce No Healing duration",
+            "description": [
+              "If your crew has 6 Shooter characters, reduces No Healing duration by 1 turn",
+              "If your crew has 5 Shooter characters, reduces No Healing duration by 1 turn",
+              "If your crew has 4 Shooter characters, reduces No Healing duration by 1 turn",
+              "If your crew has 4 Shooter characters, reduces No Healing duration by 2 turns",
+              "If your crew has 4 Shooter characters, reduces No Healing duration by 3 turns"
+            ]
+          },
+          {
+            "Name": "Barrier Penetration",
+            "description": [
+              "This character's normal attack will ignore barriers if HP is above 99% at the start of the turn",
+              "This character's normal attack will ignore barriers if HP is above 99% at the start of the turn",
+              "This character's normal attack will ignore barriers if HP is above 99% at the start of the turn",
+              "This character's normal attack will ignore barriers if HP is above 80% at the start of the turn",
+              "This character's normal attack will ignore barriers if HP is above 50% at the start of the turn"
+            ]
+          }
+        ],
+        "supportData": [
+          {
+            "Characters": "Shooter characters",
+            "description": [
+              "Reduces damage received from [INT] characters by 1%. Adds 1% of this character's base ATK to the supported character's base ATK",
+              "Reduces damage received from [INT] characters by 1%. Adds 1% of this character's base ATK to the supported character's base ATK",
+              "Reduces damage received from [INT] characters by 2%. Adds 2% of this character's base ATK to the supported character's base ATK",
+              "Reduces damage received from [INT] characters by 2%. Adds 2% of this character's base ATK to the supported character's base ATK",
+              "Reduces damage received from [INT] characters by 3%. Adds 3% of this character's base ATK to the supported character's base ATK"
+            ]
+          }
+        ],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": {
+          "basedOn": 14,
+          "id": 16
+        }
+      }
+    },
+    {
+      "id": 17,
+      "name": "Sanji",
+      "type": "QCK",
+      "primaryClass": "Fighter",
+      "secondaryClass": null,
+      "classes": [
+        "Fighter"
+      ],
+      "stars": 3,
+      "cost": 4,
+      "combo": 6,
+      "maxSockets": 0,
+      "evolutionStage": 20,
+      "maxLevel": 26184,
+      "maxExperience": 136,
+      "minHp": 64,
+      "minAtk": 17,
+      "minRcv": 506,
+      "maxHp": 218,
+      "maxAtk": 60,
+      "maxRcv": 1,
+      "growth": 0,
+      "searchText": "sanji qck fighter",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0017.png",
+        "thumbnailJapan": "0/000/0017.png",
+        "fullTransparent": "0/000/0017.png"
+      },
+      "detail": {
+        "characterId": 17,
+        "captainAbility": "Boosts ATK of [QCK] characters by 1.5x",
+        "specialName": "Special Fried Rice",
+        "specialText": "Recovers 10x character's RCV in HP",
+        "specialNotes": null,
+        "sailorAbilities": [],
+        "sailorNotes": null,
+        "limitBreak": [],
+        "potentialAbilities": [],
+        "supportData": [],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": null
+      }
+    },
+    {
+      "id": 18,
+      "name": "Sanji - Plastic Surgery Shot",
+      "type": "QCK",
+      "primaryClass": "Fighter",
+      "secondaryClass": "Powerhouse",
+      "classes": [
+        "Fighter",
+        "Powerhouse"
+      ],
+      "stars": 4,
+      "cost": 7,
+      "combo": 5,
+      "maxSockets": 2,
+      "evolutionStage": 35,
+      "maxLevel": 136167,
+      "maxExperience": 486,
+      "minHp": 207,
+      "minAtk": 32,
+      "minRcv": 907,
+      "maxHp": 496,
+      "maxAtk": 125,
+      "maxRcv": 1,
+      "growth": 0,
+      "searchText": "sanji - plastic surgery shot qck fighter powerhouse",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0018.png",
+        "thumbnailJapan": "0/000/0018.png",
+        "fullTransparent": "0/000/0018.png"
+      },
+      "detail": {
+        "characterId": 18,
+        "captainAbility": "Boosts HP of [QCK] characters by 1.5x",
+        "specialName": "Plastic Surgery Shot",
+        "specialText": "Reduces the defense of all enemies by 50% for 2 turns",
+        "specialNotes": null,
+        "sailorAbilities": [],
+        "sailorNotes": null,
+        "limitBreak": [],
+        "potentialAbilities": [],
+        "supportData": [],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": null
+      }
+    },
+    {
+      "id": 19,
+      "name": "Chef Sanji - Hot Rock Stew",
+      "type": "QCK",
+      "primaryClass": "Fighter",
+      "secondaryClass": "Powerhouse",
+      "classes": [
+        "Fighter",
+        "Powerhouse"
+      ],
+      "stars": 4,
+      "cost": 9,
+      "combo": 4,
+      "maxSockets": 2,
+      "evolutionStage": 50,
+      "maxLevel": 392109,
+      "maxExperience": 494,
+      "minHp": 191,
+      "minAtk": 54,
+      "minRcv": 986,
+      "maxHp": 500,
+      "maxAtk": 209,
+      "maxRcv": 1,
+      "growth": 0,
+      "searchText": "chef sanji - hot rock stew qck fighter powerhouse",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0019.png",
+        "thumbnailJapan": "0/000/0019.png",
+        "fullTransparent": "0/000/0019.png"
+      },
+      "detail": {
+        "characterId": 19,
+        "captainAbility": "Boosts ATK of [QCK] characters by 1.5x",
+        "specialName": "Hot Rock Stew",
+        "specialText": "Recovers 10x character's RCV in HP",
+        "specialNotes": null,
+        "sailorAbilities": [],
+        "sailorNotes": null,
+        "limitBreak": [],
+        "potentialAbilities": [],
+        "supportData": [],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": null
+      }
+    },
+    {
+      "id": 20,
+      "name": "Sanji - Diable Jambe Flambe",
+      "type": "QCK",
+      "primaryClass": "Fighter",
+      "secondaryClass": "Powerhouse",
+      "classes": [
+        "Fighter",
+        "Powerhouse"
+      ],
+      "stars": 5,
+      "cost": 15,
+      "combo": 4,
+      "maxSockets": 3,
+      "evolutionStage": 99,
+      "maxLevel": 3000000,
+      "maxExperience": 406,
+      "minHp": 418,
+      "minAtk": 175,
+      "minRcv": 2206,
+      "maxHp": 1030,
+      "maxAtk": 249,
+      "maxRcv": 1,
+      "growth": 0,
+      "searchText": "sanji - diable jambe flambe qck fighter powerhouse",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0020.png",
+        "thumbnailJapan": "0/000/0020.png",
+        "fullTransparent": "0/000/0020.png"
+      },
+      "detail": {
+        "characterId": 20,
+        "captainAbility": "Boosts ATK and HP of [QCK] characters by 1.5x",
+        "specialName": "Diable Jambe",
+        "specialText": "Deals 5,000 Fixed damage to all enemies",
+        "specialNotes": "#{fixed}",
+        "sailorAbilities": [
+          "Makes [RCV] orbs beneficial for all characters",
+          "Boosts base ATK, HP and RCV of all characters by 40"
+        ],
+        "sailorNotes": "#{beneficial}",
+        "limitBreak": [
+          {
+            "description": "Boosts base HP by 30"
+          },
+          {
+            "description": "Boosts base RCV by 10"
+          },
+          {
+            "description": "Boosts base ATK by 40"
+          },
+          {
+            "description": "Acquire Potential 1: [STR] Damage Reduction"
+          },
+          {
+            "description": "Boosts base HP by 60"
+          },
+          {
+            "description": "Boosts base RCV by 20"
+          },
+          {
+            "description": "Reduce base Special Cooldown by 1 turn"
+          },
+          {
+            "description": "Boosts base ATK by 60"
+          },
+          {
+            "description": "Acquire Sailor Ability 1: Makes [RCV] orbs beneficial for all characters"
+          },
+          {
+            "description": "Boosts base RCV by 20"
+          },
+          {
+            "description": "Reduce base Special Cooldown by 1 turn"
+          },
+          {
+            "description": "Boosts base RCV by 30"
+          },
+          {
+            "description": "Boosts base HP by 90"
+          },
+          {
+            "description": "Acquire Sailor Ability 2: Boosts base ATK, HP and RCV of all characters by 40"
+          },
+          {
+            "description": "Acquire Potential 2: Pinch Healing"
+          }
+        ],
+        "potentialAbilities": [
+          {
+            "Name": "[STR] Damage Reduction",
+            "description": [
+              "Reduces damage taken from [STR] characters by 1%",
+              "Reduces damage taken from [STR] characters by 2%",
+              "Reduces damage taken from [STR] characters by 3%",
+              "Reduces damage taken from [STR] characters by 4%",
+              "Reduces damage taken from [STR] characters by 5%"
+            ]
+          },
+          {
+            "Name": "Pinch Healing",
+            "description": [
+              "If HP is below 5% at the start of the turn, recovers 1x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
+              "If HP is below 5% at the start of the turn, recovers 1.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
+              "If HP is below 5% at the start of the turn, recovers 1.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
+              "If HP is below 10% at the start of the turn, recovers 1.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
+              "If HP is below 20% at the start of the turn, recovers 1.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character"
+            ]
+          }
+        ],
+        "supportData": [
+          {
+            "Characters": "Powerhouse characters",
+            "description": [
+              "Adds 1% of this character's base ATK and HP to the supported character's base ATK and HP",
+              "Adds 1% of this character's base ATK and HP to the supported character's base ATK and HP",
+              "Adds 2% of this character's base ATK and HP to the supported character's base ATK and HP",
+              "Adds 3% of this character's base ATK and HP to the supported character's base ATK and HP",
+              "Adds 4% of this character's base ATK and HP to the supported character's base ATK and HP"
+            ]
+          }
+        ],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": null
+      }
+    },
+    {
+      "id": 21,
+      "name": "Tony Tony Chopper",
+      "type": "PSY",
+      "primaryClass": "Fighter",
+      "secondaryClass": null,
+      "classes": [
+        "Fighter"
+      ],
+      "stars": 3,
+      "cost": 4,
+      "combo": 5,
+      "maxSockets": 0,
+      "evolutionStage": 20,
+      "maxLevel": 26184,
+      "maxExperience": 52,
+      "minHp": 40,
+      "minAtk": 39,
+      "minRcv": 294,
+      "maxHp": 144,
+      "maxAtk": 120,
+      "maxRcv": 1,
+      "growth": 0,
+      "searchText": "tony tony chopper psy fighter",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0021.png",
+        "thumbnailJapan": "0/000/0021.png",
+        "fullTransparent": "0/000/0021.png"
+      },
+      "detail": {
+        "characterId": 21,
+        "captainAbility": "Boosts RCV of [PSY] characters by 1.2x",
+        "specialName": "Hearty Yell",
+        "specialText": "Changes orbs of adjacent characters into [RCV] orbs",
+        "specialNotes": null,
+        "sailorAbilities": [],
+        "sailorNotes": null,
+        "limitBreak": [],
+        "potentialAbilities": [],
+        "supportData": [],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": null
+      }
+    },
+    {
+      "id": 22,
+      "name": "Tony Tony Chopper - Heavy Point",
+      "type": "PSY",
+      "primaryClass": "Fighter",
+      "secondaryClass": "Free Spirit",
+      "classes": [
+        "Fighter",
+        "Free Spirit"
+      ],
+      "stars": 4,
+      "cost": 9,
+      "combo": 5,
+      "maxSockets": 2,
+      "evolutionStage": 50,
+      "maxLevel": 392109,
+      "maxExperience": 306,
+      "minHp": 213,
+      "minAtk": 78,
+      "minRcv": 754,
+      "maxHp": 622,
+      "maxAtk": 207,
+      "maxRcv": 1,
+      "growth": 0,
+      "searchText": "tony tony chopper - heavy point psy fighter free spirit",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0022.png",
+        "thumbnailJapan": "0/000/0022.png",
+        "fullTransparent": "0/000/0022.png"
+      },
+      "detail": {
+        "characterId": 22,
+        "captainAbility": "Boosts RCV of [PSY] characters by 1.5x",
+        "specialName": "Heavy Gong",
+        "specialText": "Deals 15x character's ATK in [PSY] damage to one enemy",
+        "specialNotes": null,
+        "sailorAbilities": [
+          "Makes [TND] orbs beneficial for this character",
+          "Boosts base ATK, HP and RCV of all characters by 30"
+        ],
+        "sailorNotes": "#{beneficial}",
+        "limitBreak": [
+          {
+            "description": "Boosts base RCV by 20"
+          },
+          {
+            "description": "Boosts base HP by 40"
+          },
+          {
+            "description": "Boosts base RCV by 30"
+          },
+          {
+            "description": "Acquire Potential 1: [INT] Damage Reduction"
+          },
+          {
+            "description": "Boosts base HP by 60"
+          },
+          {
+            "description": "Reduce base Special Cooldown by 1 turn"
+          },
+          {
+            "description": "Boosts base ATK by 50"
+          },
+          {
+            "description": "Acquire Sailor Ability 1: Makes [TND] orbs beneficial for this character"
+          },
+          {
+            "description": "Boosts base HP by 100"
+          },
+          {
+            "description": "Acquire 1 additional Socket slot"
+          },
+          {
+            "description": "Reduce base Special Cooldown by 2 turns"
+          },
+          {
+            "description": "Boosts base ATK by 50"
+          },
+          {
+            "description": "Acquire 1 additional Socket slot"
+          },
+          {
+            "description": "Acquire Sailor Ability 2: Boosts base ATK, HP and RCV of all characters by 30"
+          },
+          {
+            "description": "Acquire Potential 2: Pinch Healing"
+          }
+        ],
+        "potentialAbilities": [
+          {
+            "Name": "[INT] Damage Reduction",
+            "description": [
+              "Reduces damage taken from [INT] characters by 1%",
+              "Reduces damage taken from [INT] characters by 2%",
+              "Reduces damage taken from [INT] characters by 3%",
+              "Reduces damage taken from [INT] characters by 4%",
+              "Reduces damage taken from [INT] characters by 5%"
+            ]
+          },
+          {
+            "Name": "Pinch Healing",
+            "description": [
+              "If HP is below 20% at the start of the turn, recovers 0.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
+              "If HP is below 25% at the start of the turn, recovers 1x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
+              "If HP is below 30% at the start of the turn, recovers 1x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
+              "If HP is below 40% at the start of the turn, recovers 1x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
+              "If HP is below 40% at the start of the turn, recovers 1.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character"
+            ]
+          }
+        ],
+        "supportData": [
+          {
+            "Characters": "Fighter characters",
+            "description": [
+              "Adds 1% of this character's base ATK and HP to the supported character's base ATK and HP",
+              "Adds 1% of this character's base ATK and HP to the supported character's base ATK and HP",
+              "Adds 2% of this character's base ATK and HP to the supported character's base ATK and HP",
+              "Adds 3% of this character's base ATK and HP to the supported character's base ATK and HP",
+              "Adds 4% of this character's base ATK and HP to the supported character's base ATK and HP"
+            ]
+          }
+        ],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": null
+      }
+    },
+    {
+      "id": 23,
+      "name": "Tony Tony Chopper - Brain Point",
+      "type": "INT",
+      "primaryClass": "Fighter",
+      "secondaryClass": "Cerebral",
+      "classes": [
+        "Fighter",
+        "Cerebral"
+      ],
+      "stars": 4,
+      "cost": 9,
+      "combo": 5,
+      "maxSockets": 2,
+      "evolutionStage": 50,
+      "maxLevel": 392109,
+      "maxExperience": 258,
+      "minHp": 198,
+      "minAtk": 91,
+      "minRcv": 520,
+      "maxHp": 454,
+      "maxAtk": 302,
+      "maxRcv": 1,
+      "growth": 0,
+      "searchText": "tony tony chopper - brain point int fighter cerebral",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0023.png",
+        "thumbnailJapan": "0/000/0023.png",
+        "fullTransparent": "0/000/0023.png"
+      },
+      "detail": {
+        "characterId": 23,
+        "captainAbility": "Boosts RCV of [INT] characters by 1.5x",
+        "specialName": "Scope",
+        "specialText": "Changes orbs of adjacent characters into [RCV] orbs",
+        "specialNotes": null,
+        "sailorAbilities": [],
+        "sailorNotes": null,
+        "limitBreak": [],
+        "potentialAbilities": [],
+        "supportData": [],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": null
+      }
+    },
+    {
+      "id": 24,
+      "name": "Tony Tony Chopper - Arm Point",
+      "type": "STR",
+      "primaryClass": "Fighter",
+      "secondaryClass": "Powerhouse",
+      "classes": [
+        "Fighter",
+        "Powerhouse"
+      ],
+      "stars": 4,
+      "cost": 9,
+      "combo": 4,
+      "maxSockets": 2,
+      "evolutionStage": 50,
+      "maxLevel": 392109,
+      "maxExperience": 356,
+      "minHp": 260,
+      "minAtk": 54,
+      "minRcv": 868,
+      "maxHp": 820,
+      "maxAtk": 122,
+      "maxRcv": 1,
+      "growth": 0,
+      "searchText": "tony tony chopper - arm point str fighter powerhouse",
+      "regionAvailability": {
+        "thumbnailGlobal": true,
+        "thumbnailJapan": true,
+        "fullTransparent": true
+      },
+      "assets": {
+        "thumbnailGlobal": "0/000/0024.png",
+        "thumbnailJapan": "0/000/0024.png",
+        "fullTransparent": "0/000/0024.png"
+      },
+      "detail": {
+        "characterId": 24,
+        "captainAbility": "Boosts RCV of [STR] characters by 1.5x",
+        "specialName": "Hoofprint Roseo",
+        "specialText": "Reduces the defense of all enemies by 50% for 2 turns",
+        "specialNotes": null,
+        "sailorAbilities": [],
+        "sailorNotes": null,
+        "limitBreak": [],
+        "potentialAbilities": [],
+        "supportData": [],
+        "swapData": null,
+        "vsSpecial": null,
+        "superType": null,
+        "superClass": null,
+        "rumbleData": null
+      }
+    }
+  ],
+  "ships": [
+    {
+      "id": 1,
+      "name": "Dinghy",
+      "thumb": "ship_0001_t2.png",
+      "description": "Boosts HP by 1.3x, boosts captain's RCV by 120 and makes PERFECTs easier to hit"
+    },
+    {
+      "id": 2,
+      "name": "Merry Go",
+      "thumb": "ship_0002_t2.png",
+      "description": "Boosts ATK by 1.5x, boosts captain's HP by 300 and makes PERFECTs easier to hit"
+    },
+    {
+      "id": 3,
+      "name": "Navy Ship",
+      "thumb": "ship_0003_t2.png",
+      "description": "Boosts HP by 1.5x, boosts ATK of Shooter characters by 100"
+    },
+    {
+      "id": 4,
+      "name": "Baratie",
+      "thumb": "ship_0004_t2.png",
+      "description": "Boosts captain's HP by 2000"
+    },
+    {
+      "id": 5,
+      "name": "Coffin Boat",
+      "thumb": "ship_0005_t2.png",
+      "description": "Boosts ATK and HP of Slasher characters by 1.5x, reduces captain's RCV by 700"
+    },
+    {
+      "id": 6,
+      "name": "Miss Love Duck",
+      "thumb": "ship_0006_t2.png",
+      "description": "Boosts ATK of Striker characters by 1.5x, boosts chances of getting Matching orbs on Striker charracters and reduces damage received by 10%"
+    },
+    {
+      "id": 7,
+      "name": "Going Merry - Flying Model",
+      "thumb": "ship_0007_t2.png",
+      "description": "Boosts ATK by 1.2x, recovers 350 HP at the end of the turn"
+    },
+    {
+      "id": 8,
+      "name": "Moby Dick",
+      "thumb": "ship_0008_t2.png",
+      "description": "Boosts ATK by 1.5x, boosts HP by 1.4x, reduces HP by 50% at the start of the fight"
+    },
+    {
+      "id": 9,
+      "name": "Big Top",
+      "thumb": "ship_0009_t2.png",
+      "description": "Boosts ATK of characters with 40 cost or less by 1.5x and boosts HP of all characters by 1.4x."
+    },
+    {
+      "id": 10,
+      "name": "Bezan Black",
+      "thumb": "ship_0010_t2.png",
+      "description": "Reduces cooldown of all specials by 1 turn at the start of the fight, boosts ATK of QCK characters by 1.5x and their HP by 1.3x"
+    },
+    {
+      "id": 11,
+      "name": "Aokiji's Bike",
+      "thumb": "ship_0011_t2.png",
+      "description": "Boosts ATK and HP of Striker characters by 1.5x, greatly reduces the appearance of RCV orbs"
+    },
+    {
+      "id": 12,
+      "name": "Striker",
+      "thumb": "ship_0012_t2.png",
+      "description": "Boosts ATK of Shooter characters by 1.5x and their HP by 1.3x, reduces cooldown of Shooter specials by 1 turn at the start of the fight"
+    }
+  ]
+}

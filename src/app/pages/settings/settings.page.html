@@ -1,0 +1,43 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title>Offline Packs</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="page-shell settings-shell">
+    <section class="glass-card intro-card">
+      <div class="section-label">Manual updates only</div>
+      <h1 class="section-title">This build expects local OPTC imports, not live scraping at runtime.</h1>
+      <p class="section-copy">
+        Source of truth is the optc-db GitHub repo. Run the import commands below whenever you want a fresh local dataset or image pack.
+      </p>
+    </section>
+
+    <section class="glass-card command-card">
+      <h2>Import commands</h2>
+      <code *ngFor="let command of commands">{{ command }}</code>
+    </section>
+
+    <section class="glass-card pack-list">
+      <h2>Pack status</h2>
+
+      <article *ngFor="let pack of manifest()?.packs ?? []" class="pack-card">
+        <div>
+          <strong>{{ pack.label }}</strong>
+          <span>{{ pack.fileCount }} files • {{ pack.totalBytes | number }} bytes</span>
+        </div>
+        <div class="pack-state" [class.installed]="pack.installed">
+          {{ pack.installed ? 'Installed' : 'Not installed' }}
+        </div>
+      </article>
+    </section>
+
+    <section class="glass-card legal-card">
+      <h2>Release note</h2>
+      <p>
+        The technical pipeline is offline-ready, but redistribution of game art remains a separate legal/product decision before any public store release.
+      </p>
+    </section>
+  </div>
+</ion-content>
