@@ -1,12 +1,12 @@
 import { CommonModule } from "@angular/common";
-import { Component, OnInit, signal } from "@angular/core";
+import { Component, OnInit, computed, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import {
   IonButton,
-  IonChip,
   IonContent,
   IonHeader,
   IonIcon,
+  IonInput,
   IonSearchbar,
   IonSpinner,
   IonTitle,
@@ -32,10 +32,10 @@ const PAGE_SIZE = 48;
   imports: [
     CommonModule,
     IonButton,
-    IonChip,
     IonContent,
     IonHeader,
     IonIcon,
+    IonInput,
     IonSearchbar,
     IonSpinner,
     IonTitle,
@@ -52,9 +52,25 @@ export class CharactersPage implements OnInit {
   public readonly loadingMore = signal(false);
   public readonly hasMore = signal(true);
   public readonly searchTerm = signal("");
+  public readonly typeQuery = signal("");
+  public readonly classQuery = signal("");
   public readonly selectedType = signal("");
   public readonly selectedClass = signal("");
   public readonly favoriteIds;
+  public readonly availableTypes = computed(() => this.normalizeOptions(this.summary()?.availableTypes ?? []));
+  public readonly availableClasses = computed(() => this.normalizeOptions(this.summary()?.availableClasses ?? []));
+  public readonly filteredTypeOptions = computed(() =>
+    this.filterOptions(this.availableTypes(), this.typeQuery(), this.selectedType()),
+  );
+  public readonly filteredClassOptions = computed(() =>
+    this.filterOptions(this.availableClasses(), this.classQuery(), this.selectedClass()),
+  );
+  public readonly showTypeSuggestions = computed(
+    () => this.filteredTypeOptions().length > 0 && this.typeQuery().trim() !== this.selectedType(),
+  );
+  public readonly showClassSuggestions = computed(
+    () => this.filteredClassOptions().length > 0 && this.classQuery().trim() !== this.selectedClass(),
+  );
 
   public readonly searchIcon = searchOutline;
   public readonly sparklesIcon = sparklesOutline;
@@ -80,13 +96,67 @@ export class CharactersPage implements OnInit {
     await this.loadCharacters(true);
   }
 
-  public async onTypeFilterChange(type: string): Promise<void> {
-    this.selectedType.set(this.selectedType() === type ? "" : type);
+  public async onTypeQueryChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
+    const nextValue = (event.detail.value ?? "").trimStart();
+    this.typeQuery.set(nextValue);
+
+    if (this.selectedType() && nextValue.trim() !== this.selectedType()) {
+      this.selectedType.set("");
+      await this.loadCharacters(true);
+    }
+  }
+
+  public async onClassQueryChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
+    const nextValue = (event.detail.value ?? "").trimStart();
+    this.classQuery.set(nextValue);
+
+    if (this.selectedClass() && nextValue.trim() !== this.selectedClass()) {
+      this.selectedClass.set("");
+      await this.loadCharacters(true);
+    }
+  }
+
+  public async applyTypeFilter(type: string): Promise<void> {
+    if (this.selectedType() === type) {
+      return;
+    }
+
+    this.typeQuery.set(type);
+    this.selectedType.set(type);
     await this.loadCharacters(true);
   }
 
-  public async onClassFilterChange(characterClass: string): Promise<void> {
-    this.selectedClass.set(this.selectedClass() === characterClass ? "" : characterClass);
+  public async applyClassFilter(characterClass: string): Promise<void> {
+    if (this.selectedClass() === characterClass) {
+      return;
+    }
+
+    this.classQuery.set(characterClass);
+    this.selectedClass.set(characterClass);
+    await this.loadCharacters(true);
+  }
+
+  public async clearTypeFilter(): Promise<void> {
+    const hadSelection = Boolean(this.selectedType());
+    this.typeQuery.set("");
+
+    if (!hadSelection) {
+      return;
+    }
+
+    this.selectedType.set("");
+    await this.loadCharacters(true);
+  }
+
+  public async clearClassFilter(): Promise<void> {
+    const hadSelection = Boolean(this.selectedClass());
+    this.classQuery.set("");
+
+    if (!hadSelection) {
+      return;
+    }
+
+    this.selectedClass.set("");
     await this.loadCharacters(true);
   }
 
@@ -131,5 +201,24 @@ export class CharactersPage implements OnInit {
     this.characters.set(reset ? nextPage : [...this.characters(), ...nextPage]);
     this.hasMore.set(nextPage.length === PAGE_SIZE);
     this.loading.set(false);
+  }
+
+  private normalizeOptions(values: string[]): string[] {
+    return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort((left, right) =>
+      left.localeCompare(right),
+    );
+  }
+
+  private filterOptions(options: string[], query: string, selectedValue: string): string[] {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+      return options.slice(0, 8);
+    }
+
+    return options
+      .filter((option) => option.toLowerCase().includes(normalizedQuery))
+      .filter((option) => option !== selectedValue)
+      .slice(0, 8);
   }
 }

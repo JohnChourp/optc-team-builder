@@ -43,27 +43,55 @@
 
       <div class="filter-group">
         <span>Type</span>
-        <div class="filter-row">
-          <ion-chip
-            *ngFor="let item of summary()?.availableTypes ?? []"
-            [class.active]="selectedType() === item"
-            (click)="onTypeFilterChange(item)"
+        <ion-input
+          class="filter-input"
+          fill="outline"
+          placeholder="Type to filter by character type"
+          [value]="typeQuery()"
+          (ionInput)="onTypeQueryChange($event)"
+        ></ion-input>
+
+        <div *ngIf="selectedType()" class="filter-selection">
+          <span>Active filter: {{ selectedType() }}</span>
+          <button type="button" class="filter-clear" (click)="clearTypeFilter()">Clear</button>
+        </div>
+
+        <div *ngIf="showTypeSuggestions()" class="filter-suggestions">
+          <button
+            type="button"
+            class="filter-suggestion"
+            *ngFor="let item of filteredTypeOptions()"
+            (click)="applyTypeFilter(item)"
           >
             {{ item }}
-          </ion-chip>
+          </button>
         </div>
       </div>
 
       <div class="filter-group">
         <span>Class</span>
-        <div class="filter-row">
-          <ion-chip
-            *ngFor="let item of (summary()?.availableClasses ?? []).slice(0, 12)"
-            [class.active]="selectedClass() === item"
-            (click)="onClassFilterChange(item)"
+        <ion-input
+          class="filter-input"
+          fill="outline"
+          placeholder="Type to filter by class"
+          [value]="classQuery()"
+          (ionInput)="onClassQueryChange($event)"
+        ></ion-input>
+
+        <div *ngIf="selectedClass()" class="filter-selection">
+          <span>Active filter: {{ selectedClass() }}</span>
+          <button type="button" class="filter-clear" (click)="clearClassFilter()">Clear</button>
+        </div>
+
+        <div *ngIf="showClassSuggestions()" class="filter-suggestions">
+          <button
+            type="button"
+            class="filter-suggestion"
+            *ngFor="let item of filteredClassOptions()"
+            (click)="applyClassFilter(item)"
           >
             {{ item }}
-          </ion-chip>
+          </button>
         </div>
       </div>
     </section>
@@ -73,7 +101,11 @@
       <span>Building the local index...</span>
     </section>
 
-    <section *ngIf="!loading()" class="character-grid">
+    <section *ngIf="!loading() && !characters().length" class="loading-card glass-card empty-card">
+      <span>No characters matched the current search and filters.</span>
+    </section>
+
+    <section *ngIf="!loading() && characters().length" class="character-grid">
       <article *ngFor="let character of characters(); trackBy: trackCharacter" class="character-card glass-card">
         <a class="character-card__link" [routerLink]="['/characters', character.id]">
           <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />

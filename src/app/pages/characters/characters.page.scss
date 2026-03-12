@@ -51,6 +51,14 @@
   gap: 10px;
 }
 
+.filter-input {
+  --background: rgba(255, 255, 255, 0.06);
+  --border-color: rgba(255, 255, 255, 0.14);
+  --border-radius: 18px;
+  --color: #f8fbff;
+  --highlight-color-focused: rgba(245, 200, 76, 0.8);
+}
+
 .filter-group span {
   color: rgba(248, 251, 255, 0.72);
   font-size: 0.82rem;
@@ -59,21 +67,50 @@
   text-transform: uppercase;
 }
 
-.filter-row {
+.filter-selection,
+.filter-suggestions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
 }
 
-ion-chip {
-  --background: rgba(255, 255, 255, 0.06);
-  color: #e9f1ff;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  cursor: pointer;
+.filter-selection span {
+  color: #f8fbff;
+  font-size: 0.84rem;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
-ion-chip.active {
-  --background: rgba(245, 200, 76, 0.18);
+.filter-clear,
+.filter-suggestion {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e9f1ff;
+  cursor: pointer;
+  font: inherit;
+}
+
+.filter-clear:hover,
+.filter-suggestion:hover {
+  border-color: rgba(245, 200, 76, 0.36);
+}
+
+.filter-suggestion {
+  text-align: left;
+}
+
+.filter-suggestion:focus-visible,
+.filter-clear:focus-visible,
+.favorite-button:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
+}
+
+.filter-selection .filter-clear {
+  background: rgba(245, 200, 76, 0.18);
   color: #f5c84c;
   border-color: rgba(245, 200, 76, 0.42);
 }
@@ -178,6 +215,10 @@ ion-chip.active {
   display: flex;
   justify-content: center;
   padding-bottom: 18px;
+}
+
+.empty-card {
+  justify-content: center;
 }
 
 @media (min-width: 768px) {

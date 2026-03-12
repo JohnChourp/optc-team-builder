@@ -22,6 +22,7 @@ const SQL_WASM_PATH = "assets/vendor/sql.js/sql-wasm.wasm";
 const SQL_SEED_PATH = "assets/data/optc-seed.sql";
 const DATASET_MANIFEST_PATH = "assets/data/optc-manifest.json";
 const FALLBACK_CHARACTER_IMAGE = "assets/placeholders/character-card.svg";
+const INVALID_CLASS_PATTERN = /^Class\d+$/i;
 
 @Injectable({ providedIn: "root" })
 export class OptcRepositoryService {
@@ -39,7 +40,9 @@ export class OptcRepositoryService {
   }
 
   public async getDatasetManifest(): Promise<DatasetManifest> {
-    this.manifestPromise ??= this.fetchJson<DatasetManifest>(DATASET_MANIFEST_PATH);
+    this.manifestPromise ??= this.fetchJson<DatasetManifest>(DATASET_MANIFEST_PATH).then((manifest) =>
+      this.normalizeManifest(manifest),
+    );
     return this.manifestPromise;
   }
 
@@ -362,5 +365,29 @@ export class OptcRepositoryService {
     }
 
     return (await response.json()) as T;
+  }
+
+  private normalizeManifest(manifest: DatasetManifest): DatasetManifest {
+    return {
+      ...manifest,
+      availableTypes: this.normalizeManifestValues(manifest.availableTypes),
+      availableClasses: this.normalizeManifestValues(manifest.availableClasses, INVALID_CLASS_PATTERN),
+    };
+  }
+
+  private normalizeManifestValues(values: unknown[], excludePattern?: RegExp): string[] {
+    return [...new Set(this.flattenValues(values))]
+      .map((value) => String(value ?? "").trim())
+      .filter((value) => value.length > 0)
+      .filter((value) => !excludePattern?.test(value))
+      .sort((left, right) => left.localeCompare(right));
+  }
+
+  private flattenValues(values: unknown): unknown[] {
+    if (!Array.isArray(values)) {
+      return [values];
+    }
+
+    return values.flatMap((value) => this.flattenValues(value));
   }
 }

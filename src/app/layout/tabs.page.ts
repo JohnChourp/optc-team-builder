@@ -1,11 +1,11 @@
 import { Component } from "@angular/core";
-import { IonIcon, IonLabel, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs } from "@ionic/angular/standalone";
+import { IonIcon, IonLabel, IonTabBar, IonTabButton, IonTabs } from "@ionic/angular/standalone";
 import { albumsOutline, cogOutline, gridOutline, peopleOutline } from "ionicons/icons";
 
 @Component({
   selector: "app-tabs-page",
   standalone: true,
-  imports: [IonIcon, IonLabel, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs],
+  imports: [IonIcon, IonLabel, IonTabBar, IonTabButton, IonTabs],
   templateUrl: "./tabs.page.html",
   styleUrl: "./tabs.page.scss",
 })

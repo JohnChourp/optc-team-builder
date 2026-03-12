@@ -45,6 +45,7 @@ const packDefinitions = [
 ];
 
 const validTypes = new Set(["STR", "DEX", "QCK", "PSY", "INT"]);
+const invalidClassPattern = /^Class\d+$/i;
 
 const noop = () => undefined;
 
@@ -316,6 +317,20 @@ function buildCharacterAssetsMap(packs) {
   return assetMap;
 }
 
+function flattenValues(value) {
+  if (Array.isArray(value)) {
+    return value.flatMap((entry) => flattenValues(entry));
+  }
+
+  return [value];
+}
+
+function normalizeCharacterClasses(value) {
+  return [...new Set(flattenValues(value))]
+    .map((entry) => String(entry ?? "").trim())
+    .filter((entry) => entry && !invalidClassPattern.test(entry));
+}
+
 function normalizeCharacters(units, details, rumbleUnits, assetsById) {
   const rumbleById = new Map(rumbleUnits.map((entry) => [entry.id, entry]));
   const toNumber = (value) => {
@@ -325,7 +340,7 @@ function normalizeCharacters(units, details, rumbleUnits, assetsById) {
 
   return units.map((entry, index) => {
     const characterId = index + 1;
-    const classes = Array.isArray(entry[2]) ? entry[2] : [entry[2]];
+    const classes = normalizeCharacterClasses(entry[2]);
     const assets = assetsById.get(characterId) ?? {
       thumbnailGlobal: null,
       thumbnailJapan: null,
