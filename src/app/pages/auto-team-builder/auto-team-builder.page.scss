@@ -83,6 +83,32 @@
   font-size: 1.4rem;
 }
 
+.strict-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.strict-toggle-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.strict-toggle-copy strong {
+  color: #ffffff;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.strict-toggle-copy small {
+  color: rgba(248, 251, 255, 0.62);
+  line-height: 1.45;
+}
+
 .type-action-row {
   display: flex;
   justify-content: flex-start;
@@ -231,6 +257,13 @@ ion-select {
   --border-radius: 18px;
   --color: #f8fbff;
   --highlight-color-focused: rgba(245, 200, 76, 0.8);
+}
+
+ion-toggle {
+  --track-background: rgba(255, 255, 255, 0.18);
+  --track-background-checked: rgba(245, 200, 76, 0.36);
+  --handle-background: #ffffff;
+  flex-shrink: 0;
 }
 
 @media (min-width: 768px) {

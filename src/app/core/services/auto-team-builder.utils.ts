@@ -9,36 +9,36 @@ import {
   type AutoBuildSlot,
   type AutoBuildUtilityRole,
   type AutoTeamBuilderType,
-} from "../models/auto-team-builder.models";
-import { type CharacterDetailRecord } from "../models/optc.models";
+} from '../models/auto-team-builder.models';
+import { type CharacterDetailRecord } from '../models/optc.models';
 
 const CAPTAIN_ATK_PATTERN = /atk(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
 const CAPTAIN_HP_PATTERN = /hp(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
 const TYPE_MATCH_PATTERNS = {
-  DEX: ["[dex]", " dex ", "dex characters", "dex units"],
-  STR: ["[str]", " str ", "str characters", "str units"],
-  QCK: ["[qck]", " qck ", "qck characters", "qck units"],
-  PSY: ["[psy]", " psy ", "psy characters", "psy units"],
-  INT: ["[int]", " int ", "int characters", "int units"],
+  DEX: ['[dex]', ' dex ', 'dex characters', 'dex units'],
+  STR: ['[str]', ' str ', 'str characters', 'str units'],
+  QCK: ['[qck]', ' qck ', 'qck characters', 'qck units'],
+  PSY: ['[psy]', ' psy ', 'psy characters', 'psy units'],
+  INT: ['[int]', ' int ', 'int characters', 'int units'],
 } as const;
 
 const CHIP_LABELS = {
-  atkBoost: "ATK boost",
-  atkDown: "ATK Down clear",
-  bind: "Bind clear",
-  chainBoost: "Chain boost",
-  colorAffinity: "Color affinity",
-  conditional: "Conditional damage",
-  cooldownReduction: "Cooldown help",
-  damageReduction: "Damage reduction clear",
-  defenseDown: "Defense down",
-  despair: "Despair clear",
-  matchingOrbs: "Matching orbs",
-  matchesClass: "Class fit",
-  orbBoost: "Orb boost",
-  orbChange: "Orb control",
-  paralysis: "Paralysis clear",
-  threshold: "Threshold clear",
+  atkBoost: 'ATK boost',
+  atkDown: 'ATK Down clear',
+  bind: 'Bind clear',
+  chainBoost: 'Chain boost',
+  colorAffinity: 'Color affinity',
+  conditional: 'Conditional damage',
+  cooldownReduction: 'Cooldown help',
+  damageReduction: 'Damage reduction clear',
+  defenseDown: 'Defense down',
+  despair: 'Despair clear',
+  matchingOrbs: 'Matching orbs',
+  matchesClass: 'Class fit',
+  orbBoost: 'Orb boost',
+  orbChange: 'Orb control',
+  paralysis: 'Paralysis clear',
+  threshold: 'Threshold clear',
 } as const;
 
 interface TeamCoverageState {
@@ -62,7 +62,10 @@ export function buildAutoTeamResult(
   const candidates = usableRecords.map((record, index) =>
     buildAutoBuildCandidate(record, input, index, usableRecords.length),
   );
-  const captain = selectCaptain(candidates);
+  const captainPool = input.requireAllSelectedClassesPerCharacter
+    ? candidates.filter((candidate) => candidate.matchesAllSelectedClasses)
+    : candidates;
+  const captain = selectCaptain(captainPool);
 
   if (!captain) {
     return null;
@@ -76,15 +79,15 @@ export function buildAutoTeamResult(
 
   const coverage = summarizeCoverage([captain, ...subs], input);
 
-  if (!coverage.coversAllSelectedClasses || !coverage.coversAllSelectedTypes) {
+  if (input.requireAllSelectedTypesInTeam && !coverage.coversAllSelectedTypes) {
     return null;
   }
 
   const slots: AutoBuildSlot[] = [
-    { role: "captain", character: captain.character, reasonChips: captain.reasonChips },
-    { role: "friendCaptain", character: captain.character, reasonChips: captain.reasonChips },
+    { role: 'captain', character: captain.character, reasonChips: captain.reasonChips },
+    { role: 'friendCaptain', character: captain.character, reasonChips: captain.reasonChips },
     ...subs.map((candidate) => ({
-      role: "sub" as const,
+      role: 'sub' as const,
       character: candidate.character,
       reasonChips: candidate.reasonChips,
     })),
@@ -106,9 +109,10 @@ export function buildAutoBuildCandidate(
 ): AutoBuildCandidate {
   const captainText = normalizeText(record.detail.captainAbility);
   const specialText = normalizeText(record.detail.specialText);
-  const sailorText = normalizeText(record.detail.sailorAbilities.join(" "));
-  const combinedText = [captainText, specialText, sailorText].filter(Boolean).join(" ");
+  const sailorText = normalizeText(record.detail.sailorAbilities.join(' '));
+  const combinedText = [captainText, specialText, sailorText].filter(Boolean).join(' ');
   const matchedSelectedClasses = resolveMatchedSelectedClasses(record, input.selectedClasses);
+  const matchesAllSelectedClasses = resolveMatchesAllSelectedClasses(record, input.selectedClasses);
   const matchedSelectedTypes = resolveMatchedSelectedTypes(record, input.types);
   const tags = parseEffectTags(input, captainText, specialText, sailorText);
 
@@ -119,6 +123,7 @@ export function buildAutoBuildCandidate(
     sailorText,
     combinedText,
     matchesSelectedClass: matchedSelectedClasses.length > 0,
+    matchesAllSelectedClasses,
     matchedSelectedClasses,
     matchedSelectedTypes,
     tags,
@@ -130,8 +135,8 @@ export function buildAutoBuildCandidate(
 export function hasReadableEffectText(record: CharacterDetailRecord): boolean {
   return Boolean(
     normalizeText(record.detail.captainAbility) ||
-      normalizeText(record.detail.specialText) ||
-      normalizeText(record.detail.sailorAbilities.join(" ")),
+    normalizeText(record.detail.specialText) ||
+    normalizeText(record.detail.sailorAbilities.join(' ')),
   );
 }
 
@@ -139,12 +144,17 @@ function selectCaptain(candidates: AutoBuildCandidate[]): AutoBuildCandidate | n
   const captainPool = candidates.filter((candidate) => candidate.tags.readableCaptainText);
   const classCaptains = captainPool.filter((candidate) => candidate.matchesSelectedClass);
   const scopedPool = classCaptains.length ? classCaptains : captainPool;
-  const universalCaptains = scopedPool.filter((candidate) => candidate.tags.captainScope.allCharacters);
+  const universalCaptains = scopedPool.filter(
+    (candidate) => candidate.tags.captainScope.allCharacters,
+  );
   const fullCoverageCaptains = scopedPool.filter(
     (candidate) =>
-      candidate.tags.captainScope.coversAllSelectedClasses && candidate.tags.captainScope.coversAllSelectedTypes,
+      candidate.tags.captainScope.coversAllSelectedClasses &&
+      candidate.tags.captainScope.coversAllSelectedTypes,
   );
-  const fullTypeCoverageCaptains = scopedPool.filter((candidate) => candidate.tags.captainScope.coversAllSelectedTypes);
+  const fullTypeCoverageCaptains = scopedPool.filter(
+    (candidate) => candidate.tags.captainScope.coversAllSelectedTypes,
+  );
   const fullClassCoverageCaptains = scopedPool.filter(
     (candidate) => candidate.tags.captainScope.coversAllSelectedClasses,
   );
@@ -182,11 +192,17 @@ function selectSubs(
 ): AutoBuildCandidate[] {
   const selected: AutoBuildCandidate[] = [];
   const coverage = createTeamCoverageState(captain);
-  const pool = candidates.filter((candidate) => candidate.character.id !== captain.character.id);
+  const pool = candidates.filter(
+    (candidate) =>
+      candidate.character.id !== captain.character.id &&
+      (!input.requireAllSelectedClassesPerCharacter || candidate.matchesAllSelectedClasses),
+  );
 
   while (selected.length < 4) {
     const next = pool
-      .filter((candidate) => !selected.some((entry) => entry.character.id === candidate.character.id))
+      .filter(
+        (candidate) => !selected.some((entry) => entry.character.id === candidate.character.id),
+      )
       .reduce<AutoBuildCandidate | null>((best, current) => {
         if (!best) {
           return current;
@@ -222,8 +238,12 @@ function scoreCaptain(candidate: AutoBuildCandidate): number {
   score += candidate.tags.captainScope.coversAllSelectedClasses ? 48 : 0;
   score += candidate.tags.captainScope.coversAllSelectedTypes ? 56 : 0;
   score += candidate.tags.captainScope.allCharacters ? 120 : 0;
-  score += candidate.tags.consistencyRoles.includes("cooldownReduction") ? 10 : 0;
-  score += candidate.tags.consistencyRoles.some((role) => role === "matchingOrbs" || role === "orbChange") ? 8 : 0;
+  score += candidate.tags.consistencyRoles.includes('cooldownReduction') ? 10 : 0;
+  score += candidate.tags.consistencyRoles.some(
+    (role) => role === 'matchingOrbs' || role === 'orbChange',
+  )
+    ? 8
+    : 0;
   score += candidate.tags.utilityRoles.length ? 4 : 0;
   score += candidate.recencyScore * 18;
 
@@ -255,14 +275,20 @@ function scoreSubCandidate(
 ): number {
   let score = 0;
 
-  const uncoveredSelectedClasses = input.selectedClasses.filter((selectedClass) => !coverage.selectedClasses.has(selectedClass));
+  const uncoveredSelectedClasses = input.selectedClasses.filter(
+    (selectedClass) => !coverage.selectedClasses.has(selectedClass),
+  );
   const uncoveredSelectedTypes = input.types.filter((type) => !coverage.selectedTypes.has(type));
   const newClassCoverage = candidate.matchedSelectedClasses.filter(
     (selectedClass) => !coverage.selectedClasses.has(selectedClass),
   ).length;
-  const newTypeCoverage = candidate.matchedSelectedTypes.filter((type) => !coverage.selectedTypes.has(type)).length;
+  const newTypeCoverage = candidate.matchedSelectedTypes.filter(
+    (type) => !coverage.selectedTypes.has(type),
+  ).length;
   const damageCoverageMissing =
-    !coverage.burst.has("colorAffinity") && !coverage.burst.has("chainBoost") && !coverage.burst.has("conditional");
+    !coverage.burst.has('colorAffinity') &&
+    !coverage.burst.has('chainBoost') &&
+    !coverage.burst.has('conditional');
   const consistencyMissing = coverage.consistency.size === 0;
   const utilityMissing = coverage.utility.size === 0;
 
@@ -280,21 +306,41 @@ function scoreSubCandidate(
     score += 12;
   }
 
-  if (uncoveredSelectedClasses.length > 0 && newClassCoverage === 0) {
+  if (
+    input.requireAllSelectedClassesPerCharacter &&
+    uncoveredSelectedClasses.length > 0 &&
+    newClassCoverage === 0
+  ) {
     score -= 18;
   }
 
-  if (uncoveredSelectedTypes.length > 0 && newTypeCoverage === 0) {
+  if (
+    input.requireAllSelectedTypesInTeam &&
+    uncoveredSelectedTypes.length > 0 &&
+    newTypeCoverage === 0
+  ) {
     score -= 16;
   }
 
-  score += scoreRolePresence(candidate.tags.burstRoles, "atkBoost", coverage.burst.has("atkBoost"), 28, 4);
-  score += scoreRolePresence(candidate.tags.burstRoles, "orbBoost", coverage.burst.has("orbBoost"), 24, 4);
+  score += scoreRolePresence(
+    candidate.tags.burstRoles,
+    'atkBoost',
+    coverage.burst.has('atkBoost'),
+    28,
+    4,
+  );
+  score += scoreRolePresence(
+    candidate.tags.burstRoles,
+    'orbBoost',
+    coverage.burst.has('orbBoost'),
+    24,
+    4,
+  );
   score += scoreGroupedDamage(candidate, damageCoverageMissing);
   score += scoreConsistency(candidate, consistencyMissing);
   score += scoreUtility(candidate, utilityMissing);
 
-  if (candidate.tags.utilityRoles.includes("defenseDown") && damageCoverageMissing) {
+  if (candidate.tags.utilityRoles.includes('defenseDown') && damageCoverageMissing) {
     score += 8;
   }
 
@@ -320,9 +366,27 @@ function scoreSubCandidate(
 function scoreGroupedDamage(candidate: AutoBuildCandidate, damageCoverageMissing: boolean): number {
   let score = 0;
 
-  score += scoreRolePresence(candidate.tags.burstRoles, "colorAffinity", false, damageCoverageMissing ? 20 : 8, 4);
-  score += scoreRolePresence(candidate.tags.burstRoles, "chainBoost", false, damageCoverageMissing ? 16 : 8, 4);
-  score += scoreRolePresence(candidate.tags.burstRoles, "conditional", false, damageCoverageMissing ? 14 : 7, 4);
+  score += scoreRolePresence(
+    candidate.tags.burstRoles,
+    'colorAffinity',
+    false,
+    damageCoverageMissing ? 20 : 8,
+    4,
+  );
+  score += scoreRolePresence(
+    candidate.tags.burstRoles,
+    'chainBoost',
+    false,
+    damageCoverageMissing ? 16 : 8,
+    4,
+  );
+  score += scoreRolePresence(
+    candidate.tags.burstRoles,
+    'conditional',
+    false,
+    damageCoverageMissing ? 14 : 7,
+    4,
+  );
 
   return score;
 }
@@ -332,15 +396,21 @@ function scoreConsistency(candidate: AutoBuildCandidate, consistencyMissing: boo
 
   score += scoreRolePresence(
     candidate.tags.consistencyRoles,
-    "matchingOrbs",
+    'matchingOrbs',
     false,
     consistencyMissing ? 16 : 6,
     3,
   );
-  score += scoreRolePresence(candidate.tags.consistencyRoles, "orbChange", false, consistencyMissing ? 12 : 5, 3);
   score += scoreRolePresence(
     candidate.tags.consistencyRoles,
-    "cooldownReduction",
+    'orbChange',
+    false,
+    consistencyMissing ? 12 : 5,
+    3,
+  );
+  score += scoreRolePresence(
+    candidate.tags.consistencyRoles,
+    'cooldownReduction',
     false,
     consistencyMissing ? 10 : 5,
     2,
@@ -379,40 +449,54 @@ function parseEffectTags(
 ): AutoBuildEffectTags {
   const selectedClasses = input.selectedClasses;
   const selectedTypes = input.types;
-  const combinedText = [captainText, specialText, sailorText].filter(Boolean).join(" ");
+  const combinedText = [captainText, specialText, sailorText].filter(Boolean).join(' ');
   const burstRoles = uniqueRoles<AutoBuildBurstRole>([
-    textHasAtkBoost(combinedText) ? "atkBoost" : null,
-    includesAny(combinedText, ["orb effects", "slot effect"]) ? "orbBoost" : null,
-    combinedText.includes("color affinity") ? "colorAffinity" : null,
-    includesAny(combinedText, ["boosts the chain multiplier", "boost chain", "chain multiplier by +"]) ? "chainBoost" : null,
-    includesAny(combinedText, ["conditional", "against enemies with", "if the enemy is"]) ? "conditional" : null,
+    textHasAtkBoost(combinedText) ? 'atkBoost' : null,
+    includesAny(combinedText, ['orb effects', 'slot effect']) ? 'orbBoost' : null,
+    combinedText.includes('color affinity') ? 'colorAffinity' : null,
+    includesAny(combinedText, [
+      'boosts the chain multiplier',
+      'boost chain',
+      'chain multiplier by +',
+    ])
+      ? 'chainBoost'
+      : null,
+    includesAny(combinedText, ['conditional', 'against enemies with', 'if the enemy is'])
+      ? 'conditional'
+      : null,
   ]);
   const consistencyRoles = uniqueRoles<AutoBuildConsistencyRole>([
-    combinedText.includes("matching orbs") ? "matchingOrbs" : null,
-    combinedText.includes("changes") && combinedText.includes("orbs") ? "orbChange" : null,
-    combinedText.includes("special cooldown") ? "cooldownReduction" : null,
+    combinedText.includes('matching orbs') ? 'matchingOrbs' : null,
+    combinedText.includes('changes') && combinedText.includes('orbs') ? 'orbChange' : null,
+    combinedText.includes('special cooldown') ? 'cooldownReduction' : null,
   ]);
   const utilityRoles = uniqueRoles<AutoBuildUtilityRole>([
-    combinedText.includes("bind") ? "bind" : null,
-    combinedText.includes("despair") ? "despair" : null,
-    combinedText.includes("paralysis") ? "paralysis" : null,
-    combinedText.includes("atk down") ? "atkDown" : null,
-    includesAny(combinedText, ["damage reduction"]) ? "damageReduction" : null,
-    includesAny(combinedText, ["threshold damage reduction"]) ? "threshold" : null,
-    includesAny(combinedText, ["defense down", "reduces the defense"]) ? "defenseDown" : null,
+    combinedText.includes('bind') ? 'bind' : null,
+    combinedText.includes('despair') ? 'despair' : null,
+    combinedText.includes('paralysis') ? 'paralysis' : null,
+    combinedText.includes('atk down') ? 'atkDown' : null,
+    includesAny(combinedText, ['damage reduction']) ? 'damageReduction' : null,
+    includesAny(combinedText, ['threshold damage reduction']) ? 'threshold' : null,
+    includesAny(combinedText, ['defense down', 'reduces the defense']) ? 'defenseDown' : null,
   ]);
-  const matchedSelectedClasses = selectedClasses.filter((selectedClass) => textMatchesClassScope(captainText, selectedClass));
-  const matchedSelectedTypes = selectedTypes.filter((type) => textMatchesTypeScope(captainText, type));
+  const matchedSelectedClasses = selectedClasses.filter((selectedClass) =>
+    textMatchesClassScope(captainText, selectedClass),
+  );
+  const matchedSelectedTypes = selectedTypes.filter((type) =>
+    textMatchesTypeScope(captainText, type),
+  );
 
   return {
     captainScope: {
-      allCharacters: includesAny(captainText, ["all characters", "all units"]),
+      allCharacters: includesAny(captainText, ['all characters', 'all units']),
       matchedSelectedClasses,
       matchedSelectedClassCount: matchedSelectedClasses.length,
-      coversAllSelectedClasses: selectedClasses.length > 0 && matchedSelectedClasses.length === selectedClasses.length,
+      coversAllSelectedClasses:
+        selectedClasses.length > 0 && matchedSelectedClasses.length === selectedClasses.length,
       matchedSelectedTypes,
       matchedSelectedTypeCount: matchedSelectedTypes.length,
-      coversAllSelectedTypes: selectedTypes.length > 0 && matchedSelectedTypes.length === selectedTypes.length,
+      coversAllSelectedTypes:
+        selectedTypes.length > 0 && matchedSelectedTypes.length === selectedTypes.length,
       matchesClass: matchedSelectedClasses.length > 0,
     },
     burstRoles,
@@ -426,7 +510,11 @@ function parseEffectTags(
   };
 }
 
-function buildReasonChips(input: AutoBuildInput, tags: AutoBuildEffectTags, matchesSelectedClass: boolean): string[] {
+function buildReasonChips(
+  input: AutoBuildInput,
+  tags: AutoBuildEffectTags,
+  matchesSelectedClass: boolean,
+): string[] {
   const chips: string[] = [];
 
   if (matchesSelectedClass) {
@@ -434,7 +522,7 @@ function buildReasonChips(input: AutoBuildInput, tags: AutoBuildEffectTags, matc
   }
 
   if (tags.captainScope.allCharacters) {
-    chips.push("Universal captain");
+    chips.push('Universal captain');
   } else if (tags.captainScope.matchedSelectedTypeCount) {
     chips.push(resolveTypeCaptainLabel(input.types, tags.captainScope.matchedSelectedTypes));
   }
@@ -448,7 +536,10 @@ function buildReasonChips(input: AutoBuildInput, tags: AutoBuildEffectTags, matc
 
 function pushChips(
   chips: string[],
-  roles: readonly AutoBuildBurstRole[] | readonly AutoBuildConsistencyRole[] | readonly AutoBuildUtilityRole[],
+  roles:
+    | readonly AutoBuildBurstRole[]
+    | readonly AutoBuildConsistencyRole[]
+    | readonly AutoBuildUtilityRole[],
 ): void {
   roles.forEach((role) => {
     const label = CHIP_LABELS[role];
@@ -459,7 +550,10 @@ function pushChips(
   });
 }
 
-function summarizeCoverage(candidates: AutoBuildCandidate[], input: AutoBuildInput): AutoBuildCoverageSummary {
+function summarizeCoverage(
+  candidates: AutoBuildCandidate[],
+  input: AutoBuildInput,
+): AutoBuildCoverageSummary {
   const burst = new Set<AutoBuildBurstRole>();
   const consistency = new Set<AutoBuildConsistencyRole>();
   const utility = new Set<AutoBuildUtilityRole>();
@@ -470,11 +564,15 @@ function summarizeCoverage(candidates: AutoBuildCandidate[], input: AutoBuildInp
     candidate.tags.burstRoles.forEach((role) => burst.add(role));
     candidate.tags.consistencyRoles.forEach((role) => consistency.add(role));
     candidate.tags.utilityRoles.forEach((role) => utility.add(role));
-    candidate.matchedSelectedClasses.forEach((selectedClass) => coveredSelectedClasses.add(selectedClass));
+    candidate.matchedSelectedClasses.forEach((selectedClass) =>
+      coveredSelectedClasses.add(selectedClass),
+    );
     candidate.matchedSelectedTypes.forEach((type) => coveredSelectedTypes.add(type));
   });
 
-  const coveredClassesList = input.selectedClasses.filter((selectedClass) => coveredSelectedClasses.has(selectedClass));
+  const coveredClassesList = input.selectedClasses.filter((selectedClass) =>
+    coveredSelectedClasses.has(selectedClass),
+  );
   const coveredTypesList = input.types.filter((type) => coveredSelectedTypes.has(type));
 
   return {
@@ -484,10 +582,13 @@ function summarizeCoverage(candidates: AutoBuildCandidate[], input: AutoBuildInp
     coveredSelectedClasses: coveredClassesList,
     coveredSelectedTypes: coveredTypesList,
     coversAllSelectedClasses:
-      input.selectedClasses.length === 0 || coveredClassesList.length === input.selectedClasses.length,
-    coversAllSelectedTypes: input.types.length === 0 || coveredTypesList.length === input.types.length,
+      input.selectedClasses.length === 0 ||
+      coveredClassesList.length === input.selectedClasses.length,
+    coversAllSelectedTypes:
+      input.types.length === 0 || coveredTypesList.length === input.types.length,
     selectedClassMatches:
-      candidates.filter((candidate) => candidate.matchesSelectedClass).length + (candidates[0]?.matchesSelectedClass ? 1 : 0),
+      candidates.filter((candidate) => candidate.matchesSelectedClass).length +
+      (candidates[0]?.matchesSelectedClass ? 1 : 0),
     selectedTypeMatches:
       candidates.filter((candidate) => candidate.matchedSelectedTypes.length > 0).length +
       (candidates[0]?.matchedSelectedTypes.length ? 1 : 0),
@@ -495,11 +596,11 @@ function summarizeCoverage(candidates: AutoBuildCandidate[], input: AutoBuildInp
 }
 
 function resolveTypeCaptainLabel(
-  selectedTypes: AutoBuildInput["types"],
+  selectedTypes: AutoBuildInput['types'],
   matchedSelectedTypes: AutoTeamBuilderType[],
 ): string {
   const typesToDisplay = matchedSelectedTypes.length ? matchedSelectedTypes : selectedTypes;
-  return `${typesToDisplay.join(" / ")} captain`;
+  return `${typesToDisplay.join(' / ')} captain`;
 }
 
 function createTeamCoverageState(captain: AutoBuildCandidate): TeamCoverageState {
@@ -519,7 +620,9 @@ function applyCandidateCoverage(coverage: TeamCoverageState, candidate: AutoBuil
   candidate.tags.burstRoles.forEach((role) => coverage.burst.add(role));
   candidate.tags.consistencyRoles.forEach((role) => coverage.consistency.add(role));
   candidate.tags.utilityRoles.forEach((role) => coverage.utility.add(role));
-  candidate.matchedSelectedClasses.forEach((selectedClass) => coverage.selectedClasses.add(selectedClass));
+  candidate.matchedSelectedClasses.forEach((selectedClass) =>
+    coverage.selectedClasses.add(selectedClass),
+  );
   candidate.matchedSelectedTypes.forEach((type) => coverage.selectedTypes.add(type));
 }
 
@@ -528,7 +631,9 @@ function addsNoNewCoverage(candidate: AutoBuildCandidate, coverage: TeamCoverage
     candidate.tags.burstRoles.every((role) => coverage.burst.has(role)) &&
     candidate.tags.consistencyRoles.every((role) => coverage.consistency.has(role)) &&
     candidate.tags.utilityRoles.every((role) => coverage.utility.has(role)) &&
-    candidate.matchedSelectedClasses.every((selectedClass) => coverage.selectedClasses.has(selectedClass)) &&
+    candidate.matchedSelectedClasses.every((selectedClass) =>
+      coverage.selectedClasses.has(selectedClass),
+    ) &&
     candidate.matchedSelectedTypes.every((type) => coverage.selectedTypes.has(type))
   );
 }
@@ -537,21 +642,42 @@ function countSelectedClassMatches(selected: AutoBuildCandidate[]): number {
   return selected.filter((candidate) => candidate.matchesSelectedClass).length;
 }
 
-function countSharedBurstRoles(candidate: AutoBuildCandidate, selected: AutoBuildCandidate[]): number {
+function countSharedBurstRoles(
+  candidate: AutoBuildCandidate,
+  selected: AutoBuildCandidate[],
+): number {
   return selected.reduce((count, entry) => {
     const shared = candidate.tags.burstRoles.filter((role) => entry.tags.burstRoles.includes(role));
     return count + shared.length;
   }, 0);
 }
 
-function resolveMatchedSelectedClasses(record: CharacterDetailRecord, selectedClasses: string[]): string[] {
+function resolveMatchedSelectedClasses(
+  record: CharacterDetailRecord,
+  selectedClasses: string[],
+): string[] {
   if (!selectedClasses.length) {
     return [];
   }
 
-  const normalizedRecordClasses = record.classes.map((characterClass) => characterClass.toLowerCase());
+  const normalizedRecordClasses = record.classes.map((characterClass) =>
+    characterClass.toLowerCase(),
+  );
 
-  return selectedClasses.filter((selectedClass) => normalizedRecordClasses.includes(selectedClass.toLowerCase()));
+  return selectedClasses.filter((selectedClass) =>
+    normalizedRecordClasses.includes(selectedClass.toLowerCase()),
+  );
+}
+
+function resolveMatchesAllSelectedClasses(
+  record: CharacterDetailRecord,
+  selectedClasses: string[],
+): boolean {
+  if (!selectedClasses.length) {
+    return true;
+  }
+
+  return resolveMatchedSelectedClasses(record, selectedClasses).length === selectedClasses.length;
 }
 
 function resolveMatchedSelectedTypes(
@@ -574,16 +700,16 @@ function extractHighestMultiplier(text: string, pattern: RegExp): number {
 }
 
 function textHasAtkBoost(text: string): boolean {
-  return includesAny(text, ["boosts atk", "atk by", "atk of"]);
+  return includesAny(text, ['boosts atk', 'atk by', 'atk of']);
 }
 
 function textMatchesTypeScope(text: string, type: AutoTeamBuilderType): boolean {
   const normalizedType = type.toLowerCase();
-  const escapedType = normalizedType.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const escapedType = normalizedType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   return (
     includesAny(text, [...TYPE_MATCH_PATTERNS[type]]) ||
-    new RegExp(`(?:^|[^a-z])${escapedType}(?:[^a-z]|$)`, "i").test(text)
+    new RegExp(`(?:^|[^a-z])${escapedType}(?:[^a-z]|$)`, 'i').test(text)
   );
 }
 
@@ -596,5 +722,5 @@ function includesAny(text: string, patterns: string[]): boolean {
 }
 
 function normalizeText(value: string | null | undefined): string {
-  return typeof value === "string" ? value.trim().toLowerCase() : "";
+  return typeof value === 'string' ? value.trim().toLowerCase() : '';
 }

@@ -1,5 +1,5 @@
-import { CommonModule } from "@angular/common";
-import { Component, OnInit, computed, signal } from "@angular/core";
+import { CommonModule } from '@angular/common';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import {
   IonButton,
   IonContent,
@@ -9,22 +9,23 @@ import {
   IonSelectOption,
   IonSpinner,
   IonTitle,
+  IonToggle,
   IonToolbar,
-} from "@ionic/angular/standalone";
-import { layersOutline, shieldHalfOutline, sparklesOutline } from "ionicons/icons";
+} from '@ionic/angular/standalone';
+import { layersOutline, shieldHalfOutline, sparklesOutline } from 'ionicons/icons';
 
 import {
   AUTO_TEAM_BUILDER_DEFAULT_TYPE,
   AUTO_TEAM_BUILDER_TYPES,
   type AutoBuildResult,
   type AutoTeamBuilderType,
-} from "../../core/models/auto-team-builder.models";
-import { type DatasetManifest } from "../../core/models/optc.models";
-import { AutoTeamBuilderService } from "../../core/services/auto-team-builder.service";
-import { OptcRepositoryService } from "../../core/services/optc-repository.service";
+} from '../../core/models/auto-team-builder.models';
+import { type DatasetManifest } from '../../core/models/optc.models';
+import { AutoTeamBuilderService } from '../../core/services/auto-team-builder.service';
+import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 
 @Component({
-  selector: "app-auto-team-builder-page",
+  selector: 'app-auto-team-builder-page',
   standalone: true,
   imports: [
     CommonModule,
@@ -36,63 +37,125 @@ import { OptcRepositoryService } from "../../core/services/optc-repository.servi
     IonSelectOption,
     IonSpinner,
     IonTitle,
+    IonToggle,
     IonToolbar,
   ],
-  templateUrl: "./auto-team-builder.page.html",
-  styleUrl: "./auto-team-builder.page.scss",
+  templateUrl: './auto-team-builder.page.html',
+  styleUrl: './auto-team-builder.page.scss',
 })
 export class AutoTeamBuilderPage implements OnInit {
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly selectedTypes = signal<AutoTeamBuilderType[]>([AUTO_TEAM_BUILDER_DEFAULT_TYPE]);
   public readonly selectedClasses = signal<string[]>([]);
+  public readonly requireAllSelectedTypesInTeam = signal(false);
+  public readonly requireAllSelectedClassesPerCharacter = signal(false);
   public readonly building = signal(false);
   public readonly result = signal<AutoBuildResult | null>(null);
-  public readonly errorMessage = signal("");
+  public readonly errorMessage = signal('');
 
   public readonly availableTypes = AUTO_TEAM_BUILDER_TYPES;
-  public readonly typeSupportLabel = "Μπορείς να διαλέξεις ένα ή περισσότερα types για mixed build.";
-  public readonly classSupportLabel = "Μπορείς να διαλέξεις ένα ή περισσότερα classes για strict mixed build.";
   public readonly availableClasses = computed(() => this.summary()?.availableClasses ?? []);
   public readonly hasSelectedClasses = computed(() => this.selectedClasses().length > 0);
   public readonly hasSelectedTypes = computed(() => this.selectedTypes().length > 0);
+  public readonly hasStrictFilters = computed(
+    () => this.requireAllSelectedTypesInTeam() || this.requireAllSelectedClassesPerCharacter(),
+  );
   public readonly allClassesSelected = computed(
-    () => this.availableClasses().length > 0 && this.selectedClasses().length === this.availableClasses().length,
+    () =>
+      this.availableClasses().length > 0 &&
+      this.selectedClasses().length === this.availableClasses().length,
   );
-  public readonly allTypesSelected = computed(() => this.selectedTypes().length === this.availableTypes.length);
-  public readonly selectedClassesLabel = computed(() => this.formatSelectedValues(this.selectedClasses()));
-  public readonly selectedTypesLabel = computed(() => this.formatSelectedTypes(this.selectedTypes()));
+  public readonly allTypesSelected = computed(
+    () => this.selectedTypes().length === this.availableTypes.length,
+  );
+  public readonly selectAllTypesButtonLabel = computed(() =>
+    this.allTypesSelected() ? 'Unselect all types' : 'Select all types',
+  );
+  public readonly selectAllClassesButtonLabel = computed(() =>
+    this.allClassesSelected() ? 'Unselect all classes' : 'Select all classes',
+  );
+  public readonly typeSupportLabel = computed(() =>
+    this.requireAllSelectedTypesInTeam()
+      ? 'Κάθε selected type πρέπει να εμφανιστεί τουλάχιστον μία φορά στο final team.'
+      : 'Τα selected types μένουν candidate-pool filter και soft preference, χωρίς υποχρεωτική πλήρη κάλυψη.',
+  );
+  public readonly classSupportLabel = computed(() =>
+    this.requireAllSelectedClassesPerCharacter()
+      ? 'Κάθε chosen unit πρέπει να έχει όλα τα selected classes.'
+      : 'Τα selected classes μένουν soft preference μόνο και δεν απαιτούνται σε κάθε χαρακτήρα.',
+  );
+  public readonly typeStrictToggleLabel = 'Require all selected types in team';
+  public readonly classStrictToggleLabel = 'Require all selected classes on every character';
+  public readonly selectedClassesLabel = computed(() =>
+    this.formatSelectedValues(this.selectedClasses()),
+  );
+  public readonly selectedTypesLabel = computed(() =>
+    this.formatSelectedTypes(this.selectedTypes()),
+  );
+  public readonly strictModeLabel = computed(() => {
+    const strictModes: string[] = [];
+
+    if (this.requireAllSelectedTypesInTeam()) {
+      strictModes.push('type coverage');
+    }
+
+    if (this.requireAllSelectedClassesPerCharacter()) {
+      strictModes.push('per-character classes');
+    }
+
+    return strictModes.length ? `Strict ${strictModes.join(' + ')}` : 'Flexible coverage';
+  });
   public readonly builderLabel = computed(() =>
-    this.hasSelectedTypes() ? `Generic ${this.selectedTypesLabel()} burst builder` : "Generic burst builder",
+    this.hasSelectedTypes()
+      ? `Generic ${this.selectedTypesLabel()} burst builder • ${this.strictModeLabel()}`
+      : `Generic burst builder • ${this.strictModeLabel()}`,
   );
-  public readonly titleLabel = computed(
-    () =>
-      this.hasSelectedClasses() && this.hasSelectedTypes()
-        ? `Διάλεξε classes και χτίσε αυτόματα ένα strict ${this.selectedTypesLabel()} mixed team.`
-        : "Διάλεξε types και classes για να χτίσεις αυτόματα ένα strict mixed team.",
+  public readonly titleLabel = computed(() =>
+    this.hasSelectedClasses() && this.hasSelectedTypes()
+      ? this.hasStrictFilters()
+        ? `Διάλεξε classes και χτίσε αυτόματα ένα ${this.selectedTypesLabel()} mixed team με strict constraints.`
+        : `Διάλεξε classes και types για να χτίσεις αυτόματα ένα flexible ${this.selectedTypesLabel()} mixed team.`
+      : this.hasStrictFilters()
+        ? 'Διάλεξε types και classes για να χτίσεις αυτόματα ένα mixed team με strict constraints.'
+        : 'Διάλεξε types και classes για να χτίσεις αυτόματα ένα flexible mixed team.',
   );
-  public readonly descriptionLabel = computed(
-    () =>
-      this.hasSelectedClasses() && this.hasSelectedTypes()
-        ? `Το v1 χρησιμοποιεί recent usable ${this.selectedTypesLabel()} units με readable captain, special, και sailor texts για να φτιάξει ένα generic high-damage team με strict coverage στα selected classes και types.`
-        : "Το v1 χρησιμοποιεί recent usable units με readable captain, special, και sailor texts για να φτιάξει ένα generic high-damage team με strict coverage στα selected classes και types.",
+  public readonly descriptionLabel = computed(() =>
+    this.hasSelectedClasses() && this.hasSelectedTypes()
+      ? this.hasStrictFilters()
+        ? `Το v1 χρησιμοποιεί recent usable ${this.selectedTypesLabel()} units με readable captain, special, και sailor texts για να φτιάξει ένα high-damage team που τηρεί τα ενεργά strict filters.`
+        : `Το v1 χρησιμοποιεί recent usable ${this.selectedTypesLabel()} units με readable captain, special, και sailor texts για να φτιάξει ένα generic high-damage team με soft preference στα selected classes και types.`
+      : this.hasStrictFilters()
+        ? 'Το v1 χρησιμοποιεί recent usable units με readable captain, special, και sailor texts για να φτιάξει ένα high-damage team που τηρεί τα ενεργά strict filters.'
+        : 'Το v1 χρησιμοποιεί recent usable units με readable captain, special, και sailor texts για να φτιάξει ένα generic high-damage team με soft preference στα selected classes και types.',
   );
   public readonly buildButtonLabel = computed(() =>
-    this.hasSelectedTypes() ? `Build strict ${this.selectedTypesLabel()} mixed team` : "Select types to build team",
+    this.hasSelectedTypes()
+      ? this.hasStrictFilters()
+        ? `Build strict ${this.selectedTypesLabel()} mixed team`
+        : `Build flexible ${this.selectedTypesLabel()} mixed team`
+      : 'Select types to build team',
   );
-  public readonly loadingLabel = computed(
-    () =>
-      this.hasSelectedTypes()
-        ? `Γίνεται scoring των πιο πρόσφατων usable ${this.selectedTypesLabel()} χαρακτήρων...`
-        : "Γίνεται scoring των πιο πρόσφατων usable χαρακτήρων...",
+  public readonly loadingLabel = computed(() =>
+    this.hasSelectedTypes()
+      ? `Γίνεται scoring των πιο πρόσφατων usable ${this.selectedTypesLabel()} χαρακτήρων...`
+      : 'Γίνεται scoring των πιο πρόσφατων usable χαρακτήρων...',
   );
   public readonly candidatePoolLabel = computed(() =>
-    this.hasSelectedTypes() ? `recent usable ${this.selectedTypesLabel()} records` : "recent usable records",
+    this.hasSelectedTypes()
+      ? `recent usable ${this.selectedTypesLabel()} records`
+      : 'recent usable records',
   );
   public readonly selectedClassSummaryLabel = computed(() => {
     const current = this.result();
 
     if (!current) {
-      return "Select classes to enforce class coverage.";
+      return this.requireAllSelectedClassesPerCharacter()
+        ? 'Strict class mode ενεργό: κάθε chosen unit πρέπει να έχει όλα τα selected classes.'
+        : 'Τα selected classes μένουν soft preference μόνο όταν το strict class toggle είναι off.';
+    }
+
+    if (current.input.requireAllSelectedClassesPerCharacter) {
+      return `${current.slots.length} / ${current.slots.length} slots match all selected classes`;
     }
 
     return `${current.coverage.coveredSelectedClasses.length} / ${current.input.selectedClasses.length} classes covered • ${current.coverage.selectedClassMatches} / 6 matching slots`;
@@ -101,20 +164,29 @@ export class AutoTeamBuilderPage implements OnInit {
     const current = this.result();
 
     if (!current) {
-      return "Select types to enforce type coverage.";
+      return this.requireAllSelectedTypesInTeam()
+        ? 'Strict type mode ενεργό: κάθε selected type πρέπει να εμφανιστεί στο final team.'
+        : 'Τα selected types παραμένουν candidate filter, αλλά η πλήρης κάλυψη είναι προαιρετική.';
     }
 
-    return `${current.coverage.coveredSelectedTypes.length} / ${current.input.types.length} types covered • ${current.coverage.selectedTypeMatches} / 6 matching slots`;
+    return current.input.requireAllSelectedTypesInTeam
+      ? `${current.coverage.coveredSelectedTypes.length} / ${current.input.types.length} types covered • strict team coverage on`
+      : `${current.coverage.coveredSelectedTypes.length} / ${current.input.types.length} types covered • ${current.coverage.selectedTypeMatches} / 6 matching slots`;
   });
-  public readonly teamSlots = computed(() =>
-    this.result()?.slots.map((slot) => ({
-      ...slot,
-      roleLabel: this.resolveRoleLabel(slot.role),
-      snippet:
-        slot.role === "sub"
-          ? slot.character.detail.specialText || slot.character.detail.captainAbility || "No detail snippet available."
-          : slot.character.detail.captainAbility || slot.character.detail.specialText || "No detail snippet available.",
-    })) ?? [],
+  public readonly teamSlots = computed(
+    () =>
+      this.result()?.slots.map((slot) => ({
+        ...slot,
+        roleLabel: this.resolveRoleLabel(slot.role),
+        snippet:
+          slot.role === 'sub'
+            ? slot.character.detail.specialText ||
+              slot.character.detail.captainAbility ||
+              'No detail snippet available.'
+            : slot.character.detail.captainAbility ||
+              slot.character.detail.specialText ||
+              'No detail snippet available.',
+      })) ?? [],
   );
 
   public readonly sparklesIcon = sparklesOutline;
@@ -130,36 +202,52 @@ export class AutoTeamBuilderPage implements OnInit {
     this.summary.set(await this.repository.getDatasetManifest());
   }
 
-  public async onClassChange(event: CustomEvent<{ value?: string[] | string | null }>): Promise<void> {
+  public async onClassChange(
+    event: CustomEvent<{ value?: string[] | string | null }>,
+  ): Promise<void> {
     this.selectedClasses.set(this.resolveSelectedClasses(event.detail.value));
-    this.result.set(null);
-    this.errorMessage.set("");
+    this.resetBuildState();
   }
 
-  public async onTypeChange(event: CustomEvent<{ value?: AutoTeamBuilderType[] | AutoTeamBuilderType | null }>): Promise<void> {
+  public async onTypeChange(
+    event: CustomEvent<{ value?: AutoTeamBuilderType[] | AutoTeamBuilderType | null }>,
+  ): Promise<void> {
     this.selectedTypes.set(this.resolveSelectedTypes(event.detail.value));
-    this.result.set(null);
-    this.errorMessage.set("");
+    this.resetBuildState();
+  }
+
+  public onRequireAllSelectedTypesToggle(event: CustomEvent<{ checked: boolean }>): void {
+    this.requireAllSelectedTypesInTeam.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
+  public onRequireAllSelectedClassesToggle(event: CustomEvent<{ checked: boolean }>): void {
+    this.requireAllSelectedClassesPerCharacter.set(event.detail.checked);
+    this.resetBuildState();
   }
 
   public selectAllTypes(): void {
     if (this.allTypesSelected()) {
+      this.selectedTypes.set([]);
+      this.resetBuildState();
+
       return;
     }
 
     this.selectedTypes.set([...this.availableTypes]);
-    this.result.set(null);
-    this.errorMessage.set("");
+    this.resetBuildState();
   }
 
   public selectAllClasses(): void {
     if (this.allClassesSelected()) {
+      this.selectedClasses.set([]);
+      this.resetBuildState();
+
       return;
     }
 
     this.selectedClasses.set([...this.availableClasses()]);
-    this.result.set(null);
-    this.errorMessage.set("");
+    this.resetBuildState();
   }
 
   public async buildTeam(): Promise<void> {
@@ -169,34 +257,62 @@ export class AutoTeamBuilderPage implements OnInit {
 
     this.building.set(true);
     this.result.set(null);
-    this.errorMessage.set("");
+    this.errorMessage.set('');
 
     try {
-      const nextResult = await this.autoTeamBuilder.buildTeam(this.selectedClasses(), this.selectedTypes());
+      const nextResult = await this.autoTeamBuilder.buildTeam(
+        this.selectedClasses(),
+        this.selectedTypes(),
+        {
+          requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
+          requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
+        },
+      );
 
       if (!nextResult) {
-        this.errorMessage.set(
-          `Δεν βρέθηκαν αρκετοί usable ${this.selectedTypesLabel()} χαρακτήρες για πλήρη κάλυψη των επιλεγμένων classes και types.`,
-        );
+        this.errorMessage.set(this.resolveBuildFailureMessage());
       }
 
       this.result.set(nextResult);
     } catch (error) {
       console.error(error);
-      this.errorMessage.set("Κάτι πήγε στραβά όσο γινόταν το auto build.");
+      this.errorMessage.set('Κάτι πήγε στραβά όσο γινόταν το auto build.');
     } finally {
       this.building.set(false);
     }
   }
 
-  private resolveRoleLabel(role: "captain" | "friendCaptain" | "sub"): string {
+  private resetBuildState(): void {
+    this.result.set(null);
+    this.errorMessage.set('');
+  }
+
+  private resolveBuildFailureMessage(): string {
+    const activeRequirements: string[] = [];
+
+    if (this.requireAllSelectedTypesInTeam()) {
+      activeRequirements.push('τουλάχιστον έναν χαρακτήρα από κάθε selected type');
+    }
+
+    if (this.requireAllSelectedClassesPerCharacter()) {
+      activeRequirements.push('χαρακτήρες που έχουν όλα τα selected classes');
+    }
+
+    if (!activeRequirements.length) {
+      return `Δεν βρέθηκε usable ${this.selectedTypesLabel()} team που να ταιριάζει στα current filters.`;
+    }
+
+    return `Δεν βρέθηκαν αρκετοί usable ${this.selectedTypesLabel()} χαρακτήρες για ${activeRequirements.join(' και ')}.`;
+  }
+
+  private resolveRoleLabel(role: 'captain' | 'friendCaptain' | 'sub'): string {
     switch (role) {
-      case "captain":
-        return "Captain";
-      case "friendCaptain":
-        return "Friend Captain";
+      case 'captain':
+        return 'Captain';
+      case 'friendCaptain':
+        return 'Friend Captain';
       default:
-        return "Sub";
+        return 'Sub';
     }
   }
 
@@ -204,7 +320,8 @@ export class AutoTeamBuilderPage implements OnInit {
     const nextValues = Array.isArray(value) ? value : value ? [value] : [];
 
     return this.availableClasses().filter(
-      (characterClass, index) => nextValues.includes(characterClass) && nextValues.indexOf(characterClass) === index,
+      (characterClass, index) =>
+        nextValues.includes(characterClass) && nextValues.indexOf(characterClass) === index,
     );
   }
 
@@ -213,7 +330,9 @@ export class AutoTeamBuilderPage implements OnInit {
   ): AutoTeamBuilderType[] {
     const nextValues = Array.isArray(value) ? value : value ? [value] : [];
 
-    return this.availableTypes.filter((type, index) => nextValues.includes(type) && nextValues.indexOf(type) === index);
+    return this.availableTypes.filter(
+      (type, index) => nextValues.includes(type) && nextValues.indexOf(type) === index,
+    );
   }
 
   private formatSelectedTypes(types: AutoTeamBuilderType[]): string {
@@ -221,6 +340,6 @@ export class AutoTeamBuilderPage implements OnInit {
   }
 
   private formatSelectedValues(values: readonly string[]): string {
-    return values.join(" / ");
+    return values.join(' / ');
   }
 }

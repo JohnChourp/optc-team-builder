@@ -50,13 +50,24 @@
               fill="clear"
               size="small"
               class="select-all-types-button"
-              [disabled]="allTypesSelected() || building()"
+              [disabled]="building()"
               (click)="selectAllTypes()"
             >
-              Select all types
+              {{ selectAllTypesButtonLabel() }}
             </ion-button>
           </div>
-          <small>{{ typeSupportLabel }}</small>
+          <div class="strict-toggle-row">
+            <div class="strict-toggle-copy">
+              <strong>{{ typeStrictToggleLabel }}</strong>
+              <small>{{ typeSupportLabel() }}</small>
+            </div>
+            <ion-toggle
+              color="warning"
+              [checked]="requireAllSelectedTypesInTeam()"
+              [disabled]="building()"
+              (ionChange)="onRequireAllSelectedTypesToggle($event)"
+            ></ion-toggle>
+          </div>
         </div>
 
         <div class="class-select-card">
@@ -79,13 +90,24 @@
               fill="clear"
               size="small"
               class="select-all-button"
-              [disabled]="allClassesSelected() || building()"
+              [disabled]="!availableClasses().length || building()"
               (click)="selectAllClasses()"
             >
-              Select all classes
+              {{ selectAllClassesButtonLabel() }}
             </ion-button>
           </div>
-          <small>{{ classSupportLabel }}</small>
+          <div class="strict-toggle-row">
+            <div class="strict-toggle-copy">
+              <strong>{{ classStrictToggleLabel }}</strong>
+              <small>{{ classSupportLabel() }}</small>
+            </div>
+            <ion-toggle
+              color="warning"
+              [checked]="requireAllSelectedClassesPerCharacter()"
+              [disabled]="building()"
+              (ionChange)="onRequireAllSelectedClassesToggle($event)"
+            ></ion-toggle>
+          </div>
         </div>
       </div>
 
@@ -113,13 +135,13 @@
       <section class="summary-grid">
         <article class="glass-card summary-card">
           <span>Selected classes</span>
-          <strong>{{ current.input.selectedClasses.join(" / ") }}</strong>
+          <strong>{{ current.input.selectedClasses.join(' / ') }}</strong>
           <small>{{ selectedClassSummaryLabel() }}</small>
         </article>
 
         <article class="glass-card summary-card">
           <span>Selected types</span>
-          <strong>{{ current.input.types.join(" / ") }}</strong>
+          <strong>{{ current.input.types.join(' / ') }}</strong>
           <small>{{ selectedTypeSummaryLabel() }}</small>
         </article>
 
@@ -132,7 +154,7 @@
         <article class="glass-card summary-card">
           <span>Burst coverage</span>
           <strong>{{ current.coverage.burst.length }}</strong>
-          <small>{{ current.coverage.burst.join(" • ") || "No burst tags" }}</small>
+          <small>{{ current.coverage.burst.join(' • ') || 'No burst tags' }}</small>
         </article>
       </section>
 
@@ -146,37 +168,55 @@
           <div>
             <span>Class coverage</span>
             <div class="chip-row">
-              <small *ngFor="let item of current.coverage.coveredSelectedClasses" class="coverage-chip">{{ item }}</small>
-              <small *ngIf="!current.coverage.coveredSelectedClasses.length" class="coverage-chip">No class coverage</small>
+              <small
+                *ngFor="let item of current.coverage.coveredSelectedClasses"
+                class="coverage-chip"
+                >{{ item }}</small
+              >
+              <small *ngIf="!current.coverage.coveredSelectedClasses.length" class="coverage-chip"
+                >No class coverage</small
+              >
             </div>
           </div>
 
           <div>
             <span>Type coverage</span>
             <div class="chip-row">
-              <small *ngFor="let item of current.coverage.coveredSelectedTypes" class="coverage-chip">{{ item }}</small>
-              <small *ngIf="!current.coverage.coveredSelectedTypes.length" class="coverage-chip">No type coverage</small>
+              <small
+                *ngFor="let item of current.coverage.coveredSelectedTypes"
+                class="coverage-chip"
+                >{{ item }}</small
+              >
+              <small *ngIf="!current.coverage.coveredSelectedTypes.length" class="coverage-chip"
+                >No type coverage</small
+              >
             </div>
           </div>
 
           <div>
             <span>Burst</span>
             <div class="chip-row">
-              <small *ngFor="let item of current.coverage.burst" class="coverage-chip">{{ item }}</small>
+              <small *ngFor="let item of current.coverage.burst" class="coverage-chip">{{
+                item
+              }}</small>
             </div>
           </div>
 
           <div>
             <span>Consistency</span>
             <div class="chip-row">
-              <small *ngFor="let item of current.coverage.consistency" class="coverage-chip">{{ item }}</small>
+              <small *ngFor="let item of current.coverage.consistency" class="coverage-chip">{{
+                item
+              }}</small>
             </div>
           </div>
 
           <div>
             <span>Utility</span>
             <div class="chip-row">
-              <small *ngFor="let item of current.coverage.utility" class="coverage-chip">{{ item }}</small>
+              <small *ngFor="let item of current.coverage.utility" class="coverage-chip">{{
+                item
+              }}</small>
             </div>
           </div>
         </div>
@@ -194,7 +234,12 @@
 
             <div class="result-card__copy">
               <strong>{{ slot.character.name }}</strong>
-              <span>{{ slot.character.primaryClass }}<ng-container *ngIf="slot.character.secondaryClass"> • {{ slot.character.secondaryClass }}</ng-container></span>
+              <span
+                >{{ slot.character.primaryClass
+                }}<ng-container *ngIf="slot.character.secondaryClass">
+                  • {{ slot.character.secondaryClass }}</ng-container
+                ></span
+              >
 
               <div class="chip-row">
                 <small *ngFor="let chip of slot.reasonChips" class="reason-chip">{{ chip }}</small>

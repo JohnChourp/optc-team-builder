@@ -1,30 +1,35 @@
-import { type CharacterDetailRecord } from "./optc.models";
+import { type CharacterDetailRecord } from './optc.models';
 
-export const AUTO_TEAM_BUILDER_TYPES = ["DEX", "STR", "QCK", "PSY", "INT"] as const;
-export const AUTO_TEAM_BUILDER_DEFAULT_TYPE = "DEX";
+export const AUTO_TEAM_BUILDER_TYPES = ['DEX', 'STR', 'QCK', 'PSY', 'INT'] as const;
+export const AUTO_TEAM_BUILDER_DEFAULT_TYPE = 'DEX';
 export const AUTO_TEAM_CANDIDATE_LIMIT = 1200;
 
 export type AutoTeamBuilderType = (typeof AUTO_TEAM_BUILDER_TYPES)[number];
 
-export type AutoBuildBurstRole =
-  | "atkBoost"
-  | "orbBoost"
-  | "colorAffinity"
-  | "chainBoost"
-  | "conditional";
+export interface AutoBuildConstraints {
+  requireAllSelectedTypesInTeam?: boolean;
+  requireAllSelectedClassesPerCharacter?: boolean;
+}
 
-export type AutoBuildConsistencyRole = "matchingOrbs" | "orbChange" | "cooldownReduction";
+export type AutoBuildBurstRole =
+  | 'atkBoost'
+  | 'orbBoost'
+  | 'colorAffinity'
+  | 'chainBoost'
+  | 'conditional';
+
+export type AutoBuildConsistencyRole = 'matchingOrbs' | 'orbChange' | 'cooldownReduction';
 
 export type AutoBuildUtilityRole =
-  | "bind"
-  | "despair"
-  | "paralysis"
-  | "atkDown"
-  | "damageReduction"
-  | "threshold"
-  | "defenseDown";
+  | 'bind'
+  | 'despair'
+  | 'paralysis'
+  | 'atkDown'
+  | 'damageReduction'
+  | 'threshold'
+  | 'defenseDown';
 
-export interface AutoBuildInput {
+export interface AutoBuildInput extends AutoBuildConstraints {
   types: AutoTeamBuilderType[];
   selectedClasses: string[];
   candidateLimit?: number;
@@ -58,6 +63,7 @@ export interface AutoBuildCandidate {
   sailorText: string;
   combinedText: string;
   matchesSelectedClass: boolean;
+  matchesAllSelectedClasses: boolean;
   matchedSelectedClasses: string[];
   matchedSelectedTypes: AutoTeamBuilderType[];
   tags: AutoBuildEffectTags;
@@ -66,7 +72,7 @@ export interface AutoBuildCandidate {
 }
 
 export interface AutoBuildSlot {
-  role: "captain" | "friendCaptain" | "sub";
+  role: 'captain' | 'friendCaptain' | 'sub';
   character: CharacterDetailRecord;
   reasonChips: string[];
 }
