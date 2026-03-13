@@ -1,0 +1,300 @@
+{
+  "generatedAt": "2026-03-12T18:20:28.321Z",
+  "sourceVersion": "unknown",
+  "total": 12,
+  "items": [
+    {
+      "id": 5605,
+      "name": "⚐ Kaido - Fate of the Land of Wano",
+      "stars": 6,
+      "type": "DEX",
+      "classes": [
+        "Driven",
+        "Powerhouse"
+      ],
+      "primaryClass": "Driven",
+      "secondaryClass": "Powerhouse",
+      "regionAvailability": {
+        "exactLocal": false,
+        "thumbnailGlobal": false,
+        "thumbnailJapan": false,
+        "fullTransparent": false
+      },
+      "assets": {
+        "exactLocal": null,
+        "thumbnailGlobal": null,
+        "thumbnailJapan": null,
+        "fullTransparent": null
+      }
+    },
+    {
+      "id": 5604,
+      "name": "⚐ Monkey D. Luffy - Fate of the Land of Wano",
+      "stars": 6,
+      "type": "QCK",
+      "classes": [
+        "Free Spirit",
+        "Fighter"
+      ],
+      "primaryClass": "Free Spirit",
+      "secondaryClass": "Fighter",
+      "regionAvailability": {
+        "exactLocal": false,
+        "thumbnailGlobal": false,
+        "thumbnailJapan": false,
+        "fullTransparent": false
+      },
+      "assets": {
+        "exactLocal": null,
+        "thumbnailGlobal": null,
+        "thumbnailJapan": null,
+        "fullTransparent": null
+      }
+    },
+    {
+      "id": 5603,
+      "name": "⚐ Kaido - Fight to the Death",
+      "stars": 5,
+      "type": "DEX",
+      "classes": [
+        "Driven",
+        "Powerhouse"
+      ],
+      "primaryClass": "Driven",
+      "secondaryClass": "Powerhouse",
+      "regionAvailability": {
+        "exactLocal": false,
+        "thumbnailGlobal": false,
+        "thumbnailJapan": false,
+        "fullTransparent": false
+      },
+      "assets": {
+        "exactLocal": null,
+        "thumbnailGlobal": null,
+        "thumbnailJapan": null,
+        "fullTransparent": null
+      }
+    },
+    {
+      "id": 5602,
+      "name": "⚐ Monkey D. Luffy - Fight to the Death",
+      "stars": 5,
+      "type": "QCK",
+      "classes": [
+        "Free Spirit",
+        "Fighter"
+      ],
+      "primaryClass": "Free Spirit",
+      "secondaryClass": "Fighter",
+      "regionAvailability": {
+        "exactLocal": false,
+        "thumbnailGlobal": false,
+        "thumbnailJapan": false,
+        "fullTransparent": false
+      },
+      "assets": {
+        "exactLocal": null,
+        "thumbnailGlobal": null,
+        "thumbnailJapan": null,
+        "fullTransparent": null
+      }
+    },
+    {
+      "id": 4215,
+      "name": "Sangoro - An Act Before Parting",
+      "stars": 5,
+      "type": "QCK",
+      "classes": [
+        "Free Spirit",
+        "Fighter"
+      ],
+      "primaryClass": "Free Spirit",
+      "secondaryClass": "Fighter",
+      "regionAvailability": {
+        "exactLocal": false,
+        "thumbnailGlobal": false,
+        "thumbnailJapan": false,
+        "fullTransparent": false
+      },
+      "assets": {
+        "exactLocal": null,
+        "thumbnailGlobal": null,
+        "thumbnailJapan": null,
+        "fullTransparent": null
+      }
+    },
+    {
+      "id": 4214,
+      "name": "Roronoa Zoro - Paying Respects to the Dead",
+      "stars": 5,
+      "type": "STR",
+      "classes": [
+        "Slasher",
+        "Free Spirit"
+      ],
+      "primaryClass": "Slasher",
+      "secondaryClass": "Free Spirit",
+      "regionAvailability": {
+        "exactLocal": false,
+        "thumbnailGlobal": false,
+        "thumbnailJapan": false,
+        "fullTransparent": false
+      },
+      "assets": {
+        "exactLocal": null,
+        "thumbnailGlobal": null,
+        "thumbnailJapan": null,
+        "fullTransparent": null
+      }
+    },
+    {
+      "id": 4210,
+      "name": "Luffy VS Kaido - Fight to the Death",
+      "stars": 5,
+      "type": [
+        "QCK",
+        "DEX"
+      ],
+      "classes": [
+        "Free Spirit",
+        "Fighter",
+        "Driven",
+        "Powerhouse"
+      ],
+      "primaryClass": "Free Spirit",
+      "secondaryClass": "Fighter",
+      "regionAvailability": {
+        "exactLocal": false,
+        "thumbnailGlobal": false,
+        "thumbnailJapan": false,
+        "fullTransparent": false
+      },
+      "assets": {
+        "exactLocal": null,
+        "thumbnailGlobal": null,
+        "thumbnailJapan": null,
+        "fullTransparent": null
+      }
+    },
+    {
+      "id": 4208,
+      "name": "Kozuki Hiyori - Graveside Prayer",
+      "stars": 5,
+      "type": "INT",
+      "classes": [
+        "Cerebral",
+        "Free Spirit"
+      ],
+      "primaryClass": "Cerebral",
+      "secondaryClass": "Free Spirit",
+      "regionAvailability": {
+        "exactLocal": false,
+        "thumbnailGlobal": false,
+        "thumbnailJapan": false,
+        "fullTransparent": false
+      },
+      "assets": {
+        "exactLocal": null,
+        "thumbnailGlobal": null,
+        "thumbnailJapan": null,
+        "fullTransparent": null
+      }
+    },
+    {
+      "id": 4207,
+      "name": "Hatchan - Enjoying a Game",
+      "stars": 5,
+      "type": "QCK",
+      "classes": [
+        "Fighter",
+        "Powerhouse"
+      ],
+      "primaryClass": "Fighter",
+      "secondaryClass": "Powerhouse",
+      "regionAvailability": {
+        "exactLocal": false,
+        "thumbnailGlobal": false,
+        "thumbnailJapan": false,
+        "fullTransparent": false
+      },
+      "assets": {
+        "exactLocal": null,
+        "thumbnailGlobal": null,
+        "thumbnailJapan": null,
+        "fullTransparent": null
+      }
+    },
+    {
+      "id": 4204,
+      "name": "Aladdin - Opening the Way",
+      "stars": 5,
+      "type": "QCK",
+      "classes": [
+        "Powerhouse",
+        "Striker"
+      ],
+      "primaryClass": "Powerhouse",
+      "secondaryClass": "Striker",
+      "regionAvailability": {
+        "exactLocal": false,
+        "thumbnailGlobal": false,
+        "thumbnailJapan": false,
+        "fullTransparent": false
+      },
+      "assets": {
+        "exactLocal": null,
+        "thumbnailGlobal": null,
+        "thumbnailJapan": null,
+        "fullTransparent": null
+      }
+    },
+    {
+      "id": 4209,
+      "name": "Kozuki Hiyori - Resounding Shamisen",
+      "stars": 0,
+      "type": "INT",
+      "classes": [
+        "Cerebral",
+        "Free Spirit"
+      ],
+      "primaryClass": "Cerebral",
+      "secondaryClass": "Free Spirit",
+      "regionAvailability": {
+        "exactLocal": false,
+        "thumbnailGlobal": false,
+        "thumbnailJapan": false,
+        "fullTransparent": false
+      },
+      "assets": {
+        "exactLocal": null,
+        "thumbnailGlobal": null,
+        "thumbnailJapan": null,
+        "fullTransparent": null
+      }
+    },
+    {
+      "id": 4206,
+      "name": "Portgas D. Ace - Crew-Protecting Flame Fence",
+      "stars": 0,
+      "type": "QCK",
+      "classes": [
+        "Free Spirit",
+        "Powerhouse"
+      ],
+      "primaryClass": "Free Spirit",
+      "secondaryClass": "Powerhouse",
+      "regionAvailability": {
+        "exactLocal": false,
+        "thumbnailGlobal": false,
+        "thumbnailJapan": false,
+        "fullTransparent": false
+      },
+      "assets": {
+        "exactLocal": null,
+        "thumbnailGlobal": null,
+        "thumbnailJapan": null,
+        "fullTransparent": null
+      }
+    }
+  ]
+}

@@ -237,12 +237,14 @@ export class OptcRepositoryService {
 
     return rows.map((row) => {
       const assets = this.parseJson<CharacterAssets>(row["assets_json"], {
+        exactLocal: null,
         thumbnailGlobal: null,
         thumbnailJapan: null,
         fullTransparent: null,
       });
 
       const regionAvailability = this.parseJson<RegionAvailability>(row["region_json"], {
+        exactLocal: false,
         thumbnailGlobal: false,
         thumbnailJapan: false,
         fullTransparent: false,
@@ -294,6 +296,10 @@ export class OptcRepositoryService {
 
     if (preferFullArt && fullArtInstalled && assets.fullTransparent) {
       return this.toLocalAssetPath("full-transparent", assets.fullTransparent);
+    }
+
+    if (assets.exactLocal) {
+      return assets.exactLocal;
     }
 
     if (thumbnailGloInstalled && assets.thumbnailGlobal) {

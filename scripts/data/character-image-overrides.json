@@ -1,0 +1,176 @@
+{
+  "4202": {
+    "source": "manual",
+    "file": "4202.png"
+  },
+  "4203": {
+    "source": "manual",
+    "file": "4203.png"
+  },
+  "4205": {
+    "source": "manual",
+    "file": "4205.png"
+  },
+  "4211": {
+    "source": "manual",
+    "file": "4211.png"
+  },
+  "4212": {
+    "source": "manual",
+    "file": "4212.png"
+  },
+  "4213": {
+    "source": "manual",
+    "file": "4213.png"
+  },
+  "5490": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "3/900/3917-DEX.png"
+  },
+  "5491": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "3/900/3917-QCK.png"
+  },
+  "5578": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4122-1.png"
+  },
+  "5574": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4121-1.png"
+  },
+  "5575": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4121-2.png"
+  },
+  "5576": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4121-QCK.png"
+  },
+  "5577": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4121-INT.png"
+  },
+  "5579": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4122-2.png"
+  },
+  "5580": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4122-QCK.png"
+  },
+  "5581": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4122-INT.png"
+  },
+  "5586": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4124-1.png"
+  },
+  "5582": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4123-1.png"
+  },
+  "5583": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4123-2.png"
+  },
+  "5584": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4123-INT.png"
+  },
+  "5585": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4123-QCK.png"
+  },
+  "5587": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4124-2.png"
+  },
+  "5588": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4124-INT.png"
+  },
+  "5589": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4124-QCK.png"
+  },
+  "5590": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4140-1.png"
+  },
+  "5591": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4140-2.png"
+  },
+  "5592": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4140-INT.png"
+  },
+  "5593": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4140-DEX.png"
+  },
+  "5598": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4142-1.png"
+  },
+  "5594": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4141-1.png"
+  },
+  "5595": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4141-2.png"
+  },
+  "5596": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4141-INT.png"
+  },
+  "5597": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4141-DEX.png"
+  },
+  "5599": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4142-2.png"
+  },
+  "5600": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4142-INT.png"
+  },
+  "5601": {
+    "source": "upstream",
+    "packKey": "thumbnailsJapan",
+    "relativePath": "4/100/4142-DEX.png"
+  }
+}

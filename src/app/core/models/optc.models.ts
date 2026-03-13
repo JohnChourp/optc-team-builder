@@ -11,12 +11,14 @@ export interface CharacterStats {
 }
 
 export interface RegionAvailability {
+  exactLocal: boolean;
   thumbnailGlobal: boolean;
   thumbnailJapan: boolean;
   fullTransparent: boolean;
 }
 
 export interface CharacterAssets {
+  exactLocal: string | null;
   thumbnailGlobal: string | null;
   thumbnailJapan: string | null;
   fullTransparent: string | null;
