@@ -22,6 +22,11 @@ export const routes: Routes = [
           import("./pages/team-builder/team-builder.page").then((module) => module.TeamBuilderPage),
       },
       {
+        path: "auto-team-builder",
+        loadComponent: () =>
+          import("./pages/auto-team-builder/auto-team-builder.page").then((module) => module.AutoTeamBuilderPage),
+      },
+      {
         path: "collection",
         loadComponent: () =>
           import("./pages/collection/collection.page").then((module) => module.CollectionPage),

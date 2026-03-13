@@ -139,6 +139,48 @@ export class OptcRepositoryService {
     };
   }
 
+  public async getAutoBuilderCandidates(typeFilter: string, limit = 1200): Promise<CharacterDetailRecord[]> {
+    const rows = await this.selectAll(
+      `
+        SELECT
+          c.id,
+          c.name,
+          c.type,
+          c.primary_class,
+          c.secondary_class,
+          c.classes_json,
+          c.stars,
+          c.cost,
+          c.combo,
+          c.max_level,
+          c.max_experience,
+          c.min_hp,
+          c.min_atk,
+          c.min_rcv,
+          c.max_hp,
+          c.max_atk,
+          c.max_rcv,
+          c.growth,
+          c.region_json,
+          c.assets_json,
+          d.detail_json
+        FROM characters c
+        LEFT JOIN character_details d ON d.character_id = c.id
+        WHERE c.type = ?
+        ORDER BY c.id DESC
+        LIMIT ?
+      `,
+      [typeFilter, limit],
+    );
+    const decorated = await this.decorateCharacterRows(rows);
+
+    return decorated.map((record, index) => ({
+      ...record,
+      detail: this.parseJson<CharacterDetail>(rows[index]["detail_json"], this.emptyDetail(record.id)),
+      detailImageUrl: this.resolveImageUrl(record.assets, true),
+    }));
+  }
+
   public async getCharactersByIds(ids: number[]): Promise<CharacterListItem[]> {
     if (!ids.length) {
       return [];

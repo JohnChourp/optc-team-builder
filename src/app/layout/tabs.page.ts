@@ -1,6 +1,6 @@
 import { Component } from "@angular/core";
 import { IonIcon, IonLabel, IonTabBar, IonTabButton, IonTabs } from "@ionic/angular/standalone";
-import { albumsOutline, cogOutline, gridOutline, peopleOutline } from "ionicons/icons";
+import { albumsOutline, cogOutline, flashOutline, gridOutline, peopleOutline } from "ionicons/icons";
 
 @Component({
   selector: "app-tabs-page",
@@ -12,6 +12,7 @@ import { albumsOutline, cogOutline, gridOutline, peopleOutline } from "ionicons/
 export class TabsPage {
   public readonly charactersIcon = gridOutline;
   public readonly teamIcon = peopleOutline;
+  public readonly autoTeamIcon = flashOutline;
   public readonly collectionIcon = albumsOutline;
   public readonly settingsIcon = cogOutline;
 }

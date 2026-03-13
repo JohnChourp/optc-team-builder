@@ -1,0 +1,149 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title>Auto Team Builder</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="page-shell auto-builder-shell">
+    <section class="hero-card glass-card">
+      <div class="hero-copy">
+        <div class="section-label">
+          <ion-icon [icon]="sparklesIcon"></ion-icon>
+          <span>Generic DEX burst builder</span>
+        </div>
+        <h1 class="section-title">Διάλεξε class και χτίσε αυτόματα ένα δυνατό DEX team.</h1>
+        <p class="section-copy">
+          Το v1 χρησιμοποιεί recent usable DEX units με readable captain, special, και sailor texts για να φτιάξει ένα
+          generic high-damage team με soft class matching.
+        </p>
+      </div>
+
+      <div class="hero-meta">
+        <div class="meta-pill">
+          <ion-icon [icon]="layersIcon"></ion-icon>
+          <span>{{ availableClasses().length }} classes</span>
+        </div>
+        <div class="meta-pill">
+          <ion-icon [icon]="coverageIcon"></ion-icon>
+          <span>Captain + 4 subs + same friend captain</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="glass-card controls-card">
+      <div class="controls-grid">
+        <div class="fixed-type-card">
+          <span>Type</span>
+          <strong>{{ fixedType }}</strong>
+          <small>Κλειδωμένο στο v1</small>
+        </div>
+
+        <div class="class-select-card">
+          <span>Class</span>
+          <ion-select
+            interface="popover"
+            fill="outline"
+            placeholder="Select class"
+            [value]="selectedClass()"
+            (ionChange)="onClassChange($event)"
+          >
+            <ion-select-option *ngFor="let item of availableClasses()" [value]="item">
+              {{ item }}
+            </ion-select-option>
+          </ion-select>
+        </div>
+      </div>
+
+      <ion-button expand="block" color="warning" [disabled]="!selectedClass() || building()" (click)="buildTeam()">
+        <ion-spinner *ngIf="building()" slot="start" name="crescent"></ion-spinner>
+        Build best DEX team
+      </ion-button>
+    </section>
+
+    <section *ngIf="building()" class="loading-card glass-card">
+      <ion-spinner name="crescent"></ion-spinner>
+      <span>Γίνεται scoring των πιο πρόσφατων usable DEX χαρακτήρων...</span>
+    </section>
+
+    <section *ngIf="!building() && errorMessage()" class="loading-card glass-card empty-card">
+      <span>{{ errorMessage() }}</span>
+    </section>
+
+    <ng-container *ngIf="!building() && result() as current">
+      <section class="summary-grid">
+        <article class="glass-card summary-card">
+          <span>Selected class</span>
+          <strong>{{ current.input.selectedClass }}</strong>
+          <small>{{ current.coverage.selectedClassMatches }} / 6 slots ταιριάζουν με την class</small>
+        </article>
+
+        <article class="glass-card summary-card">
+          <span>Candidate pool</span>
+          <strong>{{ current.candidateCount }}</strong>
+          <small>recent usable DEX records</small>
+        </article>
+
+        <article class="glass-card summary-card">
+          <span>Burst coverage</span>
+          <strong>{{ current.coverage.burst.length }}</strong>
+          <small>{{ current.coverage.burst.join(" • ") || "No burst tags" }}</small>
+        </article>
+      </section>
+
+      <section class="glass-card coverage-card">
+        <div class="slot-grid__header">
+          <h2>Coverage summary</h2>
+          <p>Σύντομο snapshot του damage και utility profile της ομάδας.</p>
+        </div>
+
+        <div class="coverage-groups">
+          <div>
+            <span>Burst</span>
+            <div class="chip-row">
+              <small *ngFor="let item of current.coverage.burst" class="coverage-chip">{{ item }}</small>
+            </div>
+          </div>
+
+          <div>
+            <span>Consistency</span>
+            <div class="chip-row">
+              <small *ngFor="let item of current.coverage.consistency" class="coverage-chip">{{ item }}</small>
+            </div>
+          </div>
+
+          <div>
+            <span>Utility</span>
+            <div class="chip-row">
+              <small *ngFor="let item of current.coverage.utility" class="coverage-chip">{{ item }}</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="result-grid">
+        <article *ngFor="let slot of teamSlots()" class="glass-card result-card">
+          <div class="result-card__head">
+            <span class="role-pill">{{ slot.roleLabel }}</span>
+            <span class="type-pill">{{ slot.character.type }}</span>
+          </div>
+
+          <div class="result-card__body">
+            <img [src]="slot.character.imageUrl" [alt]="slot.character.name" loading="lazy" />
+
+            <div class="result-card__copy">
+              <strong>{{ slot.character.name }}</strong>
+              <span>{{ slot.character.primaryClass }}<ng-container *ngIf="slot.character.secondaryClass"> • {{ slot.character.secondaryClass }}</ng-container></span>
+
+              <div class="chip-row">
+                <small *ngFor="let chip of slot.reasonChips" class="reason-chip">{{ chip }}</small>
+              </div>
+
+              <p>{{ slot.snippet }}</p>
+            </div>
+          </div>
+        </article>
+      </section>
+    </ng-container>
+  </div>
+</ion-content>
