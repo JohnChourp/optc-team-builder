@@ -10,13 +10,10 @@
       <div class="hero-copy">
         <div class="section-label">
           <ion-icon [icon]="sparklesIcon"></ion-icon>
-          <span>Generic DEX burst builder</span>
+          <span>{{ builderLabel() }}</span>
         </div>
-        <h1 class="section-title">Διάλεξε class και χτίσε αυτόματα ένα δυνατό DEX team.</h1>
-        <p class="section-copy">
-          Το v1 χρησιμοποιεί recent usable DEX units με readable captain, special, και sailor texts για να φτιάξει ένα
-          generic high-damage team με soft class matching.
-        </p>
+        <h1 class="section-title">{{ titleLabel() }}</h1>
+        <p class="section-copy">{{ descriptionLabel() }}</p>
       </div>
 
       <div class="hero-meta">
@@ -35,8 +32,18 @@
       <div class="controls-grid">
         <div class="fixed-type-card">
           <span>Type</span>
-          <strong>{{ fixedType }}</strong>
-          <small>Κλειδωμένο στο v1</small>
+          <ion-select
+            interface="popover"
+            fill="outline"
+            placeholder="Select type"
+            [value]="selectedType()"
+            (ionChange)="onTypeChange($event)"
+          >
+            <ion-select-option *ngFor="let item of availableTypes" [value]="item">
+              {{ item }}
+            </ion-select-option>
+          </ion-select>
+          <small>{{ typeSupportLabel }}</small>
         </div>
 
         <div class="class-select-card">
@@ -57,13 +64,13 @@
 
       <ion-button expand="block" color="warning" [disabled]="!selectedClass() || building()" (click)="buildTeam()">
         <ion-spinner *ngIf="building()" slot="start" name="crescent"></ion-spinner>
-        Build best DEX team
+        {{ buildButtonLabel() }}
       </ion-button>
     </section>
 
     <section *ngIf="building()" class="loading-card glass-card">
       <ion-spinner name="crescent"></ion-spinner>
-      <span>Γίνεται scoring των πιο πρόσφατων usable DEX χαρακτήρων...</span>
+      <span>{{ loadingLabel() }}</span>
     </section>
 
     <section *ngIf="!building() && errorMessage()" class="loading-card glass-card empty-card">
@@ -81,7 +88,7 @@
         <article class="glass-card summary-card">
           <span>Candidate pool</span>
           <strong>{{ current.candidateCount }}</strong>
-          <small>recent usable DEX records</small>
+          <small>{{ candidatePoolLabel() }}</small>
         </article>
 
         <article class="glass-card summary-card">

@@ -1,7 +1,10 @@
 import { type CharacterDetailRecord } from "./optc.models";
 
-export const AUTO_TEAM_BUILDER_TYPE = "DEX";
+export const AUTO_TEAM_BUILDER_TYPES = ["DEX", "STR", "QCK", "PSY", "INT"] as const;
+export const AUTO_TEAM_BUILDER_DEFAULT_TYPE = "DEX";
 export const AUTO_TEAM_CANDIDATE_LIMIT = 1200;
+
+export type AutoTeamBuilderType = (typeof AUTO_TEAM_BUILDER_TYPES)[number];
 
 export type AutoBuildBurstRole =
   | "atkBoost"
@@ -22,7 +25,7 @@ export type AutoBuildUtilityRole =
   | "defenseDown";
 
 export interface AutoBuildInput {
-  type: typeof AUTO_TEAM_BUILDER_TYPE;
+  type: AutoTeamBuilderType;
   selectedClass: string;
   candidateLimit?: number;
 }

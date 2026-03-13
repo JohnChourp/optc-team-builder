@@ -13,6 +13,13 @@ import { type CharacterDetailRecord } from "../models/optc.models";
 
 const CAPTAIN_ATK_PATTERN = /atk(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
 const CAPTAIN_HP_PATTERN = /hp(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
+const TYPE_MATCH_PATTERNS = {
+  DEX: ["[dex]", " dex ", "dex characters", "dex units"],
+  STR: ["[str]", " str ", "str characters", "str units"],
+  QCK: ["[qck]", " qck ", "qck characters", "qck units"],
+  PSY: ["[psy]", " psy ", "psy characters", "psy units"],
+  INT: ["[int]", " int ", "int characters", "int units"],
+} as const;
 
 const CHIP_LABELS = {
   atkBoost: "ATK boost",
@@ -27,7 +34,6 @@ const CHIP_LABELS = {
   despair: "Despair clear",
   matchingOrbs: "Matching orbs",
   matchesClass: "Class fit",
-  matchesType: "DEX captain",
   orbBoost: "Orb boost",
   orbChange: "Orb control",
   paralysis: "Paralysis clear",
@@ -105,7 +111,7 @@ export function buildAutoBuildCandidate(
     combinedText,
     matchesSelectedClass,
     tags,
-    reasonChips: buildReasonChips(tags, matchesSelectedClass),
+    reasonChips: buildReasonChips(input, tags, matchesSelectedClass),
     recencyScore: total <= 1 ? 1 : 1 - index / (total - 1),
   };
 }
@@ -338,7 +344,7 @@ function parseEffectTags(
   return {
     captainScope: {
       allCharacters: includesAny(captainText, ["all characters", "all units"]),
-      matchesType: includesAny(captainText, ["[dex]", " dex ", "dex characters", "dex units"]),
+      matchesType: includesAny(captainText, [...TYPE_MATCH_PATTERNS[input.type]]),
       matchesClass: selectedClass.length > 0 && captainText.includes(selectedClass),
     },
     burstRoles,
@@ -352,7 +358,7 @@ function parseEffectTags(
   };
 }
 
-function buildReasonChips(tags: AutoBuildEffectTags, matchesSelectedClass: boolean): string[] {
+function buildReasonChips(input: AutoBuildInput, tags: AutoBuildEffectTags, matchesSelectedClass: boolean): string[] {
   const chips: string[] = [];
 
   if (matchesSelectedClass) {
@@ -360,7 +366,7 @@ function buildReasonChips(tags: AutoBuildEffectTags, matchesSelectedClass: boole
   }
 
   if (tags.captainScope.matchesType) {
-    chips.push(CHIP_LABELS.matchesType);
+    chips.push(resolveTypeCaptainLabel(input.type));
   }
 
   pushChips(chips, tags.burstRoles);
@@ -402,6 +408,10 @@ function summarizeCoverage(candidates: AutoBuildCandidate[], input: AutoBuildInp
       candidates.filter((candidate) => characterMatchesClass(candidate.character, input.selectedClass)).length +
       (candidates[0]?.matchesSelectedClass ? 1 : 0),
   };
+}
+
+function resolveTypeCaptainLabel(type: AutoBuildInput["type"]): string {
+  return `${type} captain`;
 }
 
 function addsNoNewCoverage(candidate: AutoBuildCandidate, coverage: TeamCoverageState): boolean {

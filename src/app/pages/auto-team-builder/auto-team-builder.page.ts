@@ -11,9 +11,14 @@ import {
   IonTitle,
   IonToolbar,
 } from "@ionic/angular/standalone";
-import { flashOutline, layersOutline, shieldHalfOutline, sparklesOutline } from "ionicons/icons";
+import { layersOutline, shieldHalfOutline, sparklesOutline } from "ionicons/icons";
 
-import { AUTO_TEAM_BUILDER_TYPE, type AutoBuildResult } from "../../core/models/auto-team-builder.models";
+import {
+  AUTO_TEAM_BUILDER_DEFAULT_TYPE,
+  AUTO_TEAM_BUILDER_TYPES,
+  type AutoBuildResult,
+  type AutoTeamBuilderType,
+} from "../../core/models/auto-team-builder.models";
 import { type DatasetManifest } from "../../core/models/optc.models";
 import { AutoTeamBuilderService } from "../../core/services/auto-team-builder.service";
 import { OptcRepositoryService } from "../../core/services/optc-repository.service";
@@ -38,13 +43,26 @@ import { OptcRepositoryService } from "../../core/services/optc-repository.servi
 })
 export class AutoTeamBuilderPage implements OnInit {
   public readonly summary = signal<DatasetManifest | null>(null);
+  public readonly selectedType = signal<AutoTeamBuilderType>(AUTO_TEAM_BUILDER_DEFAULT_TYPE);
   public readonly selectedClass = signal("");
   public readonly building = signal(false);
   public readonly result = signal<AutoBuildResult | null>(null);
   public readonly errorMessage = signal("");
 
+  public readonly availableTypes = AUTO_TEAM_BUILDER_TYPES;
+  public readonly typeSupportLabel = `${AUTO_TEAM_BUILDER_DEFAULT_TYPE} default, με support και για ${AUTO_TEAM_BUILDER_TYPES.filter((type) => type !== AUTO_TEAM_BUILDER_DEFAULT_TYPE).join(" / ")}`;
   public readonly availableClasses = computed(() => this.summary()?.availableClasses ?? []);
-  public readonly fixedType = AUTO_TEAM_BUILDER_TYPE;
+  public readonly builderLabel = computed(() => `Generic ${this.selectedType()} burst builder`);
+  public readonly titleLabel = computed(() => `Διάλεξε class και χτίσε αυτόματα ένα δυνατό ${this.selectedType()} team.`);
+  public readonly descriptionLabel = computed(
+    () =>
+      `Το v1 χρησιμοποιεί recent usable ${this.selectedType()} units με readable captain, special, και sailor texts για να φτιάξει ένα generic high-damage team με soft class matching.`,
+  );
+  public readonly buildButtonLabel = computed(() => `Build best ${this.selectedType()} team`);
+  public readonly loadingLabel = computed(
+    () => `Γίνεται scoring των πιο πρόσφατων usable ${this.selectedType()} χαρακτήρων...`,
+  );
+  public readonly candidatePoolLabel = computed(() => `recent usable ${this.selectedType()} records`);
   public readonly teamSlots = computed(() =>
     this.result()?.slots.map((slot) => ({
       ...slot,
@@ -57,7 +75,6 @@ export class AutoTeamBuilderPage implements OnInit {
   );
 
   public readonly sparklesIcon = sparklesOutline;
-  public readonly typeIcon = flashOutline;
   public readonly layersIcon = layersOutline;
   public readonly coverageIcon = shieldHalfOutline;
 
@@ -76,6 +93,12 @@ export class AutoTeamBuilderPage implements OnInit {
     this.errorMessage.set("");
   }
 
+  public async onTypeChange(event: CustomEvent<{ value?: AutoTeamBuilderType | null }>): Promise<void> {
+    this.selectedType.set((event.detail.value as AutoTeamBuilderType | null) ?? AUTO_TEAM_BUILDER_DEFAULT_TYPE);
+    this.result.set(null);
+    this.errorMessage.set("");
+  }
+
   public async buildTeam(): Promise<void> {
     if (!this.selectedClass().trim().length || this.building()) {
       return;
@@ -86,10 +109,12 @@ export class AutoTeamBuilderPage implements OnInit {
     this.errorMessage.set("");
 
     try {
-      const nextResult = await this.autoTeamBuilder.buildTeam(this.selectedClass());
+      const nextResult = await this.autoTeamBuilder.buildTeam(this.selectedClass(), this.selectedType());
 
       if (!nextResult) {
-        this.errorMessage.set("Δεν βρέθηκαν αρκετοί usable DEX χαρακτήρες για να χτιστεί ομάδα για αυτή την class.");
+        this.errorMessage.set(
+          `Δεν βρέθηκαν αρκετοί usable ${this.selectedType()} χαρακτήρες για να χτιστεί ομάδα για αυτή την class.`,
+        );
       }
 
       this.result.set(nextResult);

@@ -1,19 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  AUTO_TEAM_BUILDER_TYPE,
   AUTO_TEAM_CANDIDATE_LIMIT,
+  AUTO_TEAM_BUILDER_DEFAULT_TYPE,
   type AutoBuildInput,
+  type AutoTeamBuilderType,
 } from "../models/auto-team-builder.models";
 import { type CharacterDetailRecord } from "../models/optc.models";
 import { AutoTeamBuilderService } from "./auto-team-builder.service";
 import { buildAutoBuildCandidate, buildAutoTeamResult, hasReadableEffectText } from "./auto-team-builder.utils";
 
-const INPUT: AutoBuildInput = {
-  type: AUTO_TEAM_BUILDER_TYPE,
-  selectedClass: "Fighter",
-  candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
-};
+const INPUT = createInput();
 
 describe("Auto team builder", () => {
   it("parses burst, consistency, and utility tags from effect text", () => {
@@ -41,6 +38,90 @@ describe("Auto team builder", () => {
       expect.arrayContaining(["matchingOrbs", "orbChange", "cooldownReduction"]),
     );
     expect(candidate.tags.utilityRoles).toEqual(expect.arrayContaining(["bind", "despair"]));
+  });
+
+  it("parses STR captain scope and dynamic reason chips", () => {
+    const candidate = buildAutoBuildCandidate(
+      createCharacterRecord({
+        id: 5910,
+        type: "STR",
+        primaryClass: "Fighter",
+        detail: {
+          captainAbility: "Boosts ATK of STR and Fighter characters by 5x and HP by 1.3x.",
+          specialText: "Boosts color affinity of STR characters by 2x for 1 turn.",
+        },
+      }),
+      createInput("STR"),
+      0,
+      1,
+    );
+
+    expect(candidate.tags.captainScope.matchesType).toBe(true);
+    expect(candidate.reasonChips).toContain("STR captain");
+    expect(candidate.reasonChips).not.toContain("DEX captain");
+  });
+
+  it("parses QCK captain scope and dynamic reason chips", () => {
+    const candidate = buildAutoBuildCandidate(
+      createCharacterRecord({
+        id: 5920,
+        type: "QCK",
+        primaryClass: "Fighter",
+        detail: {
+          captainAbility: "Boosts ATK of QCK and Fighter characters by 5x and HP by 1.3x.",
+          specialText: "Boosts color affinity of QCK characters by 2x for 1 turn.",
+        },
+      }),
+      createInput("QCK"),
+      0,
+      1,
+    );
+
+    expect(candidate.tags.captainScope.matchesType).toBe(true);
+    expect(candidate.reasonChips).toContain("QCK captain");
+    expect(candidate.reasonChips).not.toContain("STR captain");
+  });
+
+  it("parses PSY captain scope and dynamic reason chips", () => {
+    const candidate = buildAutoBuildCandidate(
+      createCharacterRecord({
+        id: 5930,
+        type: "PSY",
+        primaryClass: "Fighter",
+        detail: {
+          captainAbility: "Boosts ATK of PSY and Fighter characters by 5x and HP by 1.3x.",
+          specialText: "Boosts color affinity of PSY characters by 2x for 1 turn.",
+        },
+      }),
+      createInput("PSY"),
+      0,
+      1,
+    );
+
+    expect(candidate.tags.captainScope.matchesType).toBe(true);
+    expect(candidate.reasonChips).toContain("PSY captain");
+    expect(candidate.reasonChips).not.toContain("QCK captain");
+  });
+
+  it("parses INT captain scope and dynamic reason chips", () => {
+    const candidate = buildAutoBuildCandidate(
+      createCharacterRecord({
+        id: 5940,
+        type: "INT",
+        primaryClass: "Fighter",
+        detail: {
+          captainAbility: "Boosts ATK of INT and Fighter characters by 5x and HP by 1.3x.",
+          specialText: "Boosts color affinity of INT characters by 2x for 1 turn.",
+        },
+      }),
+      createInput("INT"),
+      0,
+      1,
+    );
+
+    expect(candidate.tags.captainScope.matchesType).toBe(true);
+    expect(candidate.reasonChips).toContain("INT captain");
+    expect(candidate.reasonChips).not.toContain("PSY captain");
   });
 
   it("ignores recent placeholders with empty effect text", () => {
@@ -94,7 +175,73 @@ describe("Auto team builder", () => {
     expect(result?.coverage.utility).toContain("Bind clear");
   });
 
-  it("requests DEX candidates from the repository service", async () => {
+  it("requests QCK candidates from the repository service when QCK is selected", async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue([
+          createCaptainRecord(),
+          createAtkSubRecord(),
+          createAffinitySubRecord(),
+          createUtilitySubRecord(),
+          createConsistencySubRecord(),
+        ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    await service.buildTeam("Fighter", "QCK");
+
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      "QCK",
+      AUTO_TEAM_CANDIDATE_LIMIT,
+    );
+  });
+
+  it("requests PSY candidates from the repository service when PSY is selected", async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue([
+          createCaptainRecord(),
+          createAtkSubRecord(),
+          createAffinitySubRecord(),
+          createUtilitySubRecord(),
+          createConsistencySubRecord(),
+        ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    await service.buildTeam("Fighter", "PSY");
+
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      "PSY",
+      AUTO_TEAM_CANDIDATE_LIMIT,
+    );
+  });
+
+  it("requests INT candidates from the repository service when INT is selected", async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue([
+          createCaptainRecord(),
+          createAtkSubRecord(),
+          createAffinitySubRecord(),
+          createUtilitySubRecord(),
+          createConsistencySubRecord(),
+        ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    await service.buildTeam("Fighter", "INT");
+
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      "INT",
+      AUTO_TEAM_CANDIDATE_LIMIT,
+    );
+  });
+
+  it("defaults to DEX when no type is provided", async () => {
     const repository = {
       getAutoBuilderCandidates: vi
         .fn()
@@ -111,11 +258,19 @@ describe("Auto team builder", () => {
     await service.buildTeam("Fighter");
 
     expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
-      AUTO_TEAM_BUILDER_TYPE,
+      AUTO_TEAM_BUILDER_DEFAULT_TYPE,
       AUTO_TEAM_CANDIDATE_LIMIT,
     );
   });
 });
+
+function createInput(type: AutoTeamBuilderType = AUTO_TEAM_BUILDER_DEFAULT_TYPE): AutoBuildInput {
+  return {
+    type,
+    selectedClass: "Fighter",
+    candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
+  };
+}
 
 function createCaptainRecord(): CharacterDetailRecord {
   return createCharacterRecord({
@@ -195,7 +350,7 @@ function createCharacterRecord(
   return {
     id: overrides.id,
     name: overrides.name ?? `Unit ${overrides.id}`,
-    type: overrides.type ?? "DEX",
+    type: overrides.type ?? AUTO_TEAM_BUILDER_DEFAULT_TYPE,
     classes,
     primaryClass: overrides.primaryClass,
     secondaryClass,
