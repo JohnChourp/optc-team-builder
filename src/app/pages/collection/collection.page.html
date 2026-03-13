@@ -30,7 +30,10 @@
     <section class="glass-card section-card">
       <div class="section-head">
         <h2>Favorites</h2>
-        <ion-button fill="clear" color="light" [routerLink]="['/tabs/characters']">Back to browser</ion-button>
+        <div class="section-actions">
+          <ion-button fill="outline" color="warning" (click)="openImportModal()">Import favorites</ion-button>
+          <ion-button fill="clear" color="light" [routerLink]="['/tabs/characters']">Back to browser</ion-button>
+        </div>
       </div>
 
       <div class="mini-grid">
@@ -69,4 +72,121 @@
       </div>
     </section>
   </div>
+
+  <ion-modal [isOpen]="importModalOpen()" cssClass="favorites-import-modal" (didDismiss)="closeImportModal()">
+    <ng-template>
+      <div class="import-modal-shell">
+        <div class="import-modal-head">
+          <div>
+            <div class="section-label">OPTCbx compatibility</div>
+            <h2>Import favorites</h2>
+            <p>Drop a raw OPTCbx export JSON file to merge owned units into your on-device favorites.</p>
+          </div>
+
+          <ion-button fill="clear" color="light" (click)="closeImportModal()">
+            <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+          </ion-button>
+        </div>
+
+        <input
+          #importFileInput
+          type="file"
+          accept=".json,application/json"
+          hidden
+          (change)="onFileSelected($event, importFileInput)"
+        />
+
+        <button
+          type="button"
+          class="import-dropzone"
+          [class.import-dropzone--active]="draggingImportFile()"
+          (click)="openFilePicker(importFileInput)"
+          (dragover)="onImportDragOver($event)"
+          (dragleave)="onImportDragLeave($event)"
+          (drop)="onImportDrop($event)"
+        >
+          <ion-icon [icon]="uploadIcon"></ion-icon>
+          <strong>Drag and drop your OPTCbx export here</strong>
+          <span>or click to browse for the raw JSON file exported by /export</span>
+        </button>
+
+        <div *ngIf="importFileName()" class="import-file-chip">
+          <ion-icon [icon]="fileIcon"></ion-icon>
+          <span>{{ importFileName() }}</span>
+        </div>
+
+        <div *ngIf="parsedImport() && !importResult()" class="import-feedback import-feedback--ready">
+          <ion-icon [icon]="successIcon"></ion-icon>
+          <div>
+            <strong>Ready to import {{ parsedImport()?.importedNumbers?.length ?? 0 }} unique unit ids.</strong>
+            <span *ngIf="(parsedImport()?.duplicatesRemoved ?? 0) > 0">
+              Removed {{ parsedImport()?.duplicatesRemoved }} duplicate entries from the export.
+            </span>
+          </div>
+        </div>
+
+        <div *ngIf="importErrorMessage()" class="import-feedback import-feedback--error">
+          <ion-icon [icon]="errorIcon"></ion-icon>
+          <span>{{ importErrorMessage() }}</span>
+        </div>
+
+        <section *ngIf="importResult()" class="import-result-card">
+          <div class="import-result-card__head">
+            <h3>Import summary</h3>
+            <p>The export was merged into your existing favorites.</p>
+          </div>
+
+          <div class="import-stats-grid">
+            <article>
+              <span>Matched</span>
+              <strong>{{ importResult()?.matchedIds?.length ?? 0 }}</strong>
+            </article>
+            <article>
+              <span>Added</span>
+              <strong>{{ importResult()?.addedCount ?? 0 }}</strong>
+            </article>
+            <article>
+              <span>Already favorited</span>
+              <strong>{{ importResult()?.alreadyFavoritedCount ?? 0 }}</strong>
+            </article>
+            <article>
+              <span>Unknown ids</span>
+              <strong>{{ importResult()?.unmatchedIds?.length ?? 0 }}</strong>
+            </article>
+          </div>
+
+          <p *ngIf="(importResult()?.duplicatesRemoved ?? 0) > 0" class="import-result-note">
+            {{ importResult()?.duplicatesRemoved }} duplicate export entries were ignored before import.
+          </p>
+
+          <div *ngIf="unmatchedPreview().length" class="import-unmatched">
+            <strong>Unknown ids</strong>
+            <p>
+              {{ unmatchedPreview().join(', ') }}
+              <span *ngIf="remainingUnmatchedCount() > 0">
+                and {{ remainingUnmatchedCount() }} more
+              </span>
+            </p>
+          </div>
+        </section>
+
+        <div class="import-modal-actions">
+          <ion-button fill="clear" color="light" (click)="resetSelectedFile()" [disabled]="importingFavorites()">
+            Choose another file
+          </ion-button>
+          <ion-button fill="outline" color="light" (click)="closeImportModal()" [disabled]="importingFavorites()">
+            {{ importResult() ? 'Done' : 'Cancel' }}
+          </ion-button>
+          <ion-button
+            color="warning"
+            (click)="importFavorites()"
+            [disabled]="!hasImportReady() || importingFavorites() || !!importResult()"
+          >
+            <ion-spinner *ngIf="importingFavorites()" slot="start" name="crescent"></ion-spinner>
+            Import favorites
+          </ion-button>
+        </div>
+      </div>
+    </ng-template>
+  </ion-modal>
 </ion-content>

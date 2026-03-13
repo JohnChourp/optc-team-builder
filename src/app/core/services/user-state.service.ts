@@ -34,6 +34,14 @@ export class UserStateService {
     await this.persistJson(FAVORITES_KEY, next);
   }
 
+  public async setFavoriteCharacterIds(characterIds: number[]): Promise<void> {
+    await this.ready();
+    const next = [...new Set(characterIds.filter((value) => Number.isInteger(value) && value > 0))];
+
+    this.favoriteCharacterIds.set(next);
+    await this.persistJson(FAVORITES_KEY, next);
+  }
+
   public async markRecent(characterId: number): Promise<void> {
     await this.ready();
     const next = [characterId, ...this.recentCharacterIds().filter((value) => value !== characterId)].slice(0, 24);
