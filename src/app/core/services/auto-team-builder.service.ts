@@ -16,15 +16,25 @@ export class AutoTeamBuilderService {
   public constructor(private readonly repository: OptcRepositoryService) {}
 
   public async buildTeam(
-    selectedClass: string,
+    selectedClasses: string[] = [],
     selectedTypes: AutoTeamBuilderType[] = [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
   ): Promise<AutoBuildResult | null> {
     const normalizedTypes = [...new Set(selectedTypes)].filter((type): type is AutoTeamBuilderType =>
       AUTO_TEAM_BUILDER_TYPES.includes(type),
     );
+    const normalizedClasses = selectedClasses.reduce<string[]>((classes, currentClass) => {
+      const nextClass = currentClass.trim();
+
+      if (!nextClass.length || classes.some((entry) => entry.toLowerCase() === nextClass.toLowerCase())) {
+        return classes;
+      }
+
+      classes.push(nextClass);
+      return classes;
+    }, []);
     const input: AutoBuildInput = {
       types: normalizedTypes.length ? normalizedTypes : [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
-      selectedClass,
+      selectedClasses: normalizedClasses,
       candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
     };
     const records = await this.repository.getAutoBuilderCandidates(input.types, input.candidateLimit);

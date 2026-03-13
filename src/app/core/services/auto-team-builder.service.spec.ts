@@ -13,22 +13,24 @@ import { buildAutoBuildCandidate, buildAutoTeamResult, hasReadableEffectText } f
 const INPUT = createInput();
 
 describe("Auto team builder", () => {
-  it("parses burst, consistency, and utility tags from effect text", () => {
+  it("parses burst, consistency, utility, and multi-class captain scope from effect text", () => {
     const candidate = buildAutoBuildCandidate(
       createCharacterRecord({
         id: 5900,
         primaryClass: "Fighter",
         detail: {
-          captainAbility: "Boosts ATK of DEX and Fighter characters by 5.25x and HP by 1.4x.",
+          captainAbility: "Boosts ATK of DEX, Fighter and Slasher characters by 5.25x and HP by 1.4x.",
           specialText:
             "Boosts orb effects by 2.5x, boosts color affinity by 2x, changes orbs into Matching Orbs, reduces Bind and Despair by 5 turns and reduces Special Cooldown by 1 turn.",
         },
       }),
-      INPUT,
+      createInput(["DEX"], ["Fighter", "Slasher"]),
       0,
       1,
     );
 
+    expect(candidate.tags.captainScope.matchedSelectedClasses).toEqual(["Fighter", "Slasher"]);
+    expect(candidate.tags.captainScope.coversAllSelectedClasses).toBe(true);
     expect(candidate.tags.captainScope.matchedSelectedTypes).toEqual(["DEX"]);
     expect(candidate.tags.captainScope.coversAllSelectedTypes).toBe(true);
     expect(candidate.tags.captainScope.matchesClass).toBe(true);
@@ -61,90 +63,6 @@ describe("Auto team builder", () => {
     expect(candidate.tags.captainScope.matchedSelectedTypeCount).toBe(2);
     expect(candidate.tags.captainScope.coversAllSelectedTypes).toBe(false);
     expect(candidate.reasonChips).toContain("DEX / PSY captain");
-  });
-
-  it("parses STR captain scope and dynamic reason chips", () => {
-    const candidate = buildAutoBuildCandidate(
-      createCharacterRecord({
-        id: 5910,
-        type: "STR",
-        primaryClass: "Fighter",
-        detail: {
-          captainAbility: "Boosts ATK of STR and Fighter characters by 5x and HP by 1.3x.",
-          specialText: "Boosts color affinity of STR characters by 2x for 1 turn.",
-        },
-      }),
-      createInput(["STR"]),
-      0,
-      1,
-    );
-
-    expect(candidate.tags.captainScope.matchedSelectedTypes).toEqual(["STR"]);
-    expect(candidate.reasonChips).toContain("STR captain");
-    expect(candidate.reasonChips).not.toContain("DEX captain");
-  });
-
-  it("parses QCK captain scope and dynamic reason chips", () => {
-    const candidate = buildAutoBuildCandidate(
-      createCharacterRecord({
-        id: 5920,
-        type: "QCK",
-        primaryClass: "Fighter",
-        detail: {
-          captainAbility: "Boosts ATK of QCK and Fighter characters by 5x and HP by 1.3x.",
-          specialText: "Boosts color affinity of QCK characters by 2x for 1 turn.",
-        },
-      }),
-      createInput(["QCK"]),
-      0,
-      1,
-    );
-
-    expect(candidate.tags.captainScope.matchedSelectedTypes).toEqual(["QCK"]);
-    expect(candidate.reasonChips).toContain("QCK captain");
-    expect(candidate.reasonChips).not.toContain("STR captain");
-  });
-
-  it("parses PSY captain scope and dynamic reason chips", () => {
-    const candidate = buildAutoBuildCandidate(
-      createCharacterRecord({
-        id: 5930,
-        type: "PSY",
-        primaryClass: "Fighter",
-        detail: {
-          captainAbility: "Boosts ATK of PSY and Fighter characters by 5x and HP by 1.3x.",
-          specialText: "Boosts color affinity of PSY characters by 2x for 1 turn.",
-        },
-      }),
-      createInput(["PSY"]),
-      0,
-      1,
-    );
-
-    expect(candidate.tags.captainScope.matchedSelectedTypes).toEqual(["PSY"]);
-    expect(candidate.reasonChips).toContain("PSY captain");
-    expect(candidate.reasonChips).not.toContain("QCK captain");
-  });
-
-  it("parses INT captain scope and dynamic reason chips", () => {
-    const candidate = buildAutoBuildCandidate(
-      createCharacterRecord({
-        id: 5940,
-        type: "INT",
-        primaryClass: "Fighter",
-        detail: {
-          captainAbility: "Boosts ATK of INT and Fighter characters by 5x and HP by 1.3x.",
-          specialText: "Boosts color affinity of INT characters by 2x for 1 turn.",
-        },
-      }),
-      createInput(["INT"]),
-      0,
-      1,
-    );
-
-    expect(candidate.tags.captainScope.matchedSelectedTypes).toEqual(["INT"]);
-    expect(candidate.reasonChips).toContain("INT captain");
-    expect(candidate.reasonChips).not.toContain("PSY captain");
   });
 
   it("ignores recent placeholders with empty effect text", () => {
@@ -196,6 +114,8 @@ describe("Auto team builder", () => {
     expect(teamIds).toEqual(expect.arrayContaining([5900, 5890, 5880, 5870, 5860]));
     expect(teamIds).not.toContain(5850);
     expect(result?.coverage.utility).toContain("Bind clear");
+    expect(result?.coverage.coversAllSelectedClasses).toBe(true);
+    expect(result?.coverage.coversAllSelectedTypes).toBe(true);
   });
 
   it("prefers universal captains over partial multi-type captains", () => {
@@ -216,21 +136,62 @@ describe("Auto team builder", () => {
     expect(result?.slots[0]?.reasonChips).toContain("Universal captain");
   });
 
+  it("builds one strict mixed team when all selected classes and types can be covered", () => {
+    const result = buildAutoTeamResult(
+      [
+        createStrictMixedCaptainRecord(),
+        createSlasherQckAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(["DEX", "QCK"], ["Fighter", "Slasher"]),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.coveredSelectedClasses).toEqual(["Fighter", "Slasher"]);
+    expect(result?.coverage.coveredSelectedTypes).toEqual(["DEX", "QCK"]);
+    expect(result?.coverage.coversAllSelectedClasses).toBe(true);
+    expect(result?.coverage.coversAllSelectedTypes).toBe(true);
+  });
+
+  it("fails strict mixed build when a selected class cannot be covered", () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(["DEX"], ["Fighter", "Shooter"]),
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it("fails strict mixed build when a selected type cannot be covered", () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(["DEX", "INT"]),
+    );
+
+    expect(result).toBeNull();
+  });
+
   it("requests combined candidates from the repository service when multiple types are selected", async () => {
     const repository = {
-      getAutoBuilderCandidates: vi
-        .fn()
-        .mockResolvedValue([
-          createCaptainRecord(),
-          createAtkSubRecord(),
-          createAffinitySubRecord(),
-          createUtilitySubRecord(),
-          createConsistencySubRecord(),
-        ]),
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
     };
     const service = new AutoTeamBuilderService(repository as never);
 
-    await service.buildTeam("Fighter", ["DEX", "PSY"]);
+    await service.buildTeam(["Fighter", "Slasher"], ["DEX", "PSY"]);
 
     expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
       ["DEX", "PSY"],
@@ -238,43 +199,28 @@ describe("Auto team builder", () => {
     );
   });
 
-  it("requests INT candidates from the repository service when INT is selected", async () => {
+  it("normalizes duplicate classes before building", async () => {
     const repository = {
-      getAutoBuilderCandidates: vi
-        .fn()
-        .mockResolvedValue([
-          createCaptainRecord(),
-          createAtkSubRecord(),
-          createAffinitySubRecord(),
-          createUtilitySubRecord(),
-          createConsistencySubRecord(),
-        ]),
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
     };
     const service = new AutoTeamBuilderService(repository as never);
 
-    await service.buildTeam("Fighter", ["INT"]);
+    const result = await service.buildTeam(["Fighter", " Slasher ", "fighter"], ["DEX", "PSY", "DEX"]);
 
     expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
-      ["INT"],
+      ["DEX", "PSY"],
       AUTO_TEAM_CANDIDATE_LIMIT,
     );
+    expect(result?.input.selectedClasses).toEqual(["Fighter", "Slasher"]);
   });
 
   it("defaults to DEX when no types are provided", async () => {
     const repository = {
-      getAutoBuilderCandidates: vi
-        .fn()
-        .mockResolvedValue([
-          createCaptainRecord(),
-          createAtkSubRecord(),
-          createAffinitySubRecord(),
-          createUtilitySubRecord(),
-          createConsistencySubRecord(),
-        ]),
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
     };
     const service = new AutoTeamBuilderService(repository as never);
 
-    await service.buildTeam("Fighter");
+    await service.buildTeam(["Fighter"]);
 
     expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
       [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
@@ -283,10 +229,13 @@ describe("Auto team builder", () => {
   });
 });
 
-function createInput(types: AutoTeamBuilderType[] = [AUTO_TEAM_BUILDER_DEFAULT_TYPE]): AutoBuildInput {
+function createInput(
+  types: AutoTeamBuilderType[] = [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
+  selectedClasses: string[] = ["Fighter"],
+): AutoBuildInput {
   return {
     types,
-    selectedClass: "Fighter",
+    selectedClasses,
     candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
   };
 }
@@ -301,6 +250,21 @@ function createCaptainRecord(): CharacterDetailRecord {
         "Boosts ATK of DEX and Fighter characters by 5.25x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.",
       specialText:
         "Boosts orb effects of DEX and Fighter characters by 2.25x for 1 turn and changes orbs into Matching Orbs.",
+    },
+  });
+}
+
+function createStrictMixedCaptainRecord(): CharacterDetailRecord {
+  return createCharacterRecord({
+    id: 5907,
+    type: "DEX",
+    primaryClass: "Fighter",
+    secondaryClass: "Slasher",
+    detail: {
+      captainAbility:
+        "Boosts ATK of DEX, QCK, Fighter and Slasher characters by 5.25x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.",
+      specialText:
+        "Boosts orb effects of DEX and QCK characters by 2.25x for 1 turn and changes orbs into Matching Orbs.",
     },
   });
 }
@@ -336,6 +300,17 @@ function createAtkSubRecord(): CharacterDetailRecord {
     primaryClass: "Fighter",
     detail: {
       specialText: "Boosts ATK of Fighter characters by 2.5x for 1 turn.",
+    },
+  });
+}
+
+function createSlasherQckAtkSubRecord(): CharacterDetailRecord {
+  return createCharacterRecord({
+    id: 5891,
+    type: "QCK",
+    primaryClass: "Slasher",
+    detail: {
+      specialText: "Boosts ATK of Slasher characters by 2.5x for 1 turn.",
     },
   });
 }
@@ -381,8 +356,45 @@ function createOffClassRedundantSubRecord(): CharacterDetailRecord {
   });
 }
 
+function createSingleTypeRecords(): CharacterDetailRecord[] {
+  return [
+    createCaptainRecord(),
+    createAtkSubRecord(),
+    createAffinitySubRecord(),
+    createUtilitySubRecord(),
+    createConsistencySubRecord(),
+  ];
+}
+
+function createStrictMixedTeamRecords(): CharacterDetailRecord[] {
+  return [
+    createCharacterRecord({
+      id: 5925,
+      type: "DEX",
+      primaryClass: "Fighter",
+      secondaryClass: "Slasher",
+      detail: {
+        captainAbility:
+          "Boosts ATK of DEX, PSY, Fighter and Slasher characters by 5.1x and HP by 1.35x, reduces Special Cooldown of crew by 1 turn.",
+        specialText: "Boosts orb effects of DEX and PSY characters by 2x for 1 turn and changes orbs into Matching Orbs.",
+      },
+    }),
+    createCharacterRecord({
+      id: 5926,
+      type: "PSY",
+      primaryClass: "Slasher",
+      detail: {
+        specialText: "Boosts ATK of Slasher characters by 2.25x for 1 turn.",
+      },
+    }),
+    createAffinitySubRecord(),
+    createUtilitySubRecord(),
+    createConsistencySubRecord(),
+  ];
+}
+
 function createCharacterRecord(
-  overrides: Partial<CharacterDetailRecord> & {
+  overrides: Omit<Partial<CharacterDetailRecord>, "detail" | "id" | "primaryClass"> & {
     id: number;
     detail?: Partial<CharacterDetailRecord["detail"]>;
     primaryClass: string;

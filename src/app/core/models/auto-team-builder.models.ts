@@ -26,13 +26,16 @@ export type AutoBuildUtilityRole =
 
 export interface AutoBuildInput {
   types: AutoTeamBuilderType[];
-  selectedClass: string;
+  selectedClasses: string[];
   candidateLimit?: number;
 }
 
 export interface AutoBuildEffectTags {
   captainScope: {
     allCharacters: boolean;
+    matchedSelectedClasses: string[];
+    matchedSelectedClassCount: number;
+    coversAllSelectedClasses: boolean;
     matchedSelectedTypes: AutoTeamBuilderType[];
     matchedSelectedTypeCount: number;
     coversAllSelectedTypes: boolean;
@@ -55,6 +58,8 @@ export interface AutoBuildCandidate {
   sailorText: string;
   combinedText: string;
   matchesSelectedClass: boolean;
+  matchedSelectedClasses: string[];
+  matchedSelectedTypes: AutoTeamBuilderType[];
   tags: AutoBuildEffectTags;
   reasonChips: string[];
   recencyScore: number;
@@ -70,7 +75,12 @@ export interface AutoBuildCoverageSummary {
   burst: string[];
   consistency: string[];
   utility: string[];
+  coveredSelectedClasses: string[];
+  coveredSelectedTypes: AutoTeamBuilderType[];
+  coversAllSelectedClasses: boolean;
+  coversAllSelectedTypes: boolean;
   selectedClassMatches: number;
+  selectedTypeMatches: number;
 }
 
 export interface AutoBuildResult {

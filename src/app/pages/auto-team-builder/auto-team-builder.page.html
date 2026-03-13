@@ -60,25 +60,39 @@
         </div>
 
         <div class="class-select-card">
-          <span>Class</span>
+          <span>Classes</span>
           <ion-select
             interface="popover"
+            [multiple]="true"
             fill="outline"
-            placeholder="Select class"
-            [value]="selectedClass()"
+            placeholder="Select classes"
+            [value]="selectedClasses()"
+            [selectedText]="selectedClassesLabel()"
             (ionChange)="onClassChange($event)"
           >
             <ion-select-option *ngFor="let item of availableClasses()" [value]="item">
               {{ item }}
             </ion-select-option>
           </ion-select>
+          <div class="control-action-row">
+            <ion-button
+              fill="clear"
+              size="small"
+              class="select-all-button"
+              [disabled]="allClassesSelected() || building()"
+              (click)="selectAllClasses()"
+            >
+              Select all classes
+            </ion-button>
+          </div>
+          <small>{{ classSupportLabel }}</small>
         </div>
       </div>
 
       <ion-button
         expand="block"
         color="warning"
-        [disabled]="!selectedClass() || !selectedTypes().length || building()"
+        [disabled]="!selectedClasses().length || !selectedTypes().length || building()"
         (click)="buildTeam()"
       >
         <ion-spinner *ngIf="building()" slot="start" name="crescent"></ion-spinner>
@@ -98,9 +112,15 @@
     <ng-container *ngIf="!building() && result() as current">
       <section class="summary-grid">
         <article class="glass-card summary-card">
-          <span>Selected class</span>
-          <strong>{{ current.input.selectedClass }}</strong>
+          <span>Selected classes</span>
+          <strong>{{ current.input.selectedClasses.join(" / ") }}</strong>
           <small>{{ selectedClassSummaryLabel() }}</small>
+        </article>
+
+        <article class="glass-card summary-card">
+          <span>Selected types</span>
+          <strong>{{ current.input.types.join(" / ") }}</strong>
+          <small>{{ selectedTypeSummaryLabel() }}</small>
         </article>
 
         <article class="glass-card summary-card">
@@ -123,6 +143,22 @@
         </div>
 
         <div class="coverage-groups">
+          <div>
+            <span>Class coverage</span>
+            <div class="chip-row">
+              <small *ngFor="let item of current.coverage.coveredSelectedClasses" class="coverage-chip">{{ item }}</small>
+              <small *ngIf="!current.coverage.coveredSelectedClasses.length" class="coverage-chip">No class coverage</small>
+            </div>
+          </div>
+
+          <div>
+            <span>Type coverage</span>
+            <div class="chip-row">
+              <small *ngFor="let item of current.coverage.coveredSelectedTypes" class="coverage-chip">{{ item }}</small>
+              <small *ngIf="!current.coverage.coveredSelectedTypes.length" class="coverage-chip">No type coverage</small>
+            </div>
+          </div>
+
           <div>
             <span>Burst</span>
             <div class="chip-row">
