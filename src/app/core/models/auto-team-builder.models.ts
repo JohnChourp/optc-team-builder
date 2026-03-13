@@ -25,7 +25,7 @@ export type AutoBuildUtilityRole =
   | "defenseDown";
 
 export interface AutoBuildInput {
-  type: AutoTeamBuilderType;
+  types: AutoTeamBuilderType[];
   selectedClass: string;
   candidateLimit?: number;
 }
@@ -33,7 +33,9 @@ export interface AutoBuildInput {
 export interface AutoBuildEffectTags {
   captainScope: {
     allCharacters: boolean;
-    matchesType: boolean;
+    matchedSelectedTypes: AutoTeamBuilderType[];
+    matchedSelectedTypeCount: number;
+    coversAllSelectedTypes: boolean;
     matchesClass: boolean;
   };
   burstRoles: AutoBuildBurstRole[];

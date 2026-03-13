@@ -31,18 +31,31 @@
     <section class="glass-card controls-card">
       <div class="controls-grid">
         <div class="fixed-type-card">
-          <span>Type</span>
+          <span>Types</span>
           <ion-select
             interface="popover"
+            [multiple]="true"
             fill="outline"
-            placeholder="Select type"
-            [value]="selectedType()"
+            placeholder="Select types"
+            [value]="selectedTypes()"
+            [selectedText]="selectedTypesLabel()"
             (ionChange)="onTypeChange($event)"
           >
             <ion-select-option *ngFor="let item of availableTypes" [value]="item">
               {{ item }}
             </ion-select-option>
           </ion-select>
+          <div class="type-action-row">
+            <ion-button
+              fill="clear"
+              size="small"
+              class="select-all-types-button"
+              [disabled]="allTypesSelected() || building()"
+              (click)="selectAllTypes()"
+            >
+              Select all types
+            </ion-button>
+          </div>
           <small>{{ typeSupportLabel }}</small>
         </div>
 
@@ -62,7 +75,12 @@
         </div>
       </div>
 
-      <ion-button expand="block" color="warning" [disabled]="!selectedClass() || building()" (click)="buildTeam()">
+      <ion-button
+        expand="block"
+        color="warning"
+        [disabled]="!selectedClass() || !selectedTypes().length || building()"
+        (click)="buildTeam()"
+      >
         <ion-spinner *ngIf="building()" slot="start" name="crescent"></ion-spinner>
         {{ buildButtonLabel() }}
       </ion-button>
@@ -82,7 +100,7 @@
         <article class="glass-card summary-card">
           <span>Selected class</span>
           <strong>{{ current.input.selectedClass }}</strong>
-          <small>{{ current.coverage.selectedClassMatches }} / 6 slots ταιριάζουν με την class</small>
+          <small>{{ selectedClassSummaryLabel() }}</small>
         </article>
 
         <article class="glass-card summary-card">

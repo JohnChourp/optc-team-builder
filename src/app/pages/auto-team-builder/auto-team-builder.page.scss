@@ -83,6 +83,16 @@
   font-size: 1.4rem;
 }
 
+.type-action-row {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.select-all-types-button {
+  --color: #f5c84c;
+  margin: 0;
+}
+
 .fixed-type-card small,
 .summary-card small {
   color: rgba(248, 251, 255, 0.62);

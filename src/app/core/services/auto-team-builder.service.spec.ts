@@ -29,7 +29,8 @@ describe("Auto team builder", () => {
       1,
     );
 
-    expect(candidate.tags.captainScope.matchesType).toBe(true);
+    expect(candidate.tags.captainScope.matchedSelectedTypes).toEqual(["DEX"]);
+    expect(candidate.tags.captainScope.coversAllSelectedTypes).toBe(true);
     expect(candidate.tags.captainScope.matchesClass).toBe(true);
     expect(candidate.tags.burstRoles).toEqual(
       expect.arrayContaining(["atkBoost", "orbBoost", "colorAffinity"]),
@@ -38,6 +39,28 @@ describe("Auto team builder", () => {
       expect.arrayContaining(["matchingOrbs", "orbChange", "cooldownReduction"]),
     );
     expect(candidate.tags.utilityRoles).toEqual(expect.arrayContaining(["bind", "despair"]));
+  });
+
+  it("builds combined captain labels for partial multi-type coverage", () => {
+    const candidate = buildAutoBuildCandidate(
+      createCharacterRecord({
+        id: 5915,
+        type: "DEX",
+        primaryClass: "Fighter",
+        detail: {
+          captainAbility: "Boosts ATK of DEX, PSY and Fighter characters by 5x and HP by 1.3x.",
+          specialText: "Boosts color affinity of DEX and PSY characters by 2x for 1 turn.",
+        },
+      }),
+      createInput(["DEX", "PSY", "INT"]),
+      0,
+      1,
+    );
+
+    expect(candidate.tags.captainScope.matchedSelectedTypes).toEqual(["DEX", "PSY"]);
+    expect(candidate.tags.captainScope.matchedSelectedTypeCount).toBe(2);
+    expect(candidate.tags.captainScope.coversAllSelectedTypes).toBe(false);
+    expect(candidate.reasonChips).toContain("DEX / PSY captain");
   });
 
   it("parses STR captain scope and dynamic reason chips", () => {
@@ -51,12 +74,12 @@ describe("Auto team builder", () => {
           specialText: "Boosts color affinity of STR characters by 2x for 1 turn.",
         },
       }),
-      createInput("STR"),
+      createInput(["STR"]),
       0,
       1,
     );
 
-    expect(candidate.tags.captainScope.matchesType).toBe(true);
+    expect(candidate.tags.captainScope.matchedSelectedTypes).toEqual(["STR"]);
     expect(candidate.reasonChips).toContain("STR captain");
     expect(candidate.reasonChips).not.toContain("DEX captain");
   });
@@ -72,12 +95,12 @@ describe("Auto team builder", () => {
           specialText: "Boosts color affinity of QCK characters by 2x for 1 turn.",
         },
       }),
-      createInput("QCK"),
+      createInput(["QCK"]),
       0,
       1,
     );
 
-    expect(candidate.tags.captainScope.matchesType).toBe(true);
+    expect(candidate.tags.captainScope.matchedSelectedTypes).toEqual(["QCK"]);
     expect(candidate.reasonChips).toContain("QCK captain");
     expect(candidate.reasonChips).not.toContain("STR captain");
   });
@@ -93,12 +116,12 @@ describe("Auto team builder", () => {
           specialText: "Boosts color affinity of PSY characters by 2x for 1 turn.",
         },
       }),
-      createInput("PSY"),
+      createInput(["PSY"]),
       0,
       1,
     );
 
-    expect(candidate.tags.captainScope.matchesType).toBe(true);
+    expect(candidate.tags.captainScope.matchedSelectedTypes).toEqual(["PSY"]);
     expect(candidate.reasonChips).toContain("PSY captain");
     expect(candidate.reasonChips).not.toContain("QCK captain");
   });
@@ -114,12 +137,12 @@ describe("Auto team builder", () => {
           specialText: "Boosts color affinity of INT characters by 2x for 1 turn.",
         },
       }),
-      createInput("INT"),
+      createInput(["INT"]),
       0,
       1,
     );
 
-    expect(candidate.tags.captainScope.matchesType).toBe(true);
+    expect(candidate.tags.captainScope.matchedSelectedTypes).toEqual(["INT"]);
     expect(candidate.reasonChips).toContain("INT captain");
     expect(candidate.reasonChips).not.toContain("PSY captain");
   });
@@ -175,29 +198,25 @@ describe("Auto team builder", () => {
     expect(result?.coverage.utility).toContain("Bind clear");
   });
 
-  it("requests QCK candidates from the repository service when QCK is selected", async () => {
-    const repository = {
-      getAutoBuilderCandidates: vi
-        .fn()
-        .mockResolvedValue([
-          createCaptainRecord(),
-          createAtkSubRecord(),
-          createAffinitySubRecord(),
-          createUtilitySubRecord(),
-          createConsistencySubRecord(),
-        ]),
-    };
-    const service = new AutoTeamBuilderService(repository as never);
-
-    await service.buildTeam("Fighter", "QCK");
-
-    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
-      "QCK",
-      AUTO_TEAM_CANDIDATE_LIMIT,
+  it("prefers universal captains over partial multi-type captains", () => {
+    const result = buildAutoTeamResult(
+      [
+        createPartialMultiTypeCaptainRecord(),
+        createUniversalCaptainRecord(),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(["DEX", "PSY"]),
     );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(5905);
+    expect(result?.slots[0]?.reasonChips).toContain("Universal captain");
   });
 
-  it("requests PSY candidates from the repository service when PSY is selected", async () => {
+  it("requests combined candidates from the repository service when multiple types are selected", async () => {
     const repository = {
       getAutoBuilderCandidates: vi
         .fn()
@@ -211,10 +230,10 @@ describe("Auto team builder", () => {
     };
     const service = new AutoTeamBuilderService(repository as never);
 
-    await service.buildTeam("Fighter", "PSY");
+    await service.buildTeam("Fighter", ["DEX", "PSY"]);
 
     expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
-      "PSY",
+      ["DEX", "PSY"],
       AUTO_TEAM_CANDIDATE_LIMIT,
     );
   });
@@ -233,15 +252,15 @@ describe("Auto team builder", () => {
     };
     const service = new AutoTeamBuilderService(repository as never);
 
-    await service.buildTeam("Fighter", "INT");
+    await service.buildTeam("Fighter", ["INT"]);
 
     expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
-      "INT",
+      ["INT"],
       AUTO_TEAM_CANDIDATE_LIMIT,
     );
   });
 
-  it("defaults to DEX when no type is provided", async () => {
+  it("defaults to DEX when no types are provided", async () => {
     const repository = {
       getAutoBuilderCandidates: vi
         .fn()
@@ -258,15 +277,15 @@ describe("Auto team builder", () => {
     await service.buildTeam("Fighter");
 
     expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
-      AUTO_TEAM_BUILDER_DEFAULT_TYPE,
+      [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
       AUTO_TEAM_CANDIDATE_LIMIT,
     );
   });
 });
 
-function createInput(type: AutoTeamBuilderType = AUTO_TEAM_BUILDER_DEFAULT_TYPE): AutoBuildInput {
+function createInput(types: AutoTeamBuilderType[] = [AUTO_TEAM_BUILDER_DEFAULT_TYPE]): AutoBuildInput {
   return {
-    type,
+    types,
     selectedClass: "Fighter",
     candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
   };
@@ -282,6 +301,31 @@ function createCaptainRecord(): CharacterDetailRecord {
         "Boosts ATK of DEX and Fighter characters by 5.25x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.",
       specialText:
         "Boosts orb effects of DEX and Fighter characters by 2.25x for 1 turn and changes orbs into Matching Orbs.",
+    },
+  });
+}
+
+function createUniversalCaptainRecord(): CharacterDetailRecord {
+  return createCharacterRecord({
+    id: 5905,
+    type: "PSY",
+    primaryClass: "Fighter",
+    detail: {
+      captainAbility:
+        "Boosts ATK of all characters by 5x and HP by 1.4x, reduces Special Cooldown of crew by 1 turn.",
+      specialText: "Boosts orb effects of all characters by 2x for 1 turn and changes orbs into Matching Orbs.",
+    },
+  });
+}
+
+function createPartialMultiTypeCaptainRecord(): CharacterDetailRecord {
+  return createCharacterRecord({
+    id: 5906,
+    type: "DEX",
+    primaryClass: "Fighter",
+    detail: {
+      captainAbility: "Boosts ATK of DEX and Fighter characters by 5.25x and HP by 1.3x.",
+      specialText: "Boosts color affinity of DEX characters by 2x for 1 turn.",
     },
   });
 }

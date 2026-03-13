@@ -139,7 +139,12 @@ export class OptcRepositoryService {
     };
   }
 
-  public async getAutoBuilderCandidates(typeFilter: string, limit = 1200): Promise<CharacterDetailRecord[]> {
+  public async getAutoBuilderCandidates(typeFilters: string[], limit = 1200): Promise<CharacterDetailRecord[]> {
+    if (!typeFilters.length) {
+      return [];
+    }
+
+    const placeholders = typeFilters.map(() => "?").join(",");
     const rows = await this.selectAll(
       `
         SELECT
@@ -166,11 +171,11 @@ export class OptcRepositoryService {
           d.detail_json
         FROM characters c
         LEFT JOIN character_details d ON d.character_id = c.id
-        WHERE c.type = ?
+        WHERE c.type IN (${placeholders})
         ORDER BY c.id DESC
         LIMIT ?
       `,
-      [typeFilter, limit],
+      [...typeFilters, limit],
     );
     const decorated = await this.decorateCharacterRows(rows);
 

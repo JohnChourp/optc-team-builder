@@ -43,26 +43,51 @@ import { OptcRepositoryService } from "../../core/services/optc-repository.servi
 })
 export class AutoTeamBuilderPage implements OnInit {
   public readonly summary = signal<DatasetManifest | null>(null);
-  public readonly selectedType = signal<AutoTeamBuilderType>(AUTO_TEAM_BUILDER_DEFAULT_TYPE);
+  public readonly selectedTypes = signal<AutoTeamBuilderType[]>([AUTO_TEAM_BUILDER_DEFAULT_TYPE]);
   public readonly selectedClass = signal("");
   public readonly building = signal(false);
   public readonly result = signal<AutoBuildResult | null>(null);
   public readonly errorMessage = signal("");
 
   public readonly availableTypes = AUTO_TEAM_BUILDER_TYPES;
-  public readonly typeSupportLabel = `${AUTO_TEAM_BUILDER_DEFAULT_TYPE} default, με support και για ${AUTO_TEAM_BUILDER_TYPES.filter((type) => type !== AUTO_TEAM_BUILDER_DEFAULT_TYPE).join(" / ")}`;
+  public readonly typeSupportLabel = "Μπορείς να διαλέξεις ένα ή περισσότερα types για mixed build.";
   public readonly availableClasses = computed(() => this.summary()?.availableClasses ?? []);
-  public readonly builderLabel = computed(() => `Generic ${this.selectedType()} burst builder`);
-  public readonly titleLabel = computed(() => `Διάλεξε class και χτίσε αυτόματα ένα δυνατό ${this.selectedType()} team.`);
+  public readonly hasSelectedTypes = computed(() => this.selectedTypes().length > 0);
+  public readonly allTypesSelected = computed(() => this.selectedTypes().length === this.availableTypes.length);
+  public readonly selectedTypesLabel = computed(() => this.formatSelectedTypes(this.selectedTypes()));
+  public readonly builderLabel = computed(() =>
+    this.hasSelectedTypes() ? `Generic ${this.selectedTypesLabel()} burst builder` : "Generic burst builder",
+  );
+  public readonly titleLabel = computed(
+    () =>
+      this.hasSelectedTypes()
+        ? `Διάλεξε class και χτίσε αυτόματα ένα δυνατό ${this.selectedTypesLabel()} team.`
+        : "Διάλεξε types και class για να χτίσεις αυτόματα ένα δυνατό team.",
+  );
   public readonly descriptionLabel = computed(
     () =>
-      `Το v1 χρησιμοποιεί recent usable ${this.selectedType()} units με readable captain, special, και sailor texts για να φτιάξει ένα generic high-damage team με soft class matching.`,
+      this.hasSelectedTypes()
+        ? `Το v1 χρησιμοποιεί recent usable ${this.selectedTypesLabel()} units με readable captain, special, και sailor texts για να φτιάξει ένα generic high-damage team με soft class matching.`
+        : "Το v1 χρησιμοποιεί recent usable units με readable captain, special, και sailor texts για να φτιάξει ένα generic high-damage team με soft class matching.",
   );
-  public readonly buildButtonLabel = computed(() => `Build best ${this.selectedType()} team`);
+  public readonly buildButtonLabel = computed(() =>
+    this.hasSelectedTypes() ? `Build best ${this.selectedTypesLabel()} team` : "Select types to build team",
+  );
   public readonly loadingLabel = computed(
-    () => `Γίνεται scoring των πιο πρόσφατων usable ${this.selectedType()} χαρακτήρων...`,
+    () =>
+      this.hasSelectedTypes()
+        ? `Γίνεται scoring των πιο πρόσφατων usable ${this.selectedTypesLabel()} χαρακτήρων...`
+        : "Γίνεται scoring των πιο πρόσφατων usable χαρακτήρων...",
   );
-  public readonly candidatePoolLabel = computed(() => `recent usable ${this.selectedType()} records`);
+  public readonly candidatePoolLabel = computed(() =>
+    this.hasSelectedTypes() ? `recent usable ${this.selectedTypesLabel()} records` : "recent usable records",
+  );
+  public readonly selectedClassSummaryLabel = computed(
+    () =>
+      this.hasSelectedTypes()
+        ? `${this.selectedTypesLabel()} • ${this.result()?.coverage.selectedClassMatches ?? 0} / 6 class matches`
+        : `${this.result()?.coverage.selectedClassMatches ?? 0} / 6 class matches`,
+  );
   public readonly teamSlots = computed(() =>
     this.result()?.slots.map((slot) => ({
       ...slot,
@@ -93,14 +118,24 @@ export class AutoTeamBuilderPage implements OnInit {
     this.errorMessage.set("");
   }
 
-  public async onTypeChange(event: CustomEvent<{ value?: AutoTeamBuilderType | null }>): Promise<void> {
-    this.selectedType.set((event.detail.value as AutoTeamBuilderType | null) ?? AUTO_TEAM_BUILDER_DEFAULT_TYPE);
+  public async onTypeChange(event: CustomEvent<{ value?: AutoTeamBuilderType[] | AutoTeamBuilderType | null }>): Promise<void> {
+    this.selectedTypes.set(this.resolveSelectedTypes(event.detail.value));
+    this.result.set(null);
+    this.errorMessage.set("");
+  }
+
+  public selectAllTypes(): void {
+    if (this.allTypesSelected()) {
+      return;
+    }
+
+    this.selectedTypes.set([...this.availableTypes]);
     this.result.set(null);
     this.errorMessage.set("");
   }
 
   public async buildTeam(): Promise<void> {
-    if (!this.selectedClass().trim().length || this.building()) {
+    if (!this.selectedClass().trim().length || !this.selectedTypes().length || this.building()) {
       return;
     }
 
@@ -109,11 +144,11 @@ export class AutoTeamBuilderPage implements OnInit {
     this.errorMessage.set("");
 
     try {
-      const nextResult = await this.autoTeamBuilder.buildTeam(this.selectedClass(), this.selectedType());
+      const nextResult = await this.autoTeamBuilder.buildTeam(this.selectedClass(), this.selectedTypes());
 
       if (!nextResult) {
         this.errorMessage.set(
-          `Δεν βρέθηκαν αρκετοί usable ${this.selectedType()} χαρακτήρες για να χτιστεί ομάδα για αυτή την class.`,
+          `Δεν βρέθηκαν αρκετοί usable ${this.selectedTypesLabel()} χαρακτήρες για να χτιστεί ομάδα για αυτή την class.`,
         );
       }
 
@@ -135,5 +170,17 @@ export class AutoTeamBuilderPage implements OnInit {
       default:
         return "Sub";
     }
+  }
+
+  private resolveSelectedTypes(
+    value: AutoTeamBuilderType[] | AutoTeamBuilderType | null | undefined,
+  ): AutoTeamBuilderType[] {
+    const nextValues = Array.isArray(value) ? value : value ? [value] : [];
+
+    return this.availableTypes.filter((type, index) => nextValues.includes(type) && nextValues.indexOf(type) === index);
+  }
+
+  private formatSelectedTypes(types: AutoTeamBuilderType[]): string {
+    return types.join(" / ");
   }
 }
