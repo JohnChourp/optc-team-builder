@@ -21,6 +21,7 @@ export class AutoTeamBuilderService {
     selectedTypes: AutoTeamBuilderType[] = [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
     constraints: AutoBuildConstraints = {},
   ): Promise<AutoBuildResult | null> {
+    const favoritesOnly = constraints.favoritesOnly ?? false;
     const normalizedTypes = [...new Set(selectedTypes)].filter(
       (type): type is AutoTeamBuilderType => AUTO_TEAM_BUILDER_TYPES.includes(type),
     );
@@ -37,19 +38,28 @@ export class AutoTeamBuilderService {
       classes.push(nextClass);
       return classes;
     }, []);
+    const favoriteCharacterIds = new Set(
+      (constraints.favoriteCharacterIds ?? []).filter(
+        (characterId) => Number.isInteger(characterId) && characterId > 0,
+      ),
+    );
     const input: AutoBuildInput = {
       types: normalizedTypes.length ? normalizedTypes : [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
       selectedClasses: normalizedClasses,
       requireAllSelectedTypesInTeam: constraints.requireAllSelectedTypesInTeam ?? false,
       requireAllSelectedClassesPerCharacter:
         constraints.requireAllSelectedClassesPerCharacter ?? false,
+      favoritesOnly,
       candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
     };
     const records = await this.repository.getAutoBuilderCandidates(
       input.types,
       input.candidateLimit,
     );
+    const candidatePool = favoritesOnly
+      ? records.filter((record) => favoriteCharacterIds.has(record.id))
+      : records;
 
-    return buildAutoTeamResult(records, input);
+    return buildAutoTeamResult(candidatePool, input);
   }
 }

@@ -23,6 +23,7 @@ import {
 import { type DatasetManifest } from '../../core/models/optc.models';
 import { AutoTeamBuilderService } from '../../core/services/auto-team-builder.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import { UserStateService } from '../../core/services/user-state.service';
 
 @Component({
   selector: 'app-auto-team-builder-page',
@@ -49,14 +50,27 @@ export class AutoTeamBuilderPage implements OnInit {
   public readonly selectedClasses = signal<string[]>([]);
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
+  public readonly favoritesOnly = signal(false);
   public readonly building = signal(false);
   public readonly result = signal<AutoBuildResult | null>(null);
   public readonly errorMessage = signal('');
+  public readonly favoriteCharacterIds;
 
   public readonly availableTypes = AUTO_TEAM_BUILDER_TYPES;
   public readonly availableClasses = computed(() => this.summary()?.availableClasses ?? []);
   public readonly hasSelectedClasses = computed(() => this.selectedClasses().length > 0);
   public readonly hasSelectedTypes = computed(() => this.selectedTypes().length > 0);
+  public readonly hasFavoriteCharacters = computed(() => this.favoriteCharacterIds().length > 0);
+  public readonly buildBlockedByFavorites = computed(
+    () => this.favoritesOnly() && !this.hasFavoriteCharacters(),
+  );
+  public readonly buildDisabled = computed(
+    () =>
+      !this.hasSelectedClasses() ||
+      !this.hasSelectedTypes() ||
+      this.building() ||
+      this.buildBlockedByFavorites(),
+  );
   public readonly hasStrictFilters = computed(
     () => this.requireAllSelectedTypesInTeam() || this.requireAllSelectedClassesPerCharacter(),
   );
@@ -84,8 +98,16 @@ export class AutoTeamBuilderPage implements OnInit {
       ? 'Κάθε chosen unit πρέπει να έχει όλα τα selected classes.'
       : 'Τα selected classes μένουν soft preference μόνο και δεν απαιτούνται σε κάθε χαρακτήρα.',
   );
+  public readonly favoritesOnlySupportLabel = computed(() =>
+    this.hasFavoriteCharacters()
+      ? `Το candidate pool περιορίζεται στα ${this.favoriteCharacterIds().length} favorites.`
+      : 'Δεν υπάρχουν ακόμα favorites. Πρόσθεσε favorites για να χρησιμοποιήσεις αυτό το mode.',
+  );
   public readonly typeStrictToggleLabel = 'Require all selected types in team';
   public readonly classStrictToggleLabel = 'Require all selected classes on every character';
+  public readonly favoritesOnlyToggleLabel = 'Use only favorites';
+  public readonly favoritesOnlyBlockedMessage =
+    'Δεν υπάρχουν favorites. Πρόσθεσε χαρακτήρες στα favorites ή απενεργοποίησε το toggle.';
   public readonly selectedClassesLabel = computed(() =>
     this.formatSelectedValues(this.selectedClasses()),
   );
@@ -131,8 +153,12 @@ export class AutoTeamBuilderPage implements OnInit {
   public readonly buildButtonLabel = computed(() =>
     this.hasSelectedTypes()
       ? this.hasStrictFilters()
-        ? `Build strict ${this.selectedTypesLabel()} mixed team`
-        : `Build flexible ${this.selectedTypesLabel()} mixed team`
+        ? this.favoritesOnly()
+          ? `Build favorite-only strict ${this.selectedTypesLabel()} mixed team`
+          : `Build strict ${this.selectedTypesLabel()} mixed team`
+        : this.favoritesOnly()
+          ? `Build favorite-only flexible ${this.selectedTypesLabel()} mixed team`
+          : `Build flexible ${this.selectedTypesLabel()} mixed team`
       : 'Select types to build team',
   );
   public readonly loadingLabel = computed(() =>
@@ -140,11 +166,14 @@ export class AutoTeamBuilderPage implements OnInit {
       ? `Γίνεται scoring των πιο πρόσφατων usable ${this.selectedTypesLabel()} χαρακτήρων...`
       : 'Γίνεται scoring των πιο πρόσφατων usable χαρακτήρων...',
   );
-  public readonly candidatePoolLabel = computed(() =>
-    this.hasSelectedTypes()
-      ? `recent usable ${this.selectedTypesLabel()} records`
-      : 'recent usable records',
-  );
+  public readonly candidatePoolLabel = computed(() => {
+    const isFavoritesOnly = this.result()?.input.favoritesOnly ?? this.favoritesOnly();
+    const poolPrefix = isFavoritesOnly ? 'favorites-only ' : '';
+
+    return this.hasSelectedTypes()
+      ? `${poolPrefix}recent usable ${this.selectedTypesLabel()} records`
+      : `${poolPrefix}recent usable records`;
+  });
   public readonly selectedClassSummaryLabel = computed(() => {
     const current = this.result();
 
@@ -196,9 +225,13 @@ export class AutoTeamBuilderPage implements OnInit {
   public constructor(
     private readonly repository: OptcRepositoryService,
     private readonly autoTeamBuilder: AutoTeamBuilderService,
-  ) {}
+    private readonly userState: UserStateService,
+  ) {
+    this.favoriteCharacterIds = this.userState.favoriteCharacterIds;
+  }
 
   public async ngOnInit(): Promise<void> {
+    await this.userState.ready();
     this.summary.set(await this.repository.getDatasetManifest());
   }
 
@@ -223,6 +256,11 @@ export class AutoTeamBuilderPage implements OnInit {
 
   public onRequireAllSelectedClassesToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.requireAllSelectedClassesPerCharacter.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
+  public onFavoritesOnlyToggle(event: CustomEvent<{ checked: boolean }>): void {
+    this.favoritesOnly.set(event.detail.checked);
     this.resetBuildState();
   }
 
@@ -251,7 +289,7 @@ export class AutoTeamBuilderPage implements OnInit {
   }
 
   public async buildTeam(): Promise<void> {
-    if (!this.selectedClasses().length || !this.selectedTypes().length || this.building()) {
+    if (this.buildDisabled()) {
       return;
     }
 
@@ -266,6 +304,8 @@ export class AutoTeamBuilderPage implements OnInit {
         {
           requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
           requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
+          favoritesOnly: this.favoritesOnly(),
+          favoriteCharacterIds: this.favoriteCharacterIds(),
         },
       );
 
@@ -288,7 +328,12 @@ export class AutoTeamBuilderPage implements OnInit {
   }
 
   private resolveBuildFailureMessage(): string {
+    if (this.buildBlockedByFavorites()) {
+      return this.favoritesOnlyBlockedMessage;
+    }
+
     const activeRequirements: string[] = [];
+    const favoritesScope = this.favoritesOnly() ? ' μέσα στα favorites σου' : '';
 
     if (this.requireAllSelectedTypesInTeam()) {
       activeRequirements.push('τουλάχιστον έναν χαρακτήρα από κάθε selected type');
@@ -298,11 +343,15 @@ export class AutoTeamBuilderPage implements OnInit {
       activeRequirements.push('χαρακτήρες που έχουν όλα τα selected classes');
     }
 
+    if (!activeRequirements.length && this.favoritesOnly()) {
+      return `Δεν βρέθηκε usable ${this.selectedTypesLabel()} team μέσα στα favorites σου.`;
+    }
+
     if (!activeRequirements.length) {
       return `Δεν βρέθηκε usable ${this.selectedTypesLabel()} team που να ταιριάζει στα current filters.`;
     }
 
-    return `Δεν βρέθηκαν αρκετοί usable ${this.selectedTypesLabel()} χαρακτήρες για ${activeRequirements.join(' και ')}.`;
+    return `Δεν βρέθηκαν αρκετοί usable ${this.selectedTypesLabel()} χαρακτήρες${favoritesScope} για ${activeRequirements.join(' και ')}.`;
   }
 
   private resolveRoleLabel(role: 'captain' | 'friendCaptain' | 'sub'): string {

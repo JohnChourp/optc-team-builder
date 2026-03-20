@@ -276,6 +276,37 @@ describe('Auto team builder', () => {
     );
   });
 
+  it('builds teams from favorites only when favorites mode is enabled', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const favoriteCharacterIds = [5925, 5926, 5880, 5870, 5860];
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      favoritesOnly: true,
+      favoriteCharacterIds,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.input.favoritesOnly).toBe(true);
+    expect(result?.slots.every((slot) => favoriteCharacterIds.includes(slot.character.id))).toBe(true);
+  });
+
+  it('returns null in favorites mode when no favorite candidate ids match', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      favoritesOnly: true,
+      favoriteCharacterIds: [999_999],
+    });
+
+    expect(result).toBeNull();
+  });
+
   it('normalizes omitted constraints to false', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
@@ -286,6 +317,7 @@ describe('Auto team builder', () => {
 
     expect(result?.input.requireAllSelectedTypesInTeam).toBe(false);
     expect(result?.input.requireAllSelectedClassesPerCharacter).toBe(false);
+    expect(result?.input.favoritesOnly).toBe(false);
   });
 });
 
@@ -293,10 +325,14 @@ function createInput(
   types: AutoTeamBuilderType[] = [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
   selectedClasses: string[] = ['Fighter'],
   overrides: Partial<
-    Pick<AutoBuildInput, 'requireAllSelectedTypesInTeam' | 'requireAllSelectedClassesPerCharacter'>
+    Pick<
+      AutoBuildInput,
+      'requireAllSelectedTypesInTeam' | 'requireAllSelectedClassesPerCharacter' | 'favoritesOnly'
+    >
   > = {
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
+    favoritesOnly: false,
   },
 ): AutoBuildInput {
   return {
@@ -304,6 +340,7 @@ function createInput(
     selectedClasses,
     requireAllSelectedTypesInTeam: overrides.requireAllSelectedTypesInTeam ?? false,
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
+    favoritesOnly: overrides.favoritesOnly ?? false,
     candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
   };
 }

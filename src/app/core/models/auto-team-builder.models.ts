@@ -9,6 +9,8 @@ export type AutoTeamBuilderType = (typeof AUTO_TEAM_BUILDER_TYPES)[number];
 export interface AutoBuildConstraints {
   requireAllSelectedTypesInTeam?: boolean;
   requireAllSelectedClassesPerCharacter?: boolean;
+  favoritesOnly?: boolean;
+  favoriteCharacterIds?: number[];
 }
 
 export type AutoBuildBurstRole =
@@ -32,6 +34,7 @@ export type AutoBuildUtilityRole =
 export interface AutoBuildInput extends AutoBuildConstraints {
   types: AutoTeamBuilderType[];
   selectedClasses: string[];
+  favoritesOnly: boolean;
   candidateLimit?: number;
 }
 

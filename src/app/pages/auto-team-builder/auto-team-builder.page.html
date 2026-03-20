@@ -111,10 +111,27 @@
         </div>
       </div>
 
+      <div class="strict-toggle-row">
+        <div class="strict-toggle-copy">
+          <strong>{{ favoritesOnlyToggleLabel }}</strong>
+          <small>{{ favoritesOnlySupportLabel() }}</small>
+        </div>
+        <ion-toggle
+          color="warning"
+          [checked]="favoritesOnly()"
+          [disabled]="building()"
+          (ionChange)="onFavoritesOnlyToggle($event)"
+        ></ion-toggle>
+      </div>
+
+      <p *ngIf="buildBlockedByFavorites()" class="favorites-only-warning">
+        {{ favoritesOnlyBlockedMessage }}
+      </p>
+
       <ion-button
         expand="block"
         color="warning"
-        [disabled]="!selectedClasses().length || !selectedTypes().length || building()"
+        [disabled]="buildDisabled()"
         (click)="buildTeam()"
       >
         <ion-spinner *ngIf="building()" slot="start" name="crescent"></ion-spinner>
