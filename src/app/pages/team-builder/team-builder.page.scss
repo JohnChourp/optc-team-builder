@@ -122,9 +122,42 @@
   display: block;
 }
 
+.candidate-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.candidate-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .candidate-card span {
   color: rgba(248, 251, 255, 0.58);
   font-size: 0.8rem;
+}
+
+.favorite-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5c84c;
+}
+
+.favorite-button:hover {
+  background: rgba(245, 200, 76, 0.18);
+}
+
+.favorite-button:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
 }
 
 .saved-teams ion-item {

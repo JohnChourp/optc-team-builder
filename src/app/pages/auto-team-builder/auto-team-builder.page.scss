@@ -119,6 +119,42 @@
   justify-content: flex-start;
 }
 
+.selected-values-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.selected-value-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 200, 76, 0.36);
+  background: rgba(245, 200, 76, 0.16);
+  color: #f8d36b;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.selected-value-chip:hover {
+  border-color: rgba(245, 200, 76, 0.54);
+  background: rgba(245, 200, 76, 0.22);
+}
+
+.selected-value-chip:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
+}
+
+.selected-value-chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .select-all-button,
 .select-all-types-button {
   --color: #f5c84c;
@@ -226,10 +262,39 @@
   gap: 10px;
 }
 
+.result-card__title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .result-card__copy strong {
   color: #ffffff;
   font-size: 1rem;
   line-height: 1.4;
+}
+
+.favorite-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5c84c;
+  flex-shrink: 0;
+}
+
+.favorite-button:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.favorite-button:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
 }
 
 .summary-card strong {

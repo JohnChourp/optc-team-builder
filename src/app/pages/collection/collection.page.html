@@ -39,7 +39,17 @@
       <div class="mini-grid">
         <a *ngFor="let character of favoriteCharacters()" class="mini-card" [routerLink]="['/characters', character.id]">
           <img [src]="character.imageUrl" [alt]="character.name" />
-          <strong>{{ character.name }}</strong>
+          <div class="mini-card__title-row">
+            <strong>{{ character.name }}</strong>
+            <button
+              type="button"
+              class="favorite-button"
+              [attr.aria-label]="isFavorite(character.id) ? 'Remove from favorites' : 'Add to favorites'"
+              (click)="toggleFavorite(character.id, $event)"
+            >
+              <ion-icon [icon]="isFavorite(character.id) ? favoriteIcon : favoriteOutlineIcon"></ion-icon>
+            </button>
+          </div>
           <span>{{ character.type }} • {{ character.primaryClass }}</span>
         </a>
       </div>
@@ -53,7 +63,17 @@
       <div class="mini-grid">
         <a *ngFor="let character of recentCharacters()" class="mini-card" [routerLink]="['/characters', character.id]">
           <img [src]="character.imageUrl" [alt]="character.name" />
-          <strong>{{ character.name }}</strong>
+          <div class="mini-card__title-row">
+            <strong>{{ character.name }}</strong>
+            <button
+              type="button"
+              class="favorite-button"
+              [attr.aria-label]="isFavorite(character.id) ? 'Remove from favorites' : 'Add to favorites'"
+              (click)="toggleFavorite(character.id, $event)"
+            >
+              <ion-icon [icon]="isFavorite(character.id) ? favoriteIcon : favoriteOutlineIcon"></ion-icon>
+            </button>
+          </div>
           <span>{{ character.type }} • {{ character.primaryClass }}</span>
         </a>
       </div>

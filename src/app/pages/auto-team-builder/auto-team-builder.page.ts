@@ -12,7 +12,7 @@ import {
   IonToggle,
   IonToolbar,
 } from '@ionic/angular/standalone';
-import { layersOutline, shieldHalfOutline, sparklesOutline } from 'ionicons/icons';
+import { heart, heartOutline, layersOutline, shieldHalfOutline, sparklesOutline } from 'ionicons/icons';
 
 import {
   AUTO_TEAM_BUILDER_DEFAULT_TYPE,
@@ -221,6 +221,8 @@ export class AutoTeamBuilderPage implements OnInit {
   public readonly sparklesIcon = sparklesOutline;
   public readonly layersIcon = layersOutline;
   public readonly coverageIcon = shieldHalfOutline;
+  public readonly favoriteIcon = heart;
+  public readonly favoriteOutlineIcon = heartOutline;
 
   public constructor(
     private readonly repository: OptcRepositoryService,
@@ -286,6 +288,26 @@ export class AutoTeamBuilderPage implements OnInit {
 
     this.selectedClasses.set([...this.availableClasses()]);
     this.resetBuildState();
+  }
+
+  public removeSelectedType(type: AutoTeamBuilderType): void {
+    this.selectedTypes.set(this.selectedTypes().filter((selectedType) => selectedType !== type));
+    this.resetBuildState();
+  }
+
+  public removeSelectedClass(characterClass: string): void {
+    this.selectedClasses.set(
+      this.selectedClasses().filter((selectedClass) => selectedClass !== characterClass),
+    );
+    this.resetBuildState();
+  }
+
+  public async toggleFavorite(characterId: number): Promise<void> {
+    await this.userState.toggleFavorite(characterId);
+  }
+
+  public isFavorite(characterId: number): boolean {
+    return this.favoriteCharacterIds().includes(characterId);
   }
 
   public async buildTeam(): Promise<void> {
@@ -367,20 +389,20 @@ export class AutoTeamBuilderPage implements OnInit {
 
   private resolveSelectedClasses(value: string[] | string | null | undefined): string[] {
     const nextValues = Array.isArray(value) ? value : value ? [value] : [];
+    const availableClassesSet = new Set(this.availableClasses());
+    const uniqueValues = [...new Set(nextValues.map((characterClass) => characterClass.trim()))];
 
-    return this.availableClasses().filter(
-      (characterClass, index) =>
-        nextValues.includes(characterClass) && nextValues.indexOf(characterClass) === index,
-    );
+    return uniqueValues.filter((characterClass) => characterClass.length && availableClassesSet.has(characterClass));
   }
 
   private resolveSelectedTypes(
     value: AutoTeamBuilderType[] | AutoTeamBuilderType | null | undefined,
   ): AutoTeamBuilderType[] {
     const nextValues = Array.isArray(value) ? value : value ? [value] : [];
+    const uniqueValues = [...new Set(nextValues)];
 
-    return this.availableTypes.filter(
-      (type, index) => nextValues.includes(type) && nextValues.indexOf(type) === index,
+    return uniqueValues.filter((type): type is AutoTeamBuilderType =>
+      this.availableTypes.includes(type),
     );
   }
 

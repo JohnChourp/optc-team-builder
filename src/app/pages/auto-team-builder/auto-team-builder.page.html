@@ -45,6 +45,18 @@
               {{ item }}
             </ion-select-option>
           </ion-select>
+          <div *ngIf="selectedTypes().length" class="selected-values-row">
+            <button
+              type="button"
+              class="selected-value-chip"
+              *ngFor="let item of selectedTypes()"
+              [disabled]="building()"
+              (click)="removeSelectedType(item)"
+            >
+              {{ item }}
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
           <div class="type-action-row">
             <ion-button
               fill="clear"
@@ -85,6 +97,18 @@
               {{ item }}
             </ion-select-option>
           </ion-select>
+          <div *ngIf="selectedClasses().length" class="selected-values-row">
+            <button
+              type="button"
+              class="selected-value-chip"
+              *ngFor="let item of selectedClasses()"
+              [disabled]="building()"
+              (click)="removeSelectedClass(item)"
+            >
+              {{ item }}
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
           <div class="control-action-row">
             <ion-button
               fill="clear"
@@ -250,7 +274,17 @@
             <img [src]="slot.character.imageUrl" [alt]="slot.character.name" loading="lazy" />
 
             <div class="result-card__copy">
-              <strong>{{ slot.character.name }}</strong>
+              <div class="result-card__title-row">
+                <strong>{{ slot.character.name }}</strong>
+                <button
+                  type="button"
+                  class="favorite-button"
+                  [attr.aria-label]="isFavorite(slot.character.id) ? 'Remove from favorites' : 'Add to favorites'"
+                  (click)="toggleFavorite(slot.character.id)"
+                >
+                  <ion-icon [icon]="isFavorite(slot.character.id) ? favoriteIcon : favoriteOutlineIcon"></ion-icon>
+                </button>
+              </div>
               <span
                 >{{ slot.character.primaryClass
                 }}<ng-container *ngIf="slot.character.secondaryClass">

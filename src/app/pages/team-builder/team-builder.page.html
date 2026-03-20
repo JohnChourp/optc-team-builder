@@ -101,8 +101,18 @@
       <div class="candidate-list">
         <article *ngFor="let candidate of candidateCharacters()" class="candidate-card">
           <img [src]="candidate.imageUrl" [alt]="candidate.name" />
-          <div>
-            <strong>{{ candidate.name }}</strong>
+          <div class="candidate-copy">
+            <div class="candidate-title-row">
+              <strong>{{ candidate.name }}</strong>
+              <button
+                type="button"
+                class="favorite-button"
+                [attr.aria-label]="isFavorite(candidate.id) ? 'Remove from favorites' : 'Add to favorites'"
+                (click)="toggleFavorite(candidate.id, $event)"
+              >
+                <ion-icon [icon]="isFavorite(candidate.id) ? favoriteIcon : favoriteOutlineIcon"></ion-icon>
+              </button>
+            </div>
             <span>{{ candidate.type }} • {{ candidate.primaryClass }}</span>
           </div>
           <div class="candidate-actions">

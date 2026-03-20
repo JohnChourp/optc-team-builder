@@ -5,6 +5,7 @@ import {
   IonButton,
   IonContent,
   IonHeader,
+  IonIcon,
   IonInput,
   IonItem,
   IonLabel,
@@ -16,6 +17,7 @@ import {
   IonTitle,
   IonToolbar,
 } from "@ionic/angular/standalone";
+import { heart, heartOutline } from "ionicons/icons";
 
 import { type CharacterListItem, type SavedTeam, type ShipRecord } from "../../core/models/optc.models";
 import { OptcRepositoryService } from "../../core/services/optc-repository.service";
@@ -30,6 +32,7 @@ import { UserStateService } from "../../core/services/user-state.service";
     IonButton,
     IonContent,
     IonHeader,
+    IonIcon,
     IonInput,
     IonItem,
     IonLabel,
@@ -53,14 +56,18 @@ export class TeamBuilderPage implements OnInit {
   public readonly teamName = signal("New Crew");
   public readonly notes = signal("");
   public readonly savedTeams;
+  public readonly favoriteIds;
   public readonly teamTotals = signal({ hp: 0, atk: 0, rcv: 0, cost: 0 });
   public readonly currentTeamId = signal<string | null>(null);
+  public readonly favoriteIcon = heart;
+  public readonly favoriteOutlineIcon = heartOutline;
 
   public constructor(
     private readonly repository: OptcRepositoryService,
     private readonly userState: UserStateService,
   ) {
     this.savedTeams = this.userState.savedTeams;
+    this.favoriteIds = this.userState.favoriteCharacterIds;
   }
 
   public async ngOnInit(): Promise<void> {
@@ -132,6 +139,16 @@ export class TeamBuilderPage implements OnInit {
     if (this.currentTeamId() === teamId) {
       this.resetEditor();
     }
+  }
+
+  public async toggleFavorite(characterId: number, event: Event): Promise<void> {
+    event.preventDefault();
+    event.stopPropagation();
+    await this.userState.toggleFavorite(characterId);
+  }
+
+  public isFavorite(characterId: number): boolean {
+    return this.favoriteIds().includes(characterId);
   }
 
   private async refreshCandidateCharacters(searchTerm: string): Promise<void> {

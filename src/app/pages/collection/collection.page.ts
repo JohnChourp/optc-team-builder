@@ -17,6 +17,8 @@ import {
   closeOutline,
   cloudUploadOutline,
   documentTextOutline,
+  heart,
+  heartOutline,
 } from "ionicons/icons";
 
 import { type CharacterListItem } from "../../core/models/optc.models";
@@ -46,6 +48,7 @@ import { UserStateService } from "../../core/services/user-state.service";
 export class CollectionPage {
   public readonly favoriteCharacters = signal<CharacterListItem[]>([]);
   public readonly recentCharacters = signal<CharacterListItem[]>([]);
+  public readonly favoriteIds;
   public readonly savedTeams;
   public readonly importModalOpen = signal(false);
   public readonly draggingImportFile = signal(false);
@@ -65,12 +68,15 @@ export class CollectionPage {
   public readonly closeIcon = closeOutline;
   public readonly successIcon = checkmarkCircleOutline;
   public readonly errorIcon = alertCircleOutline;
+  public readonly favoriteIcon = heart;
+  public readonly favoriteOutlineIcon = heartOutline;
 
   public constructor(
     private readonly repository: OptcRepositoryService,
     private readonly userState: UserStateService,
     private readonly optcbxImport: OptcbxImportService,
   ) {
+    this.favoriteIds = this.userState.favoriteCharacterIds;
     this.savedTeams = this.userState.savedTeams;
 
     effect(() => {
@@ -166,6 +172,16 @@ export class CollectionPage {
     } finally {
       this.importingFavorites.set(false);
     }
+  }
+
+  public async toggleFavorite(characterId: number, event: Event): Promise<void> {
+    event.preventDefault();
+    event.stopPropagation();
+    await this.userState.toggleFavorite(characterId);
+  }
+
+  public isFavorite(characterId: number): boolean {
+    return this.favoriteIds().includes(characterId);
   }
 
   public resetSelectedFile(): void {
