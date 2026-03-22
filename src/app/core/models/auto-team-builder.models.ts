@@ -11,6 +11,7 @@ export interface AutoBuildConstraints {
   requireAllSelectedClassesPerCharacter?: boolean;
   favoritesOnly?: boolean;
   favoriteCharacterIds?: number[];
+  lockedCharacterIds?: number[];
 }
 
 export type AutoBuildBurstRole =
@@ -35,6 +36,7 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   types: AutoTeamBuilderType[];
   selectedClasses: string[];
   favoritesOnly: boolean;
+  lockedCharacterIds: number[];
   candidateLimit?: number;
 }
 

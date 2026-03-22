@@ -5,6 +5,7 @@ import {
   IonContent,
   IonHeader,
   IonIcon,
+  IonSearchbar,
   IonSelect,
   IonSelectOption,
   IonSpinner,
@@ -12,7 +13,13 @@ import {
   IonToggle,
   IonToolbar,
 } from '@ionic/angular/standalone';
-import { heart, heartOutline, layersOutline, shieldHalfOutline, sparklesOutline } from 'ionicons/icons';
+import {
+  heart,
+  heartOutline,
+  layersOutline,
+  shieldHalfOutline,
+  sparklesOutline,
+} from 'ionicons/icons';
 
 import {
   AUTO_TEAM_BUILDER_DEFAULT_TYPE,
@@ -20,7 +27,7 @@ import {
   type AutoBuildResult,
   type AutoTeamBuilderType,
 } from '../../core/models/auto-team-builder.models';
-import { type DatasetManifest } from '../../core/models/optc.models';
+import { type CharacterListItem, type DatasetManifest } from '../../core/models/optc.models';
 import { AutoTeamBuilderService } from '../../core/services/auto-team-builder.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
@@ -34,6 +41,7 @@ import { UserStateService } from '../../core/services/user-state.service';
     IonContent,
     IonHeader,
     IonIcon,
+    IonSearchbar,
     IonSelect,
     IonSelectOption,
     IonSpinner,
@@ -45,9 +53,15 @@ import { UserStateService } from '../../core/services/user-state.service';
   styleUrl: './auto-team-builder.page.scss',
 })
 export class AutoTeamBuilderPage implements OnInit {
+  public readonly maxLockedCharacters = 5;
+  private readonly manualSearchLimit = 24;
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly selectedTypes = signal<AutoTeamBuilderType[]>([AUTO_TEAM_BUILDER_DEFAULT_TYPE]);
   public readonly selectedClasses = signal<string[]>([]);
+  public readonly manualSearchTerm = signal('');
+  public readonly manualCandidates = signal<CharacterListItem[]>([]);
+  public readonly lockedCharacterIds = signal<number[]>([]);
+  public readonly lockedCharacterRecords = signal<Record<number, CharacterListItem>>({});
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
   public readonly favoritesOnly = signal(false);
@@ -60,6 +74,22 @@ export class AutoTeamBuilderPage implements OnInit {
   public readonly availableClasses = computed(() => this.summary()?.availableClasses ?? []);
   public readonly hasSelectedClasses = computed(() => this.selectedClasses().length > 0);
   public readonly hasSelectedTypes = computed(() => this.selectedTypes().length > 0);
+  public readonly lockedCharacters = computed(() => {
+    const lockedRecords = this.lockedCharacterRecords();
+
+    return this.lockedCharacterIds()
+      .map((characterId) => lockedRecords[characterId])
+      .filter((character): character is CharacterListItem => Boolean(character));
+  });
+  public readonly hasLockedCharacters = computed(() => this.lockedCharacterIds().length > 0);
+  public readonly lockedLimitReached = computed(
+    () => this.lockedCharacterIds().length >= this.maxLockedCharacters,
+  );
+  public readonly clearAllButtonDisabled = computed(
+    () =>
+      this.building() ||
+      (!this.hasLockedCharacters() && !this.result() && !this.errorMessage().length),
+  );
   public readonly hasFavoriteCharacters = computed(() => this.favoriteCharacterIds().length > 0);
   public readonly buildBlockedByFavorites = computed(
     () => this.favoritesOnly() && !this.hasFavoriteCharacters(),
@@ -102,6 +132,15 @@ export class AutoTeamBuilderPage implements OnInit {
     this.hasFavoriteCharacters()
       ? `Το candidate pool περιορίζεται στα ${this.favoriteCharacterIds().length} favorites.`
       : 'Δεν υπάρχουν ακόμα favorites. Πρόσθεσε favorites για να χρησιμοποιήσεις αυτό το mode.',
+  );
+  public readonly lockedSummaryLabel = computed(
+    () =>
+      `${this.lockedCharacterIds().length} / ${this.maxLockedCharacters} χειροκίνητα locked units`,
+  );
+  public readonly manualPickerSupportLabel = computed(() =>
+    this.lockedLimitReached()
+      ? 'Έχεις κλειδώσει το μέγιστο των 5 μοναδικών χαρακτήρων.'
+      : 'Διάλεξε χαρακτήρες που θέλεις να μείνουν σταθεροί και το auto-build θα γεμίσει τα υπόλοιπα slots.',
   );
   public readonly typeStrictToggleLabel = 'Require all selected types in team';
   public readonly classStrictToggleLabel = 'Require all selected classes on every character';
@@ -235,6 +274,7 @@ export class AutoTeamBuilderPage implements OnInit {
   public async ngOnInit(): Promise<void> {
     await this.userState.ready();
     this.summary.set(await this.repository.getDatasetManifest());
+    await this.refreshManualCandidates('');
   }
 
   public async onClassChange(
@@ -249,6 +289,40 @@ export class AutoTeamBuilderPage implements OnInit {
   ): Promise<void> {
     this.selectedTypes.set(this.resolveSelectedTypes(event.detail.value));
     this.resetBuildState();
+  }
+
+  public async onManualSearchChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
+    const searchTerm = (event.detail.value ?? '').trim();
+    this.manualSearchTerm.set(searchTerm);
+    await this.refreshManualCandidates(searchTerm);
+  }
+
+  public lockCharacter(character: CharacterListItem): void {
+    if (this.isLockedCharacter(character.id) || this.lockedLimitReached()) {
+      return;
+    }
+
+    this.cacheCharacterRecord(character);
+    this.lockedCharacterIds.set([...this.lockedCharacterIds(), character.id]);
+    this.resetBuildState();
+  }
+
+  public removeLockedCharacter(characterId: number): void {
+    this.lockedCharacterIds.set(
+      this.lockedCharacterIds().filter(
+        (selectedCharacterId) => selectedCharacterId !== characterId,
+      ),
+    );
+    this.resetBuildState();
+  }
+
+  public clearAllManualSelections(): void {
+    this.lockedCharacterIds.set([]);
+    this.resetBuildState();
+  }
+
+  public isLockedCharacter(characterId: number): boolean {
+    return this.lockedCharacterIds().includes(characterId);
   }
 
   public onRequireAllSelectedTypesToggle(event: CustomEvent<{ checked: boolean }>): void {
@@ -328,11 +402,14 @@ export class AutoTeamBuilderPage implements OnInit {
           requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
           favoritesOnly: this.favoritesOnly(),
           favoriteCharacterIds: this.favoriteCharacterIds(),
+          lockedCharacterIds: this.lockedCharacterIds(),
         },
       );
 
       if (!nextResult) {
         this.errorMessage.set(this.resolveBuildFailureMessage());
+      } else {
+        nextResult.slots.forEach((slot) => this.cacheCharacterRecord(slot.character));
       }
 
       this.result.set(nextResult);
@@ -354,6 +431,12 @@ export class AutoTeamBuilderPage implements OnInit {
       return this.favoritesOnlyBlockedMessage;
     }
 
+    const lockedCount = this.lockedCharacterIds().length;
+
+    if (lockedCount > this.maxLockedCharacters) {
+      return `Μπορείς να κλειδώσεις μέχρι ${this.maxLockedCharacters} χαρακτήρες. Πάτα Clear All και επίλεξε ξανά.`;
+    }
+
     const activeRequirements: string[] = [];
     const favoritesScope = this.favoritesOnly() ? ' μέσα στα favorites σου' : '';
 
@@ -365,6 +448,18 @@ export class AutoTeamBuilderPage implements OnInit {
       activeRequirements.push('χαρακτήρες που έχουν όλα τα selected classes');
     }
 
+    if (lockedCount) {
+      if (this.favoritesOnly()) {
+        return `Δεν βρέθηκε usable ${this.selectedTypesLabel()} team που να κρατάει τους ${lockedCount} manual χαρακτήρες στα favorites σου. Αφαίρεσε κάποια manual picks ή πάτα Clear All.`;
+      }
+
+      if (activeRequirements.length) {
+        return `Δεν βρέθηκαν αρκετοί usable ${this.selectedTypesLabel()} χαρακτήρες για ${activeRequirements.join(' και ')} ενώ κρατάμε ${lockedCount} manual picks. Αφαίρεσε κάποια manual picks ή πάτα Clear All.`;
+      }
+
+      return `Δεν βρέθηκε usable ${this.selectedTypesLabel()} team που να κρατάει τους ${lockedCount} manual χαρακτήρες. Αφαίρεσε κάποια manual picks ή πάτα Clear All.`;
+    }
+
     if (!activeRequirements.length && this.favoritesOnly()) {
       return `Δεν βρέθηκε usable ${this.selectedTypesLabel()} team μέσα στα favorites σου.`;
     }
@@ -374,6 +469,32 @@ export class AutoTeamBuilderPage implements OnInit {
     }
 
     return `Δεν βρέθηκαν αρκετοί usable ${this.selectedTypesLabel()} χαρακτήρες${favoritesScope} για ${activeRequirements.join(' και ')}.`;
+  }
+
+  private async refreshManualCandidates(searchTerm: string): Promise<void> {
+    const candidates = await this.repository.searchCharacters({
+      searchTerm,
+      typeFilter: '',
+      classFilter: '',
+      limit: this.manualSearchLimit,
+      offset: 0,
+    });
+
+    this.manualCandidates.set(candidates);
+    candidates.forEach((candidate) => this.cacheCharacterRecord(candidate));
+  }
+
+  private cacheCharacterRecord(character: CharacterListItem): void {
+    this.lockedCharacterRecords.update((currentRecords) => {
+      if (currentRecords[character.id]) {
+        return currentRecords;
+      }
+
+      return {
+        ...currentRecords,
+        [character.id]: character,
+      };
+    });
   }
 
   private resolveRoleLabel(role: 'captain' | 'friendCaptain' | 'sub'): string {
@@ -392,7 +513,9 @@ export class AutoTeamBuilderPage implements OnInit {
     const availableClassesSet = new Set(this.availableClasses());
     const uniqueValues = [...new Set(nextValues.map((characterClass) => characterClass.trim()))];
 
-    return uniqueValues.filter((characterClass) => characterClass.length && availableClassesSet.has(characterClass));
+    return uniqueValues.filter(
+      (characterClass) => characterClass.length && availableClassesSet.has(characterClass),
+    );
   }
 
   private resolveSelectedTypes(

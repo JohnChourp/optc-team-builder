@@ -168,6 +168,88 @@
   line-height: 1.45;
 }
 
+.manual-locks-card {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.manual-locks-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.manual-locks-meta strong {
+  color: #f8fbff;
+  font-size: 0.9rem;
+}
+
+.manual-selected-row {
+  margin-top: 0;
+}
+
+.manual-lock-chip {
+  max-width: 100%;
+  justify-content: flex-start;
+}
+
+.manual-lock-chip img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.manual-candidate-list {
+  display: grid;
+  gap: 8px;
+  max-height: 300px;
+  overflow: auto;
+}
+
+.manual-candidate-card {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.manual-candidate-card img {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.manual-candidate-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.manual-candidate-copy strong {
+  color: #ffffff;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.manual-candidate-copy span {
+  color: rgba(248, 251, 255, 0.66);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
 .fixed-type-card small,
 .class-select-card small,
 .summary-card small {
@@ -329,6 +411,15 @@ ion-select {
   --border-radius: 18px;
   --color: #f8fbff;
   --highlight-color-focused: rgba(245, 200, 76, 0.8);
+}
+
+ion-searchbar {
+  --background: rgba(255, 255, 255, 0.06);
+  --border-radius: 16px;
+  --color: #f8fbff;
+  --placeholder-color: rgba(248, 251, 255, 0.6);
+  --clear-button-color: rgba(248, 251, 255, 0.7);
+  padding: 0;
 }
 
 ion-toggle {

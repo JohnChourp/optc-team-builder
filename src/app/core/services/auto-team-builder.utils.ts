@@ -40,6 +40,8 @@ const CHIP_LABELS = {
   paralysis: 'Paralysis clear',
   threshold: 'Threshold clear',
 } as const;
+const TEAM_UNIQUE_CHARACTER_LIMIT = 5;
+const LOCKED_REASON_CHIP = 'Manual lock';
 
 interface TeamCoverageState {
   burst: Set<AutoBuildBurstRole>;
@@ -53,6 +55,12 @@ export function buildAutoTeamResult(
   records: CharacterDetailRecord[],
   input: AutoBuildInput,
 ): AutoBuildResult | null {
+  const lockedCharacterIds = [...new Set(input.lockedCharacterIds)];
+
+  if (lockedCharacterIds.length > TEAM_UNIQUE_CHARACTER_LIMIT) {
+    return null;
+  }
+
   const usableRecords = records.filter((record) => hasReadableEffectText(record));
 
   if (!usableRecords.length) {
@@ -62,16 +70,40 @@ export function buildAutoTeamResult(
   const candidates = usableRecords.map((record, index) =>
     buildAutoBuildCandidate(record, input, index, usableRecords.length),
   );
-  const captainPool = input.requireAllSelectedClassesPerCharacter
+  const candidateById = new Map(candidates.map((candidate) => [candidate.character.id, candidate]));
+  const lockedCandidates = lockedCharacterIds
+    .map((characterId) => candidateById.get(characterId))
+    .filter((candidate): candidate is AutoBuildCandidate => Boolean(candidate));
+
+  if (lockedCandidates.length !== lockedCharacterIds.length) {
+    return null;
+  }
+
+  if (
+    input.requireAllSelectedClassesPerCharacter &&
+    lockedCandidates.some((candidate) => !candidate.matchesAllSelectedClasses)
+  ) {
+    return null;
+  }
+
+  const lockedCharacterIdSet = new Set(lockedCharacterIds);
+  const captainPoolBase = input.requireAllSelectedClassesPerCharacter
     ? candidates.filter((candidate) => candidate.matchesAllSelectedClasses)
     : candidates;
+  const captainPool =
+    lockedCharacterIds.length === TEAM_UNIQUE_CHARACTER_LIMIT
+      ? captainPoolBase.filter((candidate) => lockedCharacterIdSet.has(candidate.character.id))
+      : captainPoolBase;
   const captain = selectCaptain(captainPool);
 
   if (!captain) {
     return null;
   }
 
-  const subs = selectSubs(candidates, captain, input);
+  const mandatoryLockedSubs = lockedCandidates.filter(
+    (candidate) => candidate.character.id !== captain.character.id,
+  );
+  const subs = selectSubs(candidates, captain, input, mandatoryLockedSubs);
 
   if (subs.length < 4) {
     return null;
@@ -84,12 +116,29 @@ export function buildAutoTeamResult(
   }
 
   const slots: AutoBuildSlot[] = [
-    { role: 'captain', character: captain.character, reasonChips: captain.reasonChips },
-    { role: 'friendCaptain', character: captain.character, reasonChips: captain.reasonChips },
+    {
+      role: 'captain',
+      character: captain.character,
+      reasonChips: resolveSlotReasonChips(
+        captain.reasonChips,
+        lockedCharacterIdSet.has(captain.character.id),
+      ),
+    },
+    {
+      role: 'friendCaptain',
+      character: captain.character,
+      reasonChips: resolveSlotReasonChips(
+        captain.reasonChips,
+        lockedCharacterIdSet.has(captain.character.id),
+      ),
+    },
     ...subs.map((candidate) => ({
       role: 'sub' as const,
       character: candidate.character,
-      reasonChips: candidate.reasonChips,
+      reasonChips: resolveSlotReasonChips(
+        candidate.reasonChips,
+        lockedCharacterIdSet.has(candidate.character.id),
+      ),
     })),
   ];
 
@@ -189,20 +238,40 @@ function selectSubs(
   candidates: AutoBuildCandidate[],
   captain: AutoBuildCandidate,
   input: AutoBuildInput,
+  lockedSubs: AutoBuildCandidate[] = [],
 ): AutoBuildCandidate[] {
-  const selected: AutoBuildCandidate[] = [];
+  const selected = [
+    ...new Map(lockedSubs.map((candidate) => [candidate.character.id, candidate])).values(),
+  ];
+
+  if (selected.length > 4) {
+    return [];
+  }
+
+  if (selected.some((candidate) => candidate.character.id === captain.character.id)) {
+    return [];
+  }
+
+  if (
+    input.requireAllSelectedClassesPerCharacter &&
+    selected.some((candidate) => !candidate.matchesAllSelectedClasses)
+  ) {
+    return [];
+  }
+
+  const selectedIds = new Set(selected.map((candidate) => candidate.character.id));
   const coverage = createTeamCoverageState(captain);
+  selected.forEach((candidate) => applyCandidateCoverage(coverage, candidate));
   const pool = candidates.filter(
     (candidate) =>
       candidate.character.id !== captain.character.id &&
+      !selectedIds.has(candidate.character.id) &&
       (!input.requireAllSelectedClassesPerCharacter || candidate.matchesAllSelectedClasses),
   );
 
   while (selected.length < 4) {
     const next = pool
-      .filter(
-        (candidate) => !selected.some((entry) => entry.character.id === candidate.character.id),
-      )
+      .filter((candidate) => !selectedIds.has(candidate.character.id))
       .reduce<AutoBuildCandidate | null>((best, current) => {
         if (!best) {
           return current;
@@ -219,10 +288,21 @@ function selectSubs(
     }
 
     selected.push(next);
+    selectedIds.add(next.character.id);
     applyCandidateCoverage(coverage, next);
   }
 
   return selected;
+}
+
+function resolveSlotReasonChips(reasonChips: string[], isLocked: boolean): string[] {
+  if (!isLocked) {
+    return reasonChips;
+  }
+
+  return reasonChips.includes(LOCKED_REASON_CHIP)
+    ? reasonChips
+    : [LOCKED_REASON_CHIP, ...reasonChips].slice(0, 4);
 }
 
 function scoreCaptain(candidate: AutoBuildCandidate): number {

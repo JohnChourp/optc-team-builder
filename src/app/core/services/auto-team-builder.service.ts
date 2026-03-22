@@ -43,6 +43,13 @@ export class AutoTeamBuilderService {
         (characterId) => Number.isInteger(characterId) && characterId > 0,
       ),
     );
+    const lockedCharacterIds = [
+      ...new Set(
+        (constraints.lockedCharacterIds ?? []).filter(
+          (characterId) => Number.isInteger(characterId) && characterId > 0,
+        ),
+      ),
+    ];
     const input: AutoBuildInput = {
       types: normalizedTypes.length ? normalizedTypes : [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
       selectedClasses: normalizedClasses,
@@ -50,6 +57,7 @@ export class AutoTeamBuilderService {
       requireAllSelectedClassesPerCharacter:
         constraints.requireAllSelectedClassesPerCharacter ?? false,
       favoritesOnly,
+      lockedCharacterIds,
       candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
     };
     const records = await this.repository.getAutoBuilderCandidates(

@@ -152,12 +152,76 @@
         {{ favoritesOnlyBlockedMessage }}
       </p>
 
-      <ion-button
-        expand="block"
-        color="warning"
-        [disabled]="buildDisabled()"
-        (click)="buildTeam()"
-      >
+      <section class="manual-locks-card">
+        <div class="slot-grid__header">
+          <h2>Manual picks</h2>
+          <p>{{ manualPickerSupportLabel() }}</p>
+        </div>
+
+        <div class="manual-locks-meta">
+          <strong>{{ lockedSummaryLabel() }}</strong>
+          <ion-button
+            fill="clear"
+            size="small"
+            class="select-all-button"
+            [disabled]="clearAllButtonDisabled()"
+            (click)="clearAllManualSelections()"
+          >
+            Clear All
+          </ion-button>
+        </div>
+
+        <div *ngIf="hasLockedCharacters()" class="selected-values-row manual-selected-row">
+          <button
+            type="button"
+            class="selected-value-chip manual-lock-chip"
+            *ngFor="let character of lockedCharacters()"
+            [disabled]="building()"
+            (click)="removeLockedCharacter(character.id)"
+          >
+            <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
+            {{ character.name }}
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+
+        <ion-searchbar
+          [debounce]="150"
+          placeholder="Search and lock a character"
+          [value]="manualSearchTerm()"
+          (ionInput)="onManualSearchChange($event)"
+        ></ion-searchbar>
+
+        <div class="manual-candidate-list">
+          <article *ngFor="let candidate of manualCandidates()" class="manual-candidate-card">
+            <img [src]="candidate.imageUrl" [alt]="candidate.name" loading="lazy" />
+            <div class="manual-candidate-copy">
+              <strong>{{ candidate.name }}</strong>
+              <span
+                >{{ candidate.type }} • {{ candidate.primaryClass
+                }}<ng-container *ngIf="candidate.secondaryClass">
+                  • {{ candidate.secondaryClass }}</ng-container
+                ></span
+              >
+            </div>
+            <ion-button
+              size="small"
+              fill="outline"
+              color="light"
+              [disabled]="building() || (!isLockedCharacter(candidate.id) && lockedLimitReached())"
+              (click)="
+                isLockedCharacter(candidate.id)
+                  ? removeLockedCharacter(candidate.id)
+                  : lockCharacter(candidate)
+              "
+            >
+              {{ isLockedCharacter(candidate.id) ? 'Remove' : 'Lock' }}
+            </ion-button>
+          </article>
+        </div>
+      </section>
+
+      <ion-button expand="block" color="warning" [disabled]="buildDisabled()" (click)="buildTeam()">
         <ion-spinner *ngIf="building()" slot="start" name="crescent"></ion-spinner>
         {{ buildButtonLabel() }}
       </ion-button>
@@ -279,10 +343,14 @@
                 <button
                   type="button"
                   class="favorite-button"
-                  [attr.aria-label]="isFavorite(slot.character.id) ? 'Remove from favorites' : 'Add to favorites'"
+                  [attr.aria-label]="
+                    isFavorite(slot.character.id) ? 'Remove from favorites' : 'Add to favorites'
+                  "
                   (click)="toggleFavorite(slot.character.id)"
                 >
-                  <ion-icon [icon]="isFavorite(slot.character.id) ? favoriteIcon : favoriteOutlineIcon"></ion-icon>
+                  <ion-icon
+                    [icon]="isFavorite(slot.character.id) ? favoriteIcon : favoriteOutlineIcon"
+                  ></ion-icon>
                 </button>
               </div>
               <span

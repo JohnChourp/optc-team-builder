@@ -230,6 +230,59 @@ describe('Auto team builder', () => {
     expect(result).toBeNull();
   });
 
+  it('keeps locked characters in the generated team and fills the remaining slots', () => {
+    const lockedCharacterIds = [5926, 5880];
+    const result = buildAutoTeamResult(createStrictMixedTeamRecords(), {
+      ...createInput(['DEX', 'PSY'], ['Fighter', 'Slasher']),
+      lockedCharacterIds,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 5926)).toBe(true);
+    expect(result?.slots.some((slot) => slot.character.id === 5880)).toBe(true);
+    expect(
+      result?.slots.some(
+        (slot) => slot.character.id === 5926 && slot.reasonChips.includes('Manual lock'),
+      ),
+    ).toBe(true);
+  });
+
+  it('returns null when more than five locked characters are provided', () => {
+    const records = [
+      ...createAllClassStrictTeamRecords(),
+      createCharacterRecord({
+        id: 5936,
+        type: 'DEX',
+        primaryClass: 'Fighter',
+        secondaryClass: 'Slasher',
+        detail: {
+          specialText: 'Boosts ATK of Fighter and Slasher characters by 2x for 1 turn.',
+        },
+      }),
+    ];
+    const result = buildAutoTeamResult(records, {
+      ...createInput(['DEX'], ['Fighter', 'Slasher']),
+      lockedCharacterIds: [5930, 5931, 5932, 5933, 5934, 5936],
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it('forces captain selection from locked picks when five locked characters are provided', () => {
+    const lockedCharacterIds = [5925, 5926, 5880, 5870, 5860];
+    const result = buildAutoTeamResult(createStrictMixedTeamRecords(), {
+      ...createInput(['DEX', 'PSY'], ['Fighter', 'Slasher']),
+      lockedCharacterIds,
+    });
+
+    expect(result).not.toBeNull();
+    expect(lockedCharacterIds).toContain(result?.slots[0]?.character.id ?? -1);
+
+    const uniqueTeamIds = new Set(result?.slots.map((slot) => slot.character.id) ?? []);
+
+    expect(uniqueTeamIds).toEqual(new Set(lockedCharacterIds));
+  });
+
   it('requests combined candidates from the repository service when multiple types are selected', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
@@ -290,7 +343,9 @@ describe('Auto team builder', () => {
 
     expect(result).not.toBeNull();
     expect(result?.input.favoritesOnly).toBe(true);
-    expect(result?.slots.every((slot) => favoriteCharacterIds.includes(slot.character.id))).toBe(true);
+    expect(result?.slots.every((slot) => favoriteCharacterIds.includes(slot.character.id))).toBe(
+      true,
+    );
   });
 
   it('returns null in favorites mode when no favorite candidate ids match', async () => {
@@ -318,6 +373,35 @@ describe('Auto team builder', () => {
     expect(result?.input.requireAllSelectedTypesInTeam).toBe(false);
     expect(result?.input.requireAllSelectedClassesPerCharacter).toBe(false);
     expect(result?.input.favoritesOnly).toBe(false);
+    expect(result?.input.lockedCharacterIds).toEqual([]);
+  });
+
+  it('returns null in favorites mode when locked ids are outside the favorites pool', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      favoritesOnly: true,
+      favoriteCharacterIds: [5925, 5926, 5880, 5870, 5860],
+      lockedCharacterIds: [5900],
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it('normalizes and deduplicates locked ids before building', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      lockedCharacterIds: [5925, 5925, 5926, 0, -1],
+    });
+
+    expect(result?.input.lockedCharacterIds).toEqual([5925, 5926]);
   });
 });
 
@@ -327,12 +411,16 @@ function createInput(
   overrides: Partial<
     Pick<
       AutoBuildInput,
-      'requireAllSelectedTypesInTeam' | 'requireAllSelectedClassesPerCharacter' | 'favoritesOnly'
+      | 'requireAllSelectedTypesInTeam'
+      | 'requireAllSelectedClassesPerCharacter'
+      | 'favoritesOnly'
+      | 'lockedCharacterIds'
     >
   > = {
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     favoritesOnly: false,
+    lockedCharacterIds: [],
   },
 ): AutoBuildInput {
   return {
@@ -341,6 +429,7 @@ function createInput(
     requireAllSelectedTypesInTeam: overrides.requireAllSelectedTypesInTeam ?? false,
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
     favoritesOnly: overrides.favoritesOnly ?? false,
+    lockedCharacterIds: overrides.lockedCharacterIds ?? [],
     candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
   };
 }
