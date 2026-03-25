@@ -1,7 +1,8 @@
-import { Injectable } from "@angular/core";
-import type { Database, SqlJsStatic } from "sql.js";
+import { Injectable } from '@angular/core';
+import type { Database, SqlJsStatic } from 'sql.js';
 
-import { type AutoBuildCandidateQueryOptions } from "../models/auto-team-builder.models";
+import { type AutoBuildCandidateQueryOptions } from '../models/auto-team-builder.models';
+import { type AutoBuildAbilityCatalog } from '../models/auto-team-builder-ability.models';
 import {
   type CharacterAssets,
   type CharacterDetail,
@@ -13,26 +14,28 @@ import {
   type OfflinePackSummary,
   type RegionAvailability,
   type ShipRecord,
-} from "../models/optc.models";
+} from '../models/optc.models';
 
 interface SqlRow {
   [key: string]: string | number | null;
 }
 
-const SQL_WASM_PATH = "assets/vendor/sql.js/sql-wasm.wasm";
-const SQL_SEED_PATH = "assets/data/optc-seed.sql";
-const DATASET_MANIFEST_PATH = "assets/data/optc-manifest.json";
-const FALLBACK_CHARACTER_IMAGE = "assets/placeholders/character-card.svg";
+const SQL_WASM_PATH = 'assets/vendor/sql.js/sql-wasm.wasm';
+const SQL_SEED_PATH = 'assets/data/optc-seed.sql';
+const DATASET_MANIFEST_PATH = 'assets/data/optc-manifest.json';
+const AUTO_TEAM_BUILDER_ABILITY_CATALOG_PATH = 'assets/data/optc-auto-builder-abilities.json';
+const FALLBACK_CHARACTER_IMAGE = 'assets/placeholders/character-card.svg';
 const INVALID_CLASS_PATTERN = /^Class\d+$/i;
 
-@Injectable({ providedIn: "root" })
+@Injectable({ providedIn: 'root' })
 export class OptcRepositoryService {
   private readonly sqlPromise: Promise<SqlJsStatic>;
   private readonly databasePromise: Promise<Database>;
   private manifestPromise?: Promise<DatasetManifest>;
+  private autoBuilderAbilityCatalogPromise?: Promise<AutoBuildAbilityCatalog>;
 
   public constructor() {
-    this.sqlPromise = import("sql.js").then((module) =>
+    this.sqlPromise = import('sql.js').then((module) =>
       module.default({
         locateFile: () => SQL_WASM_PATH,
       }),
@@ -41,10 +44,17 @@ export class OptcRepositoryService {
   }
 
   public async getDatasetManifest(): Promise<DatasetManifest> {
-    this.manifestPromise ??= this.fetchJson<DatasetManifest>(DATASET_MANIFEST_PATH).then((manifest) =>
-      this.normalizeManifest(manifest),
+    this.manifestPromise ??= this.fetchJson<DatasetManifest>(DATASET_MANIFEST_PATH).then(
+      (manifest) => this.normalizeManifest(manifest),
     );
     return this.manifestPromise;
+  }
+
+  public async getAutoBuilderAbilityCatalog(): Promise<AutoBuildAbilityCatalog> {
+    this.autoBuilderAbilityCatalogPromise ??= this.fetchJson<AutoBuildAbilityCatalog>(
+      AUTO_TEAM_BUILDER_ABILITY_CATALOG_PATH,
+    );
+    return this.autoBuilderAbilityCatalogPromise;
   }
 
   public async searchCharacters(query: CharacterSearchQuery): Promise<CharacterListItem[]> {
@@ -131,7 +141,10 @@ export class OptcRepositoryService {
     }
 
     const [record] = await this.decorateCharacterRows(rows);
-    const detail = this.parseJson<CharacterDetail>(rows[0]["detail_json"], this.emptyDetail(characterId));
+    const detail = this.parseJson<CharacterDetail>(
+      rows[0]['detail_json'],
+      this.emptyDetail(characterId),
+    );
 
     return {
       ...record,
@@ -150,17 +163,27 @@ export class OptcRepositoryService {
     }
 
     const lockedCharacterIds = [
-      ...new Set((options.lockedCharacterIds ?? []).filter((characterId) => Number.isInteger(characterId) && characterId > 0)),
+      ...new Set(
+        (options.lockedCharacterIds ?? []).filter(
+          (characterId) => Number.isInteger(characterId) && characterId > 0,
+        ),
+      ),
     ];
     const allowedCharacterIds = [
-      ...new Set((options.allowedCharacterIds ?? []).filter((characterId) => Number.isInteger(characterId) && characterId > 0)),
+      ...new Set(
+        (options.allowedCharacterIds ?? []).filter(
+          (characterId) => Number.isInteger(characterId) && characterId > 0,
+        ),
+      ),
     ];
     const typeClauses = typeFilters.map(() => "(',' || c.type || ',') LIKE ?");
-    const queryParams: Array<string | number> = typeFilters.map((typeFilter) => `%,${typeFilter},%`);
-    let whereClause = `(${typeClauses.join(" OR ")})`;
+    const queryParams: Array<string | number> = typeFilters.map(
+      (typeFilter) => `%,${typeFilter},%`,
+    );
+    let whereClause = `(${typeClauses.join(' OR ')})`;
 
     if (lockedCharacterIds.length) {
-      whereClause = `${whereClause} OR c.id IN (${lockedCharacterIds.map(() => "?").join(",")})`;
+      whereClause = `${whereClause} OR c.id IN (${lockedCharacterIds.map(() => '?').join(',')})`;
       queryParams.push(...lockedCharacterIds);
     }
 
@@ -198,7 +221,10 @@ export class OptcRepositoryService {
     const decorated = await this.decorateCharacterRows(rows);
     const detailedRecords = decorated.map((record, index) => ({
       ...record,
-      detail: this.parseJson<CharacterDetail>(rows[index]["detail_json"], this.emptyDetail(record.id)),
+      detail: this.parseJson<CharacterDetail>(
+        rows[index]['detail_json'],
+        this.emptyDetail(record.id),
+      ),
       detailImageUrl: this.resolveImageUrl(record.assets, true),
     }));
     const allowedCharacterIdSet = allowedCharacterIds.length ? new Set(allowedCharacterIds) : null;
@@ -217,7 +243,7 @@ export class OptcRepositoryService {
       return [];
     }
 
-    const placeholders = ids.map(() => "?").join(",");
+    const placeholders = ids.map(() => '?').join(',');
     const rows = await this.selectAll(
       `
         SELECT
@@ -263,10 +289,10 @@ export class OptcRepositoryService {
     );
 
     return rows.map((row) => ({
-      id: Number(row["id"]),
-      name: String(row["name"]),
-      thumb: row["thumb"] ? String(row["thumb"]) : null,
-      description: String(row["description"]),
+      id: Number(row['id']),
+      name: String(row['name']),
+      thumb: row['thumb'] ? String(row['thumb']) : null,
+      description: String(row['description']),
     }));
   }
 
@@ -309,14 +335,14 @@ export class OptcRepositoryService {
     const installedPacks = new Map(manifest.packs.map((pack) => [pack.key, pack]));
 
     return rows.map((row) => {
-      const assets = this.parseJson<CharacterAssets>(row["assets_json"], {
+      const assets = this.parseJson<CharacterAssets>(row['assets_json'], {
         exactLocal: null,
         thumbnailGlobal: null,
         thumbnailJapan: null,
         fullTransparent: null,
       });
 
-      const regionAvailability = this.parseJson<RegionAvailability>(row["region_json"], {
+      const regionAvailability = this.parseJson<RegionAvailability>(row['region_json'], {
         exactLocal: false,
         thumbnailGlobal: false,
         thumbnailJapan: false,
@@ -324,29 +350,29 @@ export class OptcRepositoryService {
       });
 
       const record: CharacterListItem = {
-        id: Number(row["id"]),
-        name: String(row["name"]),
-        type: String(row["type"]),
-        primaryClass: String(row["primary_class"]),
-        secondaryClass: row["secondary_class"] ? String(row["secondary_class"]) : null,
-        classes: this.parseJson<string[]>(row["classes_json"], []),
-        stars: Number(row["stars"]),
-        cost: Number(row["cost"]),
-        combo: Number(row["combo"]),
-        maxLevel: Number(row["max_level"]),
-        maxExperience: Number(row["max_experience"]),
+        id: Number(row['id']),
+        name: String(row['name']),
+        type: String(row['type']),
+        primaryClass: String(row['primary_class']),
+        secondaryClass: row['secondary_class'] ? String(row['secondary_class']) : null,
+        classes: this.parseJson<string[]>(row['classes_json'], []),
+        stars: Number(row['stars']),
+        cost: Number(row['cost']),
+        combo: Number(row['combo']),
+        maxLevel: Number(row['max_level']),
+        maxExperience: Number(row['max_experience']),
         stats: {
           min: {
-            hp: Number(row["min_hp"]),
-            atk: Number(row["min_atk"]),
-            rcv: Number(row["min_rcv"]),
+            hp: Number(row['min_hp']),
+            atk: Number(row['min_atk']),
+            rcv: Number(row['min_rcv']),
           },
           max: {
-            hp: Number(row["max_hp"]),
-            atk: Number(row["max_atk"]),
-            rcv: Number(row["max_rcv"]),
+            hp: Number(row['max_hp']),
+            atk: Number(row['max_atk']),
+            rcv: Number(row['max_rcv']),
           },
-          growth: Number(row["growth"]),
+          growth: Number(row['growth']),
         },
         regionAvailability,
         assets,
@@ -363,12 +389,12 @@ export class OptcRepositoryService {
     installedPacks?: Map<string, OfflinePackSummary>,
   ): string {
     const packMap = installedPacks ?? new Map();
-    const fullArtInstalled = packMap.get("fullTransparent")?.installed ?? false;
-    const thumbnailGloInstalled = packMap.get("thumbnailsGlo")?.installed ?? false;
-    const thumbnailJapanInstalled = packMap.get("thumbnailsJapan")?.installed ?? false;
+    const fullArtInstalled = packMap.get('fullTransparent')?.installed ?? false;
+    const thumbnailGloInstalled = packMap.get('thumbnailsGlo')?.installed ?? false;
+    const thumbnailJapanInstalled = packMap.get('thumbnailsJapan')?.installed ?? false;
 
     if (preferFullArt && fullArtInstalled && assets.fullTransparent) {
-      return this.toLocalAssetPath("full-transparent", assets.fullTransparent);
+      return this.toLocalAssetPath('full-transparent', assets.fullTransparent);
     }
 
     if (assets.exactLocal) {
@@ -376,15 +402,15 @@ export class OptcRepositoryService {
     }
 
     if (thumbnailGloInstalled && assets.thumbnailGlobal) {
-      return this.toLocalAssetPath("thumbnails-glo", assets.thumbnailGlobal);
+      return this.toLocalAssetPath('thumbnails-glo', assets.thumbnailGlobal);
     }
 
     if (thumbnailJapanInstalled && assets.thumbnailJapan) {
-      return this.toLocalAssetPath("thumbnails-jap", assets.thumbnailJapan);
+      return this.toLocalAssetPath('thumbnails-jap', assets.thumbnailJapan);
     }
 
     if (fullArtInstalled && assets.fullTransparent) {
-      return this.toLocalAssetPath("full-transparent", assets.fullTransparent);
+      return this.toLocalAssetPath('full-transparent', assets.fullTransparent);
     }
 
     return FALLBACK_CHARACTER_IMAGE;
@@ -401,6 +427,7 @@ export class OptcRepositoryService {
       specialName: null,
       specialText: null,
       specialNotes: null,
+      specialAbilities: [],
       sailorAbilities: [],
       sailorNotes: null,
       limitBreak: [],
@@ -415,7 +442,7 @@ export class OptcRepositoryService {
   }
 
   private parseJson<T>(value: string | number | null | undefined, fallback: T): T {
-    if (typeof value !== "string" || !value.length) {
+    if (typeof value !== 'string' || !value.length) {
       return fallback;
     }
 
@@ -450,13 +477,16 @@ export class OptcRepositoryService {
     return {
       ...manifest,
       availableTypes: this.normalizeManifestValues(manifest.availableTypes),
-      availableClasses: this.normalizeManifestValues(manifest.availableClasses, INVALID_CLASS_PATTERN),
+      availableClasses: this.normalizeManifestValues(
+        manifest.availableClasses,
+        INVALID_CLASS_PATTERN,
+      ),
     };
   }
 
   private normalizeManifestValues(values: unknown[], excludePattern?: RegExp): string[] {
     return [...new Set(this.flattenValues(values))]
-      .map((value) => String(value ?? "").trim())
+      .map((value) => String(value ?? '').trim())
       .filter((value) => value.length > 0)
       .filter((value) => !excludePattern?.test(value))
       .sort((left, right) => left.localeCompare(right));

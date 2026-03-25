@@ -20,7 +20,9 @@ export class AutoTeamBuildCancelledError extends Error {
   }
 }
 
-export function isAutoTeamBuildCancelledError(error: unknown): error is AutoTeamBuildCancelledError {
+export function isAutoTeamBuildCancelledError(
+  error: unknown,
+): error is AutoTeamBuildCancelledError {
   return error instanceof AutoTeamBuildCancelledError;
 }
 
@@ -77,7 +79,9 @@ export function runAutoTeamBuildSearch(
       candidateCount: records.length,
       completedAttempts,
       totalAttempts,
-      currentDroppedTypes: requestedInput.types.filter((type) => !relaxedInput.types.includes(type)),
+      currentDroppedTypes: requestedInput.types.filter(
+        (type) => !relaxedInput.types.includes(type),
+      ),
       currentDroppedClasses: requestedInput.selectedClasses.filter(
         (selectedClass) => !relaxedInput.selectedClasses.includes(selectedClass),
       ),
@@ -267,8 +271,9 @@ function sameOrderedValues<T>(left: T[], right: T[]): boolean {
 function satisfiesRequestedCoverage(result: AutoBuildResult | null): result is AutoBuildResult {
   return Boolean(
     result &&
-      result.coverage.coversAllSelectedClasses &&
-      result.coverage.coversAllSelectedTypes,
+    result.coverage.coversAllSelectedClasses &&
+    result.coverage.coversAllSelectedTypes &&
+    result.coverage.abilityRequirements.matchesAll,
   );
 }
 
@@ -288,8 +293,10 @@ function resolveTypeSupport(
     .length;
 }
 
-export function normalizeSelectedTypes(selectedTypes: AutoTeamBuilderType[]): AutoTeamBuilderType[] {
-  return [...new Set(selectedTypes)].filter(
-    (type): type is AutoTeamBuilderType => AUTO_TEAM_BUILDER_TYPES.includes(type),
+export function normalizeSelectedTypes(
+  selectedTypes: AutoTeamBuilderType[],
+): AutoTeamBuilderType[] {
+  return [...new Set(selectedTypes)].filter((type): type is AutoTeamBuilderType =>
+    AUTO_TEAM_BUILDER_TYPES.includes(type),
   );
 }

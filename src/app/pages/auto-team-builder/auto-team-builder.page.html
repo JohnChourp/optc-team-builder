@@ -161,6 +161,141 @@
         ></ion-toggle>
       </div>
 
+      <section class="ability-requirements-card">
+        <div class="slot-grid__header">
+          <h2>Ability requirements</h2>
+          <p>
+            Πρόσθεσε extra utility/effect requirements που πρέπει να καλύπτει συνολικά η τελική
+            ομάδα.
+          </p>
+        </div>
+
+        <div class="manual-locks-meta ability-requirements-meta">
+          <strong>{{ requiredAbilityDrafts().length }} configured rows</strong>
+          <div class="ability-requirements-actions">
+            <ion-button
+              fill="clear"
+              size="small"
+              class="select-all-button"
+              [disabled]="building() || !availableAbilityCatalogItems().length"
+              (click)="addRequiredAbility()"
+            >
+              Add requirement
+            </ion-button>
+            <ion-button
+              fill="clear"
+              size="small"
+              class="select-all-button"
+              [disabled]="building() || !requiredAbilityDrafts().length"
+              (click)="clearRequiredAbilities()"
+            >
+              Clear requirements
+            </ion-button>
+            <ion-button
+              fill="clear"
+              size="small"
+              class="select-all-button"
+              [disabled]="!canDownloadAbilityCatalogJson()"
+              (click)="downloadAbilityCatalogJson()"
+            >
+              {{ downloadAbilityCatalogJsonLabel }}
+            </ion-button>
+          </div>
+        </div>
+
+        <p *ngIf="!availableAbilityCatalogItems().length" class="favorites-only-warning">
+          Δεν βρέθηκε ability catalog. Τρέξε το <code>npm run data:import:all</code> για να
+          δημιουργηθεί.
+        </p>
+
+        <div
+          *ngIf="requiredAbilityDrafts().length"
+          class="selected-values-row ability-requirements-selected-row"
+        >
+          <span
+            *ngFor="let draft of requiredAbilityDrafts()"
+            class="selected-value-chip ability-requirement-chip"
+          >
+            {{ resolveRequiredAbilitySelectedText(draft) }}
+          </span>
+        </div>
+
+        <div class="ability-requirement-list" *ngIf="requiredAbilityDrafts().length">
+          <article *ngFor="let draft of requiredAbilityDrafts()" class="ability-requirement-card">
+            <div class="ability-requirement-fields">
+              <div class="ability-requirement-field">
+                <span>Ability</span>
+                <ion-select
+                  interface="popover"
+                  fill="outline"
+                  placeholder="Select ability"
+                  [value]="draft.abilityKey"
+                  [selectedText]="resolveRequiredAbilitySelectedText(draft)"
+                  (ionChange)="onRequiredAbilityKeyChange(draft.draftId, $event)"
+                >
+                  <ion-select-option
+                    *ngFor="let item of availableAbilityCatalogItems()"
+                    [value]="item.key"
+                  >
+                    {{ item.label }}
+                  </ion-select-option>
+                </ion-select>
+              </div>
+
+              <label
+                *ngIf="resolveAbilityCatalogItem(draft.abilityKey)?.supportsTurns"
+                class="ability-requirement-field ability-requirement-field--number"
+              >
+                <span>Turns</span>
+                <input
+                  type="number"
+                  min="1"
+                  inputmode="numeric"
+                  [value]="draft.minTurns ?? ''"
+                  (input)="onRequiredAbilityTurnsChange(draft.draftId, $event)"
+                />
+              </label>
+
+              <div
+                *ngIf="resolveAbilityCatalogItem(draft.abilityKey)?.supportsSlotTokens"
+                class="ability-requirement-field"
+              >
+                <span>Slot tokens</span>
+                <ion-select
+                  interface="popover"
+                  [multiple]="true"
+                  fill="outline"
+                  placeholder="Select slot tokens"
+                  [value]="draft.slotTokens"
+                  [selectedText]="draft.slotTokens.join(' / ')"
+                  (ionChange)="onRequiredAbilitySlotTokensChange(draft.draftId, $event)"
+                >
+                  <ion-select-option
+                    *ngFor="
+                      let token of resolveAbilityCatalogItem(draft.abilityKey)
+                        ?.availableSlotTokens ?? []
+                    "
+                    [value]="token"
+                  >
+                    {{ token }}
+                  </ion-select-option>
+                </ion-select>
+              </div>
+            </div>
+
+            <ion-button
+              size="small"
+              fill="outline"
+              color="light"
+              [disabled]="building()"
+              (click)="removeRequiredAbility(draft.draftId)"
+            >
+              Remove
+            </ion-button>
+          </article>
+        </div>
+      </section>
+
       <p *ngIf="buildBlockedByFavorites()" class="favorites-only-warning">
         {{ favoritesOnlyBlockedMessage }}
       </p>
@@ -236,7 +371,9 @@
                 size="small"
                 fill="outline"
                 color="light"
-                [disabled]="building() || (!isLeaderCharacter(character.id) && leaderLimitReached())"
+                [disabled]="
+                  building() || (!isLeaderCharacter(character.id) && leaderLimitReached())
+                "
                 (click)="toggleLeaderCharacter(character.id)"
               >
                 {{ isLeaderCharacter(character.id) ? 'Remove leader' : 'Set leader' }}
@@ -274,8 +411,8 @@
           (ionInput)="onManualSearchChange($event)"
         ></ion-searchbar>
 
-      <div class="manual-candidate-list">
-        <article *ngFor="let candidate of manualCandidates()" class="manual-candidate-card">
+        <div class="manual-candidate-list">
+          <article *ngFor="let candidate of manualCandidates()" class="manual-candidate-card">
             <img [src]="candidate.imageUrl" [alt]="candidate.name" loading="lazy" />
             <div class="manual-candidate-copy">
               <strong>{{ candidate.name }}</strong>
@@ -349,7 +486,10 @@
       <section *ngIf="resultUsesFallback()" class="glass-card fallback-card">
         <div class="slot-grid__header">
           <h2>Relaxed fallback used</h2>
-          <p>Τα πάνω filters έμειναν όπως τα διάλεξες. Η ομάδα χτίστηκε αφού αγνοήθηκαν μόνο τα παρακάτω requirements.</p>
+          <p>
+            Τα πάνω filters έμειναν όπως τα διάλεξες. Η ομάδα χτίστηκε αφού αγνοήθηκαν μόνο τα
+            παρακάτω requirements.
+          </p>
         </div>
 
         <div class="coverage-groups">
@@ -365,7 +505,10 @@
           <div *ngIf="droppedResultClasses().length">
             <span>Dropped classes</span>
             <div class="chip-row">
-              <small *ngFor="let item of droppedResultClasses()" class="coverage-chip fallback-chip">
+              <small
+                *ngFor="let item of droppedResultClasses()"
+                class="coverage-chip fallback-chip"
+              >
                 {{ item }}
               </small>
             </div>
@@ -409,14 +552,18 @@
           <div>
             <span>Class request</span>
             <div class="chip-row">
-              <small class="coverage-chip summary-status-chip">{{ selectedClassSummaryLabel() }}</small>
+              <small class="coverage-chip summary-status-chip">{{
+                selectedClassSummaryLabel()
+              }}</small>
             </div>
           </div>
 
           <div>
             <span>Type request</span>
             <div class="chip-row">
-              <small class="coverage-chip summary-status-chip">{{ selectedTypeSummaryLabel() }}</small>
+              <small class="coverage-chip summary-status-chip">{{
+                selectedTypeSummaryLabel()
+              }}</small>
             </div>
           </div>
 
@@ -434,6 +581,15 @@
             <div class="chip-row">
               <small class="coverage-chip summary-status-chip">{{
                 specialSupportSummaryLabel()
+              }}</small>
+            </div>
+          </div>
+
+          <div>
+            <span>Ability requirements</span>
+            <div class="chip-row">
+              <small class="coverage-chip summary-status-chip">{{
+                requiredAbilitySummaryLabel()
               }}</small>
             </div>
           </div>
@@ -514,6 +670,29 @@
               <small *ngFor="let item of current.coverage.utility" class="coverage-chip">{{
                 item
               }}</small>
+            </div>
+          </div>
+
+          <div>
+            <span>Matched ability requirements</span>
+            <div class="chip-row">
+              <small *ngFor="let item of matchedRequiredAbilityLabels()" class="coverage-chip">{{
+                item
+              }}</small>
+              <small *ngIf="!matchedRequiredAbilityLabels().length" class="coverage-chip"
+                >No ability requirements</small
+              >
+            </div>
+          </div>
+
+          <div *ngIf="missingRequiredAbilityLabels().length">
+            <span>Missing ability requirements</span>
+            <div class="chip-row">
+              <small
+                *ngFor="let item of missingRequiredAbilityLabels()"
+                class="coverage-chip fallback-chip"
+                >{{ item }}</small
+              >
             </div>
           </div>
         </div>

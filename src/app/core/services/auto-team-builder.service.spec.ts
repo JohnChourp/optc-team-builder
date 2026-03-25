@@ -103,6 +103,136 @@ describe('Auto team builder', () => {
     expect(result?.slots.some((slot) => slot.character.id === 6000)).toBe(false);
   });
 
+  it('covers required abilities team-wide across different characters', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 5801,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces Bind duration by 5 turns.',
+            specialAbilities: [
+              {
+                key: 'remove_bind',
+                label: 'Remove Bind',
+                minTurns: 5,
+                isCompleteRemoval: false,
+                slotTokens: [],
+              },
+            ],
+          },
+        }),
+        createCharacterRecord({
+          id: 5802,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces Despair duration by 6 turns.',
+            specialAbilities: [
+              {
+                key: 'remove_despair',
+                label: 'Remove Despair',
+                minTurns: 6,
+                isCompleteRemoval: false,
+                slotTokens: [],
+              },
+            ],
+          },
+        }),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      {
+        ...INPUT,
+        requiredAbilities: [
+          { abilityKey: 'remove_bind', minTurns: 5, slotTokens: [] },
+          { abilityKey: 'remove_despair', minTurns: 5, slotTokens: [] },
+        ],
+      },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+    expect(result?.coverage.abilityRequirements.matched).toEqual([
+      { abilityKey: 'remove_bind', minTurns: 5, slotTokens: [] },
+      { abilityKey: 'remove_despair', minTurns: 5, slotTokens: [] },
+    ]);
+  });
+
+  it('matches at least N turns and typed slot tokens for slot barrier requirements', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 5803,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Removes [DEX] and [STR] Slot Barrier completely.',
+            specialAbilities: [
+              {
+                key: 'remove_slot_barrier',
+                label: 'Remove Slot Barrier',
+                minTurns: 99,
+                isCompleteRemoval: true,
+                slotTokens: ['DEX', 'STR'],
+              },
+            ],
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      {
+        ...INPUT,
+        requiredAbilities: [
+          { abilityKey: 'remove_slot_barrier', minTurns: 3, slotTokens: ['DEX'] },
+        ],
+      },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+  });
+
+  it('fails when no candidate covers the required ability tokens', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 5804,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Removes [DEX] Slot Barrier completely.',
+            specialAbilities: [
+              {
+                key: 'remove_slot_barrier',
+                label: 'Remove Slot Barrier',
+                minTurns: 99,
+                isCompleteRemoval: true,
+                slotTokens: ['DEX'],
+              },
+            ],
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      {
+        ...INPUT,
+        requiredAbilities: [
+          { abilityKey: 'remove_slot_barrier', minTurns: 3, slotTokens: ['QCK'] },
+        ],
+      },
+    );
+
+    expect(result).toBeNull();
+  });
+
   it('duplicates the best captain and prefers complementary class-matching subs', () => {
     const result = buildAutoTeamResult(
       [
@@ -177,11 +307,13 @@ describe('Auto team builder', () => {
     expect(result?.coverage.leaderCriteria.hasClassRestriction).toBe(true);
     expect(result?.coverage.leaderCriteria.hasTypeRestriction).toBe(false);
     expect(result?.coverage.leaderCriteria.matchingSlots).toBe(6);
-    expect(result?.slots.every((slot) =>
-      slot.character.classes.some((characterClass) =>
-        ['Powerhouse', 'Striker'].includes(characterClass),
+    expect(
+      result?.slots.every((slot) =>
+        slot.character.classes.some((characterClass) =>
+          ['Powerhouse', 'Striker'].includes(characterClass),
+        ),
       ),
-    )).toBe(true);
+    ).toBe(true);
     expect(result?.slots.some((slot) => slot.character.id === 2705)).toBe(false);
   });
 
@@ -209,9 +341,9 @@ describe('Auto team builder', () => {
     expect(result).not.toBeNull();
     expect(result?.coverage.leaderCriteria.dualLeaderMode).toBe('intersection');
     expect(result?.coverage.leaderCriteria.derivedAllowedClasses).toEqual(['Powerhouse']);
-    expect(result?.slots.slice(2).every((slot) => slot.character.classes.includes('Powerhouse'))).toBe(
-      true,
-    );
+    expect(
+      result?.slots.slice(2).every((slot) => slot.character.classes.includes('Powerhouse')),
+    ).toBe(true);
     expect(result?.slots.some((slot) => slot.character.id === 2716)).toBe(false);
   });
 
@@ -252,9 +384,7 @@ describe('Auto team builder', () => {
     expect(result).not.toBeNull();
     expect(result?.coverage.specialSupport.enabled).toBe(true);
     expect(result?.coverage.specialSupport.allSlotsMatch).toBe(true);
-    expect(result?.slots.every((slot) => slot.reasonChips.includes('Teamwide special'))).toBe(
-      true,
-    );
+    expect(result?.slots.every((slot) => slot.reasonChips.includes('Teamwide special'))).toBe(true);
   });
 
   it('rejects teams when even one slot lacks teamwide special support', () => {
@@ -790,9 +920,14 @@ describe('Auto team builder', () => {
 
     vi.spyOn(service as never, 'createWorker').mockReturnValue(worker as never);
 
-    await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {}, {
-      onProgress: (snapshot) => progressSnapshots.push(snapshot),
-    });
+    await service.buildTeam(
+      ['Fighter', 'Slasher'],
+      ['DEX', 'PSY'],
+      {},
+      {
+        onProgress: (snapshot) => progressSnapshots.push(snapshot),
+      },
+    );
 
     expect(progressSnapshots).toEqual(
       expect.arrayContaining([
@@ -817,9 +952,14 @@ describe('Auto team builder', () => {
 
     vi.spyOn(service as never, 'createWorker').mockReturnValue(worker as never);
 
-    const buildPromise = service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {}, {
-      signal: abortController.signal,
-    });
+    const buildPromise = service.buildTeam(
+      ['Fighter', 'Slasher'],
+      ['DEX', 'PSY'],
+      {},
+      {
+        signal: abortController.signal,
+      },
+    );
 
     await Promise.resolve();
     abortController.abort();
@@ -925,6 +1065,7 @@ function createInput(
   return {
     types,
     selectedClasses,
+    requiredAbilities: [],
     requireAllSelectedTypesInTeam: overrides.requireAllSelectedTypesInTeam ?? false,
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
     requireAllSpecialsSupportTeam: overrides.requireAllSpecialsSupportTeam ?? false,
@@ -1567,6 +1708,7 @@ function createCharacterRecord(
       specialName: overrides.detail?.specialName ?? null,
       specialText: overrides.detail?.specialText ?? null,
       specialNotes: overrides.detail?.specialNotes ?? null,
+      specialAbilities: overrides.detail?.specialAbilities ?? [],
       sailorAbilities: overrides.detail?.sailorAbilities ?? [],
       sailorNotes: overrides.detail?.sailorNotes ?? null,
       limitBreak: overrides.detail?.limitBreak ?? [],

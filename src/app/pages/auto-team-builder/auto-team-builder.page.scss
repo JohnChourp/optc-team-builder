@@ -195,6 +195,15 @@
   background: rgba(255, 255, 255, 0.04);
 }
 
+.ability-requirements-card {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
 .manual-locks-meta {
   display: flex;
   align-items: center;
@@ -205,6 +214,73 @@
 .manual-locks-meta strong {
   color: #f8fbff;
   font-size: 0.9rem;
+}
+
+.ability-requirements-meta {
+  align-items: flex-start;
+}
+
+.ability-requirements-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.ability-requirements-selected-row {
+  margin-top: 0;
+}
+
+.ability-requirement-chip {
+  cursor: default;
+}
+
+.ability-requirement-list {
+  display: grid;
+  gap: 10px;
+}
+
+.ability-requirement-card {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ability-requirement-fields {
+  display: grid;
+  gap: 12px;
+}
+
+.ability-requirement-field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ability-requirement-field span {
+  color: rgba(248, 251, 255, 0.62);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ability-requirement-field--number input {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  font: inherit;
+}
+
+.ability-requirement-field--number input:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
 }
 
 .manual-selected-row {
@@ -667,6 +743,11 @@ ion-toggle {
   .result-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .ability-requirement-fields {
+    grid-template-columns: minmax(0, 2fr) minmax(140px, 0.8fr) minmax(0, 1.4fr);
+    align-items: end;
+  }
 }
 
 @media (max-width: 679px) {
@@ -685,5 +766,15 @@ ion-toggle {
   .loading-card__action {
     width: 100%;
     justify-self: stretch;
+  }
+
+  .manual-locks-meta,
+  .ability-requirements-meta {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ability-requirements-actions {
+    justify-content: stretch;
   }
 }

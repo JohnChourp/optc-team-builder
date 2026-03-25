@@ -42,6 +42,7 @@ export interface AutoTeamSelectionExportPayload {
   filters: {
     selectedTypes: AutoBuildResult['input']['types'];
     selectedClasses: AutoBuildResult['input']['selectedClasses'];
+    requiredAbilities: AutoBuildResult['input']['requiredAbilities'];
     requireAllSelectedTypesInTeam: boolean;
     requireAllSelectedClassesPerCharacter: boolean;
     requireAllSpecialsSupportTeam: boolean;
@@ -60,6 +61,7 @@ export interface AutoTeamSelectionExportPayload {
 interface BuildAutoTeamSelectionExportPayloadOptions {
   selectedTypes: AutoBuildResult['input']['types'];
   selectedClasses: AutoBuildResult['input']['selectedClasses'];
+  requiredAbilities: AutoBuildResult['input']['requiredAbilities'];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
   requireAllSpecialsSupportTeam: boolean;
@@ -134,6 +136,7 @@ export function buildAutoTeamExportPayload(
 export function buildAutoTeamSelectionExportPayload({
   selectedTypes,
   selectedClasses,
+  requiredAbilities,
   requireAllSelectedTypesInTeam,
   requireAllSelectedClassesPerCharacter,
   requireAllSpecialsSupportTeam,
@@ -154,6 +157,10 @@ export function buildAutoTeamSelectionExportPayload({
     filters: {
       selectedTypes: [...selectedTypes],
       selectedClasses: [...selectedClasses],
+      requiredAbilities: requiredAbilities.map((requirement) => ({
+        ...requirement,
+        slotTokens: [...requirement.slotTokens],
+      })),
       requireAllSelectedTypesInTeam,
       requireAllSelectedClassesPerCharacter,
       requireAllSpecialsSupportTeam,
@@ -238,7 +245,12 @@ export function downloadAutoTeamExport(
   documentRef: Document = document,
   urlRef: Pick<typeof URL, 'createObjectURL' | 'revokeObjectURL'> = URL,
 ): void {
-  downloadJsonFile(payload, payload ? buildAutoTeamExportFilename(payload.exportedAt) : '', documentRef, urlRef);
+  downloadJsonFile(
+    payload,
+    payload ? buildAutoTeamExportFilename(payload.exportedAt) : '',
+    documentRef,
+    urlRef,
+  );
 }
 
 export function downloadAutoTeamSelectionExport(

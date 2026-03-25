@@ -1,3 +1,5 @@
+import { type NormalizedSpecialAbility } from './auto-team-builder-ability.models';
+
 export interface CharacterStatsRange {
   hp: number;
   atk: number;
@@ -47,6 +49,7 @@ export interface CharacterDetail {
   specialName: string | null;
   specialText: string | null;
   specialNotes: string | null;
+  specialAbilities: NormalizedSpecialAbility[];
   sailorAbilities: string[];
   sailorNotes: string | null;
   limitBreak: Array<{ description: string }>;

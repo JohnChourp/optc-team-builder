@@ -54,6 +54,52 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     );
   });
 
+  it('passes configured ability requirements to the builder service', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.requiredAbilityDrafts.set([
+      {
+        draftId: 'bind-1',
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+      },
+      {
+        draftId: 'barrier-1',
+        abilityKey: 'remove_slot_barrier',
+        minTurns: 2,
+        slotTokens: ['DEX'],
+      },
+    ]);
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({
+        requiredAbilities: [
+          {
+            abilityKey: 'remove_bind',
+            minTurns: 5,
+            slotTokens: [],
+          },
+          {
+            abilityKey: 'remove_slot_barrier',
+            minTurns: 2,
+            slotTokens: ['DEX'],
+          },
+        ],
+      }),
+      expect.objectContaining({
+        onProgress: expect.any(Function),
+        signal: expect.any(AbortSignal),
+      }),
+    );
+  });
+
   it('resets the special-support toggle when the page state is reset', async () => {
     const { page } = await createPage();
 
@@ -260,13 +306,7 @@ describe('AutoTeamBuilder export helpers', () => {
       { role: 'sub', character: createCharacterRecord(204), reasonChips: [] },
       { role: 'sub', character: createCharacterRecord(205), reasonChips: [] },
     ]);
-    const payload = buildAutoTeamExportPayload(
-      result,
-      [201],
-      201,
-      201,
-      '2026-03-25T10:00:00.000Z',
-    );
+    const payload = buildAutoTeamExportPayload(result, [201], 201, 201, '2026-03-25T10:00:00.000Z');
 
     expect(payload.team[0]?.leaderAssignment).toBe('dual');
     expect(payload.team[1]?.leaderAssignment).toBe('dual');
@@ -363,6 +403,14 @@ describe('AutoTeamBuilderPage preset export state', () => {
     userState.favoriteCharacterIds.set([101, 102, 103]);
     page.selectedTypes.set(['DEX', 'PSY']);
     page.selectedClasses.set(['Fighter', 'Slasher']);
+    page.requiredAbilityDrafts.set([
+      {
+        draftId: 'bind-1',
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+      },
+    ]);
     page.onRequireAllSelectedTypesToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
@@ -390,6 +438,13 @@ describe('AutoTeamBuilderPage preset export state', () => {
       filters: {
         selectedTypes: ['DEX', 'PSY'],
         selectedClasses: ['Fighter', 'Slasher'],
+        requiredAbilities: [
+          {
+            abilityKey: 'remove_bind',
+            minTurns: 5,
+            slotTokens: [],
+          },
+        ],
         requireAllSelectedTypesInTeam: true,
         requireAllSelectedClassesPerCharacter: true,
         requireAllSpecialsSupportTeam: true,
@@ -423,6 +478,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
     const payload = buildAutoTeamSelectionExportPayload({
       selectedTypes: ['DEX', 'PSY'],
       selectedClasses: ['Fighter', 'Slasher'],
+      requiredAbilities: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSpecialsSupportTeam: true,
@@ -439,6 +495,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
     expect(payload.filters).toEqual({
       selectedTypes: ['DEX', 'PSY'],
       selectedClasses: ['Fighter', 'Slasher'],
+      requiredAbilities: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSpecialsSupportTeam: true,
@@ -463,6 +520,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
     const payload = buildAutoTeamSelectionExportPayload({
       selectedTypes: ['DEX'],
       selectedClasses: ['Fighter'],
+      requiredAbilities: [],
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSpecialsSupportTeam: false,
@@ -501,6 +559,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
     const payload = buildAutoTeamSelectionExportPayload({
       selectedTypes: ['DEX', 'PSY'],
       selectedClasses: ['Fighter', 'Slasher'],
+      requiredAbilities: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: true,
       requireAllSpecialsSupportTeam: true,
@@ -583,6 +642,7 @@ function createCharacterRecord(id: number, name = `Character ${id}`): CharacterD
       specialName: `${name} special`,
       specialText: `${name} special text`,
       specialNotes: null,
+      specialAbilities: [],
       sailorAbilities: [`${name} sailor`],
       sailorNotes: null,
       limitBreak: [{ description: `${name} limit break` }],
@@ -614,6 +674,7 @@ function createAutoBuildResult(
   const input: AutoBuildResult['input'] = {
     types: ['DEX', 'PSY'],
     selectedClasses: ['Fighter', 'Slasher'],
+    requiredAbilities: [],
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSpecialsSupportTeam: false,
@@ -630,6 +691,10 @@ function createAutoBuildResult(
       ...input,
       types: [...input.types],
       selectedClasses: [...input.selectedClasses],
+      requiredAbilities: input.requiredAbilities.map((requirement) => ({
+        ...requirement,
+        slotTokens: [...requirement.slotTokens],
+      })),
       lockedCharacterIds: [...input.lockedCharacterIds],
     },
     relaxation: {
@@ -661,6 +726,12 @@ function createAutoBuildResult(
         totalSlots: 6,
         allSlotsMatch: false,
       },
+      abilityRequirements: {
+        requested: [],
+        matched: [],
+        missing: [],
+        matchesAll: true,
+      },
       burst: ['ATK boost'],
       consistency: ['Matching orbs'],
       utility: ['Bind clear'],
@@ -690,6 +761,33 @@ async function createPage(): Promise<{
   const { AutoTeamBuilderPage } = await import('./auto-team-builder.page');
   const repository = {
     getDatasetManifest: vi.fn().mockResolvedValue(createManifest()),
+    getAutoBuilderAbilityCatalog: vi.fn().mockResolvedValue({
+      generatedAt: '2026-03-25T10:00:00.000Z',
+      sourceVersion: 'test',
+      abilityCount: 2,
+      abilities: [
+        {
+          key: 'remove_bind',
+          label: 'Remove Bind',
+          supportsTurns: true,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          matchCount: 10,
+          sampleCharacterIds: [101],
+          sampleTexts: ['Reduces Bind duration by 5 turns'],
+        },
+        {
+          key: 'remove_slot_barrier',
+          label: 'Remove Slot Barrier',
+          supportsTurns: true,
+          supportsSlotTokens: true,
+          availableSlotTokens: ['DEX', 'STR'],
+          matchCount: 6,
+          sampleCharacterIds: [102],
+          sampleTexts: ['Removes [DEX] Slot Barrier completely'],
+        },
+      ],
+    }),
     searchCharacters: vi.fn().mockResolvedValue([]),
   };
   const autoTeamBuilder = {

@@ -1,0 +1,391 @@
+{
+  "generatedAt": "2026-03-25T11:23:55.305Z",
+  "sourceVersion": "unknown",
+  "abilityCount": 18,
+  "abilities": [
+    {
+      "key": "remove_atk_down",
+      "label": "Remove ATK Down",
+      "supportsTurns": true,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "matchCount": 276,
+      "sampleCharacterIds": [
+        1823,
+        1823,
+        1824,
+        1824,
+        1896
+      ],
+      "sampleTexts": [
+        "Deals 100,000 Fixed damage to one enemy and removes ATK DOWN duration completely. Deals 300,000 Fixed damage to one enemy and removes ATK DOWN duration completely. Deals 500,000 Fixed damage to one enemy, removes ATK DOWN duration completely and reduces enemies' Barrier duration by 1 turn",
+        "Deals 100,000 Fixed damage to one enemy and removes ATK DOWN duration completely. Deals 300,000 Fixed damage to one enemy and removes ATK DOWN duration completely. Deals 500,000 Fixed damage to one enemy, removes ATK DOWN duration completely and reduces enemies' Barrier duration by 1 turn",
+        "Deals 100,000 Fixed damage to one enemy and removes ATK DOWN duration completely. Deals 300,000 Fixed damage to one enemy and removes ATK DOWN duration completely. Deals 500,000 Fixed damage to one enemy, removes ATK DOWN duration completely and reduces enemies' Barrier duration by 1 turn",
+        "Deals 100,000 Fixed damage to one enemy and removes ATK DOWN duration completely. Deals 300,000 Fixed damage to one enemy and removes ATK DOWN duration completely. Deals 500,000 Fixed damage to one enemy, removes ATK DOWN duration completely and reduces enemies' Barrier duration by 1 turn",
+        "Changes the orb of this character into a [STR] orb, reduces ATK DOWN, Chain Multiplier Limit and Paralysis duration by 2 turns. If your Captain is a Driven character, adds 0.3x to Chain multiplier for 1 turn. Changes the orb of this character into a [STR] orb, reduces ATK DOWN, Chain Multiplier Limit and Paralysis duration by 5 turns. If your Captain is a Driven character, adds 0.7x to Chain multiplier for 1 turn"
+      ]
+    },
+    {
+      "key": "remove_bind",
+      "label": "Remove Bind",
+      "supportsTurns": true,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "matchCount": 439,
+      "sampleCharacterIds": [
+        228,
+        265,
+        354,
+        355,
+        366
+      ],
+      "sampleTexts": [
+        "Reduces Bind duration by 2 turns",
+        "Reduces Bind duration by 3 turns",
+        "Reduces Bind and Despair duration by 3 turns",
+        "Reduces Bind and Despair duration by 3 turns",
+        "Deals 20x character's ATK in [INT] damage to all enemies, reduces Bind duration by 5 turns"
+      ]
+    },
+    {
+      "key": "remove_blindness",
+      "label": "Remove Blindness",
+      "supportsTurns": true,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "matchCount": 73,
+      "sampleCharacterIds": [
+        767,
+        784,
+        785,
+        1078,
+        1079
+      ],
+      "sampleTexts": [
+        "Changes all orbs of top row characters into [DEX] orbs, removes Blindness duration completely",
+        "Reduces Despair duration by 2 turns, removes Blindness duration completely",
+        "Reduces Despair duration by 2 turns, removes Blindness duration completely",
+        "Recovers 6x character's RCV in HP. Reduces Paralysis duration by 3 turns. Recovers 15x character's RCV in HP. Removes Paralysis, Poison, RCV DOWN and Blindness duration completely. Recovers 50x character's RCV in HP. Removes Paralysis, Poison, RCV DOWN and Blindness duration completely",
+        "Recovers 6x character's RCV in HP. Reduces Paralysis duration by 3 turns. Recovers 15x character's RCV in HP. Removes Paralysis, Poison, RCV DOWN and Blindness duration completely. Recovers 50x character's RCV in HP. Removes Paralysis, Poison, RCV DOWN and Blindness duration completely"
+      ]
+    },
+    {
+      "key": "remove_burn",
+      "label": "Remove Burn",
+      "supportsTurns": true,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "matchCount": 135,
+      "sampleCharacterIds": [
+        2237,
+        2238,
+        2260,
+        2261,
+        2274
+      ],
+      "sampleTexts": [
+        "Recovers 5,000, removes Poison duration completely, reduces Paralysis, Bind, Despair and Burn duration by 2 turns, changes orbs of adjacent characters into Matching Orbs and switches orbs between slots 3 times",
+        "Recovers 5,000, removes Poison duration completely, reduces Paralysis, Bind, Despair and Burn duration by 2 turns, changes orbs of adjacent characters into Matching Orbs and switches orbs between slots 3 times",
+        "Reduces enemies' Barrier duration by 1 turn, reduces Burn duration by 1 turn, boosts chances of getting Matching orbs for 1 turn, changes [BLOCK] orbs into Matching orbs, randomizes all non-Matching orbs, and adds 60x character's ATK as Additional Typeless Damage for 1 turn.",
+        "Reduces enemies' Barrier duration by 1 turn, reduces Burn duration by 1 turn, greatly boosts chances of getting Matching orbs for 1 turn, changes [BLOCK] orbs into Matching orbs, randomizes all non-Matching orbs, and adds 60x character's ATK as Additional Typeless Damage for 1 turn.",
+        "Reduces Paralysis, Silence, Increase Damage Taken and Burn duration by 2 turns. If the enemy is delayed, boosts ATK against delayed enemies by 1.75x for 1 turn, delays all enemies by 1 turn otherwise."
+      ]
+    },
+    {
+      "key": "remove_chain_coefficient_reduction",
+      "label": "Remove Chain Coefficient Reduction",
+      "supportsTurns": true,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "matchCount": 102,
+      "sampleCharacterIds": [
+        1699,
+        1700,
+        1876,
+        1877,
+        1942
+      ],
+      "sampleTexts": [
+        "Adds 0.3x to Chain multiplier for 2 turns, reduces Chain Multiplier Limit and Chain Coefficient Reduction duration by 3 turns",
+        "Adds 0.3x to Chain multiplier for 2 turns, reduces Chain Multiplier Limit and Chain Coefficient Reduction duration by 3 turns",
+        "Deals 50,000 Fixed damage to one enemy, reduces Chain Multiplier Limit and Chain Coefficient Reduction duration by 5 turns and changes orbs of adjacent characters into Matching orbs",
+        "Deals 50,000 Fixed damage to one enemy, reduces Chain Multiplier Limit and Chain Coefficient Reduction duration by 5 turns and changes orbs of adjacent characters into Matching orbs",
+        "Changes the orb of this character into a [STR] orb, reduces Chain Multiplier Limit and Chain Coefficient Reduction duration by 3 turns. If your Captain is a Free Spirit Character, boosts ATK against delayed enemies by 1.75x for 1 turn"
+      ]
+    },
+    {
+      "key": "remove_damage_reduction",
+      "label": "Remove Damage Reduction",
+      "supportsTurns": true,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "matchCount": 86,
+      "sampleCharacterIds": [
+        1539,
+        1540,
+        1907,
+        1908,
+        2030
+      ],
+      "sampleTexts": [
+        "Reduces damage received by 90% for 1 turn, reduces the defense of all enemies by 80% for 1 turn, reduces enemies' Threshold Damage Reduction and Percent Damage Reduction duration by 2 turns",
+        "Reduces damage received by 90% for 1 turn, reduces the defense of all enemies by 80% for 1 turn, reduces enemies' Threshold Damage Reduction and Percent Damage Reduction duration by 2 turns",
+        "Reduces enemies' Threshold Damage Reduction, Percent Damage Reduction and Increased Defense duration by 4 turns. If your crew has 6 Driven characters when the special is activated, boosts ATK of Driven characters by 2x for 1 turn and reduces Special Cooldown of top row characters by 1 turn.",
+        "Reduces enemies' Threshold Damage Reduction, Percent Damage Reduction and Increased Defense duration by 4 turns. If your crew has 6 Driven characters when the special is activated, boosts ATK of Driven characters by 2x for 1 turn and reduces Special Cooldown of top row characters by 1 turn.",
+        "Reduces enemies' Threshold Damage Reduction and Percent Damage Reduction duration by 4 turns and makes [QCK], [PSY], [RCV] and [TND] orbs beneficial for [STR] and [INT] characters for 3 turns"
+      ]
+    },
+    {
+      "key": "remove_despair",
+      "label": "Remove Despair",
+      "supportsTurns": true,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "matchCount": 373,
+      "sampleCharacterIds": [
+        354,
+        355,
+        420,
+        427,
+        433
+      ],
+      "sampleTexts": [
+        "Reduces Bind and Despair duration by 3 turns",
+        "Reduces Bind and Despair duration by 3 turns",
+        "Reduces Despair duration by 3 turns, deals 15x character's ATK in [STR] damage to one enemy",
+        "Reduces Bind and Despair duration by 2 turns",
+        "Reduces Bind and Despair duration by 1 turn"
+      ]
+    },
+    {
+      "key": "remove_increase_damage_taken",
+      "label": "Remove Increase Damage Taken",
+      "supportsTurns": true,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "matchCount": 54,
+      "sampleCharacterIds": [
+        2049,
+        2050,
+        2067,
+        2068,
+        2140
+      ],
+      "sampleTexts": [
+        "Locks the chain multiplier at 3x for 1 turn and reduces Increase Damage Taken duration by 5 turns. If enemies are delayed when the special is activated, deals 1,000,000 Fixed damage to all enemies",
+        "Locks the chain multiplier at 3x for 1 turn and reduces Increase Damage Taken duration by 5 turns. If enemies are delayed when the special is activated, deals 1,000,000 Fixed damage to all enemies",
+        "Reduces ATK DOWN and Increase Damage Taken duration by 5 turns, changes [BLOCK], [STR] and [QCK] orbs into Matching orbs and locks the chain multiplier at 2.75x for 3 turns",
+        "Reduces ATK DOWN and Increase Damage Taken duration by 5 turns, changes [BLOCK], [STR] and [QCK] orbs into Matching orbs and locks the chain multiplier at 2.75x for 3 turns",
+        "If your captain is a [QCK] or [INT] character, boosts Orb Effects of all characters by 2x for 1 turn. If your Captain is a Powerhouse character, reduces Increase Damage Taken duration by 3 turns"
+      ]
+    },
+    {
+      "key": "remove_no_healing",
+      "label": "Remove No Healing",
+      "supportsTurns": true,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "matchCount": 12,
+      "sampleCharacterIds": [
+        1315,
+        1315,
+        1315,
+        1316,
+        1316
+      ],
+      "sampleTexts": [
+        "If HP is below 3,000, reduces No Healing debuff duration by 1 turn. Recovers 3x character's RCV in HP. If HP is below 3,000, reduces No Healing debuff duration by 3 turns. Recovers 6x character's RCV in HP. If HP is below 3,000, removes No Healing debuff duration completely. Recovers 13x character's RCV in HP",
+        "If HP is below 3,000, reduces No Healing debuff duration by 1 turn. Recovers 3x character's RCV in HP. If HP is below 3,000, reduces No Healing debuff duration by 3 turns. Recovers 6x character's RCV in HP. If HP is below 3,000, removes No Healing debuff duration completely. Recovers 13x character's RCV in HP",
+        "If HP is below 3,000, reduces No Healing debuff duration by 1 turn. Recovers 3x character's RCV in HP. If HP is below 3,000, reduces No Healing debuff duration by 3 turns. Recovers 6x character's RCV in HP. If HP is below 3,000, removes No Healing debuff duration completely. Recovers 13x character's RCV in HP",
+        "If HP is below 3,000, reduces No Healing debuff duration by 1 turn. Recovers 3x character's RCV in HP. If HP is below 3,000, reduces No Healing debuff duration by 3 turns. Recovers 6x character's RCV in HP. If HP is below 3,000, removes No Healing debuff duration completely. Recovers 13x character's RCV in HP",
+        "If HP is below 3,000, reduces No Healing debuff duration by 1 turn. Recovers 3x character's RCV in HP. If HP is below 3,000, reduces No Healing debuff duration by 3 turns. Recovers 6x character's RCV in HP. If HP is below 3,000, removes No Healing debuff duration completely. Recovers 13x character's RCV in HP"
+      ]
+    },
+    {
+      "key": "remove_paralysis",
+      "label": "Remove Paralysis",
+      "supportsTurns": true,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "matchCount": 375,
+      "sampleCharacterIds": [
+        1002,
+        1003,
+        1048,
+        1049,
+        1053
+      ],
+      "sampleTexts": [
+        "Reduces Paralysis duration by 3 turns and deals 7x character's ATK in [STR] damage to one enemy",
+        "Reduces Paralysis duration by 3 turns and deals 7x character's ATK in [STR] damage to one enemy",
+        "Reduces Paralysis duration by 3 turns, reduces damage received by 30% for 2 turns and recovers 6x character's RCV in HP at the end of each turn for 3 turns",
+        "Reduces Paralysis duration by 3 turns, reduces damage received by 30% for 2 turns and recovers 6x character's RCV in HP at the end of each turn for 3 turns",
+        "Reduces Paralysis and Despair duration by 3 turns, removes Blindness"
+      ]
+    },
+    {
+      "key": "remove_poison",
+      "label": "Remove Poison",
+      "supportsTurns": true,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "matchCount": 128,
+      "sampleCharacterIds": [
+        379,
+        380,
+        527,
+        528,
+        587
+      ],
+      "sampleTexts": [
+        "Removes Poison duration completely",
+        "Removes Poison duration completely",
+        "Removes Poison duration completely, recovers 15x character's RCV in HP",
+        "Removes Poison duration completely, recovers 15x character's RCV in HP",
+        "Removes Poison duration completely, reduces Bind and Despair duration by 2 turns"
+      ]
+    },
+    {
+      "key": "remove_resilience",
+      "label": "Remove Resilience",
+      "supportsTurns": true,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "matchCount": 122,
+      "sampleCharacterIds": [
+        1878,
+        1879,
+        2106,
+        2107,
+        2122
+      ],
+      "sampleTexts": [
+        "Reduces any damage received above 5,000 HP by 97% for 2 turns, recovers 20% of crew's MAX HP, reduces enemies' ATK Up and Enrage Buffs duration by 5 turns.. Reduces any damage received above 3,000 HP by 97% for 2 turns, recovers 50% of crew's MAX HP, reduces enemies' ATK Up, Enrage, End of Turn Damage/Percent Cut and Resilience Buffs duration by 5 turns.",
+        "Reduces any damage received above 5,000 HP by 97% for 2 turns, recovers 20% of crew's MAX HP, reduces enemies' ATK Up and Enrage Buffs duration by 5 turns.. Reduces any damage received above 3,000 HP by 97% for 2 turns, recovers 50% of crew's MAX HP, reduces enemies' ATK Up, Enrage, End of Turn Damage/Percent Cut and Resilience Buffs duration by 5 turns.",
+        "Reduces enemies' Threshold Damage Reduction, Percent Damage Reduction, Resilience, End of Turn Damage/Percent Cut Buffs duration by 4 turns, changes orbs of adjacent characters into Matching orbs and changes [BLOCK] orbs into Matching orbs, randomizes non-Matching orbs and reduces damage received by 70% for 2 turns.",
+        "Reduces enemies' Threshold Damage Reduction, Percent Damage Reduction and Resilience and End of Turn Damage/Percent Cut Buffs duration by 4 turns, changes orbs of adjacent characters into Matching orbs and changes [BLOCK] orbs into Matching orbs, randomizes non-Matching orbs and reduces damage received by 70% for 2 turns.",
+        "Reduces Despair and ATK DOWN duration by 5 turns and reduces enemies' Resilience Buffs duration by 5 turns. Reduces the defense of all enemies by 80% for 3 turns and boosts Orb Effects of Cerebral and Powerhouse characters by 1.75x for 3 turns"
+      ]
+    },
+    {
+      "key": "remove_sailor_despair",
+      "label": "Remove Sailor Despair",
+      "supportsTurns": true,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "matchCount": 2,
+      "sampleCharacterIds": [
+        3851,
+        3852
+      ],
+      "sampleTexts": [
+        "Reduces Special Cooldown of [PSY] and [INT] characters by 1 turn and boosts Orb Effects of [PSY] and [INT] characters by 2.5x-2.75x, based on total damage taken. If your Captain is a [PSY] or [INT] character, reduces Bind and Sailor Despair duration by 6 turns, reduces damage received by 100% for 1 turn or 1-2 attacks, depending on Special Counter, and increases duration of any Orb Amplification buffs by 1 turn, including effects activated in the same Ability.",
+        "Reduces Special Cooldown of [PSY] and [INT] characters by 1 turn and boosts Orb Effects of [PSY] and [INT] characters by 2.5x-2.75x, based on total damage taken. If your Captain is a [PSY] or [INT] character, reduces Bind and Sailor Despair duration by 6 turns, reduces damage received by 100% for 1 turn or 1-2 attacks, depending on Special Counter, and increases duration of any Orb Amplification buffs by 1 turn, including effects activated in the same Ability."
+      ]
+    },
+    {
+      "key": "remove_ship_bind",
+      "label": "Remove Ship Bind",
+      "supportsTurns": true,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "matchCount": 5,
+      "sampleCharacterIds": [
+        3700,
+        3884,
+        4076,
+        4140,
+        4193
+      ],
+      "sampleTexts": [
+        "Reduces Special Cooldown of all characters by 2 turns, changes all orbs, including [BLOCK] orbs, into Matching orbs and reduces Ship Bind duration completely.",
+        "Reduces Ship Bind duration by 2 turns, makes [STR], [DEX] and [INT] orbs beneficial for all characters for 3 turns and reduces any damage received above 5,000 HP by 97% for 2 turns.",
+        "Reduces the defense of all enemies by 100% for 1 turn. If during that turn you score 2 PERFECT hits, reduces the defense of all enemies by 100% for 1 turn in the following turn. Reduces Ship Bind, Bind and Chain Coefficient Reduction duration by 6 turns. Reduces crew's current HP by 95%, deals 30x the amount of HP subtracted in Typeless damage to all enemies, and deals 200x character's ATK in [QCK] damage to enemies at end of each turn for 3 turns.",
+        "Reduces Despair, No Healing, Ship Bind duration by 6 turns, recovers 15,000 HP, and boosts ATK against enemies inflicted with Defense Down by 2.25x for 2 turns. Boosts base ATK of [DEX], [INT] and Cerebral characters by 1,250-2,000 for 2 turns based on the number of status effects applied on enemy. Increases boost effects of Status ATK Boost buffs by +0.25x, including effects activated in the same Ability, increases boost effects of Base ATK Boost buffs by +250, including effects activated in the same Ability, and becomes Law & Bepo for 3 turns.",
+        "Reduces Special Cooldown of all characters by 1 turn, reduces enemies' damage reduction and Threshold Damage Reduction duration by 4 turns, reduces Ship Bind duration by 7 turns, boosts Color Affinity of [DEX], Powerhouse, and Shooter characters by 2.75x for 2 turns, adds 150x character's ATK in Typeless damage on top of tap-timing bonuses for 5 turns, reduces enemies' [DEX], Powerhouse, and Shooter Resistance by -10% for 1 turn, and allows chain multiplier growth rate alterating effect to be further increased up to 2 times. If \"Seeing Through the Fateful Day\" was used in this turn, further increases chain multiplier growth rate alterating effect by +0.2, and further increases type effect boost by +0.5 (effect applies to type effect boost from this Special)"
+      ]
+    },
+    {
+      "key": "remove_slot_barrier",
+      "label": "Remove Slot Barrier",
+      "supportsTurns": true,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "matchCount": 2,
+      "sampleCharacterIds": [
+        3356,
+        3357
+      ],
+      "sampleTexts": [
+        "Reduces Slot Barrier duration by 3 stacks, reduces Paralysis and Silence duration by 7 turns and recovers 50x character's RCV in HP, allowing HP Overfill up to 2x MAX HP. If HP is below 50% when the special is activated, boosts the Color Affinity of [PSY], [INT] and Powerhouse characters by 2.5x for 1 turn, by 2x for 1 turn otherwise. If your crew has Color Affinity boost when the special is activated, adds 1.2x to Chain multiplier for 1 turn.",
+        "Reduces Slot Barrier duration by 3 stacks, reduces Paralysis and Silence duration by 7 turns and recovers 50x character's RCV in HP, allowing HP Overfill up to 2x MAX HP. If HP is below 50% when the special is activated, boosts the Color Affinity of [PSY], [INT] and Powerhouse characters by 2.5x for 1 turn, by 2x for 1 turn otherwise. If your crew has Color Affinity boost when the special is activated, adds 1.2x to Chain multiplier for 1 turn."
+      ]
+    },
+    {
+      "key": "remove_slot_bind",
+      "label": "Remove Slot Bind",
+      "supportsTurns": true,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "matchCount": 8,
+      "sampleCharacterIds": [
+        3306,
+        3307,
+        3580,
+        4031,
+        4050
+      ],
+      "sampleTexts": [
+        "Reduces Slot Bind and Silence duration by 10 turns, reduces Special Cooldown of all characters by 1 turn, reduces the defense of all enemies by 100% for 1 turn, changes [EMPTY], [BLOCK] and Badly Matching orbs into [RCV] orbs and boosts ATK of [INT] characters by 2.5x for 1 turn. Locks the chain multiplier at 3x-3.5x for 1 turn, depending on how many [RCV] orbs used in normal attacks.",
+        "Reduces Slot Bind and Silence duration by 10 turns, reduces Special Cooldown of all characters by 1 turn, reduces the defense of all enemies by 100% for 1 turn, changes [EMPTY], [BLOCK] and Badly Matching orbs into [RCV] orbs and boosts ATK of [INT] characters by 2.5x for 1 turn. Locks the chain multiplier at 3x-3.5x for 1 turn depending on how many [RCV] orbs used in normal attacks.",
+        "Reduces Slot Bind duration by 2 turns, inflicts all enemies with Increase Damage Taken by 1.5x for 3 turns and deals 250x character's ATK in [PSY] damage to all enemies at the end of the turn for 1-6 turns, depending on the number of enemies on the stage when the special is activated.",
+        "Reduces Bind and Slot Bind duration by 5 turns. If there is more than 15,000 Excess Healing done when the special is activated, makes PERFECTs easier to hit for 3 turns. If your Captain's orb is a [TND] orb, recovers 30% of crew's MAX HP and locks all orbs for 1 turn. If your crew is inflicted with Captain Swap when the special is activated, after 1 turn, reduces enemies' [STR] and [PSY] Resistance by -20% for 1 turn.",
+        "Reduces Slot Bind and Burn duration by 7 turns, deals 200x character's ATK in [DEX] True damage to enemies, and changes all orbs, including [BLOCK] orbs, into [DEX] orbs. If your crew has Orb Amplification when the special is activated, increases duration of any Orb Amplification and Orb Multiplier buffs by 1 turn; boosts Orb Effects of [DEX] characters by 2.75x for 2 turns, boosts Orb Effects of all other character by 2.5x for 2 turns and increases Orb Effects of beneficial [DEX] orbs to 2.5x for 2 turns."
+      ]
+    },
+    {
+      "key": "remove_special_bind",
+      "label": "Remove Special Bind",
+      "supportsTurns": true,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "matchCount": 267,
+      "sampleCharacterIds": [
+        949,
+        1052,
+        1160,
+        1161,
+        1200
+      ],
+      "sampleTexts": [
+        "Reduces Silence duration by 3 turns and recovers 4,000 HP",
+        "Reduces Silence duration by 2 turns",
+        "Reduces Bind, Despair and Silence duration by 3 turns and recovers 2,000 HP",
+        "Reduces Bind, Despair and Silence duration by 3 turns and recovers 2,000 HP",
+        "Reduces Silence duration by 2 turns. If your HP is below 30%, changes all orbs of top row characters into Matching orbs"
+      ]
+    },
+    {
+      "key": "remove_threshold_damage_reduction",
+      "label": "Remove Threshold Damage Reduction",
+      "supportsTurns": true,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "matchCount": 280,
+      "sampleCharacterIds": [
+        1311,
+        1312,
+        1539,
+        1540,
+        1748
+      ],
+      "sampleTexts": [
+        "Deals 20x character's ATK in [INT] damage to all enemies. Reduces enemies' Threshold Damage Reduction duration by 1 turn",
+        "Deals 20x character's ATK in [INT] damage to all enemies. Reduces enemies' Threshold Damage Reduction duration by 1 turn",
+        "Reduces damage received by 90% for 1 turn, reduces the defense of all enemies by 80% for 1 turn, reduces enemies' Threshold Damage Reduction and Percent Damage Reduction duration by 2 turns",
+        "Reduces damage received by 90% for 1 turn, reduces the defense of all enemies by 80% for 1 turn, reduces enemies' Threshold Damage Reduction and Percent Damage Reduction duration by 2 turns",
+        "Deals 15% of enemies' current HP in damage to one enemy and reduces enemies' Threshold Damage Reduction duration by 5 turns"
+      ]
+    }
+  ]
+}

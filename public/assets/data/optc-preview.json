@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-25T05:34:33.518Z",
+  "generatedAt": "2026-03-25T11:23:55.305Z",
   "characters": [
     {
       "id": 1,
@@ -43,6 +43,7 @@
         "specialName": "Spinning Gum Punch",
         "specialText": "Deals 5x character's ATK in [STR] damage to one enemy",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -97,6 +98,7 @@
         "specialName": "Gum-Gum Pistol",
         "specialText": "Deals 7x character's ATK in [STR] damage to one enemy",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -151,6 +153,7 @@
         "specialName": "Gum-Gum Bazooka",
         "specialText": "Deals 15x character's ATK in [STR] damage to one enemy",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -206,9 +209,9 @@
         "specialName": "Gum-Gum Twin Jet Pistol",
         "specialText": "Deals 25x character's ATK in [STR] damage to one enemy",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [
-          "Boosts base ATK of this character by 100 if this character is the last in the chain to attack",
-          "Makes [QCK] orbs beneficial for this character"
+          "Boosts base ATK of this character by 100 if this character is the last in the chain to attack. Makes [QCK] orbs beneficial for this character"
         ],
         "sailorNotes": "#{beneficial}",
         "limitBreak": [
@@ -341,6 +344,7 @@
         "specialName": "Oni Giri",
         "specialText": "Deals 7x character's ATK in [DEX] damage to one enemy",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -396,6 +400,7 @@
         "specialName": "Three Thousand Worlds",
         "specialText": "Deals 10x character's ATK in [DEX] damage to all enemies",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -451,6 +456,7 @@
         "specialName": "108 Pound Phoenix",
         "specialText": "Deals 10x character's ATK in [DEX] damage to all enemies",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -506,9 +512,9 @@
         "specialName": "Ashura Ichibugin",
         "specialText": "Deals 15x character's ATK in [DEX] damage to all enemies",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [
-          "Restores Special Cooldown of this character by 1 turn when it is rewinded",
-          "Boosts base ATK of [DEX] characters by 40"
+          "Restores Special Cooldown of this character by 1 turn when it is rewinded. Boosts base ATK of [DEX] characters by 40"
         ],
         "sailorNotes": "#{rewind : 1}",
         "limitBreak": [
@@ -641,6 +647,7 @@
         "specialName": "Cat Burglar",
         "specialText": "Recovers 1,000 HP",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -696,6 +703,7 @@
         "specialName": "Tornado Tempo",
         "specialText": "Deals 15x character's ATK in [INT] damage to one enemy",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -751,6 +759,7 @@
         "specialName": "Mirage Tempo",
         "specialText": "Reduces damage received from [INT] enemies by 100% for 1 turn",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -806,9 +815,9 @@
         "specialName": "Thunderbolt Tempo",
         "specialText": "Deals 15x character's ATK in [INT] damage to all enemies",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [
-          "Makes [RCV] orbs beneficial for [INT] characters",
-          "Boosts base ATK, HP and RCV of [INT] characters by 50"
+          "Makes [RCV] orbs beneficial for [INT] characters. Boosts base ATK, HP and RCV of [INT] characters by 50"
         ],
         "sailorNotes": "#{beneficial}",
         "limitBreak": [
@@ -941,6 +950,7 @@
         "specialName": "Liar",
         "specialText": "Delays all enemies by 1 turn",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -1449,6 +1459,7 @@
         "specialName": "Tabasco Star",
         "specialText": "Delays all enemies by 2 turns",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -1957,6 +1968,7 @@
         "specialName": "Usopp Golden Pound",
         "specialText": "Delays all enemies by 3 turns",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -2465,6 +2477,7 @@
         "specialName": "Fire Bird Star",
         "specialText": "Delays all enemies by 3 turns, deals 15x character's ATK in [PSY] damage to all enemies",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [
           "Boosts base ATK, HP and RCV of Shooter characters by 20"
         ],
@@ -2602,6 +2615,7 @@
         "specialName": "Special Fried Rice",
         "specialText": "Recovers 10x character's RCV in HP",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -2657,6 +2671,7 @@
         "specialName": "Plastic Surgery Shot",
         "specialText": "Reduces the defense of all enemies by 50% for 2 turns",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -2712,6 +2727,7 @@
         "specialName": "Hot Rock Stew",
         "specialText": "Recovers 10x character's RCV in HP",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -2767,9 +2783,9 @@
         "specialName": "Diable Jambe",
         "specialText": "Deals 5,000 Fixed damage to all enemies",
         "specialNotes": "#{fixed}",
+        "specialAbilities": [],
         "sailorAbilities": [
-          "Makes [RCV] orbs beneficial for all characters",
-          "Boosts base ATK, HP and RCV of all characters by 40"
+          "Makes [RCV] orbs beneficial for all characters. Boosts base ATK, HP and RCV of all characters by 40"
         ],
         "sailorNotes": "#{beneficial}",
         "limitBreak": [
@@ -2902,6 +2918,7 @@
         "specialName": "Hearty Yell",
         "specialText": "Changes orbs of adjacent characters into [RCV] orbs",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -2957,9 +2974,9 @@
         "specialName": "Heavy Gong",
         "specialText": "Deals 15x character's ATK in [PSY] damage to one enemy",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [
-          "Makes [TND] orbs beneficial for this character",
-          "Boosts base ATK, HP and RCV of all characters by 30"
+          "Makes [TND] orbs beneficial for this character. Boosts base ATK, HP and RCV of all characters by 30"
         ],
         "sailorNotes": "#{beneficial}",
         "limitBreak": [
@@ -3093,6 +3110,7 @@
         "specialName": "Scope",
         "specialText": "Changes orbs of adjacent characters into [RCV] orbs",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -3148,6 +3166,7 @@
         "specialName": "Hoofprint Roseo",
         "specialText": "Reduces the defense of all enemies by 50% for 2 turns",
         "specialNotes": null,
+        "specialAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],

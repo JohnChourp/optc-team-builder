@@ -28,6 +28,11 @@ import {
   type AutoBuildResult,
   type AutoTeamBuilderType,
 } from '../../core/models/auto-team-builder.models';
+import {
+  type AutoBuildAbilityCatalog,
+  type AutoBuildAbilityCatalogItem,
+  type AutoBuildAbilityRequirement,
+} from '../../core/models/auto-team-builder-ability.models';
 import { type CharacterListItem, type DatasetManifest } from '../../core/models/optc.models';
 import {
   AutoTeamBuilderService,
@@ -53,6 +58,10 @@ interface LoadingProgressRow {
   displayText: string;
   visible: boolean;
   tone: LoadingProgressRowTone;
+}
+
+interface AbilityRequirementDraft extends AutoBuildAbilityRequirement {
+  draftId: string;
 }
 
 @Component({
@@ -81,8 +90,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private readonly manualSearchLimit = 24;
   private buildAbortController: AbortController | null = null;
   public readonly summary = signal<DatasetManifest | null>(null);
+  public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly selectedTypes = signal<AutoTeamBuilderType[]>([]);
   public readonly selectedClasses = signal<string[]>([]);
+  public readonly requiredAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly manualSearchTerm = signal('');
   public readonly manualCandidates = signal<CharacterListItem[]>([]);
   public readonly lockedCharacterIds = signal<number[]>([]);
@@ -101,8 +112,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public readonly availableTypes = AUTO_TEAM_BUILDER_TYPES;
   public readonly availableClasses = computed(() => this.summary()?.availableClasses ?? []);
+  public readonly availableAbilityCatalogItems = computed(
+    () => this.abilityCatalog()?.abilities ?? [],
+  );
+  public readonly abilityCatalogMap = computed(
+    () => new Map(this.availableAbilityCatalogItems().map((item) => [item.key, item] as const)),
+  );
   public readonly hasSelectedClasses = computed(() => this.selectedClasses().length > 0);
   public readonly hasSelectedTypes = computed(() => this.selectedTypes().length > 0);
+  public readonly hasRequiredAbilities = computed(
+    () => this.serializeRequiredAbilities().length > 0,
+  );
   public readonly lockedCharacters = computed(() => {
     const lockedRecords = this.lockedCharacterRecords();
 
@@ -323,11 +343,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           : `Build flexible ${this.selectedTypesLabel()} mixed team`
       : 'Select types to build team',
   );
-  public readonly loadingLabel = computed(() =>
-    this.buildProgress()?.message ??
-    (this.hasSelectedTypes()
-      ? `Γίνεται scoring των πιο πρόσφατων usable ${this.selectedTypesLabel()} χαρακτήρων...`
-      : 'Γίνεται scoring των πιο πρόσφατων usable χαρακτήρων...'),
+  public readonly loadingLabel = computed(
+    () =>
+      this.buildProgress()?.message ??
+      (this.hasSelectedTypes()
+        ? `Γίνεται scoring των πιο πρόσφατων usable ${this.selectedTypesLabel()} χαρακτήρων...`
+        : 'Γίνεται scoring των πιο πρόσφατων usable χαρακτήρων...'),
   );
   public readonly buildAttemptProgressLabel = computed(() => {
     const progress = this.buildProgress();
@@ -525,11 +546,37 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       ? `${specialSupport.matchingSlots} / ${specialSupport.totalSlots} slots buff the full team • hard filter on`
       : `${specialSupport.matchingSlots} / ${specialSupport.totalSlots} slots would pass teamwide special support`;
   });
+  public readonly requiredAbilitySummaryLabel = computed(() => {
+    const requirements = this.serializeRequiredAbilities();
+    const current = this.result();
+
+    if (!requirements.length) {
+      return 'Δεν έχουν οριστεί extra ability requirements.';
+    }
+
+    if (!current) {
+      return `${requirements.length} selected ability requirements πριν το build.`;
+    }
+
+    const matchedCount = current.coverage.abilityRequirements.matched.length;
+    return `${matchedCount} / ${requirements.length} selected ability requirements covered`;
+  });
+  public readonly matchedRequiredAbilityLabels = computed(() =>
+    (this.result()?.coverage.abilityRequirements.matched ?? []).map((requirement) =>
+      this.formatAbilityRequirement(requirement),
+    ),
+  );
+  public readonly missingRequiredAbilityLabels = computed(() =>
+    (this.result()?.coverage.abilityRequirements.missing ?? []).map((requirement) =>
+      this.formatAbilityRequirement(requirement),
+    ),
+  );
   public readonly canDownloadSelectionJson = computed(
     () =>
       !this.building() &&
       (this.hasSelectedTypes() ||
         this.hasSelectedClasses() ||
+        this.hasRequiredAbilities() ||
         this.requireAllSelectedTypesInTeam() ||
         this.requireAllSelectedClassesPerCharacter() ||
         this.requireAllSpecialsSupportTeam() ||
@@ -537,6 +584,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         this.hasLockedCharacters() ||
         this.hasSelectedLeaders()),
   );
+  public readonly canDownloadAbilityCatalogJson = computed(
+    () => !this.building() && this.availableAbilityCatalogItems().length > 0,
+  );
+  public readonly downloadAbilityCatalogJsonLabel = 'Download abilities JSON';
   public readonly downloadSelectionJsonLabel = 'Download preset JSON';
   public readonly canDownloadTeamJson = computed(() => Boolean(this.result()));
   public readonly downloadTeamJsonLabel = 'Download team JSON';
@@ -572,7 +623,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public async ngOnInit(): Promise<void> {
     await this.userState.ready();
-    this.summary.set(await this.repository.getDatasetManifest());
+    const [summary, abilityCatalog] = await Promise.all([
+      this.repository.getDatasetManifest(),
+      this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
+    ]);
+    this.summary.set(summary);
+    this.abilityCatalog.set(abilityCatalog);
     await this.resetPageState();
   }
 
@@ -653,6 +709,75 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public onFavoritesOnlyToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.favoritesOnly.set(event.detail.checked);
     this.resetBuildState();
+  }
+
+  public addRequiredAbility(): void {
+    const [firstItem] = this.availableAbilityCatalogItems();
+    this.requiredAbilityDrafts.set([
+      ...this.requiredAbilityDrafts(),
+      this.createAbilityRequirementDraft(firstItem),
+    ]);
+    this.resetBuildState();
+  }
+
+  public removeRequiredAbility(draftId: string): void {
+    this.requiredAbilityDrafts.set(
+      this.requiredAbilityDrafts().filter((draft) => draft.draftId !== draftId),
+    );
+    this.resetBuildState();
+  }
+
+  public clearRequiredAbilities(): void {
+    this.requiredAbilityDrafts.set([]);
+    this.resetBuildState();
+  }
+
+  public onRequiredAbilityKeyChange(
+    draftId: string,
+    event: CustomEvent<{ value?: string | null }>,
+  ): void {
+    const abilityKey = (event.detail.value ?? '').trim();
+    const catalogItem = abilityKey ? this.abilityCatalogMap().get(abilityKey) : null;
+
+    this.updateRequiredAbilityDraft(draftId, (draft) => ({
+      ...draft,
+      abilityKey,
+      minTurns: catalogItem?.supportsTurns ? (draft.minTurns ?? 1) : null,
+      slotTokens:
+        catalogItem?.supportsSlotTokens && draft.slotTokens.length
+          ? draft.slotTokens.filter((token) => catalogItem.availableSlotTokens.includes(token))
+          : [],
+    }));
+  }
+
+  public onRequiredAbilityTurnsChange(draftId: string, event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    const nextValue = input?.value?.trim() ?? '';
+    const minTurns = /^\d+$/.test(nextValue) && Number(nextValue) > 0 ? Number(nextValue) : null;
+
+    this.updateRequiredAbilityDraft(draftId, (draft) => ({
+      ...draft,
+      minTurns,
+    }));
+  }
+
+  public onRequiredAbilitySlotTokensChange(
+    draftId: string,
+    event: CustomEvent<{ value?: string[] | string | null }>,
+  ): void {
+    const nextValues = Array.isArray(event.detail.value)
+      ? event.detail.value
+      : event.detail.value
+        ? [event.detail.value]
+        : [];
+    const slotTokens = [...new Set(nextValues.map((token) => token.trim().toUpperCase()))].filter(
+      (token) => token.length,
+    );
+
+    this.updateRequiredAbilityDraft(draftId, (draft) => ({
+      ...draft,
+      slotTokens,
+    }));
   }
 
   public toggleLeaderCharacter(characterId: number): void {
@@ -781,6 +906,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
           requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
           requireAllSpecialsSupportTeam: this.requireAllSpecialsSupportTeam(),
+          requiredAbilities: this.serializeRequiredAbilities(),
           favoritesOnly: this.favoritesOnly(),
           favoriteCharacterIds: this.favoriteCharacterIds(),
           lockedCharacterIds: this.lockedCharacterIds(),
@@ -817,7 +943,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.buildAbortController?.abort();
   }
 
-  public buildTeamExportPayload(exportedAt = new Date().toISOString()): AutoTeamExportPayload | null {
+  public buildTeamExportPayload(
+    exportedAt = new Date().toISOString(),
+  ): AutoTeamExportPayload | null {
     const current = this.result();
 
     if (!current) {
@@ -843,6 +971,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     return buildAutoTeamSelectionExportPayload({
       selectedTypes: this.selectedTypes(),
       selectedClasses: this.selectedClasses(),
+      requiredAbilities: this.serializeRequiredAbilities(),
       requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
       requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
       requireAllSpecialsSupportTeam: this.requireAllSpecialsSupportTeam(),
@@ -861,6 +990,33 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     downloadAutoTeamSelectionExport(this.buildSelectionExportPayload());
   }
 
+  public downloadAbilityCatalogJson(): void {
+    const catalog = this.abilityCatalog();
+
+    if (!catalog) {
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(
+      new Blob([JSON.stringify(catalog, null, 2)], {
+        type: 'application/json;charset=utf-8',
+      }),
+    );
+    const anchor = document.createElement('a');
+
+    anchor.href = objectUrl;
+    anchor.download = 'optc-auto-builder-abilities.json';
+    anchor.style.display = 'none';
+    document.body.appendChild(anchor);
+
+    try {
+      anchor.click();
+    } finally {
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(objectUrl);
+    }
+  }
+
   public downloadTeamJson(): void {
     downloadAutoTeamExport(this.buildTeamExportPayload());
   }
@@ -874,6 +1030,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private async resetPageState(): Promise<void> {
     this.selectedTypes.set([]);
     this.selectedClasses.set([]);
+    this.requiredAbilityDrafts.set([]);
     this.manualSearchTerm.set('');
     this.lockedCharacterIds.set([]);
     this.selectedLeaderIds.set([]);
@@ -911,6 +1068,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     if (this.requireAllSpecialsSupportTeam()) {
       activeRequirements.push('specials που ενισχύουν όλο το final team');
+    }
+
+    if (this.hasRequiredAbilities()) {
+      activeRequirements.push(
+        `abilities που να καλύπτουν ${this.serializeRequiredAbilities()
+          .map((requirement) => this.formatAbilityRequirement(requirement))
+          .join(' • ')}`,
+      );
     }
 
     if (lockedCount) {
@@ -1028,6 +1193,76 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       default:
         return 'Sub';
     }
+  }
+
+  private createAbilityRequirementDraft(
+    item: AutoBuildAbilityCatalogItem | undefined,
+  ): AbilityRequirementDraft {
+    return {
+      draftId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      abilityKey: item?.key ?? '',
+      minTurns: item?.supportsTurns ? 1 : null,
+      slotTokens: [],
+    };
+  }
+
+  private updateRequiredAbilityDraft(
+    draftId: string,
+    updater: (draft: AbilityRequirementDraft) => AbilityRequirementDraft,
+  ): void {
+    this.requiredAbilityDrafts.set(
+      this.requiredAbilityDrafts().map((draft) =>
+        draft.draftId === draftId ? updater(draft) : draft,
+      ),
+    );
+    this.resetBuildState();
+  }
+
+  private serializeRequiredAbilities(): AutoBuildAbilityRequirement[] {
+    return this.requiredAbilityDrafts()
+      .filter((draft) => draft.abilityKey.trim().length > 0)
+      .map((draft) => ({
+        abilityKey: draft.abilityKey.trim(),
+        minTurns:
+          draft.minTurns !== null && Number.isFinite(draft.minTurns) && draft.minTurns > 0
+            ? Math.floor(draft.minTurns)
+            : null,
+        slotTokens: [
+          ...new Set(draft.slotTokens.map((token) => token.trim().toUpperCase())),
+        ].filter((token) => token.length),
+      }));
+  }
+
+  public resolveAbilityCatalogItem(abilityKey: string): AutoBuildAbilityCatalogItem | undefined {
+    return this.abilityCatalogMap().get(abilityKey);
+  }
+
+  public formatAbilityRequirement(requirement: AutoBuildAbilityRequirement): string {
+    const catalogItem = this.resolveAbilityCatalogItem(requirement.abilityKey);
+    const label = catalogItem?.label ?? requirement.abilityKey;
+    const suffixes: string[] = [];
+
+    if (requirement.minTurns !== null) {
+      suffixes.push(`${requirement.minTurns} turns`);
+    }
+
+    if (requirement.slotTokens.length) {
+      suffixes.push(requirement.slotTokens.join(' / '));
+    }
+
+    return suffixes.length ? `${label} (${suffixes.join(' • ')})` : label;
+  }
+
+  public resolveRequiredAbilitySelectedText(draft: AbilityRequirementDraft): string {
+    if (!draft.abilityKey.length) {
+      return 'Select ability';
+    }
+
+    return this.formatAbilityRequirement({
+      abilityKey: draft.abilityKey,
+      minTurns: draft.minTurns,
+      slotTokens: draft.slotTokens,
+    });
   }
 
   private resolveSelectedClasses(value: string[] | string | null | undefined): string[] {

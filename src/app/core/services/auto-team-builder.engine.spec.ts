@@ -9,10 +9,7 @@ import {
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
-import {
-  AutoTeamBuildCancelledError,
-  runAutoTeamBuildSearch,
-} from './auto-team-builder.engine';
+import { AutoTeamBuildCancelledError, runAutoTeamBuildSearch } from './auto-team-builder.engine';
 import { buildAutoTeamResult, resolveCharacterTypeTokens } from './auto-team-builder.utils';
 
 describe('runAutoTeamBuildSearch', () => {
@@ -85,6 +82,15 @@ describe('runAutoTeamBuildSearch', () => {
       'exactAttempt',
     ]);
   });
+
+  it('does not relax required abilities during fallback attempts', () => {
+    const result = runAutoTeamBuildSearch(createSingleTypeRecords(), {
+      ...createInput(['DEX', 'INT'], ['Fighter']),
+      requiredAbilities: [{ abilityKey: 'remove_slot_barrier', minTurns: 3, slotTokens: ['DEX'] }],
+    });
+
+    expect(result).toBeNull();
+  });
 });
 
 function runLegacySearch(
@@ -127,7 +133,8 @@ function buildLegacyAttempt(
     ...attempt,
     requestedInput,
     relaxation: {
-      usedFallback: !sameOrderedValues(requestedInput.types, input.types) ||
+      usedFallback:
+        !sameOrderedValues(requestedInput.types, input.types) ||
         !sameOrderedValues(requestedInput.selectedClasses, input.selectedClasses),
       droppedTypes: requestedInput.types.filter((type) => !input.types.includes(type)),
       droppedClasses: requestedInput.selectedClasses.filter(
@@ -237,8 +244,9 @@ function hasStrictConstraints(input: AutoBuildInput): boolean {
 function satisfiesRequestedCoverage(result: AutoBuildResult | null): result is AutoBuildResult {
   return Boolean(
     result &&
-      result.coverage.coversAllSelectedClasses &&
-      result.coverage.coversAllSelectedTypes,
+    result.coverage.coversAllSelectedClasses &&
+    result.coverage.coversAllSelectedTypes &&
+    result.coverage.abilityRequirements.matchesAll,
   );
 }
 
@@ -269,6 +277,7 @@ function createInput(
   return {
     types,
     selectedClasses,
+    requiredAbilities: [],
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSpecialsSupportTeam: false,
@@ -359,7 +368,7 @@ function createCharacterRecord(
     id,
     name: overrides.name ?? `Character ${id}`,
     type: overrides.type ?? 'DEX',
-    classes: overrides.classes ?? [primaryClass, secondaryClass].filter(Boolean) as string[],
+    classes: overrides.classes ?? ([primaryClass, secondaryClass].filter(Boolean) as string[]),
     primaryClass,
     secondaryClass,
     stars: overrides.stars ?? 6,
@@ -392,6 +401,7 @@ function createCharacterRecord(
       specialName: overrides.detail?.specialName ?? `Special ${id}`,
       specialText: overrides.detail?.specialText ?? null,
       specialNotes: overrides.detail?.specialNotes ?? null,
+      specialAbilities: overrides.detail?.specialAbilities ?? [],
       sailorAbilities: overrides.detail?.sailorAbilities ?? [],
       sailorNotes: overrides.detail?.sailorNotes ?? null,
       limitBreak: overrides.detail?.limitBreak ?? [],

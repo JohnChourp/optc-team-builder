@@ -1,3 +1,7 @@
+import {
+  type AutoBuildAbilityRequirement,
+  type NormalizedSpecialAbility,
+} from './auto-team-builder-ability.models';
 import { type CharacterDetailRecord } from './optc.models';
 
 export const AUTO_TEAM_BUILDER_TYPES = ['DEX', 'STR', 'QCK', 'PSY', 'INT'] as const;
@@ -23,6 +27,7 @@ export interface AutoBuildConstraints {
   requireAllSelectedTypesInTeam?: boolean;
   requireAllSelectedClassesPerCharacter?: boolean;
   requireAllSpecialsSupportTeam?: boolean;
+  requiredAbilities?: AutoBuildAbilityRequirement[];
   favoritesOnly?: boolean;
   favoriteCharacterIds?: number[];
   lockedCharacterIds?: number[];
@@ -57,6 +62,7 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   types: AutoTeamBuilderType[];
   selectedClasses: string[];
   requireAllSpecialsSupportTeam: boolean;
+  requiredAbilities: AutoBuildAbilityRequirement[];
   favoritesOnly: boolean;
   lockedCharacterIds: number[];
   captainCharacterId: number | null;
@@ -148,6 +154,12 @@ export interface AutoBuildSlot {
 export interface AutoBuildCoverageSummary {
   leaderCriteria: AutoBuildLeaderCriteriaSummary;
   specialSupport: AutoBuildSpecialSupportSummary;
+  abilityRequirements: {
+    requested: AutoBuildAbilityRequirement[];
+    matched: AutoBuildAbilityRequirement[];
+    missing: AutoBuildAbilityRequirement[];
+    matchesAll: boolean;
+  };
   burst: string[];
   consistency: string[];
   utility: string[];
@@ -192,4 +204,19 @@ export interface AutoBuildCoreResult {
 export interface AutoBuildResult extends AutoBuildCoreResult {
   requestedInput: AutoBuildInput;
   relaxation: AutoBuildRelaxationSummary;
+}
+
+export interface AutoBuildAbilityCoverageState {
+  requested: AutoBuildAbilityRequirement[];
+  matched: AutoBuildAbilityRequirement[];
+  missing: AutoBuildAbilityRequirement[];
+}
+
+export interface AutoBuildAbilityMatchSummary {
+  requirement: AutoBuildAbilityRequirement;
+  matchedByCharacterIds: number[];
+}
+
+export interface AutoBuildRequirementMatchCandidate {
+  abilities: NormalizedSpecialAbility[];
 }

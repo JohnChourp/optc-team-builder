@@ -9,6 +9,7 @@ import {
   type AutoBuildResult,
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
+import { type AutoBuildAbilityRequirement } from '../models/auto-team-builder-ability.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
 import {
   AutoTeamBuildCancelledError,
@@ -57,6 +58,7 @@ export class AutoTeamBuilderService {
         (characterId) => Number.isInteger(characterId) && characterId > 0,
       ),
     );
+    const requiredAbilities = this.normalizeRequiredAbilities(constraints.requiredAbilities ?? []);
     const lockedCharacterIds = [
       ...new Set(
         (constraints.lockedCharacterIds ?? []).filter(
@@ -82,6 +84,7 @@ export class AutoTeamBuilderService {
       requireAllSelectedClassesPerCharacter:
         constraints.requireAllSelectedClassesPerCharacter ?? false,
       requireAllSpecialsSupportTeam: constraints.requireAllSpecialsSupportTeam ?? false,
+      requiredAbilities,
       favoritesOnly,
       lockedCharacterIds,
       captainCharacterId,
@@ -92,6 +95,10 @@ export class AutoTeamBuilderService {
       ...input,
       types: [...input.types],
       selectedClasses: [...input.selectedClasses],
+      requiredAbilities: input.requiredAbilities.map((requirement) => ({
+        ...requirement,
+        slotTokens: [...requirement.slotTokens],
+      })),
       lockedCharacterIds: [...input.lockedCharacterIds],
     };
 
@@ -218,9 +225,7 @@ export class AutoTeamBuilderService {
       const handleError = (event: ErrorEvent): void => {
         rejectOnce(new Error(event.message || 'Auto team builder worker failed.'));
       };
-      const handleMessage = ({
-        data,
-      }: MessageEvent<AutoTeamBuilderWorkerResponse>): void => {
+      const handleMessage = ({ data }: MessageEvent<AutoTeamBuilderWorkerResponse>): void => {
         if (!data || data.runId !== runId) {
           return;
         }
@@ -287,5 +292,48 @@ export class AutoTeamBuilderService {
 
   private normalizeCharacterId(characterId: number | null | undefined): number | null {
     return Number.isInteger(characterId) && Number(characterId) > 0 ? Number(characterId) : null;
+  }
+
+  private normalizeRequiredAbilities(
+    requirements: AutoBuildAbilityRequirement[],
+  ): AutoBuildAbilityRequirement[] {
+    const seen = new Set<string>();
+
+    return requirements.reduce<AutoBuildAbilityRequirement[]>(
+      (currentRequirements, requirement) => {
+        const abilityKey = requirement.abilityKey.trim();
+        const minTurns =
+          requirement.minTurns !== null &&
+          Number.isFinite(requirement.minTurns) &&
+          requirement.minTurns > 0
+            ? Math.floor(requirement.minTurns)
+            : null;
+        const slotTokens = [
+          ...new Set(requirement.slotTokens.map((token) => token.trim().toUpperCase())),
+        ]
+          .filter((token) => token.length)
+          .sort((left, right) => left.localeCompare(right));
+
+        if (!abilityKey.length) {
+          return currentRequirements;
+        }
+
+        const identity = `${abilityKey}|${minTurns ?? 'none'}|${slotTokens.join(',')}`;
+
+        if (seen.has(identity)) {
+          return currentRequirements;
+        }
+
+        seen.add(identity);
+        currentRequirements.push({
+          abilityKey,
+          minTurns,
+          slotTokens,
+        });
+
+        return currentRequirements;
+      },
+      [],
+    );
   }
 }
