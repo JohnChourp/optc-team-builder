@@ -103,6 +103,60 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(page.buildProgress()).toBeNull();
   });
 
+  it('exposes stable loading progress rows with placeholder slots', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX']);
+    page.buildProgress.set({
+      stage: 'fallbackAttempt',
+      candidateCount: 1200,
+      completedAttempts: 3503,
+      totalAttempts: 31744,
+      currentDroppedTypes: ['STR', 'INT'],
+      currentDroppedClasses: [],
+      message: 'Fallback attempt 3504 / 31744',
+    });
+
+    expect(page.loadingProgressRows()).toEqual([
+      {
+        key: 'message',
+        text: 'Fallback attempt 3504 / 31744',
+        displayText: 'Fallback attempt 3504 / 31744',
+        visible: true,
+        tone: 'primary',
+      },
+      {
+        key: 'attempt',
+        text: 'Attempt 3504 / 31744',
+        displayText: 'Attempt 3504 / 31744',
+        visible: true,
+        tone: 'secondary',
+      },
+      {
+        key: 'candidatePool',
+        text: '1200 candidates στο current search pool',
+        displayText: '1200 candidates στο current search pool',
+        visible: true,
+        tone: 'secondary',
+      },
+      {
+        key: 'droppedTypes',
+        text: 'Ignoring types: STR / INT',
+        displayText: 'Ignoring types: STR / INT',
+        visible: true,
+        tone: 'fallback',
+      },
+      {
+        key: 'droppedClasses',
+        text: '',
+        displayText: '\u00A0',
+        visible: false,
+        tone: 'fallback',
+      },
+    ]);
+  });
+
   it('cancels the active build and restores the previous result', async () => {
     const { page, autoTeamBuilder } = await createPage();
     const previousResult = createAutoBuildResult();

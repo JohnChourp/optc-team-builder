@@ -45,6 +45,16 @@ import {
   downloadAutoTeamSelectionExport,
 } from './auto-team-builder-export.utils';
 
+type LoadingProgressRowTone = 'primary' | 'secondary' | 'fallback';
+
+interface LoadingProgressRow {
+  key: 'message' | 'attempt' | 'candidatePool' | 'droppedTypes' | 'droppedClasses';
+  text: string;
+  displayText: string;
+  visible: boolean;
+  tone: LoadingProgressRowTone;
+}
+
 @Component({
   selector: 'app-auto-team-builder-page',
   standalone: true,
@@ -349,6 +359,41 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const droppedClasses = this.buildProgress()?.currentDroppedClasses ?? [];
 
     return droppedClasses.length ? `Ignoring classes: ${droppedClasses.join(' / ')}` : '';
+  });
+  public readonly loadingProgressRows = computed<LoadingProgressRow[]>(() => {
+    const rows: Array<Pick<LoadingProgressRow, 'key' | 'text' | 'tone'>> = [
+      {
+        key: 'message',
+        text: this.loadingLabel(),
+        tone: 'primary',
+      },
+      {
+        key: 'attempt',
+        text: this.buildAttemptProgressLabel(),
+        tone: 'secondary',
+      },
+      {
+        key: 'candidatePool',
+        text: this.buildCandidateProgressLabel(),
+        tone: 'secondary',
+      },
+      {
+        key: 'droppedTypes',
+        text: this.buildDroppedTypesLabel(),
+        tone: 'fallback',
+      },
+      {
+        key: 'droppedClasses',
+        text: this.buildDroppedClassesLabel(),
+        tone: 'fallback',
+      },
+    ];
+
+    return rows.map((row) => ({
+      ...row,
+      displayText: row.text || '\u00A0',
+      visible: row.text.length > 0,
+    }));
   });
   public readonly cancelBuildButtonLabel = 'Cancel build';
   public readonly candidatePoolLabel = computed(() => {

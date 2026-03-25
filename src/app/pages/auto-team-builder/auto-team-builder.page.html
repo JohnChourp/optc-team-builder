@@ -322,24 +322,21 @@
     </section>
 
     <section *ngIf="building()" class="loading-card glass-card">
-      <ion-spinner name="crescent"></ion-spinner>
-      <div class="loading-card__copy">
-        <span>{{ loadingLabel() }}</span>
-        <small *ngIf="buildAttemptProgressLabel()">{{ buildAttemptProgressLabel() }}</small>
-        <small *ngIf="buildCandidateProgressLabel()">{{ buildCandidateProgressLabel() }}</small>
-        <div
-          *ngIf="buildDroppedTypesLabel() || buildDroppedClassesLabel()"
-          class="chip-row loading-card__chips"
-        >
-          <small *ngIf="buildDroppedTypesLabel()" class="coverage-chip fallback-chip">
-            {{ buildDroppedTypesLabel() }}
-          </small>
-          <small *ngIf="buildDroppedClassesLabel()" class="coverage-chip fallback-chip">
-            {{ buildDroppedClassesLabel() }}
-          </small>
+      <ion-spinner name="crescent" class="loading-card__spinner"></ion-spinner>
+      <div class="loading-card__copy" role="status" aria-live="polite">
+        <div class="loading-progress-list">
+          <div
+            *ngFor="let row of loadingProgressRows()"
+            class="loading-progress-row"
+            [class.loading-progress-row--visible]="row.visible"
+            [class.loading-progress-row--muted]="row.tone === 'secondary'"
+            [class.loading-progress-row--fallback]="row.tone === 'fallback'"
+          >
+            <span>{{ row.displayText }}</span>
+          </div>
         </div>
       </div>
-      <ion-button fill="outline" color="light" (click)="cancelBuild()">
+      <ion-button fill="outline" color="light" class="loading-card__action" (click)="cancelBuild()">
         {{ cancelBuildButtonLabel }}
       </ion-button>
     </section>
