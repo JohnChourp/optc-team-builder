@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-12T18:20:28.308Z",
+  "generatedAt": "2026-03-25T05:34:33.518Z",
   "sourceVersion": "unknown",
   "characterCount": 4800,
   "detailCount": 4109,
@@ -42,8 +42,8 @@
       "localBasePath": "assets/offline-packs/thumbnails-jap",
       "fileCount": 4886,
       "totalBytes": 106098998,
-      "installed": false,
-      "checksum": null
+      "installed": true,
+      "checksum": "dd8283e86a3614e7105a6c59d6d153c189ecab65"
     },
     {
       "key": "fullTransparent",
@@ -52,8 +52,8 @@
       "localBasePath": "assets/offline-packs/full-transparent",
       "fileCount": 4215,
       "totalBytes": 505151273,
-      "installed": false,
-      "checksum": null
+      "installed": true,
+      "checksum": "fb22281b95ed50ae2d17b752b4453f2655e538dd"
     }
   ]
 }

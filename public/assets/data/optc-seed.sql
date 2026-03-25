@@ -17166,8 +17166,8 @@ DROP TABLE IF EXISTS meta;
         106,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/519.png","thumbnailGlobal":null,"thumbnailJapan":"0/500/0519.png","fullTransparent":"0/500/0519.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/500/0519.png","fullTransparent":"0/500/0519.png"}',
         'monkey d. luffy - merveille''s adventurer str fighter free spirit'
       );
     
@@ -17199,8 +17199,8 @@ DROP TABLE IF EXISTS meta;
         176,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/520.png","thumbnailGlobal":null,"thumbnailJapan":"0/500/0520.png","fullTransparent":"0/500/0520.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/500/0520.png","fullTransparent":"0/500/0520.png"}',
         'monkey d. luffy - straw hat pirates'' attack str fighter free spirit'
       );
     
@@ -17232,8 +17232,8 @@ DROP TABLE IF EXISTS meta;
         122,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/521.png","thumbnailGlobal":null,"thumbnailJapan":"0/500/0521.png","fullTransparent":"0/500/0521.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/500/0521.png","fullTransparent":"0/500/0521.png"}',
         'sanji - merveille''s adventurer int fighter powerhouse'
       );
     
@@ -17265,8 +17265,8 @@ DROP TABLE IF EXISTS meta;
         226,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/522.png","thumbnailGlobal":null,"thumbnailJapan":"0/500/0522.png","fullTransparent":"0/500/0522.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/500/0522.png","fullTransparent":"0/500/0522.png"}',
         'sanji - straw hat pirates'' attack int fighter powerhouse'
       );
     
@@ -17298,8 +17298,8 @@ DROP TABLE IF EXISTS meta;
         230,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/523.png","thumbnailGlobal":null,"thumbnailJapan":"0/500/0523.png","fullTransparent":"0/500/0523.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/500/0523.png","fullTransparent":"0/500/0523.png"}',
         'nami - merveille''s adventurer qck striker cerebral'
       );
     
@@ -17331,8 +17331,8 @@ DROP TABLE IF EXISTS meta;
         455,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/524.png","thumbnailGlobal":null,"thumbnailJapan":"0/500/0524.png","fullTransparent":"0/500/0524.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/500/0524.png","fullTransparent":"0/500/0524.png"}',
         'nami and billy the thunder bird qck striker cerebral'
       );
     
@@ -17364,8 +17364,8 @@ DROP TABLE IF EXISTS meta;
         133,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/525.png","thumbnailGlobal":null,"thumbnailJapan":"0/500/0525.png","fullTransparent":"0/500/0525.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/500/0525.png","fullTransparent":"0/500/0525.png"}',
         'brook - merveille''s adventurer psy slasher free spirit'
       );
     
@@ -17397,8 +17397,8 @@ DROP TABLE IF EXISTS meta;
         234,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/526.png","thumbnailGlobal":null,"thumbnailJapan":"0/500/0526.png","fullTransparent":"0/500/0526.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/500/0526.png","fullTransparent":"0/500/0526.png"}',
         'brook - straw hat pirates'' attack psy slasher free spirit'
       );
     
@@ -17430,8 +17430,8 @@ DROP TABLE IF EXISTS meta;
         212,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/527.png","thumbnailGlobal":null,"thumbnailJapan":"0/500/0527.png","fullTransparent":"0/500/0527.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/500/0527.png","fullTransparent":"0/500/0527.png"}',
         'chopper - merveille''s adventurer dex shooter cerebral'
       );
     
@@ -17463,8 +17463,8 @@ DROP TABLE IF EXISTS meta;
         368,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/528.png","thumbnailGlobal":null,"thumbnailJapan":"0/500/0528.png","fullTransparent":"0/500/0528.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/500/0528.png","fullTransparent":"0/500/0528.png"}',
         'chopper - straw hat pirates'' attack dex shooter cerebral'
       );
     
@@ -18288,8 +18288,8 @@ DROP TABLE IF EXISTS meta;
         98,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/553.png","thumbnailGlobal":null,"thumbnailJapan":"0/500/0553.png","fullTransparent":"0/500/0553.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/500/0553.png","fullTransparent":"0/500/0553.png"}',
         'roronoa zoro - merveille''s adventurer dex slasher driven'
       );
     
@@ -18321,8 +18321,8 @@ DROP TABLE IF EXISTS meta;
         171,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/554.png","thumbnailGlobal":null,"thumbnailJapan":"0/500/0554.png","fullTransparent":"0/500/0554.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/500/0554.png","fullTransparent":"0/500/0554.png"}',
         'roronoa zoro - straw hat pirates'' attack dex slasher driven'
       );
     
@@ -18354,8 +18354,8 @@ DROP TABLE IF EXISTS meta;
         208,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/555.png","thumbnailGlobal":null,"thumbnailJapan":"0/500/0555.png","fullTransparent":"0/500/0555.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/500/0555.png","fullTransparent":"0/500/0555.png"}',
         'usopp - merveille''s adventurer qck shooter'
       );
     
@@ -18387,8 +18387,8 @@ DROP TABLE IF EXISTS meta;
         376,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/556.png","thumbnailGlobal":null,"thumbnailJapan":"0/500/0556.png","fullTransparent":"0/500/0556.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/500/0556.png","fullTransparent":"0/500/0556.png"}',
         'usopp - straw hat pirates'' attack qck shooter'
       );
     
@@ -18420,8 +18420,8 @@ DROP TABLE IF EXISTS meta;
         216,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/557.png","thumbnailGlobal":null,"thumbnailJapan":"0/500/0557.png","fullTransparent":"0/500/0557.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/500/0557.png","fullTransparent":"0/500/0557.png"}',
         'nico robin - merveille''s adventurer int fighter cerebral'
       );
     
@@ -18453,8 +18453,8 @@ DROP TABLE IF EXISTS meta;
         400,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/558.png","thumbnailGlobal":null,"thumbnailJapan":"0/500/0558.png","fullTransparent":"0/500/0558.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/500/0558.png","fullTransparent":"0/500/0558.png"}',
         'nico robin - straw hat pirates'' attack int fighter cerebral'
       );
     
@@ -18486,8 +18486,8 @@ DROP TABLE IF EXISTS meta;
         95,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/559.png","thumbnailGlobal":null,"thumbnailJapan":"0/500/0559.png","fullTransparent":"0/500/0559.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/500/0559.png","fullTransparent":"0/500/0559.png"}',
         'franky - merveille''s adventurer str shooter free spirit'
       );
     
@@ -18519,8 +18519,8 @@ DROP TABLE IF EXISTS meta;
         161,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/560.png","thumbnailGlobal":null,"thumbnailJapan":"0/500/0560.png","fullTransparent":"0/500/0560.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/500/0560.png","fullTransparent":"0/500/0560.png"}',
         'franky - straw hat pirates'' attack str shooter free spirit'
       );
     
@@ -24591,8 +24591,8 @@ DROP TABLE IF EXISTS meta;
         189,
         1.5,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/744.png","thumbnailGlobal":null,"thumbnailJapan":"0/700/0744.png","fullTransparent":"0/700/0744.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/700/0744.png","fullTransparent":"0/700/0744.png"}',
         'portgas d. ace - record of the voyage - whitebeard pirates qck free spirit fighter'
       );
     
@@ -24624,8 +24624,8 @@ DROP TABLE IF EXISTS meta;
         258,
         1.5,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/745.png","thumbnailGlobal":null,"thumbnailJapan":"0/700/0745.png","fullTransparent":"0/700/0745.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/700/0745.png","fullTransparent":"0/700/0745.png"}',
         'portgas d. ace - voyage dream: pirate summit qck free spirit fighter'
       );
     
@@ -26472,8 +26472,8 @@ DROP TABLE IF EXISTS meta;
         212,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/801.png","thumbnailGlobal":null,"thumbnailJapan":"0/800/0801.png","fullTransparent":"0/800/0801.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/800/0801.png","fullTransparent":"0/800/0801.png"}',
         'mr. 2 bon clay - voyage log: b.w. psy fighter free spirit'
       );
     
@@ -26505,8 +26505,8 @@ DROP TABLE IF EXISTS meta;
         362,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/802.png","thumbnailGlobal":null,"thumbnailJapan":"0/800/0802.png","fullTransparent":"0/800/0802.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"0/800/0802.png","fullTransparent":"0/800/0802.png"}',
         'mr. 2 bon clay - voyage dream: okama way psy fighter free spirit'
       );
     
@@ -33336,8 +33336,8 @@ DROP TABLE IF EXISTS meta;
         220,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/1009.png","thumbnailGlobal":null,"thumbnailJapan":"1/000/1009.png","fullTransparent":"1/000/1009.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"1/000/1009.png","fullTransparent":"1/000/1009.png"}',
         'kizuna boost luffy str fighter powerhouse'
       );
     
@@ -46701,8 +46701,8 @@ DROP TABLE IF EXISTS meta;
         210,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/1414.png","thumbnailGlobal":null,"thumbnailJapan":"1/400/1414.png","fullTransparent":"1/400/1414.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"1/400/1414.png","fullTransparent":"1/400/1414.png"}',
         'sanji - making food and drinks int fighter powerhouse'
       );
     
@@ -63498,8 +63498,8 @@ DROP TABLE IF EXISTS meta;
         194,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/1923.png","thumbnailGlobal":null,"thumbnailJapan":"1/900/1923.png","fullTransparent":"1/900/1923.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"1/900/1923.png","fullTransparent":"1/900/1923.png"}',
         'silvers rayleigh - first mate of the roger pirates str slasher cerebral'
       );
     
@@ -63531,8 +63531,8 @@ DROP TABLE IF EXISTS meta;
         353,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/1924.png","thumbnailGlobal":null,"thumbnailJapan":"1/900/1924.png","fullTransparent":"1/900/1924.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"1/900/1924.png","fullTransparent":"1/900/1924.png"}',
         'dark king rayleigh - first mate of the roger pirates str slasher cerebral'
       );
     
@@ -74685,8 +74685,8 @@ DROP TABLE IF EXISTS meta;
         191,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2262.png","thumbnailGlobal":null,"thumbnailJapan":"2/200/2262.png","fullTransparent":"2/200/2262.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/200/2262.png","fullTransparent":"2/200/2262.png"}',
         'donquixote doflamingo - country''s future hanging by a thread  int driven cerebral'
       );
     
@@ -74718,8 +74718,8 @@ DROP TABLE IF EXISTS meta;
         333,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2263.png","thumbnailGlobal":null,"thumbnailJapan":"2/200/2263.png","fullTransparent":"2/200/2263.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/200/2263.png","fullTransparent":"2/200/2263.png"}',
         'donquixote doflamingo - plot to destroy the world int driven cerebral'
       );
     
@@ -79206,8 +79206,8 @@ DROP TABLE IF EXISTS meta;
         216,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2399.png","thumbnailGlobal":null,"thumbnailJapan":"2/300/2399.png","fullTransparent":"2/300/2399.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/300/2399.png","fullTransparent":"2/300/2399.png"}',
         'crocodile & daz - revived duo dex,str striker driven slasher cerebral'
       );
     
@@ -80559,8 +80559,8 @@ DROP TABLE IF EXISTS meta;
         232,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2440.png","thumbnailGlobal":null,"thumbnailJapan":"2/400/2440.png","fullTransparent":"2/400/2440.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/400/2440.png","fullTransparent":"2/400/2440.png"}',
         'sabo - straw hat luffy''s brother dex fighter shooter'
       );
     
@@ -80592,8 +80592,8 @@ DROP TABLE IF EXISTS meta;
         462,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2441.png","thumbnailGlobal":null,"thumbnailJapan":"2/400/2441.png","fullTransparent":"2/400/2441.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/400/2441.png","fullTransparent":"2/400/2441.png"}',
         'sabo - straw hat luffy''s ally dex fighter shooter'
       );
     
@@ -82341,8 +82341,8 @@ DROP TABLE IF EXISTS meta;
         286,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2494.png","thumbnailGlobal":null,"thumbnailJapan":"2/400/2494.png","fullTransparent":"2/400/2494.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/400/2494.png","fullTransparent":"2/400/2494.png"}',
         'monkey d. luffy - delicious kitchen psy free spirit fighter'
       );
     
@@ -84222,8 +84222,8 @@ DROP TABLE IF EXISTS meta;
         257,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2551.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2551.png","fullTransparent":"2/500/2551.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2551.png","fullTransparent":"2/500/2551.png"}',
         'admiral sengoku & vice admiral garp int,dex fighter cerebral free spirit'
       );
     
@@ -84255,8 +84255,8 @@ DROP TABLE IF EXISTS meta;
         300,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2552.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2552.png","fullTransparent":"2/500/2552.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2552.png","fullTransparent":"2/500/2552.png"}',
         'admiral sengoku & vice admiral garp - dawn of the great era of piracy int,dex fighter cerebral free spirit'
       );
     
@@ -87918,8 +87918,8 @@ DROP TABLE IF EXISTS meta;
         181,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2663.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2663.png","fullTransparent":"2/600/2663.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2663.png","fullTransparent":"2/600/2663.png"}',
         'roronoa zoro - three-sword style swordsman in chainmail str slasher powerhouse'
       );
     
@@ -87951,8 +87951,8 @@ DROP TABLE IF EXISTS meta;
         252,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2664.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2664.png","fullTransparent":"2/600/2664.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2664.png","fullTransparent":"2/600/2664.png"}',
         'sanji - first class cook in shining armor qck fighter powerhouse'
       );
     
@@ -88644,8 +88644,8 @@ DROP TABLE IF EXISTS meta;
         60,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2685.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2685.png","fullTransparent":"2/600/2685.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2685.png","fullTransparent":"2/600/2685.png"}',
         'whitebeard - great pirate who created an age qck powerhouse striker'
       );
     
@@ -88677,8 +88677,8 @@ DROP TABLE IF EXISTS meta;
         141,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2686.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2686.png","fullTransparent":"2/600/2686.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2686.png","fullTransparent":"2/600/2686.png"}',
         'whitebeard - voiceless rage qck powerhouse striker'
       );
     
@@ -91515,8 +91515,8 @@ DROP TABLE IF EXISTS meta;
         342,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2772.png","thumbnailGlobal":null,"thumbnailJapan":"2/700/2772.png","fullTransparent":"2/700/2772.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/700/2772.png","fullTransparent":"2/700/2772.png"}',
         'wanda: kingsbird - welcoming the saviors psy slasher cerebral'
       );
     
@@ -91911,8 +91911,8 @@ DROP TABLE IF EXISTS meta;
         363,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2784.png","thumbnailGlobal":null,"thumbnailJapan":"2/700/2784.png","fullTransparent":"2/700/2784.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/700/2784.png","fullTransparent":"2/700/2784.png"}',
         'lucci: beastman - absolute prevention of evil qck shooter powerhouse'
       );
     
@@ -93033,8 +93033,8 @@ DROP TABLE IF EXISTS meta;
         244,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2818.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2818.png","fullTransparent":"2/800/2818.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2818.png","fullTransparent":"2/800/2818.png"}',
         'shanks & mihawk - strong swordsman''s reunion qck,int slasher free spirit cerebral'
       );
     
@@ -93066,8 +93066,8 @@ DROP TABLE IF EXISTS meta;
         322,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2819.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2819.png","fullTransparent":"2/800/2819.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2819.png","fullTransparent":"2/800/2819.png"}',
         'shanks & mihawk - world''s leading two swordsmen qck,int slasher free spirit cerebral'
       );
     
@@ -93429,8 +93429,8 @@ DROP TABLE IF EXISTS meta;
         530,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2830.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2830.png","fullTransparent":"2/800/2830.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2830.png","fullTransparent":"2/800/2830.png"}',
         'nico robin - umbrella under a shower of stars int cerebral fighter'
       );
     
@@ -96036,8 +96036,8 @@ DROP TABLE IF EXISTS meta;
         100,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2909.png","thumbnailGlobal":null,"thumbnailJapan":"2/900/2909.png","fullTransparent":"2/900/2909.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/900/2909.png","fullTransparent":"2/900/2909.png"}',
         'whitebeard - end of the long journey qck powerhouse striker'
       );
     
@@ -96366,8 +96366,8 @@ DROP TABLE IF EXISTS meta;
         380,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2919.png","thumbnailGlobal":null,"thumbnailJapan":"2/900/2919.png","fullTransparent":"2/900/2919.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/900/2919.png","fullTransparent":"2/900/2919.png"}',
         'sanji & pudding - royal matrimony dex,qck powerhouse fighter shooter cerebral'
       );
     
@@ -96696,8 +96696,8 @@ DROP TABLE IF EXISTS meta;
         163,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2929.png","thumbnailGlobal":null,"thumbnailJapan":"2/900/2929.png","fullTransparent":"2/900/2929.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/900/2929.png","fullTransparent":"2/900/2929.png"}',
         'aokiji - uncompromised determination and justice qck free spirit shooter'
       );
     
@@ -96729,8 +96729,8 @@ DROP TABLE IF EXISTS meta;
         219,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/2930.png","thumbnailGlobal":null,"thumbnailJapan":"2/900/2930.png","fullTransparent":"2/900/2930.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/900/2930.png","fullTransparent":"2/900/2930.png"}',
         'kuzan - uncompromised determination and justice qck free spirit shooter'
       );
     
@@ -103890,8 +103890,8 @@ DROP TABLE IF EXISTS meta;
         84,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3156.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3156.png","fullTransparent":"3/100/3156.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3156.png","fullTransparent":"3/100/3156.png"}',
         'akainu - uncompromised determination and justice str fighter shooter'
       );
     
@@ -103923,8 +103923,8 @@ DROP TABLE IF EXISTS meta;
         172,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3157.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3157.png","fullTransparent":"3/100/3157.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3157.png","fullTransparent":"3/100/3157.png"}',
         'sakazuki - uncompromised determination and justice str fighter shooter'
       );
     
@@ -108972,8 +108972,8 @@ DROP TABLE IF EXISTS meta;
         131,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3312.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3312.png","fullTransparent":"3/300/3312.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3312.png","fullTransparent":"3/300/3312.png"}',
         'monkey d. garp: neo str fighter powerhouse'
       );
     
@@ -109005,8 +109005,8 @@ DROP TABLE IF EXISTS meta;
         225,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3313.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3313.png","fullTransparent":"3/300/3313.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3313.png","fullTransparent":"3/300/3313.png"}',
         'garp the fist: neo str fighter powerhouse'
       );
     
@@ -109038,8 +109038,8 @@ DROP TABLE IF EXISTS meta;
         181,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3314.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3314.png","fullTransparent":"3/300/3314.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3314.png","fullTransparent":"3/300/3314.png"}',
         'emporio ivankov: neo dex fighter free spirit'
       );
     
@@ -109071,8 +109071,8 @@ DROP TABLE IF EXISTS meta;
         391,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3315.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3315.png","fullTransparent":"3/300/3315.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3315.png","fullTransparent":"3/300/3315.png"}',
         'emporio ivankov: neo - queen of kamabakka queendom (retired) dex fighter free spirit'
       );
     
@@ -109104,8 +109104,8 @@ DROP TABLE IF EXISTS meta;
         15,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3316.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3316.png","fullTransparent":"3/300/3316.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3316.png","fullTransparent":"3/300/3316.png"}',
         'edward newgate: neo - pirate king rival dex powerhouse striker'
       );
     
@@ -109137,8 +109137,8 @@ DROP TABLE IF EXISTS meta;
         20,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3317.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3317.png","fullTransparent":"3/300/3317.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3317.png","fullTransparent":"3/300/3317.png"}',
         'edward newgate: neo - grand pirate whitebeard dex powerhouse striker'
       );
     
@@ -109170,8 +109170,8 @@ DROP TABLE IF EXISTS meta;
         77,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3318.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3318.png","fullTransparent":"3/300/3318.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3318.png","fullTransparent":"3/300/3318.png"}',
         'iron mask duval: neo qck shooter driven'
       );
     
@@ -109203,8 +109203,8 @@ DROP TABLE IF EXISTS meta;
         103,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3319.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3319.png","fullTransparent":"3/300/3319.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3319.png","fullTransparent":"3/300/3319.png"}',
         'duval: neo - flying fish riders leader qck shooter driven'
       );
     
@@ -109236,8 +109236,8 @@ DROP TABLE IF EXISTS meta;
         312,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3320.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3320.png","fullTransparent":"3/300/3320.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3320.png","fullTransparent":"3/300/3320.png"}',
         'duval: neo - rosy life riders leader qck shooter free spirit'
       );
     
@@ -109269,8 +109269,8 @@ DROP TABLE IF EXISTS meta;
         -200,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3321.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3321.png","fullTransparent":"3/300/3321.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3321.png","fullTransparent":"3/300/3321.png"}',
         'monkey d. luffy: neo - star of hope qck slasher powerhouse'
       );
     
@@ -109302,8 +109302,8 @@ DROP TABLE IF EXISTS meta;
         -200,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3322.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3322.png","fullTransparent":"3/300/3322.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3322.png","fullTransparent":"3/300/3322.png"}',
         'nightmare luffy: neo - warrior of hope qck fighter powerhouse'
       );
     
@@ -109335,8 +109335,8 @@ DROP TABLE IF EXISTS meta;
         112,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3323.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3323.png","fullTransparent":"3/300/3323.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3323.png","fullTransparent":"3/300/3323.png"}',
         'demon bamboo vergo: neo str fighter striker'
       );
     
@@ -109368,8 +109368,8 @@ DROP TABLE IF EXISTS meta;
         253,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3324.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3324.png","fullTransparent":"3/300/3324.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3324.png","fullTransparent":"3/300/3324.png"}',
         'demon bamboo vergo: neo - top donquiote family officer str fighter striker'
       );
     
@@ -109401,8 +109401,8 @@ DROP TABLE IF EXISTS meta;
         130,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3325.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3325.png","fullTransparent":"3/300/3325.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3325.png","fullTransparent":"3/300/3325.png"}',
         'heracles-un: neo int shooter cerebral'
       );
     
@@ -109434,8 +109434,8 @@ DROP TABLE IF EXISTS meta;
         300,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3326.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3326.png","fullTransparent":"3/300/3326.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3326.png","fullTransparent":"3/300/3326.png"}',
         'heracles-un: neo - hero of the forest int shooter cerebral'
       );
     
@@ -109467,8 +109467,8 @@ DROP TABLE IF EXISTS meta;
         470,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3327.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3327.png","fullTransparent":"3/300/3327.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3327.png","fullTransparent":"3/300/3327.png"}',
         'condoriano int fighter'
       );
     
@@ -109566,8 +109566,8 @@ DROP TABLE IF EXISTS meta;
         406,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3330.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3330.png","fullTransparent":"3/300/3330.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3330.png","fullTransparent":"3/300/3330.png"}',
         'law & chopper - dynamic doctor duo qck,int slasher cerebral fighter'
       );
     
@@ -109599,8 +109599,8 @@ DROP TABLE IF EXISTS meta;
         275,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3331.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3331.png","fullTransparent":"3/300/3331.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3331.png","fullTransparent":"3/300/3331.png"}',
         'usopp & chopper - ex-weakling duo qck,qck shooter striker powerhouse'
       );
     
@@ -111282,8 +111282,8 @@ DROP TABLE IF EXISTS meta;
         104,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3383.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3383.png","fullTransparent":"3/300/3383.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3383.png","fullTransparent":"3/300/3383.png"}',
         'local sea monster - man-eating monster qck powerhouse free spirit'
       );
     
@@ -111315,8 +111315,8 @@ DROP TABLE IF EXISTS meta;
         252,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3384.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3384.png","fullTransparent":"3/300/3384.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3384.png","fullTransparent":"3/300/3384.png"}',
         'sengoku - fatherly buddha psy cerebral free spirit'
       );
     
@@ -114384,8 +114384,8 @@ DROP TABLE IF EXISTS meta;
         468,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/3478.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3478.png","fullTransparent":"3/400/3478.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3478.png","fullTransparent":"3/400/3478.png"}',
         'makino - proprietor of a relaxed tavern psy cerebral fighter'
       );
     
@@ -135372,8 +135372,8 @@ DROP TABLE IF EXISTS meta;
         129,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
-        '{"exactLocal":"assets/exact-character-images/4129.png","thumbnailGlobal":null,"thumbnailJapan":"4/100/4129.png","fullTransparent":"4/100/4129.png"}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":true}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/100/4129.png","fullTransparent":"4/100/4129.png"}',
         'luffy (age 70) - a different future int free spirit fighter'
       );
     
@@ -136461,8 +136461,8 @@ DROP TABLE IF EXISTS meta;
         208,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/4165.png","thumbnailGlobal":null,"thumbnailJapan":"4/100/4165.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/100/4165.png","fullTransparent":null}',
         'usopp - future clothing of the science island dex shooter cerebral'
       );
     
@@ -136494,8 +136494,8 @@ DROP TABLE IF EXISTS meta;
         180,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/4166.png","thumbnailGlobal":null,"thumbnailJapan":"4/100/4166.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/100/4166.png","fullTransparent":null}',
         's-snake dex powerhouse cerebral'
       );
     
@@ -136527,8 +136527,8 @@ DROP TABLE IF EXISTS meta;
         362,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/4167.png","thumbnailGlobal":null,"thumbnailJapan":"4/100/4167.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/100/4167.png","fullTransparent":null}',
         's-snake - pinnacle science of bloodline elements dex powerhouse cerebral'
       );
     
@@ -136560,8 +136560,8 @@ DROP TABLE IF EXISTS meta;
         158,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/4168.png","thumbnailGlobal":null,"thumbnailJapan":"4/100/4168.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/100/4168.png","fullTransparent":null}',
         'franky - perv in future clothing dex powerhouse fighter'
       );
     
@@ -136593,8 +136593,8 @@ DROP TABLE IF EXISTS meta;
         186,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/4169.png","thumbnailGlobal":null,"thumbnailJapan":"4/100/4169.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/100/4169.png","fullTransparent":null}',
         'brook - excited over future clothing int free spirit cerebral'
       );
     
@@ -138474,8 +138474,8 @@ DROP TABLE IF EXISTS meta;
         62,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5000.png","thumbnailGlobal":null,"thumbnailJapan":"1/900/1983-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"1/900/1983-1.png","fullTransparent":null}',
         '⚐ smoker - straw hat pursuer int striker driven'
       );
     
@@ -140058,8 +140058,8 @@ DROP TABLE IF EXISTS meta;
         322,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5048.png","thumbnailGlobal":null,"thumbnailJapan":"2/400/2469-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/400/2469-PSY.png","fullTransparent":null}',
         '⚐ smoothie & oven - intruder eliiminators psy powerhouse slasher'
       );
     
@@ -140091,8 +140091,8 @@ DROP TABLE IF EXISTS meta;
         322,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5049.png","thumbnailGlobal":null,"thumbnailJapan":"2/400/2469-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/400/2469-QCK.png","fullTransparent":null}',
         '⚐ smoothie & oven - intruder eliiminators qck powerhouse slasher'
       );
     
@@ -140124,8 +140124,8 @@ DROP TABLE IF EXISTS meta;
         170,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5050.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2516-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2516-1.png","fullTransparent":null}',
         '⚐ magellan - guards of impel down int striker shooter'
       );
     
@@ -140157,8 +140157,8 @@ DROP TABLE IF EXISTS meta;
         180,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5051.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2516-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2516-2.png","fullTransparent":null}',
         '⚐ hannyabal - guards of impel down qck striker driven'
       );
     
@@ -140751,8 +140751,8 @@ DROP TABLE IF EXISTS meta;
         191,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5069.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2533-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2533-QCK.png","fullTransparent":null}',
         '⚐ luffy & law - those who destroy the facade of peace qck fighter slasher'
       );
     
@@ -140784,8 +140784,8 @@ DROP TABLE IF EXISTS meta;
         312,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5070.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2534-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2534-1.png","fullTransparent":null}',
         '⚐ luffy - miracle-making generation dex fighter free spirit'
       );
     
@@ -140817,8 +140817,8 @@ DROP TABLE IF EXISTS meta;
         381,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5071.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2534-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2534-2.png","fullTransparent":null}',
         '⚐ law - miracle-making generation qck slasher cerebral'
       );
     
@@ -140850,8 +140850,8 @@ DROP TABLE IF EXISTS meta;
         425,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5072.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2534-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2534-DEX.png","fullTransparent":null}',
         '⚐ luffy & law - miracle-making generation dex fighter slasher'
       );
     
@@ -140883,8 +140883,8 @@ DROP TABLE IF EXISTS meta;
         425,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5073.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2534-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2534-QCK.png","fullTransparent":null}',
         '⚐ luffy & law - miracle-making generation qck fighter slasher'
       );
     
@@ -140916,8 +140916,8 @@ DROP TABLE IF EXISTS meta;
         37,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5074.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2535-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2535-1.png","fullTransparent":null}',
         '⚐ zeus & big mom - those with souls on another level int powerhouse striker'
       );
     
@@ -140949,8 +140949,8 @@ DROP TABLE IF EXISTS meta;
         37,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5075.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2535-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2535-2.png","fullTransparent":null}',
         '⚐ prometheus & big mom - those with souls on another level int powerhouse striker'
       );
     
@@ -140982,8 +140982,8 @@ DROP TABLE IF EXISTS meta;
         53,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5076.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2535-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2535-INT.png","fullTransparent":null}',
         '⚐ zeus & prometheus & big mom - those with souls on another level int powerhouse slasher'
       );
     
@@ -141015,8 +141015,8 @@ DROP TABLE IF EXISTS meta;
         82,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5077.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2535-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2535-1.png","fullTransparent":null}',
         '⚐ zeus & big mom - the leaders of the land of souls int powerhouse striker'
       );
     
@@ -141048,8 +141048,8 @@ DROP TABLE IF EXISTS meta;
         82,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5078.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2535-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2535-2.png","fullTransparent":null}',
         '⚐ prometheus & big mom - the leaders of the land of souls int powerhouse striker'
       );
     
@@ -141081,8 +141081,8 @@ DROP TABLE IF EXISTS meta;
         118,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5079.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2535-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2535-INT.png","fullTransparent":null}',
         '⚐ zeus & prometheus & big mom - the leaders of the land of souls int powerhouse slasher'
       );
     
@@ -141114,8 +141114,8 @@ DROP TABLE IF EXISTS meta;
         90,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5080.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2537-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2537-1.png","fullTransparent":null}',
         '⚐ lucci - users of unimaginable techniques str powerhouse fighter'
       );
     
@@ -141147,8 +141147,8 @@ DROP TABLE IF EXISTS meta;
         127,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5081.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2537-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2537-2.png","fullTransparent":null}',
         '⚐ kaku - users of unimaginable techniques dex powerhouse slasher'
       );
     
@@ -141180,8 +141180,8 @@ DROP TABLE IF EXISTS meta;
         136,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5082.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2537-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2537-STR.png","fullTransparent":null}',
         '⚐ lucci & kaku - users of unimaginable techniques str powerhouse slasher'
       );
     
@@ -141213,8 +141213,8 @@ DROP TABLE IF EXISTS meta;
         136,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5083.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2537-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2537-DEX.png","fullTransparent":null}',
         '⚐ lucci & kaku - users of unimaginable techniques dex powerhouse slasher'
       );
     
@@ -141246,8 +141246,8 @@ DROP TABLE IF EXISTS meta;
         199,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5084.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2538-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2538-1.png","fullTransparent":null}',
         '⚐ lucci - cp9: enforcers of dark justice str powerhouse fighter'
       );
     
@@ -141279,8 +141279,8 @@ DROP TABLE IF EXISTS meta;
         282,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5085.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2538-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2538-2.png","fullTransparent":null}',
         '⚐ kaku - cp9: enforcers of dark justice dex powerhouse slasher'
       );
     
@@ -141312,8 +141312,8 @@ DROP TABLE IF EXISTS meta;
         302,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5086.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2538-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2538-STR.png","fullTransparent":null}',
         '⚐ lucci & kaku - cp9: enforcers of dark justice str powerhouse slasher'
       );
     
@@ -141345,8 +141345,8 @@ DROP TABLE IF EXISTS meta;
         302,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5087.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2538-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2538-DEX.png","fullTransparent":null}',
         '⚐ lucci & kaku - cp9: enforcers of dark justice dex powerhouse slasher'
       );
     
@@ -141378,8 +141378,8 @@ DROP TABLE IF EXISTS meta;
         175,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5088.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2539-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2539-1.png","fullTransparent":null}',
         '⚐ ivankov - impel down''s new kama psy free spirit fighter'
       );
     
@@ -141411,8 +141411,8 @@ DROP TABLE IF EXISTS meta;
         140,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5089.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2539-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2539-2.png","fullTransparent":null}',
         '⚐ bon clay - impel down''s new kama str free spirit fighter'
       );
     
@@ -141444,8 +141444,8 @@ DROP TABLE IF EXISTS meta;
         180,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5090.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2539-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2539-PSY.png","fullTransparent":null}',
         '⚐ ivankov & bon clay - impel down''s new kama psy free spirit fighter'
       );
     
@@ -141477,8 +141477,8 @@ DROP TABLE IF EXISTS meta;
         180,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5091.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2539-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2539-STR.png","fullTransparent":null}',
         '⚐ ivankov & bon clay - impel down''s new kama str free spirit fighter'
       );
     
@@ -141510,8 +141510,8 @@ DROP TABLE IF EXISTS meta;
         388,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5092.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2540-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2540-1.png","fullTransparent":null}',
         '⚐ ivankov - new kama cheering for a miracle psy free spirit fighter'
       );
     
@@ -141543,8 +141543,8 @@ DROP TABLE IF EXISTS meta;
         355,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5093.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2540-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2540-2.png","fullTransparent":null}',
         '⚐ bon clay - new kama cheering for a miracle str free spirit fighter'
       );
     
@@ -141576,8 +141576,8 @@ DROP TABLE IF EXISTS meta;
         401,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5094.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2540-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2540-PSY.png","fullTransparent":null}',
         '⚐ ivankov & bon clay - new kama cheering for a miracle psy free spirit fighter'
       );
     
@@ -141609,8 +141609,8 @@ DROP TABLE IF EXISTS meta;
         401,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5095.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2540-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2540-STR.png","fullTransparent":null}',
         '⚐ ivankov & bon clay - new kama cheering for a miracle str free spirit fighter'
       );
     
@@ -141642,8 +141642,8 @@ DROP TABLE IF EXISTS meta;
         63,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5096.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2541-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2541-1.png","fullTransparent":null}',
         '⚐ smoker - g-5''s commanders qck striker driven'
       );
     
@@ -141675,8 +141675,8 @@ DROP TABLE IF EXISTS meta;
         159,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5097.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2541-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2541-2.png","fullTransparent":null}',
         '⚐ tashigi - g-5''s commanders psy slasher cerebral'
       );
     
@@ -141708,8 +141708,8 @@ DROP TABLE IF EXISTS meta;
         175,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5098.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2541-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2541-QCK.png","fullTransparent":null}',
         '⚐ smoker & tashigi - g-5''s commanders qck driven slasher'
       );
     
@@ -141741,8 +141741,8 @@ DROP TABLE IF EXISTS meta;
         175,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5099.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2541-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2541-PSY.png","fullTransparent":null}',
         '⚐ smoker & tashigi - g-5''s commanders psy driven slasher'
       );
     
@@ -141774,8 +141774,8 @@ DROP TABLE IF EXISTS meta;
         141,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5100.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2542-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2542-1.png","fullTransparent":null}',
         '⚐ smoker - g-5''s trusted commanders qck striker driven'
       );
     
@@ -141807,8 +141807,8 @@ DROP TABLE IF EXISTS meta;
         354,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5101.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2542-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2542-2.png","fullTransparent":null}',
         '⚐ tashigi - g-5''s trusted commanders psy slasher cerebral'
       );
     
@@ -141840,8 +141840,8 @@ DROP TABLE IF EXISTS meta;
         388,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5102.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2542-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2542-QCK.png","fullTransparent":null}',
         '⚐ smoker & tashigi - g-5''s trusted commanders qck driven slasher'
       );
     
@@ -141873,8 +141873,8 @@ DROP TABLE IF EXISTS meta;
         388,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5103.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2542-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2542-PSY.png","fullTransparent":null}',
         '⚐ smoker & tashigi - g-5''s trusted commanders psy driven slasher'
       );
     
@@ -141906,8 +141906,8 @@ DROP TABLE IF EXISTS meta;
         145,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5104.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2543-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2543-1.png","fullTransparent":null}',
         '⚐ mr. 0 - leaders of baroque works dex cerebral slasher'
       );
     
@@ -141939,8 +141939,8 @@ DROP TABLE IF EXISTS meta;
         149,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5105.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2543-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2543-2.png","fullTransparent":null}',
         '⚐ miss all sunday - leaders of baroque works int cerebral slasher'
       );
     
@@ -141972,8 +141972,8 @@ DROP TABLE IF EXISTS meta;
         155,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5106.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2543-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2543-DEX.png","fullTransparent":null}',
         '⚐ mr. 0 & miss all sunday - leaders of baroque works dex cerebral striker'
       );
     
@@ -142005,8 +142005,8 @@ DROP TABLE IF EXISTS meta;
         155,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5107.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2543-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2543-INT.png","fullTransparent":null}',
         '⚐ mr. 0 & miss all sunday - leaders of baroque works int cerebral striker'
       );
     
@@ -142038,8 +142038,8 @@ DROP TABLE IF EXISTS meta;
         322,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5108.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2544-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2544-1.png","fullTransparent":null}',
         '⚐ mr. 0 - rulers of the desert dex cerebral slasher'
       );
     
@@ -142071,8 +142071,8 @@ DROP TABLE IF EXISTS meta;
         331,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5109.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2544-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2544-2.png","fullTransparent":null}',
         '⚐ miss all sunday - rulers of the desert int cerebral slasher'
       );
     
@@ -142104,8 +142104,8 @@ DROP TABLE IF EXISTS meta;
         345,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5110.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2544-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2544-DEX.png","fullTransparent":null}',
         '⚐ mr. 0 & miss all sunday - rulers of the desert dex cerebral striker'
       );
     
@@ -142137,8 +142137,8 @@ DROP TABLE IF EXISTS meta;
         345,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5111.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2544-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2544-INT.png","fullTransparent":null}',
         '⚐ mr. 0 & miss all sunday - rulers of the desert int cerebral striker'
       );
     
@@ -142170,8 +142170,8 @@ DROP TABLE IF EXISTS meta;
         136,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5112.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2549-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2549-1.png","fullTransparent":null}',
         '⚐ doflamingo - those who create a facade of peace str driven cerebral'
       );
     
@@ -142203,8 +142203,8 @@ DROP TABLE IF EXISTS meta;
         136,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5113.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2549-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2549-2.png","fullTransparent":null}',
         '⚐ trebol - those who create a facade of peace dex driven cerebral'
       );
     
@@ -142236,8 +142236,8 @@ DROP TABLE IF EXISTS meta;
         136,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5114.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2549-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2549-STR.png","fullTransparent":null}',
         '⚐ doflamingo & trebol - those who create a facade of peace str driven cerebral'
       );
     
@@ -142269,8 +142269,8 @@ DROP TABLE IF EXISTS meta;
         136,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5115.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2549-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2549-DEX.png","fullTransparent":null}',
         '⚐ doflamingo & trebol - those who create a facade of peace dex driven cerebral'
       );
     
@@ -142302,8 +142302,8 @@ DROP TABLE IF EXISTS meta;
         160,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5116.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2550-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2550-1.png","fullTransparent":null}',
         '⚐ doflamingo - those who pull the strings behind dressrosa str driven cerebral'
       );
     
@@ -142335,8 +142335,8 @@ DROP TABLE IF EXISTS meta;
         170,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5117.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2550-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2550-2.png","fullTransparent":null}',
         '⚐ trebol - those who pull the strings behind dressrosa dex driven cerebral'
       );
     
@@ -142368,8 +142368,8 @@ DROP TABLE IF EXISTS meta;
         210,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5118.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2550-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2550-STR.png","fullTransparent":null}',
         '⚐ doflamingo & trebol - those who pull the strings behind dressrosa str driven cerebral'
       );
     
@@ -142401,8 +142401,8 @@ DROP TABLE IF EXISTS meta;
         210,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5119.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2550-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2550-DEX.png","fullTransparent":null}',
         '⚐ doflamingo & trebol - those who pull the strings behind dressrosa dex driven cerebral'
       );
     
@@ -142434,8 +142434,8 @@ DROP TABLE IF EXISTS meta;
         154,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5120.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2551-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2551-1.png","fullTransparent":null}',
         '⚐ admiral sengoku int fighter cerebral'
       );
     
@@ -142467,8 +142467,8 @@ DROP TABLE IF EXISTS meta;
         100,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5121.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2551-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2551-2.png","fullTransparent":null}',
         '⚐ vice admiral garp dex fighter free spirit'
       );
     
@@ -142500,8 +142500,8 @@ DROP TABLE IF EXISTS meta;
         257,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5122.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2551-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2551-INT.png","fullTransparent":null}',
         '⚐ admiral sengoku and vice admiral garp int fighter cerebral'
       );
     
@@ -142533,8 +142533,8 @@ DROP TABLE IF EXISTS meta;
         257,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5123.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2551-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2551-DEX.png","fullTransparent":null}',
         '⚐ admiral sengoku and vice admiral garp dex fighter cerebral'
       );
     
@@ -142566,8 +142566,8 @@ DROP TABLE IF EXISTS meta;
         280,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5124.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2552-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2552-1.png","fullTransparent":null}',
         '⚐ admiral sengoku - dawn of the great era of piracy int fighter cerebral'
       );
     
@@ -142599,8 +142599,8 @@ DROP TABLE IF EXISTS meta;
         180,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5125.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2552-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2552-2.png","fullTransparent":null}',
         '⚐ vice admiral garp - dawn of the great era of piracy dex fighter free spirit'
       );
     
@@ -142632,8 +142632,8 @@ DROP TABLE IF EXISTS meta;
         300,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5126.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2552-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2552-INT.png","fullTransparent":null}',
         '⚐ admiral sengoku and vice admiral garp - dawn of the great era of piracy int fighter cerebral'
       );
     
@@ -142665,8 +142665,8 @@ DROP TABLE IF EXISTS meta;
         300,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5127.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2552-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2552-DEX.png","fullTransparent":null}',
         '⚐ admiral sengoku and vice admiral garp - dawn of the great era of piracy dex fighter cerebral'
       );
     
@@ -142698,8 +142698,8 @@ DROP TABLE IF EXISTS meta;
         161,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5128.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2556-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2556-1.png","fullTransparent":null}',
         '⚐ red-haired shanks - men trying to stop the war int cerebral slasher'
       );
     
@@ -142731,8 +142731,8 @@ DROP TABLE IF EXISTS meta;
         114,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5129.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2556-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2556-2.png","fullTransparent":null}',
         '⚐ ben beckman - men trying to stop the war dex cerebral striker'
       );
     
@@ -142764,8 +142764,8 @@ DROP TABLE IF EXISTS meta;
         244,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5130.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2556-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2556-INT.png","fullTransparent":null}',
         '⚐ red-haired shanks & ben beckman - men trying to stop the war int cerebral slasher'
       );
     
@@ -142797,8 +142797,8 @@ DROP TABLE IF EXISTS meta;
         244,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5131.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2556-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2556-DEX.png","fullTransparent":null}',
         '⚐ red-haired shanks & ben beckman - men trying to stop the war dex cerebral slasher'
       );
     
@@ -142830,8 +142830,8 @@ DROP TABLE IF EXISTS meta;
         257,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5132.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2557-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2557-1.png","fullTransparent":null}',
         '⚐ red-haired shanks - men who ended the war int cerebral slasher'
       );
     
@@ -142863,8 +142863,8 @@ DROP TABLE IF EXISTS meta;
         230,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5133.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2557-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2557-2.png","fullTransparent":null}',
         '⚐ ben beckman - men who ended the war dex cerebral striker'
       );
     
@@ -142896,8 +142896,8 @@ DROP TABLE IF EXISTS meta;
         302,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5134.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2557-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2557-INT.png","fullTransparent":null}',
         '⚐ red-haired shanks & ben beckman - men who ended the war int cerebral slasher'
       );
     
@@ -142929,8 +142929,8 @@ DROP TABLE IF EXISTS meta;
         302,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5135.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2557-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2557-DEX.png","fullTransparent":null}',
         '⚐ red-haired shanks & ben beckman - men who ended the war dex cerebral slasher'
       );
     
@@ -142962,8 +142962,8 @@ DROP TABLE IF EXISTS meta;
         172,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5136.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2560-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2560-1.png","fullTransparent":null}',
         '⚐ sabo - youthful revolutionary power str free spirit cerebral'
       );
     
@@ -142995,8 +142995,8 @@ DROP TABLE IF EXISTS meta;
         200,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5137.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2560-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2560-2.png","fullTransparent":null}',
         '⚐ koala - youthful revolutionary power int free spirit cerebral'
       );
     
@@ -143028,8 +143028,8 @@ DROP TABLE IF EXISTS meta;
         226,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5138.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2560-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2560-STR.png","fullTransparent":null}',
         '⚐ sabo & koala - youthful revolutionary power str free spirit cerebral'
       );
     
@@ -143061,8 +143061,8 @@ DROP TABLE IF EXISTS meta;
         226,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5139.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2560-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2560-INT.png","fullTransparent":null}',
         '⚐ sabo & koala - youthful revolutionary power int free spirit cerebral'
       );
     
@@ -143094,8 +143094,8 @@ DROP TABLE IF EXISTS meta;
         389,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5140.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2561-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2561-1.png","fullTransparent":null}',
         '⚐ sabo - youthful revolutionary aces str free spirit cerebral'
       );
     
@@ -143127,8 +143127,8 @@ DROP TABLE IF EXISTS meta;
         454,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5141.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2561-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2561-2.png","fullTransparent":null}',
         '⚐ koala - youthful revolutionary aces int free spirit cerebral'
       );
     
@@ -143160,8 +143160,8 @@ DROP TABLE IF EXISTS meta;
         506,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5142.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2561-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2561-STR.png","fullTransparent":null}',
         '⚐ sabo & koala - youthful revolutionary aces str free spirit cerebral'
       );
     
@@ -143193,8 +143193,8 @@ DROP TABLE IF EXISTS meta;
         506,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5143.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2561-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2561-INT.png","fullTransparent":null}',
         '⚐ sabo & koala - youthful revolutionary aces int free spirit cerebral'
       );
     
@@ -143226,8 +143226,8 @@ DROP TABLE IF EXISTS meta;
         210,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5144.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2576-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2576-1.png","fullTransparent":null}',
         '⚐ inuarashi - clashing kings str slasher cerebral'
       );
     
@@ -143259,8 +143259,8 @@ DROP TABLE IF EXISTS meta;
         194,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5145.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2576-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2576-2.png","fullTransparent":null}',
         '⚐ nekomamushi - clashing kings psy striker powerhouse'
       );
     
@@ -143292,8 +143292,8 @@ DROP TABLE IF EXISTS meta;
         222,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5146.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2576-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2576-STR.png","fullTransparent":null}',
         '⚐ inuarashi & nekomamushi - clashing kings str striker cerebral'
       );
     
@@ -143325,8 +143325,8 @@ DROP TABLE IF EXISTS meta;
         222,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5147.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2576-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2576-PSY.png","fullTransparent":null}',
         '⚐ inuarashi & nekomamushi - clashing kings psy striker cerebral'
       );
     
@@ -143358,8 +143358,8 @@ DROP TABLE IF EXISTS meta;
         371,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5148.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2577-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2577-1.png","fullTransparent":null}',
         '⚐ inuarashi - antagonistic kings of day and night str slasher cerebral'
       );
     
@@ -143391,8 +143391,8 @@ DROP TABLE IF EXISTS meta;
         342,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5149.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2577-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2577-2.png","fullTransparent":null}',
         '⚐ nekomamushi - antagonistic kings of day and night psy striker powerhouse'
       );
     
@@ -143424,8 +143424,8 @@ DROP TABLE IF EXISTS meta;
         392,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5150.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2577-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2577-STR.png","fullTransparent":null}',
         '⚐ inuarashi & nekomamushi - antagonistic kings of day and night str striker cerebral'
       );
     
@@ -143457,8 +143457,8 @@ DROP TABLE IF EXISTS meta;
         392,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5151.png","thumbnailGlobal":null,"thumbnailJapan":"2/500/2577-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/500/2577-PSY.png","fullTransparent":null}',
         '⚐ inuarashi & nekomamushi - antagonistic kings of day and night psy striker cerebral'
       );
     
@@ -143490,8 +143490,8 @@ DROP TABLE IF EXISTS meta;
         236,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5152.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2600-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2600-1.png","fullTransparent":null}',
         '⚐ nefeltari vivi - benefactor''s bond dex cerebral free spirit'
       );
     
@@ -143523,8 +143523,8 @@ DROP TABLE IF EXISTS meta;
         219,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5153.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2600-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2600-2.png","fullTransparent":null}',
         '⚐ rebecca - benefactor''s bond str cerebral fighter'
       );
     
@@ -143556,8 +143556,8 @@ DROP TABLE IF EXISTS meta;
         248,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5154.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2600-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2600-DEX.png","fullTransparent":null}',
         '⚐ vivi & rebecca - benefactor''s bond dex cerebral striker'
       );
     
@@ -143589,8 +143589,8 @@ DROP TABLE IF EXISTS meta;
         248,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5155.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2600-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2600-STR.png","fullTransparent":null}',
         '⚐ vivi & rebecca - benefactor''s bond str cerebral striker'
       );
     
@@ -143622,8 +143622,8 @@ DROP TABLE IF EXISTS meta;
         454,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5156.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2601-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2601-1.png","fullTransparent":null}',
         '⚐ nefeltari vivi - shared benefactor dex cerebral free spirit'
       );
     
@@ -143655,8 +143655,8 @@ DROP TABLE IF EXISTS meta;
         423,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5157.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2601-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2601-2.png","fullTransparent":null}',
         '⚐ rebecca - shared benefactor str cerebral striker'
       );
     
@@ -143688,8 +143688,8 @@ DROP TABLE IF EXISTS meta;
         478,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5158.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2601-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2601-DEX.png","fullTransparent":null}',
         '⚐ vivi & rebecca - shared benefactor dex cerebral striker'
       );
     
@@ -143721,8 +143721,8 @@ DROP TABLE IF EXISTS meta;
         478,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5159.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2601-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2601-STR.png","fullTransparent":null}',
         '⚐ vivi & rebecca - shared benefactor str cerebral striker'
       );
     
@@ -143754,8 +143754,8 @@ DROP TABLE IF EXISTS meta;
         253,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5160.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2602-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2602-1.png","fullTransparent":null}',
         '⚐ shirahoshi - injury''s bond int cerebral striker'
       );
     
@@ -143787,8 +143787,8 @@ DROP TABLE IF EXISTS meta;
         272,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5161.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2602-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2602-2.png","fullTransparent":null}',
         '⚐ mansherry - injury''s bond psy cerebral free spirit'
       );
     
@@ -143820,8 +143820,8 @@ DROP TABLE IF EXISTS meta;
         343,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5162.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2602-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2602-INT.png","fullTransparent":null}',
         '⚐ shirahoshi & mansherry - injury''s bond int cerebral striker'
       );
     
@@ -143853,8 +143853,8 @@ DROP TABLE IF EXISTS meta;
         343,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5163.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2602-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2602-PSY.png","fullTransparent":null}',
         '⚐ shirahoshi & mansherry - injury''s bond psy cerebral striker'
       );
     
@@ -143886,8 +143886,8 @@ DROP TABLE IF EXISTS meta;
         488,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5164.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2603-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2603-1.png","fullTransparent":null}',
         '⚐ shirahoshi - wonderful meeting int cerebral striker'
       );
     
@@ -143919,8 +143919,8 @@ DROP TABLE IF EXISTS meta;
         524,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5165.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2603-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2603-2.png","fullTransparent":null}',
         '⚐ mansherry - wonderful meeting psy cerebral free spirit'
       );
     
@@ -143952,8 +143952,8 @@ DROP TABLE IF EXISTS meta;
         660,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5166.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2603-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2603-INT.png","fullTransparent":null}',
         '⚐ shirahoshi & mansherry - wonderful meeting int cerebral striker'
       );
     
@@ -143985,8 +143985,8 @@ DROP TABLE IF EXISTS meta;
         660,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5167.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2603-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2603-PSY.png","fullTransparent":null}',
         '⚐ shirahoshi & mansherry - wonderful meeting psy cerebral striker'
       );
     
@@ -144018,8 +144018,8 @@ DROP TABLE IF EXISTS meta;
         161,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5168.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2618-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2618-1.png","fullTransparent":null}',
         '⚐ sakazuki - tiger and dog str striker driven'
       );
     
@@ -144051,8 +144051,8 @@ DROP TABLE IF EXISTS meta;
         241,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5169.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2618-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2618-2.png","fullTransparent":null}',
         '⚐ issho - tiger and dog int striker driven'
       );
     
@@ -144084,8 +144084,8 @@ DROP TABLE IF EXISTS meta;
         341,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5170.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2618-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2618-STR.png","fullTransparent":null}',
         '⚐ sakazuki & issho - tiger and dog str striker driven'
       );
     
@@ -144117,8 +144117,8 @@ DROP TABLE IF EXISTS meta;
         341,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5171.png","thumbnailGlobal":null,"thumbnailJapan":"2/600/2618-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/600/2618-INT.png","fullTransparent":null}',
         '⚐ sakazuki & issho - tiger and dog int striker driven'
       );
     
@@ -144150,8 +144150,8 @@ DROP TABLE IF EXISTS meta;
         280,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5172.png","thumbnailGlobal":null,"thumbnailJapan":"2/700/2795-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/700/2795-1.png","fullTransparent":null}',
         '⚐ coby - shining rookies of navy hq psy free spirit fighter'
       );
     
@@ -144183,8 +144183,8 @@ DROP TABLE IF EXISTS meta;
         235,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5173.png","thumbnailGlobal":null,"thumbnailJapan":"2/700/2795-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/700/2795-2.png","fullTransparent":null}',
         '⚐ helmeppo - shining rookies of navy hq int slasher free spirit'
       );
     
@@ -144216,8 +144216,8 @@ DROP TABLE IF EXISTS meta;
         312,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5174.png","thumbnailGlobal":null,"thumbnailJapan":"2/700/2795-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/700/2795-PSY.png","fullTransparent":null}',
         '⚐ coby & helmeppo - shining rookies of navy hq psy free spirit slasher'
       );
     
@@ -144249,8 +144249,8 @@ DROP TABLE IF EXISTS meta;
         312,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5175.png","thumbnailGlobal":null,"thumbnailJapan":"2/700/2795-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/700/2795-INT.png","fullTransparent":null}',
         '⚐ coby & helmeppo - shining rookies of navy hq int free spirit slasher'
       );
     
@@ -144282,8 +144282,8 @@ DROP TABLE IF EXISTS meta;
         182,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5176.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2801-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2801-1.png","fullTransparent":null}',
         '⚐ luffytaro - land of wano visitor str free spirit slasher'
       );
     
@@ -144315,8 +144315,8 @@ DROP TABLE IF EXISTS meta;
         185,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5177.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2801-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2801-2.png","fullTransparent":null}',
         '⚐ zorojuro - land of wano visitor dex free spirit slasher'
       );
     
@@ -144348,8 +144348,8 @@ DROP TABLE IF EXISTS meta;
         197,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5178.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2801-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2801-STR.png","fullTransparent":null}',
         '⚐ luffytaro & zorojuro - land of wano visitor str free spirit slasher'
       );
     
@@ -144381,8 +144381,8 @@ DROP TABLE IF EXISTS meta;
         197,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5179.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2801-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2801-DEX.png","fullTransparent":null}',
         '⚐ luffytaro & zorojuro - land of wano visitor dex free spirit slasher'
       );
     
@@ -144414,8 +144414,8 @@ DROP TABLE IF EXISTS meta;
         378,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5180.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2802-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2802-1.png","fullTransparent":null}',
         '⚐ luffytaro - land of wano savior str free spirit slasher'
       );
     
@@ -144447,8 +144447,8 @@ DROP TABLE IF EXISTS meta;
         354,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5181.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2802-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2802-2.png","fullTransparent":null}',
         '⚐ zorojuro - land of wano savior dex free spirit slasher'
       );
     
@@ -144480,8 +144480,8 @@ DROP TABLE IF EXISTS meta;
         412,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5182.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2802-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2802-STR.png","fullTransparent":null}',
         '⚐ luffytaro & zorojuro - land of wano savior str free spirit slasher'
       );
     
@@ -144513,8 +144513,8 @@ DROP TABLE IF EXISTS meta;
         412,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5183.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2802-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2802-DEX.png","fullTransparent":null}',
         '⚐ luffytaro & zorojuro - land of wano savior dex free spirit slasher'
       );
     
@@ -144546,8 +144546,8 @@ DROP TABLE IF EXISTS meta;
         161,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5184.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2818-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2818-1.png","fullTransparent":null}',
         '⚐ red-haired shanks - strong swordsman''s reunion qck slasher free spirit'
       );
     
@@ -144579,8 +144579,8 @@ DROP TABLE IF EXISTS meta;
         114,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5185.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2818-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2818-2.png","fullTransparent":null}',
         '⚐ hawk eyes mihawk - strong swordsman''s reunion int slasher cerebral'
       );
     
@@ -144612,8 +144612,8 @@ DROP TABLE IF EXISTS meta;
         244,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5186.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2818-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2818-QCK.png","fullTransparent":null}',
         '⚐ shanks & mihawk - strong swordsman''s reunion qck slasher free spirit'
       );
     
@@ -144645,8 +144645,8 @@ DROP TABLE IF EXISTS meta;
         244,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5187.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2818-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2818-INT.png","fullTransparent":null}',
         '⚐ shanks & mihawk - strong swordsman''s reunion int slasher free spirit'
       );
     
@@ -144678,8 +144678,8 @@ DROP TABLE IF EXISTS meta;
         291,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5188.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2819-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2819-1.png","fullTransparent":null}',
         '⚐ red-haired shanks - world''s leading two swordsmen qck slasher free spirit'
       );
     
@@ -144711,8 +144711,8 @@ DROP TABLE IF EXISTS meta;
         189,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5189.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2819-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2819-2.png","fullTransparent":null}',
         '⚐ hawk eyes mihawk - world''s leading two swordsmen int slasher cerebral'
       );
     
@@ -144744,8 +144744,8 @@ DROP TABLE IF EXISTS meta;
         322,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5190.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2819-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2819-QCK.png","fullTransparent":null}',
         '⚐ shanks & mihawk - world''s leading two swordsmen qck slasher free spirit'
       );
     
@@ -144777,8 +144777,8 @@ DROP TABLE IF EXISTS meta;
         322,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5191.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2819-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2819-INT.png","fullTransparent":null}',
         '⚐ shanks & mihawk - world''s leading two swordsmen int slasher free spirit'
       );
     
@@ -144810,8 +144810,8 @@ DROP TABLE IF EXISTS meta;
         105,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5192.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2831-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2831-1.png","fullTransparent":null}',
         '⚐ marco - dual flames of the whitebeard pirates str free spirit fighter'
       );
     
@@ -144843,8 +144843,8 @@ DROP TABLE IF EXISTS meta;
         91,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5193.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2831-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2831-2.png","fullTransparent":null}',
         '⚐ ace - dual flames of the whitebeard pirates str free spirit shooter'
       );
     
@@ -144876,8 +144876,8 @@ DROP TABLE IF EXISTS meta;
         110,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5194.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2831-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2831-STR.png","fullTransparent":null}',
         '⚐ marco & ace - dual flames of the whitebeard pirates str free spirit fighter'
       );
     
@@ -144909,8 +144909,8 @@ DROP TABLE IF EXISTS meta;
         175,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5195.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2834-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2834-1.png","fullTransparent":null}',
         '⚐ nami - the lovely ladies of the straw hat crew dex free spirit striker'
       );
     
@@ -144942,8 +144942,8 @@ DROP TABLE IF EXISTS meta;
         202,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5196.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2834-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2834-2.png","fullTransparent":null}',
         '⚐ robin - the lovely ladies of the straw hat crew int free spirit cerebral'
       );
     
@@ -144975,8 +144975,8 @@ DROP TABLE IF EXISTS meta;
         202,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5197.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2834-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2834-DEX.png","fullTransparent":null}',
         '⚐ nami & robin - the lovely ladies of the straw hat crew dex free spirit cerebral'
       );
     
@@ -145008,8 +145008,8 @@ DROP TABLE IF EXISTS meta;
         202,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5198.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2834-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2834-INT.png","fullTransparent":null}',
         '⚐ nami & robin - the lovely ladies of the straw hat crew int free spirit cerebral'
       );
     
@@ -145041,8 +145041,8 @@ DROP TABLE IF EXISTS meta;
         401,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5199.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2835-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2835-1.png","fullTransparent":null}',
         '⚐ nami - break time for the lovely ladies dex free spirit striker'
       );
     
@@ -145074,8 +145074,8 @@ DROP TABLE IF EXISTS meta;
         433,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5200.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2835-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2835-2.png","fullTransparent":null}',
         '⚐ robin - break time for the lovely ladies int free spirit cerebral'
       );
     
@@ -145107,8 +145107,8 @@ DROP TABLE IF EXISTS meta;
         497,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5201.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2835-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2835-DEX.png","fullTransparent":null}',
         '⚐ nami & robin - break time for the lovely ladies dex free spirit cerebral'
       );
     
@@ -145140,8 +145140,8 @@ DROP TABLE IF EXISTS meta;
         497,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5202.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2835-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2835-INT.png","fullTransparent":null}',
         '⚐ nami & robin - break time for the lovely ladies int free spirit cerebral'
       );
     
@@ -145173,8 +145173,8 @@ DROP TABLE IF EXISTS meta;
         253,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5203.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2850-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2850-1.png","fullTransparent":null}',
         '⚐ rebecca - princesses of dressrosa dex cerebral striker'
       );
     
@@ -145206,8 +145206,8 @@ DROP TABLE IF EXISTS meta;
         278,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5204.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2850-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2850-2.png","fullTransparent":null}',
         '⚐ viola - princesses of dressrosa int cerebral striker'
       );
     
@@ -145239,8 +145239,8 @@ DROP TABLE IF EXISTS meta;
         358,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5205.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2850-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2850-DEX.png","fullTransparent":null}',
         '⚐ rebecca & viola - princesses of dressrosa dex cerebral striker'
       );
     
@@ -145272,8 +145272,8 @@ DROP TABLE IF EXISTS meta;
         358,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5206.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2850-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2850-INT.png","fullTransparent":null}',
         '⚐ rebecca & viola - princesses of dressrosa int cerebral striker'
       );
     
@@ -145305,8 +145305,8 @@ DROP TABLE IF EXISTS meta;
         44,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5207.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2859-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2859-1.png","fullTransparent":null}',
         '⚐ arlong - invaders of the east blue str powerhouse fighter'
       );
     
@@ -145338,8 +145338,8 @@ DROP TABLE IF EXISTS meta;
         50,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5208.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2859-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2859-2.png","fullTransparent":null}',
         '⚐ hatchan & kuroobi & choo - invaders of the east blue str powerhouse fighter'
       );
     
@@ -145371,8 +145371,8 @@ DROP TABLE IF EXISTS meta;
         60,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5209.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2859-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2859-STR.png","fullTransparent":null}',
         '⚐ arlong''s crew - invaders of the east blue str powerhouse slasher'
       );
     
@@ -145404,8 +145404,8 @@ DROP TABLE IF EXISTS meta;
         121,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5210.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2860-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2860-1.png","fullTransparent":null}',
         '⚐ arlong - pirates of the superior race str powerhouse shooter'
       );
     
@@ -145437,8 +145437,8 @@ DROP TABLE IF EXISTS meta;
         131,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5211.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2860-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2860-2.png","fullTransparent":null}',
         '⚐ hatchan & kuroobi & choo - pirates of the superior race str powerhouse slasher'
       );
     
@@ -145470,8 +145470,8 @@ DROP TABLE IF EXISTS meta;
         151,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5212.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2860-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2860-STR.png","fullTransparent":null}',
         '⚐ arlong''s crew - pirates of the superior race str powerhouse slasher'
       );
     
@@ -145503,8 +145503,8 @@ DROP TABLE IF EXISTS meta;
         122,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5213.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2861-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2861-1.png","fullTransparent":null}',
         '⚐ shanks - pirates making merry at the feast psy slasher cerebral'
       );
     
@@ -145536,8 +145536,8 @@ DROP TABLE IF EXISTS meta;
         138,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5214.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2861-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2861-2.png","fullTransparent":null}',
         '⚐ beckman & lucky roux & yasopp - pirates making merry at the feast qck shooter cerebral'
       );
     
@@ -145569,8 +145569,8 @@ DROP TABLE IF EXISTS meta;
         171,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5215.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2861-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2861-PSY.png","fullTransparent":null}',
         '⚐ red hair pirates - pirates making merry at the feast psy slasher cerebral'
       );
     
@@ -145602,8 +145602,8 @@ DROP TABLE IF EXISTS meta;
         171,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5216.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2861-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2861-QCK.png","fullTransparent":null}',
         '⚐ red hair pirates - pirates making merry at the feast qck slasher cerebral'
       );
     
@@ -145635,8 +145635,8 @@ DROP TABLE IF EXISTS meta;
         295,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5217.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2862-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2862-1.png","fullTransparent":null}',
         '⚐ shanks - pirates fighting for their friends psy slasher cerebral'
       );
     
@@ -145668,8 +145668,8 @@ DROP TABLE IF EXISTS meta;
         322,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5218.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2862-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2862-2.png","fullTransparent":null}',
         '⚐ beckman & lucky roux & yasopp - pirates fighting for their friends qck shooter cerebral'
       );
     
@@ -145701,8 +145701,8 @@ DROP TABLE IF EXISTS meta;
         360,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5219.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2862-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2862-PSY.png","fullTransparent":null}',
         '⚐ red hair pirates - pirates fighting for their friends psy slasher cerebral'
       );
     
@@ -145734,8 +145734,8 @@ DROP TABLE IF EXISTS meta;
         360,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5220.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2862-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2862-QCK.png","fullTransparent":null}',
         '⚐ red hair pirates - pirates fighting for their friends qck slasher cerebral'
       );
     
@@ -145767,8 +145767,8 @@ DROP TABLE IF EXISTS meta;
         88,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5221.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2863-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2863-1.png","fullTransparent":null}',
         '⚐ krieg - survivors from the grand line str powerhouse striker'
       );
     
@@ -145800,8 +145800,8 @@ DROP TABLE IF EXISTS meta;
         94,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5222.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2863-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2863-2.png","fullTransparent":null}',
         '⚐ gin - survivors from the grand line qck striker powerhouse'
       );
     
@@ -145833,8 +145833,8 @@ DROP TABLE IF EXISTS meta;
         100,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5223.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2863-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2863-STR.png","fullTransparent":null}',
         '⚐ krieg & gin - survivors from the grand line str powerhouse striker'
       );
     
@@ -145866,8 +145866,8 @@ DROP TABLE IF EXISTS meta;
         100,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5224.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2863-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2863-QCK.png","fullTransparent":null}',
         '⚐ krieg & gin - survivors from the grand line qck powerhouse striker'
       );
     
@@ -145899,8 +145899,8 @@ DROP TABLE IF EXISTS meta;
         197,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5225.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2864-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2864-1.png","fullTransparent":null}',
         '⚐ krieg - rulers of the east blue str powerhouse striker'
       );
     
@@ -145932,8 +145932,8 @@ DROP TABLE IF EXISTS meta;
         251,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5226.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2864-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2864-2.png","fullTransparent":null}',
         '⚐ gin - rulers of the east blue qck striker powerhouse'
       );
     
@@ -145965,8 +145965,8 @@ DROP TABLE IF EXISTS meta;
         281,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5227.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2864-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2864-STR.png","fullTransparent":null}',
         '⚐ krieg & gin - rulers of the east blue str powerhouse striker'
       );
     
@@ -145998,8 +145998,8 @@ DROP TABLE IF EXISTS meta;
         281,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5228.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2864-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2864-QCK.png","fullTransparent":null}',
         '⚐ krieg & gin - rulers of the east blue qck powerhouse striker'
       );
     
@@ -146031,8 +146031,8 @@ DROP TABLE IF EXISTS meta;
         99,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5229.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2865-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2865-1.png","fullTransparent":null}',
         '⚐ klahadore - secret assassination plot qck slasher cerebral'
       );
     
@@ -146064,8 +146064,8 @@ DROP TABLE IF EXISTS meta;
         138,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5230.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2865-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2865-2.png","fullTransparent":null}',
         '⚐ django - secret assassination plot dex slasher cerebral'
       );
     
@@ -146097,8 +146097,8 @@ DROP TABLE IF EXISTS meta;
         150,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5231.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2865-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2865-QCK.png","fullTransparent":null}',
         '⚐ klahadore & django - secret assassination plot qck slasher cerebral'
       );
     
@@ -146130,8 +146130,8 @@ DROP TABLE IF EXISTS meta;
         150,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5232.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2865-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2865-DEX.png","fullTransparent":null}',
         '⚐ klahadore & django - secret assassination plot dex slasher cerebral'
       );
     
@@ -146163,8 +146163,8 @@ DROP TABLE IF EXISTS meta;
         277,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5233.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2866-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2866-1.png","fullTransparent":null}',
         '⚐ kuro - captains of the black cat pirates qck slasher cerebral'
       );
     
@@ -146196,8 +146196,8 @@ DROP TABLE IF EXISTS meta;
         322,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5234.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2866-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2866-2.png","fullTransparent":null}',
         '⚐ django - captains of the black cat pirates dex slasher cerebral'
       );
     
@@ -146229,8 +146229,8 @@ DROP TABLE IF EXISTS meta;
         350,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5235.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2866-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2866-QCK.png","fullTransparent":null}',
         '⚐ kuro & django - captains of the black cat pirates qck slasher cerebral'
       );
     
@@ -146262,8 +146262,8 @@ DROP TABLE IF EXISTS meta;
         350,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5236.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2866-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2866-DEX.png","fullTransparent":null}',
         '⚐ kuro & django - captains of the black cat pirates dex slasher cerebral'
       );
     
@@ -146295,8 +146295,8 @@ DROP TABLE IF EXISTS meta;
         258,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5237.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2867-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2867-1.png","fullTransparent":null}',
         '⚐ buggy - clowns seeking great treasure int driven slasher'
       );
     
@@ -146328,8 +146328,8 @@ DROP TABLE IF EXISTS meta;
         268,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5238.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2867-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2867-2.png","fullTransparent":null}',
         '⚐ kabaji & mohji & richie - clowns seeking great treasure int driven slasher'
       );
     
@@ -146361,8 +146361,8 @@ DROP TABLE IF EXISTS meta;
         296,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5239.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2867-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2867-INT.png","fullTransparent":null}',
         '⚐ buggy pirates - clowns seeking great treasure int driven slasher'
       );
     
@@ -146394,8 +146394,8 @@ DROP TABLE IF EXISTS meta;
         200,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5240.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2894-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2894-1.png","fullTransparent":null}',
         '⚐ mihawk - residents of the ruins of the muggy kingdom str cerebral slasher'
       );
     
@@ -146427,8 +146427,8 @@ DROP TABLE IF EXISTS meta;
         223,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5241.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2894-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2894-2.png","fullTransparent":null}',
         '⚐ perona - residents of the ruins of the muggy kingdom psy cerebral driven'
       );
     
@@ -146460,8 +146460,8 @@ DROP TABLE IF EXISTS meta;
         234,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5242.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2894-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2894-STR.png","fullTransparent":null}',
         '⚐ mihawk & perona - residents of the ruins of the muggy kingdom str cerebral driven'
       );
     
@@ -146493,8 +146493,8 @@ DROP TABLE IF EXISTS meta;
         234,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5243.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2894-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2894-PSY.png","fullTransparent":null}',
         '⚐ mihawk & perona - residents of the ruins of the muggy kingdom psy cerebral driven'
       );
     
@@ -146526,8 +146526,8 @@ DROP TABLE IF EXISTS meta;
         355,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5244.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2895-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2895-1.png","fullTransparent":null}',
         '⚐ mihawk - rulers of the ruins of the muggy kingdom str cerebral slasher'
       );
     
@@ -146559,8 +146559,8 @@ DROP TABLE IF EXISTS meta;
         404,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5245.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2895-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2895-2.png","fullTransparent":null}',
         '⚐ perona - rulers of the ruins of the muggy kingdom psy cerebral driven'
       );
     
@@ -146592,8 +146592,8 @@ DROP TABLE IF EXISTS meta;
         423,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5246.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2895-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2895-STR.png","fullTransparent":null}',
         '⚐ mihawk & perona - rulers of the ruins of the muggy kingdom str cerebral driven'
       );
     
@@ -146625,8 +146625,8 @@ DROP TABLE IF EXISTS meta;
         423,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5247.png","thumbnailGlobal":null,"thumbnailJapan":"2/800/2895-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/800/2895-PSY.png","fullTransparent":null}',
         '⚐ mihawk & perona - rulers of the ruins of the muggy kingdom psy cerebral driven'
       );
     
@@ -146658,8 +146658,8 @@ DROP TABLE IF EXISTS meta;
         300,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5248.png","thumbnailGlobal":null,"thumbnailJapan":"2/900/2919-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/900/2919-1.png","fullTransparent":null}',
         '⚐ sanji - royal matrimony dex powerhouse fighter'
       );
     
@@ -146691,8 +146691,8 @@ DROP TABLE IF EXISTS meta;
         358,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5249.png","thumbnailGlobal":null,"thumbnailJapan":"2/900/2919-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/900/2919-2.png","fullTransparent":null}',
         '⚐ pudding - royal matrimony qck shooter cerebral'
       );
     
@@ -146724,8 +146724,8 @@ DROP TABLE IF EXISTS meta;
         380,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5250.png","thumbnailGlobal":null,"thumbnailJapan":"2/900/2919-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/900/2919-DEX.png","fullTransparent":null}',
         '⚐ sanji & pudding - royal matrimony dex powerhouse shooter'
       );
     
@@ -146757,8 +146757,8 @@ DROP TABLE IF EXISTS meta;
         380,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5251.png","thumbnailGlobal":null,"thumbnailJapan":"2/900/2919-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/900/2919-QCK.png","fullTransparent":null}',
         '⚐ sanji & pudding - royal matrimony qck powerhouse shooter'
       );
     
@@ -146790,8 +146790,8 @@ DROP TABLE IF EXISTS meta;
         109,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5252.png","thumbnailGlobal":null,"thumbnailJapan":"2/900/2999-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/900/2999-1.png","fullTransparent":null}',
         '⚐ monkey d. luffy - alliance formed for the sake of training psy fighter free spirit'
       );
     
@@ -146823,8 +146823,8 @@ DROP TABLE IF EXISTS meta;
         102,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5253.png","thumbnailGlobal":null,"thumbnailJapan":"2/900/2999-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/900/2999-2.png","fullTransparent":null}',
         '⚐ boa hancock - alliance formed for the sake of training int shooter free spirit'
       );
     
@@ -146856,8 +146856,8 @@ DROP TABLE IF EXISTS meta;
         119,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5254.png","thumbnailGlobal":null,"thumbnailJapan":"2/900/2999-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/900/2999-PSY.png","fullTransparent":null}',
         '⚐ luffy & hancock - alliance formed for the sake of training psy fighter shooter'
       );
     
@@ -146889,8 +146889,8 @@ DROP TABLE IF EXISTS meta;
         119,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5255.png","thumbnailGlobal":null,"thumbnailJapan":"2/900/2999-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"2/900/2999-INT.png","fullTransparent":null}',
         '⚐ luffy & hancock - alliance formed for the sake of training int fighter shooter'
       );
     
@@ -146922,8 +146922,8 @@ DROP TABLE IF EXISTS meta;
         298,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5256.png","thumbnailGlobal":null,"thumbnailJapan":"3/000/3060-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/000/3060-1.png","fullTransparent":null}',
         '⚐ nami - cheery summer festival dex free spirit striker'
       );
     
@@ -146955,8 +146955,8 @@ DROP TABLE IF EXISTS meta;
         278,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5257.png","thumbnailGlobal":null,"thumbnailJapan":"3/000/3060-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/000/3060-2.png","fullTransparent":null}',
         '⚐ sanji - cheery summer festival psy free spirit fighter'
       );
     
@@ -146988,8 +146988,8 @@ DROP TABLE IF EXISTS meta;
         335,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5258.png","thumbnailGlobal":null,"thumbnailJapan":"3/000/3060-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/000/3060-DEX.png","fullTransparent":null}',
         '⚐ nami & sanji - cheery summer festival dex free spirit fighter'
       );
     
@@ -147021,8 +147021,8 @@ DROP TABLE IF EXISTS meta;
         335,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5259.png","thumbnailGlobal":null,"thumbnailJapan":"3/000/3060-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/000/3060-PSY.png","fullTransparent":null}',
         '⚐ nami & sanji - cheery summer festival psy free spirit fighter'
       );
     
@@ -147054,8 +147054,8 @@ DROP TABLE IF EXISTS meta;
         111,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5260.png","thumbnailGlobal":null,"thumbnailJapan":"3/000/3064-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/000/3064-1.png","fullTransparent":null}',
         '⚐ luffy - one-sided duel str free spirit fighter'
       );
     
@@ -147087,8 +147087,8 @@ DROP TABLE IF EXISTS meta;
         117,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5261.png","thumbnailGlobal":null,"thumbnailJapan":"3/000/3064-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/000/3064-2.png","fullTransparent":null}',
         '⚐ sanji - one-sided duel psy free spirit fighter'
       );
     
@@ -147120,8 +147120,8 @@ DROP TABLE IF EXISTS meta;
         123,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5262.png","thumbnailGlobal":null,"thumbnailJapan":"3/000/3064-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/000/3064-STR.png","fullTransparent":null}',
         '⚐ luffy & sanji - one-sided duel str free spirit fighter'
       );
     
@@ -147153,8 +147153,8 @@ DROP TABLE IF EXISTS meta;
         123,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5263.png","thumbnailGlobal":null,"thumbnailJapan":"3/000/3064-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/000/3064-PSY.png","fullTransparent":null}',
         '⚐ luffy & sanji - one-sided duel psy free spirit fighter'
       );
     
@@ -147186,8 +147186,8 @@ DROP TABLE IF EXISTS meta;
         330,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5264.png","thumbnailGlobal":null,"thumbnailJapan":"3/000/3065-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/000/3065-1.png","fullTransparent":null}',
         '⚐ luffy - a joint struggle underpinned by trust str free spirit fighter'
       );
     
@@ -147219,8 +147219,8 @@ DROP TABLE IF EXISTS meta;
         351,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5265.png","thumbnailGlobal":null,"thumbnailJapan":"3/000/3065-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/000/3065-2.png","fullTransparent":null}',
         '⚐ sanji - a joint struggle underpinned by trust psy free spirit fighter'
       );
     
@@ -147252,8 +147252,8 @@ DROP TABLE IF EXISTS meta;
         371,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5266.png","thumbnailGlobal":null,"thumbnailJapan":"3/000/3065-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/000/3065-STR.png","fullTransparent":null}',
         '⚐ luffy & sanji - a joint struggle underpinned by trust str free spirit fighter'
       );
     
@@ -147285,8 +147285,8 @@ DROP TABLE IF EXISTS meta;
         371,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5267.png","thumbnailGlobal":null,"thumbnailJapan":"3/000/3065-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/000/3065-PSY.png","fullTransparent":null}',
         '⚐ luffy & sanji - a joint struggle underpinned by trust psy free spirit fighter'
       );
     
@@ -147318,8 +147318,8 @@ DROP TABLE IF EXISTS meta;
         109,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5268.png","thumbnailGlobal":null,"thumbnailJapan":"3/000/3098-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/000/3098-1.png","fullTransparent":null}',
         '⚐ sakazuki - strength of the most powerful str fighter driven'
       );
     
@@ -147351,8 +147351,8 @@ DROP TABLE IF EXISTS meta;
         108,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5269.png","thumbnailGlobal":null,"thumbnailJapan":"3/000/3098-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/000/3098-2.png","fullTransparent":null}',
         '⚐ borsalino - strength of the most powerful psy slasher shooter'
       );
     
@@ -147384,8 +147384,8 @@ DROP TABLE IF EXISTS meta;
         110,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5270.png","thumbnailGlobal":null,"thumbnailJapan":"3/000/3098-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/000/3098-STR.png","fullTransparent":null}',
         '⚐ sakazuki & borsalino - strength of the most powerful str driven slasher'
       );
     
@@ -147417,8 +147417,8 @@ DROP TABLE IF EXISTS meta;
         110,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5271.png","thumbnailGlobal":null,"thumbnailJapan":"3/000/3098-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/000/3098-PSY.png","fullTransparent":null}',
         '⚐ sakazuki & borsalino - strength of the most powerful psy driven slasher'
       );
     
@@ -147450,8 +147450,8 @@ DROP TABLE IF EXISTS meta;
         77,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5272.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3134-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3134-1.png","fullTransparent":null}',
         '⚔ kaido - emperors in conflict str driven powerhouse'
       );
     
@@ -147483,8 +147483,8 @@ DROP TABLE IF EXISTS meta;
         79,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5273.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3134-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3134-2.png","fullTransparent":null}',
         '⚔ big mom - emperors in conflict int driven powerhouse'
       );
     
@@ -147516,8 +147516,8 @@ DROP TABLE IF EXISTS meta;
         218,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5274.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3135-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3135-1.png","fullTransparent":null}',
         '⚔ kaido - the two threats str driven powerhouse'
       );
     
@@ -147549,8 +147549,8 @@ DROP TABLE IF EXISTS meta;
         222,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5275.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3135-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3135-2.png","fullTransparent":null}',
         '⚔ big mom - the two threats int driven powerhouse'
       );
     
@@ -147582,8 +147582,8 @@ DROP TABLE IF EXISTS meta;
         133,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5276.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3163-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3163-1.png","fullTransparent":null}',
         '⚐ vivi - joyous dinner party qck cerebral striker'
       );
     
@@ -147615,8 +147615,8 @@ DROP TABLE IF EXISTS meta;
         127,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5277.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3163-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3163-2.png","fullTransparent":null}',
         '⚐ rebecca - joyous dinner party dex cerebral striker'
       );
     
@@ -147648,8 +147648,8 @@ DROP TABLE IF EXISTS meta;
         153,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5278.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3163-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3163-QCK.png","fullTransparent":null}',
         '⚐ vivi & rebecca - joyous dinner party qck cerebral striker'
       );
     
@@ -147681,8 +147681,8 @@ DROP TABLE IF EXISTS meta;
         153,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5279.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3163-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3163-DEX.png","fullTransparent":null}',
         '⚐ vivi & rebecca - joyous dinner party dex cerebral striker'
       );
     
@@ -147714,8 +147714,8 @@ DROP TABLE IF EXISTS meta;
         414,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5280.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3164-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3164-1.png","fullTransparent":null}',
         '⚐ vivi - joyous white christmas qck cerebral striker'
       );
     
@@ -147747,8 +147747,8 @@ DROP TABLE IF EXISTS meta;
         393,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5281.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3164-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3164-2.png","fullTransparent":null}',
         '⚐ rebecca - joyous white christmas dex cerebral striker'
       );
     
@@ -147780,8 +147780,8 @@ DROP TABLE IF EXISTS meta;
         481,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5282.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3164-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3164-QCK.png","fullTransparent":null}',
         '⚐ vivi & rebecca - joyous white christmas qck cerebral striker'
       );
     
@@ -147813,8 +147813,8 @@ DROP TABLE IF EXISTS meta;
         481,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5283.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3164-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3164-DEX.png","fullTransparent":null}',
         '⚐ vivi & rebecca - joyous white christmas dex cerebral striker'
       );
     
@@ -147846,8 +147846,8 @@ DROP TABLE IF EXISTS meta;
         162,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5284.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3165-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3165-1.png","fullTransparent":null}',
         '⚐ shirahoshi - blissful gift exchange qck cerebral striker'
       );
     
@@ -147879,8 +147879,8 @@ DROP TABLE IF EXISTS meta;
         169,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5285.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3165-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3165-2.png","fullTransparent":null}',
         '⚐ mansherry - blissful gift exchange psy cerebral striker'
       );
     
@@ -147912,8 +147912,8 @@ DROP TABLE IF EXISTS meta;
         199,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5286.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3165-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3165-QCK.png","fullTransparent":null}',
         '⚐ shirahoshi & mansherry - blissful gift exchange qck cerebral striker'
       );
     
@@ -147945,8 +147945,8 @@ DROP TABLE IF EXISTS meta;
         199,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5287.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3165-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3165-PSY.png","fullTransparent":null}',
         '⚐ shirahoshi & mansherry - blissful gift exchange psy cerebral striker'
       );
     
@@ -147978,8 +147978,8 @@ DROP TABLE IF EXISTS meta;
         500,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5288.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3166-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3166-1.png","fullTransparent":null}',
         '⚐ shirahoshi - christmas tree decorated by two qck cerebral striker'
       );
     
@@ -148011,8 +148011,8 @@ DROP TABLE IF EXISTS meta;
         524,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5289.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3166-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3166-2.png","fullTransparent":null}',
         '⚐ mansherry - christmas tree decorated by two psy cerebral striker'
       );
     
@@ -148044,8 +148044,8 @@ DROP TABLE IF EXISTS meta;
         624,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5290.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3166-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3166-QCK.png","fullTransparent":null}',
         '⚐ shirahoshi & mansherry - christmas tree decorated by two qck cerebral striker'
       );
     
@@ -148077,8 +148077,8 @@ DROP TABLE IF EXISTS meta;
         624,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5291.png","thumbnailGlobal":null,"thumbnailJapan":"3/100/3166-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/100/3166-PSY.png","fullTransparent":null}',
         '⚐ shirahoshi & mansherry - christmas tree decorated by two psy cerebral striker'
       );
     
@@ -148110,8 +148110,8 @@ DROP TABLE IF EXISTS meta;
         114,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5292.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3203-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3203-1.png","fullTransparent":null}',
         '⚐ sanji - exciting collaboration qck fighter cerebral'
       );
     
@@ -148143,8 +148143,8 @@ DROP TABLE IF EXISTS meta;
         121,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5293.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3203-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3203-2.png","fullTransparent":null}',
         '⚐ pudding - exciting collaboration dex cerebral shooter'
       );
     
@@ -148176,8 +148176,8 @@ DROP TABLE IF EXISTS meta;
         145,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5294.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3203-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3203-QCK.png","fullTransparent":null}',
         '⚐ sanji & pudding - exciting collaboration qck fighter cerebral'
       );
     
@@ -148209,8 +148209,8 @@ DROP TABLE IF EXISTS meta;
         145,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5295.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3203-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3203-DEX.png","fullTransparent":null}',
         '⚐ sanji & pudding - exciting collaboration dex fighter cerebral'
       );
     
@@ -148242,8 +148242,8 @@ DROP TABLE IF EXISTS meta;
         347,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5296.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3204-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3204-1.png","fullTransparent":null}',
         '⚐ sanji - done! a special cake! qck fighter cerebral'
       );
     
@@ -148275,8 +148275,8 @@ DROP TABLE IF EXISTS meta;
         361,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5297.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3204-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3204-2.png","fullTransparent":null}',
         '⚐ pudding - done! a special cake! dex cerebral shooter'
       );
     
@@ -148308,8 +148308,8 @@ DROP TABLE IF EXISTS meta;
         393,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5298.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3204-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3204-QCK.png","fullTransparent":null}',
         '⚐ sanji & pudding - done! a special cake! qck fighter cerebral'
       );
     
@@ -148341,8 +148341,8 @@ DROP TABLE IF EXISTS meta;
         393,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5299.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3204-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3204-DEX.png","fullTransparent":null}',
         '⚐ sanji & pudding - done! a special cake! dex fighter cerebral'
       );
     
@@ -148374,8 +148374,8 @@ DROP TABLE IF EXISTS meta;
         93,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5300.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3252-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3252-1.png","fullTransparent":null}',
         '⚔ ace - flame and magma str shooter free spirit'
       );
     
@@ -148407,8 +148407,8 @@ DROP TABLE IF EXISTS meta;
         76,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5301.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3252-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3252-2.png","fullTransparent":null}',
         '⚔ akainu - flame and magma qck driven powerhouse'
       );
     
@@ -148440,8 +148440,8 @@ DROP TABLE IF EXISTS meta;
         271,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5302.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3253-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3253-1.png","fullTransparent":null}',
         '⚔ ace - clashing explosion str shooter free spirit'
       );
     
@@ -148473,8 +148473,8 @@ DROP TABLE IF EXISTS meta;
         214,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5303.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3253-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3253-2.png","fullTransparent":null}',
         '⚔ akainu - clashing explosion qck driven powerhouse'
       );
     
@@ -148506,8 +148506,8 @@ DROP TABLE IF EXISTS meta;
         81,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5304.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3279-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3279-1.png","fullTransparent":null}',
         '⚐ marshall d. teach - overwhelming two powers int driven powerhouse'
       );
     
@@ -148539,8 +148539,8 @@ DROP TABLE IF EXISTS meta;
         84,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5305.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3279-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3279-2.png","fullTransparent":null}',
         '⚐ marshall d. teach - overwhelming two powers int powerhouse driven'
       );
     
@@ -148572,8 +148572,8 @@ DROP TABLE IF EXISTS meta;
         98,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5306.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3279-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3279-INT.png","fullTransparent":null}',
         '⚐ marshall d. teach - overwhelming two powers int driven powerhouse'
       );
     
@@ -148605,8 +148605,8 @@ DROP TABLE IF EXISTS meta;
         240,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5307.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3280-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3280-1.png","fullTransparent":null}',
         '⚐ blackbeard - overwhelming two powers int driven powerhouse'
       );
     
@@ -148638,8 +148638,8 @@ DROP TABLE IF EXISTS meta;
         231,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5308.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3280-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3280-2.png","fullTransparent":null}',
         '⚐ blackbeard - overwhelming two powers int powerhouse driven'
       );
     
@@ -148671,8 +148671,8 @@ DROP TABLE IF EXISTS meta;
         287,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5309.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3280-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3280-INT.png","fullTransparent":null}',
         '⚐ blackbeard - overwhelming two powers int driven powerhouse'
       );
     
@@ -148704,8 +148704,8 @@ DROP TABLE IF EXISTS meta;
         114,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5310.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3299-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3299-1.png","fullTransparent":null}',
         '⚐ capone bege - familial bonds dex shooter driven'
       );
     
@@ -148737,8 +148737,8 @@ DROP TABLE IF EXISTS meta;
         125,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5311.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3299-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3299-2.png","fullTransparent":null}',
         '⚐ vito & gotti & chiffon - familial bonds psy shooter driven'
       );
     
@@ -148770,8 +148770,8 @@ DROP TABLE IF EXISTS meta;
         163,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5312.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3299-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3299-DEX.png","fullTransparent":null}',
         '⚐ fire tank pirates - familial bonds dex shooter driven'
       );
     
@@ -148803,8 +148803,8 @@ DROP TABLE IF EXISTS meta;
         163,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5313.png","thumbnailGlobal":null,"thumbnailJapan":"3/200/3299-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/200/3299-PSY.png","fullTransparent":null}',
         '⚐ fire tank pirates - familial bonds psy shooter driven'
       );
     
@@ -148836,8 +148836,8 @@ DROP TABLE IF EXISTS meta;
         467,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5314.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3300-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3300-1.png","fullTransparent":null}',
         '⚐ capone bege - gang protecting his family dex shooter driven'
       );
     
@@ -148869,8 +148869,8 @@ DROP TABLE IF EXISTS meta;
         486,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5315.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3300-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3300-2.png","fullTransparent":null}',
         '⚐ vito & gotti & chiffon - gang protecting his family psy shooter driven'
       );
     
@@ -148902,8 +148902,8 @@ DROP TABLE IF EXISTS meta;
         520,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5316.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3300-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3300-DEX.png","fullTransparent":null}',
         '⚐ fire tank pirates - gang protecting his family dex shooter driven'
       );
     
@@ -148935,8 +148935,8 @@ DROP TABLE IF EXISTS meta;
         520,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5317.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3300-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3300-PSY.png","fullTransparent":null}',
         '⚐ fire tank pirates - gang protecting his family psy shooter driven'
       );
     
@@ -148968,8 +148968,8 @@ DROP TABLE IF EXISTS meta;
         375,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5318.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3330-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3330-1.png","fullTransparent":null}',
         '⚐ law - dynamic doctor duo qck slasher cerebral'
       );
     
@@ -149001,8 +149001,8 @@ DROP TABLE IF EXISTS meta;
         390,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5319.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3330-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3330-2.png","fullTransparent":null}',
         '⚐ chopper - dynamic doctor duo int fighter cerebral'
       );
     
@@ -149034,8 +149034,8 @@ DROP TABLE IF EXISTS meta;
         406,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5320.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3330-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3330-QCK.png","fullTransparent":null}',
         '⚐ law & chopper - dynamic doctor duo qck slasher cerebral'
       );
     
@@ -149067,8 +149067,8 @@ DROP TABLE IF EXISTS meta;
         406,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5321.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3330-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3330-INT.png","fullTransparent":null}',
         '⚐ law & chopper - dynamic doctor duo int slasher cerebral'
       );
     
@@ -149100,8 +149100,8 @@ DROP TABLE IF EXISTS meta;
         235,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5322.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3331-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3331-1.png","fullTransparent":null}',
         '⚐ usopp - ex-weakling duo qck shooter'
       );
     
@@ -149133,8 +149133,8 @@ DROP TABLE IF EXISTS meta;
         270,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5323.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3331-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3331-2.png","fullTransparent":null}',
         '⚐ chopper - ex-weakling duo qck striker powerhouse'
       );
     
@@ -149166,8 +149166,8 @@ DROP TABLE IF EXISTS meta;
         275,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5324.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3331-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3331-QCK.png","fullTransparent":null}',
         '⚐ usopp & chopper - ex-weakling duo qck shooter striker'
       );
     
@@ -149199,8 +149199,8 @@ DROP TABLE IF EXISTS meta;
         271,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5325.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3346-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3346-1.png","fullTransparent":null}',
         '⚐ kaido - worst alliance ever str driven powerhouse'
       );
     
@@ -149232,8 +149232,8 @@ DROP TABLE IF EXISTS meta;
         271,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5326.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3346-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3346-2.png","fullTransparent":null}',
         '⚐ big mom - worst alliance ever dex driven powerhouse'
       );
     
@@ -149265,8 +149265,8 @@ DROP TABLE IF EXISTS meta;
         271,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5327.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3346-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3346-STR.png","fullTransparent":null}',
         '⚐ kaido & big mom - worst alliance ever str driven powerhouse'
       );
     
@@ -149298,8 +149298,8 @@ DROP TABLE IF EXISTS meta;
         271,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5328.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3346-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3346-DEX.png","fullTransparent":null}',
         '⚐ kaido & big mom - worst alliance ever dex driven powerhouse'
       );
     
@@ -149331,8 +149331,8 @@ DROP TABLE IF EXISTS meta;
         128,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5329.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3348-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3348-1.png","fullTransparent":null}',
         '⚐ ace - brothers in kimono qck free spirit shooter'
       );
     
@@ -149364,8 +149364,8 @@ DROP TABLE IF EXISTS meta;
         124,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5330.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3348-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3348-2.png","fullTransparent":null}',
         '⚐ sabo - brothers in kimono dex free spirit striker'
       );
     
@@ -149397,8 +149397,8 @@ DROP TABLE IF EXISTS meta;
         185,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5331.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3348-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3348-QCK.png","fullTransparent":null}',
         '⚐ ace & sabo - brothers in kimono qck free spirit shooter'
       );
     
@@ -149430,8 +149430,8 @@ DROP TABLE IF EXISTS meta;
         185,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5332.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3348-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3348-DEX.png","fullTransparent":null}',
         '⚐ ace & sabo - brothers in kimono dex free spirit shooter'
       );
     
@@ -149463,8 +149463,8 @@ DROP TABLE IF EXISTS meta;
         336,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5333.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3349-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3349-1.png","fullTransparent":null}',
         '⚐ ace - raging flame and dragon qck free spirit shooter'
       );
     
@@ -149496,8 +149496,8 @@ DROP TABLE IF EXISTS meta;
         332,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5334.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3349-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3349-2.png","fullTransparent":null}',
         '⚐ sabo - raging flame and dragon dex free spirit striker'
       );
     
@@ -149529,8 +149529,8 @@ DROP TABLE IF EXISTS meta;
         365,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5335.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3349-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3349-QCK.png","fullTransparent":null}',
         '⚐ ace & sabo - raging flame and dragon qck free spirit shooter'
       );
     
@@ -149562,8 +149562,8 @@ DROP TABLE IF EXISTS meta;
         365,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5336.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3349-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3349-DEX.png","fullTransparent":null}',
         '⚐ ace & sabo - raging flame and dragon dex free spirit shooter'
       );
     
@@ -149595,8 +149595,8 @@ DROP TABLE IF EXISTS meta;
         72,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5337.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3354-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3354-1.png","fullTransparent":null}',
         '⚔ whitebeard - discussion of the emperors int striker powerhouse'
       );
     
@@ -149628,8 +149628,8 @@ DROP TABLE IF EXISTS meta;
         85,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5338.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3354-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3354-2.png","fullTransparent":null}',
         '⚔ shanks - discussion of the emperors psy slasher cerebral'
       );
     
@@ -149661,8 +149661,8 @@ DROP TABLE IF EXISTS meta;
         251,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5339.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3355-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3355-1.png","fullTransparent":null}',
         '⚔ whitebeard - broken negotiation int striker powerhouse'
       );
     
@@ -149694,8 +149694,8 @@ DROP TABLE IF EXISTS meta;
         251,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5340.png","thumbnailGlobal":null,"thumbnailJapan":"3/300/3355-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/300/3355-2.png","fullTransparent":null}',
         '⚔ shanks - broken negotiation psy slasher cerebral'
       );
     
@@ -149727,8 +149727,8 @@ DROP TABLE IF EXISTS meta;
         117,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5341.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3432-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3432-1.png","fullTransparent":null}',
         '⚐ ulti qck driven powerhouse'
       );
     
@@ -149760,8 +149760,8 @@ DROP TABLE IF EXISTS meta;
         99,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5342.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3432-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3432-2.png","fullTransparent":null}',
         '⚐ page one dex driven powerhouse'
       );
     
@@ -149793,8 +149793,8 @@ DROP TABLE IF EXISTS meta;
         120,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5343.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3432-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3432-QCK.png","fullTransparent":null}',
         '⚐ ulti & page one qck driven powerhouse'
       );
     
@@ -149826,8 +149826,8 @@ DROP TABLE IF EXISTS meta;
         120,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5344.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3432-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3432-DEX.png","fullTransparent":null}',
         '⚐ ulti & page one dex driven powerhouse'
       );
     
@@ -149859,8 +149859,8 @@ DROP TABLE IF EXISTS meta;
         223,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5345.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3433-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3433-1.png","fullTransparent":null}',
         '⚐ ulti - engaging a dangerous opponent qck driven powerhouse'
       );
     
@@ -149892,8 +149892,8 @@ DROP TABLE IF EXISTS meta;
         188,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5346.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3433-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3433-2.png","fullTransparent":null}',
         '⚐ page one - engaging a dangerous opponent dex driven powerhouse'
       );
     
@@ -149925,8 +149925,8 @@ DROP TABLE IF EXISTS meta;
         223,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5347.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3433-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3433-QCK.png","fullTransparent":null}',
         '⚐ ulti & page one - engaging a dangerous opponent qck driven powerhouse'
       );
     
@@ -149958,8 +149958,8 @@ DROP TABLE IF EXISTS meta;
         223,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5348.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3433-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3433-DEX.png","fullTransparent":null}',
         '⚐ ulti & page one - engaging a dangerous opponent dex driven powerhouse'
       );
     
@@ -149991,8 +149991,8 @@ DROP TABLE IF EXISTS meta;
         190,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5349.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3492-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3492-1.png","fullTransparent":null}',
         '⚐ nami - preparation for a grand battle str cerebral free spirit'
       );
     
@@ -150024,8 +150024,8 @@ DROP TABLE IF EXISTS meta;
         140,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5350.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3492-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3492-2.png","fullTransparent":null}',
         '⚐ usopp - preparation for a grand battle psy cerebral shooter'
       );
     
@@ -150057,8 +150057,8 @@ DROP TABLE IF EXISTS meta;
         192,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5351.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3492-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3492-STR.png","fullTransparent":null}',
         '⚐ nami & usopp - preparation for a grand battle str cerebral shooter'
       );
     
@@ -150090,8 +150090,8 @@ DROP TABLE IF EXISTS meta;
         192,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5352.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3492-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3492-PSY.png","fullTransparent":null}',
         '⚐ nami & usopp - preparation for a grand battle psy cerebral shooter'
       );
     
@@ -150123,8 +150123,8 @@ DROP TABLE IF EXISTS meta;
         373,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5353.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3493-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3493-1.png","fullTransparent":null}',
         '⚐ nami - climate control and sniping combined str cerebral free spirit'
       );
     
@@ -150156,8 +150156,8 @@ DROP TABLE IF EXISTS meta;
         276,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5354.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3493-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3493-2.png","fullTransparent":null}',
         '⚐ usopp - climate control and sniping combined psy cerebral shooter'
       );
     
@@ -150189,8 +150189,8 @@ DROP TABLE IF EXISTS meta;
         376,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5355.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3493-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3493-STR.png","fullTransparent":null}',
         '⚐ nami & usopp - climate control and sniping combined str cerebral shooter'
       );
     
@@ -150222,8 +150222,8 @@ DROP TABLE IF EXISTS meta;
         376,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5356.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3493-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3493-PSY.png","fullTransparent":null}',
         '⚐ nami & usopp - climate control and sniping combined psy cerebral shooter'
       );
     
@@ -150255,8 +150255,8 @@ DROP TABLE IF EXISTS meta;
         144,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5357.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3494-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3494-1.png","fullTransparent":null}',
         '⚐ robin - archaeologist and helmsman dex fighter cerebral'
       );
     
@@ -150288,8 +150288,8 @@ DROP TABLE IF EXISTS meta;
         86,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5358.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3494-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3494-2.png","fullTransparent":null}',
         '⚐ jinbe - archaeologist and helmsman int fighter cerebral'
       );
     
@@ -150321,8 +150321,8 @@ DROP TABLE IF EXISTS meta;
         144,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5359.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3494-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3494-DEX.png","fullTransparent":null}',
         '⚐ robin & jinbe - archaeologist and helmsman dex fighter cerebral'
       );
     
@@ -150354,8 +150354,8 @@ DROP TABLE IF EXISTS meta;
         144,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5360.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3494-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3494-INT.png","fullTransparent":null}',
         '⚐ robin & jinbe - archaeologist and helmsman int fighter cerebral'
       );
     
@@ -150387,8 +150387,8 @@ DROP TABLE IF EXISTS meta;
         287,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5361.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3495-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3495-1.png","fullTransparent":null}',
         '⚐ robin - steadfast duo dex fighter cerebral'
       );
     
@@ -150420,8 +150420,8 @@ DROP TABLE IF EXISTS meta;
         171,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5362.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3495-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3495-2.png","fullTransparent":null}',
         '⚐ jinbe - steadfast duo int fighter cerebral'
       );
     
@@ -150453,8 +150453,8 @@ DROP TABLE IF EXISTS meta;
         287,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5363.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3495-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3495-DEX.png","fullTransparent":null}',
         '⚐ robin & jinbe - steadfast duo dex fighter cerebral'
       );
     
@@ -150486,8 +150486,8 @@ DROP TABLE IF EXISTS meta;
         287,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5364.png","thumbnailGlobal":null,"thumbnailJapan":"3/400/3495-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/400/3495-INT.png","fullTransparent":null}',
         '⚐ robin & jinbe - steadfast duo int fighter cerebral'
       );
     
@@ -150519,8 +150519,8 @@ DROP TABLE IF EXISTS meta;
         61,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5365.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3507-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3507-1.png","fullTransparent":null}',
         '⚐ kaido - animal kingdom pirates str powerhouse driven'
       );
     
@@ -150552,8 +150552,8 @@ DROP TABLE IF EXISTS meta;
         58,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5366.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3507-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3507-2.png","fullTransparent":null}',
         '⚐ lead performers - animal kingdom pirates qck powerhouse driven'
       );
     
@@ -150585,8 +150585,8 @@ DROP TABLE IF EXISTS meta;
         91,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5367.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3507-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3507-STR.png","fullTransparent":null}',
         '⚐ kaido & lead performers - animal kingdom pirates str powerhouse driven'
       );
     
@@ -150618,8 +150618,8 @@ DROP TABLE IF EXISTS meta;
         91,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5368.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3507-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3507-QCK.png","fullTransparent":null}',
         '⚐ kaido & lead performers - animal kingdom pirates qck powerhouse driven'
       );
     
@@ -150651,8 +150651,8 @@ DROP TABLE IF EXISTS meta;
         144,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5369.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3508-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3508-1.png","fullTransparent":null}',
         '⚐ kaido - greatest army in the world str powerhouse driven'
       );
     
@@ -150684,8 +150684,8 @@ DROP TABLE IF EXISTS meta;
         142,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5370.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3508-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3508-2.png","fullTransparent":null}',
         '⚐ lead performers - greatest army in the world qck powerhouse driven'
       );
     
@@ -150717,8 +150717,8 @@ DROP TABLE IF EXISTS meta;
         162,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5371.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3508-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3508-STR.png","fullTransparent":null}',
         '⚐ kaido & lead performers - greatest army in the world str powerhouse driven'
       );
     
@@ -150750,8 +150750,8 @@ DROP TABLE IF EXISTS meta;
         162,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5372.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3508-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3508-QCK.png","fullTransparent":null}',
         '⚐ kaido & lead performers - greatest army in the world qck powerhouse driven'
       );
     
@@ -150783,8 +150783,8 @@ DROP TABLE IF EXISTS meta;
         142,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5373.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3512-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3512-1.png","fullTransparent":null}',
         '⚐ gol d. roger - confrontation of the mighty int slasher striker'
       );
     
@@ -150816,8 +150816,8 @@ DROP TABLE IF EXISTS meta;
         132,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5374.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3512-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3512-2.png","fullTransparent":null}',
         '⚐ edward newgate - confrontation of the mighty psy slasher striker'
       );
     
@@ -150849,8 +150849,8 @@ DROP TABLE IF EXISTS meta;
         154,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5375.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3512-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3512-INT.png","fullTransparent":null}',
         '⚐ roger & newgate - confrontation of the mighty int slasher striker'
       );
     
@@ -150882,8 +150882,8 @@ DROP TABLE IF EXISTS meta;
         154,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5376.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3512-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3512-PSY.png","fullTransparent":null}',
         '⚐ roger & newgate - confrontation of the mighty psy slasher striker'
       );
     
@@ -150915,8 +150915,8 @@ DROP TABLE IF EXISTS meta;
         274,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5377.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3513-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3513-1.png","fullTransparent":null}',
         '⚐ gol d. roger - clash of the mighty int slasher striker'
       );
     
@@ -150948,8 +150948,8 @@ DROP TABLE IF EXISTS meta;
         254,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5378.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3513-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3513-2.png","fullTransparent":null}',
         '⚐ edward newgate - clash of the mighty psy slasher striker'
       );
     
@@ -150981,8 +150981,8 @@ DROP TABLE IF EXISTS meta;
         299,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5379.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3513-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3513-INT.png","fullTransparent":null}',
         '⚐ roger & newgate - clash of the mighty int slasher striker'
       );
     
@@ -151014,8 +151014,8 @@ DROP TABLE IF EXISTS meta;
         299,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5380.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3513-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3513-PSY.png","fullTransparent":null}',
         '⚐ roger & newgate - clash of the mighty psy slasher striker'
       );
     
@@ -151047,8 +151047,8 @@ DROP TABLE IF EXISTS meta;
         158,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5381.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3514-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3514-1.png","fullTransparent":null}',
         '⚐ monkey d. luffy - advancing pirates str free spirit fighter'
       );
     
@@ -151080,8 +151080,8 @@ DROP TABLE IF EXISTS meta;
         168,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5382.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3514-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3514-2.png","fullTransparent":null}',
         '⚐ straw hat pirates - advancing pirates dex free spirit fighter'
       );
     
@@ -151113,8 +151113,8 @@ DROP TABLE IF EXISTS meta;
         186,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5383.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3514-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3514-STR.png","fullTransparent":null}',
         '⚐ luffy & straw hat pirates - advancing pirates str free spirit fighter'
       );
     
@@ -151146,8 +151146,8 @@ DROP TABLE IF EXISTS meta;
         186,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5384.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3514-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3514-DEX.png","fullTransparent":null}',
         '⚐ luffy & straw hat pirates - advancing pirates dex free spirit fighter'
       );
     
@@ -151179,8 +151179,8 @@ DROP TABLE IF EXISTS meta;
         301,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5385.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3515-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3515-1.png","fullTransparent":null}',
         '⚐ monkey d. luffy - start of a full-scale war str free spirit fighter'
       );
     
@@ -151212,8 +151212,8 @@ DROP TABLE IF EXISTS meta;
         325,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5386.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3515-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3515-2.png","fullTransparent":null}',
         '⚐ straw hat pirates - start of a full-scale war dex free spirit fighter'
       );
     
@@ -151245,8 +151245,8 @@ DROP TABLE IF EXISTS meta;
         356,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5387.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3515-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3515-STR.png","fullTransparent":null}',
         '⚐ luffy & straw hat pirates - start of a full-scale war str free spirit fighter'
       );
     
@@ -151278,8 +151278,8 @@ DROP TABLE IF EXISTS meta;
         356,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5388.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3515-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3515-DEX.png","fullTransparent":null}',
         '⚐ luffy & straw hat pirates - start of a full-scale war dex free spirit fighter'
       );
     
@@ -151311,8 +151311,8 @@ DROP TABLE IF EXISTS meta;
         158,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5389.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3542-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3542-1.png","fullTransparent":null}',
         '⚐ carrot - beautiful sulongs qck slasher cerebral'
       );
     
@@ -151344,8 +151344,8 @@ DROP TABLE IF EXISTS meta;
         152,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5390.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3542-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3542-2.png","fullTransparent":null}',
         '⚐ wanda - beautiful sulongs dex slasher cerebral'
       );
     
@@ -151377,8 +151377,8 @@ DROP TABLE IF EXISTS meta;
         182,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5391.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3542-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3542-QCK.png","fullTransparent":null}',
         '⚐ carrot & wanda - beautiful sulongs qck slasher cerebral'
       );
     
@@ -151410,8 +151410,8 @@ DROP TABLE IF EXISTS meta;
         182,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5392.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3542-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3542-DEX.png","fullTransparent":null}',
         '⚐ carrot & wanda - beautiful sulongs dex slasher cerebral'
       );
     
@@ -151443,8 +151443,8 @@ DROP TABLE IF EXISTS meta;
         306,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5393.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3543-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3543-1.png","fullTransparent":null}',
         '⚐ carrot - sulongs seeking revenge qck slasher cerebral'
       );
     
@@ -151476,8 +151476,8 @@ DROP TABLE IF EXISTS meta;
         298,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5394.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3543-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3543-2.png","fullTransparent":null}',
         '⚐ wanda - sulongs seeking revenge dex slasher cerebral'
       );
     
@@ -151509,8 +151509,8 @@ DROP TABLE IF EXISTS meta;
         356,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5395.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3543-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3543-QCK.png","fullTransparent":null}',
         '⚐ carrot & wanda - sulongs seeking revenge qck slasher cerebral'
       );
     
@@ -151542,8 +151542,8 @@ DROP TABLE IF EXISTS meta;
         356,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5396.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3543-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3543-DEX.png","fullTransparent":null}',
         '⚐ carrot & wanda - sulongs seeking revenge dex slasher cerebral'
       );
     
@@ -151575,8 +151575,8 @@ DROP TABLE IF EXISTS meta;
         145,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5397.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3554-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3554-1.png","fullTransparent":null}',
         '⚐ kin''emon - samurai challenging the dragon psy slasher free spirit'
       );
     
@@ -151608,8 +151608,8 @@ DROP TABLE IF EXISTS meta;
         128,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5398.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3554-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3554-2.png","fullTransparent":null}',
         '⚐ denjiro - samurai challenging the dragon qck slasher free spirit'
       );
     
@@ -151641,8 +151641,8 @@ DROP TABLE IF EXISTS meta;
         150,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5399.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3554-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3554-PSY.png","fullTransparent":null}',
         '⚐ kin''emon & denjiro - samurai challenging the dragon psy slasher free spirit'
       );
     
@@ -151674,8 +151674,8 @@ DROP TABLE IF EXISTS meta;
         150,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5400.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3554-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3554-QCK.png","fullTransparent":null}',
         '⚐ kin''emon & denjiro - samurai challenging the dragon qck slasher free spirit'
       );
     
@@ -151707,8 +151707,8 @@ DROP TABLE IF EXISTS meta;
         295,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5401.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3555-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3555-1.png","fullTransparent":null}',
         '⚐ kin''emon - shouldering his master''s spirit psy slasher free spirit'
       );
     
@@ -151740,8 +151740,8 @@ DROP TABLE IF EXISTS meta;
         254,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5402.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3555-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3555-2.png","fullTransparent":null}',
         '⚐ denjiro - shouldering his master''s spirit qck slasher free spirit'
       );
     
@@ -151773,8 +151773,8 @@ DROP TABLE IF EXISTS meta;
         298,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5403.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3555-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3555-PSY.png","fullTransparent":null}',
         '⚐ kin''emon & denjiro - shouldering his master''s spirit psy slasher free spirit'
       );
     
@@ -151806,8 +151806,8 @@ DROP TABLE IF EXISTS meta;
         298,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5404.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3555-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3555-QCK.png","fullTransparent":null}',
         '⚐ kin''emon & denjiro - shouldering his master''s spirit qck slasher free spirit'
       );
     
@@ -151839,8 +151839,8 @@ DROP TABLE IF EXISTS meta;
         134,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5405.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3573-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3573-1.png","fullTransparent":null}',
         '⚐ black rhino fr-u4 - rendezvous point psy free spirit fighter'
       );
     
@@ -151872,8 +151872,8 @@ DROP TABLE IF EXISTS meta;
         136,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5406.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3573-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3573-2.png","fullTransparent":null}',
         '⚐ brachio-tank 5 - rendezvous point dex free spirit shooter'
       );
     
@@ -151905,8 +151905,8 @@ DROP TABLE IF EXISTS meta;
         158,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5407.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3573-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3573-PSY.png","fullTransparent":null}',
         '⚐ black rhino fr-u4 & brachio-tank 5 - rendezvous point psy free spirit slasher'
       );
     
@@ -151938,8 +151938,8 @@ DROP TABLE IF EXISTS meta;
         158,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5408.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3573-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3573-DEX.png","fullTransparent":null}',
         '⚐ black rhino fr-u4 & brachio-tank 5 - rendezvous point dex free spirit slasher'
       );
     
@@ -151971,8 +151971,8 @@ DROP TABLE IF EXISTS meta;
         264,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5409.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3574-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3574-1.png","fullTransparent":null}',
         '⚐ black rhino fr-u4 - dream docking psy free spirit fighter'
       );
     
@@ -152004,8 +152004,8 @@ DROP TABLE IF EXISTS meta;
         296,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5410.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3574-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3574-2.png","fullTransparent":null}',
         '⚐ brachio-tank 5 - dream docking dex free spirit shooter'
       );
     
@@ -152037,8 +152037,8 @@ DROP TABLE IF EXISTS meta;
         306,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5411.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3574-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3574-PSY.png","fullTransparent":null}',
         '⚐ general franky - dream docking psy free spirit slasher'
       );
     
@@ -152070,8 +152070,8 @@ DROP TABLE IF EXISTS meta;
         306,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5412.png","thumbnailGlobal":null,"thumbnailJapan":"3/500/3574-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/500/3574-DEX.png","fullTransparent":null}',
         '⚐ general franky - dream docking dex free spirit slasher'
       );
     
@@ -152103,8 +152103,8 @@ DROP TABLE IF EXISTS meta;
         72,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5413.png","thumbnailGlobal":null,"thumbnailJapan":"3/600/3610-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/600/3610-1.png","fullTransparent":null}',
         '⚐ yamato - full-force clashes str free spirit striker'
       );
     
@@ -152136,8 +152136,8 @@ DROP TABLE IF EXISTS meta;
         135,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5414.png","thumbnailGlobal":null,"thumbnailJapan":"3/600/3610-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/600/3610-2.png","fullTransparent":null}',
         '⚐ ace - full-force clashes dex free spirit shooter'
       );
     
@@ -152169,8 +152169,8 @@ DROP TABLE IF EXISTS meta;
         138,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5415.png","thumbnailGlobal":null,"thumbnailJapan":"3/600/3610-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/600/3610-STR.png","fullTransparent":null}',
         '⚐ yamato & ace - full-force clashes str free spirit striker'
       );
     
@@ -152202,8 +152202,8 @@ DROP TABLE IF EXISTS meta;
         138,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5416.png","thumbnailGlobal":null,"thumbnailJapan":"3/600/3610-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/600/3610-DEX.png","fullTransparent":null}',
         '⚐ yamato & ace - full-force clashes dex free spirit striker'
       );
     
@@ -152235,8 +152235,8 @@ DROP TABLE IF EXISTS meta;
         261,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5417.png","thumbnailGlobal":null,"thumbnailJapan":"3/600/3611-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/600/3611-1.png","fullTransparent":null}',
         '⚐ yamato - two who get along so well str free spirit striker'
       );
     
@@ -152268,8 +152268,8 @@ DROP TABLE IF EXISTS meta;
         253,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5418.png","thumbnailGlobal":null,"thumbnailJapan":"3/600/3611-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/600/3611-2.png","fullTransparent":null}',
         '⚐ ace - two who get along so well dex free spirit shooter'
       );
     
@@ -152301,8 +152301,8 @@ DROP TABLE IF EXISTS meta;
         266,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5419.png","thumbnailGlobal":null,"thumbnailJapan":"3/600/3611-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/600/3611-STR.png","fullTransparent":null}',
         '⚐ yamato & ace - two who get along so well str free spirit striker'
       );
     
@@ -152334,8 +152334,8 @@ DROP TABLE IF EXISTS meta;
         266,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5420.png","thumbnailGlobal":null,"thumbnailJapan":"3/600/3611-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/600/3611-DEX.png","fullTransparent":null}',
         '⚐ yamato & ace - two who get along so well dex free spirit striker'
       );
     
@@ -152367,8 +152367,8 @@ DROP TABLE IF EXISTS meta;
         137,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5421.png","thumbnailGlobal":null,"thumbnailJapan":"3/700/3707-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/700/3707-1.png","fullTransparent":null}',
         '⚐ usopp - connected sight psy shooter free spirit'
       );
     
@@ -152400,8 +152400,8 @@ DROP TABLE IF EXISTS meta;
         138,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5422.png","thumbnailGlobal":null,"thumbnailJapan":"3/700/3707-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/700/3707-2.png","fullTransparent":null}',
         '⚐ yasopp - connected sight qck shooter free spirit'
       );
     
@@ -152433,8 +152433,8 @@ DROP TABLE IF EXISTS meta;
         142,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5423.png","thumbnailGlobal":null,"thumbnailJapan":"3/700/3707-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/700/3707-PSY.png","fullTransparent":null}',
         '⚐ usopp & yasopp - connected sight psy shooter free spirit'
       );
     
@@ -152466,8 +152466,8 @@ DROP TABLE IF EXISTS meta;
         142,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5424.png","thumbnailGlobal":null,"thumbnailJapan":"3/700/3707-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/700/3707-QCK.png","fullTransparent":null}',
         '⚐ usopp & yasopp - connected sight qck shooter free spirit'
       );
     
@@ -152499,8 +152499,8 @@ DROP TABLE IF EXISTS meta;
         267,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5425.png","thumbnailGlobal":null,"thumbnailJapan":"3/700/3708-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/700/3708-1.png","fullTransparent":null}',
         '⚐ usopp - synchronized sniping psy shooter free spirit'
       );
     
@@ -152532,8 +152532,8 @@ DROP TABLE IF EXISTS meta;
         270,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5426.png","thumbnailGlobal":null,"thumbnailJapan":"3/700/3708-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/700/3708-2.png","fullTransparent":null}',
         '⚐ yasopp - synchronized sniping qck shooter free spirit'
       );
     
@@ -152565,8 +152565,8 @@ DROP TABLE IF EXISTS meta;
         282,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5427.png","thumbnailGlobal":null,"thumbnailJapan":"3/700/3708-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/700/3708-PSY.png","fullTransparent":null}',
         '⚐ usopp & yasopp - synchronized sniping psy shooter free spirit'
       );
     
@@ -152598,8 +152598,8 @@ DROP TABLE IF EXISTS meta;
         282,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5428.png","thumbnailGlobal":null,"thumbnailJapan":"3/700/3708-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/700/3708-QCK.png","fullTransparent":null}',
         '⚐ usopp & yasopp - synchronized sniping qck shooter free spirit'
       );
     
@@ -152631,8 +152631,8 @@ DROP TABLE IF EXISTS meta;
         100,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5429.png","thumbnailGlobal":null,"thumbnailJapan":"3/700/3787-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/700/3787-1.png","fullTransparent":null}',
         '⚔ kaido - standoff of mystical beasts int striker driven'
       );
     
@@ -152664,8 +152664,8 @@ DROP TABLE IF EXISTS meta;
         129,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5430.png","thumbnailGlobal":null,"thumbnailJapan":"3/700/3787-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/700/3787-2.png","fullTransparent":null}',
         '⚔ yamato - standoff of mystical beasts dex striker free spirit'
       );
     
@@ -152697,8 +152697,8 @@ DROP TABLE IF EXISTS meta;
         190,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5431.png","thumbnailGlobal":null,"thumbnailJapan":"3/700/3788-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/700/3788-1.png","fullTransparent":null}',
         '⚔ kaido - clashing father and son int striker driven'
       );
     
@@ -152730,8 +152730,8 @@ DROP TABLE IF EXISTS meta;
         248,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5432.png","thumbnailGlobal":null,"thumbnailJapan":"3/700/3788-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/700/3788-2.png","fullTransparent":null}',
         '⚔ yamato - clashing father and son dex striker free spirit'
       );
     
@@ -152763,8 +152763,8 @@ DROP TABLE IF EXISTS meta;
         112,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5433.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3810-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3810-1.png","fullTransparent":null}',
         '⚐ rayleigh - the mighty duo psy free spirit cerebral'
       );
     
@@ -152796,8 +152796,8 @@ DROP TABLE IF EXISTS meta;
         104,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5434.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3810-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3810-2.png","fullTransparent":null}',
         '⚐ gaban - the mighty duo dex free spirit cerebral'
       );
     
@@ -152829,8 +152829,8 @@ DROP TABLE IF EXISTS meta;
         113,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5435.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3810-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3810-PSY.png","fullTransparent":null}',
         '⚐ rayleigh & gaban - the mighty duo psy free spirit cerebral'
       );
     
@@ -152862,8 +152862,8 @@ DROP TABLE IF EXISTS meta;
         113,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5436.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3810-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3810-DEX.png","fullTransparent":null}',
         '⚐ rayleigh & gaban - the mighty duo dex free spirit cerebral'
       );
     
@@ -152895,8 +152895,8 @@ DROP TABLE IF EXISTS meta;
         220,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5437.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3811-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3811-1.png","fullTransparent":null}',
         '⚐ rayleigh - the assaulting duo psy free spirit cerebral'
       );
     
@@ -152928,8 +152928,8 @@ DROP TABLE IF EXISTS meta;
         204,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5438.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3811-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3811-2.png","fullTransparent":null}',
         '⚐ gaban - the assaulting duo dex free spirit cerebral'
       );
     
@@ -152961,8 +152961,8 @@ DROP TABLE IF EXISTS meta;
         222,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5439.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3811-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3811-PSY.png","fullTransparent":null}',
         '⚐ rayleigh & gaban - the assaulting duo psy free spirit cerebral'
       );
     
@@ -152994,8 +152994,8 @@ DROP TABLE IF EXISTS meta;
         222,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5440.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3811-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3811-DEX.png","fullTransparent":null}',
         '⚐ rayleigh & gaban - the assaulting duo dex free spirit cerebral'
       );
     
@@ -153027,8 +153027,8 @@ DROP TABLE IF EXISTS meta;
         374,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5441.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3828-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3828-1.png","fullTransparent":null}',
         '⚐ dogstorm - moonlight shining kings str slasher cerebral'
       );
     
@@ -153060,8 +153060,8 @@ DROP TABLE IF EXISTS meta;
         364,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5442.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3828-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3828-2.png","fullTransparent":null}',
         '⚐ cat viper - moonlight shining kings psy striker powerhouse'
       );
     
@@ -153093,8 +153093,8 @@ DROP TABLE IF EXISTS meta;
         393,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5443.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3828-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3828-STR.png","fullTransparent":null}',
         '⚐ dogstorm & cat viper - moonlight shining kings str slasher cerebral'
       );
     
@@ -153126,8 +153126,8 @@ DROP TABLE IF EXISTS meta;
         393,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5444.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3828-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3828-PSY.png","fullTransparent":null}',
         '⚐ dogstorm & cat viper - moonlight shining kings psy slasher cerebral'
       );
     
@@ -153159,8 +153159,8 @@ DROP TABLE IF EXISTS meta;
         320,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5445.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3845-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3845-1.png","fullTransparent":null}',
         '⚐ red-haired shanks - impeding emperor psy slasher cerebral'
       );
     
@@ -153192,8 +153192,8 @@ DROP TABLE IF EXISTS meta;
         334,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5446.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3845-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3845-2.png","fullTransparent":null}',
         '⚐ beckman & lucky roux & yasopp - impeding emperor qck shooter cerebral'
       );
     
@@ -153225,8 +153225,8 @@ DROP TABLE IF EXISTS meta;
         363,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5447.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3845-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3845-PSY.png","fullTransparent":null}',
         '⚐ red-hair pirates - impeding emperor psy slasher cerebral'
       );
     
@@ -153258,8 +153258,8 @@ DROP TABLE IF EXISTS meta;
         363,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5448.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3845-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3845-QCK.png","fullTransparent":null}',
         '⚐ red-hair pirates - impeding emperor qck slasher cerebral'
       );
     
@@ -153291,8 +153291,8 @@ DROP TABLE IF EXISTS meta;
         386,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5449.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3868-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3868-1.png","fullTransparent":null}',
         '⚐ bartolomeo - flower preotecting man-eater and slicing wind dex driven striker'
       );
     
@@ -153324,8 +153324,8 @@ DROP TABLE IF EXISTS meta;
         362,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5450.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3868-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3868-2.png","fullTransparent":null}',
         '⚐ hakuba - flower preotecting man-eater and slicing wind qck driven slasher'
       );
     
@@ -153357,8 +153357,8 @@ DROP TABLE IF EXISTS meta;
         400,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5451.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3868-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3868-DEX.png","fullTransparent":null}',
         '⚐ bartolomeo & hakuba - flower preotecting man-eater and slicing wind dex driven slasher'
       );
     
@@ -153390,8 +153390,8 @@ DROP TABLE IF EXISTS meta;
         400,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5452.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3868-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3868-QCK.png","fullTransparent":null}',
         '⚐ bartolomeo & hakuba - flower preotecting man-eater and slicing wind qck driven slasher'
       );
     
@@ -153423,8 +153423,8 @@ DROP TABLE IF EXISTS meta;
         320,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5453.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3877-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3877-1.png","fullTransparent":null}',
         '⚐ monkey d. luffy - prepared for the final showdown str free spirit fighter'
       );
     
@@ -153456,8 +153456,8 @@ DROP TABLE IF EXISTS meta;
         350,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5454.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3877-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3877-2.png","fullTransparent":null}',
         '⚐ yamato - prepared for the final showdown dex free spirit striker'
       );
     
@@ -153489,8 +153489,8 @@ DROP TABLE IF EXISTS meta;
         385,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5455.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3877-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3877-STR.png","fullTransparent":null}',
         '⚐ luffy & yamato - prepared for the final showdown str free spirit striker'
       );
     
@@ -153522,8 +153522,8 @@ DROP TABLE IF EXISTS meta;
         385,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5456.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3877-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3877-DEX.png","fullTransparent":null}',
         '⚐ luffy & yamato - prepared for the final showdown dex free spirit striker'
       );
     
@@ -153555,8 +153555,8 @@ DROP TABLE IF EXISTS meta;
         320,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5457.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3878-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3878-1.png","fullTransparent":null}',
         '⚐ monkey d. luffy - declaring war on the demon str free spirit fighter'
       );
     
@@ -153588,8 +153588,8 @@ DROP TABLE IF EXISTS meta;
         350,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5458.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3878-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3878-2.png","fullTransparent":null}',
         '⚐ yamato - declaring war on the demon dex free spirit striker'
       );
     
@@ -153621,8 +153621,8 @@ DROP TABLE IF EXISTS meta;
         385,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5459.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3878-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3878-STR.png","fullTransparent":null}',
         '⚐ luffy & yamato - declaring war on the demon str free spirit striker'
       );
     
@@ -153654,8 +153654,8 @@ DROP TABLE IF EXISTS meta;
         385,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5460.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3878-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3878-DEX.png","fullTransparent":null}',
         '⚐ luffy & yamato - declaring war on the demon dex free spirit striker'
       );
     
@@ -153687,8 +153687,8 @@ DROP TABLE IF EXISTS meta;
         162,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5461.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3879-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3879-1.png","fullTransparent":null}',
         '⚐ kozuki oden - cherished meeting qck slasher fighter'
       );
     
@@ -153720,8 +153720,8 @@ DROP TABLE IF EXISTS meta;
         201,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5462.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3879-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3879-2.png","fullTransparent":null}',
         '⚐ kozuki toki - cherished meeting str slasher free spirit'
       );
     
@@ -153753,8 +153753,8 @@ DROP TABLE IF EXISTS meta;
         205,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5463.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3879-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3879-QCK.png","fullTransparent":null}',
         '⚐ oden & toki - cherished meeting qck slasher free spirit'
       );
     
@@ -153786,8 +153786,8 @@ DROP TABLE IF EXISTS meta;
         205,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5464.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3879-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3879-STR.png","fullTransparent":null}',
         '⚐ oden & toki - cherished meeting str slasher free spirit'
       );
     
@@ -153819,8 +153819,8 @@ DROP TABLE IF EXISTS meta;
         320,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5465.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3880-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3880-1.png","fullTransparent":null}',
         '⚐ kozuki oden - long-awaited reunion qck slasher fighter'
       );
     
@@ -153852,8 +153852,8 @@ DROP TABLE IF EXISTS meta;
         397,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5466.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3880-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3880-2.png","fullTransparent":null}',
         '⚐ kozuki toki - long-awaited reunion str slasher free spirit'
       );
     
@@ -153885,8 +153885,8 @@ DROP TABLE IF EXISTS meta;
         406,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5467.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3880-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3880-QCK.png","fullTransparent":null}',
         '⚐ oden & toki - long-awaited reunion qck slasher free spirit'
       );
     
@@ -153918,8 +153918,8 @@ DROP TABLE IF EXISTS meta;
         406,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5468.png","thumbnailGlobal":null,"thumbnailJapan":"3/800/3880-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/800/3880-STR.png","fullTransparent":null}',
         '⚐ oden & toki - long-awaited reunion str slasher free spirit'
       );
     
@@ -153951,8 +153951,8 @@ DROP TABLE IF EXISTS meta;
         177,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5469.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3902-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3902-1.png","fullTransparent":null}',
         '⚐ zeus & big mom - emperor cornering the new generation int powerhouse slasher'
       );
     
@@ -153984,8 +153984,8 @@ DROP TABLE IF EXISTS meta;
         177,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5470.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3902-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3902-2.png","fullTransparent":null}',
         '⚐ prometheus & big mom - emperor cornering the new generation int powerhouse slasher'
       );
     
@@ -154017,8 +154017,8 @@ DROP TABLE IF EXISTS meta;
         224,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5471.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3902-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3902-INT.png","fullTransparent":null}',
         '⚐ zeus & prometheus & big mom - emperor cornering the new generation int powerhouse slasher'
       );
     
@@ -154050,8 +154050,8 @@ DROP TABLE IF EXISTS meta;
         109,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5472.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3907-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3907-1.png","fullTransparent":null}',
         '⚔ whitebeard - fateful meeting psy powerhouse striker'
       );
     
@@ -154083,8 +154083,8 @@ DROP TABLE IF EXISTS meta;
         77,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5473.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3907-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3907-2.png","fullTransparent":null}',
         '⚔ blackbeard - fateful meeting dex powerhouse driven'
       );
     
@@ -154116,8 +154116,8 @@ DROP TABLE IF EXISTS meta;
         214,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5474.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3908-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3908-1.png","fullTransparent":null}',
         '⚔ whitebeard - clash of tremor and darkness psy powerhouse striker'
       );
     
@@ -154149,8 +154149,8 @@ DROP TABLE IF EXISTS meta;
         150,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5475.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3908-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3908-2.png","fullTransparent":null}',
         '⚔ blackbeard - clash of tremor and darkness dex powerhouse driven'
       );
     
@@ -154182,8 +154182,8 @@ DROP TABLE IF EXISTS meta;
         144,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5476.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3909-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3909-1.png","fullTransparent":null}',
         '⚐ shanks - meeting at the paramount war psy slasher cerebral'
       );
     
@@ -154215,8 +154215,8 @@ DROP TABLE IF EXISTS meta;
         147,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5477.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3909-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3909-2.png","fullTransparent":null}',
         '⚐ buggy - meeting at the paramount war dex slasher driven'
       );
     
@@ -154248,8 +154248,8 @@ DROP TABLE IF EXISTS meta;
         180,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5478.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3909-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3909-PSY.png","fullTransparent":null}',
         '⚐ shanks & buggy - meeting at the paramount war psy slasher driven'
       );
     
@@ -154281,8 +154281,8 @@ DROP TABLE IF EXISTS meta;
         180,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5479.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3909-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3909-DEX.png","fullTransparent":null}',
         '⚐ shanks & buggy - meeting at the paramount war dex slasher driven'
       );
     
@@ -154314,8 +154314,8 @@ DROP TABLE IF EXISTS meta;
         278,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5480.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3910-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3910-1.png","fullTransparent":null}',
         '⚐ shanks - the same old psy slasher cerebral'
       );
     
@@ -154347,8 +154347,8 @@ DROP TABLE IF EXISTS meta;
         290,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5481.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3910-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3910-2.png","fullTransparent":null}',
         '⚐ buggy - the same old dex slasher driven'
       );
     
@@ -154380,8 +154380,8 @@ DROP TABLE IF EXISTS meta;
         351,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5482.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3910-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3910-PSY.png","fullTransparent":null}',
         '⚐ shanks & buggy - the same old psy slasher driven'
       );
     
@@ -154413,8 +154413,8 @@ DROP TABLE IF EXISTS meta;
         351,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5483.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3910-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3910-DEX.png","fullTransparent":null}',
         '⚐ shanks & buggy - the same old dex slasher driven'
       );
     
@@ -154446,8 +154446,8 @@ DROP TABLE IF EXISTS meta;
         168,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5484.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3916-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3916-1.png","fullTransparent":null}',
         '⚐ doflamingo - recruiting on the battlefield dex driven cerebral'
       );
     
@@ -154479,8 +154479,8 @@ DROP TABLE IF EXISTS meta;
         171,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5485.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3916-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3916-2.png","fullTransparent":null}',
         '⚐ crocodile - recruiting on the battlefield qck driven cerebral'
       );
     
@@ -154512,8 +154512,8 @@ DROP TABLE IF EXISTS meta;
         206,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5486.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3916-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3916-DEX.png","fullTransparent":null}',
         '⚐ doflamingo & crocodile - recruiting on the battlefield dex driven cerebral'
       );
     
@@ -154545,8 +154545,8 @@ DROP TABLE IF EXISTS meta;
         206,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5487.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3916-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3916-QCK.png","fullTransparent":null}',
         '⚐ doflamingo & crocodile - recruiting on the battlefield qck driven cerebral'
       );
     
@@ -154578,8 +154578,8 @@ DROP TABLE IF EXISTS meta;
         331,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5488.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3917-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3917-1.png","fullTransparent":null}',
         '⚐ doflamingo - conflicting sand and thread dex driven cerebral'
       );
     
@@ -154611,8 +154611,8 @@ DROP TABLE IF EXISTS meta;
         338,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5489.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3917-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3917-2.png","fullTransparent":null}',
         '⚐ crocodile - conflicting sand and thread qck driven cerebral'
       );
     
@@ -154710,8 +154710,8 @@ DROP TABLE IF EXISTS meta;
         410,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5492.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3920-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3920-1.png","fullTransparent":null}',
         '⚐ monkey d. luffy - brothers in sync qck free spirit fighter'
       );
     
@@ -154743,8 +154743,8 @@ DROP TABLE IF EXISTS meta;
         390,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5493.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3920-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3920-2.png","fullTransparent":null}',
         '⚐ portgas d. ace - brothers in sync str free spirit shooter'
       );
     
@@ -154776,8 +154776,8 @@ DROP TABLE IF EXISTS meta;
         426,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5494.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3920-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3920-QCK.png","fullTransparent":null}',
         '⚐ luffy & ace - brothers in sync qck free spirit fighter'
       );
     
@@ -154809,8 +154809,8 @@ DROP TABLE IF EXISTS meta;
         426,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5495.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3920-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3920-STR.png","fullTransparent":null}',
         '⚐ luffy & ace - brothers in sync str free spirit fighter'
       );
     
@@ -154842,8 +154842,8 @@ DROP TABLE IF EXISTS meta;
         174,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5496.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3921-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3921-1.png","fullTransparent":null}',
         '⚐ nico robin - chats before training int cerebral free spirit'
       );
     
@@ -154875,8 +154875,8 @@ DROP TABLE IF EXISTS meta;
         164,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5497.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3921-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3921-2.png","fullTransparent":null}',
         '⚐ koala - chats before training dex cerebral free spirit'
       );
     
@@ -154908,8 +154908,8 @@ DROP TABLE IF EXISTS meta;
         192,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5498.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3921-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3921-INT.png","fullTransparent":null}',
         '⚐ robin & koala - chats before training int cerebral free spirit'
       );
     
@@ -154941,8 +154941,8 @@ DROP TABLE IF EXISTS meta;
         192,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5499.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3921-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3921-DEX.png","fullTransparent":null}',
         '⚐ robin & koala - chats before training dex cerebral free spirit'
       );
     
@@ -154974,8 +154974,8 @@ DROP TABLE IF EXISTS meta;
         344,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5500.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3922-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3922-1.png","fullTransparent":null}',
         '⚐ nico robin - flowing hands int cerebral free spirit'
       );
     
@@ -155007,8 +155007,8 @@ DROP TABLE IF EXISTS meta;
         323,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5501.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3922-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3922-2.png","fullTransparent":null}',
         '⚐ koala - flowing hands dex cerebral free spirit'
       );
     
@@ -155040,8 +155040,8 @@ DROP TABLE IF EXISTS meta;
         380,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5502.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3922-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3922-INT.png","fullTransparent":null}',
         '⚐ robin & koala - flowing hands int cerebral free spirit'
       );
     
@@ -155073,8 +155073,8 @@ DROP TABLE IF EXISTS meta;
         380,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5503.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3922-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3922-DEX.png","fullTransparent":null}',
         '⚐ robin & koala - flowing hands dex cerebral free spirit'
       );
     
@@ -155106,8 +155106,8 @@ DROP TABLE IF EXISTS meta;
         162,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5504.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3923-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3923-1.png","fullTransparent":null}',
         '⚐ black maria - obstructing tobi roppo pair dex cerebral driven'
       );
     
@@ -155139,8 +155139,8 @@ DROP TABLE IF EXISTS meta;
         169,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5505.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3923-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3923-2.png","fullTransparent":null}',
         '⚐ ulti - obstructing tobi roppo pair int cerebral driven'
       );
     
@@ -155172,8 +155172,8 @@ DROP TABLE IF EXISTS meta;
         187,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5506.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3923-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3923-DEX.png","fullTransparent":null}',
         '⚐ black maria & ulti - obstructing tobi roppo pair dex cerebral driven'
       );
     
@@ -155205,8 +155205,8 @@ DROP TABLE IF EXISTS meta;
         187,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5507.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3923-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3923-INT.png","fullTransparent":null}',
         '⚐ black maria & ulti - obstructing tobi roppo pair int cerebral driven'
       );
     
@@ -155238,8 +155238,8 @@ DROP TABLE IF EXISTS meta;
         320,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5508.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3924-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3924-1.png","fullTransparent":null}',
         '⚐ black maria - merciless assault dex cerebral driven'
       );
     
@@ -155271,8 +155271,8 @@ DROP TABLE IF EXISTS meta;
         333,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5509.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3924-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3924-2.png","fullTransparent":null}',
         '⚐ ulti - merciless assault int cerebral driven'
       );
     
@@ -155304,8 +155304,8 @@ DROP TABLE IF EXISTS meta;
         370,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5510.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3924-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3924-DEX.png","fullTransparent":null}',
         '⚐ black maria & ulti - merciless assault dex cerebral driven'
       );
     
@@ -155337,8 +155337,8 @@ DROP TABLE IF EXISTS meta;
         370,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5511.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3924-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3924-INT.png","fullTransparent":null}',
         '⚐ black maria & ulti - merciless assault int cerebral driven'
       );
     
@@ -155370,8 +155370,8 @@ DROP TABLE IF EXISTS meta;
         185,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5512.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3932-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3932-1.png","fullTransparent":null}',
         '⚐ nami - escaping into the seducing woods int cerebral free spirit'
       );
     
@@ -155403,8 +155403,8 @@ DROP TABLE IF EXISTS meta;
         174,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5513.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3932-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3932-2.png","fullTransparent":null}',
         '⚐ carrot - escaping into the seducing woods dex cerebral free spirit'
       );
     
@@ -155436,8 +155436,8 @@ DROP TABLE IF EXISTS meta;
         193,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5514.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3932-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3932-INT.png","fullTransparent":null}',
         '⚐ nami & carrot - escaping into the seducing woods int cerebral free spirit'
       );
     
@@ -155469,8 +155469,8 @@ DROP TABLE IF EXISTS meta;
         193,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5515.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3932-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3932-DEX.png","fullTransparent":null}',
         '⚐ nami & carrot - escaping into the seducing woods dex cerebral free spirit'
       );
     
@@ -155502,8 +155502,8 @@ DROP TABLE IF EXISTS meta;
         366,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5516.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3933-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3933-1.png","fullTransparent":null}',
         '⚐ nami - relaxing bath time int cerebral free spirit'
       );
     
@@ -155535,8 +155535,8 @@ DROP TABLE IF EXISTS meta;
         343,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5517.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3933-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3933-2.png","fullTransparent":null}',
         '⚐ carrot - relaxing bath time dex cerebral free spirit'
       );
     
@@ -155568,8 +155568,8 @@ DROP TABLE IF EXISTS meta;
         382,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5518.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3933-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3933-INT.png","fullTransparent":null}',
         '⚐ nami & carrot - relaxing bath time int cerebral free spirit'
       );
     
@@ -155601,8 +155601,8 @@ DROP TABLE IF EXISTS meta;
         382,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5519.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3933-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3933-DEX.png","fullTransparent":null}',
         '⚐ nami & carrot - relaxing bath time dex cerebral free spirit'
       );
     
@@ -155634,8 +155634,8 @@ DROP TABLE IF EXISTS meta;
         448,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5520.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3940-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3940-1.png","fullTransparent":null}',
         '⚐ nami - elegant flowers blooming on the battlefield dex free spirit striker'
       );
     
@@ -155667,8 +155667,8 @@ DROP TABLE IF EXISTS meta;
         463,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5521.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3940-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3940-2.png","fullTransparent":null}',
         '⚐ nico robin - elegant flowers blooming on the battlefield int free spirit cerebral'
       );
     
@@ -155700,8 +155700,8 @@ DROP TABLE IF EXISTS meta;
         511,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5522.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3940-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3940-DEX.png","fullTransparent":null}',
         '⚐ nami & robin - elegant flowers blooming on the battlefield dex free spirit cerebral'
       );
     
@@ -155733,8 +155733,8 @@ DROP TABLE IF EXISTS meta;
         511,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5523.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3940-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3940-INT.png","fullTransparent":null}',
         '⚐ nami & robin - elegant flowers blooming on the battlefield int free spirit cerebral'
       );
     
@@ -155766,8 +155766,8 @@ DROP TABLE IF EXISTS meta;
         280,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5524.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3969-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3969-1.png","fullTransparent":null}',
         '⚐ sanji - severed family ties psy powerhouse fighter'
       );
     
@@ -155799,8 +155799,8 @@ DROP TABLE IF EXISTS meta;
         231,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5525.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3969-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3969-2.png","fullTransparent":null}',
         '⚐ vinsmoke judge - severed family ties psy powerhouse driven'
       );
     
@@ -155832,8 +155832,8 @@ DROP TABLE IF EXISTS meta;
         350,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5526.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3969-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3969-PSY.png","fullTransparent":null}',
         '⚐ sanji & judge - severed family ties psy powerhouse fighter'
       );
     
@@ -155865,8 +155865,8 @@ DROP TABLE IF EXISTS meta;
         195,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5527.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3970-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3970-1.png","fullTransparent":null}',
         '⚐ trafalgar law - awakened captains psy free spirit slasher'
       );
     
@@ -155898,8 +155898,8 @@ DROP TABLE IF EXISTS meta;
         177,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5528.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3970-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3970-2.png","fullTransparent":null}',
         '⚐ eustass kid - awakened captains int driven free spirit'
       );
     
@@ -155931,8 +155931,8 @@ DROP TABLE IF EXISTS meta;
         196,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5529.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3970-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3970-PSY.png","fullTransparent":null}',
         '⚐ law & kid - awakened captains psy free spirit driven'
       );
     
@@ -155964,8 +155964,8 @@ DROP TABLE IF EXISTS meta;
         196,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5530.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3970-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3970-INT.png","fullTransparent":null}',
         '⚐ law & kid - awakened captains int free spirit driven'
       );
     
@@ -155997,8 +155997,8 @@ DROP TABLE IF EXISTS meta;
         386,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5531.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3971-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3971-1.png","fullTransparent":null}',
         '⚐ trafalgar law - overthrowing an emperor psy free spirit slasher'
       );
     
@@ -156030,8 +156030,8 @@ DROP TABLE IF EXISTS meta;
         350,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5532.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3971-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3971-2.png","fullTransparent":null}',
         '⚐ eustass kid - overthrowing an emperor int driven free spirit'
       );
     
@@ -156063,8 +156063,8 @@ DROP TABLE IF EXISTS meta;
         388,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5533.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3971-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3971-PSY.png","fullTransparent":null}',
         '⚐ law & kid - overthrowing an emperor psy free spirit driven'
       );
     
@@ -156096,8 +156096,8 @@ DROP TABLE IF EXISTS meta;
         388,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5534.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3971-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3971-INT.png","fullTransparent":null}',
         '⚐ law & kid - overthrowing an emperor int free spirit driven'
       );
     
@@ -156129,8 +156129,8 @@ DROP TABLE IF EXISTS meta;
         354,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5535.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3989-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3989-1.png","fullTransparent":null}',
         '⚐ whitebeard - deadly battle at the paramount war psy striker powerhouse'
       );
     
@@ -156162,8 +156162,8 @@ DROP TABLE IF EXISTS meta;
         430,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5536.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3989-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3989-2.png","fullTransparent":null}',
         '⚐ marco - deadly battle at the paramount war int fighter powerhouse'
       );
     
@@ -156195,8 +156195,8 @@ DROP TABLE IF EXISTS meta;
         450,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5537.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3989-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3989-PSY.png","fullTransparent":null}',
         '⚐ whitebeard & marco - deadly battle at the paramount war psy striker powerhouse'
       );
     
@@ -156228,8 +156228,8 @@ DROP TABLE IF EXISTS meta;
         450,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5538.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3989-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3989-INT.png","fullTransparent":null}',
         '⚐ whitebeard & marco - deadly battle at the paramount war int striker powerhouse'
       );
     
@@ -156261,8 +156261,8 @@ DROP TABLE IF EXISTS meta;
         163,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5539.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3994-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3994-1.png","fullTransparent":null}',
         '⚐ kizaru - incoming navy hq powerhouses int slasher shooter'
       );
     
@@ -156294,8 +156294,8 @@ DROP TABLE IF EXISTS meta;
         187,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5540.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3994-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3994-2.png","fullTransparent":null}',
         '⚐ fujitora - incoming navy hq powerhouses psy slasher shooter'
       );
     
@@ -156327,8 +156327,8 @@ DROP TABLE IF EXISTS meta;
         193,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5541.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3994-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3994-INT.png","fullTransparent":null}',
         '⚐ kizaru & fujitora - incoming navy hq powerhouses psy slasher shooter'
       );
     
@@ -156360,8 +156360,8 @@ DROP TABLE IF EXISTS meta;
         193,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5542.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3994-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3994-PSY.png","fullTransparent":null}',
         '⚐ kizaru & fujitora - incoming navy hq powerhouses int slasher shooter'
       );
     
@@ -156393,8 +156393,8 @@ DROP TABLE IF EXISTS meta;
         321,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5543.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3995-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3995-1.png","fullTransparent":null}',
         '⚐ kizaru - admiral after the diva int slasher shooter'
       );
     
@@ -156426,8 +156426,8 @@ DROP TABLE IF EXISTS meta;
         369,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5544.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3995-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3995-2.png","fullTransparent":null}',
         '⚐ fujitora - admiral after the diva psy slasher shooter'
       );
     
@@ -156459,8 +156459,8 @@ DROP TABLE IF EXISTS meta;
         381,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5545.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3995-INT.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3995-INT.png","fullTransparent":null}',
         '⚐ kizaru & fujitora - admirals after the diva psy slasher shooter'
       );
     
@@ -156492,8 +156492,8 @@ DROP TABLE IF EXISTS meta;
         381,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5546.png","thumbnailGlobal":null,"thumbnailJapan":"3/900/3995-PSY.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"3/900/3995-PSY.png","fullTransparent":null}',
         '⚐ kizaru & fujitora - admirals after the diva int slasher shooter'
       );
     
@@ -156525,8 +156525,8 @@ DROP TABLE IF EXISTS meta;
         189,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5547.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4002-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4002-1.png","fullTransparent":null}',
         '⚐ nami - frenemies: cat and fox str free spirit cerebral'
       );
     
@@ -156558,8 +156558,8 @@ DROP TABLE IF EXISTS meta;
         194,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5548.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4002-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4002-2.png","fullTransparent":null}',
         '⚐ carina - frenemies: cat and fox qck free spirit cerebral'
       );
     
@@ -156591,8 +156591,8 @@ DROP TABLE IF EXISTS meta;
         225,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5549.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4002-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4002-STR.png","fullTransparent":null}',
         '⚐ nami & carina - frenemies: cat and fox str free spirit cerebral'
       );
     
@@ -156624,8 +156624,8 @@ DROP TABLE IF EXISTS meta;
         225,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5550.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4002-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4002-QCK.png","fullTransparent":null}',
         '⚐ nami & carina - frenemies: cat and fox qck free spirit cerebral'
       );
     
@@ -156657,8 +156657,8 @@ DROP TABLE IF EXISTS meta;
         374,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5551.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4003-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4003-1.png","fullTransparent":null}',
         '⚐ nami - cat and fox''s showtime str free spirit cerebral'
       );
     
@@ -156690,8 +156690,8 @@ DROP TABLE IF EXISTS meta;
         384,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5552.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4003-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4003-2.png","fullTransparent":null}',
         '⚐ carina - cat and fox''s showtime qck free spirit cerebral'
       );
     
@@ -156723,8 +156723,8 @@ DROP TABLE IF EXISTS meta;
         445,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5553.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4003-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4003-STR.png","fullTransparent":null}',
         '⚐ nami & carina - cat and fox''s showtime str free spirit cerebral'
       );
     
@@ -156756,8 +156756,8 @@ DROP TABLE IF EXISTS meta;
         445,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5554.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4003-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4003-QCK.png","fullTransparent":null}',
         '⚐ nami & carina - cat and fox''s showtime qck free spirit cerebral'
       );
     
@@ -156789,8 +156789,8 @@ DROP TABLE IF EXISTS meta;
         172,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5555.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4059-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4059-1.png","fullTransparent":null}',
         '⚐ yamato - white beast dashing through the battlefield qck striker slasher'
       );
     
@@ -156822,8 +156822,8 @@ DROP TABLE IF EXISTS meta;
         166,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5556.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4059-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4059-2.png","fullTransparent":null}',
         '⚐ yamato - using the name of oden dex striker slasher'
       );
     
@@ -156855,8 +156855,8 @@ DROP TABLE IF EXISTS meta;
         183,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5557.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4059-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4059-QCK.png","fullTransparent":null}',
         '⚐ yamato - determined to fight alongside the land of wano qck striker slasher'
       );
     
@@ -156888,8 +156888,8 @@ DROP TABLE IF EXISTS meta;
         183,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5558.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4059-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4059-DEX.png","fullTransparent":null}',
         '⚐ yamato - determined to fight alongside the land of wano dex striker slasher'
       );
     
@@ -156921,8 +156921,8 @@ DROP TABLE IF EXISTS meta;
         339,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5559.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4060-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4060-1.png","fullTransparent":null}',
         '⚐ "child of ogres" yamato - white beast dashing through the battlefield qck striker slasher'
       );
     
@@ -156954,8 +156954,8 @@ DROP TABLE IF EXISTS meta;
         328,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5560.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4060-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4060-2.png","fullTransparent":null}',
         '⚐ "child of ogres" yamato - using the name of oden dex striker slasher'
       );
     
@@ -156987,8 +156987,8 @@ DROP TABLE IF EXISTS meta;
         362,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5561.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4060-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4060-QCK.png","fullTransparent":null}',
         '⚐ "child of ogres" yamato - determined to fight alongside the land of wano qck striker slasher'
       );
     
@@ -157020,8 +157020,8 @@ DROP TABLE IF EXISTS meta;
         362,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5562.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4060-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4060-DEX.png","fullTransparent":null}',
         '⚐ "child of ogres" yamato - determined to fight alongside the land of wano dex striker slasher'
       );
     
@@ -157053,8 +157053,8 @@ DROP TABLE IF EXISTS meta;
         185,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5563.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4061-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4061-1.png","fullTransparent":null}',
         '⚐ roronoa zoro - vows made dex slasher driven'
       );
     
@@ -157086,8 +157086,8 @@ DROP TABLE IF EXISTS meta;
         191,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5564.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4061-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4061-2.png","fullTransparent":null}',
         '⚐ sanji - vows made qck free spirit fighter'
       );
     
@@ -157119,8 +157119,8 @@ DROP TABLE IF EXISTS meta;
         202,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5565.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4061-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4061-DEX.png","fullTransparent":null}',
         '⚐ zoro & sanji - vows made dex slasher free spirit'
       );
     
@@ -157152,8 +157152,8 @@ DROP TABLE IF EXISTS meta;
         202,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5566.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4061-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4061-QCK.png","fullTransparent":null}',
         '⚐ zoro & sanji - vows made qck slasher free spirit'
       );
     
@@ -157185,8 +157185,8 @@ DROP TABLE IF EXISTS meta;
         366,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5567.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4062-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4062-1.png","fullTransparent":null}',
         '⚐ roronoa zoro - wings to become the king dex slasher driven'
       );
     
@@ -157218,8 +157218,8 @@ DROP TABLE IF EXISTS meta;
         377,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5568.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4062-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4062-2.png","fullTransparent":null}',
         '⚐ sanji - wings to become the king qck free spirit fighter'
       );
     
@@ -157251,8 +157251,8 @@ DROP TABLE IF EXISTS meta;
         400,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5569.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4062-DEX.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4062-DEX.png","fullTransparent":null}',
         '⚐ zoro & sanji - wings to become the king dex slasher free spirit'
       );
     
@@ -157284,8 +157284,8 @@ DROP TABLE IF EXISTS meta;
         400,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5570.png","thumbnailGlobal":null,"thumbnailJapan":"4/000/4062-QCK.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/000/4062-QCK.png","fullTransparent":null}',
         '⚐ zoro & sanji - wings to become the king qck slasher free spirit'
       );
     
@@ -157317,8 +157317,8 @@ DROP TABLE IF EXISTS meta;
         230,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5571.png","thumbnailGlobal":null,"thumbnailJapan":"4/100/4118-1.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/100/4118-1.png","fullTransparent":null}',
         '⚐ arlong - brutal punishment str powerhouse slasher'
       );
     
@@ -157350,8 +157350,8 @@ DROP TABLE IF EXISTS meta;
         241,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5572.png","thumbnailGlobal":null,"thumbnailJapan":"4/100/4118-2.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/100/4118-2.png","fullTransparent":null}',
         '⚐ hatchan & kuroobi & choo - brutal punishment str powerhouse slasher'
       );
     
@@ -157383,8 +157383,8 @@ DROP TABLE IF EXISTS meta;
         263,
         1,
         0,
-        '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/5573.png","thumbnailGlobal":null,"thumbnailJapan":"4/100/4118-STR.png","fullTransparent":null}',
+        '{"exactLocal":false,"thumbnailGlobal":false,"thumbnailJapan":true,"fullTransparent":false}',
+        '{"exactLocal":null,"thumbnailGlobal":null,"thumbnailJapan":"4/100/4118-STR.png","fullTransparent":null}',
         '⚐ arlong pirates - brutal punishment str powerhouse slasher'
       );
     
@@ -159044,5 +159044,5 @@ DROP TABLE IF EXISTS meta;
     
 
     INSERT INTO meta (key, value)
-    VALUES ('manifest', '{"generatedAt":"2026-03-12T18:20:28.308Z","sourceVersion":"unknown","characterCount":4800,"detailCount":4109,"shipCount":66,"rumbleCount":1429,"availableTypes":["DEX","INT","PSY","QCK","STR"],"availableClasses":["Booster","Cerebral","Driven","Evolver","Fighter","Free Spirit","Powerhouse","Shooter","Slasher","Striker"],"packs":[{"key":"thumbnailsGlo","id":"thumbnails-glo","label":"Global thumbnails","localBasePath":"assets/offline-packs/thumbnails-glo","fileCount":4609,"totalBytes":45851276,"installed":true,"checksum":"df94f79786955eedd082930b70946c4aa0d71e27"},{"key":"thumbnailsJapan","id":"thumbnails-jap","label":"Japan thumbnails","localBasePath":"assets/offline-packs/thumbnails-jap","fileCount":4886,"totalBytes":106098998,"installed":false,"checksum":null},{"key":"fullTransparent","id":"full-transparent","label":"Transparent full art","localBasePath":"assets/offline-packs/full-transparent","fileCount":4215,"totalBytes":505151273,"installed":false,"checksum":null}]}');
+    VALUES ('manifest', '{"generatedAt":"2026-03-25T05:34:33.518Z","sourceVersion":"unknown","characterCount":4800,"detailCount":4109,"shipCount":66,"rumbleCount":1429,"availableTypes":["DEX","INT","PSY","QCK","STR"],"availableClasses":["Booster","Cerebral","Driven","Evolver","Fighter","Free Spirit","Powerhouse","Shooter","Slasher","Striker"],"packs":[{"key":"thumbnailsGlo","id":"thumbnails-glo","label":"Global thumbnails","localBasePath":"assets/offline-packs/thumbnails-glo","fileCount":4609,"totalBytes":45851276,"installed":true,"checksum":"df94f79786955eedd082930b70946c4aa0d71e27"},{"key":"thumbnailsJapan","id":"thumbnails-jap","label":"Japan thumbnails","localBasePath":"assets/offline-packs/thumbnails-jap","fileCount":4886,"totalBytes":106098998,"installed":true,"checksum":"dd8283e86a3614e7105a6c59d6d153c189ecab65"},{"key":"fullTransparent","id":"full-transparent","label":"Transparent full art","localBasePath":"assets/offline-packs/full-transparent","fileCount":4215,"totalBytes":505151273,"installed":true,"checksum":"fb22281b95ed50ae2d17b752b4453f2655e538dd"}]}');
   
