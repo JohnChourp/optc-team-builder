@@ -548,6 +548,15 @@
   justify-content: center;
 }
 
+.build-action-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.download-preset-button {
+  margin: 0;
+}
+
 ion-select {
   --background: rgba(255, 255, 255, 0.06);
   --border-color: rgba(255, 255, 255, 0.14);
@@ -593,5 +602,15 @@ ion-toggle {
 
   .result-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 679px) {
+  .build-action-row {
+    justify-content: stretch;
+  }
+
+  .download-preset-button {
+    width: 100%;
   }
 }

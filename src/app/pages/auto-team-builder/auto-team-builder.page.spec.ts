@@ -8,7 +8,10 @@ import { type CharacterDetailRecord, type DatasetManifest } from '../../core/mod
 import {
   buildAutoTeamExportFilename,
   buildAutoTeamExportPayload,
+  buildAutoTeamSelectionExportFilename,
+  buildAutoTeamSelectionExportPayload,
   downloadAutoTeamExport,
+  downloadAutoTeamSelectionExport,
 } from './auto-team-builder-export.utils';
 
 vi.mock('@ionic/angular/standalone', () => ({
@@ -188,6 +191,221 @@ describe('AutoTeamBuilder export helpers', () => {
   });
 });
 
+describe('AutoTeamBuilderPage preset export state', () => {
+  it('is disabled when the page has no selected filters or manual picks', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+
+    expect(page.canDownloadSelectionJson()).toBe(false);
+    expect(page.buildSelectionExportPayload()).toBeNull();
+  });
+
+  it('is enabled when the page only has filters, manual picks, or leader state', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX']);
+    expect(page.canDownloadSelectionJson()).toBe(true);
+
+    await page.ionViewWillEnter();
+    page.lockCharacter(createCharacterRecord(301));
+    expect(page.canDownloadSelectionJson()).toBe(true);
+
+    await page.ionViewWillEnter();
+    page.selectedLeaderIds.set([302]);
+    expect(page.canDownloadSelectionJson()).toBe(true);
+  });
+
+  it('builds the preset export payload from the current page selections', async () => {
+    const { page, userState } = await createPage();
+
+    await page.ngOnInit();
+    userState.favoriteCharacterIds.set([101, 102, 103]);
+    page.selectedTypes.set(['DEX', 'PSY']);
+    page.selectedClasses.set(['Fighter', 'Slasher']);
+    page.onRequireAllSelectedTypesToggle({ detail: { checked: true } } as CustomEvent<{
+      checked: boolean;
+    }>);
+    page.onRequireAllSelectedClassesToggle({ detail: { checked: true } } as CustomEvent<{
+      checked: boolean;
+    }>);
+    page.onRequireAllSpecialsSupportToggle({ detail: { checked: true } } as CustomEvent<{
+      checked: boolean;
+    }>);
+    page.onFavoritesOnlyToggle({ detail: { checked: true } } as CustomEvent<{ checked: boolean }>);
+    page.lockCharacter(createCharacterRecord(101));
+    page.lockCharacter(createCharacterRecord(102));
+    page.toggleLeaderCharacter(101);
+    page.toggleLeaderCharacter(102);
+    page.setCaptainLeader(102);
+
+    const payload = page.buildSelectionExportPayload('2026-03-25T10:00:00.000Z');
+
+    expect(payload).not.toBeNull();
+    expect(payload).toMatchObject({
+      schemaVersion: 1,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+      source: 'auto-team-builder',
+      exportType: 'preset',
+      filters: {
+        selectedTypes: ['DEX', 'PSY'],
+        selectedClasses: ['Fighter', 'Slasher'],
+        requireAllSelectedTypesInTeam: true,
+        requireAllSelectedClassesPerCharacter: true,
+        requireAllSpecialsSupportTeam: true,
+        favoritesOnly: true,
+        favoriteCount: 3,
+      },
+      manualSelection: {
+        lockedCharacterIds: [101, 102],
+        selectedLeaderIds: [101, 102],
+        captainLeaderId: 102,
+        friendCaptainLeaderId: 101,
+      },
+    });
+    expect(payload?.manualSelection.characters).toEqual([
+      expect.objectContaining({
+        id: 101,
+        isLeader: true,
+        leaderAssignment: 'friendCaptain',
+      }),
+      expect.objectContaining({
+        id: 102,
+        isLeader: true,
+        leaderAssignment: 'captain',
+      }),
+    ]);
+  });
+});
+
+describe('AutoTeamBuilder preset export helpers', () => {
+  it('builds the expected preset payload for the current selection snapshot', () => {
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX', 'PSY'],
+      selectedClasses: ['Fighter', 'Slasher'],
+      requireAllSelectedTypesInTeam: true,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSpecialsSupportTeam: true,
+      favoritesOnly: true,
+      favoriteCount: 4,
+      lockedCharacterIds: [101, 102],
+      lockedCharacters: [createCharacterRecord(101), createCharacterRecord(102)],
+      selectedLeaderIds: [101, 102],
+      captainLeaderId: 101,
+      friendCaptainLeaderId: 102,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+
+    expect(payload.filters).toEqual({
+      selectedTypes: ['DEX', 'PSY'],
+      selectedClasses: ['Fighter', 'Slasher'],
+      requireAllSelectedTypesInTeam: true,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSpecialsSupportTeam: true,
+      favoritesOnly: true,
+      favoriteCount: 4,
+    });
+    expect(payload.manualSelection.characters).toEqual([
+      expect.objectContaining({
+        id: 101,
+        isLeader: true,
+        leaderAssignment: 'captain',
+      }),
+      expect.objectContaining({
+        id: 102,
+        isLeader: true,
+        leaderAssignment: 'friendCaptain',
+      }),
+    ]);
+  });
+
+  it('marks a single selected leader as dual in the preset snapshot', () => {
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSpecialsSupportTeam: false,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      lockedCharacterIds: [201],
+      lockedCharacters: [createCharacterRecord(201, 'Solo Leader')],
+      selectedLeaderIds: [201],
+      captainLeaderId: 201,
+      friendCaptainLeaderId: 201,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+
+    expect(payload.manualSelection.characters[0]).toMatchObject({
+      id: 201,
+      isLeader: true,
+      leaderAssignment: 'dual',
+    });
+  });
+
+  it('does not start a preset download when the payload is missing', () => {
+    const dom = new JSDOM('<!doctype html><html><body></body></html>');
+    const urlRef = {
+      createObjectURL: vi.fn(),
+      revokeObjectURL: vi.fn(),
+    };
+
+    downloadAutoTeamSelectionExport(null, dom.window.document, urlRef);
+
+    expect(urlRef.createObjectURL).not.toHaveBeenCalled();
+    expect(urlRef.revokeObjectURL).not.toHaveBeenCalled();
+  });
+
+  it('downloads the preset snapshot as json with the expected filename and payload', async () => {
+    const dom = new JSDOM('<!doctype html><html><body></body></html>');
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX', 'PSY'],
+      selectedClasses: ['Fighter', 'Slasher'],
+      requireAllSelectedTypesInTeam: true,
+      requireAllSelectedClassesPerCharacter: true,
+      requireAllSpecialsSupportTeam: true,
+      favoritesOnly: true,
+      favoriteCount: 2,
+      lockedCharacterIds: [101, 102],
+      lockedCharacters: [createCharacterRecord(101), createCharacterRecord(102)],
+      selectedLeaderIds: [101, 102],
+      captainLeaderId: 102,
+      friendCaptainLeaderId: 101,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+    const clickSpy = vi
+      .spyOn(dom.window.HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+    const urlRef = {
+      createObjectURL: vi.fn((blob: Blob) => {
+        downloadedBlob = blob;
+        return 'blob:preset-json';
+      }),
+      revokeObjectURL: vi.fn(),
+    };
+    let downloadedBlob: Blob | null = null;
+
+    downloadAutoTeamSelectionExport(payload, dom.window.document, urlRef);
+
+    expect(urlRef.createObjectURL).toHaveBeenCalledOnce();
+    expect(clickSpy).toHaveBeenCalledOnce();
+    expect(urlRef.revokeObjectURL).toHaveBeenCalledWith('blob:preset-json');
+    expect(downloadedBlob).not.toBeNull();
+
+    const exportedJson = JSON.parse(await downloadedBlob!.text()) as ReturnType<
+      typeof buildAutoTeamSelectionExportPayload
+    >;
+
+    expect(buildAutoTeamSelectionExportFilename(exportedJson.exportedAt)).toBe(
+      'auto-team-builder-preset-2026-03-25T10-00-00-000Z.json',
+    );
+    expect(exportedJson.filters.favoriteCount).toBe(2);
+    expect(exportedJson.manualSelection.characters[0]?.leaderAssignment).toBe('friendCaptain');
+    expect(exportedJson.manualSelection.characters[1]?.leaderAssignment).toBe('captain');
+  });
+});
+
 function createCharacterRecord(id: number, name = `Character ${id}`): CharacterDetailRecord {
   return {
     id,
@@ -321,6 +539,14 @@ function createAutoBuildResult(
 async function createPage(): Promise<{
   page: any;
   autoTeamBuilder: { buildTeam: ReturnType<typeof vi.fn> };
+  userState: {
+    favoriteCharacterIds: {
+      (): number[];
+      set(value: number[]): void;
+    };
+    ready: ReturnType<typeof vi.fn>;
+    toggleFavorite: ReturnType<typeof vi.fn>;
+  };
 }> {
   const { AutoTeamBuilderPage } = await import('./auto-team-builder.page');
   const repository = {
@@ -343,6 +569,7 @@ async function createPage(): Promise<{
       userState as never,
     ),
     autoTeamBuilder,
+    userState,
   };
 }
 

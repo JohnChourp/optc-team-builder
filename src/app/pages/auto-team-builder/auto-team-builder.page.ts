@@ -33,8 +33,11 @@ import { OptcRepositoryService } from '../../core/services/optc-repository.servi
 import { UserStateService } from '../../core/services/user-state.service';
 import {
   type AutoTeamExportPayload,
+  type AutoTeamSelectionExportPayload,
   buildAutoTeamExportPayload,
+  buildAutoTeamSelectionExportPayload,
   downloadAutoTeamExport,
+  downloadAutoTeamSelectionExport,
 } from './auto-team-builder-export.utils';
 
 @Component({
@@ -437,6 +440,19 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
       ? `${specialSupport.matchingSlots} / ${specialSupport.totalSlots} slots buff the full team • hard filter on`
       : `${specialSupport.matchingSlots} / ${specialSupport.totalSlots} slots would pass teamwide special support`;
   });
+  public readonly canDownloadSelectionJson = computed(
+    () =>
+      !this.building() &&
+      (this.hasSelectedTypes() ||
+        this.hasSelectedClasses() ||
+        this.requireAllSelectedTypesInTeam() ||
+        this.requireAllSelectedClassesPerCharacter() ||
+        this.requireAllSpecialsSupportTeam() ||
+        this.favoritesOnly() ||
+        this.hasLockedCharacters() ||
+        this.hasSelectedLeaders()),
+  );
+  public readonly downloadSelectionJsonLabel = 'Download preset JSON';
   public readonly canDownloadTeamJson = computed(() => Boolean(this.result()));
   public readonly downloadTeamJsonLabel = 'Download team JSON';
   public readonly teamSlots = computed(
@@ -704,6 +720,34 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
       this.effectiveFriendLeaderId(),
       exportedAt,
     );
+  }
+
+  public buildSelectionExportPayload(
+    exportedAt = new Date().toISOString(),
+  ): AutoTeamSelectionExportPayload | null {
+    if (!this.canDownloadSelectionJson()) {
+      return null;
+    }
+
+    return buildAutoTeamSelectionExportPayload({
+      selectedTypes: this.selectedTypes(),
+      selectedClasses: this.selectedClasses(),
+      requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
+      requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
+      requireAllSpecialsSupportTeam: this.requireAllSpecialsSupportTeam(),
+      favoritesOnly: this.favoritesOnly(),
+      favoriteCount: this.favoriteCharacterIds().length,
+      lockedCharacterIds: this.lockedCharacterIds(),
+      lockedCharacters: this.lockedCharacters(),
+      selectedLeaderIds: this.selectedLeaderIds(),
+      captainLeaderId: this.effectiveCaptainLeaderId(),
+      friendCaptainLeaderId: this.effectiveFriendLeaderId(),
+      exportedAt,
+    });
+  }
+
+  public downloadSelectionJson(): void {
+    downloadAutoTeamSelectionExport(this.buildSelectionExportPayload());
   }
 
   public downloadTeamJson(): void {

@@ -274,8 +274,8 @@
           (ionInput)="onManualSearchChange($event)"
         ></ion-searchbar>
 
-        <div class="manual-candidate-list">
-          <article *ngFor="let candidate of manualCandidates()" class="manual-candidate-card">
+      <div class="manual-candidate-list">
+        <article *ngFor="let candidate of manualCandidates()" class="manual-candidate-card">
             <img [src]="candidate.imageUrl" [alt]="candidate.name" loading="lazy" />
             <div class="manual-candidate-copy">
               <strong>{{ candidate.name }}</strong>
@@ -302,6 +302,18 @@
           </article>
         </div>
       </section>
+
+      <div class="build-action-row">
+        <ion-button
+          fill="outline"
+          color="warning"
+          class="download-preset-button"
+          [disabled]="!canDownloadSelectionJson()"
+          (click)="downloadSelectionJson()"
+        >
+          {{ downloadSelectionJsonLabel }}
+        </ion-button>
+      </div>
 
       <ion-button expand="block" color="warning" [disabled]="buildDisabled()" (click)="buildTeam()">
         <ion-spinner *ngIf="building()" slot="start" name="crescent"></ion-spinner>
