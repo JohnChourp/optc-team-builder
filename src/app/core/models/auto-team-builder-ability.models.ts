@@ -1,4 +1,5 @@
 export type AutoBuildAbilitySource = 'specialText' | 'captainAbility';
+export type AutoBuildAbilityCoverageMode = 'explicit' | 'selectedDebuff';
 
 export interface NormalizedBuilderAbility {
   key: string;
@@ -7,6 +8,7 @@ export interface NormalizedBuilderAbility {
   isCompleteRemoval: boolean;
   slotTokens: string[];
   source: AutoBuildAbilitySource;
+  coverageMode?: AutoBuildAbilityCoverageMode;
 }
 
 export interface AutoBuildAbilityCatalogItem {
@@ -16,6 +18,7 @@ export interface AutoBuildAbilityCatalogItem {
   supportsSlotTokens: boolean;
   availableSlotTokens: string[];
   availableSources: AutoBuildAbilitySource[];
+  availableCoverageModes?: AutoBuildAbilityCoverageMode[];
   matchCount: number;
   sampleCharacterIds: number[];
   sampleTexts: string[];

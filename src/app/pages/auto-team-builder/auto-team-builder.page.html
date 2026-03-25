@@ -237,7 +237,7 @@
                     *ngFor="let item of availableAbilityCatalogItems()"
                     [value]="item.key"
                   >
-                    {{ item.label }}
+                    {{ formatAbilityCatalogItemLabel(item) }}
                   </ion-select-option>
                 </ion-select>
               </div>
@@ -1017,7 +1017,7 @@
                           *ngFor="let item of availableAbilityCatalogItems()"
                           [value]="item.key"
                         >
-                          {{ item.label }}
+                          {{ formatAbilityCatalogItemLabel(item) }}
                         </ion-select-option>
                       </ion-select>
                     </div>

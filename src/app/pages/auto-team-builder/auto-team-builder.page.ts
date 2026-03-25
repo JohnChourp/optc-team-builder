@@ -37,6 +37,7 @@ import {
 import {
   type AutoBuildAbilityCatalog,
   type AutoBuildAbilityCatalogItem,
+  type AutoBuildAbilityCoverageMode,
   type AutoBuildAbilityRequirement,
   type NormalizedBuilderAbility,
 } from '../../core/models/auto-team-builder-ability.models';
@@ -1671,7 +1672,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public formatAbilityRequirement(requirement: AutoBuildAbilityRequirement): string {
     const catalogItem = this.resolveAbilityCatalogItem(requirement.abilityKey);
-    const label = catalogItem?.label ?? requirement.abilityKey;
+    const label = catalogItem
+      ? this.formatAbilityCatalogItemLabel(catalogItem)
+      : requirement.abilityKey;
     const suffixes: string[] = [];
 
     if (requirement.minTurns !== null) {
@@ -1780,7 +1783,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const chipViews: CharacterAbilityChipView[] = [];
 
     abilities.forEach((ability) => {
-      const key = `${ability.key}|${ability.minTurns ?? 'none'}|${ability.slotTokens.join(',')}|${ability.source}`;
+      const key = `${ability.key}|${ability.minTurns ?? 'none'}|${ability.slotTokens.join(',')}|${ability.source}|${ability.coverageMode ?? 'explicit'}`;
 
       if (seen.has(key)) {
         return;
@@ -1813,7 +1816,34 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const metadataSuffix = metadata.length ? ` (${metadata.join(' • ')})` : '';
     const sourceSuffix = ability.source === 'captainAbility' ? ' • Captain' : '';
 
-    return `${ability.label}${metadataSuffix}${sourceSuffix}`;
+    return `${this.formatCharacterAbilityLabel(ability)}${metadataSuffix}${sourceSuffix}`;
+  }
+
+  public formatAbilityCatalogItemLabel(item: AutoBuildAbilityCatalogItem): string {
+    const coverageModes = item.availableCoverageModes ?? ['explicit'];
+
+    if (!coverageModes.includes('selectedDebuff')) {
+      return item.label;
+    }
+
+    if (coverageModes.includes('explicit')) {
+      return `${item.label} (includes selectable debuff counters)`;
+    }
+
+    return `${item.label} (selectable debuff)`;
+  }
+
+  private formatCharacterAbilityLabel(ability: NormalizedBuilderAbility): string {
+    const coverageMode = ability.coverageMode ?? 'explicit';
+    const coverageSuffix = this.resolveCoverageModeLabel(coverageMode);
+
+    return coverageSuffix ? `${ability.label} (${coverageSuffix})` : ability.label;
+  }
+
+  private resolveCoverageModeLabel(
+    coverageMode: AutoBuildAbilityCoverageMode,
+  ): string | null {
+    return coverageMode === 'selectedDebuff' ? 'selectable debuff' : null;
   }
 
   private sameStringValues(left: readonly string[], right: readonly string[]): boolean {

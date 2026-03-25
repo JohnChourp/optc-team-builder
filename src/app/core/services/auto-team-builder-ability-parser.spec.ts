@@ -7,6 +7,7 @@ let analyzeBuilderAbilityText: (value: unknown, source: 'specialText' | 'captain
   isCompleteRemoval: boolean;
   slotTokens: string[];
   source: 'specialText' | 'captainAbility';
+  coverageMode?: 'explicit' | 'selectedDebuff';
 }>;
 
 beforeAll(async () => {
@@ -86,10 +87,84 @@ describe('auto team builder ability parser', () => {
     ]);
   });
 
+  it('extracts explicit pain removal from special text', () => {
+    expect(
+      analyzeBuilderAbilityText('Recovers HP and reduces Pain duration by 5 turns.', 'specialText'),
+    ).toEqual([
+      expect.objectContaining({
+        key: 'remove_pain',
+        label: 'Remove Pain',
+        minTurns: 5,
+        coverageMode: 'explicit',
+        source: 'specialText',
+      }),
+    ]);
+  });
+
+  it('extracts explicit pain removal from captain text', () => {
+    expect(
+      analyzeBuilderAbilityText(
+        'Boosts ATK by 5x, reduces Pain duration by 10 turns and recovers HP at end of turn.',
+        'captainAbility',
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        key: 'remove_pain',
+        label: 'Remove Pain',
+        minTurns: 10,
+        coverageMode: 'explicit',
+        source: 'captainAbility',
+      }),
+    ]);
+  });
+
+  it('extracts selected debuff counters as selectable pain coverage', () => {
+    expect(
+      analyzeBuilderAbilityText(
+        'Reduces 2 selected debuffs duration by 10 turns and changes all orbs into Matching orbs.',
+        'specialText',
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        key: 'remove_pain',
+        label: 'Remove Pain',
+        minTurns: 10,
+        coverageMode: 'selectedDebuff',
+        source: 'specialText',
+      }),
+    ]);
+  });
+
+  it('extracts singular selected debuff coverage with the actual turn count', () => {
+    expect(
+      analyzeBuilderAbilityText(
+        'Delays all enemies by 1 turn and reduces 1 selected debuff duration by 5 turns.',
+        'specialText',
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        key: 'remove_pain',
+        label: 'Remove Pain',
+        minTurns: 5,
+        coverageMode: 'selectedDebuff',
+        source: 'specialText',
+      }),
+    ]);
+  });
+
   it('ignores unsupported boost-only text to avoid false positives', () => {
     expect(
       analyzeBuilderAbilityText(
         'Boosts ATK of Fighter characters by 2.5x for 1 turn and boosts Orb Effects by 2.25x for 1 turn.',
+        'specialText',
+      ),
+    ).toEqual([]);
+  });
+
+  it('does not treat unrelated status wording as pain removal', () => {
+    expect(
+      analyzeBuilderAbilityText(
+        'Increases duration of any Status ATK boosting buffs applied by Specials by 1 turn.',
         'specialText',
       ),
     ).toEqual([]);

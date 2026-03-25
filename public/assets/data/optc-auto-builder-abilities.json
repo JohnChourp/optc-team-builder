@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-03-25T17:49:52.407Z",
+  "generatedAt": "2026-03-25T20:06:28.666Z",
   "sourceVersion": "unknown",
-  "abilityCount": 19,
+  "abilityCount": 20,
   "abilities": [
     {
       "key": "ignore_normal_attack_only",
@@ -12,6 +12,9 @@
       "availableSources": [
         "captainAbility",
         "specialText"
+      ],
+      "availableCoverageModes": [
+        "explicit"
       ],
       "matchCount": 23,
       "sampleCharacterIds": [
@@ -39,6 +42,9 @@
         "captainAbility",
         "specialText"
       ],
+      "availableCoverageModes": [
+        "explicit"
+      ],
       "matchCount": 304,
       "sampleCharacterIds": [
         1823,
@@ -64,6 +70,9 @@
       "availableSources": [
         "captainAbility",
         "specialText"
+      ],
+      "availableCoverageModes": [
+        "explicit"
       ],
       "matchCount": 485,
       "sampleCharacterIds": [
@@ -91,6 +100,9 @@
         "captainAbility",
         "specialText"
       ],
+      "availableCoverageModes": [
+        "explicit"
+      ],
       "matchCount": 76,
       "sampleCharacterIds": [
         767,
@@ -116,6 +128,9 @@
       "availableSources": [
         "captainAbility",
         "specialText"
+      ],
+      "availableCoverageModes": [
+        "explicit"
       ],
       "matchCount": 157,
       "sampleCharacterIds": [
@@ -143,6 +158,9 @@
         "captainAbility",
         "specialText"
       ],
+      "availableCoverageModes": [
+        "explicit"
+      ],
       "matchCount": 114,
       "sampleCharacterIds": [
         1699,
@@ -168,6 +186,9 @@
       "availableSources": [
         "captainAbility",
         "specialText"
+      ],
+      "availableCoverageModes": [
+        "explicit"
       ],
       "matchCount": 96,
       "sampleCharacterIds": [
@@ -195,6 +216,9 @@
         "captainAbility",
         "specialText"
       ],
+      "availableCoverageModes": [
+        "explicit"
+      ],
       "matchCount": 436,
       "sampleCharacterIds": [
         354,
@@ -219,6 +243,9 @@
       "availableSlotTokens": [],
       "availableSources": [
         "specialText"
+      ],
+      "availableCoverageModes": [
+        "explicit"
       ],
       "matchCount": 54,
       "sampleCharacterIds": [
@@ -245,6 +272,9 @@
       "availableSources": [
         "specialText"
       ],
+      "availableCoverageModes": [
+        "explicit"
+      ],
       "matchCount": 13,
       "sampleCharacterIds": [
         1315,
@@ -262,6 +292,36 @@
       ]
     },
     {
+      "key": "remove_pain",
+      "label": "Remove Pain",
+      "supportsTurns": true,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "availableSources": [
+        "captainAbility",
+        "specialText"
+      ],
+      "availableCoverageModes": [
+        "explicit",
+        "selectedDebuff"
+      ],
+      "matchCount": 6,
+      "sampleCharacterIds": [
+        2602,
+        2603,
+        3398,
+        4095,
+        4096
+      ],
+      "sampleTexts": [
+        "Changes all orbs, including [BLOCK] orbs, into Matching orbs, recovers 100x character's RCV in HP, reduces 2 selected debuffs duration by 10 turns and becomes Shirahoshi & Mansherry for 1 turn.",
+        "Changes all orbs, including [BLOCK] orbs, into Matching orbs, recovers 100x character's RCV in HP, reduces 2 selected debuffs duration by 10 turns and becomes Shirahoshi & Mansherry for 1 turn.",
+        "Makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for all characters for 1 turn, boosts ATK of all characters by 2.25x for 1 turn, boosts the color affinity of all characters by 1.75x for 1 turn, delays all enemies by 1 turn, reduces 1 selected debuff duration by 5 turns, reduces damage received by 70% for 1 turn, changes [BLOCK] orbs into Matching orbs, recovers 4,343 HP and reduces enemies' Increased Defense and Percent Damage Reduction duration by 5 turns.",
+        "Recovers 20,000 HP, reduces Pain duration by 5 turns, ignores Delay Debuff Protection and delays all enemies by 1 turn, inflicts Petrify to all enemies inflicted with Melo-Melo for 2 turns, inflicts Melo-Melo to all enemies for 8 hits, changes the orb of this character into a [TND] orb, and increases Chain Tap Timing Bonus of Cerebral and Free Spirit characters to +0.2x-0.7x for 2 turns depending on Tap Timing. If your crew has Chain Lock when the special is activated, boosts ATK of [PSY], Cerebral and Free Spirit characters by 2.75x for 2 turns, sets Chain Boundaries to 2.75x and 30.0x for 2 turns otherwise.",
+        "Recovers 20,000 HP, reduces Pain duration by 5 turns, ignores Delay Debuff Protection and delays all enemies by 1 turn, inflicts Petrify to all enemies inflicted with Melo-Melo for 2 turns, inflicts Melo-Melo to all enemies for 8 hits, changes the orb of this character into a [TND] orb, and increases Chain Tap Timing Bonus of Cerebral and Free Spirit characters to +0.2x-0.7x for 2 turns depending on Tap Timing. If your crew has Chain Lock when the special is activated, boosts ATK of [PSY], Cerebral and Free Spirit characters by 2.75x for 2 turns, sets Chain Boundaries to 2.75x and 30.0x for 2 turns otherwise."
+      ]
+    },
+    {
       "key": "remove_paralysis",
       "label": "Remove Paralysis",
       "supportsTurns": true,
@@ -270,6 +330,9 @@
       "availableSources": [
         "captainAbility",
         "specialText"
+      ],
+      "availableCoverageModes": [
+        "explicit"
       ],
       "matchCount": 441,
       "sampleCharacterIds": [
@@ -296,6 +359,9 @@
       "availableSources": [
         "specialText"
       ],
+      "availableCoverageModes": [
+        "explicit"
+      ],
       "matchCount": 130,
       "sampleCharacterIds": [
         379,
@@ -320,6 +386,9 @@
       "availableSlotTokens": [],
       "availableSources": [
         "specialText"
+      ],
+      "availableCoverageModes": [
+        "explicit"
       ],
       "matchCount": 125,
       "sampleCharacterIds": [
@@ -347,6 +416,9 @@
         "captainAbility",
         "specialText"
       ],
+      "availableCoverageModes": [
+        "explicit"
+      ],
       "matchCount": 4,
       "sampleCharacterIds": [
         3851,
@@ -369,6 +441,9 @@
       "availableSlotTokens": [],
       "availableSources": [
         "specialText"
+      ],
+      "availableCoverageModes": [
+        "explicit"
       ],
       "matchCount": 8,
       "sampleCharacterIds": [
@@ -395,6 +470,9 @@
       "availableSources": [
         "specialText"
       ],
+      "availableCoverageModes": [
+        "explicit"
+      ],
       "matchCount": 2,
       "sampleCharacterIds": [
         3356,
@@ -413,6 +491,9 @@
       "availableSlotTokens": [],
       "availableSources": [
         "specialText"
+      ],
+      "availableCoverageModes": [
+        "explicit"
       ],
       "matchCount": 10,
       "sampleCharacterIds": [
@@ -440,6 +521,9 @@
         "captainAbility",
         "specialText"
       ],
+      "availableCoverageModes": [
+        "explicit"
+      ],
       "matchCount": 324,
       "sampleCharacterIds": [
         949,
@@ -465,6 +549,9 @@
       "availableSources": [
         "captainAbility",
         "specialText"
+      ],
+      "availableCoverageModes": [
+        "explicit"
       ],
       "matchCount": 295,
       "sampleCharacterIds": [

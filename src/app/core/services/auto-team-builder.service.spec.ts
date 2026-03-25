@@ -200,6 +200,159 @@ describe('Auto team builder', () => {
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
   });
 
+  it('matches explicit pain removal from special text for the requested turn count', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 5805,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Recovers HP and reduces Pain duration by 5 turns.',
+            builderAbilities: [
+              {
+                key: 'remove_pain',
+                label: 'Remove Pain',
+                minTurns: 5,
+                isCompleteRemoval: false,
+                slotTokens: [],
+                source: 'specialText',
+                coverageMode: 'explicit',
+              },
+            ],
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      {
+        ...INPUT,
+        requiredAbilities: [{ abilityKey: 'remove_pain', minTurns: 5, slotTokens: [] }],
+      },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+    expect(result?.coverage.abilityRequirements.matched).toEqual([
+      { abilityKey: 'remove_pain', minTurns: 5, slotTokens: [] },
+    ]);
+  });
+
+  it('matches selectable debuff counters as pain coverage when turns are sufficient', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 5806,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText:
+              'Reduces 1 selected debuff duration by 5 turns and changes all orbs into Matching orbs.',
+            builderAbilities: [
+              {
+                key: 'remove_pain',
+                label: 'Remove Pain',
+                minTurns: 5,
+                isCompleteRemoval: false,
+                slotTokens: [],
+                source: 'specialText',
+                coverageMode: 'selectedDebuff',
+              },
+            ],
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      {
+        ...INPUT,
+        requiredAbilities: [{ abilityKey: 'remove_pain', minTurns: 1, slotTokens: [] }],
+      },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+  });
+
+  it('allows captain-sourced pain removal to satisfy a higher turn requirement', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 5811,
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility:
+              'Boosts ATK by 5x, reduces Pain duration by 10 turns and recovers 3,000 HP at end of turn.',
+            builderAbilities: [
+              {
+                key: 'remove_pain',
+                label: 'Remove Pain',
+                minTurns: 10,
+                isCompleteRemoval: false,
+                slotTokens: [],
+                source: 'captainAbility',
+                coverageMode: 'explicit',
+              },
+            ],
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+        createOffClassRedundantSubRecord(),
+      ],
+      {
+        ...INPUT,
+        requiredAbilities: [{ abilityKey: 'remove_pain', minTurns: 10, slotTokens: [] }],
+      },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+  });
+
+  it('fails when pain removal coverage does not reach the requested turn count', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 5807,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText:
+              'Reduces 1 selected debuff duration by 5 turns and changes all orbs into Matching orbs.',
+            builderAbilities: [
+              {
+                key: 'remove_pain',
+                label: 'Remove Pain',
+                minTurns: 5,
+                isCompleteRemoval: false,
+                slotTokens: [],
+                source: 'specialText',
+                coverageMode: 'selectedDebuff',
+              },
+            ],
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      {
+        ...INPUT,
+        requiredAbilities: [{ abilityKey: 'remove_pain', minTurns: 10, slotTokens: [] }],
+      },
+    );
+
+    expect(result).toBeNull();
+  });
+
   it('allows captain-sourced builder abilities to satisfy a requirement', () => {
     const result = buildAutoTeamResult(
       [

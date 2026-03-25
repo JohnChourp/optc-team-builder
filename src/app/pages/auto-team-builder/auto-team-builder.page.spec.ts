@@ -120,6 +120,48 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     ).toBe('Ignore Normal Attack Only (NAO) • Captain');
   });
 
+  it('formats selectable debuff pain coverage with a dedicated label', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+
+    expect(
+      page['formatCharacterAbility']({
+        key: 'remove_pain',
+        label: 'Remove Pain',
+        minTurns: 5,
+        isCompleteRemoval: false,
+        slotTokens: [],
+        source: 'specialText',
+        coverageMode: 'selectedDebuff',
+      }),
+    ).toBe('Remove Pain (selectable debuff) (5 turns)');
+  });
+
+  it('summarizes mixed pain coverage modes in the ability catalog label', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+
+    expect(
+      page.formatAbilityCatalogItemLabel({
+        key: 'remove_pain',
+        label: 'Remove Pain',
+        supportsTurns: true,
+        supportsSlotTokens: false,
+        availableSlotTokens: [],
+        availableSources: ['specialText', 'captainAbility'],
+        availableCoverageModes: ['explicit', 'selectedDebuff'],
+        matchCount: 6,
+        sampleCharacterIds: [2602, 4095],
+        sampleTexts: [
+          'Reduces 2 selected debuffs duration by 10 turns.',
+          'Reduces Pain duration by 5 turns.',
+        ],
+      }),
+    ).toBe('Remove Pain (includes selectable debuff counters)');
+  });
+
   it('resets the special-support toggle when the page state is reset', async () => {
     const { page } = await createPage();
 

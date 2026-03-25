@@ -1,4 +1,7 @@
 const SLOT_ABILITY_KEY_SET = new Set(['remove_slot_bind', 'remove_slot_barrier']);
+const DEFAULT_COVERAGE_MODE = 'explicit';
+const PAIN_ABILITY_KEY = 'remove_pain';
+const PAIN_ABILITY_LABEL = 'Remove Pain';
 const EXPLICIT_BUILDER_ABILITIES = [
   {
     key: 'ignore_normal_attack_only',
@@ -101,6 +104,11 @@ const TARGET_ALIASES = [
     matcher: (target) => target === 'poison' || target === 'toxic' || target.includes('poison'),
   },
   {
+    key: PAIN_ABILITY_KEY,
+    label: PAIN_ABILITY_LABEL,
+    matcher: (target) => target.includes('pain'),
+  },
+  {
     key: 'remove_chain_coefficient_reduction',
     label: 'Remove Chain Coefficient Reduction',
     matcher: (target) => target.includes('chain coefficient reduction'),
@@ -123,6 +131,9 @@ const TURN_PATTERNS = [
     pattern: /(?:reduces?|removes?)\s+([^.;]+?)\s+completely/gi,
     resolveTurns: () => 99,
   },
+];
+const SELECTED_DEBUFF_PAIN_PATTERNS = [
+  /(?:reduces?|removes?)\s+(?:\d+\s+)?selected\s+debuffs?\s+(?:duration\s+)?by\s+(\d+)\s+turns?/gi,
 ];
 
 export function normalizeLegacyAbilityText(value) {
@@ -163,15 +174,29 @@ export function analyzeBuilderAbilityText(value, source) {
           isCompleteRemoval,
           slotTokens: normalized.slotTokens,
           source,
+          coverageMode: DEFAULT_COVERAGE_MODE,
         };
-        const identity = buildAbilityIdentity(ability);
+        addAbility(abilities, seen, ability);
+      });
+    }
+  });
 
-        if (seen.has(identity)) {
-          return;
-        }
+  SELECTED_DEBUFF_PAIN_PATTERNS.forEach((pattern) => {
+    for (const match of normalizedText.matchAll(pattern)) {
+      const minTurns = Number(match[1]);
 
-        seen.add(identity);
-        abilities.push(ability);
+      if (!Number.isFinite(minTurns) || minTurns <= 0) {
+        continue;
+      }
+
+      addAbility(abilities, seen, {
+        key: PAIN_ABILITY_KEY,
+        label: PAIN_ABILITY_LABEL,
+        minTurns,
+        isCompleteRemoval: false,
+        slotTokens: [],
+        source,
+        coverageMode: 'selectedDebuff',
       });
     }
   });
@@ -188,15 +213,9 @@ export function analyzeBuilderAbilityText(value, source) {
       isCompleteRemoval: false,
       slotTokens: [],
       source,
+      coverageMode: DEFAULT_COVERAGE_MODE,
     };
-    const identity = buildAbilityIdentity(ability);
-
-    if (seen.has(identity)) {
-      return;
-    }
-
-    seen.add(identity);
-    abilities.push(ability);
+    addAbility(abilities, seen, ability);
   });
 
   return abilities;
@@ -231,6 +250,7 @@ export async function enrichCharactersWithBuilderAbilities(
         current.supportsTurns ||= ability.minTurns !== null;
         current.supportsSlotTokens ||= ability.slotTokens.length > 0;
         current.availableSources.add(ability.source);
+        current.availableCoverageModes.add(resolveCoverageMode(ability));
         ability.slotTokens.forEach((token) => current.availableSlotTokens.add(token));
 
         if (current.sampleCharacterIds.length < 5) {
@@ -274,6 +294,7 @@ export async function enrichCharactersWithBuilderAbilities(
       availableSources: [...entry.availableSources].sort((left, right) =>
         left.localeCompare(right),
       ),
+      availableCoverageModes: [...entry.availableCoverageModes].sort(compareCoverageModes),
       matchCount: entry.matchCount,
       sampleCharacterIds: [...entry.sampleCharacterIds],
       sampleTexts: [...entry.sampleTexts],
@@ -291,6 +312,7 @@ function createCatalogAccumulator(key, label) {
     supportsSlotTokens: false,
     availableSlotTokens: new Set(),
     availableSources: new Set(),
+    availableCoverageModes: new Set(),
     matchCount: 0,
     sampleCharacterIds: [],
     sampleTexts: [],
@@ -298,7 +320,31 @@ function createCatalogAccumulator(key, label) {
 }
 
 function buildAbilityIdentity(ability) {
-  return `${ability.key}|${ability.minTurns ?? 'none'}|${ability.slotTokens.join(',')}|${ability.source}`;
+  return `${ability.key}|${ability.minTurns ?? 'none'}|${ability.slotTokens.join(',')}|${ability.source}|${resolveCoverageMode(ability)}`;
+}
+
+function addAbility(abilities, seen, ability) {
+  const identity = buildAbilityIdentity(ability);
+
+  if (seen.has(identity)) {
+    return;
+  }
+
+  seen.add(identity);
+  abilities.push(ability);
+}
+
+function resolveCoverageMode(ability) {
+  return ability.coverageMode ?? DEFAULT_COVERAGE_MODE;
+}
+
+function compareCoverageModes(left, right) {
+  const order = new Map([
+    ['explicit', 0],
+    ['selectedDebuff', 1],
+  ]);
+
+  return (order.get(left) ?? Number.MAX_SAFE_INTEGER) - (order.get(right) ?? Number.MAX_SAFE_INTEGER);
 }
 
 function extractTextFragments(value) {
