@@ -18,9 +18,12 @@ import {
 } from '../models/auto-team-builder.models';
 import {
   type AutoBuildAbilityRequirement,
-  type NormalizedSpecialAbility,
 } from '../models/auto-team-builder-ability.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
+import {
+  buildAbilityRequirementIdentity,
+  matchesAbilityRequirement,
+} from './auto-team-builder-ability-match.utils';
 
 const CAPTAIN_ATK_PATTERN = /atk(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
 const CAPTAIN_HP_PATTERN = /hp(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
@@ -68,35 +71,6 @@ type ActiveLeaderCriteria = Omit<
   AutoBuildLeaderCriteriaSummary,
   'matchingSlots' | 'totalSlots' | 'allSlotsMatch'
 >;
-
-function buildAbilityRequirementIdentity(requirement: AutoBuildAbilityRequirement): string {
-  return `${requirement.abilityKey}|${requirement.minTurns ?? 'none'}|${requirement.slotTokens.join(',')}`;
-}
-
-function matchesAbilityRequirement(
-  ability: NormalizedSpecialAbility,
-  requirement: AutoBuildAbilityRequirement,
-): boolean {
-  if (ability.key !== requirement.abilityKey) {
-    return false;
-  }
-
-  if (
-    requirement.minTurns !== null &&
-    (ability.minTurns === null || ability.minTurns < requirement.minTurns)
-  ) {
-    return false;
-  }
-
-  if (
-    requirement.slotTokens.length &&
-    requirement.slotTokens.some((slotToken) => !ability.slotTokens.includes(slotToken))
-  ) {
-    return false;
-  }
-
-  return true;
-}
 
 function candidateMatchesAbilityRequirement(
   candidate: AutoBuildCandidate,

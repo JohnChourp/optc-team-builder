@@ -7,10 +7,12 @@ import {
   type CharacterAssets,
   type CharacterDetail,
   type CharacterDetailRecord,
+  type DetailedCharacterSearchQuery,
   type CharacterListItem,
   type CharacterRecord,
   type CharacterSearchQuery,
   type DatasetManifest,
+  type ManualCharacterFilterMetadata,
   type OfflinePackSummary,
   type RegionAvailability,
   type ShipRecord,
@@ -33,6 +35,7 @@ export class OptcRepositoryService {
   private readonly databasePromise: Promise<Database>;
   private manifestPromise?: Promise<DatasetManifest>;
   private autoBuilderAbilityCatalogPromise?: Promise<AutoBuildAbilityCatalog>;
+  private manualCharacterFilterMetadataPromise?: Promise<ManualCharacterFilterMetadata>;
 
   public constructor() {
     this.sqlPromise = import('sql.js').then((module) =>
@@ -55,6 +58,11 @@ export class OptcRepositoryService {
       AUTO_TEAM_BUILDER_ABILITY_CATALOG_PATH,
     );
     return this.autoBuilderAbilityCatalogPromise;
+  }
+
+  public async getManualCharacterFilterMetadata(): Promise<ManualCharacterFilterMetadata> {
+    this.manualCharacterFilterMetadataPromise ??= this.buildManualCharacterFilterMetadata();
+    return this.manualCharacterFilterMetadataPromise;
   }
 
   public async searchCharacters(query: CharacterSearchQuery): Promise<CharacterListItem[]> {
@@ -104,6 +112,71 @@ export class OptcRepositoryService {
     return this.decorateCharacterRows(rows);
   }
 
+  public async searchDetailedCharacters(
+    query: DetailedCharacterSearchQuery,
+  ): Promise<CharacterDetailRecord[]> {
+    const normalizedSelectedTypes = [...new Set(query.selectedTypes.map((type) => type.trim()))]
+      .filter((type) => type.length);
+    const normalizedSelectedClasses = [
+      ...new Set(query.selectedClasses.map((characterClass) => characterClass.trim())),
+    ].filter((characterClass) => characterClass.length);
+    const whereClauses = [
+      "(? = '' OR c.search_text LIKE '%' || ? || '%')",
+    ];
+    const queryParams: Array<string | number> = [
+      query.searchTerm.toLowerCase(),
+      query.searchTerm.toLowerCase(),
+    ];
+
+    normalizedSelectedTypes.forEach((type) => {
+      whereClauses.push("(',' || c.type || ',') LIKE ?");
+      queryParams.push(`%,${type},%`);
+    });
+
+    normalizedSelectedClasses.forEach((characterClass) => {
+      whereClauses.push('c.classes_json LIKE ?');
+      queryParams.push(`%\"${characterClass}\"%`);
+    });
+
+    whereClauses.push('1 = 1');
+    queryParams.push(query.limit, query.offset);
+
+    const rows = await this.selectAll(
+      `
+        SELECT
+          c.id,
+          c.name,
+          c.type,
+          c.primary_class,
+          c.secondary_class,
+          c.classes_json,
+          c.stars,
+          c.cost,
+          c.combo,
+          c.max_level,
+          c.max_experience,
+          c.min_hp,
+          c.min_atk,
+          c.min_rcv,
+          c.max_hp,
+          c.max_atk,
+          c.max_rcv,
+          c.growth,
+          c.region_json,
+          c.assets_json,
+          d.detail_json
+        FROM characters c
+        LEFT JOIN character_details d ON d.character_id = c.id
+        WHERE ${whereClauses.join('\n          AND ')}
+        ORDER BY c.stars DESC, c.id DESC
+        LIMIT ? OFFSET ?
+      `,
+      queryParams,
+    );
+
+    return this.decorateCharacterDetailRows(rows);
+  }
+
   public async getCharacterById(characterId: number): Promise<CharacterDetailRecord | null> {
     const rows = await this.selectAll(
       `
@@ -140,17 +213,9 @@ export class OptcRepositoryService {
       return null;
     }
 
-    const [record] = await this.decorateCharacterRows(rows);
-    const detail = this.parseJson<CharacterDetail>(
-      rows[0]['detail_json'],
-      this.emptyDetail(characterId),
-    );
+    const [record] = await this.decorateCharacterDetailRows(rows);
 
-    return {
-      ...record,
-      detail,
-      detailImageUrl: this.resolveImageUrl(record.assets, true),
-    };
+    return record ?? null;
   }
 
   public async getAutoBuilderCandidates(
@@ -218,15 +283,7 @@ export class OptcRepositoryService {
       `,
       queryParams,
     );
-    const decorated = await this.decorateCharacterRows(rows);
-    const detailedRecords = decorated.map((record, index) => ({
-      ...record,
-      detail: this.parseJson<CharacterDetail>(
-        rows[index]['detail_json'],
-        this.emptyDetail(record.id),
-      ),
-      detailImageUrl: this.resolveImageUrl(record.assets, true),
-    }));
+    const detailedRecords = await this.decorateCharacterDetailRows(rows);
     const allowedCharacterIdSet = allowedCharacterIds.length ? new Set(allowedCharacterIds) : null;
     const lockedCharacterIdSet = new Set(lockedCharacterIds);
     const filteredRecords = allowedCharacterIdSet
@@ -383,6 +440,19 @@ export class OptcRepositoryService {
     });
   }
 
+  private async decorateCharacterDetailRows(rows: SqlRow[]): Promise<CharacterDetailRecord[]> {
+    const records = await this.decorateCharacterRows(rows);
+
+    return records.map((record, index) => ({
+      ...record,
+      detail: this.parseJson<CharacterDetail>(
+        rows[index]['detail_json'],
+        this.emptyDetail(record.id),
+      ),
+      detailImageUrl: this.resolveImageUrl(record.assets, true),
+    }));
+  }
+
   private resolveImageUrl(
     assets: CharacterAssets,
     preferFullArt: boolean,
@@ -471,6 +541,40 @@ export class OptcRepositoryService {
     }
 
     return (await response.json()) as T;
+  }
+
+  private async buildManualCharacterFilterMetadata(): Promise<ManualCharacterFilterMetadata> {
+    const [manifest, rows] = await Promise.all([
+      this.getDatasetManifest(),
+      this.selectAll(
+        `
+          SELECT type, classes_json
+          FROM characters
+        `,
+      ),
+    ]);
+    let maxTypesPerCharacter = 0;
+    let maxClassesPerCharacter = 0;
+
+    rows.forEach((row) => {
+      const typeCount = String(row['type'] ?? '')
+        .split(',')
+        .map((value) => value.trim())
+        .filter((value) => value.length).length;
+      const classCount = [
+        ...new Set(this.parseJson<string[]>(row['classes_json'], []).map((value) => value.trim())),
+      ].filter((value) => value.length).length;
+
+      maxTypesPerCharacter = Math.max(maxTypesPerCharacter, typeCount);
+      maxClassesPerCharacter = Math.max(maxClassesPerCharacter, classCount);
+    });
+
+    return {
+      availableTypes: [...manifest.availableTypes],
+      availableClasses: [...manifest.availableClasses],
+      maxTypesPerCharacter: Math.max(maxTypesPerCharacter, 1),
+      maxClassesPerCharacter: Math.max(maxClassesPerCharacter, 1),
+    };
   }
 
   private normalizeManifest(manifest: DatasetManifest): DatasetManifest {

@@ -117,3 +117,20 @@ export interface CharacterSearchQuery {
   limit: number;
   offset: number;
 }
+
+export interface DetailedCharacterSearchQuery {
+  searchTerm: string;
+  selectedTypes: string[];
+  selectedClasses: string[];
+  limit: number;
+  offset: number;
+}
+
+export type ManualCharacterFavoriteFilterMode = 'all' | 'favoritesOnly' | 'nonFavoritesOnly';
+
+export interface ManualCharacterFilterMetadata {
+  availableTypes: string[];
+  availableClasses: string[];
+  maxTypesPerCharacter: number;
+  maxClassesPerCharacter: number;
+}

@@ -404,37 +404,108 @@
           </div>
         </section>
 
+        <div class="manual-filter-summary-card">
+          <div class="manual-filter-summary-copy">
+            <strong>Applied manual filters</strong>
+            <p>{{ manualFilterSummaryLabel() }}</p>
+          </div>
+
+          <ion-button
+            fill="outline"
+            color="warning"
+            class="manual-filter-open-button"
+            [disabled]="building()"
+            (click)="openManualFilterModal()"
+          >
+            <ion-icon slot="start" [icon]="manualFilterIcon"></ion-icon>
+            Open filters
+          </ion-button>
+        </div>
+
+        <div *ngIf="hasAppliedManualFilters()" class="selected-values-row manual-selected-row">
+          <span *ngFor="let item of appliedManualFilters().selectedTypes" class="selected-value-chip ability-requirement-chip">
+            Type: {{ item }}
+          </span>
+          <span *ngFor="let item of appliedManualFilters().selectedClasses" class="selected-value-chip ability-requirement-chip">
+            Class: {{ item }}
+          </span>
+          <span *ngFor="let item of manualFilterAppliedAbilityLabels()" class="selected-value-chip ability-requirement-chip">
+            {{ item }}
+          </span>
+          <span
+            *ngIf="appliedManualFilters().favoriteMode !== 'all'"
+            class="selected-value-chip ability-requirement-chip"
+          >
+            {{ appliedManualFilters().favoriteMode === 'favoritesOnly' ? 'Favorites only' : 'Non-favorites only' }}
+          </span>
+        </div>
+
+        <div class="manual-locks-meta manual-locks-meta--candidates">
+          <strong>{{ manualCandidatesSummaryLabel() }}</strong>
+          <small>{{ hasAppliedManualFilters() ? 'Result list after pressing OK in the modal.' : 'Top characters by the current default pool.' }}</small>
+        </div>
+
         <ion-searchbar
           [debounce]="150"
-          placeholder="Search and lock a character"
+          placeholder="Search by character name in manual picks"
           [value]="manualSearchTerm()"
           (ionInput)="onManualSearchChange($event)"
         ></ion-searchbar>
 
-        <div class="manual-candidate-list">
-          <article *ngFor="let candidate of manualCandidates()" class="manual-candidate-card">
-            <img [src]="candidate.imageUrl" [alt]="candidate.name" loading="lazy" />
+        <div *ngIf="manualCandidatesLoading()" class="manual-candidate-empty-state">
+          Γίνεται φόρτωση των manual candidates...
+        </div>
+
+        <div
+          *ngIf="!manualCandidatesLoading() && !manualCandidateCards().length"
+          class="manual-candidate-empty-state"
+        >
+          Δεν βρέθηκαν χαρακτήρες που να ταιριάζουν σε όλα τα selected manual filters.
+        </div>
+
+        <div *ngIf="manualCandidateCards().length" class="manual-candidate-list">
+          <article
+            *ngFor="let candidateCard of manualCandidateCards()"
+            class="manual-candidate-card manual-candidate-card--detailed"
+          >
+            <img
+              [src]="candidateCard.character.imageUrl"
+              [alt]="candidateCard.character.name"
+              loading="lazy"
+            />
             <div class="manual-candidate-copy">
-              <strong>{{ candidate.name }}</strong>
-              <span
-                >{{ candidate.type }} • {{ candidate.primaryClass
-                }}<ng-container *ngIf="candidate.secondaryClass">
-                  • {{ candidate.secondaryClass }}</ng-container
-                ></span
-              >
+              <strong>{{ candidateCard.character.name }}</strong>
+              <span>{{ candidateCard.subtitle }}</span>
+              <small *ngIf="candidateCard.favoriteLabel" class="manual-candidate-role">
+                {{ candidateCard.favoriteLabel }}
+              </small>
+
+              <div class="chip-row manual-candidate-chip-row">
+                <small
+                  *ngFor="let abilityChip of candidateCard.abilityChips"
+                  class="coverage-chip manual-ability-chip"
+                  [class.manual-ability-chip--matched]="abilityChip.highlighted"
+                  [class.manual-ability-chip--empty]="abilityChip.empty"
+                >
+                  {{ abilityChip.label }}
+                </small>
+              </div>
             </div>
             <ion-button
               size="small"
               fill="outline"
               color="light"
-              [disabled]="building() || (!isLockedCharacter(candidate.id) && lockedLimitReached())"
+              [disabled]="
+                building() ||
+                (!isLockedCharacter(candidateCard.character.id) && lockedLimitReached())
+              "
               (click)="
-                isLockedCharacter(candidate.id)
-                  ? removeLockedCharacter(candidate.id)
-                  : lockCharacter(candidate)
+                isLockedCharacter(candidateCard.character.id)
+                  ? removeLockedCharacter(candidateCard.character.id)
+                  : lockCharacter(candidateCard.character)
               "
             >
-              {{ isLockedCharacter(candidate.id) ? 'Remove' : 'Lock' }}
+              {{ isLockedCharacter(candidateCard.character.id) ? 'Remove' : 'Lock' }}
             </ion-button>
           </article>
         </div>
@@ -747,6 +818,17 @@
                 <small *ngFor="let chip of slot.reasonChips" class="reason-chip">{{ chip }}</small>
               </div>
 
+              <div class="chip-row result-ability-chip-row">
+                <small
+                  *ngFor="let abilityChip of slot.abilityChips"
+                  class="coverage-chip result-ability-chip"
+                  [class.result-ability-chip--matched]="abilityChip.highlighted"
+                  [class.result-ability-chip--empty]="abilityChip.empty"
+                >
+                  {{ abilityChip.label }}
+                </small>
+              </div>
+
               <p>{{ slot.snippet }}</p>
             </div>
           </div>
@@ -754,4 +836,271 @@
       </section>
     </ng-container>
   </div>
+
+  <ion-modal
+    [isOpen]="manualFilterModalOpen()"
+    cssClass="manual-filter-modal"
+    (didDismiss)="closeManualFilterModal()"
+  >
+    <ng-template>
+      <div class="manual-filter-modal-shell">
+        <div class="manual-filter-modal-head">
+          <div>
+            <div class="section-label">
+              <ion-icon [icon]="manualFilterIcon"></ion-icon>
+              <span>Manual character finder</span>
+            </div>
+            <h2>Φίλτραρε το manual candidate pool</h2>
+            <p>
+              Χρησιμοποίησε strict AND filters για abilities, turns, types, classes και favorite
+              status πριν κλειδώσεις χαρακτήρες στο team.
+            </p>
+          </div>
+
+          <ion-button fill="clear" color="light" (click)="closeManualFilterModal()">
+            <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+          </ion-button>
+        </div>
+
+        <div class="manual-filter-modal-body">
+          <div class="manual-filter-modal-summary">
+            <strong>{{ manualFilterModalSummaryLabel }}</strong>
+            <span>
+              {{ manualTypeLimitLabel() }} {{ manualClassLimitLabel() }}
+            </span>
+          </div>
+
+          <div class="manual-filter-modal-grid">
+            <section class="manual-filter-panel">
+              <div class="slot-grid__header">
+                <h3>Pool filters</h3>
+                <p>Ο χαρακτήρας πρέπει να έχει όλα τα selected types/classes και το chosen favorite state.</p>
+              </div>
+
+              <div class="ability-requirement-field">
+                <span>Types</span>
+                <ion-select
+                  interface="popover"
+                  [multiple]="true"
+                  fill="outline"
+                  placeholder="Select types"
+                  [value]="manualFilterSelectedTypes()"
+                  [selectedText]="manualFilterSelectedTypesLabel()"
+                  (ionChange)="onManualFilterTypeChange($event)"
+                >
+                  <ion-select-option *ngFor="let item of manualAvailableTypes()" [value]="item">
+                    {{ item }}
+                  </ion-select-option>
+                </ion-select>
+                <small class="manual-filter-hint">{{ manualTypeLimitLabel() }}</small>
+                <div *ngIf="manualFilterSelectedTypes().length" class="selected-values-row">
+                  <button
+                    type="button"
+                    class="selected-value-chip"
+                    *ngFor="let item of manualFilterSelectedTypes()"
+                    (click)="removeManualSelectedType(item)"
+                  >
+                    {{ item }}
+                    <span aria-hidden="true">×</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="ability-requirement-field">
+                <span>Classes</span>
+                <ion-select
+                  interface="popover"
+                  [multiple]="true"
+                  fill="outline"
+                  placeholder="Select classes"
+                  [value]="manualFilterSelectedClasses()"
+                  [selectedText]="manualFilterSelectedClassesLabel()"
+                  (ionChange)="onManualFilterClassChange($event)"
+                >
+                  <ion-select-option *ngFor="let item of manualAvailableClasses()" [value]="item">
+                    {{ item }}
+                  </ion-select-option>
+                </ion-select>
+                <small class="manual-filter-hint">{{ manualClassLimitLabel() }}</small>
+                <div *ngIf="manualFilterSelectedClasses().length" class="selected-values-row">
+                  <button
+                    type="button"
+                    class="selected-value-chip"
+                    *ngFor="let item of manualFilterSelectedClasses()"
+                    (click)="removeManualSelectedClass(item)"
+                  >
+                    {{ item }}
+                    <span aria-hidden="true">×</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="ability-requirement-field">
+                <span>Favorite status</span>
+                <ion-segment
+                  [value]="manualFilterFavoriteMode()"
+                  (ionChange)="onManualFilterFavoriteModeChange($event)"
+                >
+                  <ion-segment-button value="all">All</ion-segment-button>
+                  <ion-segment-button value="favoritesOnly">Favorites</ion-segment-button>
+                  <ion-segment-button value="nonFavoritesOnly">Non-favorites</ion-segment-button>
+                </ion-segment>
+                <small class="manual-filter-hint">{{ manualFilterFavoriteModeLabel() }}</small>
+              </div>
+            </section>
+
+            <section class="manual-filter-panel">
+              <div class="slot-grid__header">
+                <h3>Ability filters</h3>
+                <p>
+                  Όλα τα selected ability rows πρέπει να ταιριάζουν στο ίδιο unit. Τα turns
+                  λειτουργούν ως minimum requirement.
+                </p>
+              </div>
+
+              <div class="manual-locks-meta ability-requirements-meta">
+                <strong>{{ manualFilterDraftAbilityLabels().length }} configured rows</strong>
+                <div class="ability-requirements-actions">
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    class="select-all-button"
+                    [disabled]="!availableAbilityCatalogItems().length"
+                    (click)="addManualFilterAbility()"
+                  >
+                    Add ability
+                  </ion-button>
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    class="select-all-button"
+                    [disabled]="!manualFilterRequiredAbilityDrafts().length"
+                    (click)="clearManualFilterAbilities()"
+                  >
+                    Clear
+                  </ion-button>
+                </div>
+              </div>
+
+              <div
+                *ngIf="manualFilterRequiredAbilityDrafts().length"
+                class="selected-values-row ability-requirements-selected-row"
+              >
+                <span
+                  *ngFor="let item of manualFilterDraftAbilityLabels()"
+                  class="selected-value-chip ability-requirement-chip"
+                >
+                  {{ item }}
+                </span>
+              </div>
+
+              <div
+                *ngIf="manualFilterRequiredAbilityDrafts().length"
+                class="ability-requirement-list"
+              >
+                <article
+                  *ngFor="let draft of manualFilterRequiredAbilityDrafts()"
+                  class="ability-requirement-card"
+                >
+                  <div class="ability-requirement-fields">
+                    <div class="ability-requirement-field">
+                      <span>Ability</span>
+                      <ion-select
+                        interface="popover"
+                        fill="outline"
+                        placeholder="Select ability"
+                        [value]="draft.abilityKey"
+                        [selectedText]="resolveManualFilterAbilitySelectedText(draft)"
+                        (ionChange)="onManualFilterAbilityKeyChange(draft.draftId, $event)"
+                      >
+                        <ion-select-option
+                          *ngFor="let item of availableAbilityCatalogItems()"
+                          [value]="item.key"
+                        >
+                          {{ item.label }}
+                        </ion-select-option>
+                      </ion-select>
+                    </div>
+
+                    <label
+                      *ngIf="resolveAbilityCatalogItem(draft.abilityKey)?.supportsTurns"
+                      class="ability-requirement-field ability-requirement-field--number"
+                    >
+                      <span>Turns</span>
+                      <input
+                        type="number"
+                        min="1"
+                        inputmode="numeric"
+                        [value]="draft.minTurns ?? ''"
+                        (input)="onManualFilterAbilityTurnsChange(draft.draftId, $event)"
+                      />
+                    </label>
+
+                    <div
+                      *ngIf="resolveAbilityCatalogItem(draft.abilityKey)?.supportsSlotTokens"
+                      class="ability-requirement-field"
+                    >
+                      <span>Slot tokens</span>
+                      <ion-select
+                        interface="popover"
+                        [multiple]="true"
+                        fill="outline"
+                        placeholder="Select slot tokens"
+                        [value]="draft.slotTokens"
+                        [selectedText]="draft.slotTokens.join(' / ')"
+                        (ionChange)="onManualFilterAbilitySlotTokensChange(draft.draftId, $event)"
+                      >
+                        <ion-select-option
+                          *ngFor="
+                            let token of resolveAbilityCatalogItem(draft.abilityKey)
+                              ?.availableSlotTokens ?? []
+                          "
+                          [value]="token"
+                        >
+                          {{ token }}
+                        </ion-select-option>
+                      </ion-select>
+                    </div>
+                  </div>
+
+                  <ion-button
+                    size="small"
+                    fill="outline"
+                    color="light"
+                    (click)="removeManualFilterAbility(draft.draftId)"
+                  >
+                    Remove
+                  </ion-button>
+                </article>
+              </div>
+
+              <div
+                *ngIf="!manualFilterRequiredAbilityDrafts().length"
+                class="manual-candidate-empty-state manual-candidate-empty-state--compact"
+              >
+                Πρόσθεσε rows μόνο αν θέλεις strict utility matching στο ίδιο unit.
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="manual-filter-modal-actions">
+          <ion-button fill="clear" color="light" (click)="resetManualFilterDraft()">
+            <ion-icon slot="start" [icon]="resetIcon"></ion-icon>
+            Reset
+          </ion-button>
+          <ion-button fill="outline" color="light" (click)="closeManualFilterModal()">
+            Cancel
+          </ion-button>
+          <ion-button
+            color="warning"
+            [disabled]="!manualFilterHasDraftChanges()"
+            (click)="applyManualFilterDraft()"
+          >
+            OK
+          </ion-button>
+        </div>
+      </div>
+    </ng-template>
+  </ion-modal>
 </ion-content>

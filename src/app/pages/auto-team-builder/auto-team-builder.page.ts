@@ -5,7 +5,10 @@ import {
   IonContent,
   IonHeader,
   IonIcon,
+  IonModal,
   IonSearchbar,
+  IonSegment,
+  IonSegmentButton,
   IonSelect,
   IonSelectOption,
   IonSpinner,
@@ -15,9 +18,12 @@ import {
 } from '@ionic/angular/standalone';
 import { type ViewWillEnter } from '@ionic/angular';
 import {
+  closeOutline,
   heart,
   heartOutline,
   layersOutline,
+  optionsOutline,
+  refreshOutline,
   shieldHalfOutline,
   sparklesOutline,
 } from 'ionicons/icons';
@@ -32,12 +38,23 @@ import {
   type AutoBuildAbilityCatalog,
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityRequirement,
+  type NormalizedSpecialAbility,
 } from '../../core/models/auto-team-builder-ability.models';
-import { type CharacterListItem, type DatasetManifest } from '../../core/models/optc.models';
+import {
+  type CharacterDetailRecord,
+  type CharacterListItem,
+  type DatasetManifest,
+  type ManualCharacterFavoriteFilterMode,
+  type ManualCharacterFilterMetadata,
+} from '../../core/models/optc.models';
 import {
   AutoTeamBuilderService,
   type AutoTeamBuildExecutionOptions,
 } from '../../core/services/auto-team-builder.service';
+import {
+  matchesAnyAbilityRequirement,
+  specialAbilitiesMatchAllRequirements,
+} from '../../core/services/auto-team-builder-ability-match.utils';
 import { isAutoTeamBuildCancelledError } from '../../core/services/auto-team-builder.engine';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
@@ -64,6 +81,33 @@ interface AbilityRequirementDraft extends AutoBuildAbilityRequirement {
   draftId: string;
 }
 
+interface CharacterAbilityChipView {
+  key: string;
+  label: string;
+  highlighted: boolean;
+  empty?: boolean;
+}
+
+interface ManualCharacterCardView {
+  character: CharacterDetailRecord;
+  subtitle: string;
+  favoriteLabel: string | null;
+  abilityChips: CharacterAbilityChipView[];
+}
+
+type TeamSlotViewModel = AutoBuildResult['slots'][number] & {
+  roleLabel: string;
+  snippet: string;
+  abilityChips: CharacterAbilityChipView[];
+};
+
+interface AppliedManualCharacterFilters {
+  selectedTypes: AutoTeamBuilderType[];
+  selectedClasses: string[];
+  requiredAbilities: AutoBuildAbilityRequirement[];
+  favoriteMode: ManualCharacterFavoriteFilterMode;
+}
+
 @Component({
   selector: 'app-auto-team-builder-page',
   standalone: true,
@@ -73,7 +117,10 @@ interface AbilityRequirementDraft extends AutoBuildAbilityRequirement {
     IonContent,
     IonHeader,
     IonIcon,
+    IonModal,
     IonSearchbar,
+    IonSegment,
+    IonSegmentButton,
     IonSelect,
     IonSelectOption,
     IonSpinner,
@@ -89,13 +136,27 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly maxLeaderCharacters = 2;
   private readonly manualSearchLimit = 24;
   private buildAbortController: AbortController | null = null;
+  private appliedManualCandidateSearchRequestId = 0;
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
+  public readonly manualFilterMetadata = signal<ManualCharacterFilterMetadata | null>(null);
   public readonly selectedTypes = signal<AutoTeamBuilderType[]>([]);
   public readonly selectedClasses = signal<string[]>([]);
   public readonly requiredAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly manualFilterModalOpen = signal(false);
   public readonly manualSearchTerm = signal('');
-  public readonly manualCandidates = signal<CharacterListItem[]>([]);
+  public readonly manualFilterSelectedTypes = signal<AutoTeamBuilderType[]>([]);
+  public readonly manualFilterSelectedClasses = signal<string[]>([]);
+  public readonly manualFilterRequiredAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly manualFilterFavoriteMode = signal<ManualCharacterFavoriteFilterMode>('all');
+  public readonly appliedManualFilters = signal<AppliedManualCharacterFilters>({
+    selectedTypes: [],
+    selectedClasses: [],
+    requiredAbilities: [],
+    favoriteMode: 'all',
+  });
+  public readonly manualCandidates = signal<CharacterDetailRecord[]>([]);
+  public readonly manualCandidatesLoading = signal(false);
   public readonly lockedCharacterIds = signal<number[]>([]);
   public readonly lockedCharacterRecords = signal<Record<number, CharacterListItem>>({});
   public readonly selectedLeaderIds = signal<number[]>([]);
@@ -112,17 +173,32 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public readonly availableTypes = AUTO_TEAM_BUILDER_TYPES;
   public readonly availableClasses = computed(() => this.summary()?.availableClasses ?? []);
+  public readonly manualAvailableTypes = computed(() => {
+    const metadataTypes = this.manualFilterMetadata()?.availableTypes ?? this.availableTypes;
+
+    return metadataTypes.filter((type): type is AutoTeamBuilderType =>
+      this.availableTypes.includes(type as AutoTeamBuilderType),
+    );
+  });
+  public readonly manualAvailableClasses = computed(
+    () => this.manualFilterMetadata()?.availableClasses ?? this.availableClasses(),
+  );
+  public readonly manualMaxTypesPerCharacter = computed(
+    () => this.manualFilterMetadata()?.maxTypesPerCharacter ?? 1,
+  );
+  public readonly manualMaxClassesPerCharacter = computed(
+    () => this.manualFilterMetadata()?.maxClassesPerCharacter ?? 1,
+  );
   public readonly availableAbilityCatalogItems = computed(
     () => this.abilityCatalog()?.abilities ?? [],
   );
   public readonly abilityCatalogMap = computed(
     () => new Map(this.availableAbilityCatalogItems().map((item) => [item.key, item] as const)),
   );
+  public readonly pageRequiredAbilities = computed(() => this.serializeRequiredAbilities());
   public readonly hasSelectedClasses = computed(() => this.selectedClasses().length > 0);
   public readonly hasSelectedTypes = computed(() => this.selectedTypes().length > 0);
-  public readonly hasRequiredAbilities = computed(
-    () => this.serializeRequiredAbilities().length > 0,
-  );
+  public readonly hasRequiredAbilities = computed(() => this.pageRequiredAbilities().length > 0);
   public readonly lockedCharacters = computed(() => {
     const lockedRecords = this.lockedCharacterRecords();
 
@@ -267,7 +343,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly manualPickerSupportLabel = computed(() =>
     this.lockedLimitReached()
       ? 'Έχεις κλειδώσει το μέγιστο των 5 μοναδικών χαρακτήρων.'
-      : 'Διάλεξε μέχρι 5 χαρακτήρες που θέλεις να μείνουν στο team και όρισε προαιρετικά έως 2 από αυτούς ως leaders.',
+      : 'Διάλεξε μέχρι 5 χαρακτήρες που θέλεις να μείνουν στο team και όρισε προαιρετικά έως 2 από αυτούς ως leaders. Άνοιξε τα manual filters για πιο στοχευμένο candidate pool.',
   );
   public readonly leaderPickerSupportLabel = computed(() => {
     if (!this.hasLockedCharacters()) {
@@ -284,6 +360,90 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     return 'Με 2 leaders, όρισε ποιος είναι ο δικός σου Captain και ποιος ο Friend Captain.';
   });
+  public readonly manualFilterSummaryLabel = computed(() => {
+    const filters = this.appliedManualFilters();
+    const parts: string[] = [];
+
+    if (filters.selectedTypes.length) {
+      parts.push(`types: ${filters.selectedTypes.join(' / ')}`);
+    }
+
+    if (filters.selectedClasses.length) {
+      parts.push(`classes: ${filters.selectedClasses.join(' / ')}`);
+    }
+
+    if (filters.requiredAbilities.length) {
+      parts.push(
+        `abilities: ${filters.requiredAbilities
+          .map((requirement) => this.formatAbilityRequirement(requirement))
+          .join(' • ')}`,
+      );
+    }
+
+    if (filters.favoriteMode === 'favoritesOnly') {
+      parts.push('favorites only');
+    } else if (filters.favoriteMode === 'nonFavoritesOnly') {
+      parts.push('non-favorites only');
+    }
+
+    return parts.length ? parts.join(' • ') : 'No manual filters applied.';
+  });
+  public readonly manualFilterFavoriteModeLabel = computed(() => {
+    switch (this.manualFilterFavoriteMode()) {
+      case 'favoritesOnly':
+        return 'Favorites only';
+      case 'nonFavoritesOnly':
+        return 'Non-favorites only';
+      default:
+        return 'All characters';
+    }
+  });
+  public readonly manualFilterModalSummaryLabel =
+    'Ρύθμισε τα φίλτρα και πάτα OK για να ανανεωθεί η λίστα manual candidates.';
+  public readonly manualCandidatesSummaryLabel = computed(() => {
+    if (this.manualCandidatesLoading()) {
+      return 'Γίνεται φόρτωση manual candidates...';
+    }
+
+    return `${this.manualCandidates().length} manual candidates`;
+  });
+  public readonly manualFilterSelectedTypesLabel = computed(() =>
+    this.formatResultValues(this.manualFilterSelectedTypes()),
+  );
+  public readonly manualFilterSelectedClassesLabel = computed(() =>
+    this.formatResultValues(this.manualFilterSelectedClasses()),
+  );
+  public readonly manualFilterAppliedAbilityLabels = computed(() =>
+    this.appliedManualFilters().requiredAbilities.map((requirement) =>
+      this.formatAbilityRequirement(requirement),
+    ),
+  );
+  public readonly manualFilterDraftAbilityLabels = computed(() =>
+    this.manualFilterRequiredAbilities().map((requirement) =>
+      this.formatAbilityRequirement(requirement),
+    ),
+  );
+  public readonly manualTypeLimitLabel = computed(
+    () => `Μπορείς να ζητήσεις μέχρι ${this.manualMaxTypesPerCharacter()} types ανά χαρακτήρα.`,
+  );
+  public readonly manualClassLimitLabel = computed(
+    () => `Μπορείς να ζητήσεις μέχρι ${this.manualMaxClassesPerCharacter()} classes ανά χαρακτήρα.`,
+  );
+  public readonly manualFilterRequiredAbilities = computed(() =>
+    this.serializeAbilityRequirementDrafts(this.manualFilterRequiredAbilityDrafts()),
+  );
+  public readonly manualFilterHasDraftChanges = computed(() =>
+    !this.areManualFiltersEqual(this.serializeManualFilterDraft(), this.appliedManualFilters()),
+  );
+  public readonly hasAppliedManualFilters = computed(() =>
+    !this.areManualFiltersEqual(this.appliedManualFilters(), this.createEmptyManualCharacterFilters()),
+  );
+  public readonly manualCandidateCards = computed(() =>
+    this.buildManualCharacterCards(
+      this.manualCandidates(),
+      this.appliedManualFilters().requiredAbilities,
+    ),
+  );
   public readonly typeStrictToggleLabel = 'Require all selected types in team';
   public readonly classStrictToggleLabel = 'Require all selected classes on every character';
   public readonly specialSupportToggleLabel = 'Require every special to buff the full team';
@@ -591,9 +751,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly downloadSelectionJsonLabel = 'Download preset JSON';
   public readonly canDownloadTeamJson = computed(() => Boolean(this.result()));
   public readonly downloadTeamJsonLabel = 'Download team JSON';
-  public readonly teamSlots = computed(
-    () =>
-      this.result()?.slots.map((slot) => ({
+  public readonly teamSlots = computed<TeamSlotViewModel[]>(() => {
+    const currentResult = this.result();
+    const requirements = this.pageRequiredAbilities();
+
+    return (
+      currentResult?.slots.map((slot) => ({
         ...slot,
         roleLabel: this.resolveRoleLabel(slot.role),
         snippet:
@@ -604,14 +767,19 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
             : slot.character.detail.captainAbility ||
               slot.character.detail.specialText ||
               'No detail snippet available.',
-      })) ?? [],
-  );
+        abilityChips: this.buildAbilityChipViews(slot.character.detail.specialAbilities, requirements),
+      })) ?? []
+    );
+  });
 
   public readonly sparklesIcon = sparklesOutline;
   public readonly layersIcon = layersOutline;
   public readonly coverageIcon = shieldHalfOutline;
   public readonly favoriteIcon = heart;
   public readonly favoriteOutlineIcon = heartOutline;
+  public readonly manualFilterIcon = optionsOutline;
+  public readonly resetIcon = refreshOutline;
+  public readonly closeIcon = closeOutline;
 
   public constructor(
     private readonly repository: OptcRepositoryService,
@@ -623,12 +791,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public async ngOnInit(): Promise<void> {
     await this.userState.ready();
-    const [summary, abilityCatalog] = await Promise.all([
+    const [summary, abilityCatalog, manualFilterMetadata] = await Promise.all([
       this.repository.getDatasetManifest(),
       this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
+      this.repository.getManualCharacterFilterMetadata(),
     ]);
     this.summary.set(summary);
     this.abilityCatalog.set(abilityCatalog);
+    this.manualFilterMetadata.set(manualFilterMetadata);
     await this.resetPageState();
   }
 
@@ -654,10 +824,59 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.resetBuildState();
   }
 
-  public async onManualSearchChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
-    const searchTerm = (event.detail.value ?? '').trim();
-    this.manualSearchTerm.set(searchTerm);
-    await this.refreshManualCandidates(searchTerm);
+  public openManualFilterModal(): void {
+    this.syncManualFilterDraftFromAppliedFilters();
+    this.manualFilterModalOpen.set(true);
+  }
+
+  public closeManualFilterModal(): void {
+    this.manualFilterModalOpen.set(false);
+    this.syncManualFilterDraftFromAppliedFilters();
+  }
+
+  public async applyManualFilterDraft(): Promise<void> {
+    this.appliedManualFilters.set(this.serializeManualFilterDraft());
+    this.manualFilterModalOpen.set(false);
+    await this.refreshAppliedManualCandidates();
+  }
+
+  public resetManualFilterDraft(): void {
+    const emptyFilters = this.createEmptyManualCharacterFilters();
+
+    this.manualFilterSelectedTypes.set(emptyFilters.selectedTypes);
+    this.manualFilterSelectedClasses.set(emptyFilters.selectedClasses);
+    this.manualFilterRequiredAbilityDrafts.set([]);
+    this.manualFilterFavoriteMode.set(emptyFilters.favoriteMode);
+  }
+
+  public async onManualSearchChange(
+    event: CustomEvent<{ value?: string | null }>,
+  ): Promise<void> {
+    this.manualSearchTerm.set((event.detail.value ?? '').trim());
+    await this.refreshAppliedManualCandidates();
+  }
+
+  public onManualFilterTypeChange(
+    event: CustomEvent<{ value?: AutoTeamBuilderType[] | AutoTeamBuilderType | null }>,
+  ): void {
+    this.manualFilterSelectedTypes.set(this.resolveManualSelectedTypes(event.detail.value));
+  }
+
+  public onManualFilterClassChange(
+    event: CustomEvent<{ value?: string[] | string | null }>,
+  ): void {
+    this.manualFilterSelectedClasses.set(this.resolveManualSelectedClasses(event.detail.value));
+  }
+
+  public onManualFilterFavoriteModeChange(
+    event: CustomEvent<{ value?: string | number | null }>,
+  ): void {
+    const nextValue =
+      typeof event.detail.value === 'string' ? event.detail.value : null;
+
+    this.manualFilterFavoriteMode.set(
+      nextValue === 'favoritesOnly' || nextValue === 'nonFavoritesOnly' ? nextValue : 'all',
+    );
   }
 
   public lockCharacter(character: CharacterListItem): void {
@@ -780,6 +999,73 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }));
   }
 
+  public addManualFilterAbility(): void {
+    const [firstItem] = this.availableAbilityCatalogItems();
+
+    this.manualFilterRequiredAbilityDrafts.set([
+      ...this.manualFilterRequiredAbilityDrafts(),
+      this.createAbilityRequirementDraft(firstItem),
+    ]);
+  }
+
+  public removeManualFilterAbility(draftId: string): void {
+    this.manualFilterRequiredAbilityDrafts.set(
+      this.manualFilterRequiredAbilityDrafts().filter((draft) => draft.draftId !== draftId),
+    );
+  }
+
+  public clearManualFilterAbilities(): void {
+    this.manualFilterRequiredAbilityDrafts.set([]);
+  }
+
+  public onManualFilterAbilityKeyChange(
+    draftId: string,
+    event: CustomEvent<{ value?: string | null }>,
+  ): void {
+    const abilityKey = (event.detail.value ?? '').trim();
+    const catalogItem = abilityKey ? this.abilityCatalogMap().get(abilityKey) : null;
+
+    this.updateManualFilterAbilityDraft(draftId, (draft) => ({
+      ...draft,
+      abilityKey,
+      minTurns: catalogItem?.supportsTurns ? (draft.minTurns ?? 1) : null,
+      slotTokens:
+        catalogItem?.supportsSlotTokens && draft.slotTokens.length
+          ? draft.slotTokens.filter((token) => catalogItem.availableSlotTokens.includes(token))
+          : [],
+    }));
+  }
+
+  public onManualFilterAbilityTurnsChange(draftId: string, event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    const nextValue = input?.value?.trim() ?? '';
+    const minTurns = /^\d+$/.test(nextValue) && Number(nextValue) > 0 ? Number(nextValue) : null;
+
+    this.updateManualFilterAbilityDraft(draftId, (draft) => ({
+      ...draft,
+      minTurns,
+    }));
+  }
+
+  public onManualFilterAbilitySlotTokensChange(
+    draftId: string,
+    event: CustomEvent<{ value?: string[] | string | null }>,
+  ): void {
+    const nextValues = Array.isArray(event.detail.value)
+      ? event.detail.value
+      : event.detail.value
+        ? [event.detail.value]
+        : [];
+    const slotTokens = [...new Set(nextValues.map((token) => token.trim().toUpperCase()))].filter(
+      (token) => token.length,
+    );
+
+    this.updateManualFilterAbilityDraft(draftId, (draft) => ({
+      ...draft,
+      slotTokens,
+    }));
+  }
+
   public toggleLeaderCharacter(characterId: number): void {
     if (!this.isLockedCharacter(characterId)) {
       return;
@@ -872,8 +1158,26 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.resetBuildState();
   }
 
+  public removeManualSelectedType(type: AutoTeamBuilderType): void {
+    this.manualFilterSelectedTypes.set(
+      this.manualFilterSelectedTypes().filter((selectedType) => selectedType !== type),
+    );
+  }
+
+  public removeManualSelectedClass(characterClass: string): void {
+    this.manualFilterSelectedClasses.set(
+      this.manualFilterSelectedClasses().filter(
+        (selectedClass) => selectedClass !== characterClass,
+      ),
+    );
+  }
+
   public async toggleFavorite(characterId: number): Promise<void> {
     await this.userState.toggleFavorite(characterId);
+
+    if (this.appliedManualFilters().favoriteMode !== 'all') {
+      await this.refreshAppliedManualCandidates();
+    }
   }
 
   public isFavorite(characterId: number): boolean {
@@ -1028,10 +1332,20 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   private async resetPageState(): Promise<void> {
+    const emptyManualFilters = this.createEmptyManualCharacterFilters();
+
     this.selectedTypes.set([]);
     this.selectedClasses.set([]);
     this.requiredAbilityDrafts.set([]);
     this.manualSearchTerm.set('');
+    this.manualFilterModalOpen.set(false);
+    this.appliedManualFilters.set(emptyManualFilters);
+    this.manualFilterSelectedTypes.set(emptyManualFilters.selectedTypes);
+    this.manualFilterSelectedClasses.set(emptyManualFilters.selectedClasses);
+    this.manualFilterRequiredAbilityDrafts.set([]);
+    this.manualFilterFavoriteMode.set(emptyManualFilters.favoriteMode);
+    this.manualCandidates.set([]);
+    this.manualCandidatesLoading.set(false);
     this.lockedCharacterIds.set([]);
     this.selectedLeaderIds.set([]);
     this.captainLeaderId.set(null);
@@ -1040,7 +1354,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.requireAllSpecialsSupportTeam.set(false);
     this.favoritesOnly.set(false);
     this.resetBuildState();
-    await this.refreshManualCandidates('');
+    await this.refreshAppliedManualCandidates();
   }
 
   private resolveBuildFailureMessage(): string {
@@ -1117,17 +1431,72 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     return `Δεν βρέθηκαν αρκετοί usable ${this.selectedTypesLabel()} χαρακτήρες${favoritesScope} για ${activeRequirements.join(' και ')}. Το flexible fallback εξαντλήθηκε χωρίς valid team.`;
   }
 
-  private async refreshManualCandidates(searchTerm: string): Promise<void> {
-    const candidates = await this.repository.searchCharacters({
-      searchTerm,
-      typeFilter: '',
-      classFilter: '',
-      limit: this.manualSearchLimit,
-      offset: 0,
-    });
+  private async refreshAppliedManualCandidates(): Promise<void> {
+    const requestId = ++this.appliedManualCandidateSearchRequestId;
+    this.manualCandidatesLoading.set(true);
 
-    this.manualCandidates.set(candidates);
-    candidates.forEach((candidate) => this.cacheCharacterRecord(candidate));
+    try {
+      const candidates = await this.repository.searchDetailedCharacters({
+        searchTerm: this.manualSearchTerm().trim(),
+        selectedTypes: this.appliedManualFilters().selectedTypes,
+        selectedClasses: this.appliedManualFilters().selectedClasses,
+        limit: this.manualSearchLimit,
+        offset: 0,
+      });
+      const favoriteCharacterIdSet = new Set(this.favoriteCharacterIds());
+      const filteredCandidates = candidates.filter((candidate) =>
+        this.matchesManualCharacterFilters(
+          candidate,
+          this.appliedManualFilters(),
+          favoriteCharacterIdSet,
+        ),
+      );
+
+      if (requestId !== this.appliedManualCandidateSearchRequestId) {
+        return;
+      }
+
+      this.manualCandidates.set(filteredCandidates);
+      filteredCandidates.forEach((candidate) => this.cacheCharacterRecord(candidate));
+    } finally {
+      if (requestId !== this.appliedManualCandidateSearchRequestId) {
+        return;
+      }
+
+      this.manualCandidatesLoading.set(false);
+    }
+  }
+
+  private matchesManualCharacterFilters(
+    candidate: CharacterDetailRecord,
+    filters: AppliedManualCharacterFilters,
+    favoriteCharacterIdSet: Set<number>,
+  ): boolean {
+    if (
+      filters.favoriteMode === 'favoritesOnly' &&
+      !favoriteCharacterIdSet.has(candidate.id)
+    ) {
+      return false;
+    }
+
+    if (
+      filters.favoriteMode === 'nonFavoritesOnly' &&
+      favoriteCharacterIdSet.has(candidate.id)
+    ) {
+      return false;
+    }
+
+    if (
+      filters.requiredAbilities.length &&
+      !specialAbilitiesMatchAllRequirements(
+        candidate.detail.specialAbilities,
+        filters.requiredAbilities,
+      )
+    ) {
+      return false;
+    }
+
+    return true;
   }
 
   private cacheCharacterRecord(character: CharacterListItem): void {
@@ -1218,8 +1587,25 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.resetBuildState();
   }
 
+  private updateManualFilterAbilityDraft(
+    draftId: string,
+    updater: (draft: AbilityRequirementDraft) => AbilityRequirementDraft,
+  ): void {
+    this.manualFilterRequiredAbilityDrafts.set(
+      this.manualFilterRequiredAbilityDrafts().map((draft) =>
+        draft.draftId === draftId ? updater(draft) : draft,
+      ),
+    );
+  }
+
   private serializeRequiredAbilities(): AutoBuildAbilityRequirement[] {
-    return this.requiredAbilityDrafts()
+    return this.serializeAbilityRequirementDrafts(this.requiredAbilityDrafts());
+  }
+
+  private serializeAbilityRequirementDrafts(
+    drafts: AbilityRequirementDraft[],
+  ): AutoBuildAbilityRequirement[] {
+    return drafts
       .filter((draft) => draft.abilityKey.trim().length > 0)
       .map((draft) => ({
         abilityKey: draft.abilityKey.trim(),
@@ -1231,6 +1617,52 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           ...new Set(draft.slotTokens.map((token) => token.trim().toUpperCase())),
         ].filter((token) => token.length),
       }));
+  }
+
+  private createEmptyManualCharacterFilters(): AppliedManualCharacterFilters {
+    return {
+      selectedTypes: [],
+      selectedClasses: [],
+      requiredAbilities: [],
+      favoriteMode: 'all',
+    };
+  }
+
+  private syncManualFilterDraftFromAppliedFilters(): void {
+    const filters = this.appliedManualFilters();
+
+    this.manualFilterSelectedTypes.set([...filters.selectedTypes]);
+    this.manualFilterSelectedClasses.set([...filters.selectedClasses]);
+    this.manualFilterRequiredAbilityDrafts.set(
+      filters.requiredAbilities.map((requirement) => ({
+        draftId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        abilityKey: requirement.abilityKey,
+        minTurns: requirement.minTurns,
+        slotTokens: [...requirement.slotTokens],
+      })),
+    );
+    this.manualFilterFavoriteMode.set(filters.favoriteMode);
+  }
+
+  private serializeManualFilterDraft(): AppliedManualCharacterFilters {
+    return {
+      selectedTypes: [...this.manualFilterSelectedTypes()],
+      selectedClasses: [...this.manualFilterSelectedClasses()],
+      requiredAbilities: this.manualFilterRequiredAbilities(),
+      favoriteMode: this.manualFilterFavoriteMode(),
+    };
+  }
+
+  private areManualFiltersEqual(
+    left: AppliedManualCharacterFilters,
+    right: AppliedManualCharacterFilters,
+  ): boolean {
+    return (
+      left.favoriteMode === right.favoriteMode &&
+      this.sameStringValues(left.selectedTypes, right.selectedTypes) &&
+      this.sameStringValues(left.selectedClasses, right.selectedClasses) &&
+      this.sameAbilityRequirements(left.requiredAbilities, right.requiredAbilities)
+    );
   }
 
   public resolveAbilityCatalogItem(abilityKey: string): AutoBuildAbilityCatalogItem | undefined {
@@ -1265,6 +1697,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     });
   }
 
+  public resolveManualFilterAbilitySelectedText(draft: AbilityRequirementDraft): string {
+    return this.resolveRequiredAbilitySelectedText(draft);
+  }
+
   private resolveSelectedClasses(value: string[] | string | null | undefined): string[] {
     const nextValues = Array.isArray(value) ? value : value ? [value] : [];
     const availableClassesSet = new Set(this.availableClasses());
@@ -1283,6 +1719,122 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     return uniqueValues.filter((type): type is AutoTeamBuilderType =>
       this.availableTypes.includes(type),
+    );
+  }
+
+  private resolveManualSelectedClasses(value: string[] | string | null | undefined): string[] {
+    const nextValues = Array.isArray(value) ? value : value ? [value] : [];
+    const availableClassesSet = new Set(this.manualAvailableClasses());
+    const uniqueValues = [...new Set(nextValues.map((characterClass) => characterClass.trim()))]
+      .filter((characterClass) => characterClass.length && availableClassesSet.has(characterClass));
+
+    return uniqueValues.slice(0, this.manualMaxClassesPerCharacter());
+  }
+
+  private resolveManualSelectedTypes(
+    value: AutoTeamBuilderType[] | AutoTeamBuilderType | null | undefined,
+  ): AutoTeamBuilderType[] {
+    const nextValues = Array.isArray(value) ? value : value ? [value] : [];
+    const uniqueValues = [...new Set(nextValues)].filter((type): type is AutoTeamBuilderType =>
+      this.manualAvailableTypes().includes(type),
+    );
+
+    return uniqueValues.slice(0, this.manualMaxTypesPerCharacter());
+  }
+
+  private buildManualCharacterCards(
+    characters: CharacterDetailRecord[],
+    highlightedRequirements: AutoBuildAbilityRequirement[],
+  ): ManualCharacterCardView[] {
+    return characters.map((character) => ({
+      character,
+      subtitle: this.buildCharacterSubtitle(character),
+      favoriteLabel: this.isFavorite(character.id) ? 'Favorite' : null,
+      abilityChips: this.buildAbilityChipViews(
+        character.detail.specialAbilities,
+        highlightedRequirements,
+      ),
+    }));
+  }
+
+  private buildCharacterSubtitle(character: CharacterDetailRecord): string {
+    const typeLabel = character.type.split(',').map((value) => value.trim()).join(' • ');
+    const classLabel = character.classes.join(' • ');
+
+    return [typeLabel, classLabel].filter((value) => value.length).join(' • ');
+  }
+
+  private buildAbilityChipViews(
+    abilities: NormalizedSpecialAbility[],
+    highlightedRequirements: AutoBuildAbilityRequirement[],
+  ): CharacterAbilityChipView[] {
+    if (!abilities.length) {
+      return [
+        {
+          key: 'none',
+          label: 'No parsed abilities',
+          highlighted: false,
+          empty: true,
+        },
+      ];
+    }
+
+    const seen = new Set<string>();
+    const chipViews: CharacterAbilityChipView[] = [];
+
+    abilities.forEach((ability) => {
+      const key = `${ability.key}|${ability.minTurns ?? 'none'}|${ability.slotTokens.join(',')}`;
+
+      if (seen.has(key)) {
+        return;
+      }
+
+      seen.add(key);
+      chipViews.push({
+        key,
+        label: this.formatCharacterAbility(ability),
+        highlighted:
+          highlightedRequirements.length > 0 &&
+          matchesAnyAbilityRequirement(ability, highlightedRequirements),
+      });
+    });
+
+    return chipViews;
+  }
+
+  private formatCharacterAbility(ability: NormalizedSpecialAbility): string {
+    const suffixes: string[] = [];
+
+    if (ability.minTurns !== null) {
+      suffixes.push(`${ability.minTurns} turns`);
+    }
+
+    if (ability.slotTokens.length) {
+      suffixes.push(ability.slotTokens.join(' / '));
+    }
+
+    return suffixes.length ? `${ability.label} (${suffixes.join(' • ')})` : ability.label;
+  }
+
+  private sameStringValues(left: readonly string[], right: readonly string[]): boolean {
+    return left.length === right.length && left.every((value, index) => value === right[index]);
+  }
+
+  private sameAbilityRequirements(
+    left: AutoBuildAbilityRequirement[],
+    right: AutoBuildAbilityRequirement[],
+  ): boolean {
+    return (
+      left.length === right.length &&
+      left.every((requirement, index) => {
+        const nextRequirement = right[index];
+
+        return (
+          requirement.abilityKey === nextRequirement?.abilityKey &&
+          requirement.minTurns === nextRequirement?.minTurns &&
+          this.sameStringValues(requirement.slotTokens, nextRequirement?.slotTokens ?? [])
+        );
+      })
     );
   }
 
