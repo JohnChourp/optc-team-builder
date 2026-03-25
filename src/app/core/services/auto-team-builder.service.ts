@@ -2,16 +2,30 @@ import { Injectable } from '@angular/core';
 
 import {
   AUTO_TEAM_CANDIDATE_LIMIT,
-  type AutoBuildConstraints,
   AUTO_TEAM_BUILDER_DEFAULT_TYPE,
-  AUTO_TEAM_BUILDER_TYPES,
+  type AutoBuildConstraints,
   type AutoBuildInput,
+  type AutoBuildProgressSnapshot,
   type AutoBuildResult,
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
+import {
+  AutoTeamBuildCancelledError,
+  isAutoTeamBuildCancelledError,
+  normalizeSelectedTypes,
+  runAutoTeamBuildSearch,
+} from './auto-team-builder.engine';
 import { OptcRepositoryService } from './optc-repository.service';
-import { buildAutoTeamResult, resolveCharacterTypeTokens } from './auto-team-builder.utils';
+import {
+  type AutoTeamBuilderWorkerRequest,
+  type AutoTeamBuilderWorkerResponse,
+} from './auto-team-builder.worker.models';
+
+export interface AutoTeamBuildExecutionOptions {
+  onProgress?: (snapshot: AutoBuildProgressSnapshot) => void;
+  signal?: AbortSignal;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AutoTeamBuilderService {
@@ -21,11 +35,10 @@ export class AutoTeamBuilderService {
     selectedClasses: string[] = [],
     selectedTypes: AutoTeamBuilderType[] = [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
     constraints: AutoBuildConstraints = {},
+    executionOptions: AutoTeamBuildExecutionOptions = {},
   ): Promise<AutoBuildResult | null> {
     const favoritesOnly = constraints.favoritesOnly ?? false;
-    const normalizedTypes = [...new Set(selectedTypes)].filter(
-      (type): type is AutoTeamBuilderType => AUTO_TEAM_BUILDER_TYPES.includes(type),
-    );
+    const normalizedTypes = normalizeSelectedTypes(selectedTypes);
     const normalizedClasses = selectedClasses.reduce<string[]>((classes, currentClass) => {
       const nextClass = currentClass.trim();
 
@@ -86,7 +99,10 @@ export class AutoTeamBuilderService {
       return null;
     }
 
-    if (favoritesOnly && lockedCharacterIds.some((characterId) => !favoriteCharacterIds.has(characterId))) {
+    if (
+      favoritesOnly &&
+      lockedCharacterIds.some((characterId) => !favoriteCharacterIds.has(characterId))
+    ) {
       return null;
     }
 
@@ -99,9 +115,23 @@ export class AutoTeamBuilderService {
       return null;
     }
 
-    if (favoritesOnly && requestedLeaderIds.some((characterId) => !favoriteCharacterIds.has(characterId))) {
+    if (
+      favoritesOnly &&
+      requestedLeaderIds.some((characterId) => !favoriteCharacterIds.has(characterId))
+    ) {
       return null;
     }
+
+    this.throwIfCancelled(executionOptions.signal);
+    this.emitProgress(executionOptions, {
+      stage: 'loadingCandidates',
+      candidateCount: 0,
+      completedAttempts: 0,
+      totalAttempts: 0,
+      currentDroppedTypes: [],
+      currentDroppedClasses: [],
+      message: 'Φόρτωση candidate pool...',
+    });
 
     const records = await this.repository.getAutoBuilderCandidates(
       requestedInput.types,
@@ -111,181 +141,148 @@ export class AutoTeamBuilderService {
         lockedCharacterIds,
       },
     );
-    const exactResult = this.buildAttempt(records, requestedInput, requestedInput);
 
-    if (this.hasStrictConstraints(requestedInput)) {
-      return exactResult;
-    }
+    this.throwIfCancelled(executionOptions.signal);
 
-    if (this.satisfiesRequestedCoverage(exactResult)) {
-      return exactResult;
-    }
-
-    for (const relaxedInput of this.buildRelaxedInputs(requestedInput, records)) {
-      const relaxedResult = this.buildAttempt(records, relaxedInput, requestedInput);
-
-      if (this.satisfiesRequestedCoverage(relaxedResult)) {
-        return relaxedResult;
-      }
-    }
-
-    return null;
+    return this.executeSearch(records, requestedInput, executionOptions);
   }
 
-  private buildAttempt(
+  private async executeSearch(
     records: CharacterDetailRecord[],
-    input: AutoBuildInput,
     requestedInput: AutoBuildInput,
-  ): AutoBuildResult | null {
-    const attempt = buildAutoTeamResult(records, input);
+    executionOptions: AutoTeamBuildExecutionOptions,
+  ): Promise<AutoBuildResult | null> {
+    const worker = this.createWorker();
 
-    if (!attempt) {
+    if (!worker) {
+      return runAutoTeamBuildSearch(records, requestedInput, {
+        onProgress: executionOptions.onProgress,
+        isCancelled: () => executionOptions.signal?.aborted ?? false,
+      });
+    }
+
+    try {
+      return await this.runSearchInWorker(worker, records, requestedInput, executionOptions);
+    } catch (error) {
+      worker.terminate();
+
+      if (isAutoTeamBuildCancelledError(error)) {
+        throw error;
+      }
+
+      return runAutoTeamBuildSearch(records, requestedInput, {
+        onProgress: executionOptions.onProgress,
+        isCancelled: () => executionOptions.signal?.aborted ?? false,
+      });
+    }
+  }
+
+  private runSearchInWorker(
+    worker: Worker,
+    records: CharacterDetailRecord[],
+    requestedInput: AutoBuildInput,
+    executionOptions: AutoTeamBuildExecutionOptions,
+  ): Promise<AutoBuildResult | null> {
+    const runId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    return new Promise<AutoBuildResult | null>((resolve, reject) => {
+      let settled = false;
+      const cleanup = (): void => {
+        executionOptions.signal?.removeEventListener('abort', handleAbort);
+        worker.removeEventListener('message', handleMessage);
+        worker.removeEventListener('error', handleError);
+      };
+      const resolveOnce = (result: AutoBuildResult | null): void => {
+        if (settled) {
+          return;
+        }
+
+        settled = true;
+        cleanup();
+        worker.terminate();
+        resolve(result);
+      };
+      const rejectOnce = (error: unknown): void => {
+        if (settled) {
+          return;
+        }
+
+        settled = true;
+        cleanup();
+        worker.terminate();
+        reject(error);
+      };
+      const handleAbort = (): void => {
+        rejectOnce(new AutoTeamBuildCancelledError());
+      };
+      const handleError = (event: ErrorEvent): void => {
+        rejectOnce(new Error(event.message || 'Auto team builder worker failed.'));
+      };
+      const handleMessage = ({
+        data,
+      }: MessageEvent<AutoTeamBuilderWorkerResponse>): void => {
+        if (!data || data.runId !== runId) {
+          return;
+        }
+
+        if (data.type === 'progress') {
+          executionOptions.onProgress?.(data.snapshot);
+          return;
+        }
+
+        if (data.type === 'result') {
+          resolveOnce(data.result);
+          return;
+        }
+
+        rejectOnce(new Error(data.errorMessage));
+      };
+
+      if (executionOptions.signal?.aborted) {
+        handleAbort();
+        return;
+      }
+
+      executionOptions.signal?.addEventListener('abort', handleAbort, { once: true });
+      worker.addEventListener('message', handleMessage);
+      worker.addEventListener('error', handleError);
+
+      const request: AutoTeamBuilderWorkerRequest = {
+        type: 'run',
+        runId,
+        records,
+        requestedInput,
+      };
+
+      worker.postMessage(request);
+    });
+  }
+
+  private createWorker(): Worker | null {
+    if (typeof Worker === 'undefined') {
       return null;
     }
 
-    return {
-      ...attempt,
-      requestedInput,
-      relaxation: {
-        usedFallback: !this.inputsMatch(requestedInput, input),
-        droppedTypes: requestedInput.types.filter((type) => !input.types.includes(type)),
-        droppedClasses: requestedInput.selectedClasses.filter(
-          (selectedClass) => !input.selectedClasses.includes(selectedClass),
-        ),
-      },
-    };
-  }
-
-  private buildRelaxedInputs(
-    requestedInput: AutoBuildInput,
-    records: CharacterDetailRecord[],
-  ): AutoBuildInput[] {
-    const classSupport = new Map(
-      requestedInput.selectedClasses.map((selectedClass) => [
-        selectedClass,
-        this.resolveClassSupport(records, selectedClass),
-      ]),
-    );
-    const typeSupport = new Map(
-      requestedInput.types.map((type) => [type, this.resolveTypeSupport(records, type)]),
-    );
-    const typeSubsets = this.buildSubsets(requestedInput.types, 1);
-    const classSubsets = this.buildSubsets(requestedInput.selectedClasses, 0);
-    const nextInputs = typeSubsets.flatMap((types) =>
-      classSubsets
-        .filter(
-          (selectedClasses) =>
-            !this.sameOrderedValues(types, requestedInput.types) ||
-            !this.sameOrderedValues(selectedClasses, requestedInput.selectedClasses),
-        )
-        .map((selectedClasses) => {
-          const droppedTypes = requestedInput.types.filter((type) => !types.includes(type));
-          const droppedClasses = requestedInput.selectedClasses.filter(
-            (selectedClass) => !selectedClasses.includes(selectedClass),
-          );
-
-          return {
-            input: {
-              ...requestedInput,
-              types,
-              selectedClasses,
-            },
-            droppedTypes,
-            droppedClasses,
-            droppedCount: droppedTypes.length + droppedClasses.length,
-            droppedSupport:
-              droppedTypes.reduce((sum, type) => sum + (typeSupport.get(type) ?? 0), 0) +
-              droppedClasses.reduce(
-                (sum, selectedClass) => sum + (classSupport.get(selectedClass) ?? 0),
-                0,
-              ),
-          };
-        }),
-    );
-
-    nextInputs.sort((left, right) => {
-      if (left.droppedCount !== right.droppedCount) {
-        return left.droppedCount - right.droppedCount;
-      }
-
-      if (left.input.types.length !== right.input.types.length) {
-        return right.input.types.length - left.input.types.length;
-      }
-
-      if (left.input.selectedClasses.length !== right.input.selectedClasses.length) {
-        return right.input.selectedClasses.length - left.input.selectedClasses.length;
-      }
-
-      if (left.droppedSupport !== right.droppedSupport) {
-        return left.droppedSupport - right.droppedSupport;
-      }
-
-      const leftDroppedTypes = left.droppedTypes.join('|');
-      const rightDroppedTypes = right.droppedTypes.join('|');
-
-      if (leftDroppedTypes !== rightDroppedTypes) {
-        return leftDroppedTypes.localeCompare(rightDroppedTypes);
-      }
-
-      return left.droppedClasses.join('|').localeCompare(right.droppedClasses.join('|'));
-    });
-
-    return nextInputs.map((entry) => entry.input);
-  }
-
-  private buildSubsets<T>(values: T[], minLength: number): T[][] {
-    const subsets: T[][] = [];
-
-    for (let mask = 0; mask < 1 << values.length; mask += 1) {
-      const subset = values.filter((_, index) => (mask & (1 << index)) !== 0);
-
-      if (subset.length >= minLength) {
-        subsets.push(subset);
-      }
+    try {
+      return new Worker(new URL('./auto-team-builder.worker', import.meta.url), {
+        type: 'module',
+      });
+    } catch {
+      return null;
     }
-
-    return subsets;
   }
 
-  private hasStrictConstraints(input: AutoBuildInput): boolean {
-    return Boolean(
-      input.requireAllSelectedTypesInTeam || input.requireAllSelectedClassesPerCharacter,
-    );
+  private emitProgress(
+    executionOptions: AutoTeamBuildExecutionOptions,
+    snapshot: AutoBuildProgressSnapshot,
+  ): void {
+    executionOptions.onProgress?.(snapshot);
   }
 
-  private inputsMatch(left: AutoBuildInput, right: AutoBuildInput): boolean {
-    return (
-      this.sameOrderedValues(left.types, right.types) &&
-      this.sameOrderedValues(left.selectedClasses, right.selectedClasses)
-    );
-  }
-
-  private sameOrderedValues<T>(left: T[], right: T[]): boolean {
-    return left.length === right.length && left.every((value, index) => value === right[index]);
-  }
-
-  private satisfiesRequestedCoverage(result: AutoBuildResult | null): result is AutoBuildResult {
-    return Boolean(
-      result &&
-      result.coverage.coversAllSelectedClasses &&
-      result.coverage.coversAllSelectedTypes,
-    );
-  }
-
-  private resolveClassSupport(records: CharacterDetailRecord[], selectedClass: string): number {
-    const normalizedSelectedClass = selectedClass.toLowerCase();
-
-    return records.filter((record) =>
-      record.classes.some((recordClass) => recordClass.toLowerCase() === normalizedSelectedClass),
-    ).length;
-  }
-
-  private resolveTypeSupport(
-    records: CharacterDetailRecord[],
-    selectedType: AutoTeamBuilderType,
-  ): number {
-    return records.filter((record) => resolveCharacterTypeTokens(record.type).includes(selectedType))
-      .length;
+  private throwIfCancelled(signal?: AbortSignal): void {
+    if (signal?.aborted) {
+      throw new AutoTeamBuildCancelledError();
+    }
   }
 
   private normalizeCharacterId(characterId: number | null | undefined): number | null {

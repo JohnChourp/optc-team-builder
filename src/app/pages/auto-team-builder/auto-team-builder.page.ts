@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import {
   IonButton,
   IonContent,
@@ -24,11 +24,16 @@ import {
 
 import {
   AUTO_TEAM_BUILDER_TYPES,
+  type AutoBuildProgressSnapshot,
   type AutoBuildResult,
   type AutoTeamBuilderType,
 } from '../../core/models/auto-team-builder.models';
 import { type CharacterListItem, type DatasetManifest } from '../../core/models/optc.models';
-import { AutoTeamBuilderService } from '../../core/services/auto-team-builder.service';
+import {
+  AutoTeamBuilderService,
+  type AutoTeamBuildExecutionOptions,
+} from '../../core/services/auto-team-builder.service';
+import { isAutoTeamBuildCancelledError } from '../../core/services/auto-team-builder.engine';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import {
@@ -60,10 +65,11 @@ import {
   templateUrl: './auto-team-builder.page.html',
   styleUrl: './auto-team-builder.page.scss',
 })
-export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
+export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly maxLockedCharacters = 5;
   public readonly maxLeaderCharacters = 2;
   private readonly manualSearchLimit = 24;
+  private buildAbortController: AbortController | null = null;
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly selectedTypes = signal<AutoTeamBuilderType[]>([]);
   public readonly selectedClasses = signal<string[]>([]);
@@ -78,6 +84,7 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
   public readonly requireAllSpecialsSupportTeam = signal(false);
   public readonly favoritesOnly = signal(false);
   public readonly building = signal(false);
+  public readonly buildProgress = signal<AutoBuildProgressSnapshot | null>(null);
   public readonly result = signal<AutoBuildResult | null>(null);
   public readonly errorMessage = signal('');
   public readonly favoriteCharacterIds;
@@ -307,10 +314,43 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
       : 'Select types to build team',
   );
   public readonly loadingLabel = computed(() =>
-    this.hasSelectedTypes()
+    this.buildProgress()?.message ??
+    (this.hasSelectedTypes()
       ? `Γίνεται scoring των πιο πρόσφατων usable ${this.selectedTypesLabel()} χαρακτήρων...`
-      : 'Γίνεται scoring των πιο πρόσφατων usable χαρακτήρων...',
+      : 'Γίνεται scoring των πιο πρόσφατων usable χαρακτήρων...'),
   );
+  public readonly buildAttemptProgressLabel = computed(() => {
+    const progress = this.buildProgress();
+
+    if (!progress || !progress.totalAttempts) {
+      return '';
+    }
+
+    const currentAttempt =
+      progress.stage === 'completed'
+        ? progress.completedAttempts
+        : Math.min(progress.completedAttempts + 1, progress.totalAttempts);
+
+    return `Attempt ${currentAttempt} / ${progress.totalAttempts}`;
+  });
+  public readonly buildCandidateProgressLabel = computed(() => {
+    const progress = this.buildProgress();
+
+    return progress?.candidateCount
+      ? `${progress.candidateCount} candidates στο current search pool`
+      : '';
+  });
+  public readonly buildDroppedTypesLabel = computed(() => {
+    const droppedTypes = this.buildProgress()?.currentDroppedTypes ?? [];
+
+    return droppedTypes.length ? `Ignoring types: ${droppedTypes.join(' / ')}` : '';
+  });
+  public readonly buildDroppedClassesLabel = computed(() => {
+    const droppedClasses = this.buildProgress()?.currentDroppedClasses ?? [];
+
+    return droppedClasses.length ? `Ignoring classes: ${droppedClasses.join(' / ')}` : '';
+  });
+  public readonly cancelBuildButtonLabel = 'Cancel build';
   public readonly candidatePoolLabel = computed(() => {
     const isFavoritesOnly = this.result()?.input.favoritesOnly ?? this.favoritesOnly();
     const poolPrefix = isFavoritesOnly ? 'favorites-only ' : '';
@@ -489,6 +529,10 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
     await this.userState.ready();
     this.summary.set(await this.repository.getDatasetManifest());
     await this.resetPageState();
+  }
+
+  public ngOnDestroy(): void {
+    this.cancelBuild();
   }
 
   public async ionViewWillEnter(): Promise<void> {
@@ -671,11 +715,20 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
       return;
     }
 
+    const previousResult = this.result();
+    const abortController = new AbortController();
+
+    this.buildAbortController = abortController;
     this.building.set(true);
+    this.buildProgress.set(null);
     this.result.set(null);
     this.errorMessage.set('');
 
     try {
+      const executionOptions: AutoTeamBuildExecutionOptions = {
+        signal: abortController.signal,
+        onProgress: (snapshot) => this.buildProgress.set(snapshot),
+      };
       const nextResult = await this.autoTeamBuilder.buildTeam(
         this.selectedClasses(),
         this.selectedTypes(),
@@ -689,6 +742,7 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
           captainCharacterId: this.effectiveCaptainLeaderId(),
           friendCaptainCharacterId: this.effectiveFriendLeaderId(),
         },
+        executionOptions,
       );
 
       if (!nextResult) {
@@ -699,11 +753,23 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
 
       this.result.set(nextResult);
     } catch (error) {
+      if (isAutoTeamBuildCancelledError(error)) {
+        this.result.set(previousResult);
+        this.errorMessage.set('');
+        return;
+      }
+
       console.error(error);
       this.errorMessage.set('Κάτι πήγε στραβά όσο γινόταν το auto build.');
     } finally {
+      this.buildAbortController = null;
+      this.buildProgress.set(null);
       this.building.set(false);
     }
+  }
+
+  public cancelBuild(): void {
+    this.buildAbortController?.abort();
   }
 
   public buildTeamExportPayload(exportedAt = new Date().toISOString()): AutoTeamExportPayload | null {
@@ -755,6 +821,7 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
   }
 
   private resetBuildState(): void {
+    this.buildProgress.set(null);
     this.result.set(null);
     this.errorMessage.set('');
   }

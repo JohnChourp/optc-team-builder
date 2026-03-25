@@ -538,10 +538,31 @@
 }
 
 .loading-card {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   color: #f8fbff;
+}
+
+.loading-card__copy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.loading-card__copy span,
+.loading-card__copy small {
+  color: #f8fbff;
+}
+
+.loading-card__copy small {
+  color: rgba(248, 251, 255, 0.72);
+  line-height: 1.45;
+}
+
+.loading-card__chips {
+  margin-top: 0;
 }
 
 .empty-card {
@@ -606,6 +627,11 @@ ion-toggle {
 }
 
 @media (max-width: 679px) {
+  .loading-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .build-action-row {
     justify-content: stretch;
   }

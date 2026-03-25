@@ -5,6 +5,7 @@ import { JSDOM } from 'jsdom';
 
 import { type AutoBuildResult } from '../../core/models/auto-team-builder.models';
 import { type CharacterDetailRecord, type DatasetManifest } from '../../core/models/optc.models';
+import { AutoTeamBuildCancelledError } from '../../core/services/auto-team-builder.engine';
 import {
   buildAutoTeamExportFilename,
   buildAutoTeamExportPayload,
@@ -46,6 +47,10 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
       expect.objectContaining({
         requireAllSpecialsSupportTeam: true,
       }),
+      expect.objectContaining({
+        onProgress: expect.any(Function),
+        signal: expect.any(AbortSignal),
+      }),
     );
   });
 
@@ -62,6 +67,86 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     await page.ionViewWillEnter();
 
     expect(page.requireAllSpecialsSupportTeam()).toBe(false);
+  });
+
+  it('updates build progress from the service execution callback', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    autoTeamBuilder.buildTeam.mockImplementation(
+      async (
+        _selectedClasses: string[],
+        _selectedTypes: string[],
+        _constraints: unknown,
+        executionOptions?: { onProgress?: (snapshot: any) => void },
+      ) => {
+        executionOptions?.onProgress?.({
+          stage: 'exactAttempt',
+          candidateCount: 1242,
+          completedAttempts: 0,
+          totalAttempts: 31744,
+          currentDroppedTypes: [],
+          currentDroppedClasses: [],
+          message: 'Exact attempt 1 / 31744',
+        });
+
+        return null;
+      },
+    );
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    await page.buildTeam();
+
+    expect(page.errorMessage()).toContain('Δοκιμάστηκαν');
+    expect(page.building()).toBe(false);
+    expect(page.buildProgress()).toBeNull();
+  });
+
+  it('cancels the active build and restores the previous result', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    const previousResult = createAutoBuildResult();
+
+    autoTeamBuilder.buildTeam.mockImplementation(
+      async (
+        _selectedClasses: string[],
+        _selectedTypes: string[],
+        _constraints: unknown,
+        executionOptions?: { signal?: AbortSignal; onProgress?: (snapshot: any) => void },
+      ) =>
+        new Promise<null>((resolve, reject) => {
+          executionOptions?.onProgress?.({
+            stage: 'exactAttempt',
+            candidateCount: 64,
+            completedAttempts: 0,
+            totalAttempts: 2,
+            currentDroppedTypes: [],
+            currentDroppedClasses: [],
+            message: 'Exact attempt 1 / 2',
+          });
+          executionOptions?.signal?.addEventListener(
+            'abort',
+            () => reject(new AutoTeamBuildCancelledError()),
+            { once: true },
+          );
+        }),
+    );
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.result.set(previousResult);
+
+    const buildPromise = page.buildTeam();
+
+    expect(page.buildDisabled()).toBe(true);
+
+    page.cancelBuild();
+    await buildPromise;
+
+    expect(page.result()).toEqual(previousResult);
+    expect(page.errorMessage()).toBe('');
+    expect(page.building()).toBe(false);
   });
 });
 

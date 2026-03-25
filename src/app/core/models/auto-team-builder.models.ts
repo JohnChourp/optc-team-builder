@@ -165,6 +165,23 @@ export interface AutoBuildRelaxationSummary {
   droppedClasses: string[];
 }
 
+export type AutoBuildProgressStage =
+  | 'loadingCandidates'
+  | 'preparingSearch'
+  | 'exactAttempt'
+  | 'fallbackAttempt'
+  | 'completed';
+
+export interface AutoBuildProgressSnapshot {
+  stage: AutoBuildProgressStage;
+  candidateCount: number;
+  completedAttempts: number;
+  totalAttempts: number;
+  currentDroppedTypes: AutoTeamBuilderType[];
+  currentDroppedClasses: string[];
+  message: string;
+}
+
 export interface AutoBuildCoreResult {
   input: AutoBuildInput;
   candidateCount: number;

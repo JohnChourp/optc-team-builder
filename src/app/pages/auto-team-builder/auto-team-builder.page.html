@@ -323,7 +323,25 @@
 
     <section *ngIf="building()" class="loading-card glass-card">
       <ion-spinner name="crescent"></ion-spinner>
-      <span>{{ loadingLabel() }}</span>
+      <div class="loading-card__copy">
+        <span>{{ loadingLabel() }}</span>
+        <small *ngIf="buildAttemptProgressLabel()">{{ buildAttemptProgressLabel() }}</small>
+        <small *ngIf="buildCandidateProgressLabel()">{{ buildCandidateProgressLabel() }}</small>
+        <div
+          *ngIf="buildDroppedTypesLabel() || buildDroppedClassesLabel()"
+          class="chip-row loading-card__chips"
+        >
+          <small *ngIf="buildDroppedTypesLabel()" class="coverage-chip fallback-chip">
+            {{ buildDroppedTypesLabel() }}
+          </small>
+          <small *ngIf="buildDroppedClassesLabel()" class="coverage-chip fallback-chip">
+            {{ buildDroppedClassesLabel() }}
+          </small>
+        </div>
+      </div>
+      <ion-button fill="outline" color="light" (click)="cancelBuild()">
+        {{ cancelBuildButtonLabel }}
+      </ion-button>
     </section>
 
     <section *ngIf="!building() && errorMessage()" class="loading-card glass-card empty-card">

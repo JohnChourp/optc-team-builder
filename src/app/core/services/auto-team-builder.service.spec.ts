@@ -4,9 +4,11 @@ import {
   AUTO_TEAM_CANDIDATE_LIMIT,
   AUTO_TEAM_BUILDER_DEFAULT_TYPE,
   type AutoBuildInput,
+  type AutoBuildProgressSnapshot,
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
+import { AutoTeamBuildCancelledError } from './auto-team-builder.engine';
 import { AutoTeamBuilderService } from './auto-team-builder.service';
 import {
   buildAutoBuildCandidate,
@@ -759,6 +761,88 @@ describe('Auto team builder', () => {
     expect(result).toBeNull();
   });
 
+  it('forwards progress snapshots from the worker runtime', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const worker = new FakeWorker((request) => {
+      worker.emitMessage({
+        type: 'progress',
+        runId: request.runId,
+        snapshot: {
+          stage: 'exactAttempt',
+          candidateCount: 6,
+          completedAttempts: 0,
+          totalAttempts: 1,
+          currentDroppedTypes: [],
+          currentDroppedClasses: [],
+          message: 'Exact attempt 1 / 1',
+        },
+      });
+      worker.emitMessage({
+        type: 'result',
+        runId: request.runId,
+        result: null,
+      });
+    });
+    const progressSnapshots: AutoBuildProgressSnapshot[] = [];
+
+    vi.spyOn(service as never, 'createWorker').mockReturnValue(worker as never);
+
+    await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {}, {
+      onProgress: (snapshot) => progressSnapshots.push(snapshot),
+    });
+
+    expect(progressSnapshots).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          stage: 'loadingCandidates',
+        }),
+        expect.objectContaining({
+          stage: 'exactAttempt',
+          message: 'Exact attempt 1 / 1',
+        }),
+      ]),
+    );
+  });
+
+  it('rejects with cancellation and terminates the worker when the signal aborts', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const worker = new FakeWorker();
+    const abortController = new AbortController();
+
+    vi.spyOn(service as never, 'createWorker').mockReturnValue(worker as never);
+
+    const buildPromise = service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {}, {
+      signal: abortController.signal,
+    });
+
+    await Promise.resolve();
+    abortController.abort();
+
+    await expect(buildPromise).rejects.toBeInstanceOf(AutoTeamBuildCancelledError);
+    expect(worker.terminated).toBe(true);
+  });
+
+  it('falls back to the main-thread engine when no worker is available', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const createWorkerSpy = vi.spyOn(service as never, 'createWorker').mockReturnValue(null);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY']);
+
+    expect(createWorkerSpy).toHaveBeenCalledOnce();
+    expect(result).not.toBeNull();
+    expect(result?.relaxation.usedFallback).toBe(false);
+    expect(result?.coverage.coversAllSelectedClasses).toBe(true);
+  });
+
   it('fails strict class mode when a forced leader does not match all selected classes', () => {
     const result = buildAutoTeamResult(
       [
@@ -977,6 +1061,38 @@ function createSingleTypeRecords(): CharacterDetailRecord[] {
     createUtilitySubRecord(),
     createConsistencySubRecord(),
   ];
+}
+
+class FakeWorker extends EventTarget {
+  public terminated = false;
+
+  public constructor(
+    private readonly onPostMessage?: (request: {
+      type: 'run';
+      runId: string;
+      records: CharacterDetailRecord[];
+      requestedInput: AutoBuildInput;
+    }) => void,
+  ) {
+    super();
+  }
+
+  public postMessage(request: {
+    type: 'run';
+    runId: string;
+    records: CharacterDetailRecord[];
+    requestedInput: AutoBuildInput;
+  }): void {
+    this.onPostMessage?.(request);
+  }
+
+  public terminate(): void {
+    this.terminated = true;
+  }
+
+  public emitMessage(data: unknown): void {
+    this.dispatchEvent(new MessageEvent('message', { data }));
+  }
 }
 
 function createAllClassStrictTeamRecords(): CharacterDetailRecord[] {
