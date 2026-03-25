@@ -403,6 +403,16 @@
   margin-bottom: 18px;
 }
 
+.coverage-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+.download-team-button {
+  margin: 0;
+}
+
 .chip-row {
   display: flex;
   flex-wrap: wrap;

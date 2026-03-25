@@ -31,6 +31,11 @@ import { type CharacterListItem, type DatasetManifest } from '../../core/models/
 import { AutoTeamBuilderService } from '../../core/services/auto-team-builder.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
+import {
+  type AutoTeamExportPayload,
+  buildAutoTeamExportPayload,
+  downloadAutoTeamExport,
+} from './auto-team-builder-export.utils';
 
 @Component({
   selector: 'app-auto-team-builder-page',
@@ -359,6 +364,8 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
       ? `${current.coverage.coveredSelectedTypes.length} / ${current.input.types.length} types covered • strict team coverage on`
       : `${current.coverage.coveredSelectedTypes.length} / ${current.input.types.length} types covered • ${current.coverage.selectedTypeMatches} / 6 matching slots`;
   });
+  public readonly canDownloadTeamJson = computed(() => Boolean(this.result()));
+  public readonly downloadTeamJsonLabel = 'Download team JSON';
   public readonly teamSlots = computed(
     () =>
       this.result()?.slots.map((slot) => ({
@@ -602,6 +609,26 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
     } finally {
       this.building.set(false);
     }
+  }
+
+  public buildTeamExportPayload(exportedAt = new Date().toISOString()): AutoTeamExportPayload | null {
+    const current = this.result();
+
+    if (!current) {
+      return null;
+    }
+
+    return buildAutoTeamExportPayload(
+      current,
+      this.favoriteCharacterIds(),
+      this.effectiveCaptainLeaderId(),
+      this.effectiveFriendLeaderId(),
+      exportedAt,
+    );
+  }
+
+  public downloadTeamJson(): void {
+    downloadAutoTeamExport(this.buildTeamExportPayload());
   }
 
   private resetBuildState(): void {

@@ -437,6 +437,18 @@
             </div>
           </div>
         </div>
+
+        <div class="coverage-actions">
+          <ion-button
+            fill="outline"
+            color="warning"
+            class="download-team-button"
+            [disabled]="!canDownloadTeamJson()"
+            (click)="downloadTeamJson()"
+          >
+            {{ downloadTeamJsonLabel }}
+          </ion-button>
+        </div>
       </section>
 
       <section class="result-grid">
