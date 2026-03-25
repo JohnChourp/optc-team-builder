@@ -1,6 +1,6 @@
 import {
   type AutoBuildAbilityRequirement,
-  type NormalizedSpecialAbility,
+  type NormalizedBuilderAbility,
 } from './auto-team-builder-ability.models';
 import { type CharacterDetailRecord } from './optc.models';
 
@@ -218,5 +218,5 @@ export interface AutoBuildAbilityMatchSummary {
 }
 
 export interface AutoBuildRequirementMatchCandidate {
-  abilities: NormalizedSpecialAbility[];
+  abilities: NormalizedBuilderAbility[];
 }

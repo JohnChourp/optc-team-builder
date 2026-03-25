@@ -20,7 +20,10 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonContent: class {},
   IonHeader: class {},
   IonIcon: class {},
+  IonModal: class {},
   IonSearchbar: class {},
+  IonSegment: class {},
+  IonSegmentButton: class {},
   IonSelect: class {},
   IonSelectOption: class {},
   IonSpinner: class {},
@@ -98,6 +101,23 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
         signal: expect.any(AbortSignal),
       }),
     );
+  });
+
+  it('formats captain-sourced abilities with a source suffix', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+
+    expect(
+      page['formatCharacterAbility']({
+        key: 'ignore_normal_attack_only',
+        label: 'Ignore Normal Attack Only (NAO)',
+        minTurns: null,
+        isCompleteRemoval: false,
+        slotTokens: [],
+        source: 'captainAbility',
+      }),
+    ).toBe('Ignore Normal Attack Only (NAO) • Captain');
   });
 
   it('resets the special-support toggle when the page state is reset', async () => {
@@ -642,7 +662,7 @@ function createCharacterRecord(id: number, name = `Character ${id}`): CharacterD
       specialName: `${name} special`,
       specialText: `${name} special text`,
       specialNotes: null,
-      specialAbilities: [],
+      builderAbilities: [],
       sailorAbilities: [`${name} sailor`],
       sailorNotes: null,
       limitBreak: [{ description: `${name} limit break` }],
@@ -772,6 +792,7 @@ async function createPage(): Promise<{
           supportsTurns: true,
           supportsSlotTokens: false,
           availableSlotTokens: [],
+          availableSources: ['specialText'],
           matchCount: 10,
           sampleCharacterIds: [101],
           sampleTexts: ['Reduces Bind duration by 5 turns'],
@@ -782,12 +803,20 @@ async function createPage(): Promise<{
           supportsTurns: true,
           supportsSlotTokens: true,
           availableSlotTokens: ['DEX', 'STR'],
+          availableSources: ['specialText'],
           matchCount: 6,
           sampleCharacterIds: [102],
           sampleTexts: ['Removes [DEX] Slot Barrier completely'],
         },
       ],
     }),
+    getManualCharacterFilterMetadata: vi.fn().mockResolvedValue({
+      availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      availableClasses: ['Fighter', 'Slasher'],
+      maxTypesPerCharacter: 2,
+      maxClassesPerCharacter: 2,
+    }),
+    searchDetailedCharacters: vi.fn().mockResolvedValue([]),
     searchCharacters: vi.fn().mockResolvedValue([]),
   };
   const autoTeamBuilder = {

@@ -1,9 +1,12 @@
-export interface NormalizedSpecialAbility {
+export type AutoBuildAbilitySource = 'specialText' | 'captainAbility';
+
+export interface NormalizedBuilderAbility {
   key: string;
   label: string;
   minTurns: number | null;
   isCompleteRemoval: boolean;
   slotTokens: string[];
+  source: AutoBuildAbilitySource;
 }
 
 export interface AutoBuildAbilityCatalogItem {
@@ -12,6 +15,7 @@ export interface AutoBuildAbilityCatalogItem {
   supportsTurns: boolean;
   supportsSlotTokens: boolean;
   availableSlotTokens: string[];
+  availableSources: AutoBuildAbilitySource[];
   matchCount: number;
   sampleCharacterIds: number[];
   sampleTexts: string[];

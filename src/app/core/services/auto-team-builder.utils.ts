@@ -76,7 +76,7 @@ function candidateMatchesAbilityRequirement(
   candidate: AutoBuildCandidate,
   requirement: AutoBuildAbilityRequirement,
 ): boolean {
-  return candidate.character.detail.specialAbilities.some((ability) =>
+  return candidate.character.detail.builderAbilities.some((ability) =>
     matchesAbilityRequirement(ability, requirement),
   );
 }

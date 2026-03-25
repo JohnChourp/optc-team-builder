@@ -112,13 +112,14 @@ describe('Auto team builder', () => {
           primaryClass: 'Fighter',
           detail: {
             specialText: 'Reduces Bind duration by 5 turns.',
-            specialAbilities: [
+            builderAbilities: [
               {
                 key: 'remove_bind',
                 label: 'Remove Bind',
                 minTurns: 5,
                 isCompleteRemoval: false,
                 slotTokens: [],
+                source: 'specialText',
               },
             ],
           },
@@ -128,13 +129,14 @@ describe('Auto team builder', () => {
           primaryClass: 'Fighter',
           detail: {
             specialText: 'Reduces Despair duration by 6 turns.',
-            specialAbilities: [
+            builderAbilities: [
               {
                 key: 'remove_despair',
                 label: 'Remove Despair',
                 minTurns: 6,
                 isCompleteRemoval: false,
                 slotTokens: [],
+                source: 'specialText',
               },
             ],
           },
@@ -169,13 +171,14 @@ describe('Auto team builder', () => {
           primaryClass: 'Fighter',
           detail: {
             specialText: 'Removes [DEX] and [STR] Slot Barrier completely.',
-            specialAbilities: [
+            builderAbilities: [
               {
                 key: 'remove_slot_barrier',
                 label: 'Remove Slot Barrier',
                 minTurns: 99,
                 isCompleteRemoval: true,
                 slotTokens: ['DEX', 'STR'],
+                source: 'specialText',
               },
             ],
           },
@@ -197,6 +200,46 @@ describe('Auto team builder', () => {
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
   });
 
+  it('allows captain-sourced builder abilities to satisfy a requirement', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 5810,
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility:
+              "Boosts ATK by 5x and deals 10% of enemies' current HP in True damage, ignoring Normal Attack Only, to all enemies at the end of each turn.",
+            builderAbilities: [
+              {
+                key: 'ignore_normal_attack_only',
+                label: 'Ignore Normal Attack Only (NAO)',
+                minTurns: null,
+                isCompleteRemoval: false,
+                slotTokens: [],
+                source: 'captainAbility',
+              },
+            ],
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+        createOffClassRedundantSubRecord(),
+      ],
+      {
+        ...INPUT,
+        requiredAbilities: [{ abilityKey: 'ignore_normal_attack_only', minTurns: null, slotTokens: [] }],
+      },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+    expect(result?.coverage.abilityRequirements.matched).toEqual([
+      { abilityKey: 'ignore_normal_attack_only', minTurns: null, slotTokens: [] },
+    ]);
+  });
+
   it('fails when no candidate covers the required ability tokens', () => {
     const result = buildAutoTeamResult(
       [
@@ -206,13 +249,14 @@ describe('Auto team builder', () => {
           primaryClass: 'Fighter',
           detail: {
             specialText: 'Removes [DEX] Slot Barrier completely.',
-            specialAbilities: [
+            builderAbilities: [
               {
                 key: 'remove_slot_barrier',
                 label: 'Remove Slot Barrier',
                 minTurns: 99,
                 isCompleteRemoval: true,
                 slotTokens: ['DEX'],
+                source: 'specialText',
               },
             ],
           },
@@ -1708,7 +1752,7 @@ function createCharacterRecord(
       specialName: overrides.detail?.specialName ?? null,
       specialText: overrides.detail?.specialText ?? null,
       specialNotes: overrides.detail?.specialNotes ?? null,
-      specialAbilities: overrides.detail?.specialAbilities ?? [],
+      builderAbilities: overrides.detail?.builderAbilities ?? [],
       sailorAbilities: overrides.detail?.sailorAbilities ?? [],
       sailorNotes: overrides.detail?.sailorNotes ?? null,
       limitBreak: overrides.detail?.limitBreak ?? [],

@@ -38,7 +38,7 @@ import {
   type AutoBuildAbilityCatalog,
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityRequirement,
-  type NormalizedSpecialAbility,
+  type NormalizedBuilderAbility,
 } from '../../core/models/auto-team-builder-ability.models';
 import {
   type CharacterDetailRecord,
@@ -53,7 +53,7 @@ import {
 } from '../../core/services/auto-team-builder.service';
 import {
   matchesAnyAbilityRequirement,
-  specialAbilitiesMatchAllRequirements,
+  builderAbilitiesMatchAllRequirements,
 } from '../../core/services/auto-team-builder-ability-match.utils';
 import { isAutoTeamBuildCancelledError } from '../../core/services/auto-team-builder.engine';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
@@ -767,7 +767,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
             : slot.character.detail.captainAbility ||
               slot.character.detail.specialText ||
               'No detail snippet available.',
-        abilityChips: this.buildAbilityChipViews(slot.character.detail.specialAbilities, requirements),
+        abilityChips: this.buildAbilityChipViews(slot.character.detail.builderAbilities, requirements),
       })) ?? []
     );
   });
@@ -1488,8 +1488,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     if (
       filters.requiredAbilities.length &&
-      !specialAbilitiesMatchAllRequirements(
-        candidate.detail.specialAbilities,
+      !builderAbilitiesMatchAllRequirements(
+        candidate.detail.builderAbilities,
         filters.requiredAbilities,
       )
     ) {
@@ -1750,10 +1750,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       character,
       subtitle: this.buildCharacterSubtitle(character),
       favoriteLabel: this.isFavorite(character.id) ? 'Favorite' : null,
-      abilityChips: this.buildAbilityChipViews(
-        character.detail.specialAbilities,
-        highlightedRequirements,
-      ),
+      abilityChips: this.buildAbilityChipViews(character.detail.builderAbilities, highlightedRequirements),
     }));
   }
 
@@ -1765,7 +1762,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   private buildAbilityChipViews(
-    abilities: NormalizedSpecialAbility[],
+    abilities: NormalizedBuilderAbility[],
     highlightedRequirements: AutoBuildAbilityRequirement[],
   ): CharacterAbilityChipView[] {
     if (!abilities.length) {
@@ -1783,7 +1780,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const chipViews: CharacterAbilityChipView[] = [];
 
     abilities.forEach((ability) => {
-      const key = `${ability.key}|${ability.minTurns ?? 'none'}|${ability.slotTokens.join(',')}`;
+      const key = `${ability.key}|${ability.minTurns ?? 'none'}|${ability.slotTokens.join(',')}|${ability.source}`;
 
       if (seen.has(key)) {
         return;
@@ -1802,18 +1799,21 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     return chipViews;
   }
 
-  private formatCharacterAbility(ability: NormalizedSpecialAbility): string {
-    const suffixes: string[] = [];
+  private formatCharacterAbility(ability: NormalizedBuilderAbility): string {
+    const metadata: string[] = [];
 
     if (ability.minTurns !== null) {
-      suffixes.push(`${ability.minTurns} turns`);
+      metadata.push(`${ability.minTurns} turns`);
     }
 
     if (ability.slotTokens.length) {
-      suffixes.push(ability.slotTokens.join(' / '));
+      metadata.push(ability.slotTokens.join(' / '));
     }
 
-    return suffixes.length ? `${ability.label} (${suffixes.join(' • ')})` : ability.label;
+    const metadataSuffix = metadata.length ? ` (${metadata.join(' • ')})` : '';
+    const sourceSuffix = ability.source === 'captainAbility' ? ' • Captain' : '';
+
+    return `${ability.label}${metadataSuffix}${sourceSuffix}`;
   }
 
   private sameStringValues(left: readonly string[], right: readonly string[]): boolean {

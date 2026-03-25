@@ -445,9 +445,9 @@ export class OptcRepositoryService {
 
     return records.map((record, index) => ({
       ...record,
-      detail: this.parseJson<CharacterDetail>(
-        rows[index]['detail_json'],
-        this.emptyDetail(record.id),
+      detail: this.normalizeCharacterDetail(
+        this.parseJson<CharacterDetail>(rows[index]['detail_json'], this.emptyDetail(record.id)),
+        record.id,
       ),
       detailImageUrl: this.resolveImageUrl(record.assets, true),
     }));
@@ -497,7 +497,7 @@ export class OptcRepositoryService {
       specialName: null,
       specialText: null,
       specialNotes: null,
-      specialAbilities: [],
+      builderAbilities: [],
       sailorAbilities: [],
       sailorNotes: null,
       limitBreak: [],
@@ -508,6 +508,19 @@ export class OptcRepositoryService {
       superType: null,
       superClass: null,
       rumbleData: null,
+    };
+  }
+
+  private normalizeCharacterDetail(detail: CharacterDetail, characterId: number): CharacterDetail {
+    const normalizedDetail = detail as CharacterDetail & {
+      specialAbilities?: CharacterDetail['builderAbilities'];
+    };
+
+    return {
+      ...this.emptyDetail(characterId),
+      ...normalizedDetail,
+      characterId,
+      builderAbilities: normalizedDetail.builderAbilities ?? normalizedDetail.specialAbilities ?? [],
     };
   }
 

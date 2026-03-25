@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
 import {
-  enrichCharactersWithSpecialAbilities,
+  enrichCharactersWithBuilderAbilities,
   normalizeLegacyAbilityText,
 } from './auto-team-builder-ability-parser.mjs';
 
@@ -689,7 +689,7 @@ function normalizeCharacters(units, details, rumbleUnits, assetsById) {
       specialName: detail.specialName ?? null,
       specialText: normalizedSpecialText,
       specialNotes: detail.specialNotes ?? null,
-      specialAbilities: [],
+      builderAbilities: [],
       sailorAbilities: normalizedSailorAbilities,
       sailorNotes: detail.sailorNotes ?? null,
       limitBreak: detail.limit ?? [],
@@ -1030,7 +1030,7 @@ async function main() {
     normalizeCharacters(unitsWindow.units, detailsWindow.details, rumble.units ?? [], assetsById),
     manualExactLocalPaths,
   );
-  const autoBuilderAbilities = await enrichCharactersWithSpecialAbilities(characters, {
+  const autoBuilderAbilities = await enrichCharactersWithBuilderAbilities(characters, {
     batchSize: 250,
     logger: (message) => console.log(message),
   });

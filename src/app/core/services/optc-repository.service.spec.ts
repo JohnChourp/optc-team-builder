@@ -153,7 +153,7 @@ function createCharacterRow(
       specialName: null,
       specialText: null,
       specialNotes: null,
-      specialAbilities: [],
+      builderAbilities: [],
       sailorAbilities: [],
       sailorNotes: null,
       limitBreak: [],

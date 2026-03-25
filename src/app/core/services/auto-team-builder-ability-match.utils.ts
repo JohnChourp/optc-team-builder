@@ -1,6 +1,6 @@
 import {
   type AutoBuildAbilityRequirement,
-  type NormalizedSpecialAbility,
+  type NormalizedBuilderAbility,
 } from '../models/auto-team-builder-ability.models';
 
 export function buildAbilityRequirementIdentity(
@@ -10,7 +10,7 @@ export function buildAbilityRequirementIdentity(
 }
 
 export function matchesAbilityRequirement(
-  ability: NormalizedSpecialAbility,
+  ability: NormalizedBuilderAbility,
   requirement: AutoBuildAbilityRequirement,
 ): boolean {
   if (ability.key !== requirement.abilityKey) {
@@ -35,14 +35,14 @@ export function matchesAbilityRequirement(
 }
 
 export function matchesAnyAbilityRequirement(
-  ability: NormalizedSpecialAbility,
+  ability: NormalizedBuilderAbility,
   requirements: AutoBuildAbilityRequirement[],
 ): boolean {
   return requirements.some((requirement) => matchesAbilityRequirement(ability, requirement));
 }
 
-export function specialAbilitiesMatchAllRequirements(
-  abilities: NormalizedSpecialAbility[],
+export function builderAbilitiesMatchAllRequirements(
+  abilities: NormalizedBuilderAbility[],
   requirements: AutoBuildAbilityRequirement[],
 ): boolean {
   return requirements.every((requirement) =>

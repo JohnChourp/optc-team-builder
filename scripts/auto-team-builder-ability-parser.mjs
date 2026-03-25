@@ -1,4 +1,11 @@
 const SLOT_ABILITY_KEY_SET = new Set(['remove_slot_bind', 'remove_slot_barrier']);
+const EXPLICIT_BUILDER_ABILITIES = [
+  {
+    key: 'ignore_normal_attack_only',
+    label: 'Ignore Normal Attack Only (NAO)',
+    matcher: (text) => /\bignoring normal attack only\b/i.test(text),
+  },
+];
 const IGNORED_TARGET_PATTERNS = [
   'special cooldown',
   'cooldown',
@@ -123,10 +130,10 @@ export function normalizeLegacyAbilityText(value) {
   return fragments.join('. ');
 }
 
-export function analyzeSpecialText(value) {
-  const specialText = normalizeLegacyAbilityText(value);
+export function analyzeBuilderAbilityText(value, source) {
+  const normalizedText = normalizeLegacyAbilityText(value);
 
-  if (!specialText.length) {
+  if (!normalizedText.length) {
     return [];
   }
 
@@ -134,7 +141,7 @@ export function analyzeSpecialText(value) {
   const seen = new Set();
 
   TURN_PATTERNS.forEach(({ pattern, resolveTurns, isCompleteRemoval }) => {
-    for (const match of specialText.matchAll(pattern)) {
+    for (const match of normalizedText.matchAll(pattern)) {
       const rawTarget = String(match[1] ?? '').trim();
       const minTurns = resolveTurns(match);
 
@@ -155,8 +162,9 @@ export function analyzeSpecialText(value) {
           minTurns,
           isCompleteRemoval,
           slotTokens: normalized.slotTokens,
+          source,
         };
-        const identity = `${ability.key}|${ability.minTurns}|${ability.slotTokens.join(',')}`;
+        const identity = buildAbilityIdentity(ability);
 
         if (seen.has(identity)) {
           return;
@@ -168,10 +176,37 @@ export function analyzeSpecialText(value) {
     }
   });
 
+  EXPLICIT_BUILDER_ABILITIES.forEach((definition) => {
+    if (!definition.matcher(normalizedText)) {
+      return;
+    }
+
+    const ability = {
+      key: definition.key,
+      label: definition.label,
+      minTurns: null,
+      isCompleteRemoval: false,
+      slotTokens: [],
+      source,
+    };
+    const identity = buildAbilityIdentity(ability);
+
+    if (seen.has(identity)) {
+      return;
+    }
+
+    seen.add(identity);
+    abilities.push(ability);
+  });
+
   return abilities;
 }
 
-export async function enrichCharactersWithSpecialAbilities(
+export function analyzeSpecialText(value) {
+  return analyzeBuilderAbilityText(value, 'specialText');
+}
+
+export async function enrichCharactersWithBuilderAbilities(
   characters,
   { batchSize = 200, logger = console.log } = {},
 ) {
@@ -182,28 +217,37 @@ export async function enrichCharactersWithSpecialAbilities(
     const batch = characters.slice(start, start + batchSize);
 
     batch.forEach((character) => {
-      const specialAbilities = analyzeSpecialText(character.detail?.specialText ?? null);
-      character.detail.specialAbilities = specialAbilities;
+      const builderAbilities = [
+        ...analyzeBuilderAbilityText(character.detail?.specialText ?? null, 'specialText'),
+        ...analyzeBuilderAbilityText(character.detail?.captainAbility ?? null, 'captainAbility'),
+      ];
+      character.detail.builderAbilities = builderAbilities;
 
-      specialAbilities.forEach((ability) => {
+      builderAbilities.forEach((ability) => {
         const current =
           catalogMap.get(ability.key) ?? createCatalogAccumulator(ability.key, ability.label);
 
         current.matchCount += 1;
         current.supportsTurns ||= ability.minTurns !== null;
         current.supportsSlotTokens ||= ability.slotTokens.length > 0;
+        current.availableSources.add(ability.source);
         ability.slotTokens.forEach((token) => current.availableSlotTokens.add(token));
 
         if (current.sampleCharacterIds.length < 5) {
           current.sampleCharacterIds.push(character.id);
         }
 
+        const sampleText =
+          ability.source === 'captainAbility'
+            ? character.detail?.captainAbility
+            : character.detail?.specialText;
+
         if (
           current.sampleTexts.length < 5 &&
-          typeof character.detail?.specialText === 'string' &&
-          character.detail.specialText.length
+          typeof sampleText === 'string' &&
+          sampleText.length
         ) {
-          current.sampleTexts.push(character.detail.specialText);
+          current.sampleTexts.push(sampleText);
         }
 
         catalogMap.set(ability.key, current);
@@ -227,6 +271,9 @@ export async function enrichCharactersWithSpecialAbilities(
       availableSlotTokens: [...entry.availableSlotTokens].sort((left, right) =>
         left.localeCompare(right),
       ),
+      availableSources: [...entry.availableSources].sort((left, right) =>
+        left.localeCompare(right),
+      ),
       matchCount: entry.matchCount,
       sampleCharacterIds: [...entry.sampleCharacterIds],
       sampleTexts: [...entry.sampleTexts],
@@ -243,10 +290,15 @@ function createCatalogAccumulator(key, label) {
     supportsTurns: false,
     supportsSlotTokens: false,
     availableSlotTokens: new Set(),
+    availableSources: new Set(),
     matchCount: 0,
     sampleCharacterIds: [],
     sampleTexts: [],
   };
+}
+
+function buildAbilityIdentity(ability) {
+  return `${ability.key}|${ability.minTurns ?? 'none'}|${ability.slotTokens.join(',')}|${ability.source}`;
 }
 
 function extractTextFragments(value) {
@@ -264,17 +316,37 @@ function extractTextFragments(value) {
   }
 
   const record = value;
-  const preferredKeys = ['description', 'base', 'level1', 'level2', 'level3', 'level4', 'level5'];
+  const preferredKeys = [
+    'description',
+    'base',
+    'llbbase',
+    'level1',
+    'llblevel1',
+    'level2',
+    'llblevel2',
+    'level3',
+    'llblevel3',
+    'level4',
+    'llblevel4',
+    'level5',
+    'llblevel5',
+  ];
   const fragments = [];
+  const seenKeys = new Set();
 
   preferredKeys.forEach((key) => {
     if (key in record) {
       fragments.push(...extractTextFragments(record[key]));
+      seenKeys.add(key);
     }
   });
 
-  if (fragments.length) {
-    return fragments;
+  const fallbackFragments = Object.entries(record)
+    .filter(([key]) => !seenKeys.has(key))
+    .flatMap(([, entry]) => extractTextFragments(entry));
+
+  if (fragments.length || fallbackFragments.length) {
+    return [...fragments, ...fallbackFragments];
   }
 
   return Object.values(record).flatMap((entry) => extractTextFragments(entry));

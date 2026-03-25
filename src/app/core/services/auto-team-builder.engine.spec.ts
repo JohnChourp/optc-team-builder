@@ -401,7 +401,7 @@ function createCharacterRecord(
       specialName: overrides.detail?.specialName ?? `Special ${id}`,
       specialText: overrides.detail?.specialText ?? null,
       specialNotes: overrides.detail?.specialNotes ?? null,
-      specialAbilities: overrides.detail?.specialAbilities ?? [],
+      builderAbilities: overrides.detail?.builderAbilities ?? [],
       sailorAbilities: overrides.detail?.sailorAbilities ?? [],
       sailorNotes: overrides.detail?.sailorNotes ?? null,
       limitBreak: overrides.detail?.limitBreak ?? [],
