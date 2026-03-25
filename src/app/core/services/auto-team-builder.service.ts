@@ -51,6 +51,17 @@ export class AutoTeamBuilderService {
         ),
       ),
     ];
+    let captainCharacterId = this.normalizeCharacterId(constraints.captainCharacterId);
+    let friendCaptainCharacterId = this.normalizeCharacterId(constraints.friendCaptainCharacterId);
+
+    if (!captainCharacterId && friendCaptainCharacterId) {
+      captainCharacterId = friendCaptainCharacterId;
+    }
+
+    if (captainCharacterId && !friendCaptainCharacterId) {
+      friendCaptainCharacterId = captainCharacterId;
+    }
+
     const input: AutoBuildInput = {
       types: normalizedTypes.length ? normalizedTypes : [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
       selectedClasses: normalizedClasses,
@@ -59,6 +70,8 @@ export class AutoTeamBuilderService {
         constraints.requireAllSelectedClassesPerCharacter ?? false,
       favoritesOnly,
       lockedCharacterIds,
+      captainCharacterId,
+      friendCaptainCharacterId,
       candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
     };
     const requestedInput: AutoBuildInput = {
@@ -73,6 +86,19 @@ export class AutoTeamBuilderService {
     }
 
     if (favoritesOnly && lockedCharacterIds.some((characterId) => !favoriteCharacterIds.has(characterId))) {
+      return null;
+    }
+
+    const requestedLeaderIds = [captainCharacterId, friendCaptainCharacterId].filter(
+      (characterId): characterId is number =>
+        characterId !== null && Number.isInteger(characterId) && characterId > 0,
+    );
+
+    if (requestedLeaderIds.some((characterId) => !lockedCharacterIds.includes(characterId))) {
+      return null;
+    }
+
+    if (favoritesOnly && requestedLeaderIds.some((characterId) => !favoriteCharacterIds.has(characterId))) {
       return null;
     }
 
@@ -259,5 +285,9 @@ export class AutoTeamBuilderService {
   ): number {
     return records.filter((record) => resolveCharacterTypeTokens(record.type).includes(selectedType))
       .length;
+  }
+
+  private normalizeCharacterId(characterId: number | null | undefined): number | null {
+    return Number.isInteger(characterId) && Number(characterId) > 0 ? Number(characterId) : null;
   }
 }

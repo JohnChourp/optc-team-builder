@@ -41,7 +41,8 @@ const CHIP_LABELS = {
   paralysis: 'Paralysis clear',
   threshold: 'Threshold clear',
 } as const;
-const TEAM_UNIQUE_CHARACTER_LIMIT = 5;
+const TEAM_MANUAL_LOCK_LIMIT = 5;
+const TEAM_SUB_SLOT_COUNT = 4;
 const LOCKED_REASON_CHIP = 'Manual lock';
 
 interface TeamCoverageState {
@@ -58,7 +59,7 @@ export function buildAutoTeamResult(
 ): AutoBuildCoreResult | null {
   const lockedCharacterIds = [...new Set(input.lockedCharacterIds)];
 
-  if (lockedCharacterIds.length > TEAM_UNIQUE_CHARACTER_LIMIT) {
+  if (lockedCharacterIds.length > TEAM_MANUAL_LOCK_LIMIT) {
     return null;
   }
 
@@ -87,30 +88,55 @@ export function buildAutoTeamResult(
     return null;
   }
 
+  const forcedCaptain = resolveForcedLeaderCandidate(input.captainCharacterId, candidateById);
+  const forcedFriendCaptain = resolveForcedLeaderCandidate(
+    input.friendCaptainCharacterId,
+    candidateById,
+  );
+
+  if (
+    (input.captainCharacterId && !forcedCaptain) ||
+    (input.friendCaptainCharacterId && !forcedFriendCaptain)
+  ) {
+    return null;
+  }
+
   const lockedCharacterIdSet = new Set(lockedCharacterIds);
   const captainPoolBase = input.requireAllSelectedClassesPerCharacter
     ? candidates.filter((candidate) => candidate.matchesAllSelectedClasses)
     : candidates;
   const captainPool =
-    lockedCharacterIds.length === TEAM_UNIQUE_CHARACTER_LIMIT
+    !forcedCaptain && lockedCharacterIds.length === TEAM_MANUAL_LOCK_LIMIT
       ? captainPoolBase.filter((candidate) => lockedCharacterIdSet.has(candidate.character.id))
       : captainPoolBase;
-  const captain = selectCaptain(captainPool);
+  const captain = forcedCaptain ?? selectCaptain(captainPool);
 
   if (!captain) {
     return null;
   }
 
-  const mandatoryLockedSubs = lockedCandidates.filter(
-    (candidate) => candidate.character.id !== captain.character.id,
-  );
-  const subs = selectSubs(candidates, captain, input, mandatoryLockedSubs);
-
-  if (subs.length < 4) {
+  if (!captain.tags.readableCaptainText) {
     return null;
   }
 
-  const coverage = summarizeCoverage([captain, ...subs], input);
+  const friendCaptain = forcedFriendCaptain ?? captain;
+
+  if (!friendCaptain.tags.readableCaptainText) {
+    return null;
+  }
+
+  const leaders = resolveUniqueCandidates([captain, friendCaptain]);
+  const leaderCharacterIdSet = new Set(leaders.map((candidate) => candidate.character.id));
+  const mandatoryLockedSubs = lockedCandidates.filter(
+    (candidate) => !leaderCharacterIdSet.has(candidate.character.id),
+  );
+  const subs = selectSubs(candidates, leaders, input, mandatoryLockedSubs);
+
+  if (subs.length < TEAM_SUB_SLOT_COUNT) {
+    return null;
+  }
+
+  const coverage = summarizeCoverage([captain, friendCaptain, ...subs], input);
 
   if (input.requireAllSelectedTypesInTeam && !coverage.coversAllSelectedTypes) {
     return null;
@@ -127,10 +153,10 @@ export function buildAutoTeamResult(
     },
     {
       role: 'friendCaptain',
-      character: captain.character,
+      character: friendCaptain.character,
       reasonChips: resolveSlotReasonChips(
-        captain.reasonChips,
-        lockedCharacterIdSet.has(captain.character.id),
+        friendCaptain.reasonChips,
+        lockedCharacterIdSet.has(friendCaptain.character.id),
       ),
     },
     ...subs.map((candidate) => ({
@@ -149,6 +175,17 @@ export function buildAutoTeamResult(
     slots,
     coverage,
   };
+}
+
+function resolveForcedLeaderCandidate(
+  characterId: number | null,
+  candidateById: Map<number, AutoBuildCandidate>,
+): AutoBuildCandidate | null {
+  if (!characterId) {
+    return null;
+  }
+
+  return candidateById.get(characterId) ?? null;
 }
 
 export function buildAutoBuildCandidate(
@@ -237,19 +274,21 @@ function selectCaptain(candidates: AutoBuildCandidate[]): AutoBuildCandidate | n
 
 function selectSubs(
   candidates: AutoBuildCandidate[],
-  captain: AutoBuildCandidate,
+  leaders: AutoBuildCandidate[],
   input: AutoBuildInput,
   lockedSubs: AutoBuildCandidate[] = [],
 ): AutoBuildCandidate[] {
-  const selected = [
-    ...new Map(lockedSubs.map((candidate) => [candidate.character.id, candidate])).values(),
-  ];
+  const selected = resolveUniqueCandidates(lockedSubs);
+  const leaderCandidates = resolveUniqueCandidates(leaders);
+  const leaderCharacterIdSet = new Set(
+    leaderCandidates.map((candidate) => candidate.character.id),
+  );
 
-  if (selected.length > 4) {
+  if (selected.length > TEAM_SUB_SLOT_COUNT) {
     return [];
   }
 
-  if (selected.some((candidate) => candidate.character.id === captain.character.id)) {
+  if (selected.some((candidate) => leaderCharacterIdSet.has(candidate.character.id))) {
     return [];
   }
 
@@ -261,16 +300,16 @@ function selectSubs(
   }
 
   const selectedIds = new Set(selected.map((candidate) => candidate.character.id));
-  const coverage = createTeamCoverageState(captain);
+  const coverage = createTeamCoverageState(leaderCandidates);
   selected.forEach((candidate) => applyCandidateCoverage(coverage, candidate));
   const pool = candidates.filter(
     (candidate) =>
-      candidate.character.id !== captain.character.id &&
+      !leaderCharacterIdSet.has(candidate.character.id) &&
       !selectedIds.has(candidate.character.id) &&
       (!input.requireAllSelectedClassesPerCharacter || candidate.matchesAllSelectedClasses),
   );
 
-  while (selected.length < 4) {
+  while (selected.length < TEAM_SUB_SLOT_COUNT) {
     const next = pool
       .filter((candidate) => !selectedIds.has(candidate.character.id))
       .reduce<AutoBuildCandidate | null>((best, current) => {
@@ -278,8 +317,8 @@ function selectSubs(
           return current;
         }
 
-        return scoreSubCandidate(current, captain, coverage, selected, input) >
-          scoreSubCandidate(best, captain, coverage, selected, input)
+        return scoreSubCandidate(current, leaderCandidates, coverage, selected, input) >
+          scoreSubCandidate(best, leaderCandidates, coverage, selected, input)
           ? current
           : best;
       }, null);
@@ -349,7 +388,7 @@ function scoreCaptain(candidate: AutoBuildCandidate): number {
 
 function scoreSubCandidate(
   candidate: AutoBuildCandidate,
-  captain: AutoBuildCandidate,
+  leaders: AutoBuildCandidate[],
   coverage: TeamCoverageState,
   selected: AutoBuildCandidate[],
   input: AutoBuildInput,
@@ -372,16 +411,27 @@ function scoreSubCandidate(
     !coverage.burst.has('conditional');
   const consistencyMissing = coverage.consistency.size === 0;
   const utilityMissing = coverage.utility.size === 0;
+  const hasUniversalLeader = leaders.some((leader) => leader.tags.captainScope.allCharacters);
+  const hasClassScopedLeader = leaders.some((leader) => leader.tags.captainScope.matchesClass);
+  const hasFullClassCoverageLeader = leaders.some(
+    (leader) => leader.tags.captainScope.coversAllSelectedClasses,
+  );
+  const hasFullTypeCoverageLeader = leaders.some(
+    (leader) => leader.tags.captainScope.coversAllSelectedTypes,
+  );
+  const hasTypeScopedLeader = leaders.some(
+    (leader) => leader.tags.captainScope.matchedSelectedTypeCount > 0,
+  );
 
   score += newClassCoverage * 44;
   score += newTypeCoverage * 36;
   score += candidate.matchesSelectedClass ? 18 : -8;
   score += candidate.recencyScore * 10;
-  score += captain.tags.captainScope.allCharacters ? 10 : 0;
-  score += captain.tags.captainScope.matchesClass && candidate.matchesSelectedClass ? 12 : 0;
-  score += captain.tags.captainScope.coversAllSelectedClasses ? 8 : 0;
-  score += captain.tags.captainScope.coversAllSelectedTypes ? 6 : 0;
-  score += captain.tags.captainScope.matchedSelectedTypeCount > 0 ? 3 : 0;
+  score += hasUniversalLeader ? 10 : 0;
+  score += hasClassScopedLeader && candidate.matchesSelectedClass ? 12 : 0;
+  score += hasFullClassCoverageLeader ? 8 : 0;
+  score += hasFullTypeCoverageLeader ? 6 : 0;
+  score += hasTypeScopedLeader ? 3 : 0;
 
   if (newClassCoverage && newTypeCoverage) {
     score += 12;
@@ -667,12 +717,9 @@ function summarizeCoverage(
       coveredClassesList.length === input.selectedClasses.length,
     coversAllSelectedTypes:
       input.types.length === 0 || coveredTypesList.length === input.types.length,
-    selectedClassMatches:
-      candidates.filter((candidate) => candidate.matchesSelectedClass).length +
-      (candidates[0]?.matchesSelectedClass ? 1 : 0),
-    selectedTypeMatches:
-      candidates.filter((candidate) => candidate.matchedSelectedTypes.length > 0).length +
-      (candidates[0]?.matchedSelectedTypes.length ? 1 : 0),
+    selectedClassMatches: candidates.filter((candidate) => candidate.matchesSelectedClass).length,
+    selectedTypeMatches: candidates.filter((candidate) => candidate.matchedSelectedTypes.length > 0)
+      .length,
   };
 }
 
@@ -684,7 +731,7 @@ function resolveTypeCaptainLabel(
   return `${typesToDisplay.join(' / ')} captain`;
 }
 
-function createTeamCoverageState(captain: AutoBuildCandidate): TeamCoverageState {
+function createTeamCoverageState(leaders: AutoBuildCandidate[]): TeamCoverageState {
   const coverage: TeamCoverageState = {
     burst: new Set<AutoBuildBurstRole>(),
     consistency: new Set<AutoBuildConsistencyRole>(),
@@ -693,8 +740,12 @@ function createTeamCoverageState(captain: AutoBuildCandidate): TeamCoverageState
     selectedTypes: new Set<AutoTeamBuilderType>(),
   };
 
-  applyCandidateCoverage(coverage, captain);
+  leaders.forEach((leader) => applyCandidateCoverage(coverage, leader));
   return coverage;
+}
+
+function resolveUniqueCandidates(candidates: AutoBuildCandidate[]): AutoBuildCandidate[] {
+  return [...new Map(candidates.map((candidate) => [candidate.character.id, candidate])).values()];
 }
 
 function applyCandidateCoverage(coverage: TeamCoverageState, candidate: AutoBuildCandidate): void {

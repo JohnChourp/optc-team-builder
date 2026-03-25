@@ -54,6 +54,7 @@ import { UserStateService } from '../../core/services/user-state.service';
 })
 export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
   public readonly maxLockedCharacters = 5;
+  public readonly maxLeaderCharacters = 2;
   private readonly manualSearchLimit = 24;
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly selectedTypes = signal<AutoTeamBuilderType[]>([]);
@@ -62,6 +63,8 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
   public readonly manualCandidates = signal<CharacterListItem[]>([]);
   public readonly lockedCharacterIds = signal<number[]>([]);
   public readonly lockedCharacterRecords = signal<Record<number, CharacterListItem>>({});
+  public readonly selectedLeaderIds = signal<number[]>([]);
+  public readonly captainLeaderId = signal<number | null>(null);
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
   public readonly favoritesOnly = signal(false);
@@ -85,6 +88,71 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
   public readonly lockedLimitReached = computed(
     () => this.lockedCharacterIds().length >= this.maxLockedCharacters,
   );
+  public readonly selectedLeaderCharacters = computed(() => {
+    const lockedRecords = this.lockedCharacterRecords();
+
+    return this.selectedLeaderIds()
+      .map((characterId) => lockedRecords[characterId])
+      .filter((character): character is CharacterListItem => Boolean(character));
+  });
+  public readonly hasSelectedLeaders = computed(() => this.selectedLeaderIds().length > 0);
+  public readonly hasDualLeaders = computed(() => this.selectedLeaderIds().length === 2);
+  public readonly leaderLimitReached = computed(
+    () => this.selectedLeaderIds().length >= this.maxLeaderCharacters,
+  );
+  public readonly effectiveCaptainLeaderId = computed(() => {
+    const leaderIds = this.selectedLeaderIds();
+
+    if (!leaderIds.length) {
+      return null;
+    }
+
+    if (leaderIds.length === 1) {
+      return leaderIds[0];
+    }
+
+    const currentCaptainLeaderId = this.captainLeaderId();
+
+    return currentCaptainLeaderId && leaderIds.includes(currentCaptainLeaderId)
+      ? currentCaptainLeaderId
+      : leaderIds[0];
+  });
+  public readonly effectiveFriendLeaderId = computed(() => {
+    const leaderIds = this.selectedLeaderIds();
+
+    if (!leaderIds.length) {
+      return null;
+    }
+
+    if (leaderIds.length === 1) {
+      return leaderIds[0];
+    }
+
+    const captainLeaderId = this.effectiveCaptainLeaderId();
+
+    return leaderIds.find((characterId) => characterId !== captainLeaderId) ?? null;
+  });
+  public readonly leaderRoleMap = computed<Record<number, string>>(() => {
+    const leaderIds = this.selectedLeaderIds();
+
+    if (!leaderIds.length) {
+      return {};
+    }
+
+    if (leaderIds.length === 1) {
+      return {
+        [leaderIds[0]]: 'Captain / Friend Captain',
+      };
+    }
+
+    const captainLeaderId = this.effectiveCaptainLeaderId();
+    const friendLeaderId = this.effectiveFriendLeaderId();
+
+    return {
+      ...(captainLeaderId ? { [captainLeaderId]: 'Captain' } : {}),
+      ...(friendLeaderId ? { [friendLeaderId]: 'Friend Captain' } : {}),
+    };
+  });
   public readonly clearAllButtonDisabled = computed(
     () =>
       this.building() ||
@@ -112,6 +180,11 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
   public readonly allTypesSelected = computed(
     () => this.selectedTypes().length === this.availableTypes.length,
   );
+  public readonly teamStructureLabel = computed(() =>
+    this.hasDualLeaders()
+      ? 'Captain + Friend captain + 4 subs'
+      : 'Captain + 4 subs + same friend captain',
+  );
   public readonly selectAllTypesButtonLabel = computed(() =>
     this.allTypesSelected() ? 'Unselect all types' : 'Select all types',
   );
@@ -137,11 +210,29 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
     () =>
       `${this.lockedCharacterIds().length} / ${this.maxLockedCharacters} χειροκίνητα locked units`,
   );
+  public readonly leaderSummaryLabel = computed(
+    () => `${this.selectedLeaderIds().length} / ${this.maxLeaderCharacters} selected leaders`,
+  );
   public readonly manualPickerSupportLabel = computed(() =>
     this.lockedLimitReached()
       ? 'Έχεις κλειδώσει το μέγιστο των 5 μοναδικών χαρακτήρων.'
-      : 'Διάλεξε χαρακτήρες που θέλεις να μείνουν σταθεροί και το auto-build θα γεμίσει τα υπόλοιπα slots.',
+      : 'Διάλεξε μέχρι 5 χαρακτήρες που θέλεις να μείνουν στο team και όρισε προαιρετικά έως 2 από αυτούς ως leaders.',
   );
+  public readonly leaderPickerSupportLabel = computed(() => {
+    if (!this.hasLockedCharacters()) {
+      return 'Κλείδωσε πρώτα manual picks για να μπορείς να ορίσεις leaders.';
+    }
+
+    if (!this.hasSelectedLeaders()) {
+      return 'Μπορείς να επιλέξεις έως 2 leaders από τα locked manual picks.';
+    }
+
+    if (!this.hasDualLeaders()) {
+      return 'Με 1 leader, ο ίδιος χαρακτήρας θα χρησιμοποιηθεί και ως Captain και ως Friend Captain.';
+    }
+
+    return 'Με 2 leaders, όρισε ποιος είναι ο δικός σου Captain και ποιος ο Friend Captain.';
+  });
   public readonly typeStrictToggleLabel = 'Require all selected types in team';
   public readonly classStrictToggleLabel = 'Require all selected classes on every character';
   public readonly favoritesOnlyToggleLabel = 'Use only favorites';
@@ -335,6 +426,7 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
 
     this.cacheCharacterRecord(character);
     this.lockedCharacterIds.set([...this.lockedCharacterIds(), character.id]);
+    this.syncLeaderSelectionWithLockedCharacters();
     this.resetBuildState();
   }
 
@@ -344,11 +436,13 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
         (selectedCharacterId) => selectedCharacterId !== characterId,
       ),
     );
+    this.syncLeaderSelectionWithLockedCharacters();
     this.resetBuildState();
   }
 
   public clearAllManualSelections(): void {
     this.lockedCharacterIds.set([]);
+    this.syncLeaderSelectionWithLockedCharacters();
     this.resetBuildState();
   }
 
@@ -368,6 +462,62 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
 
   public onFavoritesOnlyToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.favoritesOnly.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
+  public toggleLeaderCharacter(characterId: number): void {
+    if (!this.isLockedCharacter(characterId)) {
+      return;
+    }
+
+    if (this.isLeaderCharacter(characterId)) {
+      this.selectedLeaderIds.set(
+        this.selectedLeaderIds().filter((selectedLeaderId) => selectedLeaderId !== characterId),
+      );
+      this.syncLeaderSelectionWithLockedCharacters();
+      this.resetBuildState();
+
+      return;
+    }
+
+    if (this.leaderLimitReached()) {
+      return;
+    }
+
+    this.selectedLeaderIds.set([...this.selectedLeaderIds(), characterId]);
+    this.syncLeaderSelectionWithLockedCharacters();
+    this.resetBuildState();
+  }
+
+  public isLeaderCharacter(characterId: number): boolean {
+    return this.selectedLeaderIds().includes(characterId);
+  }
+
+  public isCaptainLeader(characterId: number): boolean {
+    return this.effectiveCaptainLeaderId() === characterId;
+  }
+
+  public setCaptainLeader(characterId: number): void {
+    if (!this.hasDualLeaders() || !this.isLeaderCharacter(characterId)) {
+      return;
+    }
+
+    this.captainLeaderId.set(characterId);
+    this.resetBuildState();
+  }
+
+  public swapLeaderAssignments(): void {
+    if (!this.hasDualLeaders()) {
+      return;
+    }
+
+    const friendLeaderId = this.effectiveFriendLeaderId();
+
+    if (!friendLeaderId) {
+      return;
+    }
+
+    this.captainLeaderId.set(friendLeaderId);
     this.resetBuildState();
   }
 
@@ -434,6 +584,8 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
           favoritesOnly: this.favoritesOnly(),
           favoriteCharacterIds: this.favoriteCharacterIds(),
           lockedCharacterIds: this.lockedCharacterIds(),
+          captainCharacterId: this.effectiveCaptainLeaderId(),
+          friendCaptainCharacterId: this.effectiveFriendLeaderId(),
         },
       );
 
@@ -462,6 +614,8 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
     this.selectedClasses.set([]);
     this.manualSearchTerm.set('');
     this.lockedCharacterIds.set([]);
+    this.selectedLeaderIds.set([]);
+    this.captainLeaderId.set(null);
     this.requireAllSelectedTypesInTeam.set(false);
     this.requireAllSelectedClassesPerCharacter.set(false);
     this.favoritesOnly.set(false);
@@ -475,6 +629,7 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
     }
 
     const lockedCount = this.lockedCharacterIds().length;
+    const leaderRequirementLabel = this.resolveLeaderFailureLabel();
 
     if (lockedCount > this.maxLockedCharacters) {
       return `Μπορείς να κλειδώσεις μέχρι ${this.maxLockedCharacters} χαρακτήρες. Πάτα Clear All και επίλεξε ξανά.`;
@@ -493,18 +648,18 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
 
     if (lockedCount) {
       if (this.hasStrictFilters()) {
-        return `Δεν βρέθηκε ομάδα που να κρατάει τους ${lockedCount} manual χαρακτήρες και να ικανοποιεί τα strict constraints. Το fallback είναι απενεργοποιημένο όσο strict mode είναι ενεργό.`;
+        return `Δεν βρέθηκε ομάδα που να κρατάει τους ${lockedCount} manual χαρακτήρες${leaderRequirementLabel} και να ικανοποιεί τα strict constraints. Το fallback είναι απενεργοποιημένο όσο strict mode είναι ενεργό.`;
       }
 
       if (this.favoritesOnly()) {
-        return `Δοκιμάστηκαν όλα τα flexible combinations για usable ${this.selectedTypesLabel()} team που να κρατάει τους ${lockedCount} manual χαρακτήρες στα favorites σου, αλλά δεν βρέθηκε λύση. Αφαίρεσε κάποια manual picks ή πάτα Clear All.`;
+        return `Δοκιμάστηκαν όλα τα flexible combinations για usable ${this.selectedTypesLabel()} team που να κρατάει τους ${lockedCount} manual χαρακτήρες${leaderRequirementLabel} στα favorites σου, αλλά δεν βρέθηκε λύση. Αφαίρεσε κάποια manual picks ή πάτα Clear All.`;
       }
 
       if (activeRequirements.length) {
-        return `Δεν βρέθηκαν αρκετοί usable ${this.selectedTypesLabel()} χαρακτήρες για ${activeRequirements.join(' και ')} ενώ κρατάμε ${lockedCount} manual picks. Το flexible fallback εξαντλήθηκε χωρίς valid team.`;
+        return `Δεν βρέθηκαν αρκετοί usable ${this.selectedTypesLabel()} χαρακτήρες για ${activeRequirements.join(' και ')} ενώ κρατάμε ${lockedCount} manual picks${leaderRequirementLabel}. Το flexible fallback εξαντλήθηκε χωρίς valid team.`;
       }
 
-      return `Δοκιμάστηκαν όλα τα flexible combinations, αλλά δεν βρέθηκε usable ${this.selectedTypesLabel()} team που να κρατάει τους ${lockedCount} manual χαρακτήρες. Αφαίρεσε κάποια manual picks ή πάτα Clear All.`;
+      return `Δοκιμάστηκαν όλα τα flexible combinations, αλλά δεν βρέθηκε usable ${this.selectedTypesLabel()} team που να κρατάει τους ${lockedCount} manual χαρακτήρες${leaderRequirementLabel}. Αφαίρεσε κάποια manual picks ή πάτα Clear All.`;
     }
 
     if (!activeRequirements.length && this.favoritesOnly()) {
@@ -554,6 +709,47 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
         [character.id]: character,
       };
     });
+  }
+
+  private syncLeaderSelectionWithLockedCharacters(): void {
+    const lockedCharacterIdSet = new Set(this.lockedCharacterIds());
+    const nextLeaderIds = this.selectedLeaderIds()
+      .filter((characterId) => lockedCharacterIdSet.has(characterId))
+      .slice(0, this.maxLeaderCharacters);
+
+    this.selectedLeaderIds.set(nextLeaderIds);
+
+    if (!nextLeaderIds.length) {
+      this.captainLeaderId.set(null);
+
+      return;
+    }
+
+    if (nextLeaderIds.length === 1) {
+      this.captainLeaderId.set(nextLeaderIds[0]);
+
+      return;
+    }
+
+    const currentCaptainLeaderId = this.captainLeaderId();
+
+    this.captainLeaderId.set(
+      currentCaptainLeaderId && nextLeaderIds.includes(currentCaptainLeaderId)
+        ? currentCaptainLeaderId
+        : nextLeaderIds[0],
+    );
+  }
+
+  private resolveLeaderFailureLabel(): string {
+    if (this.hasDualLeaders()) {
+      return ' με τους 2 selected leaders στα captain slots';
+    }
+
+    if (this.hasSelectedLeaders()) {
+      return ' με τον selected leader και στα 2 captain slots';
+    }
+
+    return '';
   }
 
   private resolveRoleLabel(role: 'captain' | 'friendCaptain' | 'sub'): string {

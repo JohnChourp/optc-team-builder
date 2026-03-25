@@ -23,7 +23,7 @@
         </div>
         <div class="meta-pill">
           <ion-icon [icon]="coverageIcon"></ion-icon>
-          <span>Captain + 4 subs + same friend captain</span>
+          <span>{{ teamStructureLabel() }}</span>
         </div>
       </div>
     </section>
@@ -184,6 +184,75 @@
             <span aria-hidden="true">×</span>
           </button>
         </div>
+
+        <section *ngIf="hasLockedCharacters()" class="manual-leaders-card">
+          <div class="slot-grid__header">
+            <h3>Leader picks</h3>
+            <p>{{ leaderPickerSupportLabel() }}</p>
+          </div>
+
+          <div class="manual-locks-meta manual-locks-meta--leaders">
+            <strong>{{ leaderSummaryLabel() }}</strong>
+            <ion-button
+              fill="clear"
+              size="small"
+              class="select-all-button"
+              [disabled]="!hasDualLeaders() || building()"
+              (click)="swapLeaderAssignments()"
+            >
+              Swap roles
+            </ion-button>
+          </div>
+
+          <div class="manual-candidate-list manual-candidate-list--leaders">
+            <article *ngFor="let character of lockedCharacters()" class="manual-candidate-card">
+              <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
+              <div class="manual-candidate-copy">
+                <strong>{{ character.name }}</strong>
+                <span
+                  >{{ character.type }} • {{ character.primaryClass
+                  }}<ng-container *ngIf="character.secondaryClass">
+                    • {{ character.secondaryClass }}</ng-container
+                  ></span
+                >
+                <small *ngIf="leaderRoleMap()[character.id]" class="manual-candidate-role">
+                  {{ leaderRoleMap()[character.id] }}
+                </small>
+              </div>
+              <ion-button
+                size="small"
+                fill="outline"
+                color="light"
+                [disabled]="building() || (!isLeaderCharacter(character.id) && leaderLimitReached())"
+                (click)="toggleLeaderCharacter(character.id)"
+              >
+                {{ isLeaderCharacter(character.id) ? 'Remove leader' : 'Set leader' }}
+              </ion-button>
+            </article>
+          </div>
+
+          <div *ngIf="hasDualLeaders()" class="leader-role-grid">
+            <article
+              *ngFor="let leader of selectedLeaderCharacters()"
+              class="leader-role-card"
+              [class.leader-role-card--active]="isCaptainLeader(leader.id)"
+            >
+              <img [src]="leader.imageUrl" [alt]="leader.name" loading="lazy" />
+              <div class="leader-role-copy">
+                <strong>{{ leader.name }}</strong>
+                <span>{{ leaderRoleMap()[leader.id] }}</span>
+              </div>
+              <button
+                type="button"
+                class="leader-role-button"
+                [disabled]="building() || isCaptainLeader(leader.id)"
+                (click)="setCaptainLeader(leader.id)"
+              >
+                Make Captain
+              </button>
+            </article>
+          </div>
+        </section>
 
         <ion-searchbar
           [debounce]="150"

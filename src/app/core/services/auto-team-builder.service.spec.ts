@@ -124,6 +124,36 @@ describe('Auto team builder', () => {
     expect(result?.coverage.coversAllSelectedTypes).toBe(true);
   });
 
+  it('uses one selected leader for both captain slots', () => {
+    const result = buildAutoTeamResult(createStrictMixedTeamRecords(), {
+      ...createInput(['DEX', 'PSY'], ['Fighter', 'Slasher'], {
+        lockedCharacterIds: [5925],
+        captainCharacterId: 5925,
+        friendCaptainCharacterId: 5925,
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(5925);
+    expect(result?.slots[1]?.character.id).toBe(5925);
+  });
+
+  it('uses two selected leaders in the chosen captain and friend order', () => {
+    const result = buildAutoTeamResult(createDualLeaderMixedTeamRecords(), {
+      ...createInput(['DEX', 'PSY'], ['Fighter', 'Slasher'], {
+        lockedCharacterIds: [5925, 5927],
+        captainCharacterId: 5927,
+        friendCaptainCharacterId: 5925,
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(5927);
+    expect(result?.slots[1]?.character.id).toBe(5925);
+    expect(result?.coverage.selectedClassMatches).toBe(6);
+    expect(result?.coverage.selectedTypeMatches).toBe(6);
+  });
+
   it('prefers universal captains over partial multi-type captains', () => {
     const result = buildAutoTeamResult(
       [
@@ -283,6 +313,25 @@ describe('Auto team builder', () => {
     expect(uniqueTeamIds).toEqual(new Set(lockedCharacterIds));
   });
 
+  it('builds a six-slot team when five manual picks include two distinct leaders', () => {
+    const lockedCharacterIds = [5925, 5927, 5926, 5880, 5870];
+    const result = buildAutoTeamResult(createDualLeaderMixedTeamRecords(), {
+      ...createInput(['DEX', 'PSY'], ['Fighter', 'Slasher'], {
+        lockedCharacterIds,
+        captainCharacterId: 5925,
+        friendCaptainCharacterId: 5927,
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots).toHaveLength(6);
+    expect(result?.slots[0]?.character.id).toBe(5925);
+    expect(result?.slots[1]?.character.id).toBe(5927);
+    expect(new Set(result?.slots.map((slot) => slot.character.id) ?? [])).toEqual(
+      new Set([5925, 5927, 5926, 5880, 5870, 5860]),
+    );
+  });
+
   it('requests combined candidates from the repository service when multiple types are selected', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
@@ -405,6 +454,8 @@ describe('Auto team builder', () => {
     expect(result?.input.favoritesOnly).toBe(false);
     expect(result?.input.lockedCharacterIds).toEqual([]);
     expect(result?.requestedInput.lockedCharacterIds).toEqual([]);
+    expect(result?.input.captainCharacterId).toBeNull();
+    expect(result?.input.friendCaptainCharacterId).toBeNull();
   });
 
   it('returns null in favorites mode when locked ids are outside the favorites pool', async () => {
@@ -434,6 +485,55 @@ describe('Auto team builder', () => {
     });
 
     expect(result?.input.lockedCharacterIds).toEqual([5925, 5926]);
+  });
+
+  it('normalizes a single selected leader into both captain ids', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      lockedCharacterIds: [5925],
+      captainCharacterId: 5925,
+    });
+
+    expect(result?.input.captainCharacterId).toBe(5925);
+    expect(result?.input.friendCaptainCharacterId).toBe(5925);
+  });
+
+  it('returns null when a selected leader is outside the locked picks', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      lockedCharacterIds: [5926],
+      captainCharacterId: 5925,
+      friendCaptainCharacterId: 5925,
+    });
+
+    expect(result).toBeNull();
+    expect(repository.getAutoBuilderCandidates).not.toHaveBeenCalled();
+  });
+
+  it('returns null in favorites mode when a selected leader is outside the favorites pool', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      favoritesOnly: true,
+      favoriteCharacterIds: [5926, 5880, 5870, 5860],
+      lockedCharacterIds: [5925],
+      captainCharacterId: 5925,
+      friendCaptainCharacterId: 5925,
+    });
+
+    expect(result).toBeNull();
+    expect(repository.getAutoBuilderCandidates).not.toHaveBeenCalled();
   });
 
   it('returns requestedInput and no relaxation metadata when exact coverage succeeds', async () => {
@@ -502,6 +602,60 @@ describe('Auto team builder', () => {
 
     expect(result).toBeNull();
   });
+
+  it('fails strict class mode when a forced leader does not match all selected classes', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 5931,
+          type: 'DEX',
+          primaryClass: 'Fighter',
+          secondaryClass: 'Slasher',
+          detail: {
+            specialText: 'Boosts ATK of Fighter and Slasher characters by 2.25x for 1 turn.',
+          },
+        }),
+        createCharacterRecord({
+          id: 5932,
+          type: 'DEX',
+          primaryClass: 'Fighter',
+          secondaryClass: 'Slasher',
+          detail: {
+            specialText: 'Boosts color affinity of DEX characters by 2x for 1 turn.',
+          },
+        }),
+        createCharacterRecord({
+          id: 5933,
+          type: 'DEX',
+          primaryClass: 'Fighter',
+          secondaryClass: 'Slasher',
+          detail: {
+            specialText:
+              'Reduces Bind and Despair duration by 5 turns and reduces Threshold Damage Reduction duration by 5 turns.',
+          },
+        }),
+        createCharacterRecord({
+          id: 5934,
+          type: 'DEX',
+          primaryClass: 'Fighter',
+          secondaryClass: 'Slasher',
+          detail: {
+            specialText:
+              'Changes crew orbs into Matching Orbs and reduces Special Cooldown by 1 turn.',
+          },
+        }),
+      ],
+      createInput(['DEX'], ['Fighter', 'Slasher'], {
+        requireAllSelectedClassesPerCharacter: true,
+        lockedCharacterIds: [5900],
+        captainCharacterId: 5900,
+        friendCaptainCharacterId: 5900,
+      }),
+    );
+
+    expect(result).toBeNull();
+  });
 });
 
 function createInput(
@@ -514,12 +668,16 @@ function createInput(
       | 'requireAllSelectedClassesPerCharacter'
       | 'favoritesOnly'
       | 'lockedCharacterIds'
+      | 'captainCharacterId'
+      | 'friendCaptainCharacterId'
     >
   > = {
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     favoritesOnly: false,
     lockedCharacterIds: [],
+    captainCharacterId: null,
+    friendCaptainCharacterId: null,
   },
 ): AutoBuildInput {
   return {
@@ -529,6 +687,8 @@ function createInput(
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
     favoritesOnly: overrides.favoritesOnly ?? false,
     lockedCharacterIds: overrides.lockedCharacterIds ?? [],
+    captainCharacterId: overrides.captainCharacterId ?? null,
+    friendCaptainCharacterId: overrides.friendCaptainCharacterId ?? null,
     candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
   };
 }
@@ -753,6 +913,24 @@ function createStrictMixedTeamRecords(): CharacterDetailRecord[] {
     createAffinitySubRecord(),
     createUtilitySubRecord(),
     createConsistencySubRecord(),
+  ];
+}
+
+function createDualLeaderMixedTeamRecords(): CharacterDetailRecord[] {
+  return [
+    ...createStrictMixedTeamRecords(),
+    createCharacterRecord({
+      id: 5927,
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Slasher',
+      detail: {
+        captainAbility:
+          'Boosts ATK of DEX, PSY, Fighter and Slasher characters by 4.8x and HP by 1.25x.',
+        specialText:
+          'Boosts color affinity of DEX and PSY characters by 2x for 1 turn and changes adjacent orbs into Matching Orbs.',
+      },
+    }),
   ];
 }
 

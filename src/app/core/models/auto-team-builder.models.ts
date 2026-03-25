@@ -12,6 +12,8 @@ export interface AutoBuildConstraints {
   favoritesOnly?: boolean;
   favoriteCharacterIds?: number[];
   lockedCharacterIds?: number[];
+  captainCharacterId?: number | null;
+  friendCaptainCharacterId?: number | null;
 }
 
 export interface AutoBuildCandidateQueryOptions {
@@ -42,6 +44,8 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   selectedClasses: string[];
   favoritesOnly: boolean;
   lockedCharacterIds: number[];
+  captainCharacterId: number | null;
+  friendCaptainCharacterId: number | null;
   candidateLimit?: number;
 }
 
