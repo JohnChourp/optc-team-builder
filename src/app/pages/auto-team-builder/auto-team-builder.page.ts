@@ -121,12 +121,12 @@ export class AutoTeamBuilderPage implements OnInit {
   public readonly typeSupportLabel = computed(() =>
     this.requireAllSelectedTypesInTeam()
       ? 'Κάθε selected type πρέπει να εμφανιστεί τουλάχιστον μία φορά στο final team.'
-      : 'Τα selected types μένουν candidate-pool filter και soft preference, χωρίς υποχρεωτική πλήρη κάλυψη.',
+      : 'Το auto-build προσπαθεί πρώτα να καλύψει όλα τα selected types και μετά κάνει fallback μόνο στο result panel αν χρειαστεί.',
   );
   public readonly classSupportLabel = computed(() =>
     this.requireAllSelectedClassesPerCharacter()
       ? 'Κάθε chosen unit πρέπει να έχει όλα τα selected classes.'
-      : 'Τα selected classes μένουν soft preference μόνο και δεν απαιτούνται σε κάθε χαρακτήρα.',
+      : 'Το auto-build προσπαθεί πρώτα να καλύψει όλα τα selected classes στο team και μετά κάνει fallback χωρίς να πειράζει τα πάνω filters.',
   );
   public readonly favoritesOnlySupportLabel = computed(() =>
     this.hasFavoriteCharacters()
@@ -175,19 +175,19 @@ export class AutoTeamBuilderPage implements OnInit {
     this.hasSelectedClasses() && this.hasSelectedTypes()
       ? this.hasStrictFilters()
         ? `Διάλεξε classes και χτίσε αυτόματα ένα ${this.selectedTypesLabel()} mixed team με strict constraints.`
-        : `Διάλεξε classes και types για να χτίσεις αυτόματα ένα flexible ${this.selectedTypesLabel()} mixed team.`
+        : `Διάλεξε classes και types για να χτίσεις αυτόματα ένα ${this.selectedTypesLabel()} mixed team με smart fallback.`
       : this.hasStrictFilters()
         ? 'Διάλεξε types και classes για να χτίσεις αυτόματα ένα mixed team με strict constraints.'
-        : 'Διάλεξε types και classes για να χτίσεις αυτόματα ένα flexible mixed team.',
+        : 'Διάλεξε types και classes για να χτίσεις αυτόματα ένα mixed team με smart fallback.',
   );
   public readonly descriptionLabel = computed(() =>
     this.hasSelectedClasses() && this.hasSelectedTypes()
       ? this.hasStrictFilters()
         ? `Το v1 χρησιμοποιεί recent usable ${this.selectedTypesLabel()} units με readable captain, special, και sailor texts για να φτιάξει ένα high-damage team που τηρεί τα ενεργά strict filters.`
-        : `Το v1 χρησιμοποιεί recent usable ${this.selectedTypesLabel()} units με readable captain, special, και sailor texts για να φτιάξει ένα generic high-damage team με soft preference στα selected classes και types.`
+        : `Το v1 προσπαθεί πρώτα να καλύψει όλα τα selected classes και types με recent usable ${this.selectedTypesLabel()} units και κάνει relaxed fallback μόνο αν χρειαστεί.`
       : this.hasStrictFilters()
         ? 'Το v1 χρησιμοποιεί recent usable units με readable captain, special, και sailor texts για να φτιάξει ένα high-damage team που τηρεί τα ενεργά strict filters.'
-        : 'Το v1 χρησιμοποιεί recent usable units με readable captain, special, και sailor texts για να φτιάξει ένα generic high-damage team με soft preference στα selected classes και types.',
+        : 'Το v1 προσπαθεί πρώτα να καλύψει όλα τα selected classes και types και κάνει relaxed fallback μόνο αν χρειαστεί.',
   );
   public readonly buildButtonLabel = computed(() =>
     this.hasSelectedTypes()
@@ -213,17 +213,40 @@ export class AutoTeamBuilderPage implements OnInit {
       ? `${poolPrefix}recent usable ${this.selectedTypesLabel()} records`
       : `${poolPrefix}recent usable records`;
   });
+  public readonly resultUsesFallback = computed(
+    () => this.result()?.relaxation.usedFallback ?? false,
+  );
+  public readonly requestedResultClassesLabel = computed(() =>
+    this.formatResultValues(this.result()?.requestedInput.selectedClasses ?? []),
+  );
+  public readonly effectiveResultClassesLabel = computed(() =>
+    this.formatResultValues(this.result()?.input.selectedClasses ?? []),
+  );
+  public readonly requestedResultTypesLabel = computed(() =>
+    this.formatResultValues(this.result()?.requestedInput.types ?? []),
+  );
+  public readonly effectiveResultTypesLabel = computed(() =>
+    this.formatResultValues(this.result()?.input.types ?? []),
+  );
+  public readonly droppedResultTypes = computed(() => this.result()?.relaxation.droppedTypes ?? []);
+  public readonly droppedResultClasses = computed(
+    () => this.result()?.relaxation.droppedClasses ?? [],
+  );
   public readonly selectedClassSummaryLabel = computed(() => {
     const current = this.result();
 
     if (!current) {
       return this.requireAllSelectedClassesPerCharacter()
         ? 'Strict class mode ενεργό: κάθε chosen unit πρέπει να έχει όλα τα selected classes.'
-        : 'Τα selected classes μένουν soft preference μόνο όταν το strict class toggle είναι off.';
+        : 'Flexible mode: δοκιμάζεται πλήρης class coverage και μετά relaxed fallback αν χρειαστεί.';
     }
 
     if (current.input.requireAllSelectedClassesPerCharacter) {
       return `${current.slots.length} / ${current.slots.length} slots match all selected classes`;
+    }
+
+    if (!current.input.selectedClasses.length) {
+      return 'Το final fallback κράτησε ομάδα χωρίς class requirement.';
     }
 
     return `${current.coverage.coveredSelectedClasses.length} / ${current.input.selectedClasses.length} classes covered • ${current.coverage.selectedClassMatches} / 6 matching slots`;
@@ -234,7 +257,11 @@ export class AutoTeamBuilderPage implements OnInit {
     if (!current) {
       return this.requireAllSelectedTypesInTeam()
         ? 'Strict type mode ενεργό: κάθε selected type πρέπει να εμφανιστεί στο final team.'
-        : 'Τα selected types παραμένουν candidate filter, αλλά η πλήρης κάλυψη είναι προαιρετική.';
+        : 'Flexible mode: δοκιμάζεται πλήρης type coverage και μετά relaxed fallback αν χρειαστεί.';
+    }
+
+    if (!current.input.types.length) {
+      return 'Δεν έμεινε type requirement στο final fallback.';
     }
 
     return current.input.requireAllSelectedTypesInTeam
@@ -449,26 +476,42 @@ export class AutoTeamBuilderPage implements OnInit {
     }
 
     if (lockedCount) {
+      if (this.hasStrictFilters()) {
+        return `Δεν βρέθηκε ομάδα που να κρατάει τους ${lockedCount} manual χαρακτήρες και να ικανοποιεί τα strict constraints. Το fallback είναι απενεργοποιημένο όσο strict mode είναι ενεργό.`;
+      }
+
       if (this.favoritesOnly()) {
-        return `Δεν βρέθηκε usable ${this.selectedTypesLabel()} team που να κρατάει τους ${lockedCount} manual χαρακτήρες στα favorites σου. Αφαίρεσε κάποια manual picks ή πάτα Clear All.`;
+        return `Δοκιμάστηκαν όλα τα flexible combinations για usable ${this.selectedTypesLabel()} team που να κρατάει τους ${lockedCount} manual χαρακτήρες στα favorites σου, αλλά δεν βρέθηκε λύση. Αφαίρεσε κάποια manual picks ή πάτα Clear All.`;
       }
 
       if (activeRequirements.length) {
-        return `Δεν βρέθηκαν αρκετοί usable ${this.selectedTypesLabel()} χαρακτήρες για ${activeRequirements.join(' και ')} ενώ κρατάμε ${lockedCount} manual picks. Αφαίρεσε κάποια manual picks ή πάτα Clear All.`;
+        return `Δεν βρέθηκαν αρκετοί usable ${this.selectedTypesLabel()} χαρακτήρες για ${activeRequirements.join(' και ')} ενώ κρατάμε ${lockedCount} manual picks. Το flexible fallback εξαντλήθηκε χωρίς valid team.`;
       }
 
-      return `Δεν βρέθηκε usable ${this.selectedTypesLabel()} team που να κρατάει τους ${lockedCount} manual χαρακτήρες. Αφαίρεσε κάποια manual picks ή πάτα Clear All.`;
+      return `Δοκιμάστηκαν όλα τα flexible combinations, αλλά δεν βρέθηκε usable ${this.selectedTypesLabel()} team που να κρατάει τους ${lockedCount} manual χαρακτήρες. Αφαίρεσε κάποια manual picks ή πάτα Clear All.`;
     }
 
     if (!activeRequirements.length && this.favoritesOnly()) {
-      return `Δεν βρέθηκε usable ${this.selectedTypesLabel()} team μέσα στα favorites σου.`;
+      if (this.hasStrictFilters()) {
+        return `Δεν βρέθηκε ομάδα μέσα στα favorites σου που να ικανοποιεί τα strict constraints. Το fallback είναι απενεργοποιημένο σε strict mode.`;
+      }
+
+      return `Δοκιμάστηκαν όλα τα flexible combinations, αλλά δεν βρέθηκε usable ${this.selectedTypesLabel()} team μέσα στα favorites σου.`;
     }
 
     if (!activeRequirements.length) {
-      return `Δεν βρέθηκε usable ${this.selectedTypesLabel()} team που να ταιριάζει στα current filters.`;
+      if (this.hasStrictFilters()) {
+        return `Δεν βρέθηκε usable ${this.selectedTypesLabel()} team που να ικανοποιεί τα strict constraints. Το fallback είναι απενεργοποιημένο σε strict mode.`;
+      }
+
+      return `Δοκιμάστηκαν όλα τα flexible combinations, αλλά δεν βρέθηκε usable ${this.selectedTypesLabel()} team που να ταιριάζει στα current filters.`;
     }
 
-    return `Δεν βρέθηκαν αρκετοί usable ${this.selectedTypesLabel()} χαρακτήρες${favoritesScope} για ${activeRequirements.join(' και ')}.`;
+    if (this.hasStrictFilters()) {
+      return `Δεν βρέθηκαν αρκετοί usable ${this.selectedTypesLabel()} χαρακτήρες${favoritesScope} για ${activeRequirements.join(' και ')}. Το fallback είναι απενεργοποιημένο σε strict mode.`;
+    }
+
+    return `Δεν βρέθηκαν αρκετοί usable ${this.selectedTypesLabel()} χαρακτήρες${favoritesScope} για ${activeRequirements.join(' και ')}. Το flexible fallback εξαντλήθηκε χωρίς valid team.`;
   }
 
   private async refreshManualCandidates(searchTerm: string): Promise<void> {
@@ -531,6 +574,10 @@ export class AutoTeamBuilderPage implements OnInit {
 
   private formatSelectedTypes(types: AutoTeamBuilderType[]): string {
     return this.formatSelectedValues(types);
+  }
+
+  private formatResultValues(values: readonly string[]): string {
+    return values.length ? this.formatSelectedValues(values) : 'None';
   }
 
   private formatSelectedValues(values: readonly string[]): string {

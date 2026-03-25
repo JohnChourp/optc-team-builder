@@ -6,6 +6,7 @@
 .hero-card,
 .controls-card,
 .coverage-card,
+.fallback-card,
 .loading-card,
 .summary-card,
 .result-card {
@@ -281,6 +282,10 @@
   gap: 16px;
 }
 
+.coverage-groups--summary {
+  margin-bottom: 18px;
+}
+
 .chip-row {
   display: flex;
   flex-wrap: wrap;
@@ -291,6 +296,17 @@
 .coverage-chip {
   background: rgba(245, 200, 76, 0.16);
   color: #f5c84c;
+}
+
+.fallback-chip {
+  background: rgba(244, 114, 182, 0.16);
+  color: #f7a7ce;
+}
+
+.summary-status-chip {
+  justify-content: flex-start;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .role-pill {

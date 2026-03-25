@@ -294,6 +294,10 @@ describe('Auto team builder', () => {
     expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
       ['DEX', 'PSY'],
       AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        allowedCharacterIds: undefined,
+        lockedCharacterIds: [],
+      },
     );
   });
 
@@ -311,8 +315,14 @@ describe('Auto team builder', () => {
     expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
       ['DEX', 'PSY'],
       AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        allowedCharacterIds: undefined,
+        lockedCharacterIds: [],
+      },
     );
     expect(result?.input.selectedClasses).toEqual(['Fighter', 'Slasher']);
+    expect(result?.requestedInput.selectedClasses).toEqual(['Fighter', 'Slasher']);
+    expect(result?.relaxation.usedFallback).toBe(false);
   });
 
   it('defaults to DEX when no types are provided', async () => {
@@ -326,6 +336,10 @@ describe('Auto team builder', () => {
     expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
       [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
       AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        allowedCharacterIds: undefined,
+        lockedCharacterIds: [],
+      },
     );
   });
 
@@ -346,11 +360,19 @@ describe('Auto team builder', () => {
     expect(result?.slots.every((slot) => favoriteCharacterIds.includes(slot.character.id))).toBe(
       true,
     );
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      ['DEX', 'PSY'],
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        allowedCharacterIds: favoriteCharacterIds,
+        lockedCharacterIds: [],
+      },
+    );
   });
 
   it('returns null in favorites mode when no favorite candidate ids match', async () => {
     const repository = {
-      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue([]),
     };
     const service = new AutoTeamBuilderService(repository as never);
 
@@ -360,6 +382,14 @@ describe('Auto team builder', () => {
     });
 
     expect(result).toBeNull();
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      ['DEX', 'PSY'],
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        allowedCharacterIds: [999_999],
+        lockedCharacterIds: [],
+      },
+    );
   });
 
   it('normalizes omitted constraints to false', async () => {
@@ -374,6 +404,7 @@ describe('Auto team builder', () => {
     expect(result?.input.requireAllSelectedClassesPerCharacter).toBe(false);
     expect(result?.input.favoritesOnly).toBe(false);
     expect(result?.input.lockedCharacterIds).toEqual([]);
+    expect(result?.requestedInput.lockedCharacterIds).toEqual([]);
   });
 
   it('returns null in favorites mode when locked ids are outside the favorites pool', async () => {
@@ -389,6 +420,7 @@ describe('Auto team builder', () => {
     });
 
     expect(result).toBeNull();
+    expect(repository.getAutoBuilderCandidates).not.toHaveBeenCalled();
   });
 
   it('normalizes and deduplicates locked ids before building', async () => {
@@ -402,6 +434,73 @@ describe('Auto team builder', () => {
     });
 
     expect(result?.input.lockedCharacterIds).toEqual([5925, 5926]);
+  });
+
+  it('returns requestedInput and no relaxation metadata when exact coverage succeeds', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY']);
+
+    expect(result).not.toBeNull();
+    expect(result?.requestedInput.selectedClasses).toEqual(['Fighter', 'Slasher']);
+    expect(result?.requestedInput.types).toEqual(['DEX', 'PSY']);
+    expect(result?.relaxation).toEqual({
+      usedFallback: false,
+      droppedTypes: [],
+      droppedClasses: [],
+    });
+  });
+
+  it('drops the weakest uncovered class in flexible mode when exact class coverage fails', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Shooter'], ['DEX']);
+
+    expect(result).not.toBeNull();
+    expect(result?.requestedInput.selectedClasses).toEqual(['Fighter', 'Shooter']);
+    expect(result?.input.selectedClasses).toEqual(['Fighter']);
+    expect(result?.relaxation).toEqual({
+      usedFallback: true,
+      droppedTypes: [],
+      droppedClasses: ['Shooter'],
+    });
+  });
+
+  it('drops the weakest uncovered type in flexible mode when exact type coverage fails', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX', 'INT']);
+
+    expect(result).not.toBeNull();
+    expect(result?.requestedInput.types).toEqual(['DEX', 'INT']);
+    expect(result?.input.types).toEqual(['DEX']);
+    expect(result?.relaxation).toEqual({
+      usedFallback: true,
+      droppedTypes: ['INT'],
+      droppedClasses: [],
+    });
+  });
+
+  it('does not relax filters when any strict toggle is enabled', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX', 'INT'], {
+      requireAllSelectedTypesInTeam: true,
+    });
+
+    expect(result).toBeNull();
   });
 });
 

@@ -1,6 +1,7 @@
 import { Injectable } from "@angular/core";
 import type { Database, SqlJsStatic } from "sql.js";
 
+import { type AutoBuildCandidateQueryOptions } from "../models/auto-team-builder.models";
 import {
   type CharacterAssets,
   type CharacterDetail,
@@ -139,12 +140,30 @@ export class OptcRepositoryService {
     };
   }
 
-  public async getAutoBuilderCandidates(typeFilters: string[], limit = 1200): Promise<CharacterDetailRecord[]> {
+  public async getAutoBuilderCandidates(
+    typeFilters: string[],
+    limit = 1200,
+    options: AutoBuildCandidateQueryOptions = {},
+  ): Promise<CharacterDetailRecord[]> {
     if (!typeFilters.length) {
       return [];
     }
 
-    const placeholders = typeFilters.map(() => "?").join(",");
+    const lockedCharacterIds = [
+      ...new Set((options.lockedCharacterIds ?? []).filter((characterId) => Number.isInteger(characterId) && characterId > 0)),
+    ];
+    const allowedCharacterIds = [
+      ...new Set((options.allowedCharacterIds ?? []).filter((characterId) => Number.isInteger(characterId) && characterId > 0)),
+    ];
+    const typeClauses = typeFilters.map(() => "(',' || c.type || ',') LIKE ?");
+    const queryParams: Array<string | number> = typeFilters.map((typeFilter) => `%,${typeFilter},%`);
+    let whereClause = `(${typeClauses.join(" OR ")})`;
+
+    if (lockedCharacterIds.length) {
+      whereClause = `${whereClause} OR c.id IN (${lockedCharacterIds.map(() => "?").join(",")})`;
+      queryParams.push(...lockedCharacterIds);
+    }
+
     const rows = await this.selectAll(
       `
         SELECT
@@ -171,19 +190,26 @@ export class OptcRepositoryService {
           d.detail_json
         FROM characters c
         LEFT JOIN character_details d ON d.character_id = c.id
-        WHERE c.type IN (${placeholders})
+        WHERE ${whereClause}
         ORDER BY c.id DESC
-        LIMIT ?
       `,
-      [...typeFilters, limit],
+      queryParams,
     );
     const decorated = await this.decorateCharacterRows(rows);
-
-    return decorated.map((record, index) => ({
+    const detailedRecords = decorated.map((record, index) => ({
       ...record,
       detail: this.parseJson<CharacterDetail>(rows[index]["detail_json"], this.emptyDetail(record.id)),
       detailImageUrl: this.resolveImageUrl(record.assets, true),
     }));
+    const allowedCharacterIdSet = allowedCharacterIds.length ? new Set(allowedCharacterIds) : null;
+    const lockedCharacterIdSet = new Set(lockedCharacterIds);
+    const filteredRecords = allowedCharacterIdSet
+      ? detailedRecords.filter((record) => allowedCharacterIdSet.has(record.id))
+      : detailedRecords;
+
+    return filteredRecords.filter(
+      (record, index) => index < limit || lockedCharacterIdSet.has(record.id),
+    );
   }
 
   public async getCharactersByIds(ids: number[]): Promise<CharacterListItem[]> {

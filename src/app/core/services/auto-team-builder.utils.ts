@@ -1,11 +1,12 @@
 import {
+  AUTO_TEAM_BUILDER_TYPES,
   type AutoBuildBurstRole,
   type AutoBuildCandidate,
   type AutoBuildConsistencyRole,
+  type AutoBuildCoreResult,
   type AutoBuildCoverageSummary,
   type AutoBuildEffectTags,
   type AutoBuildInput,
-  type AutoBuildResult,
   type AutoBuildSlot,
   type AutoBuildUtilityRole,
   type AutoTeamBuilderType,
@@ -54,7 +55,7 @@ interface TeamCoverageState {
 export function buildAutoTeamResult(
   records: CharacterDetailRecord[],
   input: AutoBuildInput,
-): AutoBuildResult | null {
+): AutoBuildCoreResult | null {
   const lockedCharacterIds = [...new Set(input.lockedCharacterIds)];
 
   if (lockedCharacterIds.length > TEAM_UNIQUE_CHARACTER_LIMIT) {
@@ -764,7 +765,16 @@ function resolveMatchedSelectedTypes(
   record: CharacterDetailRecord,
   selectedTypes: AutoTeamBuilderType[],
 ): AutoTeamBuilderType[] {
-  return selectedTypes.filter((type) => type === record.type);
+  const recordTypes = resolveCharacterTypeTokens(record.type);
+
+  return selectedTypes.filter((type) => recordTypes.includes(type));
+}
+
+export function resolveCharacterTypeTokens(typeValue: string): AutoTeamBuilderType[] {
+  return [...new Set(typeValue.split(',').map((entry) => entry.trim()))].filter(
+    (entry): entry is AutoTeamBuilderType =>
+      AUTO_TEAM_BUILDER_TYPES.includes(entry as AutoTeamBuilderType),
+  );
 }
 
 function textMatchesClassScope(text: string, selectedClass: string): boolean {

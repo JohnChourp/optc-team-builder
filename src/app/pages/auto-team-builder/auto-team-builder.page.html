@@ -237,17 +237,44 @@
     </section>
 
     <ng-container *ngIf="!building() && result() as current">
+      <section *ngIf="resultUsesFallback()" class="glass-card fallback-card">
+        <div class="slot-grid__header">
+          <h2>Relaxed fallback used</h2>
+          <p>Τα πάνω filters έμειναν όπως τα διάλεξες. Η ομάδα χτίστηκε αφού αγνοήθηκαν μόνο τα παρακάτω requirements.</p>
+        </div>
+
+        <div class="coverage-groups">
+          <div *ngIf="droppedResultTypes().length">
+            <span>Dropped types</span>
+            <div class="chip-row">
+              <small *ngFor="let item of droppedResultTypes()" class="coverage-chip fallback-chip">
+                {{ item }}
+              </small>
+            </div>
+          </div>
+
+          <div *ngIf="droppedResultClasses().length">
+            <span>Dropped classes</span>
+            <div class="chip-row">
+              <small *ngFor="let item of droppedResultClasses()" class="coverage-chip fallback-chip">
+                {{ item }}
+              </small>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="summary-grid">
         <article class="glass-card summary-card">
-          <span>Selected classes</span>
-          <strong>{{ current.input.selectedClasses.join(' / ') }}</strong>
-          <small>{{ selectedClassSummaryLabel() }}</small>
+          <span>Requested classes</span>
+          <strong>{{ requestedResultClassesLabel() }}</strong>
+          <small>Effective: {{ effectiveResultClassesLabel() }}</small>
         </article>
 
         <article class="glass-card summary-card">
-          <span>Selected types</span>
-          <strong>{{ current.input.types.join(' / ') }}</strong>
-          <small>{{ selectedTypeSummaryLabel() }}</small>
+          <span>Requested types</span>
+          <strong>{{ requestedResultTypesLabel() }}</strong>
+          <small>Effective: {{ effectiveResultTypesLabel() }}</small>
         </article>
 
         <article class="glass-card summary-card">
@@ -267,6 +294,22 @@
         <div class="slot-grid__header">
           <h2>Coverage summary</h2>
           <p>Σύντομο snapshot του damage και utility profile της ομάδας.</p>
+        </div>
+
+        <div class="coverage-groups coverage-groups--summary">
+          <div>
+            <span>Class request</span>
+            <div class="chip-row">
+              <small class="coverage-chip summary-status-chip">{{ selectedClassSummaryLabel() }}</small>
+            </div>
+          </div>
+
+          <div>
+            <span>Type request</span>
+            <div class="chip-row">
+              <small class="coverage-chip summary-status-chip">{{ selectedTypeSummaryLabel() }}</small>
+            </div>
+          </div>
         </div>
 
         <div class="coverage-groups">

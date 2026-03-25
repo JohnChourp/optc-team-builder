@@ -14,6 +14,11 @@ export interface AutoBuildConstraints {
   lockedCharacterIds?: number[];
 }
 
+export interface AutoBuildCandidateQueryOptions {
+  allowedCharacterIds?: number[];
+  lockedCharacterIds?: number[];
+}
+
 export type AutoBuildBurstRole =
   | 'atkBoost'
   | 'orbBoost'
@@ -94,9 +99,20 @@ export interface AutoBuildCoverageSummary {
   selectedTypeMatches: number;
 }
 
-export interface AutoBuildResult {
+export interface AutoBuildRelaxationSummary {
+  usedFallback: boolean;
+  droppedTypes: AutoTeamBuilderType[];
+  droppedClasses: string[];
+}
+
+export interface AutoBuildCoreResult {
   input: AutoBuildInput;
   candidateCount: number;
   slots: AutoBuildSlot[];
   coverage: AutoBuildCoverageSummary;
+}
+
+export interface AutoBuildResult extends AutoBuildCoreResult {
+  requestedInput: AutoBuildInput;
+  relaxation: AutoBuildRelaxationSummary;
 }
