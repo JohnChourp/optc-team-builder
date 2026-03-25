@@ -68,6 +68,7 @@ export class AutoTeamBuilderService {
       requireAllSelectedTypesInTeam: constraints.requireAllSelectedTypesInTeam ?? false,
       requireAllSelectedClassesPerCharacter:
         constraints.requireAllSelectedClassesPerCharacter ?? false,
+      requireAllSpecialsSupportTeam: constraints.requireAllSpecialsSupportTeam ?? false,
       favoritesOnly,
       lockedCharacterIds,
       captainCharacterId,

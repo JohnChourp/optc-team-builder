@@ -72,6 +72,7 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
   public readonly captainLeaderId = signal<number | null>(null);
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
+  public readonly requireAllSpecialsSupportTeam = signal(false);
   public readonly favoritesOnly = signal(false);
   public readonly building = signal(false);
   public readonly result = signal<AutoBuildResult | null>(null);
@@ -206,6 +207,11 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
       ? 'Κάθε chosen unit πρέπει να έχει όλα τα selected classes.'
       : 'Το auto-build προσπαθεί πρώτα να καλύψει όλα τα selected classes στο team και μετά κάνει fallback χωρίς να πειράζει τα πάνω filters.',
   );
+  public readonly specialSupportLabel = computed(() =>
+    this.requireAllSpecialsSupportTeam()
+      ? 'Κάθε slot πρέπει να έχει special που ενισχύει όλους τους τελικούς teammates. Το requirement δεν χαλαρώνει στο fallback.'
+      : 'Προαιρετικό hard filter που κρατά μόνο units με special το οποίο καλύπτει όλο το final team.',
+  );
   public readonly favoritesOnlySupportLabel = computed(() =>
     this.hasFavoriteCharacters()
       ? `Το candidate pool περιορίζεται στα ${this.favoriteCharacterIds().length} favorites.`
@@ -240,6 +246,7 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
   });
   public readonly typeStrictToggleLabel = 'Require all selected types in team';
   public readonly classStrictToggleLabel = 'Require all selected classes on every character';
+  public readonly specialSupportToggleLabel = 'Require every special to buff the full team';
   public readonly favoritesOnlyToggleLabel = 'Use only favorites';
   public readonly favoritesOnlyBlockedMessage =
     'Δεν υπάρχουν favorites. Πρόσθεσε χαρακτήρες στα favorites ή απενεργοποίησε το toggle.';
@@ -364,6 +371,72 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
       ? `${current.coverage.coveredSelectedTypes.length} / ${current.input.types.length} types covered • strict team coverage on`
       : `${current.coverage.coveredSelectedTypes.length} / ${current.input.types.length} types covered • ${current.coverage.selectedTypeMatches} / 6 matching slots`;
   });
+  public readonly leaderCriteriaSourceLabel = computed(() => {
+    const leaderCriteria = this.result()?.coverage.leaderCriteria;
+
+    if (!leaderCriteria) {
+      return 'Captain ability';
+    }
+
+    return leaderCriteria.dualLeaderMode === 'intersection'
+      ? 'Captain ability • dual leader intersection'
+      : 'Captain ability';
+  });
+  public readonly leaderCriteriaLeadersLabel = computed(() => {
+    const leaderCriteria = this.result()?.coverage.leaderCriteria;
+
+    return leaderCriteria?.leaderNames.length ? leaderCriteria.leaderNames.join(' / ') : 'None';
+  });
+  public readonly leaderCriteriaClassesLabel = computed(() => {
+    const leaderCriteria = this.result()?.coverage.leaderCriteria;
+
+    if (!leaderCriteria) {
+      return 'No leader data';
+    }
+
+    return leaderCriteria.hasClassRestriction
+      ? leaderCriteria.derivedAllowedClasses.join(' / ')
+      : 'No leader class restriction';
+  });
+  public readonly leaderCriteriaTypesLabel = computed(() => {
+    const leaderCriteria = this.result()?.coverage.leaderCriteria;
+
+    if (!leaderCriteria) {
+      return 'No leader data';
+    }
+
+    return leaderCriteria.hasTypeRestriction
+      ? leaderCriteria.derivedAllowedTypes.join(' / ')
+      : 'No leader type restriction';
+  });
+  public readonly leaderCriteriaScopeSummaryLabel = computed(() => {
+    const leaderCriteria = this.result()?.coverage.leaderCriteria;
+
+    if (!leaderCriteria) {
+      return 'Το leader scope θα εμφανιστεί μετά το build.';
+    }
+
+    if (!leaderCriteria.hasClassRestriction && !leaderCriteria.hasTypeRestriction) {
+      return 'Ο leader δεν επέβαλε class/type restriction στο final team.';
+    }
+
+    return `${leaderCriteria.matchingSlots} / ${leaderCriteria.totalSlots} slots match leader scope`;
+  });
+  public readonly specialSupportSummaryLabel = computed(() => {
+    const current = this.result();
+
+    if (!current) {
+      return this.requireAllSpecialsSupportTeam()
+        ? 'Special support mode ενεργό: κάθε special πρέπει να ενισχύει όλο το final team.'
+        : 'Special support filter off.';
+    }
+
+    const { specialSupport } = current.coverage;
+
+    return specialSupport.enabled
+      ? `${specialSupport.matchingSlots} / ${specialSupport.totalSlots} slots buff the full team • hard filter on`
+      : `${specialSupport.matchingSlots} / ${specialSupport.totalSlots} slots would pass teamwide special support`;
+  });
   public readonly canDownloadTeamJson = computed(() => Boolean(this.result()));
   public readonly downloadTeamJsonLabel = 'Download team JSON';
   public readonly teamSlots = computed(
@@ -464,6 +537,11 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
 
   public onRequireAllSelectedClassesToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.requireAllSelectedClassesPerCharacter.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
+  public onRequireAllSpecialsSupportToggle(event: CustomEvent<{ checked: boolean }>): void {
+    this.requireAllSpecialsSupportTeam.set(event.detail.checked);
     this.resetBuildState();
   }
 
@@ -588,6 +666,7 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
         {
           requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
           requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
+          requireAllSpecialsSupportTeam: this.requireAllSpecialsSupportTeam(),
           favoritesOnly: this.favoritesOnly(),
           favoriteCharacterIds: this.favoriteCharacterIds(),
           lockedCharacterIds: this.lockedCharacterIds(),
@@ -645,6 +724,7 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
     this.captainLeaderId.set(null);
     this.requireAllSelectedTypesInTeam.set(false);
     this.requireAllSelectedClassesPerCharacter.set(false);
+    this.requireAllSpecialsSupportTeam.set(false);
     this.favoritesOnly.set(false);
     this.resetBuildState();
     await this.refreshManualCandidates('');
@@ -671,6 +751,10 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
 
     if (this.requireAllSelectedClassesPerCharacter()) {
       activeRequirements.push('χαρακτήρες που έχουν όλα τα selected classes');
+    }
+
+    if (this.requireAllSpecialsSupportTeam()) {
+      activeRequirements.push('specials που ενισχύουν όλο το final team');
     }
 
     if (lockedCount) {
@@ -769,11 +853,11 @@ export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
 
   private resolveLeaderFailureLabel(): string {
     if (this.hasDualLeaders()) {
-      return ' με τους 2 selected leaders στα captain slots';
+      return ' με τους 2 selected leaders στα captain slots και μόνο units που ενισχύουν και οι 2 leaders';
     }
 
     if (this.hasSelectedLeaders()) {
-      return ' με τον selected leader και στα 2 captain slots';
+      return ' με τον selected leader και στα 2 captain slots και μόνο units που ενισχύει ο leader';
     }
 
     return '';

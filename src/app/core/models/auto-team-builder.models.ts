@@ -1,14 +1,28 @@
 import { type CharacterDetailRecord } from './optc.models';
 
 export const AUTO_TEAM_BUILDER_TYPES = ['DEX', 'STR', 'QCK', 'PSY', 'INT'] as const;
+export const AUTO_TEAM_BUILDER_CLASSES = [
+  'Booster',
+  'Cerebral',
+  'Driven',
+  'Evolver',
+  'Fighter',
+  'Free Spirit',
+  'Powerhouse',
+  'Shooter',
+  'Slasher',
+  'Striker',
+] as const;
 export const AUTO_TEAM_BUILDER_DEFAULT_TYPE = 'DEX';
 export const AUTO_TEAM_CANDIDATE_LIMIT = 1200;
 
 export type AutoTeamBuilderType = (typeof AUTO_TEAM_BUILDER_TYPES)[number];
+export type AutoTeamBuilderClass = (typeof AUTO_TEAM_BUILDER_CLASSES)[number];
 
 export interface AutoBuildConstraints {
   requireAllSelectedTypesInTeam?: boolean;
   requireAllSelectedClassesPerCharacter?: boolean;
+  requireAllSpecialsSupportTeam?: boolean;
   favoritesOnly?: boolean;
   favoriteCharacterIds?: number[];
   lockedCharacterIds?: number[];
@@ -42,6 +56,7 @@ export type AutoBuildUtilityRole =
 export interface AutoBuildInput extends AutoBuildConstraints {
   types: AutoTeamBuilderType[];
   selectedClasses: string[];
+  requireAllSpecialsSupportTeam: boolean;
   favoritesOnly: boolean;
   lockedCharacterIds: number[];
   captainCharacterId: number | null;
@@ -49,9 +64,23 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   candidateLimit?: number;
 }
 
+export interface AutoBuildSpecialScope {
+  allCharacters: boolean;
+  allowedClasses: string[];
+  allowedTypes: AutoTeamBuilderType[];
+  hasClassRestriction: boolean;
+  hasTypeRestriction: boolean;
+  hasExplicitTarget: boolean;
+  hasQualifyingEffect: boolean;
+}
+
 export interface AutoBuildEffectTags {
   captainScope: {
     allCharacters: boolean;
+    allowedClasses: string[];
+    allowedTypes: AutoTeamBuilderType[];
+    hasClassRestriction: boolean;
+    hasTypeRestriction: boolean;
     matchedSelectedClasses: string[];
     matchedSelectedClassCount: number;
     coversAllSelectedClasses: boolean;
@@ -60,6 +89,7 @@ export interface AutoBuildEffectTags {
     coversAllSelectedTypes: boolean;
     matchesClass: boolean;
   };
+  specialScope: AutoBuildSpecialScope;
   burstRoles: AutoBuildBurstRole[];
   consistencyRoles: AutoBuildConsistencyRole[];
   utilityRoles: AutoBuildUtilityRole[];
@@ -68,6 +98,30 @@ export interface AutoBuildEffectTags {
   readableCaptainText: boolean;
   readableSpecialText: boolean;
   readableSailorText: boolean;
+}
+
+export interface AutoBuildLeaderCriteriaSummary {
+  source: 'captainAbility';
+  captainLeaderId: number | null;
+  friendCaptainLeaderId: number | null;
+  leaderIds: number[];
+  leaderNames: string[];
+  dualLeaderMode: 'single' | 'intersection';
+  derivedAllowedClasses: string[];
+  derivedAllowedTypes: AutoTeamBuilderType[];
+  hasClassRestriction: boolean;
+  hasTypeRestriction: boolean;
+  matchingSlots: number;
+  totalSlots: number;
+  allSlotsMatch: boolean;
+}
+
+export interface AutoBuildSpecialSupportSummary {
+  source: 'specialText';
+  enabled: boolean;
+  matchingSlots: number;
+  totalSlots: number;
+  allSlotsMatch: boolean;
 }
 
 export interface AutoBuildCandidate {
@@ -92,6 +146,8 @@ export interface AutoBuildSlot {
 }
 
 export interface AutoBuildCoverageSummary {
+  leaderCriteria: AutoBuildLeaderCriteriaSummary;
+  specialSupport: AutoBuildSpecialSupportSummary;
   burst: string[];
   consistency: string[];
   utility: string[];

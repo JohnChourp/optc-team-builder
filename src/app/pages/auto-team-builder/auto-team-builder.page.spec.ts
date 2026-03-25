@@ -1,12 +1,66 @@
+import '@angular/compiler';
+import { signal } from '@angular/core';
 import { describe, expect, it, vi } from 'vitest';
+import { JSDOM } from 'jsdom';
 
 import { type AutoBuildResult } from '../../core/models/auto-team-builder.models';
-import { type CharacterDetailRecord } from '../../core/models/optc.models';
+import { type CharacterDetailRecord, type DatasetManifest } from '../../core/models/optc.models';
 import {
   buildAutoTeamExportFilename,
   buildAutoTeamExportPayload,
   downloadAutoTeamExport,
 } from './auto-team-builder-export.utils';
+
+vi.mock('@ionic/angular/standalone', () => ({
+  IonButton: class {},
+  IonContent: class {},
+  IonHeader: class {},
+  IonIcon: class {},
+  IonSearchbar: class {},
+  IonSelect: class {},
+  IonSelectOption: class {},
+  IonSpinner: class {},
+  IonTitle: class {},
+  IonToggle: class {},
+  IonToolbar: class {},
+}));
+
+describe('AutoTeamBuilderPage special-support toggle', () => {
+  it('passes the special-support toggle to the builder service', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.onRequireAllSpecialsSupportToggle({ detail: { checked: true } } as CustomEvent<{
+      checked: boolean;
+    }>);
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({
+        requireAllSpecialsSupportTeam: true,
+      }),
+    );
+  });
+
+  it('resets the special-support toggle when the page state is reset', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.onRequireAllSpecialsSupportToggle({ detail: { checked: true } } as CustomEvent<{
+      checked: boolean;
+    }>);
+
+    expect(page.requireAllSpecialsSupportTeam()).toBe(true);
+
+    await page.ionViewWillEnter();
+
+    expect(page.requireAllSpecialsSupportTeam()).toBe(false);
+  });
+});
 
 describe('AutoTeamBuilder export helpers', () => {
   it('builds the expected export payload for dual leaders with favorite flags', () => {
@@ -25,6 +79,7 @@ describe('AutoTeamBuilder export helpers', () => {
     expect(payload.effectiveInput).toBe(result.input);
     expect(payload.relaxation).toBe(result.relaxation);
     expect(payload.coverage).toBe(result.coverage);
+    expect(payload.coverage.leaderCriteria).toEqual(result.coverage.leaderCriteria);
     expect(payload.team).toHaveLength(6);
     expect(payload.team[0]).toMatchObject({
       slotIndex: 0,
@@ -78,18 +133,20 @@ describe('AutoTeamBuilder export helpers', () => {
   });
 
   it('does not start a download when the payload is missing', () => {
+    const dom = new JSDOM('<!doctype html><html><body></body></html>');
     const urlRef = {
       createObjectURL: vi.fn(),
       revokeObjectURL: vi.fn(),
     };
 
-    downloadAutoTeamExport(null, document, urlRef);
+    downloadAutoTeamExport(null, dom.window.document, urlRef);
 
     expect(urlRef.createObjectURL).not.toHaveBeenCalled();
     expect(urlRef.revokeObjectURL).not.toHaveBeenCalled();
   });
 
   it('downloads the current team as json with the expected filename and payload', async () => {
+    const dom = new JSDOM('<!doctype html><html><body></body></html>');
     const payload = buildAutoTeamExportPayload(
       createAutoBuildResult(),
       [101, 103],
@@ -98,7 +155,7 @@ describe('AutoTeamBuilder export helpers', () => {
       '2026-03-25T10:00:00.000Z',
     );
     const clickSpy = vi
-      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .spyOn(dom.window.HTMLAnchorElement.prototype, 'click')
       .mockImplementation(() => undefined);
     const urlRef = {
       createObjectURL: vi.fn((blob: Blob) => {
@@ -109,7 +166,7 @@ describe('AutoTeamBuilder export helpers', () => {
     };
     let downloadedBlob: Blob | null = null;
 
-    downloadAutoTeamExport(payload, document, urlRef);
+    downloadAutoTeamExport(payload, dom.window.document, urlRef);
 
     expect(urlRef.createObjectURL).toHaveBeenCalledOnce();
     expect(clickSpy).toHaveBeenCalledOnce();
@@ -202,6 +259,7 @@ function createAutoBuildResult(
     selectedClasses: ['Fighter', 'Slasher'],
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
+    requireAllSpecialsSupportTeam: false,
     favoritesOnly: false,
     lockedCharacterIds: [],
     captainCharacterId: 101,
@@ -224,6 +282,28 @@ function createAutoBuildResult(
     },
     candidateCount: 32,
     coverage: {
+      leaderCriteria: {
+        source: 'captainAbility',
+        captainLeaderId: 101,
+        friendCaptainLeaderId: 102,
+        leaderIds: [101, 102],
+        leaderNames: ['Character 101', 'Character 102'],
+        dualLeaderMode: 'intersection',
+        derivedAllowedClasses: ['Fighter', 'Slasher'],
+        derivedAllowedTypes: ['DEX', 'PSY'],
+        hasClassRestriction: true,
+        hasTypeRestriction: true,
+        matchingSlots: 6,
+        totalSlots: 6,
+        allSlotsMatch: true,
+      },
+      specialSupport: {
+        source: 'specialText',
+        enabled: false,
+        matchingSlots: 4,
+        totalSlots: 6,
+        allSlotsMatch: false,
+      },
       burst: ['ATK boost'],
       consistency: ['Matching orbs'],
       utility: ['Bind clear'],
@@ -235,5 +315,47 @@ function createAutoBuildResult(
       selectedTypeMatches: 6,
     },
     slots,
+  };
+}
+
+async function createPage(): Promise<{
+  page: any;
+  autoTeamBuilder: { buildTeam: ReturnType<typeof vi.fn> };
+}> {
+  const { AutoTeamBuilderPage } = await import('./auto-team-builder.page');
+  const repository = {
+    getDatasetManifest: vi.fn().mockResolvedValue(createManifest()),
+    searchCharacters: vi.fn().mockResolvedValue([]),
+  };
+  const autoTeamBuilder = {
+    buildTeam: vi.fn().mockResolvedValue(null),
+  };
+  const userState = {
+    favoriteCharacterIds: signal<number[]>([]),
+    ready: vi.fn().mockResolvedValue(undefined),
+    toggleFavorite: vi.fn().mockResolvedValue(undefined),
+  };
+
+  return {
+    page: new AutoTeamBuilderPage(
+      repository as never,
+      autoTeamBuilder as never,
+      userState as never,
+    ),
+    autoTeamBuilder,
+  };
+}
+
+function createManifest(): DatasetManifest {
+  return {
+    generatedAt: '2026-03-25T10:00:00.000Z',
+    sourceVersion: 'test',
+    characterCount: 10,
+    detailCount: 10,
+    shipCount: 1,
+    rumbleCount: 0,
+    availableTypes: ['DEX', 'PSY'],
+    availableClasses: ['Fighter', 'Slasher'],
+    packs: [],
   };
 }

@@ -1,4 +1,5 @@
 import {
+  AUTO_TEAM_BUILDER_CLASSES,
   AUTO_TEAM_BUILDER_TYPES,
   type AutoBuildBurstRole,
   type AutoBuildCandidate,
@@ -7,6 +8,9 @@ import {
   type AutoBuildCoverageSummary,
   type AutoBuildEffectTags,
   type AutoBuildInput,
+  type AutoBuildLeaderCriteriaSummary,
+  type AutoBuildSpecialScope,
+  type AutoBuildSpecialSupportSummary,
   type AutoBuildSlot,
   type AutoBuildUtilityRole,
   type AutoTeamBuilderType,
@@ -15,6 +19,7 @@ import { type CharacterDetailRecord } from '../models/optc.models';
 
 const CAPTAIN_ATK_PATTERN = /atk(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
 const CAPTAIN_HP_PATTERN = /hp(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
+const SCOPE_CLAUSE_PATTERN = /\b(?:of|for)\s+([^.;]{1,160}?)\s+(?:characters|units)\b/g;
 const TYPE_MATCH_PATTERNS = {
   DEX: ['[dex]', ' dex ', 'dex characters', 'dex units'],
   STR: ['[str]', ' str ', 'str characters', 'str units'],
@@ -44,6 +49,7 @@ const CHIP_LABELS = {
 const TEAM_MANUAL_LOCK_LIMIT = 5;
 const TEAM_SUB_SLOT_COUNT = 4;
 const LOCKED_REASON_CHIP = 'Manual lock';
+const TEAMWIDE_SPECIAL_REASON_CHIP = 'Teamwide special';
 
 interface TeamCoverageState {
   burst: Set<AutoBuildBurstRole>;
@@ -52,6 +58,11 @@ interface TeamCoverageState {
   selectedClasses: Set<string>;
   selectedTypes: Set<AutoTeamBuilderType>;
 }
+
+type ActiveLeaderCriteria = Omit<
+  AutoBuildLeaderCriteriaSummary,
+  'matchingSlots' | 'totalSlots' | 'allSlotsMatch'
+>;
 
 export function buildAutoTeamResult(
   records: CharacterDetailRecord[],
@@ -111,11 +122,7 @@ export function buildAutoTeamResult(
       : captainPoolBase;
   const captain = forcedCaptain ?? selectCaptain(captainPool);
 
-  if (!captain) {
-    return null;
-  }
-
-  if (!captain.tags.readableCaptainText) {
+  if (!captain || !captain.tags.readableCaptainText) {
     return null;
   }
 
@@ -126,19 +133,43 @@ export function buildAutoTeamResult(
   }
 
   const leaders = resolveUniqueCandidates([captain, friendCaptain]);
+  const leaderCriteria = resolveActiveLeaderCriteria(
+    leaders,
+    captain.character.id,
+    friendCaptain.character.id,
+  );
   const leaderCharacterIdSet = new Set(leaders.map((candidate) => candidate.character.id));
   const mandatoryLockedSubs = lockedCandidates.filter(
     (candidate) => !leaderCharacterIdSet.has(candidate.character.id),
   );
-  const subs = selectSubs(candidates, leaders, input, mandatoryLockedSubs);
+
+  if (
+    input.requireAllSpecialsSupportTeam &&
+    !areCandidatesMutuallySpecialCompatible([...leaders, ...mandatoryLockedSubs])
+  ) {
+    return null;
+  }
+
+  if (
+    mandatoryLockedSubs.some((candidate) => !matchesActiveLeaderCriteria(candidate, leaderCriteria))
+  ) {
+    return null;
+  }
+
+  const subs = selectSubs(candidates, leaders, input, leaderCriteria, mandatoryLockedSubs);
 
   if (subs.length < TEAM_SUB_SLOT_COUNT) {
     return null;
   }
 
-  const coverage = summarizeCoverage([captain, friendCaptain, ...subs], input);
+  const teamCandidates = [captain, friendCaptain, ...subs];
+  const coverage = summarizeCoverage(teamCandidates, input, leaderCriteria);
 
   if (input.requireAllSelectedTypesInTeam && !coverage.coversAllSelectedTypes) {
+    return null;
+  }
+
+  if (input.requireAllSpecialsSupportTeam && !coverage.specialSupport.allSlotsMatch) {
     return null;
   }
 
@@ -149,6 +180,7 @@ export function buildAutoTeamResult(
       reasonChips: resolveSlotReasonChips(
         captain.reasonChips,
         lockedCharacterIdSet.has(captain.character.id),
+        input.requireAllSpecialsSupportTeam && supportsTeamWithSpecial(captain, teamCandidates),
       ),
     },
     {
@@ -157,6 +189,8 @@ export function buildAutoTeamResult(
       reasonChips: resolveSlotReasonChips(
         friendCaptain.reasonChips,
         lockedCharacterIdSet.has(friendCaptain.character.id),
+        input.requireAllSpecialsSupportTeam &&
+          supportsTeamWithSpecial(friendCaptain, teamCandidates),
       ),
     },
     ...subs.map((candidate) => ({
@@ -165,6 +199,7 @@ export function buildAutoTeamResult(
       reasonChips: resolveSlotReasonChips(
         candidate.reasonChips,
         lockedCharacterIdSet.has(candidate.character.id),
+        input.requireAllSpecialsSupportTeam && supportsTeamWithSpecial(candidate, teamCandidates),
       ),
     })),
   ];
@@ -222,8 +257,8 @@ export function buildAutoBuildCandidate(
 export function hasReadableEffectText(record: CharacterDetailRecord): boolean {
   return Boolean(
     normalizeText(record.detail.captainAbility) ||
-    normalizeText(record.detail.specialText) ||
-    normalizeText(record.detail.sailorAbilities.join(' ')),
+      normalizeText(record.detail.specialText) ||
+      normalizeText(record.detail.sailorAbilities.join(' ')),
   );
 }
 
@@ -276,6 +311,7 @@ function selectSubs(
   candidates: AutoBuildCandidate[],
   leaders: AutoBuildCandidate[],
   input: AutoBuildInput,
+  leaderCriteria: ActiveLeaderCriteria,
   lockedSubs: AutoBuildCandidate[] = [],
 ): AutoBuildCandidate[] {
   const selected = resolveUniqueCandidates(lockedSubs);
@@ -299,6 +335,17 @@ function selectSubs(
     return [];
   }
 
+  if (selected.some((candidate) => !matchesActiveLeaderCriteria(candidate, leaderCriteria))) {
+    return [];
+  }
+
+  if (
+    input.requireAllSpecialsSupportTeam &&
+    !areCandidatesMutuallySpecialCompatible([...leaderCandidates, ...selected])
+  ) {
+    return [];
+  }
+
   const selectedIds = new Set(selected.map((candidate) => candidate.character.id));
   const coverage = createTeamCoverageState(leaderCandidates);
   selected.forEach((candidate) => applyCandidateCoverage(coverage, candidate));
@@ -306,12 +353,26 @@ function selectSubs(
     (candidate) =>
       !leaderCharacterIdSet.has(candidate.character.id) &&
       !selectedIds.has(candidate.character.id) &&
+      matchesActiveLeaderCriteria(candidate, leaderCriteria) &&
+      matchesMutualSpecialCompatibility(
+        candidate,
+        [...leaderCandidates, ...selected],
+        input.requireAllSpecialsSupportTeam,
+      ) &&
       (!input.requireAllSelectedClassesPerCharacter || candidate.matchesAllSelectedClasses),
   );
 
   while (selected.length < TEAM_SUB_SLOT_COUNT) {
     const next = pool
-      .filter((candidate) => !selectedIds.has(candidate.character.id))
+      .filter(
+        (candidate) =>
+          !selectedIds.has(candidate.character.id) &&
+          matchesMutualSpecialCompatibility(
+            candidate,
+            [...leaderCandidates, ...selected],
+            input.requireAllSpecialsSupportTeam,
+          ),
+      )
       .reduce<AutoBuildCandidate | null>((best, current) => {
         if (!best) {
           return current;
@@ -335,14 +396,22 @@ function selectSubs(
   return selected;
 }
 
-function resolveSlotReasonChips(reasonChips: string[], isLocked: boolean): string[] {
-  if (!isLocked) {
-    return reasonChips;
+function resolveSlotReasonChips(
+  reasonChips: string[],
+  isLocked: boolean,
+  hasTeamwideSpecialSupport = false,
+): string[] {
+  const nextChips = [...reasonChips];
+
+  if (hasTeamwideSpecialSupport && !nextChips.includes(TEAMWIDE_SPECIAL_REASON_CHIP)) {
+    nextChips.unshift(TEAMWIDE_SPECIAL_REASON_CHIP);
   }
 
-  return reasonChips.includes(LOCKED_REASON_CHIP)
-    ? reasonChips
-    : [LOCKED_REASON_CHIP, ...reasonChips].slice(0, 4);
+  if (isLocked && !nextChips.includes(LOCKED_REASON_CHIP)) {
+    nextChips.unshift(LOCKED_REASON_CHIP);
+  }
+
+  return nextChips.slice(0, 4);
 }
 
 function scoreCaptain(candidate: AutoBuildCandidate): number {
@@ -572,6 +641,61 @@ function scoreRolePresence<T extends string>(
   return alreadyCovered ? coveredWeight : missingWeight;
 }
 
+function resolveSpecialScope(specialText: string): AutoBuildSpecialScope {
+  const hasQualifyingEffect = hasQualifyingSpecialEffect(specialText);
+  const allCharacters =
+    hasQualifyingEffect &&
+    (includesAny(specialText, ['all characters', 'all units']) ||
+      hasCrewWideSpecialTarget(specialText));
+  const allowedClasses =
+    allCharacters || !hasQualifyingEffect ? [] : extractAllowedSpecialClasses(specialText);
+  const allowedTypes =
+    allCharacters || !hasQualifyingEffect ? [] : extractAllowedSpecialTypes(specialText);
+  const hasClassRestriction = !allCharacters && allowedClasses.length > 0;
+  const hasTypeRestriction = !allCharacters && allowedTypes.length > 0;
+
+  return {
+    allCharacters,
+    allowedClasses,
+    allowedTypes,
+    hasClassRestriction,
+    hasTypeRestriction,
+    hasExplicitTarget: allCharacters || hasClassRestriction || hasTypeRestriction,
+    hasQualifyingEffect,
+  };
+}
+
+function hasQualifyingSpecialEffect(specialText: string): boolean {
+  return Boolean(
+    specialText.length &&
+      (textHasAtkBoost(specialText) ||
+        includesAny(specialText, ['orb effects', 'slot effect']) ||
+        specialText.includes('color affinity') ||
+        includesAny(specialText, [
+          'boosts the chain multiplier',
+          'boost chain',
+          'chain multiplier by +',
+        ]) ||
+        includesAny(specialText, ['conditional', 'against enemies with', 'if the enemy is']) ||
+        specialText.includes('matching orbs') ||
+      (specialText.includes('changes') && specialText.includes('orbs'))),
+  );
+}
+
+function hasCrewWideSpecialTarget(specialText: string): boolean {
+  return includesAny(specialText, [
+    'changes crew orbs',
+    'crew orbs into matching orbs',
+    'boosts atk of crew',
+    'boosts orb effects of crew',
+    'boosts slot effect of crew',
+    'boosts color affinity of crew',
+    'boosts the chain multiplier of crew',
+    'boost chain of crew',
+    'conditional boost of crew',
+  ]);
+}
+
 function parseEffectTags(
   input: AutoBuildInput,
   captainText: string,
@@ -610,16 +734,27 @@ function parseEffectTags(
     includesAny(combinedText, ['threshold damage reduction']) ? 'threshold' : null,
     includesAny(combinedText, ['defense down', 'reduces the defense']) ? 'defenseDown' : null,
   ]);
-  const matchedSelectedClasses = selectedClasses.filter((selectedClass) =>
-    textMatchesClassScope(captainText, selectedClass),
-  );
-  const matchedSelectedTypes = selectedTypes.filter((type) =>
-    textMatchesTypeScope(captainText, type),
-  );
+  const allCharacters = includesAny(captainText, ['all characters', 'all units']);
+  const allowedClasses = allCharacters ? [] : extractAllowedCaptainClasses(captainText);
+  const allowedTypes = allCharacters ? [] : extractAllowedCaptainTypes(captainText);
+  const matchedSelectedClasses = allCharacters
+    ? [...selectedClasses]
+    : selectedClasses.filter((selectedClass) =>
+        allowedClasses.some(
+          (allowedClass) => allowedClass.toLowerCase() === selectedClass.toLowerCase(),
+        ),
+      );
+  const matchedSelectedTypes = allCharacters
+    ? [...selectedTypes]
+    : selectedTypes.filter((type) => allowedTypes.includes(type));
 
   return {
     captainScope: {
-      allCharacters: includesAny(captainText, ['all characters', 'all units']),
+      allCharacters,
+      allowedClasses,
+      allowedTypes,
+      hasClassRestriction: !allCharacters && allowedClasses.length > 0,
+      hasTypeRestriction: !allCharacters && allowedTypes.length > 0,
       matchedSelectedClasses,
       matchedSelectedClassCount: matchedSelectedClasses.length,
       coversAllSelectedClasses:
@@ -630,6 +765,7 @@ function parseEffectTags(
         selectedTypes.length > 0 && matchedSelectedTypes.length === selectedTypes.length,
       matchesClass: matchedSelectedClasses.length > 0,
     },
+    specialScope: resolveSpecialScope(specialText),
     burstRoles,
     consistencyRoles,
     utilityRoles,
@@ -684,6 +820,7 @@ function pushChips(
 function summarizeCoverage(
   candidates: AutoBuildCandidate[],
   input: AutoBuildInput,
+  leaderCriteria: ActiveLeaderCriteria,
 ): AutoBuildCoverageSummary {
   const burst = new Set<AutoBuildBurstRole>();
   const consistency = new Set<AutoBuildConsistencyRole>();
@@ -707,6 +844,8 @@ function summarizeCoverage(
   const coveredTypesList = input.types.filter((type) => coveredSelectedTypes.has(type));
 
   return {
+    leaderCriteria: summarizeLeaderCriteria(candidates, leaderCriteria),
+    specialSupport: summarizeSpecialSupport(candidates, input.requireAllSpecialsSupportTeam),
     burst: [...burst].map((role) => CHIP_LABELS[role]),
     consistency: [...consistency].map((role) => CHIP_LABELS[role]),
     utility: [...utility].map((role) => CHIP_LABELS[role]),
@@ -742,6 +881,78 @@ function createTeamCoverageState(leaders: AutoBuildCandidate[]): TeamCoverageSta
 
   leaders.forEach((leader) => applyCandidateCoverage(coverage, leader));
   return coverage;
+}
+
+function summarizeSpecialSupport(
+  candidates: AutoBuildCandidate[],
+  enabled: boolean,
+): AutoBuildSpecialSupportSummary {
+  const matchingSlots = candidates.filter((candidate) => supportsTeamWithSpecial(candidate, candidates))
+    .length;
+
+  return {
+    source: 'specialText',
+    enabled,
+    matchingSlots,
+    totalSlots: candidates.length,
+    allSlotsMatch: matchingSlots === candidates.length,
+  };
+}
+
+function areCandidatesMutuallySpecialCompatible(candidates: AutoBuildCandidate[]): boolean {
+  return candidates.every((candidate) =>
+    candidates.every((targetCandidate) => supportsCandidateWithSpecial(candidate, targetCandidate)),
+  );
+}
+
+function matchesMutualSpecialCompatibility(
+  candidate: AutoBuildCandidate,
+  selectedCandidates: AutoBuildCandidate[],
+  enabled: boolean,
+): boolean {
+  return !enabled || areCandidatesMutuallySpecialCompatible([...selectedCandidates, candidate]);
+}
+
+function supportsTeamWithSpecial(
+  candidate: AutoBuildCandidate,
+  teamCandidates: AutoBuildCandidate[],
+): boolean {
+  return teamCandidates.every((targetCandidate) =>
+    supportsCandidateWithSpecial(candidate, targetCandidate),
+  );
+}
+
+function supportsCandidateWithSpecial(
+  sourceCandidate: AutoBuildCandidate,
+  targetCandidate: AutoBuildCandidate,
+): boolean {
+  const { specialScope } = sourceCandidate.tags;
+
+  if (!specialScope.hasQualifyingEffect) {
+    return false;
+  }
+
+  if (specialScope.allCharacters) {
+    return true;
+  }
+
+  if (!specialScope.hasExplicitTarget) {
+    return false;
+  }
+
+  const matchesClassScope = specialScope.hasClassRestriction
+    ? targetCandidate.character.classes.some((characterClass) =>
+        specialScope.allowedClasses.some(
+          (allowedClass) => allowedClass.toLowerCase() === characterClass.toLowerCase(),
+        ),
+      )
+    : true;
+  const targetTypes = resolveCharacterTypeTokens(targetCandidate.character.type);
+  const matchesTypeScope = specialScope.hasTypeRestriction
+    ? targetTypes.some((type) => specialScope.allowedTypes.includes(type))
+    : true;
+
+  return matchesClassScope && matchesTypeScope;
 }
 
 function resolveUniqueCandidates(candidates: AutoBuildCandidate[]): AutoBuildCandidate[] {
@@ -828,9 +1039,137 @@ export function resolveCharacterTypeTokens(typeValue: string): AutoTeamBuilderTy
   );
 }
 
+function resolveActiveLeaderCriteria(
+  leaders: AutoBuildCandidate[],
+  captainLeaderId: number | null,
+  friendCaptainLeaderId: number | null,
+): ActiveLeaderCriteria {
+  const uniqueLeaders = resolveUniqueCandidates(leaders);
+  const classScope = resolveIntersectedLeaderDimension(
+    uniqueLeaders,
+    AUTO_TEAM_BUILDER_CLASSES,
+    (leader) => leader.tags.captainScope.allowedClasses,
+    (leader) => leader.tags.captainScope.hasClassRestriction,
+  );
+  const typeScope = resolveIntersectedLeaderDimension(
+    uniqueLeaders,
+    AUTO_TEAM_BUILDER_TYPES,
+    (leader) => leader.tags.captainScope.allowedTypes,
+    (leader) => leader.tags.captainScope.hasTypeRestriction,
+  );
+
+  return {
+    source: 'captainAbility',
+    captainLeaderId,
+    friendCaptainLeaderId,
+    leaderIds: uniqueLeaders.map((leader) => leader.character.id),
+    leaderNames: uniqueLeaders.map((leader) => leader.character.name),
+    dualLeaderMode: uniqueLeaders.length > 1 ? 'intersection' : 'single',
+    derivedAllowedClasses: classScope.values,
+    derivedAllowedTypes: typeScope.values,
+    hasClassRestriction: classScope.restricted,
+    hasTypeRestriction: typeScope.restricted,
+  };
+}
+
+function resolveIntersectedLeaderDimension<T extends string>(
+  leaders: AutoBuildCandidate[],
+  orderedValues: readonly T[],
+  resolveAllowedValues: (leader: AutoBuildCandidate) => readonly T[],
+  hasRestriction: (leader: AutoBuildCandidate) => boolean,
+): { values: T[]; restricted: boolean } {
+  const restrictedScopes = leaders
+    .filter((leader) => hasRestriction(leader))
+    .map((leader) => new Set(resolveAllowedValues(leader)));
+
+  if (!restrictedScopes.length) {
+    return {
+      values: [],
+      restricted: false,
+    };
+  }
+
+  return {
+    values: orderedValues.filter((value) => restrictedScopes.every((scope) => scope.has(value))),
+    restricted: true,
+  };
+}
+
+function summarizeLeaderCriteria(
+  candidates: AutoBuildCandidate[],
+  leaderCriteria: ActiveLeaderCriteria,
+): AutoBuildLeaderCriteriaSummary {
+  const matchingSlots = candidates.filter((candidate) =>
+    matchesActiveLeaderCriteria(candidate, leaderCriteria),
+  ).length;
+
+  return {
+    ...leaderCriteria,
+    matchingSlots,
+    totalSlots: candidates.length,
+    allSlotsMatch: matchingSlots === candidates.length,
+  };
+}
+
+function matchesActiveLeaderCriteria(
+  candidate: AutoBuildCandidate,
+  leaderCriteria: ActiveLeaderCriteria,
+): boolean {
+  const matchesClassScope = leaderCriteria.hasClassRestriction
+    ? candidate.character.classes.some((characterClass) =>
+        leaderCriteria.derivedAllowedClasses.some(
+          (allowedClass) => allowedClass.toLowerCase() === characterClass.toLowerCase(),
+        ),
+      )
+    : true;
+  const characterTypes = resolveCharacterTypeTokens(candidate.character.type);
+  const matchesTypeScope = leaderCriteria.hasTypeRestriction
+    ? characterTypes.some((type) => leaderCriteria.derivedAllowedTypes.includes(type))
+    : true;
+
+  return matchesClassScope && matchesTypeScope;
+}
+
+function extractAllowedCaptainClasses(captainText: string): string[] {
+  return extractAllowedScopeClasses(captainText);
+}
+
+function extractAllowedCaptainTypes(captainText: string): AutoTeamBuilderType[] {
+  return extractAllowedScopeTypes(captainText);
+}
+
+function extractAllowedSpecialClasses(specialText: string): string[] {
+  return extractAllowedScopeClasses(specialText);
+}
+
+function extractAllowedSpecialTypes(specialText: string): AutoTeamBuilderType[] {
+  return extractAllowedScopeTypes(specialText);
+}
+
+function extractAllowedScopeClasses(text: string): string[] {
+  const clauses = extractScopeClauses(text);
+
+  return AUTO_TEAM_BUILDER_CLASSES.filter((characterClass) =>
+    clauses.some((clause) => textMatchesClassScope(clause, characterClass)),
+  );
+}
+
+function extractAllowedScopeTypes(text: string): AutoTeamBuilderType[] {
+  const clauses = extractScopeClauses(text);
+
+  return AUTO_TEAM_BUILDER_TYPES.filter((type) =>
+    clauses.some((clause) => textMatchesTypeScope(clause, type)),
+  );
+}
+
+function extractScopeClauses(text: string): string[] {
+  return [...text.matchAll(SCOPE_CLAUSE_PATTERN)]
+    .map((match) => normalizeText(match[1]))
+    .filter(Boolean);
+}
+
 function textMatchesClassScope(text: string, selectedClass: string): boolean {
-  const normalizedSelectedClass = normalizeText(selectedClass);
-  return normalizedSelectedClass.length > 0 && text.includes(normalizedSelectedClass);
+  return textHasLabelToken(text, selectedClass);
 }
 
 function extractHighestMultiplier(text: string, pattern: RegExp): number {
@@ -852,6 +1191,17 @@ function textMatchesTypeScope(text: string, type: AutoTeamBuilderType): boolean 
     includesAny(text, [...TYPE_MATCH_PATTERNS[type]]) ||
     new RegExp(`(?:^|[^a-z])${escapedType}(?:[^a-z]|$)`, 'i').test(text)
   );
+}
+
+function textHasLabelToken(text: string, value: string): boolean {
+  const normalizedValue = normalizeText(value);
+
+  if (!normalizedValue.length) {
+    return false;
+  }
+
+  const escapedValue = normalizedValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?:^|[^a-z])${escapedValue}(?:[^a-z]|$)`, 'i').test(text);
 }
 
 function uniqueRoles<T extends string>(roles: Array<T | null>): T[] {

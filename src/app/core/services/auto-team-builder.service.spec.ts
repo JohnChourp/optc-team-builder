@@ -34,6 +34,10 @@ describe('Auto team builder', () => {
       1,
     );
 
+    expect(candidate.tags.captainScope.allowedClasses).toEqual(['Fighter', 'Slasher']);
+    expect(candidate.tags.captainScope.allowedTypes).toEqual(['DEX']);
+    expect(candidate.tags.captainScope.hasClassRestriction).toBe(true);
+    expect(candidate.tags.captainScope.hasTypeRestriction).toBe(true);
     expect(candidate.tags.captainScope.matchedSelectedClasses).toEqual(['Fighter', 'Slasher']);
     expect(candidate.tags.captainScope.coversAllSelectedClasses).toBe(true);
     expect(candidate.tags.captainScope.matchedSelectedTypes).toEqual(['DEX']);
@@ -152,6 +156,139 @@ describe('Auto team builder', () => {
     expect(result?.slots[1]?.character.id).toBe(5925);
     expect(result?.coverage.selectedClassMatches).toBe(6);
     expect(result?.coverage.selectedTypeMatches).toBe(6);
+  });
+
+  it('builds Kaido teams only from the classes boosted by the selected leader', () => {
+    const result = buildAutoTeamResult(createKaidoLeaderTeamRecords(), {
+      ...createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], ['Powerhouse', 'Striker'], {
+        lockedCharacterIds: [2700],
+        captainCharacterId: 2700,
+        friendCaptainCharacterId: 2700,
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.leaderCriteria.derivedAllowedClasses).toEqual([
+      'Powerhouse',
+      'Striker',
+    ]);
+    expect(result?.coverage.leaderCriteria.hasClassRestriction).toBe(true);
+    expect(result?.coverage.leaderCriteria.hasTypeRestriction).toBe(false);
+    expect(result?.coverage.leaderCriteria.matchingSlots).toBe(6);
+    expect(result?.slots.every((slot) =>
+      slot.character.classes.some((characterClass) =>
+        ['Powerhouse', 'Striker'].includes(characterClass),
+      ),
+    )).toBe(true);
+    expect(result?.slots.some((slot) => slot.character.id === 2705)).toBe(false);
+  });
+
+  it('fails when a locked sub is outside the active leader scope', () => {
+    const result = buildAutoTeamResult(createKaidoLeaderTeamRecords(), {
+      ...createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], ['Powerhouse', 'Striker'], {
+        lockedCharacterIds: [2700, 2705],
+        captainCharacterId: 2700,
+        friendCaptainCharacterId: 2700,
+      }),
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it('intersects dual leader class scope before filling subs', () => {
+    const result = buildAutoTeamResult(createIntersectedLeaderTeamRecords(), {
+      ...createInput(['DEX', 'PSY'], ['Powerhouse'], {
+        lockedCharacterIds: [2710, 2711],
+        captainCharacterId: 2710,
+        friendCaptainCharacterId: 2711,
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.leaderCriteria.dualLeaderMode).toBe('intersection');
+    expect(result?.coverage.leaderCriteria.derivedAllowedClasses).toEqual(['Powerhouse']);
+    expect(result?.slots.slice(2).every((slot) => slot.character.classes.includes('Powerhouse'))).toBe(
+      true,
+    );
+    expect(result?.slots.some((slot) => slot.character.id === 2716)).toBe(false);
+  });
+
+  it('falls back to generic roster selection when captain ability has no clear scope', () => {
+    const result = buildAutoTeamResult(createScopeFreeLeaderTeamRecords(), {
+      ...createInput(['DEX', 'PSY'], ['Fighter'], {
+        lockedCharacterIds: [2720],
+        captainCharacterId: 2720,
+        friendCaptainCharacterId: 2720,
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.leaderCriteria.hasClassRestriction).toBe(false);
+    expect(result?.coverage.leaderCriteria.hasTypeRestriction).toBe(false);
+    expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
+    expect(result?.slots.some((slot) => slot.character.id === 2724)).toBe(true);
+  });
+
+  it('keeps the existing selection behavior when the special-support toggle is off', () => {
+    const result = buildAutoTeamResult(
+      createStrictMixedTeamRecords(),
+      createInput(['DEX', 'PSY'], ['Fighter', 'Slasher']),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.specialSupport.enabled).toBe(false);
+    expect(result?.coverage.specialSupport.allSlotsMatch).toBe(false);
+  });
+
+  it('accepts restricted specials when they cover the full final team', () => {
+    const result = buildAutoTeamResult(createTeamwideSpecialScopedRecords(), {
+      ...createInput(['DEX', 'PSY'], ['Fighter', 'Slasher'], {
+        requireAllSpecialsSupportTeam: true,
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.specialSupport.enabled).toBe(true);
+    expect(result?.coverage.specialSupport.allSlotsMatch).toBe(true);
+    expect(result?.slots.every((slot) => slot.reasonChips.includes('Teamwide special'))).toBe(
+      true,
+    );
+  });
+
+  it('rejects teams when even one slot lacks teamwide special support', () => {
+    const result = buildAutoTeamResult(createStrictMixedTeamRecords(), {
+      ...createInput(['DEX', 'PSY'], ['Fighter', 'Slasher'], {
+        requireAllSpecialsSupportTeam: true,
+      }),
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it('fails when selected dual leaders are not mutually special-compatible', () => {
+    const result = buildAutoTeamResult(createDualLeaderSpecialMismatchRecords(), {
+      ...createInput(['DEX', 'PSY'], ['Fighter'], {
+        lockedCharacterIds: [5940, 5941],
+        captainCharacterId: 5940,
+        friendCaptainCharacterId: 5941,
+        requireAllSpecialsSupportTeam: true,
+      }),
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it('fails when a locked sub special does not support the full final team', () => {
+    const result = buildAutoTeamResult(createLockedSpecialMismatchRecords(), {
+      ...createInput(['DEX', 'PSY'], ['Fighter', 'Slasher'], {
+        lockedCharacterIds: [5940, 5946],
+        captainCharacterId: 5940,
+        friendCaptainCharacterId: 5940,
+        requireAllSpecialsSupportTeam: true,
+      }),
+    });
+
+    expect(result).toBeNull();
   });
 
   it('prefers universal captains over partial multi-type captains', () => {
@@ -451,6 +588,7 @@ describe('Auto team builder', () => {
 
     expect(result?.input.requireAllSelectedTypesInTeam).toBe(false);
     expect(result?.input.requireAllSelectedClassesPerCharacter).toBe(false);
+    expect(result?.input.requireAllSpecialsSupportTeam).toBe(false);
     expect(result?.input.favoritesOnly).toBe(false);
     expect(result?.input.lockedCharacterIds).toEqual([]);
     expect(result?.requestedInput.lockedCharacterIds).toEqual([]);
@@ -572,6 +710,24 @@ describe('Auto team builder', () => {
     });
   });
 
+  it('relaxes class coverage without dropping the special-support requirement', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createTeamwideSpecialScopedRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Shooter'], ['DEX', 'PSY'], {
+      requireAllSpecialsSupportTeam: true,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.requestedInput.selectedClasses).toEqual(['Fighter', 'Shooter']);
+    expect(result?.input.selectedClasses).toEqual(['Fighter']);
+    expect(result?.input.requireAllSpecialsSupportTeam).toBe(true);
+    expect(result?.coverage.specialSupport.enabled).toBe(true);
+    expect(result?.coverage.specialSupport.allSlotsMatch).toBe(true);
+  });
+
   it('drops the weakest uncovered type in flexible mode when exact type coverage fails', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
@@ -666,6 +822,7 @@ function createInput(
       AutoBuildInput,
       | 'requireAllSelectedTypesInTeam'
       | 'requireAllSelectedClassesPerCharacter'
+      | 'requireAllSpecialsSupportTeam'
       | 'favoritesOnly'
       | 'lockedCharacterIds'
       | 'captainCharacterId'
@@ -674,6 +831,7 @@ function createInput(
   > = {
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
+    requireAllSpecialsSupportTeam: false,
     favoritesOnly: false,
     lockedCharacterIds: [],
     captainCharacterId: null,
@@ -685,6 +843,7 @@ function createInput(
     selectedClasses,
     requireAllSelectedTypesInTeam: overrides.requireAllSelectedTypesInTeam ?? false,
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
+    requireAllSpecialsSupportTeam: overrides.requireAllSpecialsSupportTeam ?? false,
     favoritesOnly: overrides.favoritesOnly ?? false,
     lockedCharacterIds: overrides.lockedCharacterIds ?? [],
     captainCharacterId: overrides.captainCharacterId ?? null,
@@ -929,6 +1088,315 @@ function createDualLeaderMixedTeamRecords(): CharacterDetailRecord[] {
           'Boosts ATK of DEX, PSY, Fighter and Slasher characters by 4.8x and HP by 1.25x.',
         specialText:
           'Boosts color affinity of DEX and PSY characters by 2x for 1 turn and changes adjacent orbs into Matching Orbs.',
+      },
+    }),
+  ];
+}
+
+function createKaidoLeaderTeamRecords(): CharacterDetailRecord[] {
+  return [
+    createCharacterRecord({
+      id: 2700,
+      name: 'Kaido - The Strongest Creature Alive',
+      type: 'DEX',
+      primaryClass: 'Powerhouse',
+      secondaryClass: 'Striker',
+      detail: {
+        captainAbility:
+          "Reduces Special Cooldown of Striker and Powerhouse characters by 2 turns at the start of the fight boosts ATK of Striker and Powerhouse characters by 4x, their HP by 1.25x, and deals 400x character's ATK in [DEX] damage to all enemies at the end of each turn. At the start of the fight, this character activates their own special.",
+        specialText:
+          "Deals 20% of enemies' current HP in damage to all enemies and deals 400x character's ATK in [DEX] damage to all enemies at the end of each turn for 99+ turns.",
+      },
+    }),
+    createCharacterRecord({
+      id: 2701,
+      type: 'STR',
+      primaryClass: 'Powerhouse',
+      detail: {
+        specialText: 'Boosts ATK of Powerhouse characters by 2.5x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 2702,
+      type: 'QCK',
+      primaryClass: 'Striker',
+      detail: {
+        specialText: 'Boosts color affinity of Striker characters by 2x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 2703,
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Powerhouse',
+      detail: {
+        specialText: 'Reduces Bind and Despair duration by 5 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 2704,
+      type: 'INT',
+      primaryClass: 'Striker',
+      secondaryClass: 'Cerebral',
+      detail: {
+        specialText: 'Changes crew orbs into Matching Orbs and reduces Special Cooldown by 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 2705,
+      type: 'DEX',
+      primaryClass: 'Cerebral',
+      secondaryClass: 'Driven',
+      detail: {
+        specialText:
+          'Boosts ATK of Cerebral and Driven characters by 2.5x for 1 turn and boosts orb effects by 2.25x.',
+      },
+    }),
+  ];
+}
+
+function createIntersectedLeaderTeamRecords(): CharacterDetailRecord[] {
+  return [
+    createCharacterRecord({
+      id: 2710,
+      type: 'DEX',
+      primaryClass: 'Powerhouse',
+      secondaryClass: 'Striker',
+      detail: {
+        captainAbility:
+          'Boosts ATK of DEX, PSY, Powerhouse and Striker characters by 5x and HP by 1.3x.',
+        specialText: 'Boosts orb effects of Powerhouse characters by 2x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 2711,
+      type: 'PSY',
+      primaryClass: 'Powerhouse',
+      secondaryClass: 'Cerebral',
+      detail: {
+        captainAbility:
+          'Boosts ATK of DEX, PSY, Powerhouse and Cerebral characters by 4.8x and HP by 1.25x.',
+        specialText: 'Boosts color affinity of Powerhouse characters by 2x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 2712,
+      type: 'DEX',
+      primaryClass: 'Powerhouse',
+      secondaryClass: 'Fighter',
+      detail: {
+        specialText: 'Boosts ATK of Powerhouse characters by 2.25x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 2713,
+      type: 'PSY',
+      primaryClass: 'Driven',
+      secondaryClass: 'Powerhouse',
+      detail: {
+        specialText: 'Reduces Bind and Despair duration by 5 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 2714,
+      type: 'DEX',
+      primaryClass: 'Powerhouse',
+      secondaryClass: 'Slasher',
+      detail: {
+        specialText: 'Changes crew orbs into Matching Orbs and reduces Special Cooldown by 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 2715,
+      type: 'PSY',
+      primaryClass: 'Powerhouse',
+      secondaryClass: 'Shooter',
+      detail: {
+        specialText: 'Boosts color affinity of DEX and PSY characters by 2x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 2716,
+      type: 'PSY',
+      primaryClass: 'Striker',
+      secondaryClass: 'Cerebral',
+      detail: {
+        specialText:
+          'Boosts ATK of Striker and Cerebral characters by 2.75x for 1 turn and boosts orb effects by 2.5x.',
+      },
+    }),
+  ];
+}
+
+function createScopeFreeLeaderTeamRecords(): CharacterDetailRecord[] {
+  return [
+    createCharacterRecord({
+      id: 2720,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      detail: {
+        captainAbility: 'Boosts ATK by 5x and HP by 1.3x and reduces Special Cooldown by 1 turn.',
+        specialText: 'Boosts orb effects by 2x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 2721,
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: 'Boosts ATK of Fighter characters by 2.25x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 2722,
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      detail: {
+        specialText: 'Boosts color affinity of DEX characters by 2x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 2723,
+      type: 'PSY',
+      primaryClass: 'Cerebral',
+      detail: {
+        specialText: 'Reduces Bind and Despair duration by 5 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 2724,
+      type: 'DEX',
+      primaryClass: 'Driven',
+      detail: {
+        specialText: 'Changes crew orbs into Matching Orbs and reduces Special Cooldown by 1 turn.',
+      },
+    }),
+  ];
+}
+
+function createTeamwideSpecialScopedRecords(): CharacterDetailRecord[] {
+  return [
+    createCharacterRecord({
+      id: 5940,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Slasher',
+      detail: {
+        captainAbility:
+          'Boosts ATK of DEX, PSY, Fighter and Slasher characters by 5x and HP by 1.3x.',
+        specialText:
+          'Boosts orb effects of Fighter and Slasher characters by 2.25x for 1 turn and boosts the chain multiplier of Fighter and Slasher characters by +1.1 for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 5941,
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Slasher',
+      detail: {
+        specialText: 'Boosts ATK of Fighter and Slasher characters by 2.5x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 5942,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Slasher',
+      detail: {
+        specialText: 'Boosts color affinity of Fighter and Slasher characters by 2x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 5943,
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Slasher',
+      detail: {
+        specialText:
+          'Boosts the chain multiplier of Fighter and Slasher characters by +1.3 for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 5944,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Slasher',
+      detail: {
+        specialText: 'Changes crew orbs into Matching Orbs.',
+      },
+    }),
+  ];
+}
+
+function createDualLeaderSpecialMismatchRecords(): CharacterDetailRecord[] {
+  return [
+    createCharacterRecord({
+      id: 5940,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Slasher',
+      detail: {
+        captainAbility:
+          'Boosts ATK of DEX, PSY and Fighter characters by 5x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.',
+        specialText: 'Boosts ATK of Fighter characters by 2.5x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 5941,
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      detail: {
+        captainAbility:
+          'Boosts ATK of DEX, PSY and Fighter characters by 4.8x and HP by 1.25x, reduces Special Cooldown of crew by 1 turn.',
+        specialText: 'Boosts color affinity of Shooter characters by 2x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 5942,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: 'Boosts orb effects of Fighter characters by 2x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 5943,
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: 'Boosts the chain multiplier of Fighter characters by +1.1 for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 5944,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: 'Changes crew orbs into Matching Orbs.',
+      },
+    }),
+    createCharacterRecord({
+      id: 5945,
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: 'Boosts ATK of Fighter characters by 2.25x for 1 turn.',
+      },
+    }),
+  ];
+}
+
+function createLockedSpecialMismatchRecords(): CharacterDetailRecord[] {
+  return [
+    ...createTeamwideSpecialScopedRecords(),
+    createCharacterRecord({
+      id: 5946,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Slasher',
+      detail: {
+        specialText: 'Boosts ATK of Shooter characters by 2.5x for 1 turn.',
       },
     }),
   ];

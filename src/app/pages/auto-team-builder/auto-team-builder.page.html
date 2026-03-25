@@ -148,6 +148,19 @@
         ></ion-toggle>
       </div>
 
+      <div class="strict-toggle-row">
+        <div class="strict-toggle-copy">
+          <strong>{{ specialSupportToggleLabel }}</strong>
+          <small>{{ specialSupportLabel() }}</small>
+        </div>
+        <ion-toggle
+          color="warning"
+          [checked]="requireAllSpecialsSupportTeam()"
+          [disabled]="building()"
+          (ionChange)="onRequireAllSpecialsSupportToggle($event)"
+        ></ion-toggle>
+      </div>
+
       <p *ngIf="buildBlockedByFavorites()" class="favorites-only-warning">
         {{ favoritesOnlyBlockedMessage }}
       </p>
@@ -379,9 +392,49 @@
               <small class="coverage-chip summary-status-chip">{{ selectedTypeSummaryLabel() }}</small>
             </div>
           </div>
+
+          <div>
+            <span>Leader scope</span>
+            <div class="chip-row">
+              <small class="coverage-chip summary-status-chip">{{
+                leaderCriteriaScopeSummaryLabel()
+              }}</small>
+            </div>
+          </div>
+
+          <div>
+            <span>Special support</span>
+            <div class="chip-row">
+              <small class="coverage-chip summary-status-chip">{{
+                specialSupportSummaryLabel()
+              }}</small>
+            </div>
+          </div>
         </div>
 
         <div class="coverage-groups">
+          <div>
+            <span>Leader source</span>
+            <div class="chip-row">
+              <small class="coverage-chip">{{ leaderCriteriaSourceLabel() }}</small>
+              <small class="coverage-chip">{{ leaderCriteriaLeadersLabel() }}</small>
+            </div>
+          </div>
+
+          <div>
+            <span>Leader classes</span>
+            <div class="chip-row">
+              <small class="coverage-chip">{{ leaderCriteriaClassesLabel() }}</small>
+            </div>
+          </div>
+
+          <div>
+            <span>Leader types</span>
+            <div class="chip-row">
+              <small class="coverage-chip">{{ leaderCriteriaTypesLabel() }}</small>
+            </div>
+          </div>
+
           <div>
             <span>Class coverage</span>
             <div class="chip-row">
