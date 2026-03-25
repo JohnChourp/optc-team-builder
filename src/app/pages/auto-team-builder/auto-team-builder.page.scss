@@ -57,11 +57,16 @@
   gap: 14px;
 }
 
+.controls-grid > * {
+  min-width: 0;
+}
+
 .fixed-type-card,
 .class-select-card,
 .summary-card {
   display: grid;
   gap: 8px;
+  min-width: 0;
   padding: 16px;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.04);
@@ -89,25 +94,34 @@
   align-items: center;
   justify-content: space-between;
   gap: 14px;
+  min-width: 0;
   padding: 12px 14px;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.05);
 }
 
+.strict-toggle-row--filter {
+  align-items: flex-start;
+}
+
 .strict-toggle-copy {
   display: grid;
+  flex: 1;
   gap: 4px;
+  min-width: 0;
 }
 
 .strict-toggle-copy strong {
   color: #ffffff;
   font-size: 0.92rem;
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .strict-toggle-copy small {
   color: rgba(248, 251, 255, 0.62);
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .type-action-row {
@@ -125,12 +139,15 @@
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 2px;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .selected-value-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  max-width: 100%;
   padding: 7px 12px;
   border-radius: 999px;
   border: 1px solid rgba(245, 200, 76, 0.36);
@@ -427,6 +444,11 @@ ion-select {
   --border-radius: 18px;
   --color: #f8fbff;
   --highlight-color-focused: rgba(245, 200, 76, 0.8);
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 
 ion-searchbar {
@@ -443,6 +465,10 @@ ion-toggle {
   --track-background-checked: rgba(245, 200, 76, 0.36);
   --handle-background: #ffffff;
   flex-shrink: 0;
+}
+
+.strict-toggle-row--filter ion-toggle {
+  margin-top: 2px;
 }
 
 @media (min-width: 768px) {

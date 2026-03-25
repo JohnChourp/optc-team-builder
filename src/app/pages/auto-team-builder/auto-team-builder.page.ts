@@ -13,6 +13,7 @@ import {
   IonToggle,
   IonToolbar,
 } from '@ionic/angular/standalone';
+import { type ViewWillEnter } from '@ionic/angular';
 import {
   heart,
   heartOutline,
@@ -22,7 +23,6 @@ import {
 } from 'ionicons/icons';
 
 import {
-  AUTO_TEAM_BUILDER_DEFAULT_TYPE,
   AUTO_TEAM_BUILDER_TYPES,
   type AutoBuildResult,
   type AutoTeamBuilderType,
@@ -52,11 +52,11 @@ import { UserStateService } from '../../core/services/user-state.service';
   templateUrl: './auto-team-builder.page.html',
   styleUrl: './auto-team-builder.page.scss',
 })
-export class AutoTeamBuilderPage implements OnInit {
+export class AutoTeamBuilderPage implements OnInit, ViewWillEnter {
   public readonly maxLockedCharacters = 5;
   private readonly manualSearchLimit = 24;
   public readonly summary = signal<DatasetManifest | null>(null);
-  public readonly selectedTypes = signal<AutoTeamBuilderType[]>([AUTO_TEAM_BUILDER_DEFAULT_TYPE]);
+  public readonly selectedTypes = signal<AutoTeamBuilderType[]>([]);
   public readonly selectedClasses = signal<string[]>([]);
   public readonly manualSearchTerm = signal('');
   public readonly manualCandidates = signal<CharacterListItem[]>([]);
@@ -301,7 +301,11 @@ export class AutoTeamBuilderPage implements OnInit {
   public async ngOnInit(): Promise<void> {
     await this.userState.ready();
     this.summary.set(await this.repository.getDatasetManifest());
-    await this.refreshManualCandidates('');
+    await this.resetPageState();
+  }
+
+  public async ionViewWillEnter(): Promise<void> {
+    await this.resetPageState();
   }
 
   public async onClassChange(
@@ -451,6 +455,18 @@ export class AutoTeamBuilderPage implements OnInit {
   private resetBuildState(): void {
     this.result.set(null);
     this.errorMessage.set('');
+  }
+
+  private async resetPageState(): Promise<void> {
+    this.selectedTypes.set([]);
+    this.selectedClasses.set([]);
+    this.manualSearchTerm.set('');
+    this.lockedCharacterIds.set([]);
+    this.requireAllSelectedTypesInTeam.set(false);
+    this.requireAllSelectedClassesPerCharacter.set(false);
+    this.favoritesOnly.set(false);
+    this.resetBuildState();
+    await this.refreshManualCandidates('');
   }
 
   private resolveBuildFailureMessage(): string {
