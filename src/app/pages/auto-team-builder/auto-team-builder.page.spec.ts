@@ -7,6 +7,8 @@ import { type AutoBuildResult } from '../../core/models/auto-team-builder.models
 import { type CharacterDetailRecord, type DatasetManifest } from '../../core/models/optc.models';
 import { AutoTeamBuildCancelledError } from '../../core/services/auto-team-builder.engine';
 import {
+  parseAutoTeamSelectionImportPayload,
+  sanitizeAutoTeamSelectionImportPayload,
   buildAutoTeamExportFilename,
   buildAutoTeamExportPayload,
   buildAutoTeamSelectionExportFilename,
@@ -666,6 +668,276 @@ describe('AutoTeamBuilder preset export helpers', () => {
   });
 });
 
+describe('AutoTeamBuilder preset import helpers', () => {
+  it('parses the current preset export schema', () => {
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSpecialsSupportTeam: false,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      lockedCharacterIds: [101],
+      lockedCharacters: [createCharacterRecord(101)],
+      selectedLeaderIds: [101],
+      captainLeaderId: 101,
+      friendCaptainLeaderId: 101,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+
+    expect(parseAutoTeamSelectionImportPayload(JSON.stringify(payload))).toEqual(payload);
+  });
+
+  it('sanitizes unsupported imported values with warnings', () => {
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [
+        {
+          abilityKey: 'remove_slot_barrier',
+          minTurns: 3,
+          slotTokens: ['DEX'],
+        },
+      ],
+      requireAllSelectedTypesInTeam: true,
+      requireAllSelectedClassesPerCharacter: true,
+      requireAllSpecialsSupportTeam: false,
+      favoritesOnly: true,
+      favoriteCount: 2,
+      lockedCharacterIds: [101],
+      lockedCharacters: [createCharacterRecord(101)],
+      selectedLeaderIds: [101],
+      captainLeaderId: 101,
+      friendCaptainLeaderId: 101,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+
+    payload.filters.selectedTypes.push('RAINBOW' as never);
+    payload.filters.selectedClasses.push('Shooter');
+    payload.filters.requiredAbilities.push({
+      abilityKey: 'unknown_ability',
+      minTurns: 5,
+      slotTokens: [],
+    });
+    payload.manualSelection.lockedCharacterIds.push(999);
+    payload.manualSelection.selectedLeaderIds.push(999);
+
+    const result = sanitizeAutoTeamSelectionImportPayload(payload, {
+      availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      availableClasses: ['Fighter', 'Slasher'],
+      abilityCatalogItems: [
+        {
+          key: 'remove_slot_barrier',
+          label: 'Remove Slot Barrier',
+          supportsTurns: true,
+          supportsSlotTokens: true,
+          availableSlotTokens: ['DEX', 'STR'],
+          availableSources: ['specialText'],
+          matchCount: 1,
+          sampleCharacterIds: [101],
+          sampleTexts: [],
+        },
+      ],
+      availableLockedCharacters: [createCharacterRecord(101)],
+      maxLockedCharacters: 5,
+      maxLeaderCharacters: 2,
+    });
+
+    expect(result.state.selectedTypes).toEqual(['DEX']);
+    expect(result.state.selectedClasses).toEqual(['Fighter']);
+    expect(result.state.requiredAbilities).toEqual([
+      {
+        abilityKey: 'remove_slot_barrier',
+        minTurns: 3,
+        slotTokens: ['DEX'],
+      },
+    ]);
+    expect(result.state.lockedCharacterIds).toEqual([101]);
+    expect(result.state.selectedLeaderIds).toEqual([101]);
+    expect(result.state.captainLeaderId).toBe(101);
+    expect(result.warnings).toEqual([
+      'Ignored 1 unavailable imported type from the preset.',
+      'Ignored 1 unavailable imported class from the preset.',
+      'Ignored 1 unsupported ability requirement from the preset.',
+      'Ignored 1 locked character that is missing from the current dataset.',
+      'Ignored 1 selected leader that is not part of the imported locked characters.',
+    ]);
+  });
+});
+
+describe('AutoTeamBuilderPage preset import state', () => {
+  it('applies a valid imported preset and clears previous build state', async () => {
+    const { page } = await createPage();
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX', 'PSY'],
+      selectedClasses: ['Fighter', 'Slasher'],
+      requiredAbilities: [
+        {
+          abilityKey: 'remove_bind',
+          minTurns: 5,
+          slotTokens: [],
+        },
+      ],
+      requireAllSelectedTypesInTeam: true,
+      requireAllSelectedClassesPerCharacter: true,
+      requireAllSpecialsSupportTeam: true,
+      favoritesOnly: true,
+      favoriteCount: 3,
+      lockedCharacterIds: [101, 102],
+      lockedCharacters: [createCharacterRecord(101), createCharacterRecord(102)],
+      selectedLeaderIds: [101, 102],
+      captainLeaderId: 102,
+      friendCaptainLeaderId: 101,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+
+    await page.ngOnInit();
+    page.result.set(createAutoBuildResult());
+    page.errorMessage.set('Previous error');
+    page.buildProgress.set({
+      stage: 'exactAttempt',
+      candidateCount: 64,
+      completedAttempts: 0,
+      totalAttempts: 2,
+      currentDroppedTypes: [],
+      currentDroppedClasses: [],
+      message: 'Exact attempt 1 / 2',
+    });
+    await page['importSelectionPreset'](
+      new File([JSON.stringify(payload)], 'favorite-preset.json', { type: 'application/json' }),
+    );
+
+    expect(page.selectedTypes()).toEqual(['DEX', 'PSY']);
+    expect(page.selectedClasses()).toEqual(['Fighter', 'Slasher']);
+    expect(page.pageRequiredAbilities()).toEqual([
+      {
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+      },
+    ]);
+    expect(page.lockedCharacterIds()).toEqual([101, 102]);
+    expect(page.selectedLeaderIds()).toEqual([101, 102]);
+    expect(page.effectiveCaptainLeaderId()).toBe(102);
+    expect(page.effectiveFriendLeaderId()).toBe(101);
+    expect(page.requireAllSelectedTypesInTeam()).toBe(true);
+    expect(page.requireAllSelectedClassesPerCharacter()).toBe(true);
+    expect(page.requireAllSpecialsSupportTeam()).toBe(true);
+    expect(page.favoritesOnly()).toBe(true);
+    expect(page.result()).toBeNull();
+    expect(page.errorMessage()).toBe('');
+    expect(page.buildProgress()).toBeNull();
+    expect(page.presetImportFeedback()).toEqual({
+      tone: 'success',
+      title: 'Preset applied.',
+      details: ['Loaded settings from favorite-preset.json.'],
+    });
+  });
+
+  it('applies best-effort sanitization warnings when the imported preset contains invalid values', async () => {
+    const { page } = await createPage();
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [
+        {
+          abilityKey: 'remove_slot_barrier',
+          minTurns: 2,
+          slotTokens: ['DEX'],
+        },
+      ],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSpecialsSupportTeam: false,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      lockedCharacterIds: [101],
+      lockedCharacters: [createCharacterRecord(101)],
+      selectedLeaderIds: [101],
+      captainLeaderId: 101,
+      friendCaptainLeaderId: 101,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+
+    payload.filters.selectedTypes.push('RAINBOW' as never);
+    payload.filters.selectedClasses.push('Shooter');
+    payload.filters.requiredAbilities.push({
+      abilityKey: 'unknown_ability',
+      minTurns: 4,
+      slotTokens: [],
+    });
+    payload.filters.requiredAbilities[0]!.slotTokens.push('PSY');
+    payload.manualSelection.lockedCharacterIds.push(999);
+    payload.manualSelection.selectedLeaderIds.push(999);
+    payload.manualSelection.captainLeaderId = 999;
+
+    await page.ngOnInit();
+    await page['importSelectionPreset'](
+      new File([JSON.stringify(payload)], 'mixed-preset.json', { type: 'application/json' }),
+    );
+
+    expect(page.selectedTypes()).toEqual(['DEX']);
+    expect(page.selectedClasses()).toEqual(['Fighter']);
+    expect(page.pageRequiredAbilities()).toEqual([
+      {
+        abilityKey: 'remove_slot_barrier',
+        minTurns: 2,
+        slotTokens: ['DEX'],
+      },
+    ]);
+    expect(page.lockedCharacterIds()).toEqual([101]);
+    expect(page.selectedLeaderIds()).toEqual([101]);
+    expect(page.effectiveCaptainLeaderId()).toBe(101);
+    expect(page.presetImportFeedback()).toEqual({
+      tone: 'warning',
+      title: 'Preset applied with warnings.',
+      details: [
+        'Loaded settings from mixed-preset.json.',
+        'Ignored 1 unavailable imported type from the preset.',
+        'Ignored 1 unavailable imported class from the preset.',
+        'Ignored 1 unsupported ability requirement from the preset.',
+        'Ignored 1 ability requirement with unsupported turns or slot tokens.',
+        'Ignored 1 locked character that is missing from the current dataset.',
+        'Ignored 1 selected leader that is not part of the imported locked characters.',
+      ],
+    });
+  });
+
+  it('rejects a preset with the wrong schema and keeps the current state intact', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX']);
+    page.selectedClasses.set(['Fighter']);
+
+    await page['importSelectionPreset'](
+      new File(
+        [
+          JSON.stringify({
+            schemaVersion: 2,
+            source: 'auto-team-builder',
+            exportType: 'preset',
+            filters: {},
+            manualSelection: {},
+          }),
+        ],
+        'invalid-preset.json',
+        { type: 'application/json' },
+      ),
+    );
+
+    expect(page.selectedTypes()).toEqual(['DEX']);
+    expect(page.selectedClasses()).toEqual(['Fighter']);
+    expect(page.presetImportFeedback()).toEqual({
+      tone: 'error',
+      title: 'Preset import failed.',
+      details: ['The selected file is not a supported Auto Team Builder preset.'],
+    });
+  });
+});
+
 function createCharacterRecord(id: number, name = `Character ${id}`): CharacterDetailRecord {
   return {
     id,
@@ -858,6 +1130,11 @@ async function createPage(): Promise<{
       maxTypesPerCharacter: 2,
       maxClassesPerCharacter: 2,
     }),
+    getCharactersByIds: vi.fn().mockImplementation(async (characterIds: number[]) =>
+      characterIds
+        .filter((characterId) => characterId > 0 && characterId < 900)
+        .map((characterId) => createCharacterRecord(characterId)),
+    ),
     searchDetailedCharacters: vi.fn().mockResolvedValue([]),
     searchCharacters: vi.fn().mockResolvedValue([]),
   };

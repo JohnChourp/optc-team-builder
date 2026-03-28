@@ -18,6 +18,8 @@ import {
 } from '@ionic/angular/standalone';
 import { type ViewWillEnter } from '@ionic/angular';
 import {
+  alertCircleOutline,
+  checkmarkCircleOutline,
   closeOutline,
   heart,
   heartOutline,
@@ -60,12 +62,15 @@ import { isAutoTeamBuildCancelledError } from '../../core/services/auto-team-bui
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import {
+  type AutoTeamSelectionImportResult,
   type AutoTeamExportPayload,
   type AutoTeamSelectionExportPayload,
   buildAutoTeamExportPayload,
   buildAutoTeamSelectionExportPayload,
   downloadAutoTeamExport,
   downloadAutoTeamSelectionExport,
+  parseAutoTeamSelectionImportPayload,
+  sanitizeAutoTeamSelectionImportPayload,
 } from './auto-team-builder-export.utils';
 
 type LoadingProgressRowTone = 'primary' | 'secondary' | 'fallback';
@@ -107,6 +112,14 @@ interface AppliedManualCharacterFilters {
   selectedClasses: string[];
   requiredAbilities: AutoBuildAbilityRequirement[];
   favoriteMode: ManualCharacterFavoriteFilterMode;
+}
+
+type PresetImportFeedbackTone = 'success' | 'warning' | 'error';
+
+interface PresetImportFeedback {
+  tone: PresetImportFeedbackTone;
+  title: string;
+  details: string[];
 }
 
 @Component({
@@ -171,6 +184,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly result = signal<AutoBuildResult | null>(null);
   public readonly errorMessage = signal('');
   public readonly favoriteCharacterIds;
+  public readonly presetImportFeedback = signal<PresetImportFeedback | null>(null);
 
   public readonly availableTypes = AUTO_TEAM_BUILDER_TYPES;
   public readonly availableClasses = computed(() => this.summary()?.availableClasses ?? []);
@@ -781,6 +795,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly manualFilterIcon = optionsOutline;
   public readonly resetIcon = refreshOutline;
   public readonly closeIcon = closeOutline;
+  public readonly presetImportSuccessIcon = checkmarkCircleOutline;
+  public readonly presetImportErrorIcon = alertCircleOutline;
 
   public constructor(
     private readonly repository: OptcRepositoryService,
@@ -878,6 +894,23 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.manualFilterFavoriteMode.set(
       nextValue === 'favoritesOnly' || nextValue === 'nonFavoritesOnly' ? nextValue : 'all',
     );
+  }
+
+  public openPresetFilePicker(input: HTMLInputElement): void {
+    input.click();
+  }
+
+  public async onPresetFileSelected(event: Event, input: HTMLInputElement): Promise<void> {
+    const target = event.target as HTMLInputElement;
+    const [file] = Array.from(target.files ?? []);
+
+    input.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    await this.importSelectionPreset(file);
   }
 
   public lockCharacter(character: CharacterListItem): void {
@@ -1338,6 +1371,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.selectedTypes.set([]);
     this.selectedClasses.set([]);
     this.requiredAbilityDrafts.set([]);
+    this.lockedCharacterRecords.set({});
     this.manualSearchTerm.set('');
     this.manualFilterModalOpen.set(false);
     this.appliedManualFilters.set(emptyManualFilters);
@@ -1354,8 +1388,85 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.requireAllSelectedClassesPerCharacter.set(false);
     this.requireAllSpecialsSupportTeam.set(false);
     this.favoritesOnly.set(false);
+    this.presetImportFeedback.set(null);
     this.resetBuildState();
     await this.refreshAppliedManualCandidates();
+  }
+
+  private async importSelectionPreset(file: File): Promise<void> {
+    try {
+      const rawContent = await file.text();
+      const payload = parseAutoTeamSelectionImportPayload(rawContent);
+      const availableLockedCharacters = await this.repository.getCharactersByIds(
+        [...new Set(payload.manualSelection.lockedCharacterIds.filter((characterId) => characterId > 0))],
+      );
+      const importResult = sanitizeAutoTeamSelectionImportPayload(payload, {
+        availableTypes: this.availableTypes,
+        availableClasses: this.availableClasses(),
+        abilityCatalogItems: this.availableAbilityCatalogItems(),
+        availableLockedCharacters,
+        maxLockedCharacters: this.maxLockedCharacters,
+        maxLeaderCharacters: this.maxLeaderCharacters,
+      });
+
+      await this.applyImportedSelectionPreset(importResult, availableLockedCharacters, file.name);
+    } catch (error) {
+      this.presetImportFeedback.set({
+        tone: 'error',
+        title: 'Preset import failed.',
+        details: [this.resolvePresetImportError(error)],
+      });
+    }
+  }
+
+  private async applyImportedSelectionPreset(
+    importResult: AutoTeamSelectionImportResult,
+    availableLockedCharacters: CharacterListItem[],
+    fileName: string,
+  ): Promise<void> {
+    await this.resetPageState();
+
+    const importedLockedCharacterMap = new Map(
+      availableLockedCharacters.map((character) => [character.id, character] as const),
+    );
+
+    this.selectedTypes.set([...importResult.state.selectedTypes]);
+    this.selectedClasses.set([...importResult.state.selectedClasses]);
+    this.requiredAbilityDrafts.set(
+      importResult.state.requiredAbilities.map((requirement) => ({
+        draftId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        abilityKey: requirement.abilityKey,
+        minTurns: requirement.minTurns,
+        slotTokens: [...requirement.slotTokens],
+      })),
+    );
+    this.lockedCharacterRecords.set({});
+    importResult.state.lockedCharacterIds.forEach((characterId) => {
+      const character = importedLockedCharacterMap.get(characterId);
+
+      if (character) {
+        this.cacheCharacterRecord(character);
+      }
+    });
+    this.lockedCharacterIds.set([...importResult.state.lockedCharacterIds]);
+    this.selectedLeaderIds.set([...importResult.state.selectedLeaderIds]);
+    this.captainLeaderId.set(importResult.state.captainLeaderId);
+    this.requireAllSelectedTypesInTeam.set(importResult.state.requireAllSelectedTypesInTeam);
+    this.requireAllSelectedClassesPerCharacter.set(
+      importResult.state.requireAllSelectedClassesPerCharacter,
+    );
+    this.requireAllSpecialsSupportTeam.set(importResult.state.requireAllSpecialsSupportTeam);
+    this.favoritesOnly.set(importResult.state.favoritesOnly);
+    this.resetBuildState();
+    await this.refreshAppliedManualCandidates();
+
+    this.presetImportFeedback.set({
+      tone: importResult.warnings.length ? 'warning' : 'success',
+      title: importResult.warnings.length ? 'Preset applied with warnings.' : 'Preset applied.',
+      details: importResult.warnings.length
+        ? [`Loaded settings from ${fileName}.`, ...importResult.warnings]
+        : [`Loaded settings from ${fileName}.`],
+    });
   }
 
   private resolveBuildFailureMessage(): string {
@@ -1878,5 +1989,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   private formatSelectedValues(values: readonly string[]): string {
     return values.join(' / ');
+  }
+
+  private resolvePresetImportError(error: unknown): string {
+    if (error instanceof Error && error.message.trim().length > 0) {
+      return error.message;
+    }
+
+    return 'The selected file could not be imported as an Auto Team Builder preset.';
   }
 }

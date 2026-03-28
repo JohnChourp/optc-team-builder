@@ -787,11 +787,67 @@
 
 .build-action-row {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 10px;
 }
 
 .download-preset-button {
   margin: 0;
+}
+
+.preset-import-feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 20px;
+}
+
+.preset-import-feedback ion-icon {
+  margin-top: 2px;
+  font-size: 1.1rem;
+}
+
+.preset-import-feedback div {
+  display: grid;
+  gap: 4px;
+}
+
+.preset-import-feedback strong {
+  color: #ffffff;
+}
+
+.preset-import-feedback small {
+  color: rgba(248, 251, 255, 0.7);
+  line-height: 1.45;
+}
+
+.preset-import-feedback--success {
+  background: rgba(76, 201, 240, 0.1);
+  border: 1px solid rgba(76, 201, 240, 0.22);
+}
+
+.preset-import-feedback--success ion-icon {
+  color: #4cc9f0;
+}
+
+.preset-import-feedback--warning {
+  background: rgba(245, 200, 76, 0.12);
+  border: 1px solid rgba(245, 200, 76, 0.24);
+}
+
+.preset-import-feedback--warning ion-icon {
+  color: #f5c84c;
+}
+
+.preset-import-feedback--error {
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.24);
+}
+
+.preset-import-feedback--error ion-icon {
+  color: #ff8b95;
 }
 
 .manual-filter-modal-shell {

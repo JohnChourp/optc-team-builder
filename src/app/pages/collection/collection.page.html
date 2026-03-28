@@ -31,6 +31,14 @@
       <div class="section-head">
         <h2>Favorites</h2>
         <div class="section-actions">
+          <ion-button
+            fill="outline"
+            color="light"
+            [disabled]="!canDownloadFavoritesExport()"
+            (click)="downloadFavoritesExport()"
+          >
+            Export favorites
+          </ion-button>
           <ion-button fill="outline" color="warning" (click)="openImportModal()">Import favorites</ion-button>
           <ion-button fill="clear" color="light" [routerLink]="['/tabs/characters']">Back to browser</ion-button>
         </div>

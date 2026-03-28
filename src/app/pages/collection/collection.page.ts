@@ -26,6 +26,10 @@ import { type OptcbxImportResult, type OptcbxParsedImport } from "../../core/mod
 import { OptcRepositoryService } from "../../core/services/optc-repository.service";
 import { OptcbxImportService } from "../../core/services/optcbx-import.service";
 import { UserStateService } from "../../core/services/user-state.service";
+import {
+  buildOptcbxFavoritesExportPayload,
+  downloadOptcbxFavoritesExport,
+} from "./collection-export.utils";
 
 @Component({
   selector: "app-collection-page",
@@ -50,6 +54,7 @@ export class CollectionPage {
   public readonly recentCharacters = signal<CharacterListItem[]>([]);
   public readonly favoriteIds;
   public readonly savedTeams;
+  public readonly canDownloadFavoritesExport = computed(() => this.favoriteIds().length > 0);
   public readonly importModalOpen = signal(false);
   public readonly draggingImportFile = signal(false);
   public readonly importFileName = signal("");
@@ -172,6 +177,18 @@ export class CollectionPage {
     } finally {
       this.importingFavorites.set(false);
     }
+  }
+
+  public async downloadFavoritesExport(): Promise<void> {
+    if (!this.canDownloadFavoritesExport()) {
+      return;
+    }
+
+    const favoriteIds = this.favoriteIds();
+    const favoriteCharacters = await this.repository.getCharactersByIds(favoriteIds);
+    const payload = buildOptcbxFavoritesExportPayload(favoriteIds, favoriteCharacters);
+
+    downloadOptcbxFavoritesExport(payload);
   }
 
   public async toggleFavorite(characterId: number, event: Event): Promise<void> {

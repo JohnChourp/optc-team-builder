@@ -512,6 +512,22 @@
       </section>
 
       <div class="build-action-row">
+        <input
+          #presetFileInput
+          type="file"
+          accept=".json,application/json"
+          hidden
+          (change)="onPresetFileSelected($event, presetFileInput)"
+        />
+        <ion-button
+          fill="outline"
+          color="light"
+          class="download-preset-button"
+          [disabled]="building()"
+          (click)="openPresetFilePicker(presetFileInput)"
+        >
+          Import preset JSON
+        </ion-button>
         <ion-button
           fill="outline"
           color="warning"
@@ -522,6 +538,22 @@
           {{ downloadSelectionJsonLabel }}
         </ion-button>
       </div>
+
+      <section
+        *ngIf="presetImportFeedback() as presetFeedback"
+        class="preset-import-feedback"
+        [class.preset-import-feedback--success]="presetFeedback.tone === 'success'"
+        [class.preset-import-feedback--warning]="presetFeedback.tone === 'warning'"
+        [class.preset-import-feedback--error]="presetFeedback.tone === 'error'"
+      >
+        <ion-icon
+          [icon]="presetFeedback.tone === 'error' ? presetImportErrorIcon : presetImportSuccessIcon"
+        ></ion-icon>
+        <div>
+          <strong>{{ presetFeedback.title }}</strong>
+          <small *ngFor="let detail of presetFeedback.details">{{ detail }}</small>
+        </div>
+      </section>
 
       <ion-button expand="block" color="warning" [disabled]="buildDisabled()" (click)="buildTeam()">
         <ion-spinner *ngIf="building()" slot="start" name="crescent"></ion-spinner>
