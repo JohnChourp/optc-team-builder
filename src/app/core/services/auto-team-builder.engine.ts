@@ -157,6 +157,7 @@ function buildAttempt(
         (selectedClass) => !input.selectedClasses.includes(selectedClass),
       ),
     },
+    shipSelection: null,
   };
 }
 

@@ -17,6 +17,7 @@ import {
   normalizeSelectedTypes,
   runAutoTeamBuildSearch,
 } from './auto-team-builder.engine';
+import { resolveAutoBuildShipSelection } from './auto-team-builder-ship.utils';
 import { OptcRepositoryService } from './optc-repository.service';
 import {
   type AutoTeamBuilderWorkerRequest,
@@ -68,6 +69,7 @@ export class AutoTeamBuilderService {
     ];
     let captainCharacterId = this.normalizeCharacterId(constraints.captainCharacterId);
     let friendCaptainCharacterId = this.normalizeCharacterId(constraints.friendCaptainCharacterId);
+    const manualShipId = this.normalizeCharacterId(constraints.manualShipId);
 
     if (!captainCharacterId && friendCaptainCharacterId) {
       captainCharacterId = friendCaptainCharacterId;
@@ -89,6 +91,7 @@ export class AutoTeamBuilderService {
       lockedCharacterIds,
       captainCharacterId,
       friendCaptainCharacterId,
+      manualShipId,
       candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
     };
     const requestedInput: AutoBuildInput = {
@@ -151,7 +154,23 @@ export class AutoTeamBuilderService {
 
     this.throwIfCancelled(executionOptions.signal);
 
-    return this.executeSearch(records, requestedInput, executionOptions);
+    const shipsPromise =
+      typeof this.repository.getShips === 'function'
+        ? this.repository.getShips()
+        : Promise.resolve([]);
+    const [result, ships] = await Promise.all([
+      this.executeSearch(records, requestedInput, executionOptions),
+      shipsPromise,
+    ]);
+
+    if (!result) {
+      return null;
+    }
+
+    return {
+      ...result,
+      shipSelection: resolveAutoBuildShipSelection(result, ships),
+    };
   }
 
   private async executeSearch(

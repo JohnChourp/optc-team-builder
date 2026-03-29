@@ -6,7 +6,11 @@ import {
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityRequirement,
 } from '../../core/models/auto-team-builder-ability.models';
-import { type CharacterDetailRecord, type CharacterListItem } from '../../core/models/optc.models';
+import {
+  type CharacterDetailRecord,
+  type CharacterListItem,
+  type ShipRecord,
+} from '../../core/models/optc.models';
 
 type AutoTeamExportRole = AutoBuildResult['slots'][number]['role'];
 type AutoTeamExportLeaderAssignment = 'captain' | 'friendCaptain' | 'dual' | null;
@@ -27,6 +31,7 @@ export interface AutoTeamExportPayload {
   effectiveInput: AutoBuildResult['input'];
   relaxation: AutoBuildResult['relaxation'];
   coverage: AutoBuildResult['coverage'];
+  shipSelection: AutoBuildResult['shipSelection'];
   team: AutoTeamExportSlot[];
 }
 
@@ -41,8 +46,15 @@ export interface AutoTeamSelectionCharacterSummary {
   leaderAssignment: AutoTeamExportLeaderAssignment;
 }
 
+export interface AutoTeamSelectionShipSummary {
+  id: number;
+  name: string;
+  thumb: string | null;
+  description: string;
+}
+
 export interface AutoTeamSelectionExportPayload {
-  schemaVersion: 1 | 2;
+  schemaVersion: 1 | 2 | 3;
   exportedAt: string;
   source: 'auto-team-builder';
   exportType: 'preset';
@@ -61,6 +73,8 @@ export interface AutoTeamSelectionExportPayload {
     selectedLeaderIds: number[];
     captainLeaderId: number | null;
     friendCaptainLeaderId: number | null;
+    manualShipId: number | null;
+    ship: AutoTeamSelectionShipSummary | null;
     characters: AutoTeamSelectionCharacterSummary[];
   };
 }
@@ -76,6 +90,7 @@ export interface AutoTeamSelectionImportState {
   lockedCharacterIds: number[];
   selectedLeaderIds: number[];
   captainLeaderId: number | null;
+  manualShipId: number | null;
 }
 
 export interface AutoTeamSelectionImportResult {
@@ -88,6 +103,7 @@ interface SanitizeAutoTeamSelectionImportOptions {
   availableClasses: readonly string[];
   abilityCatalogItems: AutoBuildAbilityCatalogItem[];
   availableLockedCharacters: CharacterListItem[];
+  availableShips: ShipRecord[];
   maxLockedCharacters: number;
   maxLeaderCharacters: number;
 }
@@ -106,6 +122,8 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   selectedLeaderIds: number[];
   captainLeaderId: number | null;
   friendCaptainLeaderId: number | null;
+  manualShipId: number | null;
+  manualShip: ShipRecord | null;
   exportedAt?: string;
 }
 
@@ -190,7 +208,9 @@ export function parseAutoTeamSelectionImportPayload(
   }
 
   if (
-    (parsedPayload['schemaVersion'] !== 1 && parsedPayload['schemaVersion'] !== 2) ||
+    (parsedPayload['schemaVersion'] !== 1 &&
+      parsedPayload['schemaVersion'] !== 2 &&
+      parsedPayload['schemaVersion'] !== 3) ||
     parsedPayload['source'] !== 'auto-team-builder' ||
     parsedPayload['exportType'] !== 'preset'
   ) {
@@ -233,6 +253,11 @@ export function parseAutoTeamSelectionImportPayload(
     !(
       manualSelection['friendCaptainLeaderId'] === null ||
       typeof manualSelection['friendCaptainLeaderId'] === 'number'
+    ) ||
+    !(
+      manualSelection['manualShipId'] === undefined ||
+      manualSelection['manualShipId'] === null ||
+      typeof manualSelection['manualShipId'] === 'number'
     )
   ) {
     throw new Error('The selected preset does not match the current export schema.');
@@ -250,6 +275,9 @@ export function sanitizeAutoTeamSelectionImportPayload(
   const availableClassesSet = new Set(options.availableClasses);
   const availableLockedCharacterMap = new Map(
     options.availableLockedCharacters.map((character) => [character.id, character] as const),
+  );
+  const availableShipMap = new Map(
+    (options.availableShips ?? []).map((ship) => [ship.id, ship] as const),
   );
   const abilityCatalogMap = new Map(
     options.abilityCatalogItems.map((item) => [item.key, item] as const),
@@ -425,6 +453,16 @@ export function sanitizeAutoTeamSelectionImportPayload(
       : selectedLeaderIds[0];
   }
 
+  const normalizedManualShipId = normalizePositiveInteger(payload.manualSelection.manualShipId);
+  const manualShipId =
+    normalizedManualShipId && availableShipMap.has(normalizedManualShipId)
+      ? normalizedManualShipId
+      : null;
+
+  if (normalizedManualShipId && !availableShipMap.has(normalizedManualShipId)) {
+    warnings.push('Ignored 1 manual ship that is missing from the current dataset.');
+  }
+
   return {
     state: {
       selectedTypes,
@@ -437,6 +475,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
       lockedCharacterIds,
       selectedLeaderIds,
       captainLeaderId,
+      manualShipId,
     },
     warnings,
   };
@@ -458,6 +497,13 @@ export function buildAutoTeamExportPayload(
     effectiveInput: result.input,
     relaxation: result.relaxation,
     coverage: result.coverage,
+    shipSelection: result.shipSelection
+      ? {
+          ...result.shipSelection,
+          ship: { ...result.shipSelection.ship },
+          reasonChips: [...result.shipSelection.reasonChips],
+        }
+      : null,
     team: result.slots.map((slot, slotIndex) => {
       const leaderAssignment = resolveLeaderAssignment(
         slot.character.id,
@@ -491,10 +537,12 @@ export function buildAutoTeamSelectionExportPayload({
   selectedLeaderIds,
   captainLeaderId,
   friendCaptainLeaderId,
+  manualShipId,
+  manualShip,
   exportedAt = new Date().toISOString(),
 }: BuildAutoTeamSelectionExportPayloadOptions): AutoTeamSelectionExportPayload {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     exportedAt,
     source: 'auto-team-builder',
     exportType: 'preset',
@@ -516,6 +564,15 @@ export function buildAutoTeamSelectionExportPayload({
       selectedLeaderIds: [...selectedLeaderIds],
       captainLeaderId,
       friendCaptainLeaderId,
+      manualShipId,
+      ship: manualShip
+        ? {
+            id: manualShip.id,
+            name: manualShip.name,
+            thumb: manualShip.thumb,
+            description: manualShip.description,
+          }
+        : null,
       characters: lockedCharacters.map((character) => {
         const leaderAssignment = resolveLeaderAssignment(
           character.id,

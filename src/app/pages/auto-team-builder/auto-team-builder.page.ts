@@ -17,6 +17,7 @@ import {
 import { type ViewWillEnter } from '@ionic/angular';
 import {
   alertCircleOutline,
+  boatOutline,
   checkmarkCircleOutline,
   heart,
   heartOutline,
@@ -43,6 +44,7 @@ import {
   type CharacterDetailRecord,
   type CharacterListItem,
   type DatasetManifest,
+  type ShipRecord,
 } from '../../core/models/optc.models';
 import {
   AutoTeamBuilderService,
@@ -53,6 +55,7 @@ import {
   builderAbilitiesMatchAllRequirements,
 } from '../../core/services/auto-team-builder-ability-match.utils';
 import { isAutoTeamBuildCancelledError } from '../../core/services/auto-team-builder.engine';
+import { resolveAutoBuildShipSelection } from '../../core/services/auto-team-builder-ship.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import {
@@ -97,6 +100,12 @@ interface ManualCharacterCardView {
   subtitle: string;
   favoriteLabel: string | null;
   abilityChips: CharacterAbilityChipView[];
+}
+
+interface ShipCandidateCardView {
+  ship: ShipRecord;
+  subtitle: string;
+  matchesManualSelection: boolean;
 }
 
 type TeamSlotViewModel = AutoBuildResult['slots'][number] & {
@@ -148,16 +157,20 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private appliedManualCandidateSearchRequestId = 0;
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
+  public readonly ships = signal<ShipRecord[]>([]);
   public readonly selectedTypes = signal<AutoTeamBuilderType[]>([]);
   public readonly selectedClasses = signal<string[]>([]);
   public readonly requiredAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly manualSearchTerm = signal('');
+  public readonly shipSearchTerm = signal('');
   public readonly manualCandidates = signal<CharacterDetailRecord[]>([]);
   public readonly manualCandidatesLoading = signal(false);
+  public readonly shipPickerMode = signal<'characters' | 'ships'>('characters');
   public readonly lockedCharacterIds = signal<number[]>([]);
   public readonly lockedCharacterRecords = signal<Record<number, CharacterListItem>>({});
   public readonly selectedLeaderIds = signal<number[]>([]);
   public readonly captainLeaderId = signal<number | null>(null);
+  public readonly selectedManualShipId = signal<number | null>(null);
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
   public readonly requireAllSpecialsSupportTeam = signal(false);
@@ -171,6 +184,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public readonly availableTypes = AUTO_TEAM_BUILDER_TYPES;
   public readonly availableClasses = computed(() => this.summary()?.availableClasses ?? []);
+  public readonly selectedManualShip = computed(
+    () =>
+      this.ships().find((ship) => ship.id === this.selectedManualShipId()) ?? null,
+  );
+  public readonly hasSelectedManualShip = computed(() => Boolean(this.selectedManualShip()));
   public readonly manualCandidateFilters = computed<AppliedManualCharacterFilters>(() => ({
     selectedTypes: [...this.selectedTypes()],
     selectedClasses: [...this.selectedClasses()],
@@ -400,6 +418,39 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.manualCandidateFilters().requiredAbilities,
     ),
   );
+  public readonly shipCandidates = computed<ShipCandidateCardView[]>(() => {
+    const searchTerm = this.shipSearchTerm().trim().toLowerCase();
+
+    return this.ships()
+      .filter((ship) => {
+        if (!searchTerm.length) {
+          return true;
+        }
+
+        return [ship.name, ship.description].some((value) =>
+          value.toLowerCase().includes(searchTerm),
+        );
+      })
+      .map((ship) => ({
+        ship,
+        subtitle: this.buildShipCardSubtitle(ship),
+        matchesManualSelection: ship.id === this.selectedManualShipId(),
+      }));
+  });
+  public readonly shipCandidatesSummaryLabel = computed(() => {
+    const count = this.shipCandidates().length;
+
+    return `${count} ship${count === 1 ? '' : 's'} available`;
+  });
+  public readonly shipPickerSupportLabel = computed(() => {
+    const selectedShip = this.selectedManualShip();
+
+    if (selectedShip) {
+      return `Manual override ενεργό: ${selectedShip.name}`;
+    }
+
+    return 'Αν δεν διαλέξεις ship, το build θα προτείνει αυτόματα το καλύτερο ship για το τελικό team.';
+  });
   public readonly typeStrictToggleLabel = 'Require all selected types in team';
   public readonly classStrictToggleLabel = 'Require all selected classes on every character';
   public readonly specialSupportToggleLabel = 'Require every special to buff the full team';
@@ -697,6 +748,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         this.requireAllSelectedClassesPerCharacter() ||
         this.requireAllSpecialsSupportTeam() ||
         this.favoritesOnly() ||
+        this.hasSelectedManualShip() ||
         this.hasLockedCharacters() ||
         this.hasSelectedLeaders()),
   );
@@ -734,6 +786,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly sparklesIcon = sparklesOutline;
   public readonly layersIcon = layersOutline;
   public readonly coverageIcon = shieldHalfOutline;
+  public readonly shipIcon = boatOutline;
   public readonly favoriteIcon = heart;
   public readonly favoriteOutlineIcon = heartOutline;
   public readonly manualFilterIcon = optionsOutline;
@@ -750,12 +803,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public async ngOnInit(): Promise<void> {
     await this.userState.ready();
-    const [summary, abilityCatalog] = await Promise.all([
+    const shipsPromise =
+      typeof this.repository.getShips === 'function'
+        ? this.repository.getShips()
+        : Promise.resolve([]);
+    const [summary, abilityCatalog, ships] = await Promise.all([
       this.repository.getDatasetManifest(),
       this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
+      shipsPromise,
     ]);
     this.summary.set(summary);
     this.abilityCatalog.set(abilityCatalog);
+    this.ships.set(ships);
     await this.resetPageState();
   }
 
@@ -786,6 +845,28 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public async onManualSearchChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
     this.manualSearchTerm.set((event.detail.value ?? '').trim());
     await this.refreshAppliedManualCandidates();
+  }
+
+  public setShipPickerMode(mode: 'characters' | 'ships'): void {
+    this.shipPickerMode.set(mode);
+  }
+
+  public onShipSearchChange(event: CustomEvent<{ value?: string | null }>): void {
+    this.shipSearchTerm.set((event.detail.value ?? '').trim());
+  }
+
+  public selectManualShip(shipId: number): void {
+    this.selectedManualShipId.set(shipId);
+    this.updateResultShipSelection();
+  }
+
+  public clearManualShipSelection(): void {
+    this.selectedManualShipId.set(null);
+    this.updateResultShipSelection();
+  }
+
+  public isSelectedManualShip(shipId: number): boolean {
+    return this.selectedManualShipId() === shipId;
   }
 
   public openPresetFilePicker(input: HTMLInputElement): void {
@@ -1088,6 +1169,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           lockedCharacterIds: this.lockedCharacterIds(),
           captainCharacterId: this.effectiveCaptainLeaderId(),
           friendCaptainCharacterId: this.effectiveFriendLeaderId(),
+          manualShipId: this.selectedManualShipId(),
         },
         executionOptions,
       );
@@ -1158,6 +1240,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       selectedLeaderIds: this.selectedLeaderIds(),
       captainLeaderId: this.effectiveCaptainLeaderId(),
       friendCaptainLeaderId: this.effectiveFriendLeaderId(),
+      manualShipId: this.selectedManualShipId(),
+      manualShip: this.selectedManualShip(),
       exportedAt,
     });
   }
@@ -1209,11 +1293,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.requiredAbilityDrafts.set([]);
     this.lockedCharacterRecords.set({});
     this.manualSearchTerm.set('');
+    this.shipSearchTerm.set('');
     this.manualCandidates.set([]);
     this.manualCandidatesLoading.set(false);
+    this.shipPickerMode.set('characters');
     this.lockedCharacterIds.set([]);
     this.selectedLeaderIds.set([]);
     this.captainLeaderId.set(null);
+    this.selectedManualShipId.set(null);
     this.requireAllSelectedTypesInTeam.set(false);
     this.requireAllSelectedClassesPerCharacter.set(false);
     this.requireAllSpecialsSupportTeam.set(false);
@@ -1237,6 +1324,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         availableClasses: this.availableClasses(),
         abilityCatalogItems: this.availableAbilityCatalogItems(),
         availableLockedCharacters,
+        availableShips: this.ships(),
         maxLockedCharacters: this.maxLockedCharacters,
         maxLeaderCharacters: this.maxLeaderCharacters,
       });
@@ -1284,6 +1372,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.lockedCharacterIds.set([...importResult.state.lockedCharacterIds]);
     this.selectedLeaderIds.set([...importResult.state.selectedLeaderIds]);
     this.captainLeaderId.set(importResult.state.captainLeaderId);
+    this.selectedManualShipId.set(importResult.state.manualShipId);
     this.requireAllSelectedTypesInTeam.set(importResult.state.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(
       importResult.state.requireAllSelectedClassesPerCharacter,
@@ -1425,6 +1514,37 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     return true;
+  }
+
+  private updateResultShipSelection(): void {
+    const currentResult = this.result();
+
+    if (!currentResult) {
+      return;
+    }
+
+    const manualShipId = this.selectedManualShipId();
+    const nextResult: AutoBuildResult = {
+      ...currentResult,
+      input: {
+        ...currentResult.input,
+        manualShipId,
+      },
+      requestedInput: {
+        ...currentResult.requestedInput,
+        manualShipId,
+      },
+      shipSelection: null,
+    };
+
+    nextResult.shipSelection = resolveAutoBuildShipSelection(nextResult, this.ships());
+    this.result.set(nextResult);
+  }
+
+  private buildShipCardSubtitle(ship: ShipRecord): string {
+    const description = ship.description.trim();
+
+    return description.length > 132 ? `${description.slice(0, 129).trimEnd()}...` : description;
   }
 
   private cacheCharacterRecord(character: CharacterListItem): void {

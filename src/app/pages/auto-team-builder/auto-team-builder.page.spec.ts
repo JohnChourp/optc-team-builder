@@ -110,6 +110,28 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     );
   });
 
+  it('passes the selected manual ship to the builder service', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.selectManualShip(9001);
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({
+        manualShipId: 9001,
+      }),
+      expect.objectContaining({
+        onProgress: expect.any(Function),
+        signal: expect.any(AbortSignal),
+      }),
+    );
+  });
+
   it('formats captain-sourced abilities with a source suffix', async () => {
     const { page } = await createPage();
 
@@ -742,7 +764,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 2,
+      schemaVersion: 3,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -1353,7 +1375,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
     expect(page.presetImportFeedback()).toEqual({
       tone: 'error',
       title: 'Preset import failed.',
-      details: ['The selected file is not a supported Auto Team Builder preset.'],
+      details: ['The selected preset does not match the current export schema.'],
     });
   });
 });
@@ -1553,6 +1575,7 @@ async function createPage(): Promise<{
   repository: {
     getDatasetManifest: ReturnType<typeof vi.fn>;
     getAutoBuilderAbilityCatalog: ReturnType<typeof vi.fn>;
+    getShips: ReturnType<typeof vi.fn>;
     getCharactersByIds: ReturnType<typeof vi.fn>;
     searchDetailedCharacters: ReturnType<typeof vi.fn>;
     searchCharacters: ReturnType<typeof vi.fn>;
@@ -1599,6 +1622,7 @@ async function createPage(): Promise<{
         },
       ],
     }),
+    getShips: vi.fn().mockResolvedValue([createShipRecord(9001), createShipRecord(9002)]),
     getCharactersByIds: vi
       .fn()
       .mockImplementation(async (characterIds: number[]) =>
@@ -1641,5 +1665,14 @@ function createManifest(): DatasetManifest {
     availableTypes: ['DEX', 'PSY'],
     availableClasses: ['Fighter', 'Slasher'],
     packs: [],
+  };
+}
+
+function createShipRecord(id: number): { id: number; name: string; thumb: null; description: string } {
+  return {
+    id,
+    name: `Ship ${id}`,
+    thumb: null,
+    description: 'Boosts ATK by 1.5x.',
   };
 }

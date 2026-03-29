@@ -347,75 +347,161 @@
           </div>
 
           <div class="manual-locks-search-panel">
-            <ion-searchbar
-              [debounce]="150"
-              placeholder="Search by character name in manual picks"
-              [value]="manualSearchTerm()"
-              (ionInput)="onManualSearchChange($event)"
-            ></ion-searchbar>
-
-            <div class="manual-locks-meta manual-locks-meta--candidates">
-              <strong>{{ manualCandidatesSummaryLabel() }}</strong>
-              <small>{{ manualCandidatePoolSupportLabel() }}</small>
-            </div>
-
-            <div *ngIf="manualCandidatesLoading()" class="manual-candidate-empty-state">
-              Γίνεται φόρτωση των manual candidates...
-            </div>
-
-            <div
-              *ngIf="!manualCandidatesLoading() && !manualCandidateCards().length"
-              class="manual-candidate-empty-state"
-            >
-              Δεν βρέθηκαν χαρακτήρες που να ταιριάζουν στα current page filters για manual picks.
-            </div>
-
-            <div *ngIf="manualCandidateCards().length" class="manual-candidate-list manual-candidate-list--sidebar">
-              <article
-                *ngFor="let candidateCard of manualCandidateCards()"
-                class="manual-candidate-card manual-candidate-card--detailed manual-candidate-card--sidebar"
+            <div class="manual-panel-toggle">
+              <button
+                type="button"
+                class="manual-panel-toggle__button"
+                [class.manual-panel-toggle__button--active]="shipPickerMode() === 'characters'"
+                (click)="setShipPickerMode('characters')"
               >
-                <img
-                  [src]="candidateCard.character.imageUrl"
-                  [alt]="candidateCard.character.name"
-                  loading="lazy"
-                />
-                <div class="manual-candidate-copy">
-                  <strong>{{ candidateCard.character.name }}</strong>
-                  <span>{{ candidateCard.subtitle }}</span>
-                  <small *ngIf="candidateCard.favoriteLabel" class="manual-candidate-role">
-                    {{ candidateCard.favoriteLabel }}
-                  </small>
+                Character picks
+              </button>
+              <button
+                type="button"
+                class="manual-panel-toggle__button"
+                [class.manual-panel-toggle__button--active]="shipPickerMode() === 'ships'"
+                (click)="setShipPickerMode('ships')"
+              >
+                Ship selection
+              </button>
+            </div>
 
-                  <div class="chip-row manual-candidate-chip-row">
-                    <small
-                      *ngFor="let abilityChip of candidateCard.abilityChips"
-                      class="coverage-chip manual-ability-chip"
-                      [class.manual-ability-chip--matched]="abilityChip.highlighted"
-                      [class.manual-ability-chip--empty]="abilityChip.empty"
-                    >
-                      {{ abilityChip.label }}
+            <ng-container *ngIf="shipPickerMode() === 'characters'; else shipPickerPanel">
+              <ion-searchbar
+                [debounce]="150"
+                placeholder="Search by character name in manual picks"
+                [value]="manualSearchTerm()"
+                (ionInput)="onManualSearchChange($event)"
+              ></ion-searchbar>
+
+              <div class="manual-locks-meta manual-locks-meta--candidates">
+                <strong>{{ manualCandidatesSummaryLabel() }}</strong>
+                <small>{{ manualCandidatePoolSupportLabel() }}</small>
+              </div>
+
+              <div *ngIf="manualCandidatesLoading()" class="manual-candidate-empty-state">
+                Γίνεται φόρτωση των manual candidates...
+              </div>
+
+              <div
+                *ngIf="!manualCandidatesLoading() && !manualCandidateCards().length"
+                class="manual-candidate-empty-state"
+              >
+                Δεν βρέθηκαν χαρακτήρες που να ταιριάζουν στα current page filters για manual picks.
+              </div>
+
+              <div
+                *ngIf="manualCandidateCards().length"
+                class="manual-candidate-list manual-candidate-list--sidebar"
+              >
+                <article
+                  *ngFor="let candidateCard of manualCandidateCards()"
+                  class="manual-candidate-card manual-candidate-card--detailed manual-candidate-card--sidebar"
+                >
+                  <img
+                    [src]="candidateCard.character.imageUrl"
+                    [alt]="candidateCard.character.name"
+                    loading="lazy"
+                  />
+                  <div class="manual-candidate-copy">
+                    <strong>{{ candidateCard.character.name }}</strong>
+                    <span>{{ candidateCard.subtitle }}</span>
+                    <small *ngIf="candidateCard.favoriteLabel" class="manual-candidate-role">
+                      {{ candidateCard.favoriteLabel }}
+                    </small>
+
+                    <div class="chip-row manual-candidate-chip-row">
+                      <small
+                        *ngFor="let abilityChip of candidateCard.abilityChips"
+                        class="coverage-chip manual-ability-chip"
+                        [class.manual-ability-chip--matched]="abilityChip.highlighted"
+                        [class.manual-ability-chip--empty]="abilityChip.empty"
+                      >
+                        {{ abilityChip.label }}
+                      </small>
+                    </div>
+                  </div>
+                  <ion-button
+                    size="small"
+                    fill="outline"
+                    color="light"
+                    [disabled]="
+                      building() ||
+                      (!isLockedCharacter(candidateCard.character.id) && lockedLimitReached())
+                    "
+                    (click)="
+                      isLockedCharacter(candidateCard.character.id)
+                        ? removeLockedCharacter(candidateCard.character.id)
+                        : lockCharacter(candidateCard.character)
+                    "
+                  >
+                    {{ isLockedCharacter(candidateCard.character.id) ? 'Remove' : 'Lock' }}
+                  </ion-button>
+                </article>
+              </div>
+            </ng-container>
+
+            <ng-template #shipPickerPanel>
+              <ion-searchbar
+                [debounce]="150"
+                placeholder="Search ship by name or effect"
+                [value]="shipSearchTerm()"
+                (ionInput)="onShipSearchChange($event)"
+              ></ion-searchbar>
+
+              <div class="manual-locks-meta manual-locks-meta--candidates">
+                <strong>{{ shipCandidatesSummaryLabel() }}</strong>
+                <small>{{ shipPickerSupportLabel() }}</small>
+              </div>
+
+              <div *ngIf="hasSelectedManualShip()" class="selected-values-row manual-selected-row">
+                <button
+                  type="button"
+                  class="selected-value-chip manual-lock-chip manual-lock-chip--ship"
+                  [disabled]="building()"
+                  (click)="clearManualShipSelection()"
+                >
+                  <ion-icon [icon]="shipIcon"></ion-icon>
+                  {{ selectedManualShip()?.name }}
+                  <span aria-hidden="true">×</span>
+                </button>
+              </div>
+
+              <div *ngIf="!shipCandidates().length" class="manual-candidate-empty-state">
+                Δεν βρέθηκαν ships που να ταιριάζουν στο current search.
+              </div>
+
+              <div *ngIf="shipCandidates().length" class="manual-candidate-list manual-candidate-list--sidebar">
+                <article
+                  *ngFor="let shipCard of shipCandidates()"
+                  class="manual-candidate-card manual-candidate-card--detailed manual-candidate-card--sidebar ship-candidate-card"
+                >
+                  <div class="ship-candidate-icon" aria-hidden="true">
+                    <ion-icon [icon]="shipIcon"></ion-icon>
+                  </div>
+                  <div class="manual-candidate-copy">
+                    <strong>{{ shipCard.ship.name }}</strong>
+                    <span>{{ shipCard.subtitle }}</span>
+                    <small *ngIf="shipCard.matchesManualSelection" class="manual-candidate-role">
+                      Manual ship
                     </small>
                   </div>
-                </div>
-                <ion-button
-                  size="small"
-                  fill="outline"
-                  color="light"
-                  [disabled]="
-                    building() ||
-                    (!isLockedCharacter(candidateCard.character.id) && lockedLimitReached())
-                  "
-                  (click)="
-                    isLockedCharacter(candidateCard.character.id)
-                      ? removeLockedCharacter(candidateCard.character.id)
-                      : lockCharacter(candidateCard.character)
-                  "
-                >
-                  {{ isLockedCharacter(candidateCard.character.id) ? 'Remove' : 'Lock' }}
-                </ion-button>
-              </article>
-            </div>
+                  <ion-button
+                    size="small"
+                    fill="outline"
+                    color="light"
+                    [disabled]="building()"
+                    (click)="
+                      shipCard.matchesManualSelection
+                        ? clearManualShipSelection()
+                        : selectManualShip(shipCard.ship.id)
+                    "
+                  >
+                    {{ shipCard.matchesManualSelection ? 'Clear' : 'Select' }}
+                  </ion-button>
+                </article>
+              </div>
+            </ng-template>
           </div>
         </div>
 
@@ -848,6 +934,29 @@
           >
             {{ downloadTeamJsonLabel }}
           </ion-button>
+        </div>
+      </section>
+
+      <section *ngIf="current.shipSelection as shipSelection" class="glass-card result-ship-card">
+        <div class="result-ship-card__icon" aria-hidden="true">
+          <ion-icon [icon]="shipIcon"></ion-icon>
+        </div>
+
+        <div class="result-ship-card__copy">
+          <div class="result-ship-card__head">
+            <span class="role-pill">{{
+              shipSelection.source === 'manual' ? 'Manual ship' : 'Auto selected ship'
+            }}</span>
+            <strong>{{ shipSelection.ship.name }}</strong>
+          </div>
+
+          <p>{{ shipSelection.ship.description }}</p>
+
+          <div class="chip-row result-ship-chip-row">
+            <small *ngFor="let chip of shipSelection.reasonChips" class="coverage-chip reason-chip">
+              {{ chip }}
+            </small>
+          </div>
         </div>
       </section>
 

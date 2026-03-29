@@ -218,6 +218,36 @@
   align-self: start;
 }
 
+.manual-panel-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.manual-panel-toggle__button {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(248, 251, 255, 0.72);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.manual-panel-toggle__button--active {
+  border-color: rgba(245, 200, 76, 0.34);
+  background: rgba(245, 200, 76, 0.14);
+  color: #f5c84c;
+}
+
+.manual-panel-toggle__button:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
+}
+
 .manual-locks-overview__header {
   margin-bottom: 0;
 }
@@ -378,6 +408,11 @@
   flex-shrink: 0;
 }
 
+.manual-lock-chip--ship ion-icon {
+  font-size: 1rem;
+  color: #f5c84c;
+}
+
 .manual-candidate-list {
   display: grid;
   gap: 8px;
@@ -424,6 +459,30 @@
   width: 40px;
   height: 40px;
   border-radius: 10px;
+}
+
+.ship-candidate-card {
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+}
+
+.ship-candidate-icon,
+.result-ship-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(245, 200, 76, 0.14);
+  color: #f5c84c;
+}
+
+.ship-candidate-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.ship-candidate-icon ion-icon,
+.result-ship-card__icon ion-icon {
+  font-size: 1.05rem;
 }
 
 .manual-candidate-copy {
@@ -710,6 +769,45 @@
 
 .result-grid {
   grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.result-ship-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.result-ship-card__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+}
+
+.result-ship-card__copy {
+  display: grid;
+  gap: 10px;
+}
+
+.result-ship-card__head {
+  display: grid;
+  gap: 8px;
+}
+
+.result-ship-card__head strong {
+  color: #ffffff;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.result-ship-card__copy p {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.68);
+  line-height: 1.55;
+}
+
+.result-ship-chip-row {
+  margin-top: 0;
 }
 
 .result-card {

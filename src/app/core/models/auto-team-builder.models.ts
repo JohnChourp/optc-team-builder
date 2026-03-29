@@ -2,7 +2,7 @@ import {
   type AutoBuildAbilityRequirement,
   type NormalizedBuilderAbility,
 } from './auto-team-builder-ability.models';
-import { type CharacterDetailRecord } from './optc.models';
+import { type CharacterDetailRecord, type ShipRecord } from './optc.models';
 
 export const AUTO_TEAM_BUILDER_TYPES = ['DEX', 'STR', 'QCK', 'PSY', 'INT'] as const;
 export const AUTO_TEAM_BUILDER_CLASSES = [
@@ -33,6 +33,7 @@ export interface AutoBuildConstraints {
   lockedCharacterIds?: number[];
   captainCharacterId?: number | null;
   friendCaptainCharacterId?: number | null;
+  manualShipId?: number | null;
 }
 
 export interface AutoBuildCandidateQueryOptions {
@@ -67,7 +68,14 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   lockedCharacterIds: number[];
   captainCharacterId: number | null;
   friendCaptainCharacterId: number | null;
+  manualShipId: number | null;
   candidateLimit?: number;
+}
+
+export interface AutoBuildShipSelection {
+  ship: ShipRecord;
+  source: 'manual' | 'recommended';
+  reasonChips: string[];
 }
 
 export interface AutoBuildSpecialScope {
@@ -204,6 +212,7 @@ export interface AutoBuildCoreResult {
 export interface AutoBuildResult extends AutoBuildCoreResult {
   requestedInput: AutoBuildInput;
   relaxation: AutoBuildRelaxationSummary;
+  shipSelection: AutoBuildShipSelection | null;
 }
 
 export interface AutoBuildAbilityCoverageState {
