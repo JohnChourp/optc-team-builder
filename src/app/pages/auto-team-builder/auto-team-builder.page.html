@@ -135,30 +135,32 @@
         </div>
       </div>
 
-      <div class="strict-toggle-row">
-        <div class="strict-toggle-copy">
-          <strong>{{ favoritesOnlyToggleLabel }}</strong>
-          <small>{{ favoritesOnlySupportLabel() }}</small>
+      <div class="secondary-toggle-grid">
+        <div class="strict-toggle-row">
+          <div class="strict-toggle-copy">
+            <strong>{{ favoritesOnlyToggleLabel }}</strong>
+            <small>{{ favoritesOnlySupportLabel() }}</small>
+          </div>
+          <ion-toggle
+            color="warning"
+            [checked]="favoritesOnly()"
+            [disabled]="building()"
+            (ionChange)="onFavoritesOnlyToggle($event)"
+          ></ion-toggle>
         </div>
-        <ion-toggle
-          color="warning"
-          [checked]="favoritesOnly()"
-          [disabled]="building()"
-          (ionChange)="onFavoritesOnlyToggle($event)"
-        ></ion-toggle>
-      </div>
 
-      <div class="strict-toggle-row">
-        <div class="strict-toggle-copy">
-          <strong>{{ specialSupportToggleLabel }}</strong>
-          <small>{{ specialSupportLabel() }}</small>
+        <div class="strict-toggle-row">
+          <div class="strict-toggle-copy">
+            <strong>{{ specialSupportToggleLabel }}</strong>
+            <small>{{ specialSupportLabel() }}</small>
+          </div>
+          <ion-toggle
+            color="warning"
+            [checked]="requireAllSpecialsSupportTeam()"
+            [disabled]="building()"
+            (ionChange)="onRequireAllSpecialsSupportToggle($event)"
+          ></ion-toggle>
         </div>
-        <ion-toggle
-          color="warning"
-          [checked]="requireAllSpecialsSupportTeam()"
-          [disabled]="building()"
-          (ionChange)="onRequireAllSpecialsSupportToggle($event)"
-        ></ion-toggle>
       </div>
 
       <section class="ability-requirements-card">
@@ -312,22 +314,130 @@
       </p>
 
       <section class="manual-locks-card">
-        <div class="slot-grid__header">
-          <h2>Manual picks</h2>
-          <p>{{ manualPickerSupportLabel() }}</p>
+        <div class="manual-locks-layout">
+          <div class="manual-locks-overview">
+            <div class="slot-grid__header manual-locks-overview__header">
+              <h2>Manual picks</h2>
+              <p>{{ manualPickerSupportLabel() }}</p>
+            </div>
+
+            <div class="manual-locks-meta">
+              <strong>{{ lockedSummaryLabel() }}</strong>
+              <ion-button
+                fill="clear"
+                size="small"
+                class="select-all-button"
+                [disabled]="clearAllButtonDisabled()"
+                (click)="clearAllManualSelections()"
+              >
+                Clear All
+              </ion-button>
+            </div>
+
+            <div class="manual-filter-summary-card">
+              <div class="manual-filter-summary-copy">
+                <div class="section-label">
+                  <ion-icon [icon]="manualFilterIcon"></ion-icon>
+                  <span>Manual picks sync</span>
+                </div>
+                <strong>Τα manual picks ακολουθούν τα πάνω page filters</strong>
+                <p>{{ manualFilterSummaryLabel() }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="manual-locks-search-panel">
+            <ion-searchbar
+              [debounce]="150"
+              placeholder="Search by character name in manual picks"
+              [value]="manualSearchTerm()"
+              (ionInput)="onManualSearchChange($event)"
+            ></ion-searchbar>
+
+            <div class="manual-locks-meta manual-locks-meta--candidates">
+              <strong>{{ manualCandidatesSummaryLabel() }}</strong>
+              <small>{{ manualCandidatePoolSupportLabel() }}</small>
+            </div>
+
+            <div *ngIf="manualCandidatesLoading()" class="manual-candidate-empty-state">
+              Γίνεται φόρτωση των manual candidates...
+            </div>
+
+            <div
+              *ngIf="!manualCandidatesLoading() && !manualCandidateCards().length"
+              class="manual-candidate-empty-state"
+            >
+              Δεν βρέθηκαν χαρακτήρες που να ταιριάζουν στα current page filters για manual picks.
+            </div>
+
+            <div *ngIf="manualCandidateCards().length" class="manual-candidate-list manual-candidate-list--sidebar">
+              <article
+                *ngFor="let candidateCard of manualCandidateCards()"
+                class="manual-candidate-card manual-candidate-card--detailed manual-candidate-card--sidebar"
+              >
+                <img
+                  [src]="candidateCard.character.imageUrl"
+                  [alt]="candidateCard.character.name"
+                  loading="lazy"
+                />
+                <div class="manual-candidate-copy">
+                  <strong>{{ candidateCard.character.name }}</strong>
+                  <span>{{ candidateCard.subtitle }}</span>
+                  <small *ngIf="candidateCard.favoriteLabel" class="manual-candidate-role">
+                    {{ candidateCard.favoriteLabel }}
+                  </small>
+
+                  <div class="chip-row manual-candidate-chip-row">
+                    <small
+                      *ngFor="let abilityChip of candidateCard.abilityChips"
+                      class="coverage-chip manual-ability-chip"
+                      [class.manual-ability-chip--matched]="abilityChip.highlighted"
+                      [class.manual-ability-chip--empty]="abilityChip.empty"
+                    >
+                      {{ abilityChip.label }}
+                    </small>
+                  </div>
+                </div>
+                <ion-button
+                  size="small"
+                  fill="outline"
+                  color="light"
+                  [disabled]="
+                    building() ||
+                    (!isLockedCharacter(candidateCard.character.id) && lockedLimitReached())
+                  "
+                  (click)="
+                    isLockedCharacter(candidateCard.character.id)
+                      ? removeLockedCharacter(candidateCard.character.id)
+                      : lockCharacter(candidateCard.character)
+                  "
+                >
+                  {{ isLockedCharacter(candidateCard.character.id) ? 'Remove' : 'Lock' }}
+                </ion-button>
+              </article>
+            </div>
+          </div>
         </div>
 
-        <div class="manual-locks-meta">
-          <strong>{{ lockedSummaryLabel() }}</strong>
-          <ion-button
-            fill="clear"
-            size="small"
-            class="select-all-button"
-            [disabled]="clearAllButtonDisabled()"
-            (click)="clearAllManualSelections()"
+        <div *ngIf="hasAppliedManualFilters()" class="selected-values-row manual-selected-row">
+          <span
+            *ngFor="let item of manualCandidateFilters().selectedTypes"
+            class="selected-value-chip ability-requirement-chip"
           >
-            Clear All
-          </ion-button>
+            Type: {{ item }}
+          </span>
+          <span
+            *ngFor="let item of manualCandidateFilters().selectedClasses"
+            class="selected-value-chip ability-requirement-chip"
+          >
+            Class: {{ item }}
+          </span>
+          <span
+            *ngFor="let item of manualFilterAppliedAbilityLabels()"
+            class="selected-value-chip ability-requirement-chip"
+          >
+            {{ item }}
+          </span>
         </div>
 
         <div *ngIf="hasLockedCharacters()" class="selected-values-row manual-selected-row">
@@ -414,108 +524,6 @@
             </article>
           </div>
         </section>
-
-        <div class="manual-filter-summary-card">
-          <div class="manual-filter-summary-copy">
-            <div class="section-label">
-              <ion-icon [icon]="manualFilterIcon"></ion-icon>
-              <span>Manual picks sync</span>
-            </div>
-            <strong>Τα manual picks ακολουθούν τα πάνω page filters</strong>
-            <p>{{ manualFilterSummaryLabel() }}</p>
-          </div>
-        </div>
-
-        <div *ngIf="hasAppliedManualFilters()" class="selected-values-row manual-selected-row">
-          <span
-            *ngFor="let item of manualCandidateFilters().selectedTypes"
-            class="selected-value-chip ability-requirement-chip"
-          >
-            Type: {{ item }}
-          </span>
-          <span
-            *ngFor="let item of manualCandidateFilters().selectedClasses"
-            class="selected-value-chip ability-requirement-chip"
-          >
-            Class: {{ item }}
-          </span>
-          <span
-            *ngFor="let item of manualFilterAppliedAbilityLabels()"
-            class="selected-value-chip ability-requirement-chip"
-          >
-            {{ item }}
-          </span>
-        </div>
-
-        <div class="manual-locks-meta manual-locks-meta--candidates">
-          <strong>{{ manualCandidatesSummaryLabel() }}</strong>
-          <small>{{ manualCandidatePoolSupportLabel() }}</small>
-        </div>
-
-        <ion-searchbar
-          [debounce]="150"
-          placeholder="Search by character name in manual picks"
-          [value]="manualSearchTerm()"
-          (ionInput)="onManualSearchChange($event)"
-        ></ion-searchbar>
-
-        <div *ngIf="manualCandidatesLoading()" class="manual-candidate-empty-state">
-          Γίνεται φόρτωση των manual candidates...
-        </div>
-
-        <div
-          *ngIf="!manualCandidatesLoading() && !manualCandidateCards().length"
-          class="manual-candidate-empty-state"
-        >
-          Δεν βρέθηκαν χαρακτήρες που να ταιριάζουν στα current page filters για manual picks.
-        </div>
-
-        <div *ngIf="manualCandidateCards().length" class="manual-candidate-list">
-          <article
-            *ngFor="let candidateCard of manualCandidateCards()"
-            class="manual-candidate-card manual-candidate-card--detailed"
-          >
-            <img
-              [src]="candidateCard.character.imageUrl"
-              [alt]="candidateCard.character.name"
-              loading="lazy"
-            />
-            <div class="manual-candidate-copy">
-              <strong>{{ candidateCard.character.name }}</strong>
-              <span>{{ candidateCard.subtitle }}</span>
-              <small *ngIf="candidateCard.favoriteLabel" class="manual-candidate-role">
-                {{ candidateCard.favoriteLabel }}
-              </small>
-
-              <div class="chip-row manual-candidate-chip-row">
-                <small
-                  *ngFor="let abilityChip of candidateCard.abilityChips"
-                  class="coverage-chip manual-ability-chip"
-                  [class.manual-ability-chip--matched]="abilityChip.highlighted"
-                  [class.manual-ability-chip--empty]="abilityChip.empty"
-                >
-                  {{ abilityChip.label }}
-                </small>
-              </div>
-            </div>
-            <ion-button
-              size="small"
-              fill="outline"
-              color="light"
-              [disabled]="
-                building() ||
-                (!isLockedCharacter(candidateCard.character.id) && lockedLimitReached())
-              "
-              (click)="
-                isLockedCharacter(candidateCard.character.id)
-                  ? removeLockedCharacter(candidateCard.character.id)
-                  : lockCharacter(candidateCard.character)
-              "
-            >
-              {{ isLockedCharacter(candidateCard.character.id) ? 'Remove' : 'Lock' }}
-            </ion-button>
-          </article>
-        </div>
       </section>
 
       <div class="build-action-row">
