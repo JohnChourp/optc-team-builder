@@ -215,6 +215,13 @@
     "requestedClasses": "Requested classes",
     "requestedTypes": "Requested types"
   },
+  "save": {
+    "copy": "Αποθήκευσε το generated team offline με το ίδιο shared storage που χρησιμοποιεί και το Team Builder.",
+    "notesLabel": "Σημειώσεις",
+    "saveOffline": "Αποθήκευση ομάδας offline",
+    "teamNameLabel": "Όνομα πληρώματος",
+    "title": "Αποθήκευση generated team"
+  },
   "coverage": {
     "title": "Coverage summary",
     "copy": "Σύντομο snapshot του damage, consistency και utility profile της ομάδας.",

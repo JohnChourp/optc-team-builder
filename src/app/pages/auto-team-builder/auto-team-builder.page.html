@@ -780,6 +780,36 @@
           </article>
         </section>
 
+        <section class="glass-card save-team-card">
+          <div class="slot-grid__header">
+            <h2>{{ t("save.title") }}</h2>
+            <p>{{ t("save.copy") }}</p>
+          </div>
+
+          <div class="save-team-fields">
+            <ion-input
+              [label]="t('save.teamNameLabel')"
+              labelPlacement="stacked"
+              fill="outline"
+              [value]="teamName()"
+              (ionInput)="onTeamNameChange($event)"
+            ></ion-input>
+          </div>
+
+          <ion-textarea
+            [label]="t('save.notesLabel')"
+            labelPlacement="stacked"
+            fill="outline"
+            autoGrow="true"
+            [value]="notes()"
+            (ionInput)="onNotesChange($event)"
+          ></ion-textarea>
+
+          <ion-button expand="block" color="warning" (click)="saveTeam()">
+            {{ t("save.saveOffline") }}
+          </ion-button>
+        </section>
+
         <section class="glass-card coverage-card">
           <div class="slot-grid__header">
             <h2>{{ t("coverage.title") }}</h2>

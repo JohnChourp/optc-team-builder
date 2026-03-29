@@ -26,6 +26,15 @@ describe("SavedTeamsPage", () => {
         createdAt: "2026-03-29T10:00:00.000Z",
         updatedAt: "2026-03-29T10:00:00.000Z",
       },
+      {
+        id: "team-2",
+        name: "Auto Crew",
+        notes: "Saved from auto builder",
+        shipId: 9001,
+        slots: [404, 505, null, null, null, null],
+        createdAt: "2026-03-29T11:00:00.000Z",
+        updatedAt: "2026-03-29T11:00:00.000Z",
+      },
     ]);
     const userState = {
       ready: vi.fn().mockResolvedValue(undefined),
@@ -36,6 +45,8 @@ describe("SavedTeamsPage", () => {
         createCharacter(101, "Zoro"),
         createCharacter(202, "Law"),
         createCharacter(303, "Luffy"),
+        createCharacter(404, "Nami"),
+        createCharacter(505, "Robin"),
       ]),
     };
     const page = new SavedTeamsPage(userState as never, repository as never);
@@ -43,8 +54,8 @@ describe("SavedTeamsPage", () => {
     await page.ngOnInit();
 
     expect(page.loading()).toBe(false);
-    expect(repository.getCharactersByIds).toHaveBeenCalledWith([101, 202, 303]);
-    expect(page.savedTeamCards()).toHaveLength(1);
+    expect(repository.getCharactersByIds).toHaveBeenCalledWith([101, 202, 303, 404, 505]);
+    expect(page.savedTeamCards()).toHaveLength(2);
     expect(page.savedTeamCards()[0]?.slots.map((slot) => slot?.id ?? null)).toEqual([
       101,
       null,
@@ -52,6 +63,14 @@ describe("SavedTeamsPage", () => {
       null,
       null,
       303,
+    ]);
+    expect(page.savedTeamCards()[1]?.slots.map((slot) => slot?.id ?? null)).toEqual([
+      404,
+      505,
+      null,
+      null,
+      null,
+      null,
     ]);
   });
 

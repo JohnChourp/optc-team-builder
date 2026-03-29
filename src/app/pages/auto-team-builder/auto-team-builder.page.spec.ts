@@ -24,6 +24,7 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonContent: class {},
   IonHeader: class {},
   IonIcon: class {},
+  IonInput: class {},
   IonModal: class {},
   IonSearchbar: class {},
   IonSegment: class {},
@@ -31,6 +32,7 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonSelect: class {},
   IonSelectOption: class {},
   IonSpinner: class {},
+  IonTextarea: class {},
   IonTitle: class {},
   IonToggle: class {},
   IonToolbar: class {},
@@ -273,6 +275,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(template).toContain("[routerLink]=\"getCharacterDetailLink(character)\"");
     expect(template).toContain("[routerLink]=\"getCharacterDetailLink(leader)\"");
     expect(template).toContain("[routerLink]=\"getCharacterDetailLink(slot.character)\"");
+    expect(template).toContain('(click)="saveTeam()"');
   });
 
   it('updates build progress from the service execution callback', async () => {
@@ -595,6 +598,86 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(page.result()).toEqual(previousResult);
     expect(page.errorMessage()).toBe('');
     expect(page.building()).toBe(false);
+  });
+});
+
+describe('AutoTeamBuilderPage offline save', () => {
+  it('does not save when there is no generated result', async () => {
+    const { page, userState } = await createPage();
+
+    await page.ngOnInit();
+    await page.saveTeam();
+
+    expect(userState.saveTeam).not.toHaveBeenCalled();
+  });
+
+  it('saves the generated team through the shared user state contract', async () => {
+    const { page, userState } = await createPage();
+
+    await page.ngOnInit();
+    page.teamName.set('Auto Crew');
+    page.notes.set('Generated from filters');
+    page.result.set({
+      ...createAutoBuildResult(),
+      shipSelection: {
+        ship: createShipRecord(9001),
+        source: 'recommended',
+        reasonChips: ['Recommended ship'],
+      },
+    });
+
+    await page.saveTeam();
+
+    expect(userState.saveTeam).toHaveBeenCalledWith({
+      id: undefined,
+      name: 'Auto Crew',
+      notes: 'Generated from filters',
+      shipId: 9001,
+      slots: [101, 102, 103, 104, 105, 106],
+    });
+    expect(page.currentTeamId()).toBe('saved-auto-team');
+  });
+
+  it('reuses the current saved team id when saving the same generated result again', async () => {
+    const { page, userState } = await createPage();
+
+    userState.saveTeam
+      .mockResolvedValueOnce({ id: 'saved-auto-team' })
+      .mockResolvedValueOnce({ id: 'saved-auto-team' });
+
+    await page.ngOnInit();
+    page.result.set(createAutoBuildResult());
+
+    await page.saveTeam();
+    await page.saveTeam();
+
+    expect(userState.saveTeam).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        id: undefined,
+      }),
+    );
+    expect(userState.saveTeam).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        id: 'saved-auto-team',
+      }),
+    );
+  });
+
+  it('clears the current saved team id when the generated team is reset', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.result.set(createAutoBuildResult());
+    page.currentTeamId.set('saved-auto-team');
+
+    await page.onClassChange({ detail: { value: ['Fighter'] } } as CustomEvent<{
+      value?: string[] | string | null;
+    }>);
+
+    expect(page.currentTeamId()).toBeNull();
+    expect(page.result()).toBeNull();
   });
 });
 
@@ -1609,6 +1692,7 @@ async function createPage(): Promise<{
       set(value: number[]): void;
     };
     ready: ReturnType<typeof vi.fn>;
+    saveTeam: ReturnType<typeof vi.fn>;
     toggleFavorite: ReturnType<typeof vi.fn>;
   };
 }> {
@@ -1661,6 +1745,7 @@ async function createPage(): Promise<{
   const userState = {
     favoriteCharacterIds: signal<number[]>([]),
     ready: vi.fn().mockResolvedValue(undefined),
+    saveTeam: vi.fn().mockResolvedValue({ id: 'saved-auto-team' }),
     toggleFavorite: vi.fn().mockResolvedValue(undefined),
   };
   const i18n = createI18nStub('auto-team-builder');

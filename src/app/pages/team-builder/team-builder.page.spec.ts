@@ -24,6 +24,32 @@ vi.mock("@ionic/angular/standalone", () => ({
 }));
 
 describe("TeamBuilderPage", () => {
+  it("saves manual teams through the shared user state contract", async () => {
+    const { page, userState } = createPage();
+
+    page.teamName.set("Manual Crew");
+    page.notes.set("Shared persistence");
+    page.selectedShipId.set(9001);
+    page.slotCharacters.set([
+      { id: 101 } as never,
+      null,
+      { id: 202 } as never,
+      null,
+      null,
+      { id: 303 } as never,
+    ]);
+
+    await page.saveTeam();
+
+    expect(userState.saveTeam).toHaveBeenCalledWith({
+      id: undefined,
+      name: "Manual Crew",
+      notes: "Shared persistence",
+      shipId: 9001,
+      slots: [101, null, 202, null, null, 303],
+    });
+  });
+
   it("returns a detail route only for occupied slots", () => {
     const { page } = createPage();
 
@@ -61,7 +87,9 @@ function createPage() {
     ready: vi.fn().mockResolvedValue(undefined),
     favoriteCharacterIds: signal<number[]>([]),
     savedTeams: signal([]),
-    saveTeam: vi.fn(),
+    saveTeam: vi.fn().mockResolvedValue({
+      id: "saved-team-1",
+    }),
     deleteTeam: vi.fn(),
     toggleFavorite: vi.fn(),
   };

@@ -7,10 +7,12 @@ import {
   IonContent,
   IonHeader,
   IonIcon,
+  IonInput,
   IonSearchbar,
   IonSelect,
   IonSelectOption,
   IonSpinner,
+  IonTextarea,
   IonTitle,
   IonToggle,
   IonToolbar,
@@ -141,10 +143,12 @@ interface PresetImportFeedback {
     IonContent,
     IonHeader,
     IonIcon,
+    IonInput,
     IonSearchbar,
     IonSelect,
     IonSelectOption,
     IonSpinner,
+    IonTextarea,
     IonTitle,
     IonToggle,
     IonToolbar,
@@ -181,10 +185,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
   public readonly requireAllSpecialsSupportTeam = signal(false);
   public readonly favoritesOnly = signal(false);
+  public readonly teamName = signal('');
+  public readonly notes = signal('');
   public readonly building = signal(false);
   public readonly buildProgress = signal<AutoBuildProgressSnapshot | null>(null);
   public readonly result = signal<AutoBuildResult | null>(null);
   public readonly errorMessage = signal('');
+  public readonly currentTeamId = signal<string | null>(null);
   public readonly favoriteCharacterIds;
   public readonly presetImportFeedback = signal<PresetImportFeedback | null>(null);
 
@@ -884,6 +891,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     private readonly i18n: AppI18nService,
   ) {
     this.favoriteCharacterIds = this.userState.favoriteCharacterIds;
+    this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
   }
 
   public async ngOnInit(): Promise<void> {
@@ -930,6 +938,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public async onManualSearchChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
     this.manualSearchTerm.set((event.detail.value ?? '').trim());
     await this.refreshAppliedManualCandidates();
+  }
+
+  public onTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {
+    this.teamName.set((event.detail.value ?? '').trimStart());
+  }
+
+  public onNotesChange(event: CustomEvent<{ value?: string | null }>): void {
+    this.notes.set((event.detail.value ?? '').toString());
   }
 
   public setShipPickerMode(mode: 'characters' | 'ships'): void {
@@ -1228,13 +1244,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     const previousResult = this.result();
+    const previousTeamId = this.currentTeamId();
     const abortController = new AbortController();
 
     this.buildAbortController = abortController;
     this.building.set(true);
-    this.buildProgress.set(null);
-    this.result.set(null);
-    this.errorMessage.set('');
+    this.resetBuildState();
 
     try {
       const executionOptions: AutoTeamBuildExecutionOptions = {
@@ -1269,6 +1284,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     } catch (error) {
       if (isAutoTeamBuildCancelledError(error)) {
         this.result.set(previousResult);
+        this.currentTeamId.set(previousTeamId);
         this.errorMessage.set('');
         return;
       }
@@ -1366,10 +1382,29 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     downloadAutoTeamExport(this.buildTeamExportPayload());
   }
 
+  public async saveTeam(): Promise<void> {
+    const current = this.result();
+
+    if (!current) {
+      return;
+    }
+
+    const saved = await this.userState.saveTeam({
+      id: this.currentTeamId() ?? undefined,
+      name: this.teamName(),
+      notes: this.notes(),
+      shipId: current.shipSelection?.ship.id ?? null,
+      slots: current.slots.map((slot) => slot.character.id),
+    });
+
+    this.currentTeamId.set(saved.id);
+  }
+
   private resetBuildState(): void {
     this.buildProgress.set(null);
     this.result.set(null);
     this.errorMessage.set('');
+    this.currentTeamId.set(null);
   }
 
   private async resetPageState(): Promise<void> {
@@ -1390,6 +1425,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.requireAllSelectedClassesPerCharacter.set(false);
     this.requireAllSpecialsSupportTeam.set(false);
     this.favoritesOnly.set(false);
+    this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
+    this.notes.set('');
     this.presetImportFeedback.set(null);
     this.resetBuildState();
     await this.refreshAppliedManualCandidates();
@@ -1657,6 +1694,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     nextResult.shipSelection = resolveAutoBuildShipSelection(nextResult, this.ships());
     this.result.set(nextResult);
+    this.currentTeamId.set(null);
   }
 
   private buildShipCardSubtitle(ship: ShipRecord): string {

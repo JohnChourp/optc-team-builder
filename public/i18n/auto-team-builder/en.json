@@ -215,6 +215,13 @@
     "requestedClasses": "Requested classes",
     "requestedTypes": "Requested types"
   },
+  "save": {
+    "copy": "Save the generated team offline through the same shared storage used by Team Builder.",
+    "notesLabel": "Notes",
+    "saveOffline": "Save team offline",
+    "teamNameLabel": "Crew name",
+    "title": "Save generated team"
+  },
   "coverage": {
     "title": "Coverage summary",
     "copy": "Quick snapshot of the damage, consistency, and utility profile of the generated team.",
