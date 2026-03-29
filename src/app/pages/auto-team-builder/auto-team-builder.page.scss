@@ -197,8 +197,7 @@
 
 .manual-filter-summary-card {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
   gap: 14px;
   padding: 14px;
   border-radius: 18px;
@@ -221,11 +220,6 @@
   margin: 0;
   color: rgba(248, 251, 255, 0.66);
   line-height: 1.5;
-}
-
-.manual-filter-open-button {
-  margin: 0;
-  flex-shrink: 0;
 }
 
 .ability-requirements-card {
@@ -850,78 +844,6 @@
   color: #ff8b95;
 }
 
-.manual-filter-modal-shell {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: 18px;
-  height: 100%;
-  min-height: 0;
-  padding: 22px;
-  overflow: hidden;
-  color: #f8fbff;
-}
-
-.manual-filter-modal-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.manual-filter-modal-head h2 {
-  margin: 14px 0 8px;
-  font-family: "Bricolage Grotesque", sans-serif;
-  font-size: clamp(1.7rem, 4vw, 2.2rem);
-}
-
-.manual-filter-modal-head p {
-  margin: 0;
-  color: rgba(248, 251, 255, 0.68);
-  line-height: 1.6;
-}
-
-.manual-filter-modal-summary,
-.manual-filter-panel {
-  display: grid;
-  gap: 10px;
-  padding: 16px;
-  border-radius: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.manual-filter-modal-summary strong {
-  color: #ffffff;
-}
-
-.manual-filter-modal-summary span,
-.manual-filter-hint {
-  color: rgba(248, 251, 255, 0.64);
-  line-height: 1.5;
-}
-
-.manual-filter-modal-body {
-  display: grid;
-  gap: 18px;
-  min-height: 0;
-  overflow: auto;
-  align-content: start;
-  padding-right: 4px;
-}
-
-.manual-filter-modal-grid {
-  display: grid;
-  gap: 16px;
-  align-content: start;
-}
-
-.manual-filter-modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding-top: 4px;
-}
-
 ion-select {
   --background: rgba(255, 255, 255, 0.06);
   --border-color: rgba(255, 255, 255, 0.14);
@@ -944,13 +866,6 @@ ion-searchbar {
   padding: 0;
 }
 
-ion-segment {
-  --background: rgba(255, 255, 255, 0.06);
-  --color: rgba(248, 251, 255, 0.72);
-  --color-checked: #0e1527;
-  --indicator-color: #f5c84c;
-}
-
 ion-toggle {
   --track-background: rgba(255, 255, 255, 0.18);
   --track-background-checked: rgba(245, 200, 76, 0.36);
@@ -965,10 +880,6 @@ ion-toggle {
 @media (min-width: 768px) {
   .controls-grid,
   .summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .manual-filter-modal-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -995,14 +906,8 @@ ion-toggle {
     justify-content: stretch;
   }
 
-  .manual-filter-summary-card,
-  .manual-filter-modal-head {
+  .manual-filter-summary-card {
     display: grid;
-  }
-
-  .manual-filter-open-button,
-  .manual-filter-modal-actions ion-button {
-    width: 100%;
   }
 
   .download-preset-button {
@@ -1021,10 +926,6 @@ ion-toggle {
   }
 
   .ability-requirements-actions {
-    justify-content: stretch;
-  }
-
-  .manual-filter-modal-actions {
     justify-content: stretch;
   }
 }

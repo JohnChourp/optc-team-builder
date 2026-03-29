@@ -12,7 +12,6 @@ import {
   type CharacterRecord,
   type CharacterSearchQuery,
   type DatasetManifest,
-  type ManualCharacterFilterMetadata,
   type OfflinePackSummary,
   type RegionAvailability,
   type ShipRecord,
@@ -35,7 +34,6 @@ export class OptcRepositoryService {
   private readonly databasePromise: Promise<Database>;
   private manifestPromise?: Promise<DatasetManifest>;
   private autoBuilderAbilityCatalogPromise?: Promise<AutoBuildAbilityCatalog>;
-  private manualCharacterFilterMetadataPromise?: Promise<ManualCharacterFilterMetadata>;
 
   public constructor() {
     this.sqlPromise = import('sql.js').then((module) =>
@@ -58,11 +56,6 @@ export class OptcRepositoryService {
       AUTO_TEAM_BUILDER_ABILITY_CATALOG_PATH,
     );
     return this.autoBuilderAbilityCatalogPromise;
-  }
-
-  public async getManualCharacterFilterMetadata(): Promise<ManualCharacterFilterMetadata> {
-    this.manualCharacterFilterMetadataPromise ??= this.buildManualCharacterFilterMetadata();
-    return this.manualCharacterFilterMetadataPromise;
   }
 
   public async searchCharacters(query: CharacterSearchQuery): Promise<CharacterListItem[]> {
@@ -129,28 +122,43 @@ export class OptcRepositoryService {
   public async searchDetailedCharacters(
     query: DetailedCharacterSearchQuery,
   ): Promise<CharacterDetailRecord[]> {
-    const normalizedSelectedTypes = [...new Set(query.selectedTypes.map((type) => type.trim()))]
-      .filter((type) => type.length);
+    const normalizedSelectedTypes = [
+      ...new Set(query.selectedTypes.map((type) => type.trim())),
+    ].filter((type) => type.length);
     const normalizedSelectedClasses = [
       ...new Set(query.selectedClasses.map((characterClass) => characterClass.trim())),
     ].filter((characterClass) => characterClass.length);
-    const whereClauses = [
-      "(? = '' OR c.search_text LIKE '%' || ? || '%')",
-    ];
+    const whereClauses = ["(? = '' OR c.search_text LIKE '%' || ? || '%')"];
     const queryParams: Array<string | number> = [
       query.searchTerm.toLowerCase(),
       query.searchTerm.toLowerCase(),
     ];
+    const selectedTypesMatchMode = query.selectedTypesMatchMode ?? 'all';
+    const selectedClassesMatchMode = query.selectedClassesMatchMode ?? 'all';
 
-    normalizedSelectedTypes.forEach((type) => {
-      whereClauses.push("(',' || c.type || ',') LIKE ?");
-      queryParams.push(`%,${type},%`);
-    });
+    if (normalizedSelectedTypes.length) {
+      const typeClauses = normalizedSelectedTypes.map(() => "(',' || c.type || ',') LIKE ?");
 
-    normalizedSelectedClasses.forEach((characterClass) => {
-      whereClauses.push('c.classes_json LIKE ?');
-      queryParams.push(`%\"${characterClass}\"%`);
-    });
+      whereClauses.push(
+        selectedTypesMatchMode === 'any'
+          ? `(${typeClauses.join(' OR ')})`
+          : typeClauses.join('\n          AND '),
+      );
+      queryParams.push(...normalizedSelectedTypes.map((type) => `%,${type},%`));
+    }
+
+    if (normalizedSelectedClasses.length) {
+      const classClauses = normalizedSelectedClasses.map(() => 'c.classes_json LIKE ?');
+
+      whereClauses.push(
+        selectedClassesMatchMode === 'any'
+          ? `(${classClauses.join(' OR ')})`
+          : classClauses.join('\n          AND '),
+      );
+      queryParams.push(
+        ...normalizedSelectedClasses.map((characterClass) => `%\"${characterClass}\"%`),
+      );
+    }
 
     whereClauses.push('1 = 1');
     queryParams.push(query.limit, query.offset);
@@ -534,7 +542,8 @@ export class OptcRepositoryService {
       ...this.emptyDetail(characterId),
       ...normalizedDetail,
       characterId,
-      builderAbilities: normalizedDetail.builderAbilities ?? normalizedDetail.specialAbilities ?? [],
+      builderAbilities:
+        normalizedDetail.builderAbilities ?? normalizedDetail.specialAbilities ?? [],
     };
   }
 
@@ -569,41 +578,6 @@ export class OptcRepositoryService {
 
     return (await response.json()) as T;
   }
-
-  private async buildManualCharacterFilterMetadata(): Promise<ManualCharacterFilterMetadata> {
-    const [manifest, rows] = await Promise.all([
-      this.getDatasetManifest(),
-      this.selectAll(
-        `
-          SELECT type, classes_json
-          FROM characters
-        `,
-      ),
-    ]);
-    let maxTypesPerCharacter = 0;
-    let maxClassesPerCharacter = 0;
-
-    rows.forEach((row) => {
-      const typeCount = String(row['type'] ?? '')
-        .split(',')
-        .map((value) => value.trim())
-        .filter((value) => value.length).length;
-      const classCount = [
-        ...new Set(this.parseJson<string[]>(row['classes_json'], []).map((value) => value.trim())),
-      ].filter((value) => value.length).length;
-
-      maxTypesPerCharacter = Math.max(maxTypesPerCharacter, typeCount);
-      maxClassesPerCharacter = Math.max(maxClassesPerCharacter, classCount);
-    });
-
-    return {
-      availableTypes: [...manifest.availableTypes],
-      availableClasses: [...manifest.availableClasses],
-      maxTypesPerCharacter: Math.max(maxTypesPerCharacter, 1),
-      maxClassesPerCharacter: Math.max(maxClassesPerCharacter, 1),
-    };
-  }
-
   private normalizeManifest(manifest: DatasetManifest): DatasetManifest {
     return {
       ...manifest,

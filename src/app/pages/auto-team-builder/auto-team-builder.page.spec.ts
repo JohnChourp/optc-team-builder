@@ -318,6 +318,182 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     ]);
   });
 
+  it('refreshes manual candidates live from top-level filters using any-match repository queries', async () => {
+    const { page, repository } = await createPage();
+    const dexFighter = createCharacterRecord(201, 'DEX Fighter');
+    const psySlasher = createCharacterRecord(202, 'PSY Slasher');
+    const intShooter = createCharacterRecord(203, 'INT Shooter');
+
+    dexFighter.type = 'DEX';
+    dexFighter.classes = ['Fighter'];
+    dexFighter.primaryClass = 'Fighter';
+    dexFighter.secondaryClass = null;
+
+    psySlasher.type = 'PSY';
+    psySlasher.classes = ['Slasher'];
+    psySlasher.primaryClass = 'Slasher';
+    psySlasher.secondaryClass = null;
+
+    intShooter.type = 'INT';
+    intShooter.classes = ['Shooter'];
+    intShooter.primaryClass = 'Shooter';
+    intShooter.secondaryClass = null;
+
+    repository.searchDetailedCharacters.mockImplementation(async (query) =>
+      filterCharactersForManualQuery([dexFighter, psySlasher, intShooter], query),
+    );
+
+    await page.ngOnInit();
+    repository.searchDetailedCharacters.mockClear();
+
+    await page.onTypeChange({ detail: { value: ['DEX', 'PSY'] } } as CustomEvent<{
+      value: string[];
+    }>);
+    await page.onClassChange({ detail: { value: ['Fighter', 'Slasher'] } } as CustomEvent<{
+      value: string[];
+    }>);
+
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      selectedTypes: ['DEX', 'PSY'],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: ['Fighter', 'Slasher'],
+      selectedClassesMatchMode: 'any',
+      limit: 24,
+      offset: 0,
+    });
+    expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
+      [201, 202],
+    );
+  });
+
+  it('filters manual candidates from top-level ability requirements with per-unit count normalization', async () => {
+    const { page, repository } = await createPage();
+    const bindSpecialist = createCharacterRecord(301, 'Bind Specialist', [
+      {
+        key: 'remove_bind',
+        label: 'Remove Bind',
+        minTurns: 5,
+        isCompleteRemoval: false,
+        slotTokens: [],
+        source: 'specialText',
+      },
+    ]);
+    const barrierSpecialist = createCharacterRecord(302, 'Barrier Specialist', [
+      {
+        key: 'remove_slot_barrier',
+        label: 'Remove Slot Barrier',
+        minTurns: 2,
+        isCompleteRemoval: false,
+        slotTokens: ['DEX'],
+        source: 'specialText',
+      },
+    ]);
+
+    repository.searchDetailedCharacters.mockResolvedValue([bindSpecialist, barrierSpecialist]);
+
+    await page.ngOnInit();
+    repository.searchDetailedCharacters.mockClear();
+
+    await page.addRequiredAbility();
+    const draftId = page.requiredAbilityDrafts()[0]!.draftId;
+    await page.onRequiredAbilityCountChange(draftId, createInputEvent('4'));
+
+    expect(page.manualCandidateFilters().requiredAbilities).toEqual([
+      {
+        abilityKey: 'remove_bind',
+        minTurns: 1,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ]);
+    expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
+      [301],
+    );
+  });
+
+  it('rebuilds manual candidates with the default pool after page reset', async () => {
+    const { page, repository } = await createPage();
+    const dexFighter = createCharacterRecord(401, 'Reset DEX Fighter');
+    const psySlasher = createCharacterRecord(402, 'Reset PSY Slasher');
+
+    dexFighter.type = 'DEX';
+    dexFighter.classes = ['Fighter'];
+    dexFighter.primaryClass = 'Fighter';
+    dexFighter.secondaryClass = null;
+
+    psySlasher.type = 'PSY';
+    psySlasher.classes = ['Slasher'];
+    psySlasher.primaryClass = 'Slasher';
+    psySlasher.secondaryClass = null;
+
+    repository.searchDetailedCharacters.mockImplementation(async (query) =>
+      filterCharactersForManualQuery([dexFighter, psySlasher], query),
+    );
+
+    await page.ngOnInit();
+    await page.onTypeChange({ detail: { value: ['DEX'] } } as CustomEvent<{ value: string[] }>);
+
+    expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
+      [401],
+    );
+
+    await page.ionViewWillEnter();
+
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: [],
+      selectedClassesMatchMode: 'any',
+      limit: 24,
+      offset: 0,
+    });
+    expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
+      [401, 402],
+    );
+  });
+
+  it('ignores stale manual candidate responses when the search term changes quickly', async () => {
+    const { page, repository } = await createPage();
+
+    await page.ngOnInit();
+
+    let resolveFirstRequest: ((value: CharacterDetailRecord[]) => void) | undefined;
+    let resolveSecondRequest: ((value: CharacterDetailRecord[]) => void) | undefined;
+
+    repository.searchDetailedCharacters.mockReset();
+    repository.searchDetailedCharacters
+      .mockImplementationOnce(
+        () =>
+          new Promise<CharacterDetailRecord[]>((resolve) => {
+            resolveFirstRequest = resolve;
+          }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise<CharacterDetailRecord[]>((resolve) => {
+            resolveSecondRequest = resolve;
+          }),
+      );
+
+    const firstRefresh = page.onManualSearchChange({ detail: { value: 'first' } } as CustomEvent<{
+      value: string;
+    }>);
+    const secondRefresh = page.onManualSearchChange({ detail: { value: 'second' } } as CustomEvent<{
+      value: string;
+    }>);
+
+    resolveSecondRequest?.([createCharacterRecord(501, 'Second Result')]);
+    resolveFirstRequest?.([createCharacterRecord(502, 'First Result')]);
+
+    await Promise.all([firstRefresh, secondRefresh]);
+
+    expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
+      [501],
+    );
+  });
+
   it('cancels the active build and restores the previous result', async () => {
     const { page, autoTeamBuilder } = await createPage();
     const previousResult = createAutoBuildResult();
@@ -952,7 +1128,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
 
 describe('AutoTeamBuilderPage preset import state', () => {
   it('applies a valid imported preset and clears previous build state', async () => {
-    const { page } = await createPage();
+    const { page, repository } = await createPage();
     const payload = buildAutoTeamSelectionExportPayload({
       selectedTypes: ['DEX', 'PSY'],
       selectedClasses: ['Fighter', 'Slasher'],
@@ -976,6 +1152,40 @@ describe('AutoTeamBuilderPage preset import state', () => {
       friendCaptainLeaderId: 101,
       exportedAt: '2026-03-25T10:00:00.000Z',
     });
+    const importDex = createCharacterRecord(701, 'Imported DEX Fighter', [
+      {
+        key: 'remove_bind',
+        label: 'Remove Bind',
+        minTurns: 6,
+        isCompleteRemoval: false,
+        slotTokens: [],
+        source: 'specialText',
+      },
+    ]);
+    const importPsy = createCharacterRecord(702, 'Imported PSY Slasher', [
+      {
+        key: 'remove_bind',
+        label: 'Remove Bind',
+        minTurns: 5,
+        isCompleteRemoval: false,
+        slotTokens: [],
+        source: 'specialText',
+      },
+    ]);
+
+    importDex.type = 'DEX';
+    importDex.classes = ['Fighter'];
+    importDex.primaryClass = 'Fighter';
+    importDex.secondaryClass = null;
+
+    importPsy.type = 'PSY';
+    importPsy.classes = ['Slasher'];
+    importPsy.primaryClass = 'Slasher';
+    importPsy.secondaryClass = null;
+
+    repository.searchDetailedCharacters.mockImplementation(async (query) =>
+      filterCharactersForManualQuery([importDex, importPsy], query),
+    );
 
     await page.ngOnInit();
     page.result.set(createAutoBuildResult());
@@ -1011,6 +1221,9 @@ describe('AutoTeamBuilderPage preset import state', () => {
     expect(page.requireAllSelectedClassesPerCharacter()).toBe(true);
     expect(page.requireAllSpecialsSupportTeam()).toBe(true);
     expect(page.favoritesOnly()).toBe(true);
+    expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
+      [701, 702],
+    );
     expect(page.result()).toBeNull();
     expect(page.errorMessage()).toBe('');
     expect(page.buildProgress()).toBeNull();
@@ -1126,7 +1339,11 @@ describe('AutoTeamBuilderPage preset import state', () => {
   });
 });
 
-function createCharacterRecord(id: number, name = `Character ${id}`): CharacterDetailRecord {
+function createCharacterRecord(
+  id: number,
+  name = `Character ${id}`,
+  builderAbilities: CharacterDetailRecord['detail']['builderAbilities'] = [],
+): CharacterDetailRecord {
   return {
     id,
     name,
@@ -1164,7 +1381,7 @@ function createCharacterRecord(id: number, name = `Character ${id}`): CharacterD
       specialName: `${name} special`,
       specialText: `${name} special text`,
       specialNotes: null,
-      builderAbilities: [],
+      builderAbilities,
       sailorAbilities: [`${name} sailor`],
       sailorNotes: null,
       limitBreak: [{ description: `${name} limit break` }],
@@ -1177,6 +1394,50 @@ function createCharacterRecord(id: number, name = `Character ${id}`): CharacterD
       rumbleData: null,
     },
   };
+}
+
+function createInputEvent(value: string): Event {
+  return {
+    target: { value },
+  } as unknown as Event;
+}
+
+function filterCharactersForManualQuery(
+  records: CharacterDetailRecord[],
+  query: {
+    searchTerm: string;
+    selectedTypes: string[];
+    selectedTypesMatchMode?: 'all' | 'any';
+    selectedClasses: string[];
+    selectedClassesMatchMode?: 'all' | 'any';
+  },
+): CharacterDetailRecord[] {
+  const normalizedSearchTerm = query.searchTerm.trim().toLowerCase();
+  const normalizedTypes = query.selectedTypes.map((type) => type.trim()).filter(Boolean);
+  const normalizedClasses = query.selectedClasses
+    .map((characterClass) => characterClass.trim())
+    .filter(Boolean);
+
+  return records.filter((record) => {
+    const matchesSearchTerm =
+      !normalizedSearchTerm || record.name.toLowerCase().includes(normalizedSearchTerm);
+    const recordTypes = record.type
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+    const typeMatches =
+      !normalizedTypes.length ||
+      (query.selectedTypesMatchMode === 'all'
+        ? normalizedTypes.every((type) => recordTypes.includes(type))
+        : normalizedTypes.some((type) => recordTypes.includes(type)));
+    const classMatches =
+      !normalizedClasses.length ||
+      (query.selectedClassesMatchMode === 'all'
+        ? normalizedClasses.every((characterClass) => record.classes.includes(characterClass))
+        : normalizedClasses.some((characterClass) => record.classes.includes(characterClass)));
+
+    return matchesSearchTerm && typeMatches && classMatches;
+  });
 }
 
 function createAutoBuildResult(
@@ -1270,6 +1531,13 @@ function createAutoBuildResult(
 
 async function createPage(): Promise<{
   page: any;
+  repository: {
+    getDatasetManifest: ReturnType<typeof vi.fn>;
+    getAutoBuilderAbilityCatalog: ReturnType<typeof vi.fn>;
+    getCharactersByIds: ReturnType<typeof vi.fn>;
+    searchDetailedCharacters: ReturnType<typeof vi.fn>;
+    searchCharacters: ReturnType<typeof vi.fn>;
+  };
   autoTeamBuilder: { buildTeam: ReturnType<typeof vi.fn> };
   userState: {
     favoriteCharacterIds: {
@@ -1312,17 +1580,13 @@ async function createPage(): Promise<{
         },
       ],
     }),
-    getManualCharacterFilterMetadata: vi.fn().mockResolvedValue({
-      availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
-      availableClasses: ['Fighter', 'Slasher'],
-      maxTypesPerCharacter: 2,
-      maxClassesPerCharacter: 2,
-    }),
-    getCharactersByIds: vi.fn().mockImplementation(async (characterIds: number[]) =>
-      characterIds
-        .filter((characterId) => characterId > 0 && characterId < 900)
-        .map((characterId) => createCharacterRecord(characterId)),
-    ),
+    getCharactersByIds: vi
+      .fn()
+      .mockImplementation(async (characterIds: number[]) =>
+        characterIds
+          .filter((characterId) => characterId > 0 && characterId < 900)
+          .map((characterId) => createCharacterRecord(characterId)),
+      ),
     searchDetailedCharacters: vi.fn().mockResolvedValue([]),
     searchCharacters: vi.fn().mockResolvedValue([]),
   };
@@ -1341,6 +1605,7 @@ async function createPage(): Promise<{
       autoTeamBuilder as never,
       userState as never,
     ),
+    repository,
     autoTeamBuilder,
     userState,
   };

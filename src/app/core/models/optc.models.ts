@@ -122,16 +122,9 @@ export interface CharacterSearchQuery {
 export interface DetailedCharacterSearchQuery {
   searchTerm: string;
   selectedTypes: string[];
+  selectedTypesMatchMode?: 'all' | 'any';
   selectedClasses: string[];
+  selectedClassesMatchMode?: 'all' | 'any';
   limit: number;
   offset: number;
-}
-
-export type ManualCharacterFavoriteFilterMode = 'all' | 'favoritesOnly' | 'nonFavoritesOnly';
-
-export interface ManualCharacterFilterMetadata {
-  availableTypes: string[];
-  availableClasses: string[];
-  maxTypesPerCharacter: number;
-  maxClassesPerCharacter: number;
 }
