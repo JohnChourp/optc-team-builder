@@ -42,7 +42,7 @@ export interface AutoTeamSelectionCharacterSummary {
 }
 
 export interface AutoTeamSelectionExportPayload {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   exportedAt: string;
   source: 'auto-team-builder';
   exportType: 'preset';
@@ -190,7 +190,7 @@ export function parseAutoTeamSelectionImportPayload(
   }
 
   if (
-    parsedPayload['schemaVersion'] !== 1 ||
+    (parsedPayload['schemaVersion'] !== 1 && parsedPayload['schemaVersion'] !== 2) ||
     parsedPayload['source'] !== 'auto-team-builder' ||
     parsedPayload['exportType'] !== 'preset'
   ) {
@@ -286,7 +286,9 @@ export function sanitizeAutoTeamSelectionImportPayload(
 
   let invalidAbilityCount = 0;
   let adjustedAbilityCount = 0;
-  const requiredAbilities = payload.filters.requiredAbilities.flatMap((rawRequirement) => {
+  const requiredAbilityMap = new Map<string, AutoBuildAbilityRequirement>();
+
+  payload.filters.requiredAbilities.forEach((rawRequirement) => {
     const abilityKey = typeof rawRequirement.abilityKey === 'string'
       ? rawRequirement.abilityKey.trim()
       : '';
@@ -294,11 +296,13 @@ export function sanitizeAutoTeamSelectionImportPayload(
 
     if (!abilityCatalogItem) {
       invalidAbilityCount += 1;
-      return [];
+      return;
     }
 
     const rawMinTurns = normalizePositiveInteger(rawRequirement.minTurns);
     const minTurns = abilityCatalogItem.supportsTurns ? rawMinTurns : null;
+    const rawRequiredCharacterCount = normalizePositiveInteger(rawRequirement.requiredCharacterCount);
+    const requiredCharacterCount = rawRequiredCharacterCount ?? 1;
     const rawSlotTokens = Array.isArray(rawRequirement.slotTokens)
       ? [...new Set(rawRequirement.slotTokens
           .filter((token): token is string => typeof token === 'string')
@@ -313,19 +317,35 @@ export function sanitizeAutoTeamSelectionImportPayload(
       rawSlotTokens.length !== slotTokens.length ||
       (abilityCatalogItem.supportsTurns && rawRequirement.minTurns !== null && rawMinTurns === null) ||
       (!abilityCatalogItem.supportsTurns && rawRequirement.minTurns !== null) ||
-      (!abilityCatalogItem.supportsSlotTokens && rawSlotTokens.length > 0)
+      (!abilityCatalogItem.supportsSlotTokens && rawSlotTokens.length > 0) ||
+      (
+        rawRequirement.requiredCharacterCount !== undefined &&
+        rawRequirement.requiredCharacterCount !== null &&
+        rawRequiredCharacterCount === null
+      )
     ) {
       adjustedAbilityCount += 1;
     }
 
-    return [
-      {
-        abilityKey,
-        minTurns,
-        slotTokens,
-      },
-    ];
+    const identity = `${abilityKey}|${minTurns ?? 'none'}|${slotTokens.join(',')}`;
+    const existingRequirement = requiredAbilityMap.get(identity);
+
+    if (existingRequirement) {
+      existingRequirement.requiredCharacterCount = Math.max(
+        existingRequirement.requiredCharacterCount,
+        requiredCharacterCount,
+      );
+      return;
+    }
+
+    requiredAbilityMap.set(identity, {
+      abilityKey,
+      minTurns,
+      slotTokens,
+      requiredCharacterCount,
+    });
   });
+  const requiredAbilities = [...requiredAbilityMap.values()];
 
   const invalidAbilityWarning = buildWarning(
     invalidAbilityCount,
@@ -339,8 +359,8 @@ export function sanitizeAutoTeamSelectionImportPayload(
 
   const adjustedAbilityWarning = buildWarning(
     adjustedAbilityCount,
-    '1 ability requirement with unsupported turns or slot tokens',
-    `${adjustedAbilityCount} ability requirements with unsupported turns or slot tokens`,
+    '1 ability requirement with unsupported turns, slot tokens, or character count',
+    `${adjustedAbilityCount} ability requirements with unsupported turns, slot tokens, or character count`,
   );
 
   if (adjustedAbilityWarning) {
@@ -474,7 +494,7 @@ export function buildAutoTeamSelectionExportPayload({
   exportedAt = new Date().toISOString(),
 }: BuildAutoTeamSelectionExportPayloadOptions): AutoTeamSelectionExportPayload {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     exportedAt,
     source: 'auto-team-builder',
     exportType: 'preset',

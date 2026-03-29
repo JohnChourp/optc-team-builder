@@ -21,7 +21,6 @@ import {
 } from '../models/auto-team-builder-ability.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
 import {
-  buildAbilityRequirementIdentity,
   matchesAbilityRequirement,
 } from './auto-team-builder-ability-match.utils';
 
@@ -81,6 +80,23 @@ function candidateMatchesAbilityRequirement(
   );
 }
 
+function cloneAbilityRequirement(
+  requirement: AutoBuildAbilityRequirement,
+): AutoBuildAbilityRequirement {
+  return {
+    ...requirement,
+    slotTokens: [...requirement.slotTokens],
+  };
+}
+
+function countMatchingAbilityRequirementSlots(
+  candidates: AutoBuildCandidate[],
+  requirement: AutoBuildAbilityRequirement,
+): number {
+  return candidates.filter((candidate) => candidateMatchesAbilityRequirement(candidate, requirement))
+    .length;
+}
+
 function resolveAbilityCoverage(
   candidates: AutoBuildCandidate[],
   requirements: AutoBuildAbilityRequirement[],
@@ -94,29 +110,21 @@ function resolveAbilityCoverage(
     };
   }
 
-  const matched = requirements.filter((requirement) =>
-    candidates.some((candidate) => candidateMatchesAbilityRequirement(candidate, requirement)),
-  );
-  const matchedIdentities = new Set(
-    matched.map((requirement) => buildAbilityRequirementIdentity(requirement)),
+  const matched = requirements.filter(
+    (requirement) =>
+      countMatchingAbilityRequirementSlots(candidates, requirement) >=
+      requirement.requiredCharacterCount,
   );
   const missing = requirements.filter(
-    (requirement) => !matchedIdentities.has(buildAbilityRequirementIdentity(requirement)),
+    (requirement) =>
+      countMatchingAbilityRequirementSlots(candidates, requirement) <
+      requirement.requiredCharacterCount,
   );
 
   return {
-    requested: requirements.map((requirement) => ({
-      ...requirement,
-      slotTokens: [...requirement.slotTokens],
-    })),
-    matched: matched.map((requirement) => ({
-      ...requirement,
-      slotTokens: [...requirement.slotTokens],
-    })),
-    missing: missing.map((requirement) => ({
-      ...requirement,
-      slotTokens: [...requirement.slotTokens],
-    })),
+    requested: requirements.map((requirement) => cloneAbilityRequirement(requirement)),
+    matched: matched.map((requirement) => cloneAbilityRequirement(requirement)),
+    missing: missing.map((requirement) => cloneAbilityRequirement(requirement)),
     matchesAll: missing.length === 0,
   };
 }

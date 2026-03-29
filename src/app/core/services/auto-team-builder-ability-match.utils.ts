@@ -6,7 +6,7 @@ import {
 export function buildAbilityRequirementIdentity(
   requirement: AutoBuildAbilityRequirement,
 ): string {
-  return `${requirement.abilityKey}|${requirement.minTurns ?? 'none'}|${requirement.slotTokens.join(',')}`;
+  return `${requirement.abilityKey}|${requirement.minTurns ?? 'none'}|${requirement.slotTokens.join(',')}|${requirement.requiredCharacterCount}`;
 }
 
 export function matchesAbilityRequirement(
@@ -46,6 +46,8 @@ export function builderAbilitiesMatchAllRequirements(
   requirements: AutoBuildAbilityRequirement[],
 ): boolean {
   return requirements.every((requirement) =>
-    abilities.some((ability) => matchesAbilityRequirement(ability, requirement)),
+    Number(
+      abilities.some((ability) => matchesAbilityRequirement(ability, requirement)),
+    ) >= requirement.requiredCharacterCount,
   );
 }

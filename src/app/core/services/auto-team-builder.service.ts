@@ -297,43 +297,50 @@ export class AutoTeamBuilderService {
   private normalizeRequiredAbilities(
     requirements: AutoBuildAbilityRequirement[],
   ): AutoBuildAbilityRequirement[] {
-    const seen = new Set<string>();
+    const normalizedRequirements = new Map<string, AutoBuildAbilityRequirement>();
 
-    return requirements.reduce<AutoBuildAbilityRequirement[]>(
-      (currentRequirements, requirement) => {
-        const abilityKey = requirement.abilityKey.trim();
-        const minTurns =
-          requirement.minTurns !== null &&
-          Number.isFinite(requirement.minTurns) &&
-          requirement.minTurns > 0
-            ? Math.floor(requirement.minTurns)
-            : null;
-        const slotTokens = [
-          ...new Set(requirement.slotTokens.map((token) => token.trim().toUpperCase())),
-        ]
-          .filter((token) => token.length)
-          .sort((left, right) => left.localeCompare(right));
+    requirements.forEach((requirement) => {
+      const abilityKey = requirement.abilityKey.trim();
+      const minTurns =
+        requirement.minTurns !== null &&
+        Number.isFinite(requirement.minTurns) &&
+        requirement.minTurns > 0
+          ? Math.floor(requirement.minTurns)
+          : null;
+      const slotTokens = [
+        ...new Set(requirement.slotTokens.map((token) => token.trim().toUpperCase())),
+      ]
+        .filter((token) => token.length)
+        .sort((left, right) => left.localeCompare(right));
+      const requiredCharacterCount =
+        Number.isFinite(requirement.requiredCharacterCount) &&
+        requirement.requiredCharacterCount > 0
+          ? Math.floor(requirement.requiredCharacterCount)
+          : 1;
 
-        if (!abilityKey.length) {
-          return currentRequirements;
-        }
+      if (!abilityKey.length) {
+        return;
+      }
 
-        const identity = `${abilityKey}|${minTurns ?? 'none'}|${slotTokens.join(',')}`;
+      const identity = `${abilityKey}|${minTurns ?? 'none'}|${slotTokens.join(',')}`;
+      const existingRequirement = normalizedRequirements.get(identity);
 
-        if (seen.has(identity)) {
-          return currentRequirements;
-        }
+      if (existingRequirement) {
+        existingRequirement.requiredCharacterCount = Math.max(
+          existingRequirement.requiredCharacterCount,
+          requiredCharacterCount,
+        );
+        return;
+      }
 
-        seen.add(identity);
-        currentRequirements.push({
-          abilityKey,
-          minTurns,
-          slotTokens,
-        });
+      normalizedRequirements.set(identity, {
+        abilityKey,
+        minTurns,
+        slotTokens,
+        requiredCharacterCount,
+      });
+    });
 
-        return currentRequirements;
-      },
-      [],
-    );
+    return [...normalizedRequirements.values()];
   }
 }

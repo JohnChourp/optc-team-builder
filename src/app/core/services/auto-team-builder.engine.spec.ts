@@ -86,7 +86,14 @@ describe('runAutoTeamBuildSearch', () => {
   it('does not relax required abilities during fallback attempts', () => {
     const result = runAutoTeamBuildSearch(createSingleTypeRecords(), {
       ...createInput(['DEX', 'INT'], ['Fighter']),
-      requiredAbilities: [{ abilityKey: 'remove_slot_barrier', minTurns: 3, slotTokens: ['DEX'] }],
+      requiredAbilities: [
+        {
+          abilityKey: 'remove_slot_barrier',
+          minTurns: 3,
+          slotTokens: ['DEX'],
+          requiredCharacterCount: 1,
+        },
+      ],
     });
 
     expect(result).toBeNull();

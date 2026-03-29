@@ -148,8 +148,8 @@ describe('Auto team builder', () => {
       {
         ...INPUT,
         requiredAbilities: [
-          { abilityKey: 'remove_bind', minTurns: 5, slotTokens: [] },
-          { abilityKey: 'remove_despair', minTurns: 5, slotTokens: [] },
+          { abilityKey: 'remove_bind', minTurns: 5, slotTokens: [], requiredCharacterCount: 1 },
+          { abilityKey: 'remove_despair', minTurns: 5, slotTokens: [], requiredCharacterCount: 1 },
         ],
       },
     );
@@ -157,9 +157,190 @@ describe('Auto team builder', () => {
     expect(result).not.toBeNull();
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
     expect(result?.coverage.abilityRequirements.matched).toEqual([
-      { abilityKey: 'remove_bind', minTurns: 5, slotTokens: [] },
-      { abilityKey: 'remove_despair', minTurns: 5, slotTokens: [] },
+      { abilityKey: 'remove_bind', minTurns: 5, slotTokens: [], requiredCharacterCount: 1 },
+      { abilityKey: 'remove_despair', minTurns: 5, slotTokens: [], requiredCharacterCount: 1 },
     ]);
+  });
+
+  it('requires multiple matching team slots for the same ability when the count is greater than one', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 5801,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces Bind duration by 5 turns.',
+            builderAbilities: [
+              {
+                key: 'remove_bind',
+                label: 'Remove Bind',
+                minTurns: 5,
+                isCompleteRemoval: false,
+                slotTokens: [],
+                source: 'specialText',
+              },
+            ],
+          },
+        }),
+        createCharacterRecord({
+          id: 5808,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces Bind duration by 6 turns.',
+            builderAbilities: [
+              {
+                key: 'remove_bind',
+                label: 'Remove Bind',
+                minTurns: 6,
+                isCompleteRemoval: false,
+                slotTokens: [],
+                source: 'specialText',
+              },
+            ],
+          },
+        }),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      {
+        ...INPUT,
+        requiredAbilities: [
+          { abilityKey: 'remove_bind', minTurns: 5, slotTokens: [], requiredCharacterCount: 2 },
+        ],
+      },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+    expect(result?.coverage.abilityRequirements.matched).toEqual([
+      { abilityKey: 'remove_bind', minTurns: 5, slotTokens: [], requiredCharacterCount: 2 },
+    ]);
+  });
+
+  it('fails when the team does not reach the requested ability slot count', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 5801,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces Bind duration by 5 turns.',
+            builderAbilities: [
+              {
+                key: 'remove_bind',
+                label: 'Remove Bind',
+                minTurns: 5,
+                isCompleteRemoval: false,
+                slotTokens: [],
+                source: 'specialText',
+              },
+            ],
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      {
+        ...INPUT,
+        requiredAbilities: [
+          { abilityKey: 'remove_bind', minTurns: 5, slotTokens: [], requiredCharacterCount: 2 },
+        ],
+      },
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('counts duplicated captain and friend captain slots separately toward the requirement', () => {
+    const sharedLeader = createCharacterRecord({
+      id: 5812,
+      primaryClass: 'Fighter',
+      detail: {
+        captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.5x.',
+        specialText: 'Reduces Bind duration by 5 turns.',
+        builderAbilities: [
+          {
+            key: 'remove_bind',
+            label: 'Remove Bind',
+            minTurns: 5,
+            isCompleteRemoval: false,
+            slotTokens: [],
+            source: 'specialText',
+          },
+        ],
+      },
+    });
+    const result = buildAutoTeamResult(
+      [
+        sharedLeader,
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+        createOffClassRedundantSubRecord(),
+      ],
+      {
+        ...INPUT,
+        captainCharacterId: 5812,
+        friendCaptainCharacterId: 5812,
+        requiredAbilities: [
+          { abilityKey: 'remove_bind', minTurns: 5, slotTokens: [], requiredCharacterCount: 2 },
+        ],
+      },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+  });
+
+  it('counts each slot only once even if the same character has multiple matching parsed abilities', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 5813,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces Bind duration by 5 turns and by 7 turns again.',
+            builderAbilities: [
+              {
+                key: 'remove_bind',
+                label: 'Remove Bind',
+                minTurns: 5,
+                isCompleteRemoval: false,
+                slotTokens: [],
+                source: 'specialText',
+              },
+              {
+                key: 'remove_bind',
+                label: 'Remove Bind',
+                minTurns: 7,
+                isCompleteRemoval: false,
+                slotTokens: [],
+                source: 'specialText',
+              },
+            ],
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      {
+        ...INPUT,
+        requiredAbilities: [
+          { abilityKey: 'remove_bind', minTurns: 5, slotTokens: [], requiredCharacterCount: 2 },
+        ],
+      },
+    );
+
+    expect(result).toBeNull();
   });
 
   it('matches at least N turns and typed slot tokens for slot barrier requirements', () => {
@@ -191,7 +372,12 @@ describe('Auto team builder', () => {
       {
         ...INPUT,
         requiredAbilities: [
-          { abilityKey: 'remove_slot_barrier', minTurns: 3, slotTokens: ['DEX'] },
+          {
+            abilityKey: 'remove_slot_barrier',
+            minTurns: 3,
+            slotTokens: ['DEX'],
+            requiredCharacterCount: 1,
+          },
         ],
       },
     );
@@ -229,14 +415,16 @@ describe('Auto team builder', () => {
       ],
       {
         ...INPUT,
-        requiredAbilities: [{ abilityKey: 'remove_pain', minTurns: 5, slotTokens: [] }],
+        requiredAbilities: [
+          { abilityKey: 'remove_pain', minTurns: 5, slotTokens: [], requiredCharacterCount: 1 },
+        ],
       },
     );
 
     expect(result).not.toBeNull();
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
     expect(result?.coverage.abilityRequirements.matched).toEqual([
-      { abilityKey: 'remove_pain', minTurns: 5, slotTokens: [] },
+      { abilityKey: 'remove_pain', minTurns: 5, slotTokens: [], requiredCharacterCount: 1 },
     ]);
   });
 
@@ -270,7 +458,9 @@ describe('Auto team builder', () => {
       ],
       {
         ...INPUT,
-        requiredAbilities: [{ abilityKey: 'remove_pain', minTurns: 1, slotTokens: [] }],
+        requiredAbilities: [
+          { abilityKey: 'remove_pain', minTurns: 1, slotTokens: [], requiredCharacterCount: 1 },
+        ],
       },
     );
 
@@ -308,7 +498,9 @@ describe('Auto team builder', () => {
       ],
       {
         ...INPUT,
-        requiredAbilities: [{ abilityKey: 'remove_pain', minTurns: 10, slotTokens: [] }],
+        requiredAbilities: [
+          { abilityKey: 'remove_pain', minTurns: 10, slotTokens: [], requiredCharacterCount: 1 },
+        ],
       },
     );
 
@@ -346,7 +538,9 @@ describe('Auto team builder', () => {
       ],
       {
         ...INPUT,
-        requiredAbilities: [{ abilityKey: 'remove_pain', minTurns: 10, slotTokens: [] }],
+        requiredAbilities: [
+          { abilityKey: 'remove_pain', minTurns: 10, slotTokens: [], requiredCharacterCount: 1 },
+        ],
       },
     );
 
@@ -382,14 +576,26 @@ describe('Auto team builder', () => {
       ],
       {
         ...INPUT,
-        requiredAbilities: [{ abilityKey: 'ignore_normal_attack_only', minTurns: null, slotTokens: [] }],
+        requiredAbilities: [
+          {
+            abilityKey: 'ignore_normal_attack_only',
+            minTurns: null,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+          },
+        ],
       },
     );
 
     expect(result).not.toBeNull();
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
     expect(result?.coverage.abilityRequirements.matched).toEqual([
-      { abilityKey: 'ignore_normal_attack_only', minTurns: null, slotTokens: [] },
+      {
+        abilityKey: 'ignore_normal_attack_only',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
     ]);
   });
 
@@ -422,7 +628,12 @@ describe('Auto team builder', () => {
       {
         ...INPUT,
         requiredAbilities: [
-          { abilityKey: 'remove_slot_barrier', minTurns: 3, slotTokens: ['QCK'] },
+          {
+            abilityKey: 'remove_slot_barrier',
+            minTurns: 3,
+            slotTokens: ['QCK'],
+            requiredCharacterCount: 1,
+          },
         ],
       },
     );

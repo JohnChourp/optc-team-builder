@@ -35,4 +35,5 @@ export interface AutoBuildAbilityRequirement {
   abilityKey: string;
   minTurns: number | null;
   slotTokens: string[];
+  requiredCharacterCount: number;
 }

@@ -83,8 +83,12 @@ interface LoadingProgressRow {
   tone: LoadingProgressRowTone;
 }
 
-interface AbilityRequirementDraft extends AutoBuildAbilityRequirement {
+interface AbilityRequirementDraft {
   draftId: string;
+  abilityKey: string;
+  minTurns: number | null;
+  slotTokens: string[];
+  requiredCharacterCount: number | null;
 }
 
 interface CharacterAbilityChipView {
@@ -445,7 +449,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     () => `Μπορείς να ζητήσεις μέχρι ${this.manualMaxClassesPerCharacter()} classes ανά χαρακτήρα.`,
   );
   public readonly manualFilterRequiredAbilities = computed(() =>
-    this.serializeAbilityRequirementDrafts(this.manualFilterRequiredAbilityDrafts()),
+    this.serializeAbilityRequirementDrafts(this.manualFilterRequiredAbilityDrafts(), true),
   );
   public readonly manualFilterHasDraftChanges = computed(() =>
     !this.areManualFiltersEqual(this.serializeManualFilterDraft(), this.appliedManualFilters()),
@@ -1014,6 +1018,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }));
   }
 
+  public onRequiredAbilityCountChange(draftId: string, event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    const nextValue = input?.value?.trim() ?? '';
+    const requiredCharacterCount =
+      /^\d+$/.test(nextValue) && Number(nextValue) > 0 ? Number(nextValue) : null;
+
+    this.updateRequiredAbilityDraft(draftId, (draft) => ({
+      ...draft,
+      requiredCharacterCount,
+    }));
+  }
+
   public onRequiredAbilitySlotTokensChange(
     draftId: string,
     event: CustomEvent<{ value?: string[] | string | null }>,
@@ -1438,6 +1454,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         abilityKey: requirement.abilityKey,
         minTurns: requirement.minTurns,
         slotTokens: [...requirement.slotTokens],
+        requiredCharacterCount: requirement.requiredCharacterCount,
       })),
     );
     this.lockedCharacterRecords.set({});
@@ -1684,6 +1701,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       abilityKey: item?.key ?? '',
       minTurns: item?.supportsTurns ? 1 : null,
       slotTokens: [],
+      requiredCharacterCount: 1,
     };
   }
 
@@ -1716,19 +1734,47 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   private serializeAbilityRequirementDrafts(
     drafts: AbilityRequirementDraft[],
+    forceSingleCharacterCount = false,
   ): AutoBuildAbilityRequirement[] {
-    return drafts
-      .filter((draft) => draft.abilityKey.trim().length > 0)
-      .map((draft) => ({
-        abilityKey: draft.abilityKey.trim(),
-        minTurns:
-          draft.minTurns !== null && Number.isFinite(draft.minTurns) && draft.minTurns > 0
-            ? Math.floor(draft.minTurns)
-            : null,
-        slotTokens: [
-          ...new Set(draft.slotTokens.map((token) => token.trim().toUpperCase())),
-        ].filter((token) => token.length),
-      }));
+    const requirements = new Map<string, AutoBuildAbilityRequirement>();
+
+    drafts.forEach((draft) => {
+      const abilityKey = draft.abilityKey.trim();
+
+      if (!abilityKey.length) {
+        return;
+      }
+
+      const minTurns =
+        draft.minTurns !== null && Number.isFinite(draft.minTurns) && draft.minTurns > 0
+          ? Math.floor(draft.minTurns)
+          : null;
+      const slotTokens = [
+        ...new Set(draft.slotTokens.map((token) => token.trim().toUpperCase())),
+      ].filter((token) => token.length);
+      const requiredCharacterCount = forceSingleCharacterCount
+        ? 1
+        : this.normalizeRequiredCharacterCount(draft.requiredCharacterCount);
+      const identity = `${abilityKey}|${minTurns ?? 'none'}|${slotTokens.join(',')}`;
+      const existingRequirement = requirements.get(identity);
+
+      if (existingRequirement) {
+        existingRequirement.requiredCharacterCount = Math.max(
+          existingRequirement.requiredCharacterCount,
+          requiredCharacterCount,
+        );
+        return;
+      }
+
+      requirements.set(identity, {
+        abilityKey,
+        minTurns,
+        slotTokens,
+        requiredCharacterCount,
+      });
+    });
+
+    return [...requirements.values()];
   }
 
   private createEmptyManualCharacterFilters(): AppliedManualCharacterFilters {
@@ -1751,6 +1797,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         abilityKey: requirement.abilityKey,
         minTurns: requirement.minTurns,
         slotTokens: [...requirement.slotTokens],
+        requiredCharacterCount: requirement.requiredCharacterCount,
       })),
     );
     this.manualFilterFavoriteMode.set(filters.favoriteMode);
@@ -1760,7 +1807,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     return {
       selectedTypes: [...this.manualFilterSelectedTypes()],
       selectedClasses: [...this.manualFilterSelectedClasses()],
-      requiredAbilities: this.manualFilterRequiredAbilities(),
+      requiredAbilities: this.serializeAbilityRequirementDrafts(
+        this.manualFilterRequiredAbilityDrafts(),
+        true,
+      ),
       favoriteMode: this.manualFilterFavoriteMode(),
     };
   }
@@ -1788,6 +1838,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       : requirement.abilityKey;
     const suffixes: string[] = [];
 
+    if (requirement.requiredCharacterCount > 1) {
+      suffixes.push(`>=${requirement.requiredCharacterCount} chars`);
+    }
+
     if (requirement.minTurns !== null) {
       suffixes.push(`${requirement.minTurns} turns`);
     }
@@ -1808,7 +1862,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       abilityKey: draft.abilityKey,
       minTurns: draft.minTurns,
       slotTokens: draft.slotTokens,
+      requiredCharacterCount: this.normalizeRequiredCharacterCount(draft.requiredCharacterCount),
     });
+  }
+
+  private normalizeRequiredCharacterCount(value: number | null | undefined): number {
+    return Number.isFinite(value) && Number(value) > 0 ? Math.floor(Number(value)) : 1;
   }
 
   public resolveManualFilterAbilitySelectedText(draft: AbilityRequirementDraft): string {
@@ -1973,6 +2032,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         return (
           requirement.abilityKey === nextRequirement?.abilityKey &&
           requirement.minTurns === nextRequirement?.minTurns &&
+          requirement.requiredCharacterCount === nextRequirement?.requiredCharacterCount &&
           this.sameStringValues(requirement.slotTokens, nextRequirement?.slotTokens ?? [])
         );
       })

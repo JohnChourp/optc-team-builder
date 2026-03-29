@@ -242,6 +242,17 @@
                 </ion-select>
               </div>
 
+              <label class="ability-requirement-field ability-requirement-field--number">
+                <span>Characters</span>
+                <input
+                  type="number"
+                  min="1"
+                  inputmode="numeric"
+                  [value]="draft.requiredCharacterCount ?? ''"
+                  (input)="onRequiredAbilityCountChange(draft.draftId, $event)"
+                />
+              </label>
+
               <label
                 *ngIf="resolveAbilityCatalogItem(draft.abilityKey)?.supportsTurns"
                 class="ability-requirement-field ability-requirement-field--number"

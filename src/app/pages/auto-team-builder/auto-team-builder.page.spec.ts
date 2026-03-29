@@ -71,12 +71,14 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
         abilityKey: 'remove_bind',
         minTurns: 5,
         slotTokens: [],
+        requiredCharacterCount: 2,
       },
       {
         draftId: 'barrier-1',
         abilityKey: 'remove_slot_barrier',
         minTurns: 2,
         slotTokens: ['DEX'],
+        requiredCharacterCount: 1,
       },
     ]);
     await page.buildTeam();
@@ -90,11 +92,13 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
             abilityKey: 'remove_bind',
             minTurns: 5,
             slotTokens: [],
+            requiredCharacterCount: 2,
           },
           {
             abilityKey: 'remove_slot_barrier',
             minTurns: 2,
             slotTokens: ['DEX'],
+            requiredCharacterCount: 1,
           },
         ],
       }),
@@ -138,6 +142,53 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
         coverageMode: 'selectedDebuff',
       }),
     ).toBe('Remove Pain (selectable debuff) (5 turns)');
+  });
+
+  it('formats ability requirements with a character-count prefix only when needed', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+
+    expect(
+      page.formatAbilityRequirement({
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 2,
+      }),
+    ).toBe('Remove Bind (>=2 chars • 5 turns)');
+    expect(
+      page.formatAbilityRequirement({
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      }),
+    ).toBe('Remove Bind (5 turns)');
+  });
+
+  it('sanitizes empty character counts back to an effective default of 1', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.requiredAbilityDrafts.set([
+      {
+        draftId: 'bind-1',
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: null,
+      },
+    ]);
+
+    expect(page.pageRequiredAbilities()).toEqual([
+      {
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ]);
   });
 
   it('summarizes mixed pain coverage modes in the ability catalog label', async () => {
@@ -473,6 +524,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
         abilityKey: 'remove_bind',
         minTurns: 5,
         slotTokens: [],
+        requiredCharacterCount: 2,
       },
     ]);
     page.onRequireAllSelectedTypesToggle({ detail: { checked: true } } as CustomEvent<{
@@ -495,7 +547,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -507,6 +559,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
             abilityKey: 'remove_bind',
             minTurns: 5,
             slotTokens: [],
+            requiredCharacterCount: 2,
           },
         ],
         requireAllSelectedTypesInTeam: true,
@@ -699,6 +752,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
           abilityKey: 'remove_slot_barrier',
           minTurns: 3,
           slotTokens: ['DEX'],
+          requiredCharacterCount: 2,
         },
       ],
       requireAllSelectedTypesInTeam: true,
@@ -720,6 +774,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       abilityKey: 'unknown_ability',
       minTurns: 5,
       slotTokens: [],
+      requiredCharacterCount: 4,
     });
     payload.manualSelection.lockedCharacterIds.push(999);
     payload.manualSelection.selectedLeaderIds.push(999);
@@ -752,6 +807,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
         abilityKey: 'remove_slot_barrier',
         minTurns: 3,
         slotTokens: ['DEX'],
+        requiredCharacterCount: 2,
       },
     ]);
     expect(result.state.lockedCharacterIds).toEqual([101]);
@@ -763,6 +819,133 @@ describe('AutoTeamBuilder preset import helpers', () => {
       'Ignored 1 unsupported ability requirement from the preset.',
       'Ignored 1 locked character that is missing from the current dataset.',
       'Ignored 1 selected leader that is not part of the imported locked characters.',
+    ]);
+  });
+
+  it('defaults missing legacy preset character counts to 1', () => {
+    const legacyPayload = {
+      schemaVersion: 1,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+      source: 'auto-team-builder',
+      exportType: 'preset',
+      filters: {
+        selectedTypes: ['DEX'],
+        selectedClasses: ['Fighter'],
+        requiredAbilities: [
+          {
+            abilityKey: 'remove_slot_barrier',
+            minTurns: 3,
+            slotTokens: ['DEX'],
+          },
+        ],
+        requireAllSelectedTypesInTeam: false,
+        requireAllSelectedClassesPerCharacter: false,
+        requireAllSpecialsSupportTeam: false,
+        favoritesOnly: false,
+        favoriteCount: 0,
+      },
+      manualSelection: {
+        lockedCharacterIds: [101],
+        selectedLeaderIds: [101],
+        captainLeaderId: 101,
+        friendCaptainLeaderId: 101,
+        characters: [],
+      },
+    };
+
+    const parsedPayload = parseAutoTeamSelectionImportPayload(JSON.stringify(legacyPayload));
+    const result = sanitizeAutoTeamSelectionImportPayload(parsedPayload, {
+      availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      availableClasses: ['Fighter', 'Slasher'],
+      abilityCatalogItems: [
+        {
+          key: 'remove_slot_barrier',
+          label: 'Remove Slot Barrier',
+          supportsTurns: true,
+          supportsSlotTokens: true,
+          availableSlotTokens: ['DEX', 'STR'],
+          availableSources: ['specialText'],
+          matchCount: 1,
+          sampleCharacterIds: [101],
+          sampleTexts: [],
+        },
+      ],
+      availableLockedCharacters: [createCharacterRecord(101)],
+      maxLockedCharacters: 5,
+      maxLeaderCharacters: 2,
+    });
+
+    expect(result.state.requiredAbilities).toEqual([
+      {
+        abilityKey: 'remove_slot_barrier',
+        minTurns: 3,
+        slotTokens: ['DEX'],
+        requiredCharacterCount: 1,
+      },
+    ]);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it('merges duplicate imported ability requirements by keeping the max character count', () => {
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [
+        {
+          abilityKey: 'remove_slot_barrier',
+          minTurns: 3,
+          slotTokens: ['DEX'],
+          requiredCharacterCount: 1,
+        },
+      ],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSpecialsSupportTeam: false,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      lockedCharacterIds: [101],
+      lockedCharacters: [createCharacterRecord(101)],
+      selectedLeaderIds: [101],
+      captainLeaderId: 101,
+      friendCaptainLeaderId: 101,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+
+    payload.filters.requiredAbilities.push({
+      abilityKey: 'remove_slot_barrier',
+      minTurns: 3,
+      slotTokens: ['DEX'],
+      requiredCharacterCount: 3,
+    });
+
+    const result = sanitizeAutoTeamSelectionImportPayload(payload, {
+      availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      availableClasses: ['Fighter', 'Slasher'],
+      abilityCatalogItems: [
+        {
+          key: 'remove_slot_barrier',
+          label: 'Remove Slot Barrier',
+          supportsTurns: true,
+          supportsSlotTokens: true,
+          availableSlotTokens: ['DEX', 'STR'],
+          availableSources: ['specialText'],
+          matchCount: 1,
+          sampleCharacterIds: [101],
+          sampleTexts: [],
+        },
+      ],
+      availableLockedCharacters: [createCharacterRecord(101)],
+      maxLockedCharacters: 5,
+      maxLeaderCharacters: 2,
+    });
+
+    expect(result.state.requiredAbilities).toEqual([
+      {
+        abilityKey: 'remove_slot_barrier',
+        minTurns: 3,
+        slotTokens: ['DEX'],
+        requiredCharacterCount: 3,
+      },
     ]);
   });
 });
@@ -778,6 +961,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
           abilityKey: 'remove_bind',
           minTurns: 5,
           slotTokens: [],
+          requiredCharacterCount: 2,
         },
       ],
       requireAllSelectedTypesInTeam: true,
@@ -816,6 +1000,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
         abilityKey: 'remove_bind',
         minTurns: 5,
         slotTokens: [],
+        requiredCharacterCount: 2,
       },
     ]);
     expect(page.lockedCharacterIds()).toEqual([101, 102]);
@@ -846,6 +1031,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
           abilityKey: 'remove_slot_barrier',
           minTurns: 2,
           slotTokens: ['DEX'],
+          requiredCharacterCount: 1,
         },
       ],
       requireAllSelectedTypesInTeam: false,
@@ -867,6 +1053,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
       abilityKey: 'unknown_ability',
       minTurns: 4,
       slotTokens: [],
+      requiredCharacterCount: 2,
     });
     payload.filters.requiredAbilities[0]!.slotTokens.push('PSY');
     payload.manualSelection.lockedCharacterIds.push(999);
@@ -885,6 +1072,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
         abilityKey: 'remove_slot_barrier',
         minTurns: 2,
         slotTokens: ['DEX'],
+        requiredCharacterCount: 1,
       },
     ]);
     expect(page.lockedCharacterIds()).toEqual([101]);
@@ -898,7 +1086,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
         'Ignored 1 unavailable imported type from the preset.',
         'Ignored 1 unavailable imported class from the preset.',
         'Ignored 1 unsupported ability requirement from the preset.',
-        'Ignored 1 ability requirement with unsupported turns or slot tokens.',
+        'Ignored 1 ability requirement with unsupported turns, slot tokens, or character count.',
         'Ignored 1 locked character that is missing from the current dataset.',
         'Ignored 1 selected leader that is not part of the imported locked characters.',
       ],
@@ -916,7 +1104,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
       new File(
         [
           JSON.stringify({
-            schemaVersion: 2,
+            schemaVersion: 3,
             source: 'auto-team-builder',
             exportType: 'preset',
             filters: {},
