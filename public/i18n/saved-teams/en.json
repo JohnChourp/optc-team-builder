@@ -1,9 +1,51 @@
 {
+  "confirm": {
+    "deleteSelected": "Delete {{count}} selected teams?",
+    "deleteSingle": "Delete team \"{{name}}\"?"
+  },
   "empty": "No saved teams yet.",
+  "edit": {
+    "actions": {
+      "edit": "Edit"
+    },
+    "copy": "Update the saved team's name and notes without changing its slots or ship.",
+    "eyebrow": "Team update",
+    "notesLabel": "Notes",
+    "teamNameLabel": "Team name",
+    "title": "Edit saved team"
+  },
   "hero": {
     "copy": "This page only shows your saved teams.",
     "eyebrow": "Offline memory",
     "title": "Your saved teams stay on-device and are ready to load back into the builder."
+  },
+  "import": {
+    "chooseAnotherFile": "Choose another file",
+    "copy": "Import an export JSON from the Saved Teams page and merge it with the current on-device teams.",
+    "dropzone": {
+      "subtitle": "Import merges by id and updates existing saved teams.",
+      "title": "Drop or choose a JSON file"
+    },
+    "errorTitle": "Import failed",
+    "errors": {
+      "generic": "The selected file could not be imported.",
+      "invalidJson": "The selected file is not valid JSON.",
+      "invalidPayload": "The JSON does not match the expected saved teams schema.",
+      "unsupportedSchema": "The selected JSON is not supported by the current saved teams import schema."
+    },
+    "eyebrow": "Team transfer",
+    "loadedFromFile": "Loaded {{fileName}}.",
+    "processing": "Importing teams...",
+    "stats": {
+      "added": "Added {{count}} new teams.",
+      "duplicates": "Collapsed {{count}} duplicate ids from the import.",
+      "invalid": "Skipped {{count}} invalid teams.",
+      "unknownSlots": "Cleared {{count}} unknown character slots.",
+      "updated": "Updated {{count}} existing teams."
+    },
+    "successTitle": "Import completed",
+    "title": "Import teams",
+    "warningTitle": "Import completed with warnings"
   },
   "loading": "Loading saved teams...",
   "preview": {
@@ -11,6 +53,17 @@
     "emptySlotAlt": "Empty slot",
     "emptySlotAria": "Empty slot {{slot}}",
     "viewDetailsAria": "View details for {{name}} in slot {{slot}}"
+  },
+  "selection": {
+    "selectAll": "Select all",
+    "selectAllAria": "Select all saved teams",
+    "selected": "{{count}} selected",
+    "teamAria": "Select team {{name}}"
+  },
+  "tools": {
+    "delete": "Delete selected",
+    "export": "Export selected",
+    "import": "Import teams"
   },
   "title": "Saved Teams",
   "total": "{{count}} total"

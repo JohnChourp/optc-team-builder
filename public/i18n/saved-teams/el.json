@@ -1,9 +1,51 @@
 {
+  "confirm": {
+    "deleteSelected": "Να διαγραφούν {{count}} επιλεγμένες ομάδες;",
+    "deleteSingle": "Να διαγραφεί η ομάδα \"{{name}}\";"
+  },
   "empty": "Δεν υπάρχουν αποθηκευμένες ομάδες ακόμα.",
+  "edit": {
+    "actions": {
+      "edit": "Επεξεργασία"
+    },
+    "copy": "Άλλαξε το όνομα και τις σημειώσεις της αποθηκευμένης ομάδας χωρίς να πειραχτούν τα slots ή το ship.",
+    "eyebrow": "Ενημέρωση ομάδας",
+    "notesLabel": "Σημειώσεις",
+    "teamNameLabel": "Όνομα ομάδας",
+    "title": "Επεξεργασία αποθηκευμένης ομάδας"
+  },
   "hero": {
     "copy": "Αυτή η σελίδα δείχνει μόνο τις αποθηκευμένες ομάδες σου.",
     "eyebrow": "Offline μνήμη",
     "title": "Οι αποθηκευμένες ομάδες σου μένουν στη συσκευή και είναι έτοιμες να φορτωθούν ξανά στον builder."
+  },
+  "import": {
+    "chooseAnotherFile": "Διάλεξε άλλο αρχείο",
+    "copy": "Κάνε import export JSON από τη Saved Teams σελίδα για merge με τα υπάρχοντα αποθηκευμένα teams της συσκευής.",
+    "dropzone": {
+      "subtitle": "Το import κάνει merge by id και ενημερώνει υπάρχοντα teams.",
+      "title": "Κάνε drop ή επίλεξε αρχείο JSON"
+    },
+    "errorTitle": "Το import απέτυχε",
+    "errors": {
+      "generic": "Το αρχείο δεν μπόρεσε να εισαχθεί.",
+      "invalidJson": "Το αρχείο δεν είναι έγκυρο JSON.",
+      "invalidPayload": "Το JSON δεν ταιριάζει με το expected saved teams schema.",
+      "unsupportedSchema": "Το selected JSON δεν υποστηρίζεται από το current saved teams import schema."
+    },
+    "eyebrow": "Μεταφορά ομάδων",
+    "loadedFromFile": "Φορτώθηκε το {{fileName}}.",
+    "processing": "Γίνεται import ομάδων...",
+    "stats": {
+      "added": "Προστέθηκαν {{count}} νέα teams.",
+      "duplicates": "Συγχωνεύτηκαν {{count}} duplicate ids από το import.",
+      "invalid": "Αγνοήθηκαν {{count}} invalid teams.",
+      "unknownSlots": "Καθαρίστηκαν {{count}} unknown character slots.",
+      "updated": "Ενημερώθηκαν {{count}} υπάρχοντα teams."
+    },
+    "successTitle": "Το import ολοκληρώθηκε",
+    "title": "Εισαγωγή ομάδων",
+    "warningTitle": "Το import ολοκληρώθηκε με παρατηρήσεις"
   },
   "loading": "Φόρτωση αποθηκευμένων ομάδων...",
   "preview": {
@@ -11,6 +53,17 @@
     "emptySlotAlt": "Κενό slot",
     "emptySlotAria": "Κενό slot {{slot}}",
     "viewDetailsAria": "Προβολή λεπτομερειών για τον {{name}} στο slot {{slot}}"
+  },
+  "selection": {
+    "selectAll": "Επίλεξε όλα",
+    "selectAllAria": "Επιλογή όλων των αποθηκευμένων ομάδων",
+    "selected": "{{count}} επιλεγμένες",
+    "teamAria": "Επιλογή της ομάδας {{name}}"
+  },
+  "tools": {
+    "delete": "Διαγραφή επιλεγμένων",
+    "export": "Εξαγωγή επιλεγμένων",
+    "import": "Εισαγωγή ομάδων"
   },
   "title": "Αποθηκευμένες ομάδες",
   "total": "{{count}} συνολικά"

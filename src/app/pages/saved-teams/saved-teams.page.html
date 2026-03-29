@@ -25,15 +25,68 @@
 
       <section *ngIf="!loading() && savedTeamCards().length" class="glass-card section-card">
         <div class="section-head">
-          <h2>{{ t("title") }}</h2>
-          <span>{{ t("total", { count: savedTeams().length }) }}</span>
+          <div>
+            <h2>{{ t("title") }}</h2>
+            <span>{{ t("total", { count: savedTeams().length }) }}</span>
+          </div>
+        </div>
+
+        <div class="saved-teams-tools">
+          <div class="saved-teams-selection">
+            <label class="saved-teams-select-all">
+              <ion-checkbox
+                [checked]="allSelected()"
+                [attr.aria-label]="t('selection.selectAllAria')"
+                (ionChange)="onSelectAllChange($event)"
+              ></ion-checkbox>
+              <span>{{ t("selection.selectAll") }}</span>
+            </label>
+
+            <span class="saved-teams-selection-count">{{ t("selection.selected", { count: selectedCount() }) }}</span>
+          </div>
+
+          <div class="saved-teams-tool-actions">
+            <ion-button fill="outline" color="light" [disabled]="!hasSelection()" (click)="exportSelectedTeams()">
+              {{ t("tools.export") }}
+            </ion-button>
+            <ion-button
+              fill="outline"
+              color="danger"
+              [disabled]="!hasSelection()"
+              (click)="confirmAndDeleteSelectedTeams()"
+            >
+              {{ t("tools.delete") }}
+            </ion-button>
+            <ion-button fill="outline" color="warning" (click)="openImportModal()">
+              {{ t("tools.import") }}
+            </ion-button>
+          </div>
         </div>
 
         <div class="saved-team-list">
           <article *ngFor="let teamCard of savedTeamCards()">
-            <div class="saved-team-copy">
-              <strong>{{ teamCard.team.name }}</strong>
-              <p>{{ teamCard.team.notes || ("common.defaults.noNotesYet" | transloco) }}</p>
+            <div class="saved-team-head">
+              <label class="saved-team-check">
+                <ion-checkbox
+                  [checked]="isSelected(teamCard.team.id)"
+                  [attr.aria-label]="t('selection.teamAria', { name: teamCard.team.name })"
+                  (ionChange)="onTeamSelectionChange(teamCard.team.id, $event)"
+                ></ion-checkbox>
+              </label>
+
+              <div class="saved-team-copy">
+                <strong>{{ teamCard.team.name }}</strong>
+                <p>{{ teamCard.team.notes || ("common.defaults.noNotesYet" | transloco) }}</p>
+              </div>
+
+              <div class="saved-team-actions">
+                <ion-button fill="clear" color="warning" (click)="openEditModal(teamCard.team)">
+                  {{ t("edit.actions.edit") }}
+                </ion-button>
+                <ion-button fill="clear" color="danger" (click)="confirmAndDeleteTeam(teamCard.team.id)">
+                  {{ "common.actions.delete" | transloco }}
+                </ion-button>
+              </div>
             </div>
 
             <div class="saved-team-preview" [attr.aria-label]="t('preview.ariaLabel')">
@@ -60,5 +113,124 @@
         </div>
       </section>
     </div>
+
+    <ion-modal [isOpen]="editModalOpen()" cssClass="saved-teams-edit-modal" (didDismiss)="closeEditModal()">
+      <ng-template>
+        <div class="edit-modal-shell">
+          <div class="import-modal-head">
+            <div>
+              <div class="section-label">{{ t("edit.eyebrow") }}</div>
+              <h2>{{ t("edit.title") }}</h2>
+              <p>{{ t("edit.copy") }}</p>
+            </div>
+
+            <ion-button fill="clear" color="light" [disabled]="savingEdit()" (click)="closeEditModal()">
+              <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+            </ion-button>
+          </div>
+
+          <ion-input
+            [label]="t('edit.teamNameLabel')"
+            labelPlacement="stacked"
+            fill="outline"
+            [value]="editTeamName()"
+            [disabled]="savingEdit()"
+            (ionInput)="onEditTeamNameChange($event)"
+          ></ion-input>
+
+          <ion-textarea
+            [label]="t('edit.notesLabel')"
+            labelPlacement="stacked"
+            fill="outline"
+            autoGrow="true"
+            [value]="editNotes()"
+            [disabled]="savingEdit()"
+            (ionInput)="onEditNotesChange($event)"
+          ></ion-textarea>
+
+          <div class="import-modal-actions">
+            <ion-button fill="outline" color="light" [disabled]="savingEdit()" (click)="closeEditModal()">
+              {{ "common.actions.cancel" | transloco }}
+            </ion-button>
+            <ion-button color="warning" [disabled]="savingEdit() || !editingTeam()" (click)="saveEditedTeam()">
+              {{ "common.actions.save" | transloco }}
+            </ion-button>
+          </div>
+        </div>
+      </ng-template>
+    </ion-modal>
+
+    <ion-modal [isOpen]="importModalOpen()" cssClass="saved-teams-import-modal" (didDismiss)="closeImportModal()">
+      <ng-template>
+        <div class="import-modal-shell">
+          <div class="import-modal-head">
+            <div>
+              <div class="section-label">{{ t("import.eyebrow") }}</div>
+              <h2>{{ t("import.title") }}</h2>
+              <p>{{ t("import.copy") }}</p>
+            </div>
+
+            <ion-button fill="clear" color="light" (click)="closeImportModal()">
+              <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+            </ion-button>
+          </div>
+
+          <input
+            #importFileInput
+            type="file"
+            accept=".json,application/json"
+            hidden
+            (change)="onFileSelected($event, importFileInput)"
+          />
+
+          <button
+            type="button"
+            class="import-dropzone"
+            [class.import-dropzone--active]="draggingImportFile()"
+            (click)="openFilePicker(importFileInput)"
+            (dragover)="onImportDragOver($event)"
+            (dragleave)="onImportDragLeave($event)"
+            (drop)="onImportDrop($event)"
+          >
+            <ion-icon [icon]="uploadIcon"></ion-icon>
+            <strong>{{ t("import.dropzone.title") }}</strong>
+            <span>{{ t("import.dropzone.subtitle") }}</span>
+          </button>
+
+          <div *ngIf="importFileName()" class="import-file-chip">
+            <ion-icon [icon]="fileIcon"></ion-icon>
+            <span>{{ importFileName() }}</span>
+          </div>
+
+          <div *ngIf="importing()" class="import-feedback import-feedback--progress">
+            <ion-spinner name="crescent"></ion-spinner>
+            <span>{{ t("import.processing") }}</span>
+          </div>
+
+          <div
+            *ngIf="importFeedback() as feedback"
+            class="import-feedback"
+            [class.import-feedback--success]="feedback.tone === 'success'"
+            [class.import-feedback--warning]="feedback.tone === 'warning'"
+            [class.import-feedback--error]="feedback.tone === 'error'"
+          >
+            <ion-icon [icon]="feedback.tone === 'error' ? errorIcon : successIcon"></ion-icon>
+            <div>
+              <strong>{{ feedback.title }}</strong>
+              <span *ngFor="let detail of feedback.details">{{ detail }}</span>
+            </div>
+          </div>
+
+          <div class="import-modal-actions">
+            <ion-button fill="outline" color="light" [disabled]="importing()" (click)="openFilePicker(importFileInput)">
+              {{ t("import.chooseAnotherFile") }}
+            </ion-button>
+            <ion-button fill="clear" color="light" [disabled]="importing()" (click)="closeImportModal()">
+              {{ "common.actions.close" | transloco }}
+            </ion-button>
+          </div>
+        </div>
+      </ng-template>
+    </ion-modal>
   </ion-content>
 </ng-container>

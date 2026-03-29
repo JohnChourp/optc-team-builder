@@ -54,34 +54,91 @@ export class UserStateService {
   public async saveTeam(input: Omit<SavedTeam, "id" | "createdAt" | "updatedAt"> & { id?: string }): Promise<SavedTeam> {
     await this.ready();
 
-    const now = new Date().toISOString();
     const existing = this.savedTeams().find((team) => team.id === input.id);
-    const savedTeam: SavedTeam = {
-      id: input.id ?? this.createTeamId(),
-      name: input.name.trim() || this.i18n.translate("common.defaults.untitledCrew"),
-      slots: [...input.slots],
-      shipId: input.shipId ?? null,
-      notes: input.notes.trim(),
-      createdAt: existing?.createdAt ?? now,
-      updatedAt: now,
-    };
+    const savedTeam = this.normalizeSavedTeam(
+      {
+        ...input,
+        id: input.id ?? this.createTeamId(),
+      },
+      existing,
+    );
 
     const next = existing
       ? this.savedTeams().map((team) => (team.id === savedTeam.id ? savedTeam : team))
       : [savedTeam, ...this.savedTeams()];
 
-    this.savedTeams.set(next);
-    await this.persistJson(SAVED_TEAMS_KEY, next);
+    await this.replaceSavedTeams(next);
 
     return savedTeam;
   }
 
   public async deleteTeam(teamId: string): Promise<void> {
-    await this.ready();
-    const next = this.savedTeams().filter((team) => team.id !== teamId);
+    await this.deleteTeams([teamId]);
+  }
 
-    this.savedTeams.set(next);
-    await this.persistJson(SAVED_TEAMS_KEY, next);
+  public async deleteTeams(teamIds: string[]): Promise<void> {
+    await this.ready();
+    const targetTeamIds = new Set(
+      teamIds
+        .map((teamId) => teamId.trim())
+        .filter((teamId) => teamId.length > 0),
+    );
+
+    if (!targetTeamIds.size) {
+      return;
+    }
+
+    const next = this.savedTeams().filter((team) => !targetTeamIds.has(team.id));
+
+    if (next.length === this.savedTeams().length) {
+      return;
+    }
+
+    await this.replaceSavedTeams(next);
+  }
+
+  public async mergeImportedTeams(
+    teams: SavedTeam[],
+  ): Promise<{ addedCount: number; updatedCount: number; teams: SavedTeam[] }> {
+    await this.ready();
+
+    const currentTeams = this.savedTeams();
+    const currentTeamMap = new Map(currentTeams.map((team) => [team.id, team] as const));
+    const mergedTeams: SavedTeam[] = [];
+    const importedTeamIds = new Set<string>();
+    let addedCount = 0;
+    let updatedCount = 0;
+
+    teams.forEach((team) => {
+      const normalizedTeam = this.normalizeSavedTeam(team, currentTeamMap.get(team.id));
+
+      if (importedTeamIds.has(normalizedTeam.id)) {
+        return;
+      }
+
+      importedTeamIds.add(normalizedTeam.id);
+
+      if (currentTeamMap.has(normalizedTeam.id)) {
+        updatedCount += 1;
+      } else {
+        addedCount += 1;
+      }
+
+      mergedTeams.push(normalizedTeam);
+    });
+
+    const next = [
+      ...mergedTeams,
+      ...currentTeams.filter((team) => !importedTeamIds.has(team.id)),
+    ];
+
+    await this.replaceSavedTeams(next);
+
+    return {
+      addedCount,
+      updatedCount,
+      teams: next,
+    };
   }
 
   private async hydrate(): Promise<void> {
@@ -112,6 +169,76 @@ export class UserStateService {
 
   private async persistJson(key: string, value: unknown): Promise<void> {
     await Preferences.set({ key, value: JSON.stringify(value) });
+  }
+
+  private async replaceSavedTeams(teams: SavedTeam[]): Promise<void> {
+    this.savedTeams.set(teams);
+    await this.persistJson(SAVED_TEAMS_KEY, teams);
+  }
+
+  private normalizeSavedTeam(
+    team: Pick<SavedTeam, "name" | "notes" | "shipId" | "slots"> & Partial<SavedTeam>,
+    existing?: SavedTeam,
+  ): SavedTeam {
+    const now = new Date().toISOString();
+
+    return {
+      id: this.normalizeTeamId(team.id) ?? existing?.id ?? this.createTeamId(),
+      name: this.normalizeTeamName(team.name),
+      slots: this.normalizeTeamSlots(team.slots),
+      shipId: this.normalizeShipId(team.shipId),
+      notes: this.normalizeNotes(team.notes),
+      createdAt: this.normalizeTimestamp(team.createdAt, existing?.createdAt ?? now),
+      updatedAt: this.normalizeTimestamp(team.updatedAt, now),
+    };
+  }
+
+  private normalizeTeamId(teamId: string | undefined): string | null {
+    if (typeof teamId !== "string") {
+      return null;
+    }
+
+    const normalizedTeamId = teamId.trim();
+
+    return normalizedTeamId.length ? normalizedTeamId : null;
+  }
+
+  private normalizeTeamName(teamName: string | undefined): string {
+    if (typeof teamName !== "string") {
+      return this.i18n.translate("common.defaults.untitledCrew");
+    }
+
+    return teamName.trim() || this.i18n.translate("common.defaults.untitledCrew");
+  }
+
+  private normalizeTeamSlots(slots: Array<number | null> | undefined): Array<number | null> {
+    return Array.from({ length: 6 }, (_, index) => {
+      const value = slots?.[index];
+
+      return typeof value === "number" && Number.isInteger(value) && value > 0 ? value : null;
+    });
+  }
+
+  private normalizeShipId(shipId: number | null | undefined): number | null {
+    return typeof shipId === "number" && Number.isInteger(shipId) && shipId > 0 ? shipId : null;
+  }
+
+  private normalizeNotes(notes: string | undefined): string {
+    return typeof notes === "string" ? notes.trim() : "";
+  }
+
+  private normalizeTimestamp(value: string | undefined, fallback: string): string {
+    if (typeof value !== "string") {
+      return fallback;
+    }
+
+    const normalizedValue = value.trim();
+
+    if (!normalizedValue.length || Number.isNaN(Date.parse(normalizedValue))) {
+      return fallback;
+    }
+
+    return normalizedValue;
   }
 
   private createTeamId(): string {
