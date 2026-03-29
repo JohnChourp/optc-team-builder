@@ -1,298 +1,313 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar>
-    <ion-title>OPTC Character Vault</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ng-container *transloco="let t; scope: 'characters'; read: 'characters'">
+  <ion-header class="ion-no-border">
+    <ion-toolbar>
+      <ion-title>{{ t("title") }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
 
-<ion-content [fullscreen]="true">
-  <div class="page-shell characters-shell">
-    <section class="hero-card glass-card">
-      <div class="hero-copy">
-        <div class="section-label">
-          <ion-icon [icon]="sparklesIcon"></ion-icon>
-          <span>Offline-first database</span>
-        </div>
-        <h1 class="section-title">Browse crews, filter fast, and prep teams without touching the network.</h1>
-        <p class="section-copy">
-          {{ summary()?.characterCount ?? 0 }} units, {{ summary()?.detailCount ?? 0 }} detailed records, and
-          {{ summary()?.rumbleCount ?? 0 }} rumble entries from the OPTC source repo.
-        </p>
-      </div>
-
-      <div class="hero-meta">
-        <div class="meta-pill">
-          <ion-icon [icon]="layersIcon"></ion-icon>
-          <span>{{ summary()?.availableTypes?.length ?? 0 }} types</span>
-        </div>
-        <div class="meta-pill">
-          <ion-icon [icon]="favoriteIcon"></ion-icon>
-          <span>{{ favoriteIds().length }} favorites</span>
-        </div>
-      </div>
-    </section>
-
-    <section class="glass-card controls-card">
-      <div class="favorites-tools-head">
-        <div>
-          <div class="section-label">Favorites tools</div>
-          <p>Manage your OPTCbx-compatible favorites file directly from the character browser.</p>
-        </div>
-        <div class="favorites-tools-actions">
-          <ion-button
-            fill="outline"
-            color="light"
-            [disabled]="!canDownloadFavoritesExport()"
-            (click)="downloadFavoritesExport()"
-          >
-            Export favorites
-          </ion-button>
-          <ion-button fill="outline" color="warning" (click)="openImportModal()">Import favorites</ion-button>
-        </div>
-      </div>
-
-      <ion-searchbar
-        class="vault-search"
-        [debounce]="150"
-        placeholder="Search names, classes, types..."
-        [value]="searchTerm()"
-        [searchIcon]="searchIcon"
-        (ionInput)="onSearchChange($event)"
-      ></ion-searchbar>
-
-      <div class="favorites-toggle-row">
-        <div class="favorites-toggle-copy">
-          <strong>{{ favoritesOnlyToggleLabel }}</strong>
-          <small>{{ favoritesOnlySupportLabel() }}</small>
-        </div>
-        <ion-toggle
-          color="warning"
-          [checked]="favoritesOnly()"
-          (ionChange)="onFavoritesOnlyToggle($event)"
-        ></ion-toggle>
-      </div>
-
-      <div class="filter-group">
-        <span>Type</span>
-        <ion-input
-          class="filter-input"
-          fill="outline"
-          placeholder="Type to filter by character type"
-          [value]="typeQuery()"
-          (ionInput)="onTypeQueryChange($event)"
-        ></ion-input>
-
-        <div *ngIf="selectedType()" class="filter-selection">
-          <span>Active filter: {{ selectedType() }}</span>
-          <button type="button" class="filter-clear" (click)="clearTypeFilter()">Clear</button>
-        </div>
-
-        <div *ngIf="showTypeSuggestions()" class="filter-suggestions">
-          <button
-            type="button"
-            class="filter-suggestion"
-            *ngFor="let item of filteredTypeOptions()"
-            (click)="applyTypeFilter(item)"
-          >
-            {{ item }}
-          </button>
-        </div>
-      </div>
-
-      <div class="filter-group">
-        <span>Class</span>
-        <ion-input
-          class="filter-input"
-          fill="outline"
-          placeholder="Type to filter by class"
-          [value]="classQuery()"
-          (ionInput)="onClassQueryChange($event)"
-        ></ion-input>
-
-        <div *ngIf="selectedClass()" class="filter-selection">
-          <span>Active filter: {{ selectedClass() }}</span>
-          <button type="button" class="filter-clear" (click)="clearClassFilter()">Clear</button>
-        </div>
-
-        <div *ngIf="showClassSuggestions()" class="filter-suggestions">
-          <button
-            type="button"
-            class="filter-suggestion"
-            *ngFor="let item of filteredClassOptions()"
-            (click)="applyClassFilter(item)"
-          >
-            {{ item }}
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <section *ngIf="loading()" class="loading-card glass-card">
-      <ion-spinner name="crescent"></ion-spinner>
-      <span>Building the local index...</span>
-    </section>
-
-    <section *ngIf="!loading() && !characters().length" class="loading-card glass-card empty-card">
-      <span>No characters matched the current search and filters.</span>
-    </section>
-
-    <section *ngIf="!loading() && characters().length" class="character-grid">
-      <article *ngFor="let character of characters(); trackBy: trackCharacter" class="character-card glass-card">
-        <a class="character-card__link" [routerLink]="['/characters', character.id]">
-          <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
-
-          <div class="character-card__content">
-            <div class="character-card__title-row">
-              <h2>{{ character.name }}</h2>
-              <button type="button" class="favorite-button" (click)="toggleFavorite(character.id, $event)">
-                <ion-icon [icon]="isFavorite(character.id) ? favoriteIcon : favoriteOutlineIcon"></ion-icon>
-              </button>
-            </div>
-
-            <div class="stat-row">
-              <span>{{ character.type }}</span>
-              <span>{{ character.primaryClass }}</span>
-              <span *ngIf="character.secondaryClass">{{ character.secondaryClass }}</span>
-            </div>
-
-            <div class="metrics-row">
-              <div>
-                <strong>{{ character.stats.max.hp }}</strong>
-                <span>HP</span>
-              </div>
-              <div>
-                <strong>{{ character.stats.max.atk }}</strong>
-                <span>ATK</span>
-              </div>
-              <div>
-                <strong>{{ character.stats.max.rcv }}</strong>
-                <span>RCV</span>
-              </div>
-            </div>
+  <ion-content [fullscreen]="true">
+    <div class="page-shell characters-shell">
+      <section class="hero-card glass-card">
+        <div class="hero-copy">
+          <div class="section-label">
+            <ion-icon [icon]="sparklesIcon"></ion-icon>
+            <span>{{ t("hero.eyebrow") }}</span>
           </div>
-        </a>
-      </article>
-    </section>
-
-    <div *ngIf="!loading() && hasMore()" class="load-more">
-      <ion-button fill="outline" color="light" [disabled]="loadingMore()" (click)="loadMore()">
-        <ion-spinner *ngIf="loadingMore()" slot="start" name="crescent"></ion-spinner>
-        Load more units
-      </ion-button>
-    </div>
-  </div>
-
-  <ion-modal [isOpen]="importModalOpen()" cssClass="favorites-import-modal" (didDismiss)="closeImportModal()">
-    <ng-template>
-      <div class="import-modal-shell">
-        <div class="import-modal-head">
-          <div>
-            <div class="section-label">OPTCbx compatibility</div>
-            <h2>Import favorites</h2>
-            <p>Drop a raw OPTCbx export JSON file to merge owned units into your on-device favorites.</p>
-          </div>
-
-          <ion-button fill="clear" color="light" (click)="closeImportModal()">
-            <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
-          </ion-button>
-        </div>
-
-        <input
-          #importFileInput
-          type="file"
-          accept=".json,application/json"
-          hidden
-          (change)="onFileSelected($event, importFileInput)"
-        />
-
-        <button
-          type="button"
-          class="import-dropzone"
-          [class.import-dropzone--active]="draggingImportFile()"
-          (click)="openFilePicker(importFileInput)"
-          (dragover)="onImportDragOver($event)"
-          (dragleave)="onImportDragLeave($event)"
-          (drop)="onImportDrop($event)"
-        >
-          <ion-icon [icon]="uploadIcon"></ion-icon>
-          <strong>Drag and drop your OPTCbx export here</strong>
-          <span>or click to browse for the raw JSON file exported by /export</span>
-        </button>
-
-        <div *ngIf="importFileName()" class="import-file-chip">
-          <ion-icon [icon]="fileIcon"></ion-icon>
-          <span>{{ importFileName() }}</span>
-        </div>
-
-        <div *ngIf="parsedImport() && !importResult()" class="import-feedback import-feedback--ready">
-          <ion-icon [icon]="successIcon"></ion-icon>
-          <div>
-            <strong>Ready to import {{ parsedImport()?.importedNumbers?.length ?? 0 }} unique unit ids.</strong>
-            <span *ngIf="(parsedImport()?.duplicatesRemoved ?? 0) > 0">
-              Removed {{ parsedImport()?.duplicatesRemoved }} duplicate entries from the export.
-            </span>
-          </div>
-        </div>
-
-        <div *ngIf="importErrorMessage()" class="import-feedback import-feedback--error">
-          <ion-icon [icon]="errorIcon"></ion-icon>
-          <span>{{ importErrorMessage() }}</span>
-        </div>
-
-        <section *ngIf="importResult()" class="import-result-card">
-          <div class="import-result-card__head">
-            <h3>Import summary</h3>
-            <p>The export was merged into your existing favorites.</p>
-          </div>
-
-          <div class="import-stats-grid">
-            <article>
-              <span>Matched</span>
-              <strong>{{ importResult()?.matchedIds?.length ?? 0 }}</strong>
-            </article>
-            <article>
-              <span>Added</span>
-              <strong>{{ importResult()?.addedCount ?? 0 }}</strong>
-            </article>
-            <article>
-              <span>Already favorited</span>
-              <strong>{{ importResult()?.alreadyFavoritedCount ?? 0 }}</strong>
-            </article>
-            <article>
-              <span>Unknown ids</span>
-              <strong>{{ importResult()?.unmatchedIds?.length ?? 0 }}</strong>
-            </article>
-          </div>
-
-          <p *ngIf="(importResult()?.duplicatesRemoved ?? 0) > 0" class="import-result-note">
-            {{ importResult()?.duplicatesRemoved }} duplicate export entries were ignored before import.
+          <h1 class="section-title">{{ t("hero.title") }}</h1>
+          <p class="section-copy">
+            {{
+              t("hero.copy", {
+                characterCount: summary()?.characterCount ?? 0,
+                detailCount: summary()?.detailCount ?? 0,
+                rumbleCount: summary()?.rumbleCount ?? 0
+              })
+            }}
           </p>
-
-          <div *ngIf="unmatchedPreview().length" class="import-unmatched">
-            <strong>Unknown ids</strong>
-            <p>
-              {{ unmatchedPreview().join(", ") }}
-              <span *ngIf="remainingUnmatchedCount() > 0"> and {{ remainingUnmatchedCount() }} more </span>
-            </p>
-          </div>
-        </section>
-
-        <div class="import-modal-actions">
-          <ion-button fill="clear" color="light" (click)="resetSelectedFile()" [disabled]="importingFavorites()">
-            Choose another file
-          </ion-button>
-          <ion-button fill="outline" color="light" (click)="closeImportModal()" [disabled]="importingFavorites()">
-            {{ importResult() ? "Done" : "Cancel" }}
-          </ion-button>
-          <ion-button
-            color="warning"
-            (click)="importFavorites()"
-            [disabled]="!hasImportReady() || importingFavorites() || !!importResult()"
-          >
-            <ion-spinner *ngIf="importingFavorites()" slot="start" name="crescent"></ion-spinner>
-            Import favorites
-          </ion-button>
         </div>
+
+        <div class="hero-meta">
+          <div class="meta-pill">
+            <ion-icon [icon]="layersIcon"></ion-icon>
+            <span>{{ t("hero.typesCount", { count: summary()?.availableTypes?.length ?? 0 }) }}</span>
+          </div>
+          <div class="meta-pill">
+            <ion-icon [icon]="favoriteIcon"></ion-icon>
+            <span>{{ t("hero.favoritesCount", { count: favoriteIds().length }) }}</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="glass-card controls-card">
+        <div class="favorites-tools-head">
+          <div>
+            <div class="section-label">{{ t("tools.title") }}</div>
+            <p>{{ t("tools.copy") }}</p>
+          </div>
+          <div class="favorites-tools-actions">
+            <ion-button
+              fill="outline"
+              color="light"
+              [disabled]="!canDownloadFavoritesExport()"
+              (click)="downloadFavoritesExport()"
+            >
+              {{ t("tools.export") }}
+            </ion-button>
+            <ion-button fill="outline" color="warning" (click)="openImportModal()">
+              {{ t("tools.import") }}
+            </ion-button>
+          </div>
+        </div>
+
+        <ion-searchbar
+          class="vault-search"
+          [debounce]="150"
+          [placeholder]="t('search.placeholder')"
+          [value]="searchTerm()"
+          [searchIcon]="searchIcon"
+          (ionInput)="onSearchChange($event)"
+        ></ion-searchbar>
+
+        <div class="favorites-toggle-row">
+          <div class="favorites-toggle-copy">
+            <strong>{{ t("filters.favoritesOnly.label") }}</strong>
+            <small>{{ favoritesOnlySupportLabel() }}</small>
+          </div>
+          <ion-toggle
+            color="warning"
+            [checked]="favoritesOnly()"
+            (ionChange)="onFavoritesOnlyToggle($event)"
+          ></ion-toggle>
+        </div>
+
+        <div class="filter-group">
+          <span>{{ t("filters.type.label") }}</span>
+          <ion-input
+            class="filter-input"
+            fill="outline"
+            [placeholder]="t('filters.type.placeholder')"
+            [value]="typeQuery()"
+            (ionInput)="onTypeQueryChange($event)"
+          ></ion-input>
+
+          <div *ngIf="selectedType()" class="filter-selection">
+            <span>{{ t("filters.active", { value: selectedType() }) }}</span>
+            <button type="button" class="filter-clear" (click)="clearTypeFilter()">
+              {{ "common.actions.clear" | transloco }}
+            </button>
+          </div>
+
+          <div *ngIf="showTypeSuggestions()" class="filter-suggestions">
+            <button
+              type="button"
+              class="filter-suggestion"
+              *ngFor="let item of filteredTypeOptions()"
+              (click)="applyTypeFilter(item)"
+            >
+              {{ item }}
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <span>{{ t("filters.class.label") }}</span>
+          <ion-input
+            class="filter-input"
+            fill="outline"
+            [placeholder]="t('filters.class.placeholder')"
+            [value]="classQuery()"
+            (ionInput)="onClassQueryChange($event)"
+          ></ion-input>
+
+          <div *ngIf="selectedClass()" class="filter-selection">
+            <span>{{ t("filters.active", { value: selectedClass() }) }}</span>
+            <button type="button" class="filter-clear" (click)="clearClassFilter()">
+              {{ "common.actions.clear" | transloco }}
+            </button>
+          </div>
+
+          <div *ngIf="showClassSuggestions()" class="filter-suggestions">
+            <button
+              type="button"
+              class="filter-suggestion"
+              *ngFor="let item of filteredClassOptions()"
+              (click)="applyClassFilter(item)"
+            >
+              {{ item }}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section *ngIf="loading()" class="loading-card glass-card">
+        <ion-spinner name="crescent"></ion-spinner>
+        <span>{{ t("loading") }}</span>
+      </section>
+
+      <section *ngIf="!loading() && !characters().length" class="loading-card glass-card empty-card">
+        <span>{{ t("empty") }}</span>
+      </section>
+
+      <section *ngIf="!loading() && characters().length" class="character-grid">
+        <article *ngFor="let character of characters(); trackBy: trackCharacter" class="character-card glass-card">
+          <a class="character-card__link" [routerLink]="['/characters', character.id]">
+            <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
+
+            <div class="character-card__content">
+              <div class="character-card__title-row">
+                <h2>{{ character.name }}</h2>
+                <button type="button" class="favorite-button" (click)="toggleFavorite(character.id, $event)">
+                  <ion-icon [icon]="isFavorite(character.id) ? favoriteIcon : favoriteOutlineIcon"></ion-icon>
+                </button>
+              </div>
+
+              <div class="stat-row">
+                <span>{{ character.type }}</span>
+                <span>{{ character.primaryClass }}</span>
+                <span *ngIf="character.secondaryClass">{{ character.secondaryClass }}</span>
+              </div>
+
+              <div class="metrics-row">
+                <div>
+                  <strong>{{ character.stats.max.hp }}</strong>
+                  <span>{{ t("stats.hp") }}</span>
+                </div>
+                <div>
+                  <strong>{{ character.stats.max.atk }}</strong>
+                  <span>{{ t("stats.atk") }}</span>
+                </div>
+                <div>
+                  <strong>{{ character.stats.max.rcv }}</strong>
+                  <span>{{ t("stats.rcv") }}</span>
+                </div>
+              </div>
+            </div>
+          </a>
+        </article>
+      </section>
+
+      <div *ngIf="!loading() && hasMore()" class="load-more">
+        <ion-button fill="outline" color="light" [disabled]="loadingMore()" (click)="loadMore()">
+          <ion-spinner *ngIf="loadingMore()" slot="start" name="crescent"></ion-spinner>
+          {{ t("loadMore") }}
+        </ion-button>
       </div>
-    </ng-template>
-  </ion-modal>
-</ion-content>
+    </div>
+
+    <ion-modal [isOpen]="importModalOpen()" cssClass="favorites-import-modal" (didDismiss)="closeImportModal()">
+      <ng-template>
+        <div class="import-modal-shell">
+          <div class="import-modal-head">
+            <div>
+              <div class="section-label">{{ t("import.eyebrow") }}</div>
+              <h2>{{ t("import.title") }}</h2>
+              <p>{{ t("import.copy") }}</p>
+            </div>
+
+            <ion-button fill="clear" color="light" (click)="closeImportModal()">
+              <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+            </ion-button>
+          </div>
+
+          <input
+            #importFileInput
+            type="file"
+            accept=".json,application/json"
+            hidden
+            (change)="onFileSelected($event, importFileInput)"
+          />
+
+          <button
+            type="button"
+            class="import-dropzone"
+            [class.import-dropzone--active]="draggingImportFile()"
+            (click)="openFilePicker(importFileInput)"
+            (dragover)="onImportDragOver($event)"
+            (dragleave)="onImportDragLeave($event)"
+            (drop)="onImportDrop($event)"
+          >
+            <ion-icon [icon]="uploadIcon"></ion-icon>
+            <strong>{{ t("import.dropzone.title") }}</strong>
+            <span>{{ t("import.dropzone.subtitle") }}</span>
+          </button>
+
+          <div *ngIf="importFileName()" class="import-file-chip">
+            <ion-icon [icon]="fileIcon"></ion-icon>
+            <span>{{ importFileName() }}</span>
+          </div>
+
+          <div *ngIf="parsedImport() && !importResult()" class="import-feedback import-feedback--ready">
+            <ion-icon [icon]="successIcon"></ion-icon>
+            <div>
+              <strong>{{ t("import.ready", { count: parsedImport()?.importedNumbers?.length ?? 0 }) }}</strong>
+              <span *ngIf="(parsedImport()?.duplicatesRemoved ?? 0) > 0">
+                {{ t("import.removedDuplicates", { count: parsedImport()?.duplicatesRemoved ?? 0 }) }}
+              </span>
+            </div>
+          </div>
+
+          <div *ngIf="importErrorMessage()" class="import-feedback import-feedback--error">
+            <ion-icon [icon]="errorIcon"></ion-icon>
+            <span>{{ importErrorMessage() }}</span>
+          </div>
+
+          <section *ngIf="importResult()" class="import-result-card">
+            <div class="import-result-card__head">
+              <h3>{{ t("import.summary.title") }}</h3>
+              <p>{{ t("import.summary.copy") }}</p>
+            </div>
+
+            <div class="import-stats-grid">
+              <article>
+                <span>{{ t("import.stats.matched") }}</span>
+                <strong>{{ importResult()?.matchedIds?.length ?? 0 }}</strong>
+              </article>
+              <article>
+                <span>{{ t("import.stats.added") }}</span>
+                <strong>{{ importResult()?.addedCount ?? 0 }}</strong>
+              </article>
+              <article>
+                <span>{{ t("import.stats.alreadyFavorited") }}</span>
+                <strong>{{ importResult()?.alreadyFavoritedCount ?? 0 }}</strong>
+              </article>
+              <article>
+                <span>{{ t("import.stats.unknownIds") }}</span>
+                <strong>{{ importResult()?.unmatchedIds?.length ?? 0 }}</strong>
+              </article>
+            </div>
+
+            <p *ngIf="(importResult()?.duplicatesRemoved ?? 0) > 0" class="import-result-note">
+              {{ t("import.ignoredDuplicates", { count: importResult()?.duplicatesRemoved ?? 0 }) }}
+            </p>
+
+            <div *ngIf="unmatchedPreview().length" class="import-unmatched">
+              <strong>{{ t("import.stats.unknownIds") }}</strong>
+              <p>
+                {{ unmatchedPreview().join(", ") }}
+                <span *ngIf="remainingUnmatchedCount() > 0">
+                  {{ t("import.andMore", { count: remainingUnmatchedCount() }) }}
+                </span>
+              </p>
+            </div>
+          </section>
+
+          <div class="import-modal-actions">
+            <ion-button fill="clear" color="light" (click)="resetSelectedFile()" [disabled]="importingFavorites()">
+              {{ t("import.chooseAnotherFile") }}
+            </ion-button>
+            <ion-button fill="outline" color="light" (click)="closeImportModal()" [disabled]="importingFavorites()">
+              {{ importResult() ? t("import.done") : ("common.actions.cancel" | transloco) }}
+            </ion-button>
+            <ion-button
+              color="warning"
+              (click)="importFavorites()"
+              [disabled]="!hasImportReady() || importingFavorites() || !!importResult()"
+            >
+              <ion-spinner *ngIf="importingFavorites()" slot="start" name="crescent"></ion-spinner>
+              {{ t("import.importFavorites") }}
+            </ion-button>
+          </div>
+        </div>
+      </ng-template>
+    </ion-modal>
+  </ion-content>
+</ng-container>

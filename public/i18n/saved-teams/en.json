@@ -1,0 +1,17 @@
+{
+  "empty": "No saved teams yet.",
+  "hero": {
+    "copy": "This page only shows your saved teams.",
+    "eyebrow": "Offline memory",
+    "title": "Your saved teams stay on-device and are ready to load back into the builder."
+  },
+  "loading": "Loading saved teams...",
+  "preview": {
+    "ariaLabel": "Saved team character slots",
+    "emptySlotAlt": "Empty slot",
+    "emptySlotAria": "Empty slot {{slot}}",
+    "viewDetailsAria": "View details for {{name}} in slot {{slot}}"
+  },
+  "title": "Saved Teams",
+  "total": "{{count}} total"
+}

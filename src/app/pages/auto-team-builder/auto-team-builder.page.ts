@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
   IonButton,
   IonContent,
@@ -50,6 +51,7 @@ import {
   AutoTeamBuilderService,
   type AutoTeamBuildExecutionOptions,
 } from '../../core/services/auto-team-builder.service';
+import { AppI18nService } from '../../core/services/app-i18n.service';
 import {
   matchesAnyAbilityRequirement,
   builderAbilitiesMatchAllRequirements,
@@ -59,6 +61,8 @@ import { resolveAutoBuildShipSelection } from '../../core/services/auto-team-bui
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import {
+  AutoTeamSelectionImportError,
+  type AutoTeamSelectionImportMessage,
   type AutoTeamSelectionImportResult,
   type AutoTeamExportPayload,
   type AutoTeamSelectionExportPayload,
@@ -145,6 +149,8 @@ interface PresetImportFeedback {
     IonToggle,
     IonToolbar,
     RouterLink,
+    TranslocoDirective,
+    TranslocoPipe,
   ],
   templateUrl: './auto-team-builder.page.html',
   styleUrl: './auto-team-builder.page.scss',
@@ -268,7 +274,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     if (leaderIds.length === 1) {
       return {
-        [leaderIds[0]]: 'Captain / Friend Captain',
+        [leaderIds[0]]: this.t('manual.leaders.roles.dual'),
       };
     }
 
@@ -276,8 +282,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const friendLeaderId = this.effectiveFriendLeaderId();
 
     return {
-      ...(captainLeaderId ? { [captainLeaderId]: 'Captain' } : {}),
-      ...(friendLeaderId ? { [friendLeaderId]: 'Friend Captain' } : {}),
+      ...(captainLeaderId ? { [captainLeaderId]: this.t('manual.leaders.roles.captain') } : {}),
+      ...(friendLeaderId
+        ? { [friendLeaderId]: this.t('manual.leaders.roles.friendCaptain') }
+        : {}),
     };
   });
   public readonly clearAllButtonDisabled = computed(
@@ -309,92 +317,113 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   );
   public readonly teamStructureLabel = computed(() =>
     this.hasDualLeaders()
-      ? 'Captain + Friend captain + 4 subs'
-      : 'Captain + 4 subs + same friend captain',
+      ? this.t('hero.teamStructure.dual')
+      : this.t('hero.teamStructure.single'),
   );
   public readonly selectAllTypesButtonLabel = computed(() =>
-    this.allTypesSelected() ? 'Unselect all types' : 'Select all types',
+    this.allTypesSelected() ? this.t('filters.types.unselectAll') : this.t('filters.types.selectAll'),
   );
   public readonly selectAllClassesButtonLabel = computed(() =>
-    this.allClassesSelected() ? 'Unselect all classes' : 'Select all classes',
+    this.allClassesSelected()
+      ? this.t('filters.classes.unselectAll')
+      : this.t('filters.classes.selectAll'),
   );
   public readonly typeSupportLabel = computed(() =>
     this.requireAllSelectedTypesInTeam()
-      ? 'Κάθε selected type πρέπει να εμφανιστεί τουλάχιστον μία φορά στο final team.'
-      : 'Το auto-build προσπαθεί πρώτα να καλύψει όλα τα selected types και μετά κάνει fallback μόνο στο result panel αν χρειαστεί.',
+      ? this.t('filters.types.support.strict')
+      : this.t('filters.types.support.flexible'),
   );
   public readonly classSupportLabel = computed(() =>
     this.requireAllSelectedClassesPerCharacter()
-      ? 'Κάθε chosen unit πρέπει να έχει όλα τα selected classes.'
-      : 'Το auto-build προσπαθεί πρώτα να καλύψει όλα τα selected classes στο team και μετά κάνει fallback χωρίς να πειράζει τα πάνω filters.',
+      ? this.t('filters.classes.support.strict')
+      : this.t('filters.classes.support.flexible'),
   );
   public readonly specialSupportLabel = computed(() =>
     this.requireAllSpecialsSupportTeam()
-      ? 'Κάθε slot πρέπει να έχει special που ενισχύει όλους τους τελικούς teammates. Το requirement δεν χαλαρώνει στο fallback.'
-      : 'Προαιρετικό hard filter που κρατά μόνο units με special το οποίο καλύπτει όλο το final team.',
+      ? this.t('filters.specialSupport.support.strict')
+      : this.t('filters.specialSupport.support.flexible'),
   );
   public readonly favoritesOnlySupportLabel = computed(() =>
     this.hasFavoriteCharacters()
-      ? `Το candidate pool περιορίζεται στα ${this.favoriteCharacterIds().length} favorites.`
-      : 'Δεν υπάρχουν ακόμα favorites. Πρόσθεσε favorites για να χρησιμοποιήσεις αυτό το mode.',
+      ? this.t('filters.favoritesOnly.support.withCount', {
+          count: this.favoriteCharacterIds().length,
+        })
+      : this.t('filters.favoritesOnly.support.empty'),
   );
   public readonly lockedSummaryLabel = computed(
     () =>
-      `${this.lockedCharacterIds().length} / ${this.maxLockedCharacters} χειροκίνητα locked units`,
+      this.t('manual.lockedSummary', {
+        count: this.lockedCharacterIds().length,
+        max: this.maxLockedCharacters,
+      }),
   );
   public readonly leaderSummaryLabel = computed(
-    () => `${this.selectedLeaderIds().length} / ${this.maxLeaderCharacters} selected leaders`,
+    () =>
+      this.t('manual.leaderSummary', {
+        count: this.selectedLeaderIds().length,
+        max: this.maxLeaderCharacters,
+      }),
   );
   public readonly manualPickerSupportLabel = computed(() =>
     this.lockedLimitReached()
-      ? 'Έχεις κλειδώσει το μέγιστο των 5 μοναδικών χαρακτήρων.'
-      : 'Διάλεξε μέχρι 5 χαρακτήρες που θέλεις να μείνουν στο team. Τα manual picks ακολουθούν αυτόματα τα selected Types, Classes και Ability requirements από πάνω.',
+      ? this.t('manual.pickerSupport.maxReached')
+      : this.t('manual.pickerSupport.default'),
   );
   public readonly leaderPickerSupportLabel = computed(() => {
     if (!this.hasLockedCharacters()) {
-      return 'Κλείδωσε πρώτα manual picks για να μπορείς να ορίσεις leaders.';
+      return this.t('manual.leaderSupport.noLockedCharacters');
     }
 
     if (!this.hasSelectedLeaders()) {
-      return 'Μπορείς να επιλέξεις έως 2 leaders από τα locked manual picks.';
+      return this.t('manual.leaderSupport.noLeaders');
     }
 
     if (!this.hasDualLeaders()) {
-      return 'Με 1 leader, ο ίδιος χαρακτήρας θα χρησιμοποιηθεί και ως Captain και ως Friend Captain.';
+      return this.t('manual.leaderSupport.singleLeader');
     }
 
-    return 'Με 2 leaders, όρισε ποιος είναι ο δικός σου Captain και ποιος ο Friend Captain.';
+    return this.t('manual.leaderSupport.dualLeader');
   });
   public readonly manualFilterSummaryLabel = computed(() => {
     const filters = this.manualCandidateFilters();
     const parts: string[] = [];
 
     if (filters.selectedTypes.length) {
-      parts.push(`types: ${filters.selectedTypes.join(' / ')}`);
+      parts.push(
+        this.t('manual.filters.parts.types', {
+          values: filters.selectedTypes.join(' / '),
+        }),
+      );
     }
 
     if (filters.selectedClasses.length) {
-      parts.push(`classes: ${filters.selectedClasses.join(' / ')}`);
+      parts.push(
+        this.t('manual.filters.parts.classes', {
+          values: filters.selectedClasses.join(' / '),
+        }),
+      );
     }
 
     if (filters.requiredAbilities.length) {
       parts.push(
-        `abilities: ${filters.requiredAbilities
-          .map((requirement) => this.formatAbilityRequirement(requirement))
-          .join(' • ')}`,
+        this.t('manual.filters.parts.abilities', {
+          values: filters.requiredAbilities
+            .map((requirement) => this.formatAbilityRequirement(requirement))
+            .join(' • '),
+        }),
       );
     }
 
     return parts.length
-      ? `Τα manual picks ακολουθούν live τα πάνω filters: ${parts.join(' • ')}`
-      : 'Τα manual picks δείχνουν το default pool μέχρι να διαλέξεις Types, Classes ή Ability requirements.';
+      ? this.t('manual.filters.active', { summary: parts.join(' • ') })
+      : this.t('manual.filters.default');
   });
   public readonly manualCandidatesSummaryLabel = computed(() => {
     if (this.manualCandidatesLoading()) {
-      return 'Γίνεται φόρτωση manual candidates...';
+      return this.t('manual.candidates.loading');
     }
 
-    return `${this.manualCandidates().length} manual candidates`;
+    return this.t('manual.candidates.count', { count: this.manualCandidates().length });
   });
   public readonly manualFilterAppliedAbilityLabels = computed(() =>
     this.manualCandidateFilters().requiredAbilities.map((requirement) =>
@@ -409,8 +438,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   );
   public readonly manualCandidatePoolSupportLabel = computed(() =>
     this.hasAppliedManualFilters()
-      ? 'Live αποτέλεσμα από τα current page filters και το search.'
-      : 'Top characters από το default pool.',
+      ? this.t('manual.candidatePool.filtered')
+      : this.t('manual.candidatePool.default'),
   );
   public readonly manualCandidateCards = computed(() =>
     this.buildManualCharacterCards(
@@ -438,25 +467,24 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       }));
   });
   public readonly shipCandidatesSummaryLabel = computed(() => {
-    const count = this.shipCandidates().length;
-
-    return `${count} ship${count === 1 ? '' : 's'} available`;
+    return this.t('ships.count', { count: this.shipCandidates().length });
   });
   public readonly shipPickerSupportLabel = computed(() => {
     const selectedShip = this.selectedManualShip();
 
     if (selectedShip) {
-      return `Manual override ενεργό: ${selectedShip.name}`;
+      return this.t('ships.manualOverride', { name: selectedShip.name });
     }
 
-    return 'Αν δεν διαλέξεις ship, το build θα προτείνει αυτόματα το καλύτερο ship για το τελικό team.';
+    return this.t('ships.autoRecommendation');
   });
-  public readonly typeStrictToggleLabel = 'Require all selected types in team';
-  public readonly classStrictToggleLabel = 'Require all selected classes on every character';
-  public readonly specialSupportToggleLabel = 'Require every special to buff the full team';
-  public readonly favoritesOnlyToggleLabel = 'Use only favorites';
-  public readonly favoritesOnlyBlockedMessage =
-    'Δεν υπάρχουν favorites. Πρόσθεσε χαρακτήρες στα favorites ή απενεργοποίησε το toggle.';
+  public readonly typeStrictToggleLabel = computed(() => this.t('filters.types.toggle'));
+  public readonly classStrictToggleLabel = computed(() => this.t('filters.classes.toggle'));
+  public readonly specialSupportToggleLabel = computed(() => this.t('filters.specialSupport.toggle'));
+  public readonly favoritesOnlyToggleLabel = computed(() => this.t('filters.favoritesOnly.toggle'));
+  public readonly favoritesOnlyBlockedMessage = computed(() =>
+    this.t('filters.favoritesOnly.blockedMessage'),
+  );
   public readonly selectedClassesLabel = computed(() =>
     this.formatSelectedValues(this.selectedClasses()),
   );
@@ -467,55 +495,65 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const strictModes: string[] = [];
 
     if (this.requireAllSelectedTypesInTeam()) {
-      strictModes.push('type coverage');
+      strictModes.push(this.t('hero.strictModes.typeCoverage'));
     }
 
     if (this.requireAllSelectedClassesPerCharacter()) {
-      strictModes.push('per-character classes');
+      strictModes.push(this.t('hero.strictModes.perCharacterClasses'));
     }
 
-    return strictModes.length ? `Strict ${strictModes.join(' + ')}` : 'Flexible coverage';
+    return strictModes.length
+      ? this.t('hero.strictMode.strict', { modes: strictModes.join(' + ') })
+      : this.t('hero.strictMode.flexible');
   });
   public readonly builderLabel = computed(() =>
     this.hasSelectedTypes()
-      ? `Generic ${this.selectedTypesLabel()} burst builder • ${this.strictModeLabel()}`
-      : `Generic burst builder • ${this.strictModeLabel()}`,
+      ? this.t('hero.builderLabel.withTypes', {
+          types: this.selectedTypesLabel(),
+          mode: this.strictModeLabel(),
+        })
+      : this.t('hero.builderLabel.default', { mode: this.strictModeLabel() }),
   );
   public readonly titleLabel = computed(() =>
     this.hasSelectedClasses() && this.hasSelectedTypes()
       ? this.hasStrictFilters()
-        ? `Διάλεξε classes και χτίσε αυτόματα ένα ${this.selectedTypesLabel()} mixed team με strict constraints.`
-        : `Διάλεξε classes και types για να χτίσεις αυτόματα ένα ${this.selectedTypesLabel()} mixed team με smart fallback.`
+        ? this.t('hero.title.withTypesStrict', { types: this.selectedTypesLabel() })
+        : this.t('hero.title.withTypesFlexible', { types: this.selectedTypesLabel() })
       : this.hasStrictFilters()
-        ? 'Διάλεξε types και classes για να χτίσεις αυτόματα ένα mixed team με strict constraints.'
-        : 'Διάλεξε types και classes για να χτίσεις αυτόματα ένα mixed team με smart fallback.',
+        ? this.t('hero.title.defaultStrict')
+        : this.t('hero.title.defaultFlexible'),
   );
   public readonly descriptionLabel = computed(() =>
     this.hasSelectedClasses() && this.hasSelectedTypes()
       ? this.hasStrictFilters()
-        ? `Το v1 χρησιμοποιεί recent usable ${this.selectedTypesLabel()} units με readable captain, special, και sailor texts για να φτιάξει ένα high-damage team που τηρεί τα ενεργά strict filters.`
-        : `Το v1 προσπαθεί πρώτα να καλύψει όλα τα selected classes και types με recent usable ${this.selectedTypesLabel()} units και κάνει relaxed fallback μόνο αν χρειαστεί.`
+        ? this.t('hero.description.withTypesStrict', { types: this.selectedTypesLabel() })
+        : this.t('hero.description.withTypesFlexible', { types: this.selectedTypesLabel() })
       : this.hasStrictFilters()
-        ? 'Το v1 χρησιμοποιεί recent usable units με readable captain, special, και sailor texts για να φτιάξει ένα high-damage team που τηρεί τα ενεργά strict filters.'
-        : 'Το v1 προσπαθεί πρώτα να καλύψει όλα τα selected classes και types και κάνει relaxed fallback μόνο αν χρειαστεί.',
+        ? this.t('hero.description.defaultStrict')
+        : this.t('hero.description.defaultFlexible'),
   );
   public readonly buildButtonLabel = computed(() =>
     this.hasSelectedTypes()
       ? this.hasStrictFilters()
         ? this.favoritesOnly()
-          ? `Build favorite-only strict ${this.selectedTypesLabel()} mixed team`
-          : `Build strict ${this.selectedTypesLabel()} mixed team`
+          ? this.t('actions.build.favoriteStrict', { types: this.selectedTypesLabel() })
+          : this.t('actions.build.strict', { types: this.selectedTypesLabel() })
         : this.favoritesOnly()
-          ? `Build favorite-only flexible ${this.selectedTypesLabel()} mixed team`
-          : `Build flexible ${this.selectedTypesLabel()} mixed team`
-      : 'Select types to build team',
+          ? this.t('actions.build.favoriteFlexible', { types: this.selectedTypesLabel() })
+          : this.t('actions.build.flexible', { types: this.selectedTypesLabel() })
+      : this.t('actions.build.selectTypes'),
   );
   public readonly loadingLabel = computed(
     () =>
-      this.buildProgress()?.message ??
+      (this.buildProgress()?.messageKey
+        ? this.t(
+            this.buildProgress()!.messageKey,
+            this.buildProgress()!.messageParams,
+          )
+        : null) ??
       (this.hasSelectedTypes()
-        ? `Γίνεται scoring των πιο πρόσφατων usable ${this.selectedTypesLabel()} χαρακτήρων...`
-        : 'Γίνεται scoring των πιο πρόσφατων usable χαρακτήρων...'),
+        ? this.t('progress.scoringWithTypes', { types: this.selectedTypesLabel() })
+        : this.t('progress.scoringDefault')),
   );
   public readonly buildAttemptProgressLabel = computed(() => {
     const progress = this.buildProgress();
@@ -529,24 +567,31 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         ? progress.completedAttempts
         : Math.min(progress.completedAttempts + 1, progress.totalAttempts);
 
-    return `Attempt ${currentAttempt} / ${progress.totalAttempts}`;
+    return this.t('progress.attemptProgress', {
+      current: currentAttempt,
+      total: progress.totalAttempts,
+    });
   });
   public readonly buildCandidateProgressLabel = computed(() => {
     const progress = this.buildProgress();
 
     return progress?.candidateCount
-      ? `${progress.candidateCount} candidates στο current search pool`
+      ? this.t('progress.candidatePool', { count: progress.candidateCount })
       : '';
   });
   public readonly buildDroppedTypesLabel = computed(() => {
     const droppedTypes = this.buildProgress()?.currentDroppedTypes ?? [];
 
-    return droppedTypes.length ? `Ignoring types: ${droppedTypes.join(' / ')}` : '';
+    return droppedTypes.length
+      ? this.t('progress.ignoringTypes', { types: droppedTypes.join(' / ') })
+      : '';
   });
   public readonly buildDroppedClassesLabel = computed(() => {
     const droppedClasses = this.buildProgress()?.currentDroppedClasses ?? [];
 
-    return droppedClasses.length ? `Ignoring classes: ${droppedClasses.join(' / ')}` : '';
+    return droppedClasses.length
+      ? this.t('progress.ignoringClasses', { classes: droppedClasses.join(' / ') })
+      : '';
   });
   public readonly loadingProgressRows = computed<LoadingProgressRow[]>(() => {
     const rows: Array<Pick<LoadingProgressRow, 'key' | 'text' | 'tone'>> = [
@@ -583,14 +628,23 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       visible: row.text.length > 0,
     }));
   });
-  public readonly cancelBuildButtonLabel = 'Cancel build';
+  public readonly cancelBuildButtonLabel = computed(() => this.t('actions.cancelBuild'));
   public readonly candidatePoolLabel = computed(() => {
     const isFavoritesOnly = this.result()?.input.favoritesOnly ?? this.favoritesOnly();
-    const poolPrefix = isFavoritesOnly ? 'favorites-only ' : '';
 
-    return this.hasSelectedTypes()
-      ? `${poolPrefix}recent usable ${this.selectedTypesLabel()} records`
-      : `${poolPrefix}recent usable records`;
+    if (this.hasSelectedTypes()) {
+      return isFavoritesOnly
+        ? this.t('results.candidatePool.favoritesWithTypes', {
+            types: this.selectedTypesLabel(),
+          })
+        : this.t('results.candidatePool.withTypes', {
+            types: this.selectedTypesLabel(),
+          });
+    }
+
+    return isFavoritesOnly
+      ? this.t('results.candidatePool.favoritesDefault')
+      : this.t('results.candidatePool.default');
   });
   public readonly resultUsesFallback = computed(
     () => this.result()?.relaxation.usedFallback ?? false,
@@ -616,117 +670,145 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     if (!current) {
       return this.requireAllSelectedClassesPerCharacter()
-        ? 'Strict class mode ενεργό: κάθε chosen unit πρέπει να έχει όλα τα selected classes.'
-        : 'Flexible mode: δοκιμάζεται πλήρης class coverage και μετά relaxed fallback αν χρειαστεί.';
+        ? this.t('results.selectedClassSummary.strictPending')
+        : this.t('results.selectedClassSummary.flexiblePending');
     }
 
     if (current.input.requireAllSelectedClassesPerCharacter) {
-      return `${current.slots.length} / ${current.slots.length} slots match all selected classes`;
+      return this.t('results.selectedClassSummary.strictResolved', {
+        matching: current.slots.length,
+        total: current.slots.length,
+      });
     }
 
     if (!current.input.selectedClasses.length) {
-      return 'Το final fallback κράτησε ομάδα χωρίς class requirement.';
+      return this.t('results.selectedClassSummary.noRequirement');
     }
 
-    return `${current.coverage.coveredSelectedClasses.length} / ${current.input.selectedClasses.length} classes covered • ${current.coverage.selectedClassMatches} / 6 matching slots`;
+    return this.t('results.selectedClassSummary.coverage', {
+      covered: current.coverage.coveredSelectedClasses.length,
+      total: current.input.selectedClasses.length,
+      matchingSlots: current.coverage.selectedClassMatches,
+    });
   });
   public readonly selectedTypeSummaryLabel = computed(() => {
     const current = this.result();
 
     if (!current) {
       return this.requireAllSelectedTypesInTeam()
-        ? 'Strict type mode ενεργό: κάθε selected type πρέπει να εμφανιστεί στο final team.'
-        : 'Flexible mode: δοκιμάζεται πλήρης type coverage και μετά relaxed fallback αν χρειαστεί.';
+        ? this.t('results.selectedTypeSummary.strictPending')
+        : this.t('results.selectedTypeSummary.flexiblePending');
     }
 
     if (!current.input.types.length) {
-      return 'Δεν έμεινε type requirement στο final fallback.';
+      return this.t('results.selectedTypeSummary.noRequirement');
     }
 
     return current.input.requireAllSelectedTypesInTeam
-      ? `${current.coverage.coveredSelectedTypes.length} / ${current.input.types.length} types covered • strict team coverage on`
-      : `${current.coverage.coveredSelectedTypes.length} / ${current.input.types.length} types covered • ${current.coverage.selectedTypeMatches} / 6 matching slots`;
+      ? this.t('results.selectedTypeSummary.strictResolved', {
+          covered: current.coverage.coveredSelectedTypes.length,
+          total: current.input.types.length,
+        })
+      : this.t('results.selectedTypeSummary.coverage', {
+          covered: current.coverage.coveredSelectedTypes.length,
+          total: current.input.types.length,
+          matchingSlots: current.coverage.selectedTypeMatches,
+        });
   });
   public readonly leaderCriteriaSourceLabel = computed(() => {
     const leaderCriteria = this.result()?.coverage.leaderCriteria;
 
     if (!leaderCriteria) {
-      return 'Captain ability';
+      return this.t('results.leaderCriteria.sourceSingle');
     }
 
     return leaderCriteria.dualLeaderMode === 'intersection'
-      ? 'Captain ability • dual leader intersection'
-      : 'Captain ability';
+      ? this.t('results.leaderCriteria.sourceDual')
+      : this.t('results.leaderCriteria.sourceSingle');
   });
   public readonly leaderCriteriaLeadersLabel = computed(() => {
     const leaderCriteria = this.result()?.coverage.leaderCriteria;
 
-    return leaderCriteria?.leaderNames.length ? leaderCriteria.leaderNames.join(' / ') : 'None';
+    return leaderCriteria?.leaderNames.length
+      ? leaderCriteria.leaderNames.join(' / ')
+      : this.t('results.none');
   });
   public readonly leaderCriteriaClassesLabel = computed(() => {
     const leaderCriteria = this.result()?.coverage.leaderCriteria;
 
     if (!leaderCriteria) {
-      return 'No leader data';
+      return this.t('results.leaderCriteria.noData');
     }
 
     return leaderCriteria.hasClassRestriction
       ? leaderCriteria.derivedAllowedClasses.join(' / ')
-      : 'No leader class restriction';
+      : this.t('results.leaderCriteria.noClassRestriction');
   });
   public readonly leaderCriteriaTypesLabel = computed(() => {
     const leaderCriteria = this.result()?.coverage.leaderCriteria;
 
     if (!leaderCriteria) {
-      return 'No leader data';
+      return this.t('results.leaderCriteria.noData');
     }
 
     return leaderCriteria.hasTypeRestriction
       ? leaderCriteria.derivedAllowedTypes.join(' / ')
-      : 'No leader type restriction';
+      : this.t('results.leaderCriteria.noTypeRestriction');
   });
   public readonly leaderCriteriaScopeSummaryLabel = computed(() => {
     const leaderCriteria = this.result()?.coverage.leaderCriteria;
 
     if (!leaderCriteria) {
-      return 'Το leader scope θα εμφανιστεί μετά το build.';
+      return this.t('results.leaderCriteria.scopePending');
     }
 
     if (!leaderCriteria.hasClassRestriction && !leaderCriteria.hasTypeRestriction) {
-      return 'Ο leader δεν επέβαλε class/type restriction στο final team.';
+      return this.t('results.leaderCriteria.noRestriction');
     }
 
-    return `${leaderCriteria.matchingSlots} / ${leaderCriteria.totalSlots} slots match leader scope`;
+    return this.t('results.leaderCriteria.scopeCoverage', {
+      matching: leaderCriteria.matchingSlots,
+      total: leaderCriteria.totalSlots,
+    });
   });
   public readonly specialSupportSummaryLabel = computed(() => {
     const current = this.result();
 
     if (!current) {
       return this.requireAllSpecialsSupportTeam()
-        ? 'Special support mode ενεργό: κάθε special πρέπει να ενισχύει όλο το final team.'
-        : 'Special support filter off.';
+        ? this.t('results.specialSupport.pendingStrict')
+        : this.t('results.specialSupport.pendingOff');
     }
 
     const { specialSupport } = current.coverage;
 
     return specialSupport.enabled
-      ? `${specialSupport.matchingSlots} / ${specialSupport.totalSlots} slots buff the full team • hard filter on`
-      : `${specialSupport.matchingSlots} / ${specialSupport.totalSlots} slots would pass teamwide special support`;
+      ? this.t('results.specialSupport.enabled', {
+          matching: specialSupport.matchingSlots,
+          total: specialSupport.totalSlots,
+        })
+      : this.t('results.specialSupport.disabled', {
+          matching: specialSupport.matchingSlots,
+          total: specialSupport.totalSlots,
+        });
   });
   public readonly requiredAbilitySummaryLabel = computed(() => {
     const requirements = this.serializeRequiredAbilities();
     const current = this.result();
 
     if (!requirements.length) {
-      return 'Δεν έχουν οριστεί extra ability requirements.';
+      return this.t('results.requiredAbilities.none');
     }
 
     if (!current) {
-      return `${requirements.length} selected ability requirements πριν το build.`;
+      return this.t('results.requiredAbilities.pending', { count: requirements.length });
     }
 
     const matchedCount = current.coverage.abilityRequirements.matched.length;
-    return `${matchedCount} / ${requirements.length} selected ability requirements covered`;
+    return this.t('results.requiredAbilities.coverage', {
+      matched: matchedCount,
+      total: requirements.length,
+    });
   });
   public readonly matchedRequiredAbilityLabels = computed(() =>
     (this.result()?.coverage.abilityRequirements.matched ?? []).map((requirement) =>
@@ -755,10 +837,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly canDownloadAbilityCatalogJson = computed(
     () => !this.building() && this.availableAbilityCatalogItems().length > 0,
   );
-  public readonly downloadAbilityCatalogJsonLabel = 'Download abilities JSON';
-  public readonly downloadSelectionJsonLabel = 'Download preset JSON';
+  public readonly downloadAbilityCatalogJsonLabel = computed(() =>
+    this.t('actions.downloadAbilitiesJson'),
+  );
+  public readonly downloadSelectionJsonLabel = computed(() => this.t('actions.downloadPresetJson'));
   public readonly canDownloadTeamJson = computed(() => Boolean(this.result()));
-  public readonly downloadTeamJsonLabel = 'Download team JSON';
+  public readonly downloadTeamJsonLabel = computed(() => this.t('actions.downloadTeamJson'));
   public readonly teamSlots = computed<TeamSlotViewModel[]>(() => {
     const currentResult = this.result();
     const requirements = this.pageRequiredAbilities();
@@ -771,10 +855,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           slot.role === 'sub'
             ? slot.character.detail.specialText ||
               slot.character.detail.captainAbility ||
-              'No detail snippet available.'
+              this.t('results.teamSlots.noSnippet')
             : slot.character.detail.captainAbility ||
               slot.character.detail.specialText ||
-              'No detail snippet available.',
+              this.t('results.teamSlots.noSnippet'),
         abilityChips: this.buildAbilityChipViews(
           slot.character.detail.builderAbilities,
           requirements,
@@ -797,6 +881,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     private readonly repository: OptcRepositoryService,
     private readonly autoTeamBuilder: AutoTeamBuilderService,
     private readonly userState: UserStateService,
+    private readonly i18n: AppI18nService,
   ) {
     this.favoriteCharacterIds = this.userState.favoriteCharacterIds;
   }
@@ -1189,7 +1274,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       }
 
       console.error(error);
-      this.errorMessage.set('Κάτι πήγε στραβά όσο γινόταν το auto build.');
+      this.errorMessage.set(this.t('errors.buildFailed'));
     } finally {
       this.buildAbortController = null;
       this.buildProgress.set(null);
@@ -1333,7 +1418,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     } catch (error) {
       this.presetImportFeedback.set({
         tone: 'error',
-        title: 'Preset import failed.',
+        title: this.t('preset.importFailedTitle'),
         details: [this.resolvePresetImportError(error)],
       });
     }
@@ -1384,85 +1469,118 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     this.presetImportFeedback.set({
       tone: importResult.warnings.length ? 'warning' : 'success',
-      title: importResult.warnings.length ? 'Preset applied with warnings.' : 'Preset applied.',
+      title: importResult.warnings.length
+        ? this.t('preset.appliedWithWarningsTitle')
+        : this.t('preset.appliedTitle'),
       details: importResult.warnings.length
-        ? [`Loaded settings from ${fileName}.`, ...importResult.warnings]
-        : [`Loaded settings from ${fileName}.`],
+        ? [
+            this.t('preset.loadedFromFile', { fileName }),
+            ...importResult.warnings.map((warning) => this.translateImportMessage(warning)),
+          ]
+        : [this.t('preset.loadedFromFile', { fileName })],
     });
   }
 
   private resolveBuildFailureMessage(): string {
     if (this.buildBlockedByFavorites()) {
-      return this.favoritesOnlyBlockedMessage;
+      return this.favoritesOnlyBlockedMessage();
     }
 
     const lockedCount = this.lockedCharacterIds().length;
     const leaderRequirementLabel = this.resolveLeaderFailureLabel();
 
     if (lockedCount > this.maxLockedCharacters) {
-      return `Μπορείς να κλειδώσεις μέχρι ${this.maxLockedCharacters} χαρακτήρες. Πάτα Clear All και επίλεξε ξανά.`;
+      return this.t('errors.lockedLimitExceeded', { max: this.maxLockedCharacters });
     }
 
     const activeRequirements: string[] = [];
-    const favoritesScope = this.favoritesOnly() ? ' μέσα στα favorites σου' : '';
+    const favoritesScope = this.favoritesOnly()
+      ? this.t('errors.requirements.favoritesScope')
+      : '';
 
     if (this.requireAllSelectedTypesInTeam()) {
-      activeRequirements.push('τουλάχιστον έναν χαρακτήρα από κάθε selected type');
+      activeRequirements.push(this.t('errors.requirements.typeCoverage'));
     }
 
     if (this.requireAllSelectedClassesPerCharacter()) {
-      activeRequirements.push('χαρακτήρες που έχουν όλα τα selected classes');
+      activeRequirements.push(this.t('errors.requirements.classCoverage'));
     }
 
     if (this.requireAllSpecialsSupportTeam()) {
-      activeRequirements.push('specials που ενισχύουν όλο το final team');
+      activeRequirements.push(this.t('errors.requirements.specialCoverage'));
     }
 
     if (this.hasRequiredAbilities()) {
       activeRequirements.push(
-        `abilities που να καλύπτουν ${this.serializeRequiredAbilities()
-          .map((requirement) => this.formatAbilityRequirement(requirement))
-          .join(' • ')}`,
+        this.t('errors.requirements.abilityCoverage', {
+          abilities: this.serializeRequiredAbilities()
+            .map((requirement) => this.formatAbilityRequirement(requirement))
+            .join(' • '),
+        }),
       );
     }
 
     if (lockedCount) {
       if (this.hasStrictFilters()) {
-        return `Δεν βρέθηκε ομάδα που να κρατάει τους ${lockedCount} manual χαρακτήρες${leaderRequirementLabel} και να ικανοποιεί τα strict constraints. Το fallback είναι απενεργοποιημένο όσο strict mode είναι ενεργό.`;
+        return this.t('errors.locked.strict', {
+          lockedCount,
+          leaderRequirement: leaderRequirementLabel,
+        });
       }
 
       if (this.favoritesOnly()) {
-        return `Δοκιμάστηκαν όλα τα flexible combinations για usable ${this.selectedTypesLabel()} team που να κρατάει τους ${lockedCount} manual χαρακτήρες${leaderRequirementLabel} στα favorites σου, αλλά δεν βρέθηκε λύση. Αφαίρεσε κάποια manual picks ή πάτα Clear All.`;
+        return this.t('errors.locked.favoritesFlexible', {
+          types: this.selectedTypesLabel(),
+          lockedCount,
+          leaderRequirement: leaderRequirementLabel,
+        });
       }
 
       if (activeRequirements.length) {
-        return `Δεν βρέθηκαν αρκετοί usable ${this.selectedTypesLabel()} χαρακτήρες για ${activeRequirements.join(' και ')} ενώ κρατάμε ${lockedCount} manual picks${leaderRequirementLabel}. Το flexible fallback εξαντλήθηκε χωρίς valid team.`;
+        return this.t('errors.locked.requirementsFlexible', {
+          types: this.selectedTypesLabel(),
+          requirements: this.joinRequirementLabels(activeRequirements),
+          lockedCount,
+          leaderRequirement: leaderRequirementLabel,
+        });
       }
 
-      return `Δοκιμάστηκαν όλα τα flexible combinations, αλλά δεν βρέθηκε usable ${this.selectedTypesLabel()} team που να κρατάει τους ${lockedCount} manual χαρακτήρες${leaderRequirementLabel}. Αφαίρεσε κάποια manual picks ή πάτα Clear All.`;
+      return this.t('errors.locked.defaultFlexible', {
+        types: this.selectedTypesLabel(),
+        lockedCount,
+        leaderRequirement: leaderRequirementLabel,
+      });
     }
 
     if (!activeRequirements.length && this.favoritesOnly()) {
       if (this.hasStrictFilters()) {
-        return `Δεν βρέθηκε ομάδα μέσα στα favorites σου που να ικανοποιεί τα strict constraints. Το fallback είναι απενεργοποιημένο σε strict mode.`;
+        return this.t('errors.favorites.strict');
       }
 
-      return `Δοκιμάστηκαν όλα τα flexible combinations, αλλά δεν βρέθηκε usable ${this.selectedTypesLabel()} team μέσα στα favorites σου.`;
+      return this.t('errors.favorites.flexible', { types: this.selectedTypesLabel() });
     }
 
     if (!activeRequirements.length) {
       if (this.hasStrictFilters()) {
-        return `Δεν βρέθηκε usable ${this.selectedTypesLabel()} team που να ικανοποιεί τα strict constraints. Το fallback είναι απενεργοποιημένο σε strict mode.`;
+        return this.t('errors.default.strict', { types: this.selectedTypesLabel() });
       }
 
-      return `Δοκιμάστηκαν όλα τα flexible combinations, αλλά δεν βρέθηκε usable ${this.selectedTypesLabel()} team που να ταιριάζει στα current filters.`;
+      return this.t('errors.default.flexible', { types: this.selectedTypesLabel() });
     }
 
     if (this.hasStrictFilters()) {
-      return `Δεν βρέθηκαν αρκετοί usable ${this.selectedTypesLabel()} χαρακτήρες${favoritesScope} για ${activeRequirements.join(' και ')}. Το fallback είναι απενεργοποιημένο σε strict mode.`;
+      return this.t('errors.requirements.strict', {
+        types: this.selectedTypesLabel(),
+        favoritesScope,
+        requirements: this.joinRequirementLabels(activeRequirements),
+      });
     }
 
-    return `Δεν βρέθηκαν αρκετοί usable ${this.selectedTypesLabel()} χαρακτήρες${favoritesScope} για ${activeRequirements.join(' και ')}. Το flexible fallback εξαντλήθηκε χωρίς valid team.`;
+    return this.t('errors.requirements.flexible', {
+      types: this.selectedTypesLabel(),
+      favoritesScope,
+      requirements: this.joinRequirementLabels(activeRequirements),
+    });
   }
 
   private async refreshAppliedManualCandidates(): Promise<void> {
@@ -1591,11 +1709,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   private resolveLeaderFailureLabel(): string {
     if (this.hasDualLeaders()) {
-      return ' με τους 2 selected leaders στα captain slots και μόνο units που ενισχύουν και οι 2 leaders';
+      return this.t('errors.leaderRequirement.dual');
     }
 
     if (this.hasSelectedLeaders()) {
-      return ' με τον selected leader και στα 2 captain slots και μόνο units που ενισχύει ο leader';
+      return this.t('errors.leaderRequirement.single');
     }
 
     return '';
@@ -1604,11 +1722,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private resolveRoleLabel(role: 'captain' | 'friendCaptain' | 'sub'): string {
     switch (role) {
       case 'captain':
-        return 'Captain';
+        return this.t('results.teamSlots.roles.captain');
       case 'friendCaptain':
-        return 'Friend Captain';
+        return this.t('results.teamSlots.roles.friendCaptain');
       default:
-        return 'Sub';
+        return this.t('results.teamSlots.roles.sub');
     }
   }
 
@@ -1697,11 +1815,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const suffixes: string[] = [];
 
     if (requirement.requiredCharacterCount > 1) {
-      suffixes.push(`>=${requirement.requiredCharacterCount} chars`);
+      suffixes.push(this.t('abilities.requirement.characters', {
+        count: requirement.requiredCharacterCount,
+      }));
     }
 
     if (requirement.minTurns !== null) {
-      suffixes.push(`${requirement.minTurns} turns`);
+      suffixes.push(this.t('abilities.requirement.turns', { count: requirement.minTurns }));
     }
 
     if (requirement.slotTokens.length) {
@@ -1713,7 +1833,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public resolveRequiredAbilitySelectedText(draft: AbilityRequirementDraft): string {
     if (!draft.abilityKey.length) {
-      return 'Select ability';
+      return this.t('abilities.select');
     }
 
     return this.formatAbilityRequirement({
@@ -1756,7 +1876,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     return characters.map((character) => ({
       character,
       subtitle: this.buildCharacterSubtitle(character),
-      favoriteLabel: this.isFavorite(character.id) ? 'Favorite' : null,
+      favoriteLabel: this.isFavorite(character.id) ? this.t('manual.favorite') : null,
       abilityChips: this.buildAbilityChipViews(
         character.detail.builderAbilities,
         highlightedRequirements,
@@ -1782,7 +1902,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return [
         {
           key: 'none',
-          label: 'No parsed abilities',
+          label: this.t('abilities.noneParsed'),
           highlighted: false,
           empty: true,
         },
@@ -1816,7 +1936,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const metadata: string[] = [];
 
     if (ability.minTurns !== null) {
-      metadata.push(`${ability.minTurns} turns`);
+      metadata.push(this.t('abilities.requirement.turns', { count: ability.minTurns }));
     }
 
     if (ability.slotTokens.length) {
@@ -1824,7 +1944,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     const metadataSuffix = metadata.length ? ` (${metadata.join(' • ')})` : '';
-    const sourceSuffix = ability.source === 'captainAbility' ? ' • Captain' : '';
+    const sourceSuffix =
+      ability.source === 'captainAbility' ? ` • ${this.t('abilities.captainSource')}` : '';
 
     return `${this.formatCharacterAbilityLabel(ability)}${metadataSuffix}${sourceSuffix}`;
   }
@@ -1837,10 +1958,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     if (coverageModes.includes('explicit')) {
-      return `${item.label} (includes selectable debuff counters)`;
+      return this.t('abilities.catalog.withSelectableDebuff', { label: item.label });
     }
 
-    return `${item.label} (selectable debuff)`;
+    return this.t('abilities.catalog.selectableDebuffOnly', { label: item.label });
   }
 
   private formatCharacterAbilityLabel(ability: NormalizedBuilderAbility): string {
@@ -1851,7 +1972,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   private resolveCoverageModeLabel(coverageMode: AutoBuildAbilityCoverageMode): string | null {
-    return coverageMode === 'selectedDebuff' ? 'selectable debuff' : null;
+    return coverageMode === 'selectedDebuff' ? this.t('abilities.selectableDebuff') : null;
   }
 
   private formatSelectedTypes(types: AutoTeamBuilderType[]): string {
@@ -1859,7 +1980,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   private formatResultValues(values: readonly string[]): string {
-    return values.length ? this.formatSelectedValues(values) : 'None';
+    return values.length ? this.formatSelectedValues(values) : this.t('results.none');
   }
 
   private formatSelectedValues(values: readonly string[]): string {
@@ -1867,10 +1988,29 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   private resolvePresetImportError(error: unknown): string {
+    if (error instanceof AutoTeamSelectionImportError) {
+      return this.t(error.key, error.params);
+    }
+
     if (error instanceof Error && error.message.trim().length > 0) {
       return error.message;
     }
 
-    return 'The selected file could not be imported as an Auto Team Builder preset.';
+    return this.t('preset.importFailedDescription');
+  }
+
+  private t(
+    key: string,
+    params?: Record<string, string | number | boolean | null | undefined>,
+  ): string {
+    return this.i18n.translate(key, params, 'auto-team-builder');
+  }
+
+  private translateImportMessage(message: AutoTeamSelectionImportMessage): string {
+    return this.t(message.key, message.params);
+  }
+
+  private joinRequirementLabels(labels: string[]): string {
+    return labels.join(this.t('errors.requirements.separator'));
   }
 }

@@ -1315,7 +1315,11 @@ describe('Auto team builder', () => {
           totalAttempts: 1,
           currentDroppedTypes: [],
           currentDroppedClasses: [],
-          message: 'Exact attempt 1 / 1',
+          messageKey: 'progress.exactAttempt',
+          messageParams: {
+            current: 1,
+            total: 1,
+          },
         },
       });
       worker.emitMessage({
@@ -1326,7 +1330,8 @@ describe('Auto team builder', () => {
     });
     const progressSnapshots: AutoBuildProgressSnapshot[] = [];
 
-    vi.spyOn(service as never, 'createWorker').mockReturnValue(worker as never);
+    const createWorkerSpy = vi.spyOn(service as any, 'createWorker');
+    createWorkerSpy.mockReturnValue(worker as never);
 
     await service.buildTeam(
       ['Fighter', 'Slasher'],
@@ -1344,7 +1349,11 @@ describe('Auto team builder', () => {
         }),
         expect.objectContaining({
           stage: 'exactAttempt',
-          message: 'Exact attempt 1 / 1',
+          messageKey: 'progress.exactAttempt',
+          messageParams: {
+            current: 1,
+            total: 1,
+          },
         }),
       ]),
     );
@@ -1358,7 +1367,8 @@ describe('Auto team builder', () => {
     const worker = new FakeWorker();
     const abortController = new AbortController();
 
-    vi.spyOn(service as never, 'createWorker').mockReturnValue(worker as never);
+    const createWorkerSpy = vi.spyOn(service as any, 'createWorker');
+    createWorkerSpy.mockReturnValue(worker as never);
 
     const buildPromise = service.buildTeam(
       ['Fighter', 'Slasher'],
@@ -1381,7 +1391,8 @@ describe('Auto team builder', () => {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
     };
     const service = new AutoTeamBuilderService(repository as never);
-    const createWorkerSpy = vi.spyOn(service as never, 'createWorker').mockReturnValue(null);
+    const createWorkerSpy = vi.spyOn(service as any, 'createWorker');
+    createWorkerSpy.mockReturnValue(null);
 
     const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY']);
 
@@ -1481,6 +1492,7 @@ function createInput(
     lockedCharacterIds: overrides.lockedCharacterIds ?? [],
     captainCharacterId: overrides.captainCharacterId ?? null,
     friendCaptainCharacterId: overrides.friendCaptainCharacterId ?? null,
+    manualShipId: null,
     candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
   };
 }

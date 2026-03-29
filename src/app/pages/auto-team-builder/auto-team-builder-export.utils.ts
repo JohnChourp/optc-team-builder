@@ -95,7 +95,22 @@ export interface AutoTeamSelectionImportState {
 
 export interface AutoTeamSelectionImportResult {
   state: AutoTeamSelectionImportState;
-  warnings: string[];
+  warnings: AutoTeamSelectionImportMessage[];
+}
+
+export interface AutoTeamSelectionImportMessage {
+  key: string;
+  params?: Record<string, string | number>;
+}
+
+export class AutoTeamSelectionImportError extends Error {
+  public constructor(
+    public readonly key: string,
+    public readonly params?: Record<string, string | number>,
+  ) {
+    super(key);
+    this.name = 'AutoTeamSelectionImportError';
+  }
 }
 
 interface SanitizeAutoTeamSelectionImportOptions {
@@ -103,7 +118,7 @@ interface SanitizeAutoTeamSelectionImportOptions {
   availableClasses: readonly string[];
   abilityCatalogItems: AutoBuildAbilityCatalogItem[];
   availableLockedCharacters: CharacterListItem[];
-  availableShips: ShipRecord[];
+  availableShips?: ShipRecord[];
   maxLockedCharacters: number;
   maxLeaderCharacters: number;
 }
@@ -122,8 +137,8 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   selectedLeaderIds: number[];
   captainLeaderId: number | null;
   friendCaptainLeaderId: number | null;
-  manualShipId: number | null;
-  manualShip: ShipRecord | null;
+  manualShipId?: number | null;
+  manualShip?: ShipRecord | null;
   exportedAt?: string;
 }
 
@@ -181,15 +196,21 @@ function collectPositiveIntegers(values: unknown[]): number[] {
 }
 
 function buildWarning(
+  key: string,
   count: number,
-  singularMessage: string,
-  pluralMessage: string,
-): string | null {
+  params?: Record<string, string | number>,
+): AutoTeamSelectionImportMessage | null {
   if (count <= 0) {
     return null;
   }
 
-  return `Ignored ${count === 1 ? singularMessage : pluralMessage}.`;
+  return {
+    key,
+    params: {
+      count,
+      ...params,
+    },
+  };
 }
 
 export function parseAutoTeamSelectionImportPayload(
@@ -200,11 +221,11 @@ export function parseAutoTeamSelectionImportPayload(
   try {
     parsedPayload = JSON.parse(rawContent) as unknown;
   } catch {
-    throw new Error('The selected file is not valid JSON.');
+    throw new AutoTeamSelectionImportError('preset.errors.invalidJson');
   }
 
   if (!isRecord(parsedPayload)) {
-    throw new Error('The selected file is not a valid preset JSON.');
+    throw new AutoTeamSelectionImportError('preset.errors.invalidPresetJson');
   }
 
   if (
@@ -214,14 +235,14 @@ export function parseAutoTeamSelectionImportPayload(
     parsedPayload['source'] !== 'auto-team-builder' ||
     parsedPayload['exportType'] !== 'preset'
   ) {
-    throw new Error('The selected file is not a supported Auto Team Builder preset.');
+    throw new AutoTeamSelectionImportError('preset.errors.unsupportedPreset');
   }
 
   const filters = parsedPayload['filters'];
   const manualSelection = parsedPayload['manualSelection'];
 
   if (!isRecord(filters) || !isRecord(manualSelection)) {
-    throw new Error('The selected preset is missing required sections.');
+    throw new AutoTeamSelectionImportError('preset.errors.missingSections');
   }
 
   if (
@@ -240,7 +261,7 @@ export function parseAutoTeamSelectionImportPayload(
     !Array.isArray(manualSelection['selectedLeaderIds']) ||
     !Array.isArray(manualSelection['characters'])
   ) {
-    throw new Error('The selected preset does not match the current export schema.');
+    throw new AutoTeamSelectionImportError('preset.errors.schemaMismatch');
   }
 
   if (
@@ -260,7 +281,7 @@ export function parseAutoTeamSelectionImportPayload(
       typeof manualSelection['manualShipId'] === 'number'
     )
   ) {
-    throw new Error('The selected preset does not match the current export schema.');
+    throw new AutoTeamSelectionImportError('preset.errors.schemaMismatch');
   }
 
   return parsedPayload as unknown as AutoTeamSelectionExportPayload;
@@ -270,7 +291,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
   payload: AutoTeamSelectionExportPayload,
   options: SanitizeAutoTeamSelectionImportOptions,
 ): AutoTeamSelectionImportResult {
-  const warnings: string[] = [];
+  const warnings: AutoTeamSelectionImportMessage[] = [];
   const availableTypesSet = new Set(options.availableTypes);
   const availableClassesSet = new Set(options.availableClasses);
   const availableLockedCharacterMap = new Map(
@@ -288,9 +309,8 @@ export function sanitizeAutoTeamSelectionImportPayload(
     availableTypesSet.has(type as AutoTeamBuilderType),
   );
   const typeWarning = buildWarning(
+    'preset.warnings.unavailableTypes',
     rawSelectedTypes.length - selectedTypes.length,
-    '1 unavailable imported type from the preset',
-    `${rawSelectedTypes.length - selectedTypes.length} unavailable imported types from the preset`,
   );
 
   if (typeWarning) {
@@ -303,9 +323,8 @@ export function sanitizeAutoTeamSelectionImportPayload(
     availableClassesSet.has(characterClass),
   );
   const classWarning = buildWarning(
+    'preset.warnings.unavailableClasses',
     rawSelectedClasses.length - selectedClasses.length,
-    '1 unavailable imported class from the preset',
-    `${rawSelectedClasses.length - selectedClasses.length} unavailable imported classes from the preset`,
   );
 
   if (classWarning) {
@@ -376,9 +395,8 @@ export function sanitizeAutoTeamSelectionImportPayload(
   const requiredAbilities = [...requiredAbilityMap.values()];
 
   const invalidAbilityWarning = buildWarning(
+    'preset.warnings.unsupportedAbilities',
     invalidAbilityCount,
-    '1 unsupported ability requirement from the preset',
-    `${invalidAbilityCount} unsupported ability requirements from the preset`,
   );
 
   if (invalidAbilityWarning) {
@@ -386,9 +404,8 @@ export function sanitizeAutoTeamSelectionImportPayload(
   }
 
   const adjustedAbilityWarning = buildWarning(
+    'preset.warnings.adjustedAbilities',
     adjustedAbilityCount,
-    '1 ability requirement with unsupported turns, slot tokens, or character count',
-    `${adjustedAbilityCount} ability requirements with unsupported turns, slot tokens, or character count`,
   );
 
   if (adjustedAbilityWarning) {
@@ -405,9 +422,8 @@ export function sanitizeAutoTeamSelectionImportPayload(
   const truncatedLockedCount = Math.max(0, rawLockedCharacterIds.length - unknownLockedCount - lockedCharacterIds.length);
 
   const unknownLockedWarning = buildWarning(
+    'preset.warnings.missingLockedCharacters',
     unknownLockedCount,
-    '1 locked character that is missing from the current dataset',
-    `${unknownLockedCount} locked characters that are missing from the current dataset`,
   );
 
   if (unknownLockedWarning) {
@@ -415,9 +431,9 @@ export function sanitizeAutoTeamSelectionImportPayload(
   }
 
   const truncatedLockedWarning = buildWarning(
+    'preset.warnings.lockedLimitExceeded',
     truncatedLockedCount,
-    `1 locked character because the preset exceeds the ${options.maxLockedCharacters}-unit lock limit`,
-    `${truncatedLockedCount} locked characters because the preset exceeds the ${options.maxLockedCharacters}-unit lock limit`,
+    { max: options.maxLockedCharacters },
   );
 
   if (truncatedLockedWarning) {
@@ -431,9 +447,8 @@ export function sanitizeAutoTeamSelectionImportPayload(
     .slice(0, options.maxLeaderCharacters);
   const droppedLeaderCount = rawLeaderIds.length - selectedLeaderIds.length;
   const droppedLeaderWarning = buildWarning(
+    'preset.warnings.invalidLeaders',
     droppedLeaderCount,
-    '1 selected leader that is not part of the imported locked characters',
-    `${droppedLeaderCount} selected leaders that are not part of the imported locked characters`,
   );
 
   if (droppedLeaderWarning) {
@@ -460,7 +475,10 @@ export function sanitizeAutoTeamSelectionImportPayload(
       : null;
 
   if (normalizedManualShipId && !availableShipMap.has(normalizedManualShipId)) {
-    warnings.push('Ignored 1 manual ship that is missing from the current dataset.');
+    warnings.push({
+      key: 'preset.warnings.missingManualShip',
+      params: { count: 1 },
+    });
   }
 
   return {
@@ -537,8 +555,8 @@ export function buildAutoTeamSelectionExportPayload({
   selectedLeaderIds,
   captainLeaderId,
   friendCaptainLeaderId,
-  manualShipId,
-  manualShip,
+  manualShipId = null,
+  manualShip = null,
   exportedAt = new Date().toISOString(),
 }: BuildAutoTeamSelectionExportPayloadOptions): AutoTeamSelectionExportPayload {
   return {

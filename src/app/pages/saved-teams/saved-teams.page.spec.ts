@@ -1,6 +1,7 @@
 import "@angular/compiler";
 import { signal } from "@angular/core";
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 import { SavedTeamsPage } from "./saved-teams.page";
@@ -69,9 +70,12 @@ describe("SavedTeamsPage", () => {
   });
 
   it("renders saved team slot previews with detail links", () => {
-    const template = readFileSync(new URL("./saved-teams.page.html", import.meta.url), "utf8");
+    const template = readFileSync(
+      resolve(process.cwd(), "src/app/pages/saved-teams/saved-teams.page.html"),
+      "utf8",
+    );
 
-    expect(template).toContain("Saved Teams");
+    expect(template).toContain('t("title")');
     expect(template).toContain("saved-team-preview");
     expect(template).toContain("[routerLink]=\"getCharacterDetailLink(currentSlot)\"");
   });

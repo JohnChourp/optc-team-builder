@@ -1,0 +1,73 @@
+{
+  "empty": "No characters matched the current search and filters.",
+  "filters": {
+    "active": "Active filter: {{value}}",
+    "class": {
+      "label": "Class",
+      "placeholder": "Type to filter by class"
+    },
+    "favoritesOnly": {
+      "empty": "No favorites saved yet.",
+      "label": "Show favorites only",
+      "withCount": "Limit results to your {{count}} favorited characters."
+    },
+    "type": {
+      "label": "Type",
+      "placeholder": "Type to filter by character type"
+    }
+  },
+  "hero": {
+    "copy": "{{characterCount}} units, {{detailCount}} detailed records, and {{rumbleCount}} rumble entries from the OPTC source repo.",
+    "eyebrow": "Offline-first database",
+    "favoritesCount": "{{count}} favorites",
+    "title": "Browse crews, filter fast, and prep teams without touching the network.",
+    "typesCount": "{{count}} types"
+  },
+  "import": {
+    "andMore": "and {{count}} more",
+    "chooseAnotherFile": "Choose another file",
+    "copy": "Drop a raw OPTCbx export JSON file to merge owned units into your on-device favorites.",
+    "done": "Done",
+    "dropzone": {
+      "subtitle": "or click to browse for the raw JSON file exported by /export",
+      "title": "Drag and drop your OPTCbx export here"
+    },
+    "eyebrow": "OPTCbx compatibility",
+    "errors": {
+      "dropJson": "Drop a JSON file exported by OPTCbx.",
+      "generic": "The OPTCbx import failed. Please try another export file."
+    },
+    "ignoredDuplicates": "{{count}} duplicate export entries were ignored before import.",
+    "importFavorites": "Import favorites",
+    "ready": "Ready to import {{count}} unique unit ids.",
+    "removedDuplicates": "Removed {{count}} duplicate entries from the export.",
+    "stats": {
+      "added": "Added",
+      "alreadyFavorited": "Already favorited",
+      "matched": "Matched",
+      "unknownIds": "Unknown ids"
+    },
+    "summary": {
+      "copy": "The export was merged into your existing favorites.",
+      "title": "Import summary"
+    },
+    "title": "Import favorites"
+  },
+  "loadMore": "Load more units",
+  "loading": "Building the local index...",
+  "search": {
+    "placeholder": "Search names, classes, types..."
+  },
+  "stats": {
+    "atk": "ATK",
+    "hp": "HP",
+    "rcv": "RCV"
+  },
+  "title": "OPTC Character Vault",
+  "tools": {
+    "copy": "Manage your OPTCbx-compatible favorites file directly from the character browser.",
+    "export": "Export favorites",
+    "import": "Import favorites",
+    "title": "Favorites tools"
+  }
+}

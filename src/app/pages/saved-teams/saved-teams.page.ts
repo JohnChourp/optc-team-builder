@@ -3,6 +3,7 @@ import { Component, OnInit, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import { type ViewWillEnter } from "@ionic/angular";
 import { IonContent, IonHeader, IonSpinner, IonTitle, IonToolbar } from "@ionic/angular/standalone";
+import { TranslocoDirective, TranslocoPipe } from "@jsverse/transloco";
 
 import { type CharacterListItem, type SavedTeam } from "../../core/models/optc.models";
 import { OptcRepositoryService } from "../../core/services/optc-repository.service";
@@ -16,7 +17,17 @@ interface SavedTeamPreviewCard {
 @Component({
   selector: "app-saved-teams-page",
   standalone: true,
-  imports: [CommonModule, IonContent, IonHeader, IonSpinner, IonTitle, IonToolbar, RouterLink],
+  imports: [
+    CommonModule,
+    IonContent,
+    IonHeader,
+    IonSpinner,
+    IonTitle,
+    IonToolbar,
+    RouterLink,
+    TranslocoDirective,
+    TranslocoPipe,
+  ],
   templateUrl: "./saved-teams.page.html",
   styleUrl: "./saved-teams.page.scss",
 })

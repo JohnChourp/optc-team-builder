@@ -1,0 +1,376 @@
+{
+  "title": "Auto Team Builder",
+  "hero": {
+    "meta": {
+      "availableClasses": "{{count}} διαθέσιμα classes"
+    },
+    "teamStructure": {
+      "dual": "Build με dual leaders",
+      "single": "Build με single leader"
+    },
+    "strictModes": {
+      "typeCoverage": "κάλυψη types στην ομάδα",
+      "perCharacterClasses": "match classes σε κάθε slot"
+    },
+    "strictMode": {
+      "flexible": "με flexible fallback",
+      "strict": "strict mode: {{modes}}"
+    },
+    "builderLabel": {
+      "default": "Offline builder {{mode}}",
+      "withTypes": "Auto-build για {{types}} crews {{mode}}"
+    },
+    "title": {
+      "defaultFlexible": "Χτίσε μια ισορροπημένη ομάδα από το τοπικό dataset.",
+      "defaultStrict": "Χτίσε μια exact-match ομάδα από το τοπικό dataset.",
+      "withTypesFlexible": "Χτίσε ομάδα {{types}} με controlled fallback όταν χρειάζεται.",
+      "withTypesStrict": "Χτίσε ομάδα {{types}} μόνο με exact-match κανόνες."
+    },
+    "description": {
+      "defaultFlexible": "Διάλεξε classes, κλείδωσε units, πρόσθεσε utility requirements και άφησε τον builder να χαλαρώσει μόνο ό,τι χρειάζεται.",
+      "defaultStrict": "Διάλεξε classes, κλείδωσε units, πρόσθεσε utility requirements και κράτησε υποχρεωτικό κάθε strict rule.",
+      "withTypesFlexible": "Ο builder δίνει προτεραιότητα στην κάλυψη των {{types}} και μετά κάνει controlled fallback αν το local pool είναι στενό.",
+      "withTypesStrict": "Ο builder δέχεται μόνο αποτελέσματα που κρατούν την κάλυψη των {{types}} και όλα τα strict filters που ενεργοποίησες."
+    }
+  },
+  "filters": {
+    "types": {
+      "label": "Types",
+      "placeholder": "Επίλεξε types",
+      "toggle": "Απαίτησε πλήρη κάλυψη types",
+      "selectAll": "Επίλεξε όλα τα types",
+      "unselectAll": "Καθάρισε τα types",
+      "support": {
+        "strict": "Κάθε selected type πρέπει να εμφανιστεί τουλάχιστον μία φορά στο final team.",
+        "flexible": "Το auto-build προσπαθεί πρώτα να καλύψει όλα τα selected types και μετά κάνει fallback μόνο στο result panel αν χρειαστεί."
+      }
+    },
+    "classes": {
+      "label": "Classes",
+      "placeholder": "Επίλεξε classes",
+      "toggle": "Απαίτησε όλα τα slots να ταιριάζουν στα selected classes",
+      "selectAll": "Επίλεξε όλα τα classes",
+      "unselectAll": "Καθάρισε τα classes",
+      "support": {
+        "strict": "Κάθε χαρακτήρας της τελικής ομάδας πρέπει να ταιριάζει σε όλα τα selected classes.",
+        "flexible": "Τα selected classes καθοδηγούν το captain scope και το weighting χωρίς να μπλοκάρουν το fallback."
+      }
+    },
+    "specialSupport": {
+      "toggle": "Απαίτησε special support coverage",
+      "support": {
+        "strict": "Κάθε final slot πρέπει να προσφέρει readable special utility ή team support.",
+        "flexible": "Το special utility προτιμάται αλλά μπορεί να χαλαρώσει αν το local pool είναι πολύ στενό."
+      }
+    },
+    "favoritesOnly": {
+      "toggle": "Χρησιμοποίησε μόνο favorites",
+      "blockedMessage": "Το favorites-only build δεν είναι διαθέσιμο μέχρι να αποθηκεύσεις τουλάχιστον ένα favorite unit.",
+      "support": {
+        "empty": "Δεν υπάρχουν αποθηκευμένα favorites σε αυτή τη συσκευή.",
+        "withCount": "Περιορίζει τον builder στα {{count}} αποθηκευμένα favorite units σου."
+      }
+    }
+  },
+  "abilityRequirements": {
+    "title": "Ability requirements",
+    "copy": "Πρόσθεσε extra utility requirements που πρέπει να καλύπτει συνολικά η τελική ομάδα και στα έξι slots.",
+    "configuredRows": "{{count}} configured rows",
+    "emptyCatalog": "Δεν βρέθηκε ability catalog. Τρέξε",
+    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά.",
+    "fields": {
+      "ability": "Ability",
+      "characters": "Χαρακτήρες",
+      "turns": "Turns",
+      "slotTokens": "Slot tokens"
+    },
+    "placeholders": {
+      "selectAbility": "Επίλεξε ability",
+      "selectSlotTokens": "Επίλεξε slot tokens"
+    },
+    "actions": {
+      "addRequirement": "Προσθήκη requirement",
+      "clearRequirements": "Καθαρισμός requirements",
+      "removeRequirement": "Αφαίρεση"
+    }
+  },
+  "actions": {
+    "build": {
+      "favoriteFlexible": "Χτίσε ομάδα {{types}} μόνο από favorites",
+      "favoriteStrict": "Χτίσε strict ομάδα {{types}} μόνο από favorites",
+      "flexible": "Χτίσε ομάδα {{types}}",
+      "selectTypes": "Επίλεξε τουλάχιστον ένα type για build",
+      "strict": "Χτίσε strict ομάδα {{types}}"
+    },
+    "cancelBuild": "Ακύρωση build",
+    "downloadAbilitiesJson": "Λήψη ability catalog JSON",
+    "downloadPresetJson": "Λήψη preset JSON",
+    "downloadTeamJson": "Λήψη team JSON",
+    "importPresetJson": "Εισαγωγή preset JSON"
+  },
+  "manual": {
+    "title": "Manual picks",
+    "copy": "Κλείδωσε units, όρισε leaders και προαιρετικά διάλεξε ship πριν τρέξεις τον builder.",
+    "favorite": "Favorite",
+    "lockedSummary": "{{count}} / {{max}} locked units",
+    "leaderSummary": "{{count}} / {{max}} leader picks",
+    "pickerSupport": {
+      "default": "Κλείδωσε όσα units θέλεις να κρατήσει ο builder οπωσδήποτε.",
+      "maxReached": "Έφτασες το όριο manual locks για αυτό το build."
+    },
+    "leaderSupport": {
+      "dualLeader": "Έχεις δύο leaders. Διάλεξε ποιος είναι Captain και ποιος Friend Captain.",
+      "noLeaders": "Επίλεξε ένα ή δύο locked units για να ορίσεις το captain scope.",
+      "noLockedCharacters": "Κλείδωσε πρώτα χαρακτήρες και μετά όρισε leaders.",
+      "singleLeader": "Έχεις έναν leader. Το ίδιο unit θα χρησιμοποιηθεί και στα δύο captain slots."
+    },
+    "filters": {
+      "active": "Ενεργά manual filters: {{summary}}",
+      "default": "Τα manual picks ακολουθούν μόνο τα top-level filters της σελίδας.",
+      "parts": {
+        "abilities": "abilities: {{values}}",
+        "classes": "classes: {{values}}",
+        "types": "types: {{values}}"
+      }
+    },
+    "candidates": {
+      "count": "{{count}} manual candidates",
+      "loading": "Γίνεται φόρτωση manual candidates..."
+    },
+    "candidatePool": {
+      "default": "Το sidebar χρησιμοποιεί τα current page filters ως default pool.",
+      "filtered": "Το sidebar περιορίζεται από τα current page filters και τα ability requirements."
+    },
+    "sync": {
+      "eyebrow": "Manual picks sync",
+      "title": "Τα manual picks ακολουθούν τα current page filters"
+    },
+    "modes": {
+      "characters": "Character picks",
+      "ships": "Ship selection"
+    },
+    "searchPlaceholder": {
+      "characters": "Search by character name in manual picks"
+    },
+    "empty": {
+      "loadingCandidates": "Γίνεται φόρτωση manual candidates...",
+      "noCandidates": "Δεν βρέθηκαν χαρακτήρες που να ταιριάζουν στα current page filters για manual picks."
+    },
+    "actions": {
+      "clearAll": "Καθαρισμός όλων",
+      "lock": "Lock",
+      "swapRoles": "Αλλαγή ρόλων"
+    },
+    "applied": {
+      "class": "Class: {{value}}",
+      "type": "Type: {{value}}"
+    },
+    "leaders": {
+      "title": "Leader picks",
+      "roles": {
+        "captain": "Captain",
+        "dual": "Captain / Friend Captain",
+        "friendCaptain": "Friend Captain"
+      },
+      "actions": {
+        "makeCaptain": "Ορισμός Captain",
+        "removeLeader": "Αφαίρεση leader",
+        "setLeader": "Ορισμός leader"
+      }
+    }
+  },
+  "ships": {
+    "autoRecommendation": "Άφησε τον builder να προτείνει το καλύτερο ship για την επιλεγμένη ομάδα.",
+    "count": "{{count}} ships ταιριάζουν στο current ship search.",
+    "emptySearch": "Δεν βρέθηκαν ships που να ταιριάζουν στο current search.",
+    "manualBadge": "Manual ship",
+    "manualOverride": "Ενεργό manual ship override: {{name}}",
+    "searchPlaceholder": "Search ship by name or effect"
+  },
+  "progress": {
+    "attemptProgress": "Attempt {{current}} / {{total}}",
+    "candidatePool": "{{count}} candidates στο current search pool",
+    "completed": "Η αναζήτηση ολοκληρώθηκε.",
+    "exactAttempt": "Exact attempt {{current}} / {{total}}",
+    "fallbackAttempt": "Fallback attempt {{current}} / {{total}}",
+    "ignoringClasses": "Ignoring classes: {{classes}}",
+    "ignoringTypes": "Ignoring types: {{types}}",
+    "loadingCandidates": "Φόρτωση candidates από το local dataset...",
+    "preparingSearch": "Προετοιμασία search permutations...",
+    "scoringDefault": "Γίνεται scoring των καλύτερων local team candidates...",
+    "scoringWithTypes": "Γίνεται scoring για team candidates {{types}}..."
+  },
+  "fallback": {
+    "copy": "Τα πάνω filters έμειναν όπως τα διάλεξες. Η ομάδα χτίστηκε αφού αγνοήθηκαν μόνο τα παρακάτω requirements.",
+    "droppedClasses": "Dropped classes",
+    "droppedTypes": "Dropped types",
+    "title": "Χρησιμοποιήθηκε relaxed fallback"
+  },
+  "summary": {
+    "burstCoverage": "Burst coverage",
+    "candidatePool": "Candidate pool",
+    "effectiveClasses": "Effective: {{value}}",
+    "effectiveTypes": "Effective: {{value}}",
+    "noBurstTags": "No burst tags",
+    "requestedClasses": "Requested classes",
+    "requestedTypes": "Requested types"
+  },
+  "coverage": {
+    "title": "Coverage summary",
+    "copy": "Σύντομο snapshot του damage, consistency και utility profile της ομάδας.",
+    "groups": {
+      "abilityRequirements": "Ability requirements",
+      "burst": "Burst",
+      "classCoverage": "Class coverage",
+      "classRequest": "Class request",
+      "consistency": "Consistency",
+      "leaderClasses": "Leader classes",
+      "leaderScope": "Leader scope",
+      "leaderSource": "Leader source",
+      "leaderTypes": "Leader types",
+      "matchedRequirements": "Matched ability requirements",
+      "missingRequirements": "Missing ability requirements",
+      "specialSupport": "Special support",
+      "typeCoverage": "Type coverage",
+      "typeRequest": "Type request",
+      "utility": "Utility"
+    },
+    "empty": {
+      "noAbilityRequirements": "Δεν υπάρχουν ability requirements",
+      "noClassCoverage": "Δεν υπάρχει class coverage",
+      "noTypeCoverage": "Δεν υπάρχει type coverage"
+    }
+  },
+  "results": {
+    "candidatePool": {
+      "default": "Χτίστηκε από όλο το local pool.",
+      "favoritesDefault": "Χτίστηκε από το favorites-only local pool.",
+      "favoritesWithTypes": "Χτίστηκε από το favorites-only local pool με στόχο κάλυψη {{types}}.",
+      "withTypes": "Χτίστηκε από το local pool με στόχο κάλυψη {{types}}."
+    },
+    "leaderCriteria": {
+      "noClassRestriction": "Χωρίς class restriction",
+      "noData": "Δεν υπάρχουν δεδομένα leader scope",
+      "noRestriction": "Τα leader abilities δεν περιορίζουν τα slots.",
+      "noTypeRestriction": "Χωρίς type restriction",
+      "scopeCoverage": "{{matching}} / {{total}} slots ταιριάζουν στο derived leader scope.",
+      "scopePending": "Το leader scope θα υπολογιστεί μετά από επιτυχημένο build.",
+      "sourceDual": "Προέκυψε από τους δύο selected leaders",
+      "sourceSingle": "Προέκυψε από τον active captain"
+    },
+    "none": "Κανένα",
+    "requiredAbilities": {
+      "coverage": "{{matched}} / {{total}} requested abilities καλύφθηκαν.",
+      "none": "Δεν υπάρχουν required abilities.",
+      "pending": "{{count}} required abilities περιμένουν validation."
+    },
+    "selectedClassSummary": {
+      "coverage": "{{covered}} / {{total}} selected classes καλύφθηκαν σε {{matchingSlots}} matching slots.",
+      "flexiblePending": "Το class coverage θα αξιολογηθεί μετά το build.",
+      "noRequirement": "Δεν υπάρχει class requirement.",
+      "strictPending": "Το strict class coverage είναι ενεργό και θα ελεγχθεί μετά το build.",
+      "strictResolved": "Και τα {{matching}} / {{total}} slots ικανοποιούν τον strict class κανόνα."
+    },
+    "selectedTypeSummary": {
+      "coverage": "{{covered}} / {{total}} selected types καλύφθηκαν σε {{matchingSlots}} matching slots.",
+      "flexiblePending": "Το type coverage θα αξιολογηθεί μετά το build.",
+      "noRequirement": "Δεν υπάρχει type requirement.",
+      "strictPending": "Το strict type coverage είναι ενεργό και θα ελεγχθεί μετά το build.",
+      "strictResolved": "{{covered}} / {{total}} selected types καλύπτονται στην τελική ομάδα."
+    },
+    "specialSupport": {
+      "disabled": "Το special support είναι προαιρετικό. Παρ' όλα αυτά {{matching}} / {{total}} slots προσφέρουν readable support.",
+      "enabled": "Το special support είναι ενεργό. Τα {{matching}} / {{total}} slots προσφέρουν readable support.",
+      "pendingOff": "Το special support είναι προαιρετικό για το επόμενο build.",
+      "pendingStrict": "Το strict special support θα ελεγχθεί μετά το build."
+    },
+    "teamSlots": {
+      "noSnippet": "Δεν βρέθηκε readable captain ή special text.",
+      "roles": {
+        "captain": "Captain",
+        "friendCaptain": "Friend Captain",
+        "sub": "Sub"
+      }
+    }
+  },
+  "result": {
+    "favorite": {
+      "addAria": "Προσθήκη στα favorites",
+      "removeAria": "Αφαίρεση από τα favorites"
+    },
+    "ship": {
+      "manualSource": "Manual ship",
+      "recommendedSource": "Auto selected ship"
+    }
+  },
+  "errors": {
+    "buildFailed": "Το auto build απέτυχε απρόσμενα. Δοκίμασε ξανά.",
+    "lockedLimitExceeded": "Η τρέχουσα επιλογή ξεπερνά το manual lock limit των {{max}} units.",
+    "leaderRequirement": {
+      "dual": " και το επιλεγμένο captain/friend captain pair",
+      "single": " και τον επιλεγμένο leader"
+    },
+    "default": {
+      "flexible": "Δεν βρέθηκε ομάδα για {{types}} ούτε μετά το flexible fallback.",
+      "strict": "Δεν βρέθηκε exact ομάδα για {{types}} με τους τρέχοντες strict κανόνες."
+    },
+    "favorites": {
+      "flexible": "Δεν βρέθηκε favorites-only ομάδα για {{types}}.",
+      "strict": "Δεν βρέθηκε favorites-only ομάδα με τους τρέχοντες strict κανόνες."
+    },
+    "locked": {
+      "defaultFlexible": "Δεν βρέθηκε flexible ομάδα για {{types}} με {{lockedCount}} locked units{{leaderRequirement}}.",
+      "favoritesFlexible": "Δεν βρέθηκε favorites-only ομάδα για {{types}} με {{lockedCount}} locked units{{leaderRequirement}}.",
+      "requirementsFlexible": "Δεν βρέθηκε flexible ομάδα για {{types}} αφού εφαρμόστηκαν τα {{requirements}} με {{lockedCount}} locked units{{leaderRequirement}}.",
+      "strict": "Δεν βρέθηκε strict ομάδα με {{lockedCount}} locked units{{leaderRequirement}}."
+    },
+    "requirements": {
+      "abilityCoverage": "ability coverage για {{abilities}}",
+      "classCoverage": "class coverage σε κάθε slot",
+      "favoritesScope": " μέσα στο favorites-only pool",
+      "flexible": "Δεν βρέθηκε flexible ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
+      "separator": " και ",
+      "specialCoverage": "special support coverage",
+      "strict": "Δεν βρέθηκε strict ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
+      "typeCoverage": "κάλυψη types στην ομάδα"
+    }
+  },
+  "abilities": {
+    "captainSource": "Captain",
+    "noneParsed": "Δεν βρέθηκαν parsed abilities",
+    "select": "Επίλεξε ability",
+    "selectableDebuff": "selectable debuff",
+    "requirement": {
+      "characters": ">={{count}} chars",
+      "turns": "{{count}} turns"
+    },
+    "catalog": {
+      "selectableDebuffOnly": "{{label}} (μόνο selectable debuff)",
+      "withSelectableDebuff": "{{label}} (περιλαμβάνει selectable debuff counters)"
+    }
+  },
+  "preset": {
+    "appliedTitle": "Το preset εφαρμόστηκε.",
+    "appliedWithWarningsTitle": "Το preset εφαρμόστηκε με warnings.",
+    "importFailedDescription": "Το επιλεγμένο preset δεν μπόρεσε να εισαχθεί.",
+    "importFailedTitle": "Η εισαγωγή preset απέτυχε.",
+    "loadedFromFile": "Φορτώθηκαν ρυθμίσεις από το {{fileName}}.",
+    "errors": {
+      "invalidJson": "Το επιλεγμένο αρχείο δεν είναι έγκυρο JSON.",
+      "invalidPresetJson": "Το επιλεγμένο αρχείο δεν είναι έγκυρο preset JSON.",
+      "missingSections": "Από το επιλεγμένο preset λείπουν απαιτούμενα sections.",
+      "schemaMismatch": "Το επιλεγμένο preset δεν ταιριάζει με το current export schema.",
+      "unsupportedPreset": "Το επιλεγμένο αρχείο δεν είναι υποστηριζόμενο Auto Team Builder preset."
+    },
+    "warnings": {
+      "adjustedAbilities": "Αγνοήθηκαν {{count}} ability requirements με unsupported turns, slot tokens ή character count.",
+      "invalidLeaders": "Αγνοήθηκαν {{count}} selected leaders που δεν ανήκουν στους imported locked characters.",
+      "lockedLimitExceeded": "Αγνοήθηκαν {{count}} locked characters επειδή το preset ξεπερνά το limit των {{max}} units.",
+      "missingLockedCharacters": "Αγνοήθηκαν {{count}} locked characters που λείπουν από το current dataset.",
+      "missingManualShip": "Αγνοήθηκε {{count}} manual ship επειδή λείπει από το current dataset.",
+      "unavailableClasses": "Αγνοήθηκαν {{count}} unavailable imported classes από το preset.",
+      "unavailableTypes": "Αγνοήθηκαν {{count}} unavailable imported types από το preset.",
+      "unsupportedAbilities": "Αγνοήθηκαν {{count}} unsupported ability requirements από το preset."
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import "@angular/compiler";
 import { signal } from "@angular/core";
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 import { TeamBuilderPage } from "./team-builder.page";
@@ -44,10 +45,13 @@ describe("TeamBuilderPage", () => {
   });
 
   it("renders a dedicated slot detail action without adding it to candidate cards", () => {
-    const template = readFileSync(new URL("./team-builder.page.html", import.meta.url), "utf8");
+    const template = readFileSync(
+      resolve(process.cwd(), "src/app/pages/team-builder/team-builder.page.html"),
+      "utf8",
+    );
 
     expect(template).toContain("[routerLink]=\"getCharacterDetailLink(slot)\"");
-    expect(template.match(/View details/g)).toHaveLength(1);
+    expect(template.match(/common\.actions\.viewDetails/g)).toHaveLength(1);
     expect(template).toContain("(click)=\"assignCharacter(candidate)\"");
   });
 });
@@ -66,7 +70,24 @@ function createPage() {
     searchCharacters: vi.fn().mockResolvedValue([]),
     getCharactersByIds: vi.fn().mockResolvedValue([]),
   };
-  const page = new TeamBuilderPage(repository as never, userState as never);
+  const i18n = {
+    activeLanguage: signal<"en" | "el">("en"),
+    availableLanguages: [
+      { id: "en", label: "English" },
+      { id: "el", label: "Ελληνικά" },
+    ] as const,
+    preloadScope: vi.fn().mockResolvedValue(undefined),
+    ready: vi.fn().mockResolvedValue(undefined),
+    setLanguage: vi.fn().mockResolvedValue(undefined),
+    translate: vi.fn((key: string) => {
+      if (key === "common.defaults.newCrew") {
+        return "New Crew";
+      }
 
-  return { page, repository, userState };
+      return key;
+    }),
+  };
+  const page = new TeamBuilderPage(repository as never, userState as never, i18n as never);
+
+  return { page, repository, userState, i18n };
 }

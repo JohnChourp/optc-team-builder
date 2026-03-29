@@ -39,7 +39,7 @@ export function runAutoTeamBuildSearch(
     totalAttempts: 0,
     currentDroppedTypes: [],
     currentDroppedClasses: [],
-    message: 'Προετοιμασία exact και relaxed search...',
+    messageKey: 'progress.preparingSearch',
   });
 
   const relaxedInputs = hasStrictConstraints(requestedInput)
@@ -55,7 +55,11 @@ export function runAutoTeamBuildSearch(
     totalAttempts,
     currentDroppedTypes: [],
     currentDroppedClasses: [],
-    message: `Exact attempt 1 / ${Math.max(totalAttempts, 1)}`,
+    messageKey: 'progress.exactAttempt',
+    messageParams: {
+      current: 1,
+      total: Math.max(totalAttempts, 1),
+    },
   });
 
   const exactResult = buildAttempt(records, requestedInput, requestedInput);
@@ -85,7 +89,11 @@ export function runAutoTeamBuildSearch(
       currentDroppedClasses: requestedInput.selectedClasses.filter(
         (selectedClass) => !relaxedInput.selectedClasses.includes(selectedClass),
       ),
-      message: `Fallback attempt ${completedAttempts + 1} / ${totalAttempts}`,
+      messageKey: 'progress.fallbackAttempt',
+      messageParams: {
+        current: completedAttempts + 1,
+        total: totalAttempts,
+      },
     });
 
     const relaxedResult = buildAttempt(records, relaxedInput, requestedInput);
@@ -115,7 +123,7 @@ function emitCompletedProgress(
     totalAttempts,
     currentDroppedTypes: [],
     currentDroppedClasses: [],
-    message: 'Το auto-build ολοκλήρωσε όλα τα attempts.',
+    messageKey: 'progress.completed',
   });
 }
 

@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, OnInit, computed, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
+import { TranslocoDirective, TranslocoPipe } from "@jsverse/transloco";
 import {
   IonButton,
   IonContent,
@@ -29,6 +30,7 @@ import {
 
 import { type CharacterListItem, type DatasetManifest } from "../../core/models/optc.models";
 import { type OptcbxImportResult, type OptcbxParsedImport } from "../../core/models/optcbx-import.models";
+import { AppI18nService } from "../../core/services/app-i18n.service";
 import { OptcRepositoryService } from "../../core/services/optc-repository.service";
 import { OptcbxImportService } from "../../core/services/optcbx-import.service";
 import { UserStateService } from "../../core/services/user-state.service";
@@ -56,6 +58,8 @@ const PAGE_SIZE = 48;
     IonTitle,
     IonToolbar,
     RouterLink,
+    TranslocoDirective,
+    TranslocoPipe,
   ],
   templateUrl: "./characters.page.html",
   styleUrl: "./characters.page.scss",
@@ -102,8 +106,12 @@ export class CharactersPage implements OnInit {
   );
   public readonly favoritesOnlySupportLabel = computed(() =>
     this.favoriteIds().length
-      ? `Limit results to your ${this.favoriteIds().length} favorited characters.`
-      : "No favorites saved yet.",
+      ? this.i18n.translate(
+          "filters.favoritesOnly.withCount",
+          { count: this.favoriteIds().length },
+          "characters",
+        )
+      : this.i18n.translate("filters.favoritesOnly.empty", undefined, "characters"),
   );
 
   public readonly searchIcon = searchOutline;
@@ -116,12 +124,11 @@ export class CharactersPage implements OnInit {
   public readonly errorIcon = alertCircleOutline;
   public readonly favoriteIcon = heart;
   public readonly favoriteOutlineIcon = heartOutline;
-  public readonly favoritesOnlyToggleLabel = "Show favorites only";
-
   public constructor(
     private readonly repository: OptcRepositoryService,
     private readonly userState: UserStateService,
     private readonly optcbxImport: OptcbxImportService,
+    private readonly i18n: AppI18nService,
   ) {
     this.favoriteIds = this.userState.favoriteCharacterIds;
   }
@@ -272,7 +279,7 @@ export class CharactersPage implements OnInit {
     const file = event.dataTransfer?.files?.item(0);
 
     if (!file) {
-      this.importErrorMessage.set("Drop a JSON file exported by OPTCbx.");
+      this.importErrorMessage.set(this.i18n.translate("import.errors.dropJson", undefined, "characters"));
       return;
     }
 
@@ -405,7 +412,7 @@ export class CharactersPage implements OnInit {
       return error.message;
     }
 
-    return "The OPTCbx import failed. Please try another export file.";
+    return this.i18n.translate("import.errors.generic", undefined, "characters");
   }
 
   private resetImportState(): void {

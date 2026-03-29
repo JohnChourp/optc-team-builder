@@ -1,0 +1,24 @@
+{
+  "intro": {
+    "eyebrow": "Μόνο χειροκίνητες ενημερώσεις",
+    "title": "Αυτό το build περιμένει τοπικά OPTC imports και όχι live scraping την ώρα του runtime.",
+    "copy": "Source of truth είναι το optc-db GitHub repo. Τρέξε τα παρακάτω import commands όποτε θέλεις νέο local dataset ή image pack."
+  },
+  "language": {
+    "label": "Γλώσσα",
+    "helper": "Άλλαξε live τη γλώσσα του app και κράτησέ την αποθηκευμένη σε αυτή τη συσκευή."
+  },
+  "packState": {
+    "installed": "Εγκατεστημένο",
+    "notInstalled": "Μη εγκατεστημένο"
+  },
+  "sections": {
+    "commands": "Commands εισαγωγής",
+    "packStatus": "Κατάσταση pack",
+    "releaseNote": "Σημείωση release"
+  },
+  "title": "Offline Packs",
+  "release": {
+    "copy": "Το technical pipeline είναι έτοιμο για offline χρήση, αλλά η αναδιανομή του game art παραμένει ξεχωριστή νομική και product απόφαση πριν από οποιοδήποτε public store release."
+  }
+}

@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { RouterLink } from "@angular/router";
+import { TranslocoDirective, TranslocoPipe } from "@jsverse/transloco";
 import {
   IonButton,
   IonContent,
@@ -22,6 +23,7 @@ import { heart, heartOutline } from "ionicons/icons";
 
 import { type CharacterListItem, type SavedTeam, type ShipRecord } from "../../core/models/optc.models";
 import { OptcRepositoryService } from "../../core/services/optc-repository.service";
+import { AppI18nService } from "../../core/services/app-i18n.service";
 import { UserStateService } from "../../core/services/user-state.service";
 
 @Component({
@@ -45,6 +47,8 @@ import { UserStateService } from "../../core/services/user-state.service";
     IonTitle,
     IonToolbar,
     RouterLink,
+    TranslocoDirective,
+    TranslocoPipe,
   ],
   templateUrl: "./team-builder.page.html",
   styleUrl: "./team-builder.page.scss",
@@ -55,7 +59,7 @@ export class TeamBuilderPage implements OnInit {
   public readonly slotCharacters = signal<Array<CharacterListItem | null>>(Array.from({ length: 6 }, () => null));
   public readonly selectedSlotIndex = signal(0);
   public readonly selectedShipId = signal<number | null>(null);
-  public readonly teamName = signal("New Crew");
+  public readonly teamName = signal("");
   public readonly notes = signal("");
   public readonly savedTeams;
   public readonly favoriteIds;
@@ -67,9 +71,11 @@ export class TeamBuilderPage implements OnInit {
   public constructor(
     private readonly repository: OptcRepositoryService,
     private readonly userState: UserStateService,
+    private readonly i18n: AppI18nService,
   ) {
     this.savedTeams = this.userState.savedTeams;
     this.favoriteIds = this.userState.favoriteCharacterIds;
+    this.teamName.set(this.i18n.translate("common.defaults.newCrew"));
   }
 
   public async ngOnInit(): Promise<void> {
@@ -187,7 +193,7 @@ export class TeamBuilderPage implements OnInit {
 
   private resetEditor(): void {
     this.currentTeamId.set(null);
-    this.teamName.set("New Crew");
+    this.teamName.set(this.i18n.translate("common.defaults.newCrew"));
     this.notes.set("");
     this.selectedShipId.set(null);
     this.slotCharacters.set(Array.from({ length: 6 }, () => null));

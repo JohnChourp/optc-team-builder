@@ -148,6 +148,7 @@ function buildLegacyAttempt(
         (selectedClass) => !input.selectedClasses.includes(selectedClass),
       ),
     },
+    shipSelection: null,
   };
 }
 
@@ -292,6 +293,7 @@ function createInput(
     lockedCharacterIds: [],
     captainCharacterId: null,
     friendCaptainCharacterId: null,
+    manualShipId: null,
     candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
   };
 }
@@ -362,7 +364,7 @@ function createConsistencySubRecord(): CharacterDetailRecord {
 }
 
 function createCharacterRecord(
-  overrides: Partial<CharacterDetailRecord> & {
+  overrides: Omit<Partial<CharacterDetailRecord>, 'detail'> & {
     id: number;
     detail?: Partial<CharacterDetailRecord['detail']>;
   },

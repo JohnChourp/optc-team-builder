@@ -12,6 +12,7 @@ import {
   IonTitle,
   IonToolbar,
 } from "@ionic/angular/standalone";
+import { TranslocoDirective } from "@jsverse/transloco";
 import { heart, heartOutline } from "ionicons/icons";
 
 import { type CharacterDetailRecord } from "../../core/models/optc.models";
@@ -34,6 +35,7 @@ import { UserStateService } from "../../core/services/user-state.service";
     IonToolbar,
     JsonPipe,
     RouterLink,
+    TranslocoDirective,
   ],
   templateUrl: "./character-detail.page.html",
   styleUrl: "./character-detail.page.scss",

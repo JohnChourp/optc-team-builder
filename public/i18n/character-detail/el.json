@@ -1,0 +1,24 @@
+{
+  "fallbackTitle": "Χαρακτήρας",
+  "hero": {
+    "addFavorite": "Προσθήκη favorite",
+    "favorited": "Στα favorites",
+    "openTeamBuilder": "Άνοιγμα team builder",
+    "summary": "Κόστος {{cost}} • Max Lv {{maxLevel}} • {{stars}}★ unit"
+  },
+  "loading": "Φόρτωση offline εγγραφής χαρακτήρα...",
+  "sections": {
+    "captainAbility": "Captain Ability",
+    "limitBreak": "Limit Break",
+    "potentialAbilities": "Potential Abilities",
+    "rumbleData": "Rumble Data",
+    "sailorAbilities": "Sailor Abilities",
+    "special": "Special",
+    "supportData": "Support Data"
+  },
+  "stats": {
+    "maxAtk": "Max ATK",
+    "maxHp": "Max HP",
+    "maxRcv": "Max RCV"
+  }
+}

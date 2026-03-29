@@ -140,7 +140,7 @@ export class AutoTeamBuilderService {
       totalAttempts: 0,
       currentDroppedTypes: [],
       currentDroppedClasses: [],
-      message: 'Φόρτωση candidate pool...',
+      messageKey: 'progress.loadingCandidates',
     });
 
     const records = await this.repository.getAutoBuilderCandidates(

@@ -1,6 +1,7 @@
 import "@angular/compiler";
 import { signal } from "@angular/core";
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 import { type OptcbxParsedImport } from "../../core/models/optcbx-import.models";
@@ -70,11 +71,15 @@ describe("CharactersPage favorites tools", () => {
   });
 
   it("includes the favorites import/export actions in the template", () => {
-    const template = readFileSync(new URL("./characters.page.html", import.meta.url), "utf8");
+    const template = readFileSync(
+      resolve(process.cwd(), "src/app/pages/characters/characters.page.html"),
+      "utf8",
+    );
 
-    expect(template).toContain("Export favorites");
-    expect(template).toContain("Import favorites");
-    expect(template).toContain("favoritesOnlyToggleLabel");
+    expect(template).toContain('t("tools.export")');
+    expect(template).toContain('t("tools.import")');
+    expect(template).toContain('t("filters.favoritesOnly.label")');
+    expect(template).toContain("favoritesOnlySupportLabel()");
     expect(template).toContain("onFavoritesOnlyToggle($event)");
   });
 
@@ -164,7 +169,33 @@ function createPage(overrides: { favoriteIds?: number[] } = {}) {
     buildMergeImportResult: vi.fn(),
     mergeFavoriteIds: vi.fn(),
   };
-  const page = new CharactersPage(repository as never, userState as never, optcbxImport as never);
+  const i18n = {
+    activeLanguage: signal<"en" | "el">("en"),
+    availableLanguages: [
+      { id: "en", label: "English" },
+      { id: "el", label: "Ελληνικά" },
+    ] as const,
+    preloadScope: vi.fn().mockResolvedValue(undefined),
+    ready: vi.fn().mockResolvedValue(undefined),
+    setLanguage: vi.fn().mockResolvedValue(undefined),
+    translate: vi.fn((key: string, params?: Record<string, string | number>) => {
+      if (key === "filters.favoritesOnly.withCount") {
+        return `Limit results to your ${params?.["count"] ?? 0} favorited characters.`;
+      }
 
-  return { page, repository, userState, optcbxImport };
+      if (key === "filters.favoritesOnly.empty") {
+        return "No favorites saved yet.";
+      }
+
+      return key;
+    }),
+  };
+  const page = new CharactersPage(
+    repository as never,
+    userState as never,
+    optcbxImport as never,
+    i18n as never,
+  );
+
+  return { page, repository, userState, optcbxImport, i18n };
 }

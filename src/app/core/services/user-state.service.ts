@@ -2,6 +2,7 @@ import { Injectable, signal } from "@angular/core";
 import { Preferences } from "@capacitor/preferences";
 
 import { type SavedTeam } from "../models/optc.models";
+import { AppI18nService } from "./app-i18n.service";
 
 const FAVORITES_KEY = "favoriteCharacterIds";
 const RECENTS_KEY = "recentCharacterIds";
@@ -15,7 +16,7 @@ export class UserStateService {
 
   private readonly hydratePromise: Promise<void>;
 
-  public constructor() {
+  public constructor(private readonly i18n: AppI18nService) {
     this.hydratePromise = this.hydrate();
   }
 
@@ -57,7 +58,7 @@ export class UserStateService {
     const existing = this.savedTeams().find((team) => team.id === input.id);
     const savedTeam: SavedTeam = {
       id: input.id ?? this.createTeamId(),
-      name: input.name.trim() || "Untitled Crew",
+      name: input.name.trim() || this.i18n.translate("common.defaults.untitledCrew"),
       slots: [...input.slots],
       shipId: input.shipId ?? null,
       notes: input.notes.trim(),

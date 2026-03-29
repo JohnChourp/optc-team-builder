@@ -1,0 +1,36 @@
+{
+  "assign": {
+    "addFavoriteAria": "Προσθήκη στα favorites",
+    "removeFavoriteAria": "Αφαίρεση από τα favorites",
+    "searchPlaceholder": "Βρες χαρακτήρα για αυτό το slot",
+    "subtitle": "Κάνε search στο offline index και πάτα μία φορά για να τοποθετήσεις το unit.",
+    "title": "Ανάθεση χαρακτήρα στο slot {{slot}}"
+  },
+  "form": {
+    "eyebrow": "Draft πληρώματος",
+    "noShip": "Χωρίς ship",
+    "notesLabel": "Σημειώσεις",
+    "saveOffline": "Αποθήκευση ομάδας offline",
+    "shipLabel": "Ship",
+    "teamNameLabel": "Όνομα πληρώματος"
+  },
+  "saved": {
+    "subtitle": "Όλα αποθηκεύονται τοπικά στη συσκευή.",
+    "title": "Αποθηκευμένες ομάδες"
+  },
+  "slots": {
+    "empty": "Κενό",
+    "emptyAlt": "Κενό slot",
+    "slotLabel": "Slot {{slot}}",
+    "subtitle": "Επίλεξε slot και πάτησε έναν χαρακτήρα παρακάτω.",
+    "tapToAssign": "Πάτα για ανάθεση",
+    "title": "Slots"
+  },
+  "title": "Δημιουργός ομάδας",
+  "totals": {
+    "atk": "ATK",
+    "cost": "Κόστος",
+    "hp": "HP",
+    "rcv": "RCV"
+  }
+}

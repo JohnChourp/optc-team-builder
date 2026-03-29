@@ -199,7 +199,8 @@ export interface AutoBuildProgressSnapshot {
   totalAttempts: number;
   currentDroppedTypes: AutoTeamBuilderType[];
   currentDroppedClasses: string[];
-  message: string;
+  messageKey: string;
+  messageParams?: Record<string, number | string>;
 }
 
 export interface AutoBuildCoreResult {

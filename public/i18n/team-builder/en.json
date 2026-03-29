@@ -1,0 +1,36 @@
+{
+  "assign": {
+    "addFavoriteAria": "Add to favorites",
+    "removeFavoriteAria": "Remove from favorites",
+    "searchPlaceholder": "Find a character for this slot",
+    "subtitle": "Search the offline index and tap once to place the unit.",
+    "title": "Assign character to slot {{slot}}"
+  },
+  "form": {
+    "eyebrow": "Crew Draft",
+    "noShip": "No ship",
+    "notesLabel": "Notes",
+    "saveOffline": "Save team offline",
+    "shipLabel": "Ship",
+    "teamNameLabel": "Crew name"
+  },
+  "saved": {
+    "subtitle": "All locally persisted on-device.",
+    "title": "Saved teams"
+  },
+  "slots": {
+    "empty": "Empty",
+    "emptyAlt": "Empty slot",
+    "slotLabel": "Slot {{slot}}",
+    "subtitle": "Select a slot and tap a character below.",
+    "tapToAssign": "Tap to assign",
+    "title": "Slots"
+  },
+  "title": "Team Builder",
+  "totals": {
+    "atk": "ATK",
+    "cost": "Cost",
+    "hp": "HP",
+    "rcv": "RCV"
+  }
+}

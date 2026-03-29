@@ -1,0 +1,73 @@
+{
+  "empty": "Κανένας χαρακτήρας δεν ταίριαξε με το τωρινό search και τα φίλτρα.",
+  "filters": {
+    "active": "Ενεργό φίλτρο: {{value}}",
+    "class": {
+      "label": "Class",
+      "placeholder": "Πληκτρολόγησε για φιλτράρισμα ανά class"
+    },
+    "favoritesOnly": {
+      "empty": "Δεν υπάρχουν αποθηκευμένα favorites ακόμα.",
+      "label": "Μόνο favorites",
+      "withCount": "Περιορισμός αποτελεσμάτων στους {{count}} favorite χαρακτήρες σου."
+    },
+    "type": {
+      "label": "Type",
+      "placeholder": "Πληκτρολόγησε για φιλτράρισμα ανά type"
+    }
+  },
+  "hero": {
+    "copy": "{{characterCount}} units, {{detailCount}} detailed records και {{rumbleCount}} rumble entries από το OPTC source repo.",
+    "eyebrow": "Offline-first βάση δεδομένων",
+    "favoritesCount": "{{count}} favorites",
+    "title": "Κάνε browse πληρώματα, φίλτραρε γρήγορα και ετοίμασε ομάδες χωρίς να αγγίξεις το δίκτυο.",
+    "typesCount": "{{count}} types"
+  },
+  "import": {
+    "andMore": "και άλλα {{count}}",
+    "chooseAnotherFile": "Επίλεξε άλλο αρχείο",
+    "copy": "Ρίξε ένα raw OPTCbx export JSON για να γίνει merge των owned units στα on-device favorites σου.",
+    "done": "Ολοκληρώθηκε",
+    "dropzone": {
+      "subtitle": "ή πάτα για να διαλέξεις το raw JSON αρχείο που έγινε export από το /export",
+      "title": "Κάνε drag and drop το OPTCbx export εδώ"
+    },
+    "eyebrow": "Συμβατότητα OPTCbx",
+    "errors": {
+      "dropJson": "Ρίξε ένα JSON αρχείο που έγινε export από το OPTCbx.",
+      "generic": "Το import του OPTCbx απέτυχε. Δοκίμασε άλλο export αρχείο."
+    },
+    "ignoredDuplicates": "{{count}} διπλές εγγραφές export αγνοήθηκαν πριν από το import.",
+    "importFavorites": "Εισαγωγή favorites",
+    "ready": "Έτοιμο για εισαγωγή {{count}} μοναδικών unit ids.",
+    "removedDuplicates": "Αφαιρέθηκαν {{count}} διπλές εγγραφές από το export.",
+    "stats": {
+      "added": "Προστέθηκαν",
+      "alreadyFavorited": "Ήδη στα favorites",
+      "matched": "Ταίριαξαν",
+      "unknownIds": "Άγνωστα ids"
+    },
+    "summary": {
+      "copy": "Το export έγινε merge με τα υπάρχοντα favorites σου.",
+      "title": "Σύνοψη εισαγωγής"
+    },
+    "title": "Εισαγωγή favorites"
+  },
+  "loadMore": "Φόρτωση περισσότερων units",
+  "loading": "Χτίζεται το local index...",
+  "search": {
+    "placeholder": "Αναζήτηση σε ονόματα, classes, types..."
+  },
+  "stats": {
+    "atk": "ATK",
+    "hp": "HP",
+    "rcv": "RCV"
+  },
+  "title": "Θησαυροφυλάκιο χαρακτήρων OPTC",
+  "tools": {
+    "copy": "Διαχειρίσου το OPTCbx-compatible favorites αρχείο απευθείας από το character browser.",
+    "export": "Εξαγωγή favorites",
+    "import": "Εισαγωγή favorites",
+    "title": "Εργαλεία favorites"
+  }
+}

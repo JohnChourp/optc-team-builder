@@ -1,0 +1,376 @@
+{
+  "title": "Auto Team Builder",
+  "hero": {
+    "meta": {
+      "availableClasses": "{{count}} classes available"
+    },
+    "teamStructure": {
+      "dual": "Dual leader build",
+      "single": "Single leader build"
+    },
+    "strictModes": {
+      "typeCoverage": "team-wide type coverage",
+      "perCharacterClasses": "per-slot class matching"
+    },
+    "strictMode": {
+      "flexible": "flexible fallback enabled",
+      "strict": "strict mode: {{modes}}"
+    },
+    "builderLabel": {
+      "default": "Offline builder with {{mode}}",
+      "withTypes": "Auto-build {{types}} crews with {{mode}}"
+    },
+    "title": {
+      "defaultFlexible": "Assemble a balanced crew from your local dataset.",
+      "defaultStrict": "Assemble an exact-match crew from your local dataset.",
+      "withTypesFlexible": "Build a {{types}} crew with smart fallback when needed.",
+      "withTypesStrict": "Build a {{types}} crew with exact-match rules only."
+    },
+    "description": {
+      "defaultFlexible": "Pick classes, lock units, add utility requirements, and let the builder relax only what it must.",
+      "defaultStrict": "Pick classes, lock units, add utility requirements, and keep every selected rule mandatory.",
+      "withTypesFlexible": "The builder prioritizes {{types}} coverage first, then uses controlled fallback if the local pool is too narrow.",
+      "withTypesStrict": "The builder only accepts results that preserve {{types}} coverage and every strict filter you enabled."
+    }
+  },
+  "filters": {
+    "types": {
+      "label": "Types",
+      "placeholder": "Select types",
+      "toggle": "Require full type coverage",
+      "selectAll": "Select all types",
+      "unselectAll": "Clear type selection",
+      "support": {
+        "strict": "Every selected type must appear at least once in the final team.",
+        "flexible": "The builder tries to cover every selected type first and only relaxes that in the result panel if needed."
+      }
+    },
+    "classes": {
+      "label": "Classes",
+      "placeholder": "Select classes",
+      "toggle": "Require every slot to match selected classes",
+      "selectAll": "Select all classes",
+      "unselectAll": "Clear class selection",
+      "support": {
+        "strict": "Every selected unit in the final team must match all selected classes.",
+        "flexible": "Selected classes guide captain scope and candidate weighting without blocking fallback."
+      }
+    },
+    "specialSupport": {
+      "toggle": "Require special support coverage",
+      "support": {
+        "strict": "Every final slot must contribute readable special utility or team support.",
+        "flexible": "Special utility is preferred but can be relaxed if the local pool is too narrow."
+      }
+    },
+    "favoritesOnly": {
+      "toggle": "Use favorites only",
+      "blockedMessage": "Favorites-only build is unavailable until you save at least one favorite unit.",
+      "support": {
+        "empty": "No favorites are currently saved on this device.",
+        "withCount": "Limit the builder to your {{count}} saved favorite units."
+      }
+    }
+  },
+  "abilityRequirements": {
+    "title": "Ability requirements",
+    "copy": "Add extra utility requirements that the final team should cover across all six slots.",
+    "configuredRows": "{{count}} configured rows",
+    "emptyCatalog": "No ability catalog was found. Run",
+    "emptyCatalogSuffix": "to regenerate it.",
+    "fields": {
+      "ability": "Ability",
+      "characters": "Characters",
+      "turns": "Turns",
+      "slotTokens": "Slot tokens"
+    },
+    "placeholders": {
+      "selectAbility": "Select ability",
+      "selectSlotTokens": "Select slot tokens"
+    },
+    "actions": {
+      "addRequirement": "Add requirement",
+      "clearRequirements": "Clear requirements",
+      "removeRequirement": "Remove"
+    }
+  },
+  "actions": {
+    "build": {
+      "favoriteFlexible": "Build {{types}} crew from favorites",
+      "favoriteStrict": "Build strict {{types}} crew from favorites",
+      "flexible": "Build {{types}} crew",
+      "selectTypes": "Select at least one type to build",
+      "strict": "Build strict {{types}} crew"
+    },
+    "cancelBuild": "Cancel build",
+    "downloadAbilitiesJson": "Download ability catalog JSON",
+    "downloadPresetJson": "Download preset JSON",
+    "downloadTeamJson": "Download team JSON",
+    "importPresetJson": "Import preset JSON"
+  },
+  "manual": {
+    "title": "Manual picks",
+    "copy": "Lock units, pin leaders, and optionally override the recommended ship before running the builder.",
+    "favorite": "Favorite",
+    "lockedSummary": "{{count}} / {{max}} locked units",
+    "leaderSummary": "{{count}} / {{max}} leader picks",
+    "pickerSupport": {
+      "default": "Lock any high-priority units you want the builder to keep.",
+      "maxReached": "You reached the manual lock limit for this build."
+    },
+    "leaderSupport": {
+      "dualLeader": "Two leaders selected. Choose which one is Captain and which one is Friend Captain.",
+      "noLeaders": "Select one or two locked units to define the captain scope.",
+      "noLockedCharacters": "Lock characters first before assigning leaders.",
+      "singleLeader": "One leader selected. The same unit will fill both captain slots."
+    },
+    "filters": {
+      "active": "Active manual filters: {{summary}}",
+      "default": "Manual picks currently follow the top-level page filters only.",
+      "parts": {
+        "abilities": "abilities: {{values}}",
+        "classes": "classes: {{values}}",
+        "types": "types: {{values}}"
+      }
+    },
+    "candidates": {
+      "count": "{{count}} manual candidates",
+      "loading": "Loading manual candidates..."
+    },
+    "candidatePool": {
+      "default": "The sidebar uses the current page filters as its default pool.",
+      "filtered": "The sidebar is narrowed by your current page filters and ability requirements."
+    },
+    "sync": {
+      "eyebrow": "Manual picks sync",
+      "title": "Manual picks follow the current page filters"
+    },
+    "modes": {
+      "characters": "Character picks",
+      "ships": "Ship selection"
+    },
+    "searchPlaceholder": {
+      "characters": "Search by character name in manual picks"
+    },
+    "empty": {
+      "loadingCandidates": "Loading manual candidates...",
+      "noCandidates": "No characters matched the current page filters for manual picks."
+    },
+    "actions": {
+      "clearAll": "Clear all",
+      "lock": "Lock",
+      "swapRoles": "Swap roles"
+    },
+    "applied": {
+      "class": "Class: {{value}}",
+      "type": "Type: {{value}}"
+    },
+    "leaders": {
+      "title": "Leader picks",
+      "roles": {
+        "captain": "Captain",
+        "dual": "Captain / Friend Captain",
+        "friendCaptain": "Friend Captain"
+      },
+      "actions": {
+        "makeCaptain": "Make Captain",
+        "removeLeader": "Remove leader",
+        "setLeader": "Set leader"
+      }
+    }
+  },
+  "ships": {
+    "autoRecommendation": "Let the builder recommend the best ship for the selected crew.",
+    "count": "{{count}} ships matched the current ship search.",
+    "emptySearch": "No ships matched the current ship search.",
+    "manualBadge": "Manual ship",
+    "manualOverride": "Manual ship override active: {{name}}",
+    "searchPlaceholder": "Search ship by name or effect"
+  },
+  "progress": {
+    "attemptProgress": "Attempt {{current}} / {{total}}",
+    "candidatePool": "{{count}} candidates in the current search pool",
+    "completed": "Search completed.",
+    "exactAttempt": "Exact attempt {{current}} / {{total}}",
+    "fallbackAttempt": "Fallback attempt {{current}} / {{total}}",
+    "ignoringClasses": "Ignoring classes: {{classes}}",
+    "ignoringTypes": "Ignoring types: {{types}}",
+    "loadingCandidates": "Loading candidates from the local dataset...",
+    "preparingSearch": "Preparing search permutations...",
+    "scoringDefault": "Scoring the best local team candidates...",
+    "scoringWithTypes": "Scoring {{types}} team candidates..."
+  },
+  "fallback": {
+    "copy": "Your top-level filters stayed the same. The builder only relaxed the requirements below in order to return a team.",
+    "droppedClasses": "Dropped classes",
+    "droppedTypes": "Dropped types",
+    "title": "Relaxed fallback used"
+  },
+  "summary": {
+    "burstCoverage": "Burst coverage",
+    "candidatePool": "Candidate pool",
+    "effectiveClasses": "Effective: {{value}}",
+    "effectiveTypes": "Effective: {{value}}",
+    "noBurstTags": "No burst tags",
+    "requestedClasses": "Requested classes",
+    "requestedTypes": "Requested types"
+  },
+  "coverage": {
+    "title": "Coverage summary",
+    "copy": "Quick snapshot of the damage, consistency, and utility profile of the generated team.",
+    "groups": {
+      "abilityRequirements": "Ability requirements",
+      "burst": "Burst",
+      "classCoverage": "Class coverage",
+      "classRequest": "Class request",
+      "consistency": "Consistency",
+      "leaderClasses": "Leader classes",
+      "leaderScope": "Leader scope",
+      "leaderSource": "Leader source",
+      "leaderTypes": "Leader types",
+      "matchedRequirements": "Matched ability requirements",
+      "missingRequirements": "Missing ability requirements",
+      "specialSupport": "Special support",
+      "typeCoverage": "Type coverage",
+      "typeRequest": "Type request",
+      "utility": "Utility"
+    },
+    "empty": {
+      "noAbilityRequirements": "No ability requirements",
+      "noClassCoverage": "No class coverage",
+      "noTypeCoverage": "No type coverage"
+    }
+  },
+  "results": {
+    "candidatePool": {
+      "default": "Built from the full local pool.",
+      "favoritesDefault": "Built from the favorites-only local pool.",
+      "favoritesWithTypes": "Built from the favorites-only local pool while targeting {{types}} coverage.",
+      "withTypes": "Built from the local pool while targeting {{types}} coverage."
+    },
+    "leaderCriteria": {
+      "noClassRestriction": "No class restriction",
+      "noData": "No leader scope data",
+      "noRestriction": "Leader abilities do not restrict slot coverage.",
+      "noTypeRestriction": "No type restriction",
+      "scopeCoverage": "{{matching}} / {{total}} slots match the derived leader scope.",
+      "scopePending": "Leader scope will be calculated after a successful build.",
+      "sourceDual": "Derived from both selected leaders",
+      "sourceSingle": "Derived from the active captain"
+    },
+    "none": "None",
+    "requiredAbilities": {
+      "coverage": "{{matched}} / {{total}} requested abilities covered.",
+      "none": "No required abilities selected.",
+      "pending": "{{count}} required abilities waiting to be validated."
+    },
+    "selectedClassSummary": {
+      "coverage": "{{covered}} / {{total}} selected classes covered across {{matchingSlots}} matching slots.",
+      "flexiblePending": "Class coverage will be evaluated after the build.",
+      "noRequirement": "No class requirement selected.",
+      "strictPending": "Strict class coverage is enabled and will be validated after the build.",
+      "strictResolved": "All {{matching}} / {{total}} slots satisfy the strict class rule."
+    },
+    "selectedTypeSummary": {
+      "coverage": "{{covered}} / {{total}} selected types covered across {{matchingSlots}} matching slots.",
+      "flexiblePending": "Type coverage will be evaluated after the build.",
+      "noRequirement": "No type requirement selected.",
+      "strictPending": "Strict type coverage is enabled and will be validated after the build.",
+      "strictResolved": "{{covered}} / {{total}} selected types are covered in the final team."
+    },
+    "specialSupport": {
+      "disabled": "Special support is optional. {{matching}} / {{total}} slots still contribute readable support.",
+      "enabled": "Special support is enabled. {{matching}} / {{total}} slots contribute readable support.",
+      "pendingOff": "Special support is optional for the next build.",
+      "pendingStrict": "Strict special support will be validated after the build."
+    },
+    "teamSlots": {
+      "noSnippet": "No readable captain or special text was parsed.",
+      "roles": {
+        "captain": "Captain",
+        "friendCaptain": "Friend Captain",
+        "sub": "Sub"
+      }
+    }
+  },
+  "result": {
+    "favorite": {
+      "addAria": "Add to favorites",
+      "removeAria": "Remove from favorites"
+    },
+    "ship": {
+      "manualSource": "Manual ship",
+      "recommendedSource": "Auto selected ship"
+    }
+  },
+  "errors": {
+    "buildFailed": "The auto build failed unexpectedly. Please try again.",
+    "lockedLimitExceeded": "The current selection exceeds the manual lock limit of {{max}} units.",
+    "leaderRequirement": {
+      "dual": " and the selected captain/friend captain pair",
+      "single": " and the selected leader"
+    },
+    "default": {
+      "flexible": "No team matched {{types}} even after flexible fallback.",
+      "strict": "No exact team matched {{types}} with the current strict rules."
+    },
+    "favorites": {
+      "flexible": "No favorites-only team matched {{types}}.",
+      "strict": "No favorites-only team matched the current strict rules."
+    },
+    "locked": {
+      "defaultFlexible": "No flexible {{types}} team could be built with {{lockedCount}} locked units{{leaderRequirement}}.",
+      "favoritesFlexible": "No favorites-only {{types}} team could be built with {{lockedCount}} locked units{{leaderRequirement}}.",
+      "requirementsFlexible": "No flexible {{types}} team could be built after applying {{requirements}} with {{lockedCount}} locked units{{leaderRequirement}}.",
+      "strict": "No strict team could be built with {{lockedCount}} locked units{{leaderRequirement}}."
+    },
+    "requirements": {
+      "abilityCoverage": "ability coverage for {{abilities}}",
+      "classCoverage": "per-slot class coverage",
+      "favoritesScope": " inside the favorites-only pool",
+      "flexible": "No flexible team matched {{types}} while keeping {{requirements}}{{favoritesScope}}.",
+      "separator": " and ",
+      "specialCoverage": "special support coverage",
+      "strict": "No strict team matched {{types}} while keeping {{requirements}}{{favoritesScope}}.",
+      "typeCoverage": "team-wide type coverage"
+    }
+  },
+  "abilities": {
+    "captainSource": "Captain",
+    "noneParsed": "No parsed abilities",
+    "select": "Select an ability",
+    "selectableDebuff": "selectable debuff",
+    "requirement": {
+      "characters": ">={{count}} chars",
+      "turns": "{{count}} turns"
+    },
+    "catalog": {
+      "selectableDebuffOnly": "{{label}} (selectable debuff only)",
+      "withSelectableDebuff": "{{label}} (includes selectable debuff counters)"
+    }
+  },
+  "preset": {
+    "appliedTitle": "Preset applied.",
+    "appliedWithWarningsTitle": "Preset applied with warnings.",
+    "importFailedDescription": "The selected preset could not be imported.",
+    "importFailedTitle": "Preset import failed.",
+    "loadedFromFile": "Loaded settings from {{fileName}}.",
+    "errors": {
+      "invalidJson": "The selected file is not valid JSON.",
+      "invalidPresetJson": "The selected file is not a valid preset JSON.",
+      "missingSections": "The selected preset is missing required sections.",
+      "schemaMismatch": "The selected preset does not match the current export schema.",
+      "unsupportedPreset": "The selected file is not a supported Auto Team Builder preset."
+    },
+    "warnings": {
+      "adjustedAbilities": "Ignored {{count}} ability requirements with unsupported turns, slot tokens, or character count.",
+      "invalidLeaders": "Ignored {{count}} selected leaders that are not part of the imported locked characters.",
+      "lockedLimitExceeded": "Ignored {{count}} locked characters because the preset exceeds the {{max}}-unit lock limit.",
+      "missingLockedCharacters": "Ignored {{count}} locked characters that are missing from the current dataset.",
+      "missingManualShip": "Ignored {{count}} manual ship because it is missing from the current dataset.",
+      "unavailableClasses": "Ignored {{count}} unavailable imported classes from the preset.",
+      "unavailableTypes": "Ignored {{count}} unavailable imported types from the preset.",
+      "unsupportedAbilities": "Ignored {{count}} unsupported ability requirements from the preset."
+    }
+  }
+}

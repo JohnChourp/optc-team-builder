@@ -1,60 +1,64 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar>
-    <ion-title>Saved Teams</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ng-container *transloco="let t; scope: 'saved-teams'; read: 'saved-teams'">
+  <ion-header class="ion-no-border">
+    <ion-toolbar>
+      <ion-title>{{ t("title") }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
 
-<ion-content [fullscreen]="true">
-  <div class="page-shell saved-teams-shell">
-    <section class="glass-card hero-card">
-      <div class="section-label">Offline memory</div>
-      <h1 class="section-title">Your saved teams stay on-device and are ready to load back into the builder.</h1>
-      <p class="section-copy">This page only shows your saved teams.</p>
-    </section>
+  <ion-content [fullscreen]="true">
+    <div class="page-shell saved-teams-shell">
+      <section class="glass-card hero-card">
+        <div class="section-label">{{ t("hero.eyebrow") }}</div>
+        <h1 class="section-title">{{ t("hero.title") }}</h1>
+        <p class="section-copy">{{ t("hero.copy") }}</p>
+      </section>
 
-    <section *ngIf="loading()" class="glass-card loading-card">
-      <ion-spinner name="crescent"></ion-spinner>
-      <span>Loading saved teams...</span>
-    </section>
+      <section *ngIf="loading()" class="glass-card loading-card">
+        <ion-spinner name="crescent"></ion-spinner>
+        <span>{{ t("loading") }}</span>
+      </section>
 
-    <section *ngIf="!loading() && !savedTeams().length" class="glass-card empty-card">
-      <h2>Saved Teams</h2>
-      <p>No saved teams yet.</p>
-    </section>
+      <section *ngIf="!loading() && !savedTeams().length" class="glass-card empty-card">
+        <h2>{{ t("title") }}</h2>
+        <p>{{ t("empty") }}</p>
+      </section>
 
-    <section *ngIf="!loading() && savedTeamCards().length" class="glass-card section-card">
-      <div class="section-head">
-        <h2>Saved Teams</h2>
-        <span>{{ savedTeams().length }} total</span>
-      </div>
+      <section *ngIf="!loading() && savedTeamCards().length" class="glass-card section-card">
+        <div class="section-head">
+          <h2>{{ t("title") }}</h2>
+          <span>{{ t("total", { count: savedTeams().length }) }}</span>
+        </div>
 
-      <div class="saved-team-list">
-        <article *ngFor="let teamCard of savedTeamCards()">
-          <div class="saved-team-copy">
-            <strong>{{ teamCard.team.name }}</strong>
-            <p>{{ teamCard.team.notes || "No notes yet." }}</p>
-          </div>
+        <div class="saved-team-list">
+          <article *ngFor="let teamCard of savedTeamCards()">
+            <div class="saved-team-copy">
+              <strong>{{ teamCard.team.name }}</strong>
+              <p>{{ teamCard.team.notes || ("common.defaults.noNotesYet" | transloco) }}</p>
+            </div>
 
-          <div class="saved-team-preview" aria-label="Saved team character slots">
-            <ng-container *ngFor="let slot of teamCard.slots; let index = index">
-              <a
-                *ngIf="slot as currentSlot; else emptySavedTeamSlot"
-                class="saved-team-slot saved-team-slot--filled"
-                [routerLink]="getCharacterDetailLink(currentSlot)"
-                [attr.aria-label]="'View details for ' + currentSlot.name + ' in slot ' + (index + 1)"
-              >
-                <img [src]="currentSlot.imageUrl" [alt]="currentSlot.name" loading="lazy" />
-              </a>
+            <div class="saved-team-preview" [attr.aria-label]="t('preview.ariaLabel')">
+              <ng-container *ngFor="let slot of teamCard.slots; let index = index">
+                <a
+                  *ngIf="slot as currentSlot; else emptySavedTeamSlot"
+                  class="saved-team-slot saved-team-slot--filled"
+                  [routerLink]="getCharacterDetailLink(currentSlot)"
+                  [attr.aria-label]="
+                    t('preview.viewDetailsAria', { name: currentSlot.name, slot: index + 1 })
+                  "
+                >
+                  <img [src]="currentSlot.imageUrl" [alt]="currentSlot.name" loading="lazy" />
+                </a>
 
-              <ng-template #emptySavedTeamSlot>
-                <span class="saved-team-slot" [attr.aria-label]="'Empty slot ' + (index + 1)">
-                  <img src="assets/placeholders/character-card.svg" alt="Empty slot" loading="lazy" />
-                </span>
-              </ng-template>
-            </ng-container>
-          </div>
-        </article>
-      </div>
-    </section>
-  </div>
-</ion-content>
+                <ng-template #emptySavedTeamSlot>
+                  <span class="saved-team-slot" [attr.aria-label]="t('preview.emptySlotAria', { slot: index + 1 })">
+                    <img src="assets/placeholders/character-card.svg" [alt]="t('preview.emptySlotAlt')" loading="lazy" />
+                  </span>
+                </ng-template>
+              </ng-container>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+  </ion-content>
+</ng-container>

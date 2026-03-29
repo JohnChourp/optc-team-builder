@@ -1,6 +1,7 @@
 import '@angular/compiler';
 import { signal } from '@angular/core';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
@@ -263,9 +264,12 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
   });
 
   it('renders detail actions only on selected leader and result cards', async () => {
-    const template = readFileSync(new URL('./auto-team-builder.page.html', import.meta.url), 'utf8');
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
+      'utf8',
+    );
 
-    expect(template.match(/View details/g)).toHaveLength(3);
+    expect(template.match(/common\.actions\.viewDetails/g)).toHaveLength(3);
     expect(template).toContain("[routerLink]=\"getCharacterDetailLink(character)\"");
     expect(template).toContain("[routerLink]=\"getCharacterDetailLink(leader)\"");
     expect(template).toContain("[routerLink]=\"getCharacterDetailLink(slot.character)\"");
@@ -288,7 +292,11 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
           totalAttempts: 31744,
           currentDroppedTypes: [],
           currentDroppedClasses: [],
-          message: 'Exact attempt 1 / 31744',
+          messageKey: 'progress.exactAttempt',
+          messageParams: {
+            current: 1,
+            total: 31744,
+          },
         });
 
         return null;
@@ -300,7 +308,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     page.selectedTypes.set(['DEX']);
     await page.buildTeam();
 
-    expect(page.errorMessage()).toContain('Δοκιμάστηκαν');
+    expect(page.errorMessage()).toContain('DEX');
     expect(page.building()).toBe(false);
     expect(page.buildProgress()).toBeNull();
   });
@@ -317,7 +325,11 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
       totalAttempts: 31744,
       currentDroppedTypes: ['STR', 'INT'],
       currentDroppedClasses: [],
-      message: 'Fallback attempt 3504 / 31744',
+      messageKey: 'progress.fallbackAttempt',
+      messageParams: {
+        current: 3504,
+        total: 31744,
+      },
     });
 
     expect(page.loadingProgressRows()).toEqual([
@@ -337,8 +349,8 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
       },
       {
         key: 'candidatePool',
-        text: '1200 candidates στο current search pool',
-        displayText: '1200 candidates στο current search pool',
+        text: '1200 candidates in the current search pool',
+        displayText: '1200 candidates in the current search pool',
         visible: true,
         tone: 'secondary',
       },
@@ -554,7 +566,11 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
             totalAttempts: 2,
             currentDroppedTypes: [],
             currentDroppedClasses: [],
-            message: 'Exact attempt 1 / 2',
+            messageKey: 'progress.exactAttempt',
+            messageParams: {
+              current: 1,
+              total: 2,
+            },
           });
           executionOptions?.signal?.addEventListener(
             'abort',
@@ -1031,11 +1047,11 @@ describe('AutoTeamBuilder preset import helpers', () => {
     expect(result.state.selectedLeaderIds).toEqual([101]);
     expect(result.state.captainLeaderId).toBe(101);
     expect(result.warnings).toEqual([
-      'Ignored 1 unavailable imported type from the preset.',
-      'Ignored 1 unavailable imported class from the preset.',
-      'Ignored 1 unsupported ability requirement from the preset.',
-      'Ignored 1 locked character that is missing from the current dataset.',
-      'Ignored 1 selected leader that is not part of the imported locked characters.',
+      { key: 'preset.warnings.unavailableTypes', params: { count: 1 } },
+      { key: 'preset.warnings.unavailableClasses', params: { count: 1 } },
+      { key: 'preset.warnings.unsupportedAbilities', params: { count: 1 } },
+      { key: 'preset.warnings.missingLockedCharacters', params: { count: 1 } },
+      { key: 'preset.warnings.invalidLeaders', params: { count: 1 } },
     ]);
   });
 
@@ -1238,7 +1254,11 @@ describe('AutoTeamBuilderPage preset import state', () => {
       totalAttempts: 2,
       currentDroppedTypes: [],
       currentDroppedClasses: [],
-      message: 'Exact attempt 1 / 2',
+      messageKey: 'progress.exactAttempt',
+      messageParams: {
+        current: 1,
+        total: 2,
+      },
     });
     await page['importSelectionPreset'](
       new File([JSON.stringify(payload)], 'favorite-preset.json', { type: 'application/json' }),
@@ -1337,12 +1357,12 @@ describe('AutoTeamBuilderPage preset import state', () => {
       title: 'Preset applied with warnings.',
       details: [
         'Loaded settings from mixed-preset.json.',
-        'Ignored 1 unavailable imported type from the preset.',
-        'Ignored 1 unavailable imported class from the preset.',
-        'Ignored 1 unsupported ability requirement from the preset.',
-        'Ignored 1 ability requirement with unsupported turns, slot tokens, or character count.',
-        'Ignored 1 locked character that is missing from the current dataset.',
-        'Ignored 1 selected leader that is not part of the imported locked characters.',
+        'Ignored 1 unavailable imported types from the preset.',
+        'Ignored 1 unavailable imported classes from the preset.',
+        'Ignored 1 unsupported ability requirements from the preset.',
+        'Ignored 1 ability requirements with unsupported turns, slot tokens, or character count.',
+        'Ignored 1 locked characters that are missing from the current dataset.',
+        'Ignored 1 selected leaders that are not part of the imported locked characters.',
       ],
     });
   });
@@ -1506,6 +1526,7 @@ function createAutoBuildResult(
     lockedCharacterIds: [],
     captainCharacterId: 101,
     friendCaptainCharacterId: 102,
+    manualShipId: null,
     candidateLimit: 1200,
   };
 
@@ -1526,6 +1547,7 @@ function createAutoBuildResult(
       droppedTypes: [],
       droppedClasses: [],
     },
+    shipSelection: null,
     candidateCount: 32,
     coverage: {
       leaderCriteria: {
@@ -1641,12 +1663,14 @@ async function createPage(): Promise<{
     ready: vi.fn().mockResolvedValue(undefined),
     toggleFavorite: vi.fn().mockResolvedValue(undefined),
   };
+  const i18n = createI18nStub('auto-team-builder');
 
   return {
     page: new AutoTeamBuilderPage(
       repository as never,
       autoTeamBuilder as never,
       userState as never,
+      i18n as never,
     ),
     repository,
     autoTeamBuilder,
@@ -1675,4 +1699,58 @@ function createShipRecord(id: number): { id: number; name: string; thumb: null; 
     thumb: null,
     description: 'Boosts ATK by 1.5x.',
   };
+}
+
+function createI18nStub(scope: string) {
+  const globalTranslations = loadJson('../../../../public/i18n/en.json');
+  const scopedTranslations = loadJson(`../../../../public/i18n/${scope}/en.json`);
+
+  return {
+    activeLanguage: signal<'en' | 'el'>('en'),
+    availableLanguages: [
+      { id: 'en', label: 'English' },
+      { id: 'el', label: 'Ελληνικά' },
+    ] as const,
+    preloadScope: vi.fn().mockResolvedValue(undefined),
+    ready: vi.fn().mockResolvedValue(undefined),
+    setLanguage: vi.fn().mockResolvedValue(undefined),
+    translate: (
+      key: string,
+      params?: Record<string, string | number | boolean | null | undefined>,
+      requestedScope?: string,
+    ) => {
+      const source = requestedScope ? scopedTranslations : globalTranslations;
+      const resolved = resolveTranslationValue(source, key);
+
+      if (typeof resolved !== 'string') {
+        return key;
+      }
+
+      return resolved.replace(/\{\{\s*(\w+)\s*\}\}/g, (_match, paramKey: string) =>
+        String(params?.[paramKey] ?? ''),
+      );
+    },
+  };
+}
+
+function loadJson(relativePath: string): Record<string, unknown> {
+  return JSON.parse(
+    readFileSync(
+      resolve(process.cwd(), relativePath.replace(/^\.\.\/\.\.\/\.\.\/\.\.\//, '')),
+      'utf8',
+    ),
+  ) as Record<string, unknown>;
+}
+
+function resolveTranslationValue(
+  source: Record<string, unknown>,
+  key: string,
+): unknown {
+  return key.split('.').reduce<unknown>((current, part) => {
+    if (!current || typeof current !== 'object' || Array.isArray(current)) {
+      return undefined;
+    }
+
+    return (current as Record<string, unknown>)[part];
+  }, source);
 }

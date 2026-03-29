@@ -1,3 +1,5 @@
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 let analyzeBuilderAbilityText: (value: unknown, source: 'specialText' | 'captainAbility') => Array<{
@@ -12,7 +14,7 @@ let analyzeBuilderAbilityText: (value: unknown, source: 'specialText' | 'captain
 
 beforeAll(async () => {
   ({ analyzeBuilderAbilityText } = await import(
-    new URL('../../../../scripts/auto-team-builder-ability-parser.mjs', import.meta.url).href
+    pathToFileURL(resolve(process.cwd(), 'scripts/auto-team-builder-ability-parser.mjs')).href
   ));
 });
 

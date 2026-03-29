@@ -1,1030 +1,1028 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar>
-    <ion-title>Auto Team Builder</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ng-container *transloco="let t; scope: 'auto-team-builder'; read: 'auto-team-builder'">
+  <ion-header class="ion-no-border">
+    <ion-toolbar>
+      <ion-title>{{ t("title") }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
 
-<ion-content [fullscreen]="true">
-  <div class="page-shell auto-builder-shell">
-    <section class="hero-card glass-card">
-      <div class="hero-copy">
-        <div class="section-label">
-          <ion-icon [icon]="sparklesIcon"></ion-icon>
-          <span>{{ builderLabel() }}</span>
-        </div>
-        <h1 class="section-title">{{ titleLabel() }}</h1>
-        <p class="section-copy">{{ descriptionLabel() }}</p>
-      </div>
-
-      <div class="hero-meta">
-        <div class="meta-pill">
-          <ion-icon [icon]="layersIcon"></ion-icon>
-          <span>{{ availableClasses().length }} classes</span>
-        </div>
-        <div class="meta-pill">
-          <ion-icon [icon]="coverageIcon"></ion-icon>
-          <span>{{ teamStructureLabel() }}</span>
-        </div>
-      </div>
-    </section>
-
-    <section class="glass-card controls-card">
-      <div class="controls-grid">
-        <div class="fixed-type-card">
-          <span>Types</span>
-          <ion-select
-            interface="popover"
-            [multiple]="true"
-            fill="outline"
-            placeholder="Select types"
-            [value]="selectedTypes()"
-            [selectedText]="selectedTypesLabel()"
-            (ionChange)="onTypeChange($event)"
-          >
-            <ion-select-option *ngFor="let item of availableTypes" [value]="item">
-              {{ item }}
-            </ion-select-option>
-          </ion-select>
-          <div *ngIf="selectedTypes().length" class="selected-values-row">
-            <button
-              type="button"
-              class="selected-value-chip"
-              *ngFor="let item of selectedTypes()"
-              [disabled]="building()"
-              (click)="removeSelectedType(item)"
-            >
-              {{ item }}
-              <span aria-hidden="true">×</span>
-            </button>
+  <ion-content [fullscreen]="true">
+    <div class="page-shell auto-builder-shell">
+      <section class="hero-card glass-card">
+        <div class="hero-copy">
+          <div class="section-label">
+            <ion-icon [icon]="sparklesIcon"></ion-icon>
+            <span>{{ builderLabel() }}</span>
           </div>
-          <div class="type-action-row">
-            <ion-button
-              fill="clear"
-              size="small"
-              class="select-all-types-button"
-              [disabled]="building()"
-              (click)="selectAllTypes()"
-            >
-              {{ selectAllTypesButtonLabel() }}
-            </ion-button>
-          </div>
-          <div class="strict-toggle-row strict-toggle-row--filter">
-            <div class="strict-toggle-copy">
-              <strong>{{ typeStrictToggleLabel }}</strong>
-              <small>{{ typeSupportLabel() }}</small>
-            </div>
-            <ion-toggle
-              color="warning"
-              [checked]="requireAllSelectedTypesInTeam()"
-              [disabled]="building()"
-              (ionChange)="onRequireAllSelectedTypesToggle($event)"
-            ></ion-toggle>
-          </div>
+          <h1 class="section-title">{{ titleLabel() }}</h1>
+          <p class="section-copy">{{ descriptionLabel() }}</p>
         </div>
 
-        <div class="class-select-card">
-          <span>Classes</span>
-          <ion-select
-            interface="popover"
-            [multiple]="true"
-            fill="outline"
-            placeholder="Select classes"
-            [value]="selectedClasses()"
-            [selectedText]="selectedClassesLabel()"
-            (ionChange)="onClassChange($event)"
-          >
-            <ion-select-option *ngFor="let item of availableClasses()" [value]="item">
-              {{ item }}
-            </ion-select-option>
-          </ion-select>
-          <div *ngIf="selectedClasses().length" class="selected-values-row">
-            <button
-              type="button"
-              class="selected-value-chip"
-              *ngFor="let item of selectedClasses()"
-              [disabled]="building()"
-              (click)="removeSelectedClass(item)"
-            >
-              {{ item }}
-              <span aria-hidden="true">×</span>
-            </button>
+        <div class="hero-meta">
+          <div class="meta-pill">
+            <ion-icon [icon]="layersIcon"></ion-icon>
+            <span>{{ t("hero.meta.availableClasses", { count: availableClasses().length }) }}</span>
           </div>
-          <div class="control-action-row">
-            <ion-button
-              fill="clear"
-              size="small"
-              class="select-all-button"
-              [disabled]="!availableClasses().length || building()"
-              (click)="selectAllClasses()"
-            >
-              {{ selectAllClassesButtonLabel() }}
-            </ion-button>
+          <div class="meta-pill">
+            <ion-icon [icon]="coverageIcon"></ion-icon>
+            <span>{{ teamStructureLabel() }}</span>
           </div>
-          <div class="strict-toggle-row strict-toggle-row--filter">
-            <div class="strict-toggle-copy">
-              <strong>{{ classStrictToggleLabel }}</strong>
-              <small>{{ classSupportLabel() }}</small>
-            </div>
-            <ion-toggle
-              color="warning"
-              [checked]="requireAllSelectedClassesPerCharacter()"
-              [disabled]="building()"
-              (ionChange)="onRequireAllSelectedClassesToggle($event)"
-            ></ion-toggle>
-          </div>
-        </div>
-      </div>
-
-      <div class="secondary-toggle-grid">
-        <div class="strict-toggle-row">
-          <div class="strict-toggle-copy">
-            <strong>{{ favoritesOnlyToggleLabel }}</strong>
-            <small>{{ favoritesOnlySupportLabel() }}</small>
-          </div>
-          <ion-toggle
-            color="warning"
-            [checked]="favoritesOnly()"
-            [disabled]="building()"
-            (ionChange)="onFavoritesOnlyToggle($event)"
-          ></ion-toggle>
-        </div>
-
-        <div class="strict-toggle-row">
-          <div class="strict-toggle-copy">
-            <strong>{{ specialSupportToggleLabel }}</strong>
-            <small>{{ specialSupportLabel() }}</small>
-          </div>
-          <ion-toggle
-            color="warning"
-            [checked]="requireAllSpecialsSupportTeam()"
-            [disabled]="building()"
-            (ionChange)="onRequireAllSpecialsSupportToggle($event)"
-          ></ion-toggle>
-        </div>
-      </div>
-
-      <section class="ability-requirements-card">
-        <div class="slot-grid__header">
-          <h2>Ability requirements</h2>
-          <p>
-            Πρόσθεσε extra utility/effect requirements που πρέπει να καλύπτει συνολικά η τελική
-            ομάδα.
-          </p>
-        </div>
-
-        <div class="manual-locks-meta ability-requirements-meta">
-          <strong>{{ requiredAbilityDrafts().length }} configured rows</strong>
-          <div class="ability-requirements-actions">
-            <ion-button
-              fill="clear"
-              size="small"
-              class="select-all-button"
-              [disabled]="building() || !availableAbilityCatalogItems().length"
-              (click)="addRequiredAbility()"
-            >
-              Add requirement
-            </ion-button>
-            <ion-button
-              fill="clear"
-              size="small"
-              class="select-all-button"
-              [disabled]="building() || !requiredAbilityDrafts().length"
-              (click)="clearRequiredAbilities()"
-            >
-              Clear requirements
-            </ion-button>
-            <ion-button
-              fill="clear"
-              size="small"
-              class="select-all-button"
-              [disabled]="!canDownloadAbilityCatalogJson()"
-              (click)="downloadAbilityCatalogJson()"
-            >
-              {{ downloadAbilityCatalogJsonLabel }}
-            </ion-button>
-          </div>
-        </div>
-
-        <p *ngIf="!availableAbilityCatalogItems().length" class="favorites-only-warning">
-          Δεν βρέθηκε ability catalog. Τρέξε το <code>npm run data:import:all</code> για να
-          δημιουργηθεί.
-        </p>
-
-        <div
-          *ngIf="requiredAbilityDrafts().length"
-          class="selected-values-row ability-requirements-selected-row"
-        >
-          <span
-            *ngFor="let draft of requiredAbilityDrafts()"
-            class="selected-value-chip ability-requirement-chip"
-          >
-            {{ resolveRequiredAbilitySelectedText(draft) }}
-          </span>
-        </div>
-
-        <div class="ability-requirement-list" *ngIf="requiredAbilityDrafts().length">
-          <article *ngFor="let draft of requiredAbilityDrafts()" class="ability-requirement-card">
-            <div class="ability-requirement-fields">
-              <div class="ability-requirement-field">
-                <span>Ability</span>
-                <ion-select
-                  interface="popover"
-                  fill="outline"
-                  placeholder="Select ability"
-                  [value]="draft.abilityKey"
-                  [selectedText]="resolveRequiredAbilitySelectedText(draft)"
-                  (ionChange)="onRequiredAbilityKeyChange(draft.draftId, $event)"
-                >
-                  <ion-select-option
-                    *ngFor="let item of availableAbilityCatalogItems()"
-                    [value]="item.key"
-                  >
-                    {{ formatAbilityCatalogItemLabel(item) }}
-                  </ion-select-option>
-                </ion-select>
-              </div>
-
-              <label class="ability-requirement-field ability-requirement-field--number">
-                <span>Characters</span>
-                <input
-                  type="number"
-                  min="1"
-                  inputmode="numeric"
-                  [value]="draft.requiredCharacterCount ?? ''"
-                  (input)="onRequiredAbilityCountChange(draft.draftId, $event)"
-                />
-              </label>
-
-              <label
-                *ngIf="resolveAbilityCatalogItem(draft.abilityKey)?.supportsTurns"
-                class="ability-requirement-field ability-requirement-field--number"
-              >
-                <span>Turns</span>
-                <input
-                  type="number"
-                  min="1"
-                  inputmode="numeric"
-                  [value]="draft.minTurns ?? ''"
-                  (input)="onRequiredAbilityTurnsChange(draft.draftId, $event)"
-                />
-              </label>
-
-              <div
-                *ngIf="resolveAbilityCatalogItem(draft.abilityKey)?.supportsSlotTokens"
-                class="ability-requirement-field"
-              >
-                <span>Slot tokens</span>
-                <ion-select
-                  interface="popover"
-                  [multiple]="true"
-                  fill="outline"
-                  placeholder="Select slot tokens"
-                  [value]="draft.slotTokens"
-                  [selectedText]="draft.slotTokens.join(' / ')"
-                  (ionChange)="onRequiredAbilitySlotTokensChange(draft.draftId, $event)"
-                >
-                  <ion-select-option
-                    *ngFor="
-                      let token of resolveAbilityCatalogItem(draft.abilityKey)
-                        ?.availableSlotTokens ?? []
-                    "
-                    [value]="token"
-                  >
-                    {{ token }}
-                  </ion-select-option>
-                </ion-select>
-              </div>
-            </div>
-
-            <ion-button
-              size="small"
-              fill="outline"
-              color="light"
-              [disabled]="building()"
-              (click)="removeRequiredAbility(draft.draftId)"
-            >
-              Remove
-            </ion-button>
-          </article>
         </div>
       </section>
 
-      <p *ngIf="buildBlockedByFavorites()" class="favorites-only-warning">
-        {{ favoritesOnlyBlockedMessage }}
-      </p>
-
-      <section class="manual-locks-card">
-        <div class="manual-locks-layout">
-          <div class="manual-locks-overview">
-            <div class="slot-grid__header manual-locks-overview__header">
-              <h2>Manual picks</h2>
-              <p>{{ manualPickerSupportLabel() }}</p>
+      <section class="glass-card controls-card">
+        <div class="controls-grid">
+          <div class="fixed-type-card">
+            <span>{{ t("filters.types.label") }}</span>
+            <ion-select
+              interface="popover"
+              [multiple]="true"
+              fill="outline"
+              [placeholder]="t('filters.types.placeholder')"
+              [value]="selectedTypes()"
+              [selectedText]="selectedTypesLabel()"
+              (ionChange)="onTypeChange($event)"
+            >
+              <ion-select-option *ngFor="let item of availableTypes" [value]="item">
+                {{ item }}
+              </ion-select-option>
+            </ion-select>
+            <div *ngIf="selectedTypes().length" class="selected-values-row">
+              <button
+                type="button"
+                class="selected-value-chip"
+                *ngFor="let item of selectedTypes()"
+                [disabled]="building()"
+                (click)="removeSelectedType(item)"
+              >
+                {{ item }}
+                <span aria-hidden="true">×</span>
+              </button>
             </div>
+            <div class="type-action-row">
+              <ion-button
+                fill="clear"
+                size="small"
+                class="select-all-types-button"
+                [disabled]="building()"
+                (click)="selectAllTypes()"
+              >
+                {{ selectAllTypesButtonLabel() }}
+              </ion-button>
+            </div>
+            <div class="strict-toggle-row strict-toggle-row--filter">
+              <div class="strict-toggle-copy">
+                <strong>{{ typeStrictToggleLabel() }}</strong>
+                <small>{{ typeSupportLabel() }}</small>
+              </div>
+              <ion-toggle
+                color="warning"
+                [checked]="requireAllSelectedTypesInTeam()"
+                [disabled]="building()"
+                (ionChange)="onRequireAllSelectedTypesToggle($event)"
+              ></ion-toggle>
+            </div>
+          </div>
 
-            <div class="manual-locks-meta">
-              <strong>{{ lockedSummaryLabel() }}</strong>
+          <div class="class-select-card">
+            <span>{{ t("filters.classes.label") }}</span>
+            <ion-select
+              interface="popover"
+              [multiple]="true"
+              fill="outline"
+              [placeholder]="t('filters.classes.placeholder')"
+              [value]="selectedClasses()"
+              [selectedText]="selectedClassesLabel()"
+              (ionChange)="onClassChange($event)"
+            >
+              <ion-select-option *ngFor="let item of availableClasses()" [value]="item">
+                {{ item }}
+              </ion-select-option>
+            </ion-select>
+            <div *ngIf="selectedClasses().length" class="selected-values-row">
+              <button
+                type="button"
+                class="selected-value-chip"
+                *ngFor="let item of selectedClasses()"
+                [disabled]="building()"
+                (click)="removeSelectedClass(item)"
+              >
+                {{ item }}
+                <span aria-hidden="true">×</span>
+              </button>
+            </div>
+            <div class="control-action-row">
               <ion-button
                 fill="clear"
                 size="small"
                 class="select-all-button"
-                [disabled]="clearAllButtonDisabled()"
-                (click)="clearAllManualSelections()"
+                [disabled]="!availableClasses().length || building()"
+                (click)="selectAllClasses()"
               >
-                Clear All
+                {{ selectAllClassesButtonLabel() }}
               </ion-button>
             </div>
-
-            <div class="manual-filter-summary-card">
-              <div class="manual-filter-summary-copy">
-                <div class="section-label">
-                  <ion-icon [icon]="manualFilterIcon"></ion-icon>
-                  <span>Manual picks sync</span>
-                </div>
-                <strong>Τα manual picks ακολουθούν τα πάνω page filters</strong>
-                <p>{{ manualFilterSummaryLabel() }}</p>
+            <div class="strict-toggle-row strict-toggle-row--filter">
+              <div class="strict-toggle-copy">
+                <strong>{{ classStrictToggleLabel() }}</strong>
+                <small>{{ classSupportLabel() }}</small>
               </div>
+              <ion-toggle
+                color="warning"
+                [checked]="requireAllSelectedClassesPerCharacter()"
+                [disabled]="building()"
+                (ionChange)="onRequireAllSelectedClassesToggle($event)"
+              ></ion-toggle>
             </div>
           </div>
+        </div>
 
-          <div class="manual-locks-search-panel">
-            <div class="manual-panel-toggle">
-              <button
-                type="button"
-                class="manual-panel-toggle__button"
-                [class.manual-panel-toggle__button--active]="shipPickerMode() === 'characters'"
-                (click)="setShipPickerMode('characters')"
-              >
-                Character picks
-              </button>
-              <button
-                type="button"
-                class="manual-panel-toggle__button"
-                [class.manual-panel-toggle__button--active]="shipPickerMode() === 'ships'"
-                (click)="setShipPickerMode('ships')"
-              >
-                Ship selection
-              </button>
+        <div class="secondary-toggle-grid">
+          <div class="strict-toggle-row">
+            <div class="strict-toggle-copy">
+              <strong>{{ favoritesOnlyToggleLabel() }}</strong>
+              <small>{{ favoritesOnlySupportLabel() }}</small>
             </div>
+            <ion-toggle
+              color="warning"
+              [checked]="favoritesOnly()"
+              [disabled]="building()"
+              (ionChange)="onFavoritesOnlyToggle($event)"
+            ></ion-toggle>
+          </div>
 
-            <ng-container *ngIf="shipPickerMode() === 'characters'; else shipPickerPanel">
-              <ion-searchbar
-                [debounce]="150"
-                placeholder="Search by character name in manual picks"
-                [value]="manualSearchTerm()"
-                (ionInput)="onManualSearchChange($event)"
-              ></ion-searchbar>
-
-              <div class="manual-locks-meta manual-locks-meta--candidates">
-                <strong>{{ manualCandidatesSummaryLabel() }}</strong>
-                <small>{{ manualCandidatePoolSupportLabel() }}</small>
-              </div>
-
-              <div *ngIf="manualCandidatesLoading()" class="manual-candidate-empty-state">
-                Γίνεται φόρτωση των manual candidates...
-              </div>
-
-              <div
-                *ngIf="!manualCandidatesLoading() && !manualCandidateCards().length"
-                class="manual-candidate-empty-state"
-              >
-                Δεν βρέθηκαν χαρακτήρες που να ταιριάζουν στα current page filters για manual picks.
-              </div>
-
-              <div
-                *ngIf="manualCandidateCards().length"
-                class="manual-candidate-list manual-candidate-list--sidebar"
-              >
-                <article
-                  *ngFor="let candidateCard of manualCandidateCards()"
-                  class="manual-candidate-card manual-candidate-card--detailed manual-candidate-card--sidebar"
-                >
-                  <img
-                    [src]="candidateCard.character.imageUrl"
-                    [alt]="candidateCard.character.name"
-                    loading="lazy"
-                  />
-                  <div class="manual-candidate-copy">
-                    <strong>{{ candidateCard.character.name }}</strong>
-                    <span>{{ candidateCard.subtitle }}</span>
-                    <small *ngIf="candidateCard.favoriteLabel" class="manual-candidate-role">
-                      {{ candidateCard.favoriteLabel }}
-                    </small>
-
-                    <div class="chip-row manual-candidate-chip-row">
-                      <small
-                        *ngFor="let abilityChip of candidateCard.abilityChips"
-                        class="coverage-chip manual-ability-chip"
-                        [class.manual-ability-chip--matched]="abilityChip.highlighted"
-                        [class.manual-ability-chip--empty]="abilityChip.empty"
-                      >
-                        {{ abilityChip.label }}
-                      </small>
-                    </div>
-                  </div>
-                  <ion-button
-                    size="small"
-                    fill="outline"
-                    color="light"
-                    [disabled]="
-                      building() ||
-                      (!isLockedCharacter(candidateCard.character.id) && lockedLimitReached())
-                    "
-                    (click)="
-                      isLockedCharacter(candidateCard.character.id)
-                        ? removeLockedCharacter(candidateCard.character.id)
-                        : lockCharacter(candidateCard.character)
-                    "
-                  >
-                    {{ isLockedCharacter(candidateCard.character.id) ? 'Remove' : 'Lock' }}
-                  </ion-button>
-                </article>
-              </div>
-            </ng-container>
-
-            <ng-template #shipPickerPanel>
-              <ion-searchbar
-                [debounce]="150"
-                placeholder="Search ship by name or effect"
-                [value]="shipSearchTerm()"
-                (ionInput)="onShipSearchChange($event)"
-              ></ion-searchbar>
-
-              <div class="manual-locks-meta manual-locks-meta--candidates">
-                <strong>{{ shipCandidatesSummaryLabel() }}</strong>
-                <small>{{ shipPickerSupportLabel() }}</small>
-              </div>
-
-              <div *ngIf="hasSelectedManualShip()" class="selected-values-row manual-selected-row">
-                <button
-                  type="button"
-                  class="selected-value-chip manual-lock-chip manual-lock-chip--ship"
-                  [disabled]="building()"
-                  (click)="clearManualShipSelection()"
-                >
-                  <ion-icon [icon]="shipIcon"></ion-icon>
-                  {{ selectedManualShip()?.name }}
-                  <span aria-hidden="true">×</span>
-                </button>
-              </div>
-
-              <div *ngIf="!shipCandidates().length" class="manual-candidate-empty-state">
-                Δεν βρέθηκαν ships που να ταιριάζουν στο current search.
-              </div>
-
-              <div *ngIf="shipCandidates().length" class="manual-candidate-list manual-candidate-list--sidebar">
-                <article
-                  *ngFor="let shipCard of shipCandidates()"
-                  class="manual-candidate-card manual-candidate-card--detailed manual-candidate-card--sidebar ship-candidate-card"
-                >
-                  <div class="ship-candidate-icon" aria-hidden="true">
-                    <ion-icon [icon]="shipIcon"></ion-icon>
-                  </div>
-                  <div class="manual-candidate-copy">
-                    <strong>{{ shipCard.ship.name }}</strong>
-                    <span>{{ shipCard.subtitle }}</span>
-                    <small *ngIf="shipCard.matchesManualSelection" class="manual-candidate-role">
-                      Manual ship
-                    </small>
-                  </div>
-                  <ion-button
-                    size="small"
-                    fill="outline"
-                    color="light"
-                    [disabled]="building()"
-                    (click)="
-                      shipCard.matchesManualSelection
-                        ? clearManualShipSelection()
-                        : selectManualShip(shipCard.ship.id)
-                    "
-                  >
-                    {{ shipCard.matchesManualSelection ? 'Clear' : 'Select' }}
-                  </ion-button>
-                </article>
-              </div>
-            </ng-template>
+          <div class="strict-toggle-row">
+            <div class="strict-toggle-copy">
+              <strong>{{ specialSupportToggleLabel() }}</strong>
+              <small>{{ specialSupportLabel() }}</small>
+            </div>
+            <ion-toggle
+              color="warning"
+              [checked]="requireAllSpecialsSupportTeam()"
+              [disabled]="building()"
+              (ionChange)="onRequireAllSpecialsSupportToggle($event)"
+            ></ion-toggle>
           </div>
         </div>
 
-        <div *ngIf="hasAppliedManualFilters()" class="selected-values-row manual-selected-row">
-          <span
-            *ngFor="let item of manualCandidateFilters().selectedTypes"
-            class="selected-value-chip ability-requirement-chip"
-          >
-            Type: {{ item }}
-          </span>
-          <span
-            *ngFor="let item of manualCandidateFilters().selectedClasses"
-            class="selected-value-chip ability-requirement-chip"
-          >
-            Class: {{ item }}
-          </span>
-          <span
-            *ngFor="let item of manualFilterAppliedAbilityLabels()"
-            class="selected-value-chip ability-requirement-chip"
-          >
-            {{ item }}
-          </span>
-        </div>
-
-        <div *ngIf="hasLockedCharacters()" class="selected-values-row manual-selected-row">
-          <button
-            type="button"
-            class="selected-value-chip manual-lock-chip"
-            *ngFor="let character of lockedCharacters()"
-            [disabled]="building()"
-            (click)="removeLockedCharacter(character.id)"
-          >
-            <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
-            {{ character.name }}
-            <span aria-hidden="true">×</span>
-          </button>
-        </div>
-
-        <section *ngIf="hasLockedCharacters()" class="manual-leaders-card">
+        <section class="ability-requirements-card">
           <div class="slot-grid__header">
-            <h3>Leader picks</h3>
-            <p>{{ leaderPickerSupportLabel() }}</p>
+            <h2>{{ t("abilityRequirements.title") }}</h2>
+            <p>{{ t("abilityRequirements.copy") }}</p>
           </div>
 
-          <div class="manual-locks-meta manual-locks-meta--leaders">
-            <strong>{{ leaderSummaryLabel() }}</strong>
-            <ion-button
-              fill="clear"
-              size="small"
-              class="select-all-button"
-              [disabled]="!hasDualLeaders() || building()"
-              (click)="swapLeaderAssignments()"
+          <div class="manual-locks-meta ability-requirements-meta">
+            <strong>{{ t("abilityRequirements.configuredRows", { count: requiredAbilityDrafts().length }) }}</strong>
+            <div class="ability-requirements-actions">
+              <ion-button
+                fill="clear"
+                size="small"
+                class="select-all-button"
+                [disabled]="building() || !availableAbilityCatalogItems().length"
+                (click)="addRequiredAbility()"
+              >
+                {{ t("abilityRequirements.actions.addRequirement") }}
+              </ion-button>
+              <ion-button
+                fill="clear"
+                size="small"
+                class="select-all-button"
+                [disabled]="building() || !requiredAbilityDrafts().length"
+                (click)="clearRequiredAbilities()"
+              >
+                {{ t("abilityRequirements.actions.clearRequirements") }}
+              </ion-button>
+              <ion-button
+                fill="clear"
+                size="small"
+                class="select-all-button"
+                [disabled]="!canDownloadAbilityCatalogJson()"
+                (click)="downloadAbilityCatalogJson()"
+              >
+                {{ downloadAbilityCatalogJsonLabel() }}
+              </ion-button>
+            </div>
+          </div>
+
+          <p *ngIf="!availableAbilityCatalogItems().length" class="favorites-only-warning">
+            {{ t("abilityRequirements.emptyCatalog") }}
+            <code>npm run data:import:all</code>
+            {{ t("abilityRequirements.emptyCatalogSuffix") }}
+          </p>
+
+          <div
+            *ngIf="requiredAbilityDrafts().length"
+            class="selected-values-row ability-requirements-selected-row"
+          >
+            <span
+              *ngFor="let draft of requiredAbilityDrafts()"
+              class="selected-value-chip ability-requirement-chip"
             >
-              Swap roles
-            </ion-button>
+              {{ resolveRequiredAbilitySelectedText(draft) }}
+            </span>
           </div>
 
-          <div class="manual-candidate-list manual-candidate-list--leaders">
-            <article *ngFor="let character of lockedCharacters()" class="manual-candidate-card">
-              <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
-              <div class="manual-candidate-copy">
-                <strong>{{ character.name }}</strong>
-                <span
-                  >{{ character.type }} • {{ character.primaryClass
-                  }}<ng-container *ngIf="character.secondaryClass">
-                    • {{ character.secondaryClass }}</ng-container
-                  ></span
-                >
-                <small *ngIf="leaderRoleMap()[character.id]" class="manual-candidate-role">
-                  {{ leaderRoleMap()[character.id] }}
-                </small>
-              </div>
-              <div class="manual-candidate-actions">
-                <ion-button
-                  size="small"
-                  fill="clear"
-                  color="warning"
-                  class="detail-link-button"
-                  [routerLink]="getCharacterDetailLink(character)"
-                >
-                  View details
-                </ion-button>
-                <ion-button
-                  size="small"
-                  fill="outline"
-                  color="light"
-                  class="manual-candidate-action-button"
-                  [disabled]="
-                    building() || (!isLeaderCharacter(character.id) && leaderLimitReached())
-                  "
-                  (click)="toggleLeaderCharacter(character.id)"
-                >
-                  {{ isLeaderCharacter(character.id) ? 'Remove leader' : 'Set leader' }}
-                </ion-button>
-              </div>
-            </article>
-          </div>
+          <div class="ability-requirement-list" *ngIf="requiredAbilityDrafts().length">
+            <article *ngFor="let draft of requiredAbilityDrafts()" class="ability-requirement-card">
+              <div class="ability-requirement-fields">
+                <div class="ability-requirement-field">
+                  <span>{{ t("abilityRequirements.fields.ability") }}</span>
+                  <ion-select
+                    interface="popover"
+                    fill="outline"
+                    [placeholder]="t('abilityRequirements.placeholders.selectAbility')"
+                    [value]="draft.abilityKey"
+                    [selectedText]="resolveRequiredAbilitySelectedText(draft)"
+                    (ionChange)="onRequiredAbilityKeyChange(draft.draftId, $event)"
+                  >
+                    <ion-select-option
+                      *ngFor="let item of availableAbilityCatalogItems()"
+                      [value]="item.key"
+                    >
+                      {{ formatAbilityCatalogItemLabel(item) }}
+                    </ion-select-option>
+                  </ion-select>
+                </div>
 
-          <div *ngIf="hasDualLeaders()" class="leader-role-grid">
-            <article
-              *ngFor="let leader of selectedLeaderCharacters()"
-              class="leader-role-card"
-              [class.leader-role-card--active]="isCaptainLeader(leader.id)"
-            >
-              <img [src]="leader.imageUrl" [alt]="leader.name" loading="lazy" />
-              <div class="leader-role-copy">
-                <strong>{{ leader.name }}</strong>
-                <span>{{ leaderRoleMap()[leader.id] }}</span>
-              </div>
-              <div class="leader-role-actions">
-                <ion-button
-                  size="small"
-                  fill="clear"
-                  color="warning"
-                  class="detail-link-button"
-                  [routerLink]="getCharacterDetailLink(leader)"
+                <label class="ability-requirement-field ability-requirement-field--number">
+                  <span>{{ t("abilityRequirements.fields.characters") }}</span>
+                  <input
+                    type="number"
+                    min="1"
+                    inputmode="numeric"
+                    [value]="draft.requiredCharacterCount ?? ''"
+                    (input)="onRequiredAbilityCountChange(draft.draftId, $event)"
+                  />
+                </label>
+
+                <label
+                  *ngIf="resolveAbilityCatalogItem(draft.abilityKey)?.supportsTurns"
+                  class="ability-requirement-field ability-requirement-field--number"
                 >
-                  View details
-                </ion-button>
-                <button
-                  type="button"
-                  class="leader-role-button"
-                  [disabled]="building() || isCaptainLeader(leader.id)"
-                  (click)="setCaptainLeader(leader.id)"
+                  <span>{{ t("abilityRequirements.fields.turns") }}</span>
+                  <input
+                    type="number"
+                    min="1"
+                    inputmode="numeric"
+                    [value]="draft.minTurns ?? ''"
+                    (input)="onRequiredAbilityTurnsChange(draft.draftId, $event)"
+                  />
+                </label>
+
+                <div
+                  *ngIf="resolveAbilityCatalogItem(draft.abilityKey)?.supportsSlotTokens"
+                  class="ability-requirement-field"
                 >
-                  Make Captain
-                </button>
+                  <span>{{ t("abilityRequirements.fields.slotTokens") }}</span>
+                  <ion-select
+                    interface="popover"
+                    [multiple]="true"
+                    fill="outline"
+                    [placeholder]="t('abilityRequirements.placeholders.selectSlotTokens')"
+                    [value]="draft.slotTokens"
+                    [selectedText]="draft.slotTokens.join(' / ')"
+                    (ionChange)="onRequiredAbilitySlotTokensChange(draft.draftId, $event)"
+                  >
+                    <ion-select-option
+                      *ngFor="
+                        let token of resolveAbilityCatalogItem(draft.abilityKey)
+                          ?.availableSlotTokens ?? []
+                      "
+                      [value]="token"
+                    >
+                      {{ token }}
+                    </ion-select-option>
+                  </ion-select>
+                </div>
               </div>
+
+              <ion-button
+                size="small"
+                fill="outline"
+                color="light"
+                [disabled]="building()"
+                (click)="removeRequiredAbility(draft.draftId)"
+              >
+                {{ t("abilityRequirements.actions.removeRequirement") }}
+              </ion-button>
             </article>
           </div>
         </section>
-      </section>
 
-      <div class="build-action-row">
-        <input
-          #presetFileInput
-          type="file"
-          accept=".json,application/json"
-          hidden
-          (change)="onPresetFileSelected($event, presetFileInput)"
-        />
-        <ion-button
-          fill="outline"
-          color="light"
-          class="download-preset-button"
-          [disabled]="building()"
-          (click)="openPresetFilePicker(presetFileInput)"
-        >
-          Import preset JSON
-        </ion-button>
-        <ion-button
-          fill="outline"
-          color="warning"
-          class="download-preset-button"
-          [disabled]="!canDownloadSelectionJson()"
-          (click)="downloadSelectionJson()"
-        >
-          {{ downloadSelectionJsonLabel }}
-        </ion-button>
-      </div>
+        <p *ngIf="buildBlockedByFavorites()" class="favorites-only-warning">
+          {{ favoritesOnlyBlockedMessage() }}
+        </p>
 
-      <section
-        *ngIf="presetImportFeedback() as presetFeedback"
-        class="preset-import-feedback"
-        [class.preset-import-feedback--success]="presetFeedback.tone === 'success'"
-        [class.preset-import-feedback--warning]="presetFeedback.tone === 'warning'"
-        [class.preset-import-feedback--error]="presetFeedback.tone === 'error'"
-      >
-        <ion-icon
-          [icon]="presetFeedback.tone === 'error' ? presetImportErrorIcon : presetImportSuccessIcon"
-        ></ion-icon>
-        <div>
-          <strong>{{ presetFeedback.title }}</strong>
-          <small *ngFor="let detail of presetFeedback.details">{{ detail }}</small>
-        </div>
-      </section>
+        <section class="manual-locks-card">
+          <div class="manual-locks-layout">
+            <div class="manual-locks-overview">
+              <div class="slot-grid__header manual-locks-overview__header">
+                <h2>{{ t("manual.title") }}</h2>
+                <p>{{ t("manual.copy") }}</p>
+              </div>
 
-      <ion-button expand="block" color="warning" [disabled]="buildDisabled()" (click)="buildTeam()">
-        <ion-spinner *ngIf="building()" slot="start" name="crescent"></ion-spinner>
-        {{ buildButtonLabel() }}
-      </ion-button>
-    </section>
+              <div class="manual-locks-meta">
+                <strong>{{ lockedSummaryLabel() }}</strong>
+                <ion-button
+                  fill="clear"
+                  size="small"
+                  class="select-all-button"
+                  [disabled]="clearAllButtonDisabled()"
+                  (click)="clearAllManualSelections()"
+                >
+                  {{ t("manual.actions.clearAll") }}
+                </ion-button>
+              </div>
 
-    <section *ngIf="building()" class="loading-card glass-card">
-      <ion-spinner name="crescent" class="loading-card__spinner"></ion-spinner>
-      <div class="loading-card__copy" role="status" aria-live="polite">
-        <div class="loading-progress-list">
-          <div
-            *ngFor="let row of loadingProgressRows()"
-            class="loading-progress-row"
-            [class.loading-progress-row--visible]="row.visible"
-            [class.loading-progress-row--muted]="row.tone === 'secondary'"
-            [class.loading-progress-row--fallback]="row.tone === 'fallback'"
+              <div class="manual-filter-summary-card">
+                <div class="manual-filter-summary-copy">
+                  <div class="section-label">
+                    <ion-icon [icon]="manualFilterIcon"></ion-icon>
+                    <span>{{ t("manual.sync.eyebrow") }}</span>
+                  </div>
+                  <strong>{{ t("manual.sync.title") }}</strong>
+                  <p>{{ manualFilterSummaryLabel() }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="manual-locks-search-panel">
+              <div class="manual-panel-toggle">
+                <button
+                  type="button"
+                  class="manual-panel-toggle__button"
+                  [class.manual-panel-toggle__button--active]="shipPickerMode() === 'characters'"
+                  (click)="setShipPickerMode('characters')"
+                >
+                  {{ t("manual.modes.characters") }}
+                </button>
+                <button
+                  type="button"
+                  class="manual-panel-toggle__button"
+                  [class.manual-panel-toggle__button--active]="shipPickerMode() === 'ships'"
+                  (click)="setShipPickerMode('ships')"
+                >
+                  {{ t("manual.modes.ships") }}
+                </button>
+              </div>
+
+              <ng-container *ngIf="shipPickerMode() === 'characters'; else shipPickerPanel">
+                <ion-searchbar
+                  [debounce]="150"
+                  [placeholder]="t('manual.searchPlaceholder.characters')"
+                  [value]="manualSearchTerm()"
+                  (ionInput)="onManualSearchChange($event)"
+                ></ion-searchbar>
+
+                <div class="manual-locks-meta manual-locks-meta--candidates">
+                  <strong>{{ manualCandidatesSummaryLabel() }}</strong>
+                  <small>{{ manualCandidatePoolSupportLabel() }}</small>
+                </div>
+
+                <div *ngIf="manualCandidatesLoading()" class="manual-candidate-empty-state">
+                  {{ t("manual.empty.loadingCandidates") }}
+                </div>
+
+                <div
+                  *ngIf="!manualCandidatesLoading() && !manualCandidateCards().length"
+                  class="manual-candidate-empty-state"
+                >
+                  {{ t("manual.empty.noCandidates") }}
+                </div>
+
+                <div
+                  *ngIf="manualCandidateCards().length"
+                  class="manual-candidate-list manual-candidate-list--sidebar"
+                >
+                  <article
+                    *ngFor="let candidateCard of manualCandidateCards()"
+                    class="manual-candidate-card manual-candidate-card--detailed manual-candidate-card--sidebar"
+                  >
+                    <img
+                      [src]="candidateCard.character.imageUrl"
+                      [alt]="candidateCard.character.name"
+                      loading="lazy"
+                    />
+                    <div class="manual-candidate-copy">
+                      <strong>{{ candidateCard.character.name }}</strong>
+                      <span>{{ candidateCard.subtitle }}</span>
+                      <small *ngIf="candidateCard.favoriteLabel" class="manual-candidate-role">
+                        {{ candidateCard.favoriteLabel }}
+                      </small>
+
+                      <div class="chip-row manual-candidate-chip-row">
+                        <small
+                          *ngFor="let abilityChip of candidateCard.abilityChips"
+                          class="coverage-chip manual-ability-chip"
+                          [class.manual-ability-chip--matched]="abilityChip.highlighted"
+                          [class.manual-ability-chip--empty]="abilityChip.empty"
+                        >
+                          {{ abilityChip.label }}
+                        </small>
+                      </div>
+                    </div>
+                    <ion-button
+                      size="small"
+                      fill="outline"
+                      color="light"
+                      [disabled]="
+                        building() ||
+                        (!isLockedCharacter(candidateCard.character.id) && lockedLimitReached())
+                      "
+                      (click)="
+                        isLockedCharacter(candidateCard.character.id)
+                          ? removeLockedCharacter(candidateCard.character.id)
+                          : lockCharacter(candidateCard.character)
+                      "
+                    >
+                      {{
+                        isLockedCharacter(candidateCard.character.id)
+                          ? ("common.actions.remove" | transloco)
+                          : t("manual.actions.lock")
+                      }}
+                    </ion-button>
+                  </article>
+                </div>
+              </ng-container>
+
+              <ng-template #shipPickerPanel>
+                <ion-searchbar
+                  [debounce]="150"
+                  [placeholder]="t('ships.searchPlaceholder')"
+                  [value]="shipSearchTerm()"
+                  (ionInput)="onShipSearchChange($event)"
+                ></ion-searchbar>
+
+                <div class="manual-locks-meta manual-locks-meta--candidates">
+                  <strong>{{ shipCandidatesSummaryLabel() }}</strong>
+                  <small>{{ shipPickerSupportLabel() }}</small>
+                </div>
+
+                <div *ngIf="hasSelectedManualShip()" class="selected-values-row manual-selected-row">
+                  <button
+                    type="button"
+                    class="selected-value-chip manual-lock-chip manual-lock-chip--ship"
+                    [disabled]="building()"
+                    (click)="clearManualShipSelection()"
+                  >
+                    <ion-icon [icon]="shipIcon"></ion-icon>
+                    {{ selectedManualShip()?.name }}
+                    <span aria-hidden="true">×</span>
+                  </button>
+                </div>
+
+                <div *ngIf="!shipCandidates().length" class="manual-candidate-empty-state">
+                  {{ t("ships.emptySearch") }}
+                </div>
+
+                <div
+                  *ngIf="shipCandidates().length"
+                  class="manual-candidate-list manual-candidate-list--sidebar"
+                >
+                  <article
+                    *ngFor="let shipCard of shipCandidates()"
+                    class="manual-candidate-card manual-candidate-card--detailed manual-candidate-card--sidebar ship-candidate-card"
+                  >
+                    <div class="ship-candidate-icon" aria-hidden="true">
+                      <ion-icon [icon]="shipIcon"></ion-icon>
+                    </div>
+                    <div class="manual-candidate-copy">
+                      <strong>{{ shipCard.ship.name }}</strong>
+                      <span>{{ shipCard.subtitle }}</span>
+                      <small *ngIf="shipCard.matchesManualSelection" class="manual-candidate-role">
+                        {{ t("ships.manualBadge") }}
+                      </small>
+                    </div>
+                    <ion-button
+                      size="small"
+                      fill="outline"
+                      color="light"
+                      [disabled]="building()"
+                      (click)="
+                        shipCard.matchesManualSelection
+                          ? clearManualShipSelection()
+                          : selectManualShip(shipCard.ship.id)
+                      "
+                    >
+                      {{
+                        shipCard.matchesManualSelection
+                          ? ("common.actions.clear" | transloco)
+                          : ("common.actions.select" | transloco)
+                      }}
+                    </ion-button>
+                  </article>
+                </div>
+              </ng-template>
+            </div>
+          </div>
+
+          <div *ngIf="hasAppliedManualFilters()" class="selected-values-row manual-selected-row">
+            <span
+              *ngFor="let item of manualCandidateFilters().selectedTypes"
+              class="selected-value-chip ability-requirement-chip"
+            >
+              {{ t("manual.applied.type", { value: item }) }}
+            </span>
+            <span
+              *ngFor="let item of manualCandidateFilters().selectedClasses"
+              class="selected-value-chip ability-requirement-chip"
+            >
+              {{ t("manual.applied.class", { value: item }) }}
+            </span>
+            <span
+              *ngFor="let item of manualFilterAppliedAbilityLabels()"
+              class="selected-value-chip ability-requirement-chip"
+            >
+              {{ item }}
+            </span>
+          </div>
+
+          <div *ngIf="hasLockedCharacters()" class="selected-values-row manual-selected-row">
+            <button
+              type="button"
+              class="selected-value-chip manual-lock-chip"
+              *ngFor="let character of lockedCharacters()"
+              [disabled]="building()"
+              (click)="removeLockedCharacter(character.id)"
+            >
+              <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
+              {{ character.name }}
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
+
+          <section *ngIf="hasLockedCharacters()" class="manual-leaders-card">
+            <div class="slot-grid__header">
+              <h3>{{ t("manual.leaders.title") }}</h3>
+              <p>{{ leaderPickerSupportLabel() }}</p>
+            </div>
+
+            <div class="manual-locks-meta manual-locks-meta--leaders">
+              <strong>{{ leaderSummaryLabel() }}</strong>
+              <ion-button
+                fill="clear"
+                size="small"
+                class="select-all-button"
+                [disabled]="!hasDualLeaders() || building()"
+                (click)="swapLeaderAssignments()"
+              >
+                {{ t("manual.actions.swapRoles") }}
+              </ion-button>
+            </div>
+
+            <div class="manual-candidate-list manual-candidate-list--leaders">
+              <article *ngFor="let character of lockedCharacters()" class="manual-candidate-card">
+                <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
+                <div class="manual-candidate-copy">
+                  <strong>{{ character.name }}</strong>
+                  <span
+                    >{{ character.type }} • {{ character.primaryClass
+                    }}<ng-container *ngIf="character.secondaryClass">
+                      • {{ character.secondaryClass }}</ng-container
+                    ></span
+                  >
+                  <small *ngIf="leaderRoleMap()[character.id]" class="manual-candidate-role">
+                    {{ leaderRoleMap()[character.id] }}
+                  </small>
+                </div>
+                <div class="manual-candidate-actions">
+                  <ion-button
+                    size="small"
+                    fill="clear"
+                    color="warning"
+                    class="detail-link-button"
+                    [routerLink]="getCharacterDetailLink(character)"
+                  >
+                    {{ "common.actions.viewDetails" | transloco }}
+                  </ion-button>
+                  <ion-button
+                    size="small"
+                    fill="outline"
+                    color="light"
+                    class="manual-candidate-action-button"
+                    [disabled]="
+                      building() || (!isLeaderCharacter(character.id) && leaderLimitReached())
+                    "
+                    (click)="toggleLeaderCharacter(character.id)"
+                  >
+                    {{
+                      isLeaderCharacter(character.id)
+                        ? t("manual.leaders.actions.removeLeader")
+                        : t("manual.leaders.actions.setLeader")
+                    }}
+                  </ion-button>
+                </div>
+              </article>
+            </div>
+
+            <div *ngIf="hasDualLeaders()" class="leader-role-grid">
+              <article
+                *ngFor="let leader of selectedLeaderCharacters()"
+                class="leader-role-card"
+                [class.leader-role-card--active]="isCaptainLeader(leader.id)"
+              >
+                <img [src]="leader.imageUrl" [alt]="leader.name" loading="lazy" />
+                <div class="leader-role-copy">
+                  <strong>{{ leader.name }}</strong>
+                  <span>{{ leaderRoleMap()[leader.id] }}</span>
+                </div>
+                <div class="leader-role-actions">
+                  <ion-button
+                    size="small"
+                    fill="clear"
+                    color="warning"
+                    class="detail-link-button"
+                    [routerLink]="getCharacterDetailLink(leader)"
+                  >
+                    {{ "common.actions.viewDetails" | transloco }}
+                  </ion-button>
+                  <button
+                    type="button"
+                    class="leader-role-button"
+                    [disabled]="building() || isCaptainLeader(leader.id)"
+                    (click)="setCaptainLeader(leader.id)"
+                  >
+                    {{ t("manual.leaders.actions.makeCaptain") }}
+                  </button>
+                </div>
+              </article>
+            </div>
+          </section>
+        </section>
+
+        <div class="build-action-row">
+          <input
+            #presetFileInput
+            type="file"
+            accept=".json,application/json"
+            hidden
+            (change)="onPresetFileSelected($event, presetFileInput)"
+          />
+          <ion-button
+            fill="outline"
+            color="light"
+            class="download-preset-button"
+            [disabled]="building()"
+            (click)="openPresetFilePicker(presetFileInput)"
           >
-            <span>{{ row.displayText }}</span>
-          </div>
-        </div>
-      </div>
-      <ion-button fill="outline" color="light" class="loading-card__action" (click)="cancelBuild()">
-        {{ cancelBuildButtonLabel }}
-      </ion-button>
-    </section>
-
-    <section *ngIf="!building() && errorMessage()" class="loading-card glass-card empty-card">
-      <span>{{ errorMessage() }}</span>
-    </section>
-
-    <ng-container *ngIf="!building() && result() as current">
-      <section *ngIf="resultUsesFallback()" class="glass-card fallback-card">
-        <div class="slot-grid__header">
-          <h2>Relaxed fallback used</h2>
-          <p>
-            Τα πάνω filters έμειναν όπως τα διάλεξες. Η ομάδα χτίστηκε αφού αγνοήθηκαν μόνο τα
-            παρακάτω requirements.
-          </p>
-        </div>
-
-        <div class="coverage-groups">
-          <div *ngIf="droppedResultTypes().length">
-            <span>Dropped types</span>
-            <div class="chip-row">
-              <small *ngFor="let item of droppedResultTypes()" class="coverage-chip fallback-chip">
-                {{ item }}
-              </small>
-            </div>
-          </div>
-
-          <div *ngIf="droppedResultClasses().length">
-            <span>Dropped classes</span>
-            <div class="chip-row">
-              <small
-                *ngFor="let item of droppedResultClasses()"
-                class="coverage-chip fallback-chip"
-              >
-                {{ item }}
-              </small>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="summary-grid">
-        <article class="glass-card summary-card">
-          <span>Requested classes</span>
-          <strong>{{ requestedResultClassesLabel() }}</strong>
-          <small>Effective: {{ effectiveResultClassesLabel() }}</small>
-        </article>
-
-        <article class="glass-card summary-card">
-          <span>Requested types</span>
-          <strong>{{ requestedResultTypesLabel() }}</strong>
-          <small>Effective: {{ effectiveResultTypesLabel() }}</small>
-        </article>
-
-        <article class="glass-card summary-card">
-          <span>Candidate pool</span>
-          <strong>{{ current.candidateCount }}</strong>
-          <small>{{ candidatePoolLabel() }}</small>
-        </article>
-
-        <article class="glass-card summary-card">
-          <span>Burst coverage</span>
-          <strong>{{ current.coverage.burst.length }}</strong>
-          <small>{{ current.coverage.burst.join(' • ') || 'No burst tags' }}</small>
-        </article>
-      </section>
-
-      <section class="glass-card coverage-card">
-        <div class="slot-grid__header">
-          <h2>Coverage summary</h2>
-          <p>Σύντομο snapshot του damage και utility profile της ομάδας.</p>
-        </div>
-
-        <div class="coverage-groups coverage-groups--summary">
-          <div>
-            <span>Class request</span>
-            <div class="chip-row">
-              <small class="coverage-chip summary-status-chip">{{
-                selectedClassSummaryLabel()
-              }}</small>
-            </div>
-          </div>
-
-          <div>
-            <span>Type request</span>
-            <div class="chip-row">
-              <small class="coverage-chip summary-status-chip">{{
-                selectedTypeSummaryLabel()
-              }}</small>
-            </div>
-          </div>
-
-          <div>
-            <span>Leader scope</span>
-            <div class="chip-row">
-              <small class="coverage-chip summary-status-chip">{{
-                leaderCriteriaScopeSummaryLabel()
-              }}</small>
-            </div>
-          </div>
-
-          <div>
-            <span>Special support</span>
-            <div class="chip-row">
-              <small class="coverage-chip summary-status-chip">{{
-                specialSupportSummaryLabel()
-              }}</small>
-            </div>
-          </div>
-
-          <div>
-            <span>Ability requirements</span>
-            <div class="chip-row">
-              <small class="coverage-chip summary-status-chip">{{
-                requiredAbilitySummaryLabel()
-              }}</small>
-            </div>
-          </div>
-        </div>
-
-        <div class="coverage-groups">
-          <div>
-            <span>Leader source</span>
-            <div class="chip-row">
-              <small class="coverage-chip">{{ leaderCriteriaSourceLabel() }}</small>
-              <small class="coverage-chip">{{ leaderCriteriaLeadersLabel() }}</small>
-            </div>
-          </div>
-
-          <div>
-            <span>Leader classes</span>
-            <div class="chip-row">
-              <small class="coverage-chip">{{ leaderCriteriaClassesLabel() }}</small>
-            </div>
-          </div>
-
-          <div>
-            <span>Leader types</span>
-            <div class="chip-row">
-              <small class="coverage-chip">{{ leaderCriteriaTypesLabel() }}</small>
-            </div>
-          </div>
-
-          <div>
-            <span>Class coverage</span>
-            <div class="chip-row">
-              <small
-                *ngFor="let item of current.coverage.coveredSelectedClasses"
-                class="coverage-chip"
-                >{{ item }}</small
-              >
-              <small *ngIf="!current.coverage.coveredSelectedClasses.length" class="coverage-chip"
-                >No class coverage</small
-              >
-            </div>
-          </div>
-
-          <div>
-            <span>Type coverage</span>
-            <div class="chip-row">
-              <small
-                *ngFor="let item of current.coverage.coveredSelectedTypes"
-                class="coverage-chip"
-                >{{ item }}</small
-              >
-              <small *ngIf="!current.coverage.coveredSelectedTypes.length" class="coverage-chip"
-                >No type coverage</small
-              >
-            </div>
-          </div>
-
-          <div>
-            <span>Burst</span>
-            <div class="chip-row">
-              <small *ngFor="let item of current.coverage.burst" class="coverage-chip">{{
-                item
-              }}</small>
-            </div>
-          </div>
-
-          <div>
-            <span>Consistency</span>
-            <div class="chip-row">
-              <small *ngFor="let item of current.coverage.consistency" class="coverage-chip">{{
-                item
-              }}</small>
-            </div>
-          </div>
-
-          <div>
-            <span>Utility</span>
-            <div class="chip-row">
-              <small *ngFor="let item of current.coverage.utility" class="coverage-chip">{{
-                item
-              }}</small>
-            </div>
-          </div>
-
-          <div>
-            <span>Matched ability requirements</span>
-            <div class="chip-row">
-              <small *ngFor="let item of matchedRequiredAbilityLabels()" class="coverage-chip">{{
-                item
-              }}</small>
-              <small *ngIf="!matchedRequiredAbilityLabels().length" class="coverage-chip"
-                >No ability requirements</small
-              >
-            </div>
-          </div>
-
-          <div *ngIf="missingRequiredAbilityLabels().length">
-            <span>Missing ability requirements</span>
-            <div class="chip-row">
-              <small
-                *ngFor="let item of missingRequiredAbilityLabels()"
-                class="coverage-chip fallback-chip"
-                >{{ item }}</small
-              >
-            </div>
-          </div>
-        </div>
-
-        <div class="coverage-actions">
+            {{ t("actions.importPresetJson") }}
+          </ion-button>
           <ion-button
             fill="outline"
             color="warning"
-            class="download-team-button"
-            [disabled]="!canDownloadTeamJson()"
-            (click)="downloadTeamJson()"
+            class="download-preset-button"
+            [disabled]="!canDownloadSelectionJson()"
+            (click)="downloadSelectionJson()"
           >
-            {{ downloadTeamJsonLabel }}
+            {{ downloadSelectionJsonLabel() }}
           </ion-button>
         </div>
+
+        <section
+          *ngIf="presetImportFeedback() as presetFeedback"
+          class="preset-import-feedback"
+          [class.preset-import-feedback--success]="presetFeedback.tone === 'success'"
+          [class.preset-import-feedback--warning]="presetFeedback.tone === 'warning'"
+          [class.preset-import-feedback--error]="presetFeedback.tone === 'error'"
+        >
+          <ion-icon
+            [icon]="presetFeedback.tone === 'error' ? presetImportErrorIcon : presetImportSuccessIcon"
+          ></ion-icon>
+          <div>
+            <strong>{{ presetFeedback.title }}</strong>
+            <small *ngFor="let detail of presetFeedback.details">{{ detail }}</small>
+          </div>
+        </section>
+
+        <ion-button expand="block" color="warning" [disabled]="buildDisabled()" (click)="buildTeam()">
+          <ion-spinner *ngIf="building()" slot="start" name="crescent"></ion-spinner>
+          {{ buildButtonLabel() }}
+        </ion-button>
       </section>
 
-      <section *ngIf="current.shipSelection as shipSelection" class="glass-card result-ship-card">
-        <div class="result-ship-card__icon" aria-hidden="true">
-          <ion-icon [icon]="shipIcon"></ion-icon>
-        </div>
-
-        <div class="result-ship-card__copy">
-          <div class="result-ship-card__head">
-            <span class="role-pill">{{
-              shipSelection.source === 'manual' ? 'Manual ship' : 'Auto selected ship'
-            }}</span>
-            <strong>{{ shipSelection.ship.name }}</strong>
-          </div>
-
-          <p>{{ shipSelection.ship.description }}</p>
-
-          <div class="chip-row result-ship-chip-row">
-            <small *ngFor="let chip of shipSelection.reasonChips" class="coverage-chip reason-chip">
-              {{ chip }}
-            </small>
+      <section *ngIf="building()" class="loading-card glass-card">
+        <ion-spinner name="crescent" class="loading-card__spinner"></ion-spinner>
+        <div class="loading-card__copy" role="status" aria-live="polite">
+          <div class="loading-progress-list">
+            <div
+              *ngFor="let row of loadingProgressRows()"
+              class="loading-progress-row"
+              [class.loading-progress-row--visible]="row.visible"
+              [class.loading-progress-row--muted]="row.tone === 'secondary'"
+              [class.loading-progress-row--fallback]="row.tone === 'fallback'"
+            >
+              <span>{{ row.displayText }}</span>
+            </div>
           </div>
         </div>
+        <ion-button fill="outline" color="light" class="loading-card__action" (click)="cancelBuild()">
+          {{ cancelBuildButtonLabel() }}
+        </ion-button>
       </section>
 
-      <section class="result-grid">
-        <article *ngFor="let slot of teamSlots()" class="glass-card result-card">
-          <div class="result-card__head">
-            <span class="role-pill">{{ slot.roleLabel }}</span>
-            <span class="type-pill">{{ slot.character.type }}</span>
+      <section *ngIf="!building() && errorMessage()" class="loading-card glass-card empty-card">
+        <span>{{ errorMessage() }}</span>
+      </section>
+
+      <ng-container *ngIf="!building() && result() as current">
+        <section *ngIf="resultUsesFallback()" class="glass-card fallback-card">
+          <div class="slot-grid__header">
+            <h2>{{ t("fallback.title") }}</h2>
+            <p>{{ t("fallback.copy") }}</p>
           </div>
 
-          <div class="result-card__body">
-            <img [src]="slot.character.imageUrl" [alt]="slot.character.name" loading="lazy" />
-
-            <div class="result-card__copy">
-              <div class="result-card__title-row">
-                <strong>{{ slot.character.name }}</strong>
-                <button
-                  type="button"
-                  class="favorite-button"
-                  [attr.aria-label]="
-                    isFavorite(slot.character.id) ? 'Remove from favorites' : 'Add to favorites'
-                  "
-                  (click)="toggleFavorite(slot.character.id)"
-                >
-                  <ion-icon
-                    [icon]="isFavorite(slot.character.id) ? favoriteIcon : favoriteOutlineIcon"
-                  ></ion-icon>
-                </button>
-              </div>
-              <span
-                >{{ slot.character.primaryClass
-                }}<ng-container *ngIf="slot.character.secondaryClass">
-                  • {{ slot.character.secondaryClass }}</ng-container
-                ></span
-              >
-
+          <div class="coverage-groups">
+            <div *ngIf="droppedResultTypes().length">
+              <span>{{ t("fallback.droppedTypes") }}</span>
               <div class="chip-row">
-                <small *ngFor="let chip of slot.reasonChips" class="reason-chip">{{ chip }}</small>
-              </div>
-
-              <div class="chip-row result-ability-chip-row">
-                <small
-                  *ngFor="let abilityChip of slot.abilityChips"
-                  class="coverage-chip result-ability-chip"
-                  [class.result-ability-chip--matched]="abilityChip.highlighted"
-                  [class.result-ability-chip--empty]="abilityChip.empty"
-                >
-                  {{ abilityChip.label }}
+                <small *ngFor="let item of droppedResultTypes()" class="coverage-chip fallback-chip">
+                  {{ item }}
                 </small>
               </div>
+            </div>
 
-              <p>{{ slot.snippet }}</p>
-
-              <div class="result-card__actions">
-                <ion-button
-                  size="small"
-                  fill="clear"
-                  color="warning"
-                  class="detail-link-button"
-                  [routerLink]="getCharacterDetailLink(slot.character)"
+            <div *ngIf="droppedResultClasses().length">
+              <span>{{ t("fallback.droppedClasses") }}</span>
+              <div class="chip-row">
+                <small
+                  *ngFor="let item of droppedResultClasses()"
+                  class="coverage-chip fallback-chip"
                 >
-                  View details
-                </ion-button>
+                  {{ item }}
+                </small>
               </div>
             </div>
           </div>
-        </article>
-      </section>
-    </ng-container>
-  </div>
-</ion-content>
+        </section>
+
+        <section class="summary-grid">
+          <article class="glass-card summary-card">
+            <span>{{ t("summary.requestedClasses") }}</span>
+            <strong>{{ requestedResultClassesLabel() }}</strong>
+            <small>{{ t("summary.effectiveClasses", { value: effectiveResultClassesLabel() }) }}</small>
+          </article>
+
+          <article class="glass-card summary-card">
+            <span>{{ t("summary.requestedTypes") }}</span>
+            <strong>{{ requestedResultTypesLabel() }}</strong>
+            <small>{{ t("summary.effectiveTypes", { value: effectiveResultTypesLabel() }) }}</small>
+          </article>
+
+          <article class="glass-card summary-card">
+            <span>{{ t("summary.candidatePool") }}</span>
+            <strong>{{ current.candidateCount }}</strong>
+            <small>{{ candidatePoolLabel() }}</small>
+          </article>
+
+          <article class="glass-card summary-card">
+            <span>{{ t("summary.burstCoverage") }}</span>
+            <strong>{{ current.coverage.burst.length }}</strong>
+            <small>{{ current.coverage.burst.join(' • ') || t("summary.noBurstTags") }}</small>
+          </article>
+        </section>
+
+        <section class="glass-card coverage-card">
+          <div class="slot-grid__header">
+            <h2>{{ t("coverage.title") }}</h2>
+            <p>{{ t("coverage.copy") }}</p>
+          </div>
+
+          <div class="coverage-groups coverage-groups--summary">
+            <div>
+              <span>{{ t("coverage.groups.classRequest") }}</span>
+              <div class="chip-row">
+                <small class="coverage-chip summary-status-chip">{{ selectedClassSummaryLabel() }}</small>
+              </div>
+            </div>
+
+            <div>
+              <span>{{ t("coverage.groups.typeRequest") }}</span>
+              <div class="chip-row">
+                <small class="coverage-chip summary-status-chip">{{ selectedTypeSummaryLabel() }}</small>
+              </div>
+            </div>
+
+            <div>
+              <span>{{ t("coverage.groups.leaderScope") }}</span>
+              <div class="chip-row">
+                <small class="coverage-chip summary-status-chip">{{ leaderCriteriaScopeSummaryLabel() }}</small>
+              </div>
+            </div>
+
+            <div>
+              <span>{{ t("coverage.groups.specialSupport") }}</span>
+              <div class="chip-row">
+                <small class="coverage-chip summary-status-chip">{{ specialSupportSummaryLabel() }}</small>
+              </div>
+            </div>
+
+            <div>
+              <span>{{ t("coverage.groups.abilityRequirements") }}</span>
+              <div class="chip-row">
+                <small class="coverage-chip summary-status-chip">{{ requiredAbilitySummaryLabel() }}</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="coverage-groups">
+            <div>
+              <span>{{ t("coverage.groups.leaderSource") }}</span>
+              <div class="chip-row">
+                <small class="coverage-chip">{{ leaderCriteriaSourceLabel() }}</small>
+                <small class="coverage-chip">{{ leaderCriteriaLeadersLabel() }}</small>
+              </div>
+            </div>
+
+            <div>
+              <span>{{ t("coverage.groups.leaderClasses") }}</span>
+              <div class="chip-row">
+                <small class="coverage-chip">{{ leaderCriteriaClassesLabel() }}</small>
+              </div>
+            </div>
+
+            <div>
+              <span>{{ t("coverage.groups.leaderTypes") }}</span>
+              <div class="chip-row">
+                <small class="coverage-chip">{{ leaderCriteriaTypesLabel() }}</small>
+              </div>
+            </div>
+
+            <div>
+              <span>{{ t("coverage.groups.classCoverage") }}</span>
+              <div class="chip-row">
+                <small
+                  *ngFor="let item of current.coverage.coveredSelectedClasses"
+                  class="coverage-chip"
+                  >{{ item }}</small
+                >
+                <small *ngIf="!current.coverage.coveredSelectedClasses.length" class="coverage-chip"
+                  >{{ t("coverage.empty.noClassCoverage") }}</small
+                >
+              </div>
+            </div>
+
+            <div>
+              <span>{{ t("coverage.groups.typeCoverage") }}</span>
+              <div class="chip-row">
+                <small
+                  *ngFor="let item of current.coverage.coveredSelectedTypes"
+                  class="coverage-chip"
+                  >{{ item }}</small
+                >
+                <small *ngIf="!current.coverage.coveredSelectedTypes.length" class="coverage-chip"
+                  >{{ t("coverage.empty.noTypeCoverage") }}</small
+                >
+              </div>
+            </div>
+
+            <div>
+              <span>{{ t("coverage.groups.burst") }}</span>
+              <div class="chip-row">
+                <small *ngFor="let item of current.coverage.burst" class="coverage-chip">{{ item }}</small>
+              </div>
+            </div>
+
+            <div>
+              <span>{{ t("coverage.groups.consistency") }}</span>
+              <div class="chip-row">
+                <small *ngFor="let item of current.coverage.consistency" class="coverage-chip">{{ item }}</small>
+              </div>
+            </div>
+
+            <div>
+              <span>{{ t("coverage.groups.utility") }}</span>
+              <div class="chip-row">
+                <small *ngFor="let item of current.coverage.utility" class="coverage-chip">{{ item }}</small>
+              </div>
+            </div>
+
+            <div>
+              <span>{{ t("coverage.groups.matchedRequirements") }}</span>
+              <div class="chip-row">
+                <small *ngFor="let item of matchedRequiredAbilityLabels()" class="coverage-chip">{{ item }}</small>
+                <small *ngIf="!matchedRequiredAbilityLabels().length" class="coverage-chip"
+                  >{{ t("coverage.empty.noAbilityRequirements") }}</small
+                >
+              </div>
+            </div>
+
+            <div *ngIf="missingRequiredAbilityLabels().length">
+              <span>{{ t("coverage.groups.missingRequirements") }}</span>
+              <div class="chip-row">
+                <small
+                  *ngFor="let item of missingRequiredAbilityLabels()"
+                  class="coverage-chip fallback-chip"
+                  >{{ item }}</small
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="coverage-actions">
+            <ion-button
+              fill="outline"
+              color="warning"
+              class="download-team-button"
+              [disabled]="!canDownloadTeamJson()"
+              (click)="downloadTeamJson()"
+            >
+              {{ downloadTeamJsonLabel() }}
+            </ion-button>
+          </div>
+        </section>
+
+        <section *ngIf="current.shipSelection as shipSelection" class="glass-card result-ship-card">
+          <div class="result-ship-card__icon" aria-hidden="true">
+            <ion-icon [icon]="shipIcon"></ion-icon>
+          </div>
+
+          <div class="result-ship-card__copy">
+            <div class="result-ship-card__head">
+              <span class="role-pill">{{
+                shipSelection.source === 'manual'
+                  ? t("result.ship.manualSource")
+                  : t("result.ship.recommendedSource")
+              }}</span>
+              <strong>{{ shipSelection.ship.name }}</strong>
+            </div>
+
+            <p>{{ shipSelection.ship.description }}</p>
+
+            <div class="chip-row result-ship-chip-row">
+              <small *ngFor="let chip of shipSelection.reasonChips" class="coverage-chip reason-chip">
+                {{ chip }}
+              </small>
+            </div>
+          </div>
+        </section>
+
+        <section class="result-grid">
+          <article *ngFor="let slot of teamSlots()" class="glass-card result-card">
+            <div class="result-card__head">
+              <span class="role-pill">{{ slot.roleLabel }}</span>
+              <span class="type-pill">{{ slot.character.type }}</span>
+            </div>
+
+            <div class="result-card__body">
+              <img [src]="slot.character.imageUrl" [alt]="slot.character.name" loading="lazy" />
+
+              <div class="result-card__copy">
+                <div class="result-card__title-row">
+                  <strong>{{ slot.character.name }}</strong>
+                  <button
+                    type="button"
+                    class="favorite-button"
+                    [attr.aria-label]="
+                      isFavorite(slot.character.id)
+                        ? t('result.favorite.removeAria')
+                        : t('result.favorite.addAria')
+                    "
+                    (click)="toggleFavorite(slot.character.id)"
+                  >
+                    <ion-icon
+                      [icon]="isFavorite(slot.character.id) ? favoriteIcon : favoriteOutlineIcon"
+                    ></ion-icon>
+                  </button>
+                </div>
+                <span
+                  >{{ slot.character.primaryClass
+                  }}<ng-container *ngIf="slot.character.secondaryClass">
+                    • {{ slot.character.secondaryClass }}</ng-container
+                  ></span
+                >
+
+                <div class="chip-row">
+                  <small *ngFor="let chip of slot.reasonChips" class="reason-chip">{{ chip }}</small>
+                </div>
+
+                <div class="chip-row result-ability-chip-row">
+                  <small
+                    *ngFor="let abilityChip of slot.abilityChips"
+                    class="coverage-chip result-ability-chip"
+                    [class.result-ability-chip--matched]="abilityChip.highlighted"
+                    [class.result-ability-chip--empty]="abilityChip.empty"
+                  >
+                    {{ abilityChip.label }}
+                  </small>
+                </div>
+
+                <p>{{ slot.snippet }}</p>
+
+                <div class="result-card__actions">
+                  <ion-button
+                    size="small"
+                    fill="clear"
+                    color="warning"
+                    class="detail-link-button"
+                    [routerLink]="getCharacterDetailLink(slot.character)"
+                  >
+                    {{ "common.actions.viewDetails" | transloco }}
+                  </ion-button>
+                </div>
+              </div>
+            </div>
+          </article>
+        </section>
+      </ng-container>
+    </div>
+  </ion-content>
+</ng-container>

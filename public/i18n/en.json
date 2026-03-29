@@ -1,0 +1,306 @@
+{
+  "abilityRequirements": {
+    "actions": {
+      "addRequirement": "Missing value for 'abilityRequirements.actions.addRequirement'",
+      "clearRequirements": "Missing value for 'abilityRequirements.actions.clearRequirements'",
+      "removeRequirement": "Missing value for 'abilityRequirements.actions.removeRequirement'"
+    },
+    "configuredRows": "Missing value for 'abilityRequirements.configuredRows'",
+    "copy": "Missing value for 'abilityRequirements.copy'",
+    "emptyCatalog": "Missing value for 'abilityRequirements.emptyCatalog'",
+    "emptyCatalogSuffix": "Missing value for 'abilityRequirements.emptyCatalogSuffix'",
+    "fields": {
+      "ability": "Missing value for 'abilityRequirements.fields.ability'",
+      "characters": "Missing value for 'abilityRequirements.fields.characters'",
+      "slotTokens": "Missing value for 'abilityRequirements.fields.slotTokens'",
+      "turns": "Missing value for 'abilityRequirements.fields.turns'"
+    },
+    "placeholders": {
+      "selectAbility": "Missing value for 'abilityRequirements.placeholders.selectAbility'",
+      "selectSlotTokens": "Missing value for 'abilityRequirements.placeholders.selectSlotTokens'"
+    },
+    "title": "Missing value for 'abilityRequirements.title'"
+  },
+  "actions": {
+    "importPresetJson": "Missing value for 'actions.importPresetJson'"
+  },
+  "assign": {
+    "addFavoriteAria": "Missing value for 'assign.addFavoriteAria'",
+    "removeFavoriteAria": "Missing value for 'assign.removeFavoriteAria'",
+    "searchPlaceholder": "Missing value for 'assign.searchPlaceholder'",
+    "subtitle": "Missing value for 'assign.subtitle'",
+    "title": "Missing value for 'assign.title'"
+  },
+  "common": {
+    "actions": {
+      "add": "Add",
+      "assign": "Assign",
+      "cancel": "Cancel",
+      "clear": "Clear",
+      "close": "Close",
+      "delete": "Delete",
+      "download": "Download",
+      "export": "Export",
+      "import": "Import",
+      "load": "Load",
+      "remove": "Remove",
+      "save": "Save",
+      "select": "Select",
+      "viewDetails": "View details"
+    },
+    "defaults": {
+      "newCrew": "New Crew",
+      "noNotesYet": "No notes yet.",
+      "none": "None",
+      "untitledCrew": "Untitled Crew"
+    },
+    "languages": {
+      "el": "Greek",
+      "en": "English"
+    }
+  },
+  "coverage": {
+    "copy": "Missing value for 'coverage.copy'",
+    "empty": {
+      "noAbilityRequirements": "Missing value for 'coverage.empty.noAbilityRequirements'",
+      "noClassCoverage": "Missing value for 'coverage.empty.noClassCoverage'",
+      "noTypeCoverage": "Missing value for 'coverage.empty.noTypeCoverage'"
+    },
+    "groups": {
+      "abilityRequirements": "Missing value for 'coverage.groups.abilityRequirements'",
+      "burst": "Missing value for 'coverage.groups.burst'",
+      "classCoverage": "Missing value for 'coverage.groups.classCoverage'",
+      "classRequest": "Missing value for 'coverage.groups.classRequest'",
+      "consistency": "Missing value for 'coverage.groups.consistency'",
+      "leaderClasses": "Missing value for 'coverage.groups.leaderClasses'",
+      "leaderScope": "Missing value for 'coverage.groups.leaderScope'",
+      "leaderSource": "Missing value for 'coverage.groups.leaderSource'",
+      "leaderTypes": "Missing value for 'coverage.groups.leaderTypes'",
+      "matchedRequirements": "Missing value for 'coverage.groups.matchedRequirements'",
+      "missingRequirements": "Missing value for 'coverage.groups.missingRequirements'",
+      "specialSupport": "Missing value for 'coverage.groups.specialSupport'",
+      "typeCoverage": "Missing value for 'coverage.groups.typeCoverage'",
+      "typeRequest": "Missing value for 'coverage.groups.typeRequest'",
+      "utility": "Missing value for 'coverage.groups.utility'"
+    },
+    "title": "Missing value for 'coverage.title'"
+  },
+  "empty": "Missing value for 'empty'",
+  "fallback": {
+    "copy": "Missing value for 'fallback.copy'",
+    "droppedClasses": "Missing value for 'fallback.droppedClasses'",
+    "droppedTypes": "Missing value for 'fallback.droppedTypes'",
+    "title": "Missing value for 'fallback.title'"
+  },
+  "fallbackTitle": "Missing value for 'fallbackTitle'",
+  "filters": {
+    "active": "Missing value for 'filters.active'",
+    "class": {
+      "label": "Missing value for 'filters.class.label'",
+      "placeholder": "Missing value for 'filters.class.placeholder'"
+    },
+    "classes": {
+      "label": "Missing value for 'filters.classes.label'",
+      "placeholder": "Missing value for 'filters.classes.placeholder'"
+    },
+    "favoritesOnly": {
+      "label": "Missing value for 'filters.favoritesOnly.label'"
+    },
+    "type": {
+      "label": "Missing value for 'filters.type.label'",
+      "placeholder": "Missing value for 'filters.type.placeholder'"
+    },
+    "types": {
+      "label": "Missing value for 'filters.types.label'",
+      "placeholder": "Missing value for 'filters.types.placeholder'"
+    }
+  },
+  "form": {
+    "eyebrow": "Missing value for 'form.eyebrow'",
+    "noShip": "Missing value for 'form.noShip'",
+    "notesLabel": "Missing value for 'form.notesLabel'",
+    "saveOffline": "Missing value for 'form.saveOffline'",
+    "shipLabel": "Missing value for 'form.shipLabel'",
+    "teamNameLabel": "Missing value for 'form.teamNameLabel'"
+  },
+  "hero": {
+    "addFavorite": "Missing value for 'hero.addFavorite'",
+    "copy": "Missing value for 'hero.copy'",
+    "eyebrow": "Missing value for 'hero.eyebrow'",
+    "favorited": "Missing value for 'hero.favorited'",
+    "favoritesCount": "Missing value for 'hero.favoritesCount'",
+    "meta": {
+      "availableClasses": "Missing value for 'hero.meta.availableClasses'"
+    },
+    "openTeamBuilder": "Missing value for 'hero.openTeamBuilder'",
+    "summary": "Missing value for 'hero.summary'",
+    "title": "Missing value for 'hero.title'",
+    "typesCount": "Missing value for 'hero.typesCount'"
+  },
+  "import": {
+    "andMore": "Missing value for 'import.andMore'",
+    "chooseAnotherFile": "Missing value for 'import.chooseAnotherFile'",
+    "copy": "Missing value for 'import.copy'",
+    "done": "Missing value for 'import.done'",
+    "dropzone": {
+      "subtitle": "Missing value for 'import.dropzone.subtitle'",
+      "title": "Missing value for 'import.dropzone.title'"
+    },
+    "eyebrow": "Missing value for 'import.eyebrow'",
+    "ignoredDuplicates": "Missing value for 'import.ignoredDuplicates'",
+    "importFavorites": "Missing value for 'import.importFavorites'",
+    "ready": "Missing value for 'import.ready'",
+    "removedDuplicates": "Missing value for 'import.removedDuplicates'",
+    "stats": {
+      "added": "Missing value for 'import.stats.added'",
+      "alreadyFavorited": "Missing value for 'import.stats.alreadyFavorited'",
+      "matched": "Missing value for 'import.stats.matched'",
+      "unknownIds": "Missing value for 'import.stats.unknownIds'"
+    },
+    "summary": {
+      "copy": "Missing value for 'import.summary.copy'",
+      "title": "Missing value for 'import.summary.title'"
+    },
+    "title": "Missing value for 'import.title'"
+  },
+  "intro": {
+    "copy": "Missing value for 'intro.copy'",
+    "eyebrow": "Missing value for 'intro.eyebrow'",
+    "title": "Missing value for 'intro.title'"
+  },
+  "language": {
+    "helper": "Missing value for 'language.helper'",
+    "label": "Missing value for 'language.label'"
+  },
+  "loadMore": "Missing value for 'loadMore'",
+  "loading": "Missing value for 'loading'",
+  "manual": {
+    "actions": {
+      "clearAll": "Missing value for 'manual.actions.clearAll'",
+      "lock": "Missing value for 'manual.actions.lock'",
+      "swapRoles": "Missing value for 'manual.actions.swapRoles'"
+    },
+    "applied": {
+      "class": "Missing value for 'manual.applied.class'",
+      "type": "Missing value for 'manual.applied.type'"
+    },
+    "copy": "Missing value for 'manual.copy'",
+    "empty": {
+      "loadingCandidates": "Missing value for 'manual.empty.loadingCandidates'",
+      "noCandidates": "Missing value for 'manual.empty.noCandidates'"
+    },
+    "leaders": {
+      "actions": {
+        "makeCaptain": "Missing value for 'manual.leaders.actions.makeCaptain'",
+        "removeLeader": "Missing value for 'manual.leaders.actions.removeLeader'",
+        "setLeader": "Missing value for 'manual.leaders.actions.setLeader'"
+      },
+      "title": "Missing value for 'manual.leaders.title'"
+    },
+    "modes": {
+      "characters": "Missing value for 'manual.modes.characters'",
+      "ships": "Missing value for 'manual.modes.ships'"
+    },
+    "searchPlaceholder": {
+      "characters": "Missing value for 'manual.searchPlaceholder.characters'"
+    },
+    "sync": {
+      "eyebrow": "Missing value for 'manual.sync.eyebrow'",
+      "title": "Missing value for 'manual.sync.title'"
+    },
+    "title": "Missing value for 'manual.title'"
+  },
+  "packState": {
+    "installed": "Missing value for 'packState.installed'",
+    "notInstalled": "Missing value for 'packState.notInstalled'"
+  },
+  "preview": {
+    "ariaLabel": "Missing value for 'preview.ariaLabel'",
+    "emptySlotAlt": "Missing value for 'preview.emptySlotAlt'",
+    "emptySlotAria": "Missing value for 'preview.emptySlotAria'",
+    "viewDetailsAria": "Missing value for 'preview.viewDetailsAria'"
+  },
+  "release": {
+    "copy": "Missing value for 'release.copy'"
+  },
+  "result": {
+    "favorite": {
+      "addAria": "Missing value for 'result.favorite.addAria'",
+      "removeAria": "Missing value for 'result.favorite.removeAria'"
+    },
+    "ship": {
+      "manualSource": "Missing value for 'result.ship.manualSource'",
+      "recommendedSource": "Missing value for 'result.ship.recommendedSource'"
+    }
+  },
+  "saved": {
+    "subtitle": "Missing value for 'saved.subtitle'",
+    "title": "Missing value for 'saved.title'"
+  },
+  "search": {
+    "placeholder": "Missing value for 'search.placeholder'"
+  },
+  "sections": {
+    "captainAbility": "Missing value for 'sections.captainAbility'",
+    "commands": "Missing value for 'sections.commands'",
+    "limitBreak": "Missing value for 'sections.limitBreak'",
+    "packStatus": "Missing value for 'sections.packStatus'",
+    "potentialAbilities": "Missing value for 'sections.potentialAbilities'",
+    "releaseNote": "Missing value for 'sections.releaseNote'",
+    "rumbleData": "Missing value for 'sections.rumbleData'",
+    "sailorAbilities": "Missing value for 'sections.sailorAbilities'",
+    "special": "Missing value for 'sections.special'",
+    "supportData": "Missing value for 'sections.supportData'"
+  },
+  "ships": {
+    "emptySearch": "Missing value for 'ships.emptySearch'",
+    "manualBadge": "Missing value for 'ships.manualBadge'",
+    "searchPlaceholder": "Missing value for 'ships.searchPlaceholder'"
+  },
+  "slots": {
+    "empty": "Missing value for 'slots.empty'",
+    "emptyAlt": "Missing value for 'slots.emptyAlt'",
+    "slotLabel": "Missing value for 'slots.slotLabel'",
+    "subtitle": "Missing value for 'slots.subtitle'",
+    "tapToAssign": "Missing value for 'slots.tapToAssign'",
+    "title": "Missing value for 'slots.title'"
+  },
+  "stats": {
+    "atk": "Missing value for 'stats.atk'",
+    "hp": "Missing value for 'stats.hp'",
+    "maxAtk": "Missing value for 'stats.maxAtk'",
+    "maxHp": "Missing value for 'stats.maxHp'",
+    "maxRcv": "Missing value for 'stats.maxRcv'",
+    "rcv": "Missing value for 'stats.rcv'"
+  },
+  "summary": {
+    "burstCoverage": "Missing value for 'summary.burstCoverage'",
+    "candidatePool": "Missing value for 'summary.candidatePool'",
+    "effectiveClasses": "Missing value for 'summary.effectiveClasses'",
+    "effectiveTypes": "Missing value for 'summary.effectiveTypes'",
+    "noBurstTags": "Missing value for 'summary.noBurstTags'",
+    "requestedClasses": "Missing value for 'summary.requestedClasses'",
+    "requestedTypes": "Missing value for 'summary.requestedTypes'"
+  },
+  "tabs": {
+    "auto": "Auto",
+    "characters": "Characters",
+    "offline": "Offline",
+    "savedTeams": "Saved Teams",
+    "team": "Team"
+  },
+  "title": "Missing value for 'title'",
+  "tools": {
+    "copy": "Missing value for 'tools.copy'",
+    "export": "Missing value for 'tools.export'",
+    "import": "Missing value for 'tools.import'",
+    "title": "Missing value for 'tools.title'"
+  },
+  "total": "Missing value for 'total'",
+  "totals": {
+    "atk": "Missing value for 'totals.atk'",
+    "cost": "Missing value for 'totals.cost'",
+    "hp": "Missing value for 'totals.hp'",
+    "rcv": "Missing value for 'totals.rcv'"
+  }
+}

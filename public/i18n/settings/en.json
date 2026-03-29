@@ -1,0 +1,24 @@
+{
+  "intro": {
+    "eyebrow": "Manual updates only",
+    "title": "This build expects local OPTC imports, not live scraping at runtime.",
+    "copy": "Source of truth is the optc-db GitHub repo. Run the import commands below whenever you want a fresh local dataset or image pack."
+  },
+  "language": {
+    "label": "Language",
+    "helper": "Change the app language live and keep it persisted on this device."
+  },
+  "packState": {
+    "installed": "Installed",
+    "notInstalled": "Not installed"
+  },
+  "sections": {
+    "commands": "Import commands",
+    "packStatus": "Pack status",
+    "releaseNote": "Release note"
+  },
+  "title": "Offline Packs",
+  "release": {
+    "copy": "The technical pipeline is offline-ready, but redistribution of game art remains a separate legal/product decision before any public store release."
+  }
+}
