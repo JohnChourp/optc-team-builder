@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { RouterLink } from "@angular/router";
 import {
   IonButton,
   IonContent,
@@ -43,6 +44,7 @@ import { UserStateService } from "../../core/services/user-state.service";
     IonTextarea,
     IonTitle,
     IonToolbar,
+    RouterLink,
   ],
   templateUrl: "./team-builder.page.html",
   styleUrl: "./team-builder.page.scss",
@@ -149,6 +151,10 @@ export class TeamBuilderPage implements OnInit {
 
   public isFavorite(characterId: number): boolean {
     return this.favoriteIds().includes(characterId);
+  }
+
+  public getCharacterDetailLink(character: CharacterListItem | null): string[] | null {
+    return character ? ["/characters", character.id.toString()] : null;
   }
 
   private async refreshCandidateCharacters(searchTerm: string): Promise<void> {

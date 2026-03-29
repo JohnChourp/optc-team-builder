@@ -70,19 +70,36 @@
       </div>
 
       <div class="slots">
-        <button
-          type="button"
+        <article
           class="slot-card"
           *ngFor="let slot of slotCharacters(); let index = index"
           [class.active]="selectedSlotIndex() === index"
-          (click)="selectSlot(index)"
         >
-          <img [src]="slot?.imageUrl ?? 'assets/placeholders/character-card.svg'" [alt]="slot?.name ?? 'Empty slot'" />
-          <strong>Slot {{ index + 1 }}</strong>
-          <span>{{ slot?.name ?? 'Empty' }}</span>
-          <small *ngIf="slot">{{ slot.type }} • {{ slot.primaryClass }}</small>
-          <small *ngIf="!slot">Tap to assign</small>
-        </button>
+          <button type="button" class="slot-card__select" (click)="selectSlot(index)">
+            <img
+              [src]="slot?.imageUrl ?? 'assets/placeholders/character-card.svg'"
+              [alt]="slot?.name ?? 'Empty slot'"
+            />
+            <div class="slot-card__copy">
+              <strong>Slot {{ index + 1 }}</strong>
+              <span>{{ slot?.name ?? 'Empty' }}</span>
+              <small *ngIf="slot">{{ slot.type }} • {{ slot.primaryClass }}</small>
+              <small *ngIf="!slot">Tap to assign</small>
+            </div>
+          </button>
+
+          <div *ngIf="slot" class="slot-card__actions">
+            <ion-button
+              size="small"
+              fill="clear"
+              color="warning"
+              class="slot-card__detail-button"
+              [routerLink]="getCharacterDetailLink(slot)"
+            >
+              View details
+            </ion-button>
+          </div>
+        </article>
       </div>
     </section>
 

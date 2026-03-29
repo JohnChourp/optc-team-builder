@@ -66,14 +66,11 @@
 
 .slot-card {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
-  gap: 12px;
+  gap: 10px;
   padding: 14px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.03);
-  color: #f8fbff;
-  text-align: left;
 }
 
 .slot-card.active {
@@ -81,17 +78,44 @@
   box-shadow: 0 0 0 1px rgba(245, 200, 76, 0.16);
 }
 
-.slot-card img {
+.slot-card__select {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #f8fbff;
+  text-align: left;
+}
+
+.slot-card__select img {
   width: 64px;
   height: 64px;
   border-radius: 16px;
   object-fit: cover;
 }
 
-.slot-card strong,
-.slot-card span,
-.slot-card small {
-  grid-column: 2;
+.slot-card__copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.slot-card__copy strong,
+.slot-card__copy span,
+.slot-card__copy small {
+  display: block;
+}
+
+.slot-card__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.slot-card__detail-button {
+  margin: 0;
 }
 
 .candidate-list {

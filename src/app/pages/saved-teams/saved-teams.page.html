@@ -22,16 +22,37 @@
       <p>No saved teams yet.</p>
     </section>
 
-    <section *ngIf="!loading() && savedTeams().length" class="glass-card section-card">
+    <section *ngIf="!loading() && savedTeamCards().length" class="glass-card section-card">
       <div class="section-head">
         <h2>Saved Teams</h2>
         <span>{{ savedTeams().length }} total</span>
       </div>
 
       <div class="saved-team-list">
-        <article *ngFor="let team of savedTeams()">
-          <strong>{{ team.name }}</strong>
-          <p>{{ team.notes || "No notes yet." }}</p>
+        <article *ngFor="let teamCard of savedTeamCards()">
+          <div class="saved-team-copy">
+            <strong>{{ teamCard.team.name }}</strong>
+            <p>{{ teamCard.team.notes || "No notes yet." }}</p>
+          </div>
+
+          <div class="saved-team-preview" aria-label="Saved team character slots">
+            <ng-container *ngFor="let slot of teamCard.slots; let index = index">
+              <a
+                *ngIf="slot as currentSlot; else emptySavedTeamSlot"
+                class="saved-team-slot saved-team-slot--filled"
+                [routerLink]="getCharacterDetailLink(currentSlot)"
+                [attr.aria-label]="'View details for ' + currentSlot.name + ' in slot ' + (index + 1)"
+              >
+                <img [src]="currentSlot.imageUrl" [alt]="currentSlot.name" loading="lazy" />
+              </a>
+
+              <ng-template #emptySavedTeamSlot>
+                <span class="saved-team-slot" [attr.aria-label]="'Empty slot ' + (index + 1)">
+                  <img src="assets/placeholders/character-card.svg" alt="Empty slot" loading="lazy" />
+                </span>
+              </ng-template>
+            </ng-container>
+          </div>
         </article>
       </div>
     </section>

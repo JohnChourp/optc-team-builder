@@ -499,6 +499,17 @@
   padding: 14px;
 }
 
+.manual-candidate-actions {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.manual-candidate-action-button,
+.detail-link-button {
+  margin: 0;
+}
+
 .manual-ability-chip {
   background: rgba(255, 255, 255, 0.08);
   color: rgba(248, 251, 255, 0.88);
@@ -559,6 +570,12 @@
   color: rgba(248, 251, 255, 0.68);
   font-size: 0.78rem;
   line-height: 1.35;
+}
+
+.leader-role-actions {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
 }
 
 .leader-role-button {
@@ -775,6 +792,11 @@
 .result-card__copy p {
   font-size: 0.9rem;
   line-height: 1.55;
+}
+
+.result-card__actions {
+  display: flex;
+  justify-content: flex-start;
 }
 
 .loading-card {

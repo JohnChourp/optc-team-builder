@@ -488,17 +488,29 @@
                   {{ leaderRoleMap()[character.id] }}
                 </small>
               </div>
-              <ion-button
-                size="small"
-                fill="outline"
-                color="light"
-                [disabled]="
-                  building() || (!isLeaderCharacter(character.id) && leaderLimitReached())
-                "
-                (click)="toggleLeaderCharacter(character.id)"
-              >
-                {{ isLeaderCharacter(character.id) ? 'Remove leader' : 'Set leader' }}
-              </ion-button>
+              <div class="manual-candidate-actions">
+                <ion-button
+                  size="small"
+                  fill="clear"
+                  color="warning"
+                  class="detail-link-button"
+                  [routerLink]="getCharacterDetailLink(character)"
+                >
+                  View details
+                </ion-button>
+                <ion-button
+                  size="small"
+                  fill="outline"
+                  color="light"
+                  class="manual-candidate-action-button"
+                  [disabled]="
+                    building() || (!isLeaderCharacter(character.id) && leaderLimitReached())
+                  "
+                  (click)="toggleLeaderCharacter(character.id)"
+                >
+                  {{ isLeaderCharacter(character.id) ? 'Remove leader' : 'Set leader' }}
+                </ion-button>
+              </div>
             </article>
           </div>
 
@@ -513,14 +525,25 @@
                 <strong>{{ leader.name }}</strong>
                 <span>{{ leaderRoleMap()[leader.id] }}</span>
               </div>
-              <button
-                type="button"
-                class="leader-role-button"
-                [disabled]="building() || isCaptainLeader(leader.id)"
-                (click)="setCaptainLeader(leader.id)"
-              >
-                Make Captain
-              </button>
+              <div class="leader-role-actions">
+                <ion-button
+                  size="small"
+                  fill="clear"
+                  color="warning"
+                  class="detail-link-button"
+                  [routerLink]="getCharacterDetailLink(leader)"
+                >
+                  View details
+                </ion-button>
+                <button
+                  type="button"
+                  class="leader-role-button"
+                  [disabled]="building() || isCaptainLeader(leader.id)"
+                  (click)="setCaptainLeader(leader.id)"
+                >
+                  Make Captain
+                </button>
+              </div>
             </article>
           </div>
         </section>
@@ -877,6 +900,18 @@
               </div>
 
               <p>{{ slot.snippet }}</p>
+
+              <div class="result-card__actions">
+                <ion-button
+                  size="small"
+                  fill="clear"
+                  color="warning"
+                  class="detail-link-button"
+                  [routerLink]="getCharacterDetailLink(slot.character)"
+                >
+                  View details
+                </ion-button>
+              </div>
             </div>
           </div>
         </article>

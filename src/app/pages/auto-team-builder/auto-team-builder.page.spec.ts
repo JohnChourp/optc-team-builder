@@ -1,5 +1,6 @@
 import '@angular/compiler';
 import { signal } from '@angular/core';
+import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
@@ -126,6 +127,15 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     ).toBe('Ignore Normal Attack Only (NAO) • Captain');
   });
 
+  it('returns detail links only for selected characters', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+
+    expect(page.getCharacterDetailLink({ id: 404 } as never)).toEqual(['/characters', '404']);
+    expect(page.getCharacterDetailLink(null)).toBeNull();
+  });
+
   it('formats selectable debuff pain coverage with a dedicated label', async () => {
     const { page } = await createPage();
 
@@ -228,6 +238,15 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     await page.ionViewWillEnter();
 
     expect(page.requireAllSpecialsSupportTeam()).toBe(false);
+  });
+
+  it('renders detail actions only on selected leader and result cards', async () => {
+    const template = readFileSync(new URL('./auto-team-builder.page.html', import.meta.url), 'utf8');
+
+    expect(template.match(/View details/g)).toHaveLength(3);
+    expect(template).toContain("[routerLink]=\"getCharacterDetailLink(character)\"");
+    expect(template).toContain("[routerLink]=\"getCharacterDetailLink(leader)\"");
+    expect(template).toContain("[routerLink]=\"getCharacterDetailLink(slot.character)\"");
   });
 
   it('updates build progress from the service execution callback', async () => {

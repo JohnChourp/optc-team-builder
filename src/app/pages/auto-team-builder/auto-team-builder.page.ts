@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import {
   IonButton,
   IonContent,
@@ -134,6 +135,7 @@ interface PresetImportFeedback {
     IonTitle,
     IonToggle,
     IonToolbar,
+    RouterLink,
   ],
   templateUrl: './auto-team-builder.page.html',
   styleUrl: './auto-team-builder.page.scss',
@@ -1046,6 +1048,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public isFavorite(characterId: number): boolean {
     return this.favoriteCharacterIds().includes(characterId);
+  }
+
+  public getCharacterDetailLink(
+    character: Pick<CharacterListItem, 'id'> | null | undefined,
+  ): string[] | null {
+    return character ? ['/characters', character.id.toString()] : null;
   }
 
   public async buildTeam(): Promise<void> {

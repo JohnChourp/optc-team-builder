@@ -56,6 +56,53 @@
   background: rgba(255, 255, 255, 0.03);
 }
 
+.saved-team-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.saved-team-preview {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.saved-team-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.saved-team-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.saved-team-slot--filled {
+  transition:
+    transform 120ms ease,
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+.saved-team-slot--filled:hover {
+  transform: translateY(-1px);
+  border-color: rgba(245, 200, 76, 0.48);
+  background: rgba(245, 200, 76, 0.12);
+}
+
+.saved-team-slot--filled:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
+}
+
 .loading-card {
   display: inline-flex;
   align-items: center;
