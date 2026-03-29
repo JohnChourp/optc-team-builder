@@ -6,9 +6,9 @@ import {
   buildOptcbxFavoritesExportFilename,
   buildOptcbxFavoritesExportPayload,
   downloadOptcbxFavoritesExport,
-} from "./collection-export.utils";
+} from "./characters-favorites.utils";
 
-describe("Collection favorites export helpers", () => {
+describe("Characters favorites export helpers", () => {
   it("builds an optcbx-compatible payload with unresolved id fallback", () => {
     const payload = buildOptcbxFavoritesExportPayload(
       [103, 101, 103, 999, 0, -2],

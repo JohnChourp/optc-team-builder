@@ -1,0 +1,21 @@
+import { describe, expect, it } from "vitest";
+
+import { routes } from "./app.routes";
+
+describe("app routes", () => {
+  it("registers the saved teams tab route", () => {
+    const tabsRoute = routes.find((route) => route.path === "tabs");
+    const savedTeamsRoute = tabsRoute?.children?.find((route) => route.path === "saved-teams");
+
+    expect(savedTeamsRoute).toBeDefined();
+    expect(savedTeamsRoute?.loadComponent).toBeTypeOf("function");
+  });
+
+  it("redirects the legacy collection tab route to saved teams", () => {
+    const tabsRoute = routes.find((route) => route.path === "tabs");
+    const collectionRoute = tabsRoute?.children?.find((route) => route.path === "collection");
+
+    expect(collectionRoute?.redirectTo).toBe("saved-teams");
+    expect(collectionRoute?.pathMatch).toBe("full");
+  });
+});

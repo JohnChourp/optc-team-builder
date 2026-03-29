@@ -13,6 +13,6 @@ export class TabsPage {
   public readonly charactersIcon = gridOutline;
   public readonly teamIcon = peopleOutline;
   public readonly autoTeamIcon = flashOutline;
-  public readonly collectionIcon = albumsOutline;
+  public readonly savedTeamsIcon = albumsOutline;
   public readonly settingsIcon = cogOutline;
 }

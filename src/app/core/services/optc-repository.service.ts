@@ -66,6 +66,18 @@ export class OptcRepositoryService {
   }
 
   public async searchCharacters(query: CharacterSearchQuery): Promise<CharacterListItem[]> {
+    const allowedCharacterIds = [
+      ...new Set(
+        (query.allowedCharacterIds ?? []).filter(
+          (characterId) => Number.isInteger(characterId) && characterId > 0,
+        ),
+      ),
+    ];
+    const allowedCharacterClause = allowedCharacterIds.length
+      ? `\n          AND id IN (${allowedCharacterIds.map(() => '?').join(',')})`
+      : query.allowedCharacterIds
+        ? '\n          AND 1 = 0'
+        : '';
     const rows = await this.selectAll(
       `
         SELECT
@@ -93,6 +105,7 @@ export class OptcRepositoryService {
         WHERE (? = '' OR search_text LIKE '%' || ? || '%')
           AND (? = '' OR type LIKE '%' || ? || '%')
           AND (? = '' OR primary_class = ? OR secondary_class = ?)
+          ${allowedCharacterClause}
         ORDER BY stars DESC, id DESC
         LIMIT ? OFFSET ?
       `,
@@ -104,6 +117,7 @@ export class OptcRepositoryService {
         query.classFilter,
         query.classFilter,
         query.classFilter,
+        ...allowedCharacterIds,
         query.limit,
         query.offset,
       ],

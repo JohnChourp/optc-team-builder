@@ -27,9 +27,14 @@ export const routes: Routes = [
           import("./pages/auto-team-builder/auto-team-builder.page").then((module) => module.AutoTeamBuilderPage),
       },
       {
-        path: "collection",
+        path: "saved-teams",
         loadComponent: () =>
-          import("./pages/collection/collection.page").then((module) => module.CollectionPage),
+          import("./pages/saved-teams/saved-teams.page").then((module) => module.SavedTeamsPage),
+      },
+      {
+        path: "collection",
+        pathMatch: "full",
+        redirectTo: "saved-teams",
       },
       {
         path: "settings",

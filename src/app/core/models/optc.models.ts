@@ -114,6 +114,7 @@ export interface CharacterSearchQuery {
   searchTerm: string;
   typeFilter: string;
   classFilter: string;
+  allowedCharacterIds?: number[];
   limit: number;
   offset: number;
 }

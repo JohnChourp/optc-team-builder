@@ -1,0 +1,170 @@
+import "@angular/compiler";
+import { signal } from "@angular/core";
+import { readFileSync } from "node:fs";
+import { describe, expect, it, vi } from "vitest";
+
+import { type OptcbxParsedImport } from "../../core/models/optcbx-import.models";
+import { CharactersPage } from "./characters.page";
+
+vi.mock("@ionic/angular/standalone", () => ({
+  IonButton: class {},
+  IonContent: class {},
+  IonHeader: class {},
+  IonIcon: class {},
+  IonInput: class {},
+  IonModal: class {},
+  IonSearchbar: class {},
+  IonSpinner: class {},
+  IonToggle: class {},
+  IonTitle: class {},
+  IonToolbar: class {},
+}));
+
+describe("CharactersPage favorites tools", () => {
+  it("disables favorites export when there are no favorites", () => {
+    const { page } = createPage();
+
+    expect(page.canDownloadFavoritesExport()).toBe(false);
+  });
+
+  it("opens and closes the favorites import modal with reset state", () => {
+    const { page } = createPage();
+
+    page.importFileName.set("favorites.json");
+    page.importErrorMessage.set("bad file");
+    page.openImportModal();
+
+    expect(page.importModalOpen()).toBe(true);
+    expect(page.importFileName()).toBe("");
+
+    page.importFileName.set("favorites.json");
+    page.closeImportModal();
+
+    expect(page.importModalOpen()).toBe(false);
+    expect(page.importFileName()).toBe("");
+  });
+
+  it("imports favorites into user state", async () => {
+    const parsedImport: OptcbxParsedImport = {
+      importedNumbers: [1001, 1002],
+      duplicatesRemoved: 0,
+    };
+    const { page, optcbxImport, userState } = createPage({
+      favoriteIds: [1003],
+    });
+
+    optcbxImport.buildMergeImportResult.mockResolvedValue({
+      matchedIds: [1001, 1002],
+      unmatchedIds: [],
+      duplicatesRemoved: 0,
+      addedCount: 2,
+      alreadyFavoritedCount: 0,
+    });
+    optcbxImport.mergeFavoriteIds.mockReturnValue([1001, 1002, 1003]);
+    page.parsedImport.set(parsedImport);
+
+    await page.importFavorites();
+
+    expect(userState.setFavoriteCharacterIds).toHaveBeenCalledWith([1001, 1002, 1003]);
+    expect(page.importResult()?.matchedIds).toEqual([1001, 1002]);
+  });
+
+  it("includes the favorites import/export actions in the template", () => {
+    const template = readFileSync(new URL("./characters.page.html", import.meta.url), "utf8");
+
+    expect(template).toContain("Export favorites");
+    expect(template).toContain("Import favorites");
+    expect(template).toContain("favoritesOnlyToggleLabel");
+    expect(template).toContain("onFavoritesOnlyToggle($event)");
+  });
+
+  it("filters searches down to favorites when the toggle is enabled", async () => {
+    const { page, repository } = createPage({
+      favoriteIds: [101, 202],
+    });
+
+    await page.onFavoritesOnlyToggle({
+      detail: {
+        checked: true,
+      },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.favoritesOnly()).toBe(true);
+    expect(repository.searchCharacters).toHaveBeenCalledWith({
+      searchTerm: "",
+      typeFilter: "",
+      classFilter: "",
+      allowedCharacterIds: [101, 202],
+      limit: 48,
+      offset: 0,
+    });
+  });
+
+  it("refreshes the current list after removing a favorite in favorites-only mode", async () => {
+    const { page, repository } = createPage({
+      favoriteIds: [101],
+    });
+
+    await page.onFavoritesOnlyToggle({
+      detail: {
+        checked: true,
+      },
+    } as CustomEvent<{ checked: boolean }>);
+    repository.searchCharacters.mockClear();
+
+    await page.toggleFavorite(
+      101,
+      {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      } as unknown as Event,
+    );
+
+    expect(repository.searchCharacters).toHaveBeenCalledWith({
+      searchTerm: "",
+      typeFilter: "",
+      classFilter: "",
+      allowedCharacterIds: [],
+      limit: 48,
+      offset: 0,
+    });
+  });
+});
+
+function createPage(overrides: { favoriteIds?: number[] } = {}) {
+  const favoriteIds = signal(overrides.favoriteIds ?? []);
+  const userState = {
+    ready: vi.fn().mockResolvedValue(undefined),
+    favoriteCharacterIds: favoriteIds,
+    toggleFavorite: vi.fn().mockImplementation(async (characterId: number) => {
+      const currentFavoriteIds = favoriteIds();
+      favoriteIds.set(
+        currentFavoriteIds.includes(characterId)
+          ? currentFavoriteIds.filter((favoriteId) => favoriteId !== characterId)
+          : [...currentFavoriteIds, characterId],
+      );
+    }),
+    setFavoriteCharacterIds: vi.fn().mockImplementation(async (nextFavoriteIds: number[]) => {
+      favoriteIds.set(nextFavoriteIds);
+    }),
+  };
+  const repository = {
+    getDatasetManifest: vi.fn().mockResolvedValue({
+      characterCount: 0,
+      detailCount: 0,
+      rumbleCount: 0,
+      availableTypes: [],
+      availableClasses: [],
+    }),
+    searchCharacters: vi.fn().mockResolvedValue([]),
+    getCharactersByIds: vi.fn().mockResolvedValue([]),
+  };
+  const optcbxImport = {
+    parseExport: vi.fn(),
+    buildMergeImportResult: vi.fn(),
+    mergeFavoriteIds: vi.fn(),
+  };
+  const page = new CharactersPage(repository as never, userState as never, optcbxImport as never);
+
+  return { page, repository, userState, optcbxImport };
+}

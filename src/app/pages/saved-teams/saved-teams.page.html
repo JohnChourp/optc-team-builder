@@ -1,0 +1,39 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title>Saved Teams</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="page-shell saved-teams-shell">
+    <section class="glass-card hero-card">
+      <div class="section-label">Offline memory</div>
+      <h1 class="section-title">Your saved teams stay on-device and are ready to load back into the builder.</h1>
+      <p class="section-copy">This page only shows your saved teams.</p>
+    </section>
+
+    <section *ngIf="loading()" class="glass-card loading-card">
+      <ion-spinner name="crescent"></ion-spinner>
+      <span>Loading saved teams...</span>
+    </section>
+
+    <section *ngIf="!loading() && !savedTeams().length" class="glass-card empty-card">
+      <h2>Saved Teams</h2>
+      <p>No saved teams yet.</p>
+    </section>
+
+    <section *ngIf="!loading() && savedTeams().length" class="glass-card section-card">
+      <div class="section-head">
+        <h2>Saved Teams</h2>
+        <span>{{ savedTeams().length }} total</span>
+      </div>
+
+      <div class="saved-team-list">
+        <article *ngFor="let team of savedTeams()">
+          <strong>{{ team.name }}</strong>
+          <p>{{ team.notes || "No notes yet." }}</p>
+        </article>
+      </div>
+    </section>
+  </div>
+</ion-content>
