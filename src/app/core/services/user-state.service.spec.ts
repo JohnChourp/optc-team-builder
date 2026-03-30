@@ -97,13 +97,76 @@ describe("UserStateService saved teams", () => {
       createdAt: originalTeam.createdAt,
     });
   });
+
+  it("saves a normalized enemy preset and persists it in front of older enemies", async () => {
+    const { service, setCalls } = await createService([], [createEnemy("enemy-1", "Old enemy")]);
+
+    const result = await service.saveEnemy({
+      name: "  Forest Boss  ",
+      notes: "  removes bind and despair  ",
+      selectedTypes: ["dex", "PSY", "dex"],
+      selectedClasses: ["Fighter", " Slasher ", "Fighter"],
+      requiredAbilities: [
+        {
+          abilityKey: " remove_bind ",
+          minTurns: 5,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+        },
+        {
+          abilityKey: "remove_bind",
+          minTurns: 5,
+          slotTokens: [],
+          requiredCharacterCount: 2,
+        },
+      ],
+      requireAllSelectedTypesInTeam: true,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSpecialsSupportTeam: true,
+    });
+
+    expect(result).toMatchObject({
+      name: "Forest Boss",
+      notes: "removes bind and despair",
+      selectedTypes: ["DEX", "PSY"],
+      selectedClasses: ["Fighter", "Slasher"],
+      requiredAbilities: [
+        {
+          abilityKey: "remove_bind",
+          minTurns: 5,
+          slotTokens: [],
+          requiredCharacterCount: 2,
+        },
+      ],
+      requireAllSelectedTypesInTeam: true,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSpecialsSupportTeam: true,
+    });
+    expect(service.savedEnemies()[0]?.id).toBe(result.id);
+    expect(service.savedEnemies()[1]?.id).toBe("enemy-1");
+    expect(setCalls.at(-1)?.key).toBe("savedEnemies");
+  });
+
+  it("deletes only the requested saved enemies and persists the next enemy state", async () => {
+    const { service, setCalls } = await createService([], [
+      createEnemy("enemy-1", "Forest Boss"),
+      createEnemy("enemy-2", "Arena Boss"),
+    ]);
+
+    await service.deleteEnemies(["enemy-2", "missing"]);
+
+    expect(service.savedEnemies().map((enemy) => enemy.id)).toEqual(["enemy-1"]);
+    expect(setCalls.at(-1)?.key).toBe("savedEnemies");
+    expect(JSON.parse(setCalls.at(-1)?.value ?? "[]")).toEqual([createEnemy("enemy-1", "Forest Boss")]);
+  });
 });
 
-async function createService(storedTeams: unknown[]) {
+async function createService(storedTeams: unknown[], storedEnemies: unknown[] = []) {
   const store = new Map<string, string>([
     ["favoriteCharacterIds", JSON.stringify([])],
     ["recentCharacterIds", JSON.stringify([])],
     ["savedTeams", JSON.stringify(storedTeams)],
+    ["savedEnemies", JSON.stringify(storedEnemies)],
   ]);
   const setCalls: Array<{ key: string; value: string }> = [];
 
@@ -116,7 +179,17 @@ async function createService(storedTeams: unknown[]) {
   });
 
   const i18n = {
-    translate: vi.fn((key: string) => (key === "common.defaults.untitledCrew" ? "Untitled Crew" : key)),
+    translate: vi.fn((key: string) => {
+      if (key === "common.defaults.untitledCrew") {
+        return "Untitled Crew";
+      }
+
+      if (key === "common.defaults.untitledEnemy") {
+        return "Untitled Enemy";
+      }
+
+      return key;
+    }),
   };
   const service = new UserStateService(i18n as never);
 
@@ -132,6 +205,22 @@ function createTeam(id: string, name: string) {
     notes: "",
     shipId: null,
     slots: [101, null, 202, null, null, 303],
+    createdAt: "2026-03-29T10:00:00.000Z",
+    updatedAt: "2026-03-29T10:05:00.000Z",
+  };
+}
+
+function createEnemy(id: string, name: string) {
+  return {
+    id,
+    name,
+    notes: "",
+    selectedTypes: ["DEX"],
+    selectedClasses: ["Fighter"],
+    requiredAbilities: [],
+    requireAllSelectedTypesInTeam: false,
+    requireAllSelectedClassesPerCharacter: false,
+    requireAllSpecialsSupportTeam: false,
     createdAt: "2026-03-29T10:00:00.000Z",
     updatedAt: "2026-03-29T10:05:00.000Z",
   };

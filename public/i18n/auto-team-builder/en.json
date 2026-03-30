@@ -379,5 +379,9 @@
       "unavailableTypes": "Ignored {{count}} unavailable imported types from the preset.",
       "unsupportedAbilities": "Ignored {{count}} unsupported ability requirements from the preset."
     }
+  },
+  "enemyPreset": {
+    "loadedDescription": "Loaded enemy preset: {{name}}.",
+    "loadedTitle": "Enemy preset ready."
   }
 }

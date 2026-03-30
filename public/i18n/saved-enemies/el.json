@@ -1,0 +1,78 @@
+{
+  "actions": {
+    "edit": "Επεξεργασία",
+    "openBuilder": "Άνοιγμα στον builder",
+    "saveChanges": "Αποθήκευση αλλαγών",
+    "saveEnemy": "Αποθήκευση εχθρού"
+  },
+  "confirm": {
+    "deleteSingle": "Να διαγραφεί ο εχθρός \"{{name}}\";"
+  },
+  "editor": {
+    "abilitiesCopy": "Πρόσθεσε utility requirements που πρέπει να καλύπτει η τελική ομάδα απέναντι σε αυτόν τον εχθρό.",
+    "abilitiesTitle": "Requirements εχθρού",
+    "abilityFields": {
+      "ability": "Ability",
+      "characters": "Χαρακτήρες",
+      "slotTokens": "Slot tokens",
+      "turns": "Turns"
+    },
+    "addAbility": "Προσθήκη ability",
+    "classesLabel": "Classes",
+    "classesPlaceholder": "Επίλεξε classes",
+    "copy": "Αποθήκευσε μόνο enemy-related filters ώστε το Auto Team Builder να τα ξαναφορτώνει αργότερα.",
+    "createEyebrow": "Νέο preset εχθρού",
+    "createTitle": "Δημιουργία saved enemy",
+    "editEyebrow": "Ενημέρωση εχθρού",
+    "editTitle": "Επεξεργασία saved enemy",
+    "nameLabel": "Όνομα εχθρού",
+    "noAbilityCatalog": "Το ability catalog δεν είναι ακόμα διαθέσιμο σε αυτό το dataset.",
+    "notesLabel": "Σημειώσεις",
+    "removeAbility": "Αφαίρεση",
+    "requirementSummary": {
+      "characters": ">={{count}} chars",
+      "turns": "{{count}} turns"
+    },
+    "toggles": {
+      "classes": "Απαίτησε όλα τα selected classes σε κάθε slot",
+      "classesCopy": "Κράτα κάθε slot ευθυγραμμισμένο με τους αποθηκευμένους class κανόνες.",
+      "specials": "Απαίτησε special support coverage",
+      "specialsCopy": "Κράτα την ομάδα εστιασμένη σε readable special utility.",
+      "types": "Απαίτησε team-wide type coverage",
+      "typesCopy": "Κράτα κάθε selected type παρόν στο αποτέλεσμα."
+    },
+    "typesLabel": "Types",
+    "typesPlaceholder": "Επίλεξε types"
+  },
+  "empty": {
+    "copy": "Φτιάξε ένα saved enemy preset και μετά άνοιξέ το στο Auto Team Builder με όλα τα enemy filters προγεμισμένα.",
+    "cta": "Δημιουργία πρώτου εχθρού",
+    "title": "Δεν υπάρχουν saved enemies ακόμα."
+  },
+  "hero": {
+    "copy": "Τα saved enemies κρατούν τα boss requirements ξεχωριστά από τη δική σου manual team στρατηγική.",
+    "createCta": "Δημιουργία εχθρού",
+    "eyebrow": "Enemy presets",
+    "savedTeamsCta": "Επιστροφή στα saved teams",
+    "title": "Φτιάξε reusable enemy presets και στείλ’ τα κατευθείαν στο Auto Team Builder."
+  },
+  "list": {
+    "addAnother": "Προσθήκη άλλου εχθρού",
+    "title": "Saved enemies",
+    "total": "{{count}} συνολικά"
+  },
+  "loading": "Φόρτωση saved enemies...",
+  "summary": {
+    "abilities": "Abilities",
+    "classes": "Classes",
+    "noRules": "Χωρίς strict rules",
+    "ruleLabels": {
+      "classes": "Strict classes",
+      "specials": "Special support",
+      "types": "Strict types"
+    },
+    "rules": "Κανόνες",
+    "types": "Types"
+  },
+  "title": "Saved Enemies"
+}

@@ -379,5 +379,9 @@
       "unavailableTypes": "Αγνοήθηκαν {{count}} unavailable imported types από το preset.",
       "unsupportedAbilities": "Αγνοήθηκαν {{count}} unsupported ability requirements από το preset."
     }
+  },
+  "enemyPreset": {
+    "loadedDescription": "Φορτώθηκε το enemy preset: {{name}}.",
+    "loadedTitle": "Το enemy preset είναι έτοιμο."
   }
 }

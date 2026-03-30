@@ -15,6 +15,12 @@
   gap: 10px;
 }
 
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .hero-card .section-title,
 .section-head h2,
 .saved-team-list strong,

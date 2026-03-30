@@ -1,0 +1,258 @@
+import "@angular/compiler";
+import { signal } from "@angular/core";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { SavedEnemiesPage } from "./saved-enemies.page";
+
+vi.mock("@ionic/angular/standalone", () => ({
+  IonButton: class {},
+  IonContent: class {},
+  IonHeader: class {},
+  IonIcon: class {},
+  IonInput: class {},
+  IonModal: class {},
+  IonSelect: class {},
+  IonSelectOption: class {},
+  IonSpinner: class {},
+  IonTextarea: class {},
+  IonTitle: class {},
+  IonToggle: class {},
+  IonToolbar: class {},
+}));
+
+describe("SavedEnemiesPage", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("hydrates saved enemies and supporting builder metadata", async () => {
+    const { page, repository } = createPage();
+
+    await page.ngOnInit();
+
+    expect(page.loading()).toBe(false);
+    expect(page.savedEnemies()).toHaveLength(2);
+    expect(repository.getDatasetManifest).toHaveBeenCalledOnce();
+    expect(repository.getAutoBuilderAbilityCatalog).toHaveBeenCalledOnce();
+    expect(page.availableClasses()).toEqual(["Fighter", "Slasher"]);
+  });
+
+  it("opens the create modal with fresh defaults", () => {
+    const { page } = createPage({ savedEnemies: [] });
+
+    page.openCreateModal();
+
+    expect(page.editorOpen()).toBe(true);
+    expect(page.editingEnemy()).toBeNull();
+    expect(page.selectedTypes()).toEqual(["DEX"]);
+    expect(page.requiredAbilityDrafts()).toEqual([]);
+  });
+
+  it("opens the edit modal with the selected enemy preset", () => {
+    const { page } = createPage();
+
+    page.openEditModal(page.savedEnemies()[0]!);
+
+    expect(page.editorOpen()).toBe(true);
+    expect(page.editingEnemy()?.id).toBe("enemy-1");
+    expect(page.enemyName()).toBe("Forest Boss");
+    expect(page.selectedTypes()).toEqual(["DEX", "PSY"]);
+    expect(page.selectedClasses()).toEqual(["Fighter"]);
+  });
+
+  it("saves an enemy preset through user state", async () => {
+    const { page, userState } = createPage();
+
+    await page.ngOnInit();
+    page.openCreateModal();
+    page.onEnemyNameChange({ detail: { value: " Arena Boss " } } as CustomEvent<{ value?: string | null }>);
+    page.onEnemyNotesChange({ detail: { value: " Removes bind " } } as CustomEvent<{ value?: string | null }>);
+    page.onTypeChange({ detail: { value: ["STR"] } } as CustomEvent<{ value?: string[] | string | null }>);
+    page.onClassChange({ detail: { value: ["Slasher"] } } as CustomEvent<{ value?: string[] | string | null }>);
+    page.addRequiredAbility();
+    page.onRequiredAbilityTurnsChange(page.requiredAbilityDrafts()[0]!.draftId, createInputEvent("5"));
+
+    await page.saveEnemy();
+
+    expect(userState.saveEnemy).toHaveBeenCalledWith({
+      id: undefined,
+      name: "Arena Boss",
+      notes: " Removes bind ",
+      selectedTypes: ["STR"],
+      selectedClasses: ["Slasher"],
+      requiredAbilities: [
+        {
+          abilityKey: "remove_bind",
+          minTurns: 5,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+        },
+      ],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSpecialsSupportTeam: false,
+    });
+    expect(page.editorOpen()).toBe(false);
+  });
+
+  it("deletes a saved enemy after confirmation", async () => {
+    const confirmSpy = vi.fn().mockReturnValue(true);
+    vi.stubGlobal("confirm", confirmSpy);
+    const { page, userState } = createPage();
+
+    await page.confirmAndDeleteEnemy("enemy-1");
+
+    expect(confirmSpy).toHaveBeenCalledOnce();
+    expect(userState.deleteEnemy).toHaveBeenCalledWith("enemy-1");
+  });
+
+  it("builds the correct builder query params for a saved enemy", () => {
+    const { page } = createPage();
+
+    expect(page.getEnemyBuilderQueryParams(page.savedEnemies()[0]!)).toEqual({ enemyId: "enemy-1" });
+  });
+
+  it("renders saved enemy actions and builder handoff in the template", () => {
+    const template = readFileSync(
+      resolve(process.cwd(), "src/app/pages/saved-enemies/saved-enemies.page.html"),
+      "utf8",
+    );
+
+    expect(template).toContain('t("hero.createCta")');
+    expect(template).toContain('t("actions.openBuilder")');
+    expect(template).toContain("[queryParams]=\"getEnemyBuilderQueryParams(enemy)\"");
+    expect(template).toContain("editor.abilitiesTitle");
+    expect(template).toContain("editor.toggles.specials");
+  });
+});
+
+function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnemies> } = {}) {
+  const savedEnemies = signal(overrides.savedEnemies ?? buildSavedEnemies());
+  const userState = {
+    ready: vi.fn().mockResolvedValue(undefined),
+    savedEnemies,
+    getSavedEnemyById: vi.fn((enemyId: string) => savedEnemies().find((enemy) => enemy.id === enemyId) ?? null),
+    saveEnemy: vi.fn().mockImplementation(async (input: Record<string, unknown>) => {
+      const nextEnemy = {
+        id: typeof input["id"] === "string" ? input["id"] : "enemy-new",
+        name: String(input["name"] ?? "").trim() || "Untitled Enemy",
+        notes: String(input["notes"] ?? "").trim(),
+        selectedTypes: [...((input["selectedTypes"] as string[]) ?? [])],
+        selectedClasses: [...((input["selectedClasses"] as string[]) ?? [])],
+        requiredAbilities: [...((input["requiredAbilities"] as unknown[]) ?? [])],
+        requireAllSelectedTypesInTeam: Boolean(input["requireAllSelectedTypesInTeam"]),
+        requireAllSelectedClassesPerCharacter: Boolean(input["requireAllSelectedClassesPerCharacter"]),
+        requireAllSpecialsSupportTeam: Boolean(input["requireAllSpecialsSupportTeam"]),
+        createdAt: "2026-03-30T10:00:00.000Z",
+        updatedAt: "2026-03-30T10:05:00.000Z",
+      };
+
+      savedEnemies.set([nextEnemy, ...savedEnemies()]);
+      return nextEnemy;
+    }),
+    deleteEnemy: vi.fn().mockImplementation(async (enemyId: string) => {
+      savedEnemies.set(savedEnemies().filter((enemy) => enemy.id !== enemyId));
+    }),
+  };
+  const repository = {
+    getDatasetManifest: vi.fn().mockResolvedValue({
+      generatedAt: "2026-03-30T10:00:00.000Z",
+      sourceVersion: "test",
+      characterCount: 10,
+      detailCount: 10,
+      shipCount: 2,
+      rumbleCount: 0,
+      availableTypes: ["DEX", "STR", "PSY"],
+      availableClasses: ["Fighter", "Slasher"],
+      packs: [],
+    }),
+    getAutoBuilderAbilityCatalog: vi.fn().mockResolvedValue({
+      generatedAt: "2026-03-30T10:00:00.000Z",
+      sourceVersion: "test",
+      abilityCount: 1,
+      abilities: [
+        {
+          key: "remove_bind",
+          label: "Remove Bind",
+          supportsTurns: true,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ["specialText"],
+          matchCount: 10,
+          sampleCharacterIds: [101],
+          sampleTexts: ["Reduces Bind duration by 5 turns"],
+        },
+      ],
+    }),
+  };
+  const i18n = {
+    translate: vi.fn((key: string, params?: Record<string, string | number>) => {
+      if (key === "confirm.deleteSingle") {
+        return `Delete ${params?.["name"] ?? ""}`;
+      }
+
+      if (key === "editor.requirementSummary.characters") {
+        return `>=${params?.["count"] ?? 1} chars`;
+      }
+
+      if (key === "editor.requirementSummary.turns") {
+        return `${params?.["count"] ?? 1} turns`;
+      }
+
+      if (key === "common.defaults.untitledEnemy") {
+        return "Untitled Enemy";
+      }
+
+      return key;
+    }),
+  };
+  const page = new SavedEnemiesPage(userState as never, repository as never, i18n as never);
+
+  return { page, repository, userState };
+}
+
+function buildSavedEnemies() {
+  return [
+    {
+      id: "enemy-1",
+      name: "Forest Boss",
+      notes: "Needs bind removal",
+      selectedTypes: ["DEX", "PSY"],
+      selectedClasses: ["Fighter"],
+      requiredAbilities: [
+        {
+          abilityKey: "remove_bind",
+          minTurns: 5,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+        },
+      ],
+      requireAllSelectedTypesInTeam: true,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSpecialsSupportTeam: true,
+      createdAt: "2026-03-30T10:00:00.000Z",
+      updatedAt: "2026-03-30T10:05:00.000Z",
+    },
+    {
+      id: "enemy-2",
+      name: "Arena Boss",
+      notes: "",
+      selectedTypes: ["STR"],
+      selectedClasses: ["Slasher"],
+      requiredAbilities: [],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: true,
+      requireAllSpecialsSupportTeam: false,
+      createdAt: "2026-03-30T10:10:00.000Z",
+      updatedAt: "2026-03-30T10:15:00.000Z",
+    },
+  ];
+}
+
+function createInputEvent(value: string): Event {
+  return {
+    target: { value },
+  } as unknown as Event;
+}

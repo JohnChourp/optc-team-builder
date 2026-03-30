@@ -1483,6 +1483,83 @@ describe('AutoTeamBuilderPage preset import state', () => {
   });
 });
 
+describe('AutoTeamBuilder enemy preset handoff', () => {
+  it('applies a saved enemy preset from the route and clears the transient query param', async () => {
+    const { page, router } = await createPage({ routeEnemyId: 'enemy-1' });
+
+    await page.ngOnInit();
+    page.result.set(createAutoBuildResult());
+    page.currentTeamId.set('saved-team-before-enemy');
+
+    await page.ionViewWillEnter();
+
+    expect(page.selectedTypes()).toEqual(['DEX', 'PSY']);
+    expect(page.selectedClasses()).toEqual(['Fighter']);
+    expect(page.pageRequiredAbilities()).toEqual([
+      {
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ]);
+    expect(page.requireAllSelectedTypesInTeam()).toBe(true);
+    expect(page.requireAllSelectedClassesPerCharacter()).toBe(false);
+    expect(page.requireAllSpecialsSupportTeam()).toBe(true);
+    expect(page.loadedEnemyPresetName()).toBe('Forest Boss');
+    expect(page.result()).toBeNull();
+    expect(page.currentTeamId()).toBeNull();
+    expect(router.navigate).toHaveBeenCalledWith([], {
+      relativeTo: expect.any(Object),
+      queryParams: { enemyId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  });
+
+  it('ignores an unknown enemy preset id without crashing and keeps default state', async () => {
+    const { page, router } = await createPage({ routeEnemyId: 'missing-enemy' });
+
+    await page.ngOnInit();
+    await page.ionViewWillEnter();
+
+    expect(page.selectedTypes()).toEqual([]);
+    expect(page.selectedClasses()).toEqual([]);
+    expect(page.loadedEnemyPresetName()).toBeNull();
+    expect(router.navigate).toHaveBeenCalledOnce();
+  });
+
+  it('uses the prefilled enemy requirements when building after route handoff', async () => {
+    const { page, autoTeamBuilder } = await createPage({ routeEnemyId: 'enemy-1' });
+
+    await page.ngOnInit();
+    await page.ionViewWillEnter();
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX', 'PSY'],
+      expect.objectContaining({
+        requiredAbilities: [
+          {
+            abilityKey: 'remove_bind',
+            minTurns: 5,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+          },
+        ],
+        requireAllSelectedTypesInTeam: true,
+        requireAllSelectedClassesPerCharacter: false,
+        requireAllSpecialsSupportTeam: true,
+      }),
+      expect.objectContaining({
+        onProgress: expect.any(Function),
+        signal: expect.any(AbortSignal),
+      }),
+    );
+  });
+});
+
 function createCharacterRecord(
   id: number,
   name = `Character ${id}`,
@@ -1675,7 +1752,7 @@ function createAutoBuildResult(
   };
 }
 
-async function createPage(): Promise<{
+async function createPage(options: { routeEnemyId?: string | null } = {}): Promise<{
   page: any;
   repository: {
     getDatasetManifest: ReturnType<typeof vi.fn>;
@@ -1686,11 +1763,18 @@ async function createPage(): Promise<{
     searchCharacters: ReturnType<typeof vi.fn>;
   };
   autoTeamBuilder: { buildTeam: ReturnType<typeof vi.fn> };
+  router: { navigate: ReturnType<typeof vi.fn> };
+  route: { snapshot: { queryParamMap: { get: ReturnType<typeof vi.fn> } } };
   userState: {
     favoriteCharacterIds: {
       (): number[];
       set(value: number[]): void;
     };
+    savedEnemies: {
+      (): Array<Record<string, unknown>>;
+      set(value: Array<Record<string, unknown>>): void;
+    };
+    getSavedEnemyById: ReturnType<typeof vi.fn>;
     ready: ReturnType<typeof vi.fn>;
     saveTeam: ReturnType<typeof vi.fn>;
     toggleFavorite: ReturnType<typeof vi.fn>;
@@ -1742,13 +1826,49 @@ async function createPage(): Promise<{
   const autoTeamBuilder = {
     buildTeam: vi.fn().mockResolvedValue(null),
   };
+  const savedEnemies = signal([
+    {
+      id: 'enemy-1',
+      name: 'Forest Boss',
+      notes: 'Needs bind removal',
+      selectedTypes: ['DEX', 'PSY'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [
+        {
+          abilityKey: 'remove_bind',
+          minTurns: 5,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+        },
+      ],
+      requireAllSelectedTypesInTeam: true,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSpecialsSupportTeam: true,
+      createdAt: '2026-03-30T10:00:00.000Z',
+      updatedAt: '2026-03-30T10:05:00.000Z',
+    },
+  ]);
   const userState = {
     favoriteCharacterIds: signal<number[]>([]),
+    savedEnemies,
+    getSavedEnemyById: vi.fn((enemyId: string) =>
+      savedEnemies().find((enemy) => enemy.id === enemyId) ?? null,
+    ),
     ready: vi.fn().mockResolvedValue(undefined),
     saveTeam: vi.fn().mockResolvedValue({ id: 'saved-auto-team' }),
     toggleFavorite: vi.fn().mockResolvedValue(undefined),
   };
   const i18n = createI18nStub('auto-team-builder');
+  const route = {
+    snapshot: {
+      queryParamMap: {
+        get: vi.fn((key: string) => (key === 'enemyId' ? (options.routeEnemyId ?? null) : null)),
+      },
+    },
+  };
+  const router = {
+    navigate: vi.fn().mockResolvedValue(true),
+  };
 
   return {
     page: new AutoTeamBuilderPage(
@@ -1756,9 +1876,13 @@ async function createPage(): Promise<{
       autoTeamBuilder as never,
       userState as never,
       i18n as never,
+      route as never,
+      router as never,
     ),
     repository,
     autoTeamBuilder,
+    router,
+    route,
     userState,
   };
 }

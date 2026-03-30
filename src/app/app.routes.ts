@@ -32,6 +32,11 @@ export const routes: Routes = [
           import("./pages/saved-teams/saved-teams.page").then((module) => module.SavedTeamsPage),
       },
       {
+        path: "saved-enemies",
+        loadComponent: () =>
+          import("./pages/saved-enemies/saved-enemies.page").then((module) => module.SavedEnemiesPage),
+      },
+      {
         path: "collection",
         pathMatch: "full",
         redirectTo: "saved-teams",

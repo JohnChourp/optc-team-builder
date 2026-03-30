@@ -153,6 +153,7 @@ describe("SavedTeamsPage", () => {
     );
 
     expect(template).toContain('t("title")');
+    expect(template).toContain('t("hero.savedEnemiesCta")');
     expect(template).toContain('t("tools.export")');
     expect(template).toContain('t("tools.import")');
     expect(template).toContain('t("selection.selectAll")');
@@ -165,6 +166,7 @@ describe("SavedTeamsPage", () => {
     expect(template).toContain("edit-modal-shell");
     expect(template).toContain("import-dropzone");
     expect(template).toContain("saved-team-preview");
+    expect(template).toContain("[routerLink]=\"['/tabs/saved-enemies']\"");
     expect(template).toContain("[routerLink]=\"getCharacterDetailLink(currentSlot)\"");
   });
 });

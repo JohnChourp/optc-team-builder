@@ -1,0 +1,279 @@
+.saved-enemies-shell {
+  display: grid;
+  gap: 18px;
+}
+
+.hero-card,
+.section-card,
+.loading-card,
+.empty-card {
+  padding: 18px;
+}
+
+.hero-card {
+  display: grid;
+  gap: 12px;
+}
+
+.hero-card .section-title,
+.section-head h2,
+.saved-enemy-copy strong,
+.empty-card h2,
+.editor-modal-head h2,
+.ability-card h3 {
+  color: #ffffff;
+}
+
+.hero-card .section-copy,
+.section-head span,
+.saved-enemy-copy p,
+.editor-modal-head p,
+.empty-card p,
+.editor-empty-copy {
+  color: rgba(248, 251, 255, 0.66);
+}
+
+.hero-actions,
+.saved-enemy-head,
+.saved-enemy-actions,
+.section-head,
+.editor-modal-head,
+.editor-modal-actions,
+.strict-toggle-row {
+  display: flex;
+  align-items: center;
+}
+
+.hero-actions,
+.saved-enemy-actions,
+.editor-modal-actions {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.section-head,
+.saved-enemy-head,
+.editor-modal-head,
+.strict-toggle-row {
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.section-head {
+  margin-bottom: 18px;
+}
+
+.section-head h2,
+.saved-enemy-copy p,
+.editor-modal-head p,
+.ability-card h3 {
+  margin: 0;
+}
+
+.section-head > div,
+.saved-enemy-copy,
+.strict-toggle-copy,
+.enemy-chip-group {
+  display: grid;
+  gap: 6px;
+}
+
+.saved-enemy-list {
+  display: grid;
+  gap: 12px;
+}
+
+.saved-enemy-list article {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.saved-enemy-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.saved-enemy-copy strong,
+.saved-enemy-copy p {
+  overflow-wrap: anywhere;
+}
+
+.enemy-chip-groups,
+.chip-row,
+.editor-grid,
+.toggle-grid,
+.ability-list,
+.ability-card-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.chip-row {
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.enemy-chip {
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: rgba(245, 200, 76, 0.16);
+  border: 1px solid rgba(245, 200, 76, 0.26);
+  color: #fff7dd;
+  white-space: nowrap;
+}
+
+.enemy-chip--secondary {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f8fbff;
+}
+
+.enemy-chip--ability {
+  background: rgba(117, 214, 255, 0.14);
+  border-color: rgba(117, 214, 255, 0.24);
+  color: #d8f7ff;
+}
+
+.enemy-chip--rule {
+  background: rgba(147, 109, 255, 0.14);
+  border-color: rgba(147, 109, 255, 0.24);
+  color: #e8dcff;
+}
+
+.loading-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.empty-card {
+  display: grid;
+  gap: 10px;
+}
+
+:host ion-modal.saved-enemies-editor-modal::part(backdrop) {
+  background: rgba(7, 11, 23, 0.68);
+}
+
+:host ion-modal.saved-enemies-editor-modal::part(content) {
+  width: min(860px, calc(100vw - 24px));
+  max-height: var(--app-modal-max-height);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 32px;
+  background: linear-gradient(180deg, rgba(18, 25, 46, 0.98), rgba(10, 14, 27, 0.98));
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+}
+
+.editor-modal-shell {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  overflow: auto;
+  color: #f8fbff;
+}
+
+.editor-modal-head {
+  align-items: flex-start;
+}
+
+.editor-modal-head h2 {
+  margin: 12px 0 8px;
+  font-size: clamp(1.7rem, 4vw, 2.2rem);
+}
+
+.editor-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.toggle-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.strict-toggle-row {
+  align-items: flex-start;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.strict-toggle-copy small {
+  line-height: 1.5;
+  color: rgba(248, 251, 255, 0.66);
+}
+
+.ability-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.section-head--editor {
+  margin-bottom: 0;
+}
+
+.ability-card-grid {
+  grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+  align-items: flex-start;
+}
+
+.ability-card-row {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.editor-field {
+  display: grid;
+  gap: 8px;
+}
+
+.editor-field span {
+  color: rgba(248, 251, 255, 0.82);
+  font-size: 0.94rem;
+}
+
+.editor-field--number input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #f8fbff;
+  padding: 12px 14px;
+  font: inherit;
+}
+
+.editor-field--number input:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.7);
+  outline-offset: 2px;
+}
+
+@media (max-width: 920px) {
+  .editor-grid,
+  .toggle-grid,
+  .ability-card-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .saved-enemy-head,
+  .section-head,
+  .editor-modal-head,
+  .strict-toggle-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .saved-enemy-actions {
+    justify-content: flex-start;
+  }
+}

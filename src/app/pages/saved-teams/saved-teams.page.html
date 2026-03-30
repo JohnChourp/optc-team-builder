@@ -11,6 +11,11 @@
         <div class="section-label">{{ t("hero.eyebrow") }}</div>
         <h1 class="section-title">{{ t("hero.title") }}</h1>
         <p class="section-copy">{{ t("hero.copy") }}</p>
+        <div class="hero-actions">
+          <ion-button fill="outline" color="warning" [routerLink]="['/tabs/saved-enemies']">
+            {{ t("hero.savedEnemiesCta") }}
+          </ion-button>
+        </div>
       </section>
 
       <section *ngIf="loading()" class="glass-card loading-card">

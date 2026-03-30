@@ -693,6 +693,17 @@
           </div>
         </section>
 
+        <section
+          *ngIf="hasLoadedEnemyPreset()"
+          class="preset-import-feedback preset-import-feedback--success"
+        >
+          <ion-icon [icon]="presetImportSuccessIcon"></ion-icon>
+          <div>
+            <strong>{{ t("enemyPreset.loadedTitle") }}</strong>
+            <small>{{ t("enemyPreset.loadedDescription", { name: loadedEnemyPresetName() }) }}</small>
+          </div>
+        </section>
+
         <ion-button expand="block" color="warning" [disabled]="buildDisabled()" (click)="buildTeam()">
           <ion-spinner *ngIf="building()" slot="start" name="crescent"></ion-spinner>
           {{ buildButtonLabel() }}

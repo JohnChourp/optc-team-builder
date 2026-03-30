@@ -17,6 +17,7 @@
   "hero": {
     "copy": "This page only shows your saved teams.",
     "eyebrow": "Offline memory",
+    "savedEnemiesCta": "Open saved enemies",
     "title": "Your saved teams stay on-device and are ready to load back into the builder."
   },
   "import": {

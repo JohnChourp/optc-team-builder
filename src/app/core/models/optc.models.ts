@@ -1,4 +1,7 @@
-import { type NormalizedBuilderAbility } from './auto-team-builder-ability.models';
+import {
+  type AutoBuildAbilityRequirement,
+  type NormalizedBuilderAbility,
+} from './auto-team-builder-ability.models';
 
 export interface CharacterStatsRange {
   hp: number;
@@ -84,6 +87,20 @@ export interface SavedTeam {
   slots: Array<number | null>;
   shipId: number | null;
   notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SavedEnemy {
+  id: string;
+  name: string;
+  notes: string;
+  selectedTypes: string[];
+  selectedClasses: string[];
+  requiredAbilities: AutoBuildAbilityRequirement[];
+  requireAllSelectedTypesInTeam: boolean;
+  requireAllSelectedClassesPerCharacter: boolean;
+  requireAllSpecialsSupportTeam: boolean;
   createdAt: string;
   updatedAt: string;
 }

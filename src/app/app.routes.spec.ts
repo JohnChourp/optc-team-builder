@@ -11,6 +11,14 @@ describe("app routes", () => {
     expect(savedTeamsRoute?.loadComponent).toBeTypeOf("function");
   });
 
+  it("registers the saved enemies route inside tabs", () => {
+    const tabsRoute = routes.find((route) => route.path === "tabs");
+    const savedEnemiesRoute = tabsRoute?.children?.find((route) => route.path === "saved-enemies");
+
+    expect(savedEnemiesRoute).toBeDefined();
+    expect(savedEnemiesRoute?.loadComponent).toBeTypeOf("function");
+  });
+
   it("redirects the legacy collection tab route to saved teams", () => {
     const tabsRoute = routes.find((route) => route.path === "tabs");
     const collectionRoute = tabsRoute?.children?.find((route) => route.path === "collection");

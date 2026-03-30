@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
   IonButton,
@@ -66,6 +66,7 @@ import {
   AutoTeamSelectionImportError,
   type AutoTeamSelectionImportMessage,
   type AutoTeamSelectionImportResult,
+  type AutoTeamSelectionImportState,
   type AutoTeamExportPayload,
   type AutoTeamSelectionExportPayload,
   buildAutoTeamExportPayload,
@@ -75,6 +76,7 @@ import {
   parseAutoTeamSelectionImportPayload,
   sanitizeAutoTeamSelectionImportPayload,
 } from './auto-team-builder-export.utils';
+import { buildAutoTeamBuilderStateFromSavedEnemy } from './auto-team-builder-enemy-preset.utils';
 
 type LoadingProgressRowTone = 'primary' | 'secondary' | 'fallback';
 
@@ -194,6 +196,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly currentTeamId = signal<string | null>(null);
   public readonly favoriteCharacterIds;
   public readonly presetImportFeedback = signal<PresetImportFeedback | null>(null);
+  public readonly loadedEnemyPresetName = signal<string | null>(null);
 
   public readonly availableTypes = AUTO_TEAM_BUILDER_TYPES;
   public readonly availableClasses = computed(() => this.summary()?.availableClasses ?? []);
@@ -217,6 +220,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly hasSelectedClasses = computed(() => this.selectedClasses().length > 0);
   public readonly hasSelectedTypes = computed(() => this.selectedTypes().length > 0);
   public readonly hasRequiredAbilities = computed(() => this.pageRequiredAbilities().length > 0);
+  public readonly hasLoadedEnemyPreset = computed(() => Boolean(this.loadedEnemyPresetName()));
   public readonly lockedCharacters = computed(() => {
     const lockedRecords = this.lockedCharacterRecords();
 
@@ -889,6 +893,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     private readonly autoTeamBuilder: AutoTeamBuilderService,
     private readonly userState: UserStateService,
     private readonly i18n: AppI18nService,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
   ) {
     this.favoriteCharacterIds = this.userState.favoriteCharacterIds;
     this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
@@ -917,6 +923,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public async ionViewWillEnter(): Promise<void> {
     await this.resetPageState();
+    await this.applyEnemyPresetFromRoute();
   }
 
   public async onClassChange(
@@ -1428,6 +1435,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
     this.notes.set('');
     this.presetImportFeedback.set(null);
+    this.loadedEnemyPresetName.set(null);
     this.resetBuildState();
     await this.refreshAppliedManualCandidates();
   }
@@ -1466,43 +1474,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     availableLockedCharacters: CharacterListItem[],
     fileName: string,
   ): Promise<void> {
-    await this.resetPageState();
-
-    const importedLockedCharacterMap = new Map(
-      availableLockedCharacters.map((character) => [character.id, character] as const),
-    );
-
-    this.selectedTypes.set([...importResult.state.selectedTypes]);
-    this.selectedClasses.set([...importResult.state.selectedClasses]);
-    this.requiredAbilityDrafts.set(
-      importResult.state.requiredAbilities.map((requirement) => ({
-        draftId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        abilityKey: requirement.abilityKey,
-        minTurns: requirement.minTurns,
-        slotTokens: [...requirement.slotTokens],
-        requiredCharacterCount: requirement.requiredCharacterCount,
-      })),
-    );
-    this.lockedCharacterRecords.set({});
-    importResult.state.lockedCharacterIds.forEach((characterId) => {
-      const character = importedLockedCharacterMap.get(characterId);
-
-      if (character) {
-        this.cacheCharacterRecord(character);
-      }
-    });
-    this.lockedCharacterIds.set([...importResult.state.lockedCharacterIds]);
-    this.selectedLeaderIds.set([...importResult.state.selectedLeaderIds]);
-    this.captainLeaderId.set(importResult.state.captainLeaderId);
-    this.selectedManualShipId.set(importResult.state.manualShipId);
-    this.requireAllSelectedTypesInTeam.set(importResult.state.requireAllSelectedTypesInTeam);
-    this.requireAllSelectedClassesPerCharacter.set(
-      importResult.state.requireAllSelectedClassesPerCharacter,
-    );
-    this.requireAllSpecialsSupportTeam.set(importResult.state.requireAllSpecialsSupportTeam);
-    this.favoritesOnly.set(importResult.state.favoritesOnly);
-    this.resetBuildState();
-    await this.refreshAppliedManualCandidates();
+    await this.applySelectionPresetState(importResult.state, availableLockedCharacters);
 
     this.presetImportFeedback.set({
       tone: importResult.warnings.length ? 'warning' : 'success',
@@ -1515,6 +1487,65 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
             ...importResult.warnings.map((warning) => this.translateImportMessage(warning)),
           ]
         : [this.t('preset.loadedFromFile', { fileName })],
+    });
+  }
+
+  private async applySelectionPresetState(
+    state: AutoTeamSelectionImportState,
+    availableLockedCharacters: CharacterListItem[] = [],
+  ): Promise<void> {
+    await this.resetPageState();
+
+    this.selectedTypes.set([...state.selectedTypes]);
+    this.selectedClasses.set([...state.selectedClasses]);
+    this.requiredAbilityDrafts.set(
+      state.requiredAbilities.map((requirement) => ({
+        draftId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        abilityKey: requirement.abilityKey,
+        minTurns: requirement.minTurns,
+        slotTokens: [...requirement.slotTokens],
+        requiredCharacterCount: requirement.requiredCharacterCount,
+      })),
+    );
+    this.lockedCharacterRecords.set({});
+    availableLockedCharacters.forEach((character) => this.cacheCharacterRecord(character));
+    this.lockedCharacterIds.set([...state.lockedCharacterIds]);
+    this.selectedLeaderIds.set([...state.selectedLeaderIds]);
+    this.captainLeaderId.set(state.captainLeaderId);
+    this.selectedManualShipId.set(state.manualShipId);
+    this.requireAllSelectedTypesInTeam.set(state.requireAllSelectedTypesInTeam);
+    this.requireAllSelectedClassesPerCharacter.set(state.requireAllSelectedClassesPerCharacter);
+    this.requireAllSpecialsSupportTeam.set(state.requireAllSpecialsSupportTeam);
+    this.favoritesOnly.set(state.favoritesOnly);
+    this.resetBuildState();
+    await this.refreshAppliedManualCandidates();
+  }
+
+  private async applyEnemyPresetFromRoute(): Promise<void> {
+    const enemyId = this.route.snapshot.queryParamMap.get('enemyId')?.trim() ?? '';
+
+    if (!enemyId.length) {
+      return;
+    }
+
+    const enemy = this.userState.getSavedEnemyById(enemyId);
+
+    if (!enemy) {
+      await this.clearEnemyPresetQueryParam();
+      return;
+    }
+
+    await this.applySelectionPresetState(buildAutoTeamBuilderStateFromSavedEnemy(enemy));
+    this.loadedEnemyPresetName.set(enemy.name);
+    await this.clearEnemyPresetQueryParam();
+  }
+
+  private async clearEnemyPresetQueryParam(): Promise<void> {
+    await this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { enemyId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
     });
   }
 

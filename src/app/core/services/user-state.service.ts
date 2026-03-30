@@ -1,18 +1,21 @@
 import { Injectable, signal } from "@angular/core";
 import { Preferences } from "@capacitor/preferences";
 
-import { type SavedTeam } from "../models/optc.models";
+import { type SavedEnemy, type SavedTeam } from "../models/optc.models";
+import { type AutoBuildAbilityRequirement } from "../models/auto-team-builder-ability.models";
 import { AppI18nService } from "./app-i18n.service";
 
 const FAVORITES_KEY = "favoriteCharacterIds";
 const RECENTS_KEY = "recentCharacterIds";
 const SAVED_TEAMS_KEY = "savedTeams";
+const SAVED_ENEMIES_KEY = "savedEnemies";
 
 @Injectable({ providedIn: "root" })
 export class UserStateService {
   public readonly favoriteCharacterIds = signal<number[]>([]);
   public readonly recentCharacterIds = signal<number[]>([]);
   public readonly savedTeams = signal<SavedTeam[]>([]);
+  public readonly savedEnemies = signal<SavedEnemy[]>([]);
 
   private readonly hydratePromise: Promise<void>;
 
@@ -97,6 +100,67 @@ export class UserStateService {
     await this.replaceSavedTeams(next);
   }
 
+  public getSavedEnemyById(enemyId: string): SavedEnemy | null {
+    const normalizedEnemyId = this.normalizeEntityId(enemyId);
+
+    if (!normalizedEnemyId) {
+      return null;
+    }
+
+    return this.savedEnemies().find((enemy) => enemy.id === normalizedEnemyId) ?? null;
+  }
+
+  public async saveEnemy(
+    input: Omit<
+      SavedEnemy,
+      "id" | "createdAt" | "updatedAt"
+    > & { id?: string },
+  ): Promise<SavedEnemy> {
+    await this.ready();
+
+    const existing = this.savedEnemies().find((enemy) => enemy.id === input.id);
+    const savedEnemy = this.normalizeSavedEnemy(
+      {
+        ...input,
+        id: input.id ?? this.createEnemyId(),
+      },
+      existing,
+    );
+
+    const next = existing
+      ? this.savedEnemies().map((enemy) => (enemy.id === savedEnemy.id ? savedEnemy : enemy))
+      : [savedEnemy, ...this.savedEnemies()];
+
+    await this.replaceSavedEnemies(next);
+
+    return savedEnemy;
+  }
+
+  public async deleteEnemy(enemyId: string): Promise<void> {
+    await this.deleteEnemies([enemyId]);
+  }
+
+  public async deleteEnemies(enemyIds: string[]): Promise<void> {
+    await this.ready();
+    const targetEnemyIds = new Set(
+      enemyIds
+        .map((enemyId) => this.normalizeEntityId(enemyId))
+        .filter((enemyId): enemyId is string => Boolean(enemyId)),
+    );
+
+    if (!targetEnemyIds.size) {
+      return;
+    }
+
+    const next = this.savedEnemies().filter((enemy) => !targetEnemyIds.has(enemy.id));
+
+    if (next.length === this.savedEnemies().length) {
+      return;
+    }
+
+    await this.replaceSavedEnemies(next);
+  }
+
   public async mergeImportedTeams(
     teams: SavedTeam[],
   ): Promise<{ addedCount: number; updatedCount: number; teams: SavedTeam[] }> {
@@ -142,15 +206,17 @@ export class UserStateService {
   }
 
   private async hydrate(): Promise<void> {
-    const [favorites, recents, teams] = await Promise.all([
+    const [favorites, recents, teams, enemies] = await Promise.all([
       this.readJson<number[]>(FAVORITES_KEY, []),
       this.readJson<number[]>(RECENTS_KEY, []),
       this.readJson<SavedTeam[]>(SAVED_TEAMS_KEY, []),
+      this.readJson<SavedEnemy[]>(SAVED_ENEMIES_KEY, []),
     ]);
 
     this.favoriteCharacterIds.set(favorites);
     this.recentCharacterIds.set(recents);
-    this.savedTeams.set(teams);
+    this.savedTeams.set(teams.map((team) => this.normalizeSavedTeam(team)));
+    this.savedEnemies.set(enemies.map((enemy) => this.normalizeSavedEnemy(enemy)));
   }
 
   private async readJson<T>(key: string, fallback: T): Promise<T> {
@@ -176,6 +242,11 @@ export class UserStateService {
     await this.persistJson(SAVED_TEAMS_KEY, teams);
   }
 
+  private async replaceSavedEnemies(enemies: SavedEnemy[]): Promise<void> {
+    this.savedEnemies.set(enemies);
+    await this.persistJson(SAVED_ENEMIES_KEY, enemies);
+  }
+
   private normalizeSavedTeam(
     team: Pick<SavedTeam, "name" | "notes" | "shipId" | "slots"> & Partial<SavedTeam>,
     existing?: SavedTeam,
@@ -183,7 +254,7 @@ export class UserStateService {
     const now = new Date().toISOString();
 
     return {
-      id: this.normalizeTeamId(team.id) ?? existing?.id ?? this.createTeamId(),
+      id: this.normalizeEntityId(team.id) ?? existing?.id ?? this.createTeamId(),
       name: this.normalizeTeamName(team.name),
       slots: this.normalizeTeamSlots(team.slots),
       shipId: this.normalizeShipId(team.shipId),
@@ -193,7 +264,41 @@ export class UserStateService {
     };
   }
 
-  private normalizeTeamId(teamId: string | undefined): string | null {
+  private normalizeSavedEnemy(
+    enemy: Pick<
+      SavedEnemy,
+      | "name"
+      | "notes"
+      | "selectedTypes"
+      | "selectedClasses"
+      | "requiredAbilities"
+      | "requireAllSelectedTypesInTeam"
+      | "requireAllSelectedClassesPerCharacter"
+      | "requireAllSpecialsSupportTeam"
+    > &
+      Partial<SavedEnemy>,
+    existing?: SavedEnemy,
+  ): SavedEnemy {
+    const now = new Date().toISOString();
+
+    return {
+      id: this.normalizeEntityId(enemy.id) ?? existing?.id ?? this.createEnemyId(),
+      name: this.normalizeEnemyName(enemy.name),
+      notes: this.normalizeNotes(enemy.notes),
+      selectedTypes: this.normalizeStringCollection(enemy.selectedTypes, {
+        mapValue: (value) => value.toUpperCase(),
+      }),
+      selectedClasses: this.normalizeStringCollection(enemy.selectedClasses),
+      requiredAbilities: this.normalizeRequiredAbilities(enemy.requiredAbilities),
+      requireAllSelectedTypesInTeam: Boolean(enemy.requireAllSelectedTypesInTeam),
+      requireAllSelectedClassesPerCharacter: Boolean(enemy.requireAllSelectedClassesPerCharacter),
+      requireAllSpecialsSupportTeam: Boolean(enemy.requireAllSpecialsSupportTeam),
+      createdAt: this.normalizeTimestamp(enemy.createdAt, existing?.createdAt ?? now),
+      updatedAt: this.normalizeTimestamp(enemy.updatedAt, now),
+    };
+  }
+
+  private normalizeEntityId(teamId: string | undefined): string | null {
     if (typeof teamId !== "string") {
       return null;
     }
@@ -209,6 +314,14 @@ export class UserStateService {
     }
 
     return teamName.trim() || this.i18n.translate("common.defaults.untitledCrew");
+  }
+
+  private normalizeEnemyName(enemyName: string | undefined): string {
+    if (typeof enemyName !== "string") {
+      return this.i18n.translate("common.defaults.untitledEnemy");
+    }
+
+    return enemyName.trim() || this.i18n.translate("common.defaults.untitledEnemy");
   }
 
   private normalizeTeamSlots(slots: Array<number | null> | undefined): Array<number | null> {
@@ -227,6 +340,90 @@ export class UserStateService {
     return typeof notes === "string" ? notes.trim() : "";
   }
 
+  private normalizeStringCollection(
+    values: string[] | undefined,
+    options?: { mapValue?: (value: string) => string },
+  ): string[] {
+    if (!Array.isArray(values)) {
+      return [];
+    }
+
+    const normalizedValues = new Set<string>();
+
+    values.forEach((value) => {
+      if (typeof value !== "string") {
+        return;
+      }
+
+      const normalizedValue = (options?.mapValue?.(value.trim()) ?? value.trim()).trim();
+
+      if (!normalizedValue.length) {
+        return;
+      }
+
+      normalizedValues.add(normalizedValue);
+    });
+
+    return [...normalizedValues];
+  }
+
+  private normalizeRequiredAbilities(
+    requirements: AutoBuildAbilityRequirement[] | undefined,
+  ): AutoBuildAbilityRequirement[] {
+    if (!Array.isArray(requirements)) {
+      return [];
+    }
+
+    const normalizedRequirements = new Map<string, AutoBuildAbilityRequirement>();
+
+    requirements.forEach((requirement) => {
+      if (!requirement || typeof requirement !== "object") {
+        return;
+      }
+
+      const abilityKey = typeof requirement.abilityKey === "string" ? requirement.abilityKey.trim() : "";
+
+      if (!abilityKey.length) {
+        return;
+      }
+
+      const minTurns =
+        typeof requirement.minTurns === "number" &&
+        Number.isInteger(requirement.minTurns) &&
+        requirement.minTurns > 0
+          ? requirement.minTurns
+          : null;
+      const slotTokens = this.normalizeStringCollection(requirement.slotTokens, {
+        mapValue: (value) => value.toUpperCase(),
+      });
+      const requiredCharacterCount =
+        typeof requirement.requiredCharacterCount === "number" &&
+        Number.isInteger(requirement.requiredCharacterCount) &&
+        requirement.requiredCharacterCount > 0
+          ? requirement.requiredCharacterCount
+          : 1;
+      const key = `${abilityKey}|${minTurns ?? "none"}|${slotTokens.join(",")}`;
+      const existing = normalizedRequirements.get(key);
+
+      if (existing) {
+        existing.requiredCharacterCount = Math.max(
+          existing.requiredCharacterCount,
+          requiredCharacterCount,
+        );
+        return;
+      }
+
+      normalizedRequirements.set(key, {
+        abilityKey,
+        minTurns,
+        slotTokens,
+        requiredCharacterCount,
+      });
+    });
+
+    return [...normalizedRequirements.values()];
+  }
+
   private normalizeTimestamp(value: string | undefined, fallback: string): string {
     if (typeof value !== "string") {
       return fallback;
@@ -243,5 +440,9 @@ export class UserStateService {
 
   private createTeamId(): string {
     return `crew-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  private createEnemyId(): string {
+    return `enemy-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   }
 }

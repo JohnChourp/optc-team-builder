@@ -1,0 +1,78 @@
+{
+  "actions": {
+    "edit": "Edit",
+    "openBuilder": "Open in builder",
+    "saveChanges": "Save changes",
+    "saveEnemy": "Save enemy"
+  },
+  "confirm": {
+    "deleteSingle": "Delete enemy \"{{name}}\"?"
+  },
+  "editor": {
+    "abilitiesCopy": "Add utility requirements that the final team should cover against this enemy.",
+    "abilitiesTitle": "Enemy requirements",
+    "abilityFields": {
+      "ability": "Ability",
+      "characters": "Characters",
+      "slotTokens": "Slot tokens",
+      "turns": "Turns"
+    },
+    "addAbility": "Add ability",
+    "classesLabel": "Classes",
+    "classesPlaceholder": "Select classes",
+    "copy": "Save only enemy-related filters so Auto Team Builder can reopen them later.",
+    "createEyebrow": "New enemy preset",
+    "createTitle": "Create saved enemy",
+    "editEyebrow": "Enemy update",
+    "editTitle": "Edit saved enemy",
+    "nameLabel": "Enemy name",
+    "noAbilityCatalog": "Ability catalog is not available in this dataset yet.",
+    "notesLabel": "Notes",
+    "removeAbility": "Remove",
+    "requirementSummary": {
+      "characters": ">={{count}} chars",
+      "turns": "{{count}} turns"
+    },
+    "toggles": {
+      "classes": "Require all selected classes per slot",
+      "classesCopy": "Keep every slot aligned with the saved class rules.",
+      "specials": "Require special support coverage",
+      "specialsCopy": "Keep the team focused on readable special utility.",
+      "types": "Require team-wide type coverage",
+      "typesCopy": "Keep every selected type represented in the result."
+    },
+    "typesLabel": "Types",
+    "typesPlaceholder": "Select types"
+  },
+  "empty": {
+    "copy": "Create a saved enemy preset, then reopen it in Auto Team Builder with all enemy filters prefilled.",
+    "cta": "Create first enemy",
+    "title": "No saved enemies yet."
+  },
+  "hero": {
+    "copy": "Saved enemies let you keep boss requirements separately from your manual team strategy.",
+    "createCta": "Create enemy",
+    "eyebrow": "Enemy presets",
+    "savedTeamsCta": "Back to saved teams",
+    "title": "Build reusable enemy presets and send them straight into Auto Team Builder."
+  },
+  "list": {
+    "addAnother": "Add another enemy",
+    "title": "Saved enemies",
+    "total": "{{count}} total"
+  },
+  "loading": "Loading saved enemies...",
+  "summary": {
+    "abilities": "Abilities",
+    "classes": "Classes",
+    "noRules": "No strict rules",
+    "ruleLabels": {
+      "classes": "Strict classes",
+      "specials": "Special support",
+      "types": "Strict types"
+    },
+    "rules": "Rules",
+    "types": "Types"
+  },
+  "title": "Saved Enemies"
+}
