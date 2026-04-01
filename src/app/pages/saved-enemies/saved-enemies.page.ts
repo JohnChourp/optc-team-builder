@@ -1,7 +1,6 @@
-import { CommonModule } from "@angular/common";
-import { Component, OnInit, computed, signal } from "@angular/core";
-import { RouterLink } from "@angular/router";
-import { type ViewWillEnter } from "@ionic/angular";
+import { Component, OnInit, computed, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { type ViewWillEnter } from '@ionic/angular';
 import {
   IonButton,
   IonContent,
@@ -16,20 +15,20 @@ import {
   IonTitle,
   IonToggle,
   IonToolbar,
-} from "@ionic/angular/standalone";
-import { TranslocoDirective, TranslocoPipe } from "@jsverse/transloco";
-import { addCircleOutline, closeOutline } from "ionicons/icons";
+} from '@ionic/angular/standalone';
+import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
+import { addCircleOutline, closeOutline } from 'ionicons/icons';
 
-import { AUTO_TEAM_BUILDER_TYPES } from "../../core/models/auto-team-builder.models";
+import { AUTO_TEAM_BUILDER_TYPES } from '../../core/models/auto-team-builder.models';
 import {
   type AutoBuildAbilityCatalog,
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityRequirement,
-} from "../../core/models/auto-team-builder-ability.models";
-import { type DatasetManifest, type SavedEnemy } from "../../core/models/optc.models";
-import { AppI18nService } from "../../core/services/app-i18n.service";
-import { OptcRepositoryService } from "../../core/services/optc-repository.service";
-import { UserStateService } from "../../core/services/user-state.service";
+} from '../../core/models/auto-team-builder-ability.models';
+import { type DatasetManifest, type SavedEnemy } from '../../core/models/optc.models';
+import { AppI18nService } from '../../core/services/app-i18n.service';
+import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import { UserStateService } from '../../core/services/user-state.service';
 
 interface EnemyAbilityRequirementDraft {
   draftId: string;
@@ -40,10 +39,9 @@ interface EnemyAbilityRequirementDraft {
 }
 
 @Component({
-  selector: "app-saved-enemies-page",
+  selector: 'app-saved-enemies-page',
   standalone: true,
   imports: [
-    CommonModule,
     IonButton,
     IonContent,
     IonHeader,
@@ -61,8 +59,8 @@ interface EnemyAbilityRequirementDraft {
     TranslocoDirective,
     TranslocoPipe,
   ],
-  templateUrl: "./saved-enemies.page.html",
-  styleUrl: "./saved-enemies.page.scss",
+  templateUrl: './saved-enemies.page.html',
+  styleUrl: './saved-enemies.page.scss',
 })
 export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public readonly loading = signal(true);
@@ -71,8 +69,8 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public readonly savedEnemies;
   public readonly editorOpen = signal(false);
   public readonly editingEnemy = signal<SavedEnemy | null>(null);
-  public readonly enemyName = signal("");
-  public readonly enemyNotes = signal("");
+  public readonly enemyName = signal('');
+  public readonly enemyNotes = signal('');
   public readonly selectedTypes = signal<string[]>([]);
   public readonly selectedClasses = signal<string[]>([]);
   public readonly requiredAbilityDrafts = signal<EnemyAbilityRequirementDraft[]>([]);
@@ -127,9 +125,9 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
   public openCreateModal(): void {
     this.editingEnemy.set(null);
-    this.enemyName.set("");
-    this.enemyNotes.set("");
-    this.selectedTypes.set(["DEX"]);
+    this.enemyName.set('');
+    this.enemyNotes.set('');
+    this.selectedTypes.set(['DEX']);
     this.selectedClasses.set([]);
     this.requiredAbilityDrafts.set([]);
     this.requireAllSelectedTypesInTeam.set(false);
@@ -162,11 +160,11 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   public onEnemyNameChange(event: CustomEvent<{ value?: string | null }>): void {
-    this.enemyName.set((event.detail.value ?? "").trimStart());
+    this.enemyName.set((event.detail.value ?? '').trimStart());
   }
 
   public onEnemyNotesChange(event: CustomEvent<{ value?: string | null }>): void {
-    this.enemyNotes.set((event.detail.value ?? "").toString());
+    this.enemyNotes.set((event.detail.value ?? '').toString());
   }
 
   public onTypeChange(event: CustomEvent<{ value?: string[] | string | null }>): void {
@@ -205,7 +203,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     draftId: string,
     event: CustomEvent<{ value?: string | null }>,
   ): void {
-    const abilityKey = (event.detail.value ?? "").trim();
+    const abilityKey = (event.detail.value ?? '').trim();
 
     this.requiredAbilityDrafts.update((currentDrafts) =>
       currentDrafts.map((draft) => {
@@ -218,7 +216,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
         return {
           ...draft,
           abilityKey,
-          minTurns: ability?.supportsTurns ? draft.minTurns ?? 1 : null,
+          minTurns: ability?.supportsTurns ? (draft.minTurns ?? 1) : null,
           slotTokens: ability?.supportsSlotTokens ? draft.slotTokens : [],
         };
       }),
@@ -242,7 +240,9 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     event: CustomEvent<{ value?: string[] | string | null }>,
   ): void {
     this.updateRequiredAbilityDraft(draftId, {
-      slotTokens: this.resolveSelectedValues(event.detail.value).map((token) => token.toUpperCase()),
+      slotTokens: this.resolveSelectedValues(event.detail.value).map((token) =>
+        token.toUpperCase(),
+      ),
     });
   }
 
@@ -289,7 +289,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     if (
       !enemy ||
       !this.confirmDelete(
-        this.i18n.translate("confirm.deleteSingle", { name: enemy.name }, "saved-enemies"),
+        this.i18n.translate('confirm.deleteSingle', { name: enemy.name }, 'saved-enemies'),
       )
     ) {
       return;
@@ -299,39 +299,42 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   public formatAbilityRequirement(requirement: AutoBuildAbilityRequirement): string {
-    const label = this.abilityCatalogMap().get(requirement.abilityKey)?.label ?? requirement.abilityKey;
+    const label =
+      this.abilityCatalogMap().get(requirement.abilityKey)?.label ?? requirement.abilityKey;
     const metadata: string[] = [];
 
     if (requirement.requiredCharacterCount > 1) {
       metadata.push(
         this.i18n.translate(
-          "editor.requirementSummary.characters",
+          'editor.requirementSummary.characters',
           { count: requirement.requiredCharacterCount },
-          "saved-enemies",
+          'saved-enemies',
         ),
       );
     }
 
     if (requirement.minTurns) {
       metadata.push(
-        this.i18n.translate("editor.requirementSummary.turns", { count: requirement.minTurns }, "saved-enemies"),
+        this.i18n.translate(
+          'editor.requirementSummary.turns',
+          { count: requirement.minTurns },
+          'saved-enemies',
+        ),
       );
     }
 
     if (requirement.slotTokens.length) {
-      metadata.push(requirement.slotTokens.join(" / "));
+      metadata.push(requirement.slotTokens.join(' / '));
     }
 
-    return metadata.length ? `${label} (${metadata.join(" • ")})` : label;
+    return metadata.length ? `${label} (${metadata.join(' • ')})` : label;
   }
 
   public formatAbilityCatalogItemLabel(item: AutoBuildAbilityCatalogItem): string {
     return item.label;
   }
 
-  public resolveAbilityCatalogItem(
-    abilityKey: string,
-  ): AutoBuildAbilityCatalogItem | null {
+  public resolveAbilityCatalogItem(abilityKey: string): AutoBuildAbilityCatalogItem | null {
     return this.abilityCatalogMap().get(abilityKey) ?? null;
   }
 
@@ -362,25 +365,32 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   private serializeRequiredAbilities(): AutoBuildAbilityRequirement[] {
-    return this.requiredAbilityDrafts().reduce<AutoBuildAbilityRequirement[]>((requirements, draft) => {
-      const abilityKey = draft.abilityKey.trim();
+    return this.requiredAbilityDrafts().reduce<AutoBuildAbilityRequirement[]>(
+      (requirements, draft) => {
+        const abilityKey = draft.abilityKey.trim();
 
-      if (!abilityKey.length) {
+        if (!abilityKey.length) {
+          return requirements;
+        }
+
+        requirements.push({
+          abilityKey,
+          minTurns: draft.minTurns && draft.minTurns > 0 ? draft.minTurns : null,
+          slotTokens: [
+            ...new Set(
+              draft.slotTokens.map((token) => token.trim()).filter((token) => token.length > 0),
+            ),
+          ],
+          requiredCharacterCount:
+            draft.requiredCharacterCount && draft.requiredCharacterCount > 0
+              ? draft.requiredCharacterCount
+              : 1,
+        });
+
         return requirements;
-      }
-
-      requirements.push({
-        abilityKey,
-        minTurns: draft.minTurns && draft.minTurns > 0 ? draft.minTurns : null,
-        slotTokens: [...new Set(draft.slotTokens.map((token) => token.trim()).filter((token) => token.length > 0))],
-        requiredCharacterCount:
-          draft.requiredCharacterCount && draft.requiredCharacterCount > 0
-            ? draft.requiredCharacterCount
-            : 1,
-      });
-
-      return requirements;
-    }, []);
+      },
+      [],
+    );
   }
 
   private resolveSelectedValues(value?: string[] | string | null): string[] {
@@ -388,7 +398,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       return [...new Set(value.map((entry) => entry.trim()).filter((entry) => entry.length > 0))];
     }
 
-    if (typeof value === "string" && value.trim().length > 0) {
+    if (typeof value === 'string' && value.trim().length > 0) {
       return [value.trim()];
     }
 
@@ -402,6 +412,6 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   private confirmDelete(message: string): boolean {
-    return typeof globalThis.confirm === "function" ? globalThis.confirm(message) : false;
+    return typeof globalThis.confirm === 'function' ? globalThis.confirm(message) : false;
   }
 }

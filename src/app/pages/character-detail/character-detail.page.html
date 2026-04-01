@@ -4,103 +4,130 @@
       <ion-buttons slot="start">
         <ion-back-button defaultHref="/tabs/characters"></ion-back-button>
       </ion-buttons>
-      <ion-title>{{ character()?.name ?? t("fallbackTitle") }}</ion-title>
+      <ion-title>{{ character()?.name ?? t('fallbackTitle') }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
   <ion-content [fullscreen]="true">
     <div class="page-shell detail-shell">
-      <section *ngIf="loading()" class="loading-card glass-card">
-        <ion-spinner name="crescent"></ion-spinner>
-        <span>{{ t("loading") }}</span>
-      </section>
+      @if (loading()) {
+        <section class="loading-card glass-card">
+          <ion-spinner name="crescent"></ion-spinner>
+          <span>{{ t('loading') }}</span>
+        </section>
+      }
 
-      <ng-container *ngIf="!loading() && character() as current">
+      @if (!loading() && character(); as current) {
         <section class="hero-card glass-card">
           <img [src]="current.detailImageUrl" [alt]="current.name" />
-
           <div class="hero-copy">
             <div class="section-label">{{ current.type }} • {{ current.primaryClass }}</div>
             <h1 class="section-title">{{ current.name }}</h1>
             <p class="section-copy">
-              {{ t("hero.summary", { cost: current.cost, maxLevel: current.maxLevel, stars: current.stars }) }}
+              {{
+                t('hero.summary', {
+                  cost: current.cost,
+                  maxLevel: current.maxLevel,
+                  stars: current.stars,
+                })
+              }}
             </p>
-
             <div class="hero-actions">
               <ion-button fill="solid" color="warning" (click)="toggleFavorite(current.id)">
-                <ion-icon slot="start" [icon]="isFavorite(current.id) ? favoriteIcon : favoriteOutlineIcon"></ion-icon>
-                {{ isFavorite(current.id) ? t("hero.favorited") : t("hero.addFavorite") }}
+                <ion-icon
+                  slot="start"
+                  [icon]="isFavorite(current.id) ? favoriteIcon : favoriteOutlineIcon"
+                ></ion-icon>
+                {{ isFavorite(current.id) ? t('hero.favorited') : t('hero.addFavorite') }}
               </ion-button>
               <ion-button fill="outline" color="light" [routerLink]="['/tabs/team-builder']">
-                {{ t("hero.openTeamBuilder") }}
+                {{ t('hero.openTeamBuilder') }}
               </ion-button>
             </div>
           </div>
         </section>
-
         <section class="stats-grid">
           <article class="glass-card stat-card">
-            <span>{{ t("stats.maxHp") }}</span>
+            <span>{{ t('stats.maxHp') }}</span>
             <strong>{{ current.stats.max.hp }}</strong>
           </article>
           <article class="glass-card stat-card">
-            <span>{{ t("stats.maxAtk") }}</span>
+            <span>{{ t('stats.maxAtk') }}</span>
             <strong>{{ current.stats.max.atk }}</strong>
           </article>
           <article class="glass-card stat-card">
-            <span>{{ t("stats.maxRcv") }}</span>
+            <span>{{ t('stats.maxRcv') }}</span>
             <strong>{{ current.stats.max.rcv }}</strong>
           </article>
         </section>
-
         <section class="detail-grid">
-          <article class="glass-card detail-card" *ngIf="current.detail.captainAbility">
-            <h2>{{ t("sections.captainAbility") }}</h2>
-            <p>{{ current.detail.captainAbility }}</p>
-          </article>
-
-          <article class="glass-card detail-card" *ngIf="current.detail.specialText || current.detail.specialName">
-            <h2>{{ t("sections.special") }}</h2>
-            <strong *ngIf="current.detail.specialName">{{ current.detail.specialName }}</strong>
-            <p>{{ current.detail.specialText }}</p>
-            <small *ngIf="current.detail.specialNotes">{{ current.detail.specialNotes }}</small>
-          </article>
-
-          <article class="glass-card detail-card" *ngIf="current.detail.sailorAbilities.length">
-            <h2>{{ t("sections.sailorAbilities") }}</h2>
-            <ul>
-              <li *ngFor="let sailor of current.detail.sailorAbilities">{{ sailor }}</li>
-            </ul>
-          </article>
-
-          <article class="glass-card detail-card" *ngIf="current.detail.limitBreak.length">
-            <h2>{{ t("sections.limitBreak") }}</h2>
-            <ul>
-              <li *ngFor="let entry of current.detail.limitBreak">{{ entry.description }}</li>
-            </ul>
-          </article>
-
-          <article class="glass-card detail-card" *ngIf="current.detail.potentialAbilities.length">
-            <h2>{{ t("sections.potentialAbilities") }}</h2>
-            <ul>
-              <li *ngFor="let entry of current.detail.potentialAbilities">
-                <strong *ngIf="entry.Name">{{ entry.Name }}:</strong>
-                {{ (entry.description ?? []).join(' / ') }}
-              </li>
-            </ul>
-          </article>
-
-          <article class="glass-card detail-card" *ngIf="current.detail.supportData.length">
-            <h2>{{ t("sections.supportData") }}</h2>
-            <pre>{{ current.detail.supportData | json }}</pre>
-          </article>
-
-          <article class="glass-card detail-card" *ngIf="current.detail.rumbleData">
-            <h2>{{ t("sections.rumbleData") }}</h2>
-            <pre>{{ current.detail.rumbleData | json }}</pre>
-          </article>
+          @if (current.detail.captainAbility) {
+            <article class="glass-card detail-card">
+              <h2>{{ t('sections.captainAbility') }}</h2>
+              <p>{{ current.detail.captainAbility }}</p>
+            </article>
+          }
+          @if (current.detail.specialText || current.detail.specialName) {
+            <article class="glass-card detail-card">
+              <h2>{{ t('sections.special') }}</h2>
+              @if (current.detail.specialName) {
+                <strong>{{ current.detail.specialName }}</strong>
+              }
+              <p>{{ current.detail.specialText }}</p>
+              @if (current.detail.specialNotes) {
+                <small>{{ current.detail.specialNotes }}</small>
+              }
+            </article>
+          }
+          @if (current.detail.sailorAbilities.length) {
+            <article class="glass-card detail-card">
+              <h2>{{ t('sections.sailorAbilities') }}</h2>
+              <ul>
+                @for (sailor of current.detail.sailorAbilities; track sailor) {
+                  <li>{{ sailor }}</li>
+                }
+              </ul>
+            </article>
+          }
+          @if (current.detail.limitBreak.length) {
+            <article class="glass-card detail-card">
+              <h2>{{ t('sections.limitBreak') }}</h2>
+              <ul>
+                @for (entry of current.detail.limitBreak; track entry.description) {
+                  <li>{{ entry.description }}</li>
+                }
+              </ul>
+            </article>
+          }
+          @if (current.detail.potentialAbilities.length) {
+            <article class="glass-card detail-card">
+              <h2>{{ t('sections.potentialAbilities') }}</h2>
+              <ul>
+                @for (entry of current.detail.potentialAbilities; track $index) {
+                  <li>
+                    @if (entry.Name) {
+                      <strong>{{ entry.Name }}:</strong>
+                    }
+                    {{ (entry.description ?? []).join(' / ') }}
+                  </li>
+                }
+              </ul>
+            </article>
+          }
+          @if (current.detail.supportData.length) {
+            <article class="glass-card detail-card">
+              <h2>{{ t('sections.supportData') }}</h2>
+              <pre>{{ current.detail.supportData | json }}</pre>
+            </article>
+          }
+          @if (current.detail.rumbleData) {
+            <article class="glass-card detail-card">
+              <h2>{{ t('sections.rumbleData') }}</h2>
+              <pre>{{ current.detail.rumbleData | json }}</pre>
+            </article>
+          }
         </section>
-      </ng-container>
+      }
     </div>
   </ion-content>
 </ng-container>

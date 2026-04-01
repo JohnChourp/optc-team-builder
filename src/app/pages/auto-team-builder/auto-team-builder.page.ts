@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
@@ -140,7 +139,6 @@ interface PresetImportFeedback {
   selector: 'app-auto-team-builder-page',
   standalone: true,
   imports: [
-    CommonModule,
     IonButton,
     IonContent,
     IonHeader,
@@ -201,8 +199,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly availableTypes = AUTO_TEAM_BUILDER_TYPES;
   public readonly availableClasses = computed(() => this.summary()?.availableClasses ?? []);
   public readonly selectedManualShip = computed(
-    () =>
-      this.ships().find((ship) => ship.id === this.selectedManualShipId()) ?? null,
+    () => this.ships().find((ship) => ship.id === this.selectedManualShipId()) ?? null,
   );
   public readonly hasSelectedManualShip = computed(() => Boolean(this.selectedManualShip()));
   public readonly manualCandidateFilters = computed<AppliedManualCharacterFilters>(() => ({
@@ -294,9 +291,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     return {
       ...(captainLeaderId ? { [captainLeaderId]: this.t('manual.leaders.roles.captain') } : {}),
-      ...(friendLeaderId
-        ? { [friendLeaderId]: this.t('manual.leaders.roles.friendCaptain') }
-        : {}),
+      ...(friendLeaderId ? { [friendLeaderId]: this.t('manual.leaders.roles.friendCaptain') } : {}),
     };
   });
   public readonly clearAllButtonDisabled = computed(
@@ -327,12 +322,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     () => this.selectedTypes().length === this.availableTypes.length,
   );
   public readonly teamStructureLabel = computed(() =>
-    this.hasDualLeaders()
-      ? this.t('hero.teamStructure.dual')
-      : this.t('hero.teamStructure.single'),
+    this.hasDualLeaders() ? this.t('hero.teamStructure.dual') : this.t('hero.teamStructure.single'),
   );
   public readonly selectAllTypesButtonLabel = computed(() =>
-    this.allTypesSelected() ? this.t('filters.types.unselectAll') : this.t('filters.types.selectAll'),
+    this.allTypesSelected()
+      ? this.t('filters.types.unselectAll')
+      : this.t('filters.types.selectAll'),
   );
   public readonly selectAllClassesButtonLabel = computed(() =>
     this.allClassesSelected()
@@ -361,19 +356,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         })
       : this.t('filters.favoritesOnly.support.empty'),
   );
-  public readonly lockedSummaryLabel = computed(
-    () =>
-      this.t('manual.lockedSummary', {
-        count: this.lockedCharacterIds().length,
-        max: this.maxLockedCharacters,
-      }),
+  public readonly lockedSummaryLabel = computed(() =>
+    this.t('manual.lockedSummary', {
+      count: this.lockedCharacterIds().length,
+      max: this.maxLockedCharacters,
+    }),
   );
-  public readonly leaderSummaryLabel = computed(
-    () =>
-      this.t('manual.leaderSummary', {
-        count: this.selectedLeaderIds().length,
-        max: this.maxLeaderCharacters,
-      }),
+  public readonly leaderSummaryLabel = computed(() =>
+    this.t('manual.leaderSummary', {
+      count: this.selectedLeaderIds().length,
+      max: this.maxLeaderCharacters,
+    }),
   );
   public readonly manualPickerSupportLabel = computed(() =>
     this.lockedLimitReached()
@@ -491,7 +484,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   });
   public readonly typeStrictToggleLabel = computed(() => this.t('filters.types.toggle'));
   public readonly classStrictToggleLabel = computed(() => this.t('filters.classes.toggle'));
-  public readonly specialSupportToggleLabel = computed(() => this.t('filters.specialSupport.toggle'));
+  public readonly specialSupportToggleLabel = computed(() =>
+    this.t('filters.specialSupport.toggle'),
+  );
   public readonly favoritesOnlyToggleLabel = computed(() => this.t('filters.favoritesOnly.toggle'));
   public readonly favoritesOnlyBlockedMessage = computed(() =>
     this.t('filters.favoritesOnly.blockedMessage'),
@@ -557,10 +552,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly loadingLabel = computed(
     () =>
       (this.buildProgress()?.messageKey
-        ? this.t(
-            this.buildProgress()!.messageKey,
-            this.buildProgress()!.messageParams,
-          )
+        ? this.t(this.buildProgress()!.messageKey, this.buildProgress()!.messageParams)
         : null) ??
       (this.hasSelectedTypes()
         ? this.t('progress.scoringWithTypes', { types: this.selectedTypesLabel() })
@@ -1562,9 +1554,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     const activeRequirements: string[] = [];
-    const favoritesScope = this.favoritesOnly()
-      ? this.t('errors.requirements.favoritesScope')
-      : '';
+    const favoritesScope = this.favoritesOnly() ? this.t('errors.requirements.favoritesScope') : '';
 
     if (this.requireAllSelectedTypesInTeam()) {
       activeRequirements.push(this.t('errors.requirements.typeCoverage'));
@@ -1884,9 +1874,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const suffixes: string[] = [];
 
     if (requirement.requiredCharacterCount > 1) {
-      suffixes.push(this.t('abilities.requirement.characters', {
-        count: requirement.requiredCharacterCount,
-      }));
+      suffixes.push(
+        this.t('abilities.requirement.characters', {
+          count: requirement.requiredCharacterCount,
+        }),
+      );
     }
 
     if (requirement.minTurns !== null) {

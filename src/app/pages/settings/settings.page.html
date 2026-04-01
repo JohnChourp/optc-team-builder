@@ -1,55 +1,61 @@
 <ng-container *transloco="let t; scope: 'settings'; read: 'settings'">
   <ion-header class="ion-no-border">
     <ion-toolbar>
-      <ion-title>{{ t("title") }}</ion-title>
+      <ion-title>{{ t('title') }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
   <ion-content [fullscreen]="true">
     <div class="page-shell settings-shell">
       <section class="glass-card intro-card">
-        <div class="section-label">{{ t("intro.eyebrow") }}</div>
-        <h1 class="section-title">{{ t("intro.title") }}</h1>
-        <p class="section-copy">{{ t("intro.copy") }}</p>
+        <div class="section-label">{{ t('intro.eyebrow') }}</div>
+        <h1 class="section-title">{{ t('intro.title') }}</h1>
+        <p class="section-copy">{{ t('intro.copy') }}</p>
       </section>
 
       <section class="glass-card command-card">
-        <ion-label>{{ t("language.label") }}</ion-label>
+        <ion-label>{{ t('language.label') }}</ion-label>
         <ion-select
           interface="popover"
           fill="outline"
           [value]="activeLanguage()"
           (ionChange)="onLanguageChange($event)"
         >
-          <ion-select-option *ngFor="let language of availableLanguages" [value]="language.id">
-            {{ "common.languages." + language.id | transloco }}
-          </ion-select-option>
+          @for (language of availableLanguages; track language.id) {
+            <ion-select-option [value]="language.id">
+              {{ 'common.languages.' + language.id | transloco }}
+            </ion-select-option>
+          }
         </ion-select>
-        <p>{{ t("language.helper") }}</p>
+        <p>{{ t('language.helper') }}</p>
       </section>
 
       <section class="glass-card command-card">
-        <h2>{{ t("sections.commands") }}</h2>
-        <code *ngFor="let command of commands">{{ command }}</code>
+        <h2>{{ t('sections.commands') }}</h2>
+        @for (command of commands; track command) {
+          <code>{{ command }}</code>
+        }
       </section>
 
       <section class="glass-card pack-list">
-        <h2>{{ t("sections.packStatus") }}</h2>
+        <h2>{{ t('sections.packStatus') }}</h2>
 
-        <article *ngFor="let pack of manifest()?.packs ?? []" class="pack-card">
-          <div>
-            <strong>{{ pack.label }}</strong>
-            <span>{{ pack.fileCount }} files • {{ pack.totalBytes | number }} bytes</span>
-          </div>
-          <div class="pack-state" [class.installed]="pack.installed">
-            {{ pack.installed ? t("packState.installed") : t("packState.notInstalled") }}
-          </div>
-        </article>
+        @for (pack of manifest()?.packs ?? []; track pack.id) {
+          <article class="pack-card">
+            <div>
+              <strong>{{ pack.label }}</strong>
+              <span>{{ pack.fileCount }} files • {{ pack.totalBytes | number }} bytes</span>
+            </div>
+            <div class="pack-state" [class.installed]="pack.installed">
+              {{ pack.installed ? t('packState.installed') : t('packState.notInstalled') }}
+            </div>
+          </article>
+        }
       </section>
 
       <section class="glass-card legal-card">
-        <h2>{{ t("sections.releaseNote") }}</h2>
-        <p>{{ t("release.copy") }}</p>
+        <h2>{{ t('sections.releaseNote') }}</h2>
+        <p>{{ t('release.copy') }}</p>
       </section>
     </div>
   </ion-content>

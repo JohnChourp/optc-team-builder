@@ -1,7 +1,6 @@
-import { CommonModule } from "@angular/common";
-import { Component, OnInit, computed, signal } from "@angular/core";
-import { RouterLink } from "@angular/router";
-import { type ViewWillEnter } from "@ionic/angular";
+import { Component, OnInit, computed, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { type ViewWillEnter } from '@ionic/angular';
 import {
   IonButton,
   IonCheckbox,
@@ -14,20 +13,20 @@ import {
   IonTextarea,
   IonTitle,
   IonToolbar,
-} from "@ionic/angular/standalone";
-import { TranslocoDirective, TranslocoPipe } from "@jsverse/transloco";
+} from '@ionic/angular/standalone';
+import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
   alertCircleOutline,
   checkmarkCircleOutline,
   closeOutline,
   cloudUploadOutline,
   documentTextOutline,
-} from "ionicons/icons";
+} from 'ionicons/icons';
 
-import { type CharacterListItem, type SavedTeam } from "../../core/models/optc.models";
-import { AppI18nService } from "../../core/services/app-i18n.service";
-import { OptcRepositoryService } from "../../core/services/optc-repository.service";
-import { UserStateService } from "../../core/services/user-state.service";
+import { type CharacterListItem, type SavedTeam } from '../../core/models/optc.models';
+import { AppI18nService } from '../../core/services/app-i18n.service';
+import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import { UserStateService } from '../../core/services/user-state.service';
 import {
   buildSavedTeamsTransferPayload,
   clearUnavailableSavedTeamSlots,
@@ -35,7 +34,7 @@ import {
   parseSavedTeamsImportPayload,
   sanitizeSavedTeamsImportPayload,
   type SavedTeamsImportError,
-} from "./saved-teams-transfer.utils";
+} from './saved-teams-transfer.utils';
 
 interface SavedTeamPreviewCard {
   team: SavedTeam;
@@ -45,14 +44,13 @@ interface SavedTeamPreviewCard {
 interface SavedTeamsImportFeedback {
   details: string[];
   title: string;
-  tone: "error" | "success" | "warning";
+  tone: 'error' | 'success' | 'warning';
 }
 
 @Component({
-  selector: "app-saved-teams-page",
+  selector: 'app-saved-teams-page',
   standalone: true,
   imports: [
-    CommonModule,
     IonButton,
     IonCheckbox,
     IonContent,
@@ -68,8 +66,8 @@ interface SavedTeamsImportFeedback {
     TranslocoDirective,
     TranslocoPipe,
   ],
-  templateUrl: "./saved-teams.page.html",
-  styleUrl: "./saved-teams.page.scss",
+  templateUrl: './saved-teams.page.html',
+  styleUrl: './saved-teams.page.scss',
 })
 export class SavedTeamsPage implements OnInit, ViewWillEnter {
   public readonly loading = signal(true);
@@ -82,17 +80,20 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
   public readonly allSelected = computed(() => {
     const teamCards = this.savedTeamCards();
 
-    return teamCards.length > 0 && teamCards.every((teamCard) => this.selectedTeamIdSet().has(teamCard.team.id));
+    return (
+      teamCards.length > 0 &&
+      teamCards.every((teamCard) => this.selectedTeamIdSet().has(teamCard.team.id))
+    );
   });
   public readonly importModalOpen = signal(false);
   public readonly draggingImportFile = signal(false);
-  public readonly importFileName = signal("");
+  public readonly importFileName = signal('');
   public readonly importFeedback = signal<SavedTeamsImportFeedback | null>(null);
   public readonly importing = signal(false);
   public readonly editModalOpen = signal(false);
   public readonly editingTeam = signal<SavedTeam | null>(null);
-  public readonly editTeamName = signal("");
-  public readonly editNotes = signal("");
+  public readonly editTeamName = signal('');
+  public readonly editNotes = signal('');
   public readonly savingEdit = signal(false);
   public readonly uploadIcon = cloudUploadOutline;
   public readonly fileIcon = documentTextOutline;
@@ -119,9 +120,9 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
   }
 
   public getCharacterDetailLink(
-    character: Pick<CharacterListItem, "id"> | null | undefined,
+    character: Pick<CharacterListItem, 'id'> | null | undefined,
   ): string[] | null {
-    return character ? ["/characters", character.id.toString()] : null;
+    return character ? ['/characters', character.id.toString()] : null;
   }
 
   public isSelected(teamId: string): boolean {
@@ -157,7 +158,12 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
   public async confirmAndDeleteTeam(teamId: string): Promise<void> {
     const team = this.savedTeams().find((entry) => entry.id === teamId);
 
-    if (!team || !this.confirmDelete(this.i18n.translate("confirm.deleteSingle", { name: team.name }, "saved-teams"))) {
+    if (
+      !team ||
+      !this.confirmDelete(
+        this.i18n.translate('confirm.deleteSingle', { name: team.name }, 'saved-teams'),
+      )
+    ) {
       return;
     }
 
@@ -171,7 +177,11 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
     if (
       !selectedTeamIds.length ||
       !this.confirmDelete(
-        this.i18n.translate("confirm.deleteSelected", { count: selectedTeamIds.length }, "saved-teams"),
+        this.i18n.translate(
+          'confirm.deleteSelected',
+          { count: selectedTeamIds.length },
+          'saved-teams',
+        ),
       )
     ) {
       return;
@@ -195,11 +205,11 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
   }
 
   public onEditTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {
-    this.editTeamName.set((event.detail.value ?? "").trimStart());
+    this.editTeamName.set((event.detail.value ?? '').trimStart());
   }
 
   public onEditNotesChange(event: CustomEvent<{ value?: string | null }>): void {
-    this.editNotes.set((event.detail.value ?? "").toString());
+    this.editNotes.set((event.detail.value ?? '').toString());
   }
 
   public async saveEditedTeam(): Promise<void> {
@@ -244,7 +254,7 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
     const target = event.target as HTMLInputElement;
     const [file] = Array.from(target.files ?? []);
 
-    input.value = "";
+    input.value = '';
 
     if (!file) {
       return;
@@ -258,7 +268,7 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
     this.draggingImportFile.set(true);
 
     if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = "copy";
+      event.dataTransfer.dropEffect = 'copy';
     }
   }
 
@@ -291,9 +301,13 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
       return;
     }
 
-    const characterIds = [...new Set(
-      teams.flatMap((team) => team.slots.filter((slotId): slotId is number => typeof slotId === "number")),
-    )];
+    const characterIds = [
+      ...new Set(
+        teams.flatMap((team) =>
+          team.slots.filter((slotId): slotId is number => typeof slotId === 'number'),
+        ),
+      ),
+    ];
     const characters = await this.repository.getCharactersByIds(characterIds);
     const characterMap = new Map(characters.map((character) => [character.id, character] as const));
 
@@ -301,7 +315,7 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
       teams.map((team) => ({
         team,
         slots: team.slots.map((slotId) =>
-          typeof slotId === "number" ? characterMap.get(slotId) ?? null : null,
+          typeof slotId === 'number' ? (characterMap.get(slotId) ?? null) : null,
         ),
       })),
     );
@@ -333,20 +347,20 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
   }
 
   private confirmDelete(message: string): boolean {
-    return typeof globalThis.confirm === "function" ? globalThis.confirm(message) : false;
+    return typeof globalThis.confirm === 'function' ? globalThis.confirm(message) : false;
   }
 
   private resetImportState(): void {
     this.draggingImportFile.set(false);
-    this.importFileName.set("");
+    this.importFileName.set('');
     this.importFeedback.set(null);
     this.importing.set(false);
   }
 
   private resetEditState(): void {
     this.editingTeam.set(null);
-    this.editTeamName.set("");
-    this.editNotes.set("");
+    this.editTeamName.set('');
+    this.editNotes.set('');
     this.savingEdit.set(false);
   }
 
@@ -359,12 +373,12 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
       const rawContent = await file.text();
       const payload = parseSavedTeamsImportPayload(rawContent);
       const sanitizedImport = sanitizeSavedTeamsImportPayload(payload, {
-        untitledTeamName: this.i18n.translate("common.defaults.untitledCrew"),
+        untitledTeamName: this.i18n.translate('common.defaults.untitledCrew'),
       });
       const candidateCharacterIds = [
         ...new Set(
           sanitizedImport.teams.flatMap((team) =>
-            team.slots.filter((slotId): slotId is number => typeof slotId === "number"),
+            team.slots.filter((slotId): slotId is number => typeof slotId === 'number'),
           ),
         ),
       ];
@@ -378,18 +392,20 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
       const mergeResult = await this.userState.mergeImportedTeams(slotSanitizeResult.teams);
 
       await this.refreshSavedTeamCards();
-      this.importFeedback.set(this.buildImportFeedback({
-        addedCount: mergeResult.addedCount,
-        duplicateIdCount: sanitizedImport.duplicateIdCount,
-        fileName: file.name,
-        invalidTeamCount: sanitizedImport.invalidTeamCount,
-        unknownSlotCount: slotSanitizeResult.unknownSlotCount,
-        updatedCount: mergeResult.updatedCount,
-      }));
+      this.importFeedback.set(
+        this.buildImportFeedback({
+          addedCount: mergeResult.addedCount,
+          duplicateIdCount: sanitizedImport.duplicateIdCount,
+          fileName: file.name,
+          invalidTeamCount: sanitizedImport.invalidTeamCount,
+          unknownSlotCount: slotSanitizeResult.unknownSlotCount,
+          updatedCount: mergeResult.updatedCount,
+        }),
+      );
     } catch (error) {
       this.importFeedback.set({
-        tone: "error",
-        title: this.i18n.translate("import.errorTitle", undefined, "saved-teams"),
+        tone: 'error',
+        title: this.i18n.translate('import.errorTitle', undefined, 'saved-teams'),
         details: [this.resolveImportError(error as SavedTeamsImportError)],
       });
     } finally {
@@ -405,49 +421,73 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
     unknownSlotCount: number;
     updatedCount: number;
   }): SavedTeamsImportFeedback {
-    const details = [this.i18n.translate("import.loadedFromFile", { fileName: stats.fileName }, "saved-teams")];
+    const details = [
+      this.i18n.translate('import.loadedFromFile', { fileName: stats.fileName }, 'saved-teams'),
+    ];
 
     if (stats.addedCount > 0) {
-      details.push(this.i18n.translate("import.stats.added", { count: stats.addedCount }, "saved-teams"));
+      details.push(
+        this.i18n.translate('import.stats.added', { count: stats.addedCount }, 'saved-teams'),
+      );
     }
 
     if (stats.updatedCount > 0) {
-      details.push(this.i18n.translate("import.stats.updated", { count: stats.updatedCount }, "saved-teams"));
+      details.push(
+        this.i18n.translate('import.stats.updated', { count: stats.updatedCount }, 'saved-teams'),
+      );
     }
 
     if (stats.invalidTeamCount > 0) {
-      details.push(this.i18n.translate("import.stats.invalid", { count: stats.invalidTeamCount }, "saved-teams"));
+      details.push(
+        this.i18n.translate(
+          'import.stats.invalid',
+          { count: stats.invalidTeamCount },
+          'saved-teams',
+        ),
+      );
     }
 
     if (stats.duplicateIdCount > 0) {
-      details.push(this.i18n.translate("import.stats.duplicates", { count: stats.duplicateIdCount }, "saved-teams"));
+      details.push(
+        this.i18n.translate(
+          'import.stats.duplicates',
+          { count: stats.duplicateIdCount },
+          'saved-teams',
+        ),
+      );
     }
 
     if (stats.unknownSlotCount > 0) {
-      details.push(this.i18n.translate("import.stats.unknownSlots", { count: stats.unknownSlotCount }, "saved-teams"));
+      details.push(
+        this.i18n.translate(
+          'import.stats.unknownSlots',
+          { count: stats.unknownSlotCount },
+          'saved-teams',
+        ),
+      );
     }
 
     return {
       tone:
         stats.invalidTeamCount > 0 || stats.duplicateIdCount > 0 || stats.unknownSlotCount > 0
-          ? "warning"
-          : "success",
+          ? 'warning'
+          : 'success',
       title: this.i18n.translate(
         stats.invalidTeamCount > 0 || stats.duplicateIdCount > 0 || stats.unknownSlotCount > 0
-          ? "import.warningTitle"
-          : "import.successTitle",
+          ? 'import.warningTitle'
+          : 'import.successTitle',
         undefined,
-        "saved-teams",
+        'saved-teams',
       ),
       details,
     };
   }
 
   private resolveImportError(error: SavedTeamsImportError | Error | unknown): string {
-    if (error && typeof error === "object" && "key" in error && typeof error.key === "string") {
-      return this.i18n.translate(error.key, undefined, "saved-teams");
+    if (error && typeof error === 'object' && 'key' in error && typeof error.key === 'string') {
+      return this.i18n.translate(error.key, undefined, 'saved-teams');
     }
 
-    return this.i18n.translate("import.errors.generic", undefined, "saved-teams");
+    return this.i18n.translate('import.errors.generic', undefined, 'saved-teams');
   }
 }

@@ -1,14 +1,14 @@
 <ng-container *transloco="let t; scope: 'team-builder'; read: 'team-builder'">
   <ion-header class="ion-no-border">
     <ion-toolbar>
-      <ion-title>{{ t("title") }}</ion-title>
+      <ion-title>{{ t('title') }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
   <ion-content [fullscreen]="true">
     <div class="page-shell team-shell">
       <section class="glass-card team-form">
-        <div class="section-label">{{ t("form.eyebrow") }}</div>
+        <div class="section-label">{{ t('form.eyebrow') }}</div>
         <div class="team-fields">
           <ion-input
             [label]="t('form.teamNameLabel')"
@@ -26,10 +26,12 @@
             [value]="selectedShipId()"
             (ionChange)="selectedShipId.set($event.detail.value)"
           >
-            <ion-select-option [value]="null">{{ t("form.noShip") }}</ion-select-option>
-            <ion-select-option *ngFor="let ship of ships()" [value]="ship.id">
-              {{ ship.name }}
-            </ion-select-option>
+            <ion-select-option [value]="null">{{ t('form.noShip') }}</ion-select-option>
+            @for (ship of ships(); track ship.id) {
+              <ion-select-option [value]="ship.id">
+                {{ ship.name }}
+              </ion-select-option>
+            }
           </ion-select>
         </div>
 
@@ -44,72 +46,75 @@
 
         <div class="totals-grid">
           <article class="total-card">
-            <span>{{ t("totals.hp") }}</span>
+            <span>{{ t('totals.hp') }}</span>
             <strong>{{ teamTotals().hp }}</strong>
           </article>
           <article class="total-card">
-            <span>{{ t("totals.atk") }}</span>
+            <span>{{ t('totals.atk') }}</span>
             <strong>{{ teamTotals().atk }}</strong>
           </article>
           <article class="total-card">
-            <span>{{ t("totals.rcv") }}</span>
+            <span>{{ t('totals.rcv') }}</span>
             <strong>{{ teamTotals().rcv }}</strong>
           </article>
           <article class="total-card">
-            <span>{{ t("totals.cost") }}</span>
+            <span>{{ t('totals.cost') }}</span>
             <strong>{{ teamTotals().cost }}</strong>
           </article>
         </div>
 
         <ion-button expand="block" color="warning" (click)="saveTeam()">
-          {{ t("form.saveOffline") }}
+          {{ t('form.saveOffline') }}
         </ion-button>
       </section>
 
       <section class="glass-card slot-grid">
         <div class="slot-grid__header">
-          <h2>{{ t("slots.title") }}</h2>
-          <p>{{ t("slots.subtitle") }}</p>
+          <h2>{{ t('slots.title') }}</h2>
+          <p>{{ t('slots.subtitle') }}</p>
         </div>
 
         <div class="slots">
-          <article
-            class="slot-card"
-            *ngFor="let slot of slotCharacters(); let index = index"
-            [class.active]="selectedSlotIndex() === index"
-          >
-            <button type="button" class="slot-card__select" (click)="selectSlot(index)">
-              <img
-                [src]="slot?.imageUrl ?? 'assets/placeholders/character-card.svg'"
-                [alt]="slot?.name ?? t('slots.emptyAlt')"
-              />
-              <div class="slot-card__copy">
-                <strong>{{ t("slots.slotLabel", { slot: index + 1 }) }}</strong>
-                <span>{{ slot?.name ?? t("slots.empty") }}</span>
-                <small *ngIf="slot">{{ slot.type }} • {{ slot.primaryClass }}</small>
-                <small *ngIf="!slot">{{ t("slots.tapToAssign") }}</small>
-              </div>
-            </button>
-
-            <div *ngIf="slot" class="slot-card__actions">
-              <ion-button
-                size="small"
-                fill="clear"
-                color="warning"
-                class="slot-card__detail-button"
-                [routerLink]="getCharacterDetailLink(slot)"
-              >
-                {{ "common.actions.viewDetails" | transloco }}
-              </ion-button>
-            </div>
-          </article>
+          @for (slot of slotCharacters(); track slot?.id ?? index; let index = $index) {
+            <article class="slot-card" [class.active]="selectedSlotIndex() === index">
+              <button type="button" class="slot-card__select" (click)="selectSlot(index)">
+                <img
+                  [src]="slot?.imageUrl ?? 'assets/placeholders/character-card.svg'"
+                  [alt]="slot?.name ?? t('slots.emptyAlt')"
+                />
+                <div class="slot-card__copy">
+                  <strong>{{ t('slots.slotLabel', { slot: index + 1 }) }}</strong>
+                  <span>{{ slot?.name ?? t('slots.empty') }}</span>
+                  @if (slot) {
+                    <small>{{ slot.type }} • {{ slot.primaryClass }}</small>
+                  }
+                  @if (!slot) {
+                    <small>{{ t('slots.tapToAssign') }}</small>
+                  }
+                </div>
+              </button>
+              @if (slot) {
+                <div class="slot-card__actions">
+                  <ion-button
+                    size="small"
+                    fill="clear"
+                    color="warning"
+                    class="slot-card__detail-button"
+                    [routerLink]="getCharacterDetailLink(slot)"
+                  >
+                    {{ 'common.actions.viewDetails' | transloco }}
+                  </ion-button>
+                </div>
+              }
+            </article>
+          }
         </div>
       </section>
 
       <section class="glass-card assign-panel">
         <div class="slot-grid__header">
-          <h2>{{ t("assign.title", { slot: selectedSlotIndex() + 1 }) }}</h2>
-          <p>{{ t("assign.subtitle") }}</p>
+          <h2>{{ t('assign.title', { slot: selectedSlotIndex() + 1 }) }}</h2>
+          <p>{{ t('assign.subtitle') }}</p>
         </div>
 
         <ion-searchbar
@@ -119,54 +124,65 @@
         ></ion-searchbar>
 
         <div class="candidate-list">
-          <article *ngFor="let candidate of candidateCharacters()" class="candidate-card">
-            <img [src]="candidate.imageUrl" [alt]="candidate.name" />
-            <div class="candidate-copy">
-              <div class="candidate-title-row">
-                <strong>{{ candidate.name }}</strong>
-                <button
-                  type="button"
-                  class="favorite-button"
-                  [attr.aria-label]="
-                    isFavorite(candidate.id)
-                      ? t('assign.removeFavoriteAria')
-                      : t('assign.addFavoriteAria')
-                  "
-                  (click)="toggleFavorite(candidate.id, $event)"
-                >
-                  <ion-icon [icon]="isFavorite(candidate.id) ? favoriteIcon : favoriteOutlineIcon"></ion-icon>
-                </button>
+          @for (candidate of candidateCharacters(); track candidate.id) {
+            <article class="candidate-card">
+              <img [src]="candidate.imageUrl" [alt]="candidate.name" />
+              <div class="candidate-copy">
+                <div class="candidate-title-row">
+                  <strong>{{ candidate.name }}</strong>
+                  <button
+                    type="button"
+                    class="favorite-button"
+                    [attr.aria-label]="
+                      isFavorite(candidate.id)
+                        ? t('assign.removeFavoriteAria')
+                        : t('assign.addFavoriteAria')
+                    "
+                    (click)="toggleFavorite(candidate.id, $event)"
+                  >
+                    <ion-icon
+                      [icon]="isFavorite(candidate.id) ? favoriteIcon : favoriteOutlineIcon"
+                    ></ion-icon>
+                  </button>
+                </div>
+                <span>{{ candidate.type }} • {{ candidate.primaryClass }}</span>
               </div>
-              <span>{{ candidate.type }} • {{ candidate.primaryClass }}</span>
-            </div>
-            <div class="candidate-actions">
-              <ion-button size="small" fill="outline" color="light" (click)="assignCharacter(candidate)">
-                {{ "common.actions.assign" | transloco }}
-              </ion-button>
-            </div>
-          </article>
+              <div class="candidate-actions">
+                <ion-button
+                  size="small"
+                  fill="outline"
+                  color="light"
+                  (click)="assignCharacter(candidate)"
+                >
+                  {{ 'common.actions.assign' | transloco }}
+                </ion-button>
+              </div>
+            </article>
+          }
         </div>
       </section>
 
       <section class="glass-card saved-teams">
         <div class="slot-grid__header">
-          <h2>{{ t("saved.title") }}</h2>
-          <p>{{ t("saved.subtitle") }}</p>
+          <h2>{{ t('saved.title') }}</h2>
+          <p>{{ t('saved.subtitle') }}</p>
         </div>
 
         <ion-list lines="none">
-          <ion-item *ngFor="let team of savedTeams()">
-            <ion-label>
-              <h3>{{ team.name }}</h3>
-              <p>{{ team.notes || ("common.defaults.noNotesYet" | transloco) }}</p>
-            </ion-label>
-            <ion-button fill="clear" color="light" (click)="loadTeam(team)">
-              {{ "common.actions.load" | transloco }}
-            </ion-button>
-            <ion-button fill="clear" color="danger" (click)="deleteTeam(team.id)">
-              {{ "common.actions.delete" | transloco }}
-            </ion-button>
-          </ion-item>
+          @for (team of savedTeams(); track team.id) {
+            <ion-item>
+              <ion-label>
+                <h3>{{ team.name }}</h3>
+                <p>{{ team.notes || ('common.defaults.noNotesYet' | transloco) }}</p>
+              </ion-label>
+              <ion-button fill="clear" color="light" (click)="loadTeam(team)">
+                {{ 'common.actions.load' | transloco }}
+              </ion-button>
+              <ion-button fill="clear" color="danger" (click)="deleteTeam(team.id)">
+                {{ 'common.actions.delete' | transloco }}
+              </ion-button>
+            </ion-item>
+          }
         </ion-list>
       </section>
     </div>
