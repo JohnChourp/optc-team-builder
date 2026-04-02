@@ -668,6 +668,51 @@ describe('Auto team builder', () => {
     expect(result?.coverage.coversAllSelectedTypes).toBe(true);
   });
 
+  it('prefers the newer equivalent captain after filtering unreadable recent placeholders', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 6000,
+          primaryClass: 'Fighter',
+          detail: {},
+        }),
+        createCharacterRecord({
+          id: 5901,
+          primaryClass: 'Fighter',
+          secondaryClass: 'Free Spirit',
+          detail: {
+            captainAbility:
+              'Boosts ATK of DEX and Fighter characters by 5.25x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.',
+            specialText:
+              'Boosts orb effects of DEX and Fighter characters by 2.25x for 1 turn and changes orbs into Matching Orbs.',
+          },
+        }),
+        createCharacterRecord({
+          id: 5899,
+          primaryClass: 'Fighter',
+          secondaryClass: 'Free Spirit',
+          detail: {
+            captainAbility:
+              'Boosts ATK of DEX and Fighter characters by 5.25x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.',
+            specialText:
+              'Boosts orb effects of DEX and Fighter characters by 2.25x for 1 turn and changes orbs into Matching Orbs.',
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      INPUT,
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.candidateCount).toBe(6);
+    expect(result?.slots[0]?.character.id).toBe(5901);
+    expect(result?.slots[1]?.character.id).toBe(5901);
+    expect(result?.slots.some((slot) => slot.character.id === 6000)).toBe(false);
+  });
+
   it('uses one selected leader for both captain slots', () => {
     const result = buildAutoTeamResult(createStrictMixedTeamRecords(), {
       ...createInput(['DEX', 'PSY'], ['Fighter', 'Slasher'], {
