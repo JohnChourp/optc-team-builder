@@ -55,9 +55,16 @@
             @for (enemy of savedEnemies(); track enemy.id) {
               <article>
                 <div class="saved-enemy-head">
-                  <div class="saved-enemy-copy">
-                    <strong>{{ enemy.name }}</strong>
-                    <p>{{ enemy.notes || ('common.defaults.noNotesYet' | transloco) }}</p>
+                  <div class="saved-enemy-main">
+                    @if (enemy.imageDataUrl) {
+                      <div class="saved-enemy-thumb">
+                        <img [src]="enemy.imageDataUrl" [alt]="enemy.name" loading="lazy" />
+                      </div>
+                    }
+                    <div class="saved-enemy-copy">
+                      <strong>{{ enemy.name }}</strong>
+                      <p>{{ enemy.notes || ('common.defaults.noNotesYet' | transloco) }}</p>
+                    </div>
                   </div>
                   <div class="saved-enemy-actions">
                     <ion-button
@@ -192,6 +199,66 @@
             [disabled]="savingEnemy()"
             (ionInput)="onEnemyNotesChange($event)"
           ></ion-textarea>
+
+          <input
+            #enemyImageInput
+            type="file"
+            accept="image/*"
+            hidden
+            (change)="onEnemyImageSelected($event, enemyImageInput)"
+          />
+
+          <section class="enemy-image-card">
+            <div class="section-head section-head--editor">
+              <div>
+                <h3>{{ t('editor.image.title') }}</h3>
+                <span>{{ t('editor.image.copy') }}</span>
+              </div>
+              <div class="enemy-image-actions">
+                <ion-button
+                  fill="outline"
+                  color="warning"
+                  size="small"
+                  [disabled]="savingEnemy() || processingEnemyImage()"
+                  (click)="openEnemyImagePicker(enemyImageInput)"
+                >
+                  {{ enemyImageDataUrl() ? t('editor.image.replace') : t('editor.image.upload') }}
+                </ion-button>
+                <ion-button
+                  fill="clear"
+                  color="light"
+                  size="small"
+                  [disabled]="savingEnemy() || processingEnemyImage() || !enemyImageDataUrl()"
+                  (click)="removeEnemyImage()"
+                >
+                  {{ t('editor.image.remove') }}
+                </ion-button>
+              </div>
+            </div>
+
+            @if (enemyImageDataUrl()) {
+              <div class="enemy-image-preview">
+                <img
+                  [src]="enemyImageDataUrl()!"
+                  [alt]="enemyName() || t('editor.image.previewAlt')"
+                />
+              </div>
+            } @else {
+              <p class="editor-empty-copy">{{ t('editor.image.empty') }}</p>
+            }
+
+            @if (processingEnemyImage()) {
+              <p class="enemy-image-status">
+                {{ t('editor.image.processing') }}
+              </p>
+            }
+
+            @if (enemyImageErrorMessage()) {
+              <p class="enemy-image-error">
+                {{ enemyImageErrorMessage() }}
+              </p>
+            }
+          </section>
 
           <div class="editor-grid">
             <div class="editor-field">
@@ -391,7 +458,7 @@
             </ion-button>
             <ion-button
               color="warning"
-              [disabled]="savingEnemy() || !canSaveEnemy()"
+              [disabled]="savingEnemy() || processingEnemyImage() || !canSaveEnemy()"
               (click)="saveEnemy()"
             >
               {{ editingEnemy() ? t('actions.saveChanges') : t('actions.saveEnemy') }}

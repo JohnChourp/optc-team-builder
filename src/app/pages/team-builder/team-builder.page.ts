@@ -57,6 +57,7 @@ import { UserStateService } from '../../core/services/user-state.service';
 })
 export class TeamBuilderPage implements OnInit {
   public readonly ships = signal<ShipRecord[]>([]);
+  public readonly candidateSearchTerm = signal('');
   public readonly candidateCharacters = signal<CharacterListItem[]>([]);
   public readonly slotCharacters = signal<Array<CharacterListItem | null>>(
     Array.from({ length: 6 }, () => null),
@@ -85,11 +86,12 @@ export class TeamBuilderPage implements OnInit {
   public async ngOnInit(): Promise<void> {
     await this.userState.ready();
     this.ships.set(await this.repository.getShips());
-    await this.refreshCandidateCharacters('');
+    await this.refreshCandidateCharacters(this.candidateSearchTerm());
   }
 
   public async onSearchCandidates(event: CustomEvent<{ value?: string | null }>): Promise<void> {
-    await this.refreshCandidateCharacters((event.detail.value ?? '').trim());
+    this.candidateSearchTerm.set((event.detail.value ?? '').trim());
+    await this.refreshCandidateCharacters(this.candidateSearchTerm());
   }
 
   public onTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {
@@ -155,6 +157,13 @@ export class TeamBuilderPage implements OnInit {
     }
   }
 
+  public async resetPage(): Promise<void> {
+    this.candidateSearchTerm.set('');
+    this.selectedSlotIndex.set(0);
+    this.resetEditor();
+    await this.refreshCandidateCharacters(this.candidateSearchTerm());
+  }
+
   public async toggleFavorite(characterId: number, event: Event): Promise<void> {
     event.preventDefault();
     event.stopPropagation();
@@ -204,6 +213,7 @@ export class TeamBuilderPage implements OnInit {
     this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
     this.notes.set('');
     this.selectedShipId.set(null);
+    this.selectedSlotIndex.set(0);
     this.slotCharacters.set(Array.from({ length: 6 }, () => null));
     this.teamTotals.set({ hp: 0, atk: 0, rcv: 0, cost: 0 });
   }

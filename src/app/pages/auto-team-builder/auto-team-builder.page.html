@@ -683,6 +683,15 @@
             color="light"
             class="download-preset-button"
             [disabled]="building()"
+            (click)="resetPage()"
+          >
+            {{ 'common.actions.reset' | transloco }}
+          </ion-button>
+          <ion-button
+            fill="outline"
+            color="light"
+            class="download-preset-button"
+            [disabled]="building()"
             (click)="openPresetFilePicker(presetFileInput)"
           >
             {{ t('actions.importPresetJson') }}

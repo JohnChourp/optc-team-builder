@@ -1,16 +1,16 @@
-import { Injectable, signal } from "@angular/core";
-import { Preferences } from "@capacitor/preferences";
+import { Injectable, signal } from '@angular/core';
+import { Preferences } from '@capacitor/preferences';
 
-import { type SavedEnemy, type SavedTeam } from "../models/optc.models";
-import { type AutoBuildAbilityRequirement } from "../models/auto-team-builder-ability.models";
-import { AppI18nService } from "./app-i18n.service";
+import { type SavedEnemy, type SavedTeam } from '../models/optc.models';
+import { type AutoBuildAbilityRequirement } from '../models/auto-team-builder-ability.models';
+import { AppI18nService } from './app-i18n.service';
 
-const FAVORITES_KEY = "favoriteCharacterIds";
-const RECENTS_KEY = "recentCharacterIds";
-const SAVED_TEAMS_KEY = "savedTeams";
-const SAVED_ENEMIES_KEY = "savedEnemies";
+const FAVORITES_KEY = 'favoriteCharacterIds';
+const RECENTS_KEY = 'recentCharacterIds';
+const SAVED_TEAMS_KEY = 'savedTeams';
+const SAVED_ENEMIES_KEY = 'savedEnemies';
 
-@Injectable({ providedIn: "root" })
+@Injectable({ providedIn: 'root' })
 export class UserStateService {
   public readonly favoriteCharacterIds = signal<number[]>([]);
   public readonly recentCharacterIds = signal<number[]>([]);
@@ -48,13 +48,18 @@ export class UserStateService {
 
   public async markRecent(characterId: number): Promise<void> {
     await this.ready();
-    const next = [characterId, ...this.recentCharacterIds().filter((value) => value !== characterId)].slice(0, 24);
+    const next = [
+      characterId,
+      ...this.recentCharacterIds().filter((value) => value !== characterId),
+    ].slice(0, 24);
 
     this.recentCharacterIds.set(next);
     await this.persistJson(RECENTS_KEY, next);
   }
 
-  public async saveTeam(input: Omit<SavedTeam, "id" | "createdAt" | "updatedAt"> & { id?: string }): Promise<SavedTeam> {
+  public async saveTeam(
+    input: Omit<SavedTeam, 'id' | 'createdAt' | 'updatedAt'> & { id?: string },
+  ): Promise<SavedTeam> {
     await this.ready();
 
     const existing = this.savedTeams().find((team) => team.id === input.id);
@@ -82,9 +87,7 @@ export class UserStateService {
   public async deleteTeams(teamIds: string[]): Promise<void> {
     await this.ready();
     const targetTeamIds = new Set(
-      teamIds
-        .map((teamId) => teamId.trim())
-        .filter((teamId) => teamId.length > 0),
+      teamIds.map((teamId) => teamId.trim()).filter((teamId) => teamId.length > 0),
     );
 
     if (!targetTeamIds.size) {
@@ -111,10 +114,7 @@ export class UserStateService {
   }
 
   public async saveEnemy(
-    input: Omit<
-      SavedEnemy,
-      "id" | "createdAt" | "updatedAt"
-    > & { id?: string },
+    input: Omit<SavedEnemy, 'id' | 'createdAt' | 'updatedAt'> & { id?: string },
   ): Promise<SavedEnemy> {
     await this.ready();
 
@@ -191,10 +191,7 @@ export class UserStateService {
       mergedTeams.push(normalizedTeam);
     });
 
-    const next = [
-      ...mergedTeams,
-      ...currentTeams.filter((team) => !importedTeamIds.has(team.id)),
-    ];
+    const next = [...mergedTeams, ...currentTeams.filter((team) => !importedTeamIds.has(team.id))];
 
     await this.replaceSavedTeams(next);
 
@@ -248,7 +245,7 @@ export class UserStateService {
   }
 
   private normalizeSavedTeam(
-    team: Pick<SavedTeam, "name" | "notes" | "shipId" | "slots"> & Partial<SavedTeam>,
+    team: Pick<SavedTeam, 'name' | 'notes' | 'shipId' | 'slots'> & Partial<SavedTeam>,
     existing?: SavedTeam,
   ): SavedTeam {
     const now = new Date().toISOString();
@@ -267,14 +264,15 @@ export class UserStateService {
   private normalizeSavedEnemy(
     enemy: Pick<
       SavedEnemy,
-      | "name"
-      | "notes"
-      | "selectedTypes"
-      | "selectedClasses"
-      | "requiredAbilities"
-      | "requireAllSelectedTypesInTeam"
-      | "requireAllSelectedClassesPerCharacter"
-      | "requireAllSpecialsSupportTeam"
+      | 'name'
+      | 'notes'
+      | 'imageDataUrl'
+      | 'selectedTypes'
+      | 'selectedClasses'
+      | 'requiredAbilities'
+      | 'requireAllSelectedTypesInTeam'
+      | 'requireAllSelectedClassesPerCharacter'
+      | 'requireAllSpecialsSupportTeam'
     > &
       Partial<SavedEnemy>,
     existing?: SavedEnemy,
@@ -285,6 +283,7 @@ export class UserStateService {
       id: this.normalizeEntityId(enemy.id) ?? existing?.id ?? this.createEnemyId(),
       name: this.normalizeEnemyName(enemy.name),
       notes: this.normalizeNotes(enemy.notes),
+      imageDataUrl: this.normalizeEnemyImageDataUrl(enemy.imageDataUrl),
       selectedTypes: this.normalizeStringCollection(enemy.selectedTypes, {
         mapValue: (value) => value.toUpperCase(),
       }),
@@ -299,7 +298,7 @@ export class UserStateService {
   }
 
   private normalizeEntityId(teamId: string | undefined): string | null {
-    if (typeof teamId !== "string") {
+    if (typeof teamId !== 'string') {
       return null;
     }
 
@@ -309,35 +308,49 @@ export class UserStateService {
   }
 
   private normalizeTeamName(teamName: string | undefined): string {
-    if (typeof teamName !== "string") {
-      return this.i18n.translate("common.defaults.untitledCrew");
+    if (typeof teamName !== 'string') {
+      return this.i18n.translate('common.defaults.untitledCrew');
     }
 
-    return teamName.trim() || this.i18n.translate("common.defaults.untitledCrew");
+    return teamName.trim() || this.i18n.translate('common.defaults.untitledCrew');
   }
 
   private normalizeEnemyName(enemyName: string | undefined): string {
-    if (typeof enemyName !== "string") {
-      return this.i18n.translate("common.defaults.untitledEnemy");
+    if (typeof enemyName !== 'string') {
+      return this.i18n.translate('common.defaults.untitledEnemy');
     }
 
-    return enemyName.trim() || this.i18n.translate("common.defaults.untitledEnemy");
+    return enemyName.trim() || this.i18n.translate('common.defaults.untitledEnemy');
   }
 
   private normalizeTeamSlots(slots: Array<number | null> | undefined): Array<number | null> {
     return Array.from({ length: 6 }, (_, index) => {
       const value = slots?.[index];
 
-      return typeof value === "number" && Number.isInteger(value) && value > 0 ? value : null;
+      return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : null;
     });
   }
 
   private normalizeShipId(shipId: number | null | undefined): number | null {
-    return typeof shipId === "number" && Number.isInteger(shipId) && shipId > 0 ? shipId : null;
+    return typeof shipId === 'number' && Number.isInteger(shipId) && shipId > 0 ? shipId : null;
   }
 
   private normalizeNotes(notes: string | undefined): string {
-    return typeof notes === "string" ? notes.trim() : "";
+    return typeof notes === 'string' ? notes.trim() : '';
+  }
+
+  private normalizeEnemyImageDataUrl(imageDataUrl: string | null | undefined): string | null {
+    if (typeof imageDataUrl !== 'string') {
+      return null;
+    }
+
+    const normalizedImageDataUrl = imageDataUrl.trim();
+
+    if (!normalizedImageDataUrl.startsWith('data:image/')) {
+      return null;
+    }
+
+    return normalizedImageDataUrl.includes(';base64,') ? normalizedImageDataUrl : null;
   }
 
   private normalizeStringCollection(
@@ -351,7 +364,7 @@ export class UserStateService {
     const normalizedValues = new Set<string>();
 
     values.forEach((value) => {
-      if (typeof value !== "string") {
+      if (typeof value !== 'string') {
         return;
       }
 
@@ -377,18 +390,19 @@ export class UserStateService {
     const normalizedRequirements = new Map<string, AutoBuildAbilityRequirement>();
 
     requirements.forEach((requirement) => {
-      if (!requirement || typeof requirement !== "object") {
+      if (!requirement || typeof requirement !== 'object') {
         return;
       }
 
-      const abilityKey = typeof requirement.abilityKey === "string" ? requirement.abilityKey.trim() : "";
+      const abilityKey =
+        typeof requirement.abilityKey === 'string' ? requirement.abilityKey.trim() : '';
 
       if (!abilityKey.length) {
         return;
       }
 
       const minTurns =
-        typeof requirement.minTurns === "number" &&
+        typeof requirement.minTurns === 'number' &&
         Number.isInteger(requirement.minTurns) &&
         requirement.minTurns > 0
           ? requirement.minTurns
@@ -397,12 +411,12 @@ export class UserStateService {
         mapValue: (value) => value.toUpperCase(),
       });
       const requiredCharacterCount =
-        typeof requirement.requiredCharacterCount === "number" &&
+        typeof requirement.requiredCharacterCount === 'number' &&
         Number.isInteger(requirement.requiredCharacterCount) &&
         requirement.requiredCharacterCount > 0
           ? requirement.requiredCharacterCount
           : 1;
-      const key = `${abilityKey}|${minTurns ?? "none"}|${slotTokens.join(",")}`;
+      const key = `${abilityKey}|${minTurns ?? 'none'}|${slotTokens.join(',')}`;
       const existing = normalizedRequirements.get(key);
 
       if (existing) {
@@ -425,7 +439,7 @@ export class UserStateService {
   }
 
   private normalizeTimestamp(value: string | undefined, fallback: string): string {
-    if (typeof value !== "string") {
+    if (typeof value !== 'string') {
       return fallback;
     }
 

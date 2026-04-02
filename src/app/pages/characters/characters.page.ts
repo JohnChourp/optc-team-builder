@@ -79,6 +79,7 @@ export class CharactersPage implements OnInit {
   public readonly favoritesOnly = signal(false);
   public readonly favoriteIds;
   public readonly canDownloadFavoritesExport = computed(() => this.favoriteIds().length > 0);
+  public readonly canClearAllFavorites = computed(() => this.favoriteIds().length > 0);
   public readonly importModalOpen = signal(false);
   public readonly draggingImportFile = signal(false);
   public readonly importFileName = signal('');
@@ -132,6 +133,7 @@ export class CharactersPage implements OnInit {
   public readonly errorIcon = alertCircleOutline;
   public readonly favoriteIcon = heart;
   public readonly favoriteOutlineIcon = heartOutline;
+
   public constructor(
     private readonly repository: OptcRepositoryService,
     private readonly userState: UserStateService,
@@ -352,6 +354,36 @@ export class CharactersPage implements OnInit {
     }
   }
 
+  public async clearAllFavorites(): Promise<void> {
+    if (
+      !this.canClearAllFavorites() ||
+      !this.confirmAction(this.i18n.translate('favorites.clearAllConfirm', undefined, 'characters'))
+    ) {
+      return;
+    }
+
+    await this.userState.setFavoriteCharacterIds([]);
+
+    if (this.favoritesOnly()) {
+      await this.loadCharacters(true);
+    }
+  }
+
+  public async resetPage(): Promise<void> {
+    this.searchTerm.set('');
+    this.typeQuery.set('');
+    this.classQuery.set('');
+    this.selectedType.set('');
+    this.selectedClass.set('');
+    this.favoritesOnly.set(false);
+    this.characters.set([]);
+    this.loadingMore.set(false);
+    this.hasMore.set(true);
+    this.importModalOpen.set(false);
+    this.resetImportState();
+    await this.loadCharacters(true);
+  }
+
   public isFavorite(characterId: number): boolean {
     return this.favoriteIds().includes(characterId);
   }
@@ -434,5 +466,9 @@ export class CharactersPage implements OnInit {
     this.parsedImport.set(null);
     this.importResult.set(null);
     this.importingFavorites.set(false);
+  }
+
+  private confirmAction(message: string): boolean {
+    return typeof globalThis.confirm === 'function' ? globalThis.confirm(message) : false;
   }
 }

@@ -155,6 +155,14 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
     downloadSavedTeamsExport(payload);
   }
 
+  public resetPage(): void {
+    this.selectedTeamIds.set([]);
+    this.editModalOpen.set(false);
+    this.importModalOpen.set(false);
+    this.resetEditState();
+    this.resetImportState();
+  }
+
   public async confirmAndDeleteTeam(teamId: string): Promise<void> {
     const team = this.savedTeams().find((entry) => entry.id === teamId);
 

@@ -63,6 +63,8 @@ interface EnemyAbilityRequirementDraft {
   styleUrl: './saved-enemies.page.scss',
 })
 export class SavedEnemiesPage implements OnInit, ViewWillEnter {
+  private readonly maxEnemyImageDimension = 1200;
+
   public readonly loading = signal(true);
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
@@ -71,6 +73,9 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public readonly editingEnemy = signal<SavedEnemy | null>(null);
   public readonly enemyName = signal('');
   public readonly enemyNotes = signal('');
+  public readonly enemyImageDataUrl = signal<string | null>(null);
+  public readonly enemyImageErrorMessage = signal('');
+  public readonly processingEnemyImage = signal(false);
   public readonly selectedTypes = signal<string[]>([]);
   public readonly selectedClasses = signal<string[]>([]);
   public readonly requiredAbilityDrafts = signal<EnemyAbilityRequirementDraft[]>([]);
@@ -127,6 +132,9 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.editingEnemy.set(null);
     this.enemyName.set('');
     this.enemyNotes.set('');
+    this.enemyImageDataUrl.set(null);
+    this.enemyImageErrorMessage.set('');
+    this.processingEnemyImage.set(false);
     this.selectedTypes.set(['DEX']);
     this.selectedClasses.set([]);
     this.requiredAbilityDrafts.set([]);
@@ -141,6 +149,9 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.editingEnemy.set(enemy);
     this.enemyName.set(enemy.name);
     this.enemyNotes.set(enemy.notes);
+    this.enemyImageDataUrl.set(enemy.imageDataUrl);
+    this.enemyImageErrorMessage.set('');
+    this.processingEnemyImage.set(false);
     this.selectedTypes.set([...enemy.selectedTypes]);
     this.selectedClasses.set([...enemy.selectedClasses]);
     this.requiredAbilityDrafts.set(
@@ -157,6 +168,8 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.editorOpen.set(false);
     this.editingEnemy.set(null);
     this.savingEnemy.set(false);
+    this.enemyImageErrorMessage.set('');
+    this.processingEnemyImage.set(false);
   }
 
   public onEnemyNameChange(event: CustomEvent<{ value?: string | null }>): void {
@@ -165,6 +178,32 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
   public onEnemyNotesChange(event: CustomEvent<{ value?: string | null }>): void {
     this.enemyNotes.set((event.detail.value ?? '').toString());
+  }
+
+  public openEnemyImagePicker(input: HTMLInputElement): void {
+    if (this.savingEnemy() || this.processingEnemyImage()) {
+      return;
+    }
+
+    input.click();
+  }
+
+  public async onEnemyImageSelected(event: Event, input: HTMLInputElement): Promise<void> {
+    const target = event.target as HTMLInputElement;
+    const [file] = Array.from(target.files ?? []);
+
+    input.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    await this.loadEnemyImage(file);
+  }
+
+  public removeEnemyImage(): void {
+    this.enemyImageDataUrl.set(null);
+    this.enemyImageErrorMessage.set('');
   }
 
   public onTypeChange(event: CustomEvent<{ value?: string[] | string | null }>): void {
@@ -259,7 +298,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   public async saveEnemy(): Promise<void> {
-    if (this.savingEnemy() || !this.canSaveEnemy()) {
+    if (this.savingEnemy() || this.processingEnemyImage() || !this.canSaveEnemy()) {
       return;
     }
 
@@ -270,6 +309,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
         id: this.editingEnemy()?.id ?? undefined,
         name: this.enemyName().trim(),
         notes: this.enemyNotes(),
+        imageDataUrl: this.enemyImageDataUrl(),
         selectedTypes: this.selectedTypes(),
         selectedClasses: this.selectedClasses(),
         requiredAbilities: this.serializeRequiredAbilities(),
@@ -391,6 +431,75 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       },
       [],
     );
+  }
+
+  private async loadEnemyImage(file: File): Promise<void> {
+    if (!file.type.startsWith('image/')) {
+      this.enemyImageErrorMessage.set(
+        this.i18n.translate('editor.image.errors.invalidType', undefined, 'saved-enemies'),
+      );
+      return;
+    }
+
+    this.processingEnemyImage.set(true);
+    this.enemyImageErrorMessage.set('');
+
+    try {
+      const rawImageDataUrl = await this.readFileAsDataUrl(file);
+      const resizedImageDataUrl = await this.resizeImageDataUrl(
+        rawImageDataUrl,
+        this.maxEnemyImageDimension,
+      );
+
+      this.enemyImageDataUrl.set(resizedImageDataUrl);
+    } catch {
+      this.enemyImageErrorMessage.set(
+        this.i18n.translate('editor.image.errors.loadFailed', undefined, 'saved-enemies'),
+      );
+    } finally {
+      this.processingEnemyImage.set(false);
+    }
+  }
+
+  private readFileAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result);
+          return;
+        }
+
+        reject(new Error('Unable to read image data.'));
+      };
+      reader.onerror = () => reject(reader.error ?? new Error('Unable to read image data.'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  private resizeImageDataUrl(imageDataUrl: string, maxDimension: number): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+
+      image.onload = () => {
+        const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+
+        if (!context) {
+          reject(new Error('Unable to create image canvas.'));
+          return;
+        }
+
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      };
+      image.onerror = () => reject(new Error('Unable to load image.'));
+      image.src = imageDataUrl;
+    });
   }
 
   private resolveSelectedValues(value?: string[] | string | null): string[] {

@@ -66,6 +66,10 @@
         <ion-button expand="block" color="warning" (click)="saveTeam()">
           {{ t('form.saveOffline') }}
         </ion-button>
+
+        <ion-button expand="block" fill="outline" color="light" (click)="resetPage()">
+          {{ 'common.actions.reset' | transloco }}
+        </ion-button>
       </section>
 
       <section class="glass-card slot-grid">
@@ -120,6 +124,7 @@
         <ion-searchbar
           [debounce]="150"
           [placeholder]="t('assign.searchPlaceholder')"
+          [value]="candidateSearchTerm()"
           (ionInput)="onSearchCandidates($event)"
         ></ion-searchbar>
 

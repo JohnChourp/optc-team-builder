@@ -46,6 +46,9 @@
             <p>{{ t('tools.copy') }}</p>
           </div>
           <div class="favorites-tools-actions">
+            <ion-button fill="outline" color="light" (click)="resetPage()">
+              {{ 'common.actions.reset' | transloco }}
+            </ion-button>
             <ion-button
               fill="outline"
               color="light"
@@ -56,6 +59,14 @@
             </ion-button>
             <ion-button fill="outline" color="warning" (click)="openImportModal()">
               {{ t('tools.import') }}
+            </ion-button>
+            <ion-button
+              fill="outline"
+              color="danger"
+              [disabled]="!canClearAllFavorites()"
+              (click)="clearAllFavorites()"
+            >
+              {{ t('favorites.clearAll') }}
             </ion-button>
           </div>
         </div>

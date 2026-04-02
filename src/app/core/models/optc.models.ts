@@ -95,6 +95,7 @@ export interface SavedEnemy {
   id: string;
   name: string;
   notes: string;
+  imageDataUrl: string | null;
   selectedTypes: string[];
   selectedClasses: string[];
   requiredAbilities: AutoBuildAbilityRequirement[];

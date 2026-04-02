@@ -164,6 +164,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly maxLeaderCharacters = 2;
   private readonly manualSearchLimit = 24;
   private buildAbortController: AbortController | null = null;
+  private resetAfterBuildCancellation = false;
   private appliedManualCandidateSearchRequestId = 0;
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
@@ -1282,6 +1283,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.result.set(nextResult);
     } catch (error) {
       if (isAutoTeamBuildCancelledError(error)) {
+        if (this.resetAfterBuildCancellation) {
+          return;
+        }
+
         this.result.set(previousResult);
         this.currentTeamId.set(previousTeamId);
         this.errorMessage.set('');
@@ -1299,6 +1304,21 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public cancelBuild(): void {
     this.buildAbortController?.abort();
+  }
+
+  public async resetPage(): Promise<void> {
+    if (this.building()) {
+      this.resetAfterBuildCancellation = true;
+      this.cancelBuild();
+
+      while (this.building()) {
+        await new Promise((resolve) => globalThis.setTimeout(resolve, 0));
+      }
+
+      this.resetAfterBuildCancellation = false;
+    }
+
+    await this.resetPageState();
   }
 
   public buildTeamExportPayload(

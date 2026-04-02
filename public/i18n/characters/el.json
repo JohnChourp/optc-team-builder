@@ -16,6 +16,10 @@
       "placeholder": "Πληκτρολόγησε για φιλτράρισμα ανά type"
     }
   },
+  "favorites": {
+    "clearAll": "Διαγραφή όλων των favorites",
+    "clearAllConfirm": "Να διαγραφούν όλα τα favorites; Η ενέργεια δεν επηρεάζει τις αποθηκευμένες ομάδες."
+  },
   "hero": {
     "copy": "{{characterCount}} units, {{detailCount}} detailed records και {{rumbleCount}} rumble entries από το OPTC source repo.",
     "eyebrow": "Offline-first βάση δεδομένων",

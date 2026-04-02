@@ -25,6 +25,20 @@
     "createTitle": "Create saved enemy",
     "editEyebrow": "Enemy update",
     "editTitle": "Edit saved enemy",
+    "image": {
+      "copy": "Upload a local enemy image for preview only on the saved enemies page.",
+      "empty": "No enemy image selected yet.",
+      "errors": {
+        "invalidType": "Choose an image file from your computer.",
+        "loadFailed": "The image could not be loaded."
+      },
+      "previewAlt": "Enemy image preview",
+      "processing": "Processing image...",
+      "remove": "Remove image",
+      "replace": "Replace image",
+      "title": "Enemy image",
+      "upload": "Upload image"
+    },
     "nameLabel": "Enemy name",
     "noAbilityCatalog": "Ability catalog is not available in this dataset yet.",
     "notesLabel": "Notes",
