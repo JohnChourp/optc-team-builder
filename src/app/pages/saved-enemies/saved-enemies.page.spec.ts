@@ -8,11 +8,14 @@ import { SavedEnemiesPage } from './saved-enemies.page';
 
 vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
+  IonButtons: class {},
   IonContent: class {},
+  IonFooter: class {},
   IonHeader: class {},
   IonIcon: class {},
   IonInput: class {},
   IonModal: class {},
+  IonSearchbar: class {},
   IonSelect: class {},
   IonSelectOption: class {},
   IonSpinner: class {},
@@ -45,6 +48,7 @@ describe('SavedEnemiesPage', () => {
     page.openCreateModal();
 
     expect(page.editorOpen()).toBe(true);
+    expect(page.abilityPickerOpen()).toBe(false);
     expect(page.editingEnemy()).toBeNull();
     expect(page.selectedTypes()).toEqual(['DEX']);
     expect(page.requiredAbilityDrafts()).toEqual([]);
@@ -61,6 +65,64 @@ describe('SavedEnemiesPage', () => {
     expect(page.enemyImageDataUrl()).toBe('data:image/jpeg;base64,Zm9yZXN0LWJvc3M=');
     expect(page.selectedTypes()).toEqual(['DEX', 'PSY']);
     expect(page.selectedClasses()).toEqual(['Fighter']);
+    expect(page.requiredAbilityDrafts()).toHaveLength(1);
+  });
+
+  it('toggles select all and clear for types from the create modal', () => {
+    const { page } = createPage({ savedEnemies: [] });
+
+    page.openCreateModal();
+
+    expect(page.selectedTypes()).toEqual(['DEX']);
+    expect(page.selectAllTypesButtonLabel()).toBe('Select all types');
+
+    page.selectAllTypes();
+
+    expect(page.selectedTypes()).toEqual([...page.availableTypes]);
+    expect(page.selectAllTypesButtonLabel()).toBe('Clear type selection');
+
+    page.selectAllTypes();
+
+    expect(page.selectedTypes()).toEqual([]);
+    expect(page.selectAllTypesButtonLabel()).toBe('Select all types');
+  });
+
+  it('toggles select all and clear for classes without touching unrelated editor state', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    page.openEditModal(page.savedEnemies()[0]!);
+
+    expect(page.selectedClasses()).toEqual(['Fighter']);
+    expect(page.selectedTypes()).toEqual(['DEX', 'PSY']);
+    expect(page.selectAllClassesButtonLabel()).toBe('Select all classes');
+
+    page.selectAllClasses();
+
+    expect(page.selectedClasses()).toEqual(['Fighter', 'Slasher']);
+    expect(page.selectedTypes()).toEqual(['DEX', 'PSY']);
+    expect(page.selectAllClassesButtonLabel()).toBe('Clear class selection');
+
+    page.selectAllClasses();
+
+    expect(page.selectedClasses()).toEqual([]);
+    expect(page.selectedTypes()).toEqual(['DEX', 'PSY']);
+    expect(page.selectAllClassesButtonLabel()).toBe('Select all classes');
+  });
+
+  it('opens and closes the shared ability picker from the editor state', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    page.openCreateModal();
+    page.openAbilityPicker();
+
+    expect(page.abilityPickerOpen()).toBe(true);
+
+    page.closeAbilityPicker();
+
+    expect(page.abilityPickerOpen()).toBe(false);
+    expect(page.requiredAbilityDrafts()).toEqual([]);
   });
 
   it('saves an enemy preset through user state', async () => {
@@ -81,11 +143,15 @@ describe('SavedEnemiesPage', () => {
     page.onClassChange({ detail: { value: ['Slasher'] } } as CustomEvent<{
       value?: string[] | string | null;
     }>);
-    page.addRequiredAbility();
-    page.onRequiredAbilityTurnsChange(
-      page.requiredAbilityDrafts()[0]!.draftId,
-      createInputEvent('5'),
-    );
+    page.saveAbilityPicker([
+      {
+        draftId: 'bind-1',
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ]);
 
     await page.saveEnemy();
 
@@ -150,8 +216,14 @@ describe('SavedEnemiesPage', () => {
     expect(template).toContain("t('editor.image.title')");
     expect(template).toContain('onEnemyImageSelected($event, enemyImageInput)');
     expect(template).toContain('[queryParams]="getEnemyBuilderQueryParams(enemy)"');
+    expect(template).toContain('(click)="selectAllTypes()"');
+    expect(template).toContain('(click)="selectAllClasses()"');
+    expect(template).toContain('selectAllTypesButtonLabel()');
+    expect(template).toContain('selectAllClassesButtonLabel()');
     expect(template).toContain('editor.abilitiesTitle');
     expect(template).toContain('editor.toggles.specials');
+    expect(template).toContain('<app-ability-requirement-picker');
+    expect(template).not.toContain("resolveAbilityCatalogItem(draft.abilityKey)?.label");
   });
 });
 
@@ -220,6 +292,7 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
     }),
   };
   const i18n = {
+    preloadScope: vi.fn().mockResolvedValue(undefined),
     translate: vi.fn((key: string, params?: Record<string, string | number>) => {
       if (key === 'confirm.deleteSingle') {
         return `Delete ${params?.['name'] ?? ''}`;
@@ -235,6 +308,26 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
 
       if (key === 'common.defaults.untitledEnemy') {
         return 'Untitled Enemy';
+      }
+
+      if (key === 'common.actions.select') {
+        return 'Select';
+      }
+
+      if (key === 'editor.typesActions.selectAll') {
+        return 'Select all types';
+      }
+
+      if (key === 'editor.typesActions.clear') {
+        return 'Clear type selection';
+      }
+
+      if (key === 'editor.classesActions.selectAll') {
+        return 'Select all classes';
+      }
+
+      if (key === 'editor.classesActions.clear') {
+        return 'Clear class selection';
       }
 
       return key;
@@ -283,10 +376,4 @@ function buildSavedEnemies() {
       updatedAt: '2026-03-30T10:15:00.000Z',
     },
   ];
-}
-
-function createInputEvent(value: string): Event {
-  return {
-    target: { value },
-  } as unknown as Event;
 }

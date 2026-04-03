@@ -74,7 +74,8 @@
 .section-head > div,
 .saved-enemy-copy,
 .strict-toggle-copy,
-.enemy-chip-group {
+.enemy-chip-group,
+.editor-field {
   display: grid;
   gap: 6px;
 }
@@ -251,6 +252,11 @@
   gap: 8px;
 }
 
+.editor-field-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
 .enemy-image-preview {
   width: min(100%, 320px);
   aspect-ratio: 1;
@@ -280,6 +286,78 @@
 
 .section-head--editor {
   margin-bottom: 0;
+}
+
+.selected-values-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.selected-value-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 200, 76, 0.32);
+  background: rgba(245, 200, 76, 0.14);
+  color: #f6d779;
+  font-size: 0.8rem;
+}
+
+.editor-ability-chip__icon {
+  display: inline-grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 38px;
+  padding: 4px 5px;
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.editor-ability-chip__icon ion-icon {
+  font-size: 0.9rem;
+}
+
+.editor-ability-chip__icon small {
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.editor-ability-chip__icon[data-tone='gold'] {
+  color: #f5c84c;
+}
+
+.editor-ability-chip__icon[data-tone='red'] {
+  color: #ff9d81;
+}
+
+.editor-ability-chip__icon[data-tone='teal'] {
+  color: #65d4d4;
+}
+
+.editor-ability-chip__icon[data-tone='blue'] {
+  color: #7eb9ff;
+}
+
+.editor-ability-chip__icon[data-tone='violet'] {
+  color: #c4a3ff;
+}
+
+.editor-ability-chip__icon[data-tone='green'] {
+  color: #8ee38e;
+}
+
+.editor-ability-chip__icon[data-tone='orange'] {
+  color: #ffba74;
+}
+
+.editor-ability-chip__icon[data-tone='neutral'] {
+  color: rgba(248, 251, 255, 0.76);
 }
 
 .ability-card-grid {

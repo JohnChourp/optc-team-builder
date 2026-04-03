@@ -91,6 +91,7 @@
     "actions": {
       "addRequirement": "Add requirement",
       "clearRequirements": "Clear requirements",
+      "openPicker": "Open picker",
       "removeRequirement": "Remove"
     }
   },

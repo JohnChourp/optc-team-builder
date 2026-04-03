@@ -18,8 +18,13 @@
       "turns": "Turns"
     },
     "addAbility": "Add ability",
+    "editAbilities": "Open picker",
     "classesLabel": "Classes",
     "classesPlaceholder": "Select classes",
+    "classesActions": {
+      "clear": "Clear class selection",
+      "selectAll": "Select all classes"
+    },
     "copy": "Save only enemy-related filters so Auto Team Builder can reopen them later.",
     "createEyebrow": "New enemy preset",
     "createTitle": "Create saved enemy",
@@ -56,7 +61,11 @@
       "typesCopy": "Keep every selected type represented in the result."
     },
     "typesLabel": "Types",
-    "typesPlaceholder": "Select types"
+    "typesPlaceholder": "Select types",
+    "typesActions": {
+      "clear": "Clear type selection",
+      "selectAll": "Select all types"
+    }
   },
   "empty": {
     "copy": "Create a saved enemy preset, then reopen it in Auto Team Builder with all enemy filters prefilled.",

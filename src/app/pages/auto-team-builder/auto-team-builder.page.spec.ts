@@ -8,10 +8,12 @@ import { JSDOM } from 'jsdom';
 import {
   createEmptyAutoBuildManualSlots,
   type AutoBuildManualSlotSelection,
+  type AutoBuildProgressSnapshot,
   type AutoBuildResult,
 } from '../../core/models/auto-team-builder.models';
 import { type CharacterDetailRecord, type DatasetManifest } from '../../core/models/optc.models';
 import { AutoTeamBuildCancelledError } from '../../core/services/auto-team-builder.engine';
+import type { AutoTeamBuilderPage } from './auto-team-builder.page';
 import {
   parseAutoTeamSelectionImportPayload,
   sanitizeAutoTeamSelectionImportPayload,
@@ -25,7 +27,9 @@ import {
 
 vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
+  IonButtons: class {},
   IonContent: class {},
+  IonFooter: class {},
   IonHeader: class {},
   IonIcon: class {},
   IonInput: class {},
@@ -115,6 +119,67 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
         signal: expect.any(AbortSignal),
       }),
     );
+  });
+
+  it('opens and closes the shared ability picker without mutating requirements', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.requiredAbilityDrafts.set([
+      {
+        draftId: 'bind-1',
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 2,
+      },
+    ]);
+
+    page.openAbilityPicker();
+    expect(page.abilityPickerOpen()).toBe(true);
+
+    page.closeAbilityPicker();
+    expect(page.abilityPickerOpen()).toBe(false);
+    expect(page.requiredAbilityDrafts()).toEqual([
+      {
+        draftId: 'bind-1',
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 2,
+      },
+    ]);
+  });
+
+  it('applies shared picker drafts and refreshes the manual candidate pool on save', async () => {
+    const { page, repository } = await createPage();
+
+    await page.ngOnInit();
+    repository.searchDetailedCharacters.mockClear();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+
+    await page.saveAbilityPicker([
+      {
+        draftId: 'bind-1',
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 2,
+      },
+    ]);
+
+    expect(page.abilityPickerOpen()).toBe(false);
+    expect(page.requiredAbilityDrafts()).toEqual([
+      {
+        draftId: 'bind-1',
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 2,
+      },
+    ]);
+    expect(repository.searchDetailedCharacters).toHaveBeenCalledOnce();
   });
 
   it('passes the selected manual ship to the builder service', async () => {
@@ -373,6 +438,8 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(template).toContain('[routerLink]="getCharacterDetailLink(candidateCard.character)"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(slot.character)"');
     expect(template).toContain('(click)="saveTeam()"');
+    expect(template).toContain('<app-ability-requirement-picker');
+    expect(template).not.toContain("abilityRequirements.placeholders.selectAbility");
   });
 
   it('resets the full page state through resetPage', async () => {
@@ -444,7 +511,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
         _selectedClasses: string[],
         _selectedTypes: string[],
         _constraints: unknown,
-        executionOptions?: { onProgress?: (snapshot: any) => void },
+        executionOptions?: { onProgress?: (snapshot: AutoBuildProgressSnapshot) => void },
       ) => {
         executionOptions?.onProgress?.({
           stage: 'exactAttempt',
@@ -609,9 +676,15 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     await page.ngOnInit();
     repository.searchDetailedCharacters.mockClear();
 
-    await page.addRequiredAbility();
-    const draftId = page.requiredAbilityDrafts()[0]!.draftId;
-    await page.onRequiredAbilityCountChange(draftId, createInputEvent('4'));
+    await page.saveAbilityPicker([
+      {
+        draftId: 'bind-1',
+        abilityKey: 'remove_bind',
+        minTurns: 1,
+        slotTokens: [],
+        requiredCharacterCount: 4,
+      },
+    ]);
 
     expect(page.manualCandidateFilters().requiredAbilities).toEqual([
       {
@@ -717,7 +790,10 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
         _selectedClasses: string[],
         _selectedTypes: string[],
         _constraints: unknown,
-        executionOptions?: { signal?: AbortSignal; onProgress?: (snapshot: any) => void },
+        executionOptions?: {
+          signal?: AbortSignal;
+          onProgress?: (snapshot: AutoBuildProgressSnapshot) => void;
+        },
       ) =>
         new Promise<null>((resolve, reject) => {
           executionOptions?.onProgress?.({
@@ -767,7 +843,10 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
         _selectedClasses: string[],
         _selectedTypes: string[],
         _constraints: unknown,
-        executionOptions?: { signal?: AbortSignal; onProgress?: (snapshot: any) => void },
+        executionOptions?: {
+          signal?: AbortSignal;
+          onProgress?: (snapshot: AutoBuildProgressSnapshot) => void;
+        },
       ) =>
         new Promise<null>((_resolve, reject) => {
           executionOptions?.signal?.addEventListener(
@@ -1862,12 +1941,6 @@ function createCharacterRecord(
   };
 }
 
-function createInputEvent(value: string): Event {
-  return {
-    target: { value },
-  } as unknown as Event;
-}
-
 function filterCharactersForManualQuery(
   records: CharacterDetailRecord[],
   query: {
@@ -2019,7 +2092,7 @@ function createAutoBuildResult(
 }
 
 async function createPage(options: { routeEnemyId?: string | null } = {}): Promise<{
-  page: any;
+  page: AutoTeamBuilderPage;
   repository: {
     getDatasetManifest: ReturnType<typeof vi.fn>;
     getAutoBuilderAbilityCatalog: ReturnType<typeof vi.fn>;

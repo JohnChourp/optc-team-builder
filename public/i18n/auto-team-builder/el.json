@@ -91,6 +91,7 @@
     "actions": {
       "addRequirement": "Προσθήκη requirement",
       "clearRequirements": "Καθαρισμός requirements",
+      "openPicker": "Άνοιγμα picker",
       "removeRequirement": "Αφαίρεση"
     }
   },

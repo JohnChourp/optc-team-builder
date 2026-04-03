@@ -277,6 +277,17 @@
                   </ion-select-option>
                 }
               </ion-select>
+              <div class="editor-field-actions">
+                <ion-button
+                  fill="clear"
+                  color="warning"
+                  size="small"
+                  [disabled]="savingEnemy()"
+                  (click)="selectAllTypes()"
+                >
+                  {{ selectAllTypesButtonLabel() }}
+                </ion-button>
+              </div>
             </div>
 
             <div class="editor-field">
@@ -295,6 +306,17 @@
                   </ion-select-option>
                 }
               </ion-select>
+              <div class="editor-field-actions">
+                <ion-button
+                  fill="clear"
+                  color="warning"
+                  size="small"
+                  [disabled]="savingEnemy() || availableClasses().length === 0"
+                  (click)="selectAllClasses()"
+                >
+                  {{ selectAllClassesButtonLabel() }}
+                </ion-button>
+              </div>
             </div>
           </div>
 
@@ -351,9 +373,9 @@
                 color="warning"
                 size="small"
                 [disabled]="savingEnemy() || !availableAbilityCatalogItems().length"
-                (click)="addRequiredAbility()"
+                (click)="openAbilityPicker()"
               >
-                {{ t('editor.addAbility') }}
+                {{ t('editor.editAbilities') }}
               </ion-button>
             </div>
 
@@ -363,89 +385,30 @@
               </p>
             }
 
-            @if (requiredAbilityDrafts().length) {
-              <div class="ability-list">
-                @for (draft of requiredAbilityDrafts(); track draft.draftId) {
-                  <article class="ability-card-row">
-                    <div class="ability-card-grid">
-                      <div class="editor-field">
-                        <span>{{ t('editor.abilityFields.ability') }}</span>
-                        <ion-select
-                          interface="popover"
-                          fill="outline"
-                          [value]="draft.abilityKey"
-                          [selectedText]="
-                            resolveAbilityCatalogItem(draft.abilityKey)?.label ?? draft.abilityKey
-                          "
-                          (ionChange)="onRequiredAbilityKeyChange(draft.draftId, $event)"
-                        >
-                          @for (item of availableAbilityCatalogItems(); track item.key) {
-                            <ion-select-option [value]="item.key">
-                              {{ formatAbilityCatalogItemLabel(item) }}
-                            </ion-select-option>
-                          }
-                        </ion-select>
-                      </div>
-                      <label class="editor-field editor-field--number">
-                        <span>{{ t('editor.abilityFields.characters') }}</span>
-                        <input
-                          type="number"
-                          min="1"
-                          inputmode="numeric"
-                          [value]="draft.requiredCharacterCount ?? ''"
-                          (input)="onRequiredAbilityCountChange(draft.draftId, $event)"
-                        />
-                      </label>
-                      @if (resolveAbilityCatalogItem(draft.abilityKey)?.supportsTurns) {
-                        <label class="editor-field editor-field--number">
-                          <span>{{ t('editor.abilityFields.turns') }}</span>
-                          <input
-                            type="number"
-                            min="1"
-                            inputmode="numeric"
-                            [value]="draft.minTurns ?? ''"
-                            (input)="onRequiredAbilityTurnsChange(draft.draftId, $event)"
-                          />
-                        </label>
-                      }
-                      @if (resolveAbilityCatalogItem(draft.abilityKey)?.supportsSlotTokens) {
-                        <div class="editor-field">
-                          <span>{{ t('editor.abilityFields.slotTokens') }}</span>
-                          <ion-select
-                            interface="popover"
-                            [multiple]="true"
-                            fill="outline"
-                            [value]="draft.slotTokens"
-                            [selectedText]="draft.slotTokens.join(' / ')"
-                            (ionChange)="onRequiredAbilitySlotTokensChange(draft.draftId, $event)"
-                          >
-                            @for (
-                              token of resolveAbilityCatalogItem(draft.abilityKey)
-                                ?.availableSlotTokens ?? [];
-                              track token
-                            ) {
-                              <ion-select-option [value]="token">
-                                {{ token }}
-                              </ion-select-option>
-                            }
-                          </ion-select>
-                        </div>
-                      }
-                    </div>
-                    <ion-button
-                      fill="clear"
-                      color="danger"
-                      size="small"
-                      [disabled]="savingEnemy()"
-                      (click)="removeRequiredAbility(draft.draftId)"
-                    >
-                      {{ t('editor.removeAbility') }}
-                    </ion-button>
-                  </article>
+            @if (requiredAbilitySummaryChips().length) {
+              <div class="selected-values-row">
+                @for (chip of requiredAbilitySummaryChips(); track chip.draftId) {
+                  <span class="selected-value-chip editor-ability-chip">
+                    <span class="editor-ability-chip__icon" [attr.data-tone]="chip.visual.tone">
+                      <ion-icon [icon]="chip.visual.icon"></ion-icon>
+                      <small>{{ chip.visual.badge }}</small>
+                    </span>
+                    <span>{{ chip.label }}</span>
+                  </span>
                 }
               </div>
             }
           </section>
+
+          <app-ability-requirement-picker
+            [isOpen]="abilityPickerOpen()"
+            [title]="t('editor.abilitiesTitle')"
+            [copy]="t('editor.abilitiesCopy')"
+            [drafts]="requiredAbilityDrafts()"
+            [catalogItems]="availableAbilityCatalogItems()"
+            (dismiss)="closeAbilityPicker()"
+            (saveDrafts)="saveAbilityPicker($event)"
+          ></app-ability-requirement-picker>
 
           <div class="editor-modal-actions">
             <ion-button

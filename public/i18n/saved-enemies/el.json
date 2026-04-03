@@ -18,8 +18,13 @@
       "turns": "Turns"
     },
     "addAbility": "Προσθήκη ability",
+    "editAbilities": "Άνοιγμα picker",
     "classesLabel": "Classes",
     "classesPlaceholder": "Επίλεξε classes",
+    "classesActions": {
+      "clear": "Καθάρισε τα classes",
+      "selectAll": "Επίλεξε όλα τα classes"
+    },
     "copy": "Αποθήκευσε μόνο enemy-related filters ώστε το Auto Team Builder να τα ξαναφορτώνει αργότερα.",
     "createEyebrow": "Νέο preset εχθρού",
     "createTitle": "Δημιουργία saved enemy",
@@ -56,7 +61,11 @@
       "typesCopy": "Κράτα κάθε selected type παρόν στο αποτέλεσμα."
     },
     "typesLabel": "Types",
-    "typesPlaceholder": "Επίλεξε types"
+    "typesPlaceholder": "Επίλεξε types",
+    "typesActions": {
+      "clear": "Καθάρισε τα types",
+      "selectAll": "Επίλεξε όλα τα types"
+    }
   },
   "empty": {
     "copy": "Φτιάξε ένα saved enemy preset και μετά άνοιξέ το στο Auto Team Builder με όλα τα enemy filters προγεμισμένα.",

@@ -1,0 +1,395 @@
+:host ion-modal.ability-picker-modal::part(backdrop) {
+  background: rgba(7, 11, 23, 0.72);
+}
+
+:host ion-modal.ability-picker-modal::part(content) {
+  width: min(1120px, 80vw);
+  height: min(880px, 80dvh);
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 32px;
+  background: linear-gradient(180deg, rgba(18, 25, 46, 0.98), rgba(10, 14, 27, 0.98));
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+}
+
+.ability-picker-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100%;
+  color: #f8fbff;
+}
+
+.ability-picker-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 22px 0;
+}
+
+.ability-picker-head h2 {
+  margin: 12px 0 8px;
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: clamp(1.7rem, 4vw, 2.2rem);
+}
+
+.ability-picker-head p {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.68);
+  line-height: 1.6;
+}
+
+.ability-picker-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 16px;
+  padding: 18px 22px 0;
+  min-height: 0;
+}
+
+.ability-picker-panel {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-height: 0;
+  padding: 16px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ability-picker-panel--selected {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.ability-picker-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ability-picker-panel__head strong {
+  display: block;
+  color: #ffffff;
+  font-size: 0.96rem;
+}
+
+.ability-picker-panel__head small {
+  color: rgba(248, 251, 255, 0.64);
+  line-height: 1.45;
+}
+
+.ability-picker-search {
+  --background: rgba(255, 255, 255, 0.06);
+  --border-radius: 18px;
+  --box-shadow: none;
+  --color: #f8fbff;
+  padding-inline: 0;
+}
+
+.ability-picker-empty {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ability-picker-empty strong {
+  color: #ffffff;
+}
+
+.ability-picker-empty p {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.68);
+  line-height: 1.55;
+}
+
+.ability-picker-empty--selected {
+  align-self: start;
+}
+
+.ability-picker-tile-grid,
+.ability-picker-selected-list {
+  display: grid;
+  gap: 10px;
+  min-height: 0;
+  overflow: auto;
+  align-content: start;
+}
+
+.ability-picker-tile-grid {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.ability-picker-tile {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.ability-picker-tile:hover,
+.ability-picker-tile:focus-visible {
+  border-color: rgba(245, 200, 76, 0.38);
+  background: rgba(245, 200, 76, 0.08);
+  transform: translateY(-1px);
+}
+
+.ability-picker-tile--selected {
+  border-color: rgba(245, 200, 76, 0.42);
+  background:
+    radial-gradient(circle at top, rgba(245, 200, 76, 0.12), transparent 58%),
+    rgba(255, 255, 255, 0.05);
+}
+
+.ability-picker-tile__badge {
+  display: inline-grid;
+  justify-items: center;
+  gap: 4px;
+  min-width: 54px;
+  padding: 8px 6px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ability-picker-tile__badge ion-icon {
+  font-size: 1.05rem;
+}
+
+.ability-picker-tile__badge small {
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.ability-picker-tile__badge[data-tone="gold"] {
+  color: #f5c84c;
+}
+
+.ability-picker-tile__badge[data-tone="red"] {
+  color: #ff9d81;
+}
+
+.ability-picker-tile__badge[data-tone="teal"] {
+  color: #65d4d4;
+}
+
+.ability-picker-tile__badge[data-tone="blue"] {
+  color: #7eb9ff;
+}
+
+.ability-picker-tile__badge[data-tone="violet"] {
+  color: #c4a3ff;
+}
+
+.ability-picker-tile__badge[data-tone="green"] {
+  color: #8ee38e;
+}
+
+.ability-picker-tile__badge[data-tone="orange"] {
+  color: #ffba74;
+}
+
+.ability-picker-tile__badge[data-tone="neutral"] {
+  color: rgba(248, 251, 255, 0.76);
+}
+
+.ability-picker-tile__copy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ability-picker-tile__copy strong {
+  color: #ffffff;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.ability-picker-tile__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ability-picker-tile__meta small,
+.ability-picker-tile__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(248, 251, 255, 0.74);
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.ability-picker-row {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ability-picker-row__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ability-picker-row__title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ability-picker-row__title strong {
+  display: block;
+  color: #ffffff;
+  line-height: 1.4;
+}
+
+.ability-picker-row__title small {
+  color: rgba(248, 251, 255, 0.62);
+  line-height: 1.45;
+}
+
+.ability-picker-row__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ability-picker-field {
+  display: grid;
+  gap: 8px;
+}
+
+.ability-picker-field span {
+  color: rgba(248, 251, 255, 0.68);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ability-picker-field ion-input {
+  --background: rgba(255, 255, 255, 0.05);
+  --border-radius: 16px;
+  --color: #f8fbff;
+}
+
+.ability-picker-token-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ability-picker-token {
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(248, 251, 255, 0.82);
+  font: inherit;
+  font-size: 0.78rem;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.ability-picker-token--selected {
+  border-color: rgba(245, 200, 76, 0.42);
+  background: rgba(245, 200, 76, 0.14);
+  color: #f5d16d;
+}
+
+.ability-picker-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ability-picker-footer ion-toolbar {
+  --background: transparent;
+  --border-width: 0;
+  padding: 12px 18px 18px;
+}
+
+.ability-picker-footer__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@media (max-width: 920px) {
+  .ability-picker-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ability-picker-panel--selected {
+    min-height: 280px;
+  }
+}
+
+@media (max-width: 720px) {
+  :host ion-modal.ability-picker-modal::part(content) {
+    width: calc(100vw - 16px);
+    height: min(80dvh, var(--app-mobile-sheet-height));
+    max-width: calc(100vw - 16px);
+    max-height: var(--app-mobile-sheet-height);
+    border-radius: 24px;
+  }
+
+  .ability-picker-head,
+  .ability-picker-body {
+    padding-inline: 16px;
+  }
+
+  .ability-picker-head {
+    flex-direction: column;
+    align-items: stretch;
+    padding-top: 18px;
+  }
+
+  .ability-picker-row__head,
+  .ability-picker-row__fields {
+    grid-template-columns: minmax(0, 1fr);
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ability-picker-footer ion-toolbar {
+    padding-inline: 12px;
+    padding-bottom: 14px;
+  }
+
+  .ability-picker-footer__actions {
+    justify-content: stretch;
+  }
+
+  .ability-picker-footer__actions ion-button {
+    flex: 1 1 0;
+  }
+}

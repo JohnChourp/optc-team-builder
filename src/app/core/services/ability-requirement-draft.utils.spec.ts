@@ -1,0 +1,87 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
+
+import {
+  formatAbilityRequirementSummary,
+  resolveAbilityRequirementVisual,
+  serializeAbilityRequirementDrafts,
+  type AbilityRequirementDraft,
+} from "./ability-requirement-draft.utils";
+
+describe("ability-requirement-draft utils", () => {
+  it("resolves explicit visual metadata for every current catalog ability", () => {
+    const catalog = loadAbilityCatalog();
+
+    for (const ability of catalog.abilities) {
+      const visual = resolveAbilityRequirementVisual(ability.key);
+
+      expect(visual.isFallback, ability.key).toBe(false);
+      expect(visual.badge.length, ability.key).toBeGreaterThan(0);
+    }
+  });
+
+  it("falls back to a generic visual for unknown abilities", () => {
+    expect(resolveAbilityRequirementVisual("future_unknown_ability").isFallback).toBe(true);
+  });
+
+  it("dedupes identical draft identities while keeping the largest character count", () => {
+    const drafts: AbilityRequirementDraft[] = [
+      {
+        draftId: "draft-1",
+        abilityKey: "remove_bind",
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+      {
+        draftId: "draft-2",
+        abilityKey: "remove_bind",
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 3,
+      },
+    ];
+
+    expect(
+      serializeAbilityRequirementDrafts(drafts, {
+        dedupe: true,
+      }),
+    ).toEqual([
+      {
+        abilityKey: "remove_bind",
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 3,
+      },
+    ]);
+  });
+
+  it("formats a readable ability summary with counts, turns, and slot tokens", () => {
+    expect(
+      formatAbilityRequirementSummary(
+        {
+          abilityKey: "remove_slot_barrier",
+          minTurns: 2,
+          slotTokens: ["DEX"],
+          requiredCharacterCount: 2,
+        },
+        () => "Remove Slot Barrier",
+        {
+          formatCharacters: (count) => `>=${count} chars`,
+          formatTurns: (count) => `${count} turns`,
+        },
+      ),
+    ).toBe("Remove Slot Barrier (>=2 chars • 2 turns • DEX)");
+  });
+});
+
+function loadAbilityCatalog(): {
+  abilities: Array<{ key: string }>;
+} {
+  return JSON.parse(
+    readFileSync(resolve(process.cwd(), "public/assets/data/optc-auto-builder-abilities.json"), "utf8"),
+  ) as {
+    abilities: Array<{ key: string }>;
+  };
+}

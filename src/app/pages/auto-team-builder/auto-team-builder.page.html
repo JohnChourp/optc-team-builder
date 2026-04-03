@@ -190,9 +190,9 @@
                 size="small"
                 class="select-all-button"
                 [disabled]="building() || !availableAbilityCatalogItems().length"
-                (click)="addRequiredAbility()"
+                (click)="openAbilityPicker()"
               >
-                {{ t('abilityRequirements.actions.addRequirement') }}
+                {{ t('abilityRequirements.actions.openPicker') }}
               </ion-button>
               <ion-button
                 fill="clear"
@@ -223,99 +223,33 @@
             </p>
           }
 
-          @if (requiredAbilityDrafts().length) {
+          @if (requiredAbilitySummaryChips().length) {
             <div class="selected-values-row ability-requirements-selected-row">
-              @for (draft of requiredAbilityDrafts(); track draft.draftId) {
+              @for (chip of requiredAbilitySummaryChips(); track chip.draftId) {
                 <span class="selected-value-chip ability-requirement-chip">
-                  {{ resolveRequiredAbilitySelectedText(draft) }}
+                  <span
+                    class="ability-visual-chip"
+                    [attr.data-tone]="chip.visual.tone"
+                  >
+                    <ion-icon [icon]="chip.visual.icon"></ion-icon>
+                    <small>{{ chip.visual.badge }}</small>
+                  </span>
+                  <span>{{ chip.label }}</span>
                 </span>
               }
             </div>
           }
-
-          @if (requiredAbilityDrafts().length) {
-            <div class="ability-requirement-list">
-              @for (draft of requiredAbilityDrafts(); track draft.draftId) {
-                <article class="ability-requirement-card">
-                  <div class="ability-requirement-fields">
-                    <div class="ability-requirement-field">
-                      <span>{{ t('abilityRequirements.fields.ability') }}</span>
-                      <ion-select
-                        interface="popover"
-                        fill="outline"
-                        [placeholder]="t('abilityRequirements.placeholders.selectAbility')"
-                        [value]="draft.abilityKey"
-                        [selectedText]="resolveRequiredAbilitySelectedText(draft)"
-                        (ionChange)="onRequiredAbilityKeyChange(draft.draftId, $event)"
-                      >
-                        @for (item of availableAbilityCatalogItems(); track item.key) {
-                          <ion-select-option [value]="item.key">
-                            {{ formatAbilityCatalogItemLabel(item) }}
-                          </ion-select-option>
-                        }
-                      </ion-select>
-                    </div>
-                    <label class="ability-requirement-field ability-requirement-field--number">
-                      <span>{{ t('abilityRequirements.fields.characters') }}</span>
-                      <input
-                        type="number"
-                        min="1"
-                        inputmode="numeric"
-                        [value]="draft.requiredCharacterCount ?? ''"
-                        (input)="onRequiredAbilityCountChange(draft.draftId, $event)"
-                      />
-                    </label>
-                    @if (resolveAbilityCatalogItem(draft.abilityKey)?.supportsTurns) {
-                      <label class="ability-requirement-field ability-requirement-field--number">
-                        <span>{{ t('abilityRequirements.fields.turns') }}</span>
-                        <input
-                          type="number"
-                          min="1"
-                          inputmode="numeric"
-                          [value]="draft.minTurns ?? ''"
-                          (input)="onRequiredAbilityTurnsChange(draft.draftId, $event)"
-                        />
-                      </label>
-                    }
-                    @if (resolveAbilityCatalogItem(draft.abilityKey)?.supportsSlotTokens) {
-                      <div class="ability-requirement-field">
-                        <span>{{ t('abilityRequirements.fields.slotTokens') }}</span>
-                        <ion-select
-                          interface="popover"
-                          [multiple]="true"
-                          fill="outline"
-                          [placeholder]="t('abilityRequirements.placeholders.selectSlotTokens')"
-                          [value]="draft.slotTokens"
-                          [selectedText]="draft.slotTokens.join(' / ')"
-                          (ionChange)="onRequiredAbilitySlotTokensChange(draft.draftId, $event)"
-                        >
-                          @for (
-                            token of resolveAbilityCatalogItem(draft.abilityKey)
-                              ?.availableSlotTokens ?? [];
-                            track token
-                          ) {
-                            <ion-select-option [value]="token">
-                              {{ token }}
-                            </ion-select-option>
-                          }
-                        </ion-select>
-                      </div>
-                    }
-                  </div>
-                  <ion-button
-                    size="small"
-                    fill="outline"
-                    color="light"
-                    [disabled]="building()"
-                    (click)="removeRequiredAbility(draft.draftId)"
-                  >
-                    {{ t('abilityRequirements.actions.removeRequirement') }}
-                  </ion-button>
-                </article>
-              }
-            </div>
-          }
         </section>
+
+        <app-ability-requirement-picker
+          [isOpen]="abilityPickerOpen()"
+          [title]="t('abilityRequirements.title')"
+          [copy]="t('abilityRequirements.copy')"
+          [drafts]="requiredAbilityDrafts()"
+          [catalogItems]="availableAbilityCatalogItems()"
+          (dismiss)="closeAbilityPicker()"
+          (saveDrafts)="saveAbilityPicker($event)"
+        ></app-ability-requirement-picker>
 
         @if (buildBlockedByFavorites()) {
           <p class="favorites-only-warning">

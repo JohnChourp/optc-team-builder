@@ -22,20 +22,27 @@ import { addCircleOutline, closeOutline } from 'ionicons/icons';
 import { AUTO_TEAM_BUILDER_TYPES } from '../../core/models/auto-team-builder.models';
 import {
   type AutoBuildAbilityCatalog,
-  type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityRequirement,
 } from '../../core/models/auto-team-builder-ability.models';
 import { type DatasetManifest, type SavedEnemy } from '../../core/models/optc.models';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
+import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
+import {
+  createAbilityRequirementDrafts,
+  formatAbilityRequirementSummary,
+  resolveAbilityRequirementVisual,
+  resolvePositiveInteger,
+  serializeAbilityRequirementDrafts,
+  type AbilityRequirementDraft,
+  type AbilityRequirementVisualMeta,
+} from '../../core/services/ability-requirement-draft.utils';
 
-interface EnemyAbilityRequirementDraft {
+interface SavedEnemyAbilitySummaryChipView {
   draftId: string;
-  abilityKey: string;
-  minTurns: number | null;
-  slotTokens: string[];
-  requiredCharacterCount: number | null;
+  label: string;
+  visual: AbilityRequirementVisualMeta;
 }
 
 @Component({
@@ -55,6 +62,7 @@ interface EnemyAbilityRequirementDraft {
     IonTitle,
     IonToggle,
     IonToolbar,
+    AbilityRequirementPickerComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,
@@ -78,7 +86,8 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public readonly processingEnemyImage = signal(false);
   public readonly selectedTypes = signal<string[]>([]);
   public readonly selectedClasses = signal<string[]>([]);
-  public readonly requiredAbilityDrafts = signal<EnemyAbilityRequirementDraft[]>([]);
+  public readonly requiredAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly abilityPickerOpen = signal(false);
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
   public readonly requireAllSpecialsSupportTeam = signal(false);
@@ -88,11 +97,42 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
   public readonly availableTypes = AUTO_TEAM_BUILDER_TYPES;
   public readonly availableClasses = computed(() => this.summary()?.availableClasses ?? []);
+  public readonly allTypesSelected = computed(
+    () => this.selectedTypes().length === this.availableTypes.length,
+  );
+  public readonly allClassesSelected = computed(
+    () =>
+      this.availableClasses().length > 0 &&
+      this.selectedClasses().length === this.availableClasses().length,
+  );
+  public readonly selectAllTypesButtonLabel = computed(() =>
+    this.i18n.translate(
+      this.allTypesSelected() ? 'editor.typesActions.clear' : 'editor.typesActions.selectAll',
+      undefined,
+      'saved-enemies',
+    ),
+  );
+  public readonly selectAllClassesButtonLabel = computed(() =>
+    this.i18n.translate(
+      this.allClassesSelected()
+        ? 'editor.classesActions.clear'
+        : 'editor.classesActions.selectAll',
+      undefined,
+      'saved-enemies',
+    ),
+  );
   public readonly availableAbilityCatalogItems = computed(
     () => this.abilityCatalog()?.abilities ?? [],
   );
   public readonly abilityCatalogMap = computed(
     () => new Map(this.availableAbilityCatalogItems().map((item) => [item.key, item] as const)),
+  );
+  public readonly requiredAbilitySummaryChips = computed<SavedEnemyAbilitySummaryChipView[]>(() =>
+    this.requiredAbilityDrafts().map((draft) => ({
+      draftId: draft.draftId,
+      label: this.resolveRequiredAbilitySelectedText(draft),
+      visual: resolveAbilityRequirementVisual(draft.abilityKey),
+    })),
   );
   public readonly hasSavedEnemies = computed(() => this.savedEnemies().length > 0);
   public readonly canSaveEnemy = computed(
@@ -109,6 +149,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
   public async ngOnInit(): Promise<void> {
     await this.userState.ready();
+    await this.i18n.preloadScope('ability-picker');
     const [summary, abilityCatalog] = await Promise.all([
       this.repository.getDatasetManifest(),
       this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
@@ -135,6 +176,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.enemyImageDataUrl.set(null);
     this.enemyImageErrorMessage.set('');
     this.processingEnemyImage.set(false);
+    this.abilityPickerOpen.set(false);
     this.selectedTypes.set(['DEX']);
     this.selectedClasses.set([]);
     this.requiredAbilityDrafts.set([]);
@@ -152,11 +194,10 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.enemyImageDataUrl.set(enemy.imageDataUrl);
     this.enemyImageErrorMessage.set('');
     this.processingEnemyImage.set(false);
+    this.abilityPickerOpen.set(false);
     this.selectedTypes.set([...enemy.selectedTypes]);
     this.selectedClasses.set([...enemy.selectedClasses]);
-    this.requiredAbilityDrafts.set(
-      enemy.requiredAbilities.map((requirement) => this.createDraft(requirement)),
-    );
+    this.requiredAbilityDrafts.set(createAbilityRequirementDrafts(enemy.requiredAbilities));
     this.requireAllSelectedTypesInTeam.set(enemy.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(enemy.requireAllSelectedClassesPerCharacter);
     this.requireAllSpecialsSupportTeam.set(enemy.requireAllSpecialsSupportTeam);
@@ -165,6 +206,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   public closeEditor(): void {
+    this.abilityPickerOpen.set(false);
     this.editorOpen.set(false);
     this.editingEnemy.set(null);
     this.savingEnemy.set(false);
@@ -214,75 +256,48 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.selectedClasses.set(this.resolveSelectedValues(event.detail.value));
   }
 
-  public addRequiredAbility(): void {
-    const [firstAbility] = this.availableAbilityCatalogItems();
-
-    if (!firstAbility) {
+  public selectAllTypes(): void {
+    if (this.allTypesSelected()) {
+      this.selectedTypes.set([]);
       return;
     }
 
-    this.requiredAbilityDrafts.update((currentDrafts) => [
-      ...currentDrafts,
-      this.createDraft({
-        abilityKey: firstAbility.key,
-        minTurns: firstAbility.supportsTurns ? 1 : null,
-        slotTokens: [],
-        requiredCharacterCount: 1,
-      }),
-    ]);
+    this.selectedTypes.set([...this.availableTypes]);
   }
 
-  public removeRequiredAbility(draftId: string): void {
-    this.requiredAbilityDrafts.update((currentDrafts) =>
-      currentDrafts.filter((draft) => draft.draftId !== draftId),
-    );
+  public selectAllClasses(): void {
+    if (this.availableClasses().length === 0) {
+      this.selectedClasses.set([]);
+      return;
+    }
+
+    if (this.allClassesSelected()) {
+      this.selectedClasses.set([]);
+      return;
+    }
+
+    this.selectedClasses.set([...this.availableClasses()]);
   }
 
-  public onRequiredAbilityKeyChange(
-    draftId: string,
-    event: CustomEvent<{ value?: string | null }>,
-  ): void {
-    const abilityKey = (event.detail.value ?? '').trim();
+  public openAbilityPicker(): void {
+    if (this.savingEnemy() || !this.availableAbilityCatalogItems().length) {
+      return;
+    }
 
-    this.requiredAbilityDrafts.update((currentDrafts) =>
-      currentDrafts.map((draft) => {
-        if (draft.draftId !== draftId) {
-          return draft;
-        }
-
-        const ability = this.abilityCatalogMap().get(abilityKey);
-
-        return {
-          ...draft,
-          abilityKey,
-          minTurns: ability?.supportsTurns ? (draft.minTurns ?? 1) : null,
-          slotTokens: ability?.supportsSlotTokens ? draft.slotTokens : [],
-        };
-      }),
-    );
+    this.abilityPickerOpen.set(true);
   }
 
-  public onRequiredAbilityCountChange(draftId: string, event: Event): void {
-    this.updateRequiredAbilityDraft(draftId, {
-      requiredCharacterCount: this.resolvePositiveInteger((event.target as HTMLInputElement).value),
-    });
+  public closeAbilityPicker(): void {
+    this.abilityPickerOpen.set(false);
   }
 
-  public onRequiredAbilityTurnsChange(draftId: string, event: Event): void {
-    this.updateRequiredAbilityDraft(draftId, {
-      minTurns: this.resolvePositiveInteger((event.target as HTMLInputElement).value),
-    });
+  public saveAbilityPicker(drafts: AbilityRequirementDraft[]): void {
+    this.requiredAbilityDrafts.set(drafts);
+    this.abilityPickerOpen.set(false);
   }
 
-  public onRequiredAbilitySlotTokensChange(
-    draftId: string,
-    event: CustomEvent<{ value?: string[] | string | null }>,
-  ): void {
-    this.updateRequiredAbilityDraft(draftId, {
-      slotTokens: this.resolveSelectedValues(event.detail.value).map((token) =>
-        token.toUpperCase(),
-      ),
-    });
+  public clearRequiredAbilities(): void {
+    this.requiredAbilityDrafts.set([]);
   }
 
   public onRequireAllSelectedTypesToggle(event: CustomEvent<{ checked: boolean }>): void {
@@ -339,98 +354,40 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   public formatAbilityRequirement(requirement: AutoBuildAbilityRequirement): string {
-    const label =
-      this.abilityCatalogMap().get(requirement.abilityKey)?.label ?? requirement.abilityKey;
-    const metadata: string[] = [];
-
-    if (requirement.requiredCharacterCount > 1) {
-      metadata.push(
-        this.i18n.translate(
-          'editor.requirementSummary.characters',
-          { count: requirement.requiredCharacterCount },
-          'saved-enemies',
-        ),
-      );
-    }
-
-    if (requirement.minTurns) {
-      metadata.push(
-        this.i18n.translate(
-          'editor.requirementSummary.turns',
-          { count: requirement.minTurns },
-          'saved-enemies',
-        ),
-      );
-    }
-
-    if (requirement.slotTokens.length) {
-      metadata.push(requirement.slotTokens.join(' / '));
-    }
-
-    return metadata.length ? `${label} (${metadata.join(' • ')})` : label;
-  }
-
-  public formatAbilityCatalogItemLabel(item: AutoBuildAbilityCatalogItem): string {
-    return item.label;
-  }
-
-  public resolveAbilityCatalogItem(abilityKey: string): AutoBuildAbilityCatalogItem | null {
-    return this.abilityCatalogMap().get(abilityKey) ?? null;
-  }
-
-  private createDraft(requirement: AutoBuildAbilityRequirement): EnemyAbilityRequirementDraft {
-    return {
-      draftId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      abilityKey: requirement.abilityKey,
-      minTurns: requirement.minTurns,
-      slotTokens: [...requirement.slotTokens],
-      requiredCharacterCount: requirement.requiredCharacterCount,
-    };
-  }
-
-  private updateRequiredAbilityDraft(
-    draftId: string,
-    patch: Partial<EnemyAbilityRequirementDraft>,
-  ): void {
-    this.requiredAbilityDrafts.update((currentDrafts) =>
-      currentDrafts.map((draft) =>
-        draft.draftId === draftId
-          ? {
-              ...draft,
-              ...patch,
-            }
-          : draft,
-      ),
+    return formatAbilityRequirementSummary(
+      requirement,
+      (abilityKey) => this.abilityCatalogMap().get(abilityKey)?.label ?? abilityKey,
+      {
+        formatCharacters: (count) =>
+          this.i18n.translate(
+            'editor.requirementSummary.characters',
+            { count },
+            'saved-enemies',
+          ),
+        formatTurns: (count) =>
+          this.i18n.translate('editor.requirementSummary.turns', { count }, 'saved-enemies'),
+      },
     );
+  }
+
+  public resolveRequiredAbilitySelectedText(draft: AbilityRequirementDraft): string {
+    if (draft.abilityKey.length === 0) {
+      return this.i18n.translate('common.actions.select');
+    }
+
+    return this.formatAbilityRequirement({
+      abilityKey: draft.abilityKey,
+      minTurns: draft.minTurns,
+      slotTokens: draft.slotTokens,
+      requiredCharacterCount: resolvePositiveInteger(draft.requiredCharacterCount) ?? 1,
+    });
   }
 
   private serializeRequiredAbilities(): AutoBuildAbilityRequirement[] {
-    return this.requiredAbilityDrafts().reduce<AutoBuildAbilityRequirement[]>(
-      (requirements, draft) => {
-        const abilityKey = draft.abilityKey.trim();
-
-        if (!abilityKey.length) {
-          return requirements;
-        }
-
-        requirements.push({
-          abilityKey,
-          minTurns: draft.minTurns && draft.minTurns > 0 ? draft.minTurns : null,
-          slotTokens: [
-            ...new Set(
-              draft.slotTokens.map((token) => token.trim()).filter((token) => token.length > 0),
-            ),
-          ],
-          requiredCharacterCount:
-            draft.requiredCharacterCount && draft.requiredCharacterCount > 0
-              ? draft.requiredCharacterCount
-              : 1,
-        });
-
-        return requirements;
-      },
-      [],
-    );
+    return serializeAbilityRequirementDrafts(this.requiredAbilityDrafts(), {
+      dedupe: false,
+      catalogMap: this.abilityCatalogMap(),
+    });
   }
 
   private async loadEnemyImage(file: File): Promise<void> {
@@ -512,12 +469,6 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     }
 
     return [];
-  }
-
-  private resolvePositiveInteger(value: string): number | null {
-    const parsedValue = Number.parseInt(value, 10);
-
-    return Number.isInteger(parsedValue) && parsedValue > 0 ? parsedValue : null;
   }
 
   private confirmDelete(message: string): boolean {

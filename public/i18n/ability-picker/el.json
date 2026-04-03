@@ -1,0 +1,32 @@
+{
+  "eyebrow": "Ability picker",
+  "actions": {
+    "clearAll": "Καθαρισμός όλων"
+  },
+  "catalog": {
+    "title": "Διαθέσιμα abilities",
+    "count": "{{count}} από {{total}} συνολικά",
+    "searchPlaceholder": "Αναζήτηση abilities",
+    "selectedCount": "{{count}} επιλεγμένα",
+    "emptyCatalogTitle": "Δεν υπάρχει ability catalog",
+    "emptyCatalogCopy": "Το picker δεν μπορεί να εμφανίσει abilities μέχρι να φορτωθεί το local catalog.",
+    "emptySearchTitle": "Δεν βρέθηκαν abilities",
+    "emptySearchCopy": "Δοκίμασε διαφορετικό search term.",
+    "hints": {
+      "turns": "Turns",
+      "slotTokens": "Slot tokens",
+      "selectableDebuff": "Selectable debuff"
+    }
+  },
+  "selected": {
+    "title": "Επιλεγμένα requirements",
+    "count": "{{count}} ρυθμισμένα",
+    "emptyTitle": "Δεν έχουν επιλεγεί abilities ακόμα",
+    "emptyCopy": "Επίλεξε ένα ή περισσότερα abilities από τον κατάλογο για να ορίσεις τα requirement rules."
+  },
+  "fields": {
+    "characters": "Χαρακτήρες",
+    "turns": "Turns",
+    "slotTokens": "Slot tokens"
+  }
+}

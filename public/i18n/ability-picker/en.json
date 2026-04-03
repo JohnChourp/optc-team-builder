@@ -1,0 +1,32 @@
+{
+  "eyebrow": "Ability picker",
+  "actions": {
+    "clearAll": "Clear all"
+  },
+  "catalog": {
+    "title": "Available abilities",
+    "count": "{{count}} shown of {{total}} total",
+    "searchPlaceholder": "Search abilities",
+    "selectedCount": "{{count}} selected",
+    "emptyCatalogTitle": "No ability catalog available",
+    "emptyCatalogCopy": "The picker cannot show abilities until the local catalog is loaded.",
+    "emptySearchTitle": "No abilities matched",
+    "emptySearchCopy": "Try a different search term.",
+    "hints": {
+      "turns": "Turns",
+      "slotTokens": "Slot tokens",
+      "selectableDebuff": "Selectable debuff"
+    }
+  },
+  "selected": {
+    "title": "Selected requirements",
+    "count": "{{count}} configured",
+    "emptyTitle": "No abilities selected yet",
+    "emptyCopy": "Pick one or more abilities from the catalog to start configuring the requirement rules."
+  },
+  "fields": {
+    "characters": "Characters",
+    "turns": "Turns",
+    "slotTokens": "Slot tokens"
+  }
+}
