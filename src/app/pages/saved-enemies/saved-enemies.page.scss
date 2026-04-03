@@ -180,19 +180,6 @@
   gap: 10px;
 }
 
-:host ion-modal.saved-enemies-editor-modal::part(backdrop) {
-  background: rgba(7, 11, 23, 0.68);
-}
-
-:host ion-modal.saved-enemies-editor-modal::part(content) {
-  width: min(860px, calc(100vw - 24px));
-  max-height: var(--app-modal-max-height);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 32px;
-  background: linear-gradient(180deg, rgba(18, 25, 46, 0.98), rgba(10, 14, 27, 0.98));
-  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
-}
-
 .editor-modal-shell {
   display: grid;
   gap: 18px;

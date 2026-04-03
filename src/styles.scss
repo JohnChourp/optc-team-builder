@@ -85,11 +85,15 @@ img {
   display: block;
 }
 
-.manual-filter-modal::part(backdrop) {
+.manual-filter-modal::part(backdrop),
+.ability-picker-modal::part(backdrop),
+.saved-enemies-editor-modal::part(backdrop) {
   background: rgba(7, 11, 23, 0.7);
 }
 
-.manual-filter-modal::part(content) {
+.manual-filter-modal::part(content),
+.ability-picker-modal::part(content),
+.saved-enemies-editor-modal::part(content) {
   width: 80vw;
   height: 80vh;
   max-width: 80vw;
@@ -101,7 +105,9 @@ img {
 }
 
 @media (max-width: 679px) {
-  .manual-filter-modal::part(content) {
+  .manual-filter-modal::part(content),
+  .ability-picker-modal::part(content),
+  .saved-enemies-editor-modal::part(content) {
     width: calc(100vw - 16px);
     height: var(--app-mobile-sheet-height);
     max-width: calc(100vw - 16px);
