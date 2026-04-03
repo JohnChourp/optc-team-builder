@@ -236,10 +236,14 @@ export async function enrichCharactersWithBuilderAbilities(
     const batch = characters.slice(start, start + batchSize);
 
     batch.forEach((character) => {
-      const builderAbilities = [
+      const derivedBuilderAbilities = [
         ...analyzeBuilderAbilityText(character.detail?.specialText ?? null, 'specialText'),
         ...analyzeBuilderAbilityText(character.detail?.captainAbility ?? null, 'captainAbility'),
       ];
+      const builderAbilities = mergeBuilderAbilities(
+        character.detail?.builderAbilities ?? [],
+        derivedBuilderAbilities,
+      );
       character.detail.builderAbilities = builderAbilities;
 
       builderAbilities.forEach((ability) => {
@@ -302,6 +306,51 @@ export async function enrichCharactersWithBuilderAbilities(
     .sort((left, right) => left.label.localeCompare(right.label));
 
   return abilities;
+}
+
+function mergeBuilderAbilities(existingAbilities, derivedAbilities) {
+  const mergedAbilities = [];
+  const seen = new Set();
+
+  [...normalizeExistingBuilderAbilities(existingAbilities), ...derivedAbilities].forEach((ability) => {
+    addAbility(mergedAbilities, seen, ability);
+  });
+
+  return mergedAbilities;
+}
+
+function normalizeExistingBuilderAbilities(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((entry) => normalizeExistingBuilderAbility(entry))
+    .filter((entry) => entry !== null);
+}
+
+function normalizeExistingBuilderAbility(value) {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const key = typeof value.key === 'string' ? value.key.trim() : '';
+
+  if (!key.length) {
+    return null;
+  }
+
+  return {
+    key,
+    label: typeof value.label === 'string' && value.label.trim().length ? value.label.trim() : key,
+    minTurns: Number.isFinite(Number(value.minTurns)) ? Number(value.minTurns) : null,
+    isCompleteRemoval: Boolean(value.isCompleteRemoval),
+    slotTokens: Array.isArray(value.slotTokens)
+      ? [...new Set(value.slotTokens.map((entry) => String(entry).trim().toUpperCase()).filter(Boolean))]
+      : [],
+    source: value.source === 'captainAbility' ? 'captainAbility' : 'specialText',
+    coverageMode: value.coverageMode === 'selectedDebuff' ? 'selectedDebuff' : DEFAULT_COVERAGE_MODE,
+  };
 }
 
 function createCatalogAccumulator(key, label) {

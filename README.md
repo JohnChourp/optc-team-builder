@@ -37,13 +37,13 @@ npm run data:import
 Import metadata plus global thumbnails:
 
 ```bash
-npm run data:import:glo-thumbs
+npm run data:import -- --download-images=thumbnails-glo
 ```
 
 Import metadata plus every supported offline image pack:
 
 ```bash
-npm run data:import:all
+npm run data:import -- --download-images=all
 ```
 
 Run the app in the browser:
@@ -62,6 +62,21 @@ Build and sync the native projects:
 
 ```bash
 npm run build:mobile
+```
+
+Create a signed Android GitHub release locally:
+
+```bash
+~/.codex/skills/optc-team-builder-android-release/scripts/run_release.sh --bump patch
+```
+
+Required signing env vars:
+
+```bash
+export ANDROID_SIGNING_STORE_FILE=/absolute/path/to/keystore.jks
+export ANDROID_SIGNING_STORE_PASSWORD=...
+export ANDROID_SIGNING_KEY_ALIAS=...
+export ANDROID_SIGNING_KEY_PASSWORD=...
 ```
 
 ## Generated assets

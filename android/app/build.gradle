@@ -1,8 +1,28 @@
 apply plugin: 'com.android.application'
 
+def releaseSigningEnv = [
+    storeFile   : System.getenv("ANDROID_SIGNING_STORE_FILE"),
+    storePassword: System.getenv("ANDROID_SIGNING_STORE_PASSWORD"),
+    keyAlias    : System.getenv("ANDROID_SIGNING_KEY_ALIAS"),
+    keyPassword : System.getenv("ANDROID_SIGNING_KEY_PASSWORD")
+]
+def hasReleaseSigning = releaseSigningEnv.values().every { value ->
+    value != null && value.trim()
+}
+
 android {
     namespace = "com.john.optcteambuilder"
     compileSdk = rootProject.ext.compileSdkVersion
+    signingConfigs {
+        if (hasReleaseSigning) {
+            release {
+                storeFile file(releaseSigningEnv.storeFile)
+                storePassword releaseSigningEnv.storePassword
+                keyAlias releaseSigningEnv.keyAlias
+                keyPassword releaseSigningEnv.keyPassword
+            }
+        }
+    }
     defaultConfig {
         applicationId "com.john.optcteambuilder"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -18,6 +38,9 @@ android {
     }
     buildTypes {
         release {
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

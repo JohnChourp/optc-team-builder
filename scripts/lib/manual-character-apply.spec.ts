@@ -1,0 +1,277 @@
+import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path, { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { beforeAll, describe, expect, it } from 'vitest';
+
+let applyManualCharacterOverlay: (options: Record<string, unknown>) => Promise<{
+  written: boolean;
+  manualCharacterCount: number;
+  characterCount: number;
+}>;
+let buildAutoBuilderAbilityCatalog: (
+  generatedAt: string,
+  sourceVersion: string,
+  abilities: Array<Record<string, unknown>>,
+) => Record<string, unknown>;
+let buildManifest: (
+  characters: Array<Record<string, unknown>>,
+  ships: Array<Record<string, unknown>>,
+  sourceVersion: string,
+  packs: Array<Record<string, unknown>>,
+  generatedAt: string,
+) => Record<string, unknown>;
+let buildPreviewPayload: (
+  generatedAt: string,
+  characters: Array<Record<string, unknown>>,
+  ships: Array<Record<string, unknown>>,
+) => Record<string, unknown>;
+let createSqlSeed: (
+  characters: Array<Record<string, unknown>>,
+  ships: Array<Record<string, unknown>>,
+  manifest: Record<string, unknown>,
+) => string;
+let createUnresolvedCatalog: (
+  characters: Array<Record<string, unknown>>,
+  packs: Array<Record<string, unknown>>,
+  sourceVersion: string,
+  generatedAt: string,
+) => Record<string, unknown>;
+let writeGeneratedDatasetFiles: (
+  dataDir: string,
+  manifest: Record<string, unknown>,
+  sqlSeed: string,
+  unresolvedCatalog: Record<string, unknown>,
+  autoBuilderAbilityCatalog: Record<string, unknown>,
+  preview: Record<string, unknown>,
+) => Promise<void>;
+
+beforeAll(async () => {
+  ({ applyManualCharacterOverlay } = await import(
+    pathToFileURL(resolve(process.cwd(), 'scripts/lib/manual-character-apply.mjs')).href
+  ));
+  ({
+    buildAutoBuilderAbilityCatalog,
+    buildManifest,
+    buildPreviewPayload,
+    createSqlSeed,
+    createUnresolvedCatalog,
+    writeGeneratedDatasetFiles,
+  } = await import(pathToFileURL(resolve(process.cwd(), 'scripts/lib/optc-dataset.mjs')).href));
+});
+
+describe('manual character apply pipeline', () => {
+  it('applies custom characters, copies exact images and preserves detail payloads', async () => {
+    const rootDir = await createFixtureWorkspace();
+    const dataDir = path.join(rootDir, 'public', 'assets', 'data');
+    const sourceImageDir = path.join(rootDir, 'scripts', 'data', 'character-images');
+    const exactImagesDir = path.join(rootDir, 'public', 'assets', 'exact-character-images');
+    const overlayPath = path.join(rootDir, 'scripts', 'data', 'manual-characters.json');
+    const result = await applyManualCharacterOverlay({
+      rootDir,
+      dataDir,
+      seedPath: path.join(dataDir, 'optc-seed.sql'),
+      manifestPath: path.join(dataDir, 'optc-manifest.json'),
+      overlayPath,
+      sourceImageDir,
+      exactImagesDir,
+      logger: null,
+    });
+
+    expect(result).toMatchObject({
+      written: true,
+      manualCharacterCount: 1,
+      characterCount: 2,
+    });
+    expect(await readFile(path.join(exactImagesDir, '900000.png'), 'utf8')).toBe('manual-png');
+
+    const preview = JSON.parse(await readFile(path.join(dataDir, 'optc-preview.json'), 'utf8'));
+    const customCharacter = preview.characters.find((character: { id: number }) => character.id === 900000);
+
+    expect(customCharacter).toMatchObject({
+      id: 900000,
+      detail: {
+        supportData: [{ Characters: 'Luffy', description: ['Boosts ATK by 5%'] }],
+        rumbleData: { description: 'Rumble text' },
+      },
+    });
+    expect(customCharacter.detail.builderAbilities).toHaveLength(1);
+    expect(customCharacter.detail.builderAbilities[0]).toMatchObject({
+      key: 'remove_bind',
+      minTurns: 5,
+      source: 'specialText',
+    });
+  });
+
+  it('is a no-op when the overlay is already applied', async () => {
+    const rootDir = await createFixtureWorkspace();
+    const dataDir = path.join(rootDir, 'public', 'assets', 'data');
+    const sourceImageDir = path.join(rootDir, 'scripts', 'data', 'character-images');
+    const exactImagesDir = path.join(rootDir, 'public', 'assets', 'exact-character-images');
+    const overlayPath = path.join(rootDir, 'scripts', 'data', 'manual-characters.json');
+
+    await applyManualCharacterOverlay({
+      rootDir,
+      dataDir,
+      seedPath: path.join(dataDir, 'optc-seed.sql'),
+      manifestPath: path.join(dataDir, 'optc-manifest.json'),
+      overlayPath,
+      sourceImageDir,
+      exactImagesDir,
+      logger: null,
+    });
+
+    const secondResult = await applyManualCharacterOverlay({
+      rootDir,
+      dataDir,
+      seedPath: path.join(dataDir, 'optc-seed.sql'),
+      manifestPath: path.join(dataDir, 'optc-manifest.json'),
+      overlayPath,
+      sourceImageDir,
+      exactImagesDir,
+      logger: null,
+    });
+
+    expect(secondResult.written).toBe(false);
+  });
+});
+
+async function createFixtureWorkspace() {
+  const rootDir = await mkdtemp(path.join(tmpdir(), 'optc-manual-apply-'));
+  const dataDir = path.join(rootDir, 'public', 'assets', 'data');
+  const scriptsDataDir = path.join(rootDir, 'scripts', 'data');
+  const sourceImageDir = path.join(scriptsDataDir, 'character-images');
+
+  await mkdir(dataDir, { recursive: true });
+  await mkdir(sourceImageDir, { recursive: true });
+
+  const baseCharacters = [
+    {
+      id: 100,
+      name: 'Upstream Luffy',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      secondaryClass: null,
+      classes: ['Fighter'],
+      stars: 4,
+      cost: 20,
+      combo: 4,
+      maxLevel: 99,
+      maxExperience: 1000000,
+      minHp: 500,
+      minAtk: 200,
+      minRcv: 80,
+      maxHp: 3000,
+      maxAtk: 1400,
+      maxRcv: 250,
+      growth: 0,
+      searchText: 'upstream luffy str fighter',
+      regionAvailability: {
+        exactLocal: false,
+        thumbnailGlobal: false,
+        thumbnailJapan: false,
+        fullTransparent: false,
+      },
+      assets: {
+        exactLocal: null,
+        thumbnailGlobal: null,
+        thumbnailJapan: null,
+        fullTransparent: null,
+      },
+      detail: {
+        characterId: 100,
+        captainAbility: null,
+        specialName: null,
+        specialText: null,
+        specialNotes: null,
+        builderAbilities: [],
+        sailorAbilities: [],
+        sailorNotes: null,
+        limitBreak: [],
+        potentialAbilities: [],
+        supportData: [],
+        swapData: null,
+        vsSpecial: null,
+        superType: null,
+        superClass: null,
+        rumbleData: null,
+      },
+    },
+  ];
+  const ships: Array<Record<string, unknown>> = [];
+  const generatedAt = '2026-04-03T00:00:00.000Z';
+  const manifest = buildManifest(baseCharacters, ships, 'test', [], generatedAt);
+  manifest.availableClasses = ['Fighter', 'Free Spirit'];
+  const unresolvedCatalog = createUnresolvedCatalog(baseCharacters, [], 'test', generatedAt);
+  const sqlSeed = createSqlSeed(baseCharacters, ships, manifest);
+
+  await writeGeneratedDatasetFiles(
+    dataDir,
+    manifest,
+    sqlSeed,
+    unresolvedCatalog,
+    buildAutoBuilderAbilityCatalog(generatedAt, 'test', []),
+    buildPreviewPayload(generatedAt, baseCharacters, ships),
+  );
+
+  await writeFile(
+    path.join(scriptsDataDir, 'manual-characters.json'),
+    JSON.stringify(
+      {
+        '900000': {
+          id: 900000,
+          name: 'Manual Ace',
+          type: 'DEX',
+          classes: ['Fighter', 'Free Spirit'],
+          stars: 6,
+          cost: 55,
+          combo: 5,
+          maxLevel: 99,
+          maxExperience: 5000000,
+          minHp: 1200,
+          minAtk: 600,
+          minRcv: 200,
+          maxHp: 4300,
+          maxAtk: 2200,
+          maxRcv: 420,
+          growth: 0,
+          image: {
+            file: '900000.png',
+          },
+          detail: {
+            characterId: 900000,
+            captainAbility: null,
+            specialName: 'Flame Emperor',
+            specialText: 'Reduces Bind duration by 5 turns.',
+            specialNotes: null,
+            builderAbilities: [
+              {
+                key: 'remove_bind',
+                label: 'Remove Bind',
+                minTurns: 5,
+                isCompleteRemoval: false,
+                slotTokens: [],
+                source: 'specialText',
+              },
+            ],
+            sailorAbilities: [],
+            sailorNotes: null,
+            limitBreak: [],
+            potentialAbilities: [],
+            supportData: [{ Characters: 'Luffy', description: ['Boosts ATK by 5%'] }],
+            swapData: null,
+            vsSpecial: null,
+            superType: null,
+            superClass: null,
+            rumbleData: { description: 'Rumble text' },
+          },
+        },
+      },
+      null,
+      2,
+    ),
+  );
+  await writeFile(path.join(sourceImageDir, '900000.png'), 'manual-png');
+
+  return rootDir;
+}

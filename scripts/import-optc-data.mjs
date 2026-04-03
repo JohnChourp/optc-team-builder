@@ -10,6 +10,19 @@ import {
   enrichCharactersWithBuilderAbilities,
   normalizeLegacyAbilityText,
 } from './auto-team-builder-ability-parser.mjs';
+import { applyManualCharacterOverlay } from './lib/manual-character-apply.mjs';
+import {
+  buildAutoBuilderAbilityCatalog,
+  buildManifest,
+  buildPreviewPayload,
+  createEmptyAssets,
+  createSqlSeed,
+  createUnresolvedCatalog,
+  flattenValues,
+  getSortedUnresolvedCharacters,
+  normalizeCharacterClasses,
+  writeGeneratedDatasetFiles,
+} from './lib/optc-dataset.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,8 +33,6 @@ const offlineDir = path.join(publicDir, 'assets', 'offline-packs');
 const exactImagesDir = path.join(publicDir, 'assets', 'exact-character-images');
 const overrideConfigPath = path.join(rootDir, 'scripts', 'data', 'character-image-overrides.json');
 const manualExactImageSourceDir = path.join(rootDir, 'scripts', 'data', 'character-images');
-const unresolvedCatalogPath = path.join(dataDir, 'optc-unresolved-images.json');
-const autoBuilderAbilityCatalogPath = path.join(dataDir, 'optc-auto-builder-abilities.json');
 
 const sourceRepoBase = 'https://raw.githubusercontent.com/optc-db/optc-db.github.io/master';
 const githubApiBase = 'https://api.github.com/repos/optc-db/optc-db.github.io';
@@ -54,8 +65,6 @@ const packDefinitions = [
   },
 ];
 
-const validTypes = new Set(['STR', 'DEX', 'QCK', 'PSY', 'INT']);
-const invalidClassPattern = /^Class\d+$/i;
 const typeSuffixOrder = new Map(
   ['STR', 'DEX', 'QCK', 'PSY', 'INT'].map((value, index) => [value, index]),
 );
@@ -290,22 +299,6 @@ async function downloadPackFiles(pack, mode) {
   };
 }
 
-function escapeSql(value) {
-  return String(value).replaceAll("'", "''");
-}
-
-function sqlValue(value) {
-  if (value === null || value === undefined) {
-    return 'NULL';
-  }
-
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? String(value) : 'NULL';
-  }
-
-  return `'${escapeSql(value)}'`;
-}
-
 function buildCharacterAssetsMap(packs) {
   const assetMap = new Map();
 
@@ -338,24 +331,6 @@ function buildCharacterAssetsMap(packs) {
   }
 
   return assetMap;
-}
-
-function createEmptyAssets() {
-  return {
-    exactLocal: null,
-    thumbnailGlobal: null,
-    thumbnailJapan: null,
-    fullTransparent: null,
-  };
-}
-
-function createEmptyRegionAvailability() {
-  return {
-    exactLocal: false,
-    thumbnailGlobal: false,
-    thumbnailJapan: false,
-    fullTransparent: false,
-  };
 }
 
 function parseAssetReference(localPath) {
@@ -635,20 +610,6 @@ async function materializeExactImageSources(
   return exactLocalPaths;
 }
 
-function flattenValues(value) {
-  if (Array.isArray(value)) {
-    return value.flatMap((entry) => flattenValues(entry));
-  }
-
-  return [value];
-}
-
-function normalizeCharacterClasses(value) {
-  return [...new Set(flattenValues(value))]
-    .map((entry) => String(entry ?? '').trim())
-    .filter((entry) => entry && !invalidClassPattern.test(entry));
-}
-
 function isPlaceholderCharacterEntry(entry) {
   const name = String(entry?.[0] ?? '').trim();
   const type = String(entry?.[1] ?? '').trim();
@@ -757,57 +718,6 @@ function applyExactLocalAssets(characters, exactLocalPaths) {
   return characters;
 }
 
-function canResolveWithoutPlaceholder(character, packStatuses) {
-  const installedByKey = new Map(packStatuses.map((pack) => [pack.key, Boolean(pack.installed)]));
-
-  if (character.assets.exactLocal) {
-    return true;
-  }
-
-  if (installedByKey.get('thumbnailsGlo') && character.assets.thumbnailGlobal) {
-    return true;
-  }
-
-  if (installedByKey.get('thumbnailsJapan') && character.assets.thumbnailJapan) {
-    return true;
-  }
-
-  if (installedByKey.get('fullTransparent') && character.assets.fullTransparent) {
-    return true;
-  }
-
-  return false;
-}
-
-function createUnresolvedCatalog(characters, packStatuses, sourceVersion) {
-  const unresolvedCharacters = getSortedUnresolvedCharacters(characters, packStatuses).map(
-    (character) => ({
-      id: character.id,
-      name: character.name,
-      stars: character.stars,
-      type: character.type,
-      classes: character.classes,
-      primaryClass: character.primaryClass,
-      secondaryClass: character.secondaryClass,
-      regionAvailability: character.regionAvailability,
-      assets: character.assets,
-    }),
-  );
-
-  return {
-    generatedAt: new Date().toISOString(),
-    sourceVersion,
-    total: unresolvedCharacters.length,
-    items: unresolvedCharacters,
-  };
-}
-
-function getSortedUnresolvedCharacters(characters, packStatuses) {
-  return [...characters]
-    .sort((left, right) => right.stars - left.stars || right.id - left.id)
-    .filter((character) => !canResolveWithoutPlaceholder(character, packStatuses));
-}
-
 function selectLocalizableExactSource(character) {
   if (character.assets.exactLocal) {
     return null;
@@ -863,117 +773,6 @@ function normalizeShips(ships) {
     thumb: entry.thumb ?? null,
     description: entry.description ?? '',
   }));
-}
-
-function createSqlSeed(characters, ships, manifest) {
-  const statements = [
-    'PRAGMA foreign_keys = OFF;',
-    'DROP TABLE IF EXISTS characters;',
-    'DROP TABLE IF EXISTS character_details;',
-    'DROP TABLE IF EXISTS ships;',
-    'DROP TABLE IF EXISTS meta;',
-    `
-      CREATE TABLE characters (
-        id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL,
-        type TEXT NOT NULL,
-        primary_class TEXT NOT NULL,
-        secondary_class TEXT,
-        classes_json TEXT NOT NULL,
-        stars INTEGER NOT NULL,
-        cost INTEGER NOT NULL,
-        combo INTEGER NOT NULL,
-        max_level INTEGER NOT NULL,
-        max_experience INTEGER NOT NULL,
-        min_hp INTEGER NOT NULL,
-        min_atk INTEGER NOT NULL,
-        min_rcv INTEGER NOT NULL,
-        max_hp INTEGER NOT NULL,
-        max_atk INTEGER NOT NULL,
-        max_rcv INTEGER NOT NULL,
-        growth REAL NOT NULL,
-        region_json TEXT NOT NULL,
-        assets_json TEXT NOT NULL,
-        search_text TEXT NOT NULL
-      );
-    `,
-    `
-      CREATE TABLE character_details (
-        character_id INTEGER PRIMARY KEY,
-        detail_json TEXT NOT NULL
-      );
-    `,
-    `
-      CREATE TABLE ships (
-        id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL,
-        thumb TEXT,
-        description TEXT NOT NULL
-      );
-    `,
-    `
-      CREATE TABLE meta (
-        key TEXT PRIMARY KEY,
-        value TEXT NOT NULL
-      );
-    `,
-  ];
-
-  for (const character of characters) {
-    statements.push(`
-      INSERT INTO characters (
-        id, name, type, primary_class, secondary_class, classes_json, stars, cost, combo, max_level,
-        max_experience, min_hp, min_atk, min_rcv, max_hp, max_atk, max_rcv, growth, region_json,
-        assets_json, search_text
-      ) VALUES (
-        ${sqlValue(character.id)},
-        ${sqlValue(character.name)},
-        ${sqlValue(character.type)},
-        ${sqlValue(character.primaryClass)},
-        ${sqlValue(character.secondaryClass)},
-        ${sqlValue(JSON.stringify(character.classes))},
-        ${sqlValue(character.stars)},
-        ${sqlValue(character.cost)},
-        ${sqlValue(character.combo)},
-        ${sqlValue(character.maxLevel)},
-        ${sqlValue(character.maxExperience)},
-        ${sqlValue(character.minHp)},
-        ${sqlValue(character.minAtk)},
-        ${sqlValue(character.minRcv)},
-        ${sqlValue(character.maxHp)},
-        ${sqlValue(character.maxAtk)},
-        ${sqlValue(character.maxRcv)},
-        ${sqlValue(character.growth)},
-        ${sqlValue(JSON.stringify(character.regionAvailability))},
-        ${sqlValue(JSON.stringify(character.assets))},
-        ${sqlValue(character.searchText)}
-      );
-    `);
-
-    statements.push(`
-      INSERT INTO character_details (character_id, detail_json)
-      VALUES (${sqlValue(character.id)}, ${sqlValue(JSON.stringify(character.detail))});
-    `);
-  }
-
-  for (const ship of ships) {
-    statements.push(`
-      INSERT INTO ships (id, name, thumb, description)
-      VALUES (
-        ${sqlValue(ship.id)},
-        ${sqlValue(ship.name)},
-        ${sqlValue(ship.thumb)},
-        ${sqlValue(ship.description)}
-      );
-    `);
-  }
-
-  statements.push(`
-    INSERT INTO meta (key, value)
-    VALUES ('manifest', ${sqlValue(JSON.stringify(manifest))});
-  `);
-
-  return statements.join('\n');
 }
 
 async function hashFile(targetPath) {
@@ -1069,62 +868,40 @@ async function main() {
   );
   applyExactLocalAssets(characters, resolvedExactLocalPaths);
 
-  const manifest = {
-    generatedAt: new Date().toISOString(),
+  const manifest = buildManifest(
+    characters,
+    ships,
     sourceVersion,
-    characterCount: characters.length,
-    detailCount: characters.filter(
-      (character) => character.detail.specialText || character.detail.captainAbility,
-    ).length,
-    shipCount: ships.length,
-    rumbleCount: rumble.units?.length ?? 0,
-    availableTypes: [
-      ...new Set(
-        characters.flatMap((character) =>
-          String(character.type)
-            .split(',')
-            .map((type) => type.trim())
-            .filter((type) => validTypes.has(type)),
-        ),
-      ),
-    ].sort(),
-    availableClasses: [...new Set(characters.flatMap((character) => character.classes))].sort(),
-    packs: packStatuses,
-  };
-  const unresolvedCatalog = createUnresolvedCatalog(characters, packStatuses, sourceVersion);
-
+    packStatuses,
+    new Date().toISOString(),
+  );
+  const unresolvedCatalog = createUnresolvedCatalog(
+    characters,
+    packStatuses,
+    sourceVersion,
+    manifest.generatedAt,
+  );
   const sqlSeed = createSqlSeed(characters, ships, manifest);
+  const autoBuilderAbilityCatalog = buildAutoBuilderAbilityCatalog(
+    manifest.generatedAt,
+    sourceVersion,
+    autoBuilderAbilities,
+  );
+  const preview = buildPreviewPayload(manifest.generatedAt, characters, ships);
 
-  await Promise.all([
-    writeFile(path.join(dataDir, 'optc-manifest.json'), JSON.stringify(manifest, null, 2)),
-    writeFile(path.join(dataDir, 'optc-seed.sql'), sqlSeed),
-    writeFile(unresolvedCatalogPath, JSON.stringify(unresolvedCatalog, null, 2)),
-    writeFile(
-      autoBuilderAbilityCatalogPath,
-      JSON.stringify(
-        {
-          generatedAt: manifest.generatedAt,
-          sourceVersion,
-          abilityCount: autoBuilderAbilities.length,
-          abilities: autoBuilderAbilities,
-        },
-        null,
-        2,
-      ),
-    ),
-    writeFile(
-      path.join(dataDir, 'optc-preview.json'),
-      JSON.stringify(
-        {
-          generatedAt: manifest.generatedAt,
-          characters: characters.slice(0, 24),
-          ships: ships.slice(0, 12),
-        },
-        null,
-        2,
-      ),
-    ),
-  ]);
+  await writeGeneratedDatasetFiles(
+    dataDir,
+    manifest,
+    sqlSeed,
+    unresolvedCatalog,
+    autoBuilderAbilityCatalog,
+    preview,
+  );
+
+  await applyManualCharacterOverlay({
+    rootDir,
+    logger: (message) => console.log(message),
+  });
 
   console.log(
     `Imported ${manifest.characterCount} characters, ${manifest.shipCount} ships, ${manifest.rumbleCount} rumble entries.`,

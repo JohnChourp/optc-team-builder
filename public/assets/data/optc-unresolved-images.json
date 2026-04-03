@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-01T06:43:15.794Z",
+  "generatedAt": "2026-04-03T18:04:56.605Z",
   "sourceVersion": "unknown",
   "total": 12,
   "items": [
@@ -151,10 +151,7 @@
       "id": 4210,
       "name": "Luffy VS Kaido - Fight to the Death",
       "stars": 5,
-      "type": [
-        "QCK",
-        "DEX"
-      ],
+      "type": "QCK,DEX",
       "classes": [
         "Free Spirit",
         "Fighter",

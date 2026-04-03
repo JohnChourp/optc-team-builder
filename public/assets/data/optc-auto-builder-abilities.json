@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-04-01T06:43:15.790Z",
+  "generatedAt": "2026-04-03T18:04:56.605Z",
   "sourceVersion": "unknown",
   "abilityCount": 20,
   "abilities": [
     {
       "key": "ignore_normal_attack_only",
       "label": "Ignore Normal Attack Only (NAO)",
-      "supportsTurns": false,
+      "supportsTurns": true,
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
@@ -16,20 +16,20 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 23,
+      "matchCount": 46,
       "sampleCharacterIds": [
         1413,
+        1413,
         3154,
-        3176,
-        3177,
-        3279
+        3154,
+        3176
       ],
       "sampleTexts": [
         "Deals 30% of enemies' current HP in damage to all enemies, reduces Special Cooldown of middle and bottom row characters by 1 turn and randomizes non-Matching orbs, including [BLOCK] orbs.. Deals 30% of enemies' current HP in damage to all enemies, reduces Special Cooldown of all characters by 1 turn and changes all orbs, including [BLOCK] orbs, into Matching orbs. If your crew has Normal Attack Only when the special is activated, deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies, boosts Orb Effects of all characters by 2x for 1 turn and boosts base ATK of all characters by 800 for 1 turn.",
+        "Deals 30% of enemies' current HP in damage to all enemies, reduces Special Cooldown of middle and bottom row characters by 1 turn and randomizes non-Matching orbs, including [BLOCK] orbs.. Deals 30% of enemies' current HP in damage to all enemies, reduces Special Cooldown of all characters by 1 turn and changes all orbs, including [BLOCK] orbs, into Matching orbs. If your crew has Normal Attack Only when the special is activated, deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies, boosts Orb Effects of all characters by 2x for 1 turn and boosts base ATK of all characters by 800 for 1 turn.",
         "Deals 30% of enemies' current HP in True damage to all enemies, reduces Bind duration by 5 turns and changes [BLOCK] orbs into Matching orbs.. Reduces Bind and ATK DOWN duration by 6 turns and changes [BLOCK] orbs into Matching orbs. If your crew has Normal Attack Only when the special is activated, deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2.25x for 2 turns; deals 30% of enemies' current HP in True damage to all enemies otherwise.",
-        "Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated. If this character is your Captain/Friend Captain, increases duration of any Orb Amplification buffs by 1 turn.",
-        "Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated. If this character is your Captain/Friend Captain, increases duration of any Orb Amplification buffs by 1 turn.",
-        "Boosts ATK of Driven and Powerhouse characters by 4x, their HP by 1.75x, reduces RCV of Driven and Powerhouse characters by 50%, increases damage received by 1.5x and reduces Special Cooldown of this character by 2 turns after each turn you take damage. If a crew member uses a special with a Percent Damage Reduction, Threshold Damage Reduction or Damage Nullification buff, replaces those buffs with an ATK boost that will overwrite ATK boosts in the same special: Boosts ATK of Driven and Powerhouse characters by 2x for 1 turn.. Boosts ATK of Driven and Powerhouse characters by 4x, their HP by 1.75x, reduces RCV of Driven and Powerhouse characters by 50%, increases damage received by 1.5x and deals 10% of enemies' current HP in True damage, ignoring Normal Attack Only, to all enemies at the start of every stage. If a crew member uses a special with a Percent Damage Reduction, Threshold Damage Reduction or Damage Nullification buff, replaces those buffs with an ATK boost that will overwrite ATK boosts in the same special: Boosts ATK of Driven and Powerhouse characters by 2x for 1 turn.. Boosts ATK of Driven and Powerhouse characters by 5x, their HP by 1.75x, reduces Special Cooldown of this character by 2 turns after each turn you take damage and deals 10% of enemies' current HP in True damage, ignoring Normal Attack Only, to all enemies at the start of every stage. If a crew member uses a special with a Percent Damage Reduction, Threshold Damage Reduction or Damage Nullification buff, replaces those buffs with an ATK boost that will overwrite ATK boosts in the same special: Boosts ATK of Driven and Powerhouse characters by 2x for 1 turn."
+        "Deals 30% of enemies' current HP in True damage to all enemies, reduces Bind duration by 5 turns and changes [BLOCK] orbs into Matching orbs.. Reduces Bind and ATK DOWN duration by 6 turns and changes [BLOCK] orbs into Matching orbs. If your crew has Normal Attack Only when the special is activated, deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2.25x for 2 turns; deals 30% of enemies' current HP in True damage to all enemies otherwise.",
+        "Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated. If this character is your Captain/Friend Captain, increases duration of any Orb Amplification buffs by 1 turn."
       ]
     },
     {

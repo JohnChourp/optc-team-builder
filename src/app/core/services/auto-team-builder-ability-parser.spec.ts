@@ -11,9 +11,20 @@ let analyzeBuilderAbilityText: (value: unknown, source: 'specialText' | 'captain
   source: 'specialText' | 'captainAbility';
   coverageMode?: 'explicit' | 'selectedDebuff';
 }>;
+let enrichCharactersWithBuilderAbilities: (
+  characters: Array<{
+    id: number;
+    detail: {
+      specialText: string | null;
+      captainAbility: string | null;
+      builderAbilities: Array<Record<string, unknown>>;
+    };
+  }>,
+  options?: { batchSize?: number; logger?: ((message: string) => void) | null },
+) => Promise<Array<{ key: string; label: string }>>;
 
 beforeAll(async () => {
-  ({ analyzeBuilderAbilityText } = await import(
+  ({ analyzeBuilderAbilityText, enrichCharactersWithBuilderAbilities } = await import(
     pathToFileURL(resolve(process.cwd(), 'scripts/auto-team-builder-ability-parser.mjs')).href
   ));
 });
@@ -228,5 +239,37 @@ describe('auto team builder ability parser', () => {
         'specialText',
       ),
     ).toEqual([]);
+  });
+
+  it('preserves explicit builder abilities while deduping derived matches', async () => {
+    const characters = [
+      {
+        id: 900000,
+        detail: {
+          specialText: 'Reduces Bind duration by 5 turns.',
+          captainAbility: null,
+          builderAbilities: [
+            {
+              key: 'remove_bind',
+              label: 'Remove Bind',
+              minTurns: 5,
+              isCompleteRemoval: false,
+              slotTokens: [],
+              source: 'specialText',
+            },
+          ],
+        },
+      },
+    ];
+
+    await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(characters[0]?.detail.builderAbilities).toEqual([
+      expect.objectContaining({
+        key: 'remove_bind',
+        minTurns: 5,
+        source: 'specialText',
+      }),
+    ]);
   });
 });
