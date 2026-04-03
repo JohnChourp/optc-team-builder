@@ -64,11 +64,11 @@
       }
     },
     "favoritesOnly": {
-      "toggle": "Χρησιμοποίησε μόνο favorites",
-      "blockedMessage": "Το favorites-only build δεν είναι διαθέσιμο μέχρι να αποθηκεύσεις τουλάχιστον ένα favorite unit.",
+      "toggle": "Χρησιμοποίησε favorites για auto-fill",
+      "blockedMessage": "Το favorite-only auto-fill δεν είναι διαθέσιμο μέχρι να αποθηκεύσεις τουλάχιστον ένα favorite unit.",
       "support": {
-        "empty": "Δεν υπάρχουν αποθηκευμένα favorites σε αυτή τη συσκευή.",
-        "withCount": "Περιορίζει τον builder στα {{count}} αποθηκευμένα favorite units σου."
+        "empty": "Δεν υπάρχουν αποθηκευμένα favorites σε αυτή τη συσκευή, οπότε το favorite-only auto-fill δεν είναι διαθέσιμο.",
+        "withCount": "Περιορίζει τα auto-filled slots στα {{count}} αποθηκευμένα favorite units σου. Τα manual picks μπορούν να χρησιμοποιούν οποιοδήποτε unit."
       }
     }
   },
@@ -96,8 +96,8 @@
   },
   "actions": {
     "build": {
-      "favoriteFlexible": "Χτίσε ομάδα {{types}} μόνο από favorites",
-      "favoriteStrict": "Χτίσε strict ομάδα {{types}} μόνο από favorites",
+      "favoriteFlexible": "Χτίσε ομάδα {{types}} με favorite auto-fill",
+      "favoriteStrict": "Χτίσε strict ομάδα {{types}} με favorite auto-fill",
       "flexible": "Χτίσε ομάδα {{types}}",
       "selectTypes": "Επίλεξε τουλάχιστον ένα type για build",
       "strict": "Χτίσε strict ομάδα {{types}}"
@@ -110,20 +110,9 @@
   },
   "manual": {
     "title": "Manual picks",
-    "copy": "Κλείδωσε units, όρισε leaders και προαιρετικά διάλεξε ship πριν τρέξεις τον builder.",
+    "copy": "Διάλεξε OR επιλογές ανά slot, κράτησε προαιρετικά manual ship και άφησε τα κενά slots να γεμίσουν αυτόματα.",
     "favorite": "Favorite",
-    "lockedSummary": "{{count}} / {{max}} locked units",
-    "leaderSummary": "{{count}} / {{max}} leader picks",
-    "pickerSupport": {
-      "default": "Κλείδωσε όσα units θέλεις να κρατήσει ο builder οπωσδήποτε.",
-      "maxReached": "Έφτασες το όριο manual locks για αυτό το build."
-    },
-    "leaderSupport": {
-      "dualLeader": "Έχεις δύο leaders. Διάλεξε ποιος είναι Captain και ποιος Friend Captain.",
-      "noLeaders": "Επίλεξε ένα ή δύο locked units για να ορίσεις το captain scope.",
-      "noLockedCharacters": "Κλείδωσε πρώτα χαρακτήρες και μετά όρισε leaders.",
-      "singleLeader": "Έχεις έναν leader. Το ίδιο unit θα χρησιμοποιηθεί και στα δύο captain slots."
-    },
+    "slotSummary": "{{slots}} slots έχουν manual choices ({{choices}} συνολικά OR picks).",
     "filters": {
       "active": "Ενεργά manual filters: {{summary}}",
       "default": "Τα manual picks ακολουθούν μόνο τα top-level filters της σελίδας.",
@@ -139,7 +128,8 @@
     },
     "candidatePool": {
       "default": "Το sidebar χρησιμοποιεί τα current page filters ως default pool.",
-      "filtered": "Το sidebar περιορίζεται από τα current page filters και τα ability requirements."
+      "filtered": "Το sidebar περιορίζεται από τα current page filters και τα ability requirements.",
+      "leaderOnly": "Το active leader slot δείχνει μόνο characters με readable captain ability."
     },
     "sync": {
       "eyebrow": "Manual picks sync",
@@ -158,24 +148,32 @@
     },
     "actions": {
       "clearAll": "Καθαρισμός όλων",
-      "lock": "Lock",
-      "swapRoles": "Αλλαγή ρόλων"
+      "addChoice": "Προσθήκη OR"
     },
     "applied": {
       "class": "Class: {{value}}",
       "type": "Type: {{value}}"
     },
-    "leaders": {
-      "title": "Leader picks",
+    "slotSelection": {
+      "activeSummary": "Active slot: {{role}} ({{count}} picks)",
+      "assignedTo": "Υπάρχει ήδη στα {{slots}}.",
+      "noneActive": "Διάλεξε slot για να κάνεις edit."
+    },
+    "slots": {
+      "empty": "Δεν έχουν οριστεί OR choices για αυτό το slot ακόμη.",
       "roles": {
         "captain": "Captain",
-        "dual": "Captain / Friend Captain",
-        "friendCaptain": "Friend Captain"
+        "friendCaptain": "Friend Captain",
+        "sub1": "Sub 1",
+        "sub2": "Sub 2",
+        "sub3": "Sub 3",
+        "sub4": "Sub 4"
       },
-      "actions": {
-        "makeCaptain": "Ορισμός Captain",
-        "removeLeader": "Αφαίρεση leader",
-        "setLeader": "Ορισμός leader"
+      "support": {
+        "leaderEmpty": "Δέχεται έναν ή περισσότερους leader-capable χαρακτήρες με σειρά προτίμησης.",
+        "leaderSelected": "{{count}} OR leader picks με σειρά προτίμησης.",
+        "subEmpty": "Δέχεται έναν ή περισσότερους χαρακτήρες. Αν μείνει κενό, ο builder το γεμίζει αυτόματα.",
+        "subSelected": "{{count}} OR sub picks με σειρά προτίμησης."
       }
     }
   },
@@ -251,8 +249,8 @@
   "results": {
     "candidatePool": {
       "default": "Χτίστηκε από όλο το local pool.",
-      "favoritesDefault": "Χτίστηκε από το favorites-only local pool.",
-      "favoritesWithTypes": "Χτίστηκε από το favorites-only local pool με στόχο κάλυψη {{types}}.",
+      "favoritesDefault": "Χτίστηκε με favorite-only auto-fill για τα ανοιχτά slots.",
+      "favoritesWithTypes": "Χτίστηκε με favorite-only auto-fill για τα ανοιχτά slots με στόχο κάλυψη {{types}}.",
       "withTypes": "Χτίστηκε από το local pool με στόχο κάλυψη {{types}}."
     },
     "leaderCriteria": {
@@ -312,29 +310,28 @@
   },
   "errors": {
     "buildFailed": "Το auto build απέτυχε απρόσμενα. Δοκίμασε ξανά.",
-    "lockedLimitExceeded": "Η τρέχουσα επιλογή ξεπερνά το manual lock limit των {{max}} units.",
     "leaderRequirement": {
-      "dual": " και το επιλεγμένο captain/friend captain pair",
-      "single": " και τον επιλεγμένο leader"
+      "dual": " και τα επιλεγμένα captain / friend captain slots",
+      "single": " και το επιλεγμένο captain slot"
     },
     "default": {
       "flexible": "Δεν βρέθηκε ομάδα για {{types}} ούτε μετά το flexible fallback.",
       "strict": "Δεν βρέθηκε exact ομάδα για {{types}} με τους τρέχοντες strict κανόνες."
     },
     "favorites": {
-      "flexible": "Δεν βρέθηκε favorites-only ομάδα για {{types}}.",
-      "strict": "Δεν βρέθηκε favorites-only ομάδα με τους τρέχοντες strict κανόνες."
+      "flexible": "Δεν βρέθηκε ομάδα για {{types}} με favorite-only auto-fill.",
+      "strict": "Δεν βρέθηκε ομάδα με τους τρέχοντες strict κανόνες με favorite-only auto-fill."
     },
     "locked": {
-      "defaultFlexible": "Δεν βρέθηκε flexible ομάδα για {{types}} με {{lockedCount}} locked units{{leaderRequirement}}.",
-      "favoritesFlexible": "Δεν βρέθηκε favorites-only ομάδα για {{types}} με {{lockedCount}} locked units{{leaderRequirement}}.",
-      "requirementsFlexible": "Δεν βρέθηκε flexible ομάδα για {{types}} αφού εφαρμόστηκαν τα {{requirements}} με {{lockedCount}} locked units{{leaderRequirement}}.",
-      "strict": "Δεν βρέθηκε strict ομάδα με {{lockedCount}} locked units{{leaderRequirement}}."
+      "defaultFlexible": "Δεν βρέθηκε flexible ομάδα για {{types}} με {{lockedCount}} manual slot choices{{leaderRequirement}}.",
+      "favoritesFlexible": "Δεν βρέθηκε flexible ομάδα για {{types}} με {{lockedCount}} manual slot choices, κρατώντας favorite-only auto-fill για τα ανοιχτά slots{{leaderRequirement}}.",
+      "requirementsFlexible": "Δεν βρέθηκε flexible ομάδα για {{types}} αφού εφαρμόστηκαν τα {{requirements}} με {{lockedCount}} manual slot choices{{leaderRequirement}}.",
+      "strict": "Δεν βρέθηκε strict ομάδα με {{lockedCount}} manual slot choices{{leaderRequirement}}."
     },
     "requirements": {
       "abilityCoverage": "ability coverage για {{abilities}}",
       "classCoverage": "class coverage σε κάθε slot",
-      "favoritesScope": " μέσα στο favorites-only pool",
+      "favoritesScope": " κρατώντας favorite-only auto-fill για τα ανοιχτά slots",
       "flexible": "Δεν βρέθηκε flexible ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
       "separator": " και ",
       "specialCoverage": "special support coverage",
@@ -371,8 +368,8 @@
     },
     "warnings": {
       "adjustedAbilities": "Αγνοήθηκαν {{count}} ability requirements με unsupported turns, slot tokens ή character count.",
-      "invalidLeaders": "Αγνοήθηκαν {{count}} selected leaders που δεν ανήκουν στους imported locked characters.",
-      "lockedLimitExceeded": "Αγνοήθηκαν {{count}} locked characters επειδή το preset ξεπερνά το limit των {{max}} units.",
+      "invalidLeaders": "Αγνοήθηκαν {{count}} imported leader επιλογές που δεν ταιριάζουν με το current slot setup.",
+      "lockedLimitExceeded": "Αγνοήθηκαν {{count}} legacy locked characters επειδή δεν μπορούν να χαρτογραφηθούν στα σημερινά slots.",
       "missingLockedCharacters": "Αγνοήθηκαν {{count}} locked characters που λείπουν από το current dataset.",
       "missingManualShip": "Αγνοήθηκε {{count}} manual ship επειδή λείπει από το current dataset.",
       "unavailableClasses": "Αγνοήθηκαν {{count}} unavailable imported classes από το preset.",

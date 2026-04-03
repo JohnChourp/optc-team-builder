@@ -279,6 +279,74 @@
   line-height: 1.5;
 }
 
+.manual-slot-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.manual-slot-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  text-align: left;
+}
+
+.manual-slot-card--active {
+  border-color: rgba(245, 200, 76, 0.42);
+  background: rgba(245, 200, 76, 0.08);
+}
+
+.manual-slot-card--leader {
+  box-shadow: inset 0 0 0 1px rgba(76, 201, 240, 0.12);
+}
+
+.manual-slot-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.manual-slot-card:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
+}
+
+.manual-slot-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.manual-slot-card__copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.manual-slot-card__copy strong {
+  color: #ffffff;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.manual-slot-card__copy small {
+  color: rgba(248, 251, 255, 0.66);
+  line-height: 1.45;
+}
+
+.manual-slot-card__clear {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.manual-slot-card__selected {
+  margin-top: 0;
+}
+
 .ability-requirements-card {
   display: grid;
   gap: 12px;
@@ -401,6 +469,10 @@
   justify-content: flex-start;
 }
 
+.manual-lock-chip--static {
+  cursor: default;
+}
+
 .manual-lock-chip img {
   width: 20px;
   height: 20px;
@@ -446,6 +518,15 @@
   gap: 8px;
   padding: 8px 10px;
   border-radius: 14px;
+}
+
+.manual-candidate-card--selected {
+  border-color: rgba(245, 200, 76, 0.42);
+  background: rgba(245, 200, 76, 0.09);
+}
+
+.manual-candidate-card--blocked {
+  opacity: 0.72;
 }
 
 .manual-candidate-card img {
@@ -510,6 +591,12 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.manual-candidate-role--muted {
+  color: rgba(248, 251, 255, 0.58);
+  letter-spacing: 0.03em;
+  text-transform: none;
 }
 
 .manual-candidate-card--sidebar .manual-candidate-copy {

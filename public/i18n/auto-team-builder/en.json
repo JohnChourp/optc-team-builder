@@ -64,11 +64,11 @@
       }
     },
     "favoritesOnly": {
-      "toggle": "Use favorites only",
-      "blockedMessage": "Favorites-only build is unavailable until you save at least one favorite unit.",
+      "toggle": "Use favorites for auto-fill",
+      "blockedMessage": "Favorite-only auto-fill is unavailable until you save at least one favorite unit.",
       "support": {
-        "empty": "No favorites are currently saved on this device.",
-        "withCount": "Limit the builder to your {{count}} saved favorite units."
+        "empty": "No favorites are currently saved on this device, so favorite-only auto-fill is unavailable.",
+        "withCount": "Limit auto-filled slots to your {{count}} saved favorite units. Manual picks can still use any unit."
       }
     }
   },
@@ -96,8 +96,8 @@
   },
   "actions": {
     "build": {
-      "favoriteFlexible": "Build {{types}} crew from favorites",
-      "favoriteStrict": "Build strict {{types}} crew from favorites",
+      "favoriteFlexible": "Build {{types}} crew with favorite auto-fill",
+      "favoriteStrict": "Build strict {{types}} crew with favorite auto-fill",
       "flexible": "Build {{types}} crew",
       "selectTypes": "Select at least one type to build",
       "strict": "Build strict {{types}} crew"
@@ -110,20 +110,9 @@
   },
   "manual": {
     "title": "Manual picks",
-    "copy": "Lock units, pin leaders, and optionally override the recommended ship before running the builder.",
+    "copy": "Set OR choices per slot, optionally keep a manual ship, and let empty slots auto-fill during the build.",
     "favorite": "Favorite",
-    "lockedSummary": "{{count}} / {{max}} locked units",
-    "leaderSummary": "{{count}} / {{max}} leader picks",
-    "pickerSupport": {
-      "default": "Lock any high-priority units you want the builder to keep.",
-      "maxReached": "You reached the manual lock limit for this build."
-    },
-    "leaderSupport": {
-      "dualLeader": "Two leaders selected. Choose which one is Captain and which one is Friend Captain.",
-      "noLeaders": "Select one or two locked units to define the captain scope.",
-      "noLockedCharacters": "Lock characters first before assigning leaders.",
-      "singleLeader": "One leader selected. The same unit will fill both captain slots."
-    },
+    "slotSummary": "{{slots}} slots currently have manual choices ({{choices}} OR picks total).",
     "filters": {
       "active": "Active manual filters: {{summary}}",
       "default": "Manual picks currently follow the top-level page filters only.",
@@ -139,7 +128,8 @@
     },
     "candidatePool": {
       "default": "The sidebar uses the current page filters as its default pool.",
-      "filtered": "The sidebar is narrowed by your current page filters and ability requirements."
+      "filtered": "The sidebar is narrowed by your current page filters and ability requirements.",
+      "leaderOnly": "The active leader slot only shows characters with a readable captain ability."
     },
     "sync": {
       "eyebrow": "Manual picks sync",
@@ -158,24 +148,32 @@
     },
     "actions": {
       "clearAll": "Clear all",
-      "lock": "Lock",
-      "swapRoles": "Swap roles"
+      "addChoice": "Add OR"
     },
     "applied": {
       "class": "Class: {{value}}",
       "type": "Type: {{value}}"
     },
-    "leaders": {
-      "title": "Leader picks",
+    "slotSelection": {
+      "activeSummary": "Active slot: {{role}} ({{count}} picks)",
+      "assignedTo": "Already assigned to {{slots}}.",
+      "noneActive": "Choose a slot to start editing."
+    },
+    "slots": {
+      "empty": "No OR choices have been assigned to this slot yet.",
       "roles": {
         "captain": "Captain",
-        "dual": "Captain / Friend Captain",
-        "friendCaptain": "Friend Captain"
+        "friendCaptain": "Friend Captain",
+        "sub1": "Sub 1",
+        "sub2": "Sub 2",
+        "sub3": "Sub 3",
+        "sub4": "Sub 4"
       },
-      "actions": {
-        "makeCaptain": "Make Captain",
-        "removeLeader": "Remove leader",
-        "setLeader": "Set leader"
+      "support": {
+        "leaderEmpty": "Accepts one or more leader-capable characters in preference order.",
+        "leaderSelected": "{{count}} OR leader picks in preference order.",
+        "subEmpty": "Accepts one or more characters. If left empty, the builder fills it automatically.",
+        "subSelected": "{{count}} OR sub picks in preference order."
       }
     }
   },
@@ -251,8 +249,8 @@
   "results": {
     "candidatePool": {
       "default": "Built from the full local pool.",
-      "favoritesDefault": "Built from the favorites-only local pool.",
-      "favoritesWithTypes": "Built from the favorites-only local pool while targeting {{types}} coverage.",
+      "favoritesDefault": "Built with favorite-only auto-fill for open slots.",
+      "favoritesWithTypes": "Built with favorite-only auto-fill for open slots while targeting {{types}} coverage.",
       "withTypes": "Built from the local pool while targeting {{types}} coverage."
     },
     "leaderCriteria": {
@@ -312,29 +310,28 @@
   },
   "errors": {
     "buildFailed": "The auto build failed unexpectedly. Please try again.",
-    "lockedLimitExceeded": "The current selection exceeds the manual lock limit of {{max}} units.",
     "leaderRequirement": {
-      "dual": " and the selected captain/friend captain pair",
-      "single": " and the selected leader"
+      "dual": " and the selected captain / friend captain slots",
+      "single": " and the selected captain slot"
     },
     "default": {
       "flexible": "No team matched {{types}} even after flexible fallback.",
       "strict": "No exact team matched {{types}} with the current strict rules."
     },
     "favorites": {
-      "flexible": "No favorites-only team matched {{types}}.",
-      "strict": "No favorites-only team matched the current strict rules."
+      "flexible": "No team matched {{types}} with favorite-only auto-fill.",
+      "strict": "No team matched the current strict rules with favorite-only auto-fill."
     },
     "locked": {
-      "defaultFlexible": "No flexible {{types}} team could be built with {{lockedCount}} locked units{{leaderRequirement}}.",
-      "favoritesFlexible": "No favorites-only {{types}} team could be built with {{lockedCount}} locked units{{leaderRequirement}}.",
-      "requirementsFlexible": "No flexible {{types}} team could be built after applying {{requirements}} with {{lockedCount}} locked units{{leaderRequirement}}.",
-      "strict": "No strict team could be built with {{lockedCount}} locked units{{leaderRequirement}}."
+      "defaultFlexible": "No flexible {{types}} team could be built with {{lockedCount}} manual slot choices{{leaderRequirement}}.",
+      "favoritesFlexible": "No flexible {{types}} team could be built with {{lockedCount}} manual slot choices while keeping favorite-only auto-fill for open slots{{leaderRequirement}}.",
+      "requirementsFlexible": "No flexible {{types}} team could be built after applying {{requirements}} with {{lockedCount}} manual slot choices{{leaderRequirement}}.",
+      "strict": "No strict team could be built with {{lockedCount}} manual slot choices{{leaderRequirement}}."
     },
     "requirements": {
       "abilityCoverage": "ability coverage for {{abilities}}",
       "classCoverage": "per-slot class coverage",
-      "favoritesScope": " inside the favorites-only pool",
+      "favoritesScope": " while keeping favorite-only auto-fill for open slots",
       "flexible": "No flexible team matched {{types}} while keeping {{requirements}}{{favoritesScope}}.",
       "separator": " and ",
       "specialCoverage": "special support coverage",
@@ -371,8 +368,8 @@
     },
     "warnings": {
       "adjustedAbilities": "Ignored {{count}} ability requirements with unsupported turns, slot tokens, or character count.",
-      "invalidLeaders": "Ignored {{count}} selected leaders that are not part of the imported locked characters.",
-      "lockedLimitExceeded": "Ignored {{count}} locked characters because the preset exceeds the {{max}}-unit lock limit.",
+      "invalidLeaders": "Ignored {{count}} imported leader choices that do not fit the current slot setup.",
+      "lockedLimitExceeded": "Ignored {{count}} legacy locked characters because they cannot be mapped into the current slot model.",
       "missingLockedCharacters": "Ignored {{count}} locked characters that are missing from the current dataset.",
       "missingManualShip": "Ignored {{count}} manual ship because it is missing from the current dataset.",
       "unavailableClasses": "Ignored {{count}} unavailable imported classes from the preset.",

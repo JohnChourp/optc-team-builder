@@ -1,5 +1,6 @@
 import {
   AUTO_TEAM_BUILDER_TYPES,
+  createEmptyAutoBuildManualSlots,
   type AutoTeamBuilderType,
 } from "../../core/models/auto-team-builder.models";
 import { type SavedEnemy } from "../../core/models/optc.models";
@@ -23,6 +24,7 @@ export function buildAutoTeamBuilderStateFromSavedEnemy(
     requireAllSelectedClassesPerCharacter: enemy.requireAllSelectedClassesPerCharacter,
     requireAllSpecialsSupportTeam: enemy.requireAllSpecialsSupportTeam,
     favoritesOnly: false,
+    manualSlots: createEmptyAutoBuildManualSlots(),
     lockedCharacterIds: [],
     selectedLeaderIds: [],
     captainLeaderId: null,

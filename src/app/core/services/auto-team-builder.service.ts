@@ -1,35 +1,40 @@
-import { Injectable } from '@angular/core';
+import { Injectable } from "@angular/core";
 
 import {
   AUTO_TEAM_CANDIDATE_LIMIT,
   AUTO_TEAM_BUILDER_DEFAULT_TYPE,
+  AUTO_BUILD_MANUAL_SLOT_ROLES,
+  AUTO_BUILD_MANUAL_SUB_SLOT_ROLES,
   type AutoBuildConstraints,
   type AutoBuildInput,
+  type AutoBuildManualSlotRole,
+  type AutoBuildManualSlotSelection,
   type AutoBuildProgressSnapshot,
   type AutoBuildResult,
   type AutoTeamBuilderType,
-} from '../models/auto-team-builder.models';
-import { type AutoBuildAbilityRequirement } from '../models/auto-team-builder-ability.models';
-import { type CharacterDetailRecord } from '../models/optc.models';
+  createEmptyAutoBuildManualSlots,
+} from "../models/auto-team-builder.models";
+import { type AutoBuildAbilityRequirement } from "../models/auto-team-builder-ability.models";
+import { type CharacterDetailRecord } from "../models/optc.models";
 import {
   AutoTeamBuildCancelledError,
   isAutoTeamBuildCancelledError,
   normalizeSelectedTypes,
   runAutoTeamBuildSearch,
-} from './auto-team-builder.engine';
-import { resolveAutoBuildShipSelection } from './auto-team-builder-ship.utils';
-import { OptcRepositoryService } from './optc-repository.service';
+} from "./auto-team-builder.engine";
+import { resolveAutoBuildShipSelection } from "./auto-team-builder-ship.utils";
+import { OptcRepositoryService } from "./optc-repository.service";
 import {
   type AutoTeamBuilderWorkerRequest,
   type AutoTeamBuilderWorkerResponse,
-} from './auto-team-builder.worker.models';
+} from "./auto-team-builder.worker.models";
 
 export interface AutoTeamBuildExecutionOptions {
   onProgress?: (snapshot: AutoBuildProgressSnapshot) => void;
   signal?: AbortSignal;
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class AutoTeamBuilderService {
   public constructor(private readonly repository: OptcRepositoryService) {}
 
@@ -41,46 +46,47 @@ export class AutoTeamBuilderService {
   ): Promise<AutoBuildResult | null> {
     const favoritesOnly = constraints.favoritesOnly ?? false;
     const normalizedTypes = normalizeSelectedTypes(selectedTypes);
-    const normalizedClasses = selectedClasses.reduce<string[]>((classes, currentClass) => {
+    const normalizedClasses: string[] = [];
+
+    for (const currentClass of selectedClasses) {
       const nextClass = currentClass.trim();
 
       if (
-        !nextClass.length ||
-        classes.some((entry) => entry.toLowerCase() === nextClass.toLowerCase())
+        nextClass.length === 0 ||
+        normalizedClasses.some((entry) => entry.toLowerCase() === nextClass.toLowerCase())
       ) {
-        return classes;
+        continue;
       }
 
-      classes.push(nextClass);
-      return classes;
-    }, []);
+      normalizedClasses.push(nextClass);
+    }
     const favoriteCharacterIds = new Set(
       (constraints.favoriteCharacterIds ?? []).filter(
         (characterId) => Number.isInteger(characterId) && characterId > 0,
       ),
     );
     const requiredAbilities = this.normalizeRequiredAbilities(constraints.requiredAbilities ?? []);
-    const lockedCharacterIds = [
-      ...new Set(
-        (constraints.lockedCharacterIds ?? []).filter(
-          (characterId) => Number.isInteger(characterId) && characterId > 0,
-        ),
-      ),
-    ];
-    let captainCharacterId = this.normalizeCharacterId(constraints.captainCharacterId);
-    let friendCaptainCharacterId = this.normalizeCharacterId(constraints.friendCaptainCharacterId);
+    const normalizedManualSlots = this.normalizeManualSlots(constraints.manualSlots);
+    const hasManualSlots = normalizedManualSlots.some((slot) => slot.characterIds.length > 0);
+    const legacyManualSelection = this.normalizeLegacyManualSelection(
+      constraints.lockedCharacterIds,
+      constraints.captainCharacterId,
+      constraints.friendCaptainCharacterId,
+    );
+    if (!hasManualSlots && legacyManualSelection.hasInvalidLeaderSelection) {
+      return null;
+    }
+    const manualSlots = hasManualSlots
+      ? normalizedManualSlots
+      : this.createManualSlotsFromLegacySelection(legacyManualSelection);
+    const derivedManualSelection = this.deriveLegacyManualSelectionFromManualSlots(manualSlots);
+    const lockedCharacterIds = derivedManualSelection.lockedCharacterIds;
+    const captainCharacterId = derivedManualSelection.captainCharacterId;
+    const friendCaptainCharacterId = derivedManualSelection.friendCaptainCharacterId;
     const manualShipId = this.normalizeCharacterId(constraints.manualShipId);
 
-    if (!captainCharacterId && friendCaptainCharacterId) {
-      captainCharacterId = friendCaptainCharacterId;
-    }
-
-    if (captainCharacterId && !friendCaptainCharacterId) {
-      friendCaptainCharacterId = captainCharacterId;
-    }
-
     const input: AutoBuildInput = {
-      types: normalizedTypes.length ? normalizedTypes : [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
+      types: normalizedTypes.length > 0 ? normalizedTypes : [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
       selectedClasses: normalizedClasses,
       requireAllSelectedTypesInTeam: constraints.requireAllSelectedTypesInTeam ?? false,
       requireAllSelectedClassesPerCharacter:
@@ -88,6 +94,7 @@ export class AutoTeamBuilderService {
       requireAllSpecialsSupportTeam: constraints.requireAllSpecialsSupportTeam ?? false,
       requiredAbilities,
       favoritesOnly,
+      manualSlots,
       lockedCharacterIds,
       captainCharacterId,
       friendCaptainCharacterId,
@@ -102,17 +109,14 @@ export class AutoTeamBuilderService {
         ...requirement,
         slotTokens: [...requirement.slotTokens],
       })),
+      manualSlots: input.manualSlots.map((slot) => ({
+        role: slot.role,
+        characterIds: [...slot.characterIds],
+      })),
       lockedCharacterIds: [...input.lockedCharacterIds],
     };
 
-    if (favoritesOnly && !favoriteCharacterIds.size) {
-      return null;
-    }
-
-    if (
-      favoritesOnly &&
-      lockedCharacterIds.some((characterId) => !favoriteCharacterIds.has(characterId))
-    ) {
+    if (favoritesOnly && favoriteCharacterIds.size === 0) {
       return null;
     }
 
@@ -125,22 +129,15 @@ export class AutoTeamBuilderService {
       return null;
     }
 
-    if (
-      favoritesOnly &&
-      requestedLeaderIds.some((characterId) => !favoriteCharacterIds.has(characterId))
-    ) {
-      return null;
-    }
-
     this.throwIfCancelled(executionOptions.signal);
     this.emitProgress(executionOptions, {
-      stage: 'loadingCandidates',
+      stage: "loadingCandidates",
       candidateCount: 0,
       completedAttempts: 0,
       totalAttempts: 0,
       currentDroppedTypes: [],
       currentDroppedClasses: [],
-      messageKey: 'progress.loadingCandidates',
+      messageKey: "progress.loadingCandidates",
     });
 
     const records = await this.repository.getAutoBuilderCandidates(
@@ -155,7 +152,7 @@ export class AutoTeamBuilderService {
     this.throwIfCancelled(executionOptions.signal);
 
     const shipsPromise =
-      typeof this.repository.getShips === 'function'
+      typeof this.repository.getShips === "function"
         ? this.repository.getShips()
         : Promise.resolve([]);
     const [result, ships] = await Promise.all([
@@ -214,9 +211,9 @@ export class AutoTeamBuilderService {
     return new Promise<AutoBuildResult | null>((resolve, reject) => {
       let settled = false;
       const cleanup = (): void => {
-        executionOptions.signal?.removeEventListener('abort', handleAbort);
-        worker.removeEventListener('message', handleMessage);
-        worker.removeEventListener('error', handleError);
+        executionOptions.signal?.removeEventListener("abort", handleAbort);
+        worker.removeEventListener("message", handleMessage);
+        worker.removeEventListener("error", handleError);
       };
       const resolveOnce = (result: AutoBuildResult | null): void => {
         if (settled) {
@@ -242,19 +239,19 @@ export class AutoTeamBuilderService {
         rejectOnce(new AutoTeamBuildCancelledError());
       };
       const handleError = (event: ErrorEvent): void => {
-        rejectOnce(new Error(event.message || 'Auto team builder worker failed.'));
+        rejectOnce(new Error(event.message || "Auto team builder worker failed."));
       };
       const handleMessage = ({ data }: MessageEvent<AutoTeamBuilderWorkerResponse>): void => {
         if (!data || data.runId !== runId) {
           return;
         }
 
-        if (data.type === 'progress') {
+        if (data.type === "progress") {
           executionOptions.onProgress?.(data.snapshot);
           return;
         }
 
-        if (data.type === 'result') {
+        if (data.type === "result") {
           resolveOnce(data.result);
           return;
         }
@@ -267,12 +264,12 @@ export class AutoTeamBuilderService {
         return;
       }
 
-      executionOptions.signal?.addEventListener('abort', handleAbort, { once: true });
-      worker.addEventListener('message', handleMessage);
-      worker.addEventListener('error', handleError);
+      executionOptions.signal?.addEventListener("abort", handleAbort, { once: true });
+      worker.addEventListener("message", handleMessage);
+      worker.addEventListener("error", handleError);
 
       const request: AutoTeamBuilderWorkerRequest = {
-        type: 'run',
+        type: "run",
         runId,
         records,
         requestedInput,
@@ -283,13 +280,13 @@ export class AutoTeamBuilderService {
   }
 
   private createWorker(): Worker | null {
-    if (typeof Worker === 'undefined') {
+    if (typeof Worker === "undefined") {
       return null;
     }
 
     try {
-      return new Worker(new URL('./auto-team-builder.worker', import.meta.url), {
-        type: 'module',
+      return new Worker(new URL("auto-team-builder.worker", import.meta.url), {
+        type: "module",
       });
     } catch {
       return null;
@@ -313,12 +310,175 @@ export class AutoTeamBuilderService {
     return Number.isInteger(characterId) && Number(characterId) > 0 ? Number(characterId) : null;
   }
 
+  private normalizeManualSlots(
+    manualSlots: AutoBuildManualSlotSelection[] | undefined,
+  ): AutoBuildManualSlotSelection[] {
+    const roleMap = new Map<AutoBuildManualSlotRole, number[]>();
+
+    for (const slot of (manualSlots ?? [])) {
+      if (!slot || typeof slot !== "object" || !AUTO_BUILD_MANUAL_SLOT_ROLES.includes(slot.role)) {
+        continue;
+      }
+
+      const normalizedCharacterIds = [
+        ...new Set(
+          (Array.isArray(slot.characterIds) ? slot.characterIds : [])
+            .map((characterId) => this.normalizeCharacterId(characterId))
+            .filter((characterId): characterId is number => characterId !== null),
+        ),
+      ];
+
+      roleMap.set(slot.role, normalizedCharacterIds);
+    }
+
+    const normalizedSlots = createEmptyAutoBuildManualSlots();
+    const usedLeaderIds = new Set<number>();
+    const usedSubIds = new Set<number>();
+
+    for (const slot of normalizedSlots) {
+      const nextIds: number[] = [];
+
+      for (const characterId of (roleMap.get(slot.role) ?? [])) {
+        if (
+          AUTO_BUILD_MANUAL_SUB_SLOT_ROLES.includes(
+            slot.role as (typeof AUTO_BUILD_MANUAL_SUB_SLOT_ROLES)[number],
+          )
+        ) {
+          if (usedLeaderIds.has(characterId) || usedSubIds.has(characterId)) {
+            continue;
+          }
+
+          usedSubIds.add(characterId);
+          nextIds.push(characterId);
+          continue;
+        }
+
+        if (usedSubIds.has(characterId) || nextIds.includes(characterId)) {
+          continue;
+        }
+
+        usedLeaderIds.add(characterId);
+        nextIds.push(characterId);
+      }
+
+      slot.characterIds = nextIds;
+    }
+
+    return normalizedSlots;
+  }
+
+  private normalizeLegacyManualSelection(
+    rawLockedCharacterIds: number[] | undefined,
+    rawCaptainCharacterId: number | null | undefined,
+    rawFriendCaptainCharacterId: number | null | undefined,
+  ): {
+    lockedCharacterIds: number[];
+    captainCharacterId: number | null;
+    friendCaptainCharacterId: number | null;
+    hasInvalidLeaderSelection: boolean;
+  } {
+    const lockedCharacterIds = [
+      ...new Set(
+        (rawLockedCharacterIds ?? [])
+          .map((characterId) => this.normalizeCharacterId(characterId))
+          .filter((characterId): characterId is number => characterId !== null),
+      ),
+    ];
+    const lockedCharacterIdSet = new Set(lockedCharacterIds);
+    let hasInvalidLeaderSelection = false;
+    let captainCharacterId = this.normalizeCharacterId(rawCaptainCharacterId);
+    let friendCaptainCharacterId = this.normalizeCharacterId(rawFriendCaptainCharacterId);
+
+    if (captainCharacterId && !lockedCharacterIdSet.has(captainCharacterId)) {
+      captainCharacterId = null;
+      hasInvalidLeaderSelection = true;
+    }
+
+    if (friendCaptainCharacterId && !lockedCharacterIdSet.has(friendCaptainCharacterId)) {
+      friendCaptainCharacterId = null;
+      hasInvalidLeaderSelection = true;
+    }
+
+    if (!captainCharacterId && friendCaptainCharacterId) {
+      captainCharacterId = friendCaptainCharacterId;
+    }
+
+    if (captainCharacterId && !friendCaptainCharacterId) {
+      friendCaptainCharacterId = captainCharacterId;
+    }
+
+    return {
+      lockedCharacterIds,
+      captainCharacterId,
+      friendCaptainCharacterId,
+      hasInvalidLeaderSelection,
+    };
+  }
+
+  private createManualSlotsFromLegacySelection(selection: {
+    lockedCharacterIds: number[];
+    captainCharacterId: number | null;
+    friendCaptainCharacterId: number | null;
+  }): AutoBuildManualSlotSelection[] {
+    const manualSlots = createEmptyAutoBuildManualSlots();
+    const captainSlot = manualSlots.find((slot) => slot.role === "captain");
+    const friendCaptainSlot = manualSlots.find((slot) => slot.role === "friendCaptain");
+    const leaderIds = new Set([
+      selection.captainCharacterId,
+      selection.friendCaptainCharacterId,
+    ].filter((characterId): characterId is number => characterId !== null));
+
+    if (captainSlot && selection.captainCharacterId) {
+      captainSlot.characterIds = [selection.captainCharacterId];
+    }
+
+    if (friendCaptainSlot && selection.friendCaptainCharacterId) {
+      friendCaptainSlot.characterIds = [selection.friendCaptainCharacterId];
+    }
+
+    const remainingSubIds = selection.lockedCharacterIds.filter(
+      (characterId) => !leaderIds.has(characterId),
+    );
+
+    for (const [index, role] of AUTO_BUILD_MANUAL_SUB_SLOT_ROLES.entries()) {
+      const slot = manualSlots.find((entry) => entry.role === role);
+      const characterId = remainingSubIds[index];
+
+      if (slot && characterId) {
+        slot.characterIds = [characterId];
+      }
+    }
+
+    return manualSlots;
+  }
+
+  private deriveLegacyManualSelectionFromManualSlots(manualSlots: AutoBuildManualSlotSelection[]): {
+    lockedCharacterIds: number[];
+    captainCharacterId: number | null;
+    friendCaptainCharacterId: number | null;
+  } {
+    const captainCharacterId =
+      manualSlots.find((slot) => slot.role === "captain")?.characterIds[0] ?? null;
+    const friendCaptainCharacterId =
+      manualSlots.find((slot) => slot.role === "friendCaptain")?.characterIds[0] ??
+      captainCharacterId;
+    const lockedCharacterIds = [
+      ...new Set(manualSlots.flatMap((slot) => slot.characterIds)),
+    ];
+
+    return {
+      lockedCharacterIds,
+      captainCharacterId,
+      friendCaptainCharacterId,
+    };
+  }
+
   private normalizeRequiredAbilities(
     requirements: AutoBuildAbilityRequirement[],
   ): AutoBuildAbilityRequirement[] {
     const normalizedRequirements = new Map<string, AutoBuildAbilityRequirement>();
 
-    requirements.forEach((requirement) => {
+    for (const requirement of requirements) {
       const abilityKey = requirement.abilityKey.trim();
       const minTurns =
         requirement.minTurns !== null &&
@@ -337,11 +497,11 @@ export class AutoTeamBuilderService {
           ? Math.floor(requirement.requiredCharacterCount)
           : 1;
 
-      if (!abilityKey.length) {
-        return;
+      if (abilityKey.length === 0) {
+        continue;
       }
 
-      const identity = `${abilityKey}|${minTurns ?? 'none'}|${slotTokens.join(',')}`;
+      const identity = `${abilityKey}|${minTurns ?? "none"}|${slotTokens.join(",")}`;
       const existingRequirement = normalizedRequirements.get(identity);
 
       if (existingRequirement) {
@@ -349,7 +509,7 @@ export class AutoTeamBuilderService {
           existingRequirement.requiredCharacterCount,
           requiredCharacterCount,
         );
-        return;
+        continue;
       }
 
       normalizedRequirements.set(identity, {
@@ -358,7 +518,7 @@ export class AutoTeamBuilderService {
         slotTokens,
         requiredCharacterCount,
       });
-    });
+    }
 
     return [...normalizedRequirements.values()];
   }

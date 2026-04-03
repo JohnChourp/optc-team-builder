@@ -1,27 +1,49 @@
 import {
   type AutoBuildAbilityRequirement,
   type NormalizedBuilderAbility,
-} from './auto-team-builder-ability.models';
-import { type CharacterDetailRecord, type ShipRecord } from './optc.models';
+} from "./auto-team-builder-ability.models";
+import { type CharacterDetailRecord, type ShipRecord } from "./optc.models";
 
-export const AUTO_TEAM_BUILDER_TYPES = ['DEX', 'STR', 'QCK', 'PSY', 'INT'] as const;
+export const AUTO_TEAM_BUILDER_TYPES = ["DEX", "STR", "QCK", "PSY", "INT"] as const;
 export const AUTO_TEAM_BUILDER_CLASSES = [
-  'Booster',
-  'Cerebral',
-  'Driven',
-  'Evolver',
-  'Fighter',
-  'Free Spirit',
-  'Powerhouse',
-  'Shooter',
-  'Slasher',
-  'Striker',
+  "Booster",
+  "Cerebral",
+  "Driven",
+  "Evolver",
+  "Fighter",
+  "Free Spirit",
+  "Powerhouse",
+  "Shooter",
+  "Slasher",
+  "Striker",
 ] as const;
-export const AUTO_TEAM_BUILDER_DEFAULT_TYPE = 'DEX';
+export const AUTO_TEAM_BUILDER_DEFAULT_TYPE = "DEX";
 export const AUTO_TEAM_CANDIDATE_LIMIT = 1200;
+export const AUTO_BUILD_MANUAL_SLOT_ROLES = [
+  "captain",
+  "friendCaptain",
+  "sub1",
+  "sub2",
+  "sub3",
+  "sub4",
+] as const;
+export const AUTO_BUILD_MANUAL_SUB_SLOT_ROLES = ["sub1", "sub2", "sub3", "sub4"] as const;
 
 export type AutoTeamBuilderType = (typeof AUTO_TEAM_BUILDER_TYPES)[number];
 export type AutoTeamBuilderClass = (typeof AUTO_TEAM_BUILDER_CLASSES)[number];
+export type AutoBuildManualSlotRole = (typeof AUTO_BUILD_MANUAL_SLOT_ROLES)[number];
+
+export interface AutoBuildManualSlotSelection {
+  role: AutoBuildManualSlotRole;
+  characterIds: number[];
+}
+
+export function createEmptyAutoBuildManualSlots(): AutoBuildManualSlotSelection[] {
+  return AUTO_BUILD_MANUAL_SLOT_ROLES.map((role) => ({
+    role,
+    characterIds: [],
+  }));
+}
 
 export interface AutoBuildConstraints {
   requireAllSelectedTypesInTeam?: boolean;
@@ -30,6 +52,7 @@ export interface AutoBuildConstraints {
   requiredAbilities?: AutoBuildAbilityRequirement[];
   favoritesOnly?: boolean;
   favoriteCharacterIds?: number[];
+  manualSlots?: AutoBuildManualSlotSelection[];
   lockedCharacterIds?: number[];
   captainCharacterId?: number | null;
   friendCaptainCharacterId?: number | null;
@@ -42,22 +65,22 @@ export interface AutoBuildCandidateQueryOptions {
 }
 
 export type AutoBuildBurstRole =
-  | 'atkBoost'
-  | 'orbBoost'
-  | 'colorAffinity'
-  | 'chainBoost'
-  | 'conditional';
+  | "atkBoost"
+  | "orbBoost"
+  | "colorAffinity"
+  | "chainBoost"
+  | "conditional";
 
-export type AutoBuildConsistencyRole = 'matchingOrbs' | 'orbChange' | 'cooldownReduction';
+export type AutoBuildConsistencyRole = "matchingOrbs" | "orbChange" | "cooldownReduction";
 
 export type AutoBuildUtilityRole =
-  | 'bind'
-  | 'despair'
-  | 'paralysis'
-  | 'atkDown'
-  | 'damageReduction'
-  | 'threshold'
-  | 'defenseDown';
+  | "bind"
+  | "despair"
+  | "paralysis"
+  | "atkDown"
+  | "damageReduction"
+  | "threshold"
+  | "defenseDown";
 
 export interface AutoBuildInput extends AutoBuildConstraints {
   types: AutoTeamBuilderType[];
@@ -65,6 +88,7 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   requireAllSpecialsSupportTeam: boolean;
   requiredAbilities: AutoBuildAbilityRequirement[];
   favoritesOnly: boolean;
+  manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   captainCharacterId: number | null;
   friendCaptainCharacterId: number | null;
@@ -74,7 +98,7 @@ export interface AutoBuildInput extends AutoBuildConstraints {
 
 export interface AutoBuildShipSelection {
   ship: ShipRecord;
-  source: 'manual' | 'recommended';
+  source: "manual" | "recommended";
   reasonChips: string[];
 }
 
@@ -115,12 +139,12 @@ export interface AutoBuildEffectTags {
 }
 
 export interface AutoBuildLeaderCriteriaSummary {
-  source: 'captainAbility';
+  source: "captainAbility";
   captainLeaderId: number | null;
   friendCaptainLeaderId: number | null;
   leaderIds: number[];
   leaderNames: string[];
-  dualLeaderMode: 'single' | 'intersection';
+  dualLeaderMode: "single" | "intersection";
   derivedAllowedClasses: string[];
   derivedAllowedTypes: AutoTeamBuilderType[];
   hasClassRestriction: boolean;
@@ -131,7 +155,7 @@ export interface AutoBuildLeaderCriteriaSummary {
 }
 
 export interface AutoBuildSpecialSupportSummary {
-  source: 'specialText';
+  source: "specialText";
   enabled: boolean;
   matchingSlots: number;
   totalSlots: number;
@@ -154,7 +178,7 @@ export interface AutoBuildCandidate {
 }
 
 export interface AutoBuildSlot {
-  role: 'captain' | 'friendCaptain' | 'sub';
+  role: "captain" | "friendCaptain" | "sub";
   character: CharacterDetailRecord;
   reasonChips: string[];
 }
@@ -186,11 +210,11 @@ export interface AutoBuildRelaxationSummary {
 }
 
 export type AutoBuildProgressStage =
-  | 'loadingCandidates'
-  | 'preparingSearch'
-  | 'exactAttempt'
-  | 'fallbackAttempt'
-  | 'completed';
+  | "loadingCandidates"
+  | "preparingSearch"
+  | "exactAttempt"
+  | "fallbackAttempt"
+  | "completed";
 
 export interface AutoBuildProgressSnapshot {
   stage: AutoBuildProgressStage;

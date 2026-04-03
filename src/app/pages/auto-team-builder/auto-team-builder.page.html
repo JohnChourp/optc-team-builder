@@ -332,7 +332,7 @@
               </div>
 
               <div class="manual-locks-meta">
-                <strong>{{ lockedSummaryLabel() }}</strong>
+                <strong>{{ manualSlotSummaryLabel() }}</strong>
                 <ion-button
                   fill="clear"
                   size="small"
@@ -353,6 +353,51 @@
                   <strong>{{ t('manual.sync.title') }}</strong>
                   <p>{{ manualFilterSummaryLabel() }}</p>
                 </div>
+              </div>
+
+              <div class="manual-slot-grid">
+                @for (slotCard of manualSlotCards(); track slotCard.role) {
+                  <button
+                    type="button"
+                    class="manual-slot-card"
+                    [class.manual-slot-card--active]="slotCard.isActive"
+                    [class.manual-slot-card--leader]="slotCard.isLeaderSlot"
+                    [disabled]="building()"
+                    (click)="selectManualSlot(slotCard.role)"
+                  >
+                    <div class="manual-slot-card__header">
+                      <div class="manual-slot-card__copy">
+                        <strong>{{ slotCard.title }}</strong>
+                        <small>{{ slotCard.support }}</small>
+                      </div>
+                      <ion-button
+                        fill="clear"
+                        size="small"
+                        color="warning"
+                        class="manual-slot-card__clear"
+                        [disabled]="building() || !slotCard.selectedCharacters.length"
+                        (click)="clearManualSlot(slotCard.role, $event)"
+                      >
+                        {{ 'common.actions.clear' | transloco }}
+                      </ion-button>
+                    </div>
+
+                    @if (slotCard.selectedCharacters.length) {
+                      <div class="selected-values-row manual-slot-card__selected">
+                        @for (character of slotCard.selectedCharacters; track character.id) {
+                          <span class="selected-value-chip manual-lock-chip manual-lock-chip--static">
+                            <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
+                            {{ character.name }}
+                          </span>
+                        }
+                      </div>
+                    } @else {
+                      <div class="manual-candidate-empty-state manual-candidate-empty-state--compact">
+                        {{ t('manual.slots.empty') }}
+                      </div>
+                    }
+                  </button>
+                }
               </div>
             </div>
 
@@ -377,6 +422,28 @@
               </div>
 
               @if (shipPickerMode() === 'characters') {
+                <div class="manual-locks-meta manual-locks-meta--candidates">
+                  <strong>{{ activeManualSlotSummaryLabel() }}</strong>
+                  <small>{{ activeManualSlotSupportLabel() }}</small>
+                </div>
+
+                @if (activeManualSlotSelectedCharacters().length) {
+                  <div class="selected-values-row manual-selected-row">
+                    @for (character of activeManualSlotSelectedCharacters(); track character.id) {
+                      <button
+                        type="button"
+                        class="selected-value-chip manual-lock-chip"
+                        [disabled]="building()"
+                        (click)="removeCharacterFromManualSlot(activeManualSlotRole(), character.id)"
+                      >
+                        <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
+                        {{ character.name }}
+                        <span aria-hidden="true">×</span>
+                      </button>
+                    }
+                  </div>
+                }
+
                 <ion-searchbar
                   [debounce]="150"
                   [placeholder]="t('manual.searchPlaceholder.characters')"
@@ -405,6 +472,10 @@
                     ) {
                       <article
                         class="manual-candidate-card manual-candidate-card--detailed manual-candidate-card--sidebar"
+                        [class.manual-candidate-card--selected]="candidateCard.isSelectedInActiveSlot"
+                        [class.manual-candidate-card--blocked]="
+                          !candidateCard.isSelectedInActiveSlot && !candidateCard.isSelectableInActiveSlot
+                        "
                       >
                         <img
                           [src]="candidateCard.character.imageUrl"
@@ -419,6 +490,11 @@
                               {{ candidateCard.favoriteLabel }}
                             </small>
                           }
+                          @if (candidateCard.selectionSupportLabel) {
+                            <small class="manual-candidate-role manual-candidate-role--muted">
+                              {{ candidateCard.selectionSupportLabel }}
+                            </small>
+                          }
                           <div class="chip-row manual-candidate-chip-row">
                             @for (abilityChip of candidateCard.abilityChips; track $index) {
                               <small
@@ -431,26 +507,31 @@
                             }
                           </div>
                         </div>
-                        <ion-button
-                          size="small"
-                          fill="outline"
-                          color="light"
-                          [disabled]="
-                            building() ||
-                            (!isLockedCharacter(candidateCard.character.id) && lockedLimitReached())
-                          "
-                          (click)="
-                            isLockedCharacter(candidateCard.character.id)
-                              ? removeLockedCharacter(candidateCard.character.id)
-                              : lockCharacter(candidateCard.character)
-                          "
-                        >
-                          {{
-                            isLockedCharacter(candidateCard.character.id)
-                              ? ('common.actions.remove' | transloco)
-                              : t('manual.actions.lock')
-                          }}
-                        </ion-button>
+                        <div class="manual-candidate-actions">
+                          <ion-button
+                            size="small"
+                            fill="clear"
+                            color="warning"
+                            class="detail-link-button"
+                            [routerLink]="getCharacterDetailLink(candidateCard.character)"
+                          >
+                            {{ 'common.actions.viewDetails' | transloco }}
+                          </ion-button>
+                          <ion-button
+                            size="small"
+                            fill="outline"
+                            color="light"
+                            class="manual-candidate-action-button"
+                            [disabled]="
+                              building() ||
+                              (!candidateCard.isSelectedInActiveSlot &&
+                                !candidateCard.isSelectableInActiveSlot)
+                            "
+                            (click)="toggleCharacterInActiveManualSlot(candidateCard.character)"
+                          >
+                            {{ candidateCard.actionLabel }}
+                          </ion-button>
+                        </div>
                       </article>
                     }
                   </div>
@@ -546,127 +627,6 @@
                 </span>
               }
             </div>
-          }
-
-          @if (hasLockedCharacters()) {
-            <div class="selected-values-row manual-selected-row">
-              @for (character of lockedCharacters(); track character.id) {
-                <button
-                  type="button"
-                  class="selected-value-chip manual-lock-chip"
-                  [disabled]="building()"
-                  (click)="removeLockedCharacter(character.id)"
-                >
-                  <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
-                  {{ character.name }}
-                  <span aria-hidden="true">×</span>
-                </button>
-              }
-            </div>
-          }
-
-          @if (hasLockedCharacters()) {
-            <section class="manual-leaders-card">
-              <div class="slot-grid__header">
-                <h3>{{ t('manual.leaders.title') }}</h3>
-                <p>{{ leaderPickerSupportLabel() }}</p>
-              </div>
-              <div class="manual-locks-meta manual-locks-meta--leaders">
-                <strong>{{ leaderSummaryLabel() }}</strong>
-                <ion-button
-                  fill="clear"
-                  size="small"
-                  class="select-all-button"
-                  [disabled]="!hasDualLeaders() || building()"
-                  (click)="swapLeaderAssignments()"
-                >
-                  {{ t('manual.actions.swapRoles') }}
-                </ion-button>
-              </div>
-              <div class="manual-candidate-list manual-candidate-list--leaders">
-                @for (character of lockedCharacters(); track character.id) {
-                  <article class="manual-candidate-card">
-                    <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
-                    <div class="manual-candidate-copy">
-                      <strong>{{ character.name }}</strong>
-                      <span
-                        >{{ character.type }} • {{ character.primaryClass }}
-                        @if (character.secondaryClass) {
-                          • {{ character.secondaryClass }}
-                        }
-                      </span>
-                      @if (leaderRoleMap()[character.id]) {
-                        <small class="manual-candidate-role">
-                          {{ leaderRoleMap()[character.id] }}
-                        </small>
-                      }
-                    </div>
-                    <div class="manual-candidate-actions">
-                      <ion-button
-                        size="small"
-                        fill="clear"
-                        color="warning"
-                        class="detail-link-button"
-                        [routerLink]="getCharacterDetailLink(character)"
-                      >
-                        {{ 'common.actions.viewDetails' | transloco }}
-                      </ion-button>
-                      <ion-button
-                        size="small"
-                        fill="outline"
-                        color="light"
-                        class="manual-candidate-action-button"
-                        [disabled]="
-                          building() || (!isLeaderCharacter(character.id) && leaderLimitReached())
-                        "
-                        (click)="toggleLeaderCharacter(character.id)"
-                      >
-                        {{
-                          isLeaderCharacter(character.id)
-                            ? t('manual.leaders.actions.removeLeader')
-                            : t('manual.leaders.actions.setLeader')
-                        }}
-                      </ion-button>
-                    </div>
-                  </article>
-                }
-              </div>
-              @if (hasDualLeaders()) {
-                <div class="leader-role-grid">
-                  @for (leader of selectedLeaderCharacters(); track leader.id) {
-                    <article
-                      class="leader-role-card"
-                      [class.leader-role-card--active]="isCaptainLeader(leader.id)"
-                    >
-                      <img [src]="leader.imageUrl" [alt]="leader.name" loading="lazy" />
-                      <div class="leader-role-copy">
-                        <strong>{{ leader.name }}</strong>
-                        <span>{{ leaderRoleMap()[leader.id] }}</span>
-                      </div>
-                      <div class="leader-role-actions">
-                        <ion-button
-                          size="small"
-                          fill="clear"
-                          color="warning"
-                          class="detail-link-button"
-                          [routerLink]="getCharacterDetailLink(leader)"
-                        >
-                          {{ 'common.actions.viewDetails' | transloco }}
-                        </ion-button>
-                        <button
-                          type="button"
-                          class="leader-role-button"
-                          [disabled]="building() || isCaptainLeader(leader.id)"
-                          (click)="setCaptainLeader(leader.id)"
-                        >
-                          {{ t('manual.leaders.actions.makeCaptain') }}
-                        </button>
-                      </div>
-                    </article>
-                  }
-                </div>
-              }
-            </section>
           }
         </section>
 

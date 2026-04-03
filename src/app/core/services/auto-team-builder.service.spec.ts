@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   AUTO_TEAM_CANDIDATE_LIMIT,
   AUTO_TEAM_BUILDER_DEFAULT_TYPE,
+  createEmptyAutoBuildManualSlots,
+  type AutoBuildManualSlotSelection,
   type AutoBuildInput,
   type AutoBuildProgressSnapshot,
   type AutoTeamBuilderType,
@@ -992,14 +994,9 @@ describe('Auto team builder', () => {
     expect(result).not.toBeNull();
     expect(result?.slots.some((slot) => slot.character.id === 5926)).toBe(true);
     expect(result?.slots.some((slot) => slot.character.id === 5880)).toBe(true);
-    expect(
-      result?.slots.some(
-        (slot) => slot.character.id === 5926 && slot.reasonChips.includes('Manual lock'),
-      ),
-    ).toBe(true);
   });
 
-  it('returns null when more than five locked characters are provided', () => {
+  it('falls back to the first four legacy locked subs when more than four sub picks are provided', () => {
     const records = [
       ...createAllClassStrictTeamRecords(),
       createCharacterRecord({
@@ -1017,7 +1014,8 @@ describe('Auto team builder', () => {
       lockedCharacterIds: [5930, 5931, 5932, 5933, 5934, 5936],
     });
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 5936)).toBe(false);
   });
 
   it('forces captain selection from locked picks when five locked characters are provided', () => {
@@ -1181,20 +1179,35 @@ describe('Auto team builder', () => {
     expect(result?.input.friendCaptainCharacterId).toBeNull();
   });
 
-  it('returns null in favorites mode when locked ids are outside the favorites pool', async () => {
+  it('keeps non-favorite manual picks while querying the auto-fill pool from favorites only', async () => {
     const repository = {
-      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue([createCaptainRecord(), ...createStrictMixedTeamRecords()]),
     };
     const service = new AutoTeamBuilderService(repository as never);
+    const favoriteCharacterIds = [5926, 5870, 5860];
 
     const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
       favoritesOnly: true,
-      favoriteCharacterIds: [5925, 5926, 5880, 5870, 5860],
-      lockedCharacterIds: [5900],
+      favoriteCharacterIds,
+      manualSlots: createManualSlots({
+        captain: [5925],
+        sub1: [5900],
+      }),
     });
 
-    expect(result).toBeNull();
-    expect(repository.getAutoBuilderCandidates).not.toHaveBeenCalled();
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 5925)).toBe(true);
+    expect(result?.slots.some((slot) => slot.character.id === 5900)).toBe(true);
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      ['DEX', 'PSY'],
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        allowedCharacterIds: favoriteCharacterIds,
+        lockedCharacterIds: [5925, 5900],
+      },
+    );
   });
 
   it('normalizes and deduplicates locked ids before building', async () => {
@@ -1205,6 +1218,7 @@ describe('Auto team builder', () => {
 
     const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
       lockedCharacterIds: [5925, 5925, 5926, 0, -1],
+      captainCharacterId: 5925,
     });
 
     expect(result?.input.lockedCharacterIds).toEqual([5925, 5926]);
@@ -1225,6 +1239,76 @@ describe('Auto team builder', () => {
     expect(result?.input.friendCaptainCharacterId).toBe(5925);
   });
 
+  it('derives legacy leader ids from slot-based manual selections and keeps shared leaders valid', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      manualSlots: createManualSlots({
+        captain: [5925, 5926],
+        friendCaptain: [5925],
+        sub1: [5926, 5880],
+        sub2: [5880, 5870],
+      }),
+    });
+
+    expect(result?.input.manualSlots).toEqual(
+      createManualSlots({
+        captain: [5925, 5926],
+        friendCaptain: [5925],
+        sub1: [5880],
+        sub2: [5870],
+      }),
+    );
+    expect(result?.input.lockedCharacterIds).toEqual([5925, 5926, 5880, 5870]);
+    expect(result?.input.captainCharacterId).toBe(5925);
+    expect(result?.input.friendCaptainCharacterId).toBe(5925);
+  });
+
+  it('prefers slot-based manual selections over legacy locked ids when both are provided', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      manualSlots: createManualSlots({
+        captain: [5925],
+        sub1: [5880],
+      }),
+      lockedCharacterIds: [5900],
+      captainCharacterId: 5900,
+      friendCaptainCharacterId: 5900,
+    });
+
+    expect(result?.input.manualSlots).toEqual(
+      createManualSlots({
+        captain: [5925],
+        sub1: [5880],
+      }),
+    );
+    expect(result?.input.lockedCharacterIds).toEqual([5925, 5880]);
+    expect(result?.input.captainCharacterId).toBe(5925);
+    expect(result?.input.friendCaptainCharacterId).toBe(5925);
+  });
+
+  it('returns null when a slot-based manual pick is missing from the available candidate pool', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      manualSlots: createManualSlots({
+        captain: [999999],
+      }),
+    });
+
+    expect(result).toBeNull();
+  });
+
   it('returns null when a selected leader is outside the locked picks', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
@@ -1241,22 +1325,32 @@ describe('Auto team builder', () => {
     expect(repository.getAutoBuilderCandidates).not.toHaveBeenCalled();
   });
 
-  it('returns null in favorites mode when a selected leader is outside the favorites pool', async () => {
+  it('keeps a non-favorite legacy leader while querying the auto-fill pool from favorites only', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
     };
     const service = new AutoTeamBuilderService(repository as never);
+    const favoriteCharacterIds = [5926, 5880, 5870, 5860];
 
     const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
       favoritesOnly: true,
-      favoriteCharacterIds: [5926, 5880, 5870, 5860],
+      favoriteCharacterIds,
       lockedCharacterIds: [5925],
       captainCharacterId: 5925,
       friendCaptainCharacterId: 5925,
     });
 
-    expect(result).toBeNull();
-    expect(repository.getAutoBuilderCandidates).not.toHaveBeenCalled();
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(5925);
+    expect(result?.slots[1]?.character.id).toBe(5925);
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      ['DEX', 'PSY'],
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        allowedCharacterIds: favoriteCharacterIds,
+        lockedCharacterIds: [5925],
+      },
+    );
   });
 
   it('returns requestedInput and no relaxation metadata when exact coverage succeeds', async () => {
@@ -1512,6 +1606,7 @@ function createInput(
       | 'requireAllSelectedClassesPerCharacter'
       | 'requireAllSpecialsSupportTeam'
       | 'favoritesOnly'
+      | 'manualSlots'
       | 'lockedCharacterIds'
       | 'captainCharacterId'
       | 'friendCaptainCharacterId'
@@ -1526,6 +1621,10 @@ function createInput(
     friendCaptainCharacterId: null,
   },
 ): AutoBuildInput {
+  const lockedCharacterIds = overrides.lockedCharacterIds ?? [];
+  const captainCharacterId = overrides.captainCharacterId ?? null;
+  const friendCaptainCharacterId = overrides.friendCaptainCharacterId ?? null;
+
   return {
     types,
     selectedClasses,
@@ -1534,12 +1633,47 @@ function createInput(
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
     requireAllSpecialsSupportTeam: overrides.requireAllSpecialsSupportTeam ?? false,
     favoritesOnly: overrides.favoritesOnly ?? false,
-    lockedCharacterIds: overrides.lockedCharacterIds ?? [],
-    captainCharacterId: overrides.captainCharacterId ?? null,
-    friendCaptainCharacterId: overrides.friendCaptainCharacterId ?? null,
+    manualSlots:
+      overrides.manualSlots ??
+      createManualSlotsFromLegacySelection(
+        lockedCharacterIds,
+        captainCharacterId,
+        friendCaptainCharacterId,
+      ),
+    lockedCharacterIds,
+    captainCharacterId,
+    friendCaptainCharacterId,
     manualShipId: null,
     candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
   };
+}
+
+function createManualSlots(
+  overrides: Partial<Record<AutoBuildManualSlotSelection['role'], number[]>> = {},
+): AutoBuildManualSlotSelection[] {
+  return createEmptyAutoBuildManualSlots().map((slot) => ({
+    role: slot.role,
+    characterIds: [...(overrides[slot.role] ?? [])],
+  }));
+}
+
+function createManualSlotsFromLegacySelection(
+  lockedCharacterIds: number[],
+  captainCharacterId: number | null,
+  friendCaptainCharacterId: number | null,
+): AutoBuildManualSlotSelection[] {
+  const selectedLeaderIds = [captainCharacterId, friendCaptainCharacterId].filter(
+    (characterId): characterId is number => characterId !== null,
+  );
+
+  return createManualSlots({
+    captain: captainCharacterId ? [captainCharacterId] : [],
+    friendCaptain: friendCaptainCharacterId ? [friendCaptainCharacterId] : [],
+    sub1: lockedCharacterIds.filter((characterId) => !selectedLeaderIds.includes(characterId)).slice(0, 1),
+    sub2: lockedCharacterIds.filter((characterId) => !selectedLeaderIds.includes(characterId)).slice(1, 2),
+    sub3: lockedCharacterIds.filter((characterId) => !selectedLeaderIds.includes(characterId)).slice(2, 3),
+    sub4: lockedCharacterIds.filter((characterId) => !selectedLeaderIds.includes(characterId)).slice(3, 4),
+  });
 }
 
 function createCaptainRecord(): CharacterDetailRecord {
