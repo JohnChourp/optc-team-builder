@@ -95,6 +95,14 @@
                     <p>{{ teamCard.team.notes || ('common.defaults.noNotesYet' | transloco) }}</p>
                   </div>
                   <div class="saved-team-actions">
+                    <ion-button
+                      fill="outline"
+                      color="warning"
+                      [routerLink]="['/tabs/auto-team-builder']"
+                      [queryParams]="getTeamBuilderQueryParams(teamCard.team)"
+                    >
+                      {{ t('actions.openBuilder') }}
+                    </ion-button>
                     <ion-button fill="clear" color="warning" (click)="openEditModal(teamCard.team)">
                       {{ t('edit.actions.edit') }}
                     </ion-button>

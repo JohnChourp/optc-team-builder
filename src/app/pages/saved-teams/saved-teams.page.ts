@@ -125,6 +125,10 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
     await this.refreshSavedTeamCards();
   }
 
+  public getTeamBuilderQueryParams(team: Pick<SavedTeam, 'id'>): { teamId: string } {
+    return { teamId: team.id };
+  }
+
   public getCharacterDetailLink(
     character: Pick<CharacterListItem, 'id'> | null | undefined,
   ): string[] | null {

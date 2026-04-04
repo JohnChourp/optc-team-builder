@@ -107,6 +107,16 @@ export class UserStateService {
     await this.replaceSavedTeams(next);
   }
 
+  public getSavedTeamById(teamId: string): SavedTeam | null {
+    const normalizedTeamId = this.normalizeEntityId(teamId);
+
+    if (!normalizedTeamId) {
+      return null;
+    }
+
+    return this.savedTeams().find((team) => team.id === normalizedTeamId) ?? null;
+  }
+
   public getSavedEnemyById(enemyId: string): SavedEnemy | null {
     const normalizedEnemyId = this.normalizeEntityId(enemyId);
 

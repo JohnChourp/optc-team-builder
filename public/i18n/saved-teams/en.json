@@ -1,4 +1,7 @@
 {
+  "actions": {
+    "openBuilder": "Open in team builder"
+  },
   "confirm": {
     "deleteSelected": "Delete {{count}} selected teams?",
     "deleteSingle": "Delete team \"{{name}}\"?"

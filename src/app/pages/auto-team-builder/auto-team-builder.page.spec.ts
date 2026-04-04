@@ -2117,6 +2117,92 @@ describe('AutoTeamBuilderPage preset import state', () => {
   });
 });
 
+describe('AutoTeamBuilder saved team preset handoff', () => {
+  it('applies a saved team preset from the route, prefers it over enemyId, and clears the transient query param', async () => {
+    const { page, router } = await createPage({ routeTeamId: 'team-1', routeEnemyId: 'enemy-1' });
+
+    await page.ngOnInit();
+    page.result.set(createAutoBuildResult());
+    page.currentTeamId.set('saved-team-before-route');
+
+    await page.ionViewWillEnter();
+
+    expect(page.selectedTypes()).toEqual([]);
+    expect(page.selectedClasses()).toEqual([]);
+    expect(page.manualSlots()).toEqual(
+      createManualSlots({
+        captain: [101],
+        friendCaptain: [102],
+        sub1: [103],
+        sub2: [],
+        sub3: [105],
+        sub4: [106],
+      }),
+    );
+    expect(page.selectedManualShipId()).toBe(9001);
+    expect(page.loadedEnemyPresetName()).toBeNull();
+    expect(page.result()).toBeNull();
+    expect(page.currentTeamId()).toBeNull();
+    expect(router.navigate).toHaveBeenCalledWith([], {
+      relativeTo: expect.any(Object),
+      queryParams: { teamId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  });
+
+  it('falls back to the enemy preset flow when the route team id is unknown', async () => {
+    const { page, router } = await createPage({
+      routeTeamId: 'missing-team',
+      routeEnemyId: 'enemy-1',
+    });
+
+    await page.ngOnInit();
+    await page.ionViewWillEnter();
+
+    expect(page.selectedTypes()).toEqual(['DEX', 'PSY']);
+    expect(page.selectedClasses()).toEqual(['Fighter']);
+    expect(page.loadedEnemyPresetName()).toBe('Forest Boss');
+    expect(router.navigate).toHaveBeenNthCalledWith(1, [], {
+      relativeTo: expect.any(Object),
+      queryParams: { teamId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    expect(router.navigate).toHaveBeenNthCalledWith(2, [], {
+      relativeTo: expect.any(Object),
+      queryParams: { enemyId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  });
+
+  it('ignores missing saved team characters and ship ids during route handoff', async () => {
+    const { page, router } = await createPage({ routeTeamId: 'team-with-missing-data' });
+
+    await page.ngOnInit();
+    await page.ionViewWillEnter();
+
+    expect(page.manualSlots()).toEqual(
+      createManualSlots({
+        captain: [101],
+        friendCaptain: [],
+        sub1: [],
+        sub2: [104],
+        sub3: [],
+        sub4: [],
+      }),
+    );
+    expect(page.selectedManualShipId()).toBeNull();
+    expect(router.navigate).toHaveBeenCalledWith([], {
+      relativeTo: expect.any(Object),
+      queryParams: { teamId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  });
+});
+
 describe('AutoTeamBuilder enemy preset handoff', () => {
   it('applies a saved enemy preset from the route and clears the transient query param', async () => {
     const { page, router } = await createPage({ routeEnemyId: 'enemy-1' });
@@ -2446,7 +2532,9 @@ function createAutoBuildResult(
   };
 }
 
-async function createPage(options: { routeEnemyId?: string | null } = {}): Promise<{
+async function createPage(
+  options: { routeEnemyId?: string | null; routeTeamId?: string | null } = {},
+): Promise<{
   page: AutoTeamBuilderPage;
   repository: {
     getDatasetManifest: ReturnType<typeof vi.fn>;
@@ -2464,10 +2552,15 @@ async function createPage(options: { routeEnemyId?: string | null } = {}): Promi
       (): number[];
       set(value: number[]): void;
     };
+    savedTeams: {
+      (): Array<Record<string, unknown>>;
+      set(value: Array<Record<string, unknown>>): void;
+    };
     savedEnemies: {
       (): Array<Record<string, unknown>>;
       set(value: Array<Record<string, unknown>>): void;
     };
+    getSavedTeamById: ReturnType<typeof vi.fn>;
     getSavedEnemyById: ReturnType<typeof vi.fn>;
     ready: ReturnType<typeof vi.fn>;
     saveTeam: ReturnType<typeof vi.fn>;
@@ -2520,6 +2613,16 @@ async function createPage(options: { routeEnemyId?: string | null } = {}): Promi
   const autoTeamBuilder = {
     buildTeam: vi.fn().mockResolvedValue(null),
   };
+  const savedTeams = signal([
+    createSavedTeam('team-1', {
+      shipId: 9001,
+      slots: [101, 102, 103, null, 105, 106],
+    }),
+    createSavedTeam('team-with-missing-data', {
+      shipId: 9999,
+      slots: [101, 999, null, 104, null, null],
+    }),
+  ]);
   const savedEnemies = signal([
     {
       id: 'enemy-1',
@@ -2562,7 +2665,11 @@ async function createPage(options: { routeEnemyId?: string | null } = {}): Promi
   ]);
   const userState = {
     favoriteCharacterIds: signal<number[]>([]),
+    savedTeams,
     savedEnemies,
+    getSavedTeamById: vi.fn(
+      (teamId: string) => savedTeams().find((team) => team.id === teamId) ?? null,
+    ),
     getSavedEnemyById: vi.fn(
       (enemyId: string) => savedEnemies().find((enemy) => enemy.id === enemyId) ?? null,
     ),
@@ -2574,7 +2681,17 @@ async function createPage(options: { routeEnemyId?: string | null } = {}): Promi
   const route = {
     snapshot: {
       queryParamMap: {
-        get: vi.fn((key: string) => (key === 'enemyId' ? (options.routeEnemyId ?? null) : null)),
+        get: vi.fn((key: string) => {
+          if (key === 'teamId') {
+            return options.routeTeamId ?? null;
+          }
+
+          if (key === 'enemyId') {
+            return options.routeEnemyId ?? null;
+          }
+
+          return null;
+        }),
       },
     },
   };
@@ -2626,6 +2743,26 @@ function createShipRecord(id: number): {
     thumb: null,
     thumbUrl: null,
     description: 'Boosts ATK by 1.5x.',
+  };
+}
+
+function createSavedTeam(
+  id: string,
+  overrides: Partial<{
+    name: string;
+    notes: string;
+    shipId: number | null;
+    slots: Array<number | null>;
+  }> = {},
+) {
+  return {
+    id,
+    name: overrides.name ?? `Saved Team ${id}`,
+    notes: overrides.notes ?? '',
+    shipId: overrides.shipId ?? null,
+    slots: overrides.slots ?? [101, 102, 103, 104, 105, 106],
+    createdAt: '2026-03-30T10:00:00.000Z',
+    updatedAt: '2026-03-30T10:05:00.000Z',
   };
 }
 

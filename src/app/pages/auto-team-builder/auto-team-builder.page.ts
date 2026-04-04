@@ -82,6 +82,7 @@ import {
   sanitizeAutoTeamSelectionImportPayload,
 } from "./auto-team-builder-export.utils";
 import { buildAutoTeamBuilderStateFromSavedEnemy } from "./auto-team-builder-enemy-preset.utils";
+import { buildAutoTeamBuilderStateFromSavedTeam } from "./auto-team-builder-saved-team-preset.utils";
 import { AbilityRequirementPickerComponent } from "../../shared/ability-requirement-picker/ability-requirement-picker.component";
 import { EnemyMechanicPickerComponent } from "../../shared/enemy-mechanic-picker/enemy-mechanic-picker.component";
 import { ShipPickerComponent } from "../../shared/ship-picker/ship-picker.component";
@@ -1090,7 +1091,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public async ionViewWillEnter(): Promise<void> {
     await this.resetPageState();
-    await this.applyEnemyPresetFromRoute();
+    const appliedSavedTeamPreset = await this.applySavedTeamPresetFromRoute();
+
+    if (!appliedSavedTeamPreset) {
+      await this.applyEnemyPresetFromRoute();
+    }
   }
 
   public async onClassChange(
@@ -1844,6 +1849,36 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     await this.refreshCharacterPickPanels();
   }
 
+  private async applySavedTeamPresetFromRoute(): Promise<boolean> {
+    const teamId = this.route.snapshot.queryParamMap.get("teamId")?.trim() ?? "";
+
+    if (teamId.length === 0) {
+      return false;
+    }
+
+    const team = this.userState.getSavedTeamById(teamId);
+
+    if (!team) {
+      await this.clearSavedTeamPresetQueryParam();
+      return false;
+    }
+
+    const selectedCharacterIds = [
+      ...new Set(team.slots.filter((characterId): characterId is number => typeof characterId === "number")),
+    ];
+    const availableLockedCharacters =
+      selectedCharacterIds.length > 0
+        ? await this.repository.getCharactersByIds(selectedCharacterIds)
+        : [];
+
+    await this.applySelectionPresetState(
+      buildAutoTeamBuilderStateFromSavedTeam(team, availableLockedCharacters, this.ships()),
+      availableLockedCharacters,
+    );
+    await this.clearSavedTeamPresetQueryParam();
+    return true;
+  }
+
   private async applyEnemyPresetFromRoute(): Promise<void> {
     const enemyId = this.route.snapshot.queryParamMap.get("enemyId")?.trim() ?? "";
 
@@ -1861,6 +1896,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     await this.applySelectionPresetState(buildAutoTeamBuilderStateFromSavedEnemy(enemy));
     this.loadedEnemyPresetName.set(enemy.name);
     await this.clearEnemyPresetQueryParam();
+  }
+
+  private async clearSavedTeamPresetQueryParam(): Promise<void> {
+    await this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { teamId: null },
+      queryParamsHandling: "merge",
+      replaceUrl: true,
+    });
   }
 
   private async clearEnemyPresetQueryParam(): Promise<void> {

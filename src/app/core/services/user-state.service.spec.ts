@@ -96,6 +96,19 @@ describe('UserStateService saved teams', () => {
     });
   });
 
+  it('returns a saved team by normalized id', async () => {
+    const { service } = await createService([
+      createTeam('team-1', 'Slashers'),
+      createTeam('team-2', 'Driven'),
+    ]);
+
+    expect(service.getSavedTeamById(' team-2 ')).toMatchObject({
+      id: 'team-2',
+      name: 'Driven',
+    });
+    expect(service.getSavedTeamById('missing-team')).toBeNull();
+  });
+
   it('saves a normalized enemy preset and persists it in front of older enemies', async () => {
     const { service, setCalls } = await createService([], [createEnemy('enemy-1', 'Old enemy')]);
 

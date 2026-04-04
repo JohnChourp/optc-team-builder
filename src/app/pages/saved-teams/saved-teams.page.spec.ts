@@ -166,6 +166,14 @@ describe('SavedTeamsPage', () => {
     expect(page.getCharacterDetailLink(null)).toBeNull();
   });
 
+  it('builds the correct auto team builder query params for a saved team', () => {
+    const { page } = createPage();
+
+    expect(page.getTeamBuilderQueryParams(page.savedTeams()[0]!)).toEqual({
+      teamId: 'team-1',
+    });
+  });
+
   it('renders saved team tools, import controls and slot previews in the template', () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/saved-teams/saved-teams.page.html'),
@@ -174,6 +182,7 @@ describe('SavedTeamsPage', () => {
 
     expect(template).toContain("t('title')");
     expect(template).toContain("t('hero.savedEnemiesCta')");
+    expect(template).toContain("t('actions.openBuilder')");
     expect(template).toContain("'common.actions.reset' | transloco");
     expect(template).toContain("t('tools.export')");
     expect(template).toContain("t('tools.import')");
@@ -191,6 +200,8 @@ describe('SavedTeamsPage', () => {
     expect(template).toContain("t('ship.label')");
     expect(template).toContain("t('ship.thumbnailAlt'");
     expect(template).toContain('[icon]="shipIcon"');
+    expect(template).toContain("[routerLink]=\"['/tabs/auto-team-builder']\"");
+    expect(template).toContain('[queryParams]="getTeamBuilderQueryParams(teamCard.team)"');
     expect(template).toContain('[routerLink]="[\'/tabs/saved-enemies\']"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(currentSlot)"');
   });

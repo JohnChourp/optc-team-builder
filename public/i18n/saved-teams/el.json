@@ -1,4 +1,7 @@
 {
+  "actions": {
+    "openBuilder": "Open in team builder"
+  },
   "confirm": {
     "deleteSelected": "Να διαγραφούν {{count}} επιλεγμένες ομάδες;",
     "deleteSingle": "Να διαγραφεί η ομάδα \"{{name}}\";"
