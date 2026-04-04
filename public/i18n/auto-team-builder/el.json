@@ -243,12 +243,12 @@
       "loading": "Γίνεται φόρτωση excluded candidates..."
     },
     "candidatePool": {
-      "default": "Τα exclude picks ακολουθούν τα current page filters.",
-      "filtered": "Τα exclude picks περιορίζονται από τα current filters και τα ability requirements."
+      "default": "Τα exclude picks μένουν διαθέσιμα από όλο το catalog. Το search ισχύει μόνο μέσα σε αυτό το panel.",
+      "filtered": "Τα current build filters δεν κρύβουν exclude picks. Μένουν ορατά και τα requirement chips ενημερώνονται μόνο για context."
     },
     "empty": {
       "loadingCharacters": "Γίνεται φόρτωση excluded candidates...",
-      "noCharacters": "Δεν βρέθηκαν χαρακτήρες που να ταιριάζουν στα current page filters για exclude picks.",
+      "noCharacters": "Δεν βρέθηκαν χαρακτήρες στο current exclude search.",
       "noShips": "Δεν βρέθηκαν ships που να ταιριάζουν στο current ship search."
     },
     "actions": {
@@ -265,8 +265,8 @@
       "withCount": "{{count}} ships είναι excluded αυτή τη στιγμή."
     },
     "selectionSupport": {
-      "lockedTo": "Υπάρχει ήδη locked στα {{slots}}.",
-      "manualShip": "Αυτό το ship είναι ήδη επιλεγμένο ως manual ship override."
+      "removesLockedFrom": "Αν κάνεις exclude αυτόν τον character, θα αφαιρεθεί από τα {{slots}}.",
+      "clearsManualShip": "Αν κάνεις exclude αυτό το ship, θα καθαρίσει το current manual ship override."
     }
   },
   "ships": {

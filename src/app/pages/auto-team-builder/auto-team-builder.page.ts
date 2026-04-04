@@ -61,7 +61,6 @@ import {
 import { AppI18nService } from "../../core/services/app-i18n.service";
 import {
   matchesAnyAbilityRequirement,
-  builderAbilitiesMatchAllRequirements,
 } from "../../core/services/auto-team-builder-ability-match.utils";
 import { isAutoTeamBuildCancelledError } from "../../core/services/auto-team-builder.engine";
 import { resolveAutoBuildShipSelection } from "../../core/services/auto-team-builder-ship.utils";
@@ -1198,11 +1197,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return;
     }
 
-    if (!this.canExcludeCharacter(character.id)) {
-      return;
-    }
-
     this.cacheCharacterRecord(character);
+    this.removeCharacterFromAllManualSlots(character.id);
     this.excludedCharacterIds.update((currentIds) => [...currentIds, character.id]);
     this.resetBuildState();
   }
@@ -1226,8 +1222,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return;
     }
 
-    if (!this.canExcludeShip(shipId)) {
-      return;
+    if (this.selectedManualShipId() === shipId) {
+      this.selectedManualShipId.set(null);
     }
 
     this.excludedShipIds.update((currentIds) => [...currentIds, shipId]);
@@ -1465,13 +1461,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   public canExcludeCharacter(characterId: number): boolean {
-    return this.isExcludedCharacter(characterId)
-      ? true
-      : !this.manualSlots().some((slot) => slot.characterIds.includes(characterId));
+    void characterId;
+    return true;
   }
 
   public canExcludeShip(shipId: number): boolean {
-    return this.isExcludedShip(shipId) ? true : this.selectedManualShipId() !== shipId;
+    void shipId;
+    return true;
   }
 
   public async selectAllTypes(): Promise<void> {
@@ -2051,29 +2047,23 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   private async refreshAppliedExcludedCandidates(): Promise<void> {
     const requestId = ++this.appliedExcludedCandidateSearchRequestId;
-    const filters = this.manualCandidateFilters();
     this.excludedCandidatesLoading.set(true);
 
     try {
       const candidates = await this.repository.searchDetailedCharacters({
         searchTerm: this.excludeCharacterSearchTerm().trim(),
-        selectedTypes: filters.selectedTypes,
-        selectedTypesMatchMode: "any",
-        selectedClasses: filters.selectedClasses,
-        selectedClassesMatchMode: "any",
+        selectedTypes: [],
+        selectedClasses: [],
         limit: this.manualSearchLimit,
         offset: 0,
       });
-      const filteredCandidates = candidates.filter((candidate) =>
-        this.matchesManualCharacterFilters(candidate, filters),
-      );
 
       if (requestId !== this.appliedExcludedCandidateSearchRequestId) {
         return;
       }
 
-      this.excludedCandidates.set(filteredCandidates);
-      for (const candidate of filteredCandidates) this.cacheCharacterRecord(candidate);
+      this.excludedCandidates.set(candidates);
+      for (const candidate of candidates) this.cacheCharacterRecord(candidate);
     } finally {
       if (requestId !== this.appliedExcludedCandidateSearchRequestId) {
         return;
@@ -2088,23 +2078,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.refreshAppliedManualCandidates(),
       this.refreshAppliedExcludedCandidates(),
     ]);
-  }
-
-  private matchesManualCharacterFilters(
-    candidate: CharacterDetailRecord,
-    filters: AppliedManualCharacterFilters,
-  ): boolean {
-    if (
-      filters.requiredAbilities.length > 0 &&
-      !builderAbilitiesMatchAllRequirements(
-        candidate.detail.builderAbilities,
-        filters.requiredAbilities,
-      )
-    ) {
-      return false;
-    }
-
-    return true;
   }
 
   private updateResultShipSelection(): void {
@@ -2153,6 +2126,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         [character.id]: character,
       };
     });
+  }
+
+  private removeCharacterFromAllManualSlots(characterId: number): void {
+    this.manualSlots.update((currentSlots) =>
+      currentSlots.map((slot) => ({
+        ...slot,
+        characterIds: slot.characterIds.filter(
+          (selectedCharacterId) => selectedCharacterId !== characterId,
+        ),
+      })),
+    );
   }
 
   private resolveManualSlotSelection(role: AutoBuildManualSlotRole): AutoBuildManualSlotSelection {
@@ -2263,7 +2247,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       .map((slot) => this.getManualSlotTitle(slot.role));
 
     if (assignedRoles.length > 0) {
-      return this.t("exclude.selectionSupport.lockedTo", {
+      return this.t("exclude.selectionSupport.removesLockedFrom", {
         slots: assignedRoles.join(" / "),
       });
     }
@@ -2281,7 +2265,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   private resolveExcludedShipSupportLabel(shipId: number): string | null {
     if (this.selectedManualShipId() === shipId) {
-      return this.t("exclude.selectionSupport.manualShip");
+      return this.t("exclude.selectionSupport.clearsManualShip");
     }
 
     return null;

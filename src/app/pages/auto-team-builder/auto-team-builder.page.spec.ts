@@ -392,15 +392,39 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     );
   });
 
-  it('blocks excluding the current manual ship override', async () => {
+  it('excluding a manual-locked character clears it from manual slots and keeps the exclude', async () => {
+    const { page } = await createPage();
+    const lockedCandidate = createCharacterRecord(414, 'Locked Candidate');
+
+    await page.ngOnInit();
+    page.manualSlots.set(
+      createManualSlots({
+        captain: [414],
+        sub1: [414],
+      }),
+    );
+    page.excludedCandidates.set([lockedCandidate]);
+
+    expect(page.excludedCharacterCards()[0]?.selectionSupportLabel).toBe(
+      'Excluding this character will remove it from Captain / Sub 1.',
+    );
+
+    page.toggleExcludedCharacter(lockedCandidate);
+
+    expect(page.excludedCharacterIds()).toEqual([414]);
+    expect(page.manualSlots()).toEqual(createManualSlots());
+  });
+
+  it('excluding the current manual ship override clears the manual ship and keeps the exclude', async () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
     page.selectManualShip(9001);
     page.toggleExcludedShip(9001);
 
-    expect(page.excludedShipIds()).toEqual([]);
-    expect(page.canExcludeShip(9001)).toBe(false);
+    expect(page.selectedManualShipId()).toBeNull();
+    expect(page.excludedShipIds()).toEqual([9001]);
+    expect(page.canExcludeShip(9001)).toBe(true);
   });
 
   it('describes favorites mode as favorite auto-fill for open slots in result copy', async () => {
@@ -803,14 +827,15 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     });
     expect(repository.searchDetailedCharacters).toHaveBeenNthCalledWith(2, {
       searchTerm: '',
-      selectedTypes: ['DEX', 'PSY'],
-      selectedTypesMatchMode: 'any',
+      selectedTypes: [],
       selectedClasses: [],
-      selectedClassesMatchMode: 'any',
       limit: 24,
       offset: 0,
     });
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
+      [201, 202, 203],
+    );
+    expect(page.excludedCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
       [201, 202, 203],
     );
 
@@ -828,14 +853,15 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     });
     expect(repository.searchDetailedCharacters).toHaveBeenNthCalledWith(2, {
       searchTerm: '',
-      selectedTypes: ['DEX', 'PSY'],
-      selectedTypesMatchMode: 'any',
-      selectedClasses: ['Fighter', 'Slasher'],
-      selectedClassesMatchMode: 'any',
+      selectedTypes: [],
+      selectedClasses: [],
       limit: 24,
       offset: 0,
     });
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
+      [201, 202, 203],
+    );
+    expect(page.excludedCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
       [201, 202, 203],
     );
   });
@@ -890,7 +916,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
       [301, 302],
     );
     expect(page.excludedCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
-      [301],
+      [301, 302],
     );
   });
 
@@ -925,9 +951,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
       selectedTypes: [],
-      selectedTypesMatchMode: 'any',
       selectedClasses: [],
-      selectedClassesMatchMode: 'any',
       limit: 24,
       offset: 0,
     });

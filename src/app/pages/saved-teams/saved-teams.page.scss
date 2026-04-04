@@ -240,12 +240,10 @@
   gap: 8px;
 }
 
-:host ion-modal.saved-teams-edit-modal::part(backdrop),
 :host ion-modal.saved-teams-import-modal::part(backdrop) {
   background: rgba(7, 11, 23, 0.68);
 }
 
-:host ion-modal.saved-teams-edit-modal::part(content),
 :host ion-modal.saved-teams-import-modal::part(content) {
   width: min(720px, calc(100vw - 24px));
   max-height: var(--app-modal-max-height);

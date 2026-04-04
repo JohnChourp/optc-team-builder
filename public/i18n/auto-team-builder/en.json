@@ -243,12 +243,12 @@
       "loading": "Loading excluded candidates..."
     },
     "candidatePool": {
-      "default": "Exclude picks follow the current page filters.",
-      "filtered": "Exclude picks are narrowed by the current filters and ability requirements."
+      "default": "Exclude picks stay available from the full catalogs. Search stays local to this panel.",
+      "filtered": "Current build filters do not hide exclude picks. They remain visible while the requirement chips update for context."
     },
     "empty": {
       "loadingCharacters": "Loading excluded candidates...",
-      "noCharacters": "No characters matched the current page filters for exclude picks.",
+      "noCharacters": "No characters matched the current exclude search.",
       "noShips": "No ships matched the current ship search."
     },
     "actions": {
@@ -265,8 +265,8 @@
       "withCount": "{{count}} ships are currently excluded."
     },
     "selectionSupport": {
-      "lockedTo": "Already locked into {{slots}}.",
-      "manualShip": "This ship is currently selected as the manual ship override."
+      "removesLockedFrom": "Excluding this character will remove it from {{slots}}.",
+      "clearsManualShip": "Excluding this ship will clear the current manual ship override."
     }
   },
   "ships": {
