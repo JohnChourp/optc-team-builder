@@ -169,6 +169,7 @@ function createShip(id: number, name: string, description: string): ShipRecord {
     id,
     name,
     thumb: null,
+    thumbUrl: null,
     description,
   };
 }

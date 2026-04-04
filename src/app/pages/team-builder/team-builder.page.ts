@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
@@ -12,13 +12,11 @@ import {
   IonLabel,
   IonList,
   IonSearchbar,
-  IonSelect,
-  IonSelectOption,
   IonTextarea,
   IonTitle,
   IonToolbar,
 } from '@ionic/angular/standalone';
-import { heart, heartOutline } from 'ionicons/icons';
+import { boatOutline, heart, heartOutline } from 'ionicons/icons';
 
 import {
   type CharacterListItem,
@@ -28,6 +26,7 @@ import {
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { UserStateService } from '../../core/services/user-state.service';
+import { ShipPickerComponent } from '../../shared/ship-picker/ship-picker.component';
 
 @Component({
   selector: 'app-team-builder-page',
@@ -43,12 +42,11 @@ import { UserStateService } from '../../core/services/user-state.service';
     IonLabel,
     IonList,
     IonSearchbar,
-    IonSelect,
-    IonSelectOption,
     IonTextarea,
     IonTitle,
     IonToolbar,
     RouterLink,
+    ShipPickerComponent,
     TranslocoDirective,
     TranslocoPipe,
   ],
@@ -64,14 +62,31 @@ export class TeamBuilderPage implements OnInit {
   );
   public readonly selectedSlotIndex = signal(0);
   public readonly selectedShipId = signal<number | null>(null);
+  public readonly shipPickerOpen = signal(false);
   public readonly teamName = signal('');
   public readonly notes = signal('');
   public readonly savedTeams;
   public readonly favoriteIds;
   public readonly teamTotals = signal({ hp: 0, atk: 0, rcv: 0, cost: 0 });
   public readonly currentTeamId = signal<string | null>(null);
+  public readonly selectedShip = computed(
+    () => this.ships().find((ship) => ship.id === this.selectedShipId()) ?? null,
+  );
+  public readonly selectedShipTitle = computed(
+    () => this.selectedShip()?.name ?? this.i18n.translate('form.noShip', undefined, 'team-builder'),
+  );
+  public readonly selectedShipSubtitle = computed(() => {
+    const selectedShip = this.selectedShip();
+
+    if (!selectedShip) {
+      return this.i18n.translate('form.noShipCopy', undefined, 'team-builder');
+    }
+
+    return this.buildShipSubtitle(selectedShip.description);
+  });
   public readonly favoriteIcon = heart;
   public readonly favoriteOutlineIcon = heartOutline;
+  public readonly shipIcon = boatOutline;
 
   public constructor(
     private readonly repository: OptcRepositoryService,
@@ -100,6 +115,19 @@ export class TeamBuilderPage implements OnInit {
 
   public onNotesChange(event: CustomEvent<{ value?: string | null }>): void {
     this.notes.set((event.detail.value ?? '').toString());
+  }
+
+  public openShipPicker(): void {
+    this.shipPickerOpen.set(true);
+  }
+
+  public closeShipPicker(): void {
+    this.shipPickerOpen.set(false);
+  }
+
+  public saveShipSelection(shipId: number | null): void {
+    this.selectedShipId.set(shipId);
+    this.closeShipPicker();
   }
 
   public selectSlot(index: number): void {
@@ -208,11 +236,20 @@ export class TeamBuilderPage implements OnInit {
     );
   }
 
+  private buildShipSubtitle(description: string): string {
+    const normalizedDescription = description.trim();
+
+    return normalizedDescription.length > 132
+      ? `${normalizedDescription.slice(0, 129).trimEnd()}...`
+      : normalizedDescription;
+  }
+
   private resetEditor(): void {
     this.currentTeamId.set(null);
     this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
     this.notes.set('');
     this.selectedShipId.set(null);
+    this.shipPickerOpen.set(false);
     this.selectedSlotIndex.set(0);
     this.slotCharacters.set(Array.from({ length: 6 }, () => null));
     this.teamTotals.set({ hp: 0, atk: 0, rcv: 0, cost: 0 });

@@ -332,7 +332,7 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
     this.savedTeamCards.set(
       teams.map((team) => {
         const ship = typeof team.shipId === 'number' ? (shipMap.get(team.shipId) ?? null) : null;
-        const shipThumbUrl = this.resolveShipThumbUrl(ship);
+        const shipThumbUrl = ship?.thumbUrl ?? null;
 
         return {
           team,
@@ -349,26 +349,6 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
     );
     this.pruneSelection();
     this.loading.set(false);
-  }
-
-  private resolveShipThumbUrl(ship: ShipRecord | null): string | null {
-    const thumb = ship?.thumb?.trim();
-
-    if (!thumb) {
-      return null;
-    }
-
-    if (
-      thumb.startsWith('assets/') ||
-      thumb.startsWith('/assets/') ||
-      thumb.startsWith('http://') ||
-      thumb.startsWith('https://') ||
-      thumb.startsWith('data:')
-    ) {
-      return thumb;
-    }
-
-    return null;
   }
 
   private setTeamSelection(teamId: string, selected: boolean): void {

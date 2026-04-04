@@ -62,8 +62,8 @@ describe('SavedTeamsPage', () => {
         name: 'Going Merry',
       },
       shipDisplayName: 'Going Merry',
-      shipThumbUrl: null,
-      hasShipThumbnail: false,
+      shipThumbUrl: 'assets/offline-packs/ship-thumbnails/ship_0001_t2.png',
+      hasShipThumbnail: true,
     });
   });
 
@@ -279,7 +279,14 @@ function createPage(overrides: { savedTeams?: ReturnType<typeof buildSavedTeams>
         createCharacter(404, 'Nami'),
         createCharacter(505, 'Robin'),
       ]),
-    getShips: vi.fn().mockResolvedValue([createShip(9001, 'Going Merry', 'ship_0001_t2.png')]),
+    getShips: vi.fn().mockResolvedValue([
+      createShip(
+        9001,
+        'Going Merry',
+        'ship_0001_t2.png',
+        'assets/offline-packs/ship-thumbnails/ship_0001_t2.png',
+      ),
+    ]),
   };
   const i18n = {
     translate: vi.fn((key: string, params?: Record<string, string | number>) => {
@@ -346,11 +353,17 @@ function createCharacter(id: number, name: string) {
   };
 }
 
-function createShip(id: number, name: string, thumb: string | null) {
+function createShip(
+  id: number,
+  name: string,
+  thumb: string | null,
+  thumbUrl: string | null,
+) {
   return {
     id,
     name,
     thumb,
+    thumbUrl,
     description: `${name} effect`,
   };
 }

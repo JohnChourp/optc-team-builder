@@ -26,6 +26,8 @@ const DATASET_MANIFEST_PATH = 'assets/data/optc-manifest.json';
 const AUTO_TEAM_BUILDER_ABILITY_CATALOG_PATH = 'assets/data/optc-auto-builder-abilities.json';
 const FALLBACK_CHARACTER_IMAGE = 'assets/placeholders/character-card.svg';
 const INVALID_CLASS_PATTERN = /^Class\d+$/i;
+const SHIP_THUMBNAIL_PACK_ID = 'ship-thumbnails';
+const SHIP_THUMBNAIL_PACK_KEY = 'shipThumbnails';
 
 @Injectable({ providedIn: 'root' })
 export class OptcRepositoryService {
@@ -369,6 +371,9 @@ export class OptcRepositoryService {
   }
 
   public async getShips(): Promise<ShipRecord[]> {
+    const manifest = await this.getDatasetManifest();
+    const installedPacks = new Map(manifest.packs.map((pack) => [pack.key, pack]));
+
     const rows = await this.selectAll(
       `
         SELECT id, name, thumb, description
@@ -381,6 +386,10 @@ export class OptcRepositoryService {
       id: Number(row['id']),
       name: String(row['name']),
       thumb: row['thumb'] ? String(row['thumb']) : null,
+      thumbUrl: this.resolveShipThumbUrl(
+        row['thumb'] ? String(row['thumb']) : null,
+        installedPacks,
+      ),
       description: String(row['description']),
     }));
   }
@@ -520,6 +529,34 @@ export class OptcRepositoryService {
 
   private toLocalAssetPath(packId: string, relativePath: string): string {
     return `assets/offline-packs/${packId}/${relativePath}`;
+  }
+
+  private resolveShipThumbUrl(
+    thumb: string | null,
+    installedPacks?: Map<string, OfflinePackSummary>,
+  ): string | null {
+    const trimmedThumb = thumb?.trim() ?? '';
+
+    if (!trimmedThumb.length) {
+      return null;
+    }
+
+    if (
+      trimmedThumb.startsWith('assets/') ||
+      trimmedThumb.startsWith('/assets/') ||
+      trimmedThumb.startsWith('http://') ||
+      trimmedThumb.startsWith('https://') ||
+      trimmedThumb.startsWith('data:')
+    ) {
+      return trimmedThumb;
+    }
+
+    const shipThumbnailsInstalled =
+      (installedPacks ?? new Map()).get(SHIP_THUMBNAIL_PACK_KEY)?.installed ?? false;
+
+    return shipThumbnailsInstalled
+      ? this.toLocalAssetPath(SHIP_THUMBNAIL_PACK_ID, trimmedThumb)
+      : null;
   }
 
   private emptyDetail(characterId: number): CharacterDetail {

@@ -1,0 +1,15 @@
+{
+  "catalog": {
+    "count": "{{count}} visible choices from {{total}} ships",
+    "emptyCopy": "No ships matched the current search.",
+    "emptyTitle": "No matching ships",
+    "searchPlaceholder": "Search ship by name or effect",
+    "title": "Ship catalog"
+  },
+  "eyebrow": "Ship picker",
+  "selected": {
+    "emptyState": "Confirm to keep the empty ship selection.",
+    "shipReady": "This ship will be applied when you confirm.",
+    "title": "Selected ship"
+  }
+}

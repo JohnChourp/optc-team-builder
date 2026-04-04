@@ -259,6 +259,24 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     );
   });
 
+  it('opens the shared ship picker and saves or clears the manual ship override', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+
+    page.openManualShipPicker();
+    expect(page.manualShipPickerOpen()).toBe(true);
+
+    page.saveManualShipSelection(9001);
+    expect(page.selectedManualShipId()).toBe(9001);
+    expect(page.manualShipPickerOpen()).toBe(false);
+
+    page.openManualShipPicker();
+    page.saveManualShipSelection(null);
+    expect(page.selectedManualShipId()).toBeNull();
+    expect(page.manualShipPickerOpen()).toBe(false);
+  });
+
   it('passes slot-based OR picks to the builder service', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
@@ -545,7 +563,10 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(template).toContain('(click)="saveTeam()"');
     expect(template).toContain('<app-enemy-mechanic-picker');
     expect(template).toContain('<app-ability-requirement-picker');
+    expect(template).toContain('<app-ship-picker');
+    expect(template).toContain("t('ships.pickerTitle')");
     expect(template).not.toContain("abilityRequirements.placeholders.selectAbility");
+    expect(template).not.toContain('shipSearchTerm()');
   });
 
   it('resets the full page state through resetPage', async () => {
@@ -583,10 +604,10 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     page.activeManualSlotRole.set('sub2');
     page.selectedManualShipId.set(9001);
     page.excludedShipIds.set([9002]);
+    page.manualShipPickerOpen.set(true);
     page.favoritesOnly.set(true);
     page.manualSearchTerm.set('Luffy');
     page.excludeCharacterSearchTerm.set('Kaido');
-    page.shipSearchTerm.set('Going Merry');
     page.excludeShipSearchTerm.set('Sunny');
     page.shipPickerMode.set('ships');
     page.excludePickerMode.set('ships');
@@ -616,10 +637,10 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(page.activeManualSlotRole()).toBe('captain');
     expect(page.selectedManualShipId()).toBeNull();
     expect(page.excludedShipIds()).toEqual([]);
+    expect(page.manualShipPickerOpen()).toBe(false);
     expect(page.favoritesOnly()).toBe(false);
     expect(page.manualSearchTerm()).toBe('');
     expect(page.excludeCharacterSearchTerm()).toBe('');
-    expect(page.shipSearchTerm()).toBe('');
     expect(page.excludeShipSearchTerm()).toBe('');
     expect(page.shipPickerMode()).toBe('characters');
     expect(page.excludePickerMode()).toBe('characters');
@@ -2596,12 +2617,14 @@ function createShipRecord(id: number): {
   id: number;
   name: string;
   thumb: null;
+  thumbUrl: null;
   description: string;
 } {
   return {
     id,
     name: `Ship ${id}`,
     thumb: null,
+    thumbUrl: null,
     description: 'Boosts ATK by 1.5x.',
   };
 }

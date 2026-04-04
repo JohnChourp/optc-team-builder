@@ -271,11 +271,18 @@
   },
   "ships": {
     "autoRecommendation": "Άφησε τον builder να προτείνει το καλύτερο ship για την επιλεγμένη ομάδα.",
-    "count": "{{count}} ships ταιριάζουν στο current ship search.",
-    "emptySearch": "Δεν βρέθηκαν ships που να ταιριάζουν στο current search.",
+    "changeAction": "Αλλαγή ship",
+    "clearSelection": "Χρήση auto recommendation",
+    "confirm": "Χρήση επιλογής ship",
+    "count": "{{count}} ships διαθέσιμα για manual επιλογή.",
+    "emptySelectionLabel": "Auto ship recommendation",
+    "emptySearch": "Δεν υπάρχουν διαθέσιμα ships για manual επιλογή.",
     "excluded": "Τα excluded ships δεν μπορούν να διαλεγούν ως manual ship.",
     "manualBadge": "Manual ship",
     "manualOverride": "Ενεργό manual ship override: {{name}}",
+    "openAction": "Επιλογή ship",
+    "pickerCopy": "Διάλεξε manual ship override με εικόνα και effect ή άφησέ το κενό ώστε ο builder να προτείνει ship.",
+    "pickerTitle": "Manual ship επιλογή",
     "searchPlaceholder": "Search ship by name or effect"
   },
   "progress": {

@@ -7,12 +7,19 @@
     "title": "Assign character to slot {{slot}}"
   },
   "form": {
+    "changeShip": "Choose ship",
     "eyebrow": "Crew Draft",
     "noShip": "No ship",
+    "noShipCopy": "Leave this draft without a ship if you want to save only the crew layout.",
     "notesLabel": "Notes",
     "saveOffline": "Save team offline",
     "shipLabel": "Ship",
     "teamNameLabel": "Crew name"
+  },
+  "shipPicker": {
+    "confirm": "Use ship",
+    "copy": "Pick a ship with its image and effect before saving this manual crew.",
+    "title": "Choose ship"
   },
   "saved": {
     "subtitle": "All locally persisted on-device.",

@@ -8,16 +8,17 @@ import { TeamBuilderPage } from './team-builder.page';
 
 vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
+  IonButtons: class {},
   IonContent: class {},
+  IonFooter: class {},
   IonHeader: class {},
   IonIcon: class {},
   IonInput: class {},
   IonItem: class {},
   IonLabel: class {},
   IonList: class {},
+  IonModal: class {},
   IonSearchbar: class {},
-  IonSelect: class {},
-  IonSelectOption: class {},
   IonTextarea: class {},
   IonTitle: class {},
   IonToolbar: class {},
@@ -61,6 +62,18 @@ describe('TeamBuilderPage', () => {
     expect(page.getCharacterDetailLink(null)).toBeNull();
   });
 
+  it('updates the selected ship through the shared picker save flow', () => {
+    const { page } = createPage();
+
+    page.openShipPicker();
+    expect(page.shipPickerOpen()).toBe(true);
+
+    page.saveShipSelection(9001);
+
+    expect(page.selectedShipId()).toBe(9001);
+    expect(page.shipPickerOpen()).toBe(false);
+  });
+
   it('keeps slot selection independent from detail navigation availability', () => {
     const { page } = createPage();
 
@@ -81,6 +94,8 @@ describe('TeamBuilderPage', () => {
     expect(template).toContain('[routerLink]="getCharacterDetailLink(slot)"');
     expect(template.match(/common\.actions\.viewDetails/g)).toHaveLength(1);
     expect(template).toContain('(click)="assignCharacter(candidate)"');
+    expect(template).toContain('<app-ship-picker');
+    expect(template).not.toContain('<ion-select');
   });
 
   it('resets the builder draft, slot selection and candidate search state', async () => {

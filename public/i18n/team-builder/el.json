@@ -7,12 +7,19 @@
     "title": "Ανάθεση χαρακτήρα στο slot {{slot}}"
   },
   "form": {
+    "changeShip": "Επιλογή ship",
     "eyebrow": "Draft πληρώματος",
     "noShip": "Χωρίς ship",
+    "noShipCopy": "Άφησε αυτό το draft χωρίς ship αν θέλεις να αποθηκεύσεις μόνο τη σύνθεση της ομάδας.",
     "notesLabel": "Σημειώσεις",
     "saveOffline": "Αποθήκευση ομάδας offline",
     "shipLabel": "Ship",
     "teamNameLabel": "Όνομα πληρώματος"
+  },
+  "shipPicker": {
+    "confirm": "Χρήση ship",
+    "copy": "Διάλεξε ship με εικόνα και effect πριν αποθηκεύσεις αυτή τη manual ομάδα.",
+    "title": "Επιλογή ship"
   },
   "saved": {
     "subtitle": "Όλα αποθηκεύονται τοπικά στη συσκευή.",

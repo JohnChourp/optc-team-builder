@@ -86,20 +86,87 @@ describe('OptcRepositoryService', () => {
 
     expect(result.map((record) => record.id)).toEqual([4101]);
   });
+
+  it('resolves ship thumbnail urls when the ship offline pack is installed', async () => {
+    const service = createRepositoryService([], {
+      manifest: createManifest({
+        packs: [
+          createPack({
+            key: 'shipThumbnails',
+            id: 'ship-thumbnails',
+            installed: true,
+          }),
+        ],
+      }),
+      shipRows: [
+        createShipRow({
+          id: 9001,
+          name: 'Going Merry',
+          thumb: 'ship_0001_t2.png',
+        }),
+      ],
+    });
+
+    const result = await service.getShips();
+
+    expect(result).toEqual([
+      {
+        id: 9001,
+        name: 'Going Merry',
+        thumb: 'ship_0001_t2.png',
+        thumbUrl: 'assets/offline-packs/ship-thumbnails/ship_0001_t2.png',
+        description: 'Boosts ATK by 1.5x.',
+      },
+    ]);
+  });
+
+  it('keeps ship thumbnail urls null when the ship offline pack is missing', async () => {
+    const service = createRepositoryService([], {
+      shipRows: [
+        createShipRow({
+          id: 9001,
+          name: 'Going Merry',
+          thumb: 'ship_0001_t2.png',
+        }),
+      ],
+    });
+
+    const result = await service.getShips();
+
+    expect(result).toEqual([
+      {
+        id: 9001,
+        name: 'Going Merry',
+        thumb: 'ship_0001_t2.png',
+        thumbUrl: null,
+        description: 'Boosts ATK by 1.5x.',
+      },
+    ]);
+  });
 });
 
-function createRepositoryService(rows: TestSqlRow[]): OptcRepositoryService {
+function createRepositoryService(
+  rows: TestSqlRow[],
+  options: {
+    manifest?: DatasetManifest;
+    shipRows?: TestSqlRow[];
+  } = {},
+): OptcRepositoryService {
   const service = Object.create(OptcRepositoryService.prototype) as OptcRepositoryService;
 
   Object.assign(service, {
-    getDatasetManifest: vi.fn().mockResolvedValue(createManifest()),
-    selectAll: vi.fn().mockResolvedValue(rows),
+    getDatasetManifest: vi.fn().mockResolvedValue(options.manifest ?? createManifest()),
+    selectAll: vi.fn().mockImplementation((query: string) =>
+      Promise.resolve(query.includes('FROM ships') ? (options.shipRows ?? []) : rows),
+    ),
   });
 
   return service;
 }
 
-function createManifest(): DatasetManifest {
+function createManifest(
+  overrides: Partial<DatasetManifest> = {},
+): DatasetManifest {
   return {
     generatedAt: '2026-03-25T00:00:00.000Z',
     sourceVersion: 'test',
@@ -110,6 +177,37 @@ function createManifest(): DatasetManifest {
     availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
     availableClasses: ['Fighter', 'Slasher'],
     packs: [],
+    ...overrides,
+  };
+}
+
+function createPack(
+  overrides: Partial<DatasetManifest['packs'][number]> = {},
+): DatasetManifest['packs'][number] {
+  return {
+    key: overrides.key ?? 'shipThumbnails',
+    id: overrides.id ?? 'ship-thumbnails',
+    label: overrides.label ?? 'Ship thumbnails',
+    localBasePath: overrides.localBasePath ?? 'assets/offline-packs/ship-thumbnails',
+    fileCount: overrides.fileCount ?? 1,
+    totalBytes: overrides.totalBytes ?? 1234,
+    installed: overrides.installed ?? false,
+  };
+}
+
+function createShipRow(
+  overrides: Partial<{
+    id: number;
+    name: string;
+    thumb: string | null;
+    description: string;
+  }> = {},
+): TestSqlRow {
+  return {
+    id: overrides.id ?? 9001,
+    name: overrides.name ?? 'Ship 9001',
+    thumb: overrides.thumb ?? null,
+    description: overrides.description ?? 'Boosts ATK by 1.5x.',
   };
 }
 

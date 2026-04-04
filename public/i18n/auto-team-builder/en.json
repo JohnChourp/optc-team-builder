@@ -271,11 +271,18 @@
   },
   "ships": {
     "autoRecommendation": "Let the builder recommend the best ship for the selected crew.",
-    "count": "{{count}} ships matched the current ship search.",
-    "emptySearch": "No ships matched the current ship search.",
+    "changeAction": "Change ship",
+    "clearSelection": "Use auto recommendation",
+    "confirm": "Use ship selection",
+    "count": "{{count}} ships available for manual selection.",
+    "emptySelectionLabel": "Auto ship recommendation",
+    "emptySearch": "No ships are available for manual selection.",
     "excluded": "Excluded ships cannot be selected as the manual ship.",
     "manualBadge": "Manual ship",
     "manualOverride": "Manual ship override active: {{name}}",
+    "openAction": "Choose ship",
+    "pickerCopy": "Pick a manual ship override with its image and effect, or leave the slot empty so the builder can recommend one.",
+    "pickerTitle": "Manual ship selection",
     "searchPlaceholder": "Search ship by name or effect"
   },
   "progress": {

@@ -79,6 +79,7 @@ export interface ShipRecord {
   id: number;
   name: string;
   thumb: string | null;
+  thumbUrl: string | null;
   description: string;
 }
 

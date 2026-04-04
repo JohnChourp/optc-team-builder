@@ -1,0 +1,135 @@
+<ng-container *transloco="let t; scope: 'ship-picker'; read: 'ship-picker'">
+  <ion-modal
+    [isOpen]="isOpen"
+    cssClass="ship-picker-modal"
+    (didDismiss)="onModalDidDismiss()"
+  >
+    <ng-template>
+      <div class="ship-picker-shell">
+        <div class="ship-picker-head">
+          <div>
+            <div class="section-label">
+              <ion-icon [icon]="shipIcon"></ion-icon>
+              <span>{{ t('eyebrow') }}</span>
+            </div>
+            <h2>{{ title }}</h2>
+            <p>{{ copy }}</p>
+          </div>
+
+          <ion-buttons>
+            <ion-button fill="clear" color="light" (click)="cancel()">
+              <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </div>
+
+        <div class="ship-picker-body">
+          <section class="ship-picker-panel">
+            <div class="ship-picker-panel__head">
+              <div>
+                <strong>{{ t('catalog.title') }}</strong>
+                <small>{{
+                  t('catalog.count', {
+                    count: filteredShipCards().length,
+                    total: shipsState().length
+                  })
+                }}</small>
+              </div>
+            </div>
+
+            <ion-searchbar
+              class="ship-picker-search"
+              [debounce]="150"
+              [placeholder]="t('catalog.searchPlaceholder')"
+              [value]="searchTerm()"
+              (ionInput)="onSearchChange($event)"
+            ></ion-searchbar>
+
+            @if (!filteredShipCards().length) {
+              <div class="ship-picker-empty">
+                <strong>{{ t('catalog.emptyTitle') }}</strong>
+                <p>{{ t('catalog.emptyCopy') }}</p>
+              </div>
+            } @else {
+              <div class="ship-picker-grid">
+                @for (card of filteredShipCards(); track card.shipId ?? 'empty') {
+                  <button
+                    type="button"
+                    class="ship-picker-card"
+                    [class.ship-picker-card--selected]="card.isSelected"
+                    (click)="selectShip(card.shipId)"
+                  >
+                    <div
+                      class="ship-picker-card__image"
+                      [class.ship-picker-card__image--fallback]="!card.thumbUrl"
+                    >
+                      @if (card.thumbUrl) {
+                        <img [src]="card.thumbUrl" [alt]="card.title" loading="lazy" />
+                      } @else {
+                        <ion-icon [icon]="shipIcon"></ion-icon>
+                      }
+                    </div>
+
+                    <div class="ship-picker-card__copy">
+                      <strong>{{ card.title }}</strong>
+                      <p>{{ card.subtitle }}</p>
+                    </div>
+                  </button>
+                }
+              </div>
+            }
+          </section>
+
+          <section class="ship-picker-panel ship-picker-panel--selected">
+            <div class="ship-picker-panel__head">
+              <div>
+                <strong>{{ t('selected.title') }}</strong>
+              </div>
+            </div>
+
+            <article class="ship-picker-preview-card">
+              <div
+                class="ship-picker-preview-card__image"
+                [class.ship-picker-preview-card__image--fallback]="!selectedCard().thumbUrl"
+              >
+                @if (selectedCard().thumbUrl) {
+                  <img
+                    [src]="selectedCard().thumbUrl"
+                    [alt]="selectedCard().title"
+                    loading="lazy"
+                  />
+                } @else {
+                  <ion-icon [icon]="shipIcon"></ion-icon>
+                }
+              </div>
+
+              <div class="ship-picker-preview-card__copy">
+                <strong>{{ selectedCard().title }}</strong>
+                <p>{{ selectedCard().subtitle }}</p>
+
+                @if (selectedCard().ship) {
+                  <small>{{ t('selected.shipReady') }}</small>
+                } @else {
+                  <small>{{ t('selected.emptyState') }}</small>
+                }
+              </div>
+            </article>
+          </section>
+        </div>
+
+        <ion-footer class="ship-picker-footer">
+          <ion-toolbar>
+            <div class="ship-picker-footer__actions">
+              <ion-button fill="clear" color="light" (click)="cancel()">
+                {{ 'common.actions.cancel' | transloco }}
+              </ion-button>
+              <ion-button color="warning" (click)="save()">
+                {{ confirmLabel }}
+              </ion-button>
+            </div>
+          </ion-toolbar>
+        </ion-footer>
+      </div>
+    </ng-template>
+  </ion-modal>
+</ng-container>

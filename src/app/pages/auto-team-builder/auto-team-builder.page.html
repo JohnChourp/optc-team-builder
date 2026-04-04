@@ -351,6 +351,19 @@
           (saveDrafts)="saveAbilityPicker($event)"
         ></app-ability-requirement-picker>
 
+        <app-ship-picker
+          [isOpen]="manualShipPickerOpen()"
+          [title]="t('ships.pickerTitle')"
+          [copy]="t('ships.pickerCopy')"
+          [ships]="availableManualShips()"
+          [selectedShipId]="selectedManualShipId()"
+          [emptySelectionLabel]="t('ships.emptySelectionLabel')"
+          [emptySelectionCopy]="t('ships.autoRecommendation')"
+          [confirmLabel]="t('ships.confirm')"
+          (dismiss)="closeManualShipPicker()"
+          (saveSelection)="saveManualShipSelection($event)"
+        ></app-ship-picker>
+
         @if (buildBlockedByFavorites()) {
           <p class="favorites-only-warning">
             {{ favoritesOnlyBlockedMessage() }}
@@ -571,85 +584,63 @@
                   </div>
                 }
               } @else {
-                <ion-searchbar
-                  [debounce]="150"
-                  [placeholder]="t('ships.searchPlaceholder')"
-                  [value]="shipSearchTerm()"
-                  (ionInput)="onShipSearchChange($event)"
-                ></ion-searchbar>
                 <div class="manual-locks-meta manual-locks-meta--candidates">
-                  <strong>{{ shipCandidatesSummaryLabel() }}</strong>
+                  <strong>{{ t('ships.count', { count: availableManualShips().length }) }}</strong>
                   <small>{{ shipPickerSupportLabel() }}</small>
                 </div>
-                @if (hasSelectedManualShip()) {
-                  <div class="selected-values-row manual-selected-row">
-                    <button
-                      type="button"
-                      class="selected-value-chip manual-lock-chip manual-lock-chip--ship"
-                      [disabled]="building()"
-                      (click)="clearManualShipSelection()"
-                    >
-                      <ion-icon [icon]="shipIcon"></ion-icon>
-                      {{ selectedManualShip()?.name }}
-                      <span aria-hidden="true">×</span>
-                    </button>
-                  </div>
-                }
-                @if (!shipCandidates().length) {
+                @if (!availableManualShips().length && !hasSelectedManualShip()) {
                   <div class="manual-candidate-empty-state">
                     {{ t('ships.emptySearch') }}
                   </div>
-                }
-                @if (shipCandidates().length) {
-                  <div class="manual-candidate-list manual-candidate-list--sidebar">
-                    @for (shipCard of shipCandidates(); track shipCard.ship.id) {
-                      <article
-                        class="manual-candidate-card manual-candidate-card--detailed manual-candidate-card--sidebar ship-candidate-card"
-                        [class.manual-candidate-card--selected]="shipCard.matchesManualSelection"
-                        [class.manual-candidate-card--blocked]="
-                          !shipCard.matchesManualSelection && !shipCard.isSelectableInManualPicker
+                } @else {
+                  <article class="manual-ship-summary-card">
+                    <button
+                      type="button"
+                      class="manual-ship-summary-card__trigger"
+                      [disabled]="building()"
+                      (click)="openManualShipPicker()"
+                    >
+                      <div
+                        class="manual-ship-summary-card__media"
+                        [class.manual-ship-summary-card__media--fallback]="
+                          !selectedManualShip()?.thumbUrl
                         "
+                        aria-hidden="true"
                       >
-                        <div class="ship-candidate-icon" aria-hidden="true">
+                        @if (selectedManualShip()?.thumbUrl; as thumbUrl) {
+                          <img [src]="thumbUrl" [alt]="selectedManualShipTitle()" loading="lazy" />
+                        } @else {
                           <ion-icon [icon]="shipIcon"></ion-icon>
-                        </div>
-                        <div class="manual-candidate-copy">
-                          <strong>{{ shipCard.ship.name }}</strong>
-                          <span>{{ shipCard.subtitle }}</span>
-                          @if (shipCard.matchesManualSelection) {
-                            <small class="manual-candidate-role">
-                              {{ t('ships.manualBadge') }}
-                            </small>
-                          }
-                          @if (shipCard.manualPickerSupportLabel) {
-                            <small class="manual-candidate-role manual-candidate-role--muted">
-                              {{ shipCard.manualPickerSupportLabel }}
-                            </small>
-                          }
-                        </div>
+                        }
+                      </div>
+                      <div class="manual-ship-summary-card__copy">
+                        <strong>{{ selectedManualShipTitle() }}</strong>
+                        <span>{{ selectedManualShipSubtitle() }}</span>
+                        <small>{{ shipPickerSupportLabel() }}</small>
+                      </div>
+                      <span class="manual-ship-summary-card__action">
+                        {{
+                          hasSelectedManualShip()
+                            ? t('ships.changeAction')
+                            : t('ships.openAction')
+                        }}
+                      </span>
+                    </button>
+
+                    @if (hasSelectedManualShip()) {
+                      <div class="manual-ship-summary-card__footer">
                         <ion-button
+                          fill="clear"
                           size="small"
-                          fill="outline"
                           color="light"
-                          [disabled]="
-                            building() ||
-                            (!shipCard.matchesManualSelection && !shipCard.isSelectableInManualPicker)
-                          "
-                          (click)="
-                            shipCard.matchesManualSelection
-                              ? clearManualShipSelection()
-                              : selectManualShip(shipCard.ship.id)
-                          "
+                          [disabled]="building()"
+                          (click)="clearManualShipSelection()"
                         >
-                          {{
-                            shipCard.matchesManualSelection
-                              ? ('common.actions.clear' | transloco)
-                              : ('common.actions.select' | transloco)
-                          }}
+                          {{ t('ships.clearSelection') }}
                         </ion-button>
-                      </article>
+                      </div>
                     }
-                  </div>
+                  </article>
                 }
               }
             </div>
@@ -1273,8 +1264,16 @@
         </section>
         @if (current.shipSelection; as shipSelection) {
           <section class="glass-card result-ship-card">
-            <div class="result-ship-card__icon" aria-hidden="true">
-              <ion-icon [icon]="shipIcon"></ion-icon>
+            <div
+              class="result-ship-card__icon"
+              [class.result-ship-card__icon--fallback]="!shipSelection.ship.thumbUrl"
+              aria-hidden="true"
+            >
+              @if (shipSelection.ship.thumbUrl; as thumbUrl) {
+                <img [src]="thumbUrl" [alt]="shipSelection.ship.name" loading="lazy" />
+              } @else {
+                <ion-icon [icon]="shipIcon"></ion-icon>
+              }
             </div>
             <div class="result-ship-card__copy">
               <div class="result-ship-card__head">

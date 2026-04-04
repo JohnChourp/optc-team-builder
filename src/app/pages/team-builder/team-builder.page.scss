@@ -16,6 +16,93 @@
   gap: 12px;
 }
 
+.ship-field {
+  display: grid;
+  gap: 8px;
+}
+
+.ship-field__label {
+  color: rgba(248, 251, 255, 0.72);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.ship-picker-trigger {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #f8fbff;
+  text-align: left;
+  font: inherit;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.ship-picker-trigger:hover,
+.ship-picker-trigger:focus-visible {
+  border-color: rgba(245, 200, 76, 0.38);
+  background: rgba(245, 200, 76, 0.08);
+  transform: translateY(-1px);
+}
+
+.ship-picker-trigger__media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ship-picker-trigger__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ship-picker-trigger__media--fallback {
+  color: rgba(245, 200, 76, 0.9);
+}
+
+.ship-picker-trigger__media ion-icon {
+  font-size: 1.9rem;
+}
+
+.ship-picker-trigger__copy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ship-picker-trigger__copy strong {
+  color: #ffffff;
+}
+
+.ship-picker-trigger__copy small {
+  color: rgba(248, 251, 255, 0.62);
+  line-height: 1.5;
+}
+
+.ship-picker-trigger__action {
+  color: #f5c84c;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 .totals-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: 16px;
@@ -196,5 +283,20 @@
 
   .totals-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .ship-picker-trigger {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .ship-picker-trigger__media {
+    width: 64px;
+    height: 64px;
+  }
+
+  .ship-picker-trigger__action {
+    grid-column: 1 / -1;
   }
 }

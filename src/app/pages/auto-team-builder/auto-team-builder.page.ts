@@ -84,6 +84,7 @@ import {
 import { buildAutoTeamBuilderStateFromSavedEnemy } from "./auto-team-builder-enemy-preset.utils";
 import { AbilityRequirementPickerComponent } from "../../shared/ability-requirement-picker/ability-requirement-picker.component";
 import { EnemyMechanicPickerComponent } from "../../shared/enemy-mechanic-picker/enemy-mechanic-picker.component";
+import { ShipPickerComponent } from "../../shared/ship-picker/ship-picker.component";
 import {
   createAbilityRequirementDrafts,
   formatAbilityRequirementSummary,
@@ -215,6 +216,7 @@ interface PresetImportFeedback {
     IonToolbar,
     AbilityRequirementPickerComponent,
     EnemyMechanicPickerComponent,
+    ShipPickerComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,
@@ -239,7 +241,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly abilityPickerOpen = signal(false);
   public readonly manualSearchTerm = signal("");
   public readonly excludeCharacterSearchTerm = signal("");
-  public readonly shipSearchTerm = signal("");
   public readonly excludeShipSearchTerm = signal("");
   public readonly manualCandidates = signal<CharacterDetailRecord[]>([]);
   public readonly manualCandidatesLoading = signal(false);
@@ -247,6 +248,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly excludedCandidatesLoading = signal(false);
   public readonly shipPickerMode = signal<"characters" | "ships">("characters");
   public readonly excludePickerMode = signal<"characters" | "ships">("characters");
+  public readonly manualShipPickerOpen = signal(false);
   public readonly manualSlots = signal<AutoBuildManualSlotSelection[]>(
     createEmptyAutoBuildManualSlots(),
   );
@@ -275,7 +277,24 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly selectedManualShip = computed(
     () => this.ships().find((ship) => ship.id === this.selectedManualShipId()) ?? null,
   );
+  public readonly availableManualShips = computed(() => {
+    const excludedShipIdSet = new Set(this.excludedShipIds());
+
+    return this.ships().filter((ship) => !excludedShipIdSet.has(ship.id));
+  });
   public readonly hasSelectedManualShip = computed(() => Boolean(this.selectedManualShip()));
+  public readonly selectedManualShipTitle = computed(() => {
+    const selectedShip = this.selectedManualShip();
+
+    return selectedShip?.name ?? this.t("ships.emptySelectionLabel");
+  });
+  public readonly selectedManualShipSubtitle = computed(() => {
+    const selectedShip = this.selectedManualShip();
+
+    return selectedShip
+      ? this.buildShipCardSubtitle(selectedShip)
+      : this.t("ships.autoRecommendation");
+  });
   public readonly excludedShips = computed(() => {
     const excludedShipIdSet = new Set(this.excludedShipIds());
 
@@ -586,30 +605,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.manualCandidateFilters().requiredAbilities,
     ),
   );
-  public readonly shipCandidates = computed<ShipCandidateCardView[]>(() => {
-    const searchTerm = this.shipSearchTerm().trim().toLowerCase();
-
-    return this.ships()
-      .filter((ship) => {
-        if (searchTerm.length === 0) {
-          return true;
-        }
-
-        return [ship.name, ship.description].some((value) =>
-          value.toLowerCase().includes(searchTerm),
-        );
-      })
-      .map((ship) => ({
-        ship,
-        subtitle: this.buildShipCardSubtitle(ship),
-        matchesManualSelection: ship.id === this.selectedManualShipId(),
-        isExcluded: this.excludedShipIds().includes(ship.id),
-        isSelectableInManualPicker: !this.excludedShipIds().includes(ship.id),
-        manualPickerSupportLabel: this.resolveManualShipSupportLabel(ship.id),
-        isSelectableInExcludePicker: this.canExcludeShip(ship.id),
-        excludePickerSupportLabel: this.resolveExcludedShipSupportLabel(ship.id),
-      }));
-  });
   public readonly excludedShipCandidates = computed<ShipCandidateCardView[]>(() => {
     const searchTerm = this.excludeShipSearchTerm().trim().toLowerCase();
 
@@ -633,9 +628,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         isSelectableInExcludePicker: this.canExcludeShip(ship.id),
         excludePickerSupportLabel: this.resolveExcludedShipSupportLabel(ship.id),
       }));
-  });
-  public readonly shipCandidatesSummaryLabel = computed(() => {
-    return this.t("ships.count", { count: this.shipCandidates().length });
   });
   public readonly shipPickerSupportLabel = computed(() => {
     const selectedShip = this.selectedManualShip();
@@ -1073,6 +1065,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     await Promise.all([
       this.i18n.preloadScope("ability-picker"),
       this.i18n.preloadScope("enemy-mechanics-picker"),
+      this.i18n.preloadScope("ship-picker"),
     ]);
     const shipsPromise =
       typeof this.repository.getShips === "function"
@@ -1144,8 +1137,23 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.excludePickerMode.set(mode);
   }
 
-  public onShipSearchChange(event: CustomEvent<{ value?: string | null }>): void {
-    this.shipSearchTerm.set((event.detail.value ?? "").trim());
+  public openManualShipPicker(): void {
+    this.manualShipPickerOpen.set(true);
+  }
+
+  public closeManualShipPicker(): void {
+    this.manualShipPickerOpen.set(false);
+  }
+
+  public saveManualShipSelection(shipId: number | null): void {
+    if (shipId === null) {
+      this.clearManualShipSelection();
+      this.closeManualShipPicker();
+      return;
+    }
+
+    this.selectManualShip(shipId);
+    this.closeManualShipPicker();
   }
 
   public onExcludeShipSearchChange(event: CustomEvent<{ value?: string | null }>): void {
@@ -1706,6 +1714,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private async resetPageState(): Promise<void> {
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
+    this.manualShipPickerOpen.set(false);
     this.selectedTypes.set([]);
     this.selectedClasses.set([]);
     this.enemyMechanicDrafts.set([]);
@@ -1713,7 +1722,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.lockedCharacterRecords.set({});
     this.manualSearchTerm.set("");
     this.excludeCharacterSearchTerm.set("");
-    this.shipSearchTerm.set("");
     this.excludeShipSearchTerm.set("");
     this.manualCandidates.set([]);
     this.manualCandidatesLoading.set(false);

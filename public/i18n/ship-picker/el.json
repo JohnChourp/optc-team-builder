@@ -1,0 +1,15 @@
+{
+  "catalog": {
+    "count": "{{count}} ορατές επιλογές από {{total}} ships",
+    "emptyCopy": "Δεν βρέθηκαν ships που να ταιριάζουν στο current search.",
+    "emptyTitle": "Δεν βρέθηκαν ships",
+    "searchPlaceholder": "Αναζήτηση ship με όνομα ή effect",
+    "title": "Κατάλογος ships"
+  },
+  "eyebrow": "Επιλογή ship",
+  "selected": {
+    "emptyState": "Επιβεβαίωσε για να μείνει κενή η επιλογή ship.",
+    "shipReady": "Αυτό το ship θα εφαρμοστεί όταν πατήσεις επιβεβαίωση.",
+    "title": "Επιλεγμένο ship"
+  }
+}

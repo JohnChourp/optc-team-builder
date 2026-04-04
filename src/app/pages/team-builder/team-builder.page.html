@@ -18,21 +18,28 @@
             (ionInput)="onTeamNameChange($event)"
           ></ion-input>
 
-          <ion-select
-            interface="popover"
-            [label]="t('form.shipLabel')"
-            labelPlacement="stacked"
-            fill="outline"
-            [value]="selectedShipId()"
-            (ionChange)="selectedShipId.set($event.detail.value)"
-          >
-            <ion-select-option [value]="null">{{ t('form.noShip') }}</ion-select-option>
-            @for (ship of ships(); track ship.id) {
-              <ion-select-option [value]="ship.id">
-                {{ ship.name }}
-              </ion-select-option>
-            }
-          </ion-select>
+          <div class="ship-field">
+            <span class="ship-field__label">{{ t('form.shipLabel') }}</span>
+            <button type="button" class="ship-picker-trigger" (click)="openShipPicker()">
+              <span
+                class="ship-picker-trigger__media"
+                [class.ship-picker-trigger__media--fallback]="!selectedShip()?.thumbUrl"
+              >
+                @if (selectedShip()?.thumbUrl; as thumbUrl) {
+                  <img [src]="thumbUrl" [alt]="selectedShipTitle()" loading="lazy" />
+                } @else {
+                  <ion-icon [icon]="shipIcon"></ion-icon>
+                }
+              </span>
+
+              <span class="ship-picker-trigger__copy">
+                <strong>{{ selectedShipTitle() }}</strong>
+                <small>{{ selectedShipSubtitle() }}</small>
+              </span>
+
+              <span class="ship-picker-trigger__action">{{ t('form.changeShip') }}</span>
+            </button>
+          </div>
         </div>
 
         <ion-textarea
@@ -71,6 +78,19 @@
           {{ 'common.actions.reset' | transloco }}
         </ion-button>
       </section>
+
+      <app-ship-picker
+        [isOpen]="shipPickerOpen()"
+        [title]="t('shipPicker.title')"
+        [copy]="t('shipPicker.copy')"
+        [ships]="ships()"
+        [selectedShipId]="selectedShipId()"
+        [emptySelectionLabel]="t('form.noShip')"
+        [emptySelectionCopy]="t('form.noShipCopy')"
+        [confirmLabel]="t('shipPicker.confirm')"
+        (dismiss)="closeShipPicker()"
+        (saveSelection)="saveShipSelection($event)"
+      ></app-ship-picker>
 
       <section class="glass-card slot-grid">
         <div class="slot-grid__header">

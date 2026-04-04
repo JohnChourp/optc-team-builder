@@ -41,7 +41,7 @@ const githubHeaders = {
   Accept: 'application/vnd.github+json',
 };
 
-const packDefinitions = [
+export const packDefinitions = [
   {
     key: 'thumbnailsGlo',
     id: 'thumbnails-glo',
@@ -55,6 +55,13 @@ const packDefinitions = [
     label: 'Japan thumbnails',
     listingPath: 'api/images/thumbnail',
     entryName: 'jap',
+  },
+  {
+    key: 'shipThumbnails',
+    id: 'ship-thumbnails',
+    label: 'Ship thumbnails',
+    listingPath: 'api/images/thumbnail',
+    entryName: 'ship',
   },
   {
     key: 'fullTransparent',
@@ -228,13 +235,17 @@ async function buildPackTrees() {
   return packTrees;
 }
 
-function shouldDownloadPack(mode, packId) {
+export function shouldDownloadPack(mode, packId) {
   if (mode === 'all') {
     return true;
   }
 
   if (mode === 'thumbnails') {
-    return packId === 'thumbnails-glo' || packId === 'thumbnails-jap';
+    return (
+      packId === 'thumbnails-glo' ||
+      packId === 'thumbnails-jap' ||
+      packId === 'ship-thumbnails'
+    );
   }
 
   return mode === packId;
@@ -914,7 +925,9 @@ async function main() {
   );
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
+  main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}

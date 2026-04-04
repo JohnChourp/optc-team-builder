@@ -40,6 +40,12 @@ Import metadata plus global thumbnails:
 npm run data:import -- --download-images=thumbnails-glo
 ```
 
+Import metadata plus all thumbnail packs, including ship thumbnails:
+
+```bash
+npm run data:import -- --download-images=thumbnails
+```
+
 Import metadata plus every supported offline image pack:
 
 ```bash
@@ -99,8 +105,10 @@ The currently installed pack in this workspace is:
 
 - `thumbnails-glo` at roughly `56 MB`
 
+Available offline image packs also include `ship-thumbnails` for ship picker and saved team previews.
+
 ## Current limitations
 
-- `thumbnails-jap` and `full-transparent` are implemented in the importer but were not downloaded in this pass.
+- `thumbnails-jap`, `ship-thumbnails`, and `full-transparent` are implemented in the importer but were not downloaded in this pass.
 - The app uses `sql.js`, which increases the web bundle size compared with a plain JSON-only client.
 - Redistribution of game art is a separate legal/product decision before any public store release.
