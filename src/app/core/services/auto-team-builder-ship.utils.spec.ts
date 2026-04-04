@@ -105,6 +105,30 @@ describe('auto team builder ship selection', () => {
     expect(selection?.source).toBe('recommended');
     expect(selection?.ship.id).toBe(14);
   });
+
+  it('ignores excluded ships for both manual and recommended selection', () => {
+    const ships = [
+      createShip(14, 'Thousand Sunny', 'Boosts ATK by 1.5x.'),
+      createShip(15, 'Polar Tang', 'Boosts ATK by 1.6x.'),
+    ];
+
+    const selection = resolveAutoBuildShipSelection(
+      {
+        ...createResult(
+          Array.from({ length: 6 }, (_, index) => createCharacter(index + 1)),
+          15,
+        ),
+        input: {
+          ...createResult(Array.from({ length: 6 }, (_, index) => createCharacter(index + 1)), 15).input,
+          excludedShipIds: [15],
+        },
+      },
+      ships,
+    );
+
+    expect(selection?.source).toBe('recommended');
+    expect(selection?.ship.id).toBe(14);
+  });
 });
 
 function createResult(
@@ -118,11 +142,15 @@ function createResult(
     requireAllSelectedClassesPerCharacter: false,
     requireAllSpecialsSupportTeam: false,
     requiredAbilities: [],
+    enemyMechanics: [],
     favoritesOnly: false,
+    manualSlots: [],
     lockedCharacterIds: [],
+    excludedCharacterIds: [],
     captainCharacterId: null,
     friendCaptainCharacterId: null,
     manualShipId,
+    excludedShipIds: [],
     candidateLimit: 1200,
   };
 

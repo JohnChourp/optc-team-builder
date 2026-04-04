@@ -61,7 +61,7 @@ export interface AutoTeamSelectionShipSummary {
 }
 
 export interface AutoTeamSelectionExportPayload {
-  schemaVersion: 1 | 2 | 3 | 4 | 5;
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6;
   exportedAt: string;
   source: "auto-team-builder";
   exportType: "preset";
@@ -79,12 +79,16 @@ export interface AutoTeamSelectionExportPayload {
   manualSelection: {
     manualSlots: AutoBuildManualSlotSelection[];
     lockedCharacterIds: number[];
+    excludedCharacterIds: number[];
     selectedLeaderIds: number[];
     captainLeaderId: number | null;
     friendCaptainLeaderId: number | null;
     manualShipId: number | null;
+    excludedShipIds: number[];
     ship: AutoTeamSelectionShipSummary | null;
     characters: AutoTeamSelectionCharacterSummary[];
+    excludedCharacters: AutoTeamSelectionCharacterSummary[];
+    excludedShips: AutoTeamSelectionShipSummary[];
   };
 }
 
@@ -99,9 +103,11 @@ export interface AutoTeamSelectionImportState {
   favoritesOnly: boolean;
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
+  excludedCharacterIds: number[];
   selectedLeaderIds: number[];
   captainLeaderId: number | null;
   manualShipId: number | null;
+  excludedShipIds: number[];
 }
 
 export interface AutoTeamSelectionImportResult {
@@ -145,11 +151,15 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   lockedCharacters: CharacterListItem[];
+  excludedCharacterIds?: number[];
+  excludedCharacters?: CharacterListItem[];
   selectedLeaderIds: number[];
   captainLeaderId: number | null;
   friendCaptainLeaderId: number | null;
   manualShipId?: number | null;
   manualShip?: ShipRecord | null;
+  excludedShipIds?: number[];
+  excludedShips?: ShipRecord[];
   exportedAt?: string;
 }
 
@@ -379,7 +389,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload["schemaVersion"] !== 2 &&
       parsedPayload["schemaVersion"] !== 3 &&
       parsedPayload["schemaVersion"] !== 4 &&
-      parsedPayload["schemaVersion"] !== 5) ||
+      parsedPayload["schemaVersion"] !== 5 &&
+      parsedPayload["schemaVersion"] !== 6) ||
     parsedPayload["source"] !== "auto-team-builder" ||
     parsedPayload["exportType"] !== "preset"
   ) {
@@ -413,14 +424,34 @@ export function parseAutoTeamSelectionImportPayload(
     typeof filters["favoritesOnly"] !== "boolean" ||
     typeof filters["favoriteCount"] !== "number" ||
     !Array.isArray(manualSelection["lockedCharacterIds"]) ||
+    !(
+      manualSelection["excludedCharacterIds"] === undefined ||
+      Array.isArray(manualSelection["excludedCharacterIds"])
+    ) ||
     !Array.isArray(manualSelection["selectedLeaderIds"]) ||
-    !Array.isArray(manualSelection["characters"])
+    !Array.isArray(manualSelection["characters"]) ||
+    !(
+      manualSelection["excludedShipIds"] === undefined ||
+      Array.isArray(manualSelection["excludedShipIds"])
+    ) ||
+    !(
+      manualSelection["excludedCharacters"] === undefined ||
+      Array.isArray(manualSelection["excludedCharacters"])
+    ) ||
+    !(
+      manualSelection["excludedShips"] === undefined ||
+      Array.isArray(manualSelection["excludedShips"])
+    )
   ) {
     throw new AutoTeamSelectionImportError("preset.errors.schemaMismatch");
   }
 
   if (
     !manualSelection["lockedCharacterIds"].every((characterId) => typeof characterId === "number") ||
+    !(
+      manualSelection["excludedCharacterIds"] === undefined ||
+      manualSelection["excludedCharacterIds"].every((characterId) => typeof characterId === "number")
+    ) ||
     !manualSelection["selectedLeaderIds"].every((characterId) => typeof characterId === "number") ||
     !(
       manualSelection["captainLeaderId"] === null ||
@@ -434,6 +465,10 @@ export function parseAutoTeamSelectionImportPayload(
       manualSelection["manualShipId"] === undefined ||
       manualSelection["manualShipId"] === null ||
       typeof manualSelection["manualShipId"] === "number"
+    ) ||
+    !(
+      manualSelection["excludedShipIds"] === undefined ||
+      manualSelection["excludedShipIds"].every((shipId) => typeof shipId === "number")
     )
   ) {
     throw new AutoTeamSelectionImportError("preset.errors.schemaMismatch");
@@ -684,6 +719,68 @@ export function sanitizeAutoTeamSelectionImportPayload(
     });
   }
 
+  const rawExcludedCharacterIds = collectPositiveIntegers(
+    Array.isArray(payload.manualSelection.excludedCharacterIds)
+      ? payload.manualSelection.excludedCharacterIds
+      : [],
+  );
+  const missingExcludedCharacterCount = rawExcludedCharacterIds.filter(
+    (characterId) => !availableLockedCharacterMap.has(characterId),
+  ).length;
+  const excludedCharacterConflictSet = new Set(derivedManualSelection.lockedCharacterIds);
+  const excludedCharacterIds = rawExcludedCharacterIds.filter(
+    (characterId) =>
+      availableLockedCharacterMap.has(characterId) && !excludedCharacterConflictSet.has(characterId),
+  );
+  const conflictingExcludedCharacterCount = rawExcludedCharacterIds.filter((characterId) =>
+    excludedCharacterConflictSet.has(characterId),
+  ).length;
+  const missingExcludedCharacterWarning = buildWarning(
+    "preset.warnings.missingExcludedCharacters",
+    missingExcludedCharacterCount,
+  );
+
+  if (missingExcludedCharacterWarning) {
+    warnings.push(missingExcludedCharacterWarning);
+  }
+
+  const conflictingExcludedCharacterWarning = buildWarning(
+    "preset.warnings.conflictingExcludedCharacters",
+    conflictingExcludedCharacterCount,
+  );
+
+  if (conflictingExcludedCharacterWarning) {
+    warnings.push(conflictingExcludedCharacterWarning);
+  }
+
+  const rawExcludedShipIds = collectPositiveIntegers(
+    Array.isArray(payload.manualSelection.excludedShipIds) ? payload.manualSelection.excludedShipIds : [],
+  );
+  const missingExcludedShipCount = rawExcludedShipIds.filter((shipId) => !availableShipMap.has(shipId))
+    .length;
+  const excludedShipIds = rawExcludedShipIds.filter(
+    (shipId) => availableShipMap.has(shipId) && shipId !== manualShipId,
+  );
+  const conflictingExcludedShipCount =
+    manualShipId === null ? 0 : rawExcludedShipIds.filter((shipId) => shipId === manualShipId).length;
+  const missingExcludedShipWarning = buildWarning(
+    "preset.warnings.missingExcludedShips",
+    missingExcludedShipCount,
+  );
+
+  if (missingExcludedShipWarning) {
+    warnings.push(missingExcludedShipWarning);
+  }
+
+  const conflictingExcludedShipWarning = buildWarning(
+    "preset.warnings.conflictingExcludedShips",
+    conflictingExcludedShipCount,
+  );
+
+  if (conflictingExcludedShipWarning) {
+    warnings.push(conflictingExcludedShipWarning);
+  }
+
   return {
     state: {
       selectedTypes,
@@ -696,9 +793,11 @@ export function sanitizeAutoTeamSelectionImportPayload(
       favoritesOnly: payload.filters.favoritesOnly,
       manualSlots: normalizedManualSlots,
       lockedCharacterIds: derivedManualSelection.lockedCharacterIds,
+      excludedCharacterIds,
       selectedLeaderIds: derivedManualSelection.selectedLeaderIds,
       captainLeaderId: derivedManualSelection.captainLeaderId,
       manualShipId,
+      excludedShipIds,
     },
     warnings,
   };
@@ -759,11 +858,15 @@ export function buildAutoTeamSelectionExportPayload({
   manualSlots,
   lockedCharacterIds,
   lockedCharacters,
+  excludedCharacterIds = [],
+  excludedCharacters = [],
   selectedLeaderIds,
   captainLeaderId,
   friendCaptainLeaderId,
   manualShipId = null,
   manualShip = null,
+  excludedShipIds = [],
+  excludedShips = [],
   exportedAt = new Date().toISOString(),
 }: BuildAutoTeamSelectionExportPayloadOptions): AutoTeamSelectionExportPayload {
   const normalizedManualSlots = manualSlots.map((slot) => ({
@@ -772,7 +875,7 @@ export function buildAutoTeamSelectionExportPayload({
   }));
 
   return {
-    schemaVersion: 5,
+    schemaVersion: 6,
     exportedAt,
     source: "auto-team-builder",
     exportType: "preset",
@@ -798,10 +901,12 @@ export function buildAutoTeamSelectionExportPayload({
     manualSelection: {
       manualSlots: normalizedManualSlots,
       lockedCharacterIds: [...lockedCharacterIds],
+      excludedCharacterIds: [...excludedCharacterIds],
       selectedLeaderIds: [...selectedLeaderIds],
       captainLeaderId,
       friendCaptainLeaderId,
       manualShipId,
+      excludedShipIds: [...excludedShipIds],
       ship: manualShip
         ? {
             id: manualShip.id,
@@ -828,6 +933,22 @@ export function buildAutoTeamSelectionExportPayload({
           leaderAssignment,
         };
       }),
+      excludedCharacters: excludedCharacters.map((character) => ({
+        id: character.id,
+        name: character.name,
+        type: character.type,
+        primaryClass: character.primaryClass,
+        secondaryClass: character.secondaryClass,
+        imageUrl: character.imageUrl,
+        isLeader: false,
+        leaderAssignment: null,
+      })),
+      excludedShips: excludedShips.map((ship) => ({
+        id: ship.id,
+        name: ship.name,
+        thumb: ship.thumb,
+        description: ship.description,
+      })),
     },
   };
 }

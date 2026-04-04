@@ -56,14 +56,17 @@ export interface AutoBuildConstraints {
   favoriteCharacterIds?: number[];
   manualSlots?: AutoBuildManualSlotSelection[];
   lockedCharacterIds?: number[];
+  excludedCharacterIds?: number[];
   captainCharacterId?: number | null;
   friendCaptainCharacterId?: number | null;
   manualShipId?: number | null;
+  excludedShipIds?: number[];
 }
 
 export interface AutoBuildCandidateQueryOptions {
   allowedCharacterIds?: number[];
   lockedCharacterIds?: number[];
+  excludedCharacterIds?: number[];
 }
 
 export type AutoBuildBurstRole =
@@ -93,9 +96,11 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   favoritesOnly: boolean;
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
+  excludedCharacterIds: number[];
   captainCharacterId: number | null;
   friendCaptainCharacterId: number | null;
   manualShipId: number | null;
+  excludedShipIds: number[];
   candidateLimit?: number;
 }
 

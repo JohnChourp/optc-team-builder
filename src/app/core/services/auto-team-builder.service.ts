@@ -89,9 +89,11 @@ export class AutoTeamBuilderService {
       : this.createManualSlotsFromLegacySelection(legacyManualSelection);
     const derivedManualSelection = this.deriveLegacyManualSelectionFromManualSlots(manualSlots);
     const lockedCharacterIds = derivedManualSelection.lockedCharacterIds;
+    const excludedCharacterIds = this.normalizeCharacterIds(constraints.excludedCharacterIds);
     const captainCharacterId = derivedManualSelection.captainCharacterId;
     const friendCaptainCharacterId = derivedManualSelection.friendCaptainCharacterId;
     const manualShipId = this.normalizeCharacterId(constraints.manualShipId);
+    const excludedShipIds = this.normalizeCharacterIds(constraints.excludedShipIds);
 
     const input: AutoBuildInput = {
       types: normalizedTypes.length > 0 ? normalizedTypes : [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
@@ -105,9 +107,11 @@ export class AutoTeamBuilderService {
       favoritesOnly,
       manualSlots,
       lockedCharacterIds,
+      excludedCharacterIds,
       captainCharacterId,
       friendCaptainCharacterId,
       manualShipId,
+      excludedShipIds,
       candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
     };
     const requestedInput: AutoBuildInput = {
@@ -129,6 +133,8 @@ export class AutoTeamBuilderService {
         characterIds: [...slot.characterIds],
       })),
       lockedCharacterIds: [...input.lockedCharacterIds],
+      excludedCharacterIds: [...input.excludedCharacterIds],
+      excludedShipIds: [...input.excludedShipIds],
     };
 
     if (favoritesOnly && favoriteCharacterIds.size === 0) {
@@ -161,6 +167,7 @@ export class AutoTeamBuilderService {
       {
         allowedCharacterIds: favoritesOnly ? [...favoriteCharacterIds] : undefined,
         lockedCharacterIds,
+        excludedCharacterIds,
       },
     );
 
@@ -325,6 +332,16 @@ export class AutoTeamBuilderService {
     return Number.isInteger(characterId) && Number(characterId) > 0 ? Number(characterId) : null;
   }
 
+  private normalizeCharacterIds(characterIds: number[] | undefined): number[] {
+    return [
+      ...new Set(
+        (characterIds ?? [])
+          .map((characterId) => this.normalizeCharacterId(characterId))
+          .filter((characterId): characterId is number => characterId !== null),
+      ),
+    ];
+  }
+
   private normalizeManualSlots(
     manualSlots: AutoBuildManualSlotSelection[] | undefined,
   ): AutoBuildManualSlotSelection[] {
@@ -392,13 +409,7 @@ export class AutoTeamBuilderService {
     friendCaptainCharacterId: number | null;
     hasInvalidLeaderSelection: boolean;
   } {
-    const lockedCharacterIds = [
-      ...new Set(
-        (rawLockedCharacterIds ?? [])
-          .map((characterId) => this.normalizeCharacterId(characterId))
-          .filter((characterId): characterId is number => characterId !== null),
-      ),
-    ];
+    const lockedCharacterIds = this.normalizeCharacterIds(rawLockedCharacterIds);
     const lockedCharacterIdSet = new Set(lockedCharacterIds);
     let hasInvalidLeaderSelection = false;
     let captainCharacterId = this.normalizeCharacterId(rawCaptainCharacterId);

@@ -294,9 +294,11 @@ function createInput(
     favoritesOnly: false,
     manualSlots: createEmptyAutoBuildManualSlots(),
     lockedCharacterIds: [],
+    excludedCharacterIds: [],
     captainCharacterId: null,
     friendCaptainCharacterId: null,
     manualShipId: null,
+    excludedShipIds: [],
     candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
   };
 }

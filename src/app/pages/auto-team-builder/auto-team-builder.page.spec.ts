@@ -204,7 +204,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
         requiredCharacterCount: 2,
       },
     ]);
-    expect(repository.searchDetailedCharacters).toHaveBeenCalledOnce();
+    expect(repository.searchDetailedCharacters).toHaveBeenCalledTimes(2);
   });
 
   it('derives direct counters from enemy mechanics and refreshes the manual candidate pool on save', async () => {
@@ -234,7 +234,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
         requiredCharacterCount: 1,
       },
     ]);
-    expect(repository.searchDetailedCharacters).toHaveBeenCalledOnce();
+    expect(repository.searchDetailedCharacters).toHaveBeenCalledTimes(2);
   });
 
   it('passes the selected manual ship to the builder service', async () => {
@@ -289,6 +289,30 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     );
   });
 
+  it('passes excluded characters and ships to the builder service', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.excludedCharacterIds.set([101, 102]);
+    page.excludedShipIds.set([9002]);
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({
+        excludedCharacterIds: [101, 102],
+        excludedShipIds: [9002],
+      }),
+      expect.objectContaining({
+        onProgress: expect.any(Function),
+        signal: expect.any(AbortSignal),
+      }),
+    );
+  });
+
   it('filters the manual candidate sidebar to leader-capable characters for leader slots', async () => {
     const { page } = await createPage();
     const leaderCandidate = createCharacterRecord(411, 'Leader Candidate');
@@ -320,6 +344,32 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     page.onFavoritesOnlyToggle({ detail: { checked: true } } as CustomEvent<{ checked: boolean }>);
 
     expect(page.manualCandidateCards().map((candidate: { character: CharacterDetailRecord }) => candidate.character.id)).toEqual([411, 412]);
+  });
+
+  it('blocks assigning excluded characters into manual team slots', async () => {
+    const { page } = await createPage();
+    const excludedCandidate = createCharacterRecord(413, 'Excluded Candidate');
+
+    await page.ngOnInit();
+    page.excludedCharacterIds.set([413]);
+    page.manualCandidates.set([excludedCandidate]);
+    page.activeManualSlotRole.set('sub1');
+
+    expect(page.canAssignCharacterToManualSlot('sub1', excludedCandidate)).toBe(false);
+    expect(page.manualCandidateCards()[0]?.selectionSupportLabel).toBe(
+      'Excluded picks cannot be assigned to final team slots.',
+    );
+  });
+
+  it('blocks excluding the current manual ship override', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.selectManualShip(9001);
+    page.toggleExcludedShip(9001);
+
+    expect(page.excludedShipIds()).toEqual([]);
+    expect(page.canExcludeShip(9001)).toBe(false);
   });
 
   it('describes favorites mode as favorite auto-fill for open slots in result copy', async () => {
@@ -489,7 +539,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     );
 
     expect(template).toContain("'common.actions.reset' | transloco");
-    expect(template.match(/common\.actions\.viewDetails/g)).toHaveLength(2);
+    expect(template.match(/common\.actions\.viewDetails/g)).toHaveLength(3);
     expect(template).toContain('[routerLink]="getCharacterDetailLink(candidateCard.character)"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(slot.character)"');
     expect(template).toContain('(click)="saveTeam()"');
@@ -529,12 +579,17 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
       101: createCharacterRecord(101),
     });
     page.manualSlots.set(createManualSlots({ captain: [101] }));
+    page.excludedCharacterIds.set([102]);
     page.activeManualSlotRole.set('sub2');
     page.selectedManualShipId.set(9001);
+    page.excludedShipIds.set([9002]);
     page.favoritesOnly.set(true);
     page.manualSearchTerm.set('Luffy');
+    page.excludeCharacterSearchTerm.set('Kaido');
     page.shipSearchTerm.set('Going Merry');
+    page.excludeShipSearchTerm.set('Sunny');
     page.shipPickerMode.set('ships');
+    page.excludePickerMode.set('ships');
     page.teamName.set('Auto Crew');
     page.notes.set('Generated');
     page.result.set(createAutoBuildResult());
@@ -555,14 +610,19 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(page.requiredAbilityDrafts()).toEqual([]);
     expect(page.manualSlots()).toEqual(createManualSlots());
     expect(page.lockedCharacterIds()).toEqual([]);
+    expect(page.excludedCharacterIds()).toEqual([]);
     expect(page.selectedLeaderIds()).toEqual([]);
     expect(page.effectiveCaptainLeaderId()).toBeNull();
     expect(page.activeManualSlotRole()).toBe('captain');
     expect(page.selectedManualShipId()).toBeNull();
+    expect(page.excludedShipIds()).toEqual([]);
     expect(page.favoritesOnly()).toBe(false);
     expect(page.manualSearchTerm()).toBe('');
+    expect(page.excludeCharacterSearchTerm()).toBe('');
     expect(page.shipSearchTerm()).toBe('');
+    expect(page.excludeShipSearchTerm()).toBe('');
     expect(page.shipPickerMode()).toBe('characters');
+    expect(page.excludePickerMode()).toBe('characters');
     expect(page.teamName()).toBe('New Crew');
     expect(page.notes()).toBe('');
     expect(page.result()).toBeNull();
@@ -1169,6 +1229,10 @@ describe('AutoTeamBuilderPage preset export state', () => {
     await page.ionViewWillEnter();
     page.manualSlots.set(createManualSlots({ captain: [302] }));
     expect(page.canDownloadSelectionJson()).toBe(true);
+
+    await page.ionViewWillEnter();
+    page.excludedCharacterIds.set([303]);
+    expect(page.canDownloadSelectionJson()).toBe(true);
   });
 
   it('builds the preset export payload from the current page selections', async () => {
@@ -1206,13 +1270,16 @@ describe('AutoTeamBuilderPage preset export state', () => {
     page.lockedCharacterRecords.set({
       101: createCharacterRecord(101),
       102: createCharacterRecord(102),
+      103: createCharacterRecord(103),
     });
+    page.excludedCharacterIds.set([103]);
+    page.excludedShipIds.set([9002]);
 
     const payload = page.buildSelectionExportPayload('2026-03-25T10:00:00.000Z');
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 5,
+      schemaVersion: 6,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -1236,9 +1303,11 @@ describe('AutoTeamBuilderPage preset export state', () => {
       },
       manualSelection: {
         lockedCharacterIds: [102, 101],
+        excludedCharacterIds: [103],
         selectedLeaderIds: [102, 101],
         captainLeaderId: 102,
         friendCaptainLeaderId: 101,
+        excludedShipIds: [9002],
         manualSlots: createManualSlots({
           captain: [102, 101],
           friendCaptain: [101, 102],
@@ -1255,6 +1324,18 @@ describe('AutoTeamBuilderPage preset export state', () => {
         id: 101,
         isLeader: true,
         leaderAssignment: 'friendCaptain',
+      }),
+    ]);
+    expect(payload?.manualSelection.excludedCharacters).toEqual([
+      expect.objectContaining({
+        id: 103,
+        isLeader: false,
+        leaderAssignment: null,
+      }),
+    ]);
+    expect(payload?.manualSelection.excludedShips).toEqual([
+      expect.objectContaining({
+        id: 9002,
       }),
     ]);
   });
@@ -1724,6 +1805,56 @@ describe('AutoTeamBuilder preset import helpers', () => {
         slotTokens: ['DEX'],
         requiredCharacterCount: 3,
       },
+    ]);
+  });
+
+  it('drops conflicting imported exclusions and keeps manual picks with warnings', () => {
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [],
+      enemyMechanics: [],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSpecialsSupportTeam: false,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      manualSlots: createManualSlots({
+        captain: [101],
+      }),
+      lockedCharacterIds: [101],
+      lockedCharacters: [createCharacterRecord(101)],
+      excludedCharacterIds: [101],
+      excludedCharacters: [createCharacterRecord(101)],
+      selectedLeaderIds: [101],
+      captainLeaderId: 101,
+      friendCaptainLeaderId: 101,
+      manualShipId: 9001,
+      manualShip: createShipRecord(9001),
+      excludedShipIds: [9001],
+      excludedShips: [createShipRecord(9001)],
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+
+    const result = sanitizeAutoTeamSelectionImportPayload(payload, {
+      availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      availableClasses: ['Fighter', 'Slasher'],
+      abilityCatalogItems: [],
+      availableLockedCharacters: [createCharacterRecord(101)],
+      availableShips: [createShipRecord(9001)],
+    });
+
+    expect(result.state.manualSlots).toEqual(
+      createManualSlots({
+        captain: [101],
+      }),
+    );
+    expect(result.state.excludedCharacterIds).toEqual([]);
+    expect(result.state.manualShipId).toBe(9001);
+    expect(result.state.excludedShipIds).toEqual([]);
+    expect(result.warnings).toEqual([
+      { key: 'preset.warnings.conflictingExcludedCharacters', params: { count: 1 } },
+      { key: 'preset.warnings.conflictingExcludedShips', params: { count: 1 } },
     ]);
   });
 });
@@ -2212,9 +2343,11 @@ function createAutoBuildResult(
       sub4: [106],
     }),
     lockedCharacterIds: [],
+    excludedCharacterIds: [],
     captainCharacterId: 101,
     friendCaptainCharacterId: 102,
     manualShipId: null,
+    excludedShipIds: [],
     candidateLimit: 1200,
   };
 
@@ -2239,6 +2372,8 @@ function createAutoBuildResult(
         characterIds: [...slot.characterIds],
       })),
       lockedCharacterIds: [...input.lockedCharacterIds],
+      excludedCharacterIds: [...input.excludedCharacterIds],
+      excludedShipIds: [...input.excludedShipIds],
     },
     relaxation: {
       usedFallback: false,

@@ -9,7 +9,6 @@ import {
   type CharacterDetailRecord,
   type DetailedCharacterSearchQuery,
   type CharacterListItem,
-  type CharacterRecord,
   type CharacterSearchQuery,
   type DatasetManifest,
   type OfflinePackSummary,
@@ -263,6 +262,13 @@ export class OptcRepositoryService {
         ),
       ),
     ];
+    const excludedCharacterIds = [
+      ...new Set(
+        (options.excludedCharacterIds ?? []).filter(
+          (characterId) => Number.isInteger(characterId) && characterId > 0,
+        ),
+      ),
+    ];
     const typeClauses = typeFilters.map(() => "(',' || c.type || ',') LIKE ?");
     const queryParams: Array<string | number> = typeFilters.map(
       (typeFilter) => `%,${typeFilter},%`,
@@ -307,10 +313,14 @@ export class OptcRepositoryService {
     );
     const detailedRecords = await this.decorateCharacterDetailRows(rows);
     const allowedCharacterIdSet = allowedCharacterIds.length ? new Set(allowedCharacterIds) : null;
+    const excludedCharacterIdSet = new Set(excludedCharacterIds);
     const lockedCharacterIdSet = new Set(lockedCharacterIds);
     const filteredRecords = allowedCharacterIdSet
-      ? detailedRecords.filter((record) => allowedCharacterIdSet.has(record.id))
-      : detailedRecords;
+      ? detailedRecords.filter(
+          (record) =>
+            allowedCharacterIdSet.has(record.id) && !excludedCharacterIdSet.has(record.id),
+        )
+      : detailedRecords.filter((record) => !excludedCharacterIdSet.has(record.id));
 
     return filteredRecords.filter(
       (record, index) => index < limit || lockedCharacterIdSet.has(record.id),

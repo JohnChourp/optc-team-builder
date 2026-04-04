@@ -205,6 +205,7 @@
     "slotSelection": {
       "activeSummary": "Active slot: {{role}} ({{count}} picks)",
       "assignedTo": "Υπάρχει ήδη στα {{slots}}.",
+      "excluded": "Τα excluded picks δεν μπορούν να μπουν στα τελικά team slots.",
       "noneActive": "Διάλεξε slot για να κάνεις edit."
     },
     "slots": {
@@ -225,10 +226,54 @@
       }
     }
   },
+  "exclude": {
+    "title": "Exclude picks",
+    "copy": "Κράτα χαρακτήρες ή ships έξω από το τελικό αποτέλεσμα χωρίς να αλλάζει η σημασία των υπαρχόντων manual slot locks.",
+    "summary": "{{characters}} excluded characters, {{ships}} excluded ships.",
+    "modes": {
+      "characters": "Character excludes",
+      "ships": "Ship excludes"
+    },
+    "searchPlaceholder": {
+      "characters": "Search by character name in exclude picks"
+    },
+    "candidates": {
+      "countCharacters": "{{count}} character candidates",
+      "countShips": "{{count}} ship candidates",
+      "loading": "Γίνεται φόρτωση excluded candidates..."
+    },
+    "candidatePool": {
+      "default": "Τα exclude picks ακολουθούν τα current page filters.",
+      "filtered": "Τα exclude picks περιορίζονται από τα current filters και τα ability requirements."
+    },
+    "empty": {
+      "loadingCharacters": "Γίνεται φόρτωση excluded candidates...",
+      "noCharacters": "Δεν βρέθηκαν χαρακτήρες που να ταιριάζουν στα current page filters για exclude picks.",
+      "noShips": "Δεν βρέθηκαν ships που να ταιριάζουν στο current ship search."
+    },
+    "actions": {
+      "add": "Exclude",
+      "addShip": "Exclude",
+      "clearCharacters": "Καθαρισμός characters",
+      "clearShips": "Καθαρισμός ships"
+    },
+    "badges": {
+      "ship": "Excluded ship"
+    },
+    "shipSupport": {
+      "default": "Τα excluded ships βγαίνουν και από το manual ship override και από το auto recommendation.",
+      "withCount": "{{count}} ships είναι excluded αυτή τη στιγμή."
+    },
+    "selectionSupport": {
+      "lockedTo": "Υπάρχει ήδη locked στα {{slots}}.",
+      "manualShip": "Αυτό το ship είναι ήδη επιλεγμένο ως manual ship override."
+    }
+  },
   "ships": {
     "autoRecommendation": "Άφησε τον builder να προτείνει το καλύτερο ship για την επιλεγμένη ομάδα.",
     "count": "{{count}} ships ταιριάζουν στο current ship search.",
     "emptySearch": "Δεν βρέθηκαν ships που να ταιριάζουν στο current search.",
+    "excluded": "Τα excluded ships δεν μπορούν να διαλεγούν ως manual ship.",
     "manualBadge": "Manual ship",
     "manualOverride": "Ενεργό manual ship override: {{name}}",
     "searchPlaceholder": "Search ship by name or effect"
@@ -416,8 +461,12 @@
     },
     "warnings": {
       "adjustedAbilities": "Αγνοήθηκαν {{count}} ability requirements με unsupported turns, slot tokens ή character count.",
+      "conflictingExcludedCharacters": "Αγνοήθηκαν {{count}} excluded characters επειδή χρησιμοποιούνται ακόμη από manual slot picks.",
+      "conflictingExcludedShips": "Αγνοήθηκαν {{count}} excluded ships επειδή ήταν ακόμη διαλεγμένα ως manual ship.",
       "invalidLeaders": "Αγνοήθηκαν {{count}} imported leader επιλογές που δεν ταιριάζουν με το current slot setup.",
       "lockedLimitExceeded": "Αγνοήθηκαν {{count}} legacy locked characters επειδή δεν μπορούν να χαρτογραφηθούν στα σημερινά slots.",
+      "missingExcludedCharacters": "Αγνοήθηκαν {{count}} excluded characters που λείπουν από το current dataset.",
+      "missingExcludedShips": "Αγνοήθηκαν {{count}} excluded ships που λείπουν από το current dataset.",
       "missingLockedCharacters": "Αγνοήθηκαν {{count}} locked characters που λείπουν από το current dataset.",
       "missingManualShip": "Αγνοήθηκε {{count}} manual ship επειδή λείπει από το current dataset.",
       "unavailableClasses": "Αγνοήθηκαν {{count}} unavailable imported classes από το preset.",

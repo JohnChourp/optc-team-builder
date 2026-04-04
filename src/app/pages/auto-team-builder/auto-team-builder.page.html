@@ -605,6 +605,10 @@
                     @for (shipCard of shipCandidates(); track shipCard.ship.id) {
                       <article
                         class="manual-candidate-card manual-candidate-card--detailed manual-candidate-card--sidebar ship-candidate-card"
+                        [class.manual-candidate-card--selected]="shipCard.matchesManualSelection"
+                        [class.manual-candidate-card--blocked]="
+                          !shipCard.matchesManualSelection && !shipCard.isSelectableInManualPicker
+                        "
                       >
                         <div class="ship-candidate-icon" aria-hidden="true">
                           <ion-icon [icon]="shipIcon"></ion-icon>
@@ -617,12 +621,20 @@
                               {{ t('ships.manualBadge') }}
                             </small>
                           }
+                          @if (shipCard.manualPickerSupportLabel) {
+                            <small class="manual-candidate-role manual-candidate-role--muted">
+                              {{ shipCard.manualPickerSupportLabel }}
+                            </small>
+                          }
                         </div>
                         <ion-button
                           size="small"
                           fill="outline"
                           color="light"
-                          [disabled]="building()"
+                          [disabled]="
+                            building() ||
+                            (!shipCard.matchesManualSelection && !shipCard.isSelectableInManualPicker)
+                          "
                           (click)="
                             shipCard.matchesManualSelection
                               ? clearManualShipSelection()
@@ -662,6 +674,250 @@
               }
             </div>
           }
+        </section>
+
+        <section class="manual-locks-card">
+          <div class="manual-locks-layout">
+            <div class="manual-locks-overview">
+              <div class="slot-grid__header manual-locks-overview__header">
+                <h2>{{ t('exclude.title') }}</h2>
+                <p>{{ t('exclude.copy') }}</p>
+              </div>
+
+              <div class="manual-locks-meta">
+                <strong>{{ excludedSelectionSummaryLabel() }}</strong>
+                <div class="ability-requirements-actions">
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    class="select-all-button"
+                    [disabled]="building() || !hasExcludedCharacters()"
+                    (click)="clearExcludedCharacters()"
+                  >
+                    {{ t('exclude.actions.clearCharacters') }}
+                  </ion-button>
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    class="select-all-button"
+                    [disabled]="building() || !hasExcludedShips()"
+                    (click)="clearExcludedShips()"
+                  >
+                    {{ t('exclude.actions.clearShips') }}
+                  </ion-button>
+                </div>
+              </div>
+
+              @if (hasExcludedCharacters()) {
+                <div class="selected-values-row manual-selected-row">
+                  @for (character of excludedCharacters(); track character.id) {
+                    <button
+                      type="button"
+                      class="selected-value-chip manual-lock-chip"
+                      [disabled]="building()"
+                      (click)="removeExcludedCharacter(character.id)"
+                    >
+                      <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
+                      {{ character.name }}
+                      <span aria-hidden="true">×</span>
+                    </button>
+                  }
+                </div>
+              }
+
+              @if (hasExcludedShips()) {
+                <div class="selected-values-row manual-selected-row">
+                  @for (ship of excludedShips(); track ship.id) {
+                    <button
+                      type="button"
+                      class="selected-value-chip manual-lock-chip manual-lock-chip--ship"
+                      [disabled]="building()"
+                      (click)="removeExcludedShip(ship.id)"
+                    >
+                      <ion-icon [icon]="shipIcon"></ion-icon>
+                      {{ ship.name }}
+                      <span aria-hidden="true">×</span>
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="manual-locks-search-panel">
+              <div class="manual-panel-toggle">
+                <button
+                  type="button"
+                  class="manual-panel-toggle__button"
+                  [class.manual-panel-toggle__button--active]="excludePickerMode() === 'characters'"
+                  (click)="setExcludePickerMode('characters')"
+                >
+                  {{ t('exclude.modes.characters') }}
+                </button>
+                <button
+                  type="button"
+                  class="manual-panel-toggle__button"
+                  [class.manual-panel-toggle__button--active]="excludePickerMode() === 'ships'"
+                  (click)="setExcludePickerMode('ships')"
+                >
+                  {{ t('exclude.modes.ships') }}
+                </button>
+              </div>
+
+              @if (excludePickerMode() === 'characters') {
+                <ion-searchbar
+                  [debounce]="150"
+                  [placeholder]="t('exclude.searchPlaceholder.characters')"
+                  [value]="excludeCharacterSearchTerm()"
+                  (ionInput)="onExcludeCharacterSearchChange($event)"
+                ></ion-searchbar>
+                <div class="manual-locks-meta manual-locks-meta--candidates">
+                  <strong>{{ excludedCandidatesSummaryLabel() }}</strong>
+                  <small>{{ excludedCandidatePoolSupportLabel() }}</small>
+                </div>
+                @if (excludedCandidatesLoading()) {
+                  <div class="manual-candidate-empty-state">
+                    {{ t('exclude.empty.loadingCharacters') }}
+                  </div>
+                }
+                @if (!excludedCandidatesLoading() && !excludedCharacterCards().length) {
+                  <div class="manual-candidate-empty-state">
+                    {{ t('exclude.empty.noCharacters') }}
+                  </div>
+                }
+                @if (excludedCharacterCards().length) {
+                  <div class="manual-candidate-list manual-candidate-list--sidebar">
+                    @for (
+                      candidateCard of excludedCharacterCards();
+                      track candidateCard.character.id
+                    ) {
+                      <article
+                        class="manual-candidate-card manual-candidate-card--detailed manual-candidate-card--sidebar"
+                        [class.manual-candidate-card--selected]="candidateCard.isExcluded"
+                        [class.manual-candidate-card--blocked]="
+                          !candidateCard.isExcluded && !candidateCard.isSelectable
+                        "
+                      >
+                        <img
+                          [src]="candidateCard.character.imageUrl"
+                          [alt]="candidateCard.character.name"
+                          loading="lazy"
+                        />
+                        <div class="manual-candidate-copy">
+                          <strong>{{ candidateCard.character.name }}</strong>
+                          <span>{{ candidateCard.subtitle }}</span>
+                          @if (candidateCard.favoriteLabel) {
+                            <small class="manual-candidate-role">
+                              {{ candidateCard.favoriteLabel }}
+                            </small>
+                          }
+                          @if (candidateCard.selectionSupportLabel) {
+                            <small class="manual-candidate-role manual-candidate-role--muted">
+                              {{ candidateCard.selectionSupportLabel }}
+                            </small>
+                          }
+                          <div class="chip-row manual-candidate-chip-row">
+                            @for (abilityChip of candidateCard.abilityChips; track $index) {
+                              <small
+                                class="coverage-chip manual-ability-chip"
+                                [class.manual-ability-chip--matched]="abilityChip.highlighted"
+                                [class.manual-ability-chip--empty]="abilityChip.empty"
+                              >
+                                {{ abilityChip.label }}
+                              </small>
+                            }
+                          </div>
+                        </div>
+                        <div class="manual-candidate-actions">
+                          <ion-button
+                            size="small"
+                            fill="clear"
+                            color="warning"
+                            class="detail-link-button"
+                            [routerLink]="getCharacterDetailLink(candidateCard.character)"
+                          >
+                            {{ 'common.actions.viewDetails' | transloco }}
+                          </ion-button>
+                          <ion-button
+                            size="small"
+                            fill="outline"
+                            color="light"
+                            class="manual-candidate-action-button"
+                            [disabled]="building() || (!candidateCard.isExcluded && !candidateCard.isSelectable)"
+                            (click)="toggleExcludedCharacter(candidateCard.character)"
+                          >
+                            {{ candidateCard.actionLabel }}
+                          </ion-button>
+                        </div>
+                      </article>
+                    }
+                  </div>
+                }
+              } @else {
+                <ion-searchbar
+                  [debounce]="150"
+                  [placeholder]="t('ships.searchPlaceholder')"
+                  [value]="excludeShipSearchTerm()"
+                  (ionInput)="onExcludeShipSearchChange($event)"
+                ></ion-searchbar>
+                <div class="manual-locks-meta manual-locks-meta--candidates">
+                  <strong>{{ excludedShipCandidatesSummaryLabel() }}</strong>
+                  <small>{{ excludeShipPickerSupportLabel() }}</small>
+                </div>
+                @if (!excludedShipCandidates().length) {
+                  <div class="manual-candidate-empty-state">
+                    {{ t('exclude.empty.noShips') }}
+                  </div>
+                }
+                @if (excludedShipCandidates().length) {
+                  <div class="manual-candidate-list manual-candidate-list--sidebar">
+                    @for (shipCard of excludedShipCandidates(); track shipCard.ship.id) {
+                      <article
+                        class="manual-candidate-card manual-candidate-card--detailed manual-candidate-card--sidebar ship-candidate-card"
+                        [class.manual-candidate-card--selected]="shipCard.isExcluded"
+                        [class.manual-candidate-card--blocked]="
+                          !shipCard.isExcluded && !shipCard.isSelectableInExcludePicker
+                        "
+                      >
+                        <div class="ship-candidate-icon" aria-hidden="true">
+                          <ion-icon [icon]="shipIcon"></ion-icon>
+                        </div>
+                        <div class="manual-candidate-copy">
+                          <strong>{{ shipCard.ship.name }}</strong>
+                          <span>{{ shipCard.subtitle }}</span>
+                          @if (shipCard.isExcluded) {
+                            <small class="manual-candidate-role">
+                              {{ t('exclude.badges.ship') }}
+                            </small>
+                          }
+                          @if (shipCard.excludePickerSupportLabel) {
+                            <small class="manual-candidate-role manual-candidate-role--muted">
+                              {{ shipCard.excludePickerSupportLabel }}
+                            </small>
+                          }
+                        </div>
+                        <ion-button
+                          size="small"
+                          fill="outline"
+                          color="light"
+                          [disabled]="
+                            building() ||
+                            (!shipCard.isExcluded && !shipCard.isSelectableInExcludePicker)
+                          "
+                          (click)="toggleExcludedShip(shipCard.ship.id)"
+                        >
+                          {{
+                            shipCard.isExcluded
+                              ? ('common.actions.remove' | transloco)
+                              : t('exclude.actions.addShip')
+                          }}
+                        </ion-button>
+                      </article>
+                    }
+                  </div>
+                }
+              }
+            </div>
+          </div>
         </section>
 
         <div class="build-action-row">

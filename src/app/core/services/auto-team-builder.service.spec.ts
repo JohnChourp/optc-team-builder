@@ -1069,6 +1069,29 @@ describe('Auto team builder', () => {
       {
         allowedCharacterIds: undefined,
         lockedCharacterIds: [],
+        excludedCharacterIds: [],
+      },
+    );
+  });
+
+  it('normalizes and forwards excluded character ids to the repository query', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      excludedCharacterIds: [5926, 5926, -1, 0],
+    });
+
+    expect(result?.input.excludedCharacterIds).toEqual([5926]);
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      ['DEX', 'PSY'],
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        allowedCharacterIds: undefined,
+        lockedCharacterIds: [],
+        excludedCharacterIds: [5926],
       },
     );
   });
@@ -1090,6 +1113,7 @@ describe('Auto team builder', () => {
       {
         allowedCharacterIds: undefined,
         lockedCharacterIds: [],
+        excludedCharacterIds: [],
       },
     );
     expect(result?.input.selectedClasses).toEqual(['Fighter', 'Slasher']);
@@ -1111,6 +1135,7 @@ describe('Auto team builder', () => {
       {
         allowedCharacterIds: undefined,
         lockedCharacterIds: [],
+        excludedCharacterIds: [],
       },
     );
   });
@@ -1138,6 +1163,7 @@ describe('Auto team builder', () => {
       {
         allowedCharacterIds: favoriteCharacterIds,
         lockedCharacterIds: [],
+        excludedCharacterIds: [],
       },
     );
   });
@@ -1160,6 +1186,7 @@ describe('Auto team builder', () => {
       {
         allowedCharacterIds: [999_999],
         lockedCharacterIds: [],
+        excludedCharacterIds: [],
       },
     );
   });
@@ -1209,6 +1236,7 @@ describe('Auto team builder', () => {
       {
         allowedCharacterIds: favoriteCharacterIds,
         lockedCharacterIds: [5925, 5900],
+        excludedCharacterIds: [],
       },
     );
   });
@@ -1352,6 +1380,7 @@ describe('Auto team builder', () => {
       {
         allowedCharacterIds: favoriteCharacterIds,
         lockedCharacterIds: [5925],
+        excludedCharacterIds: [],
       },
     );
   });
@@ -1620,8 +1649,10 @@ function createInput(
       | 'favoritesOnly'
       | 'manualSlots'
       | 'lockedCharacterIds'
+      | 'excludedCharacterIds'
       | 'captainCharacterId'
       | 'friendCaptainCharacterId'
+      | 'excludedShipIds'
     >
   > = {
     requireAllSelectedTypesInTeam: false,
@@ -1629,11 +1660,14 @@ function createInput(
     requireAllSpecialsSupportTeam: false,
     favoritesOnly: false,
     lockedCharacterIds: [],
+    excludedCharacterIds: [],
     captainCharacterId: null,
     friendCaptainCharacterId: null,
+    excludedShipIds: [],
   },
 ): AutoBuildInput {
   const lockedCharacterIds = overrides.lockedCharacterIds ?? [];
+  const excludedCharacterIds = overrides.excludedCharacterIds ?? [];
   const captainCharacterId = overrides.captainCharacterId ?? null;
   const friendCaptainCharacterId = overrides.friendCaptainCharacterId ?? null;
 
@@ -1654,9 +1688,11 @@ function createInput(
         friendCaptainCharacterId,
       ),
     lockedCharacterIds,
+    excludedCharacterIds,
     captainCharacterId,
     friendCaptainCharacterId,
     manualShipId: null,
+    excludedShipIds: overrides.excludedShipIds ?? [],
     candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
   };
 }

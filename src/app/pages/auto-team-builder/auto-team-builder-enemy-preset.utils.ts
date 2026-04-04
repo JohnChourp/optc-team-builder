@@ -32,8 +32,10 @@ export function buildAutoTeamBuilderStateFromSavedEnemy(
     favoritesOnly: false,
     manualSlots: createEmptyAutoBuildManualSlots(),
     lockedCharacterIds: [],
+    excludedCharacterIds: [],
     selectedLeaderIds: [],
     captainLeaderId: null,
     manualShipId: null,
+    excludedShipIds: [],
   };
 }

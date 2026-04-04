@@ -97,11 +97,14 @@ export function resolveAutoBuildShipSelection(
   result: Pick<AutoBuildResult, 'slots' | 'input'>,
   ships: ShipRecord[],
 ): AutoBuildShipSelection | null {
-  if (!ships.length) {
+  const excludedShipIdSet = new Set(result.input.excludedShipIds ?? []);
+  const eligibleShips = ships.filter((ship) => !excludedShipIdSet.has(ship.id));
+
+  if (!eligibleShips.length) {
     return null;
   }
 
-  const manualShip = ships.find((ship) => ship.id === result.input.manualShipId);
+  const manualShip = eligibleShips.find((ship) => ship.id === result.input.manualShipId);
 
   if (manualShip) {
     const analysis = analyzeShipForResult(manualShip, result);
@@ -113,7 +116,7 @@ export function resolveAutoBuildShipSelection(
     };
   }
 
-  const [recommendedShip] = ships
+  const [recommendedShip] = eligibleShips
     .map<RecommendedShipCandidate>((ship) => ({
       ship,
       analysis: analyzeShipForResult(ship, result),

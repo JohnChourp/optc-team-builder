@@ -73,6 +73,19 @@ describe('OptcRepositoryService', () => {
     );
     expect(result[0]?.type).toBe('DEX,INT');
   });
+
+  it('filters excluded character ids out of the candidate pool before the final limit', async () => {
+    const service = createRepositoryService([
+      createCharacterRow({ id: 4102, type: 'DEX' }),
+      createCharacterRow({ id: 4101, type: 'DEX' }),
+    ]);
+
+    const result = await service.getAutoBuilderCandidates(['DEX'], 1200, {
+      excludedCharacterIds: [4102],
+    });
+
+    expect(result.map((record) => record.id)).toEqual([4101]);
+  });
 });
 
 function createRepositoryService(rows: TestSqlRow[]): OptcRepositoryService {
