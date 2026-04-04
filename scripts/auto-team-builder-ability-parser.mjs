@@ -8,6 +8,18 @@ const EXPLICIT_BUILDER_ABILITIES = [
     label: 'Ignore Normal Attack Only (NAO)',
     matcher: (text) => /\bignoring normal attack only\b/i.test(text),
   },
+  {
+    key: 'deal_fixed_damage',
+    label: 'Deal Fixed Damage',
+    matcher: (text) => /\bdeals?\b[^.]*\bfixed(?: true)? damage\b/i.test(text),
+  },
+  {
+    key: 'inflict_poison',
+    label: 'Inflict Poison',
+    matcher: (text) =>
+      /\binflicts?\b[^.]*\b(?:poison|strong poison|toxic|venom)\b/i.test(text) ||
+      /\bpoisons?\b[^.]*\benemies?\b/i.test(text),
+  },
 ];
 const IGNORED_TARGET_PATTERNS = [
   'special cooldown',

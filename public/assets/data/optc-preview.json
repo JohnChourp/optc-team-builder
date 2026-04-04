@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-04T04:27:28.300Z",
+  "generatedAt": "2026-04-04T04:55:37.227Z",
   "characters": [
     {
       "id": 1,
@@ -2743,7 +2743,17 @@
         "specialName": "Diable Jambe",
         "specialText": "Deals 5,000 Fixed damage to all enemies",
         "specialNotes": "#{fixed}",
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "deal_fixed_damage",
+            "label": "Deal Fixed Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [
           "Makes [RCV] orbs beneficial for all characters. Boosts base ATK, HP and RCV of all characters by 40"
         ],

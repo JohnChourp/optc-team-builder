@@ -28,6 +28,31 @@
     "createTitle": "Δημιουργία saved enemy",
     "editEyebrow": "Ενημέρωση εχθρού",
     "editTitle": "Επεξεργασία saved enemy",
+    "import": {
+      "title": "Import enemy JSON",
+      "copy": "Φόρτωσε JSON preset από το OPTC enemy import skill. Οι imported τιμές αντικαθιστούν το current draft και αποθηκεύονται μόνο όταν πατήσεις save.",
+      "actions": {
+        "open": "Import enemy"
+      },
+      "processing": "Γίνεται import του enemy preset...",
+      "success": "Το enemy preset φορτώθηκε στο draft του editor.",
+      "errors": {
+        "invalidJson": "Το επιλεγμένο αρχείο δεν είναι έγκυρο JSON.",
+        "invalidPayload": "Το επιλεγμένο αρχείο δεν ταιριάζει με το enemy import schema.",
+        "unsupportedSchema": "Αυτό το enemy import schema δεν υποστηρίζεται.",
+        "invalidType": "Επίλεξε JSON αρχείο που έχει εξαχθεί από το enemy import skill.",
+        "loadFailed": "Το enemy preset δεν μπόρεσε να γίνει import."
+      },
+      "warnings": {
+        "unavailableTypes": "{{count}} τιμές type αγνοήθηκαν.",
+        "defaultedTypes": "Τα type filters ορίστηκαν αυτόματα σε όλα τα διαθέσιμα types.",
+        "unavailableClasses": "{{count}} τιμές class αγνοήθηκαν.",
+        "defaultedClasses": "Τα class filters ορίστηκαν αυτόματα σε όλα τα διαθέσιμα classes.",
+        "unsupportedAbilities": "{{count}} ability requirements αγνοήθηκαν.",
+        "adjustedAbilities": "{{count}} ability requirements προσαρμόστηκαν στο current catalog.",
+        "unsupportedMechanics": "{{count}} enemy mechanics αγνοήθηκαν."
+      }
+    },
     "image": {
       "copy": "Ανέβασε τοπική εικόνα enemy μόνο για preview στη saved enemies σελίδα.",
       "empty": "Δεν έχει οριστεί ακόμα εικόνα enemy.",

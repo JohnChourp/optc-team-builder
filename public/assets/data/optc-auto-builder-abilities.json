@@ -1,8 +1,37 @@
 {
-  "generatedAt": "2026-04-04T04:27:28.300Z",
+  "generatedAt": "2026-04-04T04:55:37.227Z",
   "sourceVersion": "unknown",
-  "abilityCount": 30,
+  "abilityCount": 32,
   "abilities": [
+    {
+      "key": "deal_fixed_damage",
+      "label": "Deal Fixed Damage",
+      "supportsTurns": false,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "availableSources": [
+        "captainAbility",
+        "specialText"
+      ],
+      "availableCoverageModes": [
+        "explicit"
+      ],
+      "matchCount": 238,
+      "sampleCharacterIds": [
+        20,
+        230,
+        254,
+        255,
+        311
+      ],
+      "sampleTexts": [
+        "Deals 5,000 Fixed damage to all enemies",
+        "Deals 200 Fixed damage to one enemy",
+        "Deals 5,000 Fixed damage to all enemies",
+        "Deals 5,000 Fixed damage to all enemies",
+        "Deals 100x character's ATK in Fixed damage to one enemy, reduces crew's current HP to 1"
+      ]
+    },
     {
       "key": "ignore_normal_attack_only",
       "label": "Ignore Normal Attack Only (NAO)",
@@ -30,6 +59,35 @@
         "Deals 30% of enemies' current HP in True damage to all enemies, reduces Bind duration by 5 turns and changes [BLOCK] orbs into Matching orbs.. Reduces Bind and ATK DOWN duration by 6 turns and changes [BLOCK] orbs into Matching orbs. If your crew has Normal Attack Only when the special is activated, deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2.25x for 2 turns; deals 30% of enemies' current HP in True damage to all enemies otherwise.",
         "Deals 30% of enemies' current HP in True damage to all enemies, reduces Bind duration by 5 turns and changes [BLOCK] orbs into Matching orbs.. Reduces Bind and ATK DOWN duration by 6 turns and changes [BLOCK] orbs into Matching orbs. If your crew has Normal Attack Only when the special is activated, deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2.25x for 2 turns; deals 30% of enemies' current HP in True damage to all enemies otherwise.",
         "Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated. If this character is your Captain/Friend Captain, increases duration of any Orb Amplification buffs by 1 turn."
+      ]
+    },
+    {
+      "key": "inflict_poison",
+      "label": "Inflict Poison",
+      "supportsTurns": false,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "availableSources": [
+        "captainAbility",
+        "specialText"
+      ],
+      "availableCoverageModes": [
+        "explicit"
+      ],
+      "matchCount": 65,
+      "sampleCharacterIds": [
+        58,
+        215,
+        391,
+        392,
+        437
+      ],
+      "sampleTexts": [
+        "Poisons all enemies",
+        "Poisons all enemies",
+        "Reduces damage received by 90% for 1 turn, reduces the defense of all enemies by 80% for 1 turn, Poisons enemies for 1,000 damage for 1 turn",
+        "Reduces damage received by 90% for 1 turn, reduces the defense of all enemies by 80% for 1 turn, Poisons enemies for 1,000 damage for 1 turn",
+        "Recovers 3x character's RCV in HP, reduces damage received by 80% for 1 turn, Poisons enemies for 1,000 for a single turn"
       ]
     },
     {

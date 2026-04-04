@@ -181,6 +181,81 @@ describe('SavedEnemiesPage', () => {
     expect(page.editorOpen()).toBe(false);
   });
 
+  it('imports an enemy preset into the current editor draft without auto-saving', async () => {
+    const { page, userState } = createPage();
+    const originalEnemy = buildSavedEnemies()[0]!;
+
+    await page.ngOnInit();
+    page.openEditModal(page.savedEnemies()[0]!);
+    stubFileReaderTextResult(
+      JSON.stringify({
+        schemaVersion: 1,
+        source: 'optc-enemy-skill',
+        exportType: 'enemy',
+        enemy: {
+          name: ' Red Cloth Bundle ',
+          notes: ' Bring fixed damage or poison. ',
+          selectedTypes: ['STR'],
+          selectedClasses: ['Slasher'],
+          requiredAbilities: [
+            {
+              abilityKey: 'remove_bind',
+              minTurns: 5,
+              requiredCharacterCount: 1,
+            },
+          ],
+          enemyMechanics: [
+            {
+              mechanicKey: 'enemy_increased_defense',
+              category: 'enemyDefense',
+              minTurns: 99,
+            },
+          ],
+          requireAllSpecialsSupportTeam: true,
+        },
+      }),
+    );
+
+    await page.onEnemyImportSelected(
+      createFileEvent(new File(['enemy'], 'red-cloth-bundle.json', { type: 'application/json' })),
+      { value: '' } as HTMLInputElement,
+    );
+
+    expect(page.enemyName()).toBe('Red Cloth Bundle');
+    expect(page.enemyNotes()).toBe('Bring fixed damage or poison.');
+    expect(page.enemyImageDataUrl()).toBe(originalEnemy.imageDataUrl);
+    expect(page.selectedTypes()).toEqual(['STR']);
+    expect(page.selectedClasses()).toEqual(['Slasher']);
+    expect(page.enemyMechanicDrafts()).toHaveLength(1);
+    expect(page.requiredAbilityDrafts()).toEqual([
+      expect.objectContaining({
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+      }),
+    ]);
+    expect(page.requireAllSpecialsSupportTeam()).toBe(true);
+    expect(page.enemyImportErrorMessage()).toBe('');
+    expect(page.enemyImportFeedbackMessage()).toBeTruthy();
+    expect(userState.saveEnemy).not.toHaveBeenCalled();
+  });
+
+  it('keeps the current editor state when enemy import fails', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    page.openEditModal(page.savedEnemies()[0]!);
+    stubFileReaderTextResult('{"schemaVersion":2}');
+
+    await page.onEnemyImportSelected(
+      createFileEvent(new File(['enemy'], 'bad-enemy.json', { type: 'application/json' })),
+      { value: '' } as HTMLInputElement,
+    );
+
+    expect(page.enemyName()).toBe('Forest Boss');
+    expect(page.selectedTypes()).toEqual(['DEX', 'PSY']);
+    expect(page.enemyImportErrorMessage()).toBe('Unsupported import schema');
+  });
+
   it('removes the currently selected enemy image from the editor state', () => {
     const { page } = createPage();
 
@@ -217,7 +292,9 @@ describe('SavedEnemiesPage', () => {
 
     expect(template).toContain("t('hero.createCta')");
     expect(template).toContain("t('actions.openBuilder')");
+    expect(template).toContain("t('editor.import.actions.open')");
     expect(template).toContain("t('editor.image.title')");
+    expect(template).toContain('onEnemyImportSelected($event, enemyImportInput)');
     expect(template).toContain('onEnemyImageSelected($event, enemyImageInput)');
     expect(template).toContain('[queryParams]="getEnemyBuilderQueryParams(enemy)"');
     expect(template).toContain('(click)="selectAllTypes()"');
@@ -337,6 +414,14 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
         return 'Clear class selection';
       }
 
+      if (key === 'editor.import.success') {
+        return 'Enemy preset imported';
+      }
+
+      if (key === 'editor.import.errors.unsupportedSchema') {
+        return 'Unsupported import schema';
+      }
+
       return key;
     }),
   };
@@ -401,4 +486,28 @@ function buildSavedEnemies() {
       updatedAt: '2026-03-30T10:15:00.000Z',
     },
   ];
+}
+
+function createFileEvent(file: File): Event {
+  return {
+    target: {
+      files: [file],
+    },
+  } as unknown as Event;
+}
+
+function stubFileReaderTextResult(result: string): void {
+  class MockFileReader {
+    public result: string | null = null;
+    public error: Error | null = null;
+    public onload: null | (() => void) = null;
+    public onerror: null | (() => void) = null;
+
+    public readAsText(): void {
+      this.result = result;
+      this.onload?.();
+    }
+  }
+
+  vi.stubGlobal('FileReader', MockFileReader);
 }

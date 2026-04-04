@@ -220,6 +220,64 @@
             (change)="onEnemyImageSelected($event, enemyImageInput)"
           />
 
+          <input
+            #enemyImportInput
+            type="file"
+            accept=".json,application/json"
+            hidden
+            (change)="onEnemyImportSelected($event, enemyImportInput)"
+          />
+
+          <section class="enemy-import-card">
+            <div class="section-head section-head--editor">
+              <div>
+                <h3>{{ t('editor.import.title') }}</h3>
+                <span>{{ t('editor.import.copy') }}</span>
+              </div>
+
+              <div class="card-actions">
+                <ion-button
+                  fill="outline"
+                  color="warning"
+                  size="small"
+                  [disabled]="savingEnemy() || importingEnemy()"
+                  (click)="openEnemyImportPicker(enemyImportInput)"
+                >
+                  {{ t('editor.import.actions.open') }}
+                </ion-button>
+              </div>
+            </div>
+
+            @if (enemyImportFileName()) {
+              <div class="import-file-chip">
+                <span>{{ enemyImportFileName() }}</span>
+              </div>
+            }
+
+            @if (importingEnemy()) {
+              <div class="import-feedback import-feedback--progress">
+                <ion-spinner name="crescent"></ion-spinner>
+                <span>{{ t('editor.import.processing') }}</span>
+              </div>
+            }
+
+            @if (enemyImportFeedbackMessage()) {
+              <div
+                class="import-feedback"
+                [class.import-feedback--warning]="enemyImportHasWarnings()"
+                [class.import-feedback--success]="!enemyImportHasWarnings()"
+              >
+                <span>{{ enemyImportFeedbackMessage() }}</span>
+              </div>
+            }
+
+            @if (enemyImportErrorMessage()) {
+              <div class="import-feedback import-feedback--error">
+                <span>{{ enemyImportErrorMessage() }}</span>
+              </div>
+            }
+          </section>
+
           <section class="enemy-image-card">
             <div class="section-head section-head--editor">
               <div>

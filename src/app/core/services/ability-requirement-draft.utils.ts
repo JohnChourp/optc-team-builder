@@ -67,6 +67,16 @@ const FALLBACK_ABILITY_VISUAL: AbilityRequirementVisualMeta = {
 };
 
 const ABILITY_VISUALS: Record<string, Omit<AbilityRequirementVisualMeta, "isFallback">> = {
+  deal_fixed_damage: {
+    icon: pulseOutline,
+    badge: "FIX",
+    tone: "orange",
+  },
+  inflict_poison: {
+    icon: flaskOutline,
+    badge: "POI",
+    tone: "green",
+  },
   ignore_normal_attack_only: {
     icon: banOutline,
     badge: "NAO",

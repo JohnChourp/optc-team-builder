@@ -272,15 +272,17 @@ describe('auto team builder ability parser', () => {
         'Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies.',
         'specialText',
       ),
-    ).toEqual([
-      expect.objectContaining({
-        key: 'ignore_normal_attack_only',
-        label: 'Ignore Normal Attack Only (NAO)',
-        minTurns: null,
-        slotTokens: [],
-        source: 'specialText',
-      }),
-    ]);
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'ignore_normal_attack_only',
+          label: 'Ignore Normal Attack Only (NAO)',
+          minTurns: null,
+          slotTokens: [],
+          source: 'specialText',
+        }),
+      ]),
+    );
   });
 
   it('extracts explicit NAO bypass from captain text', () => {
@@ -297,6 +299,40 @@ describe('auto team builder ability parser', () => {
     ]);
   });
 
+  it('extracts fixed damage coverage from special text', () => {
+    expect(
+      analyzeBuilderAbilityText(
+        'Deals 100,000 Fixed damage to one enemy and removes ATK DOWN duration completely.',
+        'specialText',
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'deal_fixed_damage',
+          label: 'Deal Fixed Damage',
+          minTurns: null,
+          source: 'specialText',
+        }),
+      ]),
+    );
+  });
+
+  it('extracts poison coverage from poison and toxic effects', () => {
+    expect(
+      analyzeBuilderAbilityText(
+        'Inflicts Toxic to all enemies and poisons all enemies for 1 turn.',
+        'specialText',
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        key: 'inflict_poison',
+        label: 'Inflict Poison',
+        minTurns: null,
+        source: 'specialText',
+      }),
+    ]);
+  });
+
   it('extracts explicit NAO bypass from nested upgrade branches', () => {
     expect(
       analyzeBuilderAbilityText(
@@ -307,12 +343,14 @@ describe('auto team builder ability parser', () => {
         },
         'specialText',
       ),
-    ).toEqual([
-      expect.objectContaining({
-        key: 'ignore_normal_attack_only',
-        source: 'specialText',
-      }),
-    ]);
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'ignore_normal_attack_only',
+          source: 'specialText',
+        }),
+      ]),
+    );
   });
 
   it('does not treat NAO condition checks as bypass', () => {

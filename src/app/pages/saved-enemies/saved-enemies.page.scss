@@ -232,6 +232,7 @@
   background: rgba(255, 255, 255, 0.03);
 }
 
+.enemy-import-card,
 .enemy-image-card {
   display: grid;
   gap: 14px;
@@ -280,6 +281,56 @@
   margin: 0;
   color: #ff9b9b;
   line-height: 1.5;
+}
+
+.import-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(76, 201, 240, 0.12);
+  color: #d8f7ff;
+}
+
+.import-file-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.import-feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 22px;
+}
+
+.import-feedback span {
+  color: rgba(248, 251, 255, 0.78);
+  line-height: 1.6;
+}
+
+.import-feedback--progress {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.import-feedback--success {
+  background: rgba(76, 201, 240, 0.1);
+  border: 1px solid rgba(76, 201, 240, 0.22);
+}
+
+.import-feedback--warning {
+  background: rgba(245, 200, 76, 0.12);
+  border: 1px solid rgba(245, 200, 76, 0.26);
+}
+
+.import-feedback--error {
+  background: rgba(255, 107, 107, 0.12);
+  border: 1px solid rgba(255, 107, 107, 0.26);
 }
 
 .section-head--editor {

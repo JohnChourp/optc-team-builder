@@ -53,6 +53,13 @@ import {
   type EnemyMechanicDraft,
   type EnemyMechanicVisualMeta,
 } from '../../core/services/enemy-mechanic-draft.utils';
+import {
+  EnemyImportError,
+  parseEnemyImportPayload,
+  sanitizeEnemyImportPayload,
+  type EnemyImportMessage,
+  type ImportedEnemyDraft,
+} from './saved-enemies-import.utils';
 
 interface SavedEnemyAbilitySummaryChipView {
   draftId: string;
@@ -106,6 +113,11 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public readonly enemyImageDataUrl = signal<string | null>(null);
   public readonly enemyImageErrorMessage = signal('');
   public readonly processingEnemyImage = signal(false);
+  public readonly importingEnemy = signal(false);
+  public readonly enemyImportFileName = signal('');
+  public readonly enemyImportFeedbackMessage = signal('');
+  public readonly enemyImportHasWarnings = signal(false);
+  public readonly enemyImportErrorMessage = signal('');
   public readonly selectedTypes = signal<string[]>([]);
   public readonly selectedClasses = signal<string[]>([]);
   public readonly enemyMechanicDrafts = signal<EnemyMechanicDraft[]>([]);
@@ -230,6 +242,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.enemyImageDataUrl.set(null);
     this.enemyImageErrorMessage.set('');
     this.processingEnemyImage.set(false);
+    this.resetImportState();
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
     this.selectedTypes.set(['DEX']);
@@ -250,6 +263,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.enemyImageDataUrl.set(enemy.imageDataUrl);
     this.enemyImageErrorMessage.set('');
     this.processingEnemyImage.set(false);
+    this.resetImportState();
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
     this.selectedTypes.set([...enemy.selectedTypes]);
@@ -278,6 +292,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.savingEnemy.set(false);
     this.enemyImageErrorMessage.set('');
     this.processingEnemyImage.set(false);
+    this.resetImportState();
   }
 
   public onEnemyNameChange(event: CustomEvent<{ value?: string | null }>): void {
@@ -296,6 +311,14 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     input.click();
   }
 
+  public openEnemyImportPicker(input: HTMLInputElement): void {
+    if (this.savingEnemy() || this.importingEnemy()) {
+      return;
+    }
+
+    input.click();
+  }
+
   public async onEnemyImageSelected(event: Event, input: HTMLInputElement): Promise<void> {
     const target = event.target as HTMLInputElement;
     const [file] = Array.from(target.files ?? []);
@@ -307,6 +330,19 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     }
 
     await this.loadEnemyImage(file);
+  }
+
+  public async onEnemyImportSelected(event: Event, input: HTMLInputElement): Promise<void> {
+    const target = event.target as HTMLInputElement;
+    const [file] = Array.from(target.files ?? []);
+
+    input.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    await this.importEnemyPreset(file);
   }
 
   public removeEnemyImage(): void {
@@ -527,6 +563,87 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     ]);
   }
 
+  private async importEnemyPreset(file: File): Promise<void> {
+    if (!this.isEnemyImportFile(file)) {
+      this.enemyImportErrorMessage.set(
+        this.i18n.translate('editor.import.errors.invalidType', undefined, 'saved-enemies'),
+      );
+      this.enemyImportFeedbackMessage.set('');
+      this.enemyImportHasWarnings.set(false);
+      this.enemyImportFileName.set(file.name);
+      return;
+    }
+
+    this.importingEnemy.set(true);
+    this.enemyImportFileName.set(file.name);
+    this.enemyImportFeedbackMessage.set('');
+    this.enemyImportHasWarnings.set(false);
+    this.enemyImportErrorMessage.set('');
+
+    try {
+      const rawContent = await this.readFileAsText(file);
+      const payload = parseEnemyImportPayload(rawContent);
+      const result = sanitizeEnemyImportPayload(payload, {
+        untitledEnemyName: this.i18n.translate('common.defaults.untitledEnemy'),
+        currentImageDataUrl: this.enemyImageDataUrl(),
+        availableTypes: this.availableTypes,
+        availableClasses: this.availableClasses(),
+        abilityCatalogItems: this.availableAbilityCatalogItems(),
+      });
+
+      this.applyImportedEnemyDraft(result.enemy);
+      this.enemyImportHasWarnings.set(result.warnings.length > 0);
+      this.enemyImportFeedbackMessage.set(this.buildEnemyImportFeedbackMessage(result.warnings));
+    } catch (error) {
+      const errorKey =
+        error instanceof EnemyImportError
+          ? error.key
+          : 'editor.import.errors.loadFailed';
+
+      this.enemyImportErrorMessage.set(
+        this.i18n.translate(errorKey, undefined, 'saved-enemies'),
+      );
+    } finally {
+      this.importingEnemy.set(false);
+    }
+  }
+
+  private applyImportedEnemyDraft(enemy: ImportedEnemyDraft): void {
+    this.enemyName.set(enemy.name);
+    this.enemyNotes.set(enemy.notes);
+    this.enemyImageDataUrl.set(enemy.imageDataUrl);
+    this.selectedTypes.set([...enemy.selectedTypes]);
+    this.selectedClasses.set([...enemy.selectedClasses]);
+    this.enemyMechanicDrafts.set(createEnemyMechanicDrafts(enemy.enemyMechanics));
+    this.requiredAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        splitManualAbilityRequirementsFromEnemyMechanics(
+          enemy.requiredAbilities,
+          enemy.enemyMechanics,
+        ),
+      ),
+    );
+    this.requireAllSelectedTypesInTeam.set(enemy.requireAllSelectedTypesInTeam);
+    this.requireAllSelectedClassesPerCharacter.set(enemy.requireAllSelectedClassesPerCharacter);
+    this.requireAllSpecialsSupportTeam.set(enemy.requireAllSpecialsSupportTeam);
+  }
+
+  private buildEnemyImportFeedbackMessage(warnings: EnemyImportMessage[]): string {
+    const successMessage = this.i18n.translate('editor.import.success', undefined, 'saved-enemies');
+
+    if (!warnings.length) {
+      return successMessage;
+    }
+
+    return [successMessage, ...warnings.map((warning) => this.translateImportWarning(warning))]
+      .filter((value) => value.length > 0)
+      .join(' ');
+  }
+
+  private translateImportWarning(warning: EnemyImportMessage): string {
+    return this.i18n.translate(warning.key, warning.params, 'saved-enemies');
+  }
+
   private async loadEnemyImage(file: File): Promise<void> {
     if (!file.type.startsWith('image/')) {
       this.enemyImageErrorMessage.set(
@@ -572,6 +689,23 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     });
   }
 
+  private readFileAsText(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result);
+          return;
+        }
+
+        reject(new Error('Unable to read text data.'));
+      };
+      reader.onerror = () => reject(reader.error ?? new Error('Unable to read text data.'));
+      reader.readAsText(file);
+    });
+  }
+
   private resizeImageDataUrl(imageDataUrl: string, maxDimension: number): Promise<string> {
     return new Promise((resolve, reject) => {
       const image = new Image();
@@ -610,5 +744,17 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
   private confirmDelete(message: string): boolean {
     return typeof globalThis.confirm === 'function' ? globalThis.confirm(message) : false;
+  }
+
+  private isEnemyImportFile(file: File): boolean {
+    return file.type.includes('json') || file.name.toLowerCase().endsWith('.json');
+  }
+
+  private resetImportState(): void {
+    this.importingEnemy.set(false);
+    this.enemyImportFileName.set('');
+    this.enemyImportFeedbackMessage.set('');
+    this.enemyImportHasWarnings.set(false);
+    this.enemyImportErrorMessage.set('');
   }
 }

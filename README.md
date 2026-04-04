@@ -64,20 +64,27 @@ Build and sync the native projects:
 npm run build:mobile
 ```
 
+One-time Android signing setup:
+
+```bash
+./scripts/setup-release-signing.sh
+source ~/.android/optc-team-builder/release-signing.env
+```
+
 Create a signed Android GitHub release locally:
 
 ```bash
 ~/.codex/skills/optc-team-builder-android-release/scripts/run_release.sh --bump patch
 ```
 
-Required signing env vars:
+The release skill auto-loads `~/.android/optc-team-builder/release-signing.env` and, if needed, runs `./scripts/setup-release-signing.sh` before continuing with the existing release flow.
 
-```bash
-export ANDROID_SIGNING_STORE_FILE=/absolute/path/to/keystore.jks
-export ANDROID_SIGNING_STORE_PASSWORD=...
-export ANDROID_SIGNING_KEY_ALIAS=...
-export ANDROID_SIGNING_KEY_PASSWORD=...
-```
+The local signing env contract remains:
+
+- `ANDROID_SIGNING_STORE_FILE`
+- `ANDROID_SIGNING_STORE_PASSWORD`
+- `ANDROID_SIGNING_KEY_ALIAS`
+- `ANDROID_SIGNING_KEY_PASSWORD`
 
 ## Generated assets
 
