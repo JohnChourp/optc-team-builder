@@ -4,7 +4,24 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('./saved-enemies-transfer.utils', async () => {
+  const actual = await vi.importActual<typeof import('./saved-enemies-transfer.utils')>(
+    './saved-enemies-transfer.utils',
+  );
+
+  return {
+    ...actual,
+    downloadSavedEnemiesExport: vi.fn(),
+  };
+});
+
+import { downloadSavedEnemiesExport } from './saved-enemies-transfer.utils';
 import { SavedEnemiesPage } from './saved-enemies.page';
+
+type SavedEnemiesPagePrivateApi = SavedEnemiesPage & {
+  readImageUrlAsDataUrl: (imageUrl: string) => Promise<string>;
+  resizeImageDataUrl: (imageDataUrl: string, maxDimension: number) => Promise<string>;
+};
 
 vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
@@ -27,6 +44,7 @@ vi.mock('@ionic/angular/standalone', () => ({
 
 describe('SavedEnemiesPage', () => {
   afterEach(() => {
+    vi.clearAllMocks();
     vi.unstubAllGlobals();
   });
 
@@ -126,6 +144,19 @@ describe('SavedEnemiesPage', () => {
 
     expect(page.abilityPickerOpen()).toBe(false);
     expect(page.requiredAbilityDrafts()).toEqual([]);
+  });
+
+  it('opens and closes the character image picker from the editor state', () => {
+    const { page } = createPage();
+
+    page.openCreateModal();
+    page.openCharacterImagePicker();
+
+    expect(page.characterImagePickerOpen()).toBe(true);
+
+    page.closeCharacterImagePicker();
+
+    expect(page.characterImagePickerOpen()).toBe(false);
   });
 
   it('saves an enemy preset through user state', async () => {
@@ -265,6 +296,43 @@ describe('SavedEnemiesPage', () => {
     expect(page.enemyImageDataUrl()).toBeNull();
   });
 
+  it('applies the selected character image as an enemy snapshot', async () => {
+    const { page } = createPage();
+    const pageWithPrivateApi = page as SavedEnemiesPagePrivateApi;
+
+    page.openCreateModal();
+    page.openCharacterImagePicker();
+    vi.spyOn(pageWithPrivateApi, 'readImageUrlAsDataUrl').mockResolvedValue(
+      'data:image/png;base64,cmF3LWNoYXJhY3Rlcg==',
+    );
+    vi.spyOn(pageWithPrivateApi, 'resizeImageDataUrl').mockResolvedValue(
+      'data:image/jpeg;base64,c25hcHNob3Q=',
+    );
+
+    await page.applyCharacterImageSelection(buildCharacter(101, 'Monkey D. Luffy'));
+
+    expect(page.enemyImageDataUrl()).toBe('data:image/jpeg;base64,c25hcHNob3Q=');
+    expect(page.characterImagePickerOpen()).toBe(false);
+    expect(page.enemyImageErrorMessage()).toBe('');
+  });
+
+  it('keeps the current enemy image when character snapshot conversion fails', async () => {
+    const { page } = createPage();
+    const pageWithPrivateApi = page as SavedEnemiesPagePrivateApi;
+
+    page.openEditModal(page.savedEnemies()[0]!);
+    page.openCharacterImagePicker();
+    vi.spyOn(pageWithPrivateApi, 'readImageUrlAsDataUrl').mockRejectedValue(
+      new Error('load failed'),
+    );
+
+    await page.applyCharacterImageSelection(buildCharacter(202, 'Roronoa Zoro'));
+
+    expect(page.enemyImageDataUrl()).toBe('data:image/jpeg;base64,Zm9yZXN0LWJvc3M=');
+    expect(page.characterImagePickerOpen()).toBe(true);
+    expect(page.enemyImageErrorMessage()).toBe('Selected character image failed');
+  });
+
   it('deletes a saved enemy after confirmation', async () => {
     const confirmSpy = vi.fn().mockReturnValue(true);
     vi.stubGlobal('confirm', confirmSpy);
@@ -274,6 +342,37 @@ describe('SavedEnemiesPage', () => {
 
     expect(confirmSpy).toHaveBeenCalledOnce();
     expect(userState.deleteEnemy).toHaveBeenCalledWith('enemy-1');
+  });
+
+  it('exports a single saved enemy card as a saved-enemies payload', () => {
+    const { page } = createPage();
+
+    page.exportEnemy(page.savedEnemies()[0]!);
+
+    expect(vi.mocked(downloadSavedEnemiesExport)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        schemaVersion: 1,
+        source: 'saved-enemies',
+        enemies: [expect.objectContaining({ id: 'enemy-1' })],
+      }),
+    );
+  });
+
+  it('exports all saved enemies together as a saved-enemies payload', () => {
+    const { page } = createPage();
+
+    page.exportAllEnemies();
+
+    expect(vi.mocked(downloadSavedEnemiesExport)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        schemaVersion: 1,
+        source: 'saved-enemies',
+        enemies: [
+          expect.objectContaining({ id: 'enemy-1' }),
+          expect.objectContaining({ id: 'enemy-2' }),
+        ],
+      }),
+    );
   });
 
   it('builds the correct builder query params for a saved enemy', () => {
@@ -291,11 +390,17 @@ describe('SavedEnemiesPage', () => {
     );
 
     expect(template).toContain("t('hero.createCta')");
+    expect(template).toContain("t('actions.export')");
     expect(template).toContain("t('actions.openBuilder')");
+    expect(template).toContain("t('list.exportAll')");
     expect(template).toContain("t('editor.import.actions.open')");
     expect(template).toContain("t('editor.image.title')");
+    expect(template).toContain("t('editor.image.chooseCharacter')");
+    expect(template).toContain('(click)="exportEnemy(enemy)"');
+    expect(template).toContain('(click)="exportAllEnemies()"');
     expect(template).toContain('onEnemyImportSelected($event, enemyImportInput)');
     expect(template).toContain('onEnemyImageSelected($event, enemyImageInput)');
+    expect(template).toContain('(click)="openCharacterImagePicker()"');
     expect(template).toContain('[queryParams]="getEnemyBuilderQueryParams(enemy)"');
     expect(template).toContain('(click)="selectAllTypes()"');
     expect(template).toContain('(click)="selectAllClasses()"');
@@ -306,6 +411,7 @@ describe('SavedEnemiesPage', () => {
     expect(template).toContain('editor.toggles.specials');
     expect(template).toContain('<app-enemy-mechanic-picker');
     expect(template).toContain('<app-ability-requirement-picker');
+    expect(template).toContain('<app-character-image-picker');
     expect(template).not.toContain("resolveAbilityCatalogItem(draft.abilityKey)?.label");
   });
 });
@@ -374,6 +480,7 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
         },
       ],
     }),
+    searchCharacters: vi.fn().mockResolvedValue([]),
   };
   const i18n = {
     preloadScope: vi.fn().mockResolvedValue(undefined),
@@ -422,12 +529,50 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
         return 'Unsupported import schema';
       }
 
+      if (key === 'editor.image.errors.characterLoadFailed') {
+        return 'Selected character image failed';
+      }
+
       return key;
     }),
   };
   const page = new SavedEnemiesPage(userState as never, repository as never, i18n as never);
 
   return { page, repository, userState };
+}
+
+function buildCharacter(id: number, name = `Character ${id}`) {
+  return {
+    id,
+    name,
+    type: id % 2 === 0 ? 'STR' : 'DEX',
+    primaryClass: 'Fighter',
+    secondaryClass: 'Slasher',
+    classes: ['Fighter', 'Slasher'],
+    stars: 6,
+    cost: 55,
+    combo: 4,
+    maxLevel: 99,
+    maxExperience: 5000000,
+    stats: {
+      min: { hp: 1000, atk: 500, rcv: 100 },
+      max: { hp: 3500, atk: 1600, rcv: 320 },
+      growth: 1.5,
+    },
+    regionAvailability: {
+      exactLocal: false,
+      thumbnailGlobal: true,
+      thumbnailJapan: false,
+      fullTransparent: false,
+    },
+    assets: {
+      exactLocal: null,
+      thumbnailGlobal: `characters/${id}.png`,
+      thumbnailJapan: null,
+      fullTransparent: null,
+    },
+    imageUrl: `assets/offline-packs/thumbnails-glo/characters/${id}.png`,
+  };
 }
 
 function buildSavedEnemies() {

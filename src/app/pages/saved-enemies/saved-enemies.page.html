@@ -47,9 +47,14 @@
               <h2>{{ t('list.title') }}</h2>
               <span>{{ t('list.total', { count: savedEnemies().length }) }}</span>
             </div>
-            <ion-button fill="outline" color="warning" (click)="openCreateModal()">
-              {{ t('list.addAnother') }}
-            </ion-button>
+            <div class="card-actions">
+              <ion-button fill="outline" color="light" (click)="exportAllEnemies()">
+                {{ t('list.exportAll') }}
+              </ion-button>
+              <ion-button fill="outline" color="warning" (click)="openCreateModal()">
+                {{ t('list.addAnother') }}
+              </ion-button>
+            </div>
           </div>
           <div class="saved-enemy-list">
             @for (enemy of savedEnemies(); track enemy.id) {
@@ -74,6 +79,9 @@
                       [queryParams]="getEnemyBuilderQueryParams(enemy)"
                     >
                       {{ t('actions.openBuilder') }}
+                    </ion-button>
+                    <ion-button fill="clear" color="light" (click)="exportEnemy(enemy)">
+                      {{ t('actions.export') }}
                     </ion-button>
                     <ion-button fill="clear" color="light" (click)="openEditModal(enemy)">
                       {{ t('actions.edit') }}
@@ -287,6 +295,15 @@
               <div class="enemy-image-actions">
                 <ion-button
                   fill="outline"
+                  color="light"
+                  size="small"
+                  [disabled]="savingEnemy() || processingEnemyImage()"
+                  (click)="openCharacterImagePicker()"
+                >
+                  {{ t('editor.image.chooseCharacter') }}
+                </ion-button>
+                <ion-button
+                  fill="outline"
                   color="warning"
                   size="small"
                   [disabled]="savingEnemy() || processingEnemyImage()"
@@ -329,6 +346,15 @@
               </p>
             }
           </section>
+
+          <app-character-image-picker
+            [isOpen]="characterImagePickerOpen()"
+            [title]="t('editor.image.picker.title')"
+            [copy]="t('editor.image.picker.copy')"
+            [applyingSelection]="processingEnemyImage()"
+            (dismiss)="closeCharacterImagePicker()"
+            (saveSelection)="applyCharacterImageSelection($event)"
+          ></app-character-image-picker>
 
           <div class="editor-grid">
             <div class="editor-field">

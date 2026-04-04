@@ -1,0 +1,31 @@
+{
+  "eyebrow": "Character image picker",
+  "catalog": {
+    "title": "Περιήγηση χαρακτήρων",
+    "count": "{{count}} εμφανίζονται",
+    "searchPlaceholder": "Αναζήτηση με όνομα χαρακτήρα",
+    "loading": "Γίνεται φόρτωση χαρακτήρων...",
+    "emptyTitle": "Δεν βρέθηκαν χαρακτήρες",
+    "emptyCopy": "Δοκίμασε διαφορετικό search term ή φίλτρο."
+  },
+  "filters": {
+    "type": "Type",
+    "class": "Class",
+    "anyType": "Όλα τα types",
+    "anyClass": "Όλα τα classes"
+  },
+  "actions": {
+    "loadMore": "Φόρτωση περισσότερων",
+    "useImage": "Χρήση εικόνας χαρακτήρα"
+  },
+  "selected": {
+    "title": "Επιλεγμένος χαρακτήρας",
+    "emptyTitle": "Δεν έχει επιλεγεί χαρακτήρας ακόμα",
+    "emptyCopy": "Επίλεξε μια κάρτα χαρακτήρα για preview της εικόνας πριν την εφαρμόσεις στον enemy.",
+    "hint": "Το portrait θα αποθηκευτεί ως snapshot για αυτόν τον enemy."
+  },
+  "details": {
+    "type": "Type",
+    "classes": "Classes"
+  }
+}

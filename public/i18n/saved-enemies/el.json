@@ -1,6 +1,7 @@
 {
   "actions": {
     "edit": "Επεξεργασία",
+    "export": "Εξαγωγή",
     "openBuilder": "Άνοιγμα στον builder",
     "saveChanges": "Αποθήκευση αλλαγών",
     "saveEnemy": "Αποθήκευση εχθρού"
@@ -54,11 +55,17 @@
       }
     },
     "image": {
-      "copy": "Ανέβασε τοπική εικόνα enemy μόνο για preview στη saved enemies σελίδα.",
+      "chooseCharacter": "Επιλογή εικόνας χαρακτήρα",
+      "copy": "Ανέβασε τοπική εικόνα enemy ή διάλεξε portrait από OPTC χαρακτήρα μόνο για preview στη saved enemies σελίδα.",
       "empty": "Δεν έχει οριστεί ακόμα εικόνα enemy.",
       "errors": {
+        "characterLoadFailed": "Η επιλεγμένη εικόνα χαρακτήρα δεν μπόρεσε να φορτωθεί.",
         "invalidType": "Επίλεξε αρχείο εικόνας από τον υπολογιστή σου.",
         "loadFailed": "Η εικόνα δεν μπόρεσε να φορτωθεί."
+      },
+      "picker": {
+        "copy": "Περιηγήσου στον τοπικό OPTC κατάλογο χαρακτήρων και χρησιμοποίησε ένα portrait ως enemy image snapshot.",
+        "title": "Επιλογή portrait χαρακτήρα"
       },
       "previewAlt": "Preview εικόνας enemy",
       "processing": "Γίνεται επεξεργασία εικόνας...",
@@ -147,6 +154,7 @@
   },
   "list": {
     "addAnother": "Προσθήκη άλλου εχθρού",
+    "exportAll": "Εξαγωγή όλων",
     "title": "Saved enemies",
     "total": "{{count}} συνολικά"
   },

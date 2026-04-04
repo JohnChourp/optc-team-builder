@@ -1,6 +1,7 @@
 {
   "actions": {
     "edit": "Edit",
+    "export": "Export",
     "openBuilder": "Open in builder",
     "saveChanges": "Save changes",
     "saveEnemy": "Save enemy"
@@ -54,11 +55,17 @@
       }
     },
     "image": {
-      "copy": "Upload a local enemy image for preview only on the saved enemies page.",
+      "chooseCharacter": "Choose character image",
+      "copy": "Upload a local enemy image or choose an OPTC character portrait for preview only on the saved enemies page.",
       "empty": "No enemy image selected yet.",
       "errors": {
+        "characterLoadFailed": "The selected character image could not be loaded.",
         "invalidType": "Choose an image file from your computer.",
         "loadFailed": "The image could not be loaded."
+      },
+      "picker": {
+        "copy": "Browse the local OPTC character catalog and use one portrait as the enemy image snapshot.",
+        "title": "Choose character portrait"
       },
       "previewAlt": "Enemy image preview",
       "processing": "Processing image...",
@@ -147,6 +154,7 @@
   },
   "list": {
     "addAnother": "Add another enemy",
+    "exportAll": "Export all",
     "title": "Saved enemies",
     "total": "{{count}} total"
   },
