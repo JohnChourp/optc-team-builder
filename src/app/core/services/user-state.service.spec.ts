@@ -200,6 +200,44 @@ describe('UserStateService saved teams', () => {
       createEnemy('enemy-1', 'Forest Boss'),
     ]);
   });
+
+  it('merges imported enemies by id and keeps untouched enemies behind them', async () => {
+    const originalEnemy = createEnemy('enemy-1', 'Forest Boss');
+    const { service, setCalls } = await createService(
+      [],
+      [originalEnemy, createEnemy('enemy-2', 'Arena Boss')],
+    );
+
+    const result = await service.mergeImportedEnemies([
+      {
+        ...createEnemy('enemy-1', 'Updated Forest Boss'),
+        notes: 'merged',
+        selectedTypes: ['STR'],
+      },
+      createEnemy('enemy-3', 'Brand new enemy'),
+    ]);
+
+    expect(result).toMatchObject({
+      addedCount: 1,
+      updatedCount: 1,
+    });
+    expect(service.savedEnemies().map((enemy) => enemy.id)).toEqual([
+      'enemy-1',
+      'enemy-3',
+      'enemy-2',
+    ]);
+    expect(service.savedEnemies()[0]).toMatchObject({
+      id: 'enemy-1',
+      name: 'Updated Forest Boss',
+      notes: 'merged',
+      selectedTypes: ['STR'],
+      createdAt: originalEnemy.createdAt,
+    });
+    expect(service.savedEnemies()[0]?.updatedAt).not.toBe(originalEnemy.updatedAt);
+    expect(
+      JSON.parse(setCalls.at(-1)?.value ?? '[]').map((enemy: { id: string }) => enemy.id),
+    ).toEqual(['enemy-1', 'enemy-3', 'enemy-2']);
+  });
 });
 
 async function createService(storedTeams: unknown[], storedEnemies: unknown[] = []) {

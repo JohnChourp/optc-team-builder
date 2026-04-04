@@ -216,6 +216,60 @@ export class UserStateService {
     };
   }
 
+  public async mergeImportedEnemies(
+    enemies: SavedEnemy[],
+  ): Promise<{ addedCount: number; updatedCount: number; enemies: SavedEnemy[] }> {
+    await this.ready();
+
+    const currentEnemies = this.savedEnemies();
+    const currentEnemyMap = new Map(currentEnemies.map((enemy) => [enemy.id, enemy] as const));
+    const mergedEnemies: SavedEnemy[] = [];
+    const importedEnemyIds = new Set<string>();
+    let addedCount = 0;
+    let updatedCount = 0;
+
+    enemies.forEach((enemy) => {
+      const existingEnemy = currentEnemyMap.get(enemy.id);
+      const normalizedEnemy = this.normalizeSavedEnemy(
+        existingEnemy
+          ? {
+              ...enemy,
+              createdAt: undefined,
+              updatedAt: undefined,
+            }
+          : enemy,
+        existingEnemy,
+      );
+
+      if (importedEnemyIds.has(normalizedEnemy.id)) {
+        return;
+      }
+
+      importedEnemyIds.add(normalizedEnemy.id);
+
+      if (currentEnemyMap.has(normalizedEnemy.id)) {
+        updatedCount += 1;
+      } else {
+        addedCount += 1;
+      }
+
+      mergedEnemies.push(normalizedEnemy);
+    });
+
+    const next = [
+      ...mergedEnemies,
+      ...currentEnemies.filter((enemy) => !importedEnemyIds.has(enemy.id)),
+    ];
+
+    await this.replaceSavedEnemies(next);
+
+    return {
+      addedCount,
+      updatedCount,
+      enemies: next,
+    };
+  }
+
   private async hydrate(): Promise<void> {
     const [favorites, recents, teams, enemies] = await Promise.all([
       this.readJson<number[]>(FAVORITES_KEY, []),

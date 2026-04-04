@@ -9,6 +9,33 @@
   "confirm": {
     "deleteSingle": "Delete enemy \"{{name}}\"?"
   },
+  "bulkImport": {
+    "action": "Import all",
+    "eyebrow": "Bulk restore",
+    "title": "Import saved enemies backup",
+    "copy": "Load a JSON file exported from Export all. Matching ids update existing saved enemies and new ids are inserted ahead of the untouched local ones.",
+    "dropzone": {
+      "title": "Drop the saved enemies JSON here",
+      "subtitle": "Or click to choose an exported backup file."
+    },
+    "processing": "Importing saved enemies...",
+    "chooseAnotherFile": "Choose another file",
+    "loadedFromFile": "Loaded {{fileName}}.",
+    "successTitle": "Import completed",
+    "warningTitle": "Import completed with warnings",
+    "errorTitle": "Import failed",
+    "stats": {
+      "added": "Added {{count}} saved enemies.",
+      "updated": "Updated {{count}} saved enemies.",
+      "invalid": "Ignored {{count}} invalid enemy records.",
+      "duplicates": "Collapsed {{count}} duplicate ids from the import."
+    },
+    "errors": {
+      "invalidJson": "The selected file is not valid JSON.",
+      "invalidPayload": "The selected file does not match the saved enemies import schema.",
+      "unsupportedSchema": "This saved enemies import schema is not supported."
+    }
+  },
   "editor": {
     "abilityFields": {
       "ability": "Ability",

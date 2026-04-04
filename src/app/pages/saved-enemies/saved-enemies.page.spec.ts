@@ -215,11 +215,8 @@ describe('SavedEnemiesPage', () => {
   it('imports an enemy preset into the current editor draft without auto-saving', async () => {
     const { page, userState } = createPage();
     const originalEnemy = buildSavedEnemies()[0]!;
-
-    await page.ngOnInit();
-    page.openEditModal(page.savedEnemies()[0]!);
-    stubFileReaderTextResult(
-      JSON.stringify({
+    const file = createJsonFile(
+      {
         schemaVersion: 1,
         source: 'optc-enemy-skill',
         exportType: 'enemy',
@@ -244,11 +241,15 @@ describe('SavedEnemiesPage', () => {
           ],
           requireAllSpecialsSupportTeam: true,
         },
-      }),
+      },
+      'red-cloth-bundle.json',
     );
 
+    await page.ngOnInit();
+    page.openEditModal(page.savedEnemies()[0]!);
+
     await page.onEnemyImportSelected(
-      createFileEvent(new File(['enemy'], 'red-cloth-bundle.json', { type: 'application/json' })),
+      createFileEvent(file),
       { value: '' } as HTMLInputElement,
     );
 
@@ -272,13 +273,13 @@ describe('SavedEnemiesPage', () => {
 
   it('keeps the current editor state when enemy import fails', async () => {
     const { page } = createPage();
+    const file = createJsonFile({ schemaVersion: 2 }, 'bad-enemy.json');
 
     await page.ngOnInit();
     page.openEditModal(page.savedEnemies()[0]!);
-    stubFileReaderTextResult('{"schemaVersion":2}');
 
     await page.onEnemyImportSelected(
-      createFileEvent(new File(['enemy'], 'bad-enemy.json', { type: 'application/json' })),
+      createFileEvent(file),
       { value: '' } as HTMLInputElement,
     );
 
@@ -375,6 +376,73 @@ describe('SavedEnemiesPage', () => {
     );
   });
 
+  it('imports a saved enemies export file and merges by id', async () => {
+    const { page, userState } = createPage();
+    const file = createJsonFile(
+      {
+        schemaVersion: 1,
+        source: 'saved-enemies',
+        exportedAt: '2026-03-31T10:00:00.000Z',
+        enemies: [
+          {
+            ...buildSavedEnemies()[0],
+            name: 'Forest Boss Updated',
+            notes: 'Merged from import',
+          },
+          {
+            ...buildSavedEnemies()[1],
+            id: 'enemy-3',
+            name: 'Brand New Enemy',
+          },
+        ],
+      },
+      'saved-enemies-20260331-100000.json',
+    );
+
+    await page.onImportFileSelected(createFileEvent(file), { value: '' } as HTMLInputElement);
+
+    expect(userState.mergeImportedEnemies).toHaveBeenCalledWith([
+      expect.objectContaining({
+        id: 'enemy-1',
+        name: 'Forest Boss Updated',
+      }),
+      expect.objectContaining({
+        id: 'enemy-3',
+        name: 'Brand New Enemy',
+      }),
+    ]);
+    expect(page.importFeedback()).toMatchObject({
+      tone: 'success',
+      title: 'Import completed',
+    });
+    expect(page.importFeedback()?.details).toEqual([
+      'Loaded saved-enemies-20260331-100000.json.',
+      'Added 1 saved enemies.',
+      'Updated 1 saved enemies.',
+    ]);
+  });
+
+  it('keeps bulk import available even when there are no saved enemies yet', () => {
+    const { page } = createPage({ savedEnemies: [] });
+
+    page.openImportModal();
+
+    expect(page.importModalOpen()).toBe(true);
+  });
+
+  it('surfaces a bulk import error when the selected file is invalid', async () => {
+    const { page } = createPage();
+    const file = createJsonFile({ schemaVersion: 2 }, 'broken-saved-enemies.json');
+
+    await page.onImportFileSelected(createFileEvent(file), { value: '' } as HTMLInputElement);
+
+    expect(page.importFeedback()).toMatchObject({
+      tone: 'error',
+      title: 'Import failed',
+      details: ['Unsupported saved enemies import schema'],
+    });
+  });
+
   it('builds the correct builder query params for a saved enemy', () => {
     const { page } = createPage();
 
@@ -390,14 +458,18 @@ describe('SavedEnemiesPage', () => {
     );
 
     expect(template).toContain("t('hero.createCta')");
+    expect(template).toContain("t('bulkImport.action')");
     expect(template).toContain("t('actions.export')");
     expect(template).toContain("t('actions.openBuilder')");
     expect(template).toContain("t('list.exportAll')");
     expect(template).toContain("t('editor.import.actions.open')");
     expect(template).toContain("t('editor.image.title')");
     expect(template).toContain("t('editor.image.chooseCharacter')");
+    expect(template).toContain('(click)="openImportModal()"');
     expect(template).toContain('(click)="exportEnemy(enemy)"');
     expect(template).toContain('(click)="exportAllEnemies()"');
+    expect(template).toContain('onImportFileSelected($event, importFileInput)');
+    expect(template).toContain('(drop)="onImportDrop($event)"');
     expect(template).toContain('onEnemyImportSelected($event, enemyImportInput)');
     expect(template).toContain('onEnemyImageSelected($event, enemyImageInput)');
     expect(template).toContain('(click)="openCharacterImagePicker()"');
@@ -449,6 +521,45 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
     deleteEnemy: vi.fn().mockImplementation(async (enemyId: string) => {
       savedEnemies.set(savedEnemies().filter((enemy) => enemy.id !== enemyId));
     }),
+    mergeImportedEnemies: vi.fn().mockImplementation(
+      async (importedEnemies: ReturnType<typeof buildSavedEnemies>) => {
+      const currentEnemies = savedEnemies();
+      const currentEnemyMap = new Map(currentEnemies.map((enemy) => [enemy.id, enemy] as const));
+      const mergedEnemies: typeof importedEnemies = [];
+      const importedEnemyIds = new Set<string>();
+      let addedCount = 0;
+      let updatedCount = 0;
+
+      importedEnemies.forEach((enemy) => {
+        if (importedEnemyIds.has(enemy.id)) {
+          return;
+        }
+
+        importedEnemyIds.add(enemy.id);
+
+        if (currentEnemyMap.has(enemy.id)) {
+          updatedCount += 1;
+        } else {
+          addedCount += 1;
+        }
+
+        mergedEnemies.push(enemy);
+      });
+
+      const nextEnemies = [
+        ...mergedEnemies,
+        ...currentEnemies.filter((enemy) => !importedEnemyIds.has(enemy.id)),
+      ];
+
+      savedEnemies.set(nextEnemies);
+
+      return {
+        addedCount,
+        updatedCount,
+        enemies: nextEnemies,
+      };
+      },
+    ),
   };
   const repository = {
     getDatasetManifest: vi.fn().mockResolvedValue({
@@ -527,6 +638,42 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
 
       if (key === 'editor.import.errors.unsupportedSchema') {
         return 'Unsupported import schema';
+      }
+
+      if (key === 'bulkImport.successTitle') {
+        return 'Import completed';
+      }
+
+      if (key === 'bulkImport.warningTitle') {
+        return 'Import completed with warnings';
+      }
+
+      if (key === 'bulkImport.errorTitle') {
+        return 'Import failed';
+      }
+
+      if (key === 'bulkImport.loadedFromFile') {
+        return `Loaded ${params?.['fileName'] ?? ''}.`;
+      }
+
+      if (key === 'bulkImport.stats.added') {
+        return `Added ${params?.['count'] ?? 0} saved enemies.`;
+      }
+
+      if (key === 'bulkImport.stats.updated') {
+        return `Updated ${params?.['count'] ?? 0} saved enemies.`;
+      }
+
+      if (key === 'bulkImport.stats.invalid') {
+        return `Ignored ${params?.['count'] ?? 0} invalid enemy records.`;
+      }
+
+      if (key === 'bulkImport.stats.duplicates') {
+        return `Collapsed ${params?.['count'] ?? 0} duplicate ids from the import.`;
+      }
+
+      if (key === 'bulkImport.errors.unsupportedSchema') {
+        return 'Unsupported saved enemies import schema';
       }
 
       if (key === 'editor.image.errors.characterLoadFailed') {
@@ -641,18 +788,10 @@ function createFileEvent(file: File): Event {
   } as unknown as Event;
 }
 
-function stubFileReaderTextResult(result: string): void {
-  class MockFileReader {
-    public result: string | null = null;
-    public error: Error | null = null;
-    public onload: null | (() => void) = null;
-    public onerror: null | (() => void) = null;
+function createJsonFile(payload: unknown, name: string): File {
+  const file = new File([JSON.stringify(payload)], name, { type: 'application/json' });
 
-    public readAsText(): void {
-      this.result = result;
-      this.onload?.();
-    }
-  }
+  vi.spyOn(file, 'text').mockResolvedValue(JSON.stringify(payload));
 
-  vi.stubGlobal('FileReader', MockFileReader);
+  return file;
 }

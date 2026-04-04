@@ -16,6 +16,9 @@
           <ion-button fill="outline" color="light" [routerLink]="['/tabs/saved-teams']">
             {{ t('hero.savedTeamsCta') }}
           </ion-button>
+          <ion-button fill="outline" color="light" (click)="openImportModal()">
+            {{ t('bulkImport.action') }}
+          </ion-button>
           <ion-button color="warning" (click)="openCreateModal()">
             <ion-icon slot="start" [icon]="addIcon"></ion-icon>
             {{ t('hero.createCta') }}
@@ -174,6 +177,100 @@
         </section>
       }
     </div>
+
+    <ion-modal
+      [isOpen]="importModalOpen()"
+      cssClass="saved-enemies-import-modal"
+      (didDismiss)="closeImportModal()"
+    >
+      <ng-template>
+        <div class="import-modal-shell">
+          <div class="import-modal-head">
+            <div>
+              <div class="section-label">{{ t('bulkImport.eyebrow') }}</div>
+              <h2>{{ t('bulkImport.title') }}</h2>
+              <p>{{ t('bulkImport.copy') }}</p>
+            </div>
+
+            <ion-button fill="clear" color="light" (click)="closeImportModal()">
+              <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+            </ion-button>
+          </div>
+
+          <input
+            #importFileInput
+            type="file"
+            accept=".json,application/json"
+            hidden
+            (change)="onImportFileSelected($event, importFileInput)"
+          />
+
+          <button
+            type="button"
+            class="import-dropzone"
+            [class.import-dropzone--active]="draggingImportFile()"
+            (click)="openImportFilePicker(importFileInput)"
+            (dragover)="onImportDragOver($event)"
+            (dragleave)="onImportDragLeave($event)"
+            (drop)="onImportDrop($event)"
+          >
+            <ion-icon [icon]="uploadIcon"></ion-icon>
+            <strong>{{ t('bulkImport.dropzone.title') }}</strong>
+            <span>{{ t('bulkImport.dropzone.subtitle') }}</span>
+          </button>
+
+          @if (importFileName()) {
+            <div class="import-file-chip">
+              <ion-icon [icon]="fileIcon"></ion-icon>
+              <span>{{ importFileName() }}</span>
+            </div>
+          }
+
+          @if (importing()) {
+            <div class="import-feedback import-feedback--progress">
+              <ion-spinner name="crescent"></ion-spinner>
+              <span>{{ t('bulkImport.processing') }}</span>
+            </div>
+          }
+
+          @if (importFeedback(); as feedback) {
+            <div
+              class="import-feedback"
+              [class.import-feedback--success]="feedback.tone === 'success'"
+              [class.import-feedback--warning]="feedback.tone === 'warning'"
+              [class.import-feedback--error]="feedback.tone === 'error'"
+            >
+              <ion-icon [icon]="feedback.tone === 'error' ? errorIcon : successIcon"></ion-icon>
+              <div>
+                <strong>{{ feedback.title }}</strong>
+                @for (detail of feedback.details; track $index) {
+                  <span>{{ detail }}</span>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="import-modal-actions">
+            <ion-button
+              fill="outline"
+              color="light"
+              [disabled]="importing()"
+              (click)="openImportFilePicker(importFileInput)"
+            >
+              {{ t('bulkImport.chooseAnotherFile') }}
+            </ion-button>
+            <ion-button
+              fill="clear"
+              color="light"
+              [disabled]="importing()"
+              (click)="closeImportModal()"
+            >
+              {{ 'common.actions.close' | transloco }}
+            </ion-button>
+          </div>
+        </div>
+      </ng-template>
+    </ion-modal>
 
     <ion-modal
       [isOpen]="editorOpen()"

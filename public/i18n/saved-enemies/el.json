@@ -9,6 +9,33 @@
   "confirm": {
     "deleteSingle": "Να διαγραφεί ο εχθρός \"{{name}}\";"
   },
+  "bulkImport": {
+    "action": "Import all",
+    "eyebrow": "Bulk restore",
+    "title": "Import saved enemies backup",
+    "copy": "Φόρτωσε JSON που έχει εξαχθεί από το Export all. Τα ίδια ids ενημερώνουν υπάρχοντα saved enemies και τα νέα ids προστίθενται μπροστά από τα υπόλοιπα.",
+    "dropzone": {
+      "title": "Ρίξε εδώ το saved enemies JSON",
+      "subtitle": "Ή πάτα για να διαλέξεις exported backup αρχείο."
+    },
+    "processing": "Γίνεται import των saved enemies...",
+    "chooseAnotherFile": "Διάλεξε άλλο αρχείο",
+    "loadedFromFile": "Φορτώθηκε το {{fileName}}.",
+    "successTitle": "Το import ολοκληρώθηκε",
+    "warningTitle": "Το import ολοκληρώθηκε με παρατηρήσεις",
+    "errorTitle": "Το import απέτυχε",
+    "stats": {
+      "added": "Προστέθηκαν {{count}} saved enemies.",
+      "updated": "Ενημερώθηκαν {{count}} saved enemies.",
+      "invalid": "Αγνοήθηκαν {{count}} invalid enemy records.",
+      "duplicates": "Συγχωνεύτηκαν {{count}} duplicate ids από το import."
+    },
+    "errors": {
+      "invalidJson": "Το επιλεγμένο αρχείο δεν είναι έγκυρο JSON.",
+      "invalidPayload": "Το επιλεγμένο αρχείο δεν ταιριάζει με το saved enemies import schema.",
+      "unsupportedSchema": "Αυτό το saved enemies import schema δεν υποστηρίζεται."
+    }
+  },
   "editor": {
     "abilityFields": {
       "ability": "Ability",

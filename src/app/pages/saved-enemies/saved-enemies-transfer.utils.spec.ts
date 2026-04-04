@@ -7,6 +7,9 @@ import {
   buildSavedEnemiesTransferPayload,
   buildSavedEnemyExportFilename,
   downloadSavedEnemiesExport,
+  parseSavedEnemiesImportPayload,
+  sanitizeSavedEnemiesImportPayload,
+  SavedEnemiesImportError,
 } from './saved-enemies-transfer.utils';
 
 describe('Saved enemies transfer helpers', () => {
@@ -140,6 +143,90 @@ describe('Saved enemies transfer helpers', () => {
     expect(clickSpy).toHaveBeenCalledOnce();
     expect(anchor).toBeNull();
     expect(urlRef.revokeObjectURL).toHaveBeenCalledWith('blob:saved-enemies');
+  });
+
+  it('parses and sanitizes a valid bulk import payload with duplicate ids', () => {
+    const payload = parseSavedEnemiesImportPayload(
+      JSON.stringify({
+        schemaVersion: 1,
+        source: 'saved-enemies',
+        exportedAt: '2026-03-25T14:05:09.000Z',
+        enemies: [
+          buildSavedEnemy(),
+          {
+            ...buildSavedEnemy({ id: 'enemy-2', name: ' Arena Boss ' }),
+            notes: '  Updated notes  ',
+          },
+          {
+            ...buildSavedEnemy({ id: 'enemy-2', name: 'Arena Boss Override' }),
+            requiredAbilities: [
+              {
+                abilityKey: ' remove_bind ',
+                minTurns: 7,
+                slotTokens: ['block'],
+                requiredCharacterCount: 2,
+              },
+            ],
+          },
+          {
+            name: 'Missing id',
+          },
+        ],
+      }),
+    );
+
+    const result = sanitizeSavedEnemiesImportPayload(payload, {
+      untitledEnemyName: 'Untitled Enemy',
+    });
+
+    expect(result.duplicateIdCount).toBe(1);
+    expect(result.invalidEnemyCount).toBe(1);
+    expect(result.enemies).toEqual([
+      expect.objectContaining({
+        id: 'enemy-1',
+        name: 'Forest Boss',
+      }),
+      expect.objectContaining({
+        id: 'enemy-2',
+        name: 'Arena Boss Override',
+        notes: 'Bring bind removal',
+        requiredAbilities: [
+          {
+            abilityKey: 'remove_bind',
+            minTurns: 7,
+            slotTokens: ['BLOCK'],
+            requiredCharacterCount: 2,
+          },
+        ],
+      }),
+    ]);
+  });
+
+  it('throws a typed error for invalid bulk import json', () => {
+    try {
+      parseSavedEnemiesImportPayload('{');
+      throw new Error('Expected invalid json to throw.');
+    } catch (error) {
+      expect(error).toBeInstanceOf(SavedEnemiesImportError);
+      expect(error).toMatchObject({ key: 'bulkImport.errors.invalidJson' });
+    }
+  });
+
+  it('throws a typed error for unsupported bulk import schema', () => {
+    try {
+      parseSavedEnemiesImportPayload(
+        JSON.stringify({
+          schemaVersion: 2,
+          source: 'saved-enemies',
+          exportedAt: '2026-03-25T14:05:09.000Z',
+          enemies: [],
+        }),
+      );
+      throw new Error('Expected unsupported schema to throw.');
+    } catch (error) {
+      expect(error).toBeInstanceOf(SavedEnemiesImportError);
+      expect(error).toMatchObject({ key: 'bulkImport.errors.unsupportedSchema' });
+    }
   });
 });
 
