@@ -1,0 +1,71 @@
+:host {
+  display: contents;
+}
+
+.app-credit-badge {
+  position: fixed;
+  right: 16px;
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  max-width: min(calc(100vw - 32px), 320px);
+  padding: 10px 14px;
+  border: 1px solid rgba(245, 200, 76, 0.4);
+  border-radius: 999px;
+  background:
+    linear-gradient(135deg, rgba(245, 200, 76, 0.2), rgba(76, 201, 240, 0.16)),
+    rgba(9, 12, 24, 0.88);
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgba(245, 200, 76, 0.12),
+    0 0 24px rgba(245, 200, 76, 0.18);
+  color: #fff4c8;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+  text-wrap: balance;
+  backdrop-filter: blur(18px);
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    filter 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    text-decoration-color 160ms ease;
+}
+
+.app-credit-badge:hover,
+.app-credit-badge:focus-visible {
+  border-color: rgba(245, 200, 76, 0.72);
+  box-shadow:
+    0 20px 42px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(245, 200, 76, 0.2),
+    0 0 34px rgba(245, 200, 76, 0.24);
+  color: #fff8dd;
+  filter: brightness(1.06);
+  outline: none;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 248, 221, 0.92);
+  transform: translateY(-2px);
+}
+
+.app-credit-badge--tabs {
+  bottom: calc(92px + env(safe-area-inset-bottom) + var(--app-bottom-bar-extra-offset));
+}
+
+.app-credit-badge--standalone {
+  bottom: calc(16px + env(safe-area-inset-bottom) + var(--app-bottom-bar-extra-offset));
+}
+
+@media (max-width: 640px) {
+  .app-credit-badge {
+    right: 12px;
+    left: 12px;
+    max-width: none;
+  }
+}
