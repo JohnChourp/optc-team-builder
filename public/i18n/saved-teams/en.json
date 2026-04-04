@@ -55,6 +55,11 @@
     "emptySlotAria": "Empty slot {{slot}}",
     "viewDetailsAria": "View details for {{name}} in slot {{slot}}"
   },
+  "ship": {
+    "label": "Ship",
+    "noShipLabel": "No ship",
+    "thumbnailAlt": "Ship thumbnail for {{name}}"
+  },
   "selection": {
     "selectAll": "Select all",
     "selectAllAria": "Select all saved teams",

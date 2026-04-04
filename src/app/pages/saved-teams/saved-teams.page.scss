@@ -133,6 +133,67 @@
   margin-top: 6px;
 }
 
+.saved-team-ship {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.saved-team-ship__label {
+  color: rgba(248, 251, 255, 0.62);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.saved-team-ship__content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.saved-team-ship__thumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.saved-team-ship__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.saved-team-ship__thumb--fallback {
+  background:
+    radial-gradient(circle at top, rgba(245, 200, 76, 0.18), transparent 56%),
+    rgba(255, 255, 255, 0.05);
+}
+
+.saved-team-ship__thumb ion-icon {
+  font-size: 1.4rem;
+  color: #f5c84c;
+}
+
+.saved-team-ship__name {
+  color: #ffffff;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
 .saved-team-slot {
   display: flex;
   align-items: center;
@@ -339,5 +400,9 @@
 
   .saved-team-preview {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .saved-team-ship__content {
+    align-items: flex-start;
   }
 }

@@ -55,6 +55,11 @@
     "emptySlotAria": "Κενό slot {{slot}}",
     "viewDetailsAria": "Προβολή λεπτομερειών για τον {{name}} στο slot {{slot}}"
   },
+  "ship": {
+    "label": "Ship",
+    "noShipLabel": "Χωρίς ship",
+    "thumbnailAlt": "Thumbnail του ship {{name}}"
+  },
   "selection": {
     "selectAll": "Επίλεξε όλα",
     "selectAllAria": "Επιλογή όλων των αποθηκευμένων ομάδων",

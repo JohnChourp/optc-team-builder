@@ -32,6 +32,7 @@ describe('SavedTeamsPage', () => {
 
     expect(page.loading()).toBe(false);
     expect(repository.getCharactersByIds).toHaveBeenCalledWith([101, 202, 303, 404, 505]);
+    expect(repository.getShips).toHaveBeenCalledOnce();
     expect(page.savedTeamCards()).toHaveLength(2);
     expect(page.savedTeamCards()[0]?.slots.map((slot) => slot?.id ?? null)).toEqual([
       101,
@@ -41,6 +42,12 @@ describe('SavedTeamsPage', () => {
       null,
       303,
     ]);
+    expect(page.savedTeamCards()[0]).toMatchObject({
+      ship: null,
+      shipDisplayName: 'No ship',
+      shipThumbUrl: null,
+      hasShipThumbnail: false,
+    });
     expect(page.savedTeamCards()[1]?.slots.map((slot) => slot?.id ?? null)).toEqual([
       404,
       505,
@@ -49,6 +56,15 @@ describe('SavedTeamsPage', () => {
       null,
       null,
     ]);
+    expect(page.savedTeamCards()[1]).toMatchObject({
+      ship: {
+        id: 9001,
+        name: 'Going Merry',
+      },
+      shipDisplayName: 'Going Merry',
+      shipThumbUrl: null,
+      hasShipThumbnail: false,
+    });
   });
 
   it('selects all teams and enables bulk actions', async () => {
@@ -171,6 +187,10 @@ describe('SavedTeamsPage', () => {
     expect(template).toContain('edit-modal-shell');
     expect(template).toContain('import-dropzone');
     expect(template).toContain('saved-team-preview');
+    expect(template).toContain('saved-team-ship');
+    expect(template).toContain("t('ship.label')");
+    expect(template).toContain("t('ship.thumbnailAlt'");
+    expect(template).toContain('[icon]="shipIcon"');
     expect(template).toContain('[routerLink]="[\'/tabs/saved-enemies\']"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(currentSlot)"');
   });
@@ -259,6 +279,7 @@ function createPage(overrides: { savedTeams?: ReturnType<typeof buildSavedTeams>
         createCharacter(404, 'Nami'),
         createCharacter(505, 'Robin'),
       ]),
+    getShips: vi.fn().mockResolvedValue([createShip(9001, 'Going Merry', 'ship_0001_t2.png')]),
   };
   const i18n = {
     translate: vi.fn((key: string, params?: Record<string, string | number>) => {
@@ -280,6 +301,10 @@ function createPage(overrides: { savedTeams?: ReturnType<typeof buildSavedTeams>
 
       if (key === 'import.errors.generic') {
         return 'Generic import error';
+      }
+
+      if (key === 'ship.noShipLabel') {
+        return 'No ship';
       }
 
       return key;
@@ -318,5 +343,14 @@ function createCharacter(id: number, name: string) {
     id,
     name,
     imageUrl: `assets/${id}.png`,
+  };
+}
+
+function createShip(id: number, name: string, thumb: string | null) {
+  return {
+    id,
+    name,
+    thumb,
+    description: `${name} effect`,
   };
 }

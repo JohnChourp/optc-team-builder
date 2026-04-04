@@ -108,6 +108,26 @@
                   </div>
                 </div>
                 <div class="saved-team-preview" [attr.aria-label]="t('preview.ariaLabel')">
+                  <div class="saved-team-ship">
+                    <span class="saved-team-ship__label">{{ t('ship.label') }}</span>
+                    <div class="saved-team-ship__content">
+                      <span
+                        class="saved-team-ship__thumb"
+                        [class.saved-team-ship__thumb--fallback]="!teamCard.hasShipThumbnail"
+                      >
+                        @if (teamCard.shipThumbUrl) {
+                          <img
+                            [src]="teamCard.shipThumbUrl"
+                            [alt]="t('ship.thumbnailAlt', { name: teamCard.shipDisplayName })"
+                            loading="lazy"
+                          />
+                        } @else {
+                          <ion-icon [icon]="shipIcon" aria-hidden="true"></ion-icon>
+                        }
+                      </span>
+                      <span class="saved-team-ship__name">{{ teamCard.shipDisplayName }}</span>
+                    </div>
+                  </div>
                   @for (slot of teamCard.slots; track slot?.id ?? index; let index = $index) {
                     @if (slot; as currentSlot) {
                       <a

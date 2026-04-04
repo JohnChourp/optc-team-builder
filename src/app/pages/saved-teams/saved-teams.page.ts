@@ -17,13 +17,14 @@ import {
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
   alertCircleOutline,
+  boatOutline,
   checkmarkCircleOutline,
   closeOutline,
   cloudUploadOutline,
   documentTextOutline,
 } from 'ionicons/icons';
 
-import { type CharacterListItem, type SavedTeam } from '../../core/models/optc.models';
+import { type CharacterListItem, type SavedTeam, type ShipRecord } from '../../core/models/optc.models';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
@@ -37,6 +38,10 @@ import {
 } from './saved-teams-transfer.utils';
 
 interface SavedTeamPreviewCard {
+  hasShipThumbnail: boolean;
+  ship: ShipRecord | null;
+  shipDisplayName: string;
+  shipThumbUrl: string | null;
   team: SavedTeam;
   slots: Array<CharacterListItem | null>;
 }
@@ -100,6 +105,7 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
   public readonly closeIcon = closeOutline;
   public readonly successIcon = checkmarkCircleOutline;
   public readonly errorIcon = alertCircleOutline;
+  public readonly shipIcon = boatOutline;
 
   public constructor(
     private readonly userState: UserStateService,
@@ -316,19 +322,53 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
         ),
       ),
     ];
-    const characters = await this.repository.getCharactersByIds(characterIds);
+    const [characters, ships] = await Promise.all([
+      this.repository.getCharactersByIds(characterIds),
+      this.repository.getShips(),
+    ]);
     const characterMap = new Map(characters.map((character) => [character.id, character] as const));
+    const shipMap = new Map(ships.map((ship) => [ship.id, ship] as const));
 
     this.savedTeamCards.set(
-      teams.map((team) => ({
-        team,
-        slots: team.slots.map((slotId) =>
-          typeof slotId === 'number' ? (characterMap.get(slotId) ?? null) : null,
-        ),
-      })),
+      teams.map((team) => {
+        const ship = typeof team.shipId === 'number' ? (shipMap.get(team.shipId) ?? null) : null;
+        const shipThumbUrl = this.resolveShipThumbUrl(ship);
+
+        return {
+          team,
+          ship,
+          shipDisplayName:
+            ship?.name ?? this.i18n.translate('ship.noShipLabel', undefined, 'saved-teams'),
+          shipThumbUrl,
+          hasShipThumbnail: Boolean(shipThumbUrl),
+          slots: team.slots.map((slotId) =>
+            typeof slotId === 'number' ? (characterMap.get(slotId) ?? null) : null,
+          ),
+        };
+      }),
     );
     this.pruneSelection();
     this.loading.set(false);
+  }
+
+  private resolveShipThumbUrl(ship: ShipRecord | null): string | null {
+    const thumb = ship?.thumb?.trim();
+
+    if (!thumb) {
+      return null;
+    }
+
+    if (
+      thumb.startsWith('assets/') ||
+      thumb.startsWith('/assets/') ||
+      thumb.startsWith('http://') ||
+      thumb.startsWith('https://') ||
+      thumb.startsWith('data:')
+    ) {
+      return thumb;
+    }
+
+    return null;
   }
 
   private setTeamSelection(teamId: string, selected: boolean): void {
