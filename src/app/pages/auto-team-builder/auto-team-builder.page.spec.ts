@@ -277,6 +277,19 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(page.manualShipPickerOpen()).toBe(false);
   });
 
+  it('keeps the full ship catalog available for the manual picker while marking excluded ships as blocked', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.excludedShipIds.set([9002]);
+
+    expect(page.ships().map((ship) => ship.id)).toEqual([9001, 9002]);
+    expect(page.manualShipBlockedIds()).toEqual([9002]);
+    expect(page.manualShipSupportLabels()[9002]).toBe(
+      'This ship is excluded and cannot be confirmed as the manual ship.',
+    );
+  });
+
   it('passes slot-based OR picks to the builder service', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
@@ -749,7 +762,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     ]);
   });
 
-  it('refreshes manual candidates live from top-level filters using any-match repository queries', async () => {
+  it('keeps manual candidates visible when top-level filters change and queries the manual pool without filter constraints', async () => {
     const { page, repository } = await createPage();
     const dexFighter = createCharacterRecord(201, 'DEX Fighter');
     const psySlasher = createCharacterRecord(202, 'PSY Slasher');
@@ -780,11 +793,40 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     await page.onTypeChange({ detail: { value: ['DEX', 'PSY'] } } as CustomEvent<{
       value: string[];
     }>);
+
+    expect(repository.searchDetailedCharacters).toHaveBeenNthCalledWith(1, {
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      limit: 24,
+      offset: 0,
+    });
+    expect(repository.searchDetailedCharacters).toHaveBeenNthCalledWith(2, {
+      searchTerm: '',
+      selectedTypes: ['DEX', 'PSY'],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: [],
+      selectedClassesMatchMode: 'any',
+      limit: 24,
+      offset: 0,
+    });
+    expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
+      [201, 202, 203],
+    );
+
+    repository.searchDetailedCharacters.mockClear();
     await page.onClassChange({ detail: { value: ['Fighter', 'Slasher'] } } as CustomEvent<{
       value: string[];
     }>);
 
-    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
+    expect(repository.searchDetailedCharacters).toHaveBeenNthCalledWith(1, {
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      limit: 24,
+      offset: 0,
+    });
+    expect(repository.searchDetailedCharacters).toHaveBeenNthCalledWith(2, {
       searchTerm: '',
       selectedTypes: ['DEX', 'PSY'],
       selectedTypesMatchMode: 'any',
@@ -794,11 +836,11 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
       offset: 0,
     });
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
-      [201, 202],
+      [201, 202, 203],
     );
   });
 
-  it('filters manual candidates from top-level ability requirements with per-unit count normalization', async () => {
+  it('keeps manual candidates visible when top-level ability requirements change and normalizes the build-context requirement count', async () => {
     const { page, repository } = await createPage();
     const bindSpecialist = createCharacterRecord(301, 'Bind Specialist', [
       {
@@ -845,11 +887,14 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
       },
     ]);
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
+      [301, 302],
+    );
+    expect(page.excludedCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
       [301],
     );
   });
 
-  it('rebuilds manual candidates with the default pool after page reset', async () => {
+  it('rebuilds manual candidates with the full catalog after page reset', async () => {
     const { page, repository } = await createPage();
     const dexFighter = createCharacterRecord(401, 'Reset DEX Fighter');
     const psySlasher = createCharacterRecord(402, 'Reset PSY Slasher');
@@ -872,7 +917,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     await page.onTypeChange({ detail: { value: ['DEX'] } } as CustomEvent<{ value: string[] }>);
 
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
-      [401],
+      [401, 402],
     );
 
     await page.ionViewWillEnter();

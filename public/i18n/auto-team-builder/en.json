@@ -162,8 +162,8 @@
     "favorite": "Favorite",
     "slotSummary": "{{slots}} slots currently have manual choices ({{choices}} OR picks total).",
     "filters": {
-      "active": "Active manual filters: {{summary}}",
-      "default": "Manual picks currently follow the top-level page filters only.",
+      "active": "Current build filters: {{summary}}",
+      "default": "Current build filters affect team generation, not the manual pick catalog.",
       "parts": {
         "abilities": "abilities: {{values}}",
         "classes": "classes: {{values}}",
@@ -175,13 +175,13 @@
       "loading": "Loading manual candidates..."
     },
     "candidatePool": {
-      "default": "The sidebar uses the current page filters as its default pool.",
-      "filtered": "The sidebar is narrowed by your current page filters and ability requirements.",
+      "default": "Manual picks stay available from the full character catalog. Search and slot rules still apply.",
+      "filtered": "Current build filters do not hide manual picks. They remain visible while the requirement chips update for context.",
       "leaderOnly": "The active leader slot only shows characters with a readable captain ability."
     },
     "sync": {
       "eyebrow": "Manual picks sync",
-      "title": "Manual picks follow the current page filters"
+      "title": "Manual picks stay available independently from the current page filters"
     },
     "modes": {
       "characters": "Character picks",
@@ -192,7 +192,7 @@
     },
     "empty": {
       "loadingCandidates": "Loading manual candidates...",
-      "noCandidates": "No characters matched the current page filters for manual picks."
+      "noCandidates": "No characters matched the current manual search or slot rules."
     },
     "actions": {
       "clearAll": "Clear all",
@@ -274,14 +274,14 @@
     "changeAction": "Change ship",
     "clearSelection": "Use auto recommendation",
     "confirm": "Use ship selection",
-    "count": "{{count}} ships available for manual selection.",
+    "count": "{{count}} ships in the manual ship catalog.",
     "emptySelectionLabel": "Auto ship recommendation",
-    "emptySearch": "No ships are available for manual selection.",
-    "excluded": "Excluded ships cannot be selected as the manual ship.",
+    "emptySearch": "No ships matched the current ship search.",
+    "excluded": "This ship is excluded and cannot be confirmed as the manual ship.",
     "manualBadge": "Manual ship",
     "manualOverride": "Manual ship override active: {{name}}",
     "openAction": "Choose ship",
-    "pickerCopy": "Pick a manual ship override with its image and effect, or leave the slot empty so the builder can recommend one.",
+    "pickerCopy": "Pick any ship from the full catalog, or leave it empty so the builder can recommend one. Excluded ships stay visible but locked.",
     "pickerTitle": "Manual ship selection",
     "searchPlaceholder": "Search ship by name or effect"
   },

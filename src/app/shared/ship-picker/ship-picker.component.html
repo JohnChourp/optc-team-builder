@@ -57,6 +57,8 @@
                     type="button"
                     class="ship-picker-card"
                     [class.ship-picker-card--selected]="card.isSelected"
+                    [class.ship-picker-card--blocked]="card.isBlocked"
+                    [disabled]="card.isBlocked"
                     (click)="selectShip(card.shipId)"
                   >
                     <div
@@ -73,6 +75,9 @@
                     <div class="ship-picker-card__copy">
                       <strong>{{ card.title }}</strong>
                       <p>{{ card.subtitle }}</p>
+                      @if (card.supportLabel) {
+                        <small>{{ card.supportLabel }}</small>
+                      }
                     </div>
                   </button>
                 }
@@ -108,7 +113,9 @@
                 <p>{{ selectedCard().subtitle }}</p>
 
                 @if (selectedCard().ship) {
-                  <small>{{ t('selected.shipReady') }}</small>
+                  <small>{{
+                    selectedCard().supportLabel ?? t('selected.shipReady')
+                  }}</small>
                 } @else {
                   <small>{{ t('selected.emptyState') }}</small>
                 }
@@ -123,7 +130,7 @@
               <ion-button fill="clear" color="light" (click)="cancel()">
                 {{ 'common.actions.cancel' | transloco }}
               </ion-button>
-              <ion-button color="warning" (click)="save()">
+              <ion-button color="warning" [disabled]="selectedCard().isBlocked" (click)="save()">
                 {{ confirmLabel }}
               </ion-button>
             </div>

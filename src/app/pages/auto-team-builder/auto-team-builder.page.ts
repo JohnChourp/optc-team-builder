@@ -278,11 +278,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly selectedManualShip = computed(
     () => this.ships().find((ship) => ship.id === this.selectedManualShipId()) ?? null,
   );
-  public readonly availableManualShips = computed(() => {
-    const excludedShipIdSet = new Set(this.excludedShipIds());
-
-    return this.ships().filter((ship) => !excludedShipIdSet.has(ship.id));
-  });
   public readonly hasSelectedManualShip = computed(() => Boolean(this.selectedManualShip()));
   public readonly selectedManualShipTitle = computed(() => {
     const selectedShip = this.selectedManualShip();
@@ -638,6 +633,20 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     return this.t("ships.autoRecommendation");
+  });
+  public readonly manualShipBlockedIds = computed(() => [...this.excludedShipIds()]);
+  public readonly manualShipSupportLabels = computed<Record<number, string>>(() => {
+    const labels: Record<number, string> = {};
+
+    for (const ship of this.ships()) {
+      const supportLabel = this.resolveManualShipSupportLabel(ship.id);
+
+      if (supportLabel) {
+        labels[ship.id] = supportLabel;
+      }
+    }
+
+    return labels;
   });
   public readonly excludedShipCandidatesSummaryLabel = computed(() =>
     this.t("exclude.candidates.countShips", { count: this.excludedShipCandidates().length }),
@@ -2014,29 +2023,23 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   private async refreshAppliedManualCandidates(): Promise<void> {
     const requestId = ++this.appliedManualCandidateSearchRequestId;
-    const filters = this.manualCandidateFilters();
     this.manualCandidatesLoading.set(true);
 
     try {
       const candidates = await this.repository.searchDetailedCharacters({
         searchTerm: this.manualSearchTerm().trim(),
-        selectedTypes: filters.selectedTypes,
-        selectedTypesMatchMode: "any",
-        selectedClasses: filters.selectedClasses,
-        selectedClassesMatchMode: "any",
+        selectedTypes: [],
+        selectedClasses: [],
         limit: this.manualSearchLimit,
         offset: 0,
       });
-      const filteredCandidates = candidates.filter((candidate) =>
-        this.matchesManualCharacterFilters(candidate, filters),
-      );
 
       if (requestId !== this.appliedManualCandidateSearchRequestId) {
         return;
       }
 
-      this.manualCandidates.set(filteredCandidates);
-      for (const candidate of filteredCandidates) this.cacheCharacterRecord(candidate);
+      this.manualCandidates.set(candidates);
+      for (const candidate of candidates) this.cacheCharacterRecord(candidate);
     } finally {
       if (requestId !== this.appliedManualCandidateSearchRequestId) {
         return;

@@ -162,8 +162,8 @@
     "favorite": "Favorite",
     "slotSummary": "{{slots}} slots έχουν manual choices ({{choices}} συνολικά OR picks).",
     "filters": {
-      "active": "Ενεργά manual filters: {{summary}}",
-      "default": "Τα manual picks ακολουθούν μόνο τα top-level filters της σελίδας.",
+      "active": "Current build filters: {{summary}}",
+      "default": "Τα current build filters επηρεάζουν το χτίσιμο της ομάδας, όχι το manual pick catalog.",
       "parts": {
         "abilities": "abilities: {{values}}",
         "classes": "classes: {{values}}",
@@ -175,13 +175,13 @@
       "loading": "Γίνεται φόρτωση manual candidates..."
     },
     "candidatePool": {
-      "default": "Το sidebar χρησιμοποιεί τα current page filters ως default pool.",
-      "filtered": "Το sidebar περιορίζεται από τα current page filters και τα ability requirements.",
+      "default": "Τα manual picks μένουν διαθέσιμα από όλο το character catalog. Ισχύουν μόνο search και slot rules.",
+      "filtered": "Τα current build filters δεν κρύβουν manual picks. Μένουν ορατά και τα requirement chips ενημερώνονται μόνο για context.",
       "leaderOnly": "Το active leader slot δείχνει μόνο characters με readable captain ability."
     },
     "sync": {
       "eyebrow": "Manual picks sync",
-      "title": "Τα manual picks ακολουθούν τα current page filters"
+      "title": "Τα manual picks μένουν διαθέσιμα ανεξάρτητα από τα current page filters"
     },
     "modes": {
       "characters": "Character picks",
@@ -192,7 +192,7 @@
     },
     "empty": {
       "loadingCandidates": "Γίνεται φόρτωση manual candidates...",
-      "noCandidates": "Δεν βρέθηκαν χαρακτήρες που να ταιριάζουν στα current page filters για manual picks."
+      "noCandidates": "Δεν βρέθηκαν χαρακτήρες για το current manual search ή για τους κανόνες του slot."
     },
     "actions": {
       "clearAll": "Καθαρισμός όλων",
@@ -274,14 +274,14 @@
     "changeAction": "Αλλαγή ship",
     "clearSelection": "Χρήση auto recommendation",
     "confirm": "Χρήση επιλογής ship",
-    "count": "{{count}} ships διαθέσιμα για manual επιλογή.",
+    "count": "{{count}} ships στο manual ship catalog.",
     "emptySelectionLabel": "Auto ship recommendation",
-    "emptySearch": "Δεν υπάρχουν διαθέσιμα ships για manual επιλογή.",
-    "excluded": "Τα excluded ships δεν μπορούν να διαλεγούν ως manual ship.",
+    "emptySearch": "Δεν βρέθηκαν ships στο current ship search.",
+    "excluded": "Αυτό το ship είναι excluded και δεν μπορεί να επιβεβαιωθεί ως manual ship.",
     "manualBadge": "Manual ship",
     "manualOverride": "Ενεργό manual ship override: {{name}}",
     "openAction": "Επιλογή ship",
-    "pickerCopy": "Διάλεξε manual ship override με εικόνα και effect ή άφησέ το κενό ώστε ο builder να προτείνει ship.",
+    "pickerCopy": "Διάλεξε οποιοδήποτε ship από όλο το catalog ή άφησέ το κενό ώστε ο builder να προτείνει ship. Τα excluded ships μένουν ορατά αλλά κλειδωμένα.",
     "pickerTitle": "Manual ship επιλογή",
     "searchPlaceholder": "Search ship by name or effect"
   },

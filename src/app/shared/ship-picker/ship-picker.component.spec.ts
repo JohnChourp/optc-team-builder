@@ -66,6 +66,55 @@ describe('ShipPickerComponent', () => {
     expect(emitSpy).toHaveBeenCalledWith(9002);
   });
 
+  it('keeps blocked ships visible with support labels and prevents selecting them', () => {
+    const component = createComponent();
+
+    component.blockedShipIds = [9002];
+    component.shipSupportLabels = {
+      9002: 'This ship is excluded and cannot be confirmed as the manual ship.',
+    };
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+      ships: new SimpleChange([], component.ships, true),
+      blockedShipIds: new SimpleChange([], component.blockedShipIds, true),
+      shipSupportLabels: new SimpleChange({}, component.shipSupportLabels, true),
+    });
+
+    expect(component.filteredShipCards().find((card) => card.shipId === 9002)).toMatchObject({
+      shipId: 9002,
+      isBlocked: true,
+      supportLabel: 'This ship is excluded and cannot be confirmed as the manual ship.',
+    });
+
+    component.selectShip(9002);
+
+    expect(component.workingShipId()).toBe(9001);
+  });
+
+  it('does not emit blocked ship selections on save', () => {
+    const component = createComponent();
+    const emitSpy = vi.spyOn(component.saveSelection, 'emit');
+
+    component.selectedShipId = 9002;
+    component.blockedShipIds = [9002];
+    component.shipSupportLabels = {
+      9002: 'This ship is excluded and cannot be confirmed as the manual ship.',
+    };
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+      ships: new SimpleChange([], component.ships, true),
+      blockedShipIds: new SimpleChange([], component.blockedShipIds, true),
+      shipSupportLabels: new SimpleChange({}, component.shipSupportLabels, true),
+    });
+
+    component.save();
+
+    expect(component.selectedCard().isBlocked).toBe(true);
+    expect(emitSpy).not.toHaveBeenCalled();
+  });
+
   it('renders the search, card selection and confirm action in the template', () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/shared/ship-picker/ship-picker.component.html'),
@@ -74,6 +123,9 @@ describe('ShipPickerComponent', () => {
 
     expect(template).toContain("t('catalog.searchPlaceholder')");
     expect(template).toContain('(click)="selectShip(card.shipId)"');
+    expect(template).toContain('[disabled]="card.isBlocked"');
+    expect(template).toContain('card.supportLabel');
+    expect(template).toContain('[disabled]="selectedCard().isBlocked"');
     expect(template).toContain("{{ confirmLabel }}");
     expect(template).toContain("t('selected.title')");
   });
@@ -88,6 +140,8 @@ function createComponent() {
   component.emptySelectionCopy = 'Leave the team without a ship.';
   component.confirmLabel = 'Use ship';
   component.selectedShipId = 9001;
+  component.blockedShipIds = [];
+  component.shipSupportLabels = {};
   component.ships = [
     {
       id: 9001,

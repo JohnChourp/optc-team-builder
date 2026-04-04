@@ -14,10 +14,12 @@ import { boatOutline, closeOutline } from 'ionicons/icons';
 import { type ShipRecord } from '../../core/models/optc.models';
 
 interface ShipPickerCardView {
+  isBlocked: boolean;
   isSelected: boolean;
   ship: ShipRecord | null;
   shipId: number | null;
   subtitle: string;
+  supportLabel: string | null;
   thumbUrl: string | null;
   title: string;
 }
@@ -45,6 +47,8 @@ export class ShipPickerComponent implements OnChanges {
   @Input({ required: true }) public copy = '';
   @Input({ required: true }) public ships: ShipRecord[] = [];
   @Input({ required: true }) public selectedShipId: number | null = null;
+  @Input() public blockedShipIds: number[] = [];
+  @Input() public shipSupportLabels: Record<number, string> = {};
   @Input({ required: true }) public emptySelectionLabel = '';
   @Input({ required: true }) public emptySelectionCopy = '';
   @Input({ required: true }) public confirmLabel = '';
@@ -55,26 +59,25 @@ export class ShipPickerComponent implements OnChanges {
   public readonly shipIcon = boatOutline;
   public readonly searchTerm = signal('');
   public readonly shipsState = signal<ShipRecord[]>([]);
+  public readonly blockedShipIdsState = signal<number[]>([]);
+  public readonly shipSupportLabelsState = signal<Record<number, string>>({});
   public readonly workingShipId = signal<number | null>(null);
   public readonly filteredShipCards = computed<ShipPickerCardView[]>(() => {
     const searchTerm = this.searchTerm().trim().toLowerCase();
     const baseCards: ShipPickerCardView[] = [
       {
+        isBlocked: false,
         shipId: null,
         ship: null,
         title: this.emptySelectionLabel,
         subtitle: this.emptySelectionCopy,
+        supportLabel: null,
         thumbUrl: null,
         isSelected: this.workingShipId() === null,
       },
-      ...this.shipsState().map((ship) => ({
-        shipId: ship.id,
-        ship,
-        title: ship.name,
-        subtitle: this.buildShipSubtitle(ship.description),
-        thumbUrl: ship.thumbUrl,
-        isSelected: ship.id === this.workingShipId(),
-      })),
+      ...this.shipsState().map((ship) =>
+        this.buildShipCard(ship, ship.id === this.workingShipId(), ship.id, true),
+      ),
     ];
 
     if (!searchTerm.length) {
@@ -92,10 +95,12 @@ export class ShipPickerComponent implements OnChanges {
 
     if (selectedShipId === null) {
       return {
+        isBlocked: false,
         shipId: null,
         ship: null,
         title: this.emptySelectionLabel,
         subtitle: this.emptySelectionCopy,
+        supportLabel: null,
         thumbUrl: null,
         isSelected: true,
       };
@@ -103,16 +108,7 @@ export class ShipPickerComponent implements OnChanges {
 
     const selectedShip = this.shipsState().find((ship) => ship.id === selectedShipId) ?? null;
 
-    return {
-      shipId: selectedShipId,
-      ship: selectedShip,
-      title: selectedShip?.name ?? this.emptySelectionLabel,
-      subtitle: selectedShip
-        ? selectedShip.description
-        : this.emptySelectionCopy,
-      thumbUrl: selectedShip?.thumbUrl ?? null,
-      isSelected: true,
-    };
+    return this.buildShipCard(selectedShip, true, selectedShipId, false);
   });
 
   private dismissReason: 'save' | 'cancel' | null = null;
@@ -122,11 +118,21 @@ export class ShipPickerComponent implements OnChanges {
       this.shipsState.set(this.ships);
     }
 
+    if (changes['blockedShipIds']) {
+      this.blockedShipIdsState.set([...this.blockedShipIds]);
+    }
+
+    if (changes['shipSupportLabels']) {
+      this.shipSupportLabelsState.set({ ...this.shipSupportLabels });
+    }
+
     if (changes['isOpen'] && this.isOpen) {
       this.dismissReason = null;
       this.searchTerm.set('');
       this.workingShipId.set(this.selectedShipId);
       this.shipsState.set(this.ships);
+      this.blockedShipIdsState.set([...this.blockedShipIds]);
+      this.shipSupportLabelsState.set({ ...this.shipSupportLabels });
     }
   }
 
@@ -135,10 +141,18 @@ export class ShipPickerComponent implements OnChanges {
   }
 
   public selectShip(shipId: number | null): void {
+    if (shipId !== null && this.blockedShipIdsState().includes(shipId)) {
+      return;
+    }
+
     this.workingShipId.set(shipId);
   }
 
   public save(): void {
+    if (this.selectedCard().isBlocked) {
+      return;
+    }
+
     this.dismissReason = 'save';
     this.saveSelection.emit(this.workingShipId());
   }
@@ -163,5 +177,29 @@ export class ShipPickerComponent implements OnChanges {
     return normalizedDescription.length > 132
       ? `${normalizedDescription.slice(0, 129).trimEnd()}...`
       : normalizedDescription;
+  }
+
+  private buildShipCard(
+    ship: ShipRecord | null,
+    isSelected: boolean,
+    shipId = ship?.id ?? null,
+    truncateSubtitle = true,
+  ): ShipPickerCardView {
+    const isBlocked = shipId !== null && this.blockedShipIdsState().includes(shipId);
+
+    return {
+      isBlocked,
+      isSelected,
+      shipId,
+      ship,
+      title: ship?.name ?? this.emptySelectionLabel,
+      subtitle: ship
+        ? truncateSubtitle
+          ? this.buildShipSubtitle(ship.description)
+          : ship.description
+        : this.emptySelectionCopy,
+      supportLabel: shipId !== null ? this.shipSupportLabelsState()[shipId] ?? null : null,
+      thumbUrl: ship?.thumbUrl ?? null,
+    };
   }
 }

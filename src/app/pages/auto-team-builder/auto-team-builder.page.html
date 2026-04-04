@@ -355,7 +355,9 @@
           [isOpen]="manualShipPickerOpen()"
           [title]="t('ships.pickerTitle')"
           [copy]="t('ships.pickerCopy')"
-          [ships]="availableManualShips()"
+          [ships]="ships()"
+          [blockedShipIds]="manualShipBlockedIds()"
+          [shipSupportLabels]="manualShipSupportLabels()"
           [selectedShipId]="selectedManualShipId()"
           [emptySelectionLabel]="t('ships.emptySelectionLabel')"
           [emptySelectionCopy]="t('ships.autoRecommendation')"
@@ -582,13 +584,13 @@
                       </article>
                     }
                   </div>
-                }
-              } @else {
+              }
+            } @else {
                 <div class="manual-locks-meta manual-locks-meta--candidates">
-                  <strong>{{ t('ships.count', { count: availableManualShips().length }) }}</strong>
+                  <strong>{{ t('ships.count', { count: ships().length }) }}</strong>
                   <small>{{ shipPickerSupportLabel() }}</small>
                 </div>
-                @if (!availableManualShips().length && !hasSelectedManualShip()) {
+                @if (!ships().length && !hasSelectedManualShip()) {
                   <div class="manual-candidate-empty-state">
                     {{ t('ships.emptySearch') }}
                   </div>
