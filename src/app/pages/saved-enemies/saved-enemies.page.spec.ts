@@ -48,9 +48,11 @@ describe('SavedEnemiesPage', () => {
     page.openCreateModal();
 
     expect(page.editorOpen()).toBe(true);
+    expect(page.enemyMechanicPickerOpen()).toBe(false);
     expect(page.abilityPickerOpen()).toBe(false);
     expect(page.editingEnemy()).toBeNull();
     expect(page.selectedTypes()).toEqual(['DEX']);
+    expect(page.enemyMechanicDrafts()).toEqual([]);
     expect(page.requiredAbilityDrafts()).toEqual([]);
   });
 
@@ -65,6 +67,7 @@ describe('SavedEnemiesPage', () => {
     expect(page.enemyImageDataUrl()).toBe('data:image/jpeg;base64,Zm9yZXN0LWJvc3M=');
     expect(page.selectedTypes()).toEqual(['DEX', 'PSY']);
     expect(page.selectedClasses()).toEqual(['Fighter']);
+    expect(page.enemyMechanicDrafts()).toHaveLength(1);
     expect(page.requiredAbilityDrafts()).toHaveLength(1);
   });
 
@@ -170,6 +173,7 @@ describe('SavedEnemiesPage', () => {
           requiredCharacterCount: 1,
         },
       ],
+      enemyMechanics: [],
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSpecialsSupportTeam: false,
@@ -220,8 +224,10 @@ describe('SavedEnemiesPage', () => {
     expect(template).toContain('(click)="selectAllClasses()"');
     expect(template).toContain('selectAllTypesButtonLabel()');
     expect(template).toContain('selectAllClassesButtonLabel()');
-    expect(template).toContain('editor.abilitiesTitle');
+    expect(template).toContain('editor.enemyMechanics.title');
+    expect(template).toContain('editor.manualCounters.title');
     expect(template).toContain('editor.toggles.specials');
+    expect(template).toContain('<app-enemy-mechanic-picker');
     expect(template).toContain('<app-ability-requirement-picker');
     expect(template).not.toContain("resolveAbilityCatalogItem(draft.abilityKey)?.label");
   });
@@ -244,6 +250,7 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
         selectedTypes: [...((input['selectedTypes'] as string[]) ?? [])],
         selectedClasses: [...((input['selectedClasses'] as string[]) ?? [])],
         requiredAbilities: [...((input['requiredAbilities'] as unknown[]) ?? [])],
+        enemyMechanics: [...((input['enemyMechanics'] as unknown[]) ?? [])],
         requireAllSelectedTypesInTeam: Boolean(input['requireAllSelectedTypesInTeam']),
         requireAllSelectedClassesPerCharacter: Boolean(
           input['requireAllSelectedClassesPerCharacter'],
@@ -349,10 +356,27 @@ function buildSavedEnemies() {
       selectedClasses: ['Fighter'],
       requiredAbilities: [
         {
+          abilityKey: 'remove_enemy_barrier',
+          minTurns: 3,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+        },
+        {
           abilityKey: 'remove_bind',
           minTurns: 5,
           slotTokens: [],
           requiredCharacterCount: 1,
+        },
+      ],
+      enemyMechanics: [
+        {
+          mechanicKey: 'enemy_barrier',
+          category: 'enemyDefense',
+          minTurns: 3,
+          triggerTags: [],
+          responseTags: [],
+          conditionTags: [],
+          derivedAbilityKey: 'remove_enemy_barrier',
         },
       ],
       requireAllSelectedTypesInTeam: true,
@@ -369,6 +393,7 @@ function buildSavedEnemies() {
       selectedTypes: ['STR'],
       selectedClasses: ['Slasher'],
       requiredAbilities: [],
+      enemyMechanics: [],
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: true,
       requireAllSpecialsSupportTeam: false,

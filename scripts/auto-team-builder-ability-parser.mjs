@@ -14,7 +14,6 @@ const IGNORED_TARGET_PATTERNS = [
   'cooldown',
   'captain effect',
   'captain ability',
-  'chain multiplier',
 ];
 
 const TARGET_ALIASES = [
@@ -46,7 +45,10 @@ const TARGET_ALIASES = [
   {
     key: 'remove_bind',
     label: 'Remove Bind',
-    matcher: (target) => target === 'bind' || target.endsWith(' bind'),
+    matcher: (target) =>
+      (target === 'bind' || target.endsWith(' bind')) &&
+      !target.includes('slot bind') &&
+      !target.includes('orb bind'),
   },
   {
     key: 'remove_despair',
@@ -74,6 +76,12 @@ const TARGET_ALIASES = [
     matcher: (target) => target === 'damage reduction' || target === 'percent damage reduction',
   },
   {
+    key: 'remove_enemy_orb_based_damage_reduction',
+    label: 'Remove Orb-Based Damage Reduction',
+    matcher: (target) =>
+      target.includes('orb-based damage reduction') || target.includes('orb based damage reduction'),
+  },
+  {
     key: 'remove_threshold_damage_reduction',
     label: 'Remove Threshold Damage Reduction',
     matcher: (target) => target.includes('threshold damage reduction'),
@@ -84,9 +92,49 @@ const TARGET_ALIASES = [
     matcher: (target) => target.includes('resilience'),
   },
   {
-    key: 'remove_defense_up',
-    label: 'Remove Defense Up',
-    matcher: (target) => target === 'defense up',
+    key: 'remove_enemy_increased_defense',
+    label: 'Remove Increased Defense',
+    matcher: (target) =>
+      target.includes('increased defense') ||
+      target === 'defense up' ||
+      target.endsWith(' defense up'),
+  },
+  {
+    key: 'remove_enemy_barrier',
+    label: 'Remove Enemy Barrier',
+    matcher: (target) =>
+      target.includes('barrier') &&
+      !target.includes('slot barrier') &&
+      !target.includes('orb barrier'),
+  },
+  {
+    key: 'remove_enemy_damage_nullification',
+    label: 'Remove Damage Nullification',
+    matcher: (target) => target.includes('damage nullification'),
+  },
+  {
+    key: 'remove_enemy_atk_up',
+    label: 'Remove ATK Up',
+    matcher: (target) => target.includes('atk up') || target.includes('attack up'),
+  },
+  {
+    key: 'remove_enemy_enrage',
+    label: 'Remove Enrage',
+    matcher: (target) => target.includes('enrage'),
+  },
+  {
+    key: 'remove_enemy_end_of_turn_damage_percent_cut',
+    label: 'Remove End of Turn Damage/Percent Cut',
+    matcher: (target) =>
+      target.includes('end of turn damage/percent cut') ||
+      target.includes('end of turn damage percent cut') ||
+      target.includes('end of turn damage') ||
+      target.includes('percent cut'),
+  },
+  {
+    key: 'remove_enemy_end_of_turn_heal',
+    label: 'Remove End of Turn Heal',
+    matcher: (target) => target.includes('end of turn heal'),
   },
   {
     key: 'remove_no_healing',
@@ -114,9 +162,24 @@ const TARGET_ALIASES = [
     matcher: (target) => target.includes('chain coefficient reduction'),
   },
   {
+    key: 'remove_chain_multiplier_limit',
+    label: 'Remove Chain Multiplier Limit',
+    matcher: (target) => target.includes('chain multiplier limit') || target.includes('chain lock'),
+  },
+  {
     key: 'remove_increase_damage_taken',
     label: 'Remove Increase Damage Taken',
     matcher: (target) => target.includes('increase damage taken'),
+  },
+  {
+    key: 'remove_healing_reduction',
+    label: 'Remove Healing Reduction',
+    matcher: (target) => target.includes('healing reduction'),
+  },
+  {
+    key: 'remove_stun',
+    label: 'Remove Stun',
+    matcher: (target) => target.includes('stun'),
   },
 ];
 
@@ -161,22 +224,18 @@ export function analyzeBuilderAbilityText(value, source) {
       }
 
       normalizeTargetSegments(rawTarget).forEach((segment) => {
-        const normalized = resolveAbilityDefinition(segment);
-
-        if (!normalized) {
-          return;
-        }
-
-        const ability = {
-          key: normalized.key,
-          label: normalized.label,
-          minTurns,
-          isCompleteRemoval,
-          slotTokens: normalized.slotTokens,
-          source,
-          coverageMode: DEFAULT_COVERAGE_MODE,
-        };
-        addAbility(abilities, seen, ability);
+        resolveAbilityDefinitions(segment).forEach((normalized) => {
+          const ability = {
+            key: normalized.key,
+            label: normalized.label,
+            minTurns,
+            isCompleteRemoval,
+            slotTokens: normalized.slotTokens,
+            source,
+            coverageMode: DEFAULT_COVERAGE_MODE,
+          };
+          addAbility(abilities, seen, ability);
+        });
       });
     }
   });
@@ -464,14 +523,33 @@ function normalizeTargetSegments(targetText) {
     ];
   }
 
-  return normalizedTarget
-    .split(/\s*,\s*|\s+and\s+/gi)
-    .map((segment) => segment.trim())
-    .filter(Boolean)
-    .map((segment) => ({
-      target: segment,
+  const candidates = [
+    ...normalizedTarget
+      .split(/\s*,\s*|\s+and\s+/gi)
+      .map((segment) => segment.trim())
+      .filter(Boolean)
+      .map((segment) => ({
+        target: segment,
+        slotTokens: [],
+      })),
+    {
+      target: normalizedTarget,
       slotTokens: [],
-    }));
+    },
+  ];
+
+  const seen = new Set();
+
+  return candidates.filter((candidate) => {
+    const identity = `${candidate.target}|${candidate.slotTokens.join(',')}`;
+
+    if (seen.has(identity)) {
+      return false;
+    }
+
+    seen.add(identity);
+    return true;
+  });
 }
 
 function extractSlotTokens(targetText) {
@@ -487,8 +565,14 @@ function normalizeTargetText(targetText) {
     .toLowerCase()
     .replace(/\[[^\]]+\]/g, ' ')
     .replace(/\bthe\b/g, ' ')
+    .replace(/\benemies'?s?\b/g, ' ')
+    .replace(/\benemy\b/g, ' ')
+    .replace(/\bbuffs?\b/g, ' ')
+    .replace(/\bstatuses?\b/g, ' ')
     .replace(/\bof the crew\b/g, ' ')
     .replace(/\bcrew\b/g, ' ')
+    .replace(/^(?:and|or)\s+/g, ' ')
+    .replace(/\s+(?:and|or)$/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -502,22 +586,16 @@ function isSlotScopedTarget(target) {
   );
 }
 
-function resolveAbilityDefinition(segment) {
+function resolveAbilityDefinitions(segment) {
   const target = segment.target.trim();
 
   if (!target.length || IGNORED_TARGET_PATTERNS.some((pattern) => target.includes(pattern))) {
-    return null;
+    return [];
   }
 
-  const alias = TARGET_ALIASES.find((entry) => entry.matcher(target));
-
-  if (!alias) {
-    return null;
-  }
-
-  return {
+  return TARGET_ALIASES.filter((entry) => entry.matcher(target)).map((alias) => ({
     key: alias.key,
     label: alias.label,
     slotTokens: SLOT_ABILITY_KEY_SET.has(alias.key) ? [...segment.slotTokens] : [],
-  };
+  }));
 }

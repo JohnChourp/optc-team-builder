@@ -19,6 +19,9 @@ import {
 } from './auto-team-builder.utils';
 
 const INPUT = createInput();
+type AutoTeamBuilderServiceWithWorkerFactory = AutoTeamBuilderService & {
+  createWorker: () => Worker | null;
+};
 
 describe('Auto team builder', () => {
   it('parses burst, consistency, utility, and multi-class captain scope from effect text', () => {
@@ -1469,7 +1472,10 @@ describe('Auto team builder', () => {
     });
     const progressSnapshots: AutoBuildProgressSnapshot[] = [];
 
-    const createWorkerSpy = vi.spyOn(service as any, 'createWorker');
+    const createWorkerSpy = vi.spyOn(
+      service as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
     createWorkerSpy.mockReturnValue(worker as never);
 
     await service.buildTeam(
@@ -1506,7 +1512,10 @@ describe('Auto team builder', () => {
     const worker = new FakeWorker();
     const abortController = new AbortController();
 
-    const createWorkerSpy = vi.spyOn(service as any, 'createWorker');
+    const createWorkerSpy = vi.spyOn(
+      service as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
     createWorkerSpy.mockReturnValue(worker as never);
 
     const buildPromise = service.buildTeam(
@@ -1530,7 +1539,10 @@ describe('Auto team builder', () => {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
     };
     const service = new AutoTeamBuilderService(repository as never);
-    const createWorkerSpy = vi.spyOn(service as any, 'createWorker');
+    const createWorkerSpy = vi.spyOn(
+      service as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
     createWorkerSpy.mockReturnValue(null);
 
     const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY']);
@@ -1629,6 +1641,7 @@ function createInput(
     types,
     selectedClasses,
     requiredAbilities: [],
+    enemyMechanics: [],
     requireAllSelectedTypesInTeam: overrides.requireAllSelectedTypesInTeam ?? false,
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
     requireAllSpecialsSupportTeam: overrides.requireAllSpecialsSupportTeam ?? false,

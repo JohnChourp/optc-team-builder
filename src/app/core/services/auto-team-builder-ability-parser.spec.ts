@@ -100,6 +100,89 @@ describe('auto team builder ability parser', () => {
     ]);
   });
 
+  it('extracts multiple enemy defense counters from wrapped enemy buff text', () => {
+    expect(
+      analyzeBuilderAbilityText(
+        "Reduces enemies' ATK Up, Barrier and Damage Nullification buffs duration by 5 turns.",
+        'specialText',
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        key: 'remove_enemy_atk_up',
+        minTurns: 5,
+        source: 'specialText',
+      }),
+      expect.objectContaining({
+        key: 'remove_enemy_barrier',
+        minTurns: 5,
+        source: 'specialText',
+      }),
+      expect.objectContaining({
+        key: 'remove_enemy_damage_nullification',
+        minTurns: 5,
+        source: 'specialText',
+      }),
+    ]);
+  });
+
+  it.each([
+    [
+      'increased defense',
+      'Reduces enemies increased defense duration by 4 turns.',
+      'remove_enemy_increased_defense',
+      4,
+    ],
+    [
+      'end of turn damage percent cut',
+      'Reduces end of turn damage/percent cut duration by 6 turns.',
+      'remove_enemy_end_of_turn_damage_percent_cut',
+      6,
+    ],
+    [
+      'end of turn heal',
+      'Reduces enemy end of turn heal duration by 4 turns.',
+      'remove_enemy_end_of_turn_heal',
+      4,
+    ],
+    [
+      'orb-based damage reduction',
+      'Reduces orb-based damage reduction duration by 3 turns.',
+      'remove_enemy_orb_based_damage_reduction',
+      3,
+    ],
+    [
+      'chain multiplier limit',
+      'Reduces chain multiplier limit duration by 5 turns.',
+      'remove_chain_multiplier_limit',
+      5,
+    ],
+    [
+      'healing reduction',
+      'Reduces healing reduction duration by 7 turns.',
+      'remove_healing_reduction',
+      7,
+    ],
+    [
+      'stun',
+      'Reduces stun duration by 2 turns.',
+      'remove_stun',
+      2,
+    ],
+    [
+      'enrage',
+      'Reduces enemy enrage duration by 3 turns.',
+      'remove_enemy_enrage',
+      3,
+    ],
+  ])('extracts %s removal into the direct counter catalog', (_label, text, key, turns) => {
+    expect(analyzeBuilderAbilityText(text, 'specialText')).toEqual([
+      expect.objectContaining({
+        key,
+        minTurns: turns,
+      }),
+    ]);
+  });
+
   it('extracts explicit pain removal from special text', () => {
     expect(
       analyzeBuilderAbilityText('Recovers HP and reduces Pain duration by 5 turns.', 'specialText'),

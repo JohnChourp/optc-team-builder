@@ -9,8 +9,6 @@
     "deleteSingle": "Να διαγραφεί ο εχθρός \"{{name}}\";"
   },
   "editor": {
-    "abilitiesCopy": "Πρόσθεσε utility requirements που πρέπει να καλύπτει η τελική ομάδα απέναντι σε αυτόν τον εχθρό.",
-    "abilitiesTitle": "Requirements εχθρού",
     "abilityFields": {
       "ability": "Ability",
       "characters": "Χαρακτήρες",
@@ -47,6 +45,49 @@
     "nameLabel": "Όνομα εχθρού",
     "noAbilityCatalog": "Το ability catalog δεν είναι ακόμα διαθέσιμο σε αυτό το dataset.",
     "notesLabel": "Σημειώσεις",
+    "enemyMechanics": {
+      "title": "Enemy mechanics",
+      "copy": "Αποθήκευσε πρώτα όλη τη συμπεριφορά του εχθρού εδώ. Όπου γίνεται, οι direct counters θα παράγονται αυτόματα.",
+      "empty": "Δεν έχουν επιλεγεί enemy mechanics ακόμη.",
+      "actions": {
+        "openPicker": "Άνοιγμα mechanic picker",
+        "clear": "Καθαρισμός mechanics"
+      },
+      "tags": {
+        "trigger": {
+          "onSpecial": "Σε special",
+          "onAtkBoost": "Σε ATK boost",
+          "onOrbBoost": "Σε orb boost",
+          "onDelay": "Σε delay",
+          "onOrbChange": "Σε orb change"
+        },
+        "response": {
+          "removeBuffs": "Αφαιρεί buffs",
+          "applyDebuffs": "Βάζει debuffs",
+          "heal": "Θεραπεύει",
+          "shield": "Βάζει shield"
+        },
+        "condition": {
+          "hpThreshold": "HP threshold",
+          "turnCounter": "Turn counter",
+          "revive": "Revive"
+        }
+      }
+    },
+    "derivedCounters": {
+      "title": "Derived counters",
+      "copy": "Αυτά τα counters παράγονται αυτόματα από τα επιλεγμένα enemy mechanics.",
+      "empty": "Δεν προκύπτουν direct counters από τα current mechanics."
+    },
+    "manualCounters": {
+      "title": "Manual counter overrides",
+      "copy": "Πρόσθεσε extra direct counters μόνο όταν ο εχθρός θέλει κάλυψη πέρα από το structured mechanics list.",
+      "empty": "Δεν έχουν επιλεγεί manual counter overrides.",
+      "actions": {
+        "openPicker": "Άνοιγμα counter picker",
+        "clear": "Καθαρισμός overrides"
+      }
+    },
     "removeAbility": "Αφαίρεση",
     "requirementSummary": {
       "characters": ">={{count}} chars",
@@ -86,8 +127,9 @@
   },
   "loading": "Φόρτωση saved enemies...",
   "summary": {
-    "abilities": "Abilities",
     "classes": "Classes",
+    "counters": "Counters",
+    "mechanics": "Mechanics",
     "noRules": "Χωρίς strict rules",
     "ruleLabels": {
       "classes": "Strict classes",

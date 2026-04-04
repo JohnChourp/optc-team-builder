@@ -399,6 +399,12 @@
   cursor: default;
 }
 
+.ability-requirement-chip--mechanic {
+  border-color: rgba(255, 186, 116, 0.34);
+  background: rgba(255, 186, 116, 0.12);
+  color: #ffd7a5;
+}
+
 .ability-visual-chip {
   display: inline-grid;
   justify-items: center;

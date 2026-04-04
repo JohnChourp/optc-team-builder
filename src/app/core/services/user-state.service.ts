@@ -4,11 +4,15 @@ import { Preferences } from '@capacitor/preferences';
 import { type SavedEnemy, type SavedTeam } from '../models/optc.models';
 import { type AutoBuildAbilityRequirement } from '../models/auto-team-builder-ability.models';
 import { AppI18nService } from './app-i18n.service';
+import { normalizeEnemyMechanicRequirements } from './enemy-mechanic-draft.utils';
 
 const FAVORITES_KEY = 'favoriteCharacterIds';
 const RECENTS_KEY = 'recentCharacterIds';
 const SAVED_TEAMS_KEY = 'savedTeams';
 const SAVED_ENEMIES_KEY = 'savedEnemies';
+const LEGACY_ABILITY_KEY_ALIASES: Record<string, string> = {
+  remove_defense_up: 'remove_enemy_increased_defense',
+};
 
 @Injectable({ providedIn: 'root' })
 export class UserStateService {
@@ -270,6 +274,7 @@ export class UserStateService {
       | 'selectedTypes'
       | 'selectedClasses'
       | 'requiredAbilities'
+      | 'enemyMechanics'
       | 'requireAllSelectedTypesInTeam'
       | 'requireAllSelectedClassesPerCharacter'
       | 'requireAllSpecialsSupportTeam'
@@ -289,6 +294,7 @@ export class UserStateService {
       }),
       selectedClasses: this.normalizeStringCollection(enemy.selectedClasses),
       requiredAbilities: this.normalizeRequiredAbilities(enemy.requiredAbilities),
+      enemyMechanics: normalizeEnemyMechanicRequirements(enemy.enemyMechanics),
       requireAllSelectedTypesInTeam: Boolean(enemy.requireAllSelectedTypesInTeam),
       requireAllSelectedClassesPerCharacter: Boolean(enemy.requireAllSelectedClassesPerCharacter),
       requireAllSpecialsSupportTeam: Boolean(enemy.requireAllSpecialsSupportTeam),
@@ -395,7 +401,9 @@ export class UserStateService {
       }
 
       const abilityKey =
-        typeof requirement.abilityKey === 'string' ? requirement.abilityKey.trim() : '';
+        typeof requirement.abilityKey === 'string'
+          ? LEGACY_ABILITY_KEY_ALIASES[requirement.abilityKey.trim()] ?? requirement.abilityKey.trim()
+          : '';
 
       if (!abilityKey.length) {
         return;

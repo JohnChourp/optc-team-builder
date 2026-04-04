@@ -87,12 +87,14 @@ img {
 
 .manual-filter-modal::part(backdrop),
 .ability-picker-modal::part(backdrop),
+.enemy-mechanic-picker-modal::part(backdrop),
 .saved-enemies-editor-modal::part(backdrop) {
   background: rgba(7, 11, 23, 0.7);
 }
 
 .manual-filter-modal::part(content),
 .ability-picker-modal::part(content),
+.enemy-mechanic-picker-modal::part(content),
 .saved-enemies-editor-modal::part(content) {
   width: 80vw;
   height: 80vh;
@@ -107,6 +109,7 @@ img {
 @media (max-width: 679px) {
   .manual-filter-modal::part(content),
   .ability-picker-modal::part(content),
+.enemy-mechanic-picker-modal::part(content),
   .saved-enemies-editor-modal::part(content) {
     width: calc(100vw - 16px);
     height: var(--app-mobile-sheet-height);

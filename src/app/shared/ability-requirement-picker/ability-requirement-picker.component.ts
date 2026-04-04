@@ -16,9 +16,11 @@ import {
   applyCatalogAbilityToDraft,
   cloneAbilityRequirementDrafts,
   createAbilityRequirementDraft,
+  resolveAbilityRequirementPainSelectableDebuffBadges,
   resolveAbilityRequirementVisual,
   resolvePositiveInteger,
   type AbilityRequirementDraft,
+  type AbilityRequirementMiniBadge,
 } from "../../core/services/ability-requirement-draft.utils";
 import { type AutoBuildAbilityCatalogItem } from "../../core/models/auto-team-builder-ability.models";
 
@@ -28,6 +30,7 @@ interface AbilityRequirementCatalogTileView {
   isSelected: boolean;
   selectedCount: number;
   supportsSelectableDebuff: boolean;
+  painSelectableBadges: AbilityRequirementMiniBadge[];
 }
 
 interface AbilityRequirementSelectedRowView {
@@ -37,6 +40,7 @@ interface AbilityRequirementSelectedRowView {
   supportsTurns: boolean;
   supportsSlotTokens: boolean;
   availableSlotTokens: string[];
+  painSelectableBadges: AbilityRequirementMiniBadge[];
 }
 
 @Component({
@@ -111,6 +115,7 @@ export class AbilityRequirementPickerComponent implements OnChanges {
         supportsSelectableDebuff: (item.availableCoverageModes ?? ["explicit"]).includes(
           "selectedDebuff",
         ),
+        painSelectableBadges: resolveAbilityRequirementPainSelectableDebuffBadges(item.key),
       }));
   });
   public readonly selectedRows = computed<AbilityRequirementSelectedRowView[]>(() =>
@@ -124,6 +129,7 @@ export class AbilityRequirementPickerComponent implements OnChanges {
         supportsTurns: catalogItem?.supportsTurns ?? false,
         supportsSlotTokens: catalogItem?.supportsSlotTokens ?? false,
         availableSlotTokens: catalogItem?.availableSlotTokens ?? [],
+        painSelectableBadges: resolveAbilityRequirementPainSelectableDebuffBadges(draft.abilityKey),
       };
     }),
   );

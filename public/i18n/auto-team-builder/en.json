@@ -95,6 +95,53 @@
       "removeRequirement": "Remove"
     }
   },
+  "enemyMechanics": {
+    "title": "Enemy mechanics",
+    "copy": "Describe the enemy mechanics first. The builder derives direct counters from them where the mapping is explicit.",
+    "configuredRows": "{{count}} configured mechanics",
+    "empty": "No enemy mechanics selected yet.",
+    "actions": {
+      "openPicker": "Open mechanic picker",
+      "clearMechanics": "Clear mechanics"
+    },
+    "tags": {
+      "trigger": {
+        "onSpecial": "On special",
+        "onAtkBoost": "On ATK boost",
+        "onOrbBoost": "On orb boost",
+        "onDelay": "On delay",
+        "onOrbChange": "On orb change"
+      },
+      "response": {
+        "removeBuffs": "Remove buffs",
+        "applyDebuffs": "Apply debuffs",
+        "heal": "Heal",
+        "shield": "Shield"
+      },
+      "condition": {
+        "hpThreshold": "HP threshold",
+        "turnCounter": "Turn counter",
+        "revive": "Revive"
+      }
+    }
+  },
+  "derivedCounters": {
+    "title": "Derived counters",
+    "copy": "These direct counters are inferred automatically from the selected enemy mechanics and affect filtering immediately.",
+    "empty": "No direct counters are currently derived from the selected enemy mechanics."
+  },
+  "manualCounters": {
+    "title": "Manual counter overrides",
+    "copy": "Add extra direct counters only when you want filtering beyond what the structured enemy mechanics already derive.",
+    "configuredRows": "{{count}} manual overrides",
+    "empty": "No manual counter overrides selected.",
+    "emptyCatalog": "No ability catalog was found. Run",
+    "emptyCatalogSuffix": "to regenerate it.",
+    "actions": {
+      "openPicker": "Open counter picker",
+      "clearRequirements": "Clear overrides"
+    }
+  },
   "actions": {
     "build": {
       "favoriteFlexible": "Build {{types}} crew with favorite auto-fill",

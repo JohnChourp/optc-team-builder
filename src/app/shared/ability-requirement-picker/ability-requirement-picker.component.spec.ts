@@ -120,6 +120,7 @@ describe("AbilityRequirementPickerComponent", () => {
     );
 
     expect(template).toContain("ability-picker-tile__badge");
+    expect(template).toContain("ability-picker-mini-badge-list");
     expect(template).toContain("@if (row.supportsTurns)");
     expect(template).toContain("@if (row.supportsSlotTokens && row.availableSlotTokens.length)");
   });

@@ -176,13 +176,97 @@
 
         <section class="ability-requirements-card">
           <div class="slot-grid__header">
-            <h2>{{ t('abilityRequirements.title') }}</h2>
-            <p>{{ t('abilityRequirements.copy') }}</p>
+            <h2>{{ t('enemyMechanics.title') }}</h2>
+            <p>{{ t('enemyMechanics.copy') }}</p>
+          </div>
+
+          <div class="manual-locks-meta ability-requirements-meta">
+            <strong>{{ t('enemyMechanics.configuredRows', { count: enemyMechanicDrafts().length }) }}</strong>
+            <div class="ability-requirements-actions">
+              <ion-button
+                fill="clear"
+                size="small"
+                class="select-all-button"
+                [disabled]="building()"
+                (click)="openEnemyMechanicPicker()"
+              >
+                {{ t('enemyMechanics.actions.openPicker') }}
+              </ion-button>
+              <ion-button
+                fill="clear"
+                size="small"
+                class="select-all-button"
+                [disabled]="building() || !enemyMechanicDrafts().length"
+                (click)="clearEnemyMechanics()"
+              >
+                {{ t('enemyMechanics.actions.clearMechanics') }}
+              </ion-button>
+            </div>
+          </div>
+
+          @if (!enemyMechanicSummaryChips().length) {
+            <p class="favorites-only-warning">
+              {{ t('enemyMechanics.empty') }}
+            </p>
+          }
+
+          @if (enemyMechanicSummaryChips().length) {
+            <div class="selected-values-row ability-requirements-selected-row">
+              @for (chip of enemyMechanicSummaryChips(); track chip.draftId) {
+                <span class="selected-value-chip ability-requirement-chip ability-requirement-chip--mechanic">
+                  <span
+                    class="ability-visual-chip"
+                    [attr.data-tone]="chip.visual.tone"
+                  >
+                    <ion-icon [icon]="chip.visual.icon"></ion-icon>
+                    <small>{{ chip.visual.badge }}</small>
+                  </span>
+                  <span>{{ chip.label }}</span>
+                </span>
+              }
+            </div>
+          }
+        </section>
+
+        <section class="ability-requirements-card">
+          <div class="slot-grid__header">
+            <h2>{{ t('derivedCounters.title') }}</h2>
+            <p>{{ t('derivedCounters.copy') }}</p>
+          </div>
+
+          @if (!derivedRequiredAbilitySummaryChips().length) {
+            <p class="favorites-only-warning">
+              {{ t('derivedCounters.empty') }}
+            </p>
+          }
+
+          @if (derivedRequiredAbilitySummaryChips().length) {
+            <div class="selected-values-row ability-requirements-selected-row">
+              @for (chip of derivedRequiredAbilitySummaryChips(); track chip.draftId) {
+                <span class="selected-value-chip ability-requirement-chip">
+                  <span
+                    class="ability-visual-chip"
+                    [attr.data-tone]="chip.visual.tone"
+                  >
+                    <ion-icon [icon]="chip.visual.icon"></ion-icon>
+                    <small>{{ chip.visual.badge }}</small>
+                  </span>
+                  <span>{{ chip.label }}</span>
+                </span>
+              }
+            </div>
+          }
+        </section>
+
+        <section class="ability-requirements-card">
+          <div class="slot-grid__header">
+            <h2>{{ t('manualCounters.title') }}</h2>
+            <p>{{ t('manualCounters.copy') }}</p>
           </div>
 
           <div class="manual-locks-meta ability-requirements-meta">
             <strong>{{
-              t('abilityRequirements.configuredRows', { count: requiredAbilityDrafts().length })
+              t('manualCounters.configuredRows', { count: requiredAbilityDrafts().length })
             }}</strong>
             <div class="ability-requirements-actions">
               <ion-button
@@ -192,7 +276,7 @@
                 [disabled]="building() || !availableAbilityCatalogItems().length"
                 (click)="openAbilityPicker()"
               >
-                {{ t('abilityRequirements.actions.openPicker') }}
+                {{ t('manualCounters.actions.openPicker') }}
               </ion-button>
               <ion-button
                 fill="clear"
@@ -201,7 +285,7 @@
                 [disabled]="building() || !requiredAbilityDrafts().length"
                 (click)="clearRequiredAbilities()"
               >
-                {{ t('abilityRequirements.actions.clearRequirements') }}
+                {{ t('manualCounters.actions.clearRequirements') }}
               </ion-button>
               <ion-button
                 fill="clear"
@@ -217,9 +301,15 @@
 
           @if (!availableAbilityCatalogItems().length) {
             <p class="favorites-only-warning">
-              {{ t('abilityRequirements.emptyCatalog') }}
+              {{ t('manualCounters.emptyCatalog') }}
               <code>npm run data:import:all</code>
-              {{ t('abilityRequirements.emptyCatalogSuffix') }}
+              {{ t('manualCounters.emptyCatalogSuffix') }}
+            </p>
+          }
+
+          @if (!requiredAbilitySummaryChips().length) {
+            <p class="favorites-only-warning">
+              {{ t('manualCounters.empty') }}
             </p>
           }
 
@@ -241,10 +331,20 @@
           }
         </section>
 
+        <app-enemy-mechanic-picker
+          [isOpen]="enemyMechanicPickerOpen()"
+          [title]="t('enemyMechanics.title')"
+          [copy]="t('enemyMechanics.copy')"
+          [drafts]="enemyMechanicDrafts()"
+          [catalogItems]="availableEnemyMechanicCatalogItems()"
+          (dismiss)="closeEnemyMechanicPicker()"
+          (saveDrafts)="saveEnemyMechanicPicker($event)"
+        ></app-enemy-mechanic-picker>
+
         <app-ability-requirement-picker
           [isOpen]="abilityPickerOpen()"
-          [title]="t('abilityRequirements.title')"
-          [copy]="t('abilityRequirements.copy')"
+          [title]="t('manualCounters.title')"
+          [copy]="t('manualCounters.copy')"
           [drafts]="requiredAbilityDrafts()"
           [catalogItems]="availableAbilityCatalogItems()"
           (dismiss)="closeAbilityPicker()"

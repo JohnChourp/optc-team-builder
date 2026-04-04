@@ -16,6 +16,7 @@ import {
   sadOutline,
   shieldOutline,
   sparklesOutline,
+  trendingUpOutline,
   trendingDownOutline,
   warningOutline,
 } from "ionicons/icons";
@@ -43,6 +44,13 @@ export interface AbilityRequirementVisualMeta {
 export interface AbilityRequirementSummaryFormatter {
   formatCharacters(count: number): string;
   formatTurns(count: number): string;
+}
+
+export interface AbilityRequirementMiniBadge {
+  abilityKey: string;
+  label: string;
+  badge: string;
+  tone: AbilityRequirementVisualMeta["tone"];
 }
 
 interface SerializeAbilityRequirementDraftOptions {
@@ -89,6 +97,11 @@ const ABILITY_VISUALS: Record<string, Omit<AbilityRequirementVisualMeta, "isFall
     badge: "CH",
     tone: "teal",
   },
+  remove_chain_multiplier_limit: {
+    icon: gitNetworkOutline,
+    badge: "CL",
+    tone: "teal",
+  },
   remove_damage_reduction: {
     icon: shieldOutline,
     badge: "DR",
@@ -107,6 +120,46 @@ const ABILITY_VISUALS: Record<string, Omit<AbilityRequirementVisualMeta, "isFall
   remove_no_healing: {
     icon: medkitOutline,
     badge: "NH",
+    tone: "teal",
+  },
+  remove_enemy_atk_up: {
+    icon: trendingUpOutline,
+    badge: "ATK",
+    tone: "red",
+  },
+  remove_enemy_barrier: {
+    icon: gridOutline,
+    badge: "BAR",
+    tone: "blue",
+  },
+  remove_enemy_damage_nullification: {
+    icon: banOutline,
+    badge: "DN",
+    tone: "violet",
+  },
+  remove_enemy_end_of_turn_damage_percent_cut: {
+    icon: warningOutline,
+    badge: "EOT",
+    tone: "orange",
+  },
+  remove_enemy_end_of_turn_heal: {
+    icon: medkitOutline,
+    badge: "HEAL",
+    tone: "green",
+  },
+  remove_enemy_enrage: {
+    icon: flameOutline,
+    badge: "ENG",
+    tone: "red",
+  },
+  remove_enemy_increased_defense: {
+    icon: shieldOutline,
+    badge: "DEF",
+    tone: "teal",
+  },
+  remove_enemy_orb_based_damage_reduction: {
+    icon: gridOutline,
+    badge: "ORB",
     tone: "teal",
   },
   remove_pain: {
@@ -154,12 +207,44 @@ const ABILITY_VISUALS: Record<string, Omit<AbilityRequirementVisualMeta, "isFall
     badge: "SP",
     tone: "orange",
   },
+  remove_stun: {
+    icon: flashOutline,
+    badge: "ST",
+    tone: "violet",
+  },
   remove_threshold_damage_reduction: {
     icon: removeCircleOutline,
     badge: "TH",
     tone: "blue",
   },
+  remove_healing_reduction: {
+    icon: medkitOutline,
+    badge: "HR",
+    tone: "teal",
+  },
+  remove_defense_up: {
+    icon: shieldOutline,
+    badge: "DEF",
+    tone: "teal",
+  },
 };
+
+const PAIN_SELECTABLE_DEBUFF_KEYS = [
+  { abilityKey: "remove_enemy_atk_up", label: "ATK Up" },
+  { abilityKey: "remove_enemy_barrier", label: "Barrier" },
+  { abilityKey: "remove_enemy_damage_nullification", label: "Damage Nullification" },
+  {
+    abilityKey: "remove_enemy_end_of_turn_damage_percent_cut",
+    label: "End of Turn Damage/Percent Cut",
+  },
+  { abilityKey: "remove_enemy_end_of_turn_heal", label: "End of Turn Heal" },
+  { abilityKey: "remove_enemy_enrage", label: "Enrage" },
+  { abilityKey: "remove_enemy_increased_defense", label: "Increased Defense" },
+  { abilityKey: "remove_enemy_orb_based_damage_reduction", label: "Orb-Based Damage Reduction" },
+  { abilityKey: "remove_damage_reduction", label: "Percent Damage Reduction" },
+  { abilityKey: "remove_resilience", label: "Resilience" },
+  { abilityKey: "remove_threshold_damage_reduction", label: "Threshold Damage Reduction" },
+] as const;
 
 export function resolveAbilityRequirementVisual(abilityKey: string): AbilityRequirementVisualMeta {
   const resolved = ABILITY_VISUALS[abilityKey];
@@ -172,6 +257,25 @@ export function resolveAbilityRequirementVisual(abilityKey: string): AbilityRequ
     ...resolved,
     isFallback: false,
   };
+}
+
+export function resolveAbilityRequirementPainSelectableDebuffBadges(
+  abilityKey: string,
+): AbilityRequirementMiniBadge[] {
+  if (abilityKey !== "remove_pain") {
+    return [];
+  }
+
+  return PAIN_SELECTABLE_DEBUFF_KEYS.map(({ abilityKey: painAbilityKey, label }) => {
+    const visual = resolveAbilityRequirementVisual(painAbilityKey);
+
+    return {
+      abilityKey: painAbilityKey,
+      label,
+      badge: visual.badge,
+      tone: visual.tone,
+    };
+  });
 }
 
 export function createAbilityRequirementDraft(

@@ -1,5 +1,6 @@
 import {
   type AutoBuildAbilityRequirement,
+  type AutoBuildEnemyMechanicRequirement,
   type NormalizedBuilderAbility,
 } from "./auto-team-builder-ability.models";
 import { type CharacterDetailRecord, type ShipRecord } from "./optc.models";
@@ -50,6 +51,7 @@ export interface AutoBuildConstraints {
   requireAllSelectedClassesPerCharacter?: boolean;
   requireAllSpecialsSupportTeam?: boolean;
   requiredAbilities?: AutoBuildAbilityRequirement[];
+  enemyMechanics?: AutoBuildEnemyMechanicRequirement[];
   favoritesOnly?: boolean;
   favoriteCharacterIds?: number[];
   manualSlots?: AutoBuildManualSlotSelection[];
@@ -87,6 +89,7 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   selectedClasses: string[];
   requireAllSpecialsSupportTeam: boolean;
   requiredAbilities: AutoBuildAbilityRequirement[];
+  enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   favoritesOnly: boolean;
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];

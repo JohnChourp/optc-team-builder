@@ -20,6 +20,12 @@ export function buildAutoTeamBuilderStateFromSavedEnemy(
       ...requirement,
       slotTokens: [...requirement.slotTokens],
     })),
+    enemyMechanics: enemy.enemyMechanics.map((mechanic) => ({
+      ...mechanic,
+      triggerTags: [...mechanic.triggerTags],
+      responseTags: [...mechanic.responseTags],
+      conditionTags: [...mechanic.conditionTags],
+    })),
     requireAllSelectedTypesInTeam: enemy.requireAllSelectedTypesInTeam,
     requireAllSelectedClassesPerCharacter: enemy.requireAllSelectedClassesPerCharacter,
     requireAllSpecialsSupportTeam: enemy.requireAllSpecialsSupportTeam,

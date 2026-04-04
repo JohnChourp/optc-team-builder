@@ -92,6 +92,19 @@
                           <small>{{ t("catalog.hints.selectableDebuff") }}</small>
                         }
                       </span>
+                      @if (tile.painSelectableBadges.length) {
+                        <span class="ability-picker-mini-badge-list">
+                          @for (badge of tile.painSelectableBadges; track badge.abilityKey) {
+                            <small
+                              class="ability-picker-mini-badge"
+                              [attr.data-tone]="badge.tone"
+                              [title]="badge.label"
+                            >
+                              {{ badge.badge }}
+                            </small>
+                          }
+                        </span>
+                      }
                     </span>
 
                     @if (tile.selectedCount > 0) {
@@ -131,6 +144,19 @@
                         <div>
                           <strong>{{ row.label }}</strong>
                           <small>{{ row.draft.abilityKey }}</small>
+                          @if (row.painSelectableBadges.length) {
+                            <span class="ability-picker-mini-badge-list">
+                              @for (badge of row.painSelectableBadges; track badge.abilityKey) {
+                                <small
+                                  class="ability-picker-mini-badge"
+                                  [attr.data-tone]="badge.tone"
+                                  [title]="badge.label"
+                                >
+                                  {{ badge.badge }}
+                                </small>
+                              }
+                            </span>
+                          }
                         </div>
                       </div>
 

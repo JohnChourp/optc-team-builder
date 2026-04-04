@@ -151,6 +151,31 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     ]);
   });
 
+  it('opens and closes the enemy mechanic picker without mutating the current drafts', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.enemyMechanicDrafts.set([
+      {
+        draftId: 'barrier-1',
+        mechanicKey: 'enemy_barrier',
+        category: 'enemyDefense',
+        minTurns: 3,
+        triggerTags: [],
+        responseTags: [],
+        conditionTags: [],
+        derivedAbilityKey: 'remove_enemy_barrier',
+      },
+    ]);
+
+    page.openEnemyMechanicPicker();
+    expect(page.enemyMechanicPickerOpen()).toBe(true);
+
+    page.closeEnemyMechanicPicker();
+    expect(page.enemyMechanicPickerOpen()).toBe(false);
+    expect(page.enemyMechanicDrafts()).toHaveLength(1);
+  });
+
   it('applies shared picker drafts and refreshes the manual candidate pool on save', async () => {
     const { page, repository } = await createPage();
 
@@ -177,6 +202,36 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
         minTurns: 5,
         slotTokens: [],
         requiredCharacterCount: 2,
+      },
+    ]);
+    expect(repository.searchDetailedCharacters).toHaveBeenCalledOnce();
+  });
+
+  it('derives direct counters from enemy mechanics and refreshes the manual candidate pool on save', async () => {
+    const { page, repository } = await createPage();
+
+    await page.ngOnInit();
+    repository.searchDetailedCharacters.mockClear();
+
+    await page.saveEnemyMechanicPicker([
+      {
+        mechanicKey: 'enemy_barrier',
+        category: 'enemyDefense',
+        minTurns: 3,
+        triggerTags: [],
+        responseTags: [],
+        conditionTags: [],
+        derivedAbilityKey: 'remove_enemy_barrier',
+      },
+    ]);
+
+    expect(page.enemyMechanicPickerOpen()).toBe(false);
+    expect(page.pageRequiredAbilities()).toEqual([
+      {
+        abilityKey: 'remove_enemy_barrier',
+        minTurns: 3,
+        slotTokens: [],
+        requiredCharacterCount: 1,
       },
     ]);
     expect(repository.searchDetailedCharacters).toHaveBeenCalledOnce();
@@ -438,6 +493,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(template).toContain('[routerLink]="getCharacterDetailLink(candidateCard.character)"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(slot.character)"');
     expect(template).toContain('(click)="saveTeam()"');
+    expect(template).toContain('<app-enemy-mechanic-picker');
     expect(template).toContain('<app-ability-requirement-picker');
     expect(template).not.toContain("abilityRequirements.placeholders.selectAbility");
   });
@@ -448,6 +504,18 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     await page.ngOnInit();
     page.selectedTypes.set(['DEX']);
     page.selectedClasses.set(['Fighter']);
+    page.enemyMechanicDrafts.set([
+      {
+        draftId: 'barrier-1',
+        mechanicKey: 'enemy_barrier',
+        category: 'enemyDefense',
+        minTurns: 3,
+        triggerTags: [],
+        responseTags: [],
+        conditionTags: [],
+        derivedAbilityKey: 'remove_enemy_barrier',
+      },
+    ]);
     page.requiredAbilityDrafts.set([
       {
         draftId: 'bind-1',
@@ -483,6 +551,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
 
     expect(page.selectedTypes()).toEqual([]);
     expect(page.selectedClasses()).toEqual([]);
+    expect(page.enemyMechanicDrafts()).toEqual([]);
     expect(page.requiredAbilityDrafts()).toEqual([]);
     expect(page.manualSlots()).toEqual(createManualSlots());
     expect(page.lockedCharacterIds()).toEqual([]);
@@ -1143,7 +1212,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 4,
+      schemaVersion: 5,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -1158,6 +1227,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
             requiredCharacterCount: 2,
           },
         ],
+        enemyMechanics: [],
         requireAllSelectedTypesInTeam: true,
         requireAllSelectedClassesPerCharacter: true,
         requireAllSpecialsSupportTeam: true,
@@ -1196,6 +1266,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       selectedTypes: ['DEX', 'PSY'],
       selectedClasses: ['Fighter', 'Slasher'],
       requiredAbilities: [],
+      enemyMechanics: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSpecialsSupportTeam: true,
@@ -1217,6 +1288,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       selectedTypes: ['DEX', 'PSY'],
       selectedClasses: ['Fighter', 'Slasher'],
       requiredAbilities: [],
+      enemyMechanics: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSpecialsSupportTeam: true,
@@ -1242,6 +1314,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       selectedTypes: ['DEX'],
       selectedClasses: ['Fighter'],
       requiredAbilities: [],
+      enemyMechanics: [],
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSpecialsSupportTeam: false,
@@ -1285,6 +1358,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       selectedTypes: ['DEX', 'PSY'],
       selectedClasses: ['Fighter', 'Slasher'],
       requiredAbilities: [],
+      enemyMechanics: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: true,
       requireAllSpecialsSupportTeam: true,
@@ -1339,6 +1413,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       selectedTypes: ['DEX'],
       selectedClasses: ['Fighter'],
       requiredAbilities: [],
+      enemyMechanics: [],
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSpecialsSupportTeam: false,
@@ -1371,6 +1446,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
           requiredCharacterCount: 2,
         },
       ],
+      enemyMechanics: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: true,
       requireAllSpecialsSupportTeam: false,
@@ -1506,6 +1582,85 @@ describe('AutoTeamBuilder preset import helpers', () => {
     expect(result.warnings).toEqual([]);
   });
 
+  it('roundtrips enemy mechanics alongside effective required counters', () => {
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [
+        {
+          abilityKey: 'remove_enemy_barrier',
+          minTurns: 3,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+        },
+      ],
+      enemyMechanics: [
+        {
+          mechanicKey: 'enemy_barrier',
+          category: 'enemyDefense',
+          minTurns: 3,
+          triggerTags: [],
+          responseTags: [],
+          conditionTags: [],
+          derivedAbilityKey: 'remove_enemy_barrier',
+        },
+      ],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSpecialsSupportTeam: false,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      manualSlots: createManualSlots({
+        captain: [101],
+      }),
+      lockedCharacterIds: [101],
+      lockedCharacters: [createCharacterRecord(101)],
+      selectedLeaderIds: [101],
+      captainLeaderId: 101,
+      friendCaptainLeaderId: 101,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+
+    const result = sanitizeAutoTeamSelectionImportPayload(payload, {
+      availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      availableClasses: ['Fighter', 'Slasher'],
+      abilityCatalogItems: [
+        {
+          key: 'remove_enemy_barrier',
+          label: 'Remove Enemy Barrier',
+          supportsTurns: true,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['specialText'],
+          matchCount: 1,
+          sampleCharacterIds: [101],
+          sampleTexts: [],
+        },
+      ],
+      availableLockedCharacters: [createCharacterRecord(101)],
+    });
+
+    expect(result.state.enemyMechanics).toEqual([
+      {
+        mechanicKey: 'enemy_barrier',
+        category: 'enemyDefense',
+        minTurns: 3,
+        triggerTags: [],
+        responseTags: [],
+        conditionTags: [],
+        derivedAbilityKey: 'remove_enemy_barrier',
+      },
+    ]);
+    expect(result.state.requiredAbilities).toEqual([
+      {
+        abilityKey: 'remove_enemy_barrier',
+        minTurns: 3,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ]);
+  });
+
   it('merges duplicate imported ability requirements by keeping the max character count', () => {
     const payload = buildAutoTeamSelectionExportPayload({
       selectedTypes: ['DEX'],
@@ -1518,6 +1673,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
           requiredCharacterCount: 1,
         },
       ],
+      enemyMechanics: [],
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSpecialsSupportTeam: false,
@@ -1586,6 +1742,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
           requiredCharacterCount: 2,
         },
       ],
+      enemyMechanics: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: true,
       requireAllSpecialsSupportTeam: true,
@@ -1707,6 +1864,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
           requiredCharacterCount: 1,
         },
       ],
+      enemyMechanics: [],
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSpecialsSupportTeam: false,
@@ -1819,7 +1977,24 @@ describe('AutoTeamBuilder enemy preset handoff', () => {
 
     expect(page.selectedTypes()).toEqual(['DEX', 'PSY']);
     expect(page.selectedClasses()).toEqual(['Fighter']);
+    expect(page.pageEnemyMechanics()).toEqual([
+      {
+        mechanicKey: 'enemy_barrier',
+        category: 'enemyDefense',
+        minTurns: 3,
+        triggerTags: [],
+        responseTags: [],
+        conditionTags: [],
+        derivedAbilityKey: 'remove_enemy_barrier',
+      },
+    ]);
     expect(page.pageRequiredAbilities()).toEqual([
+      {
+        abilityKey: 'remove_enemy_barrier',
+        minTurns: 3,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
       {
         abilityKey: 'remove_bind',
         minTurns: 5,
@@ -1864,7 +2039,24 @@ describe('AutoTeamBuilder enemy preset handoff', () => {
       ['Fighter'],
       ['DEX', 'PSY'],
       expect.objectContaining({
+        enemyMechanics: [
+          {
+            mechanicKey: 'enemy_barrier',
+            category: 'enemyDefense',
+            minTurns: 3,
+            triggerTags: [],
+            responseTags: [],
+            conditionTags: [],
+            derivedAbilityKey: 'remove_enemy_barrier',
+          },
+        ],
         requiredAbilities: [
+          {
+            abilityKey: 'remove_enemy_barrier',
+            minTurns: 3,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+          },
           {
             abilityKey: 'remove_bind',
             minTurns: 5,
@@ -2006,6 +2198,7 @@ function createAutoBuildResult(
     types: ['DEX', 'PSY'],
     selectedClasses: ['Fighter', 'Slasher'],
     requiredAbilities: [],
+    enemyMechanics: [],
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSpecialsSupportTeam: false,
@@ -2034,6 +2227,12 @@ function createAutoBuildResult(
       requiredAbilities: input.requiredAbilities.map((requirement) => ({
         ...requirement,
         slotTokens: [...requirement.slotTokens],
+      })),
+      enemyMechanics: input.enemyMechanics.map((mechanic) => ({
+        ...mechanic,
+        triggerTags: [...mechanic.triggerTags],
+        responseTags: [...mechanic.responseTags],
+        conditionTags: [...mechanic.conditionTags],
       })),
       manualSlots: input.manualSlots.map((slot) => ({
         role: slot.role,
@@ -2175,10 +2374,27 @@ async function createPage(options: { routeEnemyId?: string | null } = {}): Promi
       selectedClasses: ['Fighter'],
       requiredAbilities: [
         {
+          abilityKey: 'remove_enemy_barrier',
+          minTurns: 3,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+        },
+        {
           abilityKey: 'remove_bind',
           minTurns: 5,
           slotTokens: [],
           requiredCharacterCount: 1,
+        },
+      ],
+      enemyMechanics: [
+        {
+          mechanicKey: 'enemy_barrier',
+          category: 'enemyDefense',
+          minTurns: 3,
+          triggerTags: [],
+          responseTags: [],
+          conditionTags: [],
+          derivedAbilityKey: 'remove_enemy_barrier',
         },
       ],
       requireAllSelectedTypesInTeam: true,

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   formatAbilityRequirementSummary,
+  resolveAbilityRequirementPainSelectableDebuffBadges,
   resolveAbilityRequirementVisual,
   serializeAbilityRequirementDrafts,
   type AbilityRequirementDraft,
@@ -23,6 +24,22 @@ describe("ability-requirement-draft utils", () => {
 
   it("falls back to a generic visual for unknown abilities", () => {
     expect(resolveAbilityRequirementVisual("future_unknown_ability").isFallback).toBe(true);
+  });
+
+  it("exposes selectable debuff mini badges for pain coverage", () => {
+    expect(resolveAbilityRequirementPainSelectableDebuffBadges("remove_pain")).toEqual([
+      expect.objectContaining({ abilityKey: "remove_enemy_atk_up" }),
+      expect.objectContaining({ abilityKey: "remove_enemy_barrier" }),
+      expect.objectContaining({ abilityKey: "remove_enemy_damage_nullification" }),
+      expect.objectContaining({ abilityKey: "remove_enemy_end_of_turn_damage_percent_cut" }),
+      expect.objectContaining({ abilityKey: "remove_enemy_end_of_turn_heal" }),
+      expect.objectContaining({ abilityKey: "remove_enemy_enrage" }),
+      expect.objectContaining({ abilityKey: "remove_enemy_increased_defense" }),
+      expect.objectContaining({ abilityKey: "remove_enemy_orb_based_damage_reduction" }),
+      expect.objectContaining({ abilityKey: "remove_damage_reduction" }),
+      expect.objectContaining({ abilityKey: "remove_resilience" }),
+      expect.objectContaining({ abilityKey: "remove_threshold_damage_reduction" }),
+    ]);
   });
 
   it("dedupes identical draft identities while keeping the largest character count", () => {

@@ -10,12 +10,14 @@ import {
 import {
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityRequirement,
+  type AutoBuildEnemyMechanicRequirement,
 } from "../../core/models/auto-team-builder-ability.models";
 import {
   type CharacterDetailRecord,
   type CharacterListItem,
   type ShipRecord,
 } from "../../core/models/optc.models";
+import { normalizeEnemyMechanicRequirements } from "../../core/services/enemy-mechanic-draft.utils";
 
 type AutoTeamExportRole = AutoBuildResult["slots"][number]["role"];
 type AutoTeamExportLeaderAssignment = "captain" | "friendCaptain" | "dual" | null;
@@ -59,7 +61,7 @@ export interface AutoTeamSelectionShipSummary {
 }
 
 export interface AutoTeamSelectionExportPayload {
-  schemaVersion: 1 | 2 | 3 | 4;
+  schemaVersion: 1 | 2 | 3 | 4 | 5;
   exportedAt: string;
   source: "auto-team-builder";
   exportType: "preset";
@@ -67,6 +69,7 @@ export interface AutoTeamSelectionExportPayload {
     selectedTypes: AutoBuildResult["input"]["types"];
     selectedClasses: AutoBuildResult["input"]["selectedClasses"];
     requiredAbilities: AutoBuildResult["input"]["requiredAbilities"];
+    enemyMechanics?: AutoBuildEnemyMechanicRequirement[];
     requireAllSelectedTypesInTeam: boolean;
     requireAllSelectedClassesPerCharacter: boolean;
     requireAllSpecialsSupportTeam: boolean;
@@ -89,6 +92,7 @@ export interface AutoTeamSelectionImportState {
   selectedTypes: AutoTeamBuilderType[];
   selectedClasses: string[];
   requiredAbilities: AutoBuildAbilityRequirement[];
+  enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
   requireAllSpecialsSupportTeam: boolean;
@@ -132,6 +136,7 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   selectedTypes: AutoBuildResult["input"]["types"];
   selectedClasses: AutoBuildResult["input"]["selectedClasses"];
   requiredAbilities: AutoBuildResult["input"]["requiredAbilities"];
+  enemyMechanics: AutoBuildResult["input"]["enemyMechanics"];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
   requireAllSpecialsSupportTeam: boolean;
@@ -373,7 +378,8 @@ export function parseAutoTeamSelectionImportPayload(
     (parsedPayload["schemaVersion"] !== 1 &&
       parsedPayload["schemaVersion"] !== 2 &&
       parsedPayload["schemaVersion"] !== 3 &&
-      parsedPayload["schemaVersion"] !== 4) ||
+      parsedPayload["schemaVersion"] !== 4 &&
+      parsedPayload["schemaVersion"] !== 5) ||
     parsedPayload["source"] !== "auto-team-builder" ||
     parsedPayload["exportType"] !== "preset"
   ) {
@@ -394,6 +400,13 @@ export function parseAutoTeamSelectionImportPayload(
     !filters["selectedClasses"].every((characterClass) => typeof characterClass === "string") ||
     !Array.isArray(filters["requiredAbilities"]) ||
     !filters["requiredAbilities"].every((requirement) => isRecord(requirement)) ||
+    !(
+      filters["enemyMechanics"] === undefined ||
+      (
+        Array.isArray(filters["enemyMechanics"]) &&
+        filters["enemyMechanics"].every((mechanic) => isRecord(mechanic))
+      )
+    ) ||
     typeof filters["requireAllSelectedTypesInTeam"] !== "boolean" ||
     typeof filters["requireAllSelectedClassesPerCharacter"] !== "boolean" ||
     typeof filters["requireAllSpecialsSupportTeam"] !== "boolean" ||
@@ -476,6 +489,9 @@ export function sanitizeAutoTeamSelectionImportPayload(
   let invalidAbilityCount = 0;
   let adjustedAbilityCount = 0;
   const requiredAbilityMap = new Map<string, AutoBuildAbilityRequirement>();
+  const enemyMechanics = normalizeEnemyMechanicRequirements(
+    Array.isArray(payload.filters.enemyMechanics) ? payload.filters.enemyMechanics : [],
+  );
 
   for (const rawRequirement of payload.filters.requiredAbilities) {
     const abilityKey = typeof rawRequirement.abilityKey === "string"
@@ -673,6 +689,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
       selectedTypes,
       selectedClasses,
       requiredAbilities,
+      enemyMechanics,
       requireAllSelectedTypesInTeam: payload.filters.requireAllSelectedTypesInTeam,
       requireAllSelectedClassesPerCharacter: payload.filters.requireAllSelectedClassesPerCharacter,
       requireAllSpecialsSupportTeam: payload.filters.requireAllSpecialsSupportTeam,
@@ -733,6 +750,7 @@ export function buildAutoTeamSelectionExportPayload({
   selectedTypes,
   selectedClasses,
   requiredAbilities,
+  enemyMechanics,
   requireAllSelectedTypesInTeam,
   requireAllSelectedClassesPerCharacter,
   requireAllSpecialsSupportTeam,
@@ -754,7 +772,7 @@ export function buildAutoTeamSelectionExportPayload({
   }));
 
   return {
-    schemaVersion: 4,
+    schemaVersion: 5,
     exportedAt,
     source: "auto-team-builder",
     exportType: "preset",
@@ -764,6 +782,12 @@ export function buildAutoTeamSelectionExportPayload({
       requiredAbilities: requiredAbilities.map((requirement) => ({
         ...requirement,
         slotTokens: [...requirement.slotTokens],
+      })),
+      enemyMechanics: enemyMechanics.map((mechanic) => ({
+        ...mechanic,
+        triggerTags: [...mechanic.triggerTags],
+        responseTags: [...mechanic.responseTags],
+        conditionTags: [...mechanic.conditionTags],
       })),
       requireAllSelectedTypesInTeam,
       requireAllSelectedClassesPerCharacter,

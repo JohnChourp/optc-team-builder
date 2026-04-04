@@ -3,17 +3,45 @@ import {
   type NormalizedBuilderAbility,
 } from '../models/auto-team-builder-ability.models';
 
+const LEGACY_ABILITY_KEY_ALIASES: Record<string, string> = {
+  remove_defense_up: 'remove_enemy_increased_defense',
+};
+
+const SELECTABLE_DEBUFF_COUNTER_KEYS = new Set([
+  'remove_damage_reduction',
+  'remove_threshold_damage_reduction',
+  'remove_resilience',
+  'remove_enemy_barrier',
+  'remove_enemy_damage_nullification',
+  'remove_enemy_atk_up',
+  'remove_enemy_enrage',
+  'remove_enemy_increased_defense',
+  'remove_enemy_end_of_turn_damage_percent_cut',
+  'remove_enemy_end_of_turn_heal',
+  'remove_enemy_orb_based_damage_reduction',
+]);
+
 export function buildAbilityRequirementIdentity(
   requirement: AutoBuildAbilityRequirement,
 ): string {
-  return `${requirement.abilityKey}|${requirement.minTurns ?? 'none'}|${requirement.slotTokens.join(',')}|${requirement.requiredCharacterCount}`;
+  return `${normalizeAbilityKey(requirement.abilityKey)}|${requirement.minTurns ?? 'none'}|${requirement.slotTokens.join(',')}|${requirement.requiredCharacterCount}`;
 }
 
 export function matchesAbilityRequirement(
   ability: NormalizedBuilderAbility,
   requirement: AutoBuildAbilityRequirement,
 ): boolean {
-  if (ability.key !== requirement.abilityKey) {
+  const normalizedAbilityKey = normalizeAbilityKey(ability.key);
+  const normalizedRequirementKey = normalizeAbilityKey(requirement.abilityKey);
+
+  if (
+    normalizedAbilityKey !== normalizedRequirementKey &&
+    !(
+      normalizedAbilityKey === 'remove_pain' &&
+      ability.coverageMode === 'selectedDebuff' &&
+      SELECTABLE_DEBUFF_COUNTER_KEYS.has(normalizedRequirementKey)
+    )
+  ) {
     return false;
   }
 
@@ -50,4 +78,10 @@ export function builderAbilitiesMatchAllRequirements(
       abilities.some((ability) => matchesAbilityRequirement(ability, requirement)),
     ) >= requirement.requiredCharacterCount,
   );
+}
+
+function normalizeAbilityKey(value: string): string {
+  const normalizedValue = value.trim();
+
+  return LEGACY_ABILITY_KEY_ALIASES[normalizedValue] ?? normalizedValue;
 }

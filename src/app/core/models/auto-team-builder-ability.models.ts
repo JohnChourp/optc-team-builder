@@ -1,5 +1,26 @@
 export type AutoBuildAbilitySource = 'specialText' | 'captainAbility';
 export type AutoBuildAbilityCoverageMode = 'explicit' | 'selectedDebuff';
+export type AutoBuildEnemyMechanicCategory =
+  | 'enemyDefense'
+  | 'crewDebuff'
+  | 'orbControl'
+  | 'interrupt'
+  | 'conditional';
+export type AutoBuildEnemyMechanicTriggerTag =
+  | 'onSpecial'
+  | 'onAtkBoost'
+  | 'onOrbBoost'
+  | 'onDelay'
+  | 'onOrbChange';
+export type AutoBuildEnemyMechanicResponseTag =
+  | 'removeBuffs'
+  | 'applyDebuffs'
+  | 'heal'
+  | 'shield';
+export type AutoBuildEnemyMechanicConditionTag =
+  | 'hpThreshold'
+  | 'turnCounter'
+  | 'revive';
 
 export interface NormalizedBuilderAbility {
   key: string;
@@ -36,4 +57,29 @@ export interface AutoBuildAbilityRequirement {
   minTurns: number | null;
   slotTokens: string[];
   requiredCharacterCount: number;
+}
+
+export interface AutoBuildEnemyMechanicRequirement {
+  mechanicKey: string;
+  category: AutoBuildEnemyMechanicCategory;
+  minTurns: number | null;
+  triggerTags: AutoBuildEnemyMechanicTriggerTag[];
+  responseTags: AutoBuildEnemyMechanicResponseTag[];
+  conditionTags: AutoBuildEnemyMechanicConditionTag[];
+  derivedAbilityKey: string | null;
+}
+
+export interface AutoBuildEnemyMechanicCatalogItem {
+  key: string;
+  label: string;
+  category: AutoBuildEnemyMechanicCategory;
+  supportsTurns: boolean;
+  availableTriggerTags: AutoBuildEnemyMechanicTriggerTag[];
+  availableResponseTags: AutoBuildEnemyMechanicResponseTag[];
+  availableConditionTags: AutoBuildEnemyMechanicConditionTag[];
+  defaultTriggerTags: AutoBuildEnemyMechanicTriggerTag[];
+  defaultResponseTags: AutoBuildEnemyMechanicResponseTag[];
+  defaultConditionTags: AutoBuildEnemyMechanicConditionTag[];
+  derivedAbilityKey: string | null;
+  keywords: string[];
 }

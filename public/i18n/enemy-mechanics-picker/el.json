@@ -1,0 +1,58 @@
+{
+  "eyebrow": "Enemy mechanics",
+  "actions": {
+    "clearAll": "Καθαρισμός όλων"
+  },
+  "catalog": {
+    "title": "Κατάλογος mechanics",
+    "count": "{{count}} εμφανίζονται από {{total}} συνολικά",
+    "searchPlaceholder": "Αναζήτηση mechanics, triggers ή keywords",
+    "emptyCatalogTitle": "Δεν υπάρχουν mechanics",
+    "emptyCatalogCopy": "Δεν μπόρεσε να φορτωθεί ο τοπικός κατάλογος mechanics.",
+    "emptySearchTitle": "Δεν βρέθηκαν mechanics",
+    "emptySearchCopy": "Δοκίμασε πιο γενικό όρο ή καθάρισε την αναζήτηση.",
+    "sectionCount": "{{count}} mechanics",
+    "selectedCount": "{{count}} επιλεγμένα",
+    "hints": {
+      "turns": "Υποστηρίζει turns",
+      "derivedCounter": "Προσθέτει derived counter"
+    }
+  },
+  "selected": {
+    "title": "Επιλεγμένα mechanics",
+    "count": "{{count}} ρυθμισμένα",
+    "emptyTitle": "Δεν έχουν επιλεγεί mechanics",
+    "emptyCopy": "Επίλεξε ένα ή περισσότερα enemy mechanics για να αποθηκευτούν στο preset."
+  },
+  "fields": {
+    "turns": "Turns",
+    "triggerTags": "Trigger tags",
+    "responseTags": "Response tags",
+    "conditionTags": "Condition tags"
+  },
+  "categories": {
+    "enemyDefense": "Άμυνα εχθρού",
+    "crewDebuff": "Debuffs πληρώματος",
+    "orbControl": "Έλεγχος orbs",
+    "interrupt": "Interrupts",
+    "conditional": "Conditional mechanics"
+  },
+  "triggerTags": {
+    "onSpecial": "Σε special",
+    "onAtkBoost": "Σε ATK boost",
+    "onOrbBoost": "Σε orb boost",
+    "onDelay": "Σε delay",
+    "onOrbChange": "Σε orb change"
+  },
+  "responseTags": {
+    "removeBuffs": "Αφαιρεί buffs",
+    "applyDebuffs": "Βάζει debuffs",
+    "heal": "Θεραπεύει",
+    "shield": "Βάζει shield"
+  },
+  "conditionTags": {
+    "hpThreshold": "HP threshold",
+    "turnCounter": "Turn counter",
+    "revive": "Revive"
+  }
+}

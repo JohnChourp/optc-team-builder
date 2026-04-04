@@ -14,7 +14,9 @@ import {
   type AutoTeamBuilderType,
   createEmptyAutoBuildManualSlots,
 } from "../models/auto-team-builder.models";
-import { type AutoBuildAbilityRequirement } from "../models/auto-team-builder-ability.models";
+import {
+  type AutoBuildAbilityRequirement,
+} from "../models/auto-team-builder-ability.models";
 import { type CharacterDetailRecord } from "../models/optc.models";
 import {
   AutoTeamBuildCancelledError,
@@ -23,6 +25,7 @@ import {
   runAutoTeamBuildSearch,
 } from "./auto-team-builder.engine";
 import { resolveAutoBuildShipSelection } from "./auto-team-builder-ship.utils";
+import { normalizeEnemyMechanicRequirements } from "./enemy-mechanic-draft.utils";
 import { OptcRepositoryService } from "./optc-repository.service";
 import {
   type AutoTeamBuilderWorkerRequest,
@@ -33,6 +36,10 @@ export interface AutoTeamBuildExecutionOptions {
   onProgress?: (snapshot: AutoBuildProgressSnapshot) => void;
   signal?: AbortSignal;
 }
+
+const LEGACY_ABILITY_KEY_ALIASES: Record<string, string> = {
+  remove_defense_up: "remove_enemy_increased_defense",
+};
 
 @Injectable({ providedIn: "root" })
 export class AutoTeamBuilderService {
@@ -66,6 +73,7 @@ export class AutoTeamBuilderService {
       ),
     );
     const requiredAbilities = this.normalizeRequiredAbilities(constraints.requiredAbilities ?? []);
+    const enemyMechanics = normalizeEnemyMechanicRequirements(constraints.enemyMechanics ?? []);
     const normalizedManualSlots = this.normalizeManualSlots(constraints.manualSlots);
     const hasManualSlots = normalizedManualSlots.some((slot) => slot.characterIds.length > 0);
     const legacyManualSelection = this.normalizeLegacyManualSelection(
@@ -93,6 +101,7 @@ export class AutoTeamBuilderService {
         constraints.requireAllSelectedClassesPerCharacter ?? false,
       requireAllSpecialsSupportTeam: constraints.requireAllSpecialsSupportTeam ?? false,
       requiredAbilities,
+      enemyMechanics,
       favoritesOnly,
       manualSlots,
       lockedCharacterIds,
@@ -108,6 +117,12 @@ export class AutoTeamBuilderService {
       requiredAbilities: input.requiredAbilities.map((requirement) => ({
         ...requirement,
         slotTokens: [...requirement.slotTokens],
+      })),
+      enemyMechanics: input.enemyMechanics.map((mechanic) => ({
+        ...mechanic,
+        triggerTags: [...mechanic.triggerTags],
+        responseTags: [...mechanic.responseTags],
+        conditionTags: [...mechanic.conditionTags],
       })),
       manualSlots: input.manualSlots.map((slot) => ({
         role: slot.role,
@@ -480,6 +495,7 @@ export class AutoTeamBuilderService {
 
     for (const requirement of requirements) {
       const abilityKey = requirement.abilityKey.trim();
+      const normalizedAbilityKey = LEGACY_ABILITY_KEY_ALIASES[abilityKey] ?? abilityKey;
       const minTurns =
         requirement.minTurns !== null &&
         Number.isFinite(requirement.minTurns) &&
@@ -497,11 +513,11 @@ export class AutoTeamBuilderService {
           ? Math.floor(requirement.requiredCharacterCount)
           : 1;
 
-      if (abilityKey.length === 0) {
+      if (normalizedAbilityKey.length === 0) {
         continue;
       }
 
-      const identity = `${abilityKey}|${minTurns ?? "none"}|${slotTokens.join(",")}`;
+      const identity = `${normalizedAbilityKey}|${minTurns ?? "none"}|${slotTokens.join(",")}`;
       const existingRequirement = normalizedRequirements.get(identity);
 
       if (existingRequirement) {
@@ -513,7 +529,7 @@ export class AutoTeamBuilderService {
       }
 
       normalizedRequirements.set(identity, {
-        abilityKey,
+        abilityKey: normalizedAbilityKey,
         minTurns,
         slotTokens,
         requiredCharacterCount,

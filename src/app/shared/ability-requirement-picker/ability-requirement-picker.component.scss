@@ -202,6 +202,55 @@
   min-width: 0;
 }
 
+.ability-picker-mini-badge-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ability-picker-mini-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(248, 251, 255, 0.78);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.ability-picker-mini-badge[data-tone="gold"] {
+  color: #f5c84c;
+}
+
+.ability-picker-mini-badge[data-tone="red"] {
+  color: #ff9d81;
+}
+
+.ability-picker-mini-badge[data-tone="teal"] {
+  color: #65d4d4;
+}
+
+.ability-picker-mini-badge[data-tone="blue"] {
+  color: #7eb9ff;
+}
+
+.ability-picker-mini-badge[data-tone="violet"] {
+  color: #c4a3ff;
+}
+
+.ability-picker-mini-badge[data-tone="green"] {
+  color: #8ee38e;
+}
+
+.ability-picker-mini-badge[data-tone="orange"] {
+  color: #ffba74;
+}
+
 .ability-picker-tile__copy strong {
   color: #ffffff;
   font-size: 0.92rem;

@@ -1,0 +1,58 @@
+{
+  "eyebrow": "Enemy mechanics",
+  "actions": {
+    "clearAll": "Clear all"
+  },
+  "catalog": {
+    "title": "Mechanic catalog",
+    "count": "{{count}} shown from {{total}} total",
+    "searchPlaceholder": "Search mechanics, triggers, or keywords",
+    "emptyCatalogTitle": "No mechanics available",
+    "emptyCatalogCopy": "The local mechanic catalog could not be loaded.",
+    "emptySearchTitle": "No mechanics matched",
+    "emptySearchCopy": "Try a broader search term or clear the search.",
+    "sectionCount": "{{count}} mechanics",
+    "selectedCount": "{{count}} selected",
+    "hints": {
+      "turns": "Supports turns",
+      "derivedCounter": "Adds a derived counter"
+    }
+  },
+  "selected": {
+    "title": "Selected mechanics",
+    "count": "{{count}} configured",
+    "emptyTitle": "No mechanics selected",
+    "emptyCopy": "Pick one or more enemy mechanics to persist them with this preset."
+  },
+  "fields": {
+    "turns": "Turns",
+    "triggerTags": "Trigger tags",
+    "responseTags": "Response tags",
+    "conditionTags": "Condition tags"
+  },
+  "categories": {
+    "enemyDefense": "Enemy defense",
+    "crewDebuff": "Crew debuffs",
+    "orbControl": "Orb control",
+    "interrupt": "Interrupts",
+    "conditional": "Conditional mechanics"
+  },
+  "triggerTags": {
+    "onSpecial": "On special",
+    "onAtkBoost": "On ATK boost",
+    "onOrbBoost": "On orb boost",
+    "onDelay": "On delay",
+    "onOrbChange": "On orb change"
+  },
+  "responseTags": {
+    "removeBuffs": "Remove buffs",
+    "applyDebuffs": "Apply debuffs",
+    "heal": "Heal",
+    "shield": "Shield"
+  },
+  "conditionTags": {
+    "hpThreshold": "HP threshold",
+    "turnCounter": "Turn counter",
+    "revive": "Revive"
+  }
+}

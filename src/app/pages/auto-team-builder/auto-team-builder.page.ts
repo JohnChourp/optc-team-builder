@@ -44,6 +44,8 @@ import {
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityCoverageMode,
   type AutoBuildAbilityRequirement,
+  type AutoBuildEnemyMechanicCatalogItem,
+  type AutoBuildEnemyMechanicRequirement,
   type NormalizedBuilderAbility,
 } from "../../core/models/auto-team-builder-ability.models";
 import {
@@ -81,6 +83,7 @@ import {
 } from "./auto-team-builder-export.utils";
 import { buildAutoTeamBuilderStateFromSavedEnemy } from "./auto-team-builder-enemy-preset.utils";
 import { AbilityRequirementPickerComponent } from "../../shared/ability-requirement-picker/ability-requirement-picker.component";
+import { EnemyMechanicPickerComponent } from "../../shared/enemy-mechanic-picker/enemy-mechanic-picker.component";
 import {
   createAbilityRequirementDrafts,
   formatAbilityRequirementSummary,
@@ -89,6 +92,18 @@ import {
   type AbilityRequirementDraft,
   type AbilityRequirementVisualMeta,
 } from "../../core/services/ability-requirement-draft.utils";
+import {
+  createEnemyMechanicDrafts,
+  deriveAbilityRequirementsFromEnemyMechanics,
+  formatEnemyMechanicSummary,
+  getEnemyMechanicCatalogItems,
+  mergeAbilityRequirements,
+  resolveEnemyMechanicVisual,
+  serializeEnemyMechanicDrafts,
+  splitManualAbilityRequirementsFromEnemyMechanics,
+  type EnemyMechanicDraft,
+  type EnemyMechanicVisualMeta,
+} from "../../core/services/enemy-mechanic-draft.utils";
 
 type LoadingProgressRowTone = "primary" | "secondary" | "fallback";
 
@@ -111,6 +126,12 @@ interface AbilityRequirementSummaryChipView {
   draftId: string;
   label: string;
   visual: AbilityRequirementVisualMeta;
+}
+
+interface EnemyMechanicSummaryChipView {
+  draftId: string;
+  label: string;
+  visual: EnemyMechanicVisualMeta;
 }
 
 interface ManualCharacterCardView {
@@ -177,6 +198,7 @@ interface PresetImportFeedback {
     IonToggle,
     IonToolbar,
     AbilityRequirementPickerComponent,
+    EnemyMechanicPickerComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,
@@ -194,6 +216,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly ships = signal<ShipRecord[]>([]);
   public readonly selectedTypes = signal<AutoTeamBuilderType[]>([]);
   public readonly selectedClasses = signal<string[]>([]);
+  public readonly enemyMechanicDrafts = signal<EnemyMechanicDraft[]>([]);
+  public readonly enemyMechanicPickerOpen = signal(false);
   public readonly requiredAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly abilityPickerOpen = signal(false);
   public readonly manualSearchTerm = signal("");
@@ -228,21 +252,58 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     () => this.ships().find((ship) => ship.id === this.selectedManualShipId()) ?? null,
   );
   public readonly hasSelectedManualShip = computed(() => Boolean(this.selectedManualShip()));
+  public readonly pageEnemyMechanics = computed(() => this.serializeEnemyMechanics());
+  public readonly derivedRequiredAbilities = computed(() =>
+    deriveAbilityRequirementsFromEnemyMechanics(this.pageEnemyMechanics()),
+  );
   public readonly manualCandidateFilters = computed<AppliedManualCharacterFilters>(() => ({
     selectedTypes: [...this.selectedTypes()],
     selectedClasses: [...this.selectedClasses()],
-    requiredAbilities: this.serializeAbilityRequirementDrafts(this.requiredAbilityDrafts(), true),
+    requiredAbilities: this.pageRequiredAbilities().map((requirement) => ({
+      ...requirement,
+      slotTokens: [...requirement.slotTokens],
+      requiredCharacterCount: 1,
+    })),
   }));
   public readonly availableAbilityCatalogItems = computed(
     () => this.abilityCatalog()?.abilities ?? [],
   );
+  public readonly availableEnemyMechanicCatalogItems = computed<AutoBuildEnemyMechanicCatalogItem[]>(
+    () => getEnemyMechanicCatalogItems(),
+  );
   public readonly abilityCatalogMap = computed(
     () => new Map(this.availableAbilityCatalogItems().map((item) => [item.key, item] as const)),
   );
-  public readonly pageRequiredAbilities = computed(() => this.serializeRequiredAbilities());
+  public readonly enemyMechanicCatalogMap = computed(
+    () =>
+      new Map(
+        this.availableEnemyMechanicCatalogItems().map((item) => [item.key, item] as const),
+      ),
+  );
+  public readonly pageRequiredAbilities = computed(() =>
+    mergeAbilityRequirements([
+      ...this.derivedRequiredAbilities(),
+      ...this.serializeManualRequiredAbilities(),
+    ]),
+  );
   public readonly hasSelectedClasses = computed(() => this.selectedClasses().length > 0);
   public readonly hasSelectedTypes = computed(() => this.selectedTypes().length > 0);
   public readonly hasRequiredAbilities = computed(() => this.pageRequiredAbilities().length > 0);
+  public readonly enemyMechanicSummaryChips = computed<EnemyMechanicSummaryChipView[]>(() =>
+    this.enemyMechanicDrafts().map((draft) => ({
+      draftId: draft.draftId,
+      label: this.resolveEnemyMechanicSelectedText(draft),
+      visual: resolveEnemyMechanicVisual(draft.mechanicKey),
+    })),
+  );
+  public readonly derivedRequiredAbilitySummaryChips = computed<AbilityRequirementSummaryChipView[]>(
+    () =>
+      this.derivedRequiredAbilities().map((requirement, index) => ({
+        draftId: `derived-${requirement.abilityKey}-${index}`,
+        label: this.formatAbilityRequirement(requirement),
+        visual: resolveAbilityRequirementVisual(requirement.abilityKey),
+      })),
+  );
   public readonly requiredAbilitySummaryChips = computed<AbilityRequirementSummaryChipView[]>(() =>
     this.requiredAbilityDrafts().map((draft) => ({
       draftId: draft.draftId,
@@ -806,7 +867,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         });
   });
   public readonly requiredAbilitySummaryLabel = computed(() => {
-    const requirements = this.serializeRequiredAbilities();
+    const requirements = this.pageRequiredAbilities();
     const current = this.result();
 
     if (requirements.length === 0) {
@@ -838,6 +899,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       !this.building() &&
       (this.hasSelectedTypes() ||
         this.hasSelectedClasses() ||
+        this.pageEnemyMechanics().length > 0 ||
         this.hasRequiredAbilities() ||
         this.requireAllSelectedTypesInTeam() ||
         this.requireAllSelectedClassesPerCharacter() ||
@@ -903,7 +965,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public async ngOnInit(): Promise<void> {
     await this.userState.ready();
-    await this.i18n.preloadScope("ability-picker");
+    await Promise.all([
+      this.i18n.preloadScope("ability-picker"),
+      this.i18n.preloadScope("enemy-mechanics-picker"),
+    ]);
     const shipsPromise =
       typeof this.repository.getShips === "function"
         ? this.repository.getShips()
@@ -920,6 +985,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   public ngOnDestroy(): void {
+    this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
     this.cancelBuild();
   }
@@ -1025,6 +1091,33 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public onFavoritesOnlyToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.favoritesOnly.set(event.detail.checked);
     this.resetBuildState();
+  }
+
+  public openEnemyMechanicPicker(): void {
+    if (this.building()) {
+      return;
+    }
+
+    this.enemyMechanicPickerOpen.set(true);
+  }
+
+  public closeEnemyMechanicPicker(): void {
+    this.enemyMechanicPickerOpen.set(false);
+  }
+
+  public async saveEnemyMechanicPicker(
+    drafts: AutoBuildEnemyMechanicRequirement[],
+  ): Promise<void> {
+    this.enemyMechanicDrafts.set(createEnemyMechanicDrafts(drafts));
+    this.enemyMechanicPickerOpen.set(false);
+    this.resetBuildState();
+    await this.refreshAppliedManualCandidates();
+  }
+
+  public async clearEnemyMechanics(): Promise<void> {
+    this.enemyMechanicDrafts.set([]);
+    this.resetBuildState();
+    await this.refreshAppliedManualCandidates();
   }
 
   public openAbilityPicker(): void {
@@ -1224,7 +1317,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
           requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
           requireAllSpecialsSupportTeam: this.requireAllSpecialsSupportTeam(),
-          requiredAbilities: this.serializeRequiredAbilities(),
+          requiredAbilities: this.pageRequiredAbilities(),
+          enemyMechanics: this.pageEnemyMechanics(),
           favoritesOnly: this.favoritesOnly(),
           favoriteCharacterIds: this.favoriteCharacterIds(),
           manualSlots: this.serializeManualSlots(),
@@ -1308,7 +1402,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     return buildAutoTeamSelectionExportPayload({
       selectedTypes: this.selectedTypes(),
       selectedClasses: this.selectedClasses(),
-      requiredAbilities: this.serializeRequiredAbilities(),
+      requiredAbilities: this.pageRequiredAbilities(),
+      enemyMechanics: this.pageEnemyMechanics(),
       requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
       requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
       requireAllSpecialsSupportTeam: this.requireAllSpecialsSupportTeam(),
@@ -1387,9 +1482,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   private async resetPageState(): Promise<void> {
+    this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
     this.selectedTypes.set([]);
     this.selectedClasses.set([]);
+    this.enemyMechanicDrafts.set([]);
     this.requiredAbilityDrafts.set([]);
     this.lockedCharacterRecords.set({});
     this.manualSearchTerm.set("");
@@ -1476,7 +1573,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     this.selectedTypes.set([...state.selectedTypes]);
     this.selectedClasses.set([...state.selectedClasses]);
-    this.requiredAbilityDrafts.set(createAbilityRequirementDrafts(state.requiredAbilities));
+    this.enemyMechanicDrafts.set(createEnemyMechanicDrafts(state.enemyMechanics));
+    this.requiredAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        splitManualAbilityRequirementsFromEnemyMechanics(
+          state.requiredAbilities,
+          state.enemyMechanics,
+        ),
+      ),
+    );
     this.lockedCharacterRecords.set({});
     for (const character of availableLockedCharacters) this.cacheCharacterRecord(character);
     this.manualSlots.set(
@@ -1549,7 +1654,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     if (this.hasRequiredAbilities()) {
       activeRequirements.push(
         this.t("errors.requirements.abilityCoverage", {
-          abilities: this.serializeRequiredAbilities()
+          abilities: this.pageRequiredAbilities()
             .map((requirement) => this.formatAbilityRequirement(requirement))
             .join(" • "),
         }),
@@ -1839,22 +1944,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
   }
 
-  private serializeRequiredAbilities(): AutoBuildAbilityRequirement[] {
+  private serializeManualRequiredAbilities(): AutoBuildAbilityRequirement[] {
     return serializeAbilityRequirementDrafts(this.requiredAbilityDrafts(), {
       dedupe: true,
       catalogMap: this.abilityCatalogMap(),
     });
   }
 
-  private serializeAbilityRequirementDrafts(
-    drafts: AbilityRequirementDraft[],
-    forceSingleCharacterCount = false,
-  ): AutoBuildAbilityRequirement[] {
-    return serializeAbilityRequirementDrafts(drafts, {
-      dedupe: true,
-      forceSingleCharacterCount,
-      catalogMap: this.abilityCatalogMap(),
-    });
+  private serializeEnemyMechanics(): AutoBuildEnemyMechanicRequirement[] {
+    return serializeEnemyMechanicDrafts(this.enemyMechanicDrafts());
   }
 
   public resolveAbilityCatalogItem(abilityKey: string): AutoBuildAbilityCatalogItem | undefined {
@@ -1876,6 +1974,20 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     );
   }
 
+  public formatEnemyMechanic(requirement: AutoBuildEnemyMechanicRequirement): string {
+    return formatEnemyMechanicSummary(
+      requirement,
+      (mechanicKey) =>
+        this.enemyMechanicCatalogMap().get(mechanicKey)?.label ?? mechanicKey,
+      {
+        formatTurns: (count) => this.t("abilities.requirement.turns", { count }),
+        resolveTriggerTag: (tag) => this.t(`enemyMechanics.tags.trigger.${tag}`),
+        resolveResponseTag: (tag) => this.t(`enemyMechanics.tags.response.${tag}`),
+        resolveConditionTag: (tag) => this.t(`enemyMechanics.tags.condition.${tag}`),
+      },
+    );
+  }
+
   public resolveRequiredAbilitySelectedText(draft: AbilityRequirementDraft): string {
     if (draft.abilityKey.length === 0) {
       return this.t("abilities.select");
@@ -1886,6 +1998,22 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       minTurns: draft.minTurns,
       slotTokens: draft.slotTokens,
       requiredCharacterCount: draft.requiredCharacterCount ?? 1,
+    });
+  }
+
+  public resolveEnemyMechanicSelectedText(draft: EnemyMechanicDraft): string {
+    if (draft.mechanicKey.length === 0) {
+      return this.t("abilities.select");
+    }
+
+    return this.formatEnemyMechanic({
+      mechanicKey: draft.mechanicKey,
+      category: draft.category,
+      minTurns: draft.minTurns,
+      triggerTags: [...draft.triggerTags],
+      responseTags: [...draft.responseTags],
+      conditionTags: [...draft.conditionTags],
+      derivedAbilityKey: draft.derivedAbilityKey,
     });
   }
 

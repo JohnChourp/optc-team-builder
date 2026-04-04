@@ -9,8 +9,6 @@
     "deleteSingle": "Delete enemy \"{{name}}\"?"
   },
   "editor": {
-    "abilitiesCopy": "Add utility requirements that the final team should cover against this enemy.",
-    "abilitiesTitle": "Enemy requirements",
     "abilityFields": {
       "ability": "Ability",
       "characters": "Characters",
@@ -47,6 +45,49 @@
     "nameLabel": "Enemy name",
     "noAbilityCatalog": "Ability catalog is not available in this dataset yet.",
     "notesLabel": "Notes",
+    "enemyMechanics": {
+      "title": "Enemy mechanics",
+      "copy": "Store the full enemy behavior here first. Direct counters will be derived automatically where possible.",
+      "empty": "No enemy mechanics selected yet.",
+      "actions": {
+        "openPicker": "Open mechanic picker",
+        "clear": "Clear mechanics"
+      },
+      "tags": {
+        "trigger": {
+          "onSpecial": "On special",
+          "onAtkBoost": "On ATK boost",
+          "onOrbBoost": "On orb boost",
+          "onDelay": "On delay",
+          "onOrbChange": "On orb change"
+        },
+        "response": {
+          "removeBuffs": "Remove buffs",
+          "applyDebuffs": "Apply debuffs",
+          "heal": "Heal",
+          "shield": "Shield"
+        },
+        "condition": {
+          "hpThreshold": "HP threshold",
+          "turnCounter": "Turn counter",
+          "revive": "Revive"
+        }
+      }
+    },
+    "derivedCounters": {
+      "title": "Derived counters",
+      "copy": "These counters are generated automatically from the selected enemy mechanics.",
+      "empty": "No direct counters are derived from the current mechanics."
+    },
+    "manualCounters": {
+      "title": "Manual counter overrides",
+      "copy": "Add extra direct counters only when the enemy needs coverage beyond the structured mechanics list.",
+      "empty": "No manual counter overrides selected.",
+      "actions": {
+        "openPicker": "Open counter picker",
+        "clear": "Clear overrides"
+      }
+    },
     "removeAbility": "Remove",
     "requirementSummary": {
       "characters": ">={{count}} chars",
@@ -86,8 +127,9 @@
   },
   "loading": "Loading saved enemies...",
   "summary": {
-    "abilities": "Abilities",
     "classes": "Classes",
+    "counters": "Counters",
+    "mechanics": "Mechanics",
     "noRules": "No strict rules",
     "ruleLabels": {
       "classes": "Strict classes",

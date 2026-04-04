@@ -47,7 +47,8 @@
 
 .hero-actions,
 .saved-enemy-actions,
-.editor-modal-actions {
+.editor-modal-actions,
+.card-actions {
   flex-wrap: wrap;
   gap: 10px;
 }
@@ -163,6 +164,12 @@
   color: #d8f7ff;
 }
 
+.enemy-chip--mechanic {
+  background: rgba(255, 186, 116, 0.14);
+  border-color: rgba(255, 186, 116, 0.24);
+  color: #ffe2bf;
+}
+
 .enemy-chip--rule {
   background: rgba(147, 109, 255, 0.14);
   border-color: rgba(147, 109, 255, 0.24);
@@ -244,6 +251,10 @@
   justify-content: flex-start;
 }
 
+.card-actions {
+  justify-content: flex-end;
+}
+
 .enemy-image-preview {
   width: min(100%, 320px);
   aspect-ratio: 1;
@@ -292,6 +303,12 @@
   background: rgba(245, 200, 76, 0.14);
   color: #f6d779;
   font-size: 0.8rem;
+}
+
+.editor-ability-chip--mechanic {
+  border-color: rgba(255, 186, 116, 0.32);
+  background: rgba(255, 186, 116, 0.14);
+  color: #ffd7a5;
 }
 
 .editor-ability-chip__icon {
