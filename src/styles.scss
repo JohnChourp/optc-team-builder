@@ -1,21 +1,21 @@
-@use "./theme/variables";
+@use './theme/variables';
 
-@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap");
-@import "@ionic/angular/css/core.css";
-@import "@ionic/angular/css/normalize.css";
-@import "@ionic/angular/css/structure.css";
-@import "@ionic/angular/css/typography.css";
-@import "@ionic/angular/css/display.css";
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap');
+@import '@ionic/angular/css/core.css';
+@import '@ionic/angular/css/normalize.css';
+@import '@ionic/angular/css/structure.css';
+@import '@ionic/angular/css/typography.css';
+@import '@ionic/angular/css/display.css';
 
-@import "@ionic/angular/css/padding.css";
-@import "@ionic/angular/css/float-elements.css";
-@import "@ionic/angular/css/text-alignment.css";
-@import "@ionic/angular/css/text-transformation.css";
-@import "@ionic/angular/css/flex-utils.css";
+@import '@ionic/angular/css/padding.css';
+@import '@ionic/angular/css/float-elements.css';
+@import '@ionic/angular/css/text-alignment.css';
+@import '@ionic/angular/css/text-transformation.css';
+@import '@ionic/angular/css/flex-utils.css';
 
 :root {
   color-scheme: dark;
-  font-family: "Outfit", sans-serif;
+  font-family: 'Outfit', sans-serif;
   --app-bottom-bar-extra-offset: 0px;
   --app-page-shell-padding-bottom: 112px;
   --app-mobile-sheet-height: calc(100vh - 16px);
@@ -61,7 +61,7 @@ ion-content {
 .section-title {
   margin: 14px 0 8px;
   color: var(--app-ink);
-  font-family: "Bricolage Grotesque", sans-serif;
+  font-family: 'Bricolage Grotesque', sans-serif;
   font-size: clamp(2rem, 4vw, 2.8rem);
   line-height: 1.05;
 }

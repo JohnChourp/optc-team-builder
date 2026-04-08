@@ -212,80 +212,130 @@ describe('SavedEnemiesPage', () => {
     expect(page.editorOpen()).toBe(false);
   });
 
-  it('imports an enemy preset into the current editor draft without auto-saving', async () => {
+  it('parses pasted enemy text, applies it to the draft, and persists it through saveEnemy', async () => {
     const { page, userState } = createPage();
-    const originalEnemy = buildSavedEnemies()[0]!;
-    const file = createJsonFile(
-      {
-        schemaVersion: 1,
-        source: 'optc-enemy-skill',
-        exportType: 'enemy',
-        enemy: {
-          name: ' Red Cloth Bundle ',
-          notes: ' Bring fixed damage or poison. ',
-          selectedTypes: ['STR'],
-          selectedClasses: ['Slasher'],
-          requiredAbilities: [
-            {
-              abilityKey: 'remove_bind',
-              minTurns: 5,
-              requiredCharacterCount: 1,
-            },
-          ],
-          enemyMechanics: [
-            {
-              mechanicKey: 'enemy_increased_defense',
-              category: 'enemyDefense',
-              minTurns: 99,
-            },
-          ],
-          requireAllSpecialsSupportTeam: true,
-        },
-      },
-      'red-cloth-bundle.json',
-    );
 
     await page.ngOnInit();
-    page.openEditModal(page.savedEnemies()[0]!);
+    page.openCreateModal();
+    page.onEnemyNameChange({ detail: { value: ' Paste Boss ' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+    page.onTypeChange({ detail: { value: ['DEX'] } } as CustomEvent<{
+      value?: string[] | string | null;
+    }>);
+    page.onClassChange({ detail: { value: ['Fighter'] } } as CustomEvent<{
+      value?: string[] | string | null;
+    }>);
+    page.onEnemyPasteTextChange({
+      detail: {
+        value: `
+          4 turn(s) Special Bind,
+          4 turn(s) Paralysis,
+          Non-Normal Attacks deal 1 damage
+        `,
+      },
+    } as CustomEvent<{ value?: string | null }>);
 
-    await page.onEnemyImportSelected(
-      createFileEvent(file),
-      { value: '' } as HTMLInputElement,
+    page.parseEnemyText();
+
+    expect(page.enemyTextParseResult()).toEqual(
+      expect.objectContaining({
+        matchedMechanicCount: 2,
+        matchedAbilityCount: 1,
+      }),
     );
+    expect(userState.saveEnemy).not.toHaveBeenCalled();
 
-    expect(page.enemyName()).toBe('Red Cloth Bundle');
-    expect(page.enemyNotes()).toBe('Bring fixed damage or poison.');
-    expect(page.enemyImageDataUrl()).toBe(originalEnemy.imageDataUrl);
-    expect(page.selectedTypes()).toEqual(['STR']);
-    expect(page.selectedClasses()).toEqual(['Slasher']);
-    expect(page.enemyMechanicDrafts()).toHaveLength(1);
+    page.applyParsedEnemyText();
+
+    expect(page.enemyMechanicDrafts()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          mechanicKey: 'crew_special_bind',
+          minTurns: 4,
+        }),
+        expect.objectContaining({
+          mechanicKey: 'crew_paralysis',
+          minTurns: 4,
+        }),
+      ]),
+    );
     expect(page.requiredAbilityDrafts()).toEqual([
       expect.objectContaining({
-        abilityKey: 'remove_bind',
-        minTurns: 5,
+        abilityKey: 'ignore_normal_attack_only',
       }),
     ]);
-    expect(page.requireAllSpecialsSupportTeam()).toBe(true);
-    expect(page.enemyImportErrorMessage()).toBe('');
-    expect(page.enemyImportFeedbackMessage()).toBeTruthy();
-    expect(userState.saveEnemy).not.toHaveBeenCalled();
+
+    await page.saveEnemy();
+
+    expect(userState.saveEnemy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Paste Boss',
+        enemyMechanics: [
+          expect.objectContaining({
+            mechanicKey: 'crew_special_bind',
+            minTurns: 4,
+          }),
+          expect.objectContaining({
+            mechanicKey: 'crew_paralysis',
+            minTurns: 4,
+          }),
+        ],
+        requiredAbilities: [
+          expect.objectContaining({
+            abilityKey: 'remove_special_bind',
+            minTurns: 4,
+          }),
+          expect.objectContaining({
+            abilityKey: 'remove_paralysis',
+            minTurns: 4,
+          }),
+          expect.objectContaining({
+            abilityKey: 'ignore_normal_attack_only',
+            minTurns: null,
+          }),
+        ],
+      }),
+    );
   });
 
-  it('keeps the current editor state when enemy import fails', async () => {
+  it('clears parsed warning state when the pasted text changes and recomputes on the next parse', async () => {
     const { page } = createPage();
-    const file = createJsonFile({ schemaVersion: 2 }, 'bad-enemy.json');
 
     await page.ngOnInit();
     page.openEditModal(page.savedEnemies()[0]!);
+    page.onEnemyPasteTextChange({
+      detail: {
+        value: 'Top-Row Special Reverse 2 turns(s)',
+      },
+    } as CustomEvent<{ value?: string | null }>);
 
-    await page.onEnemyImportSelected(
-      createFileEvent(file),
-      { value: '' } as HTMLInputElement,
+    page.parseEnemyText();
+
+    expect(page.enemyTextParseResult()?.warnings).toEqual([
+      expect.objectContaining({
+        kind: 'unmatched',
+      }),
+    ]);
+
+    page.onEnemyPasteTextChange({
+      detail: {
+        value: '4 turn(s) Special Bind',
+      },
+    } as CustomEvent<{ value?: string | null }>);
+
+    expect(page.enemyTextParseResult()).toBeNull();
+    expect(page.enemyTextParseErrorMessage()).toBe('');
+
+    page.parseEnemyText();
+
+    expect(page.enemyTextParseResult()).toEqual(
+      expect.objectContaining({
+        matchedMechanicCount: 1,
+        matchedAbilityCount: 0,
+      }),
     );
-
-    expect(page.enemyName()).toBe('Forest Boss');
-    expect(page.selectedTypes()).toEqual(['DEX', 'PSY']);
-    expect(page.enemyImportErrorMessage()).toBe('Unsupported import schema');
+    expect(page.enemyTextParseResult()?.warnings).toEqual([]);
   });
 
   it('removes the currently selected enemy image from the editor state', () => {
@@ -462,7 +512,9 @@ describe('SavedEnemiesPage', () => {
     expect(template).toContain("t('actions.export')");
     expect(template).toContain("t('actions.openBuilder')");
     expect(template).toContain("t('list.exportAll')");
-    expect(template).toContain("t('editor.import.actions.open')");
+    expect(template).toContain("t('editor.paste.title')");
+    expect(template).toContain("t('editor.paste.actions.parse')");
+    expect(template).toContain("t('editor.paste.actions.apply')");
     expect(template).toContain("t('editor.image.title')");
     expect(template).toContain("t('editor.image.chooseCharacter')");
     expect(template).toContain('(click)="openImportModal()"');
@@ -470,7 +522,9 @@ describe('SavedEnemiesPage', () => {
     expect(template).toContain('(click)="exportAllEnemies()"');
     expect(template).toContain('onImportFileSelected($event, importFileInput)');
     expect(template).toContain('(drop)="onImportDrop($event)"');
-    expect(template).toContain('onEnemyImportSelected($event, enemyImportInput)');
+    expect(template).toContain('(ionInput)="onEnemyPasteTextChange($event)"');
+    expect(template).toContain('(click)="parseEnemyText()"');
+    expect(template).toContain('(click)="applyParsedEnemyText()"');
     expect(template).toContain('onEnemyImageSelected($event, enemyImageInput)');
     expect(template).toContain('(click)="openCharacterImagePicker()"');
     expect(template).toContain('[queryParams]="getEnemyBuilderQueryParams(enemy)"');
@@ -484,7 +538,9 @@ describe('SavedEnemiesPage', () => {
     expect(template).toContain('<app-enemy-mechanic-picker');
     expect(template).toContain('<app-ability-requirement-picker');
     expect(template).toContain('<app-character-image-picker');
-    expect(template).not.toContain("resolveAbilityCatalogItem(draft.abilityKey)?.label");
+    expect(template).not.toContain('editor.import.actions.openTable');
+    expect(template).not.toContain('<app-saved-enemy-structured-requirements-modal');
+    expect(template).not.toContain('resolveAbilityCatalogItem(draft.abilityKey)?.label');
   });
 });
 
@@ -521,45 +577,45 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
     deleteEnemy: vi.fn().mockImplementation(async (enemyId: string) => {
       savedEnemies.set(savedEnemies().filter((enemy) => enemy.id !== enemyId));
     }),
-    mergeImportedEnemies: vi.fn().mockImplementation(
-      async (importedEnemies: ReturnType<typeof buildSavedEnemies>) => {
-      const currentEnemies = savedEnemies();
-      const currentEnemyMap = new Map(currentEnemies.map((enemy) => [enemy.id, enemy] as const));
-      const mergedEnemies: typeof importedEnemies = [];
-      const importedEnemyIds = new Set<string>();
-      let addedCount = 0;
-      let updatedCount = 0;
+    mergeImportedEnemies: vi
+      .fn()
+      .mockImplementation(async (importedEnemies: ReturnType<typeof buildSavedEnemies>) => {
+        const currentEnemies = savedEnemies();
+        const currentEnemyMap = new Map(currentEnemies.map((enemy) => [enemy.id, enemy] as const));
+        const mergedEnemies: typeof importedEnemies = [];
+        const importedEnemyIds = new Set<string>();
+        let addedCount = 0;
+        let updatedCount = 0;
 
-      importedEnemies.forEach((enemy) => {
-        if (importedEnemyIds.has(enemy.id)) {
-          return;
-        }
+        importedEnemies.forEach((enemy) => {
+          if (importedEnemyIds.has(enemy.id)) {
+            return;
+          }
 
-        importedEnemyIds.add(enemy.id);
+          importedEnemyIds.add(enemy.id);
 
-        if (currentEnemyMap.has(enemy.id)) {
-          updatedCount += 1;
-        } else {
-          addedCount += 1;
-        }
+          if (currentEnemyMap.has(enemy.id)) {
+            updatedCount += 1;
+          } else {
+            addedCount += 1;
+          }
 
-        mergedEnemies.push(enemy);
-      });
+          mergedEnemies.push(enemy);
+        });
 
-      const nextEnemies = [
-        ...mergedEnemies,
-        ...currentEnemies.filter((enemy) => !importedEnemyIds.has(enemy.id)),
-      ];
+        const nextEnemies = [
+          ...mergedEnemies,
+          ...currentEnemies.filter((enemy) => !importedEnemyIds.has(enemy.id)),
+        ];
 
-      savedEnemies.set(nextEnemies);
+        savedEnemies.set(nextEnemies);
 
-      return {
-        addedCount,
-        updatedCount,
-        enemies: nextEnemies,
-      };
-      },
-    ),
+        return {
+          addedCount,
+          updatedCount,
+          enemies: nextEnemies,
+        };
+      }),
   };
   const repository = {
     getDatasetManifest: vi.fn().mockResolvedValue({
@@ -576,7 +632,7 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
     getAutoBuilderAbilityCatalog: vi.fn().mockResolvedValue({
       generatedAt: '2026-03-30T10:00:00.000Z',
       sourceVersion: 'test',
-      abilityCount: 1,
+      abilityCount: 7,
       abilities: [
         {
           key: 'remove_bind',
@@ -588,6 +644,72 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
           matchCount: 10,
           sampleCharacterIds: [101],
           sampleTexts: ['Reduces Bind duration by 5 turns'],
+        },
+        {
+          key: 'remove_enemy_barrier',
+          label: 'Remove Barrier',
+          supportsTurns: true,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['specialText'],
+          matchCount: 8,
+          sampleCharacterIds: [102],
+          sampleTexts: ['Removes enemy barrier'],
+        },
+        {
+          key: 'remove_special_bind',
+          label: 'Remove Special Bind',
+          supportsTurns: true,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['specialText'],
+          matchCount: 8,
+          sampleCharacterIds: [103],
+          sampleTexts: ['Removes special bind'],
+        },
+        {
+          key: 'remove_paralysis',
+          label: 'Remove Paralysis',
+          supportsTurns: true,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['specialText'],
+          matchCount: 8,
+          sampleCharacterIds: [104],
+          sampleTexts: ['Removes paralysis'],
+        },
+        {
+          key: 'ignore_normal_attack_only',
+          label: 'Ignore NAO',
+          supportsTurns: false,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['specialText'],
+          matchCount: 3,
+          sampleCharacterIds: [105],
+          sampleTexts: ['Ignore normal attack only'],
+        },
+        {
+          key: 'deal_fixed_damage',
+          label: 'Deal Fixed Damage',
+          supportsTurns: false,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['specialText'],
+          matchCount: 3,
+          sampleCharacterIds: [106],
+          sampleTexts: ['Deal fixed damage'],
+        },
+        {
+          key: 'inflict_poison',
+          label: 'Inflict Poison',
+          supportsTurns: false,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['specialText'],
+          matchCount: 3,
+          sampleCharacterIds: [107],
+          sampleTexts: ['Inflict poison'],
         },
       ],
     }),
@@ -632,12 +754,34 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
         return 'Clear class selection';
       }
 
-      if (key === 'editor.import.success') {
-        return 'Enemy preset imported';
+      if (key === 'editor.paste.errors.empty') {
+        return 'Paste enemy text first';
       }
 
-      if (key === 'editor.import.errors.unsupportedSchema') {
-        return 'Unsupported import schema';
+      if (key === 'editor.paste.feedback.successTitle') {
+        return 'Text parsed';
+      }
+
+      if (key === 'editor.paste.feedback.warningTitle') {
+        return 'Text parsed with warnings';
+      }
+
+      if (key === 'editor.paste.feedback.summary') {
+        return `Matched ${params?.['mechanicCount'] ?? 0} mechanics, ${
+          params?.['abilityCount'] ?? 0
+        } direct abilities, ${params?.['warningCount'] ?? 0} warnings.`;
+      }
+
+      if (key === 'editor.paste.warnings.title') {
+        return 'Ignored or simplified lines';
+      }
+
+      if (key === 'editor.paste.warnings.unmatched') {
+        return `Ignored: ${params?.['line'] ?? ''}`;
+      }
+
+      if (key === 'editor.paste.warnings.precisionLoss') {
+        return `Simplified "${params?.['line'] ?? ''}" to ${params?.['resolvedAs'] ?? ''}.`;
       }
 
       if (key === 'bulkImport.successTitle') {

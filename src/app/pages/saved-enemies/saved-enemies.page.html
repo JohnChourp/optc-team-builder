@@ -325,60 +325,76 @@
             (change)="onEnemyImageSelected($event, enemyImageInput)"
           />
 
-          <input
-            #enemyImportInput
-            type="file"
-            accept=".json,application/json"
-            hidden
-            (change)="onEnemyImportSelected($event, enemyImportInput)"
-          />
-
           <section class="enemy-import-card">
             <div class="section-head section-head--editor">
               <div>
-                <h3>{{ t('editor.import.title') }}</h3>
-                <span>{{ t('editor.import.copy') }}</span>
+                <h3>{{ t('editor.paste.title') }}</h3>
+                <span>{{ t('editor.paste.copy') }}</span>
               </div>
 
               <div class="card-actions">
                 <ion-button
                   fill="outline"
+                  color="light"
+                  size="small"
+                  [disabled]="savingEnemy()"
+                  (click)="parseEnemyText()"
+                >
+                  {{ t('editor.paste.actions.parse') }}
+                </ion-button>
+                <ion-button
+                  fill="outline"
                   color="warning"
                   size="small"
-                  [disabled]="savingEnemy() || importingEnemy()"
-                  (click)="openEnemyImportPicker(enemyImportInput)"
+                  [disabled]="savingEnemy() || !enemyTextParseResult()"
+                  (click)="applyParsedEnemyText()"
                 >
-                  {{ t('editor.import.actions.open') }}
+                  {{ t('editor.paste.actions.apply') }}
                 </ion-button>
               </div>
             </div>
 
-            @if (enemyImportFileName()) {
-              <div class="import-file-chip">
-                <span>{{ enemyImportFileName() }}</span>
-              </div>
-            }
+            <ion-textarea
+              [label]="t('editor.paste.label')"
+              labelPlacement="stacked"
+              fill="outline"
+              autoGrow="true"
+              rows="8"
+              [value]="enemyTextPasteValue()"
+              [disabled]="savingEnemy()"
+              [placeholder]="t('editor.paste.placeholder')"
+              (ionInput)="onEnemyPasteTextChange($event)"
+            ></ion-textarea>
 
-            @if (importingEnemy()) {
-              <div class="import-feedback import-feedback--progress">
-                <ion-spinner name="crescent"></ion-spinner>
-                <span>{{ t('editor.import.processing') }}</span>
-              </div>
-            }
-
-            @if (enemyImportFeedbackMessage()) {
+            @if (enemyTextParseFeedback(); as feedback) {
               <div
                 class="import-feedback"
-                [class.import-feedback--warning]="enemyImportHasWarnings()"
-                [class.import-feedback--success]="!enemyImportHasWarnings()"
+                [class.import-feedback--warning]="feedback.tone === 'warning'"
+                [class.import-feedback--success]="feedback.tone === 'success'"
               >
-                <span>{{ enemyImportFeedbackMessage() }}</span>
+                <div>
+                  <strong>{{ feedback.title }}</strong>
+                  @for (detail of feedback.details; track $index) {
+                    <span>{{ detail }}</span>
+                  }
+                </div>
               </div>
             }
 
-            @if (enemyImportErrorMessage()) {
+            @if (enemyTextParseErrorMessage()) {
               <div class="import-feedback import-feedback--error">
-                <span>{{ enemyImportErrorMessage() }}</span>
+                <span>{{ enemyTextParseErrorMessage() }}</span>
+              </div>
+            }
+
+            @if (enemyTextParseWarningMessages().length) {
+              <div class="enemy-text-warning-list">
+                <strong>{{ t('editor.paste.warnings.title') }}</strong>
+                <ul>
+                  @for (warningMessage of enemyTextParseWarningMessages(); track $index) {
+                    <li>{{ warningMessage }}</li>
+                  }
+                </ul>
               </div>
             }
           </section>
@@ -592,7 +608,9 @@
             @if (enemyMechanicSummaryChips().length) {
               <div class="selected-values-row">
                 @for (chip of enemyMechanicSummaryChips(); track chip.draftId) {
-                  <span class="selected-value-chip editor-ability-chip editor-ability-chip--mechanic">
+                  <span
+                    class="selected-value-chip editor-ability-chip editor-ability-chip--mechanic"
+                  >
                     <span class="editor-ability-chip__icon" [attr.data-tone]="chip.visual.tone">
                       <ion-icon [icon]="chip.visual.icon"></ion-icon>
                       <small>{{ chip.visual.badge }}</small>

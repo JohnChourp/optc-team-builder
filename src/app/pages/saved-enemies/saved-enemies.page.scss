@@ -356,6 +356,26 @@
   border: 1px solid rgba(255, 107, 107, 0.26);
 }
 
+.enemy-text-warning-list {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.enemy-text-warning-list strong {
+  color: #ffffff;
+}
+
+.enemy-text-warning-list ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  color: rgba(248, 251, 255, 0.78);
+}
+
 .section-head--editor {
   margin-bottom: 0;
 }

@@ -1,6 +1,6 @@
-import { Component, OnInit, computed, signal } from "@angular/core";
-import { RouterLink } from "@angular/router";
-import { type ViewWillEnter } from "@ionic/angular";
+import { Component, OnInit, computed, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { type ViewWillEnter } from '@ionic/angular';
 import {
   IonButton,
   IonContent,
@@ -15,8 +15,8 @@ import {
   IonTitle,
   IonToggle,
   IonToolbar,
-} from "@ionic/angular/standalone";
-import { TranslocoDirective, TranslocoPipe } from "@jsverse/transloco";
+} from '@ionic/angular/standalone';
+import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
   addCircleOutline,
   alertCircleOutline,
@@ -24,22 +24,26 @@ import {
   closeOutline,
   cloudUploadOutline,
   documentTextOutline,
-} from "ionicons/icons";
+} from 'ionicons/icons';
 
-import { AUTO_TEAM_BUILDER_TYPES } from "../../core/models/auto-team-builder.models";
+import { AUTO_TEAM_BUILDER_TYPES } from '../../core/models/auto-team-builder.models';
 import {
   type AutoBuildAbilityCatalog,
   type AutoBuildAbilityRequirement,
   type AutoBuildEnemyMechanicCatalogItem,
   type AutoBuildEnemyMechanicRequirement,
-} from "../../core/models/auto-team-builder-ability.models";
-import { type CharacterListItem, type DatasetManifest, type SavedEnemy } from "../../core/models/optc.models";
-import { AppI18nService } from "../../core/services/app-i18n.service";
-import { OptcRepositoryService } from "../../core/services/optc-repository.service";
-import { UserStateService } from "../../core/services/user-state.service";
-import { AbilityRequirementPickerComponent } from "../../shared/ability-requirement-picker/ability-requirement-picker.component";
-import { CharacterImagePickerComponent } from "../../shared/character-image-picker/character-image-picker.component";
-import { EnemyMechanicPickerComponent } from "../../shared/enemy-mechanic-picker/enemy-mechanic-picker.component";
+} from '../../core/models/auto-team-builder-ability.models';
+import {
+  type CharacterListItem,
+  type DatasetManifest,
+  type SavedEnemy,
+} from '../../core/models/optc.models';
+import { AppI18nService } from '../../core/services/app-i18n.service';
+import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import { UserStateService } from '../../core/services/user-state.service';
+import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
+import { CharacterImagePickerComponent } from '../../shared/character-image-picker/character-image-picker.component';
+import { EnemyMechanicPickerComponent } from '../../shared/enemy-mechanic-picker/enemy-mechanic-picker.component';
 import {
   createAbilityRequirementDrafts,
   formatAbilityRequirementSummary,
@@ -48,7 +52,7 @@ import {
   serializeAbilityRequirementDrafts,
   type AbilityRequirementDraft,
   type AbilityRequirementVisualMeta,
-} from "../../core/services/ability-requirement-draft.utils";
+} from '../../core/services/ability-requirement-draft.utils';
 import {
   createEnemyMechanicDrafts,
   deriveAbilityRequirementsFromEnemyMechanics,
@@ -56,25 +60,24 @@ import {
   getEnemyMechanicCatalogItems,
   mergeAbilityRequirements,
   resolveEnemyMechanicVisual,
+  resolveEnemyMechanicCatalogItem,
   serializeEnemyMechanicDrafts,
   splitManualAbilityRequirementsFromEnemyMechanics,
   type EnemyMechanicDraft,
   type EnemyMechanicVisualMeta,
-} from "../../core/services/enemy-mechanic-draft.utils";
-import {
-  EnemyImportError,
-  parseEnemyImportPayload,
-  sanitizeEnemyImportPayload,
-  type EnemyImportMessage,
-  type ImportedEnemyDraft,
-} from "./saved-enemies-import.utils";
+} from '../../core/services/enemy-mechanic-draft.utils';
 import {
   buildSavedEnemiesTransferPayload,
   downloadSavedEnemiesExport,
   parseSavedEnemiesImportPayload,
   sanitizeSavedEnemiesImportPayload,
   SavedEnemiesImportError,
-} from "./saved-enemies-transfer.utils";
+} from './saved-enemies-transfer.utils';
+import {
+  parseSavedEnemyText,
+  type ParsedEnemyTextResult,
+  type ParsedEnemyTextWarning,
+} from './saved-enemies-text-parser.utils';
 
 interface SavedEnemyAbilitySummaryChipView {
   draftId: string;
@@ -91,11 +94,11 @@ interface SavedEnemyMechanicSummaryChipView {
 interface SavedEnemiesImportFeedback {
   details: string[];
   title: string;
-  tone: "error" | "success" | "warning";
+  tone: 'error' | 'success' | 'warning';
 }
 
 @Component({
-  selector: "app-saved-enemies-page",
+  selector: 'app-saved-enemies-page',
   standalone: true,
   imports: [
     IonButton,
@@ -118,8 +121,8 @@ interface SavedEnemiesImportFeedback {
     TranslocoDirective,
     TranslocoPipe,
   ],
-  templateUrl: "./saved-enemies.page.html",
-  styleUrl: "./saved-enemies.page.scss",
+  templateUrl: './saved-enemies.page.html',
+  styleUrl: './saved-enemies.page.scss',
 })
 export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public readonly loading = signal(true);
@@ -128,20 +131,18 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public readonly savedEnemies;
   public readonly editorOpen = signal(false);
   public readonly editingEnemy = signal<SavedEnemy | null>(null);
-  public readonly enemyName = signal("");
-  public readonly enemyNotes = signal("");
+  public readonly enemyName = signal('');
+  public readonly enemyNotes = signal('');
   public readonly enemyImageDataUrl = signal<string | null>(null);
-  public readonly enemyImageErrorMessage = signal("");
+  public readonly enemyImageErrorMessage = signal('');
   public readonly processingEnemyImage = signal(false);
   public readonly characterImagePickerOpen = signal(false);
-  public readonly importingEnemy = signal(false);
-  public readonly enemyImportFileName = signal("");
-  public readonly enemyImportFeedbackMessage = signal("");
-  public readonly enemyImportHasWarnings = signal(false);
-  public readonly enemyImportErrorMessage = signal("");
+  public readonly enemyTextPasteValue = signal('');
+  public readonly enemyTextParseResult = signal<ParsedEnemyTextResult | null>(null);
+  public readonly enemyTextParseErrorMessage = signal('');
   public readonly importModalOpen = signal(false);
   public readonly draggingImportFile = signal(false);
-  public readonly importFileName = signal("");
+  public readonly importFileName = signal('');
   public readonly importFeedback = signal<SavedEnemiesImportFeedback | null>(null);
   public readonly importing = signal(false);
   public readonly selectedTypes = signal<string[]>([]);
@@ -173,34 +174,30 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   );
   public readonly selectAllTypesButtonLabel = computed(() =>
     this.i18n.translate(
-      this.allTypesSelected() ? "editor.typesActions.clear" : "editor.typesActions.selectAll",
+      this.allTypesSelected() ? 'editor.typesActions.clear' : 'editor.typesActions.selectAll',
       undefined,
-      "saved-enemies",
+      'saved-enemies',
     ),
   );
   public readonly selectAllClassesButtonLabel = computed(() =>
     this.i18n.translate(
-      this.allClassesSelected()
-        ? "editor.classesActions.clear"
-        : "editor.classesActions.selectAll",
+      this.allClassesSelected() ? 'editor.classesActions.clear' : 'editor.classesActions.selectAll',
       undefined,
-      "saved-enemies",
+      'saved-enemies',
     ),
   );
   public readonly availableAbilityCatalogItems = computed(
     () => this.abilityCatalog()?.abilities ?? [],
   );
-  public readonly availableEnemyMechanicCatalogItems = computed<AutoBuildEnemyMechanicCatalogItem[]>(
-    () => getEnemyMechanicCatalogItems(),
-  );
+  public readonly availableEnemyMechanicCatalogItems = computed<
+    AutoBuildEnemyMechanicCatalogItem[]
+  >(() => getEnemyMechanicCatalogItems());
   public readonly abilityCatalogMap = computed(
     () => new Map(this.availableAbilityCatalogItems().map((item) => [item.key, item] as const)),
   );
   public readonly enemyMechanicCatalogMap = computed(
     () =>
-      new Map(
-        this.availableEnemyMechanicCatalogItems().map((item) => [item.key, item] as const),
-      ),
+      new Map(this.availableEnemyMechanicCatalogItems().map((item) => [item.key, item] as const)),
   );
   public readonly enemyMechanicSummaryChips = computed<SavedEnemyMechanicSummaryChipView[]>(() =>
     this.enemyMechanicDrafts().map((draft) => ({
@@ -227,6 +224,40 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       visual: resolveAbilityRequirementVisual(draft.abilityKey),
     })),
   );
+  public readonly enemyTextParseFeedback = computed<SavedEnemiesImportFeedback | null>(() => {
+    const result = this.enemyTextParseResult();
+
+    if (!result) {
+      return null;
+    }
+
+    return {
+      tone: result.warnings.length > 0 ? 'warning' : 'success',
+      title: this.i18n.translate(
+        result.warnings.length > 0
+          ? 'editor.paste.feedback.warningTitle'
+          : 'editor.paste.feedback.successTitle',
+        undefined,
+        'saved-enemies',
+      ),
+      details: [
+        this.i18n.translate(
+          'editor.paste.feedback.summary',
+          {
+            abilityCount: result.matchedAbilityCount,
+            mechanicCount: result.matchedMechanicCount,
+            warningCount: result.warnings.length,
+          },
+          'saved-enemies',
+        ),
+      ],
+    };
+  });
+  public readonly enemyTextParseWarningMessages = computed<string[]>(() =>
+    this.enemyTextParseResult()?.warnings.map((warning) =>
+      this.translateEnemyTextWarning(warning),
+    ) ?? [],
+  );
   public readonly hasSavedEnemies = computed(() => this.savedEnemies().length > 0);
   public readonly canSaveEnemy = computed(
     () => this.selectedTypes().length > 0 && this.selectedClasses().length > 0,
@@ -245,9 +276,9 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public async ngOnInit(): Promise<void> {
     await this.userState.ready();
     await Promise.all([
-      this.i18n.preloadScope("ability-picker"),
-      this.i18n.preloadScope("character-image-picker"),
-      this.i18n.preloadScope("enemy-mechanics-picker"),
+      this.i18n.preloadScope('ability-picker'),
+      this.i18n.preloadScope('character-image-picker'),
+      this.i18n.preloadScope('enemy-mechanics-picker'),
     ]);
     const [summary, abilityCatalog] = await Promise.all([
       this.repository.getDatasetManifest(),
@@ -270,16 +301,16 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
   public openCreateModal(): void {
     this.editingEnemy.set(null);
-    this.enemyName.set("");
-    this.enemyNotes.set("");
+    this.enemyName.set('');
+    this.enemyNotes.set('');
     this.enemyImageDataUrl.set(null);
-    this.enemyImageErrorMessage.set("");
+    this.enemyImageErrorMessage.set('');
     this.processingEnemyImage.set(false);
     this.characterImagePickerOpen.set(false);
-    this.resetImportState();
+    this.resetEnemyTextParseState();
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
-    this.selectedTypes.set(["DEX"]);
+    this.selectedTypes.set(['DEX']);
     this.selectedClasses.set([]);
     this.enemyMechanicDrafts.set([]);
     this.requiredAbilityDrafts.set([]);
@@ -295,10 +326,10 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.enemyName.set(enemy.name);
     this.enemyNotes.set(enemy.notes);
     this.enemyImageDataUrl.set(enemy.imageDataUrl);
-    this.enemyImageErrorMessage.set("");
+    this.enemyImageErrorMessage.set('');
     this.processingEnemyImage.set(false);
     this.characterImagePickerOpen.set(false);
-    this.resetImportState();
+    this.resetEnemyTextParseState();
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
     this.selectedTypes.set([...enemy.selectedTypes]);
@@ -325,10 +356,10 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.editorOpen.set(false);
     this.editingEnemy.set(null);
     this.savingEnemy.set(false);
-    this.enemyImageErrorMessage.set("");
+    this.enemyImageErrorMessage.set('');
     this.processingEnemyImage.set(false);
     this.characterImagePickerOpen.set(false);
-    this.resetImportState();
+    this.resetEnemyTextParseState();
   }
 
   public openImportModal(): void {
@@ -342,23 +373,15 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   public onEnemyNameChange(event: CustomEvent<{ value?: string | null }>): void {
-    this.enemyName.set((event.detail.value ?? "").trimStart());
+    this.enemyName.set((event.detail.value ?? '').trimStart());
   }
 
   public onEnemyNotesChange(event: CustomEvent<{ value?: string | null }>): void {
-    this.enemyNotes.set((event.detail.value ?? "").toString());
+    this.enemyNotes.set((event.detail.value ?? '').toString());
   }
 
   public openEnemyImagePicker(input: HTMLInputElement): void {
     if (this.savingEnemy() || this.processingEnemyImage()) {
-      return;
-    }
-
-    input.click();
-  }
-
-  public openEnemyImportPicker(input: HTMLInputElement): void {
-    if (this.savingEnemy() || this.importingEnemy()) {
       return;
     }
 
@@ -387,9 +410,9 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
   public async onEnemyImageSelected(event: Event, input: HTMLInputElement): Promise<void> {
     const target = event.target as HTMLInputElement;
-    const [file] = [...target.files ?? []];
+    const [file] = [...(target.files ?? [])];
 
-    input.value = "";
+    input.value = '';
 
     if (!file) {
       return;
@@ -398,24 +421,11 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     await this.loadEnemyImage(file);
   }
 
-  public async onEnemyImportSelected(event: Event, input: HTMLInputElement): Promise<void> {
-    const target = event.target as HTMLInputElement;
-    const [file] = [...target.files ?? []];
-
-    input.value = "";
-
-    if (!file) {
-      return;
-    }
-
-    await this.importEnemyPreset(file);
-  }
-
   public async onImportFileSelected(event: Event, input: HTMLInputElement): Promise<void> {
     const target = event.target as HTMLInputElement;
-    const [file] = [...target.files ?? []];
+    const [file] = [...(target.files ?? [])];
 
-    input.value = "";
+    input.value = '';
 
     if (!file) {
       return;
@@ -429,7 +439,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.draggingImportFile.set(true);
 
     if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = "copy";
+      event.dataTransfer.dropEffect = 'copy';
     }
   }
 
@@ -442,7 +452,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     event.preventDefault();
     this.draggingImportFile.set(false);
 
-    const [file] = [...event.dataTransfer?.files ?? []];
+    const [file] = [...(event.dataTransfer?.files ?? [])];
 
     if (!file) {
       return;
@@ -453,7 +463,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
   public removeEnemyImage(): void {
     this.enemyImageDataUrl.set(null);
-    this.enemyImageErrorMessage.set("");
+    this.enemyImageErrorMessage.set('');
   }
 
   public async applyCharacterImageSelection(character: CharacterListItem): Promise<void> {
@@ -462,7 +472,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     }
 
     this.processingEnemyImage.set(true);
-    this.enemyImageErrorMessage.set("");
+    this.enemyImageErrorMessage.set('');
 
     try {
       const rawImageDataUrl = await this.readImageUrlAsDataUrl(character.imageUrl);
@@ -475,11 +485,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       this.characterImagePickerOpen.set(false);
     } catch {
       this.enemyImageErrorMessage.set(
-        this.i18n.translate(
-          "editor.image.errors.characterLoadFailed",
-          undefined,
-          "saved-enemies",
-        ),
+        this.i18n.translate('editor.image.errors.characterLoadFailed', undefined, 'saved-enemies'),
       );
     } finally {
       this.processingEnemyImage.set(false);
@@ -532,6 +538,48 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public saveAbilityPicker(drafts: AbilityRequirementDraft[]): void {
     this.requiredAbilityDrafts.set(drafts);
     this.abilityPickerOpen.set(false);
+  }
+
+  public onEnemyPasteTextChange(event: CustomEvent<{ value?: string | null }>): void {
+    this.enemyTextPasteValue.set((event.detail.value ?? '').toString());
+    this.enemyTextParseResult.set(null);
+    this.enemyTextParseErrorMessage.set('');
+  }
+
+  public parseEnemyText(): void {
+    if (this.savingEnemy()) {
+      return;
+    }
+
+    if (this.enemyTextPasteValue().trim().length === 0) {
+      this.enemyTextParseResult.set(null);
+      this.enemyTextParseErrorMessage.set(
+        this.i18n.translate('editor.paste.errors.empty', undefined, 'saved-enemies'),
+      );
+      return;
+    }
+
+    this.enemyTextParseResult.set(
+      parseSavedEnemyText(this.enemyTextPasteValue(), {
+        abilityCatalogItems: this.availableAbilityCatalogItems(),
+      }),
+    );
+    this.enemyTextParseErrorMessage.set('');
+  }
+
+  public applyParsedEnemyText(): void {
+    if (this.savingEnemy()) {
+      return;
+    }
+
+    const parsedResult = this.enemyTextParseResult();
+
+    if (!parsedResult) {
+      return;
+    }
+
+    this.enemyMechanicDrafts.set(this.createParsedEnemyMechanicDrafts(parsedResult.enemyMechanics));
+    this.requiredAbilityDrafts.set(createAbilityRequirementDrafts(parsedResult.requiredAbilities));
   }
 
   public openEnemyMechanicPicker(): void {
@@ -604,7 +652,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     if (
       !enemy ||
       !this.confirmDelete(
-        this.i18n.translate("confirm.deleteSingle", { name: enemy.name }, "saved-enemies"),
+        this.i18n.translate('confirm.deleteSingle', { name: enemy.name }, 'saved-enemies'),
       )
     ) {
       return;
@@ -633,21 +681,25 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     updatedCount: number;
   }): SavedEnemiesImportFeedback {
     const details = [
-      this.i18n.translate("bulkImport.loadedFromFile", { fileName: stats.fileName }, "saved-enemies"),
+      this.i18n.translate(
+        'bulkImport.loadedFromFile',
+        { fileName: stats.fileName },
+        'saved-enemies',
+      ),
     ];
 
     if (stats.addedCount > 0) {
       details.push(
-        this.i18n.translate("bulkImport.stats.added", { count: stats.addedCount }, "saved-enemies"),
+        this.i18n.translate('bulkImport.stats.added', { count: stats.addedCount }, 'saved-enemies'),
       );
     }
 
     if (stats.updatedCount > 0) {
       details.push(
         this.i18n.translate(
-          "bulkImport.stats.updated",
+          'bulkImport.stats.updated',
           { count: stats.updatedCount },
-          "saved-enemies",
+          'saved-enemies',
         ),
       );
     }
@@ -655,9 +707,9 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     if (stats.invalidEnemyCount > 0) {
       details.push(
         this.i18n.translate(
-          "bulkImport.stats.invalid",
+          'bulkImport.stats.invalid',
           { count: stats.invalidEnemyCount },
-          "saved-enemies",
+          'saved-enemies',
         ),
       );
     }
@@ -665,9 +717,9 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     if (stats.duplicateIdCount > 0) {
       details.push(
         this.i18n.translate(
-          "bulkImport.stats.duplicates",
+          'bulkImport.stats.duplicates',
           { count: stats.duplicateIdCount },
-          "saved-enemies",
+          'saved-enemies',
         ),
       );
     }
@@ -675,11 +727,11 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     const hasWarnings = stats.invalidEnemyCount > 0 || stats.duplicateIdCount > 0;
 
     return {
-      tone: hasWarnings ? "warning" : "success",
+      tone: hasWarnings ? 'warning' : 'success',
       title: this.i18n.translate(
-        hasWarnings ? "bulkImport.warningTitle" : "bulkImport.successTitle",
+        hasWarnings ? 'bulkImport.warningTitle' : 'bulkImport.successTitle',
         undefined,
-        "saved-enemies",
+        'saved-enemies',
       ),
       details,
     };
@@ -691,13 +743,9 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       (abilityKey) => this.abilityCatalogMap().get(abilityKey)?.label ?? abilityKey,
       {
         formatCharacters: (count) =>
-          this.i18n.translate(
-            "editor.requirementSummary.characters",
-            { count },
-            "saved-enemies",
-          ),
+          this.i18n.translate('editor.requirementSummary.characters', { count }, 'saved-enemies'),
         formatTurns: (count) =>
-          this.i18n.translate("editor.requirementSummary.turns", { count }, "saved-enemies"),
+          this.i18n.translate('editor.requirementSummary.turns', { count }, 'saved-enemies'),
       },
     );
   }
@@ -705,20 +753,27 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public formatEnemyMechanic(requirement: AutoBuildEnemyMechanicRequirement): string {
     return formatEnemyMechanicSummary(
       requirement,
-      (mechanicKey) =>
-        this.enemyMechanicCatalogMap().get(mechanicKey)?.label ?? mechanicKey,
+      (mechanicKey) => this.enemyMechanicCatalogMap().get(mechanicKey)?.label ?? mechanicKey,
       {
         formatTurns: (count) =>
-          this.i18n.translate("editor.requirementSummary.turns", { count }, "saved-enemies"),
+          this.i18n.translate('editor.requirementSummary.turns', { count }, 'saved-enemies'),
         resolveTriggerTag: (tag) =>
-          this.i18n.translate(`editor.enemyMechanics.tags.trigger.${tag}`, undefined, "saved-enemies"),
+          this.i18n.translate(
+            `editor.enemyMechanics.tags.trigger.${tag}`,
+            undefined,
+            'saved-enemies',
+          ),
         resolveResponseTag: (tag) =>
-          this.i18n.translate(`editor.enemyMechanics.tags.response.${tag}`, undefined, "saved-enemies"),
+          this.i18n.translate(
+            `editor.enemyMechanics.tags.response.${tag}`,
+            undefined,
+            'saved-enemies',
+          ),
         resolveConditionTag: (tag) =>
           this.i18n.translate(
             `editor.enemyMechanics.tags.condition.${tag}`,
             undefined,
-            "saved-enemies",
+            'saved-enemies',
           ),
       },
     );
@@ -726,7 +781,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
   public resolveRequiredAbilitySelectedText(draft: AbilityRequirementDraft): string {
     if (draft.abilityKey.length === 0) {
-      return this.i18n.translate("common.actions.select");
+      return this.i18n.translate('common.actions.select');
     }
 
     return this.formatAbilityRequirement({
@@ -739,7 +794,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
   public resolveEnemyMechanicSelectedText(draft: EnemyMechanicDraft): string {
     if (draft.mechanicKey.length === 0) {
-      return this.i18n.translate("common.actions.select");
+      return this.i18n.translate('common.actions.select');
     }
 
     return this.formatEnemyMechanic({
@@ -771,51 +826,6 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     ]);
   }
 
-  private async importEnemyPreset(file: File): Promise<void> {
-    if (!this.isEnemyImportFile(file)) {
-      this.enemyImportErrorMessage.set(
-        this.i18n.translate("editor.import.errors.invalidType", undefined, "saved-enemies"),
-      );
-      this.enemyImportFeedbackMessage.set("");
-      this.enemyImportHasWarnings.set(false);
-      this.enemyImportFileName.set(file.name);
-      return;
-    }
-
-    this.importingEnemy.set(true);
-    this.enemyImportFileName.set(file.name);
-    this.enemyImportFeedbackMessage.set("");
-    this.enemyImportHasWarnings.set(false);
-    this.enemyImportErrorMessage.set("");
-
-    try {
-      const rawContent = await this.readFileAsText(file);
-      const payload = parseEnemyImportPayload(rawContent);
-      const result = sanitizeEnemyImportPayload(payload, {
-        untitledEnemyName: this.i18n.translate("common.defaults.untitledEnemy"),
-        currentImageDataUrl: this.enemyImageDataUrl(),
-        availableTypes: this.availableTypes,
-        availableClasses: this.availableClasses(),
-        abilityCatalogItems: this.availableAbilityCatalogItems(),
-      });
-
-      this.applyImportedEnemyDraft(result.enemy);
-      this.enemyImportHasWarnings.set(result.warnings.length > 0);
-      this.enemyImportFeedbackMessage.set(this.buildEnemyImportFeedbackMessage(result.warnings));
-    } catch (error) {
-      const errorKey =
-        error instanceof EnemyImportError
-          ? error.key
-          : "editor.import.errors.loadFailed";
-
-      this.enemyImportErrorMessage.set(
-        this.i18n.translate(errorKey, undefined, "saved-enemies"),
-      );
-    } finally {
-      this.importingEnemy.set(false);
-    }
-  }
-
   private async importSavedEnemies(file: File): Promise<void> {
     this.importing.set(true);
     this.importFileName.set(file.name);
@@ -825,7 +835,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       const rawContent = await this.readFileAsText(file);
       const payload = parseSavedEnemiesImportPayload(rawContent);
       const sanitizedImport = sanitizeSavedEnemiesImportPayload(payload, {
-        untitledEnemyName: this.i18n.translate("common.defaults.untitledEnemy"),
+        untitledEnemyName: this.i18n.translate('common.defaults.untitledEnemy'),
       });
       const mergeResult = await this.userState.mergeImportedEnemies(sanitizedImport.enemies);
 
@@ -840,8 +850,8 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       );
     } catch (error) {
       this.importFeedback.set({
-        tone: "error",
-        title: this.i18n.translate("bulkImport.errorTitle", undefined, "saved-enemies"),
+        tone: 'error',
+        title: this.i18n.translate('bulkImport.errorTitle', undefined, 'saved-enemies'),
         details: [this.resolveImportError(error)],
       });
     } finally {
@@ -849,52 +859,17 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     }
   }
 
-  private applyImportedEnemyDraft(enemy: ImportedEnemyDraft): void {
-    this.enemyName.set(enemy.name);
-    this.enemyNotes.set(enemy.notes);
-    this.enemyImageDataUrl.set(enemy.imageDataUrl);
-    this.selectedTypes.set([...enemy.selectedTypes]);
-    this.selectedClasses.set([...enemy.selectedClasses]);
-    this.enemyMechanicDrafts.set(createEnemyMechanicDrafts(enemy.enemyMechanics));
-    this.requiredAbilityDrafts.set(
-      createAbilityRequirementDrafts(
-        splitManualAbilityRequirementsFromEnemyMechanics(
-          enemy.requiredAbilities,
-          enemy.enemyMechanics,
-        ),
-      ),
-    );
-    this.requireAllSelectedTypesInTeam.set(enemy.requireAllSelectedTypesInTeam);
-    this.requireAllSelectedClassesPerCharacter.set(enemy.requireAllSelectedClassesPerCharacter);
-    this.requireAllSpecialsSupportTeam.set(enemy.requireAllSpecialsSupportTeam);
-  }
-
-  private buildEnemyImportFeedbackMessage(warnings: EnemyImportMessage[]): string {
-    const successMessage = this.i18n.translate("editor.import.success", undefined, "saved-enemies");
-
-    if (warnings.length === 0) {
-      return successMessage;
-    }
-
-    return [successMessage, ...warnings.map((warning) => this.translateImportWarning(warning))]
-      .filter((value) => value.length > 0)
-      .join(" ");
-  }
-
-  private translateImportWarning(warning: EnemyImportMessage): string {
-    return this.i18n.translate(warning.key, warning.params, "saved-enemies");
-  }
 
   private async loadEnemyImage(file: File): Promise<void> {
-    if (!file.type.startsWith("image/")) {
+    if (!file.type.startsWith('image/')) {
       this.enemyImageErrorMessage.set(
-        this.i18n.translate("editor.image.errors.invalidType", undefined, "saved-enemies"),
+        this.i18n.translate('editor.image.errors.invalidType', undefined, 'saved-enemies'),
       );
       return;
     }
 
     this.processingEnemyImage.set(true);
-    this.enemyImageErrorMessage.set("");
+    this.enemyImageErrorMessage.set('');
 
     try {
       const rawImageDataUrl = await this.readBlobAsDataUrl(file);
@@ -906,7 +881,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       this.enemyImageDataUrl.set(resizedImageDataUrl);
     } catch {
       this.enemyImageErrorMessage.set(
-        this.i18n.translate("editor.image.errors.loadFailed", undefined, "saved-enemies"),
+        this.i18n.translate('editor.image.errors.loadFailed', undefined, 'saved-enemies'),
       );
     } finally {
       this.processingEnemyImage.set(false);
@@ -928,14 +903,14 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       const reader = new FileReader();
 
       reader.onload = () => {
-        if (typeof reader.result === "string") {
+        if (typeof reader.result === 'string') {
           resolve(reader.result);
           return;
         }
 
-        reject(new Error("Unable to read image data."));
+        reject(new Error('Unable to read image data.'));
       };
-      reader.onerror = () => reject(reader.error ?? new Error("Unable to read image data."));
+      reader.onerror = () => reject(reader.error ?? new Error('Unable to read image data.'));
       reader.readAsDataURL(blob);
     });
   }
@@ -950,20 +925,20 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
       image.onload = () => {
         const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
-        const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d");
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
 
         if (!context) {
-          reject(new Error("Unable to create image canvas."));
+          reject(new Error('Unable to create image canvas.'));
           return;
         }
 
         canvas.width = Math.max(1, Math.round(image.width * scale));
         canvas.height = Math.max(1, Math.round(image.height * scale));
         context.drawImage(image, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.82));
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
       };
-      image.onerror = () => reject(new Error("Unable to load image."));
+      image.onerror = () => reject(new Error('Unable to load image.'));
       image.src = imageDataUrl;
     });
   }
@@ -973,7 +948,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       return [...new Set(value.map((entry) => entry.trim()).filter((entry) => entry.length > 0))];
     }
 
-    if (typeof value === "string" && value.trim().length > 0) {
+    if (typeof value === 'string' && value.trim().length > 0) {
       return [value.trim()];
     }
 
@@ -981,33 +956,76 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   private confirmDelete(message: string): boolean {
-    return typeof globalThis.confirm === "function" ? globalThis.confirm(message) : false;
-  }
-
-  private isEnemyImportFile(file: File): boolean {
-    return file.type.includes("json") || file.name.toLowerCase().endsWith(".json");
+    return typeof globalThis.confirm === 'function' ? globalThis.confirm(message) : false;
   }
 
   private resolveImportError(error: SavedEnemiesImportError | Error | unknown): string {
     if (error instanceof SavedEnemiesImportError) {
-      return this.i18n.translate(error.key, undefined, "saved-enemies");
+      return this.i18n.translate(error.key, undefined, 'saved-enemies');
     }
 
-    return this.i18n.translate("bulkImport.errors.invalidPayload", undefined, "saved-enemies");
+    return this.i18n.translate('bulkImport.errors.invalidPayload', undefined, 'saved-enemies');
   }
 
   private resetBulkImportState(): void {
     this.draggingImportFile.set(false);
-    this.importFileName.set("");
+    this.importFileName.set('');
     this.importFeedback.set(null);
     this.importing.set(false);
   }
 
-  private resetImportState(): void {
-    this.importingEnemy.set(false);
-    this.enemyImportFileName.set("");
-    this.enemyImportFeedbackMessage.set("");
-    this.enemyImportHasWarnings.set(false);
-    this.enemyImportErrorMessage.set("");
+  private createParsedEnemyMechanicDrafts(
+    requirements: AutoBuildEnemyMechanicRequirement[],
+  ): EnemyMechanicDraft[] {
+    return requirements.map((requirement, index) => ({
+      draftId: `parsed-mechanic-${Date.now()}-${index}`,
+      mechanicKey: requirement.mechanicKey,
+      category: requirement.category,
+      minTurns: requirement.minTurns,
+      triggerTags: [...requirement.triggerTags],
+      responseTags: [...requirement.responseTags],
+      conditionTags: [...requirement.conditionTags],
+      derivedAbilityKey:
+        requirement.derivedAbilityKey ??
+        resolveEnemyMechanicCatalogItem(requirement.mechanicKey)?.derivedAbilityKey ??
+        null,
+    }));
+  }
+
+  private translateEnemyTextWarning(warning: ParsedEnemyTextWarning): string {
+    if (warning.kind === 'unmatched') {
+      return this.i18n.translate(
+        'editor.paste.warnings.unmatched',
+        { line: warning.line },
+        'saved-enemies',
+      );
+    }
+
+    return this.i18n.translate(
+      'editor.paste.warnings.precisionLoss',
+      {
+        line: warning.line,
+        resolvedAs: this.resolveParsedEnemyTextWarningLabel(warning),
+      },
+      'saved-enemies',
+    );
+  }
+
+  private resolveParsedEnemyTextWarningLabel(warning: ParsedEnemyTextWarning): string {
+    if (!warning.resolvedKey) {
+      return this.i18n.translate('common.actions.select');
+    }
+
+    if (warning.matchKind === 'ability') {
+      return this.abilityCatalogMap().get(warning.resolvedKey)?.label ?? warning.resolvedKey;
+    }
+
+    return this.enemyMechanicCatalogMap().get(warning.resolvedKey)?.label ?? warning.resolvedKey;
+  }
+
+  private resetEnemyTextParseState(): void {
+    this.enemyTextPasteValue.set('');
+    this.enemyTextParseResult.set(null);
+    this.enemyTextParseErrorMessage.set('');
   }
 }
