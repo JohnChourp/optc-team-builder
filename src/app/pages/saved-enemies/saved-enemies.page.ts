@@ -253,10 +253,11 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       ],
     };
   });
-  public readonly enemyTextParseWarningMessages = computed<string[]>(() =>
-    this.enemyTextParseResult()?.warnings.map((warning) =>
-      this.translateEnemyTextWarning(warning),
-    ) ?? [],
+  public readonly enemyTextParseWarningMessages = computed<string[]>(
+    () =>
+      this.enemyTextParseResult()?.warnings.map((warning) =>
+        this.translateEnemyTextWarning(warning),
+      ) ?? [],
   );
   public readonly hasSavedEnemies = computed(() => this.savedEnemies().length > 0);
   public readonly canSaveEnemy = computed(
@@ -858,7 +859,6 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       this.importing.set(false);
     }
   }
-
 
   private async loadEnemyImage(file: File): Promise<void> {
     if (!file.type.startsWith('image/')) {
