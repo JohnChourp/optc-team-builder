@@ -1,4 +1,5 @@
 import { Component } from "@angular/core";
+import { RouterLink } from "@angular/router";
 import { IonIcon, IonLabel, IonTabBar, IonTabButton, IonTabs } from "@ionic/angular/standalone";
 import { TranslocoPipe } from "@jsverse/transloco";
 import { albumsOutline, cogOutline, flashOutline, gridOutline, peopleOutline } from "ionicons/icons";
@@ -6,7 +7,7 @@ import { albumsOutline, cogOutline, flashOutline, gridOutline, peopleOutline } f
 @Component({
   selector: "app-tabs-page",
   standalone: true,
-  imports: [IonIcon, IonLabel, IonTabBar, IonTabButton, IonTabs, TranslocoPipe],
+  imports: [IonIcon, IonLabel, IonTabBar, IonTabButton, IonTabs, RouterLink, TranslocoPipe],
   templateUrl: "./tabs.page.html",
   styleUrl: "./tabs.page.scss",
 })

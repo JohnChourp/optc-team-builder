@@ -509,7 +509,7 @@ export class OptcRepositoryService {
     }
 
     if (assets.exactLocal) {
-      return assets.exactLocal;
+      return this.normalizeAssetUrl(assets.exactLocal);
     }
 
     if (thumbnailGloInstalled && assets.thumbnailGlobal) {
@@ -531,6 +531,10 @@ export class OptcRepositoryService {
     return `assets/offline-packs/${packId}/${relativePath}`;
   }
 
+  private normalizeAssetUrl(assetUrl: string): string {
+    return assetUrl.startsWith('/assets/') ? assetUrl.slice(1) : assetUrl;
+  }
+
   private resolveShipThumbUrl(
     thumb: string | null,
     installedPacks?: Map<string, OfflinePackSummary>,
@@ -548,7 +552,7 @@ export class OptcRepositoryService {
       trimmedThumb.startsWith('https://') ||
       trimmedThumb.startsWith('data:')
     ) {
-      return trimmedThumb;
+      return this.normalizeAssetUrl(trimmedThumb);
     }
 
     const shipThumbnailsInstalled =

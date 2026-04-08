@@ -1,26 +1,26 @@
 <ion-tabs>
   <ion-tab-bar slot="bottom" class="tabs-bar">
-    <ion-tab-button tab="characters" href="/tabs/characters">
+    <ion-tab-button tab="characters" [routerLink]="['/tabs/characters']">
       <ion-icon [icon]="charactersIcon"></ion-icon>
       <ion-label>{{ "tabs.characters" | transloco }}</ion-label>
     </ion-tab-button>
 
-    <ion-tab-button tab="team-builder" href="/tabs/team-builder">
+    <ion-tab-button tab="team-builder" [routerLink]="['/tabs/team-builder']">
       <ion-icon [icon]="teamIcon"></ion-icon>
       <ion-label>{{ "tabs.team" | transloco }}</ion-label>
     </ion-tab-button>
 
-    <ion-tab-button tab="auto-team-builder" href="/tabs/auto-team-builder">
+    <ion-tab-button tab="auto-team-builder" [routerLink]="['/tabs/auto-team-builder']">
       <ion-icon [icon]="autoTeamIcon"></ion-icon>
       <ion-label>{{ "tabs.auto" | transloco }}</ion-label>
     </ion-tab-button>
 
-    <ion-tab-button tab="saved-teams" href="/tabs/saved-teams">
+    <ion-tab-button tab="saved-teams" [routerLink]="['/tabs/saved-teams']">
       <ion-icon [icon]="savedTeamsIcon"></ion-icon>
       <ion-label>{{ "tabs.savedTeams" | transloco }}</ion-label>
     </ion-tab-button>
 
-    <ion-tab-button tab="settings" href="/tabs/settings">
+    <ion-tab-button tab="settings" [routerLink]="['/tabs/settings']">
       <ion-icon [icon]="settingsIcon"></ion-icon>
       <ion-label>{{ "tabs.offline" | transloco }}</ion-label>
     </ion-tab-button>
