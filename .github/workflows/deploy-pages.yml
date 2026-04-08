@@ -1,5 +1,4 @@
 name: Deploy GitHub Pages
-
 on:
   push:
     branches:
@@ -29,7 +28,12 @@ jobs:
           cache: npm
 
       - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6.0.0
+        with:
+          # Optional first-run bootstrap. This requires a PAT or GitHub App token
+          # with Pages/admin write access, not the default GITHUB_TOKEN.
+          enablement: ${{ secrets.PAGES_ENABLEMENT_TOKEN != '' }}
+          token: ${{ secrets.PAGES_ENABLEMENT_TOKEN != '' && secrets.PAGES_ENABLEMENT_TOKEN || github.token }}
 
       - name: Install dependencies
         run: npm ci
