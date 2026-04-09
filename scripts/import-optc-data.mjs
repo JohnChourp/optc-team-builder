@@ -33,6 +33,13 @@ const offlineDir = path.join(publicDir, 'assets', 'offline-packs');
 const exactImagesDir = path.join(publicDir, 'assets', 'exact-character-images');
 const overrideConfigPath = path.join(rootDir, 'scripts', 'data', 'character-image-overrides.json');
 const manualExactImageSourceDir = path.join(rootDir, 'scripts', 'data', 'character-images');
+const shipThumbnailOverrideConfigPath = path.join(
+  rootDir,
+  'scripts',
+  'data',
+  'ship-thumbnail-overrides.json',
+);
+const manualShipThumbnailSourceDir = path.join(rootDir, 'scripts', 'data', 'ship-thumbnails');
 
 const sourceRepoBase = 'https://raw.githubusercontent.com/optc-db/optc-db.github.io/master';
 const githubApiBase = 'https://api.github.com/repos/optc-db/optc-db.github.io';
@@ -521,6 +528,33 @@ async function loadCharacterImageOverrides() {
   }
 }
 
+async function loadShipThumbnailOverrides() {
+  try {
+    const rawOverrides = JSON.parse(await readFile(shipThumbnailOverrideConfigPath, 'utf8'));
+    const overrides = new Map();
+
+    for (const [rawShipId, entry] of Object.entries(rawOverrides)) {
+      const shipId = Number(rawShipId);
+
+      if (!Number.isInteger(shipId) || shipId <= 0) {
+        throw new Error(
+          `Invalid ship id in ${path.relative(rootDir, shipThumbnailOverrideConfigPath)}: ${rawShipId}`,
+        );
+      }
+
+      overrides.set(shipId, normalizeShipThumbnailOverrideEntry(shipId, entry));
+    }
+
+    return overrides;
+  } catch (error) {
+    if (error?.code === 'ENOENT') {
+      return new Map();
+    }
+
+    throw error;
+  }
+}
+
 function normalizeOverrideEntry(characterId, entry) {
   if (!entry || typeof entry !== 'object') {
     throw new Error(`Invalid override entry for character ${characterId}.`);
@@ -554,6 +588,20 @@ function normalizeOverrideEntry(characterId, entry) {
   }
 
   throw new Error(`Unsupported override source for character ${characterId}.`);
+}
+
+function normalizeShipThumbnailOverrideEntry(shipId, entry) {
+  if (!entry || typeof entry !== 'object') {
+    throw new Error(`Invalid ship thumbnail override entry for ship ${shipId}.`);
+  }
+
+  if (typeof entry.file !== 'string' || !entry.file.trim().endsWith('.png')) {
+    throw new Error(`Invalid ship thumbnail file for ship ${shipId}.`);
+  }
+
+  return {
+    file: entry.file.trim(),
+  };
 }
 
 async function materializeExactImageSources(
@@ -619,6 +667,37 @@ async function materializeExactImageSources(
   }
 
   return exactLocalPaths;
+}
+
+async function materializeShipThumbnailOverrides(shipThumbnailOverrides, shipPackInstalled) {
+  if (!shipPackInstalled || !shipThumbnailOverrides.size) {
+    return {
+      copiedCount: 0,
+      totalBytes: 0,
+    };
+  }
+
+  const targetRoot = path.join(offlineDir, 'ship-thumbnails');
+
+  await mkdir(targetRoot, { recursive: true });
+
+  let copiedCount = 0;
+  let totalBytes = 0;
+
+  for (const override of shipThumbnailOverrides.values()) {
+    const sourcePath = path.join(manualShipThumbnailSourceDir, override.file);
+    const destinationPath = path.join(targetRoot, override.file);
+
+    await copyFile(sourcePath, destinationPath);
+    const { size } = await stat(destinationPath);
+    copiedCount += 1;
+    totalBytes += size;
+  }
+
+  return {
+    copiedCount,
+    totalBytes,
+  };
 }
 
 function isPlaceholderCharacterEntry(entry) {
@@ -786,6 +865,25 @@ function normalizeShips(ships) {
   }));
 }
 
+export function applyShipThumbnailOverrides(ships, shipThumbnailOverrides) {
+  if (!shipThumbnailOverrides.size) {
+    return ships;
+  }
+
+  return ships.map((ship) => {
+    const override = shipThumbnailOverrides.get(ship.id);
+
+    if (!override || ship.thumb) {
+      return ship;
+    }
+
+    return {
+      ...ship,
+      thumb: override.file,
+    };
+  });
+}
+
 async function hashFile(targetPath) {
   const content = await readFile(targetPath);
   return createHash('sha1').update(content).digest('hex');
@@ -807,6 +905,7 @@ async function main() {
     sourceVersion,
     packTrees,
     imageOverrides,
+    shipThumbnailOverrides,
   ] = await Promise.all([
     evaluateLegacyFile('common/data/units.js'),
     evaluateLegacyFile('common/data/details.js'),
@@ -816,6 +915,7 @@ async function main() {
     fetchVersion(),
     buildPackTrees(),
     loadCharacterImageOverrides(),
+    loadShipThumbnailOverrides(),
   ]);
 
   const packFileIndexes = buildPackFileIndexes(packTrees);
@@ -844,7 +944,10 @@ async function main() {
     batchSize: 250,
     logger: (message) => console.log(message),
   });
-  const ships = normalizeShips(shipsWindow.ships);
+  const ships = applyShipThumbnailOverrides(
+    normalizeShips(shipsWindow.ships),
+    shipThumbnailOverrides,
+  );
 
   const packStatuses = [];
   for (const pack of packTrees) {
@@ -863,6 +966,18 @@ async function main() {
       installed: status.installed,
       checksum: sampleHash,
     });
+  }
+
+  const shipThumbnailPackStatus =
+    packStatuses.find((pack) => pack.key === 'shipThumbnails') ?? null;
+  const shipThumbnailOverrideStats = await materializeShipThumbnailOverrides(
+    shipThumbnailOverrides,
+    shipThumbnailPackStatus?.installed ?? false,
+  );
+
+  if (shipThumbnailPackStatus && shipThumbnailOverrideStats.copiedCount > 0) {
+    shipThumbnailPackStatus.fileCount += shipThumbnailOverrideStats.copiedCount;
+    shipThumbnailPackStatus.totalBytes += shipThumbnailOverrideStats.totalBytes;
   }
 
   const resolvableUnresolvedExactSources = buildResolvableUnresolvedExactSources(

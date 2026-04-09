@@ -713,10 +713,15 @@
                     <button
                       type="button"
                       class="selected-value-chip manual-lock-chip manual-lock-chip--ship"
+                      [class.manual-lock-chip--ship-fallback]="!ship.thumbUrl"
                       [disabled]="building()"
                       (click)="removeExcludedShip(ship.id)"
                     >
-                      <ion-icon [icon]="shipIcon"></ion-icon>
+                      @if (ship.thumbUrl; as thumbUrl) {
+                        <img [src]="thumbUrl" [alt]="ship.name" loading="lazy" />
+                      } @else {
+                        <ion-icon [icon]="shipIcon"></ion-icon>
+                      }
                       {{ ship.name }}
                       <span aria-hidden="true">×</span>
                     </button>
@@ -862,8 +867,16 @@
                           !shipCard.isExcluded && !shipCard.isSelectableInExcludePicker
                         "
                       >
-                        <div class="ship-candidate-icon" aria-hidden="true">
-                          <ion-icon [icon]="shipIcon"></ion-icon>
+                        <div
+                          class="ship-candidate-icon"
+                          [class.ship-candidate-icon--fallback]="!shipCard.ship.thumbUrl"
+                          aria-hidden="true"
+                        >
+                          @if (shipCard.ship.thumbUrl; as thumbUrl) {
+                            <img [src]="thumbUrl" [alt]="shipCard.ship.name" loading="lazy" />
+                          } @else {
+                            <ion-icon [icon]="shipIcon"></ion-icon>
+                          }
                         </div>
                         <div class="manual-candidate-copy">
                           <strong>{{ shipCard.ship.name }}</strong>

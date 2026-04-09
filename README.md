@@ -101,14 +101,17 @@ The importer writes these generated files:
 - `public/assets/data/optc-preview.json`
 - `public/assets/offline-packs/<pack-id>/...`
 
-The currently installed pack in this workspace is:
+Available offline image packs also include:
 
-- `thumbnails-glo` at roughly `56 MB`
+- `thumbnails-glo`
+- `thumbnails-jap`
+- `ship-thumbnails` for ship picker and saved team previews
+- `full-transparent`
 
-Available offline image packs also include `ship-thumbnails` for ship picker and saved team previews.
+Local ship thumbnail overrides for upstream-missing ships live in `scripts/data/ship-thumbnail-overrides.json`.
 
 ## Current limitations
 
-- `thumbnails-jap`, `ship-thumbnails`, and `full-transparent` are implemented in the importer but were not downloaded in this pass.
+- Offline packs are opt-in and only become available in the app after running the matching `npm run data:import -- --download-images=...` mode.
 - The app uses `sql.js`, which increases the web bundle size compared with a plain JSON-only client.
 - Redistribution of game art is a separate legal/product decision before any public store release.

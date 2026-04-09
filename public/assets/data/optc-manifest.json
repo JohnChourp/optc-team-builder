@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-04T04:55:37.227Z",
+  "generatedAt": "2026-04-09T21:35:25.386Z",
   "sourceVersion": "unknown",
   "characterCount": 4800,
   "detailCount": 4109,
@@ -44,6 +44,16 @@
       "totalBytes": 106098998,
       "installed": true,
       "checksum": "dd8283e86a3614e7105a6c59d6d153c189ecab65"
+    },
+    {
+      "key": "shipThumbnails",
+      "id": "ship-thumbnails",
+      "label": "Ship thumbnails",
+      "localBasePath": "assets/offline-packs/ship-thumbnails",
+      "fileCount": 63,
+      "totalBytes": 502890,
+      "installed": true,
+      "checksum": "5f01f0889be3aa7a901634609253bf50146595b1"
     },
     {
       "key": "fullTransparent",

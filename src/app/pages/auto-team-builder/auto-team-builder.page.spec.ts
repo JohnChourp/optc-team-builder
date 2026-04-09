@@ -604,6 +604,10 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(template).toContain("t('ships.pickerTitle')");
     expect(template).not.toContain("abilityRequirements.placeholders.selectAbility");
     expect(template).not.toContain('shipSearchTerm()');
+    expect(template).toContain('[class.manual-lock-chip--ship-fallback]="!ship.thumbUrl"');
+    expect(template).toContain('@if (ship.thumbUrl; as thumbUrl)');
+    expect(template).toContain('[class.ship-candidate-icon--fallback]="!shipCard.ship.thumbUrl"');
+    expect(template).toContain('@if (shipCard.ship.thumbUrl; as thumbUrl)');
   });
 
   it('resets the full page state through resetPage', async () => {

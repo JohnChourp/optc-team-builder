@@ -545,6 +545,18 @@
   color: #f5c84c;
 }
 
+.manual-lock-chip--ship img {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.manual-lock-chip--ship-fallback {
+  background: rgba(245, 200, 76, 0.09);
+}
+
 .manual-ship-summary-card {
   display: grid;
   gap: 10px;
@@ -705,6 +717,19 @@
 .ship-candidate-icon {
   width: 80px;
   height: 80px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ship-candidate-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ship-candidate-icon--fallback {
+  background: rgba(245, 200, 76, 0.14);
 }
 
 .ship-candidate-icon ion-icon {
