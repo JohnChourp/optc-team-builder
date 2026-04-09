@@ -16,7 +16,7 @@ import {
   IonToggle,
   IonToolbar,
 } from "@ionic/angular/standalone";
-import { type ViewWillEnter } from "@ionic/angular";
+import { type ViewDidEnter, type ViewWillEnter } from "@ionic/angular";
 import {
   alertCircleOutline,
   boatOutline,
@@ -224,7 +224,7 @@ interface PresetImportFeedback {
   templateUrl: "./auto-team-builder.page.html",
   styleUrl: "./auto-team-builder.page.scss",
 })
-export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
+export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, ViewWillEnter {
   private readonly manualSearchLimit = 24;
   private buildAbortController: AbortController | null = null;
   private resetAfterBuildCancellation = false;
@@ -1104,6 +1104,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     if (!appliedSavedTeamPreset) {
       await this.applyEnemyPresetFromRoute();
     }
+  }
+
+  public ionViewDidEnter(): void {
+    console.log("AutoTeamBuilderPage component");
   }
 
   public async onClassChange(
@@ -2407,6 +2411,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         abilityChips: this.buildAbilityChipViews(
           character.detail.builderAbilities,
           highlightedRequirements,
+          { includeEmptyState: false },
         ),
         isSelectedInActiveSlot,
         isSelectableInActiveSlot: this.canAssignCharacterToManualSlot(activeRole, character),
@@ -2435,6 +2440,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         abilityChips: this.buildAbilityChipViews(
           character.detail.builderAbilities,
           highlightedRequirements,
+          { includeEmptyState: false },
         ),
         isExcluded,
         isSelectable: this.canExcludeCharacter(character.id),
@@ -2457,8 +2463,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private buildAbilityChipViews(
     abilities: NormalizedBuilderAbility[],
     highlightedRequirements: AutoBuildAbilityRequirement[],
+    options: { includeEmptyState?: boolean } = {},
   ): CharacterAbilityChipView[] {
+    const includeEmptyState = options.includeEmptyState ?? true;
+
     if (abilities.length === 0) {
+      if (!includeEmptyState) {
+        return [];
+      }
+
       return [
         {
           key: "none",

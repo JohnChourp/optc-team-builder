@@ -659,8 +659,8 @@
 }
 
 .manual-candidate-card--sidebar {
-  grid-template-columns: 40px minmax(0, 1fr) auto;
-  gap: 8px;
+  grid-template-columns: 80px minmax(0, 1fr) auto;
+  gap: 12px;
   padding: 8px 10px;
   border-radius: 14px;
 }
@@ -683,13 +683,13 @@
 }
 
 .manual-candidate-card--sidebar img {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 80px;
+  height: 80px;
+  border-radius: 16px;
 }
 
 .ship-candidate-card {
-  grid-template-columns: 40px minmax(0, 1fr) auto;
+  grid-template-columns: 80px minmax(0, 1fr) auto;
 }
 
 .ship-candidate-icon,
@@ -703,8 +703,12 @@
 }
 
 .ship-candidate-icon {
-  width: 40px;
-  height: 40px;
+  width: 80px;
+  height: 80px;
+}
+
+.ship-candidate-icon ion-icon {
+  font-size: 1.35rem;
 }
 
 .ship-candidate-icon ion-icon,

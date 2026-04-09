@@ -544,17 +544,6 @@
                               {{ candidateCard.selectionSupportLabel }}
                             </small>
                           }
-                          <div class="chip-row manual-candidate-chip-row">
-                            @for (abilityChip of candidateCard.abilityChips; track $index) {
-                              <small
-                                class="coverage-chip manual-ability-chip"
-                                [class.manual-ability-chip--matched]="abilityChip.highlighted"
-                                [class.manual-ability-chip--empty]="abilityChip.empty"
-                              >
-                                {{ abilityChip.label }}
-                              </small>
-                            }
-                          </div>
                         </div>
                         <div class="manual-candidate-actions">
                           <ion-button
@@ -808,17 +797,19 @@
                               {{ candidateCard.selectionSupportLabel }}
                             </small>
                           }
-                          <div class="chip-row manual-candidate-chip-row">
-                            @for (abilityChip of candidateCard.abilityChips; track $index) {
-                              <small
-                                class="coverage-chip manual-ability-chip"
-                                [class.manual-ability-chip--matched]="abilityChip.highlighted"
-                                [class.manual-ability-chip--empty]="abilityChip.empty"
-                              >
-                                {{ abilityChip.label }}
-                              </small>
-                            }
-                          </div>
+                          @if (candidateCard.abilityChips.length) {
+                            <div class="chip-row manual-candidate-chip-row">
+                              @for (abilityChip of candidateCard.abilityChips; track $index) {
+                                <small
+                                  class="coverage-chip manual-ability-chip"
+                                  [class.manual-ability-chip--matched]="abilityChip.highlighted"
+                                  [class.manual-ability-chip--empty]="abilityChip.empty"
+                                >
+                                  {{ abilityChip.label }}
+                                </small>
+                              }
+                            </div>
+                          }
                         </div>
                         <div class="manual-candidate-actions">
                           <ion-button
