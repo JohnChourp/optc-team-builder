@@ -303,6 +303,230 @@ describe('Auto team builder', () => {
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
   });
 
+  it('allows matching base character names when the unique-name toggle is off', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 5814,
+          name: 'Monkey D. Luffy',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.5x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 5815,
+          name: 'Monkey D. Luffy - Gear 2',
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts ATK of Fighter characters by 2.25x for 1 turn.',
+          },
+        }),
+        createCharacterRecord({
+          id: 5816,
+          name: 'Portgas D. Ace',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.25x.',
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        manualSlots: createManualSlots({
+          captain: [5814],
+          friendCaptain: [5816],
+          sub1: [5815],
+        }),
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.map((slot) => slot.character.name)).toEqual(
+      expect.arrayContaining(['Monkey D. Luffy', 'Monkey D. Luffy - Gear 2']),
+    );
+  });
+
+  it('rejects teams that reuse the same base character name when the toggle is on', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 5814,
+          name: 'Monkey D. Luffy',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.5x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 5815,
+          name: 'Monkey D. Luffy - Gear 2',
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts ATK of Fighter characters by 2.25x for 1 turn.',
+          },
+        }),
+        createCharacterRecord({
+          id: 5816,
+          name: 'Portgas D. Ace',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.25x.',
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireUniqueBaseCharacterNames: true,
+        manualSlots: createManualSlots({
+          captain: [5814],
+          friendCaptain: [5816],
+          sub1: [5815],
+        }),
+      }),
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('rejects duplicate base names across manual leader and sub slot picks when the toggle is on', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 5817,
+          name: 'Monkey D. Luffy',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.5x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 5818,
+          name: 'Portgas D. Ace',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.1x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 5819,
+          name: 'Monkey D. Luffy - Gear 2',
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts ATK of Fighter characters by 2.25x for 1 turn.',
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireUniqueBaseCharacterNames: true,
+        manualSlots: createManualSlots({
+          captain: [5817],
+          friendCaptain: [5818],
+          sub1: [5819],
+        }),
+      }),
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('allows the friend captain to reuse the same base character name when the toggle is on', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 5822,
+          name: 'Monkey D. Luffy',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.5x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 5823,
+          name: 'Monkey D. Luffy - Gear Third',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.1x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 5824,
+          name: 'Portgas D. Ace',
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts ATK of Fighter characters by 2.25x for 1 turn.',
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireUniqueBaseCharacterNames: true,
+        manualSlots: createManualSlots({
+          captain: [5822],
+          friendCaptain: [5823],
+          sub1: [5824],
+        }),
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.map((slot) => slot.character.name)).toEqual(
+      expect.arrayContaining(['Monkey D. Luffy', 'Monkey D. Luffy - Gear Third']),
+    );
+  });
+
+  it('treats distinct normalized base names like Chef Sanji and Sanji as unique', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 5820,
+          name: 'Sanji',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.5x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 5821,
+          name: 'Chef Sanji - Hot Rock Stew',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.1x.',
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireUniqueBaseCharacterNames: true,
+        manualSlots: createManualSlots({
+          captain: [5820],
+          friendCaptain: [5821],
+        }),
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.map((slot) => slot.character.name)).toEqual(
+      expect.arrayContaining(['Sanji', 'Chef Sanji - Hot Rock Stew']),
+    );
+  });
+
   it('counts each slot only once even if the same character has multiple matching parsed abilities', () => {
     const result = buildAutoTeamResult(
       [
@@ -1202,6 +1426,7 @@ describe('Auto team builder', () => {
     expect(result?.input.requireAllSelectedTypesInTeam).toBe(false);
     expect(result?.input.requireAllSelectedClassesPerCharacter).toBe(false);
     expect(result?.input.requireAllSpecialsSupportTeam).toBe(false);
+    expect(result?.input.requireUniqueBaseCharacterNames).toBe(false);
     expect(result?.input.favoritesOnly).toBe(false);
     expect(result?.input.lockedCharacterIds).toEqual([]);
     expect(result?.requestedInput.lockedCharacterIds).toEqual([]);
@@ -1646,6 +1871,7 @@ function createInput(
       | 'requireAllSelectedTypesInTeam'
       | 'requireAllSelectedClassesPerCharacter'
       | 'requireAllSpecialsSupportTeam'
+      | 'requireUniqueBaseCharacterNames'
       | 'favoritesOnly'
       | 'manualSlots'
       | 'lockedCharacterIds'
@@ -1658,6 +1884,7 @@ function createInput(
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSpecialsSupportTeam: false,
+    requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
     lockedCharacterIds: [],
     excludedCharacterIds: [],
@@ -1679,6 +1906,7 @@ function createInput(
     requireAllSelectedTypesInTeam: overrides.requireAllSelectedTypesInTeam ?? false,
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
     requireAllSpecialsSupportTeam: overrides.requireAllSpecialsSupportTeam ?? false,
+    requireUniqueBaseCharacterNames: overrides.requireUniqueBaseCharacterNames ?? false,
     favoritesOnly: overrides.favoritesOnly ?? false,
     manualSlots:
       overrides.manualSlots ??

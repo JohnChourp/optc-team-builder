@@ -162,6 +162,19 @@
 
           <div class="strict-toggle-row">
             <div class="strict-toggle-copy">
+              <strong>{{ uniqueBaseCharacterNamesToggleLabel() }}</strong>
+              <small>{{ uniqueBaseCharacterNamesSupportLabel() }}</small>
+            </div>
+            <ion-toggle
+              color="warning"
+              [checked]="requireUniqueBaseCharacterNames()"
+              [disabled]="building()"
+              (ionChange)="onRequireUniqueBaseCharacterNamesToggle($event)"
+            ></ion-toggle>
+          </div>
+
+          <div class="strict-toggle-row">
+            <div class="strict-toggle-copy">
               <strong>{{ specialSupportToggleLabel() }}</strong>
               <small>{{ specialSupportLabel() }}</small>
             </div>

@@ -102,6 +102,7 @@ export class AutoTeamBuilderService {
       requireAllSelectedClassesPerCharacter:
         constraints.requireAllSelectedClassesPerCharacter ?? false,
       requireAllSpecialsSupportTeam: constraints.requireAllSpecialsSupportTeam ?? false,
+      requireUniqueBaseCharacterNames: constraints.requireUniqueBaseCharacterNames ?? false,
       requiredAbilities,
       enemyMechanics,
       favoritesOnly,

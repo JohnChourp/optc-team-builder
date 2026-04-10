@@ -98,6 +98,17 @@ function cloneAbilityRequirement(
   };
 }
 
+export function resolveCharacterBaseNameKey(name: string): string {
+  const trimmedName = name.replace(/^[^A-Za-z0-9]+/, "").replace(/\s+/g, " ").trim();
+  const [baseName = trimmedName] = trimmedName.split(" - ", 1);
+
+  return baseName.trim().toLowerCase();
+}
+
+function resolveCandidateBaseNameKey(candidate: AutoBuildCandidate): string {
+  return resolveCharacterBaseNameKey(candidate.character.name);
+}
+
 function countMatchingAbilityRequirementSlots(
   candidates: AutoBuildCandidate[],
   requirement: AutoBuildAbilityRequirement,
@@ -332,63 +343,112 @@ function resolveConstrainedSubSelections(
   input: AutoBuildInput,
   leaderCriteria: ActiveLeaderCriteria,
 ): Map<AutoBuildManualSlotRole, AutoBuildCandidate> | null {
-  const selectedSubMap = new Map<AutoBuildManualSlotRole, AutoBuildCandidate>();
-  const selectedSubs: AutoBuildCandidate[] = [];
   const leaderCandidates = resolveUniqueCandidates(leaders);
   const leaderCharacterIdSet = new Set(leaderCandidates.map((candidate) => candidate.character.id));
-  const selectedIds = new Set<number>();
+  const leaderBaseNameKeySet =
+    input.requireUniqueBaseCharacterNames && leaderCandidates[0]
+      ? new Set([resolveCandidateBaseNameKey(leaderCandidates[0])])
+      : new Set<string>();
   const coverage = createTeamCoverageState(leaderCandidates);
+  const constrainedRoles = AUTO_BUILD_MANUAL_SUB_SLOT_ROLES.filter(
+    (role) => (manualSlotCandidateMap.get(role) ?? []).length > 0,
+  );
 
-  for (const role of AUTO_BUILD_MANUAL_SUB_SLOT_ROLES) {
+  const searchSelections = (
+    roleIndex: number,
+    selectedSubMap: Map<AutoBuildManualSlotRole, AutoBuildCandidate>,
+    selectedSubs: AutoBuildCandidate[],
+    selectedIds: Set<number>,
+    selectedBaseNameKeys: Set<string>,
+    currentCoverage: TeamCoverageState,
+  ): Map<AutoBuildManualSlotRole, AutoBuildCandidate> | null => {
+    if (roleIndex >= constrainedRoles.length) {
+      return selectedSubMap;
+    }
+
+    const role = constrainedRoles[roleIndex];
     const slotCandidates = manualSlotCandidateMap.get(role) ?? [];
+    const rankedCandidates = slotCandidates
+      .map((candidate, index) => ({
+        candidate,
+        index,
+      }))
+      .filter(({ candidate }) => {
+        const baseNameKey = resolveCandidateBaseNameKey(candidate);
 
-    if (!slotCandidates.length) {
-      continue;
-    }
+        return !(
+          leaderCharacterIdSet.has(candidate.character.id) ||
+          selectedIds.has(candidate.character.id) ||
+          (
+            input.requireUniqueBaseCharacterNames &&
+            (leaderBaseNameKeySet.has(baseNameKey) || selectedBaseNameKeys.has(baseNameKey))
+          ) ||
+          (input.requireAllSelectedClassesPerCharacter && !candidate.matchesAllSelectedClasses) ||
+          !matchesActiveLeaderCriteria(candidate, leaderCriteria) ||
+          !matchesMutualSpecialCompatibility(
+            candidate,
+            [...leaderCandidates, ...selectedSubs],
+            input.requireAllSpecialsSupportTeam,
+          )
+        );
+      })
+      .sort((left, right) => {
+        const leftScore =
+          scoreSubCandidate(
+            left.candidate,
+            leaderCandidates,
+            currentCoverage,
+            selectedSubs,
+            input,
+          ) +
+          (slotCandidates.length - left.index) / 100;
+        const rightScore =
+          scoreSubCandidate(
+            right.candidate,
+            leaderCandidates,
+            currentCoverage,
+            selectedSubs,
+            input,
+          ) +
+          (slotCandidates.length - right.index) / 100;
 
-    const next = slotCandidates.reduce<AutoBuildCandidate | null>((best, candidate, index) => {
-      if (
-        leaderCharacterIdSet.has(candidate.character.id) ||
-        selectedIds.has(candidate.character.id) ||
-        (input.requireAllSelectedClassesPerCharacter && !candidate.matchesAllSelectedClasses) ||
-        !matchesActiveLeaderCriteria(candidate, leaderCriteria) ||
-        !matchesMutualSpecialCompatibility(
-          candidate,
-          [...leaderCandidates, ...selectedSubs],
-          input.requireAllSpecialsSupportTeam,
-        )
-      ) {
-        return best;
+        return rightScore - leftScore;
+      });
+
+    for (const { candidate } of rankedCandidates) {
+      const nextSelectedSubs = [...selectedSubs, candidate];
+      const nextSelectedSubMap = new Map(selectedSubMap);
+      const nextSelectedIds = new Set(selectedIds);
+      const nextSelectedBaseNameKeys = new Set(selectedBaseNameKeys);
+      const nextCoverage = cloneTeamCoverageState(currentCoverage);
+
+      nextSelectedSubMap.set(role, candidate);
+      nextSelectedIds.add(candidate.character.id);
+
+      if (input.requireUniqueBaseCharacterNames) {
+        nextSelectedBaseNameKeys.add(resolveCandidateBaseNameKey(candidate));
       }
 
-      if (!best) {
-        return candidate;
-      }
+      applyCandidateCoverage(nextCoverage, candidate);
 
-      const bestIndex = slotCandidates.findIndex(
-        (slotCandidate) => slotCandidate.character.id === best.character.id,
+      const result = searchSelections(
+        roleIndex + 1,
+        nextSelectedSubMap,
+        nextSelectedSubs,
+        nextSelectedIds,
+        nextSelectedBaseNameKeys,
+        nextCoverage,
       );
-      const candidateScore =
-        scoreSubCandidate(candidate, leaderCandidates, coverage, selectedSubs, input) +
-        (slotCandidates.length - index) / 100;
-      const bestScore =
-        scoreSubCandidate(best, leaderCandidates, coverage, selectedSubs, input) +
-        (slotCandidates.length - bestIndex) / 100;
 
-      return candidateScore > bestScore ? candidate : best;
-    }, null);
-
-    if (!next) {
-      return null;
+      if (result) {
+        return result;
+      }
     }
 
-    selectedSubs.push(next);
-    selectedIds.add(next.character.id);
-    selectedSubMap.set(role, next);
-    applyCandidateCoverage(coverage, next);
-  }
+    return null;
+  };
 
-  return selectedSubMap;
+  return searchSelections(0, new Map(), [], new Set<number>(), new Set<string>(), coverage);
 }
 
 function orderSelectedSubCandidates(
@@ -454,54 +514,6 @@ export function hasReadableEffectText(record: CharacterDetailRecord): boolean {
   );
 }
 
-function selectCaptain(
-  candidates: AutoBuildCandidate[],
-  input: AutoBuildInput,
-): AutoBuildCandidate | null {
-  const captainPool = candidates.filter((candidate) => candidate.tags.readableCaptainText);
-  const classCaptains = captainPool.filter((candidate) => candidate.matchesSelectedClass);
-  const scopedPool = classCaptains.length ? classCaptains : captainPool;
-  const universalCaptains = scopedPool.filter(
-    (candidate) => candidate.tags.captainScope.allCharacters,
-  );
-  const fullCoverageCaptains = scopedPool.filter(
-    (candidate) =>
-      candidate.tags.captainScope.coversAllSelectedClasses &&
-      candidate.tags.captainScope.coversAllSelectedTypes,
-  );
-  const fullTypeCoverageCaptains = scopedPool.filter(
-    (candidate) => candidate.tags.captainScope.coversAllSelectedTypes,
-  );
-  const fullClassCoverageCaptains = scopedPool.filter(
-    (candidate) => candidate.tags.captainScope.coversAllSelectedClasses,
-  );
-  const partialCoverageCaptains = scopedPool.filter(
-    (candidate) =>
-      candidate.tags.captainScope.matchedSelectedTypeCount > 0 ||
-      candidate.tags.captainScope.matchedSelectedClassCount > 0,
-  );
-
-  if (!scopedPool.length) {
-    return null;
-  }
-
-  const preferredPool = universalCaptains.length
-    ? universalCaptains
-    : fullCoverageCaptains.length
-      ? fullCoverageCaptains
-      : fullTypeCoverageCaptains.length
-        ? fullTypeCoverageCaptains
-        : fullClassCoverageCaptains.length
-          ? fullClassCoverageCaptains
-          : partialCoverageCaptains.length
-            ? partialCoverageCaptains
-            : scopedPool;
-
-  return preferredPool.reduce((best, current) =>
-    scoreCaptain(current, input) > scoreCaptain(best, input) ? current : best,
-  );
-}
-
 function selectSubs(
   candidates: AutoBuildCandidate[],
   leaders: AutoBuildCandidate[],
@@ -512,6 +524,10 @@ function selectSubs(
   const selected = resolveUniqueCandidates(lockedSubs);
   const leaderCandidates = resolveUniqueCandidates(leaders);
   const leaderCharacterIdSet = new Set(leaderCandidates.map((candidate) => candidate.character.id));
+  const leaderBaseNameKeySet =
+    input.requireUniqueBaseCharacterNames && leaderCandidates[0]
+      ? new Set([resolveCandidateBaseNameKey(leaderCandidates[0])])
+      : new Set<string>();
 
   if (selected.length > TEAM_SUB_SLOT_COUNT) {
     return [];
@@ -519,6 +535,20 @@ function selectSubs(
 
   if (selected.some((candidate) => leaderCharacterIdSet.has(candidate.character.id))) {
     return [];
+  }
+
+  const selectedBaseNameKeys = new Set<string>();
+
+  if (input.requireUniqueBaseCharacterNames) {
+    for (const candidate of selected) {
+      const baseNameKey = resolveCandidateBaseNameKey(candidate);
+
+      if (leaderBaseNameKeySet.has(baseNameKey) || selectedBaseNameKeys.has(baseNameKey)) {
+        return [];
+      }
+
+      selectedBaseNameKeys.add(baseNameKey);
+    }
   }
 
   if (
@@ -543,29 +573,45 @@ function selectSubs(
   const coverage = createTeamCoverageState(leaderCandidates);
   selected.forEach((candidate) => applyCandidateCoverage(coverage, candidate));
   const pool = candidates.filter(
-    (candidate) =>
-      !leaderCharacterIdSet.has(candidate.character.id) &&
-      !selectedIds.has(candidate.character.id) &&
-      matchesActiveLeaderCriteria(candidate, leaderCriteria) &&
-      matchesMutualSpecialCompatibility(
-        candidate,
-        [...leaderCandidates, ...selected],
-        input.requireAllSpecialsSupportTeam,
-      ) &&
-      (!input.requireAllSelectedClassesPerCharacter || candidate.matchesAllSelectedClasses),
+    (candidate) => {
+      const baseNameKey = resolveCandidateBaseNameKey(candidate);
+
+      return (
+        !leaderCharacterIdSet.has(candidate.character.id) &&
+        !selectedIds.has(candidate.character.id) &&
+        !(
+          input.requireUniqueBaseCharacterNames &&
+          (leaderBaseNameKeySet.has(baseNameKey) || selectedBaseNameKeys.has(baseNameKey))
+        ) &&
+        matchesActiveLeaderCriteria(candidate, leaderCriteria) &&
+        matchesMutualSpecialCompatibility(
+          candidate,
+          [...leaderCandidates, ...selected],
+          input.requireAllSpecialsSupportTeam,
+        ) &&
+        (!input.requireAllSelectedClassesPerCharacter || candidate.matchesAllSelectedClasses)
+      );
+    },
   );
 
   while (selected.length < TEAM_SUB_SLOT_COUNT) {
     const next = pool
-      .filter(
-        (candidate) =>
+      .filter((candidate) => {
+        const baseNameKey = resolveCandidateBaseNameKey(candidate);
+
+        return (
           !selectedIds.has(candidate.character.id) &&
+          !(
+            input.requireUniqueBaseCharacterNames &&
+            (leaderBaseNameKeySet.has(baseNameKey) || selectedBaseNameKeys.has(baseNameKey))
+          ) &&
           matchesMutualSpecialCompatibility(
             candidate,
             [...leaderCandidates, ...selected],
             input.requireAllSpecialsSupportTeam,
-          ),
-      )
+          )
+        );
+      })
       .reduce<AutoBuildCandidate | null>((best, current) => {
         if (!best) {
           return current;
@@ -583,6 +629,11 @@ function selectSubs(
 
     selected.push(next);
     selectedIds.add(next.character.id);
+
+    if (input.requireUniqueBaseCharacterNames) {
+      selectedBaseNameKeys.add(resolveCandidateBaseNameKey(next));
+    }
+
     applyCandidateCoverage(coverage, next);
   }
 
@@ -1101,6 +1152,16 @@ function createTeamCoverageState(leaders: AutoBuildCandidate[]): TeamCoverageSta
 
   leaders.forEach((leader) => applyCandidateCoverage(coverage, leader));
   return coverage;
+}
+
+function cloneTeamCoverageState(coverage: TeamCoverageState): TeamCoverageState {
+  return {
+    burst: new Set(coverage.burst),
+    consistency: new Set(coverage.consistency),
+    utility: new Set(coverage.utility),
+    selectedClasses: new Set(coverage.selectedClasses),
+    selectedTypes: new Set(coverage.selectedTypes),
+  };
 }
 
 function summarizeSpecialSupport(
