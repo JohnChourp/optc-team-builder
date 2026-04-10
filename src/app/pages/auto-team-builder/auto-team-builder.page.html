@@ -1128,8 +1128,47 @@
             [value]="notes()"
             (ionInput)="onNotesChange($event)"
           ></ion-textarea>
-          <ion-button expand="block" color="warning" (click)="saveTeam()">
-            {{ t('save.saveOffline') }}
+
+          @if (saveFeedbackVisible()) {
+            <section
+              class="preset-import-feedback preset-import-feedback--warning save-team-feedback"
+              role="status"
+              aria-live="polite"
+            >
+              <div class="save-team-feedback__animation" aria-hidden="true">
+                <ng-lottie
+                  width="52px"
+                  height="52px"
+                  [options]="saveAnimationOptions"
+                ></ng-lottie>
+              </div>
+              <div class="save-team-feedback__copy">
+                <strong>{{ t('save.savingLabel') }}</strong>
+                <small>{{ t('save.savingCopy') }}</small>
+              </div>
+            </section>
+          }
+
+          @if (saveFeedbackError()) {
+            <section
+              class="preset-import-feedback preset-import-feedback--error save-team-feedback"
+              role="alert"
+              aria-live="assertive"
+            >
+              <ion-icon [icon]="presetImportErrorIcon"></ion-icon>
+              <div class="save-team-feedback__copy">
+                <strong>{{ t('save.error') }}</strong>
+              </div>
+            </section>
+          }
+
+          <ion-button
+            expand="block"
+            color="warning"
+            [disabled]="saveUiLocked()"
+            (click)="saveTeam()"
+          >
+            {{ saveButtonLabel() }}
           </ion-button>
         </section>
         <section class="glass-card coverage-card">

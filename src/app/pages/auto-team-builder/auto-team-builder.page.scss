@@ -974,6 +974,27 @@
   gap: 12px;
 }
 
+.save-team-feedback {
+  align-items: center;
+}
+
+.save-team-feedback__animation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+}
+
+.save-team-feedback__animation ng-lottie {
+  display: block;
+}
+
+.save-team-feedback__copy {
+  min-width: 0;
+}
+
 .download-team-button {
   margin: 0;
 }

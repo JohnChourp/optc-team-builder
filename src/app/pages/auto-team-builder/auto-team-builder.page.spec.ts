@@ -2,7 +2,7 @@ import '@angular/compiler';
 import { signal } from '@angular/core';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
 import {
@@ -45,6 +45,10 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonToggle: class {},
   IonToolbar: class {},
 }));
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('AutoTeamBuilderPage special-support toggle', () => {
   it('passes the special-support toggle to the builder service', async () => {
@@ -622,6 +626,9 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(template).toContain('[routerLink]="getCharacterDetailLink(candidateCard.character)"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(slot.character)"');
     expect(template).toContain('(click)="saveTeam()"');
+    expect(template).toContain('<ng-lottie');
+    expect(template).toContain('[disabled]="saveUiLocked()"');
+    expect(template).toContain("{{ saveButtonLabel() }}");
     expect(template).toContain('<app-enemy-mechanic-picker');
     expect(template).toContain('<app-ability-requirement-picker');
     expect(template).toContain('<app-ship-picker');
@@ -681,6 +688,9 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     page.result.set(createAutoBuildResult());
     page.errorMessage.set('Build failed');
     page.currentTeamId.set('saved-team-1');
+    page.saveUiLocked.set(true);
+    page.saveFeedbackVisible.set(true);
+    page.saveFeedbackError.set('Save failed');
     page.presetImportFeedback.set({
       tone: 'success',
       title: 'Loaded',
@@ -715,6 +725,9 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(page.result()).toBeNull();
     expect(page.errorMessage()).toBe('');
     expect(page.currentTeamId()).toBeNull();
+    expect(page.saveUiLocked()).toBe(false);
+    expect(page.saveFeedbackVisible()).toBe(false);
+    expect(page.saveFeedbackError()).toBe('');
     expect(page.presetImportFeedback()).toBeNull();
     expect(page.loadedEnemyPresetName()).toBeNull();
   });
@@ -1160,7 +1173,8 @@ describe('AutoTeamBuilderPage offline save', () => {
     expect(userState.saveTeam).not.toHaveBeenCalled();
   });
 
-  it('saves the generated team through the shared user state contract', async () => {
+  it('saves immediately and keeps the save UI locked for 3 seconds', async () => {
+    vi.useFakeTimers();
     const { page, userState } = await createPage();
 
     await page.ngOnInit();
@@ -1175,7 +1189,9 @@ describe('AutoTeamBuilderPage offline save', () => {
       },
     });
 
-    await page.saveTeam();
+    const savePromise = page.saveTeam();
+
+    await Promise.resolve();
 
     expect(userState.saveTeam).toHaveBeenCalledWith({
       id: undefined,
@@ -1185,9 +1201,23 @@ describe('AutoTeamBuilderPage offline save', () => {
       slots: [101, 102, 103, 104, 105, 106],
     });
     expect(page.currentTeamId()).toBe('saved-auto-team');
+    expect(page.saveUiLocked()).toBe(true);
+    expect(page.saveFeedbackVisible()).toBe(true);
+    expect(page.saveFeedbackError()).toBe('');
+
+    await vi.advanceTimersByTimeAsync(2999);
+    expect(page.saveUiLocked()).toBe(true);
+    expect(page.saveFeedbackVisible()).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(1);
+    await savePromise;
+
+    expect(page.saveUiLocked()).toBe(false);
+    expect(page.saveFeedbackVisible()).toBe(false);
   });
 
   it('reuses the current saved team id when saving the same generated result again', async () => {
+    vi.useFakeTimers();
     const { page, userState } = await createPage();
 
     userState.saveTeam
@@ -1197,8 +1227,15 @@ describe('AutoTeamBuilderPage offline save', () => {
     await page.ngOnInit();
     page.result.set(createAutoBuildResult());
 
-    await page.saveTeam();
-    await page.saveTeam();
+    const firstSavePromise = page.saveTeam();
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(3000);
+    await firstSavePromise;
+
+    const secondSavePromise = page.saveTeam();
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(3000);
+    await secondSavePromise;
 
     expect(userState.saveTeam).toHaveBeenNthCalledWith(
       1,
@@ -1212,6 +1249,44 @@ describe('AutoTeamBuilderPage offline save', () => {
         id: 'saved-auto-team',
       }),
     );
+  });
+
+  it('ignores repeated save clicks while the 3-second feedback window is active', async () => {
+    vi.useFakeTimers();
+    const { page, userState } = await createPage();
+
+    await page.ngOnInit();
+    page.result.set(createAutoBuildResult());
+
+    const firstSavePromise = page.saveTeam();
+    await Promise.resolve();
+
+    await page.saveTeam();
+
+    expect(userState.saveTeam).toHaveBeenCalledTimes(1);
+    expect(page.saveUiLocked()).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(3000);
+    await firstSavePromise;
+  });
+
+  it('unlocks immediately and shows inline feedback when save fails', async () => {
+    vi.useFakeTimers();
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { page, userState } = await createPage();
+
+    userState.saveTeam.mockRejectedValueOnce(new Error('save failed'));
+
+    await page.ngOnInit();
+    page.result.set(createAutoBuildResult());
+
+    await page.saveTeam();
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    expect(page.saveUiLocked()).toBe(false);
+    expect(page.saveFeedbackVisible()).toBe(false);
+    expect(page.saveFeedbackError()).toBe('The team could not be saved. Please try again.');
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it('clears the current saved team id when the generated team is reset', async () => {

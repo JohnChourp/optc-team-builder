@@ -322,8 +322,11 @@
   },
   "save": {
     "copy": "Save the generated team offline through the same shared storage used by Team Builder.",
+    "error": "The team could not be saved. Please try again.",
     "notesLabel": "Notes",
     "saveOffline": "Save team offline",
+    "savingCopy": "The team is already being saved offline. The button will unlock again in a few seconds.",
+    "savingLabel": "Saving...",
     "teamNameLabel": "Crew name",
     "title": "Save generated team"
   },

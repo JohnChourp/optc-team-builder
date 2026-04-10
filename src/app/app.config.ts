@@ -4,6 +4,7 @@ import { provideAnimations } from "@angular/platform-browser/animations";
 import { provideRouter, withComponentInputBinding } from "@angular/router";
 import { provideIonicAngular } from "@ionic/angular/standalone";
 import { provideTransloco, translocoConfig } from "@jsverse/transloco";
+import { provideLottieOptions } from "ngx-lottie";
 
 import { routes } from "./app.routes";
 import { APP_I18N_AVAILABLE_LANGUAGES } from "./core/i18n/app-i18n.types";
@@ -14,6 +15,9 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideHttpClient(),
     provideAnimations(),
+    provideLottieOptions({
+      player: () => import("lottie-web"),
+    }),
     provideIonicAngular(),
     provideRouter(routes, withComponentInputBinding()),
     provideTransloco({

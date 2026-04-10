@@ -28,6 +28,7 @@ import {
   shieldHalfOutline,
   sparklesOutline,
 } from "ionicons/icons";
+import { LottieComponent, type AnimationOptions } from "ngx-lottie";
 
 import {
   AUTO_BUILD_MANUAL_SLOT_ROLES,
@@ -198,6 +199,9 @@ interface PresetImportFeedback {
   details: string[];
 }
 
+const SAVE_TEAM_FEEDBACK_DURATION_MS = 3000;
+const SAVE_TEAM_ANIMATION_PATH = "assets/animations/save-team-loading.json";
+
 @Component({
   selector: "app-auto-team-builder-page",
   standalone: true,
@@ -215,6 +219,7 @@ interface PresetImportFeedback {
     IonTitle,
     IonToggle,
     IonToolbar,
+    LottieComponent,
     AbilityRequirementPickerComponent,
     EnemyMechanicPickerComponent,
     ShipPickerComponent,
@@ -231,6 +236,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   private resetAfterBuildCancellation = false;
   private appliedManualCandidateSearchRequestId = 0;
   private appliedExcludedCandidateSearchRequestId = 0;
+  private destroyed = false;
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly ships = signal<ShipRecord[]>([]);
@@ -270,9 +276,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly result = signal<AutoBuildResult | null>(null);
   public readonly errorMessage = signal("");
   public readonly currentTeamId = signal<string | null>(null);
+  public readonly saveUiLocked = signal(false);
+  public readonly saveFeedbackVisible = signal(false);
+  public readonly saveFeedbackError = signal("");
   public readonly favoriteCharacterIds;
   public readonly presetImportFeedback = signal<PresetImportFeedback | null>(null);
   public readonly loadedEnemyPresetName = signal<string | null>(null);
+  public readonly saveAnimationOptions: AnimationOptions = {
+    path: SAVE_TEAM_ANIMATION_PATH,
+    renderer: "svg",
+    loop: true,
+    autoplay: true,
+  };
 
   public readonly availableTypes = AUTO_TEAM_BUILDER_TYPES;
   public readonly availableClasses = computed(() => this.summary()?.availableClasses ?? []);
@@ -734,6 +749,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           : this.t("actions.build.flexible", { types: this.selectedTypesLabel() })
       : this.t("actions.build.selectTypes"),
   );
+  public readonly saveButtonLabel = computed(() =>
+    this.saveUiLocked() ? this.t("save.savingLabel") : this.t("save.saveOffline"),
+  );
   public readonly loadingLabel = computed(
     () =>
       (this.buildProgress()?.messageKey
@@ -1103,6 +1121,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   }
 
   public ngOnDestroy(): void {
+    this.destroyed = true;
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
     this.cancelBuild();
@@ -1723,19 +1742,45 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public async saveTeam(): Promise<void> {
     const current = this.result();
 
-    if (!current) {
+    if (!current || this.saveUiLocked()) {
       return;
     }
 
-    const saved = await this.userState.saveTeam({
-      id: this.currentTeamId() ?? undefined,
-      name: this.teamName(),
-      notes: this.notes(),
-      shipId: current.shipSelection?.ship.id ?? null,
-      slots: current.slots.map((slot) => slot.character.id),
-    });
+    const startedAt = Date.now();
 
-    this.currentTeamId.set(saved.id);
+    this.saveUiLocked.set(true);
+    this.saveFeedbackVisible.set(true);
+    this.saveFeedbackError.set("");
+
+    try {
+      const saved = await this.userState.saveTeam({
+        id: this.currentTeamId() ?? undefined,
+        name: this.teamName(),
+        notes: this.notes(),
+        shipId: current.shipSelection?.ship.id ?? null,
+        slots: current.slots.map((slot) => slot.character.id),
+      });
+
+      this.currentTeamId.set(saved.id);
+      await this.waitForSaveFeedbackWindow(startedAt);
+
+      if (this.destroyed) {
+        return;
+      }
+
+      this.saveUiLocked.set(false);
+      this.saveFeedbackVisible.set(false);
+    } catch (error) {
+      console.error(error);
+
+      if (this.destroyed) {
+        return;
+      }
+
+      this.saveUiLocked.set(false);
+      this.saveFeedbackVisible.set(false);
+      this.saveFeedbackError.set(this.t("save.error"));
+    }
   }
 
   private resetBuildState(): void {
@@ -1743,6 +1788,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.result.set(null);
     this.errorMessage.set("");
     this.currentTeamId.set(null);
+    this.resetSaveFeedbackState();
   }
 
   private async resetPageState(): Promise<void> {
@@ -2700,5 +2746,23 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
   private joinRequirementLabels(labels: string[]): string {
     return labels.join(this.t("errors.requirements.separator"));
+  }
+
+  private resetSaveFeedbackState(): void {
+    this.saveUiLocked.set(false);
+    this.saveFeedbackVisible.set(false);
+    this.saveFeedbackError.set("");
+  }
+
+  private async waitForSaveFeedbackWindow(startedAt: number): Promise<void> {
+    const remainingDuration = SAVE_TEAM_FEEDBACK_DURATION_MS - (Date.now() - startedAt);
+
+    if (remainingDuration <= 0) {
+      return;
+    }
+
+    await new Promise<void>((resolve) => {
+      globalThis.setTimeout(resolve, remainingDuration);
+    });
   }
 }

@@ -322,8 +322,11 @@
   },
   "save": {
     "copy": "Αποθήκευσε το generated team offline με το ίδιο shared storage που χρησιμοποιεί και το Team Builder.",
+    "error": "Η αποθήκευση της ομάδας δεν ολοκληρώθηκε. Δοκίμασε ξανά.",
     "notesLabel": "Σημειώσεις",
     "saveOffline": "Αποθήκευση ομάδας offline",
+    "savingCopy": "Η ομάδα αποθηκεύεται ήδη offline. Το κουμπί θα ενεργοποιηθεί ξανά σε λίγα δευτερόλεπτα.",
+    "savingLabel": "Αποθήκευση...",
     "teamNameLabel": "Όνομα πληρώματος",
     "title": "Αποθήκευση generated team"
   },
