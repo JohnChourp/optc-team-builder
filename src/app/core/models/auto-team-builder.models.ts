@@ -50,6 +50,8 @@ export interface AutoBuildConstraints {
   requireAllSelectedTypesInTeam?: boolean;
   requireAllSelectedClassesPerCharacter?: boolean;
   requireAllSpecialsSupportTeam?: boolean;
+  requireUniqueBaseCharacterNames?: boolean;
+  requireSameCaptainAndFriendCaptain?: boolean;
   requiredAbilities?: AutoBuildAbilityRequirement[];
   enemyMechanics?: AutoBuildEnemyMechanicRequirement[];
   favoritesOnly?: boolean;
@@ -91,6 +93,8 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   types: AutoTeamBuilderType[];
   selectedClasses: string[];
   requireAllSpecialsSupportTeam: boolean;
+  requireUniqueBaseCharacterNames: boolean;
+  requireSameCaptainAndFriendCaptain: boolean;
   requiredAbilities: AutoBuildAbilityRequirement[];
   enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   favoritesOnly: boolean;

@@ -44,6 +44,8 @@ export function buildAutoTeamBuilderStateFromSavedTeam(
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSpecialsSupportTeam: false,
+    requireUniqueBaseCharacterNames: false,
+    requireSameCaptainAndFriendCaptain: false,
     favoritesOnly: false,
     manualSlots,
     lockedCharacterIds: [],

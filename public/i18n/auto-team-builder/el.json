@@ -63,6 +63,20 @@
         "flexible": "Το special utility προτιμάται αλλά μπορεί να χαλαρώσει αν το local pool είναι πολύ στενό."
       }
     },
+    "uniqueNames": {
+      "toggle": "Απαίτησε μοναδικά base character names",
+      "support": {
+        "strict": "Κάθε final slot εκτός από το Friend Captain πρέπει να χρησιμοποιεί διαφορετικό normalized base character name, ώστε το Friend Captain να μπορεί ακόμη να αντιγράφει άλλη μονάδα όπως Monkey D. Luffy.",
+        "flexible": "Επίτρεψε πολλαπλά variants του ίδιου base character name στην τελική ομάδα."
+      }
+    },
+    "sameCaptain": {
+      "toggle": "Απαίτησε ίδιο captain και friend captain",
+      "support": {
+        "strict": "Το τελικό Captain και Friend Captain πρέπει να καταλήγουν στον ίδιο χαρακτήρα.",
+        "flexible": "Επίτρεψε το Captain και το Friend Captain να καταλήγουν σε διαφορετικούς χαρακτήρες."
+      }
+    },
     "favoritesOnly": {
       "toggle": "Χρησιμοποίησε favorites για auto-fill",
       "blockedMessage": "Το favorite-only auto-fill δεν είναι διαθέσιμο μέχρι να αποθηκεύσεις τουλάχιστον ένα favorite unit.",
@@ -315,8 +329,11 @@
   },
   "save": {
     "copy": "Αποθήκευσε το generated team offline με το ίδιο shared storage που χρησιμοποιεί και το Team Builder.",
+    "error": "Η αποθήκευση της ομάδας δεν ολοκληρώθηκε. Δοκίμασε ξανά.",
     "notesLabel": "Σημειώσεις",
     "saveOffline": "Αποθήκευση ομάδας offline",
+    "savingCopy": "Η ομάδα αποθηκεύεται ήδη offline. Το κουμπί θα ενεργοποιηθεί ξανά σε λίγα δευτερόλεπτα.",
+    "savingLabel": "Αποθήκευση...",
     "teamNameLabel": "Όνομα πληρώματος",
     "title": "Αποθήκευση generated team"
   },
@@ -410,6 +427,12 @@
   },
   "errors": {
     "buildFailed": "Το auto build απέτυχε απρόσμενα. Δοκίμασε ξανά.",
+    "sameCaptain": {
+      "manualConflict": "Η απαίτηση για ίδιο captain και friend captain είναι ενεργή, αλλά τα current manual Captain και Friend Captain choices δεν έχουν κοινό character."
+    },
+    "uniqueNames": {
+      "manualConflict": "Τα current manual slot choices χρησιμοποιούν ήδη το ίδιο base character name εκτός του Friend Captain slot: {{names}}."
+    },
     "leaderRequirement": {
       "dual": " και τα επιλεγμένα captain / friend captain slots",
       "single": " και το επιλεγμένο captain slot"
@@ -435,8 +458,10 @@
       "flexible": "Δεν βρέθηκε flexible ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
       "separator": " και ",
       "specialCoverage": "special support coverage",
+      "sameCaptainAndFriendCaptain": "ίδιο captain και friend captain",
       "strict": "Δεν βρέθηκε strict ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
-      "typeCoverage": "κάλυψη types στην ομάδα"
+      "typeCoverage": "κάλυψη types στην ομάδα",
+      "uniqueCharacterNames": "μοναδικά base character names σε όλη την ομάδα εκτός Friend Captain"
     }
   },
   "abilities": {

@@ -16,7 +16,7 @@ import {
   IonToggle,
   IonToolbar,
 } from "@ionic/angular/standalone";
-import { type ViewWillEnter } from "@ionic/angular";
+import { type ViewDidEnter, type ViewWillEnter } from "@ionic/angular";
 import {
   alertCircleOutline,
   boatOutline,
@@ -28,6 +28,7 @@ import {
   shieldHalfOutline,
   sparklesOutline,
 } from "ionicons/icons";
+import { LottieComponent, type AnimationOptions } from "ngx-lottie";
 
 import {
   AUTO_BUILD_MANUAL_SLOT_ROLES,
@@ -64,6 +65,7 @@ import {
 } from "../../core/services/auto-team-builder-ability-match.utils";
 import { isAutoTeamBuildCancelledError } from "../../core/services/auto-team-builder.engine";
 import { resolveAutoBuildShipSelection } from "../../core/services/auto-team-builder-ship.utils";
+import { resolveCharacterBaseNameKey } from "../../core/services/auto-team-builder.utils";
 import { OptcRepositoryService } from "../../core/services/optc-repository.service";
 import { UserStateService } from "../../core/services/user-state.service";
 import {
@@ -197,6 +199,9 @@ interface PresetImportFeedback {
   details: string[];
 }
 
+const SAVE_TEAM_FEEDBACK_DURATION_MS = 3000;
+const SAVE_TEAM_ANIMATION_PATH = "assets/animations/save-team-loading.json";
+
 @Component({
   selector: "app-auto-team-builder-page",
   standalone: true,
@@ -214,6 +219,7 @@ interface PresetImportFeedback {
     IonTitle,
     IonToggle,
     IonToolbar,
+    LottieComponent,
     AbilityRequirementPickerComponent,
     EnemyMechanicPickerComponent,
     ShipPickerComponent,
@@ -224,12 +230,13 @@ interface PresetImportFeedback {
   templateUrl: "./auto-team-builder.page.html",
   styleUrl: "./auto-team-builder.page.scss",
 })
-export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
+export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, ViewWillEnter {
   private readonly manualSearchLimit = 24;
   private buildAbortController: AbortController | null = null;
   private resetAfterBuildCancellation = false;
   private appliedManualCandidateSearchRequestId = 0;
   private appliedExcludedCandidateSearchRequestId = 0;
+  private destroyed = false;
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly ships = signal<ShipRecord[]>([]);
@@ -260,6 +267,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
   public readonly requireAllSpecialsSupportTeam = signal(false);
+  public readonly requireUniqueBaseCharacterNames = signal(false);
+  public readonly requireSameCaptainAndFriendCaptain = signal(false);
   public readonly favoritesOnly = signal(false);
   public readonly teamName = signal("");
   public readonly notes = signal("");
@@ -268,9 +277,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly result = signal<AutoBuildResult | null>(null);
   public readonly errorMessage = signal("");
   public readonly currentTeamId = signal<string | null>(null);
+  public readonly saveUiLocked = signal(false);
+  public readonly saveFeedbackVisible = signal(false);
+  public readonly saveFeedbackError = signal("");
   public readonly favoriteCharacterIds;
   public readonly presetImportFeedback = signal<PresetImportFeedback | null>(null);
   public readonly loadedEnemyPresetName = signal<string | null>(null);
+  public readonly saveAnimationOptions: AnimationOptions = {
+    path: SAVE_TEAM_ANIMATION_PATH,
+    renderer: "svg",
+    loop: true,
+    autoplay: true,
+  };
 
   public readonly availableTypes = AUTO_TEAM_BUILDER_TYPES;
   public readonly availableClasses = computed(() => this.summary()?.availableClasses ?? []);
@@ -477,6 +495,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       ? this.t("filters.specialSupport.support.strict")
       : this.t("filters.specialSupport.support.flexible"),
   );
+  public readonly uniqueBaseCharacterNamesSupportLabel = computed(() =>
+    this.requireUniqueBaseCharacterNames()
+      ? this.t("filters.uniqueNames.support.strict")
+      : this.t("filters.uniqueNames.support.flexible"),
+  );
+  public readonly sameCaptainAndFriendCaptainSupportLabel = computed(() =>
+    this.requireSameCaptainAndFriendCaptain()
+      ? this.t("filters.sameCaptain.support.strict")
+      : this.t("filters.sameCaptain.support.flexible"),
+  );
   public readonly favoritesOnlySupportLabel = computed(() =>
     this.hasFavoriteCharacters()
       ? this.t("filters.favoritesOnly.support.withCount", {
@@ -662,6 +690,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly specialSupportToggleLabel = computed(() =>
     this.t("filters.specialSupport.toggle"),
   );
+  public readonly uniqueBaseCharacterNamesToggleLabel = computed(() =>
+    this.t("filters.uniqueNames.toggle"),
+  );
+  public readonly sameCaptainAndFriendCaptainToggleLabel = computed(() =>
+    this.t("filters.sameCaptain.toggle"),
+  );
   public readonly favoritesOnlyToggleLabel = computed(() => this.t("filters.favoritesOnly.toggle"));
   public readonly favoritesOnlyBlockedMessage = computed(() =>
     this.t("filters.favoritesOnly.blockedMessage"),
@@ -723,6 +757,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           ? this.t("actions.build.favoriteFlexible", { types: this.selectedTypesLabel() })
           : this.t("actions.build.flexible", { types: this.selectedTypesLabel() })
       : this.t("actions.build.selectTypes"),
+  );
+  public readonly saveButtonLabel = computed(() =>
+    this.saveUiLocked() ? this.t("save.savingLabel") : this.t("save.saveOffline"),
   );
   public readonly loadingLabel = computed(
     () =>
@@ -1008,6 +1045,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         this.requireAllSelectedTypesInTeam() ||
         this.requireAllSelectedClassesPerCharacter() ||
         this.requireAllSpecialsSupportTeam() ||
+        this.requireUniqueBaseCharacterNames() ||
+        this.requireSameCaptainAndFriendCaptain() ||
         this.favoritesOnly() ||
         this.hasSelectedManualShip() ||
         this.hasLockedCharacters() ||
@@ -1092,6 +1131,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   public ngOnDestroy(): void {
+    this.destroyed = true;
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
     this.cancelBuild();
@@ -1104,6 +1144,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     if (!appliedSavedTeamPreset) {
       await this.applyEnemyPresetFromRoute();
     }
+  }
+
+  public ionViewDidEnter(): void {
+    console.log("AutoTeamBuilderPage component");
   }
 
   public async onClassChange(
@@ -1305,6 +1349,20 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public onRequireAllSpecialsSupportToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.requireAllSpecialsSupportTeam.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
+  public onRequireUniqueBaseCharacterNamesToggle(
+    event: CustomEvent<{ checked: boolean }>,
+  ): void {
+    this.requireUniqueBaseCharacterNames.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
+  public onRequireSameCaptainAndFriendCaptainToggle(
+    event: CustomEvent<{ checked: boolean }>,
+  ): void {
+    this.requireSameCaptainAndFriendCaptain.set(event.detail.checked);
     this.resetBuildState();
   }
 
@@ -1551,6 +1609,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
           requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
           requireAllSpecialsSupportTeam: this.requireAllSpecialsSupportTeam(),
+          requireUniqueBaseCharacterNames: this.requireUniqueBaseCharacterNames(),
+          requireSameCaptainAndFriendCaptain: this.requireSameCaptainAndFriendCaptain(),
           requiredAbilities: this.pageRequiredAbilities(),
           enemyMechanics: this.pageEnemyMechanics(),
           favoritesOnly: this.favoritesOnly(),
@@ -1643,6 +1703,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
       requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
       requireAllSpecialsSupportTeam: this.requireAllSpecialsSupportTeam(),
+      requireUniqueBaseCharacterNames: this.requireUniqueBaseCharacterNames(),
+      requireSameCaptainAndFriendCaptain: this.requireSameCaptainAndFriendCaptain(),
       favoritesOnly: this.favoritesOnly(),
       favoriteCount: this.favoriteCharacterIds().length,
       manualSlots: this.serializeManualSlots(),
@@ -1699,19 +1761,45 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public async saveTeam(): Promise<void> {
     const current = this.result();
 
-    if (!current) {
+    if (!current || this.saveUiLocked()) {
       return;
     }
 
-    const saved = await this.userState.saveTeam({
-      id: this.currentTeamId() ?? undefined,
-      name: this.teamName(),
-      notes: this.notes(),
-      shipId: current.shipSelection?.ship.id ?? null,
-      slots: current.slots.map((slot) => slot.character.id),
-    });
+    const startedAt = Date.now();
 
-    this.currentTeamId.set(saved.id);
+    this.saveUiLocked.set(true);
+    this.saveFeedbackVisible.set(true);
+    this.saveFeedbackError.set("");
+
+    try {
+      const saved = await this.userState.saveTeam({
+        id: this.currentTeamId() ?? undefined,
+        name: this.teamName(),
+        notes: this.notes(),
+        shipId: current.shipSelection?.ship.id ?? null,
+        slots: current.slots.map((slot) => slot.character.id),
+      });
+
+      this.currentTeamId.set(saved.id);
+      await this.waitForSaveFeedbackWindow(startedAt);
+
+      if (this.destroyed) {
+        return;
+      }
+
+      this.saveUiLocked.set(false);
+      this.saveFeedbackVisible.set(false);
+    } catch (error) {
+      console.error(error);
+
+      if (this.destroyed) {
+        return;
+      }
+
+      this.saveUiLocked.set(false);
+      this.saveFeedbackVisible.set(false);
+      this.saveFeedbackError.set(this.t("save.error"));
+    }
   }
 
   private resetBuildState(): void {
@@ -1719,6 +1807,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.result.set(null);
     this.errorMessage.set("");
     this.currentTeamId.set(null);
+    this.resetSaveFeedbackState();
   }
 
   private async resetPageState(): Promise<void> {
@@ -1747,6 +1836,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.requireAllSelectedTypesInTeam.set(false);
     this.requireAllSelectedClassesPerCharacter.set(false);
     this.requireAllSpecialsSupportTeam.set(false);
+    this.requireUniqueBaseCharacterNames.set(false);
+    this.requireSameCaptainAndFriendCaptain.set(false);
     this.favoritesOnly.set(false);
     this.teamName.set(this.i18n.translate("common.defaults.newCrew"));
     this.notes.set("");
@@ -1849,6 +1940,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.requireAllSelectedTypesInTeam.set(state.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(state.requireAllSelectedClassesPerCharacter);
     this.requireAllSpecialsSupportTeam.set(state.requireAllSpecialsSupportTeam);
+    this.requireUniqueBaseCharacterNames.set(state.requireUniqueBaseCharacterNames);
+    this.requireSameCaptainAndFriendCaptain.set(state.requireSameCaptainAndFriendCaptain);
     this.favoritesOnly.set(state.favoritesOnly);
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
@@ -1926,6 +2019,20 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return this.favoritesOnlyBlockedMessage();
     }
 
+    if (this.requireUniqueBaseCharacterNames()) {
+      const manualConflictNames = this.resolveManualUniqueBaseNameConflictNames();
+
+      if (manualConflictNames.length > 0) {
+        return this.t("errors.uniqueNames.manualConflict", {
+          names: manualConflictNames.join(" / "),
+        });
+      }
+    }
+
+    if (this.requireSameCaptainAndFriendCaptain() && this.hasManualSameLeaderConflict()) {
+      return this.t("errors.sameCaptain.manualConflict");
+    }
+
     const lockedCount = this.manualSelectionCount();
     const leaderRequirementLabel = this.resolveLeaderFailureLabel();
 
@@ -1942,6 +2049,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     if (this.requireAllSpecialsSupportTeam()) {
       activeRequirements.push(this.t("errors.requirements.specialCoverage"));
+    }
+
+    if (this.requireUniqueBaseCharacterNames()) {
+      activeRequirements.push(this.t("errors.requirements.uniqueCharacterNames"));
+    }
+
+    if (this.requireSameCaptainAndFriendCaptain()) {
+      activeRequirements.push(this.t("errors.requirements.sameCaptainAndFriendCaptain"));
     }
 
     if (this.hasRequiredAbilities()) {
@@ -2407,11 +2522,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         abilityChips: this.buildAbilityChipViews(
           character.detail.builderAbilities,
           highlightedRequirements,
+          { includeEmptyState: false },
         ),
         isSelectedInActiveSlot,
         isSelectableInActiveSlot: this.canAssignCharacterToManualSlot(activeRole, character),
         actionLabel: isSelectedInActiveSlot
-          ? this.t("common.actions.remove")
+          ? this.i18n.translate("common.actions.remove")
           : this.t("manual.actions.addChoice"),
         selectionSupportLabel: this.resolveManualCharacterSelectionSupport(
           character.id,
@@ -2435,10 +2551,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         abilityChips: this.buildAbilityChipViews(
           character.detail.builderAbilities,
           highlightedRequirements,
+          { includeEmptyState: false },
         ),
         isExcluded,
         isSelectable: this.canExcludeCharacter(character.id),
-        actionLabel: isExcluded ? this.t("common.actions.remove") : this.t("exclude.actions.add"),
+        actionLabel: isExcluded
+          ? this.i18n.translate("common.actions.remove")
+          : this.t("exclude.actions.add"),
         selectionSupportLabel: this.resolveExcludedCharacterSelectionSupport(character.id),
       };
     });
@@ -2454,11 +2573,110 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     return [typeLabel, classLabel].filter((value) => value.length).join(" • ");
   }
 
+  private resolveManualUniqueBaseNameConflictNames(): string[] {
+    const lockedRecords = this.lockedCharacterRecords();
+    const filledSlots = this.manualSlots()
+      .map((slot) => ({
+        role: slot.role,
+        records: slot.characterIds
+          .map((characterId) => lockedRecords[characterId])
+          .filter((record): record is CharacterListItem => Boolean(record)),
+      }))
+      .filter((slot) => slot.role !== "friendCaptain" && slot.records.length > 0);
+
+    if (
+      filledSlots.length < 2 ||
+      this.hasValidUniqueBaseNameAssignment(filledSlots, 0, new Set<string>())
+    ) {
+      return [];
+    }
+
+    const usageByBaseNameKey = new Map<string, { count: number; label: string }>();
+
+    for (const slot of filledSlots) {
+      const slotBaseNameKeys = new Set<string>();
+
+      for (const record of slot.records) {
+        const baseNameKey = resolveCharacterBaseNameKey(record.name);
+
+        if (baseNameKey.length === 0 || slotBaseNameKeys.has(baseNameKey)) {
+          continue;
+        }
+
+        slotBaseNameKeys.add(baseNameKey);
+        const currentUsage = usageByBaseNameKey.get(baseNameKey);
+
+        if (currentUsage) {
+          currentUsage.count += 1;
+          continue;
+        }
+
+        usageByBaseNameKey.set(baseNameKey, {
+          count: 1,
+          label: record.name.replace(/^[^A-Za-z0-9]+/, "").replace(/\s+/g, " ").trim(),
+        });
+      }
+    }
+
+    return [...usageByBaseNameKey.values()]
+      .filter((entry) => entry.count > 1)
+      .map((entry) => entry.label);
+  }
+
+  private hasManualSameLeaderConflict(): boolean {
+    const captainIds = this.resolveManualSlotSelection("captain").characterIds;
+    const friendCaptainIds = this.resolveManualSlotSelection("friendCaptain").characterIds;
+
+    if (captainIds.length === 0 || friendCaptainIds.length === 0) {
+      return false;
+    }
+
+    const captainIdSet = new Set(captainIds);
+
+    return !friendCaptainIds.some((characterId) => captainIdSet.has(characterId));
+  }
+
+  private hasValidUniqueBaseNameAssignment(
+    slots: Array<{ role: AutoBuildManualSlotRole; records: CharacterListItem[] }>,
+    slotIndex: number,
+    usedBaseNameKeys: Set<string>,
+  ): boolean {
+    if (slotIndex >= slots.length) {
+      return true;
+    }
+
+    const slot = slots[slotIndex];
+
+    for (const record of slot.records) {
+      const baseNameKey = resolveCharacterBaseNameKey(record.name);
+
+      if (baseNameKey.length === 0 || usedBaseNameKeys.has(baseNameKey)) {
+        continue;
+      }
+
+      const nextUsedBaseNameKeys = new Set(usedBaseNameKeys);
+      nextUsedBaseNameKeys.add(baseNameKey);
+
+      if (this.hasValidUniqueBaseNameAssignment(slots, slotIndex + 1, nextUsedBaseNameKeys)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   private buildAbilityChipViews(
     abilities: NormalizedBuilderAbility[],
     highlightedRequirements: AutoBuildAbilityRequirement[],
+    options: { includeEmptyState?: boolean } = {},
   ): CharacterAbilityChipView[] {
+    const includeEmptyState = options.includeEmptyState ?? true;
+
     if (abilities.length === 0) {
+      if (!includeEmptyState) {
+        return [];
+      }
+
       return [
         {
           key: "none",
@@ -2572,5 +2790,23 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   private joinRequirementLabels(labels: string[]): string {
     return labels.join(this.t("errors.requirements.separator"));
+  }
+
+  private resetSaveFeedbackState(): void {
+    this.saveUiLocked.set(false);
+    this.saveFeedbackVisible.set(false);
+    this.saveFeedbackError.set("");
+  }
+
+  private async waitForSaveFeedbackWindow(startedAt: number): Promise<void> {
+    const remainingDuration = SAVE_TEAM_FEEDBACK_DURATION_MS - (Date.now() - startedAt);
+
+    if (remainingDuration <= 0) {
+      return;
+    }
+
+    await new Promise<void>((resolve) => {
+      globalThis.setTimeout(resolve, remainingDuration);
+    });
   }
 }

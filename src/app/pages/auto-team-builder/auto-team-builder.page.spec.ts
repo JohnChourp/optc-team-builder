@@ -2,7 +2,7 @@ import '@angular/compiler';
 import { signal } from '@angular/core';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
 import {
@@ -46,6 +46,10 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonToolbar: class {},
 }));
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe('AutoTeamBuilderPage special-support toggle', () => {
   it('passes the special-support toggle to the builder service', async () => {
     const { page, autoTeamBuilder } = await createPage();
@@ -63,6 +67,54 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
       ['DEX'],
       expect.objectContaining({
         requireAllSpecialsSupportTeam: true,
+      }),
+      expect.objectContaining({
+        onProgress: expect.any(Function),
+        signal: expect.any(AbortSignal),
+      }),
+    );
+  });
+
+  it('passes the unique-base-name toggle to the builder service', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.onRequireUniqueBaseCharacterNamesToggle({ detail: { checked: true } } as CustomEvent<{
+      checked: boolean;
+    }>);
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({
+        requireUniqueBaseCharacterNames: true,
+      }),
+      expect.objectContaining({
+        onProgress: expect.any(Function),
+        signal: expect.any(AbortSignal),
+      }),
+    );
+  });
+
+  it('passes the same-captain toggle to the builder service', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.onRequireSameCaptainAndFriendCaptainToggle({
+      detail: { checked: true },
+    } as CustomEvent<{ checked: boolean }>);
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({
+        requireSameCaptainAndFriendCaptain: true,
       }),
       expect.objectContaining({
         onProgress: expect.any(Function),
@@ -392,6 +444,22 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     );
   });
 
+  it('uses the global remove translation for selected manual picks', async () => {
+    const { page } = await createPage();
+    const selectedCandidate = createCharacterRecord(415, 'Selected Candidate');
+
+    await page.ngOnInit();
+    page.manualCandidates.set([selectedCandidate]);
+    page.manualSlots.set(
+      createManualSlots({
+        captain: [415],
+      }),
+    );
+    page.activeManualSlotRole.set('captain');
+
+    expect(page.manualCandidateCards()[0]?.actionLabel).toBe('Remove');
+  });
+
   it('excluding a manual-locked character clears it from manual slots and keeps the exclude', async () => {
     const { page } = await createPage();
     const lockedCandidate = createCharacterRecord(414, 'Locked Candidate');
@@ -413,6 +481,17 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
 
     expect(page.excludedCharacterIds()).toEqual([414]);
     expect(page.manualSlots()).toEqual(createManualSlots());
+  });
+
+  it('uses the global remove translation for excluded character cards', async () => {
+    const { page } = await createPage();
+    const excludedCandidate = createCharacterRecord(416, 'Excluded Candidate');
+
+    await page.ngOnInit();
+    page.excludedCharacterIds.set([416]);
+    page.excludedCandidates.set([excludedCandidate]);
+
+    expect(page.excludedCharacterCards()[0]?.actionLabel).toBe('Remove');
   });
 
   it('excluding the current manual ship override clears the manual ship and keeps the exclude', async () => {
@@ -587,6 +666,21 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(page.requireAllSpecialsSupportTeam()).toBe(false);
   });
 
+  it('resets the same-captain toggle when the page state is reset', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.onRequireSameCaptainAndFriendCaptainToggle({
+      detail: { checked: true },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.requireSameCaptainAndFriendCaptain()).toBe(true);
+
+    await page.ionViewWillEnter();
+
+    expect(page.requireSameCaptainAndFriendCaptain()).toBe(false);
+  });
+
   it('renders detail actions only on selected leader and result cards', async () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
@@ -598,12 +692,19 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(template).toContain('[routerLink]="getCharacterDetailLink(candidateCard.character)"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(slot.character)"');
     expect(template).toContain('(click)="saveTeam()"');
+    expect(template).toContain('<ng-lottie');
+    expect(template).toContain('[disabled]="saveUiLocked()"');
+    expect(template).toContain("{{ saveButtonLabel() }}");
     expect(template).toContain('<app-enemy-mechanic-picker');
     expect(template).toContain('<app-ability-requirement-picker');
     expect(template).toContain('<app-ship-picker');
     expect(template).toContain("t('ships.pickerTitle')");
     expect(template).not.toContain("abilityRequirements.placeholders.selectAbility");
     expect(template).not.toContain('shipSearchTerm()');
+    expect(template).toContain('[class.manual-lock-chip--ship-fallback]="!ship.thumbUrl"');
+    expect(template).toContain('@if (ship.thumbUrl; as thumbUrl)');
+    expect(template).toContain('[class.ship-candidate-icon--fallback]="!shipCard.ship.thumbUrl"');
+    expect(template).toContain('@if (shipCard.ship.thumbUrl; as thumbUrl)');
   });
 
   it('resets the full page state through resetPage', async () => {
@@ -642,6 +743,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     page.selectedManualShipId.set(9001);
     page.excludedShipIds.set([9002]);
     page.manualShipPickerOpen.set(true);
+    page.requireSameCaptainAndFriendCaptain.set(true);
     page.favoritesOnly.set(true);
     page.manualSearchTerm.set('Luffy');
     page.excludeCharacterSearchTerm.set('Kaido');
@@ -653,6 +755,9 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     page.result.set(createAutoBuildResult());
     page.errorMessage.set('Build failed');
     page.currentTeamId.set('saved-team-1');
+    page.saveUiLocked.set(true);
+    page.saveFeedbackVisible.set(true);
+    page.saveFeedbackError.set('Save failed');
     page.presetImportFeedback.set({
       tone: 'success',
       title: 'Loaded',
@@ -675,6 +780,8 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(page.selectedManualShipId()).toBeNull();
     expect(page.excludedShipIds()).toEqual([]);
     expect(page.manualShipPickerOpen()).toBe(false);
+    expect(page.requireUniqueBaseCharacterNames()).toBe(false);
+    expect(page.requireSameCaptainAndFriendCaptain()).toBe(false);
     expect(page.favoritesOnly()).toBe(false);
     expect(page.manualSearchTerm()).toBe('');
     expect(page.excludeCharacterSearchTerm()).toBe('');
@@ -686,6 +793,9 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(page.result()).toBeNull();
     expect(page.errorMessage()).toBe('');
     expect(page.currentTeamId()).toBeNull();
+    expect(page.saveUiLocked()).toBe(false);
+    expect(page.saveFeedbackVisible()).toBe(false);
+    expect(page.saveFeedbackError()).toBe('');
     expect(page.presetImportFeedback()).toBeNull();
     expect(page.loadedEnemyPresetName()).toBeNull();
   });
@@ -726,6 +836,55 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(page.errorMessage()).toContain('DEX');
     expect(page.building()).toBe(false);
     expect(page.buildProgress()).toBeNull();
+  });
+
+  it('shows a dedicated manual conflict message for duplicate base character names', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.onRequireUniqueBaseCharacterNamesToggle({ detail: { checked: true } } as CustomEvent<{
+      checked: boolean;
+    }>);
+    page.manualSlots.set(
+      createManualSlots({
+        captain: [101],
+        sub1: [102],
+      }),
+    );
+    page.lockedCharacterRecords.set({
+      101: createCharacterRecord(101, 'Monkey D. Luffy'),
+      102: createCharacterRecord(102, 'Monkey D. Luffy - Gear 2'),
+    });
+
+    await page.buildTeam();
+
+    expect(page.errorMessage()).toContain('Monkey D. Luffy');
+    expect(page.errorMessage()).toContain('base character name');
+  });
+
+  it('shows a dedicated manual conflict message for same-captain mode', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.onRequireSameCaptainAndFriendCaptainToggle({
+      detail: { checked: true },
+    } as CustomEvent<{ checked: boolean }>);
+    page.manualSlots.set(
+      createManualSlots({
+        captain: [101],
+        friendCaptain: [102],
+      }),
+    );
+
+    await page.buildTeam();
+
+    expect(page.errorMessage()).toBe(
+      'Matching captain slots is enabled, but the current manual Captain and Friend Captain choices do not overlap.',
+    );
   });
 
   it('exposes stable loading progress rows with placeholder slots', async () => {
@@ -1105,7 +1264,8 @@ describe('AutoTeamBuilderPage offline save', () => {
     expect(userState.saveTeam).not.toHaveBeenCalled();
   });
 
-  it('saves the generated team through the shared user state contract', async () => {
+  it('saves immediately and keeps the save UI locked for 3 seconds', async () => {
+    vi.useFakeTimers();
     const { page, userState } = await createPage();
 
     await page.ngOnInit();
@@ -1120,7 +1280,9 @@ describe('AutoTeamBuilderPage offline save', () => {
       },
     });
 
-    await page.saveTeam();
+    const savePromise = page.saveTeam();
+
+    await Promise.resolve();
 
     expect(userState.saveTeam).toHaveBeenCalledWith({
       id: undefined,
@@ -1130,9 +1292,23 @@ describe('AutoTeamBuilderPage offline save', () => {
       slots: [101, 102, 103, 104, 105, 106],
     });
     expect(page.currentTeamId()).toBe('saved-auto-team');
+    expect(page.saveUiLocked()).toBe(true);
+    expect(page.saveFeedbackVisible()).toBe(true);
+    expect(page.saveFeedbackError()).toBe('');
+
+    await vi.advanceTimersByTimeAsync(2999);
+    expect(page.saveUiLocked()).toBe(true);
+    expect(page.saveFeedbackVisible()).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(1);
+    await savePromise;
+
+    expect(page.saveUiLocked()).toBe(false);
+    expect(page.saveFeedbackVisible()).toBe(false);
   });
 
   it('reuses the current saved team id when saving the same generated result again', async () => {
+    vi.useFakeTimers();
     const { page, userState } = await createPage();
 
     userState.saveTeam
@@ -1142,8 +1318,15 @@ describe('AutoTeamBuilderPage offline save', () => {
     await page.ngOnInit();
     page.result.set(createAutoBuildResult());
 
-    await page.saveTeam();
-    await page.saveTeam();
+    const firstSavePromise = page.saveTeam();
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(3000);
+    await firstSavePromise;
+
+    const secondSavePromise = page.saveTeam();
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(3000);
+    await secondSavePromise;
 
     expect(userState.saveTeam).toHaveBeenNthCalledWith(
       1,
@@ -1157,6 +1340,44 @@ describe('AutoTeamBuilderPage offline save', () => {
         id: 'saved-auto-team',
       }),
     );
+  });
+
+  it('ignores repeated save clicks while the 3-second feedback window is active', async () => {
+    vi.useFakeTimers();
+    const { page, userState } = await createPage();
+
+    await page.ngOnInit();
+    page.result.set(createAutoBuildResult());
+
+    const firstSavePromise = page.saveTeam();
+    await Promise.resolve();
+
+    await page.saveTeam();
+
+    expect(userState.saveTeam).toHaveBeenCalledTimes(1);
+    expect(page.saveUiLocked()).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(3000);
+    await firstSavePromise;
+  });
+
+  it('unlocks immediately and shows inline feedback when save fails', async () => {
+    vi.useFakeTimers();
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { page, userState } = await createPage();
+
+    userState.saveTeam.mockRejectedValueOnce(new Error('save failed'));
+
+    await page.ngOnInit();
+    page.result.set(createAutoBuildResult());
+
+    await page.saveTeam();
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    expect(page.saveUiLocked()).toBe(false);
+    expect(page.saveFeedbackVisible()).toBe(false);
+    expect(page.saveFeedbackError()).toBe('The team could not be saved. Please try again.');
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it('clears the current saved team id when the generated team is reset', async () => {
@@ -1321,6 +1542,12 @@ describe('AutoTeamBuilderPage preset export state', () => {
     expect(page.canDownloadSelectionJson()).toBe(true);
 
     await page.ionViewWillEnter();
+    page.onRequireSameCaptainAndFriendCaptainToggle({
+      detail: { checked: true },
+    } as CustomEvent<{ checked: boolean }>);
+    expect(page.canDownloadSelectionJson()).toBe(true);
+
+    await page.ionViewWillEnter();
     page.excludedCharacterIds.set([303]);
     expect(page.canDownloadSelectionJson()).toBe(true);
   });
@@ -1350,6 +1577,12 @@ describe('AutoTeamBuilderPage preset export state', () => {
     page.onRequireAllSpecialsSupportToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
+    page.onRequireUniqueBaseCharacterNamesToggle({ detail: { checked: true } } as CustomEvent<{
+      checked: boolean;
+    }>);
+    page.onRequireSameCaptainAndFriendCaptainToggle({ detail: { checked: true } } as CustomEvent<{
+      checked: boolean;
+    }>);
     page.onFavoritesOnlyToggle({ detail: { checked: true } } as CustomEvent<{ checked: boolean }>);
     page.manualSlots.set(
       createManualSlots({
@@ -1369,7 +1602,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 6,
+      schemaVersion: 8,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -1388,6 +1621,8 @@ describe('AutoTeamBuilderPage preset export state', () => {
         requireAllSelectedTypesInTeam: true,
         requireAllSelectedClassesPerCharacter: true,
         requireAllSpecialsSupportTeam: true,
+        requireUniqueBaseCharacterNames: true,
+        requireSameCaptainAndFriendCaptain: true,
         favoritesOnly: true,
         favoriteCount: 3,
       },
@@ -1441,6 +1676,8 @@ describe('AutoTeamBuilder preset export helpers', () => {
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSpecialsSupportTeam: true,
+      requireUniqueBaseCharacterNames: true,
+      requireSameCaptainAndFriendCaptain: true,
       favoritesOnly: true,
       favoriteCount: 4,
       manualSlots: createManualSlots({
@@ -1463,6 +1700,8 @@ describe('AutoTeamBuilder preset export helpers', () => {
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSpecialsSupportTeam: true,
+      requireUniqueBaseCharacterNames: true,
+      requireSameCaptainAndFriendCaptain: true,
       favoritesOnly: true,
       favoriteCount: 4,
     });
@@ -1489,6 +1728,8 @@ describe('AutoTeamBuilder preset export helpers', () => {
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSpecialsSupportTeam: false,
+      requireUniqueBaseCharacterNames: false,
+      requireSameCaptainAndFriendCaptain: false,
       favoritesOnly: false,
       favoriteCount: 0,
       manualSlots: createManualSlots({
@@ -1533,6 +1774,8 @@ describe('AutoTeamBuilder preset export helpers', () => {
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: true,
       requireAllSpecialsSupportTeam: true,
+      requireUniqueBaseCharacterNames: false,
+      requireSameCaptainAndFriendCaptain: false,
       favoritesOnly: true,
       favoriteCount: 2,
       manualSlots: createManualSlots({
@@ -1588,6 +1831,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSpecialsSupportTeam: false,
+      requireUniqueBaseCharacterNames: false,
       favoritesOnly: false,
       favoriteCount: 0,
       manualSlots: createManualSlots({
@@ -1621,6 +1865,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: true,
       requireAllSpecialsSupportTeam: false,
+      requireUniqueBaseCharacterNames: false,
       favoritesOnly: true,
       favoriteCount: 2,
       manualSlots: createManualSlots({
@@ -1678,6 +1923,8 @@ describe('AutoTeamBuilder preset import helpers', () => {
     expect(result.state.lockedCharacterIds).toEqual([101]);
     expect(result.state.selectedLeaderIds).toEqual([101]);
     expect(result.state.captainLeaderId).toBe(101);
+    expect(result.state.requireUniqueBaseCharacterNames).toBe(false);
+    expect(result.state.requireSameCaptainAndFriendCaptain).toBe(false);
     expect(result.state.manualSlots).toEqual(
       createManualSlots({
         captain: [101],
@@ -1750,7 +1997,51 @@ describe('AutoTeamBuilder preset import helpers', () => {
         requiredCharacterCount: 1,
       },
     ]);
+    expect(result.state.requireSameCaptainAndFriendCaptain).toBe(false);
     expect(result.warnings).toEqual([]);
+  });
+
+  it('defaults the same-captain flag to false for schema-7 presets', () => {
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [],
+      enemyMechanics: [],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSpecialsSupportTeam: false,
+      requireUniqueBaseCharacterNames: false,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      manualSlots: createManualSlots({
+        captain: [101],
+        friendCaptain: [101],
+      }),
+      lockedCharacterIds: [101],
+      lockedCharacters: [createCharacterRecord(101)],
+      selectedLeaderIds: [101],
+      captainLeaderId: 101,
+      friendCaptainLeaderId: 101,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+    const legacyPayload = {
+      ...payload,
+      schemaVersion: 7 as const,
+      filters: {
+        ...payload.filters,
+      },
+    };
+
+    delete (legacyPayload.filters as Record<string, unknown>).requireSameCaptainAndFriendCaptain;
+
+    const result = sanitizeAutoTeamSelectionImportPayload(legacyPayload, {
+      availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      availableClasses: ['Fighter', 'Slasher'],
+      abilityCatalogItems: [],
+      availableLockedCharacters: [createCharacterRecord(101)],
+    });
+
+    expect(result.state.requireSameCaptainAndFriendCaptain).toBe(false);
   });
 
   it('roundtrips enemy mechanics alongside effective required counters', () => {
@@ -1779,6 +2070,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSpecialsSupportTeam: false,
+      requireUniqueBaseCharacterNames: false,
       favoritesOnly: false,
       favoriteCount: 0,
       manualSlots: createManualSlots({
@@ -1848,6 +2140,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSpecialsSupportTeam: false,
+      requireUniqueBaseCharacterNames: false,
       favoritesOnly: false,
       favoriteCount: 0,
       manualSlots: createManualSlots({
@@ -1907,6 +2200,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSpecialsSupportTeam: false,
+      requireUniqueBaseCharacterNames: false,
       favoritesOnly: false,
       favoriteCount: 0,
       manualSlots: createManualSlots({
@@ -1967,6 +2261,8 @@ describe('AutoTeamBuilderPage preset import state', () => {
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: true,
       requireAllSpecialsSupportTeam: true,
+      requireUniqueBaseCharacterNames: true,
+      requireSameCaptainAndFriendCaptain: true,
       favoritesOnly: true,
       favoriteCount: 3,
       manualSlots: createManualSlots({
@@ -2058,6 +2354,8 @@ describe('AutoTeamBuilderPage preset import state', () => {
     expect(page.requireAllSelectedTypesInTeam()).toBe(true);
     expect(page.requireAllSelectedClassesPerCharacter()).toBe(true);
     expect(page.requireAllSpecialsSupportTeam()).toBe(true);
+    expect(page.requireUniqueBaseCharacterNames()).toBe(true);
+    expect(page.requireSameCaptainAndFriendCaptain()).toBe(true);
     expect(page.favoritesOnly()).toBe(true);
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
       [701, 702],
@@ -2089,6 +2387,8 @@ describe('AutoTeamBuilderPage preset import state', () => {
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSpecialsSupportTeam: false,
+      requireUniqueBaseCharacterNames: false,
+      requireSameCaptainAndFriendCaptain: false,
       favoritesOnly: false,
       favoriteCount: 0,
       manualSlots: createManualSlots({
@@ -2312,6 +2612,7 @@ describe('AutoTeamBuilder enemy preset handoff', () => {
     expect(page.requireAllSelectedTypesInTeam()).toBe(true);
     expect(page.requireAllSelectedClassesPerCharacter()).toBe(false);
     expect(page.requireAllSpecialsSupportTeam()).toBe(true);
+    expect(page.requireSameCaptainAndFriendCaptain()).toBe(false);
     expect(page.loadedEnemyPresetName()).toBe('Forest Boss');
     expect(page.result()).toBeNull();
     expect(page.currentTeamId()).toBeNull();
@@ -2509,6 +2810,8 @@ function createAutoBuildResult(
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSpecialsSupportTeam: false,
+    requireUniqueBaseCharacterNames: false,
+    requireSameCaptainAndFriendCaptain: false,
     favoritesOnly: false,
     manualSlots: createManualSlots({
       captain: [101],

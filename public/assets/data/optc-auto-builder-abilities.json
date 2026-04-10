@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-04-04T04:55:37.227Z",
+  "generatedAt": "2026-04-09T21:35:25.386Z",
   "sourceVersion": "unknown",
   "abilityCount": 32,
   "abilities": [
     {
       "key": "deal_fixed_damage",
       "label": "Deal Fixed Damage",
-      "supportsTurns": false,
+      "supportsTurns": true,
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
@@ -16,20 +16,20 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 238,
+      "matchCount": 476,
       "sampleCharacterIds": [
         20,
+        20,
         230,
-        254,
-        255,
-        311
+        230,
+        254
       ],
       "sampleTexts": [
         "Deals 5,000 Fixed damage to all enemies",
+        "Deals 5,000 Fixed damage to all enemies",
         "Deals 200 Fixed damage to one enemy",
-        "Deals 5,000 Fixed damage to all enemies",
-        "Deals 5,000 Fixed damage to all enemies",
-        "Deals 100x character's ATK in Fixed damage to one enemy, reduces crew's current HP to 1"
+        "Deals 200 Fixed damage to one enemy",
+        "Deals 5,000 Fixed damage to all enemies"
       ]
     },
     {
@@ -64,7 +64,7 @@
     {
       "key": "inflict_poison",
       "label": "Inflict Poison",
-      "supportsTurns": false,
+      "supportsTurns": true,
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
@@ -74,20 +74,20 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 65,
+      "matchCount": 130,
       "sampleCharacterIds": [
         58,
+        58,
         215,
-        391,
-        392,
-        437
+        215,
+        391
       ],
       "sampleTexts": [
         "Poisons all enemies",
         "Poisons all enemies",
-        "Reduces damage received by 90% for 1 turn, reduces the defense of all enemies by 80% for 1 turn, Poisons enemies for 1,000 damage for 1 turn",
-        "Reduces damage received by 90% for 1 turn, reduces the defense of all enemies by 80% for 1 turn, Poisons enemies for 1,000 damage for 1 turn",
-        "Recovers 3x character's RCV in HP, reduces damage received by 80% for 1 turn, Poisons enemies for 1,000 for a single turn"
+        "Poisons all enemies",
+        "Poisons all enemies",
+        "Reduces damage received by 90% for 1 turn, reduces the defense of all enemies by 80% for 1 turn, Poisons enemies for 1,000 damage for 1 turn"
       ]
     },
     {
@@ -161,7 +161,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 495,
+      "matchCount": 491,
       "sampleCharacterIds": [
         228,
         265,

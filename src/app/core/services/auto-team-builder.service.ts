@@ -92,8 +92,17 @@ export class AutoTeamBuilderService {
     const excludedCharacterIds = this.normalizeCharacterIds(constraints.excludedCharacterIds);
     const captainCharacterId = derivedManualSelection.captainCharacterId;
     const friendCaptainCharacterId = derivedManualSelection.friendCaptainCharacterId;
+    const requireSameCaptainAndFriendCaptain =
+      constraints.requireSameCaptainAndFriendCaptain ?? false;
     const manualShipId = this.normalizeCharacterId(constraints.manualShipId);
     const excludedShipIds = this.normalizeCharacterIds(constraints.excludedShipIds);
+
+    if (
+      requireSameCaptainAndFriendCaptain &&
+      this.hasConflictingManualLeaderSelections(manualSlots)
+    ) {
+      return null;
+    }
 
     const input: AutoBuildInput = {
       types: normalizedTypes.length > 0 ? normalizedTypes : [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
@@ -102,6 +111,8 @@ export class AutoTeamBuilderService {
       requireAllSelectedClassesPerCharacter:
         constraints.requireAllSelectedClassesPerCharacter ?? false,
       requireAllSpecialsSupportTeam: constraints.requireAllSpecialsSupportTeam ?? false,
+      requireUniqueBaseCharacterNames: constraints.requireUniqueBaseCharacterNames ?? false,
+      requireSameCaptainAndFriendCaptain,
       requiredAbilities,
       enemyMechanics,
       favoritesOnly,
@@ -497,6 +508,22 @@ export class AutoTeamBuilderService {
       captainCharacterId,
       friendCaptainCharacterId,
     };
+  }
+
+  private hasConflictingManualLeaderSelections(
+    manualSlots: AutoBuildManualSlotSelection[],
+  ): boolean {
+    const captainIds = manualSlots.find((slot) => slot.role === "captain")?.characterIds ?? [];
+    const friendCaptainIds =
+      manualSlots.find((slot) => slot.role === "friendCaptain")?.characterIds ?? [];
+
+    if (captainIds.length === 0 || friendCaptainIds.length === 0) {
+      return false;
+    }
+
+    const captainIdSet = new Set(captainIds);
+
+    return !friendCaptainIds.some((characterId) => captainIdSet.has(characterId));
   }
 
   private normalizeRequiredAbilities(

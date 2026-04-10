@@ -141,6 +141,8 @@ function createResult(
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSpecialsSupportTeam: false,
+    requireUniqueBaseCharacterNames: false,
+    requireSameCaptainAndFriendCaptain: false,
     requiredAbilities: [],
     enemyMechanics: [],
     favoritesOnly: false,
