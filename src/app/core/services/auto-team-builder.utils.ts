@@ -322,6 +322,13 @@ function buildLeaderPairOptions(
 
   captainOptions.forEach((captain, captainIndex) => {
     friendCaptainOptions.forEach((friendCaptain, friendCaptainIndex) => {
+      if (
+        input.requireSameCaptainAndFriendCaptain &&
+        captain.character.id !== friendCaptain.character.id
+      ) {
+        return;
+      }
+
       leaderPairs.push({
         captain,
         friendCaptain,

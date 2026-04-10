@@ -70,6 +70,13 @@
         "flexible": "Allow multiple variants of the same base character name in the final team."
       }
     },
+    "sameCaptain": {
+      "toggle": "Require matching captain slots",
+      "support": {
+        "strict": "The final Captain and Friend Captain must resolve to the same character.",
+        "flexible": "Allow the Captain and Friend Captain to resolve to different characters."
+      }
+    },
     "favoritesOnly": {
       "toggle": "Use favorites for auto-fill",
       "blockedMessage": "Favorite-only auto-fill is unavailable until you save at least one favorite unit.",
@@ -420,6 +427,9 @@
   },
   "errors": {
     "buildFailed": "The auto build failed unexpectedly. Please try again.",
+    "sameCaptain": {
+      "manualConflict": "Matching captain slots is enabled, but the current manual Captain and Friend Captain choices do not overlap."
+    },
     "uniqueNames": {
       "manualConflict": "The current manual slot choices already reuse the same base character name outside the Friend Captain slot: {{names}}."
     },
@@ -448,6 +458,7 @@
       "flexible": "No flexible team matched {{types}} while keeping {{requirements}}{{favoritesScope}}.",
       "separator": " and ",
       "specialCoverage": "special support coverage",
+      "sameCaptainAndFriendCaptain": "matching captain and friend captain",
       "strict": "No strict team matched {{types}} while keeping {{requirements}}{{favoritesScope}}.",
       "typeCoverage": "team-wide type coverage",
       "uniqueCharacterNames": "unique base character names across the team except Friend Captain"

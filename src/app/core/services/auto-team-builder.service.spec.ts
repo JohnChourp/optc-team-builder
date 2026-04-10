@@ -1427,6 +1427,7 @@ describe('Auto team builder', () => {
     expect(result?.input.requireAllSelectedClassesPerCharacter).toBe(false);
     expect(result?.input.requireAllSpecialsSupportTeam).toBe(false);
     expect(result?.input.requireUniqueBaseCharacterNames).toBe(false);
+    expect(result?.input.requireSameCaptainAndFriendCaptain).toBe(false);
     expect(result?.input.favoritesOnly).toBe(false);
     expect(result?.input.lockedCharacterIds).toEqual([]);
     expect(result?.requestedInput.lockedCharacterIds).toEqual([]);
@@ -1493,6 +1494,17 @@ describe('Auto team builder', () => {
 
     expect(result?.input.captainCharacterId).toBe(5925);
     expect(result?.input.friendCaptainCharacterId).toBe(5925);
+  });
+
+  it('returns only duplicated leader pairs when same-captain mode is enabled', () => {
+    const result = buildAutoTeamResult(createDualLeaderMixedTeamRecords(), {
+      ...createInput(['DEX', 'PSY'], ['Fighter', 'Slasher'], {
+        requireSameCaptainAndFriendCaptain: true,
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(result?.slots[1]?.character.id);
   });
 
   it('derives legacy leader ids from slot-based manual selections and keeps shared leaders valid', async () => {
@@ -1575,6 +1587,24 @@ describe('Auto team builder', () => {
       lockedCharacterIds: [5926],
       captainCharacterId: 5925,
       friendCaptainCharacterId: 5925,
+    });
+
+    expect(result).toBeNull();
+    expect(repository.getAutoBuilderCandidates).not.toHaveBeenCalled();
+  });
+
+  it('returns null before querying when same-captain mode conflicts with manual leader picks', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      requireSameCaptainAndFriendCaptain: true,
+      manualSlots: createManualSlots({
+        captain: [5925],
+        friendCaptain: [5927],
+      }),
     });
 
     expect(result).toBeNull();
@@ -1872,6 +1902,7 @@ function createInput(
       | 'requireAllSelectedClassesPerCharacter'
       | 'requireAllSpecialsSupportTeam'
       | 'requireUniqueBaseCharacterNames'
+      | 'requireSameCaptainAndFriendCaptain'
       | 'favoritesOnly'
       | 'manualSlots'
       | 'lockedCharacterIds'
@@ -1885,6 +1916,7 @@ function createInput(
     requireAllSelectedClassesPerCharacter: false,
     requireAllSpecialsSupportTeam: false,
     requireUniqueBaseCharacterNames: false,
+    requireSameCaptainAndFriendCaptain: false,
     favoritesOnly: false,
     lockedCharacterIds: [],
     excludedCharacterIds: [],
@@ -1907,6 +1939,8 @@ function createInput(
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
     requireAllSpecialsSupportTeam: overrides.requireAllSpecialsSupportTeam ?? false,
     requireUniqueBaseCharacterNames: overrides.requireUniqueBaseCharacterNames ?? false,
+    requireSameCaptainAndFriendCaptain:
+      overrides.requireSameCaptainAndFriendCaptain ?? false,
     favoritesOnly: overrides.favoritesOnly ?? false,
     manualSlots:
       overrides.manualSlots ??

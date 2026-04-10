@@ -70,6 +70,13 @@
         "flexible": "Επίτρεψε πολλαπλά variants του ίδιου base character name στην τελική ομάδα."
       }
     },
+    "sameCaptain": {
+      "toggle": "Απαίτησε ίδιο captain και friend captain",
+      "support": {
+        "strict": "Το τελικό Captain και Friend Captain πρέπει να καταλήγουν στον ίδιο χαρακτήρα.",
+        "flexible": "Επίτρεψε το Captain και το Friend Captain να καταλήγουν σε διαφορετικούς χαρακτήρες."
+      }
+    },
     "favoritesOnly": {
       "toggle": "Χρησιμοποίησε favorites για auto-fill",
       "blockedMessage": "Το favorite-only auto-fill δεν είναι διαθέσιμο μέχρι να αποθηκεύσεις τουλάχιστον ένα favorite unit.",
@@ -420,6 +427,9 @@
   },
   "errors": {
     "buildFailed": "Το auto build απέτυχε απρόσμενα. Δοκίμασε ξανά.",
+    "sameCaptain": {
+      "manualConflict": "Η απαίτηση για ίδιο captain και friend captain είναι ενεργή, αλλά τα current manual Captain και Friend Captain choices δεν έχουν κοινό character."
+    },
     "uniqueNames": {
       "manualConflict": "Τα current manual slot choices χρησιμοποιούν ήδη το ίδιο base character name εκτός του Friend Captain slot: {{names}}."
     },
@@ -448,6 +458,7 @@
       "flexible": "Δεν βρέθηκε flexible ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
       "separator": " και ",
       "specialCoverage": "special support coverage",
+      "sameCaptainAndFriendCaptain": "ίδιο captain και friend captain",
       "strict": "Δεν βρέθηκε strict ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
       "typeCoverage": "κάλυψη types στην ομάδα",
       "uniqueCharacterNames": "μοναδικά base character names σε όλη την ομάδα εκτός Friend Captain"

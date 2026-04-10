@@ -268,6 +268,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
   public readonly requireAllSpecialsSupportTeam = signal(false);
   public readonly requireUniqueBaseCharacterNames = signal(false);
+  public readonly requireSameCaptainAndFriendCaptain = signal(false);
   public readonly favoritesOnly = signal(false);
   public readonly teamName = signal("");
   public readonly notes = signal("");
@@ -499,6 +500,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       ? this.t("filters.uniqueNames.support.strict")
       : this.t("filters.uniqueNames.support.flexible"),
   );
+  public readonly sameCaptainAndFriendCaptainSupportLabel = computed(() =>
+    this.requireSameCaptainAndFriendCaptain()
+      ? this.t("filters.sameCaptain.support.strict")
+      : this.t("filters.sameCaptain.support.flexible"),
+  );
   public readonly favoritesOnlySupportLabel = computed(() =>
     this.hasFavoriteCharacters()
       ? this.t("filters.favoritesOnly.support.withCount", {
@@ -686,6 +692,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   );
   public readonly uniqueBaseCharacterNamesToggleLabel = computed(() =>
     this.t("filters.uniqueNames.toggle"),
+  );
+  public readonly sameCaptainAndFriendCaptainToggleLabel = computed(() =>
+    this.t("filters.sameCaptain.toggle"),
   );
   public readonly favoritesOnlyToggleLabel = computed(() => this.t("filters.favoritesOnly.toggle"));
   public readonly favoritesOnlyBlockedMessage = computed(() =>
@@ -1037,6 +1046,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         this.requireAllSelectedClassesPerCharacter() ||
         this.requireAllSpecialsSupportTeam() ||
         this.requireUniqueBaseCharacterNames() ||
+        this.requireSameCaptainAndFriendCaptain() ||
         this.favoritesOnly() ||
         this.hasSelectedManualShip() ||
         this.hasLockedCharacters() ||
@@ -1349,6 +1359,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.resetBuildState();
   }
 
+  public onRequireSameCaptainAndFriendCaptainToggle(
+    event: CustomEvent<{ checked: boolean }>,
+  ): void {
+    this.requireSameCaptainAndFriendCaptain.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
   public onFavoritesOnlyToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.favoritesOnly.set(event.detail.checked);
     this.resetBuildState();
@@ -1593,6 +1610,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
           requireAllSpecialsSupportTeam: this.requireAllSpecialsSupportTeam(),
           requireUniqueBaseCharacterNames: this.requireUniqueBaseCharacterNames(),
+          requireSameCaptainAndFriendCaptain: this.requireSameCaptainAndFriendCaptain(),
           requiredAbilities: this.pageRequiredAbilities(),
           enemyMechanics: this.pageEnemyMechanics(),
           favoritesOnly: this.favoritesOnly(),
@@ -1686,6 +1704,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
       requireAllSpecialsSupportTeam: this.requireAllSpecialsSupportTeam(),
       requireUniqueBaseCharacterNames: this.requireUniqueBaseCharacterNames(),
+      requireSameCaptainAndFriendCaptain: this.requireSameCaptainAndFriendCaptain(),
       favoritesOnly: this.favoritesOnly(),
       favoriteCount: this.favoriteCharacterIds().length,
       manualSlots: this.serializeManualSlots(),
@@ -1818,6 +1837,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.requireAllSelectedClassesPerCharacter.set(false);
     this.requireAllSpecialsSupportTeam.set(false);
     this.requireUniqueBaseCharacterNames.set(false);
+    this.requireSameCaptainAndFriendCaptain.set(false);
     this.favoritesOnly.set(false);
     this.teamName.set(this.i18n.translate("common.defaults.newCrew"));
     this.notes.set("");
@@ -1921,6 +1941,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.requireAllSelectedClassesPerCharacter.set(state.requireAllSelectedClassesPerCharacter);
     this.requireAllSpecialsSupportTeam.set(state.requireAllSpecialsSupportTeam);
     this.requireUniqueBaseCharacterNames.set(state.requireUniqueBaseCharacterNames);
+    this.requireSameCaptainAndFriendCaptain.set(state.requireSameCaptainAndFriendCaptain);
     this.favoritesOnly.set(state.favoritesOnly);
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
@@ -2008,6 +2029,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       }
     }
 
+    if (this.requireSameCaptainAndFriendCaptain() && this.hasManualSameLeaderConflict()) {
+      return this.t("errors.sameCaptain.manualConflict");
+    }
+
     const lockedCount = this.manualSelectionCount();
     const leaderRequirementLabel = this.resolveLeaderFailureLabel();
 
@@ -2028,6 +2053,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
     if (this.requireUniqueBaseCharacterNames()) {
       activeRequirements.push(this.t("errors.requirements.uniqueCharacterNames"));
+    }
+
+    if (this.requireSameCaptainAndFriendCaptain()) {
+      activeRequirements.push(this.t("errors.requirements.sameCaptainAndFriendCaptain"));
     }
 
     if (this.hasRequiredAbilities()) {
@@ -2498,7 +2527,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         isSelectedInActiveSlot,
         isSelectableInActiveSlot: this.canAssignCharacterToManualSlot(activeRole, character),
         actionLabel: isSelectedInActiveSlot
-          ? this.t("common.actions.remove")
+          ? this.i18n.translate("common.actions.remove")
           : this.t("manual.actions.addChoice"),
         selectionSupportLabel: this.resolveManualCharacterSelectionSupport(
           character.id,
@@ -2526,7 +2555,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         ),
         isExcluded,
         isSelectable: this.canExcludeCharacter(character.id),
-        actionLabel: isExcluded ? this.t("common.actions.remove") : this.t("exclude.actions.add"),
+        actionLabel: isExcluded
+          ? this.i18n.translate("common.actions.remove")
+          : this.t("exclude.actions.add"),
         selectionSupportLabel: this.resolveExcludedCharacterSelectionSupport(character.id),
       };
     });
@@ -2590,6 +2621,19 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     return [...usageByBaseNameKey.values()]
       .filter((entry) => entry.count > 1)
       .map((entry) => entry.label);
+  }
+
+  private hasManualSameLeaderConflict(): boolean {
+    const captainIds = this.resolveManualSlotSelection("captain").characterIds;
+    const friendCaptainIds = this.resolveManualSlotSelection("friendCaptain").characterIds;
+
+    if (captainIds.length === 0 || friendCaptainIds.length === 0) {
+      return false;
+    }
+
+    const captainIdSet = new Set(captainIds);
+
+    return !friendCaptainIds.some((characterId) => captainIdSet.has(characterId));
   }
 
   private hasValidUniqueBaseNameAssignment(

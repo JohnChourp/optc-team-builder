@@ -292,6 +292,7 @@ function createInput(
     requireAllSelectedClassesPerCharacter: false,
     requireAllSpecialsSupportTeam: false,
     requireUniqueBaseCharacterNames: false,
+    requireSameCaptainAndFriendCaptain: false,
     favoritesOnly: false,
     manualSlots: createEmptyAutoBuildManualSlots(),
     lockedCharacterIds: [],

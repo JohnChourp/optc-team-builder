@@ -175,6 +175,19 @@
 
           <div class="strict-toggle-row">
             <div class="strict-toggle-copy">
+              <strong>{{ sameCaptainAndFriendCaptainToggleLabel() }}</strong>
+              <small>{{ sameCaptainAndFriendCaptainSupportLabel() }}</small>
+            </div>
+            <ion-toggle
+              color="warning"
+              [checked]="requireSameCaptainAndFriendCaptain()"
+              [disabled]="building()"
+              (ionChange)="onRequireSameCaptainAndFriendCaptainToggle($event)"
+            ></ion-toggle>
+          </div>
+
+          <div class="strict-toggle-row">
+            <div class="strict-toggle-copy">
               <strong>{{ specialSupportToggleLabel() }}</strong>
               <small>{{ specialSupportLabel() }}</small>
             </div>
