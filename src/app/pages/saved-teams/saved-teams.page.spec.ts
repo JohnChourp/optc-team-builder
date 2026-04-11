@@ -182,6 +182,9 @@ describe('SavedTeamsPage', () => {
 
     expect(template).toContain("t('title')");
     expect(template).toContain("t('hero.savedEnemiesCta')");
+    expect(template).toMatch(
+      /@if \(!loading\(\) && !savedTeams\(\)\.length\) \{[\s\S]*openImportModal\(\)/,
+    );
     expect(template).toContain("t('actions.openBuilder')");
     expect(template).toContain("'common.actions.reset' | transloco");
     expect(template).toContain("t('tools.export')");

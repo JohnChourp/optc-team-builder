@@ -15,6 +15,11 @@
           <ion-button fill="outline" color="warning" [routerLink]="['/tabs/saved-enemies']">
             {{ t('hero.savedEnemiesCta') }}
           </ion-button>
+          @if (!loading() && !savedTeams().length) {
+            <ion-button fill="outline" color="light" (click)="openImportModal()">
+              {{ t('tools.import') }}
+            </ion-button>
+          }
         </div>
       </section>
 
