@@ -140,6 +140,7 @@ export class AbilityRequirementPickerComponent implements OnChanges {
     }
 
     if (changes["isOpen"] && this.isOpen) {
+      console.log("AbilityRequirementPickerComponent component");
       this.searchTerm.set("");
       this.workingDrafts.set(cloneAbilityRequirementDrafts(this.drafts));
     }

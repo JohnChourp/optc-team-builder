@@ -67,6 +67,7 @@ export class TeamBuilderPage implements OnInit {
   public readonly notes = signal('');
   public readonly savedTeams;
   public readonly favoriteIds;
+  public readonly favoriteShipIds;
   public readonly teamTotals = signal({ hp: 0, atk: 0, rcv: 0, cost: 0 });
   public readonly currentTeamId = signal<string | null>(null);
   public readonly selectedShip = computed(
@@ -95,6 +96,7 @@ export class TeamBuilderPage implements OnInit {
   ) {
     this.savedTeams = this.userState.savedTeams;
     this.favoriteIds = this.userState.favoriteCharacterIds;
+    this.favoriteShipIds = this.userState.favoriteShipIds;
     this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
   }
 
@@ -102,6 +104,10 @@ export class TeamBuilderPage implements OnInit {
     await this.userState.ready();
     this.ships.set(await this.repository.getShips());
     await this.refreshCandidateCharacters(this.candidateSearchTerm());
+  }
+
+  public ionViewDidEnter(): void {
+    console.log('TeamBuilderPage component');
   }
 
   public async onSearchCandidates(event: CustomEvent<{ value?: string | null }>): Promise<void> {
@@ -128,6 +134,10 @@ export class TeamBuilderPage implements OnInit {
   public saveShipSelection(shipId: number | null): void {
     this.selectedShipId.set(shipId);
     this.closeShipPicker();
+  }
+
+  public async toggleShipFavorite(shipId: number): Promise<void> {
+    await this.userState.toggleShipFavorite(shipId);
   }
 
   public selectSlot(index: number): void {

@@ -84,6 +84,13 @@
         "empty": "Δεν υπάρχουν αποθηκευμένα favorites σε αυτή τη συσκευή, οπότε το favorite-only auto-fill δεν είναι διαθέσιμο.",
         "withCount": "Περιορίζει τα auto-filled slots στα {{count}} αποθηκευμένα favorite units σου. Τα manual picks μπορούν να χρησιμοποιούν οποιοδήποτε unit."
       }
+    },
+    "favoriteShipsOnly": {
+      "toggle": "Χρησιμοποίησε μόνο favorite ships",
+      "support": {
+        "empty": "Δεν υπάρχουν αποθηκευμένα favorite ships σε αυτή τη συσκευή, οπότε με αυτό το mode ο builder μπορεί να επιστρέψει μόνο ομάδες χωρίς ship.",
+        "withCount": "Περιορίζει το manual ship confirmation και το auto ship selection στα {{count}} αποθηκευμένα favorite ships σου."
+      }
     }
   },
   "abilityRequirements": {
@@ -276,7 +283,9 @@
     },
     "shipSupport": {
       "default": "Τα excluded ships βγαίνουν και από το manual ship override και από το auto recommendation.",
-      "withCount": "{{count}} ships είναι excluded αυτή τη στιγμή."
+      "withCount": "{{count}} ships είναι excluded αυτή τη στιγμή.",
+      "favoritesOnly": "Εδώ εμφανίζονται μόνο τα {{count}} favorite ships σου όσο είναι ενεργό το favorite ship mode.",
+      "favoriteShipsEmpty": "Δεν υπάρχουν ακόμα favorite ships, οπότε αυτή η λίστα ship excludes είναι προσωρινά κενή."
     },
     "selectionSupport": {
       "removesLockedFrom": "Αν κάνεις exclude αυτόν τον character, θα αφαιρεθεί από τα {{slots}}.",
@@ -292,6 +301,12 @@
     "emptySelectionLabel": "Auto ship recommendation",
     "emptySearch": "Δεν βρέθηκαν ships στο current ship search.",
     "excluded": "Αυτό το ship είναι excluded και δεν μπορεί να επιβεβαιωθεί ως manual ship.",
+    "favoriteOnly": {
+      "blocked": "Μόνο τα favorite ships μπορούν να επιβεβαιωθούν όσο είναι ενεργό το favorite ship mode.",
+      "noFavorites": "Δεν υπάρχουν αποθηκευμένα favorite ships ακόμη, οπότε η generated ομάδα έμεινε χωρίς ship.",
+      "noneEligible": "Δεν έμεινε διαθέσιμο favorite ship μετά τα exclusions, οπότε η generated ομάδα έμεινε χωρίς ship.",
+      "noShipSelected": "Δεν μπόρεσε να επιλεγεί favorite ship για το current αποτέλεσμα, οπότε η generated ομάδα έμεινε χωρίς ship."
+    },
     "manualBadge": "Manual ship",
     "manualOverride": "Ενεργό manual ship override: {{name}}",
     "openAction": "Επιλογή ship",

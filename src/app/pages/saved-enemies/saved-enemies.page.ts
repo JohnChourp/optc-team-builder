@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { type ViewWillEnter } from '@ionic/angular';
 import {
   IonButton,
+  IonCheckbox,
   IonContent,
   IonHeader,
   IonIcon,
@@ -102,6 +103,7 @@ interface SavedEnemiesImportFeedback {
   standalone: true,
   imports: [
     IonButton,
+    IonCheckbox,
     IonContent,
     IonHeader,
     IonIcon,
@@ -129,6 +131,19 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly savedEnemies;
+  public readonly selectedEnemyIds = signal<string[]>([]);
+  public readonly selectedEnemyIdSet = computed(() => new Set(this.selectedEnemyIds()));
+  public readonly selectedCount = computed(() => this.selectedEnemyIds().length);
+  public readonly hasSelection = computed(() => this.selectedCount() > 0);
+  public readonly allSelected = computed(() => {
+    const savedEnemies = this.savedEnemies();
+    const selectedEnemyIdSet = this.selectedEnemyIdSet();
+
+    return (
+      savedEnemies.length > 0 &&
+      savedEnemies.every((enemy) => selectedEnemyIdSet.has(enemy.id))
+    );
+  });
   public readonly editorOpen = signal(false);
   public readonly editingEnemy = signal<SavedEnemy | null>(null);
   public readonly enemyName = signal('');
@@ -296,8 +311,36 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.loading.set(false);
   }
 
+  public ionViewDidEnter(): void {
+    console.log('SavedEnemiesPage component');
+  }
+
   public getEnemyBuilderQueryParams(enemy: SavedEnemy): { enemyId: string } {
     return { enemyId: enemy.id };
+  }
+
+  public isSelected(enemyId: string): boolean {
+    return this.selectedEnemyIdSet().has(enemyId);
+  }
+
+  public onEnemySelectionChange(
+    enemyId: string,
+    event: CustomEvent<{ checked: boolean }>,
+  ): void {
+    this.setEnemySelection(enemyId, event.detail.checked);
+  }
+
+  public onSelectAllChange(event: CustomEvent<{ checked: boolean }>): void {
+    if (event.detail.checked) {
+      this.selectedEnemyIds.set(this.savedEnemies().map((enemy) => enemy.id));
+      return;
+    }
+
+    this.selectedEnemyIds.set([]);
+  }
+
+  public resetSelection(): void {
+    this.selectedEnemyIds.set([]);
   }
 
   public openCreateModal(): void {
@@ -660,18 +703,41 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     }
 
     await this.userState.deleteEnemy(enemyId);
+    this.setEnemySelection(enemyId, false);
   }
 
-  public exportEnemy(enemy: SavedEnemy): void {
-    downloadSavedEnemiesExport(buildSavedEnemiesTransferPayload([enemy]));
-  }
-
-  public exportAllEnemies(): void {
-    if (!this.hasSavedEnemies()) {
+  public exportSelectedEnemies(): void {
+    if (!this.hasSelection()) {
       return;
     }
 
-    downloadSavedEnemiesExport(buildSavedEnemiesTransferPayload(this.savedEnemies()));
+    const selectedEnemyIdSet = this.selectedEnemyIdSet();
+
+    downloadSavedEnemiesExport(
+      buildSavedEnemiesTransferPayload(
+        this.savedEnemies().filter((enemy) => selectedEnemyIdSet.has(enemy.id)),
+      ),
+    );
+  }
+
+  public async confirmAndDeleteSelectedEnemies(): Promise<void> {
+    const selectedEnemyIds = this.selectedEnemyIds();
+
+    if (
+      !selectedEnemyIds.length ||
+      !this.confirmDelete(
+        this.i18n.translate(
+          'confirm.deleteSelected',
+          { count: selectedEnemyIds.length },
+          'saved-enemies',
+        ),
+      )
+    ) {
+      return;
+    }
+
+    await this.userState.deleteEnemies(selectedEnemyIds);
+    this.selectedEnemyIds.set([]);
   }
 
   private buildImportFeedback(stats: {
@@ -953,6 +1019,29 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     }
 
     return [];
+  }
+
+  private setEnemySelection(enemyId: string, checked: boolean): void {
+    const normalizedEnemyId = enemyId.trim();
+
+    if (!normalizedEnemyId.length) {
+      return;
+    }
+
+    const selectedEnemyIds = this.selectedEnemyIds();
+
+    if (checked) {
+      if (selectedEnemyIds.includes(normalizedEnemyId)) {
+        return;
+      }
+
+      this.selectedEnemyIds.set([...selectedEnemyIds, normalizedEnemyId]);
+      return;
+    }
+
+    this.selectedEnemyIds.set(
+      selectedEnemyIds.filter((selectedEnemyId) => selectedEnemyId !== normalizedEnemyId),
+    );
   }
 
   private confirmDelete(message: string): boolean {

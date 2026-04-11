@@ -5,7 +5,6 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   buildSavedEnemiesExportFilename,
   buildSavedEnemiesTransferPayload,
-  buildSavedEnemyExportFilename,
   downloadSavedEnemiesExport,
   parseSavedEnemiesImportPayload,
   sanitizeSavedEnemiesImportPayload,
@@ -71,12 +70,6 @@ describe('Saved enemies transfer helpers', () => {
     );
   });
 
-  it('builds the single export filename with a sanitized enemy name', () => {
-    expect(buildSavedEnemyExportFilename(' Forest Boss / 5* ', '2026-03-25T14:05:09.000Z')).toBe(
-      'saved-enemy-forest-boss-5-20260325-140509.json',
-    );
-  });
-
   it('does not start a download when the payload is missing', () => {
     const dom = new JSDOM('<!doctype html><html><body></body></html>');
     const urlRef = {
@@ -90,7 +83,7 @@ describe('Saved enemies transfer helpers', () => {
     expect(urlRef.revokeObjectURL).not.toHaveBeenCalled();
   });
 
-  it('downloads a single enemy export with the single-enemy filename', async () => {
+  it('downloads a saved enemies export with the shared bulk filename for a single record', async () => {
     const dom = new JSDOM('<!doctype html><html><body></body></html>');
     const payload = buildSavedEnemiesTransferPayload(
       [buildSavedEnemy()],
@@ -120,6 +113,9 @@ describe('Saved enemies transfer helpers', () => {
     >;
 
     expect(exportedJson.enemies).toHaveLength(1);
+    expect(buildSavedEnemiesExportFilename(payload.exportedAt)).toBe(
+      'saved-enemies-20260325-140509.json',
+    );
   });
 
   it('downloads a bulk export with the shared saved-enemies filename', () => {

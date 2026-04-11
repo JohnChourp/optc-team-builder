@@ -7,6 +7,10 @@
     "title": "Κατάλογος ships"
   },
   "eyebrow": "Επιλογή ship",
+  "favorites": {
+    "addAria": "Προσθήκη ship στα favorites",
+    "removeAria": "Αφαίρεση ship από τα favorites"
+  },
   "selected": {
     "emptyState": "Επιβεβαίωσε για να μείνει κενή η επιλογή ship.",
     "shipReady": "Αυτό το ship θα εφαρμοστεί όταν πατήσεις επιβεβαίωση.",

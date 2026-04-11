@@ -70,6 +70,10 @@ export class CharacterDetailPage implements OnInit {
     this.loading.set(false);
   }
 
+  public ionViewDidEnter(): void {
+    console.log("CharacterDetailPage component");
+  }
+
   public async toggleFavorite(characterId: number): Promise<void> {
     await this.userState.toggleFavorite(characterId);
   }

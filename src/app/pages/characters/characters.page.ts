@@ -149,6 +149,10 @@ export class CharactersPage implements OnInit {
     await this.loadCharacters(true);
   }
 
+  public ionViewDidEnter(): void {
+    console.log('CharactersPage component');
+  }
+
   public async onSearchChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
     this.searchTerm.set((event.detail.value ?? '').trim());
     await this.loadCharacters(true);

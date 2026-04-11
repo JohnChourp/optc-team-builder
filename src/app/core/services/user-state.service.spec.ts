@@ -17,6 +17,40 @@ describe('UserStateService saved teams', () => {
     vi.clearAllMocks();
   });
 
+  it('toggles favorite ships and persists the normalized order', async () => {
+    const { service, setCalls } = await createService([], [], [9001]);
+
+    await service.toggleShipFavorite(9002);
+
+    expect(service.favoriteShipIds()).toEqual([9002, 9001]);
+    expect(setCalls.at(-1)).toEqual({
+      key: 'favoriteShipIds',
+      value: JSON.stringify([9002, 9001]),
+    });
+
+    await service.toggleShipFavorite(9001);
+
+    expect(service.favoriteShipIds()).toEqual([9002]);
+    expect(setCalls.at(-1)).toEqual({
+      key: 'favoriteShipIds',
+      value: JSON.stringify([9002]),
+    });
+  });
+
+  it('hydrates and overwrites favorite ship ids with normalized values', async () => {
+    const { service, setCalls } = await createService([], [], [9002, 9002, -1, 9001]);
+
+    expect(service.favoriteShipIds()).toEqual([9002, 9002, -1, 9001]);
+
+    await service.setFavoriteShipIds([9003, 9003, 0, -1, 9001]);
+
+    expect(service.favoriteShipIds()).toEqual([9003, 9001]);
+    expect(setCalls.at(-1)).toEqual({
+      key: 'favoriteShipIds',
+      value: JSON.stringify([9003, 9001]),
+    });
+  });
+
   it('deletes only the requested saved teams and persists the next state', async () => {
     const { service, setCalls } = await createService([
       createTeam('team-1', 'Slashers'),
@@ -240,9 +274,14 @@ describe('UserStateService saved teams', () => {
   });
 });
 
-async function createService(storedTeams: unknown[], storedEnemies: unknown[] = []) {
+async function createService(
+  storedTeams: unknown[],
+  storedEnemies: unknown[] = [],
+  storedFavoriteShipIds: number[] = [],
+) {
   const store = new Map<string, string>([
     ['favoriteCharacterIds', JSON.stringify([])],
+    ['favoriteShipIds', JSON.stringify(storedFavoriteShipIds)],
     ['recentCharacterIds', JSON.stringify([])],
     ['savedTeams', JSON.stringify(storedTeams)],
     ['savedEnemies', JSON.stringify(storedEnemies)],

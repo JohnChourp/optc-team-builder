@@ -7,6 +7,7 @@ import { AppI18nService } from './app-i18n.service';
 import { normalizeEnemyMechanicRequirements } from './enemy-mechanic-draft.utils';
 
 const FAVORITES_KEY = 'favoriteCharacterIds';
+const FAVORITE_SHIPS_KEY = 'favoriteShipIds';
 const RECENTS_KEY = 'recentCharacterIds';
 const SAVED_TEAMS_KEY = 'savedTeams';
 const SAVED_ENEMIES_KEY = 'savedEnemies';
@@ -17,6 +18,7 @@ const LEGACY_ABILITY_KEY_ALIASES: Record<string, string> = {
 @Injectable({ providedIn: 'root' })
 export class UserStateService {
   public readonly favoriteCharacterIds = signal<number[]>([]);
+  public readonly favoriteShipIds = signal<number[]>([]);
   public readonly recentCharacterIds = signal<number[]>([]);
   public readonly savedTeams = signal<SavedTeam[]>([]);
   public readonly savedEnemies = signal<SavedEnemy[]>([]);
@@ -48,6 +50,25 @@ export class UserStateService {
 
     this.favoriteCharacterIds.set(next);
     await this.persistJson(FAVORITES_KEY, next);
+  }
+
+  public async toggleShipFavorite(shipId: number): Promise<void> {
+    await this.ready();
+    const current = this.favoriteShipIds();
+    const next = current.includes(shipId)
+      ? current.filter((value) => value !== shipId)
+      : [shipId, ...current];
+
+    this.favoriteShipIds.set(next);
+    await this.persistJson(FAVORITE_SHIPS_KEY, next);
+  }
+
+  public async setFavoriteShipIds(shipIds: number[]): Promise<void> {
+    await this.ready();
+    const next = [...new Set(shipIds.filter((value) => Number.isInteger(value) && value > 0))];
+
+    this.favoriteShipIds.set(next);
+    await this.persistJson(FAVORITE_SHIPS_KEY, next);
   }
 
   public async markRecent(characterId: number): Promise<void> {
@@ -271,14 +292,16 @@ export class UserStateService {
   }
 
   private async hydrate(): Promise<void> {
-    const [favorites, recents, teams, enemies] = await Promise.all([
+    const [favorites, favoriteShips, recents, teams, enemies] = await Promise.all([
       this.readJson<number[]>(FAVORITES_KEY, []),
+      this.readJson<number[]>(FAVORITE_SHIPS_KEY, []),
       this.readJson<number[]>(RECENTS_KEY, []),
       this.readJson<SavedTeam[]>(SAVED_TEAMS_KEY, []),
       this.readJson<SavedEnemy[]>(SAVED_ENEMIES_KEY, []),
     ]);
 
     this.favoriteCharacterIds.set(favorites);
+    this.favoriteShipIds.set(favoriteShips);
     this.recentCharacterIds.set(recents);
     this.savedTeams.set(teams.map((team) => this.normalizeSavedTeam(team)));
     this.savedEnemies.set(enemies.map((enemy) => this.normalizeSavedEnemy(enemy)));

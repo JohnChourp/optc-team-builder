@@ -61,7 +61,7 @@ export interface AutoTeamSelectionShipSummary {
 }
 
 export interface AutoTeamSelectionExportPayload {
-  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
   exportedAt: string;
   source: "auto-team-builder";
   exportType: "preset";
@@ -77,6 +77,8 @@ export interface AutoTeamSelectionExportPayload {
     requireSameCaptainAndFriendCaptain: boolean;
     favoritesOnly: boolean;
     favoriteCount: number;
+    favoriteShipsOnly?: boolean;
+    favoriteShipCount?: number;
   };
   manualSelection: {
     manualSlots: AutoBuildManualSlotSelection[];
@@ -105,6 +107,7 @@ export interface AutoTeamSelectionImportState {
   requireUniqueBaseCharacterNames: boolean;
   requireSameCaptainAndFriendCaptain: boolean;
   favoritesOnly: boolean;
+  favoriteShipsOnly: boolean;
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   excludedCharacterIds: number[];
@@ -154,6 +157,8 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   requireSameCaptainAndFriendCaptain?: boolean;
   favoritesOnly: boolean;
   favoriteCount: number;
+  favoriteShipsOnly?: boolean;
+  favoriteShipCount?: number;
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   lockedCharacters: CharacterListItem[];
@@ -398,7 +403,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload["schemaVersion"] !== 5 &&
       parsedPayload["schemaVersion"] !== 6 &&
       parsedPayload["schemaVersion"] !== 7 &&
-      parsedPayload["schemaVersion"] !== 8) ||
+      parsedPayload["schemaVersion"] !== 8 &&
+      parsedPayload["schemaVersion"] !== 9) ||
     parsedPayload["source"] !== "auto-team-builder" ||
     parsedPayload["exportType"] !== "preset"
   ) {
@@ -439,6 +445,14 @@ export function parseAutoTeamSelectionImportPayload(
     ) ||
     typeof filters["favoritesOnly"] !== "boolean" ||
     typeof filters["favoriteCount"] !== "number" ||
+    !(
+      filters["favoriteShipsOnly"] === undefined ||
+      typeof filters["favoriteShipsOnly"] === "boolean"
+    ) ||
+    !(
+      filters["favoriteShipCount"] === undefined ||
+      typeof filters["favoriteShipCount"] === "number"
+    ) ||
     !Array.isArray(manualSelection["lockedCharacterIds"]) ||
     !(
       manualSelection["excludedCharacterIds"] === undefined ||
@@ -810,6 +824,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
       requireSameCaptainAndFriendCaptain:
         payload.filters.requireSameCaptainAndFriendCaptain === true,
       favoritesOnly: payload.filters.favoritesOnly,
+      favoriteShipsOnly: payload.filters.favoriteShipsOnly === true,
       manualSlots: normalizedManualSlots,
       lockedCharacterIds: derivedManualSelection.lockedCharacterIds,
       excludedCharacterIds,
@@ -876,6 +891,8 @@ export function buildAutoTeamSelectionExportPayload({
   requireSameCaptainAndFriendCaptain = false,
   favoritesOnly,
   favoriteCount,
+  favoriteShipsOnly = false,
+  favoriteShipCount = 0,
   manualSlots,
   lockedCharacterIds,
   lockedCharacters,
@@ -896,7 +913,7 @@ export function buildAutoTeamSelectionExportPayload({
   }));
 
   return {
-    schemaVersion: 8,
+    schemaVersion: 9,
     exportedAt,
     source: "auto-team-builder",
     exportType: "preset",
@@ -920,6 +937,8 @@ export function buildAutoTeamSelectionExportPayload({
       requireSameCaptainAndFriendCaptain,
       favoritesOnly,
       favoriteCount,
+      favoriteShipsOnly,
+      favoriteShipCount,
     },
     manualSelection: {
       manualSlots: normalizedManualSlots,

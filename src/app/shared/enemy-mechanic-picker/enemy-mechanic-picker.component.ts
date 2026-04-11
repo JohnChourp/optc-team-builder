@@ -153,6 +153,7 @@ export class EnemyMechanicPickerComponent implements OnChanges {
     }
 
     if (changes['isOpen'] && this.isOpen) {
+      console.log('EnemyMechanicPickerComponent component');
       this.searchTerm.set('');
       this.workingDrafts.set(cloneEnemyMechanicDrafts(this.drafts));
     }

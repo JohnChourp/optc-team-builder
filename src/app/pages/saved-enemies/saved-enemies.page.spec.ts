@@ -25,6 +25,7 @@ type SavedEnemiesPagePrivateApi = SavedEnemiesPage & {
 
 vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
+  IonCheckbox: class {},
   IonButtons: class {},
   IonContent: class {},
   IonFooter: class {},
@@ -87,6 +88,21 @@ describe('SavedEnemiesPage', () => {
     expect(page.selectedClasses()).toEqual(['Fighter']);
     expect(page.enemyMechanicDrafts()).toHaveLength(1);
     expect(page.requiredAbilityDrafts()).toHaveLength(1);
+  });
+
+  it('selects all enemies and enables bulk actions', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    page.onSelectAllChange({
+      detail: {
+        checked: true,
+      },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.selectedEnemyIds()).toEqual(['enemy-1', 'enemy-2']);
+    expect(page.hasSelection()).toBe(true);
+    expect(page.allSelected()).toBe(true);
   });
 
   it('toggles select all and clear for types from the create modal', () => {
@@ -384,46 +400,57 @@ describe('SavedEnemiesPage', () => {
     expect(page.enemyImageErrorMessage()).toBe('Selected character image failed');
   });
 
-  it('deletes a saved enemy after confirmation', async () => {
+  it('deletes a saved enemy after confirmation and prunes its selection', async () => {
     const confirmSpy = vi.fn().mockReturnValue(true);
     vi.stubGlobal('confirm', confirmSpy);
     const { page, userState } = createPage();
 
+    page.selectedEnemyIds.set(['enemy-1', 'enemy-2']);
     await page.confirmAndDeleteEnemy('enemy-1');
 
     expect(confirmSpy).toHaveBeenCalledOnce();
     expect(userState.deleteEnemy).toHaveBeenCalledWith('enemy-1');
+    expect(page.selectedEnemyIds()).toEqual(['enemy-2']);
   });
 
-  it('exports a single saved enemy card as a saved-enemies payload', () => {
+  it('exports only the selected saved enemies as a saved-enemies payload', async () => {
     const { page } = createPage();
 
-    page.exportEnemy(page.savedEnemies()[0]!);
+    await page.ngOnInit();
+    page.onEnemySelectionChange('enemy-2', {
+      detail: {
+        checked: true,
+      },
+    } as CustomEvent<{ checked: boolean }>);
+
+    page.exportSelectedEnemies();
 
     expect(vi.mocked(downloadSavedEnemiesExport)).toHaveBeenCalledWith(
       expect.objectContaining({
         schemaVersion: 1,
         source: 'saved-enemies',
-        enemies: [expect.objectContaining({ id: 'enemy-1' })],
+        enemies: [expect.objectContaining({ id: 'enemy-2' })],
       }),
     );
   });
 
-  it('exports all saved enemies together as a saved-enemies payload', () => {
-    const { page } = createPage();
+  it('deletes the selected enemies in bulk after confirmation', async () => {
+    const confirmSpy = vi.fn().mockReturnValue(true);
+    vi.stubGlobal('confirm', confirmSpy);
+    const { page, userState } = createPage();
 
-    page.exportAllEnemies();
+    await page.ngOnInit();
+    page.onSelectAllChange({
+      detail: {
+        checked: true,
+      },
+    } as CustomEvent<{ checked: boolean }>);
 
-    expect(vi.mocked(downloadSavedEnemiesExport)).toHaveBeenCalledWith(
-      expect.objectContaining({
-        schemaVersion: 1,
-        source: 'saved-enemies',
-        enemies: [
-          expect.objectContaining({ id: 'enemy-1' }),
-          expect.objectContaining({ id: 'enemy-2' }),
-        ],
-      }),
-    );
+    await page.confirmAndDeleteSelectedEnemies();
+
+    expect(confirmSpy).toHaveBeenCalledOnce();
+    expect(userState.deleteEnemies).toHaveBeenCalledWith(['enemy-1', 'enemy-2']);
+    expect(page.selectedEnemyIds()).toEqual([]);
   });
 
   it('imports a saved enemies export file and merges by id', async () => {
@@ -509,17 +536,25 @@ describe('SavedEnemiesPage', () => {
 
     expect(template).toContain("t('hero.createCta')");
     expect(template).toContain("t('bulkImport.action')");
-    expect(template).toContain("t('actions.export')");
     expect(template).toContain("t('actions.openBuilder')");
-    expect(template).toContain("t('list.exportAll')");
+    expect(template).toContain("t('selection.selectAll')");
+    expect(template).toContain("t('tools.export')");
+    expect(template).toContain("t('tools.delete')");
+    expect(template).not.toContain("t('list.exportAll')");
+    expect(template).not.toContain("t('list.addAnother')");
     expect(template).toContain("t('editor.paste.title')");
     expect(template).toContain("t('editor.paste.actions.parse')");
     expect(template).toContain("t('editor.paste.actions.apply')");
     expect(template).toContain("t('editor.image.title')");
     expect(template).toContain("t('editor.image.chooseCharacter')");
     expect(template).toContain('(click)="openImportModal()"');
-    expect(template).toContain('(click)="exportEnemy(enemy)"');
-    expect(template).toContain('(click)="exportAllEnemies()"');
+    expect(template).toContain('(click)="resetSelection()"');
+    expect(template).toContain('(click)="exportSelectedEnemies()"');
+    expect(template).toContain('(click)="confirmAndDeleteSelectedEnemies()"');
+    expect(template).toMatch(
+      /<div class="saved-enemies-tool-actions">[\s\S]*\(click\)="exportSelectedEnemies\(\)"[\s\S]*\(click\)="openImportModal\(\)"[\s\S]*\(click\)="confirmAndDeleteSelectedEnemies\(\)"/,
+    );
+    expect(template).not.toContain('(click)="exportAllEnemies()"');
     expect(template).toContain('onImportFileSelected($event, importFileInput)');
     expect(template).toContain('(drop)="onImportDrop($event)"');
     expect(template).toContain('(ionInput)="onEnemyPasteTextChange($event)"');
@@ -528,6 +563,7 @@ describe('SavedEnemiesPage', () => {
     expect(template).toContain('onEnemyImageSelected($event, enemyImageInput)');
     expect(template).toContain('(click)="openCharacterImagePicker()"');
     expect(template).toContain('[queryParams]="getEnemyBuilderQueryParams(enemy)"');
+    expect(template).toContain('ion-checkbox');
     expect(template).toContain('(click)="selectAllTypes()"');
     expect(template).toContain('(click)="selectAllClasses()"');
     expect(template).toContain('selectAllTypesButtonLabel()');
@@ -576,6 +612,10 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
     }),
     deleteEnemy: vi.fn().mockImplementation(async (enemyId: string) => {
       savedEnemies.set(savedEnemies().filter((enemy) => enemy.id !== enemyId));
+    }),
+    deleteEnemies: vi.fn().mockImplementation(async (enemyIds: string[]) => {
+      const targetEnemyIds = new Set(enemyIds);
+      savedEnemies.set(savedEnemies().filter((enemy) => !targetEnemyIds.has(enemy.id)));
     }),
     mergeImportedEnemies: vi
       .fn()
@@ -718,6 +758,10 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
   const i18n = {
     preloadScope: vi.fn().mockResolvedValue(undefined),
     translate: vi.fn((key: string, params?: Record<string, string | number>) => {
+      if (key === 'confirm.deleteSelected') {
+        return `Delete ${params?.['count'] ?? 0} selected enemies`;
+      }
+
       if (key === 'confirm.deleteSingle') {
         return `Delete ${params?.['name'] ?? ''}`;
       }

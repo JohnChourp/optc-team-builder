@@ -17,4 +17,8 @@ export class TabsPage {
   public readonly autoTeamIcon = flashOutline;
   public readonly savedTeamsIcon = albumsOutline;
   public readonly settingsIcon = cogOutline;
+
+  public ionViewDidEnter(): void {
+    console.log("TabsPage component");
+  }
 }

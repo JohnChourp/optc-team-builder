@@ -57,6 +57,10 @@ export class SettingsPage implements OnInit {
     this.manifest.set(await this.repository.getDatasetManifest());
   }
 
+  public ionViewDidEnter(): void {
+    console.log("SettingsPage component");
+  }
+
   public async onLanguageChange(
     event: CustomEvent<{ value?: SupportedLanguage | null }>,
   ): Promise<void> {

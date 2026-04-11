@@ -16,9 +16,11 @@
           <ion-button fill="outline" color="light" [routerLink]="['/tabs/saved-teams']">
             {{ t('hero.savedTeamsCta') }}
           </ion-button>
-          <ion-button fill="outline" color="light" (click)="openImportModal()">
-            {{ t('bulkImport.action') }}
-          </ion-button>
+          @if (!hasSavedEnemies()) {
+            <ion-button fill="outline" color="light" (click)="openImportModal()">
+              {{ t('bulkImport.action') }}
+            </ion-button>
+          }
           <ion-button color="warning" (click)="openCreateModal()">
             <ion-icon slot="start" [icon]="addIcon"></ion-icon>
             {{ t('hero.createCta') }}
@@ -50,12 +52,43 @@
               <h2>{{ t('list.title') }}</h2>
               <span>{{ t('list.total', { count: savedEnemies().length }) }}</span>
             </div>
-            <div class="card-actions">
-              <ion-button fill="outline" color="light" (click)="exportAllEnemies()">
-                {{ t('list.exportAll') }}
+          </div>
+          <div class="saved-enemies-tools">
+            <div class="saved-enemies-selection">
+              <label class="saved-enemies-select-all">
+                <ion-checkbox
+                  [checked]="allSelected()"
+                  [attr.aria-label]="t('selection.selectAllAria')"
+                  (ionChange)="onSelectAllChange($event)"
+                ></ion-checkbox>
+                <span>{{ t('selection.selectAll') }}</span>
+              </label>
+              <span class="saved-enemies-selection-count">{{
+                t('selection.selected', { count: selectedCount() })
+              }}</span>
+            </div>
+            <div class="saved-enemies-tool-actions">
+              <ion-button fill="outline" color="light" (click)="resetSelection()">
+                {{ 'common.actions.reset' | transloco }}
               </ion-button>
-              <ion-button fill="outline" color="warning" (click)="openCreateModal()">
-                {{ t('list.addAnother') }}
+              <ion-button
+                fill="outline"
+                color="light"
+                [disabled]="!hasSelection()"
+                (click)="exportSelectedEnemies()"
+              >
+                {{ t('tools.export') }}
+              </ion-button>
+              <ion-button fill="outline" color="light" (click)="openImportModal()">
+                {{ t('bulkImport.action') }}
+              </ion-button>
+              <ion-button
+                fill="outline"
+                color="danger"
+                [disabled]="!hasSelection()"
+                (click)="confirmAndDeleteSelectedEnemies()"
+              >
+                {{ t('tools.delete') }}
               </ion-button>
             </div>
           </div>
@@ -63,6 +96,13 @@
             @for (enemy of savedEnemies(); track enemy.id) {
               <article>
                 <div class="saved-enemy-head">
+                  <label class="saved-enemy-check">
+                    <ion-checkbox
+                      [checked]="isSelected(enemy.id)"
+                      [attr.aria-label]="t('selection.enemyAria', { name: enemy.name })"
+                      (ionChange)="onEnemySelectionChange(enemy.id, $event)"
+                    ></ion-checkbox>
+                  </label>
                   <div class="saved-enemy-main">
                     @if (enemy.imageDataUrl) {
                       <div class="saved-enemy-thumb">
@@ -82,9 +122,6 @@
                       [queryParams]="getEnemyBuilderQueryParams(enemy)"
                     >
                       {{ t('actions.openBuilder') }}
-                    </ion-button>
-                    <ion-button fill="clear" color="light" (click)="exportEnemy(enemy)">
-                      {{ t('actions.export') }}
                     </ion-button>
                     <ion-button fill="clear" color="light" (click)="openEditModal(enemy)">
                       {{ t('actions.edit') }}

@@ -294,6 +294,8 @@ function createInput(
     requireUniqueBaseCharacterNames: false,
     requireSameCaptainAndFriendCaptain: false,
     favoritesOnly: false,
+    favoriteShipsOnly: false,
+    favoriteShipIds: [],
     manualSlots: createEmptyAutoBuildManualSlots(),
     lockedCharacterIds: [],
     excludedCharacterIds: [],

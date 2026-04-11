@@ -84,6 +84,13 @@
         "empty": "No favorites are currently saved on this device, so favorite-only auto-fill is unavailable.",
         "withCount": "Limit auto-filled slots to your {{count}} saved favorite units. Manual picks can still use any unit."
       }
+    },
+    "favoriteShipsOnly": {
+      "toggle": "Use favorite ships only",
+      "support": {
+        "empty": "No favorite ships are currently saved on this device, so the builder can only return teams without a ship while this mode is enabled.",
+        "withCount": "Limit manual ship confirmation and auto ship selection to your {{count}} saved favorite ships."
+      }
     }
   },
   "abilityRequirements": {
@@ -276,7 +283,9 @@
     },
     "shipSupport": {
       "default": "Excluded ships are removed from both manual ship override and auto recommendation.",
-      "withCount": "{{count}} ships are currently excluded."
+      "withCount": "{{count}} ships are currently excluded.",
+      "favoritesOnly": "Only your {{count}} favorite ships are shown here while favorite ship mode is enabled.",
+      "favoriteShipsEmpty": "No favorite ships are saved yet, so this ship exclude list is currently empty."
     },
     "selectionSupport": {
       "removesLockedFrom": "Excluding this character will remove it from {{slots}}.",
@@ -292,6 +301,12 @@
     "emptySelectionLabel": "Auto ship recommendation",
     "emptySearch": "No ships matched the current ship search.",
     "excluded": "This ship is excluded and cannot be confirmed as the manual ship.",
+    "favoriteOnly": {
+      "blocked": "Only favorite ships can be confirmed while favorite ship mode is enabled.",
+      "noFavorites": "No favorite ships are saved yet, so the generated team was left without a ship.",
+      "noneEligible": "No eligible favorite ship remained after exclusions, so the generated team was left without a ship.",
+      "noShipSelected": "No favorite ship could be selected for the current result, so the generated team was left without a ship."
+    },
     "manualBadge": "Manual ship",
     "manualOverride": "Manual ship override active: {{name}}",
     "openAction": "Choose ship",

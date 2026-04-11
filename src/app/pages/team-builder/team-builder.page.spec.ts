@@ -74,6 +74,14 @@ describe('TeamBuilderPage', () => {
     expect(page.shipPickerOpen()).toBe(false);
   });
 
+  it('toggles ship favorites through the shared picker contract', async () => {
+    const { page, userState } = createPage();
+
+    await page.toggleShipFavorite(9002);
+
+    expect(userState.toggleShipFavorite).toHaveBeenCalledWith(9002);
+  });
+
   it('keeps slot selection independent from detail navigation availability', () => {
     const { page } = createPage();
 
@@ -95,6 +103,8 @@ describe('TeamBuilderPage', () => {
     expect(template.match(/common\.actions\.viewDetails/g)).toHaveLength(1);
     expect(template).toContain('(click)="assignCharacter(candidate)"');
     expect(template).toContain('<app-ship-picker');
+    expect(template).toContain('[favoriteShipIds]="favoriteShipIds()"');
+    expect(template).toContain('(toggleFavoriteShip)="toggleShipFavorite($event)"');
     expect(template).not.toContain('<ion-select');
   });
 
@@ -139,12 +149,14 @@ function createPage() {
   const userState = {
     ready: vi.fn().mockResolvedValue(undefined),
     favoriteCharacterIds: signal<number[]>([]),
+    favoriteShipIds: signal<number[]>([]),
     savedTeams: signal([]),
     saveTeam: vi.fn().mockResolvedValue({
       id: 'saved-team-1',
     }),
     deleteTeam: vi.fn(),
     toggleFavorite: vi.fn(),
+    toggleShipFavorite: vi.fn().mockResolvedValue(undefined),
   };
   const repository = {
     getShips: vi.fn().mockResolvedValue([]),
