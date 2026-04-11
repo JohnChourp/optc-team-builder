@@ -506,6 +506,56 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(page.canExcludeShip(9001)).toBe(true);
   });
 
+  it('excluding a generated result character adds it to excludes, removes manual locks, and clears the current result', async () => {
+    const { page } = await createPage();
+    const currentResult = createAutoBuildResult();
+
+    await page.ngOnInit();
+    page.result.set(currentResult);
+    page.manualSlots.set(
+      createManualSlots({
+        captain: [101],
+      }),
+    );
+
+    page.toggleExcludedCharacter(currentResult.slots[0]!.character);
+
+    expect(page.excludedCharacterIds()).toEqual([101]);
+    expect(page.manualSlots()).toEqual(createManualSlots());
+    expect(page.result()).toBeNull();
+  });
+
+  it('excluding the current result ship recomputes the visible ship selection immediately', async () => {
+    const { page } = await createPage();
+    const currentResult = createAutoBuildResult();
+
+    await page.ngOnInit();
+    page.selectedManualShipId.set(9001);
+    page.result.set({
+      ...currentResult,
+      input: {
+        ...currentResult.input,
+        manualShipId: 9001,
+      },
+      requestedInput: {
+        ...currentResult.requestedInput,
+        manualShipId: 9001,
+      },
+      shipSelection: {
+        ship: createShipRecord(9001),
+        source: 'manual',
+        reasonChips: ['Manual ship'],
+      },
+    });
+
+    page.toggleExcludedShip(9001);
+
+    expect(page.selectedManualShipId()).toBeNull();
+    expect(page.excludedShipIds()).toEqual([9001]);
+    expect(page.result()?.shipSelection?.ship.id).toBe(9002);
+    expect(page.result()?.shipSelection?.source).toBe('recommended');
+  });
+
   it('describes favorites mode as favorite auto-fill for open slots in result copy', async () => {
     const { page } = await createPage();
     const result = createAutoBuildResult();
@@ -705,6 +755,11 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(template).toContain('@if (ship.thumbUrl; as thumbUrl)');
     expect(template).toContain('[class.ship-candidate-icon--fallback]="!shipCard.ship.thumbUrl"');
     expect(template).toContain('@if (shipCard.ship.thumbUrl; as thumbUrl)');
+    expect(template).toContain("(click)=\"toggleExcludedShip(shipSelection.ship.id)\"");
+    expect(template).toContain("(click)=\"toggleExcludedCharacter(slot.character)\"");
+    expect(template).toContain("t('exclude.actions.addShip')");
+    expect(template).toContain("t('exclude.actions.add')");
+    expect(template).toContain("@if (current.shipSelection; as shipSelection)");
   });
 
   it('resets the full page state through resetPage', async () => {

@@ -1116,6 +1116,13 @@
   margin-top: 0;
 }
 
+.result-ship-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
 .result-card {
   display: grid;
   gap: 14px;
@@ -1201,6 +1208,8 @@
 .result-card__actions {
   display: flex;
   justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .loading-card {

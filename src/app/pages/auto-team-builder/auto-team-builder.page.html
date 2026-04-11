@@ -1363,6 +1363,22 @@
                   </small>
                 }
               </div>
+              <div class="result-ship-card__actions">
+                <ion-button
+                  size="small"
+                  fill="outline"
+                  color="light"
+                  class="manual-candidate-action-button"
+                  [disabled]="
+                    building() ||
+                    isExcludedShip(shipSelection.ship.id) ||
+                    !canExcludeShip(shipSelection.ship.id)
+                  "
+                  (click)="toggleExcludedShip(shipSelection.ship.id)"
+                >
+                  {{ t('exclude.actions.addShip') }}
+                </ion-button>
+              </div>
             </div>
           </section>
         }
@@ -1425,6 +1441,20 @@
                       [routerLink]="getCharacterDetailLink(slot.character)"
                     >
                       {{ 'common.actions.viewDetails' | transloco }}
+                    </ion-button>
+                    <ion-button
+                      size="small"
+                      fill="outline"
+                      color="light"
+                      class="manual-candidate-action-button"
+                      [disabled]="
+                        building() ||
+                        isExcludedCharacter(slot.character.id) ||
+                        !canExcludeCharacter(slot.character.id)
+                      "
+                      (click)="toggleExcludedCharacter(slot.character)"
+                    >
+                      {{ t('exclude.actions.add') }}
                     </ion-button>
                   </div>
                 </div>
