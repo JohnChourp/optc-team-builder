@@ -69,6 +69,12 @@
   margin-bottom: 18px;
 }
 
+.saved-enemies-tools {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
 .section-head h2,
 .saved-enemy-copy p,
 .editor-modal-head p,
@@ -92,6 +98,33 @@
   min-width: 0;
 }
 
+.saved-enemies-selection,
+.saved-enemies-tool-actions,
+.saved-enemies-select-all {
+  display: flex;
+  align-items: center;
+}
+
+.saved-enemies-selection {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.saved-enemies-select-all {
+  gap: 10px;
+  color: #ffffff;
+}
+
+.saved-enemies-selection-count {
+  color: rgba(248, 251, 255, 0.66);
+  font-size: 0.92rem;
+}
+
+.saved-enemies-tool-actions {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .saved-enemy-list {
   display: grid;
   gap: 12px;
@@ -108,6 +141,11 @@
 .saved-enemy-copy {
   flex: 1;
   min-width: 0;
+}
+
+.saved-enemy-check {
+  display: inline-flex;
+  align-items: center;
 }
 
 .saved-enemy-thumb {
@@ -566,6 +604,7 @@
 }
 
 @media (max-width: 720px) {
+  .saved-enemies-selection,
   .saved-enemy-head,
   .saved-enemy-main,
   .section-head,

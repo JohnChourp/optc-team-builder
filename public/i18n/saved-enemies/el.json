@@ -1,19 +1,19 @@
 {
   "actions": {
     "edit": "Επεξεργασία",
-    "export": "Εξαγωγή",
     "openBuilder": "Άνοιγμα στον builder",
     "saveChanges": "Αποθήκευση αλλαγών",
     "saveEnemy": "Αποθήκευση εχθρού"
   },
   "confirm": {
+    "deleteSelected": "Να διαγραφούν {{count}} επιλεγμένοι εχθροί;",
     "deleteSingle": "Να διαγραφεί ο εχθρός \"{{name}}\";"
   },
   "bulkImport": {
     "action": "Import all",
     "eyebrow": "Bulk restore",
     "title": "Import saved enemies backup",
-    "copy": "Φόρτωσε JSON που έχει εξαχθεί από το Export all. Τα ίδια ids ενημερώνουν υπάρχοντα saved enemies και τα νέα ids προστίθενται μπροστά από τα υπόλοιπα.",
+    "copy": "Φόρτωσε JSON που έχει εξαχθεί από επιλεγμένα saved enemies. Τα ίδια ids ενημερώνουν υπάρχοντα saved enemies και τα νέα ids προστίθενται μπροστά από τα υπόλοιπα.",
     "dropzone": {
       "title": "Ρίξε εδώ το saved enemies JSON",
       "subtitle": "Ή πάτα για να διαλέξεις exported backup αρχείο."
@@ -178,12 +178,16 @@
     "title": "Φτιάξε reusable enemy presets και στείλ’ τα κατευθείαν στο Auto Team Builder."
   },
   "list": {
-    "addAnother": "Προσθήκη άλλου εχθρού",
-    "exportAll": "Εξαγωγή όλων",
     "title": "Saved enemies",
     "total": "{{count}} συνολικά"
   },
   "loading": "Φόρτωση saved enemies...",
+  "selection": {
+    "enemyAria": "Επιλογή του εχθρού {{name}}",
+    "selectAll": "Επίλεξε όλα",
+    "selectAllAria": "Επιλογή όλων των saved enemies",
+    "selected": "{{count}} επιλεγμένοι"
+  },
   "summary": {
     "classes": "Classes",
     "counters": "Counters",
@@ -196,6 +200,10 @@
     },
     "rules": "Κανόνες",
     "types": "Types"
+  },
+  "tools": {
+    "delete": "Διαγραφή επιλεγμένων",
+    "export": "Εξαγωγή επιλεγμένων"
   },
   "title": "Saved Enemies"
 }

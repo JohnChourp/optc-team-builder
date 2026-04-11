@@ -1,19 +1,19 @@
 {
   "actions": {
     "edit": "Edit",
-    "export": "Export",
     "openBuilder": "Open in builder",
     "saveChanges": "Save changes",
     "saveEnemy": "Save enemy"
   },
   "confirm": {
+    "deleteSelected": "Delete {{count}} selected enemies?",
     "deleteSingle": "Delete enemy \"{{name}}\"?"
   },
   "bulkImport": {
     "action": "Import all",
     "eyebrow": "Bulk restore",
     "title": "Import saved enemies backup",
-    "copy": "Load a JSON file exported from Export all. Matching ids update existing saved enemies and new ids are inserted ahead of the untouched local ones.",
+    "copy": "Load a JSON file exported from selected saved enemies. Matching ids update existing saved enemies and new ids are inserted ahead of the untouched local ones.",
     "dropzone": {
       "title": "Drop the saved enemies JSON here",
       "subtitle": "Or click to choose an exported backup file."
@@ -178,12 +178,16 @@
     "title": "Build reusable enemy presets and send them straight into Auto Team Builder."
   },
   "list": {
-    "addAnother": "Add another enemy",
-    "exportAll": "Export all",
     "title": "Saved enemies",
     "total": "{{count}} total"
   },
   "loading": "Loading saved enemies...",
+  "selection": {
+    "enemyAria": "Select enemy {{name}}",
+    "selectAll": "Select all",
+    "selectAllAria": "Select all saved enemies",
+    "selected": "{{count}} selected"
+  },
   "summary": {
     "classes": "Classes",
     "counters": "Counters",
@@ -196,6 +200,10 @@
     },
     "rules": "Rules",
     "types": "Types"
+  },
+  "tools": {
+    "delete": "Delete selected",
+    "export": "Export selected"
   },
   "title": "Saved Enemies"
 }

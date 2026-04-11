@@ -62,16 +62,6 @@ function buildTimestampSegment(exportedAt: string): string {
   );
 }
 
-function buildSafeNameSegment(value: string): string {
-  const normalizedValue = value
-    .trim()
-    .toLowerCase()
-    .replaceAll(/[^a-z0-9]+/g, "-")
-    .replaceAll(/^-+|-+$/g, "");
-
-  return normalizedValue.length > 0 ? normalizedValue : "untitled";
-}
-
 function normalizePositiveInteger(value: unknown): number | null {
   return typeof value === "number" && Number.isInteger(value) && value > 0 ? value : null;
 }
@@ -318,10 +308,6 @@ export function buildSavedEnemiesExportFilename(exportedAt: string): string {
   return `saved-enemies-${buildTimestampSegment(exportedAt)}.json`;
 }
 
-export function buildSavedEnemyExportFilename(enemyName: string, exportedAt: string): string {
-  return `saved-enemy-${buildSafeNameSegment(enemyName)}-${buildTimestampSegment(exportedAt)}.json`;
-}
-
 export function downloadSavedEnemiesExport(
   payload: SavedEnemiesTransferPayload | null,
   documentReference: Document = document,
@@ -337,12 +323,9 @@ export function downloadSavedEnemiesExport(
     }),
   );
   const anchor = documentReference.createElement("a");
-  const singleEnemy = payload.enemies.length === 1 ? payload.enemies[0] : null;
 
   anchor.href = objectUrl;
-  anchor.download = singleEnemy
-    ? buildSavedEnemyExportFilename(singleEnemy.name, payload.exportedAt)
-    : buildSavedEnemiesExportFilename(payload.exportedAt);
+  anchor.download = buildSavedEnemiesExportFilename(payload.exportedAt);
   anchor.style.display = "none";
   documentReference.body.append(anchor);
 
