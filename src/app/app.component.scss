@@ -55,11 +55,43 @@
 }
 
 .app-credit-badge--tabs {
-  bottom: calc(92px + env(safe-area-inset-bottom) + var(--app-bottom-bar-extra-offset));
+  right: auto;
+  bottom: calc(6px + env(safe-area-inset-bottom));
+  left: 50%;
+  z-index: 21;
+  min-height: 0;
+  max-width: min(calc(100vw - 28px), 240px);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: rgba(255, 244, 200, 0.56);
+  font-size: 0.56rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-decoration: none;
+  text-transform: uppercase;
+  text-wrap: nowrap;
+  backdrop-filter: none;
+  opacity: 0.82;
+  transform: translateX(-50%);
 }
 
 .app-credit-badge--standalone {
   bottom: calc(16px + env(safe-area-inset-bottom) + var(--app-bottom-bar-extra-offset));
+}
+
+.app-credit-badge--tabs:hover,
+.app-credit-badge--tabs:focus-visible {
+  border-color: transparent;
+  box-shadow: none;
+  color: rgba(255, 248, 221, 0.8);
+  filter: none;
+  text-decoration: none;
+  text-decoration-color: transparent;
+  transform: translateX(-50%);
 }
 
 @media (max-width: 640px) {
@@ -67,5 +99,11 @@
     right: 12px;
     left: 12px;
     max-width: none;
+  }
+
+  .app-credit-badge--tabs {
+    right: auto;
+    left: 50%;
+    max-width: calc(100vw - 28px);
   }
 }

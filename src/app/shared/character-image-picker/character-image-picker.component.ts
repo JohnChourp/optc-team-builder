@@ -11,7 +11,6 @@ import {
   IonSelectOption,
   IonSpinner,
   IonToolbar,
-  // eslint-disable-next-line import/no-unresolved
 } from "@ionic/angular/standalone";
 import { closeOutline, imagesOutline } from "ionicons/icons";
 
@@ -59,7 +58,6 @@ export class CharacterImagePickerComponent implements OnChanges {
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly characters = signal<CharacterListItem[]>([]);
   public readonly selectedCharacter = signal<CharacterListItem | null>(null);
-  /* eslint-disable unicorn/consistent-function-scoping */
   public readonly selectedCharacterId = computed(() => this.selectedCharacter()?.id ?? null);
   public readonly availableTypes = computed(() =>
     this.normalizeOptions(this.summary()?.availableTypes ?? []),
@@ -76,7 +74,6 @@ export class CharacterImagePickerComponent implements OnChanges {
 
     return [character.primaryClass, character.secondaryClass].filter(Boolean).join(" / ");
   });
-  /* eslint-enable unicorn/consistent-function-scoping */
 
   private dismissReason: "save" | "cancel" | null = null;
 
@@ -84,6 +81,7 @@ export class CharacterImagePickerComponent implements OnChanges {
 
   public ngOnChanges(changes: SimpleChanges): void {
     if (changes["isOpen"] && this.isOpen) {
+      console.log("CharacterImagePickerComponent component");
       this.dismissReason = null;
       this.resetState();
       void this.initializePicker();

@@ -56,6 +56,8 @@ export interface AutoBuildConstraints {
   enemyMechanics?: AutoBuildEnemyMechanicRequirement[];
   favoritesOnly?: boolean;
   favoriteCharacterIds?: number[];
+  favoriteShipsOnly?: boolean;
+  favoriteShipIds?: number[];
   manualSlots?: AutoBuildManualSlotSelection[];
   lockedCharacterIds?: number[];
   excludedCharacterIds?: number[];
@@ -98,6 +100,8 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   requiredAbilities: AutoBuildAbilityRequirement[];
   enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   favoritesOnly: boolean;
+  favoriteShipsOnly: boolean;
+  favoriteShipIds: number[];
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   excludedCharacterIds: number[];

@@ -270,6 +270,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly requireUniqueBaseCharacterNames = signal(false);
   public readonly requireSameCaptainAndFriendCaptain = signal(false);
   public readonly favoritesOnly = signal(false);
+  public readonly favoriteShipsOnly = signal(false);
   public readonly teamName = signal("");
   public readonly notes = signal("");
   public readonly building = signal(false);
@@ -281,6 +282,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly saveFeedbackVisible = signal(false);
   public readonly saveFeedbackError = signal("");
   public readonly favoriteCharacterIds;
+  public readonly favoriteShipIds;
   public readonly presetImportFeedback = signal<PresetImportFeedback | null>(null);
   public readonly loadedEnemyPresetName = signal<string | null>(null);
   public readonly saveAnimationOptions: AnimationOptions = {
@@ -401,6 +403,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly hasLockedCharacters = computed(() => this.lockedCharacterIds().length > 0);
   public readonly hasExcludedCharacters = computed(() => this.excludedCharacterIds().length > 0);
   public readonly hasSelectedLeaders = computed(() => this.selectedLeaderIds().length > 0);
+  public readonly hasFavoriteShips = computed(() => this.favoriteShipIds().length > 0);
+  public readonly availableFavoriteShipCount = computed(() =>
+    this.ships().filter((ship) => this.isFavoriteShip(ship.id)).length,
+  );
+  public readonly eligibleFavoriteShipCount = computed(() =>
+    this.ships().filter(
+      (ship) => this.isFavoriteShip(ship.id) && !this.isExcludedShip(ship.id),
+    ).length,
+  );
   public readonly hasDualLeaders = computed(
     () =>
       this.resolveManualSlotSelection("captain").characterIds.length > 0 &&
@@ -512,6 +523,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         })
       : this.t("filters.favoritesOnly.support.empty"),
   );
+  public readonly favoriteShipsOnlySupportLabel = computed(() => {
+    if (!this.hasFavoriteShips()) {
+      return this.t("filters.favoriteShipsOnly.support.empty");
+    }
+
+    return this.t("filters.favoriteShipsOnly.support.withCount", {
+      count: this.favoriteShipIds().length,
+    });
+  });
   public readonly manualSlotSummaryLabel = computed(() =>
     this.t("manual.slotSummary", {
       slots: this.manualSlots().filter((slot) => slot.characterIds.length > 0).length,
@@ -632,6 +652,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     const searchTerm = this.excludeShipSearchTerm().trim().toLowerCase();
 
     return this.ships()
+      .filter((ship) => !this.favoriteShipsOnly() || this.isFavoriteShip(ship.id))
       .filter((ship) => {
         if (searchTerm.length === 0) {
           return true;
@@ -661,7 +682,19 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
     return this.t("ships.autoRecommendation");
   });
-  public readonly manualShipBlockedIds = computed(() => [...this.excludedShipIds()]);
+  public readonly manualShipBlockedIds = computed(() => {
+    const blockedShipIds = new Set(this.excludedShipIds());
+
+    if (this.favoriteShipsOnly()) {
+      for (const ship of this.ships()) {
+        if (!this.isFavoriteShip(ship.id)) {
+          blockedShipIds.add(ship.id);
+        }
+      }
+    }
+
+    return [...blockedShipIds];
+  });
   public readonly manualShipSupportLabels = computed<Record<number, string>>(() => {
     const labels: Record<number, string> = {};
 
@@ -679,6 +712,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.t("exclude.candidates.countShips", { count: this.excludedShipCandidates().length }),
   );
   public readonly excludeShipPickerSupportLabel = computed(() => {
+    if (this.favoriteShipsOnly()) {
+      return this.hasFavoriteShips()
+        ? this.t("exclude.shipSupport.favoritesOnly", {
+            count: this.favoriteShipIds().length,
+          })
+        : this.t("exclude.shipSupport.favoriteShipsEmpty");
+    }
+
     if (this.hasExcludedShips()) {
       return this.t("exclude.shipSupport.withCount", { count: this.excludedShipIds().length });
     }
@@ -697,9 +738,27 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.t("filters.sameCaptain.toggle"),
   );
   public readonly favoritesOnlyToggleLabel = computed(() => this.t("filters.favoritesOnly.toggle"));
+  public readonly favoriteShipsOnlyToggleLabel = computed(() =>
+    this.t("filters.favoriteShipsOnly.toggle"),
+  );
   public readonly favoritesOnlyBlockedMessage = computed(() =>
     this.t("filters.favoritesOnly.blockedMessage"),
   );
+  public readonly favoriteShipsOnlyResultWarning = computed(() => {
+    if (!this.favoriteShipsOnly()) {
+      return "";
+    }
+
+    if (this.availableFavoriteShipCount() === 0) {
+      return this.t("ships.favoriteOnly.noFavorites");
+    }
+
+    if (this.eligibleFavoriteShipCount() === 0) {
+      return this.t("ships.favoriteOnly.noneEligible");
+    }
+
+    return this.t("ships.favoriteOnly.noShipSelected");
+  });
   public readonly selectedClassesLabel = computed(() =>
     this.formatSelectedValues(this.selectedClasses()),
   );
@@ -1048,6 +1107,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         this.requireUniqueBaseCharacterNames() ||
         this.requireSameCaptainAndFriendCaptain() ||
         this.favoritesOnly() ||
+        this.favoriteShipsOnly() ||
         this.hasSelectedManualShip() ||
         this.hasLockedCharacters() ||
         this.hasExcludedCharacters() ||
@@ -1105,6 +1165,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     private readonly router: Router,
   ) {
     this.favoriteCharacterIds = this.userState.favoriteCharacterIds;
+    this.favoriteShipIds = this.userState.favoriteShipIds;
     this.teamName.set(this.i18n.translate("common.defaults.newCrew"));
   }
 
@@ -1218,7 +1279,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   }
 
   public selectManualShip(shipId: number): void {
-    if (this.excludedShipIds().includes(shipId)) {
+    if (!this.canSelectManualShip(shipId)) {
       return;
     }
 
@@ -1369,6 +1430,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public onFavoritesOnlyToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.favoritesOnly.set(event.detail.checked);
     this.resetBuildState();
+  }
+
+  public onFavoriteShipsOnlyToggle(event: CustomEvent<{ checked: boolean }>): void {
+    this.favoriteShipsOnly.set(event.detail.checked);
+    this.reconcileFavoriteShipSelection();
   }
 
   public openEnemyMechanicPicker(): void {
@@ -1528,6 +1594,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     return true;
   }
 
+  public canSelectManualShip(shipId: number): boolean {
+    if (this.isExcludedShip(shipId)) {
+      return false;
+    }
+
+    if (this.favoriteShipsOnly() && !this.isFavoriteShip(shipId)) {
+      return false;
+    }
+
+    return true;
+  }
+
   public async selectAllTypes(): Promise<void> {
     if (this.allTypesSelected()) {
       this.selectedTypes.set([]);
@@ -1578,6 +1656,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     return this.favoriteCharacterIds().includes(characterId);
   }
 
+  public async toggleShipFavorite(shipId: number): Promise<void> {
+    await this.userState.toggleShipFavorite(shipId);
+    this.reconcileFavoriteShipSelection();
+  }
+
+  public isFavoriteShip(shipId: number): boolean {
+    return this.favoriteShipIds().includes(shipId);
+  }
+
   public getCharacterDetailLink(
     character: Pick<CharacterListItem, "id"> | null | undefined,
   ): string[] | null {
@@ -1615,6 +1702,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           enemyMechanics: this.pageEnemyMechanics(),
           favoritesOnly: this.favoritesOnly(),
           favoriteCharacterIds: this.favoriteCharacterIds(),
+          favoriteShipsOnly: this.favoriteShipsOnly(),
+          favoriteShipIds: this.favoriteShipIds(),
           manualSlots: this.serializeManualSlots(),
           excludedCharacterIds: this.excludedCharacterIds(),
           manualShipId: this.selectedManualShipId(),
@@ -1707,6 +1796,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       requireSameCaptainAndFriendCaptain: this.requireSameCaptainAndFriendCaptain(),
       favoritesOnly: this.favoritesOnly(),
       favoriteCount: this.favoriteCharacterIds().length,
+      favoriteShipsOnly: this.favoriteShipsOnly(),
+      favoriteShipCount: this.favoriteShipIds().length,
       manualSlots: this.serializeManualSlots(),
       lockedCharacterIds: this.lockedCharacterIds(),
       lockedCharacters: this.lockedCharacters(),
@@ -1839,6 +1930,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.requireUniqueBaseCharacterNames.set(false);
     this.requireSameCaptainAndFriendCaptain.set(false);
     this.favoritesOnly.set(false);
+    this.favoriteShipsOnly.set(false);
     this.teamName.set(this.i18n.translate("common.defaults.newCrew"));
     this.notes.set("");
     this.presetImportFeedback.set(null);
@@ -1943,6 +2035,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.requireUniqueBaseCharacterNames.set(state.requireUniqueBaseCharacterNames);
     this.requireSameCaptainAndFriendCaptain.set(state.requireSameCaptainAndFriendCaptain);
     this.favoritesOnly.set(state.favoritesOnly);
+    this.favoriteShipsOnly.set(state.favoriteShipsOnly);
+    this.reconcileFavoriteShipSelection();
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
   }
@@ -2208,11 +2302,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       ...currentResult,
       input: {
         ...currentResult.input,
+        favoriteShipsOnly: this.favoriteShipsOnly(),
+        favoriteShipIds: [...this.favoriteShipIds()],
         manualShipId,
         excludedShipIds,
       },
       requestedInput: {
         ...currentResult.requestedInput,
+        favoriteShipsOnly: this.favoriteShipsOnly(),
+        favoriteShipIds: [...this.favoriteShipIds()],
         manualShipId,
         excludedShipIds,
       },
@@ -2222,6 +2320,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     nextResult.shipSelection = resolveAutoBuildShipSelection(nextResult, this.ships());
     this.result.set(nextResult);
     this.currentTeamId.set(null);
+  }
+
+  private reconcileFavoriteShipSelection(): void {
+    const selectedManualShipId = this.selectedManualShipId();
+
+    if (selectedManualShipId !== null && !this.canSelectManualShip(selectedManualShipId)) {
+      this.selectedManualShipId.set(null);
+    }
+
+    if (this.result()) {
+      this.updateResultShipSelection();
+    }
   }
 
   private buildShipCardSubtitle(ship: ShipRecord): string {
@@ -2373,6 +2483,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   private resolveManualShipSupportLabel(shipId: number): string | null {
     if (this.isExcludedShip(shipId)) {
       return this.t("ships.excluded");
+    }
+
+    if (this.favoriteShipsOnly() && !this.isFavoriteShip(shipId)) {
+      return this.t("ships.favoriteOnly.blocked");
     }
 
     return null;

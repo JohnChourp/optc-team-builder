@@ -296,6 +296,10 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.loading.set(false);
   }
 
+  public ionViewDidEnter(): void {
+    console.log('SavedEnemiesPage component');
+  }
+
   public getEnemyBuilderQueryParams(enemy: SavedEnemy): { enemyId: string } {
     return { enemyId: enemy.id };
   }

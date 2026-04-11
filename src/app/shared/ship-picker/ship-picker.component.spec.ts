@@ -50,6 +50,25 @@ describe('ShipPickerComponent', () => {
     expect(component.selectedCard().title).toBe('No ship');
   });
 
+  it('emits favorite toggle events for ship cards and the selected preview', () => {
+    const component = createComponent();
+    const emitSpy = vi.spyOn(component.toggleFavoriteShip, 'emit');
+
+    component.favoriteShipIds = [9001];
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+      ships: new SimpleChange([], component.ships, true),
+      favoriteShipIds: new SimpleChange([], component.favoriteShipIds, true),
+    });
+
+    component.onToggleFavoriteShip(new Event('click'), 9002);
+    component.onToggleFavoriteShip(new Event('click'), component.selectedCard().shipId);
+
+    expect(emitSpy).toHaveBeenNthCalledWith(1, 9002);
+    expect(emitSpy).toHaveBeenNthCalledWith(2, 9001);
+  });
+
   it('emits the current ship selection when confirmed', () => {
     const component = createComponent();
     const emitSpy = vi.spyOn(component.saveSelection, 'emit');
@@ -92,6 +111,24 @@ describe('ShipPickerComponent', () => {
     expect(component.workingShipId()).toBe(9001);
   });
 
+  it('does not emit favorite toggle events for blocked favorite controls', () => {
+    const component = createComponent();
+    const emitSpy = vi.spyOn(component.toggleFavoriteShip, 'emit');
+
+    component.blockedFavoriteShipIds = [9001];
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+      ships: new SimpleChange([], component.ships, true),
+      blockedFavoriteShipIds: new SimpleChange([], component.blockedFavoriteShipIds, true),
+    });
+
+    component.onToggleFavoriteShip(new Event('click'), 9001);
+
+    expect(component.selectedCard().isFavoriteToggleBlocked).toBe(true);
+    expect(emitSpy).not.toHaveBeenCalled();
+  });
+
   it('does not emit blocked ship selections on save', () => {
     const component = createComponent();
     const emitSpy = vi.spyOn(component.saveSelection, 'emit');
@@ -123,9 +160,12 @@ describe('ShipPickerComponent', () => {
 
     expect(template).toContain("t('catalog.searchPlaceholder')");
     expect(template).toContain('(click)="selectShip(card.shipId)"');
+    expect(template).toContain('(click)="onToggleFavoriteShip($event, card.shipId)"');
+    expect(template).toContain('[disabled]="card.isFavoriteToggleBlocked"');
     expect(template).toContain('[disabled]="card.isBlocked"');
     expect(template).toContain('card.supportLabel');
     expect(template).toContain('[disabled]="selectedCard().isBlocked"');
+    expect(template).toContain("t('favorites.addAria')");
     expect(template).toContain("{{ confirmLabel }}");
     expect(template).toContain("t('selected.title')");
   });
@@ -141,6 +181,8 @@ function createComponent() {
   component.confirmLabel = 'Use ship';
   component.selectedShipId = 9001;
   component.blockedShipIds = [];
+  component.favoriteShipIds = [];
+  component.blockedFavoriteShipIds = [];
   component.shipSupportLabels = {};
   component.ships = [
     {

@@ -9,7 +9,7 @@ import {
   type AutoBuildProgressSnapshot,
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
-import { type CharacterDetailRecord } from '../models/optc.models';
+import { type CharacterDetailRecord, type ShipRecord } from '../models/optc.models';
 import { AutoTeamBuildCancelledError } from './auto-team-builder.engine';
 import { AutoTeamBuilderService } from './auto-team-builder.service';
 import {
@@ -1392,6 +1392,27 @@ describe('Auto team builder', () => {
     );
   });
 
+  it('carries favorite ship filters into the result input and ship selection', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+      getShips: vi.fn().mockResolvedValue([
+        createShipRecord(9001, 'Ship 9001', 'Boosts ATK by 1.5x.'),
+        createShipRecord(9002, 'Ship 9002', 'Boosts ATK by 1.6x.'),
+      ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      favoriteShipsOnly: true,
+      favoriteShipIds: [9002],
+    });
+
+    expect(result?.input.favoriteShipsOnly).toBe(true);
+    expect(result?.input.favoriteShipIds).toEqual([9002]);
+    expect(result?.requestedInput.favoriteShipIds).toEqual([9002]);
+    expect(result?.shipSelection?.ship.id).toBe(9002);
+  });
+
   it('returns null in favorites mode when no favorite candidate ids match', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue([]),
@@ -1429,6 +1450,8 @@ describe('Auto team builder', () => {
     expect(result?.input.requireUniqueBaseCharacterNames).toBe(false);
     expect(result?.input.requireSameCaptainAndFriendCaptain).toBe(false);
     expect(result?.input.favoritesOnly).toBe(false);
+    expect(result?.input.favoriteShipsOnly).toBe(false);
+    expect(result?.input.favoriteShipIds).toEqual([]);
     expect(result?.input.lockedCharacterIds).toEqual([]);
     expect(result?.requestedInput.lockedCharacterIds).toEqual([]);
     expect(result?.input.captainCharacterId).toBeNull();
@@ -1904,6 +1927,8 @@ function createInput(
       | 'requireUniqueBaseCharacterNames'
       | 'requireSameCaptainAndFriendCaptain'
       | 'favoritesOnly'
+      | 'favoriteShipsOnly'
+      | 'favoriteShipIds'
       | 'manualSlots'
       | 'lockedCharacterIds'
       | 'excludedCharacterIds'
@@ -1918,6 +1943,8 @@ function createInput(
     requireUniqueBaseCharacterNames: false,
     requireSameCaptainAndFriendCaptain: false,
     favoritesOnly: false,
+    favoriteShipsOnly: false,
+    favoriteShipIds: [],
     lockedCharacterIds: [],
     excludedCharacterIds: [],
     captainCharacterId: null,
@@ -1942,6 +1969,8 @@ function createInput(
     requireSameCaptainAndFriendCaptain:
       overrides.requireSameCaptainAndFriendCaptain ?? false,
     favoritesOnly: overrides.favoritesOnly ?? false,
+    favoriteShipsOnly: overrides.favoriteShipsOnly ?? false,
+    favoriteShipIds: overrides.favoriteShipIds ?? [],
     manualSlots:
       overrides.manualSlots ??
       createManualSlotsFromLegacySelection(
@@ -2630,5 +2659,15 @@ function createCharacterRecord(
       superClass: overrides.detail?.superClass ?? null,
       rumbleData: overrides.detail?.rumbleData ?? null,
     },
+  };
+}
+
+function createShipRecord(id: number, name: string, description: string): ShipRecord {
+  return {
+    id,
+    name,
+    thumb: null,
+    thumbUrl: null,
+    description,
   };
 }

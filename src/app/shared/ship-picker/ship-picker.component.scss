@@ -105,17 +105,12 @@
 }
 
 .ship-picker-card {
-  display: grid;
-  grid-template-columns: 88px minmax(0, 1fr);
-  gap: 12px;
+  position: relative;
   width: 100%;
-  padding: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.03);
   color: inherit;
-  text-align: left;
-  font: inherit;
   transition:
     transform 160ms ease,
     border-color 160ms ease,
@@ -123,19 +118,34 @@
     box-shadow 160ms ease;
 }
 
-.ship-picker-card:disabled {
+.ship-picker-card__select {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  padding-right: 54px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+}
+
+.ship-picker-card__select:disabled {
   cursor: not-allowed;
 }
 
 .ship-picker-card:hover,
-.ship-picker-card:focus-visible {
+.ship-picker-card:focus-within {
   border-color: rgba(245, 200, 76, 0.38);
   background: rgba(245, 200, 76, 0.08);
   transform: translateY(-1px);
 }
 
-.ship-picker-card:disabled:hover,
-.ship-picker-card:disabled:focus-visible {
+.ship-picker-card__select:disabled:hover,
+.ship-picker-card__select:disabled:focus-visible {
   transform: none;
 }
 
@@ -187,6 +197,13 @@
   font-size: 2rem;
 }
 
+.ship-picker-preview-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .ship-picker-card__copy,
 .ship-picker-preview-card__copy {
   display: grid;
@@ -235,6 +252,45 @@
   padding: 0 18px;
 }
 
+.ship-picker-favorite-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(10, 12, 18, 0.72);
+  color: rgba(245, 200, 76, 0.92);
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    transform 160ms ease,
+    color 160ms ease;
+}
+
+.ship-picker-favorite-button:hover {
+  background: rgba(245, 200, 76, 0.16);
+  transform: translateY(-1px);
+}
+
+.ship-picker-favorite-button:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
+}
+
+.ship-picker-favorite-button:disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
+}
+
+.ship-picker-card .ship-picker-favorite-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+}
+
 @media (max-width: 920px) {
   .ship-picker-body {
     grid-template-columns: minmax(0, 1fr);
@@ -248,6 +304,10 @@
   }
 
   .ship-picker-card {
+    min-height: 0;
+  }
+
+  .ship-picker-card__select {
     grid-template-columns: 72px minmax(0, 1fr);
   }
 

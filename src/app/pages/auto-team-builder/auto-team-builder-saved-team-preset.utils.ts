@@ -47,6 +47,7 @@ export function buildAutoTeamBuilderStateFromSavedTeam(
     requireUniqueBaseCharacterNames: false,
     requireSameCaptainAndFriendCaptain: false,
     favoritesOnly: false,
+    favoriteShipsOnly: false,
     manualSlots,
     lockedCharacterIds: [],
     excludedCharacterIds: [],

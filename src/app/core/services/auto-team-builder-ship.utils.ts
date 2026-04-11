@@ -98,7 +98,18 @@ export function resolveAutoBuildShipSelection(
   ships: ShipRecord[],
 ): AutoBuildShipSelection | null {
   const excludedShipIdSet = new Set(result.input.excludedShipIds ?? []);
-  const eligibleShips = ships.filter((ship) => !excludedShipIdSet.has(ship.id));
+  const favoriteShipIdSet = new Set(result.input.favoriteShipIds ?? []);
+  const eligibleShips = ships.filter((ship) => {
+    if (excludedShipIdSet.has(ship.id)) {
+      return false;
+    }
+
+    if (result.input.favoriteShipsOnly && !favoriteShipIdSet.has(ship.id)) {
+      return false;
+    }
+
+    return true;
+  });
 
   if (!eligibleShips.length) {
     return null;

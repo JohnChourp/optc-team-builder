@@ -7,6 +7,10 @@
     "title": "Ship catalog"
   },
   "eyebrow": "Ship picker",
+  "favorites": {
+    "addAria": "Add ship to favorites",
+    "removeAria": "Remove ship from favorites"
+  },
   "selected": {
     "emptyState": "Confirm to keep the empty ship selection.",
     "shipReady": "This ship will be applied when you confirm.",

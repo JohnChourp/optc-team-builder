@@ -129,6 +129,50 @@ describe('auto team builder ship selection', () => {
     expect(selection?.source).toBe('recommended');
     expect(selection?.ship.id).toBe(14);
   });
+
+  it('limits recommendations to favorite ships when favorite ship mode is enabled', () => {
+    const ships = [
+      createShip(14, 'Thousand Sunny', 'Boosts ATK by 1.5x.'),
+      createShip(15, 'Polar Tang', 'Boosts ATK by 1.6x.'),
+    ];
+
+    const selection = resolveAutoBuildShipSelection(
+      {
+        ...createResult(Array.from({ length: 6 }, (_, index) => createCharacter(index + 1))),
+        input: {
+          ...createResult(Array.from({ length: 6 }, (_, index) => createCharacter(index + 1))).input,
+          favoriteShipsOnly: true,
+          favoriteShipIds: [15],
+        },
+      },
+      ships,
+    );
+
+    expect(selection?.ship.id).toBe(15);
+    expect(selection?.source).toBe('recommended');
+  });
+
+  it('returns null when favorite ship mode is enabled without an eligible favorite ship', () => {
+    const ships = [
+      createShip(14, 'Thousand Sunny', 'Boosts ATK by 1.5x.'),
+      createShip(15, 'Polar Tang', 'Boosts ATK by 1.6x.'),
+    ];
+
+    const selection = resolveAutoBuildShipSelection(
+      {
+        ...createResult(Array.from({ length: 6 }, (_, index) => createCharacter(index + 1))),
+        input: {
+          ...createResult(Array.from({ length: 6 }, (_, index) => createCharacter(index + 1))).input,
+          favoriteShipsOnly: true,
+          favoriteShipIds: [15],
+          excludedShipIds: [15],
+        },
+      },
+      ships,
+    );
+
+    expect(selection).toBeNull();
+  });
 });
 
 function createResult(
@@ -146,6 +190,8 @@ function createResult(
     requiredAbilities: [],
     enemyMechanics: [],
     favoritesOnly: false,
+    favoriteShipsOnly: false,
+    favoriteShipIds: [],
     manualSlots: [],
     lockedCharacterIds: [],
     excludedCharacterIds: [],

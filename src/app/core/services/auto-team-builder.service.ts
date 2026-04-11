@@ -52,6 +52,7 @@ export class AutoTeamBuilderService {
     executionOptions: AutoTeamBuildExecutionOptions = {},
   ): Promise<AutoBuildResult | null> {
     const favoritesOnly = constraints.favoritesOnly ?? false;
+    const favoriteShipsOnly = constraints.favoriteShipsOnly ?? false;
     const normalizedTypes = normalizeSelectedTypes(selectedTypes);
     const normalizedClasses: string[] = [];
 
@@ -72,6 +73,7 @@ export class AutoTeamBuilderService {
         (characterId) => Number.isInteger(characterId) && characterId > 0,
       ),
     );
+    const favoriteShipIds = this.normalizeCharacterIds(constraints.favoriteShipIds);
     const requiredAbilities = this.normalizeRequiredAbilities(constraints.requiredAbilities ?? []);
     const enemyMechanics = normalizeEnemyMechanicRequirements(constraints.enemyMechanics ?? []);
     const normalizedManualSlots = this.normalizeManualSlots(constraints.manualSlots);
@@ -116,6 +118,8 @@ export class AutoTeamBuilderService {
       requiredAbilities,
       enemyMechanics,
       favoritesOnly,
+      favoriteShipsOnly,
+      favoriteShipIds,
       manualSlots,
       lockedCharacterIds,
       excludedCharacterIds,
@@ -139,6 +143,7 @@ export class AutoTeamBuilderService {
         responseTags: [...mechanic.responseTags],
         conditionTags: [...mechanic.conditionTags],
       })),
+      favoriteShipIds: [...input.favoriteShipIds],
       manualSlots: input.manualSlots.map((slot) => ({
         role: slot.role,
         characterIds: [...slot.characterIds],

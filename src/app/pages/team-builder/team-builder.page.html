@@ -85,11 +85,13 @@
         [copy]="t('shipPicker.copy')"
         [ships]="ships()"
         [selectedShipId]="selectedShipId()"
+        [favoriteShipIds]="favoriteShipIds()"
         [emptySelectionLabel]="t('form.noShip')"
         [emptySelectionCopy]="t('form.noShipCopy')"
         [confirmLabel]="t('shipPicker.confirm')"
         (dismiss)="closeShipPicker()"
         (saveSelection)="saveShipSelection($event)"
+        (toggleFavoriteShip)="toggleShipFavorite($event)"
       ></app-ship-picker>
 
       <section class="glass-card slot-grid">

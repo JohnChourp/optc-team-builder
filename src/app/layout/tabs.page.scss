@@ -1,7 +1,7 @@
 .tabs-bar {
   --background: rgba(9, 12, 24, 0.94);
   --border: 1px solid rgba(255, 255, 255, 0.08);
-  padding-bottom: calc(max(8px, env(safe-area-inset-bottom)) + var(--app-bottom-bar-extra-offset));
+  padding-bottom: calc(max(22px, env(safe-area-inset-bottom)) + var(--app-bottom-bar-extra-offset));
 }
 
 @supports (-webkit-touch-callout: none) {

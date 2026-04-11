@@ -162,6 +162,19 @@
 
           <div class="strict-toggle-row">
             <div class="strict-toggle-copy">
+              <strong>{{ favoriteShipsOnlyToggleLabel() }}</strong>
+              <small>{{ favoriteShipsOnlySupportLabel() }}</small>
+            </div>
+            <ion-toggle
+              color="warning"
+              [checked]="favoriteShipsOnly()"
+              [disabled]="building()"
+              (ionChange)="onFavoriteShipsOnlyToggle($event)"
+            ></ion-toggle>
+          </div>
+
+          <div class="strict-toggle-row">
+            <div class="strict-toggle-copy">
               <strong>{{ uniqueBaseCharacterNamesToggleLabel() }}</strong>
               <small>{{ uniqueBaseCharacterNamesSupportLabel() }}</small>
             </div>
@@ -383,6 +396,7 @@
           [copy]="t('ships.pickerCopy')"
           [ships]="ships()"
           [blockedShipIds]="manualShipBlockedIds()"
+          [favoriteShipIds]="favoriteShipIds()"
           [shipSupportLabels]="manualShipSupportLabels()"
           [selectedShipId]="selectedManualShipId()"
           [emptySelectionLabel]="t('ships.emptySelectionLabel')"
@@ -390,6 +404,7 @@
           [confirmLabel]="t('ships.confirm')"
           (dismiss)="closeManualShipPicker()"
           (saveSelection)="saveManualShipSelection($event)"
+          (toggleFavoriteShip)="toggleShipFavorite($event)"
         ></app-ship-picker>
 
         @if (buildBlockedByFavorites()) {
@@ -1380,6 +1395,11 @@
                 </ion-button>
               </div>
             </div>
+          </section>
+        }
+        @if (!current.shipSelection && favoriteShipsOnlyResultWarning()) {
+          <section class="loading-card glass-card empty-card">
+            <span>{{ favoriteShipsOnlyResultWarning() }}</span>
           </section>
         }
         <section class="result-grid">

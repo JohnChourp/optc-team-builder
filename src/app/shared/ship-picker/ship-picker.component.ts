@@ -9,11 +9,13 @@ import {
   IonSearchbar,
   IonToolbar,
 } from '@ionic/angular/standalone';
-import { boatOutline, closeOutline } from 'ionicons/icons';
+import { boatOutline, closeOutline, heart, heartOutline } from 'ionicons/icons';
 
 import { type ShipRecord } from '../../core/models/optc.models';
 
 interface ShipPickerCardView {
+  isFavorite: boolean;
+  isFavoriteToggleBlocked: boolean;
   isBlocked: boolean;
   isSelected: boolean;
   ship: ShipRecord | null;
@@ -48,18 +50,25 @@ export class ShipPickerComponent implements OnChanges {
   @Input({ required: true }) public ships: ShipRecord[] = [];
   @Input({ required: true }) public selectedShipId: number | null = null;
   @Input() public blockedShipIds: number[] = [];
+  @Input() public favoriteShipIds: number[] = [];
+  @Input() public blockedFavoriteShipIds: number[] = [];
   @Input() public shipSupportLabels: Record<number, string> = {};
   @Input({ required: true }) public emptySelectionLabel = '';
   @Input({ required: true }) public emptySelectionCopy = '';
   @Input({ required: true }) public confirmLabel = '';
   @Output() public readonly dismiss = new EventEmitter<void>();
   @Output() public readonly saveSelection = new EventEmitter<number | null>();
+  @Output() public readonly toggleFavoriteShip = new EventEmitter<number>();
 
   public readonly closeIcon = closeOutline;
   public readonly shipIcon = boatOutline;
+  public readonly favoriteIcon = heart;
+  public readonly favoriteOutlineIcon = heartOutline;
   public readonly searchTerm = signal('');
   public readonly shipsState = signal<ShipRecord[]>([]);
   public readonly blockedShipIdsState = signal<number[]>([]);
+  public readonly favoriteShipIdsState = signal<number[]>([]);
+  public readonly blockedFavoriteShipIdsState = signal<number[]>([]);
   public readonly shipSupportLabelsState = signal<Record<number, string>>({});
   public readonly workingShipId = signal<number | null>(null);
   public readonly filteredShipCards = computed<ShipPickerCardView[]>(() => {
@@ -67,6 +76,8 @@ export class ShipPickerComponent implements OnChanges {
     const baseCards: ShipPickerCardView[] = [
       {
         isBlocked: false,
+        isFavorite: false,
+        isFavoriteToggleBlocked: false,
         shipId: null,
         ship: null,
         title: this.emptySelectionLabel,
@@ -96,6 +107,8 @@ export class ShipPickerComponent implements OnChanges {
     if (selectedShipId === null) {
       return {
         isBlocked: false,
+        isFavorite: false,
+        isFavoriteToggleBlocked: false,
         shipId: null,
         ship: null,
         title: this.emptySelectionLabel,
@@ -122,16 +135,27 @@ export class ShipPickerComponent implements OnChanges {
       this.blockedShipIdsState.set([...this.blockedShipIds]);
     }
 
+    if (changes['favoriteShipIds']) {
+      this.favoriteShipIdsState.set([...this.favoriteShipIds]);
+    }
+
+    if (changes['blockedFavoriteShipIds']) {
+      this.blockedFavoriteShipIdsState.set([...this.blockedFavoriteShipIds]);
+    }
+
     if (changes['shipSupportLabels']) {
       this.shipSupportLabelsState.set({ ...this.shipSupportLabels });
     }
 
     if (changes['isOpen'] && this.isOpen) {
+      console.log('ShipPickerComponent component');
       this.dismissReason = null;
       this.searchTerm.set('');
       this.workingShipId.set(this.selectedShipId);
       this.shipsState.set(this.ships);
       this.blockedShipIdsState.set([...this.blockedShipIds]);
+      this.favoriteShipIdsState.set([...this.favoriteShipIds]);
+      this.blockedFavoriteShipIdsState.set([...this.blockedFavoriteShipIds]);
       this.shipSupportLabelsState.set({ ...this.shipSupportLabels });
     }
   }
@@ -146,6 +170,20 @@ export class ShipPickerComponent implements OnChanges {
     }
 
     this.workingShipId.set(shipId);
+  }
+
+  public onToggleFavoriteShip(event: Event, shipId: number | null): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (
+      shipId === null ||
+      this.blockedFavoriteShipIdsState().includes(shipId)
+    ) {
+      return;
+    }
+
+    this.toggleFavoriteShip.emit(shipId);
   }
 
   public save(): void {
@@ -189,6 +227,9 @@ export class ShipPickerComponent implements OnChanges {
 
     return {
       isBlocked,
+      isFavorite: shipId !== null && this.favoriteShipIdsState().includes(shipId),
+      isFavoriteToggleBlocked:
+        shipId !== null && this.blockedFavoriteShipIdsState().includes(shipId),
       isSelected,
       shipId,
       ship,
