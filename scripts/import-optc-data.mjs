@@ -24,6 +24,10 @@ import {
   normalizeCharacterClasses,
   writeGeneratedDatasetFiles,
 } from './lib/optc-dataset.mjs';
+import {
+  applyPartyConflictKeys,
+  normalizePartyConflictOverrideMap,
+} from './lib/party-conflict-keys.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -39,6 +43,12 @@ const builderAbilityCorrectionsPath = path.join(
   'scripts',
   'data',
   'builder-ability-corrections.json',
+);
+const partyConflictOverridesPath = path.join(
+  rootDir,
+  'scripts',
+  'data',
+  'party-conflict-overrides.json',
 );
 const shipThumbnailOverrideConfigPath = path.join(
   rootDir,
@@ -562,6 +572,20 @@ async function loadShipThumbnailOverrides() {
   }
 }
 
+async function loadPartyConflictOverrides() {
+  try {
+    return normalizePartyConflictOverrideMap(
+      JSON.parse(await readFile(partyConflictOverridesPath, 'utf8')),
+    );
+  } catch (error) {
+    if (error?.code === 'ENOENT') {
+      return new Map();
+    }
+
+    throw error;
+  }
+}
+
 function normalizeOverrideEntry(characterId, entry) {
   if (!entry || typeof entry !== 'object') {
     throw new Error(`Invalid override entry for character ${characterId}.`);
@@ -747,6 +771,7 @@ function normalizeCharacters(units, details, rumbleUnits, assetsById) {
       specialName: detail.specialName ?? null,
       specialText: normalizedSpecialText,
       specialNotes: detail.specialNotes ?? null,
+      partyConflictKeys: [],
       builderAbilities: [],
       sailorAbilities: normalizedSailorAbilities,
       sailorNotes: detail.sailorNotes ?? null,
@@ -912,6 +937,7 @@ async function main() {
     sourceVersion,
     packTrees,
     imageOverrides,
+    partyConflictOverrides,
     shipThumbnailOverrides,
   ] = await Promise.all([
     evaluateLegacyFile('common/data/units.js'),
@@ -922,6 +948,7 @@ async function main() {
     fetchVersion(),
     buildPackTrees(),
     loadCharacterImageOverrides(),
+    loadPartyConflictOverrides(),
     loadShipThumbnailOverrides(),
   ]);
 
@@ -943,9 +970,12 @@ async function main() {
       clearDir: true,
     },
   );
-  const characters = applyExactLocalAssets(
-    normalizeCharacters(unitsWindow.units, detailsWindow.details, rumble.units ?? [], assetsById),
-    manualExactLocalPaths,
+  const characters = applyPartyConflictKeys(
+    applyExactLocalAssets(
+      normalizeCharacters(unitsWindow.units, detailsWindow.details, rumble.units ?? [], assetsById),
+      manualExactLocalPaths,
+    ),
+    partyConflictOverrides,
   );
   const abilityCorrections = await loadBuilderAbilityCorrections(builderAbilityCorrectionsPath);
   const autoBuilderAbilities = await enrichCharactersWithBuilderAbilities(characters, {

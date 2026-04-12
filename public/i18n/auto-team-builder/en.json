@@ -64,10 +64,10 @@
       }
     },
     "uniqueNames": {
-      "toggle": "Require unique base character names",
+      "toggle": "Avoid in-game duplicate characters",
       "support": {
-        "strict": "Every final slot except Friend Captain must use a different normalized base character name, so the Friend Captain can still mirror another unit like Monkey D. Luffy.",
-        "flexible": "Allow multiple variants of the same base character name in the final team."
+        "strict": "Every final slot except Friend Captain must avoid in-game duplicate-character conflicts, so the Friend Captain can still mirror another unit like Monkey D. Luffy.",
+        "flexible": "Allow final teams that reuse in-game character identities or overlapping composite units."
       }
     },
     "sameCaptain": {
@@ -103,7 +103,7 @@
         "message": "Turn off favorite ship mode and let any saved ship be used again?"
       },
       "uniqueNames": {
-        "message": "Turn off unique base character names and allow duplicate character families in the final team?"
+        "message": "Turn off duplicate-character protection and allow in-game duplicate conflicts in the final team?"
       },
       "specialSupport": {
         "message": "Turn off special support coverage and allow slots without readable special utility or team support?"
@@ -451,7 +451,7 @@
       "manualConflict": "Matching captain slots is enabled, but the current manual Captain and Friend Captain choices do not overlap."
     },
     "uniqueNames": {
-      "manualConflict": "The current manual slot choices already reuse the same base character name outside the Friend Captain slot: {{names}}."
+      "manualConflict": "The current manual slot choices already create the same in-game character conflict outside the Friend Captain slot: {{names}}."
     },
     "leaderRequirement": {
       "dual": " and the selected captain / friend captain slots",
@@ -481,7 +481,7 @@
       "sameCaptainAndFriendCaptain": "matching captain and friend captain",
       "strict": "No strict team matched {{types}} while keeping {{requirements}}{{favoritesScope}}.",
       "typeCoverage": "team-wide type coverage",
-      "uniqueCharacterNames": "unique base character names across the team except Friend Captain"
+      "uniqueCharacterNames": "unique in-game character identities across the team except Friend Captain"
     }
   },
   "abilities": {

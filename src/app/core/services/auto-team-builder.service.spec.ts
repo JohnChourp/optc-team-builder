@@ -488,6 +488,142 @@ describe('Auto team builder', () => {
     );
   });
 
+  it('rejects a composite in-game conflict like General Franky and Tony Tony Chopper', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 3574,
+          name: 'General Franky - Dream Docking',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.5x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 5825,
+          name: 'Portgas D. Ace',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.25x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 2797,
+          name: 'Tony Tony Chopper - Long-Awaited Present',
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts ATK of Fighter characters by 2.25x for 1 turn.',
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireUniqueBaseCharacterNames: true,
+        manualSlots: createManualSlots({
+          captain: [3574],
+          friendCaptain: [5825],
+          sub1: [2797],
+        }),
+      }),
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('allows a composite in-game conflict when the unique-name toggle is off', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 3574,
+          name: 'General Franky - Dream Docking',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.5x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 5826,
+          name: 'Portgas D. Ace',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.25x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 2797,
+          name: 'Tony Tony Chopper - Long-Awaited Present',
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts ATK of Fighter characters by 2.25x for 1 turn.',
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        manualSlots: createManualSlots({
+          captain: [3574],
+          friendCaptain: [5826],
+          sub1: [2797],
+        }),
+      }),
+    );
+
+    expect(result).not.toBeNull();
+  });
+
+  it('rejects overlapping explicit party conflict keys even when display names are unrelated', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 5827,
+          name: 'Holiday Tank Pilot',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.5x.',
+            partyConflictKeys: ['franky', 'tony tony chopper'],
+          },
+        }),
+        createCharacterRecord({
+          id: 5828,
+          name: 'Portgas D. Ace',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.25x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 5829,
+          name: 'Winter Medic',
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts ATK of Fighter characters by 2.25x for 1 turn.',
+            partyConflictKeys: ['tony tony chopper'],
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireUniqueBaseCharacterNames: true,
+        manualSlots: createManualSlots({
+          captain: [5827],
+          friendCaptain: [5828],
+          sub1: [5829],
+        }),
+      }),
+    );
+
+    expect(result).toBeNull();
+  });
+
   it('treats distinct normalized base names like Chef Sanji and Sanji as unique', () => {
     const result = buildAutoTeamResult(
       [
@@ -2923,6 +3059,7 @@ function createCharacterRecord(
       specialName: overrides.detail?.specialName ?? null,
       specialText: overrides.detail?.specialText ?? null,
       specialNotes: overrides.detail?.specialNotes ?? null,
+      partyConflictKeys: overrides.detail?.partyConflictKeys ?? [],
       builderAbilities: overrides.detail?.builderAbilities ?? [],
       sailorAbilities: overrides.detail?.sailorAbilities ?? [],
       sailorNotes: overrides.detail?.sailorNotes ?? null,

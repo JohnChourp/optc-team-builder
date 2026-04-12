@@ -571,6 +571,7 @@ export class OptcRepositoryService {
       specialName: null,
       specialText: null,
       specialNotes: null,
+      partyConflictKeys: [],
       builderAbilities: [],
       sailorAbilities: [],
       sailorNotes: null,
@@ -594,6 +595,11 @@ export class OptcRepositoryService {
       ...this.emptyDetail(characterId),
       ...normalizedDetail,
       characterId,
+      partyConflictKeys: Array.isArray(normalizedDetail.partyConflictKeys)
+        ? normalizedDetail.partyConflictKeys
+            .map((value) => String(value ?? '').trim())
+            .filter((value) => value.length > 0)
+        : [],
       builderAbilities:
         normalizedDetail.builderAbilities ?? normalizedDetail.specialAbilities ?? [],
     };

@@ -64,7 +64,7 @@ import { AppI18nService } from '../../core/services/app-i18n.service';
 import { matchesAnyAbilityRequirement } from '../../core/services/auto-team-builder-ability-match.utils';
 import { isAutoTeamBuildCancelledError } from '../../core/services/auto-team-builder.engine';
 import { resolveAutoBuildShipSelection } from '../../core/services/auto-team-builder-ship.utils';
-import { resolveCharacterBaseNameKey } from '../../core/services/auto-team-builder.utils';
+import { resolveCharacterPartyConflictKeys } from '../../core/services/auto-team-builder.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import {
@@ -3086,39 +3086,37 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       return [];
     }
 
-    const usageByBaseNameKey = new Map<string, { count: number; label: string }>();
+    const usageByConflictKey = new Map<string, Map<AutoBuildManualSlotRole, Set<string>>>();
 
     for (const slot of filledSlots) {
-      const slotBaseNameKeys = new Set<string>();
+      const slotConflictKeys = new Set<string>();
 
       for (const record of slot.records) {
-        const baseNameKey = resolveCharacterBaseNameKey(record.name);
+        const label = record.name.replace(/^[^A-Za-z0-9]+/, '').replace(/\s+/g, ' ').trim();
 
-        if (baseNameKey.length === 0 || slotBaseNameKeys.has(baseNameKey)) {
-          continue;
+        for (const conflictKey of resolveCharacterPartyConflictKeys(record)) {
+          if (conflictKey.length === 0 || slotConflictKeys.has(conflictKey)) {
+            continue;
+          }
+
+          slotConflictKeys.add(conflictKey);
+          const currentUsage = usageByConflictKey.get(conflictKey) ?? new Map();
+          const slotLabels = currentUsage.get(slot.role) ?? new Set<string>();
+
+          slotLabels.add(label);
+          currentUsage.set(slot.role, slotLabels);
+          usageByConflictKey.set(conflictKey, currentUsage);
         }
-
-        slotBaseNameKeys.add(baseNameKey);
-        const currentUsage = usageByBaseNameKey.get(baseNameKey);
-
-        if (currentUsage) {
-          currentUsage.count += 1;
-          continue;
-        }
-
-        usageByBaseNameKey.set(baseNameKey, {
-          count: 1,
-          label: record.name
-            .replace(/^[^A-Za-z0-9]+/, '')
-            .replace(/\s+/g, ' ')
-            .trim(),
-        });
       }
     }
 
-    return [...usageByBaseNameKey.values()]
-      .filter((entry) => entry.count > 1)
-      .map((entry) => entry.label);
+    return [
+      ...new Set(
+        [...usageByConflictKey.values()]
+          .filter((usageByRole) => usageByRole.size > 1)
+          .flatMap((usageByRole) => [...usageByRole.values()].flatMap((labels) => [...labels])),
+      ),
+    ];
   }
 
   private hasManualSameLeaderConflict(): boolean {
@@ -3137,7 +3135,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   private hasValidUniqueBaseNameAssignment(
     slots: Array<{ role: AutoBuildManualSlotRole; records: CharacterListItem[] }>,
     slotIndex: number,
-    usedBaseNameKeys: Set<string>,
+    usedConflictKeys: Set<string>,
   ): boolean {
     if (slotIndex >= slots.length) {
       return true;
@@ -3146,16 +3144,19 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     const slot = slots[slotIndex];
 
     for (const record of slot.records) {
-      const baseNameKey = resolveCharacterBaseNameKey(record.name);
+      const partyConflictKeys = resolveCharacterPartyConflictKeys(record);
 
-      if (baseNameKey.length === 0 || usedBaseNameKeys.has(baseNameKey)) {
+      if (
+        partyConflictKeys.length === 0 ||
+        partyConflictKeys.some((conflictKey) => usedConflictKeys.has(conflictKey))
+      ) {
         continue;
       }
 
-      const nextUsedBaseNameKeys = new Set(usedBaseNameKeys);
-      nextUsedBaseNameKeys.add(baseNameKey);
+      const nextUsedConflictKeys = new Set(usedConflictKeys);
+      partyConflictKeys.forEach((conflictKey) => nextUsedConflictKeys.add(conflictKey));
 
-      if (this.hasValidUniqueBaseNameAssignment(slots, slotIndex + 1, nextUsedBaseNameKeys)) {
+      if (this.hasValidUniqueBaseNameAssignment(slots, slotIndex + 1, nextUsedConflictKeys)) {
         return true;
       }
     }
