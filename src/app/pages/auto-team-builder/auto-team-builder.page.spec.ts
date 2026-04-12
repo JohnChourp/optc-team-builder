@@ -373,38 +373,33 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     );
   });
 
-  it('opens the shared ship picker and saves or clears the manual ship override', async () => {
+  it('selects and clears the manual ship override inline', async () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
 
-    page.openManualShipPicker();
-    expect(page.manualShipPickerOpen()).toBe(true);
-
-    page.saveManualShipSelection(9001);
+    page.selectManualShip(9001);
     expect(page.selectedManualShipId()).toBe(9001);
-    expect(page.manualShipPickerOpen()).toBe(false);
 
-    page.openManualShipPicker();
-    page.saveManualShipSelection(null);
+    page.clearManualShipSelection();
     expect(page.selectedManualShipId()).toBeNull();
-    expect(page.manualShipPickerOpen()).toBe(false);
   });
 
-  it('keeps the full ship catalog available for the manual picker while marking excluded ships as blocked', async () => {
+  it('keeps the full ship catalog available inline for manual ship selection while marking excluded ships as blocked', async () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
     page.excludedShipIds.set([9002]);
+    page.setShipPickerMode('ships');
 
-    expect(page.ships().map((ship) => ship.id)).toEqual([9001, 9002]);
+    expect(page.manualShipCandidates().map((shipCard) => shipCard.ship.id)).toEqual([9001, 9002]);
     expect(page.manualShipBlockedIds()).toEqual([9002]);
     expect(page.manualShipSupportLabels()[9002]).toBe(
       'This ship is excluded and cannot be confirmed as the manual ship.',
     );
   });
 
-  it('keeps non-favorite ships visible in the manual picker but blocks selecting them when favorite ships only is enabled', async () => {
+  it('keeps non-favorite ships visible inline for manual ship selection but blocks selecting them when favorite ships only is enabled', async () => {
     const { page, userState } = await createPage();
 
     await page.ngOnInit();
@@ -412,8 +407,9 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     await page.onFavoriteShipsOnlyToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
+    page.setShipPickerMode('ships');
 
-    expect(page.ships().map((ship) => ship.id)).toEqual([9001, 9002]);
+    expect(page.manualShipCandidates().map((shipCard) => shipCard.ship.id)).toEqual([9001, 9002]);
     expect(page.manualShipBlockedIds()).toEqual([9002]);
     expect(page.manualShipSupportLabels()[9002]).toBe(
       'Only favorite ships can be confirmed while favorite ship mode is enabled.',
@@ -422,6 +418,65 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     page.selectManualShip(9002);
 
     expect(page.selectedManualShipId()).toBeNull();
+  });
+
+  it('shows manual ship candidates 10 at a time and resets the visible count after searching', async () => {
+    const { page, repository } = await createPage();
+
+    repository.getShips.mockResolvedValue(createShipCatalog(23));
+    await page.ngOnInit();
+    page.setShipPickerMode('ships');
+
+    expect(page.manualShipCandidates()).toHaveLength(23);
+    expect(page.visibleManualShipCandidates()).toHaveLength(10);
+
+    page.onManualShipListScroll(createShipListScrollEvent());
+
+    expect(page.visibleManualShipCandidates()).toHaveLength(20);
+
+    page.onManualShipSearchChange({ detail: { value: 'Ship' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+
+    expect(page.visibleManualShipCandidates()).toHaveLength(10);
+  });
+
+  it('shows excluded ship candidates 10 at a time and resets the visible count after searching', async () => {
+    const { page, repository } = await createPage();
+
+    repository.getShips.mockResolvedValue(createShipCatalog(24));
+    await page.ngOnInit();
+    page.favoriteShipsOnly.set(false);
+    page.setExcludePickerMode('ships');
+
+    expect(page.excludedShipCandidates()).toHaveLength(24);
+    expect(page.visibleExcludedShipCandidates()).toHaveLength(10);
+
+    page.onExcludedShipListScroll(createShipListScrollEvent());
+
+    expect(page.visibleExcludedShipCandidates()).toHaveLength(20);
+
+    page.onExcludeShipSearchChange({ detail: { value: 'Ship' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+
+    expect(page.visibleExcludedShipCandidates()).toHaveLength(10);
+  });
+
+  it('keeps all excluded ship candidates visible when favorite ship mode is enabled', async () => {
+    const { page, userState } = await createPage();
+
+    userState.favoriteShipIds.set([9001]);
+    await page.ngOnInit();
+    await page.onFavoriteShipsOnlyToggle({ detail: { checked: true } } as CustomEvent<{
+      checked: boolean;
+    }>);
+    page.setExcludePickerMode('ships');
+
+    expect(page.excludedShipCandidates().map((shipCard) => shipCard.ship.id)).toEqual([9001, 9002]);
+    expect(page.visibleExcludedShipCandidates().map((shipCard) => shipCard.ship.id)).toEqual([
+      9001, 9002,
+    ]);
   });
 
   it('passes slot-based OR picks to the builder service', async () => {
@@ -899,11 +954,14 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(template).toContain('{{ saveButtonLabel() }}');
     expect(template).toContain('<app-enemy-mechanic-picker');
     expect(template).toContain('<app-ability-requirement-picker');
-    expect(template).toContain('<app-ship-picker');
-    expect(template).toContain("t('ships.pickerTitle')");
+    expect(template).not.toContain('<app-ship-picker');
     expect(template).toContain('favoriteShipsOnlyToggleLabel()');
-    expect(template).toContain('[favoriteShipIds]="favoriteShipIds()"');
-    expect(template).toContain('(toggleFavoriteShip)="toggleShipFavorite($event)"');
+    expect(template).toContain('[value]="manualShipSearchTerm()"');
+    expect(template).toContain('(ionInput)="onManualShipSearchChange($event)"');
+    expect(template).toContain('(scroll)="onManualShipListScroll($event)"');
+    expect(template).toContain('(scroll)="onExcludedShipListScroll($event)"');
+    expect(template).toContain("t('ships.actions.selected')");
+    expect(template).toContain('(click)="toggleShipFavorite(shipCard.ship.id)"');
     expect(template).toContain('<cdk-virtual-scroll-viewport');
     expect(template).toContain(
       '(scrolledIndexChange)="onManualCandidatesScrolledIndexChange($event)"',
@@ -920,6 +978,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(template).not.toContain('excludedCandidatePoolSupportLabel()');
     expect(template).not.toContain('manualFilterAppliedAbilityLabels()');
     expect(template).not.toContain('hasAppliedManualFilters()');
+    expect(template).not.toContain('manualShipPickerOpen()');
     expect(template).toContain('[class.manual-lock-chip--ship-fallback]="!ship.thumbUrl"');
     expect(template).toContain('@if (ship.thumbUrl; as thumbUrl)');
     expect(template).toContain('[class.ship-candidate-icon--fallback]="!shipCard.ship.thumbUrl"');
@@ -966,11 +1025,11 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     page.activeManualSlotRole.set('sub2');
     page.selectedManualShipId.set(9001);
     page.excludedShipIds.set([9002]);
-    page.manualShipPickerOpen.set(true);
     page.requireSameCaptainAndFriendCaptain.set(true);
     page.favoritesOnly.set(true);
     page.favoriteShipsOnly.set(true);
     page.manualSearchTerm.set('Luffy');
+    page.manualShipSearchTerm.set('Sunny');
     page.excludeCharacterSearchTerm.set('Kaido');
     page.excludeShipSearchTerm.set('Sunny');
     page.shipPickerMode.set('ships');
@@ -1004,13 +1063,13 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(page.activeManualSlotRole()).toBe('captain');
     expect(page.selectedManualShipId()).toBeNull();
     expect(page.excludedShipIds()).toEqual([]);
-    expect(page.manualShipPickerOpen()).toBe(false);
     expect(page.requireAllSpecialsSupportTeam()).toBe(true);
     expect(page.requireUniqueBaseCharacterNames()).toBe(true);
     expect(page.requireSameCaptainAndFriendCaptain()).toBe(false);
     expect(page.favoritesOnly()).toBe(true);
     expect(page.favoriteShipsOnly()).toBe(true);
     expect(page.manualSearchTerm()).toBe('');
+    expect(page.manualShipSearchTerm()).toBe('');
     expect(page.excludeCharacterSearchTerm()).toBe('');
     expect(page.excludeShipSearchTerm()).toBe('');
     expect(page.shipPickerMode()).toBe('characters');
@@ -3610,6 +3669,23 @@ function createShipRecord(id: number): {
     thumbUrl: null,
     description: 'Boosts ATK by 1.5x.',
   };
+}
+
+function createShipCatalog(
+  count: number,
+  startId = 9001,
+): Array<ReturnType<typeof createShipRecord>> {
+  return Array.from({ length: count }, (_value, index) => createShipRecord(startId + index));
+}
+
+function createShipListScrollEvent(): Event {
+  return {
+    target: {
+      scrollTop: 760,
+      clientHeight: 120,
+      scrollHeight: 1000,
+    },
+  } as Event;
 }
 
 function createSavedTeam(

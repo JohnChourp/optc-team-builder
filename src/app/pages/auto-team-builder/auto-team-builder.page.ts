@@ -85,7 +85,6 @@ import { buildAutoTeamBuilderStateFromSavedEnemy } from './auto-team-builder-ene
 import { buildAutoTeamBuilderStateFromSavedTeam } from './auto-team-builder-saved-team-preset.utils';
 import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
 import { EnemyMechanicPickerComponent } from '../../shared/enemy-mechanic-picker/enemy-mechanic-picker.component';
-import { ShipPickerComponent } from '../../shared/ship-picker/ship-picker.component';
 import {
   createAbilityRequirementDrafts,
   formatAbilityRequirementSummary,
@@ -152,6 +151,7 @@ interface ShipCandidateCardView {
   subtitle: string;
   matchesManualSelection: boolean;
   isExcluded: boolean;
+  isFavorite: boolean;
   isSelectableInManualPicker: boolean;
   manualPickerSupportLabel: string | null;
   isSelectableInExcludePicker: boolean;
@@ -208,6 +208,12 @@ interface CharacterPickerPanelState {
   requestId: number;
 }
 
+interface ShipPickerPanelState {
+  visibleCount: number;
+  hasMore: boolean;
+  loadingMore: boolean;
+}
+
 interface AutoTeamBuilderDefaultFilterState {
   selectedTypes: AutoTeamBuilderType[];
   selectedClasses: string[];
@@ -224,6 +230,8 @@ const SAVE_TEAM_FEEDBACK_DURATION_MS = 3000;
 const SAVE_TEAM_ANIMATION_PATH = 'assets/animations/save-team-loading.json';
 const CHARACTER_PICKER_PAGE_SIZE = 10;
 const CHARACTER_PICKER_SCROLL_LOAD_THRESHOLD = 4;
+const SHIP_PICKER_PAGE_SIZE = 10;
+const SHIP_PICKER_SCROLL_LOAD_THRESHOLD_PX = 144;
 const MANUAL_CANDIDATE_VIEWPORT_ITEM_SIZE = 188;
 const EXCLUDED_CANDIDATE_VIEWPORT_ITEM_SIZE = 236;
 
@@ -234,6 +242,14 @@ function createCharacterPickerPanelState(): CharacterPickerPanelState {
     loadingInitial: false,
     loadingMore: false,
     requestId: 0,
+  };
+}
+
+function createShipPickerPanelState(): ShipPickerPanelState {
+  return {
+    visibleCount: 0,
+    hasMore: false,
+    loadingMore: false,
   };
 }
 
@@ -274,7 +290,6 @@ function buildDefaultAutoTeamBuilderFilterState(
     LottieComponent,
     AbilityRequirementPickerComponent,
     EnemyMechanicPickerComponent,
-    ShipPickerComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,
@@ -296,6 +311,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly requiredAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly abilityPickerOpen = signal(false);
   public readonly manualSearchTerm = signal('');
+  public readonly manualShipSearchTerm = signal('');
   public readonly excludeCharacterSearchTerm = signal('');
   public readonly excludeShipSearchTerm = signal('');
   private readonly manualCandidatePanelState = signal<CharacterPickerPanelState>(
@@ -324,9 +340,24 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly excludedCandidatesHasMore = computed(
     () => this.excludedCandidatePanelState().hasMore,
   );
+  private readonly manualShipPanelState = signal<ShipPickerPanelState>(
+    createShipPickerPanelState(),
+  );
+  public readonly manualShipCandidatesLoadingMore = computed(
+    () => this.manualShipPanelState().loadingMore,
+  );
+  public readonly manualShipCandidatesHasMore = computed(() => this.manualShipPanelState().hasMore);
+  private readonly excludedShipPanelState = signal<ShipPickerPanelState>(
+    createShipPickerPanelState(),
+  );
+  public readonly excludedShipCandidatesLoadingMore = computed(
+    () => this.excludedShipPanelState().loadingMore,
+  );
+  public readonly excludedShipCandidatesHasMore = computed(
+    () => this.excludedShipPanelState().hasMore,
+  );
   public readonly shipPickerMode = signal<'characters' | 'ships'>('characters');
   public readonly excludePickerMode = signal<'characters' | 'ships'>('characters');
-  public readonly manualShipPickerOpen = signal(false);
   public readonly manualSlots = signal<AutoBuildManualSlotSelection[]>(
     createEmptyAutoBuildManualSlots(),
   );
@@ -371,18 +402,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     () => this.ships().find((ship) => ship.id === this.selectedManualShipId()) ?? null,
   );
   public readonly hasSelectedManualShip = computed(() => Boolean(this.selectedManualShip()));
-  public readonly selectedManualShipTitle = computed(() => {
-    const selectedShip = this.selectedManualShip();
-
-    return selectedShip?.name ?? this.t('ships.emptySelectionLabel');
-  });
-  public readonly selectedManualShipSubtitle = computed(() => {
-    const selectedShip = this.selectedManualShip();
-
-    return selectedShip
-      ? this.buildShipCardSubtitle(selectedShip)
-      : this.t('ships.autoRecommendation');
-  });
   public readonly excludedShips = computed(() => {
     const excludedShipIdSet = new Set(this.excludedShipIds());
 
@@ -679,11 +698,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       this.manualCandidateFilters().requiredAbilities,
     ),
   );
-  public readonly excludedShipCandidates = computed<ShipCandidateCardView[]>(() => {
-    const searchTerm = this.excludeShipSearchTerm().trim().toLowerCase();
+  public readonly manualShipCandidates = computed<ShipCandidateCardView[]>(() => {
+    const searchTerm = this.manualShipSearchTerm().trim().toLowerCase();
 
     return this.ships()
-      .filter((ship) => !this.favoriteShipsOnly() || this.isFavoriteShip(ship.id))
       .filter((ship) => {
         if (searchTerm.length === 0) {
           return true;
@@ -698,12 +716,47 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         subtitle: this.buildShipCardSubtitle(ship),
         matchesManualSelection: ship.id === this.selectedManualShipId(),
         isExcluded: this.excludedShipIds().includes(ship.id),
+        isFavorite: this.isFavoriteShip(ship.id),
         isSelectableInManualPicker: !this.excludedShipIds().includes(ship.id),
         manualPickerSupportLabel: this.resolveManualShipSupportLabel(ship.id),
         isSelectableInExcludePicker: this.canExcludeShip(ship.id),
         excludePickerSupportLabel: this.resolveExcludedShipSupportLabel(ship.id),
       }));
   });
+  public readonly visibleManualShipCandidates = computed<ShipCandidateCardView[]>(() =>
+    this.manualShipCandidates().slice(0, this.manualShipPanelState().visibleCount),
+  );
+  public readonly excludedShipCandidates = computed<ShipCandidateCardView[]>(() => {
+    const searchTerm = this.excludeShipSearchTerm().trim().toLowerCase();
+
+    return this.ships()
+      .filter((ship) => {
+        if (searchTerm.length === 0) {
+          return true;
+        }
+
+        return [ship.name, ship.description].some((value) =>
+          value.toLowerCase().includes(searchTerm),
+        );
+      })
+      .map((ship) => ({
+        ship,
+        subtitle: this.buildShipCardSubtitle(ship),
+        matchesManualSelection: ship.id === this.selectedManualShipId(),
+        isExcluded: this.excludedShipIds().includes(ship.id),
+        isFavorite: this.isFavoriteShip(ship.id),
+        isSelectableInManualPicker: !this.excludedShipIds().includes(ship.id),
+        manualPickerSupportLabel: this.resolveManualShipSupportLabel(ship.id),
+        isSelectableInExcludePicker: this.canExcludeShip(ship.id),
+        excludePickerSupportLabel: this.resolveExcludedShipSupportLabel(ship.id),
+      }));
+  });
+  public readonly visibleExcludedShipCandidates = computed<ShipCandidateCardView[]>(() =>
+    this.excludedShipCandidates().slice(0, this.excludedShipPanelState().visibleCount),
+  );
+  public readonly manualShipCandidatesSummaryLabel = computed(() =>
+    this.t('ships.count', { count: this.manualShipCandidates().length }),
+  );
   public readonly shipPickerSupportLabel = computed(() => {
     const selectedShip = this.selectedManualShip();
 
@@ -744,11 +797,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   );
   public readonly excludeShipPickerSupportLabel = computed(() => {
     if (this.favoriteShipsOnly()) {
-      return this.hasFavoriteShips()
-        ? this.t('exclude.shipSupport.favoritesOnly', {
-            count: this.favoriteShipIds().length,
-          })
-        : this.t('exclude.shipSupport.favoriteShipsEmpty');
+      return this.t('exclude.shipSupport.favoriteShipMode');
     }
 
     if (this.hasExcludedShips()) {
@@ -1228,7 +1277,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     await Promise.all([
       this.i18n.preloadScope('ability-picker'),
       this.i18n.preloadScope('enemy-mechanics-picker'),
-      this.i18n.preloadScope('ship-picker'),
     ]);
     const shipsPromise =
       typeof this.repository.getShips === 'function'
@@ -1286,6 +1334,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     await this.refreshAppliedManualCandidates();
   }
 
+  public onManualShipSearchChange(event: CustomEvent<{ value?: string | null }>): void {
+    this.manualShipSearchTerm.set((event.detail.value ?? '').trim());
+    this.syncShipPickerPanelState('manual', { reset: true });
+  }
+
   public async onManualCandidatesScrolledIndexChange(index: number): Promise<void> {
     await this.loadMoreCharacterPickerPanel('manual', index, this.manualCandidateCards().length);
   }
@@ -1315,33 +1368,25 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
   public setShipPickerMode(mode: 'characters' | 'ships'): void {
     this.shipPickerMode.set(mode);
+    this.syncShipPickerPanelState('manual', { reset: true });
   }
 
   public setExcludePickerMode(mode: 'characters' | 'ships'): void {
     this.excludePickerMode.set(mode);
-  }
-
-  public openManualShipPicker(): void {
-    this.manualShipPickerOpen.set(true);
-  }
-
-  public closeManualShipPicker(): void {
-    this.manualShipPickerOpen.set(false);
-  }
-
-  public saveManualShipSelection(shipId: number | null): void {
-    if (shipId === null) {
-      this.clearManualShipSelection();
-      this.closeManualShipPicker();
-      return;
-    }
-
-    this.selectManualShip(shipId);
-    this.closeManualShipPicker();
+    this.syncShipPickerPanelState('excluded', { reset: true });
   }
 
   public onExcludeShipSearchChange(event: CustomEvent<{ value?: string | null }>): void {
     this.excludeShipSearchTerm.set((event.detail.value ?? '').trim());
+    this.syncShipPickerPanelState('excluded', { reset: true });
+  }
+
+  public onManualShipListScroll(event: Event): void {
+    this.loadMoreShipPickerPanelOnScroll('manual', event);
+  }
+
+  public onExcludedShipListScroll(event: Event): void {
+    this.loadMoreShipPickerPanelOnScroll('excluded', event);
   }
 
   public selectManualShip(shipId: number): void {
@@ -1404,6 +1449,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     } else {
       this.resetBuildState();
     }
+
+    this.syncShipPickerPanelStates();
   }
 
   public removeExcludedShip(shipId: number, event?: Event): void {
@@ -1417,6 +1464,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     } else {
       this.resetBuildState();
     }
+
+    this.syncShipPickerPanelStates();
   }
 
   public clearExcludedShips(): void {
@@ -1427,6 +1476,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     } else {
       this.resetBuildState();
     }
+
+    this.syncShipPickerPanelStates();
   }
 
   public isExcludedCharacter(characterId: number): boolean {
@@ -2007,19 +2058,21 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
-    this.manualShipPickerOpen.set(false);
     this.selectedTypes.set(defaultFilters.selectedTypes);
     this.selectedClasses.set(defaultFilters.selectedClasses);
     this.enemyMechanicDrafts.set([]);
     this.requiredAbilityDrafts.set([]);
     this.lockedCharacterRecords.set({});
     this.manualSearchTerm.set('');
+    this.manualShipSearchTerm.set('');
     this.excludeCharacterSearchTerm.set('');
     this.excludeShipSearchTerm.set('');
     this.manualCandidates.set([]);
     this.manualCandidatePanelState.set(createCharacterPickerPanelState());
     this.excludedCandidates.set([]);
     this.excludedCandidatePanelState.set(createCharacterPickerPanelState());
+    this.manualShipPanelState.set(createShipPickerPanelState());
+    this.excludedShipPanelState.set(createShipPickerPanelState());
     this.shipPickerMode.set('characters');
     this.excludePickerMode.set('characters');
     this.manualSlots.set(createEmptyAutoBuildManualSlots());
@@ -2041,6 +2094,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.presetImportFeedback.set(null);
     this.loadedEnemyPresetName.set(null);
     this.resetBuildState();
+    this.syncShipPickerPanelStates();
     await this.refreshCharacterPickPanels();
   }
 
@@ -2573,6 +2627,105 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     if (this.result()) {
       this.updateResultShipSelection();
     }
+
+    this.syncShipPickerPanelStates();
+  }
+
+  private loadMoreShipPickerPanelOnScroll(panel: 'manual' | 'excluded', event: Event): void {
+    const container = event.target as {
+      scrollTop: number;
+      clientHeight: number;
+      scrollHeight: number;
+    } | null;
+
+    if (!this.shouldLoadMoreShipPickerPanel(container)) {
+      return;
+    }
+
+    this.loadMoreShipPickerPanel(panel);
+  }
+
+  private shouldLoadMoreShipPickerPanel(
+    container:
+      | {
+          scrollTop: number;
+          clientHeight: number;
+          scrollHeight: number;
+        }
+      | null
+      | undefined,
+  ): boolean {
+    if (!container) {
+      return false;
+    }
+
+    const remainingDistance =
+      container.scrollHeight - (container.scrollTop + container.clientHeight);
+
+    return remainingDistance <= SHIP_PICKER_SCROLL_LOAD_THRESHOLD_PX;
+  }
+
+  private loadMoreShipPickerPanel(panel: 'manual' | 'excluded'): void {
+    const panelState = this.getShipPickerPanelState(panel);
+    const currentState = panelState();
+
+    if (!currentState.hasMore) {
+      return;
+    }
+
+    const totalCount = this.getShipCandidateCards(panel).length;
+    const nextVisibleCount = Math.min(
+      currentState.visibleCount + SHIP_PICKER_PAGE_SIZE,
+      totalCount,
+    );
+
+    panelState.set({
+      ...currentState,
+      loadingMore: true,
+    });
+    panelState.set({
+      visibleCount: nextVisibleCount,
+      hasMore: nextVisibleCount < totalCount,
+      loadingMore: false,
+    });
+  }
+
+  private syncShipPickerPanelStates(): void {
+    this.syncShipPickerPanelState('manual');
+    this.syncShipPickerPanelState('excluded');
+  }
+
+  private syncShipPickerPanelState(
+    panel: 'manual' | 'excluded',
+    options: { reset?: boolean } = {},
+  ): void {
+    const panelState = this.getShipPickerPanelState(panel);
+    const currentState = panelState();
+    const totalCount = this.getShipCandidateCards(panel).length;
+    const initialVisibleCount = Math.min(totalCount, SHIP_PICKER_PAGE_SIZE);
+    const nextVisibleCount = options.reset
+      ? initialVisibleCount
+      : totalCount === 0
+        ? 0
+        : currentState.visibleCount === 0
+          ? initialVisibleCount
+          : Math.min(currentState.visibleCount, totalCount);
+
+    panelState.set({
+      visibleCount: nextVisibleCount,
+      hasMore: nextVisibleCount < totalCount,
+      loadingMore: false,
+    });
+  }
+
+  private getShipPickerPanelState(
+    panel: 'manual' | 'excluded',
+  ): WritableSignal<ShipPickerPanelState> {
+    return panel === 'manual' ? this.manualShipPanelState : this.excludedShipPanelState;
+  }
+
+  private getShipCandidateCards(panel: 'manual' | 'excluded'): ShipCandidateCardView[] {
+    return panel === 'manual' ? this.manualShipCandidates() : this.excludedShipCandidates();
   }
 
   private buildShipCardSubtitle(ship: ShipRecord): string {

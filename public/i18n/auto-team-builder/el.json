@@ -282,8 +282,7 @@
     "shipSupport": {
       "default": "Τα excluded ships βγαίνουν και από το manual ship override και από το auto recommendation.",
       "withCount": "{{count}} ships είναι excluded αυτή τη στιγμή.",
-      "favoritesOnly": "Εδώ εμφανίζονται μόνο τα {{count}} favorite ships σου όσο είναι ενεργό το favorite ship mode.",
-      "favoriteShipsEmpty": "Δεν υπάρχουν ακόμα favorite ships, οπότε αυτή η λίστα ship excludes είναι προσωρινά κενή."
+      "favoriteShipMode": "Εδώ παραμένουν ορατά όλα τα ships ώστε να μπορείς να κάνεις exclude οποιοδήποτε. Το favorite ship mode συνεχίζει να περιορίζει μόνο το manual ship confirmation και το auto recommendation."
     },
     "selectionSupport": {
       "removesLockedFrom": "Αν κάνεις exclude αυτόν τον character, θα αφαιρεθεί από τα {{slots}}.",
@@ -291,6 +290,9 @@
     }
   },
   "ships": {
+    "actions": {
+      "selected": "Επιλεγμένο"
+    },
     "autoRecommendation": "Άφησε τον builder να προτείνει το καλύτερο ship για την επιλεγμένη ομάδα.",
     "changeAction": "Αλλαγή ship",
     "clearSelection": "Χρήση auto recommendation",
@@ -310,6 +312,10 @@
     "openAction": "Επιλογή ship",
     "pickerCopy": "Διάλεξε οποιοδήποτε ship από όλο το catalog ή άφησέ το κενό ώστε ο builder να προτείνει ship. Τα excluded ships μένουν ορατά αλλά κλειδωμένα.",
     "pickerTitle": "Manual ship επιλογή",
+    "favoriteActions": {
+      "add": "Προσθήκη ship στα favorites",
+      "remove": "Αφαίρεση ship από τα favorites"
+    },
     "searchPlaceholder": "Search ship by name or effect"
   },
   "progress": {

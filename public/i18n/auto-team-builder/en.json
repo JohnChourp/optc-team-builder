@@ -282,8 +282,7 @@
     "shipSupport": {
       "default": "Excluded ships are removed from both manual ship override and auto recommendation.",
       "withCount": "{{count}} ships are currently excluded.",
-      "favoritesOnly": "Only your {{count}} favorite ships are shown here while favorite ship mode is enabled.",
-      "favoriteShipsEmpty": "No favorite ships are saved yet, so this ship exclude list is currently empty."
+      "favoriteShipMode": "All ships stay visible here so you can exclude any of them. Favorite ship mode still only limits manual ship confirmation and auto recommendation."
     },
     "selectionSupport": {
       "removesLockedFrom": "Excluding this character will remove it from {{slots}}.",
@@ -291,6 +290,9 @@
     }
   },
   "ships": {
+    "actions": {
+      "selected": "Selected"
+    },
     "autoRecommendation": "Let the builder recommend the best ship for the selected crew.",
     "changeAction": "Change ship",
     "clearSelection": "Use auto recommendation",
@@ -310,6 +312,10 @@
     "openAction": "Choose ship",
     "pickerCopy": "Pick any ship from the full catalog, or leave it empty so the builder can recommend one. Excluded ships stay visible but locked.",
     "pickerTitle": "Manual ship selection",
+    "favoriteActions": {
+      "add": "Add ship to favorites",
+      "remove": "Remove ship from favorites"
+    },
     "searchPlaceholder": "Search ship by name or effect"
   },
   "progress": {
