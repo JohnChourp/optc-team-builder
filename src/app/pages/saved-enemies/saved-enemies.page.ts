@@ -14,7 +14,6 @@ import {
   IonSpinner,
   IonTextarea,
   IonTitle,
-  IonToggle,
   IonToolbar,
 } from '@ionic/angular/standalone';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
@@ -114,7 +113,6 @@ interface SavedEnemiesImportFeedback {
     IonSpinner,
     IonTextarea,
     IonTitle,
-    IonToggle,
     IonToolbar,
     AbilityRequirementPickerComponent,
     CharacterImagePickerComponent,
@@ -354,8 +352,8 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.resetEnemyTextParseState();
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
-    this.selectedTypes.set(['DEX']);
-    this.selectedClasses.set([]);
+    this.selectedTypes.set([...this.availableTypes]);
+    this.selectedClasses.set([...this.availableClasses()]);
     this.enemyMechanicDrafts.set([]);
     this.requiredAbilityDrafts.set([]);
     this.requireAllSelectedTypesInTeam.set(false);
@@ -651,18 +649,6 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.requiredAbilityDrafts.set([]);
   }
 
-  public onRequireAllSelectedTypesToggle(event: CustomEvent<{ checked: boolean }>): void {
-    this.requireAllSelectedTypesInTeam.set(event.detail.checked);
-  }
-
-  public onRequireAllSelectedClassesToggle(event: CustomEvent<{ checked: boolean }>): void {
-    this.requireAllSelectedClassesPerCharacter.set(event.detail.checked);
-  }
-
-  public onRequireAllSpecialsSupportToggle(event: CustomEvent<{ checked: boolean }>): void {
-    this.requireAllSpecialsSupportTeam.set(event.detail.checked);
-  }
-
   public async saveEnemy(): Promise<void> {
     if (this.savingEnemy() || this.processingEnemyImage() || !this.canSaveEnemy()) {
       return;
@@ -868,6 +854,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       mechanicKey: draft.mechanicKey,
       category: draft.category,
       minTurns: draft.minTurns,
+      requiredCharacterCount: resolvePositiveInteger(draft.requiredCharacterCount) ?? undefined,
       triggerTags: [...draft.triggerTags],
       responseTags: [...draft.responseTags],
       conditionTags: [...draft.conditionTags],
@@ -1071,6 +1058,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       mechanicKey: requirement.mechanicKey,
       category: requirement.category,
       minTurns: requirement.minTurns,
+      requiredCharacterCount: resolvePositiveInteger(requirement.requiredCharacterCount),
       triggerTags: [...requirement.triggerTags],
       responseTags: [...requirement.responseTags],
       conditionTags: [...requirement.conditionTags],

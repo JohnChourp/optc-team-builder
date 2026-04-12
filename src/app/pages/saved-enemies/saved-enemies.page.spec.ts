@@ -61,16 +61,18 @@ describe('SavedEnemiesPage', () => {
     expect(page.availableClasses()).toEqual(['Fighter', 'Slasher']);
   });
 
-  it('opens the create modal with fresh defaults', () => {
+  it('opens the create modal with fresh defaults', async () => {
     const { page } = createPage({ savedEnemies: [] });
 
+    await page.ngOnInit();
     page.openCreateModal();
 
     expect(page.editorOpen()).toBe(true);
     expect(page.enemyMechanicPickerOpen()).toBe(false);
     expect(page.abilityPickerOpen()).toBe(false);
     expect(page.editingEnemy()).toBeNull();
-    expect(page.selectedTypes()).toEqual(['DEX']);
+    expect(page.selectedTypes()).toEqual([...page.availableTypes]);
+    expect(page.selectedClasses()).toEqual([...page.availableClasses()]);
     expect(page.enemyMechanicDrafts()).toEqual([]);
     expect(page.requiredAbilityDrafts()).toEqual([]);
   });
@@ -110,11 +112,6 @@ describe('SavedEnemiesPage', () => {
 
     page.openCreateModal();
 
-    expect(page.selectedTypes()).toEqual(['DEX']);
-    expect(page.selectAllTypesButtonLabel()).toBe('Select all types');
-
-    page.selectAllTypes();
-
     expect(page.selectedTypes()).toEqual([...page.availableTypes]);
     expect(page.selectAllTypesButtonLabel()).toBe('Clear type selection');
 
@@ -122,6 +119,11 @@ describe('SavedEnemiesPage', () => {
 
     expect(page.selectedTypes()).toEqual([]);
     expect(page.selectAllTypesButtonLabel()).toBe('Select all types');
+
+    page.selectAllTypes();
+
+    expect(page.selectedTypes()).toEqual([...page.availableTypes]);
+    expect(page.selectAllTypesButtonLabel()).toBe('Clear type selection');
   });
 
   it('toggles select all and clear for classes without touching unrelated editor state', async () => {
@@ -315,6 +317,55 @@ describe('SavedEnemiesPage', () => {
     );
   });
 
+  it('counts repeated parsed counters across battles when saving an enemy', async () => {
+    const { page, userState } = createPage();
+
+    await page.ngOnInit();
+    page.openCreateModal();
+    page.onEnemyNameChange({ detail: { value: 'Stage Boss' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+    page.onTypeChange({ detail: { value: ['DEX'] } } as CustomEvent<{
+      value?: string[] | string | null;
+    }>);
+    page.onClassChange({ detail: { value: ['Fighter'] } } as CustomEvent<{
+      value?: string[] | string | null;
+    }>);
+    page.onEnemyPasteTextChange({
+      detail: {
+        value: `
+          Battle 3
+          4 turn(s) Paralysis
+          Battle 4
+          6 turn(s) Paralysis
+        `,
+      },
+    } as CustomEvent<{ value?: string | null }>);
+
+    page.parseEnemyText();
+    page.applyParsedEnemyText();
+    await page.saveEnemy();
+
+    expect(userState.saveEnemy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enemyMechanics: [
+          expect.objectContaining({
+            mechanicKey: 'crew_paralysis',
+            minTurns: 6,
+            requiredCharacterCount: 2,
+          }),
+        ],
+        requiredAbilities: [
+          expect.objectContaining({
+            abilityKey: 'remove_paralysis',
+            minTurns: 6,
+            requiredCharacterCount: 2,
+          }),
+        ],
+      }),
+    );
+  });
+
   it('clears parsed warning state when the pasted text changes and recomputes on the next parse', async () => {
     const { page } = createPage();
 
@@ -322,17 +373,13 @@ describe('SavedEnemiesPage', () => {
     page.openEditModal(page.savedEnemies()[0]!);
     page.onEnemyPasteTextChange({
       detail: {
-        value: 'Top-Row Special Reverse 2 turns(s)',
+        value: 'Battle 3',
       },
     } as CustomEvent<{ value?: string | null }>);
 
     page.parseEnemyText();
 
-    expect(page.enemyTextParseResult()?.warnings).toEqual([
-      expect.objectContaining({
-        kind: 'unmatched',
-      }),
-    ]);
+    expect(page.enemyTextParseResult()?.warnings).toEqual([]);
 
     page.onEnemyPasteTextChange({
       detail: {
@@ -570,7 +617,9 @@ describe('SavedEnemiesPage', () => {
     expect(template).toContain('selectAllClassesButtonLabel()');
     expect(template).toContain('editor.enemyMechanics.title');
     expect(template).toContain('editor.manualCounters.title');
-    expect(template).toContain('editor.toggles.specials');
+    expect(template).not.toContain('editor.toggles.types');
+    expect(template).not.toContain('editor.toggles.classes');
+    expect(template).not.toContain('editor.toggles.specials');
     expect(template).toContain('<app-enemy-mechanic-picker');
     expect(template).toContain('<app-ability-requirement-picker');
     expect(template).toContain('<app-character-image-picker');

@@ -46,6 +46,10 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonToolbar: class {},
 }));
 
+vi.mock('@ionic/angular', () => ({
+  AlertController: class {},
+}));
+
 afterEach(() => {
   vi.useRealTimers();
 });
@@ -57,7 +61,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     await page.ngOnInit();
     page.selectedClasses.set(['Fighter']);
     page.selectedTypes.set(['DEX']);
-    page.onRequireAllSpecialsSupportToggle({ detail: { checked: true } } as CustomEvent<{
+    await page.onRequireAllSpecialsSupportToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
     await page.buildTeam();
@@ -81,7 +85,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     await page.ngOnInit();
     page.selectedClasses.set(['Fighter']);
     page.selectedTypes.set(['DEX']);
-    page.onRequireUniqueBaseCharacterNamesToggle({ detail: { checked: true } } as CustomEvent<{
+    await page.onRequireUniqueBaseCharacterNamesToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
     await page.buildTeam();
@@ -121,6 +125,62 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
         signal: expect.any(AbortSignal),
       }),
     );
+  });
+
+  it('keeps favorite-only auto-fill enabled when disable confirmation is cancelled', async () => {
+    const { page, alertController, alertState } = await createPage();
+
+    await page.ngOnInit();
+    alertState.nextRole = 'cancel';
+
+    await page.onFavoritesOnlyToggle({ detail: { checked: false } } as CustomEvent<{
+      checked: boolean;
+    }>);
+
+    expect(page.favoritesOnly()).toBe(true);
+    expect(alertController.create).toHaveBeenCalledOnce();
+  });
+
+  it('disables favorite ship mode after confirmation', async () => {
+    const { page, alertController, alertState } = await createPage();
+
+    await page.ngOnInit();
+    alertState.nextRole = 'confirm';
+
+    await page.onFavoriteShipsOnlyToggle({ detail: { checked: false } } as CustomEvent<{
+      checked: boolean;
+    }>);
+
+    expect(page.favoriteShipsOnly()).toBe(false);
+    expect(alertController.create).toHaveBeenCalledOnce();
+  });
+
+  it('asks for confirmation before disabling unique-name matching', async () => {
+    const { page, alertController, alertState } = await createPage();
+
+    await page.ngOnInit();
+    alertState.nextRole = 'confirm';
+
+    await page.onRequireUniqueBaseCharacterNamesToggle({
+      detail: { checked: false },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.requireUniqueBaseCharacterNames()).toBe(false);
+    expect(alertController.create).toHaveBeenCalledOnce();
+  });
+
+  it('re-enables special-support mode without showing confirmation', async () => {
+    const { page, alertController } = await createPage();
+
+    await page.ngOnInit();
+    page.requireAllSpecialsSupportTeam.set(false);
+
+    await page.onRequireAllSpecialsSupportToggle({ detail: { checked: true } } as CustomEvent<{
+      checked: boolean;
+    }>);
+
+    expect(page.requireAllSpecialsSupportTeam()).toBe(true);
+    expect(alertController.create).not.toHaveBeenCalled();
   });
 
   it('passes configured ability requirements to the builder service', async () => {
@@ -347,7 +407,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
 
     await page.ngOnInit();
     userState.favoriteShipIds.set([9001]);
-    page.onFavoriteShipsOnlyToggle({ detail: { checked: true } } as CustomEvent<{
+    await page.onFavoriteShipsOnlyToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
 
@@ -423,7 +483,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     userState.favoriteShipIds.set([9002]);
     page.selectedClasses.set(['Fighter']);
     page.selectedTypes.set(['DEX']);
-    page.onFavoriteShipsOnlyToggle({ detail: { checked: true } } as CustomEvent<{
+    await page.onFavoriteShipsOnlyToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
     await page.buildTeam();
@@ -470,7 +530,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     await page.ngOnInit();
     page.manualCandidates.set([favoriteCandidate, nonFavoriteCandidate]);
     page.activeManualSlotRole.set('sub1');
-    page.onFavoritesOnlyToggle({ detail: { checked: true } } as CustomEvent<{ checked: boolean }>);
+    await page.onFavoritesOnlyToggle({ detail: { checked: true } } as CustomEvent<{ checked: boolean }>);
 
     expect(page.manualCandidateCards().map((candidate: { character: CharacterDetailRecord }) => candidate.character.id)).toEqual([411, 412]);
   });
@@ -576,6 +636,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     const currentResult = createAutoBuildResult();
 
     await page.ngOnInit();
+    page.favoriteShipsOnly.set(false);
     page.selectedManualShipId.set(9001);
     page.result.set({
       ...currentResult,
@@ -626,7 +687,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
       },
     });
 
-    page.onFavoriteShipsOnlyToggle({ detail: { checked: true } } as CustomEvent<{
+    await page.onFavoriteShipsOnlyToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
 
@@ -785,15 +846,13 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
-    page.onRequireAllSpecialsSupportToggle({ detail: { checked: true } } as CustomEvent<{
-      checked: boolean;
-    }>);
+    page.requireAllSpecialsSupportTeam.set(false);
 
-    expect(page.requireAllSpecialsSupportTeam()).toBe(true);
+    expect(page.requireAllSpecialsSupportTeam()).toBe(false);
 
     await page.ionViewWillEnter();
 
-    expect(page.requireAllSpecialsSupportTeam()).toBe(false);
+    expect(page.requireAllSpecialsSupportTeam()).toBe(true);
   });
 
   it('resets the same-captain toggle when the page state is reset', async () => {
@@ -906,8 +965,8 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
 
     await page.resetPage();
 
-    expect(page.selectedTypes()).toEqual([]);
-    expect(page.selectedClasses()).toEqual([]);
+    expect(page.selectedTypes()).toEqual([...page.availableTypes]);
+    expect(page.selectedClasses()).toEqual([...page.availableClasses()]);
     expect(page.enemyMechanicDrafts()).toEqual([]);
     expect(page.requiredAbilityDrafts()).toEqual([]);
     expect(page.manualSlots()).toEqual(createManualSlots());
@@ -919,10 +978,11 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(page.selectedManualShipId()).toBeNull();
     expect(page.excludedShipIds()).toEqual([]);
     expect(page.manualShipPickerOpen()).toBe(false);
-    expect(page.requireUniqueBaseCharacterNames()).toBe(false);
+    expect(page.requireAllSpecialsSupportTeam()).toBe(true);
+    expect(page.requireUniqueBaseCharacterNames()).toBe(true);
     expect(page.requireSameCaptainAndFriendCaptain()).toBe(false);
-    expect(page.favoritesOnly()).toBe(false);
-    expect(page.favoriteShipsOnly()).toBe(false);
+    expect(page.favoritesOnly()).toBe(true);
+    expect(page.favoriteShipsOnly()).toBe(true);
     expect(page.manualSearchTerm()).toBe('');
     expect(page.excludeCharacterSearchTerm()).toBe('');
     expect(page.excludeShipSearchTerm()).toBe('');
@@ -984,7 +1044,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     await page.ngOnInit();
     page.selectedClasses.set(['Fighter']);
     page.selectedTypes.set(['DEX']);
-    page.onRequireUniqueBaseCharacterNamesToggle({ detail: { checked: true } } as CustomEvent<{
+    await page.onRequireUniqueBaseCharacterNamesToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
     page.manualSlots.set(
@@ -1388,8 +1448,8 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
 
     expect(page.result()).toBeNull();
     expect(page.currentTeamId()).toBeNull();
-    expect(page.selectedTypes()).toEqual([]);
-    expect(page.selectedClasses()).toEqual([]);
+    expect(page.selectedTypes()).toEqual([...page.availableTypes]);
+    expect(page.selectedClasses()).toEqual([...page.availableClasses()]);
     expect(page.building()).toBe(false);
   });
 });
@@ -1661,6 +1721,12 @@ describe('AutoTeamBuilderPage preset export state', () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
+    page.selectedTypes.set([]);
+    page.selectedClasses.set([]);
+    page.requireAllSpecialsSupportTeam.set(false);
+    page.requireUniqueBaseCharacterNames.set(false);
+    page.favoritesOnly.set(false);
+    page.favoriteShipsOnly.set(false);
 
     expect(page.canDownloadSelectionJson()).toBe(false);
     expect(page.buildSelectionExportPayload()).toBeNull();
@@ -1715,17 +1781,17 @@ describe('AutoTeamBuilderPage preset export state', () => {
     page.onRequireAllSelectedClassesToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
-    page.onRequireAllSpecialsSupportToggle({ detail: { checked: true } } as CustomEvent<{
+    await page.onRequireAllSpecialsSupportToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
-    page.onRequireUniqueBaseCharacterNamesToggle({ detail: { checked: true } } as CustomEvent<{
+    await page.onRequireUniqueBaseCharacterNamesToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
     page.onRequireSameCaptainAndFriendCaptainToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
-    page.onFavoritesOnlyToggle({ detail: { checked: true } } as CustomEvent<{ checked: boolean }>);
-    page.onFavoriteShipsOnlyToggle({ detail: { checked: true } } as CustomEvent<{
+    await page.onFavoritesOnlyToggle({ detail: { checked: true } } as CustomEvent<{ checked: boolean }>);
+    await page.onFavoriteShipsOnlyToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
     page.manualSlots.set(
@@ -2205,7 +2271,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
           abilityKey: 'remove_enemy_barrier',
           minTurns: 3,
           slotTokens: [],
-          requiredCharacterCount: 1,
+          requiredCharacterCount: 2,
         },
       ],
       enemyMechanics: [
@@ -2213,6 +2279,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
           mechanicKey: 'enemy_barrier',
           category: 'enemyDefense',
           minTurns: 3,
+          requiredCharacterCount: 2,
           triggerTags: [],
           responseTags: [],
           conditionTags: [],
@@ -2260,6 +2327,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
         mechanicKey: 'enemy_barrier',
         category: 'enemyDefense',
         minTurns: 3,
+        requiredCharacterCount: 2,
         triggerTags: [],
         responseTags: [],
         conditionTags: [],
@@ -2271,7 +2339,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
         abilityKey: 'remove_enemy_barrier',
         minTurns: 3,
         slotTokens: [],
-        requiredCharacterCount: 1,
+        requiredCharacterCount: 2,
       },
     ]);
   });
@@ -2782,8 +2850,8 @@ describe('AutoTeamBuilder enemy preset handoff', () => {
     await page.ngOnInit();
     await page.ionViewWillEnter();
 
-    expect(page.selectedTypes()).toEqual([]);
-    expect(page.selectedClasses()).toEqual([]);
+    expect(page.selectedTypes()).toEqual([...page.availableTypes]);
+    expect(page.selectedClasses()).toEqual([...page.availableClasses()]);
     expect(page.loadedEnemyPresetName()).toBeNull();
     expect(router.navigate).toHaveBeenCalledOnce();
   });
@@ -3072,6 +3140,8 @@ async function createPage(
     searchCharacters: ReturnType<typeof vi.fn>;
   };
   autoTeamBuilder: { buildTeam: ReturnType<typeof vi.fn> };
+  alertController: { create: ReturnType<typeof vi.fn> };
+  alertState: { nextRole: 'cancel' | 'confirm'; lastConfig: unknown };
   router: { navigate: ReturnType<typeof vi.fn> };
   route: { snapshot: { queryParamMap: { get: ReturnType<typeof vi.fn> } } };
   userState: {
@@ -3145,6 +3215,20 @@ async function createPage(
   const autoTeamBuilder = {
     buildTeam: vi.fn().mockResolvedValue(null),
   };
+  const alertState: { nextRole: 'cancel' | 'confirm'; lastConfig: unknown } = {
+    nextRole: 'confirm',
+    lastConfig: null,
+  };
+  const alertController = {
+    create: vi.fn().mockImplementation(async (config: unknown) => {
+      alertState.lastConfig = config;
+
+      return {
+        present: vi.fn().mockResolvedValue(undefined),
+        onDidDismiss: vi.fn().mockResolvedValue({ role: alertState.nextRole }),
+      };
+    }),
+  };
   const savedTeams = signal([
     createSavedTeam('team-1', {
       shipId: 9001,
@@ -3196,8 +3280,8 @@ async function createPage(
     },
   ]);
   const userState = {
-    favoriteCharacterIds: signal<number[]>([]),
-    favoriteShipIds: signal<number[]>([]),
+    favoriteCharacterIds: signal<number[]>([101, 102, 103]),
+    favoriteShipIds: signal<number[]>([9001]),
     savedTeams,
     savedEnemies,
     getSavedTeamById: vi.fn(
@@ -3241,9 +3325,12 @@ async function createPage(
       i18n as never,
       route as never,
       router as never,
+      alertController as never,
     ),
     repository,
     autoTeamBuilder,
+    alertController,
+    alertState,
     router,
     route,
     userState,

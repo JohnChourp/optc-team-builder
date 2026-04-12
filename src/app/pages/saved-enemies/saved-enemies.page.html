@@ -566,47 +566,6 @@
             </div>
           </div>
 
-          <div class="toggle-grid">
-            <div class="strict-toggle-row">
-              <div class="strict-toggle-copy">
-                <strong>{{ t('editor.toggles.types') }}</strong>
-                <small>{{ t('editor.toggles.typesCopy') }}</small>
-              </div>
-              <ion-toggle
-                color="warning"
-                [checked]="requireAllSelectedTypesInTeam()"
-                [disabled]="savingEnemy()"
-                (ionChange)="onRequireAllSelectedTypesToggle($event)"
-              ></ion-toggle>
-            </div>
-
-            <div class="strict-toggle-row">
-              <div class="strict-toggle-copy">
-                <strong>{{ t('editor.toggles.classes') }}</strong>
-                <small>{{ t('editor.toggles.classesCopy') }}</small>
-              </div>
-              <ion-toggle
-                color="warning"
-                [checked]="requireAllSelectedClassesPerCharacter()"
-                [disabled]="savingEnemy()"
-                (ionChange)="onRequireAllSelectedClassesToggle($event)"
-              ></ion-toggle>
-            </div>
-
-            <div class="strict-toggle-row">
-              <div class="strict-toggle-copy">
-                <strong>{{ t('editor.toggles.specials') }}</strong>
-                <small>{{ t('editor.toggles.specialsCopy') }}</small>
-              </div>
-              <ion-toggle
-                color="warning"
-                [checked]="requireAllSpecialsSupportTeam()"
-                [disabled]="savingEnemy()"
-                (ionChange)="onRequireAllSpecialsSupportToggle($event)"
-              ></ion-toggle>
-            </div>
-          </div>
-
           <section class="ability-card">
             <div class="section-head section-head--editor">
               <div>

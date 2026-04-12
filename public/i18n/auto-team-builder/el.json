@@ -91,6 +91,23 @@
         "empty": "Δεν υπάρχουν αποθηκευμένα favorite ships σε αυτή τη συσκευή, οπότε με αυτό το mode ο builder μπορεί να επιστρέψει μόνο ομάδες χωρίς ship.",
         "withCount": "Περιορίζει το manual ship confirmation και το auto ship selection στα {{count}} αποθηκευμένα favorite ships σου."
       }
+    },
+    "disableConfirm": {
+      "title": "Θέλεις σίγουρα να το απενεργοποιήσεις;",
+      "cancel": "Κράτησέ το ενεργό",
+      "confirm": "Απενεργοποίησέ το",
+      "favoritesOnly": {
+        "message": "Να κλείσει το favorite-only auto-fill και να μπορούν να γεμίζουν τα κενά slots από οποιοδήποτε αποθηκευμένο unit;"
+      },
+      "favoriteShipsOnly": {
+        "message": "Να κλείσει το favorite ship mode και να μπορούν να χρησιμοποιηθούν ξανά όλα τα αποθηκευμένα ships;"
+      },
+      "uniqueNames": {
+        "message": "Να κλείσει ο κανόνας για μοναδικά base character names και να επιτρέπονται διπλές character families στην τελική ομάδα;"
+      },
+      "specialSupport": {
+        "message": "Να κλείσει το special support coverage και να επιτρέπονται slots χωρίς readable special utility ή team support;"
+      }
     }
   },
   "abilityRequirements": {

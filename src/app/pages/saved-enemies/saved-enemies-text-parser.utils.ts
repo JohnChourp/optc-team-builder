@@ -5,6 +5,7 @@ import {
 } from '../../core/models/auto-team-builder-ability.models';
 import {
   mergeAbilityRequirements,
+  normalizeEnemyMechanicRequirements,
   resolveEnemyMechanicCatalogItem,
 } from '../../core/services/enemy-mechanic-draft.utils';
 
@@ -34,6 +35,11 @@ interface ParseEnemyTextOptions {
 interface ParsedMechanicMatch {
   requirement: AutoBuildEnemyMechanicRequirement;
   warning: ParsedEnemyTextWarning | null;
+}
+
+interface ParsedEnemyTextSection {
+  id: string;
+  lines: string[];
 }
 
 const DIRECT_ABILITY_MATCHERS = [
@@ -80,53 +86,161 @@ export function parseSavedEnemyText(
   const abilityCatalogMap = new Map(
     options.abilityCatalogItems.map((item) => [item.key, item] as const),
   );
-  const enemyMechanics: AutoBuildEnemyMechanicRequirement[] = [];
-  const requiredAbilities: AutoBuildAbilityRequirement[] = [];
+  const enemyMechanicSections = new Map<
+    string,
+    {
+      requirement: Omit<AutoBuildEnemyMechanicRequirement, 'requiredCharacterCount'>;
+      requiredCharacterCount: number;
+    }
+  >();
+  const requiredAbilitySections = new Map<
+    string,
+    Omit<AutoBuildAbilityRequirement, 'requiredCharacterCount'> & { requiredCharacterCount: number }
+  >();
   const warnings: ParsedEnemyTextWarning[] = [];
 
-  extractEnemyTextFragments(rawValue).forEach((line) => {
-    const normalizedLine = normalizeEnemyTextLine(line);
-    const parsedTurns = extractTurns(normalizedLine);
-    const mechanicMatch = matchEnemyMechanic(normalizedLine, parsedTurns, line);
+  extractEnemyTextSections(rawValue).forEach((section) => {
+    const sectionMechanics = new Map<
+      string,
+      Omit<AutoBuildEnemyMechanicRequirement, 'requiredCharacterCount'>
+    >();
+    const sectionAbilities = new Map<string, Omit<AutoBuildAbilityRequirement, 'requiredCharacterCount'>>();
+    const seenSectionLines = new Set<string>();
 
-    if (mechanicMatch) {
-      enemyMechanics.push(mechanicMatch.requirement);
+    section.lines.forEach((line) => {
+      const normalizedLine = normalizeEnemyTextLine(line);
 
-      if (mechanicMatch.warning) {
-        warnings.push(mechanicMatch.warning);
+      if (seenSectionLines.has(normalizedLine)) {
+        return;
       }
 
-      return;
-    }
+      seenSectionLines.add(normalizedLine);
 
-    const matchedDirectAbilities = DIRECT_ABILITY_MATCHERS.flatMap((matcher) => {
-      if (!matcher.matches(normalizedLine) || !abilityCatalogMap.has(matcher.abilityKey)) {
-        return [];
+      const parsedTurns = extractTurns(normalizedLine);
+      const mechanicMatch = matchEnemyMechanic(normalizedLine, parsedTurns, line);
+
+      if (mechanicMatch) {
+        const mergeKey = buildEnemyMechanicIdentity(mechanicMatch.requirement);
+        const existingMechanic = sectionMechanics.get(mergeKey);
+
+        if (existingMechanic) {
+          existingMechanic.minTurns = resolveMaxTurns(
+            existingMechanic.minTurns,
+            mechanicMatch.requirement.minTurns,
+          );
+        } else {
+          sectionMechanics.set(mergeKey, {
+            mechanicKey: mechanicMatch.requirement.mechanicKey,
+            category: mechanicMatch.requirement.category,
+            minTurns: mechanicMatch.requirement.minTurns,
+            triggerTags: [...mechanicMatch.requirement.triggerTags],
+            responseTags: [...mechanicMatch.requirement.responseTags],
+            conditionTags: [...mechanicMatch.requirement.conditionTags],
+            derivedAbilityKey: mechanicMatch.requirement.derivedAbilityKey,
+          });
+        }
+
+        if (mechanicMatch.warning) {
+          warnings.push(mechanicMatch.warning);
+        }
+
+        return;
       }
 
-      return [
-        {
-          abilityKey: matcher.abilityKey,
-          minTurns: null,
-          requiredCharacterCount: 1,
-          slotTokens: [],
-        } satisfies AutoBuildAbilityRequirement,
-      ];
+      const matchedDirectAbilities = DIRECT_ABILITY_MATCHERS.flatMap((matcher) => {
+        if (!matcher.matches(normalizedLine) || !abilityCatalogMap.has(matcher.abilityKey)) {
+          return [];
+        }
+
+        return [
+          {
+            abilityKey: matcher.abilityKey,
+            minTurns: null,
+            slotTokens: [],
+          } satisfies Omit<AutoBuildAbilityRequirement, 'requiredCharacterCount'>,
+        ];
+      });
+
+      if (matchedDirectAbilities.length > 0) {
+        matchedDirectAbilities.forEach((requirement) => {
+          const mergeKey = buildAbilityIdentity(requirement);
+          const existingAbility = sectionAbilities.get(mergeKey);
+
+          if (existingAbility) {
+            existingAbility.minTurns = resolveMaxTurns(existingAbility.minTurns, requirement.minTurns);
+            return;
+          }
+
+          sectionAbilities.set(mergeKey, {
+            abilityKey: requirement.abilityKey,
+            minTurns: requirement.minTurns,
+            slotTokens: [...requirement.slotTokens],
+          });
+        });
+
+        return;
+      }
+
+      warnings.push({
+        kind: 'unmatched',
+        line,
+      });
     });
 
-    if (matchedDirectAbilities.length > 0) {
-      requiredAbilities.push(...matchedDirectAbilities);
-      return;
-    }
+    sectionMechanics.forEach((requirement, identity) => {
+      const existingMechanicSection = enemyMechanicSections.get(identity);
 
-    warnings.push({
-      kind: 'unmatched',
-      line,
+      if (existingMechanicSection) {
+        existingMechanicSection.requirement.minTurns = resolveMaxTurns(
+          existingMechanicSection.requirement.minTurns,
+          requirement.minTurns,
+        );
+        existingMechanicSection.requiredCharacterCount += 1;
+        return;
+      }
+
+      enemyMechanicSections.set(identity, {
+        requirement: {
+          mechanicKey: requirement.mechanicKey,
+          category: requirement.category,
+          minTurns: requirement.minTurns,
+          triggerTags: [...requirement.triggerTags],
+          responseTags: [...requirement.responseTags],
+          conditionTags: [...requirement.conditionTags],
+          derivedAbilityKey: requirement.derivedAbilityKey,
+        },
+        requiredCharacterCount: 1,
+      });
+    });
+
+    sectionAbilities.forEach((requirement, identity) => {
+      const existingAbilitySection = requiredAbilitySections.get(identity);
+
+      if (existingAbilitySection) {
+        existingAbilitySection.minTurns = resolveMaxTurns(
+          existingAbilitySection.minTurns,
+          requirement.minTurns,
+        );
+        existingAbilitySection.requiredCharacterCount += 1;
+        return;
+      }
+
+      requiredAbilitySections.set(identity, {
+        abilityKey: requirement.abilityKey,
+        minTurns: requirement.minTurns,
+        slotTokens: [...requirement.slotTokens],
+        requiredCharacterCount: 1,
+      });
     });
   });
 
-  const mergedEnemyMechanics = mergeEnemyMechanics(enemyMechanics);
-  const mergedRequiredAbilities = mergeAbilityRequirements(requiredAbilities);
+  const mergedEnemyMechanics = normalizeEnemyMechanicRequirements(
+    [...enemyMechanicSections.values()].map(({ requirement, requiredCharacterCount }) => ({
+      ...requirement,
+      ...(requiredCharacterCount > 1 ? { requiredCharacterCount } : {}),
+    })),
+  );
+  const mergedRequiredAbilities = mergeAbilityRequirements([...requiredAbilitySections.values()]);
 
   return {
     enemyMechanics: mergedEnemyMechanics,
@@ -138,6 +252,31 @@ export function parseSavedEnemyText(
       .map((warning) => warning.line),
     warnings,
   };
+}
+
+function extractEnemyTextSections(rawValue: string): ParsedEnemyTextSection[] {
+  const sections: ParsedEnemyTextSection[] = [
+    {
+      id: 'default-0',
+      lines: [],
+    },
+  ];
+  let sectionIndex = 0;
+
+  extractEnemyTextFragments(rawValue).forEach((line) => {
+    if (isEnemyTextSectionHeader(line)) {
+      sectionIndex += 1;
+      sections.push({
+        id: `section-${sectionIndex}`,
+        lines: [],
+      });
+      return;
+    }
+
+    sections[sections.length - 1]?.lines.push(line);
+  });
+
+  return sections.filter((section) => section.lines.length > 0);
 }
 
 function extractEnemyTextFragments(rawValue: string): string[] {
@@ -157,6 +296,10 @@ function cleanupDisplayLine(value: string): string {
     .replace(/\s+/g, ' ')
     .replace(/[;.,]+$/g, '')
     .trim();
+}
+
+function isEnemyTextSectionHeader(value: string): boolean {
+  return /^(?:battle|stage|wave)\s+\d+(?:\s*[:\-]\s*)?$/i.test(value.trim());
 }
 
 function normalizeEnemyTextLine(value: string): string {
@@ -377,42 +520,29 @@ function hasPrecisionLoss(line: string, mechanicKey: string): boolean {
   return false;
 }
 
-function mergeEnemyMechanics(
-  requirements: AutoBuildEnemyMechanicRequirement[],
-): AutoBuildEnemyMechanicRequirement[] {
-  const mergedRequirements = new Map<string, AutoBuildEnemyMechanicRequirement>();
+function buildEnemyMechanicIdentity(
+  requirement: Omit<AutoBuildEnemyMechanicRequirement, 'requiredCharacterCount'>,
+): string {
+  return [
+    requirement.mechanicKey,
+    requirement.category,
+    requirement.triggerTags.join(','),
+    requirement.responseTags.join(','),
+    requirement.conditionTags.join(','),
+    requirement.derivedAbilityKey ?? 'none',
+  ].join('|');
+}
 
-  requirements.forEach((requirement) => {
-    const mergeKey = [
-      requirement.mechanicKey,
-      requirement.category,
-      requirement.triggerTags.join(','),
-      requirement.responseTags.join(','),
-      requirement.conditionTags.join(','),
-      requirement.derivedAbilityKey ?? 'none',
-    ].join('|');
-    const existingRequirement = mergedRequirements.get(mergeKey);
-
-    if (existingRequirement) {
-      existingRequirement.minTurns = resolveMaxTurns(
-        existingRequirement.minTurns,
-        requirement.minTurns,
-      );
-      return;
-    }
-
-    mergedRequirements.set(mergeKey, {
-      mechanicKey: requirement.mechanicKey,
-      category: requirement.category,
-      minTurns: requirement.minTurns,
-      triggerTags: [...requirement.triggerTags],
-      responseTags: [...requirement.responseTags],
-      conditionTags: [...requirement.conditionTags],
-      derivedAbilityKey: requirement.derivedAbilityKey,
-    });
-  });
-
-  return [...mergedRequirements.values()];
+function buildAbilityIdentity(
+  requirement: Omit<AutoBuildAbilityRequirement, 'requiredCharacterCount'>,
+): string {
+  return [
+    requirement.abilityKey.trim(),
+    [...new Set(requirement.slotTokens.map((token) => token.trim().toUpperCase()))]
+      .filter((token) => token.length > 0)
+      .sort((left, right) => left.localeCompare(right))
+      .join(','),
+  ].join('|');
 }
 
 function resolveMaxTurns(left: number | null, right: number | null): number | null {

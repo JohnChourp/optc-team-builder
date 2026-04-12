@@ -115,11 +115,67 @@ describe('saved enemies text parser utils', () => {
       }),
     ]);
     expect(result.requiredAbilities).toEqual([
-      expect.objectContaining({ abilityKey: 'deal_fixed_damage' }),
-      expect.objectContaining({ abilityKey: 'inflict_poison' }),
+      expect.objectContaining({ abilityKey: 'deal_fixed_damage', requiredCharacterCount: 1 }),
+      expect.objectContaining({ abilityKey: 'inflict_poison', requiredCharacterCount: 1 }),
     ]);
     expect(result.matchedMechanicCount).toBe(1);
     expect(result.matchedAbilityCount).toBe(2);
+  });
+
+  it('counts repeated mechanics and direct abilities across battle headers', () => {
+    const result = parseSavedEnemyText(
+      `
+        Battle 3
+        4 turn(s) Paralysis,
+        fixed damage,
+        Battle 4
+        6 turn(s) Paralysis,
+        fixed damage
+      `,
+      {
+        abilityCatalogItems: [createAbilityCatalogItem('deal_fixed_damage', false)],
+      },
+    );
+
+    expect(result.enemyMechanics).toEqual([
+      expect.objectContaining({
+        mechanicKey: 'crew_paralysis',
+        minTurns: 6,
+        requiredCharacterCount: 2,
+      }),
+    ]);
+    expect(result.requiredAbilities).toEqual([
+      expect.objectContaining({
+        abilityKey: 'deal_fixed_damage',
+        requiredCharacterCount: 2,
+      }),
+    ]);
+    expect(result.unmatchedLines).toEqual([]);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it('keeps pre-header lines in the default section and ignores header-only lines', () => {
+    const result = parseSavedEnemyText(
+      `
+        4 turn(s) Paralysis,
+        Stage 3
+        4 turn(s) Paralysis,
+        Wave 4:
+      `,
+      {
+        abilityCatalogItems: [],
+      },
+    );
+
+    expect(result.enemyMechanics).toEqual([
+      expect.objectContaining({
+        mechanicKey: 'crew_paralysis',
+        minTurns: 4,
+        requiredCharacterCount: 2,
+      }),
+    ]);
+    expect(result.unmatchedLines).toEqual([]);
+    expect(result.warnings).toEqual([]);
   });
 
   it('warns when positional detail is dropped but still keeps the supported core mechanic', () => {

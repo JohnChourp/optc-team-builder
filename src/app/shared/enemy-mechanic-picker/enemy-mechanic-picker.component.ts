@@ -211,6 +211,7 @@ export class EnemyMechanicPickerComponent implements OnChanges {
         mechanicKey: draft.mechanicKey,
         category: draft.category,
         minTurns: draft.minTurns,
+        requiredCharacterCount: resolvePositiveInteger(draft.requiredCharacterCount) ?? undefined,
         triggerTags: [...draft.triggerTags],
         responseTags: [...draft.responseTags],
         conditionTags: [...draft.conditionTags],

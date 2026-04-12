@@ -198,6 +198,49 @@ describe('Saved enemies transfer helpers', () => {
     ]);
   });
 
+  it('preserves mechanic requiredCharacterCount through bulk import sanitize', () => {
+    const payload = parseSavedEnemiesImportPayload(
+      JSON.stringify({
+        schemaVersion: 1,
+        source: 'saved-enemies',
+        exportedAt: '2026-03-25T14:05:09.000Z',
+        enemies: [
+          buildSavedEnemy({
+            enemyMechanics: [
+              {
+                mechanicKey: 'crew_paralysis',
+                category: 'crewDebuff',
+                minTurns: 6,
+                requiredCharacterCount: 2,
+                triggerTags: [],
+                responseTags: [],
+                conditionTags: [],
+                derivedAbilityKey: 'remove_paralysis',
+              },
+            ],
+          }),
+        ],
+      }),
+    );
+
+    const result = sanitizeSavedEnemiesImportPayload(payload, {
+      untitledEnemyName: 'Untitled Enemy',
+    });
+
+    expect(result.enemies[0]?.enemyMechanics).toEqual([
+      {
+        mechanicKey: 'crew_paralysis',
+        category: 'crewDebuff',
+        minTurns: 6,
+        requiredCharacterCount: 2,
+        triggerTags: [],
+        responseTags: [],
+        conditionTags: [],
+        derivedAbilityKey: 'remove_paralysis',
+      },
+    ]);
+  });
+
   it('throws a typed error for invalid bulk import json', () => {
     try {
       parseSavedEnemiesImportPayload('{');

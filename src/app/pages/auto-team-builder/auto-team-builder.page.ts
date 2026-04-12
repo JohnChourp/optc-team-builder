@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, computed, signal } from "@angular/core";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { TranslocoDirective, TranslocoPipe } from "@jsverse/transloco";
+import { AlertController, type ViewDidEnter, type ViewWillEnter } from "@ionic/angular";
 import {
   IonButton,
   IonContent,
@@ -16,7 +17,6 @@ import {
   IonToggle,
   IonToolbar,
 } from "@ionic/angular/standalone";
-import { type ViewDidEnter, type ViewWillEnter } from "@ionic/angular";
 import {
   alertCircleOutline,
   boatOutline,
@@ -199,8 +199,36 @@ interface PresetImportFeedback {
   details: string[];
 }
 
+interface AutoTeamBuilderDefaultFilterState {
+  selectedTypes: AutoTeamBuilderType[];
+  selectedClasses: string[];
+  requireAllSelectedTypesInTeam: boolean;
+  requireAllSelectedClassesPerCharacter: boolean;
+  requireAllSpecialsSupportTeam: boolean;
+  requireUniqueBaseCharacterNames: boolean;
+  requireSameCaptainAndFriendCaptain: boolean;
+  favoritesOnly: boolean;
+  favoriteShipsOnly: boolean;
+}
+
 const SAVE_TEAM_FEEDBACK_DURATION_MS = 3000;
 const SAVE_TEAM_ANIMATION_PATH = "assets/animations/save-team-loading.json";
+
+function buildDefaultAutoTeamBuilderFilterState(
+  availableClasses: readonly string[],
+): AutoTeamBuilderDefaultFilterState {
+  return {
+    selectedTypes: [...AUTO_TEAM_BUILDER_TYPES],
+    selectedClasses: [...availableClasses],
+    requireAllSelectedTypesInTeam: false,
+    requireAllSelectedClassesPerCharacter: false,
+    requireAllSpecialsSupportTeam: true,
+    requireUniqueBaseCharacterNames: true,
+    requireSameCaptainAndFriendCaptain: false,
+    favoritesOnly: true,
+    favoriteShipsOnly: true,
+  };
+}
 
 @Component({
   selector: "app-auto-team-builder-page",
@@ -1163,6 +1191,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     private readonly i18n: AppI18nService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
+    private readonly alertController: AlertController,
   ) {
     this.favoriteCharacterIds = this.userState.favoriteCharacterIds;
     this.favoriteShipIds = this.userState.favoriteShipIds;
@@ -1408,14 +1437,32 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.resetBuildState();
   }
 
-  public onRequireAllSpecialsSupportToggle(event: CustomEvent<{ checked: boolean }>): void {
+  public async onRequireAllSpecialsSupportToggle(
+    event: CustomEvent<{ checked: boolean }>,
+  ): Promise<void> {
+    if (!(await this.confirmDisableToggleIfNeeded({
+      checked: event.detail.checked,
+      currentValue: this.requireAllSpecialsSupportTeam(),
+      messageKey: "filters.disableConfirm.specialSupport.message",
+    }))) {
+      return;
+    }
+
     this.requireAllSpecialsSupportTeam.set(event.detail.checked);
     this.resetBuildState();
   }
 
-  public onRequireUniqueBaseCharacterNamesToggle(
+  public async onRequireUniqueBaseCharacterNamesToggle(
     event: CustomEvent<{ checked: boolean }>,
-  ): void {
+  ): Promise<void> {
+    if (!(await this.confirmDisableToggleIfNeeded({
+      checked: event.detail.checked,
+      currentValue: this.requireUniqueBaseCharacterNames(),
+      messageKey: "filters.disableConfirm.uniqueNames.message",
+    }))) {
+      return;
+    }
+
     this.requireUniqueBaseCharacterNames.set(event.detail.checked);
     this.resetBuildState();
   }
@@ -1427,12 +1474,30 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.resetBuildState();
   }
 
-  public onFavoritesOnlyToggle(event: CustomEvent<{ checked: boolean }>): void {
+  public async onFavoritesOnlyToggle(event: CustomEvent<{ checked: boolean }>): Promise<void> {
+    if (!(await this.confirmDisableToggleIfNeeded({
+      checked: event.detail.checked,
+      currentValue: this.favoritesOnly(),
+      messageKey: "filters.disableConfirm.favoritesOnly.message",
+    }))) {
+      return;
+    }
+
     this.favoritesOnly.set(event.detail.checked);
     this.resetBuildState();
   }
 
-  public onFavoriteShipsOnlyToggle(event: CustomEvent<{ checked: boolean }>): void {
+  public async onFavoriteShipsOnlyToggle(
+    event: CustomEvent<{ checked: boolean }>,
+  ): Promise<void> {
+    if (!(await this.confirmDisableToggleIfNeeded({
+      checked: event.detail.checked,
+      currentValue: this.favoriteShipsOnly(),
+      messageKey: "filters.disableConfirm.favoriteShipsOnly.message",
+    }))) {
+      return;
+    }
+
     this.favoriteShipsOnly.set(event.detail.checked);
     this.reconcileFavoriteShipSelection();
   }
@@ -1902,11 +1967,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   }
 
   private async resetPageState(): Promise<void> {
+    const defaultFilters = buildDefaultAutoTeamBuilderFilterState(this.availableClasses());
+
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
     this.manualShipPickerOpen.set(false);
-    this.selectedTypes.set([]);
-    this.selectedClasses.set([]);
+    this.selectedTypes.set(defaultFilters.selectedTypes);
+    this.selectedClasses.set(defaultFilters.selectedClasses);
     this.enemyMechanicDrafts.set([]);
     this.requiredAbilityDrafts.set([]);
     this.lockedCharacterRecords.set({});
@@ -1924,13 +1991,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.excludedCharacterIds.set([]);
     this.selectedManualShipId.set(null);
     this.excludedShipIds.set([]);
-    this.requireAllSelectedTypesInTeam.set(false);
-    this.requireAllSelectedClassesPerCharacter.set(false);
-    this.requireAllSpecialsSupportTeam.set(false);
-    this.requireUniqueBaseCharacterNames.set(false);
-    this.requireSameCaptainAndFriendCaptain.set(false);
-    this.favoritesOnly.set(false);
-    this.favoriteShipsOnly.set(false);
+    this.requireAllSelectedTypesInTeam.set(defaultFilters.requireAllSelectedTypesInTeam);
+    this.requireAllSelectedClassesPerCharacter.set(defaultFilters.requireAllSelectedClassesPerCharacter);
+    this.requireAllSpecialsSupportTeam.set(defaultFilters.requireAllSpecialsSupportTeam);
+    this.requireUniqueBaseCharacterNames.set(defaultFilters.requireUniqueBaseCharacterNames);
+    this.requireSameCaptainAndFriendCaptain.set(defaultFilters.requireSameCaptainAndFriendCaptain);
+    this.favoritesOnly.set(defaultFilters.favoritesOnly);
+    this.favoriteShipsOnly.set(defaultFilters.favoriteShipsOnly);
     this.teamName.set(this.i18n.translate("common.defaults.newCrew"));
     this.notes.set("");
     this.presetImportFeedback.set(null);
@@ -2900,6 +2967,35 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
   private translateImportMessage(message: AutoTeamSelectionImportMessage): string {
     return this.t(message.key, message.params);
+  }
+
+  private async confirmDisableToggleIfNeeded(options: {
+    checked: boolean;
+    currentValue: boolean;
+    messageKey: string;
+  }): Promise<boolean> {
+    if (options.checked || !options.currentValue) {
+      return true;
+    }
+
+    const alert = await this.alertController.create({
+      header: this.t("filters.disableConfirm.title"),
+      message: this.t(options.messageKey),
+      buttons: [
+        {
+          text: this.t("filters.disableConfirm.cancel"),
+          role: "cancel",
+        },
+        {
+          text: this.t("filters.disableConfirm.confirm"),
+          role: "confirm",
+        },
+      ],
+    });
+
+    await alert.present();
+    const { role } = await alert.onDidDismiss();
+    return role === "confirm";
   }
 
   private joinRequirementLabels(labels: string[]): string {

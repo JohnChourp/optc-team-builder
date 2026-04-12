@@ -63,6 +63,7 @@ export interface AutoBuildEnemyMechanicRequirement {
   mechanicKey: string;
   category: AutoBuildEnemyMechanicCategory;
   minTurns: number | null;
+  requiredCharacterCount?: number;
   triggerTags: AutoBuildEnemyMechanicTriggerTag[];
   responseTags: AutoBuildEnemyMechanicResponseTag[];
   conditionTags: AutoBuildEnemyMechanicConditionTag[];
