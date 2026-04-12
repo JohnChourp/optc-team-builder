@@ -8,6 +8,26 @@
     "label": "Language",
     "helper": "Change the app language live and keep it persisted on this device."
   },
+  "performance": {
+    "title": "Auto Team Builder performance",
+    "copy": "Control how many web workers the auto team builder uses while scanning fallback attempts.",
+    "mode": {
+      "label": "Worker mode",
+      "options": {
+        "auto": "Auto",
+        "manual": "Manual"
+      }
+    },
+    "manualCount": {
+      "label": "Web workers"
+    },
+    "runtime": {
+      "auto": "Auto mode reserves one detected core for the UI when possible and applies only to fallback scans.",
+      "detected": "Detected device cores: {{count}}.",
+      "effective": "Fallback scans will use up to {{count}} web worker(s).",
+      "manual": "Manual mode uses the selected worker count only for fallback scans."
+    }
+  },
   "management": {
     "copy": "Back up and restore the device-local data used by favorite characters, favorite ships, saved teams, and saved enemies.",
     "confirm": {

@@ -18,7 +18,10 @@ import { type SupportedLanguage } from "../../core/i18n/app-i18n.types";
 import { AppI18nService } from "../../core/services/app-i18n.service";
 import { OptcbxImportService } from "../../core/services/optcbx-import.service";
 import { OptcRepositoryService } from "../../core/services/optc-repository.service";
-import { UserStateService } from "../../core/services/user-state.service";
+import {
+  UserStateService,
+  type AutoTeamBuilderWorkerMode,
+} from "../../core/services/user-state.service";
 import {
   buildOptcbxFavoritesExportPayload,
   downloadOptcbxFavoritesExport,
@@ -81,6 +84,9 @@ export class SettingsPage implements OnInit {
   public readonly favoriteShipIds;
   public readonly savedTeams;
   public readonly savedEnemies;
+  public readonly autoTeamBuilderWorkerPreference;
+  public readonly autoTeamBuilderWorkerRuntime;
+  public readonly autoTeamBuilderAvailableWorkerCounts;
 
   public readonly canExportFavorites = computed(() => this.favoriteIds().length > 0);
   public readonly canDeleteAllFavorites = computed(() => this.favoriteIds().length > 0);
@@ -118,6 +124,16 @@ export class SettingsPage implements OnInit {
     this.favoriteShipIds = this.userState.favoriteShipIds;
     this.savedTeams = this.userState.savedTeams;
     this.savedEnemies = this.userState.savedEnemies;
+    this.autoTeamBuilderWorkerPreference = this.userState.autoTeamBuilderWorkerPreference;
+    this.autoTeamBuilderWorkerRuntime = computed(() =>
+      this.userState.resolveAutoTeamBuilderWorkerPreference(),
+    );
+    this.autoTeamBuilderAvailableWorkerCounts = computed(() =>
+      Array.from(
+        { length: this.autoTeamBuilderWorkerRuntime().detectedCoreCount },
+        (_, index) => index + 1,
+      ),
+    );
   }
 
   public async ngOnInit(): Promise<void> {
@@ -139,6 +155,36 @@ export class SettingsPage implements OnInit {
     }
 
     await this.i18n.setLanguage(language);
+  }
+
+  public async onAutoTeamBuilderWorkerModeChange(
+    event: CustomEvent<{ value?: AutoTeamBuilderWorkerMode | null }>,
+  ): Promise<void> {
+    const mode = event.detail.value;
+
+    if (mode !== "auto" && mode !== "manual") {
+      return;
+    }
+
+    await this.userState.setAutoTeamBuilderWorkerPreference({
+      ...this.autoTeamBuilderWorkerPreference(),
+      mode,
+    });
+  }
+
+  public async onAutoTeamBuilderManualWorkerCountChange(
+    event: CustomEvent<{ value?: number | string | null }>,
+  ): Promise<void> {
+    const nextValue = Number(event.detail.value);
+
+    if (!Number.isInteger(nextValue) || nextValue <= 0) {
+      return;
+    }
+
+    await this.userState.setAutoTeamBuilderWorkerPreference({
+      ...this.autoTeamBuilderWorkerPreference(),
+      manualCount: nextValue,
+    });
   }
 
   public openFilePicker(input: HTMLInputElement): void {

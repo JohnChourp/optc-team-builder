@@ -1840,6 +1840,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       const executionOptions: AutoTeamBuildExecutionOptions = {
         signal: abortController.signal,
         onProgress: (snapshot) => this.buildProgress.set(snapshot),
+        workerCount: this.userState.resolveAutoTeamBuilderWorkerCount(),
       };
       const nextResult = await this.autoTeamBuilder.buildTeam(
         this.selectedClasses(),

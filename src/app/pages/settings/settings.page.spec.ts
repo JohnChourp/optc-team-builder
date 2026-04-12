@@ -78,6 +78,9 @@ describe("SettingsPage", () => {
       "utf8",
     );
 
+    expect(template).toContain('t("performance.title")');
+    expect(template).toContain('t("performance.mode.label")');
+    expect(template).toContain('t("performance.manualCount.label")');
     expect(template).toContain('t("sections.dataManagement")');
     expect(template).toContain('t("management.favorites.export")');
     expect(template).toContain('t("management.favorites.import")');
@@ -327,6 +330,32 @@ describe("SettingsPage", () => {
     expect(confirmSpy).toHaveBeenCalledOnce();
     expect(userState.clearAllSavedTeams).toHaveBeenCalledOnce();
   });
+
+  it("updates the auto team builder worker mode from settings", async () => {
+    const { page, userState } = createPage();
+
+    await page.onAutoTeamBuilderWorkerModeChange(
+      { detail: { value: "manual" } } as CustomEvent<{ value?: "auto" | "manual" | null }>,
+    );
+
+    expect(userState.setAutoTeamBuilderWorkerPreference).toHaveBeenCalledWith({
+      mode: "manual",
+      manualCount: 7,
+    });
+  });
+
+  it("updates the manual worker count from settings", async () => {
+    const { page, userState } = createPage();
+
+    await page.onAutoTeamBuilderManualWorkerCountChange(
+      { detail: { value: 4 } } as CustomEvent<{ value?: number | string | null }>,
+    );
+
+    expect(userState.setAutoTeamBuilderWorkerPreference).toHaveBeenCalledWith({
+      mode: "auto",
+      manualCount: 4,
+    });
+  });
 });
 
 function createPage() {
@@ -337,12 +366,22 @@ function createPage() {
     createTeam("team-2", [1002, null, null, null, null, null]),
   ]);
   const savedEnemies = signal([createEnemy("enemy-1"), createEnemy("enemy-2")]);
+  const autoTeamBuilderWorkerPreference = signal({
+    mode: "auto" as const,
+    manualCount: 7,
+  });
   const userState = {
     ready: vi.fn().mockResolvedValue(undefined),
     favoriteCharacterIds: favoriteIds,
     favoriteShipIds,
     savedTeams,
     savedEnemies,
+    autoTeamBuilderWorkerPreference,
+    resolveAutoTeamBuilderWorkerPreference: vi.fn(() => ({
+      ...autoTeamBuilderWorkerPreference(),
+      detectedCoreCount: 8,
+      effectiveCount: autoTeamBuilderWorkerPreference().mode === "manual" ? autoTeamBuilderWorkerPreference().manualCount : 7,
+    })),
     setFavoriteCharacterIds: vi.fn().mockImplementation(async (nextFavoriteIds: number[]) => {
       favoriteIds.set(nextFavoriteIds);
     }),
@@ -361,6 +400,11 @@ function createPage() {
     clearAllSavedEnemies: vi.fn().mockImplementation(async () => {
       savedEnemies.set([]);
     }),
+    setAutoTeamBuilderWorkerPreference: vi.fn().mockImplementation(
+      async (nextPreference: { mode: "auto" | "manual"; manualCount: number }) => {
+        autoTeamBuilderWorkerPreference.set(nextPreference);
+      },
+    ),
     mergeImportedTeams: vi.fn().mockResolvedValue({
       addedCount: 1,
       updatedCount: 0,

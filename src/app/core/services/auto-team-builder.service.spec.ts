@@ -1872,6 +1872,163 @@ describe('Auto team builder', () => {
     expect(result?.coverage.coversAllSelectedClasses).toBe(true);
   });
 
+  it('keeps the single-worker search path when workerCount is 1', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const worker = new FakeWorker((request) => {
+      if (request.type !== 'run') {
+        throw new Error(`Unexpected request type: ${request.type}`);
+      }
+
+      worker.emitMessage({
+        type: 'result',
+        runId: request.runId,
+        result: null,
+      });
+    });
+    const createWorkerSpy = vi.spyOn(
+      service as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    createWorkerSpy.mockReturnValue(worker as never);
+
+    await service.buildTeam(
+      ['Fighter', 'Slasher'],
+      ['DEX', 'PSY'],
+      {},
+      {
+        workerCount: 1,
+      },
+    );
+
+    expect(worker.requests).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'run',
+        }),
+      ]),
+    );
+  });
+
+  it('waits for earlier pooled fallback attempts before resolving a later valid result', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const deferredFallbackRunIds: string[] = [];
+    const workerA = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerA.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (request.type !== 'runAttempt') {
+        return;
+      }
+
+      if (request.input.types.length === 2 && request.input.selectedClasses.length === 1) {
+        workerA.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: null,
+        });
+        return;
+      }
+
+      if (request.input.types.length === 2 && request.input.selectedClasses.length === 0) {
+        deferredFallbackRunIds.push(request.runId);
+      }
+    });
+    const workerB = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerB.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (
+        request.type === 'runAttempt' &&
+        request.input.types.length === 1 &&
+        request.input.selectedClasses.length === 1
+      ) {
+        workerB.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: buildWorkerResult(createInput(['DEX'], ['Fighter'])),
+        });
+      }
+    });
+    const createWorkerSpy = vi.spyOn(
+      service as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    createWorkerSpy
+      .mockReturnValueOnce(workerA as never)
+      .mockReturnValueOnce(workerB as never);
+
+    let settled = false;
+    const buildPromise = service
+      .buildTeam(['Fighter'], ['DEX', 'INT'], {}, { workerCount: 2 })
+      .then((result) => {
+        settled = true;
+        return result;
+      });
+
+    await flushMicrotasks();
+    expect(settled).toBe(false);
+    expect(deferredFallbackRunIds).toHaveLength(1);
+
+    workerA.emitMessage({
+      type: 'result',
+      runId: deferredFallbackRunIds[0],
+      result: null,
+    });
+
+    const result = await buildPromise;
+
+    expect(result?.input.types).toEqual(['DEX']);
+    expect(result?.input.selectedClasses).toEqual(['Fighter']);
+    expect(workerA.terminated).toBe(true);
+    expect(workerB.terminated).toBe(true);
+  });
+
+  it('falls back to the main-thread engine when pooled worker initialization fails', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const workerA = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerA.emitMessage({ type: 'ready' });
+      }
+    });
+    const workerB = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerB.emitMessage({
+          type: 'error',
+          errorMessage: 'init failed',
+        });
+      }
+    });
+    const createWorkerSpy = vi.spyOn(
+      service as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    createWorkerSpy
+      .mockReturnValueOnce(workerA as never)
+      .mockReturnValueOnce(workerB as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX', 'INT'], {}, { workerCount: 2 });
+
+    expect(result).not.toBeNull();
+    expect(result?.input.types).toEqual(['DEX']);
+    expect(workerA.terminated).toBe(true);
+    expect(workerB.terminated).toBe(true);
+  });
+
   it('fails strict class mode when a forced leader does not match all selected classes', () => {
     const result = buildAutoTeamResult(
       [
@@ -2157,24 +2314,69 @@ function createSingleTypeRecords(): CharacterDetailRecord[] {
 
 class FakeWorker extends EventTarget {
   public terminated = false;
+  public readonly requests: Array<
+    | {
+        type: 'run';
+        runId: string;
+        records: CharacterDetailRecord[];
+        requestedInput: AutoBuildInput;
+      }
+    | {
+        type: 'init';
+        records: CharacterDetailRecord[];
+      }
+    | {
+        type: 'runAttempt';
+        runId: string;
+        input: AutoBuildInput;
+        requestedInput: AutoBuildInput;
+      }
+  > = [];
 
   public constructor(
-    private readonly onPostMessage?: (request: {
-      type: 'run';
-      runId: string;
-      records: CharacterDetailRecord[];
-      requestedInput: AutoBuildInput;
-    }) => void,
+    private readonly onPostMessage?: (
+      request:
+        | {
+            type: 'run';
+            runId: string;
+            records: CharacterDetailRecord[];
+            requestedInput: AutoBuildInput;
+          }
+        | {
+            type: 'init';
+            records: CharacterDetailRecord[];
+          }
+        | {
+            type: 'runAttempt';
+            runId: string;
+            input: AutoBuildInput;
+            requestedInput: AutoBuildInput;
+          },
+    ) => void,
   ) {
     super();
   }
 
-  public postMessage(request: {
-    type: 'run';
-    runId: string;
-    records: CharacterDetailRecord[];
-    requestedInput: AutoBuildInput;
-  }): void {
+  public postMessage(
+    request:
+      | {
+          type: 'run';
+          runId: string;
+          records: CharacterDetailRecord[];
+          requestedInput: AutoBuildInput;
+        }
+      | {
+          type: 'init';
+          records: CharacterDetailRecord[];
+        }
+      | {
+          type: 'runAttempt';
+          runId: string;
+          input: AutoBuildInput;
+          requestedInput: AutoBuildInput;
+        },
+  ): void {
+    this.requests.push(request);
     this.onPostMessage?.(request);
   }
 
@@ -2185,6 +2387,68 @@ class FakeWorker extends EventTarget {
   public emitMessage(data: unknown): void {
     this.dispatchEvent(new MessageEvent('message', { data }));
   }
+}
+
+class PooledFakeWorker extends FakeWorker {}
+
+async function flushMicrotasks(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+}
+
+function buildWorkerResult(input: AutoBuildInput): AutoBuildResult {
+  return {
+    input,
+    requestedInput: input,
+    candidateCount: 6,
+    slots: [],
+    coverage: {
+      leaderCriteria: {
+        source: 'captainAbility',
+        captainLeaderId: null,
+        friendCaptainLeaderId: null,
+        leaderIds: [],
+        leaderNames: [],
+        dualLeaderMode: 'single',
+        derivedAllowedClasses: [],
+        derivedAllowedTypes: [],
+        hasClassRestriction: false,
+        hasTypeRestriction: false,
+        matchingSlots: 0,
+        totalSlots: 0,
+        allSlotsMatch: true,
+      },
+      specialSupport: {
+        source: 'specialText',
+        enabled: false,
+        matchingSlots: 0,
+        totalSlots: 0,
+        allSlotsMatch: true,
+      },
+      abilityRequirements: {
+        requested: [],
+        matched: [],
+        missing: [],
+        matchesAll: true,
+      },
+      burst: [],
+      consistency: [],
+      utility: [],
+      coveredSelectedClasses: [...input.selectedClasses],
+      coveredSelectedTypes: [...input.types],
+      coversAllSelectedClasses: true,
+      coversAllSelectedTypes: true,
+      selectedClassMatches: input.selectedClasses.length,
+      selectedTypeMatches: input.types.length,
+    },
+    relaxation: {
+      usedFallback: true,
+      droppedTypes: ['INT'],
+      droppedClasses: [],
+    },
+    shipSelection: null,
+  };
 }
 
 function createAllClassStrictTeamRecords(): CharacterDetailRecord[] {

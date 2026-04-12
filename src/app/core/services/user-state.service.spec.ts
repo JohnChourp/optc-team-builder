@@ -15,6 +15,7 @@ vi.mock('@capacitor/preferences', () => ({
 describe('UserStateService saved teams', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it('toggles favorite ships and persists the normalized order', async () => {
@@ -48,6 +49,61 @@ describe('UserStateService saved teams', () => {
     expect(setCalls.at(-1)).toEqual({
       key: 'favoriteShipIds',
       value: JSON.stringify([9003, 9001]),
+    });
+  });
+
+  it('hydrates the auto team builder worker preference and resolves the effective count', async () => {
+    vi.stubGlobal('navigator', { hardwareConcurrency: 12 });
+    const { service } = await createService([], [], [], [], {
+      mode: 'manual',
+      manualCount: 20,
+    });
+
+    expect(service.autoTeamBuilderWorkerPreference()).toEqual({
+      mode: 'manual',
+      manualCount: 12,
+    });
+    expect(service.resolveAutoTeamBuilderWorkerPreference()).toEqual({
+      mode: 'manual',
+      manualCount: 12,
+      detectedCoreCount: 12,
+      effectiveCount: 12,
+    });
+  });
+
+  it('falls back to the safe auto worker preference when stored data is invalid', async () => {
+    vi.stubGlobal('navigator', { hardwareConcurrency: 6 });
+    const { service } = await createService([], [], [], [], {
+      mode: 'broken',
+      manualCount: -5,
+    } as never);
+
+    expect(service.autoTeamBuilderWorkerPreference()).toEqual({
+      mode: 'auto',
+      manualCount: 1,
+    });
+    expect(service.resolveAutoTeamBuilderWorkerCount()).toBe(5);
+  });
+
+  it('persists normalized auto team builder worker preferences', async () => {
+    vi.stubGlobal('navigator', { hardwareConcurrency: 10 });
+    const { service, setCalls } = await createService();
+
+    await service.setAutoTeamBuilderWorkerPreference({
+      mode: 'manual',
+      manualCount: 25,
+    });
+
+    expect(service.autoTeamBuilderWorkerPreference()).toEqual({
+      mode: 'manual',
+      manualCount: 10,
+    });
+    expect(setCalls.at(-1)).toEqual({
+      key: 'autoTeamBuilderWorkerPreference',
+      value: JSON.stringify({
+        mode: 'manual',
+        manualCount: 10,
+      }),
     });
   });
 
@@ -348,10 +404,11 @@ describe('UserStateService saved teams', () => {
 });
 
 async function createService(
-  storedTeams: unknown[],
+  storedTeams: unknown[] = [],
   storedEnemies: unknown[] = [],
   storedFavoriteShipIds: number[] = [],
   storedFavoriteCharacterIds: number[] = [],
+  storedAutoTeamBuilderWorkerPreference: unknown = { mode: 'auto', manualCount: 7 },
 ) {
   const store = new Map<string, string>([
     ['favoriteCharacterIds', JSON.stringify(storedFavoriteCharacterIds)],
@@ -359,6 +416,7 @@ async function createService(
     ['recentCharacterIds', JSON.stringify([])],
     ['savedTeams', JSON.stringify(storedTeams)],
     ['savedEnemies', JSON.stringify(storedEnemies)],
+    ['autoTeamBuilderWorkerPreference', JSON.stringify(storedAutoTeamBuilderWorkerPreference)],
   ]);
   const setCalls: Array<{ key: string; value: string }> = [];
 

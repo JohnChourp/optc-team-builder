@@ -20,9 +20,13 @@ import {
 import { type CharacterDetailRecord } from "../models/optc.models";
 import {
   AutoTeamBuildCancelledError,
+  hasStrictAutoTeamBuildConstraints,
   isAutoTeamBuildCancelledError,
   normalizeSelectedTypes,
+  planAutoTeamBuildFallbackAttempts,
   runAutoTeamBuildSearch,
+  satisfiesRequestedAutoTeamBuildCoverage,
+  type AutoTeamBuildPlannedAttempt,
 } from "./auto-team-builder.engine";
 import { resolveAutoBuildShipSelection } from "./auto-team-builder-ship.utils";
 import { normalizeEnemyMechanicRequirements } from "./enemy-mechanic-draft.utils";
@@ -35,11 +39,23 @@ import {
 export interface AutoTeamBuildExecutionOptions {
   onProgress?: (snapshot: AutoBuildProgressSnapshot) => void;
   signal?: AbortSignal;
+  workerCount?: number;
 }
 
 const LEGACY_ABILITY_KEY_ALIASES: Record<string, string> = {
   remove_defense_up: "remove_enemy_increased_defense",
 };
+
+interface AutoTeamBuildTimingState {
+  searchStartedAt: number;
+  totalCompletedFallbackMs: number;
+  completedFallbackAttempts: number;
+  now: () => number;
+}
+
+interface PooledFallbackAttemptResult {
+  result: AutoBuildResult | null;
+}
 
 @Injectable({ providedIn: "root" })
 export class AutoTeamBuilderService {
@@ -217,6 +233,30 @@ export class AutoTeamBuilderService {
     requestedInput: AutoBuildInput,
     executionOptions: AutoTeamBuildExecutionOptions,
   ): Promise<AutoBuildResult | null> {
+    const plannedFallbackAttempts = planAutoTeamBuildFallbackAttempts(requestedInput, records);
+    const requestedWorkerCount = this.normalizeWorkerCount(executionOptions.workerCount);
+
+    if (requestedWorkerCount > 1 && plannedFallbackAttempts.length > 0) {
+      try {
+        return await this.runSearchWithWorkerPool(
+          records,
+          requestedInput,
+          executionOptions,
+          plannedFallbackAttempts,
+          requestedWorkerCount,
+        );
+      } catch (error) {
+        if (isAutoTeamBuildCancelledError(error)) {
+          throw error;
+        }
+
+        return runAutoTeamBuildSearch(records, requestedInput, {
+          onProgress: executionOptions.onProgress,
+          isCancelled: () => executionOptions.signal?.aborted ?? false,
+        });
+      }
+    }
+
     const worker = this.createWorker();
 
     if (!worker) {
@@ -239,6 +279,132 @@ export class AutoTeamBuilderService {
         onProgress: executionOptions.onProgress,
         isCancelled: () => executionOptions.signal?.aborted ?? false,
       });
+    }
+  }
+
+  private async runSearchWithWorkerPool(
+    records: CharacterDetailRecord[],
+    requestedInput: AutoBuildInput,
+    executionOptions: AutoTeamBuildExecutionOptions,
+    plannedFallbackAttempts: AutoTeamBuildPlannedAttempt[],
+    requestedWorkerCount: number,
+  ): Promise<AutoBuildResult | null> {
+    const workers = this.createWorkerPool(requestedWorkerCount);
+
+    if (workers.length <= 1) {
+      workers.forEach((worker) => worker.terminate());
+      const singleWorker = this.createWorker();
+
+      if (!singleWorker) {
+        return runAutoTeamBuildSearch(records, requestedInput, {
+          onProgress: executionOptions.onProgress,
+          isCancelled: () => executionOptions.signal?.aborted ?? false,
+        });
+      }
+
+      return this.runSearchInWorker(singleWorker, records, requestedInput, executionOptions);
+    }
+
+    try {
+      await Promise.all(
+        workers.map((worker) => this.initializeWorker(worker, records, executionOptions.signal)),
+      );
+
+      const timingState = this.createTimingState();
+      const totalAttempts = 1 + plannedFallbackAttempts.length;
+
+      this.throwIfCancelled(executionOptions.signal);
+      this.emitProgress(executionOptions, {
+        stage: "preparingSearch",
+        candidateCount: records.length,
+        completedAttempts: 0,
+        totalAttempts: 0,
+        elapsedMs: 0,
+        estimatedRemainingMs: null,
+        averageFallbackAttemptMs: null,
+        completedFallbackAttempts: 0,
+        currentDroppedTypes: [],
+        currentDroppedClasses: [],
+        messageKey: "progress.preparingSearch",
+      });
+
+      this.emitProgress(executionOptions, {
+        stage: "exactAttempt",
+        candidateCount: records.length,
+        completedAttempts: 0,
+        totalAttempts,
+        ...this.buildTimingSnapshot(timingState, totalAttempts, 0, workers.length),
+        currentDroppedTypes: [],
+        currentDroppedClasses: [],
+        messageKey: "progress.exactAttempt",
+        messageParams: {
+          current: 1,
+          total: Math.max(totalAttempts, 1),
+        },
+      });
+
+      const exactResult = await this.runAttemptInInitializedWorker(
+        workers[0],
+        requestedInput,
+        requestedInput,
+        executionOptions.signal,
+      );
+
+      if (hasStrictAutoTeamBuildConstraints(requestedInput)) {
+        this.emitProgress(executionOptions, {
+          stage: "completed",
+          candidateCount: records.length,
+          completedAttempts: totalAttempts,
+          totalAttempts,
+          ...this.buildTimingSnapshot(timingState, totalAttempts, totalAttempts, workers.length),
+          currentDroppedTypes: [],
+          currentDroppedClasses: [],
+          messageKey: "progress.completed",
+        });
+        return exactResult;
+      }
+
+      if (satisfiesRequestedAutoTeamBuildCoverage(exactResult)) {
+        this.emitProgress(executionOptions, {
+          stage: "completed",
+          candidateCount: records.length,
+          completedAttempts: 1,
+          totalAttempts,
+          ...this.buildTimingSnapshot(timingState, totalAttempts, 1, workers.length),
+          currentDroppedTypes: [],
+          currentDroppedClasses: [],
+          messageKey: "progress.completed",
+        });
+        return exactResult;
+      }
+
+      if (plannedFallbackAttempts.length === 0) {
+        this.emitProgress(executionOptions, {
+          stage: "completed",
+          candidateCount: records.length,
+          completedAttempts: 1,
+          totalAttempts,
+          ...this.buildTimingSnapshot(timingState, totalAttempts, 1, workers.length),
+          currentDroppedTypes: [],
+          currentDroppedClasses: [],
+          messageKey: "progress.completed",
+        });
+        return null;
+      }
+
+      const result = await this.runPooledFallbackAttempts(
+        workers,
+        plannedFallbackAttempts,
+        requestedInput,
+        executionOptions,
+        timingState,
+        records.length,
+        totalAttempts,
+      );
+
+      return result;
+    } finally {
+      workers.forEach((worker) => worker.terminate());
     }
   }
 
@@ -284,7 +450,7 @@ export class AutoTeamBuilderService {
         rejectOnce(new Error(event.message || "Auto team builder worker failed."));
       };
       const handleMessage = ({ data }: MessageEvent<AutoTeamBuilderWorkerResponse>): void => {
-        if (!data || data.runId !== runId) {
+        if (!data || data.type === "ready" || data.runId !== runId) {
           return;
         }
 
@@ -298,7 +464,9 @@ export class AutoTeamBuilderService {
           return;
         }
 
-        rejectOnce(new Error(data.errorMessage));
+        if (data.type === "error") {
+          rejectOnce(new Error(data.errorMessage));
+        }
       };
 
       if (executionOptions.signal?.aborted) {
@@ -321,6 +489,289 @@ export class AutoTeamBuilderService {
     });
   }
 
+  private initializeWorker(
+    worker: Worker,
+    records: CharacterDetailRecord[],
+    signal?: AbortSignal,
+  ): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      let settled = false;
+      const cleanup = (): void => {
+        signal?.removeEventListener("abort", handleAbort);
+        worker.removeEventListener("message", handleMessage);
+        worker.removeEventListener("error", handleError);
+      };
+      const resolveOnce = (): void => {
+        if (settled) {
+          return;
+        }
+
+        settled = true;
+        cleanup();
+        resolve();
+      };
+      const rejectOnce = (error: unknown): void => {
+        if (settled) {
+          return;
+        }
+
+        settled = true;
+        cleanup();
+        reject(error);
+      };
+      const handleAbort = (): void => {
+        rejectOnce(new AutoTeamBuildCancelledError());
+      };
+      const handleError = (event: ErrorEvent): void => {
+        rejectOnce(new Error(event.message || "Auto team builder worker failed."));
+      };
+      const handleMessage = ({ data }: MessageEvent<AutoTeamBuilderWorkerResponse>): void => {
+        if (!data) {
+          return;
+        }
+
+        if (data.type === "ready") {
+          resolveOnce();
+          return;
+        }
+
+        if (data.type === "error" && typeof data.runId === "undefined") {
+          rejectOnce(new Error(data.errorMessage));
+        }
+      };
+
+      if (signal?.aborted) {
+        handleAbort();
+        return;
+      }
+
+      signal?.addEventListener("abort", handleAbort, { once: true });
+      worker.addEventListener("message", handleMessage);
+      worker.addEventListener("error", handleError);
+      worker.postMessage({
+        type: "init",
+        records,
+      } satisfies AutoTeamBuilderWorkerRequest);
+    });
+  }
+
+  private runAttemptInInitializedWorker(
+    worker: Worker,
+    input: AutoBuildInput,
+    requestedInput: AutoBuildInput,
+    signal?: AbortSignal,
+  ): Promise<AutoBuildResult | null> {
+    const runId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    return new Promise<AutoBuildResult | null>((resolve, reject) => {
+      let settled = false;
+      const cleanup = (): void => {
+        signal?.removeEventListener("abort", handleAbort);
+        worker.removeEventListener("message", handleMessage);
+        worker.removeEventListener("error", handleError);
+      };
+      const resolveOnce = (result: AutoBuildResult | null): void => {
+        if (settled) {
+          return;
+        }
+
+        settled = true;
+        cleanup();
+        resolve(result);
+      };
+      const rejectOnce = (error: unknown): void => {
+        if (settled) {
+          return;
+        }
+
+        settled = true;
+        cleanup();
+        reject(error);
+      };
+      const handleAbort = (): void => {
+        rejectOnce(new AutoTeamBuildCancelledError());
+      };
+      const handleError = (event: ErrorEvent): void => {
+        rejectOnce(new Error(event.message || "Auto team builder worker failed."));
+      };
+      const handleMessage = ({ data }: MessageEvent<AutoTeamBuilderWorkerResponse>): void => {
+        if (!data || data.type === "ready" || data.runId !== runId) {
+          return;
+        }
+
+        if (data.type === "result") {
+          resolveOnce(data.result);
+          return;
+        }
+
+        if (data.type === "error") {
+          rejectOnce(new Error(data.errorMessage));
+        }
+      };
+
+      if (signal?.aborted) {
+        handleAbort();
+        return;
+      }
+
+      signal?.addEventListener("abort", handleAbort, { once: true });
+      worker.addEventListener("message", handleMessage);
+      worker.addEventListener("error", handleError);
+      worker.postMessage({
+        type: "runAttempt",
+        runId,
+        input,
+        requestedInput,
+      } satisfies AutoTeamBuilderWorkerRequest);
+    });
+  }
+
+  private runPooledFallbackAttempts(
+    workers: Worker[],
+    plannedFallbackAttempts: AutoTeamBuildPlannedAttempt[],
+    requestedInput: AutoBuildInput,
+    executionOptions: AutoTeamBuildExecutionOptions,
+    timingState: AutoTeamBuildTimingState,
+    candidateCount: number,
+    totalAttempts: number,
+  ): Promise<AutoBuildResult | null> {
+    const fallbackWorkerCount = Math.max(
+      1,
+      Math.min(workers.length, plannedFallbackAttempts.length),
+    );
+
+    return new Promise<AutoBuildResult | null>((resolve, reject) => {
+      const completedAttempts = new Map<number, PooledFallbackAttemptResult>();
+      let settled = false;
+      let nextAttemptIndex = 0;
+      let inFlightCount = 0;
+
+      const resolveOnce = (result: AutoBuildResult | null, completedAttemptCount: number): void => {
+        if (settled) {
+          return;
+        }
+
+        settled = true;
+        this.emitProgress(executionOptions, {
+          stage: "completed",
+          candidateCount,
+          completedAttempts: completedAttemptCount,
+          totalAttempts,
+          ...this.buildTimingSnapshot(
+            timingState,
+            totalAttempts,
+            completedAttemptCount,
+            fallbackWorkerCount,
+          ),
+          currentDroppedTypes: [],
+          currentDroppedClasses: [],
+          messageKey: "progress.completed",
+        });
+        resolve(result);
+      };
+      const rejectOnce = (error: unknown): void => {
+        if (settled) {
+          return;
+        }
+
+        settled = true;
+        reject(error);
+      };
+      const tryResolveOrderedResult = (): void => {
+        for (let index = 0; index < plannedFallbackAttempts.length; index += 1) {
+          const currentAttempt = completedAttempts.get(index);
+
+          if (!currentAttempt) {
+            return;
+          }
+
+          if (currentAttempt.result) {
+            resolveOnce(currentAttempt.result, index + 2);
+            return;
+          }
+        }
+
+        if (nextAttemptIndex >= plannedFallbackAttempts.length && inFlightCount === 0) {
+          resolveOnce(null, totalAttempts);
+        }
+      };
+      const dispatchAttempt = (worker: Worker): void => {
+        if (settled) {
+          return;
+        }
+
+        if (executionOptions.signal?.aborted) {
+          rejectOnce(new AutoTeamBuildCancelledError());
+          return;
+        }
+
+        if (nextAttemptIndex >= plannedFallbackAttempts.length) {
+          if (inFlightCount === 0) {
+            tryResolveOrderedResult();
+          }
+          return;
+        }
+
+        const attemptIndex = nextAttemptIndex;
+        const plannedAttempt = plannedFallbackAttempts[attemptIndex];
+
+        nextAttemptIndex += 1;
+        inFlightCount += 1;
+        this.emitProgress(executionOptions, {
+          stage: "fallbackAttempt",
+          candidateCount,
+          completedAttempts: 1 + timingState.completedFallbackAttempts,
+          totalAttempts,
+          ...this.buildTimingSnapshot(
+            timingState,
+            totalAttempts,
+            1 + timingState.completedFallbackAttempts,
+            fallbackWorkerCount,
+          ),
+          currentDroppedTypes: plannedAttempt.droppedTypes,
+          currentDroppedClasses: plannedAttempt.droppedClasses,
+          messageKey: "progress.fallbackAttempt",
+          messageParams: {
+            current: attemptIndex + 2,
+            total: totalAttempts,
+          },
+        });
+
+        const startedAt = timingState.now();
+        void this.runAttemptInInitializedWorker(
+          worker,
+          plannedAttempt.input,
+          requestedInput,
+          executionOptions.signal,
+        )
+          .then((result) => {
+            if (settled) {
+              return;
+            }
+
+            inFlightCount -= 1;
+            timingState.totalCompletedFallbackMs += Math.max(0, timingState.now() - startedAt);
+            timingState.completedFallbackAttempts += 1;
+            completedAttempts.set(attemptIndex, {
+              result,
+            });
+            tryResolveOrderedResult();
+
+            if (!settled) {
+              dispatchAttempt(worker);
+            }
+          })
+          .catch((error) => {
+            rejectOnce(error);
+          });
+      };
+
+      for (const worker of workers) {
+        dispatchAttempt(worker);
+      }
+    });
+  }
+
   private createWorker(): Worker | null {
     if (typeof Worker === "undefined") {
       return null;
@@ -335,6 +786,65 @@ export class AutoTeamBuilderService {
     }
   }
 
+  private createWorkerPool(workerCount: number): Worker[] {
+    const workers: Worker[] = [];
+
+    for (let index = 0; index < workerCount; index += 1) {
+      const worker = this.createWorker();
+
+      if (!worker) {
+        break;
+      }
+
+      workers.push(worker);
+    }
+
+    return workers;
+  }
+
+  private createTimingState(): AutoTeamBuildTimingState {
+    const now =
+      typeof globalThis.performance?.now === "function"
+        ? (): number => globalThis.performance.now()
+        : (): number => Date.now();
+
+    return {
+      searchStartedAt: now(),
+      totalCompletedFallbackMs: 0,
+      completedFallbackAttempts: 0,
+      now,
+    };
+  }
+
+  private buildTimingSnapshot(
+    timingState: AutoTeamBuildTimingState,
+    totalAttempts: number,
+    completedAttempts: number,
+    activeWorkerCount: number,
+  ): Pick<
+    AutoBuildProgressSnapshot,
+    "elapsedMs" | "estimatedRemainingMs" | "averageFallbackAttemptMs" | "completedFallbackAttempts"
+  > {
+    const elapsedMs = Math.max(0, timingState.now() - timingState.searchStartedAt);
+    const averageFallbackAttemptMs =
+      timingState.completedFallbackAttempts > 0
+        ? timingState.totalCompletedFallbackMs / timingState.completedFallbackAttempts
+        : null;
+    const remainingFallbackAttempts = Math.max(totalAttempts - completedAttempts - 1, 0);
+    const estimatedRemainingMs =
+      averageFallbackAttemptMs !== null && remainingFallbackAttempts > 0
+        ? averageFallbackAttemptMs *
+          Math.ceil(remainingFallbackAttempts / Math.max(activeWorkerCount, 1))
+        : null;
+
+    return {
+      elapsedMs,
+      estimatedRemainingMs,
+      averageFallbackAttemptMs,
+      completedFallbackAttempts: timingState.completedFallbackAttempts,
+    };
+  }
+
   private emitProgress(
     executionOptions: AutoTeamBuildExecutionOptions,
     snapshot: AutoBuildProgressSnapshot,
@@ -346,6 +856,14 @@ export class AutoTeamBuilderService {
     if (signal?.aborted) {
       throw new AutoTeamBuildCancelledError();
     }
+  }
+
+  private normalizeWorkerCount(workerCount: number | undefined): number {
+    if (!Number.isFinite(workerCount)) {
+      return 1;
+    }
+
+    return Math.max(1, Math.floor(workerCount ?? 1));
   }
 
   private normalizeCharacterId(characterId: number | null | undefined): number | null {
