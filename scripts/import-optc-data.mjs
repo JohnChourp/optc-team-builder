@@ -11,6 +11,7 @@ import {
   normalizeLegacyAbilityText,
 } from './auto-team-builder-ability-parser.mjs';
 import { applyManualCharacterOverlay } from './lib/manual-character-apply.mjs';
+import { loadBuilderAbilityCorrections } from './lib/builder-ability-corrections.mjs';
 import {
   buildAutoBuilderAbilityCatalog,
   buildManifest,
@@ -33,6 +34,12 @@ const offlineDir = path.join(publicDir, 'assets', 'offline-packs');
 const exactImagesDir = path.join(publicDir, 'assets', 'exact-character-images');
 const overrideConfigPath = path.join(rootDir, 'scripts', 'data', 'character-image-overrides.json');
 const manualExactImageSourceDir = path.join(rootDir, 'scripts', 'data', 'character-images');
+const builderAbilityCorrectionsPath = path.join(
+  rootDir,
+  'scripts',
+  'data',
+  'builder-ability-corrections.json',
+);
 const shipThumbnailOverrideConfigPath = path.join(
   rootDir,
   'scripts',
@@ -940,8 +947,10 @@ async function main() {
     normalizeCharacters(unitsWindow.units, detailsWindow.details, rumble.units ?? [], assetsById),
     manualExactLocalPaths,
   );
+  const abilityCorrections = await loadBuilderAbilityCorrections(builderAbilityCorrectionsPath);
   const autoBuilderAbilities = await enrichCharactersWithBuilderAbilities(characters, {
     batchSize: 250,
+    abilityCorrections,
     logger: (message) => console.log(message),
   });
   const ships = applyShipThumbnailOverrides(

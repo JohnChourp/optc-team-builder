@@ -2,6 +2,8 @@ const SLOT_ABILITY_KEY_SET = new Set(['remove_slot_bind', 'remove_slot_barrier']
 const DEFAULT_COVERAGE_MODE = 'explicit';
 const PAIN_ABILITY_KEY = 'remove_pain';
 const PAIN_ABILITY_LABEL = 'Remove Pain';
+const ABILITY_BRANCH_ACTION_PATTERN =
+  /\b(?:deals?|boosts?|makes?|reduces?|changes?|adds?|delays?|locks?|recovers?|heals?|cuts?|transforms?|sets?)\b/gi;
 const EXPLICIT_BUILDER_ABILITIES = [
   {
     key: 'ignore_normal_attack_only',
@@ -21,6 +23,9 @@ const EXPLICIT_BUILDER_ABILITIES = [
       /\bpoisons?\b[^.]*\benemies?\b/i.test(text),
   },
 ];
+const EXPLICIT_BUILDER_ABILITY_KEY_SET = new Set(
+  EXPLICIT_BUILDER_ABILITIES.map((ability) => ability.key),
+);
 const IGNORED_TARGET_PATTERNS = [
   'special cooldown',
   'cooldown',
@@ -216,8 +221,42 @@ export function normalizeLegacyAbilityText(value) {
   return fragments.join('. ');
 }
 
-export function analyzeBuilderAbilityText(value, source) {
+export function extractPrimaryAbilityBranchText(value) {
   const normalizedText = normalizeLegacyAbilityText(value);
+
+  if (!normalizedText.length) {
+    return '';
+  }
+
+  const sentences = splitAbilityTextIntoSentences(normalizedText);
+
+  if (sentences.length <= 1) {
+    return normalizedText;
+  }
+
+  const primaryFingerprint = createBranchStarterFingerprint(sentences[0]);
+  const selectedSentences = [sentences[0]];
+
+  for (let index = 1; index < sentences.length; index += 1) {
+    const sentence = sentences[index];
+    const fingerprint = createBranchStarterFingerprint(sentence);
+
+    if (
+      primaryFingerprint.length &&
+      fingerprint === primaryFingerprint &&
+      looksLikeIndependentAbilityBranch(sentence)
+    ) {
+      break;
+    }
+
+    selectedSentences.push(sentence);
+  }
+
+  return selectedSentences.join('. ');
+}
+
+export function analyzeBuilderAbilityText(value, source) {
+  const normalizedText = extractPrimaryAbilityBranchText(value);
 
   if (!normalizedText.length) {
     return [];
@@ -298,7 +337,7 @@ export function analyzeSpecialText(value) {
 
 export async function enrichCharactersWithBuilderAbilities(
   characters,
-  { batchSize = 200, logger = console.log } = {},
+  { batchSize = 200, logger = console.log, abilityCorrections = null } = {},
 ) {
   const catalogMap = new Map();
   const total = characters.length;
@@ -315,9 +354,13 @@ export async function enrichCharactersWithBuilderAbilities(
         character.detail?.builderAbilities ?? [],
         derivedBuilderAbilities,
       );
-      character.detail.builderAbilities = builderAbilities;
+      const correctedBuilderAbilities = applyBuilderAbilityCorrection(
+        builderAbilities,
+        resolveBuilderAbilityCorrection(character.id, abilityCorrections),
+      );
+      character.detail.builderAbilities = correctedBuilderAbilities;
 
-      builderAbilities.forEach((ability) => {
+      correctedBuilderAbilities.forEach((ability) => {
         const current =
           catalogMap.get(ability.key) ?? createCatalogAccumulator(ability.key, ability.label);
 
@@ -379,6 +422,44 @@ export async function enrichCharactersWithBuilderAbilities(
   return abilities;
 }
 
+export function applyBuilderAbilityCorrection(abilities, correction) {
+  const normalizedAbilities = normalizeExistingBuilderAbilities(abilities);
+  const normalizedCorrection = normalizeBuilderAbilityCorrection(correction);
+
+  if (!normalizedCorrection) {
+    return normalizedAbilities;
+  }
+
+  let nextAbilities = normalizedAbilities;
+
+  if (normalizedCorrection.removeAbilityKeys.length > 0) {
+    nextAbilities = nextAbilities.filter(
+      (ability) =>
+        !(
+          normalizedCorrection.removeAbilityKeys.includes(ability.key) &&
+          correctionSourceMatches(ability, normalizedCorrection.sourceScopes)
+        ),
+    );
+  }
+
+  if (normalizedCorrection.replaceAbilities !== null) {
+    nextAbilities = nextAbilities.filter(
+      (ability) => !correctionSourceMatches(ability, normalizedCorrection.sourceScopes),
+    );
+
+    const replacedAbilities = [];
+    const seen = new Set();
+
+    [...nextAbilities, ...normalizedCorrection.replaceAbilities].forEach((ability) => {
+      addAbility(replacedAbilities, seen, ability);
+    });
+
+    return replacedAbilities;
+  }
+
+  return nextAbilities;
+}
+
 function mergeBuilderAbilities(existingAbilities, derivedAbilities) {
   const mergedAbilities = [];
   const seen = new Set();
@@ -411,10 +492,23 @@ function normalizeExistingBuilderAbility(value) {
     return null;
   }
 
+  const rawMinTurns =
+    value.minTurns === null || value.minTurns === undefined || value.minTurns === ''
+      ? null
+      : Number.isFinite(Number(value.minTurns))
+        ? Number(value.minTurns)
+        : null;
+  const minTurns =
+    rawMinTurns !== null &&
+    rawMinTurns <= 0 &&
+    EXPLICIT_BUILDER_ABILITY_KEY_SET.has(key)
+      ? null
+      : rawMinTurns;
+
   return {
     key,
     label: typeof value.label === 'string' && value.label.trim().length ? value.label.trim() : key,
-    minTurns: Number.isFinite(Number(value.minTurns)) ? Number(value.minTurns) : null,
+    minTurns,
     isCompleteRemoval: Boolean(value.isCompleteRemoval),
     slotTokens: Array.isArray(value.slotTokens)
       ? [...new Set(value.slotTokens.map((entry) => String(entry).trim().toUpperCase()).filter(Boolean))]
@@ -456,6 +550,22 @@ function addAbility(abilities, seen, ability) {
 
 function resolveCoverageMode(ability) {
   return ability.coverageMode ?? DEFAULT_COVERAGE_MODE;
+}
+
+function resolveBuilderAbilityCorrection(characterId, abilityCorrections) {
+  if (!abilityCorrections) {
+    return null;
+  }
+
+  if (abilityCorrections instanceof Map) {
+    return abilityCorrections.get(characterId) ?? abilityCorrections.get(String(characterId)) ?? null;
+  }
+
+  if (typeof abilityCorrections === 'object') {
+    return abilityCorrections[characterId] ?? abilityCorrections[String(characterId)] ?? null;
+  }
+
+  return null;
 }
 
 function compareCoverageModes(left, right) {
@@ -516,6 +626,64 @@ function extractTextFragments(value) {
   }
 
   return Object.values(record).flatMap((entry) => extractTextFragments(entry));
+}
+
+function splitAbilityTextIntoSentences(text) {
+  return text
+    .replace(/\.\.+/g, '.')
+    .split(/\.\s+/)
+    .map((sentence) => sentence.trim().replace(/\.+$/g, ''))
+    .filter(Boolean);
+}
+
+function createBranchStarterFingerprint(sentence) {
+  const normalizedSentence = sentence
+    .toLowerCase()
+    .replace(/\[[^\]]+\]/g, ' ')
+    .replace(/\b\d+(?:\.\d+)?x?\b/g, ' ')
+    .replace(/[^a-z\s']/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!normalizedSentence.length) {
+    return '';
+  }
+
+  return normalizedSentence.split(/\s+/).slice(0, 3).join(' ');
+}
+
+function looksLikeIndependentAbilityBranch(sentence) {
+  return (sentence.match(ABILITY_BRANCH_ACTION_PATTERN) ?? []).length >= 2;
+}
+
+function normalizeBuilderAbilityCorrection(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const sourceScopes = Array.isArray(value.sourceScopes)
+    ? [...new Set(value.sourceScopes.filter(isAbilitySource))]
+    : ['specialText', 'captainAbility'];
+  const removeAbilityKeys = Array.isArray(value.removeAbilityKeys)
+    ? [...new Set(value.removeAbilityKeys.map((entry) => String(entry).trim()).filter(Boolean))]
+    : [];
+  const replaceAbilities = 'replaceAbilities' in value
+    ? normalizeExistingBuilderAbilities(value.replaceAbilities)
+    : null;
+
+  return {
+    sourceScopes: sourceScopes.length > 0 ? sourceScopes : ['specialText', 'captainAbility'],
+    removeAbilityKeys,
+    replaceAbilities,
+  };
+}
+
+function isAbilitySource(value) {
+  return value === 'specialText' || value === 'captainAbility';
+}
+
+function correctionSourceMatches(ability, sourceScopes) {
+  return sourceScopes.includes(ability.source);
 }
 
 function normalizeTargetSegments(targetText) {

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-09T21:35:25.386Z",
+  "generatedAt": "2026-04-12T06:42:29.081Z",
   "characters": [
     {
       "id": 1,
@@ -2744,15 +2744,6 @@
         "specialText": "Deals 5,000 Fixed damage to all enemies",
         "specialNotes": "#{fixed}",
         "builderAbilities": [
-          {
-            "key": "deal_fixed_damage",
-            "label": "Deal Fixed Damage",
-            "minTurns": 0,
-            "isCompleteRemoval": false,
-            "slotTokens": [],
-            "source": "specialText",
-            "coverageMode": "explicit"
-          },
           {
             "key": "deal_fixed_damage",
             "label": "Deal Fixed Damage",

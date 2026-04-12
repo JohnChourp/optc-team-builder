@@ -6,6 +6,35 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <script>
+    (function restoreGithubPagesRoute() {
+      var searchParams = new URLSearchParams(window.location.search);
+      var routePath = searchParams.get("__gh_path__");
+
+      if (!routePath) {
+        return;
+      }
+
+      var routeSearch = searchParams.get("__gh_search__");
+      var routeHash = searchParams.get("__gh_hash__");
+      var baseHref = document.querySelector("base")?.getAttribute("href") || "/";
+      var normalizedBaseHref = baseHref.endsWith("/") ? baseHref : baseHref + "/";
+      var normalizedRoutePath = routePath.replace(/^\/+/, "");
+      var restoredUrl = normalizedRoutePath
+        ? normalizedBaseHref + normalizedRoutePath
+        : normalizedBaseHref;
+
+      if (routeSearch) {
+        restoredUrl += "?" + routeSearch;
+      }
+
+      if (routeHash) {
+        restoredUrl += "#" + routeHash;
+      }
+
+      window.history.replaceState(null, "", restoredUrl);
+    })();
+  </script>
 </head>
 <body>
   <app-root></app-root>
