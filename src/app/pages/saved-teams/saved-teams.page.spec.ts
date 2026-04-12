@@ -20,8 +20,10 @@ import { SavedTeamsPage } from './saved-teams.page';
 
 vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
+  IonButtons: class {},
   IonCheckbox: class {},
   IonContent: class {},
+  IonFooter: class {},
   IonHeader: class {},
   IonIcon: class {},
   IonInput: class {},
@@ -199,6 +201,7 @@ describe('SavedTeamsPage', () => {
     expect(template).toContain("t('actions.exportSingle')");
     expect(template).toContain("'common.actions.reset' | transloco");
     expect(template).toContain("t('tools.export')");
+    expect(template).toContain("t('tools.import')");
     expect(template).toContain("t('selection.selectAll')");
     expect(template).toContain("t('edit.actions.edit')");
     expect(template).toContain('edit.teamNameLabel');
@@ -216,8 +219,8 @@ describe('SavedTeamsPage', () => {
     expect(template).toContain('[queryParams]="getTeamBuilderQueryParams(teamCard.team)"');
     expect(template).toContain('[routerLink]="[\'/tabs/saved-enemies\']"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(currentSlot)"');
-    expect(template).not.toContain("t('tools.import')");
-    expect(template).not.toContain('openImportModal()');
+    expect(template).toContain('openImportModal()');
+    expect(template).toContain('import-dropzone');
   });
 
   it('exports a single saved team with the shared saved-teams payload', async () => {
@@ -241,17 +244,74 @@ describe('SavedTeamsPage', () => {
     await page.ngOnInit();
     page.selectedTeamIds.set(['team-1']);
     page.editModalOpen.set(true);
+    page.importModalOpen.set(true);
     page.editTeamName.set('Edited team');
     page.editNotes.set('Edited notes');
+    page.importFileName.set('teams.json');
+    page.importFeedback.set({
+      title: 'Loaded',
+      details: ['Done'],
+      tone: 'success',
+    });
 
     page.resetPage();
 
     expect(page.selectedTeamIds()).toEqual([]);
     expect(page.editModalOpen()).toBe(false);
+    expect(page.importModalOpen()).toBe(false);
     expect(page.editingTeam()).toBeNull();
     expect(page.editTeamName()).toBe('');
     expect(page.editNotes()).toBe('');
+    expect(page.importFileName()).toBe('');
+    expect(page.importFeedback()).toBeNull();
     expect(page.savedTeams()).toHaveLength(2);
+  });
+
+  it('imports teams from a valid saved-teams payload and reports success', async () => {
+    const { page, userState } = createPage();
+
+    await page.ngOnInit();
+
+    await page['importSavedTeams'](
+      new File(
+        [
+          JSON.stringify({
+            schemaVersion: 1,
+            source: 'saved-teams',
+            exportedAt: '2026-03-29T12:00:00.000Z',
+            teams: [
+              {
+                id: 'team-3',
+                name: 'Imported Team',
+                notes: 'Imported notes',
+                shipId: 9001,
+                slots: [101, null, null, null, null, null],
+                createdAt: '2026-03-29T12:00:00.000Z',
+                updatedAt: '2026-03-29T12:00:00.000Z',
+              },
+            ],
+          }),
+        ],
+        'teams.json',
+        { type: 'application/json' },
+      ),
+    );
+
+    expect(userState.mergeImportedTeams).toHaveBeenCalledWith([
+      expect.objectContaining({
+        id: 'team-3',
+        shipId: 9001,
+        slots: [101, null, null, null, null, null],
+      }),
+    ]);
+    expect(page.importing()).toBe(false);
+    expect(page.importFileName()).toBe('teams.json');
+    expect(page.importFeedback()).toEqual(
+      expect.objectContaining({
+        tone: 'success',
+      }),
+    );
+    expect(page.savedTeams().some((team) => team.id === 'team-3')).toBe(true);
   });
 });
 
@@ -267,7 +327,41 @@ function createPage(overrides: { savedTeams?: ReturnType<typeof buildSavedTeams>
       const targetIds = new Set(teamIds);
       savedTeams.set(savedTeams().filter((team) => !targetIds.has(team.id)));
     }),
-    mergeImportedTeams: vi.fn(),
+    mergeImportedTeams: vi.fn().mockImplementation(async (teams: ReturnType<typeof buildSavedTeams>) => {
+      const currentTeams = savedTeams();
+      const currentTeamMap = new Map(currentTeams.map((team) => [team.id, team] as const));
+      const mergedTeams: typeof teams = [];
+      const importedTeamIds = new Set<string>();
+      let addedCount = 0;
+      let updatedCount = 0;
+
+      teams.forEach((team) => {
+        if (importedTeamIds.has(team.id)) {
+          return;
+        }
+
+        importedTeamIds.add(team.id);
+
+        if (currentTeamMap.has(team.id)) {
+          updatedCount += 1;
+        } else {
+          addedCount += 1;
+        }
+
+        mergedTeams.push(team);
+      });
+
+      savedTeams.set([
+        ...mergedTeams,
+        ...currentTeams.filter((team) => !importedTeamIds.has(team.id)),
+      ]);
+
+      return {
+        addedCount,
+        updatedCount,
+        teams: mergedTeams,
+      };
+    }),
     saveTeam: vi
       .fn()
       .mockImplementation(
@@ -332,8 +426,40 @@ function createPage(overrides: { savedTeams?: ReturnType<typeof buildSavedTeams>
         return 'Untitled Crew';
       }
 
+      if (key === 'import.successTitle') {
+        return 'Import completed';
+      }
+
+      if (key === 'import.warningTitle') {
+        return 'Import completed with warnings';
+      }
+
       if (key === 'import.errorTitle') {
         return 'Import failed';
+      }
+
+      if (key === 'import.loadedFromFile') {
+        return `Loaded ${params?.['fileName'] ?? ''}.`;
+      }
+
+      if (key === 'import.stats.added') {
+        return `Added ${params?.['count'] ?? 0} new teams.`;
+      }
+
+      if (key === 'import.stats.updated') {
+        return `Updated ${params?.['count'] ?? 0} existing teams.`;
+      }
+
+      if (key === 'import.stats.invalid') {
+        return `Skipped ${params?.['count'] ?? 0} invalid teams.`;
+      }
+
+      if (key === 'import.stats.duplicates') {
+        return `Collapsed ${params?.['count'] ?? 0} duplicate ids from the import.`;
+      }
+
+      if (key === 'import.stats.unknownSlots') {
+        return `Cleared ${params?.['count'] ?? 0} unknown character slots.`;
       }
 
       if (key === 'import.errors.generic') {

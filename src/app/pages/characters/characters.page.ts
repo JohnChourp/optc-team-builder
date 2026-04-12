@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
@@ -7,6 +8,7 @@ import {
   IonHeader,
   IonIcon,
   IonInput,
+  IonModal,
   IonSearchbar,
   IonSpinner,
   IonToggle,
@@ -14,6 +16,11 @@ import {
   IonToolbar,
 } from '@ionic/angular/standalone';
 import {
+  alertCircleOutline,
+  checkmarkCircleOutline,
+  closeOutline,
+  cloudUploadOutline,
+  documentTextOutline,
   heart,
   heartOutline,
   layersOutline,
@@ -22,9 +29,18 @@ import {
 } from 'ionicons/icons';
 
 import { type CharacterListItem, type DatasetManifest } from '../../core/models/optc.models';
+import {
+  type OptcbxImportResult,
+  type OptcbxParsedImport,
+} from '../../core/models/optcbx-import.models';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import { OptcbxImportService } from '../../core/services/optcbx-import.service';
 import { UserStateService } from '../../core/services/user-state.service';
+import {
+  buildOptcbxFavoritesExportPayload,
+  downloadOptcbxFavoritesExport,
+} from './characters-favorites.utils';
 
 const PAGE_SIZE = 48;
 
@@ -32,11 +48,13 @@ const PAGE_SIZE = 48;
   selector: 'app-characters-page',
   standalone: true,
   imports: [
+    CommonModule,
     IonButton,
     IonContent,
     IonHeader,
     IonIcon,
     IonInput,
+    IonModal,
     IonSearchbar,
     IonSpinner,
     IonToggle,
@@ -62,6 +80,22 @@ export class CharactersPage implements OnInit {
   public readonly selectedClass = signal('');
   public readonly favoritesOnly = signal(false);
   public readonly favoriteIds;
+  public readonly canDownloadFavoritesExport = computed(() => this.favoriteIds().length > 0);
+  public readonly canClearAllFavorites = computed(() => this.favoriteIds().length > 0);
+  public readonly importModalOpen = signal(false);
+  public readonly draggingImportFile = signal(false);
+  public readonly importFileName = signal('');
+  public readonly importErrorMessage = signal('');
+  public readonly parsedImport = signal<OptcbxParsedImport | null>(null);
+  public readonly importResult = signal<OptcbxImportResult | null>(null);
+  public readonly importingFavorites = signal(false);
+  public readonly hasImportReady = computed(() => this.parsedImport() !== null);
+  public readonly unmatchedPreview = computed(
+    () => this.importResult()?.unmatchedIds.slice(0, 12) ?? [],
+  );
+  public readonly remainingUnmatchedCount = computed(() =>
+    Math.max(0, (this.importResult()?.unmatchedIds.length ?? 0) - this.unmatchedPreview().length),
+  );
   public readonly availableTypes = computed(() =>
     this.normalizeOptions(this.summary()?.availableTypes ?? []),
   );
@@ -94,12 +128,17 @@ export class CharactersPage implements OnInit {
   public readonly searchIcon = searchOutline;
   public readonly sparklesIcon = sparklesOutline;
   public readonly layersIcon = layersOutline;
+  public readonly uploadIcon = cloudUploadOutline;
+  public readonly fileIcon = documentTextOutline;
+  public readonly closeIcon = closeOutline;
+  public readonly successIcon = checkmarkCircleOutline;
+  public readonly errorIcon = alertCircleOutline;
   public readonly favoriteIcon = heart;
   public readonly favoriteOutlineIcon = heartOutline;
-
   public constructor(
     private readonly repository: OptcRepositoryService,
     private readonly userState: UserStateService,
+    private readonly optcbxImport: OptcbxImportService,
     private readonly i18n: AppI18nService,
   ) {
     this.favoriteIds = this.userState.favoriteCharacterIds;
@@ -109,10 +148,6 @@ export class CharactersPage implements OnInit {
     await this.userState.ready();
     this.summary.set(await this.repository.getDatasetManifest());
     await this.loadCharacters(true);
-  }
-
-  public ionViewDidEnter(): void {
-    console.log('CharactersPage component');
   }
 
   public async onSearchChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
@@ -199,10 +234,136 @@ export class CharactersPage implements OnInit {
     this.loadingMore.set(false);
   }
 
+  public openImportModal(): void {
+    this.resetImportState();
+    this.importModalOpen.set(true);
+  }
+
+  public closeImportModal(): void {
+    this.importModalOpen.set(false);
+    this.resetImportState();
+  }
+
+  public openFilePicker(input: HTMLInputElement): void {
+    input.click();
+  }
+
+  public async onFileSelected(event: Event, input: HTMLInputElement): Promise<void> {
+    const target = event.target as HTMLInputElement;
+    const [file] = Array.from(target.files ?? []);
+
+    input.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    await this.loadImportFile(file);
+  }
+
+  public onImportDragOver(event: DragEvent): void {
+    event.preventDefault();
+    this.draggingImportFile.set(true);
+
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'copy';
+    }
+  }
+
+  public onImportDragLeave(event: DragEvent): void {
+    event.preventDefault();
+
+    const currentTarget = event.currentTarget as HTMLElement | null;
+    const relatedTarget = event.relatedTarget as Node | null;
+
+    if (currentTarget && relatedTarget && currentTarget.contains(relatedTarget)) {
+      return;
+    }
+
+    this.draggingImportFile.set(false);
+  }
+
+  public async onImportDrop(event: DragEvent): Promise<void> {
+    event.preventDefault();
+    this.draggingImportFile.set(false);
+
+    const file = event.dataTransfer?.files?.item(0);
+
+    if (!file) {
+      this.importErrorMessage.set(
+        this.i18n.translate('import.errors.dropJson', undefined, 'characters'),
+      );
+      return;
+    }
+
+    await this.loadImportFile(file);
+  }
+
+  public async importFavorites(): Promise<void> {
+    const parsedImport = this.parsedImport();
+
+    if (!parsedImport || this.importingFavorites()) {
+      return;
+    }
+
+    this.importingFavorites.set(true);
+    this.importErrorMessage.set('');
+
+    try {
+      const currentFavoriteIds = this.userState.favoriteCharacterIds();
+      const importResult = await this.optcbxImport.buildMergeImportResult(
+        parsedImport,
+        currentFavoriteIds,
+      );
+      const nextFavoriteIds = this.optcbxImport.mergeFavoriteIds(
+        importResult.matchedIds,
+        currentFavoriteIds,
+      );
+
+      await this.userState.setFavoriteCharacterIds(nextFavoriteIds);
+      this.importResult.set(importResult);
+
+      if (this.favoritesOnly()) {
+        await this.loadCharacters(true);
+      }
+    } catch (error) {
+      this.importErrorMessage.set(this.resolveImportError(error));
+    } finally {
+      this.importingFavorites.set(false);
+    }
+  }
+
+  public async downloadFavoritesExport(): Promise<void> {
+    if (!this.canDownloadFavoritesExport()) {
+      return;
+    }
+
+    const favoriteIds = this.favoriteIds();
+    const favoriteCharacters = await this.repository.getCharactersByIds(favoriteIds);
+    const payload = buildOptcbxFavoritesExportPayload(favoriteIds, favoriteCharacters);
+
+    downloadOptcbxFavoritesExport(payload);
+  }
+
   public async toggleFavorite(characterId: number, event: Event): Promise<void> {
     event.preventDefault();
     event.stopPropagation();
     await this.userState.toggleFavorite(characterId);
+
+    if (this.favoritesOnly()) {
+      await this.loadCharacters(true);
+    }
+  }
+
+  public async clearAllFavorites(): Promise<void> {
+    if (
+      !this.canClearAllFavorites() ||
+      !this.confirmAction(this.i18n.translate('favorites.clearAllConfirm', undefined, 'characters'))
+    ) {
+      return;
+    }
+
+    await this.userState.setFavoriteCharacterIds([]);
 
     if (this.favoritesOnly()) {
       await this.loadCharacters(true);
@@ -219,11 +380,25 @@ export class CharactersPage implements OnInit {
     this.characters.set([]);
     this.loadingMore.set(false);
     this.hasMore.set(true);
+    this.importModalOpen.set(false);
+    this.resetImportState();
     await this.loadCharacters(true);
   }
 
   public isFavorite(characterId: number): boolean {
     return this.favoriteIds().includes(characterId);
+  }
+
+  public trackCharacter(_: number, character: CharacterListItem): number {
+    return character.id;
+  }
+
+  public resetSelectedFile(): void {
+    this.importFileName.set('');
+    this.importErrorMessage.set('');
+    this.parsedImport.set(null);
+    this.importResult.set(null);
+    this.draggingImportFile.set(false);
   }
 
   private async loadCharacters(reset: boolean): Promise<void> {
@@ -263,5 +438,42 @@ export class CharactersPage implements OnInit {
       .filter((option) => option.toLowerCase().includes(normalizedQuery))
       .filter((option) => option !== selectedValue)
       .slice(0, 8);
+  }
+
+  private async loadImportFile(file: File): Promise<void> {
+    this.importFileName.set(file.name);
+    this.importErrorMessage.set('');
+    this.importResult.set(null);
+    this.parsedImport.set(null);
+
+    try {
+      const rawContent = await file.text();
+      const parsedImport = this.optcbxImport.parseExport(rawContent);
+
+      this.parsedImport.set(parsedImport);
+    } catch (error) {
+      this.importErrorMessage.set(this.resolveImportError(error));
+    }
+  }
+
+  private resolveImportError(error: unknown): string {
+    if (error instanceof Error && error.message.trim()) {
+      return error.message;
+    }
+
+    return this.i18n.translate('import.errors.generic', undefined, 'characters');
+  }
+
+  private resetImportState(): void {
+    this.draggingImportFile.set(false);
+    this.importFileName.set('');
+    this.importErrorMessage.set('');
+    this.parsedImport.set(null);
+    this.importResult.set(null);
+    this.importingFavorites.set(false);
+  }
+
+  private confirmAction(message: string): boolean {
+    return typeof globalThis.confirm === 'function' ? globalThis.confirm(message) : false;
   }
 }
