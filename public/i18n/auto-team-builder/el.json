@@ -64,10 +64,10 @@
       }
     },
     "uniqueNames": {
-      "toggle": "Απαίτησε μοναδικά base character names",
+      "toggle": "Απόφυγε duplicate χαρακτήρες του παιχνιδιού",
       "support": {
-        "strict": "Κάθε final slot εκτός από το Friend Captain πρέπει να χρησιμοποιεί διαφορετικό normalized base character name, ώστε το Friend Captain να μπορεί ακόμη να αντιγράφει άλλη μονάδα όπως Monkey D. Luffy.",
-        "flexible": "Επίτρεψε πολλαπλά variants του ίδιου base character name στην τελική ομάδα."
+        "strict": "Κάθε final slot εκτός από το Friend Captain πρέπει να αποφεύγει in-game duplicate-character conflicts, ώστε το Friend Captain να μπορεί ακόμη να αντιγράφει άλλη μονάδα όπως Monkey D. Luffy.",
+        "flexible": "Επίτρεψε τελικές ομάδες με in-game duplicate identities ή composite units που επικαλύπτονται."
       }
     },
     "sameCaptain": {
@@ -103,7 +103,7 @@
         "message": "Να κλείσει το favorite ship mode και να μπορούν να χρησιμοποιηθούν ξανά όλα τα αποθηκευμένα ships;"
       },
       "uniqueNames": {
-        "message": "Να κλείσει ο κανόνας για μοναδικά base character names και να επιτρέπονται διπλές character families στην τελική ομάδα;"
+        "message": "Να κλείσει η προστασία από duplicate χαρακτήρες και να επιτρέπονται in-game duplicate conflicts στην τελική ομάδα;"
       },
       "specialSupport": {
         "message": "Να κλείσει το special support coverage και να επιτρέπονται slots χωρίς readable special utility ή team support;"
@@ -451,7 +451,7 @@
       "manualConflict": "Η απαίτηση για ίδιο captain και friend captain είναι ενεργή, αλλά τα current manual Captain και Friend Captain choices δεν έχουν κοινό character."
     },
     "uniqueNames": {
-      "manualConflict": "Τα current manual slot choices χρησιμοποιούν ήδη το ίδιο base character name εκτός του Friend Captain slot: {{names}}."
+      "manualConflict": "Τα current manual slot choices δημιουργούν ήδη το ίδιο in-game character conflict εκτός του Friend Captain slot: {{names}}."
     },
     "leaderRequirement": {
       "dual": " και τα επιλεγμένα captain / friend captain slots",
@@ -481,7 +481,7 @@
       "sameCaptainAndFriendCaptain": "ίδιο captain και friend captain",
       "strict": "Δεν βρέθηκε strict ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
       "typeCoverage": "κάλυψη types στην ομάδα",
-      "uniqueCharacterNames": "μοναδικά base character names σε όλη την ομάδα εκτός Friend Captain"
+      "uniqueCharacterNames": "μοναδικές in-game character identities σε όλη την ομάδα εκτός Friend Captain"
     }
   },
   "abilities": {

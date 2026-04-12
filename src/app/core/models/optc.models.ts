@@ -53,6 +53,7 @@ export interface CharacterDetail {
   specialName: string | null;
   specialText: string | null;
   specialNotes: string | null;
+  partyConflictKeys: string[];
   builderAbilities: NormalizedBuilderAbility[];
   sailorAbilities: string[];
   sailorNotes: string | null;

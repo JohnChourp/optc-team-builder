@@ -1148,7 +1148,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(page.buildProgress()).toBeNull();
   });
 
-  it('shows a dedicated manual conflict message for duplicate base character names', async () => {
+  it('shows a dedicated manual conflict message for duplicate in-game characters', async () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
@@ -1161,19 +1161,20 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     }>);
     page.manualSlots.set(
       createManualSlots({
-        captain: [101],
-        sub1: [102],
+        captain: [3574],
+        sub1: [2797],
       }),
     );
     page.lockedCharacterRecords.set({
-      101: createCharacterRecord(101, 'Monkey D. Luffy'),
-      102: createCharacterRecord(102, 'Monkey D. Luffy - Gear 2'),
+      2797: createCharacterRecord(2797, 'Tony Tony Chopper - Long-Awaited Present'),
+      3574: createCharacterRecord(3574, 'General Franky - Dream Docking'),
     });
 
     await page.buildTeam();
 
-    expect(page.errorMessage()).toContain('Monkey D. Luffy');
-    expect(page.errorMessage()).toContain('base character name');
+    expect(page.errorMessage()).toContain('General Franky - Dream Docking');
+    expect(page.errorMessage()).toContain('Tony Tony Chopper - Long-Awaited Present');
+    expect(page.errorMessage()).toContain('in-game character conflict');
   });
 
   it('shows a dedicated manual conflict message for same-captain mode', async () => {
@@ -3258,6 +3259,7 @@ function createCharacterRecord(
       specialName: `${name} special`,
       specialText: `${name} special text`,
       specialNotes: null,
+      partyConflictKeys: [],
       builderAbilities,
       sailorAbilities: [`${name} sailor`],
       sailorNotes: null,

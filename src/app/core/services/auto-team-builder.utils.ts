@@ -22,7 +22,8 @@ import {
 import {
   type AutoBuildAbilityRequirement,
 } from '../models/auto-team-builder-ability.models';
-import { type CharacterDetailRecord } from '../models/optc.models';
+import conflictOverrideCatalog from '../data/auto-team-builder-party-conflict-overrides.json';
+import { type CharacterDetailRecord, type CharacterListItem } from '../models/optc.models';
 import {
   matchesAbilityRequirement,
 } from './auto-team-builder-ability-match.utils';
@@ -80,6 +81,16 @@ interface LeaderPairOption {
   score: number;
 }
 
+type PartyConflictCharacter = Pick<CharacterListItem, 'id' | 'name'> &
+  Partial<Pick<CharacterDetailRecord, 'detail'>>;
+
+const PARTY_CONFLICT_KEY_OVERRIDES = new Map<number, string[]>(
+  Object.entries(conflictOverrideCatalog).map(([characterId, keys]) => [
+    Number(characterId),
+    Array.isArray(keys) ? keys.map((value) => String(value)) : [],
+  ]),
+);
+
 function candidateMatchesAbilityRequirement(
   candidate: AutoBuildCandidate,
   requirement: AutoBuildAbilityRequirement,
@@ -98,15 +109,70 @@ function cloneAbilityRequirement(
   };
 }
 
-export function resolveCharacterBaseNameKey(name: string): string {
-  const trimmedName = name.replace(/^[^A-Za-z0-9]+/, "").replace(/\s+/g, " ").trim();
-  const [baseName = trimmedName] = trimmedName.split(" - ", 1);
+export function normalizePartyConflictKey(name: string): string {
+  const trimmedName = name.replace(/^[^A-Za-z0-9]+/, '').replace(/\s+/g, ' ').trim();
 
-  return baseName.trim().toLowerCase();
+  return trimmedName.toLowerCase();
 }
 
-function resolveCandidateBaseNameKey(candidate: AutoBuildCandidate): string {
-  return resolveCharacterBaseNameKey(candidate.character.name);
+export function resolveCharacterBaseNameKey(name: string): string {
+  const trimmedName = name.replace(/^[^A-Za-z0-9]+/, '').replace(/\s+/g, ' ').trim();
+  const [baseName = trimmedName] = trimmedName.split(' - ', 1);
+
+  return normalizePartyConflictKey(baseName);
+}
+
+export function resolveNameDerivedPartyConflictKeys(name: string): string[] {
+  const primaryKey = resolveCharacterBaseNameKey(name);
+
+  if (!primaryKey.length) {
+    return [];
+  }
+
+  const keys = new Set<string>([primaryKey]);
+
+  if (primaryKey.includes('&')) {
+    primaryKey
+      .split('&')
+      .map((value) => normalizePartyConflictKey(value))
+      .filter((value) => value.length > 0)
+      .forEach((value) => keys.add(value));
+  }
+
+  return [...keys];
+}
+
+export function resolveCharacterPartyConflictKeys(character: PartyConflictCharacter): string[] {
+  const explicitKeys = Array.isArray(character.detail?.partyConflictKeys)
+    ? character.detail.partyConflictKeys
+    : [];
+  const overrideKeys = PARTY_CONFLICT_KEY_OVERRIDES.get(character.id) ?? [];
+
+  return [
+    ...new Set(
+      [...resolveNameDerivedPartyConflictKeys(character.name), ...explicitKeys, ...overrideKeys]
+        .map((value) => normalizePartyConflictKey(String(value ?? '')))
+        .filter((value) => value.length > 0),
+    ),
+  ];
+}
+
+function resolveCandidatePartyConflictKeys(candidate: AutoBuildCandidate): string[] {
+  return resolveCharacterPartyConflictKeys(candidate.character);
+}
+
+function hasAnyPartyConflictKey(
+  candidate: AutoBuildCandidate,
+  usedPartyConflictKeys: Set<string>,
+): boolean {
+  return resolveCandidatePartyConflictKeys(candidate).some((key) => usedPartyConflictKeys.has(key));
+}
+
+function addCandidatePartyConflictKeys(
+  usedPartyConflictKeys: Set<string>,
+  candidate: AutoBuildCandidate,
+): void {
+  resolveCandidatePartyConflictKeys(candidate).forEach((key) => usedPartyConflictKeys.add(key));
 }
 
 function countMatchingAbilityRequirementSlots(
@@ -352,9 +418,9 @@ function resolveConstrainedSubSelections(
 ): Map<AutoBuildManualSlotRole, AutoBuildCandidate> | null {
   const leaderCandidates = resolveUniqueCandidates(leaders);
   const leaderCharacterIdSet = new Set(leaderCandidates.map((candidate) => candidate.character.id));
-  const leaderBaseNameKeySet =
+  const leaderPartyConflictKeySet =
     input.requireUniqueBaseCharacterNames && leaderCandidates[0]
-      ? new Set([resolveCandidateBaseNameKey(leaderCandidates[0])])
+      ? new Set(resolveCandidatePartyConflictKeys(leaderCandidates[0]))
       : new Set<string>();
   const coverage = createTeamCoverageState(leaderCandidates);
   const constrainedRoles = AUTO_BUILD_MANUAL_SUB_SLOT_ROLES.filter(
@@ -366,7 +432,7 @@ function resolveConstrainedSubSelections(
     selectedSubMap: Map<AutoBuildManualSlotRole, AutoBuildCandidate>,
     selectedSubs: AutoBuildCandidate[],
     selectedIds: Set<number>,
-    selectedBaseNameKeys: Set<string>,
+    selectedPartyConflictKeys: Set<string>,
     currentCoverage: TeamCoverageState,
   ): Map<AutoBuildManualSlotRole, AutoBuildCandidate> | null => {
     if (roleIndex >= constrainedRoles.length) {
@@ -381,15 +447,12 @@ function resolveConstrainedSubSelections(
         index,
       }))
       .filter(({ candidate }) => {
-        const baseNameKey = resolveCandidateBaseNameKey(candidate);
-
         return !(
           leaderCharacterIdSet.has(candidate.character.id) ||
           selectedIds.has(candidate.character.id) ||
-          (
-            input.requireUniqueBaseCharacterNames &&
-            (leaderBaseNameKeySet.has(baseNameKey) || selectedBaseNameKeys.has(baseNameKey))
-          ) ||
+          (input.requireUniqueBaseCharacterNames &&
+            (hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) ||
+              hasAnyPartyConflictKey(candidate, selectedPartyConflictKeys))) ||
           (input.requireAllSelectedClassesPerCharacter && !candidate.matchesAllSelectedClasses) ||
           !matchesActiveLeaderCriteria(candidate, leaderCriteria) ||
           !matchesMutualSpecialCompatibility(
@@ -426,14 +489,14 @@ function resolveConstrainedSubSelections(
       const nextSelectedSubs = [...selectedSubs, candidate];
       const nextSelectedSubMap = new Map(selectedSubMap);
       const nextSelectedIds = new Set(selectedIds);
-      const nextSelectedBaseNameKeys = new Set(selectedBaseNameKeys);
+      const nextSelectedPartyConflictKeys = new Set(selectedPartyConflictKeys);
       const nextCoverage = cloneTeamCoverageState(currentCoverage);
 
       nextSelectedSubMap.set(role, candidate);
       nextSelectedIds.add(candidate.character.id);
 
       if (input.requireUniqueBaseCharacterNames) {
-        nextSelectedBaseNameKeys.add(resolveCandidateBaseNameKey(candidate));
+        addCandidatePartyConflictKeys(nextSelectedPartyConflictKeys, candidate);
       }
 
       applyCandidateCoverage(nextCoverage, candidate);
@@ -443,7 +506,7 @@ function resolveConstrainedSubSelections(
         nextSelectedSubMap,
         nextSelectedSubs,
         nextSelectedIds,
-        nextSelectedBaseNameKeys,
+        nextSelectedPartyConflictKeys,
         nextCoverage,
       );
 
@@ -531,9 +594,9 @@ function selectSubs(
   const selected = resolveUniqueCandidates(lockedSubs);
   const leaderCandidates = resolveUniqueCandidates(leaders);
   const leaderCharacterIdSet = new Set(leaderCandidates.map((candidate) => candidate.character.id));
-  const leaderBaseNameKeySet =
+  const leaderPartyConflictKeySet =
     input.requireUniqueBaseCharacterNames && leaderCandidates[0]
-      ? new Set([resolveCandidateBaseNameKey(leaderCandidates[0])])
+      ? new Set(resolveCandidatePartyConflictKeys(leaderCandidates[0]))
       : new Set<string>();
 
   if (selected.length > TEAM_SUB_SLOT_COUNT) {
@@ -544,17 +607,18 @@ function selectSubs(
     return [];
   }
 
-  const selectedBaseNameKeys = new Set<string>();
+  const selectedPartyConflictKeys = new Set<string>();
 
   if (input.requireUniqueBaseCharacterNames) {
     for (const candidate of selected) {
-      const baseNameKey = resolveCandidateBaseNameKey(candidate);
-
-      if (leaderBaseNameKeySet.has(baseNameKey) || selectedBaseNameKeys.has(baseNameKey)) {
+      if (
+        hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) ||
+        hasAnyPartyConflictKey(candidate, selectedPartyConflictKeys)
+      ) {
         return [];
       }
 
-      selectedBaseNameKeys.add(baseNameKey);
+      addCandidatePartyConflictKeys(selectedPartyConflictKeys, candidate);
     }
   }
 
@@ -581,15 +645,12 @@ function selectSubs(
   selected.forEach((candidate) => applyCandidateCoverage(coverage, candidate));
   const pool = candidates.filter(
     (candidate) => {
-      const baseNameKey = resolveCandidateBaseNameKey(candidate);
-
       return (
         !leaderCharacterIdSet.has(candidate.character.id) &&
         !selectedIds.has(candidate.character.id) &&
-        !(
-          input.requireUniqueBaseCharacterNames &&
-          (leaderBaseNameKeySet.has(baseNameKey) || selectedBaseNameKeys.has(baseNameKey))
-        ) &&
+        (!input.requireUniqueBaseCharacterNames ||
+          (!hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) &&
+            !hasAnyPartyConflictKey(candidate, selectedPartyConflictKeys))) &&
         matchesActiveLeaderCriteria(candidate, leaderCriteria) &&
         matchesMutualSpecialCompatibility(
           candidate,
@@ -604,14 +665,11 @@ function selectSubs(
   while (selected.length < TEAM_SUB_SLOT_COUNT) {
     const next = pool
       .filter((candidate) => {
-        const baseNameKey = resolveCandidateBaseNameKey(candidate);
-
         return (
           !selectedIds.has(candidate.character.id) &&
-          !(
-            input.requireUniqueBaseCharacterNames &&
-            (leaderBaseNameKeySet.has(baseNameKey) || selectedBaseNameKeys.has(baseNameKey))
-          ) &&
+          (!input.requireUniqueBaseCharacterNames ||
+            (!hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) &&
+              !hasAnyPartyConflictKey(candidate, selectedPartyConflictKeys))) &&
           matchesMutualSpecialCompatibility(
             candidate,
             [...leaderCandidates, ...selected],
@@ -638,7 +696,7 @@ function selectSubs(
     selectedIds.add(next.character.id);
 
     if (input.requireUniqueBaseCharacterNames) {
-      selectedBaseNameKeys.add(resolveCandidateBaseNameKey(next));
+      addCandidatePartyConflictKeys(selectedPartyConflictKeys, next);
     }
 
     applyCandidateCoverage(coverage, next);

@@ -504,6 +504,7 @@ function createCharacterRecord(
       specialName: overrides.detail?.specialName ?? `Special ${id}`,
       specialText: overrides.detail?.specialText ?? null,
       specialNotes: overrides.detail?.specialNotes ?? null,
+      partyConflictKeys: overrides.detail?.partyConflictKeys ?? [],
       builderAbilities: overrides.detail?.builderAbilities ?? [],
       sailorAbilities: overrides.detail?.sailorAbilities ?? [],
       sailorNotes: overrides.detail?.sailorNotes ?? null,

@@ -263,6 +263,7 @@ function createCharacter(
       specialName: null,
       specialText: null,
       specialNotes: null,
+      partyConflictKeys: [],
       builderAbilities: [],
       sailorAbilities: [],
       sailorNotes: null,
