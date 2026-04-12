@@ -52,6 +52,10 @@ export class UserStateService {
     await this.persistJson(FAVORITES_KEY, next);
   }
 
+  public async clearAllFavoriteCharacterIds(): Promise<void> {
+    await this.setFavoriteCharacterIds([]);
+  }
+
   public async toggleShipFavorite(shipId: number): Promise<void> {
     await this.ready();
     const current = this.favoriteShipIds();
@@ -69,6 +73,10 @@ export class UserStateService {
 
     this.favoriteShipIds.set(next);
     await this.persistJson(FAVORITE_SHIPS_KEY, next);
+  }
+
+  public async clearAllFavoriteShipIds(): Promise<void> {
+    await this.setFavoriteShipIds([]);
   }
 
   public async markRecent(characterId: number): Promise<void> {
@@ -126,6 +134,11 @@ export class UserStateService {
     }
 
     await this.replaceSavedTeams(next);
+  }
+
+  public async clearAllSavedTeams(): Promise<void> {
+    await this.ready();
+    await this.replaceSavedTeams([]);
   }
 
   public getSavedTeamById(teamId: string): SavedTeam | null {
@@ -194,6 +207,11 @@ export class UserStateService {
     }
 
     await this.replaceSavedEnemies(next);
+  }
+
+  public async clearAllSavedEnemies(): Promise<void> {
+    await this.ready();
+    await this.replaceSavedEnemies([]);
   }
 
   public async mergeImportedTeams(

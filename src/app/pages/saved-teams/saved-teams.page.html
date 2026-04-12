@@ -15,11 +15,6 @@
           <ion-button fill="outline" color="warning" [routerLink]="['/tabs/saved-enemies']">
             {{ t('hero.savedEnemiesCta') }}
           </ion-button>
-          @if (!loading() && !savedTeams().length) {
-            <ion-button fill="outline" color="light" (click)="openImportModal()">
-              {{ t('tools.import') }}
-            </ion-button>
-          }
         </div>
       </section>
 
@@ -79,9 +74,6 @@
               >
                 {{ t('tools.delete') }}
               </ion-button>
-              <ion-button fill="outline" color="warning" (click)="openImportModal()">
-                {{ t('tools.import') }}
-              </ion-button>
             </div>
           </div>
           <div class="saved-team-list">
@@ -107,6 +99,9 @@
                       [queryParams]="getTeamBuilderQueryParams(teamCard.team)"
                     >
                       {{ t('actions.openBuilder') }}
+                    </ion-button>
+                    <ion-button fill="clear" color="light" (click)="exportTeam(teamCard.team)">
+                      {{ t('actions.exportSingle') }}
                     </ion-button>
                     <ion-button fill="clear" color="warning" (click)="openEditModal(teamCard.team)">
                       {{ t('edit.actions.edit') }}
@@ -231,100 +226,6 @@
               (click)="saveEditedTeam()"
             >
               {{ 'common.actions.save' | transloco }}
-            </ion-button>
-          </div>
-        </div>
-      </ng-template>
-    </ion-modal>
-
-    <ion-modal
-      [isOpen]="importModalOpen()"
-      cssClass="saved-teams-import-modal"
-      (didDismiss)="closeImportModal()"
-    >
-      <ng-template>
-        <div class="import-modal-shell">
-          <div class="import-modal-head">
-            <div>
-              <div class="section-label">{{ t('import.eyebrow') }}</div>
-              <h2>{{ t('import.title') }}</h2>
-              <p>{{ t('import.copy') }}</p>
-            </div>
-
-            <ion-button fill="clear" color="light" (click)="closeImportModal()">
-              <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
-            </ion-button>
-          </div>
-
-          <input
-            #importFileInput
-            type="file"
-            accept=".json,application/json"
-            hidden
-            (change)="onFileSelected($event, importFileInput)"
-          />
-
-          <button
-            type="button"
-            class="import-dropzone"
-            [class.import-dropzone--active]="draggingImportFile()"
-            (click)="openFilePicker(importFileInput)"
-            (dragover)="onImportDragOver($event)"
-            (dragleave)="onImportDragLeave($event)"
-            (drop)="onImportDrop($event)"
-          >
-            <ion-icon [icon]="uploadIcon"></ion-icon>
-            <strong>{{ t('import.dropzone.title') }}</strong>
-            <span>{{ t('import.dropzone.subtitle') }}</span>
-          </button>
-
-          @if (importFileName()) {
-            <div class="import-file-chip">
-              <ion-icon [icon]="fileIcon"></ion-icon>
-              <span>{{ importFileName() }}</span>
-            </div>
-          }
-
-          @if (importing()) {
-            <div class="import-feedback import-feedback--progress">
-              <ion-spinner name="crescent"></ion-spinner>
-              <span>{{ t('import.processing') }}</span>
-            </div>
-          }
-
-          @if (importFeedback(); as feedback) {
-            <div
-              class="import-feedback"
-              [class.import-feedback--success]="feedback.tone === 'success'"
-              [class.import-feedback--warning]="feedback.tone === 'warning'"
-              [class.import-feedback--error]="feedback.tone === 'error'"
-            >
-              <ion-icon [icon]="feedback.tone === 'error' ? errorIcon : successIcon"></ion-icon>
-              <div>
-                <strong>{{ feedback.title }}</strong>
-                @for (detail of feedback.details; track $index) {
-                  <span>{{ detail }}</span>
-                }
-              </div>
-            </div>
-          }
-
-          <div class="import-modal-actions">
-            <ion-button
-              fill="outline"
-              color="light"
-              [disabled]="importing()"
-              (click)="openFilePicker(importFileInput)"
-            >
-              {{ t('import.chooseAnotherFile') }}
-            </ion-button>
-            <ion-button
-              fill="clear"
-              color="light"
-              [disabled]="importing()"
-              (click)="closeImportModal()"
-            >
-              {{ 'common.actions.close' | transloco }}
             </ion-button>
           </div>
         </div>

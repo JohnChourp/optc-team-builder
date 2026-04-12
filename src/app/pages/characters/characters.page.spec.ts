@@ -4,7 +4,6 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { type OptcbxParsedImport } from '../../core/models/optcbx-import.models';
 import { CharactersPage } from './characters.page';
 
 vi.mock('@ionic/angular/standalone', () => ({
@@ -13,7 +12,6 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonHeader: class {},
   IonIcon: class {},
   IonInput: class {},
-  IonModal: class {},
   IonSearchbar: class {},
   IonSpinner: class {},
   IonToggle: class {},
@@ -21,72 +19,25 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonToolbar: class {},
 }));
 
-describe('CharactersPage favorites tools', () => {
+describe('CharactersPage', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
-  it('disables favorites export when there are no favorites', () => {
-    const { page } = createPage();
-
-    expect(page.canDownloadFavoritesExport()).toBe(false);
-  });
-
-  it('opens and closes the favorites import modal with reset state', () => {
-    const { page } = createPage();
-
-    page.importFileName.set('favorites.json');
-    page.importErrorMessage.set('bad file');
-    page.openImportModal();
-
-    expect(page.importModalOpen()).toBe(true);
-    expect(page.importFileName()).toBe('');
-
-    page.importFileName.set('favorites.json');
-    page.closeImportModal();
-
-    expect(page.importModalOpen()).toBe(false);
-    expect(page.importFileName()).toBe('');
-  });
-
-  it('imports favorites into user state', async () => {
-    const parsedImport: OptcbxParsedImport = {
-      importedNumbers: [1001, 1002],
-      duplicatesRemoved: 0,
-    };
-    const { page, optcbxImport, userState } = createPage({
-      favoriteIds: [1003],
-    });
-
-    optcbxImport.buildMergeImportResult.mockResolvedValue({
-      matchedIds: [1001, 1002],
-      unmatchedIds: [],
-      duplicatesRemoved: 0,
-      addedCount: 2,
-      alreadyFavoritedCount: 0,
-    });
-    optcbxImport.mergeFavoriteIds.mockReturnValue([1001, 1002, 1003]);
-    page.parsedImport.set(parsedImport);
-
-    await page.importFavorites();
-
-    expect(userState.setFavoriteCharacterIds).toHaveBeenCalledWith([1001, 1002, 1003]);
-    expect(page.importResult()?.matchedIds).toEqual([1001, 1002]);
-  });
-
-  it('includes the favorites import/export actions in the template', () => {
+  it('keeps only reset and favorites-only controls in the template', () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/characters/characters.page.html'),
       'utf8',
     );
 
-    expect(template).toContain("t('tools.export')");
-    expect(template).toContain("t('tools.import')");
-    expect(template).toContain("t('favorites.clearAll')");
     expect(template).toContain("'common.actions.reset' | transloco");
     expect(template).toContain("t('filters.favoritesOnly.label')");
     expect(template).toContain('favoritesOnlySupportLabel()');
     expect(template).toContain('onFavoritesOnlyToggle($event)');
+    expect(template).not.toContain("t('tools.export')");
+    expect(template).not.toContain("t('tools.import')");
+    expect(template).not.toContain("t('favorites.clearAll')");
+    expect(template).not.toContain('importModalOpen()');
   });
 
   it('filters searches down to favorites when the toggle is enabled', async () => {
@@ -138,20 +89,7 @@ describe('CharactersPage favorites tools', () => {
     });
   });
 
-  it('clears all favorites after confirmation', async () => {
-    const confirmSpy = vi.fn().mockReturnValue(true);
-    vi.stubGlobal('confirm', confirmSpy);
-    const { page, userState } = createPage({
-      favoriteIds: [101, 202],
-    });
-
-    await page.clearAllFavorites();
-
-    expect(confirmSpy).toHaveBeenCalledOnce();
-    expect(userState.setFavoriteCharacterIds).toHaveBeenCalledWith([]);
-  });
-
-  it('resets page-local filters, import state and reloads the first result page', async () => {
+  it('resets page-local filters and reloads the first result page', async () => {
     const { page, repository } = createPage({
       favoriteIds: [101],
     });
@@ -162,13 +100,6 @@ describe('CharactersPage favorites tools', () => {
     page.selectedType.set('DEX');
     page.selectedClass.set('Fighter');
     page.favoritesOnly.set(true);
-    page.importModalOpen.set(true);
-    page.importFileName.set('favorites.json');
-    page.importErrorMessage.set('Bad file');
-    page.parsedImport.set({
-      importedNumbers: [101],
-      duplicatesRemoved: 0,
-    });
 
     await page.resetPage();
 
@@ -176,9 +107,6 @@ describe('CharactersPage favorites tools', () => {
     expect(page.selectedType()).toBe('');
     expect(page.selectedClass()).toBe('');
     expect(page.favoritesOnly()).toBe(false);
-    expect(page.importModalOpen()).toBe(false);
-    expect(page.importFileName()).toBe('');
-    expect(page.parsedImport()).toBeNull();
     expect(repository.searchCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
       typeFilter: '',
@@ -218,11 +146,6 @@ function createPage(overrides: { favoriteIds?: number[] } = {}) {
     searchCharacters: vi.fn().mockResolvedValue([]),
     getCharactersByIds: vi.fn().mockResolvedValue([]),
   };
-  const optcbxImport = {
-    parseExport: vi.fn(),
-    buildMergeImportResult: vi.fn(),
-    mergeFavoriteIds: vi.fn(),
-  };
   const i18n = {
     activeLanguage: signal<'en' | 'el'>('en'),
     availableLanguages: [
@@ -244,12 +167,7 @@ function createPage(overrides: { favoriteIds?: number[] } = {}) {
       return key;
     }),
   };
-  const page = new CharactersPage(
-    repository as never,
-    userState as never,
-    optcbxImport as never,
-    i18n as never,
-  );
+  const page = new CharactersPage(repository as never, userState as never, i18n as never);
 
-  return { page, repository, userState, optcbxImport, i18n };
+  return { page, repository, userState, i18n };
 }

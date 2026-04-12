@@ -136,6 +136,7 @@ export class OptcRepositoryService {
     ];
     const selectedTypesMatchMode = query.selectedTypesMatchMode ?? 'all';
     const selectedClassesMatchMode = query.selectedClassesMatchMode ?? 'all';
+    const orderByClause = query.sortMode === 'newest' ? 'c.id DESC' : 'c.stars DESC, c.id DESC';
 
     if (normalizedSelectedTypes.length) {
       const typeClauses = normalizedSelectedTypes.map(() => "(',' || c.type || ',') LIKE ?");
@@ -191,7 +192,7 @@ export class OptcRepositoryService {
         FROM characters c
         LEFT JOIN character_details d ON d.character_id = c.id
         WHERE ${whereClauses.join('\n          AND ')}
-        ORDER BY c.stars DESC, c.id DESC
+        ORDER BY ${orderByClause}
         LIMIT ? OFFSET ?
       `,
       queryParams,

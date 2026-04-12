@@ -481,6 +481,20 @@ describe('SavedEnemiesPage', () => {
     );
   });
 
+  it('exports a single saved enemy from the card actions', () => {
+    const { page } = createPage();
+
+    page.exportEnemy(page.savedEnemies()[0]!);
+
+    expect(vi.mocked(downloadSavedEnemiesExport)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        schemaVersion: 1,
+        source: 'saved-enemies',
+        enemies: [expect.objectContaining({ id: 'enemy-1' })],
+      }),
+    );
+  });
+
   it('deletes the selected enemies in bulk after confirmation', async () => {
     const confirmSpy = vi.fn().mockReturnValue(true);
     vi.stubGlobal('confirm', confirmSpy);
@@ -500,73 +514,6 @@ describe('SavedEnemiesPage', () => {
     expect(page.selectedEnemyIds()).toEqual([]);
   });
 
-  it('imports a saved enemies export file and merges by id', async () => {
-    const { page, userState } = createPage();
-    const file = createJsonFile(
-      {
-        schemaVersion: 1,
-        source: 'saved-enemies',
-        exportedAt: '2026-03-31T10:00:00.000Z',
-        enemies: [
-          {
-            ...buildSavedEnemies()[0],
-            name: 'Forest Boss Updated',
-            notes: 'Merged from import',
-          },
-          {
-            ...buildSavedEnemies()[1],
-            id: 'enemy-3',
-            name: 'Brand New Enemy',
-          },
-        ],
-      },
-      'saved-enemies-20260331-100000.json',
-    );
-
-    await page.onImportFileSelected(createFileEvent(file), { value: '' } as HTMLInputElement);
-
-    expect(userState.mergeImportedEnemies).toHaveBeenCalledWith([
-      expect.objectContaining({
-        id: 'enemy-1',
-        name: 'Forest Boss Updated',
-      }),
-      expect.objectContaining({
-        id: 'enemy-3',
-        name: 'Brand New Enemy',
-      }),
-    ]);
-    expect(page.importFeedback()).toMatchObject({
-      tone: 'success',
-      title: 'Import completed',
-    });
-    expect(page.importFeedback()?.details).toEqual([
-      'Loaded saved-enemies-20260331-100000.json.',
-      'Added 1 saved enemies.',
-      'Updated 1 saved enemies.',
-    ]);
-  });
-
-  it('keeps bulk import available even when there are no saved enemies yet', () => {
-    const { page } = createPage({ savedEnemies: [] });
-
-    page.openImportModal();
-
-    expect(page.importModalOpen()).toBe(true);
-  });
-
-  it('surfaces a bulk import error when the selected file is invalid', async () => {
-    const { page } = createPage();
-    const file = createJsonFile({ schemaVersion: 2 }, 'broken-saved-enemies.json');
-
-    await page.onImportFileSelected(createFileEvent(file), { value: '' } as HTMLInputElement);
-
-    expect(page.importFeedback()).toMatchObject({
-      tone: 'error',
-      title: 'Import failed',
-      details: ['Unsupported saved enemies import schema'],
-    });
-  });
-
   it('builds the correct builder query params for a saved enemy', () => {
     const { page } = createPage();
 
@@ -582,8 +529,8 @@ describe('SavedEnemiesPage', () => {
     );
 
     expect(template).toContain("t('hero.createCta')");
-    expect(template).toContain("t('bulkImport.action')");
     expect(template).toContain("t('actions.openBuilder')");
+    expect(template).toContain("t('actions.exportSingle')");
     expect(template).toContain("t('selection.selectAll')");
     expect(template).toContain("t('tools.export')");
     expect(template).toContain("t('tools.delete')");
@@ -594,16 +541,10 @@ describe('SavedEnemiesPage', () => {
     expect(template).toContain("t('editor.paste.actions.apply')");
     expect(template).toContain("t('editor.image.title')");
     expect(template).toContain("t('editor.image.chooseCharacter')");
-    expect(template).toContain('(click)="openImportModal()"');
     expect(template).toContain('(click)="resetSelection()"');
     expect(template).toContain('(click)="exportSelectedEnemies()"');
     expect(template).toContain('(click)="confirmAndDeleteSelectedEnemies()"');
-    expect(template).toMatch(
-      /<div class="saved-enemies-tool-actions">[\s\S]*\(click\)="exportSelectedEnemies\(\)"[\s\S]*\(click\)="openImportModal\(\)"[\s\S]*\(click\)="confirmAndDeleteSelectedEnemies\(\)"/,
-    );
     expect(template).not.toContain('(click)="exportAllEnemies()"');
-    expect(template).toContain('onImportFileSelected($event, importFileInput)');
-    expect(template).toContain('(drop)="onImportDrop($event)"');
     expect(template).toContain('(ionInput)="onEnemyPasteTextChange($event)"');
     expect(template).toContain('(click)="parseEnemyText()"');
     expect(template).toContain('(click)="applyParsedEnemyText()"');
@@ -626,6 +567,9 @@ describe('SavedEnemiesPage', () => {
     expect(template).not.toContain('editor.import.actions.openTable');
     expect(template).not.toContain('<app-saved-enemy-structured-requirements-modal');
     expect(template).not.toContain('resolveAbilityCatalogItem(draft.abilityKey)?.label');
+    expect(template).not.toContain("t('bulkImport.action')");
+    expect(template).not.toContain('(click)="openImportModal()"');
+    expect(template).not.toContain('onImportFileSelected($event, importFileInput)');
   });
 });
 
@@ -1015,20 +959,4 @@ function buildSavedEnemies() {
       updatedAt: '2026-03-30T10:15:00.000Z',
     },
   ];
-}
-
-function createFileEvent(file: File): Event {
-  return {
-    target: {
-      files: [file],
-    },
-  } as unknown as Event;
-}
-
-function createJsonFile(payload: unknown, name: string): File {
-  const file = new File([JSON.stringify(payload)], name, { type: 'application/json' });
-
-  vi.spyOn(file, 'text').mockResolvedValue(JSON.stringify(payload));
-
-  return file;
 }

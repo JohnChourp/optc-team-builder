@@ -208,15 +208,6 @@
         "types": "types: {{values}}"
       }
     },
-    "candidates": {
-      "count": "{{count}} manual candidates",
-      "loading": "Loading manual candidates..."
-    },
-    "candidatePool": {
-      "default": "Manual picks stay available from the full character catalog. Search and slot rules still apply.",
-      "filtered": "Current build filters do not hide manual picks. They remain visible while the requirement chips update for context.",
-      "leaderOnly": "The active leader slot only shows characters with a readable captain ability."
-    },
     "sync": {
       "eyebrow": "Manual picks sync",
       "title": "Manual picks stay available independently from the current page filters"
@@ -230,15 +221,11 @@
     },
     "empty": {
       "loadingCandidates": "Loading manual candidates...",
-      "noCandidates": "No characters matched the current manual search or slot rules."
+      "noCandidates": "No characters matched the current manual search."
     },
     "actions": {
       "clearAll": "Clear all",
       "addChoice": "Add OR"
-    },
-    "applied": {
-      "class": "Class: {{value}}",
-      "type": "Type: {{value}}"
     },
     "slotSelection": {
       "activeSummary": "Active slot: {{role}} ({{count}} picks)",
@@ -257,8 +244,8 @@
         "sub4": "Sub 4"
       },
       "support": {
-        "leaderEmpty": "Accepts one or more leader-capable characters in preference order.",
-        "leaderSelected": "{{count}} OR leader picks in preference order.",
+        "leaderEmpty": "Accepts one or more characters in preference order for this leader slot.",
+        "leaderSelected": "{{count}} OR picks in preference order for this leader slot.",
         "subEmpty": "Accepts one or more characters. If left empty, the builder fills it automatically.",
         "subSelected": "{{count}} OR sub picks in preference order."
       }
@@ -276,13 +263,7 @@
       "characters": "Search by character name in exclude picks"
     },
     "candidates": {
-      "countCharacters": "{{count}} character candidates",
-      "countShips": "{{count}} ship candidates",
-      "loading": "Loading excluded candidates..."
-    },
-    "candidatePool": {
-      "default": "Exclude picks stay available from the full catalogs. Search stays local to this panel.",
-      "filtered": "Current build filters do not hide exclude picks. They remain visible while the requirement chips update for context."
+      "countShips": "{{count}} ship candidates"
     },
     "empty": {
       "loadingCharacters": "Loading excluded candidates...",

@@ -63,6 +63,23 @@ describe('UserStateService saved teams', () => {
     expect(JSON.parse(setCalls.at(-1)?.value ?? '[]')).toEqual([createTeam('team-1', 'Slashers')]);
   });
 
+  it('clears all saved teams without touching other persisted state', async () => {
+    const { service, setCalls } = await createService([
+      createTeam('team-1', 'Slashers'),
+      createTeam('team-2', 'Driven'),
+    ]);
+
+    await service.clearAllSavedTeams();
+
+    expect(service.savedTeams()).toEqual([]);
+    expect(setCalls.at(-1)).toEqual({
+      key: 'savedTeams',
+      value: JSON.stringify([]),
+    });
+    expect(service.savedEnemies()).toEqual([]);
+    expect(service.favoriteCharacterIds()).toEqual([]);
+  });
+
   it('merges imported teams by id and keeps untouched teams behind them', async () => {
     const { service, setCalls } = await createService([
       createTeam('team-1', 'Original one'),
@@ -235,6 +252,62 @@ describe('UserStateService saved teams', () => {
     ]);
   });
 
+  it('clears all saved enemies without touching teams or favorites', async () => {
+    const { service, setCalls } = await createService(
+      [createTeam('team-1', 'Slashers')],
+      [createEnemy('enemy-1', 'Forest Boss'), createEnemy('enemy-2', 'Arena Boss')],
+    );
+
+    await service.clearAllSavedEnemies();
+
+    expect(service.savedEnemies()).toEqual([]);
+    expect(setCalls.at(-1)).toEqual({
+      key: 'savedEnemies',
+      value: JSON.stringify([]),
+    });
+    expect(service.savedTeams()).toEqual([createTeam('team-1', 'Slashers')]);
+    expect(service.favoriteCharacterIds()).toEqual([]);
+  });
+
+  it('clears all favorite character ids without touching teams or enemies', async () => {
+    const { service, setCalls } = await createService(
+      [createTeam('team-1', 'Slashers')],
+      [createEnemy('enemy-1', 'Forest Boss')],
+      [],
+      [101, 202],
+    );
+
+    await service.clearAllFavoriteCharacterIds();
+
+    expect(service.favoriteCharacterIds()).toEqual([]);
+    expect(setCalls.at(-1)).toEqual({
+      key: 'favoriteCharacterIds',
+      value: JSON.stringify([]),
+    });
+    expect(service.savedTeams()).toEqual([createTeam('team-1', 'Slashers')]);
+    expect(service.savedEnemies()).toEqual([createEnemy('enemy-1', 'Forest Boss')]);
+  });
+
+  it('clears all favorite ship ids without touching teams, enemies, or character favorites', async () => {
+    const { service, setCalls } = await createService(
+      [createTeam('team-1', 'Slashers')],
+      [createEnemy('enemy-1', 'Forest Boss')],
+      [9001, 9002],
+      [101, 202],
+    );
+
+    await service.clearAllFavoriteShipIds();
+
+    expect(service.favoriteShipIds()).toEqual([]);
+    expect(setCalls.at(-1)).toEqual({
+      key: 'favoriteShipIds',
+      value: JSON.stringify([]),
+    });
+    expect(service.savedTeams()).toEqual([createTeam('team-1', 'Slashers')]);
+    expect(service.savedEnemies()).toEqual([createEnemy('enemy-1', 'Forest Boss')]);
+    expect(service.favoriteCharacterIds()).toEqual([101, 202]);
+  });
+
   it('merges imported enemies by id and keeps untouched enemies behind them', async () => {
     const originalEnemy = createEnemy('enemy-1', 'Forest Boss');
     const { service, setCalls } = await createService(
@@ -278,9 +351,10 @@ async function createService(
   storedTeams: unknown[],
   storedEnemies: unknown[] = [],
   storedFavoriteShipIds: number[] = [],
+  storedFavoriteCharacterIds: number[] = [],
 ) {
   const store = new Map<string, string>([
-    ['favoriteCharacterIds', JSON.stringify([])],
+    ['favoriteCharacterIds', JSON.stringify(storedFavoriteCharacterIds)],
     ['favoriteShipIds', JSON.stringify(storedFavoriteShipIds)],
     ['recentCharacterIds', JSON.stringify([])],
     ['savedTeams', JSON.stringify(storedTeams)],

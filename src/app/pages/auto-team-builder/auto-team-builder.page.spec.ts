@@ -85,7 +85,9 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     await page.ngOnInit();
     page.selectedClasses.set(['Fighter']);
     page.selectedTypes.set(['DEX']);
-    await page.onRequireUniqueBaseCharacterNamesToggle({ detail: { checked: true } } as CustomEvent<{
+    await page.onRequireUniqueBaseCharacterNamesToggle({
+      detail: { checked: true },
+    } as CustomEvent<{
       checked: boolean;
     }>);
     await page.buildTeam();
@@ -502,7 +504,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     );
   });
 
-  it('filters the manual candidate sidebar to leader-capable characters for leader slots', async () => {
+  it('keeps non-leader manual candidates visible and selectable for leader slots', async () => {
     const { page } = await createPage();
     const leaderCandidate = createCharacterRecord(411, 'Leader Candidate');
     const subOnlyCandidate = createCharacterRecord(412, 'Sub Only');
@@ -513,11 +515,16 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     page.manualCandidates.set([leaderCandidate, subOnlyCandidate]);
     page.activeManualSlotRole.set('captain');
 
-    expect(page.manualCandidateCards().map((candidate: { character: CharacterDetailRecord }) => candidate.character.id)).toEqual([411]);
+    expect(
+      page
+        .manualCandidateCards()
+        .map((candidate: { character: CharacterDetailRecord }) => candidate.character.id),
+    ).toEqual([411, 412]);
+    expect(page.canAssignCharacterToManualSlot('captain', subOnlyCandidate)).toBe(true);
 
-    page.activeManualSlotRole.set('sub1');
+    page.toggleCharacterInActiveManualSlot(subOnlyCandidate);
 
-    expect(page.manualCandidateCards().map((candidate: { character: CharacterDetailRecord }) => candidate.character.id)).toEqual([411, 412]);
+    expect(page.manualSlots().find((slot) => slot.role === 'captain')?.characterIds).toEqual([412]);
   });
 
   it('keeps non-favorite manual candidates visible when favorites-only mode is enabled', async () => {
@@ -530,9 +537,15 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     await page.ngOnInit();
     page.manualCandidates.set([favoriteCandidate, nonFavoriteCandidate]);
     page.activeManualSlotRole.set('sub1');
-    await page.onFavoritesOnlyToggle({ detail: { checked: true } } as CustomEvent<{ checked: boolean }>);
+    await page.onFavoritesOnlyToggle({ detail: { checked: true } } as CustomEvent<{
+      checked: boolean;
+    }>);
 
-    expect(page.manualCandidateCards().map((candidate: { character: CharacterDetailRecord }) => candidate.character.id)).toEqual([411, 412]);
+    expect(
+      page
+        .manualCandidateCards()
+        .map((candidate: { character: CharacterDetailRecord }) => candidate.character.id),
+    ).toEqual([411, 412]);
   });
 
   it('blocks assigning excluded characters into manual team slots', async () => {
@@ -883,25 +896,39 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(template).toContain('(click)="saveTeam()"');
     expect(template).toContain('<ng-lottie');
     expect(template).toContain('[disabled]="saveUiLocked()"');
-    expect(template).toContain("{{ saveButtonLabel() }}");
+    expect(template).toContain('{{ saveButtonLabel() }}');
     expect(template).toContain('<app-enemy-mechanic-picker');
     expect(template).toContain('<app-ability-requirement-picker');
     expect(template).toContain('<app-ship-picker');
     expect(template).toContain("t('ships.pickerTitle')");
-    expect(template).toContain("favoriteShipsOnlyToggleLabel()");
+    expect(template).toContain('favoriteShipsOnlyToggleLabel()');
     expect(template).toContain('[favoriteShipIds]="favoriteShipIds()"');
     expect(template).toContain('(toggleFavoriteShip)="toggleShipFavorite($event)"');
-    expect(template).not.toContain("abilityRequirements.placeholders.selectAbility");
+    expect(template).toContain('<cdk-virtual-scroll-viewport');
+    expect(template).toContain(
+      '(scrolledIndexChange)="onManualCandidatesScrolledIndexChange($event)"',
+    );
+    expect(template).toContain(
+      '(scrolledIndexChange)="onExcludedCandidatesScrolledIndexChange($event)"',
+    );
+    expect(template).toContain('*cdkVirtualFor=');
+    expect(template).not.toContain('abilityRequirements.placeholders.selectAbility');
     expect(template).not.toContain('shipSearchTerm()');
+    expect(template).not.toContain('manualCandidatesSummaryLabel()');
+    expect(template).not.toContain('manualCandidatePoolSupportLabel()');
+    expect(template).not.toContain('excludedCandidatesSummaryLabel()');
+    expect(template).not.toContain('excludedCandidatePoolSupportLabel()');
+    expect(template).not.toContain('manualFilterAppliedAbilityLabels()');
+    expect(template).not.toContain('hasAppliedManualFilters()');
     expect(template).toContain('[class.manual-lock-chip--ship-fallback]="!ship.thumbUrl"');
     expect(template).toContain('@if (ship.thumbUrl; as thumbUrl)');
     expect(template).toContain('[class.ship-candidate-icon--fallback]="!shipCard.ship.thumbUrl"');
     expect(template).toContain('@if (shipCard.ship.thumbUrl; as thumbUrl)');
-    expect(template).toContain("(click)=\"toggleExcludedShip(shipSelection.ship.id)\"");
-    expect(template).toContain("(click)=\"toggleExcludedCharacter(slot.character)\"");
+    expect(template).toContain('(click)="toggleExcludedShip(shipSelection.ship.id)"');
+    expect(template).toContain('(click)="toggleExcludedCharacter(slot.character)"');
     expect(template).toContain("t('exclude.actions.addShip')");
     expect(template).toContain("t('exclude.actions.add')");
-    expect(template).toContain("@if (current.shipSelection; as shipSelection)");
+    expect(template).toContain('@if (current.shipSelection; as shipSelection)');
   });
 
   it('resets the full page state through resetPage', async () => {
@@ -1048,7 +1075,9 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     await page.ngOnInit();
     page.selectedClasses.set(['Fighter']);
     page.selectedTypes.set(['DEX']);
-    await page.onRequireUniqueBaseCharacterNamesToggle({ detail: { checked: true } } as CustomEvent<{
+    await page.onRequireUniqueBaseCharacterNamesToggle({
+      detail: { checked: true },
+    } as CustomEvent<{
       checked: boolean;
     }>);
     page.manualSlots.set(
@@ -1244,22 +1273,24 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
       searchTerm: '',
       selectedTypes: [],
       selectedClasses: [],
-      limit: 24,
+      sortMode: 'newest',
+      limit: 10,
       offset: 0,
     });
     expect(repository.searchDetailedCharacters).toHaveBeenNthCalledWith(2, {
       searchTerm: '',
       selectedTypes: [],
       selectedClasses: [],
-      limit: 24,
+      sortMode: 'newest',
+      limit: 10,
       offset: 0,
     });
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
-      [201, 202, 203],
+      [203, 202, 201],
     );
-    expect(page.excludedCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
-      [201, 202, 203],
-    );
+    expect(
+      page.excludedCandidates().map((candidate: CharacterDetailRecord) => candidate.id),
+    ).toEqual([203, 202, 201]);
 
     repository.searchDetailedCharacters.mockClear();
     await page.onClassChange({ detail: { value: ['Fighter', 'Slasher'] } } as CustomEvent<{
@@ -1270,22 +1301,24 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
       searchTerm: '',
       selectedTypes: [],
       selectedClasses: [],
-      limit: 24,
+      sortMode: 'newest',
+      limit: 10,
       offset: 0,
     });
     expect(repository.searchDetailedCharacters).toHaveBeenNthCalledWith(2, {
       searchTerm: '',
       selectedTypes: [],
       selectedClasses: [],
-      limit: 24,
+      sortMode: 'newest',
+      limit: 10,
       offset: 0,
     });
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
-      [201, 202, 203],
+      [203, 202, 201],
     );
-    expect(page.excludedCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
-      [201, 202, 203],
-    );
+    expect(
+      page.excludedCandidates().map((candidate: CharacterDetailRecord) => candidate.id),
+    ).toEqual([203, 202, 201]);
   });
 
   it('keeps manual candidates visible when top-level ability requirements change and normalizes the build-context requirement count', async () => {
@@ -1337,9 +1370,9 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
       [301, 302],
     );
-    expect(page.excludedCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
-      [301, 302],
-    );
+    expect(
+      page.excludedCandidates().map((candidate: CharacterDetailRecord) => candidate.id),
+    ).toEqual([301, 302]);
   });
 
   it('rebuilds manual candidates with the full catalog after page reset', async () => {
@@ -1365,7 +1398,7 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     await page.onTypeChange({ detail: { value: ['DEX'] } } as CustomEvent<{ value: string[] }>);
 
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
-      [401, 402],
+      [402, 401],
     );
 
     await page.ionViewWillEnter();
@@ -1374,11 +1407,136 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
       searchTerm: '',
       selectedTypes: [],
       selectedClasses: [],
-      limit: 24,
+      sortMode: 'newest',
+      limit: 10,
       offset: 0,
     });
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
-      [401, 402],
+      [402, 401],
+    );
+  });
+
+  it('loads only the first 10 manual and excluded character matches on initial render', async () => {
+    const { page, repository } = await createPage();
+    const records = Array.from({ length: 26 }, (_, index) =>
+      createCharacterRecord(600 + index, `Paged Candidate ${index + 1}`),
+    );
+
+    repository.searchDetailedCharacters.mockImplementation(async (query) =>
+      filterCharactersForManualQuery(records, query),
+    );
+
+    await page.ngOnInit();
+
+    expect(repository.searchDetailedCharacters).toHaveBeenCalledTimes(2);
+    expect(repository.searchDetailedCharacters.mock.calls).toEqual([
+      [
+        expect.objectContaining({
+          searchTerm: '',
+          selectedTypes: [],
+          selectedClasses: [],
+          sortMode: 'newest',
+          limit: 10,
+          offset: 0,
+        }),
+      ],
+      [
+        expect.objectContaining({
+          searchTerm: '',
+          selectedTypes: [],
+          selectedClasses: [],
+          sortMode: 'newest',
+          limit: 10,
+          offset: 0,
+        }),
+      ],
+    ]);
+    expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
+      records
+        .map((record) => record.id)
+        .reverse()
+        .slice(0, 10),
+    );
+    expect(
+      page.excludedCandidates().map((candidate: CharacterDetailRecord) => candidate.id),
+    ).toEqual(
+      records
+        .map((record) => record.id)
+        .reverse()
+        .slice(0, 10),
+    );
+  });
+
+  it('loads more manual and excluded candidates in 10-item batches when the virtual list nears the end', async () => {
+    const { page, repository } = await createPage();
+    const records = Array.from({ length: 26 }, (_, index) =>
+      createCharacterRecord(600 + index, `Paged Candidate ${index + 1}`),
+    );
+
+    repository.searchDetailedCharacters.mockImplementation(async (query) =>
+      filterCharactersForManualQuery(records, query),
+    );
+
+    await page.ngOnInit();
+
+    await page.onManualCandidatesScrolledIndexChange(6);
+    await page.onExcludedCandidatesScrolledIndexChange(6);
+
+    expect(repository.searchDetailedCharacters.mock.calls).toEqual([
+      [
+        expect.objectContaining({
+          searchTerm: '',
+          selectedTypes: [],
+          selectedClasses: [],
+          sortMode: 'newest',
+          limit: 10,
+          offset: 0,
+        }),
+      ],
+      [
+        expect.objectContaining({
+          searchTerm: '',
+          selectedTypes: [],
+          selectedClasses: [],
+          sortMode: 'newest',
+          limit: 10,
+          offset: 0,
+        }),
+      ],
+      [
+        expect.objectContaining({
+          searchTerm: '',
+          selectedTypes: [],
+          selectedClasses: [],
+          sortMode: 'newest',
+          limit: 10,
+          offset: 10,
+        }),
+      ],
+      [
+        expect.objectContaining({
+          searchTerm: '',
+          selectedTypes: [],
+          selectedClasses: [],
+          sortMode: 'newest',
+          limit: 10,
+          offset: 10,
+        }),
+      ],
+    ]);
+    expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
+      records
+        .map((record) => record.id)
+        .reverse()
+        .slice(0, 20),
+    );
+    expect(
+      page.excludedCandidates().map((candidate: CharacterDetailRecord) => candidate.id),
+    ).toEqual(
+      records
+        .map((record) => record.id)
+        .reverse()
+        .slice(0, 20),
     );
   });
 
@@ -1851,13 +2009,17 @@ describe('AutoTeamBuilderPage preset export state', () => {
     await page.onRequireAllSpecialsSupportToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
-    await page.onRequireUniqueBaseCharacterNamesToggle({ detail: { checked: true } } as CustomEvent<{
+    await page.onRequireUniqueBaseCharacterNamesToggle({
+      detail: { checked: true },
+    } as CustomEvent<{
       checked: boolean;
     }>);
     page.onRequireSameCaptainAndFriendCaptainToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
-    await page.onFavoritesOnlyToggle({ detail: { checked: true } } as CustomEvent<{ checked: boolean }>);
+    await page.onFavoritesOnlyToggle({ detail: { checked: true } } as CustomEvent<{
+      checked: boolean;
+    }>);
     await page.onFavoriteShipsOnlyToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
@@ -2649,7 +2811,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
     expect(page.requireSameCaptainAndFriendCaptain()).toBe(true);
     expect(page.favoritesOnly()).toBe(true);
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
-      [701, 702],
+      [702, 701],
     );
     expect(page.result()).toBeNull();
     expect(page.errorMessage()).toBe('');
@@ -3040,6 +3202,9 @@ function filterCharactersForManualQuery(
     selectedTypesMatchMode?: 'all' | 'any';
     selectedClasses: string[];
     selectedClassesMatchMode?: 'all' | 'any';
+    sortMode?: 'catalog' | 'newest';
+    limit?: number;
+    offset?: number;
   },
 ): CharacterDetailRecord[] {
   const normalizedSearchTerm = query.searchTerm.trim().toLowerCase();
@@ -3048,7 +3213,7 @@ function filterCharactersForManualQuery(
     .map((characterClass) => characterClass.trim())
     .filter(Boolean);
 
-  return records.filter((record) => {
+  const filteredRecords = records.filter((record) => {
     const matchesSearchTerm =
       !normalizedSearchTerm || record.name.toLowerCase().includes(normalizedSearchTerm);
     const recordTypes = record.type
@@ -3068,6 +3233,15 @@ function filterCharactersForManualQuery(
 
     return matchesSearchTerm && typeMatches && classMatches;
   });
+
+  const sortedRecords =
+    query.sortMode === 'newest'
+      ? [...filteredRecords].sort((left, right) => right.id - left.id)
+      : filteredRecords;
+  const offset = query.offset ?? 0;
+  const limit = query.limit ?? filteredRecords.length;
+
+  return sortedRecords.slice(offset, offset + limit);
 }
 
 function createManualSlots(

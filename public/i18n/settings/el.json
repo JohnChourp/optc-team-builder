@@ -1,24 +1,97 @@
 {
   "intro": {
-    "eyebrow": "Μόνο χειροκίνητες ενημερώσεις",
-    "title": "Αυτό το build περιμένει τοπικά OPTC imports και όχι live scraping την ώρα του runtime.",
-    "copy": "Source of truth είναι το optc-db GitHub repo. Τρέξε τα παρακάτω import commands όποτε θέλεις νέο local dataset ή image pack."
+    "eyebrow": "Έλεγχος εφαρμογής",
+    "title": "Διαχειρίσου γλώσσα, backups και offline δεδομένα από ένα σημείο.",
+    "copy": "Χρησιμοποίησε αυτή τη σελίδα για να αλλάξεις προτιμήσεις της εφαρμογής, να κρατήσεις backups των τοπικών δεδομένων και να ελέγξεις ποια OPTC packs είναι εγκατεστημένα στη συσκευή."
   },
   "language": {
     "label": "Γλώσσα",
     "helper": "Άλλαξε live τη γλώσσα του app και κράτησέ την αποθηκευμένη σε αυτή τη συσκευή."
+  },
+  "management": {
+    "copy": "Κάνε backup και restore των τοπικών δεδομένων της συσκευής για favorite characters, favorite ships, saved teams και saved enemies.",
+    "confirm": {
+      "deleteFavorites": "Να διαγραφούν όλα τα favorites; Η ενέργεια δεν επηρεάζει τα saved teams ή τα saved enemies.",
+      "deleteFavoriteShips": "Να διαγραφούν όλα τα αγαπημένα καράβια; Η ενέργεια δεν επηρεάζει τα favorite characters, τα saved teams ή τα saved enemies.",
+      "deleteSavedEnemies": "Να διαγραφούν όλα τα saved enemies; Η ενέργεια δεν επηρεάζει τα favorites ή τα saved teams.",
+      "deleteSavedTeams": "Να διαγραφούν όλα τα saved teams; Η ενέργεια δεν επηρεάζει τα favorites ή τα saved enemies."
+    },
+    "counts": {
+      "favorites": "{{count}} favorites",
+      "favoriteShips": "{{count}} αγαπημένα καράβια",
+      "savedEnemies": "{{count}} saved enemies",
+      "savedTeams": "{{count}} saved teams"
+    },
+    "favorites": {
+      "copy": "Κάνε export ή import του OPTCbx-compatible favorites αρχείου σου ή καθάρισε όλη τη λίστα favorites από αυτή τη συσκευή.",
+      "deleteAll": "Διαγραφή όλων των favorites",
+      "export": "Εξαγωγή favorites",
+      "feedback": {
+        "errorTitle": "Το import των favorites απέτυχε",
+        "successTitle": "Το import των favorites ολοκληρώθηκε",
+        "warningTitle": "Το import των favorites ολοκληρώθηκε με παρατηρήσεις"
+      },
+      "import": "Εισαγωγή favorites",
+      "processing": "Γίνεται import των favorites...",
+      "title": "Favorites"
+    },
+    "favoriteShips": {
+      "copy": "Κάνε export όλων των αγαπημένων καραβιών σε JSON, import ενός backup για favorite ships ή διαγραφή όλης της λίστας favorite ships από αυτή τη συσκευή.",
+      "deleteAll": "Διαγραφή όλων των καραβιών",
+      "errors": {
+        "generic": "Το import των αγαπημένων καραβιών απέτυχε.",
+        "invalidJson": "Το επιλεγμένο backup καραβιών δεν είναι έγκυρο JSON.",
+        "invalidPayload": "Το επιλεγμένο backup καραβιών δεν έχει το αναμενόμενο format για favorite ships.",
+        "unsupportedSchema": "Το επιλεγμένο backup καραβιών χρησιμοποιεί μη υποστηριζόμενη έκδοση schema."
+      },
+      "export": "Εξαγωγή όλων των καραβιών",
+      "feedback": {
+        "errorTitle": "Το import των αγαπημένων καραβιών απέτυχε",
+        "loadedFromFile": "Φορτώθηκε από το {{fileName}}.",
+        "stats": {
+          "added": "Προστέθηκαν {{count}} νέα καράβια.",
+          "alreadyFavorited": "{{count}} καράβια ήταν ήδη στα αγαπημένα.",
+          "duplicates": "Αγνοήθηκαν {{count}} διπλές εγγραφές καραβιών.",
+          "invalid": "Αγνοήθηκαν {{count}} μη έγκυρες εγγραφές καραβιών.",
+          "matched": "Βρέθηκαν {{count}} καράβια.",
+          "unknown": "Αγνοήθηκαν {{count}} καράβια που δεν υπάρχουν σε αυτό το build."
+        },
+        "successTitle": "Το import των αγαπημένων καραβιών ολοκληρώθηκε",
+        "warningTitle": "Το import των αγαπημένων καραβιών ολοκληρώθηκε με παρατηρήσεις"
+      },
+      "import": "Εισαγωγή όλων των καραβιών",
+      "processing": "Γίνεται import των αγαπημένων καραβιών...",
+      "title": "Favorite Ships"
+    },
+    "savedEnemies": {
+      "copy": "Κάνε export όλων των saved enemies σε JSON, import ενός saved enemies backup ή διαγραφή όλων των saved enemies από αυτή τη συσκευή.",
+      "deleteAll": "Διαγραφή όλων των saved enemies",
+      "export": "Εξαγωγή saved enemies",
+      "import": "Εισαγωγή saved enemies",
+      "processing": "Γίνεται import των saved enemies...",
+      "title": "Saved Enemies"
+    },
+    "savedTeams": {
+      "copy": "Κάνε export όλων των saved teams σε JSON, import ενός saved teams backup ή διαγραφή όλων των saved teams από αυτή τη συσκευή.",
+      "deleteAll": "Διαγραφή όλων των saved teams",
+      "export": "Εξαγωγή saved teams",
+      "import": "Εισαγωγή saved teams",
+      "processing": "Γίνεται import των saved teams...",
+      "title": "Saved Teams"
+    }
   },
   "packState": {
     "installed": "Εγκατεστημένο",
     "notInstalled": "Μη εγκατεστημένο"
   },
   "sections": {
-    "commands": "Commands εισαγωγής",
-    "packStatus": "Κατάσταση pack",
-    "releaseNote": "Σημείωση release"
+    "commands": "Commands ενημέρωσης dataset",
+    "dataManagement": "Backups και μεταφορές",
+    "packStatus": "Εγκατεστημένα packs",
+    "releaseNote": "Σημαντική σημείωση"
   },
-  "title": "Offline Packs",
+  "title": "Ρυθμίσεις",
   "release": {
-    "copy": "Το technical pipeline είναι έτοιμο για offline χρήση, αλλά η αναδιανομή του game art παραμένει ξεχωριστή νομική και product απόφαση πριν από οποιοδήποτε public store release."
+    "copy": "Το technical pipeline είναι έτοιμο για τοπική offline χρήση, αλλά η αναδιανομή του game art παραμένει ξεχωριστή νομική και product απόφαση πριν από οποιοδήποτε public store release."
   }
 }

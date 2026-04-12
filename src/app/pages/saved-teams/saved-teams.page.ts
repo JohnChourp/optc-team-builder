@@ -16,12 +16,8 @@ import {
 } from '@ionic/angular/standalone';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
-  alertCircleOutline,
   boatOutline,
-  checkmarkCircleOutline,
   closeOutline,
-  cloudUploadOutline,
-  documentTextOutline,
 } from 'ionicons/icons';
 
 import { type CharacterListItem, type SavedTeam, type ShipRecord } from '../../core/models/optc.models';
@@ -30,11 +26,7 @@ import { OptcRepositoryService } from '../../core/services/optc-repository.servi
 import { UserStateService } from '../../core/services/user-state.service';
 import {
   buildSavedTeamsTransferPayload,
-  clearUnavailableSavedTeamSlots,
   downloadSavedTeamsExport,
-  parseSavedTeamsImportPayload,
-  sanitizeSavedTeamsImportPayload,
-  type SavedTeamsImportError,
 } from './saved-teams-transfer.utils';
 
 interface SavedTeamPreviewCard {
@@ -44,12 +36,6 @@ interface SavedTeamPreviewCard {
   shipThumbUrl: string | null;
   team: SavedTeam;
   slots: Array<CharacterListItem | null>;
-}
-
-interface SavedTeamsImportFeedback {
-  details: string[];
-  title: string;
-  tone: 'error' | 'success' | 'warning';
 }
 
 @Component({
@@ -90,21 +76,12 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
       teamCards.every((teamCard) => this.selectedTeamIdSet().has(teamCard.team.id))
     );
   });
-  public readonly importModalOpen = signal(false);
-  public readonly draggingImportFile = signal(false);
-  public readonly importFileName = signal('');
-  public readonly importFeedback = signal<SavedTeamsImportFeedback | null>(null);
-  public readonly importing = signal(false);
   public readonly editModalOpen = signal(false);
   public readonly editingTeam = signal<SavedTeam | null>(null);
   public readonly editTeamName = signal('');
   public readonly editNotes = signal('');
   public readonly savingEdit = signal(false);
-  public readonly uploadIcon = cloudUploadOutline;
-  public readonly fileIcon = documentTextOutline;
   public readonly closeIcon = closeOutline;
-  public readonly successIcon = checkmarkCircleOutline;
-  public readonly errorIcon = alertCircleOutline;
   public readonly shipIcon = boatOutline;
 
   public constructor(
@@ -169,12 +146,14 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
     downloadSavedTeamsExport(payload);
   }
 
+  public exportTeam(team: SavedTeam): void {
+    downloadSavedTeamsExport(buildSavedTeamsTransferPayload([team]));
+  }
+
   public resetPage(): void {
     this.selectedTeamIds.set([]);
     this.editModalOpen.set(false);
-    this.importModalOpen.set(false);
     this.resetEditState();
-    this.resetImportState();
   }
 
   public async confirmAndDeleteTeam(teamId: string): Promise<void> {
@@ -258,60 +237,6 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
     }
   }
 
-  public openImportModal(): void {
-    this.resetImportState();
-    this.importModalOpen.set(true);
-  }
-
-  public closeImportModal(): void {
-    this.importModalOpen.set(false);
-    this.resetImportState();
-  }
-
-  public openFilePicker(input: HTMLInputElement): void {
-    input.click();
-  }
-
-  public async onFileSelected(event: Event, input: HTMLInputElement): Promise<void> {
-    const target = event.target as HTMLInputElement;
-    const [file] = Array.from(target.files ?? []);
-
-    input.value = '';
-
-    if (!file) {
-      return;
-    }
-
-    await this.importSavedTeams(file);
-  }
-
-  public onImportDragOver(event: DragEvent): void {
-    event.preventDefault();
-    this.draggingImportFile.set(true);
-
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'copy';
-    }
-  }
-
-  public onImportDragLeave(event: DragEvent): void {
-    event.preventDefault();
-    this.draggingImportFile.set(false);
-  }
-
-  public async onImportDrop(event: DragEvent): Promise<void> {
-    event.preventDefault();
-    this.draggingImportFile.set(false);
-
-    const [file] = Array.from(event.dataTransfer?.files ?? []);
-
-    if (!file) {
-      return;
-    }
-
-    await this.importSavedTeams(file);
-  }
-
   private async refreshSavedTeamCards(): Promise<void> {
     this.loading.set(true);
     const teams = this.savedTeams();
@@ -386,144 +311,10 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
     return typeof globalThis.confirm === 'function' ? globalThis.confirm(message) : false;
   }
 
-  private resetImportState(): void {
-    this.draggingImportFile.set(false);
-    this.importFileName.set('');
-    this.importFeedback.set(null);
-    this.importing.set(false);
-  }
-
   private resetEditState(): void {
     this.editingTeam.set(null);
     this.editTeamName.set('');
     this.editNotes.set('');
     this.savingEdit.set(false);
-  }
-
-  private async importSavedTeams(file: File): Promise<void> {
-    this.importing.set(true);
-    this.importFileName.set(file.name);
-    this.importFeedback.set(null);
-
-    try {
-      const rawContent = await file.text();
-      const payload = parseSavedTeamsImportPayload(rawContent);
-      const sanitizedImport = sanitizeSavedTeamsImportPayload(payload, {
-        untitledTeamName: this.i18n.translate('common.defaults.untitledCrew'),
-      });
-      const candidateCharacterIds = [
-        ...new Set(
-          sanitizedImport.teams.flatMap((team) =>
-            team.slots.filter((slotId): slotId is number => typeof slotId === 'number'),
-          ),
-        ),
-      ];
-      const availableCharacters = candidateCharacterIds.length
-        ? await this.repository.getCharactersByIds(candidateCharacterIds)
-        : [];
-      const slotSanitizeResult = clearUnavailableSavedTeamSlots(
-        sanitizedImport.teams,
-        new Set(availableCharacters.map((character) => character.id)),
-      );
-      const mergeResult = await this.userState.mergeImportedTeams(slotSanitizeResult.teams);
-
-      await this.refreshSavedTeamCards();
-      this.importFeedback.set(
-        this.buildImportFeedback({
-          addedCount: mergeResult.addedCount,
-          duplicateIdCount: sanitizedImport.duplicateIdCount,
-          fileName: file.name,
-          invalidTeamCount: sanitizedImport.invalidTeamCount,
-          unknownSlotCount: slotSanitizeResult.unknownSlotCount,
-          updatedCount: mergeResult.updatedCount,
-        }),
-      );
-    } catch (error) {
-      this.importFeedback.set({
-        tone: 'error',
-        title: this.i18n.translate('import.errorTitle', undefined, 'saved-teams'),
-        details: [this.resolveImportError(error as SavedTeamsImportError)],
-      });
-    } finally {
-      this.importing.set(false);
-    }
-  }
-
-  private buildImportFeedback(stats: {
-    addedCount: number;
-    duplicateIdCount: number;
-    fileName: string;
-    invalidTeamCount: number;
-    unknownSlotCount: number;
-    updatedCount: number;
-  }): SavedTeamsImportFeedback {
-    const details = [
-      this.i18n.translate('import.loadedFromFile', { fileName: stats.fileName }, 'saved-teams'),
-    ];
-
-    if (stats.addedCount > 0) {
-      details.push(
-        this.i18n.translate('import.stats.added', { count: stats.addedCount }, 'saved-teams'),
-      );
-    }
-
-    if (stats.updatedCount > 0) {
-      details.push(
-        this.i18n.translate('import.stats.updated', { count: stats.updatedCount }, 'saved-teams'),
-      );
-    }
-
-    if (stats.invalidTeamCount > 0) {
-      details.push(
-        this.i18n.translate(
-          'import.stats.invalid',
-          { count: stats.invalidTeamCount },
-          'saved-teams',
-        ),
-      );
-    }
-
-    if (stats.duplicateIdCount > 0) {
-      details.push(
-        this.i18n.translate(
-          'import.stats.duplicates',
-          { count: stats.duplicateIdCount },
-          'saved-teams',
-        ),
-      );
-    }
-
-    if (stats.unknownSlotCount > 0) {
-      details.push(
-        this.i18n.translate(
-          'import.stats.unknownSlots',
-          { count: stats.unknownSlotCount },
-          'saved-teams',
-        ),
-      );
-    }
-
-    return {
-      tone:
-        stats.invalidTeamCount > 0 || stats.duplicateIdCount > 0 || stats.unknownSlotCount > 0
-          ? 'warning'
-          : 'success',
-      title: this.i18n.translate(
-        stats.invalidTeamCount > 0 || stats.duplicateIdCount > 0 || stats.unknownSlotCount > 0
-          ? 'import.warningTitle'
-          : 'import.successTitle',
-        undefined,
-        'saved-teams',
-      ),
-      details,
-    };
-  }
-
-  private resolveImportError(error: SavedTeamsImportError | Error | unknown): string {
-    if (error && typeof error === 'object' && 'key' in error && typeof error.key === 'string') {
-      return this.i18n.translate(error.key, undefined, 'saved-teams');
-    }
-
-    return this.i18n.translate('import.errors.generic', undefined, 'saved-teams');
   }
 }

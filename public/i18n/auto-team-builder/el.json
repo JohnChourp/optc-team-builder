@@ -208,15 +208,6 @@
         "types": "types: {{values}}"
       }
     },
-    "candidates": {
-      "count": "{{count}} manual candidates",
-      "loading": "Γίνεται φόρτωση manual candidates..."
-    },
-    "candidatePool": {
-      "default": "Τα manual picks μένουν διαθέσιμα από όλο το character catalog. Ισχύουν μόνο search και slot rules.",
-      "filtered": "Τα current build filters δεν κρύβουν manual picks. Μένουν ορατά και τα requirement chips ενημερώνονται μόνο για context.",
-      "leaderOnly": "Το active leader slot δείχνει μόνο characters με readable captain ability."
-    },
     "sync": {
       "eyebrow": "Manual picks sync",
       "title": "Τα manual picks μένουν διαθέσιμα ανεξάρτητα από τα current page filters"
@@ -230,15 +221,11 @@
     },
     "empty": {
       "loadingCandidates": "Γίνεται φόρτωση manual candidates...",
-      "noCandidates": "Δεν βρέθηκαν χαρακτήρες για το current manual search ή για τους κανόνες του slot."
+      "noCandidates": "Δεν βρέθηκαν χαρακτήρες για το current manual search."
     },
     "actions": {
       "clearAll": "Καθαρισμός όλων",
       "addChoice": "Προσθήκη OR"
-    },
-    "applied": {
-      "class": "Class: {{value}}",
-      "type": "Type: {{value}}"
     },
     "slotSelection": {
       "activeSummary": "Active slot: {{role}} ({{count}} picks)",
@@ -257,8 +244,8 @@
         "sub4": "Sub 4"
       },
       "support": {
-        "leaderEmpty": "Δέχεται έναν ή περισσότερους leader-capable χαρακτήρες με σειρά προτίμησης.",
-        "leaderSelected": "{{count}} OR leader picks με σειρά προτίμησης.",
+        "leaderEmpty": "Δέχεται έναν ή περισσότερους χαρακτήρες με σειρά προτίμησης για αυτό το leader slot.",
+        "leaderSelected": "{{count}} OR picks με σειρά προτίμησης για αυτό το leader slot.",
         "subEmpty": "Δέχεται έναν ή περισσότερους χαρακτήρες. Αν μείνει κενό, ο builder το γεμίζει αυτόματα.",
         "subSelected": "{{count}} OR sub picks με σειρά προτίμησης."
       }
@@ -276,13 +263,7 @@
       "characters": "Search by character name in exclude picks"
     },
     "candidates": {
-      "countCharacters": "{{count}} character candidates",
-      "countShips": "{{count}} ship candidates",
-      "loading": "Γίνεται φόρτωση excluded candidates..."
-    },
-    "candidatePool": {
-      "default": "Τα exclude picks μένουν διαθέσιμα από όλο το catalog. Το search ισχύει μόνο μέσα σε αυτό το panel.",
-      "filtered": "Τα current build filters δεν κρύβουν exclude picks. Μένουν ορατά και τα requirement chips ενημερώνονται μόνο για context."
+      "countShips": "{{count}} ship candidates"
     },
     "empty": {
       "loadingCharacters": "Γίνεται φόρτωση excluded candidates...",

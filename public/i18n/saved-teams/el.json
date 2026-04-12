@@ -1,5 +1,6 @@
 {
   "actions": {
+    "exportSingle": "Εξαγωγή",
     "openBuilder": "Open in team builder"
   },
   "confirm": {
