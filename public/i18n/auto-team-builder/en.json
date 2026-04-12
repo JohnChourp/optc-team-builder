@@ -342,7 +342,8 @@
     "loadingCandidates": "Loading candidates from the local dataset...",
     "preparingSearch": "Preparing search permutations...",
     "scoringDefault": "Scoring the best local team candidates...",
-    "scoringWithTypes": "Scoring {{types}} team candidates..."
+    "scoringWithTypes": "Scoring {{types}} team candidates...",
+    "worstCaseEta": "Approx. worst-case to check the remaining fallbacks: {{duration}}"
   },
   "fallback": {
     "copy": "Your top-level filters stayed the same. The builder only relaxed the requirements below in order to return a team.",

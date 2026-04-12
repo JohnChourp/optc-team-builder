@@ -111,7 +111,7 @@ import {
 type LoadingProgressRowTone = "primary" | "secondary" | "fallback";
 
 interface LoadingProgressRow {
-  key: "message" | "attempt" | "candidatePool" | "droppedTypes" | "droppedClasses";
+  key: "message" | "attempt" | "eta" | "candidatePool" | "droppedTypes" | "droppedClasses";
   text: string;
   displayText: string;
   visible: boolean;
@@ -895,6 +895,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       ? this.t("progress.ignoringClasses", { classes: droppedClasses.join(" / ") })
       : "";
   });
+  public readonly buildWorstCaseEtaLabel = computed(() => {
+    const estimatedRemainingMs = this.buildProgress()?.estimatedRemainingMs;
+
+    return typeof estimatedRemainingMs === "number"
+      ? this.t("progress.worstCaseEta", {
+          duration: this.formatApproximateDuration(estimatedRemainingMs),
+        })
+      : "";
+  });
   public readonly loadingProgressRows = computed<LoadingProgressRow[]>(() => {
     const rows: Array<Pick<LoadingProgressRow, "key" | "text" | "tone">> = [
       {
@@ -906,6 +915,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         key: "attempt",
         text: this.buildAttemptProgressLabel(),
         tone: "secondary",
+      },
+      {
+        key: "eta",
+        text: this.buildWorstCaseEtaLabel(),
+        tone: "fallback",
       },
       {
         key: "candidatePool",
@@ -2956,6 +2970,26 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     }
 
     return this.t("preset.importFailedDescription");
+  }
+
+  private formatApproximateDuration(durationMs: number): string {
+    const totalSeconds = Math.max(0, Math.round(durationMs / 1000));
+
+    if (totalSeconds < 60) {
+      return `~${totalSeconds}s`;
+    }
+
+    const totalMinutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    if (totalMinutes < 60) {
+      return `~${totalMinutes}m ${seconds}s`;
+    }
+
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    return `~${hours}h ${minutes}m`;
   }
 
   private t(

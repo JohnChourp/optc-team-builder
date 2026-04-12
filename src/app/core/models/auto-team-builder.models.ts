@@ -237,6 +237,10 @@ export interface AutoBuildProgressSnapshot {
   candidateCount: number;
   completedAttempts: number;
   totalAttempts: number;
+  elapsedMs: number;
+  estimatedRemainingMs: number | null;
+  averageFallbackAttemptMs: number | null;
+  completedFallbackAttempts: number;
   currentDroppedTypes: AutoTeamBuilderType[];
   currentDroppedClasses: string[];
   messageKey: string;

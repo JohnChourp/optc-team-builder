@@ -1015,6 +1015,10 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
           candidateCount: 1242,
           completedAttempts: 0,
           totalAttempts: 31744,
+          elapsedMs: 25,
+          estimatedRemainingMs: null,
+          averageFallbackAttemptMs: null,
+          completedFallbackAttempts: 0,
           currentDroppedTypes: [],
           currentDroppedClasses: [],
           messageKey: 'progress.exactAttempt',
@@ -1097,6 +1101,10 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
       candidateCount: 1200,
       completedAttempts: 3503,
       totalAttempts: 31744,
+      elapsedMs: 54000,
+      estimatedRemainingMs: null,
+      averageFallbackAttemptMs: null,
+      completedFallbackAttempts: 0,
       currentDroppedTypes: ['STR', 'INT'],
       currentDroppedClasses: [],
       messageKey: 'progress.fallbackAttempt',
@@ -1122,6 +1130,13 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
         tone: 'secondary',
       },
       {
+        key: 'eta',
+        text: '',
+        displayText: '\u00A0',
+        visible: false,
+        tone: 'fallback',
+      },
+      {
         key: 'candidatePool',
         text: '1200 candidates in the current search pool',
         displayText: '1200 candidates in the current search pool',
@@ -1143,6 +1158,54 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
         tone: 'fallback',
       },
     ]);
+  });
+
+  it('shows the worst-case fallback eta row when an estimate is available', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.buildProgress.set({
+      stage: 'fallbackAttempt',
+      candidateCount: 1200,
+      completedAttempts: 3504,
+      totalAttempts: 31744,
+      elapsedMs: 91000,
+      estimatedRemainingMs: 61000,
+      averageFallbackAttemptMs: 15000,
+      completedFallbackAttempts: 2,
+      currentDroppedTypes: [],
+      currentDroppedClasses: ['Fighter'],
+      messageKey: 'progress.fallbackAttempt',
+      messageParams: {
+        current: 3505,
+        total: 31744,
+      },
+    });
+
+    expect(page.buildWorstCaseEtaLabel()).toBe(
+      'Approx. worst-case to check the remaining fallbacks: ~1m 1s',
+    );
+    expect(page.loadingProgressRows()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'eta',
+          text: 'Approx. worst-case to check the remaining fallbacks: ~1m 1s',
+          displayText: 'Approx. worst-case to check the remaining fallbacks: ~1m 1s',
+          visible: true,
+          tone: 'fallback',
+        }),
+      ]),
+    );
+  });
+
+  it('formats short, minute, and hour fallback eta durations', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+
+    expect(page['formatApproximateDuration'](59_000)).toBe('~59s');
+    expect(page['formatApproximateDuration'](61_000)).toBe('~1m 1s');
+    expect(page['formatApproximateDuration'](3_600_000)).toBe('~1h 0m');
   });
 
   it('keeps manual candidates visible when top-level filters change and queries the manual pool without filter constraints', async () => {
@@ -1379,6 +1442,10 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
             candidateCount: 64,
             completedAttempts: 0,
             totalAttempts: 2,
+            elapsedMs: 18,
+            estimatedRemainingMs: null,
+            averageFallbackAttemptMs: null,
+            completedFallbackAttempts: 0,
             currentDroppedTypes: [],
             currentDroppedClasses: [],
             messageKey: 'progress.exactAttempt',
@@ -2539,6 +2606,10 @@ describe('AutoTeamBuilderPage preset import state', () => {
       candidateCount: 64,
       completedAttempts: 0,
       totalAttempts: 2,
+      elapsedMs: 18,
+      estimatedRemainingMs: null,
+      averageFallbackAttemptMs: null,
+      completedFallbackAttempts: 0,
       currentDroppedTypes: [],
       currentDroppedClasses: [],
       messageKey: 'progress.exactAttempt',

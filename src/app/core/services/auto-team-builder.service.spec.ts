@@ -1762,6 +1762,10 @@ describe('Auto team builder', () => {
           candidateCount: 6,
           completedAttempts: 0,
           totalAttempts: 1,
+          elapsedMs: 12,
+          estimatedRemainingMs: null,
+          averageFallbackAttemptMs: null,
+          completedFallbackAttempts: 0,
           currentDroppedTypes: [],
           currentDroppedClasses: [],
           messageKey: 'progress.exactAttempt',
@@ -1798,9 +1802,17 @@ describe('Auto team builder', () => {
       expect.arrayContaining([
         expect.objectContaining({
           stage: 'loadingCandidates',
+          elapsedMs: 0,
+          estimatedRemainingMs: null,
+          averageFallbackAttemptMs: null,
+          completedFallbackAttempts: 0,
         }),
         expect.objectContaining({
           stage: 'exactAttempt',
+          elapsedMs: 12,
+          estimatedRemainingMs: null,
+          averageFallbackAttemptMs: null,
+          completedFallbackAttempts: 0,
           messageKey: 'progress.exactAttempt',
           messageParams: {
             current: 1,

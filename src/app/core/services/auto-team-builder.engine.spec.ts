@@ -36,20 +36,93 @@ describe('runAutoTeamBuildSearch', () => {
     expect(snapshots[1]).toMatchObject({
       completedAttempts: 0,
       totalAttempts: 6,
+      elapsedMs: expect.any(Number),
+      estimatedRemainingMs: null,
+      averageFallbackAttemptMs: null,
+      completedFallbackAttempts: 0,
       currentDroppedTypes: [],
       currentDroppedClasses: [],
     });
     expect(snapshots[2]).toMatchObject({
       completedAttempts: 1,
       totalAttempts: 6,
+      elapsedMs: expect.any(Number),
+      estimatedRemainingMs: null,
+      averageFallbackAttemptMs: null,
+      completedFallbackAttempts: 0,
       currentDroppedTypes: [],
       currentDroppedClasses: ['Fighter'],
     });
     expect(snapshots[3]).toMatchObject({
       completedAttempts: 2,
       totalAttempts: 6,
+      elapsedMs: expect.any(Number),
+      estimatedRemainingMs: expect.any(Number),
+      averageFallbackAttemptMs: expect.any(Number),
+      completedFallbackAttempts: 1,
       currentDroppedTypes: ['INT'],
       currentDroppedClasses: [],
+    });
+  });
+
+  it('keeps eta null until a fallback attempt finishes, then derives a decreasing estimate', () => {
+    const snapshots: AutoBuildProgressSnapshot[] = [];
+
+    runAutoTeamBuildSearch(
+      createSingleTypeRecords(),
+      {
+        ...createInput(['DEX', 'INT'], ['Fighter']),
+        requiredAbilities: [
+          {
+            abilityKey: 'remove_slot_barrier',
+            minTurns: 3,
+            slotTokens: ['DEX'],
+            requiredCharacterCount: 1,
+          },
+        ],
+      },
+      {
+        onProgress: (snapshot) => snapshots.push(snapshot),
+        now: createClock([
+          0,
+          5,
+          10,
+          15,
+          20,
+          60,
+          65,
+          70,
+          100,
+          105,
+          110,
+          140,
+          145,
+          150,
+          180,
+          185,
+          190,
+          220,
+          225,
+        ]),
+      },
+    );
+
+    const fallbackSnapshots = snapshots.filter((snapshot) => snapshot.stage === 'fallbackAttempt');
+
+    expect(fallbackSnapshots[0]).toMatchObject({
+      estimatedRemainingMs: null,
+      averageFallbackAttemptMs: null,
+      completedFallbackAttempts: 0,
+    });
+    expect(fallbackSnapshots[1]).toMatchObject({
+      estimatedRemainingMs: 120,
+      averageFallbackAttemptMs: 40,
+      completedFallbackAttempts: 1,
+    });
+    expect(fallbackSnapshots[2]).toMatchObject({
+      estimatedRemainingMs: 70,
+      averageFallbackAttemptMs: 35,
+      completedFallbackAttempts: 2,
     });
   });
 
@@ -304,6 +377,18 @@ function createInput(
     manualShipId: null,
     excludedShipIds: [],
     candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
+  };
+}
+
+function createClock(values: number[]): () => number {
+  let index = 0;
+  const lastValue = values.at(-1) ?? 0;
+
+  return () => {
+    const nextValue = values[index] ?? lastValue;
+
+    index += 1;
+    return nextValue;
   };
 }
 

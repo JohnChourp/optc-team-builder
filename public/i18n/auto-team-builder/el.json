@@ -342,7 +342,8 @@
     "loadingCandidates": "Φόρτωση candidates από το local dataset...",
     "preparingSearch": "Προετοιμασία search permutations...",
     "scoringDefault": "Γίνεται scoring των καλύτερων local team candidates...",
-    "scoringWithTypes": "Γίνεται scoring για team candidates {{types}}..."
+    "scoringWithTypes": "Γίνεται scoring για team candidates {{types}}...",
+    "worstCaseEta": "Περίπου worst-case χρόνος για να ελεγχθούν τα υπόλοιπα fallbacks: {{duration}}"
   },
   "fallback": {
     "copy": "Τα πάνω filters έμειναν όπως τα διάλεξες. Η ομάδα χτίστηκε αφού αγνοήθηκαν μόνο τα παρακάτω requirements.",
