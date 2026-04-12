@@ -80,7 +80,7 @@ source ~/.android/optc-team-builder/release-signing.env
 Create a signed Android GitHub release locally:
 
 ```bash
-~/.codex/skills/optc-team-builder-android-release/scripts/run_release.sh --bump patch
+../optc-team-builder-brain/.codex/skills/optc-team-builder-android-release/scripts/run_release.sh --project "$(pwd)" --bump patch
 ```
 
 The release skill auto-loads `~/.android/optc-team-builder/release-signing.env` and, if needed, runs `./scripts/setup-release-signing.sh` before continuing with the existing release flow.

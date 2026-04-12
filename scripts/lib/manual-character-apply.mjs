@@ -5,6 +5,7 @@ import { createRequire } from 'node:module';
 import initSqlJs from 'sql.js';
 
 import { enrichCharactersWithBuilderAbilities } from '../auto-team-builder-ability-parser.mjs';
+import { loadBuilderAbilityCorrections } from './builder-ability-corrections.mjs';
 import {
   buildAutoBuilderAbilityCatalog,
   buildManifest,
@@ -33,12 +34,14 @@ export async function applyManualCharacterOverlay({
   seedPath = path.join(dataDir, 'optc-seed.sql'),
   manifestPath = path.join(dataDir, 'optc-manifest.json'),
   overlayPath = path.join(rootDir, 'scripts', 'data', 'manual-characters.json'),
+  correctionsPath = path.join(rootDir, 'scripts', 'data', 'builder-ability-corrections.json'),
   sourceImageDir = path.join(rootDir, 'scripts', 'data', 'character-images'),
   exactImagesDir = path.join(rootDir, 'public', 'assets', 'exact-character-images'),
   logger = null,
 } = {}) {
   const currentOutputs = await readCurrentOutputs(dataDir);
   const dataset = await loadCurrentDataset(seedPath, manifestPath);
+  const abilityCorrections = await loadBuilderAbilityCorrections(correctionsPath);
   const manualRecords = await loadManualCharacterOverlay(overlayPath, {
     availableClasses: dataset.manifest.availableClasses,
   });
@@ -57,6 +60,7 @@ export async function applyManualCharacterOverlay({
     sourceVersion: dataset.manifest.sourceVersion,
     packs: dataset.manifest.packs,
     generatedAt,
+    abilityCorrections,
     logger,
   });
 
@@ -80,6 +84,7 @@ export async function applyManualCharacterOverlay({
     sourceVersion: dataset.manifest.sourceVersion,
     packs: dataset.manifest.packs,
     generatedAt: finalGeneratedAt,
+    abilityCorrections,
     logger,
   });
 
@@ -110,10 +115,12 @@ async function buildGeneratedOutputs({
   sourceVersion,
   packs,
   generatedAt,
+  abilityCorrections,
   logger,
 }) {
   const nextCharacters = characters.map((character) => structuredClone(character));
   const autoBuilderAbilities = await enrichCharactersWithBuilderAbilities(nextCharacters, {
+    abilityCorrections,
     logger,
   });
   const manifest = buildManifest(nextCharacters, ships, sourceVersion, packs, generatedAt);

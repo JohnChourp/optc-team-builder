@@ -11,6 +11,7 @@ let analyzeBuilderAbilityText: (value: unknown, source: 'specialText' | 'captain
   source: 'specialText' | 'captainAbility';
   coverageMode?: 'explicit' | 'selectedDebuff';
 }>;
+let extractPrimaryAbilityBranchText: (value: unknown) => string;
 let enrichCharactersWithBuilderAbilities: (
   characters: Array<{
     id: number;
@@ -20,11 +21,19 @@ let enrichCharactersWithBuilderAbilities: (
       builderAbilities: Array<Record<string, unknown>>;
     };
   }>,
-  options?: { batchSize?: number; logger?: ((message: string) => void) | null },
+  options?: {
+    batchSize?: number;
+    logger?: ((message: string) => void) | null;
+    abilityCorrections?: Map<number | string, Record<string, unknown>> | null;
+  },
 ) => Promise<Array<{ key: string; label: string }>>;
 
 beforeAll(async () => {
-  ({ analyzeBuilderAbilityText, enrichCharactersWithBuilderAbilities } = await import(
+  ({
+    analyzeBuilderAbilityText,
+    extractPrimaryAbilityBranchText,
+    enrichCharactersWithBuilderAbilities,
+  } = await import(
     pathToFileURL(resolve(process.cwd(), 'scripts/auto-team-builder-ability-parser.mjs')).href
   ));
 });
@@ -123,6 +132,26 @@ describe('auto team builder ability parser', () => {
         source: 'specialText',
       }),
     ]);
+  });
+
+  it('keeps only the primary special branch when upstream text concatenates alternate versions', () => {
+    const text =
+      "Deals 15x character's ATK in Typeless damage to one enemy, adds 0.3x to Chain multiplier for 1 turn, boosts Orb Effects of all characters by 1.5x for 1 turn. If Luffy is your Captain or Friend/Guest Captain, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for all characters for 3 turns. Deals 150x character's ATK in Typeless damage to one enemy, adds 0.7x to chain multiplier for 3 turns, boosts Orb Effects of all characters by 1.75x for 1 turn. If during that turn you score 3 PERFECT hits, boosts Orb Effects of all characters by 2x for 1 turn in the following turn. If Luffy is your Captain or Friend/Guest Captain, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for all characters for 3 turns. Reduces enemies' Increased Defense and Percent Damage Reduction duration by 2 turns.";
+
+    expect(extractPrimaryAbilityBranchText(text)).not.toContain(
+      'Reduces enemies\' Increased Defense and Percent Damage Reduction duration by 2 turns',
+    );
+    expect(analyzeBuilderAbilityText(text, 'specialText')).toEqual([]);
+  });
+
+  it('keeps only the primary captain branch when upstream text concatenates alternate versions', () => {
+    const text =
+      "Reduces Special Cooldown of all characters by 1 turn at the start of the fight, boosts ATK of all characters by 3.25x, their HP by 1.35x, makes [DEX] and [INT] orbs beneficial for all characters. If you use 'Gomu Gomu no King Cobra' for 3 turns, on this Luffy boosts ATK of all characters by 4x at the start of the chain, by 4.25x after 3 PERFECTs in a row.. Reduces Special Cooldown of this character by 4 turns at the start of the fight, reduces Special Cooldown of all characters by 2 turns at the start of the fight, boosts ATK of all characters by 4.5x, their HP by 1.45x, makes [DEX] and [INT] orbs beneficial for all characters. If you use 'Gomu Gomu no King Cobra' on this character, boosts ATK of all characters by 5x at the start of the chain, by 5.25x after 3 PERFECTs in a row and reduces Paralysis by 5 turns for 3 turns.";
+
+    expect(extractPrimaryAbilityBranchText(text)).not.toContain(
+      'reduces Paralysis by 5 turns for 3 turns',
+    );
+    expect(analyzeBuilderAbilityText(text, 'captainAbility')).toEqual([]);
   });
 
   it.each([
@@ -392,5 +421,122 @@ describe('auto team builder ability parser', () => {
         source: 'specialText',
       }),
     ]);
+  });
+
+  it('applies character-level corrections after deriving abilities', async () => {
+    const characters = [
+      {
+        id: 2363,
+        detail: {
+          specialText: 'Reduces Bind duration by 5 turns.',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    await enrichCharactersWithBuilderAbilities(characters, {
+      logger: null,
+      abilityCorrections: new Map([
+        [
+          2363,
+          {
+            sourceScopes: ['specialText'],
+            replaceAbilities: [],
+          },
+        ],
+      ]),
+    });
+
+    expect(characters[0]?.detail.builderAbilities).toEqual([]);
+  });
+
+  it('preserves null minTurns for explicit existing abilities during normalization', async () => {
+    const characters = [
+      {
+        id: 58,
+        detail: {
+          specialText: 'Poisons all enemies',
+          captainAbility: null,
+          builderAbilities: [
+            {
+              key: 'inflict_poison',
+              label: 'Inflict Poison',
+              minTurns: null,
+              isCompleteRemoval: false,
+              slotTokens: [],
+              source: 'specialText',
+            },
+          ],
+        },
+      },
+    ];
+
+    await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(characters[0]?.detail.builderAbilities).toEqual([
+      expect.objectContaining({
+        key: 'inflict_poison',
+        minTurns: null,
+      }),
+    ]);
+  });
+
+  it('canonicalizes zero-turn explicit existing abilities before deduping derived matches', async () => {
+    const kinemonSpecialText =
+      'Reduces enemies\' Damage Nullification duration by 5 turns, changes all orbs, including [BLOCK] orbs, into Matching orbs and Boost ATK of [STR], Slasher and Free Spirit characters by 3x for 2 turns. If "Inherited Oden Two-Sword Style: Paradise Totsuka" or "Oden Two-Sword Style: Paradise Totsuka" was used in the same turn when special is activated, deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies, increases boost effects of ATK UP and Orb Amplification buffs by +0.25x and increases duration of any ATK boosting buffs and Orb Amplification buffs by 1 turn, including effects activated in the same Ability.';
+    const characters = [
+      {
+        id: 3745,
+        detail: {
+          specialText: kinemonSpecialText,
+          captainAbility: null,
+          builderAbilities: [
+            {
+              key: 'ignore_normal_attack_only',
+              label: 'Ignore Normal Attack Only (NAO)',
+              minTurns: 0,
+              isCompleteRemoval: false,
+              slotTokens: [],
+              source: 'specialText',
+            },
+            {
+              key: 'deal_fixed_damage',
+              label: 'Deal Fixed Damage',
+              minTurns: 0,
+              isCompleteRemoval: false,
+              slotTokens: [],
+              source: 'specialText',
+            },
+          ],
+        },
+      },
+    ];
+
+    await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(characters[0]?.detail.builderAbilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'ignore_normal_attack_only',
+          minTurns: null,
+          source: 'specialText',
+        }),
+        expect.objectContaining({
+          key: 'deal_fixed_damage',
+          minTurns: null,
+          source: 'specialText',
+        }),
+      ]),
+    );
+    expect(
+      characters[0]?.detail.builderAbilities.filter(
+        (ability) =>
+          ability &&
+          typeof ability === 'object' &&
+          'key' in ability &&
+          (ability.key === 'ignore_normal_attack_only' || ability.key === 'deal_fixed_damage'),
+      ),
+    ).toHaveLength(2);
   });
 });

@@ -87,6 +87,9 @@ describe('manual character apply pipeline', () => {
 
     const preview = JSON.parse(await readFile(path.join(dataDir, 'optc-preview.json'), 'utf8'));
     const customCharacter = preview.characters.find((character: { id: number }) => character.id === 900000);
+    const correctedUpstreamCharacter = preview.characters.find(
+      (character: { id: number }) => character.id === 100,
+    );
 
     expect(customCharacter).toMatchObject({
       id: 900000,
@@ -101,6 +104,7 @@ describe('manual character apply pipeline', () => {
       minTurns: 5,
       source: 'specialText',
     });
+    expect(correctedUpstreamCharacter?.detail.builderAbilities).toEqual([]);
   });
 
   it('is a no-op when the overlay is already applied', async () => {
@@ -182,7 +186,7 @@ async function createFixtureWorkspace() {
         characterId: 100,
         captainAbility: null,
         specialName: null,
-        specialText: null,
+        specialText: 'Reduces Bind duration by 4 turns.',
         specialNotes: null,
         builderAbilities: [],
         sailorAbilities: [],
@@ -212,6 +216,21 @@ async function createFixtureWorkspace() {
     unresolvedCatalog,
     buildAutoBuilderAbilityCatalog(generatedAt, 'test', []),
     buildPreviewPayload(generatedAt, baseCharacters, ships),
+  );
+
+  await writeFile(
+    path.join(scriptsDataDir, 'builder-ability-corrections.json'),
+    JSON.stringify(
+      {
+        '100': {
+          sourceScopes: ['specialText'],
+          replaceAbilities: [],
+          reason: 'Fixture regression coverage for correction application.',
+        },
+      },
+      null,
+      2,
+    ),
   );
 
   await writeFile(
