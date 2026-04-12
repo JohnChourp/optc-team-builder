@@ -4,6 +4,18 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('./saved-teams-transfer.utils', async () => {
+  const actual = await vi.importActual<typeof import('./saved-teams-transfer.utils')>(
+    './saved-teams-transfer.utils',
+  );
+
+  return {
+    ...actual,
+    downloadSavedTeamsExport: vi.fn(),
+  };
+});
+
+import { downloadSavedTeamsExport } from './saved-teams-transfer.utils';
 import { SavedTeamsPage } from './saved-teams.page';
 
 vi.mock('@ionic/angular/standalone', () => ({
@@ -22,6 +34,7 @@ vi.mock('@ionic/angular/standalone', () => ({
 
 describe('SavedTeamsPage', () => {
   afterEach(() => {
+    vi.clearAllMocks();
     vi.unstubAllGlobals();
   });
 
@@ -174,7 +187,7 @@ describe('SavedTeamsPage', () => {
     });
   });
 
-  it('renders saved team tools, import controls and slot previews in the template', () => {
+  it('renders saved team tools and slot previews in the template', () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/saved-teams/saved-teams.page.html'),
       'utf8',
@@ -182,13 +195,10 @@ describe('SavedTeamsPage', () => {
 
     expect(template).toContain("t('title')");
     expect(template).toContain("t('hero.savedEnemiesCta')");
-    expect(template).toMatch(
-      /@if \(!loading\(\) && !savedTeams\(\)\.length\) \{[\s\S]*openImportModal\(\)/,
-    );
     expect(template).toContain("t('actions.openBuilder')");
+    expect(template).toContain("t('actions.exportSingle')");
     expect(template).toContain("'common.actions.reset' | transloco");
     expect(template).toContain("t('tools.export')");
-    expect(template).toContain("t('tools.import')");
     expect(template).toContain("t('selection.selectAll')");
     expect(template).toContain("t('edit.actions.edit')");
     expect(template).toContain('edit.teamNameLabel');
@@ -197,7 +207,6 @@ describe('SavedTeamsPage', () => {
     expect(template).toContain('ion-input');
     expect(template).toContain('ion-textarea');
     expect(template).toContain('edit-modal-shell');
-    expect(template).toContain('import-dropzone');
     expect(template).toContain('saved-team-preview');
     expect(template).toContain('saved-team-ship');
     expect(template).toContain("t('ship.label')");
@@ -207,34 +216,41 @@ describe('SavedTeamsPage', () => {
     expect(template).toContain('[queryParams]="getTeamBuilderQueryParams(teamCard.team)"');
     expect(template).toContain('[routerLink]="[\'/tabs/saved-enemies\']"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(currentSlot)"');
+    expect(template).not.toContain("t('tools.import')");
+    expect(template).not.toContain('openImportModal()');
   });
 
-  it('resets page-local selection and modal state without touching saved teams', async () => {
+  it('exports a single saved team with the shared saved-teams payload', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    page.exportTeam(page.savedTeams()[0]!);
+
+    expect(vi.mocked(downloadSavedTeamsExport)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        schemaVersion: 1,
+        source: 'saved-teams',
+        teams: [expect.objectContaining({ id: 'team-1' })],
+      }),
+    );
+  });
+
+  it('resets page-local selection and edit modal state without touching saved teams', async () => {
     const { page } = createPage();
 
     await page.ngOnInit();
     page.selectedTeamIds.set(['team-1']);
     page.editModalOpen.set(true);
-    page.importModalOpen.set(true);
     page.editTeamName.set('Edited team');
     page.editNotes.set('Edited notes');
-    page.importFileName.set('teams.json');
-    page.importFeedback.set({
-      title: 'Loaded',
-      details: ['Done'],
-      tone: 'success',
-    });
 
     page.resetPage();
 
     expect(page.selectedTeamIds()).toEqual([]);
     expect(page.editModalOpen()).toBe(false);
-    expect(page.importModalOpen()).toBe(false);
     expect(page.editingTeam()).toBeNull();
     expect(page.editTeamName()).toBe('');
     expect(page.editNotes()).toBe('');
-    expect(page.importFileName()).toBe('');
-    expect(page.importFeedback()).toBeNull();
     expect(page.savedTeams()).toHaveLength(2);
   });
 });

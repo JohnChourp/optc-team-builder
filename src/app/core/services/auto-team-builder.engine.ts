@@ -11,7 +11,20 @@ import { buildAutoTeamResult, resolveCharacterTypeTokens } from './auto-team-bui
 export interface AutoTeamBuildSearchOptions {
   onProgress?: (snapshot: AutoBuildProgressSnapshot) => void;
   isCancelled?: () => boolean;
+  now?: () => number;
 }
+
+interface AutoTeamBuildTimingState {
+  searchStartedAt: number;
+  totalCompletedFallbackMs: number;
+  completedFallbackAttempts: number;
+  now: () => number;
+}
+
+type AutoBuildProgressSnapshotBase = Omit<
+  AutoBuildProgressSnapshot,
+  'elapsedMs' | 'estimatedRemainingMs' | 'averageFallbackAttemptMs' | 'completedFallbackAttempts'
+>;
 
 export class AutoTeamBuildCancelledError extends Error {
   public constructor(message = 'Auto team build cancelled.') {
@@ -31,8 +44,10 @@ export function runAutoTeamBuildSearch(
   requestedInput: AutoBuildInput,
   options: AutoTeamBuildSearchOptions = {},
 ): AutoBuildResult | null {
+  const timingState = createTimingState(options);
+
   assertNotCancelled(options);
-  emitProgress(options, {
+  emitProgress(options, timingState, {
     stage: 'preparingSearch',
     candidateCount: records.length,
     completedAttempts: 0,
@@ -48,7 +63,7 @@ export function runAutoTeamBuildSearch(
   const totalAttempts = 1 + relaxedInputs.length;
 
   assertNotCancelled(options);
-  emitProgress(options, {
+  emitProgress(options, timingState, {
     stage: 'exactAttempt',
     candidateCount: records.length,
     completedAttempts: 0,
@@ -65,12 +80,12 @@ export function runAutoTeamBuildSearch(
   const exactResult = buildAttempt(records, requestedInput, requestedInput);
 
   if (hasStrictConstraints(requestedInput)) {
-    emitCompletedProgress(options, records.length, totalAttempts, totalAttempts);
+    emitCompletedProgress(options, timingState, records.length, totalAttempts, totalAttempts);
     return exactResult;
   }
 
   if (satisfiesRequestedCoverage(exactResult)) {
-    emitCompletedProgress(options, records.length, totalAttempts, 1);
+    emitCompletedProgress(options, timingState, records.length, totalAttempts, 1);
     return exactResult;
   }
 
@@ -78,7 +93,7 @@ export function runAutoTeamBuildSearch(
 
   for (const relaxedInput of relaxedInputs) {
     assertNotCancelled(options);
-    emitProgress(options, {
+    emitProgress(options, timingState, {
       stage: 'fallbackAttempt',
       candidateCount: records.length,
       completedAttempts,
@@ -96,27 +111,39 @@ export function runAutoTeamBuildSearch(
       },
     });
 
+    const fallbackStartedAt = timingState.now();
     const relaxedResult = buildAttempt(records, relaxedInput, requestedInput);
+    const fallbackEndedAt = timingState.now();
+
+    timingState.totalCompletedFallbackMs += Math.max(0, fallbackEndedAt - fallbackStartedAt);
+    timingState.completedFallbackAttempts += 1;
 
     if (satisfiesRequestedCoverage(relaxedResult)) {
-      emitCompletedProgress(options, records.length, totalAttempts, completedAttempts + 1);
+      emitCompletedProgress(
+        options,
+        timingState,
+        records.length,
+        totalAttempts,
+        completedAttempts + 1,
+      );
       return relaxedResult;
     }
 
     completedAttempts += 1;
   }
 
-  emitCompletedProgress(options, records.length, totalAttempts, completedAttempts);
+  emitCompletedProgress(options, timingState, records.length, totalAttempts, completedAttempts);
   return null;
 }
 
 function emitCompletedProgress(
   options: AutoTeamBuildSearchOptions,
+  timingState: AutoTeamBuildTimingState,
   candidateCount: number,
   totalAttempts: number,
   completedAttempts: number,
 ): void {
-  emitProgress(options, {
+  emitProgress(options, timingState, {
     stage: 'completed',
     candidateCount,
     completedAttempts,
@@ -129,9 +156,11 @@ function emitCompletedProgress(
 
 function emitProgress(
   options: AutoTeamBuildSearchOptions,
-  snapshot: AutoBuildProgressSnapshot,
+  timingState: AutoTeamBuildTimingState,
+  snapshot: AutoBuildProgressSnapshotBase,
 ): void {
   options.onProgress?.({
+    ...buildTimingSnapshot(timingState, snapshot.totalAttempts, snapshot.completedAttempts),
     ...snapshot,
     currentDroppedTypes: [...snapshot.currentDroppedTypes],
     currentDroppedClasses: [...snapshot.currentDroppedClasses],
@@ -142,6 +171,52 @@ function assertNotCancelled(options: AutoTeamBuildSearchOptions): void {
   if (options.isCancelled?.()) {
     throw new AutoTeamBuildCancelledError();
   }
+}
+
+function createTimingState(options: AutoTeamBuildSearchOptions): AutoTeamBuildTimingState {
+  const now = options.now ?? resolveCurrentTimestamp;
+
+  return {
+    searchStartedAt: now(),
+    totalCompletedFallbackMs: 0,
+    completedFallbackAttempts: 0,
+    now,
+  };
+}
+
+function buildTimingSnapshot(
+  timingState: AutoTeamBuildTimingState,
+  totalAttempts: number,
+  completedAttempts: number,
+): Pick<
+  AutoBuildProgressSnapshot,
+  'elapsedMs' | 'estimatedRemainingMs' | 'averageFallbackAttemptMs' | 'completedFallbackAttempts'
+> {
+  const elapsedMs = Math.max(0, timingState.now() - timingState.searchStartedAt);
+  const averageFallbackAttemptMs =
+    timingState.completedFallbackAttempts > 0
+      ? timingState.totalCompletedFallbackMs / timingState.completedFallbackAttempts
+      : null;
+  const remainingFallbackAttempts = Math.max(totalAttempts - completedAttempts - 1, 0);
+  const estimatedRemainingMs =
+    averageFallbackAttemptMs !== null && remainingFallbackAttempts > 0
+      ? averageFallbackAttemptMs * remainingFallbackAttempts
+      : null;
+
+  return {
+    elapsedMs,
+    estimatedRemainingMs,
+    averageFallbackAttemptMs,
+    completedFallbackAttempts: timingState.completedFallbackAttempts,
+  };
+}
+
+function resolveCurrentTimestamp(): number {
+  if (typeof globalThis.performance?.now === 'function') {
+    return globalThis.performance.now();
+  }
+
+  return Date.now();
 }
 
 function buildAttempt(

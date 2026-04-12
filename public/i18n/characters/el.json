@@ -69,7 +69,7 @@
   },
   "title": "Θησαυροφυλάκιο χαρακτήρων OPTC",
   "tools": {
-    "copy": "Διαχειρίσου το OPTCbx-compatible favorites αρχείο απευθείας από το character browser.",
+    "copy": "Κάνε reset στα φίλτρα εδώ και χρησιμοποίησε το Offline tab για backup, restore και μαζική διαγραφή favorites.",
     "export": "Εξαγωγή favorites",
     "import": "Εισαγωγή favorites",
     "title": "Εργαλεία favorites"

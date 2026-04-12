@@ -5,9 +5,15 @@
 
 .intro-card,
 .command-card,
+.data-card,
 .pack-list,
 .legal-card {
   padding: 18px;
+}
+
+.command-card {
+  display: grid;
+  gap: 10px;
 }
 
 .command-card code {
@@ -19,14 +25,106 @@
   font-family: "SF Mono", "Menlo", monospace;
 }
 
-.command-card {
+.section-head p,
+.transfer-card__head p,
+.legal-card p,
+.pack-card span {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.58);
+}
+
+.data-card,
+.pack-list {
   display: grid;
+  gap: 16px;
+}
+
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.section-head h2,
+.legal-card h2,
+.pack-card strong,
+.transfer-card__head strong {
+  color: #ffffff;
+}
+
+.transfer-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.transfer-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.transfer-card__head {
+  display: grid;
+  gap: 8px;
+}
+
+.transfer-card__head > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.transfer-card__head span {
+  color: rgba(248, 251, 255, 0.72);
+  font-size: 0.92rem;
+}
+
+.transfer-actions {
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
-.pack-list {
+.transfer-actions ion-button {
+  margin: 0;
+}
+
+.transfer-feedback {
   display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.transfer-feedback strong {
+  color: #ffffff;
+}
+
+.transfer-feedback span {
+  color: rgba(248, 251, 255, 0.72);
+}
+
+.transfer-feedback--progress {
+  grid-template-columns: auto 1fr;
+  align-items: center;
   gap: 12px;
+}
+
+.transfer-feedback--success {
+  background: rgba(86, 194, 120, 0.16);
+}
+
+.transfer-feedback--warning {
+  background: rgba(245, 200, 76, 0.16);
+}
+
+.transfer-feedback--error {
+  background: rgba(255, 107, 107, 0.14);
 }
 
 .pack-card {
@@ -39,18 +137,6 @@
   background: rgba(255, 255, 255, 0.03);
 }
 
-.pack-card strong,
-.legal-card h2 {
-  color: #ffffff;
-}
-
-.pack-card span,
-.legal-card p {
-  display: block;
-  margin-top: 6px;
-  color: rgba(248, 251, 255, 0.58);
-}
-
 .pack-state {
   padding: 8px 12px;
   border-radius: 999px;
@@ -61,4 +147,12 @@
 .pack-state.installed {
   background: rgba(245, 200, 76, 0.16);
   color: #f5c84c;
+}
+
+@media (max-width: 720px) {
+  .transfer-card__head > div,
+  .pack-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }

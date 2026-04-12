@@ -195,16 +195,16 @@
 
 .manual-locks-card {
   display: grid;
-  gap: 12px;
+  gap: 14px;
   margin-top: 12px;
-  padding: 16px;
+  padding: 14px;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.04);
 }
 
 .manual-locks-layout {
   display: grid;
-  gap: 12px;
+  gap: 14px;
 }
 
 .manual-locks-overview,
@@ -217,6 +217,10 @@
 
 .manual-locks-search-panel {
   align-self: start;
+  padding: 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .manual-panel-toggle {
@@ -256,8 +260,8 @@
 .manual-filter-summary-card {
   display: grid;
   gap: 8px;
-  padding: 12px 14px;
-  border-radius: 16px;
+  padding: 10px 12px;
+  border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.03);
 }
@@ -281,15 +285,15 @@
 
 .manual-slot-grid {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .manual-slot-card {
   display: grid;
-  gap: 10px;
-  padding: 12px;
+  gap: 8px;
+  padding: 10px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
+  border-radius: 16px;
   background: rgba(255, 255, 255, 0.03);
   cursor: pointer;
   text-align: left;
@@ -329,12 +333,13 @@
 
 .manual-slot-card__copy strong {
   color: #ffffff;
-  font-size: 0.9rem;
+  font-size: 0.84rem;
   line-height: 1.35;
 }
 
 .manual-slot-card__copy small {
   color: rgba(248, 251, 255, 0.66);
+  font-size: 0.76rem;
   line-height: 1.45;
 }
 
@@ -426,35 +431,35 @@
   letter-spacing: 0.08em;
 }
 
-.ability-visual-chip[data-tone="gold"] {
+.ability-visual-chip[data-tone='gold'] {
   color: #f5c84c;
 }
 
-.ability-visual-chip[data-tone="red"] {
+.ability-visual-chip[data-tone='red'] {
   color: #ff9d81;
 }
 
-.ability-visual-chip[data-tone="teal"] {
+.ability-visual-chip[data-tone='teal'] {
   color: #65d4d4;
 }
 
-.ability-visual-chip[data-tone="blue"] {
+.ability-visual-chip[data-tone='blue'] {
   color: #7eb9ff;
 }
 
-.ability-visual-chip[data-tone="violet"] {
+.ability-visual-chip[data-tone='violet'] {
   color: #c4a3ff;
 }
 
-.ability-visual-chip[data-tone="green"] {
+.ability-visual-chip[data-tone='green'] {
   color: #8ee38e;
 }
 
-.ability-visual-chip[data-tone="orange"] {
+.ability-visual-chip[data-tone='orange'] {
   color: #ffba74;
 }
 
-.ability-visual-chip[data-tone="neutral"] {
+.ability-visual-chip[data-tone='neutral'] {
   color: rgba(248, 251, 255, 0.76);
 }
 
@@ -508,6 +513,7 @@
 
 .manual-selected-row {
   margin-top: 0;
+  gap: 6px;
 }
 
 .manual-leaders-card {
@@ -526,6 +532,9 @@
 .manual-lock-chip {
   max-width: 100%;
   justify-content: flex-start;
+  padding: 6px 10px;
+  border-radius: 14px;
+  font-size: 0.74rem;
 }
 
 .manual-lock-chip--static {
@@ -533,8 +542,8 @@
 }
 
 .manual-lock-chip img {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
@@ -546,8 +555,8 @@
 }
 
 .manual-lock-chip--ship img {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 6px;
   object-fit: cover;
   background: rgba(255, 255, 255, 0.08);
@@ -557,102 +566,38 @@
   background: rgba(245, 200, 76, 0.09);
 }
 
-.manual-ship-summary-card {
-  display: grid;
-  gap: 10px;
-  padding: 14px;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.manual-ship-summary-card__trigger {
-  display: grid;
-  grid-template-columns: 72px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  text-align: left;
-  font: inherit;
-}
-
-.manual-ship-summary-card__media {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 72px;
-  height: 72px;
-  overflow: hidden;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.manual-ship-summary-card__media img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.manual-ship-summary-card__media--fallback {
-  background: rgba(245, 200, 76, 0.12);
-  color: #f5c84c;
-}
-
-.manual-ship-summary-card__media ion-icon {
-  font-size: 1.4rem;
-}
-
-.manual-ship-summary-card__copy {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-}
-
-.manual-ship-summary-card__copy strong {
-  color: #ffffff;
-  font-size: 0.95rem;
-  line-height: 1.35;
-}
-
-.manual-ship-summary-card__copy span {
-  color: rgba(248, 251, 255, 0.68);
-  font-size: 0.8rem;
-  line-height: 1.45;
-}
-
-.manual-ship-summary-card__copy small {
-  color: rgba(248, 251, 255, 0.56);
-  line-height: 1.45;
-}
-
-.manual-ship-summary-card__action {
-  color: #f5c84c;
-  font-size: 0.74rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.manual-ship-summary-card__footer {
-  display: flex;
-  justify-content: flex-end;
-}
-
 .manual-candidate-list {
   display: grid;
-  gap: 8px;
-  max-height: 300px;
+  gap: 10px;
+  max-height: 360px;
   overflow: auto;
 }
 
 .manual-candidate-list--sidebar {
-  max-height: 280px;
+  max-height: 440px;
   align-content: start;
+}
+
+.manual-candidate-list--ships {
+  max-height: 472px;
+}
+
+.manual-candidate-viewport {
+  width: 100%;
+  overflow: auto;
+  border-radius: 18px;
+}
+
+.manual-candidate-viewport--manual {
+  height: 440px;
+}
+
+.manual-candidate-viewport--exclude {
+  height: 472px;
+}
+
+.manual-candidate-viewport .cdk-virtual-scroll-content-wrapper {
+  width: 100%;
 }
 
 .manual-candidate-card {
@@ -671,10 +616,22 @@
 }
 
 .manual-candidate-card--sidebar {
-  grid-template-columns: 80px minmax(0, 1fr) auto;
-  gap: 12px;
-  padding: 8px 10px;
-  border-radius: 14px;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px;
+  border-radius: 16px;
+  align-items: start;
+  min-height: 132px;
+}
+
+.manual-candidate-viewport--manual .manual-candidate-card--sidebar {
+  height: 176px;
+  min-height: 176px;
+}
+
+.manual-candidate-viewport--exclude .manual-candidate-card--sidebar {
+  height: 224px;
+  min-height: 224px;
 }
 
 .manual-candidate-card--selected {
@@ -695,13 +652,13 @@
 }
 
 .manual-candidate-card--sidebar img {
-  width: 80px;
-  height: 80px;
-  border-radius: 16px;
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
 }
 
 .ship-candidate-card {
-  grid-template-columns: 80px minmax(0, 1fr) auto;
+  grid-template-columns: 64px minmax(0, 1fr);
 }
 
 .ship-candidate-icon,
@@ -715,8 +672,8 @@
 }
 
 .ship-candidate-icon {
-  width: 80px;
-  height: 80px;
+  width: 64px;
+  height: 64px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.04);
@@ -745,6 +702,13 @@
   display: grid;
   gap: 4px;
   min-width: 0;
+}
+
+.manual-candidate-copy__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .manual-candidate-copy strong {
@@ -778,25 +742,34 @@
 }
 
 .manual-candidate-card--sidebar .manual-candidate-copy strong {
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   line-height: 1.25;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .manual-candidate-card--sidebar .manual-candidate-copy span {
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   line-height: 1.3;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 .manual-candidate-card--sidebar .manual-candidate-chip-row {
-  flex-wrap: nowrap;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 4px;
   margin-top: 2px;
+  max-height: 52px;
   overflow: hidden;
 }
 
 .manual-candidate-card--sidebar .manual-ability-chip {
-  padding: 5px 8px;
-  font-size: 0.68rem;
+  padding: 4px 7px;
+  font-size: 0.64rem;
 }
 
 .manual-candidate-list--leaders {
@@ -820,15 +793,35 @@
   padding: 14px;
 }
 
+.manual-candidate-loading-more {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 4px;
+}
+
 .manual-candidate-actions {
   display: grid;
-  justify-items: end;
-  gap: 8px;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  justify-items: stretch;
 }
 
 .manual-candidate-action-button,
 .detail-link-button {
   margin: 0;
+  width: 100%;
+}
+
+.ship-candidate-card > ion-button {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin: 0;
+}
+
+.ship-candidate-card .favorite-button {
+  width: 32px;
+  height: 32px;
 }
 
 .manual-ability-chip {
@@ -1401,13 +1394,15 @@ ion-toggle {
   }
 
   .manual-locks-layout {
-    grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.95fr);
-    column-gap: 18px;
+    grid-template-columns: minmax(240px, 0.72fr) minmax(0, 1.28fr);
+    column-gap: 16px;
     align-items: start;
   }
 
   .manual-candidate-list--sidebar {
-    max-height: 262px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: min(72vh, 760px);
+    padding-right: 4px;
   }
 
   .secondary-toggle-grid {
@@ -1476,14 +1471,6 @@ ion-toggle {
   .ability-requirements-meta {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .manual-ship-summary-card__trigger {
-    grid-template-columns: 72px minmax(0, 1fr);
-  }
-
-  .manual-ship-summary-card__action {
-    grid-column: 2;
   }
 
   .ability-requirements-actions {

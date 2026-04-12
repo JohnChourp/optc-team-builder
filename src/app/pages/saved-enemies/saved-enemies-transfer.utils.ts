@@ -167,6 +167,7 @@ function normalizeEnemyMechanics(value: unknown): SavedEnemy["enemyMechanics"] {
         mechanicKey,
         category: category as SavedEnemy["enemyMechanics"][number]["category"],
         minTurns: normalizePositiveInteger(entry["minTurns"]),
+        requiredCharacterCount: normalizePositiveInteger(entry["requiredCharacterCount"]) ?? undefined,
         triggerTags: normalizeStringArray(entry["triggerTags"]) as SavedEnemy["enemyMechanics"][number]["triggerTags"],
         responseTags: normalizeStringArray(entry["responseTags"]) as SavedEnemy["enemyMechanics"][number]["responseTags"],
         conditionTags: normalizeStringArray(entry["conditionTags"]) as SavedEnemy["enemyMechanics"][number]["conditionTags"],

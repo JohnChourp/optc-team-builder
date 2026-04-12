@@ -1,6 +1,7 @@
 {
   "actions": {
     "edit": "Edit",
+    "exportSingle": "Export",
     "openBuilder": "Open in builder",
     "saveChanges": "Save changes",
     "saveEnemy": "Save enemy"

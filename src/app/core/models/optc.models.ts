@@ -146,6 +146,7 @@ export interface DetailedCharacterSearchQuery {
   selectedTypesMatchMode?: 'all' | 'any';
   selectedClasses: string[];
   selectedClassesMatchMode?: 'all' | 'any';
+  sortMode?: 'catalog' | 'newest';
   limit: number;
   offset: number;
 }

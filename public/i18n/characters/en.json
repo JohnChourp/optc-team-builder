@@ -69,7 +69,7 @@
   },
   "title": "OPTC Character Vault",
   "tools": {
-    "copy": "Manage your OPTCbx-compatible favorites file directly from the character browser.",
+    "copy": "Reset filters here, then use the Offline tab for favorites backup, restore, and bulk deletion.",
     "export": "Export favorites",
     "import": "Import favorites",
     "title": "Favorites tools"

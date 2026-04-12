@@ -148,7 +148,6 @@ export class ShipPickerComponent implements OnChanges {
     }
 
     if (changes['isOpen'] && this.isOpen) {
-      console.log('ShipPickerComponent component');
       this.dismissReason = null;
       this.searchTerm.set('');
       this.workingShipId.set(this.selectedShipId);

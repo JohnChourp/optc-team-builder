@@ -1,6 +1,7 @@
 {
   "actions": {
     "edit": "Επεξεργασία",
+    "exportSingle": "Εξαγωγή",
     "openBuilder": "Άνοιγμα στον builder",
     "saveChanges": "Αποθήκευση αλλαγών",
     "saveEnemy": "Αποθήκευση εχθρού"

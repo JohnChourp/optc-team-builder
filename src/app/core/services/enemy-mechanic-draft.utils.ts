@@ -35,6 +35,7 @@ export interface EnemyMechanicDraft {
   mechanicKey: string;
   category: AutoBuildEnemyMechanicCategory;
   minTurns: number | null;
+  requiredCharacterCount: number | null;
   triggerTags: AutoBuildEnemyMechanicTriggerTag[];
   responseTags: AutoBuildEnemyMechanicResponseTag[];
   conditionTags: AutoBuildEnemyMechanicConditionTag[];
@@ -489,6 +490,7 @@ export function createEnemyMechanicDraft(
     minTurns: item?.supportsTurns === false
       ? null
       : resolvePositiveInteger(requirement?.minTurns) ?? 1,
+    requiredCharacterCount: resolvePositiveInteger(requirement?.requiredCharacterCount),
     triggerTags: sanitizeTags(
       requirement?.triggerTags,
       item?.availableTriggerTags ?? DEFAULT_TRIGGER_TAGS,
@@ -516,6 +518,7 @@ export function cloneEnemyMechanicDraft(draft: EnemyMechanicDraft): EnemyMechani
     mechanicKey: draft.mechanicKey,
     category: draft.category,
     minTurns: draft.minTurns,
+    requiredCharacterCount: draft.requiredCharacterCount,
     triggerTags: [...draft.triggerTags],
     responseTags: [...draft.responseTags],
     conditionTags: [...draft.conditionTags],
@@ -551,6 +554,7 @@ export function applyCatalogEnemyMechanicToDraft(
     mechanicKey,
     category: catalogItem.category,
     minTurns: catalogItem.supportsTurns ? resolvePositiveInteger(draft.minTurns) ?? 1 : null,
+    requiredCharacterCount: resolvePositiveInteger(draft.requiredCharacterCount),
     triggerTags: sanitizeTags(
       draft.triggerTags,
       catalogItem.availableTriggerTags,
@@ -578,6 +582,7 @@ export function serializeEnemyMechanicDrafts(
       mechanicKey: draft.mechanicKey,
       category: draft.category,
       minTurns: draft.minTurns,
+      requiredCharacterCount: resolvePositiveInteger(draft.requiredCharacterCount) ?? undefined,
       triggerTags: draft.triggerTags,
       responseTags: draft.responseTags,
       conditionTags: draft.conditionTags,
@@ -609,6 +614,7 @@ export function normalizeEnemyMechanicRequirements(
 
     const minTurns =
       catalogItem?.supportsTurns === false ? null : resolvePositiveInteger(requirement.minTurns);
+    const requiredCharacterCount = resolvePositiveInteger(requirement.requiredCharacterCount) ?? 1;
     const triggerTags = sanitizeTags(
       requirement.triggerTags,
       catalogItem?.availableTriggerTags ?? DEFAULT_TRIGGER_TAGS,
@@ -636,14 +642,22 @@ export function normalizeEnemyMechanicRequirements(
     const identity = buildEnemyMechanicIdentity({
       mechanicKey,
       category,
-      minTurns,
+      minTurns: null,
+      requiredCharacterCount,
       triggerTags,
       responseTags,
       conditionTags,
       derivedAbilityKey,
     });
 
-    if (normalizedRequirements.has(identity)) {
+    const existing = normalizedRequirements.get(identity);
+
+    if (existing) {
+      existing.minTurns = resolveMaxTurns(existing.minTurns, minTurns);
+      existing.requiredCharacterCount = Math.max(
+        resolvePositiveInteger(existing.requiredCharacterCount) ?? 1,
+        requiredCharacterCount,
+      );
       return;
     }
 
@@ -651,6 +665,7 @@ export function normalizeEnemyMechanicRequirements(
       mechanicKey,
       category,
       minTurns,
+      ...(requiredCharacterCount > 1 ? { requiredCharacterCount } : {}),
       triggerTags,
       responseTags,
       conditionTags,
@@ -671,7 +686,7 @@ export function deriveAbilityRequirementsFromEnemyMechanics(
         abilityKey: mechanic.derivedAbilityKey as string,
         minTurns: mechanic.minTurns,
         slotTokens: [],
-        requiredCharacterCount: 1,
+        requiredCharacterCount: resolvePositiveInteger(mechanic.requiredCharacterCount) ?? 1,
       })),
   );
 }
@@ -793,7 +808,6 @@ function buildEnemyMechanicIdentity(requirement: AutoBuildEnemyMechanicRequireme
   return [
     requirement.mechanicKey,
     requirement.category,
-    requirement.minTurns ?? 'none',
     requirement.triggerTags.join(','),
     requirement.responseTags.join(','),
     requirement.conditionTags.join(','),

@@ -87,6 +87,43 @@ describe('OptcRepositoryService', () => {
     expect(result.map((record) => record.id)).toEqual([4101]);
   });
 
+  it('uses the default catalog sort for detailed character search when no explicit sort mode is provided', async () => {
+    const service = createRepositoryService([createCharacterRow({ id: 4102, type: 'DEX' })]);
+    const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
+
+    await service.searchDetailedCharacters({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      limit: 10,
+      offset: 0,
+    });
+
+    expect(selectAllMock).toHaveBeenCalledWith(
+      expect.stringContaining('ORDER BY c.stars DESC, c.id DESC'),
+      expect.any(Array),
+    );
+  });
+
+  it('uses newest-first sort for detailed character search when the picker requests it', async () => {
+    const service = createRepositoryService([createCharacterRow({ id: 4102, type: 'DEX' })]);
+    const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
+
+    await service.searchDetailedCharacters({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      sortMode: 'newest',
+      limit: 10,
+      offset: 0,
+    });
+
+    expect(selectAllMock).toHaveBeenCalledWith(
+      expect.stringContaining('ORDER BY c.id DESC'),
+      expect.any(Array),
+    );
+  });
+
   it('resolves ship thumbnail urls when the ship offline pack is installed', async () => {
     const service = createRepositoryService([], {
       manifest: createManifest({
@@ -156,17 +193,17 @@ function createRepositoryService(
 
   Object.assign(service, {
     getDatasetManifest: vi.fn().mockResolvedValue(options.manifest ?? createManifest()),
-    selectAll: vi.fn().mockImplementation((query: string) =>
-      Promise.resolve(query.includes('FROM ships') ? (options.shipRows ?? []) : rows),
-    ),
+    selectAll: vi
+      .fn()
+      .mockImplementation((query: string) =>
+        Promise.resolve(query.includes('FROM ships') ? (options.shipRows ?? []) : rows),
+      ),
   });
 
   return service;
 }
 
-function createManifest(
-  overrides: Partial<DatasetManifest> = {},
-): DatasetManifest {
+function createManifest(overrides: Partial<DatasetManifest> = {}): DatasetManifest {
   return {
     generatedAt: '2026-03-25T00:00:00.000Z',
     sourceVersion: 'test',

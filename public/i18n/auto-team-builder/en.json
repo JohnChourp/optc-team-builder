@@ -91,6 +91,23 @@
         "empty": "No favorite ships are currently saved on this device, so the builder can only return teams without a ship while this mode is enabled.",
         "withCount": "Limit manual ship confirmation and auto ship selection to your {{count}} saved favorite ships."
       }
+    },
+    "disableConfirm": {
+      "title": "Disable this requirement?",
+      "cancel": "Keep enabled",
+      "confirm": "Disable",
+      "favoritesOnly": {
+        "message": "Turn off favorite-only auto-fill and let any saved unit fill open slots?"
+      },
+      "favoriteShipsOnly": {
+        "message": "Turn off favorite ship mode and let any saved ship be used again?"
+      },
+      "uniqueNames": {
+        "message": "Turn off unique base character names and allow duplicate character families in the final team?"
+      },
+      "specialSupport": {
+        "message": "Turn off special support coverage and allow slots without readable special utility or team support?"
+      }
     }
   },
   "abilityRequirements": {
@@ -191,15 +208,6 @@
         "types": "types: {{values}}"
       }
     },
-    "candidates": {
-      "count": "{{count}} manual candidates",
-      "loading": "Loading manual candidates..."
-    },
-    "candidatePool": {
-      "default": "Manual picks stay available from the full character catalog. Search and slot rules still apply.",
-      "filtered": "Current build filters do not hide manual picks. They remain visible while the requirement chips update for context.",
-      "leaderOnly": "The active leader slot only shows characters with a readable captain ability."
-    },
     "sync": {
       "eyebrow": "Manual picks sync",
       "title": "Manual picks stay available independently from the current page filters"
@@ -213,15 +221,11 @@
     },
     "empty": {
       "loadingCandidates": "Loading manual candidates...",
-      "noCandidates": "No characters matched the current manual search or slot rules."
+      "noCandidates": "No characters matched the current manual search."
     },
     "actions": {
       "clearAll": "Clear all",
       "addChoice": "Add OR"
-    },
-    "applied": {
-      "class": "Class: {{value}}",
-      "type": "Type: {{value}}"
     },
     "slotSelection": {
       "activeSummary": "Active slot: {{role}} ({{count}} picks)",
@@ -240,8 +244,8 @@
         "sub4": "Sub 4"
       },
       "support": {
-        "leaderEmpty": "Accepts one or more leader-capable characters in preference order.",
-        "leaderSelected": "{{count}} OR leader picks in preference order.",
+        "leaderEmpty": "Accepts one or more characters in preference order for this leader slot.",
+        "leaderSelected": "{{count}} OR picks in preference order for this leader slot.",
         "subEmpty": "Accepts one or more characters. If left empty, the builder fills it automatically.",
         "subSelected": "{{count}} OR sub picks in preference order."
       }
@@ -259,13 +263,7 @@
       "characters": "Search by character name in exclude picks"
     },
     "candidates": {
-      "countCharacters": "{{count}} character candidates",
-      "countShips": "{{count}} ship candidates",
-      "loading": "Loading excluded candidates..."
-    },
-    "candidatePool": {
-      "default": "Exclude picks stay available from the full catalogs. Search stays local to this panel.",
-      "filtered": "Current build filters do not hide exclude picks. They remain visible while the requirement chips update for context."
+      "countShips": "{{count}} ship candidates"
     },
     "empty": {
       "loadingCharacters": "Loading excluded candidates...",
@@ -284,8 +282,7 @@
     "shipSupport": {
       "default": "Excluded ships are removed from both manual ship override and auto recommendation.",
       "withCount": "{{count}} ships are currently excluded.",
-      "favoritesOnly": "Only your {{count}} favorite ships are shown here while favorite ship mode is enabled.",
-      "favoriteShipsEmpty": "No favorite ships are saved yet, so this ship exclude list is currently empty."
+      "favoriteShipMode": "All ships stay visible here so you can exclude any of them. Favorite ship mode still only limits manual ship confirmation and auto recommendation."
     },
     "selectionSupport": {
       "removesLockedFrom": "Excluding this character will remove it from {{slots}}.",
@@ -293,6 +290,9 @@
     }
   },
   "ships": {
+    "actions": {
+      "selected": "Selected"
+    },
     "autoRecommendation": "Let the builder recommend the best ship for the selected crew.",
     "changeAction": "Change ship",
     "clearSelection": "Use auto recommendation",
@@ -312,6 +312,10 @@
     "openAction": "Choose ship",
     "pickerCopy": "Pick any ship from the full catalog, or leave it empty so the builder can recommend one. Excluded ships stay visible but locked.",
     "pickerTitle": "Manual ship selection",
+    "favoriteActions": {
+      "add": "Add ship to favorites",
+      "remove": "Remove ship from favorites"
+    },
     "searchPlaceholder": "Search ship by name or effect"
   },
   "progress": {
@@ -325,7 +329,8 @@
     "loadingCandidates": "Loading candidates from the local dataset...",
     "preparingSearch": "Preparing search permutations...",
     "scoringDefault": "Scoring the best local team candidates...",
-    "scoringWithTypes": "Scoring {{types}} team candidates..."
+    "scoringWithTypes": "Scoring {{types}} team candidates...",
+    "worstCaseEta": "Approx. worst-case to check the remaining fallbacks: {{duration}}"
   },
   "fallback": {
     "copy": "Your top-level filters stayed the same. The builder only relaxed the requirements below in order to return a team.",

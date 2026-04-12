@@ -1,24 +1,97 @@
 {
   "intro": {
-    "eyebrow": "Manual updates only",
-    "title": "This build expects local OPTC imports, not live scraping at runtime.",
-    "copy": "Source of truth is the optc-db GitHub repo. Run the import commands below whenever you want a fresh local dataset or image pack."
+    "eyebrow": "App controls",
+    "title": "Manage language, backups, and offline data from one place.",
+    "copy": "Use this page to change app preferences, back up device-local data, and inspect the installed OPTC packs on this device."
   },
   "language": {
     "label": "Language",
     "helper": "Change the app language live and keep it persisted on this device."
+  },
+  "management": {
+    "copy": "Back up and restore the device-local data used by favorite characters, favorite ships, saved teams, and saved enemies.",
+    "confirm": {
+      "deleteFavorites": "Delete all favorites? This does not affect your saved teams or saved enemies.",
+      "deleteFavoriteShips": "Delete all favorite ships? This does not affect your favorite characters, saved teams, or saved enemies.",
+      "deleteSavedEnemies": "Delete all saved enemies? This does not affect your favorites or saved teams.",
+      "deleteSavedTeams": "Delete all saved teams? This does not affect your favorites or saved enemies."
+    },
+    "counts": {
+      "favorites": "{{count}} favorites",
+      "favoriteShips": "{{count}} favorite ships",
+      "savedEnemies": "{{count}} saved enemies",
+      "savedTeams": "{{count}} saved teams"
+    },
+    "favorites": {
+      "copy": "Export or import your OPTCbx-compatible favorites file, or clear the full favorites list on this device.",
+      "deleteAll": "Delete all favorites",
+      "export": "Export favorites",
+      "feedback": {
+        "errorTitle": "Favorites import failed",
+        "successTitle": "Favorites import completed",
+        "warningTitle": "Favorites import completed with warnings"
+      },
+      "import": "Import favorites",
+      "processing": "Importing favorites...",
+      "title": "Favorites"
+    },
+    "favoriteShips": {
+      "copy": "Export all favorite ships as JSON, import a favorite ships backup, or clear the full favorite ships list from this device.",
+      "deleteAll": "Delete all ships",
+      "errors": {
+        "generic": "Favorite ships import failed.",
+        "invalidJson": "The selected ship backup is not valid JSON.",
+        "invalidPayload": "The selected ship backup does not match the expected favorite ships format.",
+        "unsupportedSchema": "The selected ship backup uses an unsupported schema version."
+      },
+      "export": "Export all ships",
+      "feedback": {
+        "errorTitle": "Favorite ships import failed",
+        "loadedFromFile": "Loaded from {{fileName}}.",
+        "stats": {
+          "added": "Added {{count}} new ships.",
+          "alreadyFavorited": "{{count}} ships were already favorited.",
+          "duplicates": "Ignored {{count}} duplicate ship entries.",
+          "invalid": "Ignored {{count}} invalid ship entries.",
+          "matched": "Matched {{count}} ships.",
+          "unknown": "Ignored {{count}} ships that are not available in this build."
+        },
+        "successTitle": "Favorite ships import completed",
+        "warningTitle": "Favorite ships import completed with warnings"
+      },
+      "import": "Import all ships",
+      "processing": "Importing favorite ships...",
+      "title": "Favorite Ships"
+    },
+    "savedEnemies": {
+      "copy": "Export all saved enemies as JSON, import a saved enemies backup, or delete every saved enemy from this device.",
+      "deleteAll": "Delete all saved enemies",
+      "export": "Export saved enemies",
+      "import": "Import saved enemies",
+      "processing": "Importing saved enemies...",
+      "title": "Saved Enemies"
+    },
+    "savedTeams": {
+      "copy": "Export all saved teams as JSON, import a saved teams backup, or delete every saved team from this device.",
+      "deleteAll": "Delete all saved teams",
+      "export": "Export saved teams",
+      "import": "Import saved teams",
+      "processing": "Importing saved teams...",
+      "title": "Saved Teams"
+    }
   },
   "packState": {
     "installed": "Installed",
     "notInstalled": "Not installed"
   },
   "sections": {
-    "commands": "Import commands",
-    "packStatus": "Pack status",
-    "releaseNote": "Release note"
+    "commands": "Dataset import commands",
+    "dataManagement": "Backups and transfers",
+    "packStatus": "Installed packs",
+    "releaseNote": "Important note"
   },
-  "title": "Offline Packs",
+  "title": "Settings",
   "release": {
-    "copy": "The technical pipeline is offline-ready, but redistribution of game art remains a separate legal/product decision before any public store release."
+    "copy": "The technical pipeline is ready for local offline use, but redistribution of game art remains a separate legal and product decision before any public store release."
   }
 }

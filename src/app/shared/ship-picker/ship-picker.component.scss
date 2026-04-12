@@ -27,7 +27,7 @@
 
 .ship-picker-body {
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
+  grid-template-columns: minmax(0, 1.22fr) minmax(250px, 0.78fr);
   gap: 16px;
   min-height: 0;
   padding: 18px 22px 0;
@@ -97,9 +97,10 @@
 
 .ship-picker-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
   min-height: 0;
+  max-height: min(72vh, 760px);
   overflow: auto;
   align-content: start;
 }
@@ -120,10 +121,10 @@
 
 .ship-picker-card__select {
   display: grid;
-  grid-template-columns: 88px minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 10px;
   width: 100%;
-  padding: 12px;
+  padding: 10px;
   padding-right: 54px;
   border: 0;
   border-radius: inherit;
@@ -176,8 +177,8 @@
 }
 
 .ship-picker-card__image {
-  width: 88px;
-  height: 88px;
+  width: 72px;
+  height: 72px;
 }
 
 .ship-picker-card__image--fallback,
@@ -295,12 +296,20 @@
   .ship-picker-body {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .ship-picker-grid {
+    max-height: min(60vh, 640px);
+  }
 }
 
 @media (max-width: 640px) {
   .ship-picker-head,
   .ship-picker-body {
     padding-inline: 16px;
+  }
+
+  .ship-picker-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .ship-picker-card {

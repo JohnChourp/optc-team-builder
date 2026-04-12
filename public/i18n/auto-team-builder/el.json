@@ -91,6 +91,23 @@
         "empty": "Δεν υπάρχουν αποθηκευμένα favorite ships σε αυτή τη συσκευή, οπότε με αυτό το mode ο builder μπορεί να επιστρέψει μόνο ομάδες χωρίς ship.",
         "withCount": "Περιορίζει το manual ship confirmation και το auto ship selection στα {{count}} αποθηκευμένα favorite ships σου."
       }
+    },
+    "disableConfirm": {
+      "title": "Θέλεις σίγουρα να το απενεργοποιήσεις;",
+      "cancel": "Κράτησέ το ενεργό",
+      "confirm": "Απενεργοποίησέ το",
+      "favoritesOnly": {
+        "message": "Να κλείσει το favorite-only auto-fill και να μπορούν να γεμίζουν τα κενά slots από οποιοδήποτε αποθηκευμένο unit;"
+      },
+      "favoriteShipsOnly": {
+        "message": "Να κλείσει το favorite ship mode και να μπορούν να χρησιμοποιηθούν ξανά όλα τα αποθηκευμένα ships;"
+      },
+      "uniqueNames": {
+        "message": "Να κλείσει ο κανόνας για μοναδικά base character names και να επιτρέπονται διπλές character families στην τελική ομάδα;"
+      },
+      "specialSupport": {
+        "message": "Να κλείσει το special support coverage και να επιτρέπονται slots χωρίς readable special utility ή team support;"
+      }
     }
   },
   "abilityRequirements": {
@@ -191,15 +208,6 @@
         "types": "types: {{values}}"
       }
     },
-    "candidates": {
-      "count": "{{count}} manual candidates",
-      "loading": "Γίνεται φόρτωση manual candidates..."
-    },
-    "candidatePool": {
-      "default": "Τα manual picks μένουν διαθέσιμα από όλο το character catalog. Ισχύουν μόνο search και slot rules.",
-      "filtered": "Τα current build filters δεν κρύβουν manual picks. Μένουν ορατά και τα requirement chips ενημερώνονται μόνο για context.",
-      "leaderOnly": "Το active leader slot δείχνει μόνο characters με readable captain ability."
-    },
     "sync": {
       "eyebrow": "Manual picks sync",
       "title": "Τα manual picks μένουν διαθέσιμα ανεξάρτητα από τα current page filters"
@@ -213,15 +221,11 @@
     },
     "empty": {
       "loadingCandidates": "Γίνεται φόρτωση manual candidates...",
-      "noCandidates": "Δεν βρέθηκαν χαρακτήρες για το current manual search ή για τους κανόνες του slot."
+      "noCandidates": "Δεν βρέθηκαν χαρακτήρες για το current manual search."
     },
     "actions": {
       "clearAll": "Καθαρισμός όλων",
       "addChoice": "Προσθήκη OR"
-    },
-    "applied": {
-      "class": "Class: {{value}}",
-      "type": "Type: {{value}}"
     },
     "slotSelection": {
       "activeSummary": "Active slot: {{role}} ({{count}} picks)",
@@ -240,8 +244,8 @@
         "sub4": "Sub 4"
       },
       "support": {
-        "leaderEmpty": "Δέχεται έναν ή περισσότερους leader-capable χαρακτήρες με σειρά προτίμησης.",
-        "leaderSelected": "{{count}} OR leader picks με σειρά προτίμησης.",
+        "leaderEmpty": "Δέχεται έναν ή περισσότερους χαρακτήρες με σειρά προτίμησης για αυτό το leader slot.",
+        "leaderSelected": "{{count}} OR picks με σειρά προτίμησης για αυτό το leader slot.",
         "subEmpty": "Δέχεται έναν ή περισσότερους χαρακτήρες. Αν μείνει κενό, ο builder το γεμίζει αυτόματα.",
         "subSelected": "{{count}} OR sub picks με σειρά προτίμησης."
       }
@@ -259,13 +263,7 @@
       "characters": "Search by character name in exclude picks"
     },
     "candidates": {
-      "countCharacters": "{{count}} character candidates",
-      "countShips": "{{count}} ship candidates",
-      "loading": "Γίνεται φόρτωση excluded candidates..."
-    },
-    "candidatePool": {
-      "default": "Τα exclude picks μένουν διαθέσιμα από όλο το catalog. Το search ισχύει μόνο μέσα σε αυτό το panel.",
-      "filtered": "Τα current build filters δεν κρύβουν exclude picks. Μένουν ορατά και τα requirement chips ενημερώνονται μόνο για context."
+      "countShips": "{{count}} ship candidates"
     },
     "empty": {
       "loadingCharacters": "Γίνεται φόρτωση excluded candidates...",
@@ -284,8 +282,7 @@
     "shipSupport": {
       "default": "Τα excluded ships βγαίνουν και από το manual ship override και από το auto recommendation.",
       "withCount": "{{count}} ships είναι excluded αυτή τη στιγμή.",
-      "favoritesOnly": "Εδώ εμφανίζονται μόνο τα {{count}} favorite ships σου όσο είναι ενεργό το favorite ship mode.",
-      "favoriteShipsEmpty": "Δεν υπάρχουν ακόμα favorite ships, οπότε αυτή η λίστα ship excludes είναι προσωρινά κενή."
+      "favoriteShipMode": "Εδώ παραμένουν ορατά όλα τα ships ώστε να μπορείς να κάνεις exclude οποιοδήποτε. Το favorite ship mode συνεχίζει να περιορίζει μόνο το manual ship confirmation και το auto recommendation."
     },
     "selectionSupport": {
       "removesLockedFrom": "Αν κάνεις exclude αυτόν τον character, θα αφαιρεθεί από τα {{slots}}.",
@@ -293,6 +290,9 @@
     }
   },
   "ships": {
+    "actions": {
+      "selected": "Επιλεγμένο"
+    },
     "autoRecommendation": "Άφησε τον builder να προτείνει το καλύτερο ship για την επιλεγμένη ομάδα.",
     "changeAction": "Αλλαγή ship",
     "clearSelection": "Χρήση auto recommendation",
@@ -312,6 +312,10 @@
     "openAction": "Επιλογή ship",
     "pickerCopy": "Διάλεξε οποιοδήποτε ship από όλο το catalog ή άφησέ το κενό ώστε ο builder να προτείνει ship. Τα excluded ships μένουν ορατά αλλά κλειδωμένα.",
     "pickerTitle": "Manual ship επιλογή",
+    "favoriteActions": {
+      "add": "Προσθήκη ship στα favorites",
+      "remove": "Αφαίρεση ship από τα favorites"
+    },
     "searchPlaceholder": "Search ship by name or effect"
   },
   "progress": {
@@ -325,7 +329,8 @@
     "loadingCandidates": "Φόρτωση candidates από το local dataset...",
     "preparingSearch": "Προετοιμασία search permutations...",
     "scoringDefault": "Γίνεται scoring των καλύτερων local team candidates...",
-    "scoringWithTypes": "Γίνεται scoring για team candidates {{types}}..."
+    "scoringWithTypes": "Γίνεται scoring για team candidates {{types}}...",
+    "worstCaseEta": "Περίπου worst-case χρόνος για να ελεγχθούν τα υπόλοιπα fallbacks: {{duration}}"
   },
   "fallback": {
     "copy": "Τα πάνω filters έμειναν όπως τα διάλεξες. Η ομάδα χτίστηκε αφού αγνοήθηκαν μόνο τα παρακάτω requirements.",

@@ -27,6 +27,7 @@ describe('enemy-mechanic-draft utils', () => {
           mechanicKey: 'enemy_barrier',
           category: 'enemyDefense',
           minTurns: 3,
+          requiredCharacterCount: 2,
           triggerTags: [],
           responseTags: [],
           conditionTags: [],
@@ -47,7 +48,41 @@ describe('enemy-mechanic-draft utils', () => {
         abilityKey: 'remove_enemy_barrier',
         minTurns: 3,
         slotTokens: [],
-        requiredCharacterCount: 1,
+        requiredCharacterCount: 2,
+      },
+    ]);
+  });
+
+  it('normalizes duplicate mechanics using the maximum turns and count', () => {
+    expect(
+      deriveAbilityRequirementsFromEnemyMechanics([
+        {
+          mechanicKey: 'crew_paralysis',
+          category: 'crewDebuff',
+          minTurns: 4,
+          requiredCharacterCount: 2,
+          triggerTags: [],
+          responseTags: [],
+          conditionTags: [],
+          derivedAbilityKey: 'remove_paralysis',
+        },
+        {
+          mechanicKey: 'crew_paralysis',
+          category: 'crewDebuff',
+          minTurns: 6,
+          requiredCharacterCount: 3,
+          triggerTags: [],
+          responseTags: [],
+          conditionTags: [],
+          derivedAbilityKey: 'remove_paralysis',
+        },
+      ]),
+    ).toEqual([
+      {
+        abilityKey: 'remove_paralysis',
+        minTurns: 6,
+        slotTokens: [],
+        requiredCharacterCount: 3,
       },
     ]);
   });
