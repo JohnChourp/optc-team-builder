@@ -1,16 +1,27 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, computed, signal } from "@angular/core";
-import { TranslocoDirective, TranslocoPipe } from "@jsverse/transloco";
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+  computed,
+  signal,
+} from '@angular/core';
+import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
   IonButton,
   IonButtons,
+  IonContent,
   IonFooter,
+  IonHeader,
   IonIcon,
   IonInput,
   IonModal,
   IonSearchbar,
   IonToolbar,
-} from "@ionic/angular/standalone";
-import { closeOutline, optionsOutline } from "ionicons/icons";
+} from '@ionic/angular/standalone';
+import { closeOutline, optionsOutline } from 'ionicons/icons';
 
 import {
   applyCatalogAbilityToDraft,
@@ -21,8 +32,8 @@ import {
   resolvePositiveInteger,
   type AbilityRequirementDraft,
   type AbilityRequirementMiniBadge,
-} from "../../core/services/ability-requirement-draft.utils";
-import { type AutoBuildAbilityCatalogItem } from "../../core/models/auto-team-builder-ability.models";
+} from '../../core/services/ability-requirement-draft.utils';
+import { type AutoBuildAbilityCatalogItem } from '../../core/models/auto-team-builder-ability.models';
 
 interface AbilityRequirementCatalogTileView {
   item: AutoBuildAbilityCatalogItem;
@@ -44,12 +55,14 @@ interface AbilityRequirementSelectedRowView {
 }
 
 @Component({
-  selector: "app-ability-requirement-picker",
+  selector: 'app-ability-requirement-picker',
   standalone: true,
   imports: [
     IonButton,
     IonButtons,
+    IonContent,
     IonFooter,
+    IonHeader,
     IonIcon,
     IonInput,
     IonModal,
@@ -58,15 +71,15 @@ interface AbilityRequirementSelectedRowView {
     TranslocoDirective,
     TranslocoPipe,
   ],
-  templateUrl: "./ability-requirement-picker.component.html",
-  styleUrl: "./ability-requirement-picker.component.scss",
+  templateUrl: './ability-requirement-picker.component.html',
+  styleUrl: './ability-requirement-picker.component.scss',
 })
 export class AbilityRequirementPickerComponent implements OnChanges {
-  private dismissReason: "save" | "cancel" | null = null;
+  private dismissReason: 'save' | 'cancel' | null = null;
 
   @Input({ required: true }) public isOpen = false;
-  @Input({ required: true }) public title = "";
-  @Input({ required: true }) public copy = "";
+  @Input({ required: true }) public title = '';
+  @Input({ required: true }) public copy = '';
   @Input({ required: true }) public drafts: AbilityRequirementDraft[] = [];
   @Input({ required: true }) public catalogItems: AutoBuildAbilityCatalogItem[] = [];
   @Output() public readonly dismiss = new EventEmitter<void>();
@@ -74,7 +87,7 @@ export class AbilityRequirementPickerComponent implements OnChanges {
 
   public readonly closeIcon = closeOutline;
   public readonly pickerIcon = optionsOutline;
-  public readonly searchTerm = signal("");
+  public readonly searchTerm = signal('');
   public readonly workingDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly catalogItemsState = signal<AutoBuildAbilityCatalogItem[]>([]);
   public readonly selectedDraftCounts = computed(() => {
@@ -112,8 +125,8 @@ export class AbilityRequirementPickerComponent implements OnChanges {
         visual: resolveAbilityRequirementVisual(item.key),
         isSelected: selectedCounts.has(item.key),
         selectedCount: selectedCounts.get(item.key) ?? 0,
-        supportsSelectableDebuff: (item.availableCoverageModes ?? ["explicit"]).includes(
-          "selectedDebuff",
+        supportsSelectableDebuff: (item.availableCoverageModes ?? ['explicit']).includes(
+          'selectedDebuff',
         ),
         painSelectableBadges: resolveAbilityRequirementPainSelectableDebuffBadges(item.key),
       }));
@@ -135,19 +148,19 @@ export class AbilityRequirementPickerComponent implements OnChanges {
   );
 
   public ngOnChanges(changes: SimpleChanges): void {
-    if (changes["catalogItems"]) {
+    if (changes['catalogItems']) {
       this.catalogItemsState.set(this.catalogItems);
     }
 
-    if (changes["isOpen"] && this.isOpen) {
-      console.log("AbilityRequirementPickerComponent component");
-      this.searchTerm.set("");
+    if (changes['isOpen'] && this.isOpen) {
+      console.log('AbilityRequirementPickerComponent component');
+      this.searchTerm.set('');
       this.workingDrafts.set(cloneAbilityRequirementDrafts(this.drafts));
     }
   }
 
   public onSearchChange(event: CustomEvent<{ value?: string | null }>): void {
-    this.searchTerm.set((event.detail.value ?? "").trimStart());
+    this.searchTerm.set((event.detail.value ?? '').trimStart());
   }
 
   public onCatalogItemSelect(item: AutoBuildAbilityCatalogItem): void {
@@ -157,7 +170,10 @@ export class AbilityRequirementPickerComponent implements OnChanges {
       return;
     }
 
-    this.workingDrafts.update((currentDrafts) => [...currentDrafts, createAbilityRequirementDraft(item)]);
+    this.workingDrafts.update((currentDrafts) => [
+      ...currentDrafts,
+      createAbilityRequirementDraft(item),
+    ]);
   }
 
   public clearAll(): void {
@@ -213,12 +229,12 @@ export class AbilityRequirementPickerComponent implements OnChanges {
   }
 
   public save(): void {
-    this.dismissReason = "save";
+    this.dismissReason = 'save';
     this.saveDrafts.emit(cloneAbilityRequirementDrafts(this.workingDrafts()));
   }
 
   public cancel(): void {
-    this.dismissReason = "cancel";
+    this.dismissReason = 'cancel';
     this.dismiss.emit();
   }
 
@@ -254,7 +270,7 @@ export class AbilityRequirementPickerComponent implements OnChanges {
   private resolveInputEventValue(
     event: CustomEvent<{ value?: string | number | null }> | Event,
   ): string | number | null | undefined {
-    if ("detail" in event && typeof event.detail === "object" && event.detail !== null) {
+    if ('detail' in event && typeof event.detail === 'object' && event.detail !== null) {
       return event.detail.value;
     }
 

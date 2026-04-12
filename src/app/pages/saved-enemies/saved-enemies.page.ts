@@ -3,8 +3,10 @@ import { RouterLink } from '@angular/router';
 import { type ViewWillEnter } from '@ionic/angular';
 import {
   IonButton,
+  IonButtons,
   IonCheckbox,
   IonContent,
+  IonFooter,
   IonHeader,
   IonIcon,
   IonInput,
@@ -17,10 +19,7 @@ import {
   IonToolbar,
 } from '@ionic/angular/standalone';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
-import {
-  addCircleOutline,
-  closeOutline,
-} from 'ionicons/icons';
+import { addCircleOutline, closeOutline } from 'ionicons/icons';
 
 import { AUTO_TEAM_BUILDER_TYPES } from '../../core/models/auto-team-builder.models';
 import {
@@ -89,8 +88,10 @@ interface SavedEnemyMechanicSummaryChipView {
   standalone: true,
   imports: [
     IonButton,
+    IonButtons,
     IonCheckbox,
     IonContent,
+    IonFooter,
     IonHeader,
     IonIcon,
     IonInput,
@@ -125,8 +126,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     const selectedEnemyIdSet = this.selectedEnemyIdSet();
 
     return (
-      savedEnemies.length > 0 &&
-      savedEnemies.every((enemy) => selectedEnemyIdSet.has(enemy.id))
+      savedEnemies.length > 0 && savedEnemies.every((enemy) => selectedEnemyIdSet.has(enemy.id))
     );
   });
   public readonly editorOpen = signal(false);
@@ -303,10 +303,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     return this.selectedEnemyIdSet().has(enemyId);
   }
 
-  public onEnemySelectionChange(
-    enemyId: string,
-    event: CustomEvent<{ checked: boolean }>,
-  ): void {
+  public onEnemySelectionChange(enemyId: string, event: CustomEvent<{ checked: boolean }>): void {
     this.setEnemySelection(enemyId, event.detail.checked);
   }
 

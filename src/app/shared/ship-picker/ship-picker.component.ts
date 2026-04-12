@@ -1,9 +1,20 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, computed, signal } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+  computed,
+  signal,
+} from '@angular/core';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
   IonButton,
   IonButtons,
+  IonContent,
   IonFooter,
+  IonHeader,
   IonIcon,
   IonModal,
   IonSearchbar,
@@ -32,7 +43,9 @@ interface ShipPickerCardView {
   imports: [
     IonButton,
     IonButtons,
+    IonContent,
     IonFooter,
+    IonHeader,
     IonIcon,
     IonModal,
     IonSearchbar,
@@ -175,10 +188,7 @@ export class ShipPickerComponent implements OnChanges {
     event.preventDefault();
     event.stopPropagation();
 
-    if (
-      shipId === null ||
-      this.blockedFavoriteShipIdsState().includes(shipId)
-    ) {
+    if (shipId === null || this.blockedFavoriteShipIdsState().includes(shipId)) {
       return;
     }
 
@@ -238,7 +248,7 @@ export class ShipPickerComponent implements OnChanges {
           ? this.buildShipSubtitle(ship.description)
           : ship.description
         : this.emptySelectionCopy,
-      supportLabel: shipId !== null ? this.shipSupportLabelsState()[shipId] ?? null : null,
+      supportLabel: shipId !== null ? (this.shipSupportLabelsState()[shipId] ?? null) : null,
       thumbUrl: ship?.thumbUrl ?? null,
     };
   }

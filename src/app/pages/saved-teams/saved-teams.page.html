@@ -174,61 +174,73 @@
       (didDismiss)="closeEditModal()"
     >
       <ng-template>
-        <div class="edit-modal-shell">
-          <div class="import-modal-head">
-            <div>
-              <div class="section-label">{{ t('edit.eyebrow') }}</div>
-              <h2>{{ t('edit.title') }}</h2>
-              <p>{{ t('edit.copy') }}</p>
+        <ion-header class="edit-modal-header ion-no-border">
+          <ion-toolbar>
+            <div class="import-modal-head">
+              <div>
+                <div class="section-label">{{ t('edit.eyebrow') }}</div>
+                <h2>{{ t('edit.title') }}</h2>
+                <p>{{ t('edit.copy') }}</p>
+              </div>
             </div>
 
-            <ion-button
-              fill="clear"
-              color="light"
-              [disabled]="savingEdit()"
-              (click)="closeEditModal()"
-            >
-              <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
-            </ion-button>
-          </div>
+            <ion-buttons slot="end">
+              <ion-button
+                fill="clear"
+                color="light"
+                [disabled]="savingEdit()"
+                (click)="closeEditModal()"
+              >
+                <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
 
-          <ion-input
-            [label]="t('edit.teamNameLabel')"
-            labelPlacement="stacked"
-            fill="outline"
-            [value]="editTeamName()"
-            [disabled]="savingEdit()"
-            (ionInput)="onEditTeamNameChange($event)"
-          ></ion-input>
-
-          <ion-textarea
-            [label]="t('edit.notesLabel')"
-            labelPlacement="stacked"
-            fill="outline"
-            autoGrow="true"
-            [value]="editNotes()"
-            [disabled]="savingEdit()"
-            (ionInput)="onEditNotesChange($event)"
-          ></ion-textarea>
-
-          <div class="import-modal-actions">
-            <ion-button
+        <ion-content class="edit-modal-content">
+          <div class="edit-modal-shell">
+            <ion-input
+              [label]="t('edit.teamNameLabel')"
+              labelPlacement="stacked"
               fill="outline"
-              color="light"
+              [value]="editTeamName()"
               [disabled]="savingEdit()"
-              (click)="closeEditModal()"
-            >
-              {{ 'common.actions.cancel' | transloco }}
-            </ion-button>
-            <ion-button
-              color="warning"
-              [disabled]="savingEdit() || !editingTeam()"
-              (click)="saveEditedTeam()"
-            >
-              {{ 'common.actions.save' | transloco }}
-            </ion-button>
+              (ionInput)="onEditTeamNameChange($event)"
+            ></ion-input>
+
+            <ion-textarea
+              [label]="t('edit.notesLabel')"
+              labelPlacement="stacked"
+              fill="outline"
+              autoGrow="true"
+              [value]="editNotes()"
+              [disabled]="savingEdit()"
+              (ionInput)="onEditNotesChange($event)"
+            ></ion-textarea>
           </div>
-        </div>
+        </ion-content>
+
+        <ion-footer class="edit-modal-footer">
+          <ion-toolbar>
+            <div class="import-modal-actions">
+              <ion-button
+                fill="outline"
+                color="light"
+                [disabled]="savingEdit()"
+                (click)="closeEditModal()"
+              >
+                {{ 'common.actions.cancel' | transloco }}
+              </ion-button>
+              <ion-button
+                color="warning"
+                [disabled]="savingEdit() || !editingTeam()"
+                (click)="saveEditedTeam()"
+              >
+                {{ 'common.actions.save' | transloco }}
+              </ion-button>
+            </div>
+          </ion-toolbar>
+        </ion-footer>
       </ng-template>
     </ion-modal>
   </ion-content>

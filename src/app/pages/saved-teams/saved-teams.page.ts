@@ -3,8 +3,10 @@ import { RouterLink } from '@angular/router';
 import { type ViewWillEnter } from '@ionic/angular';
 import {
   IonButton,
+  IonButtons,
   IonCheckbox,
   IonContent,
+  IonFooter,
   IonHeader,
   IonIcon,
   IonInput,
@@ -15,12 +17,13 @@ import {
   IonToolbar,
 } from '@ionic/angular/standalone';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
-import {
-  boatOutline,
-  closeOutline,
-} from 'ionicons/icons';
+import { boatOutline, closeOutline } from 'ionicons/icons';
 
-import { type CharacterListItem, type SavedTeam, type ShipRecord } from '../../core/models/optc.models';
+import {
+  type CharacterListItem,
+  type SavedTeam,
+  type ShipRecord,
+} from '../../core/models/optc.models';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
@@ -43,8 +46,10 @@ interface SavedTeamPreviewCard {
   standalone: true,
   imports: [
     IonButton,
+    IonButtons,
     IonCheckbox,
     IonContent,
+    IonFooter,
     IonHeader,
     IonIcon,
     IonInput,

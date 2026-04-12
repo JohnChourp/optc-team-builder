@@ -1,21 +1,45 @@
-.enemy-mechanic-picker-shell {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  height: 100%;
+.enemy-mechanic-picker-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   color: #f8fbff;
 }
 
+.enemy-mechanic-picker-header ion-toolbar {
+  --background: transparent;
+  --border-width: 0;
+  --min-height: auto;
+  --padding-start: 22px;
+  --padding-end: 12px;
+  --padding-top: 22px;
+  --padding-bottom: 0;
+}
+
+.enemy-mechanic-picker-header ion-buttons {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.enemy-mechanic-picker-content {
+  --background: transparent;
+}
+
+.enemy-mechanic-picker-content::part(scroll) {
+  min-height: 100%;
+}
+
+.enemy-mechanic-picker-content-shell {
+  display: grid;
+  min-height: 100%;
+  padding: 18px 22px 0;
+}
+
 .enemy-mechanic-picker-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 22px 22px 0;
+  min-width: 0;
+  padding-inline-end: 56px;
 }
 
 .enemy-mechanic-picker-head h2 {
   margin: 12px 0 8px;
-  font-family: "Bricolage Grotesque", sans-serif;
+  font-family: 'Bricolage Grotesque', sans-serif;
   font-size: clamp(1.7rem, 4vw, 2.2rem);
 }
 
@@ -29,7 +53,6 @@
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
   gap: 16px;
-  padding: 18px 22px 0;
   min-height: 0;
 }
 
@@ -187,35 +210,35 @@
   letter-spacing: 0.08em;
 }
 
-.enemy-mechanic-picker-tile__badge[data-tone="gold"] {
+.enemy-mechanic-picker-tile__badge[data-tone='gold'] {
   color: #f5c84c;
 }
 
-.enemy-mechanic-picker-tile__badge[data-tone="red"] {
+.enemy-mechanic-picker-tile__badge[data-tone='red'] {
   color: #ff9d81;
 }
 
-.enemy-mechanic-picker-tile__badge[data-tone="teal"] {
+.enemy-mechanic-picker-tile__badge[data-tone='teal'] {
   color: #65d4d4;
 }
 
-.enemy-mechanic-picker-tile__badge[data-tone="blue"] {
+.enemy-mechanic-picker-tile__badge[data-tone='blue'] {
   color: #7eb9ff;
 }
 
-.enemy-mechanic-picker-tile__badge[data-tone="violet"] {
+.enemy-mechanic-picker-tile__badge[data-tone='violet'] {
   color: #c4a3ff;
 }
 
-.enemy-mechanic-picker-tile__badge[data-tone="green"] {
+.enemy-mechanic-picker-tile__badge[data-tone='green'] {
   color: #8ee38e;
 }
 
-.enemy-mechanic-picker-tile__badge[data-tone="orange"] {
+.enemy-mechanic-picker-tile__badge[data-tone='orange'] {
   color: #ffba74;
 }
 
-.enemy-mechanic-picker-tile__badge[data-tone="neutral"] {
+.enemy-mechanic-picker-tile__badge[data-tone='neutral'] {
   color: rgba(248, 251, 255, 0.76);
 }
 
@@ -324,12 +347,14 @@
 }
 
 .enemy-mechanic-picker-footer {
-  padding: 0 14px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .enemy-mechanic-picker-footer ion-toolbar {
   --background: transparent;
   --border-color: transparent;
+  --border-width: 0;
+  padding: 12px 18px 14px;
 }
 
 .enemy-mechanic-picker-footer__actions {
@@ -341,5 +366,26 @@
 @media (max-width: 900px) {
   .enemy-mechanic-picker-body {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .enemy-mechanic-picker-header ion-toolbar {
+    --padding-start: 16px;
+    --padding-end: 10px;
+    --padding-top: 18px;
+  }
+
+  .enemy-mechanic-picker-content-shell {
+    padding-inline: 16px;
+  }
+
+  .enemy-mechanic-picker-head {
+    padding-inline-end: 48px;
+  }
+
+  .enemy-mechanic-picker-footer ion-toolbar {
+    padding-inline: 12px;
+    padding-bottom: 14px;
   }
 }

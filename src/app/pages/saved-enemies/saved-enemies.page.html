@@ -216,432 +216,444 @@
       (didDismiss)="closeEditor()"
     >
       <ng-template>
-        <div class="editor-modal-shell">
-          <div class="editor-modal-head">
-            <div>
-              <div class="section-label">
-                {{ editingEnemy() ? t('editor.editEyebrow') : t('editor.createEyebrow') }}
-              </div>
-              <h2>{{ editingEnemy() ? t('editor.editTitle') : t('editor.createTitle') }}</h2>
-              <p>{{ t('editor.copy') }}</p>
-            </div>
-
-            <ion-button
-              fill="clear"
-              color="light"
-              [disabled]="savingEnemy()"
-              (click)="closeEditor()"
-            >
-              <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
-            </ion-button>
-          </div>
-
-          <ion-input
-            [label]="t('editor.nameLabel')"
-            labelPlacement="stacked"
-            fill="outline"
-            [value]="enemyName()"
-            [disabled]="savingEnemy()"
-            (ionInput)="onEnemyNameChange($event)"
-          ></ion-input>
-
-          <ion-textarea
-            [label]="t('editor.notesLabel')"
-            labelPlacement="stacked"
-            fill="outline"
-            autoGrow="true"
-            [value]="enemyNotes()"
-            [disabled]="savingEnemy()"
-            (ionInput)="onEnemyNotesChange($event)"
-          ></ion-textarea>
-
-          <input
-            #enemyImageInput
-            type="file"
-            accept="image/*"
-            hidden
-            (change)="onEnemyImageSelected($event, enemyImageInput)"
-          />
-
-          <section class="enemy-import-card">
-            <div class="section-head section-head--editor">
+        <ion-header class="editor-modal-header ion-no-border">
+          <ion-toolbar>
+            <div class="editor-modal-head">
               <div>
-                <h3>{{ t('editor.paste.title') }}</h3>
-                <span>{{ t('editor.paste.copy') }}</span>
-              </div>
-
-              <div class="card-actions">
-                <ion-button
-                  fill="outline"
-                  color="light"
-                  size="small"
-                  [disabled]="savingEnemy()"
-                  (click)="parseEnemyText()"
-                >
-                  {{ t('editor.paste.actions.parse') }}
-                </ion-button>
-                <ion-button
-                  fill="outline"
-                  color="warning"
-                  size="small"
-                  [disabled]="savingEnemy() || !enemyTextParseResult()"
-                  (click)="applyParsedEnemyText()"
-                >
-                  {{ t('editor.paste.actions.apply') }}
-                </ion-button>
+                <div class="section-label">
+                  {{ editingEnemy() ? t('editor.editEyebrow') : t('editor.createEyebrow') }}
+                </div>
+                <h2>{{ editingEnemy() ? t('editor.editTitle') : t('editor.createTitle') }}</h2>
+                <p>{{ t('editor.copy') }}</p>
               </div>
             </div>
+
+            <ion-buttons slot="end">
+              <ion-button
+                fill="clear"
+                color="light"
+                [disabled]="savingEnemy()"
+                (click)="closeEditor()"
+              >
+                <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+
+        <ion-content class="editor-modal-content">
+          <div class="editor-modal-shell">
+            <ion-input
+              [label]="t('editor.nameLabel')"
+              labelPlacement="stacked"
+              fill="outline"
+              [value]="enemyName()"
+              [disabled]="savingEnemy()"
+              (ionInput)="onEnemyNameChange($event)"
+            ></ion-input>
 
             <ion-textarea
-              [label]="t('editor.paste.label')"
+              [label]="t('editor.notesLabel')"
               labelPlacement="stacked"
               fill="outline"
               autoGrow="true"
-              rows="8"
-              [value]="enemyTextPasteValue()"
+              [value]="enemyNotes()"
               [disabled]="savingEnemy()"
-              [placeholder]="t('editor.paste.placeholder')"
-              (ionInput)="onEnemyPasteTextChange($event)"
+              (ionInput)="onEnemyNotesChange($event)"
             ></ion-textarea>
 
-            @if (enemyTextParseFeedback(); as feedback) {
-              <div
-                class="import-feedback"
-                [class.import-feedback--warning]="feedback.tone === 'warning'"
-                [class.import-feedback--success]="feedback.tone === 'success'"
-              >
+            <input
+              #enemyImageInput
+              type="file"
+              accept="image/*"
+              hidden
+              (change)="onEnemyImageSelected($event, enemyImageInput)"
+            />
+
+            <section class="enemy-import-card">
+              <div class="section-head section-head--editor">
                 <div>
-                  <strong>{{ feedback.title }}</strong>
-                  @for (detail of feedback.details; track $index) {
-                    <span>{{ detail }}</span>
-                  }
+                  <h3>{{ t('editor.paste.title') }}</h3>
+                  <span>{{ t('editor.paste.copy') }}</span>
+                </div>
+
+                <div class="card-actions">
+                  <ion-button
+                    fill="outline"
+                    color="light"
+                    size="small"
+                    [disabled]="savingEnemy()"
+                    (click)="parseEnemyText()"
+                  >
+                    {{ t('editor.paste.actions.parse') }}
+                  </ion-button>
+                  <ion-button
+                    fill="outline"
+                    color="warning"
+                    size="small"
+                    [disabled]="savingEnemy() || !enemyTextParseResult()"
+                    (click)="applyParsedEnemyText()"
+                  >
+                    {{ t('editor.paste.actions.apply') }}
+                  </ion-button>
                 </div>
               </div>
-            }
 
-            @if (enemyTextParseErrorMessage()) {
-              <div class="import-feedback import-feedback--error">
-                <span>{{ enemyTextParseErrorMessage() }}</span>
-              </div>
-            }
-
-            @if (enemyTextParseWarningMessages().length) {
-              <div class="enemy-text-warning-list">
-                <strong>{{ t('editor.paste.warnings.title') }}</strong>
-                <ul>
-                  @for (warningMessage of enemyTextParseWarningMessages(); track $index) {
-                    <li>{{ warningMessage }}</li>
-                  }
-                </ul>
-              </div>
-            }
-          </section>
-
-          <section class="enemy-image-card">
-            <div class="section-head section-head--editor">
-              <div>
-                <h3>{{ t('editor.image.title') }}</h3>
-                <span>{{ t('editor.image.copy') }}</span>
-              </div>
-              <div class="enemy-image-actions">
-                <ion-button
-                  fill="outline"
-                  color="light"
-                  size="small"
-                  [disabled]="savingEnemy() || processingEnemyImage()"
-                  (click)="openCharacterImagePicker()"
-                >
-                  {{ t('editor.image.chooseCharacter') }}
-                </ion-button>
-                <ion-button
-                  fill="outline"
-                  color="warning"
-                  size="small"
-                  [disabled]="savingEnemy() || processingEnemyImage()"
-                  (click)="openEnemyImagePicker(enemyImageInput)"
-                >
-                  {{ enemyImageDataUrl() ? t('editor.image.replace') : t('editor.image.upload') }}
-                </ion-button>
-                <ion-button
-                  fill="clear"
-                  color="light"
-                  size="small"
-                  [disabled]="savingEnemy() || processingEnemyImage() || !enemyImageDataUrl()"
-                  (click)="removeEnemyImage()"
-                >
-                  {{ t('editor.image.remove') }}
-                </ion-button>
-              </div>
-            </div>
-
-            @if (enemyImageDataUrl()) {
-              <div class="enemy-image-preview">
-                <img
-                  [src]="enemyImageDataUrl()!"
-                  [alt]="enemyName() || t('editor.image.previewAlt')"
-                />
-              </div>
-            } @else {
-              <p class="editor-empty-copy">{{ t('editor.image.empty') }}</p>
-            }
-
-            @if (processingEnemyImage()) {
-              <p class="enemy-image-status">
-                {{ t('editor.image.processing') }}
-              </p>
-            }
-
-            @if (enemyImageErrorMessage()) {
-              <p class="enemy-image-error">
-                {{ enemyImageErrorMessage() }}
-              </p>
-            }
-          </section>
-
-          <app-character-image-picker
-            [isOpen]="characterImagePickerOpen()"
-            [title]="t('editor.image.picker.title')"
-            [copy]="t('editor.image.picker.copy')"
-            [applyingSelection]="processingEnemyImage()"
-            (dismiss)="closeCharacterImagePicker()"
-            (saveSelection)="applyCharacterImageSelection($event)"
-          ></app-character-image-picker>
-
-          <div class="editor-grid">
-            <div class="editor-field">
-              <span>{{ t('editor.typesLabel') }}</span>
-              <ion-select
-                interface="popover"
-                [multiple]="true"
+              <ion-textarea
+                [label]="t('editor.paste.label')"
+                labelPlacement="stacked"
                 fill="outline"
-                [placeholder]="t('editor.typesPlaceholder')"
-                [value]="selectedTypes()"
-                (ionChange)="onTypeChange($event)"
-              >
-                @for (item of availableTypes; track item) {
-                  <ion-select-option [value]="item">
-                    {{ item }}
-                  </ion-select-option>
-                }
-              </ion-select>
-              <div class="editor-field-actions">
-                <ion-button
-                  fill="clear"
-                  color="warning"
-                  size="small"
-                  [disabled]="savingEnemy()"
-                  (click)="selectAllTypes()"
+                autoGrow="true"
+                rows="8"
+                [value]="enemyTextPasteValue()"
+                [disabled]="savingEnemy()"
+                [placeholder]="t('editor.paste.placeholder')"
+                (ionInput)="onEnemyPasteTextChange($event)"
+              ></ion-textarea>
+
+              @if (enemyTextParseFeedback(); as feedback) {
+                <div
+                  class="import-feedback"
+                  [class.import-feedback--warning]="feedback.tone === 'warning'"
+                  [class.import-feedback--success]="feedback.tone === 'success'"
                 >
-                  {{ selectAllTypesButtonLabel() }}
-                </ion-button>
-              </div>
-            </div>
+                  <div>
+                    <strong>{{ feedback.title }}</strong>
+                    @for (detail of feedback.details; track $index) {
+                      <span>{{ detail }}</span>
+                    }
+                  </div>
+                </div>
+              }
 
-            <div class="editor-field">
-              <span>{{ t('editor.classesLabel') }}</span>
-              <ion-select
-                interface="popover"
-                [multiple]="true"
-                fill="outline"
-                [placeholder]="t('editor.classesPlaceholder')"
-                [value]="selectedClasses()"
-                (ionChange)="onClassChange($event)"
-              >
-                @for (item of availableClasses(); track item) {
-                  <ion-select-option [value]="item">
-                    {{ item }}
-                  </ion-select-option>
-                }
-              </ion-select>
-              <div class="editor-field-actions">
-                <ion-button
-                  fill="clear"
-                  color="warning"
-                  size="small"
-                  [disabled]="savingEnemy() || availableClasses().length === 0"
-                  (click)="selectAllClasses()"
-                >
-                  {{ selectAllClassesButtonLabel() }}
-                </ion-button>
-              </div>
-            </div>
-          </div>
+              @if (enemyTextParseErrorMessage()) {
+                <div class="import-feedback import-feedback--error">
+                  <span>{{ enemyTextParseErrorMessage() }}</span>
+                </div>
+              }
 
-          <section class="ability-card">
-            <div class="section-head section-head--editor">
-              <div>
-                <h3>{{ t('editor.enemyMechanics.title') }}</h3>
-                <span>{{ t('editor.enemyMechanics.copy') }}</span>
-              </div>
+              @if (enemyTextParseWarningMessages().length) {
+                <div class="enemy-text-warning-list">
+                  <strong>{{ t('editor.paste.warnings.title') }}</strong>
+                  <ul>
+                    @for (warningMessage of enemyTextParseWarningMessages(); track $index) {
+                      <li>{{ warningMessage }}</li>
+                    }
+                  </ul>
+                </div>
+              }
+            </section>
 
-              <div class="card-actions">
-                <ion-button
-                  fill="outline"
-                  color="warning"
-                  size="small"
-                  [disabled]="savingEnemy()"
-                  (click)="openEnemyMechanicPicker()"
-                >
-                  {{ t('editor.enemyMechanics.actions.openPicker') }}
-                </ion-button>
-                <ion-button
-                  fill="clear"
-                  color="light"
-                  size="small"
-                  [disabled]="savingEnemy() || !enemyMechanicDrafts().length"
-                  (click)="clearEnemyMechanics()"
-                >
-                  {{ t('editor.enemyMechanics.actions.clear') }}
-                </ion-button>
-              </div>
-            </div>
-
-            @if (!enemyMechanicSummaryChips().length) {
-              <p class="editor-empty-copy">
-                {{ t('editor.enemyMechanics.empty') }}
-              </p>
-            }
-
-            @if (enemyMechanicSummaryChips().length) {
-              <div class="selected-values-row">
-                @for (chip of enemyMechanicSummaryChips(); track chip.draftId) {
-                  <span
-                    class="selected-value-chip editor-ability-chip editor-ability-chip--mechanic"
+            <section class="enemy-image-card">
+              <div class="section-head section-head--editor">
+                <div>
+                  <h3>{{ t('editor.image.title') }}</h3>
+                  <span>{{ t('editor.image.copy') }}</span>
+                </div>
+                <div class="enemy-image-actions">
+                  <ion-button
+                    fill="outline"
+                    color="light"
+                    size="small"
+                    [disabled]="savingEnemy() || processingEnemyImage()"
+                    (click)="openCharacterImagePicker()"
                   >
-                    <span class="editor-ability-chip__icon" [attr.data-tone]="chip.visual.tone">
-                      <ion-icon [icon]="chip.visual.icon"></ion-icon>
-                      <small>{{ chip.visual.badge }}</small>
-                    </span>
-                    <span>{{ chip.label }}</span>
-                  </span>
-                }
-              </div>
-            }
-          </section>
-
-          <section class="ability-card">
-            <div class="section-head section-head--editor">
-              <div>
-                <h3>{{ t('editor.derivedCounters.title') }}</h3>
-                <span>{{ t('editor.derivedCounters.copy') }}</span>
-              </div>
-            </div>
-
-            @if (!derivedRequiredAbilitySummaryChips().length) {
-              <p class="editor-empty-copy">
-                {{ t('editor.derivedCounters.empty') }}
-              </p>
-            }
-
-            @if (derivedRequiredAbilitySummaryChips().length) {
-              <div class="selected-values-row">
-                @for (chip of derivedRequiredAbilitySummaryChips(); track chip.draftId) {
-                  <span class="selected-value-chip editor-ability-chip">
-                    <span class="editor-ability-chip__icon" [attr.data-tone]="chip.visual.tone">
-                      <ion-icon [icon]="chip.visual.icon"></ion-icon>
-                      <small>{{ chip.visual.badge }}</small>
-                    </span>
-                    <span>{{ chip.label }}</span>
-                  </span>
-                }
-              </div>
-            }
-          </section>
-
-          <section class="ability-card">
-            <div class="section-head section-head--editor">
-              <div>
-                <h3>{{ t('editor.manualCounters.title') }}</h3>
-                <span>{{ t('editor.manualCounters.copy') }}</span>
+                    {{ t('editor.image.chooseCharacter') }}
+                  </ion-button>
+                  <ion-button
+                    fill="outline"
+                    color="warning"
+                    size="small"
+                    [disabled]="savingEnemy() || processingEnemyImage()"
+                    (click)="openEnemyImagePicker(enemyImageInput)"
+                  >
+                    {{ enemyImageDataUrl() ? t('editor.image.replace') : t('editor.image.upload') }}
+                  </ion-button>
+                  <ion-button
+                    fill="clear"
+                    color="light"
+                    size="small"
+                    [disabled]="savingEnemy() || processingEnemyImage() || !enemyImageDataUrl()"
+                    (click)="removeEnemyImage()"
+                  >
+                    {{ t('editor.image.remove') }}
+                  </ion-button>
+                </div>
               </div>
 
-              <div class="card-actions">
-                <ion-button
+              @if (enemyImageDataUrl()) {
+                <div class="enemy-image-preview">
+                  <img
+                    [src]="enemyImageDataUrl()!"
+                    [alt]="enemyName() || t('editor.image.previewAlt')"
+                  />
+                </div>
+              } @else {
+                <p class="editor-empty-copy">{{ t('editor.image.empty') }}</p>
+              }
+
+              @if (processingEnemyImage()) {
+                <p class="enemy-image-status">
+                  {{ t('editor.image.processing') }}
+                </p>
+              }
+
+              @if (enemyImageErrorMessage()) {
+                <p class="enemy-image-error">
+                  {{ enemyImageErrorMessage() }}
+                </p>
+              }
+            </section>
+
+            <app-character-image-picker
+              [isOpen]="characterImagePickerOpen()"
+              [title]="t('editor.image.picker.title')"
+              [copy]="t('editor.image.picker.copy')"
+              [applyingSelection]="processingEnemyImage()"
+              (dismiss)="closeCharacterImagePicker()"
+              (saveSelection)="applyCharacterImageSelection($event)"
+            ></app-character-image-picker>
+
+            <div class="editor-grid">
+              <div class="editor-field">
+                <span>{{ t('editor.typesLabel') }}</span>
+                <ion-select
+                  interface="popover"
+                  [multiple]="true"
                   fill="outline"
-                  color="warning"
-                  size="small"
-                  [disabled]="savingEnemy() || !availableAbilityCatalogItems().length"
-                  (click)="openAbilityPicker()"
+                  [placeholder]="t('editor.typesPlaceholder')"
+                  [value]="selectedTypes()"
+                  (ionChange)="onTypeChange($event)"
                 >
-                  {{ t('editor.manualCounters.actions.openPicker') }}
-                </ion-button>
-                <ion-button
-                  fill="clear"
-                  color="light"
-                  size="small"
-                  [disabled]="savingEnemy() || !requiredAbilityDrafts().length"
-                  (click)="clearRequiredAbilities()"
+                  @for (item of availableTypes; track item) {
+                    <ion-select-option [value]="item">
+                      {{ item }}
+                    </ion-select-option>
+                  }
+                </ion-select>
+                <div class="editor-field-actions">
+                  <ion-button
+                    fill="clear"
+                    color="warning"
+                    size="small"
+                    [disabled]="savingEnemy()"
+                    (click)="selectAllTypes()"
+                  >
+                    {{ selectAllTypesButtonLabel() }}
+                  </ion-button>
+                </div>
+              </div>
+
+              <div class="editor-field">
+                <span>{{ t('editor.classesLabel') }}</span>
+                <ion-select
+                  interface="popover"
+                  [multiple]="true"
+                  fill="outline"
+                  [placeholder]="t('editor.classesPlaceholder')"
+                  [value]="selectedClasses()"
+                  (ionChange)="onClassChange($event)"
                 >
-                  {{ t('editor.manualCounters.actions.clear') }}
-                </ion-button>
+                  @for (item of availableClasses(); track item) {
+                    <ion-select-option [value]="item">
+                      {{ item }}
+                    </ion-select-option>
+                  }
+                </ion-select>
+                <div class="editor-field-actions">
+                  <ion-button
+                    fill="clear"
+                    color="warning"
+                    size="small"
+                    [disabled]="savingEnemy() || availableClasses().length === 0"
+                    (click)="selectAllClasses()"
+                  >
+                    {{ selectAllClassesButtonLabel() }}
+                  </ion-button>
+                </div>
               </div>
             </div>
 
-            @if (!availableAbilityCatalogItems().length) {
-              <p class="editor-empty-copy">
-                {{ t('editor.noAbilityCatalog') }}
-              </p>
-            }
+            <section class="ability-card">
+              <div class="section-head section-head--editor">
+                <div>
+                  <h3>{{ t('editor.enemyMechanics.title') }}</h3>
+                  <span>{{ t('editor.enemyMechanics.copy') }}</span>
+                </div>
 
-            @if (!requiredAbilitySummaryChips().length) {
-              <p class="editor-empty-copy">
-                {{ t('editor.manualCounters.empty') }}
-              </p>
-            }
-
-            @if (requiredAbilitySummaryChips().length) {
-              <div class="selected-values-row">
-                @for (chip of requiredAbilitySummaryChips(); track chip.draftId) {
-                  <span class="selected-value-chip editor-ability-chip">
-                    <span class="editor-ability-chip__icon" [attr.data-tone]="chip.visual.tone">
-                      <ion-icon [icon]="chip.visual.icon"></ion-icon>
-                      <small>{{ chip.visual.badge }}</small>
-                    </span>
-                    <span>{{ chip.label }}</span>
-                  </span>
-                }
+                <div class="card-actions">
+                  <ion-button
+                    fill="outline"
+                    color="warning"
+                    size="small"
+                    [disabled]="savingEnemy()"
+                    (click)="openEnemyMechanicPicker()"
+                  >
+                    {{ t('editor.enemyMechanics.actions.openPicker') }}
+                  </ion-button>
+                  <ion-button
+                    fill="clear"
+                    color="light"
+                    size="small"
+                    [disabled]="savingEnemy() || !enemyMechanicDrafts().length"
+                    (click)="clearEnemyMechanics()"
+                  >
+                    {{ t('editor.enemyMechanics.actions.clear') }}
+                  </ion-button>
+                </div>
               </div>
-            }
-          </section>
 
-          <app-enemy-mechanic-picker
-            [isOpen]="enemyMechanicPickerOpen()"
-            [title]="t('editor.enemyMechanics.title')"
-            [copy]="t('editor.enemyMechanics.copy')"
-            [drafts]="enemyMechanicDrafts()"
-            [catalogItems]="availableEnemyMechanicCatalogItems()"
-            (dismiss)="closeEnemyMechanicPicker()"
-            (saveDrafts)="saveEnemyMechanicPicker($event)"
-          ></app-enemy-mechanic-picker>
+              @if (!enemyMechanicSummaryChips().length) {
+                <p class="editor-empty-copy">
+                  {{ t('editor.enemyMechanics.empty') }}
+                </p>
+              }
 
-          <app-ability-requirement-picker
-            [isOpen]="abilityPickerOpen()"
-            [title]="t('editor.manualCounters.title')"
-            [copy]="t('editor.manualCounters.copy')"
-            [drafts]="requiredAbilityDrafts()"
-            [catalogItems]="availableAbilityCatalogItems()"
-            (dismiss)="closeAbilityPicker()"
-            (saveDrafts)="saveAbilityPicker($event)"
-          ></app-ability-requirement-picker>
+              @if (enemyMechanicSummaryChips().length) {
+                <div class="selected-values-row">
+                  @for (chip of enemyMechanicSummaryChips(); track chip.draftId) {
+                    <span
+                      class="selected-value-chip editor-ability-chip editor-ability-chip--mechanic"
+                    >
+                      <span class="editor-ability-chip__icon" [attr.data-tone]="chip.visual.tone">
+                        <ion-icon [icon]="chip.visual.icon"></ion-icon>
+                        <small>{{ chip.visual.badge }}</small>
+                      </span>
+                      <span>{{ chip.label }}</span>
+                    </span>
+                  }
+                </div>
+              }
+            </section>
 
-          <div class="editor-modal-actions">
-            <ion-button
-              fill="outline"
-              color="light"
-              [disabled]="savingEnemy()"
-              (click)="closeEditor()"
-            >
-              {{ 'common.actions.cancel' | transloco }}
-            </ion-button>
-            <ion-button
-              color="warning"
-              [disabled]="savingEnemy() || processingEnemyImage() || !canSaveEnemy()"
-              (click)="saveEnemy()"
-            >
-              {{ editingEnemy() ? t('actions.saveChanges') : t('actions.saveEnemy') }}
-            </ion-button>
+            <section class="ability-card">
+              <div class="section-head section-head--editor">
+                <div>
+                  <h3>{{ t('editor.derivedCounters.title') }}</h3>
+                  <span>{{ t('editor.derivedCounters.copy') }}</span>
+                </div>
+              </div>
+
+              @if (!derivedRequiredAbilitySummaryChips().length) {
+                <p class="editor-empty-copy">
+                  {{ t('editor.derivedCounters.empty') }}
+                </p>
+              }
+
+              @if (derivedRequiredAbilitySummaryChips().length) {
+                <div class="selected-values-row">
+                  @for (chip of derivedRequiredAbilitySummaryChips(); track chip.draftId) {
+                    <span class="selected-value-chip editor-ability-chip">
+                      <span class="editor-ability-chip__icon" [attr.data-tone]="chip.visual.tone">
+                        <ion-icon [icon]="chip.visual.icon"></ion-icon>
+                        <small>{{ chip.visual.badge }}</small>
+                      </span>
+                      <span>{{ chip.label }}</span>
+                    </span>
+                  }
+                </div>
+              }
+            </section>
+
+            <section class="ability-card">
+              <div class="section-head section-head--editor">
+                <div>
+                  <h3>{{ t('editor.manualCounters.title') }}</h3>
+                  <span>{{ t('editor.manualCounters.copy') }}</span>
+                </div>
+
+                <div class="card-actions">
+                  <ion-button
+                    fill="outline"
+                    color="warning"
+                    size="small"
+                    [disabled]="savingEnemy() || !availableAbilityCatalogItems().length"
+                    (click)="openAbilityPicker()"
+                  >
+                    {{ t('editor.manualCounters.actions.openPicker') }}
+                  </ion-button>
+                  <ion-button
+                    fill="clear"
+                    color="light"
+                    size="small"
+                    [disabled]="savingEnemy() || !requiredAbilityDrafts().length"
+                    (click)="clearRequiredAbilities()"
+                  >
+                    {{ t('editor.manualCounters.actions.clear') }}
+                  </ion-button>
+                </div>
+              </div>
+
+              @if (!availableAbilityCatalogItems().length) {
+                <p class="editor-empty-copy">
+                  {{ t('editor.noAbilityCatalog') }}
+                </p>
+              }
+
+              @if (!requiredAbilitySummaryChips().length) {
+                <p class="editor-empty-copy">
+                  {{ t('editor.manualCounters.empty') }}
+                </p>
+              }
+
+              @if (requiredAbilitySummaryChips().length) {
+                <div class="selected-values-row">
+                  @for (chip of requiredAbilitySummaryChips(); track chip.draftId) {
+                    <span class="selected-value-chip editor-ability-chip">
+                      <span class="editor-ability-chip__icon" [attr.data-tone]="chip.visual.tone">
+                        <ion-icon [icon]="chip.visual.icon"></ion-icon>
+                        <small>{{ chip.visual.badge }}</small>
+                      </span>
+                      <span>{{ chip.label }}</span>
+                    </span>
+                  }
+                </div>
+              }
+            </section>
+
+            <app-enemy-mechanic-picker
+              [isOpen]="enemyMechanicPickerOpen()"
+              [title]="t('editor.enemyMechanics.title')"
+              [copy]="t('editor.enemyMechanics.copy')"
+              [drafts]="enemyMechanicDrafts()"
+              [catalogItems]="availableEnemyMechanicCatalogItems()"
+              (dismiss)="closeEnemyMechanicPicker()"
+              (saveDrafts)="saveEnemyMechanicPicker($event)"
+            ></app-enemy-mechanic-picker>
+
+            <app-ability-requirement-picker
+              [isOpen]="abilityPickerOpen()"
+              [title]="t('editor.manualCounters.title')"
+              [copy]="t('editor.manualCounters.copy')"
+              [drafts]="requiredAbilityDrafts()"
+              [catalogItems]="availableAbilityCatalogItems()"
+              (dismiss)="closeAbilityPicker()"
+              (saveDrafts)="saveAbilityPicker($event)"
+            ></app-ability-requirement-picker>
           </div>
-        </div>
+        </ion-content>
+
+        <ion-footer class="editor-modal-footer">
+          <ion-toolbar>
+            <div class="editor-modal-actions">
+              <ion-button
+                fill="outline"
+                color="light"
+                [disabled]="savingEnemy()"
+                (click)="closeEditor()"
+              >
+                {{ 'common.actions.cancel' | transloco }}
+              </ion-button>
+              <ion-button
+                color="warning"
+                [disabled]="savingEnemy() || processingEnemyImage() || !canSaveEnemy()"
+                (click)="saveEnemy()"
+              >
+                {{ editingEnemy() ? t('actions.saveChanges') : t('actions.saveEnemy') }}
+              </ion-button>
+            </div>
+          </ion-toolbar>
+        </ion-footer>
       </ng-template>
     </ion-modal>
   </ion-content>

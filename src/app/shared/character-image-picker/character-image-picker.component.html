@@ -5,200 +5,218 @@
     (didDismiss)="onModalDidDismiss()"
   >
     <ng-template>
-      <div class="character-image-picker-shell">
-        <div class="character-image-picker-head">
-          <div>
-            <div class="section-label">
-              <ion-icon [icon]="pickerIcon"></ion-icon>
-              <span>{{ t('eyebrow') }}</span>
+      <ion-header class="character-image-picker-header ion-no-border">
+        <ion-toolbar>
+          <div class="character-image-picker-head">
+            <div>
+              <div class="section-label">
+                <ion-icon [icon]="pickerIcon"></ion-icon>
+                <span>{{ t('eyebrow') }}</span>
+              </div>
+              <h2>{{ title }}</h2>
+              <p>{{ copy }}</p>
             </div>
-            <h2>{{ title }}</h2>
-            <p>{{ copy }}</p>
           </div>
 
-          <ion-buttons>
-            <ion-button fill="clear" color="light" [disabled]="applyingSelection" (click)="cancel()">
+          <ion-buttons slot="end">
+            <ion-button
+              fill="clear"
+              color="light"
+              [disabled]="applyingSelection"
+              (click)="cancel()"
+            >
               <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
             </ion-button>
           </ion-buttons>
-        </div>
+        </ion-toolbar>
+      </ion-header>
 
-        <div class="character-image-picker-body">
-          <section class="character-image-picker-panel">
-            <div class="character-image-picker-panel__head">
-              <div>
-                <strong>{{ t('catalog.title') }}</strong>
-                <small>{{ t('catalog.count', { count: characters().length }) }}</small>
-              </div>
-            </div>
-
-            <ion-searchbar
-              class="character-image-picker-search"
-              [debounce]="150"
-              [placeholder]="t('catalog.searchPlaceholder')"
-              [value]="searchTerm()"
-              [disabled]="applyingSelection"
-              (ionInput)="onSearchChange($event)"
-            ></ion-searchbar>
-
-            <div class="character-image-picker-filter-grid">
-              <label class="character-image-picker-field">
-                <span>{{ t('filters.type') }}</span>
-                <ion-select
-                  interface="popover"
-                  fill="outline"
-                  [value]="selectedType()"
-                  [disabled]="applyingSelection"
-                  (ionChange)="onTypeChange($event)"
-                >
-                  <ion-select-option value="">
-                    {{ t('filters.anyType') }}
-                  </ion-select-option>
-                  @for (type of availableTypes(); track type) {
-                    <ion-select-option [value]="type">
-                      {{ type }}
-                    </ion-select-option>
-                  }
-                </ion-select>
-              </label>
-
-              <label class="character-image-picker-field">
-                <span>{{ t('filters.class') }}</span>
-                <ion-select
-                  interface="popover"
-                  fill="outline"
-                  [value]="selectedClass()"
-                  [disabled]="applyingSelection"
-                  (ionChange)="onClassChange($event)"
-                >
-                  <ion-select-option value="">
-                    {{ t('filters.anyClass') }}
-                  </ion-select-option>
-                  @for (characterClass of availableClasses(); track characterClass) {
-                    <ion-select-option [value]="characterClass">
-                      {{ characterClass }}
-                    </ion-select-option>
-                  }
-                </ion-select>
-              </label>
-            </div>
-
-            @if (loading()) {
-              <div class="character-image-picker-empty">
-                <ion-spinner name="crescent"></ion-spinner>
-                <p>{{ t('catalog.loading') }}</p>
-              </div>
-            } @else if (!characters().length) {
-              <div class="character-image-picker-empty">
-                <strong>{{ t('catalog.emptyTitle') }}</strong>
-                <p>{{ t('catalog.emptyCopy') }}</p>
-              </div>
-            } @else {
-              <div class="character-image-picker-grid">
-                @for (character of characters(); track character.id) {
-                  <button
-                    type="button"
-                    class="character-image-card"
-                    [class.character-image-card--selected]="selectedCharacterId() === character.id"
-                    [disabled]="applyingSelection"
-                    (click)="selectCharacter(character)"
-                  >
-                    <div class="character-image-card__image">
-                      <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
-                    </div>
-
-                    <div class="character-image-card__copy">
-                      <strong>{{ character.name }}</strong>
-                      <div class="character-image-card__meta">
-                        <small>{{ character.type }}</small>
-                        <small>{{ character.primaryClass }}</small>
-                        @if (character.secondaryClass) {
-                          <small>{{ character.secondaryClass }}</small>
-                        }
-                      </div>
-                    </div>
-                  </button>
-                }
-              </div>
-            }
-
-            @if (!loading() && hasMore()) {
-              <div class="character-image-picker-load-more">
-                <ion-button
-                  fill="outline"
-                  color="warning"
-                  [disabled]="loadingMore() || applyingSelection"
-                  (click)="loadMore()"
-                >
-                  @if (loadingMore()) {
-                    <ion-spinner slot="start" name="crescent"></ion-spinner>
-                  }
-                  {{ t('actions.loadMore') }}
-                </ion-button>
-              </div>
-            }
-          </section>
-
-          <section class="character-image-picker-panel character-image-picker-panel--selected">
-            <div class="character-image-picker-panel__head">
-              <div>
-                <strong>{{ t('selected.title') }}</strong>
-              </div>
-            </div>
-
-            @if (!selectedCharacter()) {
-              <div class="character-image-picker-empty character-image-picker-empty--selected">
-                <strong>{{ t('selected.emptyTitle') }}</strong>
-                <p>{{ t('selected.emptyCopy') }}</p>
-              </div>
-            } @else {
-              <article class="selected-character-card">
-                <div class="selected-character-card__image">
-                  <img
-                    [src]="selectedCharacter()!.imageUrl"
-                    [alt]="selectedCharacter()!.name"
-                    loading="lazy"
-                  />
+      <ion-content class="character-image-picker-content">
+        <div class="character-image-picker-content-shell">
+          <div class="character-image-picker-body">
+            <section class="character-image-picker-panel">
+              <div class="character-image-picker-panel__head">
+                <div>
+                  <strong>{{ t('catalog.title') }}</strong>
+                  <small>{{ t('catalog.count', { count: characters().length }) }}</small>
                 </div>
+              </div>
 
-                <div class="selected-character-card__copy">
-                  <strong>{{ selectedCharacter()!.name }}</strong>
+              <ion-searchbar
+                class="character-image-picker-search"
+                [debounce]="150"
+                [placeholder]="t('catalog.searchPlaceholder')"
+                [value]="searchTerm()"
+                [disabled]="applyingSelection"
+                (ionInput)="onSearchChange($event)"
+              ></ion-searchbar>
 
-                  <div class="selected-character-card__facts">
-                    <span>
-                      {{ t('details.type') }}
-                      <strong>{{ selectedCharacter()!.type }}</strong>
-                    </span>
-                    <span>
-                      {{ t('details.classes') }}
-                      <strong>{{ selectedCharacterClassesLabel() }}</strong>
-                    </span>
+              <div class="character-image-picker-filter-grid">
+                <label class="character-image-picker-field">
+                  <span>{{ t('filters.type') }}</span>
+                  <ion-select
+                    interface="popover"
+                    fill="outline"
+                    [value]="selectedType()"
+                    [disabled]="applyingSelection"
+                    (ionChange)="onTypeChange($event)"
+                  >
+                    <ion-select-option value="">
+                      {{ t('filters.anyType') }}
+                    </ion-select-option>
+                    @for (type of availableTypes(); track type) {
+                      <ion-select-option [value]="type">
+                        {{ type }}
+                      </ion-select-option>
+                    }
+                  </ion-select>
+                </label>
+
+                <label class="character-image-picker-field">
+                  <span>{{ t('filters.class') }}</span>
+                  <ion-select
+                    interface="popover"
+                    fill="outline"
+                    [value]="selectedClass()"
+                    [disabled]="applyingSelection"
+                    (ionChange)="onClassChange($event)"
+                  >
+                    <ion-select-option value="">
+                      {{ t('filters.anyClass') }}
+                    </ion-select-option>
+                    @for (characterClass of availableClasses(); track characterClass) {
+                      <ion-select-option [value]="characterClass">
+                        {{ characterClass }}
+                      </ion-select-option>
+                    }
+                  </ion-select>
+                </label>
+              </div>
+
+              @if (loading()) {
+                <div class="character-image-picker-empty">
+                  <ion-spinner name="crescent"></ion-spinner>
+                  <p>{{ t('catalog.loading') }}</p>
+                </div>
+              } @else if (!characters().length) {
+                <div class="character-image-picker-empty">
+                  <strong>{{ t('catalog.emptyTitle') }}</strong>
+                  <p>{{ t('catalog.emptyCopy') }}</p>
+                </div>
+              } @else {
+                <div class="character-image-picker-grid">
+                  @for (character of characters(); track character.id) {
+                    <button
+                      type="button"
+                      class="character-image-card"
+                      [class.character-image-card--selected]="
+                        selectedCharacterId() === character.id
+                      "
+                      [disabled]="applyingSelection"
+                      (click)="selectCharacter(character)"
+                    >
+                      <div class="character-image-card__image">
+                        <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
+                      </div>
+
+                      <div class="character-image-card__copy">
+                        <strong>{{ character.name }}</strong>
+                        <div class="character-image-card__meta">
+                          <small>{{ character.type }}</small>
+                          <small>{{ character.primaryClass }}</small>
+                          @if (character.secondaryClass) {
+                            <small>{{ character.secondaryClass }}</small>
+                          }
+                        </div>
+                      </div>
+                    </button>
+                  }
+                </div>
+              }
+
+              @if (!loading() && hasMore()) {
+                <div class="character-image-picker-load-more">
+                  <ion-button
+                    fill="outline"
+                    color="warning"
+                    [disabled]="loadingMore() || applyingSelection"
+                    (click)="loadMore()"
+                  >
+                    @if (loadingMore()) {
+                      <ion-spinner slot="start" name="crescent"></ion-spinner>
+                    }
+                    {{ t('actions.loadMore') }}
+                  </ion-button>
+                </div>
+              }
+            </section>
+
+            <section class="character-image-picker-panel character-image-picker-panel--selected">
+              <div class="character-image-picker-panel__head">
+                <div>
+                  <strong>{{ t('selected.title') }}</strong>
+                </div>
+              </div>
+
+              @if (!selectedCharacter()) {
+                <div class="character-image-picker-empty character-image-picker-empty--selected">
+                  <strong>{{ t('selected.emptyTitle') }}</strong>
+                  <p>{{ t('selected.emptyCopy') }}</p>
+                </div>
+              } @else {
+                <article class="selected-character-card">
+                  <div class="selected-character-card__image">
+                    <img
+                      [src]="selectedCharacter()!.imageUrl"
+                      [alt]="selectedCharacter()!.name"
+                      loading="lazy"
+                    />
                   </div>
 
-                  <p>{{ t('selected.hint') }}</p>
-                </div>
-              </article>
-            }
-          </section>
-        </div>
+                  <div class="selected-character-card__copy">
+                    <strong>{{ selectedCharacter()!.name }}</strong>
 
-        <ion-footer class="character-image-picker-footer">
-          <ion-toolbar>
-            <div class="character-image-picker-footer__actions">
-              <ion-button fill="clear" color="light" [disabled]="applyingSelection" (click)="cancel()">
-                {{ 'common.actions.cancel' | transloco }}
-              </ion-button>
-              <ion-button
-                color="warning"
-                [disabled]="!selectedCharacter() || applyingSelection"
-                (click)="save()"
-              >
-                {{ t('actions.useImage') }}
-              </ion-button>
-            </div>
-          </ion-toolbar>
-        </ion-footer>
-      </div>
+                    <div class="selected-character-card__facts">
+                      <span>
+                        {{ t('details.type') }}
+                        <strong>{{ selectedCharacter()!.type }}</strong>
+                      </span>
+                      <span>
+                        {{ t('details.classes') }}
+                        <strong>{{ selectedCharacterClassesLabel() }}</strong>
+                      </span>
+                    </div>
+
+                    <p>{{ t('selected.hint') }}</p>
+                  </div>
+                </article>
+              }
+            </section>
+          </div>
+        </div>
+      </ion-content>
+
+      <ion-footer class="character-image-picker-footer">
+        <ion-toolbar>
+          <div class="character-image-picker-footer__actions">
+            <ion-button
+              fill="clear"
+              color="light"
+              [disabled]="applyingSelection"
+              (click)="cancel()"
+            >
+              {{ 'common.actions.cancel' | transloco }}
+            </ion-button>
+            <ion-button
+              color="warning"
+              [disabled]="!selectedCharacter() || applyingSelection"
+              (click)="save()"
+            >
+              {{ t('actions.useImage') }}
+            </ion-button>
+          </div>
+        </ion-toolbar>
+      </ion-footer>
     </ng-template>
   </ion-modal>
 </ng-container>

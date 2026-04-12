@@ -1,183 +1,181 @@
 <ng-container *transloco="let t; scope: 'ship-picker'; read: 'ship-picker'">
-  <ion-modal
-    [isOpen]="isOpen"
-    cssClass="ship-picker-modal"
-    (didDismiss)="onModalDidDismiss()"
-  >
+  <ion-modal [isOpen]="isOpen" cssClass="ship-picker-modal" (didDismiss)="onModalDidDismiss()">
     <ng-template>
-      <div class="ship-picker-shell">
-        <div class="ship-picker-head">
-          <div>
-            <div class="section-label">
-              <ion-icon [icon]="shipIcon"></ion-icon>
-              <span>{{ t('eyebrow') }}</span>
+      <ion-header class="ship-picker-header ion-no-border">
+        <ion-toolbar>
+          <div class="ship-picker-head">
+            <div>
+              <div class="section-label">
+                <ion-icon [icon]="shipIcon"></ion-icon>
+                <span>{{ t('eyebrow') }}</span>
+              </div>
+              <h2>{{ title }}</h2>
+              <p>{{ copy }}</p>
             </div>
-            <h2>{{ title }}</h2>
-            <p>{{ copy }}</p>
           </div>
 
-          <ion-buttons>
+          <ion-buttons slot="end">
             <ion-button fill="clear" color="light" (click)="cancel()">
               <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
             </ion-button>
           </ion-buttons>
-        </div>
+        </ion-toolbar>
+      </ion-header>
 
-        <div class="ship-picker-body">
-          <section class="ship-picker-panel">
-            <div class="ship-picker-panel__head">
-              <div>
-                <strong>{{ t('catalog.title') }}</strong>
-                <small>{{
-                  t('catalog.count', {
-                    count: filteredShipCards().length,
-                    total: shipsState().length
-                  })
-                }}</small>
+      <ion-content class="ship-picker-content">
+        <div class="ship-picker-content-shell">
+          <div class="ship-picker-body">
+            <section class="ship-picker-panel">
+              <div class="ship-picker-panel__head">
+                <div>
+                  <strong>{{ t('catalog.title') }}</strong>
+                  <small>{{
+                    t('catalog.count', {
+                      count: filteredShipCards().length,
+                      total: shipsState().length,
+                    })
+                  }}</small>
+                </div>
               </div>
-            </div>
 
-            <ion-searchbar
-              class="ship-picker-search"
-              [debounce]="150"
-              [placeholder]="t('catalog.searchPlaceholder')"
-              [value]="searchTerm()"
-              (ionInput)="onSearchChange($event)"
-            ></ion-searchbar>
+              <ion-searchbar
+                class="ship-picker-search"
+                [debounce]="150"
+                [placeholder]="t('catalog.searchPlaceholder')"
+                [value]="searchTerm()"
+                (ionInput)="onSearchChange($event)"
+              ></ion-searchbar>
 
-            @if (!filteredShipCards().length) {
-              <div class="ship-picker-empty">
-                <strong>{{ t('catalog.emptyTitle') }}</strong>
-                <p>{{ t('catalog.emptyCopy') }}</p>
+              @if (!filteredShipCards().length) {
+                <div class="ship-picker-empty">
+                  <strong>{{ t('catalog.emptyTitle') }}</strong>
+                  <p>{{ t('catalog.emptyCopy') }}</p>
+                </div>
+              } @else {
+                <div class="ship-picker-grid">
+                  @for (card of filteredShipCards(); track card.shipId ?? 'empty') {
+                    <article
+                      class="ship-picker-card"
+                      [class.ship-picker-card--selected]="card.isSelected"
+                      [class.ship-picker-card--blocked]="card.isBlocked"
+                    >
+                      @if (card.shipId !== null) {
+                        <button
+                          type="button"
+                          class="favorite-button ship-picker-favorite-button"
+                          [disabled]="card.isFavoriteToggleBlocked"
+                          [attr.aria-label]="
+                            card.isFavorite ? t('favorites.removeAria') : t('favorites.addAria')
+                          "
+                          (click)="onToggleFavoriteShip($event, card.shipId)"
+                        >
+                          <ion-icon
+                            [icon]="card.isFavorite ? favoriteIcon : favoriteOutlineIcon"
+                          ></ion-icon>
+                        </button>
+                      }
+
+                      <button
+                        type="button"
+                        class="ship-picker-card__select"
+                        [disabled]="card.isBlocked"
+                        (click)="selectShip(card.shipId)"
+                      >
+                        <div
+                          class="ship-picker-card__image"
+                          [class.ship-picker-card__image--fallback]="!card.thumbUrl"
+                        >
+                          @if (card.thumbUrl) {
+                            <img [src]="card.thumbUrl" [alt]="card.title" loading="lazy" />
+                          } @else {
+                            <ion-icon [icon]="shipIcon"></ion-icon>
+                          }
+                        </div>
+
+                        <div class="ship-picker-card__copy">
+                          <strong>{{ card.title }}</strong>
+                          <p>{{ card.subtitle }}</p>
+                          @if (card.supportLabel) {
+                            <small>{{ card.supportLabel }}</small>
+                          }
+                        </div>
+                      </button>
+                    </article>
+                  }
+                </div>
+              }
+            </section>
+
+            <section class="ship-picker-panel ship-picker-panel--selected">
+              <div class="ship-picker-panel__head">
+                <div>
+                  <strong>{{ t('selected.title') }}</strong>
+                </div>
               </div>
-            } @else {
-              <div class="ship-picker-grid">
-                @for (card of filteredShipCards(); track card.shipId ?? 'empty') {
-                  <article
-                    class="ship-picker-card"
-                    [class.ship-picker-card--selected]="card.isSelected"
-                    [class.ship-picker-card--blocked]="card.isBlocked"
-                  >
-                    @if (card.shipId !== null) {
+
+              <article class="ship-picker-preview-card">
+                <div
+                  class="ship-picker-preview-card__image"
+                  [class.ship-picker-preview-card__image--fallback]="!selectedCard().thumbUrl"
+                >
+                  @if (selectedCard().thumbUrl) {
+                    <img
+                      [src]="selectedCard().thumbUrl"
+                      [alt]="selectedCard().title"
+                      loading="lazy"
+                    />
+                  } @else {
+                    <ion-icon [icon]="shipIcon"></ion-icon>
+                  }
+                </div>
+
+                <div class="ship-picker-preview-card__copy">
+                  <div class="ship-picker-preview-card__head">
+                    <strong>{{ selectedCard().title }}</strong>
+                    @if (selectedCard().shipId !== null) {
                       <button
                         type="button"
                         class="favorite-button ship-picker-favorite-button"
-                        [disabled]="card.isFavoriteToggleBlocked"
+                        [disabled]="selectedCard().isFavoriteToggleBlocked"
                         [attr.aria-label]="
-                          card.isFavorite
+                          selectedCard().isFavorite
                             ? t('favorites.removeAria')
                             : t('favorites.addAria')
                         "
-                        (click)="onToggleFavoriteShip($event, card.shipId)"
+                        (click)="onToggleFavoriteShip($event, selectedCard().shipId)"
                       >
                         <ion-icon
-                          [icon]="card.isFavorite ? favoriteIcon : favoriteOutlineIcon"
+                          [icon]="selectedCard().isFavorite ? favoriteIcon : favoriteOutlineIcon"
                         ></ion-icon>
                       </button>
                     }
+                  </div>
+                  <p>{{ selectedCard().subtitle }}</p>
 
-                    <button
-                      type="button"
-                      class="ship-picker-card__select"
-                      [disabled]="card.isBlocked"
-                      (click)="selectShip(card.shipId)"
-                    >
-                      <div
-                        class="ship-picker-card__image"
-                        [class.ship-picker-card__image--fallback]="!card.thumbUrl"
-                      >
-                        @if (card.thumbUrl) {
-                          <img [src]="card.thumbUrl" [alt]="card.title" loading="lazy" />
-                        } @else {
-                          <ion-icon [icon]="shipIcon"></ion-icon>
-                        }
-                      </div>
-
-                      <div class="ship-picker-card__copy">
-                        <strong>{{ card.title }}</strong>
-                        <p>{{ card.subtitle }}</p>
-                        @if (card.supportLabel) {
-                          <small>{{ card.supportLabel }}</small>
-                        }
-                      </div>
-                    </button>
-                  </article>
-                }
-              </div>
-            }
-          </section>
-
-          <section class="ship-picker-panel ship-picker-panel--selected">
-            <div class="ship-picker-panel__head">
-              <div>
-                <strong>{{ t('selected.title') }}</strong>
-              </div>
-            </div>
-
-            <article class="ship-picker-preview-card">
-              <div
-                class="ship-picker-preview-card__image"
-                [class.ship-picker-preview-card__image--fallback]="!selectedCard().thumbUrl"
-              >
-                @if (selectedCard().thumbUrl) {
-                  <img
-                    [src]="selectedCard().thumbUrl"
-                    [alt]="selectedCard().title"
-                    loading="lazy"
-                  />
-                } @else {
-                  <ion-icon [icon]="shipIcon"></ion-icon>
-                }
-              </div>
-
-              <div class="ship-picker-preview-card__copy">
-                <div class="ship-picker-preview-card__head">
-                  <strong>{{ selectedCard().title }}</strong>
-                  @if (selectedCard().shipId !== null) {
-                    <button
-                      type="button"
-                      class="favorite-button ship-picker-favorite-button"
-                      [disabled]="selectedCard().isFavoriteToggleBlocked"
-                      [attr.aria-label]="
-                        selectedCard().isFavorite
-                          ? t('favorites.removeAria')
-                          : t('favorites.addAria')
-                      "
-                      (click)="onToggleFavoriteShip($event, selectedCard().shipId)"
-                    >
-                      <ion-icon
-                        [icon]="selectedCard().isFavorite ? favoriteIcon : favoriteOutlineIcon"
-                      ></ion-icon>
-                    </button>
+                  @if (selectedCard().ship) {
+                    <small>{{ selectedCard().supportLabel ?? t('selected.shipReady') }}</small>
+                  } @else {
+                    <small>{{ t('selected.emptyState') }}</small>
                   }
                 </div>
-                <p>{{ selectedCard().subtitle }}</p>
-
-                @if (selectedCard().ship) {
-                  <small>{{
-                    selectedCard().supportLabel ?? t('selected.shipReady')
-                  }}</small>
-                } @else {
-                  <small>{{ t('selected.emptyState') }}</small>
-                }
-              </div>
-            </article>
-          </section>
+              </article>
+            </section>
+          </div>
         </div>
+      </ion-content>
 
-        <ion-footer class="ship-picker-footer">
-          <ion-toolbar>
-            <div class="ship-picker-footer__actions">
-              <ion-button fill="clear" color="light" (click)="cancel()">
-                {{ 'common.actions.cancel' | transloco }}
-              </ion-button>
-              <ion-button color="warning" [disabled]="selectedCard().isBlocked" (click)="save()">
-                {{ confirmLabel }}
-              </ion-button>
-            </div>
-          </ion-toolbar>
-        </ion-footer>
-      </div>
+      <ion-footer class="ship-picker-footer">
+        <ion-toolbar>
+          <div class="ship-picker-footer__actions">
+            <ion-button fill="clear" color="light" (click)="cancel()">
+              {{ 'common.actions.cancel' | transloco }}
+            </ion-button>
+            <ion-button color="warning" [disabled]="selectedCard().isBlocked" (click)="save()">
+              {{ confirmLabel }}
+            </ion-button>
+          </div>
+        </ion-toolbar>
+      </ion-footer>
     </ng-template>
   </ion-modal>
 </ng-container>

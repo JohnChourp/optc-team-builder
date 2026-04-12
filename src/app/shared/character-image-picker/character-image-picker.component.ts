@@ -1,9 +1,20 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, computed, signal } from "@angular/core";
-import { TranslocoDirective, TranslocoPipe } from "@jsverse/transloco";
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+  computed,
+  signal,
+} from '@angular/core';
+import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
   IonButton,
   IonButtons,
+  IonContent,
   IonFooter,
+  IonHeader,
   IonIcon,
   IonModal,
   IonSearchbar,
@@ -11,21 +22,23 @@ import {
   IonSelectOption,
   IonSpinner,
   IonToolbar,
-} from "@ionic/angular/standalone";
-import { closeOutline, imagesOutline } from "ionicons/icons";
+} from '@ionic/angular/standalone';
+import { closeOutline, imagesOutline } from 'ionicons/icons';
 
-import { type CharacterListItem, type DatasetManifest } from "../../core/models/optc.models";
-import { OptcRepositoryService } from "../../core/services/optc-repository.service";
+import { type CharacterListItem, type DatasetManifest } from '../../core/models/optc.models';
+import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 
 const PAGE_SIZE = 24;
 
 @Component({
-  selector: "app-character-image-picker",
+  selector: 'app-character-image-picker',
   standalone: true,
   imports: [
     IonButton,
     IonButtons,
+    IonContent,
     IonFooter,
+    IonHeader,
     IonIcon,
     IonModal,
     IonSearchbar,
@@ -36,13 +49,13 @@ const PAGE_SIZE = 24;
     TranslocoDirective,
     TranslocoPipe,
   ],
-  templateUrl: "./character-image-picker.component.html",
-  styleUrl: "./character-image-picker.component.scss",
+  templateUrl: './character-image-picker.component.html',
+  styleUrl: './character-image-picker.component.scss',
 })
 export class CharacterImagePickerComponent implements OnChanges {
   @Input({ required: true }) public isOpen = false;
-  @Input({ required: true }) public title = "";
-  @Input({ required: true }) public copy = "";
+  @Input({ required: true }) public title = '';
+  @Input({ required: true }) public copy = '';
   @Input() public applyingSelection = false;
   @Output() public readonly dismiss = new EventEmitter<void>();
   @Output() public readonly saveSelection = new EventEmitter<CharacterListItem>();
@@ -52,9 +65,9 @@ export class CharacterImagePickerComponent implements OnChanges {
   public readonly loading = signal(false);
   public readonly loadingMore = signal(false);
   public readonly hasMore = signal(true);
-  public readonly searchTerm = signal("");
-  public readonly selectedType = signal("");
-  public readonly selectedClass = signal("");
+  public readonly searchTerm = signal('');
+  public readonly selectedType = signal('');
+  public readonly selectedClass = signal('');
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly characters = signal<CharacterListItem[]>([]);
   public readonly selectedCharacter = signal<CharacterListItem | null>(null);
@@ -69,19 +82,19 @@ export class CharacterImagePickerComponent implements OnChanges {
     const character = this.selectedCharacter();
 
     if (!character) {
-      return "";
+      return '';
     }
 
-    return [character.primaryClass, character.secondaryClass].filter(Boolean).join(" / ");
+    return [character.primaryClass, character.secondaryClass].filter(Boolean).join(' / ');
   });
 
-  private dismissReason: "save" | "cancel" | null = null;
+  private dismissReason: 'save' | 'cancel' | null = null;
 
   public constructor(private readonly repository: OptcRepositoryService) {}
 
   public ngOnChanges(changes: SimpleChanges): void {
-    if (changes["isOpen"] && this.isOpen) {
-      console.log("CharacterImagePickerComponent component");
+    if (changes['isOpen'] && this.isOpen) {
+      console.log('CharacterImagePickerComponent component');
       this.dismissReason = null;
       this.resetState();
       void this.initializePicker();
@@ -93,7 +106,7 @@ export class CharacterImagePickerComponent implements OnChanges {
       return;
     }
 
-    this.searchTerm.set((event.detail.value ?? "").trimStart());
+    this.searchTerm.set((event.detail.value ?? '').trimStart());
     await this.loadCharacters(true);
   }
 
@@ -102,7 +115,7 @@ export class CharacterImagePickerComponent implements OnChanges {
       return;
     }
 
-    this.selectedType.set(typeof event.detail.value === "string" ? event.detail.value : "");
+    this.selectedType.set(typeof event.detail.value === 'string' ? event.detail.value : '');
     await this.loadCharacters(true);
   }
 
@@ -111,7 +124,7 @@ export class CharacterImagePickerComponent implements OnChanges {
       return;
     }
 
-    this.selectedClass.set(typeof event.detail.value === "string" ? event.detail.value : "");
+    this.selectedClass.set(typeof event.detail.value === 'string' ? event.detail.value : '');
     await this.loadCharacters(true);
   }
 
@@ -138,7 +151,7 @@ export class CharacterImagePickerComponent implements OnChanges {
       return;
     }
 
-    this.dismissReason = "save";
+    this.dismissReason = 'save';
     this.saveSelection.emit(selectedCharacter);
   }
 
@@ -147,7 +160,7 @@ export class CharacterImagePickerComponent implements OnChanges {
       return;
     }
 
-    this.dismissReason = "cancel";
+    this.dismissReason = 'cancel';
     this.dismiss.emit();
   }
 
@@ -167,9 +180,9 @@ export class CharacterImagePickerComponent implements OnChanges {
       const [summary, characters] = await Promise.all([
         this.repository.getDatasetManifest(),
         this.repository.searchCharacters({
-          searchTerm: "",
-          typeFilter: "",
-          classFilter: "",
+          searchTerm: '',
+          typeFilter: '',
+          classFilter: '',
           limit: PAGE_SIZE,
           offset: 0,
         }),
@@ -229,9 +242,9 @@ export class CharacterImagePickerComponent implements OnChanges {
     this.loading.set(false);
     this.loadingMore.set(false);
     this.hasMore.set(true);
-    this.searchTerm.set("");
-    this.selectedType.set("");
-    this.selectedClass.set("");
+    this.searchTerm.set('');
+    this.selectedType.set('');
+    this.selectedClass.set('');
     this.characters.set([]);
     this.selectedCharacter.set(null);
   }

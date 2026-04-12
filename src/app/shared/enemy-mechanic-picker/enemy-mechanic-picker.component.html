@@ -5,242 +5,262 @@
     (didDismiss)="onModalDidDismiss()"
   >
     <ng-template>
-      <div class="enemy-mechanic-picker-shell">
-        <div class="enemy-mechanic-picker-head">
-          <div>
-            <div class="section-label">
-              <ion-icon [icon]="pickerIcon"></ion-icon>
-              <span>{{ t('eyebrow') }}</span>
+      <ion-header class="enemy-mechanic-picker-header ion-no-border">
+        <ion-toolbar>
+          <div class="enemy-mechanic-picker-head">
+            <div>
+              <div class="section-label">
+                <ion-icon [icon]="pickerIcon"></ion-icon>
+                <span>{{ t('eyebrow') }}</span>
+              </div>
+              <h2>{{ title }}</h2>
+              <p>{{ copy }}</p>
             </div>
-            <h2>{{ title }}</h2>
-            <p>{{ copy }}</p>
           </div>
 
-          <ion-buttons>
+          <ion-buttons slot="end">
             <ion-button fill="clear" color="light" (click)="cancel()">
               <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
             </ion-button>
           </ion-buttons>
-        </div>
+        </ion-toolbar>
+      </ion-header>
 
-        <div class="enemy-mechanic-picker-body">
-          <section class="enemy-mechanic-picker-panel">
-            <div class="enemy-mechanic-picker-panel__head">
-              <div>
-                <strong>{{ t('catalog.title') }}</strong>
-                <small>{{
-                  t('catalog.count', {
-                    count: filteredCatalogSections().reduce((total, section) => total + section.items.length, 0),
-                    total: catalogItemsState().length,
-                  })
-                }}</small>
+      <ion-content class="enemy-mechanic-picker-content">
+        <div class="enemy-mechanic-picker-content-shell">
+          <div class="enemy-mechanic-picker-body">
+            <section class="enemy-mechanic-picker-panel">
+              <div class="enemy-mechanic-picker-panel__head">
+                <div>
+                  <strong>{{ t('catalog.title') }}</strong>
+                  <small>{{
+                    t('catalog.count', {
+                      count: filteredCatalogSections().reduce((total, section) => total + section.items.length, 0),
+                      total: catalogItemsState().length,
+                    })
+                  }}</small>
+                </div>
+
+                <ion-button
+                  fill="clear"
+                  size="small"
+                  color="warning"
+                  [disabled]="!workingDrafts().length"
+                  (click)="clearAll()"
+                >
+                  {{ t('actions.clearAll') }}
+                </ion-button>
               </div>
 
-              <ion-button
-                fill="clear"
-                size="small"
-                color="warning"
-                [disabled]="!workingDrafts().length"
-                (click)="clearAll()"
-              >
-                {{ t('actions.clearAll') }}
-              </ion-button>
-            </div>
+              <ion-searchbar
+                class="enemy-mechanic-picker-search"
+                [debounce]="150"
+                [placeholder]="t('catalog.searchPlaceholder')"
+                [value]="searchTerm()"
+                (ionInput)="onSearchChange($event)"
+              ></ion-searchbar>
 
-            <ion-searchbar
-              class="enemy-mechanic-picker-search"
-              [debounce]="150"
-              [placeholder]="t('catalog.searchPlaceholder')"
-              [value]="searchTerm()"
-              (ionInput)="onSearchChange($event)"
-            ></ion-searchbar>
+              @if (!catalogItemsState().length) {
+                <div class="enemy-mechanic-picker-empty">
+                  <strong>{{ t('catalog.emptyCatalogTitle') }}</strong>
+                  <p>{{ t('catalog.emptyCatalogCopy') }}</p>
+                </div>
+              } @else if (!filteredCatalogSections().length) {
+                <div class="enemy-mechanic-picker-empty">
+                  <strong>{{ t('catalog.emptySearchTitle') }}</strong>
+                  <p>{{ t('catalog.emptySearchCopy') }}</p>
+                </div>
+              } @else {
+                <div class="enemy-mechanic-picker-section-list">
+                  @for (section of filteredCatalogSections(); track section.category) {
+                    <section class="enemy-mechanic-picker-section">
+                      <div class="enemy-mechanic-picker-section__head">
+                        <strong>{{ t('categories.' + section.category) }}</strong>
+                        <small>{{
+                          t('catalog.sectionCount', { count: section.items.length })
+                        }}</small>
+                      </div>
 
-            @if (!catalogItemsState().length) {
-              <div class="enemy-mechanic-picker-empty">
-                <strong>{{ t('catalog.emptyCatalogTitle') }}</strong>
-                <p>{{ t('catalog.emptyCatalogCopy') }}</p>
+                      <div class="enemy-mechanic-picker-tile-grid">
+                        @for (tile of section.items; track tile.item.key) {
+                          <button
+                            type="button"
+                            class="enemy-mechanic-picker-tile"
+                            [class.enemy-mechanic-picker-tile--selected]="tile.isSelected"
+                            (click)="onCatalogItemSelect(tile.item)"
+                          >
+                            <span
+                              class="enemy-mechanic-picker-tile__badge"
+                              [attr.data-tone]="tile.visual.tone"
+                            >
+                              <ion-icon [icon]="tile.visual.icon"></ion-icon>
+                              <small>{{ tile.visual.badge }}</small>
+                            </span>
+
+                            <span class="enemy-mechanic-picker-tile__copy">
+                              <strong>{{ tile.item.label }}</strong>
+                              <span class="enemy-mechanic-picker-tile__meta">
+                                @if (tile.item.supportsTurns) {
+                                  <small>{{ t('catalog.hints.turns') }}</small>
+                                }
+                                @if (tile.item.derivedAbilityKey) {
+                                  <small>{{ t('catalog.hints.derivedCounter') }}</small>
+                                }
+                              </span>
+                            </span>
+
+                            @if (tile.selectedCount > 0) {
+                              <span class="enemy-mechanic-picker-tile__count">
+                                {{ t('catalog.selectedCount', { count: tile.selectedCount }) }}
+                              </span>
+                            }
+                          </button>
+                        }
+                      </div>
+                    </section>
+                  }
+                </div>
+              }
+            </section>
+
+            <section class="enemy-mechanic-picker-panel enemy-mechanic-picker-panel--selected">
+              <div class="enemy-mechanic-picker-panel__head">
+                <div>
+                  <strong>{{ t('selected.title') }}</strong>
+                  <small>{{ t('selected.count', { count: selectedRows().length }) }}</small>
+                </div>
               </div>
-            } @else if (!filteredCatalogSections().length) {
-              <div class="enemy-mechanic-picker-empty">
-                <strong>{{ t('catalog.emptySearchTitle') }}</strong>
-                <p>{{ t('catalog.emptySearchCopy') }}</p>
-              </div>
-            } @else {
-              <div class="enemy-mechanic-picker-section-list">
-                @for (section of filteredCatalogSections(); track section.category) {
-                  <section class="enemy-mechanic-picker-section">
-                    <div class="enemy-mechanic-picker-section__head">
-                      <strong>{{ t('categories.' + section.category) }}</strong>
-                      <small>{{ t('catalog.sectionCount', { count: section.items.length }) }}</small>
-                    </div>
 
-                    <div class="enemy-mechanic-picker-tile-grid">
-                      @for (tile of section.items; track tile.item.key) {
-                        <button
-                          type="button"
-                          class="enemy-mechanic-picker-tile"
-                          [class.enemy-mechanic-picker-tile--selected]="tile.isSelected"
-                          (click)="onCatalogItemSelect(tile.item)"
+              @if (!selectedRows().length) {
+                <div class="enemy-mechanic-picker-empty enemy-mechanic-picker-empty--selected">
+                  <strong>{{ t('selected.emptyTitle') }}</strong>
+                  <p>{{ t('selected.emptyCopy') }}</p>
+                </div>
+              } @else {
+                <div class="enemy-mechanic-picker-selected-list">
+                  @for (row of selectedRows(); track row.draft.draftId) {
+                    <article class="enemy-mechanic-picker-row">
+                      <div class="enemy-mechanic-picker-row__head">
+                        <div class="enemy-mechanic-picker-row__title">
+                          <span
+                            class="enemy-mechanic-picker-tile__badge"
+                            [attr.data-tone]="row.visual.tone"
+                          >
+                            <ion-icon [icon]="row.visual.icon"></ion-icon>
+                            <small>{{ row.visual.badge }}</small>
+                          </span>
+                          <div>
+                            <strong>{{ row.label }}</strong>
+                            <small>{{ t('categories.' + row.draft.category) }}</small>
+                          </div>
+                        </div>
+
+                        <ion-button
+                          fill="clear"
+                          color="danger"
+                          size="small"
+                          (click)="removeDraft(row.draft.draftId)"
                         >
-                          <span class="enemy-mechanic-picker-tile__badge" [attr.data-tone]="tile.visual.tone">
-                            <ion-icon [icon]="tile.visual.icon"></ion-icon>
-                            <small>{{ tile.visual.badge }}</small>
-                          </span>
+                          {{ 'common.actions.remove' | transloco }}
+                        </ion-button>
+                      </div>
 
-                          <span class="enemy-mechanic-picker-tile__copy">
-                            <strong>{{ tile.item.label }}</strong>
-                            <span class="enemy-mechanic-picker-tile__meta">
-                              @if (tile.item.supportsTurns) {
-                                <small>{{ t('catalog.hints.turns') }}</small>
-                              }
-                              @if (tile.item.derivedAbilityKey) {
-                                <small>{{ t('catalog.hints.derivedCounter') }}</small>
-                              }
-                            </span>
-                          </span>
+                      <div class="enemy-mechanic-picker-row__fields">
+                        @if (row.supportsTurns) {
+                          <label class="enemy-mechanic-picker-field">
+                            <span>{{ t('fields.turns') }}</span>
+                            <ion-input
+                              type="number"
+                              min="1"
+                              inputmode="numeric"
+                              fill="outline"
+                              [value]="row.draft.minTurns ?? ''"
+                              (ionInput)="onRequiredTurnsChange(row.draft.draftId, $event)"
+                            ></ion-input>
+                          </label>
+                        }
+                      </div>
 
-                          @if (tile.selectedCount > 0) {
-                            <span class="enemy-mechanic-picker-tile__count">
-                              {{ t('catalog.selectedCount', { count: tile.selectedCount }) }}
-                            </span>
-                          }
-                        </button>
+                      @if (row.availableTriggerTags.length) {
+                        <div class="enemy-mechanic-picker-field">
+                          <span>{{ t('fields.triggerTags') }}</span>
+                          <div class="enemy-mechanic-picker-tag-list">
+                            @for (tag of row.availableTriggerTags; track tag) {
+                              <button
+                                type="button"
+                                class="enemy-mechanic-picker-tag"
+                                [class.enemy-mechanic-picker-tag--selected]="
+                                  row.draft.triggerTags.includes(tag)
+                                "
+                                (click)="toggleTriggerTag(row.draft.draftId, tag)"
+                              >
+                                {{ t('triggerTags.' + tag) }}
+                              </button>
+                            }
+                          </div>
+                        </div>
                       }
-                    </div>
-                  </section>
-                }
-              </div>
-            }
-          </section>
 
-          <section class="enemy-mechanic-picker-panel enemy-mechanic-picker-panel--selected">
-            <div class="enemy-mechanic-picker-panel__head">
-              <div>
-                <strong>{{ t('selected.title') }}</strong>
-                <small>{{ t('selected.count', { count: selectedRows().length }) }}</small>
-              </div>
-            </div>
-
-            @if (!selectedRows().length) {
-              <div class="enemy-mechanic-picker-empty enemy-mechanic-picker-empty--selected">
-                <strong>{{ t('selected.emptyTitle') }}</strong>
-                <p>{{ t('selected.emptyCopy') }}</p>
-              </div>
-            } @else {
-              <div class="enemy-mechanic-picker-selected-list">
-                @for (row of selectedRows(); track row.draft.draftId) {
-                  <article class="enemy-mechanic-picker-row">
-                    <div class="enemy-mechanic-picker-row__head">
-                      <div class="enemy-mechanic-picker-row__title">
-                        <span class="enemy-mechanic-picker-tile__badge" [attr.data-tone]="row.visual.tone">
-                          <ion-icon [icon]="row.visual.icon"></ion-icon>
-                          <small>{{ row.visual.badge }}</small>
-                        </span>
-                        <div>
-                          <strong>{{ row.label }}</strong>
-                          <small>{{ t('categories.' + row.draft.category) }}</small>
+                      @if (row.availableResponseTags.length) {
+                        <div class="enemy-mechanic-picker-field">
+                          <span>{{ t('fields.responseTags') }}</span>
+                          <div class="enemy-mechanic-picker-tag-list">
+                            @for (tag of row.availableResponseTags; track tag) {
+                              <button
+                                type="button"
+                                class="enemy-mechanic-picker-tag"
+                                [class.enemy-mechanic-picker-tag--selected]="
+                                  row.draft.responseTags.includes(tag)
+                                "
+                                (click)="toggleResponseTag(row.draft.draftId, tag)"
+                              >
+                                {{ t('responseTags.' + tag) }}
+                              </button>
+                            }
+                          </div>
                         </div>
-                      </div>
-
-                      <ion-button
-                        fill="clear"
-                        color="danger"
-                        size="small"
-                        (click)="removeDraft(row.draft.draftId)"
-                      >
-                        {{ 'common.actions.remove' | transloco }}
-                      </ion-button>
-                    </div>
-
-                    <div class="enemy-mechanic-picker-row__fields">
-                      @if (row.supportsTurns) {
-                        <label class="enemy-mechanic-picker-field">
-                          <span>{{ t('fields.turns') }}</span>
-                          <ion-input
-                            type="number"
-                            min="1"
-                            inputmode="numeric"
-                            fill="outline"
-                            [value]="row.draft.minTurns ?? ''"
-                            (ionInput)="onRequiredTurnsChange(row.draft.draftId, $event)"
-                          ></ion-input>
-                        </label>
                       }
-                    </div>
 
-                    @if (row.availableTriggerTags.length) {
-                      <div class="enemy-mechanic-picker-field">
-                        <span>{{ t('fields.triggerTags') }}</span>
-                        <div class="enemy-mechanic-picker-tag-list">
-                          @for (tag of row.availableTriggerTags; track tag) {
-                            <button
-                              type="button"
-                              class="enemy-mechanic-picker-tag"
-                              [class.enemy-mechanic-picker-tag--selected]="row.draft.triggerTags.includes(tag)"
-                              (click)="toggleTriggerTag(row.draft.draftId, tag)"
-                            >
-                              {{ t('triggerTags.' + tag) }}
-                            </button>
-                          }
+                      @if (row.availableConditionTags.length) {
+                        <div class="enemy-mechanic-picker-field">
+                          <span>{{ t('fields.conditionTags') }}</span>
+                          <div class="enemy-mechanic-picker-tag-list">
+                            @for (tag of row.availableConditionTags; track tag) {
+                              <button
+                                type="button"
+                                class="enemy-mechanic-picker-tag"
+                                [class.enemy-mechanic-picker-tag--selected]="
+                                  row.draft.conditionTags.includes(tag)
+                                "
+                                (click)="toggleConditionTag(row.draft.draftId, tag)"
+                              >
+                                {{ t('conditionTags.' + tag) }}
+                              </button>
+                            }
+                          </div>
                         </div>
-                      </div>
-                    }
-
-                    @if (row.availableResponseTags.length) {
-                      <div class="enemy-mechanic-picker-field">
-                        <span>{{ t('fields.responseTags') }}</span>
-                        <div class="enemy-mechanic-picker-tag-list">
-                          @for (tag of row.availableResponseTags; track tag) {
-                            <button
-                              type="button"
-                              class="enemy-mechanic-picker-tag"
-                              [class.enemy-mechanic-picker-tag--selected]="row.draft.responseTags.includes(tag)"
-                              (click)="toggleResponseTag(row.draft.draftId, tag)"
-                            >
-                              {{ t('responseTags.' + tag) }}
-                            </button>
-                          }
-                        </div>
-                      </div>
-                    }
-
-                    @if (row.availableConditionTags.length) {
-                      <div class="enemy-mechanic-picker-field">
-                        <span>{{ t('fields.conditionTags') }}</span>
-                        <div class="enemy-mechanic-picker-tag-list">
-                          @for (tag of row.availableConditionTags; track tag) {
-                            <button
-                              type="button"
-                              class="enemy-mechanic-picker-tag"
-                              [class.enemy-mechanic-picker-tag--selected]="row.draft.conditionTags.includes(tag)"
-                              (click)="toggleConditionTag(row.draft.draftId, tag)"
-                            >
-                              {{ t('conditionTags.' + tag) }}
-                            </button>
-                          }
-                        </div>
-                      </div>
-                    }
-                  </article>
-                }
-              </div>
-            }
-          </section>
+                      }
+                    </article>
+                  }
+                </div>
+              }
+            </section>
+          </div>
         </div>
+      </ion-content>
 
-        <ion-footer class="enemy-mechanic-picker-footer">
-          <ion-toolbar>
-            <div class="enemy-mechanic-picker-footer__actions">
-              <ion-button fill="clear" color="light" (click)="cancel()">
-                {{ 'common.actions.cancel' | transloco }}
-              </ion-button>
-              <ion-button color="warning" (click)="save()">
-                {{ 'common.actions.save' | transloco }}
-              </ion-button>
-            </div>
-          </ion-toolbar>
-        </ion-footer>
-      </div>
+      <ion-footer class="enemy-mechanic-picker-footer">
+        <ion-toolbar>
+          <div class="enemy-mechanic-picker-footer__actions">
+            <ion-button fill="clear" color="light" (click)="cancel()">
+              {{ 'common.actions.cancel' | transloco }}
+            </ion-button>
+            <ion-button color="warning" (click)="save()">
+              {{ 'common.actions.save' | transloco }}
+            </ion-button>
+          </div>
+        </ion-toolbar>
+      </ion-footer>
     </ng-template>
   </ion-modal>
 </ng-container>

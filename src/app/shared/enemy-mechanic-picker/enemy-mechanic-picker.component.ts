@@ -1,9 +1,20 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, computed, signal } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+  computed,
+  signal,
+} from '@angular/core';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
   IonButton,
   IonButtons,
+  IonContent,
   IonFooter,
+  IonHeader,
   IonIcon,
   IonInput,
   IonModal,
@@ -58,7 +69,9 @@ interface EnemyMechanicSelectedRowView {
   imports: [
     IonButton,
     IonButtons,
+    IonContent,
     IonFooter,
+    IonHeader,
     IonIcon,
     IonInput,
     IonModal,
@@ -108,28 +121,26 @@ export class EnemyMechanicPickerComponent implements OnChanges {
     const searchTerm = this.searchTerm().trim().toLowerCase();
     const selectedCounts = this.selectedDraftCounts();
 
-    return ENEMY_MECHANIC_CATEGORY_ORDER
-      .map((category) => ({
-        category,
-        items: this.catalogItemsState()
-          .filter((item) => item.category === category)
-          .filter((item) => {
-            if (!searchTerm.length) {
-              return true;
-            }
+    return ENEMY_MECHANIC_CATEGORY_ORDER.map((category) => ({
+      category,
+      items: this.catalogItemsState()
+        .filter((item) => item.category === category)
+        .filter((item) => {
+          if (!searchTerm.length) {
+            return true;
+          }
 
-            return [item.key, item.label, ...item.keywords].some((value) =>
-              value.toLowerCase().includes(searchTerm),
-            );
-          })
-          .map((item) => ({
-            item,
-            visual: resolveEnemyMechanicVisual(item.key),
-            isSelected: selectedCounts.has(item.key),
-            selectedCount: selectedCounts.get(item.key) ?? 0,
-          })),
-      }))
-      .filter((section) => section.items.length > 0);
+          return [item.key, item.label, ...item.keywords].some((value) =>
+            value.toLowerCase().includes(searchTerm),
+          );
+        })
+        .map((item) => ({
+          item,
+          visual: resolveEnemyMechanicVisual(item.key),
+          isSelected: selectedCounts.has(item.key),
+          selectedCount: selectedCounts.get(item.key) ?? 0,
+        })),
+    })).filter((section) => section.items.length > 0);
   });
   public readonly selectedRows = computed<EnemyMechanicSelectedRowView[]>(() =>
     this.workingDrafts().map((draft) => {
@@ -170,7 +181,10 @@ export class EnemyMechanicPickerComponent implements OnChanges {
       return;
     }
 
-    this.workingDrafts.update((currentDrafts) => [...currentDrafts, createEnemyMechanicDraft(item)]);
+    this.workingDrafts.update((currentDrafts) => [
+      ...currentDrafts,
+      createEnemyMechanicDraft(item),
+    ]);
   }
 
   public clearAll(): void {

@@ -1,16 +1,40 @@
-.ship-picker-shell {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  height: 100%;
+.ship-picker-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   color: #f8fbff;
 }
 
+.ship-picker-header ion-toolbar {
+  --background: transparent;
+  --border-width: 0;
+  --min-height: auto;
+  --padding-start: 22px;
+  --padding-end: 12px;
+  --padding-top: 22px;
+  --padding-bottom: 0;
+}
+
+.ship-picker-header ion-buttons {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.ship-picker-content {
+  --background: transparent;
+}
+
+.ship-picker-content::part(scroll) {
+  min-height: 100%;
+}
+
+.ship-picker-content-shell {
+  display: grid;
+  min-height: 100%;
+  padding: 18px 22px 0;
+}
+
 .ship-picker-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 22px 22px 0;
+  min-width: 0;
+  padding-inline-end: 56px;
 }
 
 .ship-picker-head h2 {
@@ -30,7 +54,6 @@
   grid-template-columns: minmax(0, 1.22fr) minmax(250px, 0.78fr);
   gap: 16px;
   min-height: 0;
-  padding: 18px 22px 0;
 }
 
 .ship-picker-panel {
@@ -246,11 +269,16 @@
   line-height: 1.5;
 }
 
+.ship-picker-footer ion-toolbar {
+  --background: transparent;
+  --border-width: 0;
+  padding: 12px 18px 14px;
+}
+
 .ship-picker-footer__actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  padding: 0 18px;
 }
 
 .ship-picker-favorite-button {
@@ -303,9 +331,18 @@
 }
 
 @media (max-width: 640px) {
-  .ship-picker-head,
-  .ship-picker-body {
+  .ship-picker-header ion-toolbar {
+    --padding-start: 16px;
+    --padding-end: 10px;
+    --padding-top: 18px;
+  }
+
+  .ship-picker-content-shell {
     padding-inline: 16px;
+  }
+
+  .ship-picker-head {
+    padding-inline-end: 48px;
   }
 
   .ship-picker-grid {
