@@ -5,15 +5,35 @@
 
 .intro-card,
 .command-card,
+.performance-card,
 .data-card,
 .pack-list,
 .legal-card {
   padding: 18px;
 }
 
-.command-card {
+.command-card,
+.performance-card {
   display: grid;
   gap: 10px;
+}
+
+.performance-controls {
+  display: grid;
+  gap: 14px;
+}
+
+.performance-field {
+  display: grid;
+  gap: 8px;
+}
+
+.performance-summary {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .command-card code {

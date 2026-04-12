@@ -14,6 +14,12 @@ export interface AutoTeamBuildSearchOptions {
   now?: () => number;
 }
 
+export interface AutoTeamBuildPlannedAttempt {
+  input: AutoBuildInput;
+  droppedTypes: AutoTeamBuilderType[];
+  droppedClasses: string[];
+}
+
 interface AutoTeamBuildTimingState {
   searchStartedAt: number;
   totalCompletedFallbackMs: number;
@@ -53,14 +59,12 @@ export function runAutoTeamBuildSearch(
     completedAttempts: 0,
     totalAttempts: 0,
     currentDroppedTypes: [],
-    currentDroppedClasses: [],
-    messageKey: 'progress.preparingSearch',
+      currentDroppedClasses: [],
+      messageKey: 'progress.preparingSearch',
   });
 
-  const relaxedInputs = hasStrictConstraints(requestedInput)
-    ? []
-    : buildRelaxedInputs(requestedInput, records);
-  const totalAttempts = 1 + relaxedInputs.length;
+  const plannedAttempts = planAutoTeamBuildFallbackAttempts(requestedInput, records);
+  const totalAttempts = 1 + plannedAttempts.length;
 
   assertNotCancelled(options);
   emitProgress(options, timingState, {
@@ -77,33 +81,29 @@ export function runAutoTeamBuildSearch(
     },
   });
 
-  const exactResult = buildAttempt(records, requestedInput, requestedInput);
+  const exactResult = runAutoTeamBuildAttempt(records, requestedInput, requestedInput);
 
-  if (hasStrictConstraints(requestedInput)) {
+  if (hasStrictAutoTeamBuildConstraints(requestedInput)) {
     emitCompletedProgress(options, timingState, records.length, totalAttempts, totalAttempts);
     return exactResult;
   }
 
-  if (satisfiesRequestedCoverage(exactResult)) {
+  if (satisfiesRequestedAutoTeamBuildCoverage(exactResult)) {
     emitCompletedProgress(options, timingState, records.length, totalAttempts, 1);
     return exactResult;
   }
 
   let completedAttempts = 1;
 
-  for (const relaxedInput of relaxedInputs) {
+  for (const plannedAttempt of plannedAttempts) {
     assertNotCancelled(options);
     emitProgress(options, timingState, {
       stage: 'fallbackAttempt',
       candidateCount: records.length,
       completedAttempts,
       totalAttempts,
-      currentDroppedTypes: requestedInput.types.filter(
-        (type) => !relaxedInput.types.includes(type),
-      ),
-      currentDroppedClasses: requestedInput.selectedClasses.filter(
-        (selectedClass) => !relaxedInput.selectedClasses.includes(selectedClass),
-      ),
+      currentDroppedTypes: plannedAttempt.droppedTypes,
+      currentDroppedClasses: plannedAttempt.droppedClasses,
       messageKey: 'progress.fallbackAttempt',
       messageParams: {
         current: completedAttempts + 1,
@@ -112,13 +112,13 @@ export function runAutoTeamBuildSearch(
     });
 
     const fallbackStartedAt = timingState.now();
-    const relaxedResult = buildAttempt(records, relaxedInput, requestedInput);
+    const relaxedResult = runAutoTeamBuildAttempt(records, plannedAttempt.input, requestedInput);
     const fallbackEndedAt = timingState.now();
 
     timingState.totalCompletedFallbackMs += Math.max(0, fallbackEndedAt - fallbackStartedAt);
     timingState.completedFallbackAttempts += 1;
 
-    if (satisfiesRequestedCoverage(relaxedResult)) {
+    if (satisfiesRequestedAutoTeamBuildCoverage(relaxedResult)) {
       emitCompletedProgress(
         options,
         timingState,
@@ -219,7 +219,7 @@ function resolveCurrentTimestamp(): number {
   return Date.now();
 }
 
-function buildAttempt(
+export function runAutoTeamBuildAttempt(
   records: CharacterDetailRecord[],
   input: AutoBuildInput,
   requestedInput: AutoBuildInput,
@@ -244,10 +244,14 @@ function buildAttempt(
   };
 }
 
-function buildRelaxedInputs(
+export function planAutoTeamBuildFallbackAttempts(
   requestedInput: AutoBuildInput,
   records: CharacterDetailRecord[],
-): AutoBuildInput[] {
+): AutoTeamBuildPlannedAttempt[] {
+  if (hasStrictAutoTeamBuildConstraints(requestedInput)) {
+    return [];
+  }
+
   const classSupport = new Map(
     requestedInput.selectedClasses.map((selectedClass) => [
       selectedClass,
@@ -318,7 +322,11 @@ function buildRelaxedInputs(
     return left.droppedClasses.join('|').localeCompare(right.droppedClasses.join('|'));
   });
 
-  return nextInputs.map((entry) => entry.input);
+  return nextInputs.map((entry) => ({
+    input: entry.input,
+    droppedTypes: entry.droppedTypes,
+    droppedClasses: entry.droppedClasses,
+  }));
 }
 
 function buildSubsets<T>(values: T[], minLength: number): T[][] {
@@ -335,7 +343,7 @@ function buildSubsets<T>(values: T[], minLength: number): T[][] {
   return subsets;
 }
 
-function hasStrictConstraints(input: AutoBuildInput): boolean {
+export function hasStrictAutoTeamBuildConstraints(input: AutoBuildInput): boolean {
   return Boolean(
     input.requireAllSelectedTypesInTeam || input.requireAllSelectedClassesPerCharacter,
   );
@@ -352,7 +360,9 @@ function sameOrderedValues<T>(left: T[], right: T[]): boolean {
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
-function satisfiesRequestedCoverage(result: AutoBuildResult | null): result is AutoBuildResult {
+export function satisfiesRequestedAutoTeamBuildCoverage(
+  result: AutoBuildResult | null,
+): result is AutoBuildResult {
   return Boolean(
     result &&
     result.coverage.coversAllSelectedClasses &&

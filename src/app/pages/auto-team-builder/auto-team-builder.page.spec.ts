@@ -75,6 +75,26 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
       expect.objectContaining({
         onProgress: expect.any(Function),
         signal: expect.any(AbortSignal),
+        workerCount: 7,
+      }),
+    );
+  });
+
+  it('passes the resolved worker count to the builder service execution options', async () => {
+    const { page, autoTeamBuilder, userState } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    userState.resolveAutoTeamBuilderWorkerCount.mockReturnValue(4);
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.any(Object),
+      expect.objectContaining({
+        workerCount: 4,
       }),
     );
   });
@@ -3468,6 +3488,7 @@ async function createPage(
     getSavedTeamById: ReturnType<typeof vi.fn>;
     getSavedEnemyById: ReturnType<typeof vi.fn>;
     ready: ReturnType<typeof vi.fn>;
+    resolveAutoTeamBuilderWorkerCount: ReturnType<typeof vi.fn>;
     saveTeam: ReturnType<typeof vi.fn>;
     toggleFavorite: ReturnType<typeof vi.fn>;
     toggleShipFavorite: ReturnType<typeof vi.fn>;
@@ -3595,6 +3616,7 @@ async function createPage(
       (enemyId: string) => savedEnemies().find((enemy) => enemy.id === enemyId) ?? null,
     ),
     ready: vi.fn().mockResolvedValue(undefined),
+    resolveAutoTeamBuilderWorkerCount: vi.fn().mockReturnValue(7),
     saveTeam: vi.fn().mockResolvedValue({ id: 'saved-auto-team' }),
     toggleFavorite: vi.fn().mockResolvedValue(undefined),
     toggleShipFavorite: vi.fn().mockResolvedValue(undefined),

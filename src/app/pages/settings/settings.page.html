@@ -30,6 +30,62 @@
         <p>{{ t("language.helper") }}</p>
       </section>
 
+      <section class="glass-card performance-card">
+        <div class="section-head">
+          <div>
+            <h2>{{ t("performance.title") }}</h2>
+            <p>{{ t("performance.copy") }}</p>
+          </div>
+        </div>
+
+        <div class="performance-controls">
+          <div class="performance-field">
+            <ion-label>{{ t("performance.mode.label") }}</ion-label>
+            <ion-select
+              interface="popover"
+              fill="outline"
+              [value]="autoTeamBuilderWorkerPreference().mode"
+              (ionChange)="onAutoTeamBuilderWorkerModeChange($event)"
+            >
+              <ion-select-option value="auto">
+                {{ t("performance.mode.options.auto") }}
+              </ion-select-option>
+              <ion-select-option value="manual">
+                {{ t("performance.mode.options.manual") }}
+              </ion-select-option>
+            </ion-select>
+          </div>
+
+          @if (autoTeamBuilderWorkerPreference().mode === "manual") {
+            <div class="performance-field">
+              <ion-label>{{ t("performance.manualCount.label") }}</ion-label>
+              <ion-select
+                interface="popover"
+                fill="outline"
+                [value]="autoTeamBuilderWorkerPreference().manualCount"
+                (ionChange)="onAutoTeamBuilderManualWorkerCountChange($event)"
+              >
+                @for (count of autoTeamBuilderAvailableWorkerCounts(); track count) {
+                  <ion-select-option [value]="count">{{ count }}</ion-select-option>
+                }
+              </ion-select>
+            </div>
+          }
+        </div>
+
+        <div class="performance-summary">
+          <p>{{ t("performance.runtime.detected", { count: autoTeamBuilderWorkerRuntime().detectedCoreCount }) }}</p>
+          <p>{{ t("performance.runtime.effective", { count: autoTeamBuilderWorkerRuntime().effectiveCount }) }}</p>
+          <p>
+            {{
+              autoTeamBuilderWorkerPreference().mode === "manual"
+                ? t("performance.runtime.manual")
+                : t("performance.runtime.auto")
+            }}
+          </p>
+        </div>
+      </section>
+
       <section class="glass-card data-card">
         <div class="section-head">
           <div>

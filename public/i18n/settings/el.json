@@ -8,6 +8,26 @@
     "label": "Γλώσσα",
     "helper": "Άλλαξε live τη γλώσσα του app και κράτησέ την αποθηκευμένη σε αυτή τη συσκευή."
   },
+  "performance": {
+    "title": "Απόδοση Auto Team Builder",
+    "copy": "Ρύθμισε πόσους web workers θα χρησιμοποιεί το auto team builder όταν σκανάρει fallback attempts.",
+    "mode": {
+      "label": "Λειτουργία workers",
+      "options": {
+        "auto": "Αυτόματα",
+        "manual": "Χειροκίνητα"
+      }
+    },
+    "manualCount": {
+      "label": "Web workers"
+    },
+    "runtime": {
+      "auto": "Η αυτόματη λειτουργία κρατά έναν detected core για το UI όταν γίνεται και εφαρμόζεται μόνο στα fallback scans.",
+      "detected": "Detected device cores: {{count}}.",
+      "effective": "Τα fallback scans θα χρησιμοποιούν έως {{count}} web worker(s).",
+      "manual": "Η χειροκίνητη λειτουργία χρησιμοποιεί το επιλεγμένο πλήθος workers μόνο για τα fallback scans."
+    }
+  },
   "management": {
     "copy": "Κάνε backup και restore των τοπικών δεδομένων της συσκευής για favorite characters, favorite ships, saved teams και saved enemies.",
     "confirm": {

@@ -11,9 +11,26 @@ const FAVORITE_SHIPS_KEY = 'favoriteShipIds';
 const RECENTS_KEY = 'recentCharacterIds';
 const SAVED_TEAMS_KEY = 'savedTeams';
 const SAVED_ENEMIES_KEY = 'savedEnemies';
+const AUTO_TEAM_BUILDER_WORKER_PREFERENCE_KEY = 'autoTeamBuilderWorkerPreference';
 const LEGACY_ABILITY_KEY_ALIASES: Record<string, string> = {
   remove_defense_up: 'remove_enemy_increased_defense',
 };
+const AUTO_TEAM_BUILDER_DEFAULT_WORKER_PREFERENCE: AutoTeamBuilderWorkerPreference = {
+  mode: 'auto',
+  manualCount: 7,
+};
+
+export type AutoTeamBuilderWorkerMode = 'auto' | 'manual';
+
+export interface AutoTeamBuilderWorkerPreference {
+  mode: AutoTeamBuilderWorkerMode;
+  manualCount: number;
+}
+
+export interface ResolvedAutoTeamBuilderWorkerPreference extends AutoTeamBuilderWorkerPreference {
+  detectedCoreCount: number;
+  effectiveCount: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class UserStateService {
@@ -22,6 +39,9 @@ export class UserStateService {
   public readonly recentCharacterIds = signal<number[]>([]);
   public readonly savedTeams = signal<SavedTeam[]>([]);
   public readonly savedEnemies = signal<SavedEnemy[]>([]);
+  public readonly autoTeamBuilderWorkerPreference = signal<AutoTeamBuilderWorkerPreference>(
+    AUTO_TEAM_BUILDER_DEFAULT_WORKER_PREFERENCE,
+  );
 
   private readonly hydratePromise: Promise<void>;
 
@@ -77,6 +97,37 @@ export class UserStateService {
 
   public async clearAllFavoriteShipIds(): Promise<void> {
     await this.setFavoriteShipIds([]);
+  }
+
+  public resolveAutoTeamBuilderWorkerPreference(): ResolvedAutoTeamBuilderWorkerPreference {
+    const detectedCoreCount = this.resolveDetectedCoreCount();
+    const normalizedPreference = this.normalizeAutoTeamBuilderWorkerPreference(
+      this.autoTeamBuilderWorkerPreference(),
+      detectedCoreCount,
+    );
+
+    return {
+      ...normalizedPreference,
+      detectedCoreCount,
+      effectiveCount:
+        normalizedPreference.mode === 'manual'
+          ? normalizedPreference.manualCount
+          : Math.max(1, detectedCoreCount - 1),
+    };
+  }
+
+  public resolveAutoTeamBuilderWorkerCount(): number {
+    return this.resolveAutoTeamBuilderWorkerPreference().effectiveCount;
+  }
+
+  public async setAutoTeamBuilderWorkerPreference(
+    preference: AutoTeamBuilderWorkerPreference,
+  ): Promise<void> {
+    await this.ready();
+    const normalizedPreference = this.normalizeAutoTeamBuilderWorkerPreference(preference);
+
+    this.autoTeamBuilderWorkerPreference.set(normalizedPreference);
+    await this.persistJson(AUTO_TEAM_BUILDER_WORKER_PREFERENCE_KEY, normalizedPreference);
   }
 
   public async markRecent(characterId: number): Promise<void> {
@@ -310,12 +361,17 @@ export class UserStateService {
   }
 
   private async hydrate(): Promise<void> {
-    const [favorites, favoriteShips, recents, teams, enemies] = await Promise.all([
+    const [favorites, favoriteShips, recents, teams, enemies, autoTeamBuilderWorkerPreference] =
+      await Promise.all([
       this.readJson<number[]>(FAVORITES_KEY, []),
       this.readJson<number[]>(FAVORITE_SHIPS_KEY, []),
       this.readJson<number[]>(RECENTS_KEY, []),
       this.readJson<SavedTeam[]>(SAVED_TEAMS_KEY, []),
       this.readJson<SavedEnemy[]>(SAVED_ENEMIES_KEY, []),
+      this.readJson<AutoTeamBuilderWorkerPreference>(
+        AUTO_TEAM_BUILDER_WORKER_PREFERENCE_KEY,
+        AUTO_TEAM_BUILDER_DEFAULT_WORKER_PREFERENCE,
+      ),
     ]);
 
     this.favoriteCharacterIds.set(favorites);
@@ -323,6 +379,9 @@ export class UserStateService {
     this.recentCharacterIds.set(recents);
     this.savedTeams.set(teams.map((team) => this.normalizeSavedTeam(team)));
     this.savedEnemies.set(enemies.map((enemy) => this.normalizeSavedEnemy(enemy)));
+    this.autoTeamBuilderWorkerPreference.set(
+      this.normalizeAutoTeamBuilderWorkerPreference(autoTeamBuilderWorkerPreference),
+    );
   }
 
   private async readJson<T>(key: string, fallback: T): Promise<T> {
@@ -351,6 +410,31 @@ export class UserStateService {
   private async replaceSavedEnemies(enemies: SavedEnemy[]): Promise<void> {
     this.savedEnemies.set(enemies);
     await this.persistJson(SAVED_ENEMIES_KEY, enemies);
+  }
+
+  private resolveDetectedCoreCount(): number {
+    const hardwareConcurrency = globalThis.navigator?.hardwareConcurrency;
+
+    if (!Number.isFinite(hardwareConcurrency)) {
+      return 8;
+    }
+
+    return Math.max(1, Math.min(16, Math.floor(hardwareConcurrency ?? 8)));
+  }
+
+  private normalizeAutoTeamBuilderWorkerPreference(
+    preference: AutoTeamBuilderWorkerPreference | null | undefined,
+    detectedCoreCount = this.resolveDetectedCoreCount(),
+  ): AutoTeamBuilderWorkerPreference {
+    const mode = preference?.mode === 'manual' ? 'manual' : 'auto';
+    const manualCount = Number.isFinite(preference?.manualCount)
+      ? Math.floor(preference?.manualCount ?? 1)
+      : AUTO_TEAM_BUILDER_DEFAULT_WORKER_PREFERENCE.manualCount;
+
+    return {
+      mode,
+      manualCount: Math.max(1, Math.min(detectedCoreCount, manualCount)),
+    };
   }
 
   private normalizeSavedTeam(
