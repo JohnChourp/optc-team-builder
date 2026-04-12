@@ -201,7 +201,6 @@ describe('SavedTeamsPage', () => {
     expect(template).toContain("t('actions.exportSingle')");
     expect(template).toContain("'common.actions.reset' | transloco");
     expect(template).toContain("t('tools.export')");
-    expect(template).toContain("t('tools.import')");
     expect(template).toContain("t('selection.selectAll')");
     expect(template).toContain("t('edit.actions.edit')");
     expect(template).toContain('edit.teamNameLabel');
@@ -219,7 +218,7 @@ describe('SavedTeamsPage', () => {
     expect(template).toContain('[queryParams]="getTeamBuilderQueryParams(teamCard.team)"');
     expect(template).toContain('[routerLink]="[\'/tabs/saved-enemies\']"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(currentSlot)"');
-    expect(template).toContain('openImportModal()');
+    expect(template).not.toContain('openImportModal()');
     expect(template).toContain('import-dropzone');
   });
 

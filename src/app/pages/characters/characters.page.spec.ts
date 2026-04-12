@@ -74,19 +74,19 @@ describe('CharactersPage favorites tools', () => {
     expect(page.importResult()?.matchedIds).toEqual([1001, 1002]);
   });
 
-  it('includes the favorites import/export actions in the template', () => {
+  it('keeps the favorites-only controls in the template without bulk favorite action buttons', () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/characters/characters.page.html'),
       'utf8',
     );
 
-    expect(template).toContain("t('tools.export')");
-    expect(template).toContain("t('tools.import')");
-    expect(template).toContain("t('favorites.clearAll')");
     expect(template).toContain("'common.actions.reset' | transloco");
     expect(template).toContain("t('filters.favoritesOnly.label')");
     expect(template).toContain('favoritesOnlySupportLabel()');
     expect(template).toContain('onFavoritesOnlyToggle($event)');
+    expect(template).not.toContain("t('tools.export')");
+    expect(template).not.toContain("t('tools.import')");
+    expect(template).not.toContain("t('favorites.clearAll')");
   });
 
   it('filters searches down to favorites when the toggle is enabled', async () => {

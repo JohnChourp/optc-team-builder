@@ -49,25 +49,6 @@
             <ion-button fill="outline" color="light" (click)="resetPage()">
               {{ 'common.actions.reset' | transloco }}
             </ion-button>
-            <ion-button
-              fill="outline"
-              color="light"
-              [disabled]="!canDownloadFavoritesExport()"
-              (click)="downloadFavoritesExport()"
-            >
-              {{ t('tools.export') }}
-            </ion-button>
-            <ion-button fill="outline" color="warning" (click)="openImportModal()">
-              {{ t('tools.import') }}
-            </ion-button>
-            <ion-button
-              fill="outline"
-              color="danger"
-              [disabled]="!canClearAllFavorites()"
-              (click)="clearAllFavorites()"
-            >
-              {{ t('favorites.clearAll') }}
-            </ion-button>
           </div>
         </div>
 
