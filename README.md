@@ -70,6 +70,21 @@ Build and sync the native projects:
 npm run build:mobile
 ```
 
+Build the GitHub Pages artifact locally:
+
+```bash
+npm run build:pages
+```
+
+## GitHub Pages deploy
+
+This repo publishes Pages through the `Deploy GitHub Pages` GitHub Actions workflow only.
+
+- The repository Pages setting must stay in GitHub Actions workflow mode, not legacy branch mode.
+- Pushes to `main`, including Android release commits like `release: vX.Y.Z`, trigger the Pages workflow automatically.
+- If you see both `Deploy GitHub Pages` and `pages-build-deployment` for the same SHA, the repo Pages settings regressed back to legacy mode and need to be switched to workflow mode.
+- `PAGES_ENABLEMENT_TOKEN` is no longer part of the normal setup for this repo.
+
 One-time Android signing setup:
 
 ```bash
@@ -84,6 +99,8 @@ Create a signed Android GitHub release locally:
 ```
 
 The release skill auto-loads `~/.android/optc-team-builder/release-signing.env` and, if needed, runs `./scripts/setup-release-signing.sh` before continuing with the existing release flow.
+
+The release flow does not perform a second deploy step for Pages. It only pushes the release commit to `main`, which then triggers the normal Pages workflow.
 
 The local signing env contract remains:
 
