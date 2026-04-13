@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-12T06:42:29.081Z",
+  "generatedAt": "2026-04-13T05:55:57.196Z",
   "characters": [
     {
       "id": 1,
@@ -41,6 +41,14 @@
         "specialName": "Spinning Gum Punch",
         "specialText": "Deals 5x character's ATK in [STR] damage to one enemy",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "monkey d. luffy",
+          "luffy"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
@@ -94,6 +102,14 @@
         "specialName": "Gum-Gum Pistol",
         "specialText": "Deals 7x character's ATK in [STR] damage to one enemy",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "monkey d. luffy",
+          "luffy"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
@@ -147,6 +163,14 @@
         "specialName": "Gum-Gum Bazooka",
         "specialText": "Deals 15x character's ATK in [STR] damage to one enemy",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "monkey d. luffy",
+          "luffy"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
@@ -201,6 +225,14 @@
         "specialName": "Gum-Gum Twin Jet Pistol",
         "specialText": "Deals 25x character's ATK in [STR] damage to one enemy",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "monkey d. luffy",
+          "luffy"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [
           "Boosts base ATK of this character by 100 if this character is the last in the chain to attack. Makes [QCK] orbs beneficial for this character"
@@ -277,8 +309,8 @@
         ],
         "supportData": [
           {
-            "Characters": "All characters",
-            "description": [
+            "supportedCharactersText": "All characters",
+            "levelDescriptions": [
               "Adds 1% of this character's base ATK to the supported character's base ATK",
               "Adds 2% of this character's base ATK to the supported character's base ATK",
               "Adds 3% of this character's base ATK to the supported character's base ATK",
@@ -334,6 +366,14 @@
         "specialName": "Oni Giri",
         "specialText": "Deals 7x character's ATK in [DEX] damage to one enemy",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "roronoa zoro",
+          "zoro"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
@@ -388,6 +428,14 @@
         "specialName": "Three Thousand Worlds",
         "specialText": "Deals 10x character's ATK in [DEX] damage to all enemies",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "roronoa zoro",
+          "zoro"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
@@ -442,6 +490,14 @@
         "specialName": "108 Pound Phoenix",
         "specialText": "Deals 10x character's ATK in [DEX] damage to all enemies",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "roronoa zoro",
+          "zoro"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
@@ -496,6 +552,14 @@
         "specialName": "Ashura Ichibugin",
         "specialText": "Deals 15x character's ATK in [DEX] damage to all enemies",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "roronoa zoro",
+          "zoro"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [
           "Restores Special Cooldown of this character by 1 turn when it is rewinded. Boosts base ATK of [DEX] characters by 40"
@@ -572,8 +636,8 @@
         ],
         "supportData": [
           {
-            "Characters": "[DEX] characters",
-            "description": [
+            "supportedCharactersText": "[DEX] characters",
+            "levelDescriptions": [
               "Adds 1% of this character's base ATK and HP to the supported character's base ATK and HP",
               "Adds 1% of this character's base ATK and HP to the supported character's base ATK and HP",
               "Adds 2% of this character's base ATK and HP to the supported character's base ATK and HP",
@@ -629,6 +693,13 @@
         "specialName": "Cat Burglar",
         "specialText": "Recovers 1,000 HP",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "nami"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
@@ -683,6 +754,13 @@
         "specialName": "Tornado Tempo",
         "specialText": "Deals 15x character's ATK in [INT] damage to one enemy",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "nami"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
@@ -737,6 +815,13 @@
         "specialName": "Mirage Tempo",
         "specialText": "Reduces damage received from [INT] enemies by 100% for 1 turn",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "nami"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
@@ -791,6 +876,13 @@
         "specialName": "Thunderbolt Tempo",
         "specialText": "Deals 15x character's ATK in [INT] damage to all enemies",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "nami"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [
           "Makes [RCV] orbs beneficial for [INT] characters. Boosts base ATK, HP and RCV of [INT] characters by 50"
@@ -867,8 +959,8 @@
         ],
         "supportData": [
           {
-            "Characters": "[INT] characters",
-            "description": [
+            "supportedCharactersText": "[INT] characters",
+            "levelDescriptions": [
               "Adds 1% of this character's base ATK and RCV to the supported character's base ATK and RCV",
               "Adds 1% of this character's base ATK and RCV to the supported character's base ATK and RCV",
               "Adds 2% of this character's base ATK and RCV to the supported character's base ATK and RCV",
@@ -924,6 +1016,13 @@
         "specialName": "Liar",
         "specialText": "Delays all enemies by 1 turn",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "usopp"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
@@ -1431,6 +1530,13 @@
         "specialName": "Tabasco Star",
         "specialText": "Delays all enemies by 2 turns",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "usopp"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
@@ -1938,6 +2044,13 @@
         "specialName": "Usopp Golden Pound",
         "specialText": "Delays all enemies by 3 turns",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "usopp"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
@@ -2445,6 +2558,13 @@
         "specialName": "Fire Bird Star",
         "specialText": "Delays all enemies by 3 turns, deals 15x character's ATK in [PSY] damage to all enemies",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "sogeking"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [
           "Boosts base ATK, HP and RCV of Shooter characters by 20"
@@ -2521,8 +2641,8 @@
         ],
         "supportData": [
           {
-            "Characters": "Shooter characters",
-            "description": [
+            "supportedCharactersText": "Shooter characters",
+            "levelDescriptions": [
               "Reduces damage received from [INT] characters by 1%. Adds 1% of this character's base ATK to the supported character's base ATK",
               "Reduces damage received from [INT] characters by 1%. Adds 1% of this character's base ATK to the supported character's base ATK",
               "Reduces damage received from [INT] characters by 2%. Adds 2% of this character's base ATK to the supported character's base ATK",
@@ -2581,6 +2701,13 @@
         "specialName": "Special Fried Rice",
         "specialText": "Recovers 10x character's RCV in HP",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "sanji"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
@@ -2635,6 +2762,13 @@
         "specialName": "Plastic Surgery Shot",
         "specialText": "Reduces the defense of all enemies by 50% for 2 turns",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "sanji"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
@@ -2689,6 +2823,14 @@
         "specialName": "Hot Rock Stew",
         "specialText": "Recovers 10x character's RCV in HP",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "chef sanji",
+          "sanji"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
@@ -2743,6 +2885,13 @@
         "specialName": "Diable Jambe",
         "specialText": "Deals 5,000 Fixed damage to all enemies",
         "specialNotes": "#{fixed}",
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "sanji"
+        ],
         "builderAbilities": [
           {
             "key": "deal_fixed_damage",
@@ -2829,8 +2978,8 @@
         ],
         "supportData": [
           {
-            "Characters": "Powerhouse characters",
-            "description": [
+            "supportedCharactersText": "Powerhouse characters",
+            "levelDescriptions": [
               "Adds 1% of this character's base ATK and HP to the supported character's base ATK and HP",
               "Adds 1% of this character's base ATK and HP to the supported character's base ATK and HP",
               "Adds 2% of this character's base ATK and HP to the supported character's base ATK and HP",
@@ -2886,6 +3035,14 @@
         "specialName": "Hearty Yell",
         "specialText": "Changes orbs of adjacent characters into [RCV] orbs",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "tony tony chopper",
+          "chopper"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
@@ -2940,6 +3097,14 @@
         "specialName": "Heavy Gong",
         "specialText": "Deals 15x character's ATK in [PSY] damage to one enemy",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "tony tony chopper",
+          "chopper"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [
           "Makes [TND] orbs beneficial for this character. Boosts base ATK, HP and RCV of all characters by 30"
@@ -3016,8 +3181,8 @@
         ],
         "supportData": [
           {
-            "Characters": "Fighter characters",
-            "description": [
+            "supportedCharactersText": "Fighter characters",
+            "levelDescriptions": [
               "Adds 1% of this character's base ATK and HP to the supported character's base ATK and HP",
               "Adds 1% of this character's base ATK and HP to the supported character's base ATK and HP",
               "Adds 2% of this character's base ATK and HP to the supported character's base ATK and HP",
@@ -3074,6 +3239,14 @@
         "specialName": "Scope",
         "specialText": "Changes orbs of adjacent characters into [RCV] orbs",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "tony tony chopper",
+          "chopper"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
@@ -3128,6 +3301,14 @@
         "specialName": "Hoofprint Roseo",
         "specialText": "Reduces the defense of all enemies by 50% for 2 turns",
         "specialNotes": null,
+        "superSpecialText": null,
+        "superSpecialCriteriaText": null,
+        "superSpecialNotes": null,
+        "superSpecialCriteria": null,
+        "partyConflictKeys": [
+          "tony tony chopper",
+          "chopper"
+        ],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,

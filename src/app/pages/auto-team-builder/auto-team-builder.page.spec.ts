@@ -125,6 +125,32 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     );
   });
 
+  it('passes the leader super special criteria toggle to the builder service', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    await page.onRequireLeaderSuperSpecialCriteriaToggle({
+      detail: { checked: true },
+    } as CustomEvent<{
+      checked: boolean;
+    }>);
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({
+        requireLeaderSuperSpecialCriteria: true,
+      }),
+      expect.objectContaining({
+        onProgress: expect.any(Function),
+        signal: expect.any(AbortSignal),
+      }),
+    );
+  });
+
   it('passes the same-captain toggle to the builder service', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
@@ -202,6 +228,22 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     }>);
 
     expect(page.requireAllSpecialsSupportTeam()).toBe(true);
+    expect(alertController.create).not.toHaveBeenCalled();
+  });
+
+  it('re-enables leader super special criteria mode without showing confirmation', async () => {
+    const { page, alertController } = await createPage();
+
+    await page.ngOnInit();
+    page.requireLeaderSuperSpecialCriteria.set(false);
+
+    await page.onRequireLeaderSuperSpecialCriteriaToggle({
+      detail: { checked: true },
+    } as CustomEvent<{
+      checked: boolean;
+    }>);
+
+    expect(page.requireLeaderSuperSpecialCriteria()).toBe(true);
     expect(alertController.create).not.toHaveBeenCalled();
   });
 
@@ -956,6 +998,19 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     await page.ionViewWillEnter();
 
     expect(page.requireSameCaptainAndFriendCaptain()).toBe(false);
+  });
+
+  it('resets the leader super special criteria toggle when the page state is reset', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.requireLeaderSuperSpecialCriteria.set(false);
+
+    expect(page.requireLeaderSuperSpecialCriteria()).toBe(false);
+
+    await page.ionViewWillEnter();
+
+    expect(page.requireLeaderSuperSpecialCriteria()).toBe(true);
   });
 
   it('renders detail actions only on selected leader and result cards', async () => {
@@ -2029,6 +2084,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
     page.selectedTypes.set([]);
     page.selectedClasses.set([]);
     page.requireAllSpecialsSupportTeam.set(false);
+    page.requireLeaderSuperSpecialCriteria.set(false);
     page.requireUniqueBaseCharacterNames.set(false);
     page.favoritesOnly.set(false);
     page.favoriteShipsOnly.set(false);
@@ -2121,7 +2177,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 9,
+      schemaVersion: 10,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -2140,6 +2196,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
         requireAllSelectedTypesInTeam: true,
         requireAllSelectedClassesPerCharacter: true,
         requireAllSpecialsSupportTeam: true,
+        requireLeaderSuperSpecialCriteria: true,
         requireUniqueBaseCharacterNames: true,
         requireSameCaptainAndFriendCaptain: true,
         favoritesOnly: true,
@@ -2197,6 +2254,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSpecialsSupportTeam: true,
+      requireLeaderSuperSpecialCriteria: true,
       requireUniqueBaseCharacterNames: true,
       requireSameCaptainAndFriendCaptain: true,
       favoritesOnly: true,
@@ -2221,6 +2279,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSpecialsSupportTeam: true,
+      requireLeaderSuperSpecialCriteria: true,
       requireUniqueBaseCharacterNames: true,
       requireSameCaptainAndFriendCaptain: true,
       favoritesOnly: true,

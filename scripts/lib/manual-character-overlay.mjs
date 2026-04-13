@@ -14,6 +14,9 @@ const MANUAL_DETAIL_NULLABLE_TEXT_KEYS = [
   'specialName',
   'specialText',
   'specialNotes',
+  'superSpecialText',
+  'superSpecialCriteriaText',
+  'superSpecialNotes',
   'sailorNotes',
 ];
 const MANUAL_DETAIL_ARRAY_OBJECT_KEYS = [
@@ -22,7 +25,14 @@ const MANUAL_DETAIL_ARRAY_OBJECT_KEYS = [
   'supportData',
   'builderAbilities',
 ];
-const MANUAL_DETAIL_OBJECT_KEYS = ['swapData', 'vsSpecial', 'superType', 'superClass', 'rumbleData'];
+const MANUAL_DETAIL_OBJECT_KEYS = [
+  'superSpecialCriteria',
+  'swapData',
+  'vsSpecial',
+  'superType',
+  'superClass',
+  'rumbleData',
+];
 const MANUAL_DETAIL_STRING_ARRAY_KEYS = ['sailorAbilities'];
 export function isManualCharacterId(value) {
   return Number.isInteger(value) && value >= MANUAL_CHARACTER_ID_MIN;
@@ -35,6 +45,10 @@ export function createEmptyManualDetail(characterId) {
     specialName: null,
     specialText: null,
     specialNotes: null,
+    superSpecialText: null,
+    superSpecialCriteriaText: null,
+    superSpecialNotes: null,
+    superSpecialCriteria: null,
     builderAbilities: [],
     sailorAbilities: [],
     sailorNotes: null,

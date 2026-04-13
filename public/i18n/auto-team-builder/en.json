@@ -63,6 +63,13 @@
         "flexible": "Special utility is preferred but can be relaxed if the local pool is too narrow."
       }
     },
+    "superSpecialCriteria": {
+      "toggle": "Require leader super special criteria",
+      "support": {
+        "strict": "Selected leaders with Super Special criteria must form a final team that satisfies at least one roster-valid criteria branch.",
+        "flexible": "Ignore leader Super Special criteria when assembling the final team."
+      }
+    },
     "uniqueNames": {
       "toggle": "Avoid in-game duplicate characters",
       "support": {
@@ -107,6 +114,9 @@
       },
       "specialSupport": {
         "message": "Turn off special support coverage and allow slots without readable special utility or team support?"
+      },
+      "superSpecialCriteria": {
+        "message": "Turn off leader Super Special criteria checks and allow leaders whose Super Special roster criteria are not met?"
       }
     }
   },
@@ -478,6 +488,7 @@
       "flexible": "No flexible team matched {{types}} while keeping {{requirements}}{{favoritesScope}}.",
       "separator": " and ",
       "specialCoverage": "special support coverage",
+      "superSpecialCriteria": "leader Super Special criteria coverage",
       "sameCaptainAndFriendCaptain": "matching captain and friend captain",
       "strict": "No strict team matched {{types}} while keeping {{requirements}}{{favoritesScope}}.",
       "typeCoverage": "team-wide type coverage",

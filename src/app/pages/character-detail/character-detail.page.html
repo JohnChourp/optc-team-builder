@@ -79,6 +79,26 @@
               }
             </article>
           }
+          @if (
+            current.detail.superSpecialText ||
+            current.detail.superSpecialCriteriaText ||
+            current.detail.superSpecialNotes
+          ) {
+            <article class="glass-card detail-card">
+              <h2>{{ t('sections.superSpecial') }}</h2>
+              @if (current.detail.superSpecialText) {
+                <p>{{ current.detail.superSpecialText }}</p>
+              }
+              @if (current.detail.superSpecialCriteriaText) {
+                <strong>{{ t('superSpecial.criteriaLabel') }}</strong>
+                <p>{{ current.detail.superSpecialCriteriaText }}</p>
+              }
+              @if (current.detail.superSpecialNotes) {
+                <strong>{{ t('superSpecial.notesLabel') }}</strong>
+                <small>{{ current.detail.superSpecialNotes }}</small>
+              }
+            </article>
+          }
           @if (current.detail.sailorAbilities.length) {
             <article class="glass-card detail-card">
               <h2>{{ t('sections.sailorAbilities') }}</h2>
@@ -117,7 +137,25 @@
           @if (current.detail.supportData.length) {
             <article class="glass-card detail-card">
               <h2>{{ t('sections.supportData') }}</h2>
-              <pre>{{ current.detail.supportData | json }}</pre>
+              <ul>
+                @for (entry of current.detail.supportData; track $index) {
+                  <li>
+                    @if (entry.supportedCharactersText) {
+                      <strong>
+                        {{ t('support.supportedCharactersLabel') }}:
+                        {{ entry.supportedCharactersText }}
+                      </strong>
+                    }
+                    @if (entry.levelDescriptions.length) {
+                      <ul>
+                        @for (levelDescription of entry.levelDescriptions; track levelDescription) {
+                          <li>{{ levelDescription }}</li>
+                        }
+                      </ul>
+                    }
+                  </li>
+                }
+              </ul>
             </article>
           }
           @if (current.detail.rumbleData) {

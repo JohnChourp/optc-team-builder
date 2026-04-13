@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { applyShipThumbnailOverrides, packDefinitions, shouldDownloadPack } from './import-optc-data.mjs';
+import {
+  applyShipThumbnailOverrides,
+  normalizeCharacterDetail,
+  packDefinitions,
+  shouldDownloadPack,
+} from './import-optc-data.mjs';
 
 describe('import-optc-data ship thumbnail pack', () => {
   it('registers the ship thumbnail pack definition', () => {
@@ -41,5 +46,44 @@ describe('import-optc-data ship thumbnail pack', () => {
       { id: 63, name: "Shiki's Island Ship", thumb: 'ship_0063_t2.png', description: '' },
       { id: 14, name: 'Thousand Sunny', thumb: 'ship_0014_t2.png', description: '' },
     ]);
+  });
+
+  it('imports typed support data and super special fields into the normalized detail shape', () => {
+    const detail = normalizeCharacterDetail(
+      {
+        superSpecial:
+          'Reduces Special Cooldown of all characters by 1 turn and transforms Free Spirit characters into Super Free Spirit characters.',
+        superSpecialCriteria:
+          'This character must be captain and your crew must consist of any 1 of the following, excluding Supports and counting only 1 per unit: Roronoa Zoro, Nami or Usopp.',
+        superSpecialNotes: 'Only usable once per quest.',
+        support: [
+          {
+            Characters: 'Roronoa Zoro, Nami and Usopp',
+            description: ['Level 1 effect.', 'Level 2 effect.'],
+          },
+        ],
+      },
+      3607,
+    );
+
+    expect(detail.supportData).toEqual([
+      {
+        supportedCharactersText: 'Roronoa Zoro, Nami and Usopp',
+        levelDescriptions: ['Level 1 effect.', 'Level 2 effect.'],
+      },
+    ]);
+    expect(detail.superSpecialText).toContain('transforms Free Spirit characters');
+    expect(detail.superSpecialCriteriaText).toContain('your crew must consist of any 1');
+    expect(detail.superSpecialNotes).toBe('Only usable once per quest.');
+    expect(detail.superSpecialCriteria).toMatchObject({
+      parserStatus: 'roster_only',
+      requiresCaptain: true,
+      rosterBranches: [
+        {
+          branchType: 'character_count_any',
+          requiredCount: 1,
+        },
+      ],
+    });
   });
 });

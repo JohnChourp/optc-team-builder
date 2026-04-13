@@ -7,13 +7,16 @@ import {
   type CharacterAssets,
   type CharacterDetail,
   type CharacterDetailRecord,
+  type CharacterSupportEntry,
   type DetailedCharacterSearchQuery,
   type CharacterListItem,
   type CharacterSearchQuery,
   type DatasetManifest,
+  type NormalizedSuperSpecialCriteria,
   type OfflinePackSummary,
   type RegionAvailability,
   type ShipRecord,
+  type SuperCriteriaBranch,
 } from '../models/optc.models';
 
 interface SqlRow {
@@ -28,6 +31,158 @@ const FALLBACK_CHARACTER_IMAGE = 'assets/placeholders/character-card.svg';
 const INVALID_CLASS_PATTERN = /^Class\d+$/i;
 const SHIP_THUMBNAIL_PACK_ID = 'ship-thumbnails';
 const SHIP_THUMBNAIL_PACK_KEY = 'shipThumbnails';
+
+function normalizeStringList(value: unknown): string[] {
+  return (Array.isArray(value) ? value : [])
+    .map((entry) => String(entry ?? '').trim())
+    .filter((entry) => entry.length > 0);
+}
+
+function normalizeSupportData(value: unknown): CharacterSupportEntry[] {
+  return (Array.isArray(value) ? value : [])
+    .map((entry) => {
+      const record =
+        entry && typeof entry === 'object' && !Array.isArray(entry)
+          ? (entry as Record<string, unknown>)
+          : null;
+      const supportedCharactersText = String(
+        record?.['supportedCharactersText'] ?? record?.['Characters'] ?? '',
+      ).trim();
+      const levelDescriptions = normalizeStringList(
+        record?.['levelDescriptions'] ?? record?.['description'],
+      );
+
+      if (!supportedCharactersText.length && levelDescriptions.length === 0) {
+        return null;
+      }
+
+      return {
+        supportedCharactersText,
+        levelDescriptions,
+      };
+    })
+    .filter((entry): entry is CharacterSupportEntry => Boolean(entry));
+}
+
+function normalizeSuperCriteriaBranch(value: unknown): SuperCriteriaBranch | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const branchType = String(record['branchType'] ?? '').trim();
+
+  if (branchType === 'character_count_any') {
+    const requiredCount = Number(record['requiredCount']);
+    const rawOptions = Array.isArray(record['options'])
+      ? (record['options'] as unknown[])
+      : [];
+    const options = rawOptions
+      .map((entry: unknown) => {
+        if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+          return null;
+        }
+
+        const entryRecord = entry as Record<string, unknown>;
+        const label = String(entryRecord['label'] ?? '').trim();
+        const acceptedKeys = normalizeStringList(entryRecord['acceptedKeys']);
+
+        if (!label.length || acceptedKeys.length === 0) {
+          return null;
+        }
+
+        return {
+          label,
+          acceptedKeys,
+        };
+      })
+      .filter(
+        (
+          entry,
+        ): entry is {
+          label: string;
+          acceptedKeys: string[];
+        } => Boolean(entry),
+      );
+
+    return Number.isInteger(requiredCount) && requiredCount > 0 && options.length > 0
+      ? {
+          branchType,
+          requiredCount,
+          options,
+        }
+      : null;
+  }
+
+  if (branchType === 'class_or_type_count_any') {
+    const requiredCount = Number(record['requiredCount']);
+    const allowedClasses = normalizeStringList(record['allowedClasses']);
+    const allowedTypes = normalizeStringList(record['allowedTypes']);
+
+    return Number.isInteger(requiredCount) &&
+      requiredCount > 0 &&
+      (allowedClasses.length > 0 || allowedTypes.length > 0)
+      ? {
+          branchType,
+          requiredCount,
+          allowedClasses,
+          allowedTypes,
+        }
+      : null;
+  }
+
+  if (branchType === 'class_or_type_presence_all') {
+    const requiredClasses = normalizeStringList(record['requiredClasses']);
+    const requiredTypes = normalizeStringList(record['requiredTypes']);
+
+    return requiredClasses.length > 0 || requiredTypes.length > 0
+      ? {
+          branchType,
+          requiredClasses,
+          requiredTypes,
+        }
+      : null;
+  }
+
+  return null;
+}
+
+function normalizeSuperSpecialCriteria(value: unknown): NormalizedSuperSpecialCriteria | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const rawText = String(record['rawText'] ?? '').trim();
+  const rawRosterBranches = Array.isArray(record['rosterBranches'])
+    ? (record['rosterBranches'] as unknown[])
+    : [];
+  const rosterBranches = rawRosterBranches
+    .map((branch: unknown) => normalizeSuperCriteriaBranch(branch))
+    .filter((branch): branch is SuperCriteriaBranch => Boolean(branch));
+  const parserStatus = String(record['parserStatus'] ?? '').trim();
+  const normalizedParserStatus =
+    parserStatus === 'roster_only' ||
+    parserStatus === 'mixed' ||
+    parserStatus === 'non_roster_only' ||
+    parserStatus === 'unsupported'
+      ? parserStatus
+      : rosterBranches.length > 0
+        ? 'roster_only'
+        : 'unsupported';
+
+  if (!rawText.length) {
+    return null;
+  }
+
+  return {
+    rawText,
+    requiresCaptain: Boolean(record['requiresCaptain']),
+    rosterBranches,
+    hasNonRosterBranches: Boolean(record['hasNonRosterBranches']),
+    parserStatus: normalizedParserStatus,
+  };
+}
 
 @Injectable({ providedIn: 'root' })
 export class OptcRepositoryService {
@@ -571,6 +726,10 @@ export class OptcRepositoryService {
       specialName: null,
       specialText: null,
       specialNotes: null,
+      superSpecialText: null,
+      superSpecialCriteriaText: null,
+      superSpecialNotes: null,
+      superSpecialCriteria: null,
       partyConflictKeys: [],
       builderAbilities: [],
       sailorAbilities: [],
@@ -595,6 +754,8 @@ export class OptcRepositoryService {
       ...this.emptyDetail(characterId),
       ...normalizedDetail,
       characterId,
+      supportData: normalizeSupportData(normalizedDetail.supportData),
+      superSpecialCriteria: normalizeSuperSpecialCriteria(normalizedDetail.superSpecialCriteria),
       partyConflictKeys: Array.isArray(normalizedDetail.partyConflictKeys)
         ? normalizedDetail.partyConflictKeys
             .map((value) => String(value ?? '').trim())

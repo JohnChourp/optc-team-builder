@@ -63,6 +63,13 @@
         "flexible": "Το special utility προτιμάται αλλά μπορεί να χαλαρώσει αν το local pool είναι πολύ στενό."
       }
     },
+    "superSpecialCriteria": {
+      "toggle": "Απαίτησε leader super special criteria",
+      "support": {
+        "strict": "Οι επιλεγμένοι leaders που έχουν Super Special criteria πρέπει να καταλήγουν σε final team που ικανοποιεί τουλάχιστον ένα roster-valid criteria branch.",
+        "flexible": "Αγνόησε τα leader Super Special criteria όταν χτίζεται η τελική ομάδα."
+      }
+    },
     "uniqueNames": {
       "toggle": "Απόφυγε duplicate χαρακτήρες του παιχνιδιού",
       "support": {
@@ -107,6 +114,9 @@
       },
       "specialSupport": {
         "message": "Να κλείσει το special support coverage και να επιτρέπονται slots χωρίς readable special utility ή team support;"
+      },
+      "superSpecialCriteria": {
+        "message": "Να κλείσει ο έλεγχος των leader Super Special criteria και να επιτρέπονται leaders των οποίων τα Super Special roster criteria δεν ικανοποιούνται;"
       }
     }
   },
@@ -478,6 +488,7 @@
       "flexible": "Δεν βρέθηκε flexible ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
       "separator": " και ",
       "specialCoverage": "special support coverage",
+      "superSpecialCriteria": "κάλυψη των leader Super Special criteria",
       "sameCaptainAndFriendCaptain": "ίδιο captain και friend captain",
       "strict": "Δεν βρέθηκε strict ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
       "typeCoverage": "κάλυψη types στην ομάδα",

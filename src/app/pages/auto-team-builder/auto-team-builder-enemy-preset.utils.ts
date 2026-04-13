@@ -29,6 +29,7 @@ export function buildAutoTeamBuilderStateFromSavedEnemy(
     requireAllSelectedTypesInTeam: enemy.requireAllSelectedTypesInTeam,
     requireAllSelectedClassesPerCharacter: enemy.requireAllSelectedClassesPerCharacter,
     requireAllSpecialsSupportTeam: enemy.requireAllSpecialsSupportTeam,
+    requireLeaderSuperSpecialCriteria: true,
     requireUniqueBaseCharacterNames: false,
     requireSameCaptainAndFriendCaptain: false,
     favoritesOnly: false,

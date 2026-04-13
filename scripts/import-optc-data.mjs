@@ -28,6 +28,7 @@ import {
   applyPartyConflictKeys,
   normalizePartyConflictOverrideMap,
 } from './lib/party-conflict-keys.mjs';
+import { parseSuperSpecialCriteria } from './lib/super-special-criteria.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -743,6 +744,70 @@ function isPlaceholderCharacterEntry(entry) {
   return name.length === 0 && type === 'Type' && classes.length === 0 && !hasAnyNumericValue;
 }
 
+function normalizeSupportData(rawSupportData) {
+  return (Array.isArray(rawSupportData) ? rawSupportData : [])
+    .map((entry) => {
+      const supportedCharactersText = String(
+        entry?.supportedCharactersText ?? entry?.Characters ?? '',
+      ).trim();
+      const levelDescriptions = (Array.isArray(entry?.levelDescriptions)
+        ? entry.levelDescriptions
+        : Array.isArray(entry?.description)
+          ? entry.description
+          : []
+      )
+        .map((description) => String(description ?? '').trim())
+        .filter((description) => description.length > 0);
+
+      if (!supportedCharactersText.length && levelDescriptions.length === 0) {
+        return null;
+      }
+
+      return {
+        supportedCharactersText,
+        levelDescriptions,
+      };
+    })
+    .filter((entry) => Boolean(entry));
+}
+
+export function normalizeCharacterDetail(detail, characterId, rumbleData = null) {
+  const normalizedCaptainAbility = normalizeLegacyAbilityText(detail.captain ?? null) || null;
+  const normalizedSpecialText = normalizeLegacyAbilityText(detail.special ?? null) || null;
+  const normalizedSuperSpecialText = normalizeLegacyAbilityText(detail.superSpecial ?? null) || null;
+  const normalizedSuperSpecialCriteriaText =
+    normalizeLegacyAbilityText(detail.superSpecialCriteria ?? null) || null;
+  const normalizedSailorAbilities = flattenValues(detail.sailor ?? {})
+    .map((entry) => normalizeLegacyAbilityText(entry))
+    .filter((entry) => entry.length > 0);
+
+  return {
+    characterId,
+    captainAbility: normalizedCaptainAbility,
+    specialName: detail.specialName ?? null,
+    specialText: normalizedSpecialText,
+    specialNotes: detail.specialNotes ?? null,
+    superSpecialText: normalizedSuperSpecialText,
+    superSpecialCriteriaText: normalizedSuperSpecialCriteriaText,
+    superSpecialNotes: detail.superSpecialNotes ?? null,
+    superSpecialCriteria: normalizedSuperSpecialCriteriaText
+      ? parseSuperSpecialCriteria(normalizedSuperSpecialCriteriaText)
+      : null,
+    partyConflictKeys: [],
+    builderAbilities: [],
+    sailorAbilities: normalizedSailorAbilities,
+    sailorNotes: detail.sailorNotes ?? null,
+    limitBreak: detail.limit ?? [],
+    potentialAbilities: detail.potential ?? [],
+    supportData: normalizeSupportData(detail.support),
+    swapData: detail.swap ?? null,
+    vsSpecial: detail.vsSpecial ?? null,
+    superType: detail.superType ?? null,
+    superClass: detail.superClass ?? null,
+    rumbleData,
+  };
+}
+
 function normalizeCharacters(units, details, rumbleUnits, assetsById) {
   const rumbleById = new Map(rumbleUnits.map((entry) => [entry.id, entry]));
   const toNumber = (value) => {
@@ -758,32 +823,12 @@ function normalizeCharacters(units, details, rumbleUnits, assetsById) {
     const characterId = index + 1;
     const classes = normalizeCharacterClasses(entry[2]);
     const assets = assetsById.get(characterId) ?? createEmptyAssets();
-
     const detail = details[characterId] ?? {};
-    const normalizedCaptainAbility = normalizeLegacyAbilityText(detail.captain ?? null) || null;
-    const normalizedSpecialText = normalizeLegacyAbilityText(detail.special ?? null) || null;
-    const normalizedSailorAbilities = flattenValues(detail.sailor ?? {})
-      .map((entry) => normalizeLegacyAbilityText(entry))
-      .filter((entry) => entry.length > 0);
-    const normalizedDetail = {
+    const normalizedDetail = normalizeCharacterDetail(
+      detail,
       characterId,
-      captainAbility: normalizedCaptainAbility,
-      specialName: detail.specialName ?? null,
-      specialText: normalizedSpecialText,
-      specialNotes: detail.specialNotes ?? null,
-      partyConflictKeys: [],
-      builderAbilities: [],
-      sailorAbilities: normalizedSailorAbilities,
-      sailorNotes: detail.sailorNotes ?? null,
-      limitBreak: detail.limit ?? [],
-      potentialAbilities: detail.potential ?? [],
-      supportData: detail.support ?? [],
-      swapData: detail.swap ?? null,
-      vsSpecial: detail.vsSpecial ?? null,
-      superType: detail.superType ?? null,
-      superClass: detail.superClass ?? null,
-      rumbleData: rumbleById.get(characterId) ?? null,
-    };
+      rumbleById.get(characterId) ?? null,
+    );
 
     return [
       {

@@ -1241,6 +1241,106 @@ describe('Auto team builder', () => {
     expect(result).toBeNull();
   });
 
+  it('rejects a leader with only non-roster super special criteria when the toggle is enabled', () => {
+    const result = buildAutoTeamResult(
+      [
+        createLeaderWithSuperCriteriaRecord(7001, 'Monkey D. Luffy', createNonRosterSuperCriteria()),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+        createCharacterRecord({
+          id: 7002,
+          name: 'Roronoa Zoro',
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts chain by 1.2x for 1 turn.',
+          },
+        }),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireLeaderSuperSpecialCriteria: true,
+      }),
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('accepts a mixed super special criteria leader when the roster branch is satisfied', () => {
+    const result = buildAutoTeamResult(
+      [
+        createLeaderWithSuperCriteriaRecord(
+          7010,
+          'Monkey D. Luffy',
+          createMixedRosterSuperCriteria(1, ['Roronoa Zoro', 'Nami']),
+        ),
+        createCharacterRecord({
+          id: 7011,
+          name: 'Roronoa Zoro',
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts chain by 1.2x for 1 turn.',
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireLeaderSuperSpecialCriteria: true,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.name === 'Roronoa Zoro')).toBe(true);
+  });
+
+  it('enforces both leaders super special criteria when both selected leaders have them', () => {
+    const result = buildAutoTeamResult(
+      [
+        createLeaderWithSuperCriteriaRecord(
+          7020,
+          'Monkey D. Luffy',
+          createRosterSuperCriteria(1, ['Roronoa Zoro']),
+        ),
+        createLeaderWithSuperCriteriaRecord(
+          7021,
+          'Trafalgar D. Water Law',
+          createRosterSuperCriteria(1, ['Nami']),
+        ),
+        createCharacterRecord({
+          id: 7022,
+          name: 'Roronoa Zoro',
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts chain by 1.2x for 1 turn.',
+          },
+        }),
+        createCharacterRecord({
+          id: 7023,
+          name: 'Nami',
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces paralysis duration by 5 turns.',
+          },
+        }),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireLeaderSuperSpecialCriteria: true,
+        lockedCharacterIds: [7020, 7021],
+        captainCharacterId: 7020,
+        friendCaptainCharacterId: 7021,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.name === 'Roronoa Zoro')).toBe(true);
+    expect(result?.slots.some((slot) => slot.character.name === 'Nami')).toBe(true);
+  });
+
   it('prefers universal captains over partial multi-type captains', () => {
     const result = buildAutoTeamResult(
       [
@@ -2478,6 +2578,7 @@ function createInput(
       | 'requireAllSelectedTypesInTeam'
       | 'requireAllSelectedClassesPerCharacter'
       | 'requireAllSpecialsSupportTeam'
+      | 'requireLeaderSuperSpecialCriteria'
       | 'requireUniqueBaseCharacterNames'
       | 'requireSameCaptainAndFriendCaptain'
       | 'favoritesOnly'
@@ -2494,6 +2595,7 @@ function createInput(
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSpecialsSupportTeam: false,
+    requireLeaderSuperSpecialCriteria: false,
     requireUniqueBaseCharacterNames: false,
     requireSameCaptainAndFriendCaptain: false,
     favoritesOnly: false,
@@ -2519,6 +2621,7 @@ function createInput(
     requireAllSelectedTypesInTeam: overrides.requireAllSelectedTypesInTeam ?? false,
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
     requireAllSpecialsSupportTeam: overrides.requireAllSpecialsSupportTeam ?? false,
+    requireLeaderSuperSpecialCriteria: overrides.requireLeaderSuperSpecialCriteria ?? false,
     requireUniqueBaseCharacterNames: overrides.requireUniqueBaseCharacterNames ?? false,
     requireSameCaptainAndFriendCaptain:
       overrides.requireSameCaptainAndFriendCaptain ?? false,
@@ -3325,6 +3428,10 @@ function createCharacterRecord(
       specialName: overrides.detail?.specialName ?? null,
       specialText: overrides.detail?.specialText ?? null,
       specialNotes: overrides.detail?.specialNotes ?? null,
+      superSpecialText: overrides.detail?.superSpecialText ?? null,
+      superSpecialCriteriaText: overrides.detail?.superSpecialCriteriaText ?? null,
+      superSpecialNotes: overrides.detail?.superSpecialNotes ?? null,
+      superSpecialCriteria: overrides.detail?.superSpecialCriteria ?? null,
       partyConflictKeys: overrides.detail?.partyConflictKeys ?? [],
       builderAbilities: overrides.detail?.builderAbilities ?? [],
       sailorAbilities: overrides.detail?.sailorAbilities ?? [],
@@ -3338,6 +3445,72 @@ function createCharacterRecord(
       superClass: overrides.detail?.superClass ?? null,
       rumbleData: overrides.detail?.rumbleData ?? null,
     },
+  };
+}
+
+function createLeaderWithSuperCriteriaRecord(
+  id: number,
+  name: string,
+  superSpecialCriteria: NonNullable<CharacterDetailRecord['detail']['superSpecialCriteria']>,
+): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    name,
+    primaryClass: 'Fighter',
+    secondaryClass: 'Free Spirit',
+    detail: {
+      captainAbility:
+        'Boosts ATK of DEX and Fighter characters by 5.25x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.',
+      specialText:
+        'Boosts orb effects of DEX and Fighter characters by 2.25x for 1 turn and changes orbs into Matching Orbs.',
+      superSpecialText: 'Transforms Fighter characters into a Super class.',
+      superSpecialCriteriaText: superSpecialCriteria.rawText,
+      superSpecialCriteria,
+    },
+  });
+}
+
+function createRosterSuperCriteria(
+  requiredCount: number,
+  labels: string[],
+): NonNullable<CharacterDetailRecord['detail']['superSpecialCriteria']> {
+  return {
+    rawText: `This character must be captain and your crew must consist of any ${requiredCount} of the following: ${labels.join(', ')}.`,
+    requiresCaptain: true,
+    hasNonRosterBranches: false,
+    parserStatus: 'roster_only',
+    rosterBranches: [
+      {
+        branchType: 'character_count_any',
+        requiredCount,
+        options: labels.map((label) => ({
+          label,
+          acceptedKeys: [label.toLowerCase()],
+        })),
+      },
+    ],
+  };
+}
+
+function createMixedRosterSuperCriteria(
+  requiredCount: number,
+  labels: string[],
+): NonNullable<CharacterDetailRecord['detail']['superSpecialCriteria']> {
+  return {
+    ...createRosterSuperCriteria(requiredCount, labels),
+    rawText: `This character must be captain and 5 turns must pass or your crew must consist of any ${requiredCount} of the following: ${labels.join(', ')}.`,
+    hasNonRosterBranches: true,
+    parserStatus: 'mixed',
+  };
+}
+
+function createNonRosterSuperCriteria(): NonNullable<CharacterDetailRecord['detail']['superSpecialCriteria']> {
+  return {
+    rawText: 'This character must be captain and HP must be below 30%.',
+    requiresCaptain: true,
+    hasNonRosterBranches: true,
+    parserStatus: 'non_roster_only',
+    rosterBranches: [],
   };
 }
 

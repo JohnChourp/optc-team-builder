@@ -1,3 +1,30 @@
+const CHARACTER_NAME_KEY_ALIASES = {
+  aokiji: ['kuzan'],
+  akainu: ['sakazuki'],
+  'big mom': ['charlotte linlin'],
+  blackbeard: ['marshall d teach'],
+  'bon clay': ['bentham'],
+  corazon: ['donquixote rosinante'],
+  'cat viper': ['nekomamushi'],
+  dogstorm: ['inuarashi'],
+  fujitora: ['issho'],
+  kizaru: ['borsalino'],
+  komurasaki: ['kozuki hiyori'],
+  'mr 1': ['daz bones'],
+  'mr 2 bon clay': ['bentham'],
+  'mr 3': ['galdino'],
+  'mr 4': ['babe'],
+  'mr 5': ['gem'],
+  'miss doublefinger': ['zala'],
+  'miss goldenweek': ['marianne'],
+  'miss merry christmas': ['drophy'],
+  'miss valentine': ['mikita'],
+  'tenguyama hitetsu': ['kozuki sukiyaki'],
+  whitebeard: ['edward newgate'],
+  violet: ['viola'],
+  z: ['zephyr'],
+};
+
 export function normalizePartyConflictKey(value) {
   return String(value ?? '')
     .replace(/^[^A-Za-z0-9]+/, '')
@@ -24,6 +51,20 @@ export function resolveNameDerivedPartyConflictKeys(name) {
   }
 
   const keys = new Set([primaryKey]);
+  const baseNameWithoutParentheses = normalizePartyConflictKey(
+    String(name ?? '')
+      .split(' - ', 1)[0]
+      ?.replace(/\([^)]*\)/g, ' ') ?? '',
+  );
+
+  if (baseNameWithoutParentheses.length > 0) {
+    keys.add(baseNameWithoutParentheses);
+  }
+
+  [...String(name ?? '').matchAll(/\(([^)]+)\)/g)]
+    .map((match) => normalizePartyConflictKey(match[1]))
+    .filter((value) => value.length > 0)
+    .forEach((value) => keys.add(value));
 
   if (primaryKey.includes('&')) {
     primaryKey
@@ -31,6 +72,20 @@ export function resolveNameDerivedPartyConflictKeys(name) {
       .map((value) => normalizePartyConflictKey(value))
       .filter((value) => value.length > 0)
       .forEach((value) => keys.add(value));
+  }
+
+  const baseNameParts = baseNameWithoutParentheses
+    .split(' ')
+    .map((value) => normalizePartyConflictKey(value))
+    .filter((value) => value.length > 0);
+  const [lastBaseNamePart = ''] = baseNameParts.slice(-1);
+
+  if (baseNameParts.length >= 2 && lastBaseNamePart.length > 1) {
+    keys.add(lastBaseNamePart);
+  }
+
+  for (const key of [...keys]) {
+    (CHARACTER_NAME_KEY_ALIASES[key] ?? []).forEach((alias) => keys.add(alias));
   }
 
   return [...keys];

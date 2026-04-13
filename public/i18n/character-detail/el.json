@@ -14,7 +14,15 @@
     "rumbleData": "Rumble Data",
     "sailorAbilities": "Sailor Abilities",
     "special": "Special",
+    "superSpecial": "Super Special",
     "supportData": "Support Data"
+  },
+  "superSpecial": {
+    "criteriaLabel": "Criteria",
+    "notesLabel": "Notes"
+  },
+  "support": {
+    "supportedCharactersLabel": "Supported characters"
   },
   "stats": {
     "maxAtk": "Max ATK",

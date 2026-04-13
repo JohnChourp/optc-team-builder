@@ -129,6 +129,7 @@ export class AutoTeamBuilderService {
       requireAllSelectedClassesPerCharacter:
         constraints.requireAllSelectedClassesPerCharacter ?? false,
       requireAllSpecialsSupportTeam: constraints.requireAllSpecialsSupportTeam ?? false,
+      requireLeaderSuperSpecialCriteria: constraints.requireLeaderSuperSpecialCriteria ?? false,
       requireUniqueBaseCharacterNames: constraints.requireUniqueBaseCharacterNames ?? false,
       requireSameCaptainAndFriendCaptain,
       requiredAbilities,

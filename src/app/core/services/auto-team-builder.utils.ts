@@ -61,6 +61,32 @@ const TEAM_SUB_SLOT_COUNT = 4;
 const GLOBAL_LEADER_OPTION_LIMIT = 8;
 const LOCKED_REASON_CHIP = 'Manual lock';
 const TEAMWIDE_SPECIAL_REASON_CHIP = 'Teamwide special';
+const CHARACTER_NAME_KEY_ALIASES: Record<string, string[]> = {
+  aokiji: ['kuzan'],
+  akainu: ['sakazuki'],
+  'big mom': ['charlotte linlin'],
+  blackbeard: ['marshall d teach'],
+  'bon clay': ['bentham'],
+  corazon: ['donquixote rosinante'],
+  'cat viper': ['nekomamushi'],
+  dogstorm: ['inuarashi'],
+  fujitora: ['issho'],
+  kizaru: ['borsalino'],
+  komurasaki: ['kozuki hiyori'],
+  'mr 1': ['daz bones'],
+  'mr 2 bon clay': ['bentham'],
+  'mr 3': ['galdino'],
+  'mr 4': ['babe'],
+  'mr 5': ['gem'],
+  'miss doublefinger': ['zala'],
+  'miss goldenweek': ['marianne'],
+  'miss merry christmas': ['drophy'],
+  'miss valentine': ['mikita'],
+  'tenguyama hitetsu': ['kozuki sukiyaki'],
+  whitebeard: ['edward newgate'],
+  violet: ['viola'],
+  z: ['zephyr'],
+};
 
 interface TeamCoverageState {
   burst: Set<AutoBuildBurstRole>;
@@ -130,6 +156,19 @@ export function resolveNameDerivedPartyConflictKeys(name: string): string[] {
   }
 
   const keys = new Set<string>([primaryKey]);
+  const baseNameWithoutParentheses = normalizePartyConflictKey(
+    name.split(' - ', 1)[0]?.replace(/\([^)]*\)/g, ' ') ?? '',
+  );
+
+  if (baseNameWithoutParentheses.length > 0) {
+    keys.add(baseNameWithoutParentheses);
+  }
+
+  const parentheticalKeys = [...name.matchAll(/\(([^)]+)\)/g)]
+    .map((match) => normalizePartyConflictKey(match[1]))
+    .filter((value) => value.length > 0);
+
+  parentheticalKeys.forEach((value) => keys.add(value));
 
   if (primaryKey.includes('&')) {
     primaryKey
@@ -137,6 +176,20 @@ export function resolveNameDerivedPartyConflictKeys(name: string): string[] {
       .map((value) => normalizePartyConflictKey(value))
       .filter((value) => value.length > 0)
       .forEach((value) => keys.add(value));
+  }
+
+  const baseNameParts = baseNameWithoutParentheses
+    .split(' ')
+    .map((value) => normalizePartyConflictKey(value))
+    .filter((value) => value.length > 0);
+  const [lastBaseNamePart = ''] = baseNameParts.slice(-1);
+
+  if (baseNameParts.length >= 2 && lastBaseNamePart.length > 1) {
+    keys.add(lastBaseNamePart);
+  }
+
+  for (const key of [...keys]) {
+    (CHARACTER_NAME_KEY_ALIASES[key] ?? []).forEach((alias) => keys.add(alias));
   }
 
   return [...keys];
@@ -159,6 +212,219 @@ export function resolveCharacterPartyConflictKeys(character: PartyConflictCharac
 
 function resolveCandidatePartyConflictKeys(candidate: AutoBuildCandidate): string[] {
   return resolveCharacterPartyConflictKeys(candidate.character);
+}
+
+function candidateMatchesSuperCriteriaCharacterOption(
+  candidate: AutoBuildCandidate,
+  option: { acceptedKeys: string[] },
+): boolean {
+  const candidateKeys = resolveCandidatePartyConflictKeys(candidate);
+
+  return option.acceptedKeys.some((acceptedKey) => candidateKeys.includes(acceptedKey));
+}
+
+function candidateMatchesSuperCriteriaClassOrTypeBranch(
+  candidate: AutoBuildCandidate,
+  branch: {
+    allowedClasses?: string[];
+    allowedTypes?: string[];
+    requiredClasses?: string[];
+    requiredTypes?: string[];
+  },
+): boolean {
+  const allowedClasses = branch.allowedClasses ?? branch.requiredClasses ?? [];
+  const allowedTypes = branch.allowedTypes ?? branch.requiredTypes ?? [];
+  const matchesClass =
+    allowedClasses.length > 0 &&
+    candidate.character.classes.some((characterClass) =>
+      allowedClasses.some((allowedClass) => allowedClass.toLowerCase() === characterClass.toLowerCase()),
+    );
+  const characterTypes = resolveCharacterTypeTokens(candidate.character.type);
+  const matchesType = allowedTypes.length > 0
+    ? characterTypes.some((type) =>
+        allowedTypes.some((allowedType) => allowedType.toLowerCase() === type.toLowerCase()),
+      )
+    : false;
+
+  return matchesClass || matchesType;
+}
+
+function countSatisfiedCharacterOptions(
+  candidates: AutoBuildCandidate[],
+  options: Array<{ acceptedKeys: string[] }>,
+): number {
+  const remainingOptions = [...options];
+  let matches = 0;
+
+  for (const candidate of candidates) {
+    const matchIndex = remainingOptions.findIndex((option) =>
+      candidateMatchesSuperCriteriaCharacterOption(candidate, option),
+    );
+
+    if (matchIndex === -1) {
+      continue;
+    }
+
+    remainingOptions.splice(matchIndex, 1);
+    matches += 1;
+  }
+
+  return matches;
+}
+
+function countMatchingSuperCriteriaBranchCandidates(
+  candidates: AutoBuildCandidate[],
+  branch: Extract<
+    NonNullable<CharacterDetailRecord['detail']['superSpecialCriteria']>['rosterBranches'][number],
+    { branchType: 'class_or_type_count_any' }
+  >,
+): number {
+  return candidates.filter((candidate) =>
+    candidateMatchesSuperCriteriaClassOrTypeBranch(candidate, branch),
+  ).length;
+}
+
+function countSatisfiedPresenceRequirements(
+  candidates: AutoBuildCandidate[],
+  branch: Extract<
+    NonNullable<CharacterDetailRecord['detail']['superSpecialCriteria']>['rosterBranches'][number],
+    { branchType: 'class_or_type_presence_all' }
+  >,
+): number {
+  const satisfiedClasses = new Set<string>();
+  const satisfiedTypes = new Set<string>();
+
+  candidates.forEach((candidate) => {
+    candidate.character.classes.forEach((characterClass) => {
+      if (
+        branch.requiredClasses.some(
+          (requiredClass) => requiredClass.toLowerCase() === characterClass.toLowerCase(),
+        )
+      ) {
+        satisfiedClasses.add(characterClass.toLowerCase());
+      }
+    });
+    resolveCharacterTypeTokens(candidate.character.type).forEach((type) => {
+      if (branch.requiredTypes.some((requiredType) => requiredType.toLowerCase() === type.toLowerCase())) {
+        satisfiedTypes.add(type.toLowerCase());
+      }
+    });
+  });
+
+  const matchedClassCount = branch.requiredClasses.filter((requiredClass) =>
+    satisfiedClasses.has(requiredClass.toLowerCase()),
+  ).length;
+  const matchedTypeCount = branch.requiredTypes.filter((requiredType) =>
+    satisfiedTypes.has(requiredType.toLowerCase()),
+  ).length;
+
+  return matchedClassCount + matchedTypeCount;
+}
+
+function branchSatisfiedByCandidates(
+  branch: NonNullable<CharacterDetailRecord['detail']['superSpecialCriteria']>['rosterBranches'][number],
+  candidates: AutoBuildCandidate[],
+): boolean {
+  if (branch.branchType === 'character_count_any') {
+    return countSatisfiedCharacterOptions(candidates, branch.options) >= branch.requiredCount;
+  }
+
+  if (branch.branchType === 'class_or_type_count_any') {
+    return countMatchingSuperCriteriaBranchCandidates(candidates, branch) >= branch.requiredCount;
+  }
+
+  return (
+    countSatisfiedPresenceRequirements(candidates, branch) >=
+    branch.requiredClasses.length + branch.requiredTypes.length
+  );
+}
+
+function resolveSuperCriteriaBranchProgress(
+  branch: NonNullable<CharacterDetailRecord['detail']['superSpecialCriteria']>['rosterBranches'][number],
+  candidates: AutoBuildCandidate[],
+): number {
+  if (branch.branchType === 'character_count_any') {
+    return Math.min(branch.requiredCount, countSatisfiedCharacterOptions(candidates, branch.options));
+  }
+
+  if (branch.branchType === 'class_or_type_count_any') {
+    return Math.min(
+      branch.requiredCount,
+      countMatchingSuperCriteriaBranchCandidates(candidates, branch),
+    );
+  }
+
+  return Math.min(
+    branch.requiredClasses.length + branch.requiredTypes.length,
+    countSatisfiedPresenceRequirements(candidates, branch),
+  );
+}
+
+function leaderSuperCriteriaSatisfied(
+  leader: AutoBuildCandidate,
+  candidates: AutoBuildCandidate[],
+): boolean {
+  const criteria = leader.character.detail.superSpecialCriteria;
+
+  if (!criteria) {
+    return true;
+  }
+
+  if (criteria.parserStatus === 'non_roster_only' || criteria.parserStatus === 'unsupported') {
+    return false;
+  }
+
+  if (criteria.requiresCaptain) {
+    // This validation only runs for selected leaders, so the captain requirement is already met.
+  }
+
+  return criteria.rosterBranches.some((branch) => branchSatisfiedByCandidates(branch, candidates));
+}
+
+function resolveLeaderSuperCriteriaContribution(
+  candidate: AutoBuildCandidate,
+  leaders: AutoBuildCandidate[],
+  selectedCandidates: AutoBuildCandidate[],
+): number {
+  const nextCandidates = [...leaders, ...selectedCandidates, candidate];
+
+  return leaders.reduce((total, leader) => {
+    const criteria = leader.character.detail.superSpecialCriteria;
+
+    if (
+      !criteria ||
+      criteria.parserStatus === 'non_roster_only' ||
+      criteria.parserStatus === 'unsupported' ||
+      leaderSuperCriteriaSatisfied(leader, [...leaders, ...selectedCandidates])
+    ) {
+      return total;
+    }
+
+    const currentProgress = criteria.rosterBranches.reduce(
+      (bestProgress, branch) =>
+        Math.max(bestProgress, resolveSuperCriteriaBranchProgress(branch, [...leaders, ...selectedCandidates])),
+      0,
+    );
+    const nextProgress = criteria.rosterBranches.reduce(
+      (bestProgress, branch) =>
+        Math.max(bestProgress, resolveSuperCriteriaBranchProgress(branch, nextCandidates)),
+      0,
+    );
+
+    return total + Math.max(nextProgress - currentProgress, 0);
+  }, 0);
+}
+
+function areLeaderSuperCriteriaSatisfied(
+  leaders: AutoBuildCandidate[],
+  teamCandidates: AutoBuildCandidate[],
+  enabled: boolean,
+): boolean {
+  if (!enabled) {
+    return true;
+  }
+
+  return leaders.every((leader) => leaderSuperCriteriaSatisfied(leader, teamCandidates));
 }
 
 function hasAnyPartyConflictKey(
@@ -284,6 +550,13 @@ export function buildAutoTeamResult(
     const coverage = summarizeCoverage(teamCandidates, input, leaderCriteria);
 
     if (input.requireAllSelectedTypesInTeam && !coverage.coversAllSelectedTypes) {
+      continue;
+    }
+
+    if (
+      input.requireLeaderSuperSpecialCriteria &&
+      !areLeaderSuperCriteriaSatisfied(leaders, teamCandidates, input.requireLeaderSuperSpecialCriteria)
+    ) {
       continue;
     }
 
@@ -820,6 +1093,9 @@ function scoreSubCandidate(
   score += newClassCoverage * 44;
   score += newTypeCoverage * 36;
   score += matchedMissingAbilityCount * 58;
+  score +=
+    resolveLeaderSuperCriteriaContribution(candidate, leaders, selected) *
+    (input.requireLeaderSuperSpecialCriteria ? 160 : 36);
   score += candidate.matchesSelectedClass ? 18 : -8;
   score += candidate.recencyScore * 10;
   score += hasUniversalLeader ? 10 : 0;

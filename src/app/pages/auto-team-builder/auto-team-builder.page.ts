@@ -220,6 +220,7 @@ interface AutoTeamBuilderDefaultFilterState {
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
   requireAllSpecialsSupportTeam: boolean;
+  requireLeaderSuperSpecialCriteria: boolean;
   requireUniqueBaseCharacterNames: boolean;
   requireSameCaptainAndFriendCaptain: boolean;
   favoritesOnly: boolean;
@@ -262,6 +263,7 @@ function buildDefaultAutoTeamBuilderFilterState(
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSpecialsSupportTeam: true,
+    requireLeaderSuperSpecialCriteria: true,
     requireUniqueBaseCharacterNames: true,
     requireSameCaptainAndFriendCaptain: false,
     favoritesOnly: true,
@@ -369,6 +371,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
   public readonly requireAllSpecialsSupportTeam = signal(false);
+  public readonly requireLeaderSuperSpecialCriteria = signal(false);
   public readonly requireUniqueBaseCharacterNames = signal(false);
   public readonly requireSameCaptainAndFriendCaptain = signal(false);
   public readonly favoritesOnly = signal(false);
@@ -597,6 +600,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       ? this.t('filters.specialSupport.support.strict')
       : this.t('filters.specialSupport.support.flexible'),
   );
+  public readonly leaderSuperSpecialCriteriaSupportLabel = computed(() =>
+    this.requireLeaderSuperSpecialCriteria()
+      ? this.t('filters.superSpecialCriteria.support.strict')
+      : this.t('filters.superSpecialCriteria.support.flexible'),
+  );
   public readonly uniqueBaseCharacterNamesSupportLabel = computed(() =>
     this.requireUniqueBaseCharacterNames()
       ? this.t('filters.uniqueNames.support.strict')
@@ -810,6 +818,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly classStrictToggleLabel = computed(() => this.t('filters.classes.toggle'));
   public readonly specialSupportToggleLabel = computed(() =>
     this.t('filters.specialSupport.toggle'),
+  );
+  public readonly leaderSuperSpecialCriteriaToggleLabel = computed(() =>
+    this.t('filters.superSpecialCriteria.toggle'),
   );
   public readonly uniqueBaseCharacterNamesToggleLabel = computed(() =>
     this.t('filters.uniqueNames.toggle'),
@@ -1206,6 +1217,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         this.requireAllSelectedTypesInTeam() ||
         this.requireAllSelectedClassesPerCharacter() ||
         this.requireAllSpecialsSupportTeam() ||
+        this.requireLeaderSuperSpecialCriteria() ||
         this.requireUniqueBaseCharacterNames() ||
         this.requireSameCaptainAndFriendCaptain() ||
         this.favoritesOnly() ||
@@ -1542,6 +1554,23 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.resetBuildState();
   }
 
+  public async onRequireLeaderSuperSpecialCriteriaToggle(
+    event: CustomEvent<{ checked: boolean }>,
+  ): Promise<void> {
+    if (
+      !(await this.confirmDisableToggleIfNeeded({
+        checked: event.detail.checked,
+        currentValue: this.requireLeaderSuperSpecialCriteria(),
+        messageKey: 'filters.disableConfirm.superSpecialCriteria.message',
+      }))
+    ) {
+      return;
+    }
+
+    this.requireLeaderSuperSpecialCriteria.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
   public async onRequireUniqueBaseCharacterNamesToggle(
     event: CustomEvent<{ checked: boolean }>,
   ): Promise<void> {
@@ -1849,6 +1878,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
           requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
           requireAllSpecialsSupportTeam: this.requireAllSpecialsSupportTeam(),
+          requireLeaderSuperSpecialCriteria: this.requireLeaderSuperSpecialCriteria(),
           requireUniqueBaseCharacterNames: this.requireUniqueBaseCharacterNames(),
           requireSameCaptainAndFriendCaptain: this.requireSameCaptainAndFriendCaptain(),
           requiredAbilities: this.pageRequiredAbilities(),
@@ -1945,6 +1975,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
       requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
       requireAllSpecialsSupportTeam: this.requireAllSpecialsSupportTeam(),
+      requireLeaderSuperSpecialCriteria: this.requireLeaderSuperSpecialCriteria(),
       requireUniqueBaseCharacterNames: this.requireUniqueBaseCharacterNames(),
       requireSameCaptainAndFriendCaptain: this.requireSameCaptainAndFriendCaptain(),
       favoritesOnly: this.favoritesOnly(),
@@ -2086,6 +2117,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       defaultFilters.requireAllSelectedClassesPerCharacter,
     );
     this.requireAllSpecialsSupportTeam.set(defaultFilters.requireAllSpecialsSupportTeam);
+    this.requireLeaderSuperSpecialCriteria.set(defaultFilters.requireLeaderSuperSpecialCriteria);
     this.requireUniqueBaseCharacterNames.set(defaultFilters.requireUniqueBaseCharacterNames);
     this.requireSameCaptainAndFriendCaptain.set(defaultFilters.requireSameCaptainAndFriendCaptain);
     this.favoritesOnly.set(defaultFilters.favoritesOnly);
@@ -2193,6 +2225,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.requireAllSelectedTypesInTeam.set(state.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(state.requireAllSelectedClassesPerCharacter);
     this.requireAllSpecialsSupportTeam.set(state.requireAllSpecialsSupportTeam);
+    this.requireLeaderSuperSpecialCriteria.set(state.requireLeaderSuperSpecialCriteria);
     this.requireUniqueBaseCharacterNames.set(state.requireUniqueBaseCharacterNames);
     this.requireSameCaptainAndFriendCaptain.set(state.requireSameCaptainAndFriendCaptain);
     this.favoritesOnly.set(state.favoritesOnly);
@@ -2306,6 +2339,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
     if (this.requireAllSpecialsSupportTeam()) {
       activeRequirements.push(this.t('errors.requirements.specialCoverage'));
+    }
+
+    if (this.requireLeaderSuperSpecialCriteria()) {
+      activeRequirements.push(this.t('errors.requirements.superSpecialCriteria'));
     }
 
     if (this.requireUniqueBaseCharacterNames()) {
