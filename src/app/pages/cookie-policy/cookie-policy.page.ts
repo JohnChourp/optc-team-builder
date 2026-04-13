@@ -1,15 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, computed } from "@angular/core";
 import { RouterLink } from "@angular/router";
-import {
-  IonBackButton,
-  IonButton,
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonTitle,
-  IonToolbar,
-} from "@ionic/angular/standalone";
+import { IonButton, IonContent, IonHeader, IonTitle, IonToolbar } from "@ionic/angular/standalone";
 import { TranslocoDirective } from "@jsverse/transloco";
 
 import { AnalyticsConsentService } from "../../core/services/analytics-consent.service";
@@ -19,9 +11,7 @@ import { AnalyticsConsentService } from "../../core/services/analytics-consent.s
   standalone: true,
   imports: [
     CommonModule,
-    IonBackButton,
     IonButton,
-    IonButtons,
     IonContent,
     IonHeader,
     IonTitle,

@@ -1,14 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component } from "@angular/core";
 import { RouterLink } from "@angular/router";
-import {
-  IonBackButton,
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonTitle,
-  IonToolbar,
-} from "@ionic/angular/standalone";
+import { IonContent, IonHeader, IonTitle, IonToolbar } from "@ionic/angular/standalone";
 import { TranslocoDirective } from "@jsverse/transloco";
 
 @Component({
@@ -16,8 +9,6 @@ import { TranslocoDirective } from "@jsverse/transloco";
   standalone: true,
   imports: [
     CommonModule,
-    IonBackButton,
-    IonButtons,
     IonContent,
     IonHeader,
     IonTitle,

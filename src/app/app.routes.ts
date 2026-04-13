@@ -47,6 +47,16 @@ export const routes: Routes = [
           import("./pages/settings/settings.page").then((module) => module.SettingsPage),
       },
       {
+        path: "privacy",
+        loadComponent: () =>
+          import("./pages/privacy-policy/privacy-policy.page").then((module) => module.PrivacyPolicyPage),
+      },
+      {
+        path: "cookies",
+        loadComponent: () =>
+          import("./pages/cookie-policy/cookie-policy.page").then((module) => module.CookiePolicyPage),
+      },
+      {
         path: "",
         pathMatch: "full",
         redirectTo: "characters",
@@ -60,13 +70,13 @@ export const routes: Routes = [
   },
   {
     path: "privacy",
-    loadComponent: () =>
-      import("./pages/privacy-policy/privacy-policy.page").then((module) => module.PrivacyPolicyPage),
+    pathMatch: "full",
+    redirectTo: "tabs/privacy",
   },
   {
     path: "cookies",
-    loadComponent: () =>
-      import("./pages/cookie-policy/cookie-policy.page").then((module) => module.CookiePolicyPage),
+    pathMatch: "full",
+    redirectTo: "tabs/cookies",
   },
   {
     path: "**",

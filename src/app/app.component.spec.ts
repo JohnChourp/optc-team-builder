@@ -91,8 +91,8 @@ describe("AppComponent", () => {
     expect(template).toContain('"analyticsConsent.banner.title" | transloco');
     expect(template).toContain('(click)="acceptAnalyticsConsent()"');
     expect(template).toContain('(click)="rejectAnalyticsConsent()"');
-    expect(template).toContain("[routerLink]=\"['/privacy']\"");
-    expect(template).toContain("[routerLink]=\"['/cookies']\"");
+    expect(template).toContain("[routerLink]=\"['/tabs/privacy']\"");
+    expect(template).toContain("[routerLink]=\"['/tabs/cookies']\"");
     expect(template).toContain('"legalNav.privacy" | transloco');
     expect(template).toContain('"legalNav.cookies" | transloco');
   });

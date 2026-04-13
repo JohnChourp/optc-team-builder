@@ -27,17 +27,29 @@ describe("app routes", () => {
     expect(collectionRoute?.pathMatch).toBe("full");
   });
 
-  it("registers the public privacy policy route", () => {
-    const privacyRoute = routes.find((route) => route.path === "privacy");
+  it("registers the privacy policy route inside the tabs shell", () => {
+    const tabsRoute = routes.find((route) => route.path === "tabs");
+    const privacyRoute = tabsRoute?.children?.find((route) => route.path === "privacy");
 
     expect(privacyRoute).toBeDefined();
     expect(privacyRoute?.loadComponent).toBeTypeOf("function");
   });
 
-  it("registers the public cookie policy route", () => {
-    const cookieRoute = routes.find((route) => route.path === "cookies");
+  it("registers the cookie policy route inside the tabs shell", () => {
+    const tabsRoute = routes.find((route) => route.path === "tabs");
+    const cookieRoute = tabsRoute?.children?.find((route) => route.path === "cookies");
 
     expect(cookieRoute).toBeDefined();
     expect(cookieRoute?.loadComponent).toBeTypeOf("function");
+  });
+
+  it("redirects the legacy privacy and cookie routes into tabs", () => {
+    const privacyRoute = routes.find((route) => route.path === "privacy");
+    const cookieRoute = routes.find((route) => route.path === "cookies");
+
+    expect(privacyRoute?.redirectTo).toBe("tabs/privacy");
+    expect(privacyRoute?.pathMatch).toBe("full");
+    expect(cookieRoute?.redirectTo).toBe("tabs/cookies");
+    expect(cookieRoute?.pathMatch).toBe("full");
   });
 });

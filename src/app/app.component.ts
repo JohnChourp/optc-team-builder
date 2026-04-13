@@ -22,9 +22,9 @@ import { GoogleAnalyticsService } from "./core/services/google-analytics.service
             <strong>{{ "analyticsConsent.banner.title" | transloco }}</strong>
             <p>{{ "analyticsConsent.banner.copy" | transloco }}</p>
             <div class="analytics-consent-banner__links">
-              <a [routerLink]="['/privacy']">{{ "analyticsConsent.banner.privacyLink" | transloco }}</a>
+              <a [routerLink]="['/tabs/privacy']">{{ "analyticsConsent.banner.privacyLink" | transloco }}</a>
               <span aria-hidden="true">•</span>
-              <a [routerLink]="['/cookies']">{{ "analyticsConsent.banner.cookiesLink" | transloco }}</a>
+              <a [routerLink]="['/tabs/cookies']">{{ "analyticsConsent.banner.cookiesLink" | transloco }}</a>
             </div>
           </div>
 
@@ -50,31 +50,33 @@ import { GoogleAnalyticsService } from "./core/services/google-analytics.service
       }
 
       @if (hasResolvedInitialRoute()) {
-        <nav
-          class="app-legal-nav"
-          [class.app-legal-nav--tabs]="isTabsRoute()"
-          [class.app-legal-nav--standalone]="!isTabsRoute()"
-          [attr.aria-label]="'legalNav.ariaLabel' | transloco"
+        <div
+          class="app-footer-meta"
+          [class.app-footer-meta--tabs]="isTabsRoute()"
+          [class.app-footer-meta--standalone]="!isTabsRoute()"
         >
-          <a class="app-legal-nav__link" [routerLink]="['/privacy']">
-            {{ "legalNav.privacy" | transloco }}
+          <a
+            class="app-credit-badge"
+            href="https://github.com/JohnChourp/optc-team-builder"
+            target="_blank"
+            rel="noreferrer noopener"
+            aria-label="Open the optc-team-builder GitHub repository"
+          >
+            {{ creditLabel() }}
           </a>
-          <a class="app-legal-nav__link" [routerLink]="['/cookies']">
-            {{ "legalNav.cookies" | transloco }}
-          </a>
-        </nav>
 
-        <a
-          class="app-credit-badge"
-          [class.app-credit-badge--tabs]="isTabsRoute()"
-          [class.app-credit-badge--standalone]="!isTabsRoute()"
-          href="https://github.com/JohnChourp/optc-team-builder"
-          target="_blank"
-          rel="noreferrer noopener"
-          aria-label="Open the optc-team-builder GitHub repository"
-        >
-          {{ creditLabel() }}
-        </a>
+          <nav
+            class="app-legal-nav"
+            [attr.aria-label]="'legalNav.ariaLabel' | transloco"
+          >
+            <a class="app-legal-nav__link" [routerLink]="['/tabs/privacy']">
+              {{ "legalNav.privacy" | transloco }}
+            </a>
+            <a class="app-legal-nav__link" [routerLink]="['/tabs/cookies']">
+              {{ "legalNav.cookies" | transloco }}
+            </a>
+          </nav>
+        </div>
       }
     </ion-app>
   `,

@@ -7,9 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 import { CookiePolicyPage } from "./cookie-policy.page";
 
 vi.mock("@ionic/angular/standalone", () => ({
-  IonBackButton: class {},
   IonButton: class {},
-  IonButtons: class {},
   IonContent: class {},
   IonHeader: class {},
   IonTitle: class {},
@@ -29,7 +27,8 @@ describe("CookiePolicyPage", () => {
     expect(template).toContain('t("consent.statusLabel")');
     expect(template).toContain("(click)=\"acceptAnalyticsConsent()\"");
     expect(template).toContain("(click)=\"rejectAnalyticsConsent()\"");
-    expect(template).toContain("[routerLink]=\"['/privacy']\"");
+    expect(template).toContain("[routerLink]=\"['/tabs/privacy']\"");
+    expect(template).not.toContain("ion-back-button");
   });
 
   it("updates analytics consent from the cookie policy page", async () => {

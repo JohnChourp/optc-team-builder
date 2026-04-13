@@ -1,9 +1,6 @@
 <ng-container *transloco="let t; scope: 'privacy-policy'; read: 'privacy-policy'">
   <ion-header class="ion-no-border">
     <ion-toolbar>
-      <ion-buttons slot="start">
-        <ion-back-button defaultHref="/tabs/settings"></ion-back-button>
-      </ion-buttons>
       <ion-title>{{ t("title") }}</ion-title>
     </ion-toolbar>
   </ion-header>
@@ -126,7 +123,7 @@
         <h2>{{ t("sections.related.title") }}</h2>
         <p>{{ t("sections.related.copy") }}</p>
         <div class="policy-links">
-          <a class="policy-link" [routerLink]="['/cookies']">{{ t("sections.related.cookieLink") }}</a>
+          <a class="policy-link" [routerLink]="['/tabs/cookies']">{{ t("sections.related.cookieLink") }}</a>
           <a class="policy-link" [routerLink]="['/tabs/settings']">{{ t("sections.related.settingsLink") }}</a>
         </div>
       </section>
