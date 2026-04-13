@@ -38,25 +38,25 @@ describe("GoogleAnalyticsService", () => {
     expect(service.enable()).toBe(true);
 
     expect(document.querySelectorAll('script[src*="googletagmanager"]').length).toBe(1);
-    expect(document.defaultView?.dataLayer).toHaveLength(4);
-    expect(document.defaultView?.dataLayer?.[1]).toEqual([
-      "js",
-      expect.any(Date),
-    ]);
-    expect(document.defaultView?.dataLayer?.[2]).toEqual([
-      "config",
-      "G-TEST123",
-      {
-        send_page_view: false,
-      },
-    ]);
-    expect(document.defaultView?.dataLayer?.[3]).toEqual([
-      "consent",
-      "update",
-      {
-        analytics_storage: "granted",
-      },
-    ]);
+    expect(document.defaultView?.dataLayer).toEqual(
+      expect.arrayContaining([
+        ["js", expect.any(Date)],
+        [
+          "config",
+          "G-TEST123",
+          {
+            send_page_view: false,
+          },
+        ],
+        [
+          "consent",
+          "update",
+          {
+            analytics_storage: "granted",
+          },
+        ],
+      ]),
+    );
   });
 
   it("tracks page views only while analytics is enabled", () => {

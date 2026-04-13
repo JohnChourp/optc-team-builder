@@ -11,6 +11,41 @@
   </script>
   <script src="app-config.js"></script>
   <script>
+    (function bootstrapGoogleAnalytics() {
+      var measurementId = String(window.__appConfig?.ga4MeasurementId || "").trim().toUpperCase();
+
+      if (!/^G-[A-Z0-9]+$/i.test(measurementId)) {
+        return;
+      }
+
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = window.gtag || function() { window.dataLayer.push(arguments); };
+      window["ga-disable-" + measurementId] = true;
+
+      window.gtag("consent", "default", {
+        analytics_storage: "denied",
+        wait_for_update: 500,
+      });
+      window.gtag("js", new Date());
+      window.gtag("config", measurementId, {
+        send_page_view: false,
+      });
+
+      if (!document.getElementById("app-google-analytics")) {
+        var script = document.createElement("script");
+        script.id = "app-google-analytics";
+        script.async = true;
+        script.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(measurementId);
+        document.head.appendChild(script);
+      }
+
+      window.__googleAnalyticsBootstrap = {
+        initialized: true,
+        measurementId: measurementId,
+      };
+    })();
+  </script>
+  <script>
     (function restoreGithubPagesRoute() {
       var searchParams = new URLSearchParams(window.location.search);
       var routePath = searchParams.get("__gh_path__");

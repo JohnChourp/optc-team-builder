@@ -7,7 +7,6 @@ import { APP_ANALYTICS_CONFIG, type AppAnalyticsConfig } from "../analytics/app-
 @Injectable({ providedIn: "root" })
 export class GoogleAnalyticsService {
   private readonly scriptId = "app-google-analytics";
-  private initialized = false;
   private enabled = false;
 
   public constructor(
@@ -20,18 +19,18 @@ export class GoogleAnalyticsService {
       return false;
     }
 
-    this.ensureScript();
-    this.ensureGtag();
-    this.setDisabledFlag(false);
-    this.trackConsentUpdate("granted");
-
-    if (!this.initialized) {
+    if (!this.isBootstrapped()) {
+      this.ensureScript();
+      this.ensureGtag();
       this.window()?.gtag?.("js", new Date());
       this.window()?.gtag?.("config", this.config.ga4MeasurementId, {
         send_page_view: false,
       });
-      this.initialized = true;
+      this.setBootstrapState();
     }
+
+    this.setDisabledFlag(false);
+    this.trackConsentUpdate("granted");
 
     this.enabled = true;
     return true;
@@ -49,7 +48,7 @@ export class GoogleAnalyticsService {
   }
 
   public trackPageView(pagePath: string): void {
-    if (!this.initialized || !this.enabled || !this.canUseAnalytics() || pagePath.trim() === "") {
+    if (!this.isBootstrapped() || !this.enabled || !this.canUseAnalytics() || pagePath.trim() === "") {
       return;
     }
 
@@ -88,6 +87,26 @@ export class GoogleAnalyticsService {
     runtimeWindow.dataLayer ??= [];
     runtimeWindow.gtag ??= (...args: unknown[]) => {
       runtimeWindow.dataLayer?.push(args);
+    };
+  }
+
+  private isBootstrapped(): boolean {
+    return (
+      this.window()?.__googleAnalyticsBootstrap?.initialized === true &&
+      this.window()?.__googleAnalyticsBootstrap?.measurementId === this.config.ga4MeasurementId
+    );
+  }
+
+  private setBootstrapState(): void {
+    const runtimeWindow = this.window();
+
+    if (!runtimeWindow) {
+      return;
+    }
+
+    runtimeWindow.__googleAnalyticsBootstrap = {
+      initialized: true,
+      measurementId: this.config.ga4MeasurementId,
     };
   }
 
