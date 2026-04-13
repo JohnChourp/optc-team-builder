@@ -16,7 +16,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(),
     provideAnimations(),
     provideLottieOptions({
-      player: () => import("lottie-web"),
+      player: () => import("lottie-web/build/player/esm/lottie_svg.min.js"),
     }),
     provideIonicAngular(),
     provideRouter(routes, withComponentInputBinding()),
