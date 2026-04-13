@@ -154,8 +154,6 @@
     "toggles": {
       "classes": "Require all selected classes per slot",
       "classesCopy": "Keep every slot aligned with the saved class rules.",
-      "specials": "Require special support coverage",
-      "specialsCopy": "Keep the team focused on readable special utility.",
       "types": "Require team-wide type coverage",
       "typesCopy": "Keep every selected type represented in the result."
     },
@@ -196,7 +194,6 @@
     "noRules": "No strict rules",
     "ruleLabels": {
       "classes": "Strict classes",
-      "specials": "Special support",
       "types": "Strict types"
     },
     "rules": "Rules",

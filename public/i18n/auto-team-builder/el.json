@@ -56,11 +56,11 @@
         "flexible": "Τα selected classes καθοδηγούν το captain scope και το weighting χωρίς να μπλοκάρουν το fallback."
       }
     },
-    "specialSupport": {
-      "toggle": "Απαίτησε special support coverage",
+    "superSpecialCriteria": {
+      "toggle": "Απαίτησε leader super special criteria",
       "support": {
-        "strict": "Κάθε final slot πρέπει να προσφέρει readable special utility ή team support.",
-        "flexible": "Το special utility προτιμάται αλλά μπορεί να χαλαρώσει αν το local pool είναι πολύ στενό."
+        "strict": "Οι επιλεγμένοι leaders που έχουν Super Special criteria πρέπει να καταλήγουν σε final team που ικανοποιεί τουλάχιστον ένα roster-valid criteria branch.",
+        "flexible": "Αγνόησε τα leader Super Special criteria όταν χτίζεται η τελική ομάδα."
       }
     },
     "uniqueNames": {
@@ -68,13 +68,6 @@
       "support": {
         "strict": "Κάθε final slot εκτός από το Friend Captain πρέπει να αποφεύγει in-game duplicate-character conflicts, ώστε το Friend Captain να μπορεί ακόμη να αντιγράφει άλλη μονάδα όπως Monkey D. Luffy.",
         "flexible": "Επίτρεψε τελικές ομάδες με in-game duplicate identities ή composite units που επικαλύπτονται."
-      }
-    },
-    "sameCaptain": {
-      "toggle": "Απαίτησε ίδιο captain και friend captain",
-      "support": {
-        "strict": "Το τελικό Captain και Friend Captain πρέπει να καταλήγουν στον ίδιο χαρακτήρα.",
-        "flexible": "Επίτρεψε το Captain και το Friend Captain να καταλήγουν σε διαφορετικούς χαρακτήρες."
       }
     },
     "favoritesOnly": {
@@ -92,6 +85,19 @@
         "withCount": "Περιορίζει το manual ship confirmation και το auto ship selection στα {{count}} αποθηκευμένα favorite ships σου."
       }
     },
+    "extraDrop": {
+      "toggle": "Captain extra-drop filter",
+      "options": {
+        "off": "Off",
+        "guaranteed": "Guaranteed only",
+        "any": "Any extra-drop"
+      },
+      "support": {
+        "off": "Μην απαιτείς captain effect για extra drops.",
+        "guaranteed": "Κράτα μόνο captains που εγγυώνται duplicated reward drop στο clear του island.",
+        "any": "Κράτα captains με guaranteed ή chance-based duplicated reward drops στο clear του island."
+      }
+    },
     "disableConfirm": {
       "title": "Θέλεις σίγουρα να το απενεργοποιήσεις;",
       "cancel": "Κράτησέ το ενεργό",
@@ -105,8 +111,8 @@
       "uniqueNames": {
         "message": "Να κλείσει η προστασία από duplicate χαρακτήρες και να επιτρέπονται in-game duplicate conflicts στην τελική ομάδα;"
       },
-      "specialSupport": {
-        "message": "Να κλείσει το special support coverage και να επιτρέπονται slots χωρίς readable special utility ή team support;"
+      "superSpecialCriteria": {
+        "message": "Να κλείσει ο έλεγχος των leader Super Special criteria και να επιτρέπονται leaders των οποίων τα Super Special roster criteria δεν ικανοποιούνται;"
       }
     }
   },
@@ -367,12 +373,12 @@
       "classRequest": "Class request",
       "consistency": "Consistency",
       "leaderClasses": "Leader classes",
+      "leaderCost": "Leader cost",
       "leaderScope": "Leader scope",
       "leaderSource": "Leader source",
       "leaderTypes": "Leader types",
       "matchedRequirements": "Matched ability requirements",
       "missingRequirements": "Missing ability requirements",
-      "specialSupport": "Special support",
       "typeCoverage": "Type coverage",
       "typeRequest": "Type request",
       "utility": "Utility"
@@ -391,9 +397,11 @@
       "withTypes": "Χτίστηκε από το local pool με στόχο κάλυψη {{types}}."
     },
     "leaderCriteria": {
+      "costLimit": "Cost {{cost}} ή μικρότερο",
       "noClassRestriction": "Χωρίς class restriction",
+      "noCostRestriction": "Χωρίς cost restriction",
       "noData": "Δεν υπάρχουν δεδομένα leader scope",
-      "noRestriction": "Τα leader abilities δεν περιορίζουν τα slots.",
+      "noRestriction": "Τα leader abilities δεν περιορίζουν class, type ή cost coverage.",
       "noTypeRestriction": "Χωρίς type restriction",
       "scopeCoverage": "{{matching}} / {{total}} slots ταιριάζουν στο derived leader scope.",
       "scopePending": "Το leader scope θα υπολογιστεί μετά από επιτυχημένο build.",
@@ -420,12 +428,6 @@
       "strictPending": "Το strict type coverage είναι ενεργό και θα ελεγχθεί μετά το build.",
       "strictResolved": "{{covered}} / {{total}} selected types καλύπτονται στην τελική ομάδα."
     },
-    "specialSupport": {
-      "disabled": "Το special support είναι προαιρετικό. Παρ' όλα αυτά {{matching}} / {{total}} slots προσφέρουν readable support.",
-      "enabled": "Το special support είναι ενεργό. Τα {{matching}} / {{total}} slots προσφέρουν readable support.",
-      "pendingOff": "Το special support είναι προαιρετικό για το επόμενο build.",
-      "pendingStrict": "Το strict special support θα ελεγχθεί μετά το build."
-    },
     "teamSlots": {
       "noSnippet": "Δεν βρέθηκε readable captain ή special text.",
       "roles": {
@@ -447,9 +449,6 @@
   },
   "errors": {
     "buildFailed": "Το auto build απέτυχε απρόσμενα. Δοκίμασε ξανά.",
-    "sameCaptain": {
-      "manualConflict": "Η απαίτηση για ίδιο captain και friend captain είναι ενεργή, αλλά τα current manual Captain και Friend Captain choices δεν έχουν κοινό character."
-    },
     "uniqueNames": {
       "manualConflict": "Τα current manual slot choices δημιουργούν ήδη το ίδιο in-game character conflict εκτός του Friend Captain slot: {{names}}."
     },
@@ -477,8 +476,7 @@
       "favoritesScope": " κρατώντας favorite-only auto-fill για τα ανοιχτά slots",
       "flexible": "Δεν βρέθηκε flexible ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
       "separator": " και ",
-      "specialCoverage": "special support coverage",
-      "sameCaptainAndFriendCaptain": "ίδιο captain και friend captain",
+      "superSpecialCriteria": "κάλυψη των leader Super Special criteria",
       "strict": "Δεν βρέθηκε strict ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
       "typeCoverage": "κάλυψη types στην ομάδα",
       "uniqueCharacterNames": "μοναδικές in-game character identities σε όλη την ομάδα εκτός Friend Captain"

@@ -285,7 +285,6 @@ export function sanitizeSavedEnemiesImportPayload(
       requireAllSelectedClassesPerCharacter: Boolean(
         enemy["requireAllSelectedClassesPerCharacter"],
       ),
-      requireAllSpecialsSupportTeam: Boolean(enemy["requireAllSpecialsSupportTeam"]),
       createdAt: normalizeTimestamp(enemy["createdAt"], fallbackTimestamp),
       updatedAt: normalizeTimestamp(enemy["updatedAt"], fallbackTimestamp),
     };

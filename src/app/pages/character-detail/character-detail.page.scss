@@ -1,6 +1,6 @@
 .detail-shell {
   display: grid;
-  gap: 18px;
+  gap: 16px;
 }
 
 .loading-card {
@@ -13,13 +13,15 @@
 
 .hero-card {
   display: grid;
-  gap: 18px;
+  gap: 16px;
   overflow: hidden;
+  padding: 16px;
 }
 
-.hero-card img {
+.hero-media img {
   width: 100%;
-  max-height: 320px;
+  max-height: 240px;
+  border-radius: 22px;
   object-fit: cover;
   background: rgba(255, 255, 255, 0.08);
 }
@@ -27,7 +29,51 @@
 .hero-copy {
   display: grid;
   gap: 14px;
-  padding: 0 18px 18px;
+  align-content: start;
+}
+
+.hero-meta-grid,
+.hero-stats-grid,
+.group-grid,
+.detail-entry-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.hero-meta-grid {
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+}
+
+.hero-stats-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.meta-card,
+.stat-pill {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(9, 16, 26, 0.32);
+}
+
+.meta-card__label,
+.stat-pill span,
+.detail-row dt,
+.detail-text__label,
+.detail-list-block__label {
+  color: rgba(248, 251, 255, 0.58);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.meta-card strong,
+.stat-pill strong {
+  color: #ffffff;
+  font-size: 1rem;
+  line-height: 1.2;
 }
 
 .hero-actions {
@@ -36,92 +82,132 @@
   gap: 10px;
 }
 
-.stats-grid,
-.detail-grid {
+.group-section {
+  display: grid;
+  gap: 10px;
+}
+
+.group-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.detail-card,
+.detail-entry {
   display: grid;
   gap: 14px;
 }
 
-.stats-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.stat-card,
 .detail-card {
-  padding: 18px;
+  padding: 16px;
 }
 
-.stat-card span {
-  color: rgba(248, 251, 255, 0.6);
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.stat-card strong {
-  display: block;
-  margin-top: 8px;
-  color: #ffffff;
-  font-size: 2rem;
-}
-
-.detail-card h2 {
-  margin: 0 0 10px;
-  color: #ffffff;
-  font-size: 1rem;
-}
-
-.detail-card strong,
-.detail-card p,
-.detail-card li,
-.detail-card small,
-.detail-card pre {
-  color: rgba(248, 251, 255, 0.82);
-}
-
-.detail-card p,
-.detail-card li,
-.detail-card pre {
+.detail-card__head h2,
+.detail-entry h3 {
   margin: 0;
-  line-height: 1.65;
+  color: #ffffff;
 }
 
-.detail-card ul {
+.detail-card__head h2 {
+  font-size: 0.98rem;
+}
+
+.detail-entry {
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.detail-entry h3 {
+  font-size: 0.92rem;
+}
+
+.detail-rows {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.detail-row {
+  display: grid;
+  gap: 4px;
+}
+
+.detail-row dt,
+.detail-row dd {
+  margin: 0;
+}
+
+.detail-row dd,
+.detail-text p,
+.detail-list-block li {
+  color: rgba(248, 251, 255, 0.88);
+  line-height: 1.55;
+}
+
+.detail-texts,
+.detail-lists {
+  display: grid;
+  gap: 10px;
+}
+
+.detail-text {
+  display: grid;
+  gap: 6px;
+}
+
+.detail-text p {
+  margin: 0;
+}
+
+.detail-text--muted p {
+  color: rgba(248, 251, 255, 0.68);
+}
+
+.detail-list-block {
+  display: grid;
+  gap: 8px;
+}
+
+.detail-list-block ul {
   display: grid;
   gap: 8px;
   padding-left: 18px;
   margin: 0;
 }
 
-.detail-card pre {
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-family: "SF Mono", "Menlo", monospace;
-  font-size: 0.78rem;
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-@media (max-width: 720px) {
-  .stats-grid {
+.detail-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+  font-size: 0.78rem;
+  line-height: 1.1;
+}
+
+@media (max-width: 719px) {
+  .hero-stats-grid {
     grid-template-columns: 1fr;
   }
 }
 
 @media (min-width: 960px) {
   .hero-card {
-    grid-template-columns: minmax(320px, 0.85fr) minmax(0, 1.15fr);
+    grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1.28fr);
     align-items: stretch;
   }
 
-  .hero-card img {
+  .hero-media img {
     height: 100%;
     max-height: none;
-  }
-
-  .hero-copy {
-    padding: 24px;
-  }
-
-  .detail-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

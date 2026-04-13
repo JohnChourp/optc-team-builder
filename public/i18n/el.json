@@ -80,7 +80,6 @@
       "leaderTypes": "Missing value for 'coverage.groups.leaderTypes'",
       "matchedRequirements": "Missing value for 'coverage.groups.matchedRequirements'",
       "missingRequirements": "Missing value for 'coverage.groups.missingRequirements'",
-      "specialSupport": "Missing value for 'coverage.groups.specialSupport'",
       "typeCoverage": "Missing value for 'coverage.groups.typeCoverage'",
       "typeRequest": "Missing value for 'coverage.groups.typeRequest'",
       "utility": "Missing value for 'coverage.groups.utility'"

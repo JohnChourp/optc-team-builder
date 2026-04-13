@@ -23,6 +23,54 @@ export interface RegionAvailability {
   fullTransparent: boolean;
 }
 
+export interface CharacterSupportEntry {
+  supportedCharactersText: string;
+  levelDescriptions: string[];
+}
+
+export interface CharacterCaptainAbilityVariant {
+  key: string;
+  label: string;
+  text: string;
+}
+
+export interface SuperCriteriaCharacterOption {
+  label: string;
+  acceptedKeys: string[];
+}
+
+export interface CharacterCountAnySuperCriteriaBranch {
+  branchType: 'character_count_any';
+  requiredCount: number;
+  options: SuperCriteriaCharacterOption[];
+}
+
+export interface ClassOrTypeCountAnySuperCriteriaBranch {
+  branchType: 'class_or_type_count_any';
+  requiredCount: number;
+  allowedClasses: string[];
+  allowedTypes: string[];
+}
+
+export interface ClassOrTypePresenceAllSuperCriteriaBranch {
+  branchType: 'class_or_type_presence_all';
+  requiredClasses: string[];
+  requiredTypes: string[];
+}
+
+export type SuperCriteriaBranch =
+  | CharacterCountAnySuperCriteriaBranch
+  | ClassOrTypeCountAnySuperCriteriaBranch
+  | ClassOrTypePresenceAllSuperCriteriaBranch;
+
+export interface NormalizedSuperSpecialCriteria {
+  rawText: string;
+  requiresCaptain: boolean;
+  rosterBranches: SuperCriteriaBranch[];
+  hasNonRosterBranches: boolean;
+  parserStatus: 'roster_only' | 'mixed' | 'non_roster_only' | 'unsupported';
+}
+
 export interface CharacterAssets {
   exactLocal: string | null;
   thumbnailGlobal: string | null;
@@ -50,16 +98,22 @@ export interface CharacterRecord {
 export interface CharacterDetail {
   characterId: number;
   captainAbility: string | null;
+  captainAbilityVariants: CharacterCaptainAbilityVariant[];
+  captainNotes: string | null;
   specialName: string | null;
   specialText: string | null;
   specialNotes: string | null;
+  superSpecialText: string | null;
+  superSpecialCriteriaText: string | null;
+  superSpecialNotes: string | null;
+  superSpecialCriteria: NormalizedSuperSpecialCriteria | null;
   partyConflictKeys: string[];
   builderAbilities: NormalizedBuilderAbility[];
   sailorAbilities: string[];
   sailorNotes: string | null;
   limitBreak: Array<{ description: string }>;
   potentialAbilities: Array<{ Name?: string; description?: string[] }>;
-  supportData: Array<Record<string, unknown>>;
+  supportData: CharacterSupportEntry[];
   swapData: Record<string, unknown> | null;
   vsSpecial: Record<string, unknown> | null;
   superType: Record<string, unknown> | null;
@@ -105,7 +159,6 @@ export interface SavedEnemy {
   enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
-  requireAllSpecialsSupportTeam: boolean;
   createdAt: string;
   updatedAt: string;
 }

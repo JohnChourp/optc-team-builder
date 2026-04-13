@@ -18,6 +18,7 @@ let enrichCharactersWithBuilderAbilities: (
     detail: {
       specialText: string | null;
       captainAbility: string | null;
+      captainAbilityVariants?: Array<{ key: string; label: string; text: string }>;
       builderAbilities: Array<Record<string, unknown>>;
     };
   }>,
@@ -238,6 +239,44 @@ describe('auto team builder ability parser', () => {
         label: 'Remove Pain',
         minTurns: 10,
         coverageMode: 'explicit',
+        source: 'captainAbility',
+      }),
+    ]);
+  });
+
+  it('extracts guaranteed extra-drop coverage from captain text', () => {
+    expect(
+      analyzeBuilderAbilityText(
+        'Boosts ATK of all characters by 3x and guarantees duplicating a drop upon completion of the island.',
+        'captainAbility',
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        key: 'extra_drop_any',
+        label: 'Any Extra Drop',
+        minTurns: null,
+        source: 'captainAbility',
+      }),
+      expect.objectContaining({
+        key: 'extra_drop_guaranteed',
+        label: 'Guaranteed Extra Drop',
+        minTurns: null,
+        source: 'captainAbility',
+      }),
+    ]);
+  });
+
+  it('extracts chance-based extra-drop coverage without the guaranteed key', () => {
+    expect(
+      analyzeBuilderAbilityText(
+        'Boosts ATK of all characters by 3x and gives chance of duplicating a drop upon completion of the island.',
+        'captainAbility',
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        key: 'extra_drop_any',
+        label: 'Any Extra Drop',
+        minTurns: null,
         source: 'captainAbility',
       }),
     ]);
@@ -536,6 +575,55 @@ describe('auto team builder ability parser', () => {
           typeof ability === 'object' &&
           'key' in ability &&
           (ability.key === 'ignore_normal_attack_only' || ability.key === 'deal_fixed_damage'),
+      ),
+    ).toHaveLength(2);
+  });
+
+  it('derives captain abilities from structured captain variants without duplicate extra-drop matches', async () => {
+    const characters = [
+      {
+        id: 2035,
+        detail: {
+          specialText: null,
+          captainAbility: 'Boosts ATK by 1.75x and guarantees duplicating a drop upon completion of the island.',
+          captainAbilityVariants: [
+            {
+              key: 'base',
+              label: 'Base Captain Ability',
+              text: 'Boosts ATK by 1.75x and guarantees duplicating a drop upon completion of the island.',
+            },
+            {
+              key: 'llbbase',
+              label: 'LLB Base Captain Ability',
+              text: 'Boosts ATK by 1.75x and guarantees duplicating a drop upon completion of the island.',
+            },
+          ],
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(characters[0]?.detail.builderAbilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'extra_drop_any',
+          source: 'captainAbility',
+        }),
+        expect.objectContaining({
+          key: 'extra_drop_guaranteed',
+          source: 'captainAbility',
+        }),
+      ]),
+    );
+    expect(
+      characters[0]?.detail.builderAbilities.filter(
+        (ability) =>
+          ability &&
+          typeof ability === 'object' &&
+          'key' in ability &&
+          (ability.key === 'extra_drop_any' || ability.key === 'extra_drop_guaranteed'),
       ),
     ).toHaveLength(2);
   });

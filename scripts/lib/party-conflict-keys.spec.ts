@@ -18,6 +18,7 @@ describe('party conflict keys', () => {
       'denjiro',
       'ashura doji',
       'dogstorm',
+      'inuarashi',
     ]);
   });
 

@@ -1,8 +1,36 @@
 {
-  "generatedAt": "2026-04-12T06:42:29.081Z",
+  "generatedAt": "2026-04-13T06:45:25.940Z",
   "sourceVersion": "unknown",
-  "abilityCount": 32,
+  "abilityCount": 34,
   "abilities": [
+    {
+      "key": "extra_drop_any",
+      "label": "Any Extra Drop",
+      "supportsTurns": false,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "availableSources": [
+        "captainAbility"
+      ],
+      "availableCoverageModes": [
+        "explicit"
+      ],
+      "matchCount": 23,
+      "sampleCharacterIds": [
+        1166,
+        1167,
+        1185,
+        1186,
+        1329
+      ],
+      "sampleTexts": [
+        "Gives chance of duplicating a drop upon completion of the island.",
+        "Boosts ATK of all characters by 1.2x. Gives chance of duplicating a drop upon completion of the island.",
+        "Boosts ATK of Slasher and Cerebral characters by 1.75x. Gives chance of duplicating a drop upon completion of the island.",
+        "Boosts ATK of Slasher and Cerebral characters by 1.75x. Gives chance of duplicating a drop upon completion of the island.",
+        "Reduces Special Cooldown of Fighter and Free Spirit characters by 1 turn at the start of the fight. Gives chance of duplicating a drop upon completion of the island."
+      ]
+    },
     {
       "key": "deal_fixed_damage",
       "label": "Deal Fixed Damage",
@@ -16,7 +44,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 235,
+      "matchCount": 237,
       "sampleCharacterIds": [
         20,
         230,
@@ -33,31 +61,60 @@
       ]
     },
     {
+      "key": "extra_drop_guaranteed",
+      "label": "Guaranteed Extra Drop",
+      "supportsTurns": false,
+      "supportsSlotTokens": false,
+      "availableSlotTokens": [],
+      "availableSources": [
+        "captainAbility"
+      ],
+      "availableCoverageModes": [
+        "explicit"
+      ],
+      "matchCount": 5,
+      "sampleCharacterIds": [
+        1390,
+        1391,
+        2035,
+        4002,
+        4003
+      ],
+      "sampleTexts": [
+        "Boosts ATK of Cost 40 or less characters by 1.5x and boosts ATK and HP of Cost 41 or higher characters by 0.5x. Guarantees duplicating a drop upon completion of the island.",
+        "Boosts ATK of Cost 40 or less characters by 1.5x and reduces ATK and HP of Cost 41 of higher characters by 50%. Guarantees duplicating a drop upon completion of the island.",
+        "Boosts ATK of Cost 40 or less characters by 1.75x and reduces ATK and HP of Cost 41 or higher characters by 50%. Guarantees duplicating a drop upon completion of the island.",
+        "Boosts HP of all characters by 1.2x, boosts ATK of all characters by 3.75x, by 4.25x instead if they have a [STR], [RCV] or [TND] orb, by 4.75x if they have a [G] orb, changes [PSY] orbs into [G] orbs, guarantees duplicating a drop upon completion of the island and boosts amount of Beli received by 2x.",
+        "Boosts HP of all characters by 1.2x, boosts ATK of all characters by 3.75x, by 4.25x instead if they have a [STR], [RCV] or [TND] orb, by 4.75x if they have a [G] orb, changes [PSY] orbs into [G] orbs, guarantees duplicating a drop upon completion of the island and boosts amount of Beli received by 2x."
+      ]
+    },
+    {
       "key": "ignore_normal_attack_only",
       "label": "Ignore Normal Attack Only (NAO)",
       "supportsTurns": false,
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
+        "captainAbility",
         "specialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 20,
+      "matchCount": 22,
       "sampleCharacterIds": [
         3154,
         3176,
         3177,
-        3744,
-        3745
+        3279,
+        3280
       ],
       "sampleTexts": [
         "Deals 30% of enemies' current HP in True damage to all enemies, reduces Bind duration by 5 turns and changes [BLOCK] orbs into Matching orbs.. Reduces Bind and ATK DOWN duration by 6 turns and changes [BLOCK] orbs into Matching orbs. If your crew has Normal Attack Only when the special is activated, deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2.25x for 2 turns; deals 30% of enemies' current HP in True damage to all enemies otherwise.",
         "Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated. If this character is your Captain/Friend Captain, increases duration of any Orb Amplification buffs by 1 turn.",
         "Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated. If this character is your Captain/Friend Captain, increases duration of any Orb Amplification buffs by 1 turn.",
-        "Reduces enemies' Damage Nullification duration by 5 turns, changes all orbs, including [BLOCK] orbs, into Matching orbs and Boost ATK of [STR], Slasher and Free Spirit characters by 3x for 2 turns. If \"Inherited Oden Two-Sword Style: Paradise Totsuka\" or \"Oden Two-Sword Style: Paradise Totsuka\" was used in the same turn when special is activated, deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies, increases boost effects of ATK UP and Orb Amplification buffs by +0.25x and increases duration of any ATK boosting buffs and Orb Amplification buffs by 1 turn, including effects activated in the same Ability.",
-        "Reduces enemies' Damage Nullification duration by 5 turns, changes all orbs, including [BLOCK] orbs, into Matching orbs and Boost ATK of [STR], Slasher and Free Spirit characters by 3x for 2 turns. If \"Inherited Oden Two-Sword Style: Paradise Totsuka\" or \"Oden Two-Sword Style: Paradise Totsuka\" was used in the same turn when special is activated, deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies, increases boost effects of ATK UP and Orb Amplification buffs by +0.25x and increases duration of any ATK boosting buffs and Orb Amplification buffs by 1 turn, including effects activated in the same Ability."
+        "Boosts ATK of Driven and Powerhouse characters by 4x, their HP by 1.75x, reduces RCV of Driven and Powerhouse characters by 50%, increases damage received by 1.5x and reduces Special Cooldown of this character by 2 turns after each turn you take damage. If a crew member uses a special with a Percent Damage Reduction, Threshold Damage Reduction or Damage Nullification buff, replaces those buffs with an ATK boost that will overwrite ATK boosts in the same special: Boosts ATK of Driven and Powerhouse characters by 2x for 1 turn.",
+        "Boosts ATK of Driven and Powerhouse characters by 4x, their HP by 1.75x, reduces RCV of Driven and Powerhouse characters by 50%, increases damage received by 1.5x and reduces Special Cooldown of this character by 2 turns after each turn you take damage. If a crew member uses a special with a Percent Damage Reduction, Threshold Damage Reduction or Damage Nullification buff, replaces those buffs with an ATK boost that will overwrite ATK boosts in the same special: Boosts ATK of Driven and Powerhouse characters by 2x for 1 turn."
       ]
     },
     {
@@ -73,7 +130,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 64,
+      "matchCount": 65,
       "sampleCharacterIds": [
         58,
         215,
@@ -102,7 +159,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 279,
+      "matchCount": 282,
       "sampleCharacterIds": [
         1823,
         1824,
@@ -125,12 +182,13 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
+        "captainAbility",
         "specialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 39,
+      "matchCount": 40,
       "sampleCharacterIds": [
         1431,
         1432,
@@ -159,7 +217,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 446,
+      "matchCount": 447,
       "sampleCharacterIds": [
         228,
         265,
@@ -217,7 +275,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 136,
+      "matchCount": 139,
       "sampleCharacterIds": [
         2237,
         2238,
@@ -275,7 +333,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 91,
+      "matchCount": 92,
       "sampleCharacterIds": [
         1627,
         1628,
@@ -361,7 +419,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 405,
+      "matchCount": 414,
       "sampleCharacterIds": [
         354,
         355,
@@ -638,7 +696,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 392,
+      "matchCount": 402,
       "sampleCharacterIds": [
         1002,
         1003,
@@ -733,8 +791,8 @@
       "sampleTexts": [
         "Reduces Special Cooldown of [PSY] and [INT] characters by 1 turn and boosts Orb Effects of [PSY] and [INT] characters by 2.5x-2.75x, based on total damage taken. If your Captain is a [PSY] or [INT] character, reduces Bind and Sailor Despair duration by 6 turns, reduces damage received by 100% for 1 turn or 1-2 attacks, depending on Special Counter, and increases duration of any Orb Amplification buffs by 1 turn, including effects activated in the same Ability.",
         "Reduces Special Cooldown of [PSY] and [INT] characters by 1 turn and boosts Orb Effects of [PSY] and [INT] characters by 2.5x-2.75x, based on total damage taken. If your Captain is a [PSY] or [INT] character, reduces Bind and Sailor Despair duration by 6 turns, reduces damage received by 100% for 1 turn or 1-2 attacks, depending on Special Counter, and increases duration of any Orb Amplification buffs by 1 turn, including effects activated in the same Ability.",
-        "Reduces Special Cooldown of all characters by 1 turn at the start of the fight, boosts HP of Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters by 1.5x, boosts ATK of Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters by 2.3x-5.29x, depending on if the character has 2 matching Classes, makes [DEX], [RCV] and [TND] orbs beneficial for Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters and reduces Sailor Despair duration by 10 turns. If this character has a [TND] or [WANO] orb and you attack with this character, reduces Swap Cooldown of this character by 1.. Reduces Special Cooldown of all characters by 1 turn at the start of the fight, boosts HP of Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters by 1.5x, boosts ATK of Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters by 2.3x-5.29x, depending on if the character has 2 matching Classes, makes [QCK], [RCV] and [TND] orbs beneficial for Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters, makes PERFECTs consume [RCV] orbs and reduces Sailor Despair duration by 10 turns. If this character has a [RCV] or [TND] orb and you attack with this character, reduces Swap Cooldown of this character by 1.. Reduces Special Cooldown of all characters by 1 turn at the start of the fight, boosts HP of Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters by 1.5x, boosts ATK of Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters by 2.45x-6x, depending on if the character has 2 matching Classes, makes [DEX], [QCK], [RCV] and [TND] orbs beneficial for Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters, makes PERFECTs consume [RCV] orbs and reduces Sailor Despair duration by 10 turns and allows HP Overfill up to 2x MAX HP.",
-        "Reduces Special Cooldown of all characters by 1 turn at the start of the fight, boosts HP of Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters by 1.5x, boosts ATK of Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters by 2.3x-5.29x, depending on if the character has 2 matching Classes, makes [DEX], [RCV] and [TND] orbs beneficial for Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters and reduces Sailor Despair duration by 10 turns. If this character has a [TND] or [WANO] orb and you attack with this character, reduces Swap Cooldown of this character by 1.. Reduces Special Cooldown of all characters by 1 turn at the start of the fight, boosts HP of Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters by 1.5x, boosts ATK of Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters by 2.3x-5.29x, depending on if the character has 2 matching Classes, makes [QCK], [RCV] and [TND] orbs beneficial for Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters, makes PERFECTs consume [RCV] orbs and reduces Sailor Despair duration by 10 turns. If this character has a [RCV] or [TND] orb and you attack with this character, reduces Swap Cooldown of this character by 1.. Reduces Special Cooldown of all characters by 1 turn at the start of the fight, boosts HP of Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters by 1.5x, boosts ATK of Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters by 2.45x-6x, depending on if the character has 2 matching Classes, makes [DEX], [QCK], [RCV] and [TND] orbs beneficial for Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters, makes PERFECTs consume [RCV] orbs and reduces Sailor Despair duration by 10 turns and allows HP Overfill up to 2x MAX HP."
+        "Reduces Special Cooldown of all characters by 1 turn at the start of the fight, boosts HP of Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters by 1.5x, boosts ATK of Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters by 2.3x-5.29x, depending on if the character has 2 matching Classes, makes [DEX], [RCV] and [TND] orbs beneficial for Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters and reduces Sailor Despair duration by 10 turns. If this character has a [TND] or [WANO] orb and you attack with this character, reduces Swap Cooldown of this character by 1.",
+        "Reduces Special Cooldown of all characters by 1 turn at the start of the fight, boosts HP of Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters by 1.5x, boosts ATK of Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters by 2.3x-5.29x, depending on if the character has 2 matching Classes, makes [DEX], [RCV] and [TND] orbs beneficial for Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters and reduces Sailor Despair duration by 10 turns. If this character has a [TND] or [WANO] orb and you attack with this character, reduces Swap Cooldown of this character by 1."
       ]
     },
     {
@@ -828,7 +886,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 294,
+      "matchCount": 301,
       "sampleCharacterIds": [
         949,
         1052,

@@ -49,9 +49,8 @@ export function createEmptyAutoBuildManualSlots(): AutoBuildManualSlotSelection[
 export interface AutoBuildConstraints {
   requireAllSelectedTypesInTeam?: boolean;
   requireAllSelectedClassesPerCharacter?: boolean;
-  requireAllSpecialsSupportTeam?: boolean;
+  requireLeaderSuperSpecialCriteria?: boolean;
   requireUniqueBaseCharacterNames?: boolean;
-  requireSameCaptainAndFriendCaptain?: boolean;
   requiredAbilities?: AutoBuildAbilityRequirement[];
   enemyMechanics?: AutoBuildEnemyMechanicRequirement[];
   favoritesOnly?: boolean;
@@ -94,9 +93,8 @@ export type AutoBuildUtilityRole =
 export interface AutoBuildInput extends AutoBuildConstraints {
   types: AutoTeamBuilderType[];
   selectedClasses: string[];
-  requireAllSpecialsSupportTeam: boolean;
+  requireLeaderSuperSpecialCriteria: boolean;
   requireUniqueBaseCharacterNames: boolean;
-  requireSameCaptainAndFriendCaptain: boolean;
   requiredAbilities: AutoBuildAbilityRequirement[];
   enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   favoritesOnly: boolean;
@@ -122,6 +120,8 @@ export interface AutoBuildSpecialScope {
   allCharacters: boolean;
   allowedClasses: string[];
   allowedTypes: AutoTeamBuilderType[];
+  hasCostRestriction: boolean;
+  maxAllowedCost: number | null;
   hasClassRestriction: boolean;
   hasTypeRestriction: boolean;
   hasExplicitTarget: boolean;
@@ -133,6 +133,8 @@ export interface AutoBuildEffectTags {
     allCharacters: boolean;
     allowedClasses: string[];
     allowedTypes: AutoTeamBuilderType[];
+    hasCostRestriction: boolean;
+    maxAllowedCost: number | null;
     hasClassRestriction: boolean;
     hasTypeRestriction: boolean;
     matchedSelectedClasses: string[];
@@ -163,16 +165,10 @@ export interface AutoBuildLeaderCriteriaSummary {
   dualLeaderMode: "single" | "intersection";
   derivedAllowedClasses: string[];
   derivedAllowedTypes: AutoTeamBuilderType[];
+  hasCostRestriction: boolean;
+  maxAllowedCost: number | null;
   hasClassRestriction: boolean;
   hasTypeRestriction: boolean;
-  matchingSlots: number;
-  totalSlots: number;
-  allSlotsMatch: boolean;
-}
-
-export interface AutoBuildSpecialSupportSummary {
-  source: "specialText";
-  enabled: boolean;
   matchingSlots: number;
   totalSlots: number;
   allSlotsMatch: boolean;
@@ -201,7 +197,6 @@ export interface AutoBuildSlot {
 
 export interface AutoBuildCoverageSummary {
   leaderCriteria: AutoBuildLeaderCriteriaSummary;
-  specialSupport: AutoBuildSpecialSupportSummary;
   abilityRequirements: {
     requested: AutoBuildAbilityRequirement[];
     matched: AutoBuildAbilityRequirement[];

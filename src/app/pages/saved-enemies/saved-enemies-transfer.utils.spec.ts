@@ -56,7 +56,6 @@ describe('Saved enemies transfer helpers', () => {
           ],
           requireAllSelectedTypesInTeam: true,
           requireAllSelectedClassesPerCharacter: false,
-          requireAllSpecialsSupportTeam: true,
           createdAt: '2026-03-30T10:00:00.000Z',
           updatedAt: '2026-03-30T10:05:00.000Z',
         },
@@ -333,7 +332,6 @@ function buildSavedEnemyBase() {
     ],
     requireAllSelectedTypesInTeam: true,
     requireAllSelectedClassesPerCharacter: false,
-    requireAllSpecialsSupportTeam: true,
     createdAt: '2026-03-30T10:00:00.000Z',
     updatedAt: '2026-03-30T10:05:00.000Z',
   };

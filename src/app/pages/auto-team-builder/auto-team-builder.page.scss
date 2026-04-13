@@ -111,6 +111,17 @@
   align-items: flex-start;
 }
 
+.strict-toggle-row--select {
+  display: grid;
+  align-items: stretch;
+  justify-content: stretch;
+  gap: 10px;
+}
+
+.strict-toggle-row--select .strict-toggle-copy {
+  flex: initial;
+}
+
 .strict-toggle-copy {
   display: grid;
   flex: 1;
@@ -129,6 +140,12 @@
   color: rgba(248, 251, 255, 0.62);
   line-height: 1.45;
   overflow-wrap: anywhere;
+}
+
+.strict-toggle-select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .type-action-row {

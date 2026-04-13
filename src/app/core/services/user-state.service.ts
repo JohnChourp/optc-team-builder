@@ -466,7 +466,6 @@ export class UserStateService {
       | 'enemyMechanics'
       | 'requireAllSelectedTypesInTeam'
       | 'requireAllSelectedClassesPerCharacter'
-      | 'requireAllSpecialsSupportTeam'
     > &
       Partial<SavedEnemy>,
     existing?: SavedEnemy,
@@ -486,7 +485,6 @@ export class UserStateService {
       enemyMechanics: normalizeEnemyMechanicRequirements(enemy.enemyMechanics),
       requireAllSelectedTypesInTeam: Boolean(enemy.requireAllSelectedTypesInTeam),
       requireAllSelectedClassesPerCharacter: Boolean(enemy.requireAllSelectedClassesPerCharacter),
-      requireAllSpecialsSupportTeam: Boolean(enemy.requireAllSpecialsSupportTeam),
       createdAt: this.normalizeTimestamp(enemy.createdAt, existing?.createdAt ?? now),
       updatedAt: this.normalizeTimestamp(enemy.updatedAt, now),
     };

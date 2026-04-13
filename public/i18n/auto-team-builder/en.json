@@ -56,11 +56,11 @@
         "flexible": "Selected classes guide captain scope and candidate weighting without blocking fallback."
       }
     },
-    "specialSupport": {
-      "toggle": "Require special support coverage",
+    "superSpecialCriteria": {
+      "toggle": "Require leader super special criteria",
       "support": {
-        "strict": "Every final slot must contribute readable special utility or team support.",
-        "flexible": "Special utility is preferred but can be relaxed if the local pool is too narrow."
+        "strict": "Selected leaders with Super Special criteria must form a final team that satisfies at least one roster-valid criteria branch.",
+        "flexible": "Ignore leader Super Special criteria when assembling the final team."
       }
     },
     "uniqueNames": {
@@ -68,13 +68,6 @@
       "support": {
         "strict": "Every final slot except Friend Captain must avoid in-game duplicate-character conflicts, so the Friend Captain can still mirror another unit like Monkey D. Luffy.",
         "flexible": "Allow final teams that reuse in-game character identities or overlapping composite units."
-      }
-    },
-    "sameCaptain": {
-      "toggle": "Require matching captain slots",
-      "support": {
-        "strict": "The final Captain and Friend Captain must resolve to the same character.",
-        "flexible": "Allow the Captain and Friend Captain to resolve to different characters."
       }
     },
     "favoritesOnly": {
@@ -92,6 +85,19 @@
         "withCount": "Limit manual ship confirmation and auto ship selection to your {{count}} saved favorite ships."
       }
     },
+    "extraDrop": {
+      "toggle": "Captain extra-drop filter",
+      "options": {
+        "off": "Off",
+        "guaranteed": "Guaranteed only",
+        "any": "Any extra-drop"
+      },
+      "support": {
+        "off": "Do not require an extra-drop captain effect.",
+        "guaranteed": "Only match captains that guarantee a duplicated reward drop on island clear.",
+        "any": "Match captains with either guaranteed or chance-based duplicated reward drops on island clear."
+      }
+    },
     "disableConfirm": {
       "title": "Disable this requirement?",
       "cancel": "Keep enabled",
@@ -105,8 +111,8 @@
       "uniqueNames": {
         "message": "Turn off duplicate-character protection and allow in-game duplicate conflicts in the final team?"
       },
-      "specialSupport": {
-        "message": "Turn off special support coverage and allow slots without readable special utility or team support?"
+      "superSpecialCriteria": {
+        "message": "Turn off leader Super Special criteria checks and allow leaders whose Super Special roster criteria are not met?"
       }
     }
   },
@@ -367,12 +373,12 @@
       "classRequest": "Class request",
       "consistency": "Consistency",
       "leaderClasses": "Leader classes",
+      "leaderCost": "Leader cost",
       "leaderScope": "Leader scope",
       "leaderSource": "Leader source",
       "leaderTypes": "Leader types",
       "matchedRequirements": "Matched ability requirements",
       "missingRequirements": "Missing ability requirements",
-      "specialSupport": "Special support",
       "typeCoverage": "Type coverage",
       "typeRequest": "Type request",
       "utility": "Utility"
@@ -391,9 +397,11 @@
       "withTypes": "Built from the local pool while targeting {{types}} coverage."
     },
     "leaderCriteria": {
+      "costLimit": "Cost {{cost}} or less",
       "noClassRestriction": "No class restriction",
+      "noCostRestriction": "No cost restriction",
       "noData": "No leader scope data",
-      "noRestriction": "Leader abilities do not restrict slot coverage.",
+      "noRestriction": "Leader abilities do not restrict class, type, or cost coverage.",
       "noTypeRestriction": "No type restriction",
       "scopeCoverage": "{{matching}} / {{total}} slots match the derived leader scope.",
       "scopePending": "Leader scope will be calculated after a successful build.",
@@ -420,12 +428,6 @@
       "strictPending": "Strict type coverage is enabled and will be validated after the build.",
       "strictResolved": "{{covered}} / {{total}} selected types are covered in the final team."
     },
-    "specialSupport": {
-      "disabled": "Special support is optional. {{matching}} / {{total}} slots still contribute readable support.",
-      "enabled": "Special support is enabled. {{matching}} / {{total}} slots contribute readable support.",
-      "pendingOff": "Special support is optional for the next build.",
-      "pendingStrict": "Strict special support will be validated after the build."
-    },
     "teamSlots": {
       "noSnippet": "No readable captain or special text was parsed.",
       "roles": {
@@ -447,9 +449,6 @@
   },
   "errors": {
     "buildFailed": "The auto build failed unexpectedly. Please try again.",
-    "sameCaptain": {
-      "manualConflict": "Matching captain slots is enabled, but the current manual Captain and Friend Captain choices do not overlap."
-    },
     "uniqueNames": {
       "manualConflict": "The current manual slot choices already create the same in-game character conflict outside the Friend Captain slot: {{names}}."
     },
@@ -477,8 +476,7 @@
       "favoritesScope": " while keeping favorite-only auto-fill for open slots",
       "flexible": "No flexible team matched {{types}} while keeping {{requirements}}{{favoritesScope}}.",
       "separator": " and ",
-      "specialCoverage": "special support coverage",
-      "sameCaptainAndFriendCaptain": "matching captain and friend captain",
+      "superSpecialCriteria": "leader Super Special criteria coverage",
       "strict": "No strict team matched {{types}} while keeping {{requirements}}{{favoritesScope}}.",
       "typeCoverage": "team-wide type coverage",
       "uniqueCharacterNames": "unique in-game character identities across the team except Friend Captain"

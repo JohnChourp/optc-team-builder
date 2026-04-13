@@ -9,7 +9,9 @@ import { ShipPickerComponent } from './ship-picker.component';
 vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
   IonButtons: class {},
+  IonContent: class {},
   IonFooter: class {},
+  IonHeader: class {},
   IonIcon: class {},
   IonModal: class {},
   IonSearchbar: class {},

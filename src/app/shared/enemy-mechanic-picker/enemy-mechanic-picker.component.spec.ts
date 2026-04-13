@@ -9,7 +9,9 @@ import { EnemyMechanicPickerComponent } from './enemy-mechanic-picker.component'
 vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
   IonButtons: class {},
+  IonContent: class {},
   IonFooter: class {},
+  IonHeader: class {},
   IonIcon: class {},
   IonInput: class {},
   IonModal: class {},

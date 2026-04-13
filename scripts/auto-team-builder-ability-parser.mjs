@@ -6,6 +6,22 @@ const ABILITY_BRANCH_ACTION_PATTERN =
   /\b(?:deals?|boosts?|makes?|reduces?|changes?|adds?|delays?|locks?|recovers?|heals?|cuts?|transforms?|sets?)\b/gi;
 const EXPLICIT_BUILDER_ABILITIES = [
   {
+    key: 'extra_drop_any',
+    label: 'Any Extra Drop',
+    sources: ['captainAbility'],
+    matcher: (text) =>
+      /\b(?:gives?\s+chance\s+of|guarantees?)\s+duplicating a drop upon completion of the island\b/i.test(
+        text,
+      ),
+  },
+  {
+    key: 'extra_drop_guaranteed',
+    label: 'Guaranteed Extra Drop',
+    sources: ['captainAbility'],
+    matcher: (text) =>
+      /\bguarantees?\s+duplicating a drop upon completion of the island\b/i.test(text),
+  },
+  {
     key: 'ignore_normal_attack_only',
     label: 'Ignore Normal Attack Only (NAO)',
     matcher: (text) => /\bignoring normal attack only\b/i.test(text),
@@ -312,6 +328,10 @@ export function analyzeBuilderAbilityText(value, source) {
   });
 
   EXPLICIT_BUILDER_ABILITIES.forEach((definition) => {
+    if (Array.isArray(definition.sources) && !definition.sources.includes(source)) {
+      return;
+    }
+
     if (!definition.matcher(normalizedText)) {
       return;
     }
@@ -335,6 +355,22 @@ export function analyzeSpecialText(value) {
   return analyzeBuilderAbilityText(value, 'specialText');
 }
 
+function resolveCaptainAbilityTexts(character) {
+  const captainAbilityVariants = Array.isArray(character.detail?.captainAbilityVariants)
+    ? character.detail.captainAbilityVariants
+    : [];
+
+  if (captainAbilityVariants.length > 0) {
+    return captainAbilityVariants
+      .map((entry) => (typeof entry?.text === 'string' ? entry.text.trim() : ''))
+      .filter(Boolean);
+  }
+
+  return typeof character.detail?.captainAbility === 'string' && character.detail.captainAbility.length
+    ? [character.detail.captainAbility]
+    : [];
+}
+
 export async function enrichCharactersWithBuilderAbilities(
   characters,
   { batchSize = 200, logger = console.log, abilityCorrections = null } = {},
@@ -346,9 +382,12 @@ export async function enrichCharactersWithBuilderAbilities(
     const batch = characters.slice(start, start + batchSize);
 
     batch.forEach((character) => {
+      const captainAbilityTexts = resolveCaptainAbilityTexts(character);
       const derivedBuilderAbilities = [
         ...analyzeBuilderAbilityText(character.detail?.specialText ?? null, 'specialText'),
-        ...analyzeBuilderAbilityText(character.detail?.captainAbility ?? null, 'captainAbility'),
+        ...captainAbilityTexts.flatMap((text) =>
+          analyzeBuilderAbilityText(text, 'captainAbility'),
+        ),
       ];
       const builderAbilities = mergeBuilderAbilities(
         character.detail?.builderAbilities ?? [],
@@ -377,7 +416,7 @@ export async function enrichCharactersWithBuilderAbilities(
 
         const sampleText =
           ability.source === 'captainAbility'
-            ? character.detail?.captainAbility
+            ? captainAbilityTexts[0] ?? character.detail?.captainAbility
             : character.detail?.specialText;
 
         if (

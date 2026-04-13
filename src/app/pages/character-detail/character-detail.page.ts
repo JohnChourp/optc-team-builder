@@ -1,5 +1,5 @@
-import { CommonModule, JsonPipe } from "@angular/common";
-import { Component, OnInit, signal } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { Component, OnInit, computed, signal } from "@angular/core";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import {
   IonBackButton,
@@ -18,6 +18,10 @@ import { heart, heartOutline } from "ionicons/icons";
 import { type CharacterDetailRecord } from "../../core/models/optc.models";
 import { OptcRepositoryService } from "../../core/services/optc-repository.service";
 import { UserStateService } from "../../core/services/user-state.service";
+import {
+  buildCharacterDetailViewModel,
+  resolveRumbleBasedOnId,
+} from "./character-detail.presenter";
 
 @Component({
   selector: "app-character-detail-page",
@@ -33,7 +37,6 @@ import { UserStateService } from "../../core/services/user-state.service";
     IonSpinner,
     IonTitle,
     IonToolbar,
-    JsonPipe,
     RouterLink,
     TranslocoDirective,
   ],
@@ -42,8 +45,16 @@ import { UserStateService } from "../../core/services/user-state.service";
 })
 export class CharacterDetailPage implements OnInit {
   public readonly character = signal<CharacterDetailRecord | null>(null);
+  public readonly rumbleBasedOnName = signal<string | null>(null);
   public readonly loading = signal(true);
   public readonly favoriteIds;
+  public readonly viewModel = computed(() => {
+    const currentCharacter = this.character();
+
+    return currentCharacter
+      ? buildCharacterDetailViewModel(currentCharacter, this.rumbleBasedOnName())
+      : null;
+  });
 
   public readonly favoriteIcon = heart;
   public readonly favoriteOutlineIcon = heartOutline;
@@ -65,13 +76,12 @@ export class CharacterDetailPage implements OnInit {
     }
 
     await this.userState.ready();
-    this.character.set(await this.repository.getCharacterById(characterId));
+    const character = await this.repository.getCharacterById(characterId);
+
+    this.character.set(character);
+    await this.loadRumbleReferenceName(character);
     await this.userState.markRecent(characterId);
     this.loading.set(false);
-  }
-
-  public ionViewDidEnter(): void {
-    console.log("CharacterDetailPage component");
   }
 
   public async toggleFavorite(characterId: number): Promise<void> {
@@ -80,5 +90,18 @@ export class CharacterDetailPage implements OnInit {
 
   public isFavorite(characterId: number): boolean {
     return this.favoriteIds().includes(characterId);
+  }
+
+  private async loadRumbleReferenceName(character: CharacterDetailRecord | null): Promise<void> {
+    this.rumbleBasedOnName.set(null);
+
+    const basedOnId = resolveRumbleBasedOnId(character?.detail.rumbleData ?? null);
+
+    if (!basedOnId) {
+      return;
+    }
+
+    const basedOnCharacter = await this.repository.getCharacterById(basedOnId);
+    this.rumbleBasedOnName.set(basedOnCharacter?.name ?? null);
   }
 }

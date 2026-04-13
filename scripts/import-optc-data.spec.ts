@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { applyShipThumbnailOverrides, packDefinitions, shouldDownloadPack } from './import-optc-data.mjs';
+import {
+  applyShipThumbnailOverrides,
+  normalizeCharacterDetail,
+  packDefinitions,
+  shouldDownloadPack,
+} from './import-optc-data.mjs';
 
 describe('import-optc-data ship thumbnail pack', () => {
   it('registers the ship thumbnail pack definition', () => {
@@ -40,6 +45,117 @@ describe('import-optc-data ship thumbnail pack', () => {
     expect(result).toEqual([
       { id: 63, name: "Shiki's Island Ship", thumb: 'ship_0063_t2.png', description: '' },
       { id: 14, name: 'Thousand Sunny', thumb: 'ship_0014_t2.png', description: '' },
+    ]);
+  });
+
+  it('imports typed support data and super special fields into the normalized detail shape', () => {
+    const detail = normalizeCharacterDetail(
+      {
+        superSpecial:
+          'Reduces Special Cooldown of all characters by 1 turn and transforms Free Spirit characters into Super Free Spirit characters.',
+        superSpecialCriteria:
+          'This character must be captain and your crew must consist of any 1 of the following, excluding Supports and counting only 1 per unit: Roronoa Zoro, Nami or Usopp.',
+        superSpecialNotes: 'Only usable once per quest.',
+        support: [
+          {
+            Characters: 'Roronoa Zoro, Nami and Usopp',
+            description: ['Level 1 effect.', 'Level 2 effect.'],
+          },
+        ],
+      },
+      3607,
+    );
+
+    expect(detail.supportData).toEqual([
+      {
+        supportedCharactersText: 'Roronoa Zoro, Nami and Usopp',
+        levelDescriptions: ['Level 1 effect.', 'Level 2 effect.'],
+      },
+    ]);
+    expect(detail.superSpecialText).toContain('transforms Free Spirit characters');
+    expect(detail.superSpecialCriteriaText).toContain('your crew must consist of any 1');
+    expect(detail.superSpecialNotes).toBe('Only usable once per quest.');
+    expect(detail.superSpecialCriteria).toMatchObject({
+      parserStatus: 'roster_only',
+      requiresCaptain: true,
+      rosterBranches: [
+        {
+          branchType: 'character_count_any',
+          requiredCount: 1,
+        },
+      ],
+    });
+  });
+
+  it('preserves structured captain variants and notes without concatenating them', () => {
+    const detail = normalizeCharacterDetail(
+      {
+        captain: {
+          base: 'Base captain effect.',
+          level1: 'Level 1 captain effect.',
+          llbbase: 'LLB base captain effect.',
+          llblevel1: 'LLB level 1 captain effect.',
+        },
+        captainNotes: 'Stacks with other additional drop captains.',
+      },
+      2035,
+    );
+
+    expect(detail.captainAbility).toBe('Base captain effect.');
+    expect(detail.captainNotes).toBe('Stacks with other additional drop captains.');
+    expect(detail.captainAbilityVariants).toEqual([
+      {
+        key: 'base',
+        label: 'Base Captain Ability',
+        text: 'Base captain effect.',
+      },
+      {
+        key: 'level1',
+        label: 'Limit Break Level 1 Captain Ability',
+        text: 'Level 1 captain effect.',
+      },
+      {
+        key: 'llbbase',
+        label: 'LLB Base Captain Ability',
+        text: 'LLB base captain effect.',
+      },
+      {
+        key: 'llblevel1',
+        label: 'LLB Level 1 Captain Ability',
+        text: 'LLB level 1 captain effect.',
+      },
+    ]);
+  });
+
+  it('labels dual captain branches without flattening them into one summary', () => {
+    const detail = normalizeCharacterDetail(
+      {
+        captain: {
+          character1: 'Character 1 captain effect.',
+          character2: 'Character 2 captain effect.',
+          combined: 'Combined captain effect.',
+        },
+      },
+      4002,
+    );
+
+    expect(detail.captainAbility).toBe('Character 1 captain effect.');
+    expect(detail.captainAbilityVariants).toEqual([
+      {
+        key: 'character1',
+        label: 'Captain Ability (Character 1)',
+        text: 'Character 1 captain effect.',
+      },
+      {
+        key: 'character2',
+        label: 'Captain Ability (Character 2)',
+        text: 'Character 2 captain effect.',
+      },
+      {
+        key: 'combined',
+        label: 'Captain Ability (Combined)',
+        text: 'Combined captain effect.',
+      },
     ]);
   });
 });
