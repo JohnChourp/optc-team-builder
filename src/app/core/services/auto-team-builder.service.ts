@@ -685,7 +685,7 @@ export class AutoTeamBuilderService {
             return;
           }
 
-          if (currentAttempt.result) {
+          if (satisfiesRequestedAutoTeamBuildCoverage(currentAttempt.result)) {
             resolveOnce(currentAttempt.result, index + 2);
             return;
           }
