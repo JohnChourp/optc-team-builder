@@ -4,19 +4,21 @@ set -euo pipefail
 usage() {
     cat <<'USAGE'
 Usage:
-  release-and-tag.sh [--bump patch|minor|major] [--version X.Y.Z] [--code N] [--no-push] [--skip-gh-release]
+  release-and-tag.sh [--bump patch|minor|major] [--version X.Y.Z] [--code N] [--no-push] [--skip-gh-release] [--require-gh-release]
 USAGE
 }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd -P)"
 BUILD_ARTIFACTS_DIR="${PROJECT_ROOT}/build-artifacts/releases"
+BUILD_MOBILE_COMMAND="${BUILD_MOBILE_COMMAND:-npm run build:mobile}"
 
 BUMP_TYPE=""
 EXPLICIT_VERSION=""
 EXPLICIT_CODE=""
 NO_PUSH=0
 SKIP_GH_RELEASE=0
+REQUIRE_GH_RELEASE=0
 BUMP_ARGS=()
 
 while (($# > 0)); do
@@ -42,6 +44,10 @@ while (($# > 0)); do
             ;;
         --skip-gh-release)
             SKIP_GH_RELEASE=1
+            shift
+            ;;
+        --require-gh-release)
+            REQUIRE_GH_RELEASE=1
             shift
             ;;
         -h|--help)
@@ -103,12 +109,20 @@ ensure_gh_or_fallback_skip() {
     fi
 
     if ! command -v gh >/dev/null 2>&1; then
+        if (( REQUIRE_GH_RELEASE == 1 )); then
+            echo "ERROR: gh CLI not found but --require-gh-release was requested." >&2
+            exit 1
+        fi
         echo "[release] gh CLI not found. Falling back to --skip-gh-release." >&2
         SKIP_GH_RELEASE=1
         return
     fi
 
     if ! gh auth status >/dev/null 2>&1; then
+        if (( REQUIRE_GH_RELEASE == 1 )); then
+            echo "ERROR: gh auth is unavailable but --require-gh-release was requested." >&2
+            exit 1
+        fi
         echo "[release] gh auth is unavailable. Falling back to --skip-gh-release." >&2
         SKIP_GH_RELEASE=1
     fi
@@ -147,6 +161,17 @@ ensure_tool git
 ensure_tool node
 ensure_tool npm
 ensure_release_signing_env
+
+if (( REQUIRE_GH_RELEASE == 1 && SKIP_GH_RELEASE == 1 )); then
+    echo "ERROR: --require-gh-release cannot be combined with --skip-gh-release." >&2
+    exit 1
+fi
+
+if (( REQUIRE_GH_RELEASE == 1 && NO_PUSH == 1 )); then
+    echo "ERROR: --require-gh-release cannot be combined with --no-push." >&2
+    exit 1
+fi
+
 ensure_gh_or_fallback_skip
 
 if [[ -z "${BUMP_TYPE}" && -z "${EXPLICIT_VERSION}" ]]; then
@@ -172,7 +197,8 @@ fi
 
 mkdir -p "${BUILD_ARTIFACTS_DIR}/${RELEASE_TAG}"
 
-npm run build:mobile
+# Allow CI to override the web/native sync command without changing the local default.
+bash -lc "${BUILD_MOBILE_COMMAND}"
 
 (
     cd "${PROJECT_ROOT}/android"

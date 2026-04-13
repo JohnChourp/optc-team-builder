@@ -85,22 +85,43 @@ This repo publishes Pages through the `Deploy GitHub Pages` GitHub Actions workf
 - If you see both `Deploy GitHub Pages` and `pages-build-deployment` for the same SHA, the repo Pages settings regressed back to legacy mode and need to be switched to workflow mode.
 - `PAGES_ENABLEMENT_TOKEN` is no longer part of the normal setup for this repo.
 
-One-time Android signing setup:
+Android releases should now run from the manual `Release Android` GitHub Actions workflow.
+
+Required repository or environment secrets:
+
+- `ANDROID_KEYSTORE_B64`
+- `ANDROID_SIGNING_STORE_PASSWORD`
+- `ANDROID_SIGNING_KEY_ALIAS`
+- `ANDROID_SIGNING_KEY_PASSWORD`
+
+Optional secret when branch protection blocks `GITHUB_TOKEN` pushes:
+
+- `RELEASE_PUSH_TOKEN`
+
+The workflow:
+
+- runs only through `workflow_dispatch`
+- bumps `package.json`, `package-lock.json`, Android `versionName`/`versionCode`, and iOS `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION`
+- builds the signed Android APK
+- commits `release: vX.Y.Z`, tags `vX.Y.Z`, pushes both to `main`, and publishes a GitHub Release
+- relies on that pushed release commit to trigger the normal `Deploy GitHub Pages` workflow
+
+Local fallback signing setup:
 
 ```bash
 ./scripts/setup-release-signing.sh
 source ~/.android/optc-team-builder/release-signing.env
 ```
 
-Create a signed Android GitHub release locally:
+Local fallback release command:
 
 ```bash
 ../optc-team-builder-brain/.codex/skills/optc-team-builder-android-release/scripts/run_release.sh --project "$(pwd)" --bump patch
 ```
 
-The release skill auto-loads `~/.android/optc-team-builder/release-signing.env` and, if needed, runs `./scripts/setup-release-signing.sh` before continuing with the existing release flow.
+The local skill auto-loads `~/.android/optc-team-builder/release-signing.env` and, if needed, runs `./scripts/setup-release-signing.sh` before continuing with the existing release flow.
 
-The release flow does not perform a second deploy step for Pages. It only pushes the release commit to `main`, which then triggers the normal Pages workflow.
+The release workflow does not perform a second deploy step for Pages. It only pushes the release commit to `main`, which then triggers the normal Pages workflow.
 
 The local signing env contract remains:
 

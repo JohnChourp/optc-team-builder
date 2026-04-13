@@ -1,0 +1,143 @@
+name: Release Android
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Semantic version bump to apply when version is empty
+        required: true
+        default: patch
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      version:
+        description: Optional explicit release version in X.Y.Z format
+        required: false
+        type: string
+      code:
+        description: Optional explicit versionCode / build number
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate required release secrets
+        env:
+          ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+          ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+          ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+        run: |
+          missing=0
+          required_vars=(
+            ANDROID_KEYSTORE_B64
+            ANDROID_SIGNING_STORE_PASSWORD
+            ANDROID_SIGNING_KEY_ALIAS
+            ANDROID_SIGNING_KEY_PASSWORD
+          )
+
+          for var_name in "${required_vars[@]}"; do
+            if [[ -z "${!var_name:-}" ]]; then
+              echo "::error::Missing required secret ${var_name}."
+              missing=1
+            fi
+          done
+
+          if (( missing == 1 )); then
+            exit 1
+          fi
+
+      - name: Select GitHub auth token
+        env:
+          DEFAULT_GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_PUSH_TOKEN: ${{ secrets.RELEASE_PUSH_TOKEN }}
+        run: |
+          if [[ -n "${RELEASE_PUSH_TOKEN}" ]]; then
+            echo "RELEASE_AUTH_TOKEN=${RELEASE_PUSH_TOKEN}" >> "${GITHUB_ENV}"
+          else
+            echo "RELEASE_AUTH_TOKEN=${DEFAULT_GITHUB_TOKEN}" >> "${GITHUB_ENV}"
+          fi
+
+      - name: Prepare Android signing
+        env:
+          ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+          ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+          ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+        run: |
+          signing_dir="${RUNNER_TEMP}/optc-team-builder-signing"
+          keystore_path="${signing_dir}/release-upload-key.jks"
+
+          mkdir -p "${signing_dir}"
+          printf '%s' "${ANDROID_KEYSTORE_B64}" | base64 --decode > "${keystore_path}"
+          chmod 600 "${keystore_path}"
+
+          echo "ANDROID_SIGNING_STORE_FILE=${keystore_path}" >> "${GITHUB_ENV}"
+          echo "ANDROID_SIGNING_STORE_PASSWORD=${ANDROID_SIGNING_STORE_PASSWORD}" >> "${GITHUB_ENV}"
+          echo "ANDROID_SIGNING_KEY_ALIAS=${ANDROID_SIGNING_KEY_ALIAS}" >> "${GITHUB_ENV}"
+          echo "ANDROID_SIGNING_KEY_PASSWORD=${ANDROID_SIGNING_KEY_PASSWORD}" >> "${GITHUB_ENV}"
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${RELEASE_AUTH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+      - name: Run Android release
+        env:
+          RELEASE_BUMP_INPUT: ${{ inputs.bump }}
+          RELEASE_VERSION_INPUT: ${{ inputs.version }}
+          RELEASE_CODE_INPUT: ${{ inputs.code }}
+          BUILD_MOBILE_COMMAND: npm run build && npx cap sync android
+        run: |
+          export GH_TOKEN="${RELEASE_AUTH_TOKEN}"
+
+          release_args=(--require-gh-release)
+
+          if [[ -n "${RELEASE_VERSION_INPUT}" ]]; then
+            release_args+=(--version "${RELEASE_VERSION_INPUT}")
+          else
+            release_args+=(--bump "${RELEASE_BUMP_INPUT}")
+          fi
+
+          if [[ -n "${RELEASE_CODE_INPUT}" ]]; then
+            release_args+=(--code "${RELEASE_CODE_INPUT}")
+          fi
+
+          ./scripts/release-and-tag.sh "${release_args[@]}"
