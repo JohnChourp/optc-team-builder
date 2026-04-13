@@ -93,6 +93,10 @@ describe("SettingsPage", () => {
     expect(template).toContain('t("performance.title")');
     expect(template).toContain('t("performance.mode.label")');
     expect(template).toContain('t("performance.manualCount.label")');
+    expect(template).toContain('t("analytics.title")');
+    expect(template).toContain('t("analytics.statusLabel")');
+    expect(template).toContain('t("analytics.actions.accept")');
+    expect(template).toContain('t("analytics.actions.reject")');
     expect(template).toContain('t("sections.dataManagement")');
     expect(template).toContain('t("management.allData.export")');
     expect(template).toContain('t("management.allData.import")');
@@ -642,6 +646,22 @@ describe("SettingsPage", () => {
       manualCount: 4,
     });
   });
+
+  it("accepts analytics consent from settings", async () => {
+    const { page, analyticsConsentService } = createPage();
+
+    await page.acceptAnalyticsConsent();
+
+    expect(analyticsConsentService.accept).toHaveBeenCalledOnce();
+  });
+
+  it("rejects analytics consent from settings", async () => {
+    const { page, analyticsConsentService } = createPage();
+
+    await page.rejectAnalyticsConsent();
+
+    expect(analyticsConsentService.reject).toHaveBeenCalledOnce();
+  });
 });
 
 function createPage() {
@@ -656,6 +676,7 @@ function createPage() {
     mode: "auto" as const,
     manualCount: 7,
   });
+  const analyticsConsent = signal<"accepted" | "rejected" | "unknown">("unknown");
   const userState = {
     ready: vi.fn().mockResolvedValue(undefined),
     favoriteCharacterIds: favoriteIds,
@@ -842,6 +863,10 @@ function createPage() {
         return "Favorites";
       }
 
+      if (key === "analytics.status.unknown") {
+        return "No choice saved yet";
+      }
+
       if (key === "management.favoriteShips.title") {
         return "Favorite Ships";
       }
@@ -912,14 +937,24 @@ function createPage() {
       return key;
     }),
   };
+  const analyticsConsentService = {
+    consent: analyticsConsent,
+    accept: vi.fn().mockImplementation(async () => {
+      analyticsConsent.set("accepted");
+    }),
+    reject: vi.fn().mockImplementation(async () => {
+      analyticsConsent.set("rejected");
+    }),
+  };
   const page = new SettingsPage(
     repository as never,
     i18n as never,
     userState as never,
+    analyticsConsentService as never,
     optcbxImport as never,
   );
 
-  return { page, repository, userState, optcbxImport, i18n };
+  return { page, repository, userState, optcbxImport, i18n, analyticsConsentService };
 }
 
 function buildFile(name: string, content: string): File {

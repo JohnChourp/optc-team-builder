@@ -76,6 +76,12 @@ Build the GitHub Pages artifact locally:
 npm run build:pages
 ```
 
+Build locally with GA4 injected from environment:
+
+```bash
+APP_GA4_MEASUREMENT_ID=G-XXXXXXXXXX npm run build:pages
+```
+
 ## GitHub Pages deploy
 
 This repo publishes Pages through the `Deploy GitHub Pages` GitHub Actions workflow only.
@@ -97,6 +103,10 @@ Required repository or environment secrets:
 Optional secret when branch protection blocks `GITHUB_TOKEN` pushes:
 
 - `RELEASE_PUSH_TOKEN`
+
+Optional Pages secret for GA4 injection at build time:
+
+- `APP_GA4_MEASUREMENT_ID`
 
 The workflow:
 

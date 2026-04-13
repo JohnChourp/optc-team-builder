@@ -7,6 +7,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <script>
+    window.__appConfig = window.__appConfig || { ga4MeasurementId: "" };
+  </script>
+  <script src="app-config.js"></script>
+  <script>
     (function restoreGithubPagesRoute() {
       var searchParams = new URLSearchParams(window.location.search);
       var routePath = searchParams.get("__gh_path__");

@@ -8,6 +8,21 @@
     "label": "Γλώσσα",
     "helper": "Άλλαξε live τη γλώσσα του app και κράτησέ την αποθηκευμένη σε αυτή τη συσκευή."
   },
+  "analytics": {
+    "title": "Analytics και cookies",
+    "copy": "Το Google Analytics μένει κλειστό μέχρι να επιτρέψεις τα προαιρετικά analytics cookies για αυτόν τον browser.",
+    "helper": "Μπορείς να αλλάξεις αυτή την επιλογή οποιαδήποτε στιγμή. Η απόρριψη κρατά απενεργοποιημένα τα προαιρετικά analytics cookies.",
+    "statusLabel": "Τρέχουσα επιλογή",
+    "status": {
+      "accepted": "Έγινε αποδοχή analytics cookies",
+      "rejected": "Έγινε απόρριψη analytics cookies",
+      "unknown": "Δεν έχει αποθηκευτεί ακόμη επιλογή"
+    },
+    "actions": {
+      "accept": "Αποδοχή analytics",
+      "reject": "Απόρριψη analytics"
+    }
+  },
   "performance": {
     "title": "Απόδοση Auto Team Builder",
     "copy": "Ρύθμισε πόσους web workers θα χρησιμοποιεί το auto team builder όταν σκανάρει fallback attempts.",
@@ -125,6 +140,7 @@
     "notInstalled": "Μη εγκατεστημένο"
   },
   "sections": {
+    "analytics": "Analytics και cookies",
     "commands": "Commands ενημέρωσης dataset",
     "dataManagement": "Backups και μεταφορές",
     "packStatus": "Εγκατεστημένα packs",

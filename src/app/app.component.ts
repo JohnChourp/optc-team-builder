@@ -1,18 +1,49 @@
 import { App } from "@capacitor/app";
 import { Component, DestroyRef, computed, inject, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { IonApp, IonRouterOutlet } from "@ionic/angular/standalone";
+import { IonApp, IonButton, IonRouterOutlet } from "@ionic/angular/standalone";
 import { NavigationEnd, Router } from "@angular/router";
+import { TranslocoPipe } from "@jsverse/transloco";
 import { filter } from "rxjs";
 import packageJson from "../../package.json";
+import { AnalyticsConsentService } from "./core/services/analytics-consent.service";
+import { GoogleAnalyticsService } from "./core/services/google-analytics.service";
 
 @Component({
   selector: "app-root",
   standalone: true,
-  imports: [IonApp, IonRouterOutlet],
+  imports: [IonApp, IonButton, IonRouterOutlet, TranslocoPipe],
   template: `
     <ion-app>
       <ion-router-outlet></ion-router-outlet>
+      @if (showAnalyticsConsentBanner()) {
+        <section class="analytics-consent-banner" aria-live="polite">
+          <div class="analytics-consent-banner__copy">
+            <strong>{{ "analyticsConsent.banner.title" | transloco }}</strong>
+            <p>{{ "analyticsConsent.banner.copy" | transloco }}</p>
+          </div>
+
+          <div class="analytics-consent-banner__actions">
+            <ion-button
+              fill="solid"
+              color="warning"
+              size="small"
+              (click)="acceptAnalyticsConsent()"
+            >
+              {{ "analyticsConsent.banner.accept" | transloco }}
+            </ion-button>
+            <ion-button
+              fill="outline"
+              color="light"
+              size="small"
+              (click)="rejectAnalyticsConsent()"
+            >
+              {{ "analyticsConsent.banner.reject" | transloco }}
+            </ion-button>
+          </div>
+        </section>
+      }
+
       @if (hasResolvedInitialRoute()) {
         <a
           class="app-credit-badge"
@@ -33,12 +64,17 @@ import packageJson from "../../package.json";
 export class AppComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
+  private readonly analyticsConsentService = inject(AnalyticsConsentService);
+  private readonly analytics = inject(GoogleAnalyticsService);
+  private lastTrackedUrl: string | null = null;
 
   public readonly appVersion = signal(packageJson.version);
   public readonly creditLabel = computed(() => `powered by johnChourp v.${this.appVersion()}`);
   public readonly currentUrl = signal(this.router.url);
   public readonly hasResolvedInitialRoute = signal(this.router.navigated && this.router.url !== "");
   public readonly isTabsRoute = computed(() => this.currentUrl().startsWith("/tabs"));
+  public readonly analyticsConsent = this.analyticsConsentService.consent;
+  public readonly showAnalyticsConsentBanner = computed(() => this.analyticsConsent() === "unknown");
 
   public constructor() {
     void this.loadAppVersion();
@@ -51,7 +87,23 @@ export class AppComponent {
       .subscribe((event) => {
         this.currentUrl.set(event.urlAfterRedirects);
         this.hasResolvedInitialRoute.set(true);
+        this.trackPageView(event.urlAfterRedirects);
       });
+
+    if (this.router.navigated && this.router.url !== "") {
+      this.trackPageView(this.router.url);
+    }
+  }
+
+  public async acceptAnalyticsConsent(): Promise<void> {
+    await this.analyticsConsentService.accept();
+    this.lastTrackedUrl = null;
+    this.trackPageView(this.currentUrl());
+  }
+
+  public async rejectAnalyticsConsent(): Promise<void> {
+    await this.analyticsConsentService.reject();
+    this.lastTrackedUrl = null;
   }
 
   private async loadAppVersion(): Promise<void> {
@@ -65,5 +117,14 @@ export class AppComponent {
     } catch {
       return;
     }
+  }
+
+  private trackPageView(url: string): void {
+    if (this.analyticsConsent() !== "accepted" || url.trim() === "" || this.lastTrackedUrl === url) {
+      return;
+    }
+
+    this.analytics.trackPageView(url);
+    this.lastTrackedUrl = url;
   }
 }

@@ -291,6 +291,14 @@
     "savedTeams": "Αποθηκευμένες ομάδες",
     "team": "Ομάδα"
   },
+  "analyticsConsent": {
+    "banner": {
+      "title": "Να επιτραπούν analytics cookies;",
+      "copy": "Ενεργοποίησε προαιρετικά Google Analytics cookies για να μετριούνται οι πιο χρήσιμες οθόνες. Η εφαρμογή κρατά το analytics κλειστό μέχρι να αποφασίσεις.",
+      "accept": "Αποδοχή analytics",
+      "reject": "Απόρριψη analytics"
+    }
+  },
   "title": "Missing value for 'title'",
   "tools": {
     "copy": "Missing value for 'tools.copy'",

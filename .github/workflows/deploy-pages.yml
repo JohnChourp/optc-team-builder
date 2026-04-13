@@ -34,6 +34,8 @@ jobs:
         run: npm ci
 
       - name: Build GitHub Pages artifact
+        env:
+          APP_GA4_MEASUREMENT_ID: ${{ secrets.APP_GA4_MEASUREMENT_ID }}
         run: npm run build:pages
 
       - name: Upload Pages artifact

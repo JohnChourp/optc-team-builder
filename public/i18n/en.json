@@ -291,6 +291,14 @@
     "savedTeams": "Saved Teams",
     "team": "Team"
   },
+  "analyticsConsent": {
+    "banner": {
+      "title": "Allow analytics cookies?",
+      "copy": "Enable optional Google Analytics cookies to help measure which screens are useful. The app keeps analytics off until you choose.",
+      "accept": "Allow analytics",
+      "reject": "Reject analytics"
+    }
+  },
   "title": "Missing value for 'title'",
   "tools": {
     "copy": "Missing value for 'tools.copy'",

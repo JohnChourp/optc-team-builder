@@ -5,6 +5,7 @@
 
 .intro-card,
 .command-card,
+.analytics-card,
 .performance-card,
 .data-card,
 .pack-list,
@@ -13,9 +14,26 @@
 }
 
 .command-card,
+.analytics-card,
 .performance-card {
   display: grid;
   gap: 10px;
+}
+
+.analytics-status {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.analytics-status strong {
+  color: #ffffff;
+}
+
+.analytics-status span {
+  color: #f5c84c;
 }
 
 .performance-controls {

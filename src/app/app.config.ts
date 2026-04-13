@@ -9,6 +9,7 @@ import { provideLottieOptions } from "ngx-lottie";
 import { routes } from "./app.routes";
 import { APP_I18N_AVAILABLE_LANGUAGES } from "./core/i18n/app-i18n.types";
 import { TranslocoHttpLoader } from "./core/i18n/transloco-loader";
+import { AnalyticsConsentService } from "./core/services/analytics-consent.service";
 import { AppI18nService } from "./core/services/app-i18n.service";
 
 export const appConfig: ApplicationConfig = {
@@ -39,5 +40,6 @@ export const appConfig: ApplicationConfig = {
       loader: TranslocoHttpLoader,
     }),
     provideAppInitializer(() => inject(AppI18nService).ready()),
+    provideAppInitializer(() => inject(AnalyticsConsentService).ready()),
   ],
 };

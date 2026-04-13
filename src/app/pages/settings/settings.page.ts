@@ -15,6 +15,7 @@ import { TranslocoDirective, TranslocoPipe } from "@jsverse/transloco";
 
 import { type SupportedLanguage } from "../../core/i18n/app-i18n.types";
 import { type DatasetManifest } from "../../core/models/optc.models";
+import { AnalyticsConsentService } from "../../core/services/analytics-consent.service";
 import { AppI18nService } from "../../core/services/app-i18n.service";
 import { OptcbxImportService } from "../../core/services/optcbx-import.service";
 import { OptcRepositoryService } from "../../core/services/optc-repository.service";
@@ -108,6 +109,8 @@ export class SettingsPage implements OnInit {
   public readonly autoTeamBuilderWorkerPreference;
   public readonly autoTeamBuilderWorkerRuntime;
   public readonly autoTeamBuilderAvailableWorkerCounts;
+  public readonly analyticsConsent;
+  public readonly analyticsConsentStatusKey;
 
   public readonly canExportFavorites = computed(() => this.favoriteIds().length > 0);
   public readonly canDeleteAllFavorites = computed(() => this.favoriteIds().length > 0);
@@ -139,6 +142,7 @@ export class SettingsPage implements OnInit {
     private readonly repository: OptcRepositoryService,
     private readonly i18n: AppI18nService,
     private readonly userState: UserStateService,
+    private readonly analyticsConsentService: AnalyticsConsentService,
     private readonly optcbxImport: OptcbxImportService,
   ) {
     this.activeLanguage = this.i18n.activeLanguage;
@@ -157,6 +161,8 @@ export class SettingsPage implements OnInit {
         (_, index) => index + 1,
       ),
     );
+    this.analyticsConsent = this.analyticsConsentService.consent;
+    this.analyticsConsentStatusKey = computed(() => `analytics.status.${this.analyticsConsent()}`);
   }
 
   public async ngOnInit(): Promise<void> {
@@ -208,6 +214,14 @@ export class SettingsPage implements OnInit {
       ...this.autoTeamBuilderWorkerPreference(),
       manualCount: nextValue,
     });
+  }
+
+  public async acceptAnalyticsConsent(): Promise<void> {
+    await this.analyticsConsentService.accept();
+  }
+
+  public async rejectAnalyticsConsent(): Promise<void> {
+    await this.analyticsConsentService.reject();
   }
 
   public openFilePicker(input: HTMLInputElement): void {

@@ -8,6 +8,21 @@
     "label": "Language",
     "helper": "Change the app language live and keep it persisted on this device."
   },
+  "analytics": {
+    "title": "Analytics & cookies",
+    "copy": "Google Analytics stays off until you allow optional analytics cookies for this browser.",
+    "helper": "You can change this choice at any time. Rejecting keeps optional analytics cookies disabled.",
+    "statusLabel": "Current choice",
+    "status": {
+      "accepted": "Analytics cookies accepted",
+      "rejected": "Analytics cookies rejected",
+      "unknown": "No choice saved yet"
+    },
+    "actions": {
+      "accept": "Allow analytics",
+      "reject": "Reject analytics"
+    }
+  },
   "performance": {
     "title": "Auto Team Builder performance",
     "copy": "Control how many web workers the auto team builder uses while scanning fallback attempts.",
@@ -125,6 +140,7 @@
     "notInstalled": "Not installed"
   },
   "sections": {
+    "analytics": "Analytics & cookies",
     "commands": "Dataset import commands",
     "dataManagement": "Backups and transfers",
     "packStatus": "Installed packs",
