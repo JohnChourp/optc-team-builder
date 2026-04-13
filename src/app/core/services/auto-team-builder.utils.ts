@@ -14,7 +14,6 @@ import {
   type AutoBuildManualSlotRole,
   type AutoBuildManualSlotSelection,
   type AutoBuildSpecialScope,
-  type AutoBuildSpecialSupportSummary,
   type AutoBuildSlot,
   type AutoBuildUtilityRole,
   type AutoTeamBuilderType,
