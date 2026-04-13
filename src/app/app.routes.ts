@@ -59,6 +59,16 @@ export const routes: Routes = [
       import("./pages/character-detail/character-detail.page").then((module) => module.CharacterDetailPage),
   },
   {
+    path: "privacy",
+    loadComponent: () =>
+      import("./pages/privacy-policy/privacy-policy.page").then((module) => module.PrivacyPolicyPage),
+  },
+  {
+    path: "cookies",
+    loadComponent: () =>
+      import("./pages/cookie-policy/cookie-policy.page").then((module) => module.CookiePolicyPage),
+  },
+  {
     path: "**",
     redirectTo: "tabs/characters",
   },

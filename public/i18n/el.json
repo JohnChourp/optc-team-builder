@@ -295,9 +295,16 @@
     "banner": {
       "title": "Να επιτραπούν analytics cookies;",
       "copy": "Ενεργοποίησε προαιρετικά Google Analytics cookies για να μετριούνται οι πιο χρήσιμες οθόνες. Η εφαρμογή κρατά το analytics κλειστό μέχρι να αποφασίσεις.",
+      "privacyLink": "Πολιτική Απορρήτου",
+      "cookiesLink": "Πολιτική Cookies",
       "accept": "Αποδοχή analytics",
       "reject": "Απόρριψη analytics"
     }
+  },
+  "legalNav": {
+    "ariaLabel": "Νομικοί σύνδεσμοι",
+    "privacy": "Απόρρητο",
+    "cookies": "Cookies"
   },
   "title": "Missing value for 'title'",
   "tools": {

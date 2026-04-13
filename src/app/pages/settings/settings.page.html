@@ -118,6 +118,11 @@
           </ion-button>
         </div>
 
+        <div class="policy-links">
+          <a class="policy-link" [routerLink]="['/privacy']">{{ t("analytics.links.privacy") }}</a>
+          <a class="policy-link" [routerLink]="['/cookies']">{{ t("analytics.links.cookies") }}</a>
+        </div>
+
         <p>{{ t("analytics.helper") }}</p>
       </section>
 
@@ -482,7 +487,12 @@
       </section>
 
       <section class="glass-card legal-card">
-        <h2>{{ t("sections.releaseNote") }}</h2>
+        <h2>{{ t("sections.legal") }}</h2>
+        <p>{{ t("legal.copy") }}</p>
+        <div class="policy-links">
+          <a class="policy-link" [routerLink]="['/privacy']">{{ t("legal.actions.privacy") }}</a>
+          <a class="policy-link" [routerLink]="['/cookies']">{{ t("legal.actions.cookies") }}</a>
+        </div>
         <p>{{ t("release.copy") }}</p>
       </section>
     </div>

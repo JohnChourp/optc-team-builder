@@ -1,0 +1,71 @@
+.legal-policy-shell {
+  display: grid;
+  gap: 18px;
+}
+
+.legal-hero,
+.legal-card {
+  padding: 18px;
+}
+
+.legal-card {
+  display: grid;
+  gap: 12px;
+}
+
+.legal-card h2,
+.analytics-status strong {
+  color: #ffffff;
+}
+
+.legal-card p,
+.policy-list li,
+.analytics-status span {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.72);
+  line-height: 1.55;
+}
+
+.policy-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.analytics-status {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.analytics-status span {
+  color: #f5c84c;
+}
+
+.policy-actions,
+.policy-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.policy-actions ion-button {
+  margin: 0;
+}
+
+.policy-link {
+  display: inline-flex;
+  align-items: center;
+  color: #f5c84c;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.policy-link:hover,
+.policy-link:focus-visible {
+  color: #fff4c8;
+  text-decoration: underline;
+}

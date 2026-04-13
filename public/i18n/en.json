@@ -295,9 +295,16 @@
     "banner": {
       "title": "Allow analytics cookies?",
       "copy": "Enable optional Google Analytics cookies to help measure which screens are useful. The app keeps analytics off until you choose.",
+      "privacyLink": "Privacy Policy",
+      "cookiesLink": "Cookie Policy",
       "accept": "Allow analytics",
       "reject": "Reject analytics"
     }
+  },
+  "legalNav": {
+    "ariaLabel": "Legal links",
+    "privacy": "Privacy",
+    "cookies": "Cookies"
   },
   "title": "Missing value for 'title'",
   "tools": {

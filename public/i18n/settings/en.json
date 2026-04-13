@@ -21,6 +21,10 @@
     "actions": {
       "accept": "Allow analytics",
       "reject": "Reject analytics"
+    },
+    "links": {
+      "privacy": "Open Privacy Policy",
+      "cookies": "Open Cookie Policy"
     }
   },
   "performance": {
@@ -143,10 +147,18 @@
     "analytics": "Analytics & cookies",
     "commands": "Dataset import commands",
     "dataManagement": "Backups and transfers",
+    "legal": "Legal & privacy",
     "packStatus": "Installed packs",
     "releaseNote": "Important note"
   },
   "title": "Settings",
+  "legal": {
+    "copy": "Read how the web app uses optional analytics cookies, local browser storage, and public legal contact details before enabling Google Analytics.",
+    "actions": {
+      "privacy": "Privacy Policy",
+      "cookies": "Cookie Policy"
+    }
+  },
   "release": {
     "copy": "The technical pipeline is ready for local offline use, but redistribution of game art remains a separate legal and product decision before any public store release."
   }

@@ -1,0 +1,62 @@
+{
+  "eyebrow": "Cookie controls",
+  "title": "Cookie Policy",
+  "summary": "This page explains which cookies or similar browser storage technologies the web app uses, which ones are optional, and how you can change consent at any time.",
+  "consent": {
+    "statusLabel": "Current analytics choice",
+    "status": {
+      "accepted": "Analytics cookies accepted",
+      "rejected": "Analytics cookies rejected",
+      "unknown": "No analytics choice saved yet"
+    },
+    "accept": "Allow analytics",
+    "reject": "Reject analytics"
+  },
+  "sections": {
+    "whatTheyAre": {
+      "title": "What cookies and similar technologies are",
+      "copy": "Cookies are small text files stored by your browser. This web app also uses browser storage for app preferences and offline-first data saved directly on your device."
+    },
+    "necessary": {
+      "title": "Strictly necessary and device-local storage",
+      "copy": "The app uses browser storage that is necessary to preserve your own settings and local data on the device you use.",
+      "items": {
+        "language": "Language preference and similar technical settings needed to keep the interface usable.",
+        "consent": "The analytics consent choice itself, so the site remembers whether optional analytics is allowed or rejected.",
+        "offlineData": "Favorites, saved teams, saved enemies, recent items, and worker settings that stay local to your browser unless you export them."
+      }
+    },
+    "analytics": {
+      "title": "Optional analytics cookies",
+      "copy": "If you accept analytics, the site loads Google Analytics 4 and may create analytics cookies such as _ga and _ga_<id> to distinguish visits and measure aggregate usage.",
+      "items": {
+        "cookies": "These analytics identifiers are optional and are not loaded until you grant consent.",
+        "purpose": "They are used only to measure traffic and understand which pages or screens are useful.",
+        "noAds": "The site does not use this analytics setup to turn on advertising or personalized ads."
+      }
+    },
+    "duration": {
+      "title": "How long storage may remain",
+      "copy": "Storage duration depends on the technology and your own browser behavior.",
+      "items": {
+        "necessary": "Device-local preferences and saved app data remain until you delete them in the app or clear browser storage.",
+        "analytics": "Google Analytics cookies may remain for practical periods that can extend up to two years, subject to browser behavior and Google's current configuration.",
+        "browser": "You can also remove cookies and storage earlier through your browser controls."
+      }
+    },
+    "manageConsent": {
+      "title": "How to manage consent",
+      "copy": "You can accept or reject optional analytics below, from the first banner shown by the site, or later through the Settings page. Rejecting analytics keeps optional analytics cookies disabled."
+    },
+    "browserControls": {
+      "title": "Browser controls",
+      "copy": "Most browsers let you inspect, block, or delete cookies and site storage. Clearing browser data may also remove language settings, offline data, and consent preferences saved by this app."
+    },
+    "related": {
+      "title": "Related pages",
+      "copy": "Use the links below to read the broader privacy notice or reopen the app settings.",
+      "privacyLink": "Open Privacy Policy",
+      "settingsLink": "Open Settings"
+    }
+  }
+}

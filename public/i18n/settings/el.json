@@ -21,6 +21,10 @@
     "actions": {
       "accept": "Αποδοχή analytics",
       "reject": "Απόρριψη analytics"
+    },
+    "links": {
+      "privacy": "Άνοιγμα Πολιτικής Απορρήτου",
+      "cookies": "Άνοιγμα Πολιτικής Cookies"
     }
   },
   "performance": {
@@ -143,10 +147,18 @@
     "analytics": "Analytics και cookies",
     "commands": "Commands ενημέρωσης dataset",
     "dataManagement": "Backups και μεταφορές",
+    "legal": "Νομικά και απόρρητο",
     "packStatus": "Εγκατεστημένα packs",
     "releaseNote": "Σημαντική σημείωση"
   },
   "title": "Ρυθμίσεις",
+  "legal": {
+    "copy": "Διάβασε πώς το web app χρησιμοποιεί προαιρετικά analytics cookies, local browser storage και δημόσια στοιχεία επικοινωνίας πριν ενεργοποιήσεις το Google Analytics.",
+    "actions": {
+      "privacy": "Πολιτική Απορρήτου",
+      "cookies": "Πολιτική Cookies"
+    }
+  },
   "release": {
     "copy": "Το technical pipeline είναι έτοιμο για τοπική offline χρήση, αλλά η αναδιανομή του game art παραμένει ξεχωριστή νομική και product απόφαση πριν από οποιοδήποτε public store release."
   }

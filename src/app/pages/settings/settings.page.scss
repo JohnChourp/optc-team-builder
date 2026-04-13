@@ -36,6 +36,24 @@
   color: #f5c84c;
 }
 
+.policy-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.policy-link {
+  color: #f5c84c;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.policy-link:hover,
+.policy-link:focus-visible {
+  color: #fff4c8;
+  text-decoration: underline;
+}
+
 .performance-controls {
   display: grid;
   gap: 14px;

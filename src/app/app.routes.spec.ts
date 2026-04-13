@@ -26,4 +26,18 @@ describe("app routes", () => {
     expect(collectionRoute?.redirectTo).toBe("saved-teams");
     expect(collectionRoute?.pathMatch).toBe("full");
   });
+
+  it("registers the public privacy policy route", () => {
+    const privacyRoute = routes.find((route) => route.path === "privacy");
+
+    expect(privacyRoute).toBeDefined();
+    expect(privacyRoute?.loadComponent).toBeTypeOf("function");
+  });
+
+  it("registers the public cookie policy route", () => {
+    const cookieRoute = routes.find((route) => route.path === "cookies");
+
+    expect(cookieRoute).toBeDefined();
+    expect(cookieRoute?.loadComponent).toBeTypeOf("function");
+  });
 });

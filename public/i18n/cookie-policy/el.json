@@ -1,0 +1,62 @@
+{
+  "eyebrow": "Έλεγχος cookies",
+  "title": "Πολιτική Cookies",
+  "summary": "Αυτή η σελίδα εξηγεί ποια cookies ή παρόμοιες τεχνολογίες browser storage χρησιμοποιεί το web app, ποια είναι προαιρετικά και πώς μπορείς να αλλάξεις consent οποιαδήποτε στιγμή.",
+  "consent": {
+    "statusLabel": "Τρέχουσα επιλογή analytics",
+    "status": {
+      "accepted": "Έγινε αποδοχή analytics cookies",
+      "rejected": "Έγινε απόρριψη analytics cookies",
+      "unknown": "Δεν έχει αποθηκευτεί ακόμη επιλογή analytics"
+    },
+    "accept": "Αποδοχή analytics",
+    "reject": "Απόρριψη analytics"
+  },
+  "sections": {
+    "whatTheyAre": {
+      "title": "Τι είναι τα cookies και οι παρόμοιες τεχνολογίες",
+      "copy": "Τα cookies είναι μικρά text files που αποθηκεύονται από τον browser σου. Το web app χρησιμοποιεί επίσης browser storage για προτιμήσεις της εφαρμογής και offline-first δεδομένα που αποθηκεύονται απευθείας στη συσκευή σου."
+    },
+    "necessary": {
+      "title": "Απολύτως αναγκαία και τοπική αποθήκευση στη συσκευή",
+      "copy": "Η εφαρμογή χρησιμοποιεί browser storage που είναι αναγκαίο για να διατηρεί τις δικές σου ρυθμίσεις και τα τοπικά δεδομένα στη συσκευή που χρησιμοποιείς.",
+      "items": {
+        "language": "Προτίμηση γλώσσας και παρόμοιες τεχνικές ρυθμίσεις που χρειάζονται για να παραμένει χρηστικό το interface.",
+        "consent": "Την ίδια την επιλογή analytics consent, ώστε το site να θυμάται αν το προαιρετικό analytics επιτρέπεται ή απορρίπτεται.",
+        "offlineData": "Favorites, saved teams, saved enemies, recent items και worker settings που μένουν τοπικά στον browser σου εκτός αν τα κάνεις export."
+      }
+    },
+    "analytics": {
+      "title": "Προαιρετικά analytics cookies",
+      "copy": "Αν αποδεχτείς analytics, το site φορτώνει Google Analytics 4 και μπορεί να δημιουργήσει analytics cookies όπως _ga και _ga_<id> για να ξεχωρίζει επισκέψεις και να μετρά συγκεντρωτική χρήση.",
+      "items": {
+        "cookies": "Αυτά τα analytics identifiers είναι προαιρετικά και δεν φορτώνονται μέχρι να δώσεις consent.",
+        "purpose": "Χρησιμοποιούνται μόνο για να μετρούν κίνηση και να καταλαβαίνουν ποιες σελίδες ή οθόνες είναι χρήσιμες.",
+        "noAds": "Το site δεν χρησιμοποιεί αυτό το analytics setup για ενεργοποίηση advertising ή personalized ads."
+      }
+    },
+    "duration": {
+      "title": "Πόσο μπορεί να παραμείνει η αποθήκευση",
+      "copy": "Η διάρκεια αποθήκευσης εξαρτάται από την τεχνολογία και από τη συμπεριφορά του browser σου.",
+      "items": {
+        "necessary": "Οι τοπικές προτιμήσεις και τα αποθηκευμένα δεδομένα της εφαρμογής παραμένουν μέχρι να τα διαγράψεις μέσα στο app ή να καθαρίσεις το browser storage.",
+        "analytics": "Τα Google Analytics cookies μπορεί να παραμείνουν για πρακτικές περιόδους που μπορούν να φτάσουν έως και δύο χρόνια, ανάλογα με τον browser και την τρέχουσα ρύθμιση της Google.",
+        "browser": "Μπορείς επίσης να αφαιρέσεις cookies και storage νωρίτερα μέσω των controls του browser σου."
+      }
+    },
+    "manageConsent": {
+      "title": "Πώς διαχειρίζεσαι το consent",
+      "copy": "Μπορείς να αποδεχτείς ή να απορρίψεις το προαιρετικό analytics παρακάτω, από το πρώτο banner του site ή αργότερα μέσω της σελίδας Ρυθμίσεων. Η απόρριψη κρατά απενεργοποιημένα τα προαιρετικά analytics cookies."
+    },
+    "browserControls": {
+      "title": "Controls του browser",
+      "copy": "Οι περισσότεροι browsers σου επιτρέπουν να ελέγχεις, να μπλοκάρεις ή να διαγράφεις cookies και site storage. Το καθάρισμα των browser data μπορεί επίσης να αφαιρέσει γλώσσα, offline data και consent preferences που αποθηκεύει αυτή η εφαρμογή."
+    },
+    "related": {
+      "title": "Σχετικές σελίδες",
+      "copy": "Χρησιμοποίησε τους παρακάτω συνδέσμους για να διαβάσεις την ευρύτερη ενημέρωση απορρήτου ή να ξανανοίξεις τις ρυθμίσεις της εφαρμογής.",
+      "privacyLink": "Άνοιγμα Πολιτικής Απορρήτου",
+      "settingsLink": "Άνοιγμα Ρυθμίσεων"
+    }
+  }
+}

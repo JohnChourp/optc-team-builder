@@ -97,6 +97,8 @@ describe("SettingsPage", () => {
     expect(template).toContain('t("analytics.statusLabel")');
     expect(template).toContain('t("analytics.actions.accept")');
     expect(template).toContain('t("analytics.actions.reject")');
+    expect(template).toContain('t("analytics.links.privacy")');
+    expect(template).toContain('t("analytics.links.cookies")');
     expect(template).toContain('t("sections.dataManagement")');
     expect(template).toContain('t("management.allData.export")');
     expect(template).toContain('t("management.allData.import")');
@@ -112,6 +114,11 @@ describe("SettingsPage", () => {
     expect(template).toContain('t("management.savedEnemies.export")');
     expect(template).toContain('t("management.savedEnemies.import")');
     expect(template).toContain('t("management.savedEnemies.deleteAll")');
+    expect(template).toContain('t("sections.legal")');
+    expect(template).toContain('t("legal.actions.privacy")');
+    expect(template).toContain('t("legal.actions.cookies")');
+    expect(template).toContain("[routerLink]=\"['/privacy']\"");
+    expect(template).toContain("[routerLink]=\"['/cookies']\"");
   });
 
   it("exports all favorites through the shared OPTCbx payload helper", async () => {

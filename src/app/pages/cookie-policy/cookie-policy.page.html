@@ -1,0 +1,98 @@
+<ng-container *transloco="let t; scope: 'cookie-policy'; read: 'cookie-policy'">
+  <ion-header class="ion-no-border">
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-back-button defaultHref="/tabs/settings"></ion-back-button>
+      </ion-buttons>
+      <ion-title>{{ t("title") }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content [fullscreen]="true">
+    <div class="page-shell legal-policy-shell">
+      <section class="glass-card legal-hero">
+        <div class="section-label">{{ t("eyebrow") }}</div>
+        <h1 class="section-title">{{ t("title") }}</h1>
+        <p class="section-copy">{{ t("summary") }}</p>
+      </section>
+
+      <section class="glass-card legal-card">
+        <h2>{{ t("sections.whatTheyAre.title") }}</h2>
+        <p>{{ t("sections.whatTheyAre.copy") }}</p>
+      </section>
+
+      <section class="glass-card legal-card">
+        <h2>{{ t("sections.necessary.title") }}</h2>
+        <p>{{ t("sections.necessary.copy") }}</p>
+        <ul class="policy-list">
+          <li>{{ t("sections.necessary.items.language") }}</li>
+          <li>{{ t("sections.necessary.items.consent") }}</li>
+          <li>{{ t("sections.necessary.items.offlineData") }}</li>
+        </ul>
+      </section>
+
+      <section class="glass-card legal-card">
+        <h2>{{ t("sections.analytics.title") }}</h2>
+        <p>{{ t("sections.analytics.copy") }}</p>
+        <ul class="policy-list">
+          <li>{{ t("sections.analytics.items.cookies") }}</li>
+          <li>{{ t("sections.analytics.items.purpose") }}</li>
+          <li>{{ t("sections.analytics.items.noAds") }}</li>
+        </ul>
+      </section>
+
+      <section class="glass-card legal-card">
+        <h2>{{ t("sections.duration.title") }}</h2>
+        <p>{{ t("sections.duration.copy") }}</p>
+        <ul class="policy-list">
+          <li>{{ t("sections.duration.items.necessary") }}</li>
+          <li>{{ t("sections.duration.items.analytics") }}</li>
+          <li>{{ t("sections.duration.items.browser") }}</li>
+        </ul>
+      </section>
+
+      <section class="glass-card legal-card">
+        <h2>{{ t("sections.manageConsent.title") }}</h2>
+        <p>{{ t("sections.manageConsent.copy") }}</p>
+
+        <div class="analytics-status">
+          <strong>{{ t("consent.statusLabel") }}</strong>
+          <span>{{ t(analyticsConsentStatusKey()) }}</span>
+        </div>
+
+        <div class="policy-actions">
+          <ion-button
+            fill="outline"
+            color="warning"
+            [disabled]="analyticsConsent() === 'accepted'"
+            (click)="acceptAnalyticsConsent()"
+          >
+            {{ t("consent.accept") }}
+          </ion-button>
+          <ion-button
+            fill="outline"
+            color="light"
+            [disabled]="analyticsConsent() === 'rejected'"
+            (click)="rejectAnalyticsConsent()"
+          >
+            {{ t("consent.reject") }}
+          </ion-button>
+        </div>
+      </section>
+
+      <section class="glass-card legal-card">
+        <h2>{{ t("sections.browserControls.title") }}</h2>
+        <p>{{ t("sections.browserControls.copy") }}</p>
+      </section>
+
+      <section class="glass-card legal-card">
+        <h2>{{ t("sections.related.title") }}</h2>
+        <p>{{ t("sections.related.copy") }}</p>
+        <div class="policy-links">
+          <a class="policy-link" [routerLink]="['/privacy']">{{ t("sections.related.privacyLink") }}</a>
+          <a class="policy-link" [routerLink]="['/tabs/settings']">{{ t("sections.related.settingsLink") }}</a>
+        </div>
+      </section>
+    </div>
+  </ion-content>
+</ng-container>

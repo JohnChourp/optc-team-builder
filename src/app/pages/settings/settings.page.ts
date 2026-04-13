@@ -1,5 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { Component, OnInit, computed, signal } from "@angular/core";
+import { RouterLink } from "@angular/router";
 import {
   IonButton,
   IonContent,
@@ -92,6 +93,7 @@ interface CombinedImportSectionError {
     IonSpinner,
     IonTitle,
     IonToolbar,
+    RouterLink,
     TranslocoDirective,
     TranslocoPipe,
   ],

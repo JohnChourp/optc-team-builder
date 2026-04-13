@@ -2,7 +2,7 @@ import { App } from "@capacitor/app";
 import { Component, DestroyRef, computed, inject, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { IonApp, IonButton, IonRouterOutlet } from "@ionic/angular/standalone";
-import { NavigationEnd, Router } from "@angular/router";
+import { NavigationEnd, Router, RouterLink } from "@angular/router";
 import { TranslocoPipe } from "@jsverse/transloco";
 import { filter } from "rxjs";
 import packageJson from "../../package.json";
@@ -12,7 +12,7 @@ import { GoogleAnalyticsService } from "./core/services/google-analytics.service
 @Component({
   selector: "app-root",
   standalone: true,
-  imports: [IonApp, IonButton, IonRouterOutlet, TranslocoPipe],
+  imports: [IonApp, IonButton, IonRouterOutlet, RouterLink, TranslocoPipe],
   template: `
     <ion-app>
       <ion-router-outlet></ion-router-outlet>
@@ -21,6 +21,11 @@ import { GoogleAnalyticsService } from "./core/services/google-analytics.service
           <div class="analytics-consent-banner__copy">
             <strong>{{ "analyticsConsent.banner.title" | transloco }}</strong>
             <p>{{ "analyticsConsent.banner.copy" | transloco }}</p>
+            <div class="analytics-consent-banner__links">
+              <a [routerLink]="['/privacy']">{{ "analyticsConsent.banner.privacyLink" | transloco }}</a>
+              <span aria-hidden="true">•</span>
+              <a [routerLink]="['/cookies']">{{ "analyticsConsent.banner.cookiesLink" | transloco }}</a>
+            </div>
           </div>
 
           <div class="analytics-consent-banner__actions">
@@ -45,6 +50,20 @@ import { GoogleAnalyticsService } from "./core/services/google-analytics.service
       }
 
       @if (hasResolvedInitialRoute()) {
+        <nav
+          class="app-legal-nav"
+          [class.app-legal-nav--tabs]="isTabsRoute()"
+          [class.app-legal-nav--standalone]="!isTabsRoute()"
+          [attr.aria-label]="'legalNav.ariaLabel' | transloco"
+        >
+          <a class="app-legal-nav__link" [routerLink]="['/privacy']">
+            {{ "legalNav.privacy" | transloco }}
+          </a>
+          <a class="app-legal-nav__link" [routerLink]="['/cookies']">
+            {{ "legalNav.cookies" | transloco }}
+          </a>
+        </nav>
+
         <a
           class="app-credit-badge"
           [class.app-credit-badge--tabs]="isTabsRoute()"
