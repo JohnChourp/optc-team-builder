@@ -124,7 +124,9 @@ else
 fi
 
 if (( PRINT_ONLY == 0 )); then
-    (cd "${PROJECT_ROOT}" && npm version "${NEXT_VERSION}" --no-git-tag-version >/dev/null)
+    if [[ "${CURRENT_VERSION}" != "${NEXT_VERSION}" ]]; then
+        (cd "${PROJECT_ROOT}" && npm version "${NEXT_VERSION}" --no-git-tag-version >/dev/null)
+    fi
 
     NEXT_VERSION="${NEXT_VERSION}" NEXT_CODE="${NEXT_CODE}" ANDROID_GRADLE="${ANDROID_GRADLE}" IOS_PBXPROJ="${IOS_PBXPROJ}" node <<'NODE'
 const fs = require('fs');
