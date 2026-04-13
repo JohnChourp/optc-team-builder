@@ -18,153 +18,245 @@
       }
 
       @if (!loading() && character(); as current) {
-        <section class="hero-card glass-card">
-          <img [src]="current.detailImageUrl" [alt]="current.name" />
-          <div class="hero-copy">
-            <div class="section-label">{{ current.type }} • {{ current.primaryClass }}</div>
-            <h1 class="section-title">{{ current.name }}</h1>
-            <p class="section-copy">
-              {{
-                t('hero.summary', {
-                  cost: current.cost,
-                  maxLevel: current.maxLevel,
-                  stars: current.stars,
-                })
-              }}
-            </p>
-            <div class="hero-actions">
-              <ion-button fill="solid" color="warning" (click)="toggleFavorite(current.id)">
-                <ion-icon
-                  slot="start"
-                  [icon]="isFavorite(current.id) ? favoriteIcon : favoriteOutlineIcon"
-                ></ion-icon>
-                {{ isFavorite(current.id) ? t('hero.favorited') : t('hero.addFavorite') }}
-              </ion-button>
-              <ion-button fill="outline" color="light" [routerLink]="['/tabs/team-builder']">
-                {{ t('hero.openTeamBuilder') }}
-              </ion-button>
+        @if (viewModel(); as view) {
+          <section class="hero-card glass-card">
+            <div class="hero-media">
+              <img [src]="current.detailImageUrl" [alt]="current.name" />
             </div>
-          </div>
-        </section>
-        <section class="stats-grid">
-          <article class="glass-card stat-card">
-            <span>{{ t('stats.maxHp') }}</span>
-            <strong>{{ current.stats.max.hp }}</strong>
-          </article>
-          <article class="glass-card stat-card">
-            <span>{{ t('stats.maxAtk') }}</span>
-            <strong>{{ current.stats.max.atk }}</strong>
-          </article>
-          <article class="glass-card stat-card">
-            <span>{{ t('stats.maxRcv') }}</span>
-            <strong>{{ current.stats.max.rcv }}</strong>
-          </article>
-        </section>
-        <section class="detail-grid">
-          @if (current.detail.captainAbility) {
-            <article class="glass-card detail-card">
-              <h2>{{ t('sections.captainAbility') }}</h2>
-              <p>{{ current.detail.captainAbility }}</p>
-            </article>
-          }
-          @if (current.detail.specialText || current.detail.specialName) {
-            <article class="glass-card detail-card">
-              <h2>{{ t('sections.special') }}</h2>
-              @if (current.detail.specialName) {
-                <strong>{{ current.detail.specialName }}</strong>
-              }
-              <p>{{ current.detail.specialText }}</p>
-              @if (current.detail.specialNotes) {
-                <small>{{ current.detail.specialNotes }}</small>
-              }
-            </article>
-          }
-          @if (
-            current.detail.superSpecialText ||
-            current.detail.superSpecialCriteriaText ||
-            current.detail.superSpecialNotes
-          ) {
-            <article class="glass-card detail-card">
-              <h2>{{ t('sections.superSpecial') }}</h2>
-              @if (current.detail.superSpecialText) {
-                <p>{{ current.detail.superSpecialText }}</p>
-              }
-              @if (current.detail.superSpecialCriteriaText) {
-                <strong>{{ t('superSpecial.criteriaLabel') }}</strong>
-                <p>{{ current.detail.superSpecialCriteriaText }}</p>
-              }
-              @if (current.detail.superSpecialNotes) {
-                <strong>{{ t('superSpecial.notesLabel') }}</strong>
-                <small>{{ current.detail.superSpecialNotes }}</small>
-              }
-            </article>
-          }
-          @if (current.detail.sailorAbilities.length) {
-            <article class="glass-card detail-card">
-              <h2>{{ t('sections.sailorAbilities') }}</h2>
-              <ul>
-                @for (sailor of current.detail.sailorAbilities; track sailor) {
-                  <li>{{ sailor }}</li>
+
+            <div class="hero-copy">
+              <div class="section-label">#{{ current.id }} • {{ current.name }}</div>
+              <h1 class="section-title">{{ current.name }}</h1>
+              <p class="section-copy">
+                {{
+                  t('hero.summary', {
+                    cost: current.cost,
+                    maxLevel: current.maxLevel,
+                    stars: current.stars,
+                  })
+                }}
+              </p>
+
+              <div class="hero-meta-grid">
+                @for (meta of view.heroMeta; track $index) {
+                  <article class="meta-card">
+                    <span class="meta-card__label">
+                      @if (meta.labelKey) {
+                        {{ t(meta.labelKey) }}
+                      } @else {
+                        {{ meta.label }}
+                      }
+                    </span>
+                    <strong>{{ meta.value }}</strong>
+                  </article>
                 }
-              </ul>
-            </article>
-          }
-          @if (current.detail.limitBreak.length) {
-            <article class="glass-card detail-card">
-              <h2>{{ t('sections.limitBreak') }}</h2>
-              <ul>
-                @for (entry of current.detail.limitBreak; track entry.description) {
-                  <li>{{ entry.description }}</li>
+              </div>
+
+              <div class="hero-stats-grid">
+                @for (stat of view.heroStats; track $index) {
+                  <article class="stat-pill">
+                    <span>
+                      @if (stat.labelKey) {
+                        {{ t(stat.labelKey) }}
+                      } @else {
+                        {{ stat.label }}
+                      }
+                    </span>
+                    <strong>{{ stat.value }}</strong>
+                  </article>
                 }
-              </ul>
-            </article>
-          }
-          @if (current.detail.potentialAbilities.length) {
-            <article class="glass-card detail-card">
-              <h2>{{ t('sections.potentialAbilities') }}</h2>
-              <ul>
-                @for (entry of current.detail.potentialAbilities; track $index) {
-                  <li>
-                    @if (entry.Name) {
-                      <strong>{{ entry.Name }}:</strong>
-                    }
-                    {{ (entry.description ?? []).join(' / ') }}
-                  </li>
-                }
-              </ul>
-            </article>
-          }
-          @if (current.detail.supportData.length) {
-            <article class="glass-card detail-card">
-              <h2>{{ t('sections.supportData') }}</h2>
-              <ul>
-                @for (entry of current.detail.supportData; track $index) {
-                  <li>
-                    @if (entry.supportedCharactersText) {
-                      <strong>
-                        {{ t('support.supportedCharactersLabel') }}:
-                        {{ entry.supportedCharactersText }}
-                      </strong>
-                    }
-                    @if (entry.levelDescriptions.length) {
-                      <ul>
-                        @for (levelDescription of entry.levelDescriptions; track levelDescription) {
-                          <li>{{ levelDescription }}</li>
+              </div>
+
+              <div class="hero-actions">
+                <ion-button fill="solid" color="warning" (click)="toggleFavorite(current.id)">
+                  <ion-icon
+                    slot="start"
+                    [icon]="isFavorite(current.id) ? favoriteIcon : favoriteOutlineIcon"
+                  ></ion-icon>
+                  {{ isFavorite(current.id) ? t('hero.favorited') : t('hero.addFavorite') }}
+                </ion-button>
+                <ion-button fill="outline" color="light" [routerLink]="['/tabs/team-builder']">
+                  {{ t('hero.openTeamBuilder') }}
+                </ion-button>
+              </div>
+            </div>
+          </section>
+
+          @for (group of view.groups; track group.titleKey) {
+            <section class="group-section">
+              <div class="group-section__head">
+                <div class="section-label">{{ t(group.titleKey) }}</div>
+              </div>
+
+              <div class="group-grid">
+                @for (card of group.cards; track $index) {
+                  <article class="glass-card detail-card">
+                    <div class="detail-card__head">
+                      <h2>
+                        @if (card.titleKey) {
+                          {{ t(card.titleKey) }}
+                        } @else {
+                          {{ card.title }}
                         }
-                      </ul>
+                      </h2>
+                    </div>
+
+                    @if (card.rows.length) {
+                      <dl class="detail-rows">
+                        @for (row of card.rows; track $index) {
+                          <div class="detail-row">
+                            <dt>
+                              @if (row.labelKey) {
+                                {{ t(row.labelKey) }}
+                              } @else {
+                                {{ row.label }}
+                              }
+                            </dt>
+                            <dd>{{ row.value }}</dd>
+                          </div>
+                        }
+                      </dl>
                     }
-                  </li>
+
+                    @if (card.texts.length) {
+                      <div class="detail-texts">
+                        @for (text of card.texts; track $index) {
+                          <div class="detail-text" [class.detail-text--muted]="text.tone === 'muted'">
+                            <span class="detail-text__label">
+                              @if (text.labelKey) {
+                                {{ t(text.labelKey) }}
+                              } @else {
+                                {{ text.label }}
+                              }
+                            </span>
+                            <p>{{ text.value }}</p>
+                          </div>
+                        }
+                      </div>
+                    }
+
+                    @if (card.lists.length) {
+                      <div class="detail-lists">
+                        @for (list of card.lists; track $index) {
+                          <section class="detail-list-block">
+                            @if (list.labelKey || list.label) {
+                              <span class="detail-list-block__label">
+                                @if (list.labelKey) {
+                                  {{ t(list.labelKey) }}
+                                } @else {
+                                  {{ list.label }}
+                                }
+                              </span>
+                            }
+                            <ul>
+                              @for (item of list.items; track $index) {
+                                <li>{{ item }}</li>
+                              }
+                            </ul>
+                          </section>
+                        }
+                      </div>
+                    }
+
+                    @if (card.chips.length) {
+                      <div class="chip-row">
+                        @for (chip of card.chips; track $index) {
+                          <span class="detail-chip">{{ chip }}</span>
+                        }
+                      </div>
+                    }
+
+                    @if (card.entries.length) {
+                      <div class="detail-entry-grid">
+                        @for (entry of card.entries; track $index) {
+                          <section class="detail-entry">
+                            @if (entry.titleKey || entry.title) {
+                              <h3>
+                                @if (entry.titleKey) {
+                                  {{ t(entry.titleKey) }}
+                                } @else {
+                                  {{ entry.title }}
+                                }
+                              </h3>
+                            }
+
+                            @if (entry.rows.length) {
+                              <dl class="detail-rows detail-rows--entry">
+                                @for (row of entry.rows; track $index) {
+                                  <div class="detail-row">
+                                    <dt>
+                                      @if (row.labelKey) {
+                                        {{ t(row.labelKey) }}
+                                      } @else {
+                                        {{ row.label }}
+                                      }
+                                    </dt>
+                                    <dd>{{ row.value }}</dd>
+                                  </div>
+                                }
+                              </dl>
+                            }
+
+                            @if (entry.texts.length) {
+                              <div class="detail-texts">
+                                @for (text of entry.texts; track $index) {
+                                  <div
+                                    class="detail-text"
+                                    [class.detail-text--muted]="text.tone === 'muted'"
+                                  >
+                                    <span class="detail-text__label">
+                                      @if (text.labelKey) {
+                                        {{ t(text.labelKey) }}
+                                      } @else {
+                                        {{ text.label }}
+                                      }
+                                    </span>
+                                    <p>{{ text.value }}</p>
+                                  </div>
+                                }
+                              </div>
+                            }
+
+                            @if (entry.lists.length) {
+                              <div class="detail-lists">
+                                @for (list of entry.lists; track $index) {
+                                  <section class="detail-list-block">
+                                    @if (list.labelKey || list.label) {
+                                      <span class="detail-list-block__label">
+                                        @if (list.labelKey) {
+                                          {{ t(list.labelKey) }}
+                                        } @else {
+                                          {{ list.label }}
+                                        }
+                                      </span>
+                                    }
+                                    <ul>
+                                      @for (item of list.items; track $index) {
+                                        <li>{{ item }}</li>
+                                      }
+                                    </ul>
+                                  </section>
+                                }
+                              </div>
+                            }
+
+                            @if (entry.chips.length) {
+                              <div class="chip-row">
+                                @for (chip of entry.chips; track $index) {
+                                  <span class="detail-chip">{{ chip }}</span>
+                                }
+                              </div>
+                            }
+                          </section>
+                        }
+                      </div>
+                    }
+                  </article>
                 }
-              </ul>
-            </article>
+              </div>
+            </section>
           }
-          @if (current.detail.rumbleData) {
-            <article class="glass-card detail-card">
-              <h2>{{ t('sections.rumbleData') }}</h2>
-              <pre>{{ current.detail.rumbleData | json }}</pre>
-            </article>
-          }
-        </section>
+        }
       }
     </div>
   </ion-content>
