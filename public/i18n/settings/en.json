@@ -42,6 +42,26 @@
       "savedEnemies": "{{count}} saved enemies",
       "savedTeams": "{{count}} saved teams"
     },
+    "allData": {
+      "copy": "Export a full device backup bundle or import a smart backup that can contain all data, only one section, or even a single saved team or saved enemy export.",
+      "errors": {
+        "generic": "All data import failed.",
+        "invalidJson": "The selected backup file is not valid JSON.",
+        "invalidPayload": "The selected backup file does not match a supported all-data or single-section backup format.",
+        "unsupportedSchema": "The selected backup file uses an unsupported backup schema."
+      },
+      "export": "Export all data",
+      "feedback": {
+        "errorTitle": "All data import failed",
+        "loadedFromFile": "Loaded from {{fileName}}.",
+        "successTitle": "All data import completed",
+        "warningTitle": "All data import completed with warnings"
+      },
+      "import": "Import all data",
+      "processing": "Importing backup data...",
+      "subtitle": "Favorites, ships, teams, enemies",
+      "title": "All Data"
+    },
     "favorites": {
       "copy": "Export or import your OPTCbx-compatible favorites file, or clear the full favorites list on this device.",
       "deleteAll": "Delete all favorites",

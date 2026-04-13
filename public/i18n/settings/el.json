@@ -42,6 +42,26 @@
       "savedEnemies": "{{count}} saved enemies",
       "savedTeams": "{{count}} saved teams"
     },
+    "allData": {
+      "copy": "Κάνε export ένα πλήρες backup bundle ή import ένα έξυπνο backup που μπορεί να έχει όλα τα δεδομένα, μόνο ένα section ή ακόμα και export από ένα μόνο saved team ή saved enemy.",
+      "errors": {
+        "generic": "Το import όλων των δεδομένων απέτυχε.",
+        "invalidJson": "Το επιλεγμένο backup δεν είναι έγκυρο JSON.",
+        "invalidPayload": "Το επιλεγμένο backup δεν ταιριάζει με υποστηριζόμενο all-data ή single-section format.",
+        "unsupportedSchema": "Το επιλεγμένο backup χρησιμοποιεί μη υποστηριζόμενη έκδοση schema."
+      },
+      "export": "Εξαγωγή όλων",
+      "feedback": {
+        "errorTitle": "Το import όλων των δεδομένων απέτυχε",
+        "loadedFromFile": "Φορτώθηκε από το {{fileName}}.",
+        "successTitle": "Το import όλων των δεδομένων ολοκληρώθηκε",
+        "warningTitle": "Το import όλων των δεδομένων ολοκληρώθηκε με παρατηρήσεις"
+      },
+      "import": "Εισαγωγή όλων",
+      "processing": "Γίνεται import του backup...",
+      "subtitle": "Favorites, καράβια, teams, enemies",
+      "title": "All Data"
+    },
     "favorites": {
       "copy": "Κάνε export ή import του OPTCbx-compatible favorites αρχείου σου ή καθάρισε όλη τη λίστα favorites από αυτή τη συσκευή.",
       "deleteAll": "Διαγραφή όλων των favorites",

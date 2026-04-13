@@ -25,7 +25,11 @@ export class OptcbxImportService {
       throw new Error("The selected file is not valid JSON.");
     }
 
-    if (!this.isExportPayload(parsed)) {
+    return this.parseExportPayload(parsed);
+  }
+
+  public parseExportPayload(value: unknown): OptcbxParsedImport {
+    if (!this.isExportPayload(value)) {
       throw new Error("The selected file is not a raw OPTCbx export.");
     }
 
@@ -33,7 +37,7 @@ export class OptcbxImportService {
     const importedNumbers: number[] = [];
     let duplicatesRemoved = 0;
 
-    parsed.characters.forEach((entry, index) => {
+    value.characters.forEach((entry, index) => {
       const normalizedNumber = this.normalizeCharacterNumber(entry?.number);
 
       if (normalizedNumber === null) {

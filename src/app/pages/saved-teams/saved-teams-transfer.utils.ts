@@ -144,6 +144,12 @@ export function parseSavedTeamsImportPayload(rawContent: string): SavedTeamsTran
     throw new SavedTeamsImportError("import.errors.invalidJson");
   }
 
+  return parseSavedTeamsImportPayloadValue(parsedPayload);
+}
+
+export function parseSavedTeamsImportPayloadValue(
+  parsedPayload: unknown,
+): SavedTeamsTransferPayload {
   if (!isRecord(parsedPayload)) {
     throw new SavedTeamsImportError("import.errors.invalidPayload");
   }

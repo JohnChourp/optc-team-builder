@@ -13,8 +13,8 @@ import {
 } from "@ionic/angular/standalone";
 import { TranslocoDirective, TranslocoPipe } from "@jsverse/transloco";
 
-import { type DatasetManifest } from "../../core/models/optc.models";
 import { type SupportedLanguage } from "../../core/i18n/app-i18n.types";
+import { type DatasetManifest } from "../../core/models/optc.models";
 import { AppI18nService } from "../../core/services/app-i18n.service";
 import { OptcbxImportService } from "../../core/services/optcbx-import.service";
 import { OptcRepositoryService } from "../../core/services/optc-repository.service";
@@ -25,35 +25,56 @@ import {
 import {
   buildOptcbxFavoritesExportPayload,
   downloadOptcbxFavoritesExport,
+  type OptcbxFavoritesExportPayload,
 } from "../characters/characters-favorites.utils";
 import {
-  buildFavoriteShipsTransferPayload,
-  downloadFavoriteShipsExport,
-  filterAvailableFavoriteShips,
-  parseFavoriteShipsImportPayload,
-  sanitizeFavoriteShipsImportPayload,
-  type FavoriteShipsImportError,
-} from "./favorite-ships-transfer.utils";
+  buildSavedEnemiesTransferPayload,
+  downloadSavedEnemiesExport,
+  parseSavedEnemiesImportPayload,
+  parseSavedEnemiesImportPayloadValue,
+  sanitizeSavedEnemiesImportPayload,
+  type SavedEnemiesImportError,
+} from "../saved-enemies/saved-enemies-transfer.utils";
 import {
   buildSavedTeamsTransferPayload,
   clearUnavailableSavedTeamSlots,
   downloadSavedTeamsExport,
   parseSavedTeamsImportPayload,
+  parseSavedTeamsImportPayloadValue,
   sanitizeSavedTeamsImportPayload,
   type SavedTeamsImportError,
 } from "../saved-teams/saved-teams-transfer.utils";
 import {
-  buildSavedEnemiesTransferPayload,
-  downloadSavedEnemiesExport,
-  parseSavedEnemiesImportPayload,
-  sanitizeSavedEnemiesImportPayload,
-  type SavedEnemiesImportError,
-} from "../saved-enemies/saved-enemies-transfer.utils";
+  buildAllDataTransferPayload,
+  downloadAllDataExport,
+  parseAllDataImportCandidate,
+  type AllDataTransferPayload,
+} from "./all-data-transfer.utils";
+import {
+  buildFavoriteShipsTransferPayload,
+  downloadFavoriteShipsExport,
+  filterAvailableFavoriteShips,
+  parseFavoriteShipsImportPayload,
+  parseFavoriteShipsImportPayloadValue,
+  sanitizeFavoriteShipsImportPayload,
+  type FavoriteShipsImportError,
+  type FavoriteShipsTransferPayload,
+} from "./favorite-ships-transfer.utils";
 
 interface TransferFeedback {
   details: string[];
   title: string;
   tone: "error" | "success" | "warning";
+}
+
+interface CombinedImportSectionFeedback {
+  feedback: TransferFeedback;
+  label: string;
+}
+
+interface CombinedImportSectionError {
+  label: string;
+  message: string;
 }
 
 @Component({
@@ -97,10 +118,12 @@ export class SettingsPage implements OnInit {
   public readonly canExportSavedEnemies = computed(() => this.savedEnemies().length > 0);
   public readonly canDeleteAllSavedEnemies = computed(() => this.savedEnemies().length > 0);
 
+  public readonly allDataImporting = signal(false);
   public readonly favoritesImporting = signal(false);
   public readonly favoriteShipsImporting = signal(false);
   public readonly savedTeamsImporting = signal(false);
   public readonly savedEnemiesImporting = signal(false);
+  public readonly allDataFeedback = signal<TransferFeedback | null>(null);
   public readonly favoritesFeedback = signal<TransferFeedback | null>(null);
   public readonly favoriteShipsFeedback = signal<TransferFeedback | null>(null);
   public readonly savedTeamsFeedback = signal<TransferFeedback | null>(null);
@@ -191,14 +214,18 @@ export class SettingsPage implements OnInit {
     input.click();
   }
 
-  public async onFavoritesFileSelected(
-    event: Event,
-    input: HTMLInputElement,
-  ): Promise<void> {
-    const target = event.target as HTMLInputElement;
-    const [file] = Array.from(target.files ?? []);
+  public async onAllDataFileSelected(event: Event, input: HTMLInputElement): Promise<void> {
+    const file = this.extractSelectedFile(event, input);
 
-    input.value = "";
+    if (!file) {
+      return;
+    }
+
+    await this.importAllData(file);
+  }
+
+  public async onFavoritesFileSelected(event: Event, input: HTMLInputElement): Promise<void> {
+    const file = this.extractSelectedFile(event, input);
 
     if (!file) {
       return;
@@ -207,14 +234,8 @@ export class SettingsPage implements OnInit {
     await this.importFavorites(file);
   }
 
-  public async onSavedTeamsFileSelected(
-    event: Event,
-    input: HTMLInputElement,
-  ): Promise<void> {
-    const target = event.target as HTMLInputElement;
-    const [file] = Array.from(target.files ?? []);
-
-    input.value = "";
+  public async onSavedTeamsFileSelected(event: Event, input: HTMLInputElement): Promise<void> {
+    const file = this.extractSelectedFile(event, input);
 
     if (!file) {
       return;
@@ -223,14 +244,8 @@ export class SettingsPage implements OnInit {
     await this.importSavedTeams(file);
   }
 
-  public async onFavoriteShipsFileSelected(
-    event: Event,
-    input: HTMLInputElement,
-  ): Promise<void> {
-    const target = event.target as HTMLInputElement;
-    const [file] = Array.from(target.files ?? []);
-
-    input.value = "";
+  public async onFavoriteShipsFileSelected(event: Event, input: HTMLInputElement): Promise<void> {
+    const file = this.extractSelectedFile(event, input);
 
     if (!file) {
       return;
@@ -239,14 +254,8 @@ export class SettingsPage implements OnInit {
     await this.importFavoriteShips(file);
   }
 
-  public async onSavedEnemiesFileSelected(
-    event: Event,
-    input: HTMLInputElement,
-  ): Promise<void> {
-    const target = event.target as HTMLInputElement;
-    const [file] = Array.from(target.files ?? []);
-
-    input.value = "";
+  public async onSavedEnemiesFileSelected(event: Event, input: HTMLInputElement): Promise<void> {
+    const file = this.extractSelectedFile(event, input);
 
     if (!file) {
       return;
@@ -255,16 +264,28 @@ export class SettingsPage implements OnInit {
     await this.importSavedEnemies(file);
   }
 
+  public async exportAll(): Promise<void> {
+    const [favorites, favoriteShips] = await Promise.all([
+      this.buildFavoritesExportPayload(),
+      this.buildFavoriteShipsExportPayload(),
+    ]);
+
+    downloadAllDataExport(
+      buildAllDataTransferPayload({
+        favorites,
+        favoriteShips,
+        savedTeams: buildSavedTeamsTransferPayload(this.savedTeams()),
+        savedEnemies: buildSavedEnemiesTransferPayload(this.savedEnemies()),
+      }),
+    );
+  }
+
   public async exportFavorites(): Promise<void> {
     if (!this.canExportFavorites()) {
       return;
     }
 
-    const favoriteIds = this.favoriteIds();
-    const favoriteCharacters = await this.repository.getCharactersByIds(favoriteIds);
-    const payload = buildOptcbxFavoritesExportPayload(favoriteIds, favoriteCharacters);
-
-    downloadOptcbxFavoritesExport(payload);
+    downloadOptcbxFavoritesExport(await this.buildFavoritesExportPayload());
   }
 
   public async exportFavoriteShips(): Promise<void> {
@@ -272,12 +293,7 @@ export class SettingsPage implements OnInit {
       return;
     }
 
-    const payload = buildFavoriteShipsTransferPayload(
-      this.favoriteShipIds(),
-      await this.repository.getShips(),
-    );
-
-    downloadFavoriteShipsExport(payload);
+    downloadFavoriteShipsExport(await this.buildFavoriteShipsExportPayload());
   }
 
   public exportSavedTeams(): void {
@@ -299,7 +315,9 @@ export class SettingsPage implements OnInit {
   public async deleteAllFavorites(): Promise<void> {
     if (
       !this.canDeleteAllFavorites() ||
-      !this.confirmAction(this.i18n.translate("management.confirm.deleteFavorites", undefined, "settings"))
+      !this.confirmAction(
+        this.i18n.translate("management.confirm.deleteFavorites", undefined, "settings"),
+      )
     ) {
       return;
     }
@@ -323,7 +341,9 @@ export class SettingsPage implements OnInit {
   public async deleteAllSavedTeams(): Promise<void> {
     if (
       !this.canDeleteAllSavedTeams() ||
-      !this.confirmAction(this.i18n.translate("management.confirm.deleteSavedTeams", undefined, "settings"))
+      !this.confirmAction(
+        this.i18n.translate("management.confirm.deleteSavedTeams", undefined, "settings"),
+      )
     ) {
       return;
     }
@@ -344,26 +364,277 @@ export class SettingsPage implements OnInit {
     await this.userState.clearAllSavedEnemies();
   }
 
+  private extractSelectedFile(event: Event, input: HTMLInputElement): File | null {
+    const target = event.target as HTMLInputElement;
+    const [file] = Array.from(target.files ?? []);
+
+    input.value = "";
+
+    return file ?? null;
+  }
+
+  private async buildFavoritesExportPayload(): Promise<OptcbxFavoritesExportPayload> {
+    const favoriteIds = this.favoriteIds();
+    const favoriteCharacters = favoriteIds.length
+      ? await this.repository.getCharactersByIds(favoriteIds)
+      : [];
+
+    return buildOptcbxFavoritesExportPayload(favoriteIds, favoriteCharacters);
+  }
+
+  private async buildFavoriteShipsExportPayload(): Promise<FavoriteShipsTransferPayload> {
+    return buildFavoriteShipsTransferPayload(
+      this.favoriteShipIds(),
+      await this.repository.getShips(),
+    );
+  }
+
+  private async importAllData(file: File): Promise<void> {
+    this.allDataImporting.set(true);
+    this.allDataFeedback.set(null);
+
+    try {
+      const rawContent = await file.text();
+      const importCandidate = parseAllDataImportCandidate(rawContent);
+      let feedback: TransferFeedback;
+
+      switch (importCandidate.kind) {
+        case "all-data":
+          feedback = await this.importAllDataBundle(importCandidate.payload, file.name);
+          break;
+        case "favorites":
+          feedback = this.buildCombinedAllDataFeedback(
+            file.name,
+            [
+              {
+                label: this.resolveAllDataSectionLabel("favorites"),
+                feedback: await this.importFavoritesContent({
+                  parsedPayload: importCandidate.payload,
+                }),
+              },
+            ],
+            [],
+          );
+          break;
+        case "favorite-ships":
+          feedback = this.buildCombinedAllDataFeedback(
+            file.name,
+            [
+              {
+                label: this.resolveAllDataSectionLabel("favoriteShips"),
+                feedback: await this.importFavoriteShipsContent({
+                  fileName: file.name,
+                  parsedPayload: importCandidate.payload,
+                }),
+              },
+            ],
+            [],
+          );
+          break;
+        case "saved-teams":
+          feedback = this.buildCombinedAllDataFeedback(
+            file.name,
+            [
+              {
+                label: this.resolveAllDataSectionLabel("savedTeams"),
+                feedback: await this.importSavedTeamsContent({
+                  fileName: file.name,
+                  parsedPayload: importCandidate.payload,
+                }),
+              },
+            ],
+            [],
+          );
+          break;
+        case "saved-enemies":
+          feedback = this.buildCombinedAllDataFeedback(
+            file.name,
+            [
+              {
+                label: this.resolveAllDataSectionLabel("savedEnemies"),
+                feedback: await this.importSavedEnemiesContent({
+                  fileName: file.name,
+                  parsedPayload: importCandidate.payload,
+                }),
+              },
+            ],
+            [],
+          );
+          break;
+      }
+
+      this.allDataFeedback.set(feedback);
+    } catch (error) {
+      this.allDataFeedback.set({
+        tone: "error",
+        title: this.i18n.translate("management.allData.feedback.errorTitle", undefined, "settings"),
+        details: [this.resolveAllDataImportError(error)],
+      });
+    } finally {
+      this.allDataImporting.set(false);
+    }
+  }
+
+  private async importAllDataBundle(
+    payload: AllDataTransferPayload,
+    fileName: string,
+  ): Promise<TransferFeedback> {
+    const successfulSections: CombinedImportSectionFeedback[] = [];
+    const failedSections: CombinedImportSectionError[] = [];
+
+    if (payload.favorites !== undefined) {
+      await this.collectAllDataSectionResult({
+        failedSections,
+        label: this.resolveAllDataSectionLabel("favorites"),
+        run: () => this.importFavoritesContent({ parsedPayload: payload.favorites as unknown }),
+        successfulSections,
+        resolveError: (error) => this.resolveFavoritesImportError(error),
+      });
+    }
+
+    if (payload.favoriteShips !== undefined) {
+      await this.collectAllDataSectionResult({
+        failedSections,
+        label: this.resolveAllDataSectionLabel("favoriteShips"),
+        run: () =>
+          this.importFavoriteShipsContent({
+            fileName,
+            parsedPayload: payload.favoriteShips as unknown,
+          }),
+        successfulSections,
+        resolveError: (error) => this.resolveFavoriteShipsImportError(error),
+      });
+    }
+
+    if (payload.savedTeams !== undefined) {
+      await this.collectAllDataSectionResult({
+        failedSections,
+        label: this.resolveAllDataSectionLabel("savedTeams"),
+        run: () =>
+          this.importSavedTeamsContent({
+            fileName,
+            parsedPayload: payload.savedTeams as unknown,
+          }),
+        successfulSections,
+        resolveError: (error) => this.resolveSavedTeamsImportError(error),
+      });
+    }
+
+    if (payload.savedEnemies !== undefined) {
+      await this.collectAllDataSectionResult({
+        failedSections,
+        label: this.resolveAllDataSectionLabel("savedEnemies"),
+        run: () =>
+          this.importSavedEnemiesContent({
+            fileName,
+            parsedPayload: payload.savedEnemies as unknown,
+          }),
+        successfulSections,
+        resolveError: (error) => this.resolveSavedEnemiesImportError(error),
+      });
+    }
+
+    return this.buildCombinedAllDataFeedback(fileName, successfulSections, failedSections);
+  }
+
+  private async collectAllDataSectionResult(options: {
+    failedSections: CombinedImportSectionError[];
+    label: string;
+    resolveError: (error: unknown) => string;
+    run: () => Promise<TransferFeedback>;
+    successfulSections: CombinedImportSectionFeedback[];
+  }): Promise<void> {
+    try {
+      options.successfulSections.push({
+        label: options.label,
+        feedback: await options.run(),
+      });
+    } catch (error) {
+      options.failedSections.push({
+        label: options.label,
+        message: options.resolveError(error),
+      });
+    }
+  }
+
+  private buildCombinedAllDataFeedback(
+    fileName: string,
+    successfulSections: CombinedImportSectionFeedback[],
+    failedSections: CombinedImportSectionError[],
+  ): TransferFeedback {
+    const details = [
+      this.i18n.translate(
+        "management.allData.feedback.loadedFromFile",
+        { fileName },
+        "settings",
+      ),
+      ...successfulSections.flatMap(({ label, feedback }) => [
+        `${label}: ${feedback.title}`,
+        ...feedback.details.map((detail) => `${label}: ${detail}`),
+      ]),
+      ...failedSections.map(({ label, message }) => `${label}: ${message}`),
+    ];
+    const hasWarnings = successfulSections.some(({ feedback }) => feedback.tone === "warning");
+    const hasErrors = failedSections.length > 0;
+    const tone: TransferFeedback["tone"] = hasErrors
+      ? successfulSections.length > 0
+        ? "warning"
+        : "error"
+      : hasWarnings
+        ? "warning"
+        : "success";
+
+    return {
+      tone,
+      title: this.i18n.translate(
+        tone === "error"
+          ? "management.allData.feedback.errorTitle"
+          : tone === "warning"
+            ? "management.allData.feedback.warningTitle"
+            : "management.allData.feedback.successTitle",
+        undefined,
+        "settings",
+      ),
+      details,
+    };
+  }
+
+  private resolveAllDataSectionLabel(
+    section: "favoriteShips" | "favorites" | "savedEnemies" | "savedTeams",
+  ): string {
+    switch (section) {
+      case "favorites":
+        return this.i18n.translate("management.favorites.title", undefined, "settings");
+      case "favoriteShips":
+        return this.i18n.translate("management.favoriteShips.title", undefined, "settings");
+      case "savedTeams":
+        return this.i18n.translate("management.savedTeams.title", undefined, "settings");
+      case "savedEnemies":
+        return this.i18n.translate("management.savedEnemies.title", undefined, "settings");
+    }
+  }
+
+  private resolveAllDataImportError(error: unknown): string {
+    if (error && typeof error === "object" && "key" in error && typeof error.key === "string") {
+      return this.i18n.translate(error.key, undefined, "settings");
+    }
+
+    if (error instanceof Error && error.message.trim().length > 0) {
+      return error.message;
+    }
+
+    return this.i18n.translate("management.allData.errors.generic", undefined, "settings");
+  }
+
   private async importFavorites(file: File): Promise<void> {
     this.favoritesImporting.set(true);
     this.favoritesFeedback.set(null);
 
     try {
-      const rawContent = await file.text();
-      const parsedImport = this.optcbxImport.parseExport(rawContent);
-      const currentFavoriteIds = this.userState.favoriteCharacterIds();
-      const importResult = await this.optcbxImport.buildMergeImportResult(
-        parsedImport,
-        currentFavoriteIds,
-      );
-      const nextFavoriteIds = this.optcbxImport.mergeFavoriteIds(
-        importResult.matchedIds,
-        currentFavoriteIds,
-      );
-
-      await this.userState.setFavoriteCharacterIds(nextFavoriteIds);
       this.favoritesFeedback.set(
-        this.buildFavoritesImportFeedback(parsedImport.duplicatesRemoved, importResult),
+        await this.importFavoritesContent({
+          rawContent: await file.text(),
+        }),
       );
     } catch (error) {
       this.favoritesFeedback.set({
@@ -374,6 +645,29 @@ export class SettingsPage implements OnInit {
     } finally {
       this.favoritesImporting.set(false);
     }
+  }
+
+  private async importFavoritesContent(input: {
+    parsedPayload?: unknown;
+    rawContent?: string;
+  }): Promise<TransferFeedback> {
+    const parsedImport =
+      input.parsedPayload === undefined
+        ? this.optcbxImport.parseExport(input.rawContent ?? "")
+        : this.optcbxImport.parseExportPayload(input.parsedPayload);
+    const currentFavoriteIds = this.userState.favoriteCharacterIds();
+    const importResult = await this.optcbxImport.buildMergeImportResult(
+      parsedImport,
+      currentFavoriteIds,
+    );
+    const nextFavoriteIds = this.optcbxImport.mergeFavoriteIds(
+      importResult.matchedIds,
+      currentFavoriteIds,
+    );
+
+    await this.userState.setFavoriteCharacterIds(nextFavoriteIds);
+
+    return this.buildFavoritesImportFeedback(parsedImport.duplicatesRemoved, importResult);
   }
 
   private buildFavoritesImportFeedback(
@@ -443,31 +737,10 @@ export class SettingsPage implements OnInit {
     this.favoriteShipsFeedback.set(null);
 
     try {
-      const rawContent = await file.text();
-      const payload = parseFavoriteShipsImportPayload(rawContent);
-      const sanitizedImport = sanitizeFavoriteShipsImportPayload(payload);
-      const ships = await this.repository.getShips();
-      const availableShips = filterAvailableFavoriteShips(
-        sanitizedImport.ships,
-        new Set(ships.map((ship) => ship.id)),
-      );
-      const currentFavoriteShipIds = this.userState.favoriteShipIds();
-      const currentFavoriteShipIdSet = new Set(currentFavoriteShipIds);
-      const importedShipIds = availableShips.ships.map((ship) => ship.id);
-      const addedCount = importedShipIds.filter((shipId) => !currentFavoriteShipIdSet.has(shipId)).length;
-
-      await this.userState.setFavoriteShipIds(
-        this.mergeFavoriteShipIds(importedShipIds, currentFavoriteShipIds),
-      );
       this.favoriteShipsFeedback.set(
-        this.buildFavoriteShipsImportFeedback({
-          addedCount,
-          alreadyFavoritedCount: importedShipIds.length - addedCount,
-          duplicateIdCount: sanitizedImport.duplicateIdCount,
+        await this.importFavoriteShipsContent({
           fileName: file.name,
-          invalidShipCount: sanitizedImport.invalidShipCount,
-          matchedShipCount: importedShipIds.length,
-          unknownShipCount: availableShips.unknownShipCount,
+          rawContent: await file.text(),
         }),
       );
     } catch (error) {
@@ -483,6 +756,41 @@ export class SettingsPage implements OnInit {
     } finally {
       this.favoriteShipsImporting.set(false);
     }
+  }
+
+  private async importFavoriteShipsContent(input: {
+    fileName: string;
+    parsedPayload?: unknown;
+    rawContent?: string;
+  }): Promise<TransferFeedback> {
+    const payload =
+      input.parsedPayload === undefined
+        ? parseFavoriteShipsImportPayload(input.rawContent ?? "")
+        : parseFavoriteShipsImportPayloadValue(input.parsedPayload);
+    const sanitizedImport = sanitizeFavoriteShipsImportPayload(payload);
+    const ships = await this.repository.getShips();
+    const availableShips = filterAvailableFavoriteShips(
+      sanitizedImport.ships,
+      new Set(ships.map((ship) => ship.id)),
+    );
+    const currentFavoriteShipIds = this.userState.favoriteShipIds();
+    const currentFavoriteShipIdSet = new Set(currentFavoriteShipIds);
+    const importedShipIds = availableShips.ships.map((ship) => ship.id);
+    const addedCount = importedShipIds.filter((shipId) => !currentFavoriteShipIdSet.has(shipId)).length;
+
+    await this.userState.setFavoriteShipIds(
+      this.mergeFavoriteShipIds(importedShipIds, currentFavoriteShipIds),
+    );
+
+    return this.buildFavoriteShipsImportFeedback({
+      addedCount,
+      alreadyFavoritedCount: importedShipIds.length - addedCount,
+      duplicateIdCount: sanitizedImport.duplicateIdCount,
+      fileName: input.fileName,
+      invalidShipCount: sanitizedImport.invalidShipCount,
+      matchedShipCount: importedShipIds.length,
+      unknownShipCount: availableShips.unknownShipCount,
+    });
   }
 
   private buildFavoriteShipsImportFeedback(stats: {
@@ -604,35 +912,10 @@ export class SettingsPage implements OnInit {
     this.savedTeamsFeedback.set(null);
 
     try {
-      const rawContent = await file.text();
-      const payload = parseSavedTeamsImportPayload(rawContent);
-      const sanitizedImport = sanitizeSavedTeamsImportPayload(payload, {
-        untitledTeamName: this.i18n.translate("common.defaults.untitledCrew"),
-      });
-      const candidateCharacterIds = [
-        ...new Set(
-          sanitizedImport.teams.flatMap((team) =>
-            team.slots.filter((slotId): slotId is number => typeof slotId === "number"),
-          ),
-        ),
-      ];
-      const availableCharacters = candidateCharacterIds.length
-        ? await this.repository.getCharactersByIds(candidateCharacterIds)
-        : [];
-      const slotSanitizeResult = clearUnavailableSavedTeamSlots(
-        sanitizedImport.teams,
-        new Set(availableCharacters.map((character) => character.id)),
-      );
-      const mergeResult = await this.userState.mergeImportedTeams(slotSanitizeResult.teams);
-
       this.savedTeamsFeedback.set(
-        this.buildSavedTeamsImportFeedback({
-          addedCount: mergeResult.addedCount,
-          duplicateIdCount: sanitizedImport.duplicateIdCount,
+        await this.importSavedTeamsContent({
           fileName: file.name,
-          invalidTeamCount: sanitizedImport.invalidTeamCount,
-          unknownSlotCount: slotSanitizeResult.unknownSlotCount,
-          updatedCount: mergeResult.updatedCount,
+          rawContent: await file.text(),
         }),
       );
     } catch (error) {
@@ -644,6 +927,44 @@ export class SettingsPage implements OnInit {
     } finally {
       this.savedTeamsImporting.set(false);
     }
+  }
+
+  private async importSavedTeamsContent(input: {
+    fileName: string;
+    parsedPayload?: unknown;
+    rawContent?: string;
+  }): Promise<TransferFeedback> {
+    const payload =
+      input.parsedPayload === undefined
+        ? parseSavedTeamsImportPayload(input.rawContent ?? "")
+        : parseSavedTeamsImportPayloadValue(input.parsedPayload);
+    const sanitizedImport = sanitizeSavedTeamsImportPayload(payload, {
+      untitledTeamName: this.i18n.translate("common.defaults.untitledCrew"),
+    });
+    const candidateCharacterIds = [
+      ...new Set(
+        sanitizedImport.teams.flatMap((team) =>
+          team.slots.filter((slotId): slotId is number => typeof slotId === "number"),
+        ),
+      ),
+    ];
+    const availableCharacters = candidateCharacterIds.length
+      ? await this.repository.getCharactersByIds(candidateCharacterIds)
+      : [];
+    const slotSanitizeResult = clearUnavailableSavedTeamSlots(
+      sanitizedImport.teams,
+      new Set(availableCharacters.map((character) => character.id)),
+    );
+    const mergeResult = await this.userState.mergeImportedTeams(slotSanitizeResult.teams);
+
+    return this.buildSavedTeamsImportFeedback({
+      addedCount: mergeResult.addedCount,
+      duplicateIdCount: sanitizedImport.duplicateIdCount,
+      fileName: input.fileName,
+      invalidTeamCount: sanitizedImport.invalidTeamCount,
+      unknownSlotCount: slotSanitizeResult.unknownSlotCount,
+      updatedCount: mergeResult.updatedCount,
+    });
   }
 
   private buildSavedTeamsImportFeedback(stats: {
@@ -723,20 +1044,10 @@ export class SettingsPage implements OnInit {
     this.savedEnemiesFeedback.set(null);
 
     try {
-      const rawContent = await file.text();
-      const payload = parseSavedEnemiesImportPayload(rawContent);
-      const sanitizedImport = sanitizeSavedEnemiesImportPayload(payload, {
-        untitledEnemyName: this.i18n.translate("common.defaults.untitledEnemy"),
-      });
-      const mergeResult = await this.userState.mergeImportedEnemies(sanitizedImport.enemies);
-
       this.savedEnemiesFeedback.set(
-        this.buildSavedEnemiesImportFeedback({
-          addedCount: mergeResult.addedCount,
-          duplicateIdCount: sanitizedImport.duplicateIdCount,
+        await this.importSavedEnemiesContent({
           fileName: file.name,
-          invalidEnemyCount: sanitizedImport.invalidEnemyCount,
-          updatedCount: mergeResult.updatedCount,
+          rawContent: await file.text(),
         }),
       );
     } catch (error) {
@@ -748,6 +1059,29 @@ export class SettingsPage implements OnInit {
     } finally {
       this.savedEnemiesImporting.set(false);
     }
+  }
+
+  private async importSavedEnemiesContent(input: {
+    fileName: string;
+    parsedPayload?: unknown;
+    rawContent?: string;
+  }): Promise<TransferFeedback> {
+    const payload =
+      input.parsedPayload === undefined
+        ? parseSavedEnemiesImportPayload(input.rawContent ?? "")
+        : parseSavedEnemiesImportPayloadValue(input.parsedPayload);
+    const sanitizedImport = sanitizeSavedEnemiesImportPayload(payload, {
+      untitledEnemyName: this.i18n.translate("common.defaults.untitledEnemy"),
+    });
+    const mergeResult = await this.userState.mergeImportedEnemies(sanitizedImport.enemies);
+
+    return this.buildSavedEnemiesImportFeedback({
+      addedCount: mergeResult.addedCount,
+      duplicateIdCount: sanitizedImport.duplicateIdCount,
+      fileName: input.fileName,
+      invalidEnemyCount: sanitizedImport.invalidEnemyCount,
+      updatedCount: mergeResult.updatedCount,
+    });
   }
 
   private buildSavedEnemiesImportFeedback(stats: {

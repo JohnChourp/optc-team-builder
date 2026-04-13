@@ -98,6 +98,64 @@
           <article class="transfer-card">
             <div class="transfer-card__head">
               <div>
+                <strong>{{ t("management.allData.title") }}</strong>
+                <span>{{ t("management.allData.subtitle") }}</span>
+              </div>
+              <p>{{ t("management.allData.copy") }}</p>
+            </div>
+
+            <input
+              #allDataImportInput
+              type="file"
+              accept=".json,application/json"
+              hidden
+              (change)="onAllDataFileSelected($event, allDataImportInput)"
+            />
+
+            <div class="transfer-actions">
+              <ion-button
+                fill="outline"
+                color="light"
+                [disabled]="allDataImporting()"
+                (click)="exportAll()"
+              >
+                {{ t("management.allData.export") }}
+              </ion-button>
+              <ion-button
+                fill="outline"
+                color="warning"
+                [disabled]="allDataImporting()"
+                (click)="openFilePicker(allDataImportInput)"
+              >
+                {{ t("management.allData.import") }}
+              </ion-button>
+            </div>
+
+            @if (allDataImporting()) {
+              <div class="transfer-feedback transfer-feedback--progress">
+                <ion-spinner name="crescent"></ion-spinner>
+                <span>{{ t("management.allData.processing") }}</span>
+              </div>
+            }
+
+            @if (allDataFeedback(); as feedback) {
+              <div
+                class="transfer-feedback"
+                [class.transfer-feedback--success]="feedback.tone === 'success'"
+                [class.transfer-feedback--warning]="feedback.tone === 'warning'"
+                [class.transfer-feedback--error]="feedback.tone === 'error'"
+              >
+                <strong>{{ feedback.title }}</strong>
+                @for (detail of feedback.details; track $index) {
+                  <span>{{ detail }}</span>
+                }
+              </div>
+            }
+          </article>
+
+          <article class="transfer-card">
+            <div class="transfer-card__head">
+              <div>
                 <strong>{{ t("management.favorites.title") }}</strong>
                 <span>{{ t("management.counts.favorites", { count: favoriteIds().length }) }}</span>
               </div>

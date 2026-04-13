@@ -26,6 +26,17 @@ vi.mock("./favorite-ships-transfer.utils", async () => {
   };
 });
 
+vi.mock("./all-data-transfer.utils", async () => {
+  const actual = await vi.importActual<typeof import("./all-data-transfer.utils")>(
+    "./all-data-transfer.utils",
+  );
+
+  return {
+    ...actual,
+    downloadAllDataExport: vi.fn(),
+  };
+});
+
 vi.mock("../saved-teams/saved-teams-transfer.utils", async () => {
   const actual = await vi.importActual<typeof import("../saved-teams/saved-teams-transfer.utils")>(
     "../saved-teams/saved-teams-transfer.utils",
@@ -48,6 +59,7 @@ vi.mock("../saved-enemies/saved-enemies-transfer.utils", async () => {
   };
 });
 
+import { downloadAllDataExport } from "./all-data-transfer.utils";
 import { downloadOptcbxFavoritesExport } from "../characters/characters-favorites.utils";
 import { downloadSavedEnemiesExport } from "../saved-enemies/saved-enemies-transfer.utils";
 import { downloadSavedTeamsExport } from "../saved-teams/saved-teams-transfer.utils";
@@ -82,6 +94,8 @@ describe("SettingsPage", () => {
     expect(template).toContain('t("performance.mode.label")');
     expect(template).toContain('t("performance.manualCount.label")');
     expect(template).toContain('t("sections.dataManagement")');
+    expect(template).toContain('t("management.allData.export")');
+    expect(template).toContain('t("management.allData.import")');
     expect(template).toContain('t("management.favorites.export")');
     expect(template).toContain('t("management.favorites.import")');
     expect(template).toContain('t("management.favorites.deleteAll")');
@@ -158,6 +172,40 @@ describe("SettingsPage", () => {
           expect.objectContaining({ id: "enemy-1" }),
           expect.objectContaining({ id: "enemy-2" }),
         ]),
+      }),
+    );
+  });
+
+  it("exports all local data through the nested bundle helper", async () => {
+    const { page, repository } = createPage();
+
+    await page.exportAll();
+
+    expect(repository.getCharactersByIds).toHaveBeenCalledWith([1001, 1002]);
+    expect(repository.getShips).toHaveBeenCalledOnce();
+    expect(vi.mocked(downloadAllDataExport)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        schemaVersion: 1,
+        source: "all-data",
+        favorites: {
+          characters: [
+            { number: 1001, name: "Luffy" },
+            { number: 1002, name: "Zoro" },
+          ],
+        },
+        favoriteShips: expect.objectContaining({
+          source: "favorite-ships",
+          ships: [
+            { id: 9001, name: "Going Merry" },
+            { id: 9002, name: "Thousand Sunny" },
+          ],
+        }),
+        savedTeams: expect.objectContaining({
+          source: "saved-teams",
+        }),
+        savedEnemies: expect.objectContaining({
+          source: "saved-enemies",
+        }),
       }),
     );
   });
@@ -305,6 +353,245 @@ describe("SettingsPage", () => {
     ]);
     expect(page.savedEnemiesFeedback()).toMatchObject({
       tone: "success",
+    });
+  });
+
+  it("imports a full all-data bundle from settings", async () => {
+    const { page, optcbxImport, userState } = createPage();
+
+    optcbxImport.buildMergeImportResult.mockResolvedValue({
+      matchedIds: [1003],
+      unmatchedIds: [],
+      duplicatesRemoved: 0,
+      addedCount: 1,
+      alreadyFavoritedCount: 0,
+    });
+    optcbxImport.mergeFavoriteIds.mockReturnValue([1003, 1001, 1002]);
+
+    await page.onAllDataFileSelected(
+      createFileEvent(
+        buildFile(
+          "all-data.json",
+          JSON.stringify({
+            schemaVersion: 1,
+            source: "all-data",
+            exportedAt: "2026-04-12T09:00:00.000Z",
+            favorites: {
+              characters: [{ number: 1003, name: "Nami" }],
+            },
+            favoriteShips: {
+              schemaVersion: 1,
+              source: "favorite-ships",
+              exportedAt: "2026-04-12T09:00:00.000Z",
+              ships: [{ id: 9003, name: "Shark Superb" }],
+            },
+            savedTeams: {
+              schemaVersion: 1,
+              source: "saved-teams",
+              exportedAt: "2026-04-12T09:00:00.000Z",
+              teams: [createTeam("team-imported", [1001, null, null, null, null, null])],
+            },
+            savedEnemies: {
+              schemaVersion: 1,
+              source: "saved-enemies",
+              exportedAt: "2026-04-12T09:00:00.000Z",
+              enemies: [createEnemy("enemy-imported")],
+            },
+          }),
+        ),
+      ),
+      { value: "" } as HTMLInputElement,
+    );
+
+    expect(userState.setFavoriteCharacterIds).toHaveBeenCalledWith([1003, 1001, 1002]);
+    expect(userState.setFavoriteShipIds).toHaveBeenCalledWith([9003, 9001, 9002]);
+    expect(userState.mergeImportedTeams).toHaveBeenCalledWith([
+      expect.objectContaining({ id: "team-imported" }),
+    ]);
+    expect(userState.mergeImportedEnemies).toHaveBeenCalledWith([
+      expect.objectContaining({ id: "enemy-imported" }),
+    ]);
+    expect(page.allDataFeedback()).toMatchObject({
+      tone: "success",
+    });
+  });
+
+  it("imports a raw favorites export through import all", async () => {
+    const { page, optcbxImport, userState } = createPage();
+
+    optcbxImport.buildMergeImportResult.mockResolvedValue({
+      matchedIds: [1004],
+      unmatchedIds: [],
+      duplicatesRemoved: 0,
+      addedCount: 1,
+      alreadyFavoritedCount: 0,
+    });
+    optcbxImport.mergeFavoriteIds.mockReturnValue([1004, 1001, 1002]);
+
+    await page.onAllDataFileSelected(
+      createFileEvent(
+        buildFile(
+          "favorites.json",
+          JSON.stringify({
+            characters: [{ number: 1004, name: "Sanji" }],
+          }),
+        ),
+      ),
+      { value: "" } as HTMLInputElement,
+    );
+
+    expect(userState.setFavoriteCharacterIds).toHaveBeenCalledWith([1004, 1001, 1002]);
+    expect(page.allDataFeedback()).toMatchObject({
+      tone: "success",
+    });
+  });
+
+  it("imports a favorite ships export through import all", async () => {
+    const { page, userState } = createPage();
+
+    await page.onAllDataFileSelected(
+      createFileEvent(
+        buildFile(
+          "favorite-ships.json",
+          JSON.stringify({
+            schemaVersion: 1,
+            source: "favorite-ships",
+            exportedAt: "2026-04-12T09:00:00.000Z",
+            ships: [{ id: 9003, name: "Shark Superb" }],
+          }),
+        ),
+      ),
+      { value: "" } as HTMLInputElement,
+    );
+
+    expect(userState.setFavoriteShipIds).toHaveBeenCalledWith([9003, 9001, 9002]);
+    expect(page.allDataFeedback()).toMatchObject({
+      tone: "success",
+    });
+  });
+
+  it("imports a single saved team export through import all", async () => {
+    const { page, userState } = createPage();
+
+    await page.onAllDataFileSelected(
+      createFileEvent(
+        buildFile(
+          "saved-team.json",
+          JSON.stringify({
+            schemaVersion: 1,
+            source: "saved-teams",
+            exportedAt: "2026-04-12T09:00:00.000Z",
+            teams: [createTeam("team-single", [1001, null, null, null, null, null])],
+          }),
+        ),
+      ),
+      { value: "" } as HTMLInputElement,
+    );
+
+    expect(userState.mergeImportedTeams).toHaveBeenCalledWith([
+      expect.objectContaining({ id: "team-single" }),
+    ]);
+    expect(page.allDataFeedback()).toMatchObject({
+      tone: "success",
+    });
+  });
+
+  it("imports a single saved enemy export through import all", async () => {
+    const { page, userState } = createPage();
+
+    await page.onAllDataFileSelected(
+      createFileEvent(
+        buildFile(
+          "saved-enemy.json",
+          JSON.stringify({
+            schemaVersion: 1,
+            source: "saved-enemies",
+            exportedAt: "2026-04-12T09:00:00.000Z",
+            enemies: [createEnemy("enemy-single")],
+          }),
+        ),
+      ),
+      { value: "" } as HTMLInputElement,
+    );
+
+    expect(userState.mergeImportedEnemies).toHaveBeenCalledWith([
+      expect.objectContaining({ id: "enemy-single" }),
+    ]);
+    expect(page.allDataFeedback()).toMatchObject({
+      tone: "success",
+    });
+  });
+
+  it("keeps importing valid sections when a bundle has warnings", async () => {
+    const { page, userState } = createPage();
+
+    await page.onAllDataFileSelected(
+      createFileEvent(
+        buildFile(
+          "all-data-warning.json",
+          JSON.stringify({
+            schemaVersion: 1,
+            source: "all-data",
+            exportedAt: "2026-04-12T09:00:00.000Z",
+            favoriteShips: {
+              schemaVersion: 1,
+              source: "favorite-ships",
+              exportedAt: "2026-04-12T09:00:00.000Z",
+              ships: [
+                { id: 9003, name: "Shark Superb" },
+                { id: 9999, name: "Ghost Ship" },
+              ],
+            },
+            savedTeams: {
+              schemaVersion: 1,
+              source: "saved-teams",
+              exportedAt: "2026-04-12T09:00:00.000Z",
+              teams: [createTeam("team-warning", [1001, null, null, null, null, null])],
+            },
+          }),
+        ),
+      ),
+      { value: "" } as HTMLInputElement,
+    );
+
+    expect(userState.setFavoriteShipIds).toHaveBeenCalledWith([9003, 9001, 9002]);
+    expect(userState.mergeImportedTeams).toHaveBeenCalledWith([
+      expect.objectContaining({ id: "team-warning" }),
+    ]);
+    expect(page.allDataFeedback()).toMatchObject({
+      tone: "warning",
+    });
+  });
+
+  it("continues importing valid sections when one bundle section fails", async () => {
+    const { page, userState } = createPage();
+
+    await page.onAllDataFileSelected(
+      createFileEvent(
+        buildFile(
+          "all-data-partial-failure.json",
+          JSON.stringify({
+            schemaVersion: 1,
+            source: "all-data",
+            exportedAt: "2026-04-12T09:00:00.000Z",
+            favoriteShips: 42,
+            savedEnemies: {
+              schemaVersion: 1,
+              source: "saved-enemies",
+              exportedAt: "2026-04-12T09:00:00.000Z",
+              enemies: [createEnemy("enemy-valid")],
+            },
+          }),
+        ),
+      ),
+      { value: "" } as HTMLInputElement,
+    );
+
+    expect(userState.mergeImportedEnemies).toHaveBeenCalledWith([
+      expect.objectContaining({ id: "enemy-valid" }),
+    ]);
+    expect(page.allDataFeedback()).toMatchObject({
+      tone: "warning",
     });
   });
 
@@ -456,6 +743,10 @@ function createPage() {
       importedNumbers: [1003, 1004],
       duplicatesRemoved: 1,
     }),
+    parseExportPayload: vi.fn().mockReturnValue({
+      importedNumbers: [1003, 1004],
+      duplicatesRemoved: 0,
+    }),
     buildMergeImportResult: vi.fn(),
     mergeFavoriteIds: vi.fn(),
   };
@@ -489,6 +780,22 @@ function createPage() {
 
       if (key === "management.favoriteShips.feedback.errorTitle") {
         return "Favorite ships import failed";
+      }
+
+      if (key === "management.allData.feedback.errorTitle") {
+        return "All data import failed";
+      }
+
+      if (key === "management.allData.feedback.warningTitle") {
+        return "All data import completed with warnings";
+      }
+
+      if (key === "management.allData.feedback.successTitle") {
+        return "All data import completed";
+      }
+
+      if (key === "management.allData.feedback.loadedFromFile") {
+        return `Loaded from ${params?.["fileName"] ?? ""}.`;
       }
 
       if (key === "management.favoriteShips.feedback.warningTitle") {
@@ -528,6 +835,26 @@ function createPage() {
       }
 
       if (key.startsWith("management.favoriteShips.errors.")) {
+        return key;
+      }
+
+      if (key === "management.favorites.title") {
+        return "Favorites";
+      }
+
+      if (key === "management.favoriteShips.title") {
+        return "Favorite Ships";
+      }
+
+      if (key === "management.savedTeams.title") {
+        return "Saved Teams";
+      }
+
+      if (key === "management.savedEnemies.title") {
+        return "Saved Enemies";
+      }
+
+      if (key.startsWith("management.allData.errors.")) {
         return key;
       }
 

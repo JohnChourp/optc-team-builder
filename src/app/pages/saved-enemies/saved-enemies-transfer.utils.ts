@@ -219,6 +219,12 @@ export function parseSavedEnemiesImportPayload(rawContent: string): SavedEnemies
     throw new SavedEnemiesImportError("bulkImport.errors.invalidJson");
   }
 
+  return parseSavedEnemiesImportPayloadValue(parsedPayload);
+}
+
+export function parseSavedEnemiesImportPayloadValue(
+  parsedPayload: unknown,
+): SavedEnemiesTransferPayload {
   if (!isRecord(parsedPayload)) {
     throw new SavedEnemiesImportError("bulkImport.errors.invalidPayload");
   }

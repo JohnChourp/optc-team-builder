@@ -142,6 +142,12 @@ export function parseFavoriteShipsImportPayload(rawContent: string): FavoriteShi
     throw new FavoriteShipsImportError("management.favoriteShips.errors.invalidJson");
   }
 
+  return parseFavoriteShipsImportPayloadValue(parsedPayload);
+}
+
+export function parseFavoriteShipsImportPayloadValue(
+  parsedPayload: unknown,
+): FavoriteShipsTransferPayload {
   if (!isRecord(parsedPayload)) {
     throw new FavoriteShipsImportError("management.favoriteShips.errors.invalidPayload");
   }

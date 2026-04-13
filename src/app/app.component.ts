@@ -13,32 +13,34 @@ import packageJson from "../../package.json";
   template: `
     <ion-app>
       <ion-router-outlet></ion-router-outlet>
-      <a
-        class="app-credit-badge"
-        [class.app-credit-badge--tabs]="isTabsRoute()"
-        [class.app-credit-badge--standalone]="!isTabsRoute()"
-        href="https://github.com/JohnChourp/optc-team-builder"
-        target="_blank"
-        rel="noreferrer noopener"
-        aria-label="Open the optc-team-builder GitHub repository"
-      >
-        {{ creditLabel() }}
-      </a>
+      @if (hasResolvedInitialRoute()) {
+        <a
+          class="app-credit-badge"
+          [class.app-credit-badge--tabs]="isTabsRoute()"
+          [class.app-credit-badge--standalone]="!isTabsRoute()"
+          href="https://github.com/JohnChourp/optc-team-builder"
+          target="_blank"
+          rel="noreferrer noopener"
+          aria-label="Open the optc-team-builder GitHub repository"
+        >
+          {{ creditLabel() }}
+        </a>
+      }
     </ion-app>
   `,
   styleUrl: "./app.component.scss",
 })
 export class AppComponent {
-  public readonly appVersion = signal(packageJson.version);
-  public readonly creditLabel = computed(() => `powered by johnChourp v.${this.appVersion()}`);
-  public readonly currentUrl = signal("");
-  public readonly isTabsRoute = computed(() => this.currentUrl().startsWith("/tabs"));
-
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
 
+  public readonly appVersion = signal(packageJson.version);
+  public readonly creditLabel = computed(() => `powered by johnChourp v.${this.appVersion()}`);
+  public readonly currentUrl = signal(this.router.url);
+  public readonly hasResolvedInitialRoute = signal(this.router.navigated && this.router.url !== "");
+  public readonly isTabsRoute = computed(() => this.currentUrl().startsWith("/tabs"));
+
   public constructor() {
-    this.currentUrl.set(this.router.url);
     void this.loadAppVersion();
 
     this.router.events
@@ -48,6 +50,7 @@ export class AppComponent {
       )
       .subscribe((event) => {
         this.currentUrl.set(event.urlAfterRedirects);
+        this.hasResolvedInitialRoute.set(true);
       });
   }
 
