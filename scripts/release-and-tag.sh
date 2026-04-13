@@ -128,6 +128,10 @@ ensure_gh_or_fallback_skip() {
     fi
 }
 
+prune_android_ds_store() {
+    find "${PROJECT_ROOT}/android" -type f -name '.DS_Store' -delete 2>/dev/null || true
+}
+
 generate_release_notes() {
     local version="$1"
     local version_code="$2"
@@ -199,6 +203,7 @@ mkdir -p "${BUILD_ARTIFACTS_DIR}/${RELEASE_TAG}"
 
 # Allow CI to override the web/native sync command without changing the local default.
 bash -lc "${BUILD_MOBILE_COMMAND}"
+prune_android_ds_store
 
 (
     cd "${PROJECT_ROOT}/android"
