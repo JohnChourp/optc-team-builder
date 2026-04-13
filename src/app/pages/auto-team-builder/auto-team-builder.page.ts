@@ -219,10 +219,8 @@ interface AutoTeamBuilderDefaultFilterState {
   selectedClasses: string[];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
-  requireAllSpecialsSupportTeam: boolean;
   requireLeaderSuperSpecialCriteria: boolean;
   requireUniqueBaseCharacterNames: boolean;
-  requireSameCaptainAndFriendCaptain: boolean;
   favoritesOnly: boolean;
   favoriteShipsOnly: boolean;
 }
@@ -270,10 +268,8 @@ function buildDefaultAutoTeamBuilderFilterState(
     selectedClasses: [...availableClasses],
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
-    requireAllSpecialsSupportTeam: true,
     requireLeaderSuperSpecialCriteria: true,
     requireUniqueBaseCharacterNames: true,
-    requireSameCaptainAndFriendCaptain: false,
     favoritesOnly: true,
     favoriteShipsOnly: true,
   };
@@ -333,6 +329,30 @@ function splitExtraDropAbilityRequirements(requirements: AutoBuildAbilityRequire
       (requirement) => !EXTRA_DROP_ABILITY_KEY_SET.has(requirement.abilityKey),
     ),
   };
+}
+
+function resolveManualSlotRequiredAbilities(
+  requirements: AutoBuildAbilityRequirement[],
+  role: AutoBuildManualSlotRole,
+): AutoBuildAbilityRequirement[] {
+  return role === 'captain' || role === 'friendCaptain'
+    ? requirements
+    : splitExtraDropAbilityRequirements(requirements).remainingRequirements;
+}
+
+function matchesLeaderOnlyManualRequirements(
+  character: Pick<CharacterDetailRecord, 'detail'>,
+  requirements: AutoBuildAbilityRequirement[],
+): boolean {
+  const leaderOnlyRequirements = requirements.filter((requirement) =>
+    EXTRA_DROP_ABILITY_KEY_SET.has(requirement.abilityKey),
+  );
+
+  return leaderOnlyRequirements.every((requirement) =>
+    character.detail.builderAbilities.some((ability) =>
+      matchesAnyAbilityRequirement(ability, [requirement]),
+    ),
+  );
 }
 
 @Component({
@@ -434,10 +454,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly excludedShipIds = signal<number[]>([]);
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
-  public readonly requireAllSpecialsSupportTeam = signal(false);
   public readonly requireLeaderSuperSpecialCriteria = signal(false);
   public readonly requireUniqueBaseCharacterNames = signal(false);
-  public readonly requireSameCaptainAndFriendCaptain = signal(false);
   public readonly extraDropMode = signal<AutoBuildExtraDropMode>('off');
   public readonly favoritesOnly = signal(false);
   public readonly favoriteShipsOnly = signal(false);
@@ -483,7 +501,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly manualCandidateFilters = computed<AppliedManualCharacterFilters>(() => ({
     selectedTypes: [...this.selectedTypes()],
     selectedClasses: [...this.selectedClasses()],
-    requiredAbilities: this.pageRequiredAbilities().map((requirement) => ({
+    requiredAbilities: resolveManualSlotRequiredAbilities(
+      this.pageRequiredAbilities(),
+      this.activeManualSlotRole(),
+    ).map((requirement) => ({
       ...requirement,
       slotTokens: [...requirement.slotTokens],
       requiredCharacterCount: 1,
@@ -661,11 +682,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       ? this.t('filters.classes.support.strict')
       : this.t('filters.classes.support.flexible'),
   );
-  public readonly specialSupportLabel = computed(() =>
-    this.requireAllSpecialsSupportTeam()
-      ? this.t('filters.specialSupport.support.strict')
-      : this.t('filters.specialSupport.support.flexible'),
-  );
   public readonly leaderSuperSpecialCriteriaSupportLabel = computed(() =>
     this.requireLeaderSuperSpecialCriteria()
       ? this.t('filters.superSpecialCriteria.support.strict')
@@ -675,11 +691,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.requireUniqueBaseCharacterNames()
       ? this.t('filters.uniqueNames.support.strict')
       : this.t('filters.uniqueNames.support.flexible'),
-  );
-  public readonly sameCaptainAndFriendCaptainSupportLabel = computed(() =>
-    this.requireSameCaptainAndFriendCaptain()
-      ? this.t('filters.sameCaptain.support.strict')
-      : this.t('filters.sameCaptain.support.flexible'),
   );
   public readonly favoritesOnlySupportLabel = computed(() =>
     this.hasFavoriteCharacters()
@@ -889,17 +900,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   });
   public readonly typeStrictToggleLabel = computed(() => this.t('filters.types.toggle'));
   public readonly classStrictToggleLabel = computed(() => this.t('filters.classes.toggle'));
-  public readonly specialSupportToggleLabel = computed(() =>
-    this.t('filters.specialSupport.toggle'),
-  );
   public readonly leaderSuperSpecialCriteriaToggleLabel = computed(() =>
     this.t('filters.superSpecialCriteria.toggle'),
   );
   public readonly uniqueBaseCharacterNamesToggleLabel = computed(() =>
     this.t('filters.uniqueNames.toggle'),
-  );
-  public readonly sameCaptainAndFriendCaptainToggleLabel = computed(() =>
-    this.t('filters.sameCaptain.toggle'),
   );
   public readonly favoritesOnlyToggleLabel = computed(() => this.t('filters.favoritesOnly.toggle'));
   public readonly favoriteShipsOnlyToggleLabel = computed(() =>
@@ -1248,27 +1253,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       total: leaderCriteria.totalSlots,
     });
   });
-  public readonly specialSupportSummaryLabel = computed(() => {
-    const current = this.result();
-
-    if (!current) {
-      return this.requireAllSpecialsSupportTeam()
-        ? this.t('results.specialSupport.pendingStrict')
-        : this.t('results.specialSupport.pendingOff');
-    }
-
-    const { specialSupport } = current.coverage;
-
-    return specialSupport.enabled
-      ? this.t('results.specialSupport.enabled', {
-          matching: specialSupport.matchingSlots,
-          total: specialSupport.totalSlots,
-        })
-      : this.t('results.specialSupport.disabled', {
-          matching: specialSupport.matchingSlots,
-          total: specialSupport.totalSlots,
-        });
-  });
   public readonly requiredAbilitySummaryLabel = computed(() => {
     const requirements = this.pageRequiredAbilities();
     const current = this.result();
@@ -1306,10 +1290,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         this.hasRequiredAbilities() ||
         this.requireAllSelectedTypesInTeam() ||
         this.requireAllSelectedClassesPerCharacter() ||
-        this.requireAllSpecialsSupportTeam() ||
         this.requireLeaderSuperSpecialCriteria() ||
         this.requireUniqueBaseCharacterNames() ||
-        this.requireSameCaptainAndFriendCaptain() ||
         this.favoritesOnly() ||
         this.favoriteShipsOnly() ||
         this.hasSelectedManualShip() ||
@@ -1627,23 +1609,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.resetBuildState();
   }
 
-  public async onRequireAllSpecialsSupportToggle(
-    event: CustomEvent<{ checked: boolean }>,
-  ): Promise<void> {
-    if (
-      !(await this.confirmDisableToggleIfNeeded({
-        checked: event.detail.checked,
-        currentValue: this.requireAllSpecialsSupportTeam(),
-        messageKey: 'filters.disableConfirm.specialSupport.message',
-      }))
-    ) {
-      return;
-    }
-
-    this.requireAllSpecialsSupportTeam.set(event.detail.checked);
-    this.resetBuildState();
-  }
-
   public async onRequireLeaderSuperSpecialCriteriaToggle(
     event: CustomEvent<{ checked: boolean }>,
   ): Promise<void> {
@@ -1675,13 +1640,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     }
 
     this.requireUniqueBaseCharacterNames.set(event.detail.checked);
-    this.resetBuildState();
-  }
-
-  public onRequireSameCaptainAndFriendCaptainToggle(
-    event: CustomEvent<{ checked: boolean }>,
-  ): void {
-    this.requireSameCaptainAndFriendCaptain.set(event.detail.checked);
     this.resetBuildState();
   }
 
@@ -1988,10 +1946,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         {
           requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
           requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
-          requireAllSpecialsSupportTeam: this.requireAllSpecialsSupportTeam(),
           requireLeaderSuperSpecialCriteria: this.requireLeaderSuperSpecialCriteria(),
           requireUniqueBaseCharacterNames: this.requireUniqueBaseCharacterNames(),
-          requireSameCaptainAndFriendCaptain: this.requireSameCaptainAndFriendCaptain(),
           requiredAbilities: this.pageRequiredAbilities(),
           enemyMechanics: this.pageEnemyMechanics(),
           favoritesOnly: this.favoritesOnly(),
@@ -2085,10 +2041,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       enemyMechanics: this.pageEnemyMechanics(),
       requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
       requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
-      requireAllSpecialsSupportTeam: this.requireAllSpecialsSupportTeam(),
       requireLeaderSuperSpecialCriteria: this.requireLeaderSuperSpecialCriteria(),
       requireUniqueBaseCharacterNames: this.requireUniqueBaseCharacterNames(),
-      requireSameCaptainAndFriendCaptain: this.requireSameCaptainAndFriendCaptain(),
       favoritesOnly: this.favoritesOnly(),
       favoriteCount: this.favoriteCharacterIds().length,
       favoriteShipsOnly: this.favoriteShipsOnly(),
@@ -2228,10 +2182,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.requireAllSelectedClassesPerCharacter.set(
       defaultFilters.requireAllSelectedClassesPerCharacter,
     );
-    this.requireAllSpecialsSupportTeam.set(defaultFilters.requireAllSpecialsSupportTeam);
     this.requireLeaderSuperSpecialCriteria.set(defaultFilters.requireLeaderSuperSpecialCriteria);
     this.requireUniqueBaseCharacterNames.set(defaultFilters.requireUniqueBaseCharacterNames);
-    this.requireSameCaptainAndFriendCaptain.set(defaultFilters.requireSameCaptainAndFriendCaptain);
     this.favoritesOnly.set(defaultFilters.favoritesOnly);
     this.favoriteShipsOnly.set(defaultFilters.favoriteShipsOnly);
     this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
@@ -2338,10 +2290,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.excludedShipIds.set([...state.excludedShipIds]);
     this.requireAllSelectedTypesInTeam.set(state.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(state.requireAllSelectedClassesPerCharacter);
-    this.requireAllSpecialsSupportTeam.set(state.requireAllSpecialsSupportTeam);
     this.requireLeaderSuperSpecialCriteria.set(state.requireLeaderSuperSpecialCriteria);
     this.requireUniqueBaseCharacterNames.set(state.requireUniqueBaseCharacterNames);
-    this.requireSameCaptainAndFriendCaptain.set(state.requireSameCaptainAndFriendCaptain);
     this.favoritesOnly.set(state.favoritesOnly);
     this.favoriteShipsOnly.set(state.favoriteShipsOnly);
     this.reconcileFavoriteShipSelection();
@@ -2433,10 +2383,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       }
     }
 
-    if (this.requireSameCaptainAndFriendCaptain() && this.hasManualSameLeaderConflict()) {
-      return this.t('errors.sameCaptain.manualConflict');
-    }
-
     const lockedCount = this.manualSelectionCount();
     const leaderRequirementLabel = this.resolveLeaderFailureLabel();
 
@@ -2451,20 +2397,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       activeRequirements.push(this.t('errors.requirements.classCoverage'));
     }
 
-    if (this.requireAllSpecialsSupportTeam()) {
-      activeRequirements.push(this.t('errors.requirements.specialCoverage'));
-    }
-
     if (this.requireLeaderSuperSpecialCriteria()) {
       activeRequirements.push(this.t('errors.requirements.superSpecialCriteria'));
     }
 
     if (this.requireUniqueBaseCharacterNames()) {
       activeRequirements.push(this.t('errors.requirements.uniqueCharacterNames'));
-    }
-
-    if (this.requireSameCaptainAndFriendCaptain()) {
-      activeRequirements.push(this.t('errors.requirements.sameCaptainAndFriendCaptain'));
     }
 
     if (this.hasRequiredAbilities()) {
@@ -3159,8 +3097,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     highlightedRequirements: AutoBuildAbilityRequirement[],
   ): ManualCharacterCardView[] {
     const activeRole = this.activeManualSlotRole();
+    const visibleCharacters =
+      this.isLeaderManualSlotRole(activeRole) &&
+      highlightedRequirements.some((requirement) =>
+        EXTRA_DROP_ABILITY_KEY_SET.has(requirement.abilityKey),
+      )
+        ? characters.filter((character) =>
+            matchesLeaderOnlyManualRequirements(character, highlightedRequirements),
+          )
+        : characters;
 
-    return characters.map((character) => {
+    return visibleCharacters.map((character) => {
       const isSelectedInActiveSlot = this.isCharacterSelectedInManualSlot(activeRole, character.id);
 
       return {
@@ -3270,19 +3217,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           .flatMap((usageByRole) => [...usageByRole.values()].flatMap((labels) => [...labels])),
       ),
     ];
-  }
-
-  private hasManualSameLeaderConflict(): boolean {
-    const captainIds = this.resolveManualSlotSelection('captain').characterIds;
-    const friendCaptainIds = this.resolveManualSlotSelection('friendCaptain').characterIds;
-
-    if (captainIds.length === 0 || friendCaptainIds.length === 0) {
-      return false;
-    }
-
-    const captainIdSet = new Set(captainIds);
-
-    return !friendCaptainIds.some((characterId) => captainIdSet.has(characterId));
   }
 
   private hasValidUniqueBaseNameAssignment(

@@ -186,15 +186,9 @@
                           {{ t('summary.ruleLabels.classes') }}
                         </small>
                       }
-                      @if (enemy.requireAllSpecialsSupportTeam) {
-                        <small class="enemy-chip enemy-chip--rule">
-                          {{ t('summary.ruleLabels.specials') }}
-                        </small>
-                      }
                       @if (
                         !enemy.requireAllSelectedTypesInTeam &&
-                        !enemy.requireAllSelectedClassesPerCharacter &&
-                        !enemy.requireAllSpecialsSupportTeam
+                        !enemy.requireAllSelectedClassesPerCharacter
                       ) {
                         <small class="enemy-chip enemy-chip--secondary">
                           {{ t('summary.noRules') }}

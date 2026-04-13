@@ -154,8 +154,6 @@
     "toggles": {
       "classes": "Απαίτησε όλα τα selected classes σε κάθε slot",
       "classesCopy": "Κράτα κάθε slot ευθυγραμμισμένο με τους αποθηκευμένους class κανόνες.",
-      "specials": "Απαίτησε special support coverage",
-      "specialsCopy": "Κράτα την ομάδα εστιασμένη σε readable special utility.",
       "types": "Απαίτησε team-wide type coverage",
       "typesCopy": "Κράτα κάθε selected type παρόν στο αποτέλεσμα."
     },
@@ -196,7 +194,6 @@
     "noRules": "Χωρίς strict rules",
     "ruleLabels": {
       "classes": "Strict classes",
-      "specials": "Special support",
       "types": "Strict types"
     },
     "rules": "Κανόνες",

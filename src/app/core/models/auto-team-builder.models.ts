@@ -49,10 +49,8 @@ export function createEmptyAutoBuildManualSlots(): AutoBuildManualSlotSelection[
 export interface AutoBuildConstraints {
   requireAllSelectedTypesInTeam?: boolean;
   requireAllSelectedClassesPerCharacter?: boolean;
-  requireAllSpecialsSupportTeam?: boolean;
   requireLeaderSuperSpecialCriteria?: boolean;
   requireUniqueBaseCharacterNames?: boolean;
-  requireSameCaptainAndFriendCaptain?: boolean;
   requiredAbilities?: AutoBuildAbilityRequirement[];
   enemyMechanics?: AutoBuildEnemyMechanicRequirement[];
   favoritesOnly?: boolean;
@@ -95,10 +93,8 @@ export type AutoBuildUtilityRole =
 export interface AutoBuildInput extends AutoBuildConstraints {
   types: AutoTeamBuilderType[];
   selectedClasses: string[];
-  requireAllSpecialsSupportTeam: boolean;
   requireLeaderSuperSpecialCriteria: boolean;
   requireUniqueBaseCharacterNames: boolean;
-  requireSameCaptainAndFriendCaptain: boolean;
   requiredAbilities: AutoBuildAbilityRequirement[];
   enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   favoritesOnly: boolean;
@@ -178,14 +174,6 @@ export interface AutoBuildLeaderCriteriaSummary {
   allSlotsMatch: boolean;
 }
 
-export interface AutoBuildSpecialSupportSummary {
-  source: "specialText";
-  enabled: boolean;
-  matchingSlots: number;
-  totalSlots: number;
-  allSlotsMatch: boolean;
-}
-
 export interface AutoBuildCandidate {
   character: CharacterDetailRecord;
   captainText: string;
@@ -209,7 +197,6 @@ export interface AutoBuildSlot {
 
 export interface AutoBuildCoverageSummary {
   leaderCriteria: AutoBuildLeaderCriteriaSummary;
-  specialSupport: AutoBuildSpecialSupportSummary;
   abilityRequirements: {
     requested: AutoBuildAbilityRequirement[];
     matched: AutoBuildAbilityRequirement[];

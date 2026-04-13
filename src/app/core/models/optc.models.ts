@@ -159,7 +159,6 @@ export interface SavedEnemy {
   enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
-  requireAllSpecialsSupportTeam: boolean;
   createdAt: string;
   updatedAt: string;
 }

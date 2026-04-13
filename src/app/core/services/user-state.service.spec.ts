@@ -242,7 +242,6 @@ describe('UserStateService saved teams', () => {
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
-      requireAllSpecialsSupportTeam: true,
     });
 
     expect(result).toMatchObject({
@@ -262,7 +261,6 @@ describe('UserStateService saved teams', () => {
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
-      requireAllSpecialsSupportTeam: true,
     });
     expect(service.savedEnemies()[0]?.id).toBe(result.id);
     expect(service.savedEnemies()[1]?.id).toBe('enemy-1');
@@ -472,7 +470,6 @@ function createEnemy(id: string, name: string) {
     enemyMechanics: [],
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
-    requireAllSpecialsSupportTeam: false,
     createdAt: '2026-03-29T10:00:00.000Z',
     updatedAt: '2026-03-29T10:05:00.000Z',
   };

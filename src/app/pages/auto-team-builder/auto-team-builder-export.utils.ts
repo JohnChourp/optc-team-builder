@@ -61,7 +61,7 @@ export interface AutoTeamSelectionShipSummary {
 }
 
 export interface AutoTeamSelectionExportPayload {
-  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
   exportedAt: string;
   source: "auto-team-builder";
   exportType: "preset";
@@ -72,10 +72,8 @@ export interface AutoTeamSelectionExportPayload {
     enemyMechanics?: AutoBuildEnemyMechanicRequirement[];
     requireAllSelectedTypesInTeam: boolean;
     requireAllSelectedClassesPerCharacter: boolean;
-    requireAllSpecialsSupportTeam: boolean;
     requireLeaderSuperSpecialCriteria?: boolean;
     requireUniqueBaseCharacterNames: boolean;
-    requireSameCaptainAndFriendCaptain: boolean;
     favoritesOnly: boolean;
     favoriteCount: number;
     favoriteShipsOnly?: boolean;
@@ -104,10 +102,8 @@ export interface AutoTeamSelectionImportState {
   enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
-  requireAllSpecialsSupportTeam: boolean;
   requireLeaderSuperSpecialCriteria: boolean;
   requireUniqueBaseCharacterNames: boolean;
-  requireSameCaptainAndFriendCaptain: boolean;
   favoritesOnly: boolean;
   favoriteShipsOnly: boolean;
   manualSlots: AutoBuildManualSlotSelection[];
@@ -154,10 +150,8 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   enemyMechanics: AutoBuildResult["input"]["enemyMechanics"];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
-  requireAllSpecialsSupportTeam: boolean;
   requireLeaderSuperSpecialCriteria?: boolean;
   requireUniqueBaseCharacterNames: boolean;
-  requireSameCaptainAndFriendCaptain?: boolean;
   favoritesOnly: boolean;
   favoriteCount: number;
   favoriteShipsOnly?: boolean;
@@ -408,7 +402,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload["schemaVersion"] !== 7 &&
       parsedPayload["schemaVersion"] !== 8 &&
       parsedPayload["schemaVersion"] !== 9 &&
-      parsedPayload["schemaVersion"] !== 10) ||
+      parsedPayload["schemaVersion"] !== 10 &&
+      parsedPayload["schemaVersion"] !== 11) ||
     parsedPayload["source"] !== "auto-team-builder" ||
     parsedPayload["exportType"] !== "preset"
   ) {
@@ -438,7 +433,10 @@ export function parseAutoTeamSelectionImportPayload(
     ) ||
     typeof filters["requireAllSelectedTypesInTeam"] !== "boolean" ||
     typeof filters["requireAllSelectedClassesPerCharacter"] !== "boolean" ||
-    typeof filters["requireAllSpecialsSupportTeam"] !== "boolean" ||
+    !(
+      filters["requireAllSpecialsSupportTeam"] === undefined ||
+      typeof filters["requireAllSpecialsSupportTeam"] === "boolean"
+    ) ||
     !(
       filters["requireLeaderSuperSpecialCriteria"] === undefined ||
       typeof filters["requireLeaderSuperSpecialCriteria"] === "boolean"
@@ -827,12 +825,9 @@ export function sanitizeAutoTeamSelectionImportPayload(
       enemyMechanics,
       requireAllSelectedTypesInTeam: payload.filters.requireAllSelectedTypesInTeam,
       requireAllSelectedClassesPerCharacter: payload.filters.requireAllSelectedClassesPerCharacter,
-      requireAllSpecialsSupportTeam: payload.filters.requireAllSpecialsSupportTeam,
       requireLeaderSuperSpecialCriteria:
         payload.filters.requireLeaderSuperSpecialCriteria !== false,
       requireUniqueBaseCharacterNames: payload.filters.requireUniqueBaseCharacterNames === true,
-      requireSameCaptainAndFriendCaptain:
-        payload.filters.requireSameCaptainAndFriendCaptain === true,
       favoritesOnly: payload.filters.favoritesOnly,
       favoriteShipsOnly: payload.filters.favoriteShipsOnly === true,
       manualSlots: normalizedManualSlots,
@@ -896,10 +891,8 @@ export function buildAutoTeamSelectionExportPayload({
   enemyMechanics,
   requireAllSelectedTypesInTeam,
   requireAllSelectedClassesPerCharacter,
-  requireAllSpecialsSupportTeam,
   requireLeaderSuperSpecialCriteria = true,
   requireUniqueBaseCharacterNames,
-  requireSameCaptainAndFriendCaptain = false,
   favoritesOnly,
   favoriteCount,
   favoriteShipsOnly = false,
@@ -924,7 +917,7 @@ export function buildAutoTeamSelectionExportPayload({
   }));
 
   return {
-    schemaVersion: 10,
+    schemaVersion: 11,
     exportedAt,
     source: "auto-team-builder",
     exportType: "preset",
@@ -943,10 +936,8 @@ export function buildAutoTeamSelectionExportPayload({
       })),
       requireAllSelectedTypesInTeam,
       requireAllSelectedClassesPerCharacter,
-      requireAllSpecialsSupportTeam,
       requireLeaderSuperSpecialCriteria,
       requireUniqueBaseCharacterNames,
-      requireSameCaptainAndFriendCaptain,
       favoritesOnly,
       favoriteCount,
       favoriteShipsOnly,

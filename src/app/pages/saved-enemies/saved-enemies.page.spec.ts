@@ -225,7 +225,6 @@ describe('SavedEnemiesPage', () => {
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
-      requireAllSpecialsSupportTeam: false,
     });
     expect(page.editorOpen()).toBe(false);
   });
@@ -595,7 +594,6 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
         requireAllSelectedClassesPerCharacter: Boolean(
           input['requireAllSelectedClassesPerCharacter'],
         ),
-        requireAllSpecialsSupportTeam: Boolean(input['requireAllSpecialsSupportTeam']),
         createdAt: '2026-03-30T10:00:00.000Z',
         updatedAt: '2026-03-30T10:05:00.000Z',
       };
@@ -939,7 +937,6 @@ function buildSavedEnemies() {
       ],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
-      requireAllSpecialsSupportTeam: true,
       createdAt: '2026-03-30T10:00:00.000Z',
       updatedAt: '2026-03-30T10:05:00.000Z',
     },
@@ -954,7 +951,6 @@ function buildSavedEnemies() {
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: true,
-      requireAllSpecialsSupportTeam: false,
       createdAt: '2026-03-30T10:10:00.000Z',
       updatedAt: '2026-03-30T10:15:00.000Z',
     },

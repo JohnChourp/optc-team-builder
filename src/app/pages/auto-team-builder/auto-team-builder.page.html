@@ -188,32 +188,6 @@
 
           <div class="strict-toggle-row">
             <div class="strict-toggle-copy">
-              <strong>{{ sameCaptainAndFriendCaptainToggleLabel() }}</strong>
-              <small>{{ sameCaptainAndFriendCaptainSupportLabel() }}</small>
-            </div>
-            <ion-toggle
-              color="warning"
-              [checked]="requireSameCaptainAndFriendCaptain()"
-              [disabled]="building()"
-              (ionChange)="onRequireSameCaptainAndFriendCaptainToggle($event)"
-            ></ion-toggle>
-          </div>
-
-          <div class="strict-toggle-row">
-            <div class="strict-toggle-copy">
-              <strong>{{ specialSupportToggleLabel() }}</strong>
-              <small>{{ specialSupportLabel() }}</small>
-            </div>
-            <ion-toggle
-              color="warning"
-              [checked]="requireAllSpecialsSupportTeam()"
-              [disabled]="building()"
-              (ionChange)="onRequireAllSpecialsSupportToggle($event)"
-            ></ion-toggle>
-          </div>
-
-          <div class="strict-toggle-row">
-            <div class="strict-toggle-copy">
               <strong>{{ leaderSuperSpecialCriteriaToggleLabel() }}</strong>
               <small>{{ leaderSuperSpecialCriteriaSupportLabel() }}</small>
             </div>
@@ -1301,14 +1275,6 @@
               <div class="chip-row">
                 <small class="coverage-chip summary-status-chip">{{
                   leaderCriteriaScopeSummaryLabel()
-                }}</small>
-              </div>
-            </div>
-            <div>
-              <span>{{ t('coverage.groups.specialSupport') }}</span>
-              <div class="chip-row">
-                <small class="coverage-chip summary-status-chip">{{
-                  specialSupportSummaryLabel()
                 }}</small>
               </div>
             </div>

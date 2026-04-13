@@ -354,6 +354,76 @@ describe('Auto team builder', () => {
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
   });
 
+  it('requires both leader slots to satisfy guaranteed extra-drop requirements', () => {
+    const input = createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], ['Fighter']);
+    const result = buildAutoTeamResult(createExtraDropLeaderSelectionRecords(), {
+      ...input,
+      requiredAbilities: [
+        {
+          abilityKey: 'extra_drop_guaranteed',
+          minTurns: null,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+        },
+      ],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.detail.builderAbilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'extra_drop_guaranteed', source: 'captainAbility' }),
+      ]),
+    );
+    expect(result?.slots[1]?.character.detail.builderAbilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'extra_drop_guaranteed', source: 'captainAbility' }),
+      ]),
+    );
+    expect(result?.slots[0]?.character.id).not.toBe(1588);
+    expect(result?.slots[1]?.character.id).not.toBe(1588);
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+  });
+
+  it('does not let a sub-only extra-drop character satisfy leader-only extra-drop rules', () => {
+    const input = createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], ['Fighter'], {
+      captainCharacterId: 1588,
+      friendCaptainCharacterId: 1588,
+    });
+    const result = buildAutoTeamResult(createSubOnlyExtraDropTeamRecords(), {
+      ...input,
+      requiredAbilities: [
+        {
+          abilityKey: 'extra_drop_guaranteed',
+          minTurns: null,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+        },
+      ],
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it('fails when a manually selected captain lacks the required guaranteed extra-drop ability', () => {
+    const input = createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], ['Fighter'], {
+      captainCharacterId: 1588,
+      friendCaptainCharacterId: 2035,
+    });
+    const result = buildAutoTeamResult(createExtraDropLeaderSelectionRecords(), {
+      ...input,
+      requiredAbilities: [
+        {
+          abilityKey: 'extra_drop_guaranteed',
+          minTurns: null,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+        },
+      ],
+    });
+
+    expect(result).toBeNull();
+  });
+
   it('allows matching base character names when the unique-name toggle is off', () => {
     const result = buildAutoTeamResult(
       [
@@ -1253,79 +1323,6 @@ describe('Auto team builder', () => {
     expect(result?.slots.some((slot) => slot.character.id === 2577)).toBe(false);
   });
 
-  it('keeps the existing selection behavior when the special-support toggle is off', () => {
-    const result = buildAutoTeamResult(
-      createStrictMixedTeamRecords(),
-      createInput(['DEX', 'PSY'], ['Fighter', 'Slasher']),
-    );
-
-    expect(result).not.toBeNull();
-    expect(result?.coverage.specialSupport.enabled).toBe(false);
-    expect(result?.coverage.specialSupport.allSlotsMatch).toBe(false);
-  });
-
-  it('accepts restricted specials when they cover the full final team', () => {
-    const result = buildAutoTeamResult(createTeamwideSpecialScopedRecords(), {
-      ...createInput(['DEX', 'PSY'], ['Fighter', 'Slasher'], {
-        requireAllSpecialsSupportTeam: true,
-      }),
-    });
-
-    expect(result).not.toBeNull();
-    expect(result?.coverage.specialSupport.enabled).toBe(true);
-    expect(result?.coverage.specialSupport.allSlotsMatch).toBe(true);
-    expect(result?.slots.every((slot) => slot.reasonChips.includes('Teamwide special'))).toBe(true);
-  });
-
-  it('rejects high-cost locked characters when strict low-cost-only special support is enabled', () => {
-    const result = buildAutoTeamResult(createLowCostStrictSpecialTeamRecords(), {
-      ...createInput(['DEX'], ['Fighter'], {
-        requireAllSpecialsSupportTeam: true,
-        lockedCharacterIds: [2800, 2806],
-        captainCharacterId: 2800,
-        friendCaptainCharacterId: 2800,
-      }),
-    });
-
-    expect(result).toBeNull();
-  });
-
-  it('rejects teams when even one slot lacks teamwide special support', () => {
-    const result = buildAutoTeamResult(createStrictMixedTeamRecords(), {
-      ...createInput(['DEX', 'PSY'], ['Fighter', 'Slasher'], {
-        requireAllSpecialsSupportTeam: true,
-      }),
-    });
-
-    expect(result).toBeNull();
-  });
-
-  it('fails when selected dual leaders are not mutually special-compatible', () => {
-    const result = buildAutoTeamResult(createDualLeaderSpecialMismatchRecords(), {
-      ...createInput(['DEX', 'PSY'], ['Fighter'], {
-        lockedCharacterIds: [5940, 5941],
-        captainCharacterId: 5940,
-        friendCaptainCharacterId: 5941,
-        requireAllSpecialsSupportTeam: true,
-      }),
-    });
-
-    expect(result).toBeNull();
-  });
-
-  it('fails when a locked sub special does not support the full final team', () => {
-    const result = buildAutoTeamResult(createLockedSpecialMismatchRecords(), {
-      ...createInput(['DEX', 'PSY'], ['Fighter', 'Slasher'], {
-        lockedCharacterIds: [5940, 5946],
-        captainCharacterId: 5940,
-        friendCaptainCharacterId: 5940,
-        requireAllSpecialsSupportTeam: true,
-      }),
-    });
-
-    expect(result).toBeNull();
-  });
-
   it('rejects a leader with only non-roster super special criteria when the toggle is enabled', () => {
     const result = buildAutoTeamResult(
       [
@@ -1767,9 +1764,7 @@ describe('Auto team builder', () => {
 
     expect(result?.input.requireAllSelectedTypesInTeam).toBe(false);
     expect(result?.input.requireAllSelectedClassesPerCharacter).toBe(false);
-    expect(result?.input.requireAllSpecialsSupportTeam).toBe(false);
     expect(result?.input.requireUniqueBaseCharacterNames).toBe(false);
-    expect(result?.input.requireSameCaptainAndFriendCaptain).toBe(false);
     expect(result?.input.favoritesOnly).toBe(false);
     expect(result?.input.favoriteShipsOnly).toBe(false);
     expect(result?.input.favoriteShipIds).toEqual([]);
@@ -1838,17 +1833,6 @@ describe('Auto team builder', () => {
 
     expect(result?.input.captainCharacterId).toBe(5925);
     expect(result?.input.friendCaptainCharacterId).toBe(5925);
-  });
-
-  it('returns only duplicated leader pairs when same-captain mode is enabled', () => {
-    const result = buildAutoTeamResult(createDualLeaderMixedTeamRecords(), {
-      ...createInput(['DEX', 'PSY'], ['Fighter', 'Slasher'], {
-        requireSameCaptainAndFriendCaptain: true,
-      }),
-    });
-
-    expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(result?.slots[1]?.character.id);
   });
 
   it('derives legacy leader ids from slot-based manual selections and keeps shared leaders valid', async () => {
@@ -1937,24 +1921,6 @@ describe('Auto team builder', () => {
     expect(repository.getAutoBuilderCandidates).not.toHaveBeenCalled();
   });
 
-  it('returns null before querying when same-captain mode conflicts with manual leader picks', async () => {
-    const repository = {
-      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
-    };
-    const service = new AutoTeamBuilderService(repository as never);
-
-    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
-      requireSameCaptainAndFriendCaptain: true,
-      manualSlots: createManualSlots({
-        captain: [5925],
-        friendCaptain: [5927],
-      }),
-    });
-
-    expect(result).toBeNull();
-    expect(repository.getAutoBuilderCandidates).not.toHaveBeenCalled();
-  });
-
   it('keeps a non-favorite legacy leader while querying the auto-fill pool from favorites only', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
@@ -2020,22 +1986,17 @@ describe('Auto team builder', () => {
     });
   });
 
-  it('relaxes class coverage without dropping the special-support requirement', async () => {
+  it('relaxes class coverage independently of removed special-support rules', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createTeamwideSpecialScopedRecords()),
     };
     const service = new AutoTeamBuilderService(repository as never);
 
-    const result = await service.buildTeam(['Fighter', 'Shooter'], ['DEX', 'PSY'], {
-      requireAllSpecialsSupportTeam: true,
-    });
+    const result = await service.buildTeam(['Fighter', 'Shooter'], ['DEX', 'PSY']);
 
     expect(result).not.toBeNull();
     expect(result?.requestedInput.selectedClasses).toEqual(['Fighter', 'Shooter']);
     expect(result?.input.selectedClasses).toEqual(['Fighter']);
-    expect(result?.input.requireAllSpecialsSupportTeam).toBe(true);
-    expect(result?.coverage.specialSupport.enabled).toBe(true);
-    expect(result?.coverage.specialSupport.allSlotsMatch).toBe(true);
   });
 
   it('drops the weakest uncovered type in flexible mode when exact type coverage fails', async () => {
@@ -2662,10 +2623,8 @@ function createInput(
       AutoBuildInput,
       | 'requireAllSelectedTypesInTeam'
       | 'requireAllSelectedClassesPerCharacter'
-      | 'requireAllSpecialsSupportTeam'
       | 'requireLeaderSuperSpecialCriteria'
       | 'requireUniqueBaseCharacterNames'
-      | 'requireSameCaptainAndFriendCaptain'
       | 'favoritesOnly'
       | 'favoriteShipsOnly'
       | 'favoriteShipIds'
@@ -2679,10 +2638,8 @@ function createInput(
   > = {
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
-    requireAllSpecialsSupportTeam: false,
     requireLeaderSuperSpecialCriteria: false,
     requireUniqueBaseCharacterNames: false,
-    requireSameCaptainAndFriendCaptain: false,
     favoritesOnly: false,
     favoriteShipsOnly: false,
     favoriteShipIds: [],
@@ -2705,11 +2662,8 @@ function createInput(
     enemyMechanics: [],
     requireAllSelectedTypesInTeam: overrides.requireAllSelectedTypesInTeam ?? false,
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
-    requireAllSpecialsSupportTeam: overrides.requireAllSpecialsSupportTeam ?? false,
     requireLeaderSuperSpecialCriteria: overrides.requireLeaderSuperSpecialCriteria ?? false,
     requireUniqueBaseCharacterNames: overrides.requireUniqueBaseCharacterNames ?? false,
-    requireSameCaptainAndFriendCaptain:
-      overrides.requireSameCaptainAndFriendCaptain ?? false,
     favoritesOnly: overrides.favoritesOnly ?? false,
     favoriteShipsOnly: overrides.favoriteShipsOnly ?? false,
     favoriteShipIds: overrides.favoriteShipIds ?? [],
@@ -2801,6 +2755,45 @@ function createUniversalCaptainRecord(): CharacterDetailRecord {
   });
 }
 
+function createGuaranteedExtraDropLeaderRecord(
+  id: number,
+  name: string,
+  type: AutoTeamBuilderType,
+): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    name,
+    type,
+    primaryClass: 'Fighter',
+    secondaryClass: 'Free Spirit',
+    cost: 40,
+    detail: {
+      captainAbility:
+        'Boosts ATK of all characters by 3x, boosts HP by 1.2x and guarantees duplicating a drop upon completion of the island.',
+      specialText:
+        'Boosts ATK of all characters by 2x for 1 turn and changes crew orbs into Matching Orbs.',
+      builderAbilities: [
+        {
+          key: 'extra_drop_any',
+          label: 'Any Extra Drop',
+          minTurns: null,
+          isCompleteRemoval: false,
+          slotTokens: [],
+          source: 'captainAbility',
+        },
+        {
+          key: 'extra_drop_guaranteed',
+          label: 'Guaranteed Extra Drop',
+          minTurns: null,
+          isCompleteRemoval: false,
+          slotTokens: [],
+          source: 'captainAbility',
+        },
+      ],
+    },
+  });
+}
+
 function createPartialMultiTypeCaptainRecord(): CharacterDetailRecord {
   return createCharacterRecord({
     id: 5906,
@@ -2882,6 +2875,55 @@ function createSingleTypeRecords(): CharacterDetailRecord[] {
     createAffinitySubRecord(),
     createUtilitySubRecord(),
     createConsistencySubRecord(),
+  ];
+}
+
+function createExtraDropLeaderSelectionRecords(): CharacterDetailRecord[] {
+  return [
+    createCharacterRecord({
+      id: 1588,
+      name: 'Sanji - Prince, Kingdom of Germa',
+      type: 'INT',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      detail: {
+        captainAbility:
+          'Boosts ATK of Fighter and Powerhouse characters by 4.5x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.',
+        specialText:
+          'Boosts orb effects of Fighter characters by 2x for 1 turn and changes crew orbs into Matching Orbs.',
+      },
+    }),
+    createGuaranteedExtraDropLeaderRecord(2035, 'Buggy the Genius Jester', 'INT'),
+    createGuaranteedExtraDropLeaderRecord(1391, 'Captain Buggy', 'DEX'),
+    createAtkSubRecord(),
+    createAffinitySubRecord(),
+    createUtilitySubRecord(),
+    createConsistencySubRecord(),
+    createOffClassRedundantSubRecord(),
+  ];
+}
+
+function createSubOnlyExtraDropTeamRecords(): CharacterDetailRecord[] {
+  return [
+    createCharacterRecord({
+      id: 1588,
+      name: 'Sanji - Prince, Kingdom of Germa',
+      type: 'INT',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      detail: {
+        captainAbility:
+          'Boosts ATK of Fighter and Powerhouse characters by 4.5x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.',
+        specialText:
+          'Boosts orb effects of Fighter characters by 2x for 1 turn and changes crew orbs into Matching Orbs.',
+      },
+    }),
+    createGuaranteedExtraDropLeaderRecord(2035, 'Buggy the Genius Jester', 'INT'),
+    createAtkSubRecord(),
+    createAffinitySubRecord(),
+    createUtilitySubRecord(),
+    createConsistencySubRecord(),
+    createOffClassRedundantSubRecord(),
   ];
 }
 
@@ -3010,13 +3052,6 @@ function buildWorkerResult(
         maxAllowedCost: null,
         hasClassRestriction: false,
         hasTypeRestriction: false,
-        matchingSlots: 0,
-        totalSlots: 0,
-        allSlotsMatch: true,
-      },
-      specialSupport: {
-        source: 'specialText',
-        enabled: false,
         matchingSlots: 0,
         totalSlots: 0,
         allSlotsMatch: true,

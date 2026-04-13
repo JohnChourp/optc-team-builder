@@ -148,7 +148,6 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public readonly abilityPickerOpen = signal(false);
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
-  public readonly requireAllSpecialsSupportTeam = signal(false);
   public readonly savingEnemy = signal(false);
   public readonly addIcon = addCircleOutline;
   public readonly closeIcon = closeOutline;
@@ -337,7 +336,6 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.requiredAbilityDrafts.set([]);
     this.requireAllSelectedTypesInTeam.set(false);
     this.requireAllSelectedClassesPerCharacter.set(false);
-    this.requireAllSpecialsSupportTeam.set(false);
     this.savingEnemy.set(false);
     this.editorOpen.set(true);
   }
@@ -366,7 +364,6 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     );
     this.requireAllSelectedTypesInTeam.set(enemy.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(enemy.requireAllSelectedClassesPerCharacter);
-    this.requireAllSpecialsSupportTeam.set(enemy.requireAllSpecialsSupportTeam);
     this.savingEnemy.set(false);
     this.editorOpen.set(true);
   }
@@ -589,7 +586,6 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
         enemyMechanics: this.serializeEnemyMechanics(),
         requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
         requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
-        requireAllSpecialsSupportTeam: this.requireAllSpecialsSupportTeam(),
       });
       this.closeEditor();
     } finally {
