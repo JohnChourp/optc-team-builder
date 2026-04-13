@@ -11,6 +11,7 @@ export const MANUAL_CHARACTER_ID_MIN = 900000;
 
 const MANUAL_DETAIL_NULLABLE_TEXT_KEYS = [
   'captainAbility',
+  'captainNotes',
   'specialName',
   'specialText',
   'specialNotes',
@@ -20,6 +21,7 @@ const MANUAL_DETAIL_NULLABLE_TEXT_KEYS = [
   'sailorNotes',
 ];
 const MANUAL_DETAIL_ARRAY_OBJECT_KEYS = [
+  'captainAbilityVariants',
   'limitBreak',
   'potentialAbilities',
   'supportData',
@@ -33,7 +35,7 @@ const MANUAL_DETAIL_OBJECT_KEYS = [
   'superClass',
   'rumbleData',
 ];
-const MANUAL_DETAIL_STRING_ARRAY_KEYS = ['sailorAbilities'];
+const MANUAL_DETAIL_STRING_ARRAY_KEYS = ['partyConflictKeys', 'sailorAbilities'];
 export function isManualCharacterId(value) {
   return Number.isInteger(value) && value >= MANUAL_CHARACTER_ID_MIN;
 }
@@ -42,6 +44,8 @@ export function createEmptyManualDetail(characterId) {
   return {
     characterId,
     captainAbility: null,
+    captainAbilityVariants: [],
+    captainNotes: null,
     specialName: null,
     specialText: null,
     specialNotes: null,
@@ -49,6 +53,7 @@ export function createEmptyManualDetail(characterId) {
     superSpecialCriteriaText: null,
     superSpecialNotes: null,
     superSpecialCriteria: null,
+    partyConflictKeys: [],
     builderAbilities: [],
     sailorAbilities: [],
     sailorNotes: null,

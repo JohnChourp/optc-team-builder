@@ -8,6 +8,7 @@
   },
   "fields": {
     "captainEffect": "Captain effect",
+    "captainNotes": "Captain notes",
     "combo": "Combo",
     "completeRemoval": "Complete removal",
     "conflicts": "Conflict keys",

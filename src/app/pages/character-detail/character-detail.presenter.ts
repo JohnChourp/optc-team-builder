@@ -221,14 +221,33 @@ function buildOverviewGroup(character: CharacterDetailRecord): DetailDisplayGrou
 function buildAbilitiesGroup(character: CharacterDetailRecord): DetailDisplayGroup | null {
   const { detail } = character;
   const cards: DetailDisplayCard[] = [];
+  const captainAbilityVariants = detail.captainAbilityVariants.length
+    ? detail.captainAbilityVariants
+    : detail.captainAbility
+      ? [
+          {
+            key: 'captain',
+            label: 'Captain Ability',
+            text: detail.captainAbility,
+          },
+        ]
+      : [];
 
-  if (detail.captainAbility) {
+  if (captainAbilityVariants.length || detail.captainNotes) {
     cards.push({
       titleKey: "sections.captainAbility",
       rows: [],
-      texts: [createText("fields.captainEffect", detail.captainAbility)],
+      texts: detail.captainNotes
+        ? [createText("fields.captainNotes", detail.captainNotes, "muted")]
+        : [],
       lists: [],
-      entries: [],
+      entries: captainAbilityVariants.map((entry) => ({
+        title: entry.label,
+        rows: [],
+        texts: [createText(undefined, entry.text)],
+        lists: [],
+        chips: [],
+      })),
       chips: [],
     });
   }

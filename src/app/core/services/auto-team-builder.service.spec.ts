@@ -43,6 +43,8 @@ describe('Auto team builder', () => {
 
     expect(candidate.tags.captainScope.allowedClasses).toEqual(['Fighter', 'Slasher']);
     expect(candidate.tags.captainScope.allowedTypes).toEqual(['DEX']);
+    expect(candidate.tags.captainScope.hasCostRestriction).toBe(false);
+    expect(candidate.tags.captainScope.maxAllowedCost).toBeNull();
     expect(candidate.tags.captainScope.hasClassRestriction).toBe(true);
     expect(candidate.tags.captainScope.hasTypeRestriction).toBe(true);
     expect(candidate.tags.captainScope.matchedSelectedClasses).toEqual(['Fighter', 'Slasher']);
@@ -80,6 +82,55 @@ describe('Auto team builder', () => {
     expect(candidate.tags.captainScope.matchedSelectedTypeCount).toBe(2);
     expect(candidate.tags.captainScope.coversAllSelectedTypes).toBe(false);
     expect(candidate.reasonChips).toContain('DEX / PSY captain');
+  });
+
+  it('derives a hard captain cost restriction from low-cost-only Buggy text', () => {
+    const candidate = buildAutoBuildCandidate(
+      createCharacterRecord({
+        id: 2035,
+        name: 'Buggy the Genius Jester',
+        type: 'INT',
+        cost: 40,
+        primaryClass: 'Driven',
+        secondaryClass: 'Shooter',
+        detail: {
+          captainAbility:
+            'Boosts ATK of Cost 40 or less characters by 1.75x and reduces ATK and HP of Cost 41 or higher characters by 50%. Guarantees duplicating a drop upon completion of the island.',
+          specialText:
+            'Boosts ATK of Cost 40 or less characters by 2x for 2 turns and changes orbs of Cost 40 or lower characters into Matching Orbs.',
+        },
+      }),
+      createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT']),
+      0,
+      1,
+    );
+
+    expect(candidate.tags.captainScope.hasCostRestriction).toBe(true);
+    expect(candidate.tags.captainScope.maxAllowedCost).toBe(40);
+  });
+
+  it('does not treat bonus low-cost captain branches as a hard cost restriction', () => {
+    const candidate = buildAutoBuildCandidate(
+      createCharacterRecord({
+        id: 4111,
+        name: 'Buggy & Crocodile & Mihawk',
+        type: 'QCK',
+        primaryClass: 'Driven',
+        secondaryClass: 'Slasher',
+        detail: {
+          captainAbility:
+            'Reduces Special Cooldown of Driven and Slasher characters by 1 turn at the start of the fight, boosts HP of Driven and Slasher characters by 1.3x, boosts ATK of Driven and Slasher characters by 5.5x, by 6x instead if they are a Cost 40 or less character, makes [TND] orbs beneficial for Driven and Slasher characters, and reduces damage received by 20%.',
+          specialText:
+            'Boosts Orb Effects of Driven and Slasher characters by 2.75x for 2 turns.',
+        },
+      }),
+      createInput(['QCK'], ['Driven', 'Slasher']),
+      0,
+      1,
+    );
+
+    expect(candidate.tags.captainScope.hasCostRestriction).toBe(false);
+    expect(candidate.tags.captainScope.maxAllowedCost).toBeNull();
   });
 
   it('ignores recent placeholders with empty effect text', () => {
@@ -1122,6 +1173,8 @@ describe('Auto team builder', () => {
       'Powerhouse',
       'Striker',
     ]);
+    expect(result?.coverage.leaderCriteria.hasCostRestriction).toBe(false);
+    expect(result?.coverage.leaderCriteria.maxAllowedCost).toBeNull();
     expect(result?.coverage.leaderCriteria.hasClassRestriction).toBe(true);
     expect(result?.coverage.leaderCriteria.hasTypeRestriction).toBe(false);
     expect(result?.coverage.leaderCriteria.matchingSlots).toBe(6);
@@ -1175,10 +1228,29 @@ describe('Auto team builder', () => {
     });
 
     expect(result).not.toBeNull();
+    expect(result?.coverage.leaderCriteria.hasCostRestriction).toBe(false);
+    expect(result?.coverage.leaderCriteria.maxAllowedCost).toBeNull();
     expect(result?.coverage.leaderCriteria.hasClassRestriction).toBe(false);
     expect(result?.coverage.leaderCriteria.hasTypeRestriction).toBe(false);
     expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
     expect(result?.slots.some((slot) => slot.character.id === 2724)).toBe(true);
+  });
+
+  it('filters dual Buggy teams to cost-40-or-less characters', () => {
+    const result = buildAutoTeamResult(createBuggyLeaderTeamRecords(), {
+      ...createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], [], {
+        lockedCharacterIds: [2035],
+        captainCharacterId: 2035,
+        friendCaptainCharacterId: 2035,
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.leaderCriteria.hasCostRestriction).toBe(true);
+    expect(result?.coverage.leaderCriteria.maxAllowedCost).toBe(40);
+    expect(result?.slots.every((slot) => slot.character.cost <= 40)).toBe(true);
+    expect(result?.slots.some((slot) => slot.character.id === 2534)).toBe(false);
+    expect(result?.slots.some((slot) => slot.character.id === 2577)).toBe(false);
   });
 
   it('keeps the existing selection behavior when the special-support toggle is off', () => {
@@ -1203,6 +1275,19 @@ describe('Auto team builder', () => {
     expect(result?.coverage.specialSupport.enabled).toBe(true);
     expect(result?.coverage.specialSupport.allSlotsMatch).toBe(true);
     expect(result?.slots.every((slot) => slot.reasonChips.includes('Teamwide special'))).toBe(true);
+  });
+
+  it('rejects high-cost locked characters when strict low-cost-only special support is enabled', () => {
+    const result = buildAutoTeamResult(createLowCostStrictSpecialTeamRecords(), {
+      ...createInput(['DEX'], ['Fighter'], {
+        requireAllSpecialsSupportTeam: true,
+        lockedCharacterIds: [2800, 2806],
+        captainCharacterId: 2800,
+        friendCaptainCharacterId: 2800,
+      }),
+    });
+
+    expect(result).toBeNull();
   });
 
   it('rejects teams when even one slot lacks teamwide special support', () => {
@@ -2921,6 +3006,8 @@ function buildWorkerResult(
         dualLeaderMode: 'single',
         derivedAllowedClasses: [],
         derivedAllowedTypes: [],
+        hasCostRestriction: false,
+        maxAllowedCost: null,
         hasClassRestriction: false,
         hasTypeRestriction: false,
         matchingSlots: 0,
@@ -3246,6 +3333,166 @@ function createScopeFreeLeaderTeamRecords(): CharacterDetailRecord[] {
       primaryClass: 'Driven',
       detail: {
         specialText: 'Changes crew orbs into Matching Orbs and reduces Special Cooldown by 1 turn.',
+      },
+    }),
+  ];
+}
+
+function createBuggyLeaderTeamRecords(): CharacterDetailRecord[] {
+  return [
+    createCharacterRecord({
+      id: 2035,
+      name: 'Buggy the Genius Jester',
+      type: 'INT',
+      cost: 40,
+      primaryClass: 'Driven',
+      secondaryClass: 'Shooter',
+      detail: {
+        captainAbility:
+          'Boosts ATK of Cost 40 or less characters by 1.75x and reduces ATK and HP of Cost 41 or higher characters by 50%. Guarantees duplicating a drop upon completion of the island.',
+        specialText:
+          'Boosts ATK of Cost 40 or less characters by 2x for 2 turns. Changes orbs of Cost 40 or lower characters into Matching Orbs.',
+      },
+    }),
+    createCharacterRecord({
+      id: 2534,
+      name: 'Luffy & Law - Miracle-Making Generation',
+      type: 'DEX',
+      cost: 55,
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      detail: {
+        specialText:
+          'Boosts ATK of all characters by 2.5x for 1 turn, boosts color affinity of all characters by 2x for 1 turn and changes crew orbs into Matching Orbs.',
+      },
+    }),
+    createCharacterRecord({
+      id: 2577,
+      name: 'Dogstorm & Cat Viper - Antagonistic Kings of Day and Night',
+      type: 'PSY',
+      cost: 55,
+      primaryClass: 'Fighter',
+      secondaryClass: 'Slasher',
+      detail: {
+        specialText:
+          'Boosts orb effects of all characters by 2.5x for 1 turn and reduces Bind and Despair duration by 5 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 3872,
+      name: 'Black Maria - Entrapping Flammable Threads',
+      type: 'QCK',
+      cost: 30,
+      primaryClass: 'Driven',
+      secondaryClass: 'Cerebral',
+      detail: {
+        specialText:
+          'Boosts orb effects of all characters by 2.25x for 1 turn and changes crew orbs into Matching Orbs.',
+      },
+    }),
+    createCharacterRecord({
+      id: 3577,
+      name: 'Robin - Emperor-Felling Flower',
+      type: 'PSY',
+      cost: 30,
+      primaryClass: 'Cerebral',
+      secondaryClass: 'Free Spirit',
+      detail: {
+        specialText:
+          'Boosts color affinity of all characters by 2x for 1 turn and reduces Paralysis duration by 5 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 3601,
+      type: 'STR',
+      cost: 40,
+      primaryClass: 'Powerhouse',
+      secondaryClass: 'Striker',
+      detail: {
+        specialText: 'Boosts ATK of all characters by 2.25x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 3602,
+      type: 'DEX',
+      cost: 35,
+      primaryClass: 'Shooter',
+      secondaryClass: 'Driven',
+      detail: {
+        specialText: 'Reduces Bind and Despair duration by 5 turns.',
+      },
+    }),
+  ];
+}
+
+function createLowCostStrictSpecialTeamRecords(): CharacterDetailRecord[] {
+  const lowCostSpecial =
+    'Boosts ATK of Cost 40 or less characters by 2x for 1 turn and changes orbs of Cost 40 or lower characters into Matching Orbs.';
+
+  return [
+    createCharacterRecord({
+      id: 2800,
+      type: 'DEX',
+      cost: 30,
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 4.5x and HP by 1.3x.',
+        specialText: lowCostSpecial,
+      },
+    }),
+    createCharacterRecord({
+      id: 2801,
+      type: 'DEX',
+      cost: 35,
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: lowCostSpecial,
+      },
+    }),
+    createCharacterRecord({
+      id: 2802,
+      type: 'DEX',
+      cost: 40,
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: lowCostSpecial,
+      },
+    }),
+    createCharacterRecord({
+      id: 2803,
+      type: 'DEX',
+      cost: 30,
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: lowCostSpecial,
+      },
+    }),
+    createCharacterRecord({
+      id: 2804,
+      type: 'DEX',
+      cost: 38,
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: lowCostSpecial,
+      },
+    }),
+    createCharacterRecord({
+      id: 2805,
+      type: 'DEX',
+      cost: 32,
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: lowCostSpecial,
+      },
+    }),
+    createCharacterRecord({
+      id: 2806,
+      type: 'DEX',
+      cost: 55,
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: lowCostSpecial,
       },
     }),
   ];

@@ -771,12 +771,143 @@ function normalizeSupportData(rawSupportData) {
     .filter((entry) => Boolean(entry));
 }
 
+const CAPTAIN_VARIANT_ORDER = [
+  'base',
+  'level1',
+  'level2',
+  'level3',
+  'level4',
+  'level5',
+  'level6',
+  'llbbase',
+  'llblevel1',
+  'llblevel2',
+  'llblevel3',
+  'llblevel4',
+  'llblevel5',
+  'llblevel6',
+  'character1',
+  'character2',
+  'combined',
+  'llbcharacter1',
+  'llbcharacter2',
+  'llbcombined',
+];
+
+function resolveCaptainAbilityVariantLabel(key) {
+  if (key === 'base') {
+    return 'Base Captain Ability';
+  }
+
+  if (key.startsWith('level')) {
+    return `Limit Break Level ${key.slice('level'.length)} Captain Ability`;
+  }
+
+  if (key === 'llbbase') {
+    return 'LLB Base Captain Ability';
+  }
+
+  if (key.startsWith('llblevel')) {
+    return `LLB Level ${key.slice('llblevel'.length)} Captain Ability`;
+  }
+
+  if (key === 'character1') {
+    return 'Captain Ability (Character 1)';
+  }
+
+  if (key === 'character2') {
+    return 'Captain Ability (Character 2)';
+  }
+
+  if (key === 'combined') {
+    return 'Captain Ability (Combined)';
+  }
+
+  if (key === 'llbcharacter1') {
+    return 'LLB Captain Ability (Character 1)';
+  }
+
+  if (key === 'llbcharacter2') {
+    return 'LLB Captain Ability (Character 2)';
+  }
+
+  if (key === 'llbcombined') {
+    return 'LLB Captain Ability (Combined)';
+  }
+
+  return 'Captain Ability';
+}
+
+function normalizeCaptainAbilityVariants(rawCaptainAbility) {
+  if (typeof rawCaptainAbility === 'string') {
+    const text = normalizeLegacyAbilityText(rawCaptainAbility);
+
+    return text.length
+      ? [
+          {
+            key: 'captain',
+            label: 'Captain Ability',
+            text,
+          },
+        ]
+      : [];
+  }
+
+  if (!rawCaptainAbility || typeof rawCaptainAbility !== 'object' || Array.isArray(rawCaptainAbility)) {
+    return [];
+  }
+
+  const variants = [];
+  const seenKeys = new Set();
+
+  CAPTAIN_VARIANT_ORDER.forEach((key) => {
+    if (!(key in rawCaptainAbility)) {
+      return;
+    }
+
+    const text = normalizeLegacyAbilityText(rawCaptainAbility[key]);
+
+    if (!text.length) {
+      return;
+    }
+
+    variants.push({
+      key,
+      label: resolveCaptainAbilityVariantLabel(key),
+      text,
+    });
+    seenKeys.add(key);
+  });
+
+  Object.entries(rawCaptainAbility).forEach(([key, value]) => {
+    if (seenKeys.has(key)) {
+      return;
+    }
+
+    const text = normalizeLegacyAbilityText(value);
+
+    if (!text.length) {
+      return;
+    }
+
+    variants.push({
+      key,
+      label: resolveCaptainAbilityVariantLabel(key),
+      text,
+    });
+  });
+
+  return variants;
+}
+
 export function normalizeCharacterDetail(detail, characterId, rumbleData = null) {
-  const normalizedCaptainAbility = normalizeLegacyAbilityText(detail.captain ?? null) || null;
+  const normalizedCaptainAbilityVariants = normalizeCaptainAbilityVariants(detail.captain ?? null);
+  const normalizedCaptainAbility = normalizedCaptainAbilityVariants[0]?.text ?? null;
   const normalizedSpecialText = normalizeLegacyAbilityText(detail.special ?? null) || null;
   const normalizedSuperSpecialText = normalizeLegacyAbilityText(detail.superSpecial ?? null) || null;
   const normalizedSuperSpecialCriteriaText =
     normalizeLegacyAbilityText(detail.superSpecialCriteria ?? null) || null;
+  const normalizedCaptainNotes = normalizeLegacyAbilityText(detail.captainNotes ?? null) || null;
   const normalizedSailorAbilities = flattenValues(detail.sailor ?? {})
     .map((entry) => normalizeLegacyAbilityText(entry))
     .filter((entry) => entry.length > 0);
@@ -784,6 +915,8 @@ export function normalizeCharacterDetail(detail, characterId, rumbleData = null)
   return {
     characterId,
     captainAbility: normalizedCaptainAbility,
+    captainAbilityVariants: normalizedCaptainAbilityVariants,
+    captainNotes: normalizedCaptainNotes,
     specialName: detail.specialName ?? null,
     specialText: normalizedSpecialText,
     specialNotes: detail.specialNotes ?? null,

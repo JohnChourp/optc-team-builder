@@ -99,6 +99,19 @@
         "withCount": "Limit manual ship confirmation and auto ship selection to your {{count}} saved favorite ships."
       }
     },
+    "extraDrop": {
+      "toggle": "Captain extra-drop filter",
+      "options": {
+        "off": "Off",
+        "guaranteed": "Guaranteed only",
+        "any": "Any extra-drop"
+      },
+      "support": {
+        "off": "Do not require an extra-drop captain effect.",
+        "guaranteed": "Only match captains that guarantee a duplicated reward drop on island clear.",
+        "any": "Match captains with either guaranteed or chance-based duplicated reward drops on island clear."
+      }
+    },
     "disableConfirm": {
       "title": "Disable this requirement?",
       "cancel": "Keep enabled",
@@ -377,6 +390,7 @@
       "classRequest": "Class request",
       "consistency": "Consistency",
       "leaderClasses": "Leader classes",
+      "leaderCost": "Leader cost",
       "leaderScope": "Leader scope",
       "leaderSource": "Leader source",
       "leaderTypes": "Leader types",
@@ -401,9 +415,11 @@
       "withTypes": "Built from the local pool while targeting {{types}} coverage."
     },
     "leaderCriteria": {
+      "costLimit": "Cost {{cost}} or less",
       "noClassRestriction": "No class restriction",
+      "noCostRestriction": "No cost restriction",
       "noData": "No leader scope data",
-      "noRestriction": "Leader abilities do not restrict slot coverage.",
+      "noRestriction": "Leader abilities do not restrict class, type, or cost coverage.",
       "noTypeRestriction": "No type restriction",
       "scopeCoverage": "{{matching}} / {{total}} slots match the derived leader scope.",
       "scopePending": "Leader scope will be calculated after a successful build.",

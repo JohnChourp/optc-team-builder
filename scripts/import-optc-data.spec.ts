@@ -86,4 +86,76 @@ describe('import-optc-data ship thumbnail pack', () => {
       ],
     });
   });
+
+  it('preserves structured captain variants and notes without concatenating them', () => {
+    const detail = normalizeCharacterDetail(
+      {
+        captain: {
+          base: 'Base captain effect.',
+          level1: 'Level 1 captain effect.',
+          llbbase: 'LLB base captain effect.',
+          llblevel1: 'LLB level 1 captain effect.',
+        },
+        captainNotes: 'Stacks with other additional drop captains.',
+      },
+      2035,
+    );
+
+    expect(detail.captainAbility).toBe('Base captain effect.');
+    expect(detail.captainNotes).toBe('Stacks with other additional drop captains.');
+    expect(detail.captainAbilityVariants).toEqual([
+      {
+        key: 'base',
+        label: 'Base Captain Ability',
+        text: 'Base captain effect.',
+      },
+      {
+        key: 'level1',
+        label: 'Limit Break Level 1 Captain Ability',
+        text: 'Level 1 captain effect.',
+      },
+      {
+        key: 'llbbase',
+        label: 'LLB Base Captain Ability',
+        text: 'LLB base captain effect.',
+      },
+      {
+        key: 'llblevel1',
+        label: 'LLB Level 1 Captain Ability',
+        text: 'LLB level 1 captain effect.',
+      },
+    ]);
+  });
+
+  it('labels dual captain branches without flattening them into one summary', () => {
+    const detail = normalizeCharacterDetail(
+      {
+        captain: {
+          character1: 'Character 1 captain effect.',
+          character2: 'Character 2 captain effect.',
+          combined: 'Combined captain effect.',
+        },
+      },
+      4002,
+    );
+
+    expect(detail.captainAbility).toBe('Character 1 captain effect.');
+    expect(detail.captainAbilityVariants).toEqual([
+      {
+        key: 'character1',
+        label: 'Captain Ability (Character 1)',
+        text: 'Character 1 captain effect.',
+      },
+      {
+        key: 'character2',
+        label: 'Captain Ability (Character 2)',
+        text: 'Character 2 captain effect.',
+      },
+      {
+        key: 'combined',
+        label: 'Captain Ability (Combined)',
+        text: 'Combined captain effect.',
+      },
+    ]);
+  });
 });

@@ -8,6 +8,7 @@
   },
   "fields": {
     "captainEffect": "Effect",
+    "captainNotes": "Captain notes",
     "combo": "Combo",
     "completeRemoval": "Πλήρες removal",
     "conflicts": "Conflicts",

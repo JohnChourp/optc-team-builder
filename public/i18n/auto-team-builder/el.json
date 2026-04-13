@@ -99,6 +99,19 @@
         "withCount": "Περιορίζει το manual ship confirmation και το auto ship selection στα {{count}} αποθηκευμένα favorite ships σου."
       }
     },
+    "extraDrop": {
+      "toggle": "Captain extra-drop filter",
+      "options": {
+        "off": "Off",
+        "guaranteed": "Guaranteed only",
+        "any": "Any extra-drop"
+      },
+      "support": {
+        "off": "Μην απαιτείς captain effect για extra drops.",
+        "guaranteed": "Κράτα μόνο captains που εγγυώνται duplicated reward drop στο clear του island.",
+        "any": "Κράτα captains με guaranteed ή chance-based duplicated reward drops στο clear του island."
+      }
+    },
     "disableConfirm": {
       "title": "Θέλεις σίγουρα να το απενεργοποιήσεις;",
       "cancel": "Κράτησέ το ενεργό",
@@ -377,6 +390,7 @@
       "classRequest": "Class request",
       "consistency": "Consistency",
       "leaderClasses": "Leader classes",
+      "leaderCost": "Leader cost",
       "leaderScope": "Leader scope",
       "leaderSource": "Leader source",
       "leaderTypes": "Leader types",
@@ -401,9 +415,11 @@
       "withTypes": "Χτίστηκε από το local pool με στόχο κάλυψη {{types}}."
     },
     "leaderCriteria": {
+      "costLimit": "Cost {{cost}} ή μικρότερο",
       "noClassRestriction": "Χωρίς class restriction",
+      "noCostRestriction": "Χωρίς cost restriction",
       "noData": "Δεν υπάρχουν δεδομένα leader scope",
-      "noRestriction": "Τα leader abilities δεν περιορίζουν τα slots.",
+      "noRestriction": "Τα leader abilities δεν περιορίζουν class, type ή cost coverage.",
       "noTypeRestriction": "Χωρίς type restriction",
       "scopeCoverage": "{{matching}} / {{total}} slots ταιριάζουν στο derived leader scope.",
       "scopePending": "Το leader scope θα υπολογιστεί μετά από επιτυχημένο build.",

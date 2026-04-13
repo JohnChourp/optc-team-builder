@@ -31,6 +31,9 @@ import {
 const CAPTAIN_ATK_PATTERN = /atk(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
 const CAPTAIN_HP_PATTERN = /hp(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
 const SCOPE_CLAUSE_PATTERN = /\b(?:of|for)\s+([^.;]{1,160}?)\s+(?:characters|units)\b/g;
+const COST_UPPER_BOUND_PATTERN = /\bcost\s+(\d+)\s+or\s+(?:less|lower)\b/i;
+const HIGH_COST_PENALTY_PATTERN =
+  /\b(?:reduces?|decreases?|cuts?|lowers?|weakens?)\b[^.]*\bcost\s+\d+\s+or\s+higher\b/i;
 const TYPE_MATCH_PATTERNS = {
   DEX: ['[dex]', ' dex ', 'dex characters', 'dex units'],
   STR: ['[str]', ' str ', 'str characters', 'str units'],
@@ -1261,6 +1264,9 @@ function resolveSpecialScope(specialText: string): AutoBuildSpecialScope {
     allCharacters || !hasQualifyingEffect ? [] : extractAllowedSpecialClasses(specialText);
   const allowedTypes =
     allCharacters || !hasQualifyingEffect ? [] : extractAllowedSpecialTypes(specialText);
+  const maxAllowedCost =
+    allCharacters || !hasQualifyingEffect ? null : extractScopedMaxAllowedCost(specialText);
+  const hasCostRestriction = maxAllowedCost !== null;
   const hasClassRestriction = !allCharacters && allowedClasses.length > 0;
   const hasTypeRestriction = !allCharacters && allowedTypes.length > 0;
 
@@ -1268,9 +1274,11 @@ function resolveSpecialScope(specialText: string): AutoBuildSpecialScope {
     allCharacters,
     allowedClasses,
     allowedTypes,
+    hasCostRestriction,
+    maxAllowedCost,
     hasClassRestriction,
     hasTypeRestriction,
-    hasExplicitTarget: allCharacters || hasClassRestriction || hasTypeRestriction,
+    hasExplicitTarget: allCharacters || hasClassRestriction || hasTypeRestriction || hasCostRestriction,
     hasQualifyingEffect,
   };
 }
@@ -1347,6 +1355,8 @@ function parseEffectTags(
   const allCharacters = includesAny(captainText, ['all characters', 'all units']);
   const allowedClasses = allCharacters ? [] : extractAllowedCaptainClasses(captainText);
   const allowedTypes = allCharacters ? [] : extractAllowedCaptainTypes(captainText);
+  const maxAllowedCost = extractCaptainMaxAllowedCost(captainText);
+  const hasCostRestriction = maxAllowedCost !== null;
   const matchedSelectedClasses = allCharacters
     ? [...selectedClasses]
     : selectedClasses.filter((selectedClass) =>
@@ -1363,6 +1373,8 @@ function parseEffectTags(
       allCharacters,
       allowedClasses,
       allowedTypes,
+      hasCostRestriction,
+      maxAllowedCost,
       hasClassRestriction: !allCharacters && allowedClasses.length > 0,
       hasTypeRestriction: !allCharacters && allowedTypes.length > 0,
       matchedSelectedClasses,
@@ -1574,8 +1586,11 @@ function supportsCandidateWithSpecial(
   const matchesTypeScope = specialScope.hasTypeRestriction
     ? targetTypes.some((type) => specialScope.allowedTypes.includes(type))
     : true;
+  const matchesCostScope = specialScope.hasCostRestriction
+    ? targetCandidate.character.cost <= (specialScope.maxAllowedCost ?? Number.POSITIVE_INFINITY)
+    : true;
 
-  return matchesClassScope && matchesTypeScope;
+  return matchesClassScope && matchesTypeScope && matchesCostScope;
 }
 
 function resolveUniqueCandidates(candidates: AutoBuildCandidate[]): AutoBuildCandidate[] {
@@ -1687,6 +1702,7 @@ function resolveActiveLeaderCriteria(
     (leader) => leader.tags.captainScope.allowedTypes,
     (leader) => leader.tags.captainScope.hasTypeRestriction,
   );
+  const costScope = resolveIntersectedLeaderCostScope(uniqueLeaders);
 
   return {
     source: 'captainAbility',
@@ -1697,6 +1713,8 @@ function resolveActiveLeaderCriteria(
     dualLeaderMode: uniqueLeaders.length > 1 ? 'intersection' : 'single',
     derivedAllowedClasses: classScope.values,
     derivedAllowedTypes: typeScope.values,
+    hasCostRestriction: costScope.restricted,
+    maxAllowedCost: costScope.maxAllowedCost,
     hasClassRestriction: classScope.restricted,
     hasTypeRestriction: typeScope.restricted,
   };
@@ -1721,6 +1739,27 @@ function resolveIntersectedLeaderDimension<T extends string>(
 
   return {
     values: orderedValues.filter((value) => restrictedScopes.every((scope) => scope.has(value))),
+    restricted: true,
+  };
+}
+
+function resolveIntersectedLeaderCostScope(
+  leaders: AutoBuildCandidate[],
+): { maxAllowedCost: number | null; restricted: boolean } {
+  const costLimits = leaders
+    .filter((leader) => leader.tags.captainScope.hasCostRestriction)
+    .map((leader) => leader.tags.captainScope.maxAllowedCost)
+    .filter((value): value is number => value !== null);
+
+  if (!costLimits.length) {
+    return {
+      maxAllowedCost: null,
+      restricted: false,
+    };
+  }
+
+  return {
+    maxAllowedCost: Math.min(...costLimits),
     restricted: true,
   };
 }
@@ -1756,8 +1795,11 @@ function matchesActiveLeaderCriteria(
   const matchesTypeScope = leaderCriteria.hasTypeRestriction
     ? characterTypes.some((type) => leaderCriteria.derivedAllowedTypes.includes(type))
     : true;
+  const matchesCostScope = leaderCriteria.hasCostRestriction
+    ? candidate.character.cost <= (leaderCriteria.maxAllowedCost ?? Number.POSITIVE_INFINITY)
+    : true;
 
-  return matchesClassScope && matchesTypeScope;
+  return matchesClassScope && matchesTypeScope && matchesCostScope;
 }
 
 function extractAllowedCaptainClasses(captainText: string): string[] {
@@ -1792,10 +1834,51 @@ function extractAllowedScopeTypes(text: string): AutoTeamBuilderType[] {
   );
 }
 
+function extractCaptainMaxAllowedCost(text: string): number | null {
+  const scopedMaxAllowedCost = extractScopedMaxAllowedCost(text);
+
+  if (scopedMaxAllowedCost !== null) {
+    return scopedMaxAllowedCost;
+  }
+
+  return HIGH_COST_PENALTY_PATTERN.test(text) ? extractPenalizedCostUpperBound(text) : null;
+}
+
+function extractScopedMaxAllowedCost(text: string): number | null {
+  const costLimits = extractScopeClauses(text)
+    .map((clause) => extractCostUpperBound(clause))
+    .filter((value): value is number => value !== null);
+
+  return costLimits.length ? Math.min(...costLimits) : null;
+}
+
 function extractScopeClauses(text: string): string[] {
   return [...text.matchAll(SCOPE_CLAUSE_PATTERN)]
     .map((match) => normalizeText(match[1]))
     .filter(Boolean);
+}
+
+function extractPenalizedCostUpperBound(text: string): number | null {
+  const normalizedText = normalizeText(text);
+  const match = normalizedText.match(/\bcost\s+(\d+)\s+or\s+higher\b/);
+
+  if (!match) {
+    return null;
+  }
+
+  const lowerBound = Number(match[1]);
+  return Number.isFinite(lowerBound) ? lowerBound - 1 : null;
+}
+
+function extractCostUpperBound(text: string): number | null {
+  const match = normalizeText(text).match(COST_UPPER_BOUND_PATTERN);
+
+  if (!match) {
+    return null;
+  }
+
+  const maxAllowedCost = Number(match[1]);
+  return Number.isFinite(maxAllowedCost) ? maxAllowedCost : null;
 }
 
 function textMatchesClassScope(text: string, selectedClass: string): boolean {

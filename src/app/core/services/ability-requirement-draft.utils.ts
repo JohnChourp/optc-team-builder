@@ -72,6 +72,16 @@ const ABILITY_VISUALS: Record<string, Omit<AbilityRequirementVisualMeta, "isFall
     badge: "FIX",
     tone: "orange",
   },
+  extra_drop_any: {
+    icon: sparklesOutline,
+    badge: "DROP",
+    tone: "green",
+  },
+  extra_drop_guaranteed: {
+    icon: sparklesOutline,
+    badge: "GDRP",
+    tone: "gold",
+  },
   inflict_poison: {
     icon: flaskOutline,
     badge: "POI",

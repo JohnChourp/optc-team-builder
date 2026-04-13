@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-13T05:55:57.196Z",
+  "generatedAt": "2026-04-13T06:45:25.940Z",
   "characters": [
     {
       "id": 1,
@@ -38,6 +38,8 @@
       "detail": {
         "characterId": 1,
         "captainAbility": null,
+        "captainAbilityVariants": [],
+        "captainNotes": null,
         "specialName": "Spinning Gum Punch",
         "specialText": "Deals 5x character's ATK in [STR] damage to one enemy",
         "specialNotes": null,
@@ -99,6 +101,14 @@
       "detail": {
         "characterId": 2,
         "captainAbility": "Boosts ATK of all characters by 1.5x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts ATK of all characters by 1.5x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Gum-Gum Pistol",
         "specialText": "Deals 7x character's ATK in [STR] damage to one enemy",
         "specialNotes": null,
@@ -160,6 +170,14 @@
       "detail": {
         "characterId": 3,
         "captainAbility": "Boosts ATK of all characters by 1.5x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts ATK of all characters by 1.5x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Gum-Gum Bazooka",
         "specialText": "Deals 15x character's ATK in [STR] damage to one enemy",
         "specialNotes": null,
@@ -222,6 +240,14 @@
       "detail": {
         "characterId": 4,
         "captainAbility": "Boosts ATK of [STR] characters by 2x and ATK of all others by 1.5x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts ATK of [STR] characters by 2x and ATK of all others by 1.5x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Gum-Gum Twin Jet Pistol",
         "specialText": "Deals 25x character's ATK in [STR] damage to one enemy",
         "specialNotes": null,
@@ -363,6 +389,14 @@
       "detail": {
         "characterId": 5,
         "captainAbility": "Boosts ATK of [DEX] characters by 1.5x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts ATK of [DEX] characters by 1.5x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Oni Giri",
         "specialText": "Deals 7x character's ATK in [DEX] damage to one enemy",
         "specialNotes": null,
@@ -425,6 +459,14 @@
       "detail": {
         "characterId": 6,
         "captainAbility": "Boosts ATK of [DEX] characters by 1.5x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts ATK of [DEX] characters by 1.5x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Three Thousand Worlds",
         "specialText": "Deals 10x character's ATK in [DEX] damage to all enemies",
         "specialNotes": null,
@@ -487,6 +529,14 @@
       "detail": {
         "characterId": 7,
         "captainAbility": "Boosts ATK of [DEX] characters by 1.5x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts ATK of [DEX] characters by 1.5x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "108 Pound Phoenix",
         "specialText": "Deals 10x character's ATK in [DEX] damage to all enemies",
         "specialNotes": null,
@@ -549,6 +599,14 @@
       "detail": {
         "characterId": 8,
         "captainAbility": "Boosts ATK and HP of [DEX] characters by 2x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts ATK and HP of [DEX] characters by 2x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Ashura Ichibugin",
         "specialText": "Deals 15x character's ATK in [DEX] damage to all enemies",
         "specialNotes": null,
@@ -690,6 +748,14 @@
       "detail": {
         "characterId": 9,
         "captainAbility": "Reduces damage received from [INT] enemies by 20%",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Reduces damage received from [INT] enemies by 20%"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Cat Burglar",
         "specialText": "Recovers 1,000 HP",
         "specialNotes": null,
@@ -751,6 +817,14 @@
       "detail": {
         "characterId": 10,
         "captainAbility": "Boosts ATK of [INT] characters by 1.5x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts ATK of [INT] characters by 1.5x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Tornado Tempo",
         "specialText": "Deals 15x character's ATK in [INT] damage to one enemy",
         "specialNotes": null,
@@ -812,6 +886,14 @@
       "detail": {
         "characterId": 11,
         "captainAbility": "Boosts ATK of [INT] characters by 1.5x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts ATK of [INT] characters by 1.5x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Mirage Tempo",
         "specialText": "Reduces damage received from [INT] enemies by 100% for 1 turn",
         "specialNotes": null,
@@ -873,6 +955,14 @@
       "detail": {
         "characterId": 12,
         "captainAbility": "Boosts ATK and HP of [INT] characters by 1.5x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts ATK and HP of [INT] characters by 1.5x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Thunderbolt Tempo",
         "specialText": "Deals 15x character's ATK in [INT] damage to all enemies",
         "specialNotes": null,
@@ -1013,6 +1103,14 @@
       "detail": {
         "characterId": 13,
         "captainAbility": "Boosts ATK of Shooter characters by 1.2x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts ATK of Shooter characters by 1.2x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Liar",
         "specialText": "Delays all enemies by 1 turn",
         "specialNotes": null,
@@ -1527,6 +1625,14 @@
       "detail": {
         "characterId": 14,
         "captainAbility": "Boosts ATK of [PSY] characters by 1.5x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts ATK of [PSY] characters by 1.5x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Tabasco Star",
         "specialText": "Delays all enemies by 2 turns",
         "specialNotes": null,
@@ -2041,6 +2147,14 @@
       "detail": {
         "characterId": 15,
         "captainAbility": "Boosts ATK of [PSY] characters by 1.5x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts ATK of [PSY] characters by 1.5x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Usopp Golden Pound",
         "specialText": "Delays all enemies by 3 turns",
         "specialNotes": null,
@@ -2555,6 +2669,14 @@
       "detail": {
         "characterId": 16,
         "captainAbility": "Boosts ATK and HP of [PSY] characters by 1.5x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts ATK and HP of [PSY] characters by 1.5x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Fire Bird Star",
         "specialText": "Delays all enemies by 3 turns, deals 15x character's ATK in [PSY] damage to all enemies",
         "specialNotes": null,
@@ -2698,6 +2820,14 @@
       "detail": {
         "characterId": 17,
         "captainAbility": "Boosts ATK of [QCK] characters by 1.5x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts ATK of [QCK] characters by 1.5x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Special Fried Rice",
         "specialText": "Recovers 10x character's RCV in HP",
         "specialNotes": null,
@@ -2759,6 +2889,14 @@
       "detail": {
         "characterId": 18,
         "captainAbility": "Boosts HP of [QCK] characters by 1.5x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts HP of [QCK] characters by 1.5x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Plastic Surgery Shot",
         "specialText": "Reduces the defense of all enemies by 50% for 2 turns",
         "specialNotes": null,
@@ -2820,6 +2958,14 @@
       "detail": {
         "characterId": 19,
         "captainAbility": "Boosts ATK of [QCK] characters by 1.5x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts ATK of [QCK] characters by 1.5x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Hot Rock Stew",
         "specialText": "Recovers 10x character's RCV in HP",
         "specialNotes": null,
@@ -2882,6 +3028,14 @@
       "detail": {
         "characterId": 20,
         "captainAbility": "Boosts ATK and HP of [QCK] characters by 1.5x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts ATK and HP of [QCK] characters by 1.5x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Diable Jambe",
         "specialText": "Deals 5,000 Fixed damage to all enemies",
         "specialNotes": "#{fixed}",
@@ -3032,6 +3186,14 @@
       "detail": {
         "characterId": 21,
         "captainAbility": "Boosts RCV of [PSY] characters by 1.2x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts RCV of [PSY] characters by 1.2x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Hearty Yell",
         "specialText": "Changes orbs of adjacent characters into [RCV] orbs",
         "specialNotes": null,
@@ -3094,6 +3256,14 @@
       "detail": {
         "characterId": 22,
         "captainAbility": "Boosts RCV of [PSY] characters by 1.5x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts RCV of [PSY] characters by 1.5x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Heavy Gong",
         "specialText": "Deals 15x character's ATK in [PSY] damage to one enemy",
         "specialNotes": null,
@@ -3236,6 +3406,14 @@
       "detail": {
         "characterId": 23,
         "captainAbility": "Boosts RCV of [INT] characters by 1.5x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts RCV of [INT] characters by 1.5x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Scope",
         "specialText": "Changes orbs of adjacent characters into [RCV] orbs",
         "specialNotes": null,
@@ -3298,6 +3476,14 @@
       "detail": {
         "characterId": 24,
         "captainAbility": "Boosts RCV of [STR] characters by 1.5x",
+        "captainAbilityVariants": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "text": "Boosts RCV of [STR] characters by 1.5x"
+          }
+        ],
+        "captainNotes": null,
         "specialName": "Hoofprint Roseo",
         "specialText": "Reduces the defense of all enemies by 50% for 2 turns",
         "specialNotes": null,

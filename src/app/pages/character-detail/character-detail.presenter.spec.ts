@@ -192,6 +192,14 @@ describe("character-detail presenter", () => {
       detail: {
         characterId: 501,
         captainAbility: "Boosts ATK.",
+        captainAbilityVariants: [
+          {
+            key: "base",
+            label: "Base Captain Ability",
+            text: "Boosts ATK.",
+          },
+        ],
+        captainNotes: null,
         specialName: "Impact Burst",
         specialText: "Deals damage.",
         specialNotes: null,
@@ -250,5 +258,98 @@ describe("character-detail presenter", () => {
         "sections.superType",
       ]),
     );
+  });
+
+  it("renders captain variants as separate entries and keeps captain notes separate", () => {
+    const viewModel = buildCharacterDetailViewModel({
+      id: 777,
+      name: "Captain Variant Test",
+      type: "INT",
+      classes: ["Driven"],
+      primaryClass: "Driven",
+      secondaryClass: null,
+      stars: 6,
+      cost: 40,
+      combo: 4,
+      maxLevel: 99,
+      maxExperience: 5000000,
+      stats: {
+        min: { hp: 1000, atk: 500, rcv: 100 },
+        max: { hp: 4000, atk: 1600, rcv: 250 },
+        growth: 2,
+      },
+      regionAvailability: {
+        exactLocal: true,
+        thumbnailGlobal: true,
+        thumbnailJapan: false,
+        fullTransparent: true,
+      },
+      assets: {
+        exactLocal: null,
+        thumbnailGlobal: null,
+        thumbnailJapan: null,
+        fullTransparent: null,
+      },
+      imageUrl: "/assets/test.png",
+      detailImageUrl: "/assets/test-detail.png",
+      detail: {
+        characterId: 777,
+        captainAbility: "Base effect.",
+        captainAbilityVariants: [
+          {
+            key: "base",
+            label: "Base Captain Ability",
+            text: "Base effect.",
+          },
+          {
+            key: "level1",
+            label: "Limit Break Level 1 Captain Ability",
+            text: "Level 1 effect.",
+          },
+        ],
+        captainNotes: "Stacks with other additional drop captains.",
+        specialName: null,
+        specialText: null,
+        specialNotes: null,
+        superSpecialText: null,
+        superSpecialCriteriaText: null,
+        superSpecialNotes: null,
+        superSpecialCriteria: null,
+        partyConflictKeys: [],
+        builderAbilities: [],
+        sailorAbilities: [],
+        sailorNotes: null,
+        limitBreak: [],
+        potentialAbilities: [],
+        supportData: [],
+        swapData: null,
+        vsSpecial: null,
+        superType: null,
+        superClass: null,
+        rumbleData: null,
+      },
+    });
+
+    const captainCard = viewModel.groups
+      .flatMap((group) => group.cards)
+      .find((card) => card.titleKey === "sections.captainAbility");
+
+    expect(captainCard?.entries).toEqual([
+      expect.objectContaining({
+        title: "Base Captain Ability",
+        texts: [expect.objectContaining({ value: "Base effect." })],
+      }),
+      expect.objectContaining({
+        title: "Limit Break Level 1 Captain Ability",
+        texts: [expect.objectContaining({ value: "Level 1 effect." })],
+      }),
+    ]);
+    expect(captainCard?.texts).toEqual([
+      expect.objectContaining({
+        labelKey: "fields.captainNotes",
+        value: "Stacks with other additional drop captains.",
+        tone: "muted",
+      }),
+    ]);
   });
 });

@@ -224,6 +224,32 @@
               (ionChange)="onRequireLeaderSuperSpecialCriteriaToggle($event)"
             ></ion-toggle>
           </div>
+
+          <div class="strict-toggle-row strict-toggle-row--select">
+            <div class="strict-toggle-copy">
+              <strong>{{ extraDropToggleLabel() }}</strong>
+              <small>{{ extraDropSupportLabel() }}</small>
+            </div>
+            <ion-select
+              interface="popover"
+              fill="outline"
+              class="strict-toggle-select"
+              [value]="extraDropMode()"
+              [selectedText]="extraDropModeLabel()"
+              [disabled]="building()"
+              (ionChange)="onExtraDropModeChange($event)"
+            >
+              <ion-select-option value="off">
+                {{ t('filters.extraDrop.options.off') }}
+              </ion-select-option>
+              <ion-select-option value="guaranteed">
+                {{ t('filters.extraDrop.options.guaranteed') }}
+              </ion-select-option>
+              <ion-select-option value="any">
+                {{ t('filters.extraDrop.options.any') }}
+              </ion-select-option>
+            </ion-select>
+          </div>
         </div>
 
         <section class="ability-requirements-card">
@@ -1313,6 +1339,12 @@
               <span>{{ t('coverage.groups.leaderTypes') }}</span>
               <div class="chip-row">
                 <small class="coverage-chip">{{ leaderCriteriaTypesLabel() }}</small>
+              </div>
+            </div>
+            <div>
+              <span>{{ t('coverage.groups.leaderCost') }}</span>
+              <div class="chip-row">
+                <small class="coverage-chip">{{ leaderCriteriaCostLabel() }}</small>
               </div>
             </div>
             <div>

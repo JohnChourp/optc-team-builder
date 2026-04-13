@@ -124,6 +124,8 @@ export interface AutoBuildSpecialScope {
   allCharacters: boolean;
   allowedClasses: string[];
   allowedTypes: AutoTeamBuilderType[];
+  hasCostRestriction: boolean;
+  maxAllowedCost: number | null;
   hasClassRestriction: boolean;
   hasTypeRestriction: boolean;
   hasExplicitTarget: boolean;
@@ -135,6 +137,8 @@ export interface AutoBuildEffectTags {
     allCharacters: boolean;
     allowedClasses: string[];
     allowedTypes: AutoTeamBuilderType[];
+    hasCostRestriction: boolean;
+    maxAllowedCost: number | null;
     hasClassRestriction: boolean;
     hasTypeRestriction: boolean;
     matchedSelectedClasses: string[];
@@ -165,6 +169,8 @@ export interface AutoBuildLeaderCriteriaSummary {
   dualLeaderMode: "single" | "intersection";
   derivedAllowedClasses: string[];
   derivedAllowedTypes: AutoTeamBuilderType[];
+  hasCostRestriction: boolean;
+  maxAllowedCost: number | null;
   hasClassRestriction: boolean;
   hasTypeRestriction: boolean;
   matchingSlots: number;

@@ -28,6 +28,12 @@ export interface CharacterSupportEntry {
   levelDescriptions: string[];
 }
 
+export interface CharacterCaptainAbilityVariant {
+  key: string;
+  label: string;
+  text: string;
+}
+
 export interface SuperCriteriaCharacterOption {
   label: string;
   acceptedKeys: string[];
@@ -92,6 +98,8 @@ export interface CharacterRecord {
 export interface CharacterDetail {
   characterId: number;
   captainAbility: string | null;
+  captainAbilityVariants: CharacterCaptainAbilityVariant[];
+  captainNotes: string | null;
   specialName: string | null;
   specialText: string | null;
   specialNotes: string | null;

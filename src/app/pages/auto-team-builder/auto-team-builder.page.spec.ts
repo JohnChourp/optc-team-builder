@@ -175,6 +175,58 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
     );
   });
 
+  it('defaults the extra-drop filter to off', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+
+    expect(page.extraDropMode()).toBe('off');
+  });
+
+  it('passes the selected extra-drop requirement to the builder service', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    await page.onExtraDropModeChange({
+      detail: { value: 'guaranteed' },
+    } as CustomEvent<{ value: 'off' | 'guaranteed' | 'any' }>);
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({
+        requiredAbilities: expect.arrayContaining([
+          expect.objectContaining({
+            abilityKey: 'extra_drop_guaranteed',
+            requiredCharacterCount: 1,
+          }),
+        ]),
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it('maps picker-selected extra-drop abilities back into the dedicated mode', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    await page.saveAbilityPicker([
+      {
+        draftId: 'drop-any',
+        abilityKey: 'extra_drop_any',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ]);
+
+    expect(page.extraDropMode()).toBe('any');
+    expect(page.requiredAbilityDrafts()).toEqual([]);
+  });
+
   it('keeps favorite-only auto-fill enabled when disable confirmation is cancelled', async () => {
     const { page, alertController, alertState } = await createPage();
 
@@ -372,13 +424,12 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
 
     expect(page.abilityPickerOpen()).toBe(false);
     expect(page.requiredAbilityDrafts()).toEqual([
-      {
-        draftId: 'bind-1',
+      expect.objectContaining({
         abilityKey: 'remove_bind',
         minTurns: 5,
         slotTokens: [],
         requiredCharacterCount: 2,
-      },
+      }),
     ]);
     expect(repository.searchDetailedCharacters).toHaveBeenCalledTimes(2);
   });
@@ -2002,6 +2053,33 @@ describe('AutoTeamBuilder export helpers', () => {
     expect(payload.team.every((slot) => Boolean(slot.character.detail))).toBe(true);
   });
 
+  it('preserves leader cost restrictions in exported coverage', () => {
+    const result = createAutoBuildResult();
+    result.coverage.leaderCriteria = {
+      ...result.coverage.leaderCriteria,
+      derivedAllowedClasses: [],
+      derivedAllowedTypes: [],
+      hasCostRestriction: true,
+      maxAllowedCost: 40,
+      hasClassRestriction: false,
+      hasTypeRestriction: false,
+      matchingSlots: 4,
+      totalSlots: 6,
+      allSlotsMatch: false,
+    };
+
+    const payload = buildAutoTeamExportPayload(
+      result,
+      [2035],
+      2035,
+      2035,
+      '2026-04-13T06:57:25.964Z',
+    );
+
+    expect(payload.coverage.leaderCriteria.hasCostRestriction).toBe(true);
+    expect(payload.coverage.leaderCriteria.maxAllowedCost).toBe(40);
+  });
+
   it('marks a duplicated single leader as dual on both captain slots', () => {
     const leader = createCharacterRecord(201, 'Solo Leader');
     const result = createAutoBuildResult([
@@ -2073,6 +2151,38 @@ describe('AutoTeamBuilder export helpers', () => {
     expect(exportedJson.team[1]?.leaderAssignment).toBe('friendCaptain');
     expect(exportedJson.team[2]?.isFavorite).toBe(true);
     expect(exportedJson.team[0]?.character.detail.characterId).toBe(101);
+  });
+});
+
+describe('AutoTeamBuilderPage leader cost scope labels', () => {
+  it('shows the leader cost restriction when present', async () => {
+    const { page } = await createPage();
+    const baseResult = createAutoBuildResult();
+
+    await page.ngOnInit();
+    page.result.set({
+      ...baseResult,
+      coverage: {
+        ...baseResult.coverage,
+        leaderCriteria: {
+          ...baseResult.coverage.leaderCriteria,
+          derivedAllowedClasses: [],
+          derivedAllowedTypes: [],
+          hasCostRestriction: true,
+          maxAllowedCost: 40,
+          hasClassRestriction: false,
+          hasTypeRestriction: false,
+          matchingSlots: 4,
+          totalSlots: 6,
+          allSlotsMatch: false,
+        },
+      },
+    });
+
+    expect(page.leaderCriteriaCostLabel()).toBe('Cost 40 or less');
+    expect(page.leaderCriteriaScopeSummaryLabel()).toBe(
+      '4 / 6 slots match the derived leader scope.',
+    );
   });
 });
 
@@ -2585,6 +2695,51 @@ describe('AutoTeamBuilder preset import helpers', () => {
     expect(result.state.requireSameCaptainAndFriendCaptain).toBe(false);
     expect(result.state.favoriteShipsOnly).toBe(false);
     expect(result.warnings).toEqual([]);
+  });
+
+  it('restores the extra-drop mode from imported presets', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [
+        {
+          abilityKey: 'extra_drop_any',
+          minTurns: null,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+        },
+      ],
+      enemyMechanics: [],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSpecialsSupportTeam: false,
+      requireUniqueBaseCharacterNames: false,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      manualSlots: createEmptyAutoBuildManualSlots(),
+      lockedCharacterIds: [],
+      lockedCharacters: [],
+      selectedLeaderIds: [],
+      captainLeaderId: null,
+      friendCaptainLeaderId: null,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+
+    const result = sanitizeAutoTeamSelectionImportPayload(payload, {
+      availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      availableClasses: ['Fighter', 'Slasher'],
+      abilityCatalogItems: page.availableAbilityCatalogItems(),
+      availableLockedCharacters: [],
+    });
+
+    await page['applySelectionPresetState'](result.state, []);
+
+    expect(page.extraDropMode()).toBe('any');
+    expect(page.requiredAbilityDrafts()).toEqual([]);
   });
 
   it('defaults the same-captain flag to false for schema-7 presets', () => {
@@ -3315,6 +3470,14 @@ function createCharacterRecord(
     detail: {
       characterId: id,
       captainAbility: `${name} captain ability`,
+      captainAbilityVariants: [
+        {
+          key: 'base',
+          label: 'Base Captain Ability',
+          text: `${name} captain ability`,
+        },
+      ],
+      captainNotes: null,
       specialName: `${name} special`,
       specialText: `${name} special text`,
       specialNotes: null,
@@ -3479,6 +3642,8 @@ function createAutoBuildResult(
         dualLeaderMode: 'intersection',
         derivedAllowedClasses: ['Fighter', 'Slasher'],
         derivedAllowedTypes: ['DEX', 'PSY'],
+        hasCostRestriction: false,
+        maxAllowedCost: null,
         hasClassRestriction: true,
         hasTypeRestriction: true,
         matchingSlots: 6,
@@ -3561,8 +3726,30 @@ async function createPage(
     getAutoBuilderAbilityCatalog: vi.fn().mockResolvedValue({
       generatedAt: '2026-03-25T10:00:00.000Z',
       sourceVersion: 'test',
-      abilityCount: 2,
+      abilityCount: 4,
       abilities: [
+        {
+          key: 'extra_drop_any',
+          label: 'Any Extra Drop',
+          supportsTurns: false,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['captainAbility'],
+          matchCount: 26,
+          sampleCharacterIds: [1390],
+          sampleTexts: ['Guarantees duplicating a drop upon completion of the island.'],
+        },
+        {
+          key: 'extra_drop_guaranteed',
+          label: 'Guaranteed Extra Drop',
+          supportsTurns: false,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['captainAbility'],
+          matchCount: 6,
+          sampleCharacterIds: [1390],
+          sampleTexts: ['Guarantees duplicating a drop upon completion of the island.'],
+        },
         {
           key: 'remove_bind',
           label: 'Remove Bind',

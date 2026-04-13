@@ -723,6 +723,8 @@ export class OptcRepositoryService {
     return {
       characterId,
       captainAbility: null,
+      captainAbilityVariants: [],
+      captainNotes: null,
       specialName: null,
       specialText: null,
       specialNotes: null,
@@ -754,6 +756,29 @@ export class OptcRepositoryService {
       ...this.emptyDetail(characterId),
       ...normalizedDetail,
       characterId,
+      captainAbilityVariants: Array.isArray(normalizedDetail.captainAbilityVariants)
+        ? normalizedDetail.captainAbilityVariants
+            .map((entry) => {
+              if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+                return null;
+              }
+
+              const key = String(entry.key ?? '').trim();
+              const label = String(entry.label ?? '').trim();
+              const text = String(entry.text ?? '').trim();
+
+              if (!key.length || !label.length || !text.length) {
+                return null;
+              }
+
+              return { key, label, text };
+            })
+            .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+        : [],
+      captainNotes:
+        typeof normalizedDetail.captainNotes === 'string' && normalizedDetail.captainNotes.trim().length
+          ? normalizedDetail.captainNotes.trim()
+          : null,
       supportData: normalizeSupportData(normalizedDetail.supportData),
       superSpecialCriteria: normalizeSuperSpecialCriteria(normalizedDetail.superSpecialCriteria),
       partyConflictKeys: Array.isArray(normalizedDetail.partyConflictKeys)
