@@ -2130,6 +2130,255 @@ describe('Auto team builder', () => {
     expect(workerB.terminated).toBe(true);
   });
 
+  it('skips earlier pooled fallback results that miss requested coverage', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const workerA = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerA.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (request.type !== 'runAttempt') {
+        return;
+      }
+
+      if (request.input.types.length === 2 && request.input.selectedClasses.length === 1) {
+        workerA.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: null,
+        });
+        return;
+      }
+
+      if (request.input.types.length === 2 && request.input.selectedClasses.length === 0) {
+        workerA.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: buildWorkerResult(createInput(['DEX', 'INT'], []), {
+            coveredSelectedClasses: [],
+            coversAllSelectedClasses: false,
+            selectedClassMatches: 0,
+          }),
+        });
+      }
+    });
+    const workerB = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerB.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (
+        request.type === 'runAttempt' &&
+        request.input.types.length === 1 &&
+        request.input.selectedClasses.length === 1
+      ) {
+        workerB.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: buildWorkerResult(createInput(['DEX'], ['Fighter'])),
+        });
+      }
+    });
+    const createWorkerSpy = vi.spyOn(
+      service as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    createWorkerSpy
+      .mockReturnValueOnce(workerA as never)
+      .mockReturnValueOnce(workerB as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX', 'INT'], {}, { workerCount: 2 });
+
+    expect(result?.input.types).toEqual(['DEX']);
+    expect(result?.input.selectedClasses).toEqual(['Fighter']);
+    expect(result?.coverage.coversAllSelectedClasses).toBe(true);
+  });
+
+  it('skips earlier pooled fallback results that miss required ability coverage', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const workerA = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerA.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (request.type !== 'runAttempt') {
+        return;
+      }
+
+      if (request.input.types.length === 2 && request.input.selectedClasses.length === 1) {
+        workerA.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: null,
+        });
+        return;
+      }
+
+      if (request.input.types.length === 2 && request.input.selectedClasses.length === 0) {
+        workerA.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: buildWorkerResult(createInput(['DEX', 'INT'], []), {
+            coveredSelectedClasses: ['Fighter'],
+            coversAllSelectedClasses: true,
+            selectedClassMatches: 1,
+            abilityRequirements: {
+              matched: [],
+              missing: [
+                {
+                  abilityKey: 'remove_bind',
+                  minTurns: null,
+                  slotTokens: [],
+                  requiredCharacterCount: 1,
+                },
+              ],
+              matchesAll: false,
+            },
+          }),
+        });
+      }
+    });
+    const workerB = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerB.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (
+        request.type === 'runAttempt' &&
+        request.input.types.length === 1 &&
+        request.input.selectedClasses.length === 1
+      ) {
+        workerB.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: buildWorkerResult(createInput(['DEX'], ['Fighter'])),
+        });
+      }
+    });
+    const createWorkerSpy = vi.spyOn(
+      service as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    createWorkerSpy
+      .mockReturnValueOnce(workerA as never)
+      .mockReturnValueOnce(workerB as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX', 'INT'], {}, { workerCount: 2 });
+
+    expect(result?.input.types).toEqual(['DEX']);
+    expect(result?.input.selectedClasses).toEqual(['Fighter']);
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+  });
+
+  it('returns null when pooled fallback results never satisfy requested coverage', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const workerA = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerA.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (request.type !== 'runAttempt') {
+        return;
+      }
+
+      if (request.input.types.length === 2 && request.input.selectedClasses.length === 1) {
+        workerA.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: null,
+        });
+        return;
+      }
+
+      if (request.input.selectedClasses.length === 0) {
+        workerA.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: buildWorkerResult(createInput(request.input.types, []), {
+            coveredSelectedClasses: [],
+            coversAllSelectedClasses: false,
+            selectedClassMatches: 0,
+          }),
+        });
+        return;
+      }
+
+      workerA.emitMessage({
+        type: 'result',
+        runId: request.runId,
+        result: null,
+      });
+    });
+    const workerB = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerB.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (request.type !== 'runAttempt') {
+        return;
+      }
+
+      if (request.input.types.length === 1 && request.input.selectedClasses.length === 1) {
+        workerB.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: buildWorkerResult(createInput(request.input.types, ['Fighter']), {
+            abilityRequirements: {
+              matched: [],
+              missing: [
+                {
+                  abilityKey: 'remove_bind',
+                  minTurns: null,
+                  slotTokens: [],
+                  requiredCharacterCount: 1,
+                },
+              ],
+              matchesAll: false,
+            },
+          }),
+        });
+        return;
+      }
+
+      workerB.emitMessage({
+        type: 'result',
+        runId: request.runId,
+        result: null,
+      });
+    });
+    const createWorkerSpy = vi.spyOn(
+      service as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    createWorkerSpy
+      .mockReturnValueOnce(workerA as never)
+      .mockReturnValueOnce(workerB as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX', 'INT'], {}, { workerCount: 2 });
+
+    expect(result).toBeNull();
+    expect(workerA.terminated).toBe(true);
+    expect(workerB.terminated).toBe(true);
+  });
+
   it('falls back to the main-thread engine when pooled worker initialization fails', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
@@ -2533,10 +2782,30 @@ async function flushMicrotasks(): Promise<void> {
   await Promise.resolve();
 }
 
-function buildWorkerResult(input: AutoBuildInput): AutoBuildResult {
+function buildWorkerResult(
+  input: AutoBuildInput,
+  overrides: {
+    requestedInput?: AutoBuildInput;
+    coveredSelectedClasses?: string[];
+    coveredSelectedTypes?: AutoTeamBuilderType[];
+    coversAllSelectedClasses?: boolean;
+    coversAllSelectedTypes?: boolean;
+    selectedClassMatches?: number;
+    selectedTypeMatches?: number;
+    abilityRequirements?: Partial<AutoBuildResult['coverage']['abilityRequirements']>;
+  } = {},
+): AutoBuildResult {
+  const abilityRequirements = {
+    requested: [] as AutoBuildResult['coverage']['abilityRequirements']['requested'],
+    matched: [] as AutoBuildResult['coverage']['abilityRequirements']['matched'],
+    missing: [] as AutoBuildResult['coverage']['abilityRequirements']['missing'],
+    matchesAll: true,
+    ...overrides.abilityRequirements,
+  };
+
   return {
     input,
-    requestedInput: input,
+    requestedInput: overrides.requestedInput ?? input,
     candidateCount: 6,
     slots: [],
     coverage: {
@@ -2563,20 +2832,17 @@ function buildWorkerResult(input: AutoBuildInput): AutoBuildResult {
         allSlotsMatch: true,
       },
       abilityRequirements: {
-        requested: [],
-        matched: [],
-        missing: [],
-        matchesAll: true,
+        ...abilityRequirements,
       },
       burst: [],
       consistency: [],
       utility: [],
-      coveredSelectedClasses: [...input.selectedClasses],
-      coveredSelectedTypes: [...input.types],
-      coversAllSelectedClasses: true,
-      coversAllSelectedTypes: true,
-      selectedClassMatches: input.selectedClasses.length,
-      selectedTypeMatches: input.types.length,
+      coveredSelectedClasses: overrides.coveredSelectedClasses ?? [...input.selectedClasses],
+      coveredSelectedTypes: overrides.coveredSelectedTypes ?? [...input.types],
+      coversAllSelectedClasses: overrides.coversAllSelectedClasses ?? true,
+      coversAllSelectedTypes: overrides.coversAllSelectedTypes ?? true,
+      selectedClassMatches: overrides.selectedClassMatches ?? input.selectedClasses.length,
+      selectedTypeMatches: overrides.selectedTypeMatches ?? input.types.length,
     },
     relaxation: {
       usedFallback: true,
