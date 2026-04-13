@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -28,7 +28,7 @@ jobs:
           cache: npm
 
       - name: Configure GitHub Pages
-        uses: actions/configure-pages@v6.0.0
+        uses: actions/configure-pages@v5
         with:
           # Optional first-run bootstrap. This requires a PAT or GitHub App token
           # with Pages/admin write access, not the default GITHUB_TOKEN.
@@ -42,7 +42,7 @@ jobs:
         run: npm run build:pages
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@v4
         with:
           path: dist/optc-team-builder/browser
 
@@ -55,4 +55,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@v4
