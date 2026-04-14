@@ -73,6 +73,7 @@ export interface NormalizedSuperSpecialCriteria {
 
 export interface CharacterAssets {
   exactLocal: string | null;
+  thumbnailLocal?: string | null;
   thumbnailGlobal: string | null;
   thumbnailJapan: string | null;
   fullTransparent: string | null;

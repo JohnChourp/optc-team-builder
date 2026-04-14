@@ -162,6 +162,7 @@ export function normalizeIncomingManualCharacterPayload(
     availableClasses = [],
     characterId,
     storedImageFile,
+    storedThumbnailFile,
   },
 ) {
   if (!rawPayload || typeof rawPayload !== 'object' || Array.isArray(rawPayload)) {
@@ -171,6 +172,9 @@ export function normalizeIncomingManualCharacterPayload(
   const classes = normalizeClasses(rawPayload.classes, availableClasses);
   const detail = normalizeManualDetail(rawPayload, characterId);
   const imageFile = normalizeStoredImageFile(storedImageFile);
+  const thumbnailFile = normalizeOptionalStoredImageFile(
+    storedThumbnailFile ?? rawPayload.thumbnailImage ?? rawPayload.image?.thumbnailFile,
+  );
   const hasIncompleteStats = hasIncompleteManualStats(rawPayload);
   const normalized = {
     id: characterId,
@@ -192,6 +196,7 @@ export function normalizeIncomingManualCharacterPayload(
     growth: normalizeNullableNonNegativeNumber(rawPayload.growth, 'growth'),
     image: {
       file: imageFile,
+      ...(thumbnailFile ? { thumbnailFile } : {}),
     },
     detail,
   };
@@ -206,6 +211,9 @@ export function buildAppliedManualCharacter(record) {
   const assets = {
     ...createEmptyAssets(),
     exactLocal: `assets/exact-character-images/${record.image.file}`,
+    ...(record.image.thumbnailFile
+      ? { thumbnailLocal: `assets/exact-character-images/${record.image.thumbnailFile}` }
+      : {}),
   };
   const regionAvailability = {
     ...createEmptyRegionAvailability(),
@@ -280,6 +288,9 @@ function normalizeStoredManualCharacterRecord(rawRecord, { availableClasses, cha
     ),
     image: {
       file: normalizeStoredImageFile(rawRecord.image?.file),
+      ...(normalizeOptionalStoredImageFile(rawRecord.image?.thumbnailFile)
+        ? { thumbnailFile: normalizeOptionalStoredImageFile(rawRecord.image?.thumbnailFile) }
+        : {}),
     },
     detail,
   };
@@ -490,6 +501,11 @@ function normalizeStoredImageFile(value) {
   }
 
   return normalized;
+}
+
+function normalizeOptionalStoredImageFile(value) {
+  const normalized = String(value ?? '').trim();
+  return normalized.length ? normalized : null;
 }
 
 function normalizeNameKey(value) {

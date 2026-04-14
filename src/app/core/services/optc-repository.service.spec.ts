@@ -72,6 +72,42 @@ describe('OptcRepositoryService', () => {
     expect(result.at(-1)?.id).toBe(4799);
   });
 
+  it('prefers thumbnailLocal for list images while keeping exactLocal for detail images', async () => {
+    const service = createRepositoryService([
+      createCharacterRow({
+        id: 900001,
+        name: 'Manual Pair',
+        type: 'STR',
+      }),
+    ]);
+    const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
+    selectAllMock.mockImplementation((query: string) =>
+      Promise.resolve(
+        query.includes('FROM ships')
+          ? []
+          : [
+              createCharacterRow({
+                id: 900001,
+                name: 'Manual Pair',
+                type: 'STR',
+                assets: {
+                  exactLocal: 'assets/exact-character-images/900001.png',
+                  thumbnailLocal: 'assets/exact-character-images/900001-thumb.jpg',
+                  thumbnailGlobal: null,
+                  thumbnailJapan: null,
+                  fullTransparent: null,
+                },
+              }),
+            ],
+      ),
+    );
+
+    const record = await service.getCharacterById(900001);
+
+    expect(record?.imageUrl).toBe('assets/exact-character-images/900001-thumb.jpg');
+    expect(record?.detailImageUrl).toBe('assets/exact-character-images/900001.png');
+  });
+
   it('only keeps locked candidates beyond the main limit when a finite limit is applied', async () => {
     const rows = Array.from({ length: 1202 }, (_, index) =>
       createCharacterRow({
@@ -413,6 +449,13 @@ function createCharacterRow(
     classes: string[];
     cost: number;
     stars: number;
+    assets: {
+      exactLocal: string | null;
+      thumbnailLocal?: string | null;
+      thumbnailGlobal: string | null;
+      thumbnailJapan: string | null;
+      fullTransparent: string | null;
+    };
   }> = {},
 ): TestSqlRow {
   const id = overrides.id ?? 5000;
@@ -447,10 +490,13 @@ function createCharacterRow(
       fullTransparent: false,
     }),
     assets_json: JSON.stringify({
-      exactLocal: null,
-      thumbnailGlobal: null,
-      thumbnailJapan: null,
-      fullTransparent: null,
+      ...(overrides.assets ?? {
+        exactLocal: null,
+        thumbnailLocal: null,
+        thumbnailGlobal: null,
+        thumbnailJapan: null,
+        fullTransparent: null,
+      }),
     }),
     detail_json: JSON.stringify({
       characterId: id,

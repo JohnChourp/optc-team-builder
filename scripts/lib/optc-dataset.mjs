@@ -21,6 +21,7 @@ export function normalizeCharacterClasses(value) {
 export function createEmptyAssets() {
   return {
     exactLocal: null,
+    thumbnailLocal: null,
     thumbnailGlobal: null,
     thumbnailJapan: null,
     fullTransparent: null,

@@ -163275,7 +163275,7 @@ DROP TABLE IF EXISTS meta;
         417,
         NULL,
         '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":false,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/900000.png","thumbnailGlobal":null,"thumbnailJapan":null,"fullTransparent":null}',
+        '{"exactLocal":"assets/exact-character-images/900000.png","thumbnailLocal":"assets/exact-character-images/900000-thumb.jpg","thumbnailGlobal":null,"thumbnailJapan":null,"fullTransparent":null}',
         'usopp & dorry dex free spirit shooter'
       );
     
@@ -163309,7 +163309,7 @@ DROP TABLE IF EXISTS meta;
         380,
         NULL,
         '{"exactLocal":true,"thumbnailGlobal":false,"thumbnailJapan":false,"fullTransparent":false}',
-        '{"exactLocal":"assets/exact-character-images/900001.png","thumbnailGlobal":null,"thumbnailJapan":null,"fullTransparent":null}',
+        '{"exactLocal":"assets/exact-character-images/900001.png","thumbnailLocal":"assets/exact-character-images/900001-thumb.jpg","thumbnailGlobal":null,"thumbnailJapan":null,"fullTransparent":null}',
         'luffy & broggy str free spirit slasher'
       );
     
@@ -163913,5 +163913,5 @@ DROP TABLE IF EXISTS meta;
     
 
     INSERT INTO meta (key, value)
-    VALUES ('manifest', '{"generatedAt":"2026-04-14T19:28:48.744Z","sourceVersion":"unknown","characterCount":4802,"detailCount":4111,"shipCount":66,"rumbleCount":1408,"availableTypes":["DEX","INT","PSY","QCK","STR"],"availableClasses":["Booster","Cerebral","Driven","Evolver","Fighter","Free Spirit","Powerhouse","Shooter","Slasher","Striker"],"packs":[{"key":"thumbnailsGlo","id":"thumbnails-glo","label":"Global thumbnails","localBasePath":"assets/offline-packs/thumbnails-glo","fileCount":4609,"totalBytes":45851276,"installed":true,"checksum":"df94f79786955eedd082930b70946c4aa0d71e27"},{"key":"thumbnailsJapan","id":"thumbnails-jap","label":"Japan thumbnails","localBasePath":"assets/offline-packs/thumbnails-jap","fileCount":4886,"totalBytes":106098998,"installed":true,"checksum":"dd8283e86a3614e7105a6c59d6d153c189ecab65"},{"key":"shipThumbnails","id":"ship-thumbnails","label":"Ship thumbnails","localBasePath":"assets/offline-packs/ship-thumbnails","fileCount":63,"totalBytes":502890,"installed":true,"checksum":"5f01f0889be3aa7a901634609253bf50146595b1"},{"key":"fullTransparent","id":"full-transparent","label":"Transparent full art","localBasePath":"assets/offline-packs/full-transparent","fileCount":4215,"totalBytes":505151273,"installed":true,"checksum":"fb22281b95ed50ae2d17b752b4453f2655e538dd"}]}');
+    VALUES ('manifest', '{"generatedAt":"2026-04-14T20:39:28.450Z","sourceVersion":"unknown","characterCount":4802,"detailCount":4111,"shipCount":66,"rumbleCount":1408,"availableTypes":["DEX","INT","PSY","QCK","STR"],"availableClasses":["Booster","Cerebral","Driven","Evolver","Fighter","Free Spirit","Powerhouse","Shooter","Slasher","Striker"],"packs":[{"key":"thumbnailsGlo","id":"thumbnails-glo","label":"Global thumbnails","localBasePath":"assets/offline-packs/thumbnails-glo","fileCount":4609,"totalBytes":45851276,"installed":true,"checksum":"df94f79786955eedd082930b70946c4aa0d71e27"},{"key":"thumbnailsJapan","id":"thumbnails-jap","label":"Japan thumbnails","localBasePath":"assets/offline-packs/thumbnails-jap","fileCount":4886,"totalBytes":106098998,"installed":true,"checksum":"dd8283e86a3614e7105a6c59d6d153c189ecab65"},{"key":"shipThumbnails","id":"ship-thumbnails","label":"Ship thumbnails","localBasePath":"assets/offline-packs/ship-thumbnails","fileCount":63,"totalBytes":502890,"installed":true,"checksum":"5f01f0889be3aa7a901634609253bf50146595b1"},{"key":"fullTransparent","id":"full-transparent","label":"Transparent full art","localBasePath":"assets/offline-packs/full-transparent","fileCount":4215,"totalBytes":505151273,"installed":true,"checksum":"fb22281b95ed50ae2d17b752b4453f2655e538dd"}]}');
   

@@ -16,6 +16,7 @@
   "maxAtk": 2100,
   "maxRcv": 420,
   "image": "/absolute/path/or/https-url/to/image.png",
+  "thumbnailImage": null,
   "detail": {
     "captainAbility": null,
     "specialName": null,

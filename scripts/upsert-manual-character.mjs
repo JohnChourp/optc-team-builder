@@ -31,6 +31,10 @@ async function main() {
   const payload = await loadPayload(options);
   const { characterId, existingRecord, mode } = resolveManualCharacterUpsert(records, payload);
   const imageSource = resolveRequestedImageSource(options.imageSource, payload.image);
+  const thumbnailImageSource = resolveRequestedImageSource(
+    options.thumbnailImageSource,
+    payload.thumbnailImage,
+  );
 
   if (!imageSource && !existingRecord) {
     throw new Error('A new manual character requires an image path or URL.');
@@ -39,10 +43,14 @@ async function main() {
   const storedImageFile = imageSource
     ? await storeManualImage(imageSource, characterId, options.sourceImageDir)
     : existingRecord.image.file;
+  const storedThumbnailFile = thumbnailImageSource
+    ? await storeManualImage(thumbnailImageSource, `${characterId}-thumb`, options.sourceImageDir)
+    : existingRecord?.image?.thumbnailFile ?? null;
   const normalizedRecord = normalizeIncomingManualCharacterPayload(payload, {
     availableClasses: manifest.availableClasses,
     characterId,
     storedImageFile,
+    storedThumbnailFile,
   });
 
   records.set(characterId, normalizedRecord);
@@ -81,6 +89,7 @@ function parseArgs(args) {
     payloadFile: null,
     payloadJson: null,
     imageSource: null,
+    thumbnailImageSource: null,
   };
 
   for (const arg of args) {
@@ -100,6 +109,9 @@ function parseArgs(args) {
         break;
       case 'image':
         options.imageSource = rawValue;
+        break;
+      case 'thumbnail-image':
+        options.thumbnailImageSource = rawValue;
         break;
       case 'overlay-file':
         options.overlayPath = path.resolve(rootDir, rawValue);
@@ -161,14 +173,14 @@ function resolveRequestedImageSource(cliImageSource, payloadImage) {
   return null;
 }
 
-async function storeManualImage(imageSource, characterId, sourceImageDir) {
+async function storeManualImage(imageSource, fileStem, sourceImageDir) {
   await mkdir(sourceImageDir, { recursive: true });
-  await removeExistingCharacterImages(sourceImageDir, characterId);
+  await removeExistingCharacterImages(sourceImageDir, fileStem);
 
   const parsedUrl = tryParseUrl(imageSource);
 
   if (parsedUrl && ['http:', 'https:'].includes(parsedUrl.protocol)) {
-    return downloadManualImage(parsedUrl, characterId, sourceImageDir);
+    return downloadManualImage(parsedUrl, fileStem, sourceImageDir);
   }
 
   const sourcePath =
@@ -180,14 +192,14 @@ async function storeManualImage(imageSource, characterId, sourceImageDir) {
   const extension = normalizeImageExtension(path.extname(filePath));
   const fileBuffer = await readFile(filePath);
 
-  const fileName = `${characterId}${extension}`;
+  const fileName = `${fileStem}${extension}`;
   const destinationPath = path.join(sourceImageDir, fileName);
   await writeFile(destinationPath, fileBuffer);
 
   return fileName;
 }
 
-async function downloadManualImage(url, characterId, sourceImageDir) {
+async function downloadManualImage(url, fileStem, sourceImageDir) {
   const response = await fetch(url);
 
   if (!response.ok) {
@@ -202,7 +214,7 @@ async function downloadManualImage(url, characterId, sourceImageDir) {
 
   const extension = resolveImageExtensionFromUrl(url) ?? resolveImageExtensionFromContentType(contentType);
   const normalizedExtension = normalizeImageExtension(extension);
-  const fileName = `${characterId}${normalizedExtension}`;
+  const fileName = `${fileStem}${normalizedExtension}`;
   const destinationPath = path.join(sourceImageDir, fileName);
   const buffer = Buffer.from(await response.arrayBuffer());
 
@@ -211,12 +223,12 @@ async function downloadManualImage(url, characterId, sourceImageDir) {
   return fileName;
 }
 
-async function removeExistingCharacterImages(sourceImageDir, characterId) {
+async function removeExistingCharacterImages(sourceImageDir, fileStem) {
   const files = await readdir(sourceImageDir).catch(() => []);
 
   await Promise.all(
     files
-      .filter((fileName) => path.parse(fileName).name === String(characterId))
+      .filter((fileName) => path.parse(fileName).name === String(fileStem))
       .map((fileName) => rm(path.join(sourceImageDir, fileName), { force: true })),
   );
 }

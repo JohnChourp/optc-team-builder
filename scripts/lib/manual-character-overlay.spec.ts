@@ -6,7 +6,12 @@ let MANUAL_CHARACTER_ID_MIN: number;
 let buildAppliedManualCharacter: (record: Record<string, unknown>) => Record<string, unknown>;
 let normalizeIncomingManualCharacterPayload: (
   payload: Record<string, unknown>,
-  options: { availableClasses: string[]; characterId: number; storedImageFile: string },
+  options: {
+    availableClasses: string[];
+    characterId: number;
+    storedImageFile: string;
+    storedThumbnailFile?: string | null;
+  },
 ) => Record<string, unknown>;
 let resolveManualCharacterUpsert: (
   records: Map<number, { id: number; name: string }>,
@@ -100,6 +105,7 @@ describe('manual character overlay helpers', () => {
         availableClasses: ['Fighter', 'Free Spirit', 'Slasher'],
         characterId: MANUAL_CHARACTER_ID_MIN,
         storedImageFile: `${MANUAL_CHARACTER_ID_MIN}.png`,
+        storedThumbnailFile: `${MANUAL_CHARACTER_ID_MIN}-thumb.jpg`,
       },
     );
 
@@ -108,7 +114,10 @@ describe('manual character overlay helpers', () => {
       type: 'DEX',
       classes: ['Fighter', 'Free Spirit'],
       growth: null,
-      image: { file: `${MANUAL_CHARACTER_ID_MIN}.png` },
+      image: {
+        file: `${MANUAL_CHARACTER_ID_MIN}.png`,
+        thumbnailFile: `${MANUAL_CHARACTER_ID_MIN}-thumb.jpg`,
+      },
       detail: {
         characterId: MANUAL_CHARACTER_ID_MIN,
         specialName: 'Party Table Kick Course',
@@ -146,7 +155,10 @@ describe('manual character overlay helpers', () => {
       maxAtk: 1500,
       maxRcv: 600,
       growth: 0,
-      image: { file: `${MANUAL_CHARACTER_ID_MIN}.png` },
+      image: {
+        file: `${MANUAL_CHARACTER_ID_MIN}.png`,
+        thumbnailFile: `${MANUAL_CHARACTER_ID_MIN}-thumb.jpg`,
+      },
       detail: {
         characterId: MANUAL_CHARACTER_ID_MIN,
         captainAbility: null,
@@ -165,6 +177,7 @@ describe('manual character overlay helpers', () => {
       },
       assets: {
         exactLocal: `assets/exact-character-images/${MANUAL_CHARACTER_ID_MIN}.png`,
+        thumbnailLocal: `assets/exact-character-images/${MANUAL_CHARACTER_ID_MIN}-thumb.jpg`,
       },
     });
   });
@@ -196,6 +209,7 @@ describe('manual character overlay helpers', () => {
         availableClasses: ['Fighter', 'Free Spirit', 'Slasher'],
         characterId: MANUAL_CHARACTER_ID_MIN,
         storedImageFile: `${MANUAL_CHARACTER_ID_MIN}.png`,
+        storedThumbnailFile: null,
       },
     );
 

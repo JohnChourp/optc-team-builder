@@ -340,6 +340,13 @@ async function materializeManualCharacterImages(records, sourceImageDir, exactIm
     const destinationPath = path.join(exactImagesDir, record.image.file);
 
     await copyFile(sourcePath, destinationPath);
+
+    if (record.image.thumbnailFile) {
+      const thumbnailSourcePath = path.join(sourceImageDir, record.image.thumbnailFile);
+      const thumbnailDestinationPath = path.join(exactImagesDir, record.image.thumbnailFile);
+
+      await copyFile(thumbnailSourcePath, thumbnailDestinationPath);
+    }
   }
 }
 

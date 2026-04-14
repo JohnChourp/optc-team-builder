@@ -21,7 +21,8 @@
     "maxRcv": 417,
     "growth": null,
     "image": {
-      "file": "900000.png"
+      "file": "900000.png",
+      "thumbnailFile": "900000-thumb.jpg"
     },
     "detail": {
       "characterId": 900000,
@@ -103,7 +104,8 @@
     "maxRcv": 380,
     "growth": null,
     "image": {
-      "file": "900001.png"
+      "file": "900001.png",
+      "thumbnailFile": "900001-thumb.jpg"
     },
     "detail": {
       "characterId": 900001,

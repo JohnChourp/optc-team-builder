@@ -655,6 +655,7 @@ export class OptcRepositoryService {
     return rows.map((row) => {
       const assets = this.parseJson<CharacterAssets>(row['assets_json'], {
         exactLocal: null,
+        thumbnailLocal: null,
         thumbnailGlobal: null,
         thumbnailJapan: null,
         fullTransparent: null,
@@ -729,6 +730,10 @@ export class OptcRepositoryService {
       return this.toLocalAssetPath('full-transparent', assets.fullTransparent);
     }
 
+    if (!preferFullArt && assets.thumbnailLocal) {
+      return this.normalizeAssetUrl(assets.thumbnailLocal);
+    }
+
     if (assets.exactLocal) {
       return this.normalizeAssetUrl(assets.exactLocal);
     }
@@ -785,9 +790,9 @@ export class OptcRepositoryService {
   }
 
   private emptyDetail(characterId: number): CharacterDetail {
-    return {
-      characterId,
-      captainAbility: null,
+      return {
+        characterId,
+        captainAbility: null,
       captainAbilityVariants: [],
       captainNotes: null,
       specialName: null,
@@ -812,7 +817,7 @@ export class OptcRepositoryService {
       finalTapData: null,
       superClass: null,
       rumbleData: null,
-    };
+      };
   }
 
   private normalizeCharacterDetail(detail: CharacterDetail, characterId: number): CharacterDetail {
