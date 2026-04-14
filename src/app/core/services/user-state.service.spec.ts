@@ -107,6 +107,141 @@ describe('UserStateService saved teams', () => {
     });
   });
 
+  it('hydrates saved character boxes and returns them by normalized id', async () => {
+    const { service } = await createService([], [], [], [], { mode: 'auto', manualCount: 7 }, [
+      createBox('box-1', 'Powerhouse Box', [101, 202]),
+    ]);
+
+    expect(service.characterBoxes()).toEqual([createBox('box-1', 'Powerhouse Box', [101, 202])]);
+    expect(service.getCharacterBoxById(' box-1 ')).toMatchObject({
+      id: 'box-1',
+      name: 'Powerhouse Box',
+    });
+  });
+
+  it('saves a normalized character box and preserves createdAt on update', async () => {
+    const originalBox = createBox('box-1', 'Original Box', [101, 202]);
+    const { service, setCalls } = await createService(
+      [],
+      [],
+      [],
+      [],
+      { mode: 'auto', manualCount: 7 },
+      [originalBox],
+    );
+
+    const result = await service.saveCharacterBox({
+      id: 'box-1',
+      name: '  Updated Box  ',
+      characterIds: [303, 303, 101, -1],
+    });
+
+    expect(result).toMatchObject({
+      id: 'box-1',
+      name: 'Updated Box',
+      characterIds: [303, 101],
+      createdAt: originalBox.createdAt,
+    });
+    expect(result?.updatedAt).not.toBe(originalBox.updatedAt);
+    expect(setCalls.at(-1)?.key).toBe('characterBoxes');
+    expect(JSON.parse(setCalls.at(-1)?.value ?? '[]')).toEqual([
+      expect.objectContaining({
+        id: 'box-1',
+        name: 'Updated Box',
+        characterIds: [303, 101],
+        createdAt: originalBox.createdAt,
+      }),
+    ]);
+  });
+
+  it('rejects invalid character boxes and deletes existing ones without touching other state', async () => {
+    const { service, setCalls } = await createService(
+      [createTeam('team-1', 'Slashers')],
+      [createEnemy('enemy-1', 'Forest Boss')],
+      [],
+      [101],
+      { mode: 'auto', manualCount: 7 },
+      [createBox('box-1', 'Valid Box', [101])],
+    );
+
+    await expect(
+      service.saveCharacterBox({
+        name: '   ',
+        characterIds: [202],
+      }),
+    ).resolves.toBeNull();
+
+    await service.deleteCharacterBox('box-1');
+
+    expect(service.characterBoxes()).toEqual([]);
+    expect(setCalls.at(-1)).toEqual({
+      key: 'characterBoxes',
+      value: JSON.stringify([]),
+    });
+    expect(service.savedTeams()).toEqual([createTeam('team-1', 'Slashers')]);
+    expect(service.savedEnemies()).toEqual([createEnemy('enemy-1', 'Forest Boss')]);
+    expect(service.favoriteCharacterIds()).toEqual([101]);
+  });
+
+  it('clears all character boxes without touching teams, enemies, or favorites', async () => {
+    const { service, setCalls } = await createService(
+      [createTeam('team-1', 'Slashers')],
+      [createEnemy('enemy-1', 'Forest Boss')],
+      [],
+      [101],
+      { mode: 'auto', manualCount: 7 },
+      [createBox('box-1', 'Valid Box', [101]), createBox('box-2', 'Extra Box', [202])],
+    );
+
+    await service.clearAllCharacterBoxes();
+
+    expect(service.characterBoxes()).toEqual([]);
+    expect(setCalls.at(-1)).toEqual({
+      key: 'characterBoxes',
+      value: JSON.stringify([]),
+    });
+    expect(service.savedTeams()).toEqual([createTeam('team-1', 'Slashers')]);
+    expect(service.savedEnemies()).toEqual([createEnemy('enemy-1', 'Forest Boss')]);
+    expect(service.favoriteCharacterIds()).toEqual([101]);
+  });
+
+  it('merges imported character boxes by id and preserves createdAt on updates', async () => {
+    const originalBox = createBox('box-1', 'Original Box', [101, 202]);
+    const { service, setCalls } = await createService(
+      [],
+      [],
+      [],
+      [],
+      { mode: 'auto', manualCount: 7 },
+      [originalBox, createBox('box-2', 'Untouched Box', [303])],
+    );
+
+    const result = await service.mergeImportedCharacterBoxes([
+      {
+        ...createBox('box-1', 'Updated Import', [404]),
+        createdAt: '2026-04-14T10:00:00.000Z',
+        updatedAt: '2026-04-14T10:05:00.000Z',
+      },
+      createBox('box-3', 'Brand New Box', [505]),
+    ]);
+
+    expect(result).toMatchObject({
+      addedCount: 1,
+      updatedCount: 1,
+    });
+    expect(service.characterBoxes().map((box) => box.id)).toEqual(['box-1', 'box-3', 'box-2']);
+    expect(service.characterBoxes()[0]).toMatchObject({
+      id: 'box-1',
+      name: 'Updated Import',
+      characterIds: [404],
+      createdAt: originalBox.createdAt,
+    });
+    expect(service.characterBoxes()[0]?.updatedAt).not.toBe(originalBox.updatedAt);
+    expect(
+      JSON.parse(setCalls.at(-1)?.value ?? '[]').map((box: { id: string }) => box.id),
+    ).toEqual(['box-1', 'box-3', 'box-2']);
+  });
+
   it('deletes only the requested saved teams and persists the next state', async () => {
     const { service, setCalls } = await createService([
       createTeam('team-1', 'Slashers'),
@@ -407,11 +542,13 @@ async function createService(
   storedFavoriteShipIds: number[] = [],
   storedFavoriteCharacterIds: number[] = [],
   storedAutoTeamBuilderWorkerPreference: unknown = { mode: 'auto', manualCount: 7 },
+  storedCharacterBoxes: unknown[] = [],
 ) {
   const store = new Map<string, string>([
     ['favoriteCharacterIds', JSON.stringify(storedFavoriteCharacterIds)],
     ['favoriteShipIds', JSON.stringify(storedFavoriteShipIds)],
     ['recentCharacterIds', JSON.stringify([])],
+    ['characterBoxes', JSON.stringify(storedCharacterBoxes)],
     ['savedTeams', JSON.stringify(storedTeams)],
     ['savedEnemies', JSON.stringify(storedEnemies)],
     ['autoTeamBuilderWorkerPreference', JSON.stringify(storedAutoTeamBuilderWorkerPreference)],
@@ -470,6 +607,16 @@ function createEnemy(id: string, name: string) {
     enemyMechanics: [],
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
+    createdAt: '2026-03-29T10:00:00.000Z',
+    updatedAt: '2026-03-29T10:05:00.000Z',
+  };
+}
+
+function createBox(id: string, name: string, characterIds: number[]) {
+  return {
+    id,
+    name,
+    characterIds,
     createdAt: '2026-03-29T10:00:00.000Z',
     updatedAt: '2026-03-29T10:05:00.000Z',
   };

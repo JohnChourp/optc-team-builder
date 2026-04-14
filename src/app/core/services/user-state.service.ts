@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { Preferences } from '@capacitor/preferences';
 
-import { type SavedEnemy, type SavedTeam } from '../models/optc.models';
+import { type CharacterBox, type SavedEnemy, type SavedTeam } from '../models/optc.models';
 import { type AutoBuildAbilityRequirement } from '../models/auto-team-builder-ability.models';
 import { AppI18nService } from './app-i18n.service';
 import { normalizeEnemyMechanicRequirements } from './enemy-mechanic-draft.utils';
@@ -9,6 +9,7 @@ import { normalizeEnemyMechanicRequirements } from './enemy-mechanic-draft.utils
 const FAVORITES_KEY = 'favoriteCharacterIds';
 const FAVORITE_SHIPS_KEY = 'favoriteShipIds';
 const RECENTS_KEY = 'recentCharacterIds';
+const CHARACTER_BOXES_KEY = 'characterBoxes';
 const SAVED_TEAMS_KEY = 'savedTeams';
 const SAVED_ENEMIES_KEY = 'savedEnemies';
 const AUTO_TEAM_BUILDER_WORKER_PREFERENCE_KEY = 'autoTeamBuilderWorkerPreference';
@@ -37,6 +38,7 @@ export class UserStateService {
   public readonly favoriteCharacterIds = signal<number[]>([]);
   public readonly favoriteShipIds = signal<number[]>([]);
   public readonly recentCharacterIds = signal<number[]>([]);
+  public readonly characterBoxes = signal<CharacterBox[]>([]);
   public readonly savedTeams = signal<SavedTeam[]>([]);
   public readonly savedEnemies = signal<SavedEnemy[]>([]);
   public readonly autoTeamBuilderWorkerPreference = signal<AutoTeamBuilderWorkerPreference>(
@@ -97,6 +99,116 @@ export class UserStateService {
 
   public async clearAllFavoriteShipIds(): Promise<void> {
     await this.setFavoriteShipIds([]);
+  }
+
+  public async saveCharacterBox(
+    input: Omit<CharacterBox, 'id' | 'createdAt' | 'updatedAt'> & { id?: string },
+  ): Promise<CharacterBox | null> {
+    await this.ready();
+
+    const existing = this.characterBoxes().find((box) => box.id === input.id);
+    const normalizedBox = this.normalizeCharacterBox(
+      {
+        ...input,
+        id: input.id ?? this.createCharacterBoxId(),
+      },
+      existing,
+    );
+
+    if (!normalizedBox) {
+      return null;
+    }
+
+    const next = existing
+      ? this.characterBoxes().map((box) => (box.id === normalizedBox.id ? normalizedBox : box))
+      : [normalizedBox, ...this.characterBoxes()];
+
+    await this.replaceCharacterBoxes(next);
+
+    return normalizedBox;
+  }
+
+  public async deleteCharacterBox(boxId: string): Promise<void> {
+    await this.ready();
+    const normalizedBoxId = this.normalizeEntityId(boxId);
+
+    if (!normalizedBoxId) {
+      return;
+    }
+
+    const next = this.characterBoxes().filter((box) => box.id !== normalizedBoxId);
+
+    if (next.length === this.characterBoxes().length) {
+      return;
+    }
+
+    await this.replaceCharacterBoxes(next);
+  }
+
+  public async clearAllCharacterBoxes(): Promise<void> {
+    await this.ready();
+    await this.replaceCharacterBoxes([]);
+  }
+
+  public getCharacterBoxById(boxId: string): CharacterBox | null {
+    const normalizedBoxId = this.normalizeEntityId(boxId);
+
+    if (!normalizedBoxId) {
+      return null;
+    }
+
+    return this.characterBoxes().find((box) => box.id === normalizedBoxId) ?? null;
+  }
+
+  public async mergeImportedCharacterBoxes(
+    boxes: CharacterBox[],
+  ): Promise<{ addedCount: number; updatedCount: number; boxes: CharacterBox[] }> {
+    await this.ready();
+
+    const currentBoxes = this.characterBoxes();
+    const currentBoxMap = new Map(currentBoxes.map((box) => [box.id, box] as const));
+    const mergedBoxes: CharacterBox[] = [];
+    const importedBoxIds = new Set<string>();
+    let addedCount = 0;
+    let updatedCount = 0;
+
+    boxes.forEach((box) => {
+      const existingBox = currentBoxMap.get(box.id);
+      const normalizedBox = this.normalizeCharacterBox(
+        existingBox
+          ? {
+              ...box,
+              createdAt: undefined,
+              updatedAt: undefined,
+            }
+          : box,
+        existingBox,
+      );
+
+      if (!normalizedBox || importedBoxIds.has(normalizedBox.id)) {
+        return;
+      }
+
+      importedBoxIds.add(normalizedBox.id);
+
+      if (currentBoxMap.has(normalizedBox.id)) {
+        updatedCount += 1;
+      } else {
+        addedCount += 1;
+      }
+
+      mergedBoxes.push(normalizedBox);
+    });
+
+    const next = [...mergedBoxes, ...currentBoxes.filter((box) => !importedBoxIds.has(box.id))];
+
+    await this.replaceCharacterBoxes(next);
+
+    return {
+      addedCount,
+      updatedCount,
+      boxes: next,
+    };
   }
 
   public resolveAutoTeamBuilderWorkerPreference(): ResolvedAutoTeamBuilderWorkerPreference {
@@ -361,22 +473,36 @@ export class UserStateService {
   }
 
   private async hydrate(): Promise<void> {
-    const [favorites, favoriteShips, recents, teams, enemies, autoTeamBuilderWorkerPreference] =
+    const [
+      favorites,
+      favoriteShips,
+      recents,
+      characterBoxes,
+      teams,
+      enemies,
+      autoTeamBuilderWorkerPreference,
+    ] =
       await Promise.all([
-      this.readJson<number[]>(FAVORITES_KEY, []),
-      this.readJson<number[]>(FAVORITE_SHIPS_KEY, []),
-      this.readJson<number[]>(RECENTS_KEY, []),
-      this.readJson<SavedTeam[]>(SAVED_TEAMS_KEY, []),
-      this.readJson<SavedEnemy[]>(SAVED_ENEMIES_KEY, []),
-      this.readJson<AutoTeamBuilderWorkerPreference>(
-        AUTO_TEAM_BUILDER_WORKER_PREFERENCE_KEY,
-        AUTO_TEAM_BUILDER_DEFAULT_WORKER_PREFERENCE,
-      ),
-    ]);
+        this.readJson<number[]>(FAVORITES_KEY, []),
+        this.readJson<number[]>(FAVORITE_SHIPS_KEY, []),
+        this.readJson<number[]>(RECENTS_KEY, []),
+        this.readJson<CharacterBox[]>(CHARACTER_BOXES_KEY, []),
+        this.readJson<SavedTeam[]>(SAVED_TEAMS_KEY, []),
+        this.readJson<SavedEnemy[]>(SAVED_ENEMIES_KEY, []),
+        this.readJson<AutoTeamBuilderWorkerPreference>(
+          AUTO_TEAM_BUILDER_WORKER_PREFERENCE_KEY,
+          AUTO_TEAM_BUILDER_DEFAULT_WORKER_PREFERENCE,
+        ),
+      ]);
 
     this.favoriteCharacterIds.set(favorites);
     this.favoriteShipIds.set(favoriteShips);
     this.recentCharacterIds.set(recents);
+    this.characterBoxes.set(
+      characterBoxes
+        .map((box) => this.normalizeCharacterBox(box))
+        .filter((box): box is CharacterBox => Boolean(box)),
+    );
     this.savedTeams.set(teams.map((team) => this.normalizeSavedTeam(team)));
     this.savedEnemies.set(enemies.map((enemy) => this.normalizeSavedEnemy(enemy)));
     this.autoTeamBuilderWorkerPreference.set(
@@ -405,6 +531,11 @@ export class UserStateService {
   private async replaceSavedTeams(teams: SavedTeam[]): Promise<void> {
     this.savedTeams.set(teams);
     await this.persistJson(SAVED_TEAMS_KEY, teams);
+  }
+
+  private async replaceCharacterBoxes(boxes: CharacterBox[]): Promise<void> {
+    this.characterBoxes.set(boxes);
+    await this.persistJson(CHARACTER_BOXES_KEY, boxes);
   }
 
   private async replaceSavedEnemies(enemies: SavedEnemy[]): Promise<void> {
@@ -451,6 +582,27 @@ export class UserStateService {
       notes: this.normalizeNotes(team.notes),
       createdAt: this.normalizeTimestamp(team.createdAt, existing?.createdAt ?? now),
       updatedAt: this.normalizeTimestamp(team.updatedAt, now),
+    };
+  }
+
+  private normalizeCharacterBox(
+    box: Pick<CharacterBox, 'name' | 'characterIds'> & Partial<CharacterBox>,
+    existing?: CharacterBox,
+  ): CharacterBox | null {
+    const normalizedName = typeof box.name === 'string' ? box.name.trim() : '';
+
+    if (!normalizedName.length) {
+      return null;
+    }
+
+    const now = new Date().toISOString();
+
+    return {
+      id: this.normalizeEntityId(box.id) ?? existing?.id ?? this.createCharacterBoxId(),
+      name: normalizedName,
+      characterIds: this.normalizePositiveIntegerCollection(box.characterIds),
+      createdAt: this.normalizeTimestamp(box.createdAt, existing?.createdAt ?? now),
+      updatedAt: this.normalizeTimestamp(box.updatedAt, now),
     };
   }
 
@@ -573,6 +725,24 @@ export class UserStateService {
     return [...normalizedValues];
   }
 
+  private normalizePositiveIntegerCollection(values: number[] | undefined): number[] {
+    if (!Array.isArray(values)) {
+      return [];
+    }
+
+    const normalizedValues = new Set<number>();
+
+    values.forEach((value) => {
+      if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) {
+        return;
+      }
+
+      normalizedValues.add(value);
+    });
+
+    return [...normalizedValues];
+  }
+
   private normalizeRequiredAbilities(
     requirements: AutoBuildAbilityRequirement[] | undefined,
   ): AutoBuildAbilityRequirement[] {
@@ -653,5 +823,9 @@ export class UserStateService {
 
   private createEnemyId(): string {
     return `enemy-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  private createCharacterBoxId(): string {
+    return `box-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   }
 }

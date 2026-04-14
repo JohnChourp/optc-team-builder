@@ -146,6 +146,37 @@
   color: rgba(248, 251, 255, 0.6);
 }
 
+.assign-panel__controls {
+  display: grid;
+  gap: 12px;
+}
+
+.view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.view-toggle__button {
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: rgba(248, 251, 255, 0.74);
+  padding: 10px 14px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.view-toggle__button--active {
+  background: rgba(245, 200, 76, 0.16);
+  color: #f8fbff;
+}
+
 .slots {
   display: grid;
   gap: 12px;
@@ -211,6 +242,13 @@
   margin-top: 12px;
 }
 
+.candidate-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
 .candidate-card {
   display: grid;
   grid-template-columns: 60px minmax(0, 1fr) auto;
@@ -250,6 +288,51 @@
   font-size: 0.8rem;
 }
 
+.candidate-thumb-card {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.candidate-thumb-card img {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  object-fit: cover;
+}
+
+.candidate-thumb-card__favorite {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+}
+
+.candidate-thumb-card__copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.candidate-thumb-card__copy strong {
+  color: #ffffff;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.candidate-thumb-card__copy span {
+  color: rgba(248, 251, 255, 0.58);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.candidate-thumb-card__assign {
+  width: 100%;
+}
+
 .favorite-button {
   display: inline-flex;
   align-items: center;
@@ -266,7 +349,8 @@
   background: rgba(245, 200, 76, 0.18);
 }
 
-.favorite-button:focus-visible {
+.favorite-button:focus-visible,
+.view-toggle__button:focus-visible {
   outline: 2px solid rgba(245, 200, 76, 0.72);
   outline-offset: 2px;
 }

@@ -28,6 +28,15 @@ import { AppI18nService } from '../../core/services/app-i18n.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import { ShipPickerComponent } from '../../shared/ship-picker/ship-picker.component';
 
+type TeamBuilderCandidateDisplayMode = 'list' | 'compact';
+
+interface TeamBuilderCandidateCardView {
+  character: CharacterListItem;
+  subtitle: string;
+  isFavorite: boolean;
+  favoriteAriaLabel: string;
+}
+
 @Component({
   selector: 'app-team-builder-page',
   standalone: true,
@@ -56,6 +65,7 @@ import { ShipPickerComponent } from '../../shared/ship-picker/ship-picker.compon
 export class TeamBuilderPage implements OnInit {
   public readonly ships = signal<ShipRecord[]>([]);
   public readonly candidateSearchTerm = signal('');
+  public readonly candidateDisplayMode = signal<TeamBuilderCandidateDisplayMode>('list');
   public readonly candidateCharacters = signal<CharacterListItem[]>([]);
   public readonly slotCharacters = signal<Array<CharacterListItem | null>>(
     Array.from({ length: 6 }, () => null),
@@ -85,6 +95,27 @@ export class TeamBuilderPage implements OnInit {
 
     return this.buildShipSubtitle(selectedShip.description);
   });
+  public readonly isCompactCandidateDisplayMode = computed(
+    () => this.candidateDisplayMode() === 'compact',
+  );
+  public readonly candidateCardViews = computed<TeamBuilderCandidateCardView[]>(() =>
+    this.candidateCharacters().map((candidate) => {
+      const isFavorite = this.isFavorite(candidate.id);
+
+      return {
+        character: candidate,
+        subtitle: [candidate.type, candidate.primaryClass, candidate.secondaryClass]
+          .filter((value): value is string => Boolean(value))
+          .join(' • '),
+        isFavorite,
+        favoriteAriaLabel: this.i18n.translate(
+          isFavorite ? 'assign.removeFavoriteAria' : 'assign.addFavoriteAria',
+          undefined,
+          'team-builder',
+        ),
+      };
+    }),
+  );
   public readonly favoriteIcon = heart;
   public readonly favoriteOutlineIcon = heartOutline;
   public readonly shipIcon = boatOutline;
@@ -113,6 +144,10 @@ export class TeamBuilderPage implements OnInit {
   public async onSearchCandidates(event: CustomEvent<{ value?: string | null }>): Promise<void> {
     this.candidateSearchTerm.set((event.detail.value ?? '').trim());
     await this.refreshCandidateCharacters(this.candidateSearchTerm());
+  }
+
+  public setCandidateDisplayMode(displayMode: TeamBuilderCandidateDisplayMode): void {
+    this.candidateDisplayMode.set(displayMode);
   }
 
   public onTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {

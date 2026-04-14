@@ -32,6 +32,7 @@ import {
 import { LottieComponent, type AnimationOptions } from 'ngx-lottie';
 
 import {
+  AUTO_TEAM_CANDIDATE_LIMIT,
   AUTO_BUILD_MANUAL_SLOT_ROLES,
   AUTO_TEAM_BUILDER_TYPES,
   type AutoBuildManualSlotRole,
@@ -53,6 +54,7 @@ import {
 import {
   type CharacterDetailRecord,
   type CharacterListItem,
+  type CharacterBox,
   type DatasetManifest,
   type ShipRecord,
 } from '../../core/models/optc.models';
@@ -402,6 +404,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
   public readonly requireUniqueBaseCharacterNames = signal(false);
+  public readonly selectedCharacterBoxId = signal<string | null>(null);
   public readonly favoritesOnly = signal(false);
   public readonly favoriteShipsOnly = signal(false);
   public readonly teamName = signal('');
@@ -414,9 +417,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly saveUiLocked = signal(false);
   public readonly saveFeedbackVisible = signal(false);
   public readonly saveFeedbackError = signal('');
+  public readonly candidatePoolBoxCreationPending = signal(false);
   public readonly favoriteCharacterIds;
   public readonly favoriteShipIds;
+  public readonly characterBoxes;
   public readonly presetImportFeedback = signal<PresetImportFeedback | null>(null);
+  public readonly candidatePoolBoxFeedback = signal<PresetImportFeedback | null>(null);
   public readonly loadedEnemyPresetName = signal<string | null>(null);
   public readonly saveAnimationOptions: AnimationOptions = {
     path: SAVE_TEAM_ANIMATION_PATH,
@@ -582,6 +588,40 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       (!this.hasLockedCharacters() && !this.result() && this.errorMessage().length === 0),
   );
   public readonly hasFavoriteCharacters = computed(() => this.favoriteCharacterIds().length > 0);
+  public readonly selectedCharacterBox = computed<CharacterBox | null>(
+    () =>
+      this.characterBoxes().find(
+        (characterBox: CharacterBox) => characterBox.id === this.selectedCharacterBoxId(),
+      ) ?? null,
+  );
+  public readonly selectedCharacterBoxIds = computed(() =>
+    this.selectedCharacterBox()?.characterIds ?? [],
+  );
+  public readonly effectiveAutoBuildCandidateIds = computed<number[] | undefined>(() => {
+    if (!this.selectedCharacterBox()) {
+      return undefined;
+    }
+
+    return this.favoritesOnly()
+      ? this.selectedCharacterBoxIds().filter((characterId) =>
+          this.favoriteCharacterIds().includes(characterId),
+        )
+      : [...this.selectedCharacterBoxIds()];
+  });
+  public readonly buildBlockedByCharacterBox = computed(
+    () => Boolean(this.selectedCharacterBox()) && this.selectedCharacterBoxIds().length === 0,
+  );
+  public readonly buildBlockedByCharacterBoxFavorites = computed(
+    () =>
+      Boolean(this.selectedCharacterBox()) &&
+      this.hasFavoriteCharacters() &&
+      this.favoritesOnly() &&
+      this.selectedCharacterBoxIds().length > 0 &&
+      (this.effectiveAutoBuildCandidateIds()?.length ?? 0) === 0,
+  );
+  public readonly buildBlockedByCharacterScope = computed(
+    () => this.buildBlockedByCharacterBox() || this.buildBlockedByCharacterBoxFavorites(),
+  );
   public readonly buildBlockedByFavorites = computed(
     () => this.favoritesOnly() && !this.hasFavoriteCharacters(),
   );
@@ -590,6 +630,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       !this.hasSelectedClasses() ||
       !this.hasSelectedTypes() ||
       this.building() ||
+      this.buildBlockedByCharacterScope() ||
       this.buildBlockedByFavorites(),
   );
   public readonly hasStrictFilters = computed(
@@ -638,6 +679,38 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         })
       : this.t('filters.favoritesOnly.support.empty'),
   );
+  public readonly selectedCharacterBoxLabel = computed(
+    () => this.selectedCharacterBox()?.name ?? this.t('filters.characterBox.allCharacters'),
+  );
+  public readonly characterBoxSupportLabel = computed(() => {
+    if (!this.selectedCharacterBox()) {
+      return this.t('filters.characterBox.support.default');
+    }
+
+    if (this.buildBlockedByCharacterBox()) {
+      return this.t('filters.characterBox.support.emptyBox', {
+        name: this.selectedCharacterBox()!.name,
+      });
+    }
+
+    if (this.buildBlockedByCharacterBoxFavorites()) {
+      return this.t('filters.characterBox.support.emptyIntersection', {
+        name: this.selectedCharacterBox()!.name,
+      });
+    }
+
+    if (this.favoritesOnly()) {
+      return this.t('filters.characterBox.support.selectedWithFavorites', {
+        name: this.selectedCharacterBox()!.name,
+        count: this.effectiveAutoBuildCandidateIds()?.length ?? 0,
+      });
+    }
+
+    return this.t('filters.characterBox.support.selected', {
+      name: this.selectedCharacterBox()!.name,
+      count: this.selectedCharacterBoxIds().length,
+    });
+  });
   public readonly favoriteShipsOnlySupportLabel = computed(() => {
     if (!this.hasFavoriteShips()) {
       return this.t('filters.favoriteShipsOnly.support.empty');
@@ -842,6 +915,21 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly favoritesOnlyBlockedMessage = computed(() =>
     this.t('filters.favoritesOnly.blockedMessage'),
   );
+  public readonly characterBoxBlockedMessage = computed(() => {
+    if (this.buildBlockedByCharacterBox()) {
+      return this.t('filters.characterBox.blocked.emptyBox', {
+        name: this.selectedCharacterBox()?.name ?? '',
+      });
+    }
+
+    if (this.buildBlockedByCharacterBoxFavorites()) {
+      return this.t('filters.characterBox.blocked.emptyIntersection', {
+        name: this.selectedCharacterBox()?.name ?? '',
+      });
+    }
+
+    return '';
+  });
   public readonly favoriteShipsOnlyResultWarning = computed(() => {
     if (!this.favoriteShipsOnly()) {
       return '';
@@ -1247,6 +1335,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.t('actions.downloadAbilitiesJson'),
   );
   public readonly downloadSelectionJsonLabel = computed(() => this.t('actions.downloadPresetJson'));
+  public readonly createCandidatePoolBoxLabel = computed(() =>
+    this.t('actions.createCandidatePoolBox'),
+  );
+  public readonly canCreateCandidatePoolBox = computed(
+    () => !this.building() && !this.candidatePoolBoxCreationPending(),
+  );
   public readonly canDownloadTeamJson = computed(() => Boolean(this.result()));
   public readonly downloadTeamJsonLabel = computed(() => this.t('actions.downloadTeamJson'));
   public readonly teamSlots = computed<TeamSlotViewModel[]>(() => {
@@ -1294,6 +1388,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   ) {
     this.favoriteCharacterIds = this.userState.favoriteCharacterIds;
     this.favoriteShipIds = this.userState.favoriteShipIds;
+    this.characterBoxes = this.userState.characterBoxes;
     this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
   }
 
@@ -1582,6 +1677,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.resetBuildState();
   }
 
+  public onCharacterBoxChange(event: CustomEvent<{ value?: string | null }>): void {
+    const nextValue = typeof event.detail.value === 'string' ? event.detail.value.trim() : '';
+
+    this.selectedCharacterBoxId.set(nextValue.length > 0 ? nextValue : null);
+    this.resetBuildState();
+  }
+
   public async onFavoriteShipsOnlyToggle(event: CustomEvent<{ checked: boolean }>): Promise<void> {
     if (
       !(await this.confirmDisableToggleIfNeeded({
@@ -1852,6 +1954,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         this.selectedClasses(),
         this.selectedTypes(),
         {
+          candidateCharacterIds: this.effectiveAutoBuildCandidateIds(),
           requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
           requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
           requireUniqueBaseCharacterNames: this.requireUniqueBaseCharacterNames(),
@@ -1973,6 +2076,62 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     downloadAutoTeamSelectionExport(this.buildSelectionExportPayload());
   }
 
+  public async createCandidatePoolBox(): Promise<void> {
+    if (!this.canCreateCandidatePoolBox()) {
+      return;
+    }
+
+    this.candidatePoolBoxCreationPending.set(true);
+    this.candidatePoolBoxFeedback.set(null);
+
+    try {
+      const candidateRecords = await this.resolveCurrentCandidatePoolRecords();
+
+      if (candidateRecords.length === 0) {
+        this.candidatePoolBoxFeedback.set({
+          tone: 'warning',
+          title: this.t('candidatePoolBox.emptyTitle'),
+          details: [this.t('candidatePoolBox.emptyDescription')],
+        });
+        return;
+      }
+
+      const savedBox = await this.userState.saveCharacterBox({
+        name: this.buildNextCandidatePoolBoxName(),
+        characterIds: candidateRecords.map((candidate) => candidate.id),
+      });
+
+      if (!savedBox) {
+        this.candidatePoolBoxFeedback.set({
+          tone: 'error',
+          title: this.t('candidatePoolBox.saveFailedTitle'),
+          details: [this.t('candidatePoolBox.saveFailedDescription')],
+        });
+        return;
+      }
+
+      this.selectedCharacterBoxId.set(savedBox.id);
+      this.candidatePoolBoxFeedback.set({
+        tone: 'success',
+        title: this.t('candidatePoolBox.createdTitle', { name: savedBox.name }),
+        details: [
+          this.t('candidatePoolBox.createdDescription', {
+            count: savedBox.characterIds.length,
+          }),
+        ],
+      });
+    } catch (error) {
+      console.error(error);
+      this.candidatePoolBoxFeedback.set({
+        tone: 'error',
+        title: this.t('candidatePoolBox.saveFailedTitle'),
+        details: [this.t('candidatePoolBox.saveFailedDescription')],
+      });
+    } finally {
+      this.candidatePoolBoxCreationPending.set(false);
+    }
+  }
+
   public downloadAbilityCatalogJson(): void {
     const catalog = this.abilityCatalog();
 
@@ -2088,11 +2247,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       defaultFilters.requireAllSelectedClassesPerCharacter,
     );
     this.requireUniqueBaseCharacterNames.set(defaultFilters.requireUniqueBaseCharacterNames);
+    this.selectedCharacterBoxId.set(null);
     this.favoritesOnly.set(defaultFilters.favoritesOnly);
     this.favoriteShipsOnly.set(defaultFilters.favoriteShipsOnly);
     this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
     this.notes.set('');
     this.presetImportFeedback.set(null);
+    this.candidatePoolBoxFeedback.set(null);
     this.loadedEnemyPresetName.set(null);
     this.resetBuildState();
     this.syncShipPickerPanelStates();
@@ -2190,6 +2351,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.requireAllSelectedTypesInTeam.set(state.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(state.requireAllSelectedClassesPerCharacter);
     this.requireUniqueBaseCharacterNames.set(state.requireUniqueBaseCharacterNames);
+    this.selectedCharacterBoxId.set(null);
     this.favoritesOnly.set(state.favoritesOnly);
     this.favoriteShipsOnly.set(state.favoriteShipsOnly);
     this.reconcileFavoriteShipSelection();
@@ -2267,6 +2429,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   }
 
   private resolveBuildFailureMessage(): string {
+    if (this.buildBlockedByCharacterScope()) {
+      return this.characterBoxBlockedMessage();
+    }
+
     if (this.buildBlockedByFavorites()) {
       return this.favoritesOnlyBlockedMessage();
     }
@@ -3283,6 +3449,50 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     parameters?: Record<string, string | number | boolean | null | undefined>,
   ): string {
     return this.i18n.translate(key, parameters, 'auto-team-builder');
+  }
+
+  private async resolveCurrentCandidatePoolRecords(): Promise<CharacterDetailRecord[]> {
+    if (!this.hasSelectedTypes() || !this.hasSelectedClasses()) {
+      return [];
+    }
+
+    const allowedCharacterIds = this.resolveCurrentAutoBuildAllowedCharacterIds();
+
+    if (this.selectedCharacterBox() && allowedCharacterIds.length === 0) {
+      return [];
+    }
+
+    return this.repository.getAutoBuilderCandidates(this.selectedTypes(), AUTO_TEAM_CANDIDATE_LIMIT, {
+      selectedClasses: this.selectedClasses(),
+      allowedCharacterIds: allowedCharacterIds.length > 0 ? allowedCharacterIds : undefined,
+      lockedCharacterIds: this.lockedCharacterIds(),
+      excludedCharacterIds: this.excludedCharacterIds(),
+    });
+  }
+
+  private resolveCurrentAutoBuildAllowedCharacterIds(): number[] {
+    if (this.selectedCharacterBox()) {
+      return [...(this.effectiveAutoBuildCandidateIds() ?? [])];
+    }
+
+    return this.favoritesOnly() ? [...this.favoriteCharacterIds()] : [];
+  }
+
+  private buildNextCandidatePoolBoxName(): string {
+    const existingNames = new Set(
+      this.characterBoxes()
+        .map((box) => box.name.trim().toLowerCase())
+        .filter((name) => name.length > 0),
+    );
+    let count = 1;
+
+    while (
+      existingNames.has(this.t('candidatePoolBox.defaults.name', { count }).trim().toLowerCase())
+    ) {
+      count += 1;
+    }
+
+    return this.t('candidatePoolBox.defaults.name', { count });
   }
 
   private translateImportMessage(message: AutoTeamSelectionImportMessage): string {

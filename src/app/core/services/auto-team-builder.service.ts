@@ -89,6 +89,7 @@ export class AutoTeamBuilderService {
         (characterId) => Number.isInteger(characterId) && characterId > 0,
       ),
     );
+    const candidateCharacterIds = this.normalizeCharacterIds(constraints.candidateCharacterIds);
     const favoriteShipIds = this.normalizeCharacterIds(constraints.favoriteShipIds);
     const requiredAbilities = this.normalizeRequiredAbilities(constraints.requiredAbilities ?? []);
     const enemyMechanics = normalizeEnemyMechanicRequirements(constraints.enemyMechanics ?? []);
@@ -163,6 +164,20 @@ export class AutoTeamBuilderService {
       return null;
     }
 
+    const hasExplicitCandidateScope = constraints.candidateCharacterIds !== undefined;
+    const allowedCharacterIds =
+      hasExplicitCandidateScope
+        ? candidateCharacterIds.filter(
+            (characterId) => !favoritesOnly || favoriteCharacterIds.has(characterId),
+          )
+        : favoritesOnly
+          ? [...favoriteCharacterIds]
+          : undefined;
+
+    if (hasExplicitCandidateScope && (allowedCharacterIds?.length ?? 0) === 0) {
+      return null;
+    }
+
     const requestedLeaderIds = [captainCharacterId, friendCaptainCharacterId].filter(
       (characterId): characterId is number =>
         characterId !== null && Number.isInteger(characterId) && characterId > 0,
@@ -193,7 +208,7 @@ export class AutoTeamBuilderService {
       requestedInput.candidateLimit,
       {
         selectedClasses: requestedInput.selectedClasses,
-        allowedCharacterIds: favoritesOnly ? [...favoriteCharacterIds] : undefined,
+        allowedCharacterIds,
         lockedCharacterIds,
         excludedCharacterIds,
       },

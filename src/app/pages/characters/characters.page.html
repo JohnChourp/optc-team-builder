@@ -46,6 +46,10 @@
             <p>{{ t('tools.copy') }}</p>
           </div>
           <div class="favorites-tools-actions">
+            <ion-button fill="outline" color="light" [routerLink]="['/tabs/character-boxes']">
+              <ion-icon slot="start" [icon]="boxesIcon"></ion-icon>
+              {{ t('tools.manageBoxes') }}
+            </ion-button>
             <ion-button fill="outline" color="light" (click)="resetPage()">
               {{ 'common.actions.reset' | transloco }}
             </ion-button>
@@ -130,73 +134,120 @@
             </button>
           </div>
         </div>
+
+        <div class="view-toggle" [attr.aria-label]="t('displayMode.label')">
+          <button
+            type="button"
+            class="view-toggle__button"
+            [class.view-toggle__button--active]="!isCompactDisplayMode()"
+            (click)="setDisplayMode('list')"
+          >
+            {{ t('displayMode.list') }}
+          </button>
+          <button
+            type="button"
+            class="view-toggle__button"
+            [class.view-toggle__button--active]="isCompactDisplayMode()"
+            (click)="setDisplayMode('compact')"
+          >
+            {{ t('displayMode.compact') }}
+          </button>
+        </div>
       </section>
 
-      <section *ngIf="loading()" class="loading-card glass-card">
-        <ion-spinner name="crescent"></ion-spinner>
-        <span>{{ t('loading') }}</span>
-      </section>
+      @if (loading()) {
+        <section class="loading-card glass-card">
+          <ion-spinner name="crescent"></ion-spinner>
+          <span>{{ t('loading') }}</span>
+        </section>
+      } @else if (!characterCardViews().length) {
+        <section class="loading-card glass-card empty-card">
+          <span>{{ t('empty') }}</span>
+        </section>
+      } @else if (isCompactDisplayMode()) {
+        <section class="character-grid character-grid--compact">
+          @for (card of characterCardViews(); track card.character.id) {
+            <article class="character-thumb-card" [title]="card.character.name">
+              <button
+                type="button"
+                class="favorite-button character-thumb-card__favorite"
+                [attr.aria-label]="card.favoriteAriaLabel"
+                (click)="toggleFavorite(card.character.id, $event)"
+              >
+                <ion-icon [icon]="card.isFavorite ? favoriteIcon : favoriteOutlineIcon"></ion-icon>
+              </button>
 
-      <section
-        *ngIf="!loading() && !characters().length"
-        class="loading-card glass-card empty-card"
-      >
-        <span>{{ t('empty') }}</span>
-      </section>
+              <a
+                class="character-thumb-card__link"
+                [routerLink]="card.detailLink"
+                [attr.aria-label]="card.character.name"
+              >
+                <img [src]="card.character.imageUrl" [alt]="card.character.name" loading="lazy" />
+              </a>
+            </article>
+          }
+        </section>
+      } @else {
+        <section class="character-grid">
+          @for (card of characterCardViews(); track card.character.id) {
+            <article class="character-card glass-card">
+              <a class="character-card__link" [routerLink]="card.detailLink">
+                <img [src]="card.character.imageUrl" [alt]="card.character.name" loading="lazy" />
 
-      <section *ngIf="!loading() && characters().length" class="character-grid">
-        <article
-          *ngFor="let character of characters(); trackBy: trackCharacter"
-          class="character-card glass-card"
-        >
-          <a class="character-card__link" [routerLink]="['/characters', character.id]">
-            <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
+                <div class="character-card__content">
+                  <div class="character-card__title-row">
+                    <h2>{{ card.character.name }}</h2>
+                    <button
+                      type="button"
+                      class="favorite-button"
+                      [attr.aria-label]="card.favoriteAriaLabel"
+                      (click)="toggleFavorite(card.character.id, $event)"
+                    >
+                      <ion-icon
+                        [icon]="card.isFavorite ? favoriteIcon : favoriteOutlineIcon"
+                      ></ion-icon>
+                    </button>
+                  </div>
 
-            <div class="character-card__content">
-              <div class="character-card__title-row">
-                <h2>{{ character.name }}</h2>
-                <button
-                  type="button"
-                  class="favorite-button"
-                  (click)="toggleFavorite(character.id, $event)"
-                >
-                  <ion-icon
-                    [icon]="isFavorite(character.id) ? favoriteIcon : favoriteOutlineIcon"
-                  ></ion-icon>
-                </button>
-              </div>
+                  <div class="stat-row">
+                    <span>{{ card.character.type }}</span>
+                    <span>{{ card.character.primaryClass }}</span>
+                    @if (card.character.secondaryClass) {
+                      <span>{{ card.character.secondaryClass }}</span>
+                    }
+                  </div>
 
-              <div class="stat-row">
-                <span>{{ character.type }}</span>
-                <span>{{ character.primaryClass }}</span>
-                <span *ngIf="character.secondaryClass">{{ character.secondaryClass }}</span>
-              </div>
-
-              <div class="metrics-row">
-                <div>
-                  <strong>{{ character.stats.max.hp }}</strong>
-                  <span>{{ t('stats.hp') }}</span>
+                  <div class="metrics-row">
+                    <div>
+                      <strong>{{ card.character.stats.max.hp }}</strong>
+                      <span>{{ t('stats.hp') }}</span>
+                    </div>
+                    <div>
+                      <strong>{{ card.character.stats.max.atk }}</strong>
+                      <span>{{ t('stats.atk') }}</span>
+                    </div>
+                    <div>
+                      <strong>{{ card.character.stats.max.rcv }}</strong>
+                      <span>{{ t('stats.rcv') }}</span>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <strong>{{ character.stats.max.atk }}</strong>
-                  <span>{{ t('stats.atk') }}</span>
-                </div>
-                <div>
-                  <strong>{{ character.stats.max.rcv }}</strong>
-                  <span>{{ t('stats.rcv') }}</span>
-                </div>
-              </div>
-            </div>
-          </a>
-        </article>
-      </section>
+              </a>
+            </article>
+          }
+        </section>
+      }
 
-      <div *ngIf="!loading() && hasMore()" class="load-more">
-        <ion-button fill="outline" color="light" [disabled]="loadingMore()" (click)="loadMore()">
-          <ion-spinner *ngIf="loadingMore()" slot="start" name="crescent"></ion-spinner>
-          {{ t('loadMore') }}
-        </ion-button>
-      </div>
+      @if (!loading() && hasMore()) {
+        <div class="load-more">
+          <ion-button fill="outline" color="light" [disabled]="loadingMore()" (click)="loadMore()">
+            @if (loadingMore()) {
+              <ion-spinner slot="start" name="crescent"></ion-spinner>
+            }
+            {{ t('loadMore') }}
+          </ion-button>
+        </div>
+      }
     </div>
 
     <ion-modal

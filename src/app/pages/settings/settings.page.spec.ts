@@ -15,6 +15,17 @@ vi.mock("../characters/characters-favorites.utils", async () => {
   };
 });
 
+vi.mock("../character-boxes/character-boxes-transfer.utils", async () => {
+  const actual = await vi.importActual<
+    typeof import("../character-boxes/character-boxes-transfer.utils")
+  >("../character-boxes/character-boxes-transfer.utils");
+
+  return {
+    ...actual,
+    downloadCharacterBoxesExport: vi.fn(),
+  };
+});
+
 vi.mock("./favorite-ships-transfer.utils", async () => {
   const actual = await vi.importActual<typeof import("./favorite-ships-transfer.utils")>(
     "./favorite-ships-transfer.utils",
@@ -60,6 +71,7 @@ vi.mock("../saved-enemies/saved-enemies-transfer.utils", async () => {
 });
 
 import { downloadAllDataExport } from "./all-data-transfer.utils";
+import { downloadCharacterBoxesExport } from "../character-boxes/character-boxes-transfer.utils";
 import { downloadOptcbxFavoritesExport } from "../characters/characters-favorites.utils";
 import { downloadSavedEnemiesExport } from "../saved-enemies/saved-enemies-transfer.utils";
 import { downloadSavedTeamsExport } from "../saved-teams/saved-teams-transfer.utils";
@@ -111,6 +123,9 @@ describe("SettingsPage", () => {
     expect(template).toContain('t("management.savedTeams.export")');
     expect(template).toContain('t("management.savedTeams.import")');
     expect(template).toContain('t("management.savedTeams.deleteAll")');
+    expect(template).toContain('t("management.characterBoxes.export")');
+    expect(template).toContain('t("management.characterBoxes.import")');
+    expect(template).toContain('t("management.characterBoxes.deleteAll")');
     expect(template).toContain('t("management.savedEnemies.export")');
     expect(template).toContain('t("management.savedEnemies.import")');
     expect(template).toContain('t("management.savedEnemies.deleteAll")');
@@ -170,6 +185,23 @@ describe("SettingsPage", () => {
     );
   });
 
+  it("exports all character boxes from offline management", () => {
+    const { page } = createPage();
+
+    page.exportCharacterBoxes();
+
+    expect(vi.mocked(downloadCharacterBoxesExport)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        schemaVersion: 1,
+        source: "character-boxes",
+        boxes: expect.arrayContaining([
+          expect.objectContaining({ id: "box-1" }),
+          expect.objectContaining({ id: "box-2" }),
+        ]),
+      }),
+    );
+  });
+
   it("exports all saved enemies from offline management", () => {
     const { page } = createPage();
 
@@ -210,6 +242,13 @@ describe("SettingsPage", () => {
             { id: 9001, name: "Going Merry" },
             { id: 9002, name: "Thousand Sunny" },
           ],
+        }),
+        characterBoxes: expect.objectContaining({
+          source: "character-boxes",
+          boxes: expect.arrayContaining([
+            expect.objectContaining({ id: "box-1" }),
+            expect.objectContaining({ id: "box-2" }),
+          ]),
         }),
         savedTeams: expect.objectContaining({
           source: "saved-teams",
@@ -324,6 +363,44 @@ describe("SettingsPage", () => {
     });
   });
 
+  it("imports character boxes from settings and sanitizes unknown character ids", async () => {
+    const { page, repository, userState } = createPage();
+
+    await page.onCharacterBoxesFileSelected(
+      createFileEvent(
+        buildFile(
+          "character-boxes.json",
+          JSON.stringify({
+            schemaVersion: 1,
+            source: "character-boxes",
+            exportedAt: "2026-04-12T09:00:00.000Z",
+            boxes: [
+              {
+                id: "box-imported",
+                name: "Imported Box",
+                characterIds: [1001, 999999, 1002],
+                createdAt: "2026-04-12T09:00:00.000Z",
+                updatedAt: "2026-04-12T09:00:00.000Z",
+              },
+            ],
+          }),
+        ),
+      ),
+      { value: "" } as HTMLInputElement,
+    );
+
+    expect(repository.getCharactersByIds).toHaveBeenCalledWith([1001, 999999, 1002]);
+    expect(userState.mergeImportedCharacterBoxes).toHaveBeenCalledWith([
+      expect.objectContaining({
+        id: "box-imported",
+        characterIds: [1001, 1002],
+      }),
+    ]);
+    expect(page.characterBoxesFeedback()).toMatchObject({
+      tone: "warning",
+    });
+  });
+
   it("imports saved enemies from offline management", async () => {
     const { page, userState } = createPage();
 
@@ -396,6 +473,12 @@ describe("SettingsPage", () => {
               exportedAt: "2026-04-12T09:00:00.000Z",
               ships: [{ id: 9003, name: "Shark Superb" }],
             },
+            characterBoxes: {
+              schemaVersion: 1,
+              source: "character-boxes",
+              exportedAt: "2026-04-12T09:00:00.000Z",
+              boxes: [createBox("box-imported", [1001, 1002])],
+            },
             savedTeams: {
               schemaVersion: 1,
               source: "saved-teams",
@@ -416,6 +499,9 @@ describe("SettingsPage", () => {
 
     expect(userState.setFavoriteCharacterIds).toHaveBeenCalledWith([1003, 1001, 1002]);
     expect(userState.setFavoriteShipIds).toHaveBeenCalledWith([9003, 9001, 9002]);
+    expect(userState.mergeImportedCharacterBoxes).toHaveBeenCalledWith([
+      expect.objectContaining({ id: "box-imported" }),
+    ]);
     expect(userState.mergeImportedTeams).toHaveBeenCalledWith([
       expect.objectContaining({ id: "team-imported" }),
     ]);
@@ -501,6 +587,32 @@ describe("SettingsPage", () => {
 
     expect(userState.mergeImportedTeams).toHaveBeenCalledWith([
       expect.objectContaining({ id: "team-single" }),
+    ]);
+    expect(page.allDataFeedback()).toMatchObject({
+      tone: "success",
+    });
+  });
+
+  it("imports a single character boxes export through import all", async () => {
+    const { page, userState } = createPage();
+
+    await page.onAllDataFileSelected(
+      createFileEvent(
+        buildFile(
+          "character-boxes.json",
+          JSON.stringify({
+            schemaVersion: 1,
+            source: "character-boxes",
+            exportedAt: "2026-04-12T09:00:00.000Z",
+            boxes: [createBox("box-single", [1001, 1002])],
+          }),
+        ),
+      ),
+      { value: "" } as HTMLInputElement,
+    );
+
+    expect(userState.mergeImportedCharacterBoxes).toHaveBeenCalledWith([
+      expect.objectContaining({ id: "box-single" }),
     ]);
     expect(page.allDataFeedback()).toMatchObject({
       tone: "success",
@@ -628,6 +740,17 @@ describe("SettingsPage", () => {
     expect(userState.clearAllSavedTeams).toHaveBeenCalledOnce();
   });
 
+  it("confirms before deleting all character boxes", async () => {
+    const confirmSpy = vi.fn().mockReturnValue(true);
+    vi.stubGlobal("confirm", confirmSpy);
+    const { page, userState } = createPage();
+
+    await page.deleteAllCharacterBoxes();
+
+    expect(confirmSpy).toHaveBeenCalledOnce();
+    expect(userState.clearAllCharacterBoxes).toHaveBeenCalledOnce();
+  });
+
   it("updates the auto team builder worker mode from settings", async () => {
     const { page, userState } = createPage();
 
@@ -674,6 +797,7 @@ describe("SettingsPage", () => {
 function createPage() {
   const favoriteIds = signal([1001, 1002]);
   const favoriteShipIds = signal([9001, 9002]);
+  const characterBoxes = signal([createBox("box-1", [1001, 1002]), createBox("box-2", [1002])]);
   const savedTeams = signal([
     createTeam("team-1", [1001, 1002, null, null, null, null]),
     createTeam("team-2", [1002, null, null, null, null, null]),
@@ -688,6 +812,7 @@ function createPage() {
     ready: vi.fn().mockResolvedValue(undefined),
     favoriteCharacterIds: favoriteIds,
     favoriteShipIds,
+    characterBoxes,
     savedTeams,
     savedEnemies,
     autoTeamBuilderWorkerPreference,
@@ -708,6 +833,9 @@ function createPage() {
     clearAllFavoriteShipIds: vi.fn().mockImplementation(async () => {
       favoriteShipIds.set([]);
     }),
+    clearAllCharacterBoxes: vi.fn().mockImplementation(async () => {
+      characterBoxes.set([]);
+    }),
     clearAllSavedTeams: vi.fn().mockImplementation(async () => {
       savedTeams.set([]);
     }),
@@ -723,6 +851,11 @@ function createPage() {
       addedCount: 1,
       updatedCount: 0,
       teams: [],
+    }),
+    mergeImportedCharacterBoxes: vi.fn().mockResolvedValue({
+      addedCount: 1,
+      updatedCount: 0,
+      boxes: [],
     }),
     mergeImportedEnemies: vi.fn().mockResolvedValue({
       addedCount: 1,
@@ -792,6 +925,10 @@ function createPage() {
 
       if (key === "management.confirm.deleteFavoriteShips") {
         return "Delete all favorite ships?";
+      }
+
+      if (key === "management.confirm.deleteCharacterBoxes") {
+        return "Delete all character boxes?";
       }
 
       if (key === "management.favorites.feedback.warningTitle") {
@@ -866,6 +1003,10 @@ function createPage() {
         return key;
       }
 
+      if (key === "common.defaults.untitledBox") {
+        return "Untitled Box";
+      }
+
       if (key === "management.favorites.title") {
         return "Favorites";
       }
@@ -876,6 +1017,10 @@ function createPage() {
 
       if (key === "management.favoriteShips.title") {
         return "Favorite Ships";
+      }
+
+      if (key === "management.characterBoxes.title") {
+        return "Character Boxes";
       }
 
       if (key === "management.savedTeams.title") {
@@ -921,12 +1066,20 @@ function createPage() {
         return `Duplicates ${params?.["count"] ?? 0}.`;
       }
 
+      if (key.endsWith(".unknownCharacters")) {
+        return `Unknown characters ${params?.["count"] ?? 0}.`;
+      }
+
       if (key.endsWith(".unknownSlots")) {
         return `Unknown slots ${params?.["count"] ?? 0}.`;
       }
 
       if (key === "import.removedDuplicates") {
         return `Removed ${params?.["count"] ?? 0} duplicates.`;
+      }
+
+      if (key.startsWith("management.characterBoxes.errors.")) {
+        return key;
       }
 
       if (key === "import.stats.matched") {
@@ -1003,6 +1156,16 @@ function createEnemy(id: string) {
     enemyMechanics: [],
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
+    createdAt: "2026-04-12T09:00:00.000Z",
+    updatedAt: "2026-04-12T09:00:00.000Z",
+  };
+}
+
+function createBox(id: string, characterIds: number[]) {
+  return {
+    id,
+    name: id,
+    characterIds,
     createdAt: "2026-04-12T09:00:00.000Z",
     updatedAt: "2026-04-12T09:00:00.000Z",
   };

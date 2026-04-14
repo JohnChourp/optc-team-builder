@@ -27,6 +27,11 @@ export const routes: Routes = [
           import("./pages/auto-team-builder/auto-team-builder.page").then((module) => module.AutoTeamBuilderPage),
       },
       {
+        path: "character-boxes",
+        loadComponent: () =>
+          import("./pages/character-boxes/character-boxes.page").then((module) => module.CharacterBoxesPage),
+      },
+      {
         path: "saved-teams",
         loadComponent: () =>
           import("./pages/saved-teams/saved-teams.page").then((module) => module.SavedTeamsPage),

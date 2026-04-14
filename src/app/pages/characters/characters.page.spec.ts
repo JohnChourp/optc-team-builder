@@ -26,6 +26,24 @@ describe('CharactersPage favorites tools', () => {
     vi.unstubAllGlobals();
   });
 
+  it('defaults to list display mode', () => {
+    const { page } = createPage();
+
+    expect(page.displayMode()).toBe('list');
+    expect(page.isCompactDisplayMode()).toBe(false);
+  });
+
+  it('switches between list and compact display modes', () => {
+    const { page } = createPage();
+
+    page.setDisplayMode('compact');
+    expect(page.displayMode()).toBe('compact');
+    expect(page.isCompactDisplayMode()).toBe(true);
+
+    page.setDisplayMode('list');
+    expect(page.displayMode()).toBe('list');
+  });
+
   it('disables favorites export when there are no favorites', () => {
     const { page } = createPage();
 
@@ -80,10 +98,15 @@ describe('CharactersPage favorites tools', () => {
       'utf8',
     );
 
+    expect(template).toContain("/tabs/character-boxes");
+    expect(template).toContain("t('tools.manageBoxes')");
     expect(template).toContain("'common.actions.reset' | transloco");
     expect(template).toContain("t('filters.favoritesOnly.label')");
     expect(template).toContain('favoritesOnlySupportLabel()');
     expect(template).toContain('onFavoritesOnlyToggle($event)');
+    expect(template).toContain("t('displayMode.compact')");
+    expect(template).toContain('character-thumb-card');
+    expect(template).toContain('toggleFavorite(card.character.id, $event)');
     expect(template).not.toContain("t('tools.export')");
     expect(template).not.toContain("t('tools.import')");
     expect(template).not.toContain("t('favorites.clearAll')");
@@ -128,6 +151,36 @@ describe('CharactersPage favorites tools', () => {
       stopPropagation: vi.fn(),
     } as unknown as Event);
 
+    expect(repository.searchCharacters).toHaveBeenCalledWith({
+      searchTerm: '',
+      typeFilter: '',
+      classFilter: '',
+      allowedCharacterIds: [],
+      limit: 48,
+      offset: 0,
+    });
+  });
+
+  it('keeps favorite filtering behavior intact in compact mode', async () => {
+    const { page, repository } = createPage({
+      favoriteIds: [101],
+    });
+
+    page.setDisplayMode('compact');
+
+    await page.onFavoritesOnlyToggle({
+      detail: {
+        checked: true,
+      },
+    } as CustomEvent<{ checked: boolean }>);
+    repository.searchCharacters.mockClear();
+
+    await page.toggleFavorite(101, {
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    } as unknown as Event);
+
+    expect(page.displayMode()).toBe('compact');
     expect(repository.searchCharacters).toHaveBeenCalledWith({
       searchTerm: '',
       typeFilter: '',

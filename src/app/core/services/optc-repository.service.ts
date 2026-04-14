@@ -234,11 +234,21 @@ export class OptcRepositoryService {
         ),
       ),
     ];
+    const excludedCharacterIds = [
+      ...new Set(
+        (query.excludedCharacterIds ?? []).filter(
+          (characterId) => Number.isInteger(characterId) && characterId > 0,
+        ),
+      ),
+    ];
     const allowedCharacterClause = allowedCharacterIds.length
       ? `\n          AND id IN (${allowedCharacterIds.map(() => '?').join(',')})`
       : query.allowedCharacterIds
         ? '\n          AND 1 = 0'
         : '';
+    const excludedCharacterClause = excludedCharacterIds.length
+      ? `\n          AND id NOT IN (${excludedCharacterIds.map(() => '?').join(',')})`
+      : '';
     const rows = await this.selectAll(
       `
         SELECT
@@ -267,6 +277,7 @@ export class OptcRepositoryService {
           AND (? = '' OR type LIKE '%' || ? || '%')
           AND (? = '' OR primary_class = ? OR secondary_class = ?)
           ${allowedCharacterClause}
+          ${excludedCharacterClause}
         ORDER BY stars DESC, id DESC
         LIMIT ? OFFSET ?
       `,
@@ -279,6 +290,7 @@ export class OptcRepositoryService {
         query.classFilter,
         query.classFilter,
         ...allowedCharacterIds,
+        ...excludedCharacterIds,
         query.limit,
         query.offset,
       ],

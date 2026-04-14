@@ -1715,6 +1715,55 @@ describe('Auto team builder', () => {
     );
   });
 
+  it('builds teams only from candidate character ids when a box scope is provided', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const candidateCharacterIds = [5926, 5870, 5860];
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      candidateCharacterIds,
+    });
+
+    expect(result).not.toBeNull();
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      ['DEX', 'PSY'],
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        selectedClasses: ['Fighter', 'Slasher'],
+        allowedCharacterIds: candidateCharacterIds,
+        lockedCharacterIds: [],
+        excludedCharacterIds: [],
+      },
+    );
+  });
+
+  it('intersects candidate character ids with favorites when both scopes are enabled', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      candidateCharacterIds: [5925, 5926, 5880],
+      favoritesOnly: true,
+      favoriteCharacterIds: [5926, 5870, 5860],
+    });
+
+    expect(result).not.toBeNull();
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      ['DEX', 'PSY'],
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        selectedClasses: ['Fighter', 'Slasher'],
+        allowedCharacterIds: [5926],
+        lockedCharacterIds: [],
+        excludedCharacterIds: [],
+      },
+    );
+  });
+
   it('carries favorite ship filters into the result input and ship selection', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
@@ -1758,6 +1807,20 @@ describe('Auto team builder', () => {
         excludedCharacterIds: [],
       },
     );
+  });
+
+  it('returns null when the selected character box scope is empty', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn(),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      candidateCharacterIds: [],
+    });
+
+    expect(result).toBeNull();
+    expect(repository.getAutoBuilderCandidates).not.toHaveBeenCalled();
   });
 
   it('normalizes omitted constraints to false', async () => {
@@ -1807,6 +1870,37 @@ describe('Auto team builder', () => {
       {
         selectedClasses: ['Fighter', 'Slasher'],
         allowedCharacterIds: favoriteCharacterIds,
+        lockedCharacterIds: [5925, 5900],
+        excludedCharacterIds: [],
+      },
+    );
+  });
+
+  it('keeps manual picks outside the selected character box while querying auto-fill from the box scope', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue([createCaptainRecord(), ...createStrictMixedTeamRecords()]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      candidateCharacterIds: [5926, 5870, 5860],
+      manualSlots: createManualSlots({
+        captain: [5925],
+        sub1: [5900],
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 5925)).toBe(true);
+    expect(result?.slots.some((slot) => slot.character.id === 5900)).toBe(true);
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      ['DEX', 'PSY'],
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        selectedClasses: ['Fighter', 'Slasher'],
+        allowedCharacterIds: [5926, 5870, 5860],
         lockedCharacterIds: [5925, 5900],
         excludedCharacterIds: [],
       },

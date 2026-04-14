@@ -328,6 +328,74 @@
           <article class="transfer-card">
             <div class="transfer-card__head">
               <div>
+                <strong>{{ t("management.characterBoxes.title") }}</strong>
+                <span>{{
+                  t("management.counts.characterBoxes", { count: characterBoxes().length })
+                }}</span>
+              </div>
+              <p>{{ t("management.characterBoxes.copy") }}</p>
+            </div>
+
+            <input
+              #characterBoxesImportInput
+              type="file"
+              accept=".json,application/json"
+              hidden
+              (change)="onCharacterBoxesFileSelected($event, characterBoxesImportInput)"
+            />
+
+            <div class="transfer-actions">
+              <ion-button
+                fill="outline"
+                color="light"
+                [disabled]="!canExportCharacterBoxes() || characterBoxesImporting()"
+                (click)="exportCharacterBoxes()"
+              >
+                {{ t("management.characterBoxes.export") }}
+              </ion-button>
+              <ion-button
+                fill="outline"
+                color="warning"
+                [disabled]="characterBoxesImporting()"
+                (click)="openFilePicker(characterBoxesImportInput)"
+              >
+                {{ t("management.characterBoxes.import") }}
+              </ion-button>
+              <ion-button
+                fill="outline"
+                color="danger"
+                [disabled]="!canDeleteAllCharacterBoxes() || characterBoxesImporting()"
+                (click)="deleteAllCharacterBoxes()"
+              >
+                {{ t("management.characterBoxes.deleteAll") }}
+              </ion-button>
+            </div>
+
+            @if (characterBoxesImporting()) {
+              <div class="transfer-feedback transfer-feedback--progress">
+                <ion-spinner name="crescent"></ion-spinner>
+                <span>{{ t("management.characterBoxes.processing") }}</span>
+              </div>
+            }
+
+            @if (characterBoxesFeedback(); as feedback) {
+              <div
+                class="transfer-feedback"
+                [class.transfer-feedback--success]="feedback.tone === 'success'"
+                [class.transfer-feedback--warning]="feedback.tone === 'warning'"
+                [class.transfer-feedback--error]="feedback.tone === 'error'"
+              >
+                <strong>{{ feedback.title }}</strong>
+                @for (detail of feedback.details; track $index) {
+                  <span>{{ detail }}</span>
+                }
+              </div>
+            }
+          </article>
+
+          <article class="transfer-card">
+            <div class="transfer-card__head">
+              <div>
                 <strong>{{ t("management.favoriteShips.title") }}</strong>
                 <span>{{
                   t("management.counts.favoriteShips", { count: favoriteShipIds().length })

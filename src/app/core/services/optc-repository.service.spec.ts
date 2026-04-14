@@ -218,6 +218,25 @@ describe('OptcRepositoryService', () => {
     expect(result.map((record) => record.id)).toEqual([5105, 5102, 5103, 5101, 5106, 5104]);
   });
 
+  it('applies excluded character ids to character search queries', async () => {
+    const service = createRepositoryService([]);
+    const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
+
+    await service.searchCharacters({
+      searchTerm: '',
+      typeFilter: '',
+      classFilter: '',
+      excludedCharacterIds: [4101, 4102],
+      limit: 10,
+      offset: 0,
+    });
+
+    expect(selectAllMock).toHaveBeenCalledWith(
+      expect.stringContaining('AND id NOT IN (?,?)'),
+      ['', '', '', '', '', '', '', 4101, 4102, 10, 0],
+    );
+  });
+
   it('resolves ship thumbnail urls when the ship offline pack is installed', async () => {
     const service = createRepositoryService([], {
       manifest: createManifest({

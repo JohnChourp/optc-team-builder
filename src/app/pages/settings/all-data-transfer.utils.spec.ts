@@ -9,6 +9,9 @@ import {
   type SavedEnemiesTransferPayload,
 } from "../saved-enemies/saved-enemies-transfer.utils";
 import {
+  type CharacterBoxesTransferPayload,
+} from "../character-boxes/character-boxes-transfer.utils";
+import {
   type SavedTeamsTransferPayload,
 } from "../saved-teams/saved-teams-transfer.utils";
 import {
@@ -67,6 +70,20 @@ describe("All data transfer helpers", () => {
         },
       ],
     };
+    const characterBoxes: CharacterBoxesTransferPayload = {
+      schemaVersion: 1,
+      source: "character-boxes",
+      exportedAt: "2026-04-13T09:15:00.000Z",
+      boxes: [
+        {
+          id: "box-1",
+          name: "Powerhouse Box",
+          characterIds: [1001, 1002],
+          createdAt: "2026-04-13T09:15:00.000Z",
+          updatedAt: "2026-04-13T09:15:00.000Z",
+        },
+      ],
+    };
 
     const payload = buildAllDataTransferPayload(
       {
@@ -74,6 +91,7 @@ describe("All data transfer helpers", () => {
         favoriteShips,
         savedTeams,
         savedEnemies,
+        characterBoxes,
       },
       "2026-04-13T09:15:00.000Z",
     );
@@ -81,6 +99,7 @@ describe("All data transfer helpers", () => {
     favoriteShips.ships[0]!.name = "Changed";
     savedTeams.teams[0]!.slots[0] = 9999;
     savedEnemies.enemies[0]!.selectedTypes.push("PSY");
+    characterBoxes.boxes[0]!.characterIds.push(9999);
 
     expect(payload).toEqual({
       schemaVersion: 1,
@@ -114,6 +133,17 @@ describe("All data transfer helpers", () => {
           expect.objectContaining({
             id: "enemy-1",
             selectedTypes: ["DEX"],
+          }),
+        ],
+      },
+      characterBoxes: {
+        schemaVersion: 1,
+        source: "character-boxes",
+        exportedAt: "2026-04-13T09:15:00.000Z",
+        boxes: [
+          expect.objectContaining({
+            id: "box-1",
+            characterIds: [1001, 1002],
           }),
         ],
       },
@@ -231,6 +261,19 @@ describe("All data transfer helpers", () => {
         }),
       ),
     ).toMatchObject({ kind: "saved-enemies" });
+  });
+
+  it("detects a character boxes export", () => {
+    expect(
+      parseAllDataImportCandidate(
+        JSON.stringify({
+          schemaVersion: 1,
+          source: "character-boxes",
+          exportedAt: "2026-04-13T09:15:00.000Z",
+          boxes: [],
+        }),
+      ),
+    ).toMatchObject({ kind: "character-boxes" });
   });
 
   it("throws a typed error for invalid json", () => {

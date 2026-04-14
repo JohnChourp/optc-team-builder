@@ -6,6 +6,11 @@
     "subtitle": "Search the offline index and tap once to place the unit.",
     "title": "Assign character to slot {{slot}}"
   },
+  "displayMode": {
+    "compact": "Compact view",
+    "label": "Candidate display mode",
+    "list": "List view"
+  },
   "form": {
     "changeShip": "Choose ship",
     "eyebrow": "Crew Draft",

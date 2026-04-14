@@ -16,6 +16,7 @@ import {
   IonToolbar,
 } from '@ionic/angular/standalone';
 import {
+  archiveOutline,
   alertCircleOutline,
   checkmarkCircleOutline,
   closeOutline,
@@ -43,6 +44,14 @@ import {
 } from './characters-favorites.utils';
 
 const PAGE_SIZE = 48;
+type CharacterDisplayMode = 'list' | 'compact';
+
+interface CharacterCatalogCardView {
+  character: CharacterListItem;
+  detailLink: string[];
+  isFavorite: boolean;
+  favoriteAriaLabel: string;
+}
 
 @Component({
   selector: 'app-characters-page',
@@ -79,6 +88,7 @@ export class CharactersPage implements OnInit {
   public readonly selectedType = signal('');
   public readonly selectedClass = signal('');
   public readonly favoritesOnly = signal(false);
+  public readonly displayMode = signal<CharacterDisplayMode>('list');
   public readonly favoriteIds;
   public readonly canDownloadFavoritesExport = computed(() => this.favoriteIds().length > 0);
   public readonly canClearAllFavorites = computed(() => this.favoriteIds().length > 0);
@@ -115,6 +125,23 @@ export class CharactersPage implements OnInit {
     () =>
       this.filteredClassOptions().length > 0 && this.classQuery().trim() !== this.selectedClass(),
   );
+  public readonly isCompactDisplayMode = computed(() => this.displayMode() === 'compact');
+  public readonly characterCardViews = computed<CharacterCatalogCardView[]>(() =>
+    this.characters().map((character) => {
+      const isFavorite = this.isFavorite(character.id);
+
+      return {
+        character,
+        detailLink: ['/characters', character.id.toString()],
+        isFavorite,
+        favoriteAriaLabel: this.i18n.translate(
+          isFavorite ? 'favorites.removeAria' : 'favorites.addAria',
+          { name: character.name },
+          'characters',
+        ),
+      };
+    }),
+  );
   public readonly favoritesOnlySupportLabel = computed(() =>
     this.favoriteIds().length
       ? this.i18n.translate(
@@ -130,6 +157,7 @@ export class CharactersPage implements OnInit {
   public readonly layersIcon = layersOutline;
   public readonly uploadIcon = cloudUploadOutline;
   public readonly fileIcon = documentTextOutline;
+  public readonly boxesIcon = archiveOutline;
   public readonly closeIcon = closeOutline;
   public readonly successIcon = checkmarkCircleOutline;
   public readonly errorIcon = alertCircleOutline;
@@ -222,6 +250,10 @@ export class CharactersPage implements OnInit {
   public async onFavoritesOnlyToggle(event: CustomEvent<{ checked: boolean }>): Promise<void> {
     this.favoritesOnly.set(event.detail.checked);
     await this.loadCharacters(true);
+  }
+
+  public setDisplayMode(displayMode: CharacterDisplayMode): void {
+    this.displayMode.set(displayMode);
   }
 
   public async loadMore(): Promise<void> {

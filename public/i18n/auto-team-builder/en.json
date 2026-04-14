@@ -78,6 +78,22 @@
         "withCount": "Limit manual ship confirmation and auto ship selection to your {{count}} saved favorite ships."
       }
     },
+    "characterBox": {
+      "label": "Character box scope",
+      "placeholder": "Choose a box",
+      "allCharacters": "All characters",
+      "support": {
+        "default": "Leave this on all characters to auto-build from the full local pool. Manual picks remain unaffected.",
+        "selected": "Auto-build will only use the {{count}} characters saved in {{name}}. Manual picks still stay unrestricted.",
+        "selectedWithFavorites": "Auto-build will only use the {{count}} favorites that also exist inside {{name}}.",
+        "emptyBox": "{{name}} is currently empty, so it cannot be used for auto-build yet.",
+        "emptyIntersection": "No saved favorites currently overlap with {{name}}."
+      },
+      "blocked": {
+        "emptyBox": "{{name}} is empty. Add characters to the box or switch back to all characters.",
+        "emptyIntersection": "Favorite-only auto-fill cannot use {{name}} yet because no saved favorites overlap with that box."
+      }
+    },
     "disableConfirm": {
       "title": "Disable this requirement?",
       "cancel": "Keep enabled",
@@ -172,10 +188,22 @@
       "strict": "Build strict {{types}} crew"
     },
     "cancelBuild": "Cancel build",
+    "createCandidatePoolBox": "Create candidate pool box",
     "downloadAbilitiesJson": "Download ability catalog JSON",
     "downloadPresetJson": "Download preset JSON",
     "downloadTeamJson": "Download team JSON",
     "importPresetJson": "Import preset JSON"
+  },
+  "candidatePoolBox": {
+    "createdTitle": "{{name}} is ready",
+    "createdDescription": "{{count}} characters were saved into the new character box.",
+    "emptyTitle": "No candidate pool is available",
+    "emptyDescription": "The current builder filters do not produce any searchable characters yet.",
+    "saveFailedTitle": "Candidate pool box could not be created",
+    "saveFailedDescription": "Try again after adjusting the current filters or saved character boxes.",
+    "defaults": {
+      "name": "Auto Builder Pool {{count}}"
+    }
   },
   "manual": {
     "title": "Manual picks",

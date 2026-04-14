@@ -10,6 +10,9 @@ import {
 import {
   type SavedEnemiesTransferPayload,
 } from "../saved-enemies/saved-enemies-transfer.utils";
+import {
+  type CharacterBoxesTransferPayload,
+} from "../character-boxes/character-boxes-transfer.utils";
 
 export interface AllDataTransferPayload {
   schemaVersion: 1;
@@ -19,6 +22,7 @@ export interface AllDataTransferPayload {
   favoriteShips?: FavoriteShipsTransferPayload;
   savedTeams?: SavedTeamsTransferPayload;
   savedEnemies?: SavedEnemiesTransferPayload;
+  characterBoxes?: CharacterBoxesTransferPayload;
 }
 
 export type AllDataImportCandidate =
@@ -26,7 +30,8 @@ export type AllDataImportCandidate =
   | { kind: "favorites"; payload: unknown }
   | { kind: "favorite-ships"; payload: unknown }
   | { kind: "saved-teams"; payload: unknown }
-  | { kind: "saved-enemies"; payload: unknown };
+  | { kind: "saved-enemies"; payload: unknown }
+  | { kind: "character-boxes"; payload: unknown };
 
 export class AllDataImportError extends Error {
   public constructor(public readonly key: string) {
@@ -126,12 +131,29 @@ function cloneSavedEnemiesPayload(
   };
 }
 
+function cloneCharacterBoxesPayload(
+  payload: CharacterBoxesTransferPayload | undefined,
+): CharacterBoxesTransferPayload | undefined {
+  if (!payload) {
+    return undefined;
+  }
+
+  return {
+    ...payload,
+    boxes: payload.boxes.map((box) => ({
+      ...box,
+      characterIds: [...box.characterIds],
+    })),
+  };
+}
+
 export function buildAllDataTransferPayload(
   sections: {
     favorites?: OptcbxFavoritesExportPayload;
     favoriteShips?: FavoriteShipsTransferPayload;
     savedTeams?: SavedTeamsTransferPayload;
     savedEnemies?: SavedEnemiesTransferPayload;
+    characterBoxes?: CharacterBoxesTransferPayload;
   },
   exportedAt = new Date().toISOString(),
 ): AllDataTransferPayload {
@@ -143,6 +165,7 @@ export function buildAllDataTransferPayload(
     favoriteShips: cloneFavoriteShipsPayload(sections.favoriteShips),
     savedTeams: cloneSavedTeamsPayload(sections.savedTeams),
     savedEnemies: cloneSavedEnemiesPayload(sections.savedEnemies),
+    characterBoxes: cloneCharacterBoxesPayload(sections.characterBoxes),
   };
 }
 
@@ -248,6 +271,13 @@ export function parseAllDataImportCandidate(rawContent: string): AllDataImportCa
   if (parsedPayload["schemaVersion"] === 1 && source === "saved-enemies") {
     return {
       kind: "saved-enemies",
+      payload: parsedPayload,
+    };
+  }
+
+  if (parsedPayload["schemaVersion"] === 1 && source === "character-boxes") {
+    return {
+      kind: "character-boxes",
       payload: parsedPayload,
     };
   }

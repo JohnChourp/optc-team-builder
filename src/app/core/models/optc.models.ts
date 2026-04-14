@@ -138,6 +138,14 @@ export interface ShipRecord {
   description: string;
 }
 
+export interface CharacterBox {
+  id: string;
+  name: string;
+  characterIds: number[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface SavedTeam {
   id: string;
   name: string;
@@ -190,6 +198,7 @@ export interface CharacterSearchQuery {
   typeFilter: string;
   classFilter: string;
   allowedCharacterIds?: number[];
+  excludedCharacterIds?: number[];
   limit: number;
   offset: number;
 }

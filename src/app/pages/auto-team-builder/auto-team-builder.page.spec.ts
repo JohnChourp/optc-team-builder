@@ -121,6 +121,116 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
+  it('creates a candidate pool box before build using the exact selected-box scope', async () => {
+    const { page, repository, userState } = await createPage();
+
+    repository.getAutoBuilderCandidates.mockResolvedValue([
+      createCharacterRecord(201, 'Scoped Candidate'),
+      createCharacterRecord(901, 'Locked Outside Scope'),
+    ]);
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX']);
+    page.selectedClasses.set(['Fighter']);
+    page.favoritesOnly.set(false);
+    page.selectedCharacterBoxId.set('box-1');
+    page.manualSlots.set(
+      createManualSlots({
+        captain: [901],
+      }),
+    );
+    page.excludedCharacterIds.set([202]);
+
+    await page.createCandidatePoolBox();
+
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(['DEX'], 1200, {
+      selectedClasses: ['Fighter'],
+      allowedCharacterIds: [201, 202, 203],
+      lockedCharacterIds: [901],
+      excludedCharacterIds: [202],
+    });
+    expect(userState.saveCharacterBox).toHaveBeenCalledWith({
+      name: 'Auto Builder Pool 1',
+      characterIds: [201, 901],
+    });
+    expect(page.selectedCharacterBoxId()).toBe('box-3');
+    expect(page.candidatePoolBoxFeedback()).toEqual({
+      tone: 'success',
+      title: 'Auto Builder Pool 1 is ready',
+      details: ['2 characters were saved into the new character box.'],
+    });
+  });
+
+  it('keeps locked manual picks outside favorite scope in the candidate pool box', async () => {
+    const { page, repository } = await createPage();
+
+    repository.getAutoBuilderCandidates.mockResolvedValue([
+      createCharacterRecord(101, 'Favorite Candidate'),
+      createCharacterRecord(700, 'Locked Non Favorite'),
+    ]);
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX']);
+    page.selectedClasses.set(['Fighter']);
+    page.favoritesOnly.set(true);
+    page.manualSlots.set(
+      createManualSlots({
+        captain: [700],
+      }),
+    );
+
+    await page.createCandidatePoolBox();
+
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(['DEX'], 1200, {
+      selectedClasses: ['Fighter'],
+      allowedCharacterIds: [101, 102, 103],
+      lockedCharacterIds: [700],
+      excludedCharacterIds: [],
+    });
+  });
+
+  it('does not create a candidate pool box when the resolved pool is empty', async () => {
+    const { page, repository, userState } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX']);
+    page.selectedClasses.set(['Fighter']);
+    page.selectedCharacterBoxId.set('box-empty');
+
+    await page.createCandidatePoolBox();
+
+    expect(repository.getAutoBuilderCandidates).not.toHaveBeenCalled();
+    expect(userState.saveCharacterBox).not.toHaveBeenCalled();
+    expect(page.candidatePoolBoxFeedback()).toEqual({
+      tone: 'warning',
+      title: 'No candidate pool is available',
+      details: ['The current builder filters do not produce any searchable characters yet.'],
+    });
+    expect(page.selectedCharacterBoxId()).toBe('box-empty');
+  });
+
+  it('creates a candidate pool box after build without mutating the current result', async () => {
+    const { page, repository, autoTeamBuilder } = await createPage();
+    const buildResult = createAutoBuildResult();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue(buildResult);
+    repository.getAutoBuilderCandidates.mockResolvedValue([
+      createCharacterRecord(201, 'Candidate 1'),
+      createCharacterRecord(202, 'Candidate 2'),
+    ]);
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX']);
+    page.selectedClasses.set(['Fighter']);
+    await page.buildTeam();
+
+    const resultBeforeBoxCreation = page.result();
+
+    await page.createCandidatePoolBox();
+
+    expect(page.result()).toBe(resultBeforeBoxCreation);
+  });
+
   it('passes picker-selected extra-drop requirements to the builder service', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
@@ -732,6 +842,69 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         .manualCandidateCards()
         .map((candidate: { character: CharacterDetailRecord }) => candidate.character.id),
     ).toEqual([411, 412]);
+  });
+
+  it('passes selected character box ids to the builder when a box is selected', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.favoritesOnly.set(false);
+    page.onCharacterBoxChange({
+      detail: { value: 'box-1' },
+    } as CustomEvent<{ value?: string | null }>);
+    expect(page.selectedCharacterBox()?.id).toBe('box-1');
+    expect(page.buildDisabled()).toBe(false);
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({
+        candidateCharacterIds: [201, 202, 203],
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it('passes the favorite and box intersection when both scopes are active', async () => {
+    const { page, autoTeamBuilder, userState } = await createPage();
+
+    userState.favoriteCharacterIds.set([202, 999]);
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.onCharacterBoxChange({
+      detail: { value: 'box-1' },
+    } as CustomEvent<{ value?: string | null }>);
+    page.favoritesOnly.set(true);
+    expect(page.buildDisabled()).toBe(false);
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({
+        candidateCharacterIds: [202],
+        favoritesOnly: true,
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it('blocks builds and surfaces a clear message when the selected box is empty', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedCharacterBoxId.set('box-empty');
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+
+    expect(page.buildDisabled()).toBe(true);
+    expect(page.characterBoxBlockedMessage()).toBe(
+      'Empty Box is empty. Add characters to the box or switch back to all characters.',
+    );
   });
 
   it('blocks assigning excluded characters into manual team slots', async () => {
@@ -3618,6 +3791,7 @@ async function createPage(
   repository: {
     getDatasetManifest: ReturnType<typeof vi.fn>;
     getAutoBuilderAbilityCatalog: ReturnType<typeof vi.fn>;
+    getAutoBuilderCandidates: ReturnType<typeof vi.fn>;
     getShips: ReturnType<typeof vi.fn>;
     getCharactersByIds: ReturnType<typeof vi.fn>;
     searchDetailedCharacters: ReturnType<typeof vi.fn>;
@@ -3649,6 +3823,7 @@ async function createPage(
     getSavedEnemyById: ReturnType<typeof vi.fn>;
     ready: ReturnType<typeof vi.fn>;
     resolveAutoTeamBuilderWorkerCount: ReturnType<typeof vi.fn>;
+    saveCharacterBox: ReturnType<typeof vi.fn>;
     saveTeam: ReturnType<typeof vi.fn>;
     toggleFavorite: ReturnType<typeof vi.fn>;
     toggleShipFavorite: ReturnType<typeof vi.fn>;
@@ -3708,6 +3883,7 @@ async function createPage(
         },
       ],
     }),
+    getAutoBuilderCandidates: vi.fn().mockResolvedValue([]),
     getShips: vi.fn().mockResolvedValue([createShipRecord(9001), createShipRecord(9002)]),
     getCharactersByIds: vi
       .fn()
@@ -3788,6 +3964,10 @@ async function createPage(
   const userState = {
     favoriteCharacterIds: signal<number[]>([101, 102, 103]),
     favoriteShipIds: signal<number[]>([9001]),
+    characterBoxes: signal([
+      createCharacterBox('box-1', 'Story Box', [201, 202, 203]),
+      createCharacterBox('box-empty', 'Empty Box', []),
+    ]),
     savedTeams,
     savedEnemies,
     getSavedTeamById: vi.fn(
@@ -3798,6 +3978,17 @@ async function createPage(
     ),
     ready: vi.fn().mockResolvedValue(undefined),
     resolveAutoTeamBuilderWorkerCount: vi.fn().mockReturnValue(7),
+    saveCharacterBox: vi.fn().mockImplementation(async (input: { name: string; characterIds: number[] }) => {
+      const nextBox = createCharacterBox(
+        `box-${userState.characterBoxes().length + 1}`,
+        input.name,
+        input.characterIds,
+      );
+
+      userState.characterBoxes.set([nextBox, ...userState.characterBoxes()]);
+
+      return nextBox;
+    }),
     saveTeam: vi.fn().mockResolvedValue({ id: 'saved-auto-team' }),
     toggleFavorite: vi.fn().mockResolvedValue(undefined),
     toggleShipFavorite: vi.fn().mockResolvedValue(undefined),
@@ -3855,6 +4046,16 @@ function createManifest(): DatasetManifest {
     availableTypes: ['DEX', 'PSY'],
     availableClasses: ['Fighter', 'Slasher'],
     packs: [],
+  };
+}
+
+function createCharacterBox(id: string, name: string, characterIds: number[]) {
+  return {
+    id,
+    name,
+    characterIds,
+    createdAt: '2026-03-30T10:00:00.000Z',
+    updatedAt: '2026-03-30T10:05:00.000Z',
   };
 }
 

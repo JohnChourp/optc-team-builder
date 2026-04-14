@@ -6,6 +6,11 @@
     "subtitle": "Κάνε search στο offline index και πάτα μία φορά για να τοποθετήσεις το unit.",
     "title": "Ανάθεση χαρακτήρα στο slot {{slot}}"
   },
+  "displayMode": {
+    "compact": "Συμπαγής προβολή",
+    "label": "Τρόπος προβολής υποψηφίων",
+    "list": "Προβολή λίστας"
+  },
   "form": {
     "changeShip": "Επιλογή ship",
     "eyebrow": "Draft πληρώματος",

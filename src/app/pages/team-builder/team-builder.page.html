@@ -143,50 +143,101 @@
           <p>{{ t('assign.subtitle') }}</p>
         </div>
 
-        <ion-searchbar
-          [debounce]="150"
-          [placeholder]="t('assign.searchPlaceholder')"
-          [value]="candidateSearchTerm()"
-          (ionInput)="onSearchCandidates($event)"
-        ></ion-searchbar>
+        <div class="assign-panel__controls">
+          <ion-searchbar
+            [debounce]="150"
+            [placeholder]="t('assign.searchPlaceholder')"
+            [value]="candidateSearchTerm()"
+            (ionInput)="onSearchCandidates($event)"
+          ></ion-searchbar>
 
-        <div class="candidate-list">
-          @for (candidate of candidateCharacters(); track candidate.id) {
-            <article class="candidate-card">
-              <img [src]="candidate.imageUrl" [alt]="candidate.name" />
-              <div class="candidate-copy">
-                <div class="candidate-title-row">
-                  <strong>{{ candidate.name }}</strong>
-                  <button
-                    type="button"
-                    class="favorite-button"
-                    [attr.aria-label]="
-                      isFavorite(candidate.id)
-                        ? t('assign.removeFavoriteAria')
-                        : t('assign.addFavoriteAria')
-                    "
-                    (click)="toggleFavorite(candidate.id, $event)"
-                  >
-                    <ion-icon
-                      [icon]="isFavorite(candidate.id) ? favoriteIcon : favoriteOutlineIcon"
-                    ></ion-icon>
-                  </button>
+          <div class="view-toggle" [attr.aria-label]="t('displayMode.label')">
+            <button
+              type="button"
+              class="view-toggle__button"
+              [class.view-toggle__button--active]="!isCompactCandidateDisplayMode()"
+              (click)="setCandidateDisplayMode('list')"
+            >
+              {{ t('displayMode.list') }}
+            </button>
+            <button
+              type="button"
+              class="view-toggle__button"
+              [class.view-toggle__button--active]="isCompactCandidateDisplayMode()"
+              (click)="setCandidateDisplayMode('compact')"
+            >
+              {{ t('displayMode.compact') }}
+            </button>
+          </div>
+        </div>
+
+        @if (isCompactCandidateDisplayMode()) {
+          <div class="candidate-grid">
+            @for (card of candidateCardViews(); track card.character.id) {
+              <article class="candidate-thumb-card">
+                <button
+                  type="button"
+                  class="favorite-button candidate-thumb-card__favorite"
+                  [attr.aria-label]="card.favoriteAriaLabel"
+                  (click)="toggleFavorite(card.character.id, $event)"
+                >
+                  <ion-icon [icon]="card.isFavorite ? favoriteIcon : favoriteOutlineIcon"></ion-icon>
+                </button>
+
+                <img [src]="card.character.imageUrl" [alt]="card.character.name" loading="lazy" />
+
+                <div class="candidate-thumb-card__copy">
+                  <strong>{{ card.character.name }}</strong>
+                  <span>{{ card.subtitle }}</span>
                 </div>
-                <span>{{ candidate.type }} • {{ candidate.primaryClass }}</span>
-              </div>
-              <div class="candidate-actions">
+
                 <ion-button
                   size="small"
                   fill="outline"
                   color="light"
-                  (click)="assignCharacter(candidate)"
+                  class="candidate-thumb-card__assign"
+                  (click)="assignCharacter(card.character)"
                 >
                   {{ 'common.actions.assign' | transloco }}
                 </ion-button>
-              </div>
-            </article>
-          }
-        </div>
+              </article>
+            }
+          </div>
+        } @else {
+          <div class="candidate-list">
+            @for (card of candidateCardViews(); track card.character.id) {
+              <article class="candidate-card">
+                <img [src]="card.character.imageUrl" [alt]="card.character.name" loading="lazy" />
+                <div class="candidate-copy">
+                  <div class="candidate-title-row">
+                    <strong>{{ card.character.name }}</strong>
+                    <button
+                      type="button"
+                      class="favorite-button"
+                      [attr.aria-label]="card.favoriteAriaLabel"
+                      (click)="toggleFavorite(card.character.id, $event)"
+                    >
+                      <ion-icon
+                        [icon]="card.isFavorite ? favoriteIcon : favoriteOutlineIcon"
+                      ></ion-icon>
+                    </button>
+                  </div>
+                  <span>{{ card.subtitle }}</span>
+                </div>
+                <div class="candidate-actions">
+                  <ion-button
+                    size="small"
+                    fill="outline"
+                    color="light"
+                    (click)="assignCharacter(card.character)"
+                  >
+                    {{ 'common.actions.assign' | transloco }}
+                  </ion-button>
+                </div>
+              </article>
+            }
+          </div>
+        }
       </section>
 
       <section class="glass-card saved-teams">

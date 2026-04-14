@@ -1,0 +1,76 @@
+{
+  "title": "Character Boxes",
+  "hero": {
+    "eyebrow": "Reusable character groups",
+    "title": "Build and maintain custom boxes for fast scoped auto-builds.",
+    "copy": "Organize up to {{characterCount}} local characters into practical groups you can reuse in the Auto Team Builder.",
+    "boxesCount": "{{count}} boxes",
+    "assignedCount": "{{count}} assignments",
+    "uniqueAssignedCount": "{{count}} unique characters assigned"
+  },
+  "list": {
+    "eyebrow": "Boxes",
+    "title": "Your saved boxes",
+    "copy": "Each box can contain any mix of characters and the same character can live in multiple boxes.",
+    "create": "Create box",
+    "count": "{{count}} characters",
+    "updatedAt": "Updated {{timestamp}}"
+  },
+  "editor": {
+    "eyebrow": "Editor",
+    "title": "Selected box",
+    "copy": "Search the roster and add or remove characters from this box. Current count: {{count}}.",
+    "delete": "Delete box",
+    "addFavorites": "Add missing favorites ({{count}})",
+    "addFavoritesLabel": "Favorites bulk add",
+    "addFavoritesCopy": "Merge every favorited character you have not already placed in this box.",
+    "nameLabel": "Box name",
+    "namePlaceholder": "Enter a clear box name",
+    "nameRequired": "A box name is required before it can be saved.",
+    "inBox": "In box"
+  },
+  "defaults": {
+    "boxName": "Box {{count}}"
+  },
+  "filters": {
+    "searchPlaceholder": "Search characters by name",
+    "typePlaceholder": "Filter by type",
+    "classPlaceholder": "Filter by class",
+    "favoritesPlaceholder": "Filter by favorites",
+    "membershipPlaceholder": "Filter by box membership",
+    "favoritesOptions": {
+      "all": "All characters",
+      "favorites": "Favorites only"
+    },
+    "membershipOptions": {
+      "all": "All membership states",
+      "inBox": "Already in box",
+      "notInBox": "Not in box"
+    }
+  },
+  "displayMode": {
+    "label": "Character layout",
+    "list": "List view",
+    "compact": "Compact view"
+  },
+  "favorites": {
+    "addAria": "Add {{name}} to favorites",
+    "removeAria": "Remove {{name}} from favorites"
+  },
+  "empty": {
+    "noBoxes": {
+      "title": "No boxes yet",
+      "copy": "Create your first box to start grouping characters for targeted builds."
+    },
+    "selectBox": {
+      "title": "Select a box",
+      "copy": "Pick a box from the list to rename it and manage its character roster."
+    },
+    "noCharacters": {
+      "title": "No characters found",
+      "copy": "Try a different search, type, or class filter."
+    }
+  },
+  "loading": "Loading character catalog...",
+  "loadMore": "Load more characters"
+}

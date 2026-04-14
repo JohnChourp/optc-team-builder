@@ -25,6 +25,27 @@ vi.mock('@ionic/angular/standalone', () => ({
 }));
 
 describe('TeamBuilderPage', () => {
+  it('defaults the candidate display mode to list', () => {
+    const { page } = createPage();
+
+    expect(page.candidateDisplayMode()).toBe('list');
+    expect(page.isCompactCandidateDisplayMode()).toBe(false);
+  });
+
+  it('switches the candidate section between list and compact without changing slots', () => {
+    const { page } = createPage();
+
+    page.slotCharacters.set([createCharacter(101) as never, null, null, null, null, null]);
+    page.setCandidateDisplayMode('compact');
+
+    expect(page.candidateDisplayMode()).toBe('compact');
+    expect(page.isCompactCandidateDisplayMode()).toBe(true);
+    expect(page.slotCharacters()[0]?.id).toBe(101);
+
+    page.setCandidateDisplayMode('list');
+    expect(page.candidateDisplayMode()).toBe('list');
+  });
+
   it('saves manual teams through the shared user state contract', async () => {
     const { page, userState } = createPage();
 
@@ -101,11 +122,41 @@ describe('TeamBuilderPage', () => {
     expect(template).toContain('[value]="candidateSearchTerm()"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(slot)"');
     expect(template.match(/common\.actions\.viewDetails/g)).toHaveLength(1);
-    expect(template).toContain('(click)="assignCharacter(candidate)"');
+    expect(template).toContain("t('displayMode.compact')");
+    expect(template).toContain('(click)="assignCharacter(card.character)"');
+    expect(template).toContain('candidate-thumb-card');
     expect(template).toContain('<app-ship-picker');
     expect(template).toContain('[favoriteShipIds]="favoriteShipIds()"');
     expect(template).toContain('(toggleFavoriteShip)="toggleShipFavorite($event)"');
     expect(template).not.toContain('<ion-select');
+  });
+
+  it('keeps favorite toggles working in compact mode', async () => {
+    const { page, userState } = createPage();
+
+    page.setCandidateDisplayMode('compact');
+
+    await page.toggleFavorite(
+      101,
+      {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      } as unknown as Event,
+    );
+
+    expect(userState.toggleFavorite).toHaveBeenCalledWith(101);
+  });
+
+  it('assigns characters from compact mode without affecting saved teams', async () => {
+    const { page } = createPage();
+
+    page.setCandidateDisplayMode('compact');
+    page.selectSlot(2);
+
+    await page.assignCharacter(createCharacter(202) as never);
+
+    expect(page.slotCharacters()[2]?.id).toBe(202);
+    expect(page.savedTeams()).toEqual([]);
   });
 
   it('resets the builder draft, slot selection and candidate search state', async () => {
@@ -183,4 +234,23 @@ function createPage() {
   const page = new TeamBuilderPage(repository as never, userState as never, i18n as never);
 
   return { page, repository, userState, i18n };
+}
+
+function createCharacter(id: number) {
+  return {
+    id,
+    name: `Character ${id}`,
+    type: 'DEX',
+    primaryClass: 'Fighter',
+    secondaryClass: null,
+    cost: 55,
+    stats: {
+      max: {
+        hp: 3000,
+        atk: 1500,
+        rcv: 300,
+      },
+    },
+    imageUrl: `/characters/${id}.png`,
+  };
 }

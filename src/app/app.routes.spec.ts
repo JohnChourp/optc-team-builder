@@ -11,6 +11,14 @@ describe("app routes", () => {
     expect(savedTeamsRoute?.loadComponent).toBeTypeOf("function");
   });
 
+  it("registers the character boxes route inside tabs", () => {
+    const tabsRoute = routes.find((route) => route.path === "tabs");
+    const characterBoxesRoute = tabsRoute?.children?.find((route) => route.path === "character-boxes");
+
+    expect(characterBoxesRoute).toBeDefined();
+    expect(characterBoxesRoute?.loadComponent).toBeTypeOf("function");
+  });
+
   it("registers the saved enemies route inside tabs", () => {
     const tabsRoute = routes.find((route) => route.path === "tabs");
     const savedEnemiesRoute = tabsRoute?.children?.find((route) => route.path === "saved-enemies");

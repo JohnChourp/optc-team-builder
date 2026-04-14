@@ -78,6 +78,22 @@
         "withCount": "Περιορίζει το manual ship confirmation και το auto ship selection στα {{count}} αποθηκευμένα favorite ships σου."
       }
     },
+    "characterBox": {
+      "label": "Scope από character box",
+      "placeholder": "Επίλεξε box",
+      "allCharacters": "Όλοι οι χαρακτήρες",
+      "support": {
+        "default": "Άφησέ το σε όλους τους χαρακτήρες για auto-build από όλο το local pool. Τα manual picks δεν επηρεάζονται.",
+        "selected": "Το auto-build θα χρησιμοποιεί μόνο τους {{count}} χαρακτήρες που είναι αποθηκευμένοι στο {{name}}. Τα manual picks μένουν ελεύθερα.",
+        "selectedWithFavorites": "Το auto-build θα χρησιμοποιεί μόνο τα {{count}} favorites που υπάρχουν και μέσα στο {{name}}.",
+        "emptyBox": "Το {{name}} είναι άδειο αυτή τη στιγμή, οπότε δεν μπορεί ακόμη να χρησιμοποιηθεί για auto-build.",
+        "emptyIntersection": "Κανένα αποθηκευμένο favorite δεν επικαλύπτεται αυτή τη στιγμή με το {{name}}."
+      },
+      "blocked": {
+        "emptyBox": "Το {{name}} είναι άδειο. Πρόσθεσε χαρακτήρες στο box ή γύρνα πίσω σε όλους τους χαρακτήρες.",
+        "emptyIntersection": "Το favorite-only auto-fill δεν μπορεί ακόμη να χρησιμοποιήσει το {{name}} γιατί δεν υπάρχουν αποθηκευμένα favorites που να επικαλύπτονται με αυτό το box."
+      }
+    },
     "disableConfirm": {
       "title": "Θέλεις σίγουρα να το απενεργοποιήσεις;",
       "cancel": "Κράτησέ το ενεργό",
@@ -172,10 +188,22 @@
       "strict": "Χτίσε strict ομάδα {{types}}"
     },
     "cancelBuild": "Ακύρωση build",
+    "createCandidatePoolBox": "Φτιάξε box από το candidate pool",
     "downloadAbilitiesJson": "Λήψη ability catalog JSON",
     "downloadPresetJson": "Λήψη preset JSON",
     "downloadTeamJson": "Λήψη team JSON",
     "importPresetJson": "Εισαγωγή preset JSON"
+  },
+  "candidatePoolBox": {
+    "createdTitle": "Το {{name}} είναι έτοιμο",
+    "createdDescription": "Αποθηκεύτηκαν {{count}} χαρακτήρες στο νέο character box.",
+    "emptyTitle": "Δεν υπάρχει διαθέσιμο candidate pool",
+    "emptyDescription": "Τα current builder filters δεν παράγουν ακόμη searchable χαρακτήρες.",
+    "saveFailedTitle": "Δεν ήταν δυνατή η δημιουργία του candidate pool box",
+    "saveFailedDescription": "Δοκίμασε ξανά αφού αλλάξεις τα current filters ή τα saved character boxes.",
+    "defaults": {
+      "name": "Auto Builder Pool {{count}}"
+    }
   },
   "manual": {
     "title": "Manual picks",

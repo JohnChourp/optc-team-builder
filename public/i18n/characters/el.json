@@ -1,4 +1,9 @@
 {
+  "displayMode": {
+    "compact": "Συμπαγής προβολή",
+    "label": "Τρόπος προβολής χαρακτήρων",
+    "list": "Προβολή λίστας"
+  },
   "empty": "Κανένας χαρακτήρας δεν ταίριαξε με το τωρινό search και τα φίλτρα.",
   "filters": {
     "active": "Ενεργό φίλτρο: {{value}}",
@@ -17,8 +22,10 @@
     }
   },
   "favorites": {
+    "addAria": "Προσθήκη του {{name}} στα favorites",
     "clearAll": "Διαγραφή όλων των favorites",
-    "clearAllConfirm": "Να διαγραφούν όλα τα favorites; Η ενέργεια δεν επηρεάζει τις αποθηκευμένες ομάδες."
+    "clearAllConfirm": "Να διαγραφούν όλα τα favorites; Η ενέργεια δεν επηρεάζει τις αποθηκευμένες ομάδες.",
+    "removeAria": "Αφαίρεση του {{name}} από τα favorites"
   },
   "hero": {
     "copy": "{{characterCount}} units, {{detailCount}} detailed records και {{rumbleCount}} rumble entries από το OPTC source repo.",
@@ -70,6 +77,7 @@
   "title": "Θησαυροφυλάκιο χαρακτήρων OPTC",
   "tools": {
     "copy": "Κάνε reset στα φίλτρα εδώ και χρησιμοποίησε το Offline tab για backup, restore και μαζική διαγραφή favorites.",
+    "manageBoxes": "Διαχείριση boxes",
     "export": "Εξαγωγή favorites",
     "import": "Εισαγωγή favorites",
     "title": "Εργαλεία favorites"

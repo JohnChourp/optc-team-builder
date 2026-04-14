@@ -53,6 +53,7 @@ export interface AutoBuildConstraints {
   requireUniqueBaseCharacterNames?: boolean;
   requiredAbilities?: AutoBuildAbilityRequirement[];
   enemyMechanics?: AutoBuildEnemyMechanicRequirement[];
+  candidateCharacterIds?: number[];
   favoritesOnly?: boolean;
   favoriteCharacterIds?: number[];
   favoriteShipsOnly?: boolean;

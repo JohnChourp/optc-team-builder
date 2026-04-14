@@ -30,6 +30,16 @@ import {
   type OptcbxFavoritesExportPayload,
 } from "../characters/characters-favorites.utils";
 import {
+  buildCharacterBoxesTransferPayload,
+  clearUnavailableCharacterBoxCharacterIds,
+  downloadCharacterBoxesExport,
+  parseCharacterBoxesImportPayload,
+  parseCharacterBoxesImportPayloadValue,
+  sanitizeCharacterBoxesImportPayload,
+  type CharacterBoxesImportError,
+  type CharacterBoxesTransferPayload,
+} from "../character-boxes/character-boxes-transfer.utils";
+import {
   buildSavedEnemiesTransferPayload,
   downloadSavedEnemiesExport,
   parseSavedEnemiesImportPayload,
@@ -106,6 +116,7 @@ export class SettingsPage implements OnInit {
   public readonly availableLanguages;
   public readonly favoriteIds;
   public readonly favoriteShipIds;
+  public readonly characterBoxes;
   public readonly savedTeams;
   public readonly savedEnemies;
   public readonly autoTeamBuilderWorkerPreference;
@@ -118,6 +129,8 @@ export class SettingsPage implements OnInit {
   public readonly canDeleteAllFavorites = computed(() => this.favoriteIds().length > 0);
   public readonly canExportFavoriteShips = computed(() => this.favoriteShipIds().length > 0);
   public readonly canDeleteAllFavoriteShips = computed(() => this.favoriteShipIds().length > 0);
+  public readonly canExportCharacterBoxes = computed(() => this.characterBoxes().length > 0);
+  public readonly canDeleteAllCharacterBoxes = computed(() => this.characterBoxes().length > 0);
   public readonly canExportSavedTeams = computed(() => this.savedTeams().length > 0);
   public readonly canDeleteAllSavedTeams = computed(() => this.savedTeams().length > 0);
   public readonly canExportSavedEnemies = computed(() => this.savedEnemies().length > 0);
@@ -126,11 +139,13 @@ export class SettingsPage implements OnInit {
   public readonly allDataImporting = signal(false);
   public readonly favoritesImporting = signal(false);
   public readonly favoriteShipsImporting = signal(false);
+  public readonly characterBoxesImporting = signal(false);
   public readonly savedTeamsImporting = signal(false);
   public readonly savedEnemiesImporting = signal(false);
   public readonly allDataFeedback = signal<TransferFeedback | null>(null);
   public readonly favoritesFeedback = signal<TransferFeedback | null>(null);
   public readonly favoriteShipsFeedback = signal<TransferFeedback | null>(null);
+  public readonly characterBoxesFeedback = signal<TransferFeedback | null>(null);
   public readonly savedTeamsFeedback = signal<TransferFeedback | null>(null);
   public readonly savedEnemiesFeedback = signal<TransferFeedback | null>(null);
 
@@ -151,6 +166,7 @@ export class SettingsPage implements OnInit {
     this.availableLanguages = this.i18n.availableLanguages;
     this.favoriteIds = this.userState.favoriteCharacterIds;
     this.favoriteShipIds = this.userState.favoriteShipIds;
+    this.characterBoxes = this.userState.characterBoxes;
     this.savedTeams = this.userState.savedTeams;
     this.savedEnemies = this.userState.savedEnemies;
     this.autoTeamBuilderWorkerPreference = this.userState.autoTeamBuilderWorkerPreference;
@@ -260,6 +276,16 @@ export class SettingsPage implements OnInit {
     await this.importSavedTeams(file);
   }
 
+  public async onCharacterBoxesFileSelected(event: Event, input: HTMLInputElement): Promise<void> {
+    const file = this.extractSelectedFile(event, input);
+
+    if (!file) {
+      return;
+    }
+
+    await this.importCharacterBoxes(file);
+  }
+
   public async onFavoriteShipsFileSelected(event: Event, input: HTMLInputElement): Promise<void> {
     const file = this.extractSelectedFile(event, input);
 
@@ -290,6 +316,7 @@ export class SettingsPage implements OnInit {
       buildAllDataTransferPayload({
         favorites,
         favoriteShips,
+        characterBoxes: this.buildCharacterBoxesExportPayload(),
         savedTeams: buildSavedTeamsTransferPayload(this.savedTeams()),
         savedEnemies: buildSavedEnemiesTransferPayload(this.savedEnemies()),
       }),
@@ -310,6 +337,14 @@ export class SettingsPage implements OnInit {
     }
 
     downloadFavoriteShipsExport(await this.buildFavoriteShipsExportPayload());
+  }
+
+  public exportCharacterBoxes(): void {
+    if (!this.canExportCharacterBoxes()) {
+      return;
+    }
+
+    downloadCharacterBoxesExport(this.buildCharacterBoxesExportPayload());
   }
 
   public exportSavedTeams(): void {
@@ -367,6 +402,19 @@ export class SettingsPage implements OnInit {
     await this.userState.clearAllSavedTeams();
   }
 
+  public async deleteAllCharacterBoxes(): Promise<void> {
+    if (
+      !this.canDeleteAllCharacterBoxes() ||
+      !this.confirmAction(
+        this.i18n.translate("management.confirm.deleteCharacterBoxes", undefined, "settings"),
+      )
+    ) {
+      return;
+    }
+
+    await this.userState.clearAllCharacterBoxes();
+  }
+
   public async deleteAllSavedEnemies(): Promise<void> {
     if (
       !this.canDeleteAllSavedEnemies() ||
@@ -403,6 +451,10 @@ export class SettingsPage implements OnInit {
       this.favoriteShipIds(),
       await this.repository.getShips(),
     );
+  }
+
+  private buildCharacterBoxesExportPayload(): CharacterBoxesTransferPayload {
+    return buildCharacterBoxesTransferPayload(this.characterBoxes());
   }
 
   private async importAllData(file: File): Promise<void> {
@@ -477,6 +529,21 @@ export class SettingsPage implements OnInit {
             [],
           );
           break;
+        case "character-boxes":
+          feedback = this.buildCombinedAllDataFeedback(
+            file.name,
+            [
+              {
+                label: this.resolveAllDataSectionLabel("characterBoxes"),
+                feedback: await this.importCharacterBoxesContent({
+                  fileName: file.name,
+                  parsedPayload: importCandidate.payload,
+                }),
+              },
+            ],
+            [],
+          );
+          break;
       }
 
       this.allDataFeedback.set(feedback);
@@ -533,6 +600,20 @@ export class SettingsPage implements OnInit {
           }),
         successfulSections,
         resolveError: (error) => this.resolveSavedTeamsImportError(error),
+      });
+    }
+
+    if (payload.characterBoxes !== undefined) {
+      await this.collectAllDataSectionResult({
+        failedSections,
+        label: this.resolveAllDataSectionLabel("characterBoxes"),
+        run: () =>
+          this.importCharacterBoxesContent({
+            fileName,
+            parsedPayload: payload.characterBoxes as unknown,
+          }),
+        successfulSections,
+        resolveError: (error) => this.resolveCharacterBoxesImportError(error),
       });
     }
 
@@ -616,13 +697,15 @@ export class SettingsPage implements OnInit {
   }
 
   private resolveAllDataSectionLabel(
-    section: "favoriteShips" | "favorites" | "savedEnemies" | "savedTeams",
+    section: "characterBoxes" | "favoriteShips" | "favorites" | "savedEnemies" | "savedTeams",
   ): string {
     switch (section) {
       case "favorites":
         return this.i18n.translate("management.favorites.title", undefined, "settings");
       case "favoriteShips":
         return this.i18n.translate("management.favoriteShips.title", undefined, "settings");
+      case "characterBoxes":
+        return this.i18n.translate("management.characterBoxes.title", undefined, "settings");
       case "savedTeams":
         return this.i18n.translate("management.savedTeams.title", undefined, "settings");
       case "savedEnemies":
@@ -905,6 +988,160 @@ export class SettingsPage implements OnInit {
     }
 
     return this.i18n.translate("management.favoriteShips.errors.generic", undefined, "settings");
+  }
+
+  private async importCharacterBoxes(file: File): Promise<void> {
+    this.characterBoxesImporting.set(true);
+    this.characterBoxesFeedback.set(null);
+
+    try {
+      this.characterBoxesFeedback.set(
+        await this.importCharacterBoxesContent({
+          fileName: file.name,
+          rawContent: await file.text(),
+        }),
+      );
+    } catch (error) {
+      this.characterBoxesFeedback.set({
+        tone: "error",
+        title: this.i18n.translate(
+          "management.characterBoxes.feedback.errorTitle",
+          undefined,
+          "settings",
+        ),
+        details: [this.resolveCharacterBoxesImportError(error)],
+      });
+    } finally {
+      this.characterBoxesImporting.set(false);
+    }
+  }
+
+  private async importCharacterBoxesContent(input: {
+    fileName: string;
+    parsedPayload?: unknown;
+    rawContent?: string;
+  }): Promise<TransferFeedback> {
+    const payload =
+      input.parsedPayload === undefined
+        ? parseCharacterBoxesImportPayload(input.rawContent ?? "")
+        : parseCharacterBoxesImportPayloadValue(input.parsedPayload);
+    const sanitizedImport = sanitizeCharacterBoxesImportPayload(payload, {
+      untitledBoxName: this.i18n.translate("common.defaults.untitledBox"),
+    });
+    const candidateCharacterIds = [...new Set(sanitizedImport.boxes.flatMap((box) => box.characterIds))];
+    const availableCharacters = candidateCharacterIds.length
+      ? await this.repository.getCharactersByIds(candidateCharacterIds)
+      : [];
+    const characterSanitizeResult = clearUnavailableCharacterBoxCharacterIds(
+      sanitizedImport.boxes,
+      new Set(availableCharacters.map((character) => character.id)),
+    );
+    const mergeResult = await this.userState.mergeImportedCharacterBoxes(
+      characterSanitizeResult.boxes,
+    );
+
+    return this.buildCharacterBoxesImportFeedback({
+      addedCount: mergeResult.addedCount,
+      duplicateIdCount: sanitizedImport.duplicateIdCount,
+      fileName: input.fileName,
+      invalidBoxCount: sanitizedImport.invalidBoxCount,
+      unknownCharacterIdCount: characterSanitizeResult.unknownCharacterIdCount,
+      updatedCount: mergeResult.updatedCount,
+    });
+  }
+
+  private buildCharacterBoxesImportFeedback(stats: {
+    addedCount: number;
+    duplicateIdCount: number;
+    fileName: string;
+    invalidBoxCount: number;
+    unknownCharacterIdCount: number;
+    updatedCount: number;
+  }): TransferFeedback {
+    const details = [
+      this.i18n.translate(
+        "management.characterBoxes.feedback.loadedFromFile",
+        { fileName: stats.fileName },
+        "settings",
+      ),
+    ];
+
+    if (stats.addedCount > 0) {
+      details.push(
+        this.i18n.translate(
+          "management.characterBoxes.feedback.stats.added",
+          { count: stats.addedCount },
+          "settings",
+        ),
+      );
+    }
+
+    if (stats.updatedCount > 0) {
+      details.push(
+        this.i18n.translate(
+          "management.characterBoxes.feedback.stats.updated",
+          { count: stats.updatedCount },
+          "settings",
+        ),
+      );
+    }
+
+    if (stats.invalidBoxCount > 0) {
+      details.push(
+        this.i18n.translate(
+          "management.characterBoxes.feedback.stats.invalid",
+          { count: stats.invalidBoxCount },
+          "settings",
+        ),
+      );
+    }
+
+    if (stats.duplicateIdCount > 0) {
+      details.push(
+        this.i18n.translate(
+          "management.characterBoxes.feedback.stats.duplicates",
+          { count: stats.duplicateIdCount },
+          "settings",
+        ),
+      );
+    }
+
+    if (stats.unknownCharacterIdCount > 0) {
+      details.push(
+        this.i18n.translate(
+          "management.characterBoxes.feedback.stats.unknownCharacters",
+          { count: stats.unknownCharacterIdCount },
+          "settings",
+        ),
+      );
+    }
+
+    const hasWarnings =
+      stats.invalidBoxCount > 0 ||
+      stats.duplicateIdCount > 0 ||
+      stats.unknownCharacterIdCount > 0;
+
+    return {
+      tone: hasWarnings ? "warning" : "success",
+      title: this.i18n.translate(
+        hasWarnings
+          ? "management.characterBoxes.feedback.warningTitle"
+          : "management.characterBoxes.feedback.successTitle",
+        undefined,
+        "settings",
+      ),
+      details,
+    };
+  }
+
+  private resolveCharacterBoxesImportError(
+    error: CharacterBoxesImportError | Error | unknown,
+  ): string {
+    if (error && typeof error === "object" && "key" in error && typeof error.key === "string") {
+      return this.i18n.translate(error.key, undefined, "settings");
+    }
+
+    return this.i18n.translate("management.characterBoxes.errors.generic", undefined, "settings");
   }
 
   private mergeFavoriteShipIds(importedShipIds: number[], currentFavoriteShipIds: number[]): number[] {

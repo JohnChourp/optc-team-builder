@@ -1,0 +1,332 @@
+<ng-container *transloco="let t; scope: 'character-boxes'; read: 'character-boxes'">
+  <ion-header class="ion-no-border">
+    <ion-toolbar>
+      <ion-title>{{ t('title') }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content [fullscreen]="true">
+    <div class="page-shell character-boxes-shell">
+      <section class="hero-card glass-card">
+        <div class="hero-copy">
+          <div class="section-label">
+            <ion-icon [icon]="boxesIcon"></ion-icon>
+            <span>{{ t('hero.eyebrow') }}</span>
+          </div>
+          <h1 class="section-title">{{ t('hero.title') }}</h1>
+          <p class="section-copy">
+            {{ t('hero.copy', { characterCount: summary()?.characterCount ?? 0 }) }}
+          </p>
+        </div>
+
+        <div class="hero-meta">
+          <div class="meta-pill">
+            <ion-icon [icon]="boxesIcon"></ion-icon>
+            <span>{{ t('hero.boxesCount', { count: boxes().length }) }}</span>
+          </div>
+          <div class="meta-pill">
+            <ion-icon [icon]="unitsIcon"></ion-icon>
+            <span>{{ t('hero.assignedCount', { count: totalAssignedCharacters() }) }}</span>
+          </div>
+          <div class="meta-pill">
+            <ion-icon [icon]="layersIcon"></ion-icon>
+            <span>{{ t('hero.uniqueAssignedCount', { count: uniqueAssignedCharacters() }) }}</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="box-layout">
+        <article class="glass-card boxes-panel">
+          <div class="panel-head">
+            <div>
+              <div class="section-label">{{ t('list.eyebrow') }}</div>
+              <h2>{{ t('list.title') }}</h2>
+              <p>{{ t('list.copy') }}</p>
+            </div>
+
+            <ion-button fill="outline" color="light" (click)="createBox()">
+              <ion-icon slot="start" [icon]="addIcon"></ion-icon>
+              {{ t('list.create') }}
+            </ion-button>
+          </div>
+
+          @if (!boxes().length) {
+            <div class="panel-empty">
+              <strong>{{ t('empty.noBoxes.title') }}</strong>
+              <span>{{ t('empty.noBoxes.copy') }}</span>
+            </div>
+          } @else {
+            <div class="box-list">
+              @for (box of boxes(); track trackBox($index, box)) {
+                <button
+                  type="button"
+                  class="box-card"
+                  [class.box-card--active]="selectedBox()?.id === box.id"
+                  (click)="selectBox(box.id)"
+                >
+                  <div class="box-card__title-row">
+                    <strong>{{ box.name }}</strong>
+                    <span>{{ t('list.count', { count: box.characterIds.length }) }}</span>
+                  </div>
+                  <small>{{ t('list.updatedAt', { timestamp: box.updatedAt }) }}</small>
+                </button>
+              }
+            </div>
+          }
+        </article>
+
+        <article class="glass-card editor-panel">
+          @if (!boxes().length) {
+            <div class="panel-empty panel-empty--large">
+              <strong>{{ t('empty.noBoxes.title') }}</strong>
+              <span>{{ t('empty.noBoxes.copy') }}</span>
+            </div>
+          } @else if (!selectedBox()) {
+            <div class="panel-empty panel-empty--large">
+              <strong>{{ t('empty.selectBox.title') }}</strong>
+              <span>{{ t('empty.selectBox.copy') }}</span>
+            </div>
+          } @else {
+            <div class="panel-head panel-head--editor">
+              <div>
+                <div class="section-label">{{ t('editor.eyebrow') }}</div>
+                <h2>{{ t('editor.title') }}</h2>
+                <p>{{ t('editor.copy', { count: selectedBoxCharacterCount() }) }}</p>
+              </div>
+
+              <ion-button fill="clear" color="danger" (click)="deleteSelectedBox()">
+                <ion-icon slot="start" [icon]="deleteIcon"></ion-icon>
+                {{ t('editor.delete') }}
+              </ion-button>
+            </div>
+
+            <div class="editor-form">
+              <div class="field-block">
+                <span>{{ t('editor.nameLabel') }}</span>
+                <ion-input
+                  fill="outline"
+                  [value]="boxNameDraft()"
+                  [placeholder]="t('editor.namePlaceholder')"
+                  (ionInput)="onBoxNameInput($event)"
+                ></ion-input>
+                @if (boxNameValidationMessage()) {
+                  <small class="validation-message">{{ boxNameValidationMessage() }}</small>
+                }
+              </div>
+
+              <div class="favorites-bulk-action">
+                <div class="favorites-bulk-action__copy">
+                  <span>{{ t('editor.addFavoritesLabel') }}</span>
+                  <small>{{ t('editor.addFavoritesCopy') }}</small>
+                </div>
+
+                <ion-button
+                  fill="outline"
+                  color="light"
+                  [disabled]="!canAddFavoritesToSelectedBox()"
+                  (click)="addFavoritesToSelectedBox()"
+                >
+                  {{ t('editor.addFavorites', { count: missingFavoriteCount() }) }}
+                </ion-button>
+              </div>
+
+              <div class="filters-grid">
+                <ion-searchbar
+                  class="box-search"
+                  [debounce]="150"
+                  [placeholder]="t('filters.searchPlaceholder')"
+                  [searchIcon]="searchIcon"
+                  [value]="searchTerm()"
+                  (ionInput)="onSearchChange($event)"
+                ></ion-searchbar>
+
+                <ion-select
+                  interface="popover"
+                  fill="outline"
+                  [placeholder]="t('filters.typePlaceholder')"
+                  [value]="selectedType()"
+                  (ionChange)="onTypeChange($event)"
+                >
+                  @for (type of availableTypes(); track type) {
+                    <ion-select-option [value]="type">{{ type }}</ion-select-option>
+                  }
+                </ion-select>
+
+                <ion-select
+                  interface="popover"
+                  fill="outline"
+                  [placeholder]="t('filters.classPlaceholder')"
+                  [value]="selectedClass()"
+                  (ionChange)="onClassChange($event)"
+                >
+                  @for (characterClass of availableClasses(); track characterClass) {
+                    <ion-select-option [value]="characterClass">
+                      {{ characterClass }}
+                    </ion-select-option>
+                  }
+                </ion-select>
+
+                <ion-select
+                  interface="popover"
+                  fill="outline"
+                  [placeholder]="t('filters.favoritesPlaceholder')"
+                  [value]="selectedFavoriteFilter()"
+                  (ionChange)="onFavoriteFilterChange($event)"
+                >
+                  <ion-select-option value="all">
+                    {{ t('filters.favoritesOptions.all') }}
+                  </ion-select-option>
+                  <ion-select-option value="favorites">
+                    {{ t('filters.favoritesOptions.favorites') }}
+                  </ion-select-option>
+                </ion-select>
+
+                <ion-select
+                  interface="popover"
+                  fill="outline"
+                  [placeholder]="t('filters.membershipPlaceholder')"
+                  [value]="selectedMembershipFilter()"
+                  (ionChange)="onMembershipFilterChange($event)"
+                >
+                  <ion-select-option value="all">
+                    {{ t('filters.membershipOptions.all') }}
+                  </ion-select-option>
+                  <ion-select-option value="inBox">
+                    {{ t('filters.membershipOptions.inBox') }}
+                  </ion-select-option>
+                  <ion-select-option value="notInBox">
+                    {{ t('filters.membershipOptions.notInBox') }}
+                  </ion-select-option>
+                </ion-select>
+
+                <ion-button fill="outline" color="light" (click)="clearFilters()">
+                  {{ 'common.actions.clear' | transloco }}
+                </ion-button>
+              </div>
+
+              <div class="view-toggle" [attr.aria-label]="t('displayMode.label')">
+                <button
+                  type="button"
+                  class="view-toggle__button"
+                  [class.view-toggle__button--active]="!isCompactDisplayMode()"
+                  (click)="setDisplayMode('list')"
+                >
+                  {{ t('displayMode.list') }}
+                </button>
+                <button
+                  type="button"
+                  class="view-toggle__button"
+                  [class.view-toggle__button--active]="isCompactDisplayMode()"
+                  (click)="setDisplayMode('compact')"
+                >
+                  {{ t('displayMode.compact') }}
+                </button>
+              </div>
+            </div>
+
+            @if (loading()) {
+              <div class="panel-empty panel-empty--loading">
+                <ion-spinner name="crescent"></ion-spinner>
+                <span>{{ t('loading') }}</span>
+              </div>
+            } @else if (!characters().length) {
+              <div class="panel-empty panel-empty--large">
+                <strong>{{ t('empty.noCharacters.title') }}</strong>
+                <span>{{ t('empty.noCharacters.copy') }}</span>
+              </div>
+            } @else {
+              @if (isCompactDisplayMode()) {
+                <div class="character-grid">
+                  @for (card of characterCardViews(); track card.character.id) {
+                    <article class="character-thumb-card" [title]="card.character.name">
+                      <button
+                        type="button"
+                        class="favorite-button character-thumb-card__favorite"
+                        [attr.aria-label]="card.favoriteAriaLabel"
+                        (click)="toggleFavorite(card.character.id, $event)"
+                      >
+                        <ion-icon [icon]="card.isFavorite ? favoriteIcon : favoriteOutlineIcon"></ion-icon>
+                      </button>
+
+                      <img
+                        [src]="card.character.imageUrl"
+                        [alt]="card.character.name"
+                        loading="lazy"
+                      />
+
+                      <ion-button
+                        fill="solid"
+                        color="warning"
+                        size="small"
+                        class="character-thumb-card__membership-action"
+                        (click)="toggleCharacterMembership(card.character.id)"
+                      >
+                        {{ card.membershipActionLabel }}
+                      </ion-button>
+                    </article>
+                  }
+                </div>
+              } @else {
+                <div class="character-list">
+                  @for (card of characterCardViews(); track card.character.id) {
+                    <article class="character-row">
+                      <img
+                        [src]="card.character.imageUrl"
+                        [alt]="card.character.name"
+                        loading="lazy"
+                      />
+
+                      <div class="character-row__content">
+                        <div class="character-row__title-row">
+                          <strong>{{ card.character.name }}</strong>
+                          <button
+                            type="button"
+                            class="favorite-button"
+                            [attr.aria-label]="card.favoriteAriaLabel"
+                            (click)="toggleFavorite(card.character.id, $event)"
+                          >
+                            <ion-icon
+                              [icon]="card.isFavorite ? favoriteIcon : favoriteOutlineIcon"
+                            ></ion-icon>
+                          </button>
+                          @if (card.inSelectedBox) {
+                            <span class="membership-chip">{{ t('editor.inBox') }}</span>
+                          }
+                        </div>
+                        <small>{{ card.subtitle }}</small>
+                      </div>
+
+                      <ion-button
+                        fill="outline"
+                        color="light"
+                        (click)="toggleCharacterMembership(card.character.id)"
+                      >
+                        {{ card.membershipActionLabel }}
+                      </ion-button>
+                    </article>
+                  }
+                </div>
+              }
+
+              @if (hasMore()) {
+                <div class="load-more">
+                  <ion-button
+                    fill="outline"
+                    color="light"
+                    [disabled]="loadingMore()"
+                    (click)="loadMore()"
+                  >
+                    @if (loadingMore()) {
+                      <ion-spinner slot="start" name="crescent"></ion-spinner>
+                    }
+                    {{ t('loadMore') }}
+                  </ion-button>
+                </div>
+              }
+            }
+          }
+        </article>
+      </section>
+    </div>
+  </ion-content>
+</ng-container>

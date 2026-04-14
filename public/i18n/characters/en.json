@@ -1,4 +1,9 @@
 {
+  "displayMode": {
+    "compact": "Compact view",
+    "label": "Character display mode",
+    "list": "List view"
+  },
   "empty": "No characters matched the current search and filters.",
   "filters": {
     "active": "Active filter: {{value}}",
@@ -17,8 +22,10 @@
     }
   },
   "favorites": {
+    "addAria": "Add {{name}} to favorites",
     "clearAll": "Clear all favorites",
-    "clearAllConfirm": "Delete all favorites? This does not affect your saved teams."
+    "clearAllConfirm": "Delete all favorites? This does not affect your saved teams.",
+    "removeAria": "Remove {{name}} from favorites"
   },
   "hero": {
     "copy": "{{characterCount}} units, {{detailCount}} detailed records, and {{rumbleCount}} rumble entries from the OPTC source repo.",
@@ -70,6 +77,7 @@
   "title": "OPTC Character Vault",
   "tools": {
     "copy": "Reset filters here, then use the Offline tab for favorites backup, restore, and bulk deletion.",
+    "manageBoxes": "Manage boxes",
     "export": "Export favorites",
     "import": "Import favorites",
     "title": "Favorites tools"

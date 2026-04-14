@@ -147,6 +147,32 @@
         </div>
 
         <div class="secondary-toggle-grid">
+          <div class="strict-toggle-row strict-toggle-row--select">
+            <div class="strict-toggle-copy">
+              <strong>{{ t('filters.characterBox.label') }}</strong>
+              <small>{{ characterBoxSupportLabel() }}</small>
+            </div>
+            <ion-select
+              interface="popover"
+              class="strict-toggle-select"
+              fill="outline"
+              [placeholder]="t('filters.characterBox.placeholder')"
+              [value]="selectedCharacterBoxId() ?? ''"
+              [selectedText]="selectedCharacterBoxLabel()"
+              [disabled]="building()"
+              (ionChange)="onCharacterBoxChange($event)"
+            >
+              <ion-select-option value="">
+                {{ t('filters.characterBox.allCharacters') }}
+              </ion-select-option>
+              @for (characterBox of characterBoxes(); track characterBox.id) {
+                <ion-select-option [value]="characterBox.id">
+                  {{ characterBox.name }}
+                </ion-select-option>
+              }
+            </ion-select>
+          </div>
+
           <div class="strict-toggle-row">
             <div class="strict-toggle-copy">
               <strong>{{ favoritesOnlyToggleLabel() }}</strong>
@@ -362,6 +388,12 @@
         @if (buildBlockedByFavorites()) {
           <p class="favorites-only-warning">
             {{ favoritesOnlyBlockedMessage() }}
+          </p>
+        }
+
+        @if (buildBlockedByCharacterScope()) {
+          <p class="favorites-only-warning">
+            {{ characterBoxBlockedMessage() }}
           </p>
         }
 
@@ -1002,6 +1034,18 @@
             fill="outline"
             color="warning"
             class="download-preset-button"
+            [disabled]="!canCreateCandidatePoolBox()"
+            (click)="createCandidatePoolBox()"
+          >
+            @if (candidatePoolBoxCreationPending()) {
+              <ion-spinner slot="start" name="crescent"></ion-spinner>
+            }
+            {{ createCandidatePoolBoxLabel() }}
+          </ion-button>
+          <ion-button
+            fill="outline"
+            color="warning"
+            class="download-preset-button"
             [disabled]="!canDownloadSelectionJson()"
             (click)="downloadSelectionJson()"
           >
@@ -1024,6 +1068,29 @@
             <div>
               <strong>{{ presetFeedback.title }}</strong>
               @for (detail of presetFeedback.details; track $index) {
+                <small>{{ detail }}</small>
+              }
+            </div>
+          </section>
+        }
+
+        @if (candidatePoolBoxFeedback(); as candidatePoolFeedback) {
+          <section
+            class="preset-import-feedback"
+            [class.preset-import-feedback--success]="candidatePoolFeedback.tone === 'success'"
+            [class.preset-import-feedback--warning]="candidatePoolFeedback.tone === 'warning'"
+            [class.preset-import-feedback--error]="candidatePoolFeedback.tone === 'error'"
+          >
+            <ion-icon
+              [icon]="
+                candidatePoolFeedback.tone === 'error'
+                  ? presetImportErrorIcon
+                  : presetImportSuccessIcon
+              "
+            ></ion-icon>
+            <div>
+              <strong>{{ candidatePoolFeedback.title }}</strong>
+              @for (detail of candidatePoolFeedback.details; track $index) {
                 <small>{{ detail }}</small>
               }
             </div>

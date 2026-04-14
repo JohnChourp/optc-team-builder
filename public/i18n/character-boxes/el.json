@@ -1,0 +1,76 @@
+{
+  "title": "Character Boxes",
+  "hero": {
+    "eyebrow": "Επαναχρησιμοποιήσιμες ομάδες χαρακτήρων",
+    "title": "Φτιάξε και κράτησε custom boxes για πιο στοχευμένο auto-build.",
+    "copy": "Οργάνωσε έως και {{characterCount}} τοπικούς χαρακτήρες σε πρακτικά groups που μπορείς να ξαναχρησιμοποιήσεις στο Auto Team Builder.",
+    "boxesCount": "{{count}} boxes",
+    "assignedCount": "{{count}} αναθέσεις",
+    "uniqueAssignedCount": "{{count}} μοναδικοί χαρακτήρες σε boxes"
+  },
+  "list": {
+    "eyebrow": "Boxes",
+    "title": "Αποθηκευμένα boxes",
+    "copy": "Κάθε box μπορεί να περιέχει οποιοδήποτε μείγμα χαρακτήρων και ο ίδιος χαρακτήρας μπορεί να υπάρχει σε πολλά boxes.",
+    "create": "Νέο box",
+    "count": "{{count}} χαρακτήρες",
+    "updatedAt": "Ενημερώθηκε {{timestamp}}"
+  },
+  "editor": {
+    "eyebrow": "Editor",
+    "title": "Επιλεγμένο box",
+    "copy": "Κάνε search στο roster και πρόσθεσε ή αφαίρεσε χαρακτήρες από αυτό το box. Τρέχον πλήθος: {{count}}.",
+    "delete": "Διαγραφή box",
+    "addFavorites": "Πρόσθεσε favorites που λείπουν ({{count}})",
+    "addFavoritesLabel": "Μαζική προσθήκη favorites",
+    "addFavoritesCopy": "Κάνε merge όλων των favorited χαρακτήρων που δεν υπάρχουν ήδη σε αυτό το box.",
+    "nameLabel": "Όνομα box",
+    "namePlaceholder": "Δώσε ένα καθαρό όνομα στο box",
+    "nameRequired": "Το box χρειάζεται όνομα για να αποθηκευτεί.",
+    "inBox": "Μέσα στο box"
+  },
+  "defaults": {
+    "boxName": "Box {{count}}"
+  },
+  "filters": {
+    "searchPlaceholder": "Αναζήτηση χαρακτήρων με όνομα",
+    "typePlaceholder": "Φίλτρο ανά type",
+    "classPlaceholder": "Φίλτρο ανά class",
+    "favoritesPlaceholder": "Φίλτρο favorites",
+    "membershipPlaceholder": "Φίλτρο συμμετοχής στο box",
+    "favoritesOptions": {
+      "all": "Όλοι οι χαρακτήρες",
+      "favorites": "Μόνο favorites"
+    },
+    "membershipOptions": {
+      "all": "Όλες οι καταστάσεις",
+      "inBox": "Ήδη μέσα στο box",
+      "notInBox": "Εκτός box"
+    }
+  },
+  "displayMode": {
+    "label": "Διάταξη χαρακτήρων",
+    "list": "Προβολή λίστας",
+    "compact": "Συμπαγής προβολή"
+  },
+  "favorites": {
+    "addAria": "Πρόσθεσε τον {{name}} στα favorites",
+    "removeAria": "Αφαίρεσε τον {{name}} από τα favorites"
+  },
+  "empty": {
+    "noBoxes": {
+      "title": "Δεν υπάρχουν boxes ακόμη",
+      "copy": "Φτιάξε το πρώτο σου box για να ξεκινήσεις να ομαδοποιείς χαρακτήρες για στοχευμένα builds."
+    },
+    "selectBox": {
+      "title": "Διάλεξε box",
+      "copy": "Επίλεξε ένα box από τη λίστα για να το μετονομάσεις και να διαχειριστείς το roster του."
+    },
+    "noCharacters": {
+      "title": "Δεν βρέθηκαν χαρακτήρες",
+      "copy": "Δοκίμασε άλλο search, type ή class φίλτρο."
+    }
+  },
+  "loading": "Γίνεται φόρτωση του character catalog...",
+  "loadMore": "Φόρτωση περισσότερων χαρακτήρων"
+}

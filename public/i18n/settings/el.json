@@ -48,21 +48,23 @@
     }
   },
   "management": {
-    "copy": "Κάνε backup και restore των τοπικών δεδομένων της συσκευής για favorite characters, favorite ships, saved teams και saved enemies.",
+    "copy": "Κάνε backup και restore των τοπικών δεδομένων της συσκευής για favorite characters, favorite ships, character boxes, saved teams και saved enemies.",
     "confirm": {
+      "deleteCharacterBoxes": "Να διαγραφούν όλα τα character boxes; Η ενέργεια δεν επηρεάζει τα favorites, τα saved teams ή τα saved enemies.",
       "deleteFavorites": "Να διαγραφούν όλα τα favorites; Η ενέργεια δεν επηρεάζει τα saved teams ή τα saved enemies.",
       "deleteFavoriteShips": "Να διαγραφούν όλα τα αγαπημένα καράβια; Η ενέργεια δεν επηρεάζει τα favorite characters, τα saved teams ή τα saved enemies.",
       "deleteSavedEnemies": "Να διαγραφούν όλα τα saved enemies; Η ενέργεια δεν επηρεάζει τα favorites ή τα saved teams.",
       "deleteSavedTeams": "Να διαγραφούν όλα τα saved teams; Η ενέργεια δεν επηρεάζει τα favorites ή τα saved enemies."
     },
     "counts": {
+      "characterBoxes": "{{count}} character boxes",
       "favorites": "{{count}} favorites",
       "favoriteShips": "{{count}} αγαπημένα καράβια",
       "savedEnemies": "{{count}} saved enemies",
       "savedTeams": "{{count}} saved teams"
     },
     "allData": {
-      "copy": "Κάνε export ένα πλήρες backup bundle ή import ένα έξυπνο backup που μπορεί να έχει όλα τα δεδομένα, μόνο ένα section ή ακόμα και export από ένα μόνο saved team ή saved enemy.",
+      "copy": "Κάνε export ένα πλήρες backup bundle ή import ένα έξυπνο backup που μπορεί να έχει όλα τα δεδομένα, μόνο ένα section ή ακόμα και export από ένα μόνο favorites, ships, character boxes, saved teams ή saved enemies backup.",
       "errors": {
         "generic": "Το import όλων των δεδομένων απέτυχε.",
         "invalidJson": "Το επιλεγμένο backup δεν είναι έγκυρο JSON.",
@@ -78,8 +80,35 @@
       },
       "import": "Εισαγωγή όλων",
       "processing": "Γίνεται import του backup...",
-      "subtitle": "Favorites, καράβια, teams, enemies",
+      "subtitle": "Favorites, καράβια, boxes, teams, enemies",
       "title": "All Data"
+    },
+    "characterBoxes": {
+      "copy": "Κάνε export όλων των character boxes σε JSON, import ενός character boxes backup ή διαγραφή όλων των character boxes από αυτή τη συσκευή.",
+      "deleteAll": "Διαγραφή όλων των character boxes",
+      "errors": {
+        "generic": "Το import των character boxes απέτυχε.",
+        "invalidJson": "Το επιλεγμένο backup για character boxes δεν είναι έγκυρο JSON.",
+        "invalidPayload": "Το επιλεγμένο backup για character boxes δεν έχει το αναμενόμενο format.",
+        "unsupportedSchema": "Το επιλεγμένο backup για character boxes χρησιμοποιεί μη υποστηριζόμενη έκδοση schema."
+      },
+      "export": "Εξαγωγή character boxes",
+      "feedback": {
+        "errorTitle": "Το import των character boxes απέτυχε",
+        "loadedFromFile": "Φορτώθηκε από το {{fileName}}.",
+        "stats": {
+          "added": "Προστέθηκαν {{count}} νέα character boxes.",
+          "duplicates": "Συγχωνεύτηκαν {{count}} διπλά ids character boxes.",
+          "invalid": "Αγνοήθηκαν {{count}} μη έγκυρες εγγραφές character boxes.",
+          "unknownCharacters": "Αφαιρέθηκαν {{count}} character ids που δεν υπάρχουν σε αυτό το build.",
+          "updated": "Ενημερώθηκαν {{count}} υπάρχοντα character boxes."
+        },
+        "successTitle": "Το import των character boxes ολοκληρώθηκε",
+        "warningTitle": "Το import των character boxes ολοκληρώθηκε με παρατηρήσεις"
+      },
+      "import": "Εισαγωγή character boxes",
+      "processing": "Γίνεται import των character boxes...",
+      "title": "Character Boxes"
     },
     "favorites": {
       "copy": "Κάνε export ή import του OPTCbx-compatible favorites αρχείου σου ή καθάρισε όλη τη λίστα favorites από αυτή τη συσκευή.",
