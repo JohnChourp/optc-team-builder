@@ -412,46 +412,43 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.manualCandidateCards().map((card) => card.character.id)).toEqual([402, 401]);
   });
 
-  it('keeps favorite-only auto-fill enabled when disable confirmation is cancelled', async () => {
-    const { page, alertController, alertState } = await createPage();
+  it('disables favorite-only auto-fill immediately', async () => {
+    const { page } = await createPage();
 
     await page.ngOnInit();
-    alertState.nextRole = 'cancel';
+    page.favoritesOnly.set(true);
 
-    await page.onFavoritesOnlyToggle({ detail: { checked: false } } as CustomEvent<{
+    page.onFavoritesOnlyToggle({ detail: { checked: false } } as CustomEvent<{
       checked: boolean;
     }>);
 
-    expect(page.favoritesOnly()).toBe(true);
-    expect(alertController.create).toHaveBeenCalledOnce();
+    expect(page.favoritesOnly()).toBe(false);
   });
 
-  it('disables favorite ship mode after confirmation', async () => {
-    const { page, alertController, alertState } = await createPage();
+  it('disables favorite ship mode immediately', async () => {
+    const { page } = await createPage();
 
     await page.ngOnInit();
-    alertState.nextRole = 'confirm';
+    page.favoriteShipsOnly.set(true);
 
-    await page.onFavoriteShipsOnlyToggle({ detail: { checked: false } } as CustomEvent<{
+    page.onFavoriteShipsOnlyToggle({ detail: { checked: false } } as CustomEvent<{
       checked: boolean;
     }>);
 
     expect(page.favoriteShipsOnly()).toBe(false);
-    expect(alertController.create).toHaveBeenCalledOnce();
   });
 
-  it('asks for confirmation before disabling unique-name matching', async () => {
-    const { page, alertController, alertState } = await createPage();
+  it('disables unique-name matching immediately', async () => {
+    const { page } = await createPage();
 
     await page.ngOnInit();
-    alertState.nextRole = 'confirm';
+    page.requireUniqueBaseCharacterNames.set(true);
 
-    await page.onRequireUniqueBaseCharacterNamesToggle({
+    page.onRequireUniqueBaseCharacterNamesToggle({
       detail: { checked: false },
     } as CustomEvent<{ checked: boolean }>);
 
     expect(page.requireUniqueBaseCharacterNames()).toBe(false);
-    expect(alertController.create).toHaveBeenCalledOnce();
   });
 
   it('passes configured ability requirements to the builder service', async () => {
@@ -3825,8 +3822,6 @@ async function createPage(
     searchCharacters: ReturnType<typeof vi.fn>;
   };
   autoTeamBuilder: { buildTeam: ReturnType<typeof vi.fn> };
-  alertController: { create: ReturnType<typeof vi.fn> };
-  alertState: { nextRole: 'cancel' | 'confirm'; lastConfig: unknown };
   router: { navigate: ReturnType<typeof vi.fn> };
   route: { snapshot: { queryParamMap: { get: ReturnType<typeof vi.fn> } } };
   userState: {
@@ -3924,20 +3919,6 @@ async function createPage(
   };
   const autoTeamBuilder = {
     buildTeam: vi.fn().mockResolvedValue(null),
-  };
-  const alertState: { nextRole: 'cancel' | 'confirm'; lastConfig: unknown } = {
-    nextRole: 'confirm',
-    lastConfig: null,
-  };
-  const alertController = {
-    create: vi.fn().mockImplementation(async (config: unknown) => {
-      alertState.lastConfig = config;
-
-      return {
-        present: vi.fn().mockResolvedValue(undefined),
-        onDidDismiss: vi.fn().mockResolvedValue({ role: alertState.nextRole }),
-      };
-    }),
   };
   const savedTeams = signal([
     createSavedTeam('team-1', {
@@ -4050,12 +4031,9 @@ async function createPage(
       i18n as never,
       route as never,
       router as never,
-      alertController as never,
     ),
     repository,
     autoTeamBuilder,
-    alertController,
-    alertState,
     router,
     route,
     userState,

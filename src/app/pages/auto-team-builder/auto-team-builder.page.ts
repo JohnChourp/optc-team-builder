@@ -2,7 +2,7 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
 import { Component, OnDestroy, OnInit, computed, signal, type WritableSignal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
-import { AlertController, type ViewDidEnter, type ViewWillEnter } from '@ionic/angular';
+import { type ViewDidEnter, type ViewWillEnter } from '@ionic/angular';
 import {
   IonButton,
   IonContent,
@@ -1384,7 +1384,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     private readonly i18n: AppI18nService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
-    private readonly alertController: AlertController,
   ) {
     this.favoriteCharacterIds = this.userState.favoriteCharacterIds;
     this.favoriteShipIds = this.userState.favoriteShipIds;
@@ -1645,34 +1644,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.resetBuildState();
   }
 
-  public async onRequireUniqueBaseCharacterNamesToggle(
-    event: CustomEvent<{ checked: boolean }>,
-  ): Promise<void> {
-    if (
-      !(await this.confirmDisableToggleIfNeeded({
-        checked: event.detail.checked,
-        currentValue: this.requireUniqueBaseCharacterNames(),
-        messageKey: 'filters.disableConfirm.uniqueNames.message',
-      }))
-    ) {
-      return;
-    }
-
+  public onRequireUniqueBaseCharacterNamesToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.requireUniqueBaseCharacterNames.set(event.detail.checked);
     this.resetBuildState();
   }
 
-  public async onFavoritesOnlyToggle(event: CustomEvent<{ checked: boolean }>): Promise<void> {
-    if (
-      !(await this.confirmDisableToggleIfNeeded({
-        checked: event.detail.checked,
-        currentValue: this.favoritesOnly(),
-        messageKey: 'filters.disableConfirm.favoritesOnly.message',
-      }))
-    ) {
-      return;
-    }
-
+  public onFavoritesOnlyToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.favoritesOnly.set(event.detail.checked);
     this.resetBuildState();
   }
@@ -1684,17 +1661,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.resetBuildState();
   }
 
-  public async onFavoriteShipsOnlyToggle(event: CustomEvent<{ checked: boolean }>): Promise<void> {
-    if (
-      !(await this.confirmDisableToggleIfNeeded({
-        checked: event.detail.checked,
-        currentValue: this.favoriteShipsOnly(),
-        messageKey: 'filters.disableConfirm.favoriteShipsOnly.message',
-      }))
-    ) {
-      return;
-    }
-
+  public onFavoriteShipsOnlyToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.favoriteShipsOnly.set(event.detail.checked);
     this.reconcileFavoriteShipSelection();
   }
@@ -3497,35 +3464,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
   private translateImportMessage(message: AutoTeamSelectionImportMessage): string {
     return this.t(message.key, message.params);
-  }
-
-  private async confirmDisableToggleIfNeeded(options: {
-    checked: boolean;
-    currentValue: boolean;
-    messageKey: string;
-  }): Promise<boolean> {
-    if (options.checked || !options.currentValue) {
-      return true;
-    }
-
-    const alert = await this.alertController.create({
-      header: this.t('filters.disableConfirm.title'),
-      message: this.t(options.messageKey),
-      buttons: [
-        {
-          text: this.t('filters.disableConfirm.cancel'),
-          role: 'cancel',
-        },
-        {
-          text: this.t('filters.disableConfirm.confirm'),
-          role: 'confirm',
-        },
-      ],
-    });
-
-    await alert.present();
-    const { role } = await alert.onDidDismiss();
-    return role === 'confirm';
   }
 
   private joinRequirementLabels(labels: string[]): string {
