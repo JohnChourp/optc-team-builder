@@ -467,6 +467,7 @@ function createCharacterRow(
       swapData: null,
       vsSpecial: null,
       superType: null,
+      superTandemData: null,
       superClass: null,
       rumbleData: null,
     }),

@@ -1,9 +1,10 @@
 {
-  "generatedAt": "2026-04-13T06:45:25.940Z",
+  "generatedAt": "2026-04-14T19:28:48.744Z",
   "characters": [
     {
       "id": 1,
       "name": "Monkey D. Luffy",
+      "isIncomplete": false,
       "type": "STR",
       "primaryClass": "Fighter",
       "secondaryClass": null,
@@ -67,6 +68,7 @@
     {
       "id": 2,
       "name": "Monkey D. Luffy - Gum-Gum Pistol",
+      "isIncomplete": false,
       "type": "STR",
       "primaryClass": "Fighter",
       "secondaryClass": null,
@@ -136,6 +138,7 @@
     {
       "id": 3,
       "name": "Monkey D. Luffy - Gum-Gum Bazooka",
+      "isIncomplete": false,
       "type": "STR",
       "primaryClass": "Fighter",
       "secondaryClass": null,
@@ -205,6 +208,7 @@
     {
       "id": 4,
       "name": "Monkey D. Luffy - Gear 2",
+      "isIncomplete": false,
       "type": "STR",
       "primaryClass": "Fighter",
       "secondaryClass": "Free Spirit",
@@ -355,6 +359,7 @@
     {
       "id": 5,
       "name": "Roronoa Zoro",
+      "isIncomplete": false,
       "type": "DEX",
       "primaryClass": "Slasher",
       "secondaryClass": null,
@@ -424,6 +429,7 @@
     {
       "id": 6,
       "name": "Roronoa Zoro - Three Thousand Worlds",
+      "isIncomplete": false,
       "type": "DEX",
       "primaryClass": "Slasher",
       "secondaryClass": "Driven",
@@ -494,6 +500,7 @@
     {
       "id": 7,
       "name": "Roronoa Zoro - Pound Phoenix",
+      "isIncomplete": false,
       "type": "DEX",
       "primaryClass": "Slasher",
       "secondaryClass": "Driven",
@@ -564,6 +571,7 @@
     {
       "id": 8,
       "name": "Roronoa Zoro - Ashura Ichibugin",
+      "isIncomplete": false,
       "type": "DEX",
       "primaryClass": "Slasher",
       "secondaryClass": "Driven",
@@ -714,6 +722,7 @@
     {
       "id": 9,
       "name": "Nami",
+      "isIncomplete": false,
       "type": "INT",
       "primaryClass": "Striker",
       "secondaryClass": null,
@@ -782,6 +791,7 @@
     {
       "id": 10,
       "name": "Nami - Tornado Tempo",
+      "isIncomplete": false,
       "type": "INT",
       "primaryClass": "Striker",
       "secondaryClass": "Cerebral",
@@ -851,6 +861,7 @@
     {
       "id": 11,
       "name": "Nami - Mirage Tempo",
+      "isIncomplete": false,
       "type": "INT",
       "primaryClass": "Striker",
       "secondaryClass": "Cerebral",
@@ -920,6 +931,7 @@
     {
       "id": 12,
       "name": "Nami - Thunderbolt Tempo",
+      "isIncomplete": false,
       "type": "INT",
       "primaryClass": "Striker",
       "secondaryClass": "Cerebral",
@@ -1069,6 +1081,7 @@
     {
       "id": 13,
       "name": "Usopp",
+      "isIncomplete": false,
       "type": "PSY",
       "primaryClass": "Shooter",
       "secondaryClass": null,
@@ -1591,6 +1604,7 @@
     {
       "id": 14,
       "name": "Usopp - Tabasco Star",
+      "isIncomplete": false,
       "type": "PSY",
       "primaryClass": "Shooter",
       "secondaryClass": null,
@@ -2113,6 +2127,7 @@
     {
       "id": 15,
       "name": "Usopp - Usopp Golden Pound",
+      "isIncomplete": false,
       "type": "PSY",
       "primaryClass": "Shooter",
       "secondaryClass": null,
@@ -2635,6 +2650,7 @@
     {
       "id": 16,
       "name": "Sogeking",
+      "isIncomplete": false,
       "type": "PSY",
       "primaryClass": "Shooter",
       "secondaryClass": null,
@@ -2786,6 +2802,7 @@
     {
       "id": 17,
       "name": "Sanji",
+      "isIncomplete": false,
       "type": "QCK",
       "primaryClass": "Fighter",
       "secondaryClass": null,
@@ -2854,6 +2871,7 @@
     {
       "id": 18,
       "name": "Sanji - Plastic Surgery Shot",
+      "isIncomplete": false,
       "type": "QCK",
       "primaryClass": "Fighter",
       "secondaryClass": "Powerhouse",
@@ -2923,6 +2941,7 @@
     {
       "id": 19,
       "name": "Chef Sanji - Hot Rock Stew",
+      "isIncomplete": false,
       "type": "QCK",
       "primaryClass": "Fighter",
       "secondaryClass": "Powerhouse",
@@ -2993,6 +3012,7 @@
     {
       "id": 20,
       "name": "Sanji - Diable Jambe Flambe",
+      "isIncomplete": false,
       "type": "QCK",
       "primaryClass": "Fighter",
       "secondaryClass": "Powerhouse",
@@ -3152,6 +3172,7 @@
     {
       "id": 21,
       "name": "Tony Tony Chopper",
+      "isIncomplete": false,
       "type": "PSY",
       "primaryClass": "Fighter",
       "secondaryClass": null,
@@ -3221,6 +3242,7 @@
     {
       "id": 22,
       "name": "Tony Tony Chopper - Heavy Point",
+      "isIncomplete": false,
       "type": "PSY",
       "primaryClass": "Fighter",
       "secondaryClass": "Free Spirit",
@@ -3371,6 +3393,7 @@
     {
       "id": 23,
       "name": "Tony Tony Chopper - Brain Point",
+      "isIncomplete": false,
       "type": "INT",
       "primaryClass": "Fighter",
       "secondaryClass": "Cerebral",
@@ -3441,6 +3464,7 @@
     {
       "id": 24,
       "name": "Tony Tony Chopper - Arm Point",
+      "isIncomplete": false,
       "type": "STR",
       "primaryClass": "Fighter",
       "secondaryClass": "Powerhouse",

@@ -32,10 +32,12 @@ const MANUAL_DETAIL_OBJECT_KEYS = [
   'swapData',
   'vsSpecial',
   'superType',
+  'superTandemData',
+  'finalTapData',
   'superClass',
   'rumbleData',
 ];
-const MANUAL_DETAIL_STRING_ARRAY_KEYS = ['partyConflictKeys', 'sailorAbilities'];
+const MANUAL_DETAIL_STRING_ARRAY_KEYS = ['partyConflictKeys', 'characterTags', 'sailorAbilities'];
 export function isManualCharacterId(value) {
   return Number.isInteger(value) && value >= MANUAL_CHARACTER_ID_MIN;
 }
@@ -54,6 +56,7 @@ export function createEmptyManualDetail(characterId) {
     superSpecialNotes: null,
     superSpecialCriteria: null,
     partyConflictKeys: [],
+    characterTags: [],
     builderAbilities: [],
     sailorAbilities: [],
     sailorNotes: null,
@@ -63,6 +66,8 @@ export function createEmptyManualDetail(characterId) {
     swapData: null,
     vsSpecial: null,
     superType: null,
+    superTandemData: null,
+    finalTapData: null,
     superClass: null,
     rumbleData: null,
   };
@@ -166,23 +171,25 @@ export function normalizeIncomingManualCharacterPayload(
   const classes = normalizeClasses(rawPayload.classes, availableClasses);
   const detail = normalizeManualDetail(rawPayload, characterId);
   const imageFile = normalizeStoredImageFile(storedImageFile);
+  const hasIncompleteStats = hasIncompleteManualStats(rawPayload);
   const normalized = {
     id: characterId,
     name: normalizeRequiredString(rawPayload.name, 'manual character name'),
+    isIncomplete: normalizeIncompleteFlag(rawPayload.isIncomplete, hasIncompleteStats),
     type: normalizeType(rawPayload.type),
     classes,
     stars: normalizeNonNegativeNumber(rawPayload.stars, 'stars'),
     cost: normalizeNonNegativeNumber(rawPayload.cost, 'cost'),
     combo: normalizeNonNegativeNumber(rawPayload.combo, 'combo'),
     maxLevel: normalizeNonNegativeNumber(rawPayload.maxLevel, 'maxLevel'),
-    maxExperience: normalizeNonNegativeNumber(rawPayload.maxExperience, 'maxExperience'),
-    minHp: normalizeNonNegativeNumber(rawPayload.minHp, 'minHp'),
-    minAtk: normalizeNonNegativeNumber(rawPayload.minAtk, 'minAtk'),
-    minRcv: normalizeNonNegativeNumber(rawPayload.minRcv, 'minRcv'),
-    maxHp: normalizeNonNegativeNumber(rawPayload.maxHp, 'maxHp'),
-    maxAtk: normalizeNonNegativeNumber(rawPayload.maxAtk, 'maxAtk'),
-    maxRcv: normalizeNonNegativeNumber(rawPayload.maxRcv, 'maxRcv'),
-    growth: normalizeOptionalNonNegativeNumber(rawPayload.growth, 'growth', 0),
+    maxExperience: normalizeNullableNonNegativeNumber(rawPayload.maxExperience, 'maxExperience'),
+    minHp: normalizeNullableNonNegativeNumber(rawPayload.minHp, 'minHp'),
+    minAtk: normalizeNullableNonNegativeNumber(rawPayload.minAtk, 'minAtk'),
+    minRcv: normalizeNullableNonNegativeNumber(rawPayload.minRcv, 'minRcv'),
+    maxHp: normalizeNullableNonNegativeNumber(rawPayload.maxHp, 'maxHp'),
+    maxAtk: normalizeNullableNonNegativeNumber(rawPayload.maxAtk, 'maxAtk'),
+    maxRcv: normalizeNullableNonNegativeNumber(rawPayload.maxRcv, 'maxRcv'),
+    growth: normalizeNullableNonNegativeNumber(rawPayload.growth, 'growth'),
     image: {
       file: imageFile,
     },
@@ -208,6 +215,7 @@ export function buildAppliedManualCharacter(record) {
   return {
     id: record.id,
     name: record.name,
+    isIncomplete: record.isIncomplete === true,
     type: record.type,
     primaryClass: classes[0] ?? '',
     secondaryClass: classes[1] ?? null,
@@ -223,7 +231,7 @@ export function buildAppliedManualCharacter(record) {
     maxHp: record.maxHp,
     maxAtk: record.maxAtk,
     maxRcv: record.maxRcv,
-    growth: record.growth ?? 0,
+    growth: record.growth,
     searchText: createCharacterSearchText(record.name, record.type, classes),
     regionAvailability,
     assets,
@@ -242,9 +250,11 @@ function normalizeStoredManualCharacterRecord(rawRecord, { availableClasses, cha
 
   const classes = normalizeClasses(rawRecord.classes, availableClasses);
   const detail = normalizeManualDetail(rawRecord, characterId);
+  const hasIncompleteStats = hasIncompleteManualStats(rawRecord);
   const normalized = {
     id: characterId,
     name: normalizeRequiredString(rawRecord.name, `manual character ${characterId} name`),
+    isIncomplete: normalizeIncompleteFlag(rawRecord.isIncomplete, hasIncompleteStats),
     type: normalizeType(rawRecord.type),
     classes,
     stars: normalizeNonNegativeNumber(rawRecord.stars, `manual character ${characterId} stars`),
@@ -254,20 +264,19 @@ function normalizeStoredManualCharacterRecord(rawRecord, { availableClasses, cha
       rawRecord.maxLevel,
       `manual character ${characterId} maxLevel`,
     ),
-    maxExperience: normalizeNonNegativeNumber(
+    maxExperience: normalizeNullableNonNegativeNumber(
       rawRecord.maxExperience,
       `manual character ${characterId} maxExperience`,
     ),
-    minHp: normalizeNonNegativeNumber(rawRecord.minHp, `manual character ${characterId} minHp`),
-    minAtk: normalizeNonNegativeNumber(rawRecord.minAtk, `manual character ${characterId} minAtk`),
-    minRcv: normalizeNonNegativeNumber(rawRecord.minRcv, `manual character ${characterId} minRcv`),
-    maxHp: normalizeNonNegativeNumber(rawRecord.maxHp, `manual character ${characterId} maxHp`),
-    maxAtk: normalizeNonNegativeNumber(rawRecord.maxAtk, `manual character ${characterId} maxAtk`),
-    maxRcv: normalizeNonNegativeNumber(rawRecord.maxRcv, `manual character ${characterId} maxRcv`),
-    growth: normalizeOptionalNonNegativeNumber(
+    minHp: normalizeNullableNonNegativeNumber(rawRecord.minHp, `manual character ${characterId} minHp`),
+    minAtk: normalizeNullableNonNegativeNumber(rawRecord.minAtk, `manual character ${characterId} minAtk`),
+    minRcv: normalizeNullableNonNegativeNumber(rawRecord.minRcv, `manual character ${characterId} minRcv`),
+    maxHp: normalizeNullableNonNegativeNumber(rawRecord.maxHp, `manual character ${characterId} maxHp`),
+    maxAtk: normalizeNullableNonNegativeNumber(rawRecord.maxAtk, `manual character ${characterId} maxAtk`),
+    maxRcv: normalizeNullableNonNegativeNumber(rawRecord.maxRcv, `manual character ${characterId} maxRcv`),
+    growth: normalizeNullableNonNegativeNumber(
       rawRecord.growth,
       `manual character ${characterId} growth`,
-      0,
     ),
     image: {
       file: normalizeStoredImageFile(rawRecord.image?.file),
@@ -394,16 +403,45 @@ function normalizeOptionalNonNegativeNumber(value, label, fallback) {
   return normalizeNonNegativeNumber(value, label);
 }
 
+function normalizeNullableNonNegativeNumber(value, label) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  return normalizeNonNegativeNumber(value, label);
+}
+
+function normalizeIncompleteFlag(value, fallback) {
+  if (value === null || value === undefined || value === '') {
+    return fallback;
+  }
+
+  return Boolean(value);
+}
+
+function hasIncompleteManualStats(record) {
+  return [
+    record.maxExperience,
+    record.minHp,
+    record.minAtk,
+    record.minRcv,
+    record.maxHp,
+    record.maxAtk,
+    record.maxRcv,
+    record.growth,
+  ].some((value) => value === null || value === undefined || value === '');
+}
+
 function validateStatRanges(record) {
-  if (record.maxHp < record.minHp) {
+  if (record.maxHp !== null && record.minHp !== null && record.maxHp < record.minHp) {
     throw new Error('maxHp cannot be smaller than minHp.');
   }
 
-  if (record.maxAtk < record.minAtk) {
+  if (record.maxAtk !== null && record.minAtk !== null && record.maxAtk < record.minAtk) {
     throw new Error('maxAtk cannot be smaller than minAtk.');
   }
 
-  if (record.maxRcv < record.minRcv) {
+  if (record.maxRcv !== null && record.minRcv !== null && record.maxRcv < record.minRcv) {
     throw new Error('maxRcv cannot be smaller than minRcv.');
   }
 }

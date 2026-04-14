@@ -199,6 +199,15 @@ function normalizeSuperSpecialCriteria(value: unknown): NormalizedSuperSpecialCr
   };
 }
 
+function parseNullableNumber(value: string | number | null): number | null {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class OptcRepositoryService {
   private readonly sqlPromise: Promise<SqlJsStatic>;
@@ -257,6 +266,7 @@ export class OptcRepositoryService {
         SELECT
           id,
           name,
+          is_incomplete,
           type,
           primary_class,
           secondary_class,
@@ -357,6 +367,7 @@ export class OptcRepositoryService {
         SELECT
           c.id,
           c.name,
+          c.is_incomplete,
           c.type,
           c.primary_class,
           c.secondary_class,
@@ -394,6 +405,7 @@ export class OptcRepositoryService {
         SELECT
           c.id,
           c.name,
+          c.is_incomplete,
           c.type,
           c.primary_class,
           c.secondary_class,
@@ -488,6 +500,7 @@ export class OptcRepositoryService {
         SELECT
           c.id,
           c.name,
+          c.is_incomplete,
           c.type,
           c.primary_class,
           c.secondary_class,
@@ -546,6 +559,7 @@ export class OptcRepositoryService {
         SELECT
           id,
           name,
+          is_incomplete,
           type,
           primary_class,
           secondary_class,
@@ -656,6 +670,7 @@ export class OptcRepositoryService {
       const record: CharacterListItem = {
         id: Number(row['id']),
         name: String(row['name']),
+        isIncomplete: Number(row['is_incomplete']) === 1,
         type: String(row['type']),
         primaryClass: String(row['primary_class']),
         secondaryClass: row['secondary_class'] ? String(row['secondary_class']) : null,
@@ -664,19 +679,19 @@ export class OptcRepositoryService {
         cost: Number(row['cost']),
         combo: Number(row['combo']),
         maxLevel: Number(row['max_level']),
-        maxExperience: Number(row['max_experience']),
+        maxExperience: parseNullableNumber(row['max_experience']),
         stats: {
           min: {
-            hp: Number(row['min_hp']),
-            atk: Number(row['min_atk']),
-            rcv: Number(row['min_rcv']),
+            hp: parseNullableNumber(row['min_hp']),
+            atk: parseNullableNumber(row['min_atk']),
+            rcv: parseNullableNumber(row['min_rcv']),
           },
           max: {
-            hp: Number(row['max_hp']),
-            atk: Number(row['max_atk']),
-            rcv: Number(row['max_rcv']),
+            hp: parseNullableNumber(row['max_hp']),
+            atk: parseNullableNumber(row['max_atk']),
+            rcv: parseNullableNumber(row['max_rcv']),
           },
-          growth: Number(row['growth']),
+          growth: parseNullableNumber(row['growth']),
         },
         regionAvailability,
         assets,
@@ -783,6 +798,7 @@ export class OptcRepositoryService {
       superSpecialNotes: null,
       superSpecialCriteria: null,
       partyConflictKeys: [],
+      characterTags: [],
       builderAbilities: [],
       sailorAbilities: [],
       sailorNotes: null,
@@ -792,6 +808,8 @@ export class OptcRepositoryService {
       swapData: null,
       vsSpecial: null,
       superType: null,
+      superTandemData: null,
+      finalTapData: null,
       superClass: null,
       rumbleData: null,
     };
@@ -837,6 +855,23 @@ export class OptcRepositoryService {
             .map((value) => String(value ?? '').trim())
             .filter((value) => value.length > 0)
         : [],
+      characterTags: Array.isArray(normalizedDetail.characterTags)
+        ? normalizedDetail.characterTags
+            .map((value) => String(value ?? '').trim())
+            .filter((value) => value.length > 0)
+        : [],
+      superTandemData:
+        normalizedDetail.superTandemData &&
+        typeof normalizedDetail.superTandemData === 'object' &&
+        !Array.isArray(normalizedDetail.superTandemData)
+          ? normalizedDetail.superTandemData
+          : null,
+      finalTapData:
+        normalizedDetail.finalTapData &&
+        typeof normalizedDetail.finalTapData === 'object' &&
+        !Array.isArray(normalizedDetail.finalTapData)
+          ? normalizedDetail.finalTapData
+          : null,
       builderAbilities:
         normalizedDetail.builderAbilities ?? normalizedDetail.specialAbilities ?? [],
     };

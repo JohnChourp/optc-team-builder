@@ -5,15 +5,15 @@ import {
 } from './auto-team-builder-ability.models';
 
 export interface CharacterStatsRange {
-  hp: number;
-  atk: number;
-  rcv: number;
+  hp: number | null;
+  atk: number | null;
+  rcv: number | null;
 }
 
 export interface CharacterStats {
   min: CharacterStatsRange;
   max: CharacterStatsRange;
-  growth: number;
+  growth: number | null;
 }
 
 export interface RegionAvailability {
@@ -81,6 +81,7 @@ export interface CharacterAssets {
 export interface CharacterRecord {
   id: number;
   name: string;
+  isIncomplete: boolean;
   type: string;
   classes: string[];
   primaryClass: string;
@@ -89,7 +90,7 @@ export interface CharacterRecord {
   cost: number;
   combo: number;
   maxLevel: number;
-  maxExperience: number;
+  maxExperience: number | null;
   stats: CharacterStats;
   regionAvailability: RegionAvailability;
   assets: CharacterAssets;
@@ -108,6 +109,7 @@ export interface CharacterDetail {
   superSpecialNotes: string | null;
   superSpecialCriteria: NormalizedSuperSpecialCriteria | null;
   partyConflictKeys: string[];
+  characterTags?: string[];
   builderAbilities: NormalizedBuilderAbility[];
   sailorAbilities: string[];
   sailorNotes: string | null;
@@ -117,6 +119,8 @@ export interface CharacterDetail {
   swapData: Record<string, unknown> | null;
   vsSpecial: Record<string, unknown> | null;
   superType: Record<string, unknown> | null;
+  superTandemData?: Record<string, unknown> | null;
+  finalTapData?: Record<string, unknown> | null;
   superClass: Record<string, unknown> | null;
   rumbleData: Record<string, unknown> | null;
 }

@@ -19,7 +19,10 @@
 
       @if (!loading() && character(); as current) {
         @if (viewModel(); as view) {
-          <section class="hero-card glass-card">
+          <section
+            class="hero-card glass-card"
+            [class.hero-card--incomplete]="current.isIncomplete"
+          >
             <div class="hero-media">
               <img [src]="current.detailImageUrl" [alt]="current.name" />
             </div>
@@ -27,6 +30,9 @@
             <div class="hero-copy">
               <div class="section-label">#{{ current.id }} • {{ current.name }}</div>
               <h1 class="section-title">{{ current.name }}</h1>
+              @if (current.isIncomplete) {
+                <span class="status-badge">{{ t('status.incomplete') }}</span>
+              }
               <p class="section-copy">
                 {{
                   t('hero.summary', {

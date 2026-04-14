@@ -85,6 +85,15 @@ describe('manual character overlay helpers', () => {
           specialName: 'Party Table Kick Course',
           specialText: 'Reduces Bind duration by 5 turns.',
           supportData: [{ Characters: 'Luffy', description: ['Boosts ATK by 5%'] }],
+          characterTags: ['Straw Hat Pirates', 'Giant'],
+          superTandemData: {
+            requirement: 'At final battle and any 2 listed characters are on the crew',
+            levels: [{ level: 5, effect: 'Applies ATK Boost (Tandem) of 2.5x to DEX and STR characters for 1 turn.' }],
+          },
+          finalTapData: {
+            requirement: 'On the turn Special is launched during final Battle',
+            levels: [{ level: 1, effect: 'Further boosts the chain multiplier of the final tap by 1.3x' }],
+          },
         },
       },
       {
@@ -98,7 +107,7 @@ describe('manual character overlay helpers', () => {
       id: MANUAL_CHARACTER_ID_MIN,
       type: 'DEX',
       classes: ['Fighter', 'Free Spirit'],
-      growth: 0,
+      growth: null,
       image: { file: `${MANUAL_CHARACTER_ID_MIN}.png` },
       detail: {
         characterId: MANUAL_CHARACTER_ID_MIN,
@@ -106,6 +115,15 @@ describe('manual character overlay helpers', () => {
         specialText: 'Reduces Bind duration by 5 turns.',
         sailorAbilities: [],
         supportData: [{ Characters: 'Luffy', description: ['Boosts ATK by 5%'] }],
+        characterTags: ['Straw Hat Pirates', 'Giant'],
+        superTandemData: {
+          requirement: 'At final battle and any 2 listed characters are on the crew',
+          levels: [{ level: 5, effect: 'Applies ATK Boost (Tandem) of 2.5x to DEX and STR characters for 1 turn.' }],
+        },
+        finalTapData: {
+          requirement: 'On the turn Special is launched during final Battle',
+          levels: [{ level: 1, effect: 'Further boosts the chain multiplier of the final tap by 1.3x' }],
+        },
       },
     });
   });
@@ -148,6 +166,48 @@ describe('manual character overlay helpers', () => {
       assets: {
         exactLocal: `assets/exact-character-images/${MANUAL_CHARACTER_ID_MIN}.png`,
       },
+    });
+  });
+
+  it('accepts nullable incomplete stat fields for manual records', () => {
+    const record = normalizeIncomingManualCharacterPayload(
+      {
+        name: 'Manual Giant Pair',
+        type: 'DEX',
+        classes: ['fighter', 'free spirit'],
+        stars: 6,
+        cost: 55,
+        combo: 5,
+        maxLevel: 99,
+        maxExperience: null,
+        minHp: null,
+        minAtk: null,
+        minRcv: null,
+        maxHp: 4200,
+        maxAtk: 2200,
+        maxRcv: 450,
+        growth: null,
+        detail: {
+          specialName: 'Verified Special',
+          specialText: 'Verified text.',
+        },
+      },
+      {
+        availableClasses: ['Fighter', 'Free Spirit', 'Slasher'],
+        characterId: MANUAL_CHARACTER_ID_MIN,
+        storedImageFile: `${MANUAL_CHARACTER_ID_MIN}.png`,
+      },
+    );
+
+    expect(record).toMatchObject({
+      maxExperience: null,
+      minHp: null,
+      minAtk: null,
+      minRcv: null,
+      growth: null,
+      maxHp: 4200,
+      maxAtk: 2200,
+      maxRcv: 450,
     });
   });
 });

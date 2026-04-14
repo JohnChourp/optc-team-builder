@@ -15,6 +15,7 @@
     "cooldown": "Cooldown",
     "cost": "Cost",
     "coverage": "Coverage",
+    "effect": "Effect",
     "effects": "Effects",
     "growth": "Growth",
     "inheritsFrom": "Inherits Rumble data from",
@@ -28,6 +29,7 @@
     "passiveLevel": "Passive level",
     "pattern": "Pattern",
     "primaryClass": "Primary class",
+    "requirement": "Requirement",
     "sailorNotes": "Sailor notes",
     "secondaryClass": "Secondary class",
     "slots": "Slots",
@@ -43,11 +45,16 @@
     "type": "Type"
   },
   "loading": "Loading offline character record...",
+  "status": {
+    "incomplete": "Incomplete data"
+  },
   "sections": {
     "abilities": "Abilities",
     "battleModes": "Battle Modes",
     "captainAbility": "Captain Ability",
+    "characterTags": "Character Tags",
     "enhancements": "Enhancements",
+    "finalTapData": "Final Tap",
     "limitBreak": "Limit Break",
     "maxStats": "Max Stats",
     "overview": "Overview",
@@ -58,6 +65,7 @@
     "special": "Special",
     "supportSynergy": "Support & Team Synergy",
     "superSpecial": "Super Special",
+    "superTandemData": "Super Tandem",
     "supportData": "Support Data",
     "superClass": "Super Class",
     "superType": "Super Type",

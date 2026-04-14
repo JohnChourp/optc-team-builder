@@ -68,11 +68,12 @@ export function buildCharacterDetailViewModel(
       createRow("fields.stars", formatNumber(character.stars)),
       createRow("fields.cost", formatNumber(character.cost)),
       createRow("fields.maxLevel", formatNumber(character.maxLevel)),
+      ...createOptionalNumberRow("fields.maxExperience", character.maxExperience),
     ],
     heroStats: [
-      createRow("stats.maxHp", formatNumber(character.stats.max.hp)),
-      createRow("stats.maxAtk", formatNumber(character.stats.max.atk)),
-      createRow("stats.maxRcv", formatNumber(character.stats.max.rcv)),
+      ...createOptionalNumberRow("stats.maxHp", character.stats.max.hp),
+      ...createOptionalNumberRow("stats.maxAtk", character.stats.max.atk),
+      ...createOptionalNumberRow("stats.maxRcv", character.stats.max.rcv),
     ],
     groups,
   };
@@ -176,44 +177,64 @@ export function resolveRumbleBasedOnId(rumbleData: Record<string, unknown> | nul
 }
 
 function buildOverviewGroup(character: CharacterDetailRecord): DetailDisplayGroup {
+  const characterTags = (character.detail.characterTags ?? []).filter((tag) => tag.trim().length > 0);
+  const profileRows: DetailDisplayRow[] = [
+    createRow("fields.type", character.type),
+    createRow("fields.primaryClass", character.primaryClass),
+    ...(character.secondaryClass
+      ? [createRow("fields.secondaryClass", character.secondaryClass)]
+      : []),
+    createRow("fields.stars", formatNumber(character.stars)),
+    createRow("fields.cost", formatNumber(character.cost)),
+    createRow("fields.maxLevel", formatNumber(character.maxLevel)),
+    createRow("fields.combo", formatNumber(character.combo)),
+    ...createOptionalNumberRow("fields.maxExperience", character.maxExperience),
+  ];
+  const maxStatsRows: DetailDisplayRow[] = [
+    ...createOptionalNumberRow("stats.maxHp", character.stats.max.hp),
+    ...createOptionalNumberRow("stats.maxAtk", character.stats.max.atk),
+    ...createOptionalNumberRow("stats.maxRcv", character.stats.max.rcv),
+    ...createOptionalNumberRow("fields.minHp", character.stats.min.hp),
+    ...createOptionalNumberRow("fields.minAtk", character.stats.min.atk),
+    ...createOptionalNumberRow("fields.minRcv", character.stats.min.rcv),
+    ...createOptionalNumberRow("fields.growth", character.stats.growth),
+  ];
+
   return {
     titleKey: "sections.overview",
     cards: [
       {
         titleKey: "sections.profile",
-        rows: [
-          createRow("fields.type", character.type),
-          createRow("fields.primaryClass", character.primaryClass),
-          ...(character.secondaryClass
-            ? [createRow("fields.secondaryClass", character.secondaryClass)]
-            : []),
-          createRow("fields.stars", formatNumber(character.stars)),
-          createRow("fields.cost", formatNumber(character.cost)),
-          createRow("fields.maxLevel", formatNumber(character.maxLevel)),
-          createRow("fields.combo", formatNumber(character.combo)),
-          createRow("fields.maxExperience", formatNumber(character.maxExperience)),
-        ],
+        rows: profileRows,
         texts: [],
         lists: [],
         entries: [],
         chips: [],
       },
-      {
-        titleKey: "sections.maxStats",
-        rows: [
-          createRow("stats.maxHp", formatNumber(character.stats.max.hp)),
-          createRow("stats.maxAtk", formatNumber(character.stats.max.atk)),
-          createRow("stats.maxRcv", formatNumber(character.stats.max.rcv)),
-          createRow("fields.minHp", formatNumber(character.stats.min.hp)),
-          createRow("fields.minAtk", formatNumber(character.stats.min.atk)),
-          createRow("fields.minRcv", formatNumber(character.stats.min.rcv)),
-          createRow("fields.growth", formatNumber(character.stats.growth)),
-        ],
-        texts: [],
-        lists: [],
-        entries: [],
-        chips: [],
-      },
+      ...(maxStatsRows.length
+        ? [
+          {
+            titleKey: "sections.maxStats",
+            rows: maxStatsRows,
+            texts: [],
+            lists: [],
+            entries: [],
+            chips: [],
+          },
+        ]
+      : []),
+      ...(characterTags.length
+        ? [
+            {
+              titleKey: "sections.characterTags",
+              rows: [],
+              texts: [],
+              lists: [],
+              entries: [],
+              chips: characterTags,
+            },
+          ]
+        : []),
     ],
   };
 }
@@ -445,9 +466,22 @@ function buildBattleModesGroup(
   const { detail } = character;
   const cards: DetailDisplayCard[] = [];
   const rumbleCard = buildRumbleCardModel(detail.rumbleData, basedOnCharacterName);
+  const superTandemCard = buildLeveledBattleModeCard(
+    "sections.superTandemData",
+    detail.superTandemData ?? null,
+  );
+  const finalTapCard = buildFinalTapCard(detail.finalTapData ?? null);
 
   if (rumbleCard) {
     cards.push(rumbleCard);
+  }
+
+  if (superTandemCard) {
+    cards.push(superTandemCard);
+  }
+
+  if (finalTapCard) {
+    cards.push(finalTapCard);
   }
 
   [
@@ -469,6 +503,41 @@ function buildBattleModesGroup(
         cards,
       }
     : null;
+}
+
+function buildFinalTapCard(finalTapData: Record<string, unknown> | null): DetailDisplayCard | null {
+  return buildLeveledBattleModeCard("sections.finalTapData", finalTapData);
+}
+
+function buildLeveledBattleModeCard(
+  titleKey: string,
+  value: Record<string, unknown> | null,
+): DetailDisplayCard | null {
+  const record = asRecord(value);
+
+  if (!record) {
+    return null;
+  }
+
+  const requirement = sanitizeText(record["requirement"]);
+  const entries = Array.isArray(record["levels"])
+    ? record["levels"]
+        .map((level, index) => buildFinalTapLevelEntry(level, index))
+        .filter((entry): entry is DetailDisplayEntry => entry !== null)
+    : [];
+
+  if (!requirement && !entries.length) {
+    return null;
+  }
+
+  return {
+    titleKey,
+    rows: requirement ? [createRow("fields.requirement", requirement)] : [],
+    texts: [],
+    lists: [],
+    entries,
+    chips: [],
+  };
 }
 
 function buildStructuredCard(
@@ -523,6 +592,65 @@ function buildStructuredCard(
     entries,
     chips: [],
   };
+}
+
+function buildFinalTapLevelEntry(value: unknown, index: number): DetailDisplayEntry | null {
+  const record = asRecord(value);
+
+  if (!record) {
+    const effect = formatScalar(value);
+
+    return effect
+      ? {
+          title: `Lv ${index + 1}`,
+          rows: [],
+          texts: [createText("fields.effect", effect)],
+          lists: [],
+          chips: [],
+        }
+      : null;
+  }
+
+  const rawLevel = Number(record["level"]);
+  const title = sanitizeText(record["label"]) ?? `Lv ${Number.isFinite(rawLevel) ? rawLevel : index + 1}`;
+  const effect = sanitizeText(record["effect"]);
+  const rows: DetailDisplayRow[] = [];
+  const texts: DetailDisplayText[] = effect ? [createText("fields.effect", effect)] : [];
+  const lists: DetailDisplayList[] = [];
+
+  Object.entries(record)
+    .filter(([key]) => !["level", "label", "effect"].includes(key))
+    .forEach(([key, entryValue]) => {
+      if (isScalar(entryValue)) {
+        const formattedValue = formatScalar(entryValue);
+
+        if (formattedValue) {
+          rows.push(createRow(undefined, formattedValue, humanizeKey(key)));
+        }
+
+        return;
+      }
+
+      if (Array.isArray(entryValue) && entryValue.every((item) => isScalar(item))) {
+        const items = entryValue
+          .map((item) => formatScalar(item))
+          .filter((item): item is string => Boolean(item));
+
+        if (items.length) {
+          lists.push(createList(undefined, items, humanizeKey(key)));
+        }
+      }
+    });
+
+  return rows.length || texts.length || lists.length
+    ? {
+        title,
+        rows,
+        texts,
+        lists,
+        chips: [],
+      }
+    : null;
 }
 
 function buildStructuredEntries(
@@ -872,6 +1000,10 @@ function createText(
 
 function createList(labelKey: string | undefined, items: string[], label?: string): DetailDisplayList {
   return labelKey ? { labelKey, items } : { label, items };
+}
+
+function createOptionalNumberRow(labelKey: string, value: number | null): DetailDisplayRow[] {
+  return value === null ? [] : [createRow(labelKey, formatNumber(value))];
 }
 
 function formatNumber(value: unknown): string {

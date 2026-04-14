@@ -74,6 +74,9 @@
     "hp": "HP",
     "rcv": "RCV"
   },
+  "status": {
+    "incomplete": "Incomplete"
+  },
   "title": "OPTC Character Vault",
   "tools": {
     "copy": "Reset filters here, then use the Offline tab for favorites backup, restore, and bulk deletion.",

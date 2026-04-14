@@ -156,12 +156,14 @@ async function loadCurrentDataset(seedPath, manifestPath) {
 
   executeSqlSeed(database, seedSql);
 
+  const hasIncompleteColumn = tableHasColumn(database, 'characters', 'is_incomplete');
   const characters = selectAll(
     database,
     `
       SELECT
         c.id,
         c.name,
+        ${hasIncompleteColumn ? 'c.is_incomplete' : '0 AS is_incomplete'},
         c.type,
         c.primary_class,
         c.secondary_class,
@@ -210,6 +212,12 @@ async function loadCurrentDataset(seedPath, manifestPath) {
   };
 }
 
+function tableHasColumn(database, tableName, columnName) {
+  const pragma = database.exec(`PRAGMA table_info(${tableName})`);
+  const rows = pragma[0]?.values ?? [];
+  return rows.some((row) => row[1] === columnName);
+}
+
 function hydrateCharacterRow(row) {
   const characterId = Number(row.id);
   const classes = parseJson(row.classes_json, []);
@@ -217,6 +225,7 @@ function hydrateCharacterRow(row) {
   return {
     id: characterId,
     name: String(row.name ?? ''),
+    isIncomplete: Number(row.is_incomplete) === 1,
     type: String(row.type ?? ''),
     primaryClass: String(row.primary_class ?? ''),
     secondaryClass:
@@ -228,14 +237,14 @@ function hydrateCharacterRow(row) {
     cost: Number(row.cost),
     combo: Number(row.combo),
     maxLevel: Number(row.max_level),
-    maxExperience: Number(row.max_experience),
-    minHp: Number(row.min_hp),
-    minAtk: Number(row.min_atk),
-    minRcv: Number(row.min_rcv),
-    maxHp: Number(row.max_hp),
-    maxAtk: Number(row.max_atk),
-    maxRcv: Number(row.max_rcv),
-    growth: Number(row.growth),
+    maxExperience: parseNullableNumber(row.max_experience),
+    minHp: parseNullableNumber(row.min_hp),
+    minAtk: parseNullableNumber(row.min_atk),
+    minRcv: parseNullableNumber(row.min_rcv),
+    maxHp: parseNullableNumber(row.max_hp),
+    maxAtk: parseNullableNumber(row.max_atk),
+    maxRcv: parseNullableNumber(row.max_rcv),
+    growth: parseNullableNumber(row.growth),
     searchText:
       typeof row.search_text === 'string' && row.search_text.length
         ? row.search_text
@@ -244,6 +253,15 @@ function hydrateCharacterRow(row) {
     assets: parseJson(row.assets_json, createEmptyAssets()),
     detail: parseJson(row.detail_json, createEmptyManualDetail(characterId)),
   };
+}
+
+function parseNullableNumber(value) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function selectAll(database, query, params = []) {

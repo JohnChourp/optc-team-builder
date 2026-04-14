@@ -1,6 +1,7 @@
 {
   "id": null,
   "name": "Character Name",
+  "isIncomplete": false,
   "type": "DEX",
   "classes": ["Fighter", "Free Spirit"],
   "stars": 6,
@@ -24,6 +25,7 @@
     "superSpecialCriteriaText": null,
     "superSpecialNotes": null,
     "superSpecialCriteria": null,
+    "characterTags": [],
     "sailorAbilities": [],
     "sailorNotes": null,
     "limitBreak": [],
@@ -32,6 +34,8 @@
     "swapData": null,
     "vsSpecial": null,
     "superType": null,
+    "superTandemData": null,
+    "finalTapData": null,
     "superClass": null,
     "rumbleData": null,
     "builderAbilities": []

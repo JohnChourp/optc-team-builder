@@ -208,6 +208,7 @@ describe("character-detail presenter", () => {
         superSpecialNotes: null,
         superSpecialCriteria: null,
         partyConflictKeys: ["tony tony chopper"],
+        characterTags: ["Straw Hat Pirates", "Giant"],
         builderAbilities: [
           {
             key: "bind",
@@ -234,6 +235,26 @@ describe("character-detail presenter", () => {
         superType: {
           class: "Fighter",
         },
+        superTandemData: {
+          requirement: "At final battle and any 2 listed characters are on the crew",
+          levels: [
+            {
+              level: 5,
+              effect: "Applies ATK Boost (Tandem) of 2.5x to DEX and STR characters for 1 turn.",
+            },
+          ],
+        },
+        finalTapData: {
+          requirement: "On the turn Special is launched during final Battle",
+          levels: [
+            { level: 1, effect: "Further boosts the chain multiplier of the final tap by 1.3x" },
+            {
+              level: 5,
+              effect:
+                "Further increases crew's ATK and slot effect boosts by +0.5, and further boosts the chain multiplier of the final tap by 1.75x",
+            },
+          ],
+        },
         superClass: null,
         rumbleData: {
           id: 501,
@@ -255,7 +276,10 @@ describe("character-detail presenter", () => {
         "sections.teamSynergy",
         "sections.supportData",
         "sections.rumbleData",
+        "sections.superTandemData",
+        "sections.finalTapData",
         "sections.superType",
+        "sections.characterTags",
       ]),
     );
   });
@@ -316,6 +340,7 @@ describe("character-detail presenter", () => {
         superSpecialNotes: null,
         superSpecialCriteria: null,
         partyConflictKeys: [],
+        characterTags: [],
         builderAbilities: [],
         sailorAbilities: [],
         sailorNotes: null,
@@ -325,6 +350,8 @@ describe("character-detail presenter", () => {
         swapData: null,
         vsSpecial: null,
         superType: null,
+        superTandemData: null,
+        finalTapData: null,
         superClass: null,
         rumbleData: null,
       },
@@ -351,5 +378,91 @@ describe("character-detail presenter", () => {
         tone: "muted",
       }),
     ]);
+  });
+
+  it("omits unknown numeric stat rows when manual character data is incomplete", () => {
+    const viewModel = buildCharacterDetailViewModel({
+      id: 900000,
+      name: "Manual Pilot",
+      type: "DEX",
+      classes: ["Free Spirit", "Shooter"],
+      primaryClass: "Free Spirit",
+      secondaryClass: "Shooter",
+      stars: 6,
+      cost: 55,
+      combo: 4,
+      maxLevel: 99,
+      maxExperience: null,
+      stats: {
+        min: { hp: null, atk: null, rcv: null },
+        max: { hp: 5122, atk: 2190, rcv: 417 },
+        growth: null,
+      },
+      regionAvailability: {
+        exactLocal: true,
+        thumbnailGlobal: false,
+        thumbnailJapan: false,
+        fullTransparent: false,
+      },
+      assets: {
+        exactLocal: "assets/exact-character-images/900000.png",
+        thumbnailGlobal: null,
+        thumbnailJapan: null,
+        fullTransparent: null,
+      },
+      imageUrl: "/assets/manual.png",
+      detailImageUrl: "/assets/manual.png",
+      detail: {
+        characterId: 900000,
+        captainAbility: null,
+        captainAbilityVariants: [],
+        captainNotes: null,
+        specialName: "Verified Special",
+        specialText: "Verified text.",
+        specialNotes: null,
+        superSpecialText: null,
+        superSpecialCriteriaText: null,
+        superSpecialNotes: null,
+        superSpecialCriteria: null,
+        partyConflictKeys: [],
+        builderAbilities: [],
+        sailorAbilities: [],
+        sailorNotes: null,
+        limitBreak: [],
+        potentialAbilities: [],
+        supportData: [],
+        swapData: null,
+        vsSpecial: null,
+        superType: null,
+        superTandemData: null,
+        superClass: null,
+        rumbleData: null,
+      },
+    });
+
+    expect(viewModel.heroMeta.some((row) => row.labelKey === "fields.maxExperience")).toBe(false);
+    expect(viewModel.heroStats).toEqual([
+      expect.objectContaining({ labelKey: "stats.maxHp", value: "5,122" }),
+      expect.objectContaining({ labelKey: "stats.maxAtk", value: "2,190" }),
+      expect.objectContaining({ labelKey: "stats.maxRcv", value: "417" }),
+    ]);
+
+    const maxStatsCard = viewModel.groups
+      .flatMap((group) => group.cards)
+      .find((card) => card.titleKey === "sections.maxStats");
+    expect(maxStatsCard?.rows).toEqual([
+      expect.objectContaining({ labelKey: "stats.maxHp", value: "5,122" }),
+      expect.objectContaining({ labelKey: "stats.maxAtk", value: "2,190" }),
+      expect.objectContaining({ labelKey: "stats.maxRcv", value: "417" }),
+    ]);
+    expect(
+      viewModel.groups.flatMap((group) => group.cards).find((card) => card.titleKey === "sections.superTandemData"),
+    ).toBeUndefined();
+    expect(
+      viewModel.groups.flatMap((group) => group.cards).find((card) => card.titleKey === "sections.finalTapData"),
+    ).toBeUndefined();
+    expect(
+      viewModel.groups.flatMap((group) => group.cards).find((card) => card.titleKey === "sections.characterTags"),
+    ).toBeUndefined();
   });
 });

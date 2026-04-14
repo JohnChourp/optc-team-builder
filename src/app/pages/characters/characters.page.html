@@ -167,7 +167,14 @@
       } @else if (isCompactDisplayMode()) {
         <section class="character-grid character-grid--compact">
           @for (card of characterCardViews(); track card.character.id) {
-            <article class="character-thumb-card" [title]="card.character.name">
+            <article
+              class="character-thumb-card"
+              [class.character-thumb-card--incomplete]="card.character.isIncomplete"
+              [title]="card.character.name"
+            >
+              @if (card.character.isIncomplete) {
+                <span class="character-status-badge">{{ t('status.incomplete') }}</span>
+              }
               <button
                 type="button"
                 class="favorite-button character-thumb-card__favorite"
@@ -190,13 +197,21 @@
       } @else {
         <section class="character-grid">
           @for (card of characterCardViews(); track card.character.id) {
-            <article class="character-card glass-card">
+            <article
+              class="character-card glass-card"
+              [class.character-card--incomplete]="card.character.isIncomplete"
+            >
               <a class="character-card__link" [routerLink]="card.detailLink">
                 <img [src]="card.character.imageUrl" [alt]="card.character.name" loading="lazy" />
 
                 <div class="character-card__content">
                   <div class="character-card__title-row">
-                    <h2>{{ card.character.name }}</h2>
+                    <div class="character-card__title-block">
+                      <h2>{{ card.character.name }}</h2>
+                      @if (card.character.isIncomplete) {
+                        <span class="character-status-badge">{{ t('status.incomplete') }}</span>
+                      }
+                    </div>
                     <button
                       type="button"
                       class="favorite-button"
@@ -219,15 +234,15 @@
 
                   <div class="metrics-row">
                     <div>
-                      <strong>{{ card.character.stats.max.hp }}</strong>
+                      <strong>{{ card.character.stats.max.hp ?? '?' }}</strong>
                       <span>{{ t('stats.hp') }}</span>
                     </div>
                     <div>
-                      <strong>{{ card.character.stats.max.atk }}</strong>
+                      <strong>{{ card.character.stats.max.atk ?? '?' }}</strong>
                       <span>{{ t('stats.atk') }}</span>
                     </div>
                     <div>
-                      <strong>{{ card.character.stats.max.rcv }}</strong>
+                      <strong>{{ card.character.stats.max.rcv ?? '?' }}</strong>
                       <span>{{ t('stats.rcv') }}</span>
                     </div>
                   </div>

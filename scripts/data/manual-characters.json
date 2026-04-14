@@ -1,1 +1,184 @@
-{}
+{
+  "900000": {
+    "id": 900000,
+    "name": "Usopp & Dorry",
+    "isIncomplete": true,
+    "type": "DEX",
+    "classes": [
+      "Free Spirit",
+      "Shooter"
+    ],
+    "stars": 6,
+    "cost": 55,
+    "combo": 4,
+    "maxLevel": 99,
+    "maxExperience": null,
+    "minHp": null,
+    "minAtk": null,
+    "minRcv": null,
+    "maxHp": 5122,
+    "maxAtk": 2190,
+    "maxRcv": 417,
+    "growth": null,
+    "image": {
+      "file": "900000.png"
+    },
+    "detail": {
+      "characterId": 900000,
+      "captainAbility": "Reduces STR and DEX characters' Special charge time by 2 turns at start of quest, reduces Free Spirit characters' Special charge time a further 1 turn, boosts STR, DEX, and Free Spirit characters' ATK by 5x and HP by 1.3x, boosts their ATK by 5.5x in turns where \"Coordinated Giant Arm and Sniping\" is used, and makes crew's [DEX][RCV] slots have matching slot effects. If a [Straw Hat Pirates], [Giant], or [Four Emperors] crewmate uses a Special, reduces this character's Special charge time by 5 turns (up to 3 times per quest). If 3 or more [Straw Hat Pirates], [Giant], or [Four Emperors] characters are on the crew, boosts Free Spirit characters' ATK by a further 1.1x, and for any character on the crew with Barrier Pierce as a Potential Ability and that meets the requirements for it to activate, reduces all enemies' damage reduction duration by 3 turns when landing a successful PERFECT strike with that character.",
+      "captainAbilityVariants": [],
+      "captainNotes": null,
+      "specialName": "Coordinated Giant Arm and Sniping",
+      "specialText": "Delays all enemies for 1 turn, ignoring immunity to Delay, immunity to all status effects, or immunity excluding certain status effects, changes crew's slots including [BLOCK] and [STR] slots to [DEX], reduces DEX and STR characters' Special charge time by 2 turns, reduces crew's Special Bind duration by 7 turns, and boosts damage dealt to delayed enemies by 3.25x for 1 turn. If this character has used \"Coordinated Giant Arm and Sniping\" 1 or more times and 4 or more [Straw Hat Pirates], [Giant], or [Four Emperors] characters are on the crew, boosts damage dealt to enemies with increased damage taken status by 2.75x for 1 turn, and further increases crew's slot effect boost by 1.2x up to a maximum of 15x.",
+      "specialNotes": null,
+      "superSpecialText": null,
+      "superSpecialCriteriaText": null,
+      "superSpecialNotes": null,
+      "superSpecialCriteria": null,
+      "partyConflictKeys": [],
+      "characterTags": [
+        "Straw Hat Pirates",
+        "Giant Pirate Crew",
+        "Giant",
+        "Egghead Arc"
+      ],
+      "builderAbilities": [],
+      "sailorAbilities": [
+        "Character cannot be blown away by attack, and makes STR and DEX characters' [QCK][BOMB] slots have matching slot effects.",
+        "Reduces character's Special charge time by 3 turns every time another [Straw Hat Pirates] [Giant] [Four Emperors] character uses a Special (4 times per quest)."
+      ],
+      "sailorNotes": null,
+      "limitBreak": [],
+      "potentialAbilities": [],
+      "supportData": [
+        {
+          "supportedCharactersText": "Broggy, Oimo, Kashii",
+          "levelDescriptions": [
+            "Lv.1: At start of battle 3, reduces supported character's Special charge time by 1 turn.",
+            "Lv.2: At start of battle 3, reduces supported character's Special charge time by 1 turn.",
+            "Lv.3: At start of battle 3, reduces supported character's Special charge time by 2 turns.",
+            "Lv.4: At start of battle 3, reduces supported character's Special charge time by 2 turns.",
+            "Lv.5: At start of battle 3, reduces supported character's Special charge time by 3 turns, and changes supported character's slot to character's own type."
+          ]
+        }
+      ],
+      "swapData": null,
+      "vsSpecial": null,
+      "superType": {
+        "activationRequirement": "When any 3 [Straw Hat Pirates], [Giant], or [Four Emperors] characters are on the crew not including self, except as Support Characters or Double Characters in inactive state, can be launched when character is a crewmate.",
+        "specialEffect": "Reduces character's Special Bind duration by 7 turns, boosts crew's ATK by 1.3x for 1 turn, boosts the chain multiplier by 1.5x for 1 turn, and changes DEX characters to Super DEX."
+      },
+      "superTandemData": {
+        "requirement": "At final battle and any 2 of the following characters are on the crew, except as Support Characters: Broggy, Kashii, Oimo, Monkey D. Luffy, Roronoa Zoro, Sanji, Nami, Tony Tony Chopper, Nico Robin, Franky, Brook, Jinbe, Jewelry Bonney, Dr. Vegapunk \"Stella\", Dr. Vegapunk \"Shaka the Good\", Dr. Vegapunk \"Lilith the Evil\", Dr. Vegapunk \"Edison the Thinker\", Dr. Vegapunk \"Pythagoras the Wise\", Dr. Vegapunk \"Atlas the Violent\", Sentomaru, Emet, Bartholomew Kuma, Shanks, Yasopp.",
+        "levels": [
+          {
+            "level": 5,
+            "effect": "Applies ATK Boost (Tandem) of 2.5x to DEX and STR characters for 1 turn, and further increases crew's damage boost by +0.25."
+          }
+        ]
+      },
+      "superClass": null,
+      "rumbleData": null
+    }
+  },
+  "900001": {
+    "id": 900001,
+    "name": "Luffy & Broggy",
+    "isIncomplete": true,
+    "type": "STR",
+    "classes": [
+      "Free Spirit",
+      "Slasher"
+    ],
+    "stars": 6,
+    "cost": 55,
+    "combo": 5,
+    "maxLevel": 99,
+    "maxExperience": null,
+    "minHp": null,
+    "minAtk": null,
+    "minRcv": null,
+    "maxHp": 5156,
+    "maxAtk": 2284,
+    "maxRcv": 380,
+    "growth": null,
+    "image": {
+      "file": "900001.png"
+    },
+    "detail": {
+      "characterId": 900001,
+      "captainAbility": "Reduces STR and DEX characters' Special charge time by 2 turns at start of quest, reduces Free Spirit characters' Special charge time a further 1 turn, boosts STR, DEX, and Free Spirit characters' ATK by 5x and HP by 1.3x, boosts their ATK by 5.5x in turns where \"Rampage of the Captains\" is used, and makes crew's [STR][TND] slots have matching slot effects. If a [Straw Hat Pirates], [Giant], or [Four Emperors] crewmate uses a Special, reduces this character's Special charge time by 5 turns (up to 3 times per quest). If 3 or more [Straw Hat Pirates], [Giant], or [Four Emperors] characters are on the crew, boosts Free Spirit characters' ATK by a further 1.1x, and reduces crew's ATK down duration by 10 turns.",
+      "captainAbilityVariants": [],
+      "captainNotes": null,
+      "specialName": "Rampage of the Captains",
+      "specialText": "Sets all enemies' DEF to 0 for 1 turn, ignoring immunity to DEF Down and immunity to all status effects except immunity excluding certain status effects, reduces Free Spirit and Slasher characters' Special charge time by 1 turn, reduces crew's Burn duration by 7 turns, and boosts STR and DEX characters' base ATK by +2000 for 1 turn. If this character has used \"Rampage of the Captains\" 1 or more times and 4 or more [Straw Hat Pirates], [Giant], or [Four Emperors] characters are on the crew, increases all enemies' damage taken by 2.25x for 1 turn, ignoring immunity to status effects, and further increases crew's ATK boost by 1.2x up to a maximum of 15x. If 3 or more [Giant] or [Four Emperors] characters are on the crew, allows crew to stack up to 2 different damage boosting effects for 1 turn.",
+      "specialNotes": null,
+      "superSpecialText": null,
+      "superSpecialCriteriaText": null,
+      "superSpecialNotes": null,
+      "superSpecialCriteria": null,
+      "partyConflictKeys": [],
+      "characterTags": [
+        "Straw Hat Pirates",
+        "Giant Pirate Crew",
+        "Four Emperors",
+        "Worst Generation",
+        "Giant",
+        "Mythical Zoan-type",
+        "Egghead Arc"
+      ],
+      "builderAbilities": [],
+      "sailorAbilities": [
+        "Character cannot be blown away by attack, and reduces character's Special Reverse by 3 turns."
+      ],
+      "sailorNotes": null,
+      "limitBreak": [],
+      "potentialAbilities": [],
+      "supportData": [
+        {
+          "supportedCharactersText": "Dorry, Oimo, Kashii",
+          "levelDescriptions": [
+            "Lv.1: At start of battle 2, reduces supported character's Special charge time by 1 turn.",
+            "Lv.2: At start of battle 2, reduces supported character's Special charge time by 1 turn.",
+            "Lv.3: At start of battle 2, reduces supported character's Special charge time by 2 turns.",
+            "Lv.4: At start of battle 2, reduces supported character's Special charge time by 2 turns.",
+            "Lv.5: At start of battle 2, reduces supported character's Special charge time by 3 turns, and changes supported character's slot to [RCV]."
+          ]
+        }
+      ],
+      "swapData": null,
+      "vsSpecial": null,
+      "superType": {
+        "activationRequirement": "When any 3 [Straw Hat Pirates], [Giant], or [Four Emperors] characters are on the crew not including self, except as Support Characters or Double Characters in inactive state, can be launched when character is a crewmate.",
+        "specialEffect": "Changes character's slot, including [BLOCK] slot, to [TND], prevents character's slot from being changed until character lands a PERFECT strike, boosts crew's slot effects by 1.3x for 1 turn, boosts the ATK of the final tap performed by a STR character by 50%, and changes STR characters to Super STR."
+      },
+      "finalTapData": {
+        "requirement": "On the turn Special is launched during final Battle",
+        "levels": [
+          {
+            "level": 1,
+            "effect": "Further boosts the chain multiplier of the final tap by 1.3x."
+          },
+          {
+            "level": 2,
+            "effect": "Further boosts the chain multiplier of the final tap by 1.4x."
+          },
+          {
+            "level": 3,
+            "effect": "Further boosts the chain multiplier of the final tap by 1.5x."
+          },
+          {
+            "level": 4,
+            "effect": "Further boosts the chain multiplier of the final tap by 1.6x."
+          },
+          {
+            "level": 5,
+            "effect": "Further increases crew's ATK and slot effect boosts by +0.5, and further boosts the chain multiplier of the final tap by 1.75x."
+          }
+        ]
+      },
+      "superClass": null,
+      "rumbleData": null
+    }
+  }
+}

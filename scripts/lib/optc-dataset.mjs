@@ -92,6 +92,7 @@ export function createSqlSeed(characters, ships, manifest) {
       CREATE TABLE characters (
         id INTEGER PRIMARY KEY,
         name TEXT NOT NULL,
+        is_incomplete INTEGER NOT NULL,
         type TEXT NOT NULL,
         primary_class TEXT NOT NULL,
         secondary_class TEXT,
@@ -100,14 +101,14 @@ export function createSqlSeed(characters, ships, manifest) {
         cost INTEGER NOT NULL,
         combo INTEGER NOT NULL,
         max_level INTEGER NOT NULL,
-        max_experience INTEGER NOT NULL,
-        min_hp INTEGER NOT NULL,
-        min_atk INTEGER NOT NULL,
-        min_rcv INTEGER NOT NULL,
-        max_hp INTEGER NOT NULL,
-        max_atk INTEGER NOT NULL,
-        max_rcv INTEGER NOT NULL,
-        growth REAL NOT NULL,
+        max_experience INTEGER,
+        min_hp INTEGER,
+        min_atk INTEGER,
+        min_rcv INTEGER,
+        max_hp INTEGER,
+        max_atk INTEGER,
+        max_rcv INTEGER,
+        growth REAL,
         region_json TEXT NOT NULL,
         assets_json TEXT NOT NULL,
         search_text TEXT NOT NULL
@@ -138,12 +139,13 @@ export function createSqlSeed(characters, ships, manifest) {
   for (const character of characters) {
     statements.push(`
       INSERT INTO characters (
-        id, name, type, primary_class, secondary_class, classes_json, stars, cost, combo, max_level,
+        id, name, is_incomplete, type, primary_class, secondary_class, classes_json, stars, cost, combo, max_level,
         max_experience, min_hp, min_atk, min_rcv, max_hp, max_atk, max_rcv, growth, region_json,
         assets_json, search_text
       ) VALUES (
         ${sqlValue(character.id)},
         ${sqlValue(character.name)},
+        ${sqlValue(character.isIncomplete ? 1 : 0)},
         ${sqlValue(character.type)},
         ${sqlValue(character.primaryClass)},
         ${sqlValue(character.secondaryClass)},

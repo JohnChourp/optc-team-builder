@@ -271,9 +271,9 @@ export class TeamBuilderPage implements OnInit {
     this.teamTotals.set(
       selected.reduce(
         (totals, character) => ({
-          hp: totals.hp + character.stats.max.hp,
-          atk: totals.atk + character.stats.max.atk,
-          rcv: totals.rcv + character.stats.max.rcv,
+          hp: totals.hp + (character.stats.max.hp ?? 0),
+          atk: totals.atk + (character.stats.max.atk ?? 0),
+          rcv: totals.rcv + (character.stats.max.rcv ?? 0),
           cost: totals.cost + character.cost,
         }),
         { hp: 0, atk: 0, rcv: 0, cost: 0 },
