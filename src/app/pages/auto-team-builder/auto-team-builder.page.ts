@@ -109,7 +109,14 @@ import {
 type LoadingProgressRowTone = 'primary' | 'secondary' | 'fallback';
 
 interface LoadingProgressRow {
-  key: 'message' | 'attempt' | 'eta' | 'candidatePool' | 'droppedTypes' | 'droppedClasses';
+  key:
+    | 'message'
+    | 'attempt'
+    | 'eta'
+    | 'candidatePool'
+    | 'droppedTypes'
+    | 'droppedClasses'
+    | 'superSpecialCriteria';
   text: string;
   displayText: string;
   visible: boolean;
@@ -219,13 +226,10 @@ interface AutoTeamBuilderDefaultFilterState {
   selectedClasses: string[];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
-  requireLeaderSuperSpecialCriteria: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
   favoriteShipsOnly: boolean;
 }
-
-type AutoBuildExtraDropMode = 'off' | 'guaranteed' | 'any';
 
 const SAVE_TEAM_FEEDBACK_DURATION_MS = 3000;
 const SAVE_TEAM_ANIMATION_PATH = 'assets/animations/save-team-loading.json';
@@ -268,66 +272,9 @@ function buildDefaultAutoTeamBuilderFilterState(
     selectedClasses: [...availableClasses],
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
-    requireLeaderSuperSpecialCriteria: true,
     requireUniqueBaseCharacterNames: true,
     favoritesOnly: true,
     favoriteShipsOnly: true,
-  };
-}
-
-function buildExtraDropAbilityRequirements(mode: AutoBuildExtraDropMode): AutoBuildAbilityRequirement[] {
-  if (mode === 'guaranteed') {
-    return [
-      {
-        abilityKey: EXTRA_DROP_GUARANTEED_ABILITY_KEY,
-        minTurns: null,
-        slotTokens: [],
-        requiredCharacterCount: 1,
-      },
-    ];
-  }
-
-  if (mode === 'any') {
-    return [
-      {
-        abilityKey: EXTRA_DROP_ANY_ABILITY_KEY,
-        minTurns: null,
-        slotTokens: [],
-        requiredCharacterCount: 1,
-      },
-    ];
-  }
-
-  return [];
-}
-
-function resolveExtraDropModeFromAbilityRequirements(
-  requirements: AutoBuildAbilityRequirement[],
-): AutoBuildExtraDropMode {
-  const hasGuaranteedRequirement = requirements.some(
-    (requirement) => requirement.abilityKey === EXTRA_DROP_GUARANTEED_ABILITY_KEY,
-  );
-
-  if (hasGuaranteedRequirement) {
-    return 'guaranteed';
-  }
-
-  const hasAnyRequirement = requirements.some(
-    (requirement) => requirement.abilityKey === EXTRA_DROP_ANY_ABILITY_KEY,
-  );
-
-  return hasAnyRequirement ? 'any' : 'off';
-}
-
-function splitExtraDropAbilityRequirements(requirements: AutoBuildAbilityRequirement[]): {
-  extraDropMode: AutoBuildExtraDropMode;
-  remainingRequirements: AutoBuildAbilityRequirement[];
-} {
-  return {
-    extraDropMode: resolveExtraDropModeFromAbilityRequirements(requirements),
-    remainingRequirements: requirements.filter(
-      (requirement) => !EXTRA_DROP_ABILITY_KEY_SET.has(requirement.abilityKey),
-    ),
   };
 }
 
@@ -337,7 +284,7 @@ function resolveManualSlotRequiredAbilities(
 ): AutoBuildAbilityRequirement[] {
   return role === 'captain' || role === 'friendCaptain'
     ? requirements
-    : splitExtraDropAbilityRequirements(requirements).remainingRequirements;
+    : requirements.filter((requirement) => !EXTRA_DROP_ABILITY_KEY_SET.has(requirement.abilityKey));
 }
 
 function matchesLeaderOnlyManualRequirements(
@@ -454,9 +401,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly excludedShipIds = signal<number[]>([]);
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
-  public readonly requireLeaderSuperSpecialCriteria = signal(false);
   public readonly requireUniqueBaseCharacterNames = signal(false);
-  public readonly extraDropMode = signal<AutoBuildExtraDropMode>('off');
   public readonly favoritesOnly = signal(false);
   public readonly favoriteShipsOnly = signal(false);
   public readonly teamName = signal('');
@@ -527,7 +472,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     mergeAbilityRequirements([
       ...this.derivedRequiredAbilities(),
       ...this.serializeManualRequiredAbilities(),
-      ...buildExtraDropAbilityRequirements(this.extraDropMode()),
     ]),
   );
   public readonly hasSelectedClasses = computed(() => this.selectedClasses().length > 0);
@@ -682,11 +626,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       ? this.t('filters.classes.support.strict')
       : this.t('filters.classes.support.flexible'),
   );
-  public readonly leaderSuperSpecialCriteriaSupportLabel = computed(() =>
-    this.requireLeaderSuperSpecialCriteria()
-      ? this.t('filters.superSpecialCriteria.support.strict')
-      : this.t('filters.superSpecialCriteria.support.flexible'),
-  );
   public readonly uniqueBaseCharacterNamesSupportLabel = computed(() =>
     this.requireUniqueBaseCharacterNames()
       ? this.t('filters.uniqueNames.support.strict')
@@ -708,13 +647,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       count: this.favoriteShipIds().length,
     });
   });
-  public readonly extraDropToggleLabel = computed(() => this.t('filters.extraDrop.toggle'));
-  public readonly extraDropSupportLabel = computed(() =>
-    this.t(`filters.extraDrop.support.${this.extraDropMode()}`),
-  );
-  public readonly extraDropModeLabel = computed(() =>
-    this.t(`filters.extraDrop.options.${this.extraDropMode()}`),
-  );
   public readonly manualSlotSummaryLabel = computed(() =>
     this.t('manual.slotSummary', {
       slots: this.manualSlots().filter((slot) => slot.characterIds.length > 0).length,
@@ -900,9 +832,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   });
   public readonly typeStrictToggleLabel = computed(() => this.t('filters.types.toggle'));
   public readonly classStrictToggleLabel = computed(() => this.t('filters.classes.toggle'));
-  public readonly leaderSuperSpecialCriteriaToggleLabel = computed(() =>
-    this.t('filters.superSpecialCriteria.toggle'),
-  );
   public readonly uniqueBaseCharacterNamesToggleLabel = computed(() =>
     this.t('filters.uniqueNames.toggle'),
   );
@@ -1036,6 +965,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       ? this.t('progress.ignoringClasses', { classes: droppedClasses.join(' / ') })
       : '';
   });
+  public readonly buildIgnoredLeaderSuperSpecialCriteriaLabel = computed(() =>
+    this.buildProgress()?.currentIgnoredLeaderSuperSpecialCriteria
+      ? this.t('progress.ignoringLeaderSuperSpecialCriteria')
+      : '',
+  );
   public readonly buildWorstCaseEtaLabel = computed(() => {
     const estimatedRemainingMs = this.buildProgress()?.estimatedRemainingMs;
 
@@ -1075,6 +1009,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       {
         key: 'droppedClasses',
         text: this.buildDroppedClassesLabel(),
+        tone: 'fallback',
+      },
+      {
+        key: 'superSpecialCriteria',
+        text: this.buildIgnoredLeaderSuperSpecialCriteriaLabel(),
         tone: 'fallback',
       },
     ];
@@ -1129,6 +1068,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly droppedResultTypes = computed(() => this.result()?.relaxation.droppedTypes ?? []);
   public readonly droppedResultClasses = computed(
     () => this.result()?.relaxation.droppedClasses ?? [],
+  );
+  public readonly resultIgnoredLeaderSuperSpecialCriteria = computed(
+    () => this.result()?.relaxation.ignoredLeaderSuperSpecialCriteria ?? false,
   );
   public readonly selectedClassSummaryLabel = computed(() => {
     const current = this.result();
@@ -1290,7 +1232,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         this.hasRequiredAbilities() ||
         this.requireAllSelectedTypesInTeam() ||
         this.requireAllSelectedClassesPerCharacter() ||
-        this.requireLeaderSuperSpecialCriteria() ||
         this.requireUniqueBaseCharacterNames() ||
         this.favoritesOnly() ||
         this.favoriteShipsOnly() ||
@@ -1609,23 +1550,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.resetBuildState();
   }
 
-  public async onRequireLeaderSuperSpecialCriteriaToggle(
-    event: CustomEvent<{ checked: boolean }>,
-  ): Promise<void> {
-    if (
-      !(await this.confirmDisableToggleIfNeeded({
-        checked: event.detail.checked,
-        currentValue: this.requireLeaderSuperSpecialCriteria(),
-        messageKey: 'filters.disableConfirm.superSpecialCriteria.message',
-      }))
-    ) {
-      return;
-    }
-
-    this.requireLeaderSuperSpecialCriteria.set(event.detail.checked);
-    this.resetBuildState();
-  }
-
   public async onRequireUniqueBaseCharacterNamesToggle(
     event: CustomEvent<{ checked: boolean }>,
   ): Promise<void> {
@@ -1641,19 +1565,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
     this.requireUniqueBaseCharacterNames.set(event.detail.checked);
     this.resetBuildState();
-  }
-
-  public async onExtraDropModeChange(
-    event: CustomEvent<{ value?: AutoBuildExtraDropMode | null }>,
-  ): Promise<void> {
-    const nextMode =
-      event.detail.value === 'guaranteed' || event.detail.value === 'any'
-        ? event.detail.value
-        : 'off';
-
-    this.extraDropMode.set(nextMode);
-    this.resetBuildState();
-    await this.refreshCharacterPickPanels();
   }
 
   public async onFavoritesOnlyToggle(event: CustomEvent<{ checked: boolean }>): Promise<void> {
@@ -1724,15 +1635,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   }
 
   public async saveAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
-    const { extraDropMode, remainingRequirements } = splitExtraDropAbilityRequirements(
-      serializeAbilityRequirementDrafts(drafts, {
-        dedupe: true,
-        catalogMap: this.abilityCatalogMap(),
-      }),
-    );
+    const requirements = serializeAbilityRequirementDrafts(drafts, {
+      dedupe: true,
+      catalogMap: this.abilityCatalogMap(),
+    });
 
-    this.extraDropMode.set(extraDropMode);
-    this.requiredAbilityDrafts.set(createAbilityRequirementDrafts(remainingRequirements));
+    this.requiredAbilityDrafts.set(createAbilityRequirementDrafts(requirements));
     this.abilityPickerOpen.set(false);
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
@@ -1946,7 +1854,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         {
           requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
           requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
-          requireLeaderSuperSpecialCriteria: this.requireLeaderSuperSpecialCriteria(),
           requireUniqueBaseCharacterNames: this.requireUniqueBaseCharacterNames(),
           requiredAbilities: this.pageRequiredAbilities(),
           enemyMechanics: this.pageEnemyMechanics(),
@@ -2041,7 +1948,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       enemyMechanics: this.pageEnemyMechanics(),
       requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
       requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
-      requireLeaderSuperSpecialCriteria: this.requireLeaderSuperSpecialCriteria(),
       requireUniqueBaseCharacterNames: this.requireUniqueBaseCharacterNames(),
       favoritesOnly: this.favoritesOnly(),
       favoriteCount: this.favoriteCharacterIds().length,
@@ -2177,12 +2083,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.excludedCharacterIds.set([]);
     this.selectedManualShipId.set(null);
     this.excludedShipIds.set([]);
-    this.extraDropMode.set('off');
     this.requireAllSelectedTypesInTeam.set(defaultFilters.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(
       defaultFilters.requireAllSelectedClassesPerCharacter,
     );
-    this.requireLeaderSuperSpecialCriteria.set(defaultFilters.requireLeaderSuperSpecialCriteria);
     this.requireUniqueBaseCharacterNames.set(defaultFilters.requireUniqueBaseCharacterNames);
     this.favoritesOnly.set(defaultFilters.favoritesOnly);
     this.favoriteShipsOnly.set(defaultFilters.favoriteShipsOnly);
@@ -2270,12 +2174,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       state.requiredAbilities,
       state.enemyMechanics,
     );
-    const { extraDropMode, remainingRequirements } =
-      splitExtraDropAbilityRequirements(manualRequiredAbilities);
-    this.extraDropMode.set(extraDropMode);
-    this.requiredAbilityDrafts.set(
-      createAbilityRequirementDrafts(remainingRequirements),
-    );
+    this.requiredAbilityDrafts.set(createAbilityRequirementDrafts(manualRequiredAbilities));
     this.lockedCharacterRecords.set({});
     for (const character of availableLockedCharacters) this.cacheCharacterRecord(character);
     this.manualSlots.set(
@@ -2290,7 +2189,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.excludedShipIds.set([...state.excludedShipIds]);
     this.requireAllSelectedTypesInTeam.set(state.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(state.requireAllSelectedClassesPerCharacter);
-    this.requireLeaderSuperSpecialCriteria.set(state.requireLeaderSuperSpecialCriteria);
     this.requireUniqueBaseCharacterNames.set(state.requireUniqueBaseCharacterNames);
     this.favoritesOnly.set(state.favoritesOnly);
     this.favoriteShipsOnly.set(state.favoriteShipsOnly);
@@ -2395,10 +2293,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
     if (this.requireAllSelectedClassesPerCharacter()) {
       activeRequirements.push(this.t('errors.requirements.classCoverage'));
-    }
-
-    if (this.requireLeaderSuperSpecialCriteria()) {
-      activeRequirements.push(this.t('errors.requirements.superSpecialCriteria'));
     }
 
     if (this.requireUniqueBaseCharacterNames()) {
@@ -2621,7 +2515,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       searchTerm,
       selectedTypes: [],
       selectedClasses: [],
-      sortMode: 'newest',
+      sortMode: 'powerFirst',
       limit: CHARACTER_PICKER_PAGE_SIZE,
       offset,
     });
@@ -2998,12 +2892,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   }
 
   private serializeManualRequiredAbilities(): AutoBuildAbilityRequirement[] {
-    return splitExtraDropAbilityRequirements(
-      serializeAbilityRequirementDrafts(this.requiredAbilityDrafts(), {
-        dedupe: true,
-        catalogMap: this.abilityCatalogMap(),
-      }),
-    ).remainingRequirements;
+    return serializeAbilityRequirementDrafts(this.requiredAbilityDrafts(), {
+      dedupe: true,
+      catalogMap: this.abilityCatalogMap(),
+    });
   }
 
   private serializeEnemyMechanics(): AutoBuildEnemyMechanicRequirement[] {
@@ -3192,7 +3084,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       const slotConflictKeys = new Set<string>();
 
       for (const record of slot.records) {
-        const label = record.name.replace(/^[^A-Za-z0-9]+/, '').replace(/\s+/g, ' ').trim();
+        const label = record.name
+          .replace(/^[^A-Za-z0-9]+/, '')
+          .replace(/\s+/g, ' ')
+          .trim();
 
         for (const conflictKey of resolveCharacterPartyConflictKeys(record)) {
           if (conflictKey.length === 0 || slotConflictKeys.has(conflictKey)) {

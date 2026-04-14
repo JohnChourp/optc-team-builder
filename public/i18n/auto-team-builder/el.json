@@ -56,13 +56,6 @@
         "flexible": "Τα selected classes καθοδηγούν το captain scope και το weighting χωρίς να μπλοκάρουν το fallback."
       }
     },
-    "superSpecialCriteria": {
-      "toggle": "Απαίτησε leader super special criteria",
-      "support": {
-        "strict": "Οι επιλεγμένοι leaders που έχουν Super Special criteria πρέπει να καταλήγουν σε final team που ικανοποιεί τουλάχιστον ένα roster-valid criteria branch.",
-        "flexible": "Αγνόησε τα leader Super Special criteria όταν χτίζεται η τελική ομάδα."
-      }
-    },
     "uniqueNames": {
       "toggle": "Απόφυγε duplicate χαρακτήρες του παιχνιδιού",
       "support": {
@@ -85,19 +78,6 @@
         "withCount": "Περιορίζει το manual ship confirmation και το auto ship selection στα {{count}} αποθηκευμένα favorite ships σου."
       }
     },
-    "extraDrop": {
-      "toggle": "Captain extra-drop filter",
-      "options": {
-        "off": "Off",
-        "guaranteed": "Guaranteed only",
-        "any": "Any extra-drop"
-      },
-      "support": {
-        "off": "Μην απαιτείς captain effect για extra drops.",
-        "guaranteed": "Κράτα μόνο captains που εγγυώνται duplicated reward drop στο clear του island.",
-        "any": "Κράτα captains με guaranteed ή chance-based duplicated reward drops στο clear του island."
-      }
-    },
     "disableConfirm": {
       "title": "Θέλεις σίγουρα να το απενεργοποιήσεις;",
       "cancel": "Κράτησέ το ενεργό",
@@ -110,9 +90,6 @@
       },
       "uniqueNames": {
         "message": "Να κλείσει η προστασία από duplicate χαρακτήρες και να επιτρέπονται in-game duplicate conflicts στην τελική ομάδα;"
-      },
-      "superSpecialCriteria": {
-        "message": "Να κλείσει ο έλεγχος των leader Super Special criteria και να επιτρέπονται leaders των οποίων τα Super Special roster criteria δεν ικανοποιούνται;"
       }
     }
   },
@@ -331,6 +308,7 @@
     "exactAttempt": "Exact attempt {{current}} / {{total}}",
     "fallbackAttempt": "Fallback attempt {{current}} / {{total}}",
     "ignoringClasses": "Ignoring classes: {{classes}}",
+    "ignoringLeaderSuperSpecialCriteria": "Αγνόησε τα leader Super Special criteria",
     "ignoringTypes": "Ignoring types: {{types}}",
     "loadingCandidates": "Φόρτωση candidates από το local dataset...",
     "preparingSearch": "Προετοιμασία search permutations...",
@@ -342,6 +320,7 @@
     "copy": "Τα πάνω filters έμειναν όπως τα διάλεξες. Η ομάδα χτίστηκε αφού αγνοήθηκαν μόνο τα παρακάτω requirements.",
     "droppedClasses": "Dropped classes",
     "droppedTypes": "Dropped types",
+    "ignoredLeaderSuperSpecialCriteria": "Αγνόησε τα leader Super Special criteria",
     "title": "Χρησιμοποιήθηκε relaxed fallback"
   },
   "summary": {

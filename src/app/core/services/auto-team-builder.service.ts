@@ -119,7 +119,7 @@ export class AutoTeamBuilderService {
       requireAllSelectedTypesInTeam: constraints.requireAllSelectedTypesInTeam ?? false,
       requireAllSelectedClassesPerCharacter:
         constraints.requireAllSelectedClassesPerCharacter ?? false,
-      requireLeaderSuperSpecialCriteria: constraints.requireLeaderSuperSpecialCriteria ?? false,
+      requireLeaderSuperSpecialCriteria: constraints.requireLeaderSuperSpecialCriteria ?? true,
       requireUniqueBaseCharacterNames: constraints.requireUniqueBaseCharacterNames ?? false,
       requiredAbilities,
       enemyMechanics,
@@ -184,6 +184,7 @@ export class AutoTeamBuilderService {
       completedFallbackAttempts: 0,
       currentDroppedTypes: [],
       currentDroppedClasses: [],
+      currentIgnoredLeaderSuperSpecialCriteria: false,
       messageKey: "progress.loadingCandidates",
     });
 
@@ -191,6 +192,7 @@ export class AutoTeamBuilderService {
       requestedInput.types,
       requestedInput.candidateLimit,
       {
+        selectedClasses: requestedInput.selectedClasses,
         allowedCharacterIds: favoritesOnly ? [...favoriteCharacterIds] : undefined,
         lockedCharacterIds,
         excludedCharacterIds,
@@ -315,6 +317,7 @@ export class AutoTeamBuilderService {
         completedFallbackAttempts: 0,
         currentDroppedTypes: [],
         currentDroppedClasses: [],
+        currentIgnoredLeaderSuperSpecialCriteria: false,
         messageKey: "progress.preparingSearch",
       });
 
@@ -326,6 +329,7 @@ export class AutoTeamBuilderService {
         ...this.buildTimingSnapshot(timingState, totalAttempts, 0, workers.length),
         currentDroppedTypes: [],
         currentDroppedClasses: [],
+        currentIgnoredLeaderSuperSpecialCriteria: false,
         messageKey: "progress.exactAttempt",
         messageParams: {
           current: 1,
@@ -340,7 +344,7 @@ export class AutoTeamBuilderService {
         executionOptions.signal,
       );
 
-      if (hasStrictAutoTeamBuildConstraints(requestedInput)) {
+      if (hasStrictAutoTeamBuildConstraints(requestedInput) && plannedFallbackAttempts.length === 0) {
         this.emitProgress(executionOptions, {
           stage: "completed",
           candidateCount: records.length,
@@ -349,6 +353,7 @@ export class AutoTeamBuilderService {
           ...this.buildTimingSnapshot(timingState, totalAttempts, totalAttempts, workers.length),
           currentDroppedTypes: [],
           currentDroppedClasses: [],
+          currentIgnoredLeaderSuperSpecialCriteria: false,
           messageKey: "progress.completed",
         });
         return exactResult;
@@ -363,6 +368,7 @@ export class AutoTeamBuilderService {
           ...this.buildTimingSnapshot(timingState, totalAttempts, 1, workers.length),
           currentDroppedTypes: [],
           currentDroppedClasses: [],
+          currentIgnoredLeaderSuperSpecialCriteria: false,
           messageKey: "progress.completed",
         });
         return exactResult;
@@ -377,6 +383,7 @@ export class AutoTeamBuilderService {
           ...this.buildTimingSnapshot(timingState, totalAttempts, 1, workers.length),
           currentDroppedTypes: [],
           currentDroppedClasses: [],
+          currentIgnoredLeaderSuperSpecialCriteria: false,
           messageKey: "progress.completed",
         });
         return null;
@@ -655,6 +662,7 @@ export class AutoTeamBuilderService {
           ),
           currentDroppedTypes: [],
           currentDroppedClasses: [],
+          currentIgnoredLeaderSuperSpecialCriteria: false,
           messageKey: "progress.completed",
         });
         resolve(result);
@@ -720,6 +728,9 @@ export class AutoTeamBuilderService {
           ),
           currentDroppedTypes: plannedAttempt.droppedTypes,
           currentDroppedClasses: plannedAttempt.droppedClasses,
+          currentIgnoredLeaderSuperSpecialCriteria: Boolean(
+            plannedAttempt.ignoredLeaderSuperSpecialCriteria,
+          ),
           messageKey: "progress.fallbackAttempt",
           messageParams: {
             current: attemptIndex + 2,

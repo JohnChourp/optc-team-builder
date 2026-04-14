@@ -200,7 +200,7 @@ export interface DetailedCharacterSearchQuery {
   selectedTypesMatchMode?: 'all' | 'any';
   selectedClasses: string[];
   selectedClassesMatchMode?: 'all' | 'any';
-  sortMode?: 'catalog' | 'newest';
+  sortMode?: 'catalog' | 'newest' | 'powerFirst';
   limit: number;
   offset: number;
 }

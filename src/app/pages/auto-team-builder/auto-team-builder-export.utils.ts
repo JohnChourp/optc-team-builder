@@ -72,7 +72,6 @@ export interface AutoTeamSelectionExportPayload {
     enemyMechanics?: AutoBuildEnemyMechanicRequirement[];
     requireAllSelectedTypesInTeam: boolean;
     requireAllSelectedClassesPerCharacter: boolean;
-    requireLeaderSuperSpecialCriteria?: boolean;
     requireUniqueBaseCharacterNames: boolean;
     favoritesOnly: boolean;
     favoriteCount: number;
@@ -102,7 +101,6 @@ export interface AutoTeamSelectionImportState {
   enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
-  requireLeaderSuperSpecialCriteria: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
   favoriteShipsOnly: boolean;
@@ -150,7 +148,6 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   enemyMechanics: AutoBuildResult["input"]["enemyMechanics"];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
-  requireLeaderSuperSpecialCriteria?: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
   favoriteCount: number;
@@ -825,8 +822,6 @@ export function sanitizeAutoTeamSelectionImportPayload(
       enemyMechanics,
       requireAllSelectedTypesInTeam: payload.filters.requireAllSelectedTypesInTeam,
       requireAllSelectedClassesPerCharacter: payload.filters.requireAllSelectedClassesPerCharacter,
-      requireLeaderSuperSpecialCriteria:
-        payload.filters.requireLeaderSuperSpecialCriteria !== false,
       requireUniqueBaseCharacterNames: payload.filters.requireUniqueBaseCharacterNames === true,
       favoritesOnly: payload.filters.favoritesOnly,
       favoriteShipsOnly: payload.filters.favoriteShipsOnly === true,
@@ -891,7 +886,6 @@ export function buildAutoTeamSelectionExportPayload({
   enemyMechanics,
   requireAllSelectedTypesInTeam,
   requireAllSelectedClassesPerCharacter,
-  requireLeaderSuperSpecialCriteria = true,
   requireUniqueBaseCharacterNames,
   favoritesOnly,
   favoriteCount,
@@ -936,7 +930,6 @@ export function buildAutoTeamSelectionExportPayload({
       })),
       requireAllSelectedTypesInTeam,
       requireAllSelectedClassesPerCharacter,
-      requireLeaderSuperSpecialCriteria,
       requireUniqueBaseCharacterNames,
       favoritesOnly,
       favoriteCount,

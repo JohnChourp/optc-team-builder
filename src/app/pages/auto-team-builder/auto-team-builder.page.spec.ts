@@ -55,7 +55,6 @@ afterEach(() => {
 });
 
 describe('AutoTeamBuilderPage builder interactions', () => {
-
   it('passes the resolved worker count to the builder service execution options', async () => {
     const { page, autoTeamBuilder, userState } = await createPage();
 
@@ -101,24 +100,19 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
-  it('passes the leader super special criteria toggle to the builder service', async () => {
+  it('does not pass a leader super special criteria toggle to the builder service', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
     await page.ngOnInit();
     page.selectedClasses.set(['Fighter']);
     page.selectedTypes.set(['DEX']);
-    await page.onRequireLeaderSuperSpecialCriteriaToggle({
-      detail: { checked: true },
-    } as CustomEvent<{
-      checked: boolean;
-    }>);
     await page.buildTeam();
 
     expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
       ['Fighter'],
       ['DEX'],
-      expect.objectContaining({
-        requireLeaderSuperSpecialCriteria: true,
+      expect.not.objectContaining({
+        requireLeaderSuperSpecialCriteria: expect.anything(),
       }),
       expect.objectContaining({
         onProgress: expect.any(Function),
@@ -127,23 +121,21 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
-  it('defaults the extra-drop filter to off', async () => {
-    const { page } = await createPage();
-
-    await page.ngOnInit();
-
-    expect(page.extraDropMode()).toBe('off');
-  });
-
-  it('passes the selected extra-drop requirement to the builder service', async () => {
+  it('passes picker-selected extra-drop requirements to the builder service', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
     await page.ngOnInit();
     page.selectedClasses.set(['Fighter']);
     page.selectedTypes.set(['DEX']);
-    await page.onExtraDropModeChange({
-      detail: { value: 'guaranteed' },
-    } as CustomEvent<{ value: 'off' | 'guaranteed' | 'any' }>);
+    await page.saveAbilityPicker([
+      {
+        draftId: 'drop-guaranteed',
+        abilityKey: 'extra_drop_guaranteed',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ]);
     await page.buildTeam();
 
     expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
@@ -161,7 +153,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
-  it('maps picker-selected extra-drop abilities back into the dedicated mode', async () => {
+  it('keeps picker-selected extra-drop abilities in the manual requirement drafts', async () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
@@ -175,17 +167,42 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       },
     ]);
 
-    expect(page.extraDropMode()).toBe('any');
-    expect(page.requiredAbilityDrafts()).toEqual([]);
+    expect(page.requiredAbilityDrafts()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          abilityKey: 'extra_drop_any',
+          minTurns: null,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+        }),
+      ]),
+    );
+    expect(page.requiredAbilitySummaryChips().map((chip) => chip.label)).toContain(
+      'Any Extra Drop',
+    );
+    expect(page.pageRequiredAbilities()).toEqual([
+      {
+        abilityKey: 'extra_drop_any',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ]);
   });
 
   it('keeps extra-drop requirements in manual leader slot filters', async () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
-    await page.onExtraDropModeChange({
-      detail: { value: 'guaranteed' },
-    } as CustomEvent<{ value: 'off' | 'guaranteed' | 'any' }>);
+    await page.saveAbilityPicker([
+      {
+        draftId: 'drop-guaranteed',
+        abilityKey: 'extra_drop_guaranteed',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ]);
     page.activeManualSlotRole.set('captain');
 
     expect(page.manualCandidateFilters().requiredAbilities).toEqual([
@@ -202,9 +219,15 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
-    await page.onExtraDropModeChange({
-      detail: { value: 'guaranteed' },
-    } as CustomEvent<{ value: 'off' | 'guaranteed' | 'any' }>);
+    await page.saveAbilityPicker([
+      {
+        draftId: 'drop-guaranteed',
+        abilityKey: 'extra_drop_guaranteed',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ]);
     page.activeManualSlotRole.set('sub1');
 
     expect(page.manualCandidateFilters().requiredAbilities).toEqual([]);
@@ -235,9 +258,15 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     repository.searchDetailedCharacters.mockResolvedValue([regularLeader, matchingLeader]);
 
     await page.ngOnInit();
-    await page.onExtraDropModeChange({
-      detail: { value: 'guaranteed' },
-    } as CustomEvent<{ value: 'off' | 'guaranteed' | 'any' }>);
+    await page.saveAbilityPicker([
+      {
+        draftId: 'drop-guaranteed',
+        abilityKey: 'extra_drop_guaranteed',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ]);
 
     page.activeManualSlotRole.set('captain');
     expect(page.manualCandidateCards().map((card) => card.character.id)).toEqual([401]);
@@ -286,22 +315,6 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
     expect(page.requireUniqueBaseCharacterNames()).toBe(false);
     expect(alertController.create).toHaveBeenCalledOnce();
-  });
-
-  it('re-enables leader super special criteria mode without showing confirmation', async () => {
-    const { page, alertController } = await createPage();
-
-    await page.ngOnInit();
-    page.requireLeaderSuperSpecialCriteria.set(false);
-
-    await page.onRequireLeaderSuperSpecialCriteriaToggle({
-      detail: { checked: true },
-    } as CustomEvent<{
-      checked: boolean;
-    }>);
-
-    expect(page.requireLeaderSuperSpecialCriteria()).toBe(true);
-    expect(alertController.create).not.toHaveBeenCalled();
   });
 
   it('passes configured ability requirements to the builder service', async () => {
@@ -1028,19 +1041,6 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     ).toBe('Remove Pain (includes selectable debuff counters)');
   });
 
-  it('resets the leader super special criteria toggle when the page state is reset', async () => {
-    const { page } = await createPage();
-
-    await page.ngOnInit();
-    page.requireLeaderSuperSpecialCriteria.set(false);
-
-    expect(page.requireLeaderSuperSpecialCriteria()).toBe(false);
-
-    await page.ionViewWillEnter();
-
-    expect(page.requireLeaderSuperSpecialCriteria()).toBe(true);
-  });
-
   it('renders detail actions only on selected leader and result cards', async () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
@@ -1074,6 +1074,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
     expect(template).toContain('*cdkVirtualFor=');
     expect(template).not.toContain('abilityRequirements.placeholders.selectAbility');
+    expect(template).not.toContain('filters.extraDrop');
     expect(template).not.toContain('shipSearchTerm()');
     expect(template).not.toContain('manualCandidatesSummaryLabel()');
     expect(template).not.toContain('manualCandidatePoolSupportLabel()');
@@ -1091,6 +1092,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain("t('exclude.actions.addShip')");
     expect(template).toContain("t('exclude.actions.add')");
     expect(template).toContain('@if (current.shipSelection; as shipSelection)');
+    expect(template).not.toContain('leaderSuperSpecialCriteriaToggleLabel()');
+    expect(template).toContain("t('fallback.ignoredLeaderSuperSpecialCriteria')");
   });
 
   it('resets the full page state through resetPage', async () => {
@@ -1273,6 +1276,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       completedFallbackAttempts: 0,
       currentDroppedTypes: ['STR', 'INT'],
       currentDroppedClasses: [],
+      currentIgnoredLeaderSuperSpecialCriteria: false,
       messageKey: 'progress.fallbackAttempt',
       messageParams: {
         current: 3504,
@@ -1323,6 +1327,13 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         visible: false,
         tone: 'fallback',
       },
+      {
+        key: 'superSpecialCriteria',
+        text: '',
+        displayText: '\u00A0',
+        visible: false,
+        tone: 'fallback',
+      },
     ]);
   });
 
@@ -1341,6 +1352,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       completedFallbackAttempts: 2,
       currentDroppedTypes: [],
       currentDroppedClasses: ['Fighter'],
+      currentIgnoredLeaderSuperSpecialCriteria: false,
       messageKey: 'progress.fallbackAttempt',
       messageParams: {
         current: 3505,
@@ -1410,7 +1422,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       searchTerm: '',
       selectedTypes: [],
       selectedClasses: [],
-      sortMode: 'newest',
+      sortMode: 'powerFirst',
       limit: 10,
       offset: 0,
     });
@@ -1418,7 +1430,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       searchTerm: '',
       selectedTypes: [],
       selectedClasses: [],
-      sortMode: 'newest',
+      sortMode: 'powerFirst',
       limit: 10,
       offset: 0,
     });
@@ -1438,7 +1450,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       searchTerm: '',
       selectedTypes: [],
       selectedClasses: [],
-      sortMode: 'newest',
+      sortMode: 'powerFirst',
       limit: 10,
       offset: 0,
     });
@@ -1446,7 +1458,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       searchTerm: '',
       selectedTypes: [],
       selectedClasses: [],
-      sortMode: 'newest',
+      sortMode: 'powerFirst',
       limit: 10,
       offset: 0,
     });
@@ -1544,7 +1556,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       searchTerm: '',
       selectedTypes: [],
       selectedClasses: [],
-      sortMode: 'newest',
+      sortMode: 'powerFirst',
       limit: 10,
       offset: 0,
     });
@@ -1572,7 +1584,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
           searchTerm: '',
           selectedTypes: [],
           selectedClasses: [],
-          sortMode: 'newest',
+          sortMode: 'powerFirst',
           limit: 10,
           offset: 0,
         }),
@@ -1582,7 +1594,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
           searchTerm: '',
           selectedTypes: [],
           selectedClasses: [],
-          sortMode: 'newest',
+          sortMode: 'powerFirst',
           limit: 10,
           offset: 0,
         }),
@@ -1602,6 +1614,39 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         .reverse()
         .slice(0, 10),
     );
+  });
+
+  it('prioritizes stronger picker candidates before demoted high-cost outliers', async () => {
+    const { page, repository } = await createPage();
+    const cost55 = createCharacterRecord(701, 'Cost 55');
+    const cost65Older = createCharacterRecord(702, 'Cost 65 Older');
+    const cost60 = createCharacterRecord(703, 'Cost 60');
+    const cost99 = createCharacterRecord(704, 'Cost 99');
+    const cost65Newer = createCharacterRecord(705, 'Cost 65 Newer');
+    const cost70 = createCharacterRecord(706, 'Cost 70');
+
+    cost55.cost = 55;
+    cost65Older.cost = 65;
+    cost60.cost = 60;
+    cost99.cost = 99;
+    cost65Newer.cost = 65;
+    cost70.cost = 70;
+
+    repository.searchDetailedCharacters.mockImplementation(async (query) =>
+      filterCharactersForManualQuery(
+        [cost55, cost65Older, cost60, cost99, cost65Newer, cost70],
+        query,
+      ),
+    );
+
+    await page.ngOnInit();
+
+    expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
+      [705, 702, 703, 701, 706, 704],
+    );
+    expect(
+      page.excludedCandidates().map((candidate: CharacterDetailRecord) => candidate.id),
+    ).toEqual([705, 702, 703, 701, 706, 704]);
   });
 
   it('loads more manual and excluded candidates in 10-item batches when the virtual list nears the end', async () => {
@@ -1625,7 +1670,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
           searchTerm: '',
           selectedTypes: [],
           selectedClasses: [],
-          sortMode: 'newest',
+          sortMode: 'powerFirst',
           limit: 10,
           offset: 0,
         }),
@@ -1635,7 +1680,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
           searchTerm: '',
           selectedTypes: [],
           selectedClasses: [],
-          sortMode: 'newest',
+          sortMode: 'powerFirst',
           limit: 10,
           offset: 0,
         }),
@@ -1645,7 +1690,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
           searchTerm: '',
           selectedTypes: [],
           selectedClasses: [],
-          sortMode: 'newest',
+          sortMode: 'powerFirst',
           limit: 10,
           offset: 10,
         }),
@@ -1655,7 +1700,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
           searchTerm: '',
           selectedTypes: [],
           selectedClasses: [],
-          sortMode: 'newest',
+          sortMode: 'powerFirst',
           limit: 10,
           offset: 10,
         }),
@@ -2144,7 +2189,6 @@ describe('AutoTeamBuilderPage preset export state', () => {
     await page.ngOnInit();
     page.selectedTypes.set([]);
     page.selectedClasses.set([]);
-    page.requireLeaderSuperSpecialCriteria.set(false);
     page.requireUniqueBaseCharacterNames.set(false);
     page.favoritesOnly.set(false);
     page.favoriteShipsOnly.set(false);
@@ -2243,7 +2287,6 @@ describe('AutoTeamBuilderPage preset export state', () => {
         enemyMechanics: [],
         requireAllSelectedTypesInTeam: true,
         requireAllSelectedClassesPerCharacter: true,
-        requireLeaderSuperSpecialCriteria: true,
         requireUniqueBaseCharacterNames: true,
         favoritesOnly: true,
         favoriteCount: 3,
@@ -2299,7 +2342,6 @@ describe('AutoTeamBuilder preset export helpers', () => {
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
-      requireLeaderSuperSpecialCriteria: true,
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: true,
       favoriteCount: 4,
@@ -2322,7 +2364,6 @@ describe('AutoTeamBuilder preset export helpers', () => {
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
-      requireLeaderSuperSpecialCriteria: true,
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: true,
       favoriteCount: 4,
@@ -2620,7 +2661,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
     expect(result.warnings).toEqual([]);
   });
 
-  it('restores the extra-drop mode from imported presets', async () => {
+  it('restores imported extra-drop requirements into manual drafts', async () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
@@ -2660,8 +2701,19 @@ describe('AutoTeamBuilder preset import helpers', () => {
 
     await page['applySelectionPresetState'](result.state, []);
 
-    expect(page.extraDropMode()).toBe('any');
-    expect(page.requiredAbilityDrafts()).toEqual([]);
+    expect(page.requiredAbilityDrafts()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          abilityKey: 'extra_drop_any',
+          minTurns: null,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+        }),
+      ]),
+    );
+    expect(page.requiredAbilitySummaryChips().map((chip) => chip.label)).toContain(
+      'Any Extra Drop',
+    );
   });
 
   it('roundtrips enemy mechanics alongside effective required counters', () => {
@@ -3364,6 +3416,27 @@ function createCharacterRecord(
   };
 }
 
+function resolvePowerFirstCostBucket(cost: number): number {
+  return cost >= 1 && cost <= 65 ? 0 : 1;
+}
+
+function sortCharactersForPowerFirst(records: CharacterDetailRecord[]): CharacterDetailRecord[] {
+  return [...records].sort((left, right) => {
+    const bucketDifference =
+      resolvePowerFirstCostBucket(left.cost) - resolvePowerFirstCostBucket(right.cost);
+
+    if (bucketDifference !== 0) {
+      return bucketDifference;
+    }
+
+    if (resolvePowerFirstCostBucket(left.cost) === 0 && left.cost !== right.cost) {
+      return right.cost - left.cost;
+    }
+
+    return right.id - left.id;
+  });
+}
+
 function filterCharactersForManualQuery(
   records: CharacterDetailRecord[],
   query: {
@@ -3372,7 +3445,7 @@ function filterCharactersForManualQuery(
     selectedTypesMatchMode?: 'all' | 'any';
     selectedClasses: string[];
     selectedClassesMatchMode?: 'all' | 'any';
-    sortMode?: 'catalog' | 'newest';
+    sortMode?: 'catalog' | 'newest' | 'powerFirst';
     limit?: number;
     offset?: number;
   },
@@ -3407,7 +3480,9 @@ function filterCharactersForManualQuery(
   const sortedRecords =
     query.sortMode === 'newest'
       ? [...filteredRecords].sort((left, right) => right.id - left.id)
-      : filteredRecords;
+      : query.sortMode === 'powerFirst'
+        ? sortCharactersForPowerFirst(filteredRecords)
+        : filteredRecords;
   const offset = query.offset ?? 0;
   const limit = query.limit ?? filteredRecords.length;
 
@@ -3494,6 +3569,7 @@ function createAutoBuildResult(
       usedFallback: false,
       droppedTypes: [],
       droppedClasses: [],
+      ignoredLeaderSuperSpecialCriteria: false,
     },
     shipSelection: null,
     candidateCount: 32,

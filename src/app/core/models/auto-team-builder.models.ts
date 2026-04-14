@@ -67,6 +67,7 @@ export interface AutoBuildConstraints {
 }
 
 export interface AutoBuildCandidateQueryOptions {
+  selectedClasses?: string[];
   allowedCharacterIds?: number[];
   lockedCharacterIds?: number[];
   excludedCharacterIds?: number[];
@@ -218,6 +219,7 @@ export interface AutoBuildRelaxationSummary {
   usedFallback: boolean;
   droppedTypes: AutoTeamBuilderType[];
   droppedClasses: string[];
+  ignoredLeaderSuperSpecialCriteria: boolean;
 }
 
 export type AutoBuildProgressStage =
@@ -238,6 +240,7 @@ export interface AutoBuildProgressSnapshot {
   completedFallbackAttempts: number;
   currentDroppedTypes: AutoTeamBuilderType[];
   currentDroppedClasses: string[];
+  currentIgnoredLeaderSuperSpecialCriteria: boolean;
   messageKey: string;
   messageParams?: Record<string, number | string>;
 }

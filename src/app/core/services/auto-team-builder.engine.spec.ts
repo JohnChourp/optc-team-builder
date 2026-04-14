@@ -42,6 +42,7 @@ describe('runAutoTeamBuildSearch', () => {
       completedFallbackAttempts: 0,
       currentDroppedTypes: [],
       currentDroppedClasses: [],
+      currentIgnoredLeaderSuperSpecialCriteria: false,
     });
     expect(snapshots[2]).toMatchObject({
       completedAttempts: 1,
@@ -52,6 +53,7 @@ describe('runAutoTeamBuildSearch', () => {
       completedFallbackAttempts: 0,
       currentDroppedTypes: [],
       currentDroppedClasses: ['Fighter'],
+      currentIgnoredLeaderSuperSpecialCriteria: false,
     });
     expect(snapshots[3]).toMatchObject({
       completedAttempts: 2,
@@ -62,6 +64,7 @@ describe('runAutoTeamBuildSearch', () => {
       completedFallbackAttempts: 1,
       currentDroppedTypes: ['INT'],
       currentDroppedClasses: [],
+      currentIgnoredLeaderSuperSpecialCriteria: false,
     });
   });
 
@@ -126,13 +129,20 @@ describe('runAutoTeamBuildSearch', () => {
     });
   });
 
-  it('matches the legacy search result when no cancellation occurs', () => {
+  it('returns the first relaxed result that restores requested class and type coverage', () => {
     const records = createSingleTypeRecords();
     const requestedInput = createInput(['DEX', 'INT'], ['Fighter']);
+    const result = runAutoTeamBuildSearch(records, requestedInput);
 
-    expect(runAutoTeamBuildSearch(records, requestedInput)).toEqual(
-      runLegacySearch(records, requestedInput),
-    );
+    expect(result).not.toBeNull();
+    expect(result?.requestedInput.types).toEqual(['DEX', 'INT']);
+    expect(result?.input.types).toEqual(['DEX']);
+    expect(result?.relaxation).toEqual({
+      usedFallback: true,
+      droppedTypes: ['INT'],
+      droppedClasses: [],
+      ignoredLeaderSuperSpecialCriteria: false,
+    });
   });
 
   it('throws cancellation before starting the next attempt', () => {
@@ -212,15 +222,22 @@ function buildLegacyAttempt(
 
   return {
     ...attempt,
+    input: {
+      ...attempt.input,
+      requireLeaderSuperSpecialCriteria: input.requireLeaderSuperSpecialCriteria ?? false,
+    },
     requestedInput,
     relaxation: {
       usedFallback:
         !sameOrderedValues(requestedInput.types, input.types) ||
-        !sameOrderedValues(requestedInput.selectedClasses, input.selectedClasses),
+        !sameOrderedValues(requestedInput.selectedClasses, input.selectedClasses) ||
+        requestedInput.requireLeaderSuperSpecialCriteria !== input.requireLeaderSuperSpecialCriteria,
       droppedTypes: requestedInput.types.filter((type) => !input.types.includes(type)),
       droppedClasses: requestedInput.selectedClasses.filter(
         (selectedClass) => !input.selectedClasses.includes(selectedClass),
       ),
+      ignoredLeaderSuperSpecialCriteria:
+        requestedInput.requireLeaderSuperSpecialCriteria && !input.requireLeaderSuperSpecialCriteria,
     },
     shipSelection: null,
   };
@@ -230,6 +247,34 @@ function buildLegacyRelaxedInputs(
   requestedInput: AutoBuildInput,
   records: CharacterDetailRecord[],
 ): AutoBuildInput[] {
+  const nextInputs: Array<{
+    input: AutoBuildInput;
+    droppedCount: number;
+    droppedSupport: number;
+    droppedTypes: string;
+    droppedClasses: string;
+  }> = [];
+  const baseInput = requestedInput.requireLeaderSuperSpecialCriteria
+    ? {
+        ...requestedInput,
+        requireLeaderSuperSpecialCriteria: false,
+      }
+    : requestedInput;
+
+  if (requestedInput.requireLeaderSuperSpecialCriteria) {
+    nextInputs.push({
+      input: baseInput,
+      droppedCount: 0,
+      droppedSupport: 0,
+      droppedTypes: '',
+      droppedClasses: '',
+    });
+  }
+
+  if (hasStrictConstraints(requestedInput)) {
+    return nextInputs;
+  }
+
   const classSupport = new Map(
     requestedInput.selectedClasses.map((selectedClass) => [
       selectedClass,
@@ -239,14 +284,15 @@ function buildLegacyRelaxedInputs(
   const typeSupport = new Map(
     requestedInput.types.map((type) => [type, resolveTypeSupport(records, type)]),
   );
-  const typeSubsets = buildSubsets(requestedInput.types, 1);
-  const classSubsets = buildSubsets(requestedInput.selectedClasses, 0);
-  const nextInputs = typeSubsets.flatMap((types) =>
+  const typeSubsets = buildSubsets(baseInput.types, 1);
+  const classSubsets = buildSubsets(baseInput.selectedClasses, 0);
+  nextInputs.push(
+    ...typeSubsets.flatMap((types) =>
     classSubsets
       .filter(
         (selectedClasses) =>
-          !sameOrderedValues(types, requestedInput.types) ||
-          !sameOrderedValues(selectedClasses, requestedInput.selectedClasses),
+          !sameOrderedValues(types, baseInput.types) ||
+          !sameOrderedValues(selectedClasses, baseInput.selectedClasses),
       )
       .map((selectedClasses) => {
         const droppedTypes = requestedInput.types.filter((type) => !types.includes(type));
@@ -259,9 +305,8 @@ function buildLegacyRelaxedInputs(
             ...requestedInput,
             types,
             selectedClasses,
+            requireLeaderSuperSpecialCriteria: baseInput.requireLeaderSuperSpecialCriteria,
           },
-          droppedTypes,
-          droppedClasses,
           droppedCount: droppedTypes.length + droppedClasses.length,
           droppedSupport:
             droppedTypes.reduce((sum, type) => sum + (typeSupport.get(type) ?? 0), 0) +
@@ -269,9 +314,11 @@ function buildLegacyRelaxedInputs(
               (sum, selectedClass) => sum + (classSupport.get(selectedClass) ?? 0),
               0,
             ),
+          droppedTypes: droppedTypes.join('|'),
+          droppedClasses: droppedClasses.join('|'),
         };
       }),
-  );
+  ));
 
   nextInputs.sort((left, right) => {
     if (left.droppedCount !== right.droppedCount) {
@@ -290,14 +337,11 @@ function buildLegacyRelaxedInputs(
       return left.droppedSupport - right.droppedSupport;
     }
 
-    const leftDroppedTypes = left.droppedTypes.join('|');
-    const rightDroppedTypes = right.droppedTypes.join('|');
-
-    if (leftDroppedTypes !== rightDroppedTypes) {
-      return leftDroppedTypes.localeCompare(rightDroppedTypes);
+    if (left.droppedTypes !== right.droppedTypes) {
+      return left.droppedTypes.localeCompare(right.droppedTypes);
     }
 
-    return left.droppedClasses.join('|').localeCompare(right.droppedClasses.join('|'));
+    return left.droppedClasses.localeCompare(right.droppedClasses);
   });
 
   return nextInputs.map((entry) => entry.input);

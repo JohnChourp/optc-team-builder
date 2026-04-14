@@ -32,6 +32,20 @@ const INVALID_CLASS_PATTERN = /^Class\d+$/i;
 const SHIP_THUMBNAIL_PACK_ID = 'ship-thumbnails';
 const SHIP_THUMBNAIL_PACK_KEY = 'shipThumbnails';
 
+function buildCharacterPowerFirstOrderByClause(alias: string): string {
+  return [
+    `CASE`,
+    `  WHEN ${alias}.cost BETWEEN 1 AND 65 THEN 0`,
+    `  ELSE 1`,
+    `END ASC`,
+    `, CASE`,
+    `  WHEN ${alias}.cost BETWEEN 1 AND 65 THEN ${alias}.cost`,
+    `  ELSE 0`,
+    `END DESC`,
+    `, ${alias}.id DESC`,
+  ].join('\n          ');
+}
+
 function normalizeStringList(value: unknown): string[] {
   return (Array.isArray(value) ? value : [])
     .map((entry) => String(entry ?? '').trim())
@@ -74,9 +88,7 @@ function normalizeSuperCriteriaBranch(value: unknown): SuperCriteriaBranch | nul
 
   if (branchType === 'character_count_any') {
     const requiredCount = Number(record['requiredCount']);
-    const rawOptions = Array.isArray(record['options'])
-      ? (record['options'] as unknown[])
-      : [];
+    const rawOptions = Array.isArray(record['options']) ? (record['options'] as unknown[]) : [];
     const options = rawOptions
       .map((entry: unknown) => {
         if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
@@ -291,7 +303,12 @@ export class OptcRepositoryService {
     ];
     const selectedTypesMatchMode = query.selectedTypesMatchMode ?? 'all';
     const selectedClassesMatchMode = query.selectedClassesMatchMode ?? 'all';
-    const orderByClause = query.sortMode === 'newest' ? 'c.id DESC' : 'c.stars DESC, c.id DESC';
+    const orderByClause =
+      query.sortMode === 'newest'
+        ? 'c.id DESC'
+        : query.sortMode === 'powerFirst'
+          ? buildCharacterPowerFirstOrderByClause('c')
+          : 'c.stars DESC, c.id DESC';
 
     if (normalizedSelectedTypes.length) {
       const typeClauses = normalizedSelectedTypes.map(() => "(',' || c.type || ',') LIKE ?");
@@ -420,6 +437,13 @@ export class OptcRepositoryService {
         ),
       ),
     ];
+    const selectedClasses = [
+      ...new Set(
+        (options.selectedClasses ?? [])
+          .map((selectedClass) => selectedClass.trim())
+          .filter((selectedClass) => selectedClass.length > 0),
+      ),
+    ];
     const excludedCharacterIds = [
       ...new Set(
         (options.excludedCharacterIds ?? []).filter(
@@ -431,7 +455,13 @@ export class OptcRepositoryService {
     const queryParams: Array<string | number> = typeFilters.map(
       (typeFilter) => `%,${typeFilter},%`,
     );
+    const classClauses = selectedClasses.map(() => 'c.classes_json LIKE ?');
     let whereClause = `(${typeClauses.join(' OR ')})`;
+
+    if (classClauses.length) {
+      whereClause = `(${whereClause} AND (${classClauses.join(' OR ')}))`;
+      queryParams.push(...selectedClasses.map((selectedClass) => `%\"${selectedClass}\"%`));
+    }
 
     if (lockedCharacterIds.length) {
       whereClause = `${whereClause} OR c.id IN (${lockedCharacterIds.map(() => '?').join(',')})`;
@@ -465,7 +495,7 @@ export class OptcRepositoryService {
         FROM characters c
         LEFT JOIN character_details d ON d.character_id = c.id
         WHERE ${whereClause}
-        ORDER BY c.id DESC
+        ORDER BY ${buildCharacterPowerFirstOrderByClause('c')}
       `,
       queryParams,
     );
@@ -476,7 +506,8 @@ export class OptcRepositoryService {
     const filteredRecords = allowedCharacterIdSet
       ? detailedRecords.filter(
           (record) =>
-            allowedCharacterIdSet.has(record.id) && !excludedCharacterIdSet.has(record.id),
+            (allowedCharacterIdSet.has(record.id) || lockedCharacterIdSet.has(record.id)) &&
+            !excludedCharacterIdSet.has(record.id),
         )
       : detailedRecords.filter((record) => !excludedCharacterIdSet.has(record.id));
 
@@ -776,7 +807,8 @@ export class OptcRepositoryService {
             .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
         : [],
       captainNotes:
-        typeof normalizedDetail.captainNotes === 'string' && normalizedDetail.captainNotes.trim().length
+        typeof normalizedDetail.captainNotes === 'string' &&
+        normalizedDetail.captainNotes.trim().length
           ? normalizedDetail.captainNotes.trim()
           : null,
       supportData: normalizeSupportData(normalizedDetail.supportData),

@@ -1609,6 +1609,7 @@ describe('Auto team builder', () => {
       ['DEX', 'PSY'],
       AUTO_TEAM_CANDIDATE_LIMIT,
       {
+        selectedClasses: ['Fighter', 'Slasher'],
         allowedCharacterIds: undefined,
         lockedCharacterIds: [],
         excludedCharacterIds: [],
@@ -1631,6 +1632,7 @@ describe('Auto team builder', () => {
       ['DEX', 'PSY'],
       AUTO_TEAM_CANDIDATE_LIMIT,
       {
+        selectedClasses: ['Fighter', 'Slasher'],
         allowedCharacterIds: undefined,
         lockedCharacterIds: [],
         excludedCharacterIds: [5926],
@@ -1653,6 +1655,7 @@ describe('Auto team builder', () => {
       ['DEX', 'PSY'],
       AUTO_TEAM_CANDIDATE_LIMIT,
       {
+        selectedClasses: ['Fighter', 'Slasher'],
         allowedCharacterIds: undefined,
         lockedCharacterIds: [],
         excludedCharacterIds: [],
@@ -1675,6 +1678,7 @@ describe('Auto team builder', () => {
       [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
       AUTO_TEAM_CANDIDATE_LIMIT,
       {
+        selectedClasses: ['Fighter'],
         allowedCharacterIds: undefined,
         lockedCharacterIds: [],
         excludedCharacterIds: [],
@@ -1703,6 +1707,7 @@ describe('Auto team builder', () => {
       ['DEX', 'PSY'],
       AUTO_TEAM_CANDIDATE_LIMIT,
       {
+        selectedClasses: ['Fighter', 'Slasher'],
         allowedCharacterIds: favoriteCharacterIds,
         lockedCharacterIds: [],
         excludedCharacterIds: [],
@@ -1747,6 +1752,7 @@ describe('Auto team builder', () => {
       ['DEX', 'PSY'],
       AUTO_TEAM_CANDIDATE_LIMIT,
       {
+        selectedClasses: ['Fighter', 'Slasher'],
         allowedCharacterIds: [999_999],
         lockedCharacterIds: [],
         excludedCharacterIds: [],
@@ -1799,6 +1805,7 @@ describe('Auto team builder', () => {
       ['DEX', 'PSY'],
       AUTO_TEAM_CANDIDATE_LIMIT,
       {
+        selectedClasses: ['Fighter', 'Slasher'],
         allowedCharacterIds: favoriteCharacterIds,
         lockedCharacterIds: [5925, 5900],
         excludedCharacterIds: [],
@@ -1943,6 +1950,7 @@ describe('Auto team builder', () => {
       ['DEX', 'PSY'],
       AUTO_TEAM_CANDIDATE_LIMIT,
       {
+        selectedClasses: ['Fighter', 'Slasher'],
         allowedCharacterIds: favoriteCharacterIds,
         lockedCharacterIds: [5925],
         excludedCharacterIds: [],
@@ -1965,7 +1973,72 @@ describe('Auto team builder', () => {
       usedFallback: false,
       droppedTypes: [],
       droppedClasses: [],
+      ignoredLeaderSuperSpecialCriteria: false,
     });
+  });
+
+  it('relaxes leader super special criteria before dropping classes or types', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue([
+        createLeaderWithSuperCriteriaRecord(7001, 'Monkey D. Luffy', createNonRosterSuperCriteria()),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+        createCharacterRecord({
+          id: 7002,
+          name: 'Roronoa Zoro',
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts chain by 1.2x for 1 turn.',
+          },
+        }),
+      ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX']);
+
+    expect(result).not.toBeNull();
+    expect(result?.requestedInput.requireLeaderSuperSpecialCriteria).toBe(true);
+    expect(result?.input.requireLeaderSuperSpecialCriteria).toBe(false);
+    expect(result?.relaxation).toEqual({
+      usedFallback: true,
+      droppedTypes: [],
+      droppedClasses: [],
+      ignoredLeaderSuperSpecialCriteria: true,
+    });
+  });
+
+  it('still allows the leader super special fallback when type or class strict mode is enabled', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue([
+        createLeaderWithSuperCriteriaRecord(7101, 'Monkey D. Luffy', createNonRosterSuperCriteria()),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+        createCharacterRecord({
+          id: 7102,
+          name: 'Roronoa Zoro',
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts chain by 1.2x for 1 turn.',
+          },
+        }),
+      ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      requireAllSelectedTypesInTeam: true,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.input.requireLeaderSuperSpecialCriteria).toBe(false);
+    expect(result?.relaxation.ignoredLeaderSuperSpecialCriteria).toBe(true);
+    expect(result?.relaxation.droppedTypes).toEqual([]);
+    expect(result?.relaxation.droppedClasses).toEqual([]);
   });
 
   it('drops the weakest uncovered class in flexible mode when exact class coverage fails', async () => {
@@ -1983,6 +2056,7 @@ describe('Auto team builder', () => {
       usedFallback: true,
       droppedTypes: [],
       droppedClasses: ['Shooter'],
+      ignoredLeaderSuperSpecialCriteria: false,
     });
   });
 
@@ -2014,6 +2088,7 @@ describe('Auto team builder', () => {
       usedFallback: true,
       droppedTypes: ['INT'],
       droppedClasses: [],
+      ignoredLeaderSuperSpecialCriteria: false,
     });
   });
 
@@ -2050,6 +2125,7 @@ describe('Auto team builder', () => {
           completedFallbackAttempts: 0,
           currentDroppedTypes: [],
           currentDroppedClasses: [],
+          currentIgnoredLeaderSuperSpecialCriteria: false,
           messageKey: 'progress.exactAttempt',
           messageParams: {
             current: 1,
@@ -2252,7 +2328,12 @@ describe('Auto team builder', () => {
 
     let settled = false;
     const buildPromise = service
-      .buildTeam(['Fighter'], ['DEX', 'INT'], {}, { workerCount: 2 })
+      .buildTeam(
+        ['Fighter'],
+        ['DEX', 'INT'],
+        { requireLeaderSuperSpecialCriteria: false },
+        { workerCount: 2 },
+      )
       .then((result) => {
         settled = true;
         return result;
@@ -2339,7 +2420,12 @@ describe('Auto team builder', () => {
       .mockReturnValueOnce(workerA as never)
       .mockReturnValueOnce(workerB as never);
 
-    const result = await service.buildTeam(['Fighter'], ['DEX', 'INT'], {}, { workerCount: 2 });
+    const result = await service.buildTeam(
+      ['Fighter'],
+      ['DEX', 'INT'],
+      { requireLeaderSuperSpecialCriteria: false },
+      { workerCount: 2 },
+    );
 
     expect(result?.input.types).toEqual(['DEX']);
     expect(result?.input.selectedClasses).toEqual(['Fighter']);
@@ -2421,7 +2507,12 @@ describe('Auto team builder', () => {
       .mockReturnValueOnce(workerA as never)
       .mockReturnValueOnce(workerB as never);
 
-    const result = await service.buildTeam(['Fighter'], ['DEX', 'INT'], {}, { workerCount: 2 });
+    const result = await service.buildTeam(
+      ['Fighter'],
+      ['DEX', 'INT'],
+      { requireLeaderSuperSpecialCriteria: false },
+      { workerCount: 2 },
+    );
 
     expect(result?.input.types).toEqual(['DEX']);
     expect(result?.input.selectedClasses).toEqual(['Fighter']);
@@ -3073,6 +3164,7 @@ function buildWorkerResult(
       usedFallback: true,
       droppedTypes: ['INT'],
       droppedClasses: [],
+      ignoredLeaderSuperSpecialCriteria: false,
     },
     shipSelection: null,
   };

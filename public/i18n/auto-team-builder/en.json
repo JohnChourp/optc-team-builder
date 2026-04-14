@@ -56,13 +56,6 @@
         "flexible": "Selected classes guide captain scope and candidate weighting without blocking fallback."
       }
     },
-    "superSpecialCriteria": {
-      "toggle": "Require leader super special criteria",
-      "support": {
-        "strict": "Selected leaders with Super Special criteria must form a final team that satisfies at least one roster-valid criteria branch.",
-        "flexible": "Ignore leader Super Special criteria when assembling the final team."
-      }
-    },
     "uniqueNames": {
       "toggle": "Avoid in-game duplicate characters",
       "support": {
@@ -85,19 +78,6 @@
         "withCount": "Limit manual ship confirmation and auto ship selection to your {{count}} saved favorite ships."
       }
     },
-    "extraDrop": {
-      "toggle": "Captain extra-drop filter",
-      "options": {
-        "off": "Off",
-        "guaranteed": "Guaranteed only",
-        "any": "Any extra-drop"
-      },
-      "support": {
-        "off": "Do not require an extra-drop captain effect.",
-        "guaranteed": "Only match captains that guarantee a duplicated reward drop on island clear.",
-        "any": "Match captains with either guaranteed or chance-based duplicated reward drops on island clear."
-      }
-    },
     "disableConfirm": {
       "title": "Disable this requirement?",
       "cancel": "Keep enabled",
@@ -110,9 +90,6 @@
       },
       "uniqueNames": {
         "message": "Turn off duplicate-character protection and allow in-game duplicate conflicts in the final team?"
-      },
-      "superSpecialCriteria": {
-        "message": "Turn off leader Super Special criteria checks and allow leaders whose Super Special roster criteria are not met?"
       }
     }
   },
@@ -331,6 +308,7 @@
     "exactAttempt": "Exact attempt {{current}} / {{total}}",
     "fallbackAttempt": "Fallback attempt {{current}} / {{total}}",
     "ignoringClasses": "Ignoring classes: {{classes}}",
+    "ignoringLeaderSuperSpecialCriteria": "Ignoring leader Super Special criteria",
     "ignoringTypes": "Ignoring types: {{types}}",
     "loadingCandidates": "Loading candidates from the local dataset...",
     "preparingSearch": "Preparing search permutations...",
@@ -342,6 +320,7 @@
     "copy": "Your top-level filters stayed the same. The builder only relaxed the requirements below in order to return a team.",
     "droppedClasses": "Dropped classes",
     "droppedTypes": "Dropped types",
+    "ignoredLeaderSuperSpecialCriteria": "Ignored leader Super Special criteria",
     "title": "Relaxed fallback used"
   },
   "summary": {

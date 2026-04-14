@@ -74,6 +74,60 @@ describe('OptcRepositoryService', () => {
     expect(result[0]?.type).toBe('DEX,INT');
   });
 
+  it('adds any-match selected class filtering to auto-builder candidate queries', async () => {
+    const service = createRepositoryService([]);
+    const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
+    const fighterRow = createCharacterRow({ id: 4102, type: 'DEX', primaryClass: 'Fighter' });
+    const slasherRow = createCharacterRow({ id: 4101, type: 'DEX', primaryClass: 'Slasher' });
+
+    selectAllMock.mockResolvedValueOnce([fighterRow, slasherRow]);
+
+    const result = await service.getAutoBuilderCandidates(['DEX'], 1200, {
+      selectedClasses: ['Fighter', 'Slasher'],
+    });
+
+    expect(selectAllMock).toHaveBeenCalledWith(
+      expect.stringContaining('(c.classes_json LIKE ? OR c.classes_json LIKE ?)'),
+      ['%,DEX,%', '%"Fighter"%', '%"Slasher"%'],
+    );
+    expect(result.map((record) => record.id)).toEqual([4102, 4101]);
+  });
+
+  it('keeps locked candidates even when class and favorite filters would otherwise exclude them', async () => {
+    const service = createRepositoryService([]);
+    const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
+    const favoriteMatchRow = createCharacterRow({ id: 4101, type: 'DEX', primaryClass: 'Fighter' });
+    const lockedOffClassRow = createCharacterRow({ id: 4102, type: 'DEX', primaryClass: 'Shooter' });
+
+    selectAllMock.mockResolvedValueOnce([favoriteMatchRow, lockedOffClassRow]);
+
+    const result = await service.getAutoBuilderCandidates(['DEX'], 1200, {
+      selectedClasses: ['Fighter'],
+      allowedCharacterIds: [4101],
+      lockedCharacterIds: [4102],
+    });
+
+    expect(result.map((record) => record.id)).toEqual([4101, 4102]);
+  });
+
+  it('lets exclusions override favorite and locked candidate inclusion', async () => {
+    const service = createRepositoryService([]);
+    const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
+    const favoriteMatchRow = createCharacterRow({ id: 4101, type: 'DEX', primaryClass: 'Fighter' });
+    const lockedOffClassRow = createCharacterRow({ id: 4102, type: 'DEX', primaryClass: 'Shooter' });
+
+    selectAllMock.mockResolvedValueOnce([favoriteMatchRow, lockedOffClassRow]);
+
+    const result = await service.getAutoBuilderCandidates(['DEX'], 1200, {
+      selectedClasses: ['Fighter'],
+      allowedCharacterIds: [4101],
+      lockedCharacterIds: [4102],
+      excludedCharacterIds: [4101, 4102],
+    });
+
+    expect(result).toEqual([]);
+  });
+
   it('filters excluded character ids out of the candidate pool before the final limit', async () => {
     const service = createRepositoryService([
       createCharacterRow({ id: 4102, type: 'DEX' }),
@@ -122,6 +176,46 @@ describe('OptcRepositoryService', () => {
       expect.stringContaining('ORDER BY c.id DESC'),
       expect.any(Array),
     );
+  });
+
+  it('uses power-first sort for detailed character search when the picker requests it', async () => {
+    const service = createRepositoryService([
+      createCharacterRow({ id: 4101, type: 'DEX', cost: 55 }),
+      createCharacterRow({ id: 4104, type: 'DEX', cost: 99 }),
+      createCharacterRow({ id: 4102, type: 'DEX', cost: 65 }),
+      createCharacterRow({ id: 4103, type: 'DEX', cost: 60 }),
+    ]);
+    const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
+
+    const result = await service.searchDetailedCharacters({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      sortMode: 'powerFirst',
+      limit: 10,
+      offset: 0,
+    });
+
+    expect(selectAllMock).toHaveBeenCalledWith(
+      expect.stringContaining('WHEN c.cost BETWEEN 1 AND 65 THEN 0'),
+      expect.any(Array),
+    );
+    expect(result.map((record) => record.id)).toEqual([4102, 4103, 4101, 4104]);
+  });
+
+  it('orders auto-builder candidates by power-first cost buckets with id tie-breaks', async () => {
+    const service = createRepositoryService([
+      createCharacterRow({ id: 5101, type: 'DEX', cost: 55 }),
+      createCharacterRow({ id: 5104, type: 'DEX', cost: 99 }),
+      createCharacterRow({ id: 5102, type: 'DEX', cost: 65 }),
+      createCharacterRow({ id: 5105, type: 'DEX', cost: 65 }),
+      createCharacterRow({ id: 5106, type: 'DEX', cost: 70 }),
+      createCharacterRow({ id: 5103, type: 'DEX', cost: 60 }),
+    ]);
+
+    const result = await service.getAutoBuilderCandidates(['DEX'], 1200);
+
+    expect(result.map((record) => record.id)).toEqual([5105, 5102, 5103, 5101, 5106, 5104]);
   });
 
   it('resolves ship thumbnail urls when the ship offline pack is installed', async () => {
@@ -196,7 +290,11 @@ function createRepositoryService(
     selectAll: vi
       .fn()
       .mockImplementation((query: string) =>
-        Promise.resolve(query.includes('FROM ships') ? (options.shipRows ?? []) : rows),
+        Promise.resolve(
+          query.includes('FROM ships')
+            ? (options.shipRows ?? [])
+            : sortCharacterRowsForQuery(rows, query),
+        ),
       ),
   });
 
@@ -256,6 +354,8 @@ function createCharacterRow(
     primaryClass: string;
     secondaryClass: string | null;
     classes: string[];
+    cost: number;
+    stars: number;
   }> = {},
 ): TestSqlRow {
   const id = overrides.id ?? 5000;
@@ -271,8 +371,8 @@ function createCharacterRow(
     classes_json: JSON.stringify(
       overrides.classes ?? [primaryClass, secondaryClass].filter(Boolean),
     ),
-    stars: 6,
-    cost: 55,
+    stars: overrides.stars ?? 6,
+    cost: overrides.cost ?? 55,
     combo: 4,
     max_level: 99,
     max_experience: 1_000_000,
@@ -314,4 +414,47 @@ function createCharacterRow(
       rumbleData: null,
     }),
   };
+}
+
+function resolvePowerFirstCostBucket(cost: number): number {
+  return cost >= 1 && cost <= 65 ? 0 : 1;
+}
+
+function sortCharacterRowsForQuery(rows: TestSqlRow[], query: string): TestSqlRow[] {
+  if (query.includes('WHEN c.cost BETWEEN 1 AND 65 THEN 0')) {
+    return [...rows].sort((left, right) => {
+      const leftCost = Number(left['cost'] ?? 0);
+      const rightCost = Number(right['cost'] ?? 0);
+      const bucketDifference =
+        resolvePowerFirstCostBucket(leftCost) - resolvePowerFirstCostBucket(rightCost);
+
+      if (bucketDifference !== 0) {
+        return bucketDifference;
+      }
+
+      if (resolvePowerFirstCostBucket(leftCost) === 0 && leftCost !== rightCost) {
+        return rightCost - leftCost;
+      }
+
+      return Number(right['id'] ?? 0) - Number(left['id'] ?? 0);
+    });
+  }
+
+  if (query.includes('ORDER BY c.id DESC')) {
+    return [...rows].sort((left, right) => Number(right['id'] ?? 0) - Number(left['id'] ?? 0));
+  }
+
+  if (query.includes('ORDER BY c.stars DESC, c.id DESC')) {
+    return [...rows].sort((left, right) => {
+      const starDifference = Number(right['stars'] ?? 0) - Number(left['stars'] ?? 0);
+
+      if (starDifference !== 0) {
+        return starDifference;
+      }
+
+      return Number(right['id'] ?? 0) - Number(left['id'] ?? 0);
+    });
+  }
+
+  return rows;
 }

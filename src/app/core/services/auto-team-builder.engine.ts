@@ -18,6 +18,7 @@ export interface AutoTeamBuildPlannedAttempt {
   input: AutoBuildInput;
   droppedTypes: AutoTeamBuilderType[];
   droppedClasses: string[];
+  ignoredLeaderSuperSpecialCriteria: boolean;
 }
 
 interface AutoTeamBuildTimingState {
@@ -59,8 +60,9 @@ export function runAutoTeamBuildSearch(
     completedAttempts: 0,
     totalAttempts: 0,
     currentDroppedTypes: [],
-      currentDroppedClasses: [],
-      messageKey: 'progress.preparingSearch',
+    currentDroppedClasses: [],
+    currentIgnoredLeaderSuperSpecialCriteria: false,
+    messageKey: 'progress.preparingSearch',
   });
 
   const plannedAttempts = planAutoTeamBuildFallbackAttempts(requestedInput, records);
@@ -74,6 +76,7 @@ export function runAutoTeamBuildSearch(
     totalAttempts,
     currentDroppedTypes: [],
     currentDroppedClasses: [],
+    currentIgnoredLeaderSuperSpecialCriteria: false,
     messageKey: 'progress.exactAttempt',
     messageParams: {
       current: 1,
@@ -83,7 +86,7 @@ export function runAutoTeamBuildSearch(
 
   const exactResult = runAutoTeamBuildAttempt(records, requestedInput, requestedInput);
 
-  if (hasStrictAutoTeamBuildConstraints(requestedInput)) {
+  if (hasStrictAutoTeamBuildConstraints(requestedInput) && plannedAttempts.length === 0) {
     emitCompletedProgress(options, timingState, records.length, totalAttempts, totalAttempts);
     return exactResult;
   }
@@ -104,6 +107,9 @@ export function runAutoTeamBuildSearch(
       totalAttempts,
       currentDroppedTypes: plannedAttempt.droppedTypes,
       currentDroppedClasses: plannedAttempt.droppedClasses,
+      currentIgnoredLeaderSuperSpecialCriteria: Boolean(
+        plannedAttempt.ignoredLeaderSuperSpecialCriteria,
+      ),
       messageKey: 'progress.fallbackAttempt',
       messageParams: {
         current: completedAttempts + 1,
@@ -150,6 +156,7 @@ function emitCompletedProgress(
     totalAttempts,
     currentDroppedTypes: [],
     currentDroppedClasses: [],
+    currentIgnoredLeaderSuperSpecialCriteria: false,
     messageKey: 'progress.completed',
   });
 }
@@ -239,6 +246,9 @@ export function runAutoTeamBuildAttempt(
       droppedClasses: requestedInput.selectedClasses.filter(
         (selectedClass) => !input.selectedClasses.includes(selectedClass),
       ),
+      ignoredLeaderSuperSpecialCriteria: Boolean(
+        requestedInput.requireLeaderSuperSpecialCriteria && !input.requireLeaderSuperSpecialCriteria,
+      ),
     },
     shipSelection: null,
   };
@@ -248,8 +258,39 @@ export function planAutoTeamBuildFallbackAttempts(
   requestedInput: AutoBuildInput,
   records: CharacterDetailRecord[],
 ): AutoTeamBuildPlannedAttempt[] {
+  const nextInputs: Array<{
+    input: AutoBuildInput;
+    droppedTypes: AutoTeamBuilderType[];
+    droppedClasses: string[];
+    droppedCount: number;
+    droppedSupport: number;
+    ignoredLeaderSuperSpecialCriteria: boolean;
+  }> = [];
+  const baseInput = requestedInput.requireLeaderSuperSpecialCriteria
+    ? {
+        ...requestedInput,
+        requireLeaderSuperSpecialCriteria: false,
+      }
+    : requestedInput;
+
+  if (requestedInput.requireLeaderSuperSpecialCriteria) {
+    nextInputs.push({
+      input: baseInput,
+      droppedTypes: [],
+      droppedClasses: [],
+      droppedCount: 0,
+      droppedSupport: 0,
+      ignoredLeaderSuperSpecialCriteria: true,
+    });
+  }
+
   if (hasStrictAutoTeamBuildConstraints(requestedInput)) {
-    return [];
+    return nextInputs.map((entry) => ({
+      input: entry.input,
+      droppedTypes: entry.droppedTypes,
+      droppedClasses: entry.droppedClasses,
+      ignoredLeaderSuperSpecialCriteria: entry.ignoredLeaderSuperSpecialCriteria,
+    }));
   }
 
   const classSupport = new Map(
@@ -261,14 +302,15 @@ export function planAutoTeamBuildFallbackAttempts(
   const typeSupport = new Map(
     requestedInput.types.map((type) => [type, resolveTypeSupport(records, type)]),
   );
-  const typeSubsets = buildSubsets(requestedInput.types, 1);
-  const classSubsets = buildSubsets(requestedInput.selectedClasses, 0);
-  const nextInputs = typeSubsets.flatMap((types) =>
+  const typeSubsets = buildSubsets(baseInput.types, 1);
+  const classSubsets = buildSubsets(baseInput.selectedClasses, 0);
+  nextInputs.push(
+    ...typeSubsets.flatMap((types) =>
     classSubsets
       .filter(
         (selectedClasses) =>
-          !sameOrderedValues(types, requestedInput.types) ||
-          !sameOrderedValues(selectedClasses, requestedInput.selectedClasses),
+          !sameOrderedValues(types, baseInput.types) ||
+          !sameOrderedValues(selectedClasses, baseInput.selectedClasses),
       )
       .map((selectedClasses) => {
         const droppedTypes = requestedInput.types.filter((type) => !types.includes(type));
@@ -291,9 +333,12 @@ export function planAutoTeamBuildFallbackAttempts(
               (sum, selectedClass) => sum + (classSupport.get(selectedClass) ?? 0),
               0,
             ),
+          ignoredLeaderSuperSpecialCriteria:
+            requestedInput.requireLeaderSuperSpecialCriteria &&
+            !baseInput.requireLeaderSuperSpecialCriteria,
         };
       }),
-  );
+  ));
 
   nextInputs.sort((left, right) => {
     if (left.droppedCount !== right.droppedCount) {
@@ -326,6 +371,7 @@ export function planAutoTeamBuildFallbackAttempts(
     input: entry.input,
     droppedTypes: entry.droppedTypes,
     droppedClasses: entry.droppedClasses,
+    ignoredLeaderSuperSpecialCriteria: entry.ignoredLeaderSuperSpecialCriteria,
   }));
 }
 
@@ -352,7 +398,8 @@ export function hasStrictAutoTeamBuildConstraints(input: AutoBuildInput): boolea
 function inputsMatch(left: AutoBuildInput, right: AutoBuildInput): boolean {
   return (
     sameOrderedValues(left.types, right.types) &&
-    sameOrderedValues(left.selectedClasses, right.selectedClasses)
+    sameOrderedValues(left.selectedClasses, right.selectedClasses) &&
+    left.requireLeaderSuperSpecialCriteria === right.requireLeaderSuperSpecialCriteria
   );
 }
 
