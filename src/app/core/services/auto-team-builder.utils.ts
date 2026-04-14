@@ -119,6 +119,59 @@ const PARTY_CONFLICT_KEY_OVERRIDES = new Map<number, string[]>(
   ]),
 );
 
+function resolvePowerFirstCostBucket(cost: number): number {
+  return cost >= 1 && cost <= 65 ? 0 : 1;
+}
+
+function compareCharactersByPowerPreference(
+  left: Pick<CharacterDetailRecord, 'cost' | 'id'>,
+  right: Pick<CharacterDetailRecord, 'cost' | 'id'>,
+): number {
+  const bucketDifference =
+    resolvePowerFirstCostBucket(left.cost) - resolvePowerFirstCostBucket(right.cost);
+
+  if (bucketDifference !== 0) {
+    return bucketDifference;
+  }
+
+  if (resolvePowerFirstCostBucket(left.cost) === 0 && left.cost !== right.cost) {
+    return right.cost - left.cost;
+  }
+
+  return right.id - left.id;
+}
+
+function compareCandidatesByPowerPreference(
+  left: AutoBuildCandidate,
+  right: AutoBuildCandidate,
+): number {
+  return compareCharactersByPowerPreference(left.character, right.character);
+}
+
+function compareCaptainsBySelectionPreference(
+  left: AutoBuildCandidate,
+  right: AutoBuildCandidate,
+  input: AutoBuildInput,
+): number {
+  const powerPreferenceDifference = compareCandidatesByPowerPreference(left, right);
+
+  if (powerPreferenceDifference !== 0) {
+    return powerPreferenceDifference;
+  }
+
+  return scoreCaptain(right, input) - scoreCaptain(left, input);
+}
+
+function resolveCandidatePowerPreferenceScore(candidate: AutoBuildCandidate): number {
+  const { cost, id } = candidate.character;
+
+  if (resolvePowerFirstCostBucket(cost) === 0) {
+    return cost + id / 1_000_000;
+  }
+
+  return -Math.max(cost - 65, 1) + id / 1_000_000;
+}
+
 function candidateMatchesAbilityRequirement(
   candidate: AutoBuildCandidate,
   requirement: AutoBuildAbilityRequirement,
@@ -676,7 +729,7 @@ function resolveLeaderCandidateOptions(
 
   if (!slotCandidates.length) {
     return [...candidatePool]
-      .sort((left, right) => scoreCaptain(right, input) - scoreCaptain(left, input))
+      .sort((left, right) => compareCaptainsBySelectionPreference(left, right, input))
       .slice(0, GLOBAL_LEADER_OPTION_LIMIT);
   }
 
@@ -704,7 +757,25 @@ function buildLeaderPairOptions(
     });
   });
 
-  return leaderPairs.sort((left, right) => right.score - left.score);
+  return leaderPairs.sort((left, right) => {
+    const captainDifference = compareCaptainsBySelectionPreference(left.captain, right.captain, input);
+
+    if (captainDifference !== 0) {
+      return captainDifference;
+    }
+
+    const friendCaptainDifference = compareCaptainsBySelectionPreference(
+      left.friendCaptain,
+      right.friendCaptain,
+      input,
+    );
+
+    if (friendCaptainDifference !== 0) {
+      return friendCaptainDifference;
+    }
+
+    return right.score - left.score;
+  });
 }
 
 function resolveConstrainedSubSelections(
@@ -774,7 +845,13 @@ function resolveConstrainedSubSelections(
           ) +
           (slotCandidates.length - right.index) / 100;
 
-        return rightScore - leftScore;
+        const scoreDifference = rightScore - leftScore;
+
+        if (scoreDifference !== 0) {
+          return scoreDifference;
+        }
+
+        return compareCandidatesByPowerPreference(left.candidate, right.candidate);
       });
 
     for (const { candidate } of rankedCandidates) {
@@ -957,10 +1034,14 @@ function selectSubs(
           return current;
         }
 
-        return scoreSubCandidate(current, leaderCandidates, coverage, selected, input) >
-          scoreSubCandidate(best, leaderCandidates, coverage, selected, input)
-          ? current
-          : best;
+        const currentScore = scoreSubCandidate(current, leaderCandidates, coverage, selected, input);
+        const bestScore = scoreSubCandidate(best, leaderCandidates, coverage, selected, input);
+
+        if (currentScore !== bestScore) {
+          return currentScore > bestScore ? current : best;
+        }
+
+        return compareCandidatesByPowerPreference(current, best) < 0 ? current : best;
       }, null);
 
     if (!next) {
@@ -1096,6 +1177,7 @@ function scoreSubCandidate(
     (input.requireLeaderSuperSpecialCriteria ? 160 : 36);
   score += candidate.matchesSelectedClass ? 18 : -8;
   score += candidate.recencyScore * 10;
+  score += resolveCandidatePowerPreferenceScore(candidate);
   score += hasUniversalLeader ? 10 : 0;
   score += hasClassScopedLeader && candidate.matchesSelectedClass ? 12 : 0;
   score += hasFullClassCoverageLeader ? 8 : 0;

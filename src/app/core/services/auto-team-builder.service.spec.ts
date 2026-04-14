@@ -1199,6 +1199,178 @@ describe('Auto team builder', () => {
     expect(result?.slots.some((slot) => slot.character.id === 6000)).toBe(false);
   });
 
+  it('prefers higher-cost captains within the power-first bucket over stronger lower-cost options', () => {
+    const result = buildAutoTeamResult(
+      [
+        createPowerFirstCaptainRecord({
+          id: 6100,
+          name: 'Cost 65 Captain',
+          cost: 65,
+          atkMultiplier: 4.75,
+        }),
+        createPowerFirstCaptainRecord({
+          id: 6101,
+          name: 'Cost 55 Stronger Captain',
+          cost: 55,
+          atkMultiplier: 8.5,
+          universal: true,
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      INPUT,
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(6100);
+    expect(result?.slots[1]?.character.id).toBe(6100);
+  });
+
+  it('breaks same-cost captain ties with the newer id even when the older one has a stronger ability', () => {
+    const result = buildAutoTeamResult(
+      [
+        createPowerFirstCaptainRecord({
+          id: 6200,
+          name: 'Older Stronger Captain',
+          cost: 65,
+          atkMultiplier: 9,
+          universal: true,
+        }),
+        createPowerFirstCaptainRecord({
+          id: 6201,
+          name: 'Newer Weaker Captain',
+          cost: 65,
+          atkMultiplier: 4.5,
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      INPUT,
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(6201);
+    expect(result?.slots[1]?.character.id).toBe(6201);
+  });
+
+  it('prefers the newer power-first captain over an older ability-first alternative', () => {
+    const result = buildAutoTeamResult(
+      [
+        createPowerFirstCaptainRecord({
+          id: 6300,
+          name: 'Older Ability-First Captain',
+          cost: 60,
+          atkMultiplier: 9.25,
+          universal: true,
+        }),
+        createPowerFirstCaptainRecord({
+          id: 6305,
+          name: 'Newer Power-First Captain',
+          cost: 60,
+          atkMultiplier: 4.25,
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      INPUT,
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(6305);
+    expect(result?.slots[1]?.character.id).toBe(6305);
+  });
+
+  it('uses power-first ordering for captain and friend captain pair selection', () => {
+    const result = buildAutoTeamResult(
+      [
+        createPowerFirstCaptainRecord({
+          id: 6400,
+          name: 'Captain Slot Cost 65',
+          cost: 65,
+          atkMultiplier: 4.5,
+        }),
+        createPowerFirstCaptainRecord({
+          id: 6390,
+          name: 'Captain Slot Stronger Cost 60',
+          cost: 60,
+          atkMultiplier: 8.5,
+          universal: true,
+        }),
+        createPowerFirstCaptainRecord({
+          id: 6500,
+          name: 'Friend Slot Cost 65',
+          cost: 65,
+          atkMultiplier: 4.25,
+        }),
+        createPowerFirstCaptainRecord({
+          id: 6490,
+          name: 'Friend Slot Stronger Cost 55',
+          cost: 55,
+          atkMultiplier: 8.75,
+          universal: true,
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        manualSlots: createManualSlots({
+          captain: [6400, 6390],
+          friendCaptain: [6500, 6490],
+        }),
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(6400);
+    expect(result?.slots[1]?.character.id).toBe(6500);
+  });
+
+  it('prefers higher-cost modern subs over low-cost utility outliers when coverage is already met', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createCharacterRecord({
+          id: 6200,
+          name: 'Modern Powerhouse Sub',
+          cost: 65,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Deals 100x character ATK in typeless damage to one enemy.',
+          },
+        }),
+        createCharacterRecord({
+          id: 267,
+          name: 'Rainbow Striped Dragon',
+          type: 'INT',
+          cost: 20,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces the defense of all enemies by 50% for 1 turn.',
+          },
+        }),
+      ],
+      INPUT,
+    );
+
+    expect(result).not.toBeNull();
+
+    const teamIds = result?.slots.map((slot) => slot.character.id) ?? [];
+
+    expect(teamIds).toContain(6200);
+    expect(teamIds).not.toContain(267);
+  });
+
   it('uses one selected leader for both captain slots', () => {
     const result = buildAutoTeamResult(createStrictMixedTeamRecords(), {
       ...createInput(['DEX', 'PSY'], ['Fighter', 'Slasher'], {
@@ -1423,7 +1595,7 @@ describe('Auto team builder', () => {
     expect(result?.slots.some((slot) => slot.character.name === 'Nami')).toBe(true);
   });
 
-  it('prefers universal captains over partial multi-type captains', () => {
+  it('prefers the newer captain when universal and partial multi-type captains share the same cost', () => {
     const result = buildAutoTeamResult(
       [
         createPartialMultiTypeCaptainRecord(),
@@ -1437,8 +1609,8 @@ describe('Auto team builder', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(5905);
-    expect(result?.slots[0]?.reasonChips).toContain('Universal captain');
+    expect(result?.slots[0]?.character.id).toBe(5906);
+    expect(result?.slots[0]?.reasonChips).toContain('DEX captain');
   });
 
   it('builds one strict type-coverage team when all selected types can be covered', () => {
@@ -2907,6 +3079,34 @@ function createCaptainRecord(): CharacterDetailRecord {
         'Boosts ATK of DEX and Fighter characters by 5.25x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.',
       specialText:
         'Boosts orb effects of DEX and Fighter characters by 2.25x for 1 turn and changes orbs into Matching Orbs.',
+    },
+  });
+}
+
+function createPowerFirstCaptainRecord({
+  id,
+  name,
+  cost,
+  atkMultiplier,
+  universal = false,
+}: {
+  id: number;
+  name: string;
+  cost: number;
+  atkMultiplier: number;
+  universal?: boolean;
+}): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    name,
+    cost,
+    primaryClass: 'Fighter',
+    secondaryClass: 'Free Spirit',
+    detail: {
+      captainAbility: universal
+        ? `Boosts ATK of all characters by ${atkMultiplier}x and HP by 1.3x.`
+        : `Boosts ATK of DEX and Fighter characters by ${atkMultiplier}x and HP by 1.3x.`,
+      specialText: 'Changes crew orbs into Matching Orbs and reduces Special Cooldown by 1 turn.',
     },
   });
 }
