@@ -19,7 +19,8 @@ export const AUTO_TEAM_BUILDER_CLASSES = [
   "Striker",
 ] as const;
 export const AUTO_TEAM_BUILDER_DEFAULT_TYPE = "DEX";
-export const AUTO_TEAM_CANDIDATE_LIMIT = 1200;
+export const AUTO_TEAM_CANDIDATE_LIMIT = null;
+export const DEFAULT_AUTO_TEAM_CANDIDATE_LIMIT = 1200;
 export const AUTO_BUILD_MANUAL_SLOT_ROLES = [
   "captain",
   "friendCaptain",
@@ -109,7 +110,7 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   friendCaptainCharacterId: number | null;
   manualShipId: number | null;
   excludedShipIds: number[];
-  candidateLimit?: number;
+  candidateLimit?: number | null;
 }
 
 export interface AutoBuildShipSelection {

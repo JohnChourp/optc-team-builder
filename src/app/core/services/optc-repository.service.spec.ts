@@ -56,6 +56,44 @@ describe('OptcRepositoryService', () => {
     expect(result.map((record) => record.id)).toEqual([3200, 2700]);
   });
 
+  it('returns the full filtered pool when the candidate limit is null', async () => {
+    const rows = Array.from({ length: 1202 }, (_, index) =>
+      createCharacterRow({
+        id: 6000 - index,
+        type: 'DEX',
+      }),
+    );
+    const service = createRepositoryService(rows);
+
+    const result = await service.getAutoBuilderCandidates(['DEX'], null);
+
+    expect(result).toHaveLength(1202);
+    expect(result[0]?.id).toBe(6000);
+    expect(result.at(-1)?.id).toBe(4799);
+  });
+
+  it('only keeps locked candidates beyond the main limit when a finite limit is applied', async () => {
+    const rows = Array.from({ length: 1202 }, (_, index) =>
+      createCharacterRow({
+        id: 7000 - index,
+        type: 'DEX',
+      }),
+    );
+    const lockedCandidateId = 5799;
+    const service = createRepositoryService(rows);
+
+    const limitedResult = await service.getAutoBuilderCandidates(['DEX'], 1200, {
+      lockedCharacterIds: [lockedCandidateId],
+    });
+    const unlimitedResult = await service.getAutoBuilderCandidates(['DEX'], null, {
+      lockedCharacterIds: [lockedCandidateId],
+    });
+
+    expect(limitedResult).toHaveLength(1201);
+    expect(limitedResult.some((record) => record.id === lockedCandidateId)).toBe(true);
+    expect(unlimitedResult).toHaveLength(1202);
+  });
+
   it('uses token-based type matching so dual-type rows can match a single selected type', async () => {
     const service = createRepositoryService([
       createCharacterRow({

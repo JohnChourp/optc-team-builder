@@ -143,7 +143,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
     await page.createCandidatePoolBox();
 
-    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(['DEX'], 1200, {
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(['DEX'], null, {
       selectedClasses: ['Fighter'],
       allowedCharacterIds: [201, 202, 203],
       lockedCharacterIds: [901],
@@ -181,11 +181,38 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
     await page.createCandidatePoolBox();
 
-    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(['DEX'], 1200, {
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(['DEX'], null, {
       selectedClasses: ['Fighter'],
       allowedCharacterIds: [101, 102, 103],
       lockedCharacterIds: [700],
       excludedCharacterIds: [],
+    });
+  });
+
+  it('creates a candidate pool box without truncating scopes larger than 1200 candidates', async () => {
+    const { page, repository, userState } = await createPage();
+    const candidateRecords = Array.from({ length: 1202 }, (_, index) =>
+      createCharacterRecord(5000 + index, `Candidate ${index + 1}`),
+    );
+
+    repository.getAutoBuilderCandidates.mockResolvedValue(candidateRecords);
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX']);
+    page.selectedClasses.set(['Fighter']);
+    page.favoritesOnly.set(false);
+
+    await page.createCandidatePoolBox();
+
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(['DEX'], null, {
+      selectedClasses: ['Fighter'],
+      allowedCharacterIds: undefined,
+      lockedCharacterIds: [],
+      excludedCharacterIds: [],
+    });
+    expect(userState.saveCharacterBox).toHaveBeenCalledWith({
+      name: 'Auto Builder Pool 1',
+      characterIds: candidateRecords.map((candidate) => candidate.id),
     });
   });
 
@@ -3710,7 +3737,7 @@ function createAutoBuildResult(
     friendCaptainCharacterId: 102,
     manualShipId: null,
     excludedShipIds: [],
-    candidateLimit: 1200,
+    candidateLimit: null,
   };
 
   return {

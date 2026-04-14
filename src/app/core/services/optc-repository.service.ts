@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
 import type { Database, SqlJsStatic } from 'sql.js';
 
-import { type AutoBuildCandidateQueryOptions } from '../models/auto-team-builder.models';
+import {
+  DEFAULT_AUTO_TEAM_CANDIDATE_LIMIT,
+  type AutoBuildCandidateQueryOptions,
+} from '../models/auto-team-builder.models';
 import { type AutoBuildAbilityCatalog } from '../models/auto-team-builder-ability.models';
 import {
   type CharacterAssets,
@@ -428,7 +431,7 @@ export class OptcRepositoryService {
 
   public async getAutoBuilderCandidates(
     typeFilters: string[],
-    limit = 1200,
+    limit: number | null = DEFAULT_AUTO_TEAM_CANDIDATE_LIMIT,
     options: AutoBuildCandidateQueryOptions = {},
   ): Promise<CharacterDetailRecord[]> {
     if (!typeFilters.length) {
@@ -522,6 +525,10 @@ export class OptcRepositoryService {
             !excludedCharacterIdSet.has(record.id),
         )
       : detailedRecords.filter((record) => !excludedCharacterIdSet.has(record.id));
+
+    if (limit === null) {
+      return filteredRecords;
+    }
 
     return filteredRecords.filter(
       (record, index) => index < limit || lockedCharacterIdSet.has(record.id),
