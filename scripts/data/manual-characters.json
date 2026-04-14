@@ -78,6 +78,7 @@
           }
         ]
       },
+      "finalTapData": null,
       "superClass": null,
       "rumbleData": null
     }
@@ -154,6 +155,7 @@
         "activationRequirement": "When any 3 [Straw Hat Pirates], [Giant], or [Four Emperors] characters are on the crew not including self, except as Support Characters or Double Characters in inactive state, can be launched when character is a crewmate.",
         "specialEffect": "Changes character's slot, including [BLOCK] slot, to [TND], prevents character's slot from being changed until character lands a PERFECT strike, boosts crew's slot effects by 1.3x for 1 turn, boosts the ATK of the final tap performed by a STR character by 50%, and changes STR characters to Super STR."
       },
+      "superTandemData": null,
       "finalTapData": {
         "requirement": "On the turn Special is launched during final Battle",
         "levels": [
@@ -181,6 +183,196 @@
       },
       "superClass": null,
       "rumbleData": null
+    }
+  },
+  "900002": {
+    "id": 900002,
+    "name": "Party on the Ship Oimo",
+    "isIncomplete": true,
+    "type": "STR",
+    "classes": [
+      "Free Spirit",
+      "Powerhouse"
+    ],
+    "stars": 5,
+    "cost": 30,
+    "combo": 4,
+    "maxLevel": 110,
+    "maxExperience": null,
+    "minHp": null,
+    "minAtk": null,
+    "minRcv": null,
+    "maxHp": 4186,
+    "maxAtk": 1942,
+    "maxRcv": 267,
+    "growth": null,
+    "image": {
+      "file": "900002.jpg"
+    },
+    "detail": {
+      "characterId": 900002,
+      "captainAbility": "Boosts Free Spirit and Powerhouse characters' ATK by 3.25x, HP by 1.3x, boosts their ATK by approximately 4.5x after 3 PERFECT strikes in a row, and makes crew's [PSY] slots have matching slot effects.",
+      "captainAbilityVariants": [],
+      "captainNotes": null,
+      "specialName": "Toast to Celebrate the Reunion",
+      "specialText": "Reduces crew's Paralysis duration by 6 turns. If crew has the displayed status icon when Special is launched, boosts the chain multiplier by +1.2 for 1 turn, then after that, boosts STR, Free Spirit, and Powerhouse characters' ATK by 2.5x for 1 turn. If 4 or more [Giant] characters are on the crew, reduces top-row characters' Special charge time by 2 turns, and applies Weakened status to all enemies for 1 turn (increase damage taken by 1.3x for all enemies, damage further increased by 1.2x if enemy has Increase Damage Taken).",
+      "specialNotes": "The crew-status condition icon is visible in the screenshot but could not be safely identified as named text.",
+      "superSpecialText": null,
+      "superSpecialCriteriaText": null,
+      "superSpecialNotes": null,
+      "superSpecialCriteria": null,
+      "partyConflictKeys": [],
+      "characterTags": [
+        "Giant Pirate Crew",
+        "Giant",
+        "Egghead Arc"
+      ],
+      "builderAbilities": [],
+      "sailorAbilities": [
+        "Character cannot be blown away by attack, and makes Free Spirit and Powerhouse characters' [STR][TND] slots have matching slot effects.",
+        "Boosts crew's base ATK and HP by 150."
+      ],
+      "sailorNotes": null,
+      "limitBreak": [],
+      "potentialAbilities": [],
+      "supportData": [
+        {
+          "supportedCharactersText": "Dorry, Broggy, Kashii",
+          "levelDescriptions": [
+            "Lv.1: Once per quest, if supported character uses a Special, boosts STR and DEX characters' ATK by 1.2x for 1 turn.",
+            "Lv.2: Once per quest, if supported character uses a Special, boosts STR and DEX characters' ATK by 1.3x for 1 turn.",
+            "Lv.3: Once per quest, if supported character uses a Special, boosts STR and DEX characters' ATK by 1.4x for 1 turn.",
+            "Lv.4: Once per quest, if supported character uses a Special, boosts STR and DEX characters' ATK by 1.5x for 1 turn.",
+            "Lv.5: Once per quest, if supported character uses a Special, boosts STR and DEX characters' ATK by 1.75x for 1 turn."
+          ]
+        }
+      ],
+      "swapData": null,
+      "vsSpecial": null,
+      "superType": null,
+      "superTandemData": null,
+      "finalTapData": null,
+      "superClass": null,
+      "rumbleData": {
+        "stats": {
+          "style": "PT Style",
+          "cost": 20,
+          "combatPower": 6774,
+          "hp": 4814,
+          "atk": 2088,
+          "def": 222,
+          "spd": 155,
+          "rcv": 274
+        },
+        "special": [
+          {
+            "cooldown": 29,
+            "effects": [
+              "Targets Free Spirit class and [Giant] [Straw Hat Pirates] teammates for ATK Up Lv.1 (11 s), Blow Away % Up Lv.1 (11 s); if 4 or more [Giant] [Straw Hat Pirates] characters are on the team, targets 2 high ATK teammates for Special CT 11% reduction; during Assault Rumble, targets 3 enemies for DEF Down Lv.1 (11 s), SPD Down Lv.1 (11 s)."
+            ]
+          },
+          {
+            "cooldown": 29,
+            "effects": [
+              "Targets Free Spirit class and [Giant] [Straw Hat Pirates] teammates for ATK Up Lv.1 (12 s), Blow Away % Up Lv.1 (12 s); if 4 or more [Giant] [Straw Hat Pirates] characters are on the team, targets 2 high ATK teammates for Special CT 12% reduction; during Assault Rumble, targets 3 enemies for DEF Down Lv.1 (12 s), SPD Down Lv.1 (12 s)."
+            ]
+          },
+          {
+            "cooldown": 29,
+            "effects": [
+              "Targets Free Spirit class and [Giant] [Straw Hat Pirates] teammates for ATK Up Lv.2 (13 s), Blow Away % Up Lv.2 (13 s); if 4 or more [Giant] [Straw Hat Pirates] characters are on the team, targets 2 high ATK teammates for Special CT 13% reduction; during Assault Rumble, targets 3 enemies for DEF Down Lv.1 (13 s), SPD Down Lv.2 (13 s)."
+            ]
+          },
+          {
+            "cooldown": 29,
+            "effects": [
+              "Targets Free Spirit class and [Giant] [Straw Hat Pirates] teammates for ATK Up Lv.2 (14 s), Blow Away % Up Lv.2 (14 s); if 4 or more [Giant] [Straw Hat Pirates] characters are on the team, targets 2 high ATK teammates for Special CT 14% reduction; during Assault Rumble, targets 3 enemies for DEF Down Lv.1 (14 s), SPD Down Lv.2 (14 s)."
+            ]
+          },
+          {
+            "cooldown": 29,
+            "effects": [
+              "Targets Free Spirit class and [Giant] [Straw Hat Pirates] teammates for ATK Up Lv.3 (15 s), Blow Away % Up Lv.3 (15 s); if 4 or more [Giant] [Straw Hat Pirates] characters are on the team, targets 2 high ATK teammates for Special CT 15% reduction; during Assault Rumble, targets 3 enemies for DEF Down Lv.1 (15 s), SPD Down Lv.3 (15 s)."
+            ]
+          },
+          {
+            "cooldown": 29,
+            "effects": [
+              "Targets Free Spirit class and [Giant] [Straw Hat Pirates] teammates for ATK Up Lv.3 (16 s), Blow Away % Up Lv.3 (16 s); if 4 or more [Giant] [Straw Hat Pirates] characters are on the team, targets 2 high ATK teammates for Special CT 16% reduction; during Assault Rumble, targets 3 enemies for DEF Down Lv.2 (16 s), SPD Down Lv.3 (16 s)."
+            ]
+          },
+          {
+            "cooldown": 29,
+            "effects": [
+              "Targets Free Spirit class and [Giant] [Straw Hat Pirates] teammates for ATK Up Lv.4 (17 s), Blow Away % Up Lv.4 (17 s); if 4 or more [Giant] [Straw Hat Pirates] characters are on the team, targets 2 high ATK teammates for Special CT 17% reduction; during Assault Rumble, targets 3 enemies for DEF Down Lv.2 (17 s), SPD Down Lv.4 (17 s)."
+            ]
+          },
+          {
+            "cooldown": 29,
+            "effects": [
+              "Targets Free Spirit class and [Giant] [Straw Hat Pirates] teammates for ATK Up Lv.4 (18 s), Blow Away % Up Lv.4 (18 s); if 4 or more [Giant] [Straw Hat Pirates] characters are on the team, targets 2 high ATK teammates for Special CT 18% reduction; during Assault Rumble, targets 3 enemies for DEF Down Lv.2 (18 s), SPD Down Lv.4 (18 s)."
+            ]
+          },
+          {
+            "cooldown": 29,
+            "effects": [
+              "Targets Free Spirit class and [Giant] [Straw Hat Pirates] teammates for ATK Up Lv.5 (19 s), Blow Away % Up Lv.5 (19 s); if 4 or more [Giant] [Straw Hat Pirates] characters are on the team, targets 2 high ATK teammates for Special CT 19% reduction; during Assault Rumble, targets 3 enemies for DEF Down Lv.2 (19 s), SPD Down Lv.5 (19 s)."
+            ]
+          },
+          {
+            "cooldown": 29,
+            "effects": [
+              "Targets Free Spirit class and [Giant] [Straw Hat Pirates] teammates for ATK Up Lv.5 (20 s), Blow Away % Up Lv.5 (20 s); if 4 or more [Giant] [Straw Hat Pirates] characters are on the team, targets 2 high ATK teammates for Special CT 20% reduction; during Assault Rumble, targets 3 enemies for DEF Down Lv.3 (20 s), SPD Down Lv.5 (20 s)."
+            ]
+          }
+        ],
+        "ability": [
+          {
+            "effects": [
+              "Free Spirit class and [Giant] [Straw Hat Pirates] teammates ATK Up Lv.1, HP Up Lv.1, Blow Away % Up Lv.1; when blowing away enemy, up to 5 times self Special CT Speed Up Lv.1; targets 2 high ATK teammates for Special CT 6% reduction; when appearing on the field, \"Kashii\" Special CT 10% reduction; during Assault Rumble, self HP Up Lv.6, Special CT Speed Up Lv.2."
+            ]
+          },
+          {
+            "effects": [
+              "Free Spirit class and [Giant] [Straw Hat Pirates] teammates ATK Up Lv.2, HP Up Lv.2, Blow Away % Up Lv.2; when blowing away enemy, up to 5 times self Special CT Speed Up Lv.1; targets 2 high ATK teammates for Special CT 7% reduction; when appearing on the field, \"Kashii\" Special CT 20% reduction; during Assault Rumble, self HP Up Lv.7, Special CT Speed Up Lv.3."
+            ]
+          },
+          {
+            "effects": [
+              "Free Spirit class and [Giant] [Straw Hat Pirates] teammates ATK Up Lv.3, HP Up Lv.3, Blow Away % Up Lv.3; when blowing away enemy, up to 5 times self Special CT Speed Up Lv.1; targets 2 high ATK teammates for Special CT 8% reduction; when appearing on the field, \"Kashii\" Special CT 30% reduction; during Assault Rumble, self HP Up Lv.8, Special CT Speed Up Lv.4."
+            ]
+          },
+          {
+            "effects": [
+              "Free Spirit class and [Giant] [Straw Hat Pirates] teammates ATK Up Lv.4, HP Up Lv.4, Blow Away % Up Lv.4; when blowing away enemy, up to 5 times self Special CT Speed Up Lv.1; targets 2 high ATK teammates for Special CT 9% reduction; when appearing on the field, \"Kashii\" Special CT 40% reduction; during Assault Rumble, self HP Up Lv.9, Special CT Speed Up Lv.5."
+            ]
+          },
+          {
+            "effects": [
+              "Free Spirit class and [Giant] [Straw Hat Pirates] teammates ATK Up Lv.5, HP Up Lv.5, Blow Away % Up Lv.5; when blowing away enemy, up to 5 times self Special CT Speed Up Lv.1; targets 2 high ATK teammates for Special CT 10% reduction; when appearing on the field, \"Kashii\" Special CT 50% reduction; during Assault Rumble, self HP Up Lv.10, Special CT Speed Up Lv.6."
+            ]
+          }
+        ],
+        "pattern": [
+          "Normal Attack",
+          "Power Attack",
+          "Heal Teammate in Range Lv.1 (Small Range)",
+          "Power Attack"
+        ],
+        "target": "Targets closest enemies",
+        "resistance": {
+          "standardResistances": [
+            "Completely evades Action Bind",
+            "Reduce damage taken from DEX by 20%"
+          ],
+          "additionalResistances": {
+            "unlockRequirement": "Unlock Rumble Limit Break",
+            "effects": [
+              "Reduce damage taken from DEX by 10%"
+            ]
+          }
+        }
+      }
     }
   }
 }
