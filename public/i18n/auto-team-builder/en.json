@@ -11,7 +11,8 @@
     "strictModes": {
       "typeCoverage": "team-wide type coverage",
       "perCharacterClasses": "per-slot class matching",
-      "leaderSuperEffectScope": "leader super effect scope"
+      "leaderSuperEffectScope": "leader super effect scope",
+      "noSuperLeaders": "no super leaders"
     },
     "strictMode": {
       "flexible": "flexible fallback enabled",
@@ -69,6 +70,13 @@
       "support": {
         "strict": "Every final slot must match the shared Super Type / Super Class effect scope of the selected captain and friend captain.",
         "flexible": "Leader super effects are ignored when choosing slots unless this strict filter is enabled."
+      }
+    },
+    "leadersWithoutSuperEffects": {
+      "toggle": "Require leaders without super effects",
+      "support": {
+        "strict": "Captain and friend captain must not have any Super Type or Super Class effect text.",
+        "flexible": "Super leaders stay eligible unless this filter is enabled."
       }
     },
     "favoritesOnly": {

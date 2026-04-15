@@ -774,6 +774,7 @@ function resolveLeaderCandidateOptions(
   const candidatePool = (slotCandidates.length ? slotCandidates : candidates).filter(
     (candidate) =>
       candidate.tags.readableCaptainText &&
+      (!input.requireLeadersWithoutSuperEffects || !hasLeaderSuperEffects(candidate)) &&
       leaderOnlyRequirements.every((requirement) =>
         leaderSatisfiesAbilityRequirement(candidate, requirement),
       ) &&
@@ -2171,6 +2172,13 @@ function resolveLeaderSuperEffectText(value: Record<string, unknown> | null): st
 
   const effectText = value['specialEffect'];
   return typeof effectText === 'string' ? effectText.trim() : '';
+}
+
+function hasLeaderSuperEffects(candidate: AutoBuildCandidate): boolean {
+  return (
+    resolveLeaderSuperEffectText(candidate.character.detail.superType).length > 0 ||
+    resolveLeaderSuperEffectText(candidate.character.detail.superClass).length > 0
+  );
 }
 
 function extractPenalizedCostUpperBound(text: string): number | null {

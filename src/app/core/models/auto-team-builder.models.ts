@@ -52,6 +52,7 @@ export interface AutoBuildConstraints {
   requireAllSelectedTypesInTeam?: boolean;
   requireAllSelectedClassesPerCharacter?: boolean;
   requireAllSlotsInLeaderSuperEffectScope?: boolean;
+  requireLeadersWithoutSuperEffects?: boolean;
   minimumLeaderSuperEffectMatchingSlots?: number | null;
   requireLeaderSuperSpecialCriteria?: boolean;
   requireUniqueBaseCharacterNames?: boolean;
@@ -101,6 +102,7 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   selectedClasses: string[];
   requireLeaderSuperSpecialCriteria: boolean;
   requireAllSlotsInLeaderSuperEffectScope: boolean;
+  requireLeadersWithoutSuperEffects: boolean;
   minimumLeaderSuperEffectMatchingSlots: number | null;
   requireUniqueBaseCharacterNames: boolean;
   requiredAbilities: AutoBuildAbilityRequirement[];

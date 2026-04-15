@@ -70,6 +70,10 @@ export class AutoTeamBuilderService {
   ): Promise<AutoBuildResult | null> {
     const favoritesOnly = constraints.favoritesOnly ?? false;
     const favoriteShipsOnly = constraints.favoriteShipsOnly ?? false;
+    const requireLeadersWithoutSuperEffects = constraints.requireLeadersWithoutSuperEffects ?? false;
+    const requireAllSlotsInLeaderSuperEffectScope = requireLeadersWithoutSuperEffects
+      ? false
+      : (constraints.requireAllSlotsInLeaderSuperEffectScope ?? false);
     const normalizedTypes = normalizeSelectedTypes(selectedTypes);
     const normalizedClasses: string[] = [];
 
@@ -121,10 +125,10 @@ export class AutoTeamBuilderService {
       requireAllSelectedTypesInTeam: constraints.requireAllSelectedTypesInTeam ?? false,
       requireAllSelectedClassesPerCharacter:
         constraints.requireAllSelectedClassesPerCharacter ?? false,
-      requireAllSlotsInLeaderSuperEffectScope:
-        constraints.requireAllSlotsInLeaderSuperEffectScope ?? false,
+      requireAllSlotsInLeaderSuperEffectScope,
+      requireLeadersWithoutSuperEffects,
       minimumLeaderSuperEffectMatchingSlots:
-        constraints.requireAllSlotsInLeaderSuperEffectScope
+        requireAllSlotsInLeaderSuperEffectScope
           ? constraints.minimumLeaderSuperEffectMatchingSlots ?? AUTO_BUILD_TOTAL_SLOT_COUNT
           : null,
       requireLeaderSuperSpecialCriteria: constraints.requireLeaderSuperSpecialCriteria ?? true,

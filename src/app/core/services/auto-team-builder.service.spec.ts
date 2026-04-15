@@ -1803,6 +1803,81 @@ describe('Auto team builder', () => {
     expect(result).toBeNull();
   });
 
+  it('filters super leaders out of auto leader selection when no-super-leaders is enabled', () => {
+    const result = buildAutoTeamResult(
+      [
+        createLeaderWithSuperEffectScopeRecord(7236, {
+          type: 'DEX',
+          primaryClass: 'Fighter',
+          superTypeEffect: 'Changes DEX characters to Super DEX.',
+        }),
+        createUniversalCaptainRecord(),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireLeadersWithoutSuperEffects: true,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(5905);
+    expect(result?.slots[1]?.character.id).toBe(5905);
+    expect(result?.slots[0]?.character.id).not.toBe(7236);
+    expect(result?.slots[1]?.character.id).not.toBe(7236);
+  });
+
+  it('rejects manual leaders with super effects when no-super-leaders is enabled', () => {
+    const result = buildAutoTeamResult(
+      [
+        createLeaderWithSuperEffectScopeRecord(7237, {
+          type: 'DEX',
+          primaryClass: 'Fighter',
+          superClassEffect: 'Transforms Fighter characters into Super Fighter characters.',
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireLeadersWithoutSuperEffects: true,
+        lockedCharacterIds: [7237],
+        captainCharacterId: 7237,
+        friendCaptainCharacterId: 7237,
+      }),
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('still allows super units in sub slots when no-super-leaders is enabled', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createLeaderWithSuperEffectScopeRecord(7238, {
+          type: 'DEX',
+          primaryClass: 'Fighter',
+          superTypeEffect: 'Changes DEX characters to Super DEX.',
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireLeadersWithoutSuperEffects: true,
+        lockedCharacterIds: [5900],
+        captainCharacterId: 5900,
+        friendCaptainCharacterId: 5900,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 7238)).toBe(true);
+  });
+
   it('prefers the newer captain when universal and partial multi-type captains share the same cost', () => {
     const result = buildAutoTeamResult(
       [
@@ -2624,6 +2699,75 @@ describe('Auto team builder', () => {
     });
   });
 
+  it('returns null when every available leader has super effects and no-super-leaders is enabled', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue([
+        createLeaderWithSuperEffectScopeRecord(7256, {
+          type: 'DEX',
+          primaryClass: 'Fighter',
+          superTypeEffect: 'Changes DEX characters to Super DEX.',
+        }),
+        createLeaderWithSuperEffectScopeRecord(7257, {
+          type: 'DEX',
+          primaryClass: 'Fighter',
+          superClassEffect: 'Transforms Fighter characters into Super Fighter characters.',
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      requireLeadersWithoutSuperEffects: true,
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it('keeps the no-super-leaders filter enabled through fallback attempts', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX', 'INT'], {
+      requireLeadersWithoutSuperEffects: true,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.requestedInput.requireLeadersWithoutSuperEffects).toBe(true);
+    expect(result?.input.requireLeadersWithoutSuperEffects).toBe(true);
+    expect(result?.relaxation.usedFallback).toBe(true);
+    expect(result?.relaxation.droppedTypes).toEqual(['INT']);
+  });
+
+  it('normalizes conflicting leader filters in favor of no-super-leaders', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue([
+        createCaptainRecord(),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      requireAllSlotsInLeaderSuperEffectScope: true,
+      requireLeadersWithoutSuperEffects: true,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.requestedInput.requireAllSlotsInLeaderSuperEffectScope).toBe(false);
+    expect(result?.requestedInput.requireLeadersWithoutSuperEffects).toBe(true);
+    expect(result?.input.requireAllSlotsInLeaderSuperEffectScope).toBe(false);
+    expect(result?.input.requireLeadersWithoutSuperEffects).toBe(true);
+  });
+
   it('drops the weakest uncovered class in flexible mode when exact class coverage fails', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
@@ -3302,6 +3446,7 @@ function createInput(
       | 'requireAllSelectedTypesInTeam'
       | 'requireAllSelectedClassesPerCharacter'
       | 'requireAllSlotsInLeaderSuperEffectScope'
+      | 'requireLeadersWithoutSuperEffects'
       | 'minimumLeaderSuperEffectMatchingSlots'
       | 'requireLeaderSuperSpecialCriteria'
       | 'requireUniqueBaseCharacterNames'
@@ -3319,6 +3464,7 @@ function createInput(
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
+    requireLeadersWithoutSuperEffects: false,
     requireLeaderSuperSpecialCriteria: false,
     requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
@@ -3345,6 +3491,7 @@ function createInput(
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
     requireAllSlotsInLeaderSuperEffectScope:
       overrides.requireAllSlotsInLeaderSuperEffectScope ?? false,
+    requireLeadersWithoutSuperEffects: overrides.requireLeadersWithoutSuperEffects ?? false,
     minimumLeaderSuperEffectMatchingSlots:
       overrides.requireAllSlotsInLeaderSuperEffectScope
         ? overrides.minimumLeaderSuperEffectMatchingSlots ?? 6

@@ -145,6 +145,67 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
+  it('passes the no-super-leaders toggle to the builder service', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.onRequireLeadersWithoutSuperEffectsToggle({
+      detail: { checked: true },
+    } as CustomEvent<{ checked: boolean }>);
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({
+        requireLeadersWithoutSuperEffects: true,
+      }),
+      expect.objectContaining({
+        onProgress: expect.any(Function),
+        signal: expect.any(AbortSignal),
+      }),
+    );
+  });
+
+  it('disables no-super-leaders when leader super effect scope is enabled', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.requireLeadersWithoutSuperEffects.set(true);
+
+    page.onRequireAllSlotsInLeaderSuperEffectScopeToggle({
+      detail: { checked: true },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.requireAllSlotsInLeaderSuperEffectScope()).toBe(true);
+    expect(page.requireLeadersWithoutSuperEffects()).toBe(false);
+  });
+
+  it('disables leader super effect scope when no-super-leaders is enabled', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.requireAllSlotsInLeaderSuperEffectScope.set(true);
+
+    page.onRequireLeadersWithoutSuperEffectsToggle({
+      detail: { checked: true },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.requireLeadersWithoutSuperEffects()).toBe(true);
+    expect(page.requireAllSlotsInLeaderSuperEffectScope()).toBe(false);
+  });
+
+  it('includes no-super-leaders in the strict mode summary', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.requireLeadersWithoutSuperEffects.set(true);
+
+    expect(page.strictModeLabel()).toContain('no super leaders');
+  });
+
   it('creates a candidate pool box before build using the exact selected-box scope', async () => {
     const { page, repository, userState } = await createPage();
 
@@ -1279,6 +1340,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain('<app-enemy-mechanic-picker');
     expect(template).toContain('<app-ability-requirement-picker');
     expect(template).not.toContain('<app-ship-picker');
+    expect(template).toContain('leadersWithoutSuperEffectsToggleLabel()');
     expect(template).toContain('leaderSuperEffectScopeToggleLabel()');
     expect(template).toContain('favoriteShipsOnlyToggleLabel()');
     expect(template).toContain('[value]="manualShipSearchTerm()"');
@@ -2496,7 +2558,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 12,
+      schemaVersion: 13,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -2515,6 +2577,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
         requireAllSelectedTypesInTeam: true,
         requireAllSelectedClassesPerCharacter: true,
         requireAllSlotsInLeaderSuperEffectScope: true,
+        requireLeadersWithoutSuperEffects: false,
         requireUniqueBaseCharacterNames: true,
         favoritesOnly: true,
         favoriteCount: 3,
@@ -2594,6 +2657,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSlotsInLeaderSuperEffectScope: false,
+      requireLeadersWithoutSuperEffects: false,
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: true,
       favoriteCount: 4,
@@ -2896,6 +2960,102 @@ describe('AutoTeamBuilder preset import helpers', () => {
     expect(result.state.requireAllSlotsInLeaderSuperEffectScope).toBe(false);
     expect(result.state.favoriteShipsOnly).toBe(false);
     expect(result.warnings).toEqual([]);
+  });
+
+  it('defaults no-super-leaders to false for schema 12 presets', () => {
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [],
+      enemyMechanics: [],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
+      requireUniqueBaseCharacterNames: false,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      manualSlots: createManualSlots({
+        captain: [101],
+        friendCaptain: [101],
+      }),
+      lockedCharacterIds: [101],
+      lockedCharacters: [createCharacterRecord(101)],
+      selectedLeaderIds: [101],
+      captainLeaderId: 101,
+      friendCaptainLeaderId: 101,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+    const schema12Payload = {
+      ...payload,
+      schemaVersion: 12 as const,
+      filters: {
+        ...payload.filters,
+        requireLeadersWithoutSuperEffects: undefined,
+      },
+    };
+    delete (schema12Payload.filters as { requireLeadersWithoutSuperEffects?: boolean })
+      .requireLeadersWithoutSuperEffects;
+
+    const parsedPayload = parseAutoTeamSelectionImportPayload(JSON.stringify(schema12Payload));
+    const result = sanitizeAutoTeamSelectionImportPayload(parsedPayload, {
+      availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      availableClasses: ['Fighter', 'Slasher'],
+      abilityCatalogItems: [],
+      availableLockedCharacters: [createCharacterRecord(101)],
+    });
+
+    expect(result.state.requireLeadersWithoutSuperEffects).toBe(false);
+    expect(result.state.requireAllSlotsInLeaderSuperEffectScope).toBe(false);
+  });
+
+  it('normalizes conflicting imported leader filters in favor of no-super-leaders', () => {
+    const payload = {
+      schemaVersion: 13 as const,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+      source: 'auto-team-builder' as const,
+      exportType: 'preset' as const,
+      filters: {
+        selectedTypes: ['DEX'],
+        selectedClasses: ['Fighter'],
+        requiredAbilities: [],
+        enemyMechanics: [],
+        requireAllSelectedTypesInTeam: false,
+        requireAllSelectedClassesPerCharacter: false,
+        requireAllSlotsInLeaderSuperEffectScope: true,
+        requireLeadersWithoutSuperEffects: true,
+        requireUniqueBaseCharacterNames: false,
+        favoritesOnly: false,
+        favoriteCount: 0,
+      },
+      manualSelection: {
+        manualSlots: createManualSlots({
+          captain: [101],
+          friendCaptain: [101],
+        }),
+        lockedCharacterIds: [101],
+        excludedCharacterIds: [],
+        selectedLeaderIds: [101],
+        captainLeaderId: 101,
+        friendCaptainLeaderId: 101,
+        manualShipId: null,
+        excludedShipIds: [],
+        ship: null,
+        characters: [],
+        excludedCharacters: [],
+        excludedShips: [],
+      },
+    };
+
+    const parsedPayload = parseAutoTeamSelectionImportPayload(JSON.stringify(payload));
+    const result = sanitizeAutoTeamSelectionImportPayload(parsedPayload, {
+      availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      availableClasses: ['Fighter', 'Slasher'],
+      abilityCatalogItems: [],
+      availableLockedCharacters: [createCharacterRecord(101)],
+    });
+
+    expect(result.state.requireLeadersWithoutSuperEffects).toBe(true);
+    expect(result.state.requireAllSlotsInLeaderSuperEffectScope).toBe(false);
   });
 
   it('restores imported extra-drop requirements into manual drafts', async () => {
@@ -3764,6 +3924,7 @@ function createAutoBuildResult(
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
+    requireLeadersWithoutSuperEffects: false,
     minimumLeaderSuperEffectMatchingSlots: null,
     requireLeaderSuperSpecialCriteria: false,
     requireUniqueBaseCharacterNames: false,

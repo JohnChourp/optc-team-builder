@@ -196,6 +196,7 @@ function createInput(
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
+    requireLeadersWithoutSuperEffects: false,
     minimumLeaderSuperEffectMatchingSlots: null,
     requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
