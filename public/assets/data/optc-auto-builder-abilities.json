@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-15T19:22:46.839Z",
+  "generatedAt": "2026-04-15T20:20:03.008Z",
   "sourceVersion": "unknown",
   "abilityCount": 34,
   "abilities": [
@@ -217,7 +217,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 449,
+      "matchCount": 451,
       "sampleCharacterIds": [
         228,
         265,
@@ -275,7 +275,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 140,
+      "matchCount": 141,
       "sampleCharacterIds": [
         2237,
         2238,
@@ -419,7 +419,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 415,
+      "matchCount": 416,
       "sampleCharacterIds": [
         354,
         355,
@@ -696,7 +696,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 404,
+      "matchCount": 406,
       "sampleCharacterIds": [
         1002,
         1003,
