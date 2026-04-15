@@ -30,6 +30,8 @@ import {
 const CAPTAIN_ATK_PATTERN = /atk(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
 const CAPTAIN_HP_PATTERN = /hp(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
 const SCOPE_CLAUSE_PATTERN = /\b(?:of|for)\s+([^.;]{1,160}?)\s+(?:characters|units)\b/g;
+const SUPER_EFFECT_SCOPE_CLAUSE_PATTERN =
+  /\b(?:changes?|transforms?)\s+([^.;]{1,160}?)\s+(?:characters|units)\s+(?:to|into)\s+super\b/gi;
 const COST_UPPER_BOUND_PATTERN = /\bcost\s+(\d+)\s+or\s+(?:less|lower)\b/i;
 const HIGH_COST_PENALTY_PATTERN =
   /\b(?:reduces?|decreases?|cuts?|lowers?|weakens?)\b[^.]*\bcost\s+\d+\s+or\s+higher\b/i;
@@ -102,6 +104,14 @@ type ActiveLeaderCriteria = Omit<
   AutoBuildLeaderCriteriaSummary,
   'matchingSlots' | 'totalSlots' | 'allSlotsMatch'
 >;
+
+interface ActiveLeaderSuperEffectScope {
+  derivedAllowedClasses: string[];
+  derivedAllowedTypes: AutoTeamBuilderType[];
+  hasClassRestriction: boolean;
+  hasTypeRestriction: boolean;
+  isParseable: boolean;
+}
 
 interface LeaderPairOption {
   captain: AutoBuildCandidate;
@@ -607,17 +617,44 @@ export function buildAutoTeamResult(
   const leaderPairOptions = buildLeaderPairOptions(captainOptions, friendCaptainOptions, input);
 
   for (const leaderPair of leaderPairOptions) {
-    const leaders = resolveUniqueCandidates([leaderPair.captain, leaderPair.friendCaptain]);
+    const leaderSlots = [leaderPair.captain, leaderPair.friendCaptain];
+    const leaders = resolveUniqueCandidates(leaderSlots);
     const leaderCriteria = resolveActiveLeaderCriteria(
       leaders,
       leaderPair.captain.character.id,
       leaderPair.friendCaptain.character.id,
     );
+    const leaderSuperEffectScope = resolveActiveLeaderSuperEffectScope(leaders);
+    const requiredLeaderSuperEffectMatchingSlots =
+      resolveRequiredLeaderSuperEffectMatchingSlots(input);
+
+    if (
+      requiredLeaderSuperEffectMatchingSlots !== null &&
+      (
+        !leaderSuperEffectScope.isParseable ||
+        leaders.some((leader) => !matchesLeaderSuperEffectScope(leader, leaderSuperEffectScope))
+      )
+    ) {
+      continue;
+    }
+
+    if (
+      !canStillReachLeaderSuperEffectRequirement(
+        countLeaderSuperEffectScopeMatches(leaderSlots, leaderSuperEffectScope),
+        TEAM_SUB_SLOT_COUNT,
+        requiredLeaderSuperEffectMatchingSlots,
+      )
+    ) {
+      continue;
+    }
+
     const constrainedSubSelections = resolveConstrainedSubSelections(
       manualSlotCandidateMap,
       leaders,
+      leaderSlots,
       input,
       leaderCriteria,
+      leaderSuperEffectScope,
     );
 
     if (!constrainedSubSelections) {
@@ -627,15 +664,31 @@ export function buildAutoTeamResult(
     const constrainedSubs = AUTO_BUILD_MANUAL_SUB_SLOT_ROLES
       .map((role) => constrainedSubSelections.get(role))
       .filter((candidate): candidate is AutoBuildCandidate => Boolean(candidate));
-    const selectedSubs = selectSubs(candidates, leaders, input, leaderCriteria, constrainedSubs);
+    const selectedSubs = selectSubs(
+      candidates,
+      leaders,
+      leaderSlots,
+      input,
+      leaderCriteria,
+      leaderSuperEffectScope,
+      constrainedSubs,
+    );
 
     if (selectedSubs.length < TEAM_SUB_SLOT_COUNT) {
       continue;
     }
 
     const orderedSubs = orderSelectedSubCandidates(constrainedSubSelections, selectedSubs);
-    const leaderSlots = [leaderPair.captain, leaderPair.friendCaptain];
     const teamCandidates = [...leaderSlots, ...orderedSubs];
+
+    if (
+      requiredLeaderSuperEffectMatchingSlots !== null &&
+      countLeaderSuperEffectScopeMatches(teamCandidates, leaderSuperEffectScope) <
+        requiredLeaderSuperEffectMatchingSlots
+    ) {
+      continue;
+    }
+
     const coverage = summarizeCoverage(teamCandidates, input, leaderCriteria, leaderSlots);
 
     if (input.requireAllSelectedTypesInTeam && !coverage.coversAllSelectedTypes) {
@@ -781,10 +834,18 @@ function buildLeaderPairOptions(
 function resolveConstrainedSubSelections(
   manualSlotCandidateMap: Map<AutoBuildManualSlotRole, AutoBuildCandidate[]>,
   leaders: AutoBuildCandidate[],
+  leaderSlots: AutoBuildCandidate[],
   input: AutoBuildInput,
   leaderCriteria: ActiveLeaderCriteria,
+  leaderSuperEffectScope: ActiveLeaderSuperEffectScope,
 ): Map<AutoBuildManualSlotRole, AutoBuildCandidate> | null {
   const leaderCandidates = resolveUniqueCandidates(leaders);
+  const requiredLeaderSuperEffectMatchingSlots =
+    resolveRequiredLeaderSuperEffectMatchingSlots(input);
+  const leaderSuperEffectMatchCount = countLeaderSuperEffectScopeMatches(
+    leaderSlots,
+    leaderSuperEffectScope,
+  );
   const leaderCharacterIdSet = new Set(leaderCandidates.map((candidate) => candidate.character.id));
   const leaderPartyConflictKeySet =
     input.requireUniqueBaseCharacterNames && leaderCandidates[0]
@@ -815,6 +876,14 @@ function resolveConstrainedSubSelections(
         index,
       }))
       .filter(({ candidate }) => {
+        const currentMatchedSuperEffectSlots =
+          leaderSuperEffectMatchCount +
+          countLeaderSuperEffectScopeMatches(selectedSubs, leaderSuperEffectScope);
+        const nextMatchedSuperEffectSlots =
+          currentMatchedSuperEffectSlots +
+          (matchesLeaderSuperEffectScope(candidate, leaderSuperEffectScope) ? 1 : 0);
+        const remainingSlotsAfterPick = TEAM_SUB_SLOT_COUNT - (selectedSubs.length + 1);
+
         return !(
           leaderCharacterIdSet.has(candidate.character.id) ||
           selectedIds.has(candidate.character.id) ||
@@ -822,7 +891,12 @@ function resolveConstrainedSubSelections(
             (hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) ||
               hasAnyPartyConflictKey(candidate, selectedPartyConflictKeys))) ||
           (input.requireAllSelectedClassesPerCharacter && !candidate.matchesAllSelectedClasses) ||
-          !matchesActiveLeaderCriteria(candidate, leaderCriteria)
+          !matchesLeaderBuildScope(candidate, leaderCriteria) ||
+          !canStillReachLeaderSuperEffectRequirement(
+            nextMatchedSuperEffectSlots,
+            remainingSlotsAfterPick,
+            requiredLeaderSuperEffectMatchingSlots,
+          )
         );
       })
       .sort((left, right) => {
@@ -830,8 +904,10 @@ function resolveConstrainedSubSelections(
           scoreSubCandidate(
             left.candidate,
             leaderCandidates,
+            leaderSlots,
             currentCoverage,
             selectedSubs,
+            leaderSuperEffectScope,
             input,
           ) +
           (slotCandidates.length - left.index) / 100;
@@ -839,8 +915,10 @@ function resolveConstrainedSubSelections(
           scoreSubCandidate(
             right.candidate,
             leaderCandidates,
+            leaderSlots,
             currentCoverage,
             selectedSubs,
+            leaderSuperEffectScope,
             input,
           ) +
           (slotCandidates.length - right.index) / 100;
@@ -956,12 +1034,20 @@ export function hasReadableEffectText(record: CharacterDetailRecord): boolean {
 function selectSubs(
   candidates: AutoBuildCandidate[],
   leaders: AutoBuildCandidate[],
+  leaderSlots: AutoBuildCandidate[],
   input: AutoBuildInput,
   leaderCriteria: ActiveLeaderCriteria,
+  leaderSuperEffectScope: ActiveLeaderSuperEffectScope,
   lockedSubs: AutoBuildCandidate[] = [],
 ): AutoBuildCandidate[] {
   const selected = resolveUniqueCandidates(lockedSubs);
   const leaderCandidates = resolveUniqueCandidates(leaders);
+  const requiredLeaderSuperEffectMatchingSlots =
+    resolveRequiredLeaderSuperEffectMatchingSlots(input);
+  const leaderSuperEffectMatchCount = countLeaderSuperEffectScopeMatches(
+    leaderSlots,
+    leaderSuperEffectScope,
+  );
   const leaderCharacterIdSet = new Set(leaderCandidates.map((candidate) => candidate.character.id));
   const leaderPartyConflictKeySet =
     input.requireUniqueBaseCharacterNames && leaderCandidates[0]
@@ -998,7 +1084,21 @@ function selectSubs(
     return [];
   }
 
-  if (selected.some((candidate) => !matchesActiveLeaderCriteria(candidate, leaderCriteria))) {
+  if (
+    selected.some((candidate) =>
+      !matchesLeaderBuildScope(candidate, leaderCriteria),
+    )
+  ) {
+    return [];
+  }
+
+  if (
+    !canStillReachLeaderSuperEffectRequirement(
+      leaderSuperEffectMatchCount + countLeaderSuperEffectScopeMatches(selected, leaderSuperEffectScope),
+      TEAM_SUB_SLOT_COUNT - selected.length,
+      requiredLeaderSuperEffectMatchingSlots,
+    )
+  ) {
     return [];
   }
 
@@ -1013,7 +1113,7 @@ function selectSubs(
         (!input.requireUniqueBaseCharacterNames ||
           (!hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) &&
             !hasAnyPartyConflictKey(candidate, selectedPartyConflictKeys))) &&
-        matchesActiveLeaderCriteria(candidate, leaderCriteria) &&
+        matchesLeaderBuildScope(candidate, leaderCriteria) &&
         (!input.requireAllSelectedClassesPerCharacter || candidate.matchesAllSelectedClasses)
       );
     },
@@ -1024,6 +1124,13 @@ function selectSubs(
       .filter((candidate) => {
         return (
           !selectedIds.has(candidate.character.id) &&
+          canStillReachLeaderSuperEffectRequirement(
+            leaderSuperEffectMatchCount +
+              countLeaderSuperEffectScopeMatches(selected, leaderSuperEffectScope) +
+              (matchesLeaderSuperEffectScope(candidate, leaderSuperEffectScope) ? 1 : 0),
+            TEAM_SUB_SLOT_COUNT - (selected.length + 1),
+            requiredLeaderSuperEffectMatchingSlots,
+          ) &&
           (!input.requireUniqueBaseCharacterNames ||
             (!hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) &&
               !hasAnyPartyConflictKey(candidate, selectedPartyConflictKeys)))
@@ -1034,8 +1141,24 @@ function selectSubs(
           return current;
         }
 
-        const currentScore = scoreSubCandidate(current, leaderCandidates, coverage, selected, input);
-        const bestScore = scoreSubCandidate(best, leaderCandidates, coverage, selected, input);
+        const currentScore = scoreSubCandidate(
+          current,
+          leaderCandidates,
+          leaderSlots,
+          coverage,
+          selected,
+          leaderSuperEffectScope,
+          input,
+        );
+        const bestScore = scoreSubCandidate(
+          best,
+          leaderCandidates,
+          leaderSlots,
+          coverage,
+          selected,
+          leaderSuperEffectScope,
+          input,
+        );
 
         if (currentScore !== bestScore) {
           return currentScore > bestScore ? current : best;
@@ -1126,12 +1249,16 @@ function scoreCaptain(candidate: AutoBuildCandidate, input: AutoBuildInput): num
 function scoreSubCandidate(
   candidate: AutoBuildCandidate,
   leaders: AutoBuildCandidate[],
+  leaderSlots: AutoBuildCandidate[],
   coverage: TeamCoverageState,
   selected: AutoBuildCandidate[],
+  leaderSuperEffectScope: ActiveLeaderSuperEffectScope,
   input: AutoBuildInput,
 ): number {
   let score = 0;
-  const currentTeam = [...leaders, ...selected];
+  const currentTeam = [...leaderSlots, ...selected];
+  const requiredLeaderSuperEffectMatchingSlots =
+    resolveRequiredLeaderSuperEffectMatchingSlots(input);
   const { teamRequirements } = splitAbilityRequirementsByScope(input.requiredAbilities);
   const missingAbilityRequirements = resolveAbilityCoverage(
     currentTeam,
@@ -1168,6 +1295,13 @@ function scoreSubCandidate(
   const hasTypeScopedLeader = leaders.some(
     (leader) => leader.tags.captainScope.matchedSelectedTypeCount > 0,
   );
+  const currentLeaderSuperEffectMatches = countLeaderSuperEffectScopeMatches(
+    currentTeam,
+    leaderSuperEffectScope,
+  );
+  const nextLeaderSuperEffectMatches =
+    currentLeaderSuperEffectMatches +
+    (matchesLeaderSuperEffectScope(candidate, leaderSuperEffectScope) ? 1 : 0);
 
   score += newClassCoverage * 44;
   score += newTypeCoverage * 36;
@@ -1183,6 +1317,22 @@ function scoreSubCandidate(
   score += hasFullClassCoverageLeader ? 8 : 0;
   score += hasFullTypeCoverageLeader ? 6 : 0;
   score += hasTypeScopedLeader ? 3 : 0;
+
+  if (requiredLeaderSuperEffectMatchingSlots !== null) {
+    const currentMissingLeaderSuperEffectMatches = Math.max(
+      requiredLeaderSuperEffectMatchingSlots - currentLeaderSuperEffectMatches,
+      0,
+    );
+    const nextMissingLeaderSuperEffectMatches = Math.max(
+      requiredLeaderSuperEffectMatchingSlots - nextLeaderSuperEffectMatches,
+      0,
+    );
+    const improvedLeaderSuperEffectMatches =
+      currentMissingLeaderSuperEffectMatches - nextMissingLeaderSuperEffectMatches;
+
+    score += improvedLeaderSuperEffectMatches * 220;
+    score += matchesLeaderSuperEffectScope(candidate, leaderSuperEffectScope) ? 48 : -18;
+  }
 
   if (newClassCoverage && newTypeCoverage) {
     score += 12;
@@ -1598,42 +1748,6 @@ function cloneTeamCoverageState(coverage: TeamCoverageState): TeamCoverageState 
   };
 }
 
-function supportsCandidateWithSpecial(
-  sourceCandidate: AutoBuildCandidate,
-  targetCandidate: AutoBuildCandidate,
-): boolean {
-  const { specialScope } = sourceCandidate.tags;
-
-  if (!specialScope.hasQualifyingEffect) {
-    return false;
-  }
-
-  if (specialScope.allCharacters) {
-    return true;
-  }
-
-  if (!specialScope.hasExplicitTarget) {
-    return false;
-  }
-
-  const matchesClassScope = specialScope.hasClassRestriction
-    ? targetCandidate.character.classes.some((characterClass) =>
-        specialScope.allowedClasses.some(
-          (allowedClass) => allowedClass.toLowerCase() === characterClass.toLowerCase(),
-        ),
-      )
-    : true;
-  const targetTypes = resolveCharacterTypeTokens(targetCandidate.character.type);
-  const matchesTypeScope = specialScope.hasTypeRestriction
-    ? targetTypes.some((type) => specialScope.allowedTypes.includes(type))
-    : true;
-  const matchesCostScope = specialScope.hasCostRestriction
-    ? targetCandidate.character.cost <= (specialScope.maxAllowedCost ?? Number.POSITIVE_INFINITY)
-    : true;
-
-  return matchesClassScope && matchesTypeScope && matchesCostScope;
-}
-
 function resolveUniqueCandidates(candidates: AutoBuildCandidate[]): AutoBuildCandidate[] {
   return [...new Map(candidates.map((candidate) => [candidate.character.id, candidate])).values()];
 }
@@ -1761,11 +1875,105 @@ function resolveActiveLeaderCriteria(
   };
 }
 
-function resolveIntersectedLeaderDimension<T extends string>(
+export function resolveLeaderSuperEffectScopeFromEffectText(effectText: string): {
+  allowedClasses: string[];
+  allowedTypes: AutoTeamBuilderType[];
+  isParseable: boolean;
+} {
+  const clauses = extractSuperEffectScopeClauses(effectText);
+  const allowedClasses = extractAllowedScopeClassesFromClauses(clauses);
+  const allowedTypes = extractAllowedScopeTypesFromClauses(clauses);
+
+  return {
+    allowedClasses,
+    allowedTypes,
+    isParseable: allowedClasses.length > 0 || allowedTypes.length > 0,
+  };
+}
+
+function resolveLeaderSuperEffectScope(leader: AutoBuildCandidate): ActiveLeaderSuperEffectScope {
+  const effectTexts = [leader.character.detail.superType, leader.character.detail.superClass]
+    .map(resolveLeaderSuperEffectText)
+    .filter((text): text is string => text.length > 0);
+  const allowedClasses = new Set<string>();
+  const allowedTypes = new Set<AutoTeamBuilderType>();
+  let isParseable = false;
+
+  effectTexts.forEach((effectText) => {
+    const scope = resolveLeaderSuperEffectScopeFromEffectText(effectText);
+
+    if (!scope.isParseable) {
+      return;
+    }
+
+    isParseable = true;
+    scope.allowedClasses.forEach((characterClass) => allowedClasses.add(characterClass));
+    scope.allowedTypes.forEach((type) => allowedTypes.add(type));
+  });
+
+  return {
+    derivedAllowedClasses: AUTO_TEAM_BUILDER_CLASSES.filter((characterClass) =>
+      allowedClasses.has(characterClass),
+    ),
+    derivedAllowedTypes: AUTO_TEAM_BUILDER_TYPES.filter((type) => allowedTypes.has(type)),
+    hasClassRestriction: allowedClasses.size > 0,
+    hasTypeRestriction: allowedTypes.size > 0,
+    isParseable,
+  };
+}
+
+function resolveActiveLeaderSuperEffectScope(
   leaders: AutoBuildCandidate[],
+): ActiveLeaderSuperEffectScope {
+  const uniqueLeaders = resolveUniqueCandidates(leaders);
+  const leaderScopes = uniqueLeaders.map((leader) => resolveLeaderSuperEffectScope(leader));
+
+  if (leaderScopes.some((scope) => !scope.isParseable)) {
+    return {
+      derivedAllowedClasses: [],
+      derivedAllowedTypes: [],
+      hasClassRestriction: false,
+      hasTypeRestriction: false,
+      isParseable: false,
+    };
+  }
+
+  const classScope = resolveIntersectedLeaderDimension(
+    leaderScopes,
+    AUTO_TEAM_BUILDER_CLASSES,
+    (scope) => scope.derivedAllowedClasses,
+    (scope) => scope.hasClassRestriction,
+  );
+  const typeScope = resolveIntersectedLeaderDimension(
+    leaderScopes,
+    AUTO_TEAM_BUILDER_TYPES,
+    (scope) => scope.derivedAllowedTypes,
+    (scope) => scope.hasTypeRestriction,
+  );
+
+  return {
+    derivedAllowedClasses: classScope.values,
+    derivedAllowedTypes: typeScope.values,
+    hasClassRestriction: classScope.restricted,
+    hasTypeRestriction: typeScope.restricted,
+    isParseable: true,
+  };
+}
+
+function resolveRequiredLeaderSuperEffectMatchingSlots(input: AutoBuildInput): number | null {
+  if (!input.requireAllSlotsInLeaderSuperEffectScope) {
+    return null;
+  }
+
+  const requiredSlots = input.minimumLeaderSuperEffectMatchingSlots ?? TEAM_SUB_SLOT_COUNT + 2;
+  return Math.max(2, Math.min(TEAM_SUB_SLOT_COUNT + 2, requiredSlots));
+}
+
+function resolveIntersectedLeaderDimension<T extends string, TSource>(
+  leaders: TSource[],
   orderedValues: readonly T[],
-  resolveAllowedValues: (leader: AutoBuildCandidate) => readonly T[],
-  hasRestriction: (leader: AutoBuildCandidate) => boolean,
+  resolveAllowedValues: (leader: TSource) => readonly T[],
+  hasRestriction: (leader: TSource) => boolean,
 ): { values: T[]; restricted: boolean } {
   const restrictedScopes = leaders
     .filter((leader) => hasRestriction(leader))
@@ -1843,6 +2051,53 @@ function matchesActiveLeaderCriteria(
   return matchesClassScope && matchesTypeScope && matchesCostScope;
 }
 
+function matchesLeaderSuperEffectScope(
+  candidate: AutoBuildCandidate,
+  leaderSuperEffectScope: ActiveLeaderSuperEffectScope,
+): boolean {
+  if (!leaderSuperEffectScope.isParseable) {
+    return false;
+  }
+
+  const matchesClassScope = leaderSuperEffectScope.hasClassRestriction
+    ? candidate.character.classes.some((characterClass) =>
+        leaderSuperEffectScope.derivedAllowedClasses.some(
+          (allowedClass) => allowedClass.toLowerCase() === characterClass.toLowerCase(),
+        ),
+      )
+    : true;
+  const characterTypes = resolveCharacterTypeTokens(candidate.character.type);
+  const matchesTypeScope = leaderSuperEffectScope.hasTypeRestriction
+    ? characterTypes.some((type) => leaderSuperEffectScope.derivedAllowedTypes.includes(type))
+    : true;
+
+  return matchesClassScope && matchesTypeScope;
+}
+
+function matchesLeaderBuildScope(
+  candidate: AutoBuildCandidate,
+  leaderCriteria: ActiveLeaderCriteria,
+): boolean {
+  return matchesActiveLeaderCriteria(candidate, leaderCriteria);
+}
+
+function countLeaderSuperEffectScopeMatches(
+  candidates: AutoBuildCandidate[],
+  leaderSuperEffectScope: ActiveLeaderSuperEffectScope,
+): number {
+  return candidates.filter((candidate) =>
+    matchesLeaderSuperEffectScope(candidate, leaderSuperEffectScope),
+  ).length;
+}
+
+function canStillReachLeaderSuperEffectRequirement(
+  matchedSlots: number,
+  remainingSlots: number,
+  requiredSlots: number | null,
+): boolean {
+  return requiredSlots === null || matchedSlots + remainingSlots >= requiredSlots;
+}
+
 function extractAllowedCaptainClasses(captainText: string): string[] {
   return extractAllowedScopeClasses(captainText);
 }
@@ -1860,16 +2115,20 @@ function extractAllowedSpecialTypes(specialText: string): AutoTeamBuilderType[] 
 }
 
 function extractAllowedScopeClasses(text: string): string[] {
-  const clauses = extractScopeClauses(text);
+  return extractAllowedScopeClassesFromClauses(extractScopeClauses(text));
+}
 
+function extractAllowedScopeTypes(text: string): AutoTeamBuilderType[] {
+  return extractAllowedScopeTypesFromClauses(extractScopeClauses(text));
+}
+
+function extractAllowedScopeClassesFromClauses(clauses: string[]): string[] {
   return AUTO_TEAM_BUILDER_CLASSES.filter((characterClass) =>
     clauses.some((clause) => textMatchesClassScope(clause, characterClass)),
   );
 }
 
-function extractAllowedScopeTypes(text: string): AutoTeamBuilderType[] {
-  const clauses = extractScopeClauses(text);
-
+function extractAllowedScopeTypesFromClauses(clauses: string[]): AutoTeamBuilderType[] {
   return AUTO_TEAM_BUILDER_TYPES.filter((type) =>
     clauses.some((clause) => textMatchesTypeScope(clause, type)),
   );
@@ -1897,6 +2156,21 @@ function extractScopeClauses(text: string): string[] {
   return [...text.matchAll(SCOPE_CLAUSE_PATTERN)]
     .map((match) => normalizeText(match[1]))
     .filter(Boolean);
+}
+
+function extractSuperEffectScopeClauses(text: string): string[] {
+  return [...text.matchAll(SUPER_EFFECT_SCOPE_CLAUSE_PATTERN)]
+    .map((match) => normalizeText(match[1]))
+    .filter(Boolean);
+}
+
+function resolveLeaderSuperEffectText(value: Record<string, unknown> | null): string {
+  if (!value || typeof value !== 'object') {
+    return '';
+  }
+
+  const effectText = value['specialEffect'];
+  return typeof effectText === 'string' ? effectText.trim() : '';
 }
 
 function extractPenalizedCostUpperBound(text: string): number | null {

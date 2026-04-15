@@ -1,4 +1,5 @@
 import {
+  AUTO_BUILD_TOTAL_SLOT_COUNT,
   AUTO_TEAM_BUILDER_TYPES,
   type AutoBuildInput,
   type AutoBuildProgressSnapshot,
@@ -18,6 +19,7 @@ export interface AutoTeamBuildPlannedAttempt {
   input: AutoBuildInput;
   droppedTypes: AutoTeamBuilderType[];
   droppedClasses: string[];
+  ignoredLeaderSuperEffectScope: boolean;
   ignoredLeaderSuperSpecialCriteria: boolean;
 }
 
@@ -246,6 +248,11 @@ export function runAutoTeamBuildAttempt(
       droppedClasses: requestedInput.selectedClasses.filter(
         (selectedClass) => !input.selectedClasses.includes(selectedClass),
       ),
+      minimumLeaderSuperEffectMatchingSlots: input.minimumLeaderSuperEffectMatchingSlots,
+      ignoredLeaderSuperEffectScope: Boolean(
+        requestedInput.requireAllSlotsInLeaderSuperEffectScope &&
+          !input.requireAllSlotsInLeaderSuperEffectScope,
+      ),
       ignoredLeaderSuperSpecialCriteria: Boolean(
         requestedInput.requireLeaderSuperSpecialCriteria && !input.requireLeaderSuperSpecialCriteria,
       ),
@@ -264,22 +271,55 @@ export function planAutoTeamBuildFallbackAttempts(
     droppedClasses: string[];
     droppedCount: number;
     droppedSupport: number;
+    ignoredLeaderSuperEffectScope: boolean;
     ignoredLeaderSuperSpecialCriteria: boolean;
   }> = [];
-  const baseInput = requestedInput.requireLeaderSuperSpecialCriteria
-    ? {
-        ...requestedInput,
-        requireLeaderSuperSpecialCriteria: false,
-      }
-    : requestedInput;
+  const exactLeaderSuperEffectSlots = resolveRequestedLeaderSuperEffectMatchingSlots(requestedInput);
+  const canRelaxLeaderSuperSpecialCriteria =
+    requestedInput.requireLeaderSuperSpecialCriteria && exactLeaderSuperEffectSlots === null;
 
-  if (requestedInput.requireLeaderSuperSpecialCriteria) {
+  if (exactLeaderSuperEffectSlots !== null) {
+    for (let matchingSlots = exactLeaderSuperEffectSlots - 1; matchingSlots >= 2; matchingSlots -= 1) {
+      nextInputs.push({
+        input: {
+          ...requestedInput,
+          minimumLeaderSuperEffectMatchingSlots: matchingSlots,
+        },
+        droppedTypes: [],
+        droppedClasses: [],
+        droppedCount: 0,
+        droppedSupport: 0,
+        ignoredLeaderSuperEffectScope: false,
+        ignoredLeaderSuperSpecialCriteria: false,
+      });
+    }
+
     nextInputs.push({
-      input: baseInput,
+      input: {
+        ...requestedInput,
+        requireAllSlotsInLeaderSuperEffectScope: false,
+        minimumLeaderSuperEffectMatchingSlots: null,
+      },
       droppedTypes: [],
       droppedClasses: [],
       droppedCount: 0,
       droppedSupport: 0,
+      ignoredLeaderSuperEffectScope: true,
+      ignoredLeaderSuperSpecialCriteria: false,
+    });
+  }
+
+  if (canRelaxLeaderSuperSpecialCriteria) {
+    nextInputs.push({
+      input: {
+        ...requestedInput,
+        requireLeaderSuperSpecialCriteria: false,
+      },
+      droppedTypes: [],
+      droppedClasses: [],
+      droppedCount: 0,
+      droppedSupport: 0,
+      ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: true,
     });
   }
@@ -289,9 +329,23 @@ export function planAutoTeamBuildFallbackAttempts(
       input: entry.input,
       droppedTypes: entry.droppedTypes,
       droppedClasses: entry.droppedClasses,
+      ignoredLeaderSuperEffectScope: entry.ignoredLeaderSuperEffectScope,
       ignoredLeaderSuperSpecialCriteria: entry.ignoredLeaderSuperSpecialCriteria,
     }));
   }
+
+  const baseInput = requestedInput.requireAllSlotsInLeaderSuperEffectScope
+    ? {
+        ...requestedInput,
+        requireAllSlotsInLeaderSuperEffectScope: false,
+        minimumLeaderSuperEffectMatchingSlots: null,
+      }
+    : canRelaxLeaderSuperSpecialCriteria
+      ? {
+          ...requestedInput,
+          requireLeaderSuperSpecialCriteria: false,
+        }
+      : requestedInput;
 
   const classSupport = new Map(
     requestedInput.selectedClasses.map((selectedClass) => [
@@ -323,6 +377,8 @@ export function planAutoTeamBuildFallbackAttempts(
             ...requestedInput,
             types,
             selectedClasses,
+            requireAllSlotsInLeaderSuperEffectScope: baseInput.requireAllSlotsInLeaderSuperEffectScope,
+            minimumLeaderSuperEffectMatchingSlots: baseInput.minimumLeaderSuperEffectMatchingSlots,
           },
           droppedTypes,
           droppedClasses,
@@ -336,6 +392,9 @@ export function planAutoTeamBuildFallbackAttempts(
           ignoredLeaderSuperSpecialCriteria:
             requestedInput.requireLeaderSuperSpecialCriteria &&
             !baseInput.requireLeaderSuperSpecialCriteria,
+          ignoredLeaderSuperEffectScope:
+            requestedInput.requireAllSlotsInLeaderSuperEffectScope &&
+            !baseInput.requireAllSlotsInLeaderSuperEffectScope,
         };
       }),
   ));
@@ -371,6 +430,7 @@ export function planAutoTeamBuildFallbackAttempts(
     input: entry.input,
     droppedTypes: entry.droppedTypes,
     droppedClasses: entry.droppedClasses,
+    ignoredLeaderSuperEffectScope: entry.ignoredLeaderSuperEffectScope,
     ignoredLeaderSuperSpecialCriteria: entry.ignoredLeaderSuperSpecialCriteria,
   }));
 }
@@ -399,8 +459,19 @@ function inputsMatch(left: AutoBuildInput, right: AutoBuildInput): boolean {
   return (
     sameOrderedValues(left.types, right.types) &&
     sameOrderedValues(left.selectedClasses, right.selectedClasses) &&
+    left.requireAllSlotsInLeaderSuperEffectScope === right.requireAllSlotsInLeaderSuperEffectScope &&
+    left.minimumLeaderSuperEffectMatchingSlots === right.minimumLeaderSuperEffectMatchingSlots &&
     left.requireLeaderSuperSpecialCriteria === right.requireLeaderSuperSpecialCriteria
   );
+}
+
+function resolveRequestedLeaderSuperEffectMatchingSlots(input: AutoBuildInput): number | null {
+  if (!input.requireAllSlotsInLeaderSuperEffectScope) {
+    return null;
+  }
+
+  const requestedSlots = input.minimumLeaderSuperEffectMatchingSlots ?? AUTO_BUILD_TOTAL_SLOT_COUNT;
+  return Math.max(2, Math.min(AUTO_BUILD_TOTAL_SLOT_COUNT, requestedSlots));
 }
 
 function sameOrderedValues<T>(left: T[], right: T[]): boolean {

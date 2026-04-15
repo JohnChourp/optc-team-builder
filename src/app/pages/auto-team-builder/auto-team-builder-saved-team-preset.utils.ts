@@ -43,6 +43,7 @@ export function buildAutoTeamBuilderStateFromSavedTeam(
     enemyMechanics: [],
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
+    requireAllSlotsInLeaderSuperEffectScope: false,
     requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
     favoriteShipsOnly: false,

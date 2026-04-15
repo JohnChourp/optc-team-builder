@@ -10,7 +10,8 @@
     },
     "strictModes": {
       "typeCoverage": "team-wide type coverage",
-      "perCharacterClasses": "per-slot class matching"
+      "perCharacterClasses": "per-slot class matching",
+      "leaderSuperEffectScope": "leader super effect scope"
     },
     "strictMode": {
       "flexible": "flexible fallback enabled",
@@ -61,6 +62,13 @@
       "support": {
         "strict": "Every final slot except Friend Captain must avoid in-game duplicate-character conflicts, so the Friend Captain can still mirror another unit like Monkey D. Luffy.",
         "flexible": "Allow final teams that reuse in-game character identities or overlapping composite units."
+      }
+    },
+    "leaderSuperEffectScope": {
+      "toggle": "Require every slot to match leader super effect scope",
+      "support": {
+        "strict": "Every final slot must match the shared Super Type / Super Class effect scope of the selected captain and friend captain.",
+        "flexible": "Leader super effects are ignored when choosing slots unless this strict filter is enabled."
       }
     },
     "favoritesOnly": {

@@ -6,12 +6,10 @@ import {
   createEmptyAutoBuildManualSlots,
   type AutoBuildInput,
   type AutoBuildProgressSnapshot,
-  type AutoBuildResult,
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
 import { AutoTeamBuildCancelledError, runAutoTeamBuildSearch } from './auto-team-builder.engine';
-import { buildAutoTeamResult, resolveCharacterTypeTokens } from './auto-team-builder.utils';
 
 describe('runAutoTeamBuildSearch', () => {
   it('emits deterministic progress stages for exact and fallback attempts', () => {
@@ -141,6 +139,8 @@ describe('runAutoTeamBuildSearch', () => {
       usedFallback: true,
       droppedTypes: ['INT'],
       droppedClasses: [],
+      minimumLeaderSuperEffectMatchingSlots: null,
+      ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
     });
   });
@@ -184,218 +184,6 @@ describe('runAutoTeamBuildSearch', () => {
   });
 });
 
-function runLegacySearch(
-  records: CharacterDetailRecord[],
-  requestedInput: AutoBuildInput,
-): AutoBuildResult | null {
-  const exactResult = buildLegacyAttempt(records, requestedInput, requestedInput);
-
-  if (hasStrictConstraints(requestedInput)) {
-    return exactResult;
-  }
-
-  if (satisfiesRequestedCoverage(exactResult)) {
-    return exactResult;
-  }
-
-  for (const relaxedInput of buildLegacyRelaxedInputs(requestedInput, records)) {
-    const relaxedResult = buildLegacyAttempt(records, relaxedInput, requestedInput);
-
-    if (satisfiesRequestedCoverage(relaxedResult)) {
-      return relaxedResult;
-    }
-  }
-
-  return null;
-}
-
-function buildLegacyAttempt(
-  records: CharacterDetailRecord[],
-  input: AutoBuildInput,
-  requestedInput: AutoBuildInput,
-): AutoBuildResult | null {
-  const attempt = buildAutoTeamResult(records, input);
-
-  if (!attempt) {
-    return null;
-  }
-
-  return {
-    ...attempt,
-    input: {
-      ...attempt.input,
-      requireLeaderSuperSpecialCriteria: input.requireLeaderSuperSpecialCriteria ?? false,
-    },
-    requestedInput,
-    relaxation: {
-      usedFallback:
-        !sameOrderedValues(requestedInput.types, input.types) ||
-        !sameOrderedValues(requestedInput.selectedClasses, input.selectedClasses) ||
-        requestedInput.requireLeaderSuperSpecialCriteria !== input.requireLeaderSuperSpecialCriteria,
-      droppedTypes: requestedInput.types.filter((type) => !input.types.includes(type)),
-      droppedClasses: requestedInput.selectedClasses.filter(
-        (selectedClass) => !input.selectedClasses.includes(selectedClass),
-      ),
-      ignoredLeaderSuperSpecialCriteria:
-        requestedInput.requireLeaderSuperSpecialCriteria && !input.requireLeaderSuperSpecialCriteria,
-    },
-    shipSelection: null,
-  };
-}
-
-function buildLegacyRelaxedInputs(
-  requestedInput: AutoBuildInput,
-  records: CharacterDetailRecord[],
-): AutoBuildInput[] {
-  const nextInputs: Array<{
-    input: AutoBuildInput;
-    droppedCount: number;
-    droppedSupport: number;
-    droppedTypes: string;
-    droppedClasses: string;
-  }> = [];
-  const baseInput = requestedInput.requireLeaderSuperSpecialCriteria
-    ? {
-        ...requestedInput,
-        requireLeaderSuperSpecialCriteria: false,
-      }
-    : requestedInput;
-
-  if (requestedInput.requireLeaderSuperSpecialCriteria) {
-    nextInputs.push({
-      input: baseInput,
-      droppedCount: 0,
-      droppedSupport: 0,
-      droppedTypes: '',
-      droppedClasses: '',
-    });
-  }
-
-  if (hasStrictConstraints(requestedInput)) {
-    return nextInputs;
-  }
-
-  const classSupport = new Map(
-    requestedInput.selectedClasses.map((selectedClass) => [
-      selectedClass,
-      resolveClassSupport(records, selectedClass),
-    ]),
-  );
-  const typeSupport = new Map(
-    requestedInput.types.map((type) => [type, resolveTypeSupport(records, type)]),
-  );
-  const typeSubsets = buildSubsets(baseInput.types, 1);
-  const classSubsets = buildSubsets(baseInput.selectedClasses, 0);
-  nextInputs.push(
-    ...typeSubsets.flatMap((types) =>
-    classSubsets
-      .filter(
-        (selectedClasses) =>
-          !sameOrderedValues(types, baseInput.types) ||
-          !sameOrderedValues(selectedClasses, baseInput.selectedClasses),
-      )
-      .map((selectedClasses) => {
-        const droppedTypes = requestedInput.types.filter((type) => !types.includes(type));
-        const droppedClasses = requestedInput.selectedClasses.filter(
-          (selectedClass) => !selectedClasses.includes(selectedClass),
-        );
-
-        return {
-          input: {
-            ...requestedInput,
-            types,
-            selectedClasses,
-            requireLeaderSuperSpecialCriteria: baseInput.requireLeaderSuperSpecialCriteria,
-          },
-          droppedCount: droppedTypes.length + droppedClasses.length,
-          droppedSupport:
-            droppedTypes.reduce((sum, type) => sum + (typeSupport.get(type) ?? 0), 0) +
-            droppedClasses.reduce(
-              (sum, selectedClass) => sum + (classSupport.get(selectedClass) ?? 0),
-              0,
-            ),
-          droppedTypes: droppedTypes.join('|'),
-          droppedClasses: droppedClasses.join('|'),
-        };
-      }),
-  ));
-
-  nextInputs.sort((left, right) => {
-    if (left.droppedCount !== right.droppedCount) {
-      return left.droppedCount - right.droppedCount;
-    }
-
-    if (left.input.types.length !== right.input.types.length) {
-      return right.input.types.length - left.input.types.length;
-    }
-
-    if (left.input.selectedClasses.length !== right.input.selectedClasses.length) {
-      return right.input.selectedClasses.length - left.input.selectedClasses.length;
-    }
-
-    if (left.droppedSupport !== right.droppedSupport) {
-      return left.droppedSupport - right.droppedSupport;
-    }
-
-    if (left.droppedTypes !== right.droppedTypes) {
-      return left.droppedTypes.localeCompare(right.droppedTypes);
-    }
-
-    return left.droppedClasses.localeCompare(right.droppedClasses);
-  });
-
-  return nextInputs.map((entry) => entry.input);
-}
-
-function buildSubsets<T>(values: T[], minLength: number): T[][] {
-  const subsets: T[][] = [];
-
-  for (let mask = 0; mask < 1 << values.length; mask += 1) {
-    const subset = values.filter((_, index) => (mask & (1 << index)) !== 0);
-
-    if (subset.length >= minLength) {
-      subsets.push(subset);
-    }
-  }
-
-  return subsets;
-}
-
-function hasStrictConstraints(input: AutoBuildInput): boolean {
-  return Boolean(
-    input.requireAllSelectedTypesInTeam || input.requireAllSelectedClassesPerCharacter,
-  );
-}
-
-function satisfiesRequestedCoverage(result: AutoBuildResult | null): result is AutoBuildResult {
-  return Boolean(
-    result &&
-    result.coverage.coversAllSelectedClasses &&
-    result.coverage.coversAllSelectedTypes &&
-    result.coverage.abilityRequirements.matchesAll,
-  );
-}
-
-function sameOrderedValues<T>(left: T[], right: T[]): boolean {
-  return left.length === right.length && left.every((value, index) => value === right[index]);
-}
-
-function resolveClassSupport(records: CharacterDetailRecord[], selectedClass: string): number {
-  const normalizedSelectedClass = selectedClass.toLowerCase();
-
-  return records.filter((record) =>
-    record.classes.some((recordClass) => recordClass.toLowerCase() === normalizedSelectedClass),
-  ).length;
-}
-
-function resolveTypeSupport(
-  records: CharacterDetailRecord[],
-  selectedType: AutoTeamBuilderType,
-): number {
-  return records.filter((record) => resolveCharacterTypeTokens(record.type).includes(selectedType))
-    .length;
-}
-
 function createInput(
   types: AutoTeamBuilderType[] = [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
   selectedClasses: string[] = ['Fighter'],
@@ -407,6 +195,8 @@ function createInput(
     enemyMechanics: [],
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
+    requireAllSlotsInLeaderSuperEffectScope: false,
+    minimumLeaderSuperEffectMatchingSlots: null,
     requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
     favoriteShipsOnly: false,

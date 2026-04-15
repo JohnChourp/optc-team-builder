@@ -228,6 +228,7 @@ interface AutoTeamBuilderDefaultFilterState {
   selectedClasses: string[];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
+  requireAllSlotsInLeaderSuperEffectScope: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
   favoriteShipsOnly: boolean;
@@ -274,6 +275,7 @@ function buildDefaultAutoTeamBuilderFilterState(
     selectedClasses: [...availableClasses],
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
+    requireAllSlotsInLeaderSuperEffectScope: false,
     requireUniqueBaseCharacterNames: true,
     favoritesOnly: true,
     favoriteShipsOnly: true,
@@ -403,6 +405,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly excludedShipIds = signal<number[]>([]);
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
+  public readonly requireAllSlotsInLeaderSuperEffectScope = signal(false);
   public readonly requireUniqueBaseCharacterNames = signal(false);
   public readonly selectedCharacterBoxId = signal<string | null>(null);
   public readonly favoritesOnly = signal(false);
@@ -634,7 +637,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       this.buildBlockedByFavorites(),
   );
   public readonly hasStrictFilters = computed(
-    () => this.requireAllSelectedTypesInTeam() || this.requireAllSelectedClassesPerCharacter(),
+    () =>
+      this.requireAllSelectedTypesInTeam() ||
+      this.requireAllSelectedClassesPerCharacter() ||
+      this.requireAllSlotsInLeaderSuperEffectScope(),
   );
   public readonly allClassesSelected = computed(
     () =>
@@ -671,6 +677,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.requireUniqueBaseCharacterNames()
       ? this.t('filters.uniqueNames.support.strict')
       : this.t('filters.uniqueNames.support.flexible'),
+  );
+  public readonly leaderSuperEffectScopeSupportLabel = computed(() =>
+    this.requireAllSlotsInLeaderSuperEffectScope()
+      ? this.t('filters.leaderSuperEffectScope.support.strict')
+      : this.t('filters.leaderSuperEffectScope.support.flexible'),
   );
   public readonly favoritesOnlySupportLabel = computed(() =>
     this.hasFavoriteCharacters()
@@ -905,6 +916,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   });
   public readonly typeStrictToggleLabel = computed(() => this.t('filters.types.toggle'));
   public readonly classStrictToggleLabel = computed(() => this.t('filters.classes.toggle'));
+  public readonly leaderSuperEffectScopeToggleLabel = computed(() =>
+    this.t('filters.leaderSuperEffectScope.toggle'),
+  );
   public readonly uniqueBaseCharacterNamesToggleLabel = computed(() =>
     this.t('filters.uniqueNames.toggle'),
   );
@@ -960,6 +974,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
     if (this.requireAllSelectedClassesPerCharacter()) {
       strictModes.push(this.t('hero.strictModes.perCharacterClasses'));
+    }
+
+    if (this.requireAllSlotsInLeaderSuperEffectScope()) {
+      strictModes.push(this.t('hero.strictModes.leaderSuperEffectScope'));
     }
 
     return strictModes.length > 0
@@ -1644,6 +1662,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.resetBuildState();
   }
 
+  public onRequireAllSlotsInLeaderSuperEffectScopeToggle(
+    event: CustomEvent<{ checked: boolean }>,
+  ): void {
+    this.requireAllSlotsInLeaderSuperEffectScope.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
   public onRequireUniqueBaseCharacterNamesToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.requireUniqueBaseCharacterNames.set(event.detail.checked);
     this.resetBuildState();
@@ -1924,6 +1949,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           candidateCharacterIds: this.effectiveAutoBuildCandidateIds(),
           requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
           requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
+          requireAllSlotsInLeaderSuperEffectScope:
+            this.requireAllSlotsInLeaderSuperEffectScope(),
           requireUniqueBaseCharacterNames: this.requireUniqueBaseCharacterNames(),
           requiredAbilities: this.pageRequiredAbilities(),
           enemyMechanics: this.pageEnemyMechanics(),
@@ -2018,6 +2045,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       enemyMechanics: this.pageEnemyMechanics(),
       requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
       requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
+      requireAllSlotsInLeaderSuperEffectScope: this.requireAllSlotsInLeaderSuperEffectScope(),
       requireUniqueBaseCharacterNames: this.requireUniqueBaseCharacterNames(),
       favoritesOnly: this.favoritesOnly(),
       favoriteCount: this.favoriteCharacterIds().length,
@@ -2213,6 +2241,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.requireAllSelectedClassesPerCharacter.set(
       defaultFilters.requireAllSelectedClassesPerCharacter,
     );
+    this.requireAllSlotsInLeaderSuperEffectScope.set(
+      defaultFilters.requireAllSlotsInLeaderSuperEffectScope,
+    );
     this.requireUniqueBaseCharacterNames.set(defaultFilters.requireUniqueBaseCharacterNames);
     this.selectedCharacterBoxId.set(null);
     this.favoritesOnly.set(defaultFilters.favoritesOnly);
@@ -2317,6 +2348,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.excludedShipIds.set([...state.excludedShipIds]);
     this.requireAllSelectedTypesInTeam.set(state.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(state.requireAllSelectedClassesPerCharacter);
+    this.requireAllSlotsInLeaderSuperEffectScope.set(
+      state.requireAllSlotsInLeaderSuperEffectScope,
+    );
     this.requireUniqueBaseCharacterNames.set(state.requireUniqueBaseCharacterNames);
     this.selectedCharacterBoxId.set(null);
     this.favoritesOnly.set(state.favoritesOnly);

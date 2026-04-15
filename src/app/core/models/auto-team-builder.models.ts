@@ -30,6 +30,7 @@ export const AUTO_BUILD_MANUAL_SLOT_ROLES = [
   "sub4",
 ] as const;
 export const AUTO_BUILD_MANUAL_SUB_SLOT_ROLES = ["sub1", "sub2", "sub3", "sub4"] as const;
+export const AUTO_BUILD_TOTAL_SLOT_COUNT = AUTO_BUILD_MANUAL_SLOT_ROLES.length;
 
 export type AutoTeamBuilderType = (typeof AUTO_TEAM_BUILDER_TYPES)[number];
 export type AutoTeamBuilderClass = (typeof AUTO_TEAM_BUILDER_CLASSES)[number];
@@ -50,6 +51,8 @@ export function createEmptyAutoBuildManualSlots(): AutoBuildManualSlotSelection[
 export interface AutoBuildConstraints {
   requireAllSelectedTypesInTeam?: boolean;
   requireAllSelectedClassesPerCharacter?: boolean;
+  requireAllSlotsInLeaderSuperEffectScope?: boolean;
+  minimumLeaderSuperEffectMatchingSlots?: number | null;
   requireLeaderSuperSpecialCriteria?: boolean;
   requireUniqueBaseCharacterNames?: boolean;
   requiredAbilities?: AutoBuildAbilityRequirement[];
@@ -97,6 +100,8 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   types: AutoTeamBuilderType[];
   selectedClasses: string[];
   requireLeaderSuperSpecialCriteria: boolean;
+  requireAllSlotsInLeaderSuperEffectScope: boolean;
+  minimumLeaderSuperEffectMatchingSlots: number | null;
   requireUniqueBaseCharacterNames: boolean;
   requiredAbilities: AutoBuildAbilityRequirement[];
   enemyMechanics: AutoBuildEnemyMechanicRequirement[];
@@ -221,6 +226,8 @@ export interface AutoBuildRelaxationSummary {
   usedFallback: boolean;
   droppedTypes: AutoTeamBuilderType[];
   droppedClasses: string[];
+  minimumLeaderSuperEffectMatchingSlots: number | null;
+  ignoredLeaderSuperEffectScope: boolean;
   ignoredLeaderSuperSpecialCriteria: boolean;
 }
 

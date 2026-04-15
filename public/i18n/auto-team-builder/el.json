@@ -10,7 +10,8 @@
     },
     "strictModes": {
       "typeCoverage": "κάλυψη types στην ομάδα",
-      "perCharacterClasses": "match classes σε κάθε slot"
+      "perCharacterClasses": "match classes σε κάθε slot",
+      "leaderSuperEffectScope": "match στο leader super effect scope"
     },
     "strictMode": {
       "flexible": "με flexible fallback",
@@ -61,6 +62,13 @@
       "support": {
         "strict": "Κάθε final slot εκτός από το Friend Captain πρέπει να αποφεύγει in-game duplicate-character conflicts, ώστε το Friend Captain να μπορεί ακόμη να αντιγράφει άλλη μονάδα όπως Monkey D. Luffy.",
         "flexible": "Επίτρεψε τελικές ομάδες με in-game duplicate identities ή composite units που επικαλύπτονται."
+      }
+    },
+    "leaderSuperEffectScope": {
+      "toggle": "Απαίτησε κάθε slot να ταιριάζει στο leader super effect scope",
+      "support": {
+        "strict": "Κάθε final slot πρέπει να ταιριάζει στο κοινό Super Type / Super Class effect scope του selected captain και friend captain.",
+        "flexible": "Τα leader super effects αγνοούνται στην επιλογή slots εκτός αν ενεργοποιήσεις αυτό το strict filter."
       }
     },
     "favoritesOnly": {

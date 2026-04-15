@@ -121,6 +121,30 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
+  it('passes the leader super effect scope toggle to the builder service', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.onRequireAllSlotsInLeaderSuperEffectScopeToggle({
+      detail: { checked: true },
+    } as CustomEvent<{ checked: boolean }>);
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({
+        requireAllSlotsInLeaderSuperEffectScope: true,
+      }),
+      expect.objectContaining({
+        onProgress: expect.any(Function),
+        signal: expect.any(AbortSignal),
+      }),
+    );
+  });
+
   it('creates a candidate pool box before build using the exact selected-box scope', async () => {
     const { page, repository, userState } = await createPage();
 
@@ -1255,6 +1279,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain('<app-enemy-mechanic-picker');
     expect(template).toContain('<app-ability-requirement-picker');
     expect(template).not.toContain('<app-ship-picker');
+    expect(template).toContain('leaderSuperEffectScopeToggleLabel()');
     expect(template).toContain('favoriteShipsOnlyToggleLabel()');
     expect(template).toContain('[value]="manualShipSearchTerm()"');
     expect(template).toContain('(ionInput)="onManualShipSearchChange($event)"');
@@ -2437,6 +2462,11 @@ describe('AutoTeamBuilderPage preset export state', () => {
     page.onRequireAllSelectedClassesToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
+    page.onRequireAllSlotsInLeaderSuperEffectScopeToggle({
+      detail: { checked: true },
+    } as CustomEvent<{
+      checked: boolean;
+    }>);
     await page.onRequireUniqueBaseCharacterNamesToggle({
       detail: { checked: true },
     } as CustomEvent<{
@@ -2466,7 +2496,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 11,
+      schemaVersion: 12,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -2484,6 +2514,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
         enemyMechanics: [],
         requireAllSelectedTypesInTeam: true,
         requireAllSelectedClassesPerCharacter: true,
+        requireAllSlotsInLeaderSuperEffectScope: true,
         requireUniqueBaseCharacterNames: true,
         favoritesOnly: true,
         favoriteCount: 3,
@@ -2539,6 +2570,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: true,
       favoriteCount: 4,
@@ -2561,6 +2593,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: true,
       favoriteCount: 4,
@@ -2589,6 +2622,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
       requireUniqueBaseCharacterNames: false,
       favoritesOnly: false,
       favoriteCount: 0,
@@ -2633,6 +2667,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: true,
+      requireAllSlotsInLeaderSuperEffectScope: false,
       requireUniqueBaseCharacterNames: false,
       favoritesOnly: true,
       favoriteCount: 2,
@@ -2690,6 +2725,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
       requireUniqueBaseCharacterNames: false,
       favoritesOnly: false,
       favoriteCount: 0,
@@ -2723,6 +2759,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: true,
+      requireAllSlotsInLeaderSuperEffectScope: false,
       requireUniqueBaseCharacterNames: false,
       favoritesOnly: true,
       favoriteCount: 2,
@@ -2781,6 +2818,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
     expect(result.state.lockedCharacterIds).toEqual([101]);
     expect(result.state.selectedLeaderIds).toEqual([101]);
     expect(result.state.captainLeaderId).toBe(101);
+    expect(result.state.requireAllSlotsInLeaderSuperEffectScope).toBe(false);
     expect(result.state.requireUniqueBaseCharacterNames).toBe(false);
     expect(result.state.favoriteShipsOnly).toBe(false);
     expect(result.state.manualSlots).toEqual(
@@ -2814,6 +2852,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
         ],
         requireAllSelectedTypesInTeam: false,
         requireAllSelectedClassesPerCharacter: false,
+        requireAllSlotsInLeaderSuperEffectScope: false,
         favoritesOnly: false,
         favoriteCount: 0,
       },
@@ -2854,6 +2893,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
         requiredCharacterCount: 1,
       },
     ]);
+    expect(result.state.requireAllSlotsInLeaderSuperEffectScope).toBe(false);
     expect(result.state.favoriteShipsOnly).toBe(false);
     expect(result.warnings).toEqual([]);
   });
@@ -2877,6 +2917,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
       requireUniqueBaseCharacterNames: false,
       favoritesOnly: false,
       favoriteCount: 0,
@@ -2939,6 +2980,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       ],
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
       requireUniqueBaseCharacterNames: false,
       favoritesOnly: false,
       favoriteCount: 0,
@@ -3009,6 +3051,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
       requireUniqueBaseCharacterNames: false,
       favoritesOnly: false,
       favoriteCount: 0,
@@ -3068,6 +3111,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
       requireUniqueBaseCharacterNames: false,
       favoritesOnly: false,
       favoriteCount: 0,
@@ -3128,6 +3172,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: true,
+      requireAllSlotsInLeaderSuperEffectScope: true,
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: true,
       favoriteCount: 3,
@@ -3223,6 +3268,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
     expect(page.effectiveFriendLeaderId()).toBe(101);
     expect(page.requireAllSelectedTypesInTeam()).toBe(true);
     expect(page.requireAllSelectedClassesPerCharacter()).toBe(true);
+    expect(page.requireAllSlotsInLeaderSuperEffectScope()).toBe(true);
     expect(page.requireUniqueBaseCharacterNames()).toBe(true);
     expect(page.favoritesOnly()).toBe(true);
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
@@ -3254,6 +3300,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
       requireUniqueBaseCharacterNames: false,
       favoritesOnly: false,
       favoriteCount: 0,
@@ -3716,6 +3763,9 @@ function createAutoBuildResult(
     enemyMechanics: [],
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
+    requireAllSlotsInLeaderSuperEffectScope: false,
+    minimumLeaderSuperEffectMatchingSlots: null,
+    requireLeaderSuperSpecialCriteria: false,
     requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
     favoriteShipsOnly: false,
@@ -3766,6 +3816,8 @@ function createAutoBuildResult(
       usedFallback: false,
       droppedTypes: [],
       droppedClasses: [],
+      minimumLeaderSuperEffectMatchingSlots: null,
+      ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
     },
     shipSelection: null,

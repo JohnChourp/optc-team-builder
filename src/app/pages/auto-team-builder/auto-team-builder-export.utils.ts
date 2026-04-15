@@ -61,7 +61,7 @@ export interface AutoTeamSelectionShipSummary {
 }
 
 export interface AutoTeamSelectionExportPayload {
-  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
   exportedAt: string;
   source: "auto-team-builder";
   exportType: "preset";
@@ -72,6 +72,7 @@ export interface AutoTeamSelectionExportPayload {
     enemyMechanics?: AutoBuildEnemyMechanicRequirement[];
     requireAllSelectedTypesInTeam: boolean;
     requireAllSelectedClassesPerCharacter: boolean;
+    requireAllSlotsInLeaderSuperEffectScope?: boolean;
     requireUniqueBaseCharacterNames: boolean;
     favoritesOnly: boolean;
     favoriteCount: number;
@@ -101,6 +102,7 @@ export interface AutoTeamSelectionImportState {
   enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
+  requireAllSlotsInLeaderSuperEffectScope: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
   favoriteShipsOnly: boolean;
@@ -148,6 +150,7 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   enemyMechanics: AutoBuildResult["input"]["enemyMechanics"];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
+  requireAllSlotsInLeaderSuperEffectScope: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
   favoriteCount: number;
@@ -400,7 +403,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload["schemaVersion"] !== 8 &&
       parsedPayload["schemaVersion"] !== 9 &&
       parsedPayload["schemaVersion"] !== 10 &&
-      parsedPayload["schemaVersion"] !== 11) ||
+      parsedPayload["schemaVersion"] !== 11 &&
+      parsedPayload["schemaVersion"] !== 12) ||
     parsedPayload["source"] !== "auto-team-builder" ||
     parsedPayload["exportType"] !== "preset"
   ) {
@@ -430,6 +434,10 @@ export function parseAutoTeamSelectionImportPayload(
     ) ||
     typeof filters["requireAllSelectedTypesInTeam"] !== "boolean" ||
     typeof filters["requireAllSelectedClassesPerCharacter"] !== "boolean" ||
+    !(
+      filters["requireAllSlotsInLeaderSuperEffectScope"] === undefined ||
+      typeof filters["requireAllSlotsInLeaderSuperEffectScope"] === "boolean"
+    ) ||
     !(
       filters["requireAllSpecialsSupportTeam"] === undefined ||
       typeof filters["requireAllSpecialsSupportTeam"] === "boolean"
@@ -822,6 +830,8 @@ export function sanitizeAutoTeamSelectionImportPayload(
       enemyMechanics,
       requireAllSelectedTypesInTeam: payload.filters.requireAllSelectedTypesInTeam,
       requireAllSelectedClassesPerCharacter: payload.filters.requireAllSelectedClassesPerCharacter,
+      requireAllSlotsInLeaderSuperEffectScope:
+        payload.filters.requireAllSlotsInLeaderSuperEffectScope === true,
       requireUniqueBaseCharacterNames: payload.filters.requireUniqueBaseCharacterNames === true,
       favoritesOnly: payload.filters.favoritesOnly,
       favoriteShipsOnly: payload.filters.favoriteShipsOnly === true,
@@ -886,6 +896,7 @@ export function buildAutoTeamSelectionExportPayload({
   enemyMechanics,
   requireAllSelectedTypesInTeam,
   requireAllSelectedClassesPerCharacter,
+  requireAllSlotsInLeaderSuperEffectScope,
   requireUniqueBaseCharacterNames,
   favoritesOnly,
   favoriteCount,
@@ -911,7 +922,7 @@ export function buildAutoTeamSelectionExportPayload({
   }));
 
   return {
-    schemaVersion: 11,
+    schemaVersion: 12,
     exportedAt,
     source: "auto-team-builder",
     exportType: "preset",
@@ -930,6 +941,7 @@ export function buildAutoTeamSelectionExportPayload({
       })),
       requireAllSelectedTypesInTeam,
       requireAllSelectedClassesPerCharacter,
+      requireAllSlotsInLeaderSuperEffectScope,
       requireUniqueBaseCharacterNames,
       favoritesOnly,
       favoriteCount,

@@ -16,6 +16,7 @@ import {
   buildAutoBuildCandidate,
   buildAutoTeamResult,
   hasReadableEffectText,
+  resolveLeaderSuperEffectScopeFromEffectText,
 } from './auto-team-builder.utils';
 
 const INPUT = createInput();
@@ -24,6 +25,30 @@ type AutoTeamBuilderServiceWithWorkerFactory = AutoTeamBuilderService & {
 };
 
 describe('Auto team builder', () => {
+  it('parses type-targeted leader super effect scope text', () => {
+    expect(
+      resolveLeaderSuperEffectScopeFromEffectText(
+        'Changes DEX and STR characters to Super DEX and Super STR.',
+      ),
+    ).toEqual({
+      allowedClasses: [],
+      allowedTypes: ['DEX', 'STR'],
+      isParseable: true,
+    });
+  });
+
+  it('parses class-targeted leader super effect scope text', () => {
+    expect(
+      resolveLeaderSuperEffectScopeFromEffectText(
+        'Transforms Free Spirit characters into Super Free Spirit characters.',
+      ),
+    ).toEqual({
+      allowedClasses: ['Free Spirit'],
+      allowedTypes: [],
+      isParseable: true,
+    });
+  });
+
   it('parses burst, consistency, utility, and multi-class captain scope from effect text', () => {
     const candidate = buildAutoBuildCandidate(
       createCharacterRecord({
@@ -1595,6 +1620,189 @@ describe('Auto team builder', () => {
     expect(result?.slots.some((slot) => slot.character.name === 'Nami')).toBe(true);
   });
 
+  it('builds teams only from the leader super effect scope when enabled', () => {
+    const result = buildAutoTeamResult(
+      [
+        createLeaderWithSuperEffectScopeRecord(7200, {
+          type: 'DEX',
+          primaryClass: 'Fighter',
+          superTypeEffect: 'Changes DEX characters to Super DEX.',
+        }),
+        createSuperEffectScopeSubRecord(7201, {
+          type: 'DEX',
+          primaryClass: 'Fighter',
+        }),
+        createSuperEffectScopeSubRecord(7202, {
+          type: 'DEX',
+          primaryClass: 'Slasher',
+        }),
+        createSuperEffectScopeSubRecord(7203, {
+          type: 'DEX',
+          primaryClass: 'Driven',
+        }),
+        createSuperEffectScopeSubRecord(7204, {
+          type: 'DEX',
+          primaryClass: 'Powerhouse',
+        }),
+        createSuperEffectScopeSubRecord(7205, {
+          type: 'STR',
+          primaryClass: 'Fighter',
+        }),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireAllSlotsInLeaderSuperEffectScope: true,
+        lockedCharacterIds: [7200],
+        captainCharacterId: 7200,
+        friendCaptainCharacterId: 7200,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.every((slot) => slot.character.type.includes('DEX'))).toBe(true);
+    expect(result?.slots.some((slot) => slot.character.id === 7205)).toBe(false);
+  });
+
+  it('intersects captain and friend captain super effect scopes', () => {
+    const result = buildAutoTeamResult(
+      [
+        createLeaderWithSuperEffectScopeRecord(7210, {
+          type: 'DEX',
+          primaryClass: 'Fighter',
+          superTypeEffect: 'Changes DEX characters to Super DEX.',
+        }),
+        createLeaderWithSuperEffectScopeRecord(7211, {
+          type: 'DEX',
+          primaryClass: 'Fighter',
+          superClassEffect: 'Transforms Fighter characters into Super Fighter characters.',
+        }),
+        createSuperEffectScopeSubRecord(7212, {
+          type: 'DEX',
+          primaryClass: 'Fighter',
+        }),
+        createSuperEffectScopeSubRecord(7213, {
+          type: 'DEX',
+          primaryClass: 'Fighter',
+        }),
+        createSuperEffectScopeSubRecord(7214, {
+          type: 'DEX',
+          primaryClass: 'Striker',
+        }),
+        createSuperEffectScopeSubRecord(7215, {
+          type: 'PSY',
+          primaryClass: 'Fighter',
+        }),
+        createSuperEffectScopeSubRecord(7216, {
+          type: 'DEX',
+          primaryClass: 'Fighter',
+        }),
+        createSuperEffectScopeSubRecord(7217, {
+          type: 'DEX',
+          primaryClass: 'Fighter',
+        }),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireAllSlotsInLeaderSuperEffectScope: true,
+        lockedCharacterIds: [7210, 7211],
+        captainCharacterId: 7210,
+        friendCaptainCharacterId: 7211,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(
+      result?.slots.every(
+        (slot) => slot.character.type.includes('DEX') && slot.character.classes.includes('Fighter'),
+      ),
+    ).toBe(true);
+    expect(result?.slots.some((slot) => slot.character.id === 7214)).toBe(false);
+    expect(result?.slots.some((slot) => slot.character.id === 7215)).toBe(false);
+  });
+
+  it('rejects manual sub picks outside the leader super effect scope', () => {
+    const result = buildAutoTeamResult(
+      [
+        createLeaderWithSuperEffectScopeRecord(7220, {
+          type: 'DEX',
+          primaryClass: 'Fighter',
+          superTypeEffect: 'Changes DEX characters to Super DEX.',
+        }),
+        createSuperEffectScopeSubRecord(7221, {
+          type: 'DEX',
+          primaryClass: 'Fighter',
+        }),
+        createSuperEffectScopeSubRecord(7222, {
+          type: 'DEX',
+          primaryClass: 'Slasher',
+        }),
+        createSuperEffectScopeSubRecord(7223, {
+          type: 'DEX',
+          primaryClass: 'Driven',
+        }),
+        createSuperEffectScopeSubRecord(7224, {
+          type: 'DEX',
+          primaryClass: 'Powerhouse',
+        }),
+        createSuperEffectScopeSubRecord(7225, {
+          type: 'STR',
+          primaryClass: 'Fighter',
+        }),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireAllSlotsInLeaderSuperEffectScope: true,
+        manualSlots: createManualSlots({
+          captain: [7220],
+          friendCaptain: [7220],
+          sub1: [7225],
+        }),
+        lockedCharacterIds: [7220, 7225],
+        captainCharacterId: 7220,
+        friendCaptainCharacterId: 7220,
+      }),
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('rejects leaders without parseable super effect scope when the filter is enabled', () => {
+    const result = buildAutoTeamResult(
+      [
+        createLeaderWithSuperEffectScopeRecord(7230, {
+          type: 'DEX',
+          primaryClass: 'Fighter',
+          superTypeEffect: 'Boosts crew ATK by 1.3x for 1 turn.',
+        }),
+        createSuperEffectScopeSubRecord(7231, {
+          type: 'DEX',
+          primaryClass: 'Fighter',
+        }),
+        createSuperEffectScopeSubRecord(7232, {
+          type: 'DEX',
+          primaryClass: 'Slasher',
+        }),
+        createSuperEffectScopeSubRecord(7233, {
+          type: 'DEX',
+          primaryClass: 'Driven',
+        }),
+        createSuperEffectScopeSubRecord(7234, {
+          type: 'DEX',
+          primaryClass: 'Powerhouse',
+        }),
+        createSuperEffectScopeSubRecord(7235, {
+          type: 'DEX',
+          primaryClass: 'Shooter',
+        }),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireAllSlotsInLeaderSuperEffectScope: true,
+        lockedCharacterIds: [7230],
+        captainCharacterId: 7230,
+        friendCaptainCharacterId: 7230,
+      }),
+    );
+
+    expect(result).toBeNull();
+  });
+
   it('prefers the newer captain when universal and partial multi-type captains share the same cost', () => {
     const result = buildAutoTeamResult(
       [
@@ -2239,6 +2447,8 @@ describe('Auto team builder', () => {
       usedFallback: false,
       droppedTypes: [],
       droppedClasses: [],
+      minimumLeaderSuperEffectMatchingSlots: null,
+      ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
     });
   });
@@ -2272,6 +2482,8 @@ describe('Auto team builder', () => {
       usedFallback: true,
       droppedTypes: [],
       droppedClasses: [],
+      minimumLeaderSuperEffectMatchingSlots: null,
+      ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: true,
     });
   });
@@ -2307,6 +2519,111 @@ describe('Auto team builder', () => {
     expect(result?.relaxation.droppedClasses).toEqual([]);
   });
 
+  it('relaxes the leader super effect scope filter one matching slot at a time', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue([
+        createLeaderWithSuperEffectScopeRecord(7240, {
+          type: 'DEX',
+          primaryClass: 'Fighter',
+          superTypeEffect: 'Changes DEX characters to Super DEX.',
+        }),
+        createSuperEffectScopeSubRecord(7241, {
+          type: 'DEX',
+          primaryClass: 'Fighter',
+        }),
+        createSuperEffectScopeSubRecord(7242, {
+          type: 'DEX',
+          primaryClass: 'Slasher',
+        }),
+        createSuperEffectScopeSubRecord(7243, {
+          type: 'DEX',
+          primaryClass: 'Driven',
+        }),
+        createSuperEffectScopeSubRecord(7244, {
+          type: 'STR',
+          primaryClass: 'Powerhouse',
+        }),
+        createSuperEffectScopeSubRecord(7245, {
+          type: 'STR',
+          primaryClass: 'Shooter',
+        }),
+      ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      requireAllSlotsInLeaderSuperEffectScope: true,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.input.requireAllSlotsInLeaderSuperEffectScope).toBe(true);
+    expect(result?.input.minimumLeaderSuperEffectMatchingSlots).toBe(5);
+    expect(result?.input.requireLeaderSuperSpecialCriteria).toBe(true);
+    expect(result?.slots.filter((slot) => slot.character.type.includes('DEX'))).toHaveLength(5);
+    expect(result?.relaxation).toEqual({
+      usedFallback: true,
+      droppedTypes: [],
+      droppedClasses: [],
+      minimumLeaderSuperEffectMatchingSlots: 5,
+      ignoredLeaderSuperEffectScope: false,
+      ignoredLeaderSuperSpecialCriteria: false,
+    });
+  });
+
+  it('falls back to special criteria only after exhausting the leader super effect scope relaxations', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue([
+        createLeaderWithSuperEffectScopeRecord(7250, {
+          type: 'DEX',
+          primaryClass: 'Fighter',
+          superTypeEffect: 'Changes DEX characters to Super DEX.',
+        }),
+        createLeaderWithSuperEffectScopeRecord(7251, {
+          type: 'PSY',
+          primaryClass: 'Striker',
+          superClassEffect: 'Transforms Fighter characters into Super Fighter characters.',
+        }),
+        createCharacterRecord({
+          id: 7252,
+          name: 'Roronoa Zoro',
+          type: 'DEX',
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts chain by 1.2x for 1 turn.',
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+      ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      requireAllSlotsInLeaderSuperEffectScope: true,
+      requireLeaderSuperSpecialCriteria: true,
+      captainCharacterId: 7250,
+      friendCaptainCharacterId: 7251,
+      lockedCharacterIds: [7250, 7251],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.requestedInput.requireAllSlotsInLeaderSuperEffectScope).toBe(true);
+    expect(result?.requestedInput.requireLeaderSuperSpecialCriteria).toBe(true);
+    expect(result?.input.requireAllSlotsInLeaderSuperEffectScope).toBe(false);
+    expect(result?.input.minimumLeaderSuperEffectMatchingSlots).toBeNull();
+    expect(result?.input.requireLeaderSuperSpecialCriteria).toBe(true);
+    expect(result?.slots.some((slot) => slot.character.id === 7252)).toBe(true);
+    expect(result?.relaxation).toEqual({
+      usedFallback: true,
+      droppedTypes: [],
+      droppedClasses: [],
+      minimumLeaderSuperEffectMatchingSlots: null,
+      ignoredLeaderSuperEffectScope: true,
+      ignoredLeaderSuperSpecialCriteria: false,
+    });
+  });
+
   it('drops the weakest uncovered class in flexible mode when exact class coverage fails', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
@@ -2322,6 +2639,8 @@ describe('Auto team builder', () => {
       usedFallback: true,
       droppedTypes: [],
       droppedClasses: ['Shooter'],
+      minimumLeaderSuperEffectMatchingSlots: null,
+      ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
     });
   });
@@ -2354,6 +2673,8 @@ describe('Auto team builder', () => {
       usedFallback: true,
       droppedTypes: ['INT'],
       droppedClasses: [],
+      minimumLeaderSuperEffectMatchingSlots: null,
+      ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
     });
   });
@@ -2980,6 +3301,8 @@ function createInput(
       AutoBuildInput,
       | 'requireAllSelectedTypesInTeam'
       | 'requireAllSelectedClassesPerCharacter'
+      | 'requireAllSlotsInLeaderSuperEffectScope'
+      | 'minimumLeaderSuperEffectMatchingSlots'
       | 'requireLeaderSuperSpecialCriteria'
       | 'requireUniqueBaseCharacterNames'
       | 'favoritesOnly'
@@ -2995,6 +3318,7 @@ function createInput(
   > = {
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
+    requireAllSlotsInLeaderSuperEffectScope: false,
     requireLeaderSuperSpecialCriteria: false,
     requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
@@ -3019,6 +3343,12 @@ function createInput(
     enemyMechanics: [],
     requireAllSelectedTypesInTeam: overrides.requireAllSelectedTypesInTeam ?? false,
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
+    requireAllSlotsInLeaderSuperEffectScope:
+      overrides.requireAllSlotsInLeaderSuperEffectScope ?? false,
+    minimumLeaderSuperEffectMatchingSlots:
+      overrides.requireAllSlotsInLeaderSuperEffectScope
+        ? overrides.minimumLeaderSuperEffectMatchingSlots ?? 6
+        : null,
     requireLeaderSuperSpecialCriteria: overrides.requireLeaderSuperSpecialCriteria ?? false,
     requireUniqueBaseCharacterNames: overrides.requireUniqueBaseCharacterNames ?? false,
     favoritesOnly: overrides.favoritesOnly ?? false,
@@ -3458,6 +3788,8 @@ function buildWorkerResult(
       usedFallback: true,
       droppedTypes: ['INT'],
       droppedClasses: [],
+      minimumLeaderSuperEffectMatchingSlots: null,
+      ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
     },
     shipSelection: null,
@@ -3846,79 +4178,6 @@ function createBuggyLeaderTeamRecords(): CharacterDetailRecord[] {
   ];
 }
 
-function createLowCostStrictSpecialTeamRecords(): CharacterDetailRecord[] {
-  const lowCostSpecial =
-    'Boosts ATK of Cost 40 or less characters by 2x for 1 turn and changes orbs of Cost 40 or lower characters into Matching Orbs.';
-
-  return [
-    createCharacterRecord({
-      id: 2800,
-      type: 'DEX',
-      cost: 30,
-      primaryClass: 'Fighter',
-      secondaryClass: 'Free Spirit',
-      detail: {
-        captainAbility: 'Boosts ATK of all characters by 4.5x and HP by 1.3x.',
-        specialText: lowCostSpecial,
-      },
-    }),
-    createCharacterRecord({
-      id: 2801,
-      type: 'DEX',
-      cost: 35,
-      primaryClass: 'Fighter',
-      detail: {
-        specialText: lowCostSpecial,
-      },
-    }),
-    createCharacterRecord({
-      id: 2802,
-      type: 'DEX',
-      cost: 40,
-      primaryClass: 'Fighter',
-      detail: {
-        specialText: lowCostSpecial,
-      },
-    }),
-    createCharacterRecord({
-      id: 2803,
-      type: 'DEX',
-      cost: 30,
-      primaryClass: 'Fighter',
-      detail: {
-        specialText: lowCostSpecial,
-      },
-    }),
-    createCharacterRecord({
-      id: 2804,
-      type: 'DEX',
-      cost: 38,
-      primaryClass: 'Fighter',
-      detail: {
-        specialText: lowCostSpecial,
-      },
-    }),
-    createCharacterRecord({
-      id: 2805,
-      type: 'DEX',
-      cost: 32,
-      primaryClass: 'Fighter',
-      detail: {
-        specialText: lowCostSpecial,
-      },
-    }),
-    createCharacterRecord({
-      id: 2806,
-      type: 'DEX',
-      cost: 55,
-      primaryClass: 'Fighter',
-      detail: {
-        specialText: lowCostSpecial,
-      },
-    }),
-  ];
-}
-
 function createTeamwideSpecialScopedRecords(): CharacterDetailRecord[] {
   return [
     createCharacterRecord({
@@ -3968,80 +4227,6 @@ function createTeamwideSpecialScopedRecords(): CharacterDetailRecord[] {
       secondaryClass: 'Slasher',
       detail: {
         specialText: 'Changes crew orbs into Matching Orbs.',
-      },
-    }),
-  ];
-}
-
-function createDualLeaderSpecialMismatchRecords(): CharacterDetailRecord[] {
-  return [
-    createCharacterRecord({
-      id: 5940,
-      type: 'DEX',
-      primaryClass: 'Fighter',
-      secondaryClass: 'Slasher',
-      detail: {
-        captainAbility:
-          'Boosts ATK of DEX, PSY and Fighter characters by 5x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.',
-        specialText: 'Boosts ATK of Fighter characters by 2.5x for 1 turn.',
-      },
-    }),
-    createCharacterRecord({
-      id: 5941,
-      type: 'PSY',
-      primaryClass: 'Fighter',
-      secondaryClass: 'Cerebral',
-      detail: {
-        captainAbility:
-          'Boosts ATK of DEX, PSY and Fighter characters by 4.8x and HP by 1.25x, reduces Special Cooldown of crew by 1 turn.',
-        specialText: 'Boosts color affinity of Shooter characters by 2x for 1 turn.',
-      },
-    }),
-    createCharacterRecord({
-      id: 5942,
-      type: 'DEX',
-      primaryClass: 'Fighter',
-      detail: {
-        specialText: 'Boosts orb effects of Fighter characters by 2x for 1 turn.',
-      },
-    }),
-    createCharacterRecord({
-      id: 5943,
-      type: 'PSY',
-      primaryClass: 'Fighter',
-      detail: {
-        specialText: 'Boosts the chain multiplier of Fighter characters by +1.1 for 1 turn.',
-      },
-    }),
-    createCharacterRecord({
-      id: 5944,
-      type: 'DEX',
-      primaryClass: 'Fighter',
-      detail: {
-        specialText: 'Changes crew orbs into Matching Orbs.',
-      },
-    }),
-    createCharacterRecord({
-      id: 5945,
-      type: 'PSY',
-      primaryClass: 'Fighter',
-      detail: {
-        specialText: 'Boosts ATK of Fighter characters by 2.25x for 1 turn.',
-      },
-    }),
-  ];
-}
-
-function createLockedSpecialMismatchRecords(): CharacterDetailRecord[] {
-  return [
-    ...createTeamwideSpecialScopedRecords(),
-    createCharacterRecord({
-      id: 5946,
-      type: 'DEX',
-      primaryClass: 'Fighter',
-      secondaryClass: 'Slasher',
-      detail: {
-        specialText: 'Boosts ATK of Shooter characters by 2.5x for 1 turn.',
       },
     }),
   ];
@@ -4134,6 +4319,61 @@ function createLeaderWithSuperCriteriaRecord(
       superSpecialText: 'Transforms Fighter characters into a Super class.',
       superSpecialCriteriaText: superSpecialCriteria.rawText,
       superSpecialCriteria,
+    },
+  });
+}
+
+function createLeaderWithSuperEffectScopeRecord(
+  id: number,
+  {
+    type = 'DEX',
+    primaryClass = 'Fighter',
+    secondaryClass = 'Free Spirit',
+    superTypeEffect = null,
+    superClassEffect = null,
+  }: {
+    type?: string;
+    primaryClass?: string;
+    secondaryClass?: string | null;
+    superTypeEffect?: string | null;
+    superClassEffect?: string | null;
+  } = {},
+): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    name: `Leader ${id}`,
+    type,
+    primaryClass,
+    secondaryClass,
+    detail: {
+      captainAbility: 'Boosts ATK of all characters by 5x and HP by 1.3x.',
+      specialText: 'Boosts orb effects of all characters by 2x for 1 turn.',
+      superType: superTypeEffect ? { specialEffect: superTypeEffect } : null,
+      superClass: superClassEffect ? { specialEffect: superClassEffect } : null,
+    },
+  });
+}
+
+function createSuperEffectScopeSubRecord(
+  id: number,
+  {
+    type = 'DEX',
+    primaryClass = 'Fighter',
+    secondaryClass = null,
+  }: {
+    type?: string;
+    primaryClass?: string;
+    secondaryClass?: string | null;
+  } = {},
+): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    name: `Scoped Sub ${id}`,
+    type,
+    primaryClass,
+    secondaryClass,
+    detail: {
+      specialText: 'Boosts ATK by 2x for 1 turn.',
     },
   });
 }

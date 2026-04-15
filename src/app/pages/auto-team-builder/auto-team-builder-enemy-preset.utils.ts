@@ -28,6 +28,7 @@ export function buildAutoTeamBuilderStateFromSavedEnemy(
     })),
     requireAllSelectedTypesInTeam: enemy.requireAllSelectedTypesInTeam,
     requireAllSelectedClassesPerCharacter: enemy.requireAllSelectedClassesPerCharacter,
+    requireAllSlotsInLeaderSuperEffectScope: false,
     requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
     favoriteShipsOnly: false,

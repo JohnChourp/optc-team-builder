@@ -201,6 +201,19 @@
 
           <div class="strict-toggle-row">
             <div class="strict-toggle-copy">
+              <strong>{{ leaderSuperEffectScopeToggleLabel() }}</strong>
+              <small>{{ leaderSuperEffectScopeSupportLabel() }}</small>
+            </div>
+            <ion-toggle
+              color="warning"
+              [checked]="requireAllSlotsInLeaderSuperEffectScope()"
+              [disabled]="building()"
+              (ionChange)="onRequireAllSlotsInLeaderSuperEffectScopeToggle($event)"
+            ></ion-toggle>
+          </div>
+
+          <div class="strict-toggle-row">
+            <div class="strict-toggle-copy">
               <strong>{{ uniqueBaseCharacterNamesToggleLabel() }}</strong>
               <small>{{ uniqueBaseCharacterNamesSupportLabel() }}</small>
             </div>

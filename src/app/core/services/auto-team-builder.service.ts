@@ -3,6 +3,7 @@ import { Injectable } from "@angular/core";
 import {
   AUTO_TEAM_CANDIDATE_LIMIT,
   AUTO_TEAM_BUILDER_DEFAULT_TYPE,
+  AUTO_BUILD_TOTAL_SLOT_COUNT,
   AUTO_BUILD_MANUAL_SLOT_ROLES,
   AUTO_BUILD_MANUAL_SUB_SLOT_ROLES,
   type AutoBuildConstraints,
@@ -120,6 +121,12 @@ export class AutoTeamBuilderService {
       requireAllSelectedTypesInTeam: constraints.requireAllSelectedTypesInTeam ?? false,
       requireAllSelectedClassesPerCharacter:
         constraints.requireAllSelectedClassesPerCharacter ?? false,
+      requireAllSlotsInLeaderSuperEffectScope:
+        constraints.requireAllSlotsInLeaderSuperEffectScope ?? false,
+      minimumLeaderSuperEffectMatchingSlots:
+        constraints.requireAllSlotsInLeaderSuperEffectScope
+          ? constraints.minimumLeaderSuperEffectMatchingSlots ?? AUTO_BUILD_TOTAL_SLOT_COUNT
+          : null,
       requireLeaderSuperSpecialCriteria: constraints.requireLeaderSuperSpecialCriteria ?? true,
       requireUniqueBaseCharacterNames: constraints.requireUniqueBaseCharacterNames ?? false,
       requiredAbilities,
