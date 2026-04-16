@@ -122,6 +122,7 @@ export interface CharacterDetail {
   superType: Record<string, unknown> | null;
   superTandemData?: Record<string, unknown> | null;
   finalTapData?: Record<string, unknown> | null;
+  rushSugoSpecialData?: Record<string, unknown> | null;
   superClass: Record<string, unknown> | null;
   rumbleData: Record<string, unknown> | null;
 }

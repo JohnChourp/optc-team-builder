@@ -815,6 +815,7 @@ export class OptcRepositoryService {
       superType: null,
       superTandemData: null,
       finalTapData: null,
+      rushSugoSpecialData: null,
       superClass: null,
       rumbleData: null,
       };
@@ -876,6 +877,12 @@ export class OptcRepositoryService {
         typeof normalizedDetail.finalTapData === 'object' &&
         !Array.isArray(normalizedDetail.finalTapData)
           ? normalizedDetail.finalTapData
+          : null,
+      rushSugoSpecialData:
+        normalizedDetail.rushSugoSpecialData &&
+        typeof normalizedDetail.rushSugoSpecialData === 'object' &&
+        !Array.isArray(normalizedDetail.rushSugoSpecialData)
+          ? normalizedDetail.rushSugoSpecialData
           : null,
       builderAbilities:
         normalizedDetail.builderAbilities ?? normalizedDetail.specialAbilities ?? [],

@@ -285,6 +285,7 @@ async function createFixtureWorkspace() {
         vsSpecial: null,
         superType: null,
         superTandemData: null,
+        rushSugoSpecialData: null,
         superClass: null,
         rumbleData: null,
       },

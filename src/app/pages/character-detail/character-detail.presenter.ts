@@ -471,6 +471,10 @@ function buildBattleModesGroup(
     detail.superTandemData ?? null,
   );
   const finalTapCard = buildFinalTapCard(detail.finalTapData ?? null);
+  const rushSugoSpecialCard = buildLeveledBattleModeCard(
+    "sections.rushSugoSpecialData",
+    detail.rushSugoSpecialData ?? null,
+  );
 
   if (rumbleCard) {
     cards.push(rumbleCard);
@@ -482,6 +486,10 @@ function buildBattleModesGroup(
 
   if (finalTapCard) {
     cards.push(finalTapCard);
+  }
+
+  if (rushSugoSpecialCard) {
+    cards.push(rushSugoSpecialCard);
   }
 
   [

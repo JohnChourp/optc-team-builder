@@ -99,6 +99,10 @@ describe('manual character overlay helpers', () => {
             requirement: 'On the turn Special is launched during final Battle',
             levels: [{ level: 1, effect: 'Further boosts the chain multiplier of the final tap by 1.3x' }],
           },
+          rushSugoSpecialData: {
+            requirement: 'At final battle when character performs the first tap of an attack',
+            levels: [{ level: 5, effect: 'Allows the crew to perform a Rush.' }],
+          },
         },
       },
       {
@@ -132,6 +136,10 @@ describe('manual character overlay helpers', () => {
         finalTapData: {
           requirement: 'On the turn Special is launched during final Battle',
           levels: [{ level: 1, effect: 'Further boosts the chain multiplier of the final tap by 1.3x' }],
+        },
+        rushSugoSpecialData: {
+          requirement: 'At final battle when character performs the first tap of an attack',
+          levels: [{ level: 5, effect: 'Allows the crew to perform a Rush.' }],
         },
       },
     });

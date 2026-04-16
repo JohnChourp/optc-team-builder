@@ -34,6 +34,7 @@ const MANUAL_DETAIL_OBJECT_KEYS = [
   'superType',
   'superTandemData',
   'finalTapData',
+  'rushSugoSpecialData',
   'superClass',
   'rumbleData',
 ];
@@ -68,6 +69,7 @@ export function createEmptyManualDetail(characterId) {
     superType: null,
     superTandemData: null,
     finalTapData: null,
+    rushSugoSpecialData: null,
     superClass: null,
     rumbleData: null,
   };

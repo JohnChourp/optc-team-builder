@@ -79,6 +79,7 @@
         ]
       },
       "finalTapData": null,
+      "rushSugoSpecialData": null,
       "superClass": null,
       "rumbleData": null
     }
@@ -181,6 +182,7 @@
           }
         ]
       },
+      "rushSugoSpecialData": null,
       "superClass": null,
       "rumbleData": null
     }
@@ -252,6 +254,7 @@
       "superType": null,
       "superTandemData": null,
       "finalTapData": null,
+      "rushSugoSpecialData": null,
       "superClass": null,
       "rumbleData": {
         "stats": {
@@ -443,6 +446,7 @@
       "superType": null,
       "superTandemData": null,
       "finalTapData": null,
+      "rushSugoSpecialData": null,
       "superClass": null,
       "rumbleData": {
         "stats": {
@@ -650,6 +654,7 @@
         ]
       },
       "finalTapData": null,
+      "rushSugoSpecialData": null,
       "superClass": null,
       "rumbleData": {
         "stats": {
@@ -798,6 +803,7 @@
         ]
       },
       "finalTapData": null,
+      "rushSugoSpecialData": null,
       "superClass": null,
       "rumbleData": {
         "stats": {
@@ -955,6 +961,7 @@
         ]
       },
       "finalTapData": null,
+      "rushSugoSpecialData": null,
       "superClass": null,
       "rumbleData": {
         "stats": {
@@ -1151,6 +1158,7 @@
       "superType": null,
       "superTandemData": null,
       "finalTapData": null,
+      "rushSugoSpecialData": null,
       "superClass": null,
       "rumbleData": {
         "stats": {
@@ -1291,6 +1299,7 @@
           }
         ]
       },
+      "rushSugoSpecialData": null,
       "superClass": {
         "activationRequirement": "When any 3 of the following characters are on the crew (except as Support Characters; Double Characters counts as 1; can be launched when character is a crewmate): Edward Newgate (Whitebeard), Marco, Jozu, Vista, Whitey Bay, Fossa, Rakuyo, Kingdew, Atmos, Izo, Marshall D. Teach (Blackbeard), Thatch, Namule, Blamenco, Curiel, Haruta, Speed Jil, Blenheim, Monkey D. Luffy, Sabo, Jinbe, Yamato, Gol D. Roger",
         "specialEffect": "Deals 75x character's ATK in non-type damage to all enemies (ignoring all defensive effects and DEF), applies -10% STR Resistance to all enemies for 1 turn, boosts crew's [Unknown circular boost icon] by 1.75x for 1 turn (effect can be overwritten with other [Unknown circular boost icon] boost effects), and changes Powerhouse characters to Super Powerhouse"
@@ -1389,6 +1398,482 @@
               "level": 1,
               "effect": "Team ATK Up Lv.1, HP, SPD Up Lv.1"
             },
+            {
+              "level": 2,
+              "effect": "Team ATK Up Lv.1, HP, SPD Up Lv.2"
+            },
+            {
+              "level": 3,
+              "effect": "Team ATK Up Lv.2, HP, SPD Up Lv.2"
+            },
+            {
+              "level": 4,
+              "effect": "Team ATK Up Lv.2, HP, SPD Up Lv.3"
+            },
+            {
+              "level": 5,
+              "effect": "Team ATK Up Lv.3, HP, SPD Up Lv.3"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "900009": {
+    "id": 900009,
+    "name": "Ordering the Helmsman Nami",
+    "isIncomplete": true,
+    "type": "DEX",
+    "classes": [
+      "Free Spirit",
+      "Cerebral"
+    ],
+    "stars": 5,
+    "cost": 30,
+    "combo": 4,
+    "maxLevel": 110,
+    "maxExperience": null,
+    "minHp": null,
+    "minAtk": null,
+    "minRcv": null,
+    "maxHp": 3977,
+    "maxAtk": 1884,
+    "maxRcv": 321,
+    "growth": null,
+    "image": {
+      "file": "900009.png",
+      "thumbnailFile": "900009-thumb.jpg"
+    },
+    "detail": {
+      "characterId": 900009,
+      "captainAbility": "Reduces crew's Special charge time by 2 turns at start of quest, reduces damage taken by 10%, boosts DEX, Free Spirit, and Cerebral characters' ATK by 3.75x, RCV by 1.3x, and makes their [DEX][TND] slots have matching slot effects.",
+      "captainAbilityVariants": [],
+      "captainNotes": null,
+      "specialName": "Communicating with the Helmsman",
+      "specialText": "Reduces crew's ATK Down duration by 6 turns, sets all enemies' DEF to 0 for 1 turn, boosts Free Spirit and Cerebral characters' advantageous class effect by 1.5x for 1 turn (effect can be overwritten with other advantageous class effects), and reduces crew's VS Effect gauge and Switch Effect by 3. If Captain is a DEX or QCK-type, boosts DEX, Free Spirit, and Cerebral characters' base ATK by +1250 for 3 turns. If Captain is a STR, PSY, or INT-type, applies increase damage taken status to all enemies by 1.5x for 1 turn ignoring immunity to status effects, and if crew lands 3 PERFECT strikes in this turn, applies increase damage taken status to all enemies by 1.5x the next turn.",
+      "specialNotes": null,
+      "superSpecialText": null,
+      "superSpecialCriteriaText": null,
+      "superSpecialNotes": null,
+      "superSpecialCriteria": null,
+      "partyConflictKeys": [],
+      "characterTags": [
+        "Straw Hat Pirates",
+        "Egghead Arc"
+      ],
+      "builderAbilities": [],
+      "sailorAbilities": [
+        "Sets left column slots to [TND] slots at start of quest (no stacking identical abilities).",
+        "Makes crew's [PSY][TND] slots have matching slot effects."
+      ],
+      "sailorNotes": null,
+      "limitBreak": [],
+      "potentialAbilities": [],
+      "supportData": [
+        {
+          "supportedCharactersText": "Supportable Characters: Characters with the following Character Tag. Support's Character Tag: Straw Hat Pirates.",
+          "levelDescriptions": [
+            "Lv.1: Once per quest, if supported character uses a Special to inflict [Unknown support trigger icon] on the enemy, reduces crew's VS Effect gauge by 1.",
+            "Lv.2: Once per quest, if supported character uses a Special to inflict [Unknown support trigger icon] on the enemy, reduces crew's VS Effect gauge by 1.",
+            "Lv.3: Once per quest, if supported character uses a Special to inflict [Unknown support trigger icon] on the enemy, reduces crew's VS Effect gauge by 1.",
+            "Lv.4: Once per quest, if supported character uses a Special to inflict [Unknown support trigger icon] on the enemy, reduces crew's VS Effect gauge by 1.",
+            "Lv.5: Once per quest, if supported character uses a Special to inflict [Unknown support trigger icon] on the enemy, reduces crew's VS Effect gauge by 2."
+          ]
+        }
+      ],
+      "swapData": null,
+      "vsSpecial": null,
+      "superType": null,
+      "superTandemData": null,
+      "finalTapData": null,
+      "rushSugoSpecialData": null,
+      "superClass": null,
+      "rumbleData": {
+        "stats": {
+          "style": "SPT Style",
+          "cost": 30,
+          "combatPower": 3188,
+          "hp": 4574,
+          "atk": 2026,
+          "def": 50,
+          "spd": 100,
+          "rcv": 330
+        },
+        "rumbleSpecial": "None",
+        "rumbleAbility": "None",
+        "pattern": [
+          "Normal Attack"
+        ],
+        "target": "Targets closest enemies",
+        "resistance": "None",
+        "gpBurst": "None",
+        "gpLeaderSkill": "None"
+      }
+    }
+  },
+  "900010": {
+    "id": 900010,
+    "name": "The Strongest Form of Humanity S-Snake",
+    "isIncomplete": true,
+    "type": "STR",
+    "classes": [
+      "Fighter",
+      "Shooter"
+    ],
+    "stars": 6,
+    "cost": 40,
+    "combo": 4,
+    "maxLevel": 99,
+    "maxExperience": null,
+    "minHp": null,
+    "minAtk": null,
+    "minRcv": null,
+    "maxHp": 4872,
+    "maxAtk": 2269,
+    "maxRcv": 432,
+    "growth": null,
+    "image": {
+      "file": "900010.png",
+      "thumbnailFile": "900010-thumb.jpg"
+    },
+    "detail": {
+      "characterId": 900010,
+      "captainAbility": "Reduces crew's Special charge time and Switch Effect by 1 at start of quest, launches the following effect at start of quest: \"Adds 100x character's ATK on top of tap-timing bonuses for 20 turns\", boosts Fighter and Shooter characters' HP by 1.35x, boosts their ATK based on the timing of the previous character's attack (minimum 5x, maximum 5.75x), makes crew's [RCV][TND] slots have matching slot effects, and completely removes character's Bind/Special Bind/Despair/Special Reverse/Paralysis",
+      "captainAbilityVariants": [],
+      "captainNotes": null,
+      "specialName": "Trifling Love-Love Mellow",
+      "specialText": "Inflicts Love-Love status on each enemy (binds regular attacks until they are hit 8 times), reduces all enemies' DEF Up duration by 7 turns, and boosts Fighter and Shooter characters' chain multiplier growth rate of normal attacks up to +0.7 (GOOD +0.2; GREAT +0.4; PERFECT +0.7) for 3 turns (cannot be removed by crew or enemies). If crew can allow 2 different damage boosting effects at the same time or crew's [Unknown crew status icon] status has 3 or more turns remaining when Special is launched, boosts STR, DEX, and QCK characters' slot effects by 3.5x for 3 turns (cannot be removed by crew or enemies; boosts STR, DEX, and QCK characters' slot effects by 3x for 1 turns otherwise)",
+      "specialNotes": "The Special shows one icon-only crew status in the stronger conditional branch. The stored text keeps that condition explicit with a placeholder instead of guessing the mechanic name.",
+      "superSpecialText": null,
+      "superSpecialCriteriaText": null,
+      "superSpecialNotes": null,
+      "superSpecialCriteria": null,
+      "partyConflictKeys": [],
+      "characterTags": [
+        "Seraphim",
+        "Egghead Arc"
+      ],
+      "builderAbilities": [],
+      "sailorAbilities": [
+        "Makes crew's [RCV][TND] slots have matching slot effects",
+        "Boosts Fighter and Shooter characters' base stats by 100, and if field has \"Territory: Fighter class\", boosts crew's base ATK by a further 150"
+      ],
+      "sailorNotes": null,
+      "limitBreak": [],
+      "potentialAbilities": [],
+      "supportData": [
+        {
+          "supportedCharactersText": "Monkey D. Luffy, Rob Lucci, Kaku, Boa Hancock, Sentomaru, Stussy, Dr. Vegapunk \"Lilith the Evil\", S-Hawk, S-Shark, Dr. Vegapunk \"Atlas the Violent\", Dr. Vegapunk \"York the Greedy\", Dr. Vegapunk (Stella), Dr. Vegapunk \"Shaka the Good\", Dr. Vegapunk \"Edison the Thinker\", Dr. Vegapunk \"Pythagoras the Wise\", S-Bear",
+          "levelDescriptions": [
+            "Lv.1: Applies -2% STR, DEX, and QCK Resistance to all enemies for 1 turn at start of final battle",
+            "Lv.2: Applies -3% STR, DEX, and QCK Resistance to all enemies for 1 turn at start of final battle",
+            "Lv.3: Applies -4% STR, DEX, and QCK Resistance to all enemies for 1 turn at start of final battle",
+            "Lv.4: Applies -5% STR, DEX, and QCK Resistance to all enemies for 1 turn at start of final battle",
+            "Lv.5: Reduces all enemies' DEF Up duration by 1 turn, and applies -5% STR, DEX, and QCK Resistance to all enemies for 1 turn at start of final battle"
+          ]
+        }
+      ],
+      "swapData": null,
+      "vsSpecial": null,
+      "superType": null,
+      "superTandemData": null,
+      "finalTapData": null,
+      "rushSugoSpecialData": {
+        "requirement": "At final battle, if character performs the 1st tap of an attack, and any 2 of the following characters are on the crew (except as Support Characters; Double Characters counts as 1): Monkey D. Luffy, Boa Hancock, Sentomaru, Dr. Vegapunk (Stella), Dr. Vegapunk \"Shaka the Good\", Dr. Vegapunk \"Lilith the Evil\", Dr. Vegapunk \"Edison the Thinker\", Dr. Vegapunk \"Pythagoras the Wise\", Dr. Vegapunk \"Atlas the Violent\", Dr. Vegapunk \"York the Greedy\", S-Hawk, S-Shark, S-Bear, Rob Lucci, Kaku, Stussy",
+        "levels": [
+          {
+            "level": 5,
+            "effect": "Reduces HP by a certain amount, but allows to perform a Rush. As the Rush tap connects, cumulatively boosts the chain, and boosts the ATK of the Finish tap of Fighter and Shooter characters (up to +0.6 chain multiplier; Rush ATK boost 1.9x)"
+          }
+        ]
+      },
+      "superClass": {
+        "activationRequirement": "When any 2 of the following characters are on the crew (except as Support Characters; Double Characters counts as 1; can be launched when character is a crewmate): Monkey D. Luffy, Boa Hancock, Sentomaru, Dr. Vegapunk (Stella), Dr. Vegapunk \"Shaka the Good\", Dr. Vegapunk \"Lilith the Evil\", Dr. Vegapunk \"Edison the Thinker\", Dr. Vegapunk \"Pythagoras the Wise\", Dr. Vegapunk \"Atlas the Violent\", Dr. Vegapunk \"York the Greedy\", S-Hawk, S-Shark, S-Bear, Rob Lucci, Kaku, Stussy",
+        "specialEffect": "Reduces all enemies' damage nullification duration by 1 turn, changes crew's slots (including [BLOCK] slots) to [TND], applies -25% STR, DEX, and QCK Resistance to all enemies for 1 turn, and changes Fighter characters to Super Fighter and Shooter characters to Super Shooter"
+      },
+      "rumbleData": {
+        "stats": {
+          "style": "DBF Style",
+          "cost": 55,
+          "combatPower": 7330,
+          "hp": 5969,
+          "atk": 2525,
+          "def": 140,
+          "spd": 139,
+          "rcv": 449
+        },
+        "pattern": [
+          "Normal Attack",
+          "Normal Attack",
+          "Power Attack",
+          "Heal Self Lv.2"
+        ],
+        "target": "Targets closest enemies",
+        "resistance": {
+          "standardResistances": [
+            "Completely evades Special Bind",
+            "Reduce damage taken from DEX by 30%"
+          ],
+          "additionalResistances": {
+            "unlockRequirement": "Unlock Rumble Limit Break",
+            "effects": [
+              "Reduce damage taken from DEX by 20%",
+              "Increase damage dealt to DEX by 15%"
+            ]
+          }
+        },
+        "rumbleSpecialName": "Trifling Love-Love Mellow",
+        "verifiedRumbleSpecialLevels": [
+          {
+            "level": 9,
+            "cooldown": 22,
+            "effects": [
+              "Targets 3 enemies with low current Special CT for Special CT Speed Down Lv.4 (14 s), Damage Over Time Lv.4 (14 s); if 8 or more Fighter/Shooter characters are on the team, targets 1 high ATK enemy for 90% chance of Confusion (15 s)"
+            ]
+          },
+          {
+            "level": 10,
+            "cooldown": 22,
+            "effects": [
+              "Targets 3 enemies with low current Special CT for Special CT Speed Down Lv.5 (15 s), Damage Over Time Lv.5 (15 s); if 8 or more Fighter/Shooter characters are on the team, targets 1 high ATK enemy for 100% chance of Confusion (15 s)"
+            ]
+          }
+        ],
+        "rumbleSuperSpecialName": "Trifling Love-Love Mellow",
+        "verifiedRumbleSuperSpecial": {
+          "activationRequirement": "After character receives enemy's Rumble Special 2 times",
+          "effects": [
+            "Targets 3 enemies with low current Special CT for Special CT Speed Down Lv.7 (30 s), Damage Over Time Lv.7 (30 s); if 8 or more Fighter/Shooter characters are on the team, targets 2 high ATK enemies for 100% chance of Confusion (15 s)"
+          ]
+        },
+        "verifiedRumbleSuperSpecialLevels": [
+          {
+            "level": 5,
+            "activationRequirement": "After character receives enemy's Rumble Special 2 times",
+            "effects": [
+              "Targets all enemies for Special CT Speed Down Lv.7 (30 s), Damage Over Time Lv.10 (30 s); if 8 or more Fighter/Shooter characters are on the team, targets 2 high ATK enemies for 100% chance of Confusion (20 s)"
+            ]
+          }
+        ],
+        "verifiedRumbleAbilityLevels": [
+          {
+            "level": 4,
+            "effects": [
+              "Fighter/Shooter class teammates DEF Up Lv.5; all enemies ATK Down Lv.6; if 8 or more Fighter/Shooter characters are on the team, all enemies SPD Down Lv.6, Special CT Speed Down Lv.2"
+            ]
+          },
+          {
+            "level": 5,
+            "effects": [
+              "Fighter/Shooter class teammates DEF Up Lv.6; all enemies ATK Down Lv.6; if 8 or more Fighter/Shooter characters are on the team, all enemies SPD Down Lv.7, Special CT Speed Down Lv.3"
+            ]
+          }
+        ],
+        "gpBurst": {
+          "times": 2,
+          "levels": [
+            {
+              "level": 1,
+              "effect": "Targets all enemies for 500 damage"
+            },
+            {
+              "level": 2,
+              "effect": "Targets all enemies for 625 damage"
+            },
+            {
+              "level": 3,
+              "effect": "Targets all enemies for 750 damage"
+            },
+            {
+              "level": 4,
+              "effect": "Targets all enemies for 875 damage"
+            },
+            {
+              "level": 5,
+              "effect": "Targets all enemies for 1000 damage"
+            }
+          ]
+        },
+        "gpLeaderSkill": {
+          "levels": [
+            {
+              "level": 2,
+              "effect": "Team ATK Up Lv.1, HP, SPD Up Lv.2"
+            },
+            {
+              "level": 3,
+              "effect": "Team ATK Up Lv.2, HP, SPD Up Lv.2"
+            },
+            {
+              "level": 4,
+              "effect": "Team ATK Up Lv.2, HP, SPD Up Lv.3"
+            },
+            {
+              "level": 5,
+              "effect": "Team ATK Up Lv.3, HP, SPD Up Lv.3"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "900011": {
+    "id": 900011,
+    "name": "Cutting Down the Snow Woman Tashigi",
+    "isIncomplete": true,
+    "type": "PSY",
+    "classes": [
+      "Slasher",
+      "Cerebral"
+    ],
+    "stars": 6,
+    "cost": 55,
+    "combo": 4,
+    "maxLevel": 99,
+    "maxExperience": null,
+    "minHp": null,
+    "minAtk": null,
+    "minRcv": null,
+    "maxHp": 4860,
+    "maxAtk": 2038,
+    "maxRcv": 486,
+    "growth": null,
+    "image": {
+      "file": "900011.png",
+      "thumbnailFile": "900011-thumb.jpg"
+    },
+    "detail": {
+      "characterId": 900011,
+      "captainAbility": "Reduces ship's Special charge time by 5 turns at start of quest, boosts Slasher and Cerebral characters' ATK by 5.5x when slots match (5x otherwise), HP and RCV by 1.25x, and makes crew's [INT][RCV][TND] slots have matching slot effects. If crew applies slot effect boost or another status effect is applied to the crew, all enemies, or an individual enemy on the same turn after the required effect was applied, launches \"Memories of the Swordsman\" at start of crew's next turn (only once per quest; Specials launched due to Captain Ability will not reduce the character's Special charge time and will not affect the amount of HP beyond crew's maximum HP healed before Special is launched)",
+      "captainAbilityVariants": [],
+      "captainNotes": null,
+      "specialName": "Memories of the Swordsman",
+      "specialText": "Deals 100x characters' ATK in non-type damage to all enemies (ignoring all defensive effects and DEF), reduces crew's Special Bind duration by 7 turns, heals crew by 10x character's RCV at end of turn for 1 turn, further increases crew's slot effect boost by +0.5, and boosts Slasher and Cerebral characters' slot effects by 2.75x for 3 turns (effect can be further increased up to 2 times; cannot be removed by crew or enemies). If amount of HP beyond crew's maximum HP healed before Special is launched is 50,000 or more, boosts crew's damage dealt when landing a Critical hit by 75% (effect applies only to characters with Critical ATK Potential Ability) for 1 turn",
+      "specialNotes": null,
+      "superSpecialText": null,
+      "superSpecialCriteriaText": null,
+      "superSpecialNotes": null,
+      "superSpecialCriteria": null,
+      "partyConflictKeys": [],
+      "characterTags": [
+        "Navy",
+        "Punk Hazard Arc"
+      ],
+      "builderAbilities": [],
+      "sailorAbilities": [
+        "Reduces character's Special Bind duration by 8 turns, and makes Slasher and Cerebral characters' [INT][TND] slots have matching slot effects",
+        "When a Slasher or Cerebral Captain uses a Special, reduces character's Special charge time by 12 turns (only once per quest)"
+      ],
+      "sailorNotes": null,
+      "limitBreak": [],
+      "potentialAbilities": [],
+      "supportData": [
+        {
+          "supportedCharactersText": "Roronoa Zoro, Smoker",
+          "levelDescriptions": [
+            "Lv.1: Once per quest, if inflicted with Special Bind status from the enemy, reduces crew's Special Bind duration by 1 turn at start of crew's next turn",
+            "Lv.2: Once per quest, if inflicted with Special Bind status from the enemy, reduces crew's Special Bind duration by 1 turn at start of crew's next turn",
+            "Lv.3: Once per quest, if inflicted with Special Bind status from the enemy, reduces crew's Special Bind duration by 1 turn at start of crew's next turn",
+            "Lv.4: Once per quest, if inflicted with Special Bind status from the enemy, reduces crew's Special Bind duration by 1 turn at start of crew's next turn",
+            "Lv.5: Once per quest, if inflicted with Special Bind status from the enemy, reduces crew's Special Bind duration by 2 turns at start of crew's next turn"
+          ]
+        }
+      ],
+      "swapData": null,
+      "vsSpecial": null,
+      "superType": {
+        "activationRequirement": "When any of the following characters are on the crew (except as Support Characters): Roronoa Zoro, Smoker; or when crew has [Unknown crew status icon]",
+        "specialEffect": "Removes all beneficial effects placed on the crew, deals 80x character's ATK in non-type damage to all enemies, heals crew by 20,000 HP, sets character's Special charge to MAX, and changes PSY characters to Super PSY"
+      },
+      "superTandemData": null,
+      "finalTapData": {
+        "requirement": "At final battle",
+        "levels": [
+          {
+            "level": 5,
+            "effect": "Boosts character's base ATK by +800 (stacks with effects from Special) for 1 turn, and boosts the type effects of normal attacks for character by 2.5x for 1 turn"
+          }
+        ]
+      },
+      "rushSugoSpecialData": null,
+      "superClass": null,
+      "rumbleData": {
+        "stats": {
+          "style": "ATK Style",
+          "cost": 55,
+          "combatPower": 7500,
+          "hp": 5954,
+          "atk": 2268,
+          "def": 165,
+          "spd": 167,
+          "rcv": 505
+        },
+        "pattern": [
+          "Normal Attack",
+          "Normal Attack",
+          "Power Attack",
+          "Full Attack"
+        ],
+        "target": "Targets closest enemies",
+        "resistance": {
+          "standardResistances": [
+            "Completely evades Action Bind",
+            "Reduce damage taken from INT by 30%"
+          ],
+          "additionalResistances": {
+            "unlockRequirement": "Unlock Rumble Limit Break",
+            "effects": [
+              "Reduce damage taken from INT by 10%",
+              "Increase damage dealt to INT by 5%"
+            ]
+          }
+        },
+        "rumbleSpecialName": "Memories of the Swordsman",
+        "verifiedRumbleSpecialLevels": [
+          {
+            "level": 10,
+            "cooldown": 28,
+            "effects": [
+              "Targets enemies within large range (horizontal) for 4000 damage; targets 1 high DEF enemy for 6000 damage; targets 1 ATK Style teammate (not including self) for ATK Up Lv.8 (15 s), Critical % Up Lv.8 (15 s), Blow Away % Up Lv.8 (15 s), Special CT Speed Up Lv.5 (15 s), Shield Lv.5 (15 s)"
+            ]
+          }
+        ],
+        "verifiedRumbleAbilityLevels": [
+          {
+            "level": 5,
+            "effects": [
+              "Slasher/Cerebral class teammates HP Up Lv.8, Guard % Up Lv.5, Critical % Up Lv.5, Blow Away % Up Lv.5; if 8 or more Slasher/Cerebral characters are on the team, team Special CT Speed Up Lv.3, self Shield Lv.5; first 20 s of battle, self Special CT Speed Up Lv.8; after dealing damage, up to 5 times self Special CT 10% reduction and targets 1 ATK Style teammate (not including self) for Special CT 10% reduction"
+            ]
+          }
+        ],
+        "gpBurst": {
+          "times": 2,
+          "condition": "When 2 teammates are defeated",
+          "levels": [
+            {
+              "level": 1,
+              "effect": "Targets all enemies for 500 damage"
+            },
+            {
+              "level": 2,
+              "effect": "Targets all enemies for 625 damage"
+            },
+            {
+              "level": 3,
+              "effect": "Targets all enemies for 750 damage"
+            },
+            {
+              "level": 4,
+              "effect": "Targets all enemies for 875 damage"
+            },
+            {
+              "level": 5,
+              "effect": "Targets all enemies for 1000 damage"
+            }
+          ]
+        },
+        "gpLeaderSkill": {
+          "levels": [
             {
               "level": 2,
               "effect": "Team ATK Up Lv.1, HP, SPD Up Lv.2"

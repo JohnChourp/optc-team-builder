@@ -255,6 +255,15 @@ describe("character-detail presenter", () => {
             },
           ],
         },
+        rushSugoSpecialData: {
+          requirement: "At final battle when character performs the first tap of an attack",
+          levels: [
+            {
+              level: 5,
+              effect: "Allows the crew to perform a Rush.",
+            },
+          ],
+        },
         superClass: null,
         rumbleData: {
           id: 501,
@@ -278,6 +287,7 @@ describe("character-detail presenter", () => {
         "sections.rumbleData",
         "sections.superTandemData",
         "sections.finalTapData",
+        "sections.rushSugoSpecialData",
         "sections.superType",
         "sections.characterTags",
       ]),
@@ -352,6 +362,7 @@ describe("character-detail presenter", () => {
         superType: null,
         superTandemData: null,
         finalTapData: null,
+        rushSugoSpecialData: null,
         superClass: null,
         rumbleData: null,
       },
@@ -435,6 +446,8 @@ describe("character-detail presenter", () => {
         vsSpecial: null,
         superType: null,
         superTandemData: null,
+        finalTapData: null,
+        rushSugoSpecialData: null,
         superClass: null,
         rumbleData: null,
       },
@@ -460,6 +473,9 @@ describe("character-detail presenter", () => {
     ).toBeUndefined();
     expect(
       viewModel.groups.flatMap((group) => group.cards).find((card) => card.titleKey === "sections.finalTapData"),
+    ).toBeUndefined();
+    expect(
+      viewModel.groups.flatMap((group) => group.cards).find((card) => card.titleKey === "sections.rushSugoSpecialData"),
     ).toBeUndefined();
     expect(
       viewModel.groups.flatMap((group) => group.cards).find((card) => card.titleKey === "sections.characterTags"),
