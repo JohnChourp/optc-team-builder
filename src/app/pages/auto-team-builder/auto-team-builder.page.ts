@@ -177,6 +177,7 @@ interface ManualSlotCardView {
 }
 
 type TeamSlotViewModel = AutoBuildResult['slots'][number] & {
+  trackKey: string;
   roleLabel: string;
   snippet: string;
   abilityChips: CharacterAbilityChipView[];
@@ -1402,8 +1403,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     const requirements = this.pageRequiredAbilities();
 
     return (
-      currentResult?.slots.map((slot) => ({
+      currentResult?.slots.map((slot, index) => ({
         ...slot,
+        trackKey:
+          slot.role === 'sub'
+            ? `sub:${index}:${slot.character.id}`
+            : `${slot.role}:${slot.character.id}`,
         roleLabel: this.resolveRoleLabel(slot.role),
         snippet:
           slot.role === 'sub'

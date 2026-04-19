@@ -1509,7 +1509,7 @@
           </section>
         }
         <section class="result-grid">
-          @for (slot of teamSlots(); track slot.character.id) {
+          @for (slot of teamSlots(); track slot.trackKey) {
             <article class="glass-card result-card">
               <div class="result-card__head">
                 <span class="role-pill">{{ slot.roleLabel }}</span>

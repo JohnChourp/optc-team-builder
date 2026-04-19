@@ -136,7 +136,7 @@
                       <span class="saved-team-ship__name">{{ teamCard.shipDisplayName }}</span>
                     </div>
                   </div>
-                  @for (slot of teamCard.slots; track slot?.id ?? index; let index = $index) {
+                  @for (slot of teamCard.slots; track index; let index = $index) {
                     @if (slot; as currentSlot) {
                       <a
                         class="saved-team-slot saved-team-slot--filled"

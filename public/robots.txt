@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://johnchourp.github.io/optc-team-builder/sitemap.xml

@@ -101,7 +101,7 @@
         </div>
 
         <div class="slots">
-          @for (slot of slotCharacters(); track slot?.id ?? index; let index = $index) {
+          @for (slot of slotCharacters(); track index; let index = $index) {
             <article class="slot-card" [class.active]="selectedSlotIndex() === index">
               <button type="button" class="slot-card__select" (click)="selectSlot(index)">
                 <img
