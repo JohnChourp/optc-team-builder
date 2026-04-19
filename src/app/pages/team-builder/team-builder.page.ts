@@ -23,6 +23,7 @@ import {
   type SavedTeam,
   type ShipRecord,
 } from '../../core/models/optc.models';
+import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { UserStateService } from '../../core/services/user-state.service';
@@ -122,6 +123,7 @@ export class TeamBuilderPage implements OnInit {
 
   public constructor(
     private readonly repository: OptcRepositoryService,
+    private readonly characterCatalogCache: CharacterCatalogCacheService,
     private readonly userState: UserStateService,
     private readonly i18n: AppI18nService,
   ) {
@@ -133,7 +135,11 @@ export class TeamBuilderPage implements OnInit {
 
   public async ngOnInit(): Promise<void> {
     await this.userState.ready();
-    this.ships.set(await this.repository.getShips());
+    const [ships] = await Promise.all([
+      this.repository.getShips(),
+      this.characterCatalogCache.ensureLoaded(),
+    ]);
+    this.ships.set(ships);
     await this.refreshCandidateCharacters(this.candidateSearchTerm());
   }
 
@@ -206,7 +212,8 @@ export class TeamBuilderPage implements OnInit {
   }
 
   public async loadTeam(team: SavedTeam): Promise<void> {
-    const characters = await this.repository.getCharactersByIds(
+    await this.characterCatalogCache.ensureLoaded();
+    const characters = this.characterCatalogCache.getCharactersByIds(
       team.slots.filter((value): value is number => typeof value === 'number'),
     );
     const characterMap = new Map(characters.map((character) => [character.id, character]));
@@ -252,8 +259,9 @@ export class TeamBuilderPage implements OnInit {
   }
 
   private async refreshCandidateCharacters(searchTerm: string): Promise<void> {
+    await this.characterCatalogCache.ensureLoaded();
     this.candidateCharacters.set(
-      await this.repository.searchCharacters({
+      this.characterCatalogCache.queryCharacters({
         searchTerm,
         typeFilter: '',
         classFilter: '',

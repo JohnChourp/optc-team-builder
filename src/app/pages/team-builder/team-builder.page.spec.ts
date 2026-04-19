@@ -160,7 +160,7 @@ describe('TeamBuilderPage', () => {
   });
 
   it('resets the builder draft, slot selection and candidate search state', async () => {
-    const { page, repository } = createPage();
+    const { page, characterCatalogCache } = createPage();
 
     page.teamName.set('Manual Crew');
     page.notes.set('Shared persistence');
@@ -186,7 +186,7 @@ describe('TeamBuilderPage', () => {
     expect(page.currentTeamId()).toBeNull();
     expect(page.candidateSearchTerm()).toBe('');
     expect(page.slotCharacters()).toEqual(Array.from({ length: 6 }, () => null));
-    expect(repository.searchCharacters).toHaveBeenLastCalledWith({
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
       typeFilter: '',
       classFilter: '',
@@ -211,8 +211,12 @@ function createPage() {
   };
   const repository = {
     getShips: vi.fn().mockResolvedValue([]),
-    searchCharacters: vi.fn().mockResolvedValue([]),
     getCharactersByIds: vi.fn().mockResolvedValue([]),
+  };
+  const characterCatalogCache = {
+    ensureLoaded: vi.fn().mockResolvedValue(undefined),
+    queryCharacters: vi.fn().mockReturnValue([]),
+    getCharactersByIds: vi.fn().mockReturnValue([]),
   };
   const i18n = {
     activeLanguage: signal<'en' | 'el'>('en'),
@@ -231,9 +235,14 @@ function createPage() {
       return key;
     }),
   };
-  const page = new TeamBuilderPage(repository as never, userState as never, i18n as never);
+  const page = new TeamBuilderPage(
+    repository as never,
+    characterCatalogCache as never,
+    userState as never,
+    i18n as never,
+  );
 
-  return { page, repository, userState, i18n };
+  return { page, repository, characterCatalogCache, userState, i18n };
 }
 
 function createCharacter(id: number) {

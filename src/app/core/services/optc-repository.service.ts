@@ -312,6 +312,39 @@ export class OptcRepositoryService {
     return this.decorateCharacterRows(rows);
   }
 
+  public async getAllCharacters(): Promise<CharacterListItem[]> {
+    const rows = await this.selectAll(
+      `
+        SELECT
+          id,
+          name,
+          is_incomplete,
+          type,
+          primary_class,
+          secondary_class,
+          classes_json,
+          stars,
+          cost,
+          combo,
+          max_level,
+          max_experience,
+          min_hp,
+          min_atk,
+          min_rcv,
+          max_hp,
+          max_atk,
+          max_rcv,
+          growth,
+          region_json,
+          assets_json
+        FROM characters
+        ORDER BY stars DESC, id DESC
+      `,
+    );
+
+    return this.decorateCharacterRows(rows);
+  }
+
   public async searchDetailedCharacters(
     query: DetailedCharacterSearchQuery,
   ): Promise<CharacterDetailRecord[]> {

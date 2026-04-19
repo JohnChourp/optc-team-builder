@@ -65,7 +65,7 @@
     "title": "Import favorites"
   },
   "loadMore": "Load more units",
-  "loading": "Building the local index...",
+  "loading": "Loading character catalog...",
   "search": {
     "placeholder": "Search names, classes, types..."
   },

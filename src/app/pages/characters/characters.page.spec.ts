@@ -113,7 +113,7 @@ describe('CharactersPage favorites tools', () => {
   });
 
   it('filters searches down to favorites when the toggle is enabled', async () => {
-    const { page, repository } = createPage({
+    const { page, characterCatalogCache } = createPage({
       favoriteIds: [101, 202],
     });
 
@@ -124,7 +124,7 @@ describe('CharactersPage favorites tools', () => {
     } as CustomEvent<{ checked: boolean }>);
 
     expect(page.favoritesOnly()).toBe(true);
-    expect(repository.searchCharacters).toHaveBeenCalledWith({
+    expect(characterCatalogCache.queryCharacters).toHaveBeenCalledWith({
       searchTerm: '',
       typeFilter: '',
       classFilter: '',
@@ -135,7 +135,7 @@ describe('CharactersPage favorites tools', () => {
   });
 
   it('refreshes the current list after removing a favorite in favorites-only mode', async () => {
-    const { page, repository } = createPage({
+    const { page, characterCatalogCache } = createPage({
       favoriteIds: [101],
     });
 
@@ -144,14 +144,14 @@ describe('CharactersPage favorites tools', () => {
         checked: true,
       },
     } as CustomEvent<{ checked: boolean }>);
-    repository.searchCharacters.mockClear();
+    characterCatalogCache.queryCharacters.mockClear();
 
     await page.toggleFavorite(101, {
       preventDefault: vi.fn(),
       stopPropagation: vi.fn(),
     } as unknown as Event);
 
-    expect(repository.searchCharacters).toHaveBeenCalledWith({
+    expect(characterCatalogCache.queryCharacters).toHaveBeenCalledWith({
       searchTerm: '',
       typeFilter: '',
       classFilter: '',
@@ -162,7 +162,7 @@ describe('CharactersPage favorites tools', () => {
   });
 
   it('keeps favorite filtering behavior intact in compact mode', async () => {
-    const { page, repository } = createPage({
+    const { page, characterCatalogCache } = createPage({
       favoriteIds: [101],
     });
 
@@ -173,7 +173,7 @@ describe('CharactersPage favorites tools', () => {
         checked: true,
       },
     } as CustomEvent<{ checked: boolean }>);
-    repository.searchCharacters.mockClear();
+    characterCatalogCache.queryCharacters.mockClear();
 
     await page.toggleFavorite(101, {
       preventDefault: vi.fn(),
@@ -181,7 +181,7 @@ describe('CharactersPage favorites tools', () => {
     } as unknown as Event);
 
     expect(page.displayMode()).toBe('compact');
-    expect(repository.searchCharacters).toHaveBeenCalledWith({
+    expect(characterCatalogCache.queryCharacters).toHaveBeenCalledWith({
       searchTerm: '',
       typeFilter: '',
       classFilter: '',
@@ -205,7 +205,7 @@ describe('CharactersPage favorites tools', () => {
   });
 
   it('resets page-local filters, import state and reloads the first result page', async () => {
-    const { page, repository } = createPage({
+    const { page, characterCatalogCache } = createPage({
       favoriteIds: [101],
     });
 
@@ -232,7 +232,7 @@ describe('CharactersPage favorites tools', () => {
     expect(page.importModalOpen()).toBe(false);
     expect(page.importFileName()).toBe('');
     expect(page.parsedImport()).toBeNull();
-    expect(repository.searchCharacters).toHaveBeenLastCalledWith({
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
       typeFilter: '',
       classFilter: '',
@@ -268,8 +268,11 @@ function createPage(overrides: { favoriteIds?: number[] } = {}) {
       availableTypes: [],
       availableClasses: [],
     }),
-    searchCharacters: vi.fn().mockResolvedValue([]),
-    getCharactersByIds: vi.fn().mockResolvedValue([]),
+  };
+  const characterCatalogCache = {
+    ensureLoaded: vi.fn().mockResolvedValue(undefined),
+    queryCharacters: vi.fn().mockReturnValue([]),
+    getCharactersByIds: vi.fn().mockReturnValue([]),
   };
   const optcbxImport = {
     parseExport: vi.fn(),
@@ -299,10 +302,11 @@ function createPage(overrides: { favoriteIds?: number[] } = {}) {
   };
   const page = new CharactersPage(
     repository as never,
+    characterCatalogCache as never,
     userState as never,
     optcbxImport as never,
     i18n as never,
   );
 
-  return { page, repository, userState, optcbxImport, i18n };
+  return { page, repository, characterCatalogCache, userState, optcbxImport, i18n };
 }

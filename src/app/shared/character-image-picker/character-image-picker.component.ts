@@ -26,6 +26,7 @@ import {
 import { closeOutline, imagesOutline } from 'ionicons/icons';
 
 import { type CharacterListItem, type DatasetManifest } from '../../core/models/optc.models';
+import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 
 const PAGE_SIZE = 24;
@@ -90,7 +91,10 @@ export class CharacterImagePickerComponent implements OnChanges {
 
   private dismissReason: 'save' | 'cancel' | null = null;
 
-  public constructor(private readonly repository: OptcRepositoryService) {}
+  public constructor(
+    private readonly repository: OptcRepositoryService,
+    private readonly characterCatalogCache: CharacterCatalogCacheService,
+  ) {}
 
   public ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen'] && this.isOpen) {
@@ -177,16 +181,17 @@ export class CharacterImagePickerComponent implements OnChanges {
     this.loading.set(true);
 
     try {
-      const [summary, characters] = await Promise.all([
+      const [summary] = await Promise.all([
         this.repository.getDatasetManifest(),
-        this.repository.searchCharacters({
-          searchTerm: '',
-          typeFilter: '',
-          classFilter: '',
-          limit: PAGE_SIZE,
-          offset: 0,
-        }),
+        this.characterCatalogCache.ensureLoaded(),
       ]);
+      const characters = this.characterCatalogCache.queryCharacters({
+        searchTerm: '',
+        typeFilter: '',
+        classFilter: '',
+        limit: PAGE_SIZE,
+        offset: 0,
+      });
 
       this.summary.set(summary);
       this.characters.set(characters);
@@ -204,8 +209,9 @@ export class CharacterImagePickerComponent implements OnChanges {
     }
 
     try {
+      await this.characterCatalogCache.ensureLoaded();
       const nextOffset = reset ? 0 : this.characters().length;
-      const nextPage = await this.repository.searchCharacters({
+      const nextPage = this.characterCatalogCache.queryCharacters({
         searchTerm: this.searchTerm().trim(),
         typeFilter: this.selectedType(),
         classFilter: this.selectedClass(),

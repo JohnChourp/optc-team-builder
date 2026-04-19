@@ -35,6 +35,7 @@ import {
   type OptcbxParsedImport,
 } from '../../core/models/optcbx-import.models';
 import { AppI18nService } from '../../core/services/app-i18n.service';
+import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { OptcbxImportService } from '../../core/services/optcbx-import.service';
 import { UserStateService } from '../../core/services/user-state.service';
@@ -165,6 +166,7 @@ export class CharactersPage implements OnInit {
   public readonly favoriteOutlineIcon = heartOutline;
   public constructor(
     private readonly repository: OptcRepositoryService,
+    private readonly characterCatalogCache: CharacterCatalogCacheService,
     private readonly userState: UserStateService,
     private readonly optcbxImport: OptcbxImportService,
     private readonly i18n: AppI18nService,
@@ -174,7 +176,11 @@ export class CharactersPage implements OnInit {
 
   public async ngOnInit(): Promise<void> {
     await this.userState.ready();
-    this.summary.set(await this.repository.getDatasetManifest());
+    const [summary] = await Promise.all([
+      this.repository.getDatasetManifest(),
+      this.characterCatalogCache.ensureLoaded(),
+    ]);
+    this.summary.set(summary);
     await this.loadCharacters(true);
   }
 
@@ -370,8 +376,9 @@ export class CharactersPage implements OnInit {
       return;
     }
 
+    await this.characterCatalogCache.ensureLoaded();
     const favoriteIds = this.favoriteIds();
-    const favoriteCharacters = await this.repository.getCharactersByIds(favoriteIds);
+    const favoriteCharacters = this.characterCatalogCache.getCharactersByIds(favoriteIds);
     const payload = buildOptcbxFavoritesExportPayload(favoriteIds, favoriteCharacters);
 
     downloadOptcbxFavoritesExport(payload);
@@ -438,8 +445,9 @@ export class CharactersPage implements OnInit {
       this.loading.set(true);
     }
 
+    await this.characterCatalogCache.ensureLoaded();
     const nextOffset = reset ? 0 : this.characters().length;
-    const nextPage = await this.repository.searchCharacters({
+    const nextPage = this.characterCatalogCache.queryCharacters({
       searchTerm: this.searchTerm(),
       typeFilter: this.selectedType(),
       classFilter: this.selectedClass(),

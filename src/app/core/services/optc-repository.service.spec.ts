@@ -108,6 +108,18 @@ describe('OptcRepositoryService', () => {
     expect(record?.detailImageUrl).toBe('assets/exact-character-images/900001.png');
   });
 
+  it('returns the full character catalog in canonical list order', async () => {
+    const service = createRepositoryService([
+      createCharacterRow({ id: 4101, stars: 5 }),
+      createCharacterRow({ id: 4105, stars: 6 }),
+      createCharacterRow({ id: 4103, stars: 6 }),
+    ]);
+
+    const result = await service.getAllCharacters();
+
+    expect(result.map((record) => record.id)).toEqual([4105, 4103, 4101]);
+  });
+
   it('only keeps locked candidates beyond the main limit when a finite limit is applied', async () => {
     const rows = Array.from({ length: 1202 }, (_, index) =>
       createCharacterRow({
@@ -549,7 +561,10 @@ function sortCharacterRowsForQuery(rows: TestSqlRow[], query: string): TestSqlRo
     return [...rows].sort((left, right) => Number(right['id'] ?? 0) - Number(left['id'] ?? 0));
   }
 
-  if (query.includes('ORDER BY c.stars DESC, c.id DESC')) {
+  if (
+    query.includes('ORDER BY c.stars DESC, c.id DESC') ||
+    query.includes('ORDER BY stars DESC, id DESC')
+  ) {
     return [...rows].sort((left, right) => {
       const starDifference = Number(right['stars'] ?? 0) - Number(left['stars'] ?? 0);
 

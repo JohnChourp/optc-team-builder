@@ -30,6 +30,7 @@ import {
   type DatasetManifest,
 } from '../../core/models/optc.models';
 import { AppI18nService } from '../../core/services/app-i18n.service';
+import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 
@@ -152,6 +153,7 @@ export class CharacterBoxesPage implements OnInit {
 
   public constructor(
     private readonly repository: OptcRepositoryService,
+    private readonly characterCatalogCache: CharacterCatalogCacheService,
     private readonly userState: UserStateService,
     private readonly i18n: AppI18nService,
   ) {
@@ -161,7 +163,11 @@ export class CharacterBoxesPage implements OnInit {
 
   public async ngOnInit(): Promise<void> {
     await this.userState.ready();
-    this.summary.set(await this.repository.getDatasetManifest());
+    const [summary] = await Promise.all([
+      this.repository.getDatasetManifest(),
+      this.characterCatalogCache.ensureLoaded(),
+    ]);
+    this.summary.set(summary);
 
     if (this.boxes().length > 0) {
       this.selectBox(this.boxes()[0]!.id);
@@ -345,6 +351,7 @@ export class CharacterBoxesPage implements OnInit {
       this.loading.set(true);
     }
 
+    await this.characterCatalogCache.ensureLoaded();
     const nextOffset = reset ? 0 : this.characters().length;
     const selectedBoxCharacterIds = this.selectedBox()?.characterIds ?? [];
     const favoriteCharacterIds =
@@ -356,7 +363,7 @@ export class CharacterBoxesPage implements OnInit {
               favoriteCharacterIds === undefined || favoriteCharacterIds.includes(characterId),
           )
         : favoriteCharacterIds;
-    const nextCharacters = await this.repository.searchCharacters({
+    const nextCharacters = this.characterCatalogCache.queryCharacters({
       searchTerm: this.searchTerm(),
       typeFilter: this.selectedType(),
       classFilter: this.selectedClass(),

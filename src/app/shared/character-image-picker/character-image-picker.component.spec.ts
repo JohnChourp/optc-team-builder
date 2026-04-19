@@ -27,7 +27,7 @@ describe('CharacterImagePickerComponent', () => {
   });
 
   it('loads the manifest and the first page when the modal opens', async () => {
-    const { component, repository } = createComponent();
+    const { component, repository, characterCatalogCache } = createComponent();
 
     component.isOpen = true;
     component.ngOnChanges({
@@ -36,7 +36,7 @@ describe('CharacterImagePickerComponent', () => {
     await flushPromises();
 
     expect(repository.getDatasetManifest).toHaveBeenCalledOnce();
-    expect(repository.searchCharacters).toHaveBeenCalledWith({
+    expect(characterCatalogCache.queryCharacters).toHaveBeenCalledWith({
       searchTerm: '',
       typeFilter: '',
       classFilter: '',
@@ -48,7 +48,7 @@ describe('CharacterImagePickerComponent', () => {
   });
 
   it('reloads the catalog when search and filters change', async () => {
-    const { component, repository } = createComponent();
+    const { component, characterCatalogCache } = createComponent();
 
     component.isOpen = true;
     component.ngOnChanges({
@@ -66,7 +66,7 @@ describe('CharacterImagePickerComponent', () => {
       detail: { value: 'Fighter' },
     } as CustomEvent<{ value?: string | null }>);
 
-    expect(repository.searchCharacters).toHaveBeenLastCalledWith({
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: 'Luffy',
       typeFilter: 'DEX',
       classFilter: 'Fighter',
@@ -77,7 +77,7 @@ describe('CharacterImagePickerComponent', () => {
   });
 
   it('loads more characters without resetting the existing page', async () => {
-    const { component, repository } = createComponent();
+    const { component, characterCatalogCache } = createComponent();
 
     component.isOpen = true;
     component.ngOnChanges({
@@ -89,7 +89,7 @@ describe('CharacterImagePickerComponent', () => {
 
     await component.loadMore();
 
-    expect(repository.searchCharacters).toHaveBeenLastCalledWith({
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
       typeFilter: '',
       classFilter: '',
@@ -146,7 +146,10 @@ function createComponent() {
       availableClasses: ['Fighter', 'Shooter', 'Slasher'],
       packs: [],
     }),
-    searchCharacters: vi.fn().mockImplementation(async (query: Record<string, unknown>) => {
+  };
+  const characterCatalogCache = {
+    ensureLoaded: vi.fn().mockResolvedValue(undefined),
+    queryCharacters: vi.fn().mockImplementation((query: Record<string, unknown>) => {
       const searchTerm = String(query['searchTerm'] ?? '').toLowerCase();
       const typeFilter = String(query['typeFilter'] ?? '');
       const classFilter = String(query['classFilter'] ?? '');
@@ -165,12 +168,15 @@ function createComponent() {
         .slice(offset, offset + limit);
     }),
   };
-  const component = new CharacterImagePickerComponent(repository as never);
+  const component = new CharacterImagePickerComponent(
+    repository as never,
+    characterCatalogCache as never,
+  );
 
   component.title = 'Pick character image';
   component.copy = 'Choose one OPTC portrait.';
 
-  return { component, repository };
+  return { component, repository, characterCatalogCache };
 }
 
 function buildCharacters() {

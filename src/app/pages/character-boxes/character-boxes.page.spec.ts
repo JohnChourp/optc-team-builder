@@ -145,7 +145,7 @@ describe('CharacterBoxesPage', () => {
   });
 
   it('filters the search query through repository lookups', async () => {
-    const { page, repository } = createPage();
+    const { page, characterCatalogCache } = createPage();
 
     await page.onSearchChange({
       detail: {
@@ -153,7 +153,7 @@ describe('CharacterBoxesPage', () => {
       },
     } as CustomEvent<{ value?: string | null }>);
 
-    expect(repository.searchCharacters).toHaveBeenLastCalledWith({
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: 'Luffy',
       typeFilter: '',
       classFilter: '',
@@ -165,7 +165,7 @@ describe('CharacterBoxesPage', () => {
   });
 
   it('limits repository lookups to favorites when the favorites filter is active', async () => {
-    const { page, repository } = createPage(undefined, [101, 303]);
+    const { page, characterCatalogCache } = createPage(undefined, [101, 303]);
 
     await page.onFavoriteFilterChange({
       detail: {
@@ -173,7 +173,7 @@ describe('CharacterBoxesPage', () => {
       },
     } as CustomEvent<{ value?: string | null }>);
 
-    expect(repository.searchCharacters).toHaveBeenLastCalledWith({
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
       typeFilter: '',
       classFilter: '',
@@ -184,7 +184,7 @@ describe('CharacterBoxesPage', () => {
   });
 
   it('limits repository lookups to characters already in the selected box', async () => {
-    const { page, repository } = createPage();
+    const { page, characterCatalogCache } = createPage();
 
     page.selectBox('box-1');
     await page.onMembershipFilterChange({
@@ -193,7 +193,7 @@ describe('CharacterBoxesPage', () => {
       },
     } as CustomEvent<{ value?: string | null }>);
 
-    expect(repository.searchCharacters).toHaveBeenLastCalledWith({
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
       typeFilter: '',
       classFilter: '',
@@ -205,7 +205,7 @@ describe('CharacterBoxesPage', () => {
   });
 
   it('excludes characters already in the selected box when the outside-box filter is active', async () => {
-    const { page, repository } = createPage();
+    const { page, characterCatalogCache } = createPage();
 
     page.selectBox('box-1');
     await page.onMembershipFilterChange({
@@ -214,7 +214,7 @@ describe('CharacterBoxesPage', () => {
       },
     } as CustomEvent<{ value?: string | null }>);
 
-    expect(repository.searchCharacters).toHaveBeenLastCalledWith({
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
       typeFilter: '',
       classFilter: '',
@@ -226,7 +226,7 @@ describe('CharacterBoxesPage', () => {
   });
 
   it('intersects the favorites filter with the in-box filter', async () => {
-    const { page, repository } = createPage(undefined, [101, 303]);
+    const { page, characterCatalogCache } = createPage(undefined, [101, 303]);
 
     page.selectBox('box-1');
     await page.onFavoriteFilterChange({
@@ -240,7 +240,7 @@ describe('CharacterBoxesPage', () => {
       },
     } as CustomEvent<{ value?: string | null }>);
 
-    expect(repository.searchCharacters).toHaveBeenLastCalledWith({
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
       typeFilter: '',
       classFilter: '',
@@ -252,7 +252,7 @@ describe('CharacterBoxesPage', () => {
   });
 
   it('clears the favorites filter together with the rest of the filters', async () => {
-    const { page, repository } = createPage(undefined, [101]);
+    const { page, characterCatalogCache } = createPage(undefined, [101]);
 
     await page.onFavoriteFilterChange({
       detail: {
@@ -273,7 +273,7 @@ describe('CharacterBoxesPage', () => {
 
     expect(page.selectedFavoriteFilter()).toBe('all');
     expect(page.selectedMembershipFilter()).toBe('all');
-    expect(repository.searchCharacters).toHaveBeenLastCalledWith({
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
       typeFilter: '',
       classFilter: '',
@@ -361,7 +361,10 @@ function createPage(
       availableTypes: ['DEX', 'STR'],
       availableClasses: ['Fighter', 'Slasher'],
     }),
-    searchCharacters: vi.fn().mockResolvedValue([]),
+  };
+  const characterCatalogCache = {
+    ensureLoaded: vi.fn().mockResolvedValue(undefined),
+    queryCharacters: vi.fn().mockReturnValue([]),
   };
   const i18n = {
     translate: vi.fn((key: string, params?: Record<string, string | number>) => {
@@ -372,9 +375,14 @@ function createPage(
       return key;
     }),
   };
-  const page = new CharacterBoxesPage(repository as never, userState as never, i18n as never);
+  const page = new CharacterBoxesPage(
+    repository as never,
+    characterCatalogCache as never,
+    userState as never,
+    i18n as never,
+  );
 
-  return { page, repository, userState };
+  return { page, repository, characterCatalogCache, userState };
 }
 
 function createCharacter(id: number, name = `Character ${id}`) {
