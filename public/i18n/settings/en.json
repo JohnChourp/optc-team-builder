@@ -48,9 +48,10 @@
     }
   },
   "management": {
-    "copy": "Back up and restore the device-local data used by favorite characters, favorite ships, character boxes, saved teams, and saved enemies.",
+    "copy": "Back up and restore the device-local data used by favorite characters, favorite ships, character boxes, character overrides, saved teams, and saved enemies.",
     "confirm": {
       "deleteCharacterBoxes": "Delete all character boxes? This does not affect your favorites, saved teams, or saved enemies.",
+      "deleteCharacterOverrides": "Delete all local character overrides? This does not affect your favorites, saved teams, or saved enemies.",
       "deleteFavorites": "Delete all favorites? This does not affect your saved teams or saved enemies.",
       "deleteFavoriteShips": "Delete all favorite ships? This does not affect your favorite characters, saved teams, or saved enemies.",
       "deleteSavedEnemies": "Delete all saved enemies? This does not affect your favorites or saved teams.",
@@ -58,13 +59,14 @@
     },
     "counts": {
       "characterBoxes": "{{count}} character boxes",
+      "characterOverrides": "{{count}} character overrides",
       "favorites": "{{count}} favorites",
       "favoriteShips": "{{count}} favorite ships",
       "savedEnemies": "{{count}} saved enemies",
       "savedTeams": "{{count}} saved teams"
     },
     "allData": {
-      "copy": "Export a full device backup bundle or import a smart backup that can contain all data, only one section, or even a single favorites, ships, character boxes, saved teams, or saved enemies export.",
+      "copy": "Export a full device backup bundle or import a smart backup that can contain all data, only one section, or even a single favorites, ships, character boxes, character overrides, saved teams, or saved enemies export.",
       "errors": {
         "generic": "All data import failed.",
         "invalidJson": "The selected backup file is not valid JSON.",
@@ -80,7 +82,7 @@
       },
       "import": "Import all data",
       "processing": "Importing backup data...",
-      "subtitle": "Favorites, ships, boxes, teams, enemies",
+      "subtitle": "Favorites, ships, boxes, overrides, teams, enemies",
       "title": "All Data"
     },
     "characterBoxes": {
@@ -109,6 +111,33 @@
       "import": "Import character boxes",
       "processing": "Importing character boxes...",
       "title": "Character Boxes"
+    },
+    "characterOverrides": {
+      "copy": "Export all local character overrides as JSON, import a local override backup, or delete every local character override from this device.",
+      "deleteAll": "Delete all character overrides",
+      "errors": {
+        "generic": "Character overrides import failed.",
+        "invalidJson": "The selected character override backup is not valid JSON.",
+        "invalidPayload": "The selected character override backup does not match the expected format.",
+        "unsupportedSchema": "The selected character override backup uses an unsupported schema version."
+      },
+      "export": "Export character overrides",
+      "feedback": {
+        "errorTitle": "Character overrides import failed",
+        "loadedFromFile": "Loaded from {{fileName}}.",
+        "stats": {
+          "added": "Added {{count}} new character overrides.",
+          "duplicates": "Collapsed {{count}} duplicate character override ids.",
+          "invalid": "Ignored {{count}} invalid character override entries.",
+          "unknownCharacters": "Ignored {{count}} overrides that target characters not available in this build.",
+          "updated": "Updated {{count}} existing character overrides."
+        },
+        "successTitle": "Character overrides import completed",
+        "warningTitle": "Character overrides import completed with warnings"
+      },
+      "import": "Import character overrides",
+      "processing": "Importing character overrides...",
+      "title": "Character Overrides"
     },
     "favorites": {
       "copy": "Export or import your OPTCbx-compatible favorites file, or clear the full favorites list on this device.",

@@ -10,6 +10,7 @@ import {
   type CharacterAssets,
   type CharacterDetail,
   type CharacterDetailRecord,
+  type CharacterRecord,
   type CharacterSupportEntry,
   type DetailedCharacterSearchQuery,
   type CharacterListItem,
@@ -21,6 +22,11 @@ import {
   type ShipRecord,
   type SuperCriteriaBranch,
 } from '../models/optc.models';
+import { CharacterOverridesService } from './character-overrides.service';
+import {
+  applyOverrideToCharacterDetailRecord,
+  applyOverrideToCharacterListItem,
+} from './character-overrides.utils';
 
 interface SqlRow {
   [key: string]: string | number | null;
@@ -215,7 +221,7 @@ export class OptcRepositoryService {
   private manifestPromise?: Promise<DatasetManifest>;
   private autoBuilderAbilityCatalogPromise?: Promise<AutoBuildAbilityCatalog>;
 
-  public constructor() {
+  public constructor(private readonly characterOverrides: CharacterOverridesService) {
     this.sqlPromise = import('sql.js').then((module) =>
       module.default({
         locateFile: () => SQL_WASM_PATH,
@@ -348,88 +354,41 @@ export class OptcRepositoryService {
   public async searchDetailedCharacters(
     query: DetailedCharacterSearchQuery,
   ): Promise<CharacterDetailRecord[]> {
+    const records = await this.getAllDetailedCharacters();
     const normalizedSelectedTypes = [
-      ...new Set(query.selectedTypes.map((type) => type.trim())),
-    ].filter((type) => type.length);
+      ...new Set(query.selectedTypes.map((type) => type.trim().toUpperCase())),
+    ].filter((type) => type.length > 0);
     const normalizedSelectedClasses = [
       ...new Set(query.selectedClasses.map((characterClass) => characterClass.trim())),
-    ].filter((characterClass) => characterClass.length);
-    const whereClauses = ["(? = '' OR c.search_text LIKE '%' || ? || '%')"];
-    const queryParams: Array<string | number> = [
-      query.searchTerm.toLowerCase(),
-      query.searchTerm.toLowerCase(),
-    ];
-    const selectedTypesMatchMode = query.selectedTypesMatchMode ?? 'all';
-    const selectedClassesMatchMode = query.selectedClassesMatchMode ?? 'all';
-    const orderByClause =
-      query.sortMode === 'newest'
-        ? 'c.id DESC'
-        : query.sortMode === 'powerFirst'
-          ? buildCharacterPowerFirstOrderByClause('c')
-          : 'c.stars DESC, c.id DESC';
+    ].filter((characterClass) => characterClass.length > 0);
+    const filteredRecords = this.sortDetailedRecords(
+      records.filter((record) => {
+        if (!this.matchesSearchTerm(record, query.searchTerm)) {
+          return false;
+        }
 
-    if (normalizedSelectedTypes.length) {
-      const typeClauses = normalizedSelectedTypes.map(() => "(',' || c.type || ',') LIKE ?");
+        if (
+          !this.matchesTypes(record, normalizedSelectedTypes, query.selectedTypesMatchMode ?? 'all')
+        ) {
+          return false;
+        }
 
-      whereClauses.push(
-        selectedTypesMatchMode === 'any'
-          ? `(${typeClauses.join(' OR ')})`
-          : typeClauses.join('\n          AND '),
-      );
-      queryParams.push(...normalizedSelectedTypes.map((type) => `%,${type},%`));
-    }
+        if (
+          !this.matchesClasses(
+            record,
+            normalizedSelectedClasses,
+            query.selectedClassesMatchMode ?? 'all',
+          )
+        ) {
+          return false;
+        }
 
-    if (normalizedSelectedClasses.length) {
-      const classClauses = normalizedSelectedClasses.map(() => 'c.classes_json LIKE ?');
-
-      whereClauses.push(
-        selectedClassesMatchMode === 'any'
-          ? `(${classClauses.join(' OR ')})`
-          : classClauses.join('\n          AND '),
-      );
-      queryParams.push(
-        ...normalizedSelectedClasses.map((characterClass) => `%\"${characterClass}\"%`),
-      );
-    }
-
-    whereClauses.push('1 = 1');
-    queryParams.push(query.limit, query.offset);
-
-    const rows = await this.selectAll(
-      `
-        SELECT
-          c.id,
-          c.name,
-          c.is_incomplete,
-          c.type,
-          c.primary_class,
-          c.secondary_class,
-          c.classes_json,
-          c.stars,
-          c.cost,
-          c.combo,
-          c.max_level,
-          c.max_experience,
-          c.min_hp,
-          c.min_atk,
-          c.min_rcv,
-          c.max_hp,
-          c.max_atk,
-          c.max_rcv,
-          c.growth,
-          c.region_json,
-          c.assets_json,
-          d.detail_json
-        FROM characters c
-        LEFT JOIN character_details d ON d.character_id = c.id
-        WHERE ${whereClauses.join('\n          AND ')}
-        ORDER BY ${orderByClause}
-        LIMIT ? OFFSET ?
-      `,
-      queryParams,
+        return true;
+      }),
+      query.sortMode ?? 'catalog',
     );
 
-    return this.decorateCharacterDetailRows(rows);
+    return filteredRecords.slice(query.offset, query.offset + query.limit);
   }
 
   public async getCharacterById(characterId: number): Promise<CharacterDetailRecord | null> {
@@ -511,66 +470,46 @@ export class OptcRepositoryService {
         ),
       ),
     ];
-    const typeClauses = typeFilters.map(() => "(',' || c.type || ',') LIKE ?");
-    const queryParams: Array<string | number> = typeFilters.map(
-      (typeFilter) => `%,${typeFilter},%`,
+    const detailedRecords = this.sortDetailedRecords(
+      await this.getAllDetailedCharacters(),
+      'powerFirst',
     );
-    const classClauses = selectedClasses.map(() => 'c.classes_json LIKE ?');
-    let whereClause = `(${typeClauses.join(' OR ')})`;
-
-    if (classClauses.length) {
-      whereClause = `(${whereClause} AND (${classClauses.join(' OR ')}))`;
-      queryParams.push(...selectedClasses.map((selectedClass) => `%\"${selectedClass}\"%`));
-    }
-
-    if (lockedCharacterIds.length) {
-      whereClause = `${whereClause} OR c.id IN (${lockedCharacterIds.map(() => '?').join(',')})`;
-      queryParams.push(...lockedCharacterIds);
-    }
-
-    const rows = await this.selectAll(
-      `
-        SELECT
-          c.id,
-          c.name,
-          c.is_incomplete,
-          c.type,
-          c.primary_class,
-          c.secondary_class,
-          c.classes_json,
-          c.stars,
-          c.cost,
-          c.combo,
-          c.max_level,
-          c.max_experience,
-          c.min_hp,
-          c.min_atk,
-          c.min_rcv,
-          c.max_hp,
-          c.max_atk,
-          c.max_rcv,
-          c.growth,
-          c.region_json,
-          c.assets_json,
-          d.detail_json
-        FROM characters c
-        LEFT JOIN character_details d ON d.character_id = c.id
-        WHERE ${whereClause}
-        ORDER BY ${buildCharacterPowerFirstOrderByClause('c')}
-      `,
-      queryParams,
-    );
-    const detailedRecords = await this.decorateCharacterDetailRows(rows);
     const allowedCharacterIdSet = allowedCharacterIds.length ? new Set(allowedCharacterIds) : null;
     const excludedCharacterIdSet = new Set(excludedCharacterIds);
     const lockedCharacterIdSet = new Set(lockedCharacterIds);
-    const filteredRecords = allowedCharacterIdSet
-      ? detailedRecords.filter(
-          (record) =>
-            (allowedCharacterIdSet.has(record.id) || lockedCharacterIdSet.has(record.id)) &&
-            !excludedCharacterIdSet.has(record.id),
-        )
-      : detailedRecords.filter((record) => !excludedCharacterIdSet.has(record.id));
+    const normalizedTypeFilters = [
+      ...new Set(typeFilters.map((type) => type.trim().toUpperCase())),
+    ];
+    const filteredRecords = detailedRecords.filter((record) => {
+      if (excludedCharacterIdSet.has(record.id)) {
+        return false;
+      }
+
+      if (
+        allowedCharacterIdSet &&
+        !allowedCharacterIdSet.has(record.id) &&
+        !lockedCharacterIdSet.has(record.id)
+      ) {
+        return false;
+      }
+
+      if (
+        !lockedCharacterIdSet.has(record.id) &&
+        !this.matchesTypes(record, normalizedTypeFilters, 'any')
+      ) {
+        return false;
+      }
+
+      if (
+        !lockedCharacterIdSet.has(record.id) &&
+        selectedClasses.length > 0 &&
+        !this.matchesClasses(record, selectedClasses, 'any')
+      ) {
+        return false;
+      }
+
+      return true;
+    });
 
     if (limit === null) {
       return filteredRecords;
@@ -682,8 +621,10 @@ export class OptcRepositoryService {
   }
 
   private async decorateCharacterRows(rows: SqlRow[]): Promise<CharacterListItem[]> {
+    await this.characterOverrides.ready();
     const manifest = await this.getDatasetManifest();
     const installedPacks = new Map(manifest.packs.map((pack) => [pack.key, pack]));
+    const overridesByCharacterId = this.characterOverrides.overridesByCharacterId();
 
     return rows.map((row) => {
       const assets = this.parseJson<CharacterAssets>(row['assets_json'], {
@@ -732,21 +673,157 @@ export class OptcRepositoryService {
         imageUrl: this.resolveImageUrl(assets, false, installedPacks),
       };
 
-      return record;
+      return applyOverrideToCharacterListItem(
+        record,
+        overridesByCharacterId.get(record.id) ?? null,
+      );
     });
   }
 
   private async decorateCharacterDetailRows(rows: SqlRow[]): Promise<CharacterDetailRecord[]> {
     const records = await this.decorateCharacterRows(rows);
+    const overridesByCharacterId = this.characterOverrides.overridesByCharacterId();
 
-    return records.map((record, index) => ({
-      ...record,
-      detail: this.normalizeCharacterDetail(
-        this.parseJson<CharacterDetail>(rows[index]['detail_json'], this.emptyDetail(record.id)),
-        record.id,
+    return records.map((record, index) =>
+      applyOverrideToCharacterDetailRecord(
+        {
+          ...record,
+          detail: this.normalizeCharacterDetail(
+            this.parseJson<CharacterDetail>(
+              rows[index]['detail_json'],
+              this.emptyDetail(record.id),
+            ),
+            record.id,
+          ),
+          detailImageUrl: this.resolveImageUrl(record.assets, true),
+        },
+        overridesByCharacterId.get(record.id) ?? null,
       ),
-      detailImageUrl: this.resolveImageUrl(record.assets, true),
-    }));
+    );
+  }
+
+  private async getAllDetailedCharacters(): Promise<CharacterDetailRecord[]> {
+    const rows = await this.selectAll(
+      `
+        SELECT
+          c.id,
+          c.name,
+          c.is_incomplete,
+          c.type,
+          c.primary_class,
+          c.secondary_class,
+          c.classes_json,
+          c.stars,
+          c.cost,
+          c.combo,
+          c.max_level,
+          c.max_experience,
+          c.min_hp,
+          c.min_atk,
+          c.min_rcv,
+          c.max_hp,
+          c.max_atk,
+          c.max_rcv,
+          c.growth,
+          c.region_json,
+          c.assets_json,
+          d.detail_json
+        FROM characters c
+        LEFT JOIN character_details d ON d.character_id = c.id
+        ORDER BY c.stars DESC, c.id DESC
+      `,
+    );
+
+    return this.decorateCharacterDetailRows(rows);
+  }
+
+  private sortDetailedRecords(
+    records: CharacterDetailRecord[],
+    sortMode: DetailedCharacterSearchQuery['sortMode'] | 'catalog',
+  ): CharacterDetailRecord[] {
+    return [...records].sort((left, right) => {
+      if (sortMode === 'newest') {
+        return right.id - left.id;
+      }
+
+      if (sortMode === 'powerFirst') {
+        const leftBucket = left.cost >= 1 && left.cost <= 65 ? 0 : 1;
+        const rightBucket = right.cost >= 1 && right.cost <= 65 ? 0 : 1;
+
+        if (leftBucket !== rightBucket) {
+          return leftBucket - rightBucket;
+        }
+
+        if (leftBucket === 0 && right.cost !== left.cost) {
+          return right.cost - left.cost;
+        }
+
+        return right.id - left.id;
+      }
+
+      if (right.stars !== left.stars) {
+        return right.stars - left.stars;
+      }
+
+      return right.id - left.id;
+    });
+  }
+
+  private matchesSearchTerm(record: CharacterRecord, searchTerm: string): boolean {
+    const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+
+    if (!normalizedSearchTerm.length) {
+      return true;
+    }
+
+    return [
+      record.id,
+      record.name,
+      record.type,
+      record.primaryClass,
+      record.secondaryClass ?? '',
+      ...record.classes,
+    ]
+      .join(' ')
+      .toLowerCase()
+      .includes(normalizedSearchTerm);
+  }
+
+  private matchesTypes(
+    record: CharacterRecord,
+    selectedTypes: string[],
+    matchMode: 'all' | 'any',
+  ): boolean {
+    if (!selectedTypes.length) {
+      return true;
+    }
+
+    const recordTypes = new Set(
+      record.type
+        .split(',')
+        .map((type) => type.trim().toUpperCase())
+        .filter((type) => type.length > 0),
+    );
+
+    return matchMode === 'any'
+      ? selectedTypes.some((type) => recordTypes.has(type))
+      : selectedTypes.every((type) => recordTypes.has(type));
+  }
+
+  private matchesClasses(
+    record: CharacterRecord,
+    selectedClasses: string[],
+    matchMode: 'all' | 'any',
+  ): boolean {
+    if (!selectedClasses.length) {
+      return true;
+    }
+
+    const recordClasses = new Set(record.classes.map((characterClass) => characterClass.trim()));
+
+    return matchMode === 'any'
+      ? selectedClasses.some((characterClass) => recordClasses.has(characterClass))
+      : selectedClasses.every((characterClass) => recordClasses.has(characterClass));
   }
 
   private resolveImageUrl(
@@ -823,9 +900,9 @@ export class OptcRepositoryService {
   }
 
   private emptyDetail(characterId: number): CharacterDetail {
-      return {
-        characterId,
-        captainAbility: null,
+    return {
+      characterId,
+      captainAbility: null,
       captainAbilityVariants: [],
       captainNotes: null,
       specialName: null,
@@ -851,7 +928,7 @@ export class OptcRepositoryService {
       rushSugoSpecialData: null,
       superClass: null,
       rumbleData: null,
-      };
+    };
   }
 
   private normalizeCharacterDetail(detail: CharacterDetail, characterId: number): CharacterDetail {

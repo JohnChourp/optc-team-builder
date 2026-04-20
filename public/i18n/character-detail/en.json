@@ -2,8 +2,12 @@
   "fallbackTitle": "Character",
   "hero": {
     "addFavorite": "Add favorite",
+    "edit": "Edit locally",
+    "exportJson": "Export JSON",
     "favorited": "Favorited",
+    "importJson": "Import JSON",
     "openTeamBuilder": "Open team builder",
+    "resetOverride": "Reset local changes",
     "summary": "Cost {{cost}} • Max Lv {{maxLevel}} • {{stars}}★ unit"
   },
   "fields": {

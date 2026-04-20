@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 
 import { type CharacterListItem, type CharacterSearchQuery } from '../models/optc.models';
+import { CharacterOverridesService } from './character-overrides.service';
 import { OptcRepositoryService } from './optc-repository.service';
 
 @Injectable({ providedIn: 'root' })
@@ -13,15 +14,19 @@ export class CharacterCatalogCacheService {
 
   private preloadPromise: Promise<void> | null = null;
   private readonly searchIndex = new Map<number, string>();
+  private lastAppliedOverrideRevision = -1;
 
-  public constructor(private readonly repository: OptcRepositoryService) {}
+  public constructor(
+    private readonly repository: OptcRepositoryService,
+    private readonly characterOverrides: CharacterOverridesService,
+  ) {}
 
   public kickoffPreload(): void {
     void this.ensureLoaded().catch(() => undefined);
   }
 
   public async ensureLoaded(): Promise<void> {
-    if (this.loaded()) {
+    if (this.loaded() && this.lastAppliedOverrideRevision === this.characterOverrides.revision()) {
       return;
     }
 
@@ -35,13 +40,16 @@ export class CharacterCatalogCacheService {
       .getAllCharacters()
       .then((catalog) => {
         this.catalog.set(catalog);
-        this.catalogById.set(new Map(catalog.map((character) => [character.id, character] as const)));
+        this.catalogById.set(
+          new Map(catalog.map((character) => [character.id, character] as const)),
+        );
         this.searchIndex.clear();
 
         catalog.forEach((character) => {
           this.searchIndex.set(character.id, this.buildSearchText(character));
         });
 
+        this.lastAppliedOverrideRevision = this.characterOverrides.revision();
         this.loaded.set(true);
       })
       .catch((error: unknown) => {
@@ -74,41 +82,40 @@ export class CharacterCatalogCacheService {
     const normalizedSearchTerm = query.searchTerm.trim().toLowerCase();
     const normalizedTypeFilter = query.typeFilter.trim().toLowerCase();
     const normalizedClassFilter = query.classFilter.trim().toLowerCase();
-    const filtered = this.catalog()
-      .filter((character) => {
-        if (allowedCharacterIdSet && !allowedCharacterIdSet.has(character.id)) {
+    const filtered = this.catalog().filter((character) => {
+      if (allowedCharacterIdSet && !allowedCharacterIdSet.has(character.id)) {
+        return false;
+      }
+
+      if (excludedCharacterIdSet.has(character.id)) {
+        return false;
+      }
+
+      if (normalizedSearchTerm.length) {
+        const searchText = this.searchIndex.get(character.id) ?? '';
+
+        if (!searchText.includes(normalizedSearchTerm)) {
           return false;
         }
+      }
 
-        if (excludedCharacterIdSet.has(character.id)) {
-          return false;
-        }
+      if (
+        normalizedTypeFilter.length &&
+        !character.type.toLowerCase().includes(normalizedTypeFilter)
+      ) {
+        return false;
+      }
 
-        if (normalizedSearchTerm.length) {
-          const searchText = this.searchIndex.get(character.id) ?? '';
+      if (
+        normalizedClassFilter.length &&
+        character.primaryClass.toLowerCase() !== normalizedClassFilter &&
+        character.secondaryClass?.toLowerCase() !== normalizedClassFilter
+      ) {
+        return false;
+      }
 
-          if (!searchText.includes(normalizedSearchTerm)) {
-            return false;
-          }
-        }
-
-        if (
-          normalizedTypeFilter.length &&
-          !character.type.toLowerCase().includes(normalizedTypeFilter)
-        ) {
-          return false;
-        }
-
-        if (
-          normalizedClassFilter.length &&
-          character.primaryClass.toLowerCase() !== normalizedClassFilter &&
-          character.secondaryClass?.toLowerCase() !== normalizedClassFilter
-        ) {
-          return false;
-        }
-
-        return true;
-      });
+      return true;
+    });
 
     return filtered.slice(query.offset, query.offset + query.limit);
   }

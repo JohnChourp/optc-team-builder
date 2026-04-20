@@ -1,0 +1,99 @@
+.character-edit-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.editor-card,
+.intro-card,
+.feedback-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.form-grid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.field span {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.toggle-row small {
+  display: block;
+  margin-top: 0.25rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.image-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.image-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.image-card__label {
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.image-card img {
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  border-radius: 0.85rem;
+  background: rgba(4, 10, 24, 0.78);
+}
+
+.image-card__actions,
+.top-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.json-editor {
+  --min-height: 360px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+}
+
+.feedback-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.feedback-card--error {
+  border-color: rgba(255, 120, 120, 0.45);
+}
+
+.feedback-card--success {
+  border-color: rgba(123, 242, 176, 0.45);
+}
+
+@media (max-width: 720px) {
+  .toggle-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

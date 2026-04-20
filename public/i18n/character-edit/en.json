@@ -1,0 +1,49 @@
+{
+  "title": "Edit character",
+  "loading": "Loading editable character record...",
+  "intro": {
+    "eyebrow": "Local override",
+    "title": "Edit {{name}}",
+    "copy": "Save a local-only override for this character, including custom art and a full advanced detail payload."
+  },
+  "sections": {
+    "core": "Core",
+    "stats": "Stats",
+    "images": "Images",
+    "advancedJson": "Advanced JSON"
+  },
+  "fields": {
+    "name": "Name",
+    "type": "Type",
+    "primaryClass": "Primary class",
+    "secondaryClass": "Secondary class",
+    "stars": "Stars",
+    "cost": "Cost",
+    "combo": "Combo",
+    "maxLevel": "Max level",
+    "maxExperience": "Max experience",
+    "minHp": "Min HP",
+    "minAtk": "Min ATK",
+    "minRcv": "Min RCV",
+    "maxHp": "Max HP",
+    "maxAtk": "Max ATK",
+    "maxRcv": "Max RCV",
+    "growth": "Growth",
+    "incomplete": "Incomplete data",
+    "incompleteCopy": "Mark this override as incomplete when local edits still do not represent a full final record."
+  },
+  "images": {
+    "thumbnail": "Thumbnail image",
+    "detail": "Detail image"
+  },
+  "advanced": {
+    "copy": "Edit the full override payload below. Images stay outside this JSON editor and are managed in the Images section."
+  },
+  "actions": {
+    "save": "Save local override",
+    "resetOverride": "Reset local override",
+    "upload": "Upload image",
+    "clear": "Clear image",
+    "applyJson": "Apply JSON to draft"
+  }
+}

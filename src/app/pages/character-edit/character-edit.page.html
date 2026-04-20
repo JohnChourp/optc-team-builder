@@ -1,0 +1,287 @@
+<ng-container *transloco="let t; scope: 'character-edit'; read: 'character-edit'">
+  <ion-header class="ion-no-border">
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-back-button
+          [defaultHref]="character() ? '/characters/' + character()?.id : '/tabs/characters'"
+        ></ion-back-button>
+      </ion-buttons>
+      <ion-title>{{ character()?.name ?? t('title') }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content [fullscreen]="true">
+    <div class="page-shell character-edit-shell">
+      @if (loading()) {
+        <section class="loading-card glass-card">
+          <ion-spinner name="crescent"></ion-spinner>
+          <span>{{ t('loading') }}</span>
+        </section>
+      }
+
+      @if (!loading() && character(); as current) {
+        <section class="glass-card intro-card">
+          <div class="section-label">{{ t('intro.eyebrow') }}</div>
+          <h1 class="section-title">{{ t('intro.title', { name: current.name }) }}</h1>
+          <p class="section-copy">{{ t('intro.copy') }}</p>
+
+          <div class="top-actions">
+            <ion-button fill="solid" color="warning" [disabled]="!canSave()" (click)="save()">
+              {{ t('actions.save') }}
+            </ion-button>
+            @if (hasExistingOverride()) {
+              <ion-button
+                fill="outline"
+                color="danger"
+                [disabled]="saving()"
+                (click)="resetLocalChanges()"
+              >
+                {{ t('actions.resetOverride') }}
+              </ion-button>
+            }
+          </div>
+        </section>
+
+        @if (feedback(); as currentFeedback) {
+          <section
+            class="glass-card feedback-card"
+            [class.feedback-card--error]="currentFeedback.tone === 'error'"
+            [class.feedback-card--success]="currentFeedback.tone === 'success'"
+          >
+            {{ currentFeedback.message }}
+          </section>
+        }
+
+        <section class="glass-card editor-card">
+          <div class="section-label">{{ t('sections.core') }}</div>
+          <div class="form-grid">
+            <label class="field">
+              <span>{{ t('fields.name') }}</span>
+              <ion-input
+                fill="outline"
+                [value]="name()"
+                (ionInput)="onNameChange($event)"
+              ></ion-input>
+            </label>
+            <label class="field">
+              <span>{{ t('fields.type') }}</span>
+              <ion-input
+                fill="outline"
+                [value]="type()"
+                (ionInput)="onTypeChange($event)"
+              ></ion-input>
+            </label>
+            <label class="field">
+              <span>{{ t('fields.primaryClass') }}</span>
+              <ion-input
+                fill="outline"
+                [value]="primaryClass()"
+                (ionInput)="onPrimaryClassChange($event)"
+              ></ion-input>
+            </label>
+            <label class="field">
+              <span>{{ t('fields.secondaryClass') }}</span>
+              <ion-input
+                fill="outline"
+                [value]="secondaryClass()"
+                (ionInput)="onSecondaryClassChange($event)"
+              ></ion-input>
+            </label>
+            <label class="field">
+              <span>{{ t('fields.stars') }}</span>
+              <ion-input
+                type="number"
+                fill="outline"
+                [value]="stars()"
+                (ionInput)="onNumericInputChange('stars', $event)"
+              ></ion-input>
+            </label>
+            <label class="field">
+              <span>{{ t('fields.cost') }}</span>
+              <ion-input
+                type="number"
+                fill="outline"
+                [value]="cost()"
+                (ionInput)="onNumericInputChange('cost', $event)"
+              ></ion-input>
+            </label>
+            <label class="field">
+              <span>{{ t('fields.combo') }}</span>
+              <ion-input
+                type="number"
+                fill="outline"
+                [value]="combo()"
+                (ionInput)="onNumericInputChange('combo', $event)"
+              ></ion-input>
+            </label>
+            <label class="field">
+              <span>{{ t('fields.maxLevel') }}</span>
+              <ion-input
+                type="number"
+                fill="outline"
+                [value]="maxLevel()"
+                (ionInput)="onNumericInputChange('maxLevel', $event)"
+              ></ion-input>
+            </label>
+            <label class="field">
+              <span>{{ t('fields.maxExperience') }}</span>
+              <ion-input
+                type="number"
+                fill="outline"
+                [value]="maxExperience()"
+                (ionInput)="onNumericInputChange('maxExperience', $event)"
+              ></ion-input>
+            </label>
+          </div>
+
+          <div class="toggle-row">
+            <div>
+              <strong>{{ t('fields.incomplete') }}</strong>
+              <small>{{ t('fields.incompleteCopy') }}</small>
+            </div>
+            <ion-toggle
+              color="warning"
+              [checked]="isIncomplete()"
+              (ionChange)="onIncompleteChange($event)"
+            ></ion-toggle>
+          </div>
+        </section>
+
+        <section class="glass-card editor-card">
+          <div class="section-label">{{ t('sections.stats') }}</div>
+          <div class="form-grid">
+            <label class="field">
+              <span>{{ t('fields.minHp') }}</span>
+              <ion-input
+                type="number"
+                fill="outline"
+                [value]="minHp()"
+                (ionInput)="onNumericInputChange('minHp', $event)"
+              ></ion-input>
+            </label>
+            <label class="field">
+              <span>{{ t('fields.minAtk') }}</span>
+              <ion-input
+                type="number"
+                fill="outline"
+                [value]="minAtk()"
+                (ionInput)="onNumericInputChange('minAtk', $event)"
+              ></ion-input>
+            </label>
+            <label class="field">
+              <span>{{ t('fields.minRcv') }}</span>
+              <ion-input
+                type="number"
+                fill="outline"
+                [value]="minRcv()"
+                (ionInput)="onNumericInputChange('minRcv', $event)"
+              ></ion-input>
+            </label>
+            <label class="field">
+              <span>{{ t('fields.maxHp') }}</span>
+              <ion-input
+                type="number"
+                fill="outline"
+                [value]="maxHp()"
+                (ionInput)="onNumericInputChange('maxHp', $event)"
+              ></ion-input>
+            </label>
+            <label class="field">
+              <span>{{ t('fields.maxAtk') }}</span>
+              <ion-input
+                type="number"
+                fill="outline"
+                [value]="maxAtk()"
+                (ionInput)="onNumericInputChange('maxAtk', $event)"
+              ></ion-input>
+            </label>
+            <label class="field">
+              <span>{{ t('fields.maxRcv') }}</span>
+              <ion-input
+                type="number"
+                fill="outline"
+                [value]="maxRcv()"
+                (ionInput)="onNumericInputChange('maxRcv', $event)"
+              ></ion-input>
+            </label>
+            <label class="field">
+              <span>{{ t('fields.growth') }}</span>
+              <ion-input
+                type="number"
+                fill="outline"
+                [value]="growth()"
+                (ionInput)="onNumericInputChange('growth', $event)"
+              ></ion-input>
+            </label>
+          </div>
+        </section>
+
+        <section class="glass-card editor-card">
+          <div class="section-label">{{ t('sections.images') }}</div>
+          <div class="image-grid">
+            <article class="image-card">
+              <div class="image-card__label">{{ t('images.thumbnail') }}</div>
+              @if (thumbnailPreviewUrl()) {
+                <img [src]="thumbnailPreviewUrl()" [alt]="t('images.thumbnail')" />
+              }
+              <input
+                #thumbnailInput
+                type="file"
+                accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                hidden
+                (change)="onThumbnailFileSelected($event, thumbnailInput)"
+              />
+              <div class="image-card__actions">
+                <ion-button fill="outline" color="light" (click)="thumbnailInput.click()">
+                  {{ t('actions.upload') }}
+                </ion-button>
+                <ion-button fill="outline" color="danger" (click)="clearThumbnailImage()">
+                  {{ t('actions.clear') }}
+                </ion-button>
+              </div>
+            </article>
+
+            <article class="image-card">
+              <div class="image-card__label">{{ t('images.detail') }}</div>
+              @if (detailPreviewUrl()) {
+                <img [src]="detailPreviewUrl()" [alt]="t('images.detail')" />
+              }
+              <input
+                #detailInput
+                type="file"
+                accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                hidden
+                (change)="onDetailFileSelected($event, detailInput)"
+              />
+              <div class="image-card__actions">
+                <ion-button fill="outline" color="light" (click)="detailInput.click()">
+                  {{ t('actions.upload') }}
+                </ion-button>
+                <ion-button fill="outline" color="danger" (click)="clearDetailImage()">
+                  {{ t('actions.clear') }}
+                </ion-button>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="glass-card editor-card">
+          <div class="section-label">{{ t('sections.advancedJson') }}</div>
+          <p class="section-copy">{{ t('advanced.copy') }}</p>
+          <ion-textarea
+            class="json-editor"
+            [autoGrow]="true"
+            fill="outline"
+            [value]="advancedJsonValue()"
+            (ionInput)="onAdvancedJsonChange($event)"
+          ></ion-textarea>
+          <div class="top-actions">
+            <ion-button fill="outline" color="light" (click)="applyAdvancedJson()">
+              {{ t('actions.applyJson') }}
+            </ion-button>
+          </div>
+        </section>
+      }
+    </div>
+  </ion-content>
+</ng-container>

@@ -1,6 +1,6 @@
-import { CommonModule } from "@angular/common";
-import { Component, OnInit, computed, signal } from "@angular/core";
-import { RouterLink } from "@angular/router";
+import { CommonModule } from '@angular/common';
+import { Component, OnInit, computed, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import {
   IonButton,
   IonContent,
@@ -11,24 +11,25 @@ import {
   IonSpinner,
   IonTitle,
   IonToolbar,
-} from "@ionic/angular/standalone";
-import { TranslocoDirective, TranslocoPipe } from "@jsverse/transloco";
+} from '@ionic/angular/standalone';
+import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 
-import { type SupportedLanguage } from "../../core/i18n/app-i18n.types";
-import { type DatasetManifest } from "../../core/models/optc.models";
-import { AnalyticsConsentService } from "../../core/services/analytics-consent.service";
-import { AppI18nService } from "../../core/services/app-i18n.service";
-import { OptcbxImportService } from "../../core/services/optcbx-import.service";
-import { OptcRepositoryService } from "../../core/services/optc-repository.service";
+import { type SupportedLanguage } from '../../core/i18n/app-i18n.types';
+import { type DatasetManifest } from '../../core/models/optc.models';
+import { AnalyticsConsentService } from '../../core/services/analytics-consent.service';
+import { AppI18nService } from '../../core/services/app-i18n.service';
+import { CharacterOverridesService } from '../../core/services/character-overrides.service';
+import { OptcbxImportService } from '../../core/services/optcbx-import.service';
+import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import {
   UserStateService,
   type AutoTeamBuilderWorkerMode,
-} from "../../core/services/user-state.service";
+} from '../../core/services/user-state.service';
 import {
   buildOptcbxFavoritesExportPayload,
   downloadOptcbxFavoritesExport,
   type OptcbxFavoritesExportPayload,
-} from "../characters/characters-favorites.utils";
+} from '../characters/characters-favorites.utils';
 import {
   buildCharacterBoxesTransferPayload,
   clearUnavailableCharacterBoxCharacterIds,
@@ -38,7 +39,16 @@ import {
   sanitizeCharacterBoxesImportPayload,
   type CharacterBoxesImportError,
   type CharacterBoxesTransferPayload,
-} from "../character-boxes/character-boxes-transfer.utils";
+} from '../character-boxes/character-boxes-transfer.utils';
+import {
+  buildCharacterOverridesTransferPayload,
+  downloadCharacterOverridesExport,
+  parseCharacterOverridesImportPayload,
+  parseCharacterOverridesImportPayloadValue,
+  sanitizeCharacterOverridesImportPayload,
+  type CharacterOverridesImportError,
+  type CharacterOverridesTransferPayload,
+} from '../character-detail/character-overrides-transfer.utils';
 import {
   buildSavedEnemiesTransferPayload,
   downloadSavedEnemiesExport,
@@ -46,7 +56,7 @@ import {
   parseSavedEnemiesImportPayloadValue,
   sanitizeSavedEnemiesImportPayload,
   type SavedEnemiesImportError,
-} from "../saved-enemies/saved-enemies-transfer.utils";
+} from '../saved-enemies/saved-enemies-transfer.utils';
 import {
   buildSavedTeamsTransferPayload,
   clearUnavailableSavedTeamSlots,
@@ -55,13 +65,13 @@ import {
   parseSavedTeamsImportPayloadValue,
   sanitizeSavedTeamsImportPayload,
   type SavedTeamsImportError,
-} from "../saved-teams/saved-teams-transfer.utils";
+} from '../saved-teams/saved-teams-transfer.utils';
 import {
   buildAllDataTransferPayload,
   downloadAllDataExport,
   parseAllDataImportCandidate,
   type AllDataTransferPayload,
-} from "./all-data-transfer.utils";
+} from './all-data-transfer.utils';
 import {
   buildFavoriteShipsTransferPayload,
   downloadFavoriteShipsExport,
@@ -71,12 +81,12 @@ import {
   sanitizeFavoriteShipsImportPayload,
   type FavoriteShipsImportError,
   type FavoriteShipsTransferPayload,
-} from "./favorite-ships-transfer.utils";
+} from './favorite-ships-transfer.utils';
 
 interface TransferFeedback {
   details: string[];
   title: string;
-  tone: "error" | "success" | "warning";
+  tone: 'error' | 'success' | 'warning';
 }
 
 interface CombinedImportSectionFeedback {
@@ -90,7 +100,7 @@ interface CombinedImportSectionError {
 }
 
 @Component({
-  selector: "app-settings-page",
+  selector: 'app-settings-page',
   standalone: true,
   imports: [
     CommonModule,
@@ -107,8 +117,8 @@ interface CombinedImportSectionError {
     TranslocoDirective,
     TranslocoPipe,
   ],
-  templateUrl: "./settings.page.html",
-  styleUrl: "./settings.page.scss",
+  templateUrl: './settings.page.html',
+  styleUrl: './settings.page.scss',
 })
 export class SettingsPage implements OnInit {
   public readonly manifest = signal<DatasetManifest | null>(null);
@@ -117,6 +127,7 @@ export class SettingsPage implements OnInit {
   public readonly favoriteIds;
   public readonly favoriteShipIds;
   public readonly characterBoxes;
+  public readonly characterOverrides;
   public readonly savedTeams;
   public readonly savedEnemies;
   public readonly autoTeamBuilderWorkerPreference;
@@ -131,6 +142,12 @@ export class SettingsPage implements OnInit {
   public readonly canDeleteAllFavoriteShips = computed(() => this.favoriteShipIds().length > 0);
   public readonly canExportCharacterBoxes = computed(() => this.characterBoxes().length > 0);
   public readonly canDeleteAllCharacterBoxes = computed(() => this.characterBoxes().length > 0);
+  public readonly canExportCharacterOverrides = computed(
+    () => this.characterOverrides().length > 0,
+  );
+  public readonly canDeleteAllCharacterOverrides = computed(
+    () => this.characterOverrides().length > 0,
+  );
   public readonly canExportSavedTeams = computed(() => this.savedTeams().length > 0);
   public readonly canDeleteAllSavedTeams = computed(() => this.savedTeams().length > 0);
   public readonly canExportSavedEnemies = computed(() => this.savedEnemies().length > 0);
@@ -140,25 +157,28 @@ export class SettingsPage implements OnInit {
   public readonly favoritesImporting = signal(false);
   public readonly favoriteShipsImporting = signal(false);
   public readonly characterBoxesImporting = signal(false);
+  public readonly characterOverridesImporting = signal(false);
   public readonly savedTeamsImporting = signal(false);
   public readonly savedEnemiesImporting = signal(false);
   public readonly allDataFeedback = signal<TransferFeedback | null>(null);
   public readonly favoritesFeedback = signal<TransferFeedback | null>(null);
   public readonly favoriteShipsFeedback = signal<TransferFeedback | null>(null);
   public readonly characterBoxesFeedback = signal<TransferFeedback | null>(null);
+  public readonly characterOverridesFeedback = signal<TransferFeedback | null>(null);
   public readonly savedTeamsFeedback = signal<TransferFeedback | null>(null);
   public readonly savedEnemiesFeedback = signal<TransferFeedback | null>(null);
 
   public readonly commands = [
-    "npm run data:import",
-    "npm run data:import:glo-thumbs",
-    "npm run data:import:all",
+    'npm run data:import',
+    'npm run data:import:glo-thumbs',
+    'npm run data:import:all',
   ];
 
   public constructor(
     private readonly repository: OptcRepositoryService,
     private readonly i18n: AppI18nService,
     private readonly userState: UserStateService,
+    private readonly characterOverrideState: CharacterOverridesService,
     private readonly analyticsConsentService: AnalyticsConsentService,
     private readonly optcbxImport: OptcbxImportService,
   ) {
@@ -167,6 +187,7 @@ export class SettingsPage implements OnInit {
     this.favoriteIds = this.userState.favoriteCharacterIds;
     this.favoriteShipIds = this.userState.favoriteShipIds;
     this.characterBoxes = this.userState.characterBoxes;
+    this.characterOverrides = this.characterOverrideState.overrides;
     this.savedTeams = this.userState.savedTeams;
     this.savedEnemies = this.userState.savedEnemies;
     this.autoTeamBuilderWorkerPreference = this.userState.autoTeamBuilderWorkerPreference;
@@ -184,12 +205,12 @@ export class SettingsPage implements OnInit {
   }
 
   public async ngOnInit(): Promise<void> {
-    await this.userState.ready();
+    await Promise.all([this.userState.ready(), this.characterOverrideState.ready()]);
     this.manifest.set(await this.repository.getDatasetManifest());
   }
 
   public ionViewDidEnter(): void {
-    console.log("SettingsPage component");
+    console.log('SettingsPage component');
   }
 
   public async onLanguageChange(
@@ -209,7 +230,7 @@ export class SettingsPage implements OnInit {
   ): Promise<void> {
     const mode = event.detail.value;
 
-    if (mode !== "auto" && mode !== "manual") {
+    if (mode !== 'auto' && mode !== 'manual') {
       return;
     }
 
@@ -296,6 +317,19 @@ export class SettingsPage implements OnInit {
     await this.importFavoriteShips(file);
   }
 
+  public async onCharacterOverridesFileSelected(
+    event: Event,
+    input: HTMLInputElement,
+  ): Promise<void> {
+    const file = this.extractSelectedFile(event, input);
+
+    if (!file) {
+      return;
+    }
+
+    await this.importCharacterOverrides(file);
+  }
+
   public async onSavedEnemiesFileSelected(event: Event, input: HTMLInputElement): Promise<void> {
     const file = this.extractSelectedFile(event, input);
 
@@ -317,6 +351,7 @@ export class SettingsPage implements OnInit {
         favorites,
         favoriteShips,
         characterBoxes: this.buildCharacterBoxesExportPayload(),
+        characterOverrides: this.buildCharacterOverridesExportPayload(),
         savedTeams: buildSavedTeamsTransferPayload(this.savedTeams()),
         savedEnemies: buildSavedEnemiesTransferPayload(this.savedEnemies()),
       }),
@@ -347,6 +382,14 @@ export class SettingsPage implements OnInit {
     downloadCharacterBoxesExport(this.buildCharacterBoxesExportPayload());
   }
 
+  public exportCharacterOverrides(): void {
+    if (!this.canExportCharacterOverrides()) {
+      return;
+    }
+
+    downloadCharacterOverridesExport(this.buildCharacterOverridesExportPayload());
+  }
+
   public exportSavedTeams(): void {
     if (!this.canExportSavedTeams()) {
       return;
@@ -367,7 +410,7 @@ export class SettingsPage implements OnInit {
     if (
       !this.canDeleteAllFavorites() ||
       !this.confirmAction(
-        this.i18n.translate("management.confirm.deleteFavorites", undefined, "settings"),
+        this.i18n.translate('management.confirm.deleteFavorites', undefined, 'settings'),
       )
     ) {
       return;
@@ -380,7 +423,7 @@ export class SettingsPage implements OnInit {
     if (
       !this.canDeleteAllFavoriteShips() ||
       !this.confirmAction(
-        this.i18n.translate("management.confirm.deleteFavoriteShips", undefined, "settings"),
+        this.i18n.translate('management.confirm.deleteFavoriteShips', undefined, 'settings'),
       )
     ) {
       return;
@@ -393,7 +436,7 @@ export class SettingsPage implements OnInit {
     if (
       !this.canDeleteAllSavedTeams() ||
       !this.confirmAction(
-        this.i18n.translate("management.confirm.deleteSavedTeams", undefined, "settings"),
+        this.i18n.translate('management.confirm.deleteSavedTeams', undefined, 'settings'),
       )
     ) {
       return;
@@ -406,7 +449,7 @@ export class SettingsPage implements OnInit {
     if (
       !this.canDeleteAllCharacterBoxes() ||
       !this.confirmAction(
-        this.i18n.translate("management.confirm.deleteCharacterBoxes", undefined, "settings"),
+        this.i18n.translate('management.confirm.deleteCharacterBoxes', undefined, 'settings'),
       )
     ) {
       return;
@@ -415,11 +458,24 @@ export class SettingsPage implements OnInit {
     await this.userState.clearAllCharacterBoxes();
   }
 
+  public async deleteAllCharacterOverrides(): Promise<void> {
+    if (
+      !this.canDeleteAllCharacterOverrides() ||
+      !this.confirmAction(
+        this.i18n.translate('management.confirm.deleteCharacterOverrides', undefined, 'settings'),
+      )
+    ) {
+      return;
+    }
+
+    await this.characterOverrideState.clearAllOverrides();
+  }
+
   public async deleteAllSavedEnemies(): Promise<void> {
     if (
       !this.canDeleteAllSavedEnemies() ||
       !this.confirmAction(
-        this.i18n.translate("management.confirm.deleteSavedEnemies", undefined, "settings"),
+        this.i18n.translate('management.confirm.deleteSavedEnemies', undefined, 'settings'),
       )
     ) {
       return;
@@ -432,7 +488,7 @@ export class SettingsPage implements OnInit {
     const target = event.target as HTMLInputElement;
     const [file] = Array.from(target.files ?? []);
 
-    input.value = "";
+    input.value = '';
 
     return file ?? null;
   }
@@ -457,6 +513,10 @@ export class SettingsPage implements OnInit {
     return buildCharacterBoxesTransferPayload(this.characterBoxes());
   }
 
+  private buildCharacterOverridesExportPayload(): CharacterOverridesTransferPayload {
+    return buildCharacterOverridesTransferPayload(this.characterOverrides());
+  }
+
   private async importAllData(file: File): Promise<void> {
     this.allDataImporting.set(true);
     this.allDataFeedback.set(null);
@@ -467,15 +527,15 @@ export class SettingsPage implements OnInit {
       let feedback: TransferFeedback;
 
       switch (importCandidate.kind) {
-        case "all-data":
+        case 'all-data':
           feedback = await this.importAllDataBundle(importCandidate.payload, file.name);
           break;
-        case "favorites":
+        case 'favorites':
           feedback = this.buildCombinedAllDataFeedback(
             file.name,
             [
               {
-                label: this.resolveAllDataSectionLabel("favorites"),
+                label: this.resolveAllDataSectionLabel('favorites'),
                 feedback: await this.importFavoritesContent({
                   parsedPayload: importCandidate.payload,
                 }),
@@ -484,12 +544,12 @@ export class SettingsPage implements OnInit {
             [],
           );
           break;
-        case "favorite-ships":
+        case 'favorite-ships':
           feedback = this.buildCombinedAllDataFeedback(
             file.name,
             [
               {
-                label: this.resolveAllDataSectionLabel("favoriteShips"),
+                label: this.resolveAllDataSectionLabel('favoriteShips'),
                 feedback: await this.importFavoriteShipsContent({
                   fileName: file.name,
                   parsedPayload: importCandidate.payload,
@@ -499,12 +559,12 @@ export class SettingsPage implements OnInit {
             [],
           );
           break;
-        case "saved-teams":
+        case 'saved-teams':
           feedback = this.buildCombinedAllDataFeedback(
             file.name,
             [
               {
-                label: this.resolveAllDataSectionLabel("savedTeams"),
+                label: this.resolveAllDataSectionLabel('savedTeams'),
                 feedback: await this.importSavedTeamsContent({
                   fileName: file.name,
                   parsedPayload: importCandidate.payload,
@@ -514,12 +574,12 @@ export class SettingsPage implements OnInit {
             [],
           );
           break;
-        case "saved-enemies":
+        case 'saved-enemies':
           feedback = this.buildCombinedAllDataFeedback(
             file.name,
             [
               {
-                label: this.resolveAllDataSectionLabel("savedEnemies"),
+                label: this.resolveAllDataSectionLabel('savedEnemies'),
                 feedback: await this.importSavedEnemiesContent({
                   fileName: file.name,
                   parsedPayload: importCandidate.payload,
@@ -529,13 +589,28 @@ export class SettingsPage implements OnInit {
             [],
           );
           break;
-        case "character-boxes":
+        case 'character-boxes':
           feedback = this.buildCombinedAllDataFeedback(
             file.name,
             [
               {
-                label: this.resolveAllDataSectionLabel("characterBoxes"),
+                label: this.resolveAllDataSectionLabel('characterBoxes'),
                 feedback: await this.importCharacterBoxesContent({
+                  fileName: file.name,
+                  parsedPayload: importCandidate.payload,
+                }),
+              },
+            ],
+            [],
+          );
+          break;
+        case 'character-overrides':
+          feedback = this.buildCombinedAllDataFeedback(
+            file.name,
+            [
+              {
+                label: this.resolveAllDataSectionLabel('characterOverrides'),
+                feedback: await this.importCharacterOverridesContent({
                   fileName: file.name,
                   parsedPayload: importCandidate.payload,
                 }),
@@ -549,8 +624,8 @@ export class SettingsPage implements OnInit {
       this.allDataFeedback.set(feedback);
     } catch (error) {
       this.allDataFeedback.set({
-        tone: "error",
-        title: this.i18n.translate("management.allData.feedback.errorTitle", undefined, "settings"),
+        tone: 'error',
+        title: this.i18n.translate('management.allData.feedback.errorTitle', undefined, 'settings'),
         details: [this.resolveAllDataImportError(error)],
       });
     } finally {
@@ -568,7 +643,7 @@ export class SettingsPage implements OnInit {
     if (payload.favorites !== undefined) {
       await this.collectAllDataSectionResult({
         failedSections,
-        label: this.resolveAllDataSectionLabel("favorites"),
+        label: this.resolveAllDataSectionLabel('favorites'),
         run: () => this.importFavoritesContent({ parsedPayload: payload.favorites as unknown }),
         successfulSections,
         resolveError: (error) => this.resolveFavoritesImportError(error),
@@ -578,7 +653,7 @@ export class SettingsPage implements OnInit {
     if (payload.favoriteShips !== undefined) {
       await this.collectAllDataSectionResult({
         failedSections,
-        label: this.resolveAllDataSectionLabel("favoriteShips"),
+        label: this.resolveAllDataSectionLabel('favoriteShips'),
         run: () =>
           this.importFavoriteShipsContent({
             fileName,
@@ -592,7 +667,7 @@ export class SettingsPage implements OnInit {
     if (payload.savedTeams !== undefined) {
       await this.collectAllDataSectionResult({
         failedSections,
-        label: this.resolveAllDataSectionLabel("savedTeams"),
+        label: this.resolveAllDataSectionLabel('savedTeams'),
         run: () =>
           this.importSavedTeamsContent({
             fileName,
@@ -606,7 +681,7 @@ export class SettingsPage implements OnInit {
     if (payload.characterBoxes !== undefined) {
       await this.collectAllDataSectionResult({
         failedSections,
-        label: this.resolveAllDataSectionLabel("characterBoxes"),
+        label: this.resolveAllDataSectionLabel('characterBoxes'),
         run: () =>
           this.importCharacterBoxesContent({
             fileName,
@@ -617,10 +692,24 @@ export class SettingsPage implements OnInit {
       });
     }
 
+    if (payload.characterOverrides !== undefined) {
+      await this.collectAllDataSectionResult({
+        failedSections,
+        label: this.resolveAllDataSectionLabel('characterOverrides'),
+        run: () =>
+          this.importCharacterOverridesContent({
+            fileName,
+            parsedPayload: payload.characterOverrides as unknown,
+          }),
+        successfulSections,
+        resolveError: (error) => this.resolveCharacterOverridesImportError(error),
+      });
+    }
+
     if (payload.savedEnemies !== undefined) {
       await this.collectAllDataSectionResult({
         failedSections,
-        label: this.resolveAllDataSectionLabel("savedEnemies"),
+        label: this.resolveAllDataSectionLabel('savedEnemies'),
         run: () =>
           this.importSavedEnemiesContent({
             fileName,
@@ -660,69 +749,73 @@ export class SettingsPage implements OnInit {
     failedSections: CombinedImportSectionError[],
   ): TransferFeedback {
     const details = [
-      this.i18n.translate(
-        "management.allData.feedback.loadedFromFile",
-        { fileName },
-        "settings",
-      ),
+      this.i18n.translate('management.allData.feedback.loadedFromFile', { fileName }, 'settings'),
       ...successfulSections.flatMap(({ label, feedback }) => [
         `${label}: ${feedback.title}`,
         ...feedback.details.map((detail) => `${label}: ${detail}`),
       ]),
       ...failedSections.map(({ label, message }) => `${label}: ${message}`),
     ];
-    const hasWarnings = successfulSections.some(({ feedback }) => feedback.tone === "warning");
+    const hasWarnings = successfulSections.some(({ feedback }) => feedback.tone === 'warning');
     const hasErrors = failedSections.length > 0;
-    const tone: TransferFeedback["tone"] = hasErrors
+    const tone: TransferFeedback['tone'] = hasErrors
       ? successfulSections.length > 0
-        ? "warning"
-        : "error"
+        ? 'warning'
+        : 'error'
       : hasWarnings
-        ? "warning"
-        : "success";
+        ? 'warning'
+        : 'success';
 
     return {
       tone,
       title: this.i18n.translate(
-        tone === "error"
-          ? "management.allData.feedback.errorTitle"
-          : tone === "warning"
-            ? "management.allData.feedback.warningTitle"
-            : "management.allData.feedback.successTitle",
+        tone === 'error'
+          ? 'management.allData.feedback.errorTitle'
+          : tone === 'warning'
+            ? 'management.allData.feedback.warningTitle'
+            : 'management.allData.feedback.successTitle',
         undefined,
-        "settings",
+        'settings',
       ),
       details,
     };
   }
 
   private resolveAllDataSectionLabel(
-    section: "characterBoxes" | "favoriteShips" | "favorites" | "savedEnemies" | "savedTeams",
+    section:
+      | 'characterBoxes'
+      | 'characterOverrides'
+      | 'favoriteShips'
+      | 'favorites'
+      | 'savedEnemies'
+      | 'savedTeams',
   ): string {
     switch (section) {
-      case "favorites":
-        return this.i18n.translate("management.favorites.title", undefined, "settings");
-      case "favoriteShips":
-        return this.i18n.translate("management.favoriteShips.title", undefined, "settings");
-      case "characterBoxes":
-        return this.i18n.translate("management.characterBoxes.title", undefined, "settings");
-      case "savedTeams":
-        return this.i18n.translate("management.savedTeams.title", undefined, "settings");
-      case "savedEnemies":
-        return this.i18n.translate("management.savedEnemies.title", undefined, "settings");
+      case 'favorites':
+        return this.i18n.translate('management.favorites.title', undefined, 'settings');
+      case 'favoriteShips':
+        return this.i18n.translate('management.favoriteShips.title', undefined, 'settings');
+      case 'characterBoxes':
+        return this.i18n.translate('management.characterBoxes.title', undefined, 'settings');
+      case 'characterOverrides':
+        return this.i18n.translate('management.characterOverrides.title', undefined, 'settings');
+      case 'savedTeams':
+        return this.i18n.translate('management.savedTeams.title', undefined, 'settings');
+      case 'savedEnemies':
+        return this.i18n.translate('management.savedEnemies.title', undefined, 'settings');
     }
   }
 
   private resolveAllDataImportError(error: unknown): string {
-    if (error && typeof error === "object" && "key" in error && typeof error.key === "string") {
-      return this.i18n.translate(error.key, undefined, "settings");
+    if (error && typeof error === 'object' && 'key' in error && typeof error.key === 'string') {
+      return this.i18n.translate(error.key, undefined, 'settings');
     }
 
     if (error instanceof Error && error.message.trim().length > 0) {
       return error.message;
     }
 
-    return this.i18n.translate("management.allData.errors.generic", undefined, "settings");
+    return this.i18n.translate('management.allData.errors.generic', undefined, 'settings');
   }
 
   private async importFavorites(file: File): Promise<void> {
@@ -737,8 +830,12 @@ export class SettingsPage implements OnInit {
       );
     } catch (error) {
       this.favoritesFeedback.set({
-        tone: "error",
-        title: this.i18n.translate("management.favorites.feedback.errorTitle", undefined, "settings"),
+        tone: 'error',
+        title: this.i18n.translate(
+          'management.favorites.feedback.errorTitle',
+          undefined,
+          'settings',
+        ),
         details: [this.resolveFavoritesImportError(error)],
       });
     } finally {
@@ -752,7 +849,7 @@ export class SettingsPage implements OnInit {
   }): Promise<TransferFeedback> {
     const parsedImport =
       input.parsedPayload === undefined
-        ? this.optcbxImport.parseExport(input.rawContent ?? "")
+        ? this.optcbxImport.parseExport(input.rawContent ?? '')
         : this.optcbxImport.parseExportPayload(input.parsedPayload);
     const currentFavoriteIds = this.userState.favoriteCharacterIds();
     const importResult = await this.optcbxImport.buildMergeImportResult(
@@ -782,42 +879,42 @@ export class SettingsPage implements OnInit {
 
     if (duplicatesRemoved > 0) {
       details.push(
-        this.i18n.translate("import.removedDuplicates", { count: duplicatesRemoved }, "characters"),
+        this.i18n.translate('import.removedDuplicates', { count: duplicatesRemoved }, 'characters'),
       );
     }
 
     details.push(
-      `${this.i18n.translate("import.stats.matched", undefined, "characters")}: ${importResult.matchedIds.length}`,
+      `${this.i18n.translate('import.stats.matched', undefined, 'characters')}: ${importResult.matchedIds.length}`,
     );
 
     if (importResult.addedCount > 0) {
       details.push(
-        `${this.i18n.translate("import.stats.added", undefined, "characters")}: ${importResult.addedCount}`,
+        `${this.i18n.translate('import.stats.added', undefined, 'characters')}: ${importResult.addedCount}`,
       );
     }
 
     if (importResult.alreadyFavoritedCount > 0) {
       details.push(
-        `${this.i18n.translate("import.stats.alreadyFavorited", undefined, "characters")}: ${importResult.alreadyFavoritedCount}`,
+        `${this.i18n.translate('import.stats.alreadyFavorited', undefined, 'characters')}: ${importResult.alreadyFavoritedCount}`,
       );
     }
 
     if (importResult.unmatchedIds.length > 0) {
       details.push(
-        `${this.i18n.translate("import.stats.unknownIds", undefined, "characters")}: ${importResult.unmatchedIds.length}`,
+        `${this.i18n.translate('import.stats.unknownIds', undefined, 'characters')}: ${importResult.unmatchedIds.length}`,
       );
     }
 
     const hasWarnings = duplicatesRemoved > 0 || importResult.unmatchedIds.length > 0;
 
     return {
-      tone: hasWarnings ? "warning" : "success",
+      tone: hasWarnings ? 'warning' : 'success',
       title: this.i18n.translate(
         hasWarnings
-          ? "management.favorites.feedback.warningTitle"
-          : "management.favorites.feedback.successTitle",
+          ? 'management.favorites.feedback.warningTitle'
+          : 'management.favorites.feedback.successTitle',
         undefined,
-        "settings",
+        'settings',
       ),
       details,
     };
@@ -828,7 +925,7 @@ export class SettingsPage implements OnInit {
       return error.message;
     }
 
-    return this.i18n.translate("import.errors.generic", undefined, "characters");
+    return this.i18n.translate('import.errors.generic', undefined, 'characters');
   }
 
   private async importFavoriteShips(file: File): Promise<void> {
@@ -844,11 +941,11 @@ export class SettingsPage implements OnInit {
       );
     } catch (error) {
       this.favoriteShipsFeedback.set({
-        tone: "error",
+        tone: 'error',
         title: this.i18n.translate(
-          "management.favoriteShips.feedback.errorTitle",
+          'management.favoriteShips.feedback.errorTitle',
           undefined,
-          "settings",
+          'settings',
         ),
         details: [this.resolveFavoriteShipsImportError(error)],
       });
@@ -864,7 +961,7 @@ export class SettingsPage implements OnInit {
   }): Promise<TransferFeedback> {
     const payload =
       input.parsedPayload === undefined
-        ? parseFavoriteShipsImportPayload(input.rawContent ?? "")
+        ? parseFavoriteShipsImportPayload(input.rawContent ?? '')
         : parseFavoriteShipsImportPayloadValue(input.parsedPayload);
     const sanitizedImport = sanitizeFavoriteShipsImportPayload(payload);
     const ships = await this.repository.getShips();
@@ -875,7 +972,9 @@ export class SettingsPage implements OnInit {
     const currentFavoriteShipIds = this.userState.favoriteShipIds();
     const currentFavoriteShipIdSet = new Set(currentFavoriteShipIds);
     const importedShipIds = availableShips.ships.map((ship) => ship.id);
-    const addedCount = importedShipIds.filter((shipId) => !currentFavoriteShipIdSet.has(shipId)).length;
+    const addedCount = importedShipIds.filter(
+      (shipId) => !currentFavoriteShipIdSet.has(shipId),
+    ).length;
 
     await this.userState.setFavoriteShipIds(
       this.mergeFavoriteShipIds(importedShipIds, currentFavoriteShipIds),
@@ -903,23 +1002,23 @@ export class SettingsPage implements OnInit {
   }): TransferFeedback {
     const details = [
       this.i18n.translate(
-        "management.favoriteShips.feedback.loadedFromFile",
+        'management.favoriteShips.feedback.loadedFromFile',
         { fileName: stats.fileName },
-        "settings",
+        'settings',
       ),
       this.i18n.translate(
-        "management.favoriteShips.feedback.stats.matched",
+        'management.favoriteShips.feedback.stats.matched',
         { count: stats.matchedShipCount },
-        "settings",
+        'settings',
       ),
     ];
 
     if (stats.addedCount > 0) {
       details.push(
         this.i18n.translate(
-          "management.favoriteShips.feedback.stats.added",
+          'management.favoriteShips.feedback.stats.added',
           { count: stats.addedCount },
-          "settings",
+          'settings',
         ),
       );
     }
@@ -927,9 +1026,9 @@ export class SettingsPage implements OnInit {
     if (stats.alreadyFavoritedCount > 0) {
       details.push(
         this.i18n.translate(
-          "management.favoriteShips.feedback.stats.alreadyFavorited",
+          'management.favoriteShips.feedback.stats.alreadyFavorited',
           { count: stats.alreadyFavoritedCount },
-          "settings",
+          'settings',
         ),
       );
     }
@@ -937,9 +1036,9 @@ export class SettingsPage implements OnInit {
     if (stats.duplicateIdCount > 0) {
       details.push(
         this.i18n.translate(
-          "management.favoriteShips.feedback.stats.duplicates",
+          'management.favoriteShips.feedback.stats.duplicates',
           { count: stats.duplicateIdCount },
-          "settings",
+          'settings',
         ),
       );
     }
@@ -947,9 +1046,9 @@ export class SettingsPage implements OnInit {
     if (stats.invalidShipCount > 0) {
       details.push(
         this.i18n.translate(
-          "management.favoriteShips.feedback.stats.invalid",
+          'management.favoriteShips.feedback.stats.invalid',
           { count: stats.invalidShipCount },
-          "settings",
+          'settings',
         ),
       );
     }
@@ -957,9 +1056,9 @@ export class SettingsPage implements OnInit {
     if (stats.unknownShipCount > 0) {
       details.push(
         this.i18n.translate(
-          "management.favoriteShips.feedback.stats.unknown",
+          'management.favoriteShips.feedback.stats.unknown',
           { count: stats.unknownShipCount },
-          "settings",
+          'settings',
         ),
       );
     }
@@ -968,13 +1067,13 @@ export class SettingsPage implements OnInit {
       stats.duplicateIdCount > 0 || stats.invalidShipCount > 0 || stats.unknownShipCount > 0;
 
     return {
-      tone: hasWarnings ? "warning" : "success",
+      tone: hasWarnings ? 'warning' : 'success',
       title: this.i18n.translate(
         hasWarnings
-          ? "management.favoriteShips.feedback.warningTitle"
-          : "management.favoriteShips.feedback.successTitle",
+          ? 'management.favoriteShips.feedback.warningTitle'
+          : 'management.favoriteShips.feedback.successTitle',
         undefined,
-        "settings",
+        'settings',
       ),
       details,
     };
@@ -983,11 +1082,11 @@ export class SettingsPage implements OnInit {
   private resolveFavoriteShipsImportError(
     error: FavoriteShipsImportError | Error | unknown,
   ): string {
-    if (error && typeof error === "object" && "key" in error && typeof error.key === "string") {
-      return this.i18n.translate(error.key, undefined, "settings");
+    if (error && typeof error === 'object' && 'key' in error && typeof error.key === 'string') {
+      return this.i18n.translate(error.key, undefined, 'settings');
     }
 
-    return this.i18n.translate("management.favoriteShips.errors.generic", undefined, "settings");
+    return this.i18n.translate('management.favoriteShips.errors.generic', undefined, 'settings');
   }
 
   private async importCharacterBoxes(file: File): Promise<void> {
@@ -1003,11 +1102,11 @@ export class SettingsPage implements OnInit {
       );
     } catch (error) {
       this.characterBoxesFeedback.set({
-        tone: "error",
+        tone: 'error',
         title: this.i18n.translate(
-          "management.characterBoxes.feedback.errorTitle",
+          'management.characterBoxes.feedback.errorTitle',
           undefined,
-          "settings",
+          'settings',
         ),
         details: [this.resolveCharacterBoxesImportError(error)],
       });
@@ -1023,12 +1122,14 @@ export class SettingsPage implements OnInit {
   }): Promise<TransferFeedback> {
     const payload =
       input.parsedPayload === undefined
-        ? parseCharacterBoxesImportPayload(input.rawContent ?? "")
+        ? parseCharacterBoxesImportPayload(input.rawContent ?? '')
         : parseCharacterBoxesImportPayloadValue(input.parsedPayload);
     const sanitizedImport = sanitizeCharacterBoxesImportPayload(payload, {
-      untitledBoxName: this.i18n.translate("common.defaults.untitledBox"),
+      untitledBoxName: this.i18n.translate('common.defaults.untitledBox'),
     });
-    const candidateCharacterIds = [...new Set(sanitizedImport.boxes.flatMap((box) => box.characterIds))];
+    const candidateCharacterIds = [
+      ...new Set(sanitizedImport.boxes.flatMap((box) => box.characterIds)),
+    ];
     const availableCharacters = candidateCharacterIds.length
       ? await this.repository.getCharactersByIds(candidateCharacterIds)
       : [];
@@ -1060,18 +1161,18 @@ export class SettingsPage implements OnInit {
   }): TransferFeedback {
     const details = [
       this.i18n.translate(
-        "management.characterBoxes.feedback.loadedFromFile",
+        'management.characterBoxes.feedback.loadedFromFile',
         { fileName: stats.fileName },
-        "settings",
+        'settings',
       ),
     ];
 
     if (stats.addedCount > 0) {
       details.push(
         this.i18n.translate(
-          "management.characterBoxes.feedback.stats.added",
+          'management.characterBoxes.feedback.stats.added',
           { count: stats.addedCount },
-          "settings",
+          'settings',
         ),
       );
     }
@@ -1079,9 +1180,9 @@ export class SettingsPage implements OnInit {
     if (stats.updatedCount > 0) {
       details.push(
         this.i18n.translate(
-          "management.characterBoxes.feedback.stats.updated",
+          'management.characterBoxes.feedback.stats.updated',
           { count: stats.updatedCount },
-          "settings",
+          'settings',
         ),
       );
     }
@@ -1089,9 +1190,9 @@ export class SettingsPage implements OnInit {
     if (stats.invalidBoxCount > 0) {
       details.push(
         this.i18n.translate(
-          "management.characterBoxes.feedback.stats.invalid",
+          'management.characterBoxes.feedback.stats.invalid',
           { count: stats.invalidBoxCount },
-          "settings",
+          'settings',
         ),
       );
     }
@@ -1099,9 +1200,9 @@ export class SettingsPage implements OnInit {
     if (stats.duplicateIdCount > 0) {
       details.push(
         this.i18n.translate(
-          "management.characterBoxes.feedback.stats.duplicates",
+          'management.characterBoxes.feedback.stats.duplicates',
           { count: stats.duplicateIdCount },
-          "settings",
+          'settings',
         ),
       );
     }
@@ -1109,26 +1210,24 @@ export class SettingsPage implements OnInit {
     if (stats.unknownCharacterIdCount > 0) {
       details.push(
         this.i18n.translate(
-          "management.characterBoxes.feedback.stats.unknownCharacters",
+          'management.characterBoxes.feedback.stats.unknownCharacters',
           { count: stats.unknownCharacterIdCount },
-          "settings",
+          'settings',
         ),
       );
     }
 
     const hasWarnings =
-      stats.invalidBoxCount > 0 ||
-      stats.duplicateIdCount > 0 ||
-      stats.unknownCharacterIdCount > 0;
+      stats.invalidBoxCount > 0 || stats.duplicateIdCount > 0 || stats.unknownCharacterIdCount > 0;
 
     return {
-      tone: hasWarnings ? "warning" : "success",
+      tone: hasWarnings ? 'warning' : 'success',
       title: this.i18n.translate(
         hasWarnings
-          ? "management.characterBoxes.feedback.warningTitle"
-          : "management.characterBoxes.feedback.successTitle",
+          ? 'management.characterBoxes.feedback.warningTitle'
+          : 'management.characterBoxes.feedback.successTitle',
         undefined,
-        "settings",
+        'settings',
       ),
       details,
     };
@@ -1137,14 +1236,171 @@ export class SettingsPage implements OnInit {
   private resolveCharacterBoxesImportError(
     error: CharacterBoxesImportError | Error | unknown,
   ): string {
-    if (error && typeof error === "object" && "key" in error && typeof error.key === "string") {
-      return this.i18n.translate(error.key, undefined, "settings");
+    if (error && typeof error === 'object' && 'key' in error && typeof error.key === 'string') {
+      return this.i18n.translate(error.key, undefined, 'settings');
     }
 
-    return this.i18n.translate("management.characterBoxes.errors.generic", undefined, "settings");
+    return this.i18n.translate('management.characterBoxes.errors.generic', undefined, 'settings');
   }
 
-  private mergeFavoriteShipIds(importedShipIds: number[], currentFavoriteShipIds: number[]): number[] {
+  private async importCharacterOverrides(file: File): Promise<void> {
+    this.characterOverridesImporting.set(true);
+    this.characterOverridesFeedback.set(null);
+
+    try {
+      this.characterOverridesFeedback.set(
+        await this.importCharacterOverridesContent({
+          fileName: file.name,
+          rawContent: await file.text(),
+        }),
+      );
+    } catch (error) {
+      this.characterOverridesFeedback.set({
+        tone: 'error',
+        title: this.i18n.translate(
+          'management.characterOverrides.feedback.errorTitle',
+          undefined,
+          'settings',
+        ),
+        details: [this.resolveCharacterOverridesImportError(error)],
+      });
+    } finally {
+      this.characterOverridesImporting.set(false);
+    }
+  }
+
+  private async importCharacterOverridesContent(input: {
+    fileName: string;
+    parsedPayload?: unknown;
+    rawContent?: string;
+  }): Promise<TransferFeedback> {
+    const payload =
+      input.parsedPayload === undefined
+        ? parseCharacterOverridesImportPayload(input.rawContent ?? '')
+        : parseCharacterOverridesImportPayloadValue(input.parsedPayload);
+    const sanitizedImport = sanitizeCharacterOverridesImportPayload(payload);
+    const candidateCharacterIds = sanitizedImport.overrides.map((override) => override.characterId);
+    const availableCharacters = candidateCharacterIds.length
+      ? await this.repository.getCharactersByIds(candidateCharacterIds)
+      : [];
+    const availableCharacterIdSet = new Set(availableCharacters.map((character) => character.id));
+    const validOverrides = sanitizedImport.overrides.filter((override) =>
+      availableCharacterIdSet.has(override.characterId),
+    );
+    const mergeResult = await this.characterOverrideState.mergeImportedOverrides(validOverrides);
+
+    return this.buildCharacterOverridesImportFeedback({
+      addedCount: mergeResult.addedCount,
+      duplicateCharacterIdCount: sanitizedImport.duplicateCharacterIdCount,
+      fileName: input.fileName,
+      invalidOverrideCount: sanitizedImport.invalidOverrideCount,
+      unknownCharacterIdCount: sanitizedImport.overrides.length - validOverrides.length,
+      updatedCount: mergeResult.updatedCount,
+    });
+  }
+
+  private buildCharacterOverridesImportFeedback(stats: {
+    addedCount: number;
+    duplicateCharacterIdCount: number;
+    fileName: string;
+    invalidOverrideCount: number;
+    unknownCharacterIdCount: number;
+    updatedCount: number;
+  }): TransferFeedback {
+    const details = [
+      this.i18n.translate(
+        'management.characterOverrides.feedback.loadedFromFile',
+        { fileName: stats.fileName },
+        'settings',
+      ),
+    ];
+
+    if (stats.addedCount > 0) {
+      details.push(
+        this.i18n.translate(
+          'management.characterOverrides.feedback.stats.added',
+          { count: stats.addedCount },
+          'settings',
+        ),
+      );
+    }
+
+    if (stats.updatedCount > 0) {
+      details.push(
+        this.i18n.translate(
+          'management.characterOverrides.feedback.stats.updated',
+          { count: stats.updatedCount },
+          'settings',
+        ),
+      );
+    }
+
+    if (stats.invalidOverrideCount > 0) {
+      details.push(
+        this.i18n.translate(
+          'management.characterOverrides.feedback.stats.invalid',
+          { count: stats.invalidOverrideCount },
+          'settings',
+        ),
+      );
+    }
+
+    if (stats.duplicateCharacterIdCount > 0) {
+      details.push(
+        this.i18n.translate(
+          'management.characterOverrides.feedback.stats.duplicates',
+          { count: stats.duplicateCharacterIdCount },
+          'settings',
+        ),
+      );
+    }
+
+    if (stats.unknownCharacterIdCount > 0) {
+      details.push(
+        this.i18n.translate(
+          'management.characterOverrides.feedback.stats.unknownCharacters',
+          { count: stats.unknownCharacterIdCount },
+          'settings',
+        ),
+      );
+    }
+
+    const hasWarnings =
+      stats.invalidOverrideCount > 0 ||
+      stats.duplicateCharacterIdCount > 0 ||
+      stats.unknownCharacterIdCount > 0;
+
+    return {
+      tone: hasWarnings ? 'warning' : 'success',
+      title: this.i18n.translate(
+        hasWarnings
+          ? 'management.characterOverrides.feedback.warningTitle'
+          : 'management.characterOverrides.feedback.successTitle',
+        undefined,
+        'settings',
+      ),
+      details,
+    };
+  }
+
+  private resolveCharacterOverridesImportError(
+    error: CharacterOverridesImportError | Error | unknown,
+  ): string {
+    if (error && typeof error === 'object' && 'key' in error && typeof error.key === 'string') {
+      return this.i18n.translate(error.key, undefined, 'settings');
+    }
+
+    return this.i18n.translate(
+      'management.characterOverrides.errors.generic',
+      undefined,
+      'settings',
+    );
+  }
+
+  private mergeFavoriteShipIds(
+    importedShipIds: number[],
+    currentFavoriteShipIds: number[],
+  ): number[] {
     const nextFavoriteShipIds: number[] = [];
     const seenShipIds = new Set<number>();
 
@@ -1173,8 +1429,8 @@ export class SettingsPage implements OnInit {
       );
     } catch (error) {
       this.savedTeamsFeedback.set({
-        tone: "error",
-        title: this.i18n.translate("import.errorTitle", undefined, "saved-teams"),
+        tone: 'error',
+        title: this.i18n.translate('import.errorTitle', undefined, 'saved-teams'),
         details: [this.resolveSavedTeamsImportError(error)],
       });
     } finally {
@@ -1189,15 +1445,15 @@ export class SettingsPage implements OnInit {
   }): Promise<TransferFeedback> {
     const payload =
       input.parsedPayload === undefined
-        ? parseSavedTeamsImportPayload(input.rawContent ?? "")
+        ? parseSavedTeamsImportPayload(input.rawContent ?? '')
         : parseSavedTeamsImportPayloadValue(input.parsedPayload);
     const sanitizedImport = sanitizeSavedTeamsImportPayload(payload, {
-      untitledTeamName: this.i18n.translate("common.defaults.untitledCrew"),
+      untitledTeamName: this.i18n.translate('common.defaults.untitledCrew'),
     });
     const candidateCharacterIds = [
       ...new Set(
         sanitizedImport.teams.flatMap((team) =>
-          team.slots.filter((slotId): slotId is number => typeof slotId === "number"),
+          team.slots.filter((slotId): slotId is number => typeof slotId === 'number'),
         ),
       ),
     ];
@@ -1229,33 +1485,37 @@ export class SettingsPage implements OnInit {
     updatedCount: number;
   }): TransferFeedback {
     const details = [
-      this.i18n.translate("import.loadedFromFile", { fileName: stats.fileName }, "saved-teams"),
+      this.i18n.translate('import.loadedFromFile', { fileName: stats.fileName }, 'saved-teams'),
     ];
 
     if (stats.addedCount > 0) {
       details.push(
-        this.i18n.translate("import.stats.added", { count: stats.addedCount }, "saved-teams"),
+        this.i18n.translate('import.stats.added', { count: stats.addedCount }, 'saved-teams'),
       );
     }
 
     if (stats.updatedCount > 0) {
       details.push(
-        this.i18n.translate("import.stats.updated", { count: stats.updatedCount }, "saved-teams"),
+        this.i18n.translate('import.stats.updated', { count: stats.updatedCount }, 'saved-teams'),
       );
     }
 
     if (stats.invalidTeamCount > 0) {
       details.push(
-        this.i18n.translate("import.stats.invalid", { count: stats.invalidTeamCount }, "saved-teams"),
+        this.i18n.translate(
+          'import.stats.invalid',
+          { count: stats.invalidTeamCount },
+          'saved-teams',
+        ),
       );
     }
 
     if (stats.duplicateIdCount > 0) {
       details.push(
         this.i18n.translate(
-          "import.stats.duplicates",
+          'import.stats.duplicates',
           { count: stats.duplicateIdCount },
-          "saved-teams",
+          'saved-teams',
         ),
       );
     }
@@ -1263,9 +1523,9 @@ export class SettingsPage implements OnInit {
     if (stats.unknownSlotCount > 0) {
       details.push(
         this.i18n.translate(
-          "import.stats.unknownSlots",
+          'import.stats.unknownSlots',
           { count: stats.unknownSlotCount },
-          "saved-teams",
+          'saved-teams',
         ),
       );
     }
@@ -1274,22 +1534,22 @@ export class SettingsPage implements OnInit {
       stats.invalidTeamCount > 0 || stats.duplicateIdCount > 0 || stats.unknownSlotCount > 0;
 
     return {
-      tone: hasWarnings ? "warning" : "success",
+      tone: hasWarnings ? 'warning' : 'success',
       title: this.i18n.translate(
-        hasWarnings ? "import.warningTitle" : "import.successTitle",
+        hasWarnings ? 'import.warningTitle' : 'import.successTitle',
         undefined,
-        "saved-teams",
+        'saved-teams',
       ),
       details,
     };
   }
 
   private resolveSavedTeamsImportError(error: SavedTeamsImportError | Error | unknown): string {
-    if (error && typeof error === "object" && "key" in error && typeof error.key === "string") {
-      return this.i18n.translate(error.key, undefined, "saved-teams");
+    if (error && typeof error === 'object' && 'key' in error && typeof error.key === 'string') {
+      return this.i18n.translate(error.key, undefined, 'saved-teams');
     }
 
-    return this.i18n.translate("import.errors.generic", undefined, "saved-teams");
+    return this.i18n.translate('import.errors.generic', undefined, 'saved-teams');
   }
 
   private async importSavedEnemies(file: File): Promise<void> {
@@ -1305,8 +1565,8 @@ export class SettingsPage implements OnInit {
       );
     } catch (error) {
       this.savedEnemiesFeedback.set({
-        tone: "error",
-        title: this.i18n.translate("bulkImport.errorTitle", undefined, "saved-enemies"),
+        tone: 'error',
+        title: this.i18n.translate('bulkImport.errorTitle', undefined, 'saved-enemies'),
         details: [this.resolveSavedEnemiesImportError(error)],
       });
     } finally {
@@ -1321,10 +1581,10 @@ export class SettingsPage implements OnInit {
   }): Promise<TransferFeedback> {
     const payload =
       input.parsedPayload === undefined
-        ? parseSavedEnemiesImportPayload(input.rawContent ?? "")
+        ? parseSavedEnemiesImportPayload(input.rawContent ?? '')
         : parseSavedEnemiesImportPayloadValue(input.parsedPayload);
     const sanitizedImport = sanitizeSavedEnemiesImportPayload(payload, {
-      untitledEnemyName: this.i18n.translate("common.defaults.untitledEnemy"),
+      untitledEnemyName: this.i18n.translate('common.defaults.untitledEnemy'),
     });
     const mergeResult = await this.userState.mergeImportedEnemies(sanitizedImport.enemies);
 
@@ -1345,21 +1605,25 @@ export class SettingsPage implements OnInit {
     updatedCount: number;
   }): TransferFeedback {
     const details = [
-      this.i18n.translate("bulkImport.loadedFromFile", { fileName: stats.fileName }, "saved-enemies"),
+      this.i18n.translate(
+        'bulkImport.loadedFromFile',
+        { fileName: stats.fileName },
+        'saved-enemies',
+      ),
     ];
 
     if (stats.addedCount > 0) {
       details.push(
-        this.i18n.translate("bulkImport.stats.added", { count: stats.addedCount }, "saved-enemies"),
+        this.i18n.translate('bulkImport.stats.added', { count: stats.addedCount }, 'saved-enemies'),
       );
     }
 
     if (stats.updatedCount > 0) {
       details.push(
         this.i18n.translate(
-          "bulkImport.stats.updated",
+          'bulkImport.stats.updated',
           { count: stats.updatedCount },
-          "saved-enemies",
+          'saved-enemies',
         ),
       );
     }
@@ -1367,9 +1631,9 @@ export class SettingsPage implements OnInit {
     if (stats.invalidEnemyCount > 0) {
       details.push(
         this.i18n.translate(
-          "bulkImport.stats.invalid",
+          'bulkImport.stats.invalid',
           { count: stats.invalidEnemyCount },
-          "saved-enemies",
+          'saved-enemies',
         ),
       );
     }
@@ -1377,9 +1641,9 @@ export class SettingsPage implements OnInit {
     if (stats.duplicateIdCount > 0) {
       details.push(
         this.i18n.translate(
-          "bulkImport.stats.duplicates",
+          'bulkImport.stats.duplicates',
           { count: stats.duplicateIdCount },
-          "saved-enemies",
+          'saved-enemies',
         ),
       );
     }
@@ -1387,25 +1651,25 @@ export class SettingsPage implements OnInit {
     const hasWarnings = stats.invalidEnemyCount > 0 || stats.duplicateIdCount > 0;
 
     return {
-      tone: hasWarnings ? "warning" : "success",
+      tone: hasWarnings ? 'warning' : 'success',
       title: this.i18n.translate(
-        hasWarnings ? "bulkImport.warningTitle" : "bulkImport.successTitle",
+        hasWarnings ? 'bulkImport.warningTitle' : 'bulkImport.successTitle',
         undefined,
-        "saved-enemies",
+        'saved-enemies',
       ),
       details,
     };
   }
 
   private resolveSavedEnemiesImportError(error: SavedEnemiesImportError | Error | unknown): string {
-    if (error && typeof error === "object" && "key" in error && typeof error.key === "string") {
-      return this.i18n.translate(error.key, undefined, "saved-enemies");
+    if (error && typeof error === 'object' && 'key' in error && typeof error.key === 'string') {
+      return this.i18n.translate(error.key, undefined, 'saved-enemies');
     }
 
-    return this.i18n.translate("bulkImport.errors.invalidPayload", undefined, "saved-enemies");
+    return this.i18n.translate('bulkImport.errors.invalidPayload', undefined, 'saved-enemies');
   }
 
   private confirmAction(message: string): boolean {
-    return typeof globalThis.confirm === "function" ? globalThis.confirm(message) : false;
+    return typeof globalThis.confirm === 'function' ? globalThis.confirm(message) : false;
   }
 }

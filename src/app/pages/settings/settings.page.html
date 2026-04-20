@@ -1,20 +1,20 @@
 <ng-container *transloco="let t; scope: 'settings'; read: 'settings'">
   <ion-header class="ion-no-border">
     <ion-toolbar>
-      <ion-title>{{ t("title") }}</ion-title>
+      <ion-title>{{ t('title') }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
   <ion-content [fullscreen]="true">
     <div class="page-shell settings-shell">
       <section class="glass-card intro-card">
-        <div class="section-label">{{ t("intro.eyebrow") }}</div>
-        <h1 class="section-title">{{ t("intro.title") }}</h1>
-        <p class="section-copy">{{ t("intro.copy") }}</p>
+        <div class="section-label">{{ t('intro.eyebrow') }}</div>
+        <h1 class="section-title">{{ t('intro.title') }}</h1>
+        <p class="section-copy">{{ t('intro.copy') }}</p>
       </section>
 
       <section class="glass-card command-card">
-        <ion-label>{{ t("language.label") }}</ion-label>
+        <ion-label>{{ t('language.label') }}</ion-label>
         <ion-select
           interface="popover"
           fill="outline"
@@ -23,24 +23,24 @@
         >
           @for (language of availableLanguages; track language.id) {
             <ion-select-option [value]="language.id">
-              {{ "common.languages." + language.id | transloco }}
+              {{ 'common.languages.' + language.id | transloco }}
             </ion-select-option>
           }
         </ion-select>
-        <p>{{ t("language.helper") }}</p>
+        <p>{{ t('language.helper') }}</p>
       </section>
 
       <section class="glass-card performance-card">
         <div class="section-head">
           <div>
-            <h2>{{ t("performance.title") }}</h2>
-            <p>{{ t("performance.copy") }}</p>
+            <h2>{{ t('performance.title') }}</h2>
+            <p>{{ t('performance.copy') }}</p>
           </div>
         </div>
 
         <div class="performance-controls">
           <div class="performance-field">
-            <ion-label>{{ t("performance.mode.label") }}</ion-label>
+            <ion-label>{{ t('performance.mode.label') }}</ion-label>
             <ion-select
               interface="popover"
               fill="outline"
@@ -48,17 +48,17 @@
               (ionChange)="onAutoTeamBuilderWorkerModeChange($event)"
             >
               <ion-select-option value="auto">
-                {{ t("performance.mode.options.auto") }}
+                {{ t('performance.mode.options.auto') }}
               </ion-select-option>
               <ion-select-option value="manual">
-                {{ t("performance.mode.options.manual") }}
+                {{ t('performance.mode.options.manual') }}
               </ion-select-option>
             </ion-select>
           </div>
 
-          @if (autoTeamBuilderWorkerPreference().mode === "manual") {
+          @if (autoTeamBuilderWorkerPreference().mode === 'manual') {
             <div class="performance-field">
-              <ion-label>{{ t("performance.manualCount.label") }}</ion-label>
+              <ion-label>{{ t('performance.manualCount.label') }}</ion-label>
               <ion-select
                 interface="popover"
                 fill="outline"
@@ -74,13 +74,25 @@
         </div>
 
         <div class="performance-summary">
-          <p>{{ t("performance.runtime.detected", { count: autoTeamBuilderWorkerRuntime().detectedCoreCount }) }}</p>
-          <p>{{ t("performance.runtime.effective", { count: autoTeamBuilderWorkerRuntime().effectiveCount }) }}</p>
           <p>
             {{
-              autoTeamBuilderWorkerPreference().mode === "manual"
-                ? t("performance.runtime.manual")
-                : t("performance.runtime.auto")
+              t('performance.runtime.detected', {
+                count: autoTeamBuilderWorkerRuntime().detectedCoreCount,
+              })
+            }}
+          </p>
+          <p>
+            {{
+              t('performance.runtime.effective', {
+                count: autoTeamBuilderWorkerRuntime().effectiveCount,
+              })
+            }}
+          </p>
+          <p>
+            {{
+              autoTeamBuilderWorkerPreference().mode === 'manual'
+                ? t('performance.runtime.manual')
+                : t('performance.runtime.auto')
             }}
           </p>
         </div>
@@ -89,13 +101,13 @@
       <section class="glass-card analytics-card">
         <div class="section-head">
           <div>
-            <h2>{{ t("analytics.title") }}</h2>
-            <p>{{ t("analytics.copy") }}</p>
+            <h2>{{ t('analytics.title') }}</h2>
+            <p>{{ t('analytics.copy') }}</p>
           </div>
         </div>
 
         <div class="analytics-status">
-          <strong>{{ t("analytics.statusLabel") }}</strong>
+          <strong>{{ t('analytics.statusLabel') }}</strong>
           <span>{{ t(analyticsConsentStatusKey()) }}</span>
         </div>
 
@@ -106,7 +118,7 @@
             [disabled]="analyticsConsent() === 'accepted'"
             (click)="acceptAnalyticsConsent()"
           >
-            {{ t("analytics.actions.accept") }}
+            {{ t('analytics.actions.accept') }}
           </ion-button>
           <ion-button
             fill="outline"
@@ -114,23 +126,27 @@
             [disabled]="analyticsConsent() === 'rejected'"
             (click)="rejectAnalyticsConsent()"
           >
-            {{ t("analytics.actions.reject") }}
+            {{ t('analytics.actions.reject') }}
           </ion-button>
         </div>
 
         <div class="policy-links">
-          <a class="policy-link" [routerLink]="['/tabs/privacy']">{{ t("analytics.links.privacy") }}</a>
-          <a class="policy-link" [routerLink]="['/tabs/cookies']">{{ t("analytics.links.cookies") }}</a>
+          <a class="policy-link" [routerLink]="['/tabs/privacy']">{{
+            t('analytics.links.privacy')
+          }}</a>
+          <a class="policy-link" [routerLink]="['/tabs/cookies']">{{
+            t('analytics.links.cookies')
+          }}</a>
         </div>
 
-        <p>{{ t("analytics.helper") }}</p>
+        <p>{{ t('analytics.helper') }}</p>
       </section>
 
       <section class="glass-card data-card">
         <div class="section-head">
           <div>
-            <h2>{{ t("sections.dataManagement") }}</h2>
-            <p>{{ t("management.copy") }}</p>
+            <h2>{{ t('sections.dataManagement') }}</h2>
+            <p>{{ t('management.copy') }}</p>
           </div>
         </div>
 
@@ -138,10 +154,10 @@
           <article class="transfer-card">
             <div class="transfer-card__head">
               <div>
-                <strong>{{ t("management.allData.title") }}</strong>
-                <span>{{ t("management.allData.subtitle") }}</span>
+                <strong>{{ t('management.allData.title') }}</strong>
+                <span>{{ t('management.allData.subtitle') }}</span>
               </div>
-              <p>{{ t("management.allData.copy") }}</p>
+              <p>{{ t('management.allData.copy') }}</p>
             </div>
 
             <input
@@ -159,7 +175,7 @@
                 [disabled]="allDataImporting()"
                 (click)="exportAll()"
               >
-                {{ t("management.allData.export") }}
+                {{ t('management.allData.export') }}
               </ion-button>
               <ion-button
                 fill="outline"
@@ -167,14 +183,14 @@
                 [disabled]="allDataImporting()"
                 (click)="openFilePicker(allDataImportInput)"
               >
-                {{ t("management.allData.import") }}
+                {{ t('management.allData.import') }}
               </ion-button>
             </div>
 
             @if (allDataImporting()) {
               <div class="transfer-feedback transfer-feedback--progress">
                 <ion-spinner name="crescent"></ion-spinner>
-                <span>{{ t("management.allData.processing") }}</span>
+                <span>{{ t('management.allData.processing') }}</span>
               </div>
             }
 
@@ -196,10 +212,10 @@
           <article class="transfer-card">
             <div class="transfer-card__head">
               <div>
-                <strong>{{ t("management.favorites.title") }}</strong>
-                <span>{{ t("management.counts.favorites", { count: favoriteIds().length }) }}</span>
+                <strong>{{ t('management.favorites.title') }}</strong>
+                <span>{{ t('management.counts.favorites', { count: favoriteIds().length }) }}</span>
               </div>
-              <p>{{ t("management.favorites.copy") }}</p>
+              <p>{{ t('management.favorites.copy') }}</p>
             </div>
 
             <input
@@ -217,7 +233,7 @@
                 [disabled]="!canExportFavorites() || favoritesImporting()"
                 (click)="exportFavorites()"
               >
-                {{ t("management.favorites.export") }}
+                {{ t('management.favorites.export') }}
               </ion-button>
               <ion-button
                 fill="outline"
@@ -225,7 +241,7 @@
                 [disabled]="favoritesImporting()"
                 (click)="openFilePicker(favoritesImportInput)"
               >
-                {{ t("management.favorites.import") }}
+                {{ t('management.favorites.import') }}
               </ion-button>
               <ion-button
                 fill="outline"
@@ -233,14 +249,14 @@
                 [disabled]="!canDeleteAllFavorites() || favoritesImporting()"
                 (click)="deleteAllFavorites()"
               >
-                {{ t("management.favorites.deleteAll") }}
+                {{ t('management.favorites.deleteAll') }}
               </ion-button>
             </div>
 
             @if (favoritesImporting()) {
               <div class="transfer-feedback transfer-feedback--progress">
                 <ion-spinner name="crescent"></ion-spinner>
-                <span>{{ t("management.favorites.processing") }}</span>
+                <span>{{ t('management.favorites.processing') }}</span>
               </div>
             }
 
@@ -262,10 +278,10 @@
           <article class="transfer-card">
             <div class="transfer-card__head">
               <div>
-                <strong>{{ t("management.savedTeams.title") }}</strong>
-                <span>{{ t("management.counts.savedTeams", { count: savedTeams().length }) }}</span>
+                <strong>{{ t('management.savedTeams.title') }}</strong>
+                <span>{{ t('management.counts.savedTeams', { count: savedTeams().length }) }}</span>
               </div>
-              <p>{{ t("management.savedTeams.copy") }}</p>
+              <p>{{ t('management.savedTeams.copy') }}</p>
             </div>
 
             <input
@@ -283,7 +299,7 @@
                 [disabled]="!canExportSavedTeams() || savedTeamsImporting()"
                 (click)="exportSavedTeams()"
               >
-                {{ t("management.savedTeams.export") }}
+                {{ t('management.savedTeams.export') }}
               </ion-button>
               <ion-button
                 fill="outline"
@@ -291,7 +307,7 @@
                 [disabled]="savedTeamsImporting()"
                 (click)="openFilePicker(savedTeamsImportInput)"
               >
-                {{ t("management.savedTeams.import") }}
+                {{ t('management.savedTeams.import') }}
               </ion-button>
               <ion-button
                 fill="outline"
@@ -299,14 +315,14 @@
                 [disabled]="!canDeleteAllSavedTeams() || savedTeamsImporting()"
                 (click)="deleteAllSavedTeams()"
               >
-                {{ t("management.savedTeams.deleteAll") }}
+                {{ t('management.savedTeams.deleteAll') }}
               </ion-button>
             </div>
 
             @if (savedTeamsImporting()) {
               <div class="transfer-feedback transfer-feedback--progress">
                 <ion-spinner name="crescent"></ion-spinner>
-                <span>{{ t("management.savedTeams.processing") }}</span>
+                <span>{{ t('management.savedTeams.processing') }}</span>
               </div>
             }
 
@@ -328,12 +344,12 @@
           <article class="transfer-card">
             <div class="transfer-card__head">
               <div>
-                <strong>{{ t("management.characterBoxes.title") }}</strong>
+                <strong>{{ t('management.characterBoxes.title') }}</strong>
                 <span>{{
-                  t("management.counts.characterBoxes", { count: characterBoxes().length })
+                  t('management.counts.characterBoxes', { count: characterBoxes().length })
                 }}</span>
               </div>
-              <p>{{ t("management.characterBoxes.copy") }}</p>
+              <p>{{ t('management.characterBoxes.copy') }}</p>
             </div>
 
             <input
@@ -351,7 +367,7 @@
                 [disabled]="!canExportCharacterBoxes() || characterBoxesImporting()"
                 (click)="exportCharacterBoxes()"
               >
-                {{ t("management.characterBoxes.export") }}
+                {{ t('management.characterBoxes.export') }}
               </ion-button>
               <ion-button
                 fill="outline"
@@ -359,7 +375,7 @@
                 [disabled]="characterBoxesImporting()"
                 (click)="openFilePicker(characterBoxesImportInput)"
               >
-                {{ t("management.characterBoxes.import") }}
+                {{ t('management.characterBoxes.import') }}
               </ion-button>
               <ion-button
                 fill="outline"
@@ -367,14 +383,14 @@
                 [disabled]="!canDeleteAllCharacterBoxes() || characterBoxesImporting()"
                 (click)="deleteAllCharacterBoxes()"
               >
-                {{ t("management.characterBoxes.deleteAll") }}
+                {{ t('management.characterBoxes.deleteAll') }}
               </ion-button>
             </div>
 
             @if (characterBoxesImporting()) {
               <div class="transfer-feedback transfer-feedback--progress">
                 <ion-spinner name="crescent"></ion-spinner>
-                <span>{{ t("management.characterBoxes.processing") }}</span>
+                <span>{{ t('management.characterBoxes.processing') }}</span>
               </div>
             }
 
@@ -396,12 +412,80 @@
           <article class="transfer-card">
             <div class="transfer-card__head">
               <div>
-                <strong>{{ t("management.favoriteShips.title") }}</strong>
+                <strong>{{ t('management.characterOverrides.title') }}</strong>
                 <span>{{
-                  t("management.counts.favoriteShips", { count: favoriteShipIds().length })
+                  t('management.counts.characterOverrides', { count: characterOverrides().length })
                 }}</span>
               </div>
-              <p>{{ t("management.favoriteShips.copy") }}</p>
+              <p>{{ t('management.characterOverrides.copy') }}</p>
+            </div>
+
+            <input
+              #characterOverridesImportInput
+              type="file"
+              accept=".json,application/json"
+              hidden
+              (change)="onCharacterOverridesFileSelected($event, characterOverridesImportInput)"
+            />
+
+            <div class="transfer-actions">
+              <ion-button
+                fill="outline"
+                color="light"
+                [disabled]="!canExportCharacterOverrides() || characterOverridesImporting()"
+                (click)="exportCharacterOverrides()"
+              >
+                {{ t('management.characterOverrides.export') }}
+              </ion-button>
+              <ion-button
+                fill="outline"
+                color="warning"
+                [disabled]="characterOverridesImporting()"
+                (click)="openFilePicker(characterOverridesImportInput)"
+              >
+                {{ t('management.characterOverrides.import') }}
+              </ion-button>
+              <ion-button
+                fill="outline"
+                color="danger"
+                [disabled]="!canDeleteAllCharacterOverrides() || characterOverridesImporting()"
+                (click)="deleteAllCharacterOverrides()"
+              >
+                {{ t('management.characterOverrides.deleteAll') }}
+              </ion-button>
+            </div>
+
+            @if (characterOverridesImporting()) {
+              <div class="transfer-feedback transfer-feedback--progress">
+                <ion-spinner name="crescent"></ion-spinner>
+                <span>{{ t('management.characterOverrides.processing') }}</span>
+              </div>
+            }
+
+            @if (characterOverridesFeedback(); as feedback) {
+              <div
+                class="transfer-feedback"
+                [class.transfer-feedback--success]="feedback.tone === 'success'"
+                [class.transfer-feedback--warning]="feedback.tone === 'warning'"
+                [class.transfer-feedback--error]="feedback.tone === 'error'"
+              >
+                <strong>{{ feedback.title }}</strong>
+                @for (detail of feedback.details; track $index) {
+                  <span>{{ detail }}</span>
+                }
+              </div>
+            }
+          </article>
+
+          <article class="transfer-card">
+            <div class="transfer-card__head">
+              <div>
+                <strong>{{ t('management.favoriteShips.title') }}</strong>
+                <span>{{
+                  t('management.counts.favoriteShips', { count: favoriteShipIds().length })
+                }}</span>
+              </div>
+              <p>{{ t('management.favoriteShips.copy') }}</p>
             </div>
 
             <input
@@ -419,7 +503,7 @@
                 [disabled]="!canExportFavoriteShips() || favoriteShipsImporting()"
                 (click)="exportFavoriteShips()"
               >
-                {{ t("management.favoriteShips.export") }}
+                {{ t('management.favoriteShips.export') }}
               </ion-button>
               <ion-button
                 fill="outline"
@@ -427,7 +511,7 @@
                 [disabled]="favoriteShipsImporting()"
                 (click)="openFilePicker(favoriteShipsImportInput)"
               >
-                {{ t("management.favoriteShips.import") }}
+                {{ t('management.favoriteShips.import') }}
               </ion-button>
               <ion-button
                 fill="outline"
@@ -435,14 +519,14 @@
                 [disabled]="!canDeleteAllFavoriteShips() || favoriteShipsImporting()"
                 (click)="deleteAllFavoriteShips()"
               >
-                {{ t("management.favoriteShips.deleteAll") }}
+                {{ t('management.favoriteShips.deleteAll') }}
               </ion-button>
             </div>
 
             @if (favoriteShipsImporting()) {
               <div class="transfer-feedback transfer-feedback--progress">
                 <ion-spinner name="crescent"></ion-spinner>
-                <span>{{ t("management.favoriteShips.processing") }}</span>
+                <span>{{ t('management.favoriteShips.processing') }}</span>
               </div>
             }
 
@@ -464,12 +548,12 @@
           <article class="transfer-card">
             <div class="transfer-card__head">
               <div>
-                <strong>{{ t("management.savedEnemies.title") }}</strong>
+                <strong>{{ t('management.savedEnemies.title') }}</strong>
                 <span>{{
-                  t("management.counts.savedEnemies", { count: savedEnemies().length })
+                  t('management.counts.savedEnemies', { count: savedEnemies().length })
                 }}</span>
               </div>
-              <p>{{ t("management.savedEnemies.copy") }}</p>
+              <p>{{ t('management.savedEnemies.copy') }}</p>
             </div>
 
             <input
@@ -487,7 +571,7 @@
                 [disabled]="!canExportSavedEnemies() || savedEnemiesImporting()"
                 (click)="exportSavedEnemies()"
               >
-                {{ t("management.savedEnemies.export") }}
+                {{ t('management.savedEnemies.export') }}
               </ion-button>
               <ion-button
                 fill="outline"
@@ -495,7 +579,7 @@
                 [disabled]="savedEnemiesImporting()"
                 (click)="openFilePicker(savedEnemiesImportInput)"
               >
-                {{ t("management.savedEnemies.import") }}
+                {{ t('management.savedEnemies.import') }}
               </ion-button>
               <ion-button
                 fill="outline"
@@ -503,14 +587,14 @@
                 [disabled]="!canDeleteAllSavedEnemies() || savedEnemiesImporting()"
                 (click)="deleteAllSavedEnemies()"
               >
-                {{ t("management.savedEnemies.deleteAll") }}
+                {{ t('management.savedEnemies.deleteAll') }}
               </ion-button>
             </div>
 
             @if (savedEnemiesImporting()) {
               <div class="transfer-feedback transfer-feedback--progress">
                 <ion-spinner name="crescent"></ion-spinner>
-                <span>{{ t("management.savedEnemies.processing") }}</span>
+                <span>{{ t('management.savedEnemies.processing') }}</span>
               </div>
             }
 
@@ -532,14 +616,14 @@
       </section>
 
       <section class="glass-card command-card">
-        <h2>{{ t("sections.commands") }}</h2>
+        <h2>{{ t('sections.commands') }}</h2>
         @for (command of commands; track command) {
           <code>{{ command }}</code>
         }
       </section>
 
       <section class="glass-card pack-list">
-        <h2>{{ t("sections.packStatus") }}</h2>
+        <h2>{{ t('sections.packStatus') }}</h2>
 
         @for (pack of manifest()?.packs ?? []; track pack.id) {
           <article class="pack-card">
@@ -548,20 +632,24 @@
               <span>{{ pack.fileCount }} files • {{ pack.totalBytes | number }} bytes</span>
             </div>
             <div class="pack-state" [class.installed]="pack.installed">
-              {{ pack.installed ? t("packState.installed") : t("packState.notInstalled") }}
+              {{ pack.installed ? t('packState.installed') : t('packState.notInstalled') }}
             </div>
           </article>
         }
       </section>
 
       <section class="glass-card legal-card">
-        <h2>{{ t("sections.legal") }}</h2>
-        <p>{{ t("legal.copy") }}</p>
+        <h2>{{ t('sections.legal') }}</h2>
+        <p>{{ t('legal.copy') }}</p>
         <div class="policy-links">
-          <a class="policy-link" [routerLink]="['/tabs/privacy']">{{ t("legal.actions.privacy") }}</a>
-          <a class="policy-link" [routerLink]="['/tabs/cookies']">{{ t("legal.actions.cookies") }}</a>
+          <a class="policy-link" [routerLink]="['/tabs/privacy']">{{
+            t('legal.actions.privacy')
+          }}</a>
+          <a class="policy-link" [routerLink]="['/tabs/cookies']">{{
+            t('legal.actions.cookies')
+          }}</a>
         </div>
-        <p>{{ t("release.copy") }}</p>
+        <p>{{ t('release.copy') }}</p>
       </section>
     </div>
   </ion-content>

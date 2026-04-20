@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { type DatasetManifest } from '../models/optc.models';
+import { type DatasetManifest, type LocalCharacterOverride } from '../models/optc.models';
 import { OptcRepositoryService } from './optc-repository.service';
 
 interface TestSqlRow {
@@ -120,6 +120,73 @@ describe('OptcRepositoryService', () => {
     expect(result.map((record) => record.id)).toEqual([4105, 4103, 4101]);
   });
 
+  it('applies local override names, types, and classes to detailed search filtering', async () => {
+    const service = createRepositoryService([createCharacterRow({ id: 4101, type: 'DEX' })], {
+      overrides: [
+        createOverride({
+          characterId: 4101,
+          name: 'Edited Ace',
+          type: 'PSY',
+          classes: ['Shooter', 'Free Spirit'],
+        }),
+      ],
+    });
+
+    const result = await service.searchDetailedCharacters({
+      searchTerm: 'edited',
+      selectedTypes: ['PSY'],
+      selectedClasses: ['Shooter'],
+      limit: 10,
+      offset: 0,
+    });
+
+    expect(result.map((record) => record.id)).toEqual([4101]);
+    expect(result[0]).toMatchObject({
+      name: 'Edited Ace',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Free Spirit',
+    });
+  });
+
+  it('uses local override types and classes for auto-builder candidate filtering', async () => {
+    const service = createRepositoryService([createCharacterRow({ id: 4101, type: 'DEX' })], {
+      overrides: [
+        createOverride({
+          characterId: 4101,
+          type: 'PSY',
+          classes: ['Shooter', 'Free Spirit'],
+        }),
+      ],
+    });
+
+    const result = await service.getAutoBuilderCandidates(['PSY'], 1200, {
+      selectedClasses: ['Shooter'],
+    });
+
+    expect(result.map((record) => record.id)).toEqual([4101]);
+  });
+
+  it('prefers local override images over dataset assets for list and detail views', async () => {
+    const service = createRepositoryService([createCharacterRow({ id: 4101, type: 'DEX' })], {
+      overrides: [
+        createOverride({
+          characterId: 4101,
+          images: {
+            thumbnailDataUrl: 'data:image/jpeg;base64,dGh1bWI=',
+            detailDataUrl: 'data:image/jpeg;base64,ZGV0YWls',
+          },
+        }),
+      ],
+    });
+
+    const [listRecord] = await service.getAllCharacters();
+    const detailRecord = await service.getCharacterById(4101);
+
+    expect(listRecord?.imageUrl).toBe('data:image/jpeg;base64,dGh1bWI=');
+    expect(detailRecord?.detailImageUrl).toBe('data:image/jpeg;base64,ZGV0YWls');
+  });
+
   it('only keeps locked candidates beyond the main limit when a finite limit is applied', async () => {
     const rows = Array.from({ length: 1202 }, (_, index) =>
       createCharacterRow({
@@ -151,31 +218,19 @@ describe('OptcRepositoryService', () => {
     ]);
 
     const result = await service.getAutoBuilderCandidates(['DEX'], 1200);
-    const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
-
-    expect(selectAllMock).toHaveBeenCalledWith(
-      expect.stringContaining("(',' || c.type || ',') LIKE ?"),
-      ['%,DEX,%'],
-    );
     expect(result[0]?.type).toBe('DEX,INT');
   });
 
   it('adds any-match selected class filtering to auto-builder candidate queries', async () => {
-    const service = createRepositoryService([]);
-    const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
-    const fighterRow = createCharacterRow({ id: 4102, type: 'DEX', primaryClass: 'Fighter' });
-    const slasherRow = createCharacterRow({ id: 4101, type: 'DEX', primaryClass: 'Slasher' });
-
-    selectAllMock.mockResolvedValueOnce([fighterRow, slasherRow]);
+    const service = createRepositoryService([
+      createCharacterRow({ id: 4102, type: 'DEX', primaryClass: 'Fighter' }),
+      createCharacterRow({ id: 4101, type: 'DEX', primaryClass: 'Slasher' }),
+    ]);
 
     const result = await service.getAutoBuilderCandidates(['DEX'], 1200, {
       selectedClasses: ['Fighter', 'Slasher'],
     });
 
-    expect(selectAllMock).toHaveBeenCalledWith(
-      expect.stringContaining('(c.classes_json LIKE ? OR c.classes_json LIKE ?)'),
-      ['%,DEX,%', '%"Fighter"%', '%"Slasher"%'],
-    );
     expect(result.map((record) => record.id)).toEqual([4102, 4101]);
   });
 
@@ -183,7 +238,11 @@ describe('OptcRepositoryService', () => {
     const service = createRepositoryService([]);
     const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
     const favoriteMatchRow = createCharacterRow({ id: 4101, type: 'DEX', primaryClass: 'Fighter' });
-    const lockedOffClassRow = createCharacterRow({ id: 4102, type: 'DEX', primaryClass: 'Shooter' });
+    const lockedOffClassRow = createCharacterRow({
+      id: 4102,
+      type: 'DEX',
+      primaryClass: 'Shooter',
+    });
 
     selectAllMock.mockResolvedValueOnce([favoriteMatchRow, lockedOffClassRow]);
 
@@ -193,14 +252,18 @@ describe('OptcRepositoryService', () => {
       lockedCharacterIds: [4102],
     });
 
-    expect(result.map((record) => record.id)).toEqual([4101, 4102]);
+    expect(result.map((record) => record.id)).toEqual([4102, 4101]);
   });
 
   it('lets exclusions override favorite and locked candidate inclusion', async () => {
     const service = createRepositoryService([]);
     const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
     const favoriteMatchRow = createCharacterRow({ id: 4101, type: 'DEX', primaryClass: 'Fighter' });
-    const lockedOffClassRow = createCharacterRow({ id: 4102, type: 'DEX', primaryClass: 'Shooter' });
+    const lockedOffClassRow = createCharacterRow({
+      id: 4102,
+      type: 'DEX',
+      primaryClass: 'Shooter',
+    });
 
     selectAllMock.mockResolvedValueOnce([favoriteMatchRow, lockedOffClassRow]);
 
@@ -228,10 +291,12 @@ describe('OptcRepositoryService', () => {
   });
 
   it('uses the default catalog sort for detailed character search when no explicit sort mode is provided', async () => {
-    const service = createRepositoryService([createCharacterRow({ id: 4102, type: 'DEX' })]);
-    const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
+    const service = createRepositoryService([
+      createCharacterRow({ id: 4102, type: 'DEX', stars: 6 }),
+      createCharacterRow({ id: 4101, type: 'DEX', stars: 5 }),
+    ]);
 
-    await service.searchDetailedCharacters({
+    const result = await service.searchDetailedCharacters({
       searchTerm: '',
       selectedTypes: [],
       selectedClasses: [],
@@ -239,17 +304,16 @@ describe('OptcRepositoryService', () => {
       offset: 0,
     });
 
-    expect(selectAllMock).toHaveBeenCalledWith(
-      expect.stringContaining('ORDER BY c.stars DESC, c.id DESC'),
-      expect.any(Array),
-    );
+    expect(result.map((record) => record.id)).toEqual([4102, 4101]);
   });
 
   it('uses newest-first sort for detailed character search when the picker requests it', async () => {
-    const service = createRepositoryService([createCharacterRow({ id: 4102, type: 'DEX' })]);
-    const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
+    const service = createRepositoryService([
+      createCharacterRow({ id: 4101, type: 'DEX' }),
+      createCharacterRow({ id: 4102, type: 'DEX' }),
+    ]);
 
-    await service.searchDetailedCharacters({
+    const result = await service.searchDetailedCharacters({
       searchTerm: '',
       selectedTypes: [],
       selectedClasses: [],
@@ -258,10 +322,7 @@ describe('OptcRepositoryService', () => {
       offset: 0,
     });
 
-    expect(selectAllMock).toHaveBeenCalledWith(
-      expect.stringContaining('ORDER BY c.id DESC'),
-      expect.any(Array),
-    );
+    expect(result.map((record) => record.id)).toEqual([4102, 4101]);
   });
 
   it('uses power-first sort for detailed character search when the picker requests it', async () => {
@@ -271,8 +332,6 @@ describe('OptcRepositoryService', () => {
       createCharacterRow({ id: 4102, type: 'DEX', cost: 65 }),
       createCharacterRow({ id: 4103, type: 'DEX', cost: 60 }),
     ]);
-    const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
-
     const result = await service.searchDetailedCharacters({
       searchTerm: '',
       selectedTypes: [],
@@ -282,10 +341,6 @@ describe('OptcRepositoryService', () => {
       offset: 0,
     });
 
-    expect(selectAllMock).toHaveBeenCalledWith(
-      expect.stringContaining('WHEN c.cost BETWEEN 1 AND 65 THEN 0'),
-      expect.any(Array),
-    );
     expect(result.map((record) => record.id)).toEqual([4102, 4103, 4101, 4104]);
   });
 
@@ -317,10 +372,19 @@ describe('OptcRepositoryService', () => {
       offset: 0,
     });
 
-    expect(selectAllMock).toHaveBeenCalledWith(
-      expect.stringContaining('AND id NOT IN (?,?)'),
-      ['', '', '', '', '', '', '', 4101, 4102, 10, 0],
-    );
+    expect(selectAllMock).toHaveBeenCalledWith(expect.stringContaining('AND id NOT IN (?,?)'), [
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      4101,
+      4102,
+      10,
+      0,
+    ]);
   });
 
   it('resolves ship thumbnail urls when the ship offline pack is installed', async () => {
@@ -385,12 +449,20 @@ function createRepositoryService(
   rows: TestSqlRow[],
   options: {
     manifest?: DatasetManifest;
+    overrides?: LocalCharacterOverride[];
     shipRows?: TestSqlRow[];
   } = {},
 ): OptcRepositoryService {
   const service = Object.create(OptcRepositoryService.prototype) as OptcRepositoryService;
+  const overridesByCharacterId = new Map(
+    (options.overrides ?? []).map((override) => [override.characterId, override] as const),
+  );
 
   Object.assign(service, {
+    characterOverrides: {
+      ready: vi.fn().mockResolvedValue(undefined),
+      overridesByCharacterId: vi.fn(() => overridesByCharacterId),
+    },
     getDatasetManifest: vi.fn().mockResolvedValue(options.manifest ?? createManifest()),
     selectAll: vi
       .fn()
@@ -530,6 +602,65 @@ function createCharacterRow(
       superClass: null,
       rumbleData: null,
     }),
+  };
+}
+
+function createOverride(
+  overrides: Partial<LocalCharacterOverride> & Pick<LocalCharacterOverride, 'characterId'>,
+): LocalCharacterOverride {
+  return {
+    characterId: overrides.characterId,
+    name: overrides.name ?? `Override ${overrides.characterId}`,
+    isIncomplete: overrides.isIncomplete ?? false,
+    type: overrides.type ?? 'DEX',
+    classes: overrides.classes ?? ['Fighter'],
+    stars: overrides.stars ?? 6,
+    cost: overrides.cost ?? 55,
+    combo: overrides.combo ?? 4,
+    maxLevel: overrides.maxLevel ?? 99,
+    maxExperience: overrides.maxExperience ?? 1_000_000,
+    minHp: overrides.minHp ?? 1000,
+    minAtk: overrides.minAtk ?? 400,
+    minRcv: overrides.minRcv ?? 120,
+    maxHp: overrides.maxHp ?? 3900,
+    maxAtk: overrides.maxAtk ?? 1900,
+    maxRcv: overrides.maxRcv ?? 340,
+    growth: overrides.growth ?? 3,
+    detail: overrides.detail ?? {
+      characterId: overrides.characterId,
+      captainAbility: null,
+      captainAbilityVariants: [],
+      captainNotes: null,
+      specialName: null,
+      specialText: null,
+      specialNotes: null,
+      superSpecialText: null,
+      superSpecialCriteriaText: null,
+      superSpecialNotes: null,
+      superSpecialCriteria: null,
+      partyConflictKeys: [],
+      characterTags: [],
+      builderAbilities: [],
+      sailorAbilities: [],
+      sailorNotes: null,
+      limitBreak: [],
+      potentialAbilities: [],
+      supportData: [],
+      swapData: null,
+      vsSpecial: null,
+      superType: null,
+      superTandemData: null,
+      finalTapData: null,
+      rushSugoSpecialData: null,
+      superClass: null,
+      rumbleData: null,
+    },
+    images: overrides.images ?? {
+      thumbnailDataUrl: null,
+      detailDataUrl: null,
+    },
+    createdAt: overrides.createdAt ?? '2026-04-13T09:15:00.000Z',
+    updatedAt: overrides.updatedAt ?? '2026-04-13T09:15:00.000Z',
   };
 }
 

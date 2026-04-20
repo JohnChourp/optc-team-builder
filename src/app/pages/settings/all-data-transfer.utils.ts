@@ -1,60 +1,53 @@
-import {
-  type OptcbxFavoritesExportPayload,
-} from "../characters/characters-favorites.utils";
-import {
-  type FavoriteShipsTransferPayload,
-} from "./favorite-ships-transfer.utils";
-import {
-  type SavedTeamsTransferPayload,
-} from "../saved-teams/saved-teams-transfer.utils";
-import {
-  type SavedEnemiesTransferPayload,
-} from "../saved-enemies/saved-enemies-transfer.utils";
-import {
-  type CharacterBoxesTransferPayload,
-} from "../character-boxes/character-boxes-transfer.utils";
+import { type OptcbxFavoritesExportPayload } from '../characters/characters-favorites.utils';
+import { type FavoriteShipsTransferPayload } from './favorite-ships-transfer.utils';
+import { type SavedTeamsTransferPayload } from '../saved-teams/saved-teams-transfer.utils';
+import { type SavedEnemiesTransferPayload } from '../saved-enemies/saved-enemies-transfer.utils';
+import { type CharacterBoxesTransferPayload } from '../character-boxes/character-boxes-transfer.utils';
+import { type CharacterOverridesTransferPayload } from '../character-detail/character-overrides-transfer.utils';
 
 export interface AllDataTransferPayload {
   schemaVersion: 1;
-  source: "all-data";
+  source: 'all-data';
   exportedAt: string;
   favorites?: OptcbxFavoritesExportPayload;
   favoriteShips?: FavoriteShipsTransferPayload;
   savedTeams?: SavedTeamsTransferPayload;
   savedEnemies?: SavedEnemiesTransferPayload;
   characterBoxes?: CharacterBoxesTransferPayload;
+  characterOverrides?: CharacterOverridesTransferPayload;
 }
 
 export type AllDataImportCandidate =
-  | { kind: "all-data"; payload: AllDataTransferPayload }
-  | { kind: "favorites"; payload: unknown }
-  | { kind: "favorite-ships"; payload: unknown }
-  | { kind: "saved-teams"; payload: unknown }
-  | { kind: "saved-enemies"; payload: unknown }
-  | { kind: "character-boxes"; payload: unknown };
+  | { kind: 'all-data'; payload: AllDataTransferPayload }
+  | { kind: 'favorites'; payload: unknown }
+  | { kind: 'favorite-ships'; payload: unknown }
+  | { kind: 'saved-teams'; payload: unknown }
+  | { kind: 'saved-enemies'; payload: unknown }
+  | { kind: 'character-boxes'; payload: unknown }
+  | { kind: 'character-overrides'; payload: unknown };
 
 export class AllDataImportError extends Error {
   public constructor(public readonly key: string) {
     super(key);
-    this.name = "AllDataImportError";
+    this.name = 'AllDataImportError';
   }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
 function isAllDataTransferPayload(value: unknown): value is AllDataTransferPayload {
   return (
     isRecord(value) &&
-    value["schemaVersion"] === 1 &&
-    value["source"] === "all-data" &&
-    typeof value["exportedAt"] === "string"
+    value['schemaVersion'] === 1 &&
+    value['source'] === 'all-data' &&
+    typeof value['exportedAt'] === 'string'
   );
 }
 
 function padTimestampPart(value: number): string {
-  return String(value).padStart(2, "0");
+  return String(value).padStart(2, '0');
 }
 
 function buildExportDate(exportedAt: string): Date {
@@ -147,6 +140,19 @@ function cloneCharacterBoxesPayload(
   };
 }
 
+function cloneCharacterOverridesPayload(
+  payload: CharacterOverridesTransferPayload | undefined,
+): CharacterOverridesTransferPayload | undefined {
+  if (!payload) {
+    return undefined;
+  }
+
+  return {
+    ...payload,
+    overrides: payload.overrides.map((override) => JSON.parse(JSON.stringify(override))),
+  };
+}
+
 export function buildAllDataTransferPayload(
   sections: {
     favorites?: OptcbxFavoritesExportPayload;
@@ -154,25 +160,25 @@ export function buildAllDataTransferPayload(
     savedTeams?: SavedTeamsTransferPayload;
     savedEnemies?: SavedEnemiesTransferPayload;
     characterBoxes?: CharacterBoxesTransferPayload;
+    characterOverrides?: CharacterOverridesTransferPayload;
   },
   exportedAt = new Date().toISOString(),
 ): AllDataTransferPayload {
   return {
     schemaVersion: 1,
-    source: "all-data",
+    source: 'all-data',
     exportedAt,
     favorites: cloneFavoritesPayload(sections.favorites),
     favoriteShips: cloneFavoriteShipsPayload(sections.favoriteShips),
     savedTeams: cloneSavedTeamsPayload(sections.savedTeams),
     savedEnemies: cloneSavedEnemiesPayload(sections.savedEnemies),
     characterBoxes: cloneCharacterBoxesPayload(sections.characterBoxes),
+    characterOverrides: cloneCharacterOverridesPayload(sections.characterOverrides),
   };
 }
 
 export function buildAllDataExportFilename(exportedAt: string): string {
-  const exactTimestampMatch = exportedAt.match(
-    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/,
-  );
+  const exactTimestampMatch = exportedAt.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
 
   if (exactTimestampMatch) {
     const [, year, month, day, hours, minutes, seconds] = exactTimestampMatch;
@@ -195,22 +201,22 @@ export function buildAllDataExportFilename(exportedAt: string): string {
 export function downloadAllDataExport(
   payload: AllDataTransferPayload | null,
   documentRef: Document = document,
-  urlRef: Pick<typeof URL, "createObjectURL" | "revokeObjectURL"> = URL,
+  urlRef: Pick<typeof URL, 'createObjectURL' | 'revokeObjectURL'> = URL,
 ): void {
   if (!payload) {
     return;
   }
 
   const objectUrl = urlRef.createObjectURL(
-    new Blob([JSON.stringify(payload, null, 2) + "\n"], {
-      type: "application/json;charset=utf-8",
+    new Blob([JSON.stringify(payload, null, 2) + '\n'], {
+      type: 'application/json;charset=utf-8',
     }),
   );
-  const anchor = documentRef.createElement("a");
+  const anchor = documentRef.createElement('a');
 
   anchor.href = objectUrl;
   anchor.download = buildAllDataExportFilename(payload.exportedAt);
-  anchor.style.display = "none";
+  anchor.style.display = 'none';
   documentRef.body.appendChild(anchor);
 
   try {
@@ -227,64 +233,71 @@ export function parseAllDataImportCandidate(rawContent: string): AllDataImportCa
   try {
     parsedPayload = JSON.parse(rawContent) as unknown;
   } catch {
-    throw new AllDataImportError("management.allData.errors.invalidJson");
+    throw new AllDataImportError('management.allData.errors.invalidJson');
   }
 
   if (!isRecord(parsedPayload)) {
-    throw new AllDataImportError("management.allData.errors.invalidPayload");
+    throw new AllDataImportError('management.allData.errors.invalidPayload');
   }
 
-  if (Array.isArray(parsedPayload["characters"])) {
+  if (Array.isArray(parsedPayload['characters'])) {
     return {
-      kind: "favorites",
+      kind: 'favorites',
       payload: parsedPayload,
     };
   }
 
-  const source = parsedPayload["source"];
+  const source = parsedPayload['source'];
 
-  if (source === "all-data") {
+  if (source === 'all-data') {
     if (!isAllDataTransferPayload(parsedPayload)) {
-      throw new AllDataImportError("management.allData.errors.invalidPayload");
+      throw new AllDataImportError('management.allData.errors.invalidPayload');
     }
 
     return {
-      kind: "all-data",
+      kind: 'all-data',
       payload: parsedPayload,
     };
   }
 
-  if (parsedPayload["schemaVersion"] === 1 && source === "favorite-ships") {
+  if (parsedPayload['schemaVersion'] === 1 && source === 'favorite-ships') {
     return {
-      kind: "favorite-ships",
+      kind: 'favorite-ships',
       payload: parsedPayload,
     };
   }
 
-  if (parsedPayload["schemaVersion"] === 1 && source === "saved-teams") {
+  if (parsedPayload['schemaVersion'] === 1 && source === 'saved-teams') {
     return {
-      kind: "saved-teams",
+      kind: 'saved-teams',
       payload: parsedPayload,
     };
   }
 
-  if (parsedPayload["schemaVersion"] === 1 && source === "saved-enemies") {
+  if (parsedPayload['schemaVersion'] === 1 && source === 'saved-enemies') {
     return {
-      kind: "saved-enemies",
+      kind: 'saved-enemies',
       payload: parsedPayload,
     };
   }
 
-  if (parsedPayload["schemaVersion"] === 1 && source === "character-boxes") {
+  if (parsedPayload['schemaVersion'] === 1 && source === 'character-boxes') {
     return {
-      kind: "character-boxes",
+      kind: 'character-boxes',
       payload: parsedPayload,
     };
   }
 
-  if (typeof source === "string") {
-    throw new AllDataImportError("management.allData.errors.unsupportedSchema");
+  if (parsedPayload['schemaVersion'] === 1 && source === 'character-overrides') {
+    return {
+      kind: 'character-overrides',
+      payload: parsedPayload,
+    };
   }
 
-  throw new AllDataImportError("management.allData.errors.invalidPayload");
+  if (typeof source === 'string') {
+    throw new AllDataImportError('management.allData.errors.unsupportedSchema');
+  }
+
+  throw new AllDataImportError('management.allData.errors.invalidPayload');
 }

@@ -19,6 +19,16 @@
 
       @if (!loading() && character(); as current) {
         @if (viewModel(); as view) {
+          @if (transferFeedback(); as feedback) {
+            <section
+              class="glass-card transfer-feedback"
+              [class.transfer-feedback--error]="feedback.tone === 'error'"
+              [class.transfer-feedback--success]="feedback.tone === 'success'"
+            >
+              {{ feedback.message }}
+            </section>
+          }
+
           <section
             class="hero-card glass-card"
             [class.hero-card--incomplete]="current.isIncomplete"
@@ -84,6 +94,31 @@
                 <ion-button fill="outline" color="light" [routerLink]="['/tabs/team-builder']">
                   {{ t('hero.openTeamBuilder') }}
                 </ion-button>
+                <ion-button
+                  fill="outline"
+                  color="light"
+                  [routerLink]="['/characters', current.id, 'edit']"
+                >
+                  {{ t('hero.edit') }}
+                </ion-button>
+                <ion-button fill="outline" color="light" (click)="exportCharacterOverride(current)">
+                  {{ t('hero.exportJson') }}
+                </ion-button>
+                <input
+                  #overrideImportInput
+                  type="file"
+                  accept=".json,application/json"
+                  hidden
+                  (change)="onCharacterOverrideFileSelected($event, overrideImportInput, current)"
+                />
+                <ion-button fill="outline" color="light" (click)="overrideImportInput.click()">
+                  {{ t('hero.importJson') }}
+                </ion-button>
+                @if (hasLocalOverride()) {
+                  <ion-button fill="outline" color="danger" (click)="resetLocalChanges(current.id)">
+                    {{ t('hero.resetOverride') }}
+                  </ion-button>
+                }
               </div>
             </div>
           </section>
@@ -127,7 +162,10 @@
                     @if (card.texts.length) {
                       <div class="detail-texts">
                         @for (text of card.texts; track $index) {
-                          <div class="detail-text" [class.detail-text--muted]="text.tone === 'muted'">
+                          <div
+                            class="detail-text"
+                            [class.detail-text--muted]="text.tone === 'muted'"
+                          >
                             <span class="detail-text__label">
                               @if (text.labelKey) {
                                 {{ t(text.labelKey) }}

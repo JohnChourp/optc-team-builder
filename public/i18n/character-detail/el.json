@@ -2,8 +2,12 @@
   "fallbackTitle": "Χαρακτήρας",
   "hero": {
     "addFavorite": "Προσθήκη favorite",
+    "edit": "Τοπική επεξεργασία",
+    "exportJson": "Εξαγωγή JSON",
     "favorited": "Στα favorites",
+    "importJson": "Εισαγωγή JSON",
     "openTeamBuilder": "Άνοιγμα team builder",
+    "resetOverride": "Reset local changes",
     "summary": "Κόστος {{cost}} • Max Lv {{maxLevel}} • {{stars}}★ unit"
   },
   "fields": {

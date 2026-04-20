@@ -48,9 +48,10 @@
     }
   },
   "management": {
-    "copy": "Κάνε backup και restore των τοπικών δεδομένων της συσκευής για favorite characters, favorite ships, character boxes, saved teams και saved enemies.",
+    "copy": "Κάνε backup και restore των τοπικών δεδομένων της συσκευής για favorite characters, favorite ships, character boxes, character overrides, saved teams και saved enemies.",
     "confirm": {
       "deleteCharacterBoxes": "Να διαγραφούν όλα τα character boxes; Η ενέργεια δεν επηρεάζει τα favorites, τα saved teams ή τα saved enemies.",
+      "deleteCharacterOverrides": "Να διαγραφούν όλα τα local character overrides; Η ενέργεια δεν επηρεάζει τα favorites, τα saved teams ή τα saved enemies.",
       "deleteFavorites": "Να διαγραφούν όλα τα favorites; Η ενέργεια δεν επηρεάζει τα saved teams ή τα saved enemies.",
       "deleteFavoriteShips": "Να διαγραφούν όλα τα αγαπημένα καράβια; Η ενέργεια δεν επηρεάζει τα favorite characters, τα saved teams ή τα saved enemies.",
       "deleteSavedEnemies": "Να διαγραφούν όλα τα saved enemies; Η ενέργεια δεν επηρεάζει τα favorites ή τα saved teams.",
@@ -58,13 +59,14 @@
     },
     "counts": {
       "characterBoxes": "{{count}} character boxes",
+      "characterOverrides": "{{count}} character overrides",
       "favorites": "{{count}} favorites",
       "favoriteShips": "{{count}} αγαπημένα καράβια",
       "savedEnemies": "{{count}} saved enemies",
       "savedTeams": "{{count}} saved teams"
     },
     "allData": {
-      "copy": "Κάνε export ένα πλήρες backup bundle ή import ένα έξυπνο backup που μπορεί να έχει όλα τα δεδομένα, μόνο ένα section ή ακόμα και export από ένα μόνο favorites, ships, character boxes, saved teams ή saved enemies backup.",
+      "copy": "Κάνε export ένα πλήρες backup bundle ή import ένα έξυπνο backup που μπορεί να έχει όλα τα δεδομένα, μόνο ένα section ή ακόμα και export από ένα μόνο favorites, ships, character boxes, character overrides, saved teams ή saved enemies backup.",
       "errors": {
         "generic": "Το import όλων των δεδομένων απέτυχε.",
         "invalidJson": "Το επιλεγμένο backup δεν είναι έγκυρο JSON.",
@@ -80,7 +82,7 @@
       },
       "import": "Εισαγωγή όλων",
       "processing": "Γίνεται import του backup...",
-      "subtitle": "Favorites, καράβια, boxes, teams, enemies",
+      "subtitle": "Favorites, καράβια, boxes, overrides, teams, enemies",
       "title": "All Data"
     },
     "characterBoxes": {
@@ -109,6 +111,33 @@
       "import": "Εισαγωγή character boxes",
       "processing": "Γίνεται import των character boxes...",
       "title": "Character Boxes"
+    },
+    "characterOverrides": {
+      "copy": "Κάνε export όλων των local character overrides σε JSON, import ενός backup για local overrides ή διαγραφή όλων των local character overrides από αυτή τη συσκευή.",
+      "deleteAll": "Διαγραφή όλων των character overrides",
+      "errors": {
+        "generic": "Το import των character overrides απέτυχε.",
+        "invalidJson": "Το επιλεγμένο backup για character overrides δεν είναι έγκυρο JSON.",
+        "invalidPayload": "Το επιλεγμένο backup για character overrides δεν έχει το αναμενόμενο format.",
+        "unsupportedSchema": "Το επιλεγμένο backup για character overrides χρησιμοποιεί μη υποστηριζόμενη έκδοση schema."
+      },
+      "export": "Εξαγωγή character overrides",
+      "feedback": {
+        "errorTitle": "Το import των character overrides απέτυχε",
+        "loadedFromFile": "Φορτώθηκε από το {{fileName}}.",
+        "stats": {
+          "added": "Προστέθηκαν {{count}} νέα character overrides.",
+          "duplicates": "Συγχωνεύτηκαν {{count}} διπλά ids character overrides.",
+          "invalid": "Αγνοήθηκαν {{count}} μη έγκυρες εγγραφές character overrides.",
+          "unknownCharacters": "Αγνοήθηκαν {{count}} overrides που στοχεύουν χαρακτήρες που δεν υπάρχουν σε αυτό το build.",
+          "updated": "Ενημερώθηκαν {{count}} υπάρχοντα character overrides."
+        },
+        "successTitle": "Το import των character overrides ολοκληρώθηκε",
+        "warningTitle": "Το import των character overrides ολοκληρώθηκε με παρατηρήσεις"
+      },
+      "import": "Εισαγωγή character overrides",
+      "processing": "Γίνεται import των character overrides...",
+      "title": "Character Overrides"
     },
     "favorites": {
       "copy": "Κάνε export ή import του OPTCbx-compatible favorites αρχείου σου ή καθάρισε όλη τη λίστα favorites από αυτή τη συσκευή.",

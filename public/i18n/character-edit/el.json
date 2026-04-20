@@ -1,0 +1,49 @@
+{
+  "title": "Επεξεργασία χαρακτήρα",
+  "loading": "Γίνεται φόρτωση του editable record χαρακτήρα...",
+  "intro": {
+    "eyebrow": "Local override",
+    "title": "Επεξεργασία {{name}}",
+    "copy": "Αποθήκευσε local-only override για αυτόν τον χαρακτήρα, μαζί με custom art και πλήρες advanced detail payload."
+  },
+  "sections": {
+    "core": "Core",
+    "stats": "Stats",
+    "images": "Images",
+    "advancedJson": "Advanced JSON"
+  },
+  "fields": {
+    "name": "Όνομα",
+    "type": "Type",
+    "primaryClass": "Primary class",
+    "secondaryClass": "Secondary class",
+    "stars": "Stars",
+    "cost": "Κόστος",
+    "combo": "Combo",
+    "maxLevel": "Max level",
+    "maxExperience": "Max experience",
+    "minHp": "Min HP",
+    "minAtk": "Min ATK",
+    "minRcv": "Min RCV",
+    "maxHp": "Max HP",
+    "maxAtk": "Max ATK",
+    "maxRcv": "Max RCV",
+    "growth": "Growth",
+    "incomplete": "Ελλιπή δεδομένα",
+    "incompleteCopy": "Σημείωσε το override ως incomplete όταν οι local αλλαγές ακόμη δεν αποτυπώνουν τελικό πλήρες record."
+  },
+  "images": {
+    "thumbnail": "Thumbnail εικόνα",
+    "detail": "Μεγάλη εικόνα"
+  },
+  "advanced": {
+    "copy": "Επεξεργάσου παρακάτω ολόκληρο το payload του override. Οι εικόνες μένουν έξω από αυτό το JSON editor και διαχειρίζονται από το Images section."
+  },
+  "actions": {
+    "save": "Αποθήκευση local override",
+    "resetOverride": "Reset local override",
+    "upload": "Ανέβασμα εικόνας",
+    "clear": "Καθαρισμός εικόνας",
+    "applyJson": "Εφαρμογή JSON στο draft"
+  }
+}

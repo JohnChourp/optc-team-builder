@@ -5,6 +5,7 @@ import { CharacterCatalogCacheService } from './character-catalog-cache.service'
 
 describe('CharacterCatalogCacheService', () => {
   it('loads the full catalog only once even when ensureLoaded is called concurrently', async () => {
+    let overrideRevision = 0;
     let resolveCatalog: ((catalog: CharacterListItem[]) => void) | null = null;
     const repository = {
       getAllCharacters: vi.fn(
@@ -14,7 +15,12 @@ describe('CharacterCatalogCacheService', () => {
           }),
       ),
     };
-    const service = new CharacterCatalogCacheService(repository as never);
+    const service = new CharacterCatalogCacheService(
+      repository as never,
+      {
+        revision: () => overrideRevision,
+      } as never,
+    );
 
     const firstLoad = service.ensureLoaded();
     const secondLoad = service.ensureLoaded();
@@ -31,10 +37,16 @@ describe('CharacterCatalogCacheService', () => {
   });
 
   it('keeps the catalog warm across repeated queries without resetting it', async () => {
+    let overrideRevision = 0;
     const repository = {
       getAllCharacters: vi.fn().mockResolvedValue([createCharacter(101), createCharacter(202)]),
     };
-    const service = new CharacterCatalogCacheService(repository as never);
+    const service = new CharacterCatalogCacheService(
+      repository as never,
+      {
+        revision: () => overrideRevision,
+      } as never,
+    );
 
     await service.ensureLoaded();
     const firstCatalogRef = service.catalog();
@@ -49,19 +61,22 @@ describe('CharacterCatalogCacheService', () => {
       }),
     ).toHaveLength(2);
     expect(
-      service.queryCharacters({
-        searchTerm: '202',
-        typeFilter: '',
-        classFilter: '',
-        limit: 10,
-        offset: 0,
-      }).map((character) => character.id),
+      service
+        .queryCharacters({
+          searchTerm: '202',
+          typeFilter: '',
+          classFilter: '',
+          limit: 10,
+          offset: 0,
+        })
+        .map((character) => character.id),
     ).toEqual([202]);
     expect(service.catalog()).toBe(firstCatalogRef);
     expect(repository.getAllCharacters).toHaveBeenCalledOnce();
   });
 
   it('matches filtering and pagination semantics for cached character queries', async () => {
+    let overrideRevision = 0;
     const repository = {
       getAllCharacters: vi.fn().mockResolvedValue([
         createCharacter(401, {
@@ -84,56 +99,71 @@ describe('CharacterCatalogCacheService', () => {
         }),
       ]),
     };
-    const service = new CharacterCatalogCacheService(repository as never);
+    const service = new CharacterCatalogCacheService(
+      repository as never,
+      {
+        revision: () => overrideRevision,
+      } as never,
+    );
 
     await service.ensureLoaded();
 
     expect(
-      service.queryCharacters({
-        searchTerm: 'luffy',
-        typeFilter: '',
-        classFilter: '',
-        limit: 10,
-        offset: 0,
-      }).map((character) => character.id),
+      service
+        .queryCharacters({
+          searchTerm: 'luffy',
+          typeFilter: '',
+          classFilter: '',
+          limit: 10,
+          offset: 0,
+        })
+        .map((character) => character.id),
     ).toEqual([401]);
     expect(
-      service.queryCharacters({
-        searchTerm: '',
-        typeFilter: 'DEX',
-        classFilter: '',
-        limit: 10,
-        offset: 0,
-      }).map((character) => character.id),
+      service
+        .queryCharacters({
+          searchTerm: '',
+          typeFilter: 'DEX',
+          classFilter: '',
+          limit: 10,
+          offset: 0,
+        })
+        .map((character) => character.id),
     ).toEqual([401, 305]);
     expect(
-      service.queryCharacters({
-        searchTerm: '',
-        typeFilter: '',
-        classFilter: 'Slasher',
-        limit: 10,
-        offset: 0,
-      }).map((character) => character.id),
+      service
+        .queryCharacters({
+          searchTerm: '',
+          typeFilter: '',
+          classFilter: 'Slasher',
+          limit: 10,
+          offset: 0,
+        })
+        .map((character) => character.id),
     ).toEqual([305]);
     expect(
-      service.queryCharacters({
-        searchTerm: '',
-        typeFilter: '',
-        classFilter: '',
-        allowedCharacterIds: [305, 299],
-        excludedCharacterIds: [299],
-        limit: 1,
-        offset: 0,
-      }).map((character) => character.id),
+      service
+        .queryCharacters({
+          searchTerm: '',
+          typeFilter: '',
+          classFilter: '',
+          allowedCharacterIds: [305, 299],
+          excludedCharacterIds: [299],
+          limit: 1,
+          offset: 0,
+        })
+        .map((character) => character.id),
     ).toEqual([305]);
     expect(
-      service.queryCharacters({
-        searchTerm: '',
-        typeFilter: '',
-        classFilter: '',
-        limit: 1,
-        offset: 1,
-      }).map((character) => character.id),
+      service
+        .queryCharacters({
+          searchTerm: '',
+          typeFilter: '',
+          classFilter: '',
+          limit: 1,
+          offset: 1,
+        })
+        .map((character) => character.id),
     ).toEqual([305]);
     expect(
       service.queryCharacters({
@@ -148,22 +178,49 @@ describe('CharacterCatalogCacheService', () => {
   });
 
   it('returns characters by id while preserving the input order', async () => {
+    let overrideRevision = 0;
     const repository = {
-      getAllCharacters: vi.fn().mockResolvedValue([
-        createCharacter(401),
-        createCharacter(305),
-        createCharacter(299),
-      ]),
+      getAllCharacters: vi
+        .fn()
+        .mockResolvedValue([createCharacter(401), createCharacter(305), createCharacter(299)]),
     };
-    const service = new CharacterCatalogCacheService(repository as never);
+    const service = new CharacterCatalogCacheService(
+      repository as never,
+      {
+        revision: () => overrideRevision,
+      } as never,
+    );
 
     await service.ensureLoaded();
 
-    expect(service.getCharactersByIds([299, 401, 999, 305]).map((character) => character.id)).toEqual([
-      299,
-      401,
-      305,
-    ]);
+    expect(
+      service.getCharactersByIds([299, 401, 999, 305]).map((character) => character.id),
+    ).toEqual([299, 401, 305]);
+  });
+
+  it('reloads the cached catalog after the override revision changes', async () => {
+    let overrideRevision = 0;
+    const repository = {
+      getAllCharacters: vi
+        .fn()
+        .mockResolvedValueOnce([createCharacter(101, { name: 'Base name' })])
+        .mockResolvedValueOnce([createCharacter(101, { name: 'Edited name' })]),
+    };
+    const service = new CharacterCatalogCacheService(
+      repository as never,
+      {
+        revision: () => overrideRevision,
+      } as never,
+    );
+
+    await service.ensureLoaded();
+    expect(service.catalog()[0]?.name).toBe('Base name');
+
+    overrideRevision = 1;
+    await service.ensureLoaded();
+
+    expect(repository.getAllCharacters).toHaveBeenCalledTimes(2);
+    expect(service.catalog()[0]?.name).toBe('Edited name');
   });
 });
 

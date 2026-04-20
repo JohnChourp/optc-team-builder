@@ -136,6 +136,35 @@ export interface CharacterDetailRecord extends CharacterListItem {
   detailImageUrl: string;
 }
 
+export interface LocalCharacterOverrideImages {
+  thumbnailDataUrl: string | null;
+  detailDataUrl: string | null;
+}
+
+export interface LocalCharacterOverride {
+  characterId: number;
+  name: string;
+  isIncomplete: boolean;
+  type: string;
+  classes: string[];
+  stars: number;
+  cost: number;
+  combo: number;
+  maxLevel: number;
+  maxExperience: number | null;
+  minHp: number | null;
+  minAtk: number | null;
+  minRcv: number | null;
+  maxHp: number | null;
+  maxAtk: number | null;
+  maxRcv: number | null;
+  growth: number | null;
+  detail: CharacterDetail;
+  images: LocalCharacterOverrideImages;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ShipRecord {
   id: number;
   name: string;

@@ -1,90 +1,108 @@
-import { Routes } from "@angular/router";
+import { Routes } from '@angular/router';
 
 export const routes: Routes = [
   {
-    path: "",
-    pathMatch: "full",
-    redirectTo: "tabs/characters",
+    path: '',
+    pathMatch: 'full',
+    redirectTo: 'tabs/characters',
   },
   {
-    path: "tabs",
-    loadComponent: () =>
-      import("./layout/tabs.page").then((module) => module.TabsPage),
+    path: 'tabs',
+    loadComponent: () => import('./layout/tabs.page').then((module) => module.TabsPage),
     children: [
       {
-        path: "characters",
+        path: 'characters',
         loadComponent: () =>
-          import("./pages/characters/characters.page").then((module) => module.CharactersPage),
+          import('./pages/characters/characters.page').then((module) => module.CharactersPage),
       },
       {
-        path: "team-builder",
+        path: 'team-builder',
         loadComponent: () =>
-          import("./pages/team-builder/team-builder.page").then((module) => module.TeamBuilderPage),
+          import('./pages/team-builder/team-builder.page').then((module) => module.TeamBuilderPage),
       },
       {
-        path: "auto-team-builder",
+        path: 'auto-team-builder',
         loadComponent: () =>
-          import("./pages/auto-team-builder/auto-team-builder.page").then((module) => module.AutoTeamBuilderPage),
+          import('./pages/auto-team-builder/auto-team-builder.page').then(
+            (module) => module.AutoTeamBuilderPage,
+          ),
       },
       {
-        path: "character-boxes",
+        path: 'character-boxes',
         loadComponent: () =>
-          import("./pages/character-boxes/character-boxes.page").then((module) => module.CharacterBoxesPage),
+          import('./pages/character-boxes/character-boxes.page').then(
+            (module) => module.CharacterBoxesPage,
+          ),
       },
       {
-        path: "saved-teams",
+        path: 'saved-teams',
         loadComponent: () =>
-          import("./pages/saved-teams/saved-teams.page").then((module) => module.SavedTeamsPage),
+          import('./pages/saved-teams/saved-teams.page').then((module) => module.SavedTeamsPage),
       },
       {
-        path: "saved-enemies",
+        path: 'saved-enemies',
         loadComponent: () =>
-          import("./pages/saved-enemies/saved-enemies.page").then((module) => module.SavedEnemiesPage),
+          import('./pages/saved-enemies/saved-enemies.page').then(
+            (module) => module.SavedEnemiesPage,
+          ),
       },
       {
-        path: "collection",
-        pathMatch: "full",
-        redirectTo: "saved-teams",
+        path: 'collection',
+        pathMatch: 'full',
+        redirectTo: 'saved-teams',
       },
       {
-        path: "settings",
+        path: 'settings',
         loadComponent: () =>
-          import("./pages/settings/settings.page").then((module) => module.SettingsPage),
+          import('./pages/settings/settings.page').then((module) => module.SettingsPage),
       },
       {
-        path: "privacy",
+        path: 'privacy',
         loadComponent: () =>
-          import("./pages/privacy-policy/privacy-policy.page").then((module) => module.PrivacyPolicyPage),
+          import('./pages/privacy-policy/privacy-policy.page').then(
+            (module) => module.PrivacyPolicyPage,
+          ),
       },
       {
-        path: "cookies",
+        path: 'cookies',
         loadComponent: () =>
-          import("./pages/cookie-policy/cookie-policy.page").then((module) => module.CookiePolicyPage),
+          import('./pages/cookie-policy/cookie-policy.page').then(
+            (module) => module.CookiePolicyPage,
+          ),
       },
       {
-        path: "",
-        pathMatch: "full",
-        redirectTo: "characters",
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'characters',
       },
     ],
   },
   {
-    path: "characters/:id",
+    path: 'characters/:id',
     loadComponent: () =>
-      import("./pages/character-detail/character-detail.page").then((module) => module.CharacterDetailPage),
+      import('./pages/character-detail/character-detail.page').then(
+        (module) => module.CharacterDetailPage,
+      ),
   },
   {
-    path: "privacy",
-    pathMatch: "full",
-    redirectTo: "tabs/privacy",
+    path: 'characters/:id/edit',
+    loadComponent: () =>
+      import('./pages/character-edit/character-edit.page').then(
+        (module) => module.CharacterEditPage,
+      ),
   },
   {
-    path: "cookies",
-    pathMatch: "full",
-    redirectTo: "tabs/cookies",
+    path: 'privacy',
+    pathMatch: 'full',
+    redirectTo: 'tabs/privacy',
   },
   {
-    path: "**",
-    redirectTo: "tabs/characters",
+    path: 'cookies',
+    pathMatch: 'full',
+    redirectTo: 'tabs/cookies',
+  },
+  {
+    path: '**',
+    redirectTo: 'tabs/characters',
   },
 ];
