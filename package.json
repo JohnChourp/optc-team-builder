@@ -1,6 +1,6 @@
 {
   "name": "optc-team-builder",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "scripts": {
     "config:app": "node ./scripts/write-app-config.mjs",
     "ng": "ng",
