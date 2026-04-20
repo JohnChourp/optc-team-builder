@@ -1,6 +1,9 @@
 <ng-container *transloco="let t; scope: 'saved-enemies'; read: 'saved-enemies'">
   <ion-header class="ion-no-border">
     <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-menu-button autoHide="false"></ion-menu-button>
+      </ion-buttons>
       <ion-title>{{ t('title') }}</ion-title>
     </ion-toolbar>
   </ion-header>
@@ -13,9 +16,6 @@
         <p class="section-copy">{{ t('hero.copy') }}</p>
 
         <div class="hero-actions">
-          <ion-button fill="outline" color="light" [routerLink]="['/tabs/saved-teams']">
-            {{ t('hero.savedTeamsCta') }}
-          </ion-button>
           <ion-button color="warning" (click)="openCreateModal()">
             <ion-icon slot="start" [icon]="addIcon"></ion-icon>
             {{ t('hero.createCta') }}

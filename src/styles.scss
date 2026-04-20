@@ -17,7 +17,8 @@
   color-scheme: dark;
   font-family: 'Outfit', sans-serif;
   --app-bottom-bar-extra-offset: 0px;
-  --app-page-shell-padding-bottom: 112px;
+  --app-footer-bar-height: 34px;
+  --app-page-shell-padding-bottom: 32px;
   --app-mobile-sheet-height: calc(100vh - 16px);
   --app-modal-max-height: min(760px, calc(100vh - 32px));
 }
@@ -143,7 +144,7 @@ img {
     body,
     ion-app,
     ion-router-outlet,
-    ion-tabs {
+    ion-menu {
       min-height: 100dvh;
     }
   }

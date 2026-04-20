@@ -1,28 +1,33 @@
-<ion-tabs>
-  <ion-tab-bar slot="bottom" class="tabs-bar">
-    <ion-tab-button tab="characters" [routerLink]="['/tabs/characters']">
-      <ion-icon [icon]="charactersIcon"></ion-icon>
-      <ion-label>{{ "tabs.characters" | transloco }}</ion-label>
-    </ion-tab-button>
+<ion-menu contentId="tabs-menu-content" menuId="tabs-navigation-menu" side="start" type="overlay" class="tabs-menu">
+  <ion-header class="ion-no-border">
+    <ion-toolbar class="tabs-menu__toolbar">
+      <ion-title>{{ "tabs.menuTitle" | transloco }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
 
-    <ion-tab-button tab="team-builder" [routerLink]="['/tabs/team-builder']">
-      <ion-icon [icon]="teamIcon"></ion-icon>
-      <ion-label>{{ "tabs.team" | transloco }}</ion-label>
-    </ion-tab-button>
+  <ion-content class="tabs-menu__content">
+    <div class="tabs-menu__shell">
+      <p class="tabs-menu__copy">{{ "tabs.menuCopy" | transloco }}</p>
 
-    <ion-tab-button tab="auto-team-builder" [routerLink]="['/tabs/auto-team-builder']">
-      <ion-icon [icon]="autoTeamIcon"></ion-icon>
-      <ion-label>{{ "tabs.auto" | transloco }}</ion-label>
-    </ion-tab-button>
+      <ion-list lines="none" class="tabs-menu__list" [attr.aria-label]="'tabs.navigationAriaLabel' | transloco">
+        @for (item of navigationItems; track item.route) {
+          <ion-menu-toggle autoHide="true">
+            <ion-item
+              button
+              detail="false"
+              class="menu-item"
+              [class.menu-item--active]="isRouteActive(item)"
+              [routerLink]="[item.route]"
+              routerDirection="root"
+            >
+              <ion-icon slot="start" [icon]="item.icon"></ion-icon>
+              <ion-label>{{ item.labelKey | transloco }}</ion-label>
+            </ion-item>
+          </ion-menu-toggle>
+        }
+      </ion-list>
+    </div>
+  </ion-content>
+</ion-menu>
 
-    <ion-tab-button tab="saved-teams" [routerLink]="['/tabs/saved-teams']">
-      <ion-icon [icon]="savedTeamsIcon"></ion-icon>
-      <ion-label>{{ "tabs.savedTeams" | transloco }}</ion-label>
-    </ion-tab-button>
-
-    <ion-tab-button tab="settings" [routerLink]="['/tabs/settings']">
-      <ion-icon [icon]="settingsIcon"></ion-icon>
-      <ion-label>{{ "tabs.settings" | transloco }}</ion-label>
-    </ion-tab-button>
-  </ion-tab-bar>
-</ion-tabs>
+<ion-router-outlet id="tabs-menu-content"></ion-router-outlet>

@@ -4,10 +4,12 @@ import { RouterLink } from '@angular/router';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
   IonButton,
+  IonButtons,
   IonContent,
   IonHeader,
   IonIcon,
   IonInput,
+  IonMenuButton,
   IonModal,
   IonSearchbar,
   IonSpinner,
@@ -60,10 +62,12 @@ interface CharacterCatalogCardView {
   imports: [
     CommonModule,
     IonButton,
+    IonButtons,
     IonContent,
     IonHeader,
     IonIcon,
     IonInput,
+    IonMenuButton,
     IonModal,
     IonSearchbar,
     IonSpinner,

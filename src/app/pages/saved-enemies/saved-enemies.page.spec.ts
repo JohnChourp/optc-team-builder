@@ -32,6 +32,7 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonHeader: class {},
   IonIcon: class {},
   IonInput: class {},
+  IonMenuButton: class {},
   IonModal: class {},
   IonSearchbar: class {},
   IonSelect: class {},
@@ -563,6 +564,8 @@ describe('SavedEnemiesPage', () => {
     expect(template).toContain('<app-enemy-mechanic-picker');
     expect(template).toContain('<app-ability-requirement-picker');
     expect(template).toContain('<app-character-image-picker');
+    expect(template).not.toContain("t('hero.savedTeamsCta')");
+    expect(template).not.toContain("[routerLink]=\"['/tabs/saved-teams']\"");
     expect(template).not.toContain('editor.import.actions.openTable');
     expect(template).not.toContain('<app-saved-enemy-structured-requirements-modal');
     expect(template).not.toContain('resolveAbilityCatalogItem(draft.abilityKey)?.label');

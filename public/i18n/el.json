@@ -286,8 +286,13 @@
   },
   "tabs": {
     "auto": "Auto",
+    "characterBoxes": "Boxes χαρακτήρων",
     "characters": "Χαρακτήρες",
+    "menuCopy": "Άνοιξε οποιαδήποτε σελίδα από ένα σημείο χωρίς να στριμώχνεται το navigation στο κάτω μέρος.",
+    "menuTitle": "Πλοήγηση",
+    "navigationAriaLabel": "Κύρια πλοήγηση",
     "offline": "Offline",
+    "savedEnemies": "Αποθηκευμένοι εχθροί",
     "settings": "Ρυθμίσεις",
     "savedTeams": "Αποθηκευμένες ομάδες",
     "team": "Ομάδα"

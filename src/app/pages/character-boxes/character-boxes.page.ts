@@ -2,10 +2,12 @@ import { Component, OnInit, computed, signal } from '@angular/core';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
   IonButton,
+  IonButtons,
   IonContent,
   IonHeader,
   IonIcon,
   IonInput,
+  IonMenuButton,
   IonSearchbar,
   IonSelect,
   IonSelectOption,
@@ -53,10 +55,12 @@ interface CharacterBoxCharacterCardView {
   standalone: true,
   imports: [
     IonButton,
+    IonButtons,
     IonContent,
     IonHeader,
     IonIcon,
     IonInput,
+    IonMenuButton,
     IonSearchbar,
     IonSelect,
     IonSelectOption,

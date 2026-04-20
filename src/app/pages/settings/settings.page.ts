@@ -3,9 +3,11 @@ import { Component, OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   IonButton,
+  IonButtons,
   IonContent,
   IonHeader,
   IonLabel,
+  IonMenuButton,
   IonSelect,
   IonSelectOption,
   IonSpinner,
@@ -105,9 +107,11 @@ interface CombinedImportSectionError {
   imports: [
     CommonModule,
     IonButton,
+    IonButtons,
     IonContent,
     IonHeader,
     IonLabel,
+    IonMenuButton,
     IonSelect,
     IonSelectOption,
     IonSpinner,

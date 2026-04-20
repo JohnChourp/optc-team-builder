@@ -80,9 +80,11 @@ import { SettingsPage } from "./settings.page";
 
 vi.mock("@ionic/angular/standalone", () => ({
   IonButton: class {},
+  IonButtons: class {},
   IonContent: class {},
   IonHeader: class {},
   IonLabel: class {},
+  IonMenuButton: class {},
   IonSelect: class {},
   IonSelectOption: class {},
   IonSpinner: class {},

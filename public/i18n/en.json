@@ -286,8 +286,13 @@
   },
   "tabs": {
     "auto": "Auto",
+    "characterBoxes": "Character Boxes",
     "characters": "Characters",
+    "menuCopy": "Open any page from one place without squeezing actions into the bottom bar.",
+    "menuTitle": "Navigate",
+    "navigationAriaLabel": "Main navigation",
     "offline": "Offline",
+    "savedEnemies": "Saved Enemies",
     "settings": "Settings",
     "savedTeams": "Saved Teams",
     "team": "Team"

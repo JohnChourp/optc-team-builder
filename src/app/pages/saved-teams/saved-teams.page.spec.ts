@@ -27,6 +27,7 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonHeader: class {},
   IonIcon: class {},
   IonInput: class {},
+  IonMenuButton: class {},
   IonModal: class {},
   IonSpinner: class {},
   IonTextarea: class {},
@@ -196,7 +197,6 @@ describe('SavedTeamsPage', () => {
     );
 
     expect(template).toContain("t('title')");
-    expect(template).toContain("t('hero.savedEnemiesCta')");
     expect(template).toContain("t('actions.openBuilder')");
     expect(template).toContain("t('actions.exportSingle')");
     expect(template).toContain("'common.actions.reset' | transloco");
@@ -216,9 +216,10 @@ describe('SavedTeamsPage', () => {
     expect(template).toContain('[icon]="shipIcon"');
     expect(template).toContain("[routerLink]=\"['/tabs/auto-team-builder']\"");
     expect(template).toContain('[queryParams]="getTeamBuilderQueryParams(teamCard.team)"');
-    expect(template).toContain('[routerLink]="[\'/tabs/saved-enemies\']"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(currentSlot)"');
     expect(template).not.toContain('openImportModal()');
+    expect(template).not.toContain("t('hero.savedEnemiesCta')");
+    expect(template).not.toContain('[routerLink]="[\'/tabs/saved-enemies\']"');
     expect(template).toContain('import-dropzone');
   });
 

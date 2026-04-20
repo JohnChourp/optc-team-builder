@@ -14,8 +14,11 @@ import { GoogleAnalyticsService } from "./core/services/google-analytics.service
   standalone: true,
   imports: [IonApp, IonButton, IonRouterOutlet, RouterLink, TranslocoPipe],
   template: `
-    <ion-app>
-      <ion-router-outlet></ion-router-outlet>
+    <ion-app class="app-shell">
+      <div class="app-shell__content">
+        <ion-router-outlet></ion-router-outlet>
+      </div>
+
       @if (showAnalyticsConsentBanner()) {
         <section class="analytics-consent-banner" aria-live="polite">
           <div class="analytics-consent-banner__copy">
@@ -49,12 +52,8 @@ import { GoogleAnalyticsService } from "./core/services/google-analytics.service
         </section>
       }
 
-      @if (hasResolvedInitialRoute()) {
-        <div
-          class="app-footer-meta"
-          [class.app-footer-meta--tabs]="isTabsRoute()"
-          [class.app-footer-meta--standalone]="!isTabsRoute()"
-        >
+      <footer class="app-footer-meta">
+        <div class="app-footer-meta__inner">
           <a
             class="app-credit-badge"
             href="https://github.com/JohnChourp/optc-team-builder"
@@ -77,7 +76,7 @@ import { GoogleAnalyticsService } from "./core/services/google-analytics.service
             </a>
           </nav>
         </div>
-      }
+      </footer>
     </ion-app>
   `,
   styleUrl: "./app.component.scss",
@@ -92,8 +91,6 @@ export class AppComponent {
   public readonly appVersion = signal(packageJson.version);
   public readonly creditLabel = computed(() => `powered by johnChourp v.${this.appVersion()}`);
   public readonly currentUrl = signal(this.router.url);
-  public readonly hasResolvedInitialRoute = signal(this.router.navigated && this.router.url !== "");
-  public readonly isTabsRoute = computed(() => this.currentUrl().startsWith("/tabs"));
   public readonly analyticsConsent = this.analyticsConsentService.consent;
   public readonly showAnalyticsConsentBanner = computed(() => this.analyticsConsent() === "unknown");
 
@@ -107,7 +104,6 @@ export class AppComponent {
       )
       .subscribe((event) => {
         this.currentUrl.set(event.urlAfterRedirects);
-        this.hasResolvedInitialRoute.set(true);
         this.trackPageView(event.urlAfterRedirects);
       });
 

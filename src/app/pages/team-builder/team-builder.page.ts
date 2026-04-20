@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
   IonButton,
+  IonButtons,
   IonContent,
   IonHeader,
   IonIcon,
@@ -11,6 +12,7 @@ import {
   IonItem,
   IonLabel,
   IonList,
+  IonMenuButton,
   IonSearchbar,
   IonTextarea,
   IonTitle,
@@ -44,6 +46,7 @@ interface TeamBuilderCandidateCardView {
   imports: [
     FormsModule,
     IonButton,
+    IonButtons,
     IonContent,
     IonHeader,
     IonIcon,
@@ -51,6 +54,7 @@ interface TeamBuilderCandidateCardView {
     IonItem,
     IonLabel,
     IonList,
+    IonMenuButton,
     IonSearchbar,
     IonTextarea,
     IonTitle,

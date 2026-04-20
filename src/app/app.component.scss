@@ -2,10 +2,21 @@
   display: contents;
 }
 
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-shell__content {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .analytics-consent-banner {
   position: fixed;
   right: 16px;
-  bottom: calc(68px + env(safe-area-inset-bottom));
+  bottom: calc(16px + env(safe-area-inset-bottom) + var(--app-footer-bar-height));
   left: 16px;
   z-index: 32;
   display: grid;
@@ -68,29 +79,28 @@
 }
 
 .app-footer-meta {
-  position: fixed;
-  left: 50%;
-  z-index: 22;
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(3, 5, 12, 0.98);
+  box-shadow: 0 -12px 24px rgba(0, 0, 0, 0.18);
+}
+
+.app-footer-meta__inner {
   display: flex;
   align-items: center;
-  gap: 10px;
-  transform: translateX(-50%);
+  justify-content: center;
+  gap: 12px;
+  min-height: 0;
+  padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
-.app-footer-meta--tabs {
-  bottom: calc(6px + env(safe-area-inset-bottom));
-  padding: 9px 12px 0;
-  border-radius: 18px 18px 0 0;
-  background: linear-gradient(
-    180deg,
-    rgba(9, 12, 24, 0.96) 0%,
-    rgba(9, 12, 24, 0.9) 72%,
-    rgba(9, 12, 24, 0) 100%
-  );
-}
-
-.app-footer-meta--standalone {
-  bottom: calc(62px + env(safe-area-inset-bottom) + var(--app-bottom-bar-extra-offset));
+.app-footer-meta__inner::-webkit-scrollbar {
+  display: none;
 }
 
 .app-legal-nav {
@@ -120,7 +130,7 @@
   align-items: center;
   justify-content: center;
   min-height: 0;
-  max-width: min(calc(100vw - 32px), 260px);
+  max-width: none;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -157,7 +167,7 @@
 @media (max-width: 640px) {
   .analytics-consent-banner {
     right: 12px;
-    bottom: calc(70px + env(safe-area-inset-bottom));
+    bottom: calc(12px + env(safe-area-inset-bottom) + var(--app-footer-bar-height));
     left: 12px;
     padding: 14px;
   }
@@ -166,11 +176,13 @@
     display: grid;
   }
 
-  .app-footer-meta--tabs {
-    bottom: calc(4px + env(safe-area-inset-bottom));
+  .app-footer-meta__inner {
+    justify-content: flex-start;
+    gap: 10px;
+    padding-inline: 12px;
   }
 
   .app-credit-badge {
-    max-width: min(calc(100vw - 120px), 220px);
+    max-width: none;
   }
 }

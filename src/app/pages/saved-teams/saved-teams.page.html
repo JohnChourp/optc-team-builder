@@ -1,6 +1,9 @@
 <ng-container *transloco="let t; scope: 'saved-teams'; read: 'saved-teams'">
   <ion-header class="ion-no-border">
     <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-menu-button autoHide="false"></ion-menu-button>
+      </ion-buttons>
       <ion-title>{{ t('title') }}</ion-title>
     </ion-toolbar>
   </ion-header>
@@ -11,11 +14,6 @@
         <div class="section-label">{{ t('hero.eyebrow') }}</div>
         <h1 class="section-title">{{ t('hero.title') }}</h1>
         <p class="section-copy">{{ t('hero.copy') }}</p>
-        <div class="hero-actions">
-          <ion-button fill="outline" color="warning" [routerLink]="['/tabs/saved-enemies']">
-            {{ t('hero.savedEnemiesCta') }}
-          </ion-button>
-        </div>
       </section>
 
       @if (loading()) {

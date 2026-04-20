@@ -1,23 +1,83 @@
-.tabs-bar {
-  --background: rgba(9, 12, 24, 0.94);
-  --border: 1px solid rgba(255, 255, 255, 0.08);
-  padding-bottom: calc(max(22px, env(safe-area-inset-bottom)) + var(--app-bottom-bar-extra-offset));
+:host {
+  display: contents;
 }
 
-@supports (-webkit-touch-callout: none) {
-  .tabs-bar {
-    position: relative;
-    z-index: 20;
-  }
+.tabs-menu {
+  --width: min(320px, calc(100vw - 28px));
+  --max-width: calc(100vw - 20px);
+  --background: linear-gradient(180deg, rgba(15, 20, 36, 0.98), rgba(8, 11, 24, 0.98));
 }
 
-ion-tab-button {
-  --color: rgba(236, 240, 255, 0.64);
-  --color-selected: #f5c84c;
-  min-height: 60px;
+.tabs-menu::part(backdrop) {
+  background: rgba(7, 11, 23, 0.52);
+  backdrop-filter: blur(8px);
 }
 
-ion-tab-button ion-label {
-  font-size: 0.74rem;
-  letter-spacing: 0.04em;
+.tabs-menu::part(container) {
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 24px 0 60px rgba(0, 0, 0, 0.42);
+}
+
+.tabs-menu__toolbar {
+  --background: transparent;
+  --border-color: transparent;
+  --color: #fff8dd;
+  padding-top: env(safe-area-inset-top);
+}
+
+.tabs-menu__content {
+  --background: transparent;
+}
+
+.tabs-menu__shell {
+  display: grid;
+  gap: 18px;
+  min-height: 100%;
+  padding: 14px 14px calc(24px + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at top left, rgba(245, 200, 76, 0.14), transparent 34%),
+    radial-gradient(circle at top right, rgba(76, 201, 240, 0.08), transparent 28%);
+}
+
+.tabs-menu__copy {
+  margin: 0;
+  color: rgba(238, 243, 255, 0.68);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.tabs-menu__list {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  background: transparent;
+}
+
+.menu-item {
+  --background: transparent;
+  --border-color: transparent;
+  --color: rgba(236, 240, 255, 0.78);
+  --detail-icon-color: transparent;
+  --inner-padding-end: 14px;
+  --min-height: 56px;
+  --padding-start: 14px;
+  margin: 0;
+  border-radius: 18px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.menu-item ion-icon {
+  color: inherit;
+  font-size: 1.15rem;
+}
+
+.menu-item--active {
+  --background:
+    linear-gradient(135deg, rgba(245, 200, 76, 0.2), rgba(76, 201, 240, 0.14)),
+    rgba(255, 255, 255, 0.04);
+  --color: #fff8dd;
+  box-shadow:
+    inset 0 0 0 1px rgba(245, 200, 76, 0.16),
+    0 18px 30px rgba(0, 0, 0, 0.18);
 }

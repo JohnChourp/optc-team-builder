@@ -8,10 +8,12 @@ import { CharacterBoxesPage } from './character-boxes.page';
 
 vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
+  IonButtons: class {},
   IonContent: class {},
   IonHeader: class {},
   IonIcon: class {},
   IonInput: class {},
+  IonMenuButton: class {},
   IonSearchbar: class {},
   IonSelect: class {},
   IonSelectOption: class {},

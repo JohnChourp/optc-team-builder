@@ -9,10 +9,12 @@ import { CharactersPage } from './characters.page';
 
 vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
+  IonButtons: class {},
   IonContent: class {},
   IonHeader: class {},
   IonIcon: class {},
   IonInput: class {},
+  IonMenuButton: class {},
   IonModal: class {},
   IonSearchbar: class {},
   IonSpinner: class {},

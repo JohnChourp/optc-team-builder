@@ -5,10 +5,12 @@ import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import { type ViewDidEnter, type ViewWillEnter } from '@ionic/angular';
 import {
   IonButton,
+  IonButtons,
   IonContent,
   IonHeader,
   IonIcon,
   IonInput,
+  IonMenuButton,
   IonSearchbar,
   IonSelect,
   IonSelectOption,
@@ -313,10 +315,12 @@ function matchesLeaderOnlyManualRequirements(
   standalone: true,
   imports: [
     IonButton,
+    IonButtons,
     IonContent,
     IonHeader,
     IonIcon,
     IonInput,
+    IonMenuButton,
     IonSearchbar,
     IonSelect,
     IonSelectOption,
