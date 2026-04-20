@@ -1,0 +1,78 @@
+{
+  "title": "Crew Forge",
+  "hero": {
+    "eyebrow": "Planner από το δικό σου roster",
+    "title": "Χτίσε ranked ομάδες από τη δική σου λίστα χαρακτήρων.",
+    "copy": "Κλείδωσε έναν ή δύο leaders, διάλεξε ποιοι subs θα είναι διαθέσιμοι και σύγκρινε πολλές νόμιμες ομάδες ταξινομημένες με βάση τα διαφορετικά abilities που καλύπτουν.",
+    "meta": {
+      "limit": "Έως 50 ranked προτάσεις"
+    }
+  },
+  "actions": {
+    "build": "Δημιουργία ranked ομάδων"
+  },
+  "roster": {
+    "eyebrow": "Επιλογές",
+    "title": "Leaders και candidate pool",
+    "copy": "Οι captains μένουν κλειδωμένοι. Κάθε άλλος επιλεγμένος χαρακτήρας γίνεται πιθανός sub για τα ranked αποτελέσματα.",
+    "summary": "{{count}} συνολικές επιλογές • {{pool}} pool subs",
+    "minimum": "Διάλεξε τουλάχιστον {{count}} μοναδικούς χαρακτήρες ανάμεσα σε leaders και pool πριν δημιουργήσεις ομάδες."
+  },
+  "leaders": {
+    "captain": "Captain",
+    "friendCaptain": "Friend Captain",
+    "captainEmpty": "Άφησέ το κενό αν θέλεις το Crew Forge να διαλέξει τον καλύτερο captain για το τρέχον roster.",
+    "friendEmpty": "Άφησέ το κενό αν θέλεις το Crew Forge να διαλέξει τον καλύτερο friend captain για το τρέχον roster."
+  },
+  "pool": {
+    "title": "Sub pool",
+    "count": "{{count}} επιλεγμένοι",
+    "empty": "Πρόσθεσε τους χαρακτήρες που θέλεις να εξετάζει το Crew Forge ως πιθανούς subs."
+  },
+  "catalog": {
+    "eyebrow": "Catalog",
+    "title": "Αναζήτηση και ανάθεση χαρακτήρων",
+    "copy": "Χρησιμοποίησε τα φίλτρα για να δεις το local dataset και μετά όρισε κάθε χαρακτήρα ως captain, friend captain ή μέλος του sub pool.",
+    "searchPlaceholder": "Αναζήτηση με όνομα, id, type ή class",
+    "loading": "Φόρτωση local catalog...",
+    "empty": "Κανένας χαρακτήρας δεν ταιριάζει στα τρέχοντα φίλτρα.",
+    "loadMore": "Φόρτωση περισσότερων χαρακτήρων",
+    "filters": {
+      "type": "Type",
+      "class": "Class",
+      "characterBox": "Character box",
+      "allCharacters": "Όλοι οι χαρακτήρες",
+      "anyType": "Οποιοδήποτε type",
+      "anyClass": "Οποιοδήποτε class",
+      "favoritesOnly": "Μόνο favorites",
+      "favoritesHint": "Επηρεάζει μόνο τον catalog picker, όχι τα picks που έχεις ήδη διαλέξει."
+    },
+    "actions": {
+      "makeCaptain": "Ορισμός captain",
+      "captainSet": "Captain κλειδωμένος",
+      "makeFriend": "Ορισμός friend",
+      "friendSet": "Friend κλειδωμένος",
+      "addPool": "Προσθήκη στο pool",
+      "removePool": "Αφαίρεση από το pool"
+    }
+  },
+  "results": {
+    "eyebrow": "Προτάσεις",
+    "title": "Ranked αποτελέσματα ομάδων",
+    "copy": "Κάθε αποτέλεσμα κρατά τους locked leaders που επέλεξες και προσπαθεί να μεγιστοποιήσει τα διαφορετικά utilities σε όλη την εξαμελή ομάδα.",
+    "emptyState": "Διάλεξε leaders και candidate pool για να ξεκινήσεις τη δημιουργία ranked ομάδων.",
+    "empty": "Δεν ήταν δυνατό να δημιουργηθούν έγκυρες ομάδες από τα τρέχοντα roster picks.",
+    "loading": "Το Crew Forge αξιολογεί τους καλύτερους συνδυασμούς ομάδων...",
+    "resultLabel": "Αποτέλεσμα {{index}}",
+    "distinctAbilities": "διαφορετικά abilities",
+    "coverageSummary": "{{utility}} utility • {{burst}} burst • {{consistency}} consistency",
+    "utility": "Utility",
+    "burst": "Burst",
+    "consistency": "Consistency",
+    "uniqueAbilities": "Μοναδικά abilities της ομάδας",
+    "duplicateAbilities": "Διπλά abilities της ομάδας",
+    "noUniqueAbilities": "Δεν βρέθηκαν μοναδικά parsed builder abilities για αυτή την ομάδα.",
+    "noDuplicateAbilities": "Αυτή η ομάδα δεν διπλοκαλύπτει κανένα parsed builder ability.",
+    "loadMore": "Φόρτωση περισσότερων αποτελεσμάτων"
+  }
+}

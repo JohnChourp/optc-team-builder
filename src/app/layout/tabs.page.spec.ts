@@ -21,6 +21,7 @@ describe("TabsPage", () => {
     expect(component).toContain('"tabs.characters"');
     expect(component).toContain('"tabs.team"');
     expect(component).toContain('"tabs.auto"');
+    expect(component).toContain('"tabs.crewForge"');
     expect(component).toContain('"tabs.savedTeams"');
     expect(component).toContain('"tabs.characterBoxes"');
     expect(component).toContain('"tabs.savedEnemies"');

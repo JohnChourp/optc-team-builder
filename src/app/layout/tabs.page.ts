@@ -18,6 +18,7 @@ import {
   albumsOutline,
   archiveOutline,
   cogOutline,
+  constructOutline,
   flashOutline,
   gridOutline,
   peopleOutline,
@@ -69,6 +70,11 @@ export class TabsPage {
       icon: flashOutline,
       labelKey: "tabs.auto",
       route: "/tabs/auto-team-builder",
+    },
+    {
+      icon: constructOutline,
+      labelKey: "tabs.crewForge",
+      route: "/tabs/crew-forge",
     },
     {
       icon: albumsOutline,

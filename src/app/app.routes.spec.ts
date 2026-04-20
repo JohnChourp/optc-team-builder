@@ -19,6 +19,14 @@ describe("app routes", () => {
     expect(characterBoxesRoute?.loadComponent).toBeTypeOf("function");
   });
 
+  it("registers the crew forge route inside tabs", () => {
+    const tabsRoute = routes.find((route) => route.path === "tabs");
+    const crewForgeRoute = tabsRoute?.children?.find((route) => route.path === "crew-forge");
+
+    expect(crewForgeRoute).toBeDefined();
+    expect(crewForgeRoute?.loadComponent).toBeTypeOf("function");
+  });
+
   it("registers the saved enemies route inside tabs", () => {
     const tabsRoute = routes.find((route) => route.path === "tabs");
     const savedEnemiesRoute = tabsRoute?.children?.find((route) => route.path === "saved-enemies");

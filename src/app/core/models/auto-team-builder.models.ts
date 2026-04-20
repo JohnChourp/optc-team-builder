@@ -21,6 +21,7 @@ export const AUTO_TEAM_BUILDER_CLASSES = [
 export const AUTO_TEAM_BUILDER_DEFAULT_TYPE = "DEX";
 export const AUTO_TEAM_CANDIDATE_LIMIT = null;
 export const DEFAULT_AUTO_TEAM_CANDIDATE_LIMIT = 1200;
+export const MAX_AUTO_BUILD_RANKED_RESULT_COUNT = 50;
 export const AUTO_BUILD_MANUAL_SLOT_ROLES = [
   "captain",
   "friendCaptain",
@@ -116,6 +117,17 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   manualShipId: number | null;
   excludedShipIds: number[];
   candidateLimit?: number | null;
+}
+
+export interface AutoBuildRosterInput
+  extends Omit<
+    AutoBuildConstraints,
+    "manualSlots" | "lockedCharacterIds" | "captainCharacterId" | "friendCaptainCharacterId"
+  > {
+  rosterCharacterIds: number[];
+  captainCharacterId?: number | null;
+  friendCaptainCharacterId?: number | null;
+  resultLimit?: number | null;
 }
 
 export interface AutoBuildShipSelection {
@@ -261,6 +273,39 @@ export interface AutoBuildCoreResult {
   candidateCount: number;
   slots: AutoBuildSlot[];
   coverage: AutoBuildCoverageSummary;
+}
+
+export interface AutoBuildAbilityCoverageBreakdownItem {
+  key: string;
+  label: string;
+  count: number;
+  characterIds: number[];
+}
+
+export interface AutoBuildAbilityCoverageBreakdown {
+  distinctAbilityCount: number;
+  allAbilities: AutoBuildAbilityCoverageBreakdownItem[];
+  uniqueAbilities: AutoBuildAbilityCoverageBreakdownItem[];
+  duplicateAbilities: AutoBuildAbilityCoverageBreakdownItem[];
+}
+
+export interface AutoBuildRankedResult extends AutoBuildCoreResult {
+  teamKey: string;
+  abilityBreakdown: AutoBuildAbilityCoverageBreakdown;
+  ranking: {
+    distinctAbilityCount: number;
+    utilityCoverageCount: number;
+    burstCoverageCount: number;
+    consistencyCoverageCount: number;
+    powerScore: number;
+    recencyScore: number;
+  };
+}
+
+export interface AutoBuildRankedResults {
+  results: AutoBuildRankedResult[];
+  totalResults: number;
+  limit: number;
 }
 
 export interface AutoBuildResult extends AutoBuildCoreResult {

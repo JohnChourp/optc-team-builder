@@ -28,6 +28,11 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'crew-forge',
+        loadComponent: () =>
+          import('./pages/crew-forge/crew-forge.page').then((module) => module.CrewForgePage),
+      },
+      {
         path: 'character-boxes',
         loadComponent: () =>
           import('./pages/character-boxes/character-boxes.page').then(

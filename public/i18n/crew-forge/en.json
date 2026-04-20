@@ -1,0 +1,78 @@
+{
+  "title": "Crew Forge",
+  "hero": {
+    "eyebrow": "Roster-driven planner",
+    "title": "Forge ranked teams from your own character pool.",
+    "copy": "Lock one or two leaders, add the subs you want available, and compare multiple legal teams ranked by distinct ability coverage.",
+    "meta": {
+      "limit": "Up to 50 ranked suggestions"
+    }
+  },
+  "actions": {
+    "build": "Generate ranked teams"
+  },
+  "roster": {
+    "eyebrow": "Selections",
+    "title": "Leaders and candidate pool",
+    "copy": "Captains stay locked. Every other selected character becomes an eligible sub candidate for the ranked suggestions.",
+    "summary": "{{count}} total roster picks • {{pool}} pool subs",
+    "minimum": "Pick at least {{count}} unique characters across leaders and pool before generating teams."
+  },
+  "leaders": {
+    "captain": "Captain",
+    "friendCaptain": "Friend Captain",
+    "captainEmpty": "Leave this empty to let Crew Forge choose the best captain for the current roster.",
+    "friendEmpty": "Leave this empty to let Crew Forge choose the best friend captain for the current roster."
+  },
+  "pool": {
+    "title": "Sub pool",
+    "count": "{{count}} selected",
+    "empty": "Add the characters you want Crew Forge to consider as possible subs."
+  },
+  "catalog": {
+    "eyebrow": "Catalog",
+    "title": "Search and assign characters",
+    "copy": "Use the filters below to browse your local dataset, then mark each character as captain, friend captain, or part of the sub pool.",
+    "searchPlaceholder": "Search name, id, type, or class",
+    "loading": "Loading local catalog...",
+    "empty": "No characters match the current catalog filters.",
+    "loadMore": "Load more characters",
+    "filters": {
+      "type": "Type",
+      "class": "Class",
+      "characterBox": "Character box",
+      "allCharacters": "All characters",
+      "anyType": "Any type",
+      "anyClass": "Any class",
+      "favoritesOnly": "Favorites only",
+      "favoritesHint": "Only affects the catalog picker, not already selected picks."
+    },
+    "actions": {
+      "makeCaptain": "Set captain",
+      "captainSet": "Captain locked",
+      "makeFriend": "Set friend",
+      "friendSet": "Friend locked",
+      "addPool": "Add to pool",
+      "removePool": "Remove from pool"
+    }
+  },
+  "results": {
+    "eyebrow": "Suggestions",
+    "title": "Ranked team results",
+    "copy": "Each result keeps the locked leaders you selected and tries to maximize distinct utility across the full six-character team.",
+    "emptyState": "Pick leaders and a candidate pool to start generating ranked teams.",
+    "empty": "No valid teams could be assembled from the current roster picks.",
+    "loading": "Crew Forge is evaluating the best team combinations...",
+    "resultLabel": "Result {{index}}",
+    "distinctAbilities": "distinct abilities",
+    "coverageSummary": "{{utility}} utility • {{burst}} burst • {{consistency}} consistency",
+    "utility": "Utility",
+    "burst": "Burst",
+    "consistency": "Consistency",
+    "uniqueAbilities": "Unique abilities in this team",
+    "duplicateAbilities": "Duplicated abilities in this team",
+    "noUniqueAbilities": "No unique builder abilities were parsed for this team.",
+    "noDuplicateAbilities": "This team does not duplicate any parsed builder abilities.",
+    "loadMore": "Load more results"
+  }
+}

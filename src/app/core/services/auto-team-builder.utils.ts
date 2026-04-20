@@ -1,4 +1,6 @@
 import {
+  type AutoBuildAbilityCoverageBreakdown,
+  type AutoBuildAbilityCoverageBreakdownItem,
   AUTO_BUILD_MANUAL_SUB_SLOT_ROLES,
   AUTO_TEAM_BUILDER_CLASSES,
   AUTO_TEAM_BUILDER_TYPES,
@@ -176,14 +178,29 @@ function compareCaptainsBySelectionPreference(
   return scoreCaptain(right, input) - scoreCaptain(left, input);
 }
 
-function resolveCandidatePowerPreferenceScore(candidate: AutoBuildCandidate): number {
-  const { cost, id } = candidate.character;
+export function resolveAutoBuildCharacterPowerPreferenceScore(
+  character: Pick<CharacterDetailRecord, 'cost' | 'id'>,
+): number {
+  const { cost, id } = character;
 
   if (resolvePowerFirstCostBucket(cost) === 0) {
     return cost + id / 1_000_000;
   }
 
   return -Math.max(cost - 65, 1) + id / 1_000_000;
+}
+
+export function resolveAutoBuildTeamPowerPreferenceScore(
+  characters: Array<Pick<CharacterDetailRecord, 'cost' | 'id'>>,
+): number {
+  return characters.reduce(
+    (total, character) => total + resolveAutoBuildCharacterPowerPreferenceScore(character),
+    0,
+  );
+}
+
+function resolveCandidatePowerPreferenceScore(candidate: AutoBuildCandidate): number {
+  return resolveAutoBuildCharacterPowerPreferenceScore(candidate.character);
 }
 
 function candidateMatchesAbilityRequirement(
@@ -201,6 +218,48 @@ function cloneAbilityRequirement(
   return {
     ...requirement,
     slotTokens: [...requirement.slotTokens],
+  };
+}
+
+export function buildAutoBuildAbilityCoverageBreakdown(
+  characters: CharacterDetailRecord[],
+): AutoBuildAbilityCoverageBreakdown {
+  const abilityMap = new Map<string, AutoBuildAbilityCoverageBreakdownItem>();
+
+  characters.forEach((character) => {
+    character.detail.builderAbilities.forEach((ability) => {
+      const existing = abilityMap.get(ability.key);
+
+      if (existing) {
+        if (!existing.characterIds.includes(character.id)) {
+          existing.characterIds.push(character.id);
+          existing.count += 1;
+        }
+        return;
+      }
+
+      abilityMap.set(ability.key, {
+        key: ability.key,
+        label: ability.label,
+        count: 1,
+        characterIds: [character.id],
+      });
+    });
+  });
+
+  const sortedAbilities = [...abilityMap.values()].sort((left, right) => {
+    if (right.count !== left.count) {
+      return right.count - left.count;
+    }
+
+    return left.label.localeCompare(right.label);
+  });
+
+  return {
+    distinctAbilityCount: sortedAbilities.length,
+    allAbilities: sortedAbilities,
+    uniqueAbilities: sortedAbilities.filter((ability) => ability.count === 1),
+    duplicateAbilities: sortedAbilities.filter((ability) => ability.count > 1),
   };
 }
 

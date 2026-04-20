@@ -3537,6 +3537,119 @@ describe('Auto team builder', () => {
   });
 });
 
+it('builds ranked teams from a locked-leader roster pool', async () => {
+  const repository = {
+    getAutoBuilderCandidates: vi.fn().mockResolvedValue(createCrewForgeRosterRecords()),
+  };
+  const service = new AutoTeamBuilderService(repository as never);
+
+  const result = await service.buildRankedTeamsFromRoster({
+    rosterCharacterIds: [5900, 5905, 5880, 5870, 5860, 8301, 8302],
+    captainCharacterId: 5900,
+    friendCaptainCharacterId: 5905,
+    resultLimit: 10,
+    requireUniqueBaseCharacterNames: true,
+  });
+
+  expect(result.results.length).toBeGreaterThan(0);
+  expect(result.results.every((team) => team.slots[0]?.character.id === 5900)).toBe(true);
+  expect(result.results.every((team) => team.slots[1]?.character.id === 5905)).toBe(true);
+  expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+    ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+    null,
+    {
+      allowedCharacterIds: [5900, 5905, 5880, 5870, 5860, 8301, 8302],
+      lockedCharacterIds: [5900, 5905],
+      excludedCharacterIds: [],
+    },
+  );
+});
+
+it('dedupes leader-swapped and sub-order-equivalent ranked teams', async () => {
+  const repository = {
+    getAutoBuilderCandidates: vi.fn().mockResolvedValue(createCrewForgeRosterRecords()),
+  };
+  const service = new AutoTeamBuilderService(repository as never);
+
+  const result = await service.buildRankedTeamsFromRoster({
+    rosterCharacterIds: [5900, 5905, 5880, 5870, 5860, 8301],
+    resultLimit: 50,
+  });
+  const teamKeys = result.results.map((team) => team.teamKey);
+
+  expect(teamKeys).toEqual([...new Set(teamKeys)]);
+});
+
+it('ranks teams by distinct ability count before secondary coverage metrics', async () => {
+  const repository = {
+    getAutoBuilderCandidates: vi.fn().mockResolvedValue(createCrewForgeRosterRecords()),
+  };
+  const service = new AutoTeamBuilderService(repository as never);
+
+  const result = await service.buildRankedTeamsFromRoster({
+    rosterCharacterIds: [5900, 5905, 5880, 5870, 5860, 8301, 8302],
+    captainCharacterId: 5900,
+    friendCaptainCharacterId: 5905,
+    resultLimit: 10,
+  });
+
+  expect(result.results[0]?.ranking.distinctAbilityCount).toBeGreaterThanOrEqual(
+    result.results[1]?.ranking.distinctAbilityCount ?? -1,
+  );
+  expect(result.results[0]?.abilityBreakdown.duplicateAbilities).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        key: 'remove_paralysis',
+        count: 2,
+      }),
+    ]),
+  );
+});
+
+it('blocks ranked teams that violate party conflict rules', async () => {
+  const repository = {
+    getAutoBuilderCandidates: vi.fn().mockResolvedValue([
+      createCharacterRecord({
+        id: 8201,
+        name: 'Monkey D. Luffy',
+        type: 'DEX',
+        primaryClass: 'Fighter',
+        detail: {
+          captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.5x.',
+        },
+      }),
+      createCharacterRecord({
+        id: 8202,
+        name: 'Monkey D. Luffy - Gear 2',
+        type: 'DEX',
+        primaryClass: 'Fighter',
+        detail: {
+          captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.25x.',
+        },
+      }),
+      createAtkSubRecord(),
+      createAffinitySubRecord(),
+      createUtilitySubRecord(),
+      createConsistencySubRecord(),
+    ]),
+  };
+  const service = new AutoTeamBuilderService(repository as never);
+
+  const result = await service.buildRankedTeamsFromRoster({
+    rosterCharacterIds: [8201, 8202, 5880, 5870, 5860, 5850],
+    resultLimit: 10,
+    requireUniqueBaseCharacterNames: true,
+  });
+
+  expect(
+    result.results.some((team) => {
+      const slotIds = team.slots.map((slot) => slot.character.id);
+
+      return slotIds.includes(8201) && slotIds.includes(8202);
+    }),
+  ).toBe(false);
+});
+
 function createInput(
   types: AutoTeamBuilderType[] = [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
   selectedClasses: string[] = ['Fighter'],
@@ -4134,6 +4247,68 @@ function createStrictMixedTeamRecords(): CharacterDetailRecord[] {
     createAffinitySubRecord(),
     createUtilitySubRecord(),
     createConsistencySubRecord(),
+  ];
+}
+
+function createCrewForgeRosterRecords(): CharacterDetailRecord[] {
+  return [
+    createCaptainRecord(),
+    createUniversalCaptainRecord(),
+    createAffinitySubRecord(),
+    createUtilitySubRecord(),
+    createConsistencySubRecord(),
+    createCharacterRecord({
+      id: 8301,
+      name: 'Forge Utility One',
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: 'Reduces Bind duration by 5 turns and reduces Paralysis duration by 5 turns.',
+        builderAbilities: [
+          {
+            key: 'remove_bind',
+            label: 'Remove Bind',
+            minTurns: 5,
+            isCompleteRemoval: false,
+            slotTokens: [],
+            source: 'specialText',
+          },
+          {
+            key: 'remove_paralysis',
+            label: 'Remove Paralysis',
+            minTurns: 5,
+            isCompleteRemoval: false,
+            slotTokens: [],
+            source: 'specialText',
+          },
+        ],
+      },
+    }),
+    createCharacterRecord({
+      id: 8302,
+      name: 'Forge Utility Two',
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: 'Reduces Despair duration by 5 turns and reduces Paralysis duration by 5 turns.',
+        builderAbilities: [
+          {
+            key: 'remove_despair',
+            label: 'Remove Despair',
+            minTurns: 5,
+            isCompleteRemoval: false,
+            slotTokens: [],
+            source: 'specialText',
+          },
+          {
+            key: 'remove_paralysis',
+            label: 'Remove Paralysis',
+            minTurns: 5,
+            isCompleteRemoval: false,
+            slotTokens: [],
+            source: 'specialText',
+          },
+        ],
+      },
+    }),
   ];
 }
 

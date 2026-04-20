@@ -7,6 +7,7 @@ const tabPageTemplates = [
   "src/app/pages/characters/characters.page.html",
   "src/app/pages/team-builder/team-builder.page.html",
   "src/app/pages/auto-team-builder/auto-team-builder.page.html",
+  "src/app/pages/crew-forge/crew-forge.page.html",
   "src/app/pages/saved-teams/saved-teams.page.html",
   "src/app/pages/character-boxes/character-boxes.page.html",
   "src/app/pages/saved-enemies/saved-enemies.page.html",

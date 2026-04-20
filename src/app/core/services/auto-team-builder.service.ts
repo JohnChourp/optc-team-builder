@@ -2,16 +2,21 @@ import { Injectable } from "@angular/core";
 
 import {
   AUTO_TEAM_CANDIDATE_LIMIT,
+  AUTO_TEAM_BUILDER_TYPES,
   AUTO_TEAM_BUILDER_DEFAULT_TYPE,
   AUTO_BUILD_TOTAL_SLOT_COUNT,
   AUTO_BUILD_MANUAL_SLOT_ROLES,
   AUTO_BUILD_MANUAL_SUB_SLOT_ROLES,
   type AutoBuildConstraints,
+  type AutoBuildRankedResult,
+  type AutoBuildRankedResults,
+  type AutoBuildRosterInput,
   type AutoBuildInput,
   type AutoBuildManualSlotRole,
   type AutoBuildManualSlotSelection,
   type AutoBuildProgressSnapshot,
   type AutoBuildResult,
+  MAX_AUTO_BUILD_RANKED_RESULT_COUNT,
   type AutoTeamBuilderType,
   createEmptyAutoBuildManualSlots,
 } from "../models/auto-team-builder.models";
@@ -32,6 +37,11 @@ import {
 import { resolveAutoBuildShipSelection } from "./auto-team-builder-ship.utils";
 import { normalizeEnemyMechanicRequirements } from "./enemy-mechanic-draft.utils";
 import { OptcRepositoryService } from "./optc-repository.service";
+import {
+  buildAutoBuildAbilityCoverageBreakdown,
+  buildAutoTeamResult,
+  resolveAutoBuildTeamPowerPreferenceScore,
+} from "./auto-team-builder.utils";
 import {
   type AutoTeamBuilderWorkerRequest,
   type AutoTeamBuilderWorkerResponse,
@@ -241,6 +251,177 @@ export class AutoTeamBuilderService {
     return {
       ...result,
       shipSelection: resolveAutoBuildShipSelection(result, ships),
+    };
+  }
+
+  public async buildRankedTeamsFromRoster(
+    rosterInput: AutoBuildRosterInput,
+    executionOptions: AutoTeamBuildExecutionOptions = {},
+  ): Promise<AutoBuildRankedResults> {
+    const normalizedRosterIds = this.normalizeCharacterIds(rosterInput.rosterCharacterIds);
+    const resultLimit = this.normalizeRankedResultLimit(rosterInput.resultLimit);
+    const requiredAbilities = this.normalizeRequiredAbilities(rosterInput.requiredAbilities ?? []);
+    const enemyMechanics = normalizeEnemyMechanicRequirements(rosterInput.enemyMechanics ?? []);
+    const excludedCharacterIds = this.normalizeCharacterIds(rosterInput.excludedCharacterIds);
+    const favoriteCharacterIds = new Set(
+      this.normalizeCharacterIds(rosterInput.favoriteCharacterIds),
+    );
+    const candidateCharacterIds = this.normalizeCharacterIds(rosterInput.candidateCharacterIds);
+    const favoritesOnly = rosterInput.favoritesOnly ?? false;
+    const scopedRosterIds = normalizedRosterIds.filter((characterId) => {
+      if (excludedCharacterIds.includes(characterId)) {
+        return false;
+      }
+
+      if (favoritesOnly && favoriteCharacterIds.size > 0 && !favoriteCharacterIds.has(characterId)) {
+        return false;
+      }
+
+      if (
+        rosterInput.candidateCharacterIds !== undefined &&
+        candidateCharacterIds.length > 0 &&
+        !candidateCharacterIds.includes(characterId)
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+    const captainCharacterId = this.normalizeCharacterId(rosterInput.captainCharacterId);
+    const friendCaptainCharacterId = this.normalizeCharacterId(rosterInput.friendCaptainCharacterId);
+    const lockedLeaderIds = [
+      ...new Set(
+        [captainCharacterId, friendCaptainCharacterId].filter(
+          (characterId): characterId is number => characterId !== null,
+        ),
+      ),
+    ];
+
+    if (
+      normalizedRosterIds.length === 0 ||
+      lockedLeaderIds.some((characterId) => !normalizedRosterIds.includes(characterId))
+    ) {
+      return {
+        results: [],
+        totalResults: 0,
+        limit: resultLimit,
+      };
+    }
+
+    this.throwIfCancelled(executionOptions.signal);
+
+    const records = await this.repository.getAutoBuilderCandidates([...AUTO_TEAM_BUILDER_TYPES], null, {
+      allowedCharacterIds: scopedRosterIds,
+      lockedCharacterIds: lockedLeaderIds,
+      excludedCharacterIds,
+    });
+
+    this.throwIfCancelled(executionOptions.signal);
+
+    const recordById = new Map(records.map((record) => [record.id, record] as const));
+    const availableRosterIds = [
+      ...new Set(
+        scopedRosterIds.filter((characterId) => recordById.has(characterId)).concat(lockedLeaderIds),
+      ),
+    ].filter((characterId, index, values) => values.indexOf(characterId) === index);
+
+    if (availableRosterIds.length < 5) {
+      return {
+        results: [],
+        totalResults: 0,
+        limit: resultLimit,
+      };
+    }
+
+    const orderById = new Map(records.map((record, index) => [record.id, index] as const));
+    const rankedResults = new Map<string, AutoBuildRankedResult>();
+    const leaderPairs = this.enumerateRosterLeaderPairs(
+      availableRosterIds,
+      captainCharacterId,
+      friendCaptainCharacterId,
+    );
+
+    for (const leaderPair of leaderPairs) {
+      this.throwIfCancelled(executionOptions.signal);
+
+      const excludedSubIds = new Set<number>([leaderPair.captainId, leaderPair.friendCaptainId]);
+      const subPoolIds = availableRosterIds.filter((characterId) => !excludedSubIds.has(characterId));
+
+      if (subPoolIds.length < AUTO_BUILD_MANUAL_SUB_SLOT_ROLES.length) {
+        continue;
+      }
+
+      for (const subIds of this.enumerateSubCombinations(
+        subPoolIds,
+        AUTO_BUILD_MANUAL_SUB_SLOT_ROLES.length,
+      )) {
+        this.throwIfCancelled(executionOptions.signal);
+
+        const teamCharacterIds = [...new Set([leaderPair.captainId, leaderPair.friendCaptainId, ...subIds])];
+        const teamRecords = teamCharacterIds
+          .map((characterId) => recordById.get(characterId) ?? null)
+          .filter((record): record is CharacterDetailRecord => Boolean(record))
+          .sort((left, right) => (orderById.get(left.id) ?? 0) - (orderById.get(right.id) ?? 0));
+
+        if (teamRecords.length !== teamCharacterIds.length) {
+          continue;
+        }
+
+        const input = this.createRosterTeamInput(
+          leaderPair.captainId,
+          leaderPair.friendCaptainId,
+          subIds,
+          {
+            ...rosterInput,
+            requiredAbilities,
+            enemyMechanics,
+          },
+        );
+        const result = buildAutoTeamResult(teamRecords, input);
+
+        if (!result) {
+          continue;
+        }
+
+        const teamKey = this.buildRankedTeamKey(result);
+
+        if (rankedResults.has(teamKey)) {
+          continue;
+        }
+
+        const characters = result.slots.map((slot) => slot.character);
+        const abilityBreakdown = buildAutoBuildAbilityCoverageBreakdown(characters);
+        const recencyScore = characters.reduce((total, character) => {
+          const index = orderById.get(character.id) ?? 0;
+          const nextScore = records.length <= 1 ? 1 : 1 - index / (records.length - 1);
+
+          return total + nextScore;
+        }, 0);
+
+        rankedResults.set(teamKey, {
+          ...result,
+          teamKey,
+          abilityBreakdown,
+          ranking: {
+            distinctAbilityCount: abilityBreakdown.distinctAbilityCount,
+            utilityCoverageCount: result.coverage.utility.length,
+            burstCoverageCount: result.coverage.burst.length,
+            consistencyCoverageCount: result.coverage.consistency.length,
+            powerScore: resolveAutoBuildTeamPowerPreferenceScore(characters),
+            recencyScore,
+          },
+        });
+      }
+    }
+
+    const sortedResults = [...rankedResults.values()]
+      .sort((left, right) => this.compareRankedResults(left, right))
+      .slice(0, resultLimit);
+
+    return {
+      results: sortedResults,
+      totalResults: sortedResults.length,
+      limit: resultLimit,
     };
   }
 
@@ -900,6 +1081,187 @@ export class AutoTeamBuilderService {
     }
 
     return Math.max(1, Math.floor(workerCount ?? 1));
+  }
+
+  private normalizeRankedResultLimit(resultLimit: number | null | undefined): number {
+    if (!Number.isFinite(resultLimit)) {
+      return MAX_AUTO_BUILD_RANKED_RESULT_COUNT;
+    }
+
+    return Math.max(1, Math.min(MAX_AUTO_BUILD_RANKED_RESULT_COUNT, Math.floor(resultLimit ?? 1)));
+  }
+
+  private compareRankedResults(left: AutoBuildRankedResult, right: AutoBuildRankedResult): number {
+    if (right.ranking.distinctAbilityCount !== left.ranking.distinctAbilityCount) {
+      return right.ranking.distinctAbilityCount - left.ranking.distinctAbilityCount;
+    }
+
+    if (right.ranking.utilityCoverageCount !== left.ranking.utilityCoverageCount) {
+      return right.ranking.utilityCoverageCount - left.ranking.utilityCoverageCount;
+    }
+
+    if (right.ranking.burstCoverageCount !== left.ranking.burstCoverageCount) {
+      return right.ranking.burstCoverageCount - left.ranking.burstCoverageCount;
+    }
+
+    if (right.ranking.consistencyCoverageCount !== left.ranking.consistencyCoverageCount) {
+      return right.ranking.consistencyCoverageCount - left.ranking.consistencyCoverageCount;
+    }
+
+    if (right.ranking.powerScore !== left.ranking.powerScore) {
+      return right.ranking.powerScore - left.ranking.powerScore;
+    }
+
+    if (right.ranking.recencyScore !== left.ranking.recencyScore) {
+      return right.ranking.recencyScore - left.ranking.recencyScore;
+    }
+
+    return left.teamKey.localeCompare(right.teamKey);
+  }
+
+  private createRosterTeamInput(
+    captainCharacterId: number,
+    friendCaptainCharacterId: number,
+    subIds: number[],
+    rosterInput: AutoBuildRosterInput & {
+      requiredAbilities: AutoBuildAbilityRequirement[];
+      enemyMechanics: AutoBuildInput["enemyMechanics"];
+    },
+  ): AutoBuildInput {
+    const requireAllSlotsInLeaderSuperEffectScope =
+      rosterInput.requireAllSlotsInLeaderSuperEffectScope ?? false;
+
+    return {
+      types: [...AUTO_TEAM_BUILDER_TYPES],
+      selectedClasses: [],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope,
+      minimumLeaderSuperEffectMatchingSlots:
+        requireAllSlotsInLeaderSuperEffectScope
+          ? rosterInput.minimumLeaderSuperEffectMatchingSlots ?? AUTO_BUILD_TOTAL_SLOT_COUNT
+          : null,
+      requireLeaderSuperSpecialCriteria: rosterInput.requireLeaderSuperSpecialCriteria ?? true,
+      requireUniqueBaseCharacterNames: rosterInput.requireUniqueBaseCharacterNames ?? false,
+      requiredAbilities: rosterInput.requiredAbilities.map((requirement) => ({
+        ...requirement,
+        slotTokens: [...requirement.slotTokens],
+      })),
+      enemyMechanics: rosterInput.enemyMechanics.map((mechanic) => ({
+        ...mechanic,
+        triggerTags: [...mechanic.triggerTags],
+        responseTags: [...mechanic.responseTags],
+        conditionTags: [...mechanic.conditionTags],
+      })),
+      favoritesOnly: false,
+      favoriteShipsOnly: false,
+      favoriteShipIds: [],
+      manualSlots: this.createExactManualSlots(captainCharacterId, friendCaptainCharacterId, subIds),
+      lockedCharacterIds: [...new Set([captainCharacterId, friendCaptainCharacterId, ...subIds])],
+      excludedCharacterIds: [],
+      captainCharacterId,
+      friendCaptainCharacterId,
+      manualShipId: null,
+      excludedShipIds: [],
+      candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
+    };
+  }
+
+  private createExactManualSlots(
+    captainCharacterId: number,
+    friendCaptainCharacterId: number,
+    subIds: number[],
+  ): AutoBuildManualSlotSelection[] {
+    const manualSlots = createEmptyAutoBuildManualSlots();
+
+    manualSlots.find((slot) => slot.role === "captain")!.characterIds = [captainCharacterId];
+    manualSlots.find((slot) => slot.role === "friendCaptain")!.characterIds = [
+      friendCaptainCharacterId,
+    ];
+
+    AUTO_BUILD_MANUAL_SUB_SLOT_ROLES.forEach((role, index) => {
+      const characterId = subIds[index];
+      const slot = manualSlots.find((entry) => entry.role === role);
+
+      if (slot && characterId) {
+        slot.characterIds = [characterId];
+      }
+    });
+
+    return manualSlots;
+  }
+
+  private buildRankedTeamKey(result: Pick<AutoBuildRankedResult, "slots">): string {
+    const leaderIds = result.slots
+      .filter((slot) => slot.role === "captain" || slot.role === "friendCaptain")
+      .map((slot) => slot.character.id)
+      .sort((left, right) => left - right);
+    const subIds = result.slots
+      .filter((slot) => slot.role === "sub")
+      .map((slot) => slot.character.id)
+      .sort((left, right) => left - right);
+
+    return `${leaderIds.join(",")}|${subIds.join(",")}`;
+  }
+
+  private enumerateRosterLeaderPairs(
+    rosterCharacterIds: number[],
+    captainCharacterId: number | null,
+    friendCaptainCharacterId: number | null,
+  ): Array<{ captainId: number; friendCaptainId: number }> {
+    if (captainCharacterId !== null && friendCaptainCharacterId !== null) {
+      return [
+        {
+          captainId: captainCharacterId,
+          friendCaptainId: friendCaptainCharacterId,
+        },
+      ];
+    }
+
+    if (captainCharacterId !== null) {
+      return rosterCharacterIds.map((characterId) => ({
+        captainId: captainCharacterId,
+        friendCaptainId: characterId,
+      }));
+    }
+
+    if (friendCaptainCharacterId !== null) {
+      return rosterCharacterIds.map((characterId) => ({
+        captainId: characterId,
+        friendCaptainId: friendCaptainCharacterId,
+      }));
+    }
+
+    const leaderPairs: Array<{ captainId: number; friendCaptainId: number }> = [];
+
+    rosterCharacterIds.forEach((captainId, captainIndex) => {
+      rosterCharacterIds.slice(captainIndex).forEach((friendCaptainId) => {
+        leaderPairs.push({
+          captainId,
+          friendCaptainId,
+        });
+      });
+    });
+
+    return leaderPairs;
+  }
+
+  private *enumerateSubCombinations(
+    candidateIds: number[],
+    requiredCount: number,
+    startIndex = 0,
+    currentSelection: number[] = [],
+  ): Generator<number[]> {
+    if (currentSelection.length === requiredCount) {
+      yield [...currentSelection];
+      return;
+    }
+
+    for (let index = startIndex; index < candidateIds.length; index += 1) {
+      currentSelection.push(candidateIds[index]);
+      yield* this.enumerateSubCombinations(candidateIds, requiredCount, index + 1, currentSelection);
+      currentSelection.pop();
+    }
   }
 
   private normalizeCharacterId(characterId: number | null | undefined): number | null {

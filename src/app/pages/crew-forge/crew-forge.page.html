@@ -1,0 +1,433 @@
+<ng-container *transloco="let t; scope: 'crew-forge'; read: 'crew-forge'">
+  <ion-header class="ion-no-border">
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-menu-button autoHide="false"></ion-menu-button>
+      </ion-buttons>
+      <ion-title>{{ t('title') }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content [fullscreen]="true">
+    <div class="page-shell crew-forge-shell">
+      <section class="glass-card hero-card">
+        <div class="section-label">
+          <ion-icon [icon]="sparklesIcon"></ion-icon>
+          <span>{{ t('hero.eyebrow') }}</span>
+        </div>
+        <div class="hero-grid">
+          <div>
+            <h1 class="section-title">{{ t('hero.title') }}</h1>
+            <p class="section-copy">{{ t('hero.copy') }}</p>
+          </div>
+
+          <div class="hero-meta">
+            <div class="meta-pill">
+              <ion-icon [icon]="rosterIcon"></ion-icon>
+              <span>{{ rosterSummaryLabel() }}</span>
+            </div>
+            <div class="meta-pill">
+              <ion-icon [icon]="coverageIcon"></ion-icon>
+              <span>{{ t('hero.meta.limit') }}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="glass-card roster-card">
+        <div class="section-head">
+          <div>
+            <div class="section-label">
+              <ion-icon [icon]="forgeIcon"></ion-icon>
+              <span>{{ t('roster.eyebrow') }}</span>
+            </div>
+            <h2>{{ t('roster.title') }}</h2>
+            <p>{{ t('roster.copy') }}</p>
+          </div>
+
+          <ion-button
+            color="warning"
+            [disabled]="!buildReady() || building()"
+            (click)="buildTeams()"
+          >
+            @if (building()) {
+              <ion-spinner slot="start" name="crescent"></ion-spinner>
+            }
+            {{ t('actions.build') }}
+          </ion-button>
+        </div>
+
+        <div class="leader-grid">
+          <article class="selection-panel">
+            <div class="selection-panel__head">
+              <strong>{{ t('leaders.captain') }}</strong>
+              @if (selectedCaptain()) {
+                <button type="button" class="ghost-action" (click)="clearCaptain()">
+                  {{ 'common.actions.clear' | transloco }}
+                </button>
+              }
+            </div>
+
+            @if (!selectedCaptain()) {
+              <div class="selection-empty">
+                <p>{{ t('leaders.captainEmpty') }}</p>
+              </div>
+            } @else {
+              <article class="picked-character-card">
+                <img [src]="selectedCaptain()!.imageUrl" [alt]="selectedCaptain()!.name" loading="lazy" />
+                <div>
+                  <strong>{{ selectedCaptain()!.name }}</strong>
+                  <small>{{ selectedCaptain()!.type }} • {{ selectedCaptain()!.primaryClass }}</small>
+                </div>
+              </article>
+            }
+          </article>
+
+          <article class="selection-panel">
+            <div class="selection-panel__head">
+              <strong>{{ t('leaders.friendCaptain') }}</strong>
+              @if (selectedFriendCaptain()) {
+                <button type="button" class="ghost-action" (click)="clearFriendCaptain()">
+                  {{ 'common.actions.clear' | transloco }}
+                </button>
+              }
+            </div>
+
+            @if (!selectedFriendCaptain()) {
+              <div class="selection-empty">
+                <p>{{ t('leaders.friendEmpty') }}</p>
+              </div>
+            } @else {
+              <article class="picked-character-card">
+                <img
+                  [src]="selectedFriendCaptain()!.imageUrl"
+                  [alt]="selectedFriendCaptain()!.name"
+                  loading="lazy"
+                />
+                <div>
+                  <strong>{{ selectedFriendCaptain()!.name }}</strong>
+                  <small>{{
+                    selectedFriendCaptain()!.type
+                  }} • {{ selectedFriendCaptain()!.primaryClass }}</small>
+                </div>
+              </article>
+            }
+          </article>
+        </div>
+
+        <article class="selection-panel pool-panel">
+          <div class="selection-panel__head">
+            <div>
+              <strong>{{ t('pool.title') }}</strong>
+              <small>{{ t('pool.count', { count: selectedPoolCharacters().length }) }}</small>
+            </div>
+            <button type="button" class="ghost-action" [disabled]="!selectedPoolCharacters().length" (click)="clearPool()">
+              {{ 'common.actions.clear' | transloco }}
+            </button>
+          </div>
+
+          @if (!selectedPoolCharacters().length) {
+            <div class="selection-empty">
+              <p>{{ t('pool.empty') }}</p>
+            </div>
+          } @else {
+            <div class="pool-chip-grid">
+              @for (character of selectedPoolCharacters(); track character.id) {
+                <button type="button" class="pool-chip" (click)="removePoolCharacter(character.id)">
+                  <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
+                  <span>{{ character.name }}</span>
+                  <ion-icon [icon]="closeIcon"></ion-icon>
+                </button>
+              }
+            </div>
+          }
+        </article>
+
+        @if (!buildReady()) {
+          <p class="build-hint">{{ t('roster.minimum', { count: minimumRosterCount() }) }}</p>
+        }
+      </section>
+
+      <section class="glass-card catalog-card">
+        <div class="section-head">
+          <div>
+            <div class="section-label">
+              <ion-icon [icon]="searchIcon"></ion-icon>
+              <span>{{ t('catalog.eyebrow') }}</span>
+            </div>
+            <h2>{{ t('catalog.title') }}</h2>
+            <p>{{ t('catalog.copy') }}</p>
+          </div>
+        </div>
+
+        <div class="catalog-controls">
+          <ion-searchbar
+            [debounce]="150"
+            [value]="searchTerm()"
+            [placeholder]="t('catalog.searchPlaceholder')"
+            (ionInput)="onSearchChange($event)"
+          ></ion-searchbar>
+
+          <label class="field">
+            <span>{{ t('catalog.filters.type') }}</span>
+            <ion-select
+              interface="popover"
+              fill="outline"
+              [value]="selectedTypeFilter()"
+              (ionChange)="onTypeChange($event)"
+            >
+              <ion-select-option value="">{{ t('catalog.filters.anyType') }}</ion-select-option>
+              @for (type of availableTypes(); track type) {
+                <ion-select-option [value]="type">{{ type }}</ion-select-option>
+              }
+            </ion-select>
+          </label>
+
+          <label class="field">
+            <span>{{ t('catalog.filters.class') }}</span>
+            <ion-select
+              interface="popover"
+              fill="outline"
+              [value]="selectedClassFilter()"
+              (ionChange)="onClassChange($event)"
+            >
+              <ion-select-option value="">{{ t('catalog.filters.anyClass') }}</ion-select-option>
+              @for (characterClass of availableClasses(); track characterClass) {
+                <ion-select-option [value]="characterClass">{{ characterClass }}</ion-select-option>
+              }
+            </ion-select>
+          </label>
+
+          <label class="field">
+            <span>{{ t('catalog.filters.characterBox') }}</span>
+            <ion-select
+              interface="popover"
+              fill="outline"
+              [value]="selectedCharacterBoxId() ?? ''"
+              (ionChange)="onCharacterBoxChange($event)"
+            >
+              <ion-select-option value="">{{ t('catalog.filters.allCharacters') }}</ion-select-option>
+              @for (characterBox of characterBoxes(); track characterBox.id) {
+                <ion-select-option [value]="characterBox.id">{{ characterBox.name }}</ion-select-option>
+              }
+            </ion-select>
+          </label>
+
+          <div class="toggle-field">
+            <div>
+              <strong>{{ t('catalog.filters.favoritesOnly') }}</strong>
+              <small>{{ t('catalog.filters.favoritesHint') }}</small>
+            </div>
+            <ion-toggle
+              color="warning"
+              [checked]="favoritesOnly()"
+              (ionChange)="onFavoritesOnlyToggle($event)"
+            ></ion-toggle>
+          </div>
+        </div>
+
+        @if (catalogLoading()) {
+          <div class="selection-empty selection-empty--large">
+            <ion-spinner name="crescent"></ion-spinner>
+            <p>{{ t('catalog.loading') }}</p>
+          </div>
+        } @else if (!catalogCharacters().length) {
+          <div class="selection-empty selection-empty--large">
+            <p>{{ t('catalog.empty') }}</p>
+          </div>
+        } @else {
+          <div class="catalog-grid">
+            @for (character of catalogCharacters(); track character.id) {
+              <article class="catalog-card-item">
+                <div class="catalog-card-item__image">
+                  <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
+                </div>
+
+                <div class="catalog-card-item__copy">
+                  <strong>{{ character.name }}</strong>
+                  <small>{{ character.type }} • {{ character.primaryClass }}</small>
+                  @if (character.secondaryClass) {
+                    <small>{{ character.secondaryClass }}</small>
+                  }
+                </div>
+
+                <div class="catalog-card-item__actions">
+                  <ion-button
+                    fill="outline"
+                    size="small"
+                    color="warning"
+                    (click)="setCaptain(character.id)"
+                  >
+                    {{ isCaptain(character.id) ? t('catalog.actions.captainSet') : t('catalog.actions.makeCaptain') }}
+                  </ion-button>
+                  <ion-button
+                    fill="outline"
+                    size="small"
+                    color="warning"
+                    (click)="setFriendCaptain(character.id)"
+                  >
+                    {{
+                      isFriendCaptain(character.id)
+                        ? t('catalog.actions.friendSet')
+                        : t('catalog.actions.makeFriend')
+                    }}
+                  </ion-button>
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    [disabled]="isLeader(character.id)"
+                    (click)="togglePoolCharacter(character.id)"
+                  >
+                    {{
+                      isInPool(character.id)
+                        ? t('catalog.actions.removePool')
+                        : t('catalog.actions.addPool')
+                    }}
+                  </ion-button>
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    [routerLink]="getCharacterDetailLink(character)"
+                  >
+                    {{ 'common.actions.viewDetails' | transloco }}
+                  </ion-button>
+                </div>
+              </article>
+            }
+          </div>
+        }
+
+        @if (!catalogLoading() && catalogHasMore()) {
+          <div class="load-more-row">
+            <ion-button
+              fill="outline"
+              color="warning"
+              [disabled]="catalogLoadingMore()"
+              (click)="loadMoreCatalog()"
+            >
+              @if (catalogLoadingMore()) {
+                <ion-spinner slot="start" name="crescent"></ion-spinner>
+              }
+              {{ t('catalog.loadMore') }}
+            </ion-button>
+          </div>
+        }
+      </section>
+
+      <section class="glass-card results-card">
+        <div class="section-head">
+          <div>
+            <div class="section-label">
+              <ion-icon [icon]="coverageIcon"></ion-icon>
+              <span>{{ t('results.eyebrow') }}</span>
+            </div>
+            <h2>{{ t('results.title') }}</h2>
+            <p>{{ t('results.copy') }}</p>
+          </div>
+        </div>
+
+        @if (emptyStateVisible()) {
+          <div class="selection-empty selection-empty--large">
+            <p>{{ t('results.emptyState') }}</p>
+          </div>
+        } @else if (noResultStateVisible()) {
+          <div class="selection-empty selection-empty--large">
+            <p>{{ errorMessage() }}</p>
+          </div>
+        } @else if (building()) {
+          <div class="selection-empty selection-empty--large">
+            <ion-spinner name="crescent"></ion-spinner>
+            <p>{{ t('results.loading') }}</p>
+          </div>
+        } @else if (visibleResults().length) {
+          <div class="results-stack">
+            @for (result of visibleResults(); track result.teamKey; let index = $index) {
+              <article class="result-card">
+                <div class="result-card__head">
+                  <div>
+                    <strong>{{ t('results.resultLabel', { index: index + 1 }) }}</strong>
+                    <p>{{ resultCoverageSummary(result) }}</p>
+                  </div>
+
+                  <div class="result-score">
+                    <span>{{ result.abilityBreakdown.distinctAbilityCount }}</span>
+                    <small>{{ t('results.distinctAbilities') }}</small>
+                  </div>
+                </div>
+
+                <div class="result-slot-grid">
+                  @for (slot of result.slots; track slot.role + '-' + slot.character.id) {
+                    <a class="result-slot-card" [routerLink]="getCharacterDetailLink(slot.character)">
+                      <img [src]="slot.character.imageUrl" [alt]="slot.character.name" loading="lazy" />
+                      <div>
+                        <strong>{{ slot.character.name }}</strong>
+                        <small>{{ slot.role }}</small>
+                      </div>
+                    </a>
+                  }
+                </div>
+
+                <div class="result-metrics">
+                  <div class="metric-pill">
+                    <strong>{{ result.ranking.utilityCoverageCount }}</strong>
+                    <small>{{ t('results.utility') }}</small>
+                  </div>
+                  <div class="metric-pill">
+                    <strong>{{ result.ranking.burstCoverageCount }}</strong>
+                    <small>{{ t('results.burst') }}</small>
+                  </div>
+                  <div class="metric-pill">
+                    <strong>{{ result.ranking.consistencyCoverageCount }}</strong>
+                    <small>{{ t('results.consistency') }}</small>
+                  </div>
+                </div>
+
+                <div class="ability-breakdown-grid">
+                  <section class="ability-breakdown-card">
+                    <strong>{{ t('results.uniqueAbilities') }}</strong>
+                    @if (!result.abilityBreakdown.uniqueAbilities.length) {
+                      <p>{{ t('results.noUniqueAbilities') }}</p>
+                    } @else {
+                      <div class="ability-chip-row">
+                        @for (
+                          label of abilityLabels(result.abilityBreakdown.uniqueAbilities);
+                          track label
+                        ) {
+                          <span class="ability-chip">{{ label }}</span>
+                        }
+                      </div>
+                    }
+                  </section>
+
+                  <section class="ability-breakdown-card">
+                    <strong>{{ t('results.duplicateAbilities') }}</strong>
+                    @if (!result.abilityBreakdown.duplicateAbilities.length) {
+                      <p>{{ t('results.noDuplicateAbilities') }}</p>
+                    } @else {
+                      <div class="ability-chip-row">
+                        @for (
+                          label of abilityLabels(result.abilityBreakdown.duplicateAbilities, 6);
+                          track label
+                        ) {
+                          <span class="ability-chip ability-chip--duplicate">{{ label }}</span>
+                        }
+                      </div>
+                    }
+                  </section>
+                </div>
+              </article>
+            }
+          </div>
+
+          @if (hasMoreResults()) {
+            <div class="load-more-row">
+              <ion-button fill="outline" color="warning" (click)="loadMoreResults()">
+                {{ t('results.loadMore') }}
+              </ion-button>
+            </div>
+          }
+        }
+      </section>
+    </div>
+  </ion-content>
+</ng-container>
