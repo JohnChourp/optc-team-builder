@@ -181,6 +181,112 @@ export interface CharacterBox {
   updatedAt: string;
 }
 
+export type CrewForgeImageSlotRole = 'leader' | 'sub';
+
+export interface CrewForgeImageSlotDefinition {
+  key: string;
+  label: string;
+  role: CrewForgeImageSlotRole;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface CrewForgeImagePreprocessConfig {
+  fingerprintSize: number;
+  contrast: number;
+  brightness: number;
+  grayscale: boolean;
+  invert: boolean;
+  blurRadius: number;
+  matchThreshold: number;
+  emptyVarianceThreshold: number;
+}
+
+export interface CrewForgeImageExample {
+  id: string;
+  name: string;
+  imageDataUrl: string;
+  imageWidth: number;
+  imageHeight: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CrewForgeImageExemplar {
+  id: string;
+  slotKey: string;
+  characterId: number;
+  fingerprint: number[];
+  cropDataUrl: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CrewForgeImageProfile {
+  id: string;
+  name: string;
+  imageWidth: number;
+  imageHeight: number;
+  slotDefinitions: CrewForgeImageSlotDefinition[];
+  preprocess: CrewForgeImagePreprocessConfig;
+  examples: CrewForgeImageExample[];
+  exemplars: CrewForgeImageExemplar[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CrewForgeImageRecognitionCandidate {
+  characterId: number;
+  confidence: number;
+  source: 'exemplar' | 'catalog';
+}
+
+export type CrewForgeImageRecognitionSlotStatus =
+  | 'matched'
+  | 'ambiguous'
+  | 'empty'
+  | 'no_profile'
+  | 'manual';
+
+export interface CrewForgeImageRecognitionSlotResult {
+  slotKey: string;
+  label: string;
+  role: CrewForgeImageSlotRole;
+  characterId: number | null;
+  confidence: number;
+  status: CrewForgeImageRecognitionSlotStatus;
+  cropDataUrl: string | null;
+  candidates: CrewForgeImageRecognitionCandidate[];
+  manuallyEdited: boolean;
+}
+
+export interface CrewForgeImageRecognitionResult {
+  profileId: string | null;
+  imageWidth: number;
+  imageHeight: number;
+  slots: CrewForgeImageRecognitionSlotResult[];
+  reason: 'matched' | 'no_profile' | 'dimension_mismatch';
+}
+
+export const CREW_FORGE_IMAGE_SLOT_BLUEPRINTS: ReadonlyArray<
+  Pick<CrewForgeImageSlotDefinition, 'key' | 'label' | 'role'>
+> = [
+  { key: 'leader-1', label: 'Leader 1', role: 'leader' },
+  { key: 'leader-2', label: 'Leader 2', role: 'leader' },
+  { key: 'leader-3', label: 'Leader 3', role: 'leader' },
+  { key: 'leader-4', label: 'Leader 4', role: 'leader' },
+  { key: 'sub-1', label: 'Sub 1', role: 'sub' },
+  { key: 'sub-2', label: 'Sub 2', role: 'sub' },
+  { key: 'sub-3', label: 'Sub 3', role: 'sub' },
+  { key: 'sub-4', label: 'Sub 4', role: 'sub' },
+  { key: 'sub-5', label: 'Sub 5', role: 'sub' },
+  { key: 'sub-6', label: 'Sub 6', role: 'sub' },
+  { key: 'sub-7', label: 'Sub 7', role: 'sub' },
+  { key: 'sub-8', label: 'Sub 8', role: 'sub' },
+] as const;
+
 export interface SavedTeam {
   id: string;
   name: string;

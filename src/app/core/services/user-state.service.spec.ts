@@ -534,6 +534,89 @@ describe('UserStateService saved teams', () => {
       JSON.parse(setCalls.at(-1)?.value ?? '[]').map((enemy: { id: string }) => enemy.id),
     ).toEqual(['enemy-1', 'enemy-3', 'enemy-2']);
   });
+
+  it('hydrates crew forge image profiles and restores the last selected profile id', async () => {
+    const storedProfile = createCrewForgeProfile('profile-1', 'Main Profile');
+    const { service } = await createService(
+      [],
+      [],
+      [],
+      [],
+      { mode: 'auto', manualCount: 7 },
+      [],
+      [storedProfile],
+      'profile-1',
+    );
+
+    expect(service.crewForgeImageProfiles()).toEqual([storedProfile]);
+    expect(service.crewForgeLastImageProfileId()).toBe('profile-1');
+    expect(service.findCrewForgeImageProfileByDimensions(1080, 1920)?.id).toBe('profile-1');
+  });
+
+  it('saves normalized crew forge profiles and persists examples and exemplars through dedicated helpers', async () => {
+    const originalProfile = createCrewForgeProfile('profile-1', 'Original Profile');
+    const { service, setCalls } = await createService(
+      [],
+      [],
+      [],
+      [],
+      { mode: 'auto', manualCount: 7 },
+      [],
+      [originalProfile],
+      'profile-1',
+    );
+
+    const savedProfile = await service.saveCrewForgeImageProfile({
+      id: 'profile-1',
+      name: '  Updated Profile  ',
+      imageWidth: 1080,
+      imageHeight: 1920,
+      slotDefinitions: originalProfile.slotDefinitions.map((slot, index) => ({
+        ...slot,
+        x: index,
+      })),
+      preprocess: {
+        ...originalProfile.preprocess,
+        matchThreshold: 0.95,
+      },
+      examples: originalProfile.examples,
+      exemplars: originalProfile.exemplars,
+    });
+
+    expect(savedProfile).toMatchObject({
+      id: 'profile-1',
+      name: 'Updated Profile',
+    });
+    expect(service.crewForgeLastImageProfileId()).toBe('profile-1');
+
+    await service.saveCrewForgeImageExample('profile-1', {
+      name: ' Example Screenshot ',
+      imageDataUrl: 'data:image/png;base64,ZXhhbXBsZQ==',
+      imageWidth: 1080,
+      imageHeight: 1920,
+    });
+    await service.saveCrewForgeImageExemplar('profile-1', {
+      slotKey: 'leader-1',
+      characterId: 101,
+      fingerprint: Array.from({ length: 256 }, () => 0.5),
+      cropDataUrl: 'data:image/png;base64,Y3JvcA==',
+    });
+
+    expect(service.crewForgeImageProfiles()[0]?.examples).toEqual([
+      expect.objectContaining({
+        name: 'Example Screenshot',
+        imageWidth: 1080,
+        imageHeight: 1920,
+      }),
+    ]);
+    expect(service.crewForgeImageProfiles()[0]?.exemplars).toEqual([
+      expect.objectContaining({
+        slotKey: 'leader-1',
+        characterId: 101,
+      }),
+    ]);
+    expect(setCalls.map((call) => call.key)).toContain('crewForgeImageProfiles');
+  });
 });
 
 async function createService(
@@ -543,6 +626,8 @@ async function createService(
   storedFavoriteCharacterIds: number[] = [],
   storedAutoTeamBuilderWorkerPreference: unknown = { mode: 'auto', manualCount: 7 },
   storedCharacterBoxes: unknown[] = [],
+  storedCrewForgeImageProfiles: unknown[] = [],
+  storedCrewForgeLastImageProfileId: string | null = null,
 ) {
   const store = new Map<string, string>([
     ['favoriteCharacterIds', JSON.stringify(storedFavoriteCharacterIds)],
@@ -551,6 +636,8 @@ async function createService(
     ['characterBoxes', JSON.stringify(storedCharacterBoxes)],
     ['savedTeams', JSON.stringify(storedTeams)],
     ['savedEnemies', JSON.stringify(storedEnemies)],
+    ['crewForgeImageProfiles', JSON.stringify(storedCrewForgeImageProfiles)],
+    ['crewForgeLastImageProfileId', JSON.stringify(storedCrewForgeLastImageProfileId)],
     ['autoTeamBuilderWorkerPreference', JSON.stringify(storedAutoTeamBuilderWorkerPreference)],
   ]);
   const setCalls: Array<{ key: string; value: string }> = [];
@@ -619,5 +706,54 @@ function createBox(id: string, name: string, characterIds: number[]) {
     characterIds,
     createdAt: '2026-03-29T10:00:00.000Z',
     updatedAt: '2026-03-29T10:05:00.000Z',
+  };
+}
+
+function createCrewForgeProfile(id: string, name: string) {
+  return {
+    id,
+    name,
+    imageWidth: 1080,
+    imageHeight: 1920,
+    slotDefinitions: [
+      createCrewForgeSlot('leader-1', 'Leader 1', 'leader'),
+      createCrewForgeSlot('leader-2', 'Leader 2', 'leader'),
+      createCrewForgeSlot('leader-3', 'Leader 3', 'leader'),
+      createCrewForgeSlot('leader-4', 'Leader 4', 'leader'),
+      createCrewForgeSlot('sub-1', 'Sub 1', 'sub'),
+      createCrewForgeSlot('sub-2', 'Sub 2', 'sub'),
+      createCrewForgeSlot('sub-3', 'Sub 3', 'sub'),
+      createCrewForgeSlot('sub-4', 'Sub 4', 'sub'),
+      createCrewForgeSlot('sub-5', 'Sub 5', 'sub'),
+      createCrewForgeSlot('sub-6', 'Sub 6', 'sub'),
+      createCrewForgeSlot('sub-7', 'Sub 7', 'sub'),
+      createCrewForgeSlot('sub-8', 'Sub 8', 'sub'),
+    ],
+    preprocess: {
+      fingerprintSize: 16,
+      contrast: 1,
+      brightness: 0,
+      grayscale: true,
+      invert: false,
+      blurRadius: 0,
+      matchThreshold: 0.92,
+      emptyVarianceThreshold: 0.005,
+    },
+    examples: [],
+    exemplars: [],
+    createdAt: '2026-03-29T10:00:00.000Z',
+    updatedAt: '2026-03-29T10:05:00.000Z',
+  };
+}
+
+function createCrewForgeSlot(key: string, label: string, role: 'leader' | 'sub') {
+  return {
+    key,
+    label,
+    role,
+    x: 10,
+    y: 10,
+    width: 120,
+    height: 120,
   };
 }

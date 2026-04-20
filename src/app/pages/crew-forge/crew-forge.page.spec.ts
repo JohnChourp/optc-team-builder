@@ -10,8 +10,10 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
   IonButtons: class {},
   IonContent: class {},
+  IonFooter: class {},
   IonHeader: class {},
   IonIcon: class {},
+  IonModal: class {},
   IonMenuButton: class {},
   IonSearchbar: class {},
   IonSelect: class {},
@@ -113,6 +115,54 @@ describe('CrewForgePage', () => {
     expect(page.visibleResults()[10]?.teamKey).toBe('team-11');
   });
 
+  it('replaces the pool with unique recognized characters while preserving locked captains', async () => {
+    const { page, crewForgeImageImport } = createPage();
+
+    await page.ngOnInit();
+    page.setCaptain(101);
+    page.setFriendCaptain(102);
+    crewForgeImageImport.recognizeImage.mockResolvedValue({
+      profileId: 'profile-1',
+      imageWidth: 1080,
+      imageHeight: 1920,
+      reason: 'matched',
+      slots: [
+        createRecognitionSlot('leader-1', 101),
+        createRecognitionSlot('leader-2', 103),
+        createRecognitionSlot('leader-3', 103),
+        createRecognitionSlot('leader-4', null, 'ambiguous'),
+        createRecognitionSlot('sub-1', 104),
+        createRecognitionSlot('sub-2', 105),
+        createRecognitionSlot('sub-3', 102),
+        createRecognitionSlot('sub-4', 106),
+        createRecognitionSlot('sub-5', null, 'empty'),
+        createRecognitionSlot('sub-6', null, 'empty'),
+        createRecognitionSlot('sub-7', null, 'empty'),
+        createRecognitionSlot('sub-8', null, 'empty'),
+      ],
+    });
+
+    page.imageImportDataUrl.set('data:image/png;base64,ZmFrZQ==');
+    page.imageImportWidth.set(1080);
+    page.imageImportHeight.set(1920);
+    page.selectedImageProfileId.set('profile-1');
+
+    await page.runImageRecognition();
+    await page.applyRecognizedPool();
+
+    expect(page.poolCharacterIds()).toEqual([103, 104, 105, 106]);
+    expect(page.captainCharacterId()).toBe(101);
+    expect(page.friendCaptainCharacterId()).toBe(102);
+  });
+
+  it('restores the last selected image profile on init', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+
+    expect(page.selectedImageProfileId()).toBe('profile-1');
+  });
+
   it('renders menu access, roster controls, and ranked result copy in the template', () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/crew-forge/crew-forge.page.html'),
@@ -122,6 +172,9 @@ describe('CrewForgePage', () => {
     expect(template).toContain('<ion-buttons slot="start">');
     expect(template).toContain('<ion-menu-button autoHide="false"></ion-menu-button>');
     expect(template).toContain("t('actions.build')");
+    expect(template).toContain("t('imageImport.title')");
+    expect(template).toContain("runImageRecognition()");
+    expect(template).toContain("applyRecognizedPool()");
     expect(template).toContain("t('results.distinctAbilities')");
     expect(template).toContain("t('results.loadMore')");
   });
@@ -136,6 +189,7 @@ function createPage() {
   };
   const characterCatalogCache = {
     ensureLoaded: vi.fn().mockResolvedValue(undefined),
+    catalog: signal(createCatalogCharacters()),
     queryCharacters: vi.fn().mockImplementation(({ offset, limit }) =>
       createCatalogCharacters().slice(offset, offset + limit),
     ),
@@ -150,6 +204,62 @@ function createPage() {
       limit: 50,
     }),
   };
+  const crewForgeImageImport = {
+    createEmptyProfileInput: vi.fn().mockReturnValue({
+      name: '',
+      imageWidth: 0,
+      imageHeight: 0,
+      slotDefinitions: [
+        createSlotDefinition('leader-1', 'Leader 1', 'leader'),
+        createSlotDefinition('leader-2', 'Leader 2', 'leader'),
+        createSlotDefinition('leader-3', 'Leader 3', 'leader'),
+        createSlotDefinition('leader-4', 'Leader 4', 'leader'),
+        createSlotDefinition('sub-1', 'Sub 1', 'sub'),
+        createSlotDefinition('sub-2', 'Sub 2', 'sub'),
+        createSlotDefinition('sub-3', 'Sub 3', 'sub'),
+        createSlotDefinition('sub-4', 'Sub 4', 'sub'),
+        createSlotDefinition('sub-5', 'Sub 5', 'sub'),
+        createSlotDefinition('sub-6', 'Sub 6', 'sub'),
+        createSlotDefinition('sub-7', 'Sub 7', 'sub'),
+        createSlotDefinition('sub-8', 'Sub 8', 'sub'),
+      ],
+      preprocess: {
+        fingerprintSize: 16,
+        contrast: 1,
+        brightness: 0,
+        grayscale: true,
+        invert: false,
+        blurRadius: 0,
+        matchThreshold: 0.92,
+        emptyVarianceThreshold: 0.005,
+      },
+      examples: [],
+      exemplars: [],
+    }),
+    resolveExactProfile: vi.fn(),
+    loadImageFile: vi.fn(),
+    recognizeImage: vi.fn(),
+    applyManualSelection: vi.fn((result, slotKey, characterId, confidence) => ({
+      ...result,
+      slots: result.slots.map((slot: { slotKey: string }) =>
+        slot.slotKey === slotKey
+          ? {
+              ...slot,
+              characterId,
+              confidence,
+              status: characterId ? 'manual' : 'empty',
+              manuallyEdited: true,
+            }
+          : slot,
+      ),
+    })),
+    buildExemplarFromSlot: vi.fn().mockResolvedValue({
+      slotKey: 'leader-1',
+      characterId: 101,
+      fingerprint: [0.1, 0.9],
+      cropDataUrl: 'data:image/png;base64,ZXg=',
+    }),
+  };
   const userState = {
     ready: vi.fn().mockResolvedValue(undefined),
     favoriteCharacterIds: signal<number[]>([101, 103]),
@@ -160,7 +270,49 @@ function createPage() {
         characterIds: [101, 102, 103, 104],
       },
     ]),
+    crewForgeImageProfiles: signal([
+      {
+        id: 'profile-1',
+        name: 'Main Profile',
+        imageWidth: 1080,
+        imageHeight: 1920,
+        slotDefinitions: [
+          createSlotDefinition('leader-1', 'Leader 1', 'leader'),
+          createSlotDefinition('leader-2', 'Leader 2', 'leader'),
+          createSlotDefinition('leader-3', 'Leader 3', 'leader'),
+          createSlotDefinition('leader-4', 'Leader 4', 'leader'),
+          createSlotDefinition('sub-1', 'Sub 1', 'sub'),
+          createSlotDefinition('sub-2', 'Sub 2', 'sub'),
+          createSlotDefinition('sub-3', 'Sub 3', 'sub'),
+          createSlotDefinition('sub-4', 'Sub 4', 'sub'),
+          createSlotDefinition('sub-5', 'Sub 5', 'sub'),
+          createSlotDefinition('sub-6', 'Sub 6', 'sub'),
+          createSlotDefinition('sub-7', 'Sub 7', 'sub'),
+          createSlotDefinition('sub-8', 'Sub 8', 'sub'),
+        ],
+        preprocess: {
+          fingerprintSize: 16,
+          contrast: 1,
+          brightness: 0,
+          grayscale: true,
+          invert: false,
+          blurRadius: 0,
+          matchThreshold: 0.92,
+          emptyVarianceThreshold: 0.005,
+        },
+        examples: [],
+        exemplars: [],
+        createdAt: '2026-04-20T10:00:00.000Z',
+        updatedAt: '2026-04-20T10:00:00.000Z',
+      },
+    ]),
+    crewForgeLastImageProfileId: signal<string | null>('profile-1'),
     resolveAutoTeamBuilderWorkerCount: vi.fn().mockReturnValue(3),
+    setCrewForgeLastImageProfileId: vi.fn().mockResolvedValue(undefined),
+    saveCrewForgeImageProfile: vi.fn().mockResolvedValue(null),
+    deleteCrewForgeImageProfile: vi.fn().mockResolvedValue(undefined),
+    saveCrewForgeImageExample: vi.fn().mockResolvedValue(undefined),
+    saveCrewForgeImageExemplar: vi.fn().mockResolvedValue(undefined),
   };
   const i18n = {
     translate: vi.fn().mockImplementation((key: string) => key),
@@ -173,8 +325,10 @@ function createPage() {
       autoTeamBuilder as never,
       userState as never,
       i18n as never,
+      crewForgeImageImport as never,
     ),
     autoTeamBuilder,
+    crewForgeImageImport,
   };
 }
 
@@ -238,5 +392,37 @@ function createSlot(role: string, id: number) {
         builderAbilities: [],
       },
     },
+  };
+}
+
+function createSlotDefinition(key: string, label: string, role: 'leader' | 'sub') {
+  return {
+    key,
+    label,
+    role,
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  };
+}
+
+function createRecognitionSlot(
+  slotKey: string,
+  characterId: number | null,
+  status: 'matched' | 'ambiguous' | 'empty' | 'manual' = 'matched',
+) {
+  return {
+    slotKey,
+    label: slotKey,
+    role: slotKey.startsWith('leader') ? 'leader' : 'sub',
+    characterId,
+    confidence: characterId ? 0.96 : 0,
+    status,
+    cropDataUrl: 'data:image/png;base64,Y3JvcA==',
+    candidates: characterId
+      ? [{ characterId, confidence: 0.96, source: 'catalog' as const }]
+      : [],
+    manuallyEdited: false,
   };
 }

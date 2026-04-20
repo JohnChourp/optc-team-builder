@@ -29,6 +29,64 @@
     "count": "{{count}} επιλεγμένοι",
     "empty": "Πρόσθεσε τους χαρακτήρες που θέλεις να εξετάζει το Crew Forge ως πιθανούς subs."
   },
+  "imageImport": {
+    "title": "Εισαγωγή εικόνας",
+    "copy": "Ανέβασε screenshot του roster, ταίριαξέ το με exact profile ανάλυσης και γέμισε αυτόματα το candidate pool από τα portraits που αναγνωρίστηκαν.",
+    "empty": "Ανέβασε ένα screenshot για να ξεκινήσει η αναγνώριση portraits με exact profile.",
+    "profileLabel": "Exact profile",
+    "profilePlaceholder": "Διάλεξε αποθηκευμένο profile",
+    "processing": "Το Crew Forge αναλύει το ανεβασμένο screenshot...",
+    "previewAlt": "Ανεβασμένο screenshot ομάδας",
+    "previewFallbackName": "Ανεβασμένο screenshot",
+    "previewTitle": "Preview αναγνώρισης",
+    "previewCopy": "{{count}} μοναδικοί χαρακτήρες είναι έτοιμοι να αντικαταστήσουν το τρέχον pool.",
+    "confidence": "Βεβαιότητα",
+    "slotEmpty": "Δεν υπάρχει ακόμα αρκετά σίγουρο match για αυτό το slot.",
+    "learning": {
+      "title": "Αποθήκευση exemplars",
+      "copy": "Αποθήκευσε τα επιβεβαιωμένα slot crops στο apply ώστε τα επόμενα imports για αυτό το profile να ταιριάζουν πιο γρήγορα."
+    },
+    "picker": {
+      "title": "Επιλογή portrait match",
+      "copy": "Κάνε override στο τρέχον αποτέλεσμα αναγνώρισης για αυτό το slot."
+    },
+    "profileEditor": {
+      "title": "Επεξεργασία profile",
+      "copy": "Όρισε το ακριβές μέγεθος screenshot, τα crop rectangles των slots και το preprocessing πριν από το fingerprint matching.",
+      "save": "Αποθήκευση profile",
+      "name": "Όνομα profile",
+      "width": "Πλάτος εικόνας",
+      "height": "Ύψος εικόνας",
+      "matchThreshold": "Όριο match",
+      "emptyVarianceThreshold": "Όριο empty variance",
+      "fingerprintSize": "Μέγεθος fingerprint",
+      "contrast": "Contrast",
+      "brightness": "Brightness",
+      "blurRadius": "Blur radius",
+      "grayscale": "Μετατροπή crops σε grayscale",
+      "invert": "Αντιστροφή luminance"
+    },
+    "actions": {
+      "upload": "Ανέβασμα screenshot",
+      "replace": "Αντικατάσταση screenshot",
+      "newProfile": "Νέο profile",
+      "editProfile": "Επεξεργασία profile",
+      "deleteProfile": "Διαγραφή profile",
+      "recognize": "Εκτέλεση αναγνώρισης",
+      "saveExample": "Αποθήκευση screenshot ως example",
+      "apply": "Αντικατάσταση pool με τα matches",
+      "chooseCharacter": "Επιλογή χαρακτήρα"
+    },
+    "errors": {
+      "invalidType": "Μπορούν να εισαχθούν μόνο αρχεία εικόνας.",
+      "loadFailed": "Το screenshot δεν μπόρεσε να φορτωθεί.",
+      "recognitionFailed": "Το Crew Forge δεν μπόρεσε να αναλύσει αυτό το screenshot.",
+      "noProfile": "Δημιούργησε ή διάλεξε ένα exact profile ανάλυσης πριν τρέξει η αναγνώριση.",
+      "profileMismatch": "Το επιλεγμένο profile δεν ταιριάζει με τις διαστάσεις του τρέχοντος screenshot.",
+      "noProfileForDimensions": "Δεν υπάρχει exact profile για {{width}} × {{height}}. Δημιούργησε ένα πριν τρέξεις αναγνώριση.",
+      "invalidProfile": "Το profile είναι ελλιπές. Συμπλήρωσε όνομα, διαστάσεις και rectangles των slots."
+    }
+  },
   "catalog": {
     "eyebrow": "Catalog",
     "title": "Αναζήτηση και ανάθεση χαρακτήρων",

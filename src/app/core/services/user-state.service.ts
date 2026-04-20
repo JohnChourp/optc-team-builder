@@ -1,7 +1,17 @@
 import { Injectable, signal } from '@angular/core';
 import { Preferences } from '@capacitor/preferences';
 
-import { type CharacterBox, type SavedEnemy, type SavedTeam } from '../models/optc.models';
+import {
+  CREW_FORGE_IMAGE_SLOT_BLUEPRINTS,
+  type CharacterBox,
+  type CrewForgeImageExample,
+  type CrewForgeImageExemplar,
+  type CrewForgeImagePreprocessConfig,
+  type CrewForgeImageProfile,
+  type CrewForgeImageSlotDefinition,
+  type SavedEnemy,
+  type SavedTeam,
+} from '../models/optc.models';
 import { type AutoBuildAbilityRequirement } from '../models/auto-team-builder-ability.models';
 import { AppI18nService } from './app-i18n.service';
 import { normalizeEnemyMechanicRequirements } from './enemy-mechanic-draft.utils';
@@ -12,6 +22,8 @@ const RECENTS_KEY = 'recentCharacterIds';
 const CHARACTER_BOXES_KEY = 'characterBoxes';
 const SAVED_TEAMS_KEY = 'savedTeams';
 const SAVED_ENEMIES_KEY = 'savedEnemies';
+const CREW_FORGE_IMAGE_PROFILES_KEY = 'crewForgeImageProfiles';
+const CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY = 'crewForgeLastImageProfileId';
 const AUTO_TEAM_BUILDER_WORKER_PREFERENCE_KEY = 'autoTeamBuilderWorkerPreference';
 const LEGACY_ABILITY_KEY_ALIASES: Record<string, string> = {
   remove_defense_up: 'remove_enemy_increased_defense',
@@ -41,6 +53,8 @@ export class UserStateService {
   public readonly characterBoxes = signal<CharacterBox[]>([]);
   public readonly savedTeams = signal<SavedTeam[]>([]);
   public readonly savedEnemies = signal<SavedEnemy[]>([]);
+  public readonly crewForgeImageProfiles = signal<CrewForgeImageProfile[]>([]);
+  public readonly crewForgeLastImageProfileId = signal<string | null>(null);
   public readonly autoTeamBuilderWorkerPreference = signal<AutoTeamBuilderWorkerPreference>(
     AUTO_TEAM_BUILDER_DEFAULT_WORKER_PREFERENCE,
   );
@@ -209,6 +223,178 @@ export class UserStateService {
       updatedCount,
       boxes: next,
     };
+  }
+
+  public getCrewForgeImageProfileById(profileId: string): CrewForgeImageProfile | null {
+    const normalizedProfileId = this.normalizeEntityId(profileId);
+
+    if (!normalizedProfileId) {
+      return null;
+    }
+
+    return this.crewForgeImageProfiles().find((profile) => profile.id === normalizedProfileId) ?? null;
+  }
+
+  public findCrewForgeImageProfileByDimensions(
+    imageWidth: number,
+    imageHeight: number,
+  ): CrewForgeImageProfile | null {
+    if (!Number.isInteger(imageWidth) || imageWidth <= 0 || !Number.isInteger(imageHeight) || imageHeight <= 0) {
+      return null;
+    }
+
+    const preferredProfileId = this.crewForgeLastImageProfileId();
+    const exactProfiles = this.crewForgeImageProfiles().filter(
+      (profile) => profile.imageWidth === imageWidth && profile.imageHeight === imageHeight,
+    );
+
+    if (!exactProfiles.length) {
+      return null;
+    }
+
+    return (
+      exactProfiles.find((profile) => profile.id === preferredProfileId) ??
+      exactProfiles[0] ??
+      null
+    );
+  }
+
+  public async saveCrewForgeImageProfile(
+    input: Omit<CrewForgeImageProfile, 'id' | 'createdAt' | 'updatedAt'> &
+      Partial<Pick<CrewForgeImageProfile, 'id' | 'createdAt' | 'updatedAt'>>,
+  ): Promise<CrewForgeImageProfile | null> {
+    await this.ready();
+
+    const existing = this.crewForgeImageProfiles().find((profile) => profile.id === input.id);
+    const normalizedProfile = this.normalizeCrewForgeImageProfile(
+      {
+        ...input,
+        id: input.id ?? this.createCrewForgeImageProfileId(),
+      },
+      existing,
+    );
+
+    if (!normalizedProfile) {
+      return null;
+    }
+
+    const next = existing
+      ? this.crewForgeImageProfiles().map((profile) =>
+          profile.id === normalizedProfile.id ? normalizedProfile : profile,
+        )
+      : [normalizedProfile, ...this.crewForgeImageProfiles()];
+
+    await this.replaceCrewForgeImageProfiles(next);
+    this.crewForgeLastImageProfileId.set(normalizedProfile.id);
+    await this.persistJson(CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY, normalizedProfile.id);
+
+    return normalizedProfile;
+  }
+
+  public async deleteCrewForgeImageProfile(profileId: string): Promise<void> {
+    await this.ready();
+    const normalizedProfileId = this.normalizeEntityId(profileId);
+
+    if (!normalizedProfileId) {
+      return;
+    }
+
+    const next = this.crewForgeImageProfiles().filter((profile) => profile.id !== normalizedProfileId);
+
+    if (next.length === this.crewForgeImageProfiles().length) {
+      return;
+    }
+
+    await this.replaceCrewForgeImageProfiles(next);
+
+    if (this.crewForgeLastImageProfileId() === normalizedProfileId) {
+      const nextPreferredId = next[0]?.id ?? null;
+      this.crewForgeLastImageProfileId.set(nextPreferredId);
+      await this.persistJson(CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY, nextPreferredId);
+    }
+  }
+
+  public async setCrewForgeLastImageProfileId(profileId: string | null): Promise<void> {
+    await this.ready();
+    const normalizedProfileId =
+      profileId === null ? null : this.getCrewForgeImageProfileById(profileId)?.id ?? null;
+
+    this.crewForgeLastImageProfileId.set(normalizedProfileId);
+    await this.persistJson(CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY, normalizedProfileId);
+  }
+
+  public async saveCrewForgeImageExample(
+    profileId: string,
+    input: Omit<CrewForgeImageExample, 'id' | 'createdAt' | 'updatedAt'> & { id?: string },
+  ): Promise<CrewForgeImageProfile | null> {
+    await this.ready();
+    const profile = this.getCrewForgeImageProfileById(profileId);
+
+    if (!profile) {
+      return null;
+    }
+
+    const nextExample = this.normalizeCrewForgeImageExample(
+      {
+        ...input,
+        id: input.id ?? this.createCrewForgeImageExampleId(),
+      },
+      profile.examples.find((example) => example.id === input.id),
+      profile.imageWidth,
+      profile.imageHeight,
+    );
+
+    if (!nextExample) {
+      return null;
+    }
+
+    const nextProfile = {
+      ...profile,
+      examples: input.id
+        ? profile.examples.map((example) => (example.id === nextExample.id ? nextExample : example))
+        : [nextExample, ...profile.examples],
+    };
+
+    return this.saveCrewForgeImageProfile(nextProfile);
+  }
+
+  public async saveCrewForgeImageExemplar(
+    profileId: string,
+    input: Omit<CrewForgeImageExemplar, 'id' | 'createdAt' | 'updatedAt'> & { id?: string },
+  ): Promise<CrewForgeImageProfile | null> {
+    await this.ready();
+    const profile = this.getCrewForgeImageProfileById(profileId);
+
+    if (!profile) {
+      return null;
+    }
+
+    const existing =
+      profile.exemplars.find((exemplar) => exemplar.id === input.id) ??
+      profile.exemplars.find(
+        (exemplar) => exemplar.slotKey === input.slotKey && exemplar.characterId === input.characterId,
+      );
+    const nextExemplar = this.normalizeCrewForgeImageExemplar(
+      {
+        ...input,
+        id: input.id ?? existing?.id ?? this.createCrewForgeImageExemplarId(),
+      },
+      existing,
+      profile,
+    );
+
+    if (!nextExemplar) {
+      return null;
+    }
+
+    const nextProfile = {
+      ...profile,
+      exemplars: existing
+        ? profile.exemplars.map((exemplar) => (exemplar.id === nextExemplar.id ? nextExemplar : exemplar))
+        : [nextExemplar, ...profile.exemplars],
+    };
+
+    return this.saveCrewForgeImageProfile(nextProfile);
   }
 
   public resolveAutoTeamBuilderWorkerPreference(): ResolvedAutoTeamBuilderWorkerPreference {
@@ -480,6 +666,8 @@ export class UserStateService {
       characterBoxes,
       teams,
       enemies,
+      crewForgeImageProfiles,
+      crewForgeLastImageProfileId,
       autoTeamBuilderWorkerPreference,
     ] =
       await Promise.all([
@@ -489,6 +677,8 @@ export class UserStateService {
         this.readJson<CharacterBox[]>(CHARACTER_BOXES_KEY, []),
         this.readJson<SavedTeam[]>(SAVED_TEAMS_KEY, []),
         this.readJson<SavedEnemy[]>(SAVED_ENEMIES_KEY, []),
+        this.readJson<CrewForgeImageProfile[]>(CREW_FORGE_IMAGE_PROFILES_KEY, []),
+        this.readJson<string | null>(CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY, null),
         this.readJson<AutoTeamBuilderWorkerPreference>(
           AUTO_TEAM_BUILDER_WORKER_PREFERENCE_KEY,
           AUTO_TEAM_BUILDER_DEFAULT_WORKER_PREFERENCE,
@@ -505,6 +695,14 @@ export class UserStateService {
     );
     this.savedTeams.set(teams.map((team) => this.normalizeSavedTeam(team)));
     this.savedEnemies.set(enemies.map((enemy) => this.normalizeSavedEnemy(enemy)));
+    this.crewForgeImageProfiles.set(
+      crewForgeImageProfiles
+        .map((profile) => this.normalizeCrewForgeImageProfile(profile))
+        .filter((profile): profile is CrewForgeImageProfile => Boolean(profile)),
+    );
+    this.crewForgeLastImageProfileId.set(
+      this.normalizeEntityId(crewForgeLastImageProfileId ?? undefined),
+    );
     this.autoTeamBuilderWorkerPreference.set(
       this.normalizeAutoTeamBuilderWorkerPreference(autoTeamBuilderWorkerPreference),
     );
@@ -541,6 +739,11 @@ export class UserStateService {
   private async replaceSavedEnemies(enemies: SavedEnemy[]): Promise<void> {
     this.savedEnemies.set(enemies);
     await this.persistJson(SAVED_ENEMIES_KEY, enemies);
+  }
+
+  private async replaceCrewForgeImageProfiles(profiles: CrewForgeImageProfile[]): Promise<void> {
+    this.crewForgeImageProfiles.set(profiles);
+    await this.persistJson(CREW_FORGE_IMAGE_PROFILES_KEY, profiles);
   }
 
   private resolveDetectedCoreCount(): number {
@@ -639,6 +842,184 @@ export class UserStateService {
       requireAllSelectedClassesPerCharacter: Boolean(enemy.requireAllSelectedClassesPerCharacter),
       createdAt: this.normalizeTimestamp(enemy.createdAt, existing?.createdAt ?? now),
       updatedAt: this.normalizeTimestamp(enemy.updatedAt, now),
+    };
+  }
+
+  private normalizeCrewForgeImageProfile(
+    profile:
+      | (Pick<
+          CrewForgeImageProfile,
+          'name' | 'imageWidth' | 'imageHeight' | 'slotDefinitions' | 'preprocess' | 'examples' | 'exemplars'
+        > &
+          Partial<CrewForgeImageProfile>)
+      | null
+      | undefined,
+    existing?: CrewForgeImageProfile,
+  ): CrewForgeImageProfile | null {
+    if (!profile) {
+      return null;
+    }
+
+    const normalizedName = typeof profile.name === 'string' ? profile.name.trim() : '';
+
+    if (!normalizedName.length) {
+      return null;
+    }
+
+    const imageWidth = this.normalizePositiveInteger(profile.imageWidth);
+    const imageHeight = this.normalizePositiveInteger(profile.imageHeight);
+
+    if (!imageWidth || !imageHeight) {
+      return null;
+    }
+
+    const now = new Date().toISOString();
+    const baseProfile: CrewForgeImageProfile = {
+      id: this.normalizeEntityId(profile.id) ?? existing?.id ?? this.createCrewForgeImageProfileId(),
+      name: normalizedName,
+      imageWidth,
+      imageHeight,
+      slotDefinitions: this.normalizeCrewForgeImageSlotDefinitions(profile.slotDefinitions),
+      preprocess: this.normalizeCrewForgeImagePreprocessConfig(profile.preprocess),
+      examples: [],
+      exemplars: [],
+      createdAt: this.normalizeTimestamp(profile.createdAt, existing?.createdAt ?? now),
+      updatedAt: this.normalizeTimestamp(profile.updatedAt, now),
+    };
+
+    baseProfile.examples = (Array.isArray(profile.examples) ? profile.examples : [])
+      .map((example) =>
+        this.normalizeCrewForgeImageExample(example, undefined, baseProfile.imageWidth, baseProfile.imageHeight),
+      )
+      .filter((example): example is CrewForgeImageExample => Boolean(example));
+    baseProfile.exemplars = (Array.isArray(profile.exemplars) ? profile.exemplars : [])
+      .map((exemplar) => this.normalizeCrewForgeImageExemplar(exemplar, undefined, baseProfile))
+      .filter((exemplar): exemplar is CrewForgeImageExemplar => Boolean(exemplar));
+
+    return baseProfile;
+  }
+
+  private normalizeCrewForgeImageSlotDefinitions(
+    slotDefinitions: CrewForgeImageSlotDefinition[] | undefined,
+  ): CrewForgeImageSlotDefinition[] {
+    const rawByKey = new Map(
+      (Array.isArray(slotDefinitions) ? slotDefinitions : []).map((slot) => [slot.key, slot] as const),
+    );
+
+    return CREW_FORGE_IMAGE_SLOT_BLUEPRINTS.map((blueprint) => {
+      const raw = rawByKey.get(blueprint.key);
+
+      return {
+        key: blueprint.key,
+        label: blueprint.label,
+        role: blueprint.role,
+        x: this.normalizeNonNegativeInteger(raw?.x),
+        y: this.normalizeNonNegativeInteger(raw?.y),
+        width: this.normalizeNonNegativeInteger(raw?.width),
+        height: this.normalizeNonNegativeInteger(raw?.height),
+      };
+    });
+  }
+
+  private normalizeCrewForgeImagePreprocessConfig(
+    preprocess: CrewForgeImagePreprocessConfig | undefined,
+  ): CrewForgeImagePreprocessConfig {
+    const fingerprintSize = this.normalizePositiveInteger(preprocess?.fingerprintSize) ?? 16;
+    const matchThreshold = this.normalizeUnitInterval(preprocess?.matchThreshold, 0.92);
+    const emptyVarianceThreshold = this.normalizeUnitInterval(
+      preprocess?.emptyVarianceThreshold,
+      0.005,
+    );
+
+    return {
+      fingerprintSize: Math.max(8, Math.min(32, fingerprintSize)),
+      contrast: this.normalizeNumber(preprocess?.contrast, 1),
+      brightness: this.normalizeNumber(preprocess?.brightness, 0),
+      grayscale: preprocess?.grayscale !== false,
+      invert: Boolean(preprocess?.invert),
+      blurRadius: Math.max(0, Math.min(12, this.normalizeNumber(preprocess?.blurRadius, 0))),
+      matchThreshold,
+      emptyVarianceThreshold,
+    };
+  }
+
+  private normalizeCrewForgeImageExample(
+    example:
+      | (Pick<CrewForgeImageExample, 'name' | 'imageDataUrl' | 'imageWidth' | 'imageHeight'> &
+          Partial<CrewForgeImageExample>)
+      | null
+      | undefined,
+    existing: CrewForgeImageExample | undefined,
+    imageWidth: number,
+    imageHeight: number,
+  ): CrewForgeImageExample | null {
+    if (!example) {
+      return null;
+    }
+
+    const normalizedImageDataUrl = this.normalizeEnemyImageDataUrl(example.imageDataUrl);
+
+    if (!normalizedImageDataUrl) {
+      return null;
+    }
+
+    const now = new Date().toISOString();
+
+    return {
+      id: this.normalizeEntityId(example.id) ?? existing?.id ?? this.createCrewForgeImageExampleId(),
+      name: typeof example.name === 'string' && example.name.trim().length ? example.name.trim() : 'Example',
+      imageDataUrl: normalizedImageDataUrl,
+      imageWidth: this.normalizePositiveInteger(example.imageWidth) ?? imageWidth,
+      imageHeight: this.normalizePositiveInteger(example.imageHeight) ?? imageHeight,
+      createdAt: this.normalizeTimestamp(example.createdAt, existing?.createdAt ?? now),
+      updatedAt: this.normalizeTimestamp(example.updatedAt, now),
+    };
+  }
+
+  private normalizeCrewForgeImageExemplar(
+    exemplar:
+      | (Pick<CrewForgeImageExemplar, 'slotKey' | 'characterId' | 'fingerprint' | 'cropDataUrl'> &
+          Partial<CrewForgeImageExemplar>)
+      | null
+      | undefined,
+    existing: CrewForgeImageExemplar | undefined,
+    profile: CrewForgeImageProfile,
+  ): CrewForgeImageExemplar | null {
+    if (!exemplar) {
+      return null;
+    }
+
+    const slotKey = this.normalizeEntityId(exemplar.slotKey);
+    const slotDefinition = profile.slotDefinitions.find((slot) => slot.key === slotKey);
+    const characterId = this.normalizePositiveInteger(exemplar.characterId);
+    const cropDataUrl = this.normalizeEnemyImageDataUrl(exemplar.cropDataUrl);
+
+    if (!slotDefinition || !characterId || !cropDataUrl) {
+      return null;
+    }
+
+    const fingerprintLength = profile.preprocess.fingerprintSize * profile.preprocess.fingerprintSize;
+    const fingerprint = Array.isArray(exemplar.fingerprint)
+      ? exemplar.fingerprint
+          .map((value) => this.normalizeUnitInterval(value, -1))
+          .filter((value) => value >= 0)
+          .slice(0, fingerprintLength)
+      : [];
+
+    if (fingerprint.length !== fingerprintLength) {
+      return null;
+    }
+
+    const now = new Date().toISOString();
+
+    return {
+      id: this.normalizeEntityId(exemplar.id) ?? existing?.id ?? this.createCrewForgeImageExemplarId(),
+      slotKey: slotDefinition.key,
+      characterId,
+      fingerprint,
+      cropDataUrl,
+      createdAt: this.normalizeTimestamp(exemplar.createdAt, existing?.createdAt ?? now),
+      updatedAt: this.normalizeTimestamp(exemplar.updatedAt, now),
     };
   }
 
@@ -743,6 +1124,24 @@ export class UserStateService {
     return [...normalizedValues];
   }
 
+  private normalizePositiveInteger(value: unknown): number | null {
+    return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : null;
+  }
+
+  private normalizeNonNegativeInteger(value: unknown): number {
+    return typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : 0;
+  }
+
+  private normalizeNumber(value: unknown, fallback: number): number {
+    return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+  }
+
+  private normalizeUnitInterval(value: unknown, fallback: number): number {
+    const normalizedValue = this.normalizeNumber(value, fallback);
+
+    return Math.max(0, Math.min(1, normalizedValue));
+  }
+
   private normalizeRequiredAbilities(
     requirements: AutoBuildAbilityRequirement[] | undefined,
   ): AutoBuildAbilityRequirement[] {
@@ -827,5 +1226,17 @@ export class UserStateService {
 
   private createCharacterBoxId(): string {
     return `box-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  private createCrewForgeImageProfileId(): string {
+    return `crew-forge-profile-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  private createCrewForgeImageExampleId(): string {
+    return `crew-forge-example-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  private createCrewForgeImageExemplarId(): string {
+    return `crew-forge-exemplar-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   }
 }

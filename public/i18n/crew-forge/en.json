@@ -29,6 +29,64 @@
     "count": "{{count}} selected",
     "empty": "Add the characters you want Crew Forge to consider as possible subs."
   },
+  "imageImport": {
+    "title": "Image import",
+    "copy": "Upload a roster screenshot, match it against an exact resolution profile, and auto-fill the candidate pool from the recognized portraits.",
+    "empty": "Upload a screenshot to start profile-based portrait recognition.",
+    "profileLabel": "Exact profile",
+    "profilePlaceholder": "Select a saved profile",
+    "processing": "Crew Forge is analyzing the uploaded screenshot...",
+    "previewAlt": "Uploaded crew screenshot",
+    "previewFallbackName": "Uploaded screenshot",
+    "previewTitle": "Recognition preview",
+    "previewCopy": "{{count}} unique characters are ready to replace the current pool.",
+    "confidence": "Confidence",
+    "slotEmpty": "No confident match yet for this slot.",
+    "learning": {
+      "title": "Save exemplars",
+      "copy": "Store confirmed slot crops on apply so future imports for this profile match faster."
+    },
+    "picker": {
+      "title": "Choose portrait match",
+      "copy": "Override the current recognition result for this slot."
+    },
+    "profileEditor": {
+      "title": "Profile editor",
+      "copy": "Define the exact screenshot size, slot crop rectangles, and preprocessing used before fingerprint matching.",
+      "save": "Save profile",
+      "name": "Profile name",
+      "width": "Image width",
+      "height": "Image height",
+      "matchThreshold": "Match threshold",
+      "emptyVarianceThreshold": "Empty variance threshold",
+      "fingerprintSize": "Fingerprint size",
+      "contrast": "Contrast",
+      "brightness": "Brightness",
+      "blurRadius": "Blur radius",
+      "grayscale": "Convert crops to grayscale",
+      "invert": "Invert luminance"
+    },
+    "actions": {
+      "upload": "Upload screenshot",
+      "replace": "Replace screenshot",
+      "newProfile": "New profile",
+      "editProfile": "Edit profile",
+      "deleteProfile": "Delete profile",
+      "recognize": "Run recognition",
+      "saveExample": "Save screenshot as example",
+      "apply": "Replace pool with matches",
+      "chooseCharacter": "Pick character"
+    },
+    "errors": {
+      "invalidType": "Only image files can be imported.",
+      "loadFailed": "The screenshot could not be loaded.",
+      "recognitionFailed": "Crew Forge could not analyze this screenshot.",
+      "noProfile": "Create or select an exact resolution profile before recognition can run.",
+      "profileMismatch": "The selected profile does not match the current screenshot dimensions.",
+      "noProfileForDimensions": "No exact profile exists for {{width}} × {{height}}. Create one before running recognition.",
+      "invalidProfile": "The profile is incomplete. Fill in the name, dimensions, and slot rectangles."
+    }
+  },
   "catalog": {
     "eyebrow": "Catalog",
     "title": "Search and assign characters",
