@@ -37,11 +37,20 @@
     0 18px 34px rgba(120, 12, 12, 0.18);
 }
 
+.hero-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+}
+
 .hero-media img {
-  width: 100%;
+  width: auto;
+  max-width: 100%;
+  height: auto;
   max-height: 240px;
   border-radius: 22px;
-  object-fit: cover;
+  object-fit: contain;
   background: rgba(255, 255, 255, 0.08);
 }
 

@@ -201,19 +201,6 @@
 
           <div class="strict-toggle-row">
             <div class="strict-toggle-copy">
-              <strong>{{ leadersWithoutSuperEffectsToggleLabel() }}</strong>
-              <small>{{ leadersWithoutSuperEffectsSupportLabel() }}</small>
-            </div>
-            <ion-toggle
-              color="warning"
-              [checked]="requireLeadersWithoutSuperEffects()"
-              [disabled]="building()"
-              (ionChange)="onRequireLeadersWithoutSuperEffectsToggle($event)"
-            ></ion-toggle>
-          </div>
-
-          <div class="strict-toggle-row">
-            <div class="strict-toggle-copy">
               <strong>{{ leaderSuperEffectScopeToggleLabel() }}</strong>
               <small>{{ leaderSuperEffectScopeSupportLabel() }}</small>
             </div>
@@ -1212,6 +1199,11 @@
                       </small>
                     }
                   </div>
+                </div>
+              }
+              @if (resultAllowedLeadersWithSuperEffects()) {
+                <div>
+                  <span>{{ t('fallback.allowedLeadersWithSuperEffects') }}</span>
                 </div>
               }
               @if (resultIgnoredLeaderSuperSpecialCriteria()) {

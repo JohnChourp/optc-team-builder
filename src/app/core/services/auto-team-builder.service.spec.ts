@@ -1803,7 +1803,7 @@ describe('Auto team builder', () => {
     expect(result).toBeNull();
   });
 
-  it('filters super leaders out of auto leader selection when no-super-leaders is enabled', () => {
+  it('filters super leaders out of auto leader selection during the hidden default exact attempt', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderWithSuperEffectScopeRecord(7236, {
@@ -1817,9 +1817,8 @@ describe('Auto team builder', () => {
         createUtilitySubRecord(),
         createConsistencySubRecord(),
       ],
-      createInput(['DEX'], ['Fighter'], {
-        requireLeadersWithoutSuperEffects: true,
-      }),
+      createInput(['DEX'], ['Fighter']),
+      { requireLeadersWithoutSuperEffects: true },
     );
 
     expect(result).not.toBeNull();
@@ -1829,7 +1828,7 @@ describe('Auto team builder', () => {
     expect(result?.slots[1]?.character.id).not.toBe(7236);
   });
 
-  it('rejects manual leaders with super effects when no-super-leaders is enabled', () => {
+  it('rejects manual leaders with super effects during the hidden default exact attempt', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderWithSuperEffectScopeRecord(7237, {
@@ -1843,17 +1842,17 @@ describe('Auto team builder', () => {
         createConsistencySubRecord(),
       ],
       createInput(['DEX'], ['Fighter'], {
-        requireLeadersWithoutSuperEffects: true,
         lockedCharacterIds: [7237],
         captainCharacterId: 7237,
         friendCaptainCharacterId: 7237,
       }),
+      { requireLeadersWithoutSuperEffects: true },
     );
 
     expect(result).toBeNull();
   });
 
-  it('still allows super units in sub slots when no-super-leaders is enabled', () => {
+  it('still allows super units in sub slots during the hidden default exact attempt', () => {
     const result = buildAutoTeamResult(
       [
         createCaptainRecord(),
@@ -1867,11 +1866,11 @@ describe('Auto team builder', () => {
         createUtilitySubRecord(),
       ],
       createInput(['DEX'], ['Fighter'], {
-        requireLeadersWithoutSuperEffects: true,
         lockedCharacterIds: [5900],
         captainCharacterId: 5900,
         friendCaptainCharacterId: 5900,
       }),
+      { requireLeadersWithoutSuperEffects: true },
     );
 
     expect(result).not.toBeNull();
@@ -2523,6 +2522,7 @@ describe('Auto team builder', () => {
       droppedTypes: [],
       droppedClasses: [],
       minimumLeaderSuperEffectMatchingSlots: null,
+      allowedLeadersWithSuperEffects: false,
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
     });
@@ -2558,6 +2558,7 @@ describe('Auto team builder', () => {
       droppedTypes: [],
       droppedClasses: [],
       minimumLeaderSuperEffectMatchingSlots: null,
+      allowedLeadersWithSuperEffects: true,
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: true,
     });
@@ -2640,6 +2641,7 @@ describe('Auto team builder', () => {
       droppedTypes: [],
       droppedClasses: [],
       minimumLeaderSuperEffectMatchingSlots: 5,
+      allowedLeadersWithSuperEffects: false,
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
     });
@@ -2694,12 +2696,13 @@ describe('Auto team builder', () => {
       droppedTypes: [],
       droppedClasses: [],
       minimumLeaderSuperEffectMatchingSlots: null,
+      allowedLeadersWithSuperEffects: false,
       ignoredLeaderSuperEffectScope: true,
       ignoredLeaderSuperSpecialCriteria: false,
     });
   });
 
-  it('returns null when every available leader has super effects and no-super-leaders is enabled', async () => {
+  it('allows super leaders before dropping types or classes when the default exact attempt fails', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue([
         createLeaderWithSuperEffectScopeRecord(7256, {
@@ -2720,31 +2723,34 @@ describe('Auto team builder', () => {
     };
     const service = new AutoTeamBuilderService(repository as never);
 
-    const result = await service.buildTeam(['Fighter'], ['DEX'], {
-      requireLeadersWithoutSuperEffects: true,
-    });
+    const result = await service.buildTeam(['Fighter'], ['DEX']);
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.requestedInput.requireAllSlotsInLeaderSuperEffectScope).toBe(false);
+    expect(result?.input.requireAllSlotsInLeaderSuperEffectScope).toBe(false);
+    expect(result?.relaxation.usedFallback).toBe(true);
+    expect(result?.relaxation.allowedLeadersWithSuperEffects).toBe(true);
+    expect(result?.relaxation.droppedTypes).toEqual([]);
+    expect(result?.relaxation.droppedClasses).toEqual([]);
+    expect([7256, 7257]).toContain(result?.slots[0]?.character.id ?? -1);
+    expect([7256, 7257]).toContain(result?.slots[1]?.character.id ?? -1);
   });
 
-  it('keeps the no-super-leaders filter enabled through fallback attempts', async () => {
+  it('re-allows super leaders before dropping types during flexible fallback attempts', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
     };
     const service = new AutoTeamBuilderService(repository as never);
 
-    const result = await service.buildTeam(['Fighter'], ['DEX', 'INT'], {
-      requireLeadersWithoutSuperEffects: true,
-    });
+    const result = await service.buildTeam(['Fighter'], ['DEX', 'INT']);
 
     expect(result).not.toBeNull();
-    expect(result?.requestedInput.requireLeadersWithoutSuperEffects).toBe(true);
-    expect(result?.input.requireLeadersWithoutSuperEffects).toBe(true);
     expect(result?.relaxation.usedFallback).toBe(true);
+    expect(result?.relaxation.allowedLeadersWithSuperEffects).toBe(true);
     expect(result?.relaxation.droppedTypes).toEqual(['INT']);
   });
 
-  it('normalizes conflicting leader filters in favor of no-super-leaders', async () => {
+  it('keeps the requested scope filter untouched when scope mode is explicitly enabled', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue([
         createCaptainRecord(),
@@ -2758,14 +2764,12 @@ describe('Auto team builder', () => {
 
     const result = await service.buildTeam(['Fighter'], ['DEX'], {
       requireAllSlotsInLeaderSuperEffectScope: true,
-      requireLeadersWithoutSuperEffects: true,
     });
 
     expect(result).not.toBeNull();
-    expect(result?.requestedInput.requireAllSlotsInLeaderSuperEffectScope).toBe(false);
-    expect(result?.requestedInput.requireLeadersWithoutSuperEffects).toBe(true);
+    expect(result?.requestedInput.requireAllSlotsInLeaderSuperEffectScope).toBe(true);
     expect(result?.input.requireAllSlotsInLeaderSuperEffectScope).toBe(false);
-    expect(result?.input.requireLeadersWithoutSuperEffects).toBe(true);
+    expect(result?.relaxation.allowedLeadersWithSuperEffects).toBe(false);
   });
 
   it('drops the weakest uncovered class in flexible mode when exact class coverage fails', async () => {
@@ -2784,8 +2788,9 @@ describe('Auto team builder', () => {
       droppedTypes: [],
       droppedClasses: ['Shooter'],
       minimumLeaderSuperEffectMatchingSlots: null,
+      allowedLeadersWithSuperEffects: true,
       ignoredLeaderSuperEffectScope: false,
-      ignoredLeaderSuperSpecialCriteria: false,
+      ignoredLeaderSuperSpecialCriteria: true,
     });
   });
 
@@ -2818,8 +2823,9 @@ describe('Auto team builder', () => {
       droppedTypes: ['INT'],
       droppedClasses: [],
       minimumLeaderSuperEffectMatchingSlots: null,
+      allowedLeadersWithSuperEffects: true,
       ignoredLeaderSuperEffectScope: false,
-      ignoredLeaderSuperSpecialCriteria: false,
+      ignoredLeaderSuperSpecialCriteria: true,
     });
   });
 
@@ -3018,7 +3024,11 @@ describe('Auto team builder', () => {
         return;
       }
 
-      if (request.input.types.length === 2 && request.input.selectedClasses.length === 1) {
+      if (
+        request.input.types.length === 2 &&
+        request.input.selectedClasses.length === 1 &&
+        request.requireLeadersWithoutSuperEffects
+      ) {
         workerA.emitMessage({
           type: 'result',
           runId: request.runId,
@@ -3027,13 +3037,39 @@ describe('Auto team builder', () => {
         return;
       }
 
-      if (request.input.types.length === 2 && request.input.selectedClasses.length === 0) {
+      if (
+        request.input.types.length === 2 &&
+        request.input.selectedClasses.length === 1 &&
+        !request.requireLeadersWithoutSuperEffects
+      ) {
         deferredFallbackRunIds.push(request.runId);
+        return;
+      }
+
+      if (request.input.types.length === 2 && request.input.selectedClasses.length === 0) {
+        workerA.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: null,
+        });
       }
     });
     const workerB = new PooledFakeWorker((request) => {
       if (request.type === 'init') {
         workerB.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (
+        request.type === 'runAttempt' &&
+        request.input.types.length === 2 &&
+        request.input.selectedClasses.length === 0
+      ) {
+        workerB.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: null,
+        });
         return;
       }
 
@@ -3123,11 +3159,37 @@ describe('Auto team builder', () => {
             selectedClassMatches: 0,
           }),
         });
+        return;
+      }
+
+      if (request.input.types.length === 1 && request.input.selectedClasses.length === 1) {
+        workerA.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: buildWorkerResult(createInput(['DEX'], ['Fighter'])),
+        });
       }
     });
     const workerB = new PooledFakeWorker((request) => {
       if (request.type === 'init') {
         workerB.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (
+        request.type === 'runAttempt' &&
+        request.input.types.length === 2 &&
+        request.input.selectedClasses.length === 0
+      ) {
+        workerB.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: buildWorkerResult(createInput(['DEX', 'INT'], []), {
+            coveredSelectedClasses: [],
+            coversAllSelectedClasses: false,
+            selectedClassMatches: 0,
+          }),
+        });
         return;
       }
 
@@ -3210,11 +3272,49 @@ describe('Auto team builder', () => {
             },
           }),
         });
+        return;
+      }
+
+      if (request.input.types.length === 1 && request.input.selectedClasses.length === 1) {
+        workerA.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: buildWorkerResult(createInput(['DEX'], ['Fighter'])),
+        });
       }
     });
     const workerB = new PooledFakeWorker((request) => {
       if (request.type === 'init') {
         workerB.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (
+        request.type === 'runAttempt' &&
+        request.input.types.length === 2 &&
+        request.input.selectedClasses.length === 0
+      ) {
+        workerB.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: buildWorkerResult(createInput(['DEX', 'INT'], []), {
+            coveredSelectedClasses: ['Fighter'],
+            coversAllSelectedClasses: true,
+            selectedClassMatches: 1,
+            abilityRequirements: {
+              matched: [],
+              missing: [
+                {
+                  abilityKey: 'remove_bind',
+                  minTurns: null,
+                  slotTokens: [],
+                  requiredCharacterCount: 1,
+                },
+              ],
+              matchesAll: false,
+            },
+          }),
+        });
         return;
       }
 
@@ -3446,7 +3546,6 @@ function createInput(
       | 'requireAllSelectedTypesInTeam'
       | 'requireAllSelectedClassesPerCharacter'
       | 'requireAllSlotsInLeaderSuperEffectScope'
-      | 'requireLeadersWithoutSuperEffects'
       | 'minimumLeaderSuperEffectMatchingSlots'
       | 'requireLeaderSuperSpecialCriteria'
       | 'requireUniqueBaseCharacterNames'
@@ -3464,7 +3563,6 @@ function createInput(
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
-    requireLeadersWithoutSuperEffects: false,
     requireLeaderSuperSpecialCriteria: false,
     requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
@@ -3491,7 +3589,6 @@ function createInput(
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
     requireAllSlotsInLeaderSuperEffectScope:
       overrides.requireAllSlotsInLeaderSuperEffectScope ?? false,
-    requireLeadersWithoutSuperEffects: overrides.requireLeadersWithoutSuperEffects ?? false,
     minimumLeaderSuperEffectMatchingSlots:
       overrides.requireAllSlotsInLeaderSuperEffectScope
         ? overrides.minimumLeaderSuperEffectMatchingSlots ?? 6
@@ -3936,6 +4033,7 @@ function buildWorkerResult(
       droppedTypes: ['INT'],
       droppedClasses: [],
       minimumLeaderSuperEffectMatchingSlots: null,
+      allowedLeadersWithSuperEffects: false,
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
     },

@@ -29,39 +29,43 @@ describe('runAutoTeamBuildSearch', () => {
       'exactAttempt',
       'fallbackAttempt',
       'fallbackAttempt',
+      'fallbackAttempt',
       'completed',
     ]);
     expect(snapshots[1]).toMatchObject({
       completedAttempts: 0,
-      totalAttempts: 6,
+      totalAttempts: 7,
       elapsedMs: expect.any(Number),
       estimatedRemainingMs: null,
       averageFallbackAttemptMs: null,
       completedFallbackAttempts: 0,
       currentDroppedTypes: [],
       currentDroppedClasses: [],
+      currentAllowedLeadersWithSuperEffects: false,
       currentIgnoredLeaderSuperSpecialCriteria: false,
     });
     expect(snapshots[2]).toMatchObject({
       completedAttempts: 1,
-      totalAttempts: 6,
+      totalAttempts: 7,
       elapsedMs: expect.any(Number),
       estimatedRemainingMs: null,
       averageFallbackAttemptMs: null,
       completedFallbackAttempts: 0,
       currentDroppedTypes: [],
-      currentDroppedClasses: ['Fighter'],
+      currentDroppedClasses: [],
+      currentAllowedLeadersWithSuperEffects: true,
       currentIgnoredLeaderSuperSpecialCriteria: false,
     });
     expect(snapshots[3]).toMatchObject({
       completedAttempts: 2,
-      totalAttempts: 6,
+      totalAttempts: 7,
       elapsedMs: expect.any(Number),
       estimatedRemainingMs: expect.any(Number),
       averageFallbackAttemptMs: expect.any(Number),
       completedFallbackAttempts: 1,
-      currentDroppedTypes: ['INT'],
-      currentDroppedClasses: [],
+      currentDroppedTypes: [],
+      currentDroppedClasses: ['Fighter'],
+      currentAllowedLeadersWithSuperEffects: true,
       currentIgnoredLeaderSuperSpecialCriteria: false,
     });
   });
@@ -116,12 +120,12 @@ describe('runAutoTeamBuildSearch', () => {
       completedFallbackAttempts: 0,
     });
     expect(fallbackSnapshots[1]).toMatchObject({
-      estimatedRemainingMs: 120,
+      estimatedRemainingMs: 160,
       averageFallbackAttemptMs: 40,
       completedFallbackAttempts: 1,
     });
     expect(fallbackSnapshots[2]).toMatchObject({
-      estimatedRemainingMs: 70,
+      estimatedRemainingMs: 105,
       averageFallbackAttemptMs: 35,
       completedFallbackAttempts: 2,
     });
@@ -140,6 +144,7 @@ describe('runAutoTeamBuildSearch', () => {
       droppedTypes: ['INT'],
       droppedClasses: [],
       minimumLeaderSuperEffectMatchingSlots: null,
+      allowedLeadersWithSuperEffects: true,
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
     });
@@ -196,8 +201,8 @@ function createInput(
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
-    requireLeadersWithoutSuperEffects: false,
     minimumLeaderSuperEffectMatchingSlots: null,
+    requireLeaderSuperSpecialCriteria: false,
     requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
     favoriteShipsOnly: false,

@@ -17,6 +17,8 @@ export interface AutoTeamBuildSearchOptions {
 
 export interface AutoTeamBuildPlannedAttempt {
   input: AutoBuildInput;
+  requireLeadersWithoutSuperEffects: boolean;
+  allowedLeadersWithSuperEffects: boolean;
   droppedTypes: AutoTeamBuilderType[];
   droppedClasses: string[];
   ignoredLeaderSuperEffectScope: boolean;
@@ -63,6 +65,7 @@ export function runAutoTeamBuildSearch(
     totalAttempts: 0,
     currentDroppedTypes: [],
     currentDroppedClasses: [],
+    currentAllowedLeadersWithSuperEffects: false,
     currentIgnoredLeaderSuperSpecialCriteria: false,
     messageKey: 'progress.preparingSearch',
   });
@@ -78,6 +81,7 @@ export function runAutoTeamBuildSearch(
     totalAttempts,
     currentDroppedTypes: [],
     currentDroppedClasses: [],
+    currentAllowedLeadersWithSuperEffects: false,
     currentIgnoredLeaderSuperSpecialCriteria: false,
     messageKey: 'progress.exactAttempt',
     messageParams: {
@@ -86,7 +90,12 @@ export function runAutoTeamBuildSearch(
     },
   });
 
-  const exactResult = runAutoTeamBuildAttempt(records, requestedInput, requestedInput);
+  const exactResult = runAutoTeamBuildAttempt(
+    records,
+    requestedInput,
+    requestedInput,
+    resolveExactAttemptRequiresNoSuperLeaders(requestedInput),
+  );
 
   if (hasStrictAutoTeamBuildConstraints(requestedInput) && plannedAttempts.length === 0) {
     emitCompletedProgress(options, timingState, records.length, totalAttempts, totalAttempts);
@@ -109,6 +118,7 @@ export function runAutoTeamBuildSearch(
       totalAttempts,
       currentDroppedTypes: plannedAttempt.droppedTypes,
       currentDroppedClasses: plannedAttempt.droppedClasses,
+      currentAllowedLeadersWithSuperEffects: plannedAttempt.allowedLeadersWithSuperEffects,
       currentIgnoredLeaderSuperSpecialCriteria: Boolean(
         plannedAttempt.ignoredLeaderSuperSpecialCriteria,
       ),
@@ -120,7 +130,12 @@ export function runAutoTeamBuildSearch(
     });
 
     const fallbackStartedAt = timingState.now();
-    const relaxedResult = runAutoTeamBuildAttempt(records, plannedAttempt.input, requestedInput);
+    const relaxedResult = runAutoTeamBuildAttempt(
+      records,
+      plannedAttempt.input,
+      requestedInput,
+      plannedAttempt.requireLeadersWithoutSuperEffects,
+    );
     const fallbackEndedAt = timingState.now();
 
     timingState.totalCompletedFallbackMs += Math.max(0, fallbackEndedAt - fallbackStartedAt);
@@ -158,6 +173,7 @@ function emitCompletedProgress(
     totalAttempts,
     currentDroppedTypes: [],
     currentDroppedClasses: [],
+    currentAllowedLeadersWithSuperEffects: false,
     currentIgnoredLeaderSuperSpecialCriteria: false,
     messageKey: 'progress.completed',
   });
@@ -232,23 +248,31 @@ export function runAutoTeamBuildAttempt(
   records: CharacterDetailRecord[],
   input: AutoBuildInput,
   requestedInput: AutoBuildInput,
+  requireLeadersWithoutSuperEffects: boolean,
 ): AutoBuildResult | null {
-  const attempt = buildAutoTeamResult(records, input);
+  const attempt = buildAutoTeamResult(records, input, {
+    requireLeadersWithoutSuperEffects,
+  });
 
   if (!attempt) {
     return null;
   }
 
+  const allowedLeadersWithSuperEffects = Boolean(
+    !requestedInput.requireAllSlotsInLeaderSuperEffectScope && !requireLeadersWithoutSuperEffects,
+  );
+
   return {
     ...attempt,
     requestedInput,
     relaxation: {
-      usedFallback: !inputsMatch(requestedInput, input),
+      usedFallback: !inputsMatch(requestedInput, input) || allowedLeadersWithSuperEffects,
       droppedTypes: requestedInput.types.filter((type) => !input.types.includes(type)),
       droppedClasses: requestedInput.selectedClasses.filter(
         (selectedClass) => !input.selectedClasses.includes(selectedClass),
       ),
       minimumLeaderSuperEffectMatchingSlots: input.minimumLeaderSuperEffectMatchingSlots,
+      allowedLeadersWithSuperEffects,
       ignoredLeaderSuperEffectScope: Boolean(
         requestedInput.requireAllSlotsInLeaderSuperEffectScope &&
           !input.requireAllSlotsInLeaderSuperEffectScope,
@@ -267,6 +291,8 @@ export function planAutoTeamBuildFallbackAttempts(
 ): AutoTeamBuildPlannedAttempt[] {
   const nextInputs: Array<{
     input: AutoBuildInput;
+    requireLeadersWithoutSuperEffects: boolean;
+    allowedLeadersWithSuperEffects: boolean;
     droppedTypes: AutoTeamBuilderType[];
     droppedClasses: string[];
     droppedCount: number;
@@ -275,6 +301,8 @@ export function planAutoTeamBuildFallbackAttempts(
     ignoredLeaderSuperSpecialCriteria: boolean;
   }> = [];
   const exactLeaderSuperEffectSlots = resolveRequestedLeaderSuperEffectMatchingSlots(requestedInput);
+  const exactAttemptRequiresNoSuperLeaders =
+    resolveExactAttemptRequiresNoSuperLeaders(requestedInput);
   const canRelaxLeaderSuperSpecialCriteria =
     requestedInput.requireLeaderSuperSpecialCriteria && exactLeaderSuperEffectSlots === null;
 
@@ -285,6 +313,8 @@ export function planAutoTeamBuildFallbackAttempts(
           ...requestedInput,
           minimumLeaderSuperEffectMatchingSlots: matchingSlots,
         },
+        requireLeadersWithoutSuperEffects: false,
+        allowedLeadersWithSuperEffects: false,
         droppedTypes: [],
         droppedClasses: [],
         droppedCount: 0,
@@ -300,11 +330,29 @@ export function planAutoTeamBuildFallbackAttempts(
         requireAllSlotsInLeaderSuperEffectScope: false,
         minimumLeaderSuperEffectMatchingSlots: null,
       },
+      requireLeadersWithoutSuperEffects: false,
+      allowedLeadersWithSuperEffects: false,
       droppedTypes: [],
       droppedClasses: [],
       droppedCount: 0,
       droppedSupport: 0,
       ignoredLeaderSuperEffectScope: true,
+      ignoredLeaderSuperSpecialCriteria: false,
+    });
+  }
+
+  if (exactLeaderSuperEffectSlots === null && exactAttemptRequiresNoSuperLeaders) {
+    nextInputs.push({
+      input: {
+        ...requestedInput,
+      },
+      requireLeadersWithoutSuperEffects: false,
+      allowedLeadersWithSuperEffects: true,
+      droppedTypes: [],
+      droppedClasses: [],
+      droppedCount: 0,
+      droppedSupport: 0,
+      ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
     });
   }
@@ -315,6 +363,8 @@ export function planAutoTeamBuildFallbackAttempts(
         ...requestedInput,
         requireLeaderSuperSpecialCriteria: false,
       },
+      requireLeadersWithoutSuperEffects: false,
+      allowedLeadersWithSuperEffects: true,
       droppedTypes: [],
       droppedClasses: [],
       droppedCount: 0,
@@ -327,6 +377,8 @@ export function planAutoTeamBuildFallbackAttempts(
   if (hasStrictAutoTeamBuildConstraints(requestedInput)) {
     return nextInputs.map((entry) => ({
       input: entry.input,
+      requireLeadersWithoutSuperEffects: entry.requireLeadersWithoutSuperEffects,
+      allowedLeadersWithSuperEffects: entry.allowedLeadersWithSuperEffects,
       droppedTypes: entry.droppedTypes,
       droppedClasses: entry.droppedClasses,
       ignoredLeaderSuperEffectScope: entry.ignoredLeaderSuperEffectScope,
@@ -379,7 +431,10 @@ export function planAutoTeamBuildFallbackAttempts(
             selectedClasses,
             requireAllSlotsInLeaderSuperEffectScope: baseInput.requireAllSlotsInLeaderSuperEffectScope,
             minimumLeaderSuperEffectMatchingSlots: baseInput.minimumLeaderSuperEffectMatchingSlots,
+            requireLeaderSuperSpecialCriteria: baseInput.requireLeaderSuperSpecialCriteria,
           },
+          requireLeadersWithoutSuperEffects: false,
+          allowedLeadersWithSuperEffects: !requestedInput.requireAllSlotsInLeaderSuperEffectScope,
           droppedTypes,
           droppedClasses,
           droppedCount: droppedTypes.length + droppedClasses.length,
@@ -428,6 +483,8 @@ export function planAutoTeamBuildFallbackAttempts(
 
   return nextInputs.map((entry) => ({
     input: entry.input,
+    requireLeadersWithoutSuperEffects: entry.requireLeadersWithoutSuperEffects,
+    allowedLeadersWithSuperEffects: entry.allowedLeadersWithSuperEffects,
     droppedTypes: entry.droppedTypes,
     droppedClasses: entry.droppedClasses,
     ignoredLeaderSuperEffectScope: entry.ignoredLeaderSuperEffectScope,
@@ -453,6 +510,10 @@ export function hasStrictAutoTeamBuildConstraints(input: AutoBuildInput): boolea
   return Boolean(
     input.requireAllSelectedTypesInTeam || input.requireAllSelectedClassesPerCharacter,
   );
+}
+
+function resolveExactAttemptRequiresNoSuperLeaders(input: AutoBuildInput): boolean {
+  return !input.requireAllSlotsInLeaderSuperEffectScope;
 }
 
 function inputsMatch(left: AutoBuildInput, right: AutoBuildInput): boolean {

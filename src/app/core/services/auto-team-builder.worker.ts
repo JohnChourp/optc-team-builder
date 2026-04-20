@@ -34,7 +34,12 @@ addEventListener('message', ({ data }: MessageEvent<AutoTeamBuilderWorkerRequest
     }
 
     try {
-      const result = runAutoTeamBuildAttempt(cachedRecords, data.input, data.requestedInput);
+      const result = runAutoTeamBuildAttempt(
+        cachedRecords,
+        data.input,
+        data.requestedInput,
+        data.requireLeadersWithoutSuperEffects,
+      );
       const response: AutoTeamBuilderWorkerResponse = {
         type: 'result',
         runId: data.runId,

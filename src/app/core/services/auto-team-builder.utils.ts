@@ -119,6 +119,10 @@ interface LeaderPairOption {
   score: number;
 }
 
+interface AutoTeamBuildAttemptOptions {
+  requireLeadersWithoutSuperEffects?: boolean;
+}
+
 type PartyConflictCharacter = Pick<CharacterListItem, 'id' | 'name'> &
   Partial<Pick<CharacterDetailRecord, 'detail'>>;
 
@@ -582,6 +586,7 @@ function resolveAbilityCoverage(
 export function buildAutoTeamResult(
   records: CharacterDetailRecord[],
   input: AutoBuildInput,
+  options: AutoTeamBuildAttemptOptions = {},
 ): AutoBuildCoreResult | null {
   const usableRecords = records.filter((record) => hasReadableEffectText(record));
 
@@ -603,11 +608,13 @@ export function buildAutoTeamResult(
     manualSlotCandidateMap.get('captain') ?? [],
     candidates,
     input,
+    options,
   );
   const friendCaptainOptions = resolveLeaderCandidateOptions(
     manualSlotCandidateMap.get('friendCaptain') ?? [],
     candidates,
     input,
+    options,
   );
 
   if (!captainOptions.length || !friendCaptainOptions.length) {
@@ -769,12 +776,13 @@ function resolveLeaderCandidateOptions(
   slotCandidates: AutoBuildCandidate[],
   candidates: AutoBuildCandidate[],
   input: AutoBuildInput,
+  options: AutoTeamBuildAttemptOptions,
 ): AutoBuildCandidate[] {
   const { leaderOnlyRequirements } = splitAbilityRequirementsByScope(input.requiredAbilities);
   const candidatePool = (slotCandidates.length ? slotCandidates : candidates).filter(
     (candidate) =>
       candidate.tags.readableCaptainText &&
-      (!input.requireLeadersWithoutSuperEffects || !hasLeaderSuperEffects(candidate)) &&
+      (!options.requireLeadersWithoutSuperEffects || !hasLeaderSuperEffects(candidate)) &&
       leaderOnlyRequirements.every((requirement) =>
         leaderSatisfiesAbilityRequirement(candidate, requirement),
       ) &&

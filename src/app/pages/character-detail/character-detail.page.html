@@ -34,7 +34,7 @@
             [class.hero-card--incomplete]="current.isIncomplete"
           >
             <div class="hero-media">
-              <img [src]="current.detailImageUrl" [alt]="current.name" />
+              <img [src]="heroImageUrl()" [alt]="current.name" decoding="async" />
             </div>
 
             <div class="hero-copy">

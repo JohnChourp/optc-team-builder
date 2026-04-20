@@ -61,7 +61,7 @@ export interface AutoTeamSelectionShipSummary {
 }
 
 export interface AutoTeamSelectionExportPayload {
-  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14;
   exportedAt: string;
   source: "auto-team-builder";
   exportType: "preset";
@@ -73,7 +73,6 @@ export interface AutoTeamSelectionExportPayload {
     requireAllSelectedTypesInTeam: boolean;
     requireAllSelectedClassesPerCharacter: boolean;
     requireAllSlotsInLeaderSuperEffectScope?: boolean;
-    requireLeadersWithoutSuperEffects?: boolean;
     requireUniqueBaseCharacterNames: boolean;
     favoritesOnly: boolean;
     favoriteCount: number;
@@ -104,7 +103,6 @@ export interface AutoTeamSelectionImportState {
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
   requireAllSlotsInLeaderSuperEffectScope: boolean;
-  requireLeadersWithoutSuperEffects: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
   favoriteShipsOnly: boolean;
@@ -153,7 +151,6 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
   requireAllSlotsInLeaderSuperEffectScope: boolean;
-  requireLeadersWithoutSuperEffects?: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
   favoriteCount: number;
@@ -174,24 +171,11 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   exportedAt?: string;
 }
 
-function normalizeLeaderFilterState(
+function resolveImportedLeaderSuperEffectScopeState(
   requireAllSlotsInLeaderSuperEffectScope: boolean,
   requireLeadersWithoutSuperEffects: boolean,
-): {
-  requireAllSlotsInLeaderSuperEffectScope: boolean;
-  requireLeadersWithoutSuperEffects: boolean;
-} {
-  if (requireLeadersWithoutSuperEffects) {
-    return {
-      requireAllSlotsInLeaderSuperEffectScope: false,
-      requireLeadersWithoutSuperEffects: true,
-    };
-  }
-
-  return {
-    requireAllSlotsInLeaderSuperEffectScope,
-    requireLeadersWithoutSuperEffects: false,
-  };
+): boolean {
+  return requireAllSlotsInLeaderSuperEffectScope || requireLeadersWithoutSuperEffects;
 }
 
 function resolveLeaderAssignment(
@@ -428,7 +412,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload["schemaVersion"] !== 10 &&
       parsedPayload["schemaVersion"] !== 11 &&
       parsedPayload["schemaVersion"] !== 12 &&
-      parsedPayload["schemaVersion"] !== 13) ||
+      parsedPayload["schemaVersion"] !== 13 &&
+      parsedPayload["schemaVersion"] !== 14) ||
     parsedPayload["source"] !== "auto-team-builder" ||
     parsedPayload["exportType"] !== "preset"
   ) {
@@ -850,9 +835,10 @@ export function sanitizeAutoTeamSelectionImportPayload(
     warnings.push(conflictingExcludedShipWarning);
   }
 
-  const leaderFilterState = normalizeLeaderFilterState(
+  const requireAllSlotsInLeaderSuperEffectScope = resolveImportedLeaderSuperEffectScopeState(
     payload.filters.requireAllSlotsInLeaderSuperEffectScope === true,
-    payload.filters.requireLeadersWithoutSuperEffects === true,
+    (payload.filters as { requireLeadersWithoutSuperEffects?: boolean })
+      .requireLeadersWithoutSuperEffects === true,
   );
 
   return {
@@ -863,9 +849,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
       enemyMechanics,
       requireAllSelectedTypesInTeam: payload.filters.requireAllSelectedTypesInTeam,
       requireAllSelectedClassesPerCharacter: payload.filters.requireAllSelectedClassesPerCharacter,
-      requireAllSlotsInLeaderSuperEffectScope:
-        leaderFilterState.requireAllSlotsInLeaderSuperEffectScope,
-      requireLeadersWithoutSuperEffects: leaderFilterState.requireLeadersWithoutSuperEffects,
+      requireAllSlotsInLeaderSuperEffectScope,
       requireUniqueBaseCharacterNames: payload.filters.requireUniqueBaseCharacterNames === true,
       favoritesOnly: payload.filters.favoritesOnly,
       favoriteShipsOnly: payload.filters.favoriteShipsOnly === true,
@@ -931,7 +915,6 @@ export function buildAutoTeamSelectionExportPayload({
   requireAllSelectedTypesInTeam,
   requireAllSelectedClassesPerCharacter,
   requireAllSlotsInLeaderSuperEffectScope,
-  requireLeadersWithoutSuperEffects = false,
   requireUniqueBaseCharacterNames,
   favoritesOnly,
   favoriteCount,
@@ -955,13 +938,9 @@ export function buildAutoTeamSelectionExportPayload({
     role: slot.role,
     characterIds: [...slot.characterIds],
   }));
-  const leaderFilterState = normalizeLeaderFilterState(
-    requireAllSlotsInLeaderSuperEffectScope,
-    requireLeadersWithoutSuperEffects,
-  );
 
   return {
-    schemaVersion: 13,
+    schemaVersion: 14,
     exportedAt,
     source: "auto-team-builder",
     exportType: "preset",
@@ -980,9 +959,7 @@ export function buildAutoTeamSelectionExportPayload({
       })),
       requireAllSelectedTypesInTeam,
       requireAllSelectedClassesPerCharacter,
-      requireAllSlotsInLeaderSuperEffectScope:
-        leaderFilterState.requireAllSlotsInLeaderSuperEffectScope,
-      requireLeadersWithoutSuperEffects: leaderFilterState.requireLeadersWithoutSuperEffects,
+      requireAllSlotsInLeaderSuperEffectScope,
       requireUniqueBaseCharacterNames,
       favoritesOnly,
       favoriteCount,

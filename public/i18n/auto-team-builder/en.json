@@ -11,8 +11,7 @@
     "strictModes": {
       "typeCoverage": "team-wide type coverage",
       "perCharacterClasses": "per-slot class matching",
-      "leaderSuperEffectScope": "leader super effect scope",
-      "noSuperLeaders": "no super leaders"
+      "leaderSuperEffectScope": "leader super effect scope"
     },
     "strictMode": {
       "flexible": "flexible fallback enabled",
@@ -69,14 +68,7 @@
       "toggle": "Require every slot to match leader super effect scope",
       "support": {
         "strict": "Every final slot must match the shared Super Type / Super Class effect scope of the selected captain and friend captain.",
-        "flexible": "Leader super effects are ignored when choosing slots unless this strict filter is enabled."
-      }
-    },
-    "leadersWithoutSuperEffects": {
-      "toggle": "Require leaders without super effects",
-      "support": {
-        "strict": "Captain and friend captain must not have any Super Type or Super Class effect text.",
-        "flexible": "Super leaders stay eligible unless this filter is enabled."
+        "flexible": "Default mode tries leaders without Super Type / Super Class effects first, then allows super leaders before relaxing classes or types."
       }
     },
     "favoritesOnly": {
@@ -351,6 +343,7 @@
     "completed": "Search completed.",
     "exactAttempt": "Exact attempt {{current}} / {{total}}",
     "fallbackAttempt": "Fallback attempt {{current}} / {{total}}",
+    "allowingLeadersWithSuperEffects": "Allowing leaders with super effects",
     "ignoringClasses": "Ignoring classes: {{classes}}",
     "ignoringLeaderSuperSpecialCriteria": "Ignoring leader Super Special criteria",
     "ignoringTypes": "Ignoring types: {{types}}",
@@ -362,6 +355,7 @@
   },
   "fallback": {
     "copy": "Your top-level filters stayed the same. The builder only relaxed the requirements below in order to return a team.",
+    "allowedLeadersWithSuperEffects": "Allowed leaders with super effects",
     "droppedClasses": "Dropped classes",
     "droppedTypes": "Dropped types",
     "ignoredLeaderSuperSpecialCriteria": "Ignored leader Super Special criteria",

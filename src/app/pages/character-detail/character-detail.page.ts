@@ -59,6 +59,11 @@ export class CharacterDetailPage implements OnInit {
     null,
   );
   public readonly favoriteIds;
+  public readonly heroImageUrl = computed(() => {
+    const currentCharacter = this.character();
+
+    return currentCharacter?.imageUrl ?? currentCharacter?.detailImageUrl ?? '';
+  });
   public readonly hasLocalOverride = computed(() => {
     const currentCharacter = this.character();
 

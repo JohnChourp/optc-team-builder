@@ -187,6 +187,217 @@ describe('OptcRepositoryService', () => {
     expect(detailRecord?.detailImageUrl).toBe('data:image/jpeg;base64,ZGV0YWls');
   });
 
+  it('keeps local override fields after a dataset refresh while retaining refreshed dataset assets', async () => {
+    const override = createOverride({
+      characterId: 4101,
+      name: 'Local Ace',
+      type: 'PSY',
+      classes: ['Shooter', 'Free Spirit'],
+      detail: {
+        characterId: 4101,
+        captainAbility: 'Local captain text.',
+        captainAbilityVariants: [],
+        captainNotes: null,
+        specialName: 'Local Flame Emperor',
+        specialText: 'Local special text.',
+        specialNotes: null,
+        superSpecialText: null,
+        superSpecialCriteriaText: null,
+        superSpecialNotes: null,
+        superSpecialCriteria: null,
+        partyConflictKeys: [],
+        characterTags: ['local-override'],
+        builderAbilities: [],
+        sailorAbilities: [],
+        sailorNotes: null,
+        limitBreak: [],
+        potentialAbilities: [],
+        supportData: [],
+        swapData: null,
+        vsSpecial: null,
+        superType: null,
+        superTandemData: null,
+        finalTapData: null,
+        rushSugoSpecialData: null,
+        superClass: null,
+        rumbleData: null,
+      },
+      images: {
+        thumbnailDataUrl: 'data:image/jpeg;base64,bG9jYWwtdGh1bWI=',
+        detailDataUrl: 'data:image/jpeg;base64,bG9jYWwtZGV0YWls',
+      },
+    });
+
+    const beforeImportService = createRepositoryService(
+      [
+        createCharacterRow({
+          id: 4101,
+          name: 'Imported Ace v1',
+          type: 'DEX',
+          primaryClass: 'Fighter',
+          secondaryClass: 'Slasher',
+          classes: ['Fighter', 'Slasher'],
+          assets: {
+            exactLocal: 'assets/exact-character-images/4101-v1.png',
+            thumbnailLocal: null,
+            thumbnailGlobal: 'assets/offline-packs/thumbnails-glo/4101-v1.png',
+            thumbnailJapan: null,
+            fullTransparent: null,
+          },
+        }),
+      ],
+      { overrides: [override] },
+    );
+    const afterImportService = createRepositoryService(
+      [
+        createCharacterRow({
+          id: 4101,
+          name: 'Imported Ace v2',
+          type: 'STR',
+          primaryClass: 'Driven',
+          secondaryClass: 'Powerhouse',
+          classes: ['Driven', 'Powerhouse'],
+          assets: {
+            exactLocal: 'assets/exact-character-images/4101-v2.png',
+            thumbnailLocal: null,
+            thumbnailGlobal: 'assets/offline-packs/thumbnails-glo/4101-v2.png',
+            thumbnailJapan: 'assets/offline-packs/thumbnails-jap/4101-v2.png',
+            fullTransparent: 'assets/offline-packs/full-transparent/4101-v2.png',
+          },
+        }),
+      ],
+      { overrides: [override] },
+    );
+
+    const beforeImportRecord = await beforeImportService.getCharacterById(4101);
+    const afterImportRecord = await afterImportService.getCharacterById(4101);
+
+    expect(beforeImportRecord).toMatchObject({
+      name: 'Local Ace',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Free Spirit',
+      imageUrl: 'data:image/jpeg;base64,bG9jYWwtdGh1bWI=',
+      detailImageUrl: 'data:image/jpeg;base64,bG9jYWwtZGV0YWls',
+      detail: {
+        specialName: 'Local Flame Emperor',
+        specialText: 'Local special text.',
+        characterTags: ['local-override'],
+      },
+      assets: {
+        exactLocal: 'assets/exact-character-images/4101-v1.png',
+        thumbnailGlobal: 'assets/offline-packs/thumbnails-glo/4101-v1.png',
+        fullTransparent: null,
+      },
+    });
+    expect(afterImportRecord).toMatchObject({
+      name: 'Local Ace',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Free Spirit',
+      imageUrl: 'data:image/jpeg;base64,bG9jYWwtdGh1bWI=',
+      detailImageUrl: 'data:image/jpeg;base64,bG9jYWwtZGV0YWls',
+      detail: {
+        captainAbility: 'Local captain text.',
+        specialName: 'Local Flame Emperor',
+        specialText: 'Local special text.',
+        characterTags: ['local-override'],
+      },
+      assets: {
+        exactLocal: 'assets/exact-character-images/4101-v2.png',
+        thumbnailGlobal: 'assets/offline-packs/thumbnails-glo/4101-v2.png',
+        thumbnailJapan: 'assets/offline-packs/thumbnails-jap/4101-v2.png',
+        fullTransparent: 'assets/offline-packs/full-transparent/4101-v2.png',
+      },
+    });
+  });
+
+  it('applies app-local overrides on top of manual/custom dataset records', async () => {
+    const service = createRepositoryService(
+      [
+        createCharacterRow({
+          id: 900000,
+          name: 'Manual Ace',
+          type: 'DEX',
+          primaryClass: 'Fighter',
+          secondaryClass: 'Free Spirit',
+          classes: ['Fighter', 'Free Spirit'],
+          assets: {
+            exactLocal: 'assets/exact-character-images/900000.png',
+            thumbnailLocal: 'assets/exact-character-images/900000-thumb.png',
+            thumbnailGlobal: null,
+            thumbnailJapan: null,
+            fullTransparent: null,
+          },
+        }),
+      ],
+      {
+        overrides: [
+          createOverride({
+            characterId: 900000,
+            name: 'Manual Ace Local Edit',
+            type: 'PSY',
+            classes: ['Shooter', 'Free Spirit'],
+            detail: {
+              characterId: 900000,
+              captainAbility: null,
+              captainAbilityVariants: [],
+              captainNotes: null,
+              specialName: 'Locally Edited Manual Special',
+              specialText: 'Local manual override text.',
+              specialNotes: null,
+              superSpecialText: null,
+              superSpecialCriteriaText: null,
+              superSpecialNotes: null,
+              superSpecialCriteria: null,
+              partyConflictKeys: [],
+              characterTags: ['manual-local-override'],
+              builderAbilities: [],
+              sailorAbilities: [],
+              sailorNotes: null,
+              limitBreak: [],
+              potentialAbilities: [],
+              supportData: [],
+              swapData: null,
+              vsSpecial: null,
+              superType: null,
+              superTandemData: null,
+              finalTapData: null,
+              rushSugoSpecialData: null,
+              superClass: null,
+              rumbleData: null,
+            },
+            images: {
+              thumbnailDataUrl: 'data:image/jpeg;base64,bWFudWFsLXRodW1i',
+              detailDataUrl: 'data:image/jpeg;base64,bWFudWFsLWRldGFpbA==',
+            },
+          }),
+        ],
+      },
+    );
+
+    const record = await service.getCharacterById(900000);
+
+    expect(record).toMatchObject({
+      id: 900000,
+      name: 'Manual Ace Local Edit',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Free Spirit',
+      imageUrl: 'data:image/jpeg;base64,bWFudWFsLXRodW1i',
+      detailImageUrl: 'data:image/jpeg;base64,bWFudWFsLWRldGFpbA==',
+      detail: {
+        specialName: 'Locally Edited Manual Special',
+        specialText: 'Local manual override text.',
+        characterTags: ['manual-local-override'],
+      },
+      assets: {
+        exactLocal: 'assets/exact-character-images/900000.png',
+        thumbnailLocal: 'assets/exact-character-images/900000-thumb.png',
+      },
+    });
+  });
+
   it('only keeps locked candidates beyond the main limit when a finite limit is applied', async () => {
     const rows = Array.from({ length: 1202 }, (_, index) =>
       createCharacterRow({

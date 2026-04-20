@@ -70,10 +70,8 @@ export class AutoTeamBuilderService {
   ): Promise<AutoBuildResult | null> {
     const favoritesOnly = constraints.favoritesOnly ?? false;
     const favoriteShipsOnly = constraints.favoriteShipsOnly ?? false;
-    const requireLeadersWithoutSuperEffects = constraints.requireLeadersWithoutSuperEffects ?? false;
-    const requireAllSlotsInLeaderSuperEffectScope = requireLeadersWithoutSuperEffects
-      ? false
-      : (constraints.requireAllSlotsInLeaderSuperEffectScope ?? false);
+    const requireAllSlotsInLeaderSuperEffectScope =
+      constraints.requireAllSlotsInLeaderSuperEffectScope ?? false;
     const normalizedTypes = normalizeSelectedTypes(selectedTypes);
     const normalizedClasses: string[] = [];
 
@@ -126,7 +124,6 @@ export class AutoTeamBuilderService {
       requireAllSelectedClassesPerCharacter:
         constraints.requireAllSelectedClassesPerCharacter ?? false,
       requireAllSlotsInLeaderSuperEffectScope,
-      requireLeadersWithoutSuperEffects,
       minimumLeaderSuperEffectMatchingSlots:
         requireAllSlotsInLeaderSuperEffectScope
           ? constraints.minimumLeaderSuperEffectMatchingSlots ?? AUTO_BUILD_TOTAL_SLOT_COUNT
@@ -210,6 +207,7 @@ export class AutoTeamBuilderService {
       completedFallbackAttempts: 0,
       currentDroppedTypes: [],
       currentDroppedClasses: [],
+      currentAllowedLeadersWithSuperEffects: false,
       currentIgnoredLeaderSuperSpecialCriteria: false,
       messageKey: "progress.loadingCandidates",
     });
@@ -343,6 +341,7 @@ export class AutoTeamBuilderService {
         completedFallbackAttempts: 0,
         currentDroppedTypes: [],
         currentDroppedClasses: [],
+        currentAllowedLeadersWithSuperEffects: false,
         currentIgnoredLeaderSuperSpecialCriteria: false,
         messageKey: "progress.preparingSearch",
       });
@@ -355,6 +354,7 @@ export class AutoTeamBuilderService {
         ...this.buildTimingSnapshot(timingState, totalAttempts, 0, workers.length),
         currentDroppedTypes: [],
         currentDroppedClasses: [],
+        currentAllowedLeadersWithSuperEffects: false,
         currentIgnoredLeaderSuperSpecialCriteria: false,
         messageKey: "progress.exactAttempt",
         messageParams: {
@@ -367,6 +367,7 @@ export class AutoTeamBuilderService {
         workers[0],
         requestedInput,
         requestedInput,
+        !requestedInput.requireAllSlotsInLeaderSuperEffectScope,
         executionOptions.signal,
       );
 
@@ -379,6 +380,7 @@ export class AutoTeamBuilderService {
           ...this.buildTimingSnapshot(timingState, totalAttempts, totalAttempts, workers.length),
           currentDroppedTypes: [],
           currentDroppedClasses: [],
+          currentAllowedLeadersWithSuperEffects: false,
           currentIgnoredLeaderSuperSpecialCriteria: false,
           messageKey: "progress.completed",
         });
@@ -394,6 +396,7 @@ export class AutoTeamBuilderService {
           ...this.buildTimingSnapshot(timingState, totalAttempts, 1, workers.length),
           currentDroppedTypes: [],
           currentDroppedClasses: [],
+          currentAllowedLeadersWithSuperEffects: false,
           currentIgnoredLeaderSuperSpecialCriteria: false,
           messageKey: "progress.completed",
         });
@@ -409,6 +412,7 @@ export class AutoTeamBuilderService {
           ...this.buildTimingSnapshot(timingState, totalAttempts, 1, workers.length),
           currentDroppedTypes: [],
           currentDroppedClasses: [],
+          currentAllowedLeadersWithSuperEffects: false,
           currentIgnoredLeaderSuperSpecialCriteria: false,
           messageKey: "progress.completed",
         });
@@ -582,6 +586,7 @@ export class AutoTeamBuilderService {
     worker: Worker,
     input: AutoBuildInput,
     requestedInput: AutoBuildInput,
+    requireLeadersWithoutSuperEffects: boolean,
     signal?: AbortSignal,
   ): Promise<AutoBuildResult | null> {
     const runId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -645,6 +650,7 @@ export class AutoTeamBuilderService {
         runId,
         input,
         requestedInput,
+        requireLeadersWithoutSuperEffects,
       } satisfies AutoTeamBuilderWorkerRequest);
     });
   }
@@ -688,6 +694,7 @@ export class AutoTeamBuilderService {
           ),
           currentDroppedTypes: [],
           currentDroppedClasses: [],
+          currentAllowedLeadersWithSuperEffects: false,
           currentIgnoredLeaderSuperSpecialCriteria: false,
           messageKey: "progress.completed",
         });
@@ -754,6 +761,7 @@ export class AutoTeamBuilderService {
           ),
           currentDroppedTypes: plannedAttempt.droppedTypes,
           currentDroppedClasses: plannedAttempt.droppedClasses,
+          currentAllowedLeadersWithSuperEffects: plannedAttempt.allowedLeadersWithSuperEffects,
           currentIgnoredLeaderSuperSpecialCriteria: Boolean(
             plannedAttempt.ignoredLeaderSuperSpecialCriteria,
           ),
@@ -769,6 +777,7 @@ export class AutoTeamBuilderService {
           worker,
           plannedAttempt.input,
           requestedInput,
+          plannedAttempt.requireLeadersWithoutSuperEffects,
           executionOptions.signal,
         )
           .then((result) => {

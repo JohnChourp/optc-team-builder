@@ -18,6 +18,7 @@ export interface AutoTeamBuilderWorkerRunAttemptRequest {
   runId: string;
   input: AutoBuildInput;
   requestedInput: AutoBuildInput;
+  requireLeadersWithoutSuperEffects: boolean;
 }
 
 export interface AutoTeamBuilderWorkerReadyResponse {

@@ -11,8 +11,7 @@
     "strictModes": {
       "typeCoverage": "κάλυψη types στην ομάδα",
       "perCharacterClasses": "match classes σε κάθε slot",
-      "leaderSuperEffectScope": "match στο leader super effect scope",
-      "noSuperLeaders": "χωρίς super leaders"
+      "leaderSuperEffectScope": "match στο leader super effect scope"
     },
     "strictMode": {
       "flexible": "με flexible fallback",
@@ -69,14 +68,7 @@
       "toggle": "Απαίτησε κάθε slot να ταιριάζει στο leader super effect scope",
       "support": {
         "strict": "Κάθε final slot πρέπει να ταιριάζει στο κοινό Super Type / Super Class effect scope του selected captain και friend captain.",
-        "flexible": "Τα leader super effects αγνοούνται στην επιλογή slots εκτός αν ενεργοποιήσεις αυτό το strict filter."
-      }
-    },
-    "leadersWithoutSuperEffects": {
-      "toggle": "Απαίτησε captains χωρίς super effects",
-      "support": {
-        "strict": "Ο captain και ο friend captain δεν πρέπει να έχουν καθόλου Super Type ή Super Class effect text.",
-        "flexible": "Οι super leaders παραμένουν διαθέσιμοι εκτός αν ενεργοποιήσεις αυτό το filter."
+        "flexible": "Στο default mode ο builder δοκιμάζει πρώτα leaders χωρίς Super Type / Super Class effects και μετά επιτρέπει super leaders πριν χαλαρώσει classes ή types."
       }
     },
     "favoritesOnly": {
@@ -351,6 +343,7 @@
     "completed": "Η αναζήτηση ολοκληρώθηκε.",
     "exactAttempt": "Exact attempt {{current}} / {{total}}",
     "fallbackAttempt": "Fallback attempt {{current}} / {{total}}",
+    "allowingLeadersWithSuperEffects": "Επιτρέπονται leaders με super effects",
     "ignoringClasses": "Ignoring classes: {{classes}}",
     "ignoringLeaderSuperSpecialCriteria": "Αγνόησε τα leader Super Special criteria",
     "ignoringTypes": "Ignoring types: {{types}}",
@@ -362,6 +355,7 @@
   },
   "fallback": {
     "copy": "Τα πάνω filters έμειναν όπως τα διάλεξες. Η ομάδα χτίστηκε αφού αγνοήθηκαν μόνο τα παρακάτω requirements.",
+    "allowedLeadersWithSuperEffects": "Επιτράπηκαν leaders με super effects",
     "droppedClasses": "Dropped classes",
     "droppedTypes": "Dropped types",
     "ignoredLeaderSuperSpecialCriteria": "Αγνόησε τα leader Super Special criteria",

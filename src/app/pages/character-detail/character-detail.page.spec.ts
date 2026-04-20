@@ -9,6 +9,7 @@ describe('CharacterDetailPage template', () => {
       'utf8',
     );
 
+    expect(template).toContain('[src]="heroImageUrl()"');
     expect(template).toContain("t(group.titleKey)");
     expect(template).toContain('hero-meta-grid');
     expect(template).toContain('hero-stats-grid');

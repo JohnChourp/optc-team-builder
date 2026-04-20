@@ -145,22 +145,19 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
-  it('passes the no-super-leaders toggle to the builder service', async () => {
+  it('does not pass the removed no-super-leaders filter to the builder service', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
     await page.ngOnInit();
     page.selectedClasses.set(['Fighter']);
     page.selectedTypes.set(['DEX']);
-    page.onRequireLeadersWithoutSuperEffectsToggle({
-      detail: { checked: true },
-    } as CustomEvent<{ checked: boolean }>);
     await page.buildTeam();
 
     expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
       ['Fighter'],
       ['DEX'],
-      expect.objectContaining({
-        requireLeadersWithoutSuperEffects: true,
+      expect.not.objectContaining({
+        requireLeadersWithoutSuperEffects: expect.anything(),
       }),
       expect.objectContaining({
         onProgress: expect.any(Function),
@@ -169,41 +166,14 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
-  it('disables no-super-leaders when leader super effect scope is enabled', async () => {
-    const { page } = await createPage();
-
-    await page.ngOnInit();
-    page.requireLeadersWithoutSuperEffects.set(true);
-
-    page.onRequireAllSlotsInLeaderSuperEffectScopeToggle({
-      detail: { checked: true },
-    } as CustomEvent<{ checked: boolean }>);
-
-    expect(page.requireAllSlotsInLeaderSuperEffectScope()).toBe(true);
-    expect(page.requireLeadersWithoutSuperEffects()).toBe(false);
-  });
-
-  it('disables leader super effect scope when no-super-leaders is enabled', async () => {
+  it('uses only leader super effect scope in the strict mode summary', async () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
     page.requireAllSlotsInLeaderSuperEffectScope.set(true);
 
-    page.onRequireLeadersWithoutSuperEffectsToggle({
-      detail: { checked: true },
-    } as CustomEvent<{ checked: boolean }>);
-
-    expect(page.requireLeadersWithoutSuperEffects()).toBe(true);
-    expect(page.requireAllSlotsInLeaderSuperEffectScope()).toBe(false);
-  });
-
-  it('includes no-super-leaders in the strict mode summary', async () => {
-    const { page } = await createPage();
-
-    await page.ngOnInit();
-    page.requireLeadersWithoutSuperEffects.set(true);
-
-    expect(page.strictModeLabel()).toContain('no super leaders');
+    expect(page.strictModeLabel()).toContain('leader super effect scope');
+    expect(page.strictModeLabel()).not.toContain('no super leaders');
   });
 
   it('creates a candidate pool box before build using the exact selected-box scope', async () => {
@@ -1340,7 +1310,6 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain('<app-enemy-mechanic-picker');
     expect(template).toContain('<app-ability-requirement-picker');
     expect(template).not.toContain('<app-ship-picker');
-    expect(template).toContain('leadersWithoutSuperEffectsToggleLabel()');
     expect(template).toContain('leaderSuperEffectScopeToggleLabel()');
     expect(template).toContain('favoriteShipsOnlyToggleLabel()');
     expect(template).toContain('[value]="manualShipSearchTerm()"');
@@ -1377,6 +1346,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain("t('exclude.actions.add')");
     expect(template).toContain('@if (current.shipSelection; as shipSelection)');
     expect(template).not.toContain('leaderSuperSpecialCriteriaToggleLabel()');
+    expect(template).toContain("t('fallback.allowedLeadersWithSuperEffects')");
     expect(template).toContain("t('fallback.ignoredLeaderSuperSpecialCriteria')");
   });
 
@@ -1494,6 +1464,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
           completedFallbackAttempts: 0,
           currentDroppedTypes: [],
           currentDroppedClasses: [],
+          currentAllowedLeadersWithSuperEffects: false,
+          currentIgnoredLeaderSuperSpecialCriteria: false,
           messageKey: 'progress.exactAttempt',
           messageParams: {
             current: 1,
@@ -1560,6 +1532,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       completedFallbackAttempts: 0,
       currentDroppedTypes: ['STR', 'INT'],
       currentDroppedClasses: [],
+      currentAllowedLeadersWithSuperEffects: false,
       currentIgnoredLeaderSuperSpecialCriteria: false,
       messageKey: 'progress.fallbackAttempt',
       messageParams: {
@@ -1612,6 +1585,13 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         tone: 'fallback',
       },
       {
+        key: 'leaderSuperEffects',
+        text: '',
+        displayText: '\u00A0',
+        visible: false,
+        tone: 'fallback',
+      },
+      {
         key: 'superSpecialCriteria',
         text: '',
         displayText: '\u00A0',
@@ -1636,6 +1616,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       completedFallbackAttempts: 2,
       currentDroppedTypes: [],
       currentDroppedClasses: ['Fighter'],
+      currentAllowedLeadersWithSuperEffects: false,
       currentIgnoredLeaderSuperSpecialCriteria: false,
       messageKey: 'progress.fallbackAttempt',
       messageParams: {
@@ -2072,6 +2053,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
             completedFallbackAttempts: 0,
             currentDroppedTypes: [],
             currentDroppedClasses: [],
+            currentAllowedLeadersWithSuperEffects: false,
+            currentIgnoredLeaderSuperSpecialCriteria: false,
             messageKey: 'progress.exactAttempt',
             messageParams: {
               current: 1,
@@ -2558,7 +2541,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 13,
+      schemaVersion: 14,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -2577,7 +2560,6 @@ describe('AutoTeamBuilderPage preset export state', () => {
         requireAllSelectedTypesInTeam: true,
         requireAllSelectedClassesPerCharacter: true,
         requireAllSlotsInLeaderSuperEffectScope: true,
-        requireLeadersWithoutSuperEffects: false,
         requireUniqueBaseCharacterNames: true,
         favoritesOnly: true,
         favoriteCount: 3,
@@ -2657,7 +2639,6 @@ describe('AutoTeamBuilder preset export helpers', () => {
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSlotsInLeaderSuperEffectScope: false,
-      requireLeadersWithoutSuperEffects: false,
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: true,
       favoriteCount: 4,
@@ -2962,7 +2943,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
     expect(result.warnings).toEqual([]);
   });
 
-  it('defaults no-super-leaders to false for schema 12 presets', () => {
+  it('defaults leader super effect scope to false for schema 12 presets without the legacy flag', () => {
     const payload = buildAutoTeamSelectionExportPayload({
       selectedTypes: ['DEX'],
       selectedClasses: ['Fighter'],
@@ -2988,13 +2969,8 @@ describe('AutoTeamBuilder preset import helpers', () => {
     const schema12Payload = {
       ...payload,
       schemaVersion: 12 as const,
-      filters: {
-        ...payload.filters,
-        requireLeadersWithoutSuperEffects: undefined,
-      },
+      filters: { ...payload.filters },
     };
-    delete (schema12Payload.filters as { requireLeadersWithoutSuperEffects?: boolean })
-      .requireLeadersWithoutSuperEffects;
 
     const parsedPayload = parseAutoTeamSelectionImportPayload(JSON.stringify(schema12Payload));
     const result = sanitizeAutoTeamSelectionImportPayload(parsedPayload, {
@@ -3004,11 +2980,10 @@ describe('AutoTeamBuilder preset import helpers', () => {
       availableLockedCharacters: [createCharacterRecord(101)],
     });
 
-    expect(result.state.requireLeadersWithoutSuperEffects).toBe(false);
     expect(result.state.requireAllSlotsInLeaderSuperEffectScope).toBe(false);
   });
 
-  it('normalizes conflicting imported leader filters in favor of no-super-leaders', () => {
+  it('maps the legacy no-super-leaders flag into leader super effect scope on import', () => {
     const payload = {
       schemaVersion: 13 as const,
       exportedAt: '2026-03-25T10:00:00.000Z',
@@ -3054,8 +3029,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       availableLockedCharacters: [createCharacterRecord(101)],
     });
 
-    expect(result.state.requireLeadersWithoutSuperEffects).toBe(true);
-    expect(result.state.requireAllSlotsInLeaderSuperEffectScope).toBe(false);
+    expect(result.state.requireAllSlotsInLeaderSuperEffectScope).toBe(true);
   });
 
   it('restores imported extra-drop requirements into manual drafts', async () => {
@@ -3396,6 +3370,8 @@ describe('AutoTeamBuilderPage preset import state', () => {
       completedFallbackAttempts: 0,
       currentDroppedTypes: [],
       currentDroppedClasses: [],
+      currentAllowedLeadersWithSuperEffects: false,
+      currentIgnoredLeaderSuperSpecialCriteria: false,
       messageKey: 'progress.exactAttempt',
       messageParams: {
         current: 1,
@@ -3924,7 +3900,6 @@ function createAutoBuildResult(
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
-    requireLeadersWithoutSuperEffects: false,
     minimumLeaderSuperEffectMatchingSlots: null,
     requireLeaderSuperSpecialCriteria: false,
     requireUniqueBaseCharacterNames: false,
@@ -3978,6 +3953,7 @@ function createAutoBuildResult(
       droppedTypes: [],
       droppedClasses: [],
       minimumLeaderSuperEffectMatchingSlots: null,
+      allowedLeadersWithSuperEffects: false,
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
     },
