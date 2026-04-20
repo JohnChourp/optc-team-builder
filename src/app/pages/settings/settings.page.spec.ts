@@ -76,6 +76,7 @@ import { downloadOptcbxFavoritesExport } from "../characters/characters-favorite
 import { downloadSavedEnemiesExport } from "../saved-enemies/saved-enemies-transfer.utils";
 import { downloadSavedTeamsExport } from "../saved-teams/saved-teams-transfer.utils";
 import { downloadFavoriteShipsExport } from "./favorite-ships-transfer.utils";
+import { UserDataTransferService } from "../../core/services/user-data-transfer.service";
 import { SettingsPage } from "./settings.page";
 
 vi.mock("@ionic/angular/standalone", () => ({
@@ -104,36 +105,40 @@ describe("SettingsPage", () => {
       "utf8",
     );
 
-    expect(template).toContain('t("performance.title")');
-    expect(template).toContain('t("performance.mode.label")');
-    expect(template).toContain('t("performance.manualCount.label")');
-    expect(template).toContain('t("analytics.title")');
-    expect(template).toContain('t("analytics.statusLabel")');
-    expect(template).toContain('t("analytics.actions.accept")');
-    expect(template).toContain('t("analytics.actions.reject")');
-    expect(template).toContain('t("analytics.links.privacy")');
-    expect(template).toContain('t("analytics.links.cookies")');
-    expect(template).toContain('t("sections.dataManagement")');
-    expect(template).toContain('t("management.allData.export")');
-    expect(template).toContain('t("management.allData.import")');
-    expect(template).toContain('t("management.favorites.export")');
-    expect(template).toContain('t("management.favorites.import")');
-    expect(template).toContain('t("management.favorites.deleteAll")');
-    expect(template).toContain('t("management.favoriteShips.export")');
-    expect(template).toContain('t("management.favoriteShips.import")');
-    expect(template).toContain('t("management.favoriteShips.deleteAll")');
-    expect(template).toContain('t("management.savedTeams.export")');
-    expect(template).toContain('t("management.savedTeams.import")');
-    expect(template).toContain('t("management.savedTeams.deleteAll")');
-    expect(template).toContain('t("management.characterBoxes.export")');
-    expect(template).toContain('t("management.characterBoxes.import")');
-    expect(template).toContain('t("management.characterBoxes.deleteAll")');
-    expect(template).toContain('t("management.savedEnemies.export")');
-    expect(template).toContain('t("management.savedEnemies.import")');
-    expect(template).toContain('t("management.savedEnemies.deleteAll")');
-    expect(template).toContain('t("sections.legal")');
-    expect(template).toContain('t("legal.actions.privacy")');
-    expect(template).toContain('t("legal.actions.cookies")');
+    expect(template).toContain("t('performance.title')");
+    expect(template).toContain("t('performance.mode.label')");
+    expect(template).toContain("t('performance.manualCount.label')");
+    expect(template).toContain("t('analytics.title')");
+    expect(template).toContain("t('analytics.statusLabel')");
+    expect(template).toContain("t('analytics.actions.accept')");
+    expect(template).toContain("t('analytics.actions.reject')");
+    expect(template).toContain("t('analytics.links.privacy')");
+    expect(template).toContain("t('analytics.links.cookies')");
+    expect(template).toContain("t('driveSync.title')");
+    expect(template).toContain("t('driveSync.actions.signIn')");
+    expect(template).toContain("t('driveSync.actions.syncNow')");
+    expect(template).toContain("t('driveSync.prompt.actions.restore')");
+    expect(template).toContain("t('sections.dataManagement')");
+    expect(template).toContain("t('management.allData.export')");
+    expect(template).toContain("t('management.allData.import')");
+    expect(template).toContain("t('management.favorites.export')");
+    expect(template).toContain("t('management.favorites.import')");
+    expect(template).toContain("t('management.favorites.deleteAll')");
+    expect(template).toContain("t('management.favoriteShips.export')");
+    expect(template).toContain("t('management.favoriteShips.import')");
+    expect(template).toContain("t('management.favoriteShips.deleteAll')");
+    expect(template).toContain("t('management.savedTeams.export')");
+    expect(template).toContain("t('management.savedTeams.import')");
+    expect(template).toContain("t('management.savedTeams.deleteAll')");
+    expect(template).toContain("t('management.characterBoxes.export')");
+    expect(template).toContain("t('management.characterBoxes.import')");
+    expect(template).toContain("t('management.characterBoxes.deleteAll')");
+    expect(template).toContain("t('management.savedEnemies.export')");
+    expect(template).toContain("t('management.savedEnemies.import')");
+    expect(template).toContain("t('management.savedEnemies.deleteAll')");
+    expect(template).toContain("t('sections.legal')");
+    expect(template).toContain("t('legal.actions.privacy')");
+    expect(template).toContain("t('legal.actions.cookies')");
     expect(template).toContain("[routerLink]=\"['/tabs/privacy']\"");
     expect(template).toContain("[routerLink]=\"['/tabs/cookies']\"");
   });
@@ -779,6 +784,34 @@ describe("SettingsPage", () => {
     });
   });
 
+  it("starts Google sign-in from the drive sync controls", async () => {
+    const { page, driveBackup, googleAccount } = createPage();
+
+    await page.signInWithGoogle();
+
+    expect(googleAccount.signIn).toHaveBeenCalledWith(false);
+    expect(driveBackup.handleSettingsEntered).toHaveBeenCalled();
+  });
+
+  it("runs a manual Drive sync on demand", async () => {
+    const { page, driveBackup } = createPage();
+
+    await page.syncDriveNow();
+
+    expect(driveBackup.flushPendingUploads).toHaveBeenCalledWith({
+      interactiveAuth: true,
+      reason: "manual-sync",
+    });
+  });
+
+  it("opens the Drive restore prompt flow from settings", async () => {
+    const { page, driveBackup } = createPage();
+
+    await page.showDriveRestorePrompt();
+
+    expect(driveBackup.prepareRestorePrompt).toHaveBeenCalledOnce();
+  });
+
   it("accepts analytics consent from settings", async () => {
     const { page, analyticsConsentService } = createPage();
 
@@ -800,6 +833,7 @@ function createPage() {
   const favoriteIds = signal([1001, 1002]);
   const favoriteShipIds = signal([9001, 9002]);
   const characterBoxes = signal([createBox("box-1", [1001, 1002]), createBox("box-2", [1002])]);
+  const characterOverrides = signal([]);
   const savedTeams = signal([
     createTeam("team-1", [1001, 1002, null, null, null, null]),
     createTeam("team-2", [1002, null, null, null, null, null]),
@@ -863,6 +897,18 @@ function createPage() {
       addedCount: 1,
       updatedCount: 0,
       enemies: [],
+    }),
+  };
+  const characterOverrideState = {
+    ready: vi.fn().mockResolvedValue(undefined),
+    overrides: characterOverrides,
+    clearAllOverrides: vi.fn().mockImplementation(async () => {
+      characterOverrides.set([]);
+    }),
+    mergeImportedOverrides: vi.fn().mockResolvedValue({
+      addedCount: 1,
+      updatedCount: 0,
+      overrides: [],
     }),
   };
   const repository = {
@@ -1108,15 +1154,91 @@ function createPage() {
       analyticsConsent.set("rejected");
     }),
   };
+  const googleAccountProfile = signal(null);
+  const googleAccountStatus = signal<
+    "initializing" | "reconnect-required" | "signed-in" | "signed-out" | "signing-in" | "unavailable"
+  >("signed-out");
+  const driveSyncMetadata = signal({
+    connectedAccountEmail: null,
+    connectedAccountId: null,
+    deviceId: "device-1",
+    lastDownloadedExportedAt: null,
+    lastSeenRemoteModifiedTime: null,
+    lastUploadedExportedAt: null,
+    pendingLocalChanges: false,
+  });
+  const driveRemoteBackup = signal(null);
+  const driveRestorePrompt = signal(null);
+  const driveSyncStatus = signal({
+    phase: "idle" as const,
+    detail: null,
+    updatedAt: null,
+  });
+  const userDataTransfer = new UserDataTransferService(
+    repository as never,
+    i18n as never,
+    userState as never,
+    characterOverrideState as never,
+    optcbxImport as never,
+  );
+  const googleAccount = {
+    isAvailable: signal(true),
+    isSignedIn: signal(false),
+    lastError: signal<string | null>(null),
+    profile: googleAccountProfile,
+    status: googleAccountStatus,
+    signIn: vi.fn().mockImplementation(async () => {
+      googleAccountProfile.set({
+        email: "captain@example.com",
+        familyName: "D.",
+        givenName: "Monkey",
+        id: "google-account-1",
+        imageUrl: null,
+        name: "Monkey D. Luffy",
+      });
+      googleAccountStatus.set("signed-in");
+      googleAccount.isSignedIn.set(true);
+    }),
+    signOut: vi.fn().mockImplementation(async () => {
+      googleAccountProfile.set(null);
+      googleAccountStatus.set("signed-out");
+      googleAccount.isSignedIn.set(false);
+    }),
+  };
+  const driveBackup = {
+    handleSettingsEntered: vi.fn().mockResolvedValue(undefined),
+    flushPendingUploads: vi.fn().mockResolvedValue(true),
+    metadata: driveSyncMetadata,
+    prepareRestorePrompt: vi.fn().mockResolvedValue(null),
+    remoteBackup: driveRemoteBackup,
+    resolveRestorePrompt: vi.fn().mockResolvedValue(null),
+    restorePrompt: driveRestorePrompt,
+    syncStatus: driveSyncStatus,
+  };
   const page = new SettingsPage(
     repository as never,
     i18n as never,
     userState as never,
+    characterOverrideState as never,
     analyticsConsentService as never,
     optcbxImport as never,
+    userDataTransfer as never,
+    googleAccount as never,
+    driveBackup as never,
   );
 
-  return { page, repository, userState, optcbxImport, i18n, analyticsConsentService };
+  return {
+    page,
+    repository,
+    userState,
+    characterOverrideState,
+    optcbxImport,
+    i18n,
+    analyticsConsentService,
+    userDataTransfer,
+    googleAccount,
+    driveBackup,
+  };
 }
 
 function buildFile(name: string, content: string): File {

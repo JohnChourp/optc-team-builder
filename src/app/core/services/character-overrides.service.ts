@@ -1,7 +1,8 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, Optional, computed, signal } from '@angular/core';
 import { Preferences } from '@capacitor/preferences';
 
 import { type LocalCharacterOverride } from '../models/optc.models';
+import { DriveSyncStateService } from './drive-sync-state.service';
 import {
   normalizeLocalCharacterOverride,
   type LocalCharacterOverrideInput,
@@ -19,7 +20,7 @@ export class CharacterOverridesService {
 
   private readonly hydratePromise: Promise<void>;
 
-  public constructor() {
+  public constructor(@Optional() private readonly driveSyncState?: DriveSyncStateService) {
     this.hydratePromise = this.hydrate();
   }
 
@@ -154,5 +155,6 @@ export class CharacterOverridesService {
       key: CHARACTER_OVERRIDES_KEY,
       value: JSON.stringify(overrides),
     });
+    await this.driveSyncState?.markLocalChange();
   }
 }

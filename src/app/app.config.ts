@@ -12,6 +12,8 @@ import { TranslocoHttpLoader } from "./core/i18n/transloco-loader";
 import { AnalyticsConsentService } from "./core/services/analytics-consent.service";
 import { AppI18nService } from "./core/services/app-i18n.service";
 import { CharacterCatalogCacheService } from "./core/services/character-catalog-cache.service";
+import { DriveBackupService } from "./core/services/drive-backup.service";
+import { GoogleAccountService } from "./core/services/google-account.service";
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -42,6 +44,8 @@ export const appConfig: ApplicationConfig = {
     }),
     provideAppInitializer(() => inject(AppI18nService).ready()),
     provideAppInitializer(() => inject(AnalyticsConsentService).ready()),
+    provideAppInitializer(() => inject(GoogleAccountService).ready()),
+    provideAppInitializer(() => inject(DriveBackupService).ready()),
     provideAppInitializer(() => inject(CharacterCatalogCacheService).kickoffPreload()),
   ],
 };

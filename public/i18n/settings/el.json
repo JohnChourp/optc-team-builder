@@ -27,6 +27,54 @@
       "cookies": "Άνοιγμα Πολιτικής Cookies"
     }
   },
+  "driveSync": {
+    "title": "Sync με Google Drive",
+    "copy": "Σύνδεσε Google account για να κρατάς ένα ορατό Drive backup που μπορείς να επαναφέρεις και σε άλλη συσκευή.",
+    "scope": "Το Google Drive sync χρησιμοποιεί το ίδιο all-data bundle με τα manual backups: favorites, favorite ships, character boxes, character overrides, saved teams και saved enemies.",
+    "localOnly": "Γλώσσα, analytics consent, recents, worker preference και Crew Forge image profiles μένουν τοπικά σε κάθε συσκευή.",
+    "account": {
+      "label": "Συνδεδεμένος λογαριασμός",
+      "signedOut": "Δεν έχει συνδεθεί Google account"
+    },
+    "actions": {
+      "reconnect": "Επανασύνδεση Google",
+      "restore": "Restore από Drive",
+      "signIn": "Sign in with Google",
+      "signOut": "Αποσύνδεση",
+      "syncNow": "Sync τώρα",
+      "unavailable": "Το Google sync δεν είναι διαθέσιμο"
+    },
+    "feedback": {
+      "title": "Κατάσταση Drive sync"
+    },
+    "prompt": {
+      "conflictCopy": "Βρέθηκε νεότερο Drive backup με ενημέρωση {{modifiedAt}}. Διάλεξε αν θα γίνει restore, merge με αυτή τη συσκευή ή αν θα κρατηθούν τα τοπικά δεδομένα και θα αντικαταστήσουν το Drive στο επόμενο sync.",
+      "conflictTitle": "Επίλυση σύγκρουσης Drive backup",
+      "restoreCopy": "Υπάρχει διαθέσιμο Drive backup από {{modifiedAt}}. Μπορείς να το επαναφέρεις σε αυτή τη συσκευή ή να κρατήσεις το τρέχον local state.",
+      "restoreTitle": "Restore backup από Drive",
+      "actions": {
+        "keepLocal": "Κράτα τοπικά",
+        "merge": "Merge",
+        "restore": "Restore cloud"
+      }
+    },
+    "status": {
+      "label": "Τρέχουσα κατάσταση",
+      "lastDownloaded": "Τελευταίο restore",
+      "lastUploaded": "Τελευταίο upload",
+      "never": "Ποτέ",
+      "remoteUpdated": "Τελευταία ενημέρωση Drive",
+      "phase": {
+        "checking": "Έλεγχος Drive",
+        "disabled": "Απενεργοποιημένο",
+        "downloading": "Γίνεται restore backup",
+        "error": "Το sync απέτυχε",
+        "idle": "Έτοιμο",
+        "needs-auth": "Απαιτείται sign in",
+        "uploading": "Γίνεται upload backup"
+      }
+    }
+  },
   "performance": {
     "title": "Απόδοση Auto Team Builder",
     "copy": "Ρύθμισε πόσους web workers θα χρησιμοποιεί το auto team builder όταν σκανάρει fallback attempts.",

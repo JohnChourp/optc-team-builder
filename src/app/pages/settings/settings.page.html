@@ -145,6 +145,128 @@
         <p>{{ t('analytics.helper') }}</p>
       </section>
 
+      <section class="glass-card drive-card">
+        <div class="section-head">
+          <div>
+            <h2>{{ t('driveSync.title') }}</h2>
+            <p>{{ t('driveSync.copy') }}</p>
+          </div>
+        </div>
+
+        <div class="drive-sync-account">
+          <strong>{{ t('driveSync.account.label') }}</strong>
+          <span>
+            @if (googleAccountProfile(); as account) {
+              {{ account.email ?? account.name ?? account.id }}
+            } @else {
+              {{ t('driveSync.account.signedOut') }}
+            }
+          </span>
+        </div>
+
+        <div class="drive-sync-summary">
+          <div>
+            <strong>{{ t('driveSync.status.label') }}</strong>
+            <span>{{ t('driveSync.status.phase.' + driveSyncStatus().phase) }}</span>
+          </div>
+          <div>
+            <strong>{{ t('driveSync.status.lastUploaded') }}</strong>
+            <span>{{ formatTimestamp(driveSyncMetadata().lastUploadedExportedAt) }}</span>
+          </div>
+          <div>
+            <strong>{{ t('driveSync.status.lastDownloaded') }}</strong>
+            <span>{{ formatTimestamp(driveSyncMetadata().lastDownloadedExportedAt) }}</span>
+          </div>
+          <div>
+            <strong>{{ t('driveSync.status.remoteUpdated') }}</strong>
+            <span>{{
+              formatTimestamp(driveRemoteBackup()?.modifiedTime ?? driveSyncMetadata().lastSeenRemoteModifiedTime)
+            }}</span>
+          </div>
+        </div>
+
+        <p>{{ t('driveSync.scope') }}</p>
+        <p>{{ t('driveSync.localOnly') }}</p>
+
+        <div class="transfer-actions">
+          @if (!googleAccountAvailable()) {
+            <ion-button fill="outline" color="medium" [disabled]="true">
+              {{ t('driveSync.actions.unavailable') }}
+            </ion-button>
+          } @else if (!googleAccountSignedIn()) {
+            <ion-button fill="outline" color="warning" (click)="signInWithGoogle()">
+              {{ t('driveSync.actions.signIn') }}
+            </ion-button>
+          } @else {
+            <ion-button fill="outline" color="light" (click)="syncDriveNow()">
+              {{ t('driveSync.actions.syncNow') }}
+            </ion-button>
+            <ion-button fill="outline" color="warning" (click)="showDriveRestorePrompt()">
+              {{ t('driveSync.actions.restore') }}
+            </ion-button>
+            <ion-button fill="outline" color="light" (click)="signOutGoogle()">
+              {{ t('driveSync.actions.signOut') }}
+            </ion-button>
+          }
+
+          @if (googleAccountStatus() === 'reconnect-required') {
+            <ion-button fill="outline" color="warning" (click)="reconnectGoogleDrive()">
+              {{ t('driveSync.actions.reconnect') }}
+            </ion-button>
+          }
+        </div>
+
+        @if (driveSyncStatus().detail || googleAccountLastError()) {
+          <div
+            class="transfer-feedback"
+            [class.transfer-feedback--error]="driveSyncStatus().phase === 'error' || googleAccountStatus() === 'reconnect-required'"
+            [class.transfer-feedback--warning]="driveSyncStatus().phase === 'needs-auth' || googleAccountStatus() === 'signed-out'"
+            [class.transfer-feedback--success]="driveSyncStatus().phase === 'idle'"
+          >
+            <strong>{{ t('driveSync.feedback.title') }}</strong>
+            @if (driveSyncStatus().detail) {
+              <span>{{ driveSyncStatus().detail }}</span>
+            }
+            @if (googleAccountLastError()) {
+              <span>{{ googleAccountLastError() }}</span>
+            }
+          </div>
+        }
+
+        @if (driveRestorePrompt(); as prompt) {
+          <div class="transfer-feedback transfer-feedback--warning">
+            <strong>{{
+              prompt.kind === 'restore'
+                ? t('driveSync.prompt.restoreTitle')
+                : t('driveSync.prompt.conflictTitle')
+            }}</strong>
+            <span>{{
+              prompt.kind === 'restore'
+                ? t('driveSync.prompt.restoreCopy', {
+                    modifiedAt: formatTimestamp(prompt.remote.modifiedTime),
+                  })
+                : t('driveSync.prompt.conflictCopy', {
+                    modifiedAt: formatTimestamp(prompt.remote.modifiedTime),
+                  })
+            }}</span>
+
+            <div class="transfer-actions">
+              <ion-button fill="outline" color="warning" (click)="resolveDriveRestorePrompt('restore')">
+                {{ t('driveSync.prompt.actions.restore') }}
+              </ion-button>
+              @if (prompt.kind === 'conflict') {
+                <ion-button fill="outline" color="light" (click)="resolveDriveRestorePrompt('merge')">
+                  {{ t('driveSync.prompt.actions.merge') }}
+                </ion-button>
+              }
+              <ion-button fill="outline" color="medium" (click)="resolveDriveRestorePrompt('keep-local')">
+                {{ t('driveSync.prompt.actions.keepLocal') }}
+              </ion-button>
+            </div>
+          </div>
+        }
+      </section>
+
       <section class="glass-card data-card">
         <div class="section-head">
           <div>

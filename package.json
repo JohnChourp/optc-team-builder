@@ -40,6 +40,7 @@
     "@capacitor/core": "^8.2.0",
     "@capacitor/ios": "^8.2.0",
     "@capacitor/preferences": "^8.0.1",
+    "@capgo/capacitor-social-login": "^8.3.15",
     "@ionic/angular": "^8.8.1",
     "@jsverse/transloco": "^8.2.1",
     "ionicons": "^8.0.13",

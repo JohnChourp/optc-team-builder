@@ -1,7 +1,7 @@
 {
   "eyebrow": "Νομική ενημέρωση",
   "title": "Πολιτική Απορρήτου",
-  "summary": "Η παρούσα ενημέρωση εξηγεί πώς η web έκδοση του optc-team-builder χειρίζεται τοπικά δεδομένα, προαιρετικές μετρήσεις Google Analytics και δημόσια σημεία επικοινωνίας για αιτήματα απορρήτου.",
+  "summary": "Η παρούσα ενημέρωση εξηγεί πώς το optc-team-builder χειρίζεται τοπικά δεδομένα συσκευής, προαιρετικό Google sign-in και Google Drive backups, προαιρετικές μετρήσεις Google Analytics και δημόσια σημεία επικοινωνίας για αιτήματα απορρήτου.",
   "sections": {
     "controller": {
       "title": "Υπεύθυνος επεξεργασίας και επικοινωνία",
@@ -19,8 +19,9 @@
       "items": {
         "identifiers": "Τεχνικά αναγνωριστικά όπως πληροφορίες δικτύου που σχετίζονται με IP, metadata browser/device και page URLs που χρησιμοποιούνται για να φορτώσει το site.",
         "analytics": "Συγκεντρωτικά usage events και analytics identifiers που δημιουργούνται από το Google Analytics αφού δοθεί consent.",
-        "preferences": "Local browser storage για γλώσσα, cookie consent, worker preferences, favorites, saved teams, saved enemies και άλλες τοπικές ρυθμίσεις της συσκευής.",
-        "content": "Δεδομένα που δημιουργείς ρητά μέσα στο app, όπως saved teams, saved enemies, favorites, notes και imported/exported τοπικά backups."
+        "preferences": "Local browser ή device storage για γλώσσα, cookie consent, worker preferences, favorites, saved teams, saved enemies, character boxes, character overrides και άλλες τοπικές ρυθμίσεις της συσκευής.",
+        "content": "Δεδομένα που δημιουργείς ρητά μέσα στο app, όπως saved teams, saved enemies, favorites, notes, manual character overrides και imported/exported backups.",
+        "googleDrive": "Αν επιλέξεις Google Drive sync, τα στοιχεία Google account που χρειάζονται για sign-in και το backup αρχείο της εφαρμογής που αποθηκεύεται στον Google Drive φάκελό σου."
       }
     },
     "purposes": {
@@ -29,6 +30,7 @@
       "items": {
         "service": "Για να φορτώνει, να αποδίδει και να λειτουργεί το web app και τα offline-first χαρακτηριστικά του.",
         "preferences": "Για να θυμάται ρυθμίσεις και να κρατά συνεπή την εμπειρία της εφαρμογής στη συσκευή σου μεταξύ επισκέψεων.",
+        "drive": "Για να μπορείς να κάνεις upload, update και restore του δικού σου app backup file μεταξύ συσκευών όταν συνδέεις το Google Drive.",
         "analytics": "Για να μετρά συγκεντρωτικά τη χρήση του site, να καταλαβαίνει ποιες οθόνες είναι χρήσιμες και να βελτιώνει την web εμπειρία αφού κάνεις opt in.",
         "security": "Για να διατηρεί τεχνική ακεραιότητα, να διαγιγνώσκει σφάλματα και να προστατεύει το site από κατάχρηση."
       }
@@ -46,7 +48,7 @@
       "copy": "Σχετικά δεδομένα μπορεί να γίνονται αντικείμενο χειρισμού από τις παρακάτω κατηγορίες αποδεκτών ή processors:",
       "items": {
         "hosting": "GitHub Pages και σχετική GitHub υποδομή που χρησιμοποιείται για τη δημοσίευση του static site.",
-        "google": "Google Analytics / Google όταν έχουν γίνει αποδεκτά τα προαιρετικά analytics cookies.",
+        "google": "Google όταν χρησιμοποιείς προαιρετικό Google sign-in, Google Drive backups ή προαιρετικά Google Analytics cookies.",
         "processors": "Τεχνικούς παρόχους που είναι αναγκαίοι για hosting, ασφάλεια και παράδοση του site."
       }
     },
@@ -59,7 +61,8 @@
       "copy": "Η διατήρηση εξαρτάται από το πού ζουν τα δεδομένα και πώς χρησιμοποιείς το app.",
       "items": {
         "consent": "Η τοπική επιλογή consent παραμένει στη συσκευή σου μέχρι να την αλλάξεις ή να καθαρίσεις το browser storage.",
-        "localData": "Favorites, saved teams, saved enemies, γλώσσα και παρόμοιες ρυθμίσεις παραμένουν τοπικά αποθηκευμένα μέχρι να τα διαγράψεις μέσα στο app ή να καθαρίσεις το browser storage.",
+        "localData": "Favorites, saved teams, saved enemies, character boxes, overrides, γλώσσα και παρόμοιες ρυθμίσεις παραμένουν τοπικά αποθηκευμένα μέχρι να τα διαγράψεις μέσα στο app ή να καθαρίσεις το browser ή app storage.",
+        "drive": "Αν ενεργοποιήσεις Google Drive sync, το τελευταίο app backup μένει στο Google Drive μέχρι να το αντικαταστήσεις με νεότερο backup, να το διαγράψεις από το Drive ή να αφαιρέσεις τη σχετική πρόσβαση του Google account.",
         "analytics": "Αν ενεργοποιηθεί, τα analytics δεδομένα διατηρούνται στο Google Analytics property σύμφωνα με τα retention settings του, ενώ οι διάρκειες cookies περιγράφονται στην Πολιτική Cookies."
       }
     },

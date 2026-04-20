@@ -21,8 +21,14 @@ import { type DatasetManifest } from '../../core/models/optc.models';
 import { AnalyticsConsentService } from '../../core/services/analytics-consent.service';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { CharacterOverridesService } from '../../core/services/character-overrides.service';
+import { DriveBackupService } from '../../core/services/drive-backup.service';
+import { GoogleAccountService } from '../../core/services/google-account.service';
 import { OptcbxImportService } from '../../core/services/optcbx-import.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import {
+  type DriveConflictResolution,
+  UserDataTransferService,
+} from '../../core/services/user-data-transfer.service';
 import {
   UserStateService,
   type AutoTeamBuilderWorkerMode,
@@ -139,6 +145,15 @@ export class SettingsPage implements OnInit {
   public readonly autoTeamBuilderAvailableWorkerCounts;
   public readonly analyticsConsent;
   public readonly analyticsConsentStatusKey;
+  public readonly driveRemoteBackup;
+  public readonly driveRestorePrompt;
+  public readonly driveSyncMetadata;
+  public readonly driveSyncStatus;
+  public readonly googleAccountAvailable;
+  public readonly googleAccountLastError;
+  public readonly googleAccountProfile;
+  public readonly googleAccountSignedIn;
+  public readonly googleAccountStatus;
 
   public readonly canExportFavorites = computed(() => this.favoriteIds().length > 0);
   public readonly canDeleteAllFavorites = computed(() => this.favoriteIds().length > 0);
@@ -185,6 +200,9 @@ export class SettingsPage implements OnInit {
     private readonly characterOverrideState: CharacterOverridesService,
     private readonly analyticsConsentService: AnalyticsConsentService,
     private readonly optcbxImport: OptcbxImportService,
+    private readonly userDataTransfer: UserDataTransferService,
+    private readonly googleAccount: GoogleAccountService,
+    private readonly driveBackup: DriveBackupService,
   ) {
     this.activeLanguage = this.i18n.activeLanguage;
     this.availableLanguages = this.i18n.availableLanguages;
@@ -206,6 +224,15 @@ export class SettingsPage implements OnInit {
     );
     this.analyticsConsent = this.analyticsConsentService.consent;
     this.analyticsConsentStatusKey = computed(() => `analytics.status.${this.analyticsConsent()}`);
+    this.driveRemoteBackup = this.driveBackup.remoteBackup;
+    this.driveRestorePrompt = this.driveBackup.restorePrompt;
+    this.driveSyncMetadata = this.driveBackup.metadata;
+    this.driveSyncStatus = this.driveBackup.syncStatus;
+    this.googleAccountAvailable = this.googleAccount.isAvailable;
+    this.googleAccountLastError = this.googleAccount.lastError;
+    this.googleAccountProfile = this.googleAccount.profile;
+    this.googleAccountSignedIn = this.googleAccount.isSignedIn;
+    this.googleAccountStatus = this.googleAccount.status;
   }
 
   public async ngOnInit(): Promise<void> {
@@ -214,7 +241,7 @@ export class SettingsPage implements OnInit {
   }
 
   public ionViewDidEnter(): void {
-    console.log('SettingsPage component');
+    void this.driveBackup.handleSettingsEntered();
   }
 
   public async onLanguageChange(
@@ -265,6 +292,38 @@ export class SettingsPage implements OnInit {
 
   public async rejectAnalyticsConsent(): Promise<void> {
     await this.analyticsConsentService.reject();
+  }
+
+  public async reconnectGoogleDrive(): Promise<void> {
+    await this.signInWithGoogle(true);
+  }
+
+  public async resolveDriveRestorePrompt(resolution: DriveConflictResolution): Promise<void> {
+    await this.driveBackup.resolveRestorePrompt(resolution);
+  }
+
+  public async signInWithGoogle(forcePrompt = false): Promise<void> {
+    try {
+      await this.googleAccount.signIn(forcePrompt);
+      await this.driveBackup.handleSettingsEntered();
+    } catch {
+      return;
+    }
+  }
+
+  public async signOutGoogle(): Promise<void> {
+    await this.googleAccount.signOut();
+  }
+
+  public async syncDriveNow(): Promise<void> {
+    await this.driveBackup.flushPendingUploads({
+      interactiveAuth: true,
+      reason: 'manual-sync',
+    });
+  }
+
+  public async showDriveRestorePrompt(): Promise<void> {
+    await this.driveBackup.prepareRestorePrompt();
   }
 
   public openFilePicker(input: HTMLInputElement): void {
@@ -345,21 +404,7 @@ export class SettingsPage implements OnInit {
   }
 
   public async exportAll(): Promise<void> {
-    const [favorites, favoriteShips] = await Promise.all([
-      this.buildFavoritesExportPayload(),
-      this.buildFavoriteShipsExportPayload(),
-    ]);
-
-    downloadAllDataExport(
-      buildAllDataTransferPayload({
-        favorites,
-        favoriteShips,
-        characterBoxes: this.buildCharacterBoxesExportPayload(),
-        characterOverrides: this.buildCharacterOverridesExportPayload(),
-        savedTeams: buildSavedTeamsTransferPayload(this.savedTeams()),
-        savedEnemies: buildSavedEnemiesTransferPayload(this.savedEnemies()),
-      }),
-    );
+    downloadAllDataExport(await this.userDataTransfer.buildAllDataPayload());
   }
 
   public async exportFavorites(): Promise<void> {
@@ -648,7 +693,16 @@ export class SettingsPage implements OnInit {
       await this.collectAllDataSectionResult({
         failedSections,
         label: this.resolveAllDataSectionLabel('favorites'),
-        run: () => this.importFavoritesContent({ parsedPayload: payload.favorites as unknown }),
+        run: async () => {
+          const stats = await this.userDataTransfer.importFavoritesPayload(payload.favorites as unknown);
+
+          return this.buildFavoritesImportFeedback(stats.duplicatesRemoved, {
+            addedCount: stats.addedCount,
+            alreadyFavoritedCount: stats.alreadyFavoritedCount,
+            matchedIds: Array.from({ length: stats.matchedCount }, (_, index) => index),
+            unmatchedIds: Array.from({ length: stats.unknownCharacterCount }, (_, index) => index),
+          });
+        },
         successfulSections,
         resolveError: (error) => this.resolveFavoritesImportError(error),
       });
@@ -658,10 +712,12 @@ export class SettingsPage implements OnInit {
       await this.collectAllDataSectionResult({
         failedSections,
         label: this.resolveAllDataSectionLabel('favoriteShips'),
-        run: () =>
-          this.importFavoriteShipsContent({
+        run: async () =>
+          this.buildFavoriteShipsImportFeedback({
+            ...(await this.userDataTransfer.importFavoriteShipsPayload(
+              payload.favoriteShips as unknown,
+            )),
             fileName,
-            parsedPayload: payload.favoriteShips as unknown,
           }),
         successfulSections,
         resolveError: (error) => this.resolveFavoriteShipsImportError(error),
@@ -672,10 +728,10 @@ export class SettingsPage implements OnInit {
       await this.collectAllDataSectionResult({
         failedSections,
         label: this.resolveAllDataSectionLabel('savedTeams'),
-        run: () =>
-          this.importSavedTeamsContent({
+        run: async () =>
+          this.buildSavedTeamsImportFeedback({
+            ...(await this.userDataTransfer.importSavedTeamsPayload(payload.savedTeams as unknown)),
             fileName,
-            parsedPayload: payload.savedTeams as unknown,
           }),
         successfulSections,
         resolveError: (error) => this.resolveSavedTeamsImportError(error),
@@ -686,10 +742,12 @@ export class SettingsPage implements OnInit {
       await this.collectAllDataSectionResult({
         failedSections,
         label: this.resolveAllDataSectionLabel('characterBoxes'),
-        run: () =>
-          this.importCharacterBoxesContent({
+        run: async () =>
+          this.buildCharacterBoxesImportFeedback({
+            ...(await this.userDataTransfer.importCharacterBoxesPayload(
+              payload.characterBoxes as unknown,
+            )),
             fileName,
-            parsedPayload: payload.characterBoxes as unknown,
           }),
         successfulSections,
         resolveError: (error) => this.resolveCharacterBoxesImportError(error),
@@ -700,10 +758,12 @@ export class SettingsPage implements OnInit {
       await this.collectAllDataSectionResult({
         failedSections,
         label: this.resolveAllDataSectionLabel('characterOverrides'),
-        run: () =>
-          this.importCharacterOverridesContent({
+        run: async () =>
+          this.buildCharacterOverridesImportFeedback({
+            ...(await this.userDataTransfer.importCharacterOverridesPayload(
+              payload.characterOverrides as unknown,
+            )),
             fileName,
-            parsedPayload: payload.characterOverrides as unknown,
           }),
         successfulSections,
         resolveError: (error) => this.resolveCharacterOverridesImportError(error),
@@ -714,10 +774,12 @@ export class SettingsPage implements OnInit {
       await this.collectAllDataSectionResult({
         failedSections,
         label: this.resolveAllDataSectionLabel('savedEnemies'),
-        run: () =>
-          this.importSavedEnemiesContent({
+        run: async () =>
+          this.buildSavedEnemiesImportFeedback({
+            ...(await this.userDataTransfer.importSavedEnemiesPayload(
+              payload.savedEnemies as unknown,
+            )),
             fileName,
-            parsedPayload: payload.savedEnemies as unknown,
           }),
         successfulSections,
         resolveError: (error) => this.resolveSavedEnemiesImportError(error),
@@ -966,32 +1028,12 @@ export class SettingsPage implements OnInit {
     const payload =
       input.parsedPayload === undefined
         ? parseFavoriteShipsImportPayload(input.rawContent ?? '')
-        : parseFavoriteShipsImportPayloadValue(input.parsedPayload);
-    const sanitizedImport = sanitizeFavoriteShipsImportPayload(payload);
-    const ships = await this.repository.getShips();
-    const availableShips = filterAvailableFavoriteShips(
-      sanitizedImport.ships,
-      new Set(ships.map((ship) => ship.id)),
-    );
-    const currentFavoriteShipIds = this.userState.favoriteShipIds();
-    const currentFavoriteShipIdSet = new Set(currentFavoriteShipIds);
-    const importedShipIds = availableShips.ships.map((ship) => ship.id);
-    const addedCount = importedShipIds.filter(
-      (shipId) => !currentFavoriteShipIdSet.has(shipId),
-    ).length;
-
-    await this.userState.setFavoriteShipIds(
-      this.mergeFavoriteShipIds(importedShipIds, currentFavoriteShipIds),
-    );
+        : input.parsedPayload;
+    const stats = await this.userDataTransfer.importFavoriteShipsPayload(payload);
 
     return this.buildFavoriteShipsImportFeedback({
-      addedCount,
-      alreadyFavoritedCount: importedShipIds.length - addedCount,
-      duplicateIdCount: sanitizedImport.duplicateIdCount,
+      ...stats,
       fileName: input.fileName,
-      invalidShipCount: sanitizedImport.invalidShipCount,
-      matchedShipCount: importedShipIds.length,
-      unknownShipCount: availableShips.unknownShipCount,
     });
   }
 
@@ -1127,31 +1169,12 @@ export class SettingsPage implements OnInit {
     const payload =
       input.parsedPayload === undefined
         ? parseCharacterBoxesImportPayload(input.rawContent ?? '')
-        : parseCharacterBoxesImportPayloadValue(input.parsedPayload);
-    const sanitizedImport = sanitizeCharacterBoxesImportPayload(payload, {
-      untitledBoxName: this.i18n.translate('common.defaults.untitledBox'),
-    });
-    const candidateCharacterIds = [
-      ...new Set(sanitizedImport.boxes.flatMap((box) => box.characterIds)),
-    ];
-    const availableCharacters = candidateCharacterIds.length
-      ? await this.repository.getCharactersByIds(candidateCharacterIds)
-      : [];
-    const characterSanitizeResult = clearUnavailableCharacterBoxCharacterIds(
-      sanitizedImport.boxes,
-      new Set(availableCharacters.map((character) => character.id)),
-    );
-    const mergeResult = await this.userState.mergeImportedCharacterBoxes(
-      characterSanitizeResult.boxes,
-    );
+        : input.parsedPayload;
+    const stats = await this.userDataTransfer.importCharacterBoxesPayload(payload);
 
     return this.buildCharacterBoxesImportFeedback({
-      addedCount: mergeResult.addedCount,
-      duplicateIdCount: sanitizedImport.duplicateIdCount,
+      ...stats,
       fileName: input.fileName,
-      invalidBoxCount: sanitizedImport.invalidBoxCount,
-      unknownCharacterIdCount: characterSanitizeResult.unknownCharacterIdCount,
-      updatedCount: mergeResult.updatedCount,
     });
   }
 
@@ -1281,25 +1304,12 @@ export class SettingsPage implements OnInit {
     const payload =
       input.parsedPayload === undefined
         ? parseCharacterOverridesImportPayload(input.rawContent ?? '')
-        : parseCharacterOverridesImportPayloadValue(input.parsedPayload);
-    const sanitizedImport = sanitizeCharacterOverridesImportPayload(payload);
-    const candidateCharacterIds = sanitizedImport.overrides.map((override) => override.characterId);
-    const availableCharacters = candidateCharacterIds.length
-      ? await this.repository.getCharactersByIds(candidateCharacterIds)
-      : [];
-    const availableCharacterIdSet = new Set(availableCharacters.map((character) => character.id));
-    const validOverrides = sanitizedImport.overrides.filter((override) =>
-      availableCharacterIdSet.has(override.characterId),
-    );
-    const mergeResult = await this.characterOverrideState.mergeImportedOverrides(validOverrides);
+        : input.parsedPayload;
+    const stats = await this.userDataTransfer.importCharacterOverridesPayload(payload);
 
     return this.buildCharacterOverridesImportFeedback({
-      addedCount: mergeResult.addedCount,
-      duplicateCharacterIdCount: sanitizedImport.duplicateCharacterIdCount,
+      ...stats,
       fileName: input.fileName,
-      invalidOverrideCount: sanitizedImport.invalidOverrideCount,
-      unknownCharacterIdCount: sanitizedImport.overrides.length - validOverrides.length,
-      updatedCount: mergeResult.updatedCount,
     });
   }
 
@@ -1450,33 +1460,12 @@ export class SettingsPage implements OnInit {
     const payload =
       input.parsedPayload === undefined
         ? parseSavedTeamsImportPayload(input.rawContent ?? '')
-        : parseSavedTeamsImportPayloadValue(input.parsedPayload);
-    const sanitizedImport = sanitizeSavedTeamsImportPayload(payload, {
-      untitledTeamName: this.i18n.translate('common.defaults.untitledCrew'),
-    });
-    const candidateCharacterIds = [
-      ...new Set(
-        sanitizedImport.teams.flatMap((team) =>
-          team.slots.filter((slotId): slotId is number => typeof slotId === 'number'),
-        ),
-      ),
-    ];
-    const availableCharacters = candidateCharacterIds.length
-      ? await this.repository.getCharactersByIds(candidateCharacterIds)
-      : [];
-    const slotSanitizeResult = clearUnavailableSavedTeamSlots(
-      sanitizedImport.teams,
-      new Set(availableCharacters.map((character) => character.id)),
-    );
-    const mergeResult = await this.userState.mergeImportedTeams(slotSanitizeResult.teams);
+        : input.parsedPayload;
+    const stats = await this.userDataTransfer.importSavedTeamsPayload(payload);
 
     return this.buildSavedTeamsImportFeedback({
-      addedCount: mergeResult.addedCount,
-      duplicateIdCount: sanitizedImport.duplicateIdCount,
+      ...stats,
       fileName: input.fileName,
-      invalidTeamCount: sanitizedImport.invalidTeamCount,
-      unknownSlotCount: slotSanitizeResult.unknownSlotCount,
-      updatedCount: mergeResult.updatedCount,
     });
   }
 
@@ -1586,18 +1575,12 @@ export class SettingsPage implements OnInit {
     const payload =
       input.parsedPayload === undefined
         ? parseSavedEnemiesImportPayload(input.rawContent ?? '')
-        : parseSavedEnemiesImportPayloadValue(input.parsedPayload);
-    const sanitizedImport = sanitizeSavedEnemiesImportPayload(payload, {
-      untitledEnemyName: this.i18n.translate('common.defaults.untitledEnemy'),
-    });
-    const mergeResult = await this.userState.mergeImportedEnemies(sanitizedImport.enemies);
+        : input.parsedPayload;
+    const stats = await this.userDataTransfer.importSavedEnemiesPayload(payload);
 
     return this.buildSavedEnemiesImportFeedback({
-      addedCount: mergeResult.addedCount,
-      duplicateIdCount: sanitizedImport.duplicateIdCount,
+      ...stats,
       fileName: input.fileName,
-      invalidEnemyCount: sanitizedImport.invalidEnemyCount,
-      updatedCount: mergeResult.updatedCount,
     });
   }
 
@@ -1671,6 +1654,20 @@ export class SettingsPage implements OnInit {
     }
 
     return this.i18n.translate('bulkImport.errors.invalidPayload', undefined, 'saved-enemies');
+  }
+
+  public formatTimestamp(value: string | null | undefined): string {
+    if (!value) {
+      return this.i18n.translate('driveSync.status.never', undefined, 'settings');
+    }
+
+    const parsedValue = new Date(value);
+
+    if (Number.isNaN(parsedValue.getTime())) {
+      return value;
+    }
+
+    return parsedValue.toLocaleString();
   }
 
   private confirmAction(message: string): boolean {

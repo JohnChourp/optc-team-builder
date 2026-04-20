@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, Optional, signal } from '@angular/core';
 import { Preferences } from '@capacitor/preferences';
 
 import {
@@ -14,6 +14,7 @@ import {
 } from '../models/optc.models';
 import { type AutoBuildAbilityRequirement } from '../models/auto-team-builder-ability.models';
 import { AppI18nService } from './app-i18n.service';
+import { DriveSyncStateService } from './drive-sync-state.service';
 import { normalizeEnemyMechanicRequirements } from './enemy-mechanic-draft.utils';
 
 const FAVORITES_KEY = 'favoriteCharacterIds';
@@ -61,7 +62,10 @@ export class UserStateService {
 
   private readonly hydratePromise: Promise<void>;
 
-  public constructor(private readonly i18n: AppI18nService) {
+  public constructor(
+    private readonly i18n: AppI18nService,
+    @Optional() private readonly driveSyncState?: DriveSyncStateService,
+  ) {
     this.hydratePromise = this.hydrate();
   }
 
@@ -724,6 +728,24 @@ export class UserStateService {
 
   private async persistJson(key: string, value: unknown): Promise<void> {
     await Preferences.set({ key, value: JSON.stringify(value) });
+    await this.markSyncScopedLocalChange(key);
+  }
+
+  private async markSyncScopedLocalChange(key: string): Promise<void> {
+    if (
+      !this.driveSyncState ||
+      ![
+        FAVORITES_KEY,
+        FAVORITE_SHIPS_KEY,
+        CHARACTER_BOXES_KEY,
+        SAVED_TEAMS_KEY,
+        SAVED_ENEMIES_KEY,
+      ].includes(key)
+    ) {
+      return;
+    }
+
+    await this.driveSyncState.markLocalChange();
   }
 
   private async replaceSavedTeams(teams: SavedTeam[]): Promise<void> {

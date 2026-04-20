@@ -27,6 +27,54 @@
       "cookies": "Open Cookie Policy"
     }
   },
+  "driveSync": {
+    "title": "Google Drive sync",
+    "copy": "Connect a Google account to keep one visible Drive backup that you can restore on another device.",
+    "scope": "Google Drive sync uses the same all-data bundle as manual backups: favorites, favorite ships, character boxes, character overrides, saved teams, and saved enemies.",
+    "localOnly": "Language, analytics consent, recents, worker preference, and Crew Forge image profiles stay local on each device.",
+    "account": {
+      "label": "Connected account",
+      "signedOut": "No Google account connected"
+    },
+    "actions": {
+      "reconnect": "Reconnect Google",
+      "restore": "Restore from Drive",
+      "signIn": "Sign in with Google",
+      "signOut": "Sign out",
+      "syncNow": "Sync now",
+      "unavailable": "Google sync unavailable"
+    },
+    "feedback": {
+      "title": "Drive sync status"
+    },
+    "prompt": {
+      "conflictCopy": "A newer Drive backup was found, updated {{modifiedAt}}. Choose whether to restore it, merge it into this device, or keep the local data and overwrite Drive on the next sync.",
+      "conflictTitle": "Resolve Drive backup conflict",
+      "restoreCopy": "A Drive backup is available from {{modifiedAt}}. Restore it to this device or keep the current local state.",
+      "restoreTitle": "Restore backup from Drive",
+      "actions": {
+        "keepLocal": "Keep local",
+        "merge": "Merge",
+        "restore": "Restore cloud"
+      }
+    },
+    "status": {
+      "label": "Current state",
+      "lastDownloaded": "Last restore",
+      "lastUploaded": "Last upload",
+      "never": "Never",
+      "remoteUpdated": "Latest Drive update",
+      "phase": {
+        "checking": "Checking Drive",
+        "disabled": "Disabled",
+        "downloading": "Restoring backup",
+        "error": "Sync failed",
+        "idle": "Ready",
+        "needs-auth": "Sign in required",
+        "uploading": "Uploading backup"
+      }
+    }
+  },
   "performance": {
     "title": "Auto Team Builder performance",
     "copy": "Control how many web workers the auto team builder uses while scanning fallback attempts.",

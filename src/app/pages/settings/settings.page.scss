@@ -15,6 +15,7 @@
 
 .command-card,
 .analytics-card,
+.drive-card,
 .performance-card {
   display: grid;
   gap: 10px;
@@ -70,6 +71,32 @@
   padding: 14px;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.03);
+}
+
+.drive-sync-account,
+.drive-sync-summary {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.drive-sync-account strong,
+.drive-sync-summary strong {
+  color: #ffffff;
+}
+
+.drive-sync-account span,
+.drive-sync-summary span {
+  color: rgba(248, 251, 255, 0.72);
+}
+
+.drive-sync-summary > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
 }
 
 .command-card code {
