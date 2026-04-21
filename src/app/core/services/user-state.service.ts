@@ -1,6 +1,10 @@
-import { Injectable, Optional, signal } from '@angular/core';
+import { Injectable, Optional, computed, signal } from '@angular/core';
 import { Preferences } from '@capacitor/preferences';
 
+import {
+  BUILT_IN_CREW_FORGE_IMAGE_PROFILES,
+  BUILT_IN_CREW_FORGE_IMAGE_PROFILE_IDS,
+} from '../data/crew-forge-built-in-profiles';
 import {
   CREW_FORGE_IMAGE_SLOT_BLUEPRINTS,
   type CharacterBox,
@@ -54,13 +58,17 @@ export class UserStateService {
   public readonly characterBoxes = signal<CharacterBox[]>([]);
   public readonly savedTeams = signal<SavedTeam[]>([]);
   public readonly savedEnemies = signal<SavedEnemy[]>([]);
-  public readonly crewForgeImageProfiles = signal<CrewForgeImageProfile[]>([]);
+  public readonly crewForgeImageProfiles = computed<CrewForgeImageProfile[]>(() => [
+    ...BUILT_IN_CREW_FORGE_IMAGE_PROFILES,
+    ...this.userCrewForgeImageProfiles(),
+  ]);
   public readonly crewForgeLastImageProfileId = signal<string | null>(null);
   public readonly autoTeamBuilderWorkerPreference = signal<AutoTeamBuilderWorkerPreference>(
     AUTO_TEAM_BUILDER_DEFAULT_WORKER_PREFERENCE,
   );
 
   private readonly hydratePromise: Promise<void>;
+  private readonly userCrewForgeImageProfiles = signal<CrewForgeImageProfile[]>([]);
 
   public constructor(
     private readonly i18n: AppI18nService,
@@ -264,16 +272,21 @@ export class UserStateService {
   }
 
   public async saveCrewForgeImageProfile(
-    input: Omit<CrewForgeImageProfile, 'id' | 'createdAt' | 'updatedAt'> &
-      Partial<Pick<CrewForgeImageProfile, 'id' | 'createdAt' | 'updatedAt'>>,
+    input: Omit<CrewForgeImageProfile, 'id' | 'source' | 'createdAt' | 'updatedAt'> &
+      Partial<Pick<CrewForgeImageProfile, 'id' | 'source' | 'createdAt' | 'updatedAt'>>,
   ): Promise<CrewForgeImageProfile | null> {
     await this.ready();
 
-    const existing = this.crewForgeImageProfiles().find((profile) => profile.id === input.id);
+    const requestedId =
+      typeof input.id === 'string' && BUILT_IN_CREW_FORGE_IMAGE_PROFILE_IDS.has(input.id)
+        ? undefined
+        : input.id;
+    const existing = this.userCrewForgeImageProfiles().find((profile) => profile.id === requestedId);
     const normalizedProfile = this.normalizeCrewForgeImageProfile(
       {
         ...input,
-        id: input.id ?? this.createCrewForgeImageProfileId(),
+        id: requestedId ?? this.createCrewForgeImageProfileId(),
+        source: 'user',
       },
       existing,
     );
@@ -283,10 +296,10 @@ export class UserStateService {
     }
 
     const next = existing
-      ? this.crewForgeImageProfiles().map((profile) =>
+      ? this.userCrewForgeImageProfiles().map((profile) =>
           profile.id === normalizedProfile.id ? normalizedProfile : profile,
         )
-      : [normalizedProfile, ...this.crewForgeImageProfiles()];
+      : [normalizedProfile, ...this.userCrewForgeImageProfiles()];
 
     await this.replaceCrewForgeImageProfiles(next);
     this.crewForgeLastImageProfileId.set(normalizedProfile.id);
@@ -299,20 +312,20 @@ export class UserStateService {
     await this.ready();
     const normalizedProfileId = this.normalizeEntityId(profileId);
 
-    if (!normalizedProfileId) {
+    if (!normalizedProfileId || BUILT_IN_CREW_FORGE_IMAGE_PROFILE_IDS.has(normalizedProfileId)) {
       return;
     }
 
-    const next = this.crewForgeImageProfiles().filter((profile) => profile.id !== normalizedProfileId);
+    const next = this.userCrewForgeImageProfiles().filter((profile) => profile.id !== normalizedProfileId);
 
-    if (next.length === this.crewForgeImageProfiles().length) {
+    if (next.length === this.userCrewForgeImageProfiles().length) {
       return;
     }
 
     await this.replaceCrewForgeImageProfiles(next);
 
     if (this.crewForgeLastImageProfileId() === normalizedProfileId) {
-      const nextPreferredId = next[0]?.id ?? null;
+      const nextPreferredId = this.crewForgeImageProfiles().find((profile) => profile.id !== normalizedProfileId)?.id ?? null;
       this.crewForgeLastImageProfileId.set(nextPreferredId);
       await this.persistJson(CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY, nextPreferredId);
     }
@@ -332,7 +345,7 @@ export class UserStateService {
     input: Omit<CrewForgeImageExample, 'id' | 'createdAt' | 'updatedAt'> & { id?: string },
   ): Promise<CrewForgeImageProfile | null> {
     await this.ready();
-    const profile = this.getCrewForgeImageProfileById(profileId);
+    const profile = await this.resolveCrewForgeImageProfileForMutation(profileId);
 
     if (!profile) {
       return null;
@@ -367,7 +380,7 @@ export class UserStateService {
     input: Omit<CrewForgeImageExemplar, 'id' | 'createdAt' | 'updatedAt'> & { id?: string },
   ): Promise<CrewForgeImageProfile | null> {
     await this.ready();
-    const profile = this.getCrewForgeImageProfileById(profileId);
+    const profile = await this.resolveCrewForgeImageProfileForMutation(profileId);
 
     if (!profile) {
       return null;
@@ -399,6 +412,30 @@ export class UserStateService {
     };
 
     return this.saveCrewForgeImageProfile(nextProfile);
+  }
+
+  private async resolveCrewForgeImageProfileForMutation(
+    profileId: string,
+  ): Promise<CrewForgeImageProfile | null> {
+    const profile = this.getCrewForgeImageProfileById(profileId);
+
+    if (!profile) {
+      return null;
+    }
+
+    if (profile.source === 'user') {
+      return profile;
+    }
+
+    return this.saveCrewForgeImageProfile({
+      name: this.createCrewForgeCopiedProfileName(profile.name),
+      imageWidth: profile.imageWidth,
+      imageHeight: profile.imageHeight,
+      slotDefinitions: profile.slotDefinitions.map((slot) => ({ ...slot })),
+      preprocess: { ...profile.preprocess },
+      examples: profile.examples.map((example) => ({ ...example })),
+      exemplars: profile.exemplars.map((exemplar) => ({ ...exemplar })),
+    });
   }
 
   public resolveAutoTeamBuilderWorkerPreference(): ResolvedAutoTeamBuilderWorkerPreference {
@@ -699,13 +736,22 @@ export class UserStateService {
     );
     this.savedTeams.set(teams.map((team) => this.normalizeSavedTeam(team)));
     this.savedEnemies.set(enemies.map((enemy) => this.normalizeSavedEnemy(enemy)));
-    this.crewForgeImageProfiles.set(
+    this.userCrewForgeImageProfiles.set(
       crewForgeImageProfiles
         .map((profile) => this.normalizeCrewForgeImageProfile(profile))
-        .filter((profile): profile is CrewForgeImageProfile => Boolean(profile)),
+        .filter((profile): profile is CrewForgeImageProfile => {
+          if (!profile) {
+            return false;
+          }
+
+          return (
+            profile.source === 'user' &&
+            !BUILT_IN_CREW_FORGE_IMAGE_PROFILE_IDS.has(profile.id)
+          );
+        }),
     );
     this.crewForgeLastImageProfileId.set(
-      this.normalizeEntityId(crewForgeLastImageProfileId ?? undefined),
+      this.getCrewForgeImageProfileById(crewForgeLastImageProfileId ?? '')?.id ?? null,
     );
     this.autoTeamBuilderWorkerPreference.set(
       this.normalizeAutoTeamBuilderWorkerPreference(autoTeamBuilderWorkerPreference),
@@ -764,7 +810,7 @@ export class UserStateService {
   }
 
   private async replaceCrewForgeImageProfiles(profiles: CrewForgeImageProfile[]): Promise<void> {
-    this.crewForgeImageProfiles.set(profiles);
+    this.userCrewForgeImageProfiles.set(profiles);
     await this.persistJson(CREW_FORGE_IMAGE_PROFILES_KEY, profiles);
   }
 
@@ -871,7 +917,14 @@ export class UserStateService {
     profile:
       | (Pick<
           CrewForgeImageProfile,
-          'name' | 'imageWidth' | 'imageHeight' | 'slotDefinitions' | 'preprocess' | 'examples' | 'exemplars'
+          | 'name'
+          | 'source'
+          | 'imageWidth'
+          | 'imageHeight'
+          | 'slotDefinitions'
+          | 'preprocess'
+          | 'examples'
+          | 'exemplars'
         > &
           Partial<CrewForgeImageProfile>)
       | null
@@ -899,6 +952,7 @@ export class UserStateService {
     const baseProfile: CrewForgeImageProfile = {
       id: this.normalizeEntityId(profile.id) ?? existing?.id ?? this.createCrewForgeImageProfileId(),
       name: normalizedName,
+      source: profile.source === 'built-in' ? 'built-in' : 'user',
       imageWidth,
       imageHeight,
       slotDefinitions: this.normalizeCrewForgeImageSlotDefinitions(profile.slotDefinitions),
@@ -1248,6 +1302,16 @@ export class UserStateService {
 
   private createCharacterBoxId(): string {
     return `box-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  private createCrewForgeCopiedProfileName(name: string): string {
+    const trimmedName = typeof name === 'string' ? name.trim() : '';
+
+    if (!trimmedName.length) {
+      return 'Profile Copy';
+    }
+
+    return /\bcopy$/i.test(trimmedName) ? trimmedName : `${trimmedName} Copy`;
   }
 
   private createCrewForgeImageProfileId(): string {

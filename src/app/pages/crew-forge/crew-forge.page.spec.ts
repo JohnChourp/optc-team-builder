@@ -163,6 +163,50 @@ describe('CrewForgePage', () => {
     expect(page.selectedImageProfileId()).toBe('profile-1');
   });
 
+  it('duplicates built-in profiles into editable drafts instead of mutating them in place', async () => {
+    const { page, userState } = createPage({
+      selectedProfile: createProfileStub('built-in-profile', 'Built-in Profile', 'built-in', 1080, 2400),
+      lastProfileId: 'built-in-profile',
+    });
+
+    await page.ngOnInit();
+    page.openProfileEditorForSelected();
+
+    expect(page.profileDraft()).toMatchObject({
+      id: null,
+      name: 'Built-in Profile Copy',
+      imageWidth: 1080,
+      imageHeight: 2400,
+    });
+    expect(userState.deleteCrewForgeImageProfile).not.toHaveBeenCalled();
+  });
+
+  it('switches selection to the forked user profile when saving an example from a built-in profile', async () => {
+    const { page, userState } = createPage({
+      selectedProfile: createProfileStub('built-in-profile', 'Built-in Profile', 'built-in', 1080, 2400),
+      lastProfileId: 'built-in-profile',
+    });
+    userState.saveCrewForgeImageExample.mockResolvedValue(
+      createProfileStub('user-copy', 'Built-in Profile Copy', 'user', 1080, 2400),
+    );
+
+    await page.ngOnInit();
+    page.imageImportDataUrl.set('data:image/png;base64,ZmFrZQ==');
+    page.imageImportWidth.set(1080);
+    page.imageImportHeight.set(2400);
+
+    await page.saveCurrentImageAsExample();
+
+    expect(userState.saveCrewForgeImageExample).toHaveBeenCalledWith(
+      'built-in-profile',
+      expect.objectContaining({
+        imageWidth: 1080,
+        imageHeight: 2400,
+      }),
+    );
+    expect(page.selectedImageProfileId()).toBe('user-copy');
+  });
+
   it('renders menu access, roster controls, and ranked result copy in the template', () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/crew-forge/crew-forge.page.html'),
@@ -175,12 +219,16 @@ describe('CrewForgePage', () => {
     expect(template).toContain("t('imageImport.title')");
     expect(template).toContain("runImageRecognition()");
     expect(template).toContain("applyRecognizedPool()");
+    expect(template).toContain("t('imageImport.builtInLabel')");
     expect(template).toContain("t('results.distinctAbilities')");
     expect(template).toContain("t('results.loadMore')");
   });
 });
 
-function createPage() {
+function createPage(options: {
+  selectedProfile?: ReturnType<typeof createProfileStub>;
+  lastProfileId?: string | null;
+} = {}) {
   const repository = {
     getDatasetManifest: vi.fn().mockResolvedValue({
       availableTypes: ['DEX', 'STR'],
@@ -271,42 +319,9 @@ function createPage() {
       },
     ]),
     crewForgeImageProfiles: signal([
-      {
-        id: 'profile-1',
-        name: 'Main Profile',
-        imageWidth: 1080,
-        imageHeight: 1920,
-        slotDefinitions: [
-          createSlotDefinition('leader-1', 'Leader 1', 'leader'),
-          createSlotDefinition('leader-2', 'Leader 2', 'leader'),
-          createSlotDefinition('leader-3', 'Leader 3', 'leader'),
-          createSlotDefinition('leader-4', 'Leader 4', 'leader'),
-          createSlotDefinition('sub-1', 'Sub 1', 'sub'),
-          createSlotDefinition('sub-2', 'Sub 2', 'sub'),
-          createSlotDefinition('sub-3', 'Sub 3', 'sub'),
-          createSlotDefinition('sub-4', 'Sub 4', 'sub'),
-          createSlotDefinition('sub-5', 'Sub 5', 'sub'),
-          createSlotDefinition('sub-6', 'Sub 6', 'sub'),
-          createSlotDefinition('sub-7', 'Sub 7', 'sub'),
-          createSlotDefinition('sub-8', 'Sub 8', 'sub'),
-        ],
-        preprocess: {
-          fingerprintSize: 16,
-          contrast: 1,
-          brightness: 0,
-          grayscale: true,
-          invert: false,
-          blurRadius: 0,
-          matchThreshold: 0.92,
-          emptyVarianceThreshold: 0.005,
-        },
-        examples: [],
-        exemplars: [],
-        createdAt: '2026-04-20T10:00:00.000Z',
-        updatedAt: '2026-04-20T10:00:00.000Z',
-      },
+      options.selectedProfile ?? createProfileStub('profile-1', 'Main Profile', 'user', 1080, 1920),
     ]),
-    crewForgeLastImageProfileId: signal<string | null>('profile-1'),
+    crewForgeLastImageProfileId: signal<string | null>(options.lastProfileId ?? 'profile-1'),
     resolveAutoTeamBuilderWorkerCount: vi.fn().mockReturnValue(3),
     setCrewForgeLastImageProfileId: vi.fn().mockResolvedValue(undefined),
     saveCrewForgeImageProfile: vi.fn().mockResolvedValue(null),
@@ -329,6 +344,7 @@ function createPage() {
     ),
     autoTeamBuilder,
     crewForgeImageImport,
+    userState,
   };
 }
 
@@ -404,6 +420,50 @@ function createSlotDefinition(key: string, label: string, role: 'leader' | 'sub'
     y: 0,
     width: 0,
     height: 0,
+  };
+}
+
+function createProfileStub(
+  id: string,
+  name: string,
+  source: 'built-in' | 'user',
+  imageWidth: number,
+  imageHeight: number,
+) {
+  return {
+    id,
+    name,
+    source,
+    imageWidth,
+    imageHeight,
+    slotDefinitions: [
+      createSlotDefinition('leader-1', 'Leader 1', 'leader'),
+      createSlotDefinition('leader-2', 'Leader 2', 'leader'),
+      createSlotDefinition('leader-3', 'Leader 3', 'leader'),
+      createSlotDefinition('leader-4', 'Leader 4', 'leader'),
+      createSlotDefinition('sub-1', 'Sub 1', 'sub'),
+      createSlotDefinition('sub-2', 'Sub 2', 'sub'),
+      createSlotDefinition('sub-3', 'Sub 3', 'sub'),
+      createSlotDefinition('sub-4', 'Sub 4', 'sub'),
+      createSlotDefinition('sub-5', 'Sub 5', 'sub'),
+      createSlotDefinition('sub-6', 'Sub 6', 'sub'),
+      createSlotDefinition('sub-7', 'Sub 7', 'sub'),
+      createSlotDefinition('sub-8', 'Sub 8', 'sub'),
+    ],
+    preprocess: {
+      fingerprintSize: 16,
+      contrast: 1,
+      brightness: 0,
+      grayscale: true,
+      invert: false,
+      blurRadius: 0,
+      matchThreshold: 0.92,
+      emptyVarianceThreshold: 0.005,
+    },
+    examples: [],
+    exemplars: [],
+    createdAt: '2026-04-20T10:00:00.000Z',
+    updatedAt: '2026-04-20T10:00:00.000Z',
   };
 }
 

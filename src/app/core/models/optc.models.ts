@@ -227,6 +227,7 @@ export interface CrewForgeImageExemplar {
 export interface CrewForgeImageProfile {
   id: string;
   name: string;
+  source: 'built-in' | 'user';
   imageWidth: number;
   imageHeight: number;
   slotDefinitions: CrewForgeImageSlotDefinition[];

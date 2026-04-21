@@ -235,6 +235,9 @@ export class CrewForgePage implements OnInit {
 
     return this.crewForgeImageProfiles().find((profile) => profile.id === profileId) ?? null;
   });
+  public readonly selectedImageProfileIsBuiltIn = computed(
+    () => this.selectedImageProfile()?.source === 'built-in',
+  );
   public readonly imageImportDimensionLabel = computed(() => {
     const imageWidth = this.imageImportWidth();
     const imageHeight = this.imageImportHeight();
@@ -570,7 +573,7 @@ export class CrewForgePage implements OnInit {
   public async deleteSelectedProfile(): Promise<void> {
     const selectedProfile = this.selectedImageProfile();
 
-    if (!selectedProfile) {
+    if (!selectedProfile || selectedProfile.source === 'built-in') {
       return;
     }
 
@@ -589,12 +592,16 @@ export class CrewForgePage implements OnInit {
       return;
     }
 
-    await this.userState.saveCrewForgeImageExample(selectedProfile.id, {
+    const savedProfile = await this.userState.saveCrewForgeImageExample(selectedProfile.id, {
       name: this.imageImportFilename() || `${selectedProfile.name} example`,
       imageDataUrl,
       imageWidth,
       imageHeight,
     });
+
+    if (savedProfile) {
+      this.selectedImageProfileId.set(savedProfile.id);
+    }
   }
 
   public async runImageRecognition(): Promise<void> {
@@ -701,14 +708,24 @@ export class CrewForgePage implements OnInit {
         return;
       }
 
+      let mutableProfile = selectedProfile;
+
       for (const slot of recognitionResult.slots) {
-        const exemplar = await this.crewForgeImageImport.buildExemplarFromSlot(selectedProfile, slot);
+        const exemplar = await this.crewForgeImageImport.buildExemplarFromSlot(mutableProfile, slot);
 
         if (!exemplar) {
           continue;
         }
 
-        await this.userState.saveCrewForgeImageExemplar(selectedProfile.id, exemplar);
+        const savedProfile = await this.userState.saveCrewForgeImageExemplar(mutableProfile.id, exemplar);
+
+        if (savedProfile) {
+          mutableProfile = savedProfile;
+        }
+      }
+
+      if (mutableProfile.id !== selectedProfile.id) {
+        this.selectedImageProfileId.set(mutableProfile.id);
       }
     } finally {
       this.imageImportApplying.set(false);
@@ -870,13 +887,17 @@ export class CrewForgePage implements OnInit {
 
   private createDraftFromProfile(profile: CrewForgeImageProfile): CrewForgeImageProfileDraft {
     return {
-      id: profile.id,
-      name: profile.name,
+      id: profile.source === 'built-in' ? null : profile.id,
+      name: profile.source === 'built-in' ? `${profile.name} Copy` : profile.name,
       imageWidth: profile.imageWidth,
       imageHeight: profile.imageHeight,
       slotDefinitions: profile.slotDefinitions.map((slot) => ({ ...slot })),
       preprocess: { ...profile.preprocess },
     };
+  }
+
+  public isBuiltInProfile(profile: CrewForgeImageProfile | null | undefined): boolean {
+    return profile?.source === 'built-in';
   }
 
   private t(key: string, params?: Record<string, number | string>): string {

@@ -38,6 +38,8 @@
     "processing": "Το Crew Forge αναλύει το ανεβασμένο screenshot...",
     "previewAlt": "Ανεβασμένο screenshot ομάδας",
     "previewFallbackName": "Ανεβασμένο screenshot",
+    "builtInLabel": "Built-in",
+    "builtInCopy": "Αυτό το bundled default μένει read-only. Το edit, το save-example και το exemplar learning δημιουργούν αυτόματα local copy.",
     "previewTitle": "Preview αναγνώρισης",
     "previewCopy": "{{count}} μοναδικοί χαρακτήρες είναι έτοιμοι να αντικαταστήσουν το τρέχον pool.",
     "confidence": "Βεβαιότητα",

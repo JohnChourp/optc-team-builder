@@ -35,7 +35,7 @@ export class CrewForgeImageImportService {
   public createEmptyProfileInput(
     imageWidth = 0,
     imageHeight = 0,
-  ): Omit<CrewForgeImageProfile, 'id' | 'createdAt' | 'updatedAt'> {
+  ): Omit<CrewForgeImageProfile, 'id' | 'source' | 'createdAt' | 'updatedAt'> {
     return {
       name: '',
       imageWidth,

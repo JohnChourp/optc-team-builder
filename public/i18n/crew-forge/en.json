@@ -38,6 +38,8 @@
     "processing": "Crew Forge is analyzing the uploaded screenshot...",
     "previewAlt": "Uploaded crew screenshot",
     "previewFallbackName": "Uploaded screenshot",
+    "builtInLabel": "Built-in",
+    "builtInCopy": "This bundled default stays read-only. Edit, save-example, and exemplar learning create a local copy automatically.",
     "previewTitle": "Recognition preview",
     "previewCopy": "{{count}} unique characters are ready to replace the current pool.",
     "confidence": "Confidence",

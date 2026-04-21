@@ -3,6 +3,7 @@ import { describe, expect, it, beforeEach, vi } from 'vitest';
 
 import { Preferences } from '@capacitor/preferences';
 
+import { BUILT_IN_CREW_FORGE_IMAGE_PROFILES } from '../data/crew-forge-built-in-profiles';
 import { UserStateService } from './user-state.service';
 
 vi.mock('@capacitor/preferences', () => ({
@@ -548,9 +549,38 @@ describe('UserStateService saved teams', () => {
       'profile-1',
     );
 
-    expect(service.crewForgeImageProfiles()).toEqual([storedProfile]);
+    expect(service.crewForgeImageProfiles()).toEqual([
+      ...BUILT_IN_CREW_FORGE_IMAGE_PROFILES,
+      storedProfile,
+    ]);
     expect(service.crewForgeLastImageProfileId()).toBe('profile-1');
     expect(service.findCrewForgeImageProfileByDimensions(1080, 1920)?.id).toBe('profile-1');
+  });
+
+  it('exposes the bundled crew forge profile to fresh users and restores its preferred id', async () => {
+    const { service } = await createService(
+      [],
+      [],
+      [],
+      [],
+      { mode: 'auto', manualCount: 7 },
+      [],
+      [],
+      'crew-forge-default-android-1080x2400-character-recruitment',
+    );
+
+    expect(service.crewForgeImageProfiles()[0]).toMatchObject({
+      id: 'crew-forge-default-android-1080x2400-character-recruitment',
+      source: 'built-in',
+      imageWidth: 1080,
+      imageHeight: 2400,
+    });
+    expect(service.crewForgeLastImageProfileId()).toBe(
+      'crew-forge-default-android-1080x2400-character-recruitment',
+    );
+    expect(service.findCrewForgeImageProfileByDimensions(1080, 2400)?.id).toBe(
+      'crew-forge-default-android-1080x2400-character-recruitment',
+    );
   });
 
   it('saves normalized crew forge profiles and persists examples and exemplars through dedicated helpers', async () => {
@@ -602,14 +632,63 @@ describe('UserStateService saved teams', () => {
       cropDataUrl: 'data:image/png;base64,Y3JvcA==',
     });
 
-    expect(service.crewForgeImageProfiles()[0]?.examples).toEqual([
+    expect(service.crewForgeImageProfiles().find((profile) => profile.id === 'profile-1')?.examples).toEqual([
       expect.objectContaining({
         name: 'Example Screenshot',
         imageWidth: 1080,
         imageHeight: 1920,
       }),
     ]);
-    expect(service.crewForgeImageProfiles()[0]?.exemplars).toEqual([
+    expect(service.crewForgeImageProfiles().find((profile) => profile.id === 'profile-1')?.exemplars).toEqual([
+      expect.objectContaining({
+        slotKey: 'leader-1',
+        characterId: 101,
+      }),
+    ]);
+    expect(setCalls.map((call) => call.key)).toContain('crewForgeImageProfiles');
+  });
+
+  it('forks built-in profiles into user copies before saving examples and exemplars', async () => {
+    const { service, setCalls } = await createService(
+      [],
+      [],
+      [],
+      [],
+      { mode: 'auto', manualCount: 7 },
+      [],
+      [],
+      'crew-forge-default-android-1080x2400-character-recruitment',
+    );
+
+    const exampleProfile = await service.saveCrewForgeImageExample(
+      'crew-forge-default-android-1080x2400-character-recruitment',
+      {
+        name: 'Built-in Example',
+        imageDataUrl: 'data:image/png;base64,ZXhhbXBsZQ==',
+        imageWidth: 1080,
+        imageHeight: 2400,
+      },
+    );
+
+    expect(exampleProfile).toMatchObject({
+      source: 'user',
+      name: 'Android 1080×2400 Recruitment Copy',
+    });
+    expect(exampleProfile?.id).not.toBe('crew-forge-default-android-1080x2400-character-recruitment');
+    expect(exampleProfile?.examples).toHaveLength(1);
+
+    const exemplarProfile = await service.saveCrewForgeImageExemplar(exampleProfile?.id ?? '', {
+      slotKey: 'leader-1',
+      characterId: 101,
+      fingerprint: Array.from({ length: 256 }, () => 0.5),
+      cropDataUrl: 'data:image/png;base64,Y3JvcA==',
+    });
+
+    expect(exemplarProfile).toMatchObject({
+      id: exampleProfile?.id,
+      source: 'user',
+    });
+    expect(exemplarProfile?.exemplars).toEqual([
       expect.objectContaining({
         slotKey: 'leader-1',
         characterId: 101,
@@ -713,6 +792,7 @@ function createCrewForgeProfile(id: string, name: string) {
   return {
     id,
     name,
+    source: 'user' as const,
     imageWidth: 1080,
     imageHeight: 1920,
     slotDefinitions: [

@@ -176,6 +176,7 @@ function createProfile(id: string, imageWidth: number, imageHeight: number): Cre
   return {
     id,
     name: `Profile ${id}`,
+    source: 'user',
     imageWidth,
     imageHeight,
     slotDefinitions: service.createEmptyProfileInput(imageWidth, imageHeight).slotDefinitions,

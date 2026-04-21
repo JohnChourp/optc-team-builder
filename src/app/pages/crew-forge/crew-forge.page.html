@@ -120,7 +120,7 @@
                 <ion-select-option value="">{{ t('imageImport.profilePlaceholder') }}</ion-select-option>
                 @for (profile of crewForgeImageProfiles(); track profile.id) {
                   <ion-select-option [value]="profile.id">
-                    {{ profile.name }} • {{ profile.imageWidth }}×{{ profile.imageHeight }}
+                    {{ profile.name }} • {{ profile.imageWidth }}×{{ profile.imageHeight }}{{ isBuiltInProfile(profile) ? ' • ' + t('imageImport.builtInLabel') : '' }}
                   </ion-select-option>
                 }
               </ion-select>
@@ -166,17 +166,23 @@
               >
                 {{ t('imageImport.actions.saveExample') }}
               </ion-button>
-              <ion-button
-                fill="clear"
-                color="danger"
-                size="small"
-                [disabled]="!selectedImageProfile()"
-                (click)="deleteSelectedProfile()"
-              >
-                <ion-icon slot="start" [icon]="imageImportDeleteIcon"></ion-icon>
-                {{ t('imageImport.actions.deleteProfile') }}
-              </ion-button>
+              @if (!selectedImageProfileIsBuiltIn()) {
+                <ion-button
+                  fill="clear"
+                  color="danger"
+                  size="small"
+                  [disabled]="!selectedImageProfile()"
+                  (click)="deleteSelectedProfile()"
+                >
+                  <ion-icon slot="start" [icon]="imageImportDeleteIcon"></ion-icon>
+                  {{ t('imageImport.actions.deleteProfile') }}
+                </ion-button>
+              }
             </div>
+
+            @if (selectedImageProfileIsBuiltIn()) {
+              <p class="build-hint image-import-built-in-copy">{{ t('imageImport.builtInCopy') }}</p>
+            }
           </div>
 
           @if (imageImportLoading() || imageImportProcessing()) {
