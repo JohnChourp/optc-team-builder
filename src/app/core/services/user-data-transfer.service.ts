@@ -228,6 +228,17 @@ export class UserDataTransferService {
     );
   }
 
+  public getSyncScopeSummaryFromPayload(payload: AllDataTransferPayload): SyncScopeSummary {
+    return {
+      characterBoxesCount: payload.characterBoxes?.boxes.length ?? 0,
+      characterOverridesCount: payload.characterOverrides?.overrides.length ?? 0,
+      favoriteCharacterCount: payload.favorites?.characters.length ?? 0,
+      favoriteShipCount: payload.favoriteShips?.ships.length ?? 0,
+      savedEnemiesCount: payload.savedEnemies?.enemies.length ?? 0,
+      savedTeamsCount: payload.savedTeams?.teams.length ?? 0,
+    };
+  }
+
   public async importCharacterBoxesPayload(payload: unknown): Promise<CharacterBoxesImportSummary> {
     await this.ready();
     const parsedPayload = parseCharacterBoxesImportPayloadValue(payload);

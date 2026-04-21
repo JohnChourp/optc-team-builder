@@ -149,11 +149,16 @@ export class SettingsPage implements OnInit {
   public readonly driveRestorePrompt;
   public readonly driveSyncMetadata;
   public readonly driveSyncStatus;
+  public readonly drivePrimaryStateKey;
+  public readonly driveSecondaryMessage;
+  public readonly driveOpenUrl;
+  public readonly localSyncScopeSummary;
   public readonly googleAccountAvailable;
   public readonly googleAccountLastError;
   public readonly googleAccountProfile;
   public readonly googleAccountSignedIn;
   public readonly googleAccountStatus;
+  public readonly remoteSyncScopeSummary;
 
   public readonly canExportFavorites = computed(() => this.favoriteIds().length > 0);
   public readonly canDeleteAllFavorites = computed(() => this.favoriteIds().length > 0);
@@ -228,6 +233,66 @@ export class SettingsPage implements OnInit {
     this.driveRestorePrompt = this.driveBackup.restorePrompt;
     this.driveSyncMetadata = this.driveBackup.metadata;
     this.driveSyncStatus = this.driveBackup.syncStatus;
+    this.localSyncScopeSummary = computed(() => this.userDataTransfer.getSyncScopeSummary());
+    this.remoteSyncScopeSummary = computed(() => this.driveSyncMetadata().remoteSummary);
+    this.drivePrimaryStateKey = computed(() => {
+      if (!this.googleAccountAvailable()) {
+        return 'driveSync.overview.unavailable';
+      }
+
+      if (!this.googleAccountSignedIn()) {
+        return 'driveSync.overview.signedOut';
+      }
+
+      if (
+        this.googleAccountStatus() === 'reconnect-required' ||
+        this.driveSyncStatus().phase === 'error'
+      ) {
+        return 'driveSync.overview.error';
+      }
+
+      if (this.driveSyncStatus().phase === 'uploading') {
+        return 'driveSync.overview.uploading';
+      }
+
+      if (this.driveSyncStatus().phase === 'downloading') {
+        return 'driveSync.overview.restoring';
+      }
+
+      if (this.driveRestorePrompt()) {
+        return 'driveSync.overview.conflict';
+      }
+
+      if (this.driveSyncMetadata().pendingLocalChanges) {
+        return 'driveSync.overview.pending';
+      }
+
+      if (!this.driveSyncMetadata().lastCheckedAt) {
+        return 'driveSync.overview.connectedNotChecked';
+      }
+
+      if (this.driveSyncMetadata().hasRemoteBackup) {
+        return 'driveSync.overview.backupFound';
+      }
+
+      return 'driveSync.overview.noBackup';
+    });
+    this.driveSecondaryMessage = computed(
+      () => this.googleAccountLastError() ?? this.driveSyncStatus().detail,
+    );
+    this.driveOpenUrl = computed(() => {
+      const metadata = this.driveSyncMetadata();
+
+      if (metadata.knownFolderId) {
+        return `https://drive.google.com/drive/folders/${encodeURIComponent(metadata.knownFolderId)}`;
+      }
+
+      if (metadata.knownBackupFileId) {
+        return `https://drive.google.com/file/d/${encodeURIComponent(metadata.knownBackupFileId)}/view`;
+      }
+
+      return null;
+    });
     this.googleAccountAvailable = this.googleAccount.isAvailable;
     this.googleAccountLastError = this.googleAccount.lastError;
     this.googleAccountProfile = this.googleAccount.profile;
@@ -305,7 +370,6 @@ export class SettingsPage implements OnInit {
   public async signInWithGoogle(forcePrompt = false): Promise<void> {
     try {
       await this.googleAccount.signIn(forcePrompt);
-      await this.driveBackup.handleSettingsEntered();
     } catch {
       return;
     }
@@ -322,8 +386,25 @@ export class SettingsPage implements OnInit {
     });
   }
 
+  public async refreshDriveInfo(): Promise<void> {
+    await this.driveBackup.refreshRemoteState({
+      interactiveAuth: true,
+      reason: 'manual-refresh',
+    });
+  }
+
   public async showDriveRestorePrompt(): Promise<void> {
     await this.driveBackup.prepareRestorePrompt();
+  }
+
+  public openDriveLocation(): void {
+    const url = this.driveOpenUrl();
+
+    if (!url || typeof globalThis.open !== 'function') {
+      return;
+    }
+
+    globalThis.open(url, '_blank', 'noopener');
   }
 
   public openFilePicker(input: HTMLInputElement): void {
@@ -1668,6 +1749,61 @@ export class SettingsPage implements OnInit {
     }
 
     return parsedValue.toLocaleString();
+  }
+
+  public getDriveLocationStatus(): string {
+    const metadata = this.driveSyncMetadata();
+
+    if (!metadata.lastCheckedAt) {
+      return this.i18n.translate('driveSync.location.notChecked', undefined, 'settings');
+    }
+
+    if (metadata.knownFolderId) {
+      return this.i18n.translate('driveSync.location.folderVisible', undefined, 'settings');
+    }
+
+    return this.i18n.translate('driveSync.location.folderAfterSync', undefined, 'settings');
+  }
+
+  public getDriveBackupFileStatus(): string {
+    const metadata = this.driveSyncMetadata();
+
+    if (!metadata.lastCheckedAt) {
+      return this.i18n.translate('driveSync.location.notChecked', undefined, 'settings');
+    }
+
+    if (metadata.hasRemoteBackup) {
+      return this.i18n.translate('driveSync.location.fileVisible', undefined, 'settings');
+    }
+
+    return this.i18n.translate('driveSync.location.fileMissing', undefined, 'settings');
+  }
+
+  public getRemoteSummaryState(): string {
+    const metadata = this.driveSyncMetadata();
+
+    if (!metadata.lastCheckedAt) {
+      return this.i18n.translate('driveSync.summary.notChecked', undefined, 'settings');
+    }
+
+    if (!metadata.hasRemoteBackup) {
+      return this.i18n.translate('driveSync.summary.noBackup', undefined, 'settings');
+    }
+
+    return this.i18n.translate('driveSync.summary.remoteReady', undefined, 'settings');
+  }
+
+  public getSummaryCountLabel(
+    key:
+      | 'characterBoxes'
+      | 'characterOverrides'
+      | 'favorites'
+      | 'favoriteShips'
+      | 'savedEnemies'
+      | 'savedTeams',
+    count: number,
+  ): string {
+    return this.i18n.translate(`management.counts.${key}`, { count }, 'settings');
   }
 
   private confirmAction(message: string): boolean {

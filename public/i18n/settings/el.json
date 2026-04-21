@@ -37,6 +37,8 @@
       "signedOut": "Δεν έχει συνδεθεί Google account"
     },
     "actions": {
+      "openInDrive": "Άνοιγμα στο Drive",
+      "refresh": "Έλεγχος Drive",
       "reconnect": "Επανασύνδεση Google",
       "restore": "Restore από Drive",
       "signIn": "Sign in with Google",
@@ -46,6 +48,25 @@
     },
     "feedback": {
       "title": "Κατάσταση Drive sync"
+    },
+    "location": {
+      "fileMissing": "Δεν βρέθηκε backup αρχείο",
+      "fileVisible": "Ορατό στο Drive",
+      "folderAfterSync": "Ο φάκελος στο Drive θα εμφανιστεί μετά το πρώτο επιτυχημένο sync.",
+      "folderVisible": "Ορατό στο Drive",
+      "notChecked": "Δεν έχει γίνει έλεγχος ακόμη"
+    },
+    "overview": {
+      "backupFound": "Βρέθηκε Drive backup",
+      "connectedNotChecked": "Συνδεδεμένο, χωρίς έλεγχο ακόμη",
+      "conflict": "Χρειάζεται επίλυση σύγκρουσης",
+      "error": "Σφάλμα",
+      "noBackup": "Συνδεδεμένο, χωρίς Drive backup ακόμη",
+      "pending": "Υπάρχουν τοπικές αλλαγές για sync",
+      "restoring": "Γίνεται restore",
+      "signedOut": "Δεν έχει γίνει σύνδεση",
+      "unavailable": "Μη διαθέσιμο",
+      "uploading": "Γίνεται upload"
     },
     "prompt": {
       "conflictCopy": "Βρέθηκε νεότερο Drive backup με ενημέρωση {{modifiedAt}}. Διάλεξε αν θα γίνει restore, merge με αυτή τη συσκευή ή αν θα κρατηθούν τα τοπικά δεδομένα και θα αντικαταστήσουν το Drive στο επόμενο sync.",
@@ -58,7 +79,17 @@
         "restore": "Restore cloud"
       }
     },
+    "summary": {
+      "localTitle": "Αυτή η συσκευή",
+      "noBackup": "Δεν βρέθηκε ακόμη Drive backup.",
+      "notChecked": "Δεν έχει γίνει έλεγχος ακόμη.",
+      "remoteReady": "Φορτώθηκαν τα στοιχεία του Drive backup.",
+      "remoteTitle": "Drive backup"
+    },
     "status": {
+      "file": "Backup αρχείο",
+      "folder": "Φάκελος Drive",
+      "lastChecked": "Τελευταίος έλεγχος",
       "label": "Τρέχουσα κατάσταση",
       "lastDownloaded": "Τελευταίο restore",
       "lastUploaded": "Τελευταίο upload",

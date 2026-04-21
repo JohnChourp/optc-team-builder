@@ -37,6 +37,8 @@
       "signedOut": "No Google account connected"
     },
     "actions": {
+      "openInDrive": "Open in Drive",
+      "refresh": "Refresh Drive",
       "reconnect": "Reconnect Google",
       "restore": "Restore from Drive",
       "signIn": "Sign in with Google",
@@ -46,6 +48,25 @@
     },
     "feedback": {
       "title": "Drive sync status"
+    },
+    "location": {
+      "fileMissing": "No backup file found",
+      "fileVisible": "Visible in Drive",
+      "folderAfterSync": "The Drive folder will appear after the first successful sync.",
+      "folderVisible": "Visible in Drive",
+      "notChecked": "Not checked yet"
+    },
+    "overview": {
+      "backupFound": "Drive backup found",
+      "connectedNotChecked": "Connected, not checked",
+      "conflict": "Conflict needs review",
+      "error": "Error",
+      "noBackup": "Connected, no Drive backup yet",
+      "pending": "Local changes pending",
+      "restoring": "Restoring",
+      "signedOut": "Signed out",
+      "unavailable": "Unavailable",
+      "uploading": "Uploading"
     },
     "prompt": {
       "conflictCopy": "A newer Drive backup was found, updated {{modifiedAt}}. Choose whether to restore it, merge it into this device, or keep the local data and overwrite Drive on the next sync.",
@@ -58,7 +79,17 @@
         "restore": "Restore cloud"
       }
     },
+    "summary": {
+      "localTitle": "This device",
+      "noBackup": "No Drive backup found yet.",
+      "notChecked": "Not checked yet.",
+      "remoteReady": "Drive backup details loaded.",
+      "remoteTitle": "Drive backup"
+    },
     "status": {
+      "file": "Backup file",
+      "folder": "Drive folder",
+      "lastChecked": "Last check",
       "label": "Current state",
       "lastDownloaded": "Last restore",
       "lastUploaded": "Last upload",

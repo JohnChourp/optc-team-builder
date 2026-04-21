@@ -116,7 +116,10 @@ describe("SettingsPage", () => {
     expect(template).toContain("t('analytics.links.cookies')");
     expect(template).toContain("t('driveSync.title')");
     expect(template).toContain("t('driveSync.actions.signIn')");
+    expect(template).toContain("t('driveSync.actions.refresh')");
     expect(template).toContain("t('driveSync.actions.syncNow')");
+    expect(template).toContain("t('driveSync.summary.localTitle')");
+    expect(template).toContain("t('driveSync.summary.remoteTitle')");
     expect(template).toContain("t('driveSync.prompt.actions.restore')");
     expect(template).toContain("t('sections.dataManagement')");
     expect(template).toContain("t('management.allData.export')");
@@ -785,12 +788,11 @@ describe("SettingsPage", () => {
   });
 
   it("starts Google sign-in from the drive sync controls", async () => {
-    const { page, driveBackup, googleAccount } = createPage();
+    const { page, googleAccount } = createPage();
 
     await page.signInWithGoogle();
 
     expect(googleAccount.signIn).toHaveBeenCalledWith(false);
-    expect(driveBackup.handleSettingsEntered).toHaveBeenCalled();
   });
 
   it("runs a manual Drive sync on demand", async () => {
@@ -801,6 +803,17 @@ describe("SettingsPage", () => {
     expect(driveBackup.flushPendingUploads).toHaveBeenCalledWith({
       interactiveAuth: true,
       reason: "manual-sync",
+    });
+  });
+
+  it("refreshes Drive metadata on demand", async () => {
+    const { page, driveBackup } = createPage();
+
+    await page.refreshDriveInfo();
+
+    expect(driveBackup.refreshRemoteState).toHaveBeenCalledWith({
+      interactiveAuth: true,
+      reason: "manual-refresh",
     });
   });
 
@@ -1162,10 +1175,17 @@ function createPage() {
     connectedAccountEmail: null,
     connectedAccountId: null,
     deviceId: "device-1",
+    hasRemoteBackup: false,
+    knownBackupFileId: null,
+    knownFolderId: null,
+    lastCheckedAt: null,
     lastDownloadedExportedAt: null,
     lastSeenRemoteModifiedTime: null,
     lastUploadedExportedAt: null,
     pendingLocalChanges: false,
+    remoteExportedAt: null,
+    remoteModifiedTime: null,
+    remoteSummary: null,
   });
   const driveRemoteBackup = signal(null);
   const driveRestorePrompt = signal(null);
@@ -1210,6 +1230,7 @@ function createPage() {
     flushPendingUploads: vi.fn().mockResolvedValue(true),
     metadata: driveSyncMetadata,
     prepareRestorePrompt: vi.fn().mockResolvedValue(null),
+    refreshRemoteState: vi.fn().mockResolvedValue(null),
     remoteBackup: driveRemoteBackup,
     resolveRestorePrompt: vi.fn().mockResolvedValue(null),
     restorePrompt: driveRestorePrompt,

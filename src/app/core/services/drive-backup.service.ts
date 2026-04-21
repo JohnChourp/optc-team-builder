@@ -1,5 +1,4 @@
 import { Inject, Injector, Optional, effect, Injectable, signal } from '@angular/core';
-import { App } from '@capacitor/app';
 
 import { APP_SYNC_CONFIG, type AppSyncConfig } from '../sync/app-sync.config';
 import { GoogleAccountService, type GoogleAccountProfile } from './google-account.service';
@@ -13,6 +12,7 @@ import {
 } from '../../pages/settings/all-data-transfer.utils';
 import {
   type DriveConflictResolution,
+  type SyncScopeSummary,
   UserDataTransferService,
 } from './user-data-transfer.service';
 
@@ -50,6 +50,12 @@ interface DriveFileListResponse {
   }>;
 }
 
+interface DriveRemoteSnapshot {
+  backup: DriveRemoteBackupInfo | null;
+  folderId: string | null;
+  summary: SyncScopeSummary | null;
+}
+
 function normalizeOptionalString(value: unknown): string | null {
   if (typeof value !== 'string') {
     return null;
@@ -78,9 +84,7 @@ export class DriveBackupService {
     updatedAt: null,
   });
 
-  private foregroundListenerRegistered = false;
   private readonly readyPromise: Promise<void>;
-  private uploadTimer: ReturnType<typeof setTimeout> | null = null;
 
   public get metadata() {
     return this.syncState.metadata;
@@ -106,13 +110,7 @@ export class DriveBackupService {
     reason?: string;
   } = {}): Promise<boolean> {
     await this.ready();
-    return this.flushPendingUploadsInternal(options);
-  }
 
-  private async flushPendingUploadsInternal(options: {
-    interactiveAuth?: boolean;
-    reason?: string;
-  } = {}): Promise<boolean> {
     if (!this.account.isAvailable()) {
       this.syncStatus.set({
         detail: null,
@@ -123,18 +121,15 @@ export class DriveBackupService {
     }
 
     if (this.restorePrompt()) {
-      this.syncStatus.set(createIdleStatus('A newer Drive backup needs your decision first.'));
-      return false;
-    }
-
-    if (!this.syncState.pendingLocalChanges()) {
-      this.syncStatus.set(createIdleStatus(options.reason ?? null));
+      this.syncStatus.set(
+        createIdleStatus('Resolve the pending Drive conflict before starting a manual sync.'),
+      );
       return false;
     }
 
     this.syncStatus.set({
-      detail: options.reason ?? null,
-      phase: 'uploading',
+      detail: options.reason ?? 'Checking Drive before syncing.',
+      phase: 'checking',
       updatedAt: new Date().toISOString(),
     });
 
@@ -152,14 +147,60 @@ export class DriveBackupService {
         return false;
       }
 
+      const remoteSnapshot = await this.inspectRemoteSnapshot(accessToken, true);
+
+      this.remoteBackup.set(remoteSnapshot.backup);
+      await this.syncState.recordRemoteSnapshot({
+        fileId: remoteSnapshot.backup?.fileId ?? null,
+        folderId: remoteSnapshot.backup?.folderId ?? remoteSnapshot.folderId,
+        hasRemoteBackup: remoteSnapshot.backup !== null,
+        remoteExportedAt: remoteSnapshot.backup?.exportedAt ?? null,
+        remoteModifiedTime: remoteSnapshot.backup?.modifiedTime ?? null,
+        remoteSummary: remoteSnapshot.summary,
+      });
+
+      if (
+        remoteSnapshot.backup &&
+        this.syncState.pendingLocalChanges() &&
+        this.isRemoteBackupNewer(remoteSnapshot.backup, this.syncState.metadata())
+      ) {
+        this.setPromptForRemoteBackup(remoteSnapshot.backup);
+        this.syncStatus.set(
+          createIdleStatus('A newer Drive backup needs your decision before syncing.'),
+        );
+        return false;
+      }
+
+      if (remoteSnapshot.backup && !this.syncState.pendingLocalChanges()) {
+        this.restorePrompt.set(null);
+        this.syncStatus.set(createIdleStatus('Drive backup is already up to date.'));
+        return true;
+      }
+
+      this.syncStatus.set({
+        detail: 'Uploading the current device backup to Drive.',
+        phase: 'uploading',
+        updatedAt: new Date().toISOString(),
+      });
+
       const payload = await this.transfer.buildAllDataPayload();
-      const remoteBackup = await this.upsertRemoteBackup(accessToken, payload, this.account.profile());
+      const remoteSummary = this.transfer.getSyncScopeSummary();
+      const remoteBackup = await this.upsertRemoteBackup(
+        accessToken,
+        payload,
+        this.account.profile(),
+        remoteSnapshot.folderId,
+      );
 
       this.remoteBackup.set(remoteBackup);
+      this.restorePrompt.set(null);
       await this.syncState.recordUpload({
         account: this.account.profile(),
         exportedAt: payload.exportedAt,
+        fileId: remoteBackup.fileId,
+        folderId: remoteBackup.folderId,
         remoteModifiedTime: remoteBackup.modifiedTime,
+        remoteSummary,
       });
       this.syncStatus.set(createIdleStatus('Drive backup updated.'));
 
@@ -176,24 +217,18 @@ export class DriveBackupService {
 
   public async handleSettingsEntered(): Promise<void> {
     await this.ready();
-    await this.refreshRemoteState({ reason: 'settings-opened' });
-
-    if (!this.restorePrompt()) {
-      await this.flushPendingUploads({ reason: 'settings-opened' });
-    }
   }
 
   public async noteLocalChange(): Promise<void> {
     await this.ready();
     await this.syncState.markLocalChange();
-    this.scheduleUpload();
   }
 
   public async prepareRestorePrompt(): Promise<DriveRestorePrompt | null> {
     await this.ready();
     const remoteBackup = await this.refreshRemoteState({
       interactiveAuth: true,
-      reason: 'restore-requested',
+      reason: 'Checking Drive before showing restore options.',
     });
 
     if (!remoteBackup) {
@@ -210,13 +245,7 @@ export class DriveBackupService {
     reason?: string;
   } = {}): Promise<DriveRemoteBackupInfo | null> {
     await this.ready();
-    return this.refreshRemoteStateInternal(options);
-  }
 
-  private async refreshRemoteStateInternal(options: {
-    interactiveAuth?: boolean;
-    reason?: string;
-  } = {}): Promise<DriveRemoteBackupInfo | null> {
     if (!this.account.isAvailable()) {
       this.syncStatus.set({
         detail: null,
@@ -227,7 +256,7 @@ export class DriveBackupService {
     }
 
     this.syncStatus.set({
-      detail: options.reason ?? null,
+      detail: options.reason ?? 'Checking Google Drive.',
       phase: 'checking',
       updatedAt: new Date().toISOString(),
     });
@@ -246,19 +275,35 @@ export class DriveBackupService {
         return null;
       }
 
-      const remoteBackup = await this.findRemoteBackup(accessToken);
+      const remoteSnapshot = await this.inspectRemoteSnapshot(accessToken, true);
 
-      this.remoteBackup.set(remoteBackup);
+      this.remoteBackup.set(remoteSnapshot.backup);
+      await this.syncState.recordRemoteSnapshot({
+        fileId: remoteSnapshot.backup?.fileId ?? null,
+        folderId: remoteSnapshot.backup?.folderId ?? remoteSnapshot.folderId,
+        hasRemoteBackup: remoteSnapshot.backup !== null,
+        remoteExportedAt: remoteSnapshot.backup?.exportedAt ?? null,
+        remoteModifiedTime: remoteSnapshot.backup?.modifiedTime ?? null,
+        remoteSummary: remoteSnapshot.summary,
+      });
 
-      if (remoteBackup && this.isRemoteBackupNewer(remoteBackup, this.syncState.metadata())) {
-        this.setPromptForRemoteBackup(remoteBackup);
-      } else if (!remoteBackup) {
+      if (remoteSnapshot.backup && this.isRemoteBackupNewer(remoteSnapshot.backup, this.syncState.metadata())) {
+        this.setPromptForRemoteBackup(remoteSnapshot.backup);
+      } else {
         this.restorePrompt.set(null);
       }
 
-      this.syncStatus.set(createIdleStatus(options.reason ?? null));
+      this.syncStatus.set(
+        createIdleStatus(
+          remoteSnapshot.backup
+            ? 'Drive backup details refreshed.'
+            : remoteSnapshot.folderId
+              ? 'No Drive backup file was found in the app folder.'
+              : 'No Drive backup folder exists yet. It will appear after the first sync.',
+        ),
+      );
 
-      return remoteBackup;
+      return remoteSnapshot.backup;
     } catch (error) {
       this.syncStatus.set({
         detail: this.resolveErrorMessage(error),
@@ -284,14 +329,15 @@ export class DriveBackupService {
       await this.syncState.markRemoteSeen(prompt.remote.modifiedTime);
       await this.syncState.markLocalChange();
       this.restorePrompt.set(null);
-      this.scheduleUpload(300);
-      this.syncStatus.set(createIdleStatus('Keeping local data and scheduling a new upload.'));
+      this.syncStatus.set(
+        createIdleStatus('Keeping local data. Use Sync now if you want to overwrite Drive.'),
+      );
 
       return null;
     }
 
     this.syncStatus.set({
-      detail: resolution === 'restore' ? 'Restoring from Drive.' : 'Merging Drive backup.',
+      detail: resolution === 'restore' ? 'Restoring from Drive.' : 'Merging Drive backup locally.',
       phase: 'downloading',
       updatedAt: new Date().toISOString(),
     });
@@ -309,6 +355,7 @@ export class DriveBackupService {
       }
 
       const payload = await this.downloadRemoteBackup(accessToken, prompt.remote.fileId);
+      const remoteSummary = this.transfer.getSyncScopeSummaryFromPayload(payload);
 
       await this.transfer.applyAllDataPayload(
         payload,
@@ -317,7 +364,10 @@ export class DriveBackupService {
       await this.syncState.recordDownload({
         account: this.account.profile(),
         exportedAt: prompt.remote.exportedAt,
+        fileId: prompt.remote.fileId,
+        folderId: prompt.remote.folderId,
         remoteModifiedTime: prompt.remote.modifiedTime,
+        remoteSummary,
       });
 
       this.restorePrompt.set(null);
@@ -325,14 +375,13 @@ export class DriveBackupService {
 
       if (resolution === 'merge') {
         await this.syncState.markLocalChange();
-        this.scheduleUpload(300);
       }
 
       this.syncStatus.set(
         createIdleStatus(
           resolution === 'restore'
             ? 'Local data restored from Drive.'
-            : 'Drive backup merged into local data.',
+            : 'Drive backup merged locally. Use Sync now to upload the merged data.',
         ),
       );
 
@@ -345,6 +394,20 @@ export class DriveBackupService {
       });
       return null;
     }
+  }
+
+  private buildCachedRemoteBackup(metadata: StoredDriveSyncMetadata): DriveRemoteBackupInfo | null {
+    if (!metadata.hasRemoteBackup || !metadata.knownBackupFileId || !metadata.knownFolderId) {
+      return null;
+    }
+
+    return {
+      exportedAt: metadata.remoteExportedAt,
+      fileId: metadata.knownBackupFileId,
+      fileName: BACKUP_FILE_NAME,
+      folderId: metadata.knownFolderId,
+      modifiedTime: metadata.remoteModifiedTime,
+    };
   }
 
   private async createDriveFolder(accessToken: string): Promise<string> {
@@ -418,16 +481,6 @@ export class DriveBackupService {
     };
   }
 
-  private async findRemoteBackup(accessToken: string): Promise<DriveRemoteBackupInfo | null> {
-    const folderId = await this.ensureDriveFolderId(accessToken, false);
-
-    if (!folderId) {
-      return null;
-    }
-
-    return this.findBackupFile(accessToken, folderId);
-  }
-
   private async findVisibleDriveFolder(accessToken: string): Promise<string | null> {
     const query =
       `mimeType = '${DRIVE_FOLDER_MIME_TYPE}' and trashed = false and ` +
@@ -439,16 +492,6 @@ export class DriveBackupService {
     const payload = (await response.json()) as DriveFileListResponse;
 
     return normalizeOptionalString(payload.files?.[0]?.id);
-  }
-
-  private async handleAuthenticated(): Promise<void> {
-    await this.syncState.setConnectedAccount(this.account.profile());
-
-    const remoteBackup = await this.refreshRemoteStateInternal({ reason: 'account-connected' });
-
-    if (!remoteBackup || !this.restorePrompt()) {
-      await this.flushPendingUploadsInternal({ reason: 'account-connected' });
-    }
   }
 
   private async initialize(): Promise<void> {
@@ -463,79 +506,53 @@ export class DriveBackupService {
       return;
     }
 
-    if (!this.foregroundListenerRegistered) {
-      void App.addListener('appStateChange', ({ isActive }) => {
-        if (isActive) {
-          void this.onAppForeground();
-        }
-      });
-      this.foregroundListenerRegistered = true;
-    }
-
+    this.remoteBackup.set(this.buildCachedRemoteBackup(this.syncState.metadata()));
     this.syncStatus.set(
       this.account.isSignedIn()
-        ? createIdleStatus()
+        ? createIdleStatus(
+            this.syncState.metadata().lastCheckedAt
+              ? 'Drive details are cached from your last manual check.'
+              : 'Google account connected. Drive has not been checked yet.',
+          )
         : {
             detail: null,
             phase: 'needs-auth',
             updatedAt: new Date().toISOString(),
           },
     );
-
-    if (this.account.isSignedIn()) {
-      await this.handleAuthenticated();
-    }
   }
 
-  private registerEffects(): void {
-    if (!this.injector) {
-      return;
+  private async inspectRemoteSnapshot(
+    accessToken: string,
+    includePayloadSummary: boolean,
+  ): Promise<DriveRemoteSnapshot> {
+    const folderId = await this.ensureDriveFolderId(accessToken, false);
+
+    if (!folderId) {
+      return {
+        backup: null,
+        folderId: null,
+        summary: null,
+      };
     }
 
-    effect(() => {
-      const profile = this.account.profile();
+    const backup = await this.findBackupFile(accessToken, folderId);
 
-      void this.syncState.setConnectedAccount(profile);
-    }, { injector: this.injector });
+    if (!backup || !includePayloadSummary) {
+      return {
+        backup,
+        folderId,
+        summary: null,
+      };
+    }
 
-    effect(() => {
-      const revision = this.account.sessionRevision();
+    const payload = await this.downloadRemoteBackup(accessToken, backup.fileId);
 
-      if (revision === 0) {
-        return;
-      }
-
-      if (this.account.isSignedIn()) {
-        void this.handleAuthenticated();
-        return;
-      }
-
-      this.remoteBackup.set(null);
-      this.restorePrompt.set(null);
-      this.syncStatus.set(
-        this.account.isAvailable()
-          ? {
-              detail: null,
-              phase: 'needs-auth',
-              updatedAt: new Date().toISOString(),
-            }
-          : {
-              detail: null,
-              phase: 'disabled',
-              updatedAt: new Date().toISOString(),
-            },
-      );
-    }, { injector: this.injector });
-
-    effect(() => {
-      const pendingLocalChanges = this.syncState.pendingLocalChanges();
-
-      if (!pendingLocalChanges || !this.account.isSignedIn() || this.restorePrompt()) {
-        return;
-      }
-
-      this.scheduleUpload();
-    }, { injector: this.injector });
+    return {
+      backup,
+      folderId,
+      summary: this.transfer.getSyncScopeSummaryFromPayload(payload),
+    };
   }
 
   private isRemoteBackupNewer(
@@ -556,25 +573,55 @@ export class DriveBackupService {
     return remoteModifiedTime > lastSeenRemoteTime;
   }
 
-  private async onAppForeground(): Promise<void> {
-    await this.ready();
-
-    const remoteBackup = await this.refreshRemoteState({ reason: 'app-foregrounded' });
-
-    if (!remoteBackup || !this.restorePrompt()) {
-      await this.flushPendingUploads({ reason: 'app-foregrounded' });
-    }
-  }
-
-  private scheduleUpload(delay = 1500): void {
-    if (this.uploadTimer !== null) {
-      clearTimeout(this.uploadTimer);
+  private registerEffects(): void {
+    if (!this.injector) {
+      return;
     }
 
-    this.uploadTimer = setTimeout(() => {
-      this.uploadTimer = null;
-      void this.flushPendingUploads({ reason: 'local-change' });
-    }, delay);
+    effect(() => {
+      const profile = this.account.profile();
+
+      void this.syncState.setConnectedAccount(profile);
+    }, { injector: this.injector });
+
+    effect(() => {
+      const revision = this.account.sessionRevision();
+
+      if (revision === 0) {
+        return;
+      }
+
+      this.restorePrompt.set(null);
+
+      if (this.account.isSignedIn()) {
+        const metadata = this.syncState.metadata();
+
+        this.remoteBackup.set(this.buildCachedRemoteBackup(metadata));
+        this.syncStatus.set(
+          createIdleStatus(
+            metadata.lastCheckedAt
+              ? 'Google account connected. Drive details are cached from the last manual check.'
+              : 'Google account connected. Drive has not been checked yet.',
+          ),
+        );
+        return;
+      }
+
+      this.remoteBackup.set(null);
+      this.syncStatus.set(
+        this.account.isAvailable()
+          ? {
+              detail: null,
+              phase: 'needs-auth',
+              updatedAt: new Date().toISOString(),
+            }
+          : {
+              detail: null,
+              phase: 'disabled',
+              updatedAt: new Date().toISOString(),
+            },
+      );
+    }, { injector: this.injector });
   }
 
   private setPromptForRemoteBackup(remoteBackup: DriveRemoteBackupInfo): void {
@@ -591,8 +638,9 @@ export class DriveBackupService {
     accessToken: string,
     payload: AllDataTransferPayload,
     account: GoogleAccountProfile | null,
+    existingFolderId: string | null,
   ): Promise<DriveRemoteBackupInfo> {
-    const folderId = await this.ensureDriveFolderId(accessToken, true);
+    const folderId = existingFolderId ?? (await this.ensureDriveFolderId(accessToken, true));
 
     if (!folderId) {
       throw new Error('Google Drive folder is unavailable.');
@@ -649,7 +697,8 @@ export class DriveBackupService {
     }
 
     return {
-      exportedAt: normalizeOptionalString(updatedFile.appProperties?.['exportedAt']) ?? payload.exportedAt,
+      exportedAt:
+        normalizeOptionalString(updatedFile.appProperties?.['exportedAt']) ?? payload.exportedAt,
       fileId,
       fileName: normalizeOptionalString(updatedFile.name) ?? BACKUP_FILE_NAME,
       folderId,

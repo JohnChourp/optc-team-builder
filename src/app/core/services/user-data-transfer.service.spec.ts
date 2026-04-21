@@ -81,6 +81,68 @@ describe('UserDataTransferService', () => {
     expect(dependencies.userState.setFavoriteCharacterIds).toHaveBeenCalledWith([1003]);
     expect(dependencies.userState.setFavoriteShipIds).toHaveBeenCalledWith([9003]);
   });
+
+  it('derives a sync summary directly from an all-data payload', () => {
+    const dependencies = createDependencies();
+    const service = new UserDataTransferService(
+      dependencies.repository as never,
+      dependencies.i18n as never,
+      dependencies.userState as never,
+      dependencies.characterOverrides as never,
+      dependencies.optcbxImport as never,
+    );
+
+    expect(
+      service.getSyncScopeSummaryFromPayload({
+        exportedAt: '2026-04-20T18:00:00.000Z',
+        favorites: {
+          characters: [
+            { number: 1001, name: 'Luffy' },
+            { number: 1002, name: 'Zoro' },
+          ],
+        },
+        favoriteShips: {
+          exportedAt: '2026-04-20T18:00:00.000Z',
+          schemaVersion: 1,
+          ships: [{ id: 9003, name: 'Shark Superb' }],
+          source: 'favorite-ships',
+        },
+        characterBoxes: {
+          exportedAt: '2026-04-20T18:00:00.000Z',
+          schemaVersion: 1,
+          source: 'character-boxes',
+          boxes: [{ characterIds: [1001], createdAt: '2026-04-20T18:00:00.000Z', id: 'box-1', name: 'Favorites', updatedAt: '2026-04-20T18:00:00.000Z' }],
+        },
+        characterOverrides: {
+          exportedAt: '2026-04-20T18:00:00.000Z',
+          schemaVersion: 1,
+          source: 'character-overrides',
+          overrides: [],
+        },
+        savedEnemies: {
+          enemies: [{ createdAt: '2026-04-20T18:00:00.000Z', enemyMechanics: [], id: 'enemy-1', imageDataUrl: null, name: 'Enemy One', notes: '', requireAllSelectedClassesPerCharacter: false, requireAllSelectedTypesInTeam: false, requiredAbilities: [], selectedClasses: ['Fighter'], selectedTypes: ['DEX'], updatedAt: '2026-04-20T18:00:00.000Z' }],
+          exportedAt: '2026-04-20T18:00:00.000Z',
+          schemaVersion: 1,
+          source: 'saved-enemies',
+        },
+        savedTeams: {
+          exportedAt: '2026-04-20T18:00:00.000Z',
+          schemaVersion: 1,
+          source: 'saved-teams',
+          teams: [{ createdAt: '2026-04-20T18:00:00.000Z', id: 'team-1', name: 'Crew One', notes: '', shipId: null, slots: [1001, null, null, null, null, null], updatedAt: '2026-04-20T18:00:00.000Z' }],
+        },
+        schemaVersion: 1,
+        source: 'all-data',
+      }),
+    ).toEqual({
+      characterBoxesCount: 1,
+      characterOverridesCount: 0,
+      favoriteCharacterCount: 2,
+      favoriteShipCount: 1,
+      savedEnemiesCount: 1,
+      savedTeamsCount: 1,
+    });
+  });
 });
 
 function createDependencies() {

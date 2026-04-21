@@ -167,7 +167,11 @@
         <div class="drive-sync-summary">
           <div>
             <strong>{{ t('driveSync.status.label') }}</strong>
-            <span>{{ t('driveSync.status.phase.' + driveSyncStatus().phase) }}</span>
+            <span>{{ t(drivePrimaryStateKey()) }}</span>
+          </div>
+          <div>
+            <strong>{{ t('driveSync.status.lastChecked') }}</strong>
+            <span>{{ formatTimestamp(driveSyncMetadata().lastCheckedAt) }}</span>
           </div>
           <div>
             <strong>{{ t('driveSync.status.lastUploaded') }}</strong>
@@ -179,14 +183,49 @@
           </div>
           <div>
             <strong>{{ t('driveSync.status.remoteUpdated') }}</strong>
-            <span>{{
-              formatTimestamp(driveRemoteBackup()?.modifiedTime ?? driveSyncMetadata().lastSeenRemoteModifiedTime)
-            }}</span>
+            <span>{{ formatTimestamp(driveSyncMetadata().remoteModifiedTime) }}</span>
+          </div>
+          <div>
+            <strong>{{ t('driveSync.status.folder') }}</strong>
+            <span>{{ getDriveLocationStatus() }}</span>
+          </div>
+          <div>
+            <strong>{{ t('driveSync.status.file') }}</strong>
+            <span>{{ getDriveBackupFileStatus() }}</span>
+          </div>
+        </div>
+
+        <div class="drive-sync-panels">
+          <div class="drive-sync-panel">
+            <strong>{{ t('driveSync.summary.localTitle') }}</strong>
+            <span>{{ getSummaryCountLabel('favorites', localSyncScopeSummary().favoriteCharacterCount) }}</span>
+            <span>{{ getSummaryCountLabel('favoriteShips', localSyncScopeSummary().favoriteShipCount) }}</span>
+            <span>{{ getSummaryCountLabel('characterBoxes', localSyncScopeSummary().characterBoxesCount) }}</span>
+            <span>{{ getSummaryCountLabel('characterOverrides', localSyncScopeSummary().characterOverridesCount) }}</span>
+            <span>{{ getSummaryCountLabel('savedTeams', localSyncScopeSummary().savedTeamsCount) }}</span>
+            <span>{{ getSummaryCountLabel('savedEnemies', localSyncScopeSummary().savedEnemiesCount) }}</span>
+          </div>
+
+          <div class="drive-sync-panel">
+            <strong>{{ t('driveSync.summary.remoteTitle') }}</strong>
+            @if (remoteSyncScopeSummary(); as remoteSummary) {
+              <span>{{ getSummaryCountLabel('favorites', remoteSummary.favoriteCharacterCount) }}</span>
+              <span>{{ getSummaryCountLabel('favoriteShips', remoteSummary.favoriteShipCount) }}</span>
+              <span>{{ getSummaryCountLabel('characterBoxes', remoteSummary.characterBoxesCount) }}</span>
+              <span>{{ getSummaryCountLabel('characterOverrides', remoteSummary.characterOverridesCount) }}</span>
+              <span>{{ getSummaryCountLabel('savedTeams', remoteSummary.savedTeamsCount) }}</span>
+              <span>{{ getSummaryCountLabel('savedEnemies', remoteSummary.savedEnemiesCount) }}</span>
+            } @else {
+              <span>{{ getRemoteSummaryState() }}</span>
+            }
           </div>
         </div>
 
         <p>{{ t('driveSync.scope') }}</p>
         <p>{{ t('driveSync.localOnly') }}</p>
+        @if (!driveSyncMetadata().knownFolderId) {
+          <p>{{ t('driveSync.location.folderAfterSync') }}</p>
+        }
 
         <div class="transfer-actions">
           @if (!googleAccountAvailable()) {
@@ -198,12 +237,20 @@
               {{ t('driveSync.actions.signIn') }}
             </ion-button>
           } @else {
+            <ion-button fill="outline" color="light" (click)="refreshDriveInfo()">
+              {{ t('driveSync.actions.refresh') }}
+            </ion-button>
             <ion-button fill="outline" color="light" (click)="syncDriveNow()">
               {{ t('driveSync.actions.syncNow') }}
             </ion-button>
             <ion-button fill="outline" color="warning" (click)="showDriveRestorePrompt()">
               {{ t('driveSync.actions.restore') }}
             </ion-button>
+            @if (driveOpenUrl()) {
+              <ion-button fill="outline" color="light" (click)="openDriveLocation()">
+                {{ t('driveSync.actions.openInDrive') }}
+              </ion-button>
+            }
             <ion-button fill="outline" color="light" (click)="signOutGoogle()">
               {{ t('driveSync.actions.signOut') }}
             </ion-button>
@@ -216,20 +263,15 @@
           }
         </div>
 
-        @if (driveSyncStatus().detail || googleAccountLastError()) {
+        @if (driveSecondaryMessage()) {
           <div
             class="transfer-feedback"
             [class.transfer-feedback--error]="driveSyncStatus().phase === 'error' || googleAccountStatus() === 'reconnect-required'"
             [class.transfer-feedback--warning]="driveSyncStatus().phase === 'needs-auth' || googleAccountStatus() === 'signed-out'"
-            [class.transfer-feedback--success]="driveSyncStatus().phase === 'idle'"
+            [class.transfer-feedback--success]="driveSyncStatus().phase === 'idle' && !driveRestorePrompt()"
           >
             <strong>{{ t('driveSync.feedback.title') }}</strong>
-            @if (driveSyncStatus().detail) {
-              <span>{{ driveSyncStatus().detail }}</span>
-            }
-            @if (googleAccountLastError()) {
-              <span>{{ googleAccountLastError() }}</span>
-            }
+            <span>{{ driveSecondaryMessage() }}</span>
           </div>
         }
 
