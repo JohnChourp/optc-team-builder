@@ -569,12 +569,60 @@ describe('UserStateService saved teams', () => {
       'crew-forge-default-android-1080x2400-character-recruitment',
     );
 
-    expect(service.crewForgeImageProfiles()[0]).toMatchObject({
+    const builtInProfile = service.crewForgeImageProfiles()[0];
+
+    expect(builtInProfile).toMatchObject({
       id: 'crew-forge-default-android-1080x2400-character-recruitment',
       source: 'built-in',
       imageWidth: 1080,
       imageHeight: 2400,
     });
+    expect(builtInProfile?.slotDefinitions.map((slot) => slot.key)).toEqual([
+      'leader-1',
+      'leader-2',
+      'leader-3',
+      'leader-4',
+      'sub-1',
+      'sub-2',
+      'sub-3',
+      'sub-4',
+      'sub-5',
+      'sub-6',
+      'sub-7',
+      'sub-8',
+    ]);
+    expect(builtInProfile?.slotDefinitions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'leader-1',
+          x: 149,
+          y: 856,
+          width: 179,
+          height: 179,
+        }),
+        expect.objectContaining({
+          key: 'leader-4',
+          x: 740,
+          y: 856,
+          width: 179,
+          height: 179,
+        }),
+        expect.objectContaining({
+          key: 'sub-1',
+          x: 149,
+          y: 1179,
+          width: 179,
+          height: 179,
+        }),
+        expect.objectContaining({
+          key: 'sub-8',
+          x: 740,
+          y: 1384,
+          width: 179,
+          height: 179,
+        }),
+      ]),
+    );
     expect(service.crewForgeLastImageProfileId()).toBe(
       'crew-forge-default-android-1080x2400-character-recruitment',
     );
