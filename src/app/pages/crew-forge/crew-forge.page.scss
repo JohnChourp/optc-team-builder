@@ -411,11 +411,32 @@
 
 .image-import-slot-card__crop {
   aspect-ratio: 1;
+  width: 50%;
+  justify-self: center;
   background: rgba(255, 255, 255, 0.03);
 }
 
 .image-import-slot-card__match {
   grid-template-columns: 64px minmax(0, 1fr);
+}
+
+.image-import-slot-card__match--image-only {
+  grid-template-columns: 1fr;
+}
+
+.image-import-slot-card__match--selected {
+  aspect-ratio: 1;
+  width: 50%;
+  justify-self: center;
+}
+
+.image-import-slot-card__candidate-button {
+  font-size: 0.88rem;
+  line-height: 1.15;
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+  --padding-start: 10px;
+  --padding-end: 10px;
 }
 
 .load-more-row {

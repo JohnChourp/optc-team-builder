@@ -1,127 +1,58 @@
 {
   "title": "Crew Forge",
   "hero": {
-    "eyebrow": "Planner από το δικό σου roster",
-    "title": "Χτίσε ranked ομάδες από τη δική σου λίστα χαρακτήρων.",
-    "copy": "Κλείδωσε έναν ή δύο leaders, διάλεξε ποιοι subs θα είναι διαθέσιμοι και σύγκρινε πολλές νόμιμες ομάδες ταξινομημένες με βάση τα διαφορετικά abilities που καλύπτουν.",
+    "eyebrow": "Screenshot-first builder",
+    "title": "Ανέβασε screenshot και χτίσε ranked ομάδες από το roster που αναγνωρίστηκε.",
+    "copy": "Το Crew Forge διαβάζει τα portraits από το screenshot, σου επιτρέπει να διορθώσεις κάθε slot αν χρειάζεται, και μετά χτίζει τις καλύτερες δυνατές ομάδες με βάση τα abilities που καλύπτουν.",
     "meta": {
+      "recognized": "{{count}} αναγνωρισμένοι χαρακτήρες",
       "limit": "Έως 50 ranked προτάσεις"
     }
   },
   "actions": {
-    "build": "Δημιουργία ranked ομάδων"
+    "build": "Δημιουργία ομάδων"
   },
   "roster": {
-    "eyebrow": "Επιλογές",
-    "title": "Leaders και candidate pool",
-    "copy": "Οι captains μένουν κλειδωμένοι. Κάθε άλλος επιλεγμένος χαρακτήρας γίνεται πιθανός sub για τα ranked αποτελέσματα.",
-    "summary": "{{count}} συνολικές επιλογές • {{pool}} pool subs",
-    "minimum": "Διάλεξε τουλάχιστον {{count}} μοναδικούς χαρακτήρες ανάμεσα σε leaders και pool πριν δημιουργήσεις ομάδες."
-  },
-  "leaders": {
-    "captain": "Captain",
-    "friendCaptain": "Friend Captain",
-    "captainEmpty": "Άφησέ το κενό αν θέλεις το Crew Forge να διαλέξει τον καλύτερο captain για το τρέχον roster.",
-    "friendEmpty": "Άφησέ το κενό αν θέλεις το Crew Forge να διαλέξει τον καλύτερο friend captain για το τρέχον roster."
-  },
-  "pool": {
-    "title": "Sub pool",
-    "count": "{{count}} επιλεγμένοι",
-    "empty": "Πρόσθεσε τους χαρακτήρες που θέλεις να εξετάζει το Crew Forge ως πιθανούς subs."
+    "eyebrow": "Screenshot roster",
+    "title": "Αναγνώριση και διορθώσεις",
+    "copy": "Ανέβασε ένα screenshot, έλεγξε τα matches ανά slot και διόρθωσε όποιο portrait χρειάζεται πριν τρέξει το build.",
+    "minimum": "Χρειάζονται τουλάχιστον {{count}} μοναδικοί αναγνωρισμένοι χαρακτήρες πριν δημιουργηθούν ομάδες."
   },
   "imageImport": {
-    "title": "Εισαγωγή εικόνας",
-    "copy": "Ανέβασε screenshot του roster, ταίριαξέ το με exact profile ανάλυσης και γέμισε αυτόματα το candidate pool από τα portraits που αναγνωρίστηκαν.",
-    "empty": "Ανέβασε ένα screenshot για να ξεκινήσει η αναγνώριση portraits με exact profile.",
-    "profileLabel": "Exact profile",
-    "profilePlaceholder": "Διάλεξε αποθηκευμένο profile",
-    "processing": "Το Crew Forge αναλύει το ανεβασμένο screenshot...",
-    "previewAlt": "Ανεβασμένο screenshot ομάδας",
+    "title": "Ανέβασμα screenshot",
+    "copy": "Το screenshot ταιριάζεται αυτόματα με local exact profile ίδιων διαστάσεων και μετά ξεκινά η αναγνώριση portraits.",
+    "empty": "Ανέβασε ένα screenshot roster για να ξεκινήσει η αναγνώριση.",
+    "processing": "Το Crew Forge αναλύει το screenshot...",
+    "previewAlt": "Ανεβασμένο screenshot roster",
     "previewFallbackName": "Ανεβασμένο screenshot",
-    "builtInLabel": "Built-in",
-    "builtInCopy": "Αυτό το bundled default μένει read-only. Το edit, το save-example και το exemplar learning δημιουργούν αυτόματα local copy.",
-    "previewTitle": "Preview αναγνώρισης",
-    "previewCopy": "{{count}} μοναδικοί χαρακτήρες είναι έτοιμοι να αντικαταστήσουν το τρέχον pool.",
+    "previewTitle": "Αναγνωρισμένα slots",
+    "previewCopy": "{{count}} μοναδικοί χαρακτήρες είναι έτοιμοι για build.",
     "confidence": "Βεβαιότητα",
-    "slotEmpty": "Δεν υπάρχει ακόμα αρκετά σίγουρο match για αυτό το slot.",
-    "learning": {
-      "title": "Αποθήκευση exemplars",
-      "copy": "Αποθήκευσε τα επιβεβαιωμένα slot crops στο apply ώστε τα επόμενα imports για αυτό το profile να ταιριάζουν πιο γρήγορα."
-    },
     "picker": {
-      "title": "Επιλογή portrait match",
-      "copy": "Κάνε override στο τρέχον αποτέλεσμα αναγνώρισης για αυτό το slot."
-    },
-    "profileEditor": {
-      "title": "Επεξεργασία profile",
-      "copy": "Όρισε το ακριβές μέγεθος screenshot, τα crop rectangles των slots και το preprocessing πριν από το fingerprint matching.",
-      "save": "Αποθήκευση profile",
-      "name": "Όνομα profile",
-      "width": "Πλάτος εικόνας",
-      "height": "Ύψος εικόνας",
-      "matchThreshold": "Όριο match",
-      "emptyVarianceThreshold": "Όριο empty variance",
-      "fingerprintSize": "Μέγεθος fingerprint",
-      "contrast": "Contrast",
-      "brightness": "Brightness",
-      "blurRadius": "Blur radius",
-      "grayscale": "Μετατροπή crops σε grayscale",
-      "invert": "Αντιστροφή luminance"
+      "title": "Επιλογή χαρακτήρα",
+      "copy": "Κάνε override στο αποτέλεσμα για αυτό το slot αν το recognition διάλεξε λάθος portrait."
     },
     "actions": {
       "upload": "Ανέβασμα screenshot",
       "replace": "Αντικατάσταση screenshot",
-      "newProfile": "Νέο profile",
-      "editProfile": "Επεξεργασία profile",
-      "deleteProfile": "Διαγραφή profile",
-      "recognize": "Εκτέλεση αναγνώρισης",
-      "saveExample": "Αποθήκευση screenshot ως example",
-      "apply": "Αντικατάσταση pool με τα matches",
-      "chooseCharacter": "Επιλογή χαρακτήρα"
+      "chooseCharacter": "Pick a character"
     },
     "errors": {
       "invalidType": "Μπορούν να εισαχθούν μόνο αρχεία εικόνας.",
       "loadFailed": "Το screenshot δεν μπόρεσε να φορτωθεί.",
       "recognitionFailed": "Το Crew Forge δεν μπόρεσε να αναλύσει αυτό το screenshot.",
-      "noProfile": "Δημιούργησε ή διάλεξε ένα exact profile ανάλυσης πριν τρέξει η αναγνώριση.",
-      "profileMismatch": "Το επιλεγμένο profile δεν ταιριάζει με τις διαστάσεις του τρέχοντος screenshot.",
-      "noProfileForDimensions": "Δεν υπάρχει exact profile για {{width}} × {{height}}. Δημιούργησε ένα πριν τρέξεις αναγνώριση.",
-      "invalidProfile": "Το profile είναι ελλιπές. Συμπλήρωσε όνομα, διαστάσεις και rectangles των slots."
-    }
-  },
-  "catalog": {
-    "eyebrow": "Catalog",
-    "title": "Αναζήτηση και ανάθεση χαρακτήρων",
-    "copy": "Χρησιμοποίησε τα φίλτρα για να δεις το local dataset και μετά όρισε κάθε χαρακτήρα ως captain, friend captain ή μέλος του sub pool.",
-    "searchPlaceholder": "Αναζήτηση με όνομα, id, type ή class",
-    "loading": "Φόρτωση local catalog...",
-    "empty": "Κανένας χαρακτήρας δεν ταιριάζει στα τρέχοντα φίλτρα.",
-    "loadMore": "Φόρτωση περισσότερων χαρακτήρων",
-    "filters": {
-      "type": "Type",
-      "class": "Class",
-      "characterBox": "Character box",
-      "allCharacters": "Όλοι οι χαρακτήρες",
-      "anyType": "Οποιοδήποτε type",
-      "anyClass": "Οποιοδήποτε class",
-      "favoritesOnly": "Μόνο favorites",
-      "favoritesHint": "Επηρεάζει μόνο τον catalog picker, όχι τα picks που έχεις ήδη διαλέξει."
-    },
-    "actions": {
-      "makeCaptain": "Ορισμός captain",
-      "captainSet": "Captain κλειδωμένος",
-      "makeFriend": "Ορισμός friend",
-      "friendSet": "Friend κλειδωμένος",
-      "addPool": "Προσθήκη στο pool",
-      "removePool": "Αφαίρεση από το pool"
+      "noProfile": "Δεν βρέθηκε κατάλληλο exact profile για αυτό το screenshot.",
+      "profileMismatch": "Το exact profile δεν ταιριάζει με τις διαστάσεις του τρέχοντος screenshot.",
+      "noProfileForDimensions": "Δεν υποστηρίζεται ακόμα screenshot {{width}} × {{height}}.",
+      "invalidProfile": "Το local profile είναι ελλιπές."
     }
   },
   "results": {
     "eyebrow": "Προτάσεις",
     "title": "Ranked αποτελέσματα ομάδων",
-    "copy": "Κάθε αποτέλεσμα κρατά τους locked leaders που επέλεξες και προσπαθεί να μεγιστοποιήσει τα διαφορετικά utilities σε όλη την εξαμελή ομάδα.",
-    "emptyState": "Διάλεξε leaders και candidate pool για να ξεκινήσεις τη δημιουργία ranked ομάδων.",
-    "empty": "Δεν ήταν δυνατό να δημιουργηθούν έγκυρες ομάδες από τα τρέχοντα roster picks.",
+    "copy": "Κάθε αποτέλεσμα χτίζεται αποκλειστικά από τους χαρακτήρες που αναγνωρίστηκαν ή διορθώθηκαν στο screenshot.",
+    "emptyState": "Ανέβασε screenshot, επιβεβαίωσε τα recognized portraits και πάτα build για να δεις ranked ομάδες.",
+    "empty": "Δεν ήταν δυνατό να δημιουργηθούν έγκυρες ομάδες από το τρέχον recognized roster.",
     "loading": "Το Crew Forge αξιολογεί τους καλύτερους συνδυασμούς ομάδων...",
     "resultLabel": "Αποτέλεσμα {{index}}",
     "distinctAbilities": "διαφορετικά abilities",

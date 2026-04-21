@@ -40,10 +40,10 @@ describe('CharacterImagePickerComponent', () => {
       searchTerm: '',
       typeFilter: '',
       classFilter: '',
-      limit: 24,
+      limit: 48,
       offset: 0,
     });
-    expect(component.characters()).toHaveLength(24);
+    expect(component.characters()).toHaveLength(48);
     expect(component.hasMore()).toBe(true);
   });
 
@@ -70,10 +70,12 @@ describe('CharacterImagePickerComponent', () => {
       searchTerm: 'Luffy',
       typeFilter: 'DEX',
       classFilter: 'Fighter',
-      limit: 24,
+      limit: 48,
       offset: 0,
     });
-    expect(component.characters().every((character) => character.name.includes('Luffy'))).toBe(true);
+    expect(component.characters().every((character) => character.name.includes('Luffy'))).toBe(
+      true,
+    );
   });
 
   it('loads more characters without resetting the existing page', async () => {
@@ -85,7 +87,7 @@ describe('CharacterImagePickerComponent', () => {
     });
     await flushPromises();
 
-    expect(component.characters()).toHaveLength(24);
+    expect(component.characters()).toHaveLength(48);
 
     await component.loadMore();
 
@@ -93,10 +95,10 @@ describe('CharacterImagePickerComponent', () => {
       searchTerm: '',
       typeFilter: '',
       classFilter: '',
-      limit: 24,
-      offset: 24,
+      limit: 48,
+      offset: 48,
     });
-    expect(component.characters()).toHaveLength(32);
+    expect(component.characters()).toHaveLength(72);
     expect(component.hasMore()).toBe(false);
   });
 
@@ -117,9 +119,29 @@ describe('CharacterImagePickerComponent', () => {
     expect(emitSpy).toHaveBeenCalledWith(component.characters()[1]);
   });
 
+  it('updates the footer action label to the selected character name', async () => {
+    const { component } = createComponent();
+
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+    });
+    await flushPromises();
+
+    expect(component.selectedCharacterActionLabel()).toBe('');
+
+    component.selectCharacter(component.characters()[1]!);
+
+    expect(component.selectedCharacter()).toEqual(component.characters()[1]);
+    expect(component.selectedCharacterActionLabel()).toBe(component.characters()[1]!.name);
+  });
+
   it('renders the search, filters and confirm action in the template', () => {
     const template = readFileSync(
-      resolve(process.cwd(), 'src/app/shared/character-image-picker/character-image-picker.component.html'),
+      resolve(
+        process.cwd(),
+        'src/app/shared/character-image-picker/character-image-picker.component.html',
+      ),
       'utf8',
     );
 
@@ -129,6 +151,14 @@ describe('CharacterImagePickerComponent', () => {
     expect(template).toContain('(click)="selectCharacter(character)"');
     expect(template).toContain('(click)="loadMore()"');
     expect(template).toContain('(click)="save()"');
+    expect(template).toContain("selectedCharacterActionLabel() || t('actions.useImage')");
+    expect(template).not.toContain("t('eyebrow')");
+    expect(template).not.toContain('{{ title }}');
+    expect(template).not.toContain('{{ copy }}');
+    expect(template).not.toContain("t('catalog.title')");
+    expect(template).not.toContain("t('catalog.count'");
+    expect(template).not.toContain("t('selected.title')");
+    expect(template).not.toContain("t('selected.emptyTitle')");
   });
 });
 
@@ -180,7 +210,7 @@ function createComponent() {
 }
 
 function buildCharacters() {
-  return Array.from({ length: 32 }, (_, index) => {
+  return Array.from({ length: 72 }, (_, index) => {
     const id = index + 1;
     const isLuffy = id <= 8;
     const type = id % 3 === 0 ? 'PSY' : id % 2 === 0 ? 'STR' : 'DEX';

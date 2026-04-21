@@ -23,8 +23,8 @@
 
           <div class="hero-meta">
             <div class="meta-pill">
-              <ion-icon [icon]="rosterIcon"></ion-icon>
-              <span>{{ rosterSummaryLabel() }}</span>
+              <ion-icon [icon]="imageImportIcon"></ion-icon>
+              <span>{{ t('hero.meta.recognized', { count: recognizedRosterCount() }) }}</span>
             </div>
             <div class="meta-pill">
               <ion-icon [icon]="coverageIcon"></ion-icon>
@@ -44,17 +44,6 @@
             <h2>{{ t('roster.title') }}</h2>
             <p>{{ t('roster.copy') }}</p>
           </div>
-
-          <ion-button
-            color="warning"
-            [disabled]="!buildReady() || building()"
-            (click)="buildTeams()"
-          >
-            @if (building()) {
-              <ion-spinner slot="start" name="crescent"></ion-spinner>
-            }
-            {{ t('actions.build') }}
-          </ion-button>
         </div>
 
         <article class="selection-panel image-import-panel">
@@ -68,7 +57,7 @@
                 fill="outline"
                 color="warning"
                 size="small"
-                [disabled]="imageImportLoading() || imageImportProcessing() || imageImportApplying()"
+                [disabled]="imageImportLoading() || imageImportProcessing()"
                 (click)="openImageImportPicker(imageImportInput)"
               >
                 <ion-icon slot="start" [icon]="imageImportIcon"></ion-icon>
@@ -77,10 +66,6 @@
                     ? t('imageImport.actions.replace')
                     : t('imageImport.actions.upload')
                 }}
-              </ion-button>
-              <ion-button fill="outline" color="light" size="small" (click)="openProfileEditorForCreate()">
-                <ion-icon slot="start" [icon]="imageImportManageIcon"></ion-icon>
-                {{ t('imageImport.actions.newProfile') }}
               </ion-button>
             </div>
           </div>
@@ -107,84 +92,6 @@
             </div>
           }
 
-          <div class="catalog-controls image-import-controls">
-            <label class="field">
-              <span>{{ t('imageImport.profileLabel') }}</span>
-              <ion-select
-                interface="popover"
-                fill="outline"
-                [value]="selectedImageProfileId() ?? ''"
-                [disabled]="!crewForgeImageProfiles().length"
-                (ionChange)="onSelectedImageProfileChange($event)"
-              >
-                <ion-select-option value="">{{ t('imageImport.profilePlaceholder') }}</ion-select-option>
-                @for (profile of crewForgeImageProfiles(); track profile.id) {
-                  <ion-select-option [value]="profile.id">
-                    {{ profile.name }} • {{ profile.imageWidth }}×{{ profile.imageHeight }}{{ isBuiltInProfile(profile) ? ' • ' + t('imageImport.builtInLabel') : '' }}
-                  </ion-select-option>
-                }
-              </ion-select>
-            </label>
-
-            <div class="toggle-field">
-              <div>
-                <strong>{{ t('imageImport.learning.title') }}</strong>
-                <small>{{ t('imageImport.learning.copy') }}</small>
-              </div>
-              <ion-toggle
-                color="warning"
-                [checked]="saveImageCorrectionsToProfile()"
-                (ionChange)="onSaveCorrectionsToggle($event)"
-              ></ion-toggle>
-            </div>
-
-            <div class="image-import-inline-actions">
-              <ion-button
-                fill="outline"
-                color="light"
-                size="small"
-                [disabled]="!selectedImageProfile()"
-                (click)="openProfileEditorForSelected()"
-              >
-                {{ t('imageImport.actions.editProfile') }}
-              </ion-button>
-              <ion-button
-                fill="outline"
-                color="light"
-                size="small"
-                [disabled]="!canRecognizeUploadedImage() || imageImportProcessing()"
-                (click)="runImageRecognition()"
-              >
-                {{ t('imageImport.actions.recognize') }}
-              </ion-button>
-              <ion-button
-                fill="clear"
-                color="light"
-                size="small"
-                [disabled]="!selectedImageProfile() || !imageImportDataUrl()"
-                (click)="saveCurrentImageAsExample()"
-              >
-                {{ t('imageImport.actions.saveExample') }}
-              </ion-button>
-              @if (!selectedImageProfileIsBuiltIn()) {
-                <ion-button
-                  fill="clear"
-                  color="danger"
-                  size="small"
-                  [disabled]="!selectedImageProfile()"
-                  (click)="deleteSelectedProfile()"
-                >
-                  <ion-icon slot="start" [icon]="imageImportDeleteIcon"></ion-icon>
-                  {{ t('imageImport.actions.deleteProfile') }}
-                </ion-button>
-              }
-            </div>
-
-            @if (selectedImageProfileIsBuiltIn()) {
-              <p class="build-hint image-import-built-in-copy">{{ t('imageImport.builtInCopy') }}</p>
-            }
-          </div>
-
           @if (imageImportLoading() || imageImportProcessing()) {
             <div class="selection-empty">
               <ion-spinner name="crescent"></ion-spinner>
@@ -196,198 +103,21 @@
             <p class="build-hint image-import-error">{{ imageImportErrorMessage() }}</p>
           }
 
-          @if (profileEditorVisible()) {
-            <div class="image-profile-editor">
-              <div class="section-head section-head--compact">
-                <div>
-                  <h3>{{ t('imageImport.profileEditor.title') }}</h3>
-                  <p>{{ t('imageImport.profileEditor.copy') }}</p>
-                </div>
-                <div class="image-import-actions">
-                  <ion-button fill="outline" color="light" size="small" (click)="closeProfileEditor()">
-                    {{ 'common.actions.cancel' | transloco }}
-                  </ion-button>
-                  <ion-button fill="outline" color="warning" size="small" (click)="saveProfileDraft()">
-                    {{ t('imageImport.profileEditor.save') }}
-                  </ion-button>
-                </div>
-              </div>
-
-              <div class="image-profile-editor__grid">
-                <label class="field">
-                  <span>{{ t('imageImport.profileEditor.name') }}</span>
-                  <input type="text" [value]="profileDraft().name" (input)="updateProfileDraftName($event)" />
-                </label>
-
-                <label class="field">
-                  <span>{{ t('imageImport.profileEditor.width') }}</span>
-                  <input
-                    type="number"
-                    min="1"
-                    [value]="profileDraft().imageWidth"
-                    (input)="updateProfileDraftDimension('imageWidth', $event)"
-                  />
-                </label>
-
-                <label class="field">
-                  <span>{{ t('imageImport.profileEditor.height') }}</span>
-                  <input
-                    type="number"
-                    min="1"
-                    [value]="profileDraft().imageHeight"
-                    (input)="updateProfileDraftDimension('imageHeight', $event)"
-                  />
-                </label>
-
-                <label class="field">
-                  <span>{{ t('imageImport.profileEditor.matchThreshold') }}</span>
-                  <input
-                    type="number"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    [value]="profileDraft().preprocess.matchThreshold"
-                    (input)="updateProfileDraftPreprocess('matchThreshold', $event)"
-                  />
-                </label>
-
-                <label class="field">
-                  <span>{{ t('imageImport.profileEditor.emptyVarianceThreshold') }}</span>
-                  <input
-                    type="number"
-                    min="0"
-                    max="1"
-                    step="0.001"
-                    [value]="profileDraft().preprocess.emptyVarianceThreshold"
-                    (input)="updateProfileDraftPreprocess('emptyVarianceThreshold', $event)"
-                  />
-                </label>
-
-                <label class="field">
-                  <span>{{ t('imageImport.profileEditor.fingerprintSize') }}</span>
-                  <input
-                    type="number"
-                    min="8"
-                    max="32"
-                    [value]="profileDraft().preprocess.fingerprintSize"
-                    (input)="updateProfileDraftPreprocess('fingerprintSize', $event)"
-                  />
-                </label>
-
-                <label class="field">
-                  <span>{{ t('imageImport.profileEditor.contrast') }}</span>
-                  <input
-                    type="number"
-                    step="0.1"
-                    [value]="profileDraft().preprocess.contrast"
-                    (input)="updateProfileDraftPreprocess('contrast', $event)"
-                  />
-                </label>
-
-                <label class="field">
-                  <span>{{ t('imageImport.profileEditor.brightness') }}</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    [value]="profileDraft().preprocess.brightness"
-                    (input)="updateProfileDraftPreprocess('brightness', $event)"
-                  />
-                </label>
-
-                <label class="field">
-                  <span>{{ t('imageImport.profileEditor.blurRadius') }}</span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.5"
-                    [value]="profileDraft().preprocess.blurRadius"
-                    (input)="updateProfileDraftPreprocess('blurRadius', $event)"
-                  />
-                </label>
-
-                <label class="checkbox-field">
-                  <input
-                    type="checkbox"
-                    [checked]="profileDraft().preprocess.grayscale"
-                    (change)="updateProfileDraftPreprocess('grayscale', $event)"
-                  />
-                  <span>{{ t('imageImport.profileEditor.grayscale') }}</span>
-                </label>
-
-                <label class="checkbox-field">
-                  <input
-                    type="checkbox"
-                    [checked]="profileDraft().preprocess.invert"
-                    (change)="updateProfileDraftPreprocess('invert', $event)"
-                  />
-                  <span>{{ t('imageImport.profileEditor.invert') }}</span>
-                </label>
-              </div>
-
-              <div class="image-profile-slot-grid">
-                @for (slot of profileDraft().slotDefinitions; track slot.key) {
-                  <article class="image-profile-slot-card">
-                    <strong>{{ slot.label }}</strong>
-                    <small>{{ slot.role }}</small>
-                    <div class="image-profile-slot-card__grid">
-                      <label class="field">
-                        <span>X</span>
-                        <input
-                          type="number"
-                          min="0"
-                          [value]="slot.x"
-                          (input)="updateProfileDraftSlot(slot.key, 'x', $event)"
-                        />
-                      </label>
-                      <label class="field">
-                        <span>Y</span>
-                        <input
-                          type="number"
-                          min="0"
-                          [value]="slot.y"
-                          (input)="updateProfileDraftSlot(slot.key, 'y', $event)"
-                        />
-                      </label>
-                      <label class="field">
-                        <span>W</span>
-                        <input
-                          type="number"
-                          min="0"
-                          [value]="slot.width"
-                          (input)="updateProfileDraftSlot(slot.key, 'width', $event)"
-                        />
-                      </label>
-                      <label class="field">
-                        <span>H</span>
-                        <input
-                          type="number"
-                          min="0"
-                          [value]="slot.height"
-                          (input)="updateProfileDraftSlot(slot.key, 'height', $event)"
-                        />
-                      </label>
-                    </div>
-                  </article>
-                }
-              </div>
-            </div>
-          }
-
           @if (imageImportRecognition()) {
             <div class="section-head section-head--compact">
               <div>
                 <h3>{{ t('imageImport.previewTitle') }}</h3>
-                <p>{{ t('imageImport.previewCopy', { count: recognizedPoolCount() }) }}</p>
+                <p>{{ t('imageImport.previewCopy', { count: recognizedRosterCount() }) }}</p>
               </div>
               <ion-button
                 color="warning"
-                [disabled]="imageImportApplying()"
-                (click)="applyRecognizedPool()"
+                [disabled]="!buildReady() || building() || imageImportLoading() || imageImportProcessing()"
+                (click)="buildTeams()"
               >
-                @if (imageImportApplying()) {
+                @if (building()) {
                   <ion-spinner slot="start" name="crescent"></ion-spinner>
                 }
-                {{ t('imageImport.actions.apply') }}
+                {{ t('actions.build') }}
               </ion-button>
             </div>
 
@@ -411,41 +141,46 @@
                     </div>
                   }
 
-                  @if (item.character) {
-                    <article class="picked-character-card image-import-slot-card__match">
-                      <img [src]="item.character.imageUrl" [alt]="item.character.name" loading="lazy" />
-                      <div>
-                        <strong>{{ item.character.name }}</strong>
-                        <small>{{ item.character.type }} • {{ item.character.primaryClass }}</small>
-                      </div>
-                    </article>
-                  } @else {
-                    <div class="selection-empty">
-                      <p>{{ t('imageImport.slotEmpty') }}</p>
-                    </div>
-                  }
-
                   <div class="catalog-card-item__actions">
                     @for (candidate of item.candidates; track candidate.candidate.characterId) {
                       <ion-button
+                        class="image-import-slot-card__candidate-button"
                         fill="outline"
                         size="small"
-                        color="light"
+                        [color]="
+                          isRecognitionCandidateSelected(item.slot, candidate.character.id)
+                            ? 'success'
+                            : 'light'
+                        "
                         (click)="applyRecognitionCandidate(item.slot.slotKey, candidate.character.id, candidate.candidate.confidence)"
                       >
                         {{ candidate.character.name }}
                       </ion-button>
                     }
-                    <ion-button fill="outline" size="small" color="warning" (click)="openRecognitionPicker(item.slot.slotKey)">
+                    <ion-button
+                      fill="outline"
+                      size="small"
+                      [color]="isRecognitionPickerSelected(item) ? 'success' : 'warning'"
+                      (click)="openRecognitionPicker(item.slot.slotKey)"
+                    >
                       {{ t('imageImport.actions.chooseCharacter') }}
                     </ion-button>
-                    <ion-button fill="clear" size="small" color="light" (click)="applyRecognitionCandidate(item.slot.slotKey, null)">
-                      {{ 'common.actions.clear' | transloco }}
-                    </ion-button>
                   </div>
+
+                  @if (item.character) {
+                    <article
+                      class="picked-character-card image-import-slot-card__match image-import-slot-card__match--image-only image-import-slot-card__match--selected"
+                    >
+                      <img [src]="item.character.imageUrl" [alt]="item.character.name" loading="lazy" />
+                    </article>
+                  }
                 </article>
               }
             </div>
+
+            @if (!buildReady()) {
+              <p class="build-hint">{{ t('roster.minimum', { count: 5 }) }}</p>
+            }
           }
         </article>
 
@@ -453,266 +188,10 @@
           [isOpen]="recognitionPickerOpen()"
           [title]="t('imageImport.picker.title')"
           [copy]="t('imageImport.picker.copy')"
-          [applyingSelection]="imageImportApplying()"
+          [applyingSelection]="building() || imageImportProcessing()"
           (dismiss)="closeRecognitionPicker()"
           (saveSelection)="applyRecognitionCharacterSelection($event)"
         ></app-character-image-picker>
-
-        <div class="leader-grid">
-          <article class="selection-panel">
-            <div class="selection-panel__head">
-              <strong>{{ t('leaders.captain') }}</strong>
-              @if (selectedCaptain()) {
-                <button type="button" class="ghost-action" (click)="clearCaptain()">
-                  {{ 'common.actions.clear' | transloco }}
-                </button>
-              }
-            </div>
-
-            @if (!selectedCaptain()) {
-              <div class="selection-empty">
-                <p>{{ t('leaders.captainEmpty') }}</p>
-              </div>
-            } @else {
-              <article class="picked-character-card">
-                <img [src]="selectedCaptain()!.imageUrl" [alt]="selectedCaptain()!.name" loading="lazy" />
-                <div>
-                  <strong>{{ selectedCaptain()!.name }}</strong>
-                  <small>{{ selectedCaptain()!.type }} • {{ selectedCaptain()!.primaryClass }}</small>
-                </div>
-              </article>
-            }
-          </article>
-
-          <article class="selection-panel">
-            <div class="selection-panel__head">
-              <strong>{{ t('leaders.friendCaptain') }}</strong>
-              @if (selectedFriendCaptain()) {
-                <button type="button" class="ghost-action" (click)="clearFriendCaptain()">
-                  {{ 'common.actions.clear' | transloco }}
-                </button>
-              }
-            </div>
-
-            @if (!selectedFriendCaptain()) {
-              <div class="selection-empty">
-                <p>{{ t('leaders.friendEmpty') }}</p>
-              </div>
-            } @else {
-              <article class="picked-character-card">
-                <img
-                  [src]="selectedFriendCaptain()!.imageUrl"
-                  [alt]="selectedFriendCaptain()!.name"
-                  loading="lazy"
-                />
-                <div>
-                  <strong>{{ selectedFriendCaptain()!.name }}</strong>
-                  <small>{{
-                    selectedFriendCaptain()!.type
-                  }} • {{ selectedFriendCaptain()!.primaryClass }}</small>
-                </div>
-              </article>
-            }
-          </article>
-        </div>
-
-        <article class="selection-panel pool-panel">
-          <div class="selection-panel__head">
-            <div>
-              <strong>{{ t('pool.title') }}</strong>
-              <small>{{ t('pool.count', { count: selectedPoolCharacters().length }) }}</small>
-            </div>
-            <button type="button" class="ghost-action" [disabled]="!selectedPoolCharacters().length" (click)="clearPool()">
-              {{ 'common.actions.clear' | transloco }}
-            </button>
-          </div>
-
-          @if (!selectedPoolCharacters().length) {
-            <div class="selection-empty">
-              <p>{{ t('pool.empty') }}</p>
-            </div>
-          } @else {
-            <div class="pool-chip-grid">
-              @for (character of selectedPoolCharacters(); track character.id) {
-                <button type="button" class="pool-chip" (click)="removePoolCharacter(character.id)">
-                  <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
-                  <span>{{ character.name }}</span>
-                  <ion-icon [icon]="closeIcon"></ion-icon>
-                </button>
-              }
-            </div>
-          }
-        </article>
-
-        @if (!buildReady()) {
-          <p class="build-hint">{{ t('roster.minimum', { count: minimumRosterCount() }) }}</p>
-        }
-      </section>
-
-      <section class="glass-card catalog-card">
-        <div class="section-head">
-          <div>
-            <div class="section-label">
-              <ion-icon [icon]="searchIcon"></ion-icon>
-              <span>{{ t('catalog.eyebrow') }}</span>
-            </div>
-            <h2>{{ t('catalog.title') }}</h2>
-            <p>{{ t('catalog.copy') }}</p>
-          </div>
-        </div>
-
-        <div class="catalog-controls">
-          <ion-searchbar
-            [debounce]="150"
-            [value]="searchTerm()"
-            [placeholder]="t('catalog.searchPlaceholder')"
-            (ionInput)="onSearchChange($event)"
-          ></ion-searchbar>
-
-          <label class="field">
-            <span>{{ t('catalog.filters.type') }}</span>
-            <ion-select
-              interface="popover"
-              fill="outline"
-              [value]="selectedTypeFilter()"
-              (ionChange)="onTypeChange($event)"
-            >
-              <ion-select-option value="">{{ t('catalog.filters.anyType') }}</ion-select-option>
-              @for (type of availableTypes(); track type) {
-                <ion-select-option [value]="type">{{ type }}</ion-select-option>
-              }
-            </ion-select>
-          </label>
-
-          <label class="field">
-            <span>{{ t('catalog.filters.class') }}</span>
-            <ion-select
-              interface="popover"
-              fill="outline"
-              [value]="selectedClassFilter()"
-              (ionChange)="onClassChange($event)"
-            >
-              <ion-select-option value="">{{ t('catalog.filters.anyClass') }}</ion-select-option>
-              @for (characterClass of availableClasses(); track characterClass) {
-                <ion-select-option [value]="characterClass">{{ characterClass }}</ion-select-option>
-              }
-            </ion-select>
-          </label>
-
-          <label class="field">
-            <span>{{ t('catalog.filters.characterBox') }}</span>
-            <ion-select
-              interface="popover"
-              fill="outline"
-              [value]="selectedCharacterBoxId() ?? ''"
-              (ionChange)="onCharacterBoxChange($event)"
-            >
-              <ion-select-option value="">{{ t('catalog.filters.allCharacters') }}</ion-select-option>
-              @for (characterBox of characterBoxes(); track characterBox.id) {
-                <ion-select-option [value]="characterBox.id">{{ characterBox.name }}</ion-select-option>
-              }
-            </ion-select>
-          </label>
-
-          <div class="toggle-field">
-            <div>
-              <strong>{{ t('catalog.filters.favoritesOnly') }}</strong>
-              <small>{{ t('catalog.filters.favoritesHint') }}</small>
-            </div>
-            <ion-toggle
-              color="warning"
-              [checked]="favoritesOnly()"
-              (ionChange)="onFavoritesOnlyToggle($event)"
-            ></ion-toggle>
-          </div>
-        </div>
-
-        @if (catalogLoading()) {
-          <div class="selection-empty selection-empty--large">
-            <ion-spinner name="crescent"></ion-spinner>
-            <p>{{ t('catalog.loading') }}</p>
-          </div>
-        } @else if (!catalogCharacters().length) {
-          <div class="selection-empty selection-empty--large">
-            <p>{{ t('catalog.empty') }}</p>
-          </div>
-        } @else {
-          <div class="catalog-grid">
-            @for (character of catalogCharacters(); track character.id) {
-              <article class="catalog-card-item">
-                <div class="catalog-card-item__image">
-                  <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
-                </div>
-
-                <div class="catalog-card-item__copy">
-                  <strong>{{ character.name }}</strong>
-                  <small>{{ character.type }} • {{ character.primaryClass }}</small>
-                  @if (character.secondaryClass) {
-                    <small>{{ character.secondaryClass }}</small>
-                  }
-                </div>
-
-                <div class="catalog-card-item__actions">
-                  <ion-button
-                    fill="outline"
-                    size="small"
-                    color="warning"
-                    (click)="setCaptain(character.id)"
-                  >
-                    {{ isCaptain(character.id) ? t('catalog.actions.captainSet') : t('catalog.actions.makeCaptain') }}
-                  </ion-button>
-                  <ion-button
-                    fill="outline"
-                    size="small"
-                    color="warning"
-                    (click)="setFriendCaptain(character.id)"
-                  >
-                    {{
-                      isFriendCaptain(character.id)
-                        ? t('catalog.actions.friendSet')
-                        : t('catalog.actions.makeFriend')
-                    }}
-                  </ion-button>
-                  <ion-button
-                    fill="clear"
-                    size="small"
-                    [disabled]="isLeader(character.id)"
-                    (click)="togglePoolCharacter(character.id)"
-                  >
-                    {{
-                      isInPool(character.id)
-                        ? t('catalog.actions.removePool')
-                        : t('catalog.actions.addPool')
-                    }}
-                  </ion-button>
-                  <ion-button
-                    fill="clear"
-                    size="small"
-                    [routerLink]="getCharacterDetailLink(character)"
-                  >
-                    {{ 'common.actions.viewDetails' | transloco }}
-                  </ion-button>
-                </div>
-              </article>
-            }
-          </div>
-        }
-
-        @if (!catalogLoading() && catalogHasMore()) {
-          <div class="load-more-row">
-            <ion-button
-              fill="outline"
-              color="warning"
-              [disabled]="catalogLoadingMore()"
-              (click)="loadMoreCatalog()"
-            >
-              @if (catalogLoadingMore()) {
-                <ion-spinner slot="start" name="crescent"></ion-spinner>
-              }
-              {{ t('catalog.loadMore') }}
-            </ion-button>
-          </div>
-        }
       </section>
 
       <section class="glass-card results-card">

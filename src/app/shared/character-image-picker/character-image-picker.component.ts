@@ -23,13 +23,13 @@ import {
   IonSpinner,
   IonToolbar,
 } from '@ionic/angular/standalone';
-import { closeOutline, imagesOutline } from 'ionicons/icons';
+import { closeOutline } from 'ionicons/icons';
 
 import { type CharacterListItem, type DatasetManifest } from '../../core/models/optc.models';
 import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE = 48;
 
 @Component({
   selector: 'app-character-image-picker',
@@ -62,7 +62,6 @@ export class CharacterImagePickerComponent implements OnChanges {
   @Output() public readonly saveSelection = new EventEmitter<CharacterListItem>();
 
   public readonly closeIcon = closeOutline;
-  public readonly pickerIcon = imagesOutline;
   public readonly loading = signal(false);
   public readonly loadingMore = signal(false);
   public readonly hasMore = signal(true);
@@ -73,21 +72,15 @@ export class CharacterImagePickerComponent implements OnChanges {
   public readonly characters = signal<CharacterListItem[]>([]);
   public readonly selectedCharacter = signal<CharacterListItem | null>(null);
   public readonly selectedCharacterId = computed(() => this.selectedCharacter()?.id ?? null);
+  public readonly selectedCharacterActionLabel = computed(
+    () => this.selectedCharacter()?.name.trim() ?? '',
+  );
   public readonly availableTypes = computed(() =>
     this.normalizeOptions(this.summary()?.availableTypes ?? []),
   );
   public readonly availableClasses = computed(() =>
     this.normalizeOptions(this.summary()?.availableClasses ?? []),
   );
-  public readonly selectedCharacterClassesLabel = computed(() => {
-    const character = this.selectedCharacter();
-
-    if (!character) {
-      return '';
-    }
-
-    return [character.primaryClass, character.secondaryClass].filter(Boolean).join(' / ');
-  });
 
   private dismissReason: 'save' | 'cancel' | null = null;
 

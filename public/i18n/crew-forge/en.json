@@ -1,127 +1,58 @@
 {
   "title": "Crew Forge",
   "hero": {
-    "eyebrow": "Roster-driven planner",
-    "title": "Forge ranked teams from your own character pool.",
-    "copy": "Lock one or two leaders, add the subs you want available, and compare multiple legal teams ranked by distinct ability coverage.",
+    "eyebrow": "Screenshot-first builder",
+    "title": "Upload a screenshot and forge ranked teams from the recognized roster.",
+    "copy": "Crew Forge reads the portraits from your screenshot, lets you correct each slot when needed, and then builds the strongest team combinations based on distinct ability coverage.",
     "meta": {
+      "recognized": "{{count}} recognized characters",
       "limit": "Up to 50 ranked suggestions"
     }
   },
   "actions": {
-    "build": "Generate ranked teams"
+    "build": "Build teams"
   },
   "roster": {
-    "eyebrow": "Selections",
-    "title": "Leaders and candidate pool",
-    "copy": "Captains stay locked. Every other selected character becomes an eligible sub candidate for the ranked suggestions.",
-    "summary": "{{count}} total roster picks • {{pool}} pool subs",
-    "minimum": "Pick at least {{count}} unique characters across leaders and pool before generating teams."
-  },
-  "leaders": {
-    "captain": "Captain",
-    "friendCaptain": "Friend Captain",
-    "captainEmpty": "Leave this empty to let Crew Forge choose the best captain for the current roster.",
-    "friendEmpty": "Leave this empty to let Crew Forge choose the best friend captain for the current roster."
-  },
-  "pool": {
-    "title": "Sub pool",
-    "count": "{{count}} selected",
-    "empty": "Add the characters you want Crew Forge to consider as possible subs."
+    "eyebrow": "Screenshot roster",
+    "title": "Recognition and corrections",
+    "copy": "Upload a roster screenshot, review the detected portraits slot by slot, and correct any mismatch before running the build.",
+    "minimum": "At least {{count}} unique recognized characters are required before teams can be built."
   },
   "imageImport": {
-    "title": "Image import",
-    "copy": "Upload a roster screenshot, match it against an exact resolution profile, and auto-fill the candidate pool from the recognized portraits.",
-    "empty": "Upload a screenshot to start profile-based portrait recognition.",
-    "profileLabel": "Exact profile",
-    "profilePlaceholder": "Select a saved profile",
-    "processing": "Crew Forge is analyzing the uploaded screenshot...",
-    "previewAlt": "Uploaded crew screenshot",
+    "title": "Upload screenshot",
+    "copy": "The screenshot is matched automatically against a local exact-dimensions profile before portrait recognition runs.",
+    "empty": "Upload a roster screenshot to start recognition.",
+    "processing": "Crew Forge is analyzing the screenshot...",
+    "previewAlt": "Uploaded roster screenshot",
     "previewFallbackName": "Uploaded screenshot",
-    "builtInLabel": "Built-in",
-    "builtInCopy": "This bundled default stays read-only. Edit, save-example, and exemplar learning create a local copy automatically.",
-    "previewTitle": "Recognition preview",
-    "previewCopy": "{{count}} unique characters are ready to replace the current pool.",
+    "previewTitle": "Recognized slots",
+    "previewCopy": "{{count}} unique characters are ready for build.",
     "confidence": "Confidence",
-    "slotEmpty": "No confident match yet for this slot.",
-    "learning": {
-      "title": "Save exemplars",
-      "copy": "Store confirmed slot crops on apply so future imports for this profile match faster."
-    },
     "picker": {
-      "title": "Choose portrait match",
-      "copy": "Override the current recognition result for this slot."
-    },
-    "profileEditor": {
-      "title": "Profile editor",
-      "copy": "Define the exact screenshot size, slot crop rectangles, and preprocessing used before fingerprint matching.",
-      "save": "Save profile",
-      "name": "Profile name",
-      "width": "Image width",
-      "height": "Image height",
-      "matchThreshold": "Match threshold",
-      "emptyVarianceThreshold": "Empty variance threshold",
-      "fingerprintSize": "Fingerprint size",
-      "contrast": "Contrast",
-      "brightness": "Brightness",
-      "blurRadius": "Blur radius",
-      "grayscale": "Convert crops to grayscale",
-      "invert": "Invert luminance"
+      "title": "Pick character",
+      "copy": "Override this slot when the recognition result picked the wrong portrait."
     },
     "actions": {
       "upload": "Upload screenshot",
       "replace": "Replace screenshot",
-      "newProfile": "New profile",
-      "editProfile": "Edit profile",
-      "deleteProfile": "Delete profile",
-      "recognize": "Run recognition",
-      "saveExample": "Save screenshot as example",
-      "apply": "Replace pool with matches",
-      "chooseCharacter": "Pick character"
+      "chooseCharacter": "Pick a character"
     },
     "errors": {
       "invalidType": "Only image files can be imported.",
       "loadFailed": "The screenshot could not be loaded.",
       "recognitionFailed": "Crew Forge could not analyze this screenshot.",
-      "noProfile": "Create or select an exact resolution profile before recognition can run.",
-      "profileMismatch": "The selected profile does not match the current screenshot dimensions.",
-      "noProfileForDimensions": "No exact profile exists for {{width}} × {{height}}. Create one before running recognition.",
-      "invalidProfile": "The profile is incomplete. Fill in the name, dimensions, and slot rectangles."
-    }
-  },
-  "catalog": {
-    "eyebrow": "Catalog",
-    "title": "Search and assign characters",
-    "copy": "Use the filters below to browse your local dataset, then mark each character as captain, friend captain, or part of the sub pool.",
-    "searchPlaceholder": "Search name, id, type, or class",
-    "loading": "Loading local catalog...",
-    "empty": "No characters match the current catalog filters.",
-    "loadMore": "Load more characters",
-    "filters": {
-      "type": "Type",
-      "class": "Class",
-      "characterBox": "Character box",
-      "allCharacters": "All characters",
-      "anyType": "Any type",
-      "anyClass": "Any class",
-      "favoritesOnly": "Favorites only",
-      "favoritesHint": "Only affects the catalog picker, not already selected picks."
-    },
-    "actions": {
-      "makeCaptain": "Set captain",
-      "captainSet": "Captain locked",
-      "makeFriend": "Set friend",
-      "friendSet": "Friend locked",
-      "addPool": "Add to pool",
-      "removePool": "Remove from pool"
+      "noProfile": "No matching exact profile is available for this screenshot.",
+      "profileMismatch": "The exact profile does not match the current screenshot dimensions.",
+      "noProfileForDimensions": "Screenshot size {{width}} × {{height}} is not supported yet.",
+      "invalidProfile": "The local profile is incomplete."
     }
   },
   "results": {
     "eyebrow": "Suggestions",
     "title": "Ranked team results",
-    "copy": "Each result keeps the locked leaders you selected and tries to maximize distinct utility across the full six-character team.",
-    "emptyState": "Pick leaders and a candidate pool to start generating ranked teams.",
-    "empty": "No valid teams could be assembled from the current roster picks.",
+    "copy": "Each result is built only from the characters recognized or corrected in the screenshot.",
+    "emptyState": "Upload a screenshot, confirm the recognized portraits, and press build to see ranked teams.",
+    "empty": "No valid teams could be assembled from the current recognized roster.",
     "loading": "Crew Forge is evaluating the best team combinations...",
     "resultLabel": "Result {{index}}",
     "distinctAbilities": "distinct abilities",
