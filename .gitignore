@@ -44,3 +44,5 @@ __screenshots__/
 Thumbs.db
 /build-artifacts
 /public/app-config.js
+.env
+.env.local

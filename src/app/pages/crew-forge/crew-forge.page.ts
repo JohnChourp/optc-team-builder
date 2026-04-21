@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoDirective } from '@jsverse/transloco';
 import {
   IonButton,
   IonButtons,
@@ -68,7 +68,6 @@ type RecognitionPreviewSlotView = {
     CharacterImagePickerComponent,
     RouterLink,
     TranslocoDirective,
-    TranslocoPipe,
   ],
   templateUrl: './crew-forge.page.html',
   styleUrl: './crew-forge.page.scss',

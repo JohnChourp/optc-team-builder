@@ -28,6 +28,15 @@ Install dependencies:
 npm install
 ```
 
+Configure local app secrets:
+
+```bash
+cp .env.example .env.local
+```
+
+For Google Drive sync to be available in the browser, fill `APP_GOOGLE_WEB_CLIENT_ID` in `.env.local`.
+For iOS builds, also fill `APP_GOOGLE_IOS_CLIENT_ID`.
+
 Import metadata only:
 
 ```bash
@@ -82,6 +91,15 @@ Build locally with GA4 injected from environment:
 APP_GA4_MEASUREMENT_ID=G-XXXXXXXXXX npm run build:pages
 ```
 
+`npm start`, `npm run build`, and `npm run watch` auto-load `.env` and `.env.local` before generating `public/app-config.js`.
+If the Google OAuth IDs are missing, the config step prints a warning because the Settings page will show Google Drive sync as unavailable.
+`npm run build:pages` is stricter and fails fast when `APP_GOOGLE_WEB_CLIENT_ID` is missing so a broken Pages deploy does not get published.
+
+Google OAuth setup for the web client must include at least these authorized JavaScript origins:
+
+- `http://localhost:8400`
+- `https://johnchourp.github.io`
+
 ## GitHub Pages deploy
 
 This repo publishes Pages through the `Deploy GitHub Pages` GitHub Actions workflow only.
@@ -107,6 +125,14 @@ Optional secret when branch protection blocks `GITHUB_TOKEN` pushes:
 Optional Pages secret for GA4 injection at build time:
 
 - `APP_GA4_MEASUREMENT_ID`
+
+Required Pages secret for Google Drive sync on the website:
+
+- `APP_GOOGLE_WEB_CLIENT_ID`
+
+Optional Pages secret when you also want the same generated config file to carry the iOS client ID:
+
+- `APP_GOOGLE_IOS_CLIENT_ID`
 
 The workflow:
 

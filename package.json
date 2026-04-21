@@ -3,10 +3,11 @@
   "version": "0.0.13",
   "scripts": {
     "config:app": "node ./scripts/write-app-config.mjs",
+    "config:app:web-strict": "node ./scripts/write-app-config.mjs --require-google-web-client-id",
     "ng": "ng",
     "start": "npm run config:app && ng serve",
     "build": "npm run config:app && ng build",
-    "build:pages": "npm run config:app && ng build --configuration production --base-href /optc-team-builder/",
+    "build:pages": "npm run config:app:web-strict && ng build --configuration production --base-href /optc-team-builder/",
     "watch": "npm run config:app && ng build --watch --configuration development",
     "test": "ng test",
     "i18n:extract": "transloco-keys-manager extract --project optc-team-builder",
