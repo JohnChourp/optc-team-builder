@@ -290,6 +290,8 @@
     "characterBoxes": "Character Boxes",
     "characters": "Characters",
     "crewForge": "Crew Forge",
+    "languageSwitcherAriaLabel": "Language switcher",
+    "languageSwitchTo": "Switch language to {{ language }}",
     "menuTitle": "Menu",
     "navigationAriaLabel": "Main navigation",
     "offline": "Offline",

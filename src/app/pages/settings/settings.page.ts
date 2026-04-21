@@ -14,9 +14,8 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/angular/standalone';
-import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoDirective } from '@jsverse/transloco';
 
-import { type SupportedLanguage } from '../../core/i18n/app-i18n.types';
 import { type CharacterBox, type DatasetManifest } from '../../core/models/optc.models';
 import { AnalyticsConsentService } from '../../core/services/analytics-consent.service';
 import { AppI18nService } from '../../core/services/app-i18n.service';
@@ -130,15 +129,12 @@ interface CombinedImportSectionError {
     IonToolbar,
     RouterLink,
     TranslocoDirective,
-    TranslocoPipe,
   ],
   templateUrl: './settings.page.html',
   styleUrl: './settings.page.scss',
 })
 export class SettingsPage implements OnInit {
   public readonly manifest = signal<DatasetManifest | null>(null);
-  public readonly activeLanguage;
-  public readonly availableLanguages;
   public readonly favoriteIds;
   public readonly favoriteShipIds;
   public readonly characterBoxes;
@@ -229,8 +225,6 @@ export class SettingsPage implements OnInit {
     private readonly googleAccount: GoogleAccountService,
     private readonly driveBackup: DriveBackupService,
   ) {
-    this.activeLanguage = this.i18n.activeLanguage;
-    this.availableLanguages = this.i18n.availableLanguages;
     this.favoriteIds = this.userState.favoriteCharacterIds;
     this.favoriteShipIds = this.userState.favoriteShipIds;
     this.characterBoxes = this.userState.characterBoxes;
@@ -327,18 +321,6 @@ export class SettingsPage implements OnInit {
 
   public ionViewDidEnter(): void {
     void this.driveBackup.handleSettingsEntered();
-  }
-
-  public async onLanguageChange(
-    event: CustomEvent<{ value?: SupportedLanguage | null }>,
-  ): Promise<void> {
-    const language = event.detail.value;
-
-    if (!language) {
-      return;
-    }
-
-    await this.i18n.setLanguage(language);
   }
 
   public async onAutoTeamBuilderWorkerModeChange(

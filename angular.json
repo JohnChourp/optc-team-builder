@@ -24,7 +24,11 @@
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "allowedCommonJsDependencies": ["sql.js"],
+            "allowedCommonJsDependencies": [
+              "sql.js",
+              "tesseract.js",
+              "regenerator-runtime/runtime"
+            ],
             "assets": [
               {
                 "glob": "**/*",

@@ -290,6 +290,8 @@
     "characterBoxes": "Boxes χαρακτήρων",
     "characters": "Χαρακτήρες",
     "crewForge": "Crew Forge",
+    "languageSwitcherAriaLabel": "Εναλλαγή γλώσσας",
+    "languageSwitchTo": "Αλλαγή γλώσσας σε {{ language }}",
     "menuTitle": "Μενού",
     "navigationAriaLabel": "Κύρια πλοήγηση",
     "offline": "Offline",

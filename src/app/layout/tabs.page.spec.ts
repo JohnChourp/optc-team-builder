@@ -11,11 +11,14 @@ describe("TabsPage", () => {
     expect(template).toContain('id="tabs-menu-content"');
     expect(template).toContain("[routerLink]=\"[item.route]\"");
     expect(template).toContain('"tabs.menuTitle" | transloco');
+    expect(template).toContain('class="tabs-menu__footer"');
+    expect(template).toContain("'tabs.languageSwitcherAriaLabel' | transloco");
+    expect(template).toContain("'tabs.languageSwitchTo' | transloco");
     expect(template).not.toContain('"tabs.menuCopy" | transloco');
     expect(template).not.toContain("<ion-tab-bar");
   });
 
-  it("uses the expected navigation translation keys", () => {
+  it("uses the expected navigation and language-switcher definitions", () => {
     const component = readFileSync(resolve(process.cwd(), "src/app/layout/tabs.page.ts"), "utf8");
 
     expect(component).toContain('"tabs.characters"');
@@ -26,6 +29,9 @@ describe("TabsPage", () => {
     expect(component).toContain('"tabs.characterBoxes"');
     expect(component).toContain('"tabs.savedEnemies"');
     expect(component).toContain('"tabs.settings"');
+    expect(component).toContain('{ id: "en", flag: "🇬🇧" }');
+    expect(component).toContain('{ id: "el", flag: "🇬🇷" }');
+    expect(component).toContain("this.i18n.setLanguage(language)");
     expect(component).not.toContain('"tabs.offline"');
   });
 });

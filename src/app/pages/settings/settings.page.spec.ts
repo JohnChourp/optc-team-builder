@@ -105,6 +105,12 @@ describe("SettingsPage", () => {
       "utf8",
     );
 
+    expect(template).not.toContain("t('language.label')");
+    expect(template).not.toContain("t('language.helper')");
+    expect(template).not.toContain("[value]=\"activeLanguage()\"");
+    expect(template).not.toContain("(ionChange)=\"onLanguageChange($event)\"");
+    expect(template).not.toContain("'common.languages.' + language.id");
+    expect(template).not.toContain("availableLanguages");
     expect(template).toContain("t('performance.title')");
     expect(template).toContain("t('performance.mode.label')");
     expect(template).toContain("t('performance.manualCount.label')");
@@ -1092,11 +1098,6 @@ function createPage() {
     mergeFavoriteIds: vi.fn(),
   };
   const i18n = {
-    activeLanguage: signal<"en" | "el">("en"),
-    availableLanguages: [
-      { id: "en", label: "English" },
-      { id: "el", label: "Ελληνικά" },
-    ] as const,
     setLanguage: vi.fn().mockResolvedValue(undefined),
     translate: vi.fn((key: string, params?: Record<string, string | number>) => {
       if (key === "management.confirm.deleteSavedTeams") {

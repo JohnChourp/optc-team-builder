@@ -16,23 +16,6 @@
         <p class="section-copy">{{ t('intro.copy') }}</p>
       </section>
 
-      <section class="glass-card command-card">
-        <ion-label>{{ t('language.label') }}</ion-label>
-        <ion-select
-          interface="popover"
-          fill="outline"
-          [value]="activeLanguage()"
-          (ionChange)="onLanguageChange($event)"
-        >
-          @for (language of availableLanguages; track language.id) {
-            <ion-select-option [value]="language.id">
-              {{ 'common.languages.' + language.id | transloco }}
-            </ion-select-option>
-          }
-        </ion-select>
-        <p>{{ t('language.helper') }}</p>
-      </section>
-
       <section class="glass-card performance-card">
         <div class="section-head">
           <div>

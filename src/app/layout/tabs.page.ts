@@ -24,11 +24,18 @@ import {
   peopleOutline,
   saveOutline,
 } from "ionicons/icons";
+import { type SupportedLanguage } from "../core/i18n/app-i18n.types";
+import { AppI18nService } from "../core/services/app-i18n.service";
 
 interface NavigationItem {
   icon: string | readonly string[];
   labelKey: string;
   route: string;
+}
+
+interface LanguageItem {
+  flag: string;
+  id: SupportedLanguage;
 }
 
 @Component({
@@ -53,8 +60,14 @@ interface NavigationItem {
   styleUrl: "./tabs.page.scss",
 })
 export class TabsPage {
+  private readonly i18n = inject(AppI18nService);
   private readonly router = inject(Router);
 
+  public readonly activeLanguage = this.i18n.activeLanguage;
+  public readonly availableLanguages: readonly LanguageItem[] = [
+    { id: "en", flag: "🇬🇧" },
+    { id: "el", flag: "🇬🇷" },
+  ];
   public readonly navigationItems: NavigationItem[] = [
     {
       icon: gridOutline,
@@ -100,5 +113,13 @@ export class TabsPage {
 
   public isRouteActive(item: NavigationItem): boolean {
     return this.router.url === item.route || this.router.url.startsWith(`${item.route}?`);
+  }
+
+  public async onLanguageSelect(language: SupportedLanguage): Promise<void> {
+    if (language === this.activeLanguage()) {
+      return;
+    }
+
+    await this.i18n.setLanguage(language);
   }
 }

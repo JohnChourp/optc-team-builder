@@ -24,6 +24,27 @@
           </ion-menu-toggle>
         }
       </ion-list>
+
+      <div class="tabs-menu__footer">
+        <div
+          class="tabs-menu__language-switcher"
+          [attr.aria-label]="'tabs.languageSwitcherAriaLabel' | transloco"
+          role="group"
+        >
+          @for (language of availableLanguages; track language.id) {
+            <button
+              type="button"
+              class="language-flag-button"
+              [class.language-flag-button--active]="activeLanguage() === language.id"
+              [disabled]="activeLanguage() === language.id"
+              [attr.aria-label]="'tabs.languageSwitchTo' | transloco: { language: ('common.languages.' + language.id | transloco) }"
+              (click)="onLanguageSelect(language.id)"
+            >
+              <span aria-hidden="true">{{ language.flag }}</span>
+            </button>
+          }
+        </div>
+      </div>
     </div>
   </ion-content>
 </ion-menu>
