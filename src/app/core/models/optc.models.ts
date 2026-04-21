@@ -119,11 +119,14 @@ export interface CharacterDetail {
   supportData: CharacterSupportEntry[];
   swapData: Record<string, unknown> | null;
   vsSpecial: Record<string, unknown> | null;
+  exSuperData?: Record<string, unknown> | null;
   superType: Record<string, unknown> | null;
   superTandemData?: Record<string, unknown> | null;
   finalTapData?: Record<string, unknown> | null;
   rushSugoSpecialData?: Record<string, unknown> | null;
   superClass: Record<string, unknown> | null;
+  switchEffectData?: Record<string, unknown> | null;
+  captainShiftData?: Record<string, unknown> | null;
   rumbleData: Record<string, unknown> | null;
 }
 

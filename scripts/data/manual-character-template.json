@@ -34,11 +34,14 @@
     "supportData": [],
     "swapData": null,
     "vsSpecial": null,
+    "exSuperData": null,
     "superType": null,
     "superTandemData": null,
     "finalTapData": null,
     "rushSugoSpecialData": null,
     "superClass": null,
+    "switchEffectData": null,
+    "captainShiftData": null,
     "rumbleData": null,
     "builderAbilities": []
   }

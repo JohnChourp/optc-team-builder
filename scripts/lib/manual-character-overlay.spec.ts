@@ -91,6 +91,10 @@ describe('manual character overlay helpers', () => {
           specialText: 'Reduces Bind duration by 5 turns.',
           supportData: [{ Characters: 'Luffy', description: ['Boosts ATK by 5%'] }],
           characterTags: ['Straw Hat Pirates', 'Giant'],
+          exSuperData: {
+            activationRequirement: 'When character becomes "Yamato & Momonosuke"',
+            exSuperSpecial: 'Changes STR characters to Super STR.',
+          },
           superTandemData: {
             requirement: 'At final battle and any 2 listed characters are on the crew',
             levels: [{ level: 5, effect: 'Applies ATK Boost (Tandem) of 2.5x to DEX and STR characters for 1 turn.' }],
@@ -102,6 +106,14 @@ describe('manual character overlay helpers', () => {
           rushSugoSpecialData: {
             requirement: 'At final battle when character performs the first tap of an attack',
             levels: [{ level: 5, effect: 'Allows the crew to perform a Rush.' }],
+          },
+          switchEffectData: {
+            effect: "Completely removes character's Despair/Slot Bind.",
+          },
+          captainShiftData: {
+            shiftPosition: 'BOTTOM-RIGHT',
+            shiftUses: 2,
+            effect: 'Switches to the other captain form.',
           },
         },
       },
@@ -129,6 +141,10 @@ describe('manual character overlay helpers', () => {
         sailorAbilities: [],
         supportData: [{ Characters: 'Luffy', description: ['Boosts ATK by 5%'] }],
         characterTags: ['Straw Hat Pirates', 'Giant'],
+        exSuperData: {
+          activationRequirement: 'When character becomes "Yamato & Momonosuke"',
+          exSuperSpecial: 'Changes STR characters to Super STR.',
+        },
         superTandemData: {
           requirement: 'At final battle and any 2 listed characters are on the crew',
           levels: [{ level: 5, effect: 'Applies ATK Boost (Tandem) of 2.5x to DEX and STR characters for 1 turn.' }],
@@ -140,6 +156,14 @@ describe('manual character overlay helpers', () => {
         rushSugoSpecialData: {
           requirement: 'At final battle when character performs the first tap of an attack',
           levels: [{ level: 5, effect: 'Allows the crew to perform a Rush.' }],
+        },
+        switchEffectData: {
+          effect: "Completely removes character's Despair/Slot Bind.",
+        },
+        captainShiftData: {
+          shiftPosition: 'BOTTOM-RIGHT',
+          shiftUses: 2,
+          effect: 'Switches to the other captain form.',
         },
       },
     });

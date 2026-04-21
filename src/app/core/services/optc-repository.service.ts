@@ -922,11 +922,14 @@ export class OptcRepositoryService {
       supportData: [],
       swapData: null,
       vsSpecial: null,
+      exSuperData: null,
       superType: null,
       superTandemData: null,
       finalTapData: null,
       rushSugoSpecialData: null,
       superClass: null,
+      switchEffectData: null,
+      captainShiftData: null,
       rumbleData: null,
     };
   }
@@ -965,6 +968,12 @@ export class OptcRepositoryService {
           ? normalizedDetail.captainNotes.trim()
           : null,
       supportData: normalizeSupportData(normalizedDetail.supportData),
+      exSuperData:
+        normalizedDetail.exSuperData &&
+        typeof normalizedDetail.exSuperData === 'object' &&
+        !Array.isArray(normalizedDetail.exSuperData)
+          ? normalizedDetail.exSuperData
+          : null,
       superSpecialCriteria: normalizeSuperSpecialCriteria(normalizedDetail.superSpecialCriteria),
       partyConflictKeys: Array.isArray(normalizedDetail.partyConflictKeys)
         ? normalizedDetail.partyConflictKeys
@@ -993,6 +1002,18 @@ export class OptcRepositoryService {
         typeof normalizedDetail.rushSugoSpecialData === 'object' &&
         !Array.isArray(normalizedDetail.rushSugoSpecialData)
           ? normalizedDetail.rushSugoSpecialData
+          : null,
+      switchEffectData:
+        normalizedDetail.switchEffectData &&
+        typeof normalizedDetail.switchEffectData === 'object' &&
+        !Array.isArray(normalizedDetail.switchEffectData)
+          ? normalizedDetail.switchEffectData
+          : null,
+      captainShiftData:
+        normalizedDetail.captainShiftData &&
+        typeof normalizedDetail.captainShiftData === 'object' &&
+        !Array.isArray(normalizedDetail.captainShiftData)
+          ? normalizedDetail.captainShiftData
           : null,
       builderAbilities:
         normalizedDetail.builderAbilities ?? normalizedDetail.specialAbilities ?? [],

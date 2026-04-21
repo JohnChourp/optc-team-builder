@@ -232,6 +232,10 @@ describe("character-detail presenter", () => {
         ],
         swapData: null,
         vsSpecial: null,
+        exSuperData: {
+          activationRequirement: "When character becomes Yamato & Momonosuke.",
+          exSuperSpecial: "Changes STR characters to Super STR.",
+        },
         superType: {
           class: "Fighter",
         },
@@ -265,6 +269,14 @@ describe("character-detail presenter", () => {
           ],
         },
         superClass: null,
+        switchEffectData: {
+          effect: "Removes character's Despair/Slot Bind.",
+        },
+        captainShiftData: {
+          shiftPosition: "BOTTOM-RIGHT",
+          shiftUses: 2,
+          effect: "Switches the captain with the bottom-right character.",
+        },
         rumbleData: {
           id: 501,
           basedOn: 14,
@@ -285,10 +297,13 @@ describe("character-detail presenter", () => {
         "sections.teamSynergy",
         "sections.supportData",
         "sections.rumbleData",
+        "sections.exSuperData",
         "sections.superTandemData",
         "sections.finalTapData",
         "sections.rushSugoSpecialData",
         "sections.superType",
+        "sections.switchEffectData",
+        "sections.captainShiftData",
         "sections.characterTags",
       ]),
     );

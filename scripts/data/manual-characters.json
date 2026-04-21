@@ -65,6 +65,7 @@
       ],
       "swapData": null,
       "vsSpecial": null,
+      "exSuperData": null,
       "superType": {
         "activationRequirement": "When any 3 [Straw Hat Pirates], [Giant], or [Four Emperors] characters are on the crew not including self, except as Support Characters or Double Characters in inactive state, can be launched when character is a crewmate.",
         "specialEffect": "Reduces character's Special Bind duration by 7 turns, boosts crew's ATK by 1.3x for 1 turn, boosts the chain multiplier by 1.5x for 1 turn, and changes DEX characters to Super DEX."
@@ -81,6 +82,8 @@
       "finalTapData": null,
       "rushSugoSpecialData": null,
       "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
       "rumbleData": null
     }
   },
@@ -152,6 +155,7 @@
       ],
       "swapData": null,
       "vsSpecial": null,
+      "exSuperData": null,
       "superType": {
         "activationRequirement": "When any 3 [Straw Hat Pirates], [Giant], or [Four Emperors] characters are on the crew not including self, except as Support Characters or Double Characters in inactive state, can be launched when character is a crewmate.",
         "specialEffect": "Changes character's slot, including [BLOCK] slot, to [TND], prevents character's slot from being changed until character lands a PERFECT strike, boosts crew's slot effects by 1.3x for 1 turn, boosts the ATK of the final tap performed by a STR character by 50%, and changes STR characters to Super STR."
@@ -184,6 +188,8 @@
       },
       "rushSugoSpecialData": null,
       "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
       "rumbleData": null
     }
   },
@@ -251,11 +257,14 @@
       ],
       "swapData": null,
       "vsSpecial": null,
+      "exSuperData": null,
       "superType": null,
       "superTandemData": null,
       "finalTapData": null,
       "rushSugoSpecialData": null,
       "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
       "rumbleData": {
         "stats": {
           "style": "PT Style",
@@ -443,11 +452,14 @@
       ],
       "swapData": null,
       "vsSpecial": null,
+      "exSuperData": null,
       "superType": null,
       "superTandemData": null,
       "finalTapData": null,
       "rushSugoSpecialData": null,
       "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
       "rumbleData": {
         "stats": {
           "style": "DEF Style",
@@ -627,6 +639,7 @@
         "activationRequirement": "When number of [STR][DEX][RCV][TND] slots used in normal attacks by crew and number of turns passed totals 12",
         "activationEffect": "Applies \"Territory: DEX-type\" to the field (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory; territory is unaffected by VS Effect inability for enemies to remove) for 2 turns, adds 80x character's ATK in non-type damage on top of tap-timing bonuses for 5 turns, changes crew's slots (including [BLOCK] slots) to character's own type unless slots are [TND][RCV], and activates HP Guard of 60% effect for 1 turn"
       },
+      "exSuperData": null,
       "superType": null,
       "superTandemData": {
         "requirement": "When a [Straw Hat Pirates] [Worst Generation] [Giant] character performs Super Tandem",
@@ -656,6 +669,8 @@
       "finalTapData": null,
       "rushSugoSpecialData": null,
       "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
       "rumbleData": {
         "stats": {
           "style": "DEF Style",
@@ -776,6 +791,7 @@
         "activationRequirement": "When number of [STR][DEX][RCV][TND] slots used in normal attacks by crew and number of turns passed totals 12",
         "activationEffect": "Applies \"Territory: Cerebral class\" to the field (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory; territory application is unaffected by VS Effect inability for enemies to remove) for 2 turns, applies -10% STR Resistance to all enemies for 1 turn (resistance application is unaffected by VS Effect inability for enemies to remove), allows healing up to 2x crew's max HP ignoring max HP limit for 1 turn (if HP is above max limit, it is treated as being full HP), changes crew's slots (including [BLOCK] slots) to character's own type unless slots are [TND][RCV], and activates HP Guard of 60% effect for 1 turn"
       },
+      "exSuperData": null,
       "superType": null,
       "superTandemData": {
         "requirement": "When an [Egghead Arc] [World Government] [Five Elders] character performs Super Tandem",
@@ -805,6 +821,8 @@
       "finalTapData": null,
       "rushSugoSpecialData": null,
       "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
       "rumbleData": {
         "stats": {
           "style": "ATK Style",
@@ -931,6 +949,7 @@
       ],
       "swapData": null,
       "vsSpecial": null,
+      "exSuperData": null,
       "superType": {
         "activationRequirement": "When Monkey D. Luffy and 3 or more QCK characters are on the crew (except as Support Characters; can be launched when character is a crewmate)",
         "specialEffect": "Reduces all enemies' DEF Up and damage reduction (except [Unknown excluded enemy defensive effect icon]) duration by 1 turn, applies -20% QCK Resistance to all enemies for 1 turn, further increases damage dealt to enemies with a specific status effect boosts that are launched after this Special by crew (applies to boosts applied by Support Effect) by +0.25, and changes QCK characters to Super QCK"
@@ -963,6 +982,8 @@
       "finalTapData": null,
       "rushSugoSpecialData": null,
       "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
       "rumbleData": {
         "stats": {
           "style": "ATK Style",
@@ -1155,11 +1176,14 @@
       ],
       "swapData": null,
       "vsSpecial": null,
+      "exSuperData": null,
       "superType": null,
       "superTandemData": null,
       "finalTapData": null,
       "rushSugoSpecialData": null,
       "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
       "rumbleData": {
         "stats": {
           "style": "ATK Style",
@@ -1284,6 +1308,7 @@
       ],
       "swapData": null,
       "vsSpecial": null,
+      "exSuperData": null,
       "superType": null,
       "superTandemData": null,
       "finalTapData": {
@@ -1304,6 +1329,8 @@
         "activationRequirement": "When any 3 of the following characters are on the crew (except as Support Characters; Double Characters counts as 1; can be launched when character is a crewmate): Edward Newgate (Whitebeard), Marco, Jozu, Vista, Whitey Bay, Fossa, Rakuyo, Kingdew, Atmos, Izo, Marshall D. Teach (Blackbeard), Thatch, Namule, Blamenco, Curiel, Haruta, Speed Jil, Blenheim, Monkey D. Luffy, Sabo, Jinbe, Yamato, Gol D. Roger",
         "specialEffect": "Deals 75x character's ATK in non-type damage to all enemies (ignoring all defensive effects and DEF), applies -10% STR Resistance to all enemies for 1 turn, boosts crew's [Unknown circular boost icon] by 1.75x for 1 turn (effect can be overwritten with other [Unknown circular boost icon] boost effects), and changes Powerhouse characters to Super Powerhouse"
       },
+      "switchEffectData": null,
+      "captainShiftData": null,
       "rumbleData": {
         "stats": {
           "style": "ATK Style",
@@ -1483,11 +1510,14 @@
       ],
       "swapData": null,
       "vsSpecial": null,
+      "exSuperData": null,
       "superType": null,
       "superTandemData": null,
       "finalTapData": null,
       "rushSugoSpecialData": null,
       "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
       "rumbleData": {
         "stats": {
           "style": "SPT Style",
@@ -1575,6 +1605,7 @@
       ],
       "swapData": null,
       "vsSpecial": null,
+      "exSuperData": null,
       "superType": null,
       "superTandemData": null,
       "finalTapData": null,
@@ -1591,6 +1622,8 @@
         "activationRequirement": "When any 2 of the following characters are on the crew (except as Support Characters; Double Characters counts as 1; can be launched when character is a crewmate): Monkey D. Luffy, Boa Hancock, Sentomaru, Dr. Vegapunk (Stella), Dr. Vegapunk \"Shaka the Good\", Dr. Vegapunk \"Lilith the Evil\", Dr. Vegapunk \"Edison the Thinker\", Dr. Vegapunk \"Pythagoras the Wise\", Dr. Vegapunk \"Atlas the Violent\", Dr. Vegapunk \"York the Greedy\", S-Hawk, S-Shark, S-Bear, Rob Lucci, Kaku, Stussy",
         "specialEffect": "Reduces all enemies' damage nullification duration by 1 turn, changes crew's slots (including [BLOCK] slots) to [TND], applies -25% STR, DEX, and QCK Resistance to all enemies for 1 turn, and changes Fighter characters to Super Fighter and Shooter characters to Super Shooter"
       },
+      "switchEffectData": null,
+      "captainShiftData": null,
       "rumbleData": {
         "stats": {
           "style": "DBF Style",
@@ -1781,6 +1814,7 @@
       ],
       "swapData": null,
       "vsSpecial": null,
+      "exSuperData": null,
       "superType": {
         "activationRequirement": "When any of the following characters are on the crew (except as Support Characters): Roronoa Zoro, Smoker; or when crew has [Unknown crew status icon]",
         "specialEffect": "Removes all beneficial effects placed on the crew, deals 80x character's ATK in non-type damage to all enemies, heals crew by 20,000 HP, sets character's Special charge to MAX, and changes PSY characters to Super PSY"
@@ -1797,6 +1831,8 @@
       },
       "rushSugoSpecialData": null,
       "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
       "rumbleData": {
         "stats": {
           "style": "ATK Style",
@@ -1892,6 +1928,156 @@
             }
           ]
         }
+      }
+    }
+  },
+  "900012": {
+    "id": 900012,
+    "name": "Momonosuke - Unwavering Beliefs",
+    "isIncomplete": true,
+    "type": "STR",
+    "classes": [
+      "Slasher",
+      "Striker"
+    ],
+    "stars": 6,
+    "cost": 55,
+    "combo": 4,
+    "maxLevel": 99,
+    "maxExperience": null,
+    "minHp": null,
+    "minAtk": null,
+    "minRcv": null,
+    "maxHp": 5104,
+    "maxAtk": 2192,
+    "maxRcv": 519,
+    "growth": null,
+    "image": {
+      "file": "900012.png",
+      "thumbnailFile": "900012-thumb.jpg"
+    },
+    "detail": {
+      "characterId": 900012,
+      "captainAbility": "Launches the following effect at start of quest: \"Reduces Slasher characters' Special charge time by 2 turns, Switch Effect by 2, and boosts STR and PSY characters' chain multiplier growth rate of normal attacks up to +0.6 (GOOD +0.2; GREAT +0.4; PERFECT +0.6) for 5 turns\", boosts Slasher and Striker characters' ATK by 5x, HP by 1.3x, makes their [STR][PSY] slots have matching slot effects, and reduces character's Special Bind duration by 10 turns [Applies following effect based on number of applicable Character Tags on crew] If 3 or more [Land of Wano Arc] characters are on the crew, boosts Slasher and Striker characters' ATK by a further 1.1x. If 5 or more [Kozuki Clan] [Land of Wano Arc] [Mythical Zoan-type] characters are on the crew and a character with Critical ATK Potential Ability performs a Critical attack, reduces all enemies' DEF Up duration by 2 turns",
+      "captainAbilityVariants": [],
+      "captainNotes": null,
+      "specialName": "Honing Skills of Their Blade",
+      "specialText": "Reduces crew's Despair/Special Bind duration by 7 turns. If crew has slot effect boost when Special is launched, boosts the type effects of normal attacks for Slasher and Striker characters by 2.75x for 2 turns, then after that, boosts Slasher and Striker characters' slot effects by 3x for 2 turns, and becomes \"Yamato & Momonosuke\" for 3 turns. If 5 or more [Kozuki Clan] [Land of Wano Arc] [Mythical Zoan-type] characters are on the crew, further increases crew's ATK and slot effect boosts by 1.2x (maximum value is 7x; effect applies to slot effect boost from this Special), and applies \"Territory: Slasher class\" to the field (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory) for 2 turns.",
+      "specialNotes": null,
+      "superSpecialText": null,
+      "superSpecialCriteriaText": null,
+      "superSpecialNotes": null,
+      "superSpecialCriteria": null,
+      "partyConflictKeys": [],
+      "characterTags": [
+        "Kozuki Clan",
+        "Mythical Zoan-type",
+        "Land of Wano Arc"
+      ],
+      "builderAbilities": [],
+      "sailorAbilities": [
+        "Reduces character's Special Bind duration by 7 turns.",
+        "Once per quest, if enemy activates DEF Up, reduces all enemies' DEF Up duration by 6 turns at start of crew's next turn (even if no turns are reduced, effect still counts as 1 time activated)."
+      ],
+      "sailorNotes": null,
+      "limitBreak": [],
+      "potentialAbilities": [],
+      "supportData": [],
+      "swapData": null,
+      "vsSpecial": null,
+      "exSuperData": {
+        "activationRequirement": "When character becomes \"Yamato & Momonosuke\" and any 2 of the following characters are on the crew (except as Support Characters; Double Characters counts as 1; can be launched when character is a crewmate): Kozuki Oden, Kozuki Hiyori (Komurasaki), Kozuki Toki, Kozuki Sukiyaki (Tenguyama Hitetsu), Kin'emon, Izo, Raizo, Okiku, Ashura Doji (Shutenmaru), Dogstorm, Cat Viper, Kawamatsu, Denjiro (Kyoshiro), Shinobu, Otama, Monkey D. Luffy, Trafalgar Law, Eustass Kid",
+        "exSuperSpecial": "Can choose to completely remove crew's Swap Captains effect, reduces all enemies' damage reduction (except [Unknown excluded enemy defensive effect icon]) effect by 50% (the effect increase/decrease only occurs 1 time), increases crew's multiplicative chain multiplier boost (except additive boosts) to 1.6x, changes STR characters to Super STR, and changes PSY characters to Super PSY.",
+        "notes": "The EX Super Special screenshots include one excluded enemy defensive-effect icon that could not be safely identified by name."
+      },
+      "superType": null,
+      "superTandemData": {
+        "requirement": "When a [Kozuki Clan] [Land of Wano Arc] [Mythical Zoan-type] character performs Super Tandem",
+        "levels": [
+          {
+            "level": 5,
+            "effect": "Raises Boost Level of [Land of Wano Arc] [Mythical Zoan-type] characters by 4 and raises Boost Level of [Kozuki Clan] characters by 6 for 1 turn"
+          }
+        ]
+      },
+      "finalTapData": null,
+      "rushSugoSpecialData": null,
+      "superClass": null,
+      "switchEffectData": {
+        "effect": "Completely removes character's Despair/Slot Bind, and applies -15% STR and PSY Resistance to all enemies for 1 turn"
+      },
+      "captainShiftData": {
+        "shiftPosition": "BOTTOM-RIGHT",
+        "shiftUses": 2,
+        "effect": "If \"Yamato\" is Captain, switches to \"Momonosuke\" and can chose to swap bottom-right character with the Captain for 6 turns. If \"Momonosuke\" is bottom-right character, switches to \"Yamato\" and can chose to swap bottom-right character with the Captain for 6 turns. Reduces character's Special charge time by 3 turns, and further increases all enemies' increase damage taken effect by +0.3"
+      },
+      "rumbleData": {
+        "stats": {
+          "style": "SPT Style",
+          "cost": 55,
+          "combatPower": 7817,
+          "hp": 6253,
+          "atk": 2439,
+          "rcv": 539,
+          "def": 179,
+          "spd": 182
+        },
+        "rumbleSpecialName": "Honing Skills of Their Blade",
+        "verifiedRumbleSpecialLevels": [
+          {
+            "level": 10,
+            "cooldown": 24,
+            "effects": [
+              "Targets enemies within large range for ATK x 3 damage; targets (not including self) 3 teammates with low current Special CT for ATK Up 2 times Lv. 4 (20 s), Special CT 15% reduction 2 times; targets [Straw Hat Pirates] [Kozuki Clan] [Paramythia-type] [Mythical Zoan-type] [Ancient Zoan-type] teammates for 100% chance to evade fixed damage (15 s)"
+            ]
+          }
+        ],
+        "rumbleSuperSpecialName": "Honing Skills of Their Blade",
+        "verifiedRumbleSuperSpecial": {
+          "activationRequirement": "After character receives Special CT delay 3 times",
+          "effects": [
+            "Targets enemies within large range for ATK x 4 damage; targets (not including self) 3 teammates with low current Special CT for ATK Up 3 times Lv. 5 (20 s), Special CT 15% reduction 3 times; targets [Straw Hat Pirates] [Kozuki Clan] [Paramythia-type] [Mythical Zoan-type] [Ancient Zoan-type] teammates for 100% chance to evade fixed damage (20 s)"
+          ]
+        },
+        "verifiedRumbleSuperSpecialLevels": [
+          {
+            "level": 5,
+            "activationRequirement": "After character receives Special CT delay 1 time",
+            "effects": [
+              "Targets enemies within large range for ATK x 5 damage; targets (not including self) 3 teammates with low current Special CT for ATK Up 3 times Lv. 6 (30 s), Special CT 25% reduction 3 times; targets team for 100% chance to evade fixed damage (30 s)"
+            ]
+          }
+        ],
+        "verifiedRumbleAbilityLevels": [
+          {
+            "level": 5,
+            "effects": [
+              "Slasher/Striker class teammates HP Up Lv. 6, ATK Up Lv. 6, RCV Up Lv. 6; if 6 or more Slasher/Striker class teammates are on the team, [Straw Hat Pirates] [Kozuki Clan] [Paramythia-type] [Mythical Zoan-type] [Ancient Zoan-type] teammates SPD Up Lv. 6, DEF Up Lv. 6"
+            ]
+          }
+        ],
+        "pattern": [
+          "Normal Attack",
+          "Power Attack",
+          "Heal Teammate in Range Lv. 1 (Small Range)",
+          "Power Attack"
+        ],
+        "target": "Targets closest enemies",
+        "resistance": {
+          "standardResistances": [
+            "Completely evades Special Bind",
+            "Reduce damage taken from Fighter and Slasher by 30%"
+          ],
+          "additionalResistances": {
+            "unlockRequirement": "Unlock Rumble Limit Break",
+            "effects": [
+              "Reduces damage taken from Fighter/Slasher by 20%",
+              "Increase damage dealt to Fighter/Slasher by 15%"
+            ]
+          }
+        },
+        "gpBurst": "None",
+        "gpLeaderSkill": "None"
       }
     }
   }

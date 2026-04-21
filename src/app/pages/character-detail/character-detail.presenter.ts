@@ -495,8 +495,11 @@ function buildBattleModesGroup(
   [
     { titleKey: "sections.swapData", value: detail.swapData },
     { titleKey: "sections.vsSpecial", value: detail.vsSpecial },
+    { titleKey: "sections.exSuperData", value: detail.exSuperData ?? null },
     { titleKey: "sections.superType", value: detail.superType },
     { titleKey: "sections.superClass", value: detail.superClass },
+    { titleKey: "sections.switchEffectData", value: detail.switchEffectData ?? null },
+    { titleKey: "sections.captainShiftData", value: detail.captainShiftData ?? null },
   ].forEach(({ titleKey, value }) => {
     const card = buildStructuredCard(titleKey, value);
 

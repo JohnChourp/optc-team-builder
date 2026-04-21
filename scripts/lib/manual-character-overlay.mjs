@@ -31,11 +31,14 @@ const MANUAL_DETAIL_OBJECT_KEYS = [
   'superSpecialCriteria',
   'swapData',
   'vsSpecial',
+  'exSuperData',
   'superType',
   'superTandemData',
   'finalTapData',
   'rushSugoSpecialData',
   'superClass',
+  'switchEffectData',
+  'captainShiftData',
   'rumbleData',
 ];
 const MANUAL_DETAIL_STRING_ARRAY_KEYS = ['partyConflictKeys', 'characterTags', 'sailorAbilities'];
@@ -66,11 +69,14 @@ export function createEmptyManualDetail(characterId) {
     supportData: [],
     swapData: null,
     vsSpecial: null,
+    exSuperData: null,
     superType: null,
     superTandemData: null,
     finalTapData: null,
     rushSugoSpecialData: null,
     superClass: null,
+    switchEffectData: null,
+    captainShiftData: null,
     rumbleData: null,
   };
 }

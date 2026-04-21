@@ -56,8 +56,10 @@
     "abilities": "Abilities",
     "battleModes": "Battle Modes",
     "captainAbility": "Captain Ability",
+    "captainShiftData": "Captain Shift",
     "characterTags": "Character Tags",
     "enhancements": "Enhancements",
+    "exSuperData": "EX Super",
     "finalTapData": "Final Tap",
     "limitBreak": "Limit Break",
     "maxStats": "Max Stats",
@@ -74,6 +76,7 @@
     "supportData": "Support Data",
     "superClass": "Super Class",
     "superType": "Super Type",
+    "switchEffectData": "Switch Effect",
     "swapData": "Swap Data",
     "teamSynergy": "Team Synergy",
     "vsSpecial": "VS Special"
