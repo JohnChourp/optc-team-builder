@@ -49,10 +49,6 @@
             <p>{{ t('tools.copy') }}</p>
           </div>
           <div class="favorites-tools-actions">
-            <ion-button fill="outline" color="light" [routerLink]="['/tabs/character-boxes']">
-              <ion-icon slot="start" [icon]="boxesIcon"></ion-icon>
-              {{ t('tools.manageBoxes') }}
-            </ion-button>
             <ion-button fill="outline" color="light" (click)="resetPage()">
               {{ 'common.actions.reset' | transloco }}
             </ion-button>

@@ -98,6 +98,18 @@ describe('GoogleAccountService', () => {
     await service.signIn();
 
     expect(socialLogin.login).toHaveBeenCalledOnce();
+    expect(socialLogin.login).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: 'google',
+        options: expect.objectContaining({
+          scopes: [
+            'email',
+            'profile',
+            'https://www.googleapis.com/auth/drive.file',
+          ],
+        }),
+      }),
+    );
     expect(service.isSignedIn()).toBe(true);
     expect(service.profile()?.id).toBe('google-user-1');
     expect(service.sessionRevision()).toBe(1);

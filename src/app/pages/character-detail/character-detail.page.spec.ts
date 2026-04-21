@@ -10,6 +10,7 @@ describe('CharacterDetailPage template', () => {
     );
 
     expect(template).toContain('[src]="heroImageUrl()"');
+    expect(template).toContain('<app-toolbar-back-button></app-toolbar-back-button>');
     expect(template).toContain("t(group.titleKey)");
     expect(template).toContain('hero-meta-grid');
     expect(template).toContain('hero-stats-grid');
@@ -18,5 +19,6 @@ describe('CharacterDetailPage template', () => {
     expect(template).toContain('list.labelKey');
     expect(template).toContain('detail-entry-grid');
     expect(template).not.toContain('| json');
+    expect(template).not.toContain('ion-back-button');
   });
 });

@@ -445,6 +445,158 @@
           <article class="transfer-card">
             <div class="transfer-card__head">
               <div>
+                <strong>{{ t('management.inventoryCapture.title') }}</strong>
+                <span>{{ t('management.inventoryCapture.subtitle') }}</span>
+              </div>
+              <p>{{ t('management.inventoryCapture.copy') }}</p>
+            </div>
+
+            <input
+              #inventoryOptcbxImportInput
+              type="file"
+              accept=".json,application/json"
+              hidden
+              (change)="onInventoryOptcbxFileSelected($event, inventoryOptcbxImportInput)"
+            />
+
+            <input
+              #inventoryScreenshotImportInput
+              type="file"
+              accept="image/*"
+              hidden
+              (change)="onInventoryScreenshotFileSelected($event, inventoryScreenshotImportInput)"
+            />
+
+            <div class="transfer-actions">
+              <ion-button
+                fill="outline"
+                color="warning"
+                [disabled]="inventoryCaptureImporting()"
+                (click)="openFilePicker(inventoryOptcbxImportInput)"
+              >
+                {{ t('management.inventoryCapture.importOptcbx') }}
+              </ion-button>
+              <ion-button
+                fill="outline"
+                color="light"
+                [disabled]="inventoryCaptureImporting()"
+                (click)="openFilePicker(inventoryScreenshotImportInput)"
+              >
+                {{ t('management.inventoryCapture.importScreenshot') }}
+              </ion-button>
+              @if (inventoryCapturePreview()) {
+                <ion-button
+                  fill="outline"
+                  color="medium"
+                  [disabled]="inventoryCaptureImporting()"
+                  (click)="clearInventoryCapturePreview()"
+                >
+                  {{ t('management.inventoryCapture.clearPreview') }}
+                </ion-button>
+              }
+            </div>
+
+            @if (inventoryCaptureImporting()) {
+              <div class="transfer-feedback transfer-feedback--progress">
+                <ion-spinner name="crescent"></ion-spinner>
+                <span>{{ t('management.inventoryCapture.processing') }}</span>
+              </div>
+            }
+
+            @if (inventoryCapturePreview(); as preview) {
+              <div class="transfer-feedback transfer-feedback--success">
+                <strong>{{ t('management.inventoryCapture.review.title') }}</strong>
+                <span>{{ t('management.inventoryCapture.review.source.' + preview.sourceKind) }}</span>
+                <span>{{
+                  t('management.inventoryCapture.feedback.stats.characters', {
+                    count: preview.payload.characterIds.length,
+                  })
+                }}</span>
+                <span>{{
+                  t('management.inventoryCapture.feedback.stats.ships', {
+                    count: preview.payload.shipIds.length,
+                  })
+                }}</span>
+                <span>{{
+                  t('management.inventoryCapture.feedback.stats.unmatched', {
+                    count: preview.payload.unmatchedEntries.length,
+                  })
+                }}</span>
+              </div>
+
+              <div class="transfer-field">
+                <ion-label>{{ t('management.inventoryCapture.review.targetBox') }}</ion-label>
+                <ion-select
+                  interface="popover"
+                  fill="outline"
+                  [value]="inventoryCaptureBoxSelection()"
+                  (ionChange)="onInventoryCaptureBoxSelectionChange($event)"
+                >
+                  <ion-select-option value="new">
+                    {{ t('management.inventoryCapture.review.newBox') }}
+                  </ion-select-option>
+                  @for (box of characterBoxes(); track box.id) {
+                    <ion-select-option [value]="box.id">{{ box.name }}</ion-select-option>
+                  }
+                </ion-select>
+              </div>
+
+              <label class="transfer-field">
+                <span>{{ t('management.inventoryCapture.review.boxName') }}</span>
+                <input
+                  class="transfer-text-input"
+                  type="text"
+                  [value]="inventoryCaptureBoxName()"
+                  (input)="onInventoryCaptureBoxNameInput($event)"
+                />
+              </label>
+
+              @if (preview.payload.unmatchedEntries.length > 0) {
+                <div class="transfer-feedback transfer-feedback--warning">
+                  <strong>{{ t('management.inventoryCapture.review.unmatchedTitle') }}</strong>
+                  @for (entry of preview.payload.unmatchedEntries.slice(0, 8); track entry) {
+                    <span>{{ entry }}</span>
+                  }
+                  @if (preview.payload.unmatchedEntries.length > 8) {
+                    <span>{{
+                      t('management.inventoryCapture.review.moreUnmatched', {
+                        count: preview.payload.unmatchedEntries.length - 8,
+                      })
+                    }}</span>
+                  }
+                </div>
+              }
+
+              <div class="transfer-actions">
+                <ion-button
+                  fill="outline"
+                  color="warning"
+                  [disabled]="!canCommitInventoryCapture() || inventoryCaptureImporting()"
+                  (click)="commitInventoryCapture()"
+                >
+                  {{ t('management.inventoryCapture.commit') }}
+                </ion-button>
+              </div>
+            }
+
+            @if (inventoryCaptureFeedback(); as feedback) {
+              <div
+                class="transfer-feedback"
+                [class.transfer-feedback--success]="feedback.tone === 'success'"
+                [class.transfer-feedback--warning]="feedback.tone === 'warning'"
+                [class.transfer-feedback--error]="feedback.tone === 'error'"
+              >
+                <strong>{{ feedback.title }}</strong>
+                @for (detail of feedback.details; track $index) {
+                  <span>{{ detail }}</span>
+                }
+              </div>
+            }
+          </article>
+
+          <article class="transfer-card">
+            <div class="transfer-card__head">
+              <div>
                 <strong>{{ t('management.savedTeams.title') }}</strong>
                 <span>{{ t('management.counts.savedTeams', { count: savedTeams().length }) }}</span>
               </div>
@@ -805,22 +957,6 @@
         }
       </section>
 
-      <section class="glass-card legal-card">
-        <h2>{{ t('sections.legal') }}</h2>
-        <p>{{ t('legal.copy') }}</p>
-        <div class="policy-links">
-          <a class="policy-link" [routerLink]="['/tabs/privacy']">{{
-            t('legal.actions.privacy')
-          }}</a>
-          <a class="policy-link" [routerLink]="['/tabs/cookies']">{{
-            t('legal.actions.cookies')
-          }}</a>
-          <a class="policy-link" [routerLink]="['/tabs/terms']">{{
-            t('legal.actions.terms')
-          }}</a>
-        </div>
-        <p>{{ t('release.copy') }}</p>
-      </section>
     </div>
   </ion-content>
 </ng-container>

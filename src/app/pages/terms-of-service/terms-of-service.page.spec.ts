@@ -20,9 +20,9 @@ describe("TermsOfServicePage", () => {
     expect(template).toContain('t("sections.liability.title")');
     expect(template).toContain('t("sections.lawAndContact.title")');
     expect(template).toContain('t("sections.updates.lastUpdatedLabel")');
+    expect(template).toContain('<app-toolbar-back-button></app-toolbar-back-button>');
     expect(template).toContain("[routerLink]=\"['/tabs/privacy']\"");
     expect(template).toContain("[routerLink]=\"['/tabs/cookies']\"");
     expect(template).toContain("[routerLink]=\"['/tabs/settings']\"");
-    expect(template).not.toContain("ion-back-button");
   });
 });

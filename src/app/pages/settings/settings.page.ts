@@ -17,12 +17,16 @@ import {
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 
 import { type SupportedLanguage } from '../../core/i18n/app-i18n.types';
-import { type DatasetManifest } from '../../core/models/optc.models';
+import { type CharacterBox, type DatasetManifest } from '../../core/models/optc.models';
 import { AnalyticsConsentService } from '../../core/services/analytics-consent.service';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { CharacterOverridesService } from '../../core/services/character-overrides.service';
 import { DriveBackupService } from '../../core/services/drive-backup.service';
 import { GoogleAccountService } from '../../core/services/google-account.service';
+import {
+  InventoryCaptureImportService,
+  type InventoryCapturePreview,
+} from '../../core/services/inventory-capture-import.service';
 import { OptcbxImportService } from '../../core/services/optcbx-import.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import {
@@ -90,6 +94,7 @@ import {
   type FavoriteShipsImportError,
   type FavoriteShipsTransferPayload,
 } from './favorite-ships-transfer.utils';
+import { type InventoryCaptureImportError } from './inventory-capture.utils';
 
 interface TransferFeedback {
   details: string[];
@@ -176,10 +181,20 @@ export class SettingsPage implements OnInit {
   public readonly canDeleteAllSavedTeams = computed(() => this.savedTeams().length > 0);
   public readonly canExportSavedEnemies = computed(() => this.savedEnemies().length > 0);
   public readonly canDeleteAllSavedEnemies = computed(() => this.savedEnemies().length > 0);
+  public readonly canCommitInventoryCapture = computed(() => {
+    const preview = this.inventoryCapturePreview();
+
+    return Boolean(
+      preview &&
+        (preview.payload.characterIds.length > 0 || preview.payload.shipIds.length > 0) &&
+        (preview.payload.characterIds.length === 0 || this.inventoryCaptureBoxName().trim().length > 0),
+    );
+  });
 
   public readonly allDataImporting = signal(false);
   public readonly favoritesImporting = signal(false);
   public readonly favoriteShipsImporting = signal(false);
+  public readonly inventoryCaptureImporting = signal(false);
   public readonly characterBoxesImporting = signal(false);
   public readonly characterOverridesImporting = signal(false);
   public readonly savedTeamsImporting = signal(false);
@@ -187,6 +202,10 @@ export class SettingsPage implements OnInit {
   public readonly allDataFeedback = signal<TransferFeedback | null>(null);
   public readonly favoritesFeedback = signal<TransferFeedback | null>(null);
   public readonly favoriteShipsFeedback = signal<TransferFeedback | null>(null);
+  public readonly inventoryCaptureFeedback = signal<TransferFeedback | null>(null);
+  public readonly inventoryCapturePreview = signal<InventoryCapturePreview | null>(null);
+  public readonly inventoryCaptureBoxSelection = signal<string | 'new'>('new');
+  public readonly inventoryCaptureBoxName = signal('');
   public readonly characterBoxesFeedback = signal<TransferFeedback | null>(null);
   public readonly characterOverridesFeedback = signal<TransferFeedback | null>(null);
   public readonly savedTeamsFeedback = signal<TransferFeedback | null>(null);
@@ -205,6 +224,7 @@ export class SettingsPage implements OnInit {
     private readonly characterOverrideState: CharacterOverridesService,
     private readonly analyticsConsentService: AnalyticsConsentService,
     private readonly optcbxImport: OptcbxImportService,
+    private readonly inventoryCaptureImport: InventoryCaptureImportService,
     private readonly userDataTransfer: UserDataTransferService,
     private readonly googleAccount: GoogleAccountService,
     private readonly driveBackup: DriveBackupService,
@@ -484,6 +504,50 @@ export class SettingsPage implements OnInit {
     await this.importSavedEnemies(file);
   }
 
+  public async onInventoryOptcbxFileSelected(
+    event: Event,
+    input: HTMLInputElement,
+  ): Promise<void> {
+    const file = this.extractSelectedFile(event, input);
+
+    if (!file) {
+      return;
+    }
+
+    await this.prepareInventoryCapturePreview(file, 'optcbx-json');
+  }
+
+  public async onInventoryScreenshotFileSelected(
+    event: Event,
+    input: HTMLInputElement,
+  ): Promise<void> {
+    const file = this.extractSelectedFile(event, input);
+
+    if (!file) {
+      return;
+    }
+
+    await this.prepareInventoryCapturePreview(file, 'screenshot');
+  }
+
+  public onInventoryCaptureBoxSelectionChange(
+    event: CustomEvent<{ value?: string | null }>,
+  ): void {
+    const nextSelection = typeof event.detail.value === 'string' ? event.detail.value : 'new';
+    const existingBox = nextSelection === 'new' ? null : this.findInventoryTargetBox(nextSelection);
+
+    this.inventoryCaptureBoxSelection.set(nextSelection || 'new');
+    this.inventoryCaptureBoxName.set(
+      existingBox?.name ?? this.inventoryCapturePreview()?.suggestedBoxName ?? '',
+    );
+  }
+
+  public onInventoryCaptureBoxNameInput(event: Event): void {
+    const target = event.target as HTMLInputElement | null;
+
+    this.inventoryCaptureBoxName.set(target?.value?.trim() ?? '');
+  }
+
   public async exportAll(): Promise<void> {
     downloadAllDataExport(await this.userDataTransfer.buildAllDataPayload());
   }
@@ -534,6 +598,47 @@ export class SettingsPage implements OnInit {
     }
 
     downloadSavedEnemiesExport(buildSavedEnemiesTransferPayload(this.savedEnemies()));
+  }
+
+  public clearInventoryCapturePreview(): void {
+    this.inventoryCapturePreview.set(null);
+    this.inventoryCaptureBoxSelection.set('new');
+    this.inventoryCaptureBoxName.set('');
+  }
+
+  public async commitInventoryCapture(): Promise<void> {
+    const preview = this.inventoryCapturePreview();
+
+    if (!preview || !this.canCommitInventoryCapture()) {
+      return;
+    }
+
+    this.inventoryCaptureImporting.set(true);
+    this.inventoryCaptureFeedback.set(null);
+
+    try {
+      const applySummary = await this.inventoryCaptureImport.applyPreview(preview, {
+        boxName: this.inventoryCaptureBoxName().trim() || preview.suggestedBoxName,
+        boxSelection: this.inventoryCaptureBoxSelection(),
+      });
+
+      this.inventoryCaptureFeedback.set(
+        this.buildInventoryCaptureApplyFeedback(preview, applySummary),
+      );
+      this.clearInventoryCapturePreview();
+    } catch (error) {
+      this.inventoryCaptureFeedback.set({
+        tone: 'error',
+        title: this.i18n.translate(
+          'management.inventoryCapture.feedback.errorTitle',
+          undefined,
+          'settings',
+        ),
+        details: [this.resolveInventoryCaptureError(error)],
+      });
+    } finally {
+      this.inventoryCaptureImporting.set(false);
+    }
   }
 
   public async deleteAllFavorites(): Promise<void> {
@@ -621,6 +726,209 @@ export class SettingsPage implements OnInit {
     input.value = '';
 
     return file ?? null;
+  }
+
+  private async prepareInventoryCapturePreview(
+    file: File,
+    sourceKind: 'optcbx-json' | 'screenshot',
+  ): Promise<void> {
+    this.inventoryCaptureImporting.set(true);
+    this.inventoryCaptureFeedback.set(null);
+
+    try {
+      const preview =
+        sourceKind === 'optcbx-json'
+          ? await this.inventoryCaptureImport.buildPreviewFromOptcbxFile(file)
+          : await this.inventoryCaptureImport.buildPreviewFromScreenshotFile(file);
+
+      this.inventoryCapturePreview.set(preview);
+      this.inventoryCaptureBoxSelection.set('new');
+      this.inventoryCaptureBoxName.set(preview.suggestedBoxName);
+      this.inventoryCaptureFeedback.set(this.buildInventoryCapturePreviewFeedback(preview));
+    } catch (error) {
+      this.clearInventoryCapturePreview();
+      this.inventoryCaptureFeedback.set({
+        tone: 'error',
+        title: this.i18n.translate(
+          'management.inventoryCapture.feedback.errorTitle',
+          undefined,
+          'settings',
+        ),
+        details: [this.resolveInventoryCaptureError(error)],
+      });
+    } finally {
+      this.inventoryCaptureImporting.set(false);
+    }
+  }
+
+  private buildInventoryCapturePreviewFeedback(
+    preview: InventoryCapturePreview,
+  ): TransferFeedback {
+    const details = [
+      this.i18n.translate(
+        'management.inventoryCapture.feedback.previewReady',
+        { fileName: preview.fileName },
+        'settings',
+      ),
+      this.i18n.translate(
+        'management.inventoryCapture.feedback.stats.characters',
+        { count: preview.payload.characterIds.length },
+        'settings',
+      ),
+      this.i18n.translate(
+        'management.inventoryCapture.feedback.stats.ships',
+        { count: preview.payload.shipIds.length },
+        'settings',
+      ),
+    ];
+
+    if (preview.payload.unmatchedEntries.length > 0) {
+      details.push(
+        this.i18n.translate(
+          'management.inventoryCapture.feedback.stats.unmatched',
+          { count: preview.payload.unmatchedEntries.length },
+          'settings',
+        ),
+      );
+    }
+
+    const tone: TransferFeedback['tone'] =
+      preview.payload.characterIds.length > 0 || preview.payload.shipIds.length > 0
+        ? preview.payload.unmatchedEntries.length > 0
+          ? 'warning'
+          : 'success'
+        : 'warning';
+
+    return {
+      tone,
+      title: this.i18n.translate(
+        'management.inventoryCapture.feedback.successTitle',
+        undefined,
+        'settings',
+      ),
+      details,
+    };
+  }
+
+  private buildInventoryCaptureApplyFeedback(
+    preview: InventoryCapturePreview,
+    summary: {
+      addedShipCount: number;
+      alreadyFavoritedShipCount: number;
+      alreadyInBoxCount: number;
+      boxAction: 'created' | 'skipped' | 'updated';
+      boxName: string | null;
+      matchedCharacterCount: number;
+      matchedShipCount: number;
+      unmatchedCount: number;
+    },
+  ): TransferFeedback {
+    const details = [
+      this.i18n.translate(
+        'management.inventoryCapture.feedback.stats.characters',
+        { count: summary.matchedCharacterCount },
+        'settings',
+      ),
+      this.i18n.translate(
+        'management.inventoryCapture.feedback.stats.ships',
+        { count: summary.matchedShipCount },
+        'settings',
+      ),
+    ];
+
+    if (summary.boxAction === 'created' && summary.boxName) {
+      details.push(
+        this.i18n.translate(
+          'management.inventoryCapture.feedback.stats.boxCreated',
+          { name: summary.boxName },
+          'settings',
+        ),
+      );
+    }
+
+    if (summary.boxAction === 'updated' && summary.boxName) {
+      details.push(
+        this.i18n.translate(
+          'management.inventoryCapture.feedback.stats.boxUpdated',
+          { name: summary.boxName },
+          'settings',
+        ),
+      );
+    }
+
+    if (summary.alreadyInBoxCount > 0) {
+      details.push(
+        this.i18n.translate(
+          'management.inventoryCapture.feedback.stats.alreadyInBox',
+          { count: summary.alreadyInBoxCount },
+          'settings',
+        ),
+      );
+    }
+
+    if (summary.addedShipCount > 0) {
+      details.push(
+        this.i18n.translate(
+          'management.inventoryCapture.feedback.stats.addedShips',
+          { count: summary.addedShipCount },
+          'settings',
+        ),
+      );
+    }
+
+    if (summary.alreadyFavoritedShipCount > 0) {
+      details.push(
+        this.i18n.translate(
+          'management.inventoryCapture.feedback.stats.alreadyFavoritedShips',
+          { count: summary.alreadyFavoritedShipCount },
+          'settings',
+        ),
+      );
+    }
+
+    if (summary.unmatchedCount > 0) {
+      details.push(
+        this.i18n.translate(
+          'management.inventoryCapture.feedback.stats.unmatched',
+          { count: summary.unmatchedCount },
+          'settings',
+        ),
+      );
+    }
+
+    details.push(
+      this.i18n.translate('management.inventoryCapture.feedback.driveHint', undefined, 'settings'),
+    );
+
+    return {
+      tone: summary.unmatchedCount > 0 ? 'warning' : 'success',
+      title: this.i18n.translate(
+        summary.unmatchedCount > 0
+          ? 'management.inventoryCapture.feedback.warningTitle'
+          : 'management.inventoryCapture.feedback.committedTitle',
+        undefined,
+        'settings',
+      ),
+      details,
+    };
+  }
+
+  private resolveInventoryCaptureError(
+    error: InventoryCaptureImportError | Error | unknown,
+  ): string {
+    if (error && typeof error === 'object' && 'key' in error && typeof error.key === 'string') {
+      return this.i18n.translate(error.key, undefined, 'settings');
+    }
+
+    if (error instanceof Error && error.message.trim().length > 0) {
+      return error.message;
+    }
+
+    return this.i18n.translate('management.inventoryCapture.errors.generic', undefined, 'settings');
+  }
+
+  private findInventoryTargetBox(boxId: string): CharacterBox | null {
+    return this.characterBoxes().find((box) => box.id === boxId) ?? null;
   }
 
   private async buildFavoritesExportPayload(): Promise<OptcbxFavoritesExportPayload> {

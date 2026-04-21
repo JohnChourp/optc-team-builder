@@ -8,8 +8,10 @@ import { CookiePolicyPage } from "./cookie-policy.page";
 
 vi.mock("@ionic/angular/standalone", () => ({
   IonButton: class {},
+  IonButtons: class {},
   IonContent: class {},
   IonHeader: class {},
+  IonIcon: class {},
   IonTitle: class {},
   IonToolbar: class {},
 }));
@@ -25,11 +27,11 @@ describe("CookiePolicyPage", () => {
     expect(template).toContain('t("sections.analytics.title")');
     expect(template).toContain('t("sections.manageConsent.title")');
     expect(template).toContain('t("consent.statusLabel")');
+    expect(template).toContain('<app-toolbar-back-button></app-toolbar-back-button>');
     expect(template).toContain("(click)=\"acceptAnalyticsConsent()\"");
     expect(template).toContain("(click)=\"rejectAnalyticsConsent()\"");
     expect(template).toContain("[routerLink]=\"['/tabs/privacy']\"");
     expect(template).toContain("[routerLink]=\"['/tabs/terms']\"");
-    expect(template).not.toContain("ion-back-button");
   });
 
   it("updates analytics consent from the cookie policy page", async () => {

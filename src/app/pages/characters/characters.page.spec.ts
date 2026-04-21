@@ -100,8 +100,6 @@ describe('CharactersPage favorites tools', () => {
       'utf8',
     );
 
-    expect(template).toContain("/tabs/character-boxes");
-    expect(template).toContain("t('tools.manageBoxes')");
     expect(template).toContain("'common.actions.reset' | transloco");
     expect(template).toContain("t('filters.favoritesOnly.label')");
     expect(template).toContain('favoritesOnlySupportLabel()');
@@ -109,6 +107,8 @@ describe('CharactersPage favorites tools', () => {
     expect(template).toContain("t('displayMode.compact')");
     expect(template).toContain('character-thumb-card');
     expect(template).toContain('toggleFavorite(card.character.id, $event)');
+    expect(template).not.toContain("/tabs/character-boxes");
+    expect(template).not.toContain("t('tools.manageBoxes')");
     expect(template).not.toContain("t('tools.export')");
     expect(template).not.toContain("t('tools.import')");
     expect(template).not.toContain("t('favorites.clearAll')");

@@ -8,6 +8,7 @@ import { filter } from "rxjs";
 import packageJson from "../../package.json";
 import { AnalyticsConsentService } from "./core/services/analytics-consent.service";
 import { GoogleAnalyticsService } from "./core/services/google-analytics.service";
+import { ToolbarBackNavigationService } from "./core/services/toolbar-back-navigation.service";
 
 @Component({
   selector: "app-root",
@@ -89,6 +90,7 @@ export class AppComponent {
   private readonly router = inject(Router);
   private readonly analyticsConsentService = inject(AnalyticsConsentService);
   private readonly analytics = inject(GoogleAnalyticsService);
+  private readonly toolbarBackNavigation = inject(ToolbarBackNavigationService);
   private lastTrackedUrl: string | null = null;
 
   public readonly appVersion = signal(packageJson.version);
@@ -107,10 +109,12 @@ export class AppComponent {
       )
       .subscribe((event) => {
         this.currentUrl.set(event.urlAfterRedirects);
+        this.toolbarBackNavigation.recordNavigation(event.urlAfterRedirects);
         this.trackPageView(event.urlAfterRedirects);
       });
 
     if (this.router.navigated && this.router.url !== "") {
+      this.toolbarBackNavigation.recordNavigation(this.router.url);
       this.trackPageView(this.router.url);
     }
   }

@@ -35,6 +35,7 @@
     "actions": {
       "add": "Add",
       "assign": "Assign",
+      "back": "Back",
       "cancel": "Cancel",
       "clear": "Clear",
       "close": "Close",

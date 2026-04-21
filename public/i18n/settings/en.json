@@ -231,6 +231,52 @@
       "processing": "Importing favorites...",
       "title": "Favorites"
     },
+    "inventoryCapture": {
+      "copy": "Review and import owned characters and ships from an OPTCbx-style JSON export or from a screenshot OCR pass. This stays local to the app and never connects to the game account.",
+      "clearPreview": "Clear preview",
+      "commit": "Commit inventory import",
+      "errors": {
+        "generic": "Inventory import failed.",
+        "invalidJson": "The selected inventory capture file is not valid JSON.",
+        "invalidPayload": "The selected inventory capture file does not match the expected format.",
+        "unsupportedSchema": "The selected inventory capture file uses an unsupported schema version."
+      },
+      "feedback": {
+        "committedTitle": "Inventory import completed",
+        "errorTitle": "Inventory import failed",
+        "previewReady": "Review ready from {{fileName}}.",
+        "driveHint": "You can now use Google Drive sync to back up this updated local inventory state.",
+        "stats": {
+          "addedShips": "Added {{count}} ships to favorite ships.",
+          "alreadyFavoritedShips": "{{count}} ships were already in favorite ships.",
+          "alreadyInBox": "{{count}} characters were already present in the selected box.",
+          "boxCreated": "Created character box: {{name}}.",
+          "boxUpdated": "Updated character box: {{name}}.",
+          "characters": "Matched {{count}} characters.",
+          "ships": "Matched {{count}} ships.",
+          "unmatched": "{{count}} entries still need manual review."
+        },
+        "successTitle": "Inventory preview ready",
+        "warningTitle": "Inventory import completed with warnings"
+      },
+      "importOptcbx": "Import from OPTCbx JSON",
+      "importScreenshot": "Import from screenshots",
+      "processing": "Analyzing inventory import...",
+      "review": {
+        "boxName": "Character box name",
+        "moreUnmatched": "{{count}} more unmatched entries hidden.",
+        "newBox": "Create new character box",
+        "source": {
+          "optcbx-json": "Source: OPTCbx / raw JSON import",
+          "screenshot": "Source: screenshot OCR import"
+        },
+        "targetBox": "Target character box",
+        "title": "Review inventory import",
+        "unmatchedTitle": "Unmatched entries"
+      },
+      "subtitle": "OPTCbx JSON or screenshot OCR",
+      "title": "Import Inventory"
+    },
     "favoriteShips": {
       "copy": "Export all favorite ships as JSON, import a favorite ships backup, or clear the full favorite ships list from this device.",
       "deleteAll": "Delete all ships",
@@ -284,20 +330,7 @@
     "analytics": "Analytics & cookies",
     "commands": "Dataset import commands",
     "dataManagement": "Backups and transfers",
-    "legal": "Legal & privacy",
-    "packStatus": "Installed packs",
-    "releaseNote": "Important note"
+    "packStatus": "Installed packs"
   },
-  "title": "Settings",
-  "legal": {
-    "copy": "Read how the web app uses optional analytics cookies, local browser storage, and public legal contact details before enabling Google Analytics.",
-    "actions": {
-      "privacy": "Privacy Policy",
-      "cookies": "Cookie Policy",
-      "terms": "Terms of Service"
-    }
-  },
-  "release": {
-    "copy": "The technical pipeline is ready for local offline use, but redistribution of game art remains a separate legal and product decision before any public store release."
-  }
+  "title": "Settings"
 }

@@ -127,6 +127,10 @@ describe("SettingsPage", () => {
     expect(template).toContain("t('management.favorites.export')");
     expect(template).toContain("t('management.favorites.import')");
     expect(template).toContain("t('management.favorites.deleteAll')");
+    expect(template).toContain("t('management.inventoryCapture.title')");
+    expect(template).toContain("t('management.inventoryCapture.importOptcbx')");
+    expect(template).toContain("t('management.inventoryCapture.importScreenshot')");
+    expect(template).toContain("t('management.inventoryCapture.commit')");
     expect(template).toContain("t('management.favoriteShips.export')");
     expect(template).toContain("t('management.favoriteShips.import')");
     expect(template).toContain("t('management.favoriteShips.deleteAll')");
@@ -139,13 +143,6 @@ describe("SettingsPage", () => {
     expect(template).toContain("t('management.savedEnemies.export')");
     expect(template).toContain("t('management.savedEnemies.import')");
     expect(template).toContain("t('management.savedEnemies.deleteAll')");
-    expect(template).toContain("t('sections.legal')");
-    expect(template).toContain("t('legal.actions.privacy')");
-    expect(template).toContain("t('legal.actions.cookies')");
-    expect(template).toContain("t('legal.actions.terms')");
-    expect(template).toContain("[routerLink]=\"['/tabs/privacy']\"");
-    expect(template).toContain("[routerLink]=\"['/tabs/cookies']\"");
-    expect(template).toContain("[routerLink]=\"['/tabs/terms']\"");
   });
 
   it("exports all favorites through the shared OPTCbx payload helper", async () => {
@@ -302,6 +299,103 @@ describe("SettingsPage", () => {
     expect(userState.setFavoriteCharacterIds).toHaveBeenCalledWith([1003, 1004, 1001, 1002]);
     expect(page.favoritesFeedback()).toMatchObject({
       tone: "warning",
+    });
+  });
+
+  it("builds an inventory preview from an OPTCbx file without mutating state", async () => {
+    const { page, inventoryCaptureImport, userState } = createPage();
+
+    inventoryCaptureImport.buildPreviewFromOptcbxFile.mockResolvedValue({
+      capturedAt: "2026-04-21T10:00:00.000Z",
+      duplicateCharacterCount: 0,
+      duplicateShipCount: 0,
+      extractedText: null,
+      fileName: "inventory.json",
+      invalidCharacterCount: 0,
+      invalidShipCount: 0,
+      matchedCharacters: [],
+      matchedShips: [],
+      payload: {
+        schemaVersion: 1,
+        source: "inventory-capture",
+        capturedAt: "2026-04-21T10:00:00.000Z",
+        characterIds: [1003, 1004],
+        shipIds: [9003],
+        unmatchedEntries: ["Ghost Ship"],
+      },
+      sourceKind: "optcbx-json",
+      suggestedBoxName: "Imported Box",
+    });
+
+    await page.onInventoryOptcbxFileSelected(
+      createFileEvent(buildFile("inventory.json", "{}")),
+      { value: "" } as HTMLInputElement,
+    );
+
+    expect(inventoryCaptureImport.buildPreviewFromOptcbxFile).toHaveBeenCalledOnce();
+    expect(page.inventoryCapturePreview()).toMatchObject({
+      sourceKind: "optcbx-json",
+      payload: {
+        characterIds: [1003, 1004],
+        shipIds: [9003],
+      },
+    });
+    expect(page.inventoryCaptureBoxName()).toBe("Imported Box");
+    expect(userState.saveCharacterBox).not.toHaveBeenCalled();
+    expect(userState.setFavoriteShipIds).not.toHaveBeenCalled();
+  });
+
+  it("commits an inventory preview through the shared import service", async () => {
+    const { page, inventoryCaptureImport } = createPage();
+
+    page.inventoryCapturePreview.set({
+      capturedAt: "2026-04-21T10:00:00.000Z",
+      duplicateCharacterCount: 0,
+      duplicateShipCount: 0,
+      extractedText: "1001",
+      fileName: "inventory.png",
+      invalidCharacterCount: 0,
+      invalidShipCount: 0,
+      matchedCharacters: [],
+      matchedShips: [],
+      payload: {
+        schemaVersion: 1,
+        source: "inventory-capture",
+        capturedAt: "2026-04-21T10:00:00.000Z",
+        characterIds: [1001],
+        shipIds: [9002],
+        unmatchedEntries: [],
+      },
+      sourceKind: "screenshot",
+      suggestedBoxName: "Screenshot Box",
+    });
+    page.inventoryCaptureBoxSelection.set("new");
+    page.inventoryCaptureBoxName.set("Screenshot Box");
+    inventoryCaptureImport.applyPreview.mockResolvedValue({
+      addedShipCount: 1,
+      alreadyFavoritedShipCount: 0,
+      alreadyInBoxCount: 0,
+      boxAction: "created",
+      boxName: "Screenshot Box",
+      matchedCharacterCount: 1,
+      matchedShipCount: 1,
+      unmatchedCount: 0,
+    });
+
+    await page.commitInventoryCapture();
+
+    expect(inventoryCaptureImport.applyPreview).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fileName: "inventory.png",
+      }),
+      {
+        boxName: "Screenshot Box",
+        boxSelection: "new",
+      },
+    );
+    expect(page.inventoryCapturePreview()).toBeNull();
+    expect(page.inventoryCaptureFeedback()).toMatchObject({
+      tone: "success",
     });
   });
 
@@ -887,6 +981,29 @@ function createPage() {
     clearAllCharacterBoxes: vi.fn().mockImplementation(async () => {
       characterBoxes.set([]);
     }),
+    getCharacterBoxById: vi.fn().mockImplementation((boxId: string) => {
+      return characterBoxes().find((box) => box.id === boxId) ?? null;
+    }),
+    saveCharacterBox: vi.fn().mockImplementation(async (input: { id?: string; name: string; characterIds: number[] }) => {
+      const nextBox = {
+        id: input.id ?? `box-${characterBoxes().length + 1}`,
+        name: input.name,
+        characterIds: input.characterIds,
+        createdAt: "2026-04-21T10:00:00.000Z",
+        updatedAt: "2026-04-21T10:00:00.000Z",
+      };
+      const existingIndex = characterBoxes().findIndex((box) => box.id === nextBox.id);
+      const nextBoxes = [...characterBoxes()];
+
+      if (existingIndex >= 0) {
+        nextBoxes.splice(existingIndex, 1, nextBox);
+      } else {
+        nextBoxes.unshift(nextBox);
+      }
+
+      characterBoxes.set(nextBoxes);
+      return nextBox;
+    }),
     clearAllSavedTeams: vi.fn().mockImplementation(async () => {
       savedTeams.set([]);
     }),
@@ -1203,6 +1320,11 @@ function createPage() {
     characterOverrideState as never,
     optcbxImport as never,
   );
+  const inventoryCaptureImport = {
+    applyPreview: vi.fn(),
+    buildPreviewFromOptcbxFile: vi.fn(),
+    buildPreviewFromScreenshotFile: vi.fn(),
+  };
   const googleAccount = {
     isAvailable: signal(true),
     isSignedIn: signal(false),
@@ -1245,6 +1367,7 @@ function createPage() {
     characterOverrideState as never,
     analyticsConsentService as never,
     optcbxImport as never,
+    inventoryCaptureImport as never,
     userDataTransfer as never,
     googleAccount as never,
     driveBackup as never,
@@ -1259,6 +1382,7 @@ function createPage() {
     i18n,
     analyticsConsentService,
     userDataTransfer,
+    inventoryCaptureImport,
     googleAccount,
     driveBackup,
   };

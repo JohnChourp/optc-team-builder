@@ -5,6 +5,7 @@ import { IonButton, IonContent, IonHeader, IonTitle, IonToolbar } from "@ionic/a
 import { TranslocoDirective } from "@jsverse/transloco";
 
 import { AnalyticsConsentService } from "../../core/services/analytics-consent.service";
+import { ToolbarBackButtonComponent } from "../../shared/toolbar-back-button/toolbar-back-button.component";
 
 @Component({
   selector: "app-cookie-policy-page",
@@ -17,6 +18,7 @@ import { AnalyticsConsentService } from "../../core/services/analytics-consent.s
     IonTitle,
     IonToolbar,
     RouterLink,
+    ToolbarBackButtonComponent,
     TranslocoDirective,
   ],
   templateUrl: "./cookie-policy.page.html",

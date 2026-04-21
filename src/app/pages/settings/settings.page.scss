@@ -8,8 +8,7 @@
 .analytics-card,
 .performance-card,
 .data-card,
-.pack-list,
-.legal-card {
+.pack-list {
   padding: 18px;
 }
 
@@ -118,7 +117,6 @@
 
 .section-head p,
 .transfer-card__head p,
-.legal-card p,
 .pack-card span {
   margin: 0;
   color: rgba(248, 251, 255, 0.58);
@@ -138,7 +136,6 @@
 }
 
 .section-head h2,
-.legal-card h2,
 .pack-card strong,
 .transfer-card__head strong {
   color: #ffffff;
@@ -182,6 +179,31 @@
 
 .transfer-actions ion-button {
   margin: 0;
+}
+
+.transfer-field {
+  display: grid;
+  gap: 8px;
+}
+
+.transfer-field span {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.transfer-text-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #ffffff;
+  font: inherit;
+}
+
+.transfer-text-input:focus {
+  outline: 2px solid rgba(245, 200, 76, 0.4);
+  outline-offset: 2px;
 }
 
 .transfer-feedback {

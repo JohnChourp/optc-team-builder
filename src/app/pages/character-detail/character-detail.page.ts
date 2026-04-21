@@ -2,8 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
-  IonBackButton,
-  IonButtons,
   IonButton,
   IonContent,
   IonHeader,
@@ -30,15 +28,14 @@ import {
   buildCharacterDetailViewModel,
   resolveRumbleBasedOnId,
 } from './character-detail.presenter';
+import { ToolbarBackButtonComponent } from '../../shared/toolbar-back-button/toolbar-back-button.component';
 
 @Component({
   selector: 'app-character-detail-page',
   standalone: true,
   imports: [
     CommonModule,
-    IonBackButton,
     IonButton,
-    IonButtons,
     IonContent,
     IonHeader,
     IonIcon,
@@ -46,6 +43,7 @@ import {
     IonTitle,
     IonToolbar,
     RouterLink,
+    ToolbarBackButtonComponent,
     TranslocoDirective,
   ],
   templateUrl: './character-detail.page.html',

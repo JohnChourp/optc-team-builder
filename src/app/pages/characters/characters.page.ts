@@ -18,7 +18,6 @@ import {
   IonToolbar,
 } from '@ionic/angular/standalone';
 import {
-  archiveOutline,
   alertCircleOutline,
   checkmarkCircleOutline,
   closeOutline,
@@ -162,7 +161,6 @@ export class CharactersPage implements OnInit {
   public readonly layersIcon = layersOutline;
   public readonly uploadIcon = cloudUploadOutline;
   public readonly fileIcon = documentTextOutline;
-  public readonly boxesIcon = archiveOutline;
   public readonly closeIcon = closeOutline;
   public readonly successIcon = checkmarkCircleOutline;
   public readonly errorIcon = alertCircleOutline;

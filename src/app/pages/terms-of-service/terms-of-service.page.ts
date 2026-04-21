@@ -4,6 +4,8 @@ import { RouterLink } from "@angular/router";
 import { IonContent, IonHeader, IonTitle, IonToolbar } from "@ionic/angular/standalone";
 import { TranslocoDirective } from "@jsverse/transloco";
 
+import { ToolbarBackButtonComponent } from "../../shared/toolbar-back-button/toolbar-back-button.component";
+
 @Component({
   selector: "app-terms-of-service-page",
   standalone: true,
@@ -14,6 +16,7 @@ import { TranslocoDirective } from "@jsverse/transloco";
     IonTitle,
     IonToolbar,
     RouterLink,
+    ToolbarBackButtonComponent,
     TranslocoDirective,
   ],
   templateUrl: "./terms-of-service.page.html",

@@ -231,6 +231,52 @@
       "processing": "Γίνεται import των favorites...",
       "title": "Favorites"
     },
+    "inventoryCapture": {
+      "copy": "Κάνε review και import owned χαρακτήρων και ships από OPTCbx-style JSON export ή από screenshot OCR. Η ροή μένει τοπική στην εφαρμογή και δεν συνδέεται με το game account.",
+      "clearPreview": "Καθαρισμός preview",
+      "commit": "Εφαρμογή inventory import",
+      "errors": {
+        "generic": "Το inventory import απέτυχε.",
+        "invalidJson": "Το επιλεγμένο inventory capture αρχείο δεν είναι έγκυρο JSON.",
+        "invalidPayload": "Το επιλεγμένο inventory capture αρχείο δεν έχει το αναμενόμενο format.",
+        "unsupportedSchema": "Το επιλεγμένο inventory capture αρχείο χρησιμοποιεί μη υποστηριζόμενο schema version."
+      },
+      "feedback": {
+        "committedTitle": "Το inventory import ολοκληρώθηκε",
+        "errorTitle": "Το inventory import απέτυχε",
+        "previewReady": "Το preview είναι έτοιμο από το {{fileName}}.",
+        "driveHint": "Μπορείς τώρα να χρησιμοποιήσεις το Google Drive sync για backup αυτού του ενημερωμένου τοπικού inventory state.",
+        "stats": {
+          "addedShips": "Προστέθηκαν {{count}} ships στα favorite ships.",
+          "alreadyFavoritedShips": "{{count}} ships υπήρχαν ήδη στα favorite ships.",
+          "alreadyInBox": "{{count}} χαρακτήρες υπήρχαν ήδη στο επιλεγμένο box.",
+          "boxCreated": "Δημιουργήθηκε character box: {{name}}.",
+          "boxUpdated": "Ενημερώθηκε το character box: {{name}}.",
+          "characters": "Βρέθηκαν {{count}} χαρακτήρες.",
+          "ships": "Βρέθηκαν {{count}} ships.",
+          "unmatched": "{{count}} entries χρειάζονται ακόμη manual review."
+        },
+        "successTitle": "Το inventory preview είναι έτοιμο",
+        "warningTitle": "Το inventory import ολοκληρώθηκε με warnings"
+      },
+      "importOptcbx": "Import από OPTCbx JSON",
+      "importScreenshot": "Import από screenshots",
+      "processing": "Γίνεται ανάλυση του inventory import...",
+      "review": {
+        "boxName": "Όνομα character box",
+        "moreUnmatched": "Κρύβονται ακόμη {{count}} unmatched entries.",
+        "newBox": "Δημιουργία νέου character box",
+        "source": {
+          "optcbx-json": "Πηγή: OPTCbx / raw JSON import",
+          "screenshot": "Πηγή: screenshot OCR import"
+        },
+        "targetBox": "Target character box",
+        "title": "Review inventory import",
+        "unmatchedTitle": "Unmatched entries"
+      },
+      "subtitle": "OPTCbx JSON ή screenshot OCR",
+      "title": "Import Inventory"
+    },
     "favoriteShips": {
       "copy": "Κάνε export όλων των αγαπημένων καραβιών σε JSON, import ενός backup για favorite ships ή διαγραφή όλης της λίστας favorite ships από αυτή τη συσκευή.",
       "deleteAll": "Διαγραφή όλων των καραβιών",
@@ -284,20 +330,7 @@
     "analytics": "Analytics και cookies",
     "commands": "Commands ενημέρωσης dataset",
     "dataManagement": "Backups και μεταφορές",
-    "legal": "Νομικά και απόρρητο",
-    "packStatus": "Εγκατεστημένα packs",
-    "releaseNote": "Σημαντική σημείωση"
+    "packStatus": "Εγκατεστημένα packs"
   },
-  "title": "Ρυθμίσεις",
-  "legal": {
-    "copy": "Διάβασε πώς το web app χρησιμοποιεί προαιρετικά analytics cookies, local browser storage και δημόσια στοιχεία επικοινωνίας πριν ενεργοποιήσεις το Google Analytics.",
-    "actions": {
-      "privacy": "Πολιτική Απορρήτου",
-      "cookies": "Πολιτική Cookies",
-      "terms": "Όροι Χρήσης"
-    }
-  },
-  "release": {
-    "copy": "Το technical pipeline είναι έτοιμο για τοπική offline χρήση, αλλά η αναδιανομή του game art παραμένει ξεχωριστή νομική και product απόφαση πριν από οποιοδήποτε public store release."
-  }
+  "title": "Ρυθμίσεις"
 }

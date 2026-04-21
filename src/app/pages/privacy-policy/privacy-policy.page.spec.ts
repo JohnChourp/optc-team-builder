@@ -18,8 +18,8 @@ describe("PrivacyPolicyPage", () => {
     expect(template).toContain('t("sections.retention.title")');
     expect(template).toContain('t("sections.rights.title")');
     expect(template).toContain('t("sections.complaints.title")');
+    expect(template).toContain('<app-toolbar-back-button></app-toolbar-back-button>');
     expect(template).toContain("[routerLink]=\"['/tabs/cookies']\"");
     expect(template).toContain("[routerLink]=\"['/tabs/terms']\"");
-    expect(template).not.toContain("ion-back-button");
   });
 });

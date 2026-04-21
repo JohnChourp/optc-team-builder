@@ -80,7 +80,6 @@
   "title": "OPTC Character Vault",
   "tools": {
     "copy": "Reset filters here, then use the Offline tab for favorites backup, restore, and bulk deletion.",
-    "manageBoxes": "Manage boxes",
     "export": "Export favorites",
     "import": "Import favorites",
     "title": "Favorites tools"

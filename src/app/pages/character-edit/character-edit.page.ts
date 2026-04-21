@@ -2,9 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
-  IonBackButton,
   IonButton,
-  IonButtons,
   IonContent,
   IonHeader,
   IonInput,
@@ -25,6 +23,7 @@ import {
   normalizeLocalCharacterOverride,
 } from '../../core/services/character-overrides.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import { ToolbarBackButtonComponent } from '../../shared/toolbar-back-button/toolbar-back-button.component';
 
 type EditorFeedbackTone = 'error' | 'success';
 
@@ -38,9 +37,7 @@ interface EditorFeedback {
   standalone: true,
   imports: [
     CommonModule,
-    IonBackButton,
     IonButton,
-    IonButtons,
     IonContent,
     IonHeader,
     IonInput,
@@ -49,6 +46,7 @@ interface EditorFeedback {
     IonTitle,
     IonToggle,
     IonToolbar,
+    ToolbarBackButtonComponent,
     TranslocoDirective,
   ],
   templateUrl: './character-edit.page.html',

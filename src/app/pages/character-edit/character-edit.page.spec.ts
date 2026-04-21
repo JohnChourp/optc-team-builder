@@ -9,6 +9,7 @@ describe('CharacterEditPage template', () => {
       'utf8',
     );
 
+    expect(template).toContain('<app-toolbar-back-button></app-toolbar-back-button>');
     expect(template).toContain("t('sections.core')");
     expect(template).toContain("t('sections.stats')");
     expect(template).toContain("t('sections.images')");
@@ -16,5 +17,6 @@ describe('CharacterEditPage template', () => {
     expect(template).toContain('onThumbnailFileSelected');
     expect(template).toContain('onDetailFileSelected');
     expect(template).toContain('applyAdvancedJson()');
+    expect(template).not.toContain('ion-back-button');
   });
 });

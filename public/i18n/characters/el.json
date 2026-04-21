@@ -80,7 +80,6 @@
   "title": "Θησαυροφυλάκιο χαρακτήρων OPTC",
   "tools": {
     "copy": "Κάνε reset στα φίλτρα εδώ και χρησιμοποίησε το Offline tab για backup, restore και μαζική διαγραφή favorites.",
-    "manageBoxes": "Διαχείριση boxes",
     "export": "Εξαγωγή favorites",
     "import": "Εισαγωγή favorites",
     "title": "Εργαλεία favorites"

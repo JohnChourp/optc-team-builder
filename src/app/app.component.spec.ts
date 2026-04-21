@@ -22,6 +22,9 @@ let analyticsConsentStub: {
 let analyticsStub: {
   trackPageView: ReturnType<typeof vi.fn>;
 };
+let toolbarBackNavigationStub: {
+  recordNavigation: ReturnType<typeof vi.fn>;
+};
 
 vi.mock("@capacitor/app", () => ({
   App: {
@@ -60,6 +63,8 @@ vi.mock("@angular/core", async () => {
           return analyticsConsentStub;
         case "GoogleAnalyticsService":
           return analyticsStub;
+        case "ToolbarBackNavigationService":
+          return toolbarBackNavigationStub;
         default:
           throw new Error(`Unexpected inject token: ${token.name ?? "unknown"}`);
       }
@@ -77,6 +82,9 @@ describe("AppComponent", () => {
     analyticsConsentStub = createAnalyticsConsentStub("unknown");
     analyticsStub = {
       trackPageView: vi.fn(),
+    };
+    toolbarBackNavigationStub = {
+      recordNavigation: vi.fn(),
     };
   });
 
@@ -119,6 +127,7 @@ describe("AppComponent", () => {
 
     routerStub.events.next(new NavigationEnd(1, "/tabs/settings", "/tabs/settings"));
     expect(analyticsStub.trackPageView).toHaveBeenCalledWith("/tabs/settings");
+    expect(toolbarBackNavigationStub.recordNavigation).toHaveBeenCalledWith("/tabs/settings");
 
     analyticsStub.trackPageView.mockClear();
     analyticsConsentStub = createAnalyticsConsentStub("rejected");
@@ -149,6 +158,9 @@ describe("AppComponent", () => {
     new AppComponent();
 
     expect(analyticsStub.trackPageView).toHaveBeenCalledWith("/tabs/auto-team-builder");
+    expect(toolbarBackNavigationStub.recordNavigation).toHaveBeenCalledWith(
+      "/tabs/auto-team-builder",
+    );
   });
 });
 

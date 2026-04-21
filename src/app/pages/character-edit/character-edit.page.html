@@ -1,11 +1,7 @@
 <ng-container *transloco="let t; scope: 'character-edit'; read: 'character-edit'">
   <ion-header class="ion-no-border">
     <ion-toolbar>
-      <ion-buttons slot="start">
-        <ion-back-button
-          [defaultHref]="character() ? '/characters/' + character()?.id : '/tabs/characters'"
-        ></ion-back-button>
-      </ion-buttons>
+      <app-toolbar-back-button></app-toolbar-back-button>
       <ion-title>{{ character()?.name ?? t('title') }}</ion-title>
     </ion-toolbar>
   </ion-header>
