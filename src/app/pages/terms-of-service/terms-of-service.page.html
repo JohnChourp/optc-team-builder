@@ -1,0 +1,131 @@
+<ng-container *transloco="let t; scope: 'terms-of-service'; read: 'terms-of-service'">
+  <ion-header class="ion-no-border">
+    <ion-toolbar>
+      <ion-title>{{ t("title") }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content [fullscreen]="true">
+    <div class="page-shell legal-policy-shell">
+      <section class="glass-card legal-hero">
+        <div class="section-label">{{ t("eyebrow") }}</div>
+        <h1 class="section-title">{{ t("title") }}</h1>
+        <p class="section-copy">{{ t("summary") }}</p>
+      </section>
+
+      <section class="glass-card legal-card">
+        <h2>{{ t("sections.acceptance.title") }}</h2>
+        <p>{{ t("sections.acceptance.copy") }}</p>
+      </section>
+
+      <section class="glass-card legal-card">
+        <h2>{{ t("sections.service.title") }}</h2>
+        <p>{{ t("sections.service.copy") }}</p>
+        <ul class="policy-list">
+          <li>{{ t("sections.service.items.offline") }}</li>
+          <li>{{ t("sections.service.items.google") }}</li>
+          <li>{{ t("sections.service.items.publicPages") }}</li>
+        </ul>
+      </section>
+
+      <section class="glass-card legal-card">
+        <h2>{{ t("sections.fanProject.title") }}</h2>
+        <p>{{ t("sections.fanProject.copy") }}</p>
+      </section>
+
+      <section class="glass-card legal-card">
+        <h2>{{ t("sections.ip.title") }}</h2>
+        <p>{{ t("sections.ip.copy") }}</p>
+        <ul class="policy-list">
+          <li>{{ t("sections.ip.items.project") }}</li>
+          <li>{{ t("sections.ip.items.thirdParty") }}</li>
+          <li>{{ t("sections.ip.items.noLicense") }}</li>
+        </ul>
+      </section>
+
+      <section class="glass-card legal-card">
+        <h2>{{ t("sections.acceptableUse.title") }}</h2>
+        <p>{{ t("sections.acceptableUse.copy") }}</p>
+        <ul class="policy-list">
+          <li>{{ t("sections.acceptableUse.items.integrity") }}</li>
+          <li>{{ t("sections.acceptableUse.items.illegal") }}</li>
+          <li>{{ t("sections.acceptableUse.items.content") }}</li>
+        </ul>
+      </section>
+
+      <section class="glass-card legal-card">
+        <h2>{{ t("sections.userData.title") }}</h2>
+        <p>{{ t("sections.userData.copy") }}</p>
+      </section>
+
+      <section class="glass-card legal-card">
+        <h2>{{ t("sections.googleServices.title") }}</h2>
+        <p>{{ t("sections.googleServices.copy") }}</p>
+      </section>
+
+      <section class="glass-card legal-card">
+        <h2>{{ t("sections.availability.title") }}</h2>
+        <p>{{ t("sections.availability.copy") }}</p>
+      </section>
+
+      <section class="glass-card legal-card">
+        <h2>{{ t("sections.warranty.title") }}</h2>
+        <p>{{ t("sections.warranty.copy") }}</p>
+      </section>
+
+      <section class="glass-card legal-card">
+        <h2>{{ t("sections.liability.title") }}</h2>
+        <p>{{ t("sections.liability.copy") }}</p>
+      </section>
+
+      <section class="glass-card legal-card">
+        <h2>{{ t("sections.lawAndContact.title") }}</h2>
+        <p>{{ t("sections.lawAndContact.copy") }}</p>
+
+        <dl class="policy-facts">
+          <div>
+            <dt>{{ t("sections.lawAndContact.lawLabel") }}</dt>
+            <dd>{{ t("sections.lawAndContact.lawValue") }}</dd>
+          </div>
+          <div>
+            <dt>{{ t("sections.lawAndContact.contactLabel") }}</dt>
+            <dd>
+              <a [href]="ownerUrl" target="_blank" rel="noreferrer noopener">
+                {{ t("sections.lawAndContact.contactValue") }}
+              </a>
+            </dd>
+          </div>
+          <div>
+            <dt>{{ t("sections.lawAndContact.repositoryLabel") }}</dt>
+            <dd>
+              <a [href]="repositoryUrl" target="_blank" rel="noreferrer noopener">
+                {{ t("sections.lawAndContact.repositoryValue") }}
+              </a>
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="glass-card legal-card">
+        <h2>{{ t("sections.updates.title") }}</h2>
+        <p>{{ t("sections.updates.copy") }}</p>
+        <div class="policy-facts">
+          <div>
+            <dt>{{ t("sections.updates.lastUpdatedLabel") }}</dt>
+            <dd>{{ t("sections.updates.lastUpdatedValue") }}</dd>
+          </div>
+        </div>
+      </section>
+
+      <section class="glass-card legal-card">
+        <h2>{{ t("sections.related.title") }}</h2>
+        <p>{{ t("sections.related.copy") }}</p>
+        <div class="policy-links">
+          <a class="policy-link" [routerLink]="['/tabs/privacy']">{{ t("sections.related.privacyLink") }}</a>
+          <a class="policy-link" [routerLink]="['/tabs/cookies']">{{ t("sections.related.cookieLink") }}</a>
+          <a class="policy-link" [routerLink]="['/tabs/settings']">{{ t("sections.related.settingsLink") }}</a>
+        </div>
+      </section>
+    </div>
+  </ion-content>
+</ng-container>

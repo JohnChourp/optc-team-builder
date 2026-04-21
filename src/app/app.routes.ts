@@ -76,6 +76,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'terms',
+        loadComponent: () =>
+          import('./pages/terms-of-service/terms-of-service.page').then(
+            (module) => module.TermsOfServicePage,
+          ),
+      },
+      {
         path: '',
         pathMatch: 'full',
         redirectTo: 'characters',
@@ -105,6 +112,11 @@ export const routes: Routes = [
     path: 'cookies',
     pathMatch: 'full',
     redirectTo: 'tabs/cookies',
+  },
+  {
+    path: 'terms',
+    pathMatch: 'full',
+    redirectTo: 'tabs/terms',
   },
   {
     path: '**',

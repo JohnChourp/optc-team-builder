@@ -28,6 +28,7 @@ describe("CookiePolicyPage", () => {
     expect(template).toContain("(click)=\"acceptAnalyticsConsent()\"");
     expect(template).toContain("(click)=\"rejectAnalyticsConsent()\"");
     expect(template).toContain("[routerLink]=\"['/tabs/privacy']\"");
+    expect(template).toContain("[routerLink]=\"['/tabs/terms']\"");
     expect(template).not.toContain("ion-back-button");
   });
 

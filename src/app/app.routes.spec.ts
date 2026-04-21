@@ -59,13 +59,24 @@ describe("app routes", () => {
     expect(cookieRoute?.loadComponent).toBeTypeOf("function");
   });
 
-  it("redirects the legacy privacy and cookie routes into tabs", () => {
+  it("registers the terms of service route inside the tabs shell", () => {
+    const tabsRoute = routes.find((route) => route.path === "tabs");
+    const termsRoute = tabsRoute?.children?.find((route) => route.path === "terms");
+
+    expect(termsRoute).toBeDefined();
+    expect(termsRoute?.loadComponent).toBeTypeOf("function");
+  });
+
+  it("redirects the legacy privacy, cookie, and terms routes into tabs", () => {
     const privacyRoute = routes.find((route) => route.path === "privacy");
     const cookieRoute = routes.find((route) => route.path === "cookies");
+    const termsRoute = routes.find((route) => route.path === "terms");
 
     expect(privacyRoute?.redirectTo).toBe("tabs/privacy");
     expect(privacyRoute?.pathMatch).toBe("full");
     expect(cookieRoute?.redirectTo).toBe("tabs/cookies");
     expect(cookieRoute?.pathMatch).toBe("full");
+    expect(termsRoute?.redirectTo).toBe("tabs/terms");
+    expect(termsRoute?.pathMatch).toBe("full");
   });
 });

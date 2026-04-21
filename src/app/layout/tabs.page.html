@@ -7,8 +7,6 @@
 
   <ion-content class="tabs-menu__content">
     <div class="tabs-menu__shell">
-      <p class="tabs-menu__copy">{{ "tabs.menuCopy" | transloco }}</p>
-
       <ion-list lines="none" class="tabs-menu__list" [attr.aria-label]="'tabs.navigationAriaLabel' | transloco">
         @for (item of navigationItems; track item.route) {
           <ion-menu-toggle autoHide="true">

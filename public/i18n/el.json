@@ -289,8 +289,7 @@
     "characterBoxes": "Boxes χαρακτήρων",
     "characters": "Χαρακτήρες",
     "crewForge": "Crew Forge",
-    "menuCopy": "Άνοιξε οποιαδήποτε σελίδα από ένα σημείο χωρίς να στριμώχνεται το navigation στο κάτω μέρος.",
-    "menuTitle": "Πλοήγηση",
+    "menuTitle": "Μενού",
     "navigationAriaLabel": "Κύρια πλοήγηση",
     "offline": "Offline",
     "savedEnemies": "Αποθηκευμένοι εχθροί",
@@ -311,7 +310,8 @@
   "legalNav": {
     "ariaLabel": "Νομικοί σύνδεσμοι",
     "privacy": "Απόρρητο",
-    "cookies": "Cookies"
+    "cookies": "Cookies",
+    "terms": "Όροι"
   },
   "title": "Missing value for 'title'",
   "tools": {

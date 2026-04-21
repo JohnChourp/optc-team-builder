@@ -74,6 +74,9 @@ import { GoogleAnalyticsService } from "./core/services/google-analytics.service
             <a class="app-legal-nav__link" [routerLink]="['/tabs/cookies']">
               {{ "legalNav.cookies" | transloco }}
             </a>
+            <a class="app-legal-nav__link" [routerLink]="['/tabs/terms']">
+              {{ "legalNav.terms" | transloco }}
+            </a>
           </nav>
         </div>
       </footer>

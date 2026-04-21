@@ -11,7 +11,7 @@ describe("TabsPage", () => {
     expect(template).toContain('id="tabs-menu-content"');
     expect(template).toContain("[routerLink]=\"[item.route]\"");
     expect(template).toContain('"tabs.menuTitle" | transloco');
-    expect(template).toContain('"tabs.menuCopy" | transloco');
+    expect(template).not.toContain('"tabs.menuCopy" | transloco');
     expect(template).not.toContain("<ion-tab-bar");
   });
 

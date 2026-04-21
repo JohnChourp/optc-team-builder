@@ -86,8 +86,9 @@
     },
     "related": {
       "title": "Σχετικοί έλεγχοι",
-      "copy": "Για λεπτομέρειες cookies και controls του analytics consent, χρησιμοποίησε τις παρακάτω σελίδες.",
+      "copy": "Για λεπτομέρειες cookies, όρους χρήσης και controls του analytics consent, χρησιμοποίησε τις παρακάτω σελίδες.",
       "cookieLink": "Άνοιγμα Πολιτικής Cookies",
+      "termsLink": "Άνοιγμα Όρων Χρήσης",
       "settingsLink": "Άνοιγμα Ρυθμίσεων"
     }
   }

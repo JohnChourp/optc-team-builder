@@ -293,7 +293,8 @@
     "copy": "Διάβασε πώς το web app χρησιμοποιεί προαιρετικά analytics cookies, local browser storage και δημόσια στοιχεία επικοινωνίας πριν ενεργοποιήσεις το Google Analytics.",
     "actions": {
       "privacy": "Πολιτική Απορρήτου",
-      "cookies": "Πολιτική Cookies"
+      "cookies": "Πολιτική Cookies",
+      "terms": "Όροι Χρήσης"
     }
   },
   "release": {

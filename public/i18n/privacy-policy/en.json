@@ -86,8 +86,9 @@
     },
     "related": {
       "title": "Related controls",
-      "copy": "For cookie details and analytics consent controls, use the pages below.",
+      "copy": "For cookie details, terms, and analytics consent controls, use the pages below.",
       "cookieLink": "Open Cookie Policy",
+      "termsLink": "Open Terms of Service",
       "settingsLink": "Open Settings"
     }
   }

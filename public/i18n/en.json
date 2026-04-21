@@ -289,8 +289,7 @@
     "characterBoxes": "Character Boxes",
     "characters": "Characters",
     "crewForge": "Crew Forge",
-    "menuCopy": "Open any page from one place without squeezing actions into the bottom bar.",
-    "menuTitle": "Navigate",
+    "menuTitle": "Menu",
     "navigationAriaLabel": "Main navigation",
     "offline": "Offline",
     "savedEnemies": "Saved Enemies",
@@ -311,7 +310,8 @@
   "legalNav": {
     "ariaLabel": "Legal links",
     "privacy": "Privacy",
-    "cookies": "Cookies"
+    "cookies": "Cookies",
+    "terms": "Terms"
   },
   "title": "Missing value for 'title'",
   "tools": {

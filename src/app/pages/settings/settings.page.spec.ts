@@ -142,8 +142,10 @@ describe("SettingsPage", () => {
     expect(template).toContain("t('sections.legal')");
     expect(template).toContain("t('legal.actions.privacy')");
     expect(template).toContain("t('legal.actions.cookies')");
+    expect(template).toContain("t('legal.actions.terms')");
     expect(template).toContain("[routerLink]=\"['/tabs/privacy']\"");
     expect(template).toContain("[routerLink]=\"['/tabs/cookies']\"");
+    expect(template).toContain("[routerLink]=\"['/tabs/terms']\"");
   });
 
   it("exports all favorites through the shared OPTCbx payload helper", async () => {

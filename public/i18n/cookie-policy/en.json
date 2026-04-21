@@ -54,8 +54,9 @@
     },
     "related": {
       "title": "Related pages",
-      "copy": "Use the links below to read the broader privacy notice or reopen the app settings.",
+      "copy": "Use the links below to read the broader privacy notice, the terms of service, or reopen the app settings.",
       "privacyLink": "Open Privacy Policy",
+      "termsLink": "Open Terms of Service",
       "settingsLink": "Open Settings"
     }
   }

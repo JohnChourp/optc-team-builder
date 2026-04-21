@@ -93,8 +93,10 @@ describe("AppComponent", () => {
     expect(template).toContain('(click)="rejectAnalyticsConsent()"');
     expect(template).toContain("[routerLink]=\"['/tabs/privacy']\"");
     expect(template).toContain("[routerLink]=\"['/tabs/cookies']\"");
+    expect(template).toContain("[routerLink]=\"['/tabs/terms']\"");
     expect(template).toContain('"legalNav.privacy" | transloco');
     expect(template).toContain('"legalNav.cookies" | transloco');
+    expect(template).toContain('"legalNav.terms" | transloco');
   });
 
   it("shows the banner while consent is unknown and hides it after acceptance", async () => {

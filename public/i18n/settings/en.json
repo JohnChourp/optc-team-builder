@@ -293,7 +293,8 @@
     "copy": "Read how the web app uses optional analytics cookies, local browser storage, and public legal contact details before enabling Google Analytics.",
     "actions": {
       "privacy": "Privacy Policy",
-      "cookies": "Cookie Policy"
+      "cookies": "Cookie Policy",
+      "terms": "Terms of Service"
     }
   },
   "release": {

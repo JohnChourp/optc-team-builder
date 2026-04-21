@@ -1,0 +1,85 @@
+{
+  "eyebrow": "Legal information",
+  "title": "Terms of Service",
+  "summary": "These terms explain the rules for using the optc-team-builder web app and its related public project pages, including optional Google integrations and the limits of the service.",
+  "sections": {
+    "acceptance": {
+      "title": "Acceptance of these terms",
+      "copy": "By accessing or using the optc-team-builder web app or its related public project pages, you agree to these Terms of Service. If you do not agree, do not use the service."
+    },
+    "service": {
+      "title": "What the service provides",
+      "copy": "The service is an offline-first fan project built to help users browse OPTC data and manage team-building workflows.",
+      "items": {
+        "offline": "Core features include character browsing, team-building, saved data management, and other browser- or device-local workflows.",
+        "google": "Optional features may include Google sign-in, Google Drive backup, and Google Analytics measurement when you choose to enable them.",
+        "publicPages": "These terms also cover related public project pages such as the Privacy Policy, Cookie Policy, repository links, and other service-facing documentation."
+      }
+    },
+    "fanProject": {
+      "title": "Unofficial fan project",
+      "copy": "optc-team-builder is an unofficial fan-made project. It is not affiliated with, endorsed by, or sponsored by Bandai, Toei Animation, Shueisha, Google, or any other third-party rights holder or platform provider."
+    },
+    "ip": {
+      "title": "Intellectual property and third-party materials",
+      "copy": "Different parts of the service are subject to different ownership and licensing rules.",
+      "items": {
+        "project": "The original project code, page copy, and service-specific materials belong to the project operator or are used under the terms that apply to them.",
+        "thirdParty": "Game names, characters, artwork, trademarks, logos, and other third-party materials remain the property of their respective owners.",
+        "noLicense": "Using the service does not grant you any license or ownership rights in third-party intellectual property."
+      }
+    },
+    "acceptableUse": {
+      "title": "Acceptable use",
+      "copy": "You agree to use the service lawfully and in a way that does not interfere with the service or other users.",
+      "items": {
+        "integrity": "Do not abuse, overload, probe, disrupt, or attempt to bypass the technical integrity, hosting, or availability of the service or connected third-party systems.",
+        "illegal": "Do not use the service for unlawful, harmful, fraudulent, or clearly abusive activity, including automated misuse that exceeds the intended personal-use context of the app.",
+        "content": "Do not upload, import, sync, or redistribute content through the service if you do not have the rights or permission to do so."
+      }
+    },
+    "userData": {
+      "title": "Your data and backups",
+      "copy": "You remain responsible for the data you create, import, export, or sync through the service. Local browser data and Google Drive backups are primarily under your control, and you should keep your own copies if the data matters to you."
+    },
+    "googleServices": {
+      "title": "Optional Google services",
+      "copy": "Google sign-in, Google Drive backup, and Google Analytics are optional features. If you choose to use them, your use is also subject to Google's own terms, privacy policies, and platform rules."
+    },
+    "availability": {
+      "title": "Availability and service changes",
+      "copy": "The service may change, be limited, or be discontinued at any time. Features, data flows, third-party integrations, and public project pages may be added, removed, or modified without guaranteed continuity or advance notice."
+    },
+    "warranty": {
+      "title": "No warranty",
+      "copy": "The service is provided on an \"as is\" and \"as available\" basis. No warranty is given that the service will always be accurate, uninterrupted, secure, compatible with your environment, or sufficient for any particular purpose."
+    },
+    "liability": {
+      "title": "Limitation of liability",
+      "copy": "To the maximum extent permitted by applicable law, the project operator is not liable for data loss, backup failure, downtime, incompatibility, indirect damages, or issues caused by third-party services, infrastructure, or rights holders."
+    },
+    "lawAndContact": {
+      "title": "Applicable law and contact",
+      "copy": "These terms are intended to be interpreted with reference to applicable Greek law where relevant, without expanding mandatory user rights that apply under other laws. Until a dedicated legal or support address is published, public GitHub contact routes remain the project contact point.",
+      "lawLabel": "Legal reference",
+      "lawValue": "Applicable law of Greece, where relevant",
+      "contactLabel": "Public contact point",
+      "contactValue": "GitHub profile for JohnChourp",
+      "repositoryLabel": "Project page",
+      "repositoryValue": "Public optc-team-builder repository"
+    },
+    "updates": {
+      "title": "Updates to these terms",
+      "copy": "The operator may update these terms from time to time. Continued use of the service after an updated version is published means you accept the revised terms.",
+      "lastUpdatedLabel": "Last updated",
+      "lastUpdatedValue": "April 21, 2026"
+    },
+    "related": {
+      "title": "Related pages",
+      "copy": "Use the pages below for privacy details, cookie controls, and app settings.",
+      "privacyLink": "Open Privacy Policy",
+      "cookieLink": "Open Cookie Policy",
+      "settingsLink": "Open Settings"
+    }
+  }
+}
