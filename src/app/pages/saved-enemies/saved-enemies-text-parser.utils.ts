@@ -79,6 +79,8 @@ const EXTRA_DETAIL_PATTERNS = [
   /\bblow away\b/i,
 ] as const;
 
+const SINGLE_CHARACTER_DEFAULT_ABILITY_KEYS = new Set(['ignore_normal_attack_only']);
+
 export function parseSavedEnemyText(
   rawValue: string,
   options: ParseEnemyTextOptions,
@@ -115,6 +117,11 @@ export function parseSavedEnemyText(
       }
 
       seenSectionLines.add(normalizedLine);
+
+      // Ignore pure phase labels so warnings focus on real mechanics and unsupported effects.
+      if (isIgnoredEnemyTextLine(normalizedLine)) {
+        return;
+      }
 
       const parsedTurns = extractTurns(normalizedLine);
       const mechanicMatch = matchEnemyMechanic(normalizedLine, parsedTurns, line);
@@ -240,7 +247,9 @@ export function parseSavedEnemyText(
       ...(requiredCharacterCount > 1 ? { requiredCharacterCount } : {}),
     })),
   );
-  const mergedRequiredAbilities = mergeAbilityRequirements([...requiredAbilitySections.values()]);
+  const mergedRequiredAbilities = normalizeParsedRequiredAbilities(
+    mergeAbilityRequirements([...requiredAbilitySections.values()]),
+  );
 
   return {
     enemyMechanics: mergedEnemyMechanics,
@@ -252,6 +261,19 @@ export function parseSavedEnemyText(
       .map((warning) => warning.line),
     warnings,
   };
+}
+
+function normalizeParsedRequiredAbilities(
+  requirements: AutoBuildAbilityRequirement[],
+): AutoBuildAbilityRequirement[] {
+  return requirements.map((requirement) =>
+    SINGLE_CHARACTER_DEFAULT_ABILITY_KEYS.has(requirement.abilityKey)
+      ? {
+          ...requirement,
+          requiredCharacterCount: 1,
+        }
+      : requirement,
+  );
 }
 
 function extractEnemyTextSections(rawValue: string): ParsedEnemyTextSection[] {
@@ -316,6 +338,10 @@ function normalizeEnemyTextLine(value: string): string {
     .trim();
 }
 
+function isIgnoredEnemyTextLine(value: string): boolean {
+  return /^(?:preemptive|starting state|unlimited number of times)$/i.test(value);
+}
+
 function extractTurns(line: string): number | null {
   const match = line.match(/\b(\d+)\s+turns?\b/i);
 
@@ -370,7 +396,11 @@ function matchEnemyMechanic(
 }
 
 function matchOrbMechanic(line: string): string | null {
-  if (/\b(?:slot|orb) bind\b/i.test(line)) {
+  if (
+    /\b(?:slot|orb) bind\b/i.test(line) ||
+    /\block(?:ed)? slots?\b/i.test(line) ||
+    /\bslots?\s+locked\b/i.test(line)
+  ) {
     return 'orb_slot_bind';
   }
 
@@ -502,6 +532,7 @@ function hasPrecisionLoss(line: string, mechanicKey: string): boolean {
     if (
       mechanicKey === 'crew_atk_down' ||
       mechanicKey === 'crew_burn' ||
+      mechanicKey === 'orb_slot_bind' ||
       mechanicKey === 'enemy_immunity' ||
       mechanicKey === 'enemy_percent_damage_reduction' ||
       mechanicKey === 'enemy_increased_defense'
@@ -514,6 +545,10 @@ function hasPrecisionLoss(line: string, mechanicKey: string): boolean {
     mechanicKey === 'enemy_immunity' &&
     !/^(?:\d+\s+turns?\s+)?(?:debuff\s+)?immunity$/i.test(line)
   ) {
+    return true;
+  }
+
+  if (mechanicKey === 'orb_slot_bind' && /\block(?:ed)? slots?\b|\bslots?\s+locked\b/i.test(line)) {
     return true;
   }
 

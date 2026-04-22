@@ -1,6 +1,6 @@
 import '@angular/compiler';
 import { JSDOM } from 'jsdom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   buildSavedEnemiesExportFilename,
@@ -12,6 +12,10 @@ import {
 } from './saved-enemies-transfer.utils';
 
 describe('Saved enemies transfer helpers', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('builds a cloned saved enemies payload', () => {
     const enemy = buildSavedEnemy();
     const payload = buildSavedEnemiesTransferPayload(
@@ -265,6 +269,88 @@ describe('Saved enemies transfer helpers', () => {
       expect(error).toBeInstanceOf(SavedEnemiesImportError);
       expect(error).toMatchObject({ key: 'bulkImport.errors.unsupportedSchema' });
     }
+  });
+
+  it('accepts a single enemy skill payload by converting it to saved-enemies import shape', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-22T04:53:22.812Z'));
+
+    const payload = parseSavedEnemiesImportPayload(
+      JSON.stringify({
+        schemaVersion: 1,
+        source: 'optc-enemy-skill',
+        exportType: 'enemy',
+        enemy: {
+          name: 'Eustass "Captain" Kid Whole Quest',
+          notes: ' Whole quest import ',
+          selectedTypes: ['DEX', 'INT'],
+          selectedClasses: ['Cerebral'],
+          requiredAbilities: [
+            {
+              abilityKey: 'ignore_normal_attack_only',
+              minTurns: null,
+              slotTokens: [],
+              requiredCharacterCount: 2,
+            },
+          ],
+          enemyMechanics: [
+            {
+              mechanicKey: 'crew_special_bind',
+              category: 'crewDebuff',
+              minTurns: 99,
+              requiredCharacterCount: 2,
+              triggerTags: [],
+              responseTags: [],
+              conditionTags: [],
+              derivedAbilityKey: 'remove_special_bind',
+            },
+          ],
+          requireAllSelectedTypesInTeam: false,
+          requireAllSelectedClassesPerCharacter: false,
+          requireAllSpecialsSupportTeam: false,
+        },
+      }),
+    );
+
+    expect(payload).toEqual({
+      schemaVersion: 1,
+      source: 'saved-enemies',
+      exportedAt: '2026-04-22T04:53:22.812Z',
+      enemies: [
+        {
+          id: 'enemy-skill-eustass-captain-kid-whole-quest',
+          name: 'Eustass "Captain" Kid Whole Quest',
+          notes: ' Whole quest import ',
+          imageDataUrl: null,
+          selectedTypes: ['DEX', 'INT'],
+          selectedClasses: ['Cerebral'],
+          requiredAbilities: [
+            {
+              abilityKey: 'ignore_normal_attack_only',
+              minTurns: null,
+              slotTokens: [],
+              requiredCharacterCount: 2,
+            },
+          ],
+          enemyMechanics: [
+            {
+              mechanicKey: 'crew_special_bind',
+              category: 'crewDebuff',
+              minTurns: 99,
+              requiredCharacterCount: 2,
+              triggerTags: [],
+              responseTags: [],
+              conditionTags: [],
+              derivedAbilityKey: 'remove_special_bind',
+            },
+          ],
+          requireAllSelectedTypesInTeam: false,
+          requireAllSelectedClassesPerCharacter: false,
+          createdAt: '2026-04-22T04:53:22.812Z',
+          updatedAt: '2026-04-22T04:53:22.812Z',
+        },
+      ],
+    });
   });
 });
 

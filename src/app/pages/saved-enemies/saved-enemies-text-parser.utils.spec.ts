@@ -154,6 +154,29 @@ describe('saved enemies text parser utils', () => {
     expect(result.warnings).toEqual([]);
   });
 
+  it('keeps ignore normal attack only at a single-character default across battle headers', () => {
+    const result = parseSavedEnemyText(
+      `
+        Battle 3
+        Non-Normal Attacks deal 1 damage,
+        Battle 4
+        Non-Normal Attacks deal 1 damage
+      `,
+      {
+        abilityCatalogItems: [createAbilityCatalogItem('ignore_normal_attack_only', false)],
+      },
+    );
+
+    expect(result.requiredAbilities).toEqual([
+      expect.objectContaining({
+        abilityKey: 'ignore_normal_attack_only',
+        requiredCharacterCount: 1,
+      }),
+    ]);
+    expect(result.unmatchedLines).toEqual([]);
+    expect(result.warnings).toEqual([]);
+  });
+
   it('keeps pre-header lines in the default section and ignores header-only lines', () => {
     const result = parseSavedEnemyText(
       `
@@ -197,6 +220,133 @@ describe('saved enemies text parser utils', () => {
         resolvedKey: 'crew_special_bind',
       }),
     ]);
+  });
+
+  it('parses whole-quest battle notes, keeps supported aliases, and leaves unsupported lines unmatched', () => {
+    const result = parseSavedEnemyText(
+      `
+        BATTLE 1
+        PREEMPTIVE
+        Reduce Special Charge by 15
+        Super Switch Effect requirement reduction: 15
+        VS Effect gauge reduction: 15
+        Retreat
+
+        BATTLE 2
+        PREEMPTIVE
+        [EMPTY][STR][DEX][QCK][PSY][INT][G][RCVG][RCV][TND][BOMB] Slots to [BLOCK] Slots
+        3 turn(s) Special Bind
+        1 turn(s) Slot Barrier ([STR] Slots 2 time(s))
+        Non-Normal Attacks deal 1 damage
+
+        BATTLE 3
+        STARTING STATE
+        Eustass "Captain" Kid
+        Status Effect Immunity (except Enemy's Poison)
+        Immune to instant defeat Specials
+        Percentage damage resistance 100%
+        Weakness Class: Cerebral
+
+        PREEMPTIVE
+        3 turn(s) Special Bind
+        7 turn(s) Top-Row Despair
+        1 turn(s) Lock Slots
+        For 10 turn(s) crew can only deal up to 80% of enemy's maximum HP damage per turn
+        For 3 turn(s), apply Territory (Enemy) on 1 rn(s), apply Territory (Enemy) on the field62000 damage
+        Non-Normal Attacks deal 1 damage
+
+        INTERRUPTION When ally status is not applied (Switch Effect/Super Switch Effect)
+        Unlimited number of times
+        Full HP Recovery
+        For 99 turn(s) Silence
+        Beneficial Effects (including Super Status)/Accumulated Values Removal
+        Non-Normal Attacks deal 1 damage
+
+        NORMAL ACTION After 1 turn(s)
+        Until using 1 [RCV] [SEMLA] slots, Reduce current HP by 10% each turn, ATK 90% Down
+        Non-Normal Attacks deal 1 damage
+      `,
+      {
+        abilityCatalogItems: [createAbilityCatalogItem('ignore_normal_attack_only', false)],
+      },
+    );
+
+    expect(result.enemyMechanics).toEqual([
+      expect.objectContaining({
+        mechanicKey: 'orb_block',
+        minTurns: null,
+      }),
+      expect.objectContaining({
+        mechanicKey: 'crew_special_bind',
+        minTurns: 99,
+        requiredCharacterCount: 2,
+      }),
+      expect.objectContaining({
+        mechanicKey: 'enemy_immunity',
+        minTurns: null,
+      }),
+      expect.objectContaining({
+        mechanicKey: 'enemy_percent_damage_reduction',
+        minTurns: null,
+      }),
+      expect.objectContaining({
+        mechanicKey: 'crew_despair',
+        minTurns: 7,
+      }),
+      expect.objectContaining({
+        mechanicKey: 'orb_slot_bind',
+        minTurns: 1,
+      }),
+      expect.objectContaining({
+        mechanicKey: 'crew_atk_down',
+        minTurns: null,
+      }),
+    ]);
+    expect(result.requiredAbilities).toEqual([
+      expect.objectContaining({
+        abilityKey: 'ignore_normal_attack_only',
+        requiredCharacterCount: 1,
+      }),
+    ]);
+    expect(result.unmatchedLines).toEqual(
+      expect.arrayContaining([
+        'Retreat',
+        '1 turn(s) Slot Barrier ([STR] Slots 2 time(s))',
+        'For 10 turn(s) crew can only deal up to 80% of enemy\'s maximum HP damage per turn',
+        'For 3 turn(s)',
+        'apply Territory (Enemy) on 1 rn(s)',
+        'INTERRUPTION When ally status is not applied (Switch Effect/Super Switch Effect)',
+        'Full HP Recovery',
+        'Beneficial Effects (including Super Status)/Accumulated Values Removal',
+      ]),
+    );
+    expect(result.unmatchedLines).not.toEqual(
+      expect.arrayContaining(['PREEMPTIVE', 'STARTING STATE', 'Unlimited number of times']),
+    );
+    expect(result.warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'precisionLoss',
+          line: 'Status Effect Immunity (except Enemy\'s Poison)',
+          resolvedKey: 'enemy_immunity',
+        }),
+        expect.objectContaining({
+          kind: 'precisionLoss',
+          line: 'Percentage damage resistance 100%',
+          resolvedKey: 'enemy_percent_damage_reduction',
+        }),
+        expect.objectContaining({
+          kind: 'precisionLoss',
+          line: '7 turn(s) Top-Row Despair',
+          resolvedKey: 'crew_despair',
+        }),
+        expect.objectContaining({
+          kind: 'precisionLoss',
+          line: '1 turn(s) Lock Slots',
+          resolvedKey: 'orb_slot_bind',
+        }),
+      ]),
+    );
   });
 });
 

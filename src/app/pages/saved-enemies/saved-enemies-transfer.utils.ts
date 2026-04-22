@@ -7,6 +7,15 @@ export interface SavedEnemiesTransferPayload {
   enemies: SavedEnemy[];
 }
 
+export interface EnemySkillTransferPayload {
+  schemaVersion: 1;
+  source: "optc-enemy-skill";
+  exportType: "enemy";
+  enemy: Omit<SavedEnemy, "id" | "createdAt" | "updatedAt"> & {
+    requireAllSpecialsSupportTeam?: boolean;
+  };
+}
+
 export interface SavedEnemiesImportSanitizeOptions {
   now?: string;
   untitledEnemyName: string;
@@ -111,6 +120,21 @@ function normalizeEnemyImageDataUrl(value: unknown): string | null {
   }
 
   return normalizedValue.includes(";base64,") ? normalizedValue : null;
+}
+
+function normalizeEntityIdSegment(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/["']/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function buildImportedEnemyId(name: string): string {
+  const normalizedNameSegment = normalizeEntityIdSegment(name);
+
+  return `enemy-skill-${normalizedNameSegment || "untitled"}`;
 }
 
 function normalizeRequiredAbilities(value: unknown): SavedEnemy["requiredAbilities"] {
@@ -227,6 +251,48 @@ export function parseSavedEnemiesImportPayloadValue(
 ): SavedEnemiesTransferPayload {
   if (!isRecord(parsedPayload)) {
     throw new SavedEnemiesImportError("bulkImport.errors.invalidPayload");
+  }
+
+  if (
+    parsedPayload["schemaVersion"] === 1 &&
+    parsedPayload["source"] === "optc-enemy-skill" &&
+    parsedPayload["exportType"] === "enemy"
+  ) {
+    const enemy = parsedPayload["enemy"];
+
+    if (!isRecord(enemy)) {
+      throw new SavedEnemiesImportError("bulkImport.errors.invalidPayload");
+    }
+
+    const exportedAt = new Date().toISOString();
+    const normalizedEnemyName =
+      typeof enemy["name"] === "string" ? enemy["name"].trim() : "";
+
+    return {
+      schemaVersion: 1,
+      source: "saved-enemies",
+      exportedAt,
+      enemies: [
+        {
+          id: buildImportedEnemyId(normalizedEnemyName),
+          name: normalizedEnemyName,
+          notes: typeof enemy["notes"] === "string" ? enemy["notes"] : "",
+          imageDataUrl: normalizeEnemyImageDataUrl(enemy["imageDataUrl"]),
+          selectedTypes: Array.isArray(enemy["selectedTypes"]) ? enemy["selectedTypes"] : [],
+          selectedClasses: Array.isArray(enemy["selectedClasses"]) ? enemy["selectedClasses"] : [],
+          requiredAbilities: Array.isArray(enemy["requiredAbilities"])
+            ? enemy["requiredAbilities"]
+            : [],
+          enemyMechanics: Array.isArray(enemy["enemyMechanics"]) ? enemy["enemyMechanics"] : [],
+          requireAllSelectedTypesInTeam: Boolean(enemy["requireAllSelectedTypesInTeam"]),
+          requireAllSelectedClassesPerCharacter: Boolean(
+            enemy["requireAllSelectedClassesPerCharacter"],
+          ),
+          createdAt: exportedAt,
+          updatedAt: exportedAt,
+        },
+      ],
+    };
   }
 
   if (parsedPayload["schemaVersion"] !== 1 || parsedPayload["source"] !== "saved-enemies") {

@@ -281,6 +281,7 @@ describe('SavedEnemiesPage', () => {
     expect(page.requiredAbilityDrafts()).toEqual([
       expect.objectContaining({
         abilityKey: 'ignore_normal_attack_only',
+        requiredCharacterCount: 1,
       }),
     ]);
 
@@ -311,8 +312,67 @@ describe('SavedEnemiesPage', () => {
           expect.objectContaining({
             abilityKey: 'ignore_normal_attack_only',
             minTurns: null,
+            requiredCharacterCount: 1,
           }),
         ],
+      }),
+    );
+  });
+
+  it('preserves a manual frontend override for ignore normal attack only count', async () => {
+    const { page, userState } = createPage();
+
+    await page.ngOnInit();
+    page.openCreateModal();
+    page.onEnemyNameChange({ detail: { value: 'NAO Boss' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+    page.onTypeChange({ detail: { value: ['DEX'] } } as CustomEvent<{
+      value?: string[] | string | null;
+    }>);
+    page.onClassChange({ detail: { value: ['Fighter'] } } as CustomEvent<{
+      value?: string[] | string | null;
+    }>);
+    page.onEnemyPasteTextChange({
+      detail: {
+        value: `
+          Battle 1
+          Non-Normal Attacks deal 1 damage
+          Battle 2
+          Non-Normal Attacks deal 1 damage
+        `,
+      },
+    } as CustomEvent<{ value?: string | null }>);
+
+    page.parseEnemyText();
+    page.applyParsedEnemyText();
+
+    expect(page.requiredAbilityDrafts()).toEqual([
+      expect.objectContaining({
+        abilityKey: 'ignore_normal_attack_only',
+        requiredCharacterCount: 1,
+      }),
+    ]);
+
+    page.requiredAbilityDrafts.set(
+      page.requiredAbilityDrafts().map((draft) =>
+        draft.abilityKey === 'ignore_normal_attack_only'
+          ? {
+              ...draft,
+              requiredCharacterCount: 3,
+            }
+          : draft,
+      ),
+    );
+
+    await page.saveEnemy();
+
+    expect(userState.saveEnemy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requiredAbilities: [expect.objectContaining({
+          abilityKey: 'ignore_normal_attack_only',
+          requiredCharacterCount: 3,
+        })],
       }),
     );
   });
