@@ -1458,7 +1458,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
           stage: 'exactAttempt',
           candidateCount: 1242,
           completedAttempts: 0,
-          totalAttempts: 31744,
+          totalAttempts: 1,
+          attemptCountFinal: false,
           elapsedMs: 25,
           estimatedRemainingMs: null,
           averageFallbackAttemptMs: null,
@@ -1470,7 +1471,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
           messageKey: 'progress.exactAttempt',
           messageParams: {
             current: 1,
-            total: 31744,
+            total: 1,
           },
         });
 
@@ -1527,6 +1528,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       candidateCount: 1200,
       completedAttempts: 3503,
       totalAttempts: 31744,
+      attemptCountFinal: false,
       elapsedMs: 54000,
       estimatedRemainingMs: null,
       averageFallbackAttemptMs: null,
@@ -1551,9 +1553,25 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         tone: 'primary',
       },
       {
-        key: 'attempt',
-        text: 'Attempt 3504 / 31744',
-        displayText: 'Attempt 3504 / 31744',
+        key: 'searchPasses',
+        text: '31,744 scheduled search passes so far over the same pool of 1,200 candidates',
+        displayText: '31,744 scheduled search passes so far over the same pool of 1,200 candidates',
+        visible: true,
+        tone: 'secondary',
+      },
+      {
+        key: 'workEstimate',
+        text: 'Upper-bound scheduled pool rescans so far: 31,744 x 1,200 = ~38,092,800 candidate checks',
+        displayText:
+          'Upper-bound scheduled pool rescans so far: 31,744 x 1,200 = ~38,092,800 candidate checks',
+        visible: true,
+        tone: 'secondary',
+      },
+      {
+        key: 'searchMeaning',
+        text: 'This is not every 6-slot team combination. Each pass rescans the same pool with exact or relaxed filters.',
+        displayText:
+          'This is not every 6-slot team combination. Each pass rescans the same pool with exact or relaxed filters.',
         visible: true,
         tone: 'secondary',
       },
@@ -1611,6 +1629,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       candidateCount: 1200,
       completedAttempts: 3504,
       totalAttempts: 31744,
+      attemptCountFinal: false,
       elapsedMs: 91000,
       estimatedRemainingMs: 61000,
       averageFallbackAttemptMs: 15000,
@@ -1640,6 +1659,69 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         }),
       ]),
     );
+  });
+
+  it('computes an overall 0-100 progress label for the active search', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.buildProgress.set({
+      stage: 'fallbackAttempt',
+      candidateCount: 1200,
+      completedAttempts: 1,
+      totalAttempts: 4,
+      attemptCountFinal: false,
+      elapsedMs: 91000,
+      estimatedRemainingMs: 61000,
+      averageFallbackAttemptMs: 15000,
+      completedFallbackAttempts: 1,
+      currentDroppedTypes: [],
+      currentDroppedClasses: ['Fighter'],
+      currentAllowedLeadersWithSuperEffects: false,
+      currentIgnoredLeaderSuperSpecialCriteria: false,
+      messageKey: 'progress.fallbackAttempt',
+      messageParams: {
+        current: 2,
+        total: 4,
+      },
+    });
+
+    expect(page.buildOverallProgressPercent()).toBe(50);
+    expect(page.buildOverallProgressLabel()).toBe('Overall progress: 50%');
+  });
+
+  it('shows a live elapsed counter while the current step stays the same', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-22T05:20:00.000Z'));
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page['startBuildProgressTicker']();
+    page['handleBuildProgressSnapshot']({
+      stage: 'fallbackAttempt',
+      candidateCount: 1200,
+      completedAttempts: 1,
+      totalAttempts: 4,
+      attemptCountFinal: false,
+      elapsedMs: 91000,
+      estimatedRemainingMs: 61000,
+      averageFallbackAttemptMs: 15000,
+      completedFallbackAttempts: 1,
+      currentDroppedTypes: [],
+      currentDroppedClasses: ['Fighter'],
+      currentAllowedLeadersWithSuperEffects: false,
+      currentIgnoredLeaderSuperSpecialCriteria: false,
+      messageKey: 'progress.fallbackAttempt',
+      messageParams: {
+        current: 2,
+        total: 4,
+      },
+    });
+
+    vi.advanceTimersByTime(12_000);
+
+    expect(page.buildCurrentStepElapsedLabel()).toBe('Current step live: 12s');
+    page['stopBuildProgressTicker']();
   });
 
   it('formats short, minute, and hour fallback eta durations', async () => {
@@ -2048,6 +2130,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
             candidateCount: 64,
             completedAttempts: 0,
             totalAttempts: 2,
+            attemptCountFinal: false,
             elapsedMs: 18,
             estimatedRemainingMs: null,
             averageFallbackAttemptMs: null,
@@ -3365,6 +3448,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
       candidateCount: 64,
       completedAttempts: 0,
       totalAttempts: 2,
+      attemptCountFinal: false,
       elapsedMs: 18,
       estimatedRemainingMs: null,
       averageFallbackAttemptMs: null,
@@ -4176,17 +4260,19 @@ async function createPage(
     ),
     ready: vi.fn().mockResolvedValue(undefined),
     resolveAutoTeamBuilderWorkerCount: vi.fn().mockReturnValue(7),
-    saveCharacterBox: vi.fn().mockImplementation(async (input: { name: string; characterIds: number[] }) => {
-      const nextBox = createCharacterBox(
-        `box-${userState.characterBoxes().length + 1}`,
-        input.name,
-        input.characterIds,
-      );
+    saveCharacterBox: vi
+      .fn()
+      .mockImplementation(async (input: { name: string; characterIds: number[] }) => {
+        const nextBox = createCharacterBox(
+          `box-${userState.characterBoxes().length + 1}`,
+          input.name,
+          input.characterIds,
+        );
 
-      userState.characterBoxes.set([nextBox, ...userState.characterBoxes()]);
+        userState.characterBoxes.set([nextBox, ...userState.characterBoxes()]);
 
-      return nextBox;
-    }),
+        return nextBox;
+      }),
     saveTeam: vi.fn().mockResolvedValue({ id: 'saved-auto-team' }),
     toggleFavorite: vi.fn().mockResolvedValue(undefined),
     toggleShipFavorite: vi.fn().mockResolvedValue(undefined),

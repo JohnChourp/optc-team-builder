@@ -1237,11 +1237,54 @@
 
 .loading-card__copy {
   display: grid;
-  gap: 0;
+  gap: 12px;
   min-width: 0;
   width: 100%;
   text-align: left;
   justify-items: stretch;
+}
+
+.loading-card__progress-shell {
+  display: grid;
+  gap: 8px;
+}
+
+.loading-card__progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.loading-card__progress-header strong {
+  color: #ffffff;
+  font-size: 0.96rem;
+}
+
+.loading-card__progress-header span {
+  color: rgba(248, 251, 255, 0.72);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.loading-card__progress-bar {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.loading-card__progress-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f5c84c 0%, #ff8fb1 100%);
+  box-shadow: 0 0 24px rgba(245, 200, 76, 0.28);
+  transition: width 220ms ease;
 }
 
 .loading-progress-list {

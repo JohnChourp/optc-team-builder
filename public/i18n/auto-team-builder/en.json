@@ -341,6 +341,7 @@
     "attemptProgress": "Attempt {{current}} / {{total}}",
     "candidatePool": "{{count}} candidates in the current search pool",
     "completed": "Search completed.",
+    "currentStepElapsed": "Current step live: {{duration}}",
     "exactAttempt": "Exact attempt {{current}} / {{total}}",
     "fallbackAttempt": "Fallback attempt {{current}} / {{total}}",
     "allowingLeadersWithSuperEffects": "Allowing leaders with super effects",
@@ -348,9 +349,15 @@
     "ignoringLeaderSuperSpecialCriteria": "Ignoring leader Super Special criteria",
     "ignoringTypes": "Ignoring types: {{types}}",
     "loadingCandidates": "Loading candidates from the local dataset...",
+    "overallProgressPercent": "Overall progress: {{percent}}%",
     "preparingSearch": "Preparing search permutations...",
+    "searchMeaning": "This is not every 6-slot team combination. Each pass rescans the same pool with exact or relaxed filters.",
+    "searchPasses": "{{attempts}} scheduled search passes over the same pool of {{count}} candidates",
+    "searchPassesGrowing": "{{attempts}} scheduled search passes so far over the same pool of {{count}} candidates",
     "scoringDefault": "Scoring the best local team candidates...",
     "scoringWithTypes": "Scoring {{types}} team candidates...",
+    "workEstimate": "Upper-bound scheduled pool rescans: {{attempts}} x {{count}} = ~{{total}} candidate checks",
+    "workEstimateGrowing": "Upper-bound scheduled pool rescans so far: {{attempts}} x {{count}} = ~{{total}} candidate checks",
     "worstCaseEta": "Approx. worst-case to check the remaining fallbacks: {{duration}}"
   },
   "fallback": {

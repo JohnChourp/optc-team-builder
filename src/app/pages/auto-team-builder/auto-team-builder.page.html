@@ -1142,6 +1142,20 @@
         <section class="loading-card glass-card">
           <ion-spinner name="crescent" class="loading-card__spinner"></ion-spinner>
           <div class="loading-card__copy" role="status" aria-live="polite">
+            <div class="loading-card__progress-shell">
+              <div class="loading-card__progress-header">
+                <strong>{{ buildOverallProgressLabel() }}</strong>
+                @if (buildCurrentStepElapsedLabel()) {
+                  <span>{{ buildCurrentStepElapsedLabel() }}</span>
+                }
+              </div>
+              <div class="loading-card__progress-bar" aria-hidden="true">
+                <span
+                  class="loading-card__progress-bar-fill"
+                  [style.width.%]="buildOverallProgressPercent()"
+                ></span>
+              </div>
+            </div>
             <div class="loading-progress-list">
               @for (row of loadingProgressRows(); track $index) {
                 <div

@@ -72,6 +72,22 @@ describe('UserStateService saved teams', () => {
     });
   });
 
+  it('caps auto worker mode to four workers even on high-core devices', async () => {
+    vi.stubGlobal('navigator', { hardwareConcurrency: 12 });
+    const { service } = await createService([], [], [], [], {
+      mode: 'auto',
+      manualCount: 7,
+    });
+
+    expect(service.resolveAutoTeamBuilderWorkerPreference()).toEqual({
+      mode: 'auto',
+      manualCount: 7,
+      detectedCoreCount: 12,
+      effectiveCount: 4,
+    });
+    expect(service.resolveAutoTeamBuilderWorkerCount()).toBe(4);
+  });
+
   it('falls back to the safe auto worker preference when stored data is invalid', async () => {
     vi.stubGlobal('navigator', { hardwareConcurrency: 6 });
     const { service } = await createService([], [], [], [], {
@@ -83,7 +99,7 @@ describe('UserStateService saved teams', () => {
       mode: 'auto',
       manualCount: 1,
     });
-    expect(service.resolveAutoTeamBuilderWorkerCount()).toBe(5);
+    expect(service.resolveAutoTeamBuilderWorkerCount()).toBe(4);
   });
 
   it('persists normalized auto team builder worker preferences', async () => {

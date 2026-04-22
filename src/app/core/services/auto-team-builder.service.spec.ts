@@ -145,8 +145,7 @@ describe('Auto team builder', () => {
         detail: {
           captainAbility:
             'Reduces Special Cooldown of Driven and Slasher characters by 1 turn at the start of the fight, boosts HP of Driven and Slasher characters by 1.3x, boosts ATK of Driven and Slasher characters by 5.5x, by 6x instead if they are a Cost 40 or less character, makes [TND] orbs beneficial for Driven and Slasher characters, and reduces damage received by 20%.',
-          specialText:
-            'Boosts Orb Effects of Driven and Slasher characters by 2.75x for 2 turns.',
+          specialText: 'Boosts Orb Effects of Driven and Slasher characters by 2.75x for 2 turns.',
         },
       }),
       createInput(['QCK'], ['Driven', 'Slasher']),
@@ -1523,7 +1522,11 @@ describe('Auto team builder', () => {
   it('rejects a leader with only non-roster super special criteria when the toggle is enabled', () => {
     const result = buildAutoTeamResult(
       [
-        createLeaderWithSuperCriteriaRecord(7001, 'Monkey D. Luffy', createNonRosterSuperCriteria()),
+        createLeaderWithSuperCriteriaRecord(
+          7001,
+          'Monkey D. Luffy',
+          createNonRosterSuperCriteria(),
+        ),
         createAtkSubRecord(),
         createAffinitySubRecord(),
         createUtilitySubRecord(),
@@ -2221,10 +2224,12 @@ describe('Auto team builder', () => {
   it('carries favorite ship filters into the result input and ship selection', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
-      getShips: vi.fn().mockResolvedValue([
-        createShipRecord(9001, 'Ship 9001', 'Boosts ATK by 1.5x.'),
-        createShipRecord(9002, 'Ship 9002', 'Boosts ATK by 1.6x.'),
-      ]),
+      getShips: vi
+        .fn()
+        .mockResolvedValue([
+          createShipRecord(9001, 'Ship 9001', 'Boosts ATK by 1.5x.'),
+          createShipRecord(9002, 'Ship 9002', 'Boosts ATK by 1.6x.'),
+        ]),
     };
     const service = new AutoTeamBuilderService(repository as never);
 
@@ -2531,7 +2536,11 @@ describe('Auto team builder', () => {
   it('relaxes leader super special criteria before dropping classes or types', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue([
-        createLeaderWithSuperCriteriaRecord(7001, 'Monkey D. Luffy', createNonRosterSuperCriteria()),
+        createLeaderWithSuperCriteriaRecord(
+          7001,
+          'Monkey D. Luffy',
+          createNonRosterSuperCriteria(),
+        ),
         createAtkSubRecord(),
         createAffinitySubRecord(),
         createUtilitySubRecord(),
@@ -2567,7 +2576,11 @@ describe('Auto team builder', () => {
   it('still allows the leader super special fallback when type or class strict mode is enabled', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue([
-        createLeaderWithSuperCriteriaRecord(7101, 'Monkey D. Luffy', createNonRosterSuperCriteria()),
+        createLeaderWithSuperCriteriaRecord(
+          7101,
+          'Monkey D. Luffy',
+          createNonRosterSuperCriteria(),
+        ),
         createAtkSubRecord(),
         createAffinitySubRecord(),
         createUtilitySubRecord(),
@@ -2752,13 +2765,15 @@ describe('Auto team builder', () => {
 
   it('keeps the requested scope filter untouched when scope mode is explicitly enabled', async () => {
     const repository = {
-      getAutoBuilderCandidates: vi.fn().mockResolvedValue([
-        createCaptainRecord(),
-        createAtkSubRecord(),
-        createAffinitySubRecord(),
-        createUtilitySubRecord(),
-        createConsistencySubRecord(),
-      ]),
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue([
+          createCaptainRecord(),
+          createAtkSubRecord(),
+          createAffinitySubRecord(),
+          createUtilitySubRecord(),
+          createConsistencySubRecord(),
+        ]),
     };
     const service = new AutoTeamBuilderService(repository as never);
 
@@ -2856,12 +2871,14 @@ describe('Auto team builder', () => {
           candidateCount: 6,
           completedAttempts: 0,
           totalAttempts: 1,
+          attemptCountFinal: false,
           elapsedMs: 12,
           estimatedRemainingMs: null,
           averageFallbackAttemptMs: null,
           completedFallbackAttempts: 0,
           currentDroppedTypes: [],
           currentDroppedClasses: [],
+          currentAllowedLeadersWithSuperEffects: false,
           currentIgnoredLeaderSuperSpecialCriteria: false,
           messageKey: 'progress.exactAttempt',
           messageParams: {
@@ -3089,9 +3106,7 @@ describe('Auto team builder', () => {
       service as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
-    createWorkerSpy
-      .mockReturnValueOnce(workerA as never)
-      .mockReturnValueOnce(workerB as never);
+    createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
 
     let settled = false;
     const buildPromise = service
@@ -3209,9 +3224,7 @@ describe('Auto team builder', () => {
       service as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
-    createWorkerSpy
-      .mockReturnValueOnce(workerA as never)
-      .mockReturnValueOnce(workerB as never);
+    createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
 
     const result = await service.buildTeam(
       ['Fighter'],
@@ -3334,9 +3347,7 @@ describe('Auto team builder', () => {
       service as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
-    createWorkerSpy
-      .mockReturnValueOnce(workerA as never)
-      .mockReturnValueOnce(workerB as never);
+    createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
 
     const result = await service.buildTeam(
       ['Fighter'],
@@ -3436,15 +3447,91 @@ describe('Auto team builder', () => {
       service as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
-    createWorkerSpy
-      .mockReturnValueOnce(workerA as never)
-      .mockReturnValueOnce(workerB as never);
+    createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
 
     const result = await service.buildTeam(['Fighter'], ['DEX', 'INT'], {}, { workerCount: 2 });
 
     expect(result).toBeNull();
     expect(workerA.terminated).toBe(true);
     expect(workerB.terminated).toBe(true);
+  });
+
+  it('reports pooled fallback progress beyond the legacy 1024-attempt ceiling', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const progressSnapshots: AutoBuildProgressSnapshot[] = [];
+    const successfulWorkerResult = buildAutoTeamResult(
+      createStrictMixedTeamRecords(),
+      createInput(['DEX'], ['Fighter', 'Slasher']),
+    );
+    let runAttemptCount = 0;
+
+    expect(successfulWorkerResult).not.toBeNull();
+
+    const workerA = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerA.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (request.type === 'runAttempt') {
+        runAttemptCount += 1;
+        workerA.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: runAttemptCount === 1 ? null : successfulWorkerResult,
+        });
+      }
+    });
+    const workerB = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerB.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (request.type === 'runAttempt') {
+        runAttemptCount += 1;
+        workerB.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: runAttemptCount === 1 ? null : successfulWorkerResult,
+        });
+      }
+    });
+    const createWorkerSpy = vi.spyOn(
+      service as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
+
+    const result = await service.buildTeam(
+      createSyntheticClasses(10),
+      ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      {
+        requireLeaderSuperSpecialCriteria: true,
+      },
+      {
+        workerCount: 2,
+        onProgress: (snapshot) => progressSnapshots.push(snapshot),
+      },
+    );
+
+    expect(result).not.toBeNull();
+    expect(runAttemptCount).toBeGreaterThanOrEqual(2);
+    expect(
+      progressSnapshots.find((snapshot) => snapshot.stage === 'exactAttempt')?.totalAttempts,
+    ).toBe(1);
+    expect(
+      progressSnapshots.find(
+        (snapshot) => snapshot.stage === 'fallbackAttempt' && snapshot.totalAttempts === 31_744,
+      ),
+    ).toBeDefined();
+    expect(progressSnapshots.at(-1)?.totalAttempts).toBe(31_744);
+    expect(progressSnapshots.at(-1)?.attemptCountFinal).toBe(true);
+    expect(progressSnapshots.at(-1)?.totalAttempts).toBeGreaterThan(1024);
   });
 
   it('falls back to the main-thread engine when pooled worker initialization fails', async () => {
@@ -3470,9 +3557,7 @@ describe('Auto team builder', () => {
       service as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
-    createWorkerSpy
-      .mockReturnValueOnce(workerA as never)
-      .mockReturnValueOnce(workerB as never);
+    createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
 
     const result = await service.buildTeam(['Fighter'], ['DEX', 'INT'], {}, { workerCount: 2 });
 
@@ -3702,10 +3787,9 @@ function createInput(
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
     requireAllSlotsInLeaderSuperEffectScope:
       overrides.requireAllSlotsInLeaderSuperEffectScope ?? false,
-    minimumLeaderSuperEffectMatchingSlots:
-      overrides.requireAllSlotsInLeaderSuperEffectScope
-        ? overrides.minimumLeaderSuperEffectMatchingSlots ?? 6
-        : null,
+    minimumLeaderSuperEffectMatchingSlots: overrides.requireAllSlotsInLeaderSuperEffectScope
+      ? (overrides.minimumLeaderSuperEffectMatchingSlots ?? 6)
+      : null,
     requireLeaderSuperSpecialCriteria: overrides.requireLeaderSuperSpecialCriteria ?? false,
     requireUniqueBaseCharacterNames: overrides.requireUniqueBaseCharacterNames ?? false,
     favoritesOnly: overrides.favoritesOnly ?? false,
@@ -3749,10 +3833,18 @@ function createManualSlotsFromLegacySelection(
   return createManualSlots({
     captain: captainCharacterId ? [captainCharacterId] : [],
     friendCaptain: friendCaptainCharacterId ? [friendCaptainCharacterId] : [],
-    sub1: lockedCharacterIds.filter((characterId) => !selectedLeaderIds.includes(characterId)).slice(0, 1),
-    sub2: lockedCharacterIds.filter((characterId) => !selectedLeaderIds.includes(characterId)).slice(1, 2),
-    sub3: lockedCharacterIds.filter((characterId) => !selectedLeaderIds.includes(characterId)).slice(2, 3),
-    sub4: lockedCharacterIds.filter((characterId) => !selectedLeaderIds.includes(characterId)).slice(3, 4),
+    sub1: lockedCharacterIds
+      .filter((characterId) => !selectedLeaderIds.includes(characterId))
+      .slice(0, 1),
+    sub2: lockedCharacterIds
+      .filter((characterId) => !selectedLeaderIds.includes(characterId))
+      .slice(1, 2),
+    sub3: lockedCharacterIds
+      .filter((characterId) => !selectedLeaderIds.includes(characterId))
+      .slice(2, 3),
+    sub4: lockedCharacterIds
+      .filter((characterId) => !selectedLeaderIds.includes(characterId))
+      .slice(3, 4),
   });
 }
 
@@ -3997,6 +4089,10 @@ function createSubOnlyExtraDropTeamRecords(): CharacterDetailRecord[] {
     createConsistencySubRecord(),
     createOffClassRedundantSubRecord(),
   ];
+}
+
+function createSyntheticClasses(count: number): string[] {
+  return Array.from({ length: count }, (_, index) => `Synthetic Class ${index + 1}`);
 }
 
 class FakeWorker extends EventTarget {
@@ -4288,7 +4384,8 @@ function createCrewForgeRosterRecords(): CharacterDetailRecord[] {
       name: 'Forge Utility Two',
       primaryClass: 'Fighter',
       detail: {
-        specialText: 'Reduces Despair duration by 5 turns and reduces Paralysis duration by 5 turns.',
+        specialText:
+          'Reduces Despair duration by 5 turns and reduces Paralysis duration by 5 turns.',
         builderAbilities: [
           {
             key: 'remove_despair',
@@ -4832,7 +4929,9 @@ function createMixedRosterSuperCriteria(
   };
 }
 
-function createNonRosterSuperCriteria(): NonNullable<CharacterDetailRecord['detail']['superSpecialCriteria']> {
+function createNonRosterSuperCriteria(): NonNullable<
+  CharacterDetailRecord['detail']['superSpecialCriteria']
+> {
   return {
     rawText: 'This character must be captain and HP must be below 30%.',
     requiresCaptain: true,

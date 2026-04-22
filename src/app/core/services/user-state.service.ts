@@ -451,7 +451,7 @@ export class UserStateService {
       effectiveCount:
         normalizedPreference.mode === 'manual'
           ? normalizedPreference.manualCount
-          : Math.max(1, detectedCoreCount - 1),
+          : Math.min(4, Math.max(1, detectedCoreCount - 1)),
     };
   }
 

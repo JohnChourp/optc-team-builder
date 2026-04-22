@@ -1,4 +1,4 @@
-import { Injectable } from "@angular/core";
+import { Injectable } from '@angular/core';
 
 import {
   AUTO_TEAM_CANDIDATE_LIMIT,
@@ -19,33 +19,30 @@ import {
   MAX_AUTO_BUILD_RANKED_RESULT_COUNT,
   type AutoTeamBuilderType,
   createEmptyAutoBuildManualSlots,
-} from "../models/auto-team-builder.models";
-import {
-  type AutoBuildAbilityRequirement,
-} from "../models/auto-team-builder-ability.models";
-import { type CharacterDetailRecord } from "../models/optc.models";
+} from '../models/auto-team-builder.models';
+import { type AutoBuildAbilityRequirement } from '../models/auto-team-builder-ability.models';
+import { type CharacterDetailRecord } from '../models/optc.models';
 import {
   AutoTeamBuildCancelledError,
-  hasStrictAutoTeamBuildConstraints,
+  createAutoTeamBuildFallbackPlanner,
   isAutoTeamBuildCancelledError,
   normalizeSelectedTypes,
-  planAutoTeamBuildFallbackAttempts,
   runAutoTeamBuildSearch,
   satisfiesRequestedAutoTeamBuildCoverage,
-  type AutoTeamBuildPlannedAttempt,
-} from "./auto-team-builder.engine";
-import { resolveAutoBuildShipSelection } from "./auto-team-builder-ship.utils";
-import { normalizeEnemyMechanicRequirements } from "./enemy-mechanic-draft.utils";
-import { OptcRepositoryService } from "./optc-repository.service";
+  type AutoTeamBuildFallbackPlanner,
+} from './auto-team-builder.engine';
+import { resolveAutoBuildShipSelection } from './auto-team-builder-ship.utils';
+import { normalizeEnemyMechanicRequirements } from './enemy-mechanic-draft.utils';
+import { OptcRepositoryService } from './optc-repository.service';
 import {
   buildAutoBuildAbilityCoverageBreakdown,
   buildAutoTeamResult,
   resolveAutoBuildTeamPowerPreferenceScore,
-} from "./auto-team-builder.utils";
+} from './auto-team-builder.utils';
 import {
   type AutoTeamBuilderWorkerRequest,
   type AutoTeamBuilderWorkerResponse,
-} from "./auto-team-builder.worker.models";
+} from './auto-team-builder.worker.models';
 
 export interface AutoTeamBuildExecutionOptions {
   onProgress?: (snapshot: AutoBuildProgressSnapshot) => void;
@@ -54,7 +51,7 @@ export interface AutoTeamBuildExecutionOptions {
 }
 
 const LEGACY_ABILITY_KEY_ALIASES: Record<string, string> = {
-  remove_defense_up: "remove_enemy_increased_defense",
+  remove_defense_up: 'remove_enemy_increased_defense',
 };
 
 interface AutoTeamBuildTimingState {
@@ -68,7 +65,7 @@ interface PooledFallbackAttemptResult {
   result: AutoBuildResult | null;
 }
 
-@Injectable({ providedIn: "root" })
+@Injectable({ providedIn: 'root' })
 export class AutoTeamBuilderService {
   public constructor(private readonly repository: OptcRepositoryService) {}
 
@@ -134,10 +131,9 @@ export class AutoTeamBuilderService {
       requireAllSelectedClassesPerCharacter:
         constraints.requireAllSelectedClassesPerCharacter ?? false,
       requireAllSlotsInLeaderSuperEffectScope,
-      minimumLeaderSuperEffectMatchingSlots:
-        requireAllSlotsInLeaderSuperEffectScope
-          ? constraints.minimumLeaderSuperEffectMatchingSlots ?? AUTO_BUILD_TOTAL_SLOT_COUNT
-          : null,
+      minimumLeaderSuperEffectMatchingSlots: requireAllSlotsInLeaderSuperEffectScope
+        ? (constraints.minimumLeaderSuperEffectMatchingSlots ?? AUTO_BUILD_TOTAL_SLOT_COUNT)
+        : null,
       requireLeaderSuperSpecialCriteria: constraints.requireLeaderSuperSpecialCriteria ?? true,
       requireUniqueBaseCharacterNames: constraints.requireUniqueBaseCharacterNames ?? false,
       requiredAbilities,
@@ -183,14 +179,13 @@ export class AutoTeamBuilderService {
     }
 
     const hasExplicitCandidateScope = constraints.candidateCharacterIds !== undefined;
-    const allowedCharacterIds =
-      hasExplicitCandidateScope
-        ? candidateCharacterIds.filter(
-            (characterId) => !favoritesOnly || favoriteCharacterIds.has(characterId),
-          )
-        : favoritesOnly
-          ? [...favoriteCharacterIds]
-          : undefined;
+    const allowedCharacterIds = hasExplicitCandidateScope
+      ? candidateCharacterIds.filter(
+          (characterId) => !favoritesOnly || favoriteCharacterIds.has(characterId),
+        )
+      : favoritesOnly
+        ? [...favoriteCharacterIds]
+        : undefined;
 
     if (hasExplicitCandidateScope && (allowedCharacterIds?.length ?? 0) === 0) {
       return null;
@@ -207,10 +202,11 @@ export class AutoTeamBuilderService {
 
     this.throwIfCancelled(executionOptions.signal);
     this.emitProgress(executionOptions, {
-      stage: "loadingCandidates",
+      stage: 'loadingCandidates',
       candidateCount: 0,
       completedAttempts: 0,
       totalAttempts: 0,
+      attemptCountFinal: false,
       elapsedMs: 0,
       estimatedRemainingMs: null,
       averageFallbackAttemptMs: null,
@@ -219,7 +215,7 @@ export class AutoTeamBuilderService {
       currentDroppedClasses: [],
       currentAllowedLeadersWithSuperEffects: false,
       currentIgnoredLeaderSuperSpecialCriteria: false,
-      messageKey: "progress.loadingCandidates",
+      messageKey: 'progress.loadingCandidates',
     });
 
     const records = await this.repository.getAutoBuilderCandidates(
@@ -236,7 +232,7 @@ export class AutoTeamBuilderService {
     this.throwIfCancelled(executionOptions.signal);
 
     const shipsPromise =
-      typeof this.repository.getShips === "function"
+      typeof this.repository.getShips === 'function'
         ? this.repository.getShips()
         : Promise.resolve([]);
     const [result, ships] = await Promise.all([
@@ -273,7 +269,11 @@ export class AutoTeamBuilderService {
         return false;
       }
 
-      if (favoritesOnly && favoriteCharacterIds.size > 0 && !favoriteCharacterIds.has(characterId)) {
+      if (
+        favoritesOnly &&
+        favoriteCharacterIds.size > 0 &&
+        !favoriteCharacterIds.has(characterId)
+      ) {
         return false;
       }
 
@@ -288,7 +288,9 @@ export class AutoTeamBuilderService {
       return true;
     });
     const captainCharacterId = this.normalizeCharacterId(rosterInput.captainCharacterId);
-    const friendCaptainCharacterId = this.normalizeCharacterId(rosterInput.friendCaptainCharacterId);
+    const friendCaptainCharacterId = this.normalizeCharacterId(
+      rosterInput.friendCaptainCharacterId,
+    );
     const lockedLeaderIds = [
       ...new Set(
         [captainCharacterId, friendCaptainCharacterId].filter(
@@ -310,18 +312,24 @@ export class AutoTeamBuilderService {
 
     this.throwIfCancelled(executionOptions.signal);
 
-    const records = await this.repository.getAutoBuilderCandidates([...AUTO_TEAM_BUILDER_TYPES], null, {
-      allowedCharacterIds: scopedRosterIds,
-      lockedCharacterIds: lockedLeaderIds,
-      excludedCharacterIds,
-    });
+    const records = await this.repository.getAutoBuilderCandidates(
+      [...AUTO_TEAM_BUILDER_TYPES],
+      null,
+      {
+        allowedCharacterIds: scopedRosterIds,
+        lockedCharacterIds: lockedLeaderIds,
+        excludedCharacterIds,
+      },
+    );
 
     this.throwIfCancelled(executionOptions.signal);
 
     const recordById = new Map(records.map((record) => [record.id, record] as const));
     const availableRosterIds = [
       ...new Set(
-        scopedRosterIds.filter((characterId) => recordById.has(characterId)).concat(lockedLeaderIds),
+        scopedRosterIds
+          .filter((characterId) => recordById.has(characterId))
+          .concat(lockedLeaderIds),
       ),
     ].filter((characterId, index, values) => values.indexOf(characterId) === index);
 
@@ -345,7 +353,9 @@ export class AutoTeamBuilderService {
       this.throwIfCancelled(executionOptions.signal);
 
       const excludedSubIds = new Set<number>([leaderPair.captainId, leaderPair.friendCaptainId]);
-      const subPoolIds = availableRosterIds.filter((characterId) => !excludedSubIds.has(characterId));
+      const subPoolIds = availableRosterIds.filter(
+        (characterId) => !excludedSubIds.has(characterId),
+      );
 
       if (subPoolIds.length < AUTO_BUILD_MANUAL_SUB_SLOT_ROLES.length) {
         continue;
@@ -357,7 +367,9 @@ export class AutoTeamBuilderService {
       )) {
         this.throwIfCancelled(executionOptions.signal);
 
-        const teamCharacterIds = [...new Set([leaderPair.captainId, leaderPair.friendCaptainId, ...subIds])];
+        const teamCharacterIds = [
+          ...new Set([leaderPair.captainId, leaderPair.friendCaptainId, ...subIds]),
+        ];
         const teamRecords = teamCharacterIds
           .map((characterId) => recordById.get(characterId) ?? null)
           .filter((record): record is CharacterDetailRecord => Boolean(record))
@@ -430,16 +442,16 @@ export class AutoTeamBuilderService {
     requestedInput: AutoBuildInput,
     executionOptions: AutoTeamBuildExecutionOptions,
   ): Promise<AutoBuildResult | null> {
-    const plannedFallbackAttempts = planAutoTeamBuildFallbackAttempts(requestedInput, records);
+    const fallbackPlanner = createAutoTeamBuildFallbackPlanner(requestedInput, records);
     const requestedWorkerCount = this.normalizeWorkerCount(executionOptions.workerCount);
 
-    if (requestedWorkerCount > 1 && plannedFallbackAttempts.length > 0) {
+    if (requestedWorkerCount > 1 && fallbackPlanner.hasPotentialFallbackAttempts()) {
       try {
         return await this.runSearchWithWorkerPool(
           records,
           requestedInput,
           executionOptions,
-          plannedFallbackAttempts,
+          fallbackPlanner,
           requestedWorkerCount,
         );
       } catch (error) {
@@ -483,7 +495,7 @@ export class AutoTeamBuilderService {
     records: CharacterDetailRecord[],
     requestedInput: AutoBuildInput,
     executionOptions: AutoTeamBuildExecutionOptions,
-    plannedFallbackAttempts: AutoTeamBuildPlannedAttempt[],
+    fallbackPlanner: AutoTeamBuildFallbackPlanner,
     requestedWorkerCount: number,
   ): Promise<AutoBuildResult | null> {
     const workers = this.createWorkerPool(requestedWorkerCount);
@@ -508,14 +520,14 @@ export class AutoTeamBuilderService {
       );
 
       const timingState = this.createTimingState();
-      const totalAttempts = 1 + plannedFallbackAttempts.length;
 
       this.throwIfCancelled(executionOptions.signal);
       this.emitProgress(executionOptions, {
-        stage: "preparingSearch",
+        stage: 'preparingSearch',
         candidateCount: records.length,
         completedAttempts: 0,
         totalAttempts: 0,
+        attemptCountFinal: false,
         elapsedMs: 0,
         estimatedRemainingMs: null,
         averageFallbackAttemptMs: null,
@@ -524,23 +536,29 @@ export class AutoTeamBuilderService {
         currentDroppedClasses: [],
         currentAllowedLeadersWithSuperEffects: false,
         currentIgnoredLeaderSuperSpecialCriteria: false,
-        messageKey: "progress.preparingSearch",
+        messageKey: 'progress.preparingSearch',
       });
 
       this.emitProgress(executionOptions, {
-        stage: "exactAttempt",
+        stage: 'exactAttempt',
         candidateCount: records.length,
         completedAttempts: 0,
-        totalAttempts,
-        ...this.buildTimingSnapshot(timingState, totalAttempts, 0, workers.length),
+        totalAttempts: fallbackPlanner.getTotalAttempts(),
+        attemptCountFinal: fallbackPlanner.isAttemptCountFinal(),
+        ...this.buildTimingSnapshot(
+          timingState,
+          fallbackPlanner.getTotalAttempts(),
+          0,
+          workers.length,
+        ),
         currentDroppedTypes: [],
         currentDroppedClasses: [],
         currentAllowedLeadersWithSuperEffects: false,
         currentIgnoredLeaderSuperSpecialCriteria: false,
-        messageKey: "progress.exactAttempt",
+        messageKey: 'progress.exactAttempt',
         messageParams: {
           current: 1,
-          total: Math.max(totalAttempts, 1),
+          total: fallbackPlanner.getTotalAttempts(),
         },
       });
 
@@ -552,62 +570,54 @@ export class AutoTeamBuilderService {
         executionOptions.signal,
       );
 
-      if (hasStrictAutoTeamBuildConstraints(requestedInput) && plannedFallbackAttempts.length === 0) {
-        this.emitProgress(executionOptions, {
-          stage: "completed",
-          candidateCount: records.length,
-          completedAttempts: totalAttempts,
-          totalAttempts,
-          ...this.buildTimingSnapshot(timingState, totalAttempts, totalAttempts, workers.length),
-          currentDroppedTypes: [],
-          currentDroppedClasses: [],
-          currentAllowedLeadersWithSuperEffects: false,
-          currentIgnoredLeaderSuperSpecialCriteria: false,
-          messageKey: "progress.completed",
-        });
-        return exactResult;
-      }
-
       if (satisfiesRequestedAutoTeamBuildCoverage(exactResult)) {
         this.emitProgress(executionOptions, {
-          stage: "completed",
+          stage: 'completed',
           candidateCount: records.length,
           completedAttempts: 1,
-          totalAttempts,
-          ...this.buildTimingSnapshot(timingState, totalAttempts, 1, workers.length),
+          totalAttempts: 1,
+          attemptCountFinal: true,
+          ...this.buildTimingSnapshot(timingState, 1, 1, workers.length),
           currentDroppedTypes: [],
           currentDroppedClasses: [],
           currentAllowedLeadersWithSuperEffects: false,
           currentIgnoredLeaderSuperSpecialCriteria: false,
-          messageKey: "progress.completed",
+          messageKey: 'progress.completed',
         });
         return exactResult;
       }
 
-      if (plannedFallbackAttempts.length === 0) {
+      fallbackPlanner.scheduleInitialFallbackAttempts();
+
+      if (!fallbackPlanner.hasPendingScheduledAttempts()) {
         this.emitProgress(executionOptions, {
-          stage: "completed",
+          stage: 'completed',
           candidateCount: records.length,
           completedAttempts: 1,
-          totalAttempts,
-          ...this.buildTimingSnapshot(timingState, totalAttempts, 1, workers.length),
+          totalAttempts: fallbackPlanner.getTotalAttempts(),
+          attemptCountFinal: true,
+          ...this.buildTimingSnapshot(
+            timingState,
+            fallbackPlanner.getTotalAttempts(),
+            1,
+            workers.length,
+          ),
           currentDroppedTypes: [],
           currentDroppedClasses: [],
           currentAllowedLeadersWithSuperEffects: false,
           currentIgnoredLeaderSuperSpecialCriteria: false,
-          messageKey: "progress.completed",
+          messageKey: 'progress.completed',
         });
         return null;
       }
 
       const result = await this.runPooledFallbackAttempts(
         workers,
-        plannedFallbackAttempts,
+        fallbackPlanner,
         requestedInput,
         executionOptions,
         timingState,
         records.length,
-        totalAttempts,
       );
 
       return result;
@@ -627,9 +637,9 @@ export class AutoTeamBuilderService {
     return new Promise<AutoBuildResult | null>((resolve, reject) => {
       let settled = false;
       const cleanup = (): void => {
-        executionOptions.signal?.removeEventListener("abort", handleAbort);
-        worker.removeEventListener("message", handleMessage);
-        worker.removeEventListener("error", handleError);
+        executionOptions.signal?.removeEventListener('abort', handleAbort);
+        worker.removeEventListener('message', handleMessage);
+        worker.removeEventListener('error', handleError);
       };
       const resolveOnce = (result: AutoBuildResult | null): void => {
         if (settled) {
@@ -655,24 +665,24 @@ export class AutoTeamBuilderService {
         rejectOnce(new AutoTeamBuildCancelledError());
       };
       const handleError = (event: ErrorEvent): void => {
-        rejectOnce(new Error(event.message || "Auto team builder worker failed."));
+        rejectOnce(new Error(event.message || 'Auto team builder worker failed.'));
       };
       const handleMessage = ({ data }: MessageEvent<AutoTeamBuilderWorkerResponse>): void => {
-        if (!data || data.type === "ready" || data.runId !== runId) {
+        if (!data || data.type === 'ready' || data.runId !== runId) {
           return;
         }
 
-        if (data.type === "progress") {
+        if (data.type === 'progress') {
           executionOptions.onProgress?.(data.snapshot);
           return;
         }
 
-        if (data.type === "result") {
+        if (data.type === 'result') {
           resolveOnce(data.result);
           return;
         }
 
-        if (data.type === "error") {
+        if (data.type === 'error') {
           rejectOnce(new Error(data.errorMessage));
         }
       };
@@ -682,12 +692,12 @@ export class AutoTeamBuilderService {
         return;
       }
 
-      executionOptions.signal?.addEventListener("abort", handleAbort, { once: true });
-      worker.addEventListener("message", handleMessage);
-      worker.addEventListener("error", handleError);
+      executionOptions.signal?.addEventListener('abort', handleAbort, { once: true });
+      worker.addEventListener('message', handleMessage);
+      worker.addEventListener('error', handleError);
 
       const request: AutoTeamBuilderWorkerRequest = {
-        type: "run",
+        type: 'run',
         runId,
         records,
         requestedInput,
@@ -705,9 +715,9 @@ export class AutoTeamBuilderService {
     return new Promise<void>((resolve, reject) => {
       let settled = false;
       const cleanup = (): void => {
-        signal?.removeEventListener("abort", handleAbort);
-        worker.removeEventListener("message", handleMessage);
-        worker.removeEventListener("error", handleError);
+        signal?.removeEventListener('abort', handleAbort);
+        worker.removeEventListener('message', handleMessage);
+        worker.removeEventListener('error', handleError);
       };
       const resolveOnce = (): void => {
         if (settled) {
@@ -731,19 +741,19 @@ export class AutoTeamBuilderService {
         rejectOnce(new AutoTeamBuildCancelledError());
       };
       const handleError = (event: ErrorEvent): void => {
-        rejectOnce(new Error(event.message || "Auto team builder worker failed."));
+        rejectOnce(new Error(event.message || 'Auto team builder worker failed.'));
       };
       const handleMessage = ({ data }: MessageEvent<AutoTeamBuilderWorkerResponse>): void => {
         if (!data) {
           return;
         }
 
-        if (data.type === "ready") {
+        if (data.type === 'ready') {
           resolveOnce();
           return;
         }
 
-        if (data.type === "error" && typeof data.runId === "undefined") {
+        if (data.type === 'error' && typeof data.runId === 'undefined') {
           rejectOnce(new Error(data.errorMessage));
         }
       };
@@ -753,11 +763,11 @@ export class AutoTeamBuilderService {
         return;
       }
 
-      signal?.addEventListener("abort", handleAbort, { once: true });
-      worker.addEventListener("message", handleMessage);
-      worker.addEventListener("error", handleError);
+      signal?.addEventListener('abort', handleAbort, { once: true });
+      worker.addEventListener('message', handleMessage);
+      worker.addEventListener('error', handleError);
       worker.postMessage({
-        type: "init",
+        type: 'init',
         records,
       } satisfies AutoTeamBuilderWorkerRequest);
     });
@@ -775,9 +785,9 @@ export class AutoTeamBuilderService {
     return new Promise<AutoBuildResult | null>((resolve, reject) => {
       let settled = false;
       const cleanup = (): void => {
-        signal?.removeEventListener("abort", handleAbort);
-        worker.removeEventListener("message", handleMessage);
-        worker.removeEventListener("error", handleError);
+        signal?.removeEventListener('abort', handleAbort);
+        worker.removeEventListener('message', handleMessage);
+        worker.removeEventListener('error', handleError);
       };
       const resolveOnce = (result: AutoBuildResult | null): void => {
         if (settled) {
@@ -801,19 +811,19 @@ export class AutoTeamBuilderService {
         rejectOnce(new AutoTeamBuildCancelledError());
       };
       const handleError = (event: ErrorEvent): void => {
-        rejectOnce(new Error(event.message || "Auto team builder worker failed."));
+        rejectOnce(new Error(event.message || 'Auto team builder worker failed.'));
       };
       const handleMessage = ({ data }: MessageEvent<AutoTeamBuilderWorkerResponse>): void => {
-        if (!data || data.type === "ready" || data.runId !== runId) {
+        if (!data || data.type === 'ready' || data.runId !== runId) {
           return;
         }
 
-        if (data.type === "result") {
+        if (data.type === 'result') {
           resolveOnce(data.result);
           return;
         }
 
-        if (data.type === "error") {
+        if (data.type === 'error') {
           rejectOnce(new Error(data.errorMessage));
         }
       };
@@ -823,11 +833,11 @@ export class AutoTeamBuilderService {
         return;
       }
 
-      signal?.addEventListener("abort", handleAbort, { once: true });
-      worker.addEventListener("message", handleMessage);
-      worker.addEventListener("error", handleError);
+      signal?.addEventListener('abort', handleAbort, { once: true });
+      worker.addEventListener('message', handleMessage);
+      worker.addEventListener('error', handleError);
       worker.postMessage({
-        type: "runAttempt",
+        type: 'runAttempt',
         runId,
         input,
         requestedInput,
@@ -838,22 +848,18 @@ export class AutoTeamBuilderService {
 
   private runPooledFallbackAttempts(
     workers: Worker[],
-    plannedFallbackAttempts: AutoTeamBuildPlannedAttempt[],
+    fallbackPlanner: AutoTeamBuildFallbackPlanner,
     requestedInput: AutoBuildInput,
     executionOptions: AutoTeamBuildExecutionOptions,
     timingState: AutoTeamBuildTimingState,
     candidateCount: number,
-    totalAttempts: number,
   ): Promise<AutoBuildResult | null> {
-    const fallbackWorkerCount = Math.max(
-      1,
-      Math.min(workers.length, plannedFallbackAttempts.length),
-    );
+    const fallbackWorkerCount = Math.max(1, workers.length);
 
     return new Promise<AutoBuildResult | null>((resolve, reject) => {
       const completedAttempts = new Map<number, PooledFallbackAttemptResult>();
+      const availableWorkers = [...workers];
       let settled = false;
-      let nextAttemptIndex = 0;
       let inFlightCount = 0;
 
       const resolveOnce = (result: AutoBuildResult | null, completedAttemptCount: number): void => {
@@ -863,13 +869,14 @@ export class AutoTeamBuilderService {
 
         settled = true;
         this.emitProgress(executionOptions, {
-          stage: "completed",
+          stage: 'completed',
           candidateCount,
           completedAttempts: completedAttemptCount,
-          totalAttempts,
+          totalAttempts: fallbackPlanner.getTotalAttempts(),
+          attemptCountFinal: true,
           ...this.buildTimingSnapshot(
             timingState,
-            totalAttempts,
+            fallbackPlanner.getTotalAttempts(),
             completedAttemptCount,
             fallbackWorkerCount,
           ),
@@ -877,7 +884,7 @@ export class AutoTeamBuilderService {
           currentDroppedClasses: [],
           currentAllowedLeadersWithSuperEffects: false,
           currentIgnoredLeaderSuperSpecialCriteria: false,
-          messageKey: "progress.completed",
+          messageKey: 'progress.completed',
         });
         resolve(result);
       };
@@ -890,7 +897,11 @@ export class AutoTeamBuilderService {
         reject(error);
       };
       const tryResolveOrderedResult = (): void => {
-        for (let index = 0; index < plannedFallbackAttempts.length; index += 1) {
+        for (
+          let index = 0;
+          index < fallbackPlanner.getScheduledFallbackAttemptCount();
+          index += 1
+        ) {
           const currentAttempt = completedAttempts.get(index);
 
           if (!currentAttempt) {
@@ -903,11 +914,15 @@ export class AutoTeamBuilderService {
           }
         }
 
-        if (nextAttemptIndex >= plannedFallbackAttempts.length && inFlightCount === 0) {
-          resolveOnce(null, totalAttempts);
+        if (
+          fallbackPlanner.isAttemptCountFinal() &&
+          !fallbackPlanner.hasPendingScheduledAttempts() &&
+          inFlightCount === 0
+        ) {
+          resolveOnce(null, fallbackPlanner.getTotalAttempts());
         }
       };
-      const dispatchAttempt = (worker: Worker): void => {
+      const dispatchAvailableAttempts = (): void => {
         if (settled) {
           return;
         }
@@ -917,86 +932,96 @@ export class AutoTeamBuilderService {
           return;
         }
 
-        if (nextAttemptIndex >= plannedFallbackAttempts.length) {
-          if (inFlightCount === 0) {
-            tryResolveOrderedResult();
+        while (availableWorkers.length > 0) {
+          const nextAttempt = fallbackPlanner.takeNextScheduledAttempt();
+
+          if (!nextAttempt) {
+            break;
           }
-          return;
+
+          const worker = availableWorkers.shift();
+
+          if (!worker) {
+            break;
+          }
+
+          inFlightCount += 1;
+          this.emitProgress(executionOptions, {
+            stage: 'fallbackAttempt',
+            candidateCount,
+            completedAttempts: 1 + timingState.completedFallbackAttempts,
+            totalAttempts: fallbackPlanner.getTotalAttempts(),
+            attemptCountFinal: fallbackPlanner.isAttemptCountFinal(),
+            ...this.buildTimingSnapshot(
+              timingState,
+              fallbackPlanner.getTotalAttempts(),
+              1 + timingState.completedFallbackAttempts,
+              fallbackWorkerCount,
+            ),
+            currentDroppedTypes: nextAttempt.droppedTypes,
+            currentDroppedClasses: nextAttempt.droppedClasses,
+            currentAllowedLeadersWithSuperEffects: nextAttempt.allowedLeadersWithSuperEffects,
+            currentIgnoredLeaderSuperSpecialCriteria: Boolean(
+              nextAttempt.ignoredLeaderSuperSpecialCriteria,
+            ),
+            messageKey: 'progress.fallbackAttempt',
+            messageParams: {
+              current: nextAttempt.sequence + 2,
+              total: fallbackPlanner.getTotalAttempts(),
+            },
+          });
+
+          const startedAt = timingState.now();
+          void this.runAttemptInInitializedWorker(
+            worker,
+            nextAttempt.input,
+            requestedInput,
+            nextAttempt.requireLeadersWithoutSuperEffects,
+            executionOptions.signal,
+          )
+            .then((result) => {
+              if (settled) {
+                return;
+              }
+
+              inFlightCount -= 1;
+              availableWorkers.push(worker);
+              timingState.totalCompletedFallbackMs += Math.max(0, timingState.now() - startedAt);
+              timingState.completedFallbackAttempts += 1;
+              completedAttempts.set(nextAttempt.sequence, {
+                result,
+              });
+
+              if (!satisfiesRequestedAutoTeamBuildCoverage(result)) {
+                fallbackPlanner.recordFailedFallbackAttempt(nextAttempt);
+              }
+
+              tryResolveOrderedResult();
+
+              if (!settled) {
+                dispatchAvailableAttempts();
+              }
+            })
+            .catch((error) => {
+              rejectOnce(error);
+            });
         }
 
-        const attemptIndex = nextAttemptIndex;
-        const plannedAttempt = plannedFallbackAttempts[attemptIndex];
-
-        nextAttemptIndex += 1;
-        inFlightCount += 1;
-        this.emitProgress(executionOptions, {
-          stage: "fallbackAttempt",
-          candidateCount,
-          completedAttempts: 1 + timingState.completedFallbackAttempts,
-          totalAttempts,
-          ...this.buildTimingSnapshot(
-            timingState,
-            totalAttempts,
-            1 + timingState.completedFallbackAttempts,
-            fallbackWorkerCount,
-          ),
-          currentDroppedTypes: plannedAttempt.droppedTypes,
-          currentDroppedClasses: plannedAttempt.droppedClasses,
-          currentAllowedLeadersWithSuperEffects: plannedAttempt.allowedLeadersWithSuperEffects,
-          currentIgnoredLeaderSuperSpecialCriteria: Boolean(
-            plannedAttempt.ignoredLeaderSuperSpecialCriteria,
-          ),
-          messageKey: "progress.fallbackAttempt",
-          messageParams: {
-            current: attemptIndex + 2,
-            total: totalAttempts,
-          },
-        });
-
-        const startedAt = timingState.now();
-        void this.runAttemptInInitializedWorker(
-          worker,
-          plannedAttempt.input,
-          requestedInput,
-          plannedAttempt.requireLeadersWithoutSuperEffects,
-          executionOptions.signal,
-        )
-          .then((result) => {
-            if (settled) {
-              return;
-            }
-
-            inFlightCount -= 1;
-            timingState.totalCompletedFallbackMs += Math.max(0, timingState.now() - startedAt);
-            timingState.completedFallbackAttempts += 1;
-            completedAttempts.set(attemptIndex, {
-              result,
-            });
-            tryResolveOrderedResult();
-
-            if (!settled) {
-              dispatchAttempt(worker);
-            }
-          })
-          .catch((error) => {
-            rejectOnce(error);
-          });
+        tryResolveOrderedResult();
       };
 
-      for (const worker of workers) {
-        dispatchAttempt(worker);
-      }
+      dispatchAvailableAttempts();
     });
   }
 
   private createWorker(): Worker | null {
-    if (typeof Worker === "undefined") {
+    if (typeof Worker === 'undefined') {
       return null;
     }
 
     try {
-      return new Worker(new URL("auto-team-builder.worker", import.meta.url), {
-        type: "module",
+      return new Worker(new URL('auto-team-builder.worker', import.meta.url), {
+        type: 'module',
       });
     } catch {
       return null;
@@ -1021,7 +1046,7 @@ export class AutoTeamBuilderService {
 
   private createTimingState(): AutoTeamBuildTimingState {
     const now =
-      typeof globalThis.performance?.now === "function"
+      typeof globalThis.performance?.now === 'function'
         ? (): number => globalThis.performance.now()
         : (): number => Date.now();
 
@@ -1040,7 +1065,7 @@ export class AutoTeamBuilderService {
     activeWorkerCount: number,
   ): Pick<
     AutoBuildProgressSnapshot,
-    "elapsedMs" | "estimatedRemainingMs" | "averageFallbackAttemptMs" | "completedFallbackAttempts"
+    'elapsedMs' | 'estimatedRemainingMs' | 'averageFallbackAttemptMs' | 'completedFallbackAttempts'
   > {
     const elapsedMs = Math.max(0, timingState.now() - timingState.searchStartedAt);
     const averageFallbackAttemptMs =
@@ -1125,7 +1150,7 @@ export class AutoTeamBuilderService {
     subIds: number[],
     rosterInput: AutoBuildRosterInput & {
       requiredAbilities: AutoBuildAbilityRequirement[];
-      enemyMechanics: AutoBuildInput["enemyMechanics"];
+      enemyMechanics: AutoBuildInput['enemyMechanics'];
     },
   ): AutoBuildInput {
     const requireAllSlotsInLeaderSuperEffectScope =
@@ -1137,10 +1162,9 @@ export class AutoTeamBuilderService {
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSlotsInLeaderSuperEffectScope,
-      minimumLeaderSuperEffectMatchingSlots:
-        requireAllSlotsInLeaderSuperEffectScope
-          ? rosterInput.minimumLeaderSuperEffectMatchingSlots ?? AUTO_BUILD_TOTAL_SLOT_COUNT
-          : null,
+      minimumLeaderSuperEffectMatchingSlots: requireAllSlotsInLeaderSuperEffectScope
+        ? (rosterInput.minimumLeaderSuperEffectMatchingSlots ?? AUTO_BUILD_TOTAL_SLOT_COUNT)
+        : null,
       requireLeaderSuperSpecialCriteria: rosterInput.requireLeaderSuperSpecialCriteria ?? true,
       requireUniqueBaseCharacterNames: rosterInput.requireUniqueBaseCharacterNames ?? false,
       requiredAbilities: rosterInput.requiredAbilities.map((requirement) => ({
@@ -1156,7 +1180,11 @@ export class AutoTeamBuilderService {
       favoritesOnly: false,
       favoriteShipsOnly: false,
       favoriteShipIds: [],
-      manualSlots: this.createExactManualSlots(captainCharacterId, friendCaptainCharacterId, subIds),
+      manualSlots: this.createExactManualSlots(
+        captainCharacterId,
+        friendCaptainCharacterId,
+        subIds,
+      ),
       lockedCharacterIds: [...new Set([captainCharacterId, friendCaptainCharacterId, ...subIds])],
       excludedCharacterIds: [],
       captainCharacterId,
@@ -1174,8 +1202,8 @@ export class AutoTeamBuilderService {
   ): AutoBuildManualSlotSelection[] {
     const manualSlots = createEmptyAutoBuildManualSlots();
 
-    manualSlots.find((slot) => slot.role === "captain")!.characterIds = [captainCharacterId];
-    manualSlots.find((slot) => slot.role === "friendCaptain")!.characterIds = [
+    manualSlots.find((slot) => slot.role === 'captain')!.characterIds = [captainCharacterId];
+    manualSlots.find((slot) => slot.role === 'friendCaptain')!.characterIds = [
       friendCaptainCharacterId,
     ];
 
@@ -1191,17 +1219,17 @@ export class AutoTeamBuilderService {
     return manualSlots;
   }
 
-  private buildRankedTeamKey(result: Pick<AutoBuildRankedResult, "slots">): string {
+  private buildRankedTeamKey(result: Pick<AutoBuildRankedResult, 'slots'>): string {
     const leaderIds = result.slots
-      .filter((slot) => slot.role === "captain" || slot.role === "friendCaptain")
+      .filter((slot) => slot.role === 'captain' || slot.role === 'friendCaptain')
       .map((slot) => slot.character.id)
       .sort((left, right) => left - right);
     const subIds = result.slots
-      .filter((slot) => slot.role === "sub")
+      .filter((slot) => slot.role === 'sub')
       .map((slot) => slot.character.id)
       .sort((left, right) => left - right);
 
-    return `${leaderIds.join(",")}|${subIds.join(",")}`;
+    return `${leaderIds.join(',')}|${subIds.join(',')}`;
   }
 
   private enumerateRosterLeaderPairs(
@@ -1259,7 +1287,12 @@ export class AutoTeamBuilderService {
 
     for (let index = startIndex; index < candidateIds.length; index += 1) {
       currentSelection.push(candidateIds[index]);
-      yield* this.enumerateSubCombinations(candidateIds, requiredCount, index + 1, currentSelection);
+      yield* this.enumerateSubCombinations(
+        candidateIds,
+        requiredCount,
+        index + 1,
+        currentSelection,
+      );
       currentSelection.pop();
     }
   }
@@ -1283,8 +1316,8 @@ export class AutoTeamBuilderService {
   ): AutoBuildManualSlotSelection[] {
     const roleMap = new Map<AutoBuildManualSlotRole, number[]>();
 
-    for (const slot of (manualSlots ?? [])) {
-      if (!slot || typeof slot !== "object" || !AUTO_BUILD_MANUAL_SLOT_ROLES.includes(slot.role)) {
+    for (const slot of manualSlots ?? []) {
+      if (!slot || typeof slot !== 'object' || !AUTO_BUILD_MANUAL_SLOT_ROLES.includes(slot.role)) {
         continue;
       }
 
@@ -1306,7 +1339,7 @@ export class AutoTeamBuilderService {
     for (const slot of normalizedSlots) {
       const nextIds: number[] = [];
 
-      for (const characterId of (roleMap.get(slot.role) ?? [])) {
+      for (const characterId of roleMap.get(slot.role) ?? []) {
         if (
           AUTO_BUILD_MANUAL_SUB_SLOT_ROLES.includes(
             slot.role as (typeof AUTO_BUILD_MANUAL_SUB_SLOT_ROLES)[number],
@@ -1383,12 +1416,13 @@ export class AutoTeamBuilderService {
     friendCaptainCharacterId: number | null;
   }): AutoBuildManualSlotSelection[] {
     const manualSlots = createEmptyAutoBuildManualSlots();
-    const captainSlot = manualSlots.find((slot) => slot.role === "captain");
-    const friendCaptainSlot = manualSlots.find((slot) => slot.role === "friendCaptain");
-    const leaderIds = new Set([
-      selection.captainCharacterId,
-      selection.friendCaptainCharacterId,
-    ].filter((characterId): characterId is number => characterId !== null));
+    const captainSlot = manualSlots.find((slot) => slot.role === 'captain');
+    const friendCaptainSlot = manualSlots.find((slot) => slot.role === 'friendCaptain');
+    const leaderIds = new Set(
+      [selection.captainCharacterId, selection.friendCaptainCharacterId].filter(
+        (characterId): characterId is number => characterId !== null,
+      ),
+    );
 
     if (captainSlot && selection.captainCharacterId) {
       captainSlot.characterIds = [selection.captainCharacterId];
@@ -1420,13 +1454,11 @@ export class AutoTeamBuilderService {
     friendCaptainCharacterId: number | null;
   } {
     const captainCharacterId =
-      manualSlots.find((slot) => slot.role === "captain")?.characterIds[0] ?? null;
+      manualSlots.find((slot) => slot.role === 'captain')?.characterIds[0] ?? null;
     const friendCaptainCharacterId =
-      manualSlots.find((slot) => slot.role === "friendCaptain")?.characterIds[0] ??
+      manualSlots.find((slot) => slot.role === 'friendCaptain')?.characterIds[0] ??
       captainCharacterId;
-    const lockedCharacterIds = [
-      ...new Set(manualSlots.flatMap((slot) => slot.characterIds)),
-    ];
+    const lockedCharacterIds = [...new Set(manualSlots.flatMap((slot) => slot.characterIds))];
 
     return {
       lockedCharacterIds,
@@ -1464,7 +1496,7 @@ export class AutoTeamBuilderService {
         continue;
       }
 
-      const identity = `${normalizedAbilityKey}|${minTurns ?? "none"}|${slotTokens.join(",")}`;
+      const identity = `${normalizedAbilityKey}|${minTurns ?? 'none'}|${slotTokens.join(',')}`;
       const existingRequirement = normalizedRequirements.get(identity);
 
       if (existingRequirement) {

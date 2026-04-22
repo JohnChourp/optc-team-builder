@@ -115,7 +115,9 @@ type LoadingProgressRowTone = 'primary' | 'secondary' | 'fallback';
 interface LoadingProgressRow {
   key:
     | 'message'
-    | 'attempt'
+    | 'searchPasses'
+    | 'workEstimate'
+    | 'searchMeaning'
     | 'eta'
     | 'candidatePool'
     | 'droppedTypes'
@@ -342,6 +344,8 @@ function matchesLeaderOnlyManualRequirements(
 })
 export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, ViewWillEnter {
   private buildAbortController: AbortController | null = null;
+  private buildProgressTickerId: ReturnType<typeof globalThis.setInterval> | null = null;
+  private currentBuildProgressSignature = '';
   private resetAfterBuildCancellation = false;
   private destroyed = false;
   public readonly summary = signal<DatasetManifest | null>(null);
@@ -420,6 +424,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly notes = signal('');
   public readonly building = signal(false);
   public readonly buildProgress = signal<AutoBuildProgressSnapshot | null>(null);
+  private readonly buildProgressNowMs = signal(0);
+  private readonly currentBuildStepStartedAtMs = signal<number | null>(null);
   public readonly result = signal<AutoBuildResult | null>(null);
   public readonly errorMessage = signal('');
   public readonly currentTeamId = signal<string | null>(null);
@@ -603,8 +609,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         (characterBox: CharacterBox) => characterBox.id === this.selectedCharacterBoxId(),
       ) ?? null,
   );
-  public readonly selectedCharacterBoxIds = computed(() =>
-    this.selectedCharacterBox()?.characterIds ?? [],
+  public readonly selectedCharacterBoxIds = computed(
+    () => this.selectedCharacterBox()?.characterIds ?? [],
   );
   public readonly effectiveAutoBuildCandidateIds = computed<number[] | undefined>(() => {
     if (!this.selectedCharacterBox()) {
@@ -1039,21 +1045,34 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         ? this.t('progress.scoringWithTypes', { types: this.selectedTypesLabel() })
         : this.t('progress.scoringDefault')),
   );
-  public readonly buildAttemptProgressLabel = computed(() => {
+  public readonly buildOverallProgressPercent = computed(() => {
     const progress = this.buildProgress();
 
     if (!progress || !progress.totalAttempts) {
+      return 0;
+    }
+
+    if (progress.stage === 'completed') {
+      return 100;
+    }
+
+    const currentAttempt = Math.min(progress.completedAttempts + 1, progress.totalAttempts);
+
+    return Math.max(0, Math.min(100, Math.round((currentAttempt / progress.totalAttempts) * 100)));
+  });
+  public readonly buildOverallProgressLabel = computed(() =>
+    this.t('progress.overallProgressPercent', { percent: this.buildOverallProgressPercent() }),
+  );
+  public readonly buildCurrentStepElapsedLabel = computed(() => {
+    const progress = this.buildProgress();
+    const startedAt = this.currentBuildStepStartedAtMs();
+
+    if (!progress || startedAt === null || progress.stage === 'completed') {
       return '';
     }
 
-    const currentAttempt =
-      progress.stage === 'completed'
-        ? progress.completedAttempts
-        : Math.min(progress.completedAttempts + 1, progress.totalAttempts);
-
-    return this.t('progress.attemptProgress', {
-      current: currentAttempt,
-      total: progress.totalAttempts,
+    return this.t('progress.currentStepElapsed', {
+      duration: this.formatLiveDuration(Math.max(0, this.buildProgressNowMs() - startedAt)),
     });
   });
   public readonly buildCandidateProgressLabel = computed(() => {
@@ -1062,6 +1081,44 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     return progress?.candidateCount
       ? this.t('progress.candidatePool', { count: progress.candidateCount })
       : '';
+  });
+  public readonly buildSearchPassesLabel = computed(() => {
+    const progress = this.buildProgress();
+
+    if (!progress?.totalAttempts || !progress.candidateCount) {
+      return '';
+    }
+
+    return this.t(
+      progress.attemptCountFinal ? 'progress.searchPasses' : 'progress.searchPassesGrowing',
+      {
+        attempts: progress.totalAttempts.toLocaleString(),
+        count: progress.candidateCount.toLocaleString(),
+      },
+    );
+  });
+  public readonly buildWorkEstimateLabel = computed(() => {
+    const progress = this.buildProgress();
+
+    if (!progress?.totalAttempts || !progress.candidateCount) {
+      return '';
+    }
+
+    const upperBoundChecks = progress.totalAttempts * progress.candidateCount;
+
+    return this.t(
+      progress.attemptCountFinal ? 'progress.workEstimate' : 'progress.workEstimateGrowing',
+      {
+        attempts: progress.totalAttempts.toLocaleString(),
+        count: progress.candidateCount.toLocaleString(),
+        total: upperBoundChecks.toLocaleString(),
+      },
+    );
+  });
+  public readonly buildSearchMeaningLabel = computed(() => {
+    const progress = this.buildProgress();
+
+    return progress ? this.t('progress.searchMeaning') : '';
   });
   public readonly buildDroppedTypesLabel = computed(() => {
     const droppedTypes = this.buildProgress()?.currentDroppedTypes ?? [];
@@ -1104,8 +1161,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         tone: 'primary',
       },
       {
-        key: 'attempt',
-        text: this.buildAttemptProgressLabel(),
+        key: 'searchPasses',
+        text: this.buildSearchPassesLabel(),
+        tone: 'secondary',
+      },
+      {
+        key: 'workEstimate',
+        text: this.buildWorkEstimateLabel(),
+        tone: 'secondary',
+      },
+      {
+        key: 'searchMeaning',
+        text: this.buildSearchMeaningLabel(),
         tone: 'secondary',
       },
       {
@@ -1457,6 +1524,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.destroyed = true;
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
+    this.stopBuildProgressTicker();
     this.cancelBuild();
   }
 
@@ -1958,11 +2026,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.buildAbortController = abortController;
     this.building.set(true);
     this.resetBuildState();
+    this.startBuildProgressTicker();
 
     try {
       const executionOptions: AutoTeamBuildExecutionOptions = {
         signal: abortController.signal,
-        onProgress: (snapshot) => this.buildProgress.set(snapshot),
+        onProgress: (snapshot) => this.handleBuildProgressSnapshot(snapshot),
         workerCount: this.userState.resolveAutoTeamBuilderWorkerCount(),
       };
       const nextResult = await this.autoTeamBuilder.buildTeam(
@@ -1972,8 +2041,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           candidateCharacterIds: this.effectiveAutoBuildCandidateIds(),
           requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
           requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
-          requireAllSlotsInLeaderSuperEffectScope:
-            this.requireAllSlotsInLeaderSuperEffectScope(),
+          requireAllSlotsInLeaderSuperEffectScope: this.requireAllSlotsInLeaderSuperEffectScope(),
           requireUniqueBaseCharacterNames: this.requireUniqueBaseCharacterNames(),
           requiredAbilities: this.pageRequiredAbilities(),
           enemyMechanics: this.pageEnemyMechanics(),
@@ -2012,6 +2080,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       this.errorMessage.set(this.t('errors.buildFailed'));
     } finally {
       this.buildAbortController = null;
+      this.stopBuildProgressTicker();
       this.buildProgress.set(null);
       this.building.set(false);
     }
@@ -2226,11 +2295,57 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   }
 
   private resetBuildState(): void {
+    this.stopBuildProgressTicker();
     this.buildProgress.set(null);
     this.result.set(null);
     this.errorMessage.set('');
     this.currentTeamId.set(null);
     this.resetSaveFeedbackState();
+  }
+
+  private handleBuildProgressSnapshot(snapshot: AutoBuildProgressSnapshot): void {
+    const now = Date.now();
+    const nextSignature = this.buildProgressSnapshotSignature(snapshot);
+
+    this.buildProgressNowMs.set(now);
+
+    if (nextSignature !== this.currentBuildProgressSignature) {
+      this.currentBuildProgressSignature = nextSignature;
+      this.currentBuildStepStartedAtMs.set(now);
+    }
+
+    this.buildProgress.set(snapshot);
+  }
+
+  private buildProgressSnapshotSignature(snapshot: AutoBuildProgressSnapshot): string {
+    return [
+      snapshot.stage,
+      snapshot.completedAttempts,
+      snapshot.currentDroppedTypes.join('|'),
+      snapshot.currentDroppedClasses.join('|'),
+      snapshot.currentAllowedLeadersWithSuperEffects ? '1' : '0',
+      snapshot.currentIgnoredLeaderSuperSpecialCriteria ? '1' : '0',
+      snapshot.messageKey,
+      String(snapshot.messageParams?.['current'] ?? ''),
+    ].join('::');
+  }
+
+  private startBuildProgressTicker(): void {
+    this.stopBuildProgressTicker();
+    this.buildProgressNowMs.set(Date.now());
+    this.buildProgressTickerId = globalThis.setInterval(() => {
+      this.buildProgressNowMs.set(Date.now());
+    }, 1000);
+  }
+
+  private stopBuildProgressTicker(): void {
+    if (this.buildProgressTickerId !== null) {
+      globalThis.clearInterval(this.buildProgressTickerId);
+      this.buildProgressTickerId = null;
+    }
+
+    this.currentBuildProgressSignature = '';
+    this.currentBuildStepStartedAtMs.set(null);
   }
 
   private async resetPageState(): Promise<void> {
@@ -2371,9 +2486,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.excludedShipIds.set([...state.excludedShipIds]);
     this.requireAllSelectedTypesInTeam.set(state.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(state.requireAllSelectedClassesPerCharacter);
-    this.requireAllSlotsInLeaderSuperEffectScope.set(
-      state.requireAllSlotsInLeaderSuperEffectScope,
-    );
+    this.requireAllSlotsInLeaderSuperEffectScope.set(state.requireAllSlotsInLeaderSuperEffectScope);
     this.requireUniqueBaseCharacterNames.set(state.requireUniqueBaseCharacterNames);
     this.selectedCharacterBoxId.set(null);
     this.favoritesOnly.set(state.favoritesOnly);
@@ -3468,6 +3581,19 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     return `~${hours}h ${minutes}m`;
   }
 
+  private formatLiveDuration(durationMs: number): string {
+    const totalSeconds = Math.max(0, Math.floor(durationMs / 1000));
+
+    if (totalSeconds < 60) {
+      return `${totalSeconds}s`;
+    }
+
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${minutes}m ${seconds}s`;
+  }
+
   private t(
     key: string,
     parameters?: Record<string, string | number | boolean | null | undefined>,
@@ -3486,12 +3612,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       return [];
     }
 
-    return this.repository.getAutoBuilderCandidates(this.selectedTypes(), AUTO_TEAM_CANDIDATE_LIMIT, {
-      selectedClasses: this.selectedClasses(),
-      allowedCharacterIds: allowedCharacterIds.length > 0 ? allowedCharacterIds : undefined,
-      lockedCharacterIds: this.lockedCharacterIds(),
-      excludedCharacterIds: this.excludedCharacterIds(),
-    });
+    return this.repository.getAutoBuilderCandidates(
+      this.selectedTypes(),
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        selectedClasses: this.selectedClasses(),
+        allowedCharacterIds: allowedCharacterIds.length > 0 ? allowedCharacterIds : undefined,
+        lockedCharacterIds: this.lockedCharacterIds(),
+        excludedCharacterIds: this.excludedCharacterIds(),
+      },
+    );
   }
 
   private resolveCurrentAutoBuildAllowedCharacterIds(): number[] {

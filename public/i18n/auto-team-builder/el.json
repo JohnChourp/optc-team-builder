@@ -341,6 +341,7 @@
     "attemptProgress": "Attempt {{current}} / {{total}}",
     "candidatePool": "{{count}} candidates στο current search pool",
     "completed": "Η αναζήτηση ολοκληρώθηκε.",
+    "currentStepElapsed": "Το current step τρέχει εδώ και {{duration}}",
     "exactAttempt": "Exact attempt {{current}} / {{total}}",
     "fallbackAttempt": "Fallback attempt {{current}} / {{total}}",
     "allowingLeadersWithSuperEffects": "Επιτρέπονται leaders με super effects",
@@ -348,9 +349,15 @@
     "ignoringLeaderSuperSpecialCriteria": "Αγνόησε τα leader Super Special criteria",
     "ignoringTypes": "Ignoring types: {{types}}",
     "loadingCandidates": "Φόρτωση candidates από το local dataset...",
+    "overallProgressPercent": "Συνολικό progress: {{percent}}%",
     "preparingSearch": "Προετοιμασία search permutations...",
+    "searchMeaning": "Αυτό δεν σημαίνει όλα τα πιθανά 6-slot team combinations. Κάθε pass ξανασκανάρει το ίδιο pool με exact ή relaxed filters.",
+    "searchPasses": "{{attempts}} scheduled search passes πάνω στο ίδιο pool των {{count}} candidates",
+    "searchPassesGrowing": "{{attempts}} scheduled search passes so far πάνω στο ίδιο pool των {{count}} candidates",
     "scoringDefault": "Γίνεται scoring των καλύτερων local team candidates...",
     "scoringWithTypes": "Γίνεται scoring για team candidates {{types}}...",
+    "workEstimate": "Upper-bound scheduled rescans του pool: {{attempts}} x {{count}} = ~{{total}} candidate checks",
+    "workEstimateGrowing": "Upper-bound scheduled rescans του pool so far: {{attempts}} x {{count}} = ~{{total}} candidate checks",
     "worstCaseEta": "Περίπου worst-case χρόνος για να ελεγχθούν τα υπόλοιπα fallbacks: {{duration}}"
   },
   "fallback": {

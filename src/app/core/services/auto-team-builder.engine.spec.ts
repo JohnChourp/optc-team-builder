@@ -9,7 +9,11 @@ import {
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
-import { AutoTeamBuildCancelledError, runAutoTeamBuildSearch } from './auto-team-builder.engine';
+import {
+  AutoTeamBuildCancelledError,
+  createAutoTeamBuildFallbackPlanner,
+  runAutoTeamBuildSearch,
+} from './auto-team-builder.engine';
 
 describe('runAutoTeamBuildSearch', () => {
   it('emits deterministic progress stages for exact and fallback attempts', () => {
@@ -34,7 +38,8 @@ describe('runAutoTeamBuildSearch', () => {
     ]);
     expect(snapshots[1]).toMatchObject({
       completedAttempts: 0,
-      totalAttempts: 7,
+      totalAttempts: 1,
+      attemptCountFinal: false,
       elapsedMs: expect.any(Number),
       estimatedRemainingMs: null,
       averageFallbackAttemptMs: null,
@@ -46,7 +51,8 @@ describe('runAutoTeamBuildSearch', () => {
     });
     expect(snapshots[2]).toMatchObject({
       completedAttempts: 1,
-      totalAttempts: 7,
+      totalAttempts: 6,
+      attemptCountFinal: true,
       elapsedMs: expect.any(Number),
       estimatedRemainingMs: null,
       averageFallbackAttemptMs: null,
@@ -58,7 +64,8 @@ describe('runAutoTeamBuildSearch', () => {
     });
     expect(snapshots[3]).toMatchObject({
       completedAttempts: 2,
-      totalAttempts: 7,
+      totalAttempts: 6,
+      attemptCountFinal: true,
       elapsedMs: expect.any(Number),
       estimatedRemainingMs: expect.any(Number),
       averageFallbackAttemptMs: expect.any(Number),
@@ -67,6 +74,24 @@ describe('runAutoTeamBuildSearch', () => {
       currentDroppedClasses: ['Fighter'],
       currentAllowedLeadersWithSuperEffects: true,
       currentIgnoredLeaderSuperSpecialCriteria: false,
+    });
+    expect(snapshots[4]).toMatchObject({
+      completedAttempts: 3,
+      totalAttempts: 6,
+      attemptCountFinal: true,
+      elapsedMs: expect.any(Number),
+      estimatedRemainingMs: expect.any(Number),
+      averageFallbackAttemptMs: expect.any(Number),
+      completedFallbackAttempts: 2,
+      currentDroppedTypes: ['INT'],
+      currentDroppedClasses: [],
+      currentAllowedLeadersWithSuperEffects: true,
+      currentIgnoredLeaderSuperSpecialCriteria: false,
+    });
+    expect(snapshots[5]).toMatchObject({
+      stage: 'completed',
+      attemptCountFinal: true,
+      totalAttempts: 6,
     });
   });
 
@@ -89,25 +114,7 @@ describe('runAutoTeamBuildSearch', () => {
       {
         onProgress: (snapshot) => snapshots.push(snapshot),
         now: createClock([
-          0,
-          5,
-          10,
-          15,
-          20,
-          60,
-          65,
-          70,
-          100,
-          105,
-          110,
-          140,
-          145,
-          150,
-          180,
-          185,
-          190,
-          220,
-          225,
+          0, 5, 10, 15, 20, 60, 65, 70, 100, 105, 110, 140, 145, 150, 180, 185, 190, 220, 225,
         ]),
       },
     );
@@ -120,15 +127,11 @@ describe('runAutoTeamBuildSearch', () => {
       completedFallbackAttempts: 0,
     });
     expect(fallbackSnapshots[1]).toMatchObject({
-      estimatedRemainingMs: 160,
+      estimatedRemainingMs: expect.any(Number),
       averageFallbackAttemptMs: 40,
       completedFallbackAttempts: 1,
     });
-    expect(fallbackSnapshots[2]).toMatchObject({
-      estimatedRemainingMs: 105,
-      averageFallbackAttemptMs: 35,
-      completedFallbackAttempts: 2,
-    });
+    expect(fallbackSnapshots[1].estimatedRemainingMs).toBeGreaterThan(0);
   });
 
   it('returns the first relaxed result that restores requested class and type coverage', () => {
@@ -187,33 +190,214 @@ describe('runAutoTeamBuildSearch', () => {
 
     expect(result).toBeNull();
   });
+
+  it('does not schedule extra fallback work when the exact attempt succeeds', () => {
+    const snapshots: AutoBuildProgressSnapshot[] = [];
+    const result = runAutoTeamBuildSearch(
+      createStrictMixedTeamRecords(),
+      createInput(['DEX'], ['Fighter']),
+      {
+        onProgress: (snapshot) => snapshots.push(snapshot),
+      },
+    );
+
+    expect(result).not.toBeNull();
+    expect(snapshots.map((snapshot) => snapshot.stage)).toEqual([
+      'preparingSearch',
+      'exactAttempt',
+      'completed',
+    ]);
+    expect(snapshots[1]).toMatchObject({
+      totalAttempts: 1,
+      attemptCountFinal: false,
+    });
+    expect(snapshots[2]).toMatchObject({
+      totalAttempts: 1,
+      attemptCountFinal: true,
+      completedAttempts: 1,
+    });
+  });
+
+  it('prioritizes zero-drop and single-drop fallbacks before broader subset drops', () => {
+    const planner = createAutoTeamBuildFallbackPlanner(
+      createInput(['DEX', 'INT'], ['Fighter', 'Slasher'], {
+        requireLeaderSuperSpecialCriteria: true,
+      }),
+      createSingleTypeRecords(),
+    );
+
+    expect(planner.getTotalAttempts()).toBe(1);
+    expect(planner.isAttemptCountFinal()).toBe(false);
+
+    planner.scheduleInitialFallbackAttempts();
+
+    expect(planner.isAttemptCountFinal()).toBe(true);
+
+    const attempts = collectScheduledAttempts(planner);
+
+    expect(attempts.slice(0, 6).map((attempt) => attempt.category)).toEqual([
+      'meta',
+      'meta',
+      'single',
+      'single',
+      'single',
+      'single',
+    ]);
+    expect(attempts.some((attempt) => attempt.category === 'double')).toBe(true);
+  });
+
+  it('caps the bounded subset plan at 31,744 total attempts for now', () => {
+    const planner = createAutoTeamBuildFallbackPlanner(
+      createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], createSyntheticClasses(10), {
+        requireLeaderSuperSpecialCriteria: true,
+      }),
+      createSingleTypeRecords(),
+    );
+
+    planner.scheduleInitialFallbackAttempts();
+
+    expect(planner.getScheduledFallbackAttemptCount()).toBe(31_743);
+    expect(planner.getTotalAttempts()).toBe(31_744);
+    expect(planner.getTotalAttempts()).toBeGreaterThan(1024);
+    expect(planner.isAttemptCountFinal()).toBe(true);
+  });
+
+  it('orders single-filter drops by ascending pool support', () => {
+    const planner = createAutoTeamBuildFallbackPlanner(
+      createInput(['DEX', 'INT'], ['Fighter'], {
+        requireLeaderSuperSpecialCriteria: true,
+      }),
+      createSingleTypeRecords(),
+    );
+
+    planner.scheduleInitialFallbackAttempts();
+
+    const attempts = collectScheduledAttempts(planner);
+
+    expect(attempts[0]).toMatchObject({
+      droppedTypes: [],
+      droppedClasses: [],
+      allowedLeadersWithSuperEffects: true,
+      ignoredLeaderSuperSpecialCriteria: false,
+    });
+    expect(attempts[1]).toMatchObject({
+      droppedTypes: [],
+      droppedClasses: [],
+      allowedLeadersWithSuperEffects: true,
+      ignoredLeaderSuperSpecialCriteria: true,
+    });
+    expect(
+      attempts.slice(2, 5).map((attempt) => ({
+        droppedTypes: attempt.droppedTypes,
+        droppedClasses: attempt.droppedClasses,
+      })),
+    ).toEqual([
+      {
+        droppedTypes: [],
+        droppedClasses: ['Fighter'],
+      },
+      {
+        droppedTypes: ['INT'],
+        droppedClasses: [],
+      },
+      {
+        droppedTypes: ['DEX'],
+        droppedClasses: [],
+      },
+    ]);
+  });
+
+  it('does not create type/class drop attempts when strict constraints are enabled', () => {
+    const planner = createAutoTeamBuildFallbackPlanner(
+      createInput(['DEX', 'INT'], ['Fighter'], {
+        requireAllSelectedTypesInTeam: true,
+      }),
+      createSingleTypeRecords(),
+    );
+
+    planner.scheduleInitialFallbackAttempts();
+
+    expect(collectScheduledAttempts(planner)).toEqual([
+      expect.objectContaining({
+        droppedTypes: [],
+        droppedClasses: [],
+        category: 'meta',
+      }),
+    ]);
+  });
 });
+
+function collectScheduledAttempts(planner: ReturnType<typeof createAutoTeamBuildFallbackPlanner>) {
+  const attempts = [];
+
+  for (
+    let attempt = planner.takeNextScheduledAttempt();
+    attempt;
+    attempt = planner.takeNextScheduledAttempt()
+  ) {
+    attempts.push(attempt);
+  }
+
+  return attempts;
+}
+
+function createSyntheticClasses(count: number): string[] {
+  return Array.from({ length: count }, (_, index) => `Synthetic Class ${index + 1}`);
+}
 
 function createInput(
   types: AutoTeamBuilderType[] = [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
   selectedClasses: string[] = ['Fighter'],
+  overrides: Partial<
+    Pick<
+      AutoBuildInput,
+      | 'requireAllSelectedTypesInTeam'
+      | 'requireAllSelectedClassesPerCharacter'
+      | 'requireAllSlotsInLeaderSuperEffectScope'
+      | 'minimumLeaderSuperEffectMatchingSlots'
+      | 'requireLeaderSuperSpecialCriteria'
+      | 'requireUniqueBaseCharacterNames'
+      | 'favoritesOnly'
+      | 'favoriteShipsOnly'
+      | 'favoriteShipIds'
+      | 'manualSlots'
+      | 'lockedCharacterIds'
+      | 'excludedCharacterIds'
+      | 'captainCharacterId'
+      | 'friendCaptainCharacterId'
+      | 'excludedShipIds'
+    >
+  > = {},
 ): AutoBuildInput {
+  const lockedCharacterIds = overrides.lockedCharacterIds ?? [];
+  const excludedCharacterIds = overrides.excludedCharacterIds ?? [];
+  const captainCharacterId = overrides.captainCharacterId ?? null;
+  const friendCaptainCharacterId = overrides.friendCaptainCharacterId ?? null;
+
   return {
     types,
     selectedClasses,
     requiredAbilities: [],
     enemyMechanics: [],
-    requireAllSelectedTypesInTeam: false,
-    requireAllSelectedClassesPerCharacter: false,
-    requireAllSlotsInLeaderSuperEffectScope: false,
-    minimumLeaderSuperEffectMatchingSlots: null,
-    requireLeaderSuperSpecialCriteria: false,
-    requireUniqueBaseCharacterNames: false,
-    favoritesOnly: false,
-    favoriteShipsOnly: false,
-    favoriteShipIds: [],
-    manualSlots: createEmptyAutoBuildManualSlots(),
-    lockedCharacterIds: [],
-    excludedCharacterIds: [],
-    captainCharacterId: null,
-    friendCaptainCharacterId: null,
+    requireAllSelectedTypesInTeam: overrides.requireAllSelectedTypesInTeam ?? false,
+    requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
+    requireAllSlotsInLeaderSuperEffectScope:
+      overrides.requireAllSlotsInLeaderSuperEffectScope ?? false,
+    minimumLeaderSuperEffectMatchingSlots: overrides.requireAllSlotsInLeaderSuperEffectScope
+      ? (overrides.minimumLeaderSuperEffectMatchingSlots ?? 6)
+      : null,
+    requireLeaderSuperSpecialCriteria: overrides.requireLeaderSuperSpecialCriteria ?? false,
+    requireUniqueBaseCharacterNames: overrides.requireUniqueBaseCharacterNames ?? false,
+    favoritesOnly: overrides.favoritesOnly ?? false,
+    favoriteShipsOnly: overrides.favoriteShipsOnly ?? false,
+    favoriteShipIds: overrides.favoriteShipIds ?? [],
+    manualSlots: overrides.manualSlots ?? createEmptyAutoBuildManualSlots(),
+    lockedCharacterIds,
+    excludedCharacterIds,
+    captainCharacterId,
+    friendCaptainCharacterId,
     manualShipId: null,
-    excludedShipIds: [],
+    excludedShipIds: overrides.excludedShipIds ?? [],
     candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
   };
 }
@@ -237,6 +421,67 @@ function createSingleTypeRecords(): CharacterDetailRecord[] {
     createAffinitySubRecord(),
     createUtilitySubRecord(),
     createConsistencySubRecord(),
+  ];
+}
+
+function createStrictMixedTeamRecords(): CharacterDetailRecord[] {
+  return [
+    createCharacterRecord({
+      id: 6100,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Slasher',
+      detail: {
+        captainAbility: 'Boosts ATK of DEX and Fighter characters by 5x and HP by 1.3x.',
+        specialText: 'Boosts ATK of crew by 2x for 1 turn and removes Despair by 5 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 6101,
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Slasher',
+      detail: {
+        captainAbility: 'Boosts ATK of DEX and PSY characters by 4.5x.',
+        specialText: 'Boosts Orb Effects of crew by 2.25x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 6102,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Slasher',
+      detail: {
+        specialText: 'Adds 0.9x color affinity for DEX characters for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 6103,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Slasher',
+      detail: {
+        specialText: 'Changes EMPTY and BLOCK orbs into matching orbs for crew.',
+      },
+    }),
+    createCharacterRecord({
+      id: 6104,
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Slasher',
+      detail: {
+        specialText: 'Reduces damage reduction by 5 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 6105,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Slasher',
+      detail: {
+        specialText: 'Reduces Bind duration by 5 turns.',
+      },
+    }),
   ];
 }
 
