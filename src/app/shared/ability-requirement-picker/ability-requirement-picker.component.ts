@@ -27,9 +27,11 @@ import {
   applyCatalogAbilityToDraft,
   cloneAbilityRequirementDrafts,
   createAbilityRequirementDraft,
+  normalizeAbilityRequirementTurns,
   resolveAbilityRequirementPainSelectableDebuffBadges,
   resolveAbilityRequirementVisual,
   resolvePositiveInteger,
+  resolveNonNegativeInteger,
   type AbilityRequirementDraft,
   type AbilityRequirementMiniBadge,
 } from '../../core/services/ability-requirement-draft.utils';
@@ -201,7 +203,7 @@ export class AbilityRequirementPickerComponent implements OnChanges {
     draftId: string,
     event: CustomEvent<{ value?: string | number | null }> | Event,
   ): void {
-    const nextValue = resolvePositiveInteger(this.resolveInputEventValue(event));
+    const nextValue = resolveNonNegativeInteger(this.resolveInputEventValue(event));
 
     this.patchDraft(draftId, {
       minTurns: nextValue,
@@ -259,6 +261,13 @@ export class AbilityRequirementPickerComponent implements OnChanges {
           ...patch,
         };
         const abilityKey = nextDraft.abilityKey.trim();
+
+        if (abilityKey.length === 0) {
+          return {
+            ...nextDraft,
+            minTurns: normalizeAbilityRequirementTurns(nextDraft.minTurns),
+          };
+        }
 
         return abilityKey.length
           ? applyCatalogAbilityToDraft(nextDraft, abilityKey, this.catalogMap())

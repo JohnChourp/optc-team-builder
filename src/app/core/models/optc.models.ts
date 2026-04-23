@@ -351,6 +351,8 @@ export interface DetailedCharacterSearchQuery {
   selectedTypesMatchMode?: 'all' | 'any';
   selectedClasses: string[];
   selectedClassesMatchMode?: 'all' | 'any';
+  allowedCharacterIds?: number[];
+  excludedCharacterIds?: number[];
   sortMode?: 'catalog' | 'newest' | 'powerFirst';
   limit: number;
   offset: number;

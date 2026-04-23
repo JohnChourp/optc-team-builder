@@ -231,105 +231,23 @@
 
         <section class="ability-requirements-card">
           <div class="slot-grid__header">
-            <h2>{{ t('enemyMechanics.title') }}</h2>
-            <p>{{ t('enemyMechanics.copy') }}</p>
+            <h2>{{ t('specialFilters.title') }}</h2>
+            <p>{{ t('specialFilters.copy') }}</p>
           </div>
 
           <div class="manual-locks-meta ability-requirements-meta">
             <strong>{{
-              t('enemyMechanics.configuredRows', { count: enemyMechanicDrafts().length })
+              t('specialFilters.configuredRows', { count: requiredAbilityDrafts().length })
             }}</strong>
             <div class="ability-requirements-actions">
               <ion-button
                 fill="clear"
                 size="small"
                 class="select-all-button"
-                [disabled]="building()"
-                (click)="openEnemyMechanicPicker()"
-              >
-                {{ t('enemyMechanics.actions.openPicker') }}
-              </ion-button>
-              <ion-button
-                fill="clear"
-                size="small"
-                class="select-all-button"
-                [disabled]="building() || !enemyMechanicDrafts().length"
-                (click)="clearEnemyMechanics()"
-              >
-                {{ t('enemyMechanics.actions.clearMechanics') }}
-              </ion-button>
-            </div>
-          </div>
-
-          @if (!enemyMechanicSummaryChips().length) {
-            <p class="favorites-only-warning">
-              {{ t('enemyMechanics.empty') }}
-            </p>
-          }
-
-          @if (enemyMechanicSummaryChips().length) {
-            <div class="selected-values-row ability-requirements-selected-row">
-              @for (chip of enemyMechanicSummaryChips(); track chip.draftId) {
-                <span
-                  class="selected-value-chip ability-requirement-chip ability-requirement-chip--mechanic"
-                >
-                  <span class="ability-visual-chip" [attr.data-tone]="chip.visual.tone">
-                    <ion-icon [icon]="chip.visual.icon"></ion-icon>
-                    <small>{{ chip.visual.badge }}</small>
-                  </span>
-                  <span>{{ chip.label }}</span>
-                </span>
-              }
-            </div>
-          }
-        </section>
-
-        <section class="ability-requirements-card">
-          <div class="slot-grid__header">
-            <h2>{{ t('derivedCounters.title') }}</h2>
-            <p>{{ t('derivedCounters.copy') }}</p>
-          </div>
-
-          @if (!derivedRequiredAbilitySummaryChips().length) {
-            <p class="favorites-only-warning">
-              {{ t('derivedCounters.empty') }}
-            </p>
-          }
-
-          @if (derivedRequiredAbilitySummaryChips().length) {
-            <div class="selected-values-row ability-requirements-selected-row">
-              @for (chip of derivedRequiredAbilitySummaryChips(); track chip.draftId) {
-                <span class="selected-value-chip ability-requirement-chip">
-                  <span class="ability-visual-chip" [attr.data-tone]="chip.visual.tone">
-                    <ion-icon [icon]="chip.visual.icon"></ion-icon>
-                    <small>{{ chip.visual.badge }}</small>
-                  </span>
-                  <span>{{ chip.label }}</span>
-                </span>
-              }
-            </div>
-          }
-        </section>
-
-        <section class="ability-requirements-card">
-          <div class="slot-grid__header">
-            <h2>{{ t('manualCounters.title') }}</h2>
-            <p>{{ t('manualCounters.copy') }}</p>
-          </div>
-
-          <div class="manual-locks-meta ability-requirements-meta">
-            <strong>{{
-              t('manualCounters.configuredRows', { count: requiredAbilityDrafts().length })
-            }}</strong>
-            <div class="ability-requirements-actions">
-              <ion-button
-                fill="clear"
-                size="small"
-                class="select-all-button"
-                [disabled]="building() || !availableAbilityCatalogItems().length"
+                [disabled]="building() || !availableSpecialAbilityCatalogItems().length"
                 (click)="openAbilityPicker()"
               >
-                {{ t('manualCounters.actions.openPicker') }}
+                {{ t('specialFilters.actions.openPicker') }}
               </ion-button>
               <ion-button
                 fill="clear"
@@ -338,7 +256,7 @@
                 [disabled]="building() || !requiredAbilityDrafts().length"
                 (click)="clearRequiredAbilities()"
               >
-                {{ t('manualCounters.actions.clearRequirements') }}
+                {{ t('specialFilters.actions.clearRequirements') }}
               </ion-button>
               <ion-button
                 fill="clear"
@@ -352,17 +270,17 @@
             </div>
           </div>
 
-          @if (!availableAbilityCatalogItems().length) {
+          @if (!availableSpecialAbilityCatalogItems().length) {
             <p class="favorites-only-warning">
-              {{ t('manualCounters.emptyCatalog') }}
+              {{ t('specialFilters.emptyCatalog') }}
               <code>npm run data:import:all</code>
-              {{ t('manualCounters.emptyCatalogSuffix') }}
+              {{ t('specialFilters.emptyCatalogSuffix') }}
             </p>
           }
 
           @if (!requiredAbilitySummaryChips().length) {
             <p class="favorites-only-warning">
-              {{ t('manualCounters.empty') }}
+              {{ t('specialFilters.empty') }}
             </p>
           }
 
@@ -381,24 +299,227 @@
           }
         </section>
 
-        <app-enemy-mechanic-picker
-          [isOpen]="enemyMechanicPickerOpen()"
-          [title]="t('enemyMechanics.title')"
-          [copy]="t('enemyMechanics.copy')"
-          [drafts]="enemyMechanicDrafts()"
-          [catalogItems]="availableEnemyMechanicCatalogItems()"
-          (dismiss)="closeEnemyMechanicPicker()"
-          (saveDrafts)="saveEnemyMechanicPicker($event)"
-        ></app-enemy-mechanic-picker>
-
         <app-ability-requirement-picker
           [isOpen]="abilityPickerOpen()"
-          [title]="t('manualCounters.title')"
-          [copy]="t('manualCounters.copy')"
+          [title]="t('specialFilters.title')"
+          [copy]="t('specialFilters.copy')"
           [drafts]="requiredAbilityDrafts()"
-          [catalogItems]="availableAbilityCatalogItems()"
+          [catalogItems]="availableSpecialAbilityCatalogItems()"
           (dismiss)="closeAbilityPicker()"
           (saveDrafts)="saveAbilityPicker($event)"
+        ></app-ability-requirement-picker>
+
+        <section class="ability-requirements-card">
+          <div class="slot-grid__header">
+            <h2>{{ t('crewmateFilters.title') }}</h2>
+            <p>{{ t('crewmateFilters.copy') }}</p>
+          </div>
+
+          <div class="manual-locks-meta ability-requirements-meta">
+            <strong>{{
+              t('crewmateFilters.configuredRows', { count: crewmateAbilityDrafts().length })
+            }}</strong>
+            <div class="ability-requirements-actions">
+              <ion-button
+                fill="clear"
+                size="small"
+                class="select-all-button"
+                [disabled]="building() || !availableCrewmateAbilityCatalogItems().length"
+                (click)="openCrewmateAbilityPicker()"
+              >
+                {{ t('crewmateFilters.actions.openPicker') }}
+              </ion-button>
+              <ion-button
+                fill="clear"
+                size="small"
+                class="select-all-button"
+                [disabled]="building() || !crewmateAbilityDrafts().length"
+                (click)="clearCrewmateAbilityFilters()"
+              >
+                {{ t('crewmateFilters.actions.clearRequirements') }}
+              </ion-button>
+            </div>
+          </div>
+
+          @if (!availableCrewmateAbilityCatalogItems().length) {
+            <p class="favorites-only-warning">
+              {{ t('crewmateFilters.emptyCatalog') }}
+              <code>npm run data:import:all</code>
+              {{ t('crewmateFilters.emptyCatalogSuffix') }}
+            </p>
+          }
+
+          @if (!crewmateAbilitySummaryChips().length) {
+            <p class="favorites-only-warning">
+              {{ t('crewmateFilters.empty') }}
+            </p>
+          }
+
+          @if (crewmateAbilitySummaryChips().length) {
+            <div class="selected-values-row ability-requirements-selected-row">
+              @for (chip of crewmateAbilitySummaryChips(); track chip.draftId) {
+                <span class="selected-value-chip ability-requirement-chip">
+                  <span class="ability-visual-chip" [attr.data-tone]="chip.visual.tone">
+                    <ion-icon [icon]="chip.visual.icon"></ion-icon>
+                    <small>{{ chip.visual.badge }}</small>
+                  </span>
+                  <span>{{ chip.label }}</span>
+                </span>
+              }
+            </div>
+          }
+        </section>
+
+        <app-ability-requirement-picker
+          [isOpen]="crewmateAbilityPickerOpen()"
+          [title]="t('crewmateFilters.title')"
+          [copy]="t('crewmateFilters.copy')"
+          [drafts]="crewmateAbilityDrafts()"
+          [catalogItems]="availableCrewmateAbilityCatalogItems()"
+          (dismiss)="closeCrewmateAbilityPicker()"
+          (saveDrafts)="saveCrewmateAbilityPicker($event)"
+        ></app-ability-requirement-picker>
+
+        <section class="ability-requirements-card">
+          <div class="slot-grid__header">
+            <h2>{{ t('potentialFilters.title') }}</h2>
+            <p>{{ t('potentialFilters.copy') }}</p>
+          </div>
+
+          <div class="manual-locks-meta ability-requirements-meta">
+            <strong>{{
+              t('potentialFilters.configuredRows', { count: potentialAbilityDrafts().length })
+            }}</strong>
+            <div class="ability-requirements-actions">
+              <ion-button
+                fill="clear"
+                size="small"
+                class="select-all-button"
+                [disabled]="building() || !availablePotentialAbilityCatalogItems().length"
+                (click)="openPotentialAbilityPicker()"
+              >
+                {{ t('potentialFilters.actions.openPicker') }}
+              </ion-button>
+              <ion-button
+                fill="clear"
+                size="small"
+                class="select-all-button"
+                [disabled]="building() || !potentialAbilityDrafts().length"
+                (click)="clearPotentialAbilityFilters()"
+              >
+                {{ t('potentialFilters.actions.clearRequirements') }}
+              </ion-button>
+            </div>
+          </div>
+
+          @if (!availablePotentialAbilityCatalogItems().length) {
+            <p class="favorites-only-warning">
+              {{ t('potentialFilters.emptyCatalog') }}
+              <code>npm run data:import:all</code>
+              {{ t('potentialFilters.emptyCatalogSuffix') }}
+            </p>
+          }
+
+          @if (!potentialAbilitySummaryChips().length) {
+            <p class="favorites-only-warning">
+              {{ t('potentialFilters.empty') }}
+            </p>
+          }
+
+          @if (potentialAbilitySummaryChips().length) {
+            <div class="selected-values-row ability-requirements-selected-row">
+              @for (chip of potentialAbilitySummaryChips(); track chip.draftId) {
+                <span class="selected-value-chip ability-requirement-chip">
+                  <span class="ability-visual-chip" [attr.data-tone]="chip.visual.tone">
+                    <ion-icon [icon]="chip.visual.icon"></ion-icon>
+                    <small>{{ chip.visual.badge }}</small>
+                  </span>
+                  <span>{{ chip.label }}</span>
+                </span>
+              }
+            </div>
+          }
+        </section>
+
+        <app-ability-requirement-picker
+          [isOpen]="potentialAbilityPickerOpen()"
+          [title]="t('potentialFilters.title')"
+          [copy]="t('potentialFilters.copy')"
+          [drafts]="potentialAbilityDrafts()"
+          [catalogItems]="availablePotentialAbilityCatalogItems()"
+          (dismiss)="closePotentialAbilityPicker()"
+          (saveDrafts)="savePotentialAbilityPicker($event)"
+        ></app-ability-requirement-picker>
+
+        <section class="ability-requirements-card">
+          <div class="slot-grid__header">
+            <h2>{{ t('supportFilters.title') }}</h2>
+            <p>{{ t('supportFilters.copy') }}</p>
+          </div>
+
+          <div class="manual-locks-meta ability-requirements-meta">
+            <strong>{{
+              t('supportFilters.configuredRows', { count: supportAbilityDrafts().length })
+            }}</strong>
+            <div class="ability-requirements-actions">
+              <ion-button
+                fill="clear"
+                size="small"
+                class="select-all-button"
+                [disabled]="building() || !availableSupportAbilityCatalogItems().length"
+                (click)="openSupportAbilityPicker()"
+              >
+                {{ t('supportFilters.actions.openPicker') }}
+              </ion-button>
+              <ion-button
+                fill="clear"
+                size="small"
+                class="select-all-button"
+                [disabled]="building() || !supportAbilityDrafts().length"
+                (click)="clearSupportAbilityFilters()"
+              >
+                {{ t('supportFilters.actions.clearRequirements') }}
+              </ion-button>
+            </div>
+          </div>
+
+          @if (!availableSupportAbilityCatalogItems().length) {
+            <p class="favorites-only-warning">
+              {{ t('supportFilters.emptyCatalog') }}
+              <code>npm run data:import:all</code>
+              {{ t('supportFilters.emptyCatalogSuffix') }}
+            </p>
+          }
+
+          @if (!supportAbilitySummaryChips().length) {
+            <p class="favorites-only-warning">
+              {{ t('supportFilters.empty') }}
+            </p>
+          }
+
+          @if (supportAbilitySummaryChips().length) {
+            <div class="selected-values-row ability-requirements-selected-row">
+              @for (chip of supportAbilitySummaryChips(); track chip.draftId) {
+                <span class="selected-value-chip ability-requirement-chip">
+                  <span class="ability-visual-chip" [attr.data-tone]="chip.visual.tone">
+                    <ion-icon [icon]="chip.visual.icon"></ion-icon>
+                    <small>{{ chip.visual.badge }}</small>
+                  </span>
+                  <span>{{ chip.label }}</span>
+                </span>
+              }
+            </div>
+          }
+        </section>
+
+        <app-ability-requirement-picker
+          [isOpen]="supportAbilityPickerOpen()"
+          [title]="t('supportFilters.title')"
+          [copy]="t('supportFilters.copy')"
+          [drafts]="supportAbilityDrafts()"
+          [catalogItems]="availableSupportAbilityCatalogItems()"
+          (dismiss)="closeSupportAbilityPicker()"
+          (saveDrafts)="saveSupportAbilityPicker($event)"
         ></app-ability-requirement-picker>
 
         @if (buildBlockedByFavorites()) {
@@ -1168,6 +1289,60 @@
                 </div>
               }
             </div>
+            <section class="loading-card__performance">
+              <div class="loading-card__performance-copy">
+                <strong>{{ t('performance.title') }}</strong>
+                <small>{{ t('performance.copy') }}</small>
+              </div>
+              <div class="loading-card__performance-controls">
+                <label class="loading-card__performance-field">
+                  <span>{{ t('performance.mode.label') }}</span>
+                  <ion-select
+                    interface="popover"
+                    fill="outline"
+                    [value]="autoTeamBuilderWorkerPreference().mode"
+                    (ionChange)="onAutoTeamBuilderWorkerModeChange($event)"
+                  >
+                    <ion-select-option value="auto">
+                      {{ t('performance.mode.options.auto') }}
+                    </ion-select-option>
+                    <ion-select-option value="manual">
+                      {{ t('performance.mode.options.manual') }}
+                    </ion-select-option>
+                  </ion-select>
+                </label>
+                <label class="loading-card__performance-field">
+                  <span>{{ t('performance.manualCount.label') }}</span>
+                  <ion-select
+                    interface="popover"
+                    fill="outline"
+                    [value]="autoTeamBuilderWorkerPreference().manualCount"
+                    (ionChange)="onAutoTeamBuilderManualWorkerCountChange($event)"
+                  >
+                    @for (count of autoTeamBuilderAvailableWorkerCounts(); track count) {
+                      <ion-select-option [value]="count">{{ count }}</ion-select-option>
+                    }
+                  </ion-select>
+                </label>
+              </div>
+              <div class="loading-card__performance-summary">
+                <small>
+                  {{
+                    t('performance.runtime.detected', {
+                      count: autoTeamBuilderWorkerRuntime().detectedCoreCount,
+                    })
+                  }}
+                </small>
+                <small>
+                  {{
+                    t('performance.runtime.target', {
+                      count: autoTeamBuilderWorkerRuntime().effectiveCount,
+                    })
+                  }}
+                </small>
+                <small>{{ t('performance.runtime.applies') }}</small>
+              </div>
+            </section>
           </div>
           <ion-button
             fill="outline"

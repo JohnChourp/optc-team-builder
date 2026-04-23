@@ -24,6 +24,7 @@ import { addCircleOutline, closeOutline } from 'ionicons/icons';
 
 import { AUTO_TEAM_BUILDER_TYPES } from '../../core/models/auto-team-builder.models';
 import {
+  type AutoBuildAbilityCategory,
   type AutoBuildAbilityCatalog,
   type AutoBuildAbilityRequirement,
   type AutoBuildEnemyMechanicCatalogItem,
@@ -39,7 +40,6 @@ import { OptcRepositoryService } from '../../core/services/optc-repository.servi
 import { UserStateService } from '../../core/services/user-state.service';
 import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
 import { CharacterImagePickerComponent } from '../../shared/character-image-picker/character-image-picker.component';
-import { EnemyMechanicPickerComponent } from '../../shared/enemy-mechanic-picker/enemy-mechanic-picker.component';
 import {
   createAbilityRequirementDrafts,
   formatAbilityRequirementSummary,
@@ -63,11 +63,19 @@ import {
   type EnemyMechanicVisualMeta,
 } from '../../core/services/enemy-mechanic-draft.utils';
 import {
+  createCategoryAbilityDrafts,
+  createSpecialAbilityDrafts,
+  getAbilityCatalogItemsByCategory,
+  serializeCategoryAbilityDrafts,
+  serializeSpecialAbilityDrafts,
+} from '../../core/services/special-ability-filter.utils';
+import {
   buildSavedEnemiesTransferPayload,
   downloadSavedEnemiesExport,
 } from './saved-enemies-transfer.utils';
 import {
   parseSavedEnemyText,
+  type ParsedEnemyTextAbilityCandidate,
   type ParsedEnemyTextResult,
   type ParsedEnemyTextWarning,
 } from './saved-enemies-text-parser.utils';
@@ -82,6 +90,19 @@ interface SavedEnemyMechanicSummaryChipView {
   draftId: string;
   label: string;
   visual: EnemyMechanicVisualMeta;
+}
+
+interface ParsedEnemyTextAbilityCandidateView {
+  identity: string;
+  label: string;
+  sourceLine: string;
+  visual: AbilityRequirementVisualMeta;
+  candidate: ParsedEnemyTextAbilityCandidate;
+}
+
+interface ParsedEnemyTextAbilityCategorySectionView {
+  category: AutoBuildAbilityCategory;
+  candidates: ParsedEnemyTextAbilityCandidateView[];
 }
 
 @Component({
@@ -104,9 +125,8 @@ interface SavedEnemyMechanicSummaryChipView {
     IonTextarea,
     IonTitle,
     IonToolbar,
-    AbilityRequirementPickerComponent,
     CharacterImagePickerComponent,
-    EnemyMechanicPickerComponent,
+    AbilityRequirementPickerComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,
@@ -115,6 +135,13 @@ interface SavedEnemyMechanicSummaryChipView {
   styleUrl: './saved-enemies.page.scss',
 })
 export class SavedEnemiesPage implements OnInit, ViewWillEnter {
+  private static readonly parsedAbilityCategoryOrder: AutoBuildAbilityCategory[] = [
+    'special',
+    'crewmate',
+    'potential',
+    'support',
+  ];
+
   public readonly loading = signal(true);
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
@@ -142,12 +169,20 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public readonly enemyTextPasteValue = signal('');
   public readonly enemyTextParseResult = signal<ParsedEnemyTextResult | null>(null);
   public readonly enemyTextParseErrorMessage = signal('');
+  public readonly parsedAbilitySelectionOpen = signal(false);
+  public readonly selectedParsedAbilityCandidateIds = signal<string[]>([]);
   public readonly selectedTypes = signal<string[]>([]);
   public readonly selectedClasses = signal<string[]>([]);
   public readonly enemyMechanicDrafts = signal<EnemyMechanicDraft[]>([]);
   public readonly enemyMechanicPickerOpen = signal(false);
   public readonly requiredAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly abilityPickerOpen = signal(false);
+  public readonly crewmateAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly crewmateAbilityPickerOpen = signal(false);
+  public readonly potentialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly potentialAbilityPickerOpen = signal(false);
+  public readonly supportAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly supportAbilityPickerOpen = signal(false);
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
   public readonly savingEnemy = signal(false);
@@ -181,6 +216,18 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public readonly availableAbilityCatalogItems = computed(
     () => this.abilityCatalog()?.abilities ?? [],
   );
+  public readonly availableSpecialAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.availableAbilityCatalogItems(), 'special'),
+  );
+  public readonly availableCrewmateAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.availableAbilityCatalogItems(), 'crewmate'),
+  );
+  public readonly availablePotentialAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.availableAbilityCatalogItems(), 'potential'),
+  );
+  public readonly availableSupportAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.availableAbilityCatalogItems(), 'support'),
+  );
   public readonly availableEnemyMechanicCatalogItems = computed<
     AutoBuildEnemyMechanicCatalogItem[]
   >(() => getEnemyMechanicCatalogItems());
@@ -211,6 +258,27 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   );
   public readonly requiredAbilitySummaryChips = computed<SavedEnemyAbilitySummaryChipView[]>(() =>
     this.requiredAbilityDrafts().map((draft) => ({
+      draftId: draft.draftId,
+      label: this.resolveRequiredAbilitySelectedText(draft),
+      visual: resolveAbilityRequirementVisual(draft.abilityKey),
+    })),
+  );
+  public readonly crewmateAbilitySummaryChips = computed<SavedEnemyAbilitySummaryChipView[]>(() =>
+    this.crewmateAbilityDrafts().map((draft) => ({
+      draftId: draft.draftId,
+      label: this.resolveRequiredAbilitySelectedText(draft),
+      visual: resolveAbilityRequirementVisual(draft.abilityKey),
+    })),
+  );
+  public readonly potentialAbilitySummaryChips = computed<SavedEnemyAbilitySummaryChipView[]>(() =>
+    this.potentialAbilityDrafts().map((draft) => ({
+      draftId: draft.draftId,
+      label: this.resolveRequiredAbilitySelectedText(draft),
+      visual: resolveAbilityRequirementVisual(draft.abilityKey),
+    })),
+  );
+  public readonly supportAbilitySummaryChips = computed<SavedEnemyAbilitySummaryChipView[]>(() =>
+    this.supportAbilityDrafts().map((draft) => ({
       draftId: draft.draftId,
       label: this.resolveRequiredAbilitySelectedText(draft),
       visual: resolveAbilityRequirementVisual(draft.abilityKey),
@@ -255,6 +323,33 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
         this.translateEnemyTextWarning(warning),
       ) ?? [],
   );
+  public readonly selectedParsedAbilityCandidateIdSet = computed(
+    () => new Set(this.selectedParsedAbilityCandidateIds()),
+  );
+  public readonly parsedAbilitySelectionSections = computed<
+    ParsedEnemyTextAbilityCategorySectionView[]
+  >(() => {
+    const parsedResult = this.enemyTextParseResult();
+
+    return SavedEnemiesPage.parsedAbilityCategoryOrder.map((category) => ({
+      category,
+      candidates:
+        parsedResult?.parsedAbilityCandidates
+          .filter((candidate) => candidate.category === category)
+          .map((candidate) => ({
+            identity: this.buildParsedAbilityCandidateIdentity(candidate),
+            label: this.formatAbilityRequirement({
+              abilityKey: candidate.abilityKey,
+              minTurns: candidate.minTurns,
+              slotTokens: candidate.slotTokens,
+              requiredCharacterCount: candidate.requiredCharacterCount,
+            }),
+            sourceLine: candidate.sourceLine,
+            visual: resolveAbilityRequirementVisual(candidate.abilityKey),
+            candidate,
+          })) ?? [],
+    }));
+  });
   public readonly hasSavedEnemies = computed(() => this.savedEnemies().length > 0);
   public readonly canSaveEnemy = computed(
     () => this.selectedTypes().length > 0 && this.selectedClasses().length > 0,
@@ -332,10 +427,16 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.resetEnemyTextParseState();
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
+    this.crewmateAbilityPickerOpen.set(false);
+    this.potentialAbilityPickerOpen.set(false);
+    this.supportAbilityPickerOpen.set(false);
     this.selectedTypes.set([...this.availableTypes]);
     this.selectedClasses.set([...this.availableClasses()]);
     this.enemyMechanicDrafts.set([]);
     this.requiredAbilityDrafts.set([]);
+    this.crewmateAbilityDrafts.set([]);
+    this.potentialAbilityDrafts.set([]);
+    this.supportAbilityDrafts.set([]);
     this.requireAllSelectedTypesInTeam.set(false);
     this.requireAllSelectedClassesPerCharacter.set(false);
     this.savingEnemy.set(false);
@@ -353,15 +454,49 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.resetEnemyTextParseState();
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
+    this.crewmateAbilityPickerOpen.set(false);
+    this.potentialAbilityPickerOpen.set(false);
+    this.supportAbilityPickerOpen.set(false);
     this.selectedTypes.set([...enemy.selectedTypes]);
     this.selectedClasses.set([...enemy.selectedClasses]);
-    this.enemyMechanicDrafts.set(createEnemyMechanicDrafts(enemy.enemyMechanics));
+    this.enemyMechanicDrafts.set([]);
     this.requiredAbilityDrafts.set(
-      createAbilityRequirementDrafts(
-        splitManualAbilityRequirementsFromEnemyMechanics(
-          enemy.requiredAbilities,
-          enemy.enemyMechanics,
-        ),
+      createSpecialAbilityDrafts(
+        mergeAbilityRequirements([
+          ...enemy.requiredAbilities,
+          ...deriveAbilityRequirementsFromEnemyMechanics(enemy.enemyMechanics),
+        ]),
+        this.availableAbilityCatalogItems(),
+      ),
+    );
+    this.crewmateAbilityDrafts.set(
+      createCategoryAbilityDrafts(
+        mergeAbilityRequirements([
+          ...enemy.requiredAbilities,
+          ...deriveAbilityRequirementsFromEnemyMechanics(enemy.enemyMechanics),
+        ]),
+        this.availableAbilityCatalogItems(),
+        'crewmate',
+      ),
+    );
+    this.potentialAbilityDrafts.set(
+      createCategoryAbilityDrafts(
+        mergeAbilityRequirements([
+          ...enemy.requiredAbilities,
+          ...deriveAbilityRequirementsFromEnemyMechanics(enemy.enemyMechanics),
+        ]),
+        this.availableAbilityCatalogItems(),
+        'potential',
+      ),
+    );
+    this.supportAbilityDrafts.set(
+      createCategoryAbilityDrafts(
+        mergeAbilityRequirements([
+          ...enemy.requiredAbilities,
+          ...deriveAbilityRequirementsFromEnemyMechanics(enemy.enemyMechanics),
+        ]),
+        this.availableAbilityCatalogItems(),
+        'support',
       ),
     );
     this.requireAllSelectedTypesInTeam.set(enemy.requireAllSelectedTypesInTeam);
@@ -373,6 +508,9 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public closeEditor(): void {
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
+    this.crewmateAbilityPickerOpen.set(false);
+    this.potentialAbilityPickerOpen.set(false);
+    this.supportAbilityPickerOpen.set(false);
     this.editorOpen.set(false);
     this.editingEnemy.set(null);
     this.savingEnemy.set(false);
@@ -486,7 +624,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   public openAbilityPicker(): void {
-    if (this.savingEnemy() || this.availableAbilityCatalogItems().length === 0) {
+    if (this.savingEnemy() || this.availableSpecialAbilityCatalogItems().length === 0) {
       return;
     }
 
@@ -498,14 +636,91 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   public saveAbilityPicker(drafts: AbilityRequirementDraft[]): void {
-    this.requiredAbilityDrafts.set(drafts);
+    this.requiredAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeSpecialAbilityDrafts(drafts, this.availableSpecialAbilityCatalogItems()),
+      ),
+    );
     this.abilityPickerOpen.set(false);
+  }
+
+  public openCrewmateAbilityPicker(): void {
+    if (this.savingEnemy() || this.availableCrewmateAbilityCatalogItems().length === 0) {
+      return;
+    }
+
+    this.crewmateAbilityPickerOpen.set(true);
+  }
+
+  public closeCrewmateAbilityPicker(): void {
+    this.crewmateAbilityPickerOpen.set(false);
+  }
+
+  public saveCrewmateAbilityPicker(drafts: AbilityRequirementDraft[]): void {
+    this.crewmateAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeCategoryAbilityDrafts(
+          drafts,
+          this.availableCrewmateAbilityCatalogItems(),
+          'crewmate',
+        ),
+      ),
+    );
+    this.crewmateAbilityPickerOpen.set(false);
+  }
+
+  public openPotentialAbilityPicker(): void {
+    if (this.savingEnemy() || this.availablePotentialAbilityCatalogItems().length === 0) {
+      return;
+    }
+
+    this.potentialAbilityPickerOpen.set(true);
+  }
+
+  public closePotentialAbilityPicker(): void {
+    this.potentialAbilityPickerOpen.set(false);
+  }
+
+  public savePotentialAbilityPicker(drafts: AbilityRequirementDraft[]): void {
+    this.potentialAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeCategoryAbilityDrafts(
+          drafts,
+          this.availablePotentialAbilityCatalogItems(),
+          'potential',
+        ),
+      ),
+    );
+    this.potentialAbilityPickerOpen.set(false);
+  }
+
+  public openSupportAbilityPicker(): void {
+    if (this.savingEnemy() || this.availableSupportAbilityCatalogItems().length === 0) {
+      return;
+    }
+
+    this.supportAbilityPickerOpen.set(true);
+  }
+
+  public closeSupportAbilityPicker(): void {
+    this.supportAbilityPickerOpen.set(false);
+  }
+
+  public saveSupportAbilityPicker(drafts: AbilityRequirementDraft[]): void {
+    this.supportAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeCategoryAbilityDrafts(drafts, this.availableSupportAbilityCatalogItems(), 'support'),
+      ),
+    );
+    this.supportAbilityPickerOpen.set(false);
   }
 
   public onEnemyPasteTextChange(event: CustomEvent<{ value?: string | null }>): void {
     this.enemyTextPasteValue.set((event.detail.value ?? '').toString());
     this.enemyTextParseResult.set(null);
     this.enemyTextParseErrorMessage.set('');
+    this.parsedAbilitySelectionOpen.set(false);
+    this.selectedParsedAbilityCandidateIds.set([]);
   }
 
   public parseEnemyText(): void {
@@ -521,12 +736,18 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       return;
     }
 
-    this.enemyTextParseResult.set(
-      parseSavedEnemyText(this.enemyTextPasteValue(), {
-        abilityCatalogItems: this.availableAbilityCatalogItems(),
-      }),
-    );
+    const parsedResult = parseSavedEnemyText(this.enemyTextPasteValue(), {
+      abilityCatalogItems: this.availableAbilityCatalogItems(),
+    });
+
+    this.enemyTextParseResult.set(parsedResult);
     this.enemyTextParseErrorMessage.set('');
+    this.selectedParsedAbilityCandidateIds.set(
+      parsedResult.parsedAbilityCandidates
+        .filter((candidate) => candidate.category === 'special')
+        .map((candidate) => this.buildParsedAbilityCandidateIdentity(candidate)),
+    );
+    this.parsedAbilitySelectionOpen.set(parsedResult.parsedAbilityCandidates.length > 0);
   }
 
   public applyParsedEnemyText(): void {
@@ -540,8 +761,113 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       return;
     }
 
-    this.enemyMechanicDrafts.set(this.createParsedEnemyMechanicDrafts(parsedResult.enemyMechanics));
-    this.requiredAbilityDrafts.set(createAbilityRequirementDrafts(parsedResult.requiredAbilities));
+    const selectedCandidateIdSet = this.selectedParsedAbilityCandidateIdSet();
+    const selectedRequirements = parsedResult.parsedAbilityCandidates
+      .filter((candidate) => selectedCandidateIdSet.has(this.buildParsedAbilityCandidateIdentity(candidate)))
+      .map((candidate) => ({
+        abilityKey: candidate.abilityKey,
+        minTurns: candidate.minTurns,
+        slotTokens: [...candidate.slotTokens],
+        requiredCharacterCount: candidate.requiredCharacterCount,
+      }));
+
+    this.enemyMechanicDrafts.set([]);
+    this.requiredAbilityDrafts.set(
+      createSpecialAbilityDrafts(selectedRequirements, this.availableAbilityCatalogItems()),
+    );
+    this.crewmateAbilityDrafts.set(
+      createCategoryAbilityDrafts(
+        selectedRequirements,
+        this.availableAbilityCatalogItems(),
+        'crewmate',
+      ),
+    );
+    this.potentialAbilityDrafts.set(
+      createCategoryAbilityDrafts(
+        selectedRequirements,
+        this.availableAbilityCatalogItems(),
+        'potential',
+      ),
+    );
+    this.supportAbilityDrafts.set(
+      createCategoryAbilityDrafts(
+        selectedRequirements,
+        this.availableAbilityCatalogItems(),
+        'support',
+      ),
+    );
+    this.parsedAbilitySelectionOpen.set(false);
+  }
+
+  public closeParsedAbilitySelection(): void {
+    this.parsedAbilitySelectionOpen.set(false);
+  }
+
+  public isParsedAbilityCandidateSelected(identity: string): boolean {
+    return this.selectedParsedAbilityCandidateIdSet().has(identity);
+  }
+
+  public toggleParsedAbilityCandidate(identity: string, event: CustomEvent<{ checked: boolean }>): void {
+    const selectedIds = this.selectedParsedAbilityCandidateIds();
+
+    if (event.detail.checked) {
+      if (!selectedIds.includes(identity)) {
+        this.selectedParsedAbilityCandidateIds.set([...selectedIds, identity]);
+      }
+
+      return;
+    }
+
+    this.selectedParsedAbilityCandidateIds.set(
+      selectedIds.filter((selectedIdentity) => selectedIdentity !== identity),
+    );
+  }
+
+  public selectAllParsedAbilityCandidates(category: AutoBuildAbilityCategory): void {
+    const nextIds = new Set(this.selectedParsedAbilityCandidateIds());
+
+    this.parsedAbilitySelectionSections()
+      .find((section) => section.category === category)
+      ?.candidates.forEach((candidate) => nextIds.add(candidate.identity));
+
+    this.selectedParsedAbilityCandidateIds.set([...nextIds]);
+  }
+
+  public clearParsedAbilityCandidates(category: AutoBuildAbilityCategory): void {
+    const categoryIds = new Set(
+      this.parsedAbilitySelectionSections()
+        .find((section) => section.category === category)
+        ?.candidates.map((candidate) => candidate.identity) ?? [],
+    );
+
+    this.selectedParsedAbilityCandidateIds.set(
+      this.selectedParsedAbilityCandidateIds().filter((identity) => !categoryIds.has(identity)),
+    );
+  }
+
+  public formatParsedAbilityCategoryLabel(category: AutoBuildAbilityCategory): string {
+    switch (category) {
+      case 'crewmate':
+        return this.i18n.translate('editor.crewmateFilters.title', undefined, 'saved-enemies');
+      case 'potential':
+        return this.i18n.translate('editor.potentialFilters.title', undefined, 'saved-enemies');
+      case 'support':
+        return this.i18n.translate('editor.supportFilters.title', undefined, 'saved-enemies');
+      default:
+        return this.i18n.translate('editor.specialFilters.title', undefined, 'saved-enemies');
+    }
+  }
+
+  public hasAllParsedAbilityCandidatesSelected(category: AutoBuildAbilityCategory): boolean {
+    const section = this.parsedAbilitySelectionSections().find(
+      (candidateSection) => candidateSection.category === category,
+    );
+
+    return Boolean(
+      section &&
+        section.candidates.length > 0 &&
+        section.candidates.every((candidate) => this.isParsedAbilityCandidateSelected(candidate.identity)),
+    );
   }
 
   public openEnemyMechanicPicker(): void {
@@ -569,6 +895,18 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.requiredAbilityDrafts.set([]);
   }
 
+  public clearCrewmateAbilityFilters(): void {
+    this.crewmateAbilityDrafts.set([]);
+  }
+
+  public clearPotentialAbilityFilters(): void {
+    this.potentialAbilityDrafts.set([]);
+  }
+
+  public clearSupportAbilityFilters(): void {
+    this.supportAbilityDrafts.set([]);
+  }
+
   public async saveEnemy(): Promise<void> {
     if (this.savingEnemy() || this.processingEnemyImage() || !this.canSaveEnemy()) {
       return;
@@ -585,7 +923,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
         selectedTypes: this.selectedTypes(),
         selectedClasses: this.selectedClasses(),
         requiredAbilities: this.effectiveRequiredAbilities(),
-        enemyMechanics: this.serializeEnemyMechanics(),
+        enemyMechanics: [],
         requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
         requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
       });
@@ -722,10 +1060,27 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   private serializeRequiredAbilities(): AutoBuildAbilityRequirement[] {
-    return serializeAbilityRequirementDrafts(this.requiredAbilityDrafts(), {
-      dedupe: false,
-      catalogMap: this.abilityCatalogMap(),
-    });
+    return [
+      ...serializeSpecialAbilityDrafts(
+        this.requiredAbilityDrafts(),
+        this.availableSpecialAbilityCatalogItems(),
+      ),
+      ...serializeCategoryAbilityDrafts(
+        this.crewmateAbilityDrafts(),
+        this.availableCrewmateAbilityCatalogItems(),
+        'crewmate',
+      ),
+      ...serializeCategoryAbilityDrafts(
+        this.potentialAbilityDrafts(),
+        this.availablePotentialAbilityCatalogItems(),
+        'potential',
+      ),
+      ...serializeCategoryAbilityDrafts(
+        this.supportAbilityDrafts(),
+        this.availableSupportAbilityCatalogItems(),
+        'support',
+      ),
+    ];
   }
 
   private serializeEnemyMechanics(): AutoBuildEnemyMechanicRequirement[] {
@@ -733,10 +1088,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   private effectiveRequiredAbilities(): AutoBuildAbilityRequirement[] {
-    return mergeAbilityRequirements([
-      ...this.derivedRequiredAbilities(),
-      ...this.serializeRequiredAbilities(),
-    ]);
+    return mergeAbilityRequirements(this.serializeRequiredAbilities());
   }
 
   private async loadEnemyImage(file: File): Promise<void> {
@@ -911,5 +1263,11 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.enemyTextPasteValue.set('');
     this.enemyTextParseResult.set(null);
     this.enemyTextParseErrorMessage.set('');
+    this.parsedAbilitySelectionOpen.set(false);
+    this.selectedParsedAbilityCandidateIds.set([]);
+  }
+
+  private buildParsedAbilityCandidateIdentity(candidate: ParsedEnemyTextAbilityCandidate): string {
+    return [candidate.category, candidate.abilityKey.trim(), candidate.slotTokens.join(',')].join('|');
   }
 }

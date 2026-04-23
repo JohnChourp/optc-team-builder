@@ -2,13 +2,56 @@ import { describe, expect, it } from 'vitest';
 
 import {
   applyShipThumbnailOverrides,
+  buildDeterministicCharacterAssetsMap,
+  buildPackListingUrl,
+  buildSourceFileUrl,
+  dataImportSources,
+  extractSourceVersion,
   normalizeCharacters,
   normalizeCharacterDetail,
   packDefinitions,
+  parseArgs,
+  resolveImportSource,
   shouldDownloadPack,
 } from './import-optc-data.mjs';
 
 describe('import-optc-data ship thumbnail pack', () => {
+  it('defaults the importer source to 2shankz', () => {
+    expect(parseArgs([])).toMatchObject({
+      downloadImages: 'none',
+      source: '2shankz',
+    });
+  });
+
+  it('resolves the 2shankz source config for raw data files', () => {
+    const source = resolveImportSource(parseArgs(['--source=2shankz']).source);
+
+    expect(source).toEqual(dataImportSources['2shankz']);
+    expect(buildSourceFileUrl(source, 'common/data/units.js')).toBe(
+      'https://raw.githubusercontent.com/2Shankz/optc-db.github.io/master/common/data/units.js',
+    );
+  });
+
+  it('resolves the upstream optc-db source config explicitly', () => {
+    const source = resolveImportSource(parseArgs(['--source=optc-db']).source);
+
+    expect(source).toEqual(dataImportSources['optc-db']);
+    expect(buildSourceFileUrl(source, 'common/data/details.js')).toBe(
+      'https://raw.githubusercontent.com/optc-db/optc-db.github.io/master/common/data/details.js',
+    );
+  });
+
+  it('rejects unsupported source values with a clear error', () => {
+    expect(() => parseArgs(['--source=unknown-fork'])).toThrow(
+      'Invalid --source value "unknown-fork". Expected one of: 2shankz, optc-db.',
+    );
+  });
+
+  it('extracts source versions from quoted or unquoted upstream scripts', () => {
+    expect(extractSourceVersion("window.dbVersion = '36';")).toBe('36');
+    expect(extractSourceVersion('window.dbVersion = 36;')).toBe('36');
+  });
+
   it('registers the ship thumbnail pack definition', () => {
     expect(
       packDefinitions.find((pack) => pack.id === 'ship-thumbnails'),
@@ -25,10 +68,76 @@ describe('import-optc-data ship thumbnail pack', () => {
     expect(shouldDownloadPack('thumbnails', 'ship-thumbnails')).toBe(true);
   });
 
+  it('includes every supported image pack in the all download mode', () => {
+    expect(shouldDownloadPack('all', 'thumbnails-glo')).toBe(true);
+    expect(shouldDownloadPack('all', 'thumbnails-jap')).toBe(true);
+    expect(shouldDownloadPack('all', 'ship-thumbnails')).toBe(true);
+    expect(shouldDownloadPack('all', 'full-transparent')).toBe(true);
+  });
+
+  it('includes only thumbnail packs in the thumbnails download mode', () => {
+    expect(shouldDownloadPack('thumbnails', 'thumbnails-glo')).toBe(true);
+    expect(shouldDownloadPack('thumbnails', 'thumbnails-jap')).toBe(true);
+    expect(shouldDownloadPack('thumbnails', 'ship-thumbnails')).toBe(true);
+    expect(shouldDownloadPack('thumbnails', 'full-transparent')).toBe(false);
+  });
+
   it('supports downloading only ship thumbnails when requested explicitly', () => {
     expect(shouldDownloadPack('ship-thumbnails', 'ship-thumbnails')).toBe(true);
     expect(shouldDownloadPack('ship-thumbnails', 'thumbnails-glo')).toBe(false);
     expect(shouldDownloadPack('ship-thumbnails', 'full-transparent')).toBe(false);
+  });
+
+  it('supports each explicit single-pack download mode', () => {
+    expect(shouldDownloadPack('thumbnails-glo', 'thumbnails-glo')).toBe(true);
+    expect(shouldDownloadPack('thumbnails-glo', 'thumbnails-jap')).toBe(false);
+    expect(shouldDownloadPack('thumbnails-jap', 'thumbnails-jap')).toBe(true);
+    expect(shouldDownloadPack('thumbnails-jap', 'ship-thumbnails')).toBe(false);
+    expect(shouldDownloadPack('full-transparent', 'full-transparent')).toBe(true);
+    expect(shouldDownloadPack('full-transparent', 'thumbnails-glo')).toBe(false);
+  });
+
+  it('uses the selected GitHub repo when building image pack listings', () => {
+    const globalThumbPack = packDefinitions.find((pack) => pack.id === 'thumbnails-glo');
+
+    expect(globalThumbPack).toBeTruthy();
+    if (!globalThumbPack) {
+      throw new Error('Expected thumbnails-glo pack definition.');
+    }
+
+    expect(buildPackListingUrl(dataImportSources['2shankz'], globalThumbPack)).toBe(
+      'https://api.github.com/repos/2Shankz/optc-db.github.io/contents/api/images/thumbnail?ref=master',
+    );
+    expect(buildPackListingUrl(dataImportSources['optc-db'], globalThumbPack)).toBe(
+      'https://api.github.com/repos/optc-db/optc-db.github.io/contents/api/images/thumbnail?ref=master',
+    );
+  });
+
+  it('builds deterministic thumbnail and full-art asset paths without remote pack listings', () => {
+    const assetsById = buildDeterministicCharacterAssetsMap(2, {
+      Utils: {
+        getThumbnailUrl(characterId) {
+          return {
+            glo: `/api/images/thumbnail/glo/0/000/${String(characterId).padStart(4, '0')}.png`,
+            jap: `/api/images/thumbnail/jap/0/000/${String(characterId).padStart(4, '0')}.png`,
+          };
+        },
+        getBigThumbnailUrl(characterId) {
+          return `/api/images/full/transparent/0/000/${String(characterId).padStart(4, '0')}.png`;
+        },
+      },
+    });
+
+    expect(assetsById.get(1)).toMatchObject({
+      thumbnailGlobal: '0/000/0001.png',
+      thumbnailJapan: '0/000/0001.png',
+      fullTransparent: '0/000/0001.png',
+    });
+    expect(assetsById.get(2)).toMatchObject({
+      thumbnailGlobal: '0/000/0002.png',
+      thumbnailJapan: '0/000/0002.png',
+      fullTransparent: '0/000/0002.png',
+    });
   });
 
   it('fills missing ship thumbs from local overrides without replacing upstream thumbs', () => {
@@ -89,6 +198,49 @@ describe('import-optc-data ship thumbnail pack', () => {
       maxRcv: 370,
       growth: 1,
     });
+  });
+
+  it('supports object-based unit maps from the 2shankz source', () => {
+    const [character] = normalizeCharacters(
+      {
+        '1': {
+          id: '1',
+          name: 'Monkey D. Luffy',
+          type: 'STR',
+          class: ['Fighter', 'Free Spirit'],
+          stars: '5',
+          cost: 15,
+          combo: 6,
+          sockets: 3,
+          minHP: 902,
+          minATK: 473,
+          minRCV: 74,
+          maxHP: 1772,
+          maxATK: 1313,
+          maxRCV: 227,
+          growth: null,
+        },
+      },
+      {
+        1: {
+          special: 'Deals STR damage.',
+        },
+      },
+      [],
+      new Map(),
+    );
+
+    expect(character).toMatchObject({
+      id: 1,
+      name: 'Monkey D. Luffy',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      minHp: 902,
+      maxAtk: 1313,
+      growth: 0,
+    });
+    expect(character.detail.specialText).toBe('Deals STR damage.');
   });
 
   it('imports typed support data and super special fields into the normalized detail shape', () => {

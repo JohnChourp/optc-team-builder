@@ -63,13 +63,24 @@
       "label": "Enemy mechanics and counter text",
       "placeholder": "Paste lines like: 4 turn(s) Special Bind, 4 turn(s) Paralysis, Non-Normal Attacks deal 1 damage",
       "actions": {
-        "parse": "Parse text",
-        "apply": "Apply parsed text"
+        "parse": "Parse text"
       },
       "feedback": {
         "successTitle": "Text parsed",
         "warningTitle": "Text parsed with warnings",
-        "summary": "Matched {{mechanicCount}} mechanics, {{abilityCount}} direct abilities, {{warningCount}} warnings."
+        "summary": "Matched {{mechanicCount}} mechanics, {{abilityCount}} ability candidates, {{warningCount}} warnings."
+      },
+      "selection": {
+        "eyebrow": "Parsed abilities",
+        "title": "Select parsed ability filters",
+        "copy": "Review the matched abilities by category and choose only the filters that should be required for this enemy.",
+        "count": "{{count}} parsed abilities",
+        "emptyCategory": "No parsed abilities were matched for this category.",
+        "actions": {
+          "selectAll": "Select all",
+          "clear": "Clear",
+          "parse": "Parse"
+        }
       },
       "warnings": {
         "title": "Ignored or simplified lines",
@@ -146,6 +157,36 @@
         "clear": "Clear overrides"
       }
     },
+    "specialFilters": {
+      "eyebrow": "Special",
+      "title": "Special filters",
+      "copy": "Choose the Special effects needed for this enemy. Builder and character results must match every selected effect.",
+      "empty": "No Special effects selected yet.",
+      "actions": {
+        "openPicker": "Open Special picker",
+        "clear": "Clear Special filters"
+      }
+    },
+    "crewmateFilters": {
+      "eyebrow": "Crewmate Ability",
+      "title": "Crewmate Ability filters",
+      "copy": "Pick Crewmate effects. Results must cover every selected effect.",
+      "empty": "No Crewmate Ability effects selected",
+      "actions": {
+        "openPicker": "Open Crewmate picker",
+        "clear": "Clear Crewmate filters"
+      }
+    },
+    "potentialFilters": {
+      "eyebrow": "Potential Ability",
+      "title": "Potential Ability filters",
+      "copy": "Pick Potential effects. Results must cover every selected effect.",
+      "empty": "No Potential Ability effects selected",
+      "actions": {
+        "openPicker": "Open Potential picker",
+        "clear": "Clear Potential filters"
+      }
+    },
     "removeAbility": "Remove",
     "requirementSummary": {
       "characters": ">={{count}} chars",
@@ -162,6 +203,16 @@
     "typesActions": {
       "clear": "Clear type selection",
       "selectAll": "Select all types"
+    },
+    "supportFilters": {
+      "eyebrow": "Support Ability",
+      "title": "Support Ability filters",
+      "copy": "Pick Support effects. Results must cover every selected effect.",
+      "empty": "No Support Ability effects selected",
+      "actions": {
+        "openPicker": "Open Support picker",
+        "clear": "Clear Support filters"
+      }
     }
   },
   "empty": {

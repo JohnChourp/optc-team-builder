@@ -63,13 +63,24 @@
       "label": "Κείμενο mechanics και counters",
       "placeholder": "Κάνε paste γραμμές όπως: 4 turn(s) Special Bind, 4 turn(s) Paralysis, Non-Normal Attacks deal 1 damage",
       "actions": {
-        "parse": "Parse text",
-        "apply": "Apply parsed text"
+        "parse": "Parse text"
       },
       "feedback": {
         "successTitle": "Το text έγινε parse",
         "warningTitle": "Το text έγινε parse με παρατηρήσεις",
-        "summary": "Βρέθηκαν {{mechanicCount}} mechanics, {{abilityCount}} direct abilities, {{warningCount}} warnings."
+        "summary": "Βρέθηκαν {{mechanicCount}} mechanics, {{abilityCount}} ability candidates, {{warningCount}} warnings."
+      },
+      "selection": {
+        "eyebrow": "Parsed abilities",
+        "title": "Επίλεξε parsed ability filters",
+        "copy": "Έλεγξε τα matched abilities ανά category και διάλεξε μόνο όσα filters πρέπει να απαιτούνται για αυτόν τον εχθρό.",
+        "count": "{{count}} parsed abilities",
+        "emptyCategory": "Δεν βρέθηκαν parsed abilities για αυτή την κατηγορία.",
+        "actions": {
+          "selectAll": "Επίλεξε όλα",
+          "clear": "Καθαρισμός",
+          "parse": "Parse"
+        }
       },
       "warnings": {
         "title": "Γραμμές που αγνοήθηκαν ή απλοποιήθηκαν",
@@ -146,6 +157,36 @@
         "clear": "Καθαρισμός overrides"
       }
     },
+    "specialFilters": {
+      "eyebrow": "Special",
+      "title": "Special filters",
+      "copy": "Επίλεξε τα Special effects που χρειάζεται ο εχθρός. Builder και character results πρέπει να έχουν όλα τα επιλεγμένα effects.",
+      "empty": "Δεν έχουν επιλεγεί Special effects ακόμη.",
+      "actions": {
+        "openPicker": "Άνοιγμα Special picker",
+        "clear": "Καθαρισμός Special filters"
+      }
+    },
+    "crewmateFilters": {
+      "eyebrow": "Crewmate Ability",
+      "title": "Crewmate Ability filters",
+      "copy": "Επίλεξε Crewmate effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect.",
+      "empty": "Δεν έχουν επιλεγεί Crewmate Ability effects",
+      "actions": {
+        "openPicker": "Άνοιγμα Crewmate picker",
+        "clear": "Καθαρισμός Crewmate filters"
+      }
+    },
+    "potentialFilters": {
+      "eyebrow": "Potential Ability",
+      "title": "Potential Ability filters",
+      "copy": "Επίλεξε Potential effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect.",
+      "empty": "Δεν έχουν επιλεγεί Potential Ability effects",
+      "actions": {
+        "openPicker": "Άνοιγμα Potential picker",
+        "clear": "Καθαρισμός Potential filters"
+      }
+    },
     "removeAbility": "Αφαίρεση",
     "requirementSummary": {
       "characters": ">={{count}} chars",
@@ -162,6 +203,16 @@
     "typesActions": {
       "clear": "Καθάρισε τα types",
       "selectAll": "Επίλεξε όλα τα types"
+    },
+    "supportFilters": {
+      "eyebrow": "Support Ability",
+      "title": "Support Ability filters",
+      "copy": "Επίλεξε Support effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect.",
+      "empty": "Δεν έχουν επιλεγεί Support Ability effects",
+      "actions": {
+        "openPicker": "Άνοιγμα Support picker",
+        "clear": "Καθαρισμός Support filters"
+      }
     }
   },
   "empty": {

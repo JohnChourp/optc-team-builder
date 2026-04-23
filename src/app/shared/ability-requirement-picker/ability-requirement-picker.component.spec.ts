@@ -112,6 +112,51 @@ describe("AbilityRequirementPickerComponent", () => {
     expect(emittedDrafts).not.toBe(component.workingDrafts());
   });
 
+  it("keeps turns value 0 in working drafts so it can serialize as ignore turns", () => {
+    const component = new AbilityRequirementPickerComponent();
+
+    component.catalogItems = [
+      {
+        key: "remove_bind",
+        label: "Remove Bind",
+        supportsTurns: true,
+        supportsSlotTokens: false,
+        availableSlotTokens: [],
+        availableSources: ["specialText"],
+        availableCoverageModes: ["explicit"],
+        matchCount: 10,
+        sampleCharacterIds: [101],
+        sampleTexts: ["Removes bind"],
+      },
+    ];
+    component.drafts = [
+      {
+        draftId: "bind-1",
+        abilityKey: "remove_bind",
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ];
+    component.isOpen = true;
+    component.ngOnChanges({
+      catalogItems: new SimpleChange([], component.catalogItems, true),
+      isOpen: new SimpleChange(false, true, true),
+    });
+
+    component.onRequiredTurnsChange(
+      "bind-1",
+      { detail: { value: "0" } } as CustomEvent<{ value?: string | number | null }>,
+    );
+
+    expect(component.workingDrafts()).toEqual([
+      expect.objectContaining({
+        abilityKey: "remove_bind",
+        minTurns: 0,
+      }),
+    ]);
+  });
+
   it("renders badge and conditional field blocks in the template", () => {
     const template = readFileSync(
       resolve(
@@ -124,6 +169,7 @@ describe("AbilityRequirementPickerComponent", () => {
     expect(template).toContain("ability-picker-tile__badge");
     expect(template).toContain("ability-picker-mini-badge-list");
     expect(template).toContain("@if (row.supportsTurns)");
+    expect(template).toContain('min="0"');
     expect(template).toContain("@if (row.supportsSlotTokens && row.availableSlotTokens.length)");
   });
 });

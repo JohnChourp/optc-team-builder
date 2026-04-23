@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-23T08:13:19.745Z",
+  "generatedAt": "2026-04-23T17:11:40.407Z",
   "characters": [
     {
       "id": 1,
@@ -20,7 +20,7 @@
       "maxHp": 134,
       "maxAtk": 68,
       "maxRcv": 15,
-      "growth": 1,
+      "growth": 0,
       "searchText": "monkey d. luffy str fighter",
       "regionAvailability": {
         "exactLocal": false,
@@ -51,7 +51,17 @@
           "monkey d. luffy",
           "luffy"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -61,7 +71,24 @@
         "vsSpecial": null,
         "superType": null,
         "superClass": null,
-        "rumbleData": null
+        "rumbleData": {
+          "id": 1,
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "criteria": "near"
+          },
+          "stats": {
+            "rumbleType": "BAL",
+            "def": 50,
+            "spd": 100
+          },
+          "cost": 1
+        }
       }
     },
     {
@@ -120,7 +147,17 @@
           "monkey d. luffy",
           "luffy"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -130,7 +167,24 @@
         "vsSpecial": null,
         "superType": null,
         "superClass": null,
-        "rumbleData": null
+        "rumbleData": {
+          "id": 2,
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "criteria": "near"
+          },
+          "stats": {
+            "rumbleType": "BAL",
+            "def": 50,
+            "spd": 100
+          },
+          "cost": 4
+        }
       }
     },
     {
@@ -152,7 +206,7 @@
       "maxHp": 975,
       "maxAtk": 522,
       "maxRcv": 105,
-      "growth": 1,
+      "growth": 0,
       "searchText": "monkey d. luffy - gum-gum bazooka str fighter",
       "regionAvailability": {
         "exactLocal": false,
@@ -189,7 +243,17 @@
           "monkey d. luffy",
           "luffy"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -199,7 +263,24 @@
         "vsSpecial": null,
         "superType": null,
         "superClass": null,
-        "rumbleData": null
+        "rumbleData": {
+          "id": 3,
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "criteria": "near"
+          },
+          "stats": {
+            "rumbleType": "BAL",
+            "def": 50,
+            "spd": 100
+          },
+          "cost": 7
+        }
       }
     },
     {
@@ -222,7 +303,7 @@
       "maxHp": 1772,
       "maxAtk": 1313,
       "maxRcv": 227,
-      "growth": 1,
+      "growth": 0,
       "searchText": "monkey d. luffy - gear 2 str fighter free spirit",
       "regionAvailability": {
         "exactLocal": false,
@@ -259,57 +340,64 @@
           "monkey d. luffy",
           "luffy"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_make_slots_favorable",
+            "label": "Make Slots Favorable",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_atk_boost_self",
+            "label": "ATK Boost: Self",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_base_atk_boost",
+            "label": "Base ATK Boost",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [
           "Boosts base ATK of this character by 100 if this character is the last in the chain to attack. Makes [QCK] orbs beneficial for this character"
         ],
         "sailorNotes": "#{beneficial}",
         "limitBreak": [
-          {
-            "description": "Reduce base Special Cooldown by 1 turn"
-          },
-          {
-            "description": "Boosts base ATK by 30"
-          },
-          {
-            "description": "Boosts base RCV by 20"
-          },
-          {
-            "description": "Acquire Potential 1: Enrage/Reduce Increase Damage Taken duration"
-          },
-          {
-            "description": "Boosts base HP by 30"
-          },
-          {
-            "description": "Boosts base RCV by 30"
-          },
-          {
-            "description": "Reduce base Special Cooldown by 1 turn"
-          },
-          {
-            "description": "Boosts base HP by 40"
-          },
-          {
-            "description": "Boosts base HP by 50"
-          },
-          {
-            "description": "Acquire Sailor Ability 1: Boosts base ATK of this character by 100 if this character is the last in the chain to attack"
-          },
-          {
-            "description": "Boosts base HP by 50"
-          },
-          {
-            "description": "Reduce base Special Cooldown by 1 turn"
-          },
-          {
-            "description": "Reduce base Special Cooldown by 1 turn"
-          },
-          {
-            "description": "Acquire Sailor Ability 2: Makes [QCK] orbs beneficial for this character"
-          },
-          {
-            "description": "Acquire Potential 2: Reduce No Healing duration"
-          }
+          "Reduce base Special Cooldown by 1 turn",
+          "Boosts base ATK by 30",
+          "Boosts base RCV by 20",
+          "Acquire Potential 1: Enrage/Reduce Increase Damage Taken duration",
+          "Boosts base HP by 30",
+          "Boosts base RCV by 30",
+          "Reduce base Special Cooldown by 1 turn",
+          "Boosts base HP by 40",
+          "Boosts base HP by 50",
+          "Acquire Sailor Ability 1: Boosts base ATK of this character by 100 if this character is the last in the chain to attack",
+          "Boosts base HP by 50",
+          "Reduce base Special Cooldown by 1 turn",
+          "Reduce base Special Cooldown by 1 turn",
+          "Acquire Sailor Ability 2: Makes [QCK] orbs beneficial for this character",
+          "Acquire Potential 2: Reduce No Healing duration"
         ],
         "potentialAbilities": [
           {
@@ -349,7 +437,24 @@
         "vsSpecial": null,
         "superType": null,
         "superClass": null,
-        "rumbleData": null
+        "rumbleData": {
+          "id": 4,
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "criteria": "near"
+          },
+          "stats": {
+            "rumbleType": "BAL",
+            "def": 50,
+            "spd": 100
+          },
+          "cost": 15
+        }
       }
     },
     {
@@ -408,7 +513,17 @@
           "roronoa zoro",
           "zoro"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -418,7 +533,24 @@
         "vsSpecial": null,
         "superType": null,
         "superClass": null,
-        "rumbleData": null
+        "rumbleData": {
+          "id": 5,
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "criteria": "near"
+          },
+          "stats": {
+            "rumbleType": "BAL",
+            "def": 50,
+            "spd": 100
+          },
+          "cost": 4
+        }
       }
     },
     {
@@ -441,7 +573,7 @@
       "maxHp": 899,
       "maxAtk": 515,
       "maxRcv": 120,
-      "growth": 1,
+      "growth": 0,
       "searchText": "roronoa zoro - three thousand worlds dex slasher driven",
       "regionAvailability": {
         "exactLocal": false,
@@ -478,7 +610,17 @@
           "roronoa zoro",
           "zoro"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -488,7 +630,24 @@
         "vsSpecial": null,
         "superType": null,
         "superClass": null,
-        "rumbleData": null
+        "rumbleData": {
+          "id": 6,
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "criteria": "near"
+          },
+          "stats": {
+            "rumbleType": "BAL",
+            "def": 50,
+            "spd": 100
+          },
+          "cost": 7
+        }
       }
     },
     {
@@ -511,7 +670,7 @@
       "maxHp": 1216,
       "maxAtk": 694,
       "maxRcv": 106,
-      "growth": 1,
+      "growth": 0,
       "searchText": "roronoa zoro - pound phoenix dex slasher driven",
       "regionAvailability": {
         "exactLocal": false,
@@ -548,7 +707,17 @@
           "roronoa zoro",
           "zoro"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -558,7 +727,24 @@
         "vsSpecial": null,
         "superType": null,
         "superClass": null,
-        "rumbleData": null
+        "rumbleData": {
+          "id": 7,
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "criteria": "near"
+          },
+          "stats": {
+            "rumbleType": "BAL",
+            "def": 50,
+            "spd": 100
+          },
+          "cost": 9
+        }
       }
     },
     {
@@ -581,7 +767,7 @@
       "maxHp": 2232,
       "maxAtk": 1332,
       "maxRcv": 144,
-      "growth": 1,
+      "growth": 0,
       "searchText": "roronoa zoro - ashura ichibugin dex slasher driven",
       "regionAvailability": {
         "exactLocal": false,
@@ -618,57 +804,73 @@
           "roronoa zoro",
           "zoro"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "potential_qck_damage_reduction",
+            "label": "QCK Damage Reduction",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "potentialAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "potential_critical_atk",
+            "label": "Critical ATK",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "potentialAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_base_atk_boost_additional",
+            "label": "Base ATK Boost: Additional",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_base_hp_boost_additional",
+            "label": "Base HP Boost: Additional",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [
           "Restores Special Cooldown of this character by 1 turn when it is rewinded. Boosts base ATK of [DEX] characters by 40"
         ],
         "sailorNotes": "#{rewind : 1}",
         "limitBreak": [
-          {
-            "description": "Boosts base HP by 30"
-          },
-          {
-            "description": "Boosts base RCV by 10"
-          },
-          {
-            "description": "Boosts base HP by 40"
-          },
-          {
-            "description": "Acquire Potential 1: [QCK] Damage Reduction"
-          },
-          {
-            "description": "Boosts base ATK by 20"
-          },
-          {
-            "description": "Boosts base RCV by 20"
-          },
-          {
-            "description": "Acquire Sailor Ability 1: Restores Special Cooldown of this character by 1 turn when it is rewinded"
-          },
-          {
-            "description": "Boosts base RCV by 30"
-          },
-          {
-            "description": "Boosts base ATK by 30"
-          },
-          {
-            "description": "Boosts base HP by 50"
-          },
-          {
-            "description": "Boosts base ATK by 40"
-          },
-          {
-            "description": "Acquire Sailor Ability 2: Boosts base ATK of [DEX] characters by 40"
-          },
-          {
-            "description": "Boosts base HP by 70"
-          },
-          {
-            "description": "Acquire 1 additional Socket slot"
-          },
-          {
-            "description": "Acquire Potential 2: Critical Hit"
-          }
+          "Boosts base HP by 30",
+          "Boosts base RCV by 10",
+          "Boosts base HP by 40",
+          "Acquire Potential 1: [QCK] Damage Reduction",
+          "Boosts base ATK by 20",
+          "Boosts base RCV by 20",
+          "Acquire Sailor Ability 1: Restores Special Cooldown of this character by 1 turn when it is rewinded",
+          "Boosts base RCV by 30",
+          "Boosts base ATK by 30",
+          "Boosts base HP by 50",
+          "Boosts base ATK by 40",
+          "Acquire Sailor Ability 2: Boosts base ATK of [DEX] characters by 40",
+          "Boosts base HP by 70",
+          "Acquire 1 additional Socket slot",
+          "Acquire Potential 2: Critical Hit"
         ],
         "potentialAbilities": [
           {
@@ -708,7 +910,24 @@
         "vsSpecial": null,
         "superType": null,
         "superClass": null,
-        "rumbleData": null
+        "rumbleData": {
+          "id": 8,
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "criteria": "near"
+          },
+          "stats": {
+            "rumbleType": "BAL",
+            "def": 50,
+            "spd": 100
+          },
+          "cost": 15
+        }
       }
     },
     {
@@ -766,7 +985,17 @@
         "partyConflictKeys": [
           "nami"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "heal_hp",
+            "label": "Heal HP",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -776,7 +1005,24 @@
         "vsSpecial": null,
         "superType": null,
         "superClass": null,
-        "rumbleData": null
+        "rumbleData": {
+          "id": 9,
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "criteria": "near"
+          },
+          "stats": {
+            "rumbleType": "BAL",
+            "def": 50,
+            "spd": 100
+          },
+          "cost": 4
+        }
       }
     },
     {
@@ -799,7 +1045,7 @@
       "maxHp": 783,
       "maxAtk": 453,
       "maxRcv": 160,
-      "growth": 1,
+      "growth": 0,
       "searchText": "nami - tornado tempo int striker cerebral",
       "regionAvailability": {
         "exactLocal": false,
@@ -835,7 +1081,17 @@
         "partyConflictKeys": [
           "nami"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -845,7 +1101,24 @@
         "vsSpecial": null,
         "superType": null,
         "superClass": null,
-        "rumbleData": null
+        "rumbleData": {
+          "id": 10,
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "criteria": "near"
+          },
+          "stats": {
+            "rumbleType": "BAL",
+            "def": 50,
+            "spd": 100
+          },
+          "cost": 7
+        }
       }
     },
     {
@@ -868,7 +1141,7 @@
       "maxHp": 840,
       "maxAtk": 543,
       "maxRcv": 219,
-      "growth": 1,
+      "growth": 0,
       "searchText": "nami - mirage tempo int striker cerebral",
       "regionAvailability": {
         "exactLocal": false,
@@ -904,7 +1177,17 @@
         "partyConflictKeys": [
           "nami"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "reduce_damage",
+            "label": "Reduce Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -914,7 +1197,24 @@
         "vsSpecial": null,
         "superType": null,
         "superClass": null,
-        "rumbleData": null
+        "rumbleData": {
+          "id": 11,
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "criteria": "near"
+          },
+          "stats": {
+            "rumbleType": "BAL",
+            "def": 50,
+            "spd": 100
+          },
+          "cost": 9
+        }
       }
     },
     {
@@ -937,7 +1237,7 @@
       "maxHp": 1262,
       "maxAtk": 1088,
       "maxRcv": 387,
-      "growth": 1,
+      "growth": 0,
       "searchText": "nami - thunderbolt tempo int striker cerebral",
       "regionAvailability": {
         "exactLocal": false,
@@ -973,57 +1273,82 @@
         "partyConflictKeys": [
           "nami"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_make_slots_favorable",
+            "label": "Make Slots Favorable",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "potential_pinch_healing",
+            "label": "Pinch Healing",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "potentialAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "potential_slot_bind_resistance",
+            "label": "Slot Bind Resistance",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "potentialAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_base_atk_boost_additional",
+            "label": "Base ATK Boost: Additional",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_base_rcv_boost_additional",
+            "label": "Base RCV Boost: Additional",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [
           "Makes [RCV] orbs beneficial for [INT] characters. Boosts base ATK, HP and RCV of [INT] characters by 50"
         ],
         "sailorNotes": "#{beneficial}",
         "limitBreak": [
-          {
-            "description": "Boosts base ATK by 10"
-          },
-          {
-            "description": "Boosts base RCV by 10"
-          },
-          {
-            "description": "Boosts base RCV by 10"
-          },
-          {
-            "description": "Acquire Potential 1: Pinch Healing"
-          },
-          {
-            "description": "Boosts base HP by 40"
-          },
-          {
-            "description": "Acquire Sailor Ability 1: Makes [RCV] orbs beneficial for [INT] characters"
-          },
-          {
-            "description": "Boosts base HP by 60"
-          },
-          {
-            "description": "Boosts base ATK by 40"
-          },
-          {
-            "description": "Boosts base RCV by 20"
-          },
-          {
-            "description": "Acquire 1 additional Socket slot"
-          },
-          {
-            "description": "Boosts base ATK by 50"
-          },
-          {
-            "description": "Boosts base RCV by 30"
-          },
-          {
-            "description": "Boosts base HP by 80"
-          },
-          {
-            "description": "Acquire Sailor Ability 2: Boosts base ATK, HP and RCV of [INT] characters by 50"
-          },
-          {
-            "description": "Acquire Potential 2: Reduce Slot Bind duration"
-          }
+          "Boosts base ATK by 10",
+          "Boosts base RCV by 10",
+          "Boosts base RCV by 10",
+          "Acquire Potential 1: Pinch Healing",
+          "Boosts base HP by 40",
+          "Acquire Sailor Ability 1: Makes [RCV] orbs beneficial for [INT] characters",
+          "Boosts base HP by 60",
+          "Boosts base ATK by 40",
+          "Boosts base RCV by 20",
+          "Acquire 1 additional Socket slot",
+          "Boosts base ATK by 50",
+          "Boosts base RCV by 30",
+          "Boosts base HP by 80",
+          "Acquire Sailor Ability 2: Boosts base ATK, HP and RCV of [INT] characters by 50",
+          "Acquire Potential 2: Reduce Slot Bind duration"
         ],
         "potentialAbilities": [
           {
@@ -1063,7 +1388,24 @@
         "vsSpecial": null,
         "superType": null,
         "superClass": null,
-        "rumbleData": null
+        "rumbleData": {
+          "id": 12,
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "criteria": "near"
+          },
+          "stats": {
+            "rumbleType": "BAL",
+            "def": 50,
+            "spd": 100
+          },
+          "cost": 15
+        }
       }
     },
     {
@@ -1121,7 +1463,17 @@
         "partyConflictKeys": [
           "usopp"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "apply_delay",
+            "label": "Delay",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -1132,6 +1484,7 @@
         "superType": null,
         "superClass": null,
         "rumbleData": {
+          "id": 13,
           "ability": [
             {
               "effects": [
@@ -1152,15 +1505,8 @@
             {
               "effects": [
                 {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 2,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
+                  "override": {
+                    "level": 2
                   }
                 }
               ]
@@ -1168,15 +1514,8 @@
             {
               "effects": [
                 {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 3,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
+                  "override": {
+                    "level": 3
                   }
                 }
               ]
@@ -1184,15 +1523,8 @@
             {
               "effects": [
                 {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 4,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
+                  "override": {
+                    "level": 4
                   }
                 }
               ]
@@ -1200,38 +1532,11 @@
             {
               "effects": [
                 {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 5,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
+                  "override": {
+                    "level": 5
                   }
                 }
               ]
-            }
-          ],
-          "id": 13,
-          "pattern": [
-            {
-              "action": "attack",
-              "type": "Normal"
-            },
-            {
-              "action": "heal",
-              "area": "Self",
-              "level": 2
-            },
-            {
-              "action": "attack",
-              "type": "Power"
-            },
-            {
-              "action": "attack",
-              "type": "Normal"
             }
           ],
           "special": [
@@ -1239,8 +1544,21 @@
               "cooldown": 23,
               "effects": [
                 {
+                  "amount": 5,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
                   "attributes": [
-                    "Silence"
+                    "Special Bind"
                   ],
                   "chance": 80,
                   "duration": 10,
@@ -1253,338 +1571,138 @@
                       "enemies"
                     ]
                   }
-                },
-                {
-                  "amount": 5,
-                  "effect": "damage",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  },
-                  "type": "fixed"
                 }
               ]
             },
             {
               "cooldown": 23,
               "effects": [
+                {},
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 80,
-                  "duration": 11,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "duration": 11
                   }
-                },
-                {
-                  "amount": 5,
-                  "effect": "damage",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  },
-                  "type": "fixed"
                 }
               ]
             },
             {
               "cooldown": 23,
               "effects": [
+                {},
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 80,
-                  "duration": 12,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "duration": 12
                   }
-                },
-                {
-                  "amount": 5,
-                  "effect": "damage",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  },
-                  "type": "fixed"
                 }
               ]
             },
             {
               "cooldown": 23,
               "effects": [
+                {},
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 80,
-                  "duration": 13,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "duration": 13
                   }
-                },
-                {
-                  "amount": 5,
-                  "effect": "damage",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  },
-                  "type": "fixed"
                 }
               ]
             },
             {
               "cooldown": 23,
               "effects": [
+                {},
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 80,
-                  "duration": 14,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "duration": 14
                   }
-                },
-                {
-                  "amount": 5,
-                  "effect": "damage",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  },
-                  "type": "fixed"
                 }
               ]
             },
             {
               "cooldown": 23,
               "effects": [
+                {},
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 80,
-                  "duration": 15,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "duration": 15
                   }
-                },
-                {
-                  "amount": 5,
-                  "effect": "damage",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  },
-                  "type": "fixed"
                 }
               ]
             },
             {
               "cooldown": 23,
               "effects": [
+                {},
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 80,
-                  "duration": 16,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "duration": 16
                   }
-                },
-                {
-                  "amount": 5,
-                  "effect": "damage",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  },
-                  "type": "fixed"
                 }
               ]
             },
             {
               "cooldown": 23,
               "effects": [
+                {},
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 80,
-                  "duration": 17,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "duration": 17
                   }
-                },
-                {
-                  "amount": 5,
-                  "effect": "damage",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  },
-                  "type": "fixed"
                 }
               ]
             },
             {
               "cooldown": 23,
               "effects": [
+                {},
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 80,
-                  "duration": 18,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "duration": 18
                   }
-                },
-                {
-                  "amount": 5,
-                  "effect": "damage",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  },
-                  "type": "fixed"
                 }
               ]
             },
             {
               "cooldown": 23,
               "effects": [
+                {},
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 80,
-                  "duration": 19,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "duration": 19
                   }
-                },
-                {
-                  "amount": 5,
-                  "effect": "damage",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  },
-                  "type": "fixed"
                 }
               ]
             }
           ],
-          "stats": {
-            "def": 164,
-            "rumbleType": "DBF",
-            "spd": 124
-          },
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            },
+            {
+              "level": 2,
+              "area": "Self",
+              "action": "heal"
+            },
+            {
+              "type": "Power",
+              "action": "attack"
+            },
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
           "target": {
             "comparator": "lowest",
             "criteria": "HP"
-          }
+          },
+          "stats": {
+            "rumbleType": "DBF",
+            "def": 164,
+            "spd": 124
+          },
+          "cost": 20
         }
       }
     },
@@ -1607,7 +1725,7 @@
       "maxHp": 627,
       "maxAtk": 240,
       "maxRcv": 257,
-      "growth": 1,
+      "growth": 0,
       "searchText": "usopp - tabasco star psy shooter",
       "regionAvailability": {
         "exactLocal": false,
@@ -1643,7 +1761,17 @@
         "partyConflictKeys": [
           "usopp"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "apply_delay",
+            "label": "Delay",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -1654,6 +1782,7 @@
         "superType": null,
         "superClass": null,
         "rumbleData": {
+          "id": 14,
           "ability": [
             {
               "effects": [
@@ -1674,15 +1803,8 @@
             {
               "effects": [
                 {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 2,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
+                  "override": {
+                    "level": 2
                   }
                 }
               ]
@@ -1690,15 +1812,8 @@
             {
               "effects": [
                 {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 3,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
+                  "override": {
+                    "level": 3
                   }
                 }
               ]
@@ -1706,15 +1821,8 @@
             {
               "effects": [
                 {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 4,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
+                  "override": {
+                    "level": 4
                   }
                 }
               ]
@@ -1722,38 +1830,11 @@
             {
               "effects": [
                 {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 5,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
+                  "override": {
+                    "level": 5
                   }
                 }
               ]
-            }
-          ],
-          "id": 14,
-          "pattern": [
-            {
-              "action": "attack",
-              "type": "Normal"
-            },
-            {
-              "action": "heal",
-              "area": "Self",
-              "level": 2
-            },
-            {
-              "action": "attack",
-              "type": "Power"
-            },
-            {
-              "action": "attack",
-              "type": "Normal"
             }
           ],
           "special": [
@@ -1762,7 +1843,7 @@
               "effects": [
                 {
                   "attributes": [
-                    "Silence"
+                    "Special Bind"
                   ],
                   "chance": 59,
                   "duration": 10,
@@ -1780,9 +1861,9 @@
                   "attributes": [
                     "Accuracy"
                   ],
-                  "duration": 15,
-                  "effect": "debuff",
                   "level": 3,
+                  "duration": 15,
+                  "effect": "debuff",
                   "targeting": {
                     "targets": [
                       "enemies"
@@ -1795,32 +1876,24 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 63,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "chance": 63
+                  }
+                },
+                {}
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "override": {
+                    "chance": 67
                   }
                 },
                 {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "duration": 15,
-                  "effect": "debuff",
-                  "level": 3,
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "level": 4
                   }
                 }
               ]
@@ -1829,32 +1902,13 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 67,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "chance": 71
                   }
                 },
                 {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "duration": 15,
-                  "effect": "debuff",
-                  "level": 4,
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "level": 5
                   }
                 }
               ]
@@ -1863,32 +1917,13 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 71,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "chance": 75
                   }
                 },
                 {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "duration": 15,
-                  "effect": "debuff",
-                  "level": 5,
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "level": 6
                   }
                 }
               ]
@@ -1897,32 +1932,13 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 75,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "chance": 79
                   }
                 },
                 {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "duration": 15,
-                  "effect": "debuff",
-                  "level": 6,
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "level": 7
                   }
                 }
               ]
@@ -1931,32 +1947,13 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 79,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "chance": 83
                   }
                 },
                 {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "duration": 15,
-                  "effect": "debuff",
-                  "level": 7,
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "level": 8
                   }
                 }
               ]
@@ -1965,32 +1962,13 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 83,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "chance": 87
                   }
                 },
                 {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "duration": 15,
-                  "effect": "debuff",
-                  "level": 8,
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "level": 9
                   }
                 }
               ]
@@ -1999,32 +1977,13 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 87,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "chance": 91
                   }
                 },
                 {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "duration": 15,
-                  "effect": "debuff",
-                  "level": 9,
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "level": 9
                   }
                 }
               ]
@@ -2033,80 +1992,47 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 91,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "chance": 96
                   }
                 },
                 {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "duration": 15,
-                  "effect": "debuff",
-                  "level": 9,
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 30,
-              "effects": [
-                {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 96,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "duration": 15,
-                  "effect": "debuff",
-                  "level": 11,
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "level": 11
                   }
                 }
               ]
             }
           ],
-          "stats": {
-            "def": 164,
-            "rumbleType": "DBF",
-            "spd": 124
-          },
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            },
+            {
+              "level": 2,
+              "area": "Self",
+              "action": "heal"
+            },
+            {
+              "type": "Power",
+              "action": "attack"
+            },
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
           "target": {
             "comparator": "lowest",
             "criteria": "HP"
-          }
+          },
+          "stats": {
+            "rumbleType": "DBF",
+            "def": 164,
+            "spd": 124
+          },
+          "cost": 20
         }
       }
     },
@@ -2129,7 +2055,7 @@
       "maxHp": 1080,
       "maxAtk": 648,
       "maxRcv": 144,
-      "growth": 1,
+      "growth": 0,
       "searchText": "usopp - usopp golden pound psy shooter",
       "regionAvailability": {
         "exactLocal": false,
@@ -2165,7 +2091,17 @@
         "partyConflictKeys": [
           "usopp"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "apply_delay",
+            "label": "Delay",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -2176,6 +2112,7 @@
         "superType": null,
         "superClass": null,
         "rumbleData": {
+          "id": 15,
           "ability": [
             {
               "effects": [
@@ -2196,15 +2133,8 @@
             {
               "effects": [
                 {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 2,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
+                  "override": {
+                    "level": 2
                   }
                 }
               ]
@@ -2212,15 +2142,8 @@
             {
               "effects": [
                 {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 3,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
+                  "override": {
+                    "level": 3
                   }
                 }
               ]
@@ -2228,15 +2151,8 @@
             {
               "effects": [
                 {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 4,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
+                  "override": {
+                    "level": 4
                   }
                 }
               ]
@@ -2244,38 +2160,11 @@
             {
               "effects": [
                 {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 5,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
+                  "override": {
+                    "level": 5
                   }
                 }
               ]
-            }
-          ],
-          "id": 15,
-          "pattern": [
-            {
-              "action": "attack",
-              "type": "Normal"
-            },
-            {
-              "action": "heal",
-              "area": "Self",
-              "level": 2
-            },
-            {
-              "action": "attack",
-              "type": "Power"
-            },
-            {
-              "action": "attack",
-              "type": "Normal"
             }
           ],
           "special": [
@@ -2283,8 +2172,21 @@
               "cooldown": 23,
               "effects": [
                 {
+                  "amount": 10,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
                   "attributes": [
-                    "Silence"
+                    "Special Bind"
                   ],
                   "chance": 80,
                   "duration": 10,
@@ -2297,338 +2199,138 @@
                       "enemies"
                     ]
                   }
-                },
-                {
-                  "amount": 10,
-                  "effect": "damage",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  },
-                  "type": "fixed"
                 }
               ]
             },
             {
               "cooldown": 23,
               "effects": [
+                {},
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 80,
-                  "duration": 11,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "duration": 11
                   }
-                },
-                {
-                  "amount": 10,
-                  "effect": "damage",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  },
-                  "type": "fixed"
                 }
               ]
             },
             {
               "cooldown": 23,
               "effects": [
+                {},
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 80,
-                  "duration": 12,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "duration": 12
                   }
-                },
-                {
-                  "amount": 10,
-                  "effect": "damage",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  },
-                  "type": "fixed"
                 }
               ]
             },
             {
               "cooldown": 23,
               "effects": [
+                {},
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 80,
-                  "duration": 13,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "duration": 13
                   }
-                },
-                {
-                  "amount": 10,
-                  "effect": "damage",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  },
-                  "type": "fixed"
                 }
               ]
             },
             {
               "cooldown": 23,
               "effects": [
+                {},
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 80,
-                  "duration": 14,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "duration": 14
                   }
-                },
-                {
-                  "amount": 10,
-                  "effect": "damage",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  },
-                  "type": "fixed"
                 }
               ]
             },
             {
               "cooldown": 23,
               "effects": [
+                {},
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 80,
-                  "duration": 15,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "duration": 15
                   }
-                },
-                {
-                  "amount": 10,
-                  "effect": "damage",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  },
-                  "type": "fixed"
                 }
               ]
             },
             {
               "cooldown": 23,
               "effects": [
+                {},
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 80,
-                  "duration": 16,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "duration": 16
                   }
-                },
-                {
-                  "amount": 10,
-                  "effect": "damage",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  },
-                  "type": "fixed"
                 }
               ]
             },
             {
               "cooldown": 23,
               "effects": [
+                {},
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 80,
-                  "duration": 17,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "duration": 17
                   }
-                },
-                {
-                  "amount": 10,
-                  "effect": "damage",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  },
-                  "type": "fixed"
                 }
               ]
             },
             {
               "cooldown": 23,
               "effects": [
+                {},
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 80,
-                  "duration": 18,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "duration": 18
                   }
-                },
-                {
-                  "amount": 10,
-                  "effect": "damage",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  },
-                  "type": "fixed"
                 }
               ]
             },
             {
               "cooldown": 23,
               "effects": [
+                {},
                 {
-                  "attributes": [
-                    "Silence"
-                  ],
-                  "chance": 80,
-                  "duration": 20,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                  "override": {
+                    "duration": 20
                   }
-                },
-                {
-                  "amount": 10,
-                  "effect": "damage",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  },
-                  "type": "fixed"
                 }
               ]
             }
           ],
-          "stats": {
-            "def": 164,
-            "rumbleType": "DBF",
-            "spd": 124
-          },
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            },
+            {
+              "level": 2,
+              "area": "Self",
+              "action": "heal"
+            },
+            {
+              "type": "Power",
+              "action": "attack"
+            },
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
           "target": {
             "comparator": "lowest",
             "criteria": "HP"
-          }
+          },
+          "stats": {
+            "rumbleType": "DBF",
+            "def": 164,
+            "spd": 124
+          },
+          "cost": 20
         }
       }
     },
@@ -2651,7 +2353,7 @@
       "maxHp": 1506,
       "maxAtk": 690,
       "maxRcv": 479,
-      "growth": 1,
+      "growth": 0,
       "searchText": "sogeking psy shooter",
       "regionAvailability": {
         "exactLocal": false,
@@ -2687,57 +2389,100 @@
         "partyConflictKeys": [
           "sogeking"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "apply_delay",
+            "label": "Delay",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_atk_boost_shooter",
+            "label": "ATK Boost: Shooter",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_rcv_boost_shooter",
+            "label": "RCV Boost: Shooter",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_hp_boost_shooter",
+            "label": "HP Boost: Shooter",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "potential_barrier_pierce",
+            "label": "Barrier Pierce",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "potentialAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_base_atk_boost",
+            "label": "Base ATK Boost",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_damage_reduction_permanent",
+            "label": "Damage Reduction: Permanent",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [
           "Boosts base ATK, HP and RCV of Shooter characters by 20"
         ],
         "sailorNotes": null,
         "limitBreak": [
-          {
-            "description": "Boosts base RCV by 10"
-          },
-          {
-            "description": "Boosts base RCV by 20"
-          },
-          {
-            "description": "Boosts base RCV by 30"
-          },
-          {
-            "description": "Acquire Potential 1: Reduce No Healing duration"
-          },
-          {
-            "description": "Boosts base HP by 30"
-          },
-          {
-            "description": "Boosts base HP by 40"
-          },
-          {
-            "description": "Boosts base ATK by 20"
-          },
-          {
-            "description": "Boosts base ATK by 30"
-          },
-          {
-            "description": "Reduce base Special Cooldown by 1 turn"
-          },
-          {
-            "description": "Boosts base ATK by 40"
-          },
-          {
-            "description": "Acquire 1 additional Socket slot"
-          },
-          {
-            "description": "Boosts base HP by 60"
-          },
-          {
-            "description": "Boosts base HP by 80"
-          },
-          {
-            "description": "Acquire Sailor Ability 1: Boosts base ATK, HP and RCV of Shooter characters by 20"
-          },
-          {
-            "description": "Acquire Potential 2: Barrier Penetration"
-          }
+          "Boosts base RCV by 10",
+          "Boosts base RCV by 20",
+          "Boosts base RCV by 30",
+          "Acquire Potential 1: Reduce No Healing duration",
+          "Boosts base HP by 30",
+          "Boosts base HP by 40",
+          "Boosts base ATK by 20",
+          "Boosts base ATK by 30",
+          "Reduce base Special Cooldown by 1 turn",
+          "Boosts base ATK by 40",
+          "Acquire 1 additional Socket slot",
+          "Boosts base HP by 60",
+          "Boosts base HP by 80",
+          "Acquire Sailor Ability 1: Boosts base ATK, HP and RCV of Shooter characters by 20",
+          "Acquire Potential 2: Barrier Penetration"
         ],
         "potentialAbilities": [
           {
@@ -2778,8 +2523,404 @@
         "superType": null,
         "superClass": null,
         "rumbleData": {
-          "basedOn": 14,
-          "id": 16
+          "id": 16,
+          "ability": [
+            {
+              "effects": [
+                {
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 1,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "effects": [
+                {
+                  "override": {
+                    "level": 2
+                  }
+                }
+              ]
+            },
+            {
+              "effects": [
+                {
+                  "override": {
+                    "level": 3
+                  }
+                }
+              ]
+            },
+            {
+              "effects": [
+                {
+                  "override": {
+                    "level": 4
+                  }
+                }
+              ]
+            },
+            {
+              "effects": [
+                {
+                  "override": {
+                    "level": 5
+                  }
+                }
+              ]
+            }
+          ],
+          "special": [
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 59,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "level": 3,
+                  "duration": 15,
+                  "effect": "debuff",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "override": {
+                    "chance": 63
+                  }
+                },
+                {}
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "override": {
+                    "chance": 67
+                  }
+                },
+                {
+                  "override": {
+                    "level": 4
+                  }
+                }
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "override": {
+                    "chance": 71
+                  }
+                },
+                {
+                  "override": {
+                    "level": 5
+                  }
+                }
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "override": {
+                    "chance": 75
+                  }
+                },
+                {
+                  "override": {
+                    "level": 6
+                  }
+                }
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "override": {
+                    "chance": 79
+                  }
+                },
+                {
+                  "override": {
+                    "level": 7
+                  }
+                }
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "override": {
+                    "chance": 83
+                  }
+                },
+                {
+                  "override": {
+                    "level": 8
+                  }
+                }
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "override": {
+                    "chance": 87
+                  }
+                },
+                {
+                  "override": {
+                    "level": 9
+                  }
+                }
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "override": {
+                    "chance": 91
+                  }
+                },
+                {
+                  "override": {
+                    "level": 9
+                  }
+                }
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "override": {
+                    "chance": 96
+                  }
+                },
+                {
+                  "override": {
+                    "level": 11
+                  }
+                }
+              ]
+            }
+          ],
+          "gpability": [
+            {
+              "effects": [
+                {
+                  "attributes": [
+                    "ATK"
+                  ],
+                  "level": 1,
+                  "effect": "buff",
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "HP",
+                    "SPD"
+                  ],
+                  "level": 1,
+                  "effect": "buff",
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "effects": [
+                {},
+                {
+                  "override": {
+                    "level": 2
+                  }
+                }
+              ]
+            },
+            {
+              "effects": [
+                {
+                  "override": {
+                    "level": 2
+                  }
+                },
+                {
+                  "override": {
+                    "level": 2
+                  }
+                }
+              ]
+            },
+            {
+              "effects": [
+                {
+                  "override": {
+                    "level": 2
+                  }
+                },
+                {
+                  "override": {
+                    "level": 3
+                  }
+                }
+              ]
+            },
+            {
+              "effects": [
+                {
+                  "override": {
+                    "level": 3
+                  }
+                },
+                {
+                  "override": {
+                    "level": 3
+                  }
+                }
+              ]
+            }
+          ],
+          "gpspecial": [
+            {
+              "uses": 2,
+              "effects": [
+                {
+                  "amount": 500,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "uses": 2,
+              "effects": [
+                {
+                  "override": {
+                    "amount": 625
+                  }
+                }
+              ]
+            },
+            {
+              "uses": 2,
+              "effects": [
+                {
+                  "override": {
+                    "amount": 750
+                  }
+                }
+              ]
+            },
+            {
+              "uses": 2,
+              "effects": [
+                {
+                  "override": {
+                    "amount": 875
+                  }
+                }
+              ]
+            },
+            {
+              "uses": 2,
+              "effects": [
+                {
+                  "override": {
+                    "amount": 1000
+                  }
+                }
+              ]
+            }
+          ],
+          "gpcondition": [
+            {
+              "count": 2,
+              "type": "defeat",
+              "team": "crew"
+            }
+          ],
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            },
+            {
+              "level": 2,
+              "area": "Self",
+              "action": "heal"
+            },
+            {
+              "type": "Power",
+              "action": "attack"
+            },
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "comparator": "lowest",
+            "criteria": "HP"
+          },
+          "stats": {
+            "rumbleType": "DBF",
+            "def": 164,
+            "spd": 124
+          },
+          "cost": 20
         }
       }
     },
@@ -2802,7 +2943,7 @@
       "maxHp": 506,
       "maxAtk": 218,
       "maxRcv": 60,
-      "growth": 1,
+      "growth": 0,
       "searchText": "sanji qck fighter",
       "regionAvailability": {
         "exactLocal": false,
@@ -2838,7 +2979,17 @@
         "partyConflictKeys": [
           "sanji"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "heal_hp",
+            "label": "Heal HP",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -2848,7 +2999,24 @@
         "vsSpecial": null,
         "superType": null,
         "superClass": null,
-        "rumbleData": null
+        "rumbleData": {
+          "id": 17,
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "criteria": "near"
+          },
+          "stats": {
+            "rumbleType": "BAL",
+            "def": 50,
+            "spd": 100
+          },
+          "cost": 4
+        }
       }
     },
     {
@@ -2871,7 +3039,7 @@
       "maxHp": 907,
       "maxAtk": 496,
       "maxRcv": 125,
-      "growth": 1,
+      "growth": 0,
       "searchText": "sanji - plastic surgery shot qck fighter powerhouse",
       "regionAvailability": {
         "exactLocal": false,
@@ -2917,7 +3085,24 @@
         "vsSpecial": null,
         "superType": null,
         "superClass": null,
-        "rumbleData": null
+        "rumbleData": {
+          "id": 18,
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "criteria": "near"
+          },
+          "stats": {
+            "rumbleType": "BAL",
+            "def": 50,
+            "spd": 100
+          },
+          "cost": 7
+        }
       }
     },
     {
@@ -2940,7 +3125,7 @@
       "maxHp": 986,
       "maxAtk": 500,
       "maxRcv": 209,
-      "growth": 1,
+      "growth": 0,
       "searchText": "chef sanji - hot rock stew qck fighter powerhouse",
       "regionAvailability": {
         "exactLocal": false,
@@ -2977,7 +3162,17 @@
           "chef sanji",
           "sanji"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "heal_hp",
+            "label": "Heal HP",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -2987,12 +3182,29 @@
         "vsSpecial": null,
         "superType": null,
         "superClass": null,
-        "rumbleData": null
+        "rumbleData": {
+          "id": 19,
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "criteria": "near"
+          },
+          "stats": {
+            "rumbleType": "BAL",
+            "def": 50,
+            "spd": 100
+          },
+          "cost": 9
+        }
       }
     },
     {
       "id": 20,
-      "name": "Sanji - Diable Jambe Flambe",
+      "name": "Sanji - Diable Jambe",
       "isIncomplete": false,
       "type": "QCK",
       "primaryClass": "Fighter",
@@ -3010,8 +3222,8 @@
       "maxHp": 2206,
       "maxAtk": 1030,
       "maxRcv": 249,
-      "growth": 1,
-      "searchText": "sanji - diable jambe flambe qck fighter powerhouse",
+      "growth": 0,
+      "searchText": "sanji - diable jambe qck fighter powerhouse",
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
@@ -3055,6 +3267,87 @@
             "slotTokens": [],
             "source": "specialText",
             "coverageMode": "explicit"
+          },
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_make_slots_favorable",
+            "label": "Make Slots Favorable",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_atk_boost_crew",
+            "label": "ATK Boost: Crew",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_rcv_boost_crew",
+            "label": "RCV Boost: Crew",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_hp_boost_crew",
+            "label": "HP Boost: Crew",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "potential_str_damage_reduction",
+            "label": "STR Damage Reduction",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "potentialAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "potential_pinch_healing",
+            "label": "Pinch Healing",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "potentialAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_base_atk_boost_additional",
+            "label": "Base ATK Boost: Additional",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_base_hp_boost_additional",
+            "label": "Base HP Boost: Additional",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
+            "coverageMode": "explicit"
           }
         ],
         "sailorAbilities": [
@@ -3062,51 +3355,21 @@
         ],
         "sailorNotes": "#{beneficial}",
         "limitBreak": [
-          {
-            "description": "Boosts base HP by 30"
-          },
-          {
-            "description": "Boosts base RCV by 10"
-          },
-          {
-            "description": "Boosts base ATK by 40"
-          },
-          {
-            "description": "Acquire Potential 1: [STR] Damage Reduction"
-          },
-          {
-            "description": "Boosts base HP by 60"
-          },
-          {
-            "description": "Boosts base RCV by 20"
-          },
-          {
-            "description": "Reduce base Special Cooldown by 1 turn"
-          },
-          {
-            "description": "Boosts base ATK by 60"
-          },
-          {
-            "description": "Acquire Sailor Ability 1: Makes [RCV] orbs beneficial for all characters"
-          },
-          {
-            "description": "Boosts base RCV by 20"
-          },
-          {
-            "description": "Reduce base Special Cooldown by 1 turn"
-          },
-          {
-            "description": "Boosts base RCV by 30"
-          },
-          {
-            "description": "Boosts base HP by 90"
-          },
-          {
-            "description": "Acquire Sailor Ability 2: Boosts base ATK, HP and RCV of all characters by 40"
-          },
-          {
-            "description": "Acquire Potential 2: Pinch Healing"
-          }
+          "Boosts base HP by 30",
+          "Boosts base RCV by 10",
+          "Boosts base ATK by 40",
+          "Acquire Potential 1: [STR] Damage Reduction",
+          "Boosts base HP by 60",
+          "Boosts base RCV by 20",
+          "Reduce base Special Cooldown by 1 turn",
+          "Boosts base ATK by 60",
+          "Acquire Sailor Ability 1: Makes [RCV] orbs beneficial for all characters",
+          "Boosts base RCV by 20",
+          "Reduce base Special Cooldown by 1 turn",
+          "Boosts base RCV by 30",
+          "Boosts base HP by 90",
+          "Acquire Sailor Ability 2: Boosts base ATK, HP and RCV of all characters by 40",
+          "Acquire Potential 2: Pinch Healing"
         ],
         "potentialAbilities": [
           {
@@ -3146,7 +3409,24 @@
         "vsSpecial": null,
         "superType": null,
         "superClass": null,
-        "rumbleData": null
+        "rumbleData": {
+          "id": 20,
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "criteria": "near"
+          },
+          "stats": {
+            "rumbleType": "BAL",
+            "def": 50,
+            "spd": 100
+          },
+          "cost": 15
+        }
       }
     },
     {
@@ -3168,7 +3448,7 @@
       "maxHp": 294,
       "maxAtk": 144,
       "maxRcv": 120,
-      "growth": 1,
+      "growth": 0,
       "searchText": "tony tony chopper psy fighter",
       "regionAvailability": {
         "exactLocal": false,
@@ -3205,7 +3485,17 @@
           "tony tony chopper",
           "chopper"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "change_slots",
+            "label": "Change Slots",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -3215,7 +3505,24 @@
         "vsSpecial": null,
         "superType": null,
         "superClass": null,
-        "rumbleData": null
+        "rumbleData": {
+          "id": 21,
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "criteria": "near"
+          },
+          "stats": {
+            "rumbleType": "BAL",
+            "def": 50,
+            "spd": 100
+          },
+          "cost": 4
+        }
       }
     },
     {
@@ -3238,7 +3545,7 @@
       "maxHp": 754,
       "maxAtk": 622,
       "maxRcv": 207,
-      "growth": 1,
+      "growth": 0,
       "searchText": "tony tony chopper - heavy point psy fighter free spirit",
       "regionAvailability": {
         "exactLocal": false,
@@ -3275,57 +3582,109 @@
           "tony tony chopper",
           "chopper"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_make_slots_favorable",
+            "label": "Make Slots Favorable",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_atk_boost_crew",
+            "label": "ATK Boost: Crew",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_rcv_boost_crew",
+            "label": "RCV Boost: Crew",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_hp_boost_crew",
+            "label": "HP Boost: Crew",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "potential_int_damage_reduction",
+            "label": "INT Damage Reduction",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "potentialAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "potential_pinch_healing",
+            "label": "Pinch Healing",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "potentialAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_base_atk_boost_additional",
+            "label": "Base ATK Boost: Additional",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_base_hp_boost_additional",
+            "label": "Base HP Boost: Additional",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [
           "Makes [TND] orbs beneficial for this character. Boosts base ATK, HP and RCV of all characters by 30"
         ],
         "sailorNotes": "#{beneficial}",
         "limitBreak": [
-          {
-            "description": "Boosts base RCV by 20"
-          },
-          {
-            "description": "Boosts base HP by 40"
-          },
-          {
-            "description": "Boosts base RCV by 30"
-          },
-          {
-            "description": "Acquire Potential 1: [INT] Damage Reduction"
-          },
-          {
-            "description": "Boosts base HP by 60"
-          },
-          {
-            "description": "Reduce base Special Cooldown by 1 turn"
-          },
-          {
-            "description": "Boosts base ATK by 50"
-          },
-          {
-            "description": "Acquire Sailor Ability 1: Makes [TND] orbs beneficial for this character"
-          },
-          {
-            "description": "Boosts base HP by 100"
-          },
-          {
-            "description": "Acquire 1 additional Socket slot"
-          },
-          {
-            "description": "Reduce base Special Cooldown by 2 turns"
-          },
-          {
-            "description": "Boosts base ATK by 50"
-          },
-          {
-            "description": "Acquire 1 additional Socket slot"
-          },
-          {
-            "description": "Acquire Sailor Ability 2: Boosts base ATK, HP and RCV of all characters by 30"
-          },
-          {
-            "description": "Acquire Potential 2: Pinch Healing"
-          }
+          "Boosts base RCV by 20",
+          "Boosts base HP by 40",
+          "Boosts base RCV by 30",
+          "Acquire Potential 1: [INT] Damage Reduction",
+          "Boosts base HP by 60",
+          "Reduce base Special Cooldown by 1 turn",
+          "Boosts base ATK by 50",
+          "Acquire Sailor Ability 1: Makes [TND] orbs beneficial for this character",
+          "Boosts base HP by 100",
+          "Acquire 1 additional Socket slot",
+          "Reduce base Special Cooldown by 2 turns",
+          "Boosts base ATK by 50",
+          "Acquire 1 additional Socket slot",
+          "Acquire Sailor Ability 2: Boosts base ATK, HP and RCV of all characters by 30",
+          "Acquire Potential 2: Pinch Healing"
         ],
         "potentialAbilities": [
           {
@@ -3365,7 +3724,24 @@
         "vsSpecial": null,
         "superType": null,
         "superClass": null,
-        "rumbleData": null
+        "rumbleData": {
+          "id": 22,
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "criteria": "near"
+          },
+          "stats": {
+            "rumbleType": "BAL",
+            "def": 50,
+            "spd": 100
+          },
+          "cost": 9
+        }
       }
     },
     {
@@ -3388,7 +3764,7 @@
       "maxHp": 520,
       "maxAtk": 454,
       "maxRcv": 302,
-      "growth": 1,
+      "growth": 0,
       "searchText": "tony tony chopper - brain point int fighter cerebral",
       "regionAvailability": {
         "exactLocal": false,
@@ -3425,7 +3801,17 @@
           "tony tony chopper",
           "chopper"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "change_slots",
+            "label": "Change Slots",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -3435,7 +3821,24 @@
         "vsSpecial": null,
         "superType": null,
         "superClass": null,
-        "rumbleData": null
+        "rumbleData": {
+          "id": 23,
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "criteria": "near"
+          },
+          "stats": {
+            "rumbleType": "BAL",
+            "def": 50,
+            "spd": 100
+          },
+          "cost": 9
+        }
       }
     },
     {
@@ -3458,7 +3861,7 @@
       "maxHp": 868,
       "maxAtk": 820,
       "maxRcv": 122,
-      "growth": 1,
+      "growth": 0,
       "searchText": "tony tony chopper - arm point str fighter powerhouse",
       "regionAvailability": {
         "exactLocal": false,
@@ -3505,7 +3908,24 @@
         "vsSpecial": null,
         "superType": null,
         "superClass": null,
-        "rumbleData": null
+        "rumbleData": {
+          "id": 24,
+          "pattern": [
+            {
+              "type": "Normal",
+              "action": "attack"
+            }
+          ],
+          "target": {
+            "criteria": "near"
+          },
+          "stats": {
+            "rumbleType": "BAL",
+            "def": 50,
+            "spd": 100
+          },
+          "cost": 9
+        }
       }
     }
   ],

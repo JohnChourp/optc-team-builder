@@ -48,6 +48,7 @@ export interface AutoTeamBuildExecutionOptions {
   onProgress?: (snapshot: AutoBuildProgressSnapshot) => void;
   signal?: AbortSignal;
   workerCount?: number;
+  getWorkerCount?: () => number;
 }
 
 const LEGACY_ABILITY_KEY_ALIASES: Record<string, string> = {
@@ -63,6 +64,12 @@ interface AutoTeamBuildTimingState {
 
 interface PooledFallbackAttemptResult {
   result: AutoBuildResult | null;
+}
+
+interface PooledWorkerState {
+  worker: Worker;
+  busy: boolean;
+  retiring: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -611,6 +618,7 @@ export class AutoTeamBuilderService {
 
       const result = await this.runPooledFallbackAttempts(
         workers,
+        records,
         fallbackPlanner,
         requestedInput,
         executionOptions,
@@ -846,19 +854,138 @@ export class AutoTeamBuilderService {
 
   private runPooledFallbackAttempts(
     workers: Worker[],
+    records: CharacterDetailRecord[],
     fallbackPlanner: AutoTeamBuildFallbackPlanner,
     requestedInput: AutoBuildInput,
     executionOptions: AutoTeamBuildExecutionOptions,
     timingState: AutoTeamBuildTimingState,
     candidateCount: number,
   ): Promise<AutoBuildResult | null> {
-    const fallbackWorkerCount = Math.max(1, workers.length);
-
     return new Promise<AutoBuildResult | null>((resolve, reject) => {
       const completedAttempts = new Map<number, PooledFallbackAttemptResult>();
-      const availableWorkers = [...workers];
+      const managedWorkers = new Map<Worker, PooledWorkerState>();
+      const availableWorkers: PooledWorkerState[] = [];
       let settled = false;
       let inFlightCount = 0;
+      let pendingWorkerInitializations = 0;
+      let growthDisabled = false;
+
+      workers.forEach((worker) => {
+        const state: PooledWorkerState = {
+          worker,
+          busy: false,
+          retiring: false,
+        };
+
+        managedWorkers.set(worker, state);
+        availableWorkers.push(state);
+      });
+
+      const getActiveWorkerCount = (): number => Math.max(1, managedWorkers.size);
+      const getDesiredWorkerCount = (): number =>
+        this.resolveDesiredWorkerCount(executionOptions, workers.length);
+      const removeAvailableWorker = (state: PooledWorkerState): void => {
+        const index = availableWorkers.indexOf(state);
+
+        if (index >= 0) {
+          availableWorkers.splice(index, 1);
+        }
+      };
+      const terminateWorkerState = (state: PooledWorkerState): void => {
+        removeAvailableWorker(state);
+        managedWorkers.delete(state.worker);
+        state.busy = false;
+        state.retiring = true;
+        state.worker.terminate();
+      };
+      const reconcilePoolSize = (): void => {
+        if (settled) {
+          return;
+        }
+
+        const desiredWorkerCount = getDesiredWorkerCount();
+        let shrinkBy = managedWorkers.size + pendingWorkerInitializations - desiredWorkerCount;
+
+        while (shrinkBy > 0 && availableWorkers.length > 0) {
+          const state = availableWorkers.pop();
+
+          if (!state) {
+            break;
+          }
+
+          terminateWorkerState(state);
+          shrinkBy -= 1;
+        }
+
+        if (shrinkBy > 0) {
+          for (const state of managedWorkers.values()) {
+            if (shrinkBy <= 0) {
+              break;
+            }
+
+            if (state.busy && !state.retiring) {
+              state.retiring = true;
+              shrinkBy -= 1;
+            }
+          }
+        }
+
+        if (
+          growthDisabled ||
+          pendingWorkerInitializations > 0 ||
+          !fallbackPlanner.hasPendingScheduledAttempts() ||
+          managedWorkers.size >= desiredWorkerCount
+        ) {
+          return;
+        }
+
+        const missingWorkerCount = desiredWorkerCount - managedWorkers.size;
+
+        for (let index = 0; index < missingWorkerCount; index += 1) {
+          const worker = this.createWorker();
+
+          if (!worker) {
+            growthDisabled = true;
+            break;
+          }
+
+          workers.push(worker);
+          pendingWorkerInitializations += 1;
+
+          void this.initializeWorker(worker, records, executionOptions.signal)
+            .then(() => {
+              pendingWorkerInitializations -= 1;
+
+              if (settled) {
+                worker.terminate();
+                return;
+              }
+
+              const state: PooledWorkerState = {
+                worker,
+                busy: false,
+                retiring: false,
+              };
+
+              managedWorkers.set(worker, state);
+              availableWorkers.push(state);
+              reconcilePoolSize();
+
+              if (!settled) {
+                dispatchAvailableAttempts();
+              }
+            })
+            .catch(() => {
+              pendingWorkerInitializations -= 1;
+              growthDisabled = true;
+              worker.terminate();
+
+              if (!settled) {
+                reconcilePoolSize();
+              }
+            });
+        }
+      };
 
       const resolveOnce = (result: AutoBuildResult | null, completedAttemptCount: number): void => {
         if (settled) {
@@ -876,7 +1003,7 @@ export class AutoTeamBuilderService {
             timingState,
             fallbackPlanner.getTotalAttempts(),
             completedAttemptCount,
-            fallbackWorkerCount,
+            getActiveWorkerCount(),
           ),
           currentDroppedTypes: [],
           currentDroppedClasses: [],
@@ -932,6 +1059,8 @@ export class AutoTeamBuilderService {
           return;
         }
 
+        reconcilePoolSize();
+
         while (availableWorkers.length > 0) {
           const nextAttempt = fallbackPlanner.takeNextScheduledAttempt();
 
@@ -939,12 +1068,13 @@ export class AutoTeamBuilderService {
             break;
           }
 
-          const worker = availableWorkers.shift();
+          const workerState = availableWorkers.shift();
 
-          if (!worker) {
+          if (!workerState || workerState.retiring || !managedWorkers.has(workerState.worker)) {
             break;
           }
 
+          workerState.busy = true;
           inFlightCount += 1;
           this.emitProgress(executionOptions, {
             stage: 'fallbackAttempt',
@@ -956,7 +1086,7 @@ export class AutoTeamBuilderService {
               timingState,
               fallbackPlanner.getTotalAttempts(),
               1 + timingState.completedFallbackAttempts,
-              fallbackWorkerCount,
+              getActiveWorkerCount(),
             ),
             currentDroppedTypes: nextAttempt.droppedTypes,
             currentDroppedClasses: nextAttempt.droppedClasses,
@@ -973,7 +1103,7 @@ export class AutoTeamBuilderService {
 
           const startedAt = timingState.now();
           void this.runAttemptInInitializedWorker(
-            worker,
+            workerState.worker,
             nextAttempt.input,
             requestedInput,
             nextAttempt.requireLeadersWithoutSuperEffects,
@@ -985,17 +1115,24 @@ export class AutoTeamBuilderService {
               }
 
               inFlightCount -= 1;
-              availableWorkers.push(worker);
               timingState.totalCompletedFallbackMs += Math.max(0, timingState.now() - startedAt);
               timingState.completedFallbackAttempts += 1;
               completedAttempts.set(nextAttempt.sequence, {
                 result,
               });
+              workerState.busy = false;
+
+              if (workerState.retiring) {
+                terminateWorkerState(workerState);
+              } else {
+                availableWorkers.push(workerState);
+              }
 
               if (!satisfiesRequestedAutoTeamBuildCoverage(result)) {
                 fallbackPlanner.recordFailedFallbackAttempt(nextAttempt);
               }
 
+              reconcilePoolSize();
               tryResolveOrderedResult();
 
               if (!settled) {
@@ -1108,6 +1245,19 @@ export class AutoTeamBuilderService {
     }
 
     return Math.max(1, Math.floor(workerCount ?? 1));
+  }
+
+  private resolveDesiredWorkerCount(
+    executionOptions: AutoTeamBuildExecutionOptions,
+    fallbackWorkerCount: number,
+  ): number {
+    try {
+      return this.normalizeWorkerCount(
+        executionOptions.getWorkerCount?.() ?? executionOptions.workerCount ?? fallbackWorkerCount,
+      );
+    } catch {
+      return this.normalizeWorkerCount(executionOptions.workerCount ?? fallbackWorkerCount);
+    }
   }
 
   private normalizeRankedResultLimit(resultLimit: number | null | undefined): number {

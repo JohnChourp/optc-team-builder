@@ -154,6 +154,24 @@
             (ionInput)="onSearchCandidates($event)"
           ></ion-searchbar>
 
+          <ion-button
+            fill="outline"
+            color="warning"
+            [disabled]="!availableSpecialAbilityCatalogItems().length"
+            (click)="openSpecialAbilityPicker()"
+          >
+            {{ t('assign.special.open', { count: specialAbilityDrafts().length }) }}
+          </ion-button>
+
+          <ion-button
+            fill="clear"
+            color="light"
+            [disabled]="!specialAbilityDrafts().length"
+            (click)="clearSpecialAbilityFilters()"
+          >
+            {{ 'common.actions.clear' | transloco }}
+          </ion-button>
+
           <div class="view-toggle" [attr.aria-label]="t('displayMode.label')">
             <button
               type="button"
@@ -173,6 +191,114 @@
             </button>
           </div>
         </div>
+
+        <app-special-ability-picker
+          [isOpen]="specialAbilityPickerOpen()"
+          category="special"
+          [eyebrow]="t('assign.special.eyebrow')"
+          [title]="t('assign.special.title')"
+          [copy]="t('assign.special.copy')"
+          [drafts]="specialAbilityDrafts()"
+          [catalogItems]="availableSpecialAbilityCatalogItems()"
+          (dismiss)="closeSpecialAbilityPicker()"
+          (saveDrafts)="saveSpecialAbilityPicker($event)"
+        ></app-special-ability-picker>
+
+        <div class="assign-panel__controls">
+          <ion-button
+            fill="outline"
+            color="warning"
+            [disabled]="!availableCrewmateAbilityCatalogItems().length"
+            (click)="openCrewmateAbilityPicker()"
+          >
+            {{ t('assign.crewmate.open', { count: crewmateAbilityDrafts().length }) }}
+          </ion-button>
+
+          <ion-button
+            fill="clear"
+            color="light"
+            [disabled]="!crewmateAbilityDrafts().length"
+            (click)="clearCrewmateAbilityFilters()"
+          >
+            {{ 'common.actions.clear' | transloco }}
+          </ion-button>
+        </div>
+
+        <app-special-ability-picker
+          [isOpen]="crewmateAbilityPickerOpen()"
+          category="crewmate"
+          [eyebrow]="t('assign.crewmate.eyebrow')"
+          [title]="t('assign.crewmate.title')"
+          [copy]="t('assign.crewmate.copy')"
+          [drafts]="crewmateAbilityDrafts()"
+          [catalogItems]="availableCrewmateAbilityCatalogItems()"
+          (dismiss)="closeCrewmateAbilityPicker()"
+          (saveDrafts)="saveCrewmateAbilityPicker($event)"
+        ></app-special-ability-picker>
+
+        <div class="assign-panel__controls">
+          <ion-button
+            fill="outline"
+            color="warning"
+            [disabled]="!availablePotentialAbilityCatalogItems().length"
+            (click)="openPotentialAbilityPicker()"
+          >
+            {{ t('assign.potential.open', { count: potentialAbilityDrafts().length }) }}
+          </ion-button>
+
+          <ion-button
+            fill="clear"
+            color="light"
+            [disabled]="!potentialAbilityDrafts().length"
+            (click)="clearPotentialAbilityFilters()"
+          >
+            {{ 'common.actions.clear' | transloco }}
+          </ion-button>
+        </div>
+
+        <app-special-ability-picker
+          [isOpen]="potentialAbilityPickerOpen()"
+          category="potential"
+          [eyebrow]="t('assign.potential.eyebrow')"
+          [title]="t('assign.potential.title')"
+          [copy]="t('assign.potential.copy')"
+          [drafts]="potentialAbilityDrafts()"
+          [catalogItems]="availablePotentialAbilityCatalogItems()"
+          (dismiss)="closePotentialAbilityPicker()"
+          (saveDrafts)="savePotentialAbilityPicker($event)"
+        ></app-special-ability-picker>
+
+        <div class="assign-panel__controls">
+          <ion-button
+            fill="outline"
+            color="warning"
+            [disabled]="!availableSupportAbilityCatalogItems().length"
+            (click)="openSupportAbilityPicker()"
+          >
+            {{ t('assign.support.open', { count: supportAbilityDrafts().length }) }}
+          </ion-button>
+
+          <ion-button
+            fill="clear"
+            color="light"
+            [disabled]="!supportAbilityDrafts().length"
+            (click)="clearSupportAbilityFilters()"
+          >
+            {{ 'common.actions.clear' | transloco }}
+          </ion-button>
+        </div>
+
+        <app-special-ability-picker
+          [isOpen]="supportAbilityPickerOpen()"
+          category="support"
+          [eyebrow]="t('assign.support.eyebrow')"
+          [title]="t('assign.support.title')"
+          [copy]="t('assign.support.copy')"
+          [drafts]="supportAbilityDrafts()"
+          [catalogItems]="availableSupportAbilityCatalogItems()"
+          (dismiss)="closeSupportAbilityPicker()"
+          (saveDrafts)="saveSupportAbilityPicker($event)"
+        ></app-special-ability-picker>
 
         @if (isCompactCandidateDisplayMode()) {
           <div class="candidate-grid">

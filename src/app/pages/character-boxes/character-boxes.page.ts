@@ -31,10 +31,24 @@ import {
   type CharacterListItem,
   type DatasetManifest,
 } from '../../core/models/optc.models';
+import { type AutoBuildAbilityCatalog } from '../../core/models/auto-team-builder-ability.models';
 import { AppI18nService } from '../../core/services/app-i18n.service';
+import {
+  createAbilityRequirementDrafts,
+  type AbilityRequirementDraft,
+} from '../../core/services/ability-requirement-draft.utils';
 import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import {
+  getAbilityCatalogItemsByCategory,
+  intersectAbilityMatchingCharacterIds,
+  resolveCategoryAbilityMatchingCharacterIds,
+  resolveSpecialAbilityMatchingCharacterIds,
+  serializeCategoryAbilityDrafts,
+  serializeSpecialAbilityDrafts,
+} from '../../core/services/special-ability-filter.utils';
 import { UserStateService } from '../../core/services/user-state.service';
+import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
 
 const PAGE_SIZE = 48;
 type CharacterBoxesFavoriteFilter = 'all' | 'favorites';
@@ -67,6 +81,7 @@ interface CharacterBoxCharacterCardView {
     IonSpinner,
     IonTitle,
     IonToolbar,
+    SpecialAbilityPickerComponent,
     TranslocoDirective,
     TranslocoPipe,
   ],
@@ -75,6 +90,7 @@ interface CharacterBoxCharacterCardView {
 })
 export class CharacterBoxesPage implements OnInit {
   public readonly summary = signal<DatasetManifest | null>(null);
+  public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly boxes;
   public readonly favoriteCharacterIds;
   public readonly selectedBoxId = signal<string | null>(null);
@@ -84,6 +100,14 @@ export class CharacterBoxesPage implements OnInit {
   public readonly selectedClass = signal('');
   public readonly selectedFavoriteFilter = signal<CharacterBoxesFavoriteFilter>('all');
   public readonly selectedMembershipFilter = signal<CharacterBoxesMembershipFilter>('all');
+  public readonly specialAbilityPickerOpen = signal(false);
+  public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly crewmateAbilityPickerOpen = signal(false);
+  public readonly crewmateAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly potentialAbilityPickerOpen = signal(false);
+  public readonly potentialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly supportAbilityPickerOpen = signal(false);
+  public readonly supportAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly displayMode = signal<CharacterBoxesDisplayMode>('list');
   public readonly characters = signal<CharacterListItem[]>([]);
   public readonly loading = signal(true);
@@ -98,6 +122,72 @@ export class CharacterBoxesPage implements OnInit {
   );
   public readonly availableClasses = computed(() =>
     this.normalizeOptions(this.summary()?.availableClasses ?? []),
+  );
+  public readonly availableSpecialAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'special'),
+  );
+  public readonly availableCrewmateAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'crewmate'),
+  );
+  public readonly availablePotentialAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'potential'),
+  );
+  public readonly availableSupportAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'support'),
+  );
+  public readonly specialAbilityRequirements = computed(() =>
+    serializeSpecialAbilityDrafts(
+      this.specialAbilityDrafts(),
+      this.availableSpecialAbilityCatalogItems(),
+    ),
+  );
+  public readonly specialFilterCharacterIds = computed(() =>
+    resolveSpecialAbilityMatchingCharacterIds(
+      this.specialAbilityRequirements(),
+      this.availableSpecialAbilityCatalogItems(),
+    ),
+  );
+  public readonly crewmateAbilityRequirements = computed(() =>
+    serializeCategoryAbilityDrafts(
+      this.crewmateAbilityDrafts(),
+      this.availableCrewmateAbilityCatalogItems(),
+      'crewmate',
+    ),
+  );
+  public readonly potentialAbilityRequirements = computed(() =>
+    serializeCategoryAbilityDrafts(
+      this.potentialAbilityDrafts(),
+      this.availablePotentialAbilityCatalogItems(),
+      'potential',
+    ),
+  );
+  public readonly supportAbilityRequirements = computed(() =>
+    serializeCategoryAbilityDrafts(
+      this.supportAbilityDrafts(),
+      this.availableSupportAbilityCatalogItems(),
+      'support',
+    ),
+  );
+  public readonly crewmateFilterCharacterIds = computed(() =>
+    resolveCategoryAbilityMatchingCharacterIds(
+      this.crewmateAbilityRequirements(),
+      this.availableCrewmateAbilityCatalogItems(),
+      'crewmate',
+    ),
+  );
+  public readonly potentialFilterCharacterIds = computed(() =>
+    resolveCategoryAbilityMatchingCharacterIds(
+      this.potentialAbilityRequirements(),
+      this.availablePotentialAbilityCatalogItems(),
+      'potential',
+    ),
+  );
+  public readonly supportFilterCharacterIds = computed(() =>
+    resolveCategoryAbilityMatchingCharacterIds(
+      this.supportAbilityRequirements(),
+      this.availableSupportAbilityCatalogItems(),
+      'support',
+    ),
   );
   public readonly totalAssignedCharacters = computed(() =>
     this.boxes().reduce((count, box) => count + box.characterIds.length, 0),
@@ -167,11 +257,13 @@ export class CharacterBoxesPage implements OnInit {
 
   public async ngOnInit(): Promise<void> {
     await this.userState.ready();
-    const [summary] = await Promise.all([
+    const [summary, abilityCatalog] = await Promise.all([
       this.repository.getDatasetManifest(),
+      this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
       this.characterCatalogCache.ensureLoaded(),
     ]);
     this.summary.set(summary);
+    this.abilityCatalog.set(abilityCatalog);
 
     if (this.boxes().length > 0) {
       this.selectBox(this.boxes()[0]!.id);
@@ -290,6 +382,122 @@ export class CharacterBoxesPage implements OnInit {
     this.displayMode.set(mode);
   }
 
+  public openSpecialAbilityPicker(): void {
+    if (!this.availableSpecialAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.specialAbilityPickerOpen.set(true);
+  }
+
+  public closeSpecialAbilityPicker(): void {
+    this.specialAbilityPickerOpen.set(false);
+  }
+
+  public async saveSpecialAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.specialAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeSpecialAbilityDrafts(drafts, this.availableSpecialAbilityCatalogItems()),
+      ),
+    );
+    this.specialAbilityPickerOpen.set(false);
+    await this.loadCharacters(true);
+  }
+
+  public async clearSpecialAbilityFilters(): Promise<void> {
+    this.specialAbilityDrafts.set([]);
+    await this.loadCharacters(true);
+  }
+
+  public openCrewmateAbilityPicker(): void {
+    if (!this.availableCrewmateAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.crewmateAbilityPickerOpen.set(true);
+  }
+
+  public closeCrewmateAbilityPicker(): void {
+    this.crewmateAbilityPickerOpen.set(false);
+  }
+
+  public async saveCrewmateAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.crewmateAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeCategoryAbilityDrafts(
+          drafts,
+          this.availableCrewmateAbilityCatalogItems(),
+          'crewmate',
+        ),
+      ),
+    );
+    this.crewmateAbilityPickerOpen.set(false);
+    await this.loadCharacters(true);
+  }
+
+  public async clearCrewmateAbilityFilters(): Promise<void> {
+    this.crewmateAbilityDrafts.set([]);
+    await this.loadCharacters(true);
+  }
+
+  public openPotentialAbilityPicker(): void {
+    if (!this.availablePotentialAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.potentialAbilityPickerOpen.set(true);
+  }
+
+  public closePotentialAbilityPicker(): void {
+    this.potentialAbilityPickerOpen.set(false);
+  }
+
+  public async savePotentialAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.potentialAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeCategoryAbilityDrafts(
+          drafts,
+          this.availablePotentialAbilityCatalogItems(),
+          'potential',
+        ),
+      ),
+    );
+    this.potentialAbilityPickerOpen.set(false);
+    await this.loadCharacters(true);
+  }
+
+  public async clearPotentialAbilityFilters(): Promise<void> {
+    this.potentialAbilityDrafts.set([]);
+    await this.loadCharacters(true);
+  }
+
+  public openSupportAbilityPicker(): void {
+    if (!this.availableSupportAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.supportAbilityPickerOpen.set(true);
+  }
+
+  public closeSupportAbilityPicker(): void {
+    this.supportAbilityPickerOpen.set(false);
+  }
+
+  public async saveSupportAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.supportAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeCategoryAbilityDrafts(drafts, this.availableSupportAbilityCatalogItems(), 'support'),
+      ),
+    );
+    this.supportAbilityPickerOpen.set(false);
+    await this.loadCharacters(true);
+  }
+
+  public async clearSupportAbilityFilters(): Promise<void> {
+    this.supportAbilityDrafts.set([]);
+    await this.loadCharacters(true);
+  }
+
   public async toggleFavorite(characterId: number, event?: Event): Promise<void> {
     event?.preventDefault();
     event?.stopPropagation();
@@ -306,6 +514,14 @@ export class CharacterBoxesPage implements OnInit {
     this.selectedClass.set('');
     this.selectedFavoriteFilter.set('all');
     this.selectedMembershipFilter.set('all');
+    this.specialAbilityPickerOpen.set(false);
+    this.specialAbilityDrafts.set([]);
+    this.crewmateAbilityPickerOpen.set(false);
+    this.crewmateAbilityDrafts.set([]);
+    this.potentialAbilityPickerOpen.set(false);
+    this.potentialAbilityDrafts.set([]);
+    this.supportAbilityPickerOpen.set(false);
+    this.supportAbilityDrafts.set([]);
     await this.loadCharacters(true);
   }
 
@@ -360,13 +576,20 @@ export class CharacterBoxesPage implements OnInit {
     const selectedBoxCharacterIds = this.selectedBox()?.characterIds ?? [];
     const favoriteCharacterIds =
       this.selectedFavoriteFilter() === 'favorites' ? this.favoriteCharacterIds() : undefined;
-    const allowedCharacterIds =
+    const scopedAllowedCharacterIds =
       this.selectedMembershipFilter() === 'inBox'
         ? selectedBoxCharacterIds.filter(
             (characterId) =>
               favoriteCharacterIds === undefined || favoriteCharacterIds.includes(characterId),
           )
         : favoriteCharacterIds;
+    const allowedCharacterIds = intersectAbilityMatchingCharacterIds([
+      scopedAllowedCharacterIds,
+      this.specialFilterCharacterIds(),
+      this.crewmateFilterCharacterIds(),
+      this.potentialFilterCharacterIds(),
+      this.supportFilterCharacterIds(),
+    ]);
     const nextCharacters = this.characterCatalogCache.queryCharacters({
       searchTerm: this.searchTerm(),
       typeFilter: this.selectedType(),

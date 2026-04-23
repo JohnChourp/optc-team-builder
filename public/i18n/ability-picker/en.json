@@ -4,10 +4,11 @@
     "clearAll": "Clear all"
   },
   "catalog": {
-    "title": "Available abilities",
-    "count": "{{count}} shown of {{total}} total",
-    "searchPlaceholder": "Search abilities",
-    "selectedCount": "{{count}} selected",
+    "title": "Available {{eyebrow}} effects",
+    "count": "{{count}} effects",
+    "searchPlaceholder": "Search {{eyebrow}} effects",
+    "sectionCount": "{{count}} effects",
+    "matchCount": "{{count}} matching characters",
     "emptyCatalogTitle": "No ability catalog available",
     "emptyCatalogCopy": "The picker cannot show abilities until the local catalog is loaded.",
     "emptySearchTitle": "No abilities matched",
@@ -19,10 +20,10 @@
     }
   },
   "selected": {
-    "title": "Selected requirements",
+    "title": "Selected {{eyebrow}} filters",
     "count": "{{count}} configured",
     "emptyTitle": "No abilities selected yet",
-    "emptyCopy": "Pick one or more abilities from the catalog to start configuring the requirement rules."
+    "emptyCopy": "Pick one or more {{eyebrow}} effects. Character results must match every selected effect."
   },
   "fields": {
     "characters": "Characters",

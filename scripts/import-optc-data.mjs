@@ -60,12 +60,29 @@ const shipThumbnailOverrideConfigPath = path.join(
 );
 const manualShipThumbnailSourceDir = path.join(rootDir, 'scripts', 'data', 'ship-thumbnails');
 
-const sourceRepoBase = 'https://raw.githubusercontent.com/optc-db/optc-db.github.io/master';
-const githubApiBase = 'https://api.github.com/repos/optc-db/optc-db.github.io';
 const githubHeaders = {
   'User-Agent': 'optc-team-builder-importer',
   Accept: 'application/vnd.github+json',
 };
+
+export const dataImportSources = Object.freeze({
+  '2shankz': Object.freeze({
+    key: '2shankz',
+    label: '2Shankz/optc-db.github.io',
+    repository: '2Shankz/optc-db.github.io',
+    rawBaseUrl: 'https://raw.githubusercontent.com/2Shankz/optc-db.github.io/master',
+    githubApiBase: 'https://api.github.com/repos/2Shankz/optc-db.github.io',
+    ref: 'master',
+  }),
+  'optc-db': Object.freeze({
+    key: 'optc-db',
+    label: 'optc-db/optc-db.github.io',
+    repository: 'optc-db/optc-db.github.io',
+    rawBaseUrl: 'https://raw.githubusercontent.com/optc-db/optc-db.github.io/master',
+    githubApiBase: 'https://api.github.com/repos/optc-db/optc-db.github.io',
+    ref: 'master',
+  }),
+});
 
 export const packDefinitions = [
   {
@@ -113,39 +130,95 @@ const packEntryNameMap = {
 
 const noop = () => undefined;
 
-function parseArgs() {
-  const args = process.argv.slice(2);
+export function resolveImportSource(sourceKey = '2shankz') {
+  const selectedSource = dataImportSources[sourceKey];
+
+  if (!selectedSource) {
+    const supportedSources = Object.keys(dataImportSources).join(', ');
+    throw new Error(`Invalid --source value "${sourceKey}". Expected one of: ${supportedSources}.`);
+  }
+
+  return selectedSource;
+}
+
+export function buildSourceFileUrl(source, relativePath) {
+  return `${source.rawBaseUrl}/${relativePath}`;
+}
+
+export function buildPackListingUrl(source, pack) {
+  return `${source.githubApiBase}/contents/${pack.listingPath}?ref=${source.ref}`;
+}
+
+export function extractSourceVersion(versionSource) {
+  const match = String(versionSource).match(/dbVersion\s*=\s*["']?([^"';\s]+)["']?/);
+  return match?.[1] ?? 'unknown';
+}
+
+export function parseArgs(args = process.argv.slice(2)) {
   const defaults = {
     downloadImages: 'none',
+    source: '2shankz',
   };
 
   for (const arg of args) {
     if (arg.startsWith('--download-images=')) {
       defaults.downloadImages = arg.split('=')[1];
+      continue;
+    }
+
+    if (arg.startsWith('--source=')) {
+      defaults.source = arg.split('=')[1];
     }
   }
 
+  resolveImportSource(defaults.source);
   return defaults;
 }
 
-async function fetchText(url) {
+function buildGithubRequestHeaders() {
+  const token = process.env.GITHUB_TOKEN?.trim() || process.env.GH_TOKEN?.trim() || '';
+
+  if (!token) {
+    return githubHeaders;
+  }
+
+  return {
+    ...githubHeaders,
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+async function buildHttpError(response, url, source) {
+  const responseText = await response.text().catch(() => '');
+  const error = new Error(`Failed to fetch ${url} from ${source.label}: ${response.status}`);
+  error.status = response.status;
+  error.url = url;
+  error.sourceKey = source.key;
+  error.responseText = responseText;
+  error.isGithubRateLimit =
+    response.status === 403 &&
+    /rate limit exceeded/i.test(responseText);
+  return error;
+}
+
+async function fetchText(url, source) {
   return withRetries(async () => {
-    const response = await fetch(url, { headers: githubHeaders });
+    const response = await fetch(url, { headers: buildGithubRequestHeaders() });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch ${url}: ${response.status}`);
+      throw await buildHttpError(response, url, source);
     }
 
     return response.text();
   });
 }
 
-async function fetchJson(url) {
+async function fetchJson(url, source) {
   return withRetries(async () => {
-    const response = await fetch(url, { headers: githubHeaders });
+    const response = await fetch(url, { headers: buildGithubRequestHeaders() });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch ${url}: ${response.status}`);
+      throw await buildHttpError(response, url, source);
     }
 
     return response.json();
@@ -217,48 +290,93 @@ function createSandbox() {
   });
 }
 
-async function evaluateLegacyFile(relativePath) {
-  const source = await fetchText(`${sourceRepoBase}/${relativePath}`);
+async function evaluateLegacyFile(relativePath, source) {
+  const fileSource = await fetchText(buildSourceFileUrl(source, relativePath), source);
   const sandbox = createSandbox();
-  vm.runInNewContext(source, sandbox, { timeout: 20_000 });
+  vm.runInNewContext(fileSource, sandbox, { timeout: 20_000 });
   return sandbox.window;
 }
 
-async function fetchVersion() {
-  const source = await fetchText(`${sourceRepoBase}/common/data/version.js`);
-  const match = source.match(/dbVersion\s*=\s*["']([^"']+)["']/);
-  return match?.[1] ?? 'unknown';
+async function fetchVersion(source) {
+  const versionSource = await fetchText(buildSourceFileUrl(source, 'common/data/version.js'), source);
+  return extractSourceVersion(versionSource);
 }
 
-function normalizePackPaths(tree, pack) {
+function normalizePackPaths(tree, pack, source) {
   return tree.tree
     .filter((entry) => entry.type === 'blob' && entry.path.endsWith('.png'))
     .map((entry) => ({
       localPath: entry.path,
       bytes: entry.size,
-      url: `${sourceRepoBase}/${pack.listingPath}/${pack.entryName}/${entry.path}`,
+      url: buildSourceFileUrl(source, `${pack.listingPath}/${pack.entryName}/${entry.path}`),
     }));
 }
 
-async function buildPackTrees() {
+function parseFullAssetUrl(url) {
+  const match = String(url).match(/\/api\/images\/full\/transparent\/(.+\.png)$/);
+
+  if (!match) {
+    return null;
+  }
+
+  return match[1];
+}
+
+async function buildPackTrees(source) {
   const packTrees = [];
 
   for (const pack of packDefinitions) {
-    const listing = await fetchJson(`${githubApiBase}/contents/${pack.listingPath}?ref=master`);
+    const listing = await fetchJson(buildPackListingUrl(source, pack), source);
     const directory = listing.find((entry) => entry.name === pack.entryName);
 
     if (!directory) {
-      throw new Error(`Missing GitHub tree for ${pack.id}`);
+      throw new Error(`Missing GitHub tree for ${pack.id} in ${source.label}`);
     }
 
-    const tree = await fetchJson(`${githubApiBase}/git/trees/${directory.sha}?recursive=1`);
+    const tree = await fetchJson(
+      `${source.githubApiBase}/git/trees/${directory.sha}?recursive=1`,
+      source,
+    );
     packTrees.push({
       ...pack,
-      files: normalizePackPaths(tree, pack),
+      files: normalizePackPaths(tree, pack, source),
     });
   }
 
   return packTrees;
+}
+
+async function loadCachedPackStatuses() {
+  try {
+    const manifestPath = path.join(dataDir, 'optc-manifest.json');
+    const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+    const cachedPacks = Array.isArray(manifest?.packs) ? manifest.packs : [];
+    return new Map(cachedPacks.map((pack) => [pack.key, pack]));
+  } catch {
+    return new Map();
+  }
+}
+
+async function buildFallbackPackStatuses() {
+  const cachedPackStatuses = await loadCachedPackStatuses();
+
+  return Promise.all(
+    packDefinitions.map(async (pack) => {
+      const cached = cachedPackStatuses.get(pack.key) ?? null;
+      const installed = await fileExists(path.join(offlineDir, pack.id, '.pack-ready'));
+
+      return {
+        key: pack.key,
+        id: pack.id,
+        label: pack.label,
+        localBasePath: `assets/offline-packs/${pack.id}`,
+        fileCount: cached?.fileCount ?? 0,
+        totalBytes: cached?.totalBytes ?? 0,
+        installed,
+        checksum: cached?.checksum ?? null,
+      };
+    }),
+  );
 }
 
 export function shouldDownloadPack(mode, packId) {
@@ -431,6 +549,41 @@ function buildPackFileIndexes(packs) {
   return new Map(
     packs.map((pack) => [pack.key, new Map(pack.files.map((file) => [file.localPath, file]))]),
   );
+}
+
+export function buildDeterministicCharacterAssetsMap(characterCount, utilsWindow) {
+  const thumbnailGetter = utilsWindow?.Utils?.getThumbnailUrl;
+  const fullArtGetter = utilsWindow?.Utils?.getBigThumbnailUrl;
+  const assetMap = new Map();
+
+  if (typeof thumbnailGetter !== 'function') {
+    return assetMap;
+  }
+
+  for (let characterId = 1; characterId <= characterCount; characterId += 1) {
+    const current = createEmptyAssets();
+    const thumbnails = thumbnailGetter(characterId, '');
+    const globalReference = parseThumbnailAssetUrl(thumbnails?.glo ?? null);
+    const japanReference = parseThumbnailAssetUrl(thumbnails?.jap ?? null);
+    const fullTransparentPath =
+      typeof fullArtGetter === 'function' ? parseFullAssetUrl(fullArtGetter(characterId, '')) : null;
+
+    if (globalReference?.relativePath) {
+      current.thumbnailGlobal = globalReference.relativePath;
+    }
+
+    if (japanReference?.relativePath) {
+      current.thumbnailJapan = japanReference.relativePath;
+    }
+
+    if (fullTransparentPath) {
+      current.fullTransparent = fullTransparentPath;
+    }
+
+    assetMap.set(characterId, current);
+  }
+
+  return assetMap;
 }
 
 function parseThumbnailAssetUrl(url) {
@@ -638,6 +791,7 @@ function normalizeShipThumbnailOverrideEntry(shipId, entry) {
 }
 
 async function materializeExactImageSources(
+  source,
   exactSources,
   packTrees,
   packFileIndexes,
@@ -655,7 +809,7 @@ async function materializeExactImageSources(
     return new Map();
   }
 
-  const packByKey = new Map(packTrees.map((pack) => [pack.key, pack]));
+  const packByKey = new Map(packDefinitions.map((pack) => [pack.key, pack]));
   const exactLocalPaths = new Map();
 
   for (const [characterId, exactSource] of exactSources.entries()) {
@@ -675,16 +829,22 @@ async function materializeExactImageSources(
     const packIndex = packFileIndexes.get(exactSource.packKey);
     const pack = packByKey.get(exactSource.packKey);
 
-    if (!packIndex?.has(exactSource.relativePath) || !pack) {
+    if (!pack) {
+      throw new Error(
+        `Missing upstream asset pack definition for character ${characterId}: ${exactSource.packKey}`,
+      );
+    }
+
+    if (packIndex && !packIndex.has(exactSource.relativePath)) {
       throw new Error(
         `Missing upstream asset override source for character ${characterId}: ${exactSource.packKey}/${exactSource.relativePath}`,
       );
     }
 
     const response = await fetch(
-      `${sourceRepoBase}/${pack.listingPath}/${pack.entryName}/${exactSource.relativePath}`,
+      buildSourceFileUrl(source, `${pack.listingPath}/${pack.entryName}/${exactSource.relativePath}`),
       {
-        headers: githubHeaders,
+        headers: buildGithubRequestHeaders(),
       },
     );
 
@@ -743,6 +903,102 @@ function isPlaceholderCharacterEntry(entry) {
   );
 
   return name.length === 0 && type === 'Type' && classes.length === 0 && !hasAnyNumericValue;
+}
+
+function toFiniteNumber(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function normalizeUnitMapEntry(unitEntry, fallbackCharacterId) {
+  if (!unitEntry || typeof unitEntry !== 'object' || Array.isArray(unitEntry)) {
+    return null;
+  }
+
+  const parsedCharacterId = Number(unitEntry.id);
+  const characterId = Number.isInteger(parsedCharacterId) && parsedCharacterId > 0
+    ? parsedCharacterId
+    : fallbackCharacterId;
+  const classes = normalizeCharacterClasses(unitEntry.class ?? []);
+
+  return {
+    characterId,
+    entry: unitEntry,
+    classes,
+    type: String(unitEntry.type ?? '').trim(),
+    name: String(unitEntry.name ?? '').trim(),
+    stars: toFiniteNumber(unitEntry.stars),
+    cost: toFiniteNumber(unitEntry.cost),
+    combo: toFiniteNumber(unitEntry.combo),
+    maxSockets: toFiniteNumber(unitEntry.sockets),
+    minHp: toFiniteNumber(unitEntry.minHP),
+    minAtk: toFiniteNumber(unitEntry.minATK),
+    minRcv: toFiniteNumber(unitEntry.minRCV),
+    maxHp: toFiniteNumber(unitEntry.maxHP),
+    maxAtk: toFiniteNumber(unitEntry.maxATK),
+    maxRcv: toFiniteNumber(unitEntry.maxRCV),
+    growth: toFiniteNumber(unitEntry.growth),
+  };
+}
+
+function buildNormalizedUnitEntries(units) {
+  if (Array.isArray(units)) {
+    return units.flatMap((entry, index) => {
+      if (isPlaceholderCharacterEntry(entry)) {
+        return [];
+      }
+
+      const characterId = index + 1;
+      const classes = normalizeCharacterClasses(entry[2]);
+
+      return [
+        {
+          characterId,
+          entry,
+          classes,
+          type: entry[1],
+          name: entry[0],
+          stars: toFiniteNumber(entry[3]),
+          cost: toFiniteNumber(entry[4]),
+          combo: toFiniteNumber(entry[5]),
+          maxSockets: toFiniteNumber(entry[6]),
+          minHp: toFiniteNumber(entry[9]),
+          minAtk: toFiniteNumber(entry[10]),
+          minRcv: toFiniteNumber(entry[11]),
+          maxHp: toFiniteNumber(entry[12]),
+          maxAtk: toFiniteNumber(entry[13]),
+          maxRcv: toFiniteNumber(entry[14]),
+          growth: toFiniteNumber(entry[15]),
+        },
+      ];
+    });
+  }
+
+  if (!units || typeof units !== 'object') {
+    return [];
+  }
+
+  return Object.entries(units)
+    .map(([rawCharacterId, entry]) => normalizeUnitMapEntry(entry, Number(rawCharacterId)))
+    .filter((entry) => Boolean(entry))
+    .sort((left, right) => left.characterId - right.characterId);
+}
+
+function resolveCharacterIterationLimit(units) {
+  if (Array.isArray(units)) {
+    return units.length;
+  }
+
+  if (!units || typeof units !== 'object') {
+    return 0;
+  }
+
+  return Object.keys(units).reduce((maxCharacterId, rawCharacterId) => {
+    const characterId = Number(rawCharacterId);
+    return Number.isInteger(characterId) && characterId > maxCharacterId
+      ? characterId
+      : maxCharacterId;
+  }, 0);
 }
 
 function normalizeSupportData(rawSupportData) {
@@ -937,6 +1193,18 @@ export function normalizeCharacterDetail(detail, characterId, rumbleData = null)
     swapData: detail.swap ?? null,
     vsSpecial: detail.vsSpecial ?? null,
     superType: detail.superType ?? null,
+    superTandemData:
+      detail.superTandemData && typeof detail.superTandemData === 'object'
+        ? detail.superTandemData
+        : null,
+    finalTapData:
+      detail.finalTapData && typeof detail.finalTapData === 'object'
+        ? detail.finalTapData
+        : null,
+    rushSugoSpecialData:
+      detail.rushSugoSpecialData && typeof detail.rushSugoSpecialData === 'object'
+        ? detail.rushSugoSpecialData
+        : null,
     superClass: detail.superClass ?? null,
     rumbleData,
   };
@@ -944,18 +1212,9 @@ export function normalizeCharacterDetail(detail, characterId, rumbleData = null)
 
 export function normalizeCharacters(units, details, rumbleUnits, assetsById) {
   const rumbleById = new Map(rumbleUnits.map((entry) => [entry.id, entry]));
-  const toNumber = (value) => {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  };
+  const normalizedUnitEntries = buildNormalizedUnitEntries(units);
 
-  return units.flatMap((entry, index) => {
-    if (isPlaceholderCharacterEntry(entry)) {
-      return [];
-    }
-
-    const characterId = index + 1;
-    const classes = normalizeCharacterClasses(entry[2]);
+  return normalizedUnitEntries.map(({ characterId, classes, type, name, stars, cost, combo, maxSockets, minHp, minAtk, minRcv, maxHp, maxAtk, maxRcv, growth }) => {
     const assets = assetsById.get(characterId) ?? createEmptyAssets();
     const detail = details[characterId] ?? {};
     const normalizedDetail = normalizeCharacterDetail(
@@ -964,40 +1223,38 @@ export function normalizeCharacters(units, details, rumbleUnits, assetsById) {
       rumbleById.get(characterId) ?? null,
     );
 
-    return [
-      {
-        id: characterId,
-        name: entry[0],
-        type: entry[1],
-        primaryClass: classes[0] ?? '',
-        secondaryClass: classes[1] ?? null,
+    return {
+      id: characterId,
+      name,
+      type,
+      primaryClass: classes[0] ?? '',
+      secondaryClass: classes[1] ?? null,
+      classes,
+      stars,
+      cost,
+      combo,
+      maxSockets,
+      minHp,
+      minAtk,
+      minRcv,
+      maxHp,
+      maxAtk,
+      maxRcv,
+      growth,
+      searchText: createCharacterSearchText({
+        name,
+        type,
         classes,
-        stars: toNumber(entry[3]),
-        cost: toNumber(entry[4]),
-        combo: toNumber(entry[5]),
-        maxSockets: toNumber(entry[6]),
-        minHp: toNumber(entry[9]),
-        minAtk: toNumber(entry[10]),
-        minRcv: toNumber(entry[11]),
-        maxHp: toNumber(entry[12]),
-        maxAtk: toNumber(entry[13]),
-        maxRcv: toNumber(entry[14]),
-        growth: toNumber(entry[15]),
-        searchText: createCharacterSearchText({
-          name: entry[0],
-          type: entry[1],
-          classes,
-        }),
-        regionAvailability: {
-          exactLocal: Boolean(assets.exactLocal),
-          thumbnailGlobal: Boolean(assets.thumbnailGlobal),
-          thumbnailJapan: Boolean(assets.thumbnailJapan),
-          fullTransparent: Boolean(assets.fullTransparent),
-        },
-        assets,
-        detail: normalizedDetail,
+      }),
+      regionAvailability: {
+        exactLocal: Boolean(assets.exactLocal),
+        thumbnailGlobal: Boolean(assets.thumbnailGlobal),
+        thumbnailJapan: Boolean(assets.thumbnailJapan),
+        fullTransparent: Boolean(assets.fullTransparent),
       },
-    ];
+      assets,
+      detail: normalizedDetail,
+    };
   });
 }
 
@@ -1102,11 +1359,16 @@ async function hashFile(targetPath) {
 }
 
 async function main() {
-  const { downloadImages } = parseArgs();
+  const { downloadImages, source: sourceKey } = parseArgs();
+  const selectedSource = resolveImportSource(sourceKey);
 
   await mkdir(dataDir, { recursive: true });
   await mkdir(offlineDir, { recursive: true });
   await mkdir(exactImagesDir, { recursive: true });
+
+  console.log(
+    `Import source: ${selectedSource.label} (${selectedSource.repository}@${selectedSource.ref}).`,
+  );
 
   const [
     unitsWindow,
@@ -1115,34 +1377,60 @@ async function main() {
     utilsWindow,
     rumble,
     sourceVersion,
-    packTrees,
     imageOverrides,
     partyConflictOverrides,
     shipThumbnailOverrides,
   ] = await Promise.all([
-    evaluateLegacyFile('common/data/units.js'),
-    evaluateLegacyFile('common/data/details.js'),
-    evaluateLegacyFile('common/data/ships.js'),
-    evaluateLegacyFile('common/js/utils.js'),
-    fetchJson(`${sourceRepoBase}/common/data/rumble.json`),
-    fetchVersion(),
-    buildPackTrees(),
+    evaluateLegacyFile('common/data/units.js', selectedSource),
+    evaluateLegacyFile('common/data/details.js', selectedSource),
+    evaluateLegacyFile('common/data/ships.js', selectedSource),
+    evaluateLegacyFile('common/js/utils.js', selectedSource),
+    fetchJson(buildSourceFileUrl(selectedSource, 'common/data/rumble.json'), selectedSource),
+    fetchVersion(selectedSource),
     loadCharacterImageOverrides(),
     loadPartyConflictOverrides(),
     loadShipThumbnailOverrides(),
   ]);
 
+  let packTrees = [];
+  let packListingAvailable = false;
+
+  try {
+    packTrees = await buildPackTrees(selectedSource);
+    packListingAvailable = true;
+  } catch (error) {
+    if (error?.isGithubRateLimit) {
+      if (downloadImages !== 'none') {
+        throw new Error(
+          `GitHub API rate limit exceeded while listing image packs for ${selectedSource.label}. Set GITHUB_TOKEN or GH_TOKEN and rerun ${process.argv.slice(1).join(' ')}.`,
+        );
+      }
+
+      console.warn(
+        `[import-optc-data] GitHub API rate limit exceeded for ${selectedSource.label}. Falling back to deterministic asset paths and cached pack metadata. Set GITHUB_TOKEN or GH_TOKEN to restore full pack listing and image download support.`,
+      );
+    } else {
+      throw error;
+    }
+  }
+
   const packFileIndexes = buildPackFileIndexes(packTrees);
-  const assetsById = buildCharacterAssetsMap(packTrees);
-  const thumbnailOverrides = buildDeterministicThumbnailOverrides(
-    unitsWindow.units.length,
-    utilsWindow,
-    packFileIndexes,
-  );
+  const characterIterationLimit = resolveCharacterIterationLimit(unitsWindow.units);
+  const assetsById = packListingAvailable
+    ? buildCharacterAssetsMap(packTrees)
+    : buildDeterministicCharacterAssetsMap(characterIterationLimit, utilsWindow);
+  const thumbnailOverrides = packListingAvailable
+    ? buildDeterministicThumbnailOverrides(
+        characterIterationLimit,
+        utilsWindow,
+        packFileIndexes,
+      )
+    : new Map();
   const exactOverridePackAssets = buildPackAssetOverridesFromExactOverrides(imageOverrides);
   mergeThumbnailOverrides(assetsById, thumbnailOverrides);
   mergeThumbnailOverrides(assetsById, exactOverridePackAssets);
   const manualExactLocalPaths = await materializeExactImageSources(
+    selectedSource,
     imageOverrides,
     packTrees,
     packFileIndexes,
@@ -1169,22 +1457,26 @@ async function main() {
   );
 
   const packStatuses = [];
-  for (const pack of packTrees) {
-    const status = await downloadPackFiles(pack, downloadImages);
-    const targetRoot = path.join(offlineDir, pack.id);
-    const samplePath = path.join(targetRoot, pack.files[0]?.localPath ?? '');
-    const sampleHash = status.installed && pack.files[0] ? await hashFile(samplePath) : null;
+  if (packListingAvailable) {
+    for (const pack of packTrees) {
+      const status = await downloadPackFiles(pack, downloadImages);
+      const targetRoot = path.join(offlineDir, pack.id);
+      const samplePath = path.join(targetRoot, pack.files[0]?.localPath ?? '');
+      const sampleHash = status.installed && pack.files[0] ? await hashFile(samplePath) : null;
 
-    packStatuses.push({
-      key: pack.key,
-      id: pack.id,
-      label: pack.label,
-      localBasePath: `assets/offline-packs/${pack.id}`,
-      fileCount: pack.files.length,
-      totalBytes: pack.files.reduce((total, file) => total + file.bytes, 0),
-      installed: status.installed,
-      checksum: sampleHash,
-    });
+      packStatuses.push({
+        key: pack.key,
+        id: pack.id,
+        label: pack.label,
+        localBasePath: `assets/offline-packs/${pack.id}`,
+        fileCount: pack.files.length,
+        totalBytes: pack.files.reduce((total, file) => total + file.bytes, 0),
+        installed: status.installed,
+        checksum: sampleHash,
+      });
+    }
+  } else {
+    packStatuses.push(...(await buildFallbackPackStatuses()));
   }
 
   const shipThumbnailPackStatus =
@@ -1199,18 +1491,21 @@ async function main() {
     shipThumbnailPackStatus.totalBytes += shipThumbnailOverrideStats.totalBytes;
   }
 
-  const resolvableUnresolvedExactSources = buildResolvableUnresolvedExactSources(
-    characters,
-    packStatuses,
-  );
-  const resolvedExactLocalPaths = await materializeExactImageSources(
-    resolvableUnresolvedExactSources,
-    packTrees,
-    packFileIndexes,
-    {
-      clearDir: false,
-    },
-  );
+  const resolvableUnresolvedExactSources = packListingAvailable
+    ? buildResolvableUnresolvedExactSources(characters, packStatuses)
+    : new Map();
+  const resolvedExactLocalPaths =
+    resolvableUnresolvedExactSources.size > 0
+      ? await materializeExactImageSources(
+          selectedSource,
+          resolvableUnresolvedExactSources,
+          packTrees,
+          packFileIndexes,
+          {
+            clearDir: false,
+          },
+        )
+      : new Map();
   applyExactLocalAssets(characters, resolvedExactLocalPaths);
 
   const manifest = buildManifest(

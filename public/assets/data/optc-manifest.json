@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-23T08:13:19.745Z",
-  "sourceVersion": "unknown",
-  "characterCount": 4822,
-  "detailCount": 4131,
+  "generatedAt": "2026-04-23T17:11:40.407Z",
+  "sourceVersion": "36",
+  "characterCount": 4929,
+  "detailCount": 4444,
   "shipCount": 66,
-  "rumbleCount": 1428,
+  "rumbleCount": 4510,
   "availableTypes": [
     "DEX",
     "INT",
@@ -30,8 +30,8 @@
       "id": "thumbnails-glo",
       "label": "Global thumbnails",
       "localBasePath": "assets/offline-packs/thumbnails-glo",
-      "fileCount": 4609,
-      "totalBytes": 45851276,
+      "fileCount": 5245,
+      "totalBytes": 53195788,
       "installed": true,
       "checksum": "df94f79786955eedd082930b70946c4aa0d71e27"
     },
@@ -40,8 +40,8 @@
       "id": "thumbnails-jap",
       "label": "Japan thumbnails",
       "localBasePath": "assets/offline-packs/thumbnails-jap",
-      "fileCount": 4886,
-      "totalBytes": 106098998,
+      "fileCount": 5440,
+      "totalBytes": 112506705,
       "installed": true,
       "checksum": "dd8283e86a3614e7105a6c59d6d153c189ecab65"
     },
@@ -60,8 +60,8 @@
       "id": "full-transparent",
       "label": "Transparent full art",
       "localBasePath": "assets/offline-packs/full-transparent",
-      "fileCount": 4215,
-      "totalBytes": 505151273,
+      "fileCount": 4592,
+      "totalBytes": 588072362,
       "installed": true,
       "checksum": "fb22281b95ed50ae2d17b752b4453f2655e538dd"
     }

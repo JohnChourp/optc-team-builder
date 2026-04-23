@@ -1,9 +1,11 @@
 import {
+  type AutoBuildAbilityCategory,
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityRequirement,
   type AutoBuildEnemyMechanicRequirement,
 } from '../../core/models/auto-team-builder-ability.models';
 import {
+  deriveAbilityRequirementsFromEnemyMechanics,
   mergeAbilityRequirements,
   normalizeEnemyMechanicRequirements,
   resolveEnemyMechanicCatalogItem,
@@ -19,7 +21,17 @@ export interface ParsedEnemyTextWarning {
   resolvedKey?: string;
 }
 
+export interface ParsedEnemyTextAbilityCandidate {
+  abilityKey: string;
+  category: AutoBuildAbilityCategory;
+  sourceLine: string;
+  minTurns: number | null;
+  requiredCharacterCount: number;
+  slotTokens: string[];
+}
+
 export interface ParsedEnemyTextResult {
+  parsedAbilityCandidates: ParsedEnemyTextAbilityCandidate[];
   enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   matchedAbilityCount: number;
   matchedMechanicCount: number;
@@ -35,6 +47,14 @@ interface ParseEnemyTextOptions {
 interface ParsedMechanicMatch {
   requirement: AutoBuildEnemyMechanicRequirement;
   warning: ParsedEnemyTextWarning | null;
+}
+
+interface ParsedAbilityCandidateSeed {
+  abilityKey: string;
+  category: AutoBuildAbilityCategory;
+  sourceLine: string;
+  minTurns: number | null;
+  slotTokens: string[];
 }
 
 interface ParsedEnemyTextSection {
@@ -80,6 +100,45 @@ const EXTRA_DETAIL_PATTERNS = [
 ] as const;
 
 const SINGLE_CHARACTER_DEFAULT_ABILITY_KEYS = new Set(['ignore_normal_attack_only']);
+const PARSED_ABILITY_FAMILY_EQUIVALENTS: Partial<
+  Record<string, Partial<Record<AutoBuildAbilityCategory, string>>>
+> = {
+  deal_fixed_damage: {
+    special: 'deal_fixed_damage',
+  },
+  ignore_normal_attack_only: {
+    special: 'ignore_normal_attack_only',
+  },
+  inflict_poison: {
+    special: 'inflict_poison',
+    support: 'support_apply_status_effect_poison',
+  },
+  remove_atk_down: {
+    special: 'remove_atk_down',
+    support: 'support_status_effect_recovery_atk_down',
+  },
+  remove_burn: {
+    special: 'remove_burn',
+    crewmate: 'crewmate_recover_burn',
+    support: 'support_status_effect_recovery_burn',
+  },
+  remove_enemy_damage_nullification: {
+    special: 'remove_enemy_damage_nullification',
+  },
+  remove_paralysis: {
+    special: 'remove_paralysis',
+    crewmate: 'crewmate_recover_paralysis',
+    support: 'support_status_effect_recovery_paralysis',
+  },
+  remove_special_bind: {
+    special: 'remove_special_bind',
+    crewmate: 'crewmate_recover_special_bind',
+    support: 'support_status_effect_recovery_special_bind',
+  },
+  family_special_reverse: {
+    crewmate: 'crewmate_recover_special_reverse',
+  },
+};
 
 export function parseSavedEnemyText(
   rawValue: string,
@@ -99,24 +158,24 @@ export function parseSavedEnemyText(
     string,
     Omit<AutoBuildAbilityRequirement, 'requiredCharacterCount'> & { requiredCharacterCount: number }
   >();
+  const parsedAbilityCandidateSections = new Map<string, ParsedEnemyTextAbilityCandidate>();
   const warnings: ParsedEnemyTextWarning[] = [];
 
   extractEnemyTextSections(rawValue).forEach((section) => {
     const sectionMechanics = new Map<
       string,
-      Omit<AutoBuildEnemyMechanicRequirement, 'requiredCharacterCount'>
+      Omit<AutoBuildEnemyMechanicRequirement, 'requiredCharacterCount'> & {
+        requiredCharacterCount: number;
+      }
     >();
-    const sectionAbilities = new Map<string, Omit<AutoBuildAbilityRequirement, 'requiredCharacterCount'>>();
-    const seenSectionLines = new Set<string>();
+    const sectionAbilities = new Map<
+      string,
+      Omit<AutoBuildAbilityRequirement, 'requiredCharacterCount'> & { requiredCharacterCount: number }
+    >();
+    const sectionParsedAbilityCandidates = new Map<string, ParsedEnemyTextAbilityCandidate>();
 
     section.lines.forEach((line) => {
       const normalizedLine = normalizeEnemyTextLine(line);
-
-      if (seenSectionLines.has(normalizedLine)) {
-        return;
-      }
-
-      seenSectionLines.add(normalizedLine);
 
       // Ignore pure phase labels so warnings focus on real mechanics and unsupported effects.
       if (isIgnoredEnemyTextLine(normalizedLine)) {
@@ -135,6 +194,7 @@ export function parseSavedEnemyText(
             existingMechanic.minTurns,
             mechanicMatch.requirement.minTurns,
           );
+          existingMechanic.requiredCharacterCount += 1;
         } else {
           sectionMechanics.set(mergeKey, {
             mechanicKey: mechanicMatch.requirement.mechanicKey,
@@ -144,8 +204,18 @@ export function parseSavedEnemyText(
             responseTags: [...mechanicMatch.requirement.responseTags],
             conditionTags: [...mechanicMatch.requirement.conditionTags],
             derivedAbilityKey: mechanicMatch.requirement.derivedAbilityKey,
+            requiredCharacterCount: 1,
           });
         }
+
+        buildParsedAbilityCandidateSeeds(
+          mechanicMatch.requirement.derivedAbilityKey,
+          mechanicMatch.requirement.minTurns,
+          line,
+          abilityCatalogMap,
+        ).forEach((candidate) =>
+          mergeParsedAbilityCandidate(sectionParsedAbilityCandidates, candidate),
+        );
 
         if (mechanicMatch.warning) {
           warnings.push(mechanicMatch.warning);
@@ -175,6 +245,7 @@ export function parseSavedEnemyText(
 
           if (existingAbility) {
             existingAbility.minTurns = resolveMaxTurns(existingAbility.minTurns, requirement.minTurns);
+            existingAbility.requiredCharacterCount += 1;
             return;
           }
 
@@ -182,7 +253,38 @@ export function parseSavedEnemyText(
             abilityKey: requirement.abilityKey,
             minTurns: requirement.minTurns,
             slotTokens: [...requirement.slotTokens],
+            requiredCharacterCount: 1,
           });
+        });
+
+        matchedDirectAbilities
+          .flatMap((requirement) =>
+            buildParsedAbilityCandidateSeeds(
+              requirement.abilityKey,
+              requirement.minTurns,
+              line,
+              abilityCatalogMap,
+            ),
+          )
+          .forEach((candidate) => mergeParsedAbilityCandidate(sectionParsedAbilityCandidates, candidate));
+
+        return;
+      }
+
+      const directCandidateOnlyMatch = matchDirectParsedAbilityCandidate(
+        normalizedLine,
+        parsedTurns,
+        line,
+        abilityCatalogMap,
+      );
+
+      if (directCandidateOnlyMatch.length > 0) {
+        directCandidateOnlyMatch.forEach(({ candidate, warning }) => {
+          mergeParsedAbilityCandidate(sectionParsedAbilityCandidates, candidate);
+
+          if (warning) {
+            warnings.push(warning);
+          }
         });
 
         return;
@@ -202,7 +304,7 @@ export function parseSavedEnemyText(
           existingMechanicSection.requirement.minTurns,
           requirement.minTurns,
         );
-        existingMechanicSection.requiredCharacterCount += 1;
+        existingMechanicSection.requiredCharacterCount += requirement.requiredCharacterCount;
         return;
       }
 
@@ -216,7 +318,7 @@ export function parseSavedEnemyText(
           conditionTags: [...requirement.conditionTags],
           derivedAbilityKey: requirement.derivedAbilityKey,
         },
-        requiredCharacterCount: 1,
+        requiredCharacterCount: requirement.requiredCharacterCount,
       });
     });
 
@@ -228,7 +330,7 @@ export function parseSavedEnemyText(
           existingAbilitySection.minTurns,
           requirement.minTurns,
         );
-        existingAbilitySection.requiredCharacterCount += 1;
+        existingAbilitySection.requiredCharacterCount += requirement.requiredCharacterCount;
         return;
       }
 
@@ -236,7 +338,26 @@ export function parseSavedEnemyText(
         abilityKey: requirement.abilityKey,
         minTurns: requirement.minTurns,
         slotTokens: [...requirement.slotTokens],
-        requiredCharacterCount: 1,
+        requiredCharacterCount: requirement.requiredCharacterCount,
+      });
+    });
+
+    sectionParsedAbilityCandidates.forEach((candidate, identity) => {
+      const existingCandidate = parsedAbilityCandidateSections.get(identity);
+
+      if (existingCandidate) {
+        existingCandidate.minTurns = resolveMaxTurns(existingCandidate.minTurns, candidate.minTurns);
+        existingCandidate.requiredCharacterCount += candidate.requiredCharacterCount;
+        return;
+      }
+
+      parsedAbilityCandidateSections.set(identity, {
+        abilityKey: candidate.abilityKey,
+        category: candidate.category,
+        sourceLine: candidate.sourceLine,
+        minTurns: candidate.minTurns,
+        requiredCharacterCount: candidate.requiredCharacterCount,
+        slotTokens: [...candidate.slotTokens],
       });
     });
   });
@@ -250,10 +371,47 @@ export function parseSavedEnemyText(
   const mergedRequiredAbilities = normalizeParsedRequiredAbilities(
     mergeAbilityRequirements([...requiredAbilitySections.values()]),
   );
+  const mergedParsedAbilityCandidates = normalizeParsedRequiredAbilities(
+    mergeAbilityRequirements([
+      ...parsedAbilityCandidateSections.values(),
+      ...buildParsedAbilityCandidateSeedsFromRequirements(
+        deriveAbilityRequirementsFromEnemyMechanics(mergedEnemyMechanics),
+        abilityCatalogMap,
+      ),
+    ]),
+  ).flatMap((requirement) => {
+    const catalogItem = abilityCatalogMap.get(requirement.abilityKey);
+
+    if (!catalogItem || !catalogItem.category) {
+      return [];
+    }
+
+    return [
+      {
+        abilityKey: requirement.abilityKey,
+        category: catalogItem.category,
+        sourceLine:
+          parsedAbilityCandidateSections.get(
+            buildParsedAbilityCandidateIdentity({
+              abilityKey: requirement.abilityKey,
+              category: catalogItem.category,
+              sourceLine: '',
+              minTurns: requirement.minTurns,
+              requiredCharacterCount: requirement.requiredCharacterCount,
+              slotTokens: requirement.slotTokens,
+            }),
+          )?.sourceLine ?? catalogItem.label,
+        minTurns: requirement.minTurns,
+        requiredCharacterCount: requirement.requiredCharacterCount,
+        slotTokens: [...requirement.slotTokens],
+      } satisfies ParsedEnemyTextAbilityCandidate,
+    ];
+  });
 
   return {
+    parsedAbilityCandidates: mergedParsedAbilityCandidates,
     enemyMechanics: mergedEnemyMechanics,
-    matchedAbilityCount: mergedRequiredAbilities.length,
+    matchedAbilityCount: mergedParsedAbilityCandidates.length,
     matchedMechanicCount: mergedEnemyMechanics.length,
     requiredAbilities: mergedRequiredAbilities,
     unmatchedLines: warnings
@@ -590,4 +748,130 @@ function resolveMaxTurns(left: number | null, right: number | null): number | nu
   }
 
   return Math.max(left, right);
+}
+
+function buildParsedAbilityCandidateSeeds(
+  familyKey: string | null,
+  minTurns: number | null,
+  sourceLine: string,
+  abilityCatalogMap: ReadonlyMap<string, AutoBuildAbilityCatalogItem>,
+): ParsedAbilityCandidateSeed[] {
+  if (!familyKey) {
+    return [];
+  }
+
+  const categoryAbilityKeys = PARSED_ABILITY_FAMILY_EQUIVALENTS[familyKey];
+
+  if (!categoryAbilityKeys) {
+    return [];
+  }
+
+  return Object.entries(categoryAbilityKeys).flatMap(([category, abilityKey]) => {
+    if (!abilityKey) {
+      return [];
+    }
+
+    const catalogItem = abilityCatalogMap.get(abilityKey);
+
+    if (!catalogItem || catalogItem.category !== category) {
+      return [];
+    }
+
+    return [
+      {
+        abilityKey,
+        category: category as AutoBuildAbilityCategory,
+        sourceLine,
+        minTurns: catalogItem.supportsTurns ? minTurns : null,
+        slotTokens: [],
+      } satisfies ParsedAbilityCandidateSeed,
+    ];
+  });
+}
+
+function buildParsedAbilityCandidateSeedsFromRequirements(
+  requirements: readonly AutoBuildAbilityRequirement[],
+  abilityCatalogMap: ReadonlyMap<string, AutoBuildAbilityCatalogItem>,
+): AutoBuildAbilityRequirement[] {
+  return requirements.flatMap((requirement) =>
+    buildParsedAbilityCandidateSeeds(
+      requirement.abilityKey,
+      requirement.minTurns,
+      requirement.abilityKey,
+      abilityCatalogMap,
+    ).map((candidate) => ({
+      abilityKey: candidate.abilityKey,
+      minTurns: candidate.minTurns,
+      slotTokens: candidate.slotTokens,
+      requiredCharacterCount: requirement.requiredCharacterCount,
+    })),
+  );
+}
+
+function mergeParsedAbilityCandidate(
+  candidateMap: Map<string, ParsedEnemyTextAbilityCandidate>,
+  candidate: ParsedAbilityCandidateSeed,
+): void {
+  const identity = buildParsedAbilityCandidateIdentity({
+    ...candidate,
+    requiredCharacterCount: 1,
+  });
+  const existingCandidate = candidateMap.get(identity);
+
+  if (existingCandidate) {
+    existingCandidate.minTurns = resolveMaxTurns(existingCandidate.minTurns, candidate.minTurns);
+    existingCandidate.requiredCharacterCount += 1;
+    return;
+  }
+
+  candidateMap.set(identity, {
+    abilityKey: candidate.abilityKey,
+    category: candidate.category,
+    sourceLine: candidate.sourceLine,
+    minTurns: candidate.minTurns,
+    requiredCharacterCount: 1,
+    slotTokens: [...candidate.slotTokens],
+  });
+}
+
+function buildParsedAbilityCandidateIdentity(
+  candidate: ParsedEnemyTextAbilityCandidate,
+): string {
+  return [candidate.category, candidate.abilityKey.trim(), candidate.slotTokens.join(',')].join('|');
+}
+
+function matchDirectParsedAbilityCandidate(
+  normalizedLine: string,
+  parsedTurns: number | null,
+  originalLine: string,
+  abilityCatalogMap: ReadonlyMap<string, AutoBuildAbilityCatalogItem>,
+): Array<{ candidate: ParsedAbilityCandidateSeed; warning: ParsedEnemyTextWarning | null }> {
+  if (!/\bspecial reverse\b/i.test(normalizedLine)) {
+    return [];
+  }
+
+  return buildParsedAbilityCandidateSeeds(
+    'family_special_reverse',
+    parsedTurns,
+    originalLine,
+    abilityCatalogMap,
+  ).map((candidate) => ({
+    candidate,
+    warning: hasParsedAbilityCandidatePrecisionLoss(normalizedLine)
+      ? {
+          kind: 'precisionLoss',
+          line: originalLine,
+          matchKind: 'ability',
+          resolvedKey: candidate.abilityKey,
+        }
+      : null,
+  }));
+}
+
+function hasParsedAbilityCandidatePrecisionLoss(line: string): boolean {
+  return (
+    POSITION_DETAIL_PATTERN.test(line) ||
+    /\bcremate\b/i.test(line) ||
+    EXTRA_DETAIL_PATTERNS.some((pattern) => pattern.test(line))
+  );
 }

@@ -4,7 +4,7 @@ Offline-first Ionic Angular app for browsing One Piece Treasure Cruise character
 
 ## What is included
 
-- Local OPTC dataset importer that reads from the `optc-db.github.io` source repository.
+- Local OPTC dataset importer that reads from the raw `optc-db.github.io` source repository, defaulting to the `2Shankz` fork.
 - Generated SQLite seed loaded inside the app through `sql.js`.
 - Offline-friendly character browser, detail view, collection view, and team builder.
 - Capacitor Android and iOS projects already scaffolded.
@@ -12,7 +12,7 @@ Offline-first Ionic Angular app for browsing One Piece Treasure Cruise character
 
 ## Source of truth
 
-The app does not scrape the live rendered website. It imports from the `optc-db` source repository:
+The app does not scrape the live rendered website. It imports from the raw source repository files for the selected source (`2shankz` by default, or `optc-db` explicitly):
 
 - `common/data/units.js`
 - `common/data/details.js`
@@ -37,28 +37,58 @@ cp .env.example .env.local
 For Google Drive sync to be available in the browser, fill `APP_GOOGLE_WEB_CLIENT_ID` in `.env.local`.
 For iOS builds, also fill `APP_GOOGLE_IOS_CLIENT_ID`.
 
-Import metadata only:
+Import everything in one run:
 
 ```bash
-npm run data:import
+npm run data:import:all
 ```
+
+Import everything from the upstream `optc-db` source instead of the default `2shankz` source:
+
+```bash
+npm run data:import:all -- --source=optc-db
+```
+
+The one-shot command above already includes every supported image pack. The lower-level single-pack modes still exist only if you want them:
 
 Import metadata plus global thumbnails:
 
 ```bash
-npm run data:import -- --download-images=thumbnails-glo
+npm run data:import:all -- --download-images=thumbnails-glo
 ```
 
 Import metadata plus all thumbnail packs, including ship thumbnails:
 
 ```bash
-npm run data:import -- --download-images=thumbnails
+npm run data:import:all -- --download-images=thumbnails
 ```
 
 Import metadata plus every supported offline image pack:
 
 ```bash
-npm run data:import -- --download-images=all
+npm run data:import:all
+```
+
+Supported `--download-images` modes:
+
+- `thumbnails-glo`: only global character thumbnails
+- `thumbnails-jap`: only japan character thumbnails
+- `ship-thumbnails`: only ship thumbnails
+- `full-transparent`: only full transparent character art
+- `thumbnails`: all thumbnail packs (`thumbnails-glo`, `thumbnails-jap`, `ship-thumbnails`)
+- `all`: metadata import plus every supported offline image pack
+
+You can combine the source selector with any image download mode, for example:
+
+```bash
+npm run data:import:all -- --source=optc-db --download-images=thumbnails
+```
+
+If GitHub responds with `403` while listing image packs, export `GITHUB_TOKEN` or `GH_TOKEN` before running any `--download-images=...` import mode:
+
+```bash
+export GITHUB_TOKEN=your_github_token
+npm run data:import:all
 ```
 
 Run the app in the browser:
@@ -186,6 +216,6 @@ Local ship thumbnail overrides for upstream-missing ships live in `scripts/data/
 
 ## Current limitations
 
-- Offline packs are opt-in and only become available in the app after running the matching `npm run data:import -- --download-images=...` mode.
+- Offline packs are opt-in and only become available in the app after running the matching `npm run data:import:all -- --download-images=...` mode.
 - The app uses `sql.js`, which increases the web bundle size compared with a plain JSON-only client.
 - Redistribution of game art is a separate legal/product decision before any public store release.

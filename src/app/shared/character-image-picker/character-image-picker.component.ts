@@ -25,9 +25,25 @@ import {
 } from '@ionic/angular/standalone';
 import { closeOutline } from 'ionicons/icons';
 
+import {
+  type AutoBuildAbilityCatalog,
+} from '../../core/models/auto-team-builder-ability.models';
 import { type CharacterListItem, type DatasetManifest } from '../../core/models/optc.models';
+import {
+  createAbilityRequirementDrafts,
+  type AbilityRequirementDraft,
+} from '../../core/services/ability-requirement-draft.utils';
 import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import {
+  getAbilityCatalogItemsByCategory,
+  intersectAbilityMatchingCharacterIds,
+  resolveCategoryAbilityMatchingCharacterIds,
+  resolveSpecialAbilityMatchingCharacterIds,
+  serializeCategoryAbilityDrafts,
+  serializeSpecialAbilityDrafts,
+} from '../../core/services/special-ability-filter.utils';
+import { SpecialAbilityPickerComponent } from '../special-ability-picker/special-ability-picker.component';
 
 const PAGE_SIZE = 48;
 
@@ -47,6 +63,7 @@ const PAGE_SIZE = 48;
     IonSelectOption,
     IonSpinner,
     IonToolbar,
+    SpecialAbilityPickerComponent,
     TranslocoDirective,
     TranslocoPipe,
   ],
@@ -69,6 +86,15 @@ export class CharacterImagePickerComponent implements OnChanges {
   public readonly selectedType = signal('');
   public readonly selectedClass = signal('');
   public readonly summary = signal<DatasetManifest | null>(null);
+  public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
+  public readonly specialAbilityPickerOpen = signal(false);
+  public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly crewmateAbilityPickerOpen = signal(false);
+  public readonly crewmateAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly potentialAbilityPickerOpen = signal(false);
+  public readonly potentialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly supportAbilityPickerOpen = signal(false);
+  public readonly supportAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly characters = signal<CharacterListItem[]>([]);
   public readonly selectedCharacter = signal<CharacterListItem | null>(null);
   public readonly selectedCharacterId = computed(() => this.selectedCharacter()?.id ?? null);
@@ -81,6 +107,72 @@ export class CharacterImagePickerComponent implements OnChanges {
   public readonly availableClasses = computed(() =>
     this.normalizeOptions(this.summary()?.availableClasses ?? []),
   );
+  public readonly availableSpecialAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'special'),
+  );
+  public readonly availableCrewmateAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'crewmate'),
+  );
+  public readonly availablePotentialAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'potential'),
+  );
+  public readonly availableSupportAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'support'),
+  );
+  public readonly specialAbilityRequirements = computed(() =>
+    serializeSpecialAbilityDrafts(
+      this.specialAbilityDrafts(),
+      this.availableSpecialAbilityCatalogItems(),
+    ),
+  );
+  public readonly specialFilterCharacterIds = computed(() =>
+    resolveSpecialAbilityMatchingCharacterIds(
+      this.specialAbilityRequirements(),
+      this.availableSpecialAbilityCatalogItems(),
+    ),
+  );
+  public readonly crewmateAbilityRequirements = computed(() =>
+    serializeCategoryAbilityDrafts(
+      this.crewmateAbilityDrafts(),
+      this.availableCrewmateAbilityCatalogItems(),
+      'crewmate',
+    ),
+  );
+  public readonly potentialAbilityRequirements = computed(() =>
+    serializeCategoryAbilityDrafts(
+      this.potentialAbilityDrafts(),
+      this.availablePotentialAbilityCatalogItems(),
+      'potential',
+    ),
+  );
+  public readonly supportAbilityRequirements = computed(() =>
+    serializeCategoryAbilityDrafts(
+      this.supportAbilityDrafts(),
+      this.availableSupportAbilityCatalogItems(),
+      'support',
+    ),
+  );
+  public readonly crewmateFilterCharacterIds = computed(() =>
+    resolveCategoryAbilityMatchingCharacterIds(
+      this.crewmateAbilityRequirements(),
+      this.availableCrewmateAbilityCatalogItems(),
+      'crewmate',
+    ),
+  );
+  public readonly potentialFilterCharacterIds = computed(() =>
+    resolveCategoryAbilityMatchingCharacterIds(
+      this.potentialAbilityRequirements(),
+      this.availablePotentialAbilityCatalogItems(),
+      'potential',
+    ),
+  );
+  public readonly supportFilterCharacterIds = computed(() =>
+    resolveCategoryAbilityMatchingCharacterIds(
+      this.supportAbilityRequirements(),
+      this.availableSupportAbilityCatalogItems(),
+      'support',
+    ),
+  );
 
   private dismissReason: 'save' | 'cancel' | null = null;
 
@@ -91,7 +183,6 @@ export class CharacterImagePickerComponent implements OnChanges {
 
   public ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen'] && this.isOpen) {
-      console.log('CharacterImagePickerComponent component');
       this.dismissReason = null;
       this.resetState();
       void this.initializePicker();
@@ -131,6 +222,122 @@ export class CharacterImagePickerComponent implements OnChanges {
     }
 
     await this.loadCharacters(false);
+  }
+
+  public openSpecialAbilityPicker(): void {
+    if (this.applyingSelection || !this.availableSpecialAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.specialAbilityPickerOpen.set(true);
+  }
+
+  public closeSpecialAbilityPicker(): void {
+    this.specialAbilityPickerOpen.set(false);
+  }
+
+  public async saveSpecialAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.specialAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeSpecialAbilityDrafts(drafts, this.availableSpecialAbilityCatalogItems()),
+      ),
+    );
+    this.specialAbilityPickerOpen.set(false);
+    await this.loadCharacters(true);
+  }
+
+  public async clearSpecialAbilityFilters(): Promise<void> {
+    this.specialAbilityDrafts.set([]);
+    await this.loadCharacters(true);
+  }
+
+  public openCrewmateAbilityPicker(): void {
+    if (this.applyingSelection || !this.availableCrewmateAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.crewmateAbilityPickerOpen.set(true);
+  }
+
+  public closeCrewmateAbilityPicker(): void {
+    this.crewmateAbilityPickerOpen.set(false);
+  }
+
+  public async saveCrewmateAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.crewmateAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeCategoryAbilityDrafts(
+          drafts,
+          this.availableCrewmateAbilityCatalogItems(),
+          'crewmate',
+        ),
+      ),
+    );
+    this.crewmateAbilityPickerOpen.set(false);
+    await this.loadCharacters(true);
+  }
+
+  public async clearCrewmateAbilityFilters(): Promise<void> {
+    this.crewmateAbilityDrafts.set([]);
+    await this.loadCharacters(true);
+  }
+
+  public openPotentialAbilityPicker(): void {
+    if (this.applyingSelection || !this.availablePotentialAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.potentialAbilityPickerOpen.set(true);
+  }
+
+  public closePotentialAbilityPicker(): void {
+    this.potentialAbilityPickerOpen.set(false);
+  }
+
+  public async savePotentialAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.potentialAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeCategoryAbilityDrafts(
+          drafts,
+          this.availablePotentialAbilityCatalogItems(),
+          'potential',
+        ),
+      ),
+    );
+    this.potentialAbilityPickerOpen.set(false);
+    await this.loadCharacters(true);
+  }
+
+  public async clearPotentialAbilityFilters(): Promise<void> {
+    this.potentialAbilityDrafts.set([]);
+    await this.loadCharacters(true);
+  }
+
+  public openSupportAbilityPicker(): void {
+    if (this.applyingSelection || !this.availableSupportAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.supportAbilityPickerOpen.set(true);
+  }
+
+  public closeSupportAbilityPicker(): void {
+    this.supportAbilityPickerOpen.set(false);
+  }
+
+  public async saveSupportAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.supportAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeCategoryAbilityDrafts(drafts, this.availableSupportAbilityCatalogItems(), 'support'),
+      ),
+    );
+    this.supportAbilityPickerOpen.set(false);
+    await this.loadCharacters(true);
+  }
+
+  public async clearSupportAbilityFilters(): Promise<void> {
+    this.supportAbilityDrafts.set([]);
+    await this.loadCharacters(true);
   }
 
   public selectCharacter(character: CharacterListItem): void {
@@ -174,8 +381,11 @@ export class CharacterImagePickerComponent implements OnChanges {
     this.loading.set(true);
 
     try {
-      const [summary] = await Promise.all([
+      const [summary, abilityCatalog] = await Promise.all([
         this.repository.getDatasetManifest(),
+        typeof this.repository.getAutoBuilderAbilityCatalog === 'function'
+          ? this.repository.getAutoBuilderAbilityCatalog().catch(() => null)
+          : Promise.resolve(null),
         this.characterCatalogCache.ensureLoaded(),
       ]);
       const characters = this.characterCatalogCache.queryCharacters({
@@ -187,6 +397,7 @@ export class CharacterImagePickerComponent implements OnChanges {
       });
 
       this.summary.set(summary);
+      this.abilityCatalog.set(abilityCatalog);
       this.characters.set(characters);
       this.hasMore.set(characters.length === PAGE_SIZE);
     } finally {
@@ -204,13 +415,22 @@ export class CharacterImagePickerComponent implements OnChanges {
     try {
       await this.characterCatalogCache.ensureLoaded();
       const nextOffset = reset ? 0 : this.characters().length;
-      const nextPage = this.characterCatalogCache.queryCharacters({
+      const allowedCharacterIds = intersectAbilityMatchingCharacterIds([
+        this.specialFilterCharacterIds(),
+        this.crewmateFilterCharacterIds(),
+        this.potentialFilterCharacterIds(),
+        this.supportFilterCharacterIds(),
+      ]);
+      const query = {
         searchTerm: this.searchTerm().trim(),
         typeFilter: this.selectedType(),
         classFilter: this.selectedClass(),
         limit: PAGE_SIZE,
         offset: nextOffset,
-      });
+      };
+      const nextPage = this.characterCatalogCache.queryCharacters(
+        allowedCharacterIds === undefined ? query : { ...query, allowedCharacterIds },
+      );
 
       this.characters.set(reset ? nextPage : [...this.characters(), ...nextPage]);
       this.hasMore.set(nextPage.length === PAGE_SIZE);
@@ -244,6 +464,14 @@ export class CharacterImagePickerComponent implements OnChanges {
     this.searchTerm.set('');
     this.selectedType.set('');
     this.selectedClass.set('');
+    this.specialAbilityPickerOpen.set(false);
+    this.specialAbilityDrafts.set([]);
+    this.crewmateAbilityPickerOpen.set(false);
+    this.crewmateAbilityDrafts.set([]);
+    this.potentialAbilityPickerOpen.set(false);
+    this.potentialAbilityDrafts.set([]);
+    this.supportAbilityPickerOpen.set(false);
+    this.supportAbilityDrafts.set([]);
     this.characters.set([]);
     this.selectedCharacter.set(null);
   }

@@ -2,13 +2,16 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-let analyzeBuilderAbilityText: (value: unknown, source: 'specialText' | 'captainAbility') => Array<{
+let analyzeBuilderAbilityText: (
+  value: unknown,
+  source: 'specialText' | 'captainAbility' | 'sailorAbilities',
+) => Array<{
   key: string;
   label: string;
   minTurns: number | null;
   isCompleteRemoval: boolean;
   slotTokens: string[];
-  source: 'specialText' | 'captainAbility';
+  source: 'specialText' | 'captainAbility' | 'sailorAbilities';
   coverageMode?: 'explicit' | 'selectedDebuff';
 }>;
 let extractPrimaryAbilityBranchText: (value: unknown) => string;
@@ -19,6 +22,15 @@ let enrichCharactersWithBuilderAbilities: (
       specialText: string | null;
       captainAbility: string | null;
       captainAbilityVariants?: Array<{ key: string; label: string; text: string }>;
+      sailorAbilities?: string[];
+      potentialAbilities?: Array<{ Name?: string; description?: string[] }>;
+      supportData?: Array<{
+        supportedCharactersText?: string;
+        levelDescriptions?: string[];
+      }>;
+      superTandemData?: Record<string, unknown> | null;
+      finalTapData?: Record<string, unknown> | null;
+      rushSugoSpecialData?: Record<string, unknown> | null;
       builderAbilities: Array<Record<string, unknown>>;
     };
   }>,
@@ -27,7 +39,7 @@ let enrichCharactersWithBuilderAbilities: (
     logger?: ((message: string) => void) | null;
     abilityCorrections?: Map<number | string, Record<string, unknown>> | null;
   },
-) => Promise<Array<{ key: string; label: string }>>;
+) => Promise<Array<Record<string, unknown> & { key: string; label: string }>>;
 
 beforeAll(async () => {
   ({
@@ -46,7 +58,7 @@ describe('auto team builder ability parser', () => {
         'Reduces Bind and Despair duration by 5 turns and boosts ATK of the crew by 2x for 1 turn.',
         'specialText',
       ),
-    ).toEqual([
+    ).toEqual(expect.arrayContaining([
       expect.objectContaining({
         key: 'remove_bind',
         minTurns: 5,
@@ -59,7 +71,7 @@ describe('auto team builder ability parser', () => {
         slotTokens: [],
         source: 'specialText',
       }),
-    ]);
+    ]));
   });
 
   it('extracts slot bind removal as a dedicated ability family', () => {
@@ -79,7 +91,7 @@ describe('auto team builder ability parser', () => {
         'Removes [DEX] and [STR] Slot Barrier completely and changes orbs.',
         'specialText',
       ),
-    ).toEqual([
+    ).toEqual(expect.arrayContaining([
       expect.objectContaining({
         key: 'remove_slot_barrier',
         minTurns: 99,
@@ -87,7 +99,7 @@ describe('auto team builder ability parser', () => {
         slotTokens: ['DEX', 'STR'],
         source: 'specialText',
       }),
-    ]);
+    ]));
   });
 
   it('extracts multiple unique effects from one special text without duplicates', () => {
@@ -142,7 +154,13 @@ describe('auto team builder ability parser', () => {
     expect(extractPrimaryAbilityBranchText(text)).not.toContain(
       'Reduces enemies\' Increased Defense and Percent Damage Reduction duration by 2 turns',
     );
-    expect(analyzeBuilderAbilityText(text, 'specialText')).toEqual([]);
+    expect(analyzeBuilderAbilityText(text, 'specialText')).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'remove_enemy_increased_defense',
+        }),
+      ]),
+    );
   });
 
   it('keeps only the primary captain branch when upstream text concatenates alternate versions', () => {
@@ -217,18 +235,18 @@ describe('auto team builder ability parser', () => {
       3,
     ],
   ])('extracts %s removal into the direct counter catalog', (_label, text, key, turns) => {
-    expect(analyzeBuilderAbilityText(text, 'specialText')).toEqual([
+    expect(analyzeBuilderAbilityText(text, 'specialText')).toEqual(expect.arrayContaining([
       expect.objectContaining({
         key,
         minTurns: turns,
       }),
-    ]);
+    ]));
   });
 
   it('extracts explicit pain removal from special text', () => {
     expect(
       analyzeBuilderAbilityText('Recovers HP and reduces Pain duration by 5 turns.', 'specialText'),
-    ).toEqual([
+    ).toEqual(expect.arrayContaining([
       expect.objectContaining({
         key: 'remove_pain',
         label: 'Remove Pain',
@@ -236,7 +254,7 @@ describe('auto team builder ability parser', () => {
         coverageMode: 'explicit',
         source: 'specialText',
       }),
-    ]);
+    ]));
   });
 
   it('extracts explicit pain removal from captain text', () => {
@@ -245,7 +263,7 @@ describe('auto team builder ability parser', () => {
         'Boosts ATK by 5x, reduces Pain duration by 10 turns and recovers HP at end of turn.',
         'captainAbility',
       ),
-    ).toEqual([
+    ).toEqual(expect.arrayContaining([
       expect.objectContaining({
         key: 'remove_pain',
         label: 'Remove Pain',
@@ -253,7 +271,7 @@ describe('auto team builder ability parser', () => {
         coverageMode: 'explicit',
         source: 'captainAbility',
       }),
-    ]);
+    ]));
   });
 
   it('extracts guaranteed extra-drop coverage from captain text', () => {
@@ -300,7 +318,7 @@ describe('auto team builder ability parser', () => {
         'Reduces 2 selected debuffs duration by 10 turns and changes all orbs into Matching orbs.',
         'specialText',
       ),
-    ).toEqual([
+    ).toEqual(expect.arrayContaining([
       expect.objectContaining({
         key: 'remove_pain',
         label: 'Remove Pain',
@@ -308,7 +326,7 @@ describe('auto team builder ability parser', () => {
         coverageMode: 'selectedDebuff',
         source: 'specialText',
       }),
-    ]);
+    ]));
   });
 
   it('extracts singular selected debuff coverage with the actual turn count', () => {
@@ -317,7 +335,7 @@ describe('auto team builder ability parser', () => {
         'Delays all enemies by 1 turn and reduces 1 selected debuff duration by 5 turns.',
         'specialText',
       ),
-    ).toEqual([
+    ).toEqual(expect.arrayContaining([
       expect.objectContaining({
         key: 'remove_pain',
         label: 'Remove Pain',
@@ -325,7 +343,7 @@ describe('auto team builder ability parser', () => {
         coverageMode: 'selectedDebuff',
         source: 'specialText',
       }),
-    ]);
+    ]));
   });
 
   it('ignores unsupported boost-only text to avoid false positives', () => {
@@ -334,7 +352,12 @@ describe('auto team builder ability parser', () => {
         'Boosts ATK of Fighter characters by 2.5x for 1 turn and boosts Orb Effects by 2.25x for 1 turn.',
         'specialText',
       ),
-    ).toEqual([]);
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'boost_atk' }),
+        expect.objectContaining({ key: 'boost_slot_effects' }),
+      ]),
+    );
   });
 
   it('does not treat unrelated status wording as pain removal', () => {
@@ -343,7 +366,7 @@ describe('auto team builder ability parser', () => {
         'Increases duration of any Status ATK boosting buffs applied by Specials by 1 turn.',
         'specialText',
       ),
-    ).toEqual([]);
+    ).not.toEqual(expect.arrayContaining([expect.objectContaining({ key: 'remove_pain' })]));
   });
 
   it('extracts explicit NAO bypass from special text only when the effect ignores it', () => {
@@ -439,7 +462,13 @@ describe('auto team builder ability parser', () => {
         'If your crew has Normal Attack Only when the special is activated, boosts ATK of Driven characters by 2.5x for 1 turn.',
         'specialText',
       ),
-    ).toEqual([]);
+    ).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'ignore_normal_attack_only',
+        }),
+      ]),
+    );
   });
 
   it('preserves explicit builder abilities while deduping derived matches', async () => {
@@ -500,6 +529,84 @@ describe('auto team builder ability parser', () => {
     });
 
     expect(characters[0]?.detail.builderAbilities).toEqual([]);
+  });
+
+  it('generates the complete Special catalog with stable group counts and zero-match entries', async () => {
+    const catalog = await enrichCharactersWithBuilderAbilities([], { logger: null });
+    const specialCatalog = catalog.filter((item) => item.category === 'special');
+    const groupCounts = specialCatalog.reduce<Record<string, number>>((counts, item) => {
+      const groupLabel = String(item.groupLabel);
+      counts[groupLabel] = (counts[groupLabel] ?? 0) + 1;
+      return counts;
+    }, {});
+
+    expect(specialCatalog).toHaveLength(85);
+    expect(groupCounts).toEqual({
+      Damage: 6,
+      'Boost Damage': 17,
+      'Damage Reduction': 3,
+      Slot: 4,
+      'Slot Change': 4,
+      'Reduce Status Effect Duration': 15,
+      'Reduce Enemy Effect Duration': 9,
+      'Apply Status Effect': 8,
+      Reduction: 4,
+      Other: 15,
+    });
+    expect(specialCatalog.slice(0, 3).map((item) => item.key)).toEqual([
+      'special_damage',
+      'deal_fixed_damage',
+      'ignore_normal_attack_only',
+    ]);
+    expect(specialCatalog).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'remove_sfx',
+          category: 'special',
+          groupLabel: 'Reduce Status Effect Duration',
+          matchCount: 0,
+          matchingCharacterIds: [],
+        }),
+      ]),
+    );
+  });
+
+  it('indexes matching character ids for Special catalog entries', async () => {
+    const characters = [
+      {
+        id: 910001,
+        detail: {
+          specialText: 'Reduces Bind duration by 5 turns.',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 910002,
+        detail: {
+          specialText: 'Boosts ATK of all characters by 2.5x for 1 turn.',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(catalog.find((item) => item.key === 'remove_bind')).toEqual(
+      expect.objectContaining({
+        category: 'special',
+        matchingCharacterIds: [910001],
+        matchCount: 1,
+      }),
+    );
+    expect(catalog.find((item) => item.key === 'boost_atk')).toEqual(
+      expect.objectContaining({
+        category: 'special',
+        matchingCharacterIds: [910002],
+        matchCount: 1,
+      }),
+    );
   });
 
   it('preserves null minTurns for explicit existing abilities during normalization', async () => {
@@ -638,5 +745,507 @@ describe('auto team builder ability parser', () => {
           (ability.key === 'extra_drop_any' || ability.key === 'extra_drop_guaranteed'),
       ),
     ).toHaveLength(2);
+  });
+
+  it('seeds all 75 crewmate catalog entries with stable ordering even without matches', async () => {
+    const catalog = await enrichCharactersWithBuilderAbilities([], { logger: null });
+    const crewmateCatalog = catalog.filter((item) => item.category === 'crewmate');
+    const groupCounts = new Map<string, number>();
+
+    crewmateCatalog.forEach((item) => {
+      groupCounts.set(item.groupLabel ?? '', (groupCounts.get(item.groupLabel ?? '') ?? 0) + 1);
+    });
+
+    expect(crewmateCatalog).toHaveLength(75);
+    expect(crewmateCatalog[0]).toMatchObject({
+      label: 'Damage Boost: STR Enemy',
+      availableSources: ['sailorAbilities'],
+      matchCount: 0,
+    });
+    expect(crewmateCatalog.at(-1)).toMatchObject({
+      label: 'Hp Recovery at End of Turn',
+      availableSources: ['sailorAbilities'],
+      matchCount: 0,
+    });
+    expect(groupCounts).toEqual(
+      new Map([
+        ['Boost Damage', 6],
+        ['Status Effect Recovery', 8],
+        ['Slot', 5],
+        ['Special Charge Reduction', 4],
+        ['ATK Boost', 17],
+        ['RCV Boost', 17],
+        ['HP Boost', 17],
+        ['Other', 1],
+      ]),
+    );
+  });
+
+  it.each([
+    [
+      'damage boost vs enemy type',
+      'Boosts damage dealt to STR enemies by 1.1x.',
+      'crewmate_damage_boost_str_enemy',
+    ],
+    [
+      'status recovery',
+      'Reduces Special Bind duration by 3 turns.',
+      'crewmate_recover_special_bind',
+    ],
+    ['slot utility', 'Makes [RCV] slots beneficial for all characters.', 'crewmate_make_slots_favorable'],
+    [
+      'special charge reduction',
+      'Reduces Special Cooldown of this character by 2 turns at start of quest.',
+      'crewmate_special_charge_start_of_quest',
+    ],
+    ['atk boost', 'Boosts ATK of Fighter characters by 75.', 'crewmate_atk_boost_fighter'],
+    ['rcv boost', 'Boosts RCV of this character by 100.', 'crewmate_rcv_boost_self'],
+    ['hp boost', 'Boosts HP of STR characters by 200.', 'crewmate_hp_boost_str'],
+    [
+      'end of turn recovery',
+      'Recovers 1000 HP at the end of each turn.',
+      'crewmate_hp_recovery_eot',
+    ],
+  ])('extracts crewmate %s from sailor text', (_label, text, key) => {
+    expect(analyzeBuilderAbilityText(text, 'sailorAbilities')).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key,
+          source: 'sailorAbilities',
+          minTurns: null,
+        }),
+      ]),
+    );
+  });
+
+  it('adds crewmate-derived builder abilities from sailor abilities to the character detail', async () => {
+    const characters = [
+      {
+        id: 5001,
+        detail: {
+          specialText: null,
+          captainAbility: null,
+          sailorAbilities: [
+            'Boosts ATK of Fighter characters by 75.',
+            'Reduces Special Cooldown of this character by 2 turns at start of quest.',
+          ],
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(characters[0]?.detail.builderAbilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'crewmate_atk_boost_fighter',
+          source: 'sailorAbilities',
+        }),
+        expect.objectContaining({
+          key: 'crewmate_special_charge_start_of_quest',
+          source: 'sailorAbilities',
+        }),
+      ]),
+    );
+  });
+
+  it('seeds all 26 potential catalog entries with stable ordering even without matches', async () => {
+    const catalog = await enrichCharactersWithBuilderAbilities([], { logger: null });
+    const potentialCatalog = catalog.filter((item) => item.category === 'potential');
+    const groupCounts = new Map<string, number>();
+
+    potentialCatalog.forEach((item) => {
+      groupCounts.set(item.groupLabel ?? '', (groupCounts.get(item.groupLabel ?? '') ?? 0) + 1);
+    });
+
+    expect(potentialCatalog).toHaveLength(26);
+    expect(potentialCatalog[0]).toMatchObject({
+      label: 'Super Tandem',
+      availableSources: ['superTandemData'],
+      matchCount: 0,
+    });
+    expect(potentialCatalog.at(-1)).toMatchObject({
+      label: 'Damage Limit Break: Class',
+      availableSources: ['potentialAbilities'],
+      matchCount: 0,
+    });
+    expect(groupCounts).toEqual(
+      new Map([
+        ['Unique Abilities', 4],
+        ['Status Effect Immunity', 9],
+        ['Special Charge Reduction', 3],
+        ['Damage Reduction', 5],
+        ['Other', 5],
+      ]),
+    );
+  });
+
+  it('canonicalizes observed potential aliases from potential abilities', async () => {
+    const characters = [
+      {
+        id: 6001,
+        detail: {
+          specialText: null,
+          captainAbility: null,
+          sailorAbilities: [],
+          potentialAbilities: [
+            { Name: 'Barrier Penetration', description: ['Ignores enemy barriers.'] },
+            { Name: 'Critical Hit', description: ['Boosts critical rate.'] },
+            { Name: 'Reduce Slot Bind duration', description: ['Reduces Slot Bind duration.'] },
+            { Name: '[QCK] Damage Reduction', description: ['Reduces QCK damage.'] },
+          ],
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(characters[0]?.detail.builderAbilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'potential_barrier_pierce',
+          label: 'Barrier Pierce',
+          source: 'potentialAbilities',
+        }),
+        expect.objectContaining({
+          key: 'potential_critical_atk',
+          label: 'Critical ATK',
+          source: 'potentialAbilities',
+        }),
+        expect.objectContaining({
+          key: 'potential_slot_bind_resistance',
+          label: 'Slot Bind Resistance',
+          source: 'potentialAbilities',
+        }),
+        expect.objectContaining({
+          key: 'potential_qck_damage_reduction',
+          label: 'QCK Damage Reduction',
+          source: 'potentialAbilities',
+        }),
+      ]),
+    );
+    expect(catalog).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'potential_barrier_pierce',
+          matchingCharacterIds: [6001],
+        }),
+      ]),
+    );
+  });
+
+  it('adds unique potential abilities from dedicated detail fields', async () => {
+    const characters = [
+      {
+        id: 6002,
+        detail: {
+          specialText: null,
+          captainAbility: null,
+          sailorAbilities: [],
+          potentialAbilities: [],
+          superTandemData: {
+            requirement: 'When a character performs Super Tandem',
+            levels: [{ level: 5, effect: 'Raises Boost Level of Slasher characters by 5 for 1 turn' }],
+          },
+          finalTapData: {
+            requirement: 'At final battle',
+            levels: [{ level: 5, effect: 'Boosts base ATK by +800 for 1 turn' }],
+          },
+          rushSugoSpecialData: {
+            requirement: 'At final battle',
+            levels: [{ level: 5, effect: 'Allows to perform a Rush.' }],
+          },
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(characters[0]?.detail.builderAbilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'potential_super_tandem',
+          source: 'superTandemData',
+        }),
+        expect.objectContaining({
+          key: 'potential_super_tandem_boost',
+          source: 'superTandemData',
+        }),
+        expect.objectContaining({
+          key: 'potential_final_tap_sugo_special',
+          source: 'finalTapData',
+        }),
+        expect.objectContaining({
+          key: 'potential_rush_sugo_special',
+          source: 'rushSugoSpecialData',
+        }),
+      ]),
+    );
+  });
+
+  it('keeps unknown potential names unmatched and conservatively skips non-boost super tandem data', async () => {
+    const characters = [
+      {
+        id: 6003,
+        detail: {
+          specialText: null,
+          captainAbility: null,
+          sailorAbilities: [],
+          potentialAbilities: [{ Name: 'Unknown Potential', description: ['Unknown text'] }],
+          superTandemData: {
+            requirement: 'When a character performs Super Tandem',
+            levels: [{ level: 5, effect: 'Deals typeless damage to one enemy.' }],
+          },
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(characters[0]?.detail.builderAbilities).toEqual([
+      expect.objectContaining({
+        key: 'potential_super_tandem',
+        source: 'superTandemData',
+      }),
+    ]);
+  });
+
+  it('seeds all 67 support catalog entries with stable ordering even without matches', async () => {
+    const catalog = await enrichCharactersWithBuilderAbilities([], { logger: null });
+    const supportCatalog = catalog.filter((item) => item.category === 'support');
+    const groupCounts = new Map<string, number>();
+
+    supportCatalog.forEach((item) => {
+      groupCounts.set(item.groupLabel ?? '', (groupCounts.get(item.groupLabel ?? '') ?? 0) + 1);
+    });
+
+    expect(supportCatalog).toHaveLength(67);
+    expect(supportCatalog[0]).toMatchObject({
+      label: 'End of Turn Additional Damage',
+      availableSources: ['supportData'],
+      matchCount: 0,
+    });
+    expect(supportCatalog.at(-1)).toMatchObject({
+      label: 'Delay',
+      availableSources: ['supportData'],
+      matchCount: 0,
+    });
+    expect(groupCounts).toEqual(
+      new Map([
+        ['Damage', 1],
+        ['Boost Damage', 14],
+        ['Status Effect Recovery', 11],
+        ['Slot', 5],
+        ['Slot Change', 2],
+        ['Damage Reduction', 4],
+        ['Reduce Enemy Effect Duration', 12],
+        ['ATK Boost', 2],
+        ['RCV Boost', 2],
+        ['HP Boost', 2],
+        ['Other', 6],
+        ['Apply Status Effect', 6],
+      ]),
+    );
+  });
+
+  it('parses support abilities from the highest canonical support level only', async () => {
+    const characters = [
+      {
+        id: 7001,
+        detail: {
+          specialText: null,
+          captainAbility: null,
+          sailorAbilities: [],
+          supportData: [
+            {
+              supportedCharactersText: 'Monkey D. Luffy',
+              levelDescriptions: [
+                '',
+                'Boosts ATK of supported character by 1.3x for 1 turn',
+                'Boosts type effects of supported character by 1.75x for 1 turn',
+              ],
+            },
+          ],
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(characters[0]?.detail.builderAbilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'support_type_effect_boost',
+          source: 'supportData',
+        }),
+      ]),
+    );
+    expect(characters[0]?.detail.builderAbilities).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'support_atk_boost',
+          source: 'supportData',
+        }),
+      ]),
+    );
+  });
+
+  it('emits multiple support keys from one support row and uses provider ids for matching', async () => {
+    const characters = [
+      {
+        id: 7002,
+        detail: {
+          specialText: null,
+          captainAbility: null,
+          sailorAbilities: [],
+          supportData: [
+            {
+              supportedCharactersText: 'Zoro',
+              levelDescriptions: [
+                'Adds 5% of this character\'s base ATK and HP to the supported character\'s base ATK and HP. Reduces damage received by 5%.',
+              ],
+            },
+          ],
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(characters[0]?.detail.builderAbilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'support_base_atk_boost_additional', source: 'supportData' }),
+        expect.objectContaining({ key: 'support_base_hp_boost_additional', source: 'supportData' }),
+        expect.objectContaining({ key: 'support_damage_reduction_permanent', source: 'supportData' }),
+      ]),
+    );
+    expect(catalog).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'support_base_atk_boost_additional',
+          matchingCharacterIds: [7002],
+        }),
+      ]),
+    );
+  });
+
+  it('distinguishes triggered support boosts and tap-timing enemy-effect reduction variants', async () => {
+    const characters = [
+      {
+        id: 7003,
+        detail: {
+          specialText: null,
+          captainAbility: null,
+          sailorAbilities: [],
+          supportData: [
+            {
+              supportedCharactersText: 'Sanji',
+              levelDescriptions: [
+                'Boosts ATK of supported character by 1.75x and boosts Slot Effects by 1.5x for 1 turn.',
+              ],
+            },
+            {
+              supportedCharactersText: 'Sanji',
+              levelDescriptions: [
+                'After scoring 3 PERFECTs, reduces enemy DEF Up duration by 1 turn.',
+              ],
+            },
+            {
+              supportedCharactersText: 'Sanji',
+              levelDescriptions: [
+                'Reduces enemy DEF Up duration by 1 turn.',
+              ],
+            },
+          ],
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(characters[0]?.detail.builderAbilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'support_atk_boost', source: 'supportData' }),
+        expect.objectContaining({ key: 'support_slot_effect_boost', source: 'supportData' }),
+        expect.objectContaining({
+          key: 'support_reduce_enemy_effect_turns_def_up_tap_timing',
+          source: 'supportData',
+        }),
+        expect.objectContaining({
+          key: 'support_reduce_enemy_effect_turns_def_up',
+          source: 'supportData',
+        }),
+      ]),
+    );
+  });
+
+  it('distinguishes passive and turn-bound support damage reduction wording', async () => {
+    const characters = [
+      {
+        id: 7004,
+        detail: {
+          specialText: null,
+          captainAbility: null,
+          sailorAbilities: [],
+          supportData: [
+            {
+              supportedCharactersText: 'Nami',
+              levelDescriptions: ['Reduces damage received by 5%.'],
+            },
+            {
+              supportedCharactersText: 'Nami',
+              levelDescriptions: ['Reduces damage received by 50% for 1 turn.'],
+            },
+          ],
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(characters[0]?.detail.builderAbilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'support_damage_reduction_permanent',
+          source: 'supportData',
+        }),
+        expect.objectContaining({
+          key: 'support_damage_reduction_turn',
+          source: 'supportData',
+        }),
+      ]),
+    );
+  });
+
+  it('keeps unknown support wording unmatched', async () => {
+    const characters = [
+      {
+        id: 7005,
+        detail: {
+          specialText: null,
+          captainAbility: null,
+          sailorAbilities: [],
+          supportData: [
+            {
+              supportedCharactersText: 'Usopp',
+              levelDescriptions: ['Sometimes does a surprising thing with stars.'],
+            },
+          ],
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(characters[0]?.detail.builderAbilities).toEqual([]);
   });
 });

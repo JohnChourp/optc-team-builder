@@ -88,6 +88,7 @@ img {
 
 .manual-filter-modal::part(backdrop),
 .ability-picker-modal::part(backdrop),
+.special-ability-picker-modal::part(backdrop),
 .character-image-picker-modal::part(backdrop),
 .enemy-mechanic-picker-modal::part(backdrop),
 .ship-picker-modal::part(backdrop),
@@ -98,6 +99,7 @@ img {
 
 .manual-filter-modal::part(content),
 .ability-picker-modal::part(content),
+.special-ability-picker-modal::part(content),
 .character-image-picker-modal::part(content),
 .enemy-mechanic-picker-modal::part(content),
 .ship-picker-modal::part(content),
@@ -116,6 +118,7 @@ img {
 @media (max-width: 679px) {
   .manual-filter-modal::part(content),
   .ability-picker-modal::part(content),
+  .special-ability-picker-modal::part(content),
   .character-image-picker-modal::part(content),
   .enemy-mechanic-picker-modal::part(content),
   .ship-picker-modal::part(content),
