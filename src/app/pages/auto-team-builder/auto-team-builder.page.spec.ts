@@ -314,7 +314,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.result()).toBe(resultBeforeBoxCreation);
   });
 
-  it('passes picker-selected extra-drop requirements to the builder service', async () => {
+  it('passes picker-selected Special requirements to the builder service', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
     await page.ngOnInit();
@@ -322,8 +322,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     page.selectedTypes.set(['DEX']);
     await page.saveAbilityPicker([
       {
-        draftId: 'drop-guaranteed',
-        abilityKey: 'extra_drop_guaranteed',
+        draftId: 'bind-1',
+        abilityKey: 'remove_bind',
         minTurns: null,
         slotTokens: [],
         requiredCharacterCount: 1,
@@ -337,7 +337,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       expect.objectContaining({
         requiredAbilities: expect.arrayContaining([
           expect.objectContaining({
-            abilityKey: 'extra_drop_guaranteed',
+            abilityKey: 'remove_bind',
+            minTurns: null,
             requiredCharacterCount: 1,
           }),
         ]),
@@ -346,14 +347,14 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
-  it('keeps picker-selected extra-drop abilities in the manual requirement drafts', async () => {
+  it('keeps picker-selected Special abilities in the manual requirement drafts', async () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
     await page.saveAbilityPicker([
       {
-        draftId: 'drop-any',
-        abilityKey: 'extra_drop_any',
+        draftId: 'bind-1',
+        abilityKey: 'remove_bind',
         minTurns: null,
         slotTokens: [],
         requiredCharacterCount: 1,
@@ -363,7 +364,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.requiredAbilityDrafts()).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          abilityKey: 'extra_drop_any',
+          abilityKey: 'remove_bind',
           minTurns: null,
           slotTokens: [],
           requiredCharacterCount: 1,
@@ -371,11 +372,11 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       ]),
     );
     expect(page.requiredAbilitySummaryChips().map((chip) => chip.label)).toContain(
-      'Any Extra Drop',
+      'Bind',
     );
     expect(page.pageRequiredAbilities()).toEqual([
       {
-        abilityKey: 'extra_drop_any',
+        abilityKey: 'remove_bind',
         minTurns: null,
         slotTokens: [],
         requiredCharacterCount: 1,
@@ -383,14 +384,14 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     ]);
   });
 
-  it('keeps extra-drop requirements in manual leader slot filters', async () => {
+  it('keeps Special requirements in manual slot filters', async () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
     await page.saveAbilityPicker([
       {
-        draftId: 'drop-guaranteed',
-        abilityKey: 'extra_drop_guaranteed',
+        draftId: 'bind-1',
+        abilityKey: 'remove_bind',
         minTurns: null,
         slotTokens: [],
         requiredCharacterCount: 1,
@@ -400,7 +401,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
     expect(page.manualCandidateFilters().requiredAbilities).toEqual([
       {
-        abilityKey: 'extra_drop_guaranteed',
+        abilityKey: 'remove_bind',
         minTurns: null,
         slotTokens: [],
         requiredCharacterCount: 1,
@@ -426,7 +427,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.manualCandidateFilters().requiredAbilities).toEqual([]);
   });
 
-  it('filters manual leader cards by extra-drop while leaving sub cards unfiltered', async () => {
+  it('passes Special matching ids to manual candidate repository searches', async () => {
     const matchingLeader = createCharacterRecord(401, 'Buggy', [
       {
         key: 'extra_drop_any',
@@ -453,18 +454,19 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     await page.ngOnInit();
     await page.saveAbilityPicker([
       {
-        draftId: 'drop-guaranteed',
-        abilityKey: 'extra_drop_guaranteed',
+        draftId: 'bind-1',
+        abilityKey: 'remove_bind',
         minTurns: null,
         slotTokens: [],
         requiredCharacterCount: 1,
       },
     ]);
 
-    page.activeManualSlotRole.set('captain');
-    expect(page.manualCandidateCards().map((card) => card.character.id)).toEqual([401]);
-
-    page.activeManualSlotRole.set('sub1');
+    expect(repository.searchDetailedCharacters).toHaveBeenCalledWith(
+      expect.objectContaining({
+        allowedCharacterIds: [102, 101],
+      }),
+    );
     expect(page.manualCandidateCards().map((card) => card.character.id)).toEqual([402, 401]);
   });
 
@@ -538,14 +540,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         requiredAbilities: [
           {
             abilityKey: 'remove_bind',
-            minTurns: 5,
+            minTurns: null,
             slotTokens: [],
-            requiredCharacterCount: 2,
-          },
-          {
-            abilityKey: 'remove_slot_barrier',
-            minTurns: 2,
-            slotTokens: ['DEX'],
             requiredCharacterCount: 1,
           },
         ],
@@ -634,15 +630,15 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.requiredAbilityDrafts()).toEqual([
       expect.objectContaining({
         abilityKey: 'remove_bind',
-        minTurns: 5,
+        minTurns: null,
         slotTokens: [],
-        requiredCharacterCount: 2,
+        requiredCharacterCount: 1,
       }),
     ]);
     expect(repository.searchDetailedCharacters).toHaveBeenCalledTimes(2);
   });
 
-  it('derives direct counters from enemy mechanics and refreshes the manual candidate pool on save', async () => {
+  it('keeps enemy mechanics out of the Special-only requirement list on save', async () => {
     const { page, repository } = await createPage();
 
     await page.ngOnInit();
@@ -661,14 +657,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     ]);
 
     expect(page.enemyMechanicPickerOpen()).toBe(false);
-    expect(page.pageRequiredAbilities()).toEqual([
-      {
-        abilityKey: 'remove_enemy_barrier',
-        minTurns: 3,
-        slotTokens: [],
-        requiredCharacterCount: 1,
-      },
-    ]);
+    expect(page.pageRequiredAbilities()).toEqual([]);
     expect(repository.searchDetailedCharacters).toHaveBeenCalledTimes(2);
   });
 
@@ -1235,7 +1224,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         slotTokens: [],
         requiredCharacterCount: 2,
       }),
-    ).toBe('Remove Bind (>=2 chars • 5 turns)');
+    ).toBe('Bind (>=2 chars • 5 turns)');
     expect(
       page.formatAbilityRequirement({
         abilityKey: 'remove_bind',
@@ -1243,7 +1232,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         slotTokens: [],
         requiredCharacterCount: 1,
       }),
-    ).toBe('Remove Bind (5 turns)');
+    ).toBe('Bind (5 turns)');
   });
 
   it('sanitizes empty character counts back to an effective default of 1', async () => {
@@ -1263,7 +1252,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.pageRequiredAbilities()).toEqual([
       {
         abilityKey: 'remove_bind',
-        minTurns: 5,
+        minTurns: null,
         slotTokens: [],
         requiredCharacterCount: 1,
       },
@@ -1308,8 +1297,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain('<ng-lottie');
     expect(template).toContain('[disabled]="saveUiLocked()"');
     expect(template).toContain('{{ saveButtonLabel() }}');
-    expect(template).toContain('<app-enemy-mechanic-picker');
-    expect(template).toContain('<app-ability-requirement-picker');
+    expect(template).toContain('<app-special-ability-picker');
+    expect(template).not.toContain('<app-enemy-mechanic-picker');
+    expect(template).not.toContain('<app-ability-requirement-picker');
     expect(template).not.toContain('<app-ship-picker');
     expect(template).toContain('leaderSuperEffectScopeToggleLabel()');
     expect(template).toContain('favoriteShipsOnlyToggleLabel()');
@@ -1859,7 +1849,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.manualCandidateFilters().requiredAbilities).toEqual([
       {
         abilityKey: 'remove_bind',
-        minTurns: 1,
+        minTurns: null,
         slotTokens: [],
         requiredCharacterCount: 1,
       },
@@ -2635,9 +2625,9 @@ describe('AutoTeamBuilderPage preset export state', () => {
         requiredAbilities: [
           {
             abilityKey: 'remove_bind',
-            minTurns: 5,
+            minTurns: null,
             slotTokens: [],
-            requiredCharacterCount: 2,
+            requiredCharacterCount: 1,
           },
         ],
         enemyMechanics: [],
@@ -3157,17 +3147,8 @@ describe('AutoTeamBuilder preset import helpers', () => {
 
     await page['applySelectionPresetState'](result.state, []);
 
-    expect(page.requiredAbilityDrafts()).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          abilityKey: 'extra_drop_any',
-          minTurns: null,
-          slotTokens: [],
-          requiredCharacterCount: 1,
-        }),
-      ]),
-    );
-    expect(page.requiredAbilitySummaryChips().map((chip) => chip.label)).toContain(
+    expect(page.requiredAbilityDrafts()).toEqual([]);
+    expect(page.requiredAbilitySummaryChips().map((chip) => chip.label)).not.toContain(
       'Any Extra Drop',
     );
   });
@@ -3472,9 +3453,9 @@ describe('AutoTeamBuilderPage preset import state', () => {
     expect(page.pageRequiredAbilities()).toEqual([
       {
         abilityKey: 'remove_bind',
-        minTurns: 5,
+        minTurns: null,
         slotTokens: [],
-        requiredCharacterCount: 2,
+        requiredCharacterCount: 1,
       },
     ]);
     expect(page.lockedCharacterIds()).toEqual([102, 101]);
@@ -3499,9 +3480,12 @@ describe('AutoTeamBuilderPage preset import state', () => {
     expect(page.errorMessage()).toBe('');
     expect(page.buildProgress()).toBeNull();
     expect(page.presetImportFeedback()).toEqual({
-      tone: 'success',
-      title: 'Preset applied.',
-      details: ['Loaded settings from favorite-preset.json.'],
+      tone: 'warning',
+      title: 'Preset applied with warnings.',
+      details: [
+        'Loaded settings from favorite-preset.json.',
+        'Ignored 1 ability requirements with unsupported turns, slot tokens, or character count.',
+      ],
     });
   });
 
@@ -3557,14 +3541,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
 
     expect(page.selectedTypes()).toEqual(['DEX']);
     expect(page.selectedClasses()).toEqual(['Fighter']);
-    expect(page.pageRequiredAbilities()).toEqual([
-      {
-        abilityKey: 'remove_slot_barrier',
-        minTurns: 2,
-        slotTokens: ['DEX'],
-        requiredCharacterCount: 1,
-      },
-    ]);
+    expect(page.pageRequiredAbilities()).toEqual([]);
     expect(page.lockedCharacterIds()).toEqual([101]);
     expect(page.selectedLeaderIds()).toEqual([101]);
     expect(page.manualSlots()).toEqual(
@@ -3718,27 +3695,11 @@ describe('AutoTeamBuilder enemy preset handoff', () => {
 
     expect(page.selectedTypes()).toEqual(['DEX', 'PSY']);
     expect(page.selectedClasses()).toEqual(['Fighter']);
-    expect(page.pageEnemyMechanics()).toEqual([
-      {
-        mechanicKey: 'enemy_barrier',
-        category: 'enemyDefense',
-        minTurns: 3,
-        triggerTags: [],
-        responseTags: [],
-        conditionTags: [],
-        derivedAbilityKey: 'remove_enemy_barrier',
-      },
-    ]);
+    expect(page.pageEnemyMechanics()).toEqual([]);
     expect(page.pageRequiredAbilities()).toEqual([
       {
-        abilityKey: 'remove_enemy_barrier',
-        minTurns: 3,
-        slotTokens: [],
-        requiredCharacterCount: 1,
-      },
-      {
         abilityKey: 'remove_bind',
-        minTurns: 5,
+        minTurns: null,
         slotTokens: [],
         requiredCharacterCount: 1,
       },
@@ -3779,27 +3740,11 @@ describe('AutoTeamBuilder enemy preset handoff', () => {
       ['Fighter'],
       ['DEX', 'PSY'],
       expect.objectContaining({
-        enemyMechanics: [
-          {
-            mechanicKey: 'enemy_barrier',
-            category: 'enemyDefense',
-            minTurns: 3,
-            triggerTags: [],
-            responseTags: [],
-            conditionTags: [],
-            derivedAbilityKey: 'remove_enemy_barrier',
-          },
-        ],
+        enemyMechanics: [],
         requiredAbilities: [
           {
-            abilityKey: 'remove_enemy_barrier',
-            minTurns: 3,
-            slotTokens: [],
-            requiredCharacterCount: 1,
-          },
-          {
             abilityKey: 'remove_bind',
-            minTurns: 5,
+            minTurns: null,
             slotTokens: [],
             requiredCharacterCount: 1,
           },
@@ -4134,18 +4079,24 @@ async function createPage(
         },
         {
           key: 'remove_bind',
-          label: 'Remove Bind',
-          supportsTurns: true,
+          label: 'Bind',
+          category: 'special',
+          groupLabel: 'Reduce Status Effect Duration',
+          groupOrder: 6,
+          effectOrder: 1,
+          supportsTurns: false,
           supportsSlotTokens: false,
           availableSlotTokens: [],
           availableSources: ['specialText'],
           matchCount: 10,
+          matchingCharacterIds: [101, 102],
           sampleCharacterIds: [101],
           sampleTexts: ['Reduces Bind duration by 5 turns'],
         },
         {
           key: 'remove_slot_barrier',
           label: 'Remove Slot Barrier',
+          category: 'legacy',
           supportsTurns: true,
           supportsSlotTokens: true,
           availableSlotTokens: ['DEX', 'STR'],

@@ -30,6 +30,7 @@ import {
   sparklesOutline,
 } from 'ionicons/icons';
 
+import { type AutoBuildAbilityCatalog } from '../../core/models/auto-team-builder-ability.models';
 import { type CharacterListItem, type DatasetManifest } from '../../core/models/optc.models';
 import {
   type OptcbxImportResult,
@@ -40,6 +41,16 @@ import { CharacterCatalogCacheService } from '../../core/services/character-cata
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { OptcbxImportService } from '../../core/services/optcbx-import.service';
 import { UserStateService } from '../../core/services/user-state.service';
+import {
+  createAbilityRequirementDrafts,
+  type AbilityRequirementDraft,
+} from '../../core/services/ability-requirement-draft.utils';
+import {
+  getSpecialAbilityCatalogItems,
+  resolveSpecialAbilityMatchingCharacterIds,
+  serializeSpecialAbilityDrafts,
+} from '../../core/services/special-ability-filter.utils';
+import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
 import {
   buildOptcbxFavoritesExportPayload,
   downloadOptcbxFavoritesExport,
@@ -73,6 +84,7 @@ interface CharacterCatalogCardView {
     IonToggle,
     IonTitle,
     IonToolbar,
+    SpecialAbilityPickerComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,
@@ -82,6 +94,7 @@ interface CharacterCatalogCardView {
 })
 export class CharactersPage implements OnInit {
   public readonly summary = signal<DatasetManifest | null>(null);
+  public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly characters = signal<CharacterListItem[]>([]);
   public readonly loading = signal(true);
   public readonly loadingMore = signal(false);
@@ -92,6 +105,8 @@ export class CharactersPage implements OnInit {
   public readonly selectedType = signal('');
   public readonly selectedClass = signal('');
   public readonly favoritesOnly = signal(false);
+  public readonly specialAbilityPickerOpen = signal(false);
+  public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly displayMode = signal<CharacterDisplayMode>('list');
   public readonly favoriteIds;
   public readonly canDownloadFavoritesExport = computed(() => this.favoriteIds().length > 0);
@@ -130,6 +145,21 @@ export class CharactersPage implements OnInit {
       this.filteredClassOptions().length > 0 && this.classQuery().trim() !== this.selectedClass(),
   );
   public readonly isCompactDisplayMode = computed(() => this.displayMode() === 'compact');
+  public readonly availableSpecialAbilityCatalogItems = computed(() =>
+    getSpecialAbilityCatalogItems(this.abilityCatalog()?.abilities ?? []),
+  );
+  public readonly specialAbilityRequirements = computed(() =>
+    serializeSpecialAbilityDrafts(
+      this.specialAbilityDrafts(),
+      this.availableSpecialAbilityCatalogItems(),
+    ),
+  );
+  public readonly specialFilterCharacterIds = computed(() =>
+    resolveSpecialAbilityMatchingCharacterIds(
+      this.specialAbilityRequirements(),
+      this.availableSpecialAbilityCatalogItems(),
+    ),
+  );
   public readonly characterCardViews = computed<CharacterCatalogCardView[]>(() =>
     this.characters().map((character) => {
       const isFavorite = this.isFavorite(character.id);
@@ -178,11 +208,13 @@ export class CharactersPage implements OnInit {
 
   public async ngOnInit(): Promise<void> {
     await this.userState.ready();
-    const [summary] = await Promise.all([
+    const [summary, abilityCatalog] = await Promise.all([
       this.repository.getDatasetManifest(),
+      this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
       this.characterCatalogCache.ensureLoaded(),
     ]);
     this.summary.set(summary);
+    this.abilityCatalog.set(abilityCatalog);
     await this.loadCharacters(true);
   }
 
@@ -262,6 +294,33 @@ export class CharactersPage implements OnInit {
 
   public setDisplayMode(displayMode: CharacterDisplayMode): void {
     this.displayMode.set(displayMode);
+  }
+
+  public openSpecialAbilityPicker(): void {
+    if (!this.availableSpecialAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.specialAbilityPickerOpen.set(true);
+  }
+
+  public closeSpecialAbilityPicker(): void {
+    this.specialAbilityPickerOpen.set(false);
+  }
+
+  public async saveSpecialAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.specialAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeSpecialAbilityDrafts(drafts, this.availableSpecialAbilityCatalogItems()),
+      ),
+    );
+    this.specialAbilityPickerOpen.set(false);
+    await this.loadCharacters(true);
+  }
+
+  public async clearSpecialAbilityFilters(): Promise<void> {
+    this.specialAbilityDrafts.set([]);
+    await this.loadCharacters(true);
   }
 
   public async loadMore(): Promise<void> {
@@ -418,6 +477,8 @@ export class CharactersPage implements OnInit {
     this.selectedType.set('');
     this.selectedClass.set('');
     this.favoritesOnly.set(false);
+    this.specialAbilityPickerOpen.set(false);
+    this.specialAbilityDrafts.set([]);
     this.characters.set([]);
     this.loadingMore.set(false);
     this.hasMore.set(true);
@@ -453,7 +514,7 @@ export class CharactersPage implements OnInit {
       searchTerm: this.searchTerm(),
       typeFilter: this.selectedType(),
       classFilter: this.selectedClass(),
-      allowedCharacterIds: this.favoritesOnly() ? this.favoriteIds() : undefined,
+      allowedCharacterIds: this.resolveAllowedCharacterIds(),
       limit: PAGE_SIZE,
       offset: nextOffset,
     });
@@ -467,6 +528,23 @@ export class CharactersPage implements OnInit {
     return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort((left, right) =>
       left.localeCompare(right),
     );
+  }
+
+  private resolveAllowedCharacterIds(): number[] | undefined {
+    const specialIds = this.specialFilterCharacterIds();
+    const favoriteIds = this.favoritesOnly() ? this.favoriteIds() : undefined;
+
+    if (specialIds === undefined) {
+      return favoriteIds;
+    }
+
+    if (favoriteIds === undefined) {
+      return specialIds;
+    }
+
+    const specialIdSet = new Set(specialIds);
+
+    return favoriteIds.filter((characterId) => specialIdSet.has(characterId));
   }
 
   private filterOptions(options: string[], query: string, selectedValue: string): string[] {

@@ -1,3 +1,12 @@
+import { readFileSync } from 'node:fs';
+
+const SPECIAL_ABILITY_DEFINITIONS = JSON.parse(
+  readFileSync(new URL('./data/special-ability-definitions.json', import.meta.url), 'utf8'),
+);
+const SPECIAL_ABILITY_METADATA_BY_KEY = new Map(
+  SPECIAL_ABILITY_DEFINITIONS.map((definition) => [definition.key, definition]),
+);
+const SPECIAL_ABILITY_KEY_SET = new Set(SPECIAL_ABILITY_DEFINITIONS.map((definition) => definition.key));
 const SLOT_ABILITY_KEY_SET = new Set(['remove_slot_bind', 'remove_slot_barrier']);
 const DEFAULT_COVERAGE_MODE = 'explicit';
 const PAIN_ABILITY_KEY = 'remove_pain';
@@ -42,6 +51,70 @@ const EXPLICIT_BUILDER_ABILITIES = [
 const EXPLICIT_BUILDER_ABILITY_KEY_SET = new Set(
   EXPLICIT_BUILDER_ABILITIES.map((ability) => ability.key),
 );
+const SPECIAL_ABILITY_MATCHERS = [
+  ['special_damage', [/\bdeals?\b[^.]{0,160}\bdamage\b/i]],
+  ['special_damage_other', [/\bdeals?\b[^.]{0,160}\btypeless damage\b/i]],
+  ['percent_damage', [/\bdeals?\b[^.]{0,160}\b\d+%\s+of\b[^.]{0,100}\bHP\b[^.]{0,80}\bdamage\b/i, /\bcuts?\b[^.]{0,100}\bHP\b[^.]{0,80}\bby\s+\d+%/i]],
+  ['percent_damage_ignore_defensive_effects', [/\b\d+%\s+of\b[^.]{0,100}\bHP\b[^.]{0,120}\bignoring\b[^.]{0,120}\b(?:defensive effects|normal attack only|damage reduction|barrier|defense)\b/i]],
+  ['boost_atk', [/\bboosts?\b[^.]{0,120}\bATK\b[^.]{0,80}\bby\s+\d+(?:\.\d+)?x/i]],
+  ['boost_slot_effects', [/\bboosts?\b[^.]{0,120}\b(?:Orb Effects|Slot Effects|orbs?)\b[^.]{0,80}\bby\s+\d+(?:\.\d+)?x/i]],
+  ['boost_against_delayed_enemies', [/\bboosts?\b[^.]{0,120}\bdamage\b[^.]{0,120}\bdelayed enemies\b/i]],
+  ['boost_against_def_reduced_enemies', [/\bboosts?\b[^.]{0,120}\bdamage\b[^.]{0,120}\b(?:DEF|defense) reduced enemies\b/i]],
+  ['boost_against_poisoned_enemies', [/\bboosts?\b[^.]{0,120}\bdamage\b[^.]{0,120}\bpoisoned enemies\b/i]],
+  ['other_damage_boosts', [/\bboosts?\b[^.]{0,120}\bdamage dealt\b/i, /\bdamage boost\b/i]],
+  ['boost_type_effects', [/\bboosts?\b[^.]{0,120}\btype effects?\b/i, /\bcolor affinity\b/i]],
+  ['additional_damage_boost', [/\badds?\b[^.]{0,120}\bdamage\b/i, /\badditional damage\b/i]],
+  ['chain_multiplier_lock', [/\blocks?\b[^.]{0,120}\bchain\b/i]],
+  ['chain_multiplier_lock_min_max', [/\bchain\b[^.]{0,80}\b(?:minimum|maximum|min|max)\b/i]],
+  ['chain_multiplier_additive_boost', [/\badds?\b[^.]{0,80}\bto\b[^.]{0,40}\bchain\b/i, /\bchain\b[^.]{0,80}\b\+\d/i]],
+  ['chain_multiplier_multiplicative_boost', [/\bboosts?\b[^.]{0,120}\bchain\b[^.]{0,80}\bby\s+\d+(?:\.\d+)?x/i]],
+  ['chain_multiplier_growth_rate', [/\bboosts?\b[^.]{0,120}\bchain\b[^.]{0,80}\bgrowth rate\b/i, /\bincreases?\b[^.]{0,120}\bchain\b[^.]{0,80}\bgrowth rate\b/i]],
+  ['boost_base_atk', [/\bboosts?\b[^.]{0,120}\bbase ATK\b/i, /\badds?\b[^.]{0,120}\bbase ATK\b/i]],
+  ['effect_boost', [/\bincreases?\b[^.]{0,120}\bboost effects?\b/i, /\beffect boost\b/i]],
+  ['critical_damage_boost', [/\bcritical damage\b/i]],
+  ['final_tap_atk_boost', [/\bfinal tap\b[^.]{0,120}\bATK\b/i]],
+  ['reduce_damage', [/\breduces?\b[^.]{0,120}\bdamage (?:received|taken)\b/i]],
+  ['reduce_damage_over_threshold', [/\breduces?\b[^.]{0,120}\bdamage\b[^.]{0,120}\bover\b[^.]{0,80}\bHP\b/i]],
+  ['nullify_damage', [/\bnullif(?:y|ies)\b[^.]{0,120}\bdamage\b/i]],
+  ['lock_slots', [/\blocks?\b[^.]{0,80}\b(?:orbs?|slots?)\b/i]],
+  ['make_slots_favorable', [/\bmakes?\b[^.]{0,160}\b(?:orbs?|slots?)\b[^.]{0,80}\b(?:beneficial|matching|favorable)\b/i]],
+  ['change_slot_chance', [/\b(?:changes?|boosts?|increases?)\b[^.]{0,120}\b(?:orb|slot)\b[^.]{0,80}\bchance\b/i]],
+  ['swap_slots', [/\bswaps?\b[^.]{0,80}\b(?:orbs?|slots?)\b/i]],
+  ['change_slots', [/\bchanges?\b[^.]{0,160}\b(?:orbs?|slots?)\b/i, /\btransforms?\b[^.]{0,160}\b(?:orbs?|slots?)\b/i]],
+  ['change_block_slots', [/\bchanges?\b[^.]{0,180}\[BLOCK\][^.]{0,160}\b(?:orbs?|slots?)\b/i, /\bincluding\s+\[BLOCK\]/i]],
+  ['consume_slots', [/\bconsumes?\b[^.]{0,80}\b(?:orbs?|slots?)\b/i]],
+  ['auto_change_slots', [/\bautomatically\b[^.]{0,120}\bchanges?\b[^.]{0,120}\b(?:orbs?|slots?)\b/i, /\bauto changes?\b/i]],
+  ['remove_silence', [/\breduces?\b[^.]{0,80}\bsilence\b[^.]{0,80}\bby\s+\d+\s+turns?/i]],
+  ['apply_delay', [/\bdelays?\b[^.]{0,120}\benemies\b/i]],
+  ['apply_def_reduction', [/\breduces?\b[^.]{0,120}\benem(?:y|ies)[^.]{0,80}\bDEF\b/i, /\binflicts?\b[^.]{0,120}\bDEF Down\b/i]],
+  ['apply_increase_damage_taken', [/\bincreases?\b[^.]{0,120}\bdamage taken\b/i]],
+  ['apply_unique_effect', [/\bunique effect\b/i]],
+  ['apply_resistance_reduction', [/\bresistance reduction\b/i, /\breduces?\b[^.]{0,120}\bresistance\b/i]],
+  ['apply_set_target', [/\bsets?\b[^.]{0,80}\btarget\b/i]],
+  ['apply_weakened', [/\bweakened\b/i]],
+  ['reduce_ship_special_charge', [/\breduces?\b[^.]{0,120}\bship special\b[^.]{0,80}\b(?:charge|cooldown|turns?)\b/i]],
+  ['reduce_switch_effect_use', [/\breduces?\b[^.]{0,120}\bswitch effect\b[^.]{0,80}\buse/i]],
+  ['reduce_vs_effect_gauge', [/\breduces?\b[^.]{0,120}\bVS effect gauge\b/i]],
+  ['reduce_special_charge', [/\breduces?\b[^.]{0,120}\bspecial cooldown\b/i, /\breduces?\b[^.]{0,120}\bspecial charge\b/i]],
+  ['heal_hp', [/\b(?:recovers?|heals?)\b[^.]{0,120}\bHP\b/i]],
+  ['boost_rcv', [/\bboosts?\b[^.]{0,120}\bRCV\b/i]],
+  ['apply_resilience', [/\bapplies?\b[^.]{0,120}\bresilience\b/i, /\bresilience\b[^.]{0,120}\bcrew\b/i]],
+  ['defeat_enemy', [/\bdefeats?\b[^.]{0,120}\benem/i, /\binstantly defeats?\b/i]],
+  ['end_of_turn_additional_damage', [/\bend of (?:each )?turn\b[^.]{0,120}\bdamage\b/i]],
+  ['tap_timing_requirement', [/\bPERFECT hits?\b/i, /\btap-?timing\b/i]],
+  ['extend_turn_duration', [/\bextends?\b[^.]{0,120}\bduration\b/i, /\bincreases?\b[^.]{0,120}\bduration\b/i]],
+  ['delayed_effect_launch', [/\bfollowing turn\b/i, /\bafter\s+\d+\s+turns?\b/i]],
+  ['boost_max_hp', [/\bboosts?\b[^.]{0,120}\bmax HP\b/i]],
+  ['apply_ally_status_effect', [/\bapplies?\b[^.]{0,120}\b(?:to|for)\b[^.]{0,80}\b(?:crew|characters|allies)\b/i]],
+  ['swap_captains', [/\bswaps?\b[^.]{0,120}\bcaptains?\b/i]],
+  ['remove_beneficial_effect', [/\bremoves?\b[^.]{0,120}\bbeneficial effects?\b/i]],
+  ['class_change', [/\bclass change\b/i, /\bchanges?\b[^.]{0,120}\bclass\b/i]],
+  ['critical_hit_chance_boost', [/\bcritical hit chance\b/i]],
+  ['territory', [/\bterritory\b/i]],
+].map(([key, patterns]) => ({
+  key,
+  patterns,
+}));
 const IGNORED_TARGET_PATTERNS = [
   'special cooldown',
   'cooldown',
@@ -352,6 +425,26 @@ export function analyzeBuilderAbilityText(value, source) {
     addAbility(abilities, seen, ability);
   });
 
+  if (source === 'specialText') {
+    SPECIAL_ABILITY_MATCHERS.forEach(({ key, patterns }) => {
+      const definition = SPECIAL_ABILITY_METADATA_BY_KEY.get(key);
+
+      if (!definition || !patterns.some((pattern) => pattern.test(normalizedText))) {
+        return;
+      }
+
+      addAbility(abilities, seen, {
+        key,
+        label: definition.label,
+        minTurns: null,
+        isCompleteRemoval: false,
+        slotTokens: [],
+        source,
+        coverageMode: DEFAULT_COVERAGE_MODE,
+      });
+    });
+  }
+
   return abilities;
 }
 
@@ -380,6 +473,9 @@ export async function enrichCharactersWithBuilderAbilities(
   { batchSize = 200, logger = console.log, abilityCorrections = null } = {},
 ) {
   const catalogMap = new Map();
+  SPECIAL_ABILITY_DEFINITIONS.forEach((definition) => {
+    catalogMap.set(definition.key, createCatalogAccumulator(definition.key, definition.label));
+  });
   const total = characters.length;
 
   for (let start = 0; start < total; start += batchSize) {
@@ -407,14 +503,18 @@ export async function enrichCharactersWithBuilderAbilities(
         const current =
           catalogMap.get(ability.key) ?? createCatalogAccumulator(ability.key, ability.label);
 
-        current.matchCount += 1;
         current.supportsTurns ||= ability.minTurns !== null;
         current.supportsSlotTokens ||= ability.slotTokens.length > 0;
         current.availableSources.add(ability.source);
         current.availableCoverageModes.add(resolveCoverageMode(ability));
         ability.slotTokens.forEach((token) => current.availableSlotTokens.add(token));
 
-        if (current.sampleCharacterIds.length < 5) {
+        if (!current.matchingCharacterIds.has(character.id)) {
+          current.matchingCharacterIds.add(character.id);
+          current.matchCount = current.matchingCharacterIds.size;
+        }
+
+        if (current.sampleCharacterIds.length < 5 && !current.sampleCharacterIds.includes(character.id)) {
           current.sampleCharacterIds.push(character.id);
         }
 
@@ -444,23 +544,36 @@ export async function enrichCharactersWithBuilderAbilities(
   }
 
   const abilities = [...catalogMap.values()]
-    .map((entry) => ({
-      key: entry.key,
-      label: entry.label,
-      supportsTurns: entry.supportsTurns,
-      supportsSlotTokens: entry.supportsSlotTokens,
-      availableSlotTokens: [...entry.availableSlotTokens].sort((left, right) =>
-        left.localeCompare(right),
-      ),
-      availableSources: [...entry.availableSources].sort((left, right) =>
-        left.localeCompare(right),
-      ),
-      availableCoverageModes: [...entry.availableCoverageModes].sort(compareCoverageModes),
-      matchCount: entry.matchCount,
-      sampleCharacterIds: [...entry.sampleCharacterIds],
-      sampleTexts: [...entry.sampleTexts],
-    }))
-    .sort((left, right) => left.label.localeCompare(right.label));
+    .map((entry) => {
+      const metadata = SPECIAL_ABILITY_METADATA_BY_KEY.get(entry.key);
+
+      return {
+        key: entry.key,
+        label: metadata?.label ?? entry.label,
+        category: metadata ? 'special' : 'legacy',
+        groupLabel: metadata?.groupLabel ?? null,
+        groupOrder: metadata?.groupOrder ?? null,
+        effectOrder: metadata?.effectOrder ?? null,
+        supportsTurns: metadata ? false : entry.supportsTurns,
+        supportsSlotTokens: metadata ? false : entry.supportsSlotTokens,
+        availableSlotTokens: metadata
+          ? []
+          : [...entry.availableSlotTokens].sort((left, right) => left.localeCompare(right)),
+        availableSources: [...entry.availableSources].length
+          ? [...entry.availableSources].sort((left, right) => left.localeCompare(right))
+          : metadata
+            ? ['specialText']
+            : [],
+        availableCoverageModes: [...entry.availableCoverageModes].length
+          ? [...entry.availableCoverageModes].sort(compareCoverageModes)
+          : [DEFAULT_COVERAGE_MODE],
+        matchCount: entry.matchCount,
+        matchingCharacterIds: [...entry.matchingCharacterIds].sort((left, right) => left - right),
+        sampleCharacterIds: [...entry.sampleCharacterIds],
+        sampleTexts: [...entry.sampleTexts],
+      };
+    })
+    .sort(compareCatalogAbilities);
 
   return abilities;
 }
@@ -571,9 +684,28 @@ function createCatalogAccumulator(key, label) {
     availableSources: new Set(),
     availableCoverageModes: new Set(),
     matchCount: 0,
+    matchingCharacterIds: new Set(),
     sampleCharacterIds: [],
     sampleTexts: [],
   };
+}
+
+function compareCatalogAbilities(left, right) {
+  if (left.category === 'special' || right.category === 'special') {
+    if (left.category !== right.category) {
+      return left.category === 'special' ? -1 : 1;
+    }
+
+    return (
+      (left.groupOrder ?? Number.MAX_SAFE_INTEGER) -
+        (right.groupOrder ?? Number.MAX_SAFE_INTEGER) ||
+      (left.effectOrder ?? Number.MAX_SAFE_INTEGER) -
+        (right.effectOrder ?? Number.MAX_SAFE_INTEGER) ||
+      left.label.localeCompare(right.label)
+    );
+  }
+
+  return left.label.localeCompare(right.label);
 }
 
 function buildAbilityIdentity(ability) {

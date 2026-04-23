@@ -87,8 +87,7 @@ import {
 } from './auto-team-builder-export.utils';
 import { buildAutoTeamBuilderStateFromSavedEnemy } from './auto-team-builder-enemy-preset.utils';
 import { buildAutoTeamBuilderStateFromSavedTeam } from './auto-team-builder-saved-team-preset.utils';
-import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
-import { EnemyMechanicPickerComponent } from '../../shared/enemy-mechanic-picker/enemy-mechanic-picker.component';
+import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
 import {
   createAbilityRequirementDrafts,
   formatAbilityRequirementSummary,
@@ -109,6 +108,12 @@ import {
   type EnemyMechanicDraft,
   type EnemyMechanicVisualMeta,
 } from '../../core/services/enemy-mechanic-draft.utils';
+import {
+  createSpecialAbilityDrafts,
+  getSpecialAbilityCatalogItems,
+  resolveSpecialAbilityMatchingCharacterIds,
+  serializeSpecialAbilityDrafts,
+} from '../../core/services/special-ability-filter.utils';
 
 type LoadingProgressRowTone = 'primary' | 'secondary' | 'fallback';
 
@@ -333,8 +338,7 @@ function matchesLeaderOnlyManualRequirements(
     IonToolbar,
     ScrollingModule,
     LottieComponent,
-    AbilityRequirementPickerComponent,
-    EnemyMechanicPickerComponent,
+    SpecialAbilityPickerComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,
@@ -479,6 +483,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly availableAbilityCatalogItems = computed(
     () => this.abilityCatalog()?.abilities ?? [],
   );
+  public readonly availableSpecialAbilityCatalogItems = computed(() =>
+    getSpecialAbilityCatalogItems(this.availableAbilityCatalogItems()),
+  );
   public readonly availableEnemyMechanicCatalogItems = computed<
     AutoBuildEnemyMechanicCatalogItem[]
   >(() => getEnemyMechanicCatalogItems());
@@ -490,14 +497,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       new Map(this.availableEnemyMechanicCatalogItems().map((item) => [item.key, item] as const)),
   );
   public readonly pageRequiredAbilities = computed(() =>
-    mergeAbilityRequirements([
-      ...this.derivedRequiredAbilities(),
-      ...this.serializeManualRequiredAbilities(),
-    ]),
+    mergeAbilityRequirements(this.serializeManualRequiredAbilities()),
   );
   public readonly hasSelectedClasses = computed(() => this.selectedClasses().length > 0);
   public readonly hasSelectedTypes = computed(() => this.selectedTypes().length > 0);
   public readonly hasRequiredAbilities = computed(() => this.pageRequiredAbilities().length > 0);
+  public readonly specialFilterCharacterIds = computed(() =>
+    resolveSpecialAbilityMatchingCharacterIds(
+      this.pageRequiredAbilities(),
+      this.availableSpecialAbilityCatalogItems(),
+    ),
+  );
   public readonly enemyMechanicSummaryChips = computed<EnemyMechanicSummaryChipView[]>(() =>
     this.enemyMechanicDrafts().map((draft) => ({
       draftId: draft.draftId,
@@ -1809,7 +1819,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   }
 
   public openAbilityPicker(): void {
-    if (this.building() || !this.availableAbilityCatalogItems().length) {
+    if (this.building() || !this.availableSpecialAbilityCatalogItems().length) {
       return;
     }
 
@@ -1821,10 +1831,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   }
 
   public async saveAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
-    const requirements = serializeAbilityRequirementDrafts(drafts, {
-      dedupe: true,
-      catalogMap: this.abilityCatalogMap(),
-    });
+    const requirements = serializeSpecialAbilityDrafts(
+      drafts,
+      this.availableSpecialAbilityCatalogItems(),
+    );
 
     this.requiredAbilityDrafts.set(createAbilityRequirementDrafts(requirements));
     this.abilityPickerOpen.set(false);
@@ -2467,12 +2477,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
     this.selectedTypes.set([...state.selectedTypes]);
     this.selectedClasses.set([...state.selectedClasses]);
-    this.enemyMechanicDrafts.set(createEnemyMechanicDrafts(state.enemyMechanics));
-    const manualRequiredAbilities = splitManualAbilityRequirementsFromEnemyMechanics(
-      state.requiredAbilities,
-      state.enemyMechanics,
+    const migratedRequiredAbilities = mergeAbilityRequirements([
+      ...state.requiredAbilities,
+      ...deriveAbilityRequirementsFromEnemyMechanics(state.enemyMechanics),
+    ]);
+    this.enemyMechanicDrafts.set([]);
+    this.requiredAbilityDrafts.set(
+      createSpecialAbilityDrafts(migratedRequiredAbilities, this.availableAbilityCatalogItems()),
     );
-    this.requiredAbilityDrafts.set(createAbilityRequirementDrafts(manualRequiredAbilities));
     this.lockedCharacterRecords.set({});
     for (const character of availableLockedCharacters) this.cacheCharacterRecord(character);
     this.manualSlots.set(
@@ -2819,6 +2831,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       searchTerm,
       selectedTypes: [],
       selectedClasses: [],
+      allowedCharacterIds: this.specialFilterCharacterIds(),
       sortMode: 'powerFirst',
       limit: CHARACTER_PICKER_PAGE_SIZE,
       offset,
@@ -3196,10 +3209,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   }
 
   private serializeManualRequiredAbilities(): AutoBuildAbilityRequirement[] {
-    return serializeAbilityRequirementDrafts(this.requiredAbilityDrafts(), {
-      dedupe: true,
-      catalogMap: this.abilityCatalogMap(),
-    });
+    return serializeSpecialAbilityDrafts(
+      this.requiredAbilityDrafts(),
+      this.availableSpecialAbilityCatalogItems(),
+    );
   }
 
   private serializeEnemyMechanics(): AutoBuildEnemyMechanicRequirement[] {

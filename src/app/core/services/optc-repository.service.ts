@@ -353,6 +353,20 @@ export class OptcRepositoryService {
       const normalizedSelectedClasses = [
         ...new Set(query.selectedClasses.map((characterClass) => characterClass.trim())),
       ].filter((characterClass) => characterClass.length > 0);
+      const allowedCharacterIds = [
+        ...new Set(
+          (query.allowedCharacterIds ?? []).filter(
+            (characterId) => Number.isInteger(characterId) && characterId > 0,
+          ),
+        ),
+      ];
+      const excludedCharacterIds = [
+        ...new Set(
+          (query.excludedCharacterIds ?? []).filter(
+            (characterId) => Number.isInteger(characterId) && characterId > 0,
+          ),
+        ),
+      ];
       const whereClauses: string[] = [];
       const queryParams: Array<string | number> = [];
 
@@ -383,6 +397,18 @@ export class OptcRepositoryService {
         queryParams.push(
           ...normalizedSelectedClasses.map((selectedClass) => `%\"${selectedClass}\"%`),
         );
+      }
+
+      if (allowedCharacterIds.length > 0) {
+        whereClauses.push(`c.id IN (${allowedCharacterIds.map(() => '?').join(',')})`);
+        queryParams.push(...allowedCharacterIds);
+      } else if (query.allowedCharacterIds !== undefined) {
+        whereClauses.push('1 = 0');
+      }
+
+      if (excludedCharacterIds.length > 0) {
+        whereClauses.push(`c.id NOT IN (${excludedCharacterIds.map(() => '?').join(',')})`);
+        queryParams.push(...excludedCharacterIds);
       }
 
       const orderByClause =
@@ -434,8 +460,29 @@ export class OptcRepositoryService {
     const normalizedSelectedClasses = [
       ...new Set(query.selectedClasses.map((characterClass) => characterClass.trim())),
     ].filter((characterClass) => characterClass.length > 0);
+    const allowedCharacterIdSet =
+      query.allowedCharacterIds === undefined
+        ? null
+        : new Set(
+            query.allowedCharacterIds.filter(
+              (characterId) => Number.isInteger(characterId) && characterId > 0,
+            ),
+          );
+    const excludedCharacterIdSet = new Set(
+      (query.excludedCharacterIds ?? []).filter(
+        (characterId) => Number.isInteger(characterId) && characterId > 0,
+      ),
+    );
     const filteredRecords = this.sortDetailedRecords(
       records.filter((record) => {
+        if (allowedCharacterIdSet && !allowedCharacterIdSet.has(record.id)) {
+          return false;
+        }
+
+        if (excludedCharacterIdSet.has(record.id)) {
+          return false;
+        }
+
         if (!this.matchesSearchTerm(record, query.searchTerm)) {
           return false;
         }
@@ -617,7 +664,18 @@ export class OptcRepositoryService {
         queryParams,
       );
 
-      filteredRecords = await this.decorateCharacterDetailRows(rows);
+      const decoratedRows = await this.decorateCharacterDetailRows(rows);
+      const scopedAllowedCharacterIdSet = allowedCharacterIdSet
+        ? new Set([...allowedCharacterIds, ...lockedCharacterIds])
+        : null;
+
+      filteredRecords = this.sortDetailedRecords(decoratedRows, 'powerFirst').filter((record) => {
+        if (excludedCharacterIdSet.has(record.id)) {
+          return false;
+        }
+
+        return !scopedAllowedCharacterIdSet || scopedAllowedCharacterIdSet.has(record.id);
+      });
     } else {
       const detailedRecords = this.sortDetailedRecords(
         await this.getAllDetailedCharacters(),

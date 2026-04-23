@@ -551,5 +551,17 @@
   "enemyPreset": {
     "loadedDescription": "Loaded enemy preset: {{name}}.",
     "loadedTitle": "Enemy preset ready."
+  },
+  "specialFilters": {
+    "title": "Special filters",
+    "copy": "Pick Special effects. Results must cover every selected effect.",
+    "configuredRows": "{{count}} selected Special effects",
+    "empty": "No Special effects selected yet.",
+    "emptyCatalog": "No Special ability catalog was found. Run",
+    "emptyCatalogSuffix": "to regenerate it.",
+    "actions": {
+      "openPicker": "Open Special picker",
+      "clearRequirements": "Clear Special filters"
+    }
   }
 }

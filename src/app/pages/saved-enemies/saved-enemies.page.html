@@ -471,8 +471,8 @@
             <section class="ability-card">
               <div class="section-head section-head--editor">
                 <div>
-                  <h3>{{ t('editor.enemyMechanics.title') }}</h3>
-                  <span>{{ t('editor.enemyMechanics.copy') }}</span>
+                  <h3>{{ t('editor.specialFilters.title') }}</h3>
+                  <span>{{ t('editor.specialFilters.copy') }}</span>
                 </div>
 
                 <div class="card-actions">
@@ -480,91 +480,10 @@
                     fill="outline"
                     color="warning"
                     size="small"
-                    [disabled]="savingEnemy()"
-                    (click)="openEnemyMechanicPicker()"
-                  >
-                    {{ t('editor.enemyMechanics.actions.openPicker') }}
-                  </ion-button>
-                  <ion-button
-                    fill="clear"
-                    color="light"
-                    size="small"
-                    [disabled]="savingEnemy() || !enemyMechanicDrafts().length"
-                    (click)="clearEnemyMechanics()"
-                  >
-                    {{ t('editor.enemyMechanics.actions.clear') }}
-                  </ion-button>
-                </div>
-              </div>
-
-              @if (!enemyMechanicSummaryChips().length) {
-                <p class="editor-empty-copy">
-                  {{ t('editor.enemyMechanics.empty') }}
-                </p>
-              }
-
-              @if (enemyMechanicSummaryChips().length) {
-                <div class="selected-values-row">
-                  @for (chip of enemyMechanicSummaryChips(); track chip.draftId) {
-                    <span
-                      class="selected-value-chip editor-ability-chip editor-ability-chip--mechanic"
-                    >
-                      <span class="editor-ability-chip__icon" [attr.data-tone]="chip.visual.tone">
-                        <ion-icon [icon]="chip.visual.icon"></ion-icon>
-                        <small>{{ chip.visual.badge }}</small>
-                      </span>
-                      <span>{{ chip.label }}</span>
-                    </span>
-                  }
-                </div>
-              }
-            </section>
-
-            <section class="ability-card">
-              <div class="section-head section-head--editor">
-                <div>
-                  <h3>{{ t('editor.derivedCounters.title') }}</h3>
-                  <span>{{ t('editor.derivedCounters.copy') }}</span>
-                </div>
-              </div>
-
-              @if (!derivedRequiredAbilitySummaryChips().length) {
-                <p class="editor-empty-copy">
-                  {{ t('editor.derivedCounters.empty') }}
-                </p>
-              }
-
-              @if (derivedRequiredAbilitySummaryChips().length) {
-                <div class="selected-values-row">
-                  @for (chip of derivedRequiredAbilitySummaryChips(); track chip.draftId) {
-                    <span class="selected-value-chip editor-ability-chip">
-                      <span class="editor-ability-chip__icon" [attr.data-tone]="chip.visual.tone">
-                        <ion-icon [icon]="chip.visual.icon"></ion-icon>
-                        <small>{{ chip.visual.badge }}</small>
-                      </span>
-                      <span>{{ chip.label }}</span>
-                    </span>
-                  }
-                </div>
-              }
-            </section>
-
-            <section class="ability-card">
-              <div class="section-head section-head--editor">
-                <div>
-                  <h3>{{ t('editor.manualCounters.title') }}</h3>
-                  <span>{{ t('editor.manualCounters.copy') }}</span>
-                </div>
-
-                <div class="card-actions">
-                  <ion-button
-                    fill="outline"
-                    color="warning"
-                    size="small"
-                    [disabled]="savingEnemy() || !availableAbilityCatalogItems().length"
+                    [disabled]="savingEnemy() || !availableSpecialAbilityCatalogItems().length"
                     (click)="openAbilityPicker()"
                   >
-                    {{ t('editor.manualCounters.actions.openPicker') }}
+                    {{ t('editor.specialFilters.actions.openPicker') }}
                   </ion-button>
                   <ion-button
                     fill="clear"
@@ -573,12 +492,12 @@
                     [disabled]="savingEnemy() || !requiredAbilityDrafts().length"
                     (click)="clearRequiredAbilities()"
                   >
-                    {{ t('editor.manualCounters.actions.clear') }}
+                    {{ t('editor.specialFilters.actions.clear') }}
                   </ion-button>
                 </div>
               </div>
 
-              @if (!availableAbilityCatalogItems().length) {
+              @if (!availableSpecialAbilityCatalogItems().length) {
                 <p class="editor-empty-copy">
                   {{ t('editor.noAbilityCatalog') }}
                 </p>
@@ -586,7 +505,7 @@
 
               @if (!requiredAbilitySummaryChips().length) {
                 <p class="editor-empty-copy">
-                  {{ t('editor.manualCounters.empty') }}
+                  {{ t('editor.specialFilters.empty') }}
                 </p>
               }
 
@@ -605,25 +524,15 @@
               }
             </section>
 
-            <app-enemy-mechanic-picker
-              [isOpen]="enemyMechanicPickerOpen()"
-              [title]="t('editor.enemyMechanics.title')"
-              [copy]="t('editor.enemyMechanics.copy')"
-              [drafts]="enemyMechanicDrafts()"
-              [catalogItems]="availableEnemyMechanicCatalogItems()"
-              (dismiss)="closeEnemyMechanicPicker()"
-              (saveDrafts)="saveEnemyMechanicPicker($event)"
-            ></app-enemy-mechanic-picker>
-
-            <app-ability-requirement-picker
+            <app-special-ability-picker
               [isOpen]="abilityPickerOpen()"
-              [title]="t('editor.manualCounters.title')"
-              [copy]="t('editor.manualCounters.copy')"
+              [title]="t('editor.specialFilters.title')"
+              [copy]="t('editor.specialFilters.copy')"
               [drafts]="requiredAbilityDrafts()"
-              [catalogItems]="availableAbilityCatalogItems()"
+              [catalogItems]="availableSpecialAbilityCatalogItems()"
               (dismiss)="closeAbilityPicker()"
               (saveDrafts)="saveAbilityPicker($event)"
-            ></app-ability-requirement-picker>
+            ></app-special-ability-picker>
           </div>
         </ion-content>
 

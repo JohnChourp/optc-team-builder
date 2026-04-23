@@ -551,5 +551,17 @@
   "enemyPreset": {
     "loadedDescription": "Φορτώθηκε το enemy preset: {{name}}.",
     "loadedTitle": "Το enemy preset είναι έτοιμο."
+  },
+  "specialFilters": {
+    "title": "Special filters",
+    "copy": "Επίλεξε Special effects. Τα αποτελέσματα πρέπει να έχουν όλα τα επιλεγμένα effects.",
+    "configuredRows": "{{count}} επιλεγμένα Special effects",
+    "empty": "Δεν έχουν επιλεγεί Special effects ακόμη.",
+    "emptyCatalog": "Δεν βρέθηκε Special ability catalog. Τρέξε",
+    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά.",
+    "actions": {
+      "openPicker": "Άνοιγμα Special picker",
+      "clearRequirements": "Καθαρισμός Special filters"
+    }
   }
 }

@@ -20,15 +20,26 @@ import {
 } from '@ionic/angular/standalone';
 import { boatOutline, heart, heartOutline } from 'ionicons/icons';
 
+import { type AutoBuildAbilityCatalog } from '../../core/models/auto-team-builder-ability.models';
 import {
   type CharacterListItem,
   type SavedTeam,
   type ShipRecord,
 } from '../../core/models/optc.models';
+import {
+  createAbilityRequirementDrafts,
+  type AbilityRequirementDraft,
+} from '../../core/services/ability-requirement-draft.utils';
 import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { AppI18nService } from '../../core/services/app-i18n.service';
+import {
+  getSpecialAbilityCatalogItems,
+  resolveSpecialAbilityMatchingCharacterIds,
+  serializeSpecialAbilityDrafts,
+} from '../../core/services/special-ability-filter.utils';
 import { UserStateService } from '../../core/services/user-state.service';
+import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
 import { ShipPickerComponent } from '../../shared/ship-picker/ship-picker.component';
 
 type TeamBuilderCandidateDisplayMode = 'list' | 'compact';
@@ -61,6 +72,7 @@ interface TeamBuilderCandidateCardView {
     IonToolbar,
     RouterLink,
     ShipPickerComponent,
+    SpecialAbilityPickerComponent,
     TranslocoDirective,
     TranslocoPipe,
   ],
@@ -69,7 +81,10 @@ interface TeamBuilderCandidateCardView {
 })
 export class TeamBuilderPage implements OnInit {
   public readonly ships = signal<ShipRecord[]>([]);
+  public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly candidateSearchTerm = signal('');
+  public readonly specialAbilityPickerOpen = signal(false);
+  public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly candidateDisplayMode = signal<TeamBuilderCandidateDisplayMode>('list');
   public readonly candidateCharacters = signal<CharacterListItem[]>([]);
   public readonly slotCharacters = signal<Array<CharacterListItem | null>>(
@@ -102,6 +117,21 @@ export class TeamBuilderPage implements OnInit {
   });
   public readonly isCompactCandidateDisplayMode = computed(
     () => this.candidateDisplayMode() === 'compact',
+  );
+  public readonly availableSpecialAbilityCatalogItems = computed(() =>
+    getSpecialAbilityCatalogItems(this.abilityCatalog()?.abilities ?? []),
+  );
+  public readonly specialAbilityRequirements = computed(() =>
+    serializeSpecialAbilityDrafts(
+      this.specialAbilityDrafts(),
+      this.availableSpecialAbilityCatalogItems(),
+    ),
+  );
+  public readonly specialFilterCharacterIds = computed(() =>
+    resolveSpecialAbilityMatchingCharacterIds(
+      this.specialAbilityRequirements(),
+      this.availableSpecialAbilityCatalogItems(),
+    ),
   );
   public readonly candidateCardViews = computed<TeamBuilderCandidateCardView[]>(() =>
     this.candidateCharacters().map((candidate) => {
@@ -139,11 +169,13 @@ export class TeamBuilderPage implements OnInit {
 
   public async ngOnInit(): Promise<void> {
     await this.userState.ready();
-    const [ships] = await Promise.all([
+    const [ships, abilityCatalog] = await Promise.all([
       this.repository.getShips(),
+      this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
       this.characterCatalogCache.ensureLoaded(),
     ]);
     this.ships.set(ships);
+    this.abilityCatalog.set(abilityCatalog);
     await this.refreshCandidateCharacters(this.candidateSearchTerm());
   }
 
@@ -158,6 +190,33 @@ export class TeamBuilderPage implements OnInit {
 
   public setCandidateDisplayMode(displayMode: TeamBuilderCandidateDisplayMode): void {
     this.candidateDisplayMode.set(displayMode);
+  }
+
+  public openSpecialAbilityPicker(): void {
+    if (!this.availableSpecialAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.specialAbilityPickerOpen.set(true);
+  }
+
+  public closeSpecialAbilityPicker(): void {
+    this.specialAbilityPickerOpen.set(false);
+  }
+
+  public async saveSpecialAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.specialAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeSpecialAbilityDrafts(drafts, this.availableSpecialAbilityCatalogItems()),
+      ),
+    );
+    this.specialAbilityPickerOpen.set(false);
+    await this.refreshCandidateCharacters(this.candidateSearchTerm());
+  }
+
+  public async clearSpecialAbilityFilters(): Promise<void> {
+    this.specialAbilityDrafts.set([]);
+    await this.refreshCandidateCharacters(this.candidateSearchTerm());
   }
 
   public onTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {
@@ -243,6 +302,8 @@ export class TeamBuilderPage implements OnInit {
 
   public async resetPage(): Promise<void> {
     this.candidateSearchTerm.set('');
+    this.specialAbilityPickerOpen.set(false);
+    this.specialAbilityDrafts.set([]);
     this.selectedSlotIndex.set(0);
     this.resetEditor();
     await this.refreshCandidateCharacters(this.candidateSearchTerm());
@@ -269,6 +330,7 @@ export class TeamBuilderPage implements OnInit {
         searchTerm,
         typeFilter: '',
         classFilter: '',
+        allowedCharacterIds: this.specialFilterCharacterIds(),
         limit: 24,
         offset: 0,
       }),

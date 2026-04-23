@@ -46,6 +46,11 @@
       "all": "Όλες οι καταστάσεις",
       "inBox": "Ήδη μέσα στο box",
       "notInBox": "Εκτός box"
+    },
+    "special": {
+      "open": "Special filters ({{count}})",
+      "title": "Special filters",
+      "copy": "Φίλτραρε τα character results του box με βάση τα Special effects. Τα αποτελέσματα πρέπει να έχουν όλα τα επιλεγμένα effects."
     }
   },
   "displayMode": {

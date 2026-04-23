@@ -9,7 +9,11 @@
     "type": "Type",
     "class": "Class",
     "anyType": "Όλα τα types",
-    "anyClass": "Όλα τα classes"
+    "anyClass": "Όλα τα classes",
+    "special": "Special filters",
+    "clearSpecial": "Καθαρισμός Special",
+    "specialTitle": "Special filters",
+    "specialCopy": "Αυτά τα filters είναι μόνο για την επιλογή εικόνας και δεν αλλάζουν τον αποθηκευμένο εχθρό."
   },
   "actions": {
     "loadMore": "Φόρτωση περισσότερων",

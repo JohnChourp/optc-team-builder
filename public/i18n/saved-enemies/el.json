@@ -146,6 +146,15 @@
         "clear": "Καθαρισμός overrides"
       }
     },
+    "specialFilters": {
+      "title": "Special filters",
+      "copy": "Επίλεξε τα Special effects που χρειάζεται ο εχθρός. Builder και character results πρέπει να έχουν όλα τα επιλεγμένα effects.",
+      "empty": "Δεν έχουν επιλεγεί Special effects ακόμη.",
+      "actions": {
+        "openPicker": "Άνοιγμα Special picker",
+        "clear": "Καθαρισμός Special filters"
+      }
+    },
     "removeAbility": "Αφαίρεση",
     "requirementSummary": {
       "characters": ">={{count}} chars",

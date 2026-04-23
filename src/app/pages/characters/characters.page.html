@@ -76,6 +76,41 @@
           ></ion-toggle>
         </div>
 
+        <div class="favorites-toggle-row">
+          <div class="favorites-toggle-copy">
+            <strong>{{ t('filters.special.label') }}</strong>
+            <small>{{ t('filters.special.support', { count: specialAbilityDrafts().length }) }}</small>
+          </div>
+          <div class="favorites-tools-actions">
+            <ion-button
+              fill="outline"
+              color="warning"
+              [disabled]="!availableSpecialAbilityCatalogItems().length"
+              (click)="openSpecialAbilityPicker()"
+            >
+              {{ t('filters.special.open') }}
+            </ion-button>
+            <ion-button
+              fill="clear"
+              color="light"
+              [disabled]="!specialAbilityDrafts().length"
+              (click)="clearSpecialAbilityFilters()"
+            >
+              {{ 'common.actions.clear' | transloco }}
+            </ion-button>
+          </div>
+        </div>
+
+        <app-special-ability-picker
+          [isOpen]="specialAbilityPickerOpen()"
+          [title]="t('filters.special.title')"
+          [copy]="t('filters.special.copy')"
+          [drafts]="specialAbilityDrafts()"
+          [catalogItems]="availableSpecialAbilityCatalogItems()"
+          (dismiss)="closeSpecialAbilityPicker()"
+          (saveDrafts)="saveSpecialAbilityPicker($event)"
+        ></app-special-ability-picker>
+
         <div class="filter-group">
           <span>{{ t('filters.type.label') }}</span>
           <ion-input

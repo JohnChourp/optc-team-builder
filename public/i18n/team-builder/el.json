@@ -3,6 +3,11 @@
     "addFavoriteAria": "Προσθήκη στα favorites",
     "removeFavoriteAria": "Αφαίρεση από τα favorites",
     "searchPlaceholder": "Βρες χαρακτήρα για αυτό το slot",
+    "special": {
+      "open": "Special filters ({{count}})",
+      "title": "Special filters",
+      "copy": "Φίλτραρε assignable χαρακτήρες με βάση τα Special effects. Τα αποτελέσματα πρέπει να έχουν όλα τα επιλεγμένα effects."
+    },
     "subtitle": "Κάνε search στο offline index και πάτα μία φορά για να τοποθετήσεις το unit.",
     "title": "Ανάθεση χαρακτήρα στο slot {{slot}}"
   },

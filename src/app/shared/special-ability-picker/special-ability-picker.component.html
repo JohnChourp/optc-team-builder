@@ -1,0 +1,133 @@
+<ng-container *transloco="let t; scope: 'ability-picker'; read: 'ability-picker'">
+  <ion-modal [isOpen]="isOpen" cssClass="special-ability-picker-modal" (didDismiss)="onModalDidDismiss()">
+    <ng-template>
+      <ion-header class="special-ability-picker-header ion-no-border">
+        <ion-toolbar>
+          <div class="special-ability-picker-head">
+            <div>
+              <div class="section-label">
+                <ion-icon [icon]="pickerIcon"></ion-icon>
+                <span>{{ t('special.eyebrow') }}</span>
+              </div>
+              <h2>{{ title }}</h2>
+              <p>{{ copy }}</p>
+            </div>
+          </div>
+
+          <ion-buttons slot="end">
+            <ion-button fill="clear" color="light" (click)="cancel()">
+              <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="special-ability-picker-content">
+        <div class="special-ability-picker-shell">
+          <section class="special-ability-picker-panel special-ability-picker-panel--catalog">
+            <div class="special-ability-picker-panel__head">
+              <div>
+                <strong>{{ t('special.catalogTitle') }}</strong>
+                <small>{{ t('special.catalogCount', { count: catalogItemsState().length }) }}</small>
+              </div>
+
+              <ion-button
+                fill="clear"
+                size="small"
+                color="warning"
+                [disabled]="!workingDrafts().length"
+                (click)="clearAll()"
+              >
+                {{ t('actions.clearAll') }}
+              </ion-button>
+            </div>
+
+            <ion-searchbar
+              class="special-ability-picker-search"
+              [debounce]="150"
+              [placeholder]="t('special.searchPlaceholder')"
+              [value]="searchTerm()"
+              (ionInput)="onSearchChange($event)"
+            ></ion-searchbar>
+
+            @if (!filteredSections().length) {
+              <div class="special-ability-picker-empty">
+                <strong>{{ t('catalog.emptySearchTitle') }}</strong>
+                <p>{{ t('catalog.emptySearchCopy') }}</p>
+              </div>
+            } @else {
+              <div class="special-ability-section-list">
+                @for (section of filteredSections(); track section.groupLabel) {
+                  <section class="special-ability-section">
+                    <div class="special-ability-section__head">
+                      <strong>{{ section.groupLabel }}</strong>
+                      <small>{{ t('special.sectionCount', { count: section.items.length }) }}</small>
+                    </div>
+
+                    <div class="special-ability-tile-grid">
+                      @for (tile of section.items; track tile.item.key) {
+                        <button
+                          type="button"
+                          class="special-ability-tile"
+                          [class.special-ability-tile--selected]="tile.isSelected"
+                          (click)="toggleCatalogItem(tile.item)"
+                        >
+                          <span class="special-ability-tile__badge">{{ tile.badge }}</span>
+                          <span class="special-ability-tile__copy">
+                            <strong>{{ tile.item.label }}</strong>
+                            <small>{{ t('special.matchCount', { count: tile.item.matchCount }) }}</small>
+                          </span>
+                        </button>
+                      }
+                    </div>
+                  </section>
+                }
+              </div>
+            }
+          </section>
+
+          <section class="special-ability-picker-panel special-ability-picker-panel--selected">
+            <div class="special-ability-picker-panel__head">
+              <div>
+                <strong>{{ t('special.selectedTitle') }}</strong>
+                <small>{{ t('selected.count', { count: selectedRows().length }) }}</small>
+              </div>
+            </div>
+
+            @if (!selectedRows().length) {
+              <div class="special-ability-picker-empty special-ability-picker-empty--selected">
+                <strong>{{ t('selected.emptyTitle') }}</strong>
+                <p>{{ t('special.emptySelectedCopy') }}</p>
+              </div>
+            } @else {
+              <div class="special-ability-selected-list">
+                @for (row of selectedRows(); track row.draft.draftId) {
+                  <button
+                    type="button"
+                    class="special-ability-selected-chip"
+                    (click)="removeDraft(row.draft.draftId)"
+                  >
+                    <span class="special-ability-tile__badge">{{ row.badge }}</span>
+                    <span>{{ row.label }}</span>
+                    <small aria-hidden="true">x</small>
+                  </button>
+                }
+              </div>
+            }
+          </section>
+        </div>
+      </ion-content>
+
+      <footer class="special-ability-picker-footer">
+        <div class="special-ability-picker-footer__actions">
+          <ion-button fill="clear" color="light" (click)="cancel()">
+            {{ 'common.actions.cancel' | transloco }}
+          </ion-button>
+          <ion-button color="warning" (click)="save()">
+            {{ 'common.actions.save' | transloco }}
+          </ion-button>
+        </div>
+      </footer>
+    </ng-template>
+  </ion-modal>
+</ng-container>

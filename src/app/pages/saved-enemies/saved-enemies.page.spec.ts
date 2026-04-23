@@ -78,9 +78,10 @@ describe('SavedEnemiesPage', () => {
     expect(page.requiredAbilityDrafts()).toEqual([]);
   });
 
-  it('opens the edit modal with the selected enemy preset', () => {
+  it('opens the edit modal with the selected enemy preset', async () => {
     const { page } = createPage();
 
+    await page.ngOnInit();
     page.openEditModal(page.savedEnemies()[0]!);
 
     expect(page.editorOpen()).toBe(true);
@@ -89,8 +90,8 @@ describe('SavedEnemiesPage', () => {
     expect(page.enemyImageDataUrl()).toBe('data:image/jpeg;base64,Zm9yZXN0LWJvc3M=');
     expect(page.selectedTypes()).toEqual(['DEX', 'PSY']);
     expect(page.selectedClasses()).toEqual(['Fighter']);
-    expect(page.enemyMechanicDrafts()).toHaveLength(1);
-    expect(page.requiredAbilityDrafts()).toHaveLength(1);
+    expect(page.enemyMechanicDrafts()).toEqual([]);
+    expect(page.requiredAbilityDrafts()).toHaveLength(2);
   });
 
   it('selects all enemies and enables bulk actions', async () => {
@@ -218,7 +219,7 @@ describe('SavedEnemiesPage', () => {
       requiredAbilities: [
         {
           abilityKey: 'remove_bind',
-          minTurns: 5,
+          minTurns: null,
           slotTokens: [],
           requiredCharacterCount: 1,
         },
@@ -266,60 +267,50 @@ describe('SavedEnemiesPage', () => {
 
     page.applyParsedEnemyText();
 
-    expect(page.enemyMechanicDrafts()).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          mechanicKey: 'crew_special_bind',
-          minTurns: 4,
-        }),
-        expect.objectContaining({
-          mechanicKey: 'crew_paralysis',
-          minTurns: 4,
-        }),
-      ]),
-    );
-    expect(page.requiredAbilityDrafts()).toEqual([
+    expect(page.enemyMechanicDrafts()).toEqual([]);
+    expect(page.requiredAbilityDrafts()).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        abilityKey: 'remove_special_bind',
+        requiredCharacterCount: 1,
+      }),
+      expect.objectContaining({
+        abilityKey: 'remove_paralysis',
+        requiredCharacterCount: 1,
+      }),
       expect.objectContaining({
         abilityKey: 'ignore_normal_attack_only',
         requiredCharacterCount: 1,
       }),
-    ]);
+    ]));
 
     await page.saveEnemy();
 
     expect(userState.saveEnemy).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Paste Boss',
-        enemyMechanics: [
-          expect.objectContaining({
-            mechanicKey: 'crew_special_bind',
-            minTurns: 4,
-          }),
-          expect.objectContaining({
-            mechanicKey: 'crew_paralysis',
-            minTurns: 4,
-          }),
-        ],
-        requiredAbilities: [
+        enemyMechanics: [],
+        requiredAbilities: expect.arrayContaining([
           expect.objectContaining({
             abilityKey: 'remove_special_bind',
-            minTurns: 4,
+            minTurns: null,
+            requiredCharacterCount: 1,
           }),
           expect.objectContaining({
             abilityKey: 'remove_paralysis',
-            minTurns: 4,
+            minTurns: null,
+            requiredCharacterCount: 1,
           }),
           expect.objectContaining({
             abilityKey: 'ignore_normal_attack_only',
             minTurns: null,
             requiredCharacterCount: 1,
           }),
-        ],
+        ]),
       }),
     );
   });
 
-  it('preserves a manual frontend override for ignore normal attack only count', async () => {
+  it('normalizes parsed Special requirements to a single required character', async () => {
     const { page, userState } = createPage();
 
     await page.ngOnInit();
@@ -371,7 +362,8 @@ describe('SavedEnemiesPage', () => {
       expect.objectContaining({
         requiredAbilities: [expect.objectContaining({
           abilityKey: 'ignore_normal_attack_only',
-          requiredCharacterCount: 3,
+          minTurns: null,
+          requiredCharacterCount: 1,
         })],
       }),
     );
@@ -408,18 +400,12 @@ describe('SavedEnemiesPage', () => {
 
     expect(userState.saveEnemy).toHaveBeenCalledWith(
       expect.objectContaining({
-        enemyMechanics: [
-          expect.objectContaining({
-            mechanicKey: 'crew_paralysis',
-            minTurns: 6,
-            requiredCharacterCount: 2,
-          }),
-        ],
+        enemyMechanics: [],
         requiredAbilities: [
           expect.objectContaining({
             abilityKey: 'remove_paralysis',
-            minTurns: 6,
-            requiredCharacterCount: 2,
+            minTurns: null,
+            requiredCharacterCount: 1,
           }),
         ],
       }),
@@ -616,13 +602,16 @@ describe('SavedEnemiesPage', () => {
     expect(template).toContain('(click)="selectAllClasses()"');
     expect(template).toContain('selectAllTypesButtonLabel()');
     expect(template).toContain('selectAllClassesButtonLabel()');
-    expect(template).toContain('editor.enemyMechanics.title');
-    expect(template).toContain('editor.manualCounters.title');
+    expect(template).toContain('editor.specialFilters.title');
+    expect(template).toContain('app-special-ability-picker');
+    expect(template).not.toContain('editor.enemyMechanics.title');
+    expect(template).not.toContain('editor.manualCounters.title');
     expect(template).not.toContain('editor.toggles.types');
     expect(template).not.toContain('editor.toggles.classes');
     expect(template).not.toContain('editor.toggles.specials');
-    expect(template).toContain('<app-enemy-mechanic-picker');
-    expect(template).toContain('<app-ability-requirement-picker');
+    expect(template).not.toContain('<app-enemy-mechanic-picker');
+    expect(template).not.toContain('<app-ability-requirement-picker');
+    expect(template).toContain('<app-special-ability-picker');
     expect(template).toContain('<app-character-image-picker');
     expect(template).not.toContain("t('hero.savedTeamsCta')");
     expect(template).not.toContain("[routerLink]=\"['/tabs/saved-teams']\"");
@@ -730,30 +719,44 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
       abilities: [
         {
           key: 'remove_bind',
-          label: 'Remove Bind',
-          supportsTurns: true,
+          label: 'Bind',
+          category: 'special',
+          groupLabel: 'Reduce Status Effect Duration',
+          groupOrder: 6,
+          effectOrder: 1,
+          supportsTurns: false,
           supportsSlotTokens: false,
           availableSlotTokens: [],
           availableSources: ['specialText'],
           matchCount: 10,
+          matchingCharacterIds: [101],
           sampleCharacterIds: [101],
           sampleTexts: ['Reduces Bind duration by 5 turns'],
         },
         {
           key: 'remove_enemy_barrier',
-          label: 'Remove Barrier',
-          supportsTurns: true,
+          label: 'Enemy Barrier',
+          category: 'special',
+          groupLabel: 'Reduce Enemy Effect Duration',
+          groupOrder: 7,
+          effectOrder: 9,
+          supportsTurns: false,
           supportsSlotTokens: false,
           availableSlotTokens: [],
           availableSources: ['specialText'],
           matchCount: 8,
+          matchingCharacterIds: [102],
           sampleCharacterIds: [102],
           sampleTexts: ['Removes enemy barrier'],
         },
         {
           key: 'remove_special_bind',
-          label: 'Remove Special Bind',
-          supportsTurns: true,
+          label: 'Special Bind',
+          category: 'special',
+          groupLabel: 'Reduce Status Effect Duration',
+          groupOrder: 6,
+          effectOrder: 4,
+          supportsTurns: false,
           supportsSlotTokens: false,
           availableSlotTokens: [],
           availableSources: ['specialText'],
@@ -763,8 +766,12 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
         },
         {
           key: 'remove_paralysis',
-          label: 'Remove Paralysis',
-          supportsTurns: true,
+          label: 'Paralysis',
+          category: 'special',
+          groupLabel: 'Reduce Status Effect Duration',
+          groupOrder: 6,
+          effectOrder: 3,
+          supportsTurns: false,
           supportsSlotTokens: false,
           availableSlotTokens: [],
           availableSources: ['specialText'],
@@ -775,6 +782,10 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
         {
           key: 'ignore_normal_attack_only',
           label: 'Ignore NAO',
+          category: 'special',
+          groupLabel: 'Damage',
+          groupOrder: 1,
+          effectOrder: 3,
           supportsTurns: false,
           supportsSlotTokens: false,
           availableSlotTokens: [],
@@ -785,7 +796,11 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
         },
         {
           key: 'deal_fixed_damage',
-          label: 'Deal Fixed Damage',
+          label: 'Fixed',
+          category: 'special',
+          groupLabel: 'Damage',
+          groupOrder: 1,
+          effectOrder: 2,
           supportsTurns: false,
           supportsSlotTokens: false,
           availableSlotTokens: [],
@@ -796,7 +811,11 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
         },
         {
           key: 'inflict_poison',
-          label: 'Inflict Poison',
+          label: 'Poison',
+          category: 'special',
+          groupLabel: 'Apply Status Effect',
+          groupOrder: 8,
+          effectOrder: 3,
           supportsTurns: false,
           supportsSlotTokens: false,
           availableSlotTokens: [],

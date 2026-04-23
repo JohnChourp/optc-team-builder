@@ -11,12 +11,19 @@
       "label": "Class",
       "placeholder": "Type to filter by class"
     },
-    "favoritesOnly": {
-      "empty": "No favorites saved yet.",
-      "label": "Show favorites only",
-      "withCount": "Limit results to your {{count}} favorited characters."
-    },
-    "type": {
+  "favoritesOnly": {
+    "empty": "No favorites saved yet.",
+    "label": "Show favorites only",
+    "withCount": "Limit results to your {{count}} favorited characters."
+  },
+  "special": {
+    "label": "Special filters",
+    "support": "{{count}} selected effects. Results must match every selected effect.",
+    "open": "Open Special picker",
+    "title": "Special filters",
+    "copy": "Filter characters by Special effects."
+  },
+  "type": {
       "label": "Type",
       "placeholder": "Type to filter by character type"
     }

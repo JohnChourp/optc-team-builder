@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-23T08:13:19.745Z",
+  "generatedAt": "2026-04-23T12:33:24.781Z",
   "characters": [
     {
       "id": 1,
@@ -51,7 +51,17 @@
           "monkey d. luffy",
           "luffy"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -120,7 +130,17 @@
           "monkey d. luffy",
           "luffy"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -189,7 +209,17 @@
           "monkey d. luffy",
           "luffy"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -259,7 +289,17 @@
           "monkey d. luffy",
           "luffy"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [
           "Boosts base ATK of this character by 100 if this character is the last in the chain to attack. Makes [QCK] orbs beneficial for this character"
         ],
@@ -408,7 +448,17 @@
           "roronoa zoro",
           "zoro"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -478,7 +528,17 @@
           "roronoa zoro",
           "zoro"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -548,7 +608,17 @@
           "roronoa zoro",
           "zoro"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -618,7 +688,17 @@
           "roronoa zoro",
           "zoro"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [
           "Restores Special Cooldown of this character by 1 turn when it is rewinded. Boosts base ATK of [DEX] characters by 40"
         ],
@@ -766,7 +846,17 @@
         "partyConflictKeys": [
           "nami"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "heal_hp",
+            "label": "Heal HP",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -835,7 +925,17 @@
         "partyConflictKeys": [
           "nami"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -904,7 +1004,17 @@
         "partyConflictKeys": [
           "nami"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "reduce_damage",
+            "label": "Reduce Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -973,7 +1083,17 @@
         "partyConflictKeys": [
           "nami"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [
           "Makes [RCV] orbs beneficial for [INT] characters. Boosts base ATK, HP and RCV of [INT] characters by 50"
         ],
@@ -1121,7 +1241,17 @@
         "partyConflictKeys": [
           "usopp"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "apply_delay",
+            "label": "Delay",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -1643,7 +1773,17 @@
         "partyConflictKeys": [
           "usopp"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "apply_delay",
+            "label": "Delay",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -2165,7 +2305,17 @@
         "partyConflictKeys": [
           "usopp"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "apply_delay",
+            "label": "Delay",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -2687,7 +2837,26 @@
         "partyConflictKeys": [
           "sogeking"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "apply_delay",
+            "label": "Delay",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [
           "Boosts base ATK, HP and RCV of Shooter characters by 20"
         ],
@@ -2838,7 +3007,17 @@
         "partyConflictKeys": [
           "sanji"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "heal_hp",
+            "label": "Heal HP",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -2977,7 +3156,17 @@
           "chef sanji",
           "sanji"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "heal_hp",
+            "label": "Heal HP",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -3050,6 +3239,15 @@
           {
             "key": "deal_fixed_damage",
             "label": "Deal Fixed Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "special_damage",
+            "label": "Damage",
             "minTurns": null,
             "isCompleteRemoval": false,
             "slotTokens": [],
@@ -3205,7 +3403,17 @@
           "tony tony chopper",
           "chopper"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "change_slots",
+            "label": "Change Slots",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],
@@ -3275,7 +3483,17 @@
           "tony tony chopper",
           "chopper"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [
           "Makes [TND] orbs beneficial for this character. Boosts base ATK, HP and RCV of all characters by 30"
         ],
@@ -3425,7 +3643,17 @@
           "tony tony chopper",
           "chopper"
         ],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "change_slots",
+            "label": "Change Slots",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "limitBreak": [],

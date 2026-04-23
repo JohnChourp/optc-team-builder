@@ -74,6 +74,39 @@
               </label>
             </div>
 
+            <div class="character-image-picker-filter-grid">
+              <ion-button
+                fill="outline"
+                color="warning"
+                [disabled]="applyingSelection || !availableSpecialAbilityCatalogItems().length"
+                (click)="openSpecialAbilityPicker()"
+              >
+                {{ t('filters.special') }}
+                @if (specialAbilityDrafts().length) {
+                  <span>&nbsp;({{ specialAbilityDrafts().length }})</span>
+                }
+              </ion-button>
+
+              <ion-button
+                fill="clear"
+                color="light"
+                [disabled]="applyingSelection || !specialAbilityDrafts().length"
+                (click)="clearSpecialAbilityFilters()"
+              >
+                {{ t('filters.clearSpecial') }}
+              </ion-button>
+            </div>
+
+            <app-special-ability-picker
+              [isOpen]="specialAbilityPickerOpen()"
+              [title]="t('filters.specialTitle')"
+              [copy]="t('filters.specialCopy')"
+              [drafts]="specialAbilityDrafts()"
+              [catalogItems]="availableSpecialAbilityCatalogItems()"
+              (dismiss)="closeSpecialAbilityPicker()"
+              (saveDrafts)="saveSpecialAbilityPicker($event)"
+            ></app-special-ability-picker>
+
             @if (loading()) {
               <div class="character-image-picker-empty">
                 <ion-spinner name="crescent"></ion-spinner>

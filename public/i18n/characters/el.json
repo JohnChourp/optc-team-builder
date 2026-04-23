@@ -11,12 +11,19 @@
       "label": "Class",
       "placeholder": "Πληκτρολόγησε για φιλτράρισμα ανά class"
     },
-    "favoritesOnly": {
-      "empty": "Δεν υπάρχουν αποθηκευμένα favorites ακόμα.",
-      "label": "Μόνο favorites",
-      "withCount": "Περιορισμός αποτελεσμάτων στους {{count}} favorite χαρακτήρες σου."
-    },
-    "type": {
+  "favoritesOnly": {
+    "empty": "Δεν υπάρχουν αποθηκευμένα favorites ακόμα.",
+    "label": "Μόνο favorites",
+    "withCount": "Περιορισμός αποτελεσμάτων στους {{count}} favorite χαρακτήρες σου."
+  },
+  "special": {
+    "label": "Special filters",
+    "support": "{{count}} επιλεγμένα effects. Τα αποτελέσματα πρέπει να έχουν όλα τα επιλεγμένα effects.",
+    "open": "Άνοιγμα Special picker",
+    "title": "Special filters",
+    "copy": "Φίλτραρε χαρακτήρες με βάση τα Special effects."
+  },
+  "type": {
       "label": "Type",
       "placeholder": "Πληκτρολόγησε για φιλτράρισμα ανά type"
     }

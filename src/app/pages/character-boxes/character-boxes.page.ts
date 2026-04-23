@@ -31,10 +31,21 @@ import {
   type CharacterListItem,
   type DatasetManifest,
 } from '../../core/models/optc.models';
+import { type AutoBuildAbilityCatalog } from '../../core/models/auto-team-builder-ability.models';
 import { AppI18nService } from '../../core/services/app-i18n.service';
+import {
+  createAbilityRequirementDrafts,
+  type AbilityRequirementDraft,
+} from '../../core/services/ability-requirement-draft.utils';
 import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import {
+  getSpecialAbilityCatalogItems,
+  resolveSpecialAbilityMatchingCharacterIds,
+  serializeSpecialAbilityDrafts,
+} from '../../core/services/special-ability-filter.utils';
 import { UserStateService } from '../../core/services/user-state.service';
+import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
 
 const PAGE_SIZE = 48;
 type CharacterBoxesFavoriteFilter = 'all' | 'favorites';
@@ -67,6 +78,7 @@ interface CharacterBoxCharacterCardView {
     IonSpinner,
     IonTitle,
     IonToolbar,
+    SpecialAbilityPickerComponent,
     TranslocoDirective,
     TranslocoPipe,
   ],
@@ -75,6 +87,7 @@ interface CharacterBoxCharacterCardView {
 })
 export class CharacterBoxesPage implements OnInit {
   public readonly summary = signal<DatasetManifest | null>(null);
+  public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly boxes;
   public readonly favoriteCharacterIds;
   public readonly selectedBoxId = signal<string | null>(null);
@@ -84,6 +97,8 @@ export class CharacterBoxesPage implements OnInit {
   public readonly selectedClass = signal('');
   public readonly selectedFavoriteFilter = signal<CharacterBoxesFavoriteFilter>('all');
   public readonly selectedMembershipFilter = signal<CharacterBoxesMembershipFilter>('all');
+  public readonly specialAbilityPickerOpen = signal(false);
+  public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly displayMode = signal<CharacterBoxesDisplayMode>('list');
   public readonly characters = signal<CharacterListItem[]>([]);
   public readonly loading = signal(true);
@@ -98,6 +113,21 @@ export class CharacterBoxesPage implements OnInit {
   );
   public readonly availableClasses = computed(() =>
     this.normalizeOptions(this.summary()?.availableClasses ?? []),
+  );
+  public readonly availableSpecialAbilityCatalogItems = computed(() =>
+    getSpecialAbilityCatalogItems(this.abilityCatalog()?.abilities ?? []),
+  );
+  public readonly specialAbilityRequirements = computed(() =>
+    serializeSpecialAbilityDrafts(
+      this.specialAbilityDrafts(),
+      this.availableSpecialAbilityCatalogItems(),
+    ),
+  );
+  public readonly specialFilterCharacterIds = computed(() =>
+    resolveSpecialAbilityMatchingCharacterIds(
+      this.specialAbilityRequirements(),
+      this.availableSpecialAbilityCatalogItems(),
+    ),
   );
   public readonly totalAssignedCharacters = computed(() =>
     this.boxes().reduce((count, box) => count + box.characterIds.length, 0),
@@ -167,11 +197,13 @@ export class CharacterBoxesPage implements OnInit {
 
   public async ngOnInit(): Promise<void> {
     await this.userState.ready();
-    const [summary] = await Promise.all([
+    const [summary, abilityCatalog] = await Promise.all([
       this.repository.getDatasetManifest(),
+      this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
       this.characterCatalogCache.ensureLoaded(),
     ]);
     this.summary.set(summary);
+    this.abilityCatalog.set(abilityCatalog);
 
     if (this.boxes().length > 0) {
       this.selectBox(this.boxes()[0]!.id);
@@ -290,6 +322,33 @@ export class CharacterBoxesPage implements OnInit {
     this.displayMode.set(mode);
   }
 
+  public openSpecialAbilityPicker(): void {
+    if (!this.availableSpecialAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.specialAbilityPickerOpen.set(true);
+  }
+
+  public closeSpecialAbilityPicker(): void {
+    this.specialAbilityPickerOpen.set(false);
+  }
+
+  public async saveSpecialAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.specialAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeSpecialAbilityDrafts(drafts, this.availableSpecialAbilityCatalogItems()),
+      ),
+    );
+    this.specialAbilityPickerOpen.set(false);
+    await this.loadCharacters(true);
+  }
+
+  public async clearSpecialAbilityFilters(): Promise<void> {
+    this.specialAbilityDrafts.set([]);
+    await this.loadCharacters(true);
+  }
+
   public async toggleFavorite(characterId: number, event?: Event): Promise<void> {
     event?.preventDefault();
     event?.stopPropagation();
@@ -306,6 +365,8 @@ export class CharacterBoxesPage implements OnInit {
     this.selectedClass.set('');
     this.selectedFavoriteFilter.set('all');
     this.selectedMembershipFilter.set('all');
+    this.specialAbilityPickerOpen.set(false);
+    this.specialAbilityDrafts.set([]);
     await this.loadCharacters(true);
   }
 
@@ -360,13 +421,17 @@ export class CharacterBoxesPage implements OnInit {
     const selectedBoxCharacterIds = this.selectedBox()?.characterIds ?? [];
     const favoriteCharacterIds =
       this.selectedFavoriteFilter() === 'favorites' ? this.favoriteCharacterIds() : undefined;
-    const allowedCharacterIds =
+    const scopedAllowedCharacterIds =
       this.selectedMembershipFilter() === 'inBox'
         ? selectedBoxCharacterIds.filter(
             (characterId) =>
               favoriteCharacterIds === undefined || favoriteCharacterIds.includes(characterId),
           )
         : favoriteCharacterIds;
+    const allowedCharacterIds = this.intersectCharacterIds(
+      scopedAllowedCharacterIds,
+      this.specialFilterCharacterIds(),
+    );
     const nextCharacters = this.characterCatalogCache.queryCharacters({
       searchTerm: this.searchTerm(),
       typeFilter: this.selectedType(),
@@ -381,6 +446,23 @@ export class CharacterBoxesPage implements OnInit {
     this.characters.set(reset ? nextCharacters : [...this.characters(), ...nextCharacters]);
     this.hasMore.set(nextCharacters.length === PAGE_SIZE);
     this.loading.set(false);
+  }
+
+  private intersectCharacterIds(
+    left: number[] | undefined,
+    right: number[] | undefined,
+  ): number[] | undefined {
+    if (left === undefined) {
+      return right;
+    }
+
+    if (right === undefined) {
+      return left;
+    }
+
+    const rightSet = new Set(right);
+
+    return left.filter((characterId) => rightSet.has(characterId));
   }
 
   private normalizeOptions(values: string[]): string[] {

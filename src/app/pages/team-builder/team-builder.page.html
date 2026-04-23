@@ -154,6 +154,24 @@
             (ionInput)="onSearchCandidates($event)"
           ></ion-searchbar>
 
+          <ion-button
+            fill="outline"
+            color="warning"
+            [disabled]="!availableSpecialAbilityCatalogItems().length"
+            (click)="openSpecialAbilityPicker()"
+          >
+            {{ t('assign.special.open', { count: specialAbilityDrafts().length }) }}
+          </ion-button>
+
+          <ion-button
+            fill="clear"
+            color="light"
+            [disabled]="!specialAbilityDrafts().length"
+            (click)="clearSpecialAbilityFilters()"
+          >
+            {{ 'common.actions.clear' | transloco }}
+          </ion-button>
+
           <div class="view-toggle" [attr.aria-label]="t('displayMode.label')">
             <button
               type="button"
@@ -173,6 +191,16 @@
             </button>
           </div>
         </div>
+
+        <app-special-ability-picker
+          [isOpen]="specialAbilityPickerOpen()"
+          [title]="t('assign.special.title')"
+          [copy]="t('assign.special.copy')"
+          [drafts]="specialAbilityDrafts()"
+          [catalogItems]="availableSpecialAbilityCatalogItems()"
+          (dismiss)="closeSpecialAbilityPicker()"
+          (saveDrafts)="saveSpecialAbilityPicker($event)"
+        ></app-special-ability-picker>
 
         @if (isCompactCandidateDisplayMode()) {
           <div class="candidate-grid">

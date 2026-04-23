@@ -3,6 +3,11 @@
     "addFavoriteAria": "Add to favorites",
     "removeFavoriteAria": "Remove from favorites",
     "searchPlaceholder": "Find a character for this slot",
+    "special": {
+      "open": "Special filters ({{count}})",
+      "title": "Special filters",
+      "copy": "Filter assignable characters by Special effects. Results must match every selected effect."
+    },
     "subtitle": "Search the offline index and tap once to place the unit.",
     "title": "Assign character to slot {{slot}}"
   },

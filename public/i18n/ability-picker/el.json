@@ -28,5 +28,15 @@
     "characters": "Χαρακτήρες",
     "turns": "Turns",
     "slotTokens": "Slot tokens"
+  },
+  "special": {
+    "eyebrow": "Special",
+    "catalogTitle": "Special effects",
+    "catalogCount": "{{count}} effects",
+    "searchPlaceholder": "Αναζήτηση Special effects",
+    "sectionCount": "{{count}} effects",
+    "matchCount": "{{count}} matching χαρακτήρες",
+    "selectedTitle": "Επιλεγμένα Special filters",
+    "emptySelectedCopy": "Επίλεξε ένα ή περισσότερα Special effects. Τα αποτελέσματα χαρακτήρων πρέπει να έχουν όλα τα επιλεγμένα effects."
   }
 }

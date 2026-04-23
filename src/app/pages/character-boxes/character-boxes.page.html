@@ -202,10 +202,29 @@
                   </ion-select-option>
                 </ion-select>
 
+                <ion-button
+                  fill="outline"
+                  color="warning"
+                  [disabled]="!availableSpecialAbilityCatalogItems().length"
+                  (click)="openSpecialAbilityPicker()"
+                >
+                  {{ t('filters.special.open', { count: specialAbilityDrafts().length }) }}
+                </ion-button>
+
                 <ion-button fill="outline" color="light" (click)="clearFilters()">
                   {{ 'common.actions.clear' | transloco }}
                 </ion-button>
               </div>
+
+              <app-special-ability-picker
+                [isOpen]="specialAbilityPickerOpen()"
+                [title]="t('filters.special.title')"
+                [copy]="t('filters.special.copy')"
+                [drafts]="specialAbilityDrafts()"
+                [catalogItems]="availableSpecialAbilityCatalogItems()"
+                (dismiss)="closeSpecialAbilityPicker()"
+                (saveDrafts)="saveSpecialAbilityPicker($event)"
+              ></app-special-ability-picker>
 
               <div class="view-toggle" [attr.aria-label]="t('displayMode.label')">
                 <button

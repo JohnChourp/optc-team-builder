@@ -46,6 +46,11 @@
       "all": "All membership states",
       "inBox": "Already in box",
       "notInBox": "Not in box"
+    },
+    "special": {
+      "open": "Special filters ({{count}})",
+      "title": "Special filters",
+      "copy": "Filter box character results by Special effects. Results must match every selected effect."
     }
   },
   "displayMode": {

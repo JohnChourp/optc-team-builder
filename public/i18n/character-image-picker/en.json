@@ -9,7 +9,11 @@
     "type": "Type",
     "class": "Class",
     "anyType": "All types",
-    "anyClass": "All classes"
+    "anyClass": "All classes",
+    "special": "Special filters",
+    "clearSpecial": "Clear Special",
+    "specialTitle": "Special filters",
+    "specialCopy": "These filters are local to image selection and do not change the saved enemy."
   },
   "actions": {
     "loadMore": "Load more",

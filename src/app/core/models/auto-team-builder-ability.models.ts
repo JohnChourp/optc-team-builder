@@ -1,4 +1,5 @@
 export type AutoBuildAbilitySource = 'specialText' | 'captainAbility';
+export type AutoBuildAbilityCategory = 'special' | 'legacy';
 export type AutoBuildAbilityCoverageMode = 'explicit' | 'selectedDebuff';
 export type AutoBuildEnemyMechanicCategory =
   | 'enemyDefense'
@@ -35,12 +36,17 @@ export interface NormalizedBuilderAbility {
 export interface AutoBuildAbilityCatalogItem {
   key: string;
   label: string;
+  category?: AutoBuildAbilityCategory;
+  groupLabel?: string | null;
+  groupOrder?: number | null;
+  effectOrder?: number | null;
   supportsTurns: boolean;
   supportsSlotTokens: boolean;
   availableSlotTokens: string[];
   availableSources: AutoBuildAbilitySource[];
   availableCoverageModes?: AutoBuildAbilityCoverageMode[];
   matchCount: number;
+  matchingCharacterIds?: number[];
   sampleCharacterIds: number[];
   sampleTexts: string[];
 }

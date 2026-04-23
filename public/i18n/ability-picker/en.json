@@ -28,5 +28,15 @@
     "characters": "Characters",
     "turns": "Turns",
     "slotTokens": "Slot tokens"
+  },
+  "special": {
+    "eyebrow": "Special",
+    "catalogTitle": "Special effects",
+    "catalogCount": "{{count}} effects",
+    "searchPlaceholder": "Search Special effects",
+    "sectionCount": "{{count}} effects",
+    "matchCount": "{{count}} matching characters",
+    "selectedTitle": "Selected Special filters",
+    "emptySelectedCopy": "Pick one or more Special effects. Character results must match every selected effect."
   }
 }

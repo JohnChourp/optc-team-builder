@@ -37,9 +37,8 @@ import {
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
-import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
 import { CharacterImagePickerComponent } from '../../shared/character-image-picker/character-image-picker.component';
-import { EnemyMechanicPickerComponent } from '../../shared/enemy-mechanic-picker/enemy-mechanic-picker.component';
+import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
 import {
   createAbilityRequirementDrafts,
   formatAbilityRequirementSummary,
@@ -62,6 +61,11 @@ import {
   type EnemyMechanicDraft,
   type EnemyMechanicVisualMeta,
 } from '../../core/services/enemy-mechanic-draft.utils';
+import {
+  createSpecialAbilityDrafts,
+  getSpecialAbilityCatalogItems,
+  serializeSpecialAbilityDrafts,
+} from '../../core/services/special-ability-filter.utils';
 import {
   buildSavedEnemiesTransferPayload,
   downloadSavedEnemiesExport,
@@ -104,9 +108,8 @@ interface SavedEnemyMechanicSummaryChipView {
     IonTextarea,
     IonTitle,
     IonToolbar,
-    AbilityRequirementPickerComponent,
     CharacterImagePickerComponent,
-    EnemyMechanicPickerComponent,
+    SpecialAbilityPickerComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,
@@ -180,6 +183,9 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   );
   public readonly availableAbilityCatalogItems = computed(
     () => this.abilityCatalog()?.abilities ?? [],
+  );
+  public readonly availableSpecialAbilityCatalogItems = computed(() =>
+    getSpecialAbilityCatalogItems(this.availableAbilityCatalogItems()),
   );
   public readonly availableEnemyMechanicCatalogItems = computed<
     AutoBuildEnemyMechanicCatalogItem[]
@@ -355,13 +361,14 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.abilityPickerOpen.set(false);
     this.selectedTypes.set([...enemy.selectedTypes]);
     this.selectedClasses.set([...enemy.selectedClasses]);
-    this.enemyMechanicDrafts.set(createEnemyMechanicDrafts(enemy.enemyMechanics));
+    this.enemyMechanicDrafts.set([]);
     this.requiredAbilityDrafts.set(
-      createAbilityRequirementDrafts(
-        splitManualAbilityRequirementsFromEnemyMechanics(
-          enemy.requiredAbilities,
-          enemy.enemyMechanics,
-        ),
+      createSpecialAbilityDrafts(
+        mergeAbilityRequirements([
+          ...enemy.requiredAbilities,
+          ...deriveAbilityRequirementsFromEnemyMechanics(enemy.enemyMechanics),
+        ]),
+        this.availableAbilityCatalogItems(),
       ),
     );
     this.requireAllSelectedTypesInTeam.set(enemy.requireAllSelectedTypesInTeam);
@@ -486,7 +493,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   public openAbilityPicker(): void {
-    if (this.savingEnemy() || this.availableAbilityCatalogItems().length === 0) {
+    if (this.savingEnemy() || this.availableSpecialAbilityCatalogItems().length === 0) {
       return;
     }
 
@@ -498,7 +505,11 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   public saveAbilityPicker(drafts: AbilityRequirementDraft[]): void {
-    this.requiredAbilityDrafts.set(drafts);
+    this.requiredAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeSpecialAbilityDrafts(drafts, this.availableSpecialAbilityCatalogItems()),
+      ),
+    );
     this.abilityPickerOpen.set(false);
   }
 
@@ -540,8 +551,16 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       return;
     }
 
-    this.enemyMechanicDrafts.set(this.createParsedEnemyMechanicDrafts(parsedResult.enemyMechanics));
-    this.requiredAbilityDrafts.set(createAbilityRequirementDrafts(parsedResult.requiredAbilities));
+    this.enemyMechanicDrafts.set([]);
+    this.requiredAbilityDrafts.set(
+      createSpecialAbilityDrafts(
+        mergeAbilityRequirements([
+          ...parsedResult.requiredAbilities,
+          ...deriveAbilityRequirementsFromEnemyMechanics(parsedResult.enemyMechanics),
+        ]),
+        this.availableAbilityCatalogItems(),
+      ),
+    );
   }
 
   public openEnemyMechanicPicker(): void {
@@ -585,7 +604,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
         selectedTypes: this.selectedTypes(),
         selectedClasses: this.selectedClasses(),
         requiredAbilities: this.effectiveRequiredAbilities(),
-        enemyMechanics: this.serializeEnemyMechanics(),
+        enemyMechanics: [],
         requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
         requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
       });
@@ -722,10 +741,10 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   private serializeRequiredAbilities(): AutoBuildAbilityRequirement[] {
-    return serializeAbilityRequirementDrafts(this.requiredAbilityDrafts(), {
-      dedupe: false,
-      catalogMap: this.abilityCatalogMap(),
-    });
+    return serializeSpecialAbilityDrafts(
+      this.requiredAbilityDrafts(),
+      this.availableSpecialAbilityCatalogItems(),
+    );
   }
 
   private serializeEnemyMechanics(): AutoBuildEnemyMechanicRequirement[] {
@@ -733,10 +752,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   private effectiveRequiredAbilities(): AutoBuildAbilityRequirement[] {
-    return mergeAbilityRequirements([
-      ...this.derivedRequiredAbilities(),
-      ...this.serializeRequiredAbilities(),
-    ]);
+    return mergeAbilityRequirements(this.serializeRequiredAbilities());
   }
 
   private async loadEnemyImage(file: File): Promise<void> {

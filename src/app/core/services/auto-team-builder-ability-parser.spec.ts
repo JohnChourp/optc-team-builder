@@ -27,7 +27,7 @@ let enrichCharactersWithBuilderAbilities: (
     logger?: ((message: string) => void) | null;
     abilityCorrections?: Map<number | string, Record<string, unknown>> | null;
   },
-) => Promise<Array<{ key: string; label: string }>>;
+) => Promise<Array<Record<string, unknown> & { key: string; label: string }>>;
 
 beforeAll(async () => {
   ({
@@ -46,7 +46,7 @@ describe('auto team builder ability parser', () => {
         'Reduces Bind and Despair duration by 5 turns and boosts ATK of the crew by 2x for 1 turn.',
         'specialText',
       ),
-    ).toEqual([
+    ).toEqual(expect.arrayContaining([
       expect.objectContaining({
         key: 'remove_bind',
         minTurns: 5,
@@ -59,7 +59,7 @@ describe('auto team builder ability parser', () => {
         slotTokens: [],
         source: 'specialText',
       }),
-    ]);
+    ]));
   });
 
   it('extracts slot bind removal as a dedicated ability family', () => {
@@ -79,7 +79,7 @@ describe('auto team builder ability parser', () => {
         'Removes [DEX] and [STR] Slot Barrier completely and changes orbs.',
         'specialText',
       ),
-    ).toEqual([
+    ).toEqual(expect.arrayContaining([
       expect.objectContaining({
         key: 'remove_slot_barrier',
         minTurns: 99,
@@ -87,7 +87,7 @@ describe('auto team builder ability parser', () => {
         slotTokens: ['DEX', 'STR'],
         source: 'specialText',
       }),
-    ]);
+    ]));
   });
 
   it('extracts multiple unique effects from one special text without duplicates', () => {
@@ -142,7 +142,13 @@ describe('auto team builder ability parser', () => {
     expect(extractPrimaryAbilityBranchText(text)).not.toContain(
       'Reduces enemies\' Increased Defense and Percent Damage Reduction duration by 2 turns',
     );
-    expect(analyzeBuilderAbilityText(text, 'specialText')).toEqual([]);
+    expect(analyzeBuilderAbilityText(text, 'specialText')).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'remove_enemy_increased_defense',
+        }),
+      ]),
+    );
   });
 
   it('keeps only the primary captain branch when upstream text concatenates alternate versions', () => {
@@ -217,18 +223,18 @@ describe('auto team builder ability parser', () => {
       3,
     ],
   ])('extracts %s removal into the direct counter catalog', (_label, text, key, turns) => {
-    expect(analyzeBuilderAbilityText(text, 'specialText')).toEqual([
+    expect(analyzeBuilderAbilityText(text, 'specialText')).toEqual(expect.arrayContaining([
       expect.objectContaining({
         key,
         minTurns: turns,
       }),
-    ]);
+    ]));
   });
 
   it('extracts explicit pain removal from special text', () => {
     expect(
       analyzeBuilderAbilityText('Recovers HP and reduces Pain duration by 5 turns.', 'specialText'),
-    ).toEqual([
+    ).toEqual(expect.arrayContaining([
       expect.objectContaining({
         key: 'remove_pain',
         label: 'Remove Pain',
@@ -236,7 +242,7 @@ describe('auto team builder ability parser', () => {
         coverageMode: 'explicit',
         source: 'specialText',
       }),
-    ]);
+    ]));
   });
 
   it('extracts explicit pain removal from captain text', () => {
@@ -245,7 +251,7 @@ describe('auto team builder ability parser', () => {
         'Boosts ATK by 5x, reduces Pain duration by 10 turns and recovers HP at end of turn.',
         'captainAbility',
       ),
-    ).toEqual([
+    ).toEqual(expect.arrayContaining([
       expect.objectContaining({
         key: 'remove_pain',
         label: 'Remove Pain',
@@ -253,7 +259,7 @@ describe('auto team builder ability parser', () => {
         coverageMode: 'explicit',
         source: 'captainAbility',
       }),
-    ]);
+    ]));
   });
 
   it('extracts guaranteed extra-drop coverage from captain text', () => {
@@ -300,7 +306,7 @@ describe('auto team builder ability parser', () => {
         'Reduces 2 selected debuffs duration by 10 turns and changes all orbs into Matching orbs.',
         'specialText',
       ),
-    ).toEqual([
+    ).toEqual(expect.arrayContaining([
       expect.objectContaining({
         key: 'remove_pain',
         label: 'Remove Pain',
@@ -308,7 +314,7 @@ describe('auto team builder ability parser', () => {
         coverageMode: 'selectedDebuff',
         source: 'specialText',
       }),
-    ]);
+    ]));
   });
 
   it('extracts singular selected debuff coverage with the actual turn count', () => {
@@ -317,7 +323,7 @@ describe('auto team builder ability parser', () => {
         'Delays all enemies by 1 turn and reduces 1 selected debuff duration by 5 turns.',
         'specialText',
       ),
-    ).toEqual([
+    ).toEqual(expect.arrayContaining([
       expect.objectContaining({
         key: 'remove_pain',
         label: 'Remove Pain',
@@ -325,7 +331,7 @@ describe('auto team builder ability parser', () => {
         coverageMode: 'selectedDebuff',
         source: 'specialText',
       }),
-    ]);
+    ]));
   });
 
   it('ignores unsupported boost-only text to avoid false positives', () => {
@@ -334,7 +340,12 @@ describe('auto team builder ability parser', () => {
         'Boosts ATK of Fighter characters by 2.5x for 1 turn and boosts Orb Effects by 2.25x for 1 turn.',
         'specialText',
       ),
-    ).toEqual([]);
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'boost_atk' }),
+        expect.objectContaining({ key: 'boost_slot_effects' }),
+      ]),
+    );
   });
 
   it('does not treat unrelated status wording as pain removal', () => {
@@ -343,7 +354,7 @@ describe('auto team builder ability parser', () => {
         'Increases duration of any Status ATK boosting buffs applied by Specials by 1 turn.',
         'specialText',
       ),
-    ).toEqual([]);
+    ).not.toEqual(expect.arrayContaining([expect.objectContaining({ key: 'remove_pain' })]));
   });
 
   it('extracts explicit NAO bypass from special text only when the effect ignores it', () => {
@@ -439,7 +450,13 @@ describe('auto team builder ability parser', () => {
         'If your crew has Normal Attack Only when the special is activated, boosts ATK of Driven characters by 2.5x for 1 turn.',
         'specialText',
       ),
-    ).toEqual([]);
+    ).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'ignore_normal_attack_only',
+        }),
+      ]),
+    );
   });
 
   it('preserves explicit builder abilities while deduping derived matches', async () => {
@@ -500,6 +517,84 @@ describe('auto team builder ability parser', () => {
     });
 
     expect(characters[0]?.detail.builderAbilities).toEqual([]);
+  });
+
+  it('generates the complete Special catalog with stable group counts and zero-match entries', async () => {
+    const catalog = await enrichCharactersWithBuilderAbilities([], { logger: null });
+    const specialCatalog = catalog.filter((item) => item.category === 'special');
+    const groupCounts = specialCatalog.reduce<Record<string, number>>((counts, item) => {
+      const groupLabel = String(item.groupLabel);
+      counts[groupLabel] = (counts[groupLabel] ?? 0) + 1;
+      return counts;
+    }, {});
+
+    expect(specialCatalog).toHaveLength(85);
+    expect(groupCounts).toEqual({
+      Damage: 6,
+      'Boost Damage': 17,
+      'Damage Reduction': 3,
+      Slot: 4,
+      'Slot Change': 4,
+      'Reduce Status Effect Duration': 15,
+      'Reduce Enemy Effect Duration': 9,
+      'Apply Status Effect': 8,
+      Reduction: 4,
+      Other: 15,
+    });
+    expect(specialCatalog.slice(0, 3).map((item) => item.key)).toEqual([
+      'special_damage',
+      'deal_fixed_damage',
+      'ignore_normal_attack_only',
+    ]);
+    expect(specialCatalog).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'remove_sfx',
+          category: 'special',
+          groupLabel: 'Reduce Status Effect Duration',
+          matchCount: 0,
+          matchingCharacterIds: [],
+        }),
+      ]),
+    );
+  });
+
+  it('indexes matching character ids for Special catalog entries', async () => {
+    const characters = [
+      {
+        id: 910001,
+        detail: {
+          specialText: 'Reduces Bind duration by 5 turns.',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 910002,
+        detail: {
+          specialText: 'Boosts ATK of all characters by 2.5x for 1 turn.',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(catalog.find((item) => item.key === 'remove_bind')).toEqual(
+      expect.objectContaining({
+        category: 'special',
+        matchingCharacterIds: [910001],
+        matchCount: 1,
+      }),
+    );
+    expect(catalog.find((item) => item.key === 'boost_atk')).toEqual(
+      expect.objectContaining({
+        category: 'special',
+        matchingCharacterIds: [910002],
+        matchCount: 1,
+      }),
+    );
   });
 
   it('preserves null minTurns for explicit existing abilities during normalization', async () => {
