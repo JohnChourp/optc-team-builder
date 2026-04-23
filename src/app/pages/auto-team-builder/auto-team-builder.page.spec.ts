@@ -3830,8 +3830,6 @@ function createCharacterRecord(
     stars: 6,
     cost: 55,
     combo: 4,
-    maxLevel: 99,
-    maxExperience: 5000000,
     stats: {
       min: { hp: 1000, atk: 500, rcv: 100 },
       max: { hp: 4200, atk: 1800, rcv: 320 },

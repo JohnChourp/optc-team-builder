@@ -67,8 +67,6 @@ export class CharacterEditPage implements OnInit {
   public readonly stars = signal('');
   public readonly cost = signal('');
   public readonly combo = signal('');
-  public readonly maxLevel = signal('');
-  public readonly maxExperience = signal('');
   public readonly minHp = signal('');
   public readonly minAtk = signal('');
   public readonly minRcv = signal('');
@@ -149,8 +147,6 @@ export class CharacterEditPage implements OnInit {
       | 'stars'
       | 'cost'
       | 'combo'
-      | 'maxLevel'
-      | 'maxExperience'
       | 'minHp'
       | 'minAtk'
       | 'minRcv'
@@ -171,12 +167,6 @@ export class CharacterEditPage implements OnInit {
         break;
       case 'combo':
         this.combo.set(nextValue);
-        break;
-      case 'maxLevel':
-        this.maxLevel.set(nextValue);
-        break;
-      case 'maxExperience':
-        this.maxExperience.set(nextValue);
         break;
       case 'minHp':
         this.minHp.set(nextValue);
@@ -330,8 +320,6 @@ export class CharacterEditPage implements OnInit {
     this.stars.set(String(override.stars));
     this.cost.set(String(override.cost));
     this.combo.set(String(override.combo));
-    this.maxLevel.set(String(override.maxLevel));
-    this.maxExperience.set(this.formatNullableNumber(override.maxExperience));
     this.minHp.set(this.formatNullableNumber(override.minHp));
     this.minAtk.set(this.formatNullableNumber(override.minAtk));
     this.minRcv.set(this.formatNullableNumber(override.minRcv));
@@ -362,8 +350,6 @@ export class CharacterEditPage implements OnInit {
       stars: this.parseRequiredInteger(this.stars()),
       cost: this.parseRequiredInteger(this.cost()),
       combo: this.parseRequiredInteger(this.combo()),
-      maxLevel: this.parseRequiredInteger(this.maxLevel()),
-      maxExperience: this.parseNullableNumber(this.maxExperience()),
       minHp: this.parseNullableNumber(this.minHp()),
       minAtk: this.parseNullableNumber(this.minAtk()),
       minRcv: this.parseNullableNumber(this.minRcv()),
@@ -454,8 +440,6 @@ export class CharacterEditPage implements OnInit {
     this.stars.set(String(override.stars));
     this.cost.set(String(override.cost));
     this.combo.set(String(override.combo));
-    this.maxLevel.set(String(override.maxLevel));
-    this.maxExperience.set(this.formatNullableNumber(override.maxExperience));
     this.minHp.set(this.formatNullableNumber(override.minHp));
     this.minAtk.set(this.formatNullableNumber(override.minAtk));
     this.minRcv.set(this.formatNullableNumber(override.minRcv));

@@ -194,8 +194,6 @@ export function normalizeIncomingManualCharacterPayload(
     stars: normalizeNonNegativeNumber(rawPayload.stars, 'stars'),
     cost: normalizeNonNegativeNumber(rawPayload.cost, 'cost'),
     combo: normalizeNonNegativeNumber(rawPayload.combo, 'combo'),
-    maxLevel: normalizeNonNegativeNumber(rawPayload.maxLevel, 'maxLevel'),
-    maxExperience: normalizeNullableNonNegativeNumber(rawPayload.maxExperience, 'maxExperience'),
     minHp: normalizeNullableNonNegativeNumber(rawPayload.minHp, 'minHp'),
     minAtk: normalizeNullableNonNegativeNumber(rawPayload.minAtk, 'minAtk'),
     minRcv: normalizeNullableNonNegativeNumber(rawPayload.minRcv, 'minRcv'),
@@ -244,8 +242,6 @@ export function buildAppliedManualCharacter(record) {
     stars: record.stars,
     cost: record.cost,
     combo: record.combo,
-    maxLevel: record.maxLevel,
-    maxExperience: record.maxExperience,
     minHp: record.minHp,
     minAtk: record.minAtk,
     minRcv: record.minRcv,
@@ -289,14 +285,6 @@ function normalizeStoredManualCharacterRecord(rawRecord, { availableClasses, cha
     stars: normalizeNonNegativeNumber(rawRecord.stars, `manual character ${characterId} stars`),
     cost: normalizeNonNegativeNumber(rawRecord.cost, `manual character ${characterId} cost`),
     combo: normalizeNonNegativeNumber(rawRecord.combo, `manual character ${characterId} combo`),
-    maxLevel: normalizeNonNegativeNumber(
-      rawRecord.maxLevel,
-      `manual character ${characterId} maxLevel`,
-    ),
-    maxExperience: normalizeNullableNonNegativeNumber(
-      rawRecord.maxExperience,
-      `manual character ${characterId} maxExperience`,
-    ),
     minHp: normalizeNullableNonNegativeNumber(rawRecord.minHp, `manual character ${characterId} minHp`),
     minAtk: normalizeNullableNonNegativeNumber(rawRecord.minAtk, `manual character ${characterId} minAtk`),
     minRcv: normalizeNullableNonNegativeNumber(rawRecord.minRcv, `manual character ${characterId} minRcv`),
@@ -465,7 +453,6 @@ function normalizeIncompleteFlag(value, fallback) {
 
 function hasIncompleteManualStats(record) {
   return [
-    record.maxExperience,
     record.minHp,
     record.minAtk,
     record.minRcv,

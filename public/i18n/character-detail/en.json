@@ -8,7 +8,7 @@
     "importJson": "Import JSON",
     "openTeamBuilder": "Open team builder",
     "resetOverride": "Reset local changes",
-    "summary": "Cost {{cost}} • Max Lv {{maxLevel}} • {{stars}}★ unit"
+    "summary": "Cost {{cost}} • {{stars}}★ unit"
   },
   "fields": {
     "captainEffect": "Captain effect",
@@ -24,8 +24,6 @@
     "growth": "Growth",
     "inheritsFrom": "Inherits Rumble data from",
     "levels": "Levels",
-    "maxExperience": "Max experience",
-    "maxLevel": "Max level",
     "minAtk": "Min ATK",
     "minHp": "Min HP",
     "minRcv": "Min RCV",

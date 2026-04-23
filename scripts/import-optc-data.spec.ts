@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   applyShipThumbnailOverrides,
+  normalizeCharacters,
   normalizeCharacterDetail,
   packDefinitions,
   shouldDownloadPack,
@@ -46,6 +47,48 @@ describe('import-optc-data ship thumbnail pack', () => {
       { id: 63, name: "Shiki's Island Ship", thumb: 'ship_0063_t2.png', description: '' },
       { id: 14, name: 'Thousand Sunny', thumb: 'ship_0014_t2.png', description: '' },
     ]);
+  });
+
+  it('maps upstream unit tuple stats without shifting max RCV into growth', () => {
+    const [character] = normalizeCharacters(
+      [
+        [
+          'Black Maria & Ulti - Merciless Assault',
+          ['DEX', 'INT'],
+          [
+            ['Cerebral', 'Driven'],
+            ['Cerebral', 'Driven'],
+            ['Cerebral', 'Driven'],
+          ],
+          6,
+          55,
+          4,
+          5,
+          99,
+          5_000_000,
+          2063,
+          889,
+          185,
+          4126,
+          1777,
+          370,
+          1,
+        ],
+      ],
+      {},
+      [],
+      new Map(),
+    );
+
+    expect(character).toMatchObject({
+      minHp: 2063,
+      minAtk: 889,
+      minRcv: 185,
+      maxHp: 4126,
+      maxAtk: 1777,
+      maxRcv: 370,
+      growth: 1,
+    });
   });
 
   it('imports typed support data and super special fields into the normalized detail shape', () => {

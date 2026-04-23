@@ -87,8 +87,6 @@ describe('manual character overlay helpers', () => {
         stars: 6,
         cost: 55,
         combo: 5,
-        maxLevel: 99,
-        maxExperience: 5000000,
         minHp: 1000,
         minAtk: 500,
         minRcv: 200,
@@ -189,8 +187,6 @@ describe('manual character overlay helpers', () => {
       stars: 5,
       cost: 30,
       combo: 4,
-      maxLevel: 99,
-      maxExperience: 1000000,
       minHp: 500,
       minAtk: 200,
       minRcv: 300,
@@ -235,8 +231,6 @@ describe('manual character overlay helpers', () => {
         stars: 6,
         cost: 99,
         combo: 4,
-        maxLevel: 110,
-        maxExperience: null,
         minHp: null,
         minAtk: null,
         minRcv: null,
@@ -298,8 +292,6 @@ describe('manual character overlay helpers', () => {
         stars: 6,
         cost: 55,
         combo: 5,
-        maxLevel: 99,
-        maxExperience: null,
         minHp: null,
         minAtk: null,
         minRcv: null,
@@ -321,7 +313,6 @@ describe('manual character overlay helpers', () => {
     );
 
     expect(record).toMatchObject({
-      maxExperience: null,
       minHp: null,
       minAtk: null,
       minRcv: null,

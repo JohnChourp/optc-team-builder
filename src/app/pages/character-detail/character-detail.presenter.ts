@@ -67,8 +67,6 @@ export function buildCharacterDetailViewModel(
         : []),
       createRow("fields.stars", formatNumber(character.stars)),
       createRow("fields.cost", formatNumber(character.cost)),
-      createRow("fields.maxLevel", formatNumber(character.maxLevel)),
-      ...createOptionalNumberRow("fields.maxExperience", character.maxExperience),
     ],
     heroStats: [
       ...createOptionalNumberRow("stats.maxHp", character.stats.max.hp),
@@ -186,9 +184,7 @@ function buildOverviewGroup(character: CharacterDetailRecord): DetailDisplayGrou
       : []),
     createRow("fields.stars", formatNumber(character.stars)),
     createRow("fields.cost", formatNumber(character.cost)),
-    createRow("fields.maxLevel", formatNumber(character.maxLevel)),
     createRow("fields.combo", formatNumber(character.combo)),
-    ...createOptionalNumberRow("fields.maxExperience", character.maxExperience),
   ];
   const maxStatsRows: DetailDisplayRow[] = [
     ...createOptionalNumberRow("stats.maxHp", character.stats.max.hp),

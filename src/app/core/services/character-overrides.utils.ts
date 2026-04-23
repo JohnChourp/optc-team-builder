@@ -14,8 +14,6 @@ export interface LocalCharacterOverrideInput {
   stars: number;
   cost: number;
   combo: number;
-  maxLevel: number;
-  maxExperience: number | null;
   minHp: number | null;
   minAtk: number | null;
   minRcv: number | null;
@@ -179,7 +177,6 @@ export function normalizeLocalCharacterOverride(
   const stars = normalizeNonNegativeInteger(input.stars);
   const cost = normalizeNonNegativeInteger(input.cost);
   const combo = normalizeNonNegativeInteger(input.combo);
-  const maxLevel = normalizeNonNegativeInteger(input.maxLevel);
   const name = typeof input.name === 'string' ? input.name.trim() : '';
   const type = typeof input.type === 'string' ? input.type.trim().toUpperCase() : '';
   const classes = [
@@ -197,8 +194,7 @@ export function normalizeLocalCharacterOverride(
     classes.length === 0 ||
     stars === null ||
     cost === null ||
-    combo === null ||
-    maxLevel === null
+    combo === null
   ) {
     return null;
   }
@@ -214,8 +210,6 @@ export function normalizeLocalCharacterOverride(
     stars,
     cost,
     combo,
-    maxLevel,
-    maxExperience: normalizeNullableNumber(input.maxExperience),
     minHp: normalizeNullableNumber(input.minHp),
     minAtk: normalizeNullableNumber(input.minAtk),
     minRcv: normalizeNullableNumber(input.minRcv),
@@ -252,8 +246,6 @@ export function createLocalCharacterOverrideFromRecord(
     stars: character.stars,
     cost: character.cost,
     combo: character.combo,
-    maxLevel: character.maxLevel,
-    maxExperience: character.maxExperience,
     minHp: character.stats.min.hp,
     minAtk: character.stats.min.atk,
     minRcv: character.stats.min.rcv,
@@ -292,8 +284,6 @@ export function applyOverrideToCharacterListItem(
     stars: override.stars,
     cost: override.cost,
     combo: override.combo,
-    maxLevel: override.maxLevel,
-    maxExperience: override.maxExperience,
     stats: {
       min: {
         hp: override.minHp,
@@ -341,8 +331,6 @@ export function createEditableCharacterOverridePayload(
     stars: override.stars,
     cost: override.cost,
     combo: override.combo,
-    maxLevel: override.maxLevel,
-    maxExperience: override.maxExperience,
     minHp: override.minHp,
     minAtk: override.minAtk,
     minRcv: override.minRcv,

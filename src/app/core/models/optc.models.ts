@@ -91,8 +91,6 @@ export interface CharacterRecord {
   stars: number;
   cost: number;
   combo: number;
-  maxLevel: number;
-  maxExperience: number | null;
   stats: CharacterStats;
   regionAvailability: RegionAvailability;
   assets: CharacterAssets;
@@ -154,8 +152,6 @@ export interface LocalCharacterOverride {
   stars: number;
   cost: number;
   combo: number;
-  maxLevel: number;
-  maxExperience: number | null;
   minHp: number | null;
   minAtk: number | null;
   minRcv: number | null;

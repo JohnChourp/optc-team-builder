@@ -234,8 +234,6 @@ function createCharacter(
     stars: 6,
     cost: 55,
     combo: 4,
-    maxLevel: 99,
-    maxExperience: 1,
     stats: {
       min: { hp: 1, atk: 1, rcv: 1 },
       max: { hp: 1000, atk: 1000, rcv: 1000 },

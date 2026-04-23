@@ -8,7 +8,7 @@
     "importJson": "Εισαγωγή JSON",
     "openTeamBuilder": "Άνοιγμα team builder",
     "resetOverride": "Reset local changes",
-    "summary": "Κόστος {{cost}} • Max Lv {{maxLevel}} • {{stars}}★ unit"
+    "summary": "Κόστος {{cost}} • {{stars}}★ unit"
   },
   "fields": {
     "captainEffect": "Effect",
@@ -24,8 +24,6 @@
     "growth": "Growth",
     "inheritsFrom": "Κληρονομεί Rumble data από",
     "levels": "Levels",
-    "maxExperience": "Max experience",
-    "maxLevel": "Max level",
     "minAtk": "Min ATK",
     "minHp": "Min HP",
     "minRcv": "Min RCV",

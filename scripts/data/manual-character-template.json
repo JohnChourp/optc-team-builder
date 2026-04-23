@@ -8,8 +8,6 @@
   "stars": 6,
   "cost": 55,
   "combo": 5,
-  "maxLevel": 99,
-  "maxExperience": 5000000,
   "minHp": 1200,
   "minAtk": 500,
   "minRcv": 150,

@@ -147,8 +147,6 @@ export function createSqlSeed(characters, ships, manifest) {
         stars INTEGER NOT NULL,
         cost INTEGER NOT NULL,
         combo INTEGER NOT NULL,
-        max_level INTEGER NOT NULL,
-        max_experience INTEGER,
         min_hp INTEGER,
         min_atk INTEGER,
         min_rcv INTEGER,
@@ -186,8 +184,8 @@ export function createSqlSeed(characters, ships, manifest) {
   for (const character of characters) {
     statements.push(`
       INSERT INTO characters (
-        id, name, is_incomplete, type, primary_class, secondary_class, classes_json, stars, cost, combo, max_level,
-        max_experience, min_hp, min_atk, min_rcv, max_hp, max_atk, max_rcv, growth, region_json,
+        id, name, is_incomplete, type, primary_class, secondary_class, classes_json, stars, cost, combo,
+        min_hp, min_atk, min_rcv, max_hp, max_atk, max_rcv, growth, region_json,
         assets_json, search_text
       ) VALUES (
         ${sqlValue(character.id)},
@@ -200,8 +198,6 @@ export function createSqlSeed(characters, ships, manifest) {
         ${sqlValue(character.stars)},
         ${sqlValue(character.cost)},
         ${sqlValue(character.combo)},
-        ${sqlValue(character.maxLevel)},
-        ${sqlValue(character.maxExperience)},
         ${sqlValue(character.minHp)},
         ${sqlValue(character.minAtk)},
         ${sqlValue(character.minRcv)},

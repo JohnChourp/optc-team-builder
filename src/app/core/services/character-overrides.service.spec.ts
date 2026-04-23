@@ -110,8 +110,6 @@ function createOverride(overrides: Record<string, unknown> & { characterId: numb
     stars: overrides['stars'] ?? 6,
     cost: overrides['cost'] ?? 55,
     combo: overrides['combo'] ?? 4,
-    maxLevel: overrides['maxLevel'] ?? 99,
-    maxExperience: overrides['maxExperience'] ?? 1_000_000,
     minHp: overrides['minHp'] ?? 1000,
     minAtk: overrides['minAtk'] ?? 400,
     minRcv: overrides['minRcv'] ?? 120,

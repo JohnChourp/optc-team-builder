@@ -560,8 +560,6 @@ function createCharacterRecord(
     stars: overrides.stars ?? 6,
     cost: overrides.cost ?? 55,
     combo: overrides.combo ?? 4,
-    maxLevel: overrides.maxLevel ?? 99,
-    maxExperience: overrides.maxExperience ?? 5_000_000,
     stats: overrides.stats ?? {
       min: { hp: 1000, atk: 500, rcv: 100 },
       max: { hp: 4200, atk: 1800, rcv: 320 },

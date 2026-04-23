@@ -168,8 +168,6 @@ describe("character-detail presenter", () => {
       stars: 6,
       cost: 55,
       combo: 4,
-      maxLevel: 99,
-      maxExperience: 5000000,
       stats: {
         min: { hp: 1200, atk: 600, rcv: 200 },
         max: { hp: 3500, atk: 1800, rcv: 420 },
@@ -320,8 +318,6 @@ describe("character-detail presenter", () => {
       stars: 6,
       cost: 40,
       combo: 4,
-      maxLevel: 99,
-      maxExperience: 5000000,
       stats: {
         min: { hp: 1000, atk: 500, rcv: 100 },
         max: { hp: 4000, atk: 1600, rcv: 250 },
@@ -417,8 +413,6 @@ describe("character-detail presenter", () => {
       stars: 6,
       cost: 55,
       combo: 4,
-      maxLevel: 99,
-      maxExperience: null,
       stats: {
         min: { hp: null, atk: null, rcv: null },
         max: { hp: 5122, atk: 2190, rcv: 417 },
@@ -468,7 +462,13 @@ describe("character-detail presenter", () => {
       },
     });
 
-    expect(viewModel.heroMeta.some((row) => row.labelKey === "fields.maxExperience")).toBe(false);
+    expect(viewModel.heroMeta.map((row) => row.labelKey)).toEqual([
+      "fields.type",
+      "fields.primaryClass",
+      "fields.secondaryClass",
+      "fields.stars",
+      "fields.cost",
+    ]);
     expect(viewModel.heroStats).toEqual([
       expect.objectContaining({ labelKey: "stats.maxHp", value: "5,122" }),
       expect.objectContaining({ labelKey: "stats.maxAtk", value: "2,190" }),

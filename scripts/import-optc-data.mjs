@@ -942,7 +942,7 @@ export function normalizeCharacterDetail(detail, characterId, rumbleData = null)
   };
 }
 
-function normalizeCharacters(units, details, rumbleUnits, assetsById) {
+export function normalizeCharacters(units, details, rumbleUnits, assetsById) {
   const rumbleById = new Map(rumbleUnits.map((entry) => [entry.id, entry]));
   const toNumber = (value) => {
     const parsed = Number(value);
@@ -976,16 +976,13 @@ function normalizeCharacters(units, details, rumbleUnits, assetsById) {
         cost: toNumber(entry[4]),
         combo: toNumber(entry[5]),
         maxSockets: toNumber(entry[6]),
-        evolutionStage: toNumber(entry[7]),
-        maxLevel: toNumber(entry[8]),
-        maxExperience: toNumber(entry[9]),
-        minHp: toNumber(entry[10]),
-        minAtk: toNumber(entry[11]),
-        minRcv: toNumber(entry[12]),
-        maxHp: toNumber(entry[13]),
-        maxAtk: toNumber(entry[14]),
-        maxRcv: toNumber(entry[15]),
-        growth: toNumber(entry[16]),
+        minHp: toNumber(entry[9]),
+        minAtk: toNumber(entry[10]),
+        minRcv: toNumber(entry[11]),
+        maxHp: toNumber(entry[12]),
+        maxAtk: toNumber(entry[13]),
+        maxRcv: toNumber(entry[14]),
+        growth: toNumber(entry[15]),
         searchText: createCharacterSearchText({
           name: entry[0],
           type: entry[1],

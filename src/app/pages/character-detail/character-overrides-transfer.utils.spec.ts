@@ -105,8 +105,6 @@ function createOverride(characterId: number) {
     stars: 6,
     cost: 55,
     combo: 4,
-    maxLevel: 99,
-    maxExperience: 1_000_000,
     minHp: 1000,
     minAtk: 400,
     minRcv: 120,
