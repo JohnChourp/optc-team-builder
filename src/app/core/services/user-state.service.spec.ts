@@ -53,7 +53,28 @@ describe('UserStateService saved teams', () => {
     });
   });
 
-  it('hydrates the auto team builder worker preference and resolves the effective count', async () => {
+  it('hydrates the manual worker preference and clamps it to 65% of detected cores', async () => {
+    vi.stubGlobal('navigator', { hardwareConcurrency: 14 });
+    const { service } = await createService([], [], [], [], {
+      mode: 'manual',
+      manualCount: 20,
+    });
+
+    expect(service.autoTeamBuilderWorkerPreference()).toEqual({
+      mode: 'manual',
+      manualCount: 9,
+    });
+    expect(service.resolveAutoTeamBuilderWorkerPreference()).toEqual({
+      mode: 'manual',
+      manualCount: 9,
+      detectedCoreCount: 14,
+      manualMaxCount: 9,
+      manualMaxPercent: 64,
+      effectiveCount: 9,
+    });
+  });
+
+  it('caps manual worker mode to seven workers on twelve-core devices', async () => {
     vi.stubGlobal('navigator', { hardwareConcurrency: 12 });
     const { service } = await createService([], [], [], [], {
       mode: 'manual',
@@ -62,17 +83,19 @@ describe('UserStateService saved teams', () => {
 
     expect(service.autoTeamBuilderWorkerPreference()).toEqual({
       mode: 'manual',
-      manualCount: 12,
+      manualCount: 7,
     });
     expect(service.resolveAutoTeamBuilderWorkerPreference()).toEqual({
       mode: 'manual',
-      manualCount: 12,
+      manualCount: 7,
       detectedCoreCount: 12,
-      effectiveCount: 12,
+      manualMaxCount: 7,
+      manualMaxPercent: 58,
+      effectiveCount: 7,
     });
   });
 
-  it('caps auto worker mode to four workers even on high-core devices', async () => {
+  it('keeps auto worker mode capped at four workers on high-core devices', async () => {
     vi.stubGlobal('navigator', { hardwareConcurrency: 12 });
     const { service } = await createService([], [], [], [], {
       mode: 'auto',
@@ -83,9 +106,29 @@ describe('UserStateService saved teams', () => {
       mode: 'auto',
       manualCount: 7,
       detectedCoreCount: 12,
+      manualMaxCount: 7,
+      manualMaxPercent: 58,
       effectiveCount: 4,
     });
     expect(service.resolveAutoTeamBuilderWorkerCount()).toBe(4);
+  });
+
+  it('keeps auto worker mode clamped to at least one worker on low-core devices', async () => {
+    vi.stubGlobal('navigator', { hardwareConcurrency: 1 });
+    const { service } = await createService([], [], [], [], {
+      mode: 'auto',
+      manualCount: 7,
+    });
+
+    expect(service.resolveAutoTeamBuilderWorkerPreference()).toEqual({
+      mode: 'auto',
+      manualCount: 1,
+      detectedCoreCount: 1,
+      manualMaxCount: 1,
+      manualMaxPercent: 100,
+      effectiveCount: 1,
+    });
+    expect(service.resolveAutoTeamBuilderWorkerCount()).toBe(1);
   });
 
   it('falls back to the safe auto worker preference when stored data is invalid', async () => {
@@ -113,13 +156,13 @@ describe('UserStateService saved teams', () => {
 
     expect(service.autoTeamBuilderWorkerPreference()).toEqual({
       mode: 'manual',
-      manualCount: 10,
+      manualCount: 6,
     });
     expect(setCalls.at(-1)).toEqual({
       key: 'autoTeamBuilderWorkerPreference',
       value: JSON.stringify({
         mode: 'manual',
-        manualCount: 10,
+        manualCount: 6,
       }),
     });
   });
@@ -254,9 +297,9 @@ describe('UserStateService saved teams', () => {
       createdAt: originalBox.createdAt,
     });
     expect(service.characterBoxes()[0]?.updatedAt).not.toBe(originalBox.updatedAt);
-    expect(
-      JSON.parse(setCalls.at(-1)?.value ?? '[]').map((box: { id: string }) => box.id),
-    ).toEqual(['box-1', 'box-3', 'box-2']);
+    expect(JSON.parse(setCalls.at(-1)?.value ?? '[]').map((box: { id: string }) => box.id)).toEqual(
+      ['box-1', 'box-3', 'box-2'],
+    );
   });
 
   it('deletes only the requested saved teams and persists the next state', async () => {
@@ -696,14 +739,18 @@ describe('UserStateService saved teams', () => {
       cropDataUrl: 'data:image/png;base64,Y3JvcA==',
     });
 
-    expect(service.crewForgeImageProfiles().find((profile) => profile.id === 'profile-1')?.examples).toEqual([
+    expect(
+      service.crewForgeImageProfiles().find((profile) => profile.id === 'profile-1')?.examples,
+    ).toEqual([
       expect.objectContaining({
         name: 'Example Screenshot',
         imageWidth: 1080,
         imageHeight: 1920,
       }),
     ]);
-    expect(service.crewForgeImageProfiles().find((profile) => profile.id === 'profile-1')?.exemplars).toEqual([
+    expect(
+      service.crewForgeImageProfiles().find((profile) => profile.id === 'profile-1')?.exemplars,
+    ).toEqual([
       expect.objectContaining({
         slotKey: 'leader-1',
         characterId: 101,
@@ -738,7 +785,9 @@ describe('UserStateService saved teams', () => {
       source: 'user',
       name: 'Android 1080×2400 Recruitment Copy',
     });
-    expect(exampleProfile?.id).not.toBe('crew-forge-default-android-1080x2400-character-recruitment');
+    expect(exampleProfile?.id).not.toBe(
+      'crew-forge-default-android-1080x2400-character-recruitment',
+    );
     expect(exampleProfile?.examples).toHaveLength(1);
 
     const exemplarProfile = await service.saveCrewForgeImageExemplar(exampleProfile?.id ?? '', {

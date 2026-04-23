@@ -520,6 +520,7 @@ export class AutoTeamBuilderService {
       );
 
       const timingState = this.createTimingState();
+      const projectedTotalAttempts = fallbackPlanner.getProjectedTotalAttempts();
 
       this.throwIfCancelled(executionOptions.signal);
       this.emitProgress(executionOptions, {
@@ -543,14 +544,9 @@ export class AutoTeamBuilderService {
         stage: 'exactAttempt',
         candidateCount: records.length,
         completedAttempts: 0,
-        totalAttempts: fallbackPlanner.getTotalAttempts(),
+        totalAttempts: projectedTotalAttempts,
         attemptCountFinal: fallbackPlanner.isAttemptCountFinal(),
-        ...this.buildTimingSnapshot(
-          timingState,
-          fallbackPlanner.getTotalAttempts(),
-          0,
-          workers.length,
-        ),
+        ...this.buildTimingSnapshot(timingState, projectedTotalAttempts, 0, workers.length),
         currentDroppedTypes: [],
         currentDroppedClasses: [],
         currentAllowedLeadersWithSuperEffects: false,
@@ -558,10 +554,12 @@ export class AutoTeamBuilderService {
         messageKey: 'progress.exactAttempt',
         messageParams: {
           current: 1,
-          total: fallbackPlanner.getTotalAttempts(),
+          total: projectedTotalAttempts,
         },
       });
 
+      // Wait point 1: the exact attempt always runs first so pooled fallbacks only start once
+      // the strictest search has definitively failed to satisfy the requested coverage.
       const exactResult = await this.runAttemptInInitializedWorker(
         workers[0],
         requestedInput,
@@ -897,6 +895,8 @@ export class AutoTeamBuilderService {
         reject(error);
       };
       const tryResolveOrderedResult = (): void => {
+        // Wait point 2: pooled fallback results resolve in planned order on purpose, so a later
+        // successful attempt can still wait behind earlier unfinished attempts.
         for (
           let index = 0;
           index < fallbackPlanner.getScheduledFallbackAttemptCount();
@@ -999,6 +999,8 @@ export class AutoTeamBuilderService {
               tryResolveOrderedResult();
 
               if (!settled) {
+                // Wait point 3: as soon as a worker finishes, dispatch the next queued fallback in
+                // the same promise chain without adding any timer-based delay.
                 dispatchAvailableAttempts();
               }
             })

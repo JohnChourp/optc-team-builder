@@ -86,6 +86,7 @@ export function runAutoTeamBuildSearch(
 ): AutoBuildResult | null {
   const timingState = createTimingState(options);
   const planner = createAutoTeamBuildFallbackPlanner(requestedInput, records);
+  const projectedTotalAttempts = planner.getProjectedTotalAttempts();
 
   assertNotCancelled(options);
   emitProgress(options, timingState, {
@@ -106,7 +107,7 @@ export function runAutoTeamBuildSearch(
     stage: 'exactAttempt',
     candidateCount: records.length,
     completedAttempts: 0,
-    totalAttempts: planner.getTotalAttempts(),
+    totalAttempts: projectedTotalAttempts,
     attemptCountFinal: planner.isAttemptCountFinal(),
     currentDroppedTypes: [],
     currentDroppedClasses: [],
@@ -115,7 +116,7 @@ export function runAutoTeamBuildSearch(
     messageKey: 'progress.exactAttempt',
     messageParams: {
       current: 1,
-      total: planner.getTotalAttempts(),
+      total: projectedTotalAttempts,
     },
   });
 
@@ -333,6 +334,7 @@ export function runAutoTeamBuildAttempt(
 export class AutoTeamBuildFallbackPlanner {
   private readonly zeroDropAttempts: AutoTeamBuildPlannedAttempt[];
   private readonly subsetCandidates: AutoTeamBuildSubsetCandidate[];
+  private readonly projectedScheduledFallbackAttemptCount: number;
   private readonly scheduledAttempts: AutoTeamBuildScheduledAttempt[] = [];
   private readonly scheduledAttemptKeys = new Set<string>();
   private nextDispatchIndex = 0;
@@ -379,6 +381,11 @@ export class AutoTeamBuildFallbackPlanner {
       requestedInput,
       this.zeroDropAttempts.length,
     );
+    this.projectedScheduledFallbackAttemptCount = resolveProjectedScheduledFallbackAttemptCount(
+      this.zeroDropAttempts,
+      this.subsetCandidates,
+      this.maxScheduledFallbackAttempts,
+    );
     this.attemptCountFinal = !this.hasPotentialFallbackAttempts();
   }
 
@@ -388,6 +395,10 @@ export class AutoTeamBuildFallbackPlanner {
 
   public getTotalAttempts(): number {
     return 1 + this.scheduledAttempts.length;
+  }
+
+  public getProjectedTotalAttempts(): number {
+    return 1 + this.projectedScheduledFallbackAttemptCount;
   }
 
   public isAttemptCountFinal(): boolean {
@@ -483,6 +494,42 @@ export function createAutoTeamBuildFallbackPlanner(
   records: CharacterDetailRecord[],
 ): AutoTeamBuildFallbackPlanner {
   return new AutoTeamBuildFallbackPlanner(requestedInput, records);
+}
+
+function resolveProjectedScheduledFallbackAttemptCount(
+  zeroDropAttempts: AutoTeamBuildPlannedAttempt[],
+  subsetCandidates: AutoTeamBuildSubsetCandidate[],
+  maxScheduledFallbackAttempts: number,
+): number {
+  if (maxScheduledFallbackAttempts <= 0) {
+    return 0;
+  }
+
+  const scheduledAttemptKeys = new Set<string>();
+  let scheduledAttemptCount = 0;
+  const tryScheduleAttempt = (attempt: AutoTeamBuildPlannedAttempt): void => {
+    if (scheduledAttemptCount >= maxScheduledFallbackAttempts) {
+      return;
+    }
+
+    const key = buildFallbackAttemptKey(attempt);
+
+    if (scheduledAttemptKeys.has(key)) {
+      return;
+    }
+
+    scheduledAttemptKeys.add(key);
+    scheduledAttemptCount += 1;
+  };
+
+  zeroDropAttempts.forEach((attempt) => {
+    tryScheduleAttempt(attempt);
+  });
+  subsetCandidates.forEach((candidate) => {
+    tryScheduleAttempt(candidate.attempt);
+  });
+
+  return scheduledAttemptCount;
 }
 
 function buildZeroDropFallbackAttempts(

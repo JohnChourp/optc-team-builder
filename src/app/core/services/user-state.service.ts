@@ -30,6 +30,7 @@ const SAVED_ENEMIES_KEY = 'savedEnemies';
 const CREW_FORGE_IMAGE_PROFILES_KEY = 'crewForgeImageProfiles';
 const CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY = 'crewForgeLastImageProfileId';
 const AUTO_TEAM_BUILDER_WORKER_PREFERENCE_KEY = 'autoTeamBuilderWorkerPreference';
+const AUTO_TEAM_BUILDER_MANUAL_WORKER_MAX_RATIO = 0.65;
 const LEGACY_ABILITY_KEY_ALIASES: Record<string, string> = {
   remove_defense_up: 'remove_enemy_increased_defense',
 };
@@ -48,6 +49,8 @@ export interface AutoTeamBuilderWorkerPreference {
 export interface ResolvedAutoTeamBuilderWorkerPreference extends AutoTeamBuilderWorkerPreference {
   detectedCoreCount: number;
   effectiveCount: number;
+  manualMaxCount: number;
+  manualMaxPercent: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -244,14 +247,21 @@ export class UserStateService {
       return null;
     }
 
-    return this.crewForgeImageProfiles().find((profile) => profile.id === normalizedProfileId) ?? null;
+    return (
+      this.crewForgeImageProfiles().find((profile) => profile.id === normalizedProfileId) ?? null
+    );
   }
 
   public findCrewForgeImageProfileByDimensions(
     imageWidth: number,
     imageHeight: number,
   ): CrewForgeImageProfile | null {
-    if (!Number.isInteger(imageWidth) || imageWidth <= 0 || !Number.isInteger(imageHeight) || imageHeight <= 0) {
+    if (
+      !Number.isInteger(imageWidth) ||
+      imageWidth <= 0 ||
+      !Number.isInteger(imageHeight) ||
+      imageHeight <= 0
+    ) {
       return null;
     }
 
@@ -265,9 +275,7 @@ export class UserStateService {
     }
 
     return (
-      exactProfiles.find((profile) => profile.id === preferredProfileId) ??
-      exactProfiles[0] ??
-      null
+      exactProfiles.find((profile) => profile.id === preferredProfileId) ?? exactProfiles[0] ?? null
     );
   }
 
@@ -281,7 +289,9 @@ export class UserStateService {
       typeof input.id === 'string' && BUILT_IN_CREW_FORGE_IMAGE_PROFILE_IDS.has(input.id)
         ? undefined
         : input.id;
-    const existing = this.userCrewForgeImageProfiles().find((profile) => profile.id === requestedId);
+    const existing = this.userCrewForgeImageProfiles().find(
+      (profile) => profile.id === requestedId,
+    );
     const normalizedProfile = this.normalizeCrewForgeImageProfile(
       {
         ...input,
@@ -316,7 +326,9 @@ export class UserStateService {
       return;
     }
 
-    const next = this.userCrewForgeImageProfiles().filter((profile) => profile.id !== normalizedProfileId);
+    const next = this.userCrewForgeImageProfiles().filter(
+      (profile) => profile.id !== normalizedProfileId,
+    );
 
     if (next.length === this.userCrewForgeImageProfiles().length) {
       return;
@@ -325,7 +337,9 @@ export class UserStateService {
     await this.replaceCrewForgeImageProfiles(next);
 
     if (this.crewForgeLastImageProfileId() === normalizedProfileId) {
-      const nextPreferredId = this.crewForgeImageProfiles().find((profile) => profile.id !== normalizedProfileId)?.id ?? null;
+      const nextPreferredId =
+        this.crewForgeImageProfiles().find((profile) => profile.id !== normalizedProfileId)?.id ??
+        null;
       this.crewForgeLastImageProfileId.set(nextPreferredId);
       await this.persistJson(CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY, nextPreferredId);
     }
@@ -334,7 +348,7 @@ export class UserStateService {
   public async setCrewForgeLastImageProfileId(profileId: string | null): Promise<void> {
     await this.ready();
     const normalizedProfileId =
-      profileId === null ? null : this.getCrewForgeImageProfileById(profileId)?.id ?? null;
+      profileId === null ? null : (this.getCrewForgeImageProfileById(profileId)?.id ?? null);
 
     this.crewForgeLastImageProfileId.set(normalizedProfileId);
     await this.persistJson(CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY, normalizedProfileId);
@@ -389,7 +403,8 @@ export class UserStateService {
     const existing =
       profile.exemplars.find((exemplar) => exemplar.id === input.id) ??
       profile.exemplars.find(
-        (exemplar) => exemplar.slotKey === input.slotKey && exemplar.characterId === input.characterId,
+        (exemplar) =>
+          exemplar.slotKey === input.slotKey && exemplar.characterId === input.characterId,
       );
     const nextExemplar = this.normalizeCrewForgeImageExemplar(
       {
@@ -407,7 +422,9 @@ export class UserStateService {
     const nextProfile = {
       ...profile,
       exemplars: existing
-        ? profile.exemplars.map((exemplar) => (exemplar.id === nextExemplar.id ? nextExemplar : exemplar))
+        ? profile.exemplars.map((exemplar) =>
+            exemplar.id === nextExemplar.id ? nextExemplar : exemplar,
+          )
         : [nextExemplar, ...profile.exemplars],
     };
 
@@ -444,10 +461,13 @@ export class UserStateService {
       this.autoTeamBuilderWorkerPreference(),
       detectedCoreCount,
     );
+    const manualMaxCount = this.resolveAutoTeamBuilderManualWorkerMaxCount(detectedCoreCount);
 
     return {
       ...normalizedPreference,
       detectedCoreCount,
+      manualMaxCount,
+      manualMaxPercent: Math.floor((manualMaxCount * 100) / detectedCoreCount),
       effectiveCount:
         normalizedPreference.mode === 'manual'
           ? normalizedPreference.manualCount
@@ -710,21 +730,20 @@ export class UserStateService {
       crewForgeImageProfiles,
       crewForgeLastImageProfileId,
       autoTeamBuilderWorkerPreference,
-    ] =
-      await Promise.all([
-        this.readJson<number[]>(FAVORITES_KEY, []),
-        this.readJson<number[]>(FAVORITE_SHIPS_KEY, []),
-        this.readJson<number[]>(RECENTS_KEY, []),
-        this.readJson<CharacterBox[]>(CHARACTER_BOXES_KEY, []),
-        this.readJson<SavedTeam[]>(SAVED_TEAMS_KEY, []),
-        this.readJson<SavedEnemy[]>(SAVED_ENEMIES_KEY, []),
-        this.readJson<CrewForgeImageProfile[]>(CREW_FORGE_IMAGE_PROFILES_KEY, []),
-        this.readJson<string | null>(CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY, null),
-        this.readJson<AutoTeamBuilderWorkerPreference>(
-          AUTO_TEAM_BUILDER_WORKER_PREFERENCE_KEY,
-          AUTO_TEAM_BUILDER_DEFAULT_WORKER_PREFERENCE,
-        ),
-      ]);
+    ] = await Promise.all([
+      this.readJson<number[]>(FAVORITES_KEY, []),
+      this.readJson<number[]>(FAVORITE_SHIPS_KEY, []),
+      this.readJson<number[]>(RECENTS_KEY, []),
+      this.readJson<CharacterBox[]>(CHARACTER_BOXES_KEY, []),
+      this.readJson<SavedTeam[]>(SAVED_TEAMS_KEY, []),
+      this.readJson<SavedEnemy[]>(SAVED_ENEMIES_KEY, []),
+      this.readJson<CrewForgeImageProfile[]>(CREW_FORGE_IMAGE_PROFILES_KEY, []),
+      this.readJson<string | null>(CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY, null),
+      this.readJson<AutoTeamBuilderWorkerPreference>(
+        AUTO_TEAM_BUILDER_WORKER_PREFERENCE_KEY,
+        AUTO_TEAM_BUILDER_DEFAULT_WORKER_PREFERENCE,
+      ),
+    ]);
 
     this.favoriteCharacterIds.set(favorites);
     this.favoriteShipIds.set(favoriteShips);
@@ -745,8 +764,7 @@ export class UserStateService {
           }
 
           return (
-            profile.source === 'user' &&
-            !BUILT_IN_CREW_FORGE_IMAGE_PROFILE_IDS.has(profile.id)
+            profile.source === 'user' && !BUILT_IN_CREW_FORGE_IMAGE_PROFILE_IDS.has(profile.id)
           );
         }),
     );
@@ -829,14 +847,19 @@ export class UserStateService {
     detectedCoreCount = this.resolveDetectedCoreCount(),
   ): AutoTeamBuilderWorkerPreference {
     const mode = preference?.mode === 'manual' ? 'manual' : 'auto';
+    const manualMaxCount = this.resolveAutoTeamBuilderManualWorkerMaxCount(detectedCoreCount);
     const manualCount = Number.isFinite(preference?.manualCount)
       ? Math.floor(preference?.manualCount ?? 1)
       : AUTO_TEAM_BUILDER_DEFAULT_WORKER_PREFERENCE.manualCount;
 
     return {
       mode,
-      manualCount: Math.max(1, Math.min(detectedCoreCount, manualCount)),
+      manualCount: Math.max(1, Math.min(manualMaxCount, manualCount)),
     };
+  }
+
+  private resolveAutoTeamBuilderManualWorkerMaxCount(detectedCoreCount: number): number {
+    return Math.max(1, Math.floor(detectedCoreCount * AUTO_TEAM_BUILDER_MANUAL_WORKER_MAX_RATIO));
   }
 
   private normalizeSavedTeam(
@@ -950,7 +973,8 @@ export class UserStateService {
 
     const now = new Date().toISOString();
     const baseProfile: CrewForgeImageProfile = {
-      id: this.normalizeEntityId(profile.id) ?? existing?.id ?? this.createCrewForgeImageProfileId(),
+      id:
+        this.normalizeEntityId(profile.id) ?? existing?.id ?? this.createCrewForgeImageProfileId(),
       name: normalizedName,
       source: profile.source === 'built-in' ? 'built-in' : 'user',
       imageWidth,
@@ -965,7 +989,12 @@ export class UserStateService {
 
     baseProfile.examples = (Array.isArray(profile.examples) ? profile.examples : [])
       .map((example) =>
-        this.normalizeCrewForgeImageExample(example, undefined, baseProfile.imageWidth, baseProfile.imageHeight),
+        this.normalizeCrewForgeImageExample(
+          example,
+          undefined,
+          baseProfile.imageWidth,
+          baseProfile.imageHeight,
+        ),
       )
       .filter((example): example is CrewForgeImageExample => Boolean(example));
     baseProfile.exemplars = (Array.isArray(profile.exemplars) ? profile.exemplars : [])
@@ -979,7 +1008,9 @@ export class UserStateService {
     slotDefinitions: CrewForgeImageSlotDefinition[] | undefined,
   ): CrewForgeImageSlotDefinition[] {
     const rawByKey = new Map(
-      (Array.isArray(slotDefinitions) ? slotDefinitions : []).map((slot) => [slot.key, slot] as const),
+      (Array.isArray(slotDefinitions) ? slotDefinitions : []).map(
+        (slot) => [slot.key, slot] as const,
+      ),
     );
 
     return CREW_FORGE_IMAGE_SLOT_BLUEPRINTS.map((blueprint) => {
@@ -1042,8 +1073,12 @@ export class UserStateService {
     const now = new Date().toISOString();
 
     return {
-      id: this.normalizeEntityId(example.id) ?? existing?.id ?? this.createCrewForgeImageExampleId(),
-      name: typeof example.name === 'string' && example.name.trim().length ? example.name.trim() : 'Example',
+      id:
+        this.normalizeEntityId(example.id) ?? existing?.id ?? this.createCrewForgeImageExampleId(),
+      name:
+        typeof example.name === 'string' && example.name.trim().length
+          ? example.name.trim()
+          : 'Example',
       imageDataUrl: normalizedImageDataUrl,
       imageWidth: this.normalizePositiveInteger(example.imageWidth) ?? imageWidth,
       imageHeight: this.normalizePositiveInteger(example.imageHeight) ?? imageHeight,
@@ -1074,7 +1109,8 @@ export class UserStateService {
       return null;
     }
 
-    const fingerprintLength = profile.preprocess.fingerprintSize * profile.preprocess.fingerprintSize;
+    const fingerprintLength =
+      profile.preprocess.fingerprintSize * profile.preprocess.fingerprintSize;
     const fingerprint = Array.isArray(exemplar.fingerprint)
       ? exemplar.fingerprint
           .map((value) => this.normalizeUnitInterval(value, -1))
@@ -1089,7 +1125,10 @@ export class UserStateService {
     const now = new Date().toISOString();
 
     return {
-      id: this.normalizeEntityId(exemplar.id) ?? existing?.id ?? this.createCrewForgeImageExemplarId(),
+      id:
+        this.normalizeEntityId(exemplar.id) ??
+        existing?.id ??
+        this.createCrewForgeImageExemplarId(),
       slotKey: slotDefinition.key,
       characterId,
       fingerprint,
@@ -1234,7 +1273,8 @@ export class UserStateService {
 
       const abilityKey =
         typeof requirement.abilityKey === 'string'
-          ? LEGACY_ABILITY_KEY_ALIASES[requirement.abilityKey.trim()] ?? requirement.abilityKey.trim()
+          ? (LEGACY_ABILITY_KEY_ALIASES[requirement.abilityKey.trim()] ??
+            requirement.abilityKey.trim())
           : '';
 
       if (!abilityKey.length) {

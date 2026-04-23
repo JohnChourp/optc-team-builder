@@ -1,5 +1,5 @@
 import { Component, inject } from "@angular/core";
-import { Router, RouterLink } from "@angular/router";
+import { RouterLink, RouterLinkActive, type IsActiveMatchOptions } from "@angular/router";
 import {
   IonContent,
   IonHeader,
@@ -54,6 +54,7 @@ interface LanguageItem {
     IonTitle,
     IonToolbar,
     RouterLink,
+    RouterLinkActive,
     TranslocoPipe,
   ],
   templateUrl: "./tabs.page.html",
@@ -61,9 +62,14 @@ interface LanguageItem {
 })
 export class TabsPage {
   private readonly i18n = inject(AppI18nService);
-  private readonly router = inject(Router);
 
   public readonly activeLanguage = this.i18n.activeLanguage;
+  public readonly navItemActiveMatchOptions: IsActiveMatchOptions = {
+    paths: "exact",
+    queryParams: "subset",
+    fragment: "ignored",
+    matrixParams: "ignored",
+  };
   public readonly availableLanguages: readonly LanguageItem[] = [
     { id: "en", flag: "🇬🇧" },
     { id: "el", flag: "🇬🇷" },
@@ -110,10 +116,6 @@ export class TabsPage {
       route: "/tabs/settings",
     },
   ];
-
-  public isRouteActive(item: NavigationItem): boolean {
-    return this.router.url === item.route || this.router.url.startsWith(`${item.route}?`);
-  }
 
   public async onLanguageSelect(language: SupportedLanguage): Promise<void> {
     if (language === this.activeLanguage()) {

@@ -617,7 +617,7 @@ describe('OptcRepositoryService', () => {
     expect(result.map((record) => record.id)).toEqual([4102, 4101]);
   });
 
-  it('uses power-first sort for detailed character search when the picker requests it', async () => {
+  it('uses newest-first sort when the picker requests power-first ordering', async () => {
     const service = createRepositoryService([
       createCharacterRow({ id: 4101, type: 'DEX', cost: 55 }),
       createCharacterRow({ id: 4104, type: 'DEX', cost: 99 }),
@@ -633,10 +633,31 @@ describe('OptcRepositoryService', () => {
       offset: 0,
     });
 
-    expect(result.map((record) => record.id)).toEqual([4102, 4103, 4101, 4104]);
+    expect(result.map((record) => record.id)).toEqual([4104, 4103, 4102, 4101]);
   });
 
-  it('orders auto-builder candidates by power-first cost buckets with id tie-breaks', async () => {
+  it('queries detailed search directly without materializing the full catalog when no overrides exist', async () => {
+    const service = createRepositoryService([createCharacterRow({ id: 4101, type: 'DEX' })]);
+    const getAllDetailedCharactersSpy = vi
+      .spyOn(service as never, 'getAllDetailedCharacters')
+      .mockRejectedValue(
+        new Error('searchDetailedCharacters should not materialize the full catalog'),
+      );
+
+    await expect(
+      service.searchDetailedCharacters({
+        searchTerm: '',
+        selectedTypes: [],
+        selectedClasses: [],
+        sortMode: 'powerFirst',
+        limit: 10,
+        offset: 0,
+      }),
+    ).resolves.toEqual([expect.objectContaining({ id: 4101 })]);
+    expect(getAllDetailedCharactersSpy).not.toHaveBeenCalled();
+  });
+
+  it('orders auto-builder candidates by newest character id regardless of cost', async () => {
     const service = createRepositoryService([
       createCharacterRow({ id: 5101, type: 'DEX', cost: 55 }),
       createCharacterRow({ id: 5104, type: 'DEX', cost: 99 }),
@@ -648,7 +669,21 @@ describe('OptcRepositoryService', () => {
 
     const result = await service.getAutoBuilderCandidates(['DEX'], 1200);
 
-    expect(result.map((record) => record.id)).toEqual([5105, 5102, 5103, 5101, 5106, 5104]);
+    expect(result.map((record) => record.id)).toEqual([5106, 5105, 5104, 5103, 5102, 5101]);
+  });
+
+  it('queries auto-builder candidates directly without materializing the full catalog when no overrides exist', async () => {
+    const service = createRepositoryService([createCharacterRow({ id: 5101, type: 'DEX' })]);
+    const getAllDetailedCharactersSpy = vi
+      .spyOn(service as never, 'getAllDetailedCharacters')
+      .mockRejectedValue(
+        new Error('getAutoBuilderCandidates should not materialize the full catalog'),
+      );
+
+    await expect(service.getAutoBuilderCandidates(['DEX'], 1200)).resolves.toEqual([
+      expect.objectContaining({ id: 5101 }),
+    ]);
+    expect(getAllDetailedCharactersSpy).not.toHaveBeenCalled();
   });
 
   it('applies excluded character ids to character search queries', async () => {
@@ -758,11 +793,11 @@ function createRepositoryService(
     getDatasetManifest: vi.fn().mockResolvedValue(options.manifest ?? createManifest()),
     selectAll: vi
       .fn()
-      .mockImplementation((query: string) =>
+      .mockImplementation((query: string, params: Array<string | number> = []) =>
         Promise.resolve(
           query.includes('FROM ships')
             ? (options.shipRows ?? [])
-            : sortCharacterRowsForQuery(rows, query),
+            : filterCharacterRowsForQuery(rows, query, params),
         ),
       ),
   });
@@ -958,39 +993,180 @@ function createOverride(
   };
 }
 
-function resolvePowerFirstCostBucket(cost: number): number {
-  return cost >= 1 && cost <= 65 ? 0 : 1;
+function filterCharacterRowsForQuery(
+  rows: TestSqlRow[],
+  query: string,
+  params: Array<string | number>,
+): TestSqlRow[] {
+  if (query.includes('WHERE c.id = ?')) {
+    return rows.filter((row) => Number(row['id'] ?? 0) === Number(params[0] ?? 0));
+  }
+
+  if (query.includes('WHERE id IN (')) {
+    const allowedIds = new Set(params.map((value) => Number(value)));
+
+    return rows.filter((row) => allowedIds.has(Number(row['id'] ?? 0)));
+  }
+
+  let filteredRows = [...rows];
+
+  if (query.includes("WHERE (? = '' OR search_text LIKE '%' || ? || '%')")) {
+    const searchTerm = String(params[0] ?? '')
+      .trim()
+      .toLowerCase();
+    const typeFilter = String(params[2] ?? '').trim();
+    const classFilter = String(params[4] ?? '').trim();
+    let paramIndex = 7;
+
+    if (searchTerm.length > 0) {
+      filteredRows = filteredRows.filter((row) =>
+        String(row['search_text'] ?? '')
+          .toLowerCase()
+          .includes(searchTerm),
+      );
+    }
+
+    if (typeFilter.length > 0) {
+      filteredRows = filteredRows.filter((row) => String(row['type'] ?? '').includes(typeFilter));
+    }
+
+    if (classFilter.length > 0) {
+      filteredRows = filteredRows.filter((row) => {
+        const classes = [
+          String(row['primary_class'] ?? ''),
+          String(row['secondary_class'] ?? ''),
+        ].filter((value) => value.length > 0);
+
+        return classes.includes(classFilter);
+      });
+    }
+
+    const allowedClauseMatch = query.match(/AND id IN \(([^)]+)\)/);
+
+    if (allowedClauseMatch) {
+      const allowedCount = countClausePlaceholders(allowedClauseMatch[1] ?? '');
+      const allowedIds = new Set(
+        params.slice(paramIndex, paramIndex + allowedCount).map((value) => Number(value)),
+      );
+
+      filteredRows = filteredRows.filter((row) => allowedIds.has(Number(row['id'] ?? 0)));
+      paramIndex += allowedCount;
+    }
+
+    const excludedClauseMatch = query.match(/AND id NOT IN \(([^)]+)\)/);
+
+    if (excludedClauseMatch) {
+      const excludedCount = countClausePlaceholders(excludedClauseMatch[1] ?? '');
+      const excludedIds = new Set(
+        params.slice(paramIndex, paramIndex + excludedCount).map((value) => Number(value)),
+      );
+
+      filteredRows = filteredRows.filter((row) => !excludedIds.has(Number(row['id'] ?? 0)));
+    }
+
+    return applyOrderingAndWindow(filteredRows, query, params);
+  }
+
+  let paramIndex = 0;
+  const detailedSearchTermToken = "c.search_text LIKE '%' || ? || '%'";
+
+  if (query.includes(detailedSearchTermToken)) {
+    const searchTerm = String(params[paramIndex] ?? '')
+      .trim()
+      .toLowerCase();
+
+    filteredRows = filteredRows.filter((row) =>
+      String(row['search_text'] ?? '')
+        .toLowerCase()
+        .includes(searchTerm),
+    );
+    paramIndex += 1;
+  }
+
+  const typeToken = "(',' || c.type || ',') LIKE ?";
+  const typeTokenCount = countOccurrences(query, typeToken);
+
+  if (typeTokenCount > 0) {
+    const typePatterns = params
+      .slice(paramIndex, paramIndex + typeTokenCount)
+      .map((value) => String(value).replaceAll('%', ''));
+    const requiresAllTypes = query.includes(`${typeToken} AND ${typeToken}`);
+
+    filteredRows = filteredRows.filter((row) => {
+      const normalizedTypeValue = `,${String(row['type'] ?? '')},`;
+      const matches = typePatterns.map((pattern) => normalizedTypeValue.includes(pattern));
+
+      return requiresAllTypes ? matches.every(Boolean) : matches.some(Boolean);
+    });
+    paramIndex += typeTokenCount;
+  }
+
+  const classToken = 'c.classes_json LIKE ?';
+  const classTokenCount = countOccurrences(query, classToken);
+
+  if (classTokenCount > 0) {
+    const classPatterns = params
+      .slice(paramIndex, paramIndex + classTokenCount)
+      .map((value) => String(value).replaceAll('%', ''));
+    const requiresAllClasses = query.includes(`${classToken} AND ${classToken}`);
+
+    filteredRows = filteredRows.filter((row) => {
+      const classesJson = String(row['classes_json'] ?? '');
+      const matches = classPatterns.map((pattern) => classesJson.includes(pattern));
+
+      return requiresAllClasses ? matches.every(Boolean) : matches.some(Boolean);
+    });
+    paramIndex += classTokenCount;
+  }
+
+  const lockedClauseMatch = query.match(/OR c\.id IN \(([^)]+)\)/);
+
+  if (lockedClauseMatch) {
+    paramIndex += countClausePlaceholders(lockedClauseMatch[1] ?? '');
+  }
+
+  const allowedClauseMatch = query.match(/AND c\.id IN \(([^)]+)\)/);
+
+  if (allowedClauseMatch) {
+    const allowedCount = countClausePlaceholders(allowedClauseMatch[1] ?? '');
+    const allowedIds = new Set(
+      params.slice(paramIndex, paramIndex + allowedCount).map((value) => Number(value)),
+    );
+
+    filteredRows = filteredRows.filter((row) => allowedIds.has(Number(row['id'] ?? 0)));
+    paramIndex += allowedCount;
+  }
+
+  const excludedClauseMatch = query.match(/AND c\.id NOT IN \(([^)]+)\)/);
+
+  if (excludedClauseMatch) {
+    const excludedCount = countClausePlaceholders(excludedClauseMatch[1] ?? '');
+    const excludedIds = new Set(
+      params.slice(paramIndex, paramIndex + excludedCount).map((value) => Number(value)),
+    );
+
+    filteredRows = filteredRows.filter((row) => !excludedIds.has(Number(row['id'] ?? 0)));
+  }
+
+  return applyOrderingAndWindow(filteredRows, query, params);
 }
 
-function sortCharacterRowsForQuery(rows: TestSqlRow[], query: string): TestSqlRow[] {
-  if (query.includes('WHEN c.cost BETWEEN 1 AND 65 THEN 0')) {
-    return [...rows].sort((left, right) => {
-      const leftCost = Number(left['cost'] ?? 0);
-      const rightCost = Number(right['cost'] ?? 0);
-      const bucketDifference =
-        resolvePowerFirstCostBucket(leftCost) - resolvePowerFirstCostBucket(rightCost);
-
-      if (bucketDifference !== 0) {
-        return bucketDifference;
-      }
-
-      if (resolvePowerFirstCostBucket(leftCost) === 0 && leftCost !== rightCost) {
-        return rightCost - leftCost;
-      }
-
-      return Number(right['id'] ?? 0) - Number(left['id'] ?? 0);
-    });
-  }
+function applyOrderingAndWindow(
+  rows: TestSqlRow[],
+  query: string,
+  params: Array<string | number>,
+): TestSqlRow[] {
+  let orderedRows = rows;
 
   if (query.includes('ORDER BY c.id DESC')) {
-    return [...rows].sort((left, right) => Number(right['id'] ?? 0) - Number(left['id'] ?? 0));
-  }
-
-  if (
+    orderedRows = [...rows].sort(
+      (left, right) => Number(right['id'] ?? 0) - Number(left['id'] ?? 0),
+    );
+  } else if (
     query.includes('ORDER BY c.stars DESC, c.id DESC') ||
     query.includes('ORDER BY stars DESC, id DESC')
   ) {
-    return [...rows].sort((left, right) => {
+    orderedRows = [...rows].sort((left, right) => {
       const starDifference = Number(right['stars'] ?? 0) - Number(left['stars'] ?? 0);
 
       if (starDifference !== 0) {
@@ -1001,5 +1177,20 @@ function sortCharacterRowsForQuery(rows: TestSqlRow[], query: string): TestSqlRo
     });
   }
 
-  return rows;
+  if (query.includes('LIMIT ? OFFSET ?')) {
+    const limit = Number(params.at(-2) ?? orderedRows.length);
+    const offset = Number(params.at(-1) ?? 0);
+
+    return orderedRows.slice(offset, offset + limit);
+  }
+
+  return orderedRows;
+}
+
+function countOccurrences(value: string, needle: string): number {
+  return value.split(needle).length - 1;
+}
+
+function countClausePlaceholders(clause: string): number {
+  return countOccurrences(clause, '?');
 }

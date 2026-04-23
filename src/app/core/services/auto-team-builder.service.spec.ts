@@ -3179,6 +3179,112 @@ describe('Auto team builder', () => {
     expect(workerB.terminated).toBe(true);
   });
 
+  it('redispatches pooled fallback work on the next microtask without a timer-based pause', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    let deferredWorkerARunId: string | null = null;
+    let deferredWorkerBRunId: string | null = null;
+    let workerARunAttemptCount = 0;
+    let workerBRunAttemptCount = 0;
+
+    const workerA = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerA.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (request.type !== 'runAttempt') {
+        return;
+      }
+
+      workerARunAttemptCount += 1;
+
+      if (workerARunAttemptCount === 1) {
+        workerA.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: null,
+        });
+        return;
+      }
+
+      if (workerARunAttemptCount === 2) {
+        deferredWorkerARunId = request.runId;
+        return;
+      }
+
+      workerA.emitMessage({
+        type: 'result',
+        runId: request.runId,
+        result: buildWorkerResult(createInput(['DEX'], ['Fighter'])),
+      });
+    });
+
+    const workerB = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerB.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (request.type !== 'runAttempt') {
+        return;
+      }
+
+      workerBRunAttemptCount += 1;
+
+      if (workerBRunAttemptCount === 1) {
+        deferredWorkerBRunId = request.runId;
+      }
+    });
+
+    const createWorkerSpy = vi.spyOn(
+      service as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
+
+    const buildPromise = service.buildTeam(
+      ['Fighter'],
+      ['DEX', 'INT'],
+      { requireLeaderSuperSpecialCriteria: false },
+      { workerCount: 2 },
+    );
+
+    await flushMicrotasks();
+
+    expect(deferredWorkerARunId).not.toBeNull();
+    expect(deferredWorkerBRunId).not.toBeNull();
+    expect(workerARunAttemptCount).toBe(2);
+    expect(workerBRunAttemptCount).toBe(1);
+
+    workerA.emitMessage({
+      type: 'result',
+      runId: deferredWorkerARunId,
+      result: null,
+    });
+
+    await flushMicrotasks();
+
+    expect(workerARunAttemptCount).toBeGreaterThan(2);
+    expect(workerBRunAttemptCount).toBe(1);
+
+    workerB.emitMessage({
+      type: 'result',
+      runId: deferredWorkerBRunId,
+      result: null,
+    });
+
+    const result = await buildPromise;
+
+    expect(result?.input.types).toEqual(['DEX']);
+    expect(result?.input.selectedClasses).toEqual(['Fighter']);
+    expect(workerA.terminated).toBe(true);
+    expect(workerB.terminated).toBe(true);
+  });
+
   it('skips earlier pooled fallback results that miss requested coverage', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
@@ -3563,7 +3669,7 @@ describe('Auto team builder', () => {
     expect(runAttemptCount).toBeGreaterThanOrEqual(2);
     expect(
       progressSnapshots.find((snapshot) => snapshot.stage === 'exactAttempt')?.totalAttempts,
-    ).toBe(1);
+    ).toBe(31_744);
     expect(
       progressSnapshots.find(
         (snapshot) => snapshot.stage === 'fallbackAttempt' && snapshot.totalAttempts === 31_744,

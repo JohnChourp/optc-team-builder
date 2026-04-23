@@ -121,9 +121,10 @@
     },
     "runtime": {
       "auto": "Auto mode reserves one detected core for the UI when possible and applies only to fallback scans.",
-      "detected": "Detected device cores: {{count}}.",
+      "detected": "Detected device cores right now: {{count}}.",
       "effective": "Fallback scans will use up to {{count}} web worker(s).",
-      "manual": "Manual mode uses the selected worker count only for fallback scans."
+      "manualCap": "This device currently caps manual mode at {{count}} web worker(s), about {{percent}}% of {{detected}} detected cores, to help avoid overwhelming the device.",
+      "manualSelection": "Manual mode uses the selected worker count only for fallback scans. Current selection: {{selected}} of {{max}} allowed worker(s)."
     }
   },
   "management": {

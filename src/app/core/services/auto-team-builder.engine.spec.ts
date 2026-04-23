@@ -38,7 +38,7 @@ describe('runAutoTeamBuildSearch', () => {
     ]);
     expect(snapshots[1]).toMatchObject({
       completedAttempts: 0,
-      totalAttempts: 1,
+      totalAttempts: 6,
       attemptCountFinal: false,
       elapsedMs: expect.any(Number),
       estimatedRemainingMs: null,
@@ -207,8 +207,12 @@ describe('runAutoTeamBuildSearch', () => {
       'exactAttempt',
       'completed',
     ]);
+    const planner = createAutoTeamBuildFallbackPlanner(
+      createInput(['DEX'], ['Fighter']),
+      createStrictMixedTeamRecords(),
+    );
     expect(snapshots[1]).toMatchObject({
-      totalAttempts: 1,
+      totalAttempts: planner.getProjectedTotalAttempts(),
       attemptCountFinal: false,
     });
     expect(snapshots[2]).toMatchObject({

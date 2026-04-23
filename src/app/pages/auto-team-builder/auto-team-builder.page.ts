@@ -1502,6 +1502,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public async ngOnInit(): Promise<void> {
     await this.userState.ready();
     await Promise.all([
+      this.i18n.preloadScope('auto-team-builder'),
       this.i18n.preloadScope('ability-picker'),
       this.i18n.preloadScope('enemy-mechanics-picker'),
     ]);

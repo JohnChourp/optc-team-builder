@@ -42,17 +42,7 @@ const SHIP_THUMBNAIL_PACK_ID = 'ship-thumbnails';
 const SHIP_THUMBNAIL_PACK_KEY = 'shipThumbnails';
 
 function buildCharacterPowerFirstOrderByClause(alias: string): string {
-  return [
-    `CASE`,
-    `  WHEN ${alias}.cost BETWEEN 1 AND 65 THEN 0`,
-    `  ELSE 1`,
-    `END ASC`,
-    `, CASE`,
-    `  WHEN ${alias}.cost BETWEEN 1 AND 65 THEN ${alias}.cost`,
-    `  ELSE 0`,
-    `END DESC`,
-    `, ${alias}.id DESC`,
-  ].join('\n          ');
+  return `${alias}.id DESC`;
 }
 
 function normalizeStringList(value: unknown): string[] {
@@ -352,6 +342,91 @@ export class OptcRepositoryService {
   public async searchDetailedCharacters(
     query: DetailedCharacterSearchQuery,
   ): Promise<CharacterDetailRecord[]> {
+    await this.characterOverrides.ready();
+    const overridesByCharacterId = this.characterOverrides.overridesByCharacterId();
+
+    if (overridesByCharacterId.size === 0) {
+      const normalizedSearchTerm = query.searchTerm.trim().toLowerCase();
+      const normalizedSelectedTypes = [
+        ...new Set(query.selectedTypes.map((type) => type.trim().toUpperCase())),
+      ].filter((type) => type.length > 0);
+      const normalizedSelectedClasses = [
+        ...new Set(query.selectedClasses.map((characterClass) => characterClass.trim())),
+      ].filter((characterClass) => characterClass.length > 0);
+      const whereClauses: string[] = [];
+      const queryParams: Array<string | number> = [];
+
+      if (normalizedSearchTerm.length > 0) {
+        whereClauses.push(`c.search_text LIKE '%' || ? || '%'`);
+        queryParams.push(normalizedSearchTerm);
+      }
+
+      if (normalizedSelectedTypes.length > 0) {
+        const typeClauses = normalizedSelectedTypes.map(() => "(',' || c.type || ',') LIKE ?");
+
+        whereClauses.push(
+          query.selectedTypesMatchMode === 'any'
+            ? `(${typeClauses.join(' OR ')})`
+            : `(${typeClauses.join(' AND ')})`,
+        );
+        queryParams.push(...normalizedSelectedTypes.map((type) => `%,${type},%`));
+      }
+
+      if (normalizedSelectedClasses.length > 0) {
+        const classClauses = normalizedSelectedClasses.map(() => 'c.classes_json LIKE ?');
+
+        whereClauses.push(
+          query.selectedClassesMatchMode === 'any'
+            ? `(${classClauses.join(' OR ')})`
+            : `(${classClauses.join(' AND ')})`,
+        );
+        queryParams.push(
+          ...normalizedSelectedClasses.map((selectedClass) => `%\"${selectedClass}\"%`),
+        );
+      }
+
+      const orderByClause =
+        query.sortMode === 'catalog'
+          ? 'c.stars DESC, c.id DESC'
+          : buildCharacterPowerFirstOrderByClause('c');
+      const whereClause =
+        whereClauses.length > 0 ? `WHERE ${whereClauses.join('\n          AND ')}` : '';
+      const rows = await this.selectAll(
+        `
+          SELECT
+            c.id,
+            c.name,
+            c.is_incomplete,
+            c.type,
+            c.primary_class,
+            c.secondary_class,
+            c.classes_json,
+            c.stars,
+            c.cost,
+            c.combo,
+            c.min_hp,
+            c.min_atk,
+            c.min_rcv,
+            c.max_hp,
+            c.max_atk,
+            c.max_rcv,
+            c.growth,
+            c.region_json,
+            c.assets_json,
+            c.search_text,
+            d.detail_json
+          FROM characters c
+          LEFT JOIN character_details d ON d.character_id = c.id
+          ${whereClause}
+          ORDER BY ${orderByClause}
+          LIMIT ? OFFSET ?
+        `,
+        [...queryParams, query.limit, query.offset],
+      );
+
+      return this.decorateCharacterDetailRows(rows);
+    }
+
     const records = await this.getAllDetailedCharacters();
     const normalizedSelectedTypes = [
       ...new Set(query.selectedTypes.map((type) => type.trim().toUpperCase())),
@@ -467,47 +542,118 @@ export class OptcRepositoryService {
         ),
       ),
     ];
-    const detailedRecords = this.sortDetailedRecords(
-      await this.getAllDetailedCharacters(),
-      'powerFirst',
-    );
-    const allowedCharacterIdSet = allowedCharacterIds.length ? new Set(allowedCharacterIds) : null;
-    const excludedCharacterIdSet = new Set(excludedCharacterIds);
-    const lockedCharacterIdSet = new Set(lockedCharacterIds);
     const normalizedTypeFilters = [
       ...new Set(typeFilters.map((type) => type.trim().toUpperCase())),
     ];
-    const filteredRecords = detailedRecords.filter((record) => {
-      if (excludedCharacterIdSet.has(record.id)) {
-        return false;
+    await this.characterOverrides.ready();
+    const overridesByCharacterId = this.characterOverrides.overridesByCharacterId();
+    const allowedCharacterIdSet = allowedCharacterIds.length ? new Set(allowedCharacterIds) : null;
+    const excludedCharacterIdSet = new Set(excludedCharacterIds);
+    const lockedCharacterIdSet = new Set(lockedCharacterIds);
+
+    let filteredRecords: CharacterDetailRecord[];
+
+    if (overridesByCharacterId.size === 0) {
+      const typeClauses = normalizedTypeFilters.map(() => "(',' || c.type || ',') LIKE ?");
+      const queryParams: Array<string | number> = normalizedTypeFilters.map(
+        (typeFilter) => `%,${typeFilter},%`,
+      );
+      const classClauses = selectedClasses.map(() => 'c.classes_json LIKE ?');
+      let whereClause = `(${typeClauses.join(' OR ')})`;
+
+      if (classClauses.length > 0) {
+        whereClause = `(${whereClause} AND (${classClauses.join(' OR ')}))`;
+        queryParams.push(...selectedClasses.map((selectedClass) => `%\"${selectedClass}\"%`));
       }
 
-      if (
-        allowedCharacterIdSet &&
-        !allowedCharacterIdSet.has(record.id) &&
-        !lockedCharacterIdSet.has(record.id)
-      ) {
-        return false;
+      if (lockedCharacterIds.length > 0) {
+        whereClause = `(${whereClause} OR c.id IN (${lockedCharacterIds.map(() => '?').join(',')}))`;
+        queryParams.push(...lockedCharacterIds);
       }
 
-      if (
-        !lockedCharacterIdSet.has(record.id) &&
-        !this.matchesTypes(record, normalizedTypeFilters, 'any')
-      ) {
-        return false;
+      if (allowedCharacterIds.length > 0) {
+        const scopedIds = [...new Set([...allowedCharacterIds, ...lockedCharacterIds])];
+
+        whereClause = `(${whereClause}) AND c.id IN (${scopedIds.map(() => '?').join(',')})`;
+        queryParams.push(...scopedIds);
       }
 
-      if (
-        !lockedCharacterIdSet.has(record.id) &&
-        selectedClasses.length > 0 &&
-        !this.matchesClasses(record, selectedClasses, 'any')
-      ) {
-        return false;
+      if (excludedCharacterIds.length > 0) {
+        whereClause = `(${whereClause}) AND c.id NOT IN (${excludedCharacterIds
+          .map(() => '?')
+          .join(',')})`;
+        queryParams.push(...excludedCharacterIds);
       }
 
-      return true;
-    });
+      const rows = await this.selectAll(
+        `
+          SELECT
+            c.id,
+            c.name,
+            c.is_incomplete,
+            c.type,
+            c.primary_class,
+            c.secondary_class,
+            c.classes_json,
+            c.stars,
+            c.cost,
+            c.combo,
+            c.min_hp,
+            c.min_atk,
+            c.min_rcv,
+            c.max_hp,
+            c.max_atk,
+            c.max_rcv,
+            c.growth,
+            c.region_json,
+            c.assets_json,
+            c.search_text,
+            d.detail_json
+          FROM characters c
+          LEFT JOIN character_details d ON d.character_id = c.id
+          WHERE ${whereClause}
+          ORDER BY ${buildCharacterPowerFirstOrderByClause('c')}
+        `,
+        queryParams,
+      );
 
+      filteredRecords = await this.decorateCharacterDetailRows(rows);
+    } else {
+      const detailedRecords = this.sortDetailedRecords(
+        await this.getAllDetailedCharacters(),
+        'powerFirst',
+      );
+      filteredRecords = detailedRecords.filter((record) => {
+        if (excludedCharacterIdSet.has(record.id)) {
+          return false;
+        }
+
+        if (
+          allowedCharacterIdSet &&
+          !allowedCharacterIdSet.has(record.id) &&
+          !lockedCharacterIdSet.has(record.id)
+        ) {
+          return false;
+        }
+
+        if (
+          !lockedCharacterIdSet.has(record.id) &&
+          !this.matchesTypes(record, normalizedTypeFilters, 'any')
+        ) {
+          return false;
+        }
+
+        if (
+          !lockedCharacterIdSet.has(record.id) &&
+          selectedClasses.length > 0 &&
+          !this.matchesClasses(record, selectedClasses, 'any')
+        ) {
+          return false;
+        }
+
+        return true;
+      });
+    }
     if (limit === null) {
       return filteredRecords;
     }
@@ -741,17 +887,6 @@ export class OptcRepositoryService {
       }
 
       if (sortMode === 'powerFirst') {
-        const leftBucket = left.cost >= 1 && left.cost <= 65 ? 0 : 1;
-        const rightBucket = right.cost >= 1 && right.cost <= 65 ? 0 : 1;
-
-        if (leftBucket !== rightBucket) {
-          return leftBucket - rightBucket;
-        }
-
-        if (leftBucket === 0 && right.cost !== left.cost) {
-          return right.cost - left.cost;
-        }
-
         return right.id - left.id;
       }
 

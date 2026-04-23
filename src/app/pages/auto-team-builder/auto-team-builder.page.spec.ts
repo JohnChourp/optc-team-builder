@@ -1964,7 +1964,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
-  it('prioritizes stronger picker candidates before demoted high-cost outliers', async () => {
+  it('keeps newest picker candidates first regardless of cost', async () => {
     const { page, repository } = await createPage();
     const cost55 = createCharacterRecord(701, 'Cost 55');
     const cost65Older = createCharacterRecord(702, 'Cost 65 Older');
@@ -1990,11 +1990,11 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     await page.ngOnInit();
 
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
-      [705, 702, 703, 701, 706, 704],
+      [706, 705, 704, 703, 702, 701],
     );
     expect(
       page.excludedCandidates().map((candidate: CharacterDetailRecord) => candidate.id),
-    ).toEqual([705, 702, 703, 701, 706, 704]);
+    ).toEqual([706, 705, 704, 703, 702, 701]);
   });
 
   it('loads more manual and excluded candidates in 10-item batches when the virtual list nears the end', async () => {
@@ -3879,27 +3879,6 @@ function createCharacterRecord(
   };
 }
 
-function resolvePowerFirstCostBucket(cost: number): number {
-  return cost >= 1 && cost <= 65 ? 0 : 1;
-}
-
-function sortCharactersForPowerFirst(records: CharacterDetailRecord[]): CharacterDetailRecord[] {
-  return [...records].sort((left, right) => {
-    const bucketDifference =
-      resolvePowerFirstCostBucket(left.cost) - resolvePowerFirstCostBucket(right.cost);
-
-    if (bucketDifference !== 0) {
-      return bucketDifference;
-    }
-
-    if (resolvePowerFirstCostBucket(left.cost) === 0 && left.cost !== right.cost) {
-      return right.cost - left.cost;
-    }
-
-    return right.id - left.id;
-  });
-}
-
 function filterCharactersForManualQuery(
   records: CharacterDetailRecord[],
   query: {
@@ -3944,7 +3923,7 @@ function filterCharactersForManualQuery(
     query.sortMode === 'newest'
       ? [...filteredRecords].sort((left, right) => right.id - left.id)
       : query.sortMode === 'powerFirst'
-        ? sortCharactersForPowerFirst(filteredRecords)
+        ? [...filteredRecords].sort((left, right) => right.id - left.id)
         : filteredRecords;
   const offset = query.offset ?? 0;
   const limit = query.limit ?? filteredRecords.length;

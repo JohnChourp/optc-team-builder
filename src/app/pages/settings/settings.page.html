@@ -77,8 +77,20 @@
           <p>
             {{
               autoTeamBuilderWorkerPreference().mode === 'manual'
-                ? t('performance.runtime.manual')
+                ? t('performance.runtime.manualSelection', {
+                    selected: autoTeamBuilderWorkerRuntime().effectiveCount,
+                    max: autoTeamBuilderWorkerRuntime().manualMaxCount,
+                  })
                 : t('performance.runtime.auto')
+            }}
+          </p>
+          <p>
+            {{
+              t('performance.runtime.manualCap', {
+                count: autoTeamBuilderWorkerRuntime().manualMaxCount,
+                percent: autoTeamBuilderWorkerRuntime().manualMaxPercent,
+                detected: autoTeamBuilderWorkerRuntime().detectedCoreCount,
+              })
             }}
           </p>
         </div>

@@ -14,8 +14,9 @@
               button
               detail="false"
               class="menu-item"
-              [class.menu-item--active]="isRouteActive(item)"
               [routerLink]="[item.route]"
+              routerLinkActive="menu-item--active"
+              [routerLinkActiveOptions]="navItemActiveMatchOptions"
               routerDirection="root"
             >
               <ion-icon slot="start" [icon]="item.icon"></ion-icon>

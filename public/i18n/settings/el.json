@@ -121,9 +121,10 @@
     },
     "runtime": {
       "auto": "Η αυτόματη λειτουργία κρατά έναν detected core για το UI όταν γίνεται και εφαρμόζεται μόνο στα fallback scans.",
-      "detected": "Detected device cores: {{count}}.",
+      "detected": "Ανιχνευμένοι πυρήνες συσκευής αυτή τη στιγμή: {{count}}.",
       "effective": "Τα fallback scans θα χρησιμοποιούν έως {{count}} web worker(s).",
-      "manual": "Η χειροκίνητη λειτουργία χρησιμοποιεί το επιλεγμένο πλήθος workers μόνο για τα fallback scans."
+      "manualCap": "Σε αυτή τη συσκευή η χειροκίνητη λειτουργία περιορίζεται στα {{count}} web worker(s), περίπου {{percent}}% από τους {{detected}} ανιχνευμένους πυρήνες, ώστε να μειώνεται η πιθανότητα να βαραίνει το PC, το κινητό ή όποια συσκευή τρέχει το app.",
+      "manualSelection": "Η χειροκίνητη λειτουργία χρησιμοποιεί το επιλεγμένο πλήθος workers μόνο για τα fallback scans. Τρέχουσα επιλογή: {{selected}} από {{max}} επιτρεπόμενους worker(s)."
     }
   },
   "management": {

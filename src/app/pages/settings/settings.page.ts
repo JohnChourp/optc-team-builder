@@ -237,7 +237,7 @@ export class SettingsPage implements OnInit {
     );
     this.autoTeamBuilderAvailableWorkerCounts = computed(() =>
       Array.from(
-        { length: this.autoTeamBuilderWorkerRuntime().detectedCoreCount },
+        { length: this.autoTeamBuilderWorkerRuntime().manualMaxCount },
         (_, index) => index + 1,
       ),
     );

@@ -114,6 +114,8 @@ describe("SettingsPage", () => {
     expect(template).toContain("t('performance.title')");
     expect(template).toContain("t('performance.mode.label')");
     expect(template).toContain("t('performance.manualCount.label')");
+    expect(template).toContain("t('performance.runtime.manualSelection'");
+    expect(template).toContain("t('performance.runtime.manualCap'");
     expect(template).toContain("t('analytics.title')");
     expect(template).toContain("t('analytics.statusLabel')");
     expect(template).toContain("t('analytics.actions.accept')");
@@ -889,6 +891,12 @@ describe("SettingsPage", () => {
     });
   });
 
+  it("limits manual worker options to the live 65% device cap", () => {
+    const { page } = createPage();
+
+    expect(page.autoTeamBuilderAvailableWorkerCounts()).toEqual([1, 2, 3, 4, 5]);
+  });
+
   it("starts Google sign-in from the drive sync controls", async () => {
     const { page, googleAccount } = createPage();
 
@@ -970,7 +978,9 @@ function createPage() {
     resolveAutoTeamBuilderWorkerPreference: vi.fn(() => ({
       ...autoTeamBuilderWorkerPreference(),
       detectedCoreCount: 8,
-      effectiveCount: autoTeamBuilderWorkerPreference().mode === "manual" ? autoTeamBuilderWorkerPreference().manualCount : 7,
+      manualMaxCount: 5,
+      manualMaxPercent: 62,
+      effectiveCount: autoTeamBuilderWorkerPreference().mode === "manual" ? autoTeamBuilderWorkerPreference().manualCount : 4,
     })),
     setFavoriteCharacterIds: vi.fn().mockImplementation(async (nextFavoriteIds: number[]) => {
       favoriteIds.set(nextFavoriteIds);
