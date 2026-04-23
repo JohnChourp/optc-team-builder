@@ -82,6 +82,7 @@ export interface CharacterAssets {
 export interface CharacterRecord {
   id: number;
   name: string;
+  searchText?: string;
   isIncomplete: boolean;
   type: string;
   classes: string[];

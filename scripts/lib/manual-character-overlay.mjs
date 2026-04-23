@@ -187,6 +187,7 @@ export function normalizeIncomingManualCharacterPayload(
   const normalized = {
     id: characterId,
     name: normalizeRequiredString(rawPayload.name, 'manual character name'),
+    searchAliases: normalizeOptionalStringArray(rawPayload.searchAliases, 'searchAliases'),
     isIncomplete: normalizeIncompleteFlag(rawPayload.isIncomplete, hasIncompleteStats),
     type: normalizeType(rawPayload.type),
     classes,
@@ -216,6 +217,10 @@ export function normalizeIncomingManualCharacterPayload(
 
 export function buildAppliedManualCharacter(record) {
   const classes = [...record.classes];
+  const canonicalCharacterId =
+    Number.isInteger(record.detail?.characterId) && record.detail.characterId > 0
+      ? record.detail.characterId
+      : record.id;
   const assets = {
     ...createEmptyAssets(),
     exactLocal: `assets/exact-character-images/${record.image.file}`,
@@ -248,13 +253,20 @@ export function buildAppliedManualCharacter(record) {
     maxAtk: record.maxAtk,
     maxRcv: record.maxRcv,
     growth: record.growth,
-    searchText: createCharacterSearchText(record.name, record.type, classes),
+    searchText: createCharacterSearchText({
+      name: record.name,
+      type: record.type,
+      classes,
+      id: record.id,
+      canonicalId: canonicalCharacterId !== record.id ? canonicalCharacterId : null,
+      aliases: record.searchAliases ?? [],
+    }),
     regionAvailability,
     assets,
     detail: {
       ...createEmptyManualDetail(record.id),
       ...record.detail,
-      characterId: record.id,
+      characterId: canonicalCharacterId,
     },
   };
 }
@@ -270,6 +282,7 @@ function normalizeStoredManualCharacterRecord(rawRecord, { availableClasses, cha
   const normalized = {
     id: characterId,
     name: normalizeRequiredString(rawRecord.name, `manual character ${characterId} name`),
+    searchAliases: normalizeOptionalStringArray(rawRecord.searchAliases, 'searchAliases'),
     isIncomplete: normalizeIncompleteFlag(rawRecord.isIncomplete, hasIncompleteStats),
     type: normalizeType(rawRecord.type),
     classes,
@@ -335,7 +348,11 @@ function normalizeManualDetail(rawRecord, characterId) {
     detail[key] = normalizeNullableObject(candidate, key);
   }
 
-  detail.characterId = characterId;
+  detail.characterId = normalizeOptionalManualCharacterId(
+    rawDetail.characterId ?? rawRecord.characterId,
+    'detail.characterId',
+    characterId,
+  );
 
   return detail;
 }
@@ -343,11 +360,19 @@ function normalizeManualDetail(rawRecord, characterId) {
 function normalizeManualCharacterId(value, label) {
   const parsed = Number(value);
 
-  if (!Number.isInteger(parsed) || parsed < MANUAL_CHARACTER_ID_MIN) {
-    throw new Error(`${label} must be an integer >= ${MANUAL_CHARACTER_ID_MIN}.`);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`${label} must be a positive integer.`);
   }
 
   return parsed;
+}
+
+function normalizeOptionalManualCharacterId(value, label, fallback) {
+  if (value === null || value === undefined || value === '') {
+    return fallback;
+  }
+
+  return normalizeManualCharacterId(value, label);
 }
 
 function normalizeRequiredString(value, label) {
@@ -475,6 +500,10 @@ function normalizeStringArray(value, label) {
   }
 
   return value.map((entry) => normalizeRequiredString(entry, label));
+}
+
+function normalizeOptionalStringArray(value, label) {
+  return [...new Set(normalizeStringArray(value, label))];
 }
 
 function normalizeObjectArray(value, label) {

@@ -120,6 +120,87 @@ describe('OptcRepositoryService', () => {
     expect(result.map((record) => record.id)).toEqual([4105, 4103, 4101]);
   });
 
+  it('returns linked variants when searching by a shared canonical id', async () => {
+    const service = createRepositoryService([]);
+    const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
+    const zoroRow = createCharacterRow({
+      id: 4529,
+      name: 'Clashing Blades Roronoa Zoro',
+      type: 'DEX',
+      primaryClass: 'Free Spirit',
+      secondaryClass: 'Slasher',
+      classes: ['Free Spirit', 'Slasher'],
+      stars: 6,
+    });
+    const nusjuroRow = createCharacterRow({
+      id: 900005,
+      name: 'Clashing Blades St. Ethanbaron V. Nusjuro',
+      type: 'STR',
+      primaryClass: 'Cerebral',
+      secondaryClass: 'Slasher',
+      classes: ['Cerebral', 'Slasher'],
+      stars: 6,
+    });
+
+    selectAllMock.mockImplementation((query: string, params: Array<string | number> = []) => {
+      if (query.includes('FROM characters') && query.includes('search_text LIKE')) {
+        expect(params[0]).toBe('4529');
+        expect(params[1]).toBe('4529');
+        return Promise.resolve([nusjuroRow, zoroRow]);
+      }
+
+      return Promise.resolve([]);
+    });
+
+    const result = await service.searchCharacters({
+      searchTerm: '4529',
+      typeFilter: '',
+      classFilter: '',
+      limit: 10,
+      offset: 0,
+    });
+
+    expect(result.map((record) => record.id)).toEqual([900005, 4529]);
+    expect(result.map((record) => record.name)).toEqual([
+      'Clashing Blades St. Ethanbaron V. Nusjuro',
+      'Clashing Blades Roronoa Zoro',
+    ]);
+  });
+
+  it('matches linked variants by shared canonical id in detailed character search', async () => {
+    const service = createRepositoryService([
+      createCharacterRow({
+        id: 4529,
+        name: 'Clashing Blades Roronoa Zoro',
+        type: 'DEX',
+        primaryClass: 'Free Spirit',
+        secondaryClass: 'Slasher',
+        classes: ['Free Spirit', 'Slasher'],
+        searchText: 'clashing blades roronoa zoro dex free spirit slasher 4529',
+      }),
+      createCharacterRow({
+        id: 900005,
+        name: 'Clashing Blades St. Ethanbaron V. Nusjuro',
+        type: 'STR',
+        primaryClass: 'Cerebral',
+        secondaryClass: 'Slasher',
+        classes: ['Cerebral', 'Slasher'],
+        searchText:
+          'clashing blades st. ethanbaron v. nusjuro str cerebral slasher 900005 4529 st ethanbaron v nusjuro',
+      }),
+    ]);
+
+    const result = await service.searchDetailedCharacters({
+      searchTerm: '4529',
+      selectedTypes: [],
+      selectedClasses: [],
+      limit: 10,
+      offset: 0,
+    });
+
+    expect(result.map((record) => record.id)).toEqual([900005, 4529]);
+  });
+
   it('applies local override names, types, and classes to detailed search filtering', async () => {
     const service = createRepositoryService([createCharacterRow({ id: 4101, type: 'DEX' })], {
       overrides: [
@@ -738,6 +819,7 @@ function createCharacterRow(
   overrides: Partial<{
     id: number;
     name: string;
+    searchText: string;
     type: string;
     primaryClass: string;
     secondaryClass: string | null;
@@ -760,6 +842,11 @@ function createCharacterRow(
   return {
     id,
     name: overrides.name ?? `Unit ${id}`,
+    search_text:
+      overrides.searchText ??
+      `${overrides.name ?? `Unit ${id}`} ${overrides.type ?? 'DEX'} ${(
+        overrides.classes ?? [primaryClass, secondaryClass].filter(Boolean)
+      ).join(' ')}`.toLowerCase(),
     type: overrides.type ?? 'DEX',
     primary_class: primaryClass,
     secondary_class: secondaryClass,

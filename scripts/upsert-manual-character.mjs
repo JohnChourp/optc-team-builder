@@ -31,20 +31,32 @@ async function main() {
   const payload = await loadPayload(options);
   const { characterId, existingRecord, mode } = resolveManualCharacterUpsert(records, payload);
   const imageSource = resolveRequestedImageSource(options.imageSource, payload.image);
+  const imageFileName = resolveRequestedImageFileName(payload.image);
   const thumbnailImageSource = resolveRequestedImageSource(
     options.thumbnailImageSource,
     payload.thumbnailImage,
   );
+  const thumbnailImageFileName = resolveRequestedThumbnailFileName(payload);
 
   if (!imageSource && !existingRecord) {
     throw new Error('A new manual character requires an image path or URL.');
   }
 
   const storedImageFile = imageSource
-    ? await storeManualImage(imageSource, characterId, options.sourceImageDir)
+    ? await storeManualImage(
+        imageSource,
+        imageFileName,
+        characterId,
+        options.sourceImageDir,
+      )
     : existingRecord.image.file;
   const storedThumbnailFile = thumbnailImageSource
-    ? await storeManualImage(thumbnailImageSource, `${characterId}-thumb`, options.sourceImageDir)
+    ? await storeManualImage(
+        thumbnailImageSource,
+        thumbnailImageFileName,
+        `${characterId}-thumb`,
+        options.sourceImageDir,
+      )
     : existingRecord?.image?.thumbnailFile ?? null;
   const normalizedRecord = normalizeIncomingManualCharacterPayload(payload, {
     availableClasses: manifest.availableClasses,
@@ -173,14 +185,61 @@ function resolveRequestedImageSource(cliImageSource, payloadImage) {
   return null;
 }
 
-async function storeManualImage(imageSource, fileStem, sourceImageDir) {
+function resolveRequestedImageFileName(payloadImage) {
+  if (!payloadImage || typeof payloadImage !== 'object' || Array.isArray(payloadImage)) {
+    return null;
+  }
+
+  return normalizeRequestedOutputFileName(payloadImage.file ?? payloadImage.fileName ?? null);
+}
+
+function resolveRequestedThumbnailFileName(payload) {
+  if (payload.thumbnailImage && typeof payload.thumbnailImage === 'object' && !Array.isArray(payload.thumbnailImage)) {
+    const explicitFileName = normalizeRequestedOutputFileName(
+      payload.thumbnailImage.file ?? payload.thumbnailImage.fileName ?? null,
+    );
+
+    if (explicitFileName) {
+      return explicitFileName;
+    }
+  }
+
+  if (payload.image && typeof payload.image === 'object' && !Array.isArray(payload.image)) {
+    return normalizeRequestedOutputFileName(payload.image.thumbnailFile ?? null);
+  }
+
+  return null;
+}
+
+function normalizeRequestedOutputFileName(value) {
+  const normalized = String(value ?? '').trim();
+
+  if (!normalized.length) {
+    return null;
+  }
+
+  const parsed = path.parse(normalized);
+
+  if (parsed.dir || parsed.base !== normalized) {
+    throw new Error(`Image output file name must be a base filename: ${normalized}`);
+  }
+
+  normalizeImageExtension(parsed.ext);
+
+  return normalized;
+}
+
+async function storeManualImage(imageSource, targetFileName, fileStem, sourceImageDir) {
   await mkdir(sourceImageDir, { recursive: true });
-  await removeExistingCharacterImages(sourceImageDir, fileStem);
+  await removeExistingCharacterImages(
+    sourceImageDir,
+    path.parse(targetFileName ?? String(fileStem)).name,
+  );
 
   const parsedUrl = tryParseUrl(imageSource);
 
   if (parsedUrl && ['http:', 'https:'].includes(parsedUrl.protocol)) {
-    return downloadManualImage(parsedUrl, fileStem, sourceImageDir);
+    return downloadManualImage(parsedUrl, targetFileName, fileStem, sourceImageDir);
   }
 
   const sourcePath =
@@ -189,17 +248,27 @@ async function storeManualImage(imageSource, fileStem, sourceImageDir) {
       : path.resolve(process.cwd(), imageSource);
   const filePath =
     sourcePath instanceof URL ? fileURLToPath(sourcePath) : path.resolve(String(sourcePath));
-  const extension = normalizeImageExtension(path.extname(filePath));
   const fileBuffer = await readFile(filePath);
+  const extension = normalizeImageExtension(path.extname(filePath));
+  const outputFileName = targetFileName ?? `${fileStem}${extension}`;
 
-  const fileName = `${fileStem}${extension}`;
-  const destinationPath = path.join(sourceImageDir, fileName);
+  if (targetFileName) {
+    const targetExtension = normalizeImageExtension(path.extname(targetFileName));
+
+    if (targetExtension !== extension) {
+      throw new Error(
+        `Requested image output extension ${targetExtension} does not match source image extension ${extension}.`,
+      );
+    }
+  }
+
+  const destinationPath = path.join(sourceImageDir, outputFileName);
   await writeFile(destinationPath, fileBuffer);
 
-  return fileName;
+  return outputFileName;
 }
 
-async function downloadManualImage(url, fileStem, sourceImageDir) {
+async function downloadManualImage(url, targetFileName, fileStem, sourceImageDir) {
   const response = await fetch(url);
 
   if (!response.ok) {
@@ -212,15 +281,32 @@ async function downloadManualImage(url, fileStem, sourceImageDir) {
     throw new Error(`URL did not return an image content-type: ${contentType || 'unknown'}`);
   }
 
-  const extension = resolveImageExtensionFromUrl(url) ?? resolveImageExtensionFromContentType(contentType);
-  const normalizedExtension = normalizeImageExtension(extension);
-  const fileName = `${fileStem}${normalizedExtension}`;
-  const destinationPath = path.join(sourceImageDir, fileName);
+  const sourceExtension = resolveImageExtensionFromUrl(url) ?? resolveImageExtensionFromContentType(contentType);
+  const normalizedSourceExtension = normalizeImageExtension(sourceExtension);
+  const outputFileName = targetFileName ?? `${fileStem}${normalizedSourceExtension}`;
+
+  if (targetFileName) {
+    const targetExtension = normalizeImageExtension(path.extname(targetFileName));
+
+    if (normalizedSourceExtension !== targetExtension) {
+      throw new Error(
+        `Requested image output extension ${targetExtension} does not match source image extension ${normalizedSourceExtension}.`,
+      );
+    }
+  }
+
+  if (path.extname(outputFileName).length === 0) {
+    throw new Error(
+      `Image output file name must include an extension: ${outputFileName}`,
+    );
+  }
+
+  const destinationPath = path.join(sourceImageDir, outputFileName);
   const buffer = Buffer.from(await response.arrayBuffer());
 
   await writeFile(destinationPath, buffer);
 
-  return fileName;
+  return outputFileName;
 }
 
 async function removeExistingCharacterImages(sourceImageDir, fileStem) {

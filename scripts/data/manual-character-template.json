@@ -1,6 +1,7 @@
 {
   "id": null,
   "name": "Character Name",
+  "searchAliases": [],
   "isIncomplete": false,
   "type": "DEX",
   "classes": ["Fighter", "Free Spirit"],

@@ -130,6 +130,7 @@ export class CharacterCatalogCacheService {
 
   private buildSearchText(character: CharacterListItem): string {
     return [
+      character.searchText ?? '',
       character.id,
       character.name,
       character.type,

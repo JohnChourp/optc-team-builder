@@ -769,6 +769,46 @@ describe('Auto team builder', () => {
     expect(result).toBeNull();
   });
 
+  it('rejects linked variants that share an explicit canonical conflict key', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 4529,
+          name: 'Clashing Blades Roronoa Zoro',
+          primaryClass: 'Slasher',
+          secondaryClass: 'Free Spirit',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Slasher characters by 5.5x.',
+            partyConflictKeys: ['linked-variant-4529'],
+          },
+        }),
+        createCharacterRecord({
+          id: 900005,
+          name: 'Clashing Blades St. Ethanbaron V. Nusjuro',
+          primaryClass: 'Slasher',
+          secondaryClass: 'Cerebral',
+          detail: {
+            captainAbility: 'Boosts ATK of STR and Slasher characters by 5.5x.',
+            partyConflictKeys: ['linked-variant-4529'],
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX', 'STR'], ['Slasher'], {
+        requireUniqueBaseCharacterNames: true,
+        manualSlots: createManualSlots({
+          captain: [4529],
+          friendCaptain: [900005],
+        }),
+      }),
+    );
+
+    expect(result).toBeNull();
+  });
+
   it('treats distinct normalized base names like Chef Sanji and Sanji as unique', () => {
     const result = buildAutoTeamResult(
       [

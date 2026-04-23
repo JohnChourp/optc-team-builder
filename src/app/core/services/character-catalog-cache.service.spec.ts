@@ -198,6 +198,47 @@ describe('CharacterCatalogCacheService', () => {
     ).toEqual([299, 401, 305]);
   });
 
+  it('matches linked variants by shared canonical-id search text in cached queries', async () => {
+    let overrideRevision = 0;
+    const repository = {
+      getAllCharacters: vi.fn().mockResolvedValue([
+        createCharacter(4529, {
+          name: 'Clashing Blades Roronoa Zoro',
+          searchText: 'clashing blades roronoa zoro dex free spirit slasher 4529',
+        }),
+        createCharacter(900005, {
+          name: 'Clashing Blades St. Ethanbaron V. Nusjuro',
+          type: 'STR',
+          primaryClass: 'Cerebral',
+          secondaryClass: 'Slasher',
+          classes: ['Cerebral', 'Slasher'],
+          searchText:
+            'clashing blades st. ethanbaron v. nusjuro str cerebral slasher 900005 4529 st ethanbaron v nusjuro',
+        }),
+      ]),
+    };
+    const service = new CharacterCatalogCacheService(
+      repository as never,
+      {
+        revision: () => overrideRevision,
+      } as never,
+    );
+
+    await service.ensureLoaded();
+
+    expect(
+      service
+        .queryCharacters({
+          searchTerm: '4529',
+          typeFilter: '',
+          classFilter: '',
+          limit: 10,
+          offset: 0,
+        })
+        .map((character) => character.id),
+    ).toEqual([4529, 900005]);
+  });
+
   it('reloads the cached catalog after the override revision changes', async () => {
     let overrideRevision = 0;
     const repository = {
@@ -231,6 +272,7 @@ function createCharacter(
   return {
     id,
     name: overrides.name ?? `Character ${id}`,
+    searchText: overrides.searchText,
     isIncomplete: overrides.isIncomplete ?? false,
     type: overrides.type ?? 'DEX',
     primaryClass: overrides.primaryClass ?? 'Fighter',

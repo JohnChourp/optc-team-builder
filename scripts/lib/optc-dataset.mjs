@@ -37,8 +37,54 @@ export function createEmptyRegionAvailability() {
   };
 }
 
-export function createCharacterSearchText(name, type, classes) {
-  return `${name} ${type} ${classes.join(' ')}`.toLowerCase();
+export function createCharacterSearchText(nameOrOptions, type, classes) {
+  const normalized = normalizeCharacterSearchInput(nameOrOptions, type, classes);
+
+  return [
+    normalized.name,
+    normalized.type,
+    normalized.classes.join(' '),
+    normalized.id,
+    normalized.canonicalId,
+    ...normalized.aliases,
+  ]
+    .map((value) => String(value ?? '').trim())
+    .filter((value, index, values) => value.length > 0 && values.indexOf(value) === index)
+    .join(' ')
+    .toLowerCase();
+}
+
+function normalizeCharacterSearchInput(nameOrOptions, type, classes) {
+  if (
+    nameOrOptions &&
+    typeof nameOrOptions === 'object' &&
+    !Array.isArray(nameOrOptions)
+  ) {
+    const options = nameOrOptions;
+
+    return {
+      name: String(options.name ?? ''),
+      type: String(options.type ?? ''),
+      classes: Array.isArray(options.classes) ? options.classes.map((entry) => String(entry)) : [],
+      id: options.id === null || options.id === undefined ? '' : String(options.id),
+      canonicalId:
+        options.canonicalId === null || options.canonicalId === undefined
+          ? ''
+          : String(options.canonicalId),
+      aliases: Array.isArray(options.aliases)
+        ? options.aliases.map((entry) => String(entry ?? '').trim()).filter((entry) => entry.length > 0)
+        : [],
+    };
+  }
+
+  return {
+    name: String(nameOrOptions ?? ''),
+    type: String(type ?? ''),
+    classes: Array.isArray(classes) ? classes.map((entry) => String(entry)) : [],
+    id: '',
+    canonicalId: '',
+    aliases: [],
+  };
 }
 
 function escapeSql(value) {

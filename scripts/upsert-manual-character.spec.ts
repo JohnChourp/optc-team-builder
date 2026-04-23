@@ -223,6 +223,99 @@ describe('upsert manual character cli', () => {
       },
     });
   });
+
+  it('accepts an explicit canonical id and writes canonical image filenames', async () => {
+    const fixture = await createFixtureWorkspace();
+    const payloadPath = path.join(fixture.rootDir, 'payload-canonical.json');
+    const localImagePath = path.join(fixture.rootDir, 'usopp-dorry.png');
+    const localThumbnailPath = path.join(fixture.rootDir, 'usopp-dorry-thumb.jpg');
+
+    await writeFile(localImagePath, 'canonical-png');
+    await writeFile(localThumbnailPath, 'canonical-thumb');
+    await writeFile(
+      payloadPath,
+      JSON.stringify(
+        {
+          id: 900005,
+          name: 'Clashing Blades St. Ethanbaron V. Nusjuro',
+          searchAliases: ['4529', 'st ethanbaron v nusjuro'],
+          type: 'STR',
+          classes: ['Cerebral', 'Slasher'],
+          stars: 6,
+          cost: 99,
+          combo: 4,
+          maxLevel: 110,
+          maxExperience: null,
+          minHp: null,
+          minAtk: null,
+          minRcv: null,
+          maxHp: 6153,
+          maxAtk: 2705,
+          maxRcv: 405,
+          image: {
+            path: localImagePath,
+            file: '4529--st-ethanbaron-v-nusjuro.png',
+            thumbnailFile: '4529--st-ethanbaron-v-nusjuro-thumb.jpg',
+          },
+          thumbnailImage: {
+            path: localThumbnailPath,
+            file: '4529--st-ethanbaron-v-nusjuro-thumb.jpg',
+          },
+          detail: {
+            characterId: 4529,
+            captainAbility: null,
+            specialName: "Crackling Elder's Blade",
+            specialText: 'Verified text.',
+            partyConflictKeys: ['linked-variant-4529'],
+          },
+        },
+        null,
+        2,
+      ),
+    );
+
+    const { stdout } = await execFileAsync('node', [
+      resolve(process.cwd(), 'scripts/upsert-manual-character.mjs'),
+      `--payload-file=${payloadPath}`,
+      `--data-dir=${fixture.dataDir}`,
+      `--seed-path=${fixture.seedPath}`,
+      `--manifest-path=${fixture.manifestPath}`,
+      `--overlay-file=${fixture.overlayPath}`,
+      `--source-image-dir=${fixture.sourceImageDir}`,
+      `--exact-images-dir=${fixture.exactImagesDir}`,
+    ]);
+
+    expect(stdout).toContain('final custom id: 900005');
+
+    const overlay = JSON.parse(await readFile(fixture.overlayPath, 'utf8'));
+    expect(overlay['900005']).toMatchObject({
+      id: 900005,
+      name: 'Clashing Blades St. Ethanbaron V. Nusjuro',
+      searchAliases: ['4529', 'st ethanbaron v nusjuro'],
+      image: {
+        file: '4529--st-ethanbaron-v-nusjuro.png',
+        thumbnailFile: '4529--st-ethanbaron-v-nusjuro-thumb.jpg',
+      },
+      detail: {
+        characterId: 4529,
+        partyConflictKeys: ['linked-variant-4529'],
+      },
+    });
+    expect(
+      await readFile(
+        path.join(fixture.sourceImageDir, '4529--st-ethanbaron-v-nusjuro.png'),
+        'utf8',
+      ),
+    ).toBe(
+      'canonical-png',
+    );
+    expect(
+      await readFile(
+        path.join(fixture.sourceImageDir, '4529--st-ethanbaron-v-nusjuro-thumb.jpg'),
+        'utf8',
+      ),
+    ).toBe('canonical-thumb');
+  });
 });
 
 async function createFixtureWorkspace() {
@@ -294,7 +387,9 @@ async function createFixtureWorkspace() {
   const ships: Array<Record<string, unknown>> = [];
   const generatedAt = '2026-04-03T00:00:00.000Z';
   const manifest = buildManifest(baseCharacters, ships, 'test', [], generatedAt);
-  manifest.availableClasses = ['Fighter', 'Free Spirit'];
+  manifest.availableClasses = [
+    ...new Set([...manifest.availableClasses, 'Fighter', 'Free Spirit', 'Cerebral', 'Slasher']),
+  ].sort();
 
   await writeGeneratedDatasetFiles(
     dataDir,

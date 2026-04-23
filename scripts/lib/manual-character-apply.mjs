@@ -48,8 +48,12 @@ export async function applyManualCharacterOverlay({
 
   await materializeManualCharacterImages(manualRecords, sourceImageDir, exactImagesDir);
 
+  const overriddenCharacterIds = new Set(manualRecords.keys());
+
   const nextCharacters = [
-    ...dataset.characters.filter((character) => !isManualCharacterId(character.id)),
+    ...dataset.characters.filter(
+      (character) => !isManualCharacterId(character.id) && !overriddenCharacterIds.has(character.id),
+    ),
     ...[...manualRecords.values()].map((record) => buildAppliedManualCharacter(record)),
   ].sort((left, right) => left.id - right.id);
 

@@ -68,6 +68,16 @@ describe('manual character overlay helpers', () => {
     ).toThrow(/conflicts/i);
   });
 
+  it('accepts an explicit canonical id when rebinding a manual overlay record', () => {
+    const result = resolveManualCharacterUpsert(new Map(), { id: 4536, name: 'Usopp & Dorry' });
+
+    expect(result).toEqual({
+      characterId: 4536,
+      existingRecord: null,
+      mode: 'create',
+    });
+  });
+
   it('normalizes incoming payloads with validated stats and default detail blocks', () => {
     const record = normalizeIncomingManualCharacterPayload(
       {
@@ -127,6 +137,7 @@ describe('manual character overlay helpers', () => {
 
     expect(record).toMatchObject({
       id: MANUAL_CHARACTER_ID_MIN,
+      searchAliases: [],
       type: 'DEX',
       classes: ['Fighter', 'Free Spirit'],
       growth: null,
@@ -212,6 +223,70 @@ describe('manual character overlay helpers', () => {
         thumbnailLocal: `assets/exact-character-images/${MANUAL_CHARACTER_ID_MIN}-thumb.jpg`,
       },
     });
+  });
+
+  it('preserves explicit canonical character ids and search aliases for linked variants', () => {
+    const record = normalizeIncomingManualCharacterPayload(
+      {
+        name: 'Clashing Blades St. Ethanbaron V. Nusjuro',
+        searchAliases: ['4529', 'st ethanbaron v nusjuro'],
+        type: 'STR',
+        classes: ['Cerebral', 'Slasher'],
+        stars: 6,
+        cost: 99,
+        combo: 4,
+        maxLevel: 110,
+        maxExperience: null,
+        minHp: null,
+        minAtk: null,
+        minRcv: null,
+        maxHp: 6153,
+        maxAtk: 2705,
+        maxRcv: 405,
+        growth: null,
+        detail: {
+          characterId: 4529,
+          specialName: "Crackling Elder's Blade",
+          specialText: 'Verified text.',
+          partyConflictKeys: ['linked-variant-4529'],
+        },
+      },
+      {
+        availableClasses: ['Cerebral', 'Slasher'],
+        characterId: 900005,
+        storedImageFile: '4529--st-ethanbaron-v-nusjuro.png',
+        storedThumbnailFile: '4529--st-ethanbaron-v-nusjuro-thumb.jpg',
+      },
+    );
+
+    expect(record).toMatchObject({
+      id: 900005,
+      searchAliases: ['4529', 'st ethanbaron v nusjuro'],
+      detail: {
+        characterId: 4529,
+        partyConflictKeys: ['linked-variant-4529'],
+      },
+      image: {
+        file: '4529--st-ethanbaron-v-nusjuro.png',
+        thumbnailFile: '4529--st-ethanbaron-v-nusjuro-thumb.jpg',
+      },
+    });
+
+    const appliedRecord = buildAppliedManualCharacter(record);
+
+    expect(appliedRecord).toMatchObject({
+      id: 900005,
+      searchText: expect.stringContaining('4529'),
+      detail: {
+        characterId: 4529,
+      },
+      assets: {
+        exactLocal: 'assets/exact-character-images/4529--st-ethanbaron-v-nusjuro.png',
+        thumbnailLocal:
+          'assets/exact-character-images/4529--st-ethanbaron-v-nusjuro-thumb.jpg',
+      },
+    });
+    expect(appliedRecord.searchText).toContain('900005');
   });
 
   it('accepts nullable incomplete stat fields for manual records', () => {

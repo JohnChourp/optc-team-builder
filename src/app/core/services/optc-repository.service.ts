@@ -290,7 +290,8 @@ export class OptcRepositoryService {
           max_rcv,
           growth,
           region_json,
-          assets_json
+          assets_json,
+          search_text
         FROM characters
         WHERE (? = '' OR search_text LIKE '%' || ? || '%')
           AND (? = '' OR type LIKE '%' || ? || '%')
@@ -342,7 +343,8 @@ export class OptcRepositoryService {
           max_rcv,
           growth,
           region_json,
-          assets_json
+          assets_json,
+          search_text
         FROM characters
         ORDER BY stars DESC, id DESC
       `,
@@ -416,6 +418,7 @@ export class OptcRepositoryService {
           c.growth,
           c.region_json,
           c.assets_json,
+          c.search_text,
           d.detail_json
         FROM characters c
         LEFT JOIN character_details d ON d.character_id = c.id
@@ -549,7 +552,8 @@ export class OptcRepositoryService {
           max_rcv,
           growth,
           region_json,
-          assets_json
+          assets_json,
+          search_text
         FROM characters
         WHERE id IN (${placeholders})
       `,
@@ -645,6 +649,7 @@ export class OptcRepositoryService {
       const record: CharacterListItem = {
         id: Number(row['id']),
         name: String(row['name']),
+        searchText: this.resolveSearchText(row),
         isIncomplete: Number(row['is_incomplete']) === 1,
         type: String(row['type']),
         primaryClass: String(row['primary_class']),
@@ -727,6 +732,7 @@ export class OptcRepositoryService {
           c.growth,
           c.region_json,
           c.assets_json,
+          c.search_text,
           d.detail_json
         FROM characters c
         LEFT JOIN character_details d ON d.character_id = c.id
@@ -776,17 +782,7 @@ export class OptcRepositoryService {
       return true;
     }
 
-    return [
-      record.id,
-      record.name,
-      record.type,
-      record.primaryClass,
-      record.secondaryClass ?? '',
-      ...record.classes,
-    ]
-      .join(' ')
-      .toLowerCase()
-      .includes(normalizedSearchTerm);
+    return this.buildSearchableRecordText(record).includes(normalizedSearchTerm);
   }
 
   private matchesTypes(
@@ -1076,5 +1072,36 @@ export class OptcRepositoryService {
     }
 
     return values.flatMap((value) => this.flattenValues(value));
+  }
+
+  private resolveSearchText(row: SqlRow): string {
+    if (typeof row['search_text'] === 'string' && row['search_text'].trim().length > 0) {
+      return row['search_text'].trim().toLowerCase();
+    }
+
+    return [
+      row['id'],
+      row['name'],
+      row['type'],
+      row['primary_class'],
+      row['secondary_class'] ?? '',
+      ...this.parseJson<string[]>(row['classes_json'], []),
+    ]
+      .join(' ')
+      .toLowerCase();
+  }
+
+  private buildSearchableRecordText(record: CharacterRecord): string {
+    return [
+      record.searchText ?? '',
+      record.id,
+      record.name,
+      record.type,
+      record.primaryClass,
+      record.secondaryClass ?? '',
+      ...record.classes,
+    ]
+      .join(' ')
+      .toLowerCase();
   }
 }

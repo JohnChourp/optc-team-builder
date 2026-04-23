@@ -17,6 +17,7 @@ import {
   buildManifest,
   buildPreviewPayload,
   createEmptyAssets,
+  createCharacterSearchText,
   createSqlSeed,
   createUnresolvedCatalog,
   flattenValues,
@@ -985,7 +986,11 @@ function normalizeCharacters(units, details, rumbleUnits, assetsById) {
         maxAtk: toNumber(entry[14]),
         maxRcv: toNumber(entry[15]),
         growth: toNumber(entry[16]),
-        searchText: `${entry[0]} ${entry[1]} ${classes.join(' ')}`.toLowerCase(),
+        searchText: createCharacterSearchText({
+          name: entry[0],
+          type: entry[1],
+          classes,
+        }),
         regionAvailability: {
           exactLocal: Boolean(assets.exactLocal),
           thumbnailGlobal: Boolean(assets.thumbnailGlobal),
