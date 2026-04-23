@@ -13,7 +13,7 @@
     "i18n:extract": "transloco-keys-manager extract --project optc-team-builder",
     "i18n:find": "transloco-keys-manager find --project optc-team-builder --translations-path public/i18n",
     "i18n:validate": "node ./scripts/audit-i18n.mjs",
-    "data:import": "node ./scripts/import-optc-data.mjs",
+    "data:import:all": "node ./scripts/import-optc-data.mjs --download-images=all",
     "data:apply-manual": "node ./scripts/apply-manual-characters.mjs",
     "data:upsert-manual-character": "node ./scripts/upsert-manual-character.mjs",
     "build:mobile": "npm run build && npx cap sync",

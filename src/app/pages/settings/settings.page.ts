@@ -208,9 +208,8 @@ export class SettingsPage implements OnInit {
   public readonly savedEnemiesFeedback = signal<TransferFeedback | null>(null);
 
   public readonly commands = [
-    'npm run data:import',
-    'npm run data:import -- --download-images=thumbnails',
-    'npm run data:import -- --source=optc-db',
+    'npm run data:import:all',
+    'npm run data:import:all -- --source=optc-db',
   ];
 
   public constructor(
