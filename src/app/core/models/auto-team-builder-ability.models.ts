@@ -1,5 +1,18 @@
-export type AutoBuildAbilitySource = 'specialText' | 'captainAbility' | 'sailorAbilities';
-export type AutoBuildAbilityCategory = 'special' | 'crewmate' | 'legacy';
+export type AutoBuildAbilitySource =
+  | 'specialText'
+  | 'captainAbility'
+  | 'sailorAbilities'
+  | 'potentialAbilities'
+  | 'supportData'
+  | 'superTandemData'
+  | 'finalTapData'
+  | 'rushSugoSpecialData';
+export type AutoBuildAbilityCategory =
+  | 'special'
+  | 'crewmate'
+  | 'potential'
+  | 'support'
+  | 'legacy';
 export type AutoBuildAbilityCoverageMode = 'explicit' | 'selectedDebuff';
 export type AutoBuildEnemyMechanicCategory =
   | 'enemyDefense'

@@ -1193,6 +1193,18 @@ export function normalizeCharacterDetail(detail, characterId, rumbleData = null)
     swapData: detail.swap ?? null,
     vsSpecial: detail.vsSpecial ?? null,
     superType: detail.superType ?? null,
+    superTandemData:
+      detail.superTandemData && typeof detail.superTandemData === 'object'
+        ? detail.superTandemData
+        : null,
+    finalTapData:
+      detail.finalTapData && typeof detail.finalTapData === 'object'
+        ? detail.finalTapData
+        : null,
+    rushSugoSpecialData:
+      detail.rushSugoSpecialData && typeof detail.rushSugoSpecialData === 'object'
+        ? detail.rushSugoSpecialData
+        : null,
     superClass: detail.superClass ?? null,
     rumbleData,
   };

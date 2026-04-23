@@ -367,6 +367,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly abilityPickerOpen = signal(false);
   public readonly crewmateAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly crewmateAbilityPickerOpen = signal(false);
+  public readonly potentialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly potentialAbilityPickerOpen = signal(false);
+  public readonly supportAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly supportAbilityPickerOpen = signal(false);
   public readonly manualSearchTerm = signal('');
   public readonly manualShipSearchTerm = signal('');
   public readonly excludeCharacterSearchTerm = signal('');
@@ -495,6 +499,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly availableCrewmateAbilityCatalogItems = computed(() =>
     getAbilityCatalogItemsByCategory(this.availableAbilityCatalogItems(), 'crewmate'),
   );
+  public readonly availablePotentialAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.availableAbilityCatalogItems(), 'potential'),
+  );
+  public readonly availableSupportAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.availableAbilityCatalogItems(), 'support'),
+  );
   public readonly availableEnemyMechanicCatalogItems = computed<
     AutoBuildEnemyMechanicCatalogItem[]
   >(() => getEnemyMechanicCatalogItems());
@@ -524,10 +534,26 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       'crewmate',
     ),
   );
+  public readonly potentialFilterCharacterIds = computed(() =>
+    resolveCategoryAbilityMatchingCharacterIds(
+      this.pageRequiredAbilities(),
+      this.availablePotentialAbilityCatalogItems(),
+      'potential',
+    ),
+  );
+  public readonly supportFilterCharacterIds = computed(() =>
+    resolveCategoryAbilityMatchingCharacterIds(
+      this.pageRequiredAbilities(),
+      this.availableSupportAbilityCatalogItems(),
+      'support',
+    ),
+  );
   public readonly abilityFilterCharacterIds = computed(() =>
     intersectAbilityMatchingCharacterIds([
       this.specialFilterCharacterIds(),
       this.crewmateFilterCharacterIds(),
+      this.potentialFilterCharacterIds(),
+      this.supportFilterCharacterIds(),
     ]),
   );
   public readonly enemyMechanicSummaryChips = computed<EnemyMechanicSummaryChipView[]>(() =>
@@ -555,6 +581,20 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   );
   public readonly crewmateAbilitySummaryChips = computed<AbilityRequirementSummaryChipView[]>(() =>
     this.crewmateAbilityDrafts().map((draft) => ({
+      draftId: draft.draftId,
+      label: this.resolveRequiredAbilitySelectedText(draft),
+      visual: resolveAbilityRequirementVisual(draft.abilityKey),
+    })),
+  );
+  public readonly potentialAbilitySummaryChips = computed<AbilityRequirementSummaryChipView[]>(() =>
+    this.potentialAbilityDrafts().map((draft) => ({
+      draftId: draft.draftId,
+      label: this.resolveRequiredAbilitySelectedText(draft),
+      visual: resolveAbilityRequirementVisual(draft.abilityKey),
+    })),
+  );
+  public readonly supportAbilitySummaryChips = computed<AbilityRequirementSummaryChipView[]>(() =>
+    this.supportAbilityDrafts().map((draft) => ({
       draftId: draft.draftId,
       label: this.resolveRequiredAbilitySelectedText(draft),
       visual: resolveAbilityRequirementVisual(draft.abilityKey),
@@ -1909,6 +1949,68 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     await this.refreshCharacterPickPanels();
   }
 
+  public openPotentialAbilityPicker(): void {
+    if (this.building() || !this.availablePotentialAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.potentialAbilityPickerOpen.set(true);
+  }
+
+  public closePotentialAbilityPicker(): void {
+    this.potentialAbilityPickerOpen.set(false);
+  }
+
+  public async savePotentialAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    const requirements = serializeCategoryAbilityDrafts(
+      drafts,
+      this.availablePotentialAbilityCatalogItems(),
+      'potential',
+    );
+
+    this.potentialAbilityDrafts.set(createAbilityRequirementDrafts(requirements));
+    this.potentialAbilityPickerOpen.set(false);
+    this.resetBuildState();
+    await this.refreshCharacterPickPanels();
+  }
+
+  public async clearPotentialAbilityFilters(): Promise<void> {
+    this.potentialAbilityDrafts.set([]);
+    this.resetBuildState();
+    await this.refreshCharacterPickPanels();
+  }
+
+  public openSupportAbilityPicker(): void {
+    if (this.building() || !this.availableSupportAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.supportAbilityPickerOpen.set(true);
+  }
+
+  public closeSupportAbilityPicker(): void {
+    this.supportAbilityPickerOpen.set(false);
+  }
+
+  public async saveSupportAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    const requirements = serializeCategoryAbilityDrafts(
+      drafts,
+      this.availableSupportAbilityCatalogItems(),
+      'support',
+    );
+
+    this.supportAbilityDrafts.set(createAbilityRequirementDrafts(requirements));
+    this.supportAbilityPickerOpen.set(false);
+    this.resetBuildState();
+    await this.refreshCharacterPickPanels();
+  }
+
+  public async clearSupportAbilityFilters(): Promise<void> {
+    this.supportAbilityDrafts.set([]);
+    this.resetBuildState();
+    await this.refreshCharacterPickPanels();
+  }
+
   public toggleCharacterInActiveManualSlot(character: CharacterDetailRecord): void {
     const activeRole = this.activeManualSlotRole();
 
@@ -2425,11 +2527,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
+    this.crewmateAbilityPickerOpen.set(false);
+    this.potentialAbilityPickerOpen.set(false);
+    this.supportAbilityPickerOpen.set(false);
     this.selectedTypes.set(defaultFilters.selectedTypes);
     this.selectedClasses.set(defaultFilters.selectedClasses);
     this.enemyMechanicDrafts.set([]);
     this.requiredAbilityDrafts.set([]);
     this.crewmateAbilityDrafts.set([]);
+    this.potentialAbilityDrafts.set([]);
+    this.supportAbilityDrafts.set([]);
     this.lockedCharacterRecords.set({});
     this.manualSearchTerm.set('');
     this.manualShipSearchTerm.set('');
@@ -2552,6 +2659,20 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         migratedRequiredAbilities,
         this.availableAbilityCatalogItems(),
         'crewmate',
+      ),
+    );
+    this.potentialAbilityDrafts.set(
+      createCategoryAbilityDrafts(
+        migratedRequiredAbilities,
+        this.availableAbilityCatalogItems(),
+        'potential',
+      ),
+    );
+    this.supportAbilityDrafts.set(
+      createCategoryAbilityDrafts(
+        migratedRequiredAbilities,
+        this.availableAbilityCatalogItems(),
+        'support',
       ),
     );
     this.lockedCharacterRecords.set({});
@@ -3287,6 +3408,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         this.crewmateAbilityDrafts(),
         this.availableCrewmateAbilityCatalogItems(),
         'crewmate',
+      ),
+      ...serializeCategoryAbilityDrafts(
+        this.potentialAbilityDrafts(),
+        this.availablePotentialAbilityCatalogItems(),
+        'potential',
+      ),
+      ...serializeCategoryAbilityDrafts(
+        this.supportAbilityDrafts(),
+        this.availableSupportAbilityCatalogItems(),
+        'support',
       ),
     ];
   }

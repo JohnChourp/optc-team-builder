@@ -6,6 +6,18 @@ const SPECIAL_ABILITY_DEFINITIONS = JSON.parse(
 const CREWMATE_ABILITY_DEFINITIONS = JSON.parse(
   readFileSync(new URL('./data/crewmate-ability-definitions.json', import.meta.url), 'utf8'),
 );
+const POTENTIAL_ABILITY_DEFINITIONS = JSON.parse(
+  readFileSync(new URL('./data/potential-ability-definitions.json', import.meta.url), 'utf8'),
+);
+const SUPPORT_ABILITY_DEFINITIONS = JSON.parse(
+  readFileSync(new URL('./data/support-ability-definitions.json', import.meta.url), 'utf8'),
+);
+const POTENTIAL_UNIQUE_ABILITY_SOURCES = {
+  potential_super_tandem: ['superTandemData'],
+  potential_final_tap_sugo_special: ['finalTapData'],
+  potential_rush_sugo_special: ['rushSugoSpecialData'],
+  potential_super_tandem_boost: ['superTandemData'],
+};
 const STRUCTURED_ABILITY_DEFINITIONS = [
   ...SPECIAL_ABILITY_DEFINITIONS.map((definition) => ({
     ...definition,
@@ -16,6 +28,16 @@ const STRUCTURED_ABILITY_DEFINITIONS = [
     ...definition,
     category: 'crewmate',
     availableSources: ['sailorAbilities'],
+  })),
+  ...POTENTIAL_ABILITY_DEFINITIONS.map((definition) => ({
+    ...definition,
+    category: 'potential',
+    availableSources: POTENTIAL_UNIQUE_ABILITY_SOURCES[definition.key] ?? ['potentialAbilities'],
+  })),
+  ...SUPPORT_ABILITY_DEFINITIONS.map((definition) => ({
+    ...definition,
+    category: 'support',
+    availableSources: ['supportData'],
   })),
 ];
 const STRUCTURED_ABILITY_METADATA_BY_KEY = new Map(
@@ -35,6 +57,99 @@ const CREWMATE_CLASSES = [
   { slug: 'driven', label: 'Driven' },
   { slug: 'cerebral', label: 'Cerebral' },
   { slug: 'powerhouse', label: 'Powerhouse' },
+];
+const POTENTIAL_ABILITY_CANONICAL_LABELS = {
+  potential_super_tandem: 'Super Tandem',
+  potential_final_tap_sugo_special: 'Final Tap Sugo Special',
+  potential_rush_sugo_special: 'Rush Sugo Special',
+  potential_super_tandem_boost: 'Super Tandem Boost',
+  potential_slot_bind_resistance: 'Slot Bind Resistance',
+  potential_slot_changes_impossible_resistance: 'Slot Changes Impossible Resistance',
+  potential_bind_ship_ability_resistance: 'Bind Ship Ability Resistance',
+  potential_fear_resistance: 'Fear Resistance',
+  potential_limit_special_uses_resistance: 'Limit Special Uses Resistance',
+  potential_rcv_bind_resistance: 'RCV Bind Resistance',
+  potential_recoverable_hp_amount_down_resistance: 'Recoverable HP Amount Down Resistance',
+  potential_recovery_atk_boost_hunger_resistance: 'Recovery ATK Boost/Hunger Resistance',
+  potential_provoked_atk_boost_received_damage_up_resistance:
+    'Provoked ATK Boost/Received Damage Up Resistance',
+  potential_own_special_charge_time_reduced: 'Own Special Charge Time Reduced',
+  potential_special_double_launch: 'Special Double Launch',
+  potential_special_triple_launch: 'Special Triple Launch',
+  potential_str_damage_reduction: 'STR Damage Reduction',
+  potential_dex_damage_reduction: 'DEX Damage Reduction',
+  potential_qck_damage_reduction: 'QCK Damage Reduction',
+  potential_psy_damage_reduction: 'PSY Damage Reduction',
+  potential_int_damage_reduction: 'INT Damage Reduction',
+  potential_pinch_healing: 'Pinch Healing',
+  potential_barrier_pierce: 'Barrier Pierce',
+  potential_critical_atk: 'Critical ATK',
+  potential_damage_limit_break_type: 'Damage Limit Break: Type',
+  potential_damage_limit_break_class: 'Damage Limit Break: Class',
+};
+const POTENTIAL_ABILITY_ALIASES = new Map(
+  [
+    ['Super Tandem', 'potential_super_tandem'],
+    ['Final Tap Sugo Special', 'potential_final_tap_sugo_special'],
+    ['Rush Sugo Special', 'potential_rush_sugo_special'],
+    ['Super Tandem Boost', 'potential_super_tandem_boost'],
+    ['Slot Bind Resistance', 'potential_slot_bind_resistance'],
+    ['Reduce Slot Bind duration', 'potential_slot_bind_resistance'],
+    ['Slot Changes Impossible Resistance', 'potential_slot_changes_impossible_resistance'],
+    ['Bind Ship Ability Resistance', 'potential_bind_ship_ability_resistance'],
+    ['Fear Resistance', 'potential_fear_resistance'],
+    ['Limit Special Uses Resistance', 'potential_limit_special_uses_resistance'],
+    ['RCV Bind Resistance', 'potential_rcv_bind_resistance'],
+    ['Recoverable HP Amount Down Resistance', 'potential_recoverable_hp_amount_down_resistance'],
+    ['Recovery ATK Boost/Hunger Resistance', 'potential_recovery_atk_boost_hunger_resistance'],
+    [
+      'Provoked ATK Boost/Received Damage Up Resistance',
+      'potential_provoked_atk_boost_received_damage_up_resistance',
+    ],
+    ['Own Special Charge Time Reduced', 'potential_own_special_charge_time_reduced'],
+    ['Special Double Launch', 'potential_special_double_launch'],
+    ['Special Triple Launch', 'potential_special_triple_launch'],
+    ['STR Damage Reduction', 'potential_str_damage_reduction'],
+    ['[STR] Damage Reduction', 'potential_str_damage_reduction'],
+    ['DEX Damage Reduction', 'potential_dex_damage_reduction'],
+    ['[DEX] Damage Reduction', 'potential_dex_damage_reduction'],
+    ['QCK Damage Reduction', 'potential_qck_damage_reduction'],
+    ['[QCK] Damage Reduction', 'potential_qck_damage_reduction'],
+    ['PSY Damage Reduction', 'potential_psy_damage_reduction'],
+    ['[PSY] Damage Reduction', 'potential_psy_damage_reduction'],
+    ['INT Damage Reduction', 'potential_int_damage_reduction'],
+    ['[INT] Damage Reduction', 'potential_int_damage_reduction'],
+    ['Pinch Healing', 'potential_pinch_healing'],
+    ['Barrier Pierce', 'potential_barrier_pierce'],
+    ['Barrier Penetration', 'potential_barrier_pierce'],
+    ['Critical ATK', 'potential_critical_atk'],
+    ['Critical Hit', 'potential_critical_atk'],
+    ['Damage Limit Break: Type', 'potential_damage_limit_break_type'],
+    ['Damage Limit Break: Class', 'potential_damage_limit_break_class'],
+  ].map(([label, key]) => [normalizePotentialAbilityLabel(label), key]),
+);
+const SUPER_TANDEM_BOOST_PATTERNS = [
+  /\braises?\s+boost level\b/i,
+  /\bsuper tandem boost\b/i,
+  /\bATK Boost \(Tandem\)\b/i,
+];
+const SUPPORT_TAP_TIMING_TRIGGER_PATTERNS = [
+  /\bperfects?\b/i,
+  /\btap-?timing\b/i,
+  /\bafter scoring\b[^.]{0,80}\bperfects?\b/i,
+  /\bafter landing\b[^.]{0,80}\bperfects?\b/i,
+  /\bafter attacking\b/i,
+  /\bwhen attacking\b/i,
+  /\bon hit\b/i,
+];
+const SUPPORT_DESIGNATED_TURN_PATTERNS = [
+  /\bon (?:the )?(?:final|boss|last) (?:battle|stage|turn)\b/i,
+  /\bon battle \d+\b/i,
+  /\bon stage \d+\b/i,
+  /\bon turn \d+\b/i,
+  /\bdesignated turn\b/i,
+  /\bfollowing turn\b/i,
+  /\bafter \d+ turns?\b/i,
 ];
 const ABILITY_BRANCH_ACTION_PATTERN =
   /\b(?:deals?|boosts?|makes?|reduces?|changes?|adds?|delays?|locks?|recovers?|heals?|cuts?|transforms?|sets?)\b/gi;
@@ -654,6 +769,577 @@ export function analyzeSpecialText(value) {
   return analyzeBuilderAbilityText(value, 'specialText');
 }
 
+function normalizePotentialAbilityLabel(value) {
+  return String(value ?? '')
+    .replace(/\[[^\]]+\]/g, (match) => match.toUpperCase())
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function resolvePotentialAbilityKey(name) {
+  return POTENTIAL_ABILITY_ALIASES.get(normalizePotentialAbilityLabel(name)) ?? null;
+}
+
+function addStructuredPotentialAbility(abilities, seen, key, source) {
+  const definition = STRUCTURED_ABILITY_METADATA_BY_KEY.get(key);
+
+  if (!definition) {
+    return;
+  }
+
+  addAbility(abilities, seen, {
+    key,
+    label: definition.label,
+    minTurns: null,
+    isCompleteRemoval: false,
+    slotTokens: [],
+    source,
+    coverageMode: DEFAULT_COVERAGE_MODE,
+  });
+}
+
+function extractPotentialBuilderAbilities(character) {
+  const abilities = [];
+  const seen = new Set();
+  const potentialEntries = Array.isArray(character.detail?.potentialAbilities)
+    ? character.detail.potentialAbilities
+    : [];
+
+  potentialEntries.forEach((entry) => {
+    const key = resolvePotentialAbilityKey(entry?.Name);
+
+    if (!key) {
+      return;
+    }
+
+    addStructuredPotentialAbility(abilities, seen, key, 'potentialAbilities');
+  });
+
+  if (character.detail?.superTandemData) {
+    addStructuredPotentialAbility(abilities, seen, 'potential_super_tandem', 'superTandemData');
+
+    if (isSuperTandemBoostData(character.detail.superTandemData)) {
+      addStructuredPotentialAbility(
+        abilities,
+        seen,
+        'potential_super_tandem_boost',
+        'superTandemData',
+      );
+    }
+  }
+
+  if (character.detail?.finalTapData) {
+    addStructuredPotentialAbility(
+      abilities,
+      seen,
+      'potential_final_tap_sugo_special',
+      'finalTapData',
+    );
+  }
+
+  if (character.detail?.rushSugoSpecialData) {
+    addStructuredPotentialAbility(
+      abilities,
+      seen,
+      'potential_rush_sugo_special',
+      'rushSugoSpecialData',
+    );
+  }
+
+  return abilities;
+}
+
+function isSuperTandemBoostData(value) {
+  return extractTextFragments(value).some((fragment) =>
+    SUPER_TANDEM_BOOST_PATTERNS.some((pattern) => pattern.test(fragment)),
+  );
+}
+
+function resolvePotentialSampleText(character) {
+  const fragments = [
+    ...extractTextFragments(character.detail?.potentialAbilities ?? []),
+    ...extractTextFragments(character.detail?.superTandemData ?? null),
+    ...extractTextFragments(character.detail?.finalTapData ?? null),
+    ...extractTextFragments(character.detail?.rushSugoSpecialData ?? null),
+  ]
+    .map((fragment) => String(fragment).trim())
+    .filter(Boolean);
+
+  return fragments.join('. ');
+}
+
+function addStructuredSupportAbility(abilities, seen, key) {
+  const definition = STRUCTURED_ABILITY_METADATA_BY_KEY.get(key);
+
+  if (!definition) {
+    return;
+  }
+
+  addAbility(abilities, seen, {
+    key,
+    label: definition.label,
+    minTurns: null,
+    isCompleteRemoval: false,
+    slotTokens: [],
+    source: 'supportData',
+    coverageMode: DEFAULT_COVERAGE_MODE,
+  });
+}
+
+function extractSupportBuilderAbilities(character) {
+  const abilities = [];
+  const seen = new Set();
+  const supportEntries = Array.isArray(character.detail?.supportData) ? character.detail.supportData : [];
+
+  supportEntries.forEach((entry) => {
+    const canonicalText = resolveSupportCanonicalText(entry);
+
+    if (!canonicalText) {
+      return;
+    }
+
+    collectSupportAbilityKeys(canonicalText).forEach((key) =>
+      addStructuredSupportAbility(abilities, seen, key),
+    );
+  });
+
+  return abilities;
+}
+
+function resolveSupportCanonicalText(entry) {
+  if (!entry || typeof entry !== 'object') {
+    return '';
+  }
+
+  const levelDescriptions = Array.isArray(entry.levelDescriptions)
+    ? entry.levelDescriptions
+    : Array.isArray(entry.description)
+      ? entry.description
+      : [];
+
+  return (
+    [...levelDescriptions]
+      .map((value) => String(value).trim())
+      .filter(Boolean)
+      .at(-1) ?? ''
+  );
+}
+
+function resolveSupportSampleText(character) {
+  const fragments = (Array.isArray(character.detail?.supportData) ? character.detail.supportData : [])
+    .map((entry) => {
+      const supportedCharactersText = String(entry?.supportedCharactersText ?? entry?.Characters ?? '')
+        .trim();
+      const canonicalText = resolveSupportCanonicalText(entry);
+
+      if (!canonicalText.length) {
+        return '';
+      }
+
+      return supportedCharactersText.length
+        ? `${supportedCharactersText}: ${canonicalText}`
+        : canonicalText;
+    })
+    .filter(Boolean);
+
+  return fragments.join('. ');
+}
+
+function collectSupportAbilityKeys(value) {
+  const text = String(value ?? '').replace(/\s+/g, ' ').trim();
+
+  if (!text.length) {
+    return [];
+  }
+
+  const keys = new Set();
+
+  addSupportPassiveBaseStatKeys(keys, text);
+  addSupportDamageReductionKeys(keys, text);
+  addSupportEnemyEffectReductionKeys(keys, text);
+  addSupportSlotKeys(keys, text);
+  addSupportBoostKeys(keys, text);
+  addSupportStatusRecoveryKeys(keys, text);
+  addSupportOtherKeys(keys, text);
+  addSupportApplyStatusEffectKeys(keys, text);
+
+  return [...keys];
+}
+
+function addSupportPassiveBaseStatKeys(keys, text) {
+  const targetStats = new Set(
+    (
+      text.match(/supported character'?s\s+base\s+([A-Z]+)(?:\s+and\s+([A-Z]+))?(?:\s+and\s+([A-Z]+))?/i)
+        ?.slice(1) ?? []
+    )
+      .map((value) => String(value ?? '').trim().toUpperCase())
+      .filter((value) => ['ATK', 'HP', 'RCV'].includes(value)),
+  );
+
+  if (targetStats.size === 0 || !/this character'?s\s+base/i.test(text)) {
+    return;
+  }
+
+  const suffix = targetStats.size > 1 ? '_additional' : '';
+
+  if (targetStats.has('ATK')) {
+    keys.add(`support_base_atk_boost${suffix}`);
+  }
+
+  if (targetStats.has('HP')) {
+    keys.add(`support_base_hp_boost${suffix}`);
+  }
+
+  if (targetStats.has('RCV')) {
+    keys.add(`support_base_rcv_boost${suffix}`);
+  }
+}
+
+function addSupportDamageReductionKeys(keys, text) {
+  if (
+    /\breduce(?:s|d)?\b[^.]{0,160}\bdamage\b[^.]{0,160}\bover\b/i.test(text) ||
+    /\breduce damage over certain amount\b/i.test(text) ||
+    /\bdamage threshold\b/i.test(text)
+  ) {
+    keys.add('support_damage_reduction_reduce_damage_over_certain_amount');
+    return;
+  }
+
+  if (/\bnullif(?:y|ies)\b[^.]{0,120}\bdamage\b/i.test(text)) {
+    keys.add('support_damage_reduction_nullification');
+    return;
+  }
+
+  if (
+    /\breduce(?:s|d)?\b[^.]{0,160}\bdamage (?:received|taken)\b[^.]{0,80}\bfor \d+ turns?\b/i.test(
+      text,
+    ) ||
+    /\bdamage reduction\b[^.]{0,80}\bfor \d+ turns?\b/i.test(text)
+  ) {
+    keys.add('support_damage_reduction_turn');
+    return;
+  }
+
+  if (
+    /\breduce(?:s|d)?\b[^.]{0,160}\bdamage (?:received|taken)\b/i.test(text) ||
+    /\bdamage reduction\b/i.test(text)
+  ) {
+    keys.add('support_damage_reduction_permanent');
+  }
+}
+
+function addSupportEnemyEffectReductionKeys(keys, text) {
+  if (
+    !/\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b/i.test(text) ||
+    !/\b(?:duration|turns?)\b/i.test(text)
+  ) {
+    return;
+  }
+
+  const isTapTiming = SUPPORT_TAP_TIMING_TRIGGER_PATTERNS.some((pattern) => pattern.test(text));
+  const entries = [
+    {
+      key: isTapTiming
+        ? 'support_reduce_enemy_effect_turns_def_up_tap_timing'
+        : 'support_reduce_enemy_effect_turns_def_up',
+      pattern: /\b(?:DEF Up|defense up|increased defense)\b/i,
+    },
+    {
+      key: isTapTiming
+        ? 'support_reduce_enemy_effect_turns_damage_reduction_tap_timing'
+        : 'support_reduce_enemy_effect_turns_damage_reduction',
+      pattern: /\b(?:damage reduction|percent damage reduction)\b/i,
+      exclude: /\bthreshold damage reduction\b/i,
+    },
+    {
+      key: isTapTiming
+        ? 'support_reduce_enemy_effect_turns_damage_threshold_tap_timing'
+        : 'support_reduce_enemy_effect_turns_damage_threshold',
+      pattern: /\b(?:damage threshold|threshold damage reduction)\b/i,
+    },
+    {
+      key: isTapTiming
+        ? 'support_reduce_enemy_effect_turns_end_of_turn_damage_tap_timing'
+        : 'support_reduce_enemy_effect_turns_end_of_turn_damage',
+      pattern: /\bend of turn damage\b|\bpercent cut\b/i,
+    },
+    {
+      key: 'support_reduce_enemy_effect_turns_enrage',
+      pattern: /\benrage\b/i,
+    },
+    {
+      key: 'support_reduce_enemy_effect_turns_atk_boost',
+      pattern: /\b(?:ATK Up|attack up|ATK boost|attack boost)\b/i,
+    },
+    {
+      key: 'support_reduce_enemy_effect_turns_resilience',
+      pattern: /\bresilience\b/i,
+    },
+    {
+      key: 'support_reduce_enemy_effect_turns_barrier',
+      pattern: /\bbarrier\b/i,
+    },
+  ];
+
+  entries.forEach((entry) => {
+    if (!entry.pattern.test(text) || entry.exclude?.test(text)) {
+      return;
+    }
+
+    keys.add(entry.key);
+  });
+}
+
+function addSupportSlotKeys(keys, text) {
+  if (/\blocks?\b[^.]{0,120}\b(?:slots?|orbs?)\b/i.test(text)) {
+    keys.add('support_lock_slots');
+  }
+
+  if (/\bmakes?\b[^.]{0,160}\b(?:slots?|orbs?)\b[^.]{0,80}\b(?:beneficial|matching|favorable)\b/i.test(text)) {
+    keys.add('support_favorable_slots');
+  }
+
+  if (/\b(?:changes?|boosts?|increases?)\b[^.]{0,120}\b(?:slot|orb)\b[^.]{0,80}\bchance\b/i.test(text)) {
+    keys.add('support_change_slot_chance');
+  }
+
+  if (/\bswaps?\b[^.]{0,120}\b(?:slots?|orbs?)\b/i.test(text)) {
+    keys.add('support_swap_slots');
+  }
+
+  if (
+    /\bnullif(?:y|ies)\b[^.]{0,160}\bATK reduction\b[^.]{0,80}\b(?:from|of)\b[^.]{0,40}\b(?:slots?|orbs?)\b/i.test(
+      text,
+    ) ||
+    /\bnullif(?:y|ies)\b[^.]{0,160}\b(?:slots?|orbs?)\b[^.]{0,80}\bATK reduction\b/i.test(text)
+  ) {
+    keys.add('support_nullify_atk_reduction_effect_from_slots');
+  }
+
+  if (
+    /\b(?:changes?|transforms?)\b[^.]{0,180}\[BLOCK\][^.]{0,160}\b(?:slots?|orbs?)\b/i.test(text) ||
+    /\bchange\b[^.]{0,160}\[BLOCK\][^.]{0,160}\b(?:slots?|orbs?)\b/i.test(text)
+  ) {
+    keys.add('support_change_block_slots');
+  } else if (
+    /\b(?:changes?|transforms?)\b[^.]{0,160}\b(?:slots?|orbs?)\b/i.test(text)
+  ) {
+    keys.add('support_slot_change_normal');
+  }
+}
+
+function addSupportBoostKeys(keys, text) {
+  if (/\bend of (?:each )?turn\b[^.]{0,120}\bdamage\b/i.test(text)) {
+    keys.add('support_end_of_turn_additional_damage');
+  }
+
+  if (
+    /\bboosts?\b[^.]{0,120}\badditional damage\b/i.test(text) ||
+    /\badditional damage boost\b/i.test(text)
+  ) {
+    keys.add('support_additional_damage_boost');
+  }
+
+  if (
+    /\bboosts?\b[^.]{0,120}\bATK\b/i.test(text) &&
+    !/\bbase ATK\b/i.test(text)
+  ) {
+    keys.add('support_atk_boost');
+  }
+
+  if (/\b(?:type effects?|color affinity)\b/i.test(text)) {
+    keys.add('support_type_effect_boost');
+  }
+
+  if (
+    /\bboosts?\b[^.]{0,120}\b(?:slot|orb) effects?\b/i.test(text) ||
+    /\bslot effect boost\b/i.test(text)
+  ) {
+    keys.add('support_slot_effect_boost');
+  }
+
+  if (
+    /\blocks?\b[^.]{0,120}\bchain(?: multiplier)?\b/i.test(text) ||
+    /\bchain multiplier lock\b/i.test(text)
+  ) {
+    keys.add('support_chain_multiplier_lock');
+  } else if (
+    /\b(?:adds?|boosts?|increases?)\b[^.]{0,120}\bchain(?: multiplier)?\b/i.test(text)
+  ) {
+    keys.add('support_chain_multiplier_boost');
+  }
+
+  if (
+    /\b(?:boosts?|adds?|increases?)\b[^.]{0,120}\bbase ATK\b/i.test(text) &&
+    !/this character'?s\s+base ATK/i.test(text)
+  ) {
+    keys.add('support_base_atk_boost_damage');
+  }
+
+  const isDamageBoostText =
+    /\bboosts?\b[^.]{0,160}\bdamage\b/i.test(text) ||
+    /\bdamage boost\b/i.test(text) ||
+    /\bdamage dealt to\b/i.test(text);
+
+  if (!isDamageBoostText) {
+    return;
+  }
+
+  if (/\bdelayed enemies?\b|\bdelay\b/i.test(text)) {
+    keys.add('support_damage_boost_delay');
+    return;
+  }
+
+  if (/\b(?:DEF Down|defense down|defense reduced|DEF reduced)\b/i.test(text)) {
+    keys.add('support_damage_boost_def_down');
+    return;
+  }
+
+  if (/\bprogressive poison\b/i.test(text)) {
+    keys.add('support_damage_boost_progressive_poison');
+    return;
+  }
+
+  if (/\bvenom\b|\btoxic\b/i.test(text)) {
+    keys.add('support_damage_boost_venom');
+    return;
+  }
+
+  if (/\bpoison(?:ed)?\b/i.test(text)) {
+    keys.add('support_damage_boost_poison');
+    return;
+  }
+
+  if (
+    /\b(?:damage dealt to|damage against|boosts? damage (?:against|to))\b[^.]{0,120}(?:\[?(?:STR|DEX|QCK|PSY|INT)\]?|fighter|slasher|striker|shooter|free spirit|driven|cerebral|powerhouse)\s+enemies?\b/i.test(
+      text,
+    ) ||
+    /\bcertain enemies\b/i.test(text)
+  ) {
+    keys.add('support_damage_boost_against_certain_enemies');
+    return;
+  }
+
+  keys.add('support_damage_boost_other');
+}
+
+function addSupportStatusRecoveryKeys(keys, text) {
+  const entries = [
+    ['support_status_effect_recovery_despair', /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\bdespair\b/i],
+    [
+      'support_status_effect_recovery_bind',
+      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\bbind\b/i,
+    ],
+    [
+      'support_status_effect_recovery_paralysis',
+      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\bparalysis\b/i,
+    ],
+    [
+      'support_status_effect_recovery_special_bind',
+      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\bspecial bind\b/i,
+    ],
+    [
+      'support_status_effect_recovery_poisons',
+      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\b(?:poison|venom|toxic)\b/i,
+    ],
+    ['support_status_effect_recovery_burn', /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\bburn\b/i],
+    [
+      'support_status_effect_recovery_increased_damage_taken',
+      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\bincreased damage taken\b/i,
+    ],
+    [
+      'support_status_effect_recovery_atk_down',
+      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\b(?:ATK Down|attack down)\b/i,
+    ],
+    [
+      'support_status_effect_recovery_reduce_chain_multiplier_growth_rate',
+      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\b(?:reduce|decrease)\s+chain multiplier growth rate\b/i,
+    ],
+    [
+      'support_status_effect_recovery_lock_chain_multiplier',
+      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\block chain multiplier\b/i,
+    ],
+    ['support_status_effect_recovery_remove_sfx', /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\bSFX\b/i],
+  ];
+
+  entries.forEach(([key, pattern]) => {
+    if (pattern.test(text)) {
+      keys.add(key);
+    }
+  });
+}
+
+function addSupportOtherKeys(keys, text) {
+  if (/\b(?:recover(?:s|ed)?|heal(?:s|ed)?)\b[^.]{0,120}\bHP\b/i.test(text)) {
+    keys.add('support_hp_recovery');
+  }
+
+  if (
+    /\bapplies?\b[^.]{0,160}\b(?:status effect|beneficial effect|effect)\b[^.]{0,160}\b(?:crew|characters|allies)\b/i.test(
+      text,
+    )
+  ) {
+    keys.add('support_apply_status_effects_crew');
+  }
+
+  if (/\bperfect\b|\btap-?timing\b/i.test(text)) {
+    keys.add('support_tap_timing_requirement');
+  }
+
+  if (SUPPORT_DESIGNATED_TURN_PATTERNS.some((pattern) => pattern.test(text))) {
+    keys.add('support_effect_activation_on_designated_turn');
+  }
+
+  if (
+    /\b(?:reduce(?:s|d)?|shorten(?:s|ed)?)\b[^.]{0,160}\b(?:special cooldown|special charge|special charge time)\b[^.]{0,120}\b(?:this character|self|own)\b/i.test(
+      text,
+    ) ||
+    /\b(?:this character|self|own)\b[^.]{0,120}\b(?:special cooldown|special charge|special charge time)\b[^.]{0,120}\b(?:reduce(?:s|d)?|shorten(?:s|ed)?)\b/i.test(
+      text,
+    )
+  ) {
+    keys.add('support_reduce_special_charge_time_self');
+  }
+
+  if (
+    /\b(?:reduce(?:s|d)?|cut(?:s)?)\b[^.]{0,160}\bcurrent HP\b[^.]{0,120}\b(?:crew|all characters|characters)\b/i.test(
+      text,
+    )
+  ) {
+    keys.add('support_reduce_current_hp_crew');
+  }
+}
+
+function addSupportApplyStatusEffectKeys(keys, text) {
+  const entries = [
+    [
+      'support_apply_status_effect_def_down',
+      /\b(?:inflict(?:s|ed)?|apply|applies|reduce(?:s|d)?)\b[^.]{0,160}\b(?:DEF Down|defense down)\b/i,
+    ],
+    ['support_apply_status_effect_unique_effect', /\bunique effect\b/i],
+    [
+      'support_apply_status_effect_poison',
+      /\b(?:inflict(?:s|ed)?|poisons?|apply|applies)\b[^.]{0,160}\b(?:poison|venom|toxic)\b/i,
+    ],
+    [
+      'support_apply_status_effect_increased_damage_taken',
+      /\b(?:increase(?:s|d)?|inflict(?:s|ed)?|apply|applies)\b[^.]{0,160}\bdamage taken\b/i,
+    ],
+    [
+      'support_apply_status_effect_reduce_resistance',
+      /\b(?:resistance reduction|reduce(?:s|d)? resistance)\b/i,
+    ],
+    ['support_apply_status_effect_delay', /\bdelay(?:s|ed)?\b[^.]{0,120}\benem/i],
+  ];
+
+  entries.forEach(([key, pattern]) => {
+    if (pattern.test(text) && !/\b(?:duration|turns?)\b/i.test(text)) {
+      keys.add(key);
+    }
+  });
+}
+
 function resolveCaptainAbilityTexts(character) {
   const captainAbilityVariants = Array.isArray(character.detail?.captainAbilityVariants)
     ? character.detail.captainAbilityVariants
@@ -703,6 +1389,8 @@ export async function enrichCharactersWithBuilderAbilities(
           analyzeBuilderAbilityText(text, 'captainAbility'),
         ),
         ...analyzeBuilderAbilityText(sailorAbilityText, 'sailorAbilities'),
+        ...extractPotentialBuilderAbilities(character),
+        ...extractSupportBuilderAbilities(character),
       ];
       const builderAbilities = mergeBuilderAbilities(
         character.detail?.builderAbilities ?? [],
@@ -738,7 +1426,14 @@ export async function enrichCharactersWithBuilderAbilities(
             ? captainAbilityTexts[0] ?? character.detail?.captainAbility
             : ability.source === 'sailorAbilities'
               ? sailorAbilityText
-              : character.detail?.specialText;
+              : ability.source === 'potentialAbilities' ||
+                  ability.source === 'superTandemData' ||
+                  ability.source === 'finalTapData' ||
+                  ability.source === 'rushSugoSpecialData'
+                ? resolvePotentialSampleText(character)
+                : ability.source === 'supportData'
+                  ? resolveSupportSampleText(character)
+                : character.detail?.specialText;
 
         if (
           current.sampleTexts.length < 5 &&
@@ -891,7 +1586,17 @@ function normalizeExistingBuilderAbility(value) {
         ? 'captainAbility'
         : value.source === 'sailorAbilities'
           ? 'sailorAbilities'
-          : 'specialText',
+          : value.source === 'potentialAbilities'
+            ? 'potentialAbilities'
+            : value.source === 'supportData'
+              ? 'supportData'
+            : value.source === 'superTandemData'
+              ? 'superTandemData'
+              : value.source === 'finalTapData'
+                ? 'finalTapData'
+                : value.source === 'rushSugoSpecialData'
+                  ? 'rushSugoSpecialData'
+                  : 'specialText',
     coverageMode: value.coverageMode === 'selectedDebuff' ? 'selectedDebuff' : DEFAULT_COVERAGE_MODE,
   };
 }
@@ -916,7 +1621,9 @@ function compareCatalogAbilities(left, right) {
   const categoryOrder = new Map([
     ['special', 0],
     ['crewmate', 1],
-    ['legacy', 2],
+    ['potential', 2],
+    ['support', 3],
+    ['legacy', 4],
   ]);
   const leftCategoryOrder = categoryOrder.get(left.category ?? 'legacy') ?? Number.MAX_SAFE_INTEGER;
   const rightCategoryOrder =
@@ -926,7 +1633,7 @@ function compareCatalogAbilities(left, right) {
     return leftCategoryOrder - rightCategoryOrder;
   }
 
-  if (leftCategoryOrder < 2) {
+  if (leftCategoryOrder < 4) {
     return (
       (left.groupOrder ?? Number.MAX_SAFE_INTEGER) -
         (right.groupOrder ?? Number.MAX_SAFE_INTEGER) ||

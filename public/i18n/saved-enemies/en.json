@@ -166,6 +166,16 @@
         "clear": "Clear Crewmate filters"
       }
     },
+    "potentialFilters": {
+      "eyebrow": "Potential Ability",
+      "title": "Potential Ability filters",
+      "copy": "Pick Potential effects. Results must cover every selected effect.",
+      "empty": "No Potential Ability effects selected",
+      "actions": {
+        "openPicker": "Open Potential picker",
+        "clear": "Clear Potential filters"
+      }
+    },
     "removeAbility": "Remove",
     "requirementSummary": {
       "characters": ">={{count}} chars",
@@ -182,6 +192,16 @@
     "typesActions": {
       "clear": "Clear type selection",
       "selectAll": "Select all types"
+    },
+    "supportFilters": {
+      "eyebrow": "Support Ability",
+      "title": "Support Ability filters",
+      "copy": "Pick Support effects. Results must cover every selected effect.",
+      "empty": "No Support Ability effects selected",
+      "actions": {
+        "openPicker": "Open Support picker",
+        "clear": "Clear Support filters"
+      }
     }
   },
   "empty": {

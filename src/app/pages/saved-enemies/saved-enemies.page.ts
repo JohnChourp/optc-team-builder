@@ -155,6 +155,10 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public readonly abilityPickerOpen = signal(false);
   public readonly crewmateAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly crewmateAbilityPickerOpen = signal(false);
+  public readonly potentialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly potentialAbilityPickerOpen = signal(false);
+  public readonly supportAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly supportAbilityPickerOpen = signal(false);
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
   public readonly savingEnemy = signal(false);
@@ -194,6 +198,12 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public readonly availableCrewmateAbilityCatalogItems = computed(() =>
     getAbilityCatalogItemsByCategory(this.availableAbilityCatalogItems(), 'crewmate'),
   );
+  public readonly availablePotentialAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.availableAbilityCatalogItems(), 'potential'),
+  );
+  public readonly availableSupportAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.availableAbilityCatalogItems(), 'support'),
+  );
   public readonly availableEnemyMechanicCatalogItems = computed<
     AutoBuildEnemyMechanicCatalogItem[]
   >(() => getEnemyMechanicCatalogItems());
@@ -231,6 +241,20 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   );
   public readonly crewmateAbilitySummaryChips = computed<SavedEnemyAbilitySummaryChipView[]>(() =>
     this.crewmateAbilityDrafts().map((draft) => ({
+      draftId: draft.draftId,
+      label: this.resolveRequiredAbilitySelectedText(draft),
+      visual: resolveAbilityRequirementVisual(draft.abilityKey),
+    })),
+  );
+  public readonly potentialAbilitySummaryChips = computed<SavedEnemyAbilitySummaryChipView[]>(() =>
+    this.potentialAbilityDrafts().map((draft) => ({
+      draftId: draft.draftId,
+      label: this.resolveRequiredAbilitySelectedText(draft),
+      visual: resolveAbilityRequirementVisual(draft.abilityKey),
+    })),
+  );
+  public readonly supportAbilitySummaryChips = computed<SavedEnemyAbilitySummaryChipView[]>(() =>
+    this.supportAbilityDrafts().map((draft) => ({
       draftId: draft.draftId,
       label: this.resolveRequiredAbilitySelectedText(draft),
       visual: resolveAbilityRequirementVisual(draft.abilityKey),
@@ -353,11 +377,15 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
     this.crewmateAbilityPickerOpen.set(false);
+    this.potentialAbilityPickerOpen.set(false);
+    this.supportAbilityPickerOpen.set(false);
     this.selectedTypes.set([...this.availableTypes]);
     this.selectedClasses.set([...this.availableClasses()]);
     this.enemyMechanicDrafts.set([]);
     this.requiredAbilityDrafts.set([]);
     this.crewmateAbilityDrafts.set([]);
+    this.potentialAbilityDrafts.set([]);
+    this.supportAbilityDrafts.set([]);
     this.requireAllSelectedTypesInTeam.set(false);
     this.requireAllSelectedClassesPerCharacter.set(false);
     this.savingEnemy.set(false);
@@ -376,6 +404,8 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
     this.crewmateAbilityPickerOpen.set(false);
+    this.potentialAbilityPickerOpen.set(false);
+    this.supportAbilityPickerOpen.set(false);
     this.selectedTypes.set([...enemy.selectedTypes]);
     this.selectedClasses.set([...enemy.selectedClasses]);
     this.enemyMechanicDrafts.set([]);
@@ -398,6 +428,26 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
         'crewmate',
       ),
     );
+    this.potentialAbilityDrafts.set(
+      createCategoryAbilityDrafts(
+        mergeAbilityRequirements([
+          ...enemy.requiredAbilities,
+          ...deriveAbilityRequirementsFromEnemyMechanics(enemy.enemyMechanics),
+        ]),
+        this.availableAbilityCatalogItems(),
+        'potential',
+      ),
+    );
+    this.supportAbilityDrafts.set(
+      createCategoryAbilityDrafts(
+        mergeAbilityRequirements([
+          ...enemy.requiredAbilities,
+          ...deriveAbilityRequirementsFromEnemyMechanics(enemy.enemyMechanics),
+        ]),
+        this.availableAbilityCatalogItems(),
+        'support',
+      ),
+    );
     this.requireAllSelectedTypesInTeam.set(enemy.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(enemy.requireAllSelectedClassesPerCharacter);
     this.savingEnemy.set(false);
@@ -408,6 +458,8 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
     this.crewmateAbilityPickerOpen.set(false);
+    this.potentialAbilityPickerOpen.set(false);
+    this.supportAbilityPickerOpen.set(false);
     this.editorOpen.set(false);
     this.editingEnemy.set(null);
     this.savingEnemy.set(false);
@@ -566,6 +618,52 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.crewmateAbilityPickerOpen.set(false);
   }
 
+  public openPotentialAbilityPicker(): void {
+    if (this.savingEnemy() || this.availablePotentialAbilityCatalogItems().length === 0) {
+      return;
+    }
+
+    this.potentialAbilityPickerOpen.set(true);
+  }
+
+  public closePotentialAbilityPicker(): void {
+    this.potentialAbilityPickerOpen.set(false);
+  }
+
+  public savePotentialAbilityPicker(drafts: AbilityRequirementDraft[]): void {
+    this.potentialAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeCategoryAbilityDrafts(
+          drafts,
+          this.availablePotentialAbilityCatalogItems(),
+          'potential',
+        ),
+      ),
+    );
+    this.potentialAbilityPickerOpen.set(false);
+  }
+
+  public openSupportAbilityPicker(): void {
+    if (this.savingEnemy() || this.availableSupportAbilityCatalogItems().length === 0) {
+      return;
+    }
+
+    this.supportAbilityPickerOpen.set(true);
+  }
+
+  public closeSupportAbilityPicker(): void {
+    this.supportAbilityPickerOpen.set(false);
+  }
+
+  public saveSupportAbilityPicker(drafts: AbilityRequirementDraft[]): void {
+    this.supportAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeCategoryAbilityDrafts(drafts, this.availableSupportAbilityCatalogItems(), 'support'),
+      ),
+    );
+    this.supportAbilityPickerOpen.set(false);
+  }
+
   public onEnemyPasteTextChange(event: CustomEvent<{ value?: string | null }>): void {
     this.enemyTextPasteValue.set((event.detail.value ?? '').toString());
     this.enemyTextParseResult.set(null);
@@ -624,6 +722,26 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
         'crewmate',
       ),
     );
+    this.potentialAbilityDrafts.set(
+      createCategoryAbilityDrafts(
+        mergeAbilityRequirements([
+          ...parsedResult.requiredAbilities,
+          ...deriveAbilityRequirementsFromEnemyMechanics(parsedResult.enemyMechanics),
+        ]),
+        this.availableAbilityCatalogItems(),
+        'potential',
+      ),
+    );
+    this.supportAbilityDrafts.set(
+      createCategoryAbilityDrafts(
+        mergeAbilityRequirements([
+          ...parsedResult.requiredAbilities,
+          ...deriveAbilityRequirementsFromEnemyMechanics(parsedResult.enemyMechanics),
+        ]),
+        this.availableAbilityCatalogItems(),
+        'support',
+      ),
+    );
   }
 
   public openEnemyMechanicPicker(): void {
@@ -653,6 +771,14 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
   public clearCrewmateAbilityFilters(): void {
     this.crewmateAbilityDrafts.set([]);
+  }
+
+  public clearPotentialAbilityFilters(): void {
+    this.potentialAbilityDrafts.set([]);
+  }
+
+  public clearSupportAbilityFilters(): void {
+    this.supportAbilityDrafts.set([]);
   }
 
   public async saveEnemy(): Promise<void> {
@@ -817,6 +943,16 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
         this.crewmateAbilityDrafts(),
         this.availableCrewmateAbilityCatalogItems(),
         'crewmate',
+      ),
+      ...serializeCategoryAbilityDrafts(
+        this.potentialAbilityDrafts(),
+        this.availablePotentialAbilityCatalogItems(),
+        'potential',
+      ),
+      ...serializeCategoryAbilityDrafts(
+        this.supportAbilityDrafts(),
+        this.availableSupportAbilityCatalogItems(),
+        'support',
       ),
     ];
   }

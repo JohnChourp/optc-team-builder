@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-23T15:54:41.902Z",
+  "generatedAt": "2026-04-23T17:11:40.407Z",
   "characters": [
     {
       "id": 1,
@@ -366,6 +366,15 @@
             "isCompleteRemoval": false,
             "slotTokens": [],
             "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_base_atk_boost",
+            "label": "Base ATK Boost",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
             "coverageMode": "explicit"
           }
         ],
@@ -803,6 +812,42 @@
             "isCompleteRemoval": false,
             "slotTokens": [],
             "source": "specialText",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "potential_qck_damage_reduction",
+            "label": "QCK Damage Reduction",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "potentialAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "potential_critical_atk",
+            "label": "Critical ATK",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "potentialAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_base_atk_boost_additional",
+            "label": "Base ATK Boost: Additional",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_base_hp_boost_additional",
+            "label": "Base HP Boost: Additional",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
             "coverageMode": "explicit"
           }
         ],
@@ -1245,6 +1290,42 @@
             "isCompleteRemoval": false,
             "slotTokens": [],
             "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "potential_pinch_healing",
+            "label": "Pinch Healing",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "potentialAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "potential_slot_bind_resistance",
+            "label": "Slot Bind Resistance",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "potentialAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_base_atk_boost_additional",
+            "label": "Base ATK Boost: Additional",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_base_rcv_boost_additional",
+            "label": "Base RCV Boost: Additional",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
             "coverageMode": "explicit"
           }
         ],
@@ -2353,6 +2434,33 @@
             "slotTokens": [],
             "source": "sailorAbilities",
             "coverageMode": "explicit"
+          },
+          {
+            "key": "potential_barrier_pierce",
+            "label": "Barrier Pierce",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "potentialAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_base_atk_boost",
+            "label": "Base ATK Boost",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_damage_reduction_permanent",
+            "label": "Damage Reduction: Permanent",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
+            "coverageMode": "explicit"
           }
         ],
         "sailorAbilities": [
@@ -3204,6 +3312,42 @@
             "slotTokens": [],
             "source": "sailorAbilities",
             "coverageMode": "explicit"
+          },
+          {
+            "key": "potential_str_damage_reduction",
+            "label": "STR Damage Reduction",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "potentialAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "potential_pinch_healing",
+            "label": "Pinch Healing",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "potentialAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_base_atk_boost_additional",
+            "label": "Base ATK Boost: Additional",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_base_hp_boost_additional",
+            "label": "Base HP Boost: Additional",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
+            "coverageMode": "explicit"
           }
         ],
         "sailorAbilities": [
@@ -3482,6 +3626,42 @@
             "isCompleteRemoval": false,
             "slotTokens": [],
             "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "potential_int_damage_reduction",
+            "label": "INT Damage Reduction",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "potentialAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "potential_pinch_healing",
+            "label": "Pinch Healing",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "potentialAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_base_atk_boost_additional",
+            "label": "Base ATK Boost: Additional",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "support_base_hp_boost_additional",
+            "label": "Base HP Boost: Additional",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "supportData",
             "coverageMode": "explicit"
           }
         ],

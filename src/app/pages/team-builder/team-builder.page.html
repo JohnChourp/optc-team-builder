@@ -236,6 +236,70 @@
           (saveDrafts)="saveCrewmateAbilityPicker($event)"
         ></app-special-ability-picker>
 
+        <div class="assign-panel__controls">
+          <ion-button
+            fill="outline"
+            color="warning"
+            [disabled]="!availablePotentialAbilityCatalogItems().length"
+            (click)="openPotentialAbilityPicker()"
+          >
+            {{ t('assign.potential.open', { count: potentialAbilityDrafts().length }) }}
+          </ion-button>
+
+          <ion-button
+            fill="clear"
+            color="light"
+            [disabled]="!potentialAbilityDrafts().length"
+            (click)="clearPotentialAbilityFilters()"
+          >
+            {{ 'common.actions.clear' | transloco }}
+          </ion-button>
+        </div>
+
+        <app-special-ability-picker
+          [isOpen]="potentialAbilityPickerOpen()"
+          category="potential"
+          [eyebrow]="t('assign.potential.eyebrow')"
+          [title]="t('assign.potential.title')"
+          [copy]="t('assign.potential.copy')"
+          [drafts]="potentialAbilityDrafts()"
+          [catalogItems]="availablePotentialAbilityCatalogItems()"
+          (dismiss)="closePotentialAbilityPicker()"
+          (saveDrafts)="savePotentialAbilityPicker($event)"
+        ></app-special-ability-picker>
+
+        <div class="assign-panel__controls">
+          <ion-button
+            fill="outline"
+            color="warning"
+            [disabled]="!availableSupportAbilityCatalogItems().length"
+            (click)="openSupportAbilityPicker()"
+          >
+            {{ t('assign.support.open', { count: supportAbilityDrafts().length }) }}
+          </ion-button>
+
+          <ion-button
+            fill="clear"
+            color="light"
+            [disabled]="!supportAbilityDrafts().length"
+            (click)="clearSupportAbilityFilters()"
+          >
+            {{ 'common.actions.clear' | transloco }}
+          </ion-button>
+        </div>
+
+        <app-special-ability-picker
+          [isOpen]="supportAbilityPickerOpen()"
+          category="support"
+          [eyebrow]="t('assign.support.eyebrow')"
+          [title]="t('assign.support.title')"
+          [copy]="t('assign.support.copy')"
+          [drafts]="supportAbilityDrafts()"
+          [catalogItems]="availableSupportAbilityCatalogItems()"
+          (dismiss)="closeSupportAbilityPicker()"
+          (saveDrafts)="saveSupportAbilityPicker($event)"
+        ></app-special-ability-picker>
+
         @if (isCompactCandidateDisplayMode()) {
           <div class="candidate-grid">
             @for (card of candidateCardViews(); track card.character.id) {

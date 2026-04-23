@@ -577,5 +577,31 @@
       "openPicker": "Άνοιγμα Crewmate picker",
       "clearRequirements": "Καθαρισμός Crewmate filters"
     }
+  },
+  "potentialFilters": {
+    "eyebrow": "Potential Ability",
+    "title": "Potential Ability filters",
+    "copy": "Επίλεξε Potential effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect.",
+    "configuredRows": "{{count}} επιλεγμένα Potential effects",
+    "empty": "Δεν έχουν επιλεγεί Potential Ability effects",
+    "emptyCatalog": "Δεν βρέθηκε Potential ability catalog. Τρέξε",
+    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά.",
+    "actions": {
+      "openPicker": "Άνοιγμα Potential picker",
+      "clearRequirements": "Καθαρισμός Potential filters"
+    }
+  },
+  "supportFilters": {
+    "eyebrow": "Support Ability",
+    "title": "Support Ability filters",
+    "copy": "Επίλεξε Support effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect.",
+    "configuredRows": "{{count}} επιλεγμένα Support effects",
+    "empty": "Δεν έχουν επιλεγεί Support Ability effects",
+    "emptyCatalog": "Δεν βρέθηκε Support ability catalog. Τρέξε",
+    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά.",
+    "actions": {
+      "openPicker": "Άνοιγμα Support picker",
+      "clearRequirements": "Καθαρισμός Support filters"
+    }
   }
 }

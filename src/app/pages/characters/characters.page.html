@@ -151,6 +151,80 @@
         ></app-special-ability-picker>
 
         <div class="filter-group">
+          <div class="filter-group__head">
+            <strong>{{ t('filters.potential.label') }}</strong>
+            <small>{{ t('filters.potential.support', { count: potentialAbilityDrafts().length }) }}</small>
+          </div>
+          <div class="favorites-tools-actions">
+            <ion-button
+              fill="outline"
+              color="warning"
+              [disabled]="!availablePotentialAbilityCatalogItems().length"
+              (click)="openPotentialAbilityPicker()"
+            >
+              {{ t('filters.potential.open') }}
+            </ion-button>
+            <ion-button
+              fill="clear"
+              color="light"
+              [disabled]="!potentialAbilityDrafts().length"
+              (click)="clearPotentialAbilityFilters()"
+            >
+              {{ 'common.actions.clear' | transloco }}
+            </ion-button>
+          </div>
+        </div>
+
+        <app-special-ability-picker
+          [isOpen]="potentialAbilityPickerOpen()"
+          category="potential"
+          [eyebrow]="t('filters.potential.eyebrow')"
+          [title]="t('filters.potential.title')"
+          [copy]="t('filters.potential.copy')"
+          [drafts]="potentialAbilityDrafts()"
+          [catalogItems]="availablePotentialAbilityCatalogItems()"
+          (dismiss)="closePotentialAbilityPicker()"
+          (saveDrafts)="savePotentialAbilityPicker($event)"
+        ></app-special-ability-picker>
+
+        <div class="filter-group">
+          <div class="filter-group__head">
+            <strong>{{ t('filters.support.label') }}</strong>
+            <small>{{ t('filters.support.support', { count: supportAbilityDrafts().length }) }}</small>
+          </div>
+          <div class="favorites-tools-actions">
+            <ion-button
+              fill="outline"
+              color="warning"
+              [disabled]="!availableSupportAbilityCatalogItems().length"
+              (click)="openSupportAbilityPicker()"
+            >
+              {{ t('filters.support.open') }}
+            </ion-button>
+            <ion-button
+              fill="clear"
+              color="light"
+              [disabled]="!supportAbilityDrafts().length"
+              (click)="clearSupportAbilityFilters()"
+            >
+              {{ 'common.actions.clear' | transloco }}
+            </ion-button>
+          </div>
+        </div>
+
+        <app-special-ability-picker
+          [isOpen]="supportAbilityPickerOpen()"
+          category="support"
+          [eyebrow]="t('filters.support.eyebrow')"
+          [title]="t('filters.support.title')"
+          [copy]="t('filters.support.copy')"
+          [drafts]="supportAbilityDrafts()"
+          [catalogItems]="availableSupportAbilityCatalogItems()"
+          (dismiss)="closeSupportAbilityPicker()"
+          (saveDrafts)="saveSupportAbilityPicker($event)"
+        ></app-special-ability-picker>
+
+        <div class="filter-group">
           <span>{{ t('filters.type.label') }}</span>
           <ion-input
             class="filter-input"

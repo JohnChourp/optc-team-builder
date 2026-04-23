@@ -15,8 +15,20 @@
       "title": "Crewmate Ability filters",
       "copy": "Επίλεξε Crewmate effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect."
     },
+    "potential": {
+      "open": "Potential Ability filters ({{count}})",
+      "eyebrow": "Potential Ability",
+      "title": "Potential Ability filters",
+      "copy": "Επίλεξε Potential effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect."
+    },
     "subtitle": "Κάνε search στο offline index και πάτα μία φορά για να τοποθετήσεις το unit.",
-    "title": "Ανάθεση χαρακτήρα στο slot {{slot}}"
+    "title": "Ανάθεση χαρακτήρα στο slot {{slot}}",
+    "support": {
+      "open": "Support Ability filters ({{count}})",
+      "eyebrow": "Support Ability",
+      "title": "Support Ability filters",
+      "copy": "Επίλεξε Support effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect."
+    }
   },
   "displayMode": {
     "compact": "Συμπαγής προβολή",

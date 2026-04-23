@@ -15,8 +15,20 @@
       "title": "Crewmate Ability filters",
       "copy": "Pick Crewmate effects. Results must cover every selected effect."
     },
+    "potential": {
+      "open": "Potential Ability filters ({{count}})",
+      "eyebrow": "Potential Ability",
+      "title": "Potential Ability filters",
+      "copy": "Pick Potential effects. Results must cover every selected effect."
+    },
     "subtitle": "Search the offline index and tap once to place the unit.",
-    "title": "Assign character to slot {{slot}}"
+    "title": "Assign character to slot {{slot}}",
+    "support": {
+      "open": "Support Ability filters ({{count}})",
+      "eyebrow": "Support Ability",
+      "title": "Support Ability filters",
+      "copy": "Pick Support effects. Results must cover every selected effect."
+    }
   },
   "displayMode": {
     "compact": "Compact view",

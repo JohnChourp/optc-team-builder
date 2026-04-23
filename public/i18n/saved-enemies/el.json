@@ -166,6 +166,16 @@
         "clear": "Καθαρισμός Crewmate filters"
       }
     },
+    "potentialFilters": {
+      "eyebrow": "Potential Ability",
+      "title": "Potential Ability filters",
+      "copy": "Επίλεξε Potential effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect.",
+      "empty": "Δεν έχουν επιλεγεί Potential Ability effects",
+      "actions": {
+        "openPicker": "Άνοιγμα Potential picker",
+        "clear": "Καθαρισμός Potential filters"
+      }
+    },
     "removeAbility": "Αφαίρεση",
     "requirementSummary": {
       "characters": ">={{count}} chars",
@@ -182,6 +192,16 @@
     "typesActions": {
       "clear": "Καθάρισε τα types",
       "selectAll": "Επίλεξε όλα τα types"
+    },
+    "supportFilters": {
+      "eyebrow": "Support Ability",
+      "title": "Support Ability filters",
+      "copy": "Επίλεξε Support effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect.",
+      "empty": "Δεν έχουν επιλεγεί Support Ability effects",
+      "actions": {
+        "openPicker": "Άνοιγμα Support picker",
+        "clear": "Καθαρισμός Support filters"
+      }
     }
   },
   "empty": {

@@ -90,6 +90,10 @@ export class TeamBuilderPage implements OnInit {
   public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly crewmateAbilityPickerOpen = signal(false);
   public readonly crewmateAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly potentialAbilityPickerOpen = signal(false);
+  public readonly potentialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly supportAbilityPickerOpen = signal(false);
+  public readonly supportAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly candidateDisplayMode = signal<TeamBuilderCandidateDisplayMode>('list');
   public readonly candidateCharacters = signal<CharacterListItem[]>([]);
   public readonly slotCharacters = signal<Array<CharacterListItem | null>>(
@@ -129,6 +133,12 @@ export class TeamBuilderPage implements OnInit {
   public readonly availableCrewmateAbilityCatalogItems = computed(() =>
     getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'crewmate'),
   );
+  public readonly availablePotentialAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'potential'),
+  );
+  public readonly availableSupportAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'support'),
+  );
   public readonly specialAbilityRequirements = computed(() =>
     serializeSpecialAbilityDrafts(
       this.specialAbilityDrafts(),
@@ -142,6 +152,20 @@ export class TeamBuilderPage implements OnInit {
       'crewmate',
     ),
   );
+  public readonly potentialAbilityRequirements = computed(() =>
+    serializeCategoryAbilityDrafts(
+      this.potentialAbilityDrafts(),
+      this.availablePotentialAbilityCatalogItems(),
+      'potential',
+    ),
+  );
+  public readonly supportAbilityRequirements = computed(() =>
+    serializeCategoryAbilityDrafts(
+      this.supportAbilityDrafts(),
+      this.availableSupportAbilityCatalogItems(),
+      'support',
+    ),
+  );
   public readonly specialFilterCharacterIds = computed(() =>
     resolveSpecialAbilityMatchingCharacterIds(
       this.specialAbilityRequirements(),
@@ -153,6 +177,20 @@ export class TeamBuilderPage implements OnInit {
       this.crewmateAbilityRequirements(),
       this.availableCrewmateAbilityCatalogItems(),
       'crewmate',
+    ),
+  );
+  public readonly potentialFilterCharacterIds = computed(() =>
+    resolveCategoryAbilityMatchingCharacterIds(
+      this.potentialAbilityRequirements(),
+      this.availablePotentialAbilityCatalogItems(),
+      'potential',
+    ),
+  );
+  public readonly supportFilterCharacterIds = computed(() =>
+    resolveCategoryAbilityMatchingCharacterIds(
+      this.supportAbilityRequirements(),
+      this.availableSupportAbilityCatalogItems(),
+      'support',
     ),
   );
   public readonly candidateCardViews = computed<TeamBuilderCandidateCardView[]>(() =>
@@ -268,6 +306,64 @@ export class TeamBuilderPage implements OnInit {
     await this.refreshCandidateCharacters(this.candidateSearchTerm());
   }
 
+  public openPotentialAbilityPicker(): void {
+    if (!this.availablePotentialAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.potentialAbilityPickerOpen.set(true);
+  }
+
+  public closePotentialAbilityPicker(): void {
+    this.potentialAbilityPickerOpen.set(false);
+  }
+
+  public async savePotentialAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.potentialAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeCategoryAbilityDrafts(
+          drafts,
+          this.availablePotentialAbilityCatalogItems(),
+          'potential',
+        ),
+      ),
+    );
+    this.potentialAbilityPickerOpen.set(false);
+    await this.refreshCandidateCharacters(this.candidateSearchTerm());
+  }
+
+  public async clearPotentialAbilityFilters(): Promise<void> {
+    this.potentialAbilityDrafts.set([]);
+    await this.refreshCandidateCharacters(this.candidateSearchTerm());
+  }
+
+  public openSupportAbilityPicker(): void {
+    if (!this.availableSupportAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.supportAbilityPickerOpen.set(true);
+  }
+
+  public closeSupportAbilityPicker(): void {
+    this.supportAbilityPickerOpen.set(false);
+  }
+
+  public async saveSupportAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.supportAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeCategoryAbilityDrafts(drafts, this.availableSupportAbilityCatalogItems(), 'support'),
+      ),
+    );
+    this.supportAbilityPickerOpen.set(false);
+    await this.refreshCandidateCharacters(this.candidateSearchTerm());
+  }
+
+  public async clearSupportAbilityFilters(): Promise<void> {
+    this.supportAbilityDrafts.set([]);
+    await this.refreshCandidateCharacters(this.candidateSearchTerm());
+  }
+
   public onTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {
     this.teamName.set((event.detail.value ?? '').trimStart());
   }
@@ -355,6 +451,10 @@ export class TeamBuilderPage implements OnInit {
     this.specialAbilityDrafts.set([]);
     this.crewmateAbilityPickerOpen.set(false);
     this.crewmateAbilityDrafts.set([]);
+    this.potentialAbilityPickerOpen.set(false);
+    this.potentialAbilityDrafts.set([]);
+    this.supportAbilityPickerOpen.set(false);
+    this.supportAbilityDrafts.set([]);
     this.selectedSlotIndex.set(0);
     this.resetEditor();
     await this.refreshCandidateCharacters(this.candidateSearchTerm());
@@ -384,6 +484,8 @@ export class TeamBuilderPage implements OnInit {
         allowedCharacterIds: intersectAbilityMatchingCharacterIds([
           this.specialFilterCharacterIds(),
           this.crewmateFilterCharacterIds(),
+          this.potentialFilterCharacterIds(),
+          this.supportFilterCharacterIds(),
         ]),
         limit: 24,
         offset: 0,

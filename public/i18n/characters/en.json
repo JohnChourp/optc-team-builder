@@ -11,30 +11,46 @@
       "label": "Class",
       "placeholder": "Type to filter by class"
     },
-  "favoritesOnly": {
-    "empty": "No favorites saved yet.",
-    "label": "Show favorites only",
-    "withCount": "Limit results to your {{count}} favorited characters."
-  },
-  "special": {
-    "label": "Special filters",
-    "support": "{{count}} selected effects. Results must match every selected effect.",
-    "open": "Open Special picker",
-    "eyebrow": "Special",
-    "title": "Special filters",
-    "copy": "Filter characters by Special effects."
-  },
-  "crewmate": {
-    "label": "Crewmate Ability filters",
-    "support": "{{count}} selected effects. Results must match every selected effect.",
-    "open": "Open Crewmate picker",
-    "eyebrow": "Crewmate Ability",
-    "title": "Crewmate Ability filters",
-    "copy": "Pick Crewmate effects. Results must cover every selected effect."
-  },
-  "type": {
+    "favoritesOnly": {
+      "empty": "No favorites saved yet.",
+      "label": "Show favorites only",
+      "withCount": "Limit results to your {{count}} favorited characters."
+    },
+    "special": {
+      "label": "Special filters",
+      "support": "{{count}} selected effects. Results must match every selected effect.",
+      "open": "Open Special picker",
+      "eyebrow": "Special",
+      "title": "Special filters",
+      "copy": "Filter characters by Special effects."
+    },
+    "crewmate": {
+      "label": "Crewmate Ability filters",
+      "support": "{{count}} selected effects. Results must match every selected effect.",
+      "open": "Open Crewmate picker",
+      "eyebrow": "Crewmate Ability",
+      "title": "Crewmate Ability filters",
+      "copy": "Pick Crewmate effects. Results must cover every selected effect."
+    },
+    "potential": {
+      "label": "Potential Ability filters",
+      "support": "{{count}} selected effects. Results must match every selected effect.",
+      "open": "Open Potential picker",
+      "eyebrow": "Potential Ability",
+      "title": "Potential Ability filters",
+      "copy": "Pick Potential effects. Results must cover every selected effect."
+    },
+    "type": {
       "label": "Type",
       "placeholder": "Type to filter by character type"
+    },
+    "support": {
+      "label": "Support Ability filters",
+      "support": "{{count}} selected effects. Results must match every selected effect.",
+      "open": "Open Support picker",
+      "eyebrow": "Support Ability",
+      "title": "Support Ability filters",
+      "copy": "Pick Support effects. Results must cover every selected effect."
     }
   },
   "favorites": {

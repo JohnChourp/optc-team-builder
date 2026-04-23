@@ -577,5 +577,31 @@
       "openPicker": "Open Crewmate picker",
       "clearRequirements": "Clear Crewmate filters"
     }
+  },
+  "potentialFilters": {
+    "eyebrow": "Potential Ability",
+    "title": "Potential Ability filters",
+    "copy": "Pick Potential effects. Results must cover every selected effect.",
+    "configuredRows": "{{count}} selected Potential effects",
+    "empty": "No Potential Ability effects selected",
+    "emptyCatalog": "No Potential ability catalog was found. Run",
+    "emptyCatalogSuffix": "to regenerate it.",
+    "actions": {
+      "openPicker": "Open Potential picker",
+      "clearRequirements": "Clear Potential filters"
+    }
+  },
+  "supportFilters": {
+    "eyebrow": "Support Ability",
+    "title": "Support Ability filters",
+    "copy": "Pick Support effects. Results must cover every selected effect.",
+    "configuredRows": "{{count}} selected Support effects",
+    "empty": "No Support Ability effects selected",
+    "emptyCatalog": "No Support ability catalog was found. Run",
+    "emptyCatalogSuffix": "to regenerate it.",
+    "actions": {
+      "openPicker": "Open Support picker",
+      "clearRequirements": "Clear Support filters"
+    }
   }
 }

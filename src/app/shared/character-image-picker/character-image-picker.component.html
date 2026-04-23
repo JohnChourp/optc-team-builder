@@ -120,6 +120,52 @@
               </ion-button>
             </div>
 
+            <div class="character-image-picker-filter-grid">
+              <ion-button
+                fill="outline"
+                color="warning"
+                [disabled]="applyingSelection || !availablePotentialAbilityCatalogItems().length"
+                (click)="openPotentialAbilityPicker()"
+              >
+                {{ t('filters.potential') }}
+                @if (potentialAbilityDrafts().length) {
+                  <span>&nbsp;({{ potentialAbilityDrafts().length }})</span>
+                }
+              </ion-button>
+
+              <ion-button
+                fill="clear"
+                color="light"
+                [disabled]="applyingSelection || !potentialAbilityDrafts().length"
+                (click)="clearPotentialAbilityFilters()"
+              >
+                {{ t('filters.clearPotential') }}
+              </ion-button>
+            </div>
+
+            <div class="character-image-picker-filter-grid">
+              <ion-button
+                fill="outline"
+                color="warning"
+                [disabled]="applyingSelection || !availableSupportAbilityCatalogItems().length"
+                (click)="openSupportAbilityPicker()"
+              >
+                {{ t('filters.support') }}
+                @if (supportAbilityDrafts().length) {
+                  <span>&nbsp;({{ supportAbilityDrafts().length }})</span>
+                }
+              </ion-button>
+
+              <ion-button
+                fill="clear"
+                color="light"
+                [disabled]="applyingSelection || !supportAbilityDrafts().length"
+                (click)="clearSupportAbilityFilters()"
+              >
+                {{ t('filters.clearSupport') }}
+              </ion-button>
+            </div>
+
             <app-special-ability-picker
               [isOpen]="specialAbilityPickerOpen()"
               category="special"
@@ -142,6 +188,30 @@
               [catalogItems]="availableCrewmateAbilityCatalogItems()"
               (dismiss)="closeCrewmateAbilityPicker()"
               (saveDrafts)="saveCrewmateAbilityPicker($event)"
+            ></app-special-ability-picker>
+
+            <app-special-ability-picker
+              [isOpen]="potentialAbilityPickerOpen()"
+              category="potential"
+              [eyebrow]="t('filters.potentialEyebrow')"
+              [title]="t('filters.potentialTitle')"
+              [copy]="t('filters.potentialCopy')"
+              [drafts]="potentialAbilityDrafts()"
+              [catalogItems]="availablePotentialAbilityCatalogItems()"
+              (dismiss)="closePotentialAbilityPicker()"
+              (saveDrafts)="savePotentialAbilityPicker($event)"
+            ></app-special-ability-picker>
+
+            <app-special-ability-picker
+              [isOpen]="supportAbilityPickerOpen()"
+              category="support"
+              [eyebrow]="t('filters.supportEyebrow')"
+              [title]="t('filters.supportTitle')"
+              [copy]="t('filters.supportCopy')"
+              [drafts]="supportAbilityDrafts()"
+              [catalogItems]="availableSupportAbilityCatalogItems()"
+              (dismiss)="closeSupportAbilityPicker()"
+              (saveDrafts)="saveSupportAbilityPicker($event)"
             ></app-special-ability-picker>
 
             @if (loading()) {

@@ -384,6 +384,152 @@
           (saveDrafts)="saveCrewmateAbilityPicker($event)"
         ></app-special-ability-picker>
 
+        <section class="ability-requirements-card">
+          <div class="slot-grid__header">
+            <h2>{{ t('potentialFilters.title') }}</h2>
+            <p>{{ t('potentialFilters.copy') }}</p>
+          </div>
+
+          <div class="manual-locks-meta ability-requirements-meta">
+            <strong>{{
+              t('potentialFilters.configuredRows', { count: potentialAbilityDrafts().length })
+            }}</strong>
+            <div class="ability-requirements-actions">
+              <ion-button
+                fill="clear"
+                size="small"
+                class="select-all-button"
+                [disabled]="building() || !availablePotentialAbilityCatalogItems().length"
+                (click)="openPotentialAbilityPicker()"
+              >
+                {{ t('potentialFilters.actions.openPicker') }}
+              </ion-button>
+              <ion-button
+                fill="clear"
+                size="small"
+                class="select-all-button"
+                [disabled]="building() || !potentialAbilityDrafts().length"
+                (click)="clearPotentialAbilityFilters()"
+              >
+                {{ t('potentialFilters.actions.clearRequirements') }}
+              </ion-button>
+            </div>
+          </div>
+
+          @if (!availablePotentialAbilityCatalogItems().length) {
+            <p class="favorites-only-warning">
+              {{ t('potentialFilters.emptyCatalog') }}
+              <code>npm run data:import:all</code>
+              {{ t('potentialFilters.emptyCatalogSuffix') }}
+            </p>
+          }
+
+          @if (!potentialAbilitySummaryChips().length) {
+            <p class="favorites-only-warning">
+              {{ t('potentialFilters.empty') }}
+            </p>
+          }
+
+          @if (potentialAbilitySummaryChips().length) {
+            <div class="selected-values-row ability-requirements-selected-row">
+              @for (chip of potentialAbilitySummaryChips(); track chip.draftId) {
+                <span class="selected-value-chip ability-requirement-chip">
+                  <span class="ability-visual-chip" [attr.data-tone]="chip.visual.tone">
+                    <ion-icon [icon]="chip.visual.icon"></ion-icon>
+                    <small>{{ chip.visual.badge }}</small>
+                  </span>
+                  <span>{{ chip.label }}</span>
+                </span>
+              }
+            </div>
+          }
+        </section>
+
+        <app-special-ability-picker
+          [isOpen]="potentialAbilityPickerOpen()"
+          category="potential"
+          [eyebrow]="t('potentialFilters.eyebrow')"
+          [title]="t('potentialFilters.title')"
+          [copy]="t('potentialFilters.copy')"
+          [drafts]="potentialAbilityDrafts()"
+          [catalogItems]="availablePotentialAbilityCatalogItems()"
+          (dismiss)="closePotentialAbilityPicker()"
+          (saveDrafts)="savePotentialAbilityPicker($event)"
+        ></app-special-ability-picker>
+
+        <section class="ability-requirements-card">
+          <div class="slot-grid__header">
+            <h2>{{ t('supportFilters.title') }}</h2>
+            <p>{{ t('supportFilters.copy') }}</p>
+          </div>
+
+          <div class="manual-locks-meta ability-requirements-meta">
+            <strong>{{
+              t('supportFilters.configuredRows', { count: supportAbilityDrafts().length })
+            }}</strong>
+            <div class="ability-requirements-actions">
+              <ion-button
+                fill="clear"
+                size="small"
+                class="select-all-button"
+                [disabled]="building() || !availableSupportAbilityCatalogItems().length"
+                (click)="openSupportAbilityPicker()"
+              >
+                {{ t('supportFilters.actions.openPicker') }}
+              </ion-button>
+              <ion-button
+                fill="clear"
+                size="small"
+                class="select-all-button"
+                [disabled]="building() || !supportAbilityDrafts().length"
+                (click)="clearSupportAbilityFilters()"
+              >
+                {{ t('supportFilters.actions.clearRequirements') }}
+              </ion-button>
+            </div>
+          </div>
+
+          @if (!availableSupportAbilityCatalogItems().length) {
+            <p class="favorites-only-warning">
+              {{ t('supportFilters.emptyCatalog') }}
+              <code>npm run data:import:all</code>
+              {{ t('supportFilters.emptyCatalogSuffix') }}
+            </p>
+          }
+
+          @if (!supportAbilitySummaryChips().length) {
+            <p class="favorites-only-warning">
+              {{ t('supportFilters.empty') }}
+            </p>
+          }
+
+          @if (supportAbilitySummaryChips().length) {
+            <div class="selected-values-row ability-requirements-selected-row">
+              @for (chip of supportAbilitySummaryChips(); track chip.draftId) {
+                <span class="selected-value-chip ability-requirement-chip">
+                  <span class="ability-visual-chip" [attr.data-tone]="chip.visual.tone">
+                    <ion-icon [icon]="chip.visual.icon"></ion-icon>
+                    <small>{{ chip.visual.badge }}</small>
+                  </span>
+                  <span>{{ chip.label }}</span>
+                </span>
+              }
+            </div>
+          }
+        </section>
+
+        <app-special-ability-picker
+          [isOpen]="supportAbilityPickerOpen()"
+          category="support"
+          [eyebrow]="t('supportFilters.eyebrow')"
+          [title]="t('supportFilters.title')"
+          [copy]="t('supportFilters.copy')"
+          [drafts]="supportAbilityDrafts()"
+          [catalogItems]="availableSupportAbilityCatalogItems()"
+          (dismiss)="closeSupportAbilityPicker()"
+          (saveDrafts)="saveSupportAbilityPicker($event)"
+        ></app-special-ability-picker>
+
         @if (buildBlockedByFavorites()) {
           <p class="favorites-only-warning">
             {{ favoritesOnlyBlockedMessage() }}
