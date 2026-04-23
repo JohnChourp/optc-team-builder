@@ -17,6 +17,10 @@ import {
   type CharacterListItem,
   type ShipRecord,
 } from "../../core/models/optc.models";
+import {
+  normalizeAbilityRequirementTurns,
+  resolveNonNegativeInteger,
+} from "../../core/services/ability-requirement-draft.utils";
 import { normalizeEnemyMechanicRequirements } from "../../core/services/enemy-mechanic-draft.utils";
 
 type AutoTeamExportRole = AutoBuildResult["slots"][number]["role"];
@@ -593,8 +597,14 @@ export function sanitizeAutoTeamSelectionImportPayload(
       continue;
     }
 
-    const rawMinTurns = normalizePositiveInteger(rawRequirement.minTurns);
-    const minTurns = abilityCatalogItem.supportsTurns ? rawMinTurns : null;
+    const rawMinTurns = resolveNonNegativeInteger(
+      typeof rawRequirement.minTurns === "number" || typeof rawRequirement.minTurns === "string"
+        ? rawRequirement.minTurns
+        : null,
+    );
+    const minTurns = abilityCatalogItem.supportsTurns
+      ? normalizeAbilityRequirementTurns(rawRequirement.minTurns)
+      : null;
     const rawRequiredCharacterCount = normalizePositiveInteger(rawRequirement.requiredCharacterCount);
     const requiredCharacterCount = rawRequiredCharacterCount ?? 1;
     const rawSlotTokens = Array.isArray(rawRequirement.slotTokens)
@@ -609,7 +619,12 @@ export function sanitizeAutoTeamSelectionImportPayload(
 
     if (
       rawSlotTokens.length !== slotTokens.length ||
-      (abilityCatalogItem.supportsTurns && rawRequirement.minTurns !== null && rawMinTurns === null) ||
+      (
+        abilityCatalogItem.supportsTurns &&
+        rawRequirement.minTurns !== null &&
+        rawRequirement.minTurns !== undefined &&
+        rawMinTurns === null
+      ) ||
       (!abilityCatalogItem.supportsTurns && rawRequirement.minTurns !== null) ||
       (!abilityCatalogItem.supportsSlotTokens && rawSlotTokens.length > 0) ||
       (

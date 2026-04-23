@@ -625,7 +625,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
             abilityKey: 'remove_bind',
             minTurns: null,
             slotTokens: [],
-            requiredCharacterCount: 1,
+            requiredCharacterCount: 2,
           },
         ],
       }),
@@ -715,7 +715,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         abilityKey: 'remove_bind',
         minTurns: null,
         slotTokens: [],
-        requiredCharacterCount: 1,
+        requiredCharacterCount: 2,
       }),
     ]);
     expect(repository.searchDetailedCharacters).toHaveBeenCalledTimes(2);
@@ -1380,9 +1380,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain('<ng-lottie');
     expect(template).toContain('[disabled]="saveUiLocked()"');
     expect(template).toContain('{{ saveButtonLabel() }}');
-    expect(template).toContain('<app-special-ability-picker');
+    expect(template).toContain('<app-ability-requirement-picker');
     expect(template).not.toContain('<app-enemy-mechanic-picker');
-    expect(template).not.toContain('<app-ability-requirement-picker');
+    expect(template).not.toContain('<app-special-ability-picker');
     expect(template).not.toContain('<app-ship-picker');
     expect(template).toContain('leaderSuperEffectScopeToggleLabel()');
     expect(template).toContain('favoriteShipsOnlyToggleLabel()');
@@ -2710,7 +2710,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
             abilityKey: 'remove_bind',
             minTurns: null,
             slotTokens: [],
-            requiredCharacterCount: 1,
+            requiredCharacterCount: 2,
           },
         ],
         enemyMechanics: [],
@@ -3538,7 +3538,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
         abilityKey: 'remove_bind',
         minTurns: null,
         slotTokens: [],
-        requiredCharacterCount: 1,
+        requiredCharacterCount: 2,
       },
     ]);
     expect(page.lockedCharacterIds()).toEqual([102, 101]);

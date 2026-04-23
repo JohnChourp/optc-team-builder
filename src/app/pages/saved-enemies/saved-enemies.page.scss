@@ -631,6 +631,35 @@
   box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
 }
 
+.parsed-ability-selection-list {
+  display: grid;
+  gap: 12px;
+}
+
+.parsed-ability-selection-item {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.parsed-ability-selection-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.parsed-ability-selection-copy strong {
+  color: #f8fbff;
+}
+
+.parsed-ability-selection-copy small {
+  color: rgba(248, 251, 255, 0.64);
+}
+
 @media (max-width: 920px) {
   .editor-grid,
   .toggle-grid,

@@ -260,9 +260,10 @@ describe('SavedEnemiesPage', () => {
     expect(page.enemyTextParseResult()).toEqual(
       expect.objectContaining({
         matchedMechanicCount: 2,
-        matchedAbilityCount: 1,
+        matchedAbilityCount: 7,
       }),
     );
+    expect(page.parsedAbilitySelectionOpen()).toBe(true);
     expect(userState.saveEnemy).not.toHaveBeenCalled();
 
     page.applyParsedEnemyText();
@@ -336,6 +337,7 @@ describe('SavedEnemiesPage', () => {
     } as CustomEvent<{ value?: string | null }>);
 
     page.parseEnemyText();
+    expect(page.parsedAbilitySelectionOpen()).toBe(true);
     page.applyParsedEnemyText();
 
     expect(page.requiredAbilityDrafts()).toEqual([
@@ -363,7 +365,7 @@ describe('SavedEnemiesPage', () => {
         requiredAbilities: [expect.objectContaining({
           abilityKey: 'ignore_normal_attack_only',
           minTurns: null,
-          requiredCharacterCount: 1,
+          requiredCharacterCount: 3,
         })],
       }),
     );
@@ -405,11 +407,96 @@ describe('SavedEnemiesPage', () => {
           expect.objectContaining({
             abilityKey: 'remove_paralysis',
             minTurns: null,
-            requiredCharacterCount: 1,
+            requiredCharacterCount: 2,
           }),
         ],
       }),
     );
+  });
+
+  it('opens the parsed ability selection modal with Special candidates preselected only', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    page.openCreateModal();
+    page.onEnemyPasteTextChange({
+      detail: {
+        value: `
+          4 turn(s) Special Bind,
+          4 turn(s) Paralysis
+        `,
+      },
+    } as CustomEvent<{ value?: string | null }>);
+
+    page.parseEnemyText();
+
+    expect(page.parsedAbilitySelectionOpen()).toBe(true);
+    expect(page.parsedAbilitySelectionSections().map((section) => section.category)).toEqual([
+      'special',
+      'crewmate',
+      'potential',
+      'support',
+    ]);
+    expect(page.selectedParsedAbilityCandidateIds()).toEqual([
+      'special|remove_special_bind|',
+      'special|remove_paralysis|',
+    ]);
+  });
+
+  it('applies only the categories selected in the parsed ability modal', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    page.openCreateModal();
+    page.onEnemyPasteTextChange({
+      detail: {
+        value: '4 turn(s) Special Bind',
+      },
+    } as CustomEvent<{ value?: string | null }>);
+
+    page.parseEnemyText();
+    page.clearParsedAbilityCandidates('special');
+    page.selectAllParsedAbilityCandidates('support');
+    page.applyParsedEnemyText();
+
+    expect(page.requiredAbilityDrafts()).toEqual([]);
+    expect(page.crewmateAbilityDrafts()).toEqual([]);
+    expect(page.supportAbilityDrafts()).toEqual([
+      expect.objectContaining({
+        abilityKey: 'support_status_effect_recovery_special_bind',
+        requiredCharacterCount: 1,
+      }),
+    ]);
+  });
+
+  it('does not change existing drafts when the parsed ability modal is dismissed', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    page.openCreateModal();
+    page.saveAbilityPicker([
+      {
+        draftId: 'bind-1',
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ]);
+    page.onEnemyPasteTextChange({
+      detail: {
+        value: '4 turn(s) Special Bind',
+      },
+    } as CustomEvent<{ value?: string | null }>);
+
+    page.parseEnemyText();
+    page.closeParsedAbilitySelection();
+
+    expect(page.requiredAbilityDrafts()).toEqual([
+      expect.objectContaining({
+        abilityKey: 'remove_bind',
+      }),
+    ]);
   });
 
   it('clears parsed warning state when the pasted text changes and recomputes on the next parse', async () => {
@@ -441,7 +528,7 @@ describe('SavedEnemiesPage', () => {
     expect(page.enemyTextParseResult()).toEqual(
       expect.objectContaining({
         matchedMechanicCount: 1,
-        matchedAbilityCount: 0,
+        matchedAbilityCount: 3,
       }),
     );
     expect(page.enemyTextParseResult()?.warnings).toEqual([]);
@@ -584,7 +671,7 @@ describe('SavedEnemiesPage', () => {
     expect(template).not.toContain("t('list.addAnother')");
     expect(template).toContain("t('editor.paste.title')");
     expect(template).toContain("t('editor.paste.actions.parse')");
-    expect(template).toContain("t('editor.paste.actions.apply')");
+    expect(template).toContain("t('editor.paste.selection.actions.parse')");
     expect(template).toContain("t('editor.image.title')");
     expect(template).toContain("t('editor.image.chooseCharacter')");
     expect(template).toContain('(click)="resetSelection()"');
@@ -593,7 +680,6 @@ describe('SavedEnemiesPage', () => {
     expect(template).not.toContain('(click)="exportAllEnemies()"');
     expect(template).toContain('(ionInput)="onEnemyPasteTextChange($event)"');
     expect(template).toContain('(click)="parseEnemyText()"');
-    expect(template).toContain('(click)="applyParsedEnemyText()"');
     expect(template).toContain('onEnemyImageSelected($event, enemyImageInput)');
     expect(template).toContain('(click)="openCharacterImagePicker()"');
     expect(template).toContain('[queryParams]="getEnemyBuilderQueryParams(enemy)"');
@@ -603,15 +689,15 @@ describe('SavedEnemiesPage', () => {
     expect(template).toContain('selectAllTypesButtonLabel()');
     expect(template).toContain('selectAllClassesButtonLabel()');
     expect(template).toContain('editor.specialFilters.title');
-    expect(template).toContain('app-special-ability-picker');
+    expect(template).toContain('parsedAbilitySelectionOpen()');
     expect(template).not.toContain('editor.enemyMechanics.title');
     expect(template).not.toContain('editor.manualCounters.title');
     expect(template).not.toContain('editor.toggles.types');
     expect(template).not.toContain('editor.toggles.classes');
     expect(template).not.toContain('editor.toggles.specials');
     expect(template).not.toContain('<app-enemy-mechanic-picker');
-    expect(template).not.toContain('<app-ability-requirement-picker');
-    expect(template).toContain('<app-special-ability-picker');
+    expect(template).toContain('<app-ability-requirement-picker');
+    expect(template).not.toContain('<app-special-ability-picker');
     expect(template).toContain('<app-character-image-picker');
     expect(template).not.toContain("t('hero.savedTeamsCta')");
     expect(template).not.toContain("[routerLink]=\"['/tabs/saved-teams']\"");
@@ -715,7 +801,7 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
     getAutoBuilderAbilityCatalog: vi.fn().mockResolvedValue({
       generatedAt: '2026-03-30T10:00:00.000Z',
       sourceVersion: 'test',
-      abilityCount: 7,
+      abilityCount: 11,
       abilities: [
         {
           key: 'remove_bind',
@@ -823,6 +909,66 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
           matchCount: 3,
           sampleCharacterIds: [107],
           sampleTexts: ['Inflict poison'],
+        },
+        {
+          key: 'crewmate_recover_special_bind',
+          label: 'Status Effect Recovery: Special Bind',
+          category: 'crewmate',
+          groupLabel: 'Status Effect Recovery',
+          groupOrder: 2,
+          effectOrder: 1,
+          supportsTurns: false,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['sailorAbilities'],
+          matchCount: 2,
+          sampleCharacterIds: [108],
+          sampleTexts: ['Reduces Special Bind duration by 2 turns on this character'],
+        },
+        {
+          key: 'support_status_effect_recovery_special_bind',
+          label: 'Status Effect Recovery: Special Bind',
+          category: 'support',
+          groupLabel: 'Status Effect Recovery',
+          groupOrder: 3,
+          effectOrder: 1,
+          supportsTurns: false,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['supportData'],
+          matchCount: 2,
+          sampleCharacterIds: [109],
+          sampleTexts: ['Once per adventure, reduces Special Bind duration by 2 turns'],
+        },
+        {
+          key: 'crewmate_recover_paralysis',
+          label: 'Status Effect Recovery: Paralysis',
+          category: 'crewmate',
+          groupLabel: 'Status Effect Recovery',
+          groupOrder: 2,
+          effectOrder: 2,
+          supportsTurns: false,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['sailorAbilities'],
+          matchCount: 2,
+          sampleCharacterIds: [110],
+          sampleTexts: ['Reduces Paralysis duration by 2 turns on this character'],
+        },
+        {
+          key: 'support_status_effect_recovery_paralysis',
+          label: 'Status Effect Recovery: Paralysis',
+          category: 'support',
+          groupLabel: 'Status Effect Recovery',
+          groupOrder: 3,
+          effectOrder: 2,
+          supportsTurns: false,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['supportData'],
+          matchCount: 2,
+          sampleCharacterIds: [111],
+          sampleTexts: ['Once per adventure, reduces Paralysis duration by 2 turns'],
         },
       ],
     }),

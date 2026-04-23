@@ -90,7 +90,7 @@ import {
 } from './auto-team-builder-export.utils';
 import { buildAutoTeamBuilderStateFromSavedEnemy } from './auto-team-builder-enemy-preset.utils';
 import { buildAutoTeamBuilderStateFromSavedTeam } from './auto-team-builder-saved-team-preset.utils';
-import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
+import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
 import {
   createAbilityRequirementDrafts,
   formatAbilityRequirementSummary,
@@ -345,7 +345,7 @@ function matchesLeaderOnlyManualRequirements(
     IonToolbar,
     ScrollingModule,
     LottieComponent,
-    SpecialAbilityPickerComponent,
+    AbilityRequirementPickerComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,

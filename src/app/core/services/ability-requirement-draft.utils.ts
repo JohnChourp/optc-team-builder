@@ -302,12 +302,16 @@ export function createAbilityRequirementDraft(
   item?: AutoBuildAbilityCatalogItem | null,
   requirement?: Partial<AutoBuildAbilityRequirement>,
 ): AbilityRequirementDraft {
+  const rawTurns = requirement?.minTurns;
+
   return {
     draftId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     abilityKey: requirement?.abilityKey?.trim() ?? item?.key ?? "",
     minTurns: item?.supportsTurns
-      ? resolvePositiveInteger(requirement?.minTurns) ?? 1
-      : resolvePositiveInteger(requirement?.minTurns),
+      ? rawTurns === undefined || rawTurns === null
+        ? 1
+        : resolveNonNegativeInteger(rawTurns)
+      : normalizeAbilityRequirementTurns(rawTurns),
     slotTokens: sanitizeSlotTokens(requirement?.slotTokens),
     requiredCharacterCount: resolvePositiveInteger(requirement?.requiredCharacterCount) ?? 1,
   };
@@ -347,7 +351,11 @@ export function applyCatalogAbilityToDraft(
   return {
     ...draft,
     abilityKey,
-    minTurns: catalogItem?.supportsTurns ? resolvePositiveInteger(draft.minTurns) ?? 1 : null,
+    minTurns: catalogItem?.supportsTurns
+      ? draft.minTurns === null
+        ? 1
+        : resolveNonNegativeInteger(draft.minTurns) ?? 1
+      : null,
     slotTokens: catalogItem?.supportsSlotTokens
       ? sanitizeSlotTokens(draft.slotTokens).filter((token) =>
           catalogItem.availableSlotTokens.includes(token),
@@ -371,6 +379,33 @@ export function resolvePositiveInteger(
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : null;
 }
 
+export function resolveNonNegativeInteger(
+  value: number | string | null | undefined,
+): number | null {
+  const normalizedValue =
+    typeof value === "number" ? `${value}` : typeof value === "string" ? value.trim() : "";
+
+  if (!/^\d+$/.test(normalizedValue)) {
+    return null;
+  }
+
+  const parsed = Number(normalizedValue);
+
+  return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : null;
+}
+
+export function normalizeAbilityRequirementTurns(
+  value: number | string | null | undefined,
+): number | null {
+  const normalizedValue = resolveNonNegativeInteger(value);
+
+  if (normalizedValue === null || normalizedValue === 0) {
+    return null;
+  }
+
+  return normalizedValue;
+}
+
 export function serializeAbilityRequirementDrafts(
   drafts: AbilityRequirementDraft[],
   options: SerializeAbilityRequirementDraftOptions = {},
@@ -390,9 +425,9 @@ export function serializeAbilityRequirementDrafts(
     const catalogItem = options.catalogMap?.get(abilityKey);
     const minTurns = catalogItem
       ? catalogItem.supportsTurns
-        ? resolvePositiveInteger(draft.minTurns)
+        ? normalizeAbilityRequirementTurns(draft.minTurns)
         : null
-      : resolvePositiveInteger(draft.minTurns);
+      : normalizeAbilityRequirementTurns(draft.minTurns);
     const slotTokens = catalogItem?.supportsSlotTokens === false
       ? []
       : sanitizeSlotTokens(draft.slotTokens).filter((token) =>
@@ -438,13 +473,14 @@ export function formatAbilityRequirementSummary(
   formatter: AbilityRequirementSummaryFormatter,
 ): string {
   const suffixes: string[] = [];
+  const normalizedTurns = normalizeAbilityRequirementTurns(requirement.minTurns);
 
   if (requirement.requiredCharacterCount > 1) {
     suffixes.push(formatter.formatCharacters(requirement.requiredCharacterCount));
   }
 
-  if (requirement.minTurns !== null) {
-    suffixes.push(formatter.formatTurns(requirement.minTurns));
+  if (normalizedTurns !== null) {
+    suffixes.push(formatter.formatTurns(normalizedTurns));
   }
 
   if (requirement.slotTokens.length > 0) {

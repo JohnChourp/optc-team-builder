@@ -281,15 +281,6 @@
                   >
                     {{ t('editor.paste.actions.parse') }}
                   </ion-button>
-                  <ion-button
-                    fill="outline"
-                    color="warning"
-                    size="small"
-                    [disabled]="savingEnemy() || !enemyTextParseResult()"
-                    (click)="applyParsedEnemyText()"
-                  >
-                    {{ t('editor.paste.actions.apply') }}
-                  </ion-button>
                 </div>
               </div>
 
@@ -524,17 +515,15 @@
               }
             </section>
 
-            <app-special-ability-picker
+            <app-ability-requirement-picker
               [isOpen]="abilityPickerOpen()"
-              category="special"
-              [eyebrow]="t('editor.specialFilters.eyebrow')"
               [title]="t('editor.specialFilters.title')"
               [copy]="t('editor.specialFilters.copy')"
               [drafts]="requiredAbilityDrafts()"
               [catalogItems]="availableSpecialAbilityCatalogItems()"
               (dismiss)="closeAbilityPicker()"
               (saveDrafts)="saveAbilityPicker($event)"
-            ></app-special-ability-picker>
+            ></app-ability-requirement-picker>
 
             <section class="ability-card">
               <div class="section-head section-head--editor">
@@ -592,17 +581,15 @@
               }
             </section>
 
-            <app-special-ability-picker
+            <app-ability-requirement-picker
               [isOpen]="crewmateAbilityPickerOpen()"
-              category="crewmate"
-              [eyebrow]="t('editor.crewmateFilters.eyebrow')"
               [title]="t('editor.crewmateFilters.title')"
               [copy]="t('editor.crewmateFilters.copy')"
               [drafts]="crewmateAbilityDrafts()"
               [catalogItems]="availableCrewmateAbilityCatalogItems()"
               (dismiss)="closeCrewmateAbilityPicker()"
               (saveDrafts)="saveCrewmateAbilityPicker($event)"
-            ></app-special-ability-picker>
+            ></app-ability-requirement-picker>
 
             <section class="ability-card">
               <div class="section-head section-head--editor">
@@ -660,17 +647,15 @@
               }
             </section>
 
-            <app-special-ability-picker
+            <app-ability-requirement-picker
               [isOpen]="potentialAbilityPickerOpen()"
-              category="potential"
-              [eyebrow]="t('editor.potentialFilters.eyebrow')"
               [title]="t('editor.potentialFilters.title')"
               [copy]="t('editor.potentialFilters.copy')"
               [drafts]="potentialAbilityDrafts()"
               [catalogItems]="availablePotentialAbilityCatalogItems()"
               (dismiss)="closePotentialAbilityPicker()"
               (saveDrafts)="savePotentialAbilityPicker($event)"
-            ></app-special-ability-picker>
+            ></app-ability-requirement-picker>
 
             <section class="ability-card">
               <div class="section-head section-head--editor">
@@ -728,17 +713,134 @@
               }
             </section>
 
-            <app-special-ability-picker
+            <app-ability-requirement-picker
               [isOpen]="supportAbilityPickerOpen()"
-              category="support"
-              [eyebrow]="t('editor.supportFilters.eyebrow')"
               [title]="t('editor.supportFilters.title')"
               [copy]="t('editor.supportFilters.copy')"
               [drafts]="supportAbilityDrafts()"
               [catalogItems]="availableSupportAbilityCatalogItems()"
               (dismiss)="closeSupportAbilityPicker()"
               (saveDrafts)="saveSupportAbilityPicker($event)"
-            ></app-special-ability-picker>
+            ></app-ability-requirement-picker>
+
+            <ion-modal
+              [isOpen]="parsedAbilitySelectionOpen()"
+              cssClass="saved-enemies-editor-modal"
+              (didDismiss)="closeParsedAbilitySelection()"
+            >
+              <ng-template>
+                <ion-header class="editor-modal-header ion-no-border">
+                  <ion-toolbar>
+                    <div class="editor-modal-head">
+                      <div>
+                        <div class="section-label">
+                          {{ t('editor.paste.selection.eyebrow') }}
+                        </div>
+                        <h2>{{ t('editor.paste.selection.title') }}</h2>
+                        <p>{{ t('editor.paste.selection.copy') }}</p>
+                      </div>
+                    </div>
+
+                    <ion-buttons slot="end">
+                      <ion-button
+                        fill="clear"
+                        color="light"
+                        [disabled]="savingEnemy()"
+                        (click)="closeParsedAbilitySelection()"
+                      >
+                        <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                      </ion-button>
+                    </ion-buttons>
+                  </ion-toolbar>
+                </ion-header>
+
+                <ion-content class="editor-modal-content">
+                  <div class="editor-modal-shell">
+                    @for (section of parsedAbilitySelectionSections(); track section.category) {
+                      <section class="ability-card">
+                        <div class="section-head section-head--editor">
+                          <div>
+                            <h3>{{ formatParsedAbilityCategoryLabel(section.category) }}</h3>
+                            <span>{{
+                              t('editor.paste.selection.count', { count: section.candidates.length })
+                            }}</span>
+                          </div>
+
+                          <div class="card-actions">
+                            <ion-button
+                              fill="clear"
+                              color="warning"
+                              size="small"
+                              [disabled]="!section.candidates.length"
+                              (click)="selectAllParsedAbilityCandidates(section.category)"
+                            >
+                              {{ t('editor.paste.selection.actions.selectAll') }}
+                            </ion-button>
+                            <ion-button
+                              fill="clear"
+                              color="light"
+                              size="small"
+                              [disabled]="!section.candidates.length"
+                              (click)="clearParsedAbilityCandidates(section.category)"
+                            >
+                              {{ t('editor.paste.selection.actions.clear') }}
+                            </ion-button>
+                          </div>
+                        </div>
+
+                        @if (!section.candidates.length) {
+                          <p class="editor-empty-copy">
+                            {{ t('editor.paste.selection.emptyCategory') }}
+                          </p>
+                        } @else {
+                          <div class="parsed-ability-selection-list">
+                            @for (candidate of section.candidates; track candidate.identity) {
+                              <label class="parsed-ability-selection-item">
+                                <ion-checkbox
+                                  [checked]="isParsedAbilityCandidateSelected(candidate.identity)"
+                                  [attr.aria-label]="candidate.label"
+                                  (ionChange)="toggleParsedAbilityCandidate(candidate.identity, $event)"
+                                ></ion-checkbox>
+                                <span class="editor-ability-chip__icon" [attr.data-tone]="candidate.visual.tone">
+                                  <ion-icon [icon]="candidate.visual.icon"></ion-icon>
+                                  <small>{{ candidate.visual.badge }}</small>
+                                </span>
+                                <span class="parsed-ability-selection-copy">
+                                  <strong>{{ candidate.label }}</strong>
+                                  <small>{{ candidate.sourceLine }}</small>
+                                </span>
+                              </label>
+                            }
+                          </div>
+                        }
+                      </section>
+                    }
+                  </div>
+                </ion-content>
+
+                <ion-footer class="editor-modal-footer">
+                  <ion-toolbar>
+                    <div class="editor-modal-actions">
+                      <ion-button
+                        fill="outline"
+                        color="light"
+                        [disabled]="savingEnemy()"
+                        (click)="closeParsedAbilitySelection()"
+                      >
+                        {{ 'common.actions.cancel' | transloco }}
+                      </ion-button>
+                      <ion-button
+                        color="warning"
+                        [disabled]="savingEnemy()"
+                        (click)="applyParsedEnemyText()"
+                      >
+                        {{ t('editor.paste.selection.actions.parse') }}
+                      </ion-button>
+                    </div>
+                  </ion-toolbar>
+                </ion-footer>
+              </ng-template>
+            </ion-modal>
           </div>
         </ion-content>
 

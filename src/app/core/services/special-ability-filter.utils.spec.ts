@@ -33,7 +33,7 @@ const CATALOG_ITEMS: AutoBuildAbilityCatalogItem[] = [
     groupLabel: 'ATK Boost',
     groupOrder: 1,
     effectOrder: 1,
-    supportsTurns: false,
+    supportsTurns: true,
     supportsSlotTokens: false,
     availableSlotTokens: [],
     availableSources: ['sailorAbilities'],
@@ -165,9 +165,9 @@ describe('special ability filter utils', () => {
     expect(serializeCategoryAbilityDrafts(drafts, CATALOG_ITEMS, 'crewmate')).toEqual([
       {
         abilityKey: 'crewmate_atk_boost_fighter',
-        minTurns: null,
+        minTurns: 7,
         slotTokens: [],
-        requiredCharacterCount: 1,
+        requiredCharacterCount: 4,
       },
     ]);
   });
@@ -298,7 +298,7 @@ describe('special ability filter utils', () => {
         abilityKey: 'support_atk_boost',
         minTurns: null,
         slotTokens: [],
-        requiredCharacterCount: 1,
+        requiredCharacterCount: 3,
       },
     ]);
   });

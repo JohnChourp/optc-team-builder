@@ -63,13 +63,24 @@
       "label": "Κείμενο mechanics και counters",
       "placeholder": "Κάνε paste γραμμές όπως: 4 turn(s) Special Bind, 4 turn(s) Paralysis, Non-Normal Attacks deal 1 damage",
       "actions": {
-        "parse": "Parse text",
-        "apply": "Apply parsed text"
+        "parse": "Parse text"
       },
       "feedback": {
         "successTitle": "Το text έγινε parse",
         "warningTitle": "Το text έγινε parse με παρατηρήσεις",
-        "summary": "Βρέθηκαν {{mechanicCount}} mechanics, {{abilityCount}} direct abilities, {{warningCount}} warnings."
+        "summary": "Βρέθηκαν {{mechanicCount}} mechanics, {{abilityCount}} ability candidates, {{warningCount}} warnings."
+      },
+      "selection": {
+        "eyebrow": "Parsed abilities",
+        "title": "Επίλεξε parsed ability filters",
+        "copy": "Έλεγξε τα matched abilities ανά category και διάλεξε μόνο όσα filters πρέπει να απαιτούνται για αυτόν τον εχθρό.",
+        "count": "{{count}} parsed abilities",
+        "emptyCategory": "Δεν βρέθηκαν parsed abilities για αυτή την κατηγορία.",
+        "actions": {
+          "selectAll": "Επίλεξε όλα",
+          "clear": "Καθαρισμός",
+          "parse": "Parse"
+        }
       },
       "warnings": {
         "title": "Γραμμές που αγνοήθηκαν ή απλοποιήθηκαν",

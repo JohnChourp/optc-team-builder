@@ -299,17 +299,15 @@
           }
         </section>
 
-        <app-special-ability-picker
+        <app-ability-requirement-picker
           [isOpen]="abilityPickerOpen()"
-          category="special"
-          [eyebrow]="t('specialFilters.eyebrow')"
           [title]="t('specialFilters.title')"
           [copy]="t('specialFilters.copy')"
           [drafts]="requiredAbilityDrafts()"
           [catalogItems]="availableSpecialAbilityCatalogItems()"
           (dismiss)="closeAbilityPicker()"
           (saveDrafts)="saveAbilityPicker($event)"
-        ></app-special-ability-picker>
+        ></app-ability-requirement-picker>
 
         <section class="ability-requirements-card">
           <div class="slot-grid__header">
@@ -372,17 +370,15 @@
           }
         </section>
 
-        <app-special-ability-picker
+        <app-ability-requirement-picker
           [isOpen]="crewmateAbilityPickerOpen()"
-          category="crewmate"
-          [eyebrow]="t('crewmateFilters.eyebrow')"
           [title]="t('crewmateFilters.title')"
           [copy]="t('crewmateFilters.copy')"
           [drafts]="crewmateAbilityDrafts()"
           [catalogItems]="availableCrewmateAbilityCatalogItems()"
           (dismiss)="closeCrewmateAbilityPicker()"
           (saveDrafts)="saveCrewmateAbilityPicker($event)"
-        ></app-special-ability-picker>
+        ></app-ability-requirement-picker>
 
         <section class="ability-requirements-card">
           <div class="slot-grid__header">
@@ -445,17 +441,15 @@
           }
         </section>
 
-        <app-special-ability-picker
+        <app-ability-requirement-picker
           [isOpen]="potentialAbilityPickerOpen()"
-          category="potential"
-          [eyebrow]="t('potentialFilters.eyebrow')"
           [title]="t('potentialFilters.title')"
           [copy]="t('potentialFilters.copy')"
           [drafts]="potentialAbilityDrafts()"
           [catalogItems]="availablePotentialAbilityCatalogItems()"
           (dismiss)="closePotentialAbilityPicker()"
           (saveDrafts)="savePotentialAbilityPicker($event)"
-        ></app-special-ability-picker>
+        ></app-ability-requirement-picker>
 
         <section class="ability-requirements-card">
           <div class="slot-grid__header">
@@ -518,17 +512,15 @@
           }
         </section>
 
-        <app-special-ability-picker
+        <app-ability-requirement-picker
           [isOpen]="supportAbilityPickerOpen()"
-          category="support"
-          [eyebrow]="t('supportFilters.eyebrow')"
           [title]="t('supportFilters.title')"
           [copy]="t('supportFilters.copy')"
           [drafts]="supportAbilityDrafts()"
           [catalogItems]="availableSupportAbilityCatalogItems()"
           (dismiss)="closeSupportAbilityPicker()"
           (saveDrafts)="saveSupportAbilityPicker($event)"
-        ></app-special-ability-picker>
+        ></app-ability-requirement-picker>
 
         @if (buildBlockedByFavorites()) {
           <p class="favorites-only-warning">

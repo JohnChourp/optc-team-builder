@@ -20,8 +20,14 @@ describe('saved enemies text parser utils', () => {
       {
         abilityCatalogItems: [
           createAbilityCatalogItem('ignore_normal_attack_only', false),
-          createAbilityCatalogItem('deal_fixed_damage', false),
-          createAbilityCatalogItem('inflict_poison', false),
+          createAbilityCatalogItem('remove_special_bind', false),
+          createAbilityCatalogItem('remove_paralysis', false),
+          createAbilityCatalogItem('remove_enemy_damage_nullification', false),
+          createAbilityCatalogItem('crewmate_recover_special_reverse', false),
+          createAbilityCatalogItem('crewmate_recover_special_bind', false),
+          createAbilityCatalogItem('crewmate_recover_paralysis', false),
+          createAbilityCatalogItem('support_status_effect_recovery_special_bind', false),
+          createAbilityCatalogItem('support_status_effect_recovery_paralysis', false),
         ],
       },
     );
@@ -65,7 +71,35 @@ describe('saved enemies text parser utils', () => {
         abilityKey: 'ignore_normal_attack_only',
       }),
     ]);
-    expect(result.unmatchedLines).toEqual(['Top-Row Special Reverse 2 turns(s)']);
+    expect(result.parsedAbilityCandidates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          abilityKey: 'crewmate_recover_special_reverse',
+          category: 'crewmate',
+        }),
+        expect.objectContaining({
+          abilityKey: 'remove_special_bind',
+          category: 'special',
+        }),
+        expect.objectContaining({
+          abilityKey: 'crewmate_recover_special_bind',
+          category: 'crewmate',
+        }),
+        expect.objectContaining({
+          abilityKey: 'support_status_effect_recovery_special_bind',
+          category: 'support',
+        }),
+        expect.objectContaining({
+          abilityKey: 'remove_paralysis',
+          category: 'special',
+        }),
+        expect.objectContaining({
+          abilityKey: 'support_status_effect_recovery_paralysis',
+          category: 'support',
+        }),
+      ]),
+    );
+    expect(result.unmatchedLines).toEqual([]);
     expect(result.warnings).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -84,14 +118,16 @@ describe('saved enemies text parser utils', () => {
           resolvedKey: 'orb_block',
         }),
         expect.objectContaining({
-          kind: 'unmatched',
+          kind: 'precisionLoss',
           line: 'Top-Row Special Reverse 2 turns(s)',
+          matchKind: 'ability',
+          resolvedKey: 'crewmate_recover_special_reverse',
         }),
       ]),
     );
   });
 
-  it('dedupes repeated mechanics and direct abilities using the maximum turn value', () => {
+  it('counts repeated mechanics and direct abilities inside the same section while keeping the maximum turn value', () => {
     const result = parseSavedEnemyText(
       `
         4 turn(s) Special Bind,
@@ -112,10 +148,11 @@ describe('saved enemies text parser utils', () => {
       expect.objectContaining({
         mechanicKey: 'crew_special_bind',
         minTurns: 6,
+        requiredCharacterCount: 2,
       }),
     ]);
     expect(result.requiredAbilities).toEqual([
-      expect.objectContaining({ abilityKey: 'deal_fixed_damage', requiredCharacterCount: 1 }),
+      expect.objectContaining({ abilityKey: 'deal_fixed_damage', requiredCharacterCount: 2 }),
       expect.objectContaining({ abilityKey: 'inflict_poison', requiredCharacterCount: 1 }),
     ]);
     expect(result.matchedMechanicCount).toBe(1);
@@ -279,7 +316,7 @@ describe('saved enemies text parser utils', () => {
       expect.objectContaining({
         mechanicKey: 'crew_special_bind',
         minTurns: 99,
-        requiredCharacterCount: 2,
+        requiredCharacterCount: 3,
       }),
       expect.objectContaining({
         mechanicKey: 'enemy_immunity',
@@ -354,6 +391,7 @@ function createAbilityCatalogItem(abilityKey: string, supportsTurns: boolean) {
   return {
     key: abilityKey,
     label: abilityKey,
+    category: resolveAbilityCategory(abilityKey),
     supportsTurns,
     supportsSlotTokens: false,
     availableSlotTokens: [],
@@ -363,4 +401,20 @@ function createAbilityCatalogItem(abilityKey: string, supportsTurns: boolean) {
     sampleCharacterIds: [1],
     sampleTexts: [abilityKey],
   };
+}
+
+function resolveAbilityCategory(abilityKey: string): 'special' | 'crewmate' | 'potential' | 'support' {
+  if (abilityKey.startsWith('crewmate_')) {
+    return 'crewmate';
+  }
+
+  if (abilityKey.startsWith('potential_')) {
+    return 'potential';
+  }
+
+  if (abilityKey.startsWith('support_')) {
+    return 'support';
+  }
+
+  return 'special';
 }

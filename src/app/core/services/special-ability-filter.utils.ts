@@ -42,16 +42,21 @@ export function createCategoryAbilityDrafts(
   category: AutoBuildAbilityCategory,
 ): AbilityRequirementDraft[] {
   const categoryKeys = getCategoryAbilityKeys(catalogItems, category);
+  const catalogMap = new Map(catalogItems.map((item) => [item.key, item] as const));
 
   return createAbilityRequirementDrafts(
     requirements
       .filter((requirement) => categoryKeys.has(requirement.abilityKey))
-      .map((requirement) => ({
-        abilityKey: requirement.abilityKey,
-        minTurns: null,
-        slotTokens: [],
-        requiredCharacterCount: 1,
-      })),
+      .map((requirement) => {
+        const catalogItem = catalogMap.get(requirement.abilityKey);
+
+        return {
+          abilityKey: requirement.abilityKey,
+          minTurns: catalogItem?.supportsTurns ? requirement.minTurns : null,
+          slotTokens: catalogItem?.supportsSlotTokens ? [...requirement.slotTokens] : [],
+          requiredCharacterCount: requirement.requiredCharacterCount,
+        };
+      }),
   );
 }
 
@@ -66,15 +71,9 @@ export function serializeCategoryAbilityDrafts(
     drafts.filter((draft) => categoryKeys.has(draft.abilityKey)),
     {
       dedupe: true,
-      forceSingleCharacterCount: true,
       catalogMap: new Map(catalogItems.map((item) => [item.key, item] as const)),
     },
-  ).map((requirement) => ({
-    abilityKey: requirement.abilityKey,
-    minTurns: null,
-    slotTokens: [],
-    requiredCharacterCount: 1,
-  }));
+  );
 }
 
 export function resolveCategoryAbilityMatchingCharacterIds(

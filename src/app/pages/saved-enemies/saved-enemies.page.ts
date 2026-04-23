@@ -24,6 +24,7 @@ import { addCircleOutline, closeOutline } from 'ionicons/icons';
 
 import { AUTO_TEAM_BUILDER_TYPES } from '../../core/models/auto-team-builder.models';
 import {
+  type AutoBuildAbilityCategory,
   type AutoBuildAbilityCatalog,
   type AutoBuildAbilityRequirement,
   type AutoBuildEnemyMechanicCatalogItem,
@@ -37,8 +38,8 @@ import {
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
+import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
 import { CharacterImagePickerComponent } from '../../shared/character-image-picker/character-image-picker.component';
-import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
 import {
   createAbilityRequirementDrafts,
   formatAbilityRequirementSummary,
@@ -74,6 +75,7 @@ import {
 } from './saved-enemies-transfer.utils';
 import {
   parseSavedEnemyText,
+  type ParsedEnemyTextAbilityCandidate,
   type ParsedEnemyTextResult,
   type ParsedEnemyTextWarning,
 } from './saved-enemies-text-parser.utils';
@@ -88,6 +90,19 @@ interface SavedEnemyMechanicSummaryChipView {
   draftId: string;
   label: string;
   visual: EnemyMechanicVisualMeta;
+}
+
+interface ParsedEnemyTextAbilityCandidateView {
+  identity: string;
+  label: string;
+  sourceLine: string;
+  visual: AbilityRequirementVisualMeta;
+  candidate: ParsedEnemyTextAbilityCandidate;
+}
+
+interface ParsedEnemyTextAbilityCategorySectionView {
+  category: AutoBuildAbilityCategory;
+  candidates: ParsedEnemyTextAbilityCandidateView[];
 }
 
 @Component({
@@ -111,7 +126,7 @@ interface SavedEnemyMechanicSummaryChipView {
     IonTitle,
     IonToolbar,
     CharacterImagePickerComponent,
-    SpecialAbilityPickerComponent,
+    AbilityRequirementPickerComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,
@@ -120,6 +135,13 @@ interface SavedEnemyMechanicSummaryChipView {
   styleUrl: './saved-enemies.page.scss',
 })
 export class SavedEnemiesPage implements OnInit, ViewWillEnter {
+  private static readonly parsedAbilityCategoryOrder: AutoBuildAbilityCategory[] = [
+    'special',
+    'crewmate',
+    'potential',
+    'support',
+  ];
+
   public readonly loading = signal(true);
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
@@ -147,6 +169,8 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public readonly enemyTextPasteValue = signal('');
   public readonly enemyTextParseResult = signal<ParsedEnemyTextResult | null>(null);
   public readonly enemyTextParseErrorMessage = signal('');
+  public readonly parsedAbilitySelectionOpen = signal(false);
+  public readonly selectedParsedAbilityCandidateIds = signal<string[]>([]);
   public readonly selectedTypes = signal<string[]>([]);
   public readonly selectedClasses = signal<string[]>([]);
   public readonly enemyMechanicDrafts = signal<EnemyMechanicDraft[]>([]);
@@ -299,6 +323,33 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
         this.translateEnemyTextWarning(warning),
       ) ?? [],
   );
+  public readonly selectedParsedAbilityCandidateIdSet = computed(
+    () => new Set(this.selectedParsedAbilityCandidateIds()),
+  );
+  public readonly parsedAbilitySelectionSections = computed<
+    ParsedEnemyTextAbilityCategorySectionView[]
+  >(() => {
+    const parsedResult = this.enemyTextParseResult();
+
+    return SavedEnemiesPage.parsedAbilityCategoryOrder.map((category) => ({
+      category,
+      candidates:
+        parsedResult?.parsedAbilityCandidates
+          .filter((candidate) => candidate.category === category)
+          .map((candidate) => ({
+            identity: this.buildParsedAbilityCandidateIdentity(candidate),
+            label: this.formatAbilityRequirement({
+              abilityKey: candidate.abilityKey,
+              minTurns: candidate.minTurns,
+              slotTokens: candidate.slotTokens,
+              requiredCharacterCount: candidate.requiredCharacterCount,
+            }),
+            sourceLine: candidate.sourceLine,
+            visual: resolveAbilityRequirementVisual(candidate.abilityKey),
+            candidate,
+          })) ?? [],
+    }));
+  });
   public readonly hasSavedEnemies = computed(() => this.savedEnemies().length > 0);
   public readonly canSaveEnemy = computed(
     () => this.selectedTypes().length > 0 && this.selectedClasses().length > 0,
@@ -668,6 +719,8 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.enemyTextPasteValue.set((event.detail.value ?? '').toString());
     this.enemyTextParseResult.set(null);
     this.enemyTextParseErrorMessage.set('');
+    this.parsedAbilitySelectionOpen.set(false);
+    this.selectedParsedAbilityCandidateIds.set([]);
   }
 
   public parseEnemyText(): void {
@@ -683,12 +736,18 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       return;
     }
 
-    this.enemyTextParseResult.set(
-      parseSavedEnemyText(this.enemyTextPasteValue(), {
-        abilityCatalogItems: this.availableAbilityCatalogItems(),
-      }),
-    );
+    const parsedResult = parseSavedEnemyText(this.enemyTextPasteValue(), {
+      abilityCatalogItems: this.availableAbilityCatalogItems(),
+    });
+
+    this.enemyTextParseResult.set(parsedResult);
     this.enemyTextParseErrorMessage.set('');
+    this.selectedParsedAbilityCandidateIds.set(
+      parsedResult.parsedAbilityCandidates
+        .filter((candidate) => candidate.category === 'special')
+        .map((candidate) => this.buildParsedAbilityCandidateIdentity(candidate)),
+    );
+    this.parsedAbilitySelectionOpen.set(parsedResult.parsedAbilityCandidates.length > 0);
   }
 
   public applyParsedEnemyText(): void {
@@ -702,45 +761,112 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       return;
     }
 
+    const selectedCandidateIdSet = this.selectedParsedAbilityCandidateIdSet();
+    const selectedRequirements = parsedResult.parsedAbilityCandidates
+      .filter((candidate) => selectedCandidateIdSet.has(this.buildParsedAbilityCandidateIdentity(candidate)))
+      .map((candidate) => ({
+        abilityKey: candidate.abilityKey,
+        minTurns: candidate.minTurns,
+        slotTokens: [...candidate.slotTokens],
+        requiredCharacterCount: candidate.requiredCharacterCount,
+      }));
+
     this.enemyMechanicDrafts.set([]);
     this.requiredAbilityDrafts.set(
-      createSpecialAbilityDrafts(
-        mergeAbilityRequirements([
-          ...parsedResult.requiredAbilities,
-          ...deriveAbilityRequirementsFromEnemyMechanics(parsedResult.enemyMechanics),
-        ]),
-        this.availableAbilityCatalogItems(),
-      ),
+      createSpecialAbilityDrafts(selectedRequirements, this.availableAbilityCatalogItems()),
     );
     this.crewmateAbilityDrafts.set(
       createCategoryAbilityDrafts(
-        mergeAbilityRequirements([
-          ...parsedResult.requiredAbilities,
-          ...deriveAbilityRequirementsFromEnemyMechanics(parsedResult.enemyMechanics),
-        ]),
+        selectedRequirements,
         this.availableAbilityCatalogItems(),
         'crewmate',
       ),
     );
     this.potentialAbilityDrafts.set(
       createCategoryAbilityDrafts(
-        mergeAbilityRequirements([
-          ...parsedResult.requiredAbilities,
-          ...deriveAbilityRequirementsFromEnemyMechanics(parsedResult.enemyMechanics),
-        ]),
+        selectedRequirements,
         this.availableAbilityCatalogItems(),
         'potential',
       ),
     );
     this.supportAbilityDrafts.set(
       createCategoryAbilityDrafts(
-        mergeAbilityRequirements([
-          ...parsedResult.requiredAbilities,
-          ...deriveAbilityRequirementsFromEnemyMechanics(parsedResult.enemyMechanics),
-        ]),
+        selectedRequirements,
         this.availableAbilityCatalogItems(),
         'support',
       ),
+    );
+    this.parsedAbilitySelectionOpen.set(false);
+  }
+
+  public closeParsedAbilitySelection(): void {
+    this.parsedAbilitySelectionOpen.set(false);
+  }
+
+  public isParsedAbilityCandidateSelected(identity: string): boolean {
+    return this.selectedParsedAbilityCandidateIdSet().has(identity);
+  }
+
+  public toggleParsedAbilityCandidate(identity: string, event: CustomEvent<{ checked: boolean }>): void {
+    const selectedIds = this.selectedParsedAbilityCandidateIds();
+
+    if (event.detail.checked) {
+      if (!selectedIds.includes(identity)) {
+        this.selectedParsedAbilityCandidateIds.set([...selectedIds, identity]);
+      }
+
+      return;
+    }
+
+    this.selectedParsedAbilityCandidateIds.set(
+      selectedIds.filter((selectedIdentity) => selectedIdentity !== identity),
+    );
+  }
+
+  public selectAllParsedAbilityCandidates(category: AutoBuildAbilityCategory): void {
+    const nextIds = new Set(this.selectedParsedAbilityCandidateIds());
+
+    this.parsedAbilitySelectionSections()
+      .find((section) => section.category === category)
+      ?.candidates.forEach((candidate) => nextIds.add(candidate.identity));
+
+    this.selectedParsedAbilityCandidateIds.set([...nextIds]);
+  }
+
+  public clearParsedAbilityCandidates(category: AutoBuildAbilityCategory): void {
+    const categoryIds = new Set(
+      this.parsedAbilitySelectionSections()
+        .find((section) => section.category === category)
+        ?.candidates.map((candidate) => candidate.identity) ?? [],
+    );
+
+    this.selectedParsedAbilityCandidateIds.set(
+      this.selectedParsedAbilityCandidateIds().filter((identity) => !categoryIds.has(identity)),
+    );
+  }
+
+  public formatParsedAbilityCategoryLabel(category: AutoBuildAbilityCategory): string {
+    switch (category) {
+      case 'crewmate':
+        return this.i18n.translate('editor.crewmateFilters.title', undefined, 'saved-enemies');
+      case 'potential':
+        return this.i18n.translate('editor.potentialFilters.title', undefined, 'saved-enemies');
+      case 'support':
+        return this.i18n.translate('editor.supportFilters.title', undefined, 'saved-enemies');
+      default:
+        return this.i18n.translate('editor.specialFilters.title', undefined, 'saved-enemies');
+    }
+  }
+
+  public hasAllParsedAbilityCandidatesSelected(category: AutoBuildAbilityCategory): boolean {
+    const section = this.parsedAbilitySelectionSections().find(
+      (candidateSection) => candidateSection.category === category,
+    );
+
+    return Boolean(
+      section &&
+        section.candidates.length > 0 &&
+        section.candidates.every((candidate) => this.isParsedAbilityCandidateSelected(candidate.identity)),
     );
   }
 
@@ -1137,5 +1263,11 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.enemyTextPasteValue.set('');
     this.enemyTextParseResult.set(null);
     this.enemyTextParseErrorMessage.set('');
+    this.parsedAbilitySelectionOpen.set(false);
+    this.selectedParsedAbilityCandidateIds.set([]);
+  }
+
+  private buildParsedAbilityCandidateIdentity(candidate: ParsedEnemyTextAbilityCandidate): string {
+    return [candidate.category, candidate.abilityKey.trim(), candidate.slotTokens.join(',')].join('|');
   }
 }

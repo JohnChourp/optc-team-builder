@@ -63,13 +63,24 @@
       "label": "Enemy mechanics and counter text",
       "placeholder": "Paste lines like: 4 turn(s) Special Bind, 4 turn(s) Paralysis, Non-Normal Attacks deal 1 damage",
       "actions": {
-        "parse": "Parse text",
-        "apply": "Apply parsed text"
+        "parse": "Parse text"
       },
       "feedback": {
         "successTitle": "Text parsed",
         "warningTitle": "Text parsed with warnings",
-        "summary": "Matched {{mechanicCount}} mechanics, {{abilityCount}} direct abilities, {{warningCount}} warnings."
+        "summary": "Matched {{mechanicCount}} mechanics, {{abilityCount}} ability candidates, {{warningCount}} warnings."
+      },
+      "selection": {
+        "eyebrow": "Parsed abilities",
+        "title": "Select parsed ability filters",
+        "copy": "Review the matched abilities by category and choose only the filters that should be required for this enemy.",
+        "count": "{{count}} parsed abilities",
+        "emptyCategory": "No parsed abilities were matched for this category.",
+        "actions": {
+          "selectAll": "Select all",
+          "clear": "Clear",
+          "parse": "Parse"
+        }
       },
       "warnings": {
         "title": "Ignored or simplified lines",
