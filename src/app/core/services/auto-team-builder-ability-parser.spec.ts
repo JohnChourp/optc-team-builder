@@ -163,6 +163,12 @@ describe('auto team builder ability parser', () => {
       4,
     ],
     [
+      'DEF Up',
+      "Reduces all enemies' DEF Up duration by 5 turns.",
+      'remove_enemy_increased_defense',
+      5,
+    ],
+    [
       'end of turn damage percent cut',
       'Reduces end of turn damage/percent cut duration by 6 turns.',
       'remove_enemy_end_of_turn_damage_percent_cut',
@@ -185,6 +191,12 @@ describe('auto team builder ability parser', () => {
       'Reduces chain multiplier limit duration by 5 turns.',
       'remove_chain_multiplier_limit',
       5,
+    ],
+    [
+      'decrease chain multiplier growth rate',
+      'Reduces decrease chain multiplier growth rate duration by 6 turns.',
+      'remove_chain_coefficient_reduction',
+      6,
     ],
     [
       'healing reduction',

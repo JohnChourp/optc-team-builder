@@ -6,5 +6,23 @@
     ],
     "replaceAbilities": [],
     "reason": "Snakeman upstream text concatenates alternate branches."
+  },
+  "4109": {
+    "sourceScopes": [
+      "specialText"
+    ],
+    "removeAbilityKeys": [
+      "remove_bind"
+    ],
+    "reason": "No. 4109 reduces Special Bind only; the generic Bind parser also matches the Special Bind phrase."
+  },
+  "4545": {
+    "sourceScopes": [
+      "specialText"
+    ],
+    "removeAbilityKeys": [
+      "remove_bind"
+    ],
+    "reason": "No. 4545 reduces Special Bind only; the generic Bind parser also matches the Special Bind phrase."
   }
 }

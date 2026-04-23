@@ -1,7 +1,576 @@
 {
+  "3328": {
+    "id": 3328,
+    "name": "Smoker - Striking a Warlord of the Sea",
+    "searchAliases": [
+      "3328",
+      "White Chase",
+      "Soldier-Protecting Club"
+    ],
+    "isIncomplete": false,
+    "type": "INT",
+    "classes": [
+      "Striker",
+      "Driven"
+    ],
+    "stars": 5,
+    "cost": 30,
+    "combo": 4,
+    "maxLevel": 99,
+    "maxExperience": 4000000,
+    "minHp": 1664,
+    "minAtk": 573,
+    "minRcv": 115,
+    "maxHp": 4144,
+    "maxAtk": 1426,
+    "maxRcv": 234,
+    "growth": 1,
+    "image": {
+      "file": "3328.png",
+      "thumbnailFile": "3328-thumb.jpg"
+    },
+    "detail": {
+      "characterId": 3328,
+      "captainAbility": "Boosts Striker characters' ATK by 2.75x",
+      "captainAbilityVariants": [],
+      "captainNotes": null,
+      "specialName": "Soldier-Protecting Club",
+      "specialText": "Reduces all enemies' HP by 15% and boosts chain multiplier by +0.7 for 1 turn",
+      "specialNotes": "Lv.1 (Max Lv.1), 13 turns",
+      "superSpecialText": null,
+      "superSpecialCriteriaText": null,
+      "superSpecialNotes": null,
+      "superSpecialCriteria": null,
+      "partyConflictKeys": [
+        "smoker"
+      ],
+      "characterTags": [
+        "Navy",
+        "Navy Vice Admiral",
+        "Logia-type",
+        "Punk Hazard Arc"
+      ],
+      "builderAbilities": [],
+      "sailorAbilities": [
+        "Boosts Striker characters' base stats by 30"
+      ],
+      "sailorNotes": null,
+      "limitBreak": [
+        {
+          "description": "Boosts base ATK by 50"
+        },
+        {
+          "description": "Boosts base HP by 100"
+        },
+        {
+          "description": "Boosts base HP by 100"
+        },
+        {
+          "description": "Acquire Potential 1: [PSY] Damage Reduction"
+        },
+        {
+          "description": "Boosts base HP by 100"
+        },
+        {
+          "description": "Boosts base RCV by 100"
+        },
+        {
+          "description": "Boosts base HP by 100"
+        },
+        {
+          "description": "Boosts base ATK by 200"
+        },
+        {
+          "description": "Acquire 1 additional Socket slot"
+        },
+        {
+          "description": "Acquire Potential 2: [INT] Damage Reduction"
+        },
+        {
+          "description": "LOCKED WITH KEY"
+        },
+        {
+          "description": "Boosts base ATK by 50"
+        },
+        {
+          "description": "Boosts base ATK by 50"
+        },
+        {
+          "description": "Boosts base HP by 100"
+        },
+        {
+          "description": "Boosts base RCV by 50"
+        },
+        {
+          "description": "Boosts base ATK by 50"
+        },
+        {
+          "description": "Boosts base ATK by 50"
+        },
+        {
+          "description": "Boosts base RCV by 50"
+        },
+        {
+          "description": "Boosts base HP by 100"
+        },
+        {
+          "description": "Acquire Potential 3: Reduce Slot Bind duration"
+        }
+      ],
+      "potentialAbilities": [
+        {
+          "Name": "[PSY] Damage Reduction",
+          "description": [
+            "Reduces damage taken from [PSY] characters by 1%",
+            "Reduces damage taken from [PSY] characters by 2%",
+            "Reduces damage taken from [PSY] characters by 3%",
+            "Reduces damage taken from [PSY] characters by 4%",
+            "Reduces damage taken from [PSY] characters by 5%"
+          ]
+        },
+        {
+          "Name": "[INT] Damage Reduction",
+          "description": [
+            "Reduces damage taken from [INT] characters by 1%",
+            "Reduces damage taken from [INT] characters by 2%",
+            "Reduces damage taken from [INT] characters by 3%",
+            "Reduces damage taken from [INT] characters by 4%",
+            "Reduces damage taken from [INT] characters by 5%"
+          ]
+        },
+        {
+          "Name": "Reduce Slot Bind duration",
+          "description": [
+            "Reduces Slot Bind duration by 1 turn on this character",
+            "Reduces Slot Bind duration by 2 turns on this character",
+            "Reduces Slot Bind duration by 3 turns on this character",
+            "Reduces Slot Bind duration by 4 turns on this character",
+            "Reduces Slot Bind duration by 5 turns on this character"
+          ]
+        }
+      ],
+      "supportData": [],
+      "swapData": null,
+      "vsSpecial": null,
+      "exSuperData": null,
+      "superType": null,
+      "superTandemData": null,
+      "finalTapData": null,
+      "rushSugoSpecialData": null,
+      "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
+      "rumbleData": {
+        "stats": {
+          "style": "DBF Style",
+          "cost": 20,
+          "combatPower": 7268,
+          "hp": 5812,
+          "def": 202,
+          "atk": 2088,
+          "spd": 151,
+          "rcv": 451
+        },
+        "rumbleSpecialName": "Soldier-Protecting Club",
+        "verifiedRumbleSpecialLevels": [
+          {
+            "level": 10,
+            "cooldown": 26,
+            "effects": [
+              "Targets enemies within large range (frontal) for ATK x 2 damage; targets 2 enemies for 100% chance of Special Bind (20 s)"
+            ]
+          }
+        ],
+        "verifiedRumbleAbilityLevels": [
+          {
+            "level": 5,
+            "effects": [
+              "INT-type teammates ATK Up Lv.7; all enemies Miss % Up Lv.10"
+            ]
+          }
+        ],
+        "target": "Targets enemies with high SPD",
+        "pattern": [
+          "Normal Attack",
+          "Normal Attack",
+          "Power Attack",
+          "Full Attack"
+        ],
+        "resistance": {
+          "standardResistances": [
+            "Completely evades Action Bind",
+            "Reduce damage taken from PSY by 30%"
+          ],
+          "additionalResistances": {
+            "unlockRequirement": "Unlock Rumble Limit Break",
+            "effects": [
+              "Reduce damage taken from PSY by 10%",
+              "Increase damage dealt to PSY by 5%"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "3977": {
+    "id": 3977,
+    "name": "Jean Bart - Captain Protecting Fist",
+    "searchAliases": [
+      "3977"
+    ],
+    "isIncomplete": false,
+    "type": "INT",
+    "classes": [
+      "Free Spirit",
+      "Driven"
+    ],
+    "stars": 5,
+    "cost": 30,
+    "combo": 4,
+    "maxLevel": 99,
+    "maxExperience": 4000000,
+    "minHp": 2150,
+    "minAtk": 751,
+    "minRcv": 92,
+    "maxHp": 4300,
+    "maxAtk": 1501,
+    "maxRcv": 183,
+    "growth": 1,
+    "image": {
+      "file": "3977.png",
+      "thumbnailFile": "3977-thumb.jpg"
+    },
+    "detail": {
+      "characterId": 3977,
+      "captainAbility": "Boosts INT characters' ATK by 2.5x and HP by 1.2x",
+      "captainAbilityVariants": [],
+      "captainNotes": null,
+      "specialName": "Massive Fists",
+      "specialText": "Deals 60x character's ATK in INT damage to one enemy, reduces crew's Bind/Despair duration by 4 turns, and if crew has damage dealt to enemies with a specific status effect boost when Special is launched, boosts INT and PSY characters' base ATK by +1000 for 2 turns (boosts the damage dealt to DEF Down enemies by 2.25x for 2 turns otherwise)",
+      "specialNotes": "Max Lv.1; cooldown 12 turns.",
+      "superSpecialText": null,
+      "superSpecialCriteriaText": null,
+      "superSpecialNotes": null,
+      "superSpecialCriteria": null,
+      "partyConflictKeys": [
+        "jean bart",
+        "bart"
+      ],
+      "characterTags": [
+        "Heart Pirates"
+      ],
+      "builderAbilities": [
+        {
+          "key": "remove_bind",
+          "label": "Remove Bind",
+          "minTurns": 4,
+          "isCompleteRemoval": false,
+          "slotTokens": [],
+          "source": "specialText",
+          "coverageMode": "explicit"
+        },
+        {
+          "key": "remove_despair",
+          "label": "Remove Despair",
+          "minTurns": 4,
+          "isCompleteRemoval": false,
+          "slotTokens": [],
+          "source": "specialText",
+          "coverageMode": "explicit"
+        }
+      ],
+      "sailorAbilities": [
+        "Boosts INT and PSY characters' base ATK by 75",
+        "Makes crew's [RCV] slots have matching slot effects"
+      ],
+      "sailorNotes": "+STATS and UNIQ crewmate abilities.",
+      "limitBreak": [
+        {
+          "description": "Boosts base HP by 150"
+        },
+        {
+          "description": "Boosts base ATK by 75"
+        },
+        {
+          "description": "Boosts base ATK by 75"
+        },
+        {
+          "description": "Acquire Potential 1: [PSY] Damage Reduction"
+        },
+        {
+          "description": "Boosts base ATK by 100"
+        },
+        {
+          "description": "Boosts base RCV by 100"
+        },
+        {
+          "description": "Boosts base HP by 250"
+        },
+        {
+          "description": "Acquire 1 additional Socket slot"
+        },
+        {
+          "description": "Acquire Sailor Ability 2: Makes [RCV] orbs beneficial for all characters"
+        },
+        {
+          "description": "Acquire Potential 2: [INT] Damage Reduction"
+        }
+      ],
+      "potentialAbilities": [
+        {
+          "Name": "[PSY] Damage Reduction",
+          "description": [
+            "Reduces damage taken from [PSY] characters by 1%",
+            "Reduces damage taken from [PSY] characters by 2%",
+            "Reduces damage taken from [PSY] characters by 3%",
+            "Reduces damage taken from [PSY] characters by 4%",
+            "Reduces damage taken from [PSY] characters by 5%"
+          ]
+        },
+        {
+          "Name": "[INT] Damage Reduction",
+          "description": [
+            "Reduces damage taken from [INT] characters by 1%",
+            "Reduces damage taken from [INT] characters by 2%",
+            "Reduces damage taken from [INT] characters by 3%",
+            "Reduces damage taken from [INT] characters by 4%",
+            "Reduces damage taken from [INT] characters by 5%"
+          ]
+        }
+      ],
+      "supportData": [],
+      "swapData": null,
+      "vsSpecial": null,
+      "exSuperData": null,
+      "superType": null,
+      "superTandemData": null,
+      "finalTapData": null,
+      "rushSugoSpecialData": null,
+      "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
+      "rumbleData": {
+        "stats": {
+          "style": "DBF Style",
+          "cost": 20,
+          "combatPower": 6761,
+          "hp": 5405,
+          "def": 203,
+          "atk": 1883,
+          "spd": 150,
+          "rcv": 291
+        },
+        "rumbleSpecialName": "Massive Fists",
+        "verifiedRumbleSpecialLevels": [
+          {
+            "level": 10,
+            "cooldown": 29,
+            "effects": [
+              "Targets 3 enemies with high current HP for HP 30% reduction; targets PSY-type enemies for 100% chance of Halve Stats (15 s); if \"Trafalgar Law\" is on the team, targets enemies within large range for DEF Down Lv.8 (20 s)"
+            ]
+          }
+        ],
+        "verifiedRumbleAbilityLevels": [
+          {
+            "level": 5,
+            "effects": [
+              "Driven class teammates ATK Up Lv.5, HP Up Lv.6; PSY-type enemies ATK Down Lv.5; if \"Trafalgar Law\" is on the team, all enemies DEF Down Lv.3, Special CT Speed Down Lv.2"
+            ]
+          }
+        ],
+        "target": "Targets closest enemies",
+        "pattern": [
+          "Normal Attack",
+          "Power Attack",
+          "Heal Teammate in Range Lv.1 (Small Range)",
+          "Normal Attack"
+        ],
+        "resistance": {
+          "standardResistances": [
+            "Completely evades Action Bind",
+            "Reduce damage taken from PSY by 30%"
+          ],
+          "additionalResistances": {
+            "unlockRequirement": "Unlock Rumble Limit Break",
+            "effects": [
+              "Reduce damage taken from PSY by 10%",
+              "Increase damage dealt to PSY by 5%"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "4109": {
+    "id": 4109,
+    "name": "S-Hawk",
+    "searchAliases": [],
+    "isIncomplete": false,
+    "type": "INT",
+    "classes": [
+      "Slasher",
+      "Driven"
+    ],
+    "stars": 6,
+    "cost": 40,
+    "combo": 4,
+    "maxLevel": 99,
+    "maxExperience": 5000000,
+    "minHp": 2258,
+    "minAtk": 899,
+    "minRcv": 87,
+    "maxHp": 4516,
+    "maxAtk": 1798,
+    "maxRcv": 173,
+    "growth": 1,
+    "image": {
+      "file": "4109.png",
+      "thumbnailFile": "4109-thumb.jpg"
+    },
+    "detail": {
+      "characterId": 4109,
+      "captainAbility": "Reduces crew's Special charge time by 1 turn at start of quest, boosts Slasher and Driven characters' ATK based on the timing of the previous character's attack (minimum 4.75x, maximum 5.5x), slightly boosts Slasher and Driven characters' chance of landing on own type slot, and completely removes character's Paralysis/Special Bind",
+      "captainAbilityVariants": [
+        {
+          "key": "captain",
+          "label": "Captain Ability",
+          "text": "Reduces crew's Special charge time by 1 turn at start of quest, boosts Slasher and Driven characters' ATK based on the timing of the previous character's attack (minimum 4.75x, maximum 5.5x), slightly boosts Slasher and Driven characters' chance of landing on own type slot, and completely removes character's Paralysis/Special Bind"
+        }
+      ],
+      "captainNotes": null,
+      "specialName": "Swordplay of the New Destructive Weapon",
+      "specialText": "Reduces crew's Paralysis/Special Bind duration by 6 turns, deals 50% of the total damage dealt from normal attacks in the previous turn to all enemies as non-type damage (counts up to 999,999,999 total damage dealt with normal attacks in the previous turn), boosts Slasher and Driven characters' chain multiplier growth rate of normal attacks up to +0.6 (GOOD +0.2; GREAT +0.4; PERFECT +0.6) for 1 turn, and boosts the ATK of the next final tap performed by a Slasher or Driven character by 30% (similar effects can stack, up to 200%; the effect will be spent during the final tap when attacking with all available characters regardless of the type/class requirement of the effect). If \"Dracule Mihawk\" or \"Daz Bonez (Mr. 1)\" has launched a Special in this turn, boosts crew's damage dealt when landing a Critical hit by 50% (effect applies only to characters with Critical ATK Potential Ability; highest possible chance is 100%) for 1 turn",
+      "specialNotes": "Max Lv.6; cooldown 13 turns.",
+      "superSpecialText": null,
+      "superSpecialCriteriaText": null,
+      "superSpecialNotes": null,
+      "superSpecialCriteria": null,
+      "partyConflictKeys": [
+        "s-hawk"
+      ],
+      "characterTags": [
+        "Seraphim",
+        "Egghead Arc"
+      ],
+      "builderAbilities": [
+        {
+          "key": "remove_special_bind",
+          "label": "Remove Special Bind",
+          "minTurns": 99,
+          "isCompleteRemoval": true,
+          "slotTokens": [],
+          "source": "captainAbility",
+          "coverageMode": "explicit"
+        },
+        {
+          "key": "remove_paralysis",
+          "label": "Remove Paralysis",
+          "minTurns": 99,
+          "isCompleteRemoval": true,
+          "slotTokens": [],
+          "source": "captainAbility",
+          "coverageMode": "explicit"
+        }
+      ],
+      "sailorAbilities": [
+        "Lets character completely evade Paralysis",
+        "Lets character completely evade Special Bind"
+      ],
+      "sailorNotes": null,
+      "limitBreak": [],
+      "potentialAbilities": [],
+      "supportData": [
+        {
+          "supportedCharactersText": "Slasher characters",
+          "levelDescriptions": [
+            "Lv.5: Adds 9% of character's base stats to supported character's base stats"
+          ]
+        }
+      ],
+      "swapData": null,
+      "vsSpecial": null,
+      "exSuperData": null,
+      "superType": null,
+      "superTandemData": null,
+      "finalTapData": null,
+      "rushSugoSpecialData": null,
+      "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
+      "rumbleData": {
+        "stats": {
+          "style": "ATK Style",
+          "cost": 20,
+          "combatPower": 7518,
+          "hp": 6635,
+          "def": 128,
+          "atk": 2501,
+          "spd": 182,
+          "rcv": 387
+        },
+        "rumbleSpecialName": "Swordplay of the New Destructive Weapon",
+        "verifiedRumbleSpecialLevels": [
+          {
+            "level": 10,
+            "cooldown": 28,
+            "effects": [
+              "Targets 3 enemies with high current HP ignoring DEF for ATK x 2.5 damage; targets self for 600 HP per interval auto-healing (15 s), DEF Up Lv.7 (15 s)"
+            ]
+          }
+        ],
+        "verifiedRumbleAbilityLevels": [
+          {
+            "level": 5,
+            "effects": [
+              "INT-type teammates HP Up Lv.6; Slasher class teammates DEF Up Lv.5, SPD Up Lv.5; when current HP is below 50%, team ATK Up Lv.5"
+            ]
+          }
+        ],
+        "target": "Targets closest enemies",
+        "pattern": [
+          "Normal Attack",
+          "Normal Attack",
+          "Power Attack",
+          "Full Attack"
+        ],
+        "resistance": {
+          "standardResistances": [
+            "Completely evades Action Bind",
+            "Reduce damage taken from PSY by 30%",
+            "Increase damage dealt to PSY by 30%"
+          ],
+          "additionalResistances": {
+            "unlockRequirement": "Unlock Rumble Limit Break",
+            "effects": [
+              "Reduce damage taken from PSY by 20%",
+              "Increase damage dealt to PSY by 15%"
+            ]
+          }
+        },
+        "gpBurst": {
+          "times": 2,
+          "levels": [
+            {
+              "level": 5,
+              "effect": "Targets all enemies for 1000 damage"
+            }
+          ]
+        },
+        "gpLeaderSkill": {
+          "levels": [
+            {
+              "level": 5,
+              "effect": "Team ATK Up Lv.3, HP, SPD Up Lv.3"
+            }
+          ]
+        }
+      }
+    }
+  },
   "4329": {
     "id": 4329,
     "name": "The Strongest Form of Humanity S-Snake",
+    "searchAliases": [],
     "isIncomplete": true,
     "type": "STR",
     "classes": [
@@ -211,6 +780,7 @@
   "4345": {
     "id": 4345,
     "name": "Cutting Down the Snow Woman Tashigi",
+    "searchAliases": [],
     "isIncomplete": true,
     "type": "PSY",
     "classes": [
@@ -389,9 +959,129 @@
       }
     }
   },
+  "4386": {
+    "id": 4386,
+    "name": "Ship-Carrying Giant Robot Dr. Vegapunk \"Lilith the Evil\" & Vegaforce-01",
+    "searchAliases": [
+      "4386",
+      "Lilith",
+      "Vegaforce-01",
+      "Ship-Carrying Giant Robot"
+    ],
+    "isIncomplete": true,
+    "type": "INT",
+    "classes": [
+      "Cerebral",
+      "Striker"
+    ],
+    "stars": 5,
+    "cost": 30,
+    "combo": 5,
+    "maxLevel": 99,
+    "maxExperience": null,
+    "minHp": 1875,
+    "minAtk": 791,
+    "minRcv": 124,
+    "maxHp": null,
+    "maxAtk": null,
+    "maxRcv": null,
+    "growth": null,
+    "image": {
+      "file": "4386.png",
+      "thumbnailFile": "4386-thumb.jpg"
+    },
+    "detail": {
+      "characterId": 4386,
+      "captainAbility": "Boosts INT characters' ATK by 3x and HP by 1.3x",
+      "captainAbilityVariants": [],
+      "captainNotes": null,
+      "specialName": "Vigilant of the Surroundings",
+      "specialText": "Reduces crew's ATK Down duration by 5 turns and boosts Cerebral characters' ATK by 1.5x for 1 turn",
+      "specialNotes": "Max Lv.1; cooldown 13 turns.",
+      "superSpecialText": null,
+      "superSpecialCriteriaText": null,
+      "superSpecialNotes": null,
+      "superSpecialCriteria": null,
+      "partyConflictKeys": [],
+      "characterTags": [
+        "Vegapunk",
+        "Scientist",
+        "Egghead Arc"
+      ],
+      "builderAbilities": [],
+      "sailorAbilities": [
+        "Boosts Cerebral characters' base ATK by 100"
+      ],
+      "sailorNotes": "+STATS crewmate ability.",
+      "limitBreak": [],
+      "potentialAbilities": [],
+      "supportData": [],
+      "swapData": null,
+      "vsSpecial": null,
+      "exSuperData": null,
+      "superType": null,
+      "superTandemData": null,
+      "finalTapData": null,
+      "rushSugoSpecialData": null,
+      "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
+      "rumbleData": {
+        "stats": {
+          "style": "ATK Style",
+          "cost": 20,
+          "combatPower": 6873,
+          "hp": 4773,
+          "def": 172,
+          "atk": 1969,
+          "rcv": 357,
+          "spd": 175
+        },
+        "rumbleSpecialName": "Vigilant of the Surroundings",
+        "verifiedRumbleSpecialLevels": [
+          {
+            "level": 10,
+            "cooldown": 30,
+            "effects": [
+              "Targets self for ATK Up Lv.5 (30 s); targets enemies within large range (horizontal) for ATK x 3 damage; targets enemies within large range (frontal) for ATK x 3 damage; targets enemies within medium range for ATK x 3 damage; if 6 or more [Egghead] characters are on the team, targets enemies within large range for ATK x 3 damage"
+            ]
+          }
+        ],
+        "verifiedRumbleAbilityLevels": [
+          {
+            "level": 5,
+            "effects": [
+              "Cerebral/Striker class teammates ATK Up Lv.6, HP Up Lv.6, SPD Up Lv.6; if 6 or more [Egghead] characters are on the team, team ATK Up Lv.5"
+            ]
+          }
+        ],
+        "target": "Targets closest enemies",
+        "pattern": [
+          "Normal Attack",
+          "Normal Attack",
+          "Power Attack",
+          "Full Attack"
+        ],
+        "resistance": {
+          "standardResistances": [
+            "Completely evades Special Bind",
+            "Reduce damage taken from PSY by 30%"
+          ],
+          "additionalResistances": {
+            "unlockRequirement": "Unlock Rumble Limit Break",
+            "effects": [
+              "Reduce damage taken from PSY by 10%",
+              "Increase damage dealt to PSY by 5%"
+            ]
+          }
+        }
+      }
+    }
+  },
   "4401": {
     "id": 4401,
     "name": "Whitebeard's New Son Portgas D. Ace",
+    "searchAliases": [],
     "isIncomplete": true,
     "type": "STR",
     "classes": [
@@ -628,9 +1318,126 @@
       }
     }
   },
+  "4415": {
+    "id": 4415,
+    "name": "Alpha",
+    "searchAliases": [
+      "4415"
+    ],
+    "isIncomplete": true,
+    "type": "INT",
+    "classes": [
+      "Striker",
+      "Driven"
+    ],
+    "stars": 5,
+    "cost": 30,
+    "combo": 4,
+    "maxLevel": 99,
+    "maxExperience": null,
+    "minHp": 1840,
+    "minAtk": 796,
+    "minRcv": 129,
+    "maxHp": null,
+    "maxAtk": null,
+    "maxRcv": null,
+    "growth": null,
+    "image": {
+      "file": "4415.png",
+      "thumbnailFile": "4415-thumb.jpg"
+    },
+    "detail": {
+      "characterId": 4415,
+      "captainAbility": "Boosts INT characters' ATK by 3x and HP by 1.2x",
+      "captainAbilityVariants": [],
+      "captainNotes": null,
+      "specialName": "Arrival of the Nurse",
+      "specialText": "Heals crew by 5x character's RCV at end of turn for 3 turns, and reduces crew's Paralysis duration by 3 turns",
+      "specialNotes": "Max Lv.1; cooldown 16 turns.",
+      "superSpecialText": null,
+      "superSpecialCriteriaText": null,
+      "superSpecialNotes": null,
+      "superSpecialCriteria": null,
+      "partyConflictKeys": [],
+      "characterTags": [
+        "CP8",
+        "World Government",
+        "Egghead Arc"
+      ],
+      "builderAbilities": [],
+      "sailorAbilities": [
+        "Boosts INT characters' base ATK by 100"
+      ],
+      "sailorNotes": "+STATS crewmate ability.",
+      "limitBreak": [],
+      "potentialAbilities": [],
+      "supportData": [],
+      "swapData": null,
+      "vsSpecial": null,
+      "exSuperData": null,
+      "superType": null,
+      "superTandemData": null,
+      "finalTapData": null,
+      "rushSugoSpecialData": null,
+      "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
+      "rumbleData": {
+        "stats": {
+          "style": "DBF Style",
+          "cost": 20,
+          "combatPower": 6803,
+          "hp": 4691,
+          "def": 156,
+          "atk": 1980,
+          "spd": 166,
+          "rcv": 366
+        },
+        "rumbleSpecialName": "Arrival of the Nurse",
+        "verifiedRumbleSpecialLevels": [
+          {
+            "level": 10,
+            "cooldown": 22,
+            "effects": [
+              "Targets 3 enemies for Special CT Speed Down Lv.5 (20 s); targets INT-type teammates for Special CT Speed Up Lv.5 (20 s); targets [World Government] characters not including self for Special CT 20% reduction"
+            ]
+          }
+        ],
+        "verifiedRumbleAbilityLevels": [
+          {
+            "level": 5,
+            "effects": [
+              "INT-type teammates HP Up Lv.5, DEF Up Lv.5; if 6 or more INT-type characters are on the team, all enemies ATK Down Lv.7, Special CT Speed Down Lv.3"
+            ]
+          }
+        ],
+        "target": "Targets closest enemies",
+        "pattern": [
+          "Normal Attack",
+          "Normal Attack",
+          "Power Attack",
+          "Heal Self Lv.2"
+        ],
+        "resistance": {
+          "standardResistances": [
+            "Completely evades Damage Over Time",
+            "Reduce damage taken from PSY by 30%"
+          ],
+          "additionalResistances": {
+            "unlockRequirement": "Unlock Rumble Limit Break",
+            "effects": [
+              "Reduce damage taken from PSY by 10%",
+              "Increase damage dealt to PSY by 5%"
+            ]
+          }
+        }
+      }
+    }
+  },
   "4418": {
     "id": 4418,
     "name": "User of the Rumble-Rumble Fruit Boa Hancock from ONE PIECE magazine",
+    "searchAliases": [],
     "isIncomplete": true,
     "type": "QCK",
     "classes": [
@@ -845,6 +1652,299 @@
               "level": 4,
               "effect": "Team ATK Up Lv.2, HP, SPD Up Lv.3"
             },
+            {
+              "level": 5,
+              "effect": "Team ATK Up Lv.3, HP, SPD Up Lv.3"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "4419": {
+    "id": 4419,
+    "name": "Sabo - Core-Crushing Dragon Claw",
+    "searchAliases": [
+      "Core-Crushing Dragon Claw Sabo"
+    ],
+    "isIncomplete": true,
+    "type": "DEX",
+    "classes": [
+      "Cerebral",
+      "Fighter"
+    ],
+    "stars": 6,
+    "cost": 55,
+    "combo": 4,
+    "maxLevel": 99,
+    "maxExperience": null,
+    "minHp": null,
+    "minAtk": null,
+    "minRcv": null,
+    "maxHp": 5224,
+    "maxAtk": 2232,
+    "maxRcv": 386,
+    "growth": null,
+    "image": {
+      "file": "4419.png",
+      "thumbnailFile": "4419-thumb.jpg"
+    },
+    "detail": {
+      "characterId": 4419,
+      "captainAbility": "Reduces crew's Special charge time by 2 turns at start of quest, boosts DEX, Cerebral, and Fighter characters' ATK by 5.5x when slots match (5x otherwise), HP by 1.25x, boosts other characters' ATK by 4x, and makes crew's [DEX] [STR] [RCV] slots have matching slot effects. [Applies following effect based on number of applicable Character Tags on crew] Boosts [Revolutionary Army] characters' ATK and HP by 1.1x. If 4 or more [Revolutionary Army] characters are on the crew, launches following effect at start of quest: \"Sets the chain multiplier's minimum value at 3.0 and maximum value at 35.0 for 5 turns, and reduces crew's VS Effect gauge and Switch Effect by 2\"",
+      "captainAbilityVariants": [],
+      "captainNotes": null,
+      "specialName": "Crushing Dragon Claw",
+      "specialText": "Reduces crew's ATK Down and decrease chain multiplier growth rate duration by 6 turns, and boosts DEX, Cerebral, and Fighter characters' chain multiplier growth rate of normal attacks up to +0.7 (GOOD +0.3; GREAT +0.5; PERFECT +0.7) for 2 turns. If number of [STR] [DEX] slots used in normal attacks before Special is launched is 10 or more, or crew has Extra damage (adds extra damage to each hit by crew members on normal attacks when hitting GOOD, GREAT, or PERFECT) status with a duration of 5 turns or longer when Special is launched, applies Weakened status (increases damage taken by 1.5x for all enemies, damage further increased by 1.3x if enemy has Increased damage taken status) to all enemies for 1 turn. If 4 or more [Revolutionary Army] characters are on the crew, applies \"Territory: DEX-type\" to the field (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory) for 2 turns",
+      "specialNotes": "Max Lv.6; cooldown 15 turns.",
+      "superSpecialText": null,
+      "superSpecialCriteriaText": null,
+      "superSpecialNotes": null,
+      "superSpecialCriteria": null,
+      "partyConflictKeys": [],
+      "characterTags": [
+        "Revolutionary Army",
+        "Egghead Arc"
+      ],
+      "builderAbilities": [],
+      "sailorAbilities": [
+        "RES: Reduces crew's Despair duration by 1 turn.",
+        "+STATS: If field has \"Territory: Cerebral class\" or \"Territory: DEX type\", boosts crew's base stats by 200 (boosts crew's base HP by 200 otherwise)."
+      ],
+      "sailorNotes": null,
+      "limitBreak": [],
+      "potentialAbilities": [],
+      "supportData": [
+        {
+          "supportedCharactersText": "",
+          "levelDescriptions": [
+            "Lv.5: Once per quest, if supported character uses a Special to boost type effects or slot effects, boosts Fighter and Cerebral characters' chain multiplier growth rate of normal attacks up to +0.6 (GOOD +0.2; GREAT +0.4; PERFECT +0.6) for 1 turn"
+          ]
+        }
+      ],
+      "swapData": null,
+      "vsSpecial": null,
+      "exSuperData": null,
+      "superType": {
+        "activationRequirement": "When any 3 of the following characters are on the crew (except as Support Characters; Double Characters counts as 1): Monkey D. Luffy, Portgas D. Ace, Monkey D. Garp, Monkey D. Dragon, Jewelry Bonney, Koala, Emporio Ivankov, Belo Betty, Morley, Karasu, Lindbergh, Hack, Inazuma, Bartholomew Kuma, Nico Robin, Ginny",
+        "specialEffect": "Deals 150x character's ATK in non-type damage to all enemies, boosts the type effects of normal attacks for DEX, Cerebral, and Fighter characters by 2.5x for 1 turn, further increases crew's ATK and slot effect boosts by +0.4, and changes DEX characters to Super DEX"
+      },
+      "superTandemData": {
+        "requirement": "When a [Revolutionary Army] character performs Super Tandem",
+        "levels": [
+          {
+            "level": 5,
+            "effect": "Raises Boost Level of [Egghead] [Revolutionary Army] characters by 5 for 1 turn"
+          }
+        ]
+      },
+      "finalTapData": null,
+      "rushSugoSpecialData": null,
+      "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
+      "rumbleData": {
+        "stats": {
+          "style": "ATK Style",
+          "cost": 55,
+          "combatPower": 7504,
+          "hp": 6400,
+          "def": 160,
+          "atk": 2484,
+          "spd": 172,
+          "rcv": 401
+        },
+        "rumbleSpecialName": "Crushing Dragon Claw",
+        "verifiedRumbleSpecialLevels": [
+          {
+            "level": 10,
+            "cooldown": 27,
+            "effects": [
+              "Targets DEX-type/Cerebral class teammates for ATK Up Lv.5 (20 s), SPD Up Lv.5 (20 s); targets enemies within large range for ATK x 4 damage; targets [Revolutionary Army] teammates for DEF Up Lv.5 (20 s), Shield Lv.3 (15 s)"
+            ]
+          }
+        ],
+        "verifiedRumbleAbilityLevels": [
+          {
+            "level": 5,
+            "effects": [
+              "DEX-type/Cerebral class teammates HP Up Lv.6, SPD Up Lv.6; [Revolutionary Army] teammates ATK Up Lv.6, RCV Up Lv.6, DEF Up Lv.6"
+            ]
+          }
+        ],
+        "target": "Targets closest enemies",
+        "pattern": [
+          "Normal Attack",
+          "Normal Attack",
+          "Power Attack",
+          "Full Attack"
+        ],
+        "resistance": {
+          "standardResistances": [
+            "Completely evades Paralysis",
+            "Reduce damage taken from QCK by 30%"
+          ],
+          "additionalResistances": {
+            "unlockRequirement": "Unlock Rumble Limit Break",
+            "effects": [
+              "Reduce damage taken from QCK by 10%",
+              "Increase damage dealt to QCK by 5%"
+            ]
+          }
+        },
+        "gpBurst": {
+          "times": 2,
+          "levels": [
+            {
+              "level": 5,
+              "effect": "Targets all enemies for 1000 damage"
+            }
+          ]
+        },
+        "gpLeaderSkill": {
+          "levels": [
+            {
+              "level": 5,
+              "effect": "Team ATK Up Lv.3, HP, SPD Up Lv.3"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "4449": {
+    "id": 4449,
+    "name": "S-Snake - Mesmerizing Wink",
+    "searchAliases": [
+      "4449",
+      "Mesmerizing Wink"
+    ],
+    "isIncomplete": true,
+    "type": "QCK",
+    "classes": [
+      "Fighter",
+      "Driven"
+    ],
+    "stars": 6,
+    "cost": 40,
+    "combo": 4,
+    "maxLevel": 99,
+    "maxExperience": null,
+    "minHp": 1967,
+    "minAtk": 914,
+    "minRcv": 130,
+    "maxHp": null,
+    "maxAtk": null,
+    "maxRcv": null,
+    "growth": null,
+    "image": {
+      "file": "4449.png",
+      "thumbnailFile": "4449-thumb.jpg"
+    },
+    "detail": {
+      "characterId": 4449,
+      "captainAbility": "Launches the following effect at start of quest: \"Reduces damage taken by 60% for 5 turns\", boosts Fighter and Driven characters' HP and RCV by 1.25x, boosts the next Fighter or Driven character's ATK by at least 5x (up to 5.75x) based on the timing of the previous attack, and completely removes character's Bind/Despair/Paralysis/Special Bind/Special Reverse",
+      "captainAbilityVariants": [],
+      "captainNotes": null,
+      "specialName": "Captivating Eyes",
+      "specialText": "Inflicts Love-Love status on each enemy (binds regular attacks until they are hit 8 times), reduces crew's Despair/Paralysis duration by 6 turns, allows healing up to 2x crew's max HP ignoring max HP limit (effect cannot stack; if HP is above max limit, it is treated as being full HP) for 3 turns, heals crew by 20,000 HP, and heals crew by 15,000 HP at end of turn for 3 turns (cannot be removed by crew or enemies). If 4 or more [Vegapunk] [World Government] [Seraphim] characters are on the crew, boosts crew's ATK based on 200% of the damage reduction effect applied on the crew (e.g. if crew has 60% damage reduction, boosts ATK by 2.2x) for 1 turn (cannot be removed by crew or enemies; halves the effect otherwise (e.g. if crew has 60% damage reduction, boosts ATK by 1.6x))",
+      "specialNotes": "Max Lv.6; cooldown 14 turns.",
+      "superSpecialText": null,
+      "superSpecialCriteriaText": null,
+      "superSpecialNotes": null,
+      "superSpecialCriteria": null,
+      "partyConflictKeys": [],
+      "characterTags": [
+        "Seraphim",
+        "Egghead Arc"
+      ],
+      "builderAbilities": [],
+      "sailorAbilities": [
+        "RES: Reduces character's Special Reverse duration by 3 turns.",
+        "RES: Lets character completely evade Paralysis."
+      ],
+      "sailorNotes": null,
+      "limitBreak": [],
+      "potentialAbilities": [],
+      "supportData": [
+        {
+          "supportedCharactersText": "Fighter characters",
+          "levelDescriptions": [
+            "Lv.5: Adds 12% of character's base stats to supported character's base stats"
+          ]
+        }
+      ],
+      "swapData": null,
+      "vsSpecial": null,
+      "exSuperData": null,
+      "superType": null,
+      "superTandemData": null,
+      "finalTapData": null,
+      "rushSugoSpecialData": null,
+      "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
+      "rumbleData": {
+        "stats": {
+          "style": "DBF Style",
+          "cost": 20,
+          "combatPower": 7565,
+          "hp": 6045,
+          "def": 138,
+          "atk": 2518,
+          "rcv": 478,
+          "spd": 173
+        },
+        "rumbleSpecialName": "Captivating Eyes",
+        "verifiedRumbleSpecialLevels": [
+          {
+            "level": 10,
+            "cooldown": 24,
+            "effects": [
+              "Targets 1 DBF Style enemy with high current Special CT for Special CT 50% delay; targets 2 high ATK enemies for 100% chance of Action Bind (10 s); if 6 Fighter/Driven class characters are on the team, targets 1 enemy with high current Special CT for 100% chance of Confusion (10 s); if there are 5 or more Shooter class enemies, targets self for Special CT Speed Up Lv.5 (20 s)"
+            ]
+          }
+        ],
+        "verifiedRumbleAbilityLevels": [
+          {
+            "level": 5,
+            "effects": [
+              "Fighter class/QCK-type teammates ATK Up Lv.8; all enemies DEF Down Lv.5; if 6 or more Fighter/Driven class characters are on the team, all enemies ATK Down Lv.7, Special CT Speed Down Lv.3; if there are 5 or more Shooter class enemies, when appearing on the field self Special CT 30% reduction"
+            ]
+          }
+        ],
+        "target": "Targets closest enemies",
+        "pattern": [
+          "Normal Attack",
+          "Heal Self Lv.2",
+          "Power Attack",
+          "Power Attack"
+        ],
+        "resistance": {
+          "standardResistances": [
+            "Completely evades Action Bind",
+            "Reduce damage taken from STR by 30%",
+            "Increase damage dealt to STR by 30%"
+          ],
+          "additionalResistances": {
+            "unlockRequirement": "Unlock Rumble Limit Break",
+            "effects": [
+              "Reduce damage taken from STR by 20%",
+              "Increase damage dealt to STR by 15%"
+            ]
+          }
+        },
+        "gpBurst": {
+          "times": 2,
+          "levels": [
+            {
+              "level": 5,
+              "effect": "Targets all enemies for 1000 damage"
+            }
+          ]
+        },
+        "gpLeaderSkill": {
+          "levels": [
             {
               "level": 5,
               "effect": "Team ATK Up Lv.3, HP, SPD Up Lv.3"
@@ -1168,6 +2268,7 @@
   "4530": {
     "id": 4530,
     "name": "Hurried Rendezvous Jinbe",
+    "searchAliases": [],
     "isIncomplete": true,
     "type": "DEX",
     "classes": [
@@ -1264,6 +2365,7 @@
   "4531": {
     "id": 4531,
     "name": "Ordering the Helmsman Nami",
+    "searchAliases": [],
     "isIncomplete": true,
     "type": "DEX",
     "classes": [
@@ -1359,6 +2461,7 @@
   "4536": {
     "id": 4536,
     "name": "Usopp & Dorry",
+    "searchAliases": [],
     "isIncomplete": true,
     "type": "DEX",
     "classes": [
@@ -1447,6 +2550,7 @@
   "4537": {
     "id": 4537,
     "name": "Luffy & Broggy",
+    "searchAliases": [],
     "isIncomplete": true,
     "type": "STR",
     "classes": [
@@ -1553,6 +2657,7 @@
   "4538": {
     "id": 4538,
     "name": "Party on the Ship Oimo",
+    "searchAliases": [],
     "isIncomplete": true,
     "type": "STR",
     "classes": [
@@ -1748,6 +2853,7 @@
   "4539": {
     "id": 4539,
     "name": "Party on the Ship Kashii",
+    "searchAliases": [],
     "isIncomplete": true,
     "type": "DEX",
     "classes": [
@@ -1937,6 +3043,442 @@
             ]
           }
         }
+      }
+    }
+  },
+  "4543": {
+    "id": 4543,
+    "name": "Kaku - Haki-Coated Giraffe",
+    "searchAliases": [
+      "4543",
+      "Haki-Coated Giraffe"
+    ],
+    "isIncomplete": true,
+    "type": "INT",
+    "classes": [
+      "Driven",
+      "Powerhouse"
+    ],
+    "stars": 6,
+    "cost": 55,
+    "combo": 4,
+    "maxLevel": 110,
+    "maxExperience": null,
+    "minHp": null,
+    "minAtk": null,
+    "minRcv": null,
+    "maxHp": 5573,
+    "maxAtk": 2488,
+    "maxRcv": 459,
+    "growth": null,
+    "image": {
+      "file": "4543.png",
+      "thumbnailFile": "4543-thumb.jpg"
+    },
+    "detail": {
+      "characterId": 4543,
+      "captainAbility": "Locks crew's slots for 5 turns at start of quest, reduces VS Effect gauge by 3 at start of quest, boosts Driven and Powerhouse characters' HP by 1.35x, ATK by 5.25x, boosts their ATK by approximately 5.5x after 3 PERFECT strikes in a row, makes crew's [INT] [RCV] slots have matching slot effects, and if crew uses a Special to reduce or remove enemies' damage reduction (except [Unknown excluded enemy defensive effect icon]), reduces the effect by a further 1 turn",
+      "captainAbilityVariants": [],
+      "captainNotes": "The Captain Ability source omitted the enemy defensive exception icon after \"except\"; the stored text keeps that mechanic unresolved instead of guessing the icon name.",
+      "specialName": "Kiliman-Gyro",
+      "specialText": "Deals 300x character's ATK in non-type damage to all enemies, reduces the duration of all enemy barriers by 2 turns, and reduces crew's VS Effect gauge by 2 turns. If crew has [Unknown crew status icon] status when Special is launched, boosts INT, Driven, and Powerhouse characters' slot effects by 2.75x for 1 turn (boosts their ATK by 2.75x for 1 turn otherwise). If 3 or more [CPO] [CP9] [World Government] characters are on the crew, further increases all enemies' increase damage taken effect by +0.5, and boosts INT, Driven, and Powerhouse characters' Critical rate by 20% for 1 turn. If number of [RCV] slots used in normal attacks before Special is launched is 16 or more, reduces character's Special charge time by 12 turns, and boosts crew's damage dealt when landing a Critical hit by 75% for 1 turn (effect applies only to characters with Critical ATK Potential Ability; highest possible chance is 100%).",
+      "specialNotes": "Max Lv.6; cooldown 14 turns. The source omitted the crew status icon for the slot-effect branch, so that mechanic is kept unresolved.",
+      "superSpecialText": null,
+      "superSpecialCriteriaText": null,
+      "superSpecialNotes": null,
+      "superSpecialCriteria": null,
+      "partyConflictKeys": [],
+      "characterTags": [
+        "CPO",
+        "World Government",
+        "Zoan-type",
+        "Egghead Arc"
+      ],
+      "builderAbilities": [],
+      "sailorAbilities": [
+        "UNIQ: If enemy activates damage reduction (except [Unknown excluded enemy defensive effect icon]), reduces all enemies' damage reduction (except [Unknown excluded enemy defensive effect icon]) duration by 1 turn at start of crew's next turn (up to 2 times per quest; even if no turns are reduced, effect still counts as 1 time activated).",
+        "+STATS: Boosts Driven and Powerhouse characters' base ATK and HP by 150."
+      ],
+      "sailorNotes": "The UNIQ crewmate ability source omitted the damage reduction exception icon; the stored text keeps that exception unresolved.",
+      "limitBreak": [],
+      "potentialAbilities": [],
+      "supportData": [
+        {
+          "supportedCharactersText": "Driven characters",
+          "levelDescriptions": [
+            "Lv.5: Adds 7% of character's base stats to supported character's base stats"
+          ]
+        }
+      ],
+      "swapData": null,
+      "vsSpecial": null,
+      "exSuperData": null,
+      "superType": null,
+      "superTandemData": null,
+      "finalTapData": null,
+      "rushSugoSpecialData": null,
+      "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
+      "rumbleData": {
+        "stats": {
+          "style": "DEF Style",
+          "cost": 20,
+          "combatPower": 7811,
+          "hp": 6827,
+          "def": 291,
+          "atk": 2768,
+          "spd": 105,
+          "rcv": 477
+        },
+        "rumbleSpecialName": "Kiliman-Gyro",
+        "verifiedRumbleSpecialLevels": [
+          {
+            "level": 10,
+            "cooldown": 24,
+            "effects": [
+              "Targets self for 100% chance to evade Halve Stats (20 s), 100% chance to evade stat-reducing effects (20 s); activates Provoke on self (20 s); targets self for Shield Lv.5 (20 s), HP 30% healing; if 4 or more Driven class characters are on the team, targets [Zoan-type] teammates for 100% chance of Haste; if \"Rob Lucci\" or \"Stussy\" is on the team, targets 2 high ATK enemies for DEF Down Lv.5 (15 s); targets self for Special CT 20% reduction; targets enemies within large range (frontal) for ATK x 15 spread damage (damage on each enemy reduced based on number of total enemies)"
+            ]
+          }
+        ],
+        "verifiedRumbleAbilityLevels": [
+          {
+            "level": 5,
+            "effects": [
+              "INT-type/Driven class teammates ATK Up Lv.6, SPD Up Lv.6, Guard % Up Lv.6; after receiving damage, up to 5 times self DEF Up Lv.1, INT-type/Driven class teammates DEF Up Lv.1; if 4 or more Driven class characters are on the team, [World Government] [Navy] [Zoan-type] teammates SPD Up Lv.6; when appearing on the field, [World Government] [Navy] [Zoan-type] teammates Special CT 20% reduction"
+            ]
+          }
+        ],
+        "pattern": [
+          "Normal Attack",
+          "Normal Attack",
+          "Power Attack",
+          "Heal Self Lv.2"
+        ],
+        "target": "Targets closest enemies"
+      }
+    }
+  },
+  "4544": {
+    "id": 4544,
+    "name": "Kizaru - Overwhelming Grief",
+    "searchAliases": [
+      "4544",
+      "Borsalino",
+      "Overwhelming Grief"
+    ],
+    "isIncomplete": true,
+    "type": "INT",
+    "classes": [
+      "Slasher",
+      "Cerebral"
+    ],
+    "stars": 6,
+    "cost": 55,
+    "combo": 4,
+    "maxLevel": 99,
+    "maxExperience": null,
+    "minHp": 2179,
+    "minAtk": 928,
+    "minRcv": 103,
+    "maxHp": null,
+    "maxAtk": null,
+    "maxRcv": null,
+    "growth": null,
+    "image": {
+      "file": "4544.png",
+      "thumbnailFile": "4544-thumb.jpg"
+    },
+    "detail": {
+      "characterId": 4544,
+      "captainAbility": "Reduces character's Special charge time by 20 turns at start of quest, boosts INT, Slasher, Cerebral, and Shooter characters' ATK by 5.25x, HP and RCV by 1.2x, makes their [DEX] [INT] [TND] slots have matching slot effects, and completely removes character's Bind [Applies following effect based on number of applicable Character Tags on crew] If 3 or more [Five Elders] [Navy] [Vegapunk] characters are on the crew, boosts crew's ATK by 1.2x, and reduces crew's Limit Special Uses duration by 10 turns. If 1 or more [Vegapunk] characters are on the crew, boosts [Navy] [World Government] characters' base ATK by +1000. If an ATK or slot effect boost is applied on the crew (does not apply to statuses applied by Captain Ability or Crewmate Ability), further increases the boost by 1.2x (up to a maximum 10x, cannot be further increased)",
+      "captainAbilityVariants": [],
+      "captainNotes": null,
+      "specialName": "The Price of Justice",
+      "specialText": "Reduces crew's Bind duration by 10 turns, further increases all enemies' increase damage taken effect by +0.75, boosts INT, Slasher, Cerebral, and Shooter characters' base ATK by +1750 for 1 turn, and applies -50% INT Resistance to all enemies for 1 turn. If 3 or more [Five Elders] [Navy] [Vegapunk] characters or 5 or more [Egghead Arc] characters are on the crew, reduces crew's Special charge time by 2 turns and VS Effect gauge and Switch Effect by 2, and boosts the ATK of the next final tap performed by an INT character by 60% (similar effects can stack, up to 200%; the effect will be spent during the final tap when attacking with all available characters regardless of the type/class requirement of the effect)",
+      "specialNotes": "Max Lv.6; cooldown 14 turns.",
+      "superSpecialText": null,
+      "superSpecialCriteriaText": null,
+      "superSpecialNotes": null,
+      "superSpecialCriteria": null,
+      "partyConflictKeys": [],
+      "characterTags": [
+        "Navy",
+        "Navy Admiral",
+        "Logia-type",
+        "Egghead Arc"
+      ],
+      "builderAbilities": [],
+      "sailorAbilities": [
+        "UNIQ: Boosts INT characters' base ATK by 75, and makes their [DEX] slots have matching slot effects.",
+        "RES: Reduces character's Bind duration by 5 turns."
+      ],
+      "sailorNotes": null,
+      "limitBreak": [],
+      "potentialAbilities": [],
+      "supportData": [
+        {
+          "supportedCharactersText": "Dr. Vegapunk (Stella)",
+          "levelDescriptions": [
+            "Cuts crew's HP by 90% but boosts Cerebral characters' base ATK by +300 for 1 turn at start of final battle.",
+            "Cuts crew's HP by 90% but boosts Cerebral characters' base ATK by +400 for 1 turn at start of final battle.",
+            "Cuts crew's HP by 90% but boosts Cerebral characters' base ATK by +500 for 1 turn at start of final battle.",
+            "Cuts crew's HP by 90% but boosts Cerebral characters' base ATK by +750 for 1 turn at start of final battle.",
+            "Cuts crew's HP by 90% but boosts Cerebral characters' base ATK by +1000 for 1 turn at start of final battle."
+          ]
+        }
+      ],
+      "swapData": null,
+      "vsSpecial": null,
+      "exSuperData": null,
+      "superType": {
+        "activationRequirement": "When any 2 [Five Elders] [Navy] [Vegapunk] characters or any 5 [Egghead Arc] characters are on the crew not including self (except as Support Characters or Double Characters in inactive state; Double Characters count as 1; can be launched when character is a crewmate)",
+        "specialEffect": "Reduces crew's Special charge time by 2 turns and VS Effect gauge and Switch Effect by 2, makes crew's [PSY] slots have matching slot effects for 1 turn, doubles crew's slot effects for 1 turn (effect can be overwritten with other slot effect boost effects), and changes INT characters to Super INT"
+      },
+      "superTandemData": {
+        "requirement": "When an [Egghead Arc] [Five Elders] [Navy] [Vegapunk] character performs Super Tandem",
+        "levels": [
+          {
+            "label": "Super Tandem Boost",
+            "effect": "Raises Boost Level of [Egghead Arc] characters by 5 and raises Boost Level of [Five Elders] [Navy] [Vegapunk] characters by 6 for 1 turn"
+          }
+        ]
+      },
+      "finalTapData": null,
+      "rushSugoSpecialData": null,
+      "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
+      "rumbleData": {
+        "stats": {
+          "combatPower": 7662,
+          "hp": 7139,
+          "def": 154,
+          "atk": 2733,
+          "spd": 155,
+          "rcv": 392
+        },
+        "rumbleSpecialName": "The Price of Justice",
+        "verifiedRumbleSpecialLevels": [
+          {
+            "level": 10,
+            "cooldown": 23,
+            "effects": [
+              "If there are 1 or more [Vegapunk] enemies, targets 1 [Vegapunk] enemy ignoring DEF for ATK x 5 damage; targets self for 100% chance of Action Bind (10 s); targets 1 enemy with high current CT for Special CT 50% delay; if 6 or more Cerebral characters or 5 or more [Navy] [World Government] characters are on the team, targets enemies within large range for ATK Down Lv.5 (30 s), SPD Down Lv.5 (30 s), DEF Down Lv.5 (30 s)"
+            ]
+          }
+        ],
+        "verifiedRumbleAbilityLevels": [
+          {
+            "level": 5,
+            "effects": [
+              "Cerebral class and [Navy] [World Government] teammates ATK Up Lv.6, SPD Up Lv.6; after receiving Action Bind, up to 2 times all enemies ATK Down Lv.4, RCV Down Lv.4, SPD Down Lv.4; when defeating enemy, up to 1 time self ATK Down Lv.5, DEF Down Lv.5; if there are 1 or more [Vegapunk] enemies, self Special CT Speed Up Lv.10; when appearing on the field, self Special CT 30% reduction"
+            ]
+          }
+        ],
+        "pattern": [
+          "Normal Attack",
+          "Heal Self Lv.2",
+          "Power Attack",
+          "Power Attack"
+        ],
+        "target": "Targets closest enemies",
+        "resistance": {
+          "standardResistances": [
+            "Completely evades Special Bind",
+            "Reduce damage taken from PSY by 30%"
+          ],
+          "additionalResistances": {
+            "unlockRequirement": "Unlock Rumble Limit Break",
+            "effects": [
+              "Reduce damage taken from PSY by 10%",
+              "Increase damage dealt to PSY by 5%"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "4545": {
+    "id": 4545,
+    "name": "Sakazuki - Fleet Admiral Receiving the Report",
+    "searchAliases": [
+      "4545",
+      "Akainu",
+      "Fleet Admiral Receiving the Report"
+    ],
+    "isIncomplete": true,
+    "type": "INT",
+    "classes": [
+      "Shooter",
+      "Cerebral"
+    ],
+    "stars": 5,
+    "cost": 30,
+    "combo": 4,
+    "maxLevel": 110,
+    "maxExperience": null,
+    "minHp": null,
+    "minAtk": null,
+    "minRcv": null,
+    "maxHp": 4136,
+    "maxAtk": 2004,
+    "maxRcv": 254,
+    "growth": null,
+    "image": {
+      "file": "4545.png",
+      "thumbnailFile": "4545-thumb.jpg"
+    },
+    "detail": {
+      "characterId": 4545,
+      "captainAbility": "Boosts INT, Shooter, and Cerebral characters' ATK by approximately 4.25x when slots match (3.25x otherwise), HP by 1.35x, and further increases ATK boosts that are launched by crew Specials by +0.3 (stackable with other further raising effects)",
+      "captainAbilityVariants": [],
+      "captainNotes": null,
+      "specialName": "The Price of the Grueling Mission",
+      "specialText": "Applies Ignited status to all enemies for 2 turns (deals 40x enemy ATK in non-type damage at end of enemy turn; Ignited damage effect will not be applied after an enemy's preemptive action), reduces crew's Special Bind duration by 6 turns, and applies increase damage taken status to all enemies by 1.75x for 1 turn (ignoring immunity to status effects). If 3 or more [Navy] [World Government] characters are on the crew, heals crew by 5,000 HP at end of turn for 7 turns, and boosts damage dealt to Ignited enemies by 2.5x for 1 turn",
+      "specialNotes": "Max Lv.6; cooldown 14 turns.",
+      "superSpecialText": null,
+      "superSpecialCriteriaText": null,
+      "superSpecialNotes": null,
+      "superSpecialCriteria": null,
+      "partyConflictKeys": [],
+      "characterTags": [
+        "Navy",
+        "Navy Fleet Admiral",
+        "Logia-type",
+        "Egghead Arc"
+      ],
+      "builderAbilities": [],
+      "sailorAbilities": [
+        "RES: Reduces character's Special Bind duration by 6 turns.",
+        "UNIQ: Boosts INT characters' base ATK by 70, and makes their [STR] slots have matching slot effects."
+      ],
+      "sailorNotes": null,
+      "limitBreak": [],
+      "potentialAbilities": [],
+      "supportData": [
+        {
+          "supportedCharactersText": "",
+          "levelDescriptions": [
+            "Lv.5: Once per quest, if inflicted with Special Bind status from the enemy, reduces crew's Special Bind duration by 2 turns and heals crew by 3,000 HP at end of turn for 5 turns at start of crew's next turn"
+          ]
+        }
+      ],
+      "swapData": null,
+      "vsSpecial": null,
+      "exSuperData": null,
+      "superType": null,
+      "superTandemData": null,
+      "finalTapData": null,
+      "rushSugoSpecialData": null,
+      "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
+      "rumbleData": {
+        "stats": {
+          "style": "ATK Style",
+          "cost": 30,
+          "combatPower": 3152,
+          "hp": 4757,
+          "def": 50,
+          "atk": 2155,
+          "spd": 100,
+          "rcv": 261
+        },
+        "pattern": [
+          "Normal Attack"
+        ],
+        "target": "Targets closest enemies"
+      }
+    }
+  },
+  "4546": {
+    "id": 4546,
+    "name": "Sentomaru - Remembering the Old Days",
+    "searchAliases": [
+      "4546",
+      "Remembering the Old Days"
+    ],
+    "isIncomplete": true,
+    "type": "INT",
+    "classes": [
+      "Powerhouse",
+      "Cerebral"
+    ],
+    "stars": 5,
+    "cost": 30,
+    "combo": 4,
+    "maxLevel": 110,
+    "maxExperience": null,
+    "minHp": null,
+    "minAtk": null,
+    "minRcv": null,
+    "maxHp": 4041,
+    "maxAtk": 2035,
+    "maxRcv": 260,
+    "growth": null,
+    "image": {
+      "file": "4546.png",
+      "thumbnailFile": "4546-thumb.jpg"
+    },
+    "detail": {
+      "characterId": 4546,
+      "captainAbility": "Boosts INT, Powerhouse, and Cerebral characters' ATK by approximately 4x when slots match (3.25x otherwise), HP by 1.5x, and further increases slot effect boosts that are launched by crew Specials by +0.3 (stackable with other further raising effects)",
+      "captainAbilityVariants": [],
+      "captainNotes": null,
+      "specialName": "Silent Escape",
+      "specialText": "Changes crew's slots (including [BLOCK] slots) to [INT]. If crew has slot effect boost when Special is launched, boosts INT, Powerhouse, and Cerebral characters' ATK by 2.5x for 1 turn, then after that, boosts their slot effects by 2.75x for 1 turn. If 3 or more [Five Elders] [Navy] [Vegapunk] characters are on the crew, reduces all enemies' [Unknown enemy defensive effect icon], damage reduction, and DEF Up duration by 5 turns, and changes adjacent slots to [RCV].",
+      "specialNotes": "Max Lv.6; cooldown 14 turns. The pasted source omitted the first enemy defensive effect icon, so that mechanic is kept unresolved.",
+      "superSpecialText": null,
+      "superSpecialCriteriaText": null,
+      "superSpecialNotes": null,
+      "superSpecialCriteria": null,
+      "partyConflictKeys": [],
+      "characterTags": [
+        "Navy",
+        "Egghead Arc"
+      ],
+      "builderAbilities": [],
+      "sailorAbilities": [
+        "UNIQ: Character cannot be blown away by attack, and makes INT characters' [RCV] slots have matching slot effects.",
+        "UNIQ: Boosts INT characters' base HP by 200, and makes their [QCK] slots have matching slot effects."
+      ],
+      "sailorNotes": null,
+      "limitBreak": [],
+      "potentialAbilities": [],
+      "supportData": [
+        {
+          "supportedCharactersText": "STR or INT-type Dr. Vegapunk (Stella), Borsalino (Kizaru)",
+          "levelDescriptions": [
+            "Lv.5: Once per quest, if supported character uses a Special, reduces all enemies' [Unknown enemy defensive effect icon], damage reduction, and DEF Up duration by 1 turn."
+          ]
+        }
+      ],
+      "swapData": null,
+      "vsSpecial": null,
+      "exSuperData": null,
+      "superType": null,
+      "superTandemData": null,
+      "finalTapData": null,
+      "rushSugoSpecialData": null,
+      "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
+      "rumbleData": {
+        "stats": {
+          "style": "DEF Style",
+          "cost": 30,
+          "combatPower": 3158,
+          "hp": 4648,
+          "def": 50,
+          "atk": 2188,
+          "spd": 100,
+          "rcv": 267
+        },
+        "pattern": [
+          "Normal Attack"
+        ],
+        "target": "Targets closest enemies"
       }
     }
   },

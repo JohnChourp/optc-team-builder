@@ -129,7 +129,9 @@ const TARGET_ALIASES = [
     label: 'Remove Increased Defense',
     matcher: (target) =>
       target.includes('increased defense') ||
+      target === 'def up' ||
       target === 'defense up' ||
+      target.endsWith(' def up') ||
       target.endsWith(' defense up'),
   },
   {
@@ -192,7 +194,9 @@ const TARGET_ALIASES = [
   {
     key: 'remove_chain_coefficient_reduction',
     label: 'Remove Chain Coefficient Reduction',
-    matcher: (target) => target.includes('chain coefficient reduction'),
+    matcher: (target) =>
+      target.includes('chain coefficient reduction') ||
+      target.includes('decrease chain multiplier growth rate'),
   },
   {
     key: 'remove_chain_multiplier_limit',
