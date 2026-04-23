@@ -103,12 +103,51 @@
 
         <app-special-ability-picker
           [isOpen]="specialAbilityPickerOpen()"
+          category="special"
+          [eyebrow]="t('filters.special.eyebrow')"
           [title]="t('filters.special.title')"
           [copy]="t('filters.special.copy')"
           [drafts]="specialAbilityDrafts()"
           [catalogItems]="availableSpecialAbilityCatalogItems()"
           (dismiss)="closeSpecialAbilityPicker()"
           (saveDrafts)="saveSpecialAbilityPicker($event)"
+        ></app-special-ability-picker>
+
+        <div class="favorites-toggle-row">
+          <div class="favorites-toggle-copy">
+            <strong>{{ t('filters.crewmate.label') }}</strong>
+            <small>{{ t('filters.crewmate.support', { count: crewmateAbilityDrafts().length }) }}</small>
+          </div>
+          <div class="favorites-tools-actions">
+            <ion-button
+              fill="outline"
+              color="warning"
+              [disabled]="!availableCrewmateAbilityCatalogItems().length"
+              (click)="openCrewmateAbilityPicker()"
+            >
+              {{ t('filters.crewmate.open') }}
+            </ion-button>
+            <ion-button
+              fill="clear"
+              color="light"
+              [disabled]="!crewmateAbilityDrafts().length"
+              (click)="clearCrewmateAbilityFilters()"
+            >
+              {{ 'common.actions.clear' | transloco }}
+            </ion-button>
+          </div>
+        </div>
+
+        <app-special-ability-picker
+          [isOpen]="crewmateAbilityPickerOpen()"
+          category="crewmate"
+          [eyebrow]="t('filters.crewmate.eyebrow')"
+          [title]="t('filters.crewmate.title')"
+          [copy]="t('filters.crewmate.copy')"
+          [drafts]="crewmateAbilityDrafts()"
+          [catalogItems]="availableCrewmateAbilityCatalogItems()"
+          (dismiss)="closeCrewmateAbilityPicker()"
+          (saveDrafts)="saveCrewmateAbilityPicker($event)"
         ></app-special-ability-picker>
 
         <div class="filter-group">

@@ -12,8 +12,14 @@
     "anyClass": "Όλα τα classes",
     "special": "Special filters",
     "clearSpecial": "Καθαρισμός Special",
+    "specialEyebrow": "Special",
     "specialTitle": "Special filters",
-    "specialCopy": "Αυτά τα filters είναι μόνο για την επιλογή εικόνας και δεν αλλάζουν τον αποθηκευμένο εχθρό."
+    "specialCopy": "Αυτά τα filters είναι μόνο για την επιλογή εικόνας και δεν αλλάζουν τον αποθηκευμένο εχθρό.",
+    "crewmate": "Crewmate Ability filters",
+    "clearCrewmate": "Καθαρισμός Crewmate",
+    "crewmateEyebrow": "Crewmate Ability",
+    "crewmateTitle": "Crewmate Ability filters",
+    "crewmateCopy": "Αυτά τα filters είναι μόνο για την επιλογή εικόνας και δεν αλλάζουν τον αποθηκευμένο εχθρό."
   },
   "actions": {
     "loadMore": "Φόρτωση περισσότερων",

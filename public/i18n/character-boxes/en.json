@@ -49,8 +49,15 @@
     },
     "special": {
       "open": "Special filters ({{count}})",
+      "eyebrow": "Special",
       "title": "Special filters",
       "copy": "Filter box character results by Special effects. Results must match every selected effect."
+    },
+    "crewmate": {
+      "open": "Crewmate Ability filters ({{count}})",
+      "eyebrow": "Crewmate Ability",
+      "title": "Crewmate Ability filters",
+      "copy": "Pick Crewmate effects. Results must cover every selected effect."
     }
   },
   "displayMode": {

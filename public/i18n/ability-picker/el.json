@@ -4,10 +4,11 @@
     "clearAll": "Καθαρισμός όλων"
   },
   "catalog": {
-    "title": "Διαθέσιμα abilities",
-    "count": "{{count}} από {{total}} συνολικά",
-    "searchPlaceholder": "Αναζήτηση abilities",
-    "selectedCount": "{{count}} επιλεγμένα",
+    "title": "Διαθέσιμα effects {{eyebrow}}",
+    "count": "{{count}} effects",
+    "searchPlaceholder": "Αναζήτηση effects {{eyebrow}}",
+    "sectionCount": "{{count}} effects",
+    "matchCount": "{{count}} matching χαρακτήρες",
     "emptyCatalogTitle": "Δεν υπάρχει ability catalog",
     "emptyCatalogCopy": "Το picker δεν μπορεί να εμφανίσει abilities μέχρι να φορτωθεί το local catalog.",
     "emptySearchTitle": "Δεν βρέθηκαν abilities",
@@ -19,24 +20,14 @@
     }
   },
   "selected": {
-    "title": "Επιλεγμένα requirements",
+    "title": "Επιλεγμένα filters {{eyebrow}}",
     "count": "{{count}} ρυθμισμένα",
     "emptyTitle": "Δεν έχουν επιλεγεί abilities ακόμα",
-    "emptyCopy": "Επίλεξε ένα ή περισσότερα abilities από τον κατάλογο για να ορίσεις τα requirement rules."
+    "emptyCopy": "Επίλεξε ένα ή περισσότερα effects {{eyebrow}}. Τα αποτελέσματα χαρακτήρων πρέπει να καλύπτουν κάθε επιλεγμένο effect."
   },
   "fields": {
     "characters": "Χαρακτήρες",
     "turns": "Turns",
     "slotTokens": "Slot tokens"
-  },
-  "special": {
-    "eyebrow": "Special",
-    "catalogTitle": "Special effects",
-    "catalogCount": "{{count}} effects",
-    "searchPlaceholder": "Αναζήτηση Special effects",
-    "sectionCount": "{{count}} effects",
-    "matchCount": "{{count}} matching χαρακτήρες",
-    "selectedTitle": "Επιλεγμένα Special filters",
-    "emptySelectedCopy": "Επίλεξε ένα ή περισσότερα Special effects. Τα αποτελέσματα χαρακτήρων πρέπει να έχουν όλα τα επιλεγμένα effects."
   }
 }

@@ -553,6 +553,7 @@
     "loadedTitle": "Enemy preset ready."
   },
   "specialFilters": {
+    "eyebrow": "Special",
     "title": "Special filters",
     "copy": "Pick Special effects. Results must cover every selected effect.",
     "configuredRows": "{{count}} selected Special effects",
@@ -562,6 +563,19 @@
     "actions": {
       "openPicker": "Open Special picker",
       "clearRequirements": "Clear Special filters"
+    }
+  },
+  "crewmateFilters": {
+    "eyebrow": "Crewmate Ability",
+    "title": "Crewmate Ability filters",
+    "copy": "Pick Crewmate effects. Results must cover every selected effect.",
+    "configuredRows": "{{count}} selected Crewmate effects",
+    "empty": "No Crewmate Ability effects selected",
+    "emptyCatalog": "No Crewmate ability catalog was found. Run",
+    "emptyCatalogSuffix": "to regenerate it.",
+    "actions": {
+      "openPicker": "Open Crewmate picker",
+      "clearRequirements": "Clear Crewmate filters"
     }
   }
 }

@@ -12,8 +12,14 @@
     "anyClass": "All classes",
     "special": "Special filters",
     "clearSpecial": "Clear Special",
+    "specialEyebrow": "Special",
     "specialTitle": "Special filters",
-    "specialCopy": "These filters are local to image selection and do not change the saved enemy."
+    "specialCopy": "These filters are local to image selection and do not change the saved enemy.",
+    "crewmate": "Crewmate Ability filters",
+    "clearCrewmate": "Clear Crewmate",
+    "crewmateEyebrow": "Crewmate Ability",
+    "crewmateTitle": "Crewmate Ability filters",
+    "crewmateCopy": "These filters are local to image selection and do not change the saved enemy."
   },
   "actions": {
     "loadMore": "Load more",

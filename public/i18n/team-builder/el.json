@@ -5,8 +5,15 @@
     "searchPlaceholder": "Βρες χαρακτήρα για αυτό το slot",
     "special": {
       "open": "Special filters ({{count}})",
+      "eyebrow": "Special",
       "title": "Special filters",
       "copy": "Φίλτραρε assignable χαρακτήρες με βάση τα Special effects. Τα αποτελέσματα πρέπει να έχουν όλα τα επιλεγμένα effects."
+    },
+    "crewmate": {
+      "open": "Crewmate Ability filters ({{count}})",
+      "eyebrow": "Crewmate Ability",
+      "title": "Crewmate Ability filters",
+      "copy": "Επίλεξε Crewmate effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect."
     },
     "subtitle": "Κάνε search στο offline index και πάτα μία φορά για να τοποθετήσεις το unit.",
     "title": "Ανάθεση χαρακτήρα στο slot {{slot}}"

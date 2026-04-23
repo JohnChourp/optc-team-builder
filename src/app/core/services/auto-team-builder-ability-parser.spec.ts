@@ -2,13 +2,16 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-let analyzeBuilderAbilityText: (value: unknown, source: 'specialText' | 'captainAbility') => Array<{
+let analyzeBuilderAbilityText: (
+  value: unknown,
+  source: 'specialText' | 'captainAbility' | 'sailorAbilities',
+) => Array<{
   key: string;
   label: string;
   minTurns: number | null;
   isCompleteRemoval: boolean;
   slotTokens: string[];
-  source: 'specialText' | 'captainAbility';
+  source: 'specialText' | 'captainAbility' | 'sailorAbilities';
   coverageMode?: 'explicit' | 'selectedDebuff';
 }>;
 let extractPrimaryAbilityBranchText: (value: unknown) => string;
@@ -19,6 +22,7 @@ let enrichCharactersWithBuilderAbilities: (
       specialText: string | null;
       captainAbility: string | null;
       captainAbilityVariants?: Array<{ key: string; label: string; text: string }>;
+      sailorAbilities?: string[];
       builderAbilities: Array<Record<string, unknown>>;
     };
   }>,
@@ -733,5 +737,108 @@ describe('auto team builder ability parser', () => {
           (ability.key === 'extra_drop_any' || ability.key === 'extra_drop_guaranteed'),
       ),
     ).toHaveLength(2);
+  });
+
+  it('seeds all 75 crewmate catalog entries with stable ordering even without matches', async () => {
+    const catalog = await enrichCharactersWithBuilderAbilities([], { logger: null });
+    const crewmateCatalog = catalog.filter((item) => item.category === 'crewmate');
+    const groupCounts = new Map<string, number>();
+
+    crewmateCatalog.forEach((item) => {
+      groupCounts.set(item.groupLabel ?? '', (groupCounts.get(item.groupLabel ?? '') ?? 0) + 1);
+    });
+
+    expect(crewmateCatalog).toHaveLength(75);
+    expect(crewmateCatalog[0]).toMatchObject({
+      label: 'Damage Boost: STR Enemy',
+      availableSources: ['sailorAbilities'],
+      matchCount: 0,
+    });
+    expect(crewmateCatalog.at(-1)).toMatchObject({
+      label: 'Hp Recovery at End of Turn',
+      availableSources: ['sailorAbilities'],
+      matchCount: 0,
+    });
+    expect(groupCounts).toEqual(
+      new Map([
+        ['Boost Damage', 6],
+        ['Status Effect Recovery', 8],
+        ['Slot', 5],
+        ['Special Charge Reduction', 4],
+        ['ATK Boost', 17],
+        ['RCV Boost', 17],
+        ['HP Boost', 17],
+        ['Other', 1],
+      ]),
+    );
+  });
+
+  it.each([
+    [
+      'damage boost vs enemy type',
+      'Boosts damage dealt to STR enemies by 1.1x.',
+      'crewmate_damage_boost_str_enemy',
+    ],
+    [
+      'status recovery',
+      'Reduces Special Bind duration by 3 turns.',
+      'crewmate_recover_special_bind',
+    ],
+    ['slot utility', 'Makes [RCV] slots beneficial for all characters.', 'crewmate_make_slots_favorable'],
+    [
+      'special charge reduction',
+      'Reduces Special Cooldown of this character by 2 turns at start of quest.',
+      'crewmate_special_charge_start_of_quest',
+    ],
+    ['atk boost', 'Boosts ATK of Fighter characters by 75.', 'crewmate_atk_boost_fighter'],
+    ['rcv boost', 'Boosts RCV of this character by 100.', 'crewmate_rcv_boost_self'],
+    ['hp boost', 'Boosts HP of STR characters by 200.', 'crewmate_hp_boost_str'],
+    [
+      'end of turn recovery',
+      'Recovers 1000 HP at the end of each turn.',
+      'crewmate_hp_recovery_eot',
+    ],
+  ])('extracts crewmate %s from sailor text', (_label, text, key) => {
+    expect(analyzeBuilderAbilityText(text, 'sailorAbilities')).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key,
+          source: 'sailorAbilities',
+          minTurns: null,
+        }),
+      ]),
+    );
+  });
+
+  it('adds crewmate-derived builder abilities from sailor abilities to the character detail', async () => {
+    const characters = [
+      {
+        id: 5001,
+        detail: {
+          specialText: null,
+          captainAbility: null,
+          sailorAbilities: [
+            'Boosts ATK of Fighter characters by 75.',
+            'Reduces Special Cooldown of this character by 2 turns at start of quest.',
+          ],
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(characters[0]?.detail.builderAbilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'crewmate_atk_boost_fighter',
+          source: 'sailorAbilities',
+        }),
+        expect.objectContaining({
+          key: 'crewmate_special_charge_start_of_quest',
+          source: 'sailorAbilities',
+        }),
+      ]),
+    );
   });
 });

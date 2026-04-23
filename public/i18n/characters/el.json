@@ -20,8 +20,17 @@
     "label": "Special filters",
     "support": "{{count}} επιλεγμένα effects. Τα αποτελέσματα πρέπει να έχουν όλα τα επιλεγμένα effects.",
     "open": "Άνοιγμα Special picker",
+    "eyebrow": "Special",
     "title": "Special filters",
     "copy": "Φίλτραρε χαρακτήρες με βάση τα Special effects."
+  },
+  "crewmate": {
+    "label": "Crewmate Ability filters",
+    "support": "{{count}} επιλεγμένα effects. Τα αποτελέσματα πρέπει να έχουν όλα τα επιλεγμένα effects.",
+    "open": "Άνοιγμα Crewmate picker",
+    "eyebrow": "Crewmate Ability",
+    "title": "Crewmate Ability filters",
+    "copy": "Επίλεξε Crewmate effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect."
   },
   "type": {
       "label": "Type",

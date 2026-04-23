@@ -1,5 +1,5 @@
-export type AutoBuildAbilitySource = 'specialText' | 'captainAbility';
-export type AutoBuildAbilityCategory = 'special' | 'legacy';
+export type AutoBuildAbilitySource = 'specialText' | 'captainAbility' | 'sailorAbilities';
+export type AutoBuildAbilityCategory = 'special' | 'crewmate' | 'legacy';
 export type AutoBuildAbilityCoverageMode = 'explicit' | 'selectedDebuff';
 export type AutoBuildEnemyMechanicCategory =
   | 'enemyDefense'

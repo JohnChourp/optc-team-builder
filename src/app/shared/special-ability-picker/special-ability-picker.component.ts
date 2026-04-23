@@ -7,7 +7,6 @@ import {
   SimpleChanges,
   computed,
   signal,
-  type OnInit,
 } from '@angular/core';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
@@ -22,23 +21,26 @@ import {
 } from '@ionic/angular/standalone';
 import { closeOutline, sparklesOutline } from 'ionicons/icons';
 
-import { type AutoBuildAbilityCatalogItem } from '../../core/models/auto-team-builder-ability.models';
+import {
+  type AutoBuildAbilityCatalogItem,
+  type AutoBuildAbilityCategory,
+} from '../../core/models/auto-team-builder-ability.models';
 import {
   cloneAbilityRequirementDrafts,
   createAbilityRequirementDraft,
   type AbilityRequirementDraft,
 } from '../../core/services/ability-requirement-draft.utils';
 
-interface SpecialAbilityTileView {
+interface CategoryAbilityTileView {
   item: AutoBuildAbilityCatalogItem;
   isSelected: boolean;
   badge: string;
 }
 
-interface SpecialAbilitySectionView {
+interface CategoryAbilitySectionView {
   groupLabel: string;
   groupOrder: number;
-  items: SpecialAbilityTileView[];
+  items: CategoryAbilityTileView[];
 }
 
 @Component({
@@ -59,10 +61,12 @@ interface SpecialAbilitySectionView {
   templateUrl: './special-ability-picker.component.html',
   styleUrl: './special-ability-picker.component.scss',
 })
-export class SpecialAbilityPickerComponent implements OnInit, OnChanges {
+export class SpecialAbilityPickerComponent implements OnChanges {
   private dismissReason: 'save' | 'cancel' | null = null;
 
   @Input({ required: true }) public isOpen = false;
+  @Input({ required: true }) public category: AutoBuildAbilityCategory = 'special';
+  @Input({ required: true }) public eyebrow = '';
   @Input({ required: true }) public title = '';
   @Input({ required: true }) public copy = '';
   @Input({ required: true }) public drafts: AbilityRequirementDraft[] = [];
@@ -93,13 +97,13 @@ export class SpecialAbilityPickerComponent implements OnInit, OnChanges {
       badge: this.resolveBadge(catalogMap.get(draft.abilityKey)?.label ?? draft.abilityKey),
     }));
   });
-  public readonly filteredSections = computed<SpecialAbilitySectionView[]>(() => {
+  public readonly filteredSections = computed<CategoryAbilitySectionView[]>(() => {
     const searchTerm = this.searchTerm().trim().toLowerCase();
     const selectedKeys = this.selectedKeys();
-    const sectionMap = new Map<string, SpecialAbilitySectionView>();
+    const sectionMap = new Map<string, CategoryAbilitySectionView>();
 
     for (const item of this.catalogItemsState()) {
-      if (item.category !== 'special') {
+      if (item.category !== this.category) {
         continue;
       }
 
@@ -109,7 +113,7 @@ export class SpecialAbilityPickerComponent implements OnInit, OnChanges {
         continue;
       }
 
-      const groupLabel = item.groupLabel ?? 'Special';
+      const groupLabel = item.groupLabel ?? this.eyebrow;
       const groupOrder = item.groupOrder ?? Number.MAX_SAFE_INTEGER;
       const section =
         sectionMap.get(groupLabel) ??
@@ -117,7 +121,7 @@ export class SpecialAbilityPickerComponent implements OnInit, OnChanges {
           groupLabel,
           groupOrder,
           items: [],
-        } satisfies SpecialAbilitySectionView);
+        } satisfies CategoryAbilitySectionView);
 
       section.items.push({
         item,
@@ -142,10 +146,6 @@ export class SpecialAbilityPickerComponent implements OnInit, OnChanges {
           left.groupOrder - right.groupOrder || left.groupLabel.localeCompare(right.groupLabel),
       );
   });
-
-  ngOnInit(): void {
-    console.log('SpecialAbilityPickerComponent');
-  }
 
   public ngOnChanges(changes: SimpleChanges): void {
     if (changes['catalogItems']) {

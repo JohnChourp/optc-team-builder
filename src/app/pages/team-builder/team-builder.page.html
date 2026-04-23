@@ -194,12 +194,46 @@
 
         <app-special-ability-picker
           [isOpen]="specialAbilityPickerOpen()"
+          category="special"
+          [eyebrow]="t('assign.special.eyebrow')"
           [title]="t('assign.special.title')"
           [copy]="t('assign.special.copy')"
           [drafts]="specialAbilityDrafts()"
           [catalogItems]="availableSpecialAbilityCatalogItems()"
           (dismiss)="closeSpecialAbilityPicker()"
           (saveDrafts)="saveSpecialAbilityPicker($event)"
+        ></app-special-ability-picker>
+
+        <div class="assign-panel__controls">
+          <ion-button
+            fill="outline"
+            color="warning"
+            [disabled]="!availableCrewmateAbilityCatalogItems().length"
+            (click)="openCrewmateAbilityPicker()"
+          >
+            {{ t('assign.crewmate.open', { count: crewmateAbilityDrafts().length }) }}
+          </ion-button>
+
+          <ion-button
+            fill="clear"
+            color="light"
+            [disabled]="!crewmateAbilityDrafts().length"
+            (click)="clearCrewmateAbilityFilters()"
+          >
+            {{ 'common.actions.clear' | transloco }}
+          </ion-button>
+        </div>
+
+        <app-special-ability-picker
+          [isOpen]="crewmateAbilityPickerOpen()"
+          category="crewmate"
+          [eyebrow]="t('assign.crewmate.eyebrow')"
+          [title]="t('assign.crewmate.title')"
+          [copy]="t('assign.crewmate.copy')"
+          [drafts]="crewmateAbilityDrafts()"
+          [catalogItems]="availableCrewmateAbilityCatalogItems()"
+          (dismiss)="closeCrewmateAbilityPicker()"
+          (saveDrafts)="saveCrewmateAbilityPicker($event)"
         ></app-special-ability-picker>
 
         @if (isCompactCandidateDisplayMode()) {

@@ -20,8 +20,17 @@
     "label": "Special filters",
     "support": "{{count}} selected effects. Results must match every selected effect.",
     "open": "Open Special picker",
+    "eyebrow": "Special",
     "title": "Special filters",
     "copy": "Filter characters by Special effects."
+  },
+  "crewmate": {
+    "label": "Crewmate Ability filters",
+    "support": "{{count}} selected effects. Results must match every selected effect.",
+    "open": "Open Crewmate picker",
+    "eyebrow": "Crewmate Ability",
+    "title": "Crewmate Ability filters",
+    "copy": "Pick Crewmate effects. Results must cover every selected effect."
   },
   "type": {
       "label": "Type",

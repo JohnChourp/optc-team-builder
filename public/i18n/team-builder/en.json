@@ -5,8 +5,15 @@
     "searchPlaceholder": "Find a character for this slot",
     "special": {
       "open": "Special filters ({{count}})",
+      "eyebrow": "Special",
       "title": "Special filters",
       "copy": "Filter assignable characters by Special effects. Results must match every selected effect."
+    },
+    "crewmate": {
+      "open": "Crewmate Ability filters ({{count}})",
+      "eyebrow": "Crewmate Ability",
+      "title": "Crewmate Ability filters",
+      "copy": "Pick Crewmate effects. Results must cover every selected effect."
     },
     "subtitle": "Search the offline index and tap once to place the unit.",
     "title": "Assign character to slot {{slot}}"

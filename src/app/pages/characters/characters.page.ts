@@ -46,8 +46,11 @@ import {
   type AbilityRequirementDraft,
 } from '../../core/services/ability-requirement-draft.utils';
 import {
-  getSpecialAbilityCatalogItems,
+  getAbilityCatalogItemsByCategory,
+  intersectAbilityMatchingCharacterIds,
+  resolveCategoryAbilityMatchingCharacterIds,
   resolveSpecialAbilityMatchingCharacterIds,
+  serializeCategoryAbilityDrafts,
   serializeSpecialAbilityDrafts,
 } from '../../core/services/special-ability-filter.utils';
 import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
@@ -107,6 +110,8 @@ export class CharactersPage implements OnInit {
   public readonly favoritesOnly = signal(false);
   public readonly specialAbilityPickerOpen = signal(false);
   public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly crewmateAbilityPickerOpen = signal(false);
+  public readonly crewmateAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly displayMode = signal<CharacterDisplayMode>('list');
   public readonly favoriteIds;
   public readonly canDownloadFavoritesExport = computed(() => this.favoriteIds().length > 0);
@@ -146,7 +151,10 @@ export class CharactersPage implements OnInit {
   );
   public readonly isCompactDisplayMode = computed(() => this.displayMode() === 'compact');
   public readonly availableSpecialAbilityCatalogItems = computed(() =>
-    getSpecialAbilityCatalogItems(this.abilityCatalog()?.abilities ?? []),
+    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'special'),
+  );
+  public readonly availableCrewmateAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'crewmate'),
   );
   public readonly specialAbilityRequirements = computed(() =>
     serializeSpecialAbilityDrafts(
@@ -154,10 +162,24 @@ export class CharactersPage implements OnInit {
       this.availableSpecialAbilityCatalogItems(),
     ),
   );
+  public readonly crewmateAbilityRequirements = computed(() =>
+    serializeCategoryAbilityDrafts(
+      this.crewmateAbilityDrafts(),
+      this.availableCrewmateAbilityCatalogItems(),
+      'crewmate',
+    ),
+  );
   public readonly specialFilterCharacterIds = computed(() =>
     resolveSpecialAbilityMatchingCharacterIds(
       this.specialAbilityRequirements(),
       this.availableSpecialAbilityCatalogItems(),
+    ),
+  );
+  public readonly crewmateFilterCharacterIds = computed(() =>
+    resolveCategoryAbilityMatchingCharacterIds(
+      this.crewmateAbilityRequirements(),
+      this.availableCrewmateAbilityCatalogItems(),
+      'crewmate',
     ),
   );
   public readonly characterCardViews = computed<CharacterCatalogCardView[]>(() =>
@@ -323,6 +345,37 @@ export class CharactersPage implements OnInit {
     await this.loadCharacters(true);
   }
 
+  public openCrewmateAbilityPicker(): void {
+    if (!this.availableCrewmateAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.crewmateAbilityPickerOpen.set(true);
+  }
+
+  public closeCrewmateAbilityPicker(): void {
+    this.crewmateAbilityPickerOpen.set(false);
+  }
+
+  public async saveCrewmateAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.crewmateAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeCategoryAbilityDrafts(
+          drafts,
+          this.availableCrewmateAbilityCatalogItems(),
+          'crewmate',
+        ),
+      ),
+    );
+    this.crewmateAbilityPickerOpen.set(false);
+    await this.loadCharacters(true);
+  }
+
+  public async clearCrewmateAbilityFilters(): Promise<void> {
+    this.crewmateAbilityDrafts.set([]);
+    await this.loadCharacters(true);
+  }
+
   public async loadMore(): Promise<void> {
     if (this.loadingMore() || !this.hasMore()) {
       return;
@@ -479,6 +532,8 @@ export class CharactersPage implements OnInit {
     this.favoritesOnly.set(false);
     this.specialAbilityPickerOpen.set(false);
     this.specialAbilityDrafts.set([]);
+    this.crewmateAbilityPickerOpen.set(false);
+    this.crewmateAbilityDrafts.set([]);
     this.characters.set([]);
     this.loadingMore.set(false);
     this.hasMore.set(true);
@@ -531,20 +586,12 @@ export class CharactersPage implements OnInit {
   }
 
   private resolveAllowedCharacterIds(): number[] | undefined {
-    const specialIds = this.specialFilterCharacterIds();
     const favoriteIds = this.favoritesOnly() ? this.favoriteIds() : undefined;
-
-    if (specialIds === undefined) {
-      return favoriteIds;
-    }
-
-    if (favoriteIds === undefined) {
-      return specialIds;
-    }
-
-    const specialIdSet = new Set(specialIds);
-
-    return favoriteIds.filter((characterId) => specialIdSet.has(characterId));
+    return intersectAbilityMatchingCharacterIds([
+      this.specialFilterCharacterIds(),
+      this.crewmateFilterCharacterIds(),
+      favoriteIds,
+    ]);
   }
 
   private filterOptions(options: string[], query: string, selectedValue: string): string[] {

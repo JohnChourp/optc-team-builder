@@ -4,7 +4,7 @@ Offline-first Ionic Angular app for browsing One Piece Treasure Cruise character
 
 ## What is included
 
-- Local OPTC dataset importer that reads from the `optc-db.github.io` source repository.
+- Local OPTC dataset importer that reads from the raw `optc-db.github.io` source repository, defaulting to the `2Shankz` fork.
 - Generated SQLite seed loaded inside the app through `sql.js`.
 - Offline-friendly character browser, detail view, collection view, and team builder.
 - Capacitor Android and iOS projects already scaffolded.
@@ -12,7 +12,7 @@ Offline-first Ionic Angular app for browsing One Piece Treasure Cruise character
 
 ## Source of truth
 
-The app does not scrape the live rendered website. It imports from the `optc-db` source repository:
+The app does not scrape the live rendered website. It imports from the raw source repository files for the selected source (`2shankz` by default, or `optc-db` explicitly):
 
 - `common/data/units.js`
 - `common/data/details.js`
@@ -43,6 +43,12 @@ Import metadata only:
 npm run data:import
 ```
 
+Import metadata only from the upstream `optc-db` source instead of the default `2shankz` source:
+
+```bash
+npm run data:import -- --source=optc-db
+```
+
 Import metadata plus global thumbnails:
 
 ```bash
@@ -59,6 +65,19 @@ Import metadata plus every supported offline image pack:
 
 ```bash
 npm run data:import -- --download-images=all
+```
+
+You can combine the source selector with any image download mode, for example:
+
+```bash
+npm run data:import -- --source=optc-db --download-images=thumbnails
+```
+
+If GitHub responds with `403` while listing image packs, export `GITHUB_TOKEN` or `GH_TOKEN` before running any `--download-images=...` import mode:
+
+```bash
+export GITHUB_TOKEN=your_github_token
+npm run data:import -- --download-images=thumbnails
 ```
 
 Run the app in the browser:

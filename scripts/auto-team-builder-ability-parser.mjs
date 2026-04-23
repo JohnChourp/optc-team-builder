@@ -3,14 +3,39 @@ import { readFileSync } from 'node:fs';
 const SPECIAL_ABILITY_DEFINITIONS = JSON.parse(
   readFileSync(new URL('./data/special-ability-definitions.json', import.meta.url), 'utf8'),
 );
-const SPECIAL_ABILITY_METADATA_BY_KEY = new Map(
-  SPECIAL_ABILITY_DEFINITIONS.map((definition) => [definition.key, definition]),
+const CREWMATE_ABILITY_DEFINITIONS = JSON.parse(
+  readFileSync(new URL('./data/crewmate-ability-definitions.json', import.meta.url), 'utf8'),
 );
-const SPECIAL_ABILITY_KEY_SET = new Set(SPECIAL_ABILITY_DEFINITIONS.map((definition) => definition.key));
+const STRUCTURED_ABILITY_DEFINITIONS = [
+  ...SPECIAL_ABILITY_DEFINITIONS.map((definition) => ({
+    ...definition,
+    category: 'special',
+    availableSources: ['specialText'],
+  })),
+  ...CREWMATE_ABILITY_DEFINITIONS.map((definition) => ({
+    ...definition,
+    category: 'crewmate',
+    availableSources: ['sailorAbilities'],
+  })),
+];
+const STRUCTURED_ABILITY_METADATA_BY_KEY = new Map(
+  STRUCTURED_ABILITY_DEFINITIONS.map((definition) => [definition.key, definition]),
+);
 const SLOT_ABILITY_KEY_SET = new Set(['remove_slot_bind', 'remove_slot_barrier']);
 const DEFAULT_COVERAGE_MODE = 'explicit';
 const PAIN_ABILITY_KEY = 'remove_pain';
 const PAIN_ABILITY_LABEL = 'Remove Pain';
+const CREWMATE_TYPES = ['STR', 'DEX', 'QCK', 'PSY', 'INT'];
+const CREWMATE_CLASSES = [
+  { slug: 'fighter', label: 'Fighter' },
+  { slug: 'slasher', label: 'Slasher' },
+  { slug: 'striker', label: 'Striker' },
+  { slug: 'shooter', label: 'Shooter' },
+  { slug: 'free_spirit', label: 'Free Spirit' },
+  { slug: 'driven', label: 'Driven' },
+  { slug: 'cerebral', label: 'Cerebral' },
+  { slug: 'powerhouse', label: 'Powerhouse' },
+];
 const ABILITY_BRANCH_ACTION_PATTERN =
   /\b(?:deals?|boosts?|makes?|reduces?|changes?|adds?|delays?|locks?|recovers?|heals?|cuts?|transforms?|sets?)\b/gi;
 const EXPLICIT_BUILDER_ABILITIES = [
@@ -115,6 +140,163 @@ const SPECIAL_ABILITY_MATCHERS = [
   key,
   patterns,
 }));
+const CREWMATE_STAT_SCOPE_MATCHERS = {
+  crew: [/\b(?:crew|all characters?)\b/i],
+  self: [/\b(?:this character|self|own)\b/i],
+  position: [
+    /\b(?:position|positions?|1st|2nd|3rd|4th|5th|6th|first|second|third|fourth|fifth|sixth)\b/i,
+  ],
+  cost: [/\bcost\b/i, /\bcost of \d+(?: or less)?\b/i],
+};
+
+function createCrewmateTypeDamageMatcher(type) {
+  return new RegExp(
+    String.raw`\b(?:boosts?|increases?)\b[^.]{0,160}\bdamage\b[^.]{0,160}\b(?:against|to)\s+${type}\s+enemies\b|\bdamage dealt to\s+${type}\s+enemies\b`,
+    'i',
+  );
+}
+
+function createCrewmateStatMatchers(stat, scopePatterns) {
+  return scopePatterns.map(
+    (scopePattern) =>
+      new RegExp(
+        String.raw`\b(?:boosts?|adds?|increases?)\b[^.]{0,120}\b${stat}\b[^.]{0,160}${scopePattern.source}|${scopePattern.source}[^.]{0,160}\b${stat}\b`,
+        'i',
+      ),
+  );
+}
+
+function createCrewmateStatScopePatterns(scope) {
+  if (scope in CREWMATE_STAT_SCOPE_MATCHERS) {
+    return CREWMATE_STAT_SCOPE_MATCHERS[scope];
+  }
+
+  if (CREWMATE_TYPES.includes(scope.toUpperCase())) {
+    return [new RegExp(String.raw`\b${scope.toUpperCase()}\s+characters?\b`, 'i')];
+  }
+
+  const classEntry = CREWMATE_CLASSES.find((entry) => entry.slug === scope);
+
+  return classEntry ? [new RegExp(String.raw`\b${classEntry.label}\s+characters?\b`, 'i')] : [];
+}
+
+const CREWMATE_ABILITY_MATCHERS = [
+  ...CREWMATE_TYPES.map((type, index) => ({
+    key: `crewmate_damage_boost_${type.toLowerCase()}_enemy`,
+    patterns: [createCrewmateTypeDamageMatcher(type)],
+  })),
+  {
+    key: 'crewmate_tap_timing_bonus',
+    patterns: [
+      /\badds?\b[^.]{0,160}\badditional damage\b[^.]{0,80}\bafter timing\b/i,
+      /\btap-?timing bonus\b/i,
+      /\bafter timing\b[^.]{0,120}\bdamage\b/i,
+    ],
+  },
+  {
+    key: 'crewmate_recover_special_bind',
+    patterns: [/\b(?:reduces?|removes?)\b[^.]{0,160}\bspecial bind\b/i],
+  },
+  {
+    key: 'crewmate_recover_special_reverse',
+    patterns: [/\b(?:reduces?|removes?)\b[^.]{0,160}\bspecial reverse\b/i],
+  },
+  {
+    key: 'crewmate_recover_remove_sfx',
+    patterns: [/\b(?:reduces?|removes?)\b[^.]{0,160}\bSFX\b/i],
+  },
+  {
+    key: 'crewmate_recover_paralysis',
+    patterns: [/\b(?:reduces?|removes?)\b[^.]{0,160}\bparalysis\b/i],
+  },
+  {
+    key: 'crewmate_recover_burn',
+    patterns: [/\b(?:reduces?|removes?)\b[^.]{0,160}\bburn\b/i],
+  },
+  {
+    key: 'crewmate_recover_poisons',
+    patterns: [/\b(?:reduces?|removes?)\b[^.]{0,160}\b(?:poison|poisons|toxic)\b/i],
+  },
+  {
+    key: 'crewmate_recover_blow_away',
+    patterns: [/\b(?:reduces?|removes?)\b[^.]{0,160}\bblow away\b/i],
+  },
+  {
+    key: 'crewmate_recover_stun',
+    patterns: [/\b(?:reduces?|removes?)\b[^.]{0,160}\bstun\b/i],
+  },
+  {
+    key: 'crewmate_make_slots_favorable',
+    patterns: [/\bmakes?\b[^.]{0,160}\b(?:orbs?|slots?)\b[^.]{0,80}\b(?:beneficial|matching|favorable)\b/i],
+  },
+  {
+    key: 'crewmate_boost_slot_effect_rcv',
+    patterns: [
+      /\bboosts?\b[^.]{0,160}\b(?:slot|orb) effects?\b[^.]{0,80}\bRCV\b/i,
+      /\bRCV\b[^.]{0,80}\b(?:slot|orb) effects?\b/i,
+    ],
+  },
+  {
+    key: 'crewmate_slot_carry_over',
+    patterns: [
+      /\b(?:orbs?|slots?)\b[^.]{0,160}\bcarry over\b/i,
+      /\b(?:orbs?|slots?)\b[^.]{0,160}\bcarried over\b/i,
+      /\b(?:orbs?|slots?)\b[^.]{0,160}\bremain\b[^.]{0,80}\bnext stage\b/i,
+    ],
+  },
+  {
+    key: 'crewmate_slot_change',
+    patterns: [/\bchanges?\b[^.]{0,160}\b(?:orbs?|slots?)\b/i, /\btransforms?\b[^.]{0,160}\b(?:orbs?|slots?)\b/i],
+  },
+  {
+    key: 'crewmate_tap_requirement_certain_slots',
+    patterns: [/\bcertain slots?\b/i, /\btap-?timing\b[^.]{0,120}\bslots?\b/i],
+  },
+  {
+    key: 'crewmate_special_charge_when_specials_used_by_others',
+    patterns: [
+      /\breduces?\b[^.]{0,160}\bspecial (?:cooldown|charge)\b[^.]{0,160}\bwhen another character uses? a special\b/i,
+      /\bwhen specials? used by others\b/i,
+    ],
+  },
+  {
+    key: 'crewmate_special_charge_when_taking_damage',
+    patterns: [/\breduces?\b[^.]{0,160}\bspecial (?:cooldown|charge)\b[^.]{0,160}\bwhen taking damage\b/i],
+  },
+  {
+    key: 'crewmate_special_charge_start_of_quest',
+    patterns: [
+      /\breduces?\b[^.]{0,160}\bspecial (?:cooldown|charge)\b[^.]{0,160}\b(?:at start of quest|at the start of the fight|at the start of the quest)\b/i,
+    ],
+  },
+  {
+    key: 'crewmate_special_charge_when_afflicted_by_paralysis',
+    patterns: [
+      /\breduces?\b[^.]{0,160}\bspecial (?:cooldown|charge)\b[^.]{0,160}\bwhen afflict(?:ed)? by paralysis\b/i,
+      /\breduces?\b[^.]{0,160}\bspecial (?:cooldown|charge)\b[^.]{0,160}\bwhen inflicted with paralysis\b/i,
+    ],
+  },
+  ...['atk', 'rcv', 'hp'].flatMap((stat) =>
+    [
+      'crew',
+      'self',
+      'position',
+      'cost',
+      ...CREWMATE_TYPES.map((type) => type.toLowerCase()),
+      ...CREWMATE_CLASSES.map((entry) => entry.slug),
+    ].map((scope) => ({
+      key: `crewmate_${stat}_boost_${scope}`,
+      patterns: createCrewmateStatMatchers(stat.toUpperCase(), createCrewmateStatScopePatterns(scope)),
+    })),
+  ),
+  {
+    key: 'crewmate_hp_recovery_eot',
+    patterns: [
+      /\bend of (?:each )?turn\b[^.]{0,160}\b(?:recovers?|heals?)\b[^.]{0,80}\bHP\b/i,
+      /\b(?:recovers?|heals?)\b[^.]{0,160}\bHP\b[^.]{0,80}\bend of (?:each )?turn\b/i,
+    ],
+  },
+].filter((entry) => entry.patterns.length > 0);
 const IGNORED_TARGET_PATTERNS = [
   'special cooldown',
   'cooldown',
@@ -427,7 +609,27 @@ export function analyzeBuilderAbilityText(value, source) {
 
   if (source === 'specialText') {
     SPECIAL_ABILITY_MATCHERS.forEach(({ key, patterns }) => {
-      const definition = SPECIAL_ABILITY_METADATA_BY_KEY.get(key);
+      const definition = STRUCTURED_ABILITY_METADATA_BY_KEY.get(key);
+
+      if (!definition || !patterns.some((pattern) => pattern.test(normalizedText))) {
+        return;
+      }
+
+      addAbility(abilities, seen, {
+        key,
+        label: definition.label,
+        minTurns: null,
+        isCompleteRemoval: false,
+        slotTokens: [],
+        source,
+        coverageMode: DEFAULT_COVERAGE_MODE,
+      });
+    });
+  }
+
+  if (source === 'sailorAbilities') {
+    CREWMATE_ABILITY_MATCHERS.forEach(({ key, patterns }) => {
+      const definition = STRUCTURED_ABILITY_METADATA_BY_KEY.get(key);
 
       if (!definition || !patterns.some((pattern) => pattern.test(normalizedText))) {
         return;
@@ -468,12 +670,23 @@ function resolveCaptainAbilityTexts(character) {
     : [];
 }
 
+function resolveSailorAbilityText(character) {
+  const sailorAbilities = Array.isArray(character.detail?.sailorAbilities)
+    ? character.detail.sailorAbilities
+    : [];
+
+  return sailorAbilities
+    .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+    .filter(Boolean)
+    .join(' ');
+}
+
 export async function enrichCharactersWithBuilderAbilities(
   characters,
   { batchSize = 200, logger = console.log, abilityCorrections = null } = {},
 ) {
   const catalogMap = new Map();
-  SPECIAL_ABILITY_DEFINITIONS.forEach((definition) => {
+  STRUCTURED_ABILITY_DEFINITIONS.forEach((definition) => {
     catalogMap.set(definition.key, createCatalogAccumulator(definition.key, definition.label));
   });
   const total = characters.length;
@@ -483,11 +696,13 @@ export async function enrichCharactersWithBuilderAbilities(
 
     batch.forEach((character) => {
       const captainAbilityTexts = resolveCaptainAbilityTexts(character);
+      const sailorAbilityText = resolveSailorAbilityText(character);
       const derivedBuilderAbilities = [
         ...analyzeBuilderAbilityText(character.detail?.specialText ?? null, 'specialText'),
         ...captainAbilityTexts.flatMap((text) =>
           analyzeBuilderAbilityText(text, 'captainAbility'),
         ),
+        ...analyzeBuilderAbilityText(sailorAbilityText, 'sailorAbilities'),
       ];
       const builderAbilities = mergeBuilderAbilities(
         character.detail?.builderAbilities ?? [],
@@ -521,7 +736,9 @@ export async function enrichCharactersWithBuilderAbilities(
         const sampleText =
           ability.source === 'captainAbility'
             ? captainAbilityTexts[0] ?? character.detail?.captainAbility
-            : character.detail?.specialText;
+            : ability.source === 'sailorAbilities'
+              ? sailorAbilityText
+              : character.detail?.specialText;
 
         if (
           current.sampleTexts.length < 5 &&
@@ -545,12 +762,12 @@ export async function enrichCharactersWithBuilderAbilities(
 
   const abilities = [...catalogMap.values()]
     .map((entry) => {
-      const metadata = SPECIAL_ABILITY_METADATA_BY_KEY.get(entry.key);
+      const metadata = STRUCTURED_ABILITY_METADATA_BY_KEY.get(entry.key);
 
       return {
         key: entry.key,
         label: metadata?.label ?? entry.label,
-        category: metadata ? 'special' : 'legacy',
+        category: metadata?.category ?? 'legacy',
         groupLabel: metadata?.groupLabel ?? null,
         groupOrder: metadata?.groupOrder ?? null,
         effectOrder: metadata?.effectOrder ?? null,
@@ -562,7 +779,7 @@ export async function enrichCharactersWithBuilderAbilities(
         availableSources: [...entry.availableSources].length
           ? [...entry.availableSources].sort((left, right) => left.localeCompare(right))
           : metadata
-            ? ['specialText']
+            ? [...metadata.availableSources]
             : [],
         availableCoverageModes: [...entry.availableCoverageModes].length
           ? [...entry.availableCoverageModes].sort(compareCoverageModes)
@@ -669,7 +886,12 @@ function normalizeExistingBuilderAbility(value) {
     slotTokens: Array.isArray(value.slotTokens)
       ? [...new Set(value.slotTokens.map((entry) => String(entry).trim().toUpperCase()).filter(Boolean))]
       : [],
-    source: value.source === 'captainAbility' ? 'captainAbility' : 'specialText',
+    source:
+      value.source === 'captainAbility'
+        ? 'captainAbility'
+        : value.source === 'sailorAbilities'
+          ? 'sailorAbilities'
+          : 'specialText',
     coverageMode: value.coverageMode === 'selectedDebuff' ? 'selectedDebuff' : DEFAULT_COVERAGE_MODE,
   };
 }
@@ -691,11 +913,20 @@ function createCatalogAccumulator(key, label) {
 }
 
 function compareCatalogAbilities(left, right) {
-  if (left.category === 'special' || right.category === 'special') {
-    if (left.category !== right.category) {
-      return left.category === 'special' ? -1 : 1;
-    }
+  const categoryOrder = new Map([
+    ['special', 0],
+    ['crewmate', 1],
+    ['legacy', 2],
+  ]);
+  const leftCategoryOrder = categoryOrder.get(left.category ?? 'legacy') ?? Number.MAX_SAFE_INTEGER;
+  const rightCategoryOrder =
+    categoryOrder.get(right.category ?? 'legacy') ?? Number.MAX_SAFE_INTEGER;
 
+  if (leftCategoryOrder !== rightCategoryOrder) {
+    return leftCategoryOrder - rightCategoryOrder;
+  }
+
+  if (leftCategoryOrder < 2) {
     return (
       (left.groupOrder ?? Number.MAX_SAFE_INTEGER) -
         (right.groupOrder ?? Number.MAX_SAFE_INTEGER) ||

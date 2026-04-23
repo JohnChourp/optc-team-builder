@@ -97,14 +97,51 @@
               </ion-button>
             </div>
 
+            <div class="character-image-picker-filter-grid">
+              <ion-button
+                fill="outline"
+                color="warning"
+                [disabled]="applyingSelection || !availableCrewmateAbilityCatalogItems().length"
+                (click)="openCrewmateAbilityPicker()"
+              >
+                {{ t('filters.crewmate') }}
+                @if (crewmateAbilityDrafts().length) {
+                  <span>&nbsp;({{ crewmateAbilityDrafts().length }})</span>
+                }
+              </ion-button>
+
+              <ion-button
+                fill="clear"
+                color="light"
+                [disabled]="applyingSelection || !crewmateAbilityDrafts().length"
+                (click)="clearCrewmateAbilityFilters()"
+              >
+                {{ t('filters.clearCrewmate') }}
+              </ion-button>
+            </div>
+
             <app-special-ability-picker
               [isOpen]="specialAbilityPickerOpen()"
+              category="special"
+              [eyebrow]="t('filters.specialEyebrow')"
               [title]="t('filters.specialTitle')"
               [copy]="t('filters.specialCopy')"
               [drafts]="specialAbilityDrafts()"
               [catalogItems]="availableSpecialAbilityCatalogItems()"
               (dismiss)="closeSpecialAbilityPicker()"
               (saveDrafts)="saveSpecialAbilityPicker($event)"
+            ></app-special-ability-picker>
+
+            <app-special-ability-picker
+              [isOpen]="crewmateAbilityPickerOpen()"
+              category="crewmate"
+              [eyebrow]="t('filters.crewmateEyebrow')"
+              [title]="t('filters.crewmateTitle')"
+              [copy]="t('filters.crewmateCopy')"
+              [drafts]="crewmateAbilityDrafts()"
+              [catalogItems]="availableCrewmateAbilityCatalogItems()"
+              (dismiss)="closeCrewmateAbilityPicker()"
+              (saveDrafts)="saveCrewmateAbilityPicker($event)"
             ></app-special-ability-picker>
 
             @if (loading()) {

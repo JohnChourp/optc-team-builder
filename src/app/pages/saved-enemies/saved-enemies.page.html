@@ -526,12 +526,82 @@
 
             <app-special-ability-picker
               [isOpen]="abilityPickerOpen()"
+              category="special"
+              [eyebrow]="t('editor.specialFilters.eyebrow')"
               [title]="t('editor.specialFilters.title')"
               [copy]="t('editor.specialFilters.copy')"
               [drafts]="requiredAbilityDrafts()"
               [catalogItems]="availableSpecialAbilityCatalogItems()"
               (dismiss)="closeAbilityPicker()"
               (saveDrafts)="saveAbilityPicker($event)"
+            ></app-special-ability-picker>
+
+            <section class="ability-card">
+              <div class="section-head section-head--editor">
+                <div>
+                  <h3>{{ t('editor.crewmateFilters.title') }}</h3>
+                  <span>{{ t('editor.crewmateFilters.copy') }}</span>
+                </div>
+
+                <div class="card-actions">
+                  <ion-button
+                    fill="outline"
+                    color="warning"
+                    size="small"
+                    [disabled]="savingEnemy() || !availableCrewmateAbilityCatalogItems().length"
+                    (click)="openCrewmateAbilityPicker()"
+                  >
+                    {{ t('editor.crewmateFilters.actions.openPicker') }}
+                  </ion-button>
+                  <ion-button
+                    fill="clear"
+                    color="light"
+                    size="small"
+                    [disabled]="savingEnemy() || !crewmateAbilityDrafts().length"
+                    (click)="clearCrewmateAbilityFilters()"
+                  >
+                    {{ t('editor.crewmateFilters.actions.clear') }}
+                  </ion-button>
+                </div>
+              </div>
+
+              @if (!availableCrewmateAbilityCatalogItems().length) {
+                <p class="editor-empty-copy">
+                  {{ t('editor.noAbilityCatalog') }}
+                </p>
+              }
+
+              @if (!crewmateAbilitySummaryChips().length) {
+                <p class="editor-empty-copy">
+                  {{ t('editor.crewmateFilters.empty') }}
+                </p>
+              }
+
+              @if (crewmateAbilitySummaryChips().length) {
+                <div class="selected-values-row">
+                  @for (chip of crewmateAbilitySummaryChips(); track chip.draftId) {
+                    <span class="selected-value-chip editor-ability-chip">
+                      <span class="editor-ability-chip__icon" [attr.data-tone]="chip.visual.tone">
+                        <ion-icon [icon]="chip.visual.icon"></ion-icon>
+                        <small>{{ chip.visual.badge }}</small>
+                      </span>
+                      <span>{{ chip.label }}</span>
+                    </span>
+                  }
+                </div>
+              }
+            </section>
+
+            <app-special-ability-picker
+              [isOpen]="crewmateAbilityPickerOpen()"
+              category="crewmate"
+              [eyebrow]="t('editor.crewmateFilters.eyebrow')"
+              [title]="t('editor.crewmateFilters.title')"
+              [copy]="t('editor.crewmateFilters.copy')"
+              [drafts]="crewmateAbilityDrafts()"
+              [catalogItems]="availableCrewmateAbilityCatalogItems()"
+              (dismiss)="closeCrewmateAbilityPicker()"
+              (saveDrafts)="saveCrewmateAbilityPicker($event)"
             ></app-special-ability-picker>
           </div>
         </ion-content>

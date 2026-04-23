@@ -36,8 +36,11 @@ import {
 import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import {
-  getSpecialAbilityCatalogItems,
+  getAbilityCatalogItemsByCategory,
+  intersectAbilityMatchingCharacterIds,
+  resolveCategoryAbilityMatchingCharacterIds,
   resolveSpecialAbilityMatchingCharacterIds,
+  serializeCategoryAbilityDrafts,
   serializeSpecialAbilityDrafts,
 } from '../../core/services/special-ability-filter.utils';
 import { SpecialAbilityPickerComponent } from '../special-ability-picker/special-ability-picker.component';
@@ -86,6 +89,8 @@ export class CharacterImagePickerComponent implements OnChanges {
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly specialAbilityPickerOpen = signal(false);
   public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly crewmateAbilityPickerOpen = signal(false);
+  public readonly crewmateAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly characters = signal<CharacterListItem[]>([]);
   public readonly selectedCharacter = signal<CharacterListItem | null>(null);
   public readonly selectedCharacterId = computed(() => this.selectedCharacter()?.id ?? null);
@@ -99,7 +104,10 @@ export class CharacterImagePickerComponent implements OnChanges {
     this.normalizeOptions(this.summary()?.availableClasses ?? []),
   );
   public readonly availableSpecialAbilityCatalogItems = computed(() =>
-    getSpecialAbilityCatalogItems(this.abilityCatalog()?.abilities ?? []),
+    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'special'),
+  );
+  public readonly availableCrewmateAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'crewmate'),
   );
   public readonly specialAbilityRequirements = computed(() =>
     serializeSpecialAbilityDrafts(
@@ -113,6 +121,20 @@ export class CharacterImagePickerComponent implements OnChanges {
       this.availableSpecialAbilityCatalogItems(),
     ),
   );
+  public readonly crewmateAbilityRequirements = computed(() =>
+    serializeCategoryAbilityDrafts(
+      this.crewmateAbilityDrafts(),
+      this.availableCrewmateAbilityCatalogItems(),
+      'crewmate',
+    ),
+  );
+  public readonly crewmateFilterCharacterIds = computed(() =>
+    resolveCategoryAbilityMatchingCharacterIds(
+      this.crewmateAbilityRequirements(),
+      this.availableCrewmateAbilityCatalogItems(),
+      'crewmate',
+    ),
+  );
 
   private dismissReason: 'save' | 'cancel' | null = null;
 
@@ -123,7 +145,6 @@ export class CharacterImagePickerComponent implements OnChanges {
 
   public ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen'] && this.isOpen) {
-      console.log('CharacterImagePickerComponent component');
       this.dismissReason = null;
       this.resetState();
       void this.initializePicker();
@@ -189,6 +210,37 @@ export class CharacterImagePickerComponent implements OnChanges {
 
   public async clearSpecialAbilityFilters(): Promise<void> {
     this.specialAbilityDrafts.set([]);
+    await this.loadCharacters(true);
+  }
+
+  public openCrewmateAbilityPicker(): void {
+    if (this.applyingSelection || !this.availableCrewmateAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.crewmateAbilityPickerOpen.set(true);
+  }
+
+  public closeCrewmateAbilityPicker(): void {
+    this.crewmateAbilityPickerOpen.set(false);
+  }
+
+  public async saveCrewmateAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.crewmateAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeCategoryAbilityDrafts(
+          drafts,
+          this.availableCrewmateAbilityCatalogItems(),
+          'crewmate',
+        ),
+      ),
+    );
+    this.crewmateAbilityPickerOpen.set(false);
+    await this.loadCharacters(true);
+  }
+
+  public async clearCrewmateAbilityFilters(): Promise<void> {
+    this.crewmateAbilityDrafts.set([]);
     await this.loadCharacters(true);
   }
 
@@ -267,7 +319,10 @@ export class CharacterImagePickerComponent implements OnChanges {
     try {
       await this.characterCatalogCache.ensureLoaded();
       const nextOffset = reset ? 0 : this.characters().length;
-      const allowedCharacterIds = this.specialFilterCharacterIds();
+      const allowedCharacterIds = intersectAbilityMatchingCharacterIds([
+        this.specialFilterCharacterIds(),
+        this.crewmateFilterCharacterIds(),
+      ]);
       const query = {
         searchTerm: this.searchTerm().trim(),
         typeFilter: this.selectedType(),
@@ -313,6 +368,8 @@ export class CharacterImagePickerComponent implements OnChanges {
     this.selectedClass.set('');
     this.specialAbilityPickerOpen.set(false);
     this.specialAbilityDrafts.set([]);
+    this.crewmateAbilityPickerOpen.set(false);
+    this.crewmateAbilityDrafts.set([]);
     this.characters.set([]);
     this.selectedCharacter.set(null);
   }

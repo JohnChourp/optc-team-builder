@@ -34,8 +34,11 @@ import { CharacterCatalogCacheService } from '../../core/services/character-cata
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import {
-  getSpecialAbilityCatalogItems,
+  getAbilityCatalogItemsByCategory,
+  intersectAbilityMatchingCharacterIds,
+  resolveCategoryAbilityMatchingCharacterIds,
   resolveSpecialAbilityMatchingCharacterIds,
+  serializeCategoryAbilityDrafts,
   serializeSpecialAbilityDrafts,
 } from '../../core/services/special-ability-filter.utils';
 import { UserStateService } from '../../core/services/user-state.service';
@@ -85,6 +88,8 @@ export class TeamBuilderPage implements OnInit {
   public readonly candidateSearchTerm = signal('');
   public readonly specialAbilityPickerOpen = signal(false);
   public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly crewmateAbilityPickerOpen = signal(false);
+  public readonly crewmateAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly candidateDisplayMode = signal<TeamBuilderCandidateDisplayMode>('list');
   public readonly candidateCharacters = signal<CharacterListItem[]>([]);
   public readonly slotCharacters = signal<Array<CharacterListItem | null>>(
@@ -119,7 +124,10 @@ export class TeamBuilderPage implements OnInit {
     () => this.candidateDisplayMode() === 'compact',
   );
   public readonly availableSpecialAbilityCatalogItems = computed(() =>
-    getSpecialAbilityCatalogItems(this.abilityCatalog()?.abilities ?? []),
+    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'special'),
+  );
+  public readonly availableCrewmateAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'crewmate'),
   );
   public readonly specialAbilityRequirements = computed(() =>
     serializeSpecialAbilityDrafts(
@@ -127,10 +135,24 @@ export class TeamBuilderPage implements OnInit {
       this.availableSpecialAbilityCatalogItems(),
     ),
   );
+  public readonly crewmateAbilityRequirements = computed(() =>
+    serializeCategoryAbilityDrafts(
+      this.crewmateAbilityDrafts(),
+      this.availableCrewmateAbilityCatalogItems(),
+      'crewmate',
+    ),
+  );
   public readonly specialFilterCharacterIds = computed(() =>
     resolveSpecialAbilityMatchingCharacterIds(
       this.specialAbilityRequirements(),
       this.availableSpecialAbilityCatalogItems(),
+    ),
+  );
+  public readonly crewmateFilterCharacterIds = computed(() =>
+    resolveCategoryAbilityMatchingCharacterIds(
+      this.crewmateAbilityRequirements(),
+      this.availableCrewmateAbilityCatalogItems(),
+      'crewmate',
     ),
   );
   public readonly candidateCardViews = computed<TeamBuilderCandidateCardView[]>(() =>
@@ -179,10 +201,6 @@ export class TeamBuilderPage implements OnInit {
     await this.refreshCandidateCharacters(this.candidateSearchTerm());
   }
 
-  public ionViewDidEnter(): void {
-    console.log('TeamBuilderPage component');
-  }
-
   public async onSearchCandidates(event: CustomEvent<{ value?: string | null }>): Promise<void> {
     this.candidateSearchTerm.set((event.detail.value ?? '').trim());
     await this.refreshCandidateCharacters(this.candidateSearchTerm());
@@ -216,6 +234,37 @@ export class TeamBuilderPage implements OnInit {
 
   public async clearSpecialAbilityFilters(): Promise<void> {
     this.specialAbilityDrafts.set([]);
+    await this.refreshCandidateCharacters(this.candidateSearchTerm());
+  }
+
+  public openCrewmateAbilityPicker(): void {
+    if (!this.availableCrewmateAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.crewmateAbilityPickerOpen.set(true);
+  }
+
+  public closeCrewmateAbilityPicker(): void {
+    this.crewmateAbilityPickerOpen.set(false);
+  }
+
+  public async saveCrewmateAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.crewmateAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeCategoryAbilityDrafts(
+          drafts,
+          this.availableCrewmateAbilityCatalogItems(),
+          'crewmate',
+        ),
+      ),
+    );
+    this.crewmateAbilityPickerOpen.set(false);
+    await this.refreshCandidateCharacters(this.candidateSearchTerm());
+  }
+
+  public async clearCrewmateAbilityFilters(): Promise<void> {
+    this.crewmateAbilityDrafts.set([]);
     await this.refreshCandidateCharacters(this.candidateSearchTerm());
   }
 
@@ -304,6 +353,8 @@ export class TeamBuilderPage implements OnInit {
     this.candidateSearchTerm.set('');
     this.specialAbilityPickerOpen.set(false);
     this.specialAbilityDrafts.set([]);
+    this.crewmateAbilityPickerOpen.set(false);
+    this.crewmateAbilityDrafts.set([]);
     this.selectedSlotIndex.set(0);
     this.resetEditor();
     await this.refreshCandidateCharacters(this.candidateSearchTerm());
@@ -330,7 +381,10 @@ export class TeamBuilderPage implements OnInit {
         searchTerm,
         typeFilter: '',
         classFilter: '',
-        allowedCharacterIds: this.specialFilterCharacterIds(),
+        allowedCharacterIds: intersectAbilityMatchingCharacterIds([
+          this.specialFilterCharacterIds(),
+          this.crewmateFilterCharacterIds(),
+        ]),
         limit: 24,
         offset: 0,
       }),

@@ -62,8 +62,10 @@ import {
   type EnemyMechanicVisualMeta,
 } from '../../core/services/enemy-mechanic-draft.utils';
 import {
+  createCategoryAbilityDrafts,
   createSpecialAbilityDrafts,
-  getSpecialAbilityCatalogItems,
+  getAbilityCatalogItemsByCategory,
+  serializeCategoryAbilityDrafts,
   serializeSpecialAbilityDrafts,
 } from '../../core/services/special-ability-filter.utils';
 import {
@@ -151,6 +153,8 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public readonly enemyMechanicPickerOpen = signal(false);
   public readonly requiredAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly abilityPickerOpen = signal(false);
+  public readonly crewmateAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly crewmateAbilityPickerOpen = signal(false);
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
   public readonly savingEnemy = signal(false);
@@ -185,7 +189,10 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     () => this.abilityCatalog()?.abilities ?? [],
   );
   public readonly availableSpecialAbilityCatalogItems = computed(() =>
-    getSpecialAbilityCatalogItems(this.availableAbilityCatalogItems()),
+    getAbilityCatalogItemsByCategory(this.availableAbilityCatalogItems(), 'special'),
+  );
+  public readonly availableCrewmateAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.availableAbilityCatalogItems(), 'crewmate'),
   );
   public readonly availableEnemyMechanicCatalogItems = computed<
     AutoBuildEnemyMechanicCatalogItem[]
@@ -217,6 +224,13 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   );
   public readonly requiredAbilitySummaryChips = computed<SavedEnemyAbilitySummaryChipView[]>(() =>
     this.requiredAbilityDrafts().map((draft) => ({
+      draftId: draft.draftId,
+      label: this.resolveRequiredAbilitySelectedText(draft),
+      visual: resolveAbilityRequirementVisual(draft.abilityKey),
+    })),
+  );
+  public readonly crewmateAbilitySummaryChips = computed<SavedEnemyAbilitySummaryChipView[]>(() =>
+    this.crewmateAbilityDrafts().map((draft) => ({
       draftId: draft.draftId,
       label: this.resolveRequiredAbilitySelectedText(draft),
       visual: resolveAbilityRequirementVisual(draft.abilityKey),
@@ -338,10 +352,12 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.resetEnemyTextParseState();
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
+    this.crewmateAbilityPickerOpen.set(false);
     this.selectedTypes.set([...this.availableTypes]);
     this.selectedClasses.set([...this.availableClasses()]);
     this.enemyMechanicDrafts.set([]);
     this.requiredAbilityDrafts.set([]);
+    this.crewmateAbilityDrafts.set([]);
     this.requireAllSelectedTypesInTeam.set(false);
     this.requireAllSelectedClassesPerCharacter.set(false);
     this.savingEnemy.set(false);
@@ -359,6 +375,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.resetEnemyTextParseState();
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
+    this.crewmateAbilityPickerOpen.set(false);
     this.selectedTypes.set([...enemy.selectedTypes]);
     this.selectedClasses.set([...enemy.selectedClasses]);
     this.enemyMechanicDrafts.set([]);
@@ -371,6 +388,16 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
         this.availableAbilityCatalogItems(),
       ),
     );
+    this.crewmateAbilityDrafts.set(
+      createCategoryAbilityDrafts(
+        mergeAbilityRequirements([
+          ...enemy.requiredAbilities,
+          ...deriveAbilityRequirementsFromEnemyMechanics(enemy.enemyMechanics),
+        ]),
+        this.availableAbilityCatalogItems(),
+        'crewmate',
+      ),
+    );
     this.requireAllSelectedTypesInTeam.set(enemy.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(enemy.requireAllSelectedClassesPerCharacter);
     this.savingEnemy.set(false);
@@ -380,6 +407,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public closeEditor(): void {
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
+    this.crewmateAbilityPickerOpen.set(false);
     this.editorOpen.set(false);
     this.editingEnemy.set(null);
     this.savingEnemy.set(false);
@@ -513,6 +541,31 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.abilityPickerOpen.set(false);
   }
 
+  public openCrewmateAbilityPicker(): void {
+    if (this.savingEnemy() || this.availableCrewmateAbilityCatalogItems().length === 0) {
+      return;
+    }
+
+    this.crewmateAbilityPickerOpen.set(true);
+  }
+
+  public closeCrewmateAbilityPicker(): void {
+    this.crewmateAbilityPickerOpen.set(false);
+  }
+
+  public saveCrewmateAbilityPicker(drafts: AbilityRequirementDraft[]): void {
+    this.crewmateAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeCategoryAbilityDrafts(
+          drafts,
+          this.availableCrewmateAbilityCatalogItems(),
+          'crewmate',
+        ),
+      ),
+    );
+    this.crewmateAbilityPickerOpen.set(false);
+  }
+
   public onEnemyPasteTextChange(event: CustomEvent<{ value?: string | null }>): void {
     this.enemyTextPasteValue.set((event.detail.value ?? '').toString());
     this.enemyTextParseResult.set(null);
@@ -561,6 +614,16 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
         this.availableAbilityCatalogItems(),
       ),
     );
+    this.crewmateAbilityDrafts.set(
+      createCategoryAbilityDrafts(
+        mergeAbilityRequirements([
+          ...parsedResult.requiredAbilities,
+          ...deriveAbilityRequirementsFromEnemyMechanics(parsedResult.enemyMechanics),
+        ]),
+        this.availableAbilityCatalogItems(),
+        'crewmate',
+      ),
+    );
   }
 
   public openEnemyMechanicPicker(): void {
@@ -586,6 +649,10 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
   public clearRequiredAbilities(): void {
     this.requiredAbilityDrafts.set([]);
+  }
+
+  public clearCrewmateAbilityFilters(): void {
+    this.crewmateAbilityDrafts.set([]);
   }
 
   public async saveEnemy(): Promise<void> {
@@ -741,10 +808,17 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   private serializeRequiredAbilities(): AutoBuildAbilityRequirement[] {
-    return serializeSpecialAbilityDrafts(
-      this.requiredAbilityDrafts(),
-      this.availableSpecialAbilityCatalogItems(),
-    );
+    return [
+      ...serializeSpecialAbilityDrafts(
+        this.requiredAbilityDrafts(),
+        this.availableSpecialAbilityCatalogItems(),
+      ),
+      ...serializeCategoryAbilityDrafts(
+        this.crewmateAbilityDrafts(),
+        this.availableCrewmateAbilityCatalogItems(),
+        'crewmate',
+      ),
+    ];
   }
 
   private serializeEnemyMechanics(): AutoBuildEnemyMechanicRequirement[] {

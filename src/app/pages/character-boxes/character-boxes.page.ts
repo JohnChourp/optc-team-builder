@@ -40,8 +40,11 @@ import {
 import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import {
-  getSpecialAbilityCatalogItems,
+  getAbilityCatalogItemsByCategory,
+  intersectAbilityMatchingCharacterIds,
+  resolveCategoryAbilityMatchingCharacterIds,
   resolveSpecialAbilityMatchingCharacterIds,
+  serializeCategoryAbilityDrafts,
   serializeSpecialAbilityDrafts,
 } from '../../core/services/special-ability-filter.utils';
 import { UserStateService } from '../../core/services/user-state.service';
@@ -99,6 +102,8 @@ export class CharacterBoxesPage implements OnInit {
   public readonly selectedMembershipFilter = signal<CharacterBoxesMembershipFilter>('all');
   public readonly specialAbilityPickerOpen = signal(false);
   public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly crewmateAbilityPickerOpen = signal(false);
+  public readonly crewmateAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly displayMode = signal<CharacterBoxesDisplayMode>('list');
   public readonly characters = signal<CharacterListItem[]>([]);
   public readonly loading = signal(true);
@@ -115,7 +120,10 @@ export class CharacterBoxesPage implements OnInit {
     this.normalizeOptions(this.summary()?.availableClasses ?? []),
   );
   public readonly availableSpecialAbilityCatalogItems = computed(() =>
-    getSpecialAbilityCatalogItems(this.abilityCatalog()?.abilities ?? []),
+    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'special'),
+  );
+  public readonly availableCrewmateAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'crewmate'),
   );
   public readonly specialAbilityRequirements = computed(() =>
     serializeSpecialAbilityDrafts(
@@ -127,6 +135,20 @@ export class CharacterBoxesPage implements OnInit {
     resolveSpecialAbilityMatchingCharacterIds(
       this.specialAbilityRequirements(),
       this.availableSpecialAbilityCatalogItems(),
+    ),
+  );
+  public readonly crewmateAbilityRequirements = computed(() =>
+    serializeCategoryAbilityDrafts(
+      this.crewmateAbilityDrafts(),
+      this.availableCrewmateAbilityCatalogItems(),
+      'crewmate',
+    ),
+  );
+  public readonly crewmateFilterCharacterIds = computed(() =>
+    resolveCategoryAbilityMatchingCharacterIds(
+      this.crewmateAbilityRequirements(),
+      this.availableCrewmateAbilityCatalogItems(),
+      'crewmate',
     ),
   );
   public readonly totalAssignedCharacters = computed(() =>
@@ -349,6 +371,37 @@ export class CharacterBoxesPage implements OnInit {
     await this.loadCharacters(true);
   }
 
+  public openCrewmateAbilityPicker(): void {
+    if (!this.availableCrewmateAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.crewmateAbilityPickerOpen.set(true);
+  }
+
+  public closeCrewmateAbilityPicker(): void {
+    this.crewmateAbilityPickerOpen.set(false);
+  }
+
+  public async saveCrewmateAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.crewmateAbilityDrafts.set(
+      createAbilityRequirementDrafts(
+        serializeCategoryAbilityDrafts(
+          drafts,
+          this.availableCrewmateAbilityCatalogItems(),
+          'crewmate',
+        ),
+      ),
+    );
+    this.crewmateAbilityPickerOpen.set(false);
+    await this.loadCharacters(true);
+  }
+
+  public async clearCrewmateAbilityFilters(): Promise<void> {
+    this.crewmateAbilityDrafts.set([]);
+    await this.loadCharacters(true);
+  }
+
   public async toggleFavorite(characterId: number, event?: Event): Promise<void> {
     event?.preventDefault();
     event?.stopPropagation();
@@ -367,6 +420,8 @@ export class CharacterBoxesPage implements OnInit {
     this.selectedMembershipFilter.set('all');
     this.specialAbilityPickerOpen.set(false);
     this.specialAbilityDrafts.set([]);
+    this.crewmateAbilityPickerOpen.set(false);
+    this.crewmateAbilityDrafts.set([]);
     await this.loadCharacters(true);
   }
 
@@ -428,10 +483,11 @@ export class CharacterBoxesPage implements OnInit {
               favoriteCharacterIds === undefined || favoriteCharacterIds.includes(characterId),
           )
         : favoriteCharacterIds;
-    const allowedCharacterIds = this.intersectCharacterIds(
+    const allowedCharacterIds = intersectAbilityMatchingCharacterIds([
       scopedAllowedCharacterIds,
       this.specialFilterCharacterIds(),
-    );
+      this.crewmateFilterCharacterIds(),
+    ]);
     const nextCharacters = this.characterCatalogCache.queryCharacters({
       searchTerm: this.searchTerm(),
       typeFilter: this.selectedType(),
@@ -446,23 +502,6 @@ export class CharacterBoxesPage implements OnInit {
     this.characters.set(reset ? nextCharacters : [...this.characters(), ...nextCharacters]);
     this.hasMore.set(nextCharacters.length === PAGE_SIZE);
     this.loading.set(false);
-  }
-
-  private intersectCharacterIds(
-    left: number[] | undefined,
-    right: number[] | undefined,
-  ): number[] | undefined {
-    if (left === undefined) {
-      return right;
-    }
-
-    if (right === undefined) {
-      return left;
-    }
-
-    const rightSet = new Set(right);
-
-    return left.filter((characterId) => rightSet.has(characterId));
   }
 
   private normalizeOptions(values: string[]): string[] {

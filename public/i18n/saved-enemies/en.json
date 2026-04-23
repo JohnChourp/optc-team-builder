@@ -147,12 +147,23 @@
       }
     },
     "specialFilters": {
+      "eyebrow": "Special",
       "title": "Special filters",
       "copy": "Choose the Special effects needed for this enemy. Builder and character results must match every selected effect.",
       "empty": "No Special effects selected yet.",
       "actions": {
         "openPicker": "Open Special picker",
         "clear": "Clear Special filters"
+      }
+    },
+    "crewmateFilters": {
+      "eyebrow": "Crewmate Ability",
+      "title": "Crewmate Ability filters",
+      "copy": "Pick Crewmate effects. Results must cover every selected effect.",
+      "empty": "No Crewmate Ability effects selected",
+      "actions": {
+        "openPicker": "Open Crewmate picker",
+        "clear": "Clear Crewmate filters"
       }
     },
     "removeAbility": "Remove",

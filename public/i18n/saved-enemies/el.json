@@ -147,12 +147,23 @@
       }
     },
     "specialFilters": {
+      "eyebrow": "Special",
       "title": "Special filters",
       "copy": "Επίλεξε τα Special effects που χρειάζεται ο εχθρός. Builder και character results πρέπει να έχουν όλα τα επιλεγμένα effects.",
       "empty": "Δεν έχουν επιλεγεί Special effects ακόμη.",
       "actions": {
         "openPicker": "Άνοιγμα Special picker",
         "clear": "Καθαρισμός Special filters"
+      }
+    },
+    "crewmateFilters": {
+      "eyebrow": "Crewmate Ability",
+      "title": "Crewmate Ability filters",
+      "copy": "Επίλεξε Crewmate effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect.",
+      "empty": "Δεν έχουν επιλεγεί Crewmate Ability effects",
+      "actions": {
+        "openPicker": "Άνοιγμα Crewmate picker",
+        "clear": "Καθαρισμός Crewmate filters"
       }
     },
     "removeAbility": "Αφαίρεση",

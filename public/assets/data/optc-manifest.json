@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-23T12:33:24.781Z",
-  "sourceVersion": "unknown",
-  "characterCount": 4822,
-  "detailCount": 4131,
+  "generatedAt": "2026-04-23T15:47:40.646Z",
+  "sourceVersion": "36",
+  "characterCount": 4929,
+  "detailCount": 4444,
   "shipCount": 66,
-  "rumbleCount": 1428,
+  "rumbleCount": 4510,
   "availableTypes": [
     "DEX",
     "INT",
@@ -50,8 +50,8 @@
       "id": "ship-thumbnails",
       "label": "Ship thumbnails",
       "localBasePath": "assets/offline-packs/ship-thumbnails",
-      "fileCount": 63,
-      "totalBytes": 502890,
+      "fileCount": 71,
+      "totalBytes": 632594,
       "installed": true,
       "checksum": "5f01f0889be3aa7a901634609253bf50146595b1"
     },

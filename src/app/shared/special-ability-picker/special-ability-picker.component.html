@@ -7,7 +7,7 @@
             <div>
               <div class="section-label">
                 <ion-icon [icon]="pickerIcon"></ion-icon>
-                <span>{{ t('special.eyebrow') }}</span>
+                <span>{{ eyebrow }}</span>
               </div>
               <h2>{{ title }}</h2>
               <p>{{ copy }}</p>
@@ -27,8 +27,8 @@
           <section class="special-ability-picker-panel special-ability-picker-panel--catalog">
             <div class="special-ability-picker-panel__head">
               <div>
-                <strong>{{ t('special.catalogTitle') }}</strong>
-                <small>{{ t('special.catalogCount', { count: catalogItemsState().length }) }}</small>
+                <strong>{{ t('catalog.title', { eyebrow }) }}</strong>
+                <small>{{ t('catalog.count', { count: catalogItemsState().length }) }}</small>
               </div>
 
               <ion-button
@@ -45,7 +45,7 @@
             <ion-searchbar
               class="special-ability-picker-search"
               [debounce]="150"
-              [placeholder]="t('special.searchPlaceholder')"
+              [placeholder]="t('catalog.searchPlaceholder', { eyebrow })"
               [value]="searchTerm()"
               (ionInput)="onSearchChange($event)"
             ></ion-searchbar>
@@ -61,7 +61,7 @@
                   <section class="special-ability-section">
                     <div class="special-ability-section__head">
                       <strong>{{ section.groupLabel }}</strong>
-                      <small>{{ t('special.sectionCount', { count: section.items.length }) }}</small>
+                      <small>{{ t('catalog.sectionCount', { count: section.items.length }) }}</small>
                     </div>
 
                     <div class="special-ability-tile-grid">
@@ -75,7 +75,7 @@
                           <span class="special-ability-tile__badge">{{ tile.badge }}</span>
                           <span class="special-ability-tile__copy">
                             <strong>{{ tile.item.label }}</strong>
-                            <small>{{ t('special.matchCount', { count: tile.item.matchCount }) }}</small>
+                            <small>{{ t('catalog.matchCount', { count: tile.item.matchCount }) }}</small>
                           </span>
                         </button>
                       }
@@ -89,7 +89,7 @@
           <section class="special-ability-picker-panel special-ability-picker-panel--selected">
             <div class="special-ability-picker-panel__head">
               <div>
-                <strong>{{ t('special.selectedTitle') }}</strong>
+                <strong>{{ t('selected.title', { eyebrow }) }}</strong>
                 <small>{{ t('selected.count', { count: selectedRows().length }) }}</small>
               </div>
             </div>
@@ -97,7 +97,7 @@
             @if (!selectedRows().length) {
               <div class="special-ability-picker-empty special-ability-picker-empty--selected">
                 <strong>{{ t('selected.emptyTitle') }}</strong>
-                <p>{{ t('special.emptySelectedCopy') }}</p>
+                <p>{{ t('selected.emptyCopy', { eyebrow }) }}</p>
               </div>
             } @else {
               <div class="special-ability-selected-list">

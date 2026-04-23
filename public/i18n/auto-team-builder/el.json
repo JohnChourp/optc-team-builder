@@ -553,6 +553,7 @@
     "loadedTitle": "Το enemy preset είναι έτοιμο."
   },
   "specialFilters": {
+    "eyebrow": "Special",
     "title": "Special filters",
     "copy": "Επίλεξε Special effects. Τα αποτελέσματα πρέπει να έχουν όλα τα επιλεγμένα effects.",
     "configuredRows": "{{count}} επιλεγμένα Special effects",
@@ -562,6 +563,19 @@
     "actions": {
       "openPicker": "Άνοιγμα Special picker",
       "clearRequirements": "Καθαρισμός Special filters"
+    }
+  },
+  "crewmateFilters": {
+    "eyebrow": "Crewmate Ability",
+    "title": "Crewmate Ability filters",
+    "copy": "Επίλεξε Crewmate effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect.",
+    "configuredRows": "{{count}} επιλεγμένα Crewmate effects",
+    "empty": "Δεν έχουν επιλεγεί Crewmate Ability effects",
+    "emptyCatalog": "Δεν βρέθηκε Crewmate ability catalog. Τρέξε",
+    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά.",
+    "actions": {
+      "openPicker": "Άνοιγμα Crewmate picker",
+      "clearRequirements": "Καθαρισμός Crewmate filters"
     }
   }
 }
