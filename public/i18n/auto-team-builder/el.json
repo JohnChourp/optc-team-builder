@@ -202,6 +202,25 @@
     "downloadTeamJson": "Λήψη team JSON",
     "importPresetJson": "Εισαγωγή preset JSON"
   },
+  "performance": {
+    "title": "Live worker scaling",
+    "copy": "Άλλαξε τον target αριθμό fallback workers χωρίς restart του current build.",
+    "mode": {
+      "label": "Worker mode",
+      "options": {
+        "auto": "Auto",
+        "manual": "Manual"
+      }
+    },
+    "manualCount": {
+      "label": "Manual workers"
+    },
+    "runtime": {
+      "detected": "{{count}} ανιχνευμένοι πυρήνες σε αυτή τη συσκευή.",
+      "target": "Τα επόμενα fallback attempts στοχεύουν έως {{count}} web worker(s).",
+      "applies": "Οι αλλαγές εφαρμόζονται στα επόμενα fallback attempts. Όσα τρέχουν ήδη συνεχίζουν κανονικά."
+    }
+  },
   "candidatePoolBox": {
     "createdTitle": "Το {{name}} είναι έτοιμο",
     "createdDescription": "Αποθηκεύτηκαν {{count}} χαρακτήρες στο νέο character box.",

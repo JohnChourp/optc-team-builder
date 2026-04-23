@@ -202,6 +202,25 @@
     "downloadTeamJson": "Download team JSON",
     "importPresetJson": "Import preset JSON"
   },
+  "performance": {
+    "title": "Live worker scaling",
+    "copy": "Adjust the fallback worker target without restarting the current build.",
+    "mode": {
+      "label": "Worker mode",
+      "options": {
+        "auto": "Auto",
+        "manual": "Manual"
+      }
+    },
+    "manualCount": {
+      "label": "Manual workers"
+    },
+    "runtime": {
+      "detected": "{{count}} detected cores on this device.",
+      "target": "Upcoming fallback attempts target up to {{count}} web worker(s).",
+      "applies": "Changes apply to upcoming fallback attempts. In-flight attempts keep running."
+    }
+  },
   "candidatePoolBox": {
     "createdTitle": "{{name}} is ready",
     "createdDescription": "{{count}} characters were saved into the new character box.",

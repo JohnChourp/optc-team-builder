@@ -1297,6 +1297,60 @@
                 </div>
               }
             </div>
+            <section class="loading-card__performance">
+              <div class="loading-card__performance-copy">
+                <strong>{{ t('performance.title') }}</strong>
+                <small>{{ t('performance.copy') }}</small>
+              </div>
+              <div class="loading-card__performance-controls">
+                <label class="loading-card__performance-field">
+                  <span>{{ t('performance.mode.label') }}</span>
+                  <ion-select
+                    interface="popover"
+                    fill="outline"
+                    [value]="autoTeamBuilderWorkerPreference().mode"
+                    (ionChange)="onAutoTeamBuilderWorkerModeChange($event)"
+                  >
+                    <ion-select-option value="auto">
+                      {{ t('performance.mode.options.auto') }}
+                    </ion-select-option>
+                    <ion-select-option value="manual">
+                      {{ t('performance.mode.options.manual') }}
+                    </ion-select-option>
+                  </ion-select>
+                </label>
+                <label class="loading-card__performance-field">
+                  <span>{{ t('performance.manualCount.label') }}</span>
+                  <ion-select
+                    interface="popover"
+                    fill="outline"
+                    [value]="autoTeamBuilderWorkerPreference().manualCount"
+                    (ionChange)="onAutoTeamBuilderManualWorkerCountChange($event)"
+                  >
+                    @for (count of autoTeamBuilderAvailableWorkerCounts(); track count) {
+                      <ion-select-option [value]="count">{{ count }}</ion-select-option>
+                    }
+                  </ion-select>
+                </label>
+              </div>
+              <div class="loading-card__performance-summary">
+                <small>
+                  {{
+                    t('performance.runtime.detected', {
+                      count: autoTeamBuilderWorkerRuntime().detectedCoreCount,
+                    })
+                  }}
+                </small>
+                <small>
+                  {{
+                    t('performance.runtime.target', {
+                      count: autoTeamBuilderWorkerRuntime().effectiveCount,
+                    })
+                  }}
+                </small>
+                <small>{{ t('performance.runtime.applies') }}</small>
+              </div>
+            </section>
           </div>
           <ion-button
             fill="outline"

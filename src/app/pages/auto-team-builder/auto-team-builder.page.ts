@@ -70,7 +70,10 @@ import { isAutoTeamBuildCancelledError } from '../../core/services/auto-team-bui
 import { resolveAutoBuildShipSelection } from '../../core/services/auto-team-builder-ship.utils';
 import { resolveCharacterPartyConflictKeys } from '../../core/services/auto-team-builder.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
-import { UserStateService } from '../../core/services/user-state.service';
+import {
+  UserStateService,
+  type AutoTeamBuilderWorkerMode,
+} from '../../core/services/user-state.service';
 import {
   AutoTeamSelectionImportError,
   type AutoTeamSelectionImportMessage,
@@ -450,6 +453,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly favoriteCharacterIds;
   public readonly favoriteShipIds;
   public readonly characterBoxes;
+  public readonly autoTeamBuilderWorkerPreference;
+  public readonly autoTeamBuilderWorkerRuntime;
+  public readonly autoTeamBuilderAvailableWorkerCounts;
   public readonly presetImportFeedback = signal<PresetImportFeedback | null>(null);
   public readonly candidatePoolBoxFeedback = signal<PresetImportFeedback | null>(null);
   public readonly loadedEnemyPresetName = signal<string | null>(null);
@@ -1575,6 +1581,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.favoriteCharacterIds = this.userState.favoriteCharacterIds;
     this.favoriteShipIds = this.userState.favoriteShipIds;
     this.characterBoxes = this.userState.characterBoxes;
+    this.autoTeamBuilderWorkerPreference = this.userState.autoTeamBuilderWorkerPreference;
+    this.autoTeamBuilderWorkerRuntime = computed(() =>
+      this.userState.resolveAutoTeamBuilderWorkerPreference(),
+    );
+    this.autoTeamBuilderAvailableWorkerCounts = computed(() =>
+      Array.from(
+        { length: this.autoTeamBuilderWorkerRuntime().manualMaxCount },
+        (_, index) => index + 1,
+      ),
+    );
     this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
   }
 
@@ -1620,6 +1636,37 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
   public ionViewDidEnter(): void {
     console.log('AutoTeamBuilderPage component');
+  }
+
+  public async onAutoTeamBuilderWorkerModeChange(
+    event: CustomEvent<{ value?: AutoTeamBuilderWorkerMode | null }>,
+  ): Promise<void> {
+    const mode = event.detail.value;
+
+    if (mode !== 'auto' && mode !== 'manual') {
+      return;
+    }
+
+    await this.userState.setAutoTeamBuilderWorkerPreference({
+      ...this.autoTeamBuilderWorkerPreference(),
+      mode,
+    });
+  }
+
+  public async onAutoTeamBuilderManualWorkerCountChange(
+    event: CustomEvent<{ value?: number | string | null }>,
+  ): Promise<void> {
+    const nextValue = Number(event.detail.value);
+
+    if (!Number.isInteger(nextValue) || nextValue <= 0) {
+      return;
+    }
+
+    await this.userState.setAutoTeamBuilderWorkerPreference({
+      ...this.autoTeamBuilderWorkerPreference(),
+      mode: 'manual',
+      manualCount: nextValue,
+    });
   }
 
   public async onClassChange(
@@ -2207,6 +2254,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         signal: abortController.signal,
         onProgress: (snapshot) => this.handleBuildProgressSnapshot(snapshot),
         workerCount: this.userState.resolveAutoTeamBuilderWorkerCount(),
+        getWorkerCount: () => this.userState.resolveAutoTeamBuilderWorkerCount(),
       };
       const nextResult = await this.autoTeamBuilder.buildTeam(
         this.selectedClasses(),

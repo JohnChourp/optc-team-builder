@@ -75,6 +75,89 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
+  it('passes the live worker count resolver to the builder service execution options', async () => {
+    const { page, autoTeamBuilder, userState } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    userState.resolveAutoTeamBuilderWorkerCount.mockReturnValue(5);
+    await page.buildTeam();
+
+    const executionOptions = autoTeamBuilder.buildTeam.mock.calls[0]?.[3];
+
+    expect(executionOptions?.getWorkerCount).toBeTypeOf('function');
+    expect(executionOptions?.getWorkerCount()).toBe(5);
+  });
+
+  it('persists worker mode changes from the live build controls', async () => {
+    const { page, userState } = await createPage();
+
+    await page.onAutoTeamBuilderWorkerModeChange({
+      detail: { value: 'manual' },
+    } as CustomEvent<{ value: 'manual' }>);
+
+    expect(userState.setAutoTeamBuilderWorkerPreference).toHaveBeenCalledWith({
+      mode: 'manual',
+      manualCount: 7,
+    });
+    expect(page.autoTeamBuilderWorkerPreference().mode).toBe('manual');
+  });
+
+  it('switches to manual mode when the live worker count changes', async () => {
+    const { page, userState } = await createPage();
+
+    await page.onAutoTeamBuilderManualWorkerCountChange({
+      detail: { value: 3 },
+    } as CustomEvent<{ value: number }>);
+
+    expect(userState.setAutoTeamBuilderWorkerPreference).toHaveBeenCalledWith({
+      mode: 'manual',
+      manualCount: 3,
+    });
+    expect(page.autoTeamBuilderWorkerPreference()).toEqual({
+      mode: 'manual',
+      manualCount: 3,
+    });
+  });
+
+  it('lets the live worker count change while a build is running without cancelling it', async () => {
+    const { page, autoTeamBuilder, userState } = await createPage();
+    let resolveBuild: ((value: AutoBuildResult | null) => void) | null = null;
+
+    autoTeamBuilder.buildTeam.mockImplementation(
+      () =>
+        new Promise<AutoBuildResult | null>((resolve) => {
+          resolveBuild = resolve;
+        }),
+    );
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+
+    const buildPromise = page.buildTeam();
+
+    await Promise.resolve();
+
+    expect(page.building()).toBe(true);
+
+    await page.onAutoTeamBuilderManualWorkerCountChange({
+      detail: { value: 2 },
+    } as CustomEvent<{ value: number }>);
+
+    expect(userState.setAutoTeamBuilderWorkerPreference).toHaveBeenCalledWith({
+      mode: 'manual',
+      manualCount: 2,
+    });
+    expect(page.building()).toBe(true);
+
+    resolveBuild?.(null);
+    await buildPromise;
+
+    expect(page.building()).toBe(false);
+  });
+
   it('passes the unique-base-name toggle to the builder service', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
@@ -4040,7 +4123,13 @@ async function createPage(
     getSavedTeamById: ReturnType<typeof vi.fn>;
     getSavedEnemyById: ReturnType<typeof vi.fn>;
     ready: ReturnType<typeof vi.fn>;
+    autoTeamBuilderWorkerPreference: {
+      (): { mode: 'auto' | 'manual'; manualCount: number };
+      set(value: { mode: 'auto' | 'manual'; manualCount: number }): void;
+    };
     resolveAutoTeamBuilderWorkerCount: ReturnType<typeof vi.fn>;
+    resolveAutoTeamBuilderWorkerPreference: ReturnType<typeof vi.fn>;
+    setAutoTeamBuilderWorkerPreference: ReturnType<typeof vi.fn>;
     saveCharacterBox: ReturnType<typeof vi.fn>;
     saveTeam: ReturnType<typeof vi.fn>;
     toggleFavorite: ReturnType<typeof vi.fn>;
@@ -4171,6 +4260,20 @@ async function createPage(
       updatedAt: '2026-03-30T10:05:00.000Z',
     },
   ]);
+  const autoTeamBuilderWorkerPreference = signal<{ mode: 'auto' | 'manual'; manualCount: number }>({
+    mode: 'auto',
+    manualCount: 7,
+  });
+  const resolveWorkerRuntime = () => ({
+    ...autoTeamBuilderWorkerPreference(),
+    detectedCoreCount: 12,
+    effectiveCount:
+      autoTeamBuilderWorkerPreference().mode === 'manual'
+        ? autoTeamBuilderWorkerPreference().manualCount
+        : 4,
+    manualMaxCount: 7,
+    manualMaxPercent: 58,
+  });
   const userState = {
     favoriteCharacterIds: signal<number[]>([101, 102, 103]),
     favoriteShipIds: signal<number[]>([9001]),
@@ -4187,7 +4290,14 @@ async function createPage(
       (enemyId: string) => savedEnemies().find((enemy) => enemy.id === enemyId) ?? null,
     ),
     ready: vi.fn().mockResolvedValue(undefined),
+    autoTeamBuilderWorkerPreference,
     resolveAutoTeamBuilderWorkerCount: vi.fn().mockReturnValue(7),
+    resolveAutoTeamBuilderWorkerPreference: vi.fn(resolveWorkerRuntime),
+    setAutoTeamBuilderWorkerPreference: vi.fn().mockImplementation(
+      async (preference: { mode: 'auto' | 'manual'; manualCount: number }) => {
+        autoTeamBuilderWorkerPreference.set(preference);
+      },
+    ),
     saveCharacterBox: vi
       .fn()
       .mockImplementation(async (input: { name: string; characterIds: number[] }) => {

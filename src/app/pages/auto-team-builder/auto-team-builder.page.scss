@@ -1294,6 +1294,55 @@
   width: 100%;
 }
 
+.loading-card__performance {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.loading-card__performance-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.loading-card__performance-copy strong {
+  color: #ffffff;
+  font-size: 0.92rem;
+}
+
+.loading-card__performance-copy small,
+.loading-card__performance-summary small {
+  color: rgba(248, 251, 255, 0.7);
+  line-height: 1.45;
+}
+
+.loading-card__performance-controls {
+  display: grid;
+  gap: 10px;
+}
+
+.loading-card__performance-field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.loading-card__performance-field span {
+  color: rgba(248, 251, 255, 0.62);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.loading-card__performance-summary {
+  display: grid;
+  gap: 4px;
+}
+
 .loading-progress-row {
   display: flex;
   align-items: flex-start;
@@ -1450,6 +1499,10 @@ ion-toggle {
 @media (min-width: 768px) {
   .controls-grid,
   .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .loading-card__performance-controls {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
