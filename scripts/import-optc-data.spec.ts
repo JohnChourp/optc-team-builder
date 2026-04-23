@@ -68,10 +68,33 @@ describe('import-optc-data ship thumbnail pack', () => {
     expect(shouldDownloadPack('thumbnails', 'ship-thumbnails')).toBe(true);
   });
 
+  it('includes every supported image pack in the all download mode', () => {
+    expect(shouldDownloadPack('all', 'thumbnails-glo')).toBe(true);
+    expect(shouldDownloadPack('all', 'thumbnails-jap')).toBe(true);
+    expect(shouldDownloadPack('all', 'ship-thumbnails')).toBe(true);
+    expect(shouldDownloadPack('all', 'full-transparent')).toBe(true);
+  });
+
+  it('includes only thumbnail packs in the thumbnails download mode', () => {
+    expect(shouldDownloadPack('thumbnails', 'thumbnails-glo')).toBe(true);
+    expect(shouldDownloadPack('thumbnails', 'thumbnails-jap')).toBe(true);
+    expect(shouldDownloadPack('thumbnails', 'ship-thumbnails')).toBe(true);
+    expect(shouldDownloadPack('thumbnails', 'full-transparent')).toBe(false);
+  });
+
   it('supports downloading only ship thumbnails when requested explicitly', () => {
     expect(shouldDownloadPack('ship-thumbnails', 'ship-thumbnails')).toBe(true);
     expect(shouldDownloadPack('ship-thumbnails', 'thumbnails-glo')).toBe(false);
     expect(shouldDownloadPack('ship-thumbnails', 'full-transparent')).toBe(false);
+  });
+
+  it('supports each explicit single-pack download mode', () => {
+    expect(shouldDownloadPack('thumbnails-glo', 'thumbnails-glo')).toBe(true);
+    expect(shouldDownloadPack('thumbnails-glo', 'thumbnails-jap')).toBe(false);
+    expect(shouldDownloadPack('thumbnails-jap', 'thumbnails-jap')).toBe(true);
+    expect(shouldDownloadPack('thumbnails-jap', 'ship-thumbnails')).toBe(false);
+    expect(shouldDownloadPack('full-transparent', 'full-transparent')).toBe(true);
+    expect(shouldDownloadPack('full-transparent', 'thumbnails-glo')).toBe(false);
   });
 
   it('uses the selected GitHub repo when building image pack listings', () => {

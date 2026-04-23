@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-23T15:47:40.646Z",
+  "generatedAt": "2026-04-23T15:54:41.902Z",
   "sourceVersion": "36",
   "characterCount": 4929,
   "detailCount": 4444,
@@ -30,8 +30,8 @@
       "id": "thumbnails-glo",
       "label": "Global thumbnails",
       "localBasePath": "assets/offline-packs/thumbnails-glo",
-      "fileCount": 4609,
-      "totalBytes": 45851276,
+      "fileCount": 5245,
+      "totalBytes": 53195788,
       "installed": true,
       "checksum": "df94f79786955eedd082930b70946c4aa0d71e27"
     },
@@ -40,8 +40,8 @@
       "id": "thumbnails-jap",
       "label": "Japan thumbnails",
       "localBasePath": "assets/offline-packs/thumbnails-jap",
-      "fileCount": 4886,
-      "totalBytes": 106098998,
+      "fileCount": 5440,
+      "totalBytes": 112506705,
       "installed": true,
       "checksum": "dd8283e86a3614e7105a6c59d6d153c189ecab65"
     },
@@ -50,8 +50,8 @@
       "id": "ship-thumbnails",
       "label": "Ship thumbnails",
       "localBasePath": "assets/offline-packs/ship-thumbnails",
-      "fileCount": 71,
-      "totalBytes": 632594,
+      "fileCount": 63,
+      "totalBytes": 502890,
       "installed": true,
       "checksum": "5f01f0889be3aa7a901634609253bf50146595b1"
     },
@@ -60,8 +60,8 @@
       "id": "full-transparent",
       "label": "Transparent full art",
       "localBasePath": "assets/offline-packs/full-transparent",
-      "fileCount": 4215,
-      "totalBytes": 505151273,
+      "fileCount": 4592,
+      "totalBytes": 588072362,
       "installed": true,
       "checksum": "fb22281b95ed50ae2d17b752b4453f2655e538dd"
     }

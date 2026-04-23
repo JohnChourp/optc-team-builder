@@ -67,6 +67,15 @@ Import metadata plus every supported offline image pack:
 npm run data:import -- --download-images=all
 ```
 
+Supported `--download-images` modes:
+
+- `thumbnails-glo`: only global character thumbnails
+- `thumbnails-jap`: only japan character thumbnails
+- `ship-thumbnails`: only ship thumbnails
+- `full-transparent`: only full transparent character art
+- `thumbnails`: all thumbnail packs (`thumbnails-glo`, `thumbnails-jap`, `ship-thumbnails`)
+- `all`: metadata import plus every supported offline image pack
+
 You can combine the source selector with any image download mode, for example:
 
 ```bash
