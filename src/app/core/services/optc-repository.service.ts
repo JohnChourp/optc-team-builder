@@ -762,6 +762,49 @@ export class OptcRepositoryService {
     return decorated.sort((left, right) => (order.get(left.id) ?? 0) - (order.get(right.id) ?? 0));
   }
 
+  public async getDetailedCharactersByIds(ids: number[]): Promise<CharacterDetailRecord[]> {
+    if (!ids.length) {
+      return [];
+    }
+
+    const placeholders = ids.map(() => '?').join(',');
+    const rows = await this.selectAll(
+      `
+        SELECT
+          c.id,
+          c.name,
+          c.is_incomplete,
+          c.type,
+          c.primary_class,
+          c.secondary_class,
+          c.classes_json,
+          c.stars,
+          c.cost,
+          c.combo,
+          c.min_hp,
+          c.min_atk,
+          c.min_rcv,
+          c.max_hp,
+          c.max_atk,
+          c.max_rcv,
+          c.growth,
+          c.region_json,
+          c.assets_json,
+          c.search_text,
+          d.detail_json
+        FROM characters c
+        LEFT JOIN character_details d ON d.character_id = c.id
+        WHERE c.id IN (${placeholders})
+      `,
+      ids,
+    );
+
+    const decorated = await this.decorateCharacterDetailRows(rows);
+    const order = new Map(ids.map((id, index) => [id, index]));
+
+    return decorated.sort((left, right) => (order.get(left.id) ?? 0) - (order.get(right.id) ?? 0));
+  }
+
   public async getShips(): Promise<ShipRecord[]> {
     const manifest = await this.getDatasetManifest();
     const installedPacks = new Map(manifest.packs.map((pack) => [pack.key, pack]));

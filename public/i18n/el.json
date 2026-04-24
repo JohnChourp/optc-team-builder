@@ -63,6 +63,34 @@
       "en": "English"
     }
   },
+  "characterAbilityGroups": {
+    "categories": {
+      "special": "Special",
+      "crewmate": "Crewmate Ability",
+      "potential": "Potential Ability",
+      "support": "Support Ability",
+      "legacy": "Άλλα Abilities"
+    },
+    "coverageModes": {
+      "selectedDebuff": "Επιλέξιμο debuff"
+    },
+    "groups": {
+      "other": "Other"
+    },
+    "metadata": {
+      "turns": "{{count}} turns"
+    },
+    "sources": {
+      "specialText": "Special",
+      "captainAbility": "Captain",
+      "sailorAbilities": "Crewmate",
+      "potentialAbilities": "Potential",
+      "supportData": "Support",
+      "superTandemData": "Super Tandem",
+      "finalTapData": "Final Tap",
+      "rushSugoSpecialData": "Rush Sugo"
+    }
+  },
   "coverage": {
     "copy": "Missing value for 'coverage.copy'",
     "empty": {

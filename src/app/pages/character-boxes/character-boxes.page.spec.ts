@@ -148,7 +148,7 @@ describe('CharacterBoxesPage', () => {
   });
 
   it('filters the search query through repository lookups', async () => {
-    const { page, characterCatalogCache } = createPage();
+    const { page, repository } = createPage();
 
     await page.onSearchChange({
       detail: {
@@ -156,10 +156,12 @@ describe('CharacterBoxesPage', () => {
       },
     } as CustomEvent<{ value?: string | null }>);
 
-    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
       searchTerm: 'Luffy',
-      typeFilter: '',
-      classFilter: '',
+      selectedTypes: [],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: [],
+      selectedClassesMatchMode: 'any',
       allowedCharacterIds: undefined,
       excludedCharacterIds: undefined,
       limit: 48,
@@ -168,7 +170,7 @@ describe('CharacterBoxesPage', () => {
   });
 
   it('limits repository lookups to favorites when the favorites filter is active', async () => {
-    const { page, characterCatalogCache } = createPage(undefined, [101, 303]);
+    const { page, repository } = createPage(undefined, [101, 303]);
 
     await page.onFavoriteFilterChange({
       detail: {
@@ -176,18 +178,21 @@ describe('CharacterBoxesPage', () => {
       },
     } as CustomEvent<{ value?: string | null }>);
 
-    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
+      selectedTypes: [],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: [],
+      selectedClassesMatchMode: 'any',
       allowedCharacterIds: [101, 303],
+      excludedCharacterIds: undefined,
       limit: 48,
       offset: 0,
     });
   });
 
   it('limits repository lookups to characters already in the selected box', async () => {
-    const { page, characterCatalogCache } = createPage();
+    const { page, repository } = createPage();
 
     page.selectBox('box-1');
     await page.onMembershipFilterChange({
@@ -196,10 +201,12 @@ describe('CharacterBoxesPage', () => {
       },
     } as CustomEvent<{ value?: string | null }>);
 
-    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
+      selectedTypes: [],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: [],
+      selectedClassesMatchMode: 'any',
       allowedCharacterIds: [101],
       excludedCharacterIds: undefined,
       limit: 48,
@@ -208,7 +215,7 @@ describe('CharacterBoxesPage', () => {
   });
 
   it('excludes characters already in the selected box when the outside-box filter is active', async () => {
-    const { page, characterCatalogCache } = createPage();
+    const { page, repository } = createPage();
 
     page.selectBox('box-1');
     await page.onMembershipFilterChange({
@@ -217,10 +224,12 @@ describe('CharacterBoxesPage', () => {
       },
     } as CustomEvent<{ value?: string | null }>);
 
-    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
+      selectedTypes: [],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: [],
+      selectedClassesMatchMode: 'any',
       allowedCharacterIds: undefined,
       excludedCharacterIds: [101],
       limit: 48,
@@ -229,7 +238,7 @@ describe('CharacterBoxesPage', () => {
   });
 
   it('intersects the favorites filter with the in-box filter', async () => {
-    const { page, characterCatalogCache } = createPage(undefined, [101, 303]);
+    const { page, repository } = createPage(undefined, [101, 303]);
 
     page.selectBox('box-1');
     await page.onFavoriteFilterChange({
@@ -243,10 +252,12 @@ describe('CharacterBoxesPage', () => {
       },
     } as CustomEvent<{ value?: string | null }>);
 
-    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
+      selectedTypes: [],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: [],
+      selectedClassesMatchMode: 'any',
       allowedCharacterIds: [101],
       excludedCharacterIds: undefined,
       limit: 48,
@@ -255,7 +266,7 @@ describe('CharacterBoxesPage', () => {
   });
 
   it('clears the favorites filter together with the rest of the filters', async () => {
-    const { page, characterCatalogCache } = createPage(undefined, [101]);
+    const { page, repository } = createPage(undefined, [101]);
 
     await page.onFavoriteFilterChange({
       detail: {
@@ -276,10 +287,12 @@ describe('CharacterBoxesPage', () => {
 
     expect(page.selectedFavoriteFilter()).toBe('all');
     expect(page.selectedMembershipFilter()).toBe('all');
-    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
+      selectedTypes: [],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: [],
+      selectedClassesMatchMode: 'any',
       allowedCharacterIds: undefined,
       excludedCharacterIds: undefined,
       limit: 48,
@@ -305,6 +318,8 @@ describe('CharacterBoxesPage', () => {
     expect(template).toContain('[routerLink]="getCharacterDetailLink(card.character)"');
     expect(template).toContain('character-detail-thumb-link');
     expect(template).toContain('character-detail-name-link');
+    expect(template).toContain('<app-character-ability-groups');
+    expect(template).toContain('displayMode="collapsed"');
   });
 });
 
@@ -369,10 +384,8 @@ function createPage(
       availableTypes: ['DEX', 'STR'],
       availableClasses: ['Fighter', 'Slasher'],
     }),
-  };
-  const characterCatalogCache = {
-    ensureLoaded: vi.fn().mockResolvedValue(undefined),
-    queryCharacters: vi.fn().mockReturnValue([]),
+    getAutoBuilderAbilityCatalog: vi.fn().mockResolvedValue(null),
+    searchDetailedCharacters: vi.fn().mockResolvedValue([]),
   };
   const i18n = {
     translate: vi.fn((key: string, params?: Record<string, string | number>) => {
@@ -383,14 +396,9 @@ function createPage(
       return key;
     }),
   };
-  const page = new CharacterBoxesPage(
-    repository as never,
-    characterCatalogCache as never,
-    userState as never,
-    i18n as never,
-  );
+  const page = new CharacterBoxesPage(repository as never, userState as never, i18n as never);
 
-  return { page, repository, characterCatalogCache, userState };
+  return { page, repository, userState };
 }
 
 function createCharacter(id: number, name = `Character ${id}`) {
@@ -422,5 +430,9 @@ function createCharacter(id: number, name = `Character ${id}`) {
       fullTransparent: null,
     },
     imageUrl: `/characters/${id}.png`,
+    detail: {
+      builderAbilities: [],
+    },
+    detailImageUrl: `/characters/${id}-detail.png`,
   };
 }

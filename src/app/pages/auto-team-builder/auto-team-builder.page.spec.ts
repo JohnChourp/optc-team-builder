@@ -1467,6 +1467,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).not.toContain('slot.abilityChips');
     expect(template).not.toContain('slot.snippet');
     expect(template).toContain('<app-ability-requirement-picker');
+    expect(template).toContain('<app-character-ability-groups');
     expect(template).not.toContain('<app-enemy-mechanic-picker');
     expect(template).not.toContain('<app-special-ability-picker');
     expect(template).not.toContain('<app-ship-picker');

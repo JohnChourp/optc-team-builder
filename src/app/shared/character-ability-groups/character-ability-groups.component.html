@@ -1,0 +1,45 @@
+@if (tableView(); as table) {
+  @if (table.categories.length) {
+    <div
+      class="character-ability-groups"
+      [class.character-ability-groups--collapsed]="displayMode === 'collapsed'"
+    >
+      <div class="ability-table" [style.--ability-column-count]="table.categories.length">
+        <div class="ability-table__header" role="row">
+          @for (category of table.categories; track category.key) {
+            <div class="ability-table__category" role="columnheader">
+              <strong>{{ category.label }}</strong>
+              <span>{{ category.abilityCount }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="ability-table__body">
+          @for (row of table.rows; track row.key) {
+            <div class="ability-table__row" role="row">
+              @for (cell of row.cells; track cell.key) {
+                <div class="ability-table__cell" role="cell">
+                  @if (cell.subgroup; as subgroup) {
+                    <div class="ability-subgroup-line">
+                      <span class="ability-subgroup-label">{{ subgroup.label }}</span>
+                      <div class="ability-chip-row">
+                        @for (ability of subgroup.abilities; track ability.key) {
+                          <span
+                            class="ability-chip"
+                            [class.ability-chip--matched]="ability.highlighted"
+                          >
+                            {{ ability.label }}
+                          </span>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+}

@@ -131,6 +131,8 @@ describe('TeamBuilderPage', () => {
     expect(template).toContain('(click)="assignCharacter(card.character)"');
     expect(template).toContain('candidate-thumb-card');
     expect(template).toContain('<app-ship-picker');
+    expect(template).toContain('<app-character-ability-groups');
+    expect(template).toContain('displayMode="collapsed"');
     expect(template).toContain('[favoriteShipIds]="favoriteShipIds()"');
     expect(template).toContain('(toggleFavoriteShip)="toggleShipFavorite($event)"');
     expect(template).not.toContain('<ion-select');
@@ -162,7 +164,7 @@ describe('TeamBuilderPage', () => {
   });
 
   it('resets the builder draft, slot selection and candidate search state', async () => {
-    const { page, characterCatalogCache } = createPage();
+    const { page, repository } = createPage();
 
     page.teamName.set('Manual Crew');
     page.notes.set('Shared persistence');
@@ -188,10 +190,11 @@ describe('TeamBuilderPage', () => {
     expect(page.currentTeamId()).toBeNull();
     expect(page.candidateSearchTerm()).toBe('');
     expect(page.slotCharacters()).toEqual(Array.from({ length: 6 }, () => null));
-    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      allowedCharacterIds: undefined,
       limit: 24,
       offset: 0,
     });
@@ -213,12 +216,10 @@ function createPage() {
   };
   const repository = {
     getShips: vi.fn().mockResolvedValue([]),
+    getAutoBuilderAbilityCatalog: vi.fn().mockResolvedValue(null),
     getCharactersByIds: vi.fn().mockResolvedValue([]),
-  };
-  const characterCatalogCache = {
-    ensureLoaded: vi.fn().mockResolvedValue(undefined),
-    queryCharacters: vi.fn().mockReturnValue([]),
-    getCharactersByIds: vi.fn().mockReturnValue([]),
+    getDetailedCharactersByIds: vi.fn().mockResolvedValue([]),
+    searchDetailedCharacters: vi.fn().mockResolvedValue([]),
   };
   const i18n = {
     activeLanguage: signal<'en' | 'el'>('en'),
@@ -237,14 +238,9 @@ function createPage() {
       return key;
     }),
   };
-  const page = new TeamBuilderPage(
-    repository as never,
-    characterCatalogCache as never,
-    userState as never,
-    i18n as never,
-  );
+  const page = new TeamBuilderPage(repository as never, userState as never, i18n as never);
 
-  return { page, repository, characterCatalogCache, userState, i18n };
+  return { page, repository, userState, i18n };
 }
 
 function createCharacter(id: number) {
@@ -263,5 +259,9 @@ function createCharacter(id: number) {
       },
     },
     imageUrl: `/characters/${id}.png`,
+    detail: {
+      builderAbilities: [],
+    },
+    detailImageUrl: `/characters/${id}-detail.png`,
   };
 }

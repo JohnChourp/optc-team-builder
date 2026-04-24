@@ -22,6 +22,7 @@ import { boatOutline, heart, heartOutline } from 'ionicons/icons';
 
 import { type AutoBuildAbilityCatalog } from '../../core/models/auto-team-builder-ability.models';
 import {
+  type CharacterDetailRecord,
   type CharacterListItem,
   type SavedTeam,
   type ShipRecord,
@@ -30,7 +31,6 @@ import {
   createAbilityRequirementDrafts,
   type AbilityRequirementDraft,
 } from '../../core/services/ability-requirement-draft.utils';
-import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import {
@@ -42,13 +42,14 @@ import {
   serializeSpecialAbilityDrafts,
 } from '../../core/services/special-ability-filter.utils';
 import { UserStateService } from '../../core/services/user-state.service';
+import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
 import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
 import { ShipPickerComponent } from '../../shared/ship-picker/ship-picker.component';
 
 type TeamBuilderCandidateDisplayMode = 'list' | 'compact';
 
 interface TeamBuilderCandidateCardView {
-  character: CharacterListItem;
+  character: CharacterDetailRecord;
   subtitle: string;
   isFavorite: boolean;
   favoriteAriaLabel: string;
@@ -74,6 +75,7 @@ interface TeamBuilderCandidateCardView {
     IonTitle,
     IonToolbar,
     RouterLink,
+    CharacterAbilityGroupsComponent,
     ShipPickerComponent,
     SpecialAbilityPickerComponent,
     TranslocoDirective,
@@ -95,8 +97,8 @@ export class TeamBuilderPage implements OnInit {
   public readonly supportAbilityPickerOpen = signal(false);
   public readonly supportAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly candidateDisplayMode = signal<TeamBuilderCandidateDisplayMode>('list');
-  public readonly candidateCharacters = signal<CharacterListItem[]>([]);
-  public readonly slotCharacters = signal<Array<CharacterListItem | null>>(
+  public readonly candidateCharacters = signal<CharacterDetailRecord[]>([]);
+  public readonly slotCharacters = signal<Array<CharacterDetailRecord | null>>(
     Array.from({ length: 6 }, () => null),
   );
   public readonly selectedSlotIndex = signal(0);
@@ -113,7 +115,8 @@ export class TeamBuilderPage implements OnInit {
     () => this.ships().find((ship) => ship.id === this.selectedShipId()) ?? null,
   );
   public readonly selectedShipTitle = computed(
-    () => this.selectedShip()?.name ?? this.i18n.translate('form.noShip', undefined, 'team-builder'),
+    () =>
+      this.selectedShip()?.name ?? this.i18n.translate('form.noShip', undefined, 'team-builder'),
   );
   public readonly selectedShipSubtitle = computed(() => {
     const selectedShip = this.selectedShip();
@@ -193,6 +196,12 @@ export class TeamBuilderPage implements OnInit {
       'support',
     ),
   );
+  public readonly activeAbilityRequirements = computed(() => [
+    ...this.specialAbilityRequirements(),
+    ...this.crewmateAbilityRequirements(),
+    ...this.potentialAbilityRequirements(),
+    ...this.supportAbilityRequirements(),
+  ]);
   public readonly candidateCardViews = computed<TeamBuilderCandidateCardView[]>(() =>
     this.candidateCharacters().map((candidate) => {
       const isFavorite = this.isFavorite(candidate.id);
@@ -217,7 +226,6 @@ export class TeamBuilderPage implements OnInit {
 
   public constructor(
     private readonly repository: OptcRepositoryService,
-    private readonly characterCatalogCache: CharacterCatalogCacheService,
     private readonly userState: UserStateService,
     private readonly i18n: AppI18nService,
   ) {
@@ -232,7 +240,6 @@ export class TeamBuilderPage implements OnInit {
     const [ships, abilityCatalog] = await Promise.all([
       this.repository.getShips(),
       this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
-      this.characterCatalogCache.ensureLoaded(),
     ]);
     this.ships.set(ships);
     this.abilityCatalog.set(abilityCatalog);
@@ -352,7 +359,11 @@ export class TeamBuilderPage implements OnInit {
   public async saveSupportAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
     this.supportAbilityDrafts.set(
       createAbilityRequirementDrafts(
-        serializeCategoryAbilityDrafts(drafts, this.availableSupportAbilityCatalogItems(), 'support'),
+        serializeCategoryAbilityDrafts(
+          drafts,
+          this.availableSupportAbilityCatalogItems(),
+          'support',
+        ),
       ),
     );
     this.supportAbilityPickerOpen.set(false);
@@ -393,7 +404,7 @@ export class TeamBuilderPage implements OnInit {
     this.selectedSlotIndex.set(index);
   }
 
-  public async assignCharacter(character: CharacterListItem): Promise<void> {
+  public async assignCharacter(character: CharacterDetailRecord): Promise<void> {
     const next = [...this.slotCharacters()];
     next[this.selectedSlotIndex()] = character;
     this.slotCharacters.set(next);
@@ -420,8 +431,7 @@ export class TeamBuilderPage implements OnInit {
   }
 
   public async loadTeam(team: SavedTeam): Promise<void> {
-    await this.characterCatalogCache.ensureLoaded();
-    const characters = this.characterCatalogCache.getCharactersByIds(
+    const characters = await this.repository.getDetailedCharactersByIds(
       team.slots.filter((value): value is number => typeof value === 'number'),
     );
     const characterMap = new Map(characters.map((character) => [character.id, character]));
@@ -475,12 +485,11 @@ export class TeamBuilderPage implements OnInit {
   }
 
   private async refreshCandidateCharacters(searchTerm: string): Promise<void> {
-    await this.characterCatalogCache.ensureLoaded();
     this.candidateCharacters.set(
-      this.characterCatalogCache.queryCharacters({
+      await this.repository.searchDetailedCharacters({
         searchTerm,
-        typeFilter: '',
-        classFilter: '',
+        selectedTypes: [],
+        selectedClasses: [],
         allowedCharacterIds: intersectAbilityMatchingCharacterIds([
           this.specialFilterCharacterIds(),
           this.crewmateFilterCharacterIds(),
@@ -494,7 +503,7 @@ export class TeamBuilderPage implements OnInit {
   }
 
   private async refreshTeamTotals(): Promise<void> {
-    const selected = this.slotCharacters().filter((character): character is CharacterListItem =>
+    const selected = this.slotCharacters().filter((character): character is CharacterDetailRecord =>
       Boolean(character),
     );
 

@@ -130,6 +130,12 @@
                       {{ slot.name }}
                     </a>
                     <small>{{ slot.type }} • {{ slot.primaryClass }}</small>
+                    <app-character-ability-groups
+                      [abilities]="slot.detail.builderAbilities"
+                      [catalogItems]="abilityCatalog()?.abilities ?? []"
+                      [highlightedRequirements]="activeAbilityRequirements()"
+                      displayMode="full"
+                    ></app-character-ability-groups>
                   </div>
                 </div>
               } @else {
@@ -338,6 +344,12 @@
                     {{ card.character.name }}
                   </a>
                   <span>{{ card.subtitle }}</span>
+                  <app-character-ability-groups
+                    [abilities]="card.character.detail.builderAbilities"
+                    [catalogItems]="abilityCatalog()?.abilities ?? []"
+                    [highlightedRequirements]="activeAbilityRequirements()"
+                    displayMode="collapsed"
+                  ></app-character-ability-groups>
                 </div>
 
                 <ion-button
@@ -383,6 +395,12 @@
                     </button>
                   </div>
                   <span>{{ card.subtitle }}</span>
+                  <app-character-ability-groups
+                    [abilities]="card.character.detail.builderAbilities"
+                    [catalogItems]="abilityCatalog()?.abilities ?? []"
+                    [highlightedRequirements]="activeAbilityRequirements()"
+                    displayMode="full"
+                  ></app-character-ability-groups>
                 </div>
                 <div class="candidate-actions">
                   <ion-button

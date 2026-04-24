@@ -98,6 +98,7 @@ import {
 import { buildAutoTeamBuilderStateFromSavedEnemy } from './auto-team-builder-enemy-preset.utils';
 import { buildAutoTeamBuilderStateFromSavedTeam } from './auto-team-builder-saved-team-preset.utils';
 import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
+import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
 import {
   createAbilityRequirementDrafts,
   formatAbilityRequirementSummary,
@@ -351,6 +352,7 @@ function matchesLeaderOnlyManualRequirements(
     IonToolbar,
     ScrollingModule,
     AbilityRequirementPickerComponent,
+    CharacterAbilityGroupsComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,

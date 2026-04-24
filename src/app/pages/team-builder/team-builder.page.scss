@@ -212,7 +212,7 @@
   display: grid;
   grid-template-columns: 64px minmax(0, 1fr);
   gap: 12px;
-  align-items: center;
+  align-items: start;
 }
 
 .slot-card__select img,
@@ -331,7 +331,7 @@
   display: grid;
   grid-template-columns: 60px minmax(0, 1fr) auto;
   gap: 12px;
-  align-items: center;
+  align-items: start;
   padding: 10px;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.03);
@@ -350,6 +350,7 @@
 .candidate-copy {
   display: grid;
   gap: 6px;
+  min-width: 0;
 }
 
 .candidate-title-row {
@@ -388,7 +389,13 @@
 
 .candidate-thumb-card__copy {
   display: grid;
-  gap: 4px;
+  gap: 8px;
+  min-width: 0;
+}
+
+.slot-card__copy app-character-ability-groups,
+.candidate-copy app-character-ability-groups,
+.candidate-thumb-card__copy app-character-ability-groups {
   min-width: 0;
 }
 

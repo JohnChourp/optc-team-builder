@@ -29,6 +29,7 @@ import {
 
 import {
   type CharacterBox,
+  type CharacterDetailRecord,
   type CharacterListItem,
   type DatasetManifest,
 } from '../../core/models/optc.models';
@@ -38,7 +39,6 @@ import {
   createAbilityRequirementDrafts,
   type AbilityRequirementDraft,
 } from '../../core/services/ability-requirement-draft.utils';
-import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import {
   getAbilityCatalogItemsByCategory,
@@ -49,6 +49,7 @@ import {
   serializeSpecialAbilityDrafts,
 } from '../../core/services/special-ability-filter.utils';
 import { UserStateService } from '../../core/services/user-state.service';
+import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
 import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
 
 const PAGE_SIZE = 48;
@@ -57,7 +58,7 @@ type CharacterBoxesMembershipFilter = 'all' | 'inBox' | 'notInBox';
 type CharacterBoxesDisplayMode = 'list' | 'compact';
 
 interface CharacterBoxCharacterCardView {
-  character: CharacterListItem;
+  character: CharacterDetailRecord;
   subtitle: string;
   inSelectedBox: boolean;
   isFavorite: boolean;
@@ -83,6 +84,7 @@ interface CharacterBoxCharacterCardView {
     IonTitle,
     IonToolbar,
     RouterLink,
+    CharacterAbilityGroupsComponent,
     SpecialAbilityPickerComponent,
     TranslocoDirective,
     TranslocoPipe,
@@ -111,7 +113,7 @@ export class CharacterBoxesPage implements OnInit {
   public readonly supportAbilityPickerOpen = signal(false);
   public readonly supportAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly displayMode = signal<CharacterBoxesDisplayMode>('list');
-  public readonly characters = signal<CharacterListItem[]>([]);
+  public readonly characters = signal<CharacterDetailRecord[]>([]);
   public readonly loading = signal(true);
   public readonly loadingMore = signal(false);
   public readonly hasMore = signal(true);
@@ -191,6 +193,12 @@ export class CharacterBoxesPage implements OnInit {
       'support',
     ),
   );
+  public readonly activeAbilityRequirements = computed(() => [
+    ...this.specialAbilityRequirements(),
+    ...this.crewmateAbilityRequirements(),
+    ...this.potentialAbilityRequirements(),
+    ...this.supportAbilityRequirements(),
+  ]);
   public readonly totalAssignedCharacters = computed(() =>
     this.boxes().reduce((count, box) => count + box.characterIds.length, 0),
   );
@@ -251,7 +259,6 @@ export class CharacterBoxesPage implements OnInit {
 
   public constructor(
     private readonly repository: OptcRepositoryService,
-    private readonly characterCatalogCache: CharacterCatalogCacheService,
     private readonly userState: UserStateService,
     private readonly i18n: AppI18nService,
   ) {
@@ -264,7 +271,6 @@ export class CharacterBoxesPage implements OnInit {
     const [summary, abilityCatalog] = await Promise.all([
       this.repository.getDatasetManifest(),
       this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
-      this.characterCatalogCache.ensureLoaded(),
     ]);
     this.summary.set(summary);
     this.abilityCatalog.set(abilityCatalog);
@@ -587,7 +593,6 @@ export class CharacterBoxesPage implements OnInit {
       this.loading.set(true);
     }
 
-    await this.characterCatalogCache.ensureLoaded();
     const nextOffset = reset ? 0 : this.characters().length;
     const selectedBoxCharacterIds = this.selectedBox()?.characterIds ?? [];
     const favoriteCharacterIds =
@@ -606,10 +611,12 @@ export class CharacterBoxesPage implements OnInit {
       this.potentialFilterCharacterIds(),
       this.supportFilterCharacterIds(),
     ]);
-    const nextCharacters = this.characterCatalogCache.queryCharacters({
+    const nextCharacters = await this.repository.searchDetailedCharacters({
       searchTerm: this.searchTerm(),
-      typeFilter: this.selectedType(),
-      classFilter: this.selectedClass(),
+      selectedTypes: this.selectedType() ? [this.selectedType()] : [],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: this.selectedClass() ? [this.selectedClass()] : [],
+      selectedClassesMatchMode: 'any',
       allowedCharacterIds,
       excludedCharacterIds:
         this.selectedMembershipFilter() === 'notInBox' ? selectedBoxCharacterIds : undefined,

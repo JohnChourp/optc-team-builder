@@ -1743,6 +1743,12 @@
                       <small class="reason-chip">{{ chip }}</small>
                     }
                   </div>
+                  <app-character-ability-groups
+                    [abilities]="slot.character.detail.builderAbilities"
+                    [catalogItems]="abilityCatalog()?.abilities ?? []"
+                    [highlightedRequirements]="current.coverage.abilityRequirements.matched"
+                    displayMode="full"
+                  ></app-character-ability-groups>
                   <div class="result-card__actions">
                     <ion-button
                       size="small"
