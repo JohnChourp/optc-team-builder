@@ -219,9 +219,11 @@ ion-select {
 }
 
 .favorite-button:focus-visible,
-.view-toggle__button:focus-visible {
+.view-toggle__button:focus-visible,
+.character-detail-thumb-link:focus-visible,
+.character-detail-name-link:focus-visible {
   outline: 2px solid rgba(245, 200, 76, 0.72);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
 .character-row {
@@ -235,12 +237,36 @@ ion-select {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.character-row img {
+.character-detail-thumb-link {
+  display: block;
+  border: 1px solid rgba(245, 200, 76, 0.44);
+  background: rgba(245, 200, 76, 0.1);
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.character-detail-thumb-link:hover,
+.character-detail-thumb-link:focus-visible {
+  border-color: rgba(245, 200, 76, 0.82);
+  box-shadow: 0 0 0 3px rgba(245, 200, 76, 0.12);
+  transform: scale(1.05);
+}
+
+.character-detail-thumb-link img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.character-row__detail-thumb {
   width: 72px;
   height: 72px;
-  object-fit: cover;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.08);
 }
 
 .character-row__content {
@@ -256,8 +282,34 @@ ion-select {
   gap: 10px;
 }
 
-.character-row__title-row strong {
+.character-detail-name-link {
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  padding: 1px 4px 2px;
+  margin: -1px -4px -2px;
+  border-radius: 7px;
+  border-bottom: 1px solid rgba(245, 200, 76, 0.48);
   color: #f8fbff;
+  cursor: pointer;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+  transform-origin: left center;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.character-detail-name-link:hover,
+.character-detail-name-link:focus-visible {
+  border-color: rgba(245, 200, 76, 0.9);
+  background: rgba(245, 200, 76, 0.12);
+  color: #f5c84c;
+  transform: scale(1.03);
 }
 
 .character-grid {
@@ -276,12 +328,10 @@ ion-select {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.character-thumb-card img {
+.character-thumb-card__detail-thumb {
   width: 100%;
   aspect-ratio: 1;
-  object-fit: cover;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.08);
 }
 
 .character-thumb-card__favorite {

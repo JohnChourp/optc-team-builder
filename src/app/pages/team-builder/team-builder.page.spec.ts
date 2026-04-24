@@ -113,7 +113,7 @@ describe('TeamBuilderPage', () => {
     expect(page.getCharacterDetailLink(page.slotCharacters()[4])).toBeNull();
   });
 
-  it('renders a dedicated slot detail action without adding it to candidate cards', () => {
+  it('renders character detail links on slots and candidate cards instead of detail buttons', () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/team-builder/team-builder.page.html'),
       'utf8',
@@ -122,7 +122,11 @@ describe('TeamBuilderPage', () => {
     expect(template).toContain("'common.actions.reset' | transloco");
     expect(template).toContain('[value]="candidateSearchTerm()"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(slot)"');
-    expect(template.match(/common\.actions\.viewDetails/g)).toHaveLength(1);
+    expect(template).toContain('[routerLink]="getCharacterDetailLink(card.character)"');
+    expect(template).not.toContain('common.actions.viewDetails');
+    expect(template).not.toContain('slot-card__detail-button');
+    expect(template).toContain('character-detail-thumb-link');
+    expect(template).toContain('character-detail-name-link');
     expect(template).toContain("t('displayMode.compact')");
     expect(template).toContain('(click)="assignCharacter(card.character)"');
     expect(template).toContain('candidate-thumb-card');
@@ -137,13 +141,10 @@ describe('TeamBuilderPage', () => {
 
     page.setCandidateDisplayMode('compact');
 
-    await page.toggleFavorite(
-      101,
-      {
-        preventDefault: vi.fn(),
-        stopPropagation: vi.fn(),
-      } as unknown as Event,
-    );
+    await page.toggleFavorite(101, {
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    } as unknown as Event);
 
     expect(userState.toggleFavorite).toHaveBeenCalledWith(101);
   });

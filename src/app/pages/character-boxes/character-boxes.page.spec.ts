@@ -301,7 +301,10 @@ describe('CharacterBoxesPage', () => {
     expect(template).toContain("t('filters.favoritesPlaceholder')");
     expect(template).toContain("t('filters.membershipPlaceholder')");
     expect(template).toContain("t('displayMode.compact')");
-    expect(template).toContain("toggleFavorite(card.character.id, $event)");
+    expect(template).toContain('toggleFavorite(card.character.id, $event)');
+    expect(template).toContain('[routerLink]="getCharacterDetailLink(card.character)"');
+    expect(template).toContain('character-detail-thumb-link');
+    expect(template).toContain('character-detail-name-link');
   });
 });
 
@@ -336,23 +339,25 @@ function createPage(
           : [characterId, ...favoriteCharacterIds()],
       );
     }),
-    saveCharacterBox: vi.fn().mockImplementation(async (input: { id?: string; name: string; characterIds: number[] }) => {
-      const nextBox = {
-        id: input.id ?? 'box-1',
-        name: input.name.trim(),
-        characterIds: [...new Set(input.characterIds)],
-        createdAt: '2026-04-14T10:00:00.000Z',
-        updatedAt: '2026-04-14T10:10:00.000Z',
-      };
+    saveCharacterBox: vi
+      .fn()
+      .mockImplementation(async (input: { id?: string; name: string; characterIds: number[] }) => {
+        const nextBox = {
+          id: input.id ?? 'box-1',
+          name: input.name.trim(),
+          characterIds: [...new Set(input.characterIds)],
+          createdAt: '2026-04-14T10:00:00.000Z',
+          updatedAt: '2026-04-14T10:10:00.000Z',
+        };
 
-      boxes.set(
-        input.id
-          ? boxes().map((box) => (box.id === input.id ? nextBox : box))
-          : [nextBox, ...boxes()],
-      );
+        boxes.set(
+          input.id
+            ? boxes().map((box) => (box.id === input.id ? nextBox : box))
+            : [nextBox, ...boxes()],
+        );
 
-      return nextBox;
-    }),
+        return nextBox;
+      }),
     deleteCharacterBox: vi.fn().mockImplementation(async (boxId: string) => {
       boxes.set(boxes().filter((box) => box.id !== boxId));
     }),

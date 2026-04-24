@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
   IonButton,
@@ -81,6 +82,7 @@ interface CharacterBoxCharacterCardView {
     IonSpinner,
     IonTitle,
     IonToolbar,
+    RouterLink,
     SpecialAbilityPickerComponent,
     TranslocoDirective,
     TranslocoPipe,
@@ -216,7 +218,9 @@ export class CharacterBoxesPage implements OnInit {
     () => Boolean(this.selectedBox()) && this.missingFavoriteCount() > 0,
   );
   public readonly boxNameValidationMessage = computed(() =>
-    this.selectedBox() && this.boxNameDraft().trim().length === 0 ? this.t('editor.nameRequired') : '',
+    this.selectedBox() && this.boxNameDraft().trim().length === 0
+      ? this.t('editor.nameRequired')
+      : '',
   );
   public readonly isCompactDisplayMode = computed(() => this.displayMode() === 'compact');
   public readonly characterCardViews = computed<CharacterBoxCharacterCardView[]>(() =>
@@ -364,12 +368,16 @@ export class CharacterBoxesPage implements OnInit {
     await this.loadCharacters(true);
   }
 
-  public async onFavoriteFilterChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
+  public async onFavoriteFilterChange(
+    event: CustomEvent<{ value?: string | null }>,
+  ): Promise<void> {
     this.selectedFavoriteFilter.set(event.detail.value === 'favorites' ? 'favorites' : 'all');
     await this.loadCharacters(true);
   }
 
-  public async onMembershipFilterChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
+  public async onMembershipFilterChange(
+    event: CustomEvent<{ value?: string | null }>,
+  ): Promise<void> {
     const nextValue = event.detail.value;
 
     this.selectedMembershipFilter.set(
@@ -486,7 +494,11 @@ export class CharacterBoxesPage implements OnInit {
   public async saveSupportAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
     this.supportAbilityDrafts.set(
       createAbilityRequirementDrafts(
-        serializeCategoryAbilityDrafts(drafts, this.availableSupportAbilityCatalogItems(), 'support'),
+        serializeCategoryAbilityDrafts(
+          drafts,
+          this.availableSupportAbilityCatalogItems(),
+          'support',
+        ),
       ),
     );
     this.supportAbilityPickerOpen.set(false);
@@ -506,6 +518,10 @@ export class CharacterBoxesPage implements OnInit {
 
   public isFavorite(characterId: number): boolean {
     return this.favoriteCharacterIds().includes(characterId);
+  }
+
+  public getCharacterDetailLink(character: CharacterListItem | null): string[] | null {
+    return character ? ['/characters', character.id.toString()] : null;
   }
 
   public async clearFilters(): Promise<void> {

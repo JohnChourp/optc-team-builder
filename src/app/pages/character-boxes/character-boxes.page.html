@@ -262,54 +262,56 @@
                 </ion-button>
               </div>
 
-        <app-special-ability-picker
-          [isOpen]="potentialAbilityPickerOpen()"
-          category="potential"
+              <app-special-ability-picker
+                [isOpen]="potentialAbilityPickerOpen()"
+                category="potential"
                 [eyebrow]="t('filters.potential.eyebrow')"
                 [title]="t('filters.potential.title')"
                 [copy]="t('filters.potential.copy')"
                 [drafts]="potentialAbilityDrafts()"
                 [catalogItems]="availablePotentialAbilityCatalogItems()"
-          (dismiss)="closePotentialAbilityPicker()"
-          (saveDrafts)="savePotentialAbilityPicker($event)"
-        ></app-special-ability-picker>
+                (dismiss)="closePotentialAbilityPicker()"
+                (saveDrafts)="savePotentialAbilityPicker($event)"
+              ></app-special-ability-picker>
 
-        <div class="favorites-toggle-row">
-          <div class="favorites-toggle-copy">
-            <strong>{{ t('filters.support.label') }}</strong>
-            <small>{{ t('filters.support.support', { count: supportAbilityDrafts().length }) }}</small>
-          </div>
-          <div class="favorites-tools-actions">
-            <ion-button
-              fill="outline"
-              color="warning"
-              [disabled]="!availableSupportAbilityCatalogItems().length"
-              (click)="openSupportAbilityPicker()"
-            >
-              {{ t('filters.support.open') }}
-            </ion-button>
-            <ion-button
-              fill="clear"
-              color="light"
-              [disabled]="!supportAbilityDrafts().length"
-              (click)="clearSupportAbilityFilters()"
-            >
-              {{ 'common.actions.clear' | transloco }}
-            </ion-button>
-          </div>
-        </div>
+              <div class="favorites-toggle-row">
+                <div class="favorites-toggle-copy">
+                  <strong>{{ t('filters.support.label') }}</strong>
+                  <small>{{
+                    t('filters.support.support', { count: supportAbilityDrafts().length })
+                  }}</small>
+                </div>
+                <div class="favorites-tools-actions">
+                  <ion-button
+                    fill="outline"
+                    color="warning"
+                    [disabled]="!availableSupportAbilityCatalogItems().length"
+                    (click)="openSupportAbilityPicker()"
+                  >
+                    {{ t('filters.support.open') }}
+                  </ion-button>
+                  <ion-button
+                    fill="clear"
+                    color="light"
+                    [disabled]="!supportAbilityDrafts().length"
+                    (click)="clearSupportAbilityFilters()"
+                  >
+                    {{ 'common.actions.clear' | transloco }}
+                  </ion-button>
+                </div>
+              </div>
 
-        <app-special-ability-picker
-          [isOpen]="supportAbilityPickerOpen()"
-          category="support"
-          [eyebrow]="t('filters.support.eyebrow')"
-          [title]="t('filters.support.title')"
-          [copy]="t('filters.support.copy')"
-          [drafts]="supportAbilityDrafts()"
-          [catalogItems]="availableSupportAbilityCatalogItems()"
-          (dismiss)="closeSupportAbilityPicker()"
-          (saveDrafts)="saveSupportAbilityPicker($event)"
-        ></app-special-ability-picker>
+              <app-special-ability-picker
+                [isOpen]="supportAbilityPickerOpen()"
+                category="support"
+                [eyebrow]="t('filters.support.eyebrow')"
+                [title]="t('filters.support.title')"
+                [copy]="t('filters.support.copy')"
+                [drafts]="supportAbilityDrafts()"
+                [catalogItems]="availableSupportAbilityCatalogItems()"
+                (dismiss)="closeSupportAbilityPicker()"
+                (saveDrafts)="saveSupportAbilityPicker($event)"
+              ></app-special-ability-picker>
 
               <div class="view-toggle" [attr.aria-label]="t('displayMode.label')">
                 <button
@@ -352,14 +354,22 @@
                         [attr.aria-label]="card.favoriteAriaLabel"
                         (click)="toggleFavorite(card.character.id, $event)"
                       >
-                        <ion-icon [icon]="card.isFavorite ? favoriteIcon : favoriteOutlineIcon"></ion-icon>
+                        <ion-icon
+                          [icon]="card.isFavorite ? favoriteIcon : favoriteOutlineIcon"
+                        ></ion-icon>
                       </button>
 
-                      <img
-                        [src]="card.character.imageUrl"
-                        [alt]="card.character.name"
-                        loading="lazy"
-                      />
+                      <a
+                        class="character-detail-thumb-link character-thumb-card__detail-thumb"
+                        [routerLink]="getCharacterDetailLink(card.character)"
+                        [attr.aria-label]="card.character.name"
+                      >
+                        <img
+                          [src]="card.character.imageUrl"
+                          [alt]="card.character.name"
+                          loading="lazy"
+                        />
+                      </a>
 
                       <ion-button
                         fill="solid"
@@ -377,15 +387,26 @@
                 <div class="character-list">
                   @for (card of characterCardViews(); track card.character.id) {
                     <article class="character-row">
-                      <img
-                        [src]="card.character.imageUrl"
-                        [alt]="card.character.name"
-                        loading="lazy"
-                      />
+                      <a
+                        class="character-detail-thumb-link character-row__detail-thumb"
+                        [routerLink]="getCharacterDetailLink(card.character)"
+                        [attr.aria-label]="card.character.name"
+                      >
+                        <img
+                          [src]="card.character.imageUrl"
+                          [alt]="card.character.name"
+                          loading="lazy"
+                        />
+                      </a>
 
                       <div class="character-row__content">
                         <div class="character-row__title-row">
-                          <strong>{{ card.character.name }}</strong>
+                          <a
+                            class="character-detail-name-link"
+                            [routerLink]="getCharacterDetailLink(card.character)"
+                          >
+                            {{ card.character.name }}
+                          </a>
                           <button
                             type="button"
                             class="favorite-button"
