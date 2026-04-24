@@ -56,6 +56,32 @@ afterEach(() => {
 });
 
 describe('AutoTeamBuilderPage builder interactions', () => {
+  it('keeps runtime auto-builder code independent from the build-time ability parser', () => {
+    const runtimeFiles = [
+      'src/app/core/services/auto-team-builder.service.ts',
+      'src/app/core/services/auto-team-builder.utils.ts',
+      'src/app/core/services/auto-team-builder.engine.ts',
+      'src/app/core/services/auto-team-builder.worker.ts',
+      'src/app/core/services/auto-team-builder-ability-match.utils.ts',
+      'src/app/pages/auto-team-builder/auto-team-builder.page.ts',
+    ];
+    const forbiddenBuildTimeParserReferences = [
+      'auto-team-builder-ability-parser',
+      'analyzeBuilderAbilityText',
+      'enrichCharactersWithBuilderAbilities',
+    ];
+
+    expect(
+      runtimeFiles.flatMap((filePath) => {
+        const source = readFileSync(resolve(process.cwd(), filePath), 'utf8');
+
+        return forbiddenBuildTimeParserReferences
+          .filter((reference) => source.includes(reference))
+          .map((reference) => `${filePath}: ${reference}`);
+      }),
+    ).toEqual([]);
+  });
+
   it('passes the resolved worker count to the builder service execution options', async () => {
     const { page, autoTeamBuilder, userState } = await createPage();
 
@@ -73,6 +99,20 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         workerCount: 4,
       }),
     );
+  });
+
+  it('keeps the build button label stable across selected filters', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    expect(page.buildButtonLabel()).toBe('Auto Team Build');
+
+    page.selectedTypes.set(['DEX', 'STR', 'PSY']);
+    page.selectedClasses.set(['Fighter', 'Slasher']);
+    page.requireAllSelectedTypesInTeam.set(true);
+    page.favoritesOnly.set(true);
+
+    expect(page.buildButtonLabel()).toBe('Auto Team Build');
   });
 
   it('passes the live worker count resolver to the builder service execution options', async () => {
@@ -1418,9 +1458,13 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain('[routerLink]="getCharacterDetailLink(candidateCard.character)"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(slot.character)"');
     expect(template).toContain('(click)="saveTeam()"');
-    expect(template).toContain('<ng-lottie');
+    expect(template).not.toContain('<ng-lottie');
     expect(template).toContain('[disabled]="saveUiLocked()"');
     expect(template).toContain('{{ saveButtonLabel() }}');
+    expect(template).toContain('class="build-submit-button"');
+    expect(template).toContain('{{ buildButtonLabel() }}');
+    expect(template).not.toContain('slot.abilityChips');
+    expect(template).not.toContain('slot.snippet');
     expect(template).toContain('<app-ability-requirement-picker');
     expect(template).not.toContain('<app-enemy-mechanic-picker');
     expect(template).not.toContain('<app-special-ability-picker');
@@ -1516,7 +1560,6 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     page.errorMessage.set('Build failed');
     page.currentTeamId.set('saved-team-1');
     page.saveUiLocked.set(true);
-    page.saveFeedbackVisible.set(true);
     page.saveFeedbackError.set('Save failed');
     page.presetImportFeedback.set({
       tone: 'success',
@@ -1554,7 +1597,6 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.errorMessage()).toBe('');
     expect(page.currentTeamId()).toBeNull();
     expect(page.saveUiLocked()).toBe(false);
-    expect(page.saveFeedbackVisible()).toBe(false);
     expect(page.saveFeedbackError()).toBe('');
     expect(page.presetImportFeedback()).toBeNull();
     expect(page.loadedEnemyPresetName()).toBeNull();
@@ -2338,8 +2380,7 @@ describe('AutoTeamBuilderPage offline save', () => {
     expect(userState.saveTeam).not.toHaveBeenCalled();
   });
 
-  it('saves immediately and keeps the save UI locked for 3 seconds', async () => {
-    vi.useFakeTimers();
+  it('saves immediately and unlocks after the save finishes', async () => {
     const { page, userState } = await createPage();
 
     await page.ngOnInit();
@@ -2354,9 +2395,7 @@ describe('AutoTeamBuilderPage offline save', () => {
       },
     });
 
-    const savePromise = page.saveTeam();
-
-    await Promise.resolve();
+    await page.saveTeam();
 
     expect(userState.saveTeam).toHaveBeenCalledWith({
       id: undefined,
@@ -2366,23 +2405,11 @@ describe('AutoTeamBuilderPage offline save', () => {
       slots: [101, 102, 103, 104, 105, 106],
     });
     expect(page.currentTeamId()).toBe('saved-auto-team');
-    expect(page.saveUiLocked()).toBe(true);
-    expect(page.saveFeedbackVisible()).toBe(true);
-    expect(page.saveFeedbackError()).toBe('');
-
-    await vi.advanceTimersByTimeAsync(2999);
-    expect(page.saveUiLocked()).toBe(true);
-    expect(page.saveFeedbackVisible()).toBe(true);
-
-    await vi.advanceTimersByTimeAsync(1);
-    await savePromise;
-
     expect(page.saveUiLocked()).toBe(false);
-    expect(page.saveFeedbackVisible()).toBe(false);
+    expect(page.saveFeedbackError()).toBe('');
   });
 
   it('reuses the current saved team id when saving the same generated result again', async () => {
-    vi.useFakeTimers();
     const { page, userState } = await createPage();
 
     userState.saveTeam
@@ -2392,15 +2419,9 @@ describe('AutoTeamBuilderPage offline save', () => {
     await page.ngOnInit();
     page.result.set(createAutoBuildResult());
 
-    const firstSavePromise = page.saveTeam();
-    await Promise.resolve();
-    await vi.advanceTimersByTimeAsync(3000);
-    await firstSavePromise;
+    await page.saveTeam();
 
-    const secondSavePromise = page.saveTeam();
-    await Promise.resolve();
-    await vi.advanceTimersByTimeAsync(3000);
-    await secondSavePromise;
+    await page.saveTeam();
 
     expect(userState.saveTeam).toHaveBeenNthCalledWith(
       1,
@@ -2416,9 +2437,15 @@ describe('AutoTeamBuilderPage offline save', () => {
     );
   });
 
-  it('ignores repeated save clicks while the 3-second feedback window is active', async () => {
-    vi.useFakeTimers();
+  it('ignores repeated save clicks while the save request is active', async () => {
     const { page, userState } = await createPage();
+    let resolveSave: (value: { id: string }) => void = () => undefined;
+
+    userState.saveTeam.mockReturnValueOnce(
+      new Promise<{ id: string }>((resolve) => {
+        resolveSave = resolve;
+      }),
+    );
 
     await page.ngOnInit();
     page.result.set(createAutoBuildResult());
@@ -2431,8 +2458,10 @@ describe('AutoTeamBuilderPage offline save', () => {
     expect(userState.saveTeam).toHaveBeenCalledTimes(1);
     expect(page.saveUiLocked()).toBe(true);
 
-    await vi.advanceTimersByTimeAsync(3000);
+    resolveSave({ id: 'saved-auto-team' });
     await firstSavePromise;
+
+    expect(page.saveUiLocked()).toBe(false);
   });
 
   it('unlocks immediately and shows inline feedback when save fails', async () => {
@@ -2449,7 +2478,6 @@ describe('AutoTeamBuilderPage offline save', () => {
 
     expect(consoleErrorSpy).toHaveBeenCalled();
     expect(page.saveUiLocked()).toBe(false);
-    expect(page.saveFeedbackVisible()).toBe(false);
     expect(page.saveFeedbackError()).toBe('The team could not be saved. Please try again.');
     expect(vi.getTimerCount()).toBe(0);
   });

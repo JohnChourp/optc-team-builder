@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 import { type DatasetManifest, type LocalCharacterOverride } from '../models/optc.models';
@@ -7,7 +9,43 @@ interface TestSqlRow {
   [key: string]: string | number | null;
 }
 
+interface SeedCharacterDetail {
+  characterId: number;
+  detail: {
+    builderAbilities?: unknown;
+  };
+}
+
 describe('OptcRepositoryService', () => {
+  it('keeps generated dataset character details ready with builder ability arrays', () => {
+    const seedDetails = extractCharacterDetailsFromSeed(
+      readFileSync(resolve(process.cwd(), 'public/assets/data/optc-seed.sql'), 'utf8'),
+    );
+    const preview = JSON.parse(
+      readFileSync(resolve(process.cwd(), 'public/assets/data/optc-preview.json'), 'utf8'),
+    ) as {
+      characters?: Array<{
+        id?: unknown;
+        detail?: {
+          builderAbilities?: unknown;
+        };
+      }>;
+    };
+
+    expect(seedDetails.length).toBeGreaterThan(0);
+    expect(
+      seedDetails
+        .filter(({ detail }) => !Array.isArray(detail.builderAbilities))
+        .map(({ characterId }) => characterId),
+    ).toEqual([]);
+    expect(Array.isArray(preview.characters)).toBe(true);
+    expect(
+      (preview.characters ?? [])
+        .filter((character) => !Array.isArray(character.detail?.builderAbilities))
+        .map((character) => character.id),
+    ).toEqual([]);
+  });
+
   it('keeps a locked favorite candidate even when it sits below the default recent limit', async () => {
     const recentFavoriteRows = Array.from({ length: 1200 }, (_, index) =>
       createCharacterRow({
@@ -686,6 +724,38 @@ describe('OptcRepositoryService', () => {
     expect(getAllDetailedCharactersSpy).not.toHaveBeenCalled();
   });
 
+  it('returns precomputed builder abilities from detail_json for auto-builder candidates', async () => {
+    const service = createRepositoryService([
+      createCharacterRow({
+        id: 5101,
+        type: 'DEX',
+        detail: {
+          builderAbilities: [
+            {
+              key: 'remove_bind',
+              label: 'Remove Bind',
+              minTurns: 5,
+              isCompleteRemoval: false,
+              slotTokens: [],
+              source: 'specialText',
+              coverageMode: 'explicit',
+            },
+          ],
+        },
+      }),
+    ]);
+
+    const [candidate] = await service.getAutoBuilderCandidates(['DEX'], 1200);
+
+    expect(candidate?.detail.builderAbilities).toEqual([
+      expect.objectContaining({
+        key: 'remove_bind',
+        minTurns: 5,
+        source: 'specialText',
+      }),
+    ]);
+  });
+
   it('applies excluded character ids to character search queries', async () => {
     const service = createRepositoryService([]);
     const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
@@ -805,6 +875,81 @@ function createRepositoryService(
   return service;
 }
 
+function extractCharacterDetailsFromSeed(sql: string): SeedCharacterDetail[] {
+  const marker = 'INSERT INTO character_details (character_id, detail_json)';
+  const details: SeedCharacterDetail[] = [];
+  let searchIndex = 0;
+
+  while (searchIndex < sql.length) {
+    const insertIndex = sql.indexOf(marker, searchIndex);
+
+    if (insertIndex === -1) {
+      break;
+    }
+
+    const valuesIndex = sql.indexOf('VALUES', insertIndex);
+    const tupleStartIndex = sql.indexOf('(', valuesIndex);
+
+    if (valuesIndex === -1 || tupleStartIndex === -1) {
+      throw new Error(`Malformed character_details insert near ${insertIndex}.`);
+    }
+
+    let currentIndex = tupleStartIndex + 1;
+
+    while (/\s/u.test(sql[currentIndex] ?? '')) {
+      currentIndex += 1;
+    }
+
+    let characterIdText = '';
+
+    while (/[0-9]/u.test(sql[currentIndex] ?? '')) {
+      characterIdText += sql[currentIndex];
+      currentIndex += 1;
+    }
+
+    const characterId = Number(characterIdText);
+    const jsonStartIndex = sql.indexOf("'", currentIndex);
+
+    if (!Number.isInteger(characterId) || characterId <= 0 || jsonStartIndex === -1) {
+      throw new Error(`Malformed character_details values near ${insertIndex}.`);
+    }
+
+    const parsedString = parseSqlStringLiteral(sql, jsonStartIndex);
+    const detail = JSON.parse(parsedString.value) as SeedCharacterDetail['detail'];
+
+    details.push({ characterId, detail });
+    searchIndex = parsedString.endIndex + 1;
+  }
+
+  return details;
+}
+
+function parseSqlStringLiteral(
+  sql: string,
+  startIndex: number,
+): { value: string; endIndex: number } {
+  let value = '';
+
+  for (let index = startIndex + 1; index < sql.length; index += 1) {
+    const character = sql[index];
+
+    if (character !== "'") {
+      value += character;
+      continue;
+    }
+
+    if (sql[index + 1] === "'") {
+      value += "'";
+      index += 1;
+      continue;
+    }
+
+    return { value, endIndex: index };
+  }
+
+  throw new Error(`Unterminated SQL string literal near ${startIndex}.`);
+}
+
 function createManifest(overrides: Partial<DatasetManifest> = {}): DatasetManifest {
   return {
     generatedAt: '2026-03-25T00:00:00.000Z',
@@ -861,6 +1006,7 @@ function createCharacterRow(
     classes: string[];
     cost: number;
     stars: number;
+    detail: Partial<LocalCharacterOverride['detail']>;
     assets: {
       exactLocal: string | null;
       thumbnailLocal?: string | null;
@@ -914,25 +1060,42 @@ function createCharacterRow(
       }),
     }),
     detail_json: JSON.stringify({
+      ...createCharacterDetail(id),
+      ...(overrides.detail ?? {}),
       characterId: id,
-      captainAbility: null,
-      specialName: null,
-      specialText: null,
-      specialNotes: null,
-      builderAbilities: [],
-      sailorAbilities: [],
-      sailorNotes: null,
-      limitBreak: [],
-      potentialAbilities: [],
-      supportData: [],
-      swapData: null,
-      vsSpecial: null,
-      superType: null,
-      superTandemData: null,
-      rushSugoSpecialData: null,
-      superClass: null,
-      rumbleData: null,
     }),
+  };
+}
+
+function createCharacterDetail(characterId: number): LocalCharacterOverride['detail'] {
+  return {
+    characterId,
+    captainAbility: null,
+    captainAbilityVariants: [],
+    captainNotes: null,
+    specialName: null,
+    specialText: null,
+    specialNotes: null,
+    superSpecialText: null,
+    superSpecialCriteriaText: null,
+    superSpecialNotes: null,
+    superSpecialCriteria: null,
+    partyConflictKeys: [],
+    characterTags: [],
+    builderAbilities: [],
+    sailorAbilities: [],
+    sailorNotes: null,
+    limitBreak: [],
+    potentialAbilities: [],
+    supportData: [],
+    swapData: null,
+    vsSpecial: null,
+    superType: null,
+    superTandemData: null,
+    finalTapData: null,
+    rushSugoSpecialData: null,
+    superClass: null,
+    rumbleData: null,
   };
 }
 
@@ -955,35 +1118,7 @@ function createOverride(
     maxAtk: overrides.maxAtk ?? 1900,
     maxRcv: overrides.maxRcv ?? 340,
     growth: overrides.growth ?? 3,
-    detail: overrides.detail ?? {
-      characterId: overrides.characterId,
-      captainAbility: null,
-      captainAbilityVariants: [],
-      captainNotes: null,
-      specialName: null,
-      specialText: null,
-      specialNotes: null,
-      superSpecialText: null,
-      superSpecialCriteriaText: null,
-      superSpecialNotes: null,
-      superSpecialCriteria: null,
-      partyConflictKeys: [],
-      characterTags: [],
-      builderAbilities: [],
-      sailorAbilities: [],
-      sailorNotes: null,
-      limitBreak: [],
-      potentialAbilities: [],
-      supportData: [],
-      swapData: null,
-      vsSpecial: null,
-      superType: null,
-      superTandemData: null,
-      finalTapData: null,
-      rushSugoSpecialData: null,
-      superClass: null,
-      rumbleData: null,
-    },
+    detail: overrides.detail ?? createCharacterDetail(overrides.characterId),
     images: overrides.images ?? {
       thumbnailDataUrl: null,
       detailDataUrl: null,

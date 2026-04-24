@@ -1,5 +1,13 @@
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import { Component, OnDestroy, OnInit, computed, signal, type WritableSignal } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  computed,
+  signal,
+  type WritableSignal,
+} from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import { type ViewDidEnter, type ViewWillEnter } from '@ionic/angular';
@@ -31,7 +39,6 @@ import {
   shieldHalfOutline,
   sparklesOutline,
 } from 'ionicons/icons';
-import { LottieComponent, type AnimationOptions } from 'ngx-lottie';
 
 import {
   AUTO_TEAM_CANDIDATE_LIMIT,
@@ -196,8 +203,6 @@ interface ManualSlotCardView {
 type TeamSlotViewModel = AutoBuildResult['slots'][number] & {
   trackKey: string;
   roleLabel: string;
-  snippet: string;
-  abilityChips: CharacterAbilityChipView[];
 };
 
 interface AppliedManualCharacterFilters {
@@ -253,8 +258,7 @@ interface AutoTeamBuilderDefaultFilterState {
   favoriteShipsOnly: boolean;
 }
 
-const SAVE_TEAM_FEEDBACK_DURATION_MS = 3000;
-const SAVE_TEAM_ANIMATION_PATH = 'assets/animations/save-team-loading.json';
+const AUTO_TEAM_BUILD_BUTTON_LABEL = 'Auto Team Build';
 const CHARACTER_PICKER_PAGE_SIZE = 10;
 const CHARACTER_PICKER_SCROLL_LOAD_THRESHOLD = 4;
 const SHIP_PICKER_PAGE_SIZE = 10;
@@ -346,7 +350,6 @@ function matchesLeaderOnlyManualRequirements(
     IonToggle,
     IonToolbar,
     ScrollingModule,
-    LottieComponent,
     AbilityRequirementPickerComponent,
     RouterLink,
     TranslocoDirective,
@@ -356,6 +359,8 @@ function matchesLeaderOnlyManualRequirements(
   styleUrl: './auto-team-builder.page.scss',
 })
 export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, ViewWillEnter {
+  @ViewChild(IonContent) private content?: IonContent;
+
   private buildAbortController: AbortController | null = null;
   private buildProgressTickerId: ReturnType<typeof globalThis.setInterval> | null = null;
   private currentBuildProgressSignature = '';
@@ -450,7 +455,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly errorMessage = signal('');
   public readonly currentTeamId = signal<string | null>(null);
   public readonly saveUiLocked = signal(false);
-  public readonly saveFeedbackVisible = signal(false);
   public readonly saveFeedbackError = signal('');
   public readonly candidatePoolBoxCreationPending = signal(false);
   public readonly favoriteCharacterIds;
@@ -462,12 +466,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly presetImportFeedback = signal<PresetImportFeedback | null>(null);
   public readonly candidatePoolBoxFeedback = signal<PresetImportFeedback | null>(null);
   public readonly loadedEnemyPresetName = signal<string | null>(null);
-  public readonly saveAnimationOptions: AnimationOptions = {
-    path: SAVE_TEAM_ANIMATION_PATH,
-    renderer: 'svg',
-    loop: true,
-    autoplay: true,
-  };
 
   public readonly availableTypes = AUTO_TEAM_BUILDER_TYPES;
   public readonly manualCandidateViewportItemSize = MANUAL_CANDIDATE_VIEWPORT_ITEM_SIZE;
@@ -1116,17 +1114,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         ? this.t('hero.description.defaultStrict')
         : this.t('hero.description.defaultFlexible'),
   );
-  public readonly buildButtonLabel = computed(() =>
-    this.hasSelectedTypes()
-      ? this.hasStrictFilters()
-        ? this.favoritesOnly()
-          ? this.t('actions.build.favoriteStrict', { types: this.selectedTypesLabel() })
-          : this.t('actions.build.strict', { types: this.selectedTypesLabel() })
-        : this.favoritesOnly()
-          ? this.t('actions.build.favoriteFlexible', { types: this.selectedTypesLabel() })
-          : this.t('actions.build.flexible', { types: this.selectedTypesLabel() })
-      : this.t('actions.build.selectTypes'),
-  );
+  public readonly buildButtonLabel = computed(() => AUTO_TEAM_BUILD_BUTTON_LABEL);
   public readonly saveButtonLabel = computed(() =>
     this.saveUiLocked() ? this.t('save.savingLabel') : this.t('save.saveOffline'),
   );
@@ -1543,7 +1531,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly downloadTeamJsonLabel = computed(() => this.t('actions.downloadTeamJson'));
   public readonly teamSlots = computed<TeamSlotViewModel[]>(() => {
     const currentResult = this.result();
-    const requirements = this.pageRequiredAbilities();
 
     return (
       currentResult?.slots.map((slot, index) => ({
@@ -1553,18 +1540,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
             ? `sub:${index}:${slot.character.id}`
             : `${slot.role}:${slot.character.id}`,
         roleLabel: this.resolveRoleLabel(slot.role),
-        snippet:
-          slot.role === 'sub'
-            ? slot.character.detail.specialText ||
-              slot.character.detail.captainAbility ||
-              this.t('results.teamSlots.noSnippet')
-            : slot.character.detail.captainAbility ||
-              slot.character.detail.specialText ||
-              this.t('results.teamSlots.noSnippet'),
-        abilityChips: this.buildAbilityChipViews(
-          slot.character.detail.builderAbilities,
-          requirements,
-        ),
       })) ?? []
     );
   });
@@ -2261,6 +2236,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.building.set(true);
     this.resetBuildState();
     this.startBuildProgressTicker();
+    void this.scrollToBottom();
 
     try {
       const executionOptions: AutoTeamBuildExecutionOptions = {
@@ -2300,6 +2276,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       }
 
       this.result.set(nextResult);
+      void this.scrollToBottom();
     } catch (error) {
       if (isAutoTeamBuildCancelledError(error)) {
         if (this.resetAfterBuildCancellation) {
@@ -2314,6 +2291,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
       console.error(error);
       this.errorMessage.set(this.t('errors.buildFailed'));
+      void this.scrollToBottom();
     } finally {
       this.buildAbortController = null;
       this.stopBuildProgressTicker();
@@ -2494,10 +2472,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       return;
     }
 
-    const startedAt = Date.now();
-
     this.saveUiLocked.set(true);
-    this.saveFeedbackVisible.set(true);
     this.saveFeedbackError.set('');
 
     try {
@@ -2510,14 +2485,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       });
 
       this.currentTeamId.set(saved.id);
-      await this.waitForSaveFeedbackWindow(startedAt);
-
-      if (this.destroyed) {
-        return;
-      }
-
-      this.saveUiLocked.set(false);
-      this.saveFeedbackVisible.set(false);
     } catch (error) {
       console.error(error);
 
@@ -2525,9 +2492,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         return;
       }
 
-      this.saveUiLocked.set(false);
-      this.saveFeedbackVisible.set(false);
       this.saveFeedbackError.set(this.t('save.error'));
+    } finally {
+      if (!this.destroyed) {
+        this.saveUiLocked.set(false);
+      }
     }
   }
 
@@ -3945,19 +3914,19 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
   private resetSaveFeedbackState(): void {
     this.saveUiLocked.set(false);
-    this.saveFeedbackVisible.set(false);
     this.saveFeedbackError.set('');
   }
 
-  private async waitForSaveFeedbackWindow(startedAt: number): Promise<void> {
-    const remainingDuration = SAVE_TEAM_FEEDBACK_DURATION_MS - (Date.now() - startedAt);
-
-    if (remainingDuration <= 0) {
-      return;
-    }
-
+  private async scrollToBottom(): Promise<void> {
     await new Promise<void>((resolve) => {
-      globalThis.setTimeout(resolve, remainingDuration);
+      if (typeof globalThis.requestAnimationFrame === 'function') {
+        globalThis.requestAnimationFrame(() => resolve());
+        return;
+      }
+
+      globalThis.setTimeout(resolve, 0);
     });
+
+    await this.content?.scrollToBottom(300);
   }
 }

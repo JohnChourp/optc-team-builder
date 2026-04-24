@@ -1259,17 +1259,16 @@
           </section>
         }
 
-        <ion-button
-          expand="block"
-          color="warning"
-          [disabled]="buildDisabled()"
-          (click)="buildTeam()"
-        >
-          @if (building()) {
-            <ion-spinner slot="start" name="crescent"></ion-spinner>
-          }
-          {{ buildButtonLabel() }}
-        </ion-button>
+        <div class="build-submit-row">
+          <ion-button
+            color="warning"
+            class="build-submit-button"
+            [disabled]="buildDisabled()"
+            (click)="buildTeam()"
+          >
+            {{ buildButtonLabel() }}
+          </ion-button>
+        </div>
       </section>
 
       @if (building()) {
@@ -1467,22 +1466,6 @@
             [value]="notes()"
             (ionInput)="onNotesChange($event)"
           ></ion-textarea>
-
-          @if (saveFeedbackVisible()) {
-            <section
-              class="preset-import-feedback preset-import-feedback--warning save-team-feedback"
-              role="status"
-              aria-live="polite"
-            >
-              <div class="save-team-feedback__animation" aria-hidden="true">
-                <ng-lottie width="52px" height="52px" [options]="saveAnimationOptions"></ng-lottie>
-              </div>
-              <div class="save-team-feedback__copy">
-                <strong>{{ t('save.savingLabel') }}</strong>
-                <small>{{ t('save.savingCopy') }}</small>
-              </div>
-            </section>
-          }
 
           @if (saveFeedbackError()) {
             <section
@@ -1745,18 +1728,6 @@
                       <small class="reason-chip">{{ chip }}</small>
                     }
                   </div>
-                  <div class="chip-row result-ability-chip-row">
-                    @for (abilityChip of slot.abilityChips; track $index) {
-                      <small
-                        class="coverage-chip result-ability-chip"
-                        [class.result-ability-chip--matched]="abilityChip.highlighted"
-                        [class.result-ability-chip--empty]="abilityChip.empty"
-                      >
-                        {{ abilityChip.label }}
-                      </small>
-                    }
-                  </div>
-                  <p>{{ slot.snippet }}</p>
                   <div class="result-card__actions">
                     <ion-button
                       size="small"

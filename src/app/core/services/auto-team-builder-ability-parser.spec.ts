@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -51,7 +52,36 @@ beforeAll(async () => {
   ));
 });
 
+function expectSourceOrder(filePath: string, orderedSnippets: string[]): void {
+  const source = readFileSync(resolve(process.cwd(), filePath), 'utf8');
+  let previousIndex = -1;
+
+  for (const snippet of orderedSnippets) {
+    const nextIndex = source.indexOf(snippet);
+
+    expect(nextIndex, `${filePath} should contain ${snippet}`).toBeGreaterThanOrEqual(0);
+    expect(nextIndex, `${snippet} should appear after the previous checkpoint`).toBeGreaterThan(
+      previousIndex,
+    );
+    previousIndex = nextIndex;
+  }
+}
+
 describe('auto team builder ability parser', () => {
+  it('enriches characters with builder abilities before generated dataset outputs are written', () => {
+    expectSourceOrder('scripts/import-optc-data.mjs', [
+      'await enrichCharactersWithBuilderAbilities(characters',
+      'createSqlSeed(characters, ships, manifest)',
+      'buildPreviewPayload(manifest.generatedAt, characters, ships)',
+      'writeGeneratedDatasetFiles(',
+    ]);
+    expectSourceOrder('scripts/lib/manual-character-apply.mjs', [
+      'await enrichCharactersWithBuilderAbilities(nextCharacters',
+      'buildPreviewPayload(generatedAt, nextCharacters, ships)',
+      'createSqlSeed(nextCharacters, ships, manifest)',
+    ]);
+  });
+
   it('extracts bind and despair removal with the same turn count', () => {
     expect(
       analyzeBuilderAbilityText(
