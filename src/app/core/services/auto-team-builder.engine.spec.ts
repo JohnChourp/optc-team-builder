@@ -362,6 +362,7 @@ function createInput(
       | 'requireLeaderSuperSpecialCriteria'
       | 'requireUniqueBaseCharacterNames'
       | 'favoritesOnly'
+      | 'allowAnyFriendCaptainAutoFill'
       | 'favoriteShipsOnly'
       | 'favoriteShipIds'
       | 'manualSlots'
@@ -393,6 +394,7 @@ function createInput(
     requireLeaderSuperSpecialCriteria: overrides.requireLeaderSuperSpecialCriteria ?? false,
     requireUniqueBaseCharacterNames: overrides.requireUniqueBaseCharacterNames ?? false,
     favoritesOnly: overrides.favoritesOnly ?? false,
+    allowAnyFriendCaptainAutoFill: overrides.allowAnyFriendCaptainAutoFill ?? false,
     favoriteShipsOnly: overrides.favoriteShipsOnly ?? false,
     favoriteShipIds: overrides.favoriteShipIds ?? [],
     manualSlots: overrides.manualSlots ?? createEmptyAutoBuildManualSlots(),

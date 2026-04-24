@@ -17,6 +17,7 @@ vi.mock('./saved-enemies-transfer.utils', async () => {
 
 import { downloadSavedEnemiesExport } from './saved-enemies-transfer.utils';
 import { SavedEnemiesPage } from './saved-enemies.page';
+import { type SavedEnemy } from '../../core/models/optc.models';
 
 type SavedEnemiesPagePrivateApi = SavedEnemiesPage & {
   readImageUrlAsDataUrl: (imageUrl: string) => Promise<string>;
@@ -74,6 +75,7 @@ describe('SavedEnemiesPage', () => {
     expect(page.editingEnemy()).toBeNull();
     expect(page.selectedTypes()).toEqual([...page.availableTypes]);
     expect(page.selectedClasses()).toEqual([...page.availableClasses()]);
+    expect(page.enemyTextPasteValue()).toBe('');
     expect(page.enemyMechanicDrafts()).toEqual([]);
     expect(page.requiredAbilityDrafts()).toEqual([]);
   });
@@ -88,6 +90,9 @@ describe('SavedEnemiesPage', () => {
     expect(page.editingEnemy()?.id).toBe('enemy-1');
     expect(page.enemyName()).toBe('Forest Boss');
     expect(page.enemyImageDataUrl()).toBe('data:image/jpeg;base64,Zm9yZXN0LWJvc3M=');
+    expect(page.enemyTextPasteValue()).toBe(
+      '4 turn(s) Special Bind\nNon-Normal Attacks deal 1 damage',
+    );
     expect(page.selectedTypes()).toEqual(['DEX', 'PSY']);
     expect(page.selectedClasses()).toEqual(['Fighter']);
     expect(page.enemyMechanicDrafts()).toEqual([]);
@@ -206,6 +211,11 @@ describe('SavedEnemiesPage', () => {
         requiredCharacterCount: 1,
       },
     ]);
+    page.onEnemyPasteTextChange({
+      detail: {
+        value: '4 turn(s) Special Bind\nNon-Normal Attacks deal 1 damage',
+      },
+    } as CustomEvent<{ value?: string | null }>);
 
     await page.saveEnemy();
 
@@ -213,6 +223,7 @@ describe('SavedEnemiesPage', () => {
       id: undefined,
       name: 'Arena Boss',
       notes: ' Removes bind ',
+      rawEnemyText: '4 turn(s) Special Bind\nNon-Normal Attacks deal 1 damage',
       imageDataUrl: 'data:image/jpeg;base64,YXJlbmEtYm9zcw==',
       selectedTypes: ['STR'],
       selectedClasses: ['Slasher'],
@@ -307,6 +318,58 @@ describe('SavedEnemiesPage', () => {
             requiredCharacterCount: 1,
           }),
         ]),
+      }),
+    );
+  });
+
+  it('applies parsed bind mechanics as exact special ability filters', async () => {
+    const { page, userState } = createPage();
+
+    await page.ngOnInit();
+    page.openCreateModal();
+    page.onEnemyNameChange({ detail: { value: 'Bind Boss' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+    page.onTypeChange({ detail: { value: ['DEX'] } } as CustomEvent<{
+      value?: string[] | string | null;
+    }>);
+    page.onClassChange({ detail: { value: ['Fighter'] } } as CustomEvent<{
+      value?: string[] | string | null;
+    }>);
+    page.onEnemyPasteTextChange({
+      detail: {
+        value: '4 turn(s) Bind',
+      },
+    } as CustomEvent<{ value?: string | null }>);
+
+    page.parseEnemyText();
+
+    expect(page.parsedAbilitySelectionOpen()).toBe(true);
+    expect(page.selectedParsedAbilityCandidateIds()).toEqual(['special|remove_bind|']);
+
+    page.applyParsedEnemyText();
+
+    expect(page.enemyMechanicDrafts()).toEqual([]);
+    expect(page.requiredAbilityDrafts()).toEqual([
+      expect.objectContaining({
+        abilityKey: 'remove_bind',
+        requiredCharacterCount: 1,
+      }),
+    ]);
+
+    await page.saveEnemy();
+
+    expect(userState.saveEnemy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Bind Boss',
+        enemyMechanics: [],
+        requiredAbilities: [
+          expect.objectContaining({
+            abilityKey: 'remove_bind',
+            minTurns: null,
+            requiredCharacterCount: 1,
+          }),
+        ],
       }),
     );
   });
@@ -500,7 +563,7 @@ describe('SavedEnemiesPage', () => {
   });
 
   it('clears parsed warning state when the pasted text changes and recomputes on the next parse', async () => {
-    const { page } = createPage();
+    const { page, userState } = createPage();
 
     await page.ngOnInit();
     page.openEditModal(page.savedEnemies()[0]!);
@@ -522,6 +585,7 @@ describe('SavedEnemiesPage', () => {
 
     expect(page.enemyTextParseResult()).toBeNull();
     expect(page.enemyTextParseErrorMessage()).toBe('');
+    expect(page.enemyTextPasteValue()).toBe('4 turn(s) Special Bind');
 
     page.parseEnemyText();
 
@@ -532,6 +596,15 @@ describe('SavedEnemiesPage', () => {
       }),
     );
     expect(page.enemyTextParseResult()?.warnings).toEqual([]);
+
+    await page.saveEnemy();
+
+    expect(userState.saveEnemy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'enemy-1',
+        rawEnemyText: '4 turn(s) Special Bind',
+      }),
+    );
   });
 
   it('removes the currently selected enemy image from the editor state', () => {
@@ -710,8 +783,8 @@ describe('SavedEnemiesPage', () => {
   });
 });
 
-function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnemies> } = {}) {
-  const savedEnemies = signal(overrides.savedEnemies ?? buildSavedEnemies());
+function createPage(overrides: { savedEnemies?: SavedEnemy[] } = {}) {
+  const savedEnemies = signal<SavedEnemy[]>(overrides.savedEnemies ?? buildSavedEnemies());
   const userState = {
     ready: vi.fn().mockResolvedValue(undefined),
     savedEnemies,
@@ -723,18 +796,21 @@ function createPage(overrides: { savedEnemies?: ReturnType<typeof buildSavedEnem
         id: typeof input['id'] === 'string' ? input['id'] : 'enemy-new',
         name: String(input['name'] ?? '').trim() || 'Untitled Enemy',
         notes: String(input['notes'] ?? '').trim(),
+        rawEnemyText: typeof input['rawEnemyText'] === 'string' ? input['rawEnemyText'] : '',
         imageDataUrl: typeof input['imageDataUrl'] === 'string' ? input['imageDataUrl'] : null,
         selectedTypes: [...((input['selectedTypes'] as string[]) ?? [])],
         selectedClasses: [...((input['selectedClasses'] as string[]) ?? [])],
-        requiredAbilities: [...((input['requiredAbilities'] as unknown[]) ?? [])],
-        enemyMechanics: [...((input['enemyMechanics'] as unknown[]) ?? [])],
+        requiredAbilities: [
+          ...((input['requiredAbilities'] as SavedEnemy['requiredAbilities']) ?? []),
+        ],
+        enemyMechanics: [...((input['enemyMechanics'] as SavedEnemy['enemyMechanics']) ?? [])],
         requireAllSelectedTypesInTeam: Boolean(input['requireAllSelectedTypesInTeam']),
         requireAllSelectedClassesPerCharacter: Boolean(
           input['requireAllSelectedClassesPerCharacter'],
         ),
         createdAt: '2026-03-30T10:00:00.000Z',
         updatedAt: '2026-03-30T10:05:00.000Z',
-      };
+      } satisfies SavedEnemy;
 
       savedEnemies.set([nextEnemy, ...savedEnemies()]);
       return nextEnemy;
@@ -1127,12 +1203,13 @@ function buildCharacter(id: number, name = `Character ${id}`) {
   };
 }
 
-function buildSavedEnemies() {
+function buildSavedEnemies(): SavedEnemy[] {
   return [
     {
       id: 'enemy-1',
       name: 'Forest Boss',
       notes: 'Needs bind removal',
+      rawEnemyText: '4 turn(s) Special Bind\nNon-Normal Attacks deal 1 damage',
       imageDataUrl: 'data:image/jpeg;base64,Zm9yZXN0LWJvc3M=',
       selectedTypes: ['DEX', 'PSY'],
       selectedClasses: ['Fighter'],
@@ -1170,6 +1247,7 @@ function buildSavedEnemies() {
       id: 'enemy-2',
       name: 'Arena Boss',
       notes: '',
+      rawEnemyText: '',
       imageDataUrl: null,
       selectedTypes: ['STR'],
       selectedClasses: ['Slasher'],

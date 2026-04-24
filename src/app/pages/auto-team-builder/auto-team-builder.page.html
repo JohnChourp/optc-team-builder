@@ -191,6 +191,19 @@
 
           <div class="strict-toggle-row">
             <div class="strict-toggle-copy">
+              <strong>{{ allowAnyFriendCaptainAutoFillToggleLabel() }}</strong>
+              <small>{{ allowAnyFriendCaptainAutoFillSupportLabel() }}</small>
+            </div>
+            <ion-toggle
+              color="warning"
+              [checked]="allowAnyFriendCaptainAutoFill()"
+              [disabled]="building()"
+              (ionChange)="onAllowAnyFriendCaptainAutoFillToggle($event)"
+            ></ion-toggle>
+          </div>
+
+          <div class="strict-toggle-row">
+            <div class="strict-toggle-copy">
               <strong>{{ favoriteShipsOnlyToggleLabel() }}</strong>
               <small>{{ favoriteShipsOnlySupportLabel() }}</small>
             </div>
@@ -1311,19 +1324,21 @@
                     </ion-select-option>
                   </ion-select>
                 </label>
-                <label class="loading-card__performance-field">
-                  <span>{{ t('performance.manualCount.label') }}</span>
-                  <ion-select
-                    interface="popover"
-                    fill="outline"
-                    [value]="autoTeamBuilderWorkerPreference().manualCount"
-                    (ionChange)="onAutoTeamBuilderManualWorkerCountChange($event)"
-                  >
-                    @for (count of autoTeamBuilderAvailableWorkerCounts(); track count) {
-                      <ion-select-option [value]="count">{{ count }}</ion-select-option>
-                    }
-                  </ion-select>
-                </label>
+                @if (autoTeamBuilderWorkerPreference().mode === 'manual') {
+                  <label class="loading-card__performance-field">
+                    <span>{{ t('performance.manualCount.label') }}</span>
+                    <ion-select
+                      interface="popover"
+                      fill="outline"
+                      [value]="autoTeamBuilderWorkerPreference().manualCount"
+                      (ionChange)="onAutoTeamBuilderManualWorkerCountChange($event)"
+                    >
+                      @for (count of autoTeamBuilderAvailableWorkerCounts(); track count) {
+                        <ion-select-option [value]="count">{{ count }}</ion-select-option>
+                      }
+                    </ion-select>
+                  </label>
+                }
               </div>
               <div class="loading-card__performance-summary">
                 <small>

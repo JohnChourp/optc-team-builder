@@ -2375,6 +2375,80 @@ describe('Auto team builder', () => {
     );
   });
 
+  it('allows an auto-filled non-favorite friend captain while keeping other auto-filled slots in favorites', async () => {
+    const favoriteCharacterIds = [5900, 5890, 5880, 5870, 5860];
+    const broadFriendCaptain = createPowerFirstCaptainRecord({
+      id: 9000,
+      name: 'Broad Friend Captain',
+      cost: 60,
+      atkMultiplier: 6,
+      universal: true,
+    });
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValueOnce(createSingleTypeRecords())
+        .mockResolvedValueOnce([broadFriendCaptain, ...createSingleTypeRecords()]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      favoritesOnly: true,
+      allowAnyFriendCaptainAutoFill: true,
+      favoriteCharacterIds,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[1]?.role).toBe('friendCaptain');
+    expect(result?.slots[1]?.character.id).toBe(9000);
+    expect(
+      result?.slots
+        .filter((slot) => slot.role !== 'friendCaptain')
+        .every((slot) => favoriteCharacterIds.includes(slot.character.id)),
+    ).toBe(true);
+    expect(repository.getAutoBuilderCandidates).toHaveBeenNthCalledWith(
+      1,
+      ['DEX'],
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        selectedClasses: ['Fighter'],
+        allowedCharacterIds: favoriteCharacterIds,
+        lockedCharacterIds: [],
+        excludedCharacterIds: [],
+      },
+    );
+    expect(repository.getAutoBuilderCandidates).toHaveBeenNthCalledWith(
+      2,
+      ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      null,
+      {
+        lockedCharacterIds: [],
+        excludedCharacterIds: [],
+      },
+    );
+  });
+
+  it('does not broaden friend captain candidates when Friend Captain is manually selected', async () => {
+    const favoriteCharacterIds = [5900, 5890, 5880, 5870, 5860];
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      favoritesOnly: true,
+      allowAnyFriendCaptainAutoFill: true,
+      favoriteCharacterIds,
+      manualSlots: createManualSlots({
+        friendCaptain: [5900],
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[1]?.character.id).toBe(5900);
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps manual picks outside the selected character box while querying auto-fill from the box scope', async () => {
     const repository = {
       getAutoBuilderCandidates: vi
@@ -4458,6 +4532,7 @@ function createInput(
       | 'requireLeaderSuperSpecialCriteria'
       | 'requireUniqueBaseCharacterNames'
       | 'favoritesOnly'
+      | 'allowAnyFriendCaptainAutoFill'
       | 'favoriteShipsOnly'
       | 'favoriteShipIds'
       | 'manualSlots'
@@ -4474,6 +4549,7 @@ function createInput(
     requireLeaderSuperSpecialCriteria: false,
     requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
+    allowAnyFriendCaptainAutoFill: false,
     favoriteShipsOnly: false,
     favoriteShipIds: [],
     lockedCharacterIds: [],
@@ -4503,6 +4579,7 @@ function createInput(
     requireLeaderSuperSpecialCriteria: overrides.requireLeaderSuperSpecialCriteria ?? false,
     requireUniqueBaseCharacterNames: overrides.requireUniqueBaseCharacterNames ?? false,
     favoritesOnly: overrides.favoritesOnly ?? false,
+    allowAnyFriendCaptainAutoFill: overrides.allowAnyFriendCaptainAutoFill ?? false,
     favoriteShipsOnly: overrides.favoriteShipsOnly ?? false,
     favoriteShipIds: overrides.favoriteShipIds ?? [],
     manualSlots:
@@ -4812,17 +4889,21 @@ class FakeWorker extends EventTarget {
         type: 'run';
         runId: string;
         records: CharacterDetailRecord[];
+        friendCaptainRecords?: CharacterDetailRecord[];
         requestedInput: AutoBuildInput;
       }
     | {
         type: 'init';
         records: CharacterDetailRecord[];
+        friendCaptainRecords?: CharacterDetailRecord[];
       }
     | {
         type: 'runAttempt';
         runId: string;
         input: AutoBuildInput;
         requestedInput: AutoBuildInput;
+        requireLeadersWithoutSuperEffects: boolean;
+        friendCaptainRecords?: CharacterDetailRecord[];
       }
   > = [];
 
@@ -4833,17 +4914,21 @@ class FakeWorker extends EventTarget {
             type: 'run';
             runId: string;
             records: CharacterDetailRecord[];
+            friendCaptainRecords?: CharacterDetailRecord[];
             requestedInput: AutoBuildInput;
           }
         | {
             type: 'init';
             records: CharacterDetailRecord[];
+            friendCaptainRecords?: CharacterDetailRecord[];
           }
         | {
             type: 'runAttempt';
             runId: string;
             input: AutoBuildInput;
             requestedInput: AutoBuildInput;
+            requireLeadersWithoutSuperEffects: boolean;
+            friendCaptainRecords?: CharacterDetailRecord[];
           },
     ) => void,
   ) {
@@ -4856,17 +4941,21 @@ class FakeWorker extends EventTarget {
           type: 'run';
           runId: string;
           records: CharacterDetailRecord[];
+          friendCaptainRecords?: CharacterDetailRecord[];
           requestedInput: AutoBuildInput;
         }
       | {
           type: 'init';
           records: CharacterDetailRecord[];
+          friendCaptainRecords?: CharacterDetailRecord[];
         }
       | {
           type: 'runAttempt';
           runId: string;
           input: AutoBuildInput;
           requestedInput: AutoBuildInput;
+          requireLeadersWithoutSuperEffects: boolean;
+          friendCaptainRecords?: CharacterDetailRecord[];
         },
   ): void {
     this.requests.push(request);

@@ -123,6 +123,7 @@ interface LeaderPairOption {
 
 interface AutoTeamBuildAttemptOptions {
   requireLeadersWithoutSuperEffects?: boolean;
+  friendCaptainRecords?: CharacterDetailRecord[];
 }
 
 type PartyConflictCharacter = Pick<CharacterListItem, 'id' | 'name'> &
@@ -663,6 +664,13 @@ export function buildAutoTeamResult(
     return null;
   }
   const manualCharacterIdSet = new Set(input.manualSlots.flatMap((slot) => slot.characterIds));
+  const manualFriendCaptainCandidates = manualSlotCandidateMap.get('friendCaptain') ?? [];
+  const friendCaptainCandidates = resolveFriendCaptainCandidatePool(
+    input,
+    manualFriendCaptainCandidates,
+    candidates,
+    options.friendCaptainRecords ?? [],
+  );
   const captainOptions = resolveLeaderCandidateOptions(
     manualSlotCandidateMap.get('captain') ?? [],
     candidates,
@@ -670,8 +678,8 @@ export function buildAutoTeamResult(
     options,
   );
   const friendCaptainOptions = resolveLeaderCandidateOptions(
-    manualSlotCandidateMap.get('friendCaptain') ?? [],
-    candidates,
+    manualFriendCaptainCandidates,
+    friendCaptainCandidates,
     input,
     options,
   );
@@ -808,6 +816,39 @@ export function buildAutoTeamResult(
   }
 
   return null;
+}
+
+function resolveFriendCaptainCandidatePool(
+  input: AutoBuildInput,
+  manualFriendCaptainCandidates: AutoBuildCandidate[],
+  candidates: AutoBuildCandidate[],
+  friendCaptainRecords: CharacterDetailRecord[],
+): AutoBuildCandidate[] {
+  if (
+    !input.allowAnyFriendCaptainAutoFill ||
+    manualFriendCaptainCandidates.length > 0 ||
+    friendCaptainRecords.length === 0
+  ) {
+    return candidates;
+  }
+
+  const candidateById = new Map(candidates.map((candidate) => [candidate.character.id, candidate]));
+  const usableFriendCaptainRecords = friendCaptainRecords.filter((record) =>
+    hasReadableEffectText(record),
+  );
+
+  usableFriendCaptainRecords.forEach((record, index) => {
+    if (candidateById.has(record.id)) {
+      return;
+    }
+
+    candidateById.set(
+      record.id,
+      buildAutoBuildCandidate(record, input, index, usableFriendCaptainRecords.length),
+    );
+  });
+
+  return [...candidateById.values()];
 }
 
 function resolveManualSlotCandidateMap(

@@ -10,6 +10,7 @@ import {
   sanitizeSavedEnemiesImportPayload,
   SavedEnemiesImportError,
 } from './saved-enemies-transfer.utils';
+import { type SavedEnemy } from '../../core/models/optc.models';
 
 describe('Saved enemies transfer helpers', () => {
   afterEach(() => {
@@ -36,6 +37,7 @@ describe('Saved enemies transfer helpers', () => {
           id: 'enemy-1',
           name: 'Forest Boss',
           notes: 'Bring bind removal',
+          rawEnemyText: '4 turn(s) Special Bind\nNon-Normal Attacks deal 1 damage',
           imageDataUrl: 'data:image/jpeg;base64,Zm9yZXN0LWJvc3M=',
           selectedTypes: ['DEX', 'PSY'],
           selectedClasses: ['Fighter'],
@@ -184,11 +186,13 @@ describe('Saved enemies transfer helpers', () => {
       expect.objectContaining({
         id: 'enemy-1',
         name: 'Forest Boss',
+        rawEnemyText: '4 turn(s) Special Bind\nNon-Normal Attacks deal 1 damage',
       }),
       expect.objectContaining({
         id: 'enemy-2',
         name: 'Arena Boss Override',
         notes: 'Bring bind removal',
+        rawEnemyText: '4 turn(s) Special Bind\nNon-Normal Attacks deal 1 damage',
         requiredAbilities: [
           {
             abilityKey: 'remove_bind',
@@ -199,6 +203,32 @@ describe('Saved enemies transfer helpers', () => {
         ],
       }),
     ]);
+  });
+
+  it('sanitizes missing or invalid raw enemy text to an empty string', () => {
+    const payload = parseSavedEnemiesImportPayload(
+      JSON.stringify({
+        schemaVersion: 1,
+        source: 'saved-enemies',
+        exportedAt: '2026-03-25T14:05:09.000Z',
+        enemies: [
+          {
+            ...buildSavedEnemy({ id: 'enemy-raw-missing' }),
+            rawEnemyText: undefined,
+          },
+          {
+            ...buildSavedEnemy({ id: 'enemy-raw-invalid' }),
+            rawEnemyText: 123,
+          },
+        ],
+      }),
+    );
+
+    const result = sanitizeSavedEnemiesImportPayload(payload, {
+      untitledEnemyName: 'Untitled Enemy',
+    });
+
+    expect(result.enemies.map((enemy) => enemy.rawEnemyText)).toEqual(['', '']);
   });
 
   it('preserves mechanic requiredCharacterCount through bulk import sanitize', () => {
@@ -283,6 +313,7 @@ describe('Saved enemies transfer helpers', () => {
         enemy: {
           name: 'Eustass "Captain" Kid Whole Quest',
           notes: ' Whole quest import ',
+          rawEnemyText: 'Stage 5\n4 turn(s) Special Bind',
           selectedTypes: ['DEX', 'INT'],
           selectedClasses: ['Cerebral'],
           requiredAbilities: [
@@ -321,6 +352,7 @@ describe('Saved enemies transfer helpers', () => {
           id: 'enemy-skill-eustass-captain-kid-whole-quest',
           name: 'Eustass "Captain" Kid Whole Quest',
           notes: ' Whole quest import ',
+          rawEnemyText: 'Stage 5\n4 turn(s) Special Bind',
           imageDataUrl: null,
           selectedTypes: ['DEX', 'INT'],
           selectedClasses: ['Cerebral'],
@@ -354,7 +386,7 @@ describe('Saved enemies transfer helpers', () => {
   });
 });
 
-function buildSavedEnemy(overrides: Partial<ReturnType<typeof buildSavedEnemyBase>> = {}) {
+function buildSavedEnemy(overrides: Partial<SavedEnemy> = {}): SavedEnemy {
   return {
     ...buildSavedEnemyBase(),
     ...overrides,
@@ -389,11 +421,12 @@ function buildSavedEnemy(overrides: Partial<ReturnType<typeof buildSavedEnemyBas
   };
 }
 
-function buildSavedEnemyBase() {
+function buildSavedEnemyBase(): SavedEnemy {
   return {
     id: 'enemy-1',
     name: 'Forest Boss',
     notes: 'Bring bind removal',
+    rawEnemyText: '4 turn(s) Special Bind\nNon-Normal Attacks deal 1 damage',
     imageDataUrl: 'data:image/jpeg;base64,Zm9yZXN0LWJvc3M=',
     selectedTypes: ['DEX', 'PSY'],
     selectedClasses: ['Fighter'],

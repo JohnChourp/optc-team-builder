@@ -89,6 +89,10 @@ function normalizeTimestamp(value: unknown, fallback: string): string {
   return normalizedValue;
 }
 
+function normalizeRawEnemyText(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
 function normalizeStringArray(
   value: unknown,
   options: { mapValue?: (value: string) => string } = {},
@@ -277,6 +281,7 @@ export function parseSavedEnemiesImportPayloadValue(
           id: buildImportedEnemyId(normalizedEnemyName),
           name: normalizedEnemyName,
           notes: typeof enemy["notes"] === "string" ? enemy["notes"] : "",
+          rawEnemyText: normalizeRawEnemyText(enemy["rawEnemyText"]),
           imageDataUrl: normalizeEnemyImageDataUrl(enemy["imageDataUrl"]),
           selectedTypes: Array.isArray(enemy["selectedTypes"]) ? enemy["selectedTypes"] : [],
           selectedClasses: Array.isArray(enemy["selectedClasses"]) ? enemy["selectedClasses"] : [],
@@ -346,6 +351,7 @@ export function sanitizeSavedEnemiesImportPayload(
           ? enemy["name"].trim()
           : options.untitledEnemyName,
       notes: typeof enemy["notes"] === "string" ? enemy["notes"].trim() : "",
+      rawEnemyText: normalizeRawEnemyText(enemy["rawEnemyText"]),
       imageDataUrl: normalizeEnemyImageDataUrl(enemy["imageDataUrl"]),
       selectedTypes: normalizeStringArray(enemy["selectedTypes"], {
         mapValue: (value) => value.toUpperCase(),

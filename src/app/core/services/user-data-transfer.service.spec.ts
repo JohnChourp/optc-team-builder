@@ -120,7 +120,7 @@ describe('UserDataTransferService', () => {
           overrides: [],
         },
         savedEnemies: {
-          enemies: [{ createdAt: '2026-04-20T18:00:00.000Z', enemyMechanics: [], id: 'enemy-1', imageDataUrl: null, name: 'Enemy One', notes: '', requireAllSelectedClassesPerCharacter: false, requireAllSelectedTypesInTeam: false, requiredAbilities: [], selectedClasses: ['Fighter'], selectedTypes: ['DEX'], updatedAt: '2026-04-20T18:00:00.000Z' }],
+          enemies: [{ createdAt: '2026-04-20T18:00:00.000Z', enemyMechanics: [], id: 'enemy-1', imageDataUrl: null, name: 'Enemy One', notes: '', rawEnemyText: '', requireAllSelectedClassesPerCharacter: false, requireAllSelectedTypesInTeam: false, requiredAbilities: [], selectedClasses: ['Fighter'], selectedTypes: ['DEX'], updatedAt: '2026-04-20T18:00:00.000Z' }],
           exportedAt: '2026-04-20T18:00:00.000Z',
           schemaVersion: 1,
           source: 'saved-enemies',
@@ -176,6 +176,7 @@ function createDependencies() {
       imageDataUrl: null,
       name: 'Enemy One',
       notes: '',
+      rawEnemyText: '',
       requireAllSelectedClassesPerCharacter: false,
       requireAllSelectedTypesInTeam: false,
       requiredAbilities: [],

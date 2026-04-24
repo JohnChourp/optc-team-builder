@@ -104,7 +104,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.autoTeamBuilderWorkerPreference().mode).toBe('manual');
   });
 
-  it('switches to manual mode when the live worker count changes', async () => {
+  it('preserves worker mode when the live worker count changes', async () => {
     const { page, userState } = await createPage();
 
     await page.onAutoTeamBuilderManualWorkerCountChange({
@@ -112,11 +112,11 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     } as CustomEvent<{ value: number }>);
 
     expect(userState.setAutoTeamBuilderWorkerPreference).toHaveBeenCalledWith({
-      mode: 'manual',
+      mode: 'auto',
       manualCount: 3,
     });
     expect(page.autoTeamBuilderWorkerPreference()).toEqual({
-      mode: 'manual',
+      mode: 'auto',
       manualCount: 3,
     });
   });
@@ -147,7 +147,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     } as CustomEvent<{ value: number }>);
 
     expect(userState.setAutoTeamBuilderWorkerPreference).toHaveBeenCalledWith({
-      mode: 'manual',
+      mode: 'auto',
       manualCount: 2,
     });
     expect(page.building()).toBe(true);
@@ -1045,6 +1045,47 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
+  it('passes the any-friend-captain toggle to the builder without changing the selected box scope', async () => {
+    const { page, autoTeamBuilder, userState } = await createPage();
+
+    userState.favoriteCharacterIds.set([202, 999]);
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.onCharacterBoxChange({
+      detail: { value: 'box-1' },
+    } as CustomEvent<{ value?: string | null }>);
+    page.favoritesOnly.set(true);
+    page.allowAnyFriendCaptainAutoFill.set(true);
+
+    expect(page.buildDisabled()).toBe(false);
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({
+        candidateCharacterIds: [202],
+        favoritesOnly: true,
+        allowAnyFriendCaptainAutoFill: true,
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it('defaults and resets the any-friend-captain toggle to off', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+
+    expect(page.allowAnyFriendCaptainAutoFill()).toBe(false);
+
+    page.allowAnyFriendCaptainAutoFill.set(true);
+    await page['resetPageState']();
+
+    expect(page.allowAnyFriendCaptainAutoFill()).toBe(false);
+  });
+
   it('blocks builds and surfaces a clear message when the selected box is empty', async () => {
     const { page } = await createPage();
 
@@ -1385,6 +1426,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).not.toContain('<app-special-ability-picker');
     expect(template).not.toContain('<app-ship-picker');
     expect(template).toContain('leaderSuperEffectScopeToggleLabel()');
+    expect(template).toContain('allowAnyFriendCaptainAutoFillToggleLabel()');
+    expect(template).toContain('(ionChange)="onAllowAnyFriendCaptainAutoFillToggle($event)"');
     expect(template).toContain('favoriteShipsOnlyToggleLabel()');
     expect(template).toContain('[value]="manualShipSearchTerm()"');
     expect(template).toContain('(ionInput)="onManualShipSearchChange($event)"');
@@ -2677,6 +2720,11 @@ describe('AutoTeamBuilderPage preset export state', () => {
     await page.onFavoritesOnlyToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
+    await page.onAllowAnyFriendCaptainAutoFillToggle({
+      detail: { checked: true },
+    } as CustomEvent<{
+      checked: boolean;
+    }>);
     await page.onFavoriteShipsOnlyToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
@@ -2698,7 +2746,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 14,
+      schemaVersion: 15,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -2719,6 +2767,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
         requireAllSlotsInLeaderSuperEffectScope: true,
         requireUniqueBaseCharacterNames: true,
         favoritesOnly: true,
+        allowAnyFriendCaptainAutoFill: true,
         favoriteCount: 3,
         favoriteShipsOnly: true,
         favoriteShipCount: 1,
@@ -2775,6 +2824,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       requireAllSlotsInLeaderSuperEffectScope: false,
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: true,
+      allowAnyFriendCaptainAutoFill: false,
       favoriteCount: 4,
       manualSlots: createManualSlots({
         captain: [101],
@@ -2798,6 +2848,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       requireAllSlotsInLeaderSuperEffectScope: false,
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: true,
+      allowAnyFriendCaptainAutoFill: false,
       favoriteCount: 4,
       favoriteShipsOnly: false,
       favoriteShipCount: 0,
@@ -3096,6 +3147,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       },
     ]);
     expect(result.state.requireAllSlotsInLeaderSuperEffectScope).toBe(false);
+    expect(result.state.allowAnyFriendCaptainAutoFill).toBe(false);
     expect(result.state.favoriteShipsOnly).toBe(false);
     expect(result.warnings).toEqual([]);
   });
@@ -3457,6 +3509,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
       requireAllSlotsInLeaderSuperEffectScope: true,
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: true,
+      allowAnyFriendCaptainAutoFill: true,
       favoriteCount: 3,
       manualSlots: createManualSlots({
         captain: [102],
@@ -3556,6 +3609,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
     expect(page.requireAllSlotsInLeaderSuperEffectScope()).toBe(true);
     expect(page.requireUniqueBaseCharacterNames()).toBe(true);
     expect(page.favoritesOnly()).toBe(true);
+    expect(page.allowAnyFriendCaptainAutoFill()).toBe(true);
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
       [702, 701],
     );
@@ -3994,6 +4048,7 @@ function createAutoBuildResult(
     requireLeaderSuperSpecialCriteria: false,
     requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
+    allowAnyFriendCaptainAutoFill: false,
     favoriteShipsOnly: false,
     favoriteShipIds: [],
     manualSlots: createManualSlots({

@@ -51,6 +51,7 @@ describe('All data transfer helpers', () => {
           id: 'enemy-1',
           name: 'Boss',
           notes: '',
+          rawEnemyText: '',
           imageDataUrl: null,
           selectedTypes: ['DEX'],
           selectedClasses: ['Fighter'],

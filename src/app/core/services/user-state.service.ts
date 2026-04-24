@@ -905,6 +905,7 @@ export class UserStateService {
       SavedEnemy,
       | 'name'
       | 'notes'
+      | 'rawEnemyText'
       | 'imageDataUrl'
       | 'selectedTypes'
       | 'selectedClasses'
@@ -922,6 +923,7 @@ export class UserStateService {
       id: this.normalizeEntityId(enemy.id) ?? existing?.id ?? this.createEnemyId(),
       name: this.normalizeEnemyName(enemy.name),
       notes: this.normalizeNotes(enemy.notes),
+      rawEnemyText: this.normalizeRawEnemyText(enemy.rawEnemyText),
       imageDataUrl: this.normalizeEnemyImageDataUrl(enemy.imageDataUrl),
       selectedTypes: this.normalizeStringCollection(enemy.selectedTypes, {
         mapValue: (value) => value.toUpperCase(),
@@ -1178,6 +1180,10 @@ export class UserStateService {
 
   private normalizeNotes(notes: string | undefined): string {
     return typeof notes === 'string' ? notes.trim() : '';
+  }
+
+  private normalizeRawEnemyText(rawEnemyText: string | undefined): string {
+    return typeof rawEnemyText === 'string' ? rawEnemyText : '';
   }
 
   private normalizeEnemyImageDataUrl(imageDataUrl: string | null | undefined): string | null {

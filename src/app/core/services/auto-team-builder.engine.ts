@@ -13,6 +13,7 @@ export interface AutoTeamBuildSearchOptions {
   onProgress?: (snapshot: AutoBuildProgressSnapshot) => void;
   isCancelled?: () => boolean;
   now?: () => number;
+  friendCaptainRecords?: CharacterDetailRecord[];
 }
 
 export interface AutoTeamBuildPlannedAttempt {
@@ -125,6 +126,7 @@ export function runAutoTeamBuildSearch(
     requestedInput,
     requestedInput,
     resolveExactAttemptRequiresNoSuperLeaders(requestedInput),
+    options.friendCaptainRecords,
   );
 
   if (satisfiesRequestedAutoTeamBuildCoverage(exactResult)) {
@@ -172,6 +174,7 @@ export function runAutoTeamBuildSearch(
       plannedAttempt.input,
       requestedInput,
       plannedAttempt.requireLeadersWithoutSuperEffects,
+      options.friendCaptainRecords,
     );
     const fallbackEndedAt = timingState.now();
 
@@ -294,9 +297,11 @@ export function runAutoTeamBuildAttempt(
   input: AutoBuildInput,
   requestedInput: AutoBuildInput,
   requireLeadersWithoutSuperEffects: boolean,
+  friendCaptainRecords?: CharacterDetailRecord[],
 ): AutoBuildResult | null {
   const attempt = buildAutoTeamResult(records, input, {
     requireLeadersWithoutSuperEffects,
+    friendCaptainRecords,
   });
 
   if (!attempt) {

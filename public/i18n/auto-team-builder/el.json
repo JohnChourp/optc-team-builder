@@ -79,6 +79,10 @@
         "withCount": "Περιορίζει τα auto-filled slots στα {{count}} αποθηκευμένα favorite units σου. Τα manual picks μπορούν να χρησιμοποιούν οποιοδήποτε unit."
       }
     },
+    "allowAnyFriendCaptainAutoFill": {
+      "toggle": "Επίτρεψε οποιονδήποτε Friend Captain",
+      "support": "Όταν το Friend Captain είναι κενό, ψάχνει όλους τους χαρακτήρες για αυτό το slot. Το favorite auto-fill ισχύει ακόμα για Captain και subs."
+    },
     "favoriteShipsOnly": {
       "toggle": "Χρησιμοποίησε μόνο favorite ships",
       "support": {

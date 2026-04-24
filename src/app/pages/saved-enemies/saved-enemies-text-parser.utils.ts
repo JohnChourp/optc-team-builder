@@ -113,6 +113,14 @@ const PARSED_ABILITY_FAMILY_EQUIVALENTS: Partial<
     special: 'inflict_poison',
     support: 'support_apply_status_effect_poison',
   },
+  remove_bind: {
+    special: 'remove_bind',
+    support: 'support_status_effect_recovery_bind',
+  },
+  remove_despair: {
+    special: 'remove_despair',
+    support: 'support_status_effect_recovery_despair',
+  },
   remove_atk_down: {
     special: 'remove_atk_down',
     support: 'support_status_effect_recovery_atk_down',
@@ -760,33 +768,70 @@ function buildParsedAbilityCandidateSeeds(
     return [];
   }
 
+  const seeds = new Map<string, ParsedAbilityCandidateSeed>();
+  const exactCatalogItem = abilityCatalogMap.get(familyKey);
+
+  if (exactCatalogItem?.category) {
+    const exactSeed = createParsedAbilityCandidateSeed(
+      familyKey,
+      exactCatalogItem.category,
+      minTurns,
+      sourceLine,
+      exactCatalogItem,
+    );
+
+    seeds.set(buildParsedAbilityCandidateSeedIdentity(exactSeed), exactSeed);
+  }
+
   const categoryAbilityKeys = PARSED_ABILITY_FAMILY_EQUIVALENTS[familyKey];
 
   if (!categoryAbilityKeys) {
-    return [];
+    return [...seeds.values()];
   }
 
-  return Object.entries(categoryAbilityKeys).flatMap(([category, abilityKey]) => {
+  Object.entries(categoryAbilityKeys).forEach(([category, abilityKey]) => {
     if (!abilityKey) {
-      return [];
+      return;
     }
 
     const catalogItem = abilityCatalogMap.get(abilityKey);
 
     if (!catalogItem || catalogItem.category !== category) {
-      return [];
+      return;
     }
 
-    return [
-      {
-        abilityKey,
-        category: category as AutoBuildAbilityCategory,
-        sourceLine,
-        minTurns: catalogItem.supportsTurns ? minTurns : null,
-        slotTokens: [],
-      } satisfies ParsedAbilityCandidateSeed,
-    ];
+    const seed = createParsedAbilityCandidateSeed(
+      abilityKey,
+      category as AutoBuildAbilityCategory,
+      minTurns,
+      sourceLine,
+      catalogItem,
+    );
+
+    seeds.set(buildParsedAbilityCandidateSeedIdentity(seed), seed);
   });
+
+  return [...seeds.values()];
+}
+
+function createParsedAbilityCandidateSeed(
+  abilityKey: string,
+  category: AutoBuildAbilityCategory,
+  minTurns: number | null,
+  sourceLine: string,
+  catalogItem: AutoBuildAbilityCatalogItem,
+): ParsedAbilityCandidateSeed {
+  return {
+    abilityKey,
+    category,
+    sourceLine,
+    minTurns: catalogItem.supportsTurns ? minTurns : null,
+    slotTokens: [],
+  };
+}
+
+function buildParsedAbilityCandidateSeedIdentity(candidate: ParsedAbilityCandidateSeed): string {
+  return [candidate.category, candidate.abilityKey.trim(), candidate.slotTokens.join(',')].join('|');
 }
 
 function buildParsedAbilityCandidateSeedsFromRequirements(

@@ -249,6 +249,7 @@ interface AutoTeamBuilderDefaultFilterState {
   requireAllSlotsInLeaderSuperEffectScope: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
+  allowAnyFriendCaptainAutoFill: boolean;
   favoriteShipsOnly: boolean;
 }
 
@@ -296,6 +297,7 @@ function buildDefaultAutoTeamBuilderFilterState(
     requireAllSlotsInLeaderSuperEffectScope: false,
     requireUniqueBaseCharacterNames: true,
     favoritesOnly: true,
+    allowAnyFriendCaptainAutoFill: false,
     favoriteShipsOnly: true,
   };
 }
@@ -436,6 +438,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly requireUniqueBaseCharacterNames = signal(false);
   public readonly selectedCharacterBoxId = signal<string | null>(null);
   public readonly favoritesOnly = signal(false);
+  public readonly allowAnyFriendCaptainAutoFill = signal(false);
   public readonly favoriteShipsOnly = signal(false);
   public readonly teamName = signal('');
   public readonly notes = signal('');
@@ -1020,6 +1023,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.t('filters.uniqueNames.toggle'),
   );
   public readonly favoritesOnlyToggleLabel = computed(() => this.t('filters.favoritesOnly.toggle'));
+  public readonly allowAnyFriendCaptainAutoFillToggleLabel = computed(() =>
+    this.t('filters.allowAnyFriendCaptainAutoFill.toggle'),
+  );
+  public readonly allowAnyFriendCaptainAutoFillSupportLabel = computed(() =>
+    this.t('filters.allowAnyFriendCaptainAutoFill.support'),
+  );
   public readonly favoriteShipsOnlyToggleLabel = computed(() =>
     this.t('filters.favoriteShipsOnly.toggle'),
   );
@@ -1664,7 +1673,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
     await this.userState.setAutoTeamBuilderWorkerPreference({
       ...this.autoTeamBuilderWorkerPreference(),
-      mode: 'manual',
       manualCount: nextValue,
     });
   }
@@ -1895,6 +1903,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
   public onFavoritesOnlyToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.favoritesOnly.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
+  public onAllowAnyFriendCaptainAutoFillToggle(event: CustomEvent<{ checked: boolean }>): void {
+    this.allowAnyFriendCaptainAutoFill.set(event.detail.checked);
     this.resetBuildState();
   }
 
@@ -2268,6 +2281,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           requiredAbilities: this.pageRequiredAbilities(),
           enemyMechanics: this.pageEnemyMechanics(),
           favoritesOnly: this.favoritesOnly(),
+          allowAnyFriendCaptainAutoFill: this.allowAnyFriendCaptainAutoFill(),
           favoriteCharacterIds: this.favoriteCharacterIds(),
           favoriteShipsOnly: this.favoriteShipsOnly(),
           favoriteShipIds: this.favoriteShipIds(),
@@ -2362,6 +2376,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       requireAllSlotsInLeaderSuperEffectScope: this.requireAllSlotsInLeaderSuperEffectScope(),
       requireUniqueBaseCharacterNames: this.requireUniqueBaseCharacterNames(),
       favoritesOnly: this.favoritesOnly(),
+      allowAnyFriendCaptainAutoFill: this.allowAnyFriendCaptainAutoFill(),
       favoriteCount: this.favoriteCharacterIds().length,
       favoriteShipsOnly: this.favoriteShipsOnly(),
       favoriteShipCount: this.favoriteShipIds().length,
@@ -2613,6 +2628,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.requireUniqueBaseCharacterNames.set(defaultFilters.requireUniqueBaseCharacterNames);
     this.selectedCharacterBoxId.set(null);
     this.favoritesOnly.set(defaultFilters.favoritesOnly);
+    this.allowAnyFriendCaptainAutoFill.set(defaultFilters.allowAnyFriendCaptainAutoFill);
     this.favoriteShipsOnly.set(defaultFilters.favoriteShipsOnly);
     this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
     this.notes.set('');
@@ -2741,6 +2757,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.requireUniqueBaseCharacterNames.set(state.requireUniqueBaseCharacterNames);
     this.selectedCharacterBoxId.set(null);
     this.favoritesOnly.set(state.favoritesOnly);
+    this.allowAnyFriendCaptainAutoFill.set(state.allowAnyFriendCaptainAutoFill);
     this.favoriteShipsOnly.set(state.favoriteShipsOnly);
     this.reconcileFavoriteShipSelection();
     this.resetBuildState();

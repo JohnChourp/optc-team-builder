@@ -79,6 +79,10 @@
         "withCount": "Limit auto-filled slots to your {{count}} saved favorite units. Manual picks can still use any unit."
       }
     },
+    "allowAnyFriendCaptainAutoFill": {
+      "toggle": "Allow any Friend Captain",
+      "support": "When Friend Captain is empty, search all characters for that slot. Favorite auto-fill still applies to Captain and subs."
+    },
     "favoriteShipsOnly": {
       "toggle": "Use favorite ships only",
       "support": {

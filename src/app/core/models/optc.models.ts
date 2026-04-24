@@ -302,6 +302,7 @@ export interface SavedEnemy {
   id: string;
   name: string;
   notes: string;
+  rawEnemyText: string;
   imageDataUrl: string | null;
   selectedTypes: string[];
   selectedClasses: string[];

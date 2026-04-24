@@ -65,7 +65,7 @@ export interface AutoTeamSelectionShipSummary {
 }
 
 export interface AutoTeamSelectionExportPayload {
-  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14;
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
   exportedAt: string;
   source: "auto-team-builder";
   exportType: "preset";
@@ -79,6 +79,7 @@ export interface AutoTeamSelectionExportPayload {
     requireAllSlotsInLeaderSuperEffectScope?: boolean;
     requireUniqueBaseCharacterNames: boolean;
     favoritesOnly: boolean;
+    allowAnyFriendCaptainAutoFill?: boolean;
     favoriteCount: number;
     favoriteShipsOnly?: boolean;
     favoriteShipCount?: number;
@@ -109,6 +110,7 @@ export interface AutoTeamSelectionImportState {
   requireAllSlotsInLeaderSuperEffectScope: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
+  allowAnyFriendCaptainAutoFill: boolean;
   favoriteShipsOnly: boolean;
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
@@ -157,6 +159,7 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   requireAllSlotsInLeaderSuperEffectScope: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
+  allowAnyFriendCaptainAutoFill?: boolean;
   favoriteCount: number;
   favoriteShipsOnly?: boolean;
   favoriteShipCount?: number;
@@ -417,7 +420,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload["schemaVersion"] !== 11 &&
       parsedPayload["schemaVersion"] !== 12 &&
       parsedPayload["schemaVersion"] !== 13 &&
-      parsedPayload["schemaVersion"] !== 14) ||
+      parsedPayload["schemaVersion"] !== 14 &&
+      parsedPayload["schemaVersion"] !== 15) ||
     parsedPayload["source"] !== "auto-team-builder" ||
     parsedPayload["exportType"] !== "preset"
   ) {
@@ -472,6 +476,10 @@ export function parseAutoTeamSelectionImportPayload(
       typeof filters["requireSameCaptainAndFriendCaptain"] === "boolean"
     ) ||
     typeof filters["favoritesOnly"] !== "boolean" ||
+    !(
+      filters["allowAnyFriendCaptainAutoFill"] === undefined ||
+      typeof filters["allowAnyFriendCaptainAutoFill"] === "boolean"
+    ) ||
     typeof filters["favoriteCount"] !== "number" ||
     !(
       filters["favoriteShipsOnly"] === undefined ||
@@ -867,6 +875,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
       requireAllSlotsInLeaderSuperEffectScope,
       requireUniqueBaseCharacterNames: payload.filters.requireUniqueBaseCharacterNames === true,
       favoritesOnly: payload.filters.favoritesOnly,
+      allowAnyFriendCaptainAutoFill: payload.filters.allowAnyFriendCaptainAutoFill === true,
       favoriteShipsOnly: payload.filters.favoriteShipsOnly === true,
       manualSlots: normalizedManualSlots,
       lockedCharacterIds: derivedManualSelection.lockedCharacterIds,
@@ -932,6 +941,7 @@ export function buildAutoTeamSelectionExportPayload({
   requireAllSlotsInLeaderSuperEffectScope,
   requireUniqueBaseCharacterNames,
   favoritesOnly,
+  allowAnyFriendCaptainAutoFill = false,
   favoriteCount,
   favoriteShipsOnly = false,
   favoriteShipCount = 0,
@@ -955,7 +965,7 @@ export function buildAutoTeamSelectionExportPayload({
   }));
 
   return {
-    schemaVersion: 14,
+    schemaVersion: 15,
     exportedAt,
     source: "auto-team-builder",
     exportType: "preset",
@@ -977,6 +987,7 @@ export function buildAutoTeamSelectionExportPayload({
       requireAllSlotsInLeaderSuperEffectScope,
       requireUniqueBaseCharacterNames,
       favoritesOnly,
+      allowAnyFriendCaptainAutoFill,
       favoriteCount,
       favoriteShipsOnly,
       favoriteShipCount,

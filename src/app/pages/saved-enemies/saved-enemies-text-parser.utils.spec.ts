@@ -127,6 +127,86 @@ describe('saved enemies text parser utils', () => {
     );
   });
 
+  it('creates exact parsed candidates for derived mechanic abilities and support equivalents', () => {
+    const bindResult = parseSavedEnemyText('4 turn(s) Bind', {
+      abilityCatalogItems: [
+        createAbilityCatalogItem('remove_bind', false),
+        createAbilityCatalogItem('support_status_effect_recovery_bind', false),
+      ],
+    });
+    const despairResult = parseSavedEnemyText('7 turn(s) Despair', {
+      abilityCatalogItems: [createAbilityCatalogItem('remove_despair', false)],
+    });
+
+    expect(bindResult.enemyMechanics).toEqual([
+      expect.objectContaining({
+        mechanicKey: 'crew_bind',
+        derivedAbilityKey: 'remove_bind',
+      }),
+    ]);
+    expect(bindResult.parsedAbilityCandidates).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        abilityKey: 'remove_bind',
+        category: 'special',
+      }),
+      expect.objectContaining({
+        abilityKey: 'support_status_effect_recovery_bind',
+        category: 'support',
+      }),
+    ]));
+    expect(despairResult.parsedAbilityCandidates).toEqual([
+      expect.objectContaining({
+        abilityKey: 'remove_despair',
+        category: 'special',
+      }),
+    ]);
+  });
+
+  it('creates exact parsed candidates for unmapped derived mechanic abilities', () => {
+    const result = parseSavedEnemyText('4 turn(s) Chain Lock', {
+      abilityCatalogItems: [createAbilityCatalogItem('remove_chain_multiplier_limit', false)],
+    });
+
+    expect(result.enemyMechanics).toEqual([
+      expect.objectContaining({
+        mechanicKey: 'crew_chain_multiplier_limit',
+        derivedAbilityKey: 'remove_chain_multiplier_limit',
+      }),
+    ]);
+    expect(result.parsedAbilityCandidates).toEqual([
+      expect.objectContaining({
+        abilityKey: 'remove_chain_multiplier_limit',
+        category: 'special',
+      }),
+    ]);
+  });
+
+  it('does not duplicate exact candidates that are also listed as family equivalents', () => {
+    const result = parseSavedEnemyText('4 turn(s) Special Bind', {
+      abilityCatalogItems: [
+        createAbilityCatalogItem('remove_special_bind', false),
+        createAbilityCatalogItem('crewmate_recover_special_bind', false),
+        createAbilityCatalogItem('support_status_effect_recovery_special_bind', false),
+      ],
+    });
+
+    expect(
+      result.parsedAbilityCandidates.filter(
+        (candidate) => candidate.category === 'special' && candidate.abilityKey === 'remove_special_bind',
+      ),
+    ).toHaveLength(1);
+    expect(result.parsedAbilityCandidates).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        abilityKey: 'crewmate_recover_special_bind',
+        category: 'crewmate',
+      }),
+      expect.objectContaining({
+        abilityKey: 'support_status_effect_recovery_special_bind',
+        category: 'support',
+      }),
+    ]));
+  });
+
   it('counts repeated mechanics and direct abilities inside the same section while keeping the maximum turn value', () => {
     const result = parseSavedEnemyText(
       `

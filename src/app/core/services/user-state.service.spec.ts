@@ -417,6 +417,7 @@ describe('UserStateService saved teams', () => {
     const result = await service.saveEnemy({
       name: '  Forest Boss  ',
       notes: '  removes bind and despair  ',
+      rawEnemyText: ' 4 turn(s) Special Bind\nNon-Normal Attacks deal 1 damage ',
       imageDataUrl: 'data:image/jpeg;base64,ZmFrZS1pbWFnZQ==',
       selectedTypes: ['dex', 'PSY', 'dex'],
       selectedClasses: ['Fighter', ' Slasher ', 'Fighter'],
@@ -442,6 +443,7 @@ describe('UserStateService saved teams', () => {
     expect(result).toMatchObject({
       name: 'Forest Boss',
       notes: 'removes bind and despair',
+      rawEnemyText: ' 4 turn(s) Special Bind\nNon-Normal Attacks deal 1 damage ',
       imageDataUrl: 'data:image/jpeg;base64,ZmFrZS1pbWFnZQ==',
       selectedTypes: ['DEX', 'PSY'],
       selectedClasses: ['Fighter', 'Slasher'],
@@ -462,15 +464,15 @@ describe('UserStateService saved teams', () => {
     expect(setCalls.at(-1)?.key).toBe('savedEnemies');
   });
 
-  it('hydrates legacy or invalid enemy image payloads as null', async () => {
+  it('hydrates legacy raw text as empty and invalid enemy image payloads as null', async () => {
+    const { rawEnemyText: _rawEnemyText, ...legacyEnemy } = createEnemy('enemy-1', 'Legacy enemy');
     const { service } = await createService(
       [],
       [
-        {
-          ...createEnemy('enemy-1', 'Legacy enemy'),
-        },
+        legacyEnemy,
         {
           ...createEnemy('enemy-2', 'Invalid image enemy'),
+          rawEnemyText: 123,
           imageDataUrl: 'https://example.com/enemy.png',
         },
       ],
@@ -478,10 +480,12 @@ describe('UserStateService saved teams', () => {
 
     expect(service.savedEnemies()[0]).toMatchObject({
       id: 'enemy-1',
+      rawEnemyText: '',
       imageDataUrl: null,
     });
     expect(service.savedEnemies()[1]).toMatchObject({
       id: 'enemy-2',
+      rawEnemyText: '',
       imageDataUrl: null,
     });
   });
@@ -879,6 +883,7 @@ function createEnemy(id: string, name: string) {
     id,
     name,
     notes: '',
+    rawEnemyText: '',
     imageDataUrl: null,
     selectedTypes: ['DEX'],
     selectedClasses: ['Fighter'],

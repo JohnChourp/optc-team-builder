@@ -452,6 +452,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.processingEnemyImage.set(false);
     this.characterImagePickerOpen.set(false);
     this.resetEnemyTextParseState();
+    this.enemyTextPasteValue.set(enemy.rawEnemyText);
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
     this.crewmateAbilityPickerOpen.set(false);
@@ -919,6 +920,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
         id: this.editingEnemy()?.id ?? undefined,
         name: this.enemyName().trim(),
         notes: this.enemyNotes(),
+        rawEnemyText: this.enemyTextPasteValue(),
         imageDataUrl: this.enemyImageDataUrl(),
         selectedTypes: this.selectedTypes(),
         selectedClasses: this.selectedClasses(),

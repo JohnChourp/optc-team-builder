@@ -8,10 +8,12 @@ import {
 } from './auto-team-builder.worker.models';
 
 let cachedRecords: CharacterDetailRecord[] | null = null;
+let cachedFriendCaptainRecords: CharacterDetailRecord[] | undefined;
 
 addEventListener('message', ({ data }: MessageEvent<AutoTeamBuilderWorkerRequest>) => {
   if (data.type === 'init') {
     cachedRecords = data.records;
+    cachedFriendCaptainRecords = data.friendCaptainRecords;
 
     const response: AutoTeamBuilderWorkerResponse = {
       type: 'ready',
@@ -39,6 +41,7 @@ addEventListener('message', ({ data }: MessageEvent<AutoTeamBuilderWorkerRequest
         data.input,
         data.requestedInput,
         data.requireLeadersWithoutSuperEffects,
+        data.friendCaptainRecords ?? cachedFriendCaptainRecords,
       );
       const response: AutoTeamBuilderWorkerResponse = {
         type: 'result',
@@ -65,6 +68,7 @@ addEventListener('message', ({ data }: MessageEvent<AutoTeamBuilderWorkerRequest
 
   try {
     const result = runAutoTeamBuildSearch(data.records, data.requestedInput, {
+      friendCaptainRecords: data.friendCaptainRecords,
       onProgress: (snapshot) => {
         const response: AutoTeamBuilderWorkerResponse = {
           type: 'progress',

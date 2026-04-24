@@ -4,12 +4,14 @@ import { type CharacterDetailRecord } from '../models/optc.models';
 export interface AutoTeamBuilderWorkerInitRequest {
   type: 'init';
   records: CharacterDetailRecord[];
+  friendCaptainRecords?: CharacterDetailRecord[];
 }
 
 export interface AutoTeamBuilderWorkerRunRequest {
   type: 'run';
   runId: string;
   records: CharacterDetailRecord[];
+  friendCaptainRecords?: CharacterDetailRecord[];
   requestedInput: AutoBuildInput;
 }
 
@@ -19,6 +21,7 @@ export interface AutoTeamBuilderWorkerRunAttemptRequest {
   input: AutoBuildInput;
   requestedInput: AutoBuildInput;
   requireLeadersWithoutSuperEffects: boolean;
+  friendCaptainRecords?: CharacterDetailRecord[];
 }
 
 export interface AutoTeamBuilderWorkerReadyResponse {

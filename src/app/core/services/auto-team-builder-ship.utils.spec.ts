@@ -188,6 +188,7 @@ function createResult(
     requiredAbilities: [],
     enemyMechanics: [],
     favoritesOnly: false,
+    allowAnyFriendCaptainAutoFill: false,
     favoriteShipsOnly: false,
     favoriteShipIds: [],
     manualSlots: [],

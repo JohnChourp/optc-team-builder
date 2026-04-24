@@ -31,6 +31,7 @@ export function buildAutoTeamBuilderStateFromSavedEnemy(
     requireAllSlotsInLeaderSuperEffectScope: false,
     requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
+    allowAnyFriendCaptainAutoFill: false,
     favoriteShipsOnly: false,
     manualSlots: createEmptyAutoBuildManualSlots(),
     lockedCharacterIds: [],
