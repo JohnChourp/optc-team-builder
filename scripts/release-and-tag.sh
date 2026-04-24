@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
     cat <<'USAGE'
 Usage:
-  release-and-tag.sh [--bump patch|minor|major] [--version X.Y.Z] [--code N] [--no-push] [--skip-gh-release] [--require-gh-release]
+  release-and-tag.sh [--bump patch|minor|major] [--version X.Y.Z] [--code N] [--precommit-message MESSAGE] [--no-push] [--skip-gh-release] [--require-gh-release]
 USAGE
 }
 
@@ -19,6 +19,7 @@ EXPLICIT_CODE=""
 NO_PUSH=0
 SKIP_GH_RELEASE=0
 REQUIRE_GH_RELEASE=0
+PRECOMMIT_MESSAGE="chore: prepare release changes"
 BUMP_ARGS=()
 
 while (($# > 0)); do
@@ -36,6 +37,10 @@ while (($# > 0)); do
         --code)
             EXPLICIT_CODE="${2:-}"
             BUMP_ARGS+=("$1" "${2:-}")
+            shift 2
+            ;;
+        --precommit-message)
+            PRECOMMIT_MESSAGE="${2:-}"
             shift 2
             ;;
         --no-push)
@@ -128,6 +133,76 @@ ensure_gh_or_fallback_skip() {
     fi
 }
 
+ensure_branch_push_state() {
+    local current_branch
+    local remote_ref
+    local counts
+    local behind_count
+    local ahead_count
+
+    if (( NO_PUSH == 1 )); then
+        return
+    fi
+
+    current_branch="$(git rev-parse --abbrev-ref HEAD)"
+    if [[ "${current_branch}" == "HEAD" ]]; then
+        echo "ERROR: Cannot push from detached HEAD." >&2
+        exit 1
+    fi
+
+    if ! git fetch origin "+refs/heads/${current_branch}:refs/remotes/origin/${current_branch}" >/dev/null 2>&1; then
+        echo "ERROR: Failed to fetch origin/${current_branch}; cannot verify release push state." >&2
+        exit 1
+    fi
+
+    remote_ref="refs/remotes/origin/${current_branch}"
+    if ! git show-ref --verify --quiet "${remote_ref}"; then
+        echo "[release] No origin/${current_branch} branch found. Release push will create it." >&2
+        return
+    fi
+
+    counts="$(git rev-list --left-right --count "${remote_ref}...HEAD")"
+    behind_count="$(printf '%s\n' "${counts}" | awk '{print $1}')"
+    ahead_count="$(printf '%s\n' "${counts}" | awk '{print $2}')"
+
+    if (( behind_count > 0 )); then
+        cat >&2 <<EOF
+ERROR: Current branch is behind origin/${current_branch} by ${behind_count} commit(s).
+Pull/rebase before running the release so the release commit can be pushed safely.
+EOF
+        exit 1
+    fi
+
+    if (( ahead_count > 0 )); then
+        echo "[release] Current branch has ${ahead_count} unpushed commit(s); they will be pushed together with the release commit." >&2
+    fi
+}
+
+has_uncommitted_changes() {
+    ! git diff --quiet ||
+        ! git diff --cached --quiet ||
+        [[ -n "$(git ls-files --others --exclude-standard)" ]]
+}
+
+commit_uncommitted_changes() {
+    if ! has_uncommitted_changes; then
+        return
+    fi
+
+    if [[ -z "${PRECOMMIT_MESSAGE}" ]]; then
+        echo "ERROR: --precommit-message cannot be empty when local changes are present." >&2
+        exit 1
+    fi
+
+    echo "[release] Committing existing local changes before version bump." >&2
+    git add -A
+    if git diff --cached --quiet; then
+        echo "ERROR: Local changes were detected but no committable changes were staged." >&2
+        exit 1
+    fi
+    git commit -m "${PRECOMMIT_MESSAGE}"
+}
+
 prune_android_ds_store() {
     find "${PROJECT_ROOT}/android" -type f -name '.DS_Store' -delete 2>/dev/null || true
 }
@@ -164,7 +239,6 @@ generate_release_notes() {
 ensure_tool git
 ensure_tool node
 ensure_tool npm
-ensure_release_signing_env
 
 if (( REQUIRE_GH_RELEASE == 1 && SKIP_GH_RELEASE == 1 )); then
     echo "ERROR: --require-gh-release cannot be combined with --skip-gh-release." >&2
@@ -184,6 +258,9 @@ if [[ -z "${BUMP_TYPE}" && -z "${EXPLICIT_VERSION}" ]]; then
 fi
 
 cd "${PROJECT_ROOT}"
+ensure_branch_push_state
+commit_uncommitted_changes
+ensure_release_signing_env
 
 PREVIOUS_TAG="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"
 
@@ -232,10 +309,6 @@ git tag -a "${RELEASE_TAG}" -m "Release ${RELEASE_TAG}"
 
 if (( NO_PUSH == 0 )); then
     CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-    if [[ "${CURRENT_BRANCH}" == "HEAD" ]]; then
-        echo "ERROR: Cannot push from detached HEAD." >&2
-        exit 1
-    fi
     git push origin "${CURRENT_BRANCH}"
     git push origin "${RELEASE_TAG}"
 fi

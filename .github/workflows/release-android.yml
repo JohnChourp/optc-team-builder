@@ -23,6 +23,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: android-release
@@ -31,6 +33,8 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      release-sha: ${{ steps.android-release.outputs.release-sha }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -120,6 +124,7 @@ jobs:
           git remote set-url origin "https://x-access-token:${RELEASE_AUTH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
       - name: Run Android release
+        id: android-release
         env:
           RELEASE_BUMP_INPUT: ${{ inputs.bump }}
           RELEASE_VERSION_INPUT: ${{ inputs.version }}
@@ -141,3 +146,47 @@ jobs:
           fi
 
           ./scripts/release-and-tag.sh "${release_args[@]}"
+          echo "release-sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+
+  deploy-pages:
+    needs: release
+    runs-on: ubuntu-latest
+    concurrency:
+      group: github-pages
+      cancel-in-progress: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.release.outputs.release-sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build GitHub Pages artifact
+        env:
+          APP_GA4_MEASUREMENT_ID: ${{ secrets.APP_GA4_MEASUREMENT_ID }}
+          APP_GOOGLE_WEB_CLIENT_ID: ${{ secrets.APP_GOOGLE_WEB_CLIENT_ID }}
+          APP_GOOGLE_IOS_CLIENT_ID: ${{ secrets.APP_GOOGLE_IOS_CLIENT_ID }}
+        run: npm run build:pages
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist/optc-team-builder/browser
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
