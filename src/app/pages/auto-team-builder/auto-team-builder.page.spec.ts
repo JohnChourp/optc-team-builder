@@ -494,9 +494,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         }),
       ]),
     );
-    expect(page.requiredAbilitySummaryChips().map((chip) => chip.label)).toContain(
-      'Bind',
-    );
+    expect(page.requiredAbilitySummaryChips().map((chip) => chip.label)).toContain('Bind');
     expect(page.pageRequiredAbilities()).toEqual([
       {
         abilityKey: 'remove_bind',
@@ -1447,14 +1445,17 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     ).toBe('Remove Pain (includes selectable debuff counters)');
   });
 
-  it('renders detail actions only on selected leader and result cards', async () => {
+  it('renders character detail links on thumbnails and names instead of detail buttons', async () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
       'utf8',
     );
 
     expect(template).toContain("'common.actions.reset' | transloco");
-    expect(template.match(/common\.actions\.viewDetails/g)).toHaveLength(3);
+    expect(template).not.toContain('common.actions.viewDetails');
+    expect(template).not.toContain('detail-link-button');
+    expect(template.match(/class="character-detail-thumb-link/g)).toHaveLength(3);
+    expect(template.match(/class="character-detail-name-link/g)).toHaveLength(3);
     expect(template).toContain('[routerLink]="getCharacterDetailLink(candidateCard.character)"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(slot.character)"');
     expect(template).toContain('(click)="saveTeam()"');
@@ -4376,11 +4377,11 @@ async function createPage(
     autoTeamBuilderWorkerPreference,
     resolveAutoTeamBuilderWorkerCount: vi.fn().mockReturnValue(7),
     resolveAutoTeamBuilderWorkerPreference: vi.fn(resolveWorkerRuntime),
-    setAutoTeamBuilderWorkerPreference: vi.fn().mockImplementation(
-      async (preference: { mode: 'auto' | 'manual'; manualCount: number }) => {
+    setAutoTeamBuilderWorkerPreference: vi
+      .fn()
+      .mockImplementation(async (preference: { mode: 'auto' | 'manual'; manualCount: number }) => {
         autoTeamBuilderWorkerPreference.set(preference);
-      },
-    ),
+      }),
     saveCharacterBox: vi
       .fn()
       .mockImplementation(async (input: { name: string; characterIds: number[] }) => {

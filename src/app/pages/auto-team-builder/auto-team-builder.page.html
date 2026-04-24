@@ -708,13 +708,24 @@
                         !candidateCard.isSelectableInActiveSlot
                       "
                     >
-                      <img
-                        [src]="candidateCard.character.imageUrl"
-                        [alt]="candidateCard.character.name"
-                        loading="lazy"
-                      />
+                      <a
+                        class="character-detail-thumb-link"
+                        [routerLink]="getCharacterDetailLink(candidateCard.character)"
+                        [attr.aria-label]="candidateCard.character.name"
+                      >
+                        <img
+                          [src]="candidateCard.character.imageUrl"
+                          [alt]="candidateCard.character.name"
+                          loading="lazy"
+                        />
+                      </a>
                       <div class="manual-candidate-copy">
-                        <strong>{{ candidateCard.character.name }}</strong>
+                        <a
+                          class="character-detail-name-link"
+                          [routerLink]="getCharacterDetailLink(candidateCard.character)"
+                        >
+                          {{ candidateCard.character.name }}
+                        </a>
                         <span>{{ candidateCard.subtitle }}</span>
                         @if (candidateCard.favoriteLabel) {
                           <small class="manual-candidate-role">
@@ -728,15 +739,6 @@
                         }
                       </div>
                       <div class="manual-candidate-actions">
-                        <ion-button
-                          size="small"
-                          fill="clear"
-                          color="warning"
-                          class="detail-link-button"
-                          [routerLink]="getCharacterDetailLink(candidateCard.character)"
-                        >
-                          {{ 'common.actions.viewDetails' | transloco }}
-                        </ion-button>
                         <ion-button
                           size="small"
                           fill="outline"
@@ -996,13 +998,24 @@
                         !candidateCard.isExcluded && !candidateCard.isSelectable
                       "
                     >
-                      <img
-                        [src]="candidateCard.character.imageUrl"
-                        [alt]="candidateCard.character.name"
-                        loading="lazy"
-                      />
+                      <a
+                        class="character-detail-thumb-link"
+                        [routerLink]="getCharacterDetailLink(candidateCard.character)"
+                        [attr.aria-label]="candidateCard.character.name"
+                      >
+                        <img
+                          [src]="candidateCard.character.imageUrl"
+                          [alt]="candidateCard.character.name"
+                          loading="lazy"
+                        />
+                      </a>
                       <div class="manual-candidate-copy">
-                        <strong>{{ candidateCard.character.name }}</strong>
+                        <a
+                          class="character-detail-name-link"
+                          [routerLink]="getCharacterDetailLink(candidateCard.character)"
+                        >
+                          {{ candidateCard.character.name }}
+                        </a>
                         <span>{{ candidateCard.subtitle }}</span>
                         @if (candidateCard.favoriteLabel) {
                           <small class="manual-candidate-role">
@@ -1029,15 +1042,6 @@
                         }
                       </div>
                       <div class="manual-candidate-actions">
-                        <ion-button
-                          size="small"
-                          fill="clear"
-                          color="warning"
-                          class="detail-link-button"
-                          [routerLink]="getCharacterDetailLink(candidateCard.character)"
-                        >
-                          {{ 'common.actions.viewDetails' | transloco }}
-                        </ion-button>
                         <ion-button
                           size="small"
                           fill="outline"
@@ -1698,10 +1702,21 @@
                 <span class="type-pill">{{ slot.character.type }}</span>
               </div>
               <div class="result-card__body">
-                <img [src]="slot.character.imageUrl" [alt]="slot.character.name" loading="lazy" />
+                <a
+                  class="character-detail-thumb-link character-detail-thumb-link--result"
+                  [routerLink]="getCharacterDetailLink(slot.character)"
+                  [attr.aria-label]="slot.character.name"
+                >
+                  <img [src]="slot.character.imageUrl" [alt]="slot.character.name" loading="lazy" />
+                </a>
                 <div class="result-card__copy">
                   <div class="result-card__title-row">
-                    <strong>{{ slot.character.name }}</strong>
+                    <a
+                      class="character-detail-name-link character-detail-name-link--result"
+                      [routerLink]="getCharacterDetailLink(slot.character)"
+                    >
+                      {{ slot.character.name }}
+                    </a>
                     <button
                       type="button"
                       class="favorite-button"
@@ -1729,15 +1744,6 @@
                     }
                   </div>
                   <div class="result-card__actions">
-                    <ion-button
-                      size="small"
-                      fill="clear"
-                      color="warning"
-                      class="detail-link-button"
-                      [routerLink]="getCharacterDetailLink(slot.character)"
-                    >
-                      {{ 'common.actions.viewDetails' | transloco }}
-                    </ion-button>
                     <ion-button
                       size="small"
                       fill="outline"
