@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { type CharacterDetailRecord } from "../../core/models/optc.models";
 import { buildCharacterDetailViewModel, buildRumbleCardModel } from "./character-detail.presenter";
 
 describe("character-detail presenter", () => {
@@ -153,6 +154,28 @@ describe("character-detail presenter", () => {
             expect.objectContaining({ label: "Baz", value: "3" }),
           ]),
         }),
+      ]),
+    );
+  });
+
+  it("formats comma-backed multi-types for display", () => {
+    const viewModel = buildCharacterDetailViewModel(
+      createCharacterDetailRecord({
+        type: "STR,DEX",
+      }),
+    );
+    const profileCard = viewModel.groups
+      .flatMap((group) => group.cards)
+      .find((card) => card.titleKey === "sections.profile");
+
+    expect(viewModel.heroMeta).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ labelKey: "fields.type", value: "STR / DEX" }),
+      ]),
+    );
+    expect(profileCard?.rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ labelKey: "fields.type", value: "STR / DEX" }),
       ]),
     );
   });
@@ -497,3 +520,82 @@ describe("character-detail presenter", () => {
     ).toBeUndefined();
   });
 });
+
+function createCharacterDetailRecord(
+  overrides: Partial<CharacterDetailRecord> = {},
+): CharacterDetailRecord {
+  const base: CharacterDetailRecord = {
+    id: 4276,
+    name: "Carrot & Dogstorm & Cat Viper - Moonlit Raging Sulongs",
+    type: "STR",
+    classes: ["Slasher", "Fighter"],
+    primaryClass: "Slasher",
+    secondaryClass: "Fighter",
+    stars: 6,
+    cost: 55,
+    combo: 4,
+    stats: {
+      min: { hp: 1997, atk: 884, rcv: 198 },
+      max: { hp: 3994, atk: 1768, rcv: 395 },
+      growth: 0,
+    },
+    regionAvailability: {
+      exactLocal: false,
+      thumbnailGlobal: true,
+      thumbnailJapan: true,
+      fullTransparent: true,
+    },
+    assets: {
+      exactLocal: null,
+      thumbnailGlobal: "4/200/4276.png",
+      thumbnailJapan: "4/200/4276.png",
+      fullTransparent: "4/200/4276.png",
+    },
+    imageUrl: "/assets/test.png",
+    detailImageUrl: "/assets/test-detail.png",
+    isIncomplete: false,
+    detail: {
+      characterId: 4276,
+      captainAbility: null,
+      captainAbilityVariants: [],
+      captainNotes: null,
+      specialName: null,
+      specialText: null,
+      specialNotes: null,
+      superSpecialText: null,
+      superSpecialCriteriaText: null,
+      superSpecialNotes: null,
+      superSpecialCriteria: null,
+      partyConflictKeys: [],
+      builderAbilities: [],
+      sailorAbilities: [],
+      sailorNotes: null,
+      limitBreak: [],
+      potentialAbilities: [],
+      supportData: [],
+      swapData: null,
+      vsSpecial: null,
+      superType: null,
+      superTandemData: null,
+      finalTapData: null,
+      rushSugoSpecialData: null,
+      superClass: null,
+      rumbleData: null,
+    },
+  };
+
+  return {
+    ...base,
+    ...overrides,
+    stats: {
+      ...base.stats,
+      ...overrides.stats,
+      min: { ...base.stats.min, ...overrides.stats?.min },
+      max: { ...base.stats.max, ...overrides.stats?.max },
+    },
+    detail: {
+      ...base.detail,
+      ...overrides.detail,
+    },
+  };
+}

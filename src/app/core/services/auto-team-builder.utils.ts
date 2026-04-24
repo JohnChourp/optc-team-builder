@@ -124,6 +124,7 @@ interface LeaderPairOption {
 interface AutoTeamBuildAttemptOptions {
   requireLeadersWithoutSuperEffects?: boolean;
   friendCaptainRecords?: CharacterDetailRecord[];
+  autoFillCharacterIds?: number[];
 }
 
 type PartyConflictCharacter = Pick<CharacterListItem, 'id' | 'name'> &
@@ -663,17 +664,23 @@ export function buildAutoTeamResult(
   if (!manualSlotCandidateMap) {
     return null;
   }
+  const autoFillCandidateIdSet = options.autoFillCharacterIds
+    ? new Set(options.autoFillCharacterIds)
+    : null;
+  const autoFillCandidates = autoFillCandidateIdSet
+    ? candidates.filter((candidate) => autoFillCandidateIdSet.has(candidate.character.id))
+    : candidates;
   const manualCharacterIdSet = new Set(input.manualSlots.flatMap((slot) => slot.characterIds));
   const manualFriendCaptainCandidates = manualSlotCandidateMap.get('friendCaptain') ?? [];
   const friendCaptainCandidates = resolveFriendCaptainCandidatePool(
     input,
     manualFriendCaptainCandidates,
-    candidates,
+    autoFillCandidates,
     options.friendCaptainRecords ?? [],
   );
   const captainOptions = resolveLeaderCandidateOptions(
     manualSlotCandidateMap.get('captain') ?? [],
-    candidates,
+    autoFillCandidates,
     input,
     options,
   );
@@ -739,7 +746,7 @@ export function buildAutoTeamResult(
       .map((role) => constrainedSubSelections.get(role))
       .filter((candidate): candidate is AutoBuildCandidate => Boolean(candidate));
     const selectedSubs = selectSubs(
-      candidates,
+      autoFillCandidates,
       leaders,
       leaderSlots,
       input,

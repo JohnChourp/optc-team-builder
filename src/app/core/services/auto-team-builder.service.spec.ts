@@ -2217,7 +2217,7 @@ describe('Auto team builder', () => {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
     };
     const service = new AutoTeamBuilderService(repository as never);
-    const candidateCharacterIds = [5926, 5870, 5860];
+    const candidateCharacterIds = [5925, 5926, 5880, 5870, 5860];
 
     const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
       candidateCharacterIds,
@@ -2241,11 +2241,12 @@ describe('Auto team builder', () => {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
     };
     const service = new AutoTeamBuilderService(repository as never);
+    const sharedScopedIds = [5925, 5926, 5880, 5870, 5860];
 
     const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
-      candidateCharacterIds: [5925, 5926, 5880],
+      candidateCharacterIds: [...sharedScopedIds, 9991],
       favoritesOnly: true,
-      favoriteCharacterIds: [5926, 5870, 5860],
+      favoriteCharacterIds: [...sharedScopedIds, 9992],
     });
 
     expect(result).not.toBeNull();
@@ -2254,7 +2255,7 @@ describe('Auto team builder', () => {
       AUTO_TEAM_CANDIDATE_LIMIT,
       {
         selectedClasses: ['Fighter', 'Slasher'],
-        allowedCharacterIds: [5926],
+        allowedCharacterIds: sharedScopedIds,
         lockedCharacterIds: [],
         excludedCharacterIds: [],
       },
@@ -2346,10 +2347,14 @@ describe('Auto team builder', () => {
     const repository = {
       getAutoBuilderCandidates: vi
         .fn()
-        .mockResolvedValue([createCaptainRecord(), ...createStrictMixedTeamRecords()]),
+        .mockResolvedValue([
+          createCaptainRecord(),
+          createUniversalCaptainRecord(),
+          ...createStrictMixedTeamRecords(),
+        ]),
     };
     const service = new AutoTeamBuilderService(repository as never);
-    const favoriteCharacterIds = [5926, 5870, 5860];
+    const favoriteCharacterIds = [5905, 5926, 5880, 5870, 5860];
 
     const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
       favoritesOnly: true,
@@ -2363,6 +2368,11 @@ describe('Auto team builder', () => {
     expect(result).not.toBeNull();
     expect(result?.slots.some((slot) => slot.character.id === 5925)).toBe(true);
     expect(result?.slots.some((slot) => slot.character.id === 5900)).toBe(true);
+    expect(
+      result?.slots
+        .filter((slot) => ![5925, 5900].includes(slot.character.id))
+        .every((slot) => favoriteCharacterIds.includes(slot.character.id)),
+    ).toBe(true);
     expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
       ['DEX', 'PSY'],
       AUTO_TEAM_CANDIDATE_LIMIT,
@@ -2370,6 +2380,52 @@ describe('Auto team builder', () => {
         selectedClasses: ['Fighter', 'Slasher'],
         allowedCharacterIds: favoriteCharacterIds,
         lockedCharacterIds: [5925, 5900],
+        excludedCharacterIds: [],
+      },
+    );
+  });
+
+  it('does not reuse a non-favorite manual friend captain as an auto-filled favorite-mode captain', async () => {
+    const favoriteCharacterIds = [5900, 5890, 5880, 5870, 5860];
+    const manualFriendCaptain = createPowerFirstCaptainRecord({
+      id: 9000,
+      name: 'Manual Non-Favorite Friend Captain',
+      cost: 60,
+      atkMultiplier: 6,
+      universal: true,
+    });
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue([manualFriendCaptain, ...createSingleTypeRecords()]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      favoritesOnly: true,
+      favoriteCharacterIds,
+      manualSlots: createManualSlots({
+        friendCaptain: [9000],
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.role).toBe('captain');
+    expect(result?.slots[0]?.character.id).toBe(5900);
+    expect(result?.slots[1]?.role).toBe('friendCaptain');
+    expect(result?.slots[1]?.character.id).toBe(9000);
+    expect(
+      result?.slots
+        .filter((slot) => slot.role !== 'friendCaptain')
+        .every((slot) => favoriteCharacterIds.includes(slot.character.id)),
+    ).toBe(true);
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      ['DEX'],
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        selectedClasses: ['Fighter'],
+        allowedCharacterIds: favoriteCharacterIds,
+        lockedCharacterIds: [9000],
         excludedCharacterIds: [],
       },
     );
@@ -2453,12 +2509,16 @@ describe('Auto team builder', () => {
     const repository = {
       getAutoBuilderCandidates: vi
         .fn()
-        .mockResolvedValue([createCaptainRecord(), ...createStrictMixedTeamRecords()]),
+        .mockResolvedValue([
+          createCaptainRecord(),
+          createUniversalCaptainRecord(),
+          ...createStrictMixedTeamRecords(),
+        ]),
     };
     const service = new AutoTeamBuilderService(repository as never);
 
     const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
-      candidateCharacterIds: [5926, 5870, 5860],
+      candidateCharacterIds: [5905, 5926, 5880, 5870],
       manualSlots: createManualSlots({
         captain: [5925],
         sub1: [5900],
@@ -2473,7 +2533,7 @@ describe('Auto team builder', () => {
       AUTO_TEAM_CANDIDATE_LIMIT,
       {
         selectedClasses: ['Fighter', 'Slasher'],
-        allowedCharacterIds: [5926, 5870, 5860],
+        allowedCharacterIds: [5905, 5926, 5880, 5870],
         lockedCharacterIds: [5925, 5900],
         excludedCharacterIds: [],
       },
@@ -4890,12 +4950,14 @@ class FakeWorker extends EventTarget {
         runId: string;
         records: CharacterDetailRecord[];
         friendCaptainRecords?: CharacterDetailRecord[];
+        autoFillCharacterIds?: number[];
         requestedInput: AutoBuildInput;
       }
     | {
         type: 'init';
         records: CharacterDetailRecord[];
         friendCaptainRecords?: CharacterDetailRecord[];
+        autoFillCharacterIds?: number[];
       }
     | {
         type: 'runAttempt';
@@ -4904,6 +4966,7 @@ class FakeWorker extends EventTarget {
         requestedInput: AutoBuildInput;
         requireLeadersWithoutSuperEffects: boolean;
         friendCaptainRecords?: CharacterDetailRecord[];
+        autoFillCharacterIds?: number[];
       }
   > = [];
 
@@ -4915,12 +4978,14 @@ class FakeWorker extends EventTarget {
             runId: string;
             records: CharacterDetailRecord[];
             friendCaptainRecords?: CharacterDetailRecord[];
+            autoFillCharacterIds?: number[];
             requestedInput: AutoBuildInput;
           }
         | {
             type: 'init';
             records: CharacterDetailRecord[];
             friendCaptainRecords?: CharacterDetailRecord[];
+            autoFillCharacterIds?: number[];
           }
         | {
             type: 'runAttempt';
@@ -4929,6 +4994,7 @@ class FakeWorker extends EventTarget {
             requestedInput: AutoBuildInput;
             requireLeadersWithoutSuperEffects: boolean;
             friendCaptainRecords?: CharacterDetailRecord[];
+            autoFillCharacterIds?: number[];
           },
     ) => void,
   ) {
@@ -4942,12 +5008,14 @@ class FakeWorker extends EventTarget {
           runId: string;
           records: CharacterDetailRecord[];
           friendCaptainRecords?: CharacterDetailRecord[];
+          autoFillCharacterIds?: number[];
           requestedInput: AutoBuildInput;
         }
       | {
           type: 'init';
           records: CharacterDetailRecord[];
           friendCaptainRecords?: CharacterDetailRecord[];
+          autoFillCharacterIds?: number[];
         }
       | {
           type: 'runAttempt';
@@ -4956,6 +5024,7 @@ class FakeWorker extends EventTarget {
           requestedInput: AutoBuildInput;
           requireLeadersWithoutSuperEffects: boolean;
           friendCaptainRecords?: CharacterDetailRecord[];
+          autoFillCharacterIds?: number[];
         },
   ): void {
     this.requests.push(request);

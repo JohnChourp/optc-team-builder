@@ -60,7 +60,7 @@ export function buildCharacterDetailViewModel(
 
   return {
     heroMeta: [
-      createRow("fields.type", character.type),
+      createRow("fields.type", formatCharacterType(character.type)),
       createRow("fields.primaryClass", character.primaryClass),
       ...(character.secondaryClass
         ? [createRow("fields.secondaryClass", character.secondaryClass)]
@@ -177,7 +177,7 @@ export function resolveRumbleBasedOnId(rumbleData: Record<string, unknown> | nul
 function buildOverviewGroup(character: CharacterDetailRecord): DetailDisplayGroup {
   const characterTags = (character.detail.characterTags ?? []).filter((tag) => tag.trim().length > 0);
   const profileRows: DetailDisplayRow[] = [
-    createRow("fields.type", character.type),
+    createRow("fields.type", formatCharacterType(character.type)),
     createRow("fields.primaryClass", character.primaryClass),
     ...(character.secondaryClass
       ? [createRow("fields.secondaryClass", character.secondaryClass)]
@@ -1017,6 +1017,14 @@ function formatNumber(value: unknown): string {
   const numericValue = Number(value);
 
   return Number.isFinite(numericValue) ? numericValue.toLocaleString("en-US") : String(value ?? "");
+}
+
+function formatCharacterType(value: string): string {
+  return value
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0)
+    .join(" / ");
 }
 
 function formatScalar(value: unknown): string | null {

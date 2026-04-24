@@ -243,6 +243,80 @@ describe('import-optc-data ship thumbnail pack', () => {
     expect(character.detail.specialText).toBe('Deals STR damage.');
   });
 
+  it('derives missing base types from dashed object-map unit variants', () => {
+    const characters = normalizeCharacters(
+      {
+        '4276': {
+          id: '4276',
+          name: 'Carrot & Dogstorm & Cat Viper - Moonlit Raging Sulongs',
+          type: null,
+          class: ['Slasher', 'Fighter'],
+          stars: '6',
+          cost: 55,
+          combo: 4,
+          sockets: 5,
+          minHP: 1997,
+          minATK: 884,
+          minRCV: 198,
+          maxHP: 3994,
+          maxATK: 1768,
+          maxRCV: 395,
+          growth: null,
+        },
+        '4276-1': {
+          id: '4276-1',
+          name: 'Carrot',
+          type: 'STR',
+          class: ['Slasher', 'Fighter'],
+        },
+        '4276-2': {
+          id: '4276-2',
+          name: 'Dogstorm & Cat Viper',
+          type: 'DEX',
+          class: ['Slasher', 'Fighter'],
+        },
+      },
+      {},
+      [],
+      new Map(),
+    );
+
+    expect(characters).toHaveLength(1);
+    expect(characters[0]).toMatchObject({
+      id: 4276,
+      name: 'Carrot & Dogstorm & Cat Viper - Moonlit Raging Sulongs',
+      type: 'STR,DEX',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Fighter',
+    });
+    expect(characters[0].searchText).toContain('str');
+    expect(characters[0].searchText).toContain('dex');
+  });
+
+  it('keeps explicit base unit types when dashed variants are present', () => {
+    const [character] = normalizeCharacters(
+      {
+        '4308': {
+          id: '4308',
+          name: 'Nami & Sanji - Confronting the Peak of Science',
+          type: 'QCK',
+          class: ['Fighter', 'Cerebral'],
+        },
+        '4308-1': {
+          id: '4308-1',
+          name: 'Nami',
+          type: 'DEX',
+          class: ['Cerebral', 'Fighter'],
+        },
+      },
+      {},
+      [],
+      new Map(),
+    );
+
+    expect(character.type).toBe('QCK');
+  });
+
   it('imports typed support data and super special fields into the normalized detail shape', () => {
     const detail = normalizeCharacterDetail(
       {

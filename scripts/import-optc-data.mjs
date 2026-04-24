@@ -11,6 +11,10 @@ import {
   normalizeLegacyAbilityText,
 } from './auto-team-builder-ability-parser.mjs';
 import { applyManualCharacterOverlay } from './lib/manual-character-apply.mjs';
+import {
+  collectManualImageOverrideFiles,
+  pruneManualCharactersCoveredByImport,
+} from './lib/manual-character-prune.mjs';
 import { loadBuilderAbilityCorrections } from './lib/builder-ability-corrections.mjs';
 import {
   buildAutoBuilderAbilityCatalog,
@@ -40,6 +44,7 @@ const offlineDir = path.join(publicDir, 'assets', 'offline-packs');
 const exactImagesDir = path.join(publicDir, 'assets', 'exact-character-images');
 const overrideConfigPath = path.join(rootDir, 'scripts', 'data', 'character-image-overrides.json');
 const manualExactImageSourceDir = path.join(rootDir, 'scripts', 'data', 'character-images');
+const manualCharacterOverlayPath = path.join(rootDir, 'scripts', 'data', 'manual-characters.json');
 const builderAbilityCorrectionsPath = path.join(
   rootDir,
   'scripts',
@@ -129,6 +134,7 @@ const packEntryNameMap = {
 };
 
 const noop = () => undefined;
+const validUnitTypeSet = new Set(typeSuffixOrder.keys());
 
 export function resolveImportSource(sourceKey = '2shankz') {
   const selectedSource = dataImportSources[sourceKey];
@@ -910,22 +916,52 @@ function toFiniteNumber(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function normalizeUnitMapEntry(unitEntry, fallbackCharacterId) {
+function parseUnitMapId(value) {
+  const match = String(value ?? '').trim().match(/^(\d+)(?:-(.+))?$/);
+
+  if (!match) {
+    return null;
+  }
+
+  const baseCharacterId = Number(match[1]);
+
+  if (!Number.isInteger(baseCharacterId) || baseCharacterId <= 0) {
+    return null;
+  }
+
+  return {
+    baseCharacterId,
+    variantKey: match[2] ?? null,
+  };
+}
+
+function normalizeUnitTypeTokens(value) {
+  return flattenValues(value)
+    .flatMap((entry) => String(entry ?? '').split(','))
+    .map((entry) => entry.trim().toUpperCase())
+    .filter((entry) => validUnitTypeSet.has(entry));
+}
+
+function normalizeUnitTypeValue(value) {
+  return normalizeUnitTypeTokens(value).join(',');
+}
+
+function normalizeUnitMapEntry(unitEntry, fallbackCharacterId, variantTypesByCharacterId = new Map()) {
   if (!unitEntry || typeof unitEntry !== 'object' || Array.isArray(unitEntry)) {
     return null;
   }
 
-  const parsedCharacterId = Number(unitEntry.id);
-  const characterId = Number.isInteger(parsedCharacterId) && parsedCharacterId > 0
-    ? parsedCharacterId
-    : fallbackCharacterId;
+  const parsedEntryId = parseUnitMapId(unitEntry.id);
+  const characterId = parsedEntryId?.baseCharacterId ?? fallbackCharacterId;
   const classes = normalizeCharacterClasses(unitEntry.class ?? []);
+  const explicitType = String(unitEntry.type ?? '').trim();
+  const variantType = (variantTypesByCharacterId.get(characterId) ?? []).join(',');
 
   return {
     characterId,
     entry: unitEntry,
     classes,
-    type: String(unitEntry.type ?? '').trim(),
+    type: explicitType || variantType,
     name: String(unitEntry.name ?? '').trim(),
     stars: toFiniteNumber(unitEntry.stars),
     cost: toFiniteNumber(unitEntry.cost),
@@ -978,8 +1014,42 @@ function buildNormalizedUnitEntries(units) {
     return [];
   }
 
+  const unitEntries = Object.entries(units);
+  const variantTypesByCharacterId = new Map();
+
+  for (const [rawCharacterId, entry] of unitEntries) {
+    const parsedMapId = parseUnitMapId(rawCharacterId);
+    const parsedEntryId = parseUnitMapId(entry?.id);
+    const baseCharacterId = parsedEntryId?.baseCharacterId ?? parsedMapId?.baseCharacterId;
+    const variantKey = parsedEntryId?.variantKey ?? parsedMapId?.variantKey;
+
+    if (!baseCharacterId || !variantKey) {
+      continue;
+    }
+
+    const existingTypes = variantTypesByCharacterId.get(baseCharacterId) ?? [];
+
+    for (const type of normalizeUnitTypeTokens(entry?.type)) {
+      if (!existingTypes.includes(type)) {
+        existingTypes.push(type);
+      }
+    }
+
+    variantTypesByCharacterId.set(baseCharacterId, existingTypes);
+  }
+
   return Object.entries(units)
-    .map(([rawCharacterId, entry]) => normalizeUnitMapEntry(entry, Number(rawCharacterId)))
+    .filter(([rawCharacterId, entry]) => {
+      const parsedMapId = parseUnitMapId(rawCharacterId);
+      const parsedEntryId = parseUnitMapId(entry?.id);
+
+      return !(parsedEntryId?.variantKey ?? parsedMapId?.variantKey);
+    })
+    .map(([rawCharacterId, entry]) => {
+      const fallbackCharacterId = parseUnitMapId(rawCharacterId)?.baseCharacterId ?? Number(rawCharacterId);
+
+      return normalizeUnitMapEntry(entry, fallbackCharacterId, variantTypesByCharacterId);
+    })
     .filter((entry) => Boolean(entry))
     .sort((left, right) => left.characterId - right.characterId);
 }
@@ -1537,6 +1607,14 @@ async function main() {
     autoBuilderAbilityCatalog,
     preview,
   );
+
+  await pruneManualCharactersCoveredByImport({
+    importedCharacterIds: characters.map((character) => character.id),
+    overlayPath: manualCharacterOverlayPath,
+    sourceImageDir: manualExactImageSourceDir,
+    preservedImageFiles: collectManualImageOverrideFiles(imageOverrides),
+    logger: (message) => console.log(message),
+  });
 
   await applyManualCharacterOverlay({
     rootDir,

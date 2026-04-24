@@ -9,11 +9,13 @@ import {
 
 let cachedRecords: CharacterDetailRecord[] | null = null;
 let cachedFriendCaptainRecords: CharacterDetailRecord[] | undefined;
+let cachedAutoFillCharacterIds: number[] | undefined;
 
 addEventListener('message', ({ data }: MessageEvent<AutoTeamBuilderWorkerRequest>) => {
   if (data.type === 'init') {
     cachedRecords = data.records;
     cachedFriendCaptainRecords = data.friendCaptainRecords;
+    cachedAutoFillCharacterIds = data.autoFillCharacterIds;
 
     const response: AutoTeamBuilderWorkerResponse = {
       type: 'ready',
@@ -42,6 +44,7 @@ addEventListener('message', ({ data }: MessageEvent<AutoTeamBuilderWorkerRequest
         data.requestedInput,
         data.requireLeadersWithoutSuperEffects,
         data.friendCaptainRecords ?? cachedFriendCaptainRecords,
+        data.autoFillCharacterIds ?? cachedAutoFillCharacterIds,
       );
       const response: AutoTeamBuilderWorkerResponse = {
         type: 'result',
@@ -69,6 +72,7 @@ addEventListener('message', ({ data }: MessageEvent<AutoTeamBuilderWorkerRequest
   try {
     const result = runAutoTeamBuildSearch(data.records, data.requestedInput, {
       friendCaptainRecords: data.friendCaptainRecords,
+      autoFillCharacterIds: data.autoFillCharacterIds,
       onProgress: (snapshot) => {
         const response: AutoTeamBuilderWorkerResponse = {
           type: 'progress',

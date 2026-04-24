@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-23T17:11:40.407Z",
+  "generatedAt": "2026-04-24T09:22:38.628Z",
   "characters": [
     {
       "id": 1,
@@ -70,6 +70,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 1,
@@ -166,6 +169,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 2,
@@ -262,6 +268,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 3,
@@ -436,6 +445,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 4,
@@ -532,6 +544,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 5,
@@ -629,6 +644,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 6,
@@ -726,6 +744,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 7,
@@ -909,6 +930,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 8,
@@ -1004,6 +1028,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 9,
@@ -1100,6 +1127,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 10,
@@ -1196,6 +1226,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 11,
@@ -1387,6 +1420,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 12,
@@ -1482,6 +1518,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 13,
@@ -1780,6 +1819,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 14,
@@ -2110,6 +2152,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 15,
@@ -2521,6 +2566,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 16,
@@ -2998,6 +3046,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 17,
@@ -3084,6 +3135,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 18,
@@ -3181,6 +3235,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 19,
@@ -3408,6 +3465,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 20,
@@ -3504,6 +3564,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 21,
@@ -3723,6 +3786,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 22,
@@ -3820,6 +3886,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 23,
@@ -3907,6 +3976,9 @@
         "swapData": null,
         "vsSpecial": null,
         "superType": null,
+        "superTandemData": null,
+        "finalTapData": null,
+        "rushSugoSpecialData": null,
         "superClass": null,
         "rumbleData": {
           "id": 24,

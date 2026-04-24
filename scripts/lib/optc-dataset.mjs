@@ -234,7 +234,7 @@ export function createSqlSeed(characters, ships, manifest) {
     VALUES ('manifest', ${sqlValue(JSON.stringify(manifest))});
   `);
 
-  return statements.join('\n');
+  return statements.join('\n').replace(/[ \t]+$/gm, '');
 }
 
 export function canResolveWithoutPlaceholder(character, packStatuses) {

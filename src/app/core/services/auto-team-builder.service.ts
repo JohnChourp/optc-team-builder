@@ -200,6 +200,8 @@ export class AutoTeamBuilderService {
       return null;
     }
 
+    const autoFillCharacterIds = allowedCharacterIds ? [...allowedCharacterIds] : undefined;
+
     const requestedLeaderIds = [captainCharacterId, friendCaptainCharacterId].filter(
       (characterId): characterId is number =>
         characterId !== null && Number.isInteger(characterId) && characterId > 0,
@@ -255,7 +257,13 @@ export class AutoTeamBuilderService {
         ? this.repository.getShips()
         : Promise.resolve([]);
     const [result, ships] = await Promise.all([
-      this.executeSearch(records, requestedInput, executionOptions, friendCaptainRecords),
+      this.executeSearch(
+        records,
+        requestedInput,
+        executionOptions,
+        friendCaptainRecords,
+        autoFillCharacterIds,
+      ),
       shipsPromise,
     ]);
 
@@ -461,6 +469,7 @@ export class AutoTeamBuilderService {
     requestedInput: AutoBuildInput,
     executionOptions: AutoTeamBuildExecutionOptions,
     friendCaptainRecords?: CharacterDetailRecord[],
+    autoFillCharacterIds?: number[],
   ): Promise<AutoBuildResult | null> {
     const fallbackPlanner = createAutoTeamBuildFallbackPlanner(requestedInput, records);
     const requestedWorkerCount = this.normalizeWorkerCount(executionOptions.workerCount);
@@ -474,6 +483,7 @@ export class AutoTeamBuilderService {
           fallbackPlanner,
           requestedWorkerCount,
           friendCaptainRecords,
+          autoFillCharacterIds,
         );
       } catch (error) {
         if (isAutoTeamBuildCancelledError(error)) {
@@ -484,6 +494,7 @@ export class AutoTeamBuilderService {
           onProgress: executionOptions.onProgress,
           isCancelled: () => executionOptions.signal?.aborted ?? false,
           friendCaptainRecords,
+          autoFillCharacterIds,
         });
       }
     }
@@ -495,6 +506,7 @@ export class AutoTeamBuilderService {
         onProgress: executionOptions.onProgress,
         isCancelled: () => executionOptions.signal?.aborted ?? false,
         friendCaptainRecords,
+        autoFillCharacterIds,
       });
     }
 
@@ -505,6 +517,7 @@ export class AutoTeamBuilderService {
         requestedInput,
         executionOptions,
         friendCaptainRecords,
+        autoFillCharacterIds,
       );
     } catch (error) {
       worker.terminate();
@@ -517,6 +530,7 @@ export class AutoTeamBuilderService {
         onProgress: executionOptions.onProgress,
         isCancelled: () => executionOptions.signal?.aborted ?? false,
         friendCaptainRecords,
+        autoFillCharacterIds,
       });
     }
   }
@@ -528,6 +542,7 @@ export class AutoTeamBuilderService {
     fallbackPlanner: AutoTeamBuildFallbackPlanner,
     requestedWorkerCount: number,
     friendCaptainRecords?: CharacterDetailRecord[],
+    autoFillCharacterIds?: number[],
   ): Promise<AutoBuildResult | null> {
     const workers = this.createWorkerPool(requestedWorkerCount);
 
@@ -540,6 +555,7 @@ export class AutoTeamBuilderService {
           onProgress: executionOptions.onProgress,
           isCancelled: () => executionOptions.signal?.aborted ?? false,
           friendCaptainRecords,
+          autoFillCharacterIds,
         });
       }
 
@@ -549,13 +565,20 @@ export class AutoTeamBuilderService {
         requestedInput,
         executionOptions,
         friendCaptainRecords,
+        autoFillCharacterIds,
       );
     }
 
     try {
       await Promise.all(
         workers.map((worker) =>
-          this.initializeWorker(worker, records, executionOptions.signal, friendCaptainRecords),
+          this.initializeWorker(
+            worker,
+            records,
+            executionOptions.signal,
+            friendCaptainRecords,
+            autoFillCharacterIds,
+          ),
         ),
       );
 
@@ -607,6 +630,7 @@ export class AutoTeamBuilderService {
         !requestedInput.requireAllSlotsInLeaderSuperEffectScope,
         executionOptions.signal,
         friendCaptainRecords,
+        autoFillCharacterIds,
       );
 
       if (satisfiesRequestedAutoTeamBuildCoverage(exactResult)) {
@@ -659,6 +683,7 @@ export class AutoTeamBuilderService {
         timingState,
         records.length,
         friendCaptainRecords,
+        autoFillCharacterIds,
       );
 
       return result;
@@ -673,6 +698,7 @@ export class AutoTeamBuilderService {
     requestedInput: AutoBuildInput,
     executionOptions: AutoTeamBuildExecutionOptions,
     friendCaptainRecords?: CharacterDetailRecord[],
+    autoFillCharacterIds?: number[],
   ): Promise<AutoBuildResult | null> {
     const runId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
@@ -743,6 +769,7 @@ export class AutoTeamBuilderService {
         runId,
         records,
         friendCaptainRecords,
+        autoFillCharacterIds,
         requestedInput,
       };
 
@@ -755,6 +782,7 @@ export class AutoTeamBuilderService {
     records: CharacterDetailRecord[],
     signal?: AbortSignal,
     friendCaptainRecords?: CharacterDetailRecord[],
+    autoFillCharacterIds?: number[],
   ): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       let settled = false;
@@ -814,6 +842,7 @@ export class AutoTeamBuilderService {
         type: 'init',
         records,
         friendCaptainRecords,
+        autoFillCharacterIds,
       } satisfies AutoTeamBuilderWorkerRequest);
     });
   }
@@ -825,6 +854,7 @@ export class AutoTeamBuilderService {
     requireLeadersWithoutSuperEffects: boolean,
     signal?: AbortSignal,
     friendCaptainRecords?: CharacterDetailRecord[],
+    autoFillCharacterIds?: number[],
   ): Promise<AutoBuildResult | null> {
     const runId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
@@ -889,6 +919,7 @@ export class AutoTeamBuilderService {
         requestedInput,
         requireLeadersWithoutSuperEffects,
         friendCaptainRecords,
+        autoFillCharacterIds,
       } satisfies AutoTeamBuilderWorkerRequest);
     });
   }
@@ -902,6 +933,7 @@ export class AutoTeamBuilderService {
     timingState: AutoTeamBuildTimingState,
     candidateCount: number,
     friendCaptainRecords?: CharacterDetailRecord[],
+    autoFillCharacterIds?: number[],
   ): Promise<AutoBuildResult | null> {
     return new Promise<AutoBuildResult | null>((resolve, reject) => {
       const completedAttempts = new Map<number, PooledFallbackAttemptResult>();
@@ -999,6 +1031,7 @@ export class AutoTeamBuilderService {
             records,
             executionOptions.signal,
             friendCaptainRecords,
+            autoFillCharacterIds,
           )
             .then(() => {
               pendingWorkerInitializations -= 1;
@@ -1156,6 +1189,7 @@ export class AutoTeamBuilderService {
             nextAttempt.requireLeadersWithoutSuperEffects,
             executionOptions.signal,
             friendCaptainRecords,
+            autoFillCharacterIds,
           )
             .then((result) => {
               if (settled) {

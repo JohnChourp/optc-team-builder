@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-23T17:11:40.407Z",
+  "generatedAt": "2026-04-24T09:22:38.628Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -19,7 +19,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1750,
+      "matchCount": 1749,
       "matchingCharacterIds": [
         1,
         2,
@@ -1300,6 +1300,7 @@
         3322,
         3323,
         3324,
+        3328,
         3329,
         3331,
         3332,
@@ -1619,7 +1620,6 @@
         4082,
         4092,
         4098,
-        4109,
         4110,
         4111,
         4114,
@@ -1761,7 +1761,6 @@
         4519,
         4520,
         4521,
-        4529,
         4533,
         4535,
         4543,
@@ -1804,7 +1803,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 270,
+      "matchCount": 271,
       "matchingCharacterIds": [
         20,
         230,
@@ -2061,6 +2060,7 @@
         4322,
         4323,
         4335,
+        4345,
         4371,
         4378,
         4381,
@@ -2174,7 +2174,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 345,
+      "matchCount": 347,
       "matchingCharacterIds": [
         446,
         447,
@@ -2512,6 +2512,7 @@
         4343,
         4344,
         4390,
+        4401,
         4425,
         4429,
         4430,
@@ -2519,6 +2520,7 @@
         4468,
         4475,
         4533,
+        4543,
         5013,
         5014
       ],
@@ -2817,6 +2819,7 @@
         3298,
         3316,
         3317,
+        3328,
         3335,
         3336,
         3353,
@@ -2931,7 +2934,6 @@
         4355,
         4379,
         4380,
-        4401,
         4408,
         4440,
         4441,
@@ -3010,7 +3012,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1320,
+      "matchCount": 1329,
       "matchingCharacterIds": [
         209,
         210,
@@ -4265,6 +4267,8 @@
         4411,
         4413,
         4414,
+        4418,
+        4419,
         4420,
         4422,
         4425,
@@ -4294,6 +4298,7 @@
         4470,
         4472,
         4473,
+        4476,
         4477,
         4479,
         4482,
@@ -4322,14 +4327,20 @@
         4533,
         4534,
         4535,
+        4536,
+        4537,
         4538,
         4540,
         4541,
         4543,
+        4545,
         4546,
         4547,
         4548,
         4549,
+        4550,
+        4551,
+        4552,
         5013,
         5014
       ],
@@ -4364,7 +4375,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 769,
+      "matchCount": 771,
       "matchingCharacterIds": [
         263,
         305,
@@ -5127,14 +5138,16 @@
         4522,
         4530,
         4535,
+        4536,
         4539,
         4543,
         4546,
         4548,
         4549,
+        4550,
+        4553,
         5029,
-        5030,
-        900013
+        5030
       ],
       "sampleCharacterIds": [
         263,
@@ -5167,16 +5180,10 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1,
-      "matchingCharacterIds": [
-        4536
-      ],
-      "sampleCharacterIds": [
-        4536
-      ],
-      "sampleTexts": [
-        "Delays all enemies for 1 turn, ignoring immunity to Delay, immunity to all status effects, or immunity excluding certain status effects, changes crew's slots including [BLOCK] and [STR] slots to [DEX], reduces DEX and STR characters' Special charge time by 2 turns, reduces crew's Special Bind duration by 7 turns, and boosts damage dealt to delayed enemies by 3.25x for 1 turn. If this character has used \"Coordinated Giant Arm and Sniping\" 1 or more times and 4 or more [Straw Hat Pirates], [Giant], or [Four Emperors] characters are on the crew, boosts damage dealt to enemies with increased damage taken status by 2.75x for 1 turn, and further increases crew's slot effect boost by 1.2x up to a maximum of 15x."
-      ]
+      "matchCount": 0,
+      "matchingCharacterIds": [],
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "boost_against_def_reduced_enemies",
@@ -5245,31 +5252,24 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 9,
+      "matchCount": 4,
       "matchingCharacterIds": [
         3176,
         3177,
-        3977,
-        4109,
-        4345,
-        4418,
-        4536,
-        4543,
-        4545
+        4550,
+        4552
       ],
       "sampleCharacterIds": [
         3176,
         3177,
-        3977,
-        4109,
-        4345
+        4550,
+        4552
       ],
       "sampleTexts": [
         "Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated. If this character is your Captain/Friend Captain, increases duration of any Orb Amplification buffs by 1 turn.",
         "Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated. If this character is your Captain/Friend Captain, increases duration of any Orb Amplification buffs by 1 turn.",
-        "Deals 60x character's ATK in INT damage to one enemy, reduces crew's Bind/Despair duration by 4 turns, and if crew has damage dealt to enemies with a specific status effect boost when Special is launched, boosts INT and PSY characters' base ATK by +1000 for 2 turns (boosts the damage dealt to DEF Down enemies by 2.25x for 2 turns otherwise)",
-        "Reduces crew's Paralysis/Special Bind duration by 6 turns, deals 50% of the total damage dealt from normal attacks in the previous turn to all enemies as non-type damage (counts up to 999,999,999 total damage dealt with normal attacks in the previous turn), boosts Slasher and Driven characters' chain multiplier growth rate of normal attacks up to +0.6 (GOOD +0.2; GREAT +0.4; PERFECT +0.6) for 1 turn, and boosts the ATK of the next final tap performed by a Slasher or Driven character by 30% (similar effects can stack, up to 200%; the effect will be spent during the final tap when attacking with all available characters regardless of the type/class requirement of the effect). If \"Dracule Mihawk\" or \"Daz Bonez (Mr. 1)\" has launched a Special in this turn, boosts crew's damage dealt when landing a Critical hit by 50% (effect applies only to characters with Critical ATK Potential Ability; highest possible chance is 100%) for 1 turn",
-        "Deals 100x characters' ATK in non-type damage to all enemies (ignoring all defensive effects and DEF), reduces crew's Special Bind duration by 7 turns, heals crew by 10x character's RCV at end of turn for 1 turn, further increases crew's slot effect boost by +0.5, and boosts Slasher and Cerebral characters' slot effects by 2.75x for 3 turns (effect can be further increased up to 2 times; cannot be removed by crew or enemies). If amount of HP beyond crew's maximum HP healed before Special is launched is 50,000 or more, boosts crew's damage dealt when landing a Critical hit by 75% (effect applies only to characters with Critical ATK Potential Ability) for 1 turn"
+        "Poisons all enemies. If enemy is immune to status effects, Delay, or any Poison when Special is launched, applies Paralysis (60% chance not to reduce action turns) to all enemies for 1 turn (ignoring immunity to all status effects). If crew has slot effect boost when Special is launched, boosts Slasher and Cerebral characters' ATK based on the damage reduction effect applied on the crew (e.g. if crew has 90% damage reduction, boosts ATK by 1.9x) for 1 turn, then after that, boosts [STR] and [INT] characters' slot effects by 3.25x for 3 turns (allows this effect to be further increased up to 2 times), reduces all enemies' Threshold Damage Reduction duration by 7 turns, removes all Poison effects on the crew, and becomes \"Crocodile & Mihawk\" for 3 turns. If field has \"Territory: [STR]\", \"Territory: [INT]\", or \"Territory: Slasher class\" and 2 or more [Cross Guild] [Four Emperors] characters are on the crew when Special is launched, allows crew to stack up to 2 different damage boosting effects (cannot stack the damage boost of the same type) for 1 turn",
+        "Reduces all enemies' DEF Up duration by 6 turns, heals crew by 25,000 HP, reduces damage taken by 80% for 1 turn, changes crew's [BLOCK] slots to character's own type, and boosts damage dealt to enemies affected by Delay and DEF Down by 2.25x for 1 turn. If 5 or more [Revolutionary Army] [Egghead Arc] characters are on the crew, halves all enemies' DEF for 1 turn, and boosts crew's ATK by 1.75x for 1 turn (effect can be overwritten with other ATK boost effects)"
       ]
     },
     {
@@ -5713,10 +5713,10 @@
         4519,
         4521,
         4523,
+        4529,
         4539,
         4549,
-        900005,
-        900013
+        4553
       ],
       "sampleCharacterIds": [
         1233,
@@ -5749,7 +5749,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 77,
+      "matchCount": 78,
       "matchingCharacterIds": [
         1046,
         1047,
@@ -5823,6 +5823,7 @@
         4296,
         4297,
         4298,
+        4329,
         4330,
         4419,
         4421,
@@ -6064,24 +6065,27 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 4,
+      "matchCount": 5,
       "matchingCharacterIds": [
         3293,
         3776,
         4429,
-        4430
+        4430,
+        4554
       ],
       "sampleCharacterIds": [
         3293,
         3776,
         4429,
-        4430
+        4430,
+        4554
       ],
       "sampleTexts": [
         "Reduces Chain Multiplier Limit and Chain Coefficient Reduction duration by 5 turns, recovers 30% of crew's MAX HP and boosts the Color Affinity of Powerhouse and Driven characters by 1.75x for 1 turn. If your captain is a Driven or Powerhouse character, after 2 turns, boosts Orb Effects of Powerhouse and Driven characters by 2x for 1 turn.",
         "Reduces Special Cooldown of all characters by 1 turn, reduces enemies' Increased Defense duration by 5 turns and reduces Paralysis and ATK DOWN duration by 5 turns. If HP is above 99% when the special is activated, adds 1.0x to Chain multiplier for 1 turn, recovers 30% of crew's MAX HP otherwise.",
         "Deals 100x character's ATK in Typeless damage to one enemy, reduces enemies' Resilience duration by 6 turns, adds 1.2x to chain multiplier for 3 turns, and recovers 30% of crew's MAX HP. If HP is below 50% when the special is activated or your crew has 2+ [Navy] characters, carries over 0.1x-1.5x of Chain Multiplier on this turn to the next turn.",
-        "Reduces Special Cooldown of all characters by 1 turn, deals 100x character's ATK in Typeless damage to one enemy, reduces enemies' Resilience duration by 6 turns, adds 1.2x-1.8x to chain multiplier for 3 turns, and recovers 30% of crew's MAX HP. If HP is below 50% when the special is activated or your crew has 2+ [Navy] characters, locks all orbs for 2 turns, and carries over 0.1x-1.5x of Chain Multiplier on this turn to the next turn. If your crew has 3+ [Navy] characters, increases duration of any team Damage Nullification and Threshold Damage Reduction buffs by 1 turn."
+        "Reduces Special Cooldown of all characters by 1 turn, deals 100x character's ATK in Typeless damage to one enemy, reduces enemies' Resilience duration by 6 turns, adds 1.2x-1.8x to chain multiplier for 3 turns, and recovers 30% of crew's MAX HP. If HP is below 50% when the special is activated or your crew has 2+ [Navy] characters, locks all orbs for 2 turns, and carries over 0.1x-1.5x of Chain Multiplier on this turn to the next turn. If your crew has 3+ [Navy] characters, increases duration of any team Damage Nullification and Threshold Damage Reduction buffs by 1 turn.",
+        "Reduces crew's Despair duration by 2 turns, and launches the following effects based on character's Special launch status: (0) sets the chain multiplier's minimum value at 2.25 and maximum value at 17.5 for 1 turn, and then sets character's Special launch status to (1); (1) reduces crew's ATK Down duration by 1 turn, boosts the chain multiplier by +1.2 for 1 turn, and if character's slot is [BLOCK][BOMB][G] or Rainbow when Special is launched, sets character's Special launch status to (2): (2) prevents character's slot from being changed until character lands a PERFECT strike 1 time, applies \"Territory: [INT]\" to the field (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory) for 1 turn, and reduces crew's ATK Down duration by 2 turns (Special launch status effect is not stackable)"
       ]
     },
     {
@@ -6204,7 +6208,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 43,
+      "matchCount": 41,
       "matchingCharacterIds": [
         3754,
         3755,
@@ -6218,7 +6222,6 @@
         4061,
         4062,
         4091,
-        4109,
         4144,
         4168,
         4184,
@@ -6234,7 +6237,6 @@
         4292,
         4319,
         4328,
-        4329,
         4341,
         4342,
         4368,
@@ -6243,12 +6245,12 @@
         4371,
         4387,
         4404,
-        4419,
         4426,
         4436,
         4478,
         4486,
-        4524
+        4524,
+        4551
       ],
       "sampleCharacterIds": [
         3754,
@@ -6469,7 +6471,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 273,
+      "matchCount": 276,
       "matchingCharacterIds": [
         3365,
         3371,
@@ -6547,7 +6549,6 @@
         3961,
         3962,
         3964,
-        3977,
         3981,
         3985,
         3986,
@@ -6697,6 +6698,7 @@
         4395,
         4396,
         4397,
+        4401,
         4406,
         4409,
         4411,
@@ -6740,10 +6742,13 @@
         4518,
         4521,
         4523,
+        4529,
         4536,
-        4539,
-        4546,
-        900013
+        4537,
+        4543,
+        4544,
+        4550,
+        4553
       ],
       "sampleCharacterIds": [
         3365,
@@ -6797,7 +6802,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 33,
+      "matchCount": 36,
       "matchingCharacterIds": [
         4040,
         4041,
@@ -6806,6 +6811,7 @@
         4048,
         4064,
         4098,
+        4109,
         4119,
         4120,
         4163,
@@ -6826,12 +6832,14 @@
         4374,
         4395,
         4412,
+        4418,
         4431,
         4433,
         4459,
         4486,
         4508,
-        4521
+        4521,
+        4544
       ],
       "sampleCharacterIds": [
         4040,
@@ -6864,7 +6872,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 543,
+      "matchCount": 546,
       "matchingCharacterIds": [
         11,
         26,
@@ -7396,19 +7404,22 @@
         4519,
         4521,
         4528,
+        4529,
         4530,
         4532,
         4533,
-        4538,
+        4539,
         4540,
         4541,
         4544,
         4545,
         4547,
         4548,
+        4551,
+        4552,
+        4554,
         5013,
-        5014,
-        900013
+        5014
       ],
       "sampleCharacterIds": [
         11,
@@ -8024,7 +8035,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1467,
+      "matchCount": 1468,
       "matchingCharacterIds": [
         21,
         23,
@@ -9483,6 +9494,7 @@
         4536,
         4546,
         4547,
+        4552,
         5013,
         5014,
         5029,
@@ -9525,7 +9537,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 621,
+      "matchCount": 622,
       "matchingCharacterIds": [
         566,
         570,
@@ -10146,6 +10158,7 @@
         4536,
         4546,
         4547,
+        4552,
         5031,
         5032
       ],
@@ -10224,7 +10237,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 827,
+      "matchCount": 831,
       "matchingCharacterIds": [
         228,
         265,
@@ -10898,6 +10911,7 @@
         4105,
         4107,
         4108,
+        4109,
         4117,
         4121,
         4122,
@@ -10971,6 +10985,7 @@
         4318,
         4322,
         4324,
+        4329,
         4333,
         4336,
         4338,
@@ -11016,6 +11031,7 @@
         4446,
         4447,
         4448,
+        4449,
         4450,
         4451,
         4456,
@@ -11040,6 +11056,7 @@
         4525,
         4526,
         4527,
+        4529,
         4532,
         4534,
         4536,
@@ -11048,11 +11065,11 @@
         4544,
         4545,
         4547,
+        4551,
+        4553,
         5031,
         5032,
-        5056,
-        900005,
-        900013
+        5056
       ],
       "sampleCharacterIds": [
         228,
@@ -11087,7 +11104,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 454,
+      "matchCount": 456,
       "matchingCharacterIds": [
         354,
         355,
@@ -11501,6 +11518,7 @@
         4313,
         4316,
         4324,
+        4329,
         4334,
         4336,
         4341,
@@ -11538,11 +11556,12 @@
         4513,
         4514,
         4521,
+        4529,
         4532,
         4548,
         4549,
-        900005,
-        900013
+        4551,
+        4554
       ],
       "sampleCharacterIds": [
         354,
@@ -11577,7 +11596,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 551,
+      "matchCount": 553,
       "matchingCharacterIds": [
         73,
         251,
@@ -12083,6 +12102,7 @@
         4310,
         4315,
         4325,
+        4329,
         4333,
         4339,
         4346,
@@ -12126,6 +12146,7 @@
         4522,
         4529,
         4538,
+        4551,
         5031,
         5032,
         5046,
@@ -12164,7 +12185,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 448,
+      "matchCount": 450,
       "matchingCharacterIds": [
         709,
         949,
@@ -12565,6 +12586,7 @@
         4317,
         4318,
         4322,
+        4329,
         4335,
         4340,
         4344,
@@ -12590,6 +12612,7 @@
         4439,
         4447,
         4448,
+        4449,
         4472,
         4475,
         4476,
@@ -12605,15 +12628,15 @@
         4514,
         4520,
         4525,
+        4529,
         4532,
         4534,
         4536,
         4545,
         4547,
+        4551,
         5031,
-        5032,
-        900005,
-        900013
+        5032
       ],
       "sampleCharacterIds": [
         709,
@@ -12858,7 +12881,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 46,
+      "matchCount": 47,
       "matchingCharacterIds": [
         2049,
         2050,
@@ -12905,7 +12928,8 @@
         3526,
         3579,
         3784,
-        3819
+        3819,
+        4529
       ],
       "sampleCharacterIds": [
         2049,
@@ -12940,7 +12964,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 329,
+      "matchCount": 331,
       "matchingCharacterIds": [
         1823,
         1824,
@@ -13269,6 +13293,8 @@
         4532,
         4535,
         4537,
+        4550,
+        4554,
         5046,
         5047
       ],
@@ -14127,7 +14153,7 @@
         4534,
         4546,
         4548,
-        900013
+        4552
       ],
       "sampleCharacterIds": [
         1411,
@@ -14161,7 +14187,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 91,
+      "matchCount": 92,
       "matchingCharacterIds": [
         1539,
         1540,
@@ -14252,6 +14278,7 @@
         4231,
         4326,
         4327,
+        4418,
         4505,
         4546
       ],
@@ -14368,7 +14395,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 317,
+      "matchCount": 320,
       "matchingCharacterIds": [
         1311,
         1312,
@@ -14685,6 +14712,9 @@
         4505,
         4519,
         4521,
+        4529,
+        4546,
+        4550,
         5031,
         5032
       ],
@@ -14831,7 +14861,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 17,
+      "matchCount": 18,
       "matchingCharacterIds": [
         1431,
         1432,
@@ -14849,7 +14879,8 @@
         3645,
         4239,
         4240,
-        4523
+        4523,
+        4529
       ],
       "sampleCharacterIds": [
         1431,
@@ -15193,7 +15224,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 261,
+      "matchCount": 262,
       "matchingCharacterIds": [
         13,
         14,
@@ -15455,7 +15486,8 @@
         4490,
         4517,
         4536,
-        4547
+        4547,
+        4550
       ],
       "sampleCharacterIds": [
         13,
@@ -15488,24 +15520,15 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 4,
+      "matchCount": 1,
       "matchingCharacterIds": [
-        4329,
-        4418,
-        4531,
-        4546
+        4552
       ],
       "sampleCharacterIds": [
-        4329,
-        4418,
-        4531,
-        4546
+        4552
       ],
       "sampleTexts": [
-        "Inflicts Love-Love status on each enemy (binds regular attacks until they are hit 8 times), reduces all enemies' DEF Up duration by 7 turns, and boosts Fighter and Shooter characters' chain multiplier growth rate of normal attacks up to +0.7 (GOOD +0.2; GREAT +0.4; PERFECT +0.7) for 3 turns (cannot be removed by crew or enemies). If crew can allow 2 different damage boosting effects at the same time or crew's [Unknown crew status icon] status has 3 or more turns remaining when Special is launched, boosts STR, DEX, and QCK characters' slot effects by 3.5x for 3 turns (cannot be removed by crew or enemies; boosts STR, DEX, and QCK characters' slot effects by 3x for 1 turns otherwise)",
-        "Reduces crew's Bind duration by 7 turns, reduces all enemies' DEF Up and damage reduction (except [Unknown excluded enemy defensive effect icon]) duration by 3 turns, heals crew by 15,000 HP, applies Paralysis (60% chance not to reduce action turns) to all enemies for 2 turns, boosts the ATK of the next final tap performed by a QCK, Striker, or Powerhouse character by 30% (similar effects can stack, up to 200%; the effect will be spent during the final tap when attacking with all available characters regardless of the type/class requirement of the effect), boosts damage dealt to enemies affected by Paralysis by 2.25x for 1 turn (allows this effect to be further increased up to 2 times), and if 4 or more [Straw Hat Pirates] [Kuja Pirates] [Logia-type] characters are on the crew, allows crew to stack up to 2 different damage boosting effects (cannot stack the damage boost of the same type) for 1 turn, and this Special's Paralysis effect will ignore immunity to status effects",
-        "Reduces crew's ATK Down duration by 6 turns, sets all enemies' DEF to 0 for 1 turn, boosts Free Spirit and Cerebral characters' advantageous class effect by 1.5x for 1 turn (effect can be overwritten with other advantageous class effects), and reduces crew's VS Effect gauge and Switch Effect by 3. If Captain is a DEX or QCK-type, boosts DEX, Free Spirit, and Cerebral characters' base ATK by +1250 for 3 turns. If Captain is a STR, PSY, or INT-type, applies increase damage taken status to all enemies by 1.5x for 1 turn ignoring immunity to status effects, and if crew lands 3 PERFECT strikes in this turn, applies increase damage taken status to all enemies by 1.5x the next turn.",
-        "Changes crew's slots (including [BLOCK] slots) to [INT]. If crew has slot effect boost when Special is launched, boosts INT, Powerhouse, and Cerebral characters' ATK by 2.5x for 1 turn, then after that, boosts their slot effects by 2.75x for 1 turn. If 3 or more [Five Elders] [Navy] [Vegapunk] characters are on the crew, reduces all enemies' [Unknown enemy defensive effect icon], damage reduction, and DEF Up duration by 5 turns, and changes adjacent slots to [RCV]."
+        "Reduces all enemies' DEF Up duration by 6 turns, heals crew by 25,000 HP, reduces damage taken by 80% for 1 turn, changes crew's [BLOCK] slots to character's own type, and boosts damage dealt to enemies affected by Delay and DEF Down by 2.25x for 1 turn. If 5 or more [Revolutionary Army] [Egghead Arc] characters are on the crew, halves all enemies' DEF for 1 turn, and boosts crew's ATK by 1.75x for 1 turn (effect can be overwritten with other ATK boost effects)"
       ]
     },
     {
@@ -15525,7 +15548,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 75,
+      "matchCount": 76,
       "matchingCharacterIds": [
         58,
         215,
@@ -15601,7 +15624,8 @@
         4506,
         4509,
         4510,
-        4511
+        4511,
+        4550
       ],
       "sampleCharacterIds": [
         58,
@@ -15634,7 +15658,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 180,
+      "matchCount": 181,
       "matchingCharacterIds": [
         2049,
         2050,
@@ -15806,16 +15830,17 @@
         4508,
         4517,
         4523,
+        4529,
         4530,
         4531,
         4532,
         4533,
+        4536,
         4537,
         4538,
         4543,
         4544,
-        4545,
-        900005
+        4545
       ],
       "sampleCharacterIds": [
         2049,
@@ -15869,7 +15894,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 60,
+      "matchCount": 61,
       "matchingCharacterIds": [
         3657,
         3681,
@@ -15930,7 +15955,8 @@
         4519,
         4529,
         4540,
-        4541
+        4541,
+        4544
       ],
       "sampleCharacterIds": [
         3657,
@@ -16018,22 +16044,10 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 3,
-      "matchingCharacterIds": [
-        4419,
-        4538,
-        900005
-      ],
-      "sampleCharacterIds": [
-        4419,
-        4538,
-        900005
-      ],
-      "sampleTexts": [
-        "Reduces crew's ATK Down and decrease chain multiplier growth rate duration by 6 turns, and boosts DEX, Cerebral, and Fighter characters' chain multiplier growth rate of normal attacks up to +0.7 (GOOD +0.3; GREAT +0.5; PERFECT +0.7) for 2 turns. If number of [STR] [DEX] slots used in normal attacks before Special is launched is 10 or more, or crew has Extra damage (adds extra damage to each hit by crew members on normal attacks when hitting GOOD, GREAT, or PERFECT) status with a duration of 5 turns or longer when Special is launched, applies Weakened status (increases damage taken by 1.5x for all enemies, damage further increased by 1.3x if enemy has Increased damage taken status) to all enemies for 1 turn. If 4 or more [Revolutionary Army] characters are on the crew, applies \"Territory: DEX-type\" to the field (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory) for 2 turns",
-        "Reduces crew's Paralysis duration by 6 turns. If crew has the displayed status icon when Special is launched, boosts the chain multiplier by +1.2 for 1 turn, then after that, boosts STR, Free Spirit, and Powerhouse characters' ATK by 2.5x for 1 turn. If 4 or more [Giant] characters are on the crew, reduces top-row characters' Special charge time by 2 turns, and applies Weakened status to all enemies for 1 turn (increase damage taken by 1.3x for all enemies, damage further increased by 1.2x if enemy has Increase Damage Taken).",
-        "Reduces Despair duration by 7 turns. If crew has [Unknown crew status icon A] status when Special is launched, applies Weakened status (increase damage taken by 1.3x for all enemies, damage further increased by 1.3x if enemy has [Unknown enemy status icon B]) to all enemies for 1 turn (ignoring immunity to status effects), then after that, doubles Cerebral and Slasher characters' advantageous class effect for 1 turn, boosts the type effects of STR, Cerebral, and Slasher characters by 3.25x for 1 turn (allows [Unknown stackable boost icon C] and [Unknown crew status icon A] effects to be further increased up to 2 times). If 4 or more [Egghead Arc] [World Government] [Five Elders] characters are on the crew and enemy does not have [Unknown enemy status icon B] status, further increases crew's [Unknown stackable boost icon C] by 1.2x (up to a maximum 10x; this effect also applies to [Unknown stackable boost icon C] from this Special). If 4 or more [Egghead Arc] [World Government] [Five Elders] characters are on the crew and enemy has [Unknown enemy status icon B] status, reduces all enemies' [Unknown enemy status icon B] duration by 5 turns, and further increases crew's [Unknown stackable boost icon C] by 1.2x and [Unknown crew status icon A] by 1.5x (up to a maximum 10x; this effect also applies to [Unknown stackable boost icon C] and [Unknown crew status icon A] from this Special)."
-      ]
+      "matchCount": 0,
+      "matchingCharacterIds": [],
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "reduce_ship_special_charge",
@@ -16093,25 +16107,10 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 4,
-      "matchingCharacterIds": [
-        4530,
-        4531,
-        4543,
-        4544
-      ],
-      "sampleCharacterIds": [
-        4530,
-        4531,
-        4543,
-        4544
-      ],
-      "sampleTexts": [
-        "Reduces all enemies' damage reduction (except [Unknown excluded enemy defensive effect icon]) duration by 6 turns, reduces damage taken by 80% for 2 turns, boosts DEX, Powerhouse, and Cerebral characters' ATK by 1.75x for 1 turn (effect can be overwritten with other ATK boost effects), and reduces crew's VS Effect gauge and Switch Effect by 3. If Captain is a DEX or QCK-type, boosts DEX, Powerhouse, and Cerebral characters' slot effects by 2.25x for 3 turns. If Captain is a STR, PSY, or INT-type, applies increase damage taken status to all enemies by 1.5x for 1 turn ignoring immunity to status effects, then after 1 turn, applies increase damage taken status to all enemies by 1.5x for 1 turn.",
-        "Reduces crew's ATK Down duration by 6 turns, sets all enemies' DEF to 0 for 1 turn, boosts Free Spirit and Cerebral characters' advantageous class effect by 1.5x for 1 turn (effect can be overwritten with other advantageous class effects), and reduces crew's VS Effect gauge and Switch Effect by 3. If Captain is a DEX or QCK-type, boosts DEX, Free Spirit, and Cerebral characters' base ATK by +1250 for 3 turns. If Captain is a STR, PSY, or INT-type, applies increase damage taken status to all enemies by 1.5x for 1 turn ignoring immunity to status effects, and if crew lands 3 PERFECT strikes in this turn, applies increase damage taken status to all enemies by 1.5x the next turn.",
-        "Deals 300x character's ATK in non-type damage to all enemies, reduces the duration of all enemy barriers by 2 turns, and reduces crew's VS Effect gauge by 2 turns. If crew has [Unknown crew status icon] status when Special is launched, boosts INT, Driven, and Powerhouse characters' slot effects by 2.75x for 1 turn (boosts their ATK by 2.75x for 1 turn otherwise). If 3 or more [CPO] [CP9] [World Government] characters are on the crew, further increases all enemies' increase damage taken effect by +0.5, and boosts INT, Driven, and Powerhouse characters' Critical rate by 20% for 1 turn. If number of [RCV] slots used in normal attacks before Special is launched is 16 or more, reduces character's Special charge time by 12 turns, and boosts crew's damage dealt when landing a Critical hit by 75% for 1 turn (effect applies only to characters with Critical ATK Potential Ability; highest possible chance is 100%).",
-        "Reduces crew's Bind duration by 10 turns, further increases all enemies' increase damage taken effect by +0.75, boosts INT, Slasher, Cerebral, and Shooter characters' base ATK by +1750 for 1 turn, and applies -50% INT Resistance to all enemies for 1 turn. If 3 or more [Five Elders] [Navy] [Vegapunk] characters or 5 or more [Egghead Arc] characters are on the crew, reduces crew's Special charge time by 2 turns and VS Effect gauge and Switch Effect by 2, and boosts the ATK of the next final tap performed by an INT character by 60% (similar effects can stack, up to 200%; the effect will be spent during the final tap when attacking with all available characters regardless of the type/class requirement of the effect)"
-      ]
+      "matchCount": 0,
+      "matchingCharacterIds": [],
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "reduce_special_charge",
@@ -16129,7 +16128,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 491,
+      "matchCount": 492,
       "matchingCharacterIds": [
         950,
         951,
@@ -16621,7 +16620,8 @@
         4541,
         4543,
         4544,
-        4549
+        4549,
+        4553
       ],
       "sampleCharacterIds": [
         950,
@@ -16654,7 +16654,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 474,
+      "matchCount": 478,
       "matchingCharacterIds": [
         9,
         17,
@@ -17101,6 +17101,7 @@
         4325,
         4339,
         4344,
+        4345,
         4346,
         4347,
         4369,
@@ -17110,6 +17111,7 @@
         4398,
         4399,
         4409,
+        4415,
         4418,
         4429,
         4430,
@@ -17126,6 +17128,8 @@
         4525,
         4528,
         4545,
+        4552,
+        4553,
         5031,
         5032,
         5046,
@@ -17288,7 +17292,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 46,
+      "matchCount": 48,
       "matchingCharacterIds": [
         871,
         872,
@@ -17335,6 +17339,8 @@
         4511,
         4526,
         4527,
+        4529,
+        4539,
         4547
       ],
       "sampleCharacterIds": [
@@ -17368,7 +17374,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 42,
+      "matchCount": 39,
       "matchingCharacterIds": [
         1431,
         1432,
@@ -17407,9 +17413,6 @@
         4504,
         4521,
         4528,
-        4529,
-        4539,
-        4545,
         5029,
         5030
       ],
@@ -17444,7 +17447,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 132,
+      "matchCount": 133,
       "matchingCharacterIds": [
         668,
         669,
@@ -17577,7 +17580,8 @@
         4259,
         4355,
         4445,
-        4528
+        4528,
+        4531
       ],
       "sampleCharacterIds": [
         668,
@@ -17610,7 +17614,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 205,
+      "matchCount": 207,
       "matchingCharacterIds": [
         1191,
         1192,
@@ -17815,8 +17819,10 @@
         4504,
         4516,
         4524,
+        4529,
         4547,
-        4548
+        4548,
+        4553
       ],
       "sampleCharacterIds": [
         1191,
@@ -17849,7 +17855,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 157,
+      "matchCount": 158,
       "matchingCharacterIds": [
         668,
         669,
@@ -18007,7 +18013,8 @@
         4503,
         4517,
         4528,
-        4530
+        4530,
+        4531
       ],
       "sampleCharacterIds": [
         668,
@@ -18061,35 +18068,27 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 13,
+      "matchCount": 5,
       "matchingCharacterIds": [
         3339,
         3661,
         3980,
-        4109,
-        4345,
-        4401,
-        4419,
-        4476,
-        4529,
-        4539,
-        4543,
-        900005,
-        900013
+        4551,
+        4554
       ],
       "sampleCharacterIds": [
         3339,
         3661,
         3980,
-        4109,
-        4345
+        4551,
+        4554
       ],
       "sampleTexts": [
         "Applies ATK DOWN and Chain Coefficient Reduction Immunity for 3 turns, recovers 6,000 HP at the end of the turn for 3 turns and boosts ATK of [DEX] and Free Spirit characters by 1.75x for 1 turn. After 1 turn, boosts ATK of [DEX] and Free Spirit characters by 2x for 1 turn.",
         "Applies PERFECTs Harder to Hit and Chain Coefficient Reduction Immunity for 3 turns and boosts Color Affinity of [DEX] and [PSY] characters by 1.75x for 1 turn. If during that turn you score 2 PERFECT hits, boosts base ATK of [DEX] and [PSY] characters by 900 for 1 turn in the following turn.",
         "Delays all enemies by 2 turns, reduces Burn duration by 6 turns, applies Burn Immunity for 2 turns, boosts ATK of [INT] and [PSY] characters by 1.75x for 3 turns, boosts Orb Effects of [INT] and [PSY] characters by 1.75x for 3 turns, and deals 200x character's ATK in [INT] damage to all enemies at the end of the turn for 3 turns.",
-        "Reduces crew's Paralysis/Special Bind duration by 6 turns, deals 50% of the total damage dealt from normal attacks in the previous turn to all enemies as non-type damage (counts up to 999,999,999 total damage dealt with normal attacks in the previous turn), boosts Slasher and Driven characters' chain multiplier growth rate of normal attacks up to +0.6 (GOOD +0.2; GREAT +0.4; PERFECT +0.6) for 1 turn, and boosts the ATK of the next final tap performed by a Slasher or Driven character by 30% (similar effects can stack, up to 200%; the effect will be spent during the final tap when attacking with all available characters regardless of the type/class requirement of the effect). If \"Dracule Mihawk\" or \"Daz Bonez (Mr. 1)\" has launched a Special in this turn, boosts crew's damage dealt when landing a Critical hit by 50% (effect applies only to characters with Critical ATK Potential Ability; highest possible chance is 100%) for 1 turn",
-        "Deals 100x characters' ATK in non-type damage to all enemies (ignoring all defensive effects and DEF), reduces crew's Special Bind duration by 7 turns, heals crew by 10x character's RCV at end of turn for 1 turn, further increases crew's slot effect boost by +0.5, and boosts Slasher and Cerebral characters' slot effects by 2.75x for 3 turns (effect can be further increased up to 2 times; cannot be removed by crew or enemies). If amount of HP beyond crew's maximum HP healed before Special is launched is 50,000 or more, boosts crew's damage dealt when landing a Critical hit by 75% (effect applies only to characters with Critical ATK Potential Ability) for 1 turn"
+        "Reduces crew's Paralysis/Special Bind duration by 7 turns. If field has \"Territory: [QCK]\", \"Territory: [INT]\", or \"Territory: Free Spirit class\" and 2 or more [Blackbeard Pirates] [Four Emperors] characters are on the crew when Special is launched, boosts [QCK] and [INT] characters' chain multiplier growth rate of normal attacks up to +0.7 (GOOD +0.3; GREAT +0.5; PERFECT +0.7) for 3 turns. If enemy has damage reduction (except Threshold Damage Reduction) status and an [INT] is set as Support for character when Special is launched, applies \"Territory: Free Spirit class\" to the field<hidden> (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory)</hidden> for 2 turns. If enemy has damage reduction (except Threshold Damage Reduction) status and a [QCK] is set as Support for character when Special is launched, applies \"Territory: [QCK]\" to the field<hidden> (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory)</hidden> for 2 turns. If crew has ATK Up status when Special is launched, boosts Free Spirit, Driven, and Slasher characters' advantageous class effect by 1.75x for 1 turn, then after that, boosts [QCK] and [INT] characters' ATK by 3.25x for 3 turns (allows this effect to be further increased up to 2 times), and becomes \"Burgess & Shiryu\" for 3 turns",
+        "Reduces crew's Despair duration by 2 turns, and launches the following effects based on character's Special launch status: (0) sets the chain multiplier's minimum value at 2.25 and maximum value at 17.5 for 1 turn, and then sets character's Special launch status to (1); (1) reduces crew's ATK Down duration by 1 turn, boosts the chain multiplier by +1.2 for 1 turn, and if character's slot is [BLOCK][BOMB][G] or Rainbow when Special is launched, sets character's Special launch status to (2): (2) prevents character's slot from being changed until character lands a PERFECT strike 1 time, applies \"Territory: [INT]\" to the field (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory) for 1 turn, and reduces crew's ATK Down duration by 2 turns (Special launch status effect is not stackable)"
       ]
     },
     {
@@ -18281,7 +18280,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 44,
+      "matchCount": 46,
       "matchingCharacterIds": [
         4206,
         4209,
@@ -18326,7 +18325,9 @@
         4521,
         4541,
         4548,
-        900013
+        4550,
+        4551,
+        4554
       ],
       "sampleCharacterIds": [
         4206,
@@ -18764,6 +18765,7 @@
         4097,
         4098,
         4103,
+        4109,
         4127,
         4128,
         4137,
@@ -18818,8 +18820,7 @@
         4545,
         4547,
         5031,
-        5032,
-        900013
+        5032
       ],
       "sampleCharacterIds": [
         709,
@@ -18852,18 +18853,15 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 2,
+      "matchCount": 1,
       "matchingCharacterIds": [
-        4449,
-        4537
+        4553
       ],
       "sampleCharacterIds": [
-        4449,
-        4537
+        4553
       ],
       "sampleTexts": [
-        "RES: Reduces character's Special Reverse duration by 3 turns. RES: Lets character completely evade Paralysis.",
-        "Character cannot be blown away by attack, and reduces character's Special Reverse by 3 turns."
+        "Reduces character's Special Reverse by 3 turns. Boosts crew's base RCV by 80"
       ]
     },
     {
@@ -18903,7 +18901,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 179,
+      "matchCount": 181,
       "matchingCharacterIds": [
         73,
         251,
@@ -19057,6 +19055,7 @@
         4071,
         4078,
         4079,
+        4109,
         4146,
         4147,
         4184,
@@ -19078,6 +19077,7 @@
         4410,
         4418,
         4441,
+        4449,
         4475,
         4478,
         4510,
@@ -19264,7 +19264,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1096,
+      "matchCount": 1098,
       "matchingCharacterIds": [
         4,
         12,
@@ -20360,8 +20360,10 @@
         4546,
         4548,
         4549,
-        5014,
-        900005
+        4550,
+        4551,
+        4554,
+        5014
       ],
       "sampleCharacterIds": [
         4,
@@ -20394,29 +20396,10 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 6,
-      "matchingCharacterIds": [
-        3977,
-        4329,
-        4530,
-        4539,
-        4546,
-        900005
-      ],
-      "sampleCharacterIds": [
-        3977,
-        4329,
-        4530,
-        4539,
-        4546
-      ],
-      "sampleTexts": [
-        "Boosts INT and PSY characters' base ATK by 75 Makes crew's [RCV] slots have matching slot effects",
-        "Makes crew's [RCV][TND] slots have matching slot effects Boosts Fighter and Shooter characters' base stats by 100, and if field has \"Territory: Fighter class\", boosts crew's base ATK by a further 150",
-        "Sets right column slots to [RCV] slots at start of quest (no stacking identical abilities). Makes crew's [INT][RCV] slots have matching slot effects.",
-        "Character cannot be blown away by attack, and makes Free Spirit and Powerhouse characters' [DEX][RCV] slots have matching slot effects. Boosts crew's base ATK and HP by 150.",
-        "UNIQ: Character cannot be blown away by attack, and makes INT characters' [RCV] slots have matching slot effects. UNIQ: Boosts INT characters' base HP by 200, and makes their [QCK] slots have matching slot effects."
-      ]
+      "matchCount": 0,
+      "matchingCharacterIds": [],
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "crewmate_slot_carry_over",
@@ -20455,7 +20438,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 91,
+      "matchCount": 93,
       "matchingCharacterIds": [
         924,
         1292,
@@ -20547,7 +20530,9 @@
         4492,
         4496,
         4497,
-        4512
+        4512,
+        4530,
+        4531
       ],
       "sampleCharacterIds": [
         924,
@@ -20643,7 +20628,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 26,
+      "matchCount": 25,
       "matchingCharacterIds": [
         3613,
         3792,
@@ -20669,8 +20654,7 @@
         4497,
         4521,
         4522,
-        4529,
-        900005
+        4529
       ],
       "sampleCharacterIds": [
         3613,
@@ -20724,7 +20708,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 352,
+      "matchCount": 353,
       "matchingCharacterIds": [
         20,
         22,
@@ -20979,7 +20963,6 @@
         3956,
         3957,
         3967,
-        3977,
         3998,
         4025,
         4033,
@@ -21053,6 +21036,7 @@
         4414,
         4416,
         4417,
+        4419,
         4422,
         4431,
         4439,
@@ -21072,6 +21056,7 @@
         4519,
         4526,
         4527,
+        4529,
         4532,
         4538,
         4539,
@@ -21404,16 +21389,10 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1,
-      "matchingCharacterIds": [
-        3977
-      ],
-      "sampleCharacterIds": [
-        3977
-      ],
-      "sampleTexts": [
-        "Boosts INT and PSY characters' base ATK by 75 Makes crew's [RCV] slots have matching slot effects"
-      ]
+      "matchCount": 0,
+      "matchingCharacterIds": [],
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "crewmate_atk_boost_int",
@@ -21431,22 +21410,10 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 3,
-      "matchingCharacterIds": [
-        4415,
-        4544,
-        4545
-      ],
-      "sampleCharacterIds": [
-        4415,
-        4544,
-        4545
-      ],
-      "sampleTexts": [
-        "Boosts INT characters' base ATK by 100",
-        "UNIQ: Boosts INT characters' base ATK by 75, and makes their [DEX] slots have matching slot effects. RES: Reduces character's Bind duration by 5 turns.",
-        "RES: Reduces character's Special Bind duration by 6 turns. UNIQ: Boosts INT characters' base ATK by 70, and makes their [STR] slots have matching slot effects."
-      ]
+      "matchCount": 0,
+      "matchingCharacterIds": [],
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "crewmate_atk_boost_fighter",
@@ -21676,7 +21643,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 61,
+      "matchCount": 62,
       "matchingCharacterIds": [
         314,
         357,
@@ -21714,6 +21681,7 @@
         3051,
         3153,
         3324,
+        3328,
         3512,
         3513,
         3520,
@@ -21865,7 +21833,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 111,
+      "matchCount": 112,
       "matchingCharacterIds": [
         669,
         833,
@@ -21977,7 +21945,8 @@
         4507,
         4513,
         4514,
-        4516
+        4516,
+        4554
       ],
       "sampleCharacterIds": [
         669,
@@ -22299,7 +22268,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 128,
+      "matchCount": 129,
       "matchingCharacterIds": [
         261,
         748,
@@ -22421,6 +22390,7 @@
         4354,
         4388,
         4390,
+        4418,
         4432,
         4434,
         4450,
@@ -22667,7 +22637,6 @@
         3957,
         3967,
         3976,
-        3977,
         4025,
         4033,
         4047,
@@ -22723,6 +22692,7 @@
         4404,
         4413,
         4414,
+        4419,
         4422,
         4447,
         4448,
@@ -22740,12 +22710,12 @@
         4501,
         4518,
         4525,
-        4530,
+        4529,
         4532,
         4549,
+        4553,
         5054,
-        5055,
-        900005
+        5055
       ],
       "sampleCharacterIds": [
         20,
@@ -22778,7 +22748,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 27,
+      "matchCount": 29,
       "matchingCharacterIds": [
         363,
         527,
@@ -22806,7 +22776,9 @@
         4388,
         4410,
         4422,
-        4433
+        4433,
+        4539,
+        4546
       ],
       "sampleCharacterIds": [
         363,
@@ -22963,16 +22935,10 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1,
-      "matchingCharacterIds": [
-        3977
-      ],
-      "sampleCharacterIds": [
-        3977
-      ],
-      "sampleTexts": [
-        "Boosts INT and PSY characters' base ATK by 75 Makes crew's [RCV] slots have matching slot effects"
-      ]
+      "matchCount": 0,
+      "matchingCharacterIds": [],
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "crewmate_rcv_boost_int",
@@ -22990,16 +22956,10 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1,
-      "matchingCharacterIds": [
-        4546
-      ],
-      "sampleCharacterIds": [
-        4546
-      ],
-      "sampleTexts": [
-        "UNIQ: Character cannot be blown away by attack, and makes INT characters' [RCV] slots have matching slot effects. UNIQ: Boosts INT characters' base HP by 200, and makes their [QCK] slots have matching slot effects."
-      ]
+      "matchCount": 0,
+      "matchingCharacterIds": [],
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "crewmate_rcv_boost_fighter",
@@ -23134,7 +23094,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 26,
+      "matchCount": 27,
       "matchingCharacterIds": [
         314,
         575,
@@ -23151,6 +23111,7 @@
         2729,
         3051,
         3153,
+        3328,
         3512,
         3513,
         3930,
@@ -23194,7 +23155,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 41,
+      "matchCount": 42,
       "matchingCharacterIds": [
         16,
         353,
@@ -23236,6 +23197,7 @@
         3749,
         3952,
         4242,
+        4329,
         4334
       ],
       "sampleCharacterIds": [
@@ -23641,12 +23603,12 @@
         4295,
         4330,
         4390,
+        4418,
         4432,
         4434,
         4450,
         4451,
-        4478,
-        4539
+        4478
       ],
       "sampleCharacterIds": [
         748,
@@ -23915,6 +23877,7 @@
         4300,
         4307,
         4308,
+        4329,
         4330,
         4339,
         4351,
@@ -23955,8 +23918,7 @@
         4539,
         4549,
         5054,
-        5055,
-        900005
+        5055
       ],
       "sampleCharacterIds": [
         20,
@@ -24180,16 +24142,10 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1,
-      "matchingCharacterIds": [
-        4546
-      ],
-      "sampleCharacterIds": [
-        4546
-      ],
-      "sampleTexts": [
-        "UNIQ: Character cannot be blown away by attack, and makes INT characters' [RCV] slots have matching slot effects. UNIQ: Boosts INT characters' base HP by 200, and makes their [QCK] slots have matching slot effects."
-      ]
+      "matchCount": 0,
+      "matchingCharacterIds": [],
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "crewmate_hp_boost_fighter",
@@ -24342,7 +24298,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 35,
+      "matchCount": 36,
       "matchingCharacterIds": [
         314,
         575,
@@ -24366,6 +24322,7 @@
         2729,
         3051,
         3153,
+        3328,
         3512,
         3513,
         3930,
@@ -24411,7 +24368,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 44,
+      "matchCount": 45,
       "matchingCharacterIds": [
         16,
         353,
@@ -24456,7 +24413,8 @@
         3742,
         3952,
         3997,
-        4231
+        4231,
+        4329
       ],
       "sampleCharacterIds": [
         16,
@@ -24830,7 +24788,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 97,
+      "matchCount": 98,
       "matchingCharacterIds": [
         360,
         361,
@@ -24921,6 +24879,7 @@
         4295,
         4330,
         4390,
+        4418,
         4432,
         4433,
         4434,
@@ -25029,13 +24988,12 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "potentialAbilities",
-        "superTandemData"
+        "potentialAbilities"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 117,
+      "matchCount": 110,
       "matchingCharacterIds": [
         575,
         1595,
@@ -25133,15 +25091,12 @@
         4409,
         4413,
         4414,
-        4418,
-        4419,
         4422,
         4427,
         4428,
         4432,
         4453,
         4460,
-        4476,
         4479,
         4485,
         4490,
@@ -25149,11 +25104,7 @@
         4497,
         4499,
         4523,
-        4529,
-        4536,
-        4544,
-        900005,
-        900013
+        4536
       ],
       "sampleCharacterIds": [
         575,
@@ -25186,22 +25137,10 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 3,
-      "matchingCharacterIds": [
-        4345,
-        4401,
-        4537
-      ],
-      "sampleCharacterIds": [
-        4345,
-        4401,
-        4537
-      ],
-      "sampleTexts": [
-        "At final battle. Boosts character's base ATK by +800 (stacks with effects from Special) for 1 turn, and boosts the type effects of normal attacks for character by 2.5x for 1 turn",
-        "At final battle and any 3 of the following characters are on the crew (except as Support Characters; Double Characters counts as 1): Edward Newgate (Whitebeard), Marco, Jozu, Vista, Whitey Bay, Fossa, Rakuyo, Kingdew, Atmos, Izo, Marshall D. Teach (Blackbeard), Thatch, Namule, Blamenco, Curiel, Haruta, Speed Jil, Blenheim, Monkey D. Luffy, Sabo, Jinbe, Yamato, Gol D. Roger. Adds 0.2x of damage dealt by normal attacks of other Striker characters this turn on top of the final damage. Adds 1.0x of damage dealt by normal attacks of other Striker characters this turn on top of the final damage",
-        "On the turn Special is launched during final Battle. Further boosts the chain multiplier of the final tap by 1.3x.. Further boosts the chain multiplier of the final tap by 1.4x.. Further boosts the chain multiplier of the final tap by 1.5x.. Further boosts the chain multiplier of the final tap by 1.6x.. Further increases crew's ATK and slot effect boosts by +0.5, and further boosts the chain multiplier of the final tap by 1.75x."
-      ]
+      "matchCount": 0,
+      "matchingCharacterIds": [],
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "potential_rush_sugo_special",
@@ -25219,16 +25158,10 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1,
-      "matchingCharacterIds": [
-        4329
-      ],
-      "sampleCharacterIds": [
-        4329
-      ],
-      "sampleTexts": [
-        "At final battle, if character performs the 1st tap of an attack, and any 2 of the following characters are on the crew (except as Support Characters; Double Characters counts as 1): Monkey D. Luffy, Boa Hancock, Sentomaru, Dr. Vegapunk (Stella), Dr. Vegapunk \"Shaka the Good\", Dr. Vegapunk \"Lilith the Evil\", Dr. Vegapunk \"Edison the Thinker\", Dr. Vegapunk \"Pythagoras the Wise\", Dr. Vegapunk \"Atlas the Violent\", Dr. Vegapunk \"York the Greedy\", S-Hawk, S-Shark, S-Bear, Rob Lucci, Kaku, Stussy. Reduces HP by a certain amount, but allows to perform a Rush. As the Rush tap connects, cumulatively boosts the chain, and boosts the ATK of the Finish tap of Fighter and Shooter characters (up to +0.6 chain multiplier; Rush ATK boost 1.9x)"
-      ]
+      "matchCount": 0,
+      "matchingCharacterIds": [],
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "potential_super_tandem_boost",
@@ -25241,8 +25174,7 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "potentialAbilities",
-        "superTandemData"
+        "potentialAbilities"
       ],
       "availableCoverageModes": [
         "explicit"
@@ -25287,8 +25219,8 @@
         4529,
         4544,
         4547,
-        900005,
-        900013
+        4550,
+        4551
       ],
       "sampleCharacterIds": [
         4364,
@@ -26234,7 +26166,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 152,
+      "matchCount": 153,
       "matchingCharacterIds": [
         20,
         75,
@@ -26387,7 +26319,8 @@
         4510,
         4511,
         4515,
-        4516
+        4516,
+        4543
       ],
       "sampleCharacterIds": [
         20,
@@ -26750,7 +26683,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 134,
+      "matchCount": 137,
       "matchingCharacterIds": [
         73,
         221,
@@ -26885,7 +26818,10 @@
         4178,
         4192,
         4360,
-        4507
+        4386,
+        4415,
+        4507,
+        4543
       ],
       "sampleCharacterIds": [
         73,
@@ -26918,7 +26854,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 171,
+      "matchCount": 173,
       "matchingCharacterIds": [
         22,
         73,
@@ -27088,6 +27024,8 @@
         4178,
         4192,
         4360,
+        4386,
+        4415,
         4506,
         4509,
         4512
@@ -27123,7 +27061,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 496,
+      "matchCount": 505,
       "matchingCharacterIds": [
         12,
         20,
@@ -27617,9 +27555,18 @@
         4515,
         4521,
         4523,
+        4529,
+        4531,
+        4536,
         4540,
         4541,
+        4544,
         4548,
+        4550,
+        4551,
+        4552,
+        4553,
+        4554,
         5014
       ],
       "sampleCharacterIds": [
@@ -27653,7 +27600,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 332,
+      "matchCount": 338,
       "matchingCharacterIds": [
         16,
         257,
@@ -27955,6 +27902,7 @@
         4325,
         4326,
         4327,
+        4329,
         4330,
         4331,
         4333,
@@ -27986,6 +27934,11 @@
         4518,
         4522,
         4523,
+        4536,
+        4537,
+        4538,
+        4539,
+        4545,
         4547
       ],
       "sampleCharacterIds": [
@@ -28019,7 +27972,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 661,
+      "matchCount": 674,
       "matchingCharacterIds": [
         8,
         77,
@@ -28547,6 +28500,7 @@
         4088,
         4089,
         4103,
+        4109,
         4111,
         4118,
         4119,
@@ -28620,6 +28574,7 @@
         4326,
         4327,
         4328,
+        4329,
         4330,
         4331,
         4333,
@@ -28632,6 +28587,7 @@
         4341,
         4342,
         4343,
+        4345,
         4346,
         4355,
         4365,
@@ -28658,10 +28614,12 @@
         4431,
         4436,
         4443,
+        4449,
         4455,
         4458,
         4469,
         4475,
+        4476,
         4477,
         4478,
         4480,
@@ -28677,10 +28635,18 @@
         4525,
         4526,
         4527,
+        4529,
         4535,
+        4537,
+        4538,
+        4539,
         4540,
         4541,
+        4543,
+        4544,
         4549,
+        4550,
+        4551,
         5014
       ],
       "sampleCharacterIds": [
@@ -29105,7 +29071,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 41,
+      "matchCount": 40,
       "matchingCharacterIds": [
         713,
         789,
@@ -29145,7 +29111,6 @@
         4082,
         4302,
         4378,
-        4419,
         4457,
         4539
       ],
@@ -29607,7 +29572,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 101,
+      "matchCount": 102,
       "matchingCharacterIds": [
         367,
         645,
@@ -29709,7 +29674,8 @@
         4456,
         4472,
         4504,
-        4545
+        4545,
+        4553
       ],
       "sampleCharacterIds": [
         367,
@@ -30971,7 +30937,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 51,
+      "matchCount": 52,
       "matchingCharacterIds": [
         219,
         361,
@@ -31023,7 +30989,8 @@
         4493,
         4515,
         4534,
-        4547
+        4547,
+        4552
       ],
       "sampleCharacterIds": [
         219,
@@ -31184,7 +31151,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 26,
+      "matchCount": 25,
       "matchingCharacterIds": [
         2332,
         3100,
@@ -31210,8 +31177,7 @@
         4427,
         4444,
         4472,
-        4484,
-        4546
+        4484
       ],
       "sampleCharacterIds": [
         2332,
@@ -31285,7 +31251,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 35,
+      "matchCount": 36,
       "matchingCharacterIds": [
         1757,
         1871,
@@ -31321,7 +31287,8 @@
         4433,
         4441,
         4457,
-        4485
+        4485,
+        4546
       ],
       "sampleCharacterIds": [
         1757,
@@ -31630,7 +31597,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 802,
+      "matchCount": 805,
       "matchingCharacterIds": [
         4,
         16,
@@ -32357,6 +32324,7 @@
         4098,
         4107,
         4108,
+        4109,
         4119,
         4120,
         4127,
@@ -32417,6 +32385,7 @@
         4432,
         4447,
         4448,
+        4449,
         4463,
         4464,
         4466,
@@ -32432,6 +32401,7 @@
         4533,
         4540,
         4541,
+        4543,
         4549,
         5055
       ],
@@ -33338,7 +33308,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 85,
+      "matchCount": 86,
       "matchingCharacterIds": [
         73,
         416,
@@ -33424,7 +33394,8 @@
         4430,
         4517,
         4525,
-        4545
+        4545,
+        4552
       ],
       "sampleCharacterIds": [
         73,
@@ -33478,7 +33449,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 28,
+      "matchCount": 27,
       "matchingCharacterIds": [
         1749,
         1838,
@@ -33505,7 +33476,6 @@
         4036,
         4262,
         4404,
-        4419,
         4421,
         4474
       ],
@@ -33576,16 +33546,10 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1,
-      "matchingCharacterIds": [
-        4536
-      ],
-      "sampleCharacterIds": [
-        4536
-      ],
-      "sampleTexts": [
-        "Broggy, Oimo, Kashii: Lv.5: At start of battle 3, reduces supported character's Special charge time by 3 turns, and changes supported character's slot to character's own type."
-      ]
+      "matchCount": 0,
+      "matchingCharacterIds": [],
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "support_reduce_current_hp_crew",
@@ -33603,24 +33567,27 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 4,
+      "matchCount": 5,
       "matchingCharacterIds": [
         3962,
         3964,
         4213,
-        4438
+        4438,
+        4544
       ],
       "sampleCharacterIds": [
         3962,
         3964,
         4213,
-        4438
+        4438,
+        4544
       ],
       "sampleTexts": [
         "Yamato: Once per adventure, when you reach the final stage, reduces crew's current HP by 20%, boosts Orb Effects of all characters by 1.75x for 1 turn and changes the orb of the supported character into a [RCV] orb.",
         "Yamato: Once per adventure, when you reach the final stage, reduces crew's current HP by 20%, boosts base ATK of all characters by 500 for 1 turn and changes the orb of the supported character into a [RCV] orb.",
         "Izo, Dogstorm, Cat Viper, Raizo, Kozuki Hiyori (Komurasaki), Okiku, Otama, Ashura Doji (Shutenmaru), Kozuki Sukiyaki (Tenguyama Hitetsu), Kozuki Oden, Kawamatsu, Shinobu, Yamato, Toki: Once per adventure, when the supported character uses their special, reduces crew's current HP by 50%, changes orbs of adjacent characters into [WANO] orbs, and increases boost effects of Base ATK Boost buffs by +250.",
-        "Usopp, Tony Tony Chopper, Shanks, Dorry, Broggy: Once per adventure, when an enemy inflicts you with Bind, reduces crew's current HP by 20%, reduces Bind duration by 2 turns, allows crew to perform Super Tandem with [INT] and [RCV] orbs for 1 turn, and reduces Switch Effect of all characters by 2."
+        "Usopp, Tony Tony Chopper, Shanks, Dorry, Broggy: Once per adventure, when an enemy inflicts you with Bind, reduces crew's current HP by 20%, reduces Bind duration by 2 turns, allows crew to perform Super Tandem with [INT] and [RCV] orbs for 1 turn, and reduces Switch Effect of all characters by 2.",
+        "Dr. Vegapunk (Stella): Once per adventure, when you reach the final stage, reduces crew's current HP by 90%, and boosts Base ATK of Cerebral characters by 1,000 for 1 turn."
       ]
     },
     {
@@ -33717,15 +33684,21 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1,
+      "matchCount": 3,
       "matchingCharacterIds": [
-        4470
+        4470,
+        4530,
+        4531
       ],
       "sampleCharacterIds": [
-        4470
+        4470,
+        4530,
+        4531
       ],
       "sampleTexts": [
-        "[Egghead Arc] characters: Once per adventure, when the supported character uses a special to inflict Increase Damage Taken, changes the orb of the supported character into a [RCV] orb, and reduces VS Gauge of [STR] characters by 1."
+        "[Egghead Arc] characters: Once per adventure, when the supported character uses a special to inflict Increase Damage Taken, changes the orb of the supported character into a [RCV] orb, and reduces VS Gauge of [STR] characters by 1.",
+        "[Egghead Arc], [Fish-Man] characters: Once per adventure, when the supported character uses a special to inflict Increase Damage Taken, reduces VS Gauge of all characters by 2.",
+        "[Straw Hat Pirates] characters: Once per adventure, when the supported character uses a special to inflict Increase Damage Taken, reduces VS Gauge of all characters by 2."
       ]
     },
     {
