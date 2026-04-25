@@ -274,12 +274,6 @@
                       >
                         {{ card.membershipActionLabel }}
                       </ion-button>
-                      <app-character-ability-groups
-                        [abilities]="card.character.detail.builderAbilities"
-                        [catalogItems]="abilityCatalog()?.abilities ?? []"
-                        [highlightedRequirements]="activeAbilityRequirements()"
-                        displayMode="collapsed"
-                      ></app-character-ability-groups>
                     </article>
                   }
                 </div>
@@ -322,12 +316,6 @@
                           }
                         </div>
                         <small>{{ card.subtitle }}</small>
-                        <app-character-ability-groups
-                          [abilities]="card.character.detail.builderAbilities"
-                          [catalogItems]="abilityCatalog()?.abilities ?? []"
-                          [highlightedRequirements]="activeAbilityRequirements()"
-                          displayMode="full"
-                        ></app-character-ability-groups>
                       </div>
 
                       <ion-button
