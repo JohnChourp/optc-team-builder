@@ -134,15 +134,6 @@
               </div>
 
               <div class="filters-grid">
-                <ion-searchbar
-                  class="box-search"
-                  [debounce]="150"
-                  [placeholder]="t('filters.searchPlaceholder')"
-                  [searchIcon]="searchIcon"
-                  [value]="searchTerm()"
-                  (ionInput)="onSearchChange($event)"
-                ></ion-searchbar>
-
                 <ion-select
                   interface="popover"
                   fill="outline"
@@ -202,116 +193,19 @@
                   </ion-select-option>
                 </ion-select>
 
-                <ion-button
-                  fill="outline"
-                  color="warning"
-                  [disabled]="!availableSpecialAbilityCatalogItems().length"
-                  (click)="openSpecialAbilityPicker()"
-                >
-                  {{ t('filters.special.open', { count: specialAbilityDrafts().length }) }}
-                </ion-button>
-
                 <ion-button fill="outline" color="light" (click)="clearFilters()">
                   {{ 'common.actions.clear' | transloco }}
                 </ion-button>
               </div>
 
-              <app-special-ability-picker
-                [isOpen]="specialAbilityPickerOpen()"
-                category="special"
-                [eyebrow]="t('filters.special.eyebrow')"
-                [title]="t('filters.special.title')"
-                [copy]="t('filters.special.copy')"
-                [drafts]="specialAbilityDrafts()"
-                [catalogItems]="availableSpecialAbilityCatalogItems()"
-                (dismiss)="closeSpecialAbilityPicker()"
-                (saveDrafts)="saveSpecialAbilityPicker($event)"
-              ></app-special-ability-picker>
-
-              <div class="filters-toolbar">
-                <ion-button
-                  fill="outline"
-                  color="warning"
-                  [disabled]="!availableCrewmateAbilityCatalogItems().length"
-                  (click)="openCrewmateAbilityPicker()"
-                >
-                  {{ t('filters.crewmate.open', { count: crewmateAbilityDrafts().length }) }}
-                </ion-button>
-              </div>
-
-              <app-special-ability-picker
-                [isOpen]="crewmateAbilityPickerOpen()"
-                category="crewmate"
-                [eyebrow]="t('filters.crewmate.eyebrow')"
-                [title]="t('filters.crewmate.title')"
-                [copy]="t('filters.crewmate.copy')"
-                [drafts]="crewmateAbilityDrafts()"
-                [catalogItems]="availableCrewmateAbilityCatalogItems()"
-                (dismiss)="closeCrewmateAbilityPicker()"
-                (saveDrafts)="saveCrewmateAbilityPicker($event)"
-              ></app-special-ability-picker>
-
-              <div class="filters-toolbar">
-                <ion-button
-                  fill="outline"
-                  color="warning"
-                  [disabled]="!availablePotentialAbilityCatalogItems().length"
-                  (click)="openPotentialAbilityPicker()"
-                >
-                  {{ t('filters.potential.open', { count: potentialAbilityDrafts().length }) }}
-                </ion-button>
-              </div>
-
-              <app-special-ability-picker
-                [isOpen]="potentialAbilityPickerOpen()"
-                category="potential"
-                [eyebrow]="t('filters.potential.eyebrow')"
-                [title]="t('filters.potential.title')"
-                [copy]="t('filters.potential.copy')"
-                [drafts]="potentialAbilityDrafts()"
-                [catalogItems]="availablePotentialAbilityCatalogItems()"
-                (dismiss)="closePotentialAbilityPicker()"
-                (saveDrafts)="savePotentialAbilityPicker($event)"
-              ></app-special-ability-picker>
-
-              <div class="favorites-toggle-row">
-                <div class="favorites-toggle-copy">
-                  <strong>{{ t('filters.support.label') }}</strong>
-                  <small>{{
-                    t('filters.support.support', { count: supportAbilityDrafts().length })
-                  }}</small>
-                </div>
-                <div class="favorites-tools-actions">
-                  <ion-button
-                    fill="outline"
-                    color="warning"
-                    [disabled]="!availableSupportAbilityCatalogItems().length"
-                    (click)="openSupportAbilityPicker()"
-                  >
-                    {{ t('filters.support.open') }}
-                  </ion-button>
-                  <ion-button
-                    fill="clear"
-                    color="light"
-                    [disabled]="!supportAbilityDrafts().length"
-                    (click)="clearSupportAbilityFilters()"
-                  >
-                    {{ 'common.actions.clear' | transloco }}
-                  </ion-button>
-                </div>
-              </div>
-
-              <app-special-ability-picker
-                [isOpen]="supportAbilityPickerOpen()"
-                category="support"
-                [eyebrow]="t('filters.support.eyebrow')"
-                [title]="t('filters.support.title')"
-                [copy]="t('filters.support.copy')"
-                [drafts]="supportAbilityDrafts()"
-                [catalogItems]="availableSupportAbilityCatalogItems()"
-                (dismiss)="closeSupportAbilityPicker()"
-                (saveDrafts)="saveSupportAbilityPicker($event)"
-              ></app-special-ability-picker>
+              <ion-searchbar
+                class="box-search"
+                [debounce]="150"
+                [placeholder]="t('filters.searchPlaceholder')"
+                [searchIcon]="searchIcon"
+                [value]="searchTerm()"
+                (ionInput)="onSearchChange($event)"
+              ></ion-searchbar>
 
               <div class="view-toggle" [attr.aria-label]="t('displayMode.label')">
                 <button

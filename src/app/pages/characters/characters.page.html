@@ -55,31 +55,12 @@
           </div>
         </div>
 
-        <ion-searchbar
-          class="vault-search"
-          [debounce]="150"
-          [placeholder]="t('search.placeholder')"
-          [value]="searchTerm()"
-          [searchIcon]="searchIcon"
-          (ionInput)="onSearchChange($event)"
-        ></ion-searchbar>
-
-        <div class="favorites-toggle-row">
-          <div class="favorites-toggle-copy">
-            <strong>{{ t('filters.favoritesOnly.label') }}</strong>
-            <small>{{ favoritesOnlySupportLabel() }}</small>
-          </div>
-          <ion-toggle
-            color="warning"
-            [checked]="favoritesOnly()"
-            (ionChange)="onFavoritesOnlyToggle($event)"
-          ></ion-toggle>
-        </div>
-
         <div class="favorites-toggle-row">
           <div class="favorites-toggle-copy">
             <strong>{{ t('filters.special.label') }}</strong>
-            <small>{{ t('filters.special.support', { count: specialAbilityDrafts().length }) }}</small>
+            <small>{{
+              t('filters.special.support', { count: specialAbilityDrafts().length })
+            }}</small>
           </div>
           <div class="favorites-tools-actions">
             <ion-button
@@ -116,7 +97,9 @@
         <div class="favorites-toggle-row">
           <div class="favorites-toggle-copy">
             <strong>{{ t('filters.crewmate.label') }}</strong>
-            <small>{{ t('filters.crewmate.support', { count: crewmateAbilityDrafts().length }) }}</small>
+            <small>{{
+              t('filters.crewmate.support', { count: crewmateAbilityDrafts().length })
+            }}</small>
           </div>
           <div class="favorites-tools-actions">
             <ion-button
@@ -153,7 +136,9 @@
         <div class="filter-group">
           <div class="filter-group__head">
             <strong>{{ t('filters.potential.label') }}</strong>
-            <small>{{ t('filters.potential.support', { count: potentialAbilityDrafts().length }) }}</small>
+            <small>{{
+              t('filters.potential.support', { count: potentialAbilityDrafts().length })
+            }}</small>
           </div>
           <div class="favorites-tools-actions">
             <ion-button
@@ -190,7 +175,9 @@
         <div class="filter-group">
           <div class="filter-group__head">
             <strong>{{ t('filters.support.label') }}</strong>
-            <small>{{ t('filters.support.support', { count: supportAbilityDrafts().length }) }}</small>
+            <small>{{
+              t('filters.support.support', { count: supportAbilityDrafts().length })
+            }}</small>
           </div>
           <div class="favorites-tools-actions">
             <ion-button
@@ -281,6 +268,27 @@
             </button>
           </div>
         </div>
+
+        <div class="favorites-toggle-row">
+          <div class="favorites-toggle-copy">
+            <strong>{{ t('filters.favoritesOnly.label') }}</strong>
+            <small>{{ favoritesOnlySupportLabel() }}</small>
+          </div>
+          <ion-toggle
+            color="warning"
+            [checked]="favoritesOnly()"
+            (ionChange)="onFavoritesOnlyToggle($event)"
+          ></ion-toggle>
+        </div>
+
+        <ion-searchbar
+          class="vault-search"
+          [debounce]="150"
+          [placeholder]="t('search.placeholder')"
+          [value]="searchTerm()"
+          [searchIcon]="searchIcon"
+          (ionInput)="onSearchChange($event)"
+        ></ion-searchbar>
 
         <div class="view-toggle" [attr.aria-label]="t('displayMode.label')">
           <button

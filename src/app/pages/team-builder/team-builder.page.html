@@ -160,13 +160,6 @@
         </div>
 
         <div class="assign-panel__controls">
-          <ion-searchbar
-            [debounce]="150"
-            [placeholder]="t('assign.searchPlaceholder')"
-            [value]="candidateSearchTerm()"
-            (ionInput)="onSearchCandidates($event)"
-          ></ion-searchbar>
-
           <ion-button
             fill="outline"
             color="warning"
@@ -184,25 +177,6 @@
           >
             {{ 'common.actions.clear' | transloco }}
           </ion-button>
-
-          <div class="view-toggle" [attr.aria-label]="t('displayMode.label')">
-            <button
-              type="button"
-              class="view-toggle__button"
-              [class.view-toggle__button--active]="!isCompactCandidateDisplayMode()"
-              (click)="setCandidateDisplayMode('list')"
-            >
-              {{ t('displayMode.list') }}
-            </button>
-            <button
-              type="button"
-              class="view-toggle__button"
-              [class.view-toggle__button--active]="isCompactCandidateDisplayMode()"
-              (click)="setCandidateDisplayMode('compact')"
-            >
-              {{ t('displayMode.compact') }}
-            </button>
-          </div>
         </div>
 
         <app-special-ability-picker
@@ -312,6 +286,32 @@
           (dismiss)="closeSupportAbilityPicker()"
           (saveDrafts)="saveSupportAbilityPicker($event)"
         ></app-special-ability-picker>
+
+        <ion-searchbar
+          [debounce]="150"
+          [placeholder]="t('assign.searchPlaceholder')"
+          [value]="candidateSearchTerm()"
+          (ionInput)="onSearchCandidates($event)"
+        ></ion-searchbar>
+
+        <div class="view-toggle" [attr.aria-label]="t('displayMode.label')">
+          <button
+            type="button"
+            class="view-toggle__button"
+            [class.view-toggle__button--active]="!isCompactCandidateDisplayMode()"
+            (click)="setCandidateDisplayMode('list')"
+          >
+            {{ t('displayMode.list') }}
+          </button>
+          <button
+            type="button"
+            class="view-toggle__button"
+            [class.view-toggle__button--active]="isCompactCandidateDisplayMode()"
+            (click)="setCandidateDisplayMode('compact')"
+          >
+            {{ t('displayMode.compact') }}
+          </button>
+        </div>
 
         @if (isCompactCandidateDisplayMode()) {
           <div class="candidate-grid">
