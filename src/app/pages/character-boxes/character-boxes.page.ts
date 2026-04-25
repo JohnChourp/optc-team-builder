@@ -50,7 +50,6 @@ import {
 } from '../../core/services/special-ability-filter.utils';
 import { UserStateService } from '../../core/services/user-state.service';
 import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
-import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
 
 const PAGE_SIZE = 48;
 type CharacterBoxesFavoriteFilter = 'all' | 'favorites';
@@ -85,7 +84,6 @@ interface CharacterBoxCharacterCardView {
     IonToolbar,
     RouterLink,
     CharacterAbilityGroupsComponent,
-    SpecialAbilityPickerComponent,
     TranslocoDirective,
     TranslocoPipe,
   ],
