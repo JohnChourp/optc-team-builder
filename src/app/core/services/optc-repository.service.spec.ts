@@ -694,6 +694,55 @@ describe('OptcRepositoryService', () => {
     expect(result.map((record) => record.id)).toEqual([4104, 4103, 4102, 4101]);
   });
 
+  it('sorts detailed character search by captain boost metrics', async () => {
+    const service = createRepositoryService([
+      createCharacterRow({
+        id: 4101,
+        captainHpBoost: 1.5,
+        captainAtkBoost: 5,
+        captainAverageBoost: 3.25,
+      }),
+      createCharacterRow({
+        id: 4103,
+        captainHpBoost: 1.2,
+        captainAtkBoost: 6,
+        captainAverageBoost: 3.6,
+      }),
+      createCharacterRow({
+        id: 4102,
+        captainHpBoost: 1.8,
+        captainAtkBoost: 4,
+        captainAverageBoost: 2.9,
+      }),
+    ]);
+    const baseQuery = {
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      limit: 10,
+      offset: 0,
+    };
+
+    expect(
+      (await service.searchDetailedCharacters({ ...baseQuery, sortMode: 'captainHpBoost' })).map(
+        (record) => record.id,
+      ),
+    ).toEqual([4102, 4101, 4103]);
+    expect(
+      (await service.searchDetailedCharacters({ ...baseQuery, sortMode: 'captainAtkBoost' })).map(
+        (record) => record.id,
+      ),
+    ).toEqual([4103, 4101, 4102]);
+    expect(
+      (
+        await service.searchDetailedCharacters({
+          ...baseQuery,
+          sortMode: 'captainAverageBoost',
+        })
+      ).map((record) => record.id),
+    ).toEqual([4103, 4101, 4102]);
+  });
+
   it('sorts detailed character search by name and id before applying pagination', async () => {
     const service = createRepositoryService([
       createCharacterRow({ id: 300, name: 'Zoro', type: 'DEX' }),
@@ -1073,6 +1122,9 @@ function createCharacterRow(
     classes: string[];
     cost: number;
     stars: number;
+    captainHpBoost: number;
+    captainAtkBoost: number;
+    captainAverageBoost: number;
     detail: Partial<LocalCharacterOverride['detail']>;
     assets: {
       exactLocal: string | null;
@@ -1110,6 +1162,9 @@ function createCharacterRow(
     max_atk: 1900,
     max_rcv: 340,
     growth: 3,
+    captain_hp_boost: overrides.captainHpBoost ?? 0,
+    captain_atk_boost: overrides.captainAtkBoost ?? 0,
+    captain_average_boost: overrides.captainAverageBoost ?? 0,
     region_json: JSON.stringify({
       exactLocal: true,
       thumbnailGlobal: true,
@@ -1361,6 +1416,12 @@ function applyOrderingAndWindow(
     orderedRows = [...rows].sort(
       (left, right) => Number(right['id'] ?? 0) - Number(left['id'] ?? 0),
     );
+  } else if (query.includes('captain_hp_boost DESC')) {
+    orderedRows = sortRowsByBoost(rows, 'captain_hp_boost');
+  } else if (query.includes('captain_atk_boost DESC')) {
+    orderedRows = sortRowsByBoost(rows, 'captain_atk_boost');
+  } else if (query.includes('captain_average_boost DESC')) {
+    orderedRows = sortRowsByBoost(rows, 'captain_average_boost');
   } else if (query.includes('ORDER BY c.id ASC')) {
     orderedRows = [...rows].sort(
       (left, right) => Number(left['id'] ?? 0) - Number(right['id'] ?? 0),
@@ -1408,6 +1469,24 @@ function applyOrderingAndWindow(
   }
 
   return orderedRows;
+}
+
+function sortRowsByBoost(rows: TestSqlRow[], key: string): TestSqlRow[] {
+  return [...rows].sort((left, right) => {
+    const boostDifference = Number(right[key] ?? 0) - Number(left[key] ?? 0);
+
+    if (boostDifference !== 0) {
+      return boostDifference;
+    }
+
+    const idDifference = Number(right['id'] ?? 0) - Number(left['id'] ?? 0);
+
+    if (idDifference !== 0) {
+      return idDifference;
+    }
+
+    return Number(right['cost'] ?? 0) - Number(left['cost'] ?? 0);
+  });
 }
 
 function countOccurrences(value: string, needle: string): number {

@@ -101,6 +101,30 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
+  it('passes the selected leader boost filters to the builder and restores empty selections', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    expect(page.leaderBoostFilters()).toEqual(['HP', 'ATK']);
+
+    page.onLeaderBoostFilterChange({ detail: { value: ['HP'] } } as CustomEvent<{
+      value: ['HP'];
+    }>);
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.any(Array),
+      expect.objectContaining({
+        leaderBoostFilters: ['HP'],
+      }),
+      expect.any(Object),
+    );
+
+    page.onLeaderBoostFilterChange({ detail: { value: [] } } as CustomEvent<{ value: [] }>);
+    expect(page.leaderBoostFilters()).toEqual(['HP', 'ATK']);
+  });
+
   it('keeps the build button label stable across selected filters', async () => {
     const { page } = await createPage();
 
@@ -2855,7 +2879,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 15,
+      schemaVersion: 16,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -2961,6 +2985,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       favoriteCount: 4,
       favoriteShipsOnly: false,
       favoriteShipCount: 0,
+      leaderBoostFilters: ['HP', 'ATK'],
     });
     expect(payload.manualSelection.characters).toEqual([
       expect.objectContaining({
@@ -4021,6 +4046,9 @@ function createCharacterRecord(
     stars: 6,
     cost: 55,
     combo: 4,
+    captainHpBoost: 1.3,
+    captainAtkBoost: 5,
+    captainAverageBoost: 3.15,
     stats: {
       min: { hp: 1000, atk: 500, rcv: 100 },
       max: { hp: 4200, atk: 1800, rcv: 320 },

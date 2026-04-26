@@ -157,6 +157,18 @@ export class CharacterCatalogCacheService {
     }
 
     return [...characters].sort((left, right) => {
+      if (sortMode === 'captainHpBoost') {
+        return this.compareBoostSortedCharacters(left, right, 'captainHpBoost');
+      }
+
+      if (sortMode === 'captainAtkBoost') {
+        return this.compareBoostSortedCharacters(left, right, 'captainAtkBoost');
+      }
+
+      if (sortMode === 'captainAverageBoost') {
+        return this.compareBoostSortedCharacters(left, right, 'captainAverageBoost');
+      }
+
       if (sortMode === 'nameAsc') {
         const nameDifference = left.name.localeCompare(right.name, undefined, {
           sensitivity: 'base',
@@ -179,5 +191,31 @@ export class CharacterCatalogCacheService {
 
       return right.id - left.id;
     });
+  }
+
+  private compareBoostSortedCharacters(
+    left: CharacterListItem,
+    right: CharacterListItem,
+    key: 'captainHpBoost' | 'captainAtkBoost' | 'captainAverageBoost',
+  ): number {
+    const boostDifference = right[key] - left[key];
+
+    if (boostDifference !== 0) {
+      return boostDifference;
+    }
+
+    const idDifference = right.id - left.id;
+
+    if (idDifference !== 0) {
+      return idDifference;
+    }
+
+    const costDifference = right.cost - left.cost;
+
+    if (costDifference !== 0) {
+      return costDifference;
+    }
+
+    return left.name.localeCompare(right.name, undefined, { sensitivity: 'base' });
   }
 }

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-26T10:29:00.760Z",
+  "generatedAt": "2026-04-26T16:55:50.372Z",
   "characters": [
     {
       "id": 1,
@@ -21,6 +21,9 @@
       "maxAtk": 68,
       "maxRcv": 15,
       "growth": 0,
+      "captainHpBoost": 0,
+      "captainAtkBoost": 0,
+      "captainAverageBoost": 0,
       "searchText": "monkey d. luffy str fighter",
       "regionAvailability": {
         "exactLocal": false,
@@ -112,6 +115,9 @@
       "maxAtk": 249,
       "maxRcv": 49,
       "growth": 0.7,
+      "captainHpBoost": 0,
+      "captainAtkBoost": 1.5,
+      "captainAverageBoost": 0.75,
       "searchText": "monkey d. luffy - gum-gum pistol str fighter",
       "regionAvailability": {
         "exactLocal": false,
@@ -209,6 +215,9 @@
       "maxAtk": 522,
       "maxRcv": 105,
       "growth": 0,
+      "captainHpBoost": 0,
+      "captainAtkBoost": 1.5,
+      "captainAverageBoost": 0.75,
       "searchText": "monkey d. luffy - gum-gum bazooka str fighter",
       "regionAvailability": {
         "exactLocal": false,
@@ -307,6 +316,9 @@
       "maxAtk": 1313,
       "maxRcv": 227,
       "growth": 0,
+      "captainHpBoost": 0,
+      "captainAtkBoost": 1.5,
+      "captainAverageBoost": 0.75,
       "searchText": "monkey d. luffy - gear 2 str fighter free spirit",
       "regionAvailability": {
         "exactLocal": false,
@@ -481,6 +493,9 @@
       "maxAtk": 239,
       "maxRcv": 56,
       "growth": 0.7,
+      "captainHpBoost": 0,
+      "captainAtkBoost": 1.5,
+      "captainAverageBoost": 0.75,
       "searchText": "roronoa zoro dex slasher",
       "regionAvailability": {
         "exactLocal": false,
@@ -579,6 +594,9 @@
       "maxAtk": 515,
       "maxRcv": 120,
       "growth": 0,
+      "captainHpBoost": 0,
+      "captainAtkBoost": 1.5,
+      "captainAverageBoost": 0.75,
       "searchText": "roronoa zoro - three thousand worlds dex slasher driven",
       "regionAvailability": {
         "exactLocal": false,
@@ -677,6 +695,9 @@
       "maxAtk": 694,
       "maxRcv": 106,
       "growth": 0,
+      "captainHpBoost": 0,
+      "captainAtkBoost": 1.5,
+      "captainAverageBoost": 0.75,
       "searchText": "roronoa zoro - pound phoenix dex slasher driven",
       "regionAvailability": {
         "exactLocal": false,
@@ -775,6 +796,9 @@
       "maxAtk": 1332,
       "maxRcv": 144,
       "growth": 0,
+      "captainHpBoost": 2,
+      "captainAtkBoost": 2,
+      "captainAverageBoost": 2,
       "searchText": "roronoa zoro - ashura ichibugin dex slasher driven",
       "regionAvailability": {
         "exactLocal": false,
@@ -958,6 +982,9 @@
       "maxAtk": 201,
       "maxRcv": 89,
       "growth": 0.7,
+      "captainHpBoost": 0,
+      "captainAtkBoost": 0,
+      "captainAverageBoost": 0,
       "searchText": "nami int striker",
       "regionAvailability": {
         "exactLocal": false,
@@ -1055,6 +1082,9 @@
       "maxAtk": 453,
       "maxRcv": 160,
       "growth": 0,
+      "captainHpBoost": 0,
+      "captainAtkBoost": 1.5,
+      "captainAverageBoost": 0.75,
       "searchText": "nami - tornado tempo int striker cerebral",
       "regionAvailability": {
         "exactLocal": false,
@@ -1152,6 +1182,9 @@
       "maxAtk": 543,
       "maxRcv": 219,
       "growth": 0,
+      "captainHpBoost": 0,
+      "captainAtkBoost": 1.5,
+      "captainAverageBoost": 0.75,
       "searchText": "nami - mirage tempo int striker cerebral",
       "regionAvailability": {
         "exactLocal": false,
@@ -1249,6 +1282,9 @@
       "maxAtk": 1088,
       "maxRcv": 387,
       "growth": 0,
+      "captainHpBoost": 1.5,
+      "captainAtkBoost": 1.5,
+      "captainAverageBoost": 1.5,
       "searchText": "nami - thunderbolt tempo int striker cerebral",
       "regionAvailability": {
         "exactLocal": false,
@@ -1440,6 +1476,9 @@
       "maxAtk": 127,
       "maxRcv": 121,
       "growth": 0.7,
+      "captainHpBoost": 0,
+      "captainAtkBoost": 1.2,
+      "captainAverageBoost": 0.6,
       "searchText": "usopp psy shooter",
       "regionAvailability": {
         "exactLocal": false,
@@ -1739,6 +1778,9 @@
       "maxAtk": 240,
       "maxRcv": 257,
       "growth": 0,
+      "captainHpBoost": 0,
+      "captainAtkBoost": 1.5,
+      "captainAverageBoost": 0.75,
       "searchText": "usopp - tabasco star psy shooter",
       "regionAvailability": {
         "exactLocal": false,
@@ -2070,6 +2112,9 @@
       "maxAtk": 648,
       "maxRcv": 144,
       "growth": 0,
+      "captainHpBoost": 0,
+      "captainAtkBoost": 1.5,
+      "captainAverageBoost": 0.75,
       "searchText": "usopp - usopp golden pound psy shooter",
       "regionAvailability": {
         "exactLocal": false,
@@ -2369,6 +2414,9 @@
       "maxAtk": 690,
       "maxRcv": 479,
       "growth": 0,
+      "captainHpBoost": 1.5,
+      "captainAtkBoost": 1.5,
+      "captainAverageBoost": 1.5,
       "searchText": "sogeking psy shooter",
       "regionAvailability": {
         "exactLocal": false,
@@ -2960,6 +3008,9 @@
       "maxAtk": 218,
       "maxRcv": 60,
       "growth": 0,
+      "captainHpBoost": 0,
+      "captainAtkBoost": 1.5,
+      "captainAverageBoost": 0.75,
       "searchText": "sanji qck fighter",
       "regionAvailability": {
         "exactLocal": false,
@@ -3057,6 +3108,9 @@
       "maxAtk": 496,
       "maxRcv": 125,
       "growth": 0,
+      "captainHpBoost": 1.5,
+      "captainAtkBoost": 0,
+      "captainAverageBoost": 0.75,
       "searchText": "sanji - plastic surgery shot qck fighter powerhouse",
       "regionAvailability": {
         "exactLocal": false,
@@ -3144,6 +3198,9 @@
       "maxAtk": 500,
       "maxRcv": 209,
       "growth": 0,
+      "captainHpBoost": 0,
+      "captainAtkBoost": 1.5,
+      "captainAverageBoost": 0.75,
       "searchText": "chef sanji - hot rock stew qck fighter powerhouse",
       "regionAvailability": {
         "exactLocal": false,
@@ -3242,6 +3299,9 @@
       "maxAtk": 1030,
       "maxRcv": 249,
       "growth": 0,
+      "captainHpBoost": 1.5,
+      "captainAtkBoost": 1.5,
+      "captainAverageBoost": 1.5,
       "searchText": "sanji - diable jambe qck fighter powerhouse",
       "regionAvailability": {
         "exactLocal": false,
@@ -3469,6 +3529,9 @@
       "maxAtk": 144,
       "maxRcv": 120,
       "growth": 0,
+      "captainHpBoost": 0,
+      "captainAtkBoost": 0,
+      "captainAverageBoost": 0,
       "searchText": "tony tony chopper psy fighter",
       "regionAvailability": {
         "exactLocal": false,
@@ -3567,6 +3630,9 @@
       "maxAtk": 622,
       "maxRcv": 207,
       "growth": 0,
+      "captainHpBoost": 0,
+      "captainAtkBoost": 0,
+      "captainAverageBoost": 0,
       "searchText": "tony tony chopper - heavy point psy fighter free spirit",
       "regionAvailability": {
         "exactLocal": false,
@@ -3787,6 +3853,9 @@
       "maxAtk": 454,
       "maxRcv": 302,
       "growth": 0,
+      "captainHpBoost": 0,
+      "captainAtkBoost": 0,
+      "captainAverageBoost": 0,
       "searchText": "tony tony chopper - brain point int fighter cerebral",
       "regionAvailability": {
         "exactLocal": false,
@@ -3885,6 +3954,9 @@
       "maxAtk": 820,
       "maxRcv": 122,
       "growth": 0,
+      "captainHpBoost": 0,
+      "captainAtkBoost": 0,
+      "captainAverageBoost": 0,
       "searchText": "tony tony chopper - arm point str fighter powerhouse",
       "regionAvailability": {
         "exactLocal": false,

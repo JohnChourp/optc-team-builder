@@ -1263,7 +1263,7 @@ describe('Auto team builder', () => {
     expect(result?.slots.some((slot) => slot.character.id === 6000)).toBe(false);
   });
 
-  it('prefers higher-cost captains within the power-first bucket over stronger lower-cost options', () => {
+  it('prefers higher leader boost over higher cost for automatic captains', () => {
     const result = buildAutoTeamResult(
       [
         createPowerFirstCaptainRecord({
@@ -1288,11 +1288,11 @@ describe('Auto team builder', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(6100);
-    expect(result?.slots[1]?.character.id).toBe(6100);
+    expect(result?.slots[0]?.character.id).toBe(6101);
+    expect(result?.slots[1]?.character.id).toBe(6101);
   });
 
-  it('breaks same-cost captain ties with the newer id even when the older one has a stronger ability', () => {
+  it('prefers higher leader boost before newer id for automatic captains', () => {
     const result = buildAutoTeamResult(
       [
         createPowerFirstCaptainRecord({
@@ -1317,11 +1317,11 @@ describe('Auto team builder', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(6201);
-    expect(result?.slots[1]?.character.id).toBe(6201);
+    expect(result?.slots[0]?.character.id).toBe(6200);
+    expect(result?.slots[1]?.character.id).toBe(6200);
   });
 
-  it('prefers the newer power-first captain over an older ability-first alternative', () => {
+  it('prefers higher leader boost before recency for automatic captains', () => {
     const result = buildAutoTeamResult(
       [
         createPowerFirstCaptainRecord({
@@ -1346,8 +1346,8 @@ describe('Auto team builder', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(6305);
-    expect(result?.slots[1]?.character.id).toBe(6305);
+    expect(result?.slots[0]?.character.id).toBe(6300);
+    expect(result?.slots[1]?.character.id).toBe(6300);
   });
 
   it('uses power-first ordering for captain and friend captain pair selection', () => {
@@ -1395,6 +1395,102 @@ describe('Auto team builder', () => {
     expect(result).not.toBeNull();
     expect(result?.slots[0]?.character.id).toBe(6400);
     expect(result?.slots[1]?.character.id).toBe(6500);
+  });
+
+  it('uses the selected HP boost priority for automatic leader selection', () => {
+    const result = buildAutoTeamResult(
+      [
+        createPowerFirstCaptainRecord({
+          id: 6600,
+          name: 'Newer Lower HP Leader',
+          cost: 65,
+          atkMultiplier: 5.5,
+          hpMultiplier: 1.2,
+          universal: true,
+        }),
+        createPowerFirstCaptainRecord({
+          id: 6401,
+          name: 'Older Higher HP Leader',
+          cost: 55,
+          atkMultiplier: 4.75,
+          hpMultiplier: 1.8,
+          universal: true,
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], { leaderBoostFilters: ['HP'] }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(6401);
+    expect(result?.slots[1]?.character.id).toBe(6401);
+  });
+
+  it('uses the selected ATK boost priority for automatic leader selection', () => {
+    const result = buildAutoTeamResult(
+      [
+        createPowerFirstCaptainRecord({
+          id: 6601,
+          name: 'Newer Lower ATK Leader',
+          cost: 65,
+          atkMultiplier: 5,
+          hpMultiplier: 1.8,
+          universal: true,
+        }),
+        createPowerFirstCaptainRecord({
+          id: 6402,
+          name: 'Older Higher ATK Leader',
+          cost: 55,
+          atkMultiplier: 6.5,
+          hpMultiplier: 1.2,
+          universal: true,
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], { leaderBoostFilters: ['ATK'] }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(6402);
+    expect(result?.slots[1]?.character.id).toBe(6402);
+  });
+
+  it('uses HP and ATK average boost when both leader boost filters are selected', () => {
+    const result = buildAutoTeamResult(
+      [
+        createPowerFirstCaptainRecord({
+          id: 6602,
+          name: 'Newer Lower Average Leader',
+          cost: 65,
+          atkMultiplier: 5.5,
+          hpMultiplier: 1.1,
+          universal: true,
+        }),
+        createPowerFirstCaptainRecord({
+          id: 6403,
+          name: 'Older Higher Average Leader',
+          cost: 55,
+          atkMultiplier: 6,
+          hpMultiplier: 1.6,
+          universal: true,
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], { leaderBoostFilters: ['HP', 'ATK'] }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(6403);
+    expect(result?.slots[1]?.character.id).toBe(6403);
   });
 
   it('prefers higher-cost modern subs over low-cost utility outliers when coverage is already met', () => {
@@ -4705,6 +4801,7 @@ function createInput(
       | 'allowAnyFriendCaptainAutoFill'
       | 'favoriteShipsOnly'
       | 'favoriteShipIds'
+      | 'leaderBoostFilters'
       | 'manualSlots'
       | 'lockedCharacterIds'
       | 'excludedCharacterIds'
@@ -4722,6 +4819,7 @@ function createInput(
     allowAnyFriendCaptainAutoFill: false,
     favoriteShipsOnly: false,
     favoriteShipIds: [],
+    leaderBoostFilters: ['HP', 'ATK'],
     lockedCharacterIds: [],
     excludedCharacterIds: [],
     captainCharacterId: null,
@@ -4752,6 +4850,7 @@ function createInput(
     allowAnyFriendCaptainAutoFill: overrides.allowAnyFriendCaptainAutoFill ?? false,
     favoriteShipsOnly: overrides.favoriteShipsOnly ?? false,
     favoriteShipIds: overrides.favoriteShipIds ?? [],
+    leaderBoostFilters: overrides.leaderBoostFilters ?? ['HP', 'ATK'],
     manualSlots:
       overrides.manualSlots ??
       createManualSlotsFromLegacySelection(
@@ -4824,24 +4923,29 @@ function createPowerFirstCaptainRecord({
   name,
   cost,
   atkMultiplier,
+  hpMultiplier = 1.3,
   universal = false,
 }: {
   id: number;
   name: string;
   cost: number;
   atkMultiplier: number;
+  hpMultiplier?: number;
   universal?: boolean;
 }): CharacterDetailRecord {
   return createCharacterRecord({
     id,
     name,
     cost,
+    captainHpBoost: hpMultiplier,
+    captainAtkBoost: atkMultiplier,
+    captainAverageBoost: (hpMultiplier + atkMultiplier) / 2,
     primaryClass: 'Fighter',
     secondaryClass: 'Free Spirit',
     detail: {
       captainAbility: universal
-        ? `Boosts ATK of all characters by ${atkMultiplier}x and HP by 1.3x.`
-        : `Boosts ATK of DEX and Fighter characters by ${atkMultiplier}x and HP by 1.3x.`,
+        ? `Boosts ATK of all characters by ${atkMultiplier}x and HP by ${hpMultiplier}x.`
+        : `Boosts ATK of DEX and Fighter characters by ${atkMultiplier}x and HP by ${hpMultiplier}x.`,
       specialText: 'Changes crew orbs into Matching Orbs and reduces Special Cooldown by 1 turn.',
     },
   });
@@ -5750,6 +5854,9 @@ function createCharacterRecord(
     stars: overrides.stars ?? 6,
     cost: overrides.cost ?? 55,
     combo: overrides.combo ?? 4,
+    captainHpBoost: overrides.captainHpBoost ?? 1.3,
+    captainAtkBoost: overrides.captainAtkBoost ?? 5,
+    captainAverageBoost: overrides.captainAverageBoost ?? 3.15,
     stats: overrides.stats ?? {
       min: { hp: 1000, atk: 400, rcv: 120 },
       max: { hp: 3900, atk: 1900, rcv: 340 },

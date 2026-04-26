@@ -539,6 +539,9 @@ function createCharacterDetailRecord(
     stars: 6,
     cost: 55,
     combo: 4,
+    captainHpBoost: 0,
+    captainAtkBoost: 0,
+    captainAverageBoost: 0,
     stats: {
       min: { hp: 1997, atk: 884, rcv: 198 },
       max: { hp: 3994, atk: 1768, rcv: 395 },

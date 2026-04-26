@@ -27,6 +27,7 @@ import {
   flattenValues,
   getSortedUnresolvedCharacters,
   normalizeCharacterClasses,
+  resolveCharacterCaptainBoosts,
   writeGeneratedDatasetFiles,
 } from './lib/optc-dataset.mjs';
 import {
@@ -1297,6 +1298,7 @@ export function normalizeCharacters(units, details, rumbleUnits, assetsById) {
         characterId,
         rumbleById.get(characterId) ?? null,
       );
+      const captainBoosts = resolveCharacterCaptainBoosts(normalizedDetail);
 
       return {
         id: characterId,
@@ -1316,6 +1318,7 @@ export function normalizeCharacters(units, details, rumbleUnits, assetsById) {
         maxAtk,
         maxRcv,
         growth,
+        ...captainBoosts,
         searchText: createCharacterSearchText({
           name,
           type,

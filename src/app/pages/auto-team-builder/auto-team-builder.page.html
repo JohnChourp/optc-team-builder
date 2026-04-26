@@ -202,6 +202,30 @@
             ></ion-toggle>
           </div>
 
+          <div class="strict-toggle-row strict-toggle-row--select">
+            <div class="strict-toggle-copy">
+              <strong>{{ t('filters.leaderBoost.label') }}</strong>
+              <small>{{ leaderBoostSupportLabel() }}</small>
+            </div>
+            <ion-select
+              interface="popover"
+              class="strict-toggle-select"
+              fill="outline"
+              [multiple]="true"
+              [placeholder]="t('filters.leaderBoost.placeholder')"
+              [value]="leaderBoostFilters()"
+              [selectedText]="leaderBoostFiltersLabel()"
+              [disabled]="building()"
+              (ionChange)="onLeaderBoostFilterChange($event)"
+            >
+              @for (item of availableLeaderBoostFilters; track item) {
+                <ion-select-option [value]="item">
+                  {{ t('filters.leaderBoost.options.' + item) }}
+                </ion-select-option>
+              }
+            </ion-select>
+          </div>
+
           <div class="strict-toggle-row">
             <div class="strict-toggle-copy">
               <strong>{{ favoriteShipsOnlyToggleLabel() }}</strong>

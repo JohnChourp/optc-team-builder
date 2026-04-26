@@ -88,7 +88,10 @@
       "nameAsc": "Name A-Z",
       "nameDesc": "Name Z-A",
       "idDesc": "Character ID newest first",
-      "idAsc": "Character ID oldest first"
+      "idAsc": "Character ID oldest first",
+      "captainHpBoost": "Captain HP boost",
+      "captainAtkBoost": "Captain ATK boost",
+      "captainAverageBoost": "Captain HP/ATK average"
     }
   },
   "favorites": {

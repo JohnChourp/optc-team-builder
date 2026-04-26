@@ -161,6 +161,13 @@ async function loadCurrentDataset(seedPath, manifestPath) {
   executeSqlSeed(database, seedSql);
 
   const hasIncompleteColumn = tableHasColumn(database, 'characters', 'is_incomplete');
+  const hasCaptainHpBoostColumn = tableHasColumn(database, 'characters', 'captain_hp_boost');
+  const hasCaptainAtkBoostColumn = tableHasColumn(database, 'characters', 'captain_atk_boost');
+  const hasCaptainAverageBoostColumn = tableHasColumn(
+    database,
+    'characters',
+    'captain_average_boost',
+  );
   const characters = selectAll(
     database,
     `
@@ -182,6 +189,13 @@ async function loadCurrentDataset(seedPath, manifestPath) {
         c.max_atk,
         c.max_rcv,
         c.growth,
+        ${hasCaptainHpBoostColumn ? 'c.captain_hp_boost' : '0 AS captain_hp_boost'},
+        ${hasCaptainAtkBoostColumn ? 'c.captain_atk_boost' : '0 AS captain_atk_boost'},
+        ${
+          hasCaptainAverageBoostColumn
+            ? 'c.captain_average_boost'
+            : '0 AS captain_average_boost'
+        },
         c.region_json,
         c.assets_json,
         c.search_text,
@@ -245,6 +259,9 @@ function hydrateCharacterRow(row) {
     maxAtk: parseNullableNumber(row.max_atk),
     maxRcv: parseNullableNumber(row.max_rcv),
     growth: parseNullableNumber(row.growth),
+    captainHpBoost: parseBoostNumber(row.captain_hp_boost),
+    captainAtkBoost: parseBoostNumber(row.captain_atk_boost),
+    captainAverageBoost: parseBoostNumber(row.captain_average_boost),
     searchText:
       typeof row.search_text === 'string' && row.search_text.length
         ? row.search_text
@@ -253,6 +270,11 @@ function hydrateCharacterRow(row) {
     assets: parseJson(row.assets_json, createEmptyAssets()),
     detail: parseJson(row.detail_json, createEmptyManualDetail(characterId)),
   };
+}
+
+function parseBoostNumber(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 }
 
 function parseNullableNumber(value) {

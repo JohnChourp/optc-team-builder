@@ -745,7 +745,13 @@ export class CharactersPage implements OnInit {
   }
 
   private normalizeSortMode(value: string | null | undefined): CharacterSortMode {
-    return value === 'nameAsc' || value === 'nameDesc' || value === 'idDesc' || value === 'idAsc'
+    return value === 'nameAsc' ||
+      value === 'nameDesc' ||
+      value === 'idDesc' ||
+      value === 'idAsc' ||
+      value === 'captainHpBoost' ||
+      value === 'captainAtkBoost' ||
+      value === 'captainAverageBoost'
       ? value
       : 'catalog';
   }

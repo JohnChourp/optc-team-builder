@@ -32,10 +32,12 @@ export const AUTO_BUILD_MANUAL_SLOT_ROLES = [
 ] as const;
 export const AUTO_BUILD_MANUAL_SUB_SLOT_ROLES = ['sub1', 'sub2', 'sub3', 'sub4'] as const;
 export const AUTO_BUILD_TOTAL_SLOT_COUNT = AUTO_BUILD_MANUAL_SLOT_ROLES.length;
+export const AUTO_BUILD_LEADER_BOOST_FILTERS = ['HP', 'ATK'] as const;
 
 export type AutoTeamBuilderType = (typeof AUTO_TEAM_BUILDER_TYPES)[number];
 export type AutoTeamBuilderClass = (typeof AUTO_TEAM_BUILDER_CLASSES)[number];
 export type AutoBuildManualSlotRole = (typeof AUTO_BUILD_MANUAL_SLOT_ROLES)[number];
+export type AutoBuildLeaderBoostFilter = (typeof AUTO_BUILD_LEADER_BOOST_FILTERS)[number];
 
 export interface AutoBuildManualSlotSelection {
   role: AutoBuildManualSlotRole;
@@ -64,6 +66,7 @@ export interface AutoBuildConstraints {
   favoriteCharacterIds?: number[];
   favoriteShipsOnly?: boolean;
   favoriteShipIds?: number[];
+  leaderBoostFilters?: AutoBuildLeaderBoostFilter[];
   manualSlots?: AutoBuildManualSlotSelection[];
   lockedCharacterIds?: number[];
   excludedCharacterIds?: number[];
@@ -111,6 +114,7 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   allowAnyFriendCaptainAutoFill: boolean;
   favoriteShipsOnly: boolean;
   favoriteShipIds: number[];
+  leaderBoostFilters: AutoBuildLeaderBoostFilter[];
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   excludedCharacterIds: number[];

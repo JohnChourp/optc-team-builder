@@ -4,6 +4,7 @@ import {
   createCharacterSearchText,
   createEmptyAssets,
   createEmptyRegionAvailability,
+  resolveCharacterCaptainBoosts,
   validTypes,
 } from './optc-dataset.mjs';
 
@@ -230,6 +231,11 @@ export function buildAppliedManualCharacter(record) {
     ...createEmptyRegionAvailability(),
     exactLocal: true,
   };
+  const detail = {
+    ...createEmptyManualDetail(record.id),
+    ...record.detail,
+    characterId: canonicalCharacterId,
+  };
 
   return {
     id: record.id,
@@ -249,6 +255,7 @@ export function buildAppliedManualCharacter(record) {
     maxAtk: record.maxAtk,
     maxRcv: record.maxRcv,
     growth: record.growth,
+    ...resolveCharacterCaptainBoosts(detail),
     searchText: createCharacterSearchText({
       name: record.name,
       type: record.type,
@@ -259,11 +266,7 @@ export function buildAppliedManualCharacter(record) {
     }),
     regionAvailability,
     assets,
-    detail: {
-      ...createEmptyManualDetail(record.id),
-      ...record.detail,
-      characterId: canonicalCharacterId,
-    },
+    detail,
   };
 }
 

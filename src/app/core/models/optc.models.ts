@@ -91,6 +91,9 @@ export interface CharacterRecord {
   stars: number;
   cost: number;
   combo: number;
+  captainHpBoost: number;
+  captainAtkBoost: number;
+  captainAverageBoost: number;
   stats: CharacterStats;
   regionAvailability: RegionAvailability;
   assets: CharacterAssets;
@@ -340,6 +343,9 @@ export type CharacterSortMode =
   | 'catalog'
   | 'newest'
   | 'powerFirst'
+  | 'captainHpBoost'
+  | 'captainAtkBoost'
+  | 'captainAverageBoost'
   | 'nameAsc'
   | 'nameDesc'
   | 'idDesc'

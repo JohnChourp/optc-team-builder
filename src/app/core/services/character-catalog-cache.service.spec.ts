@@ -248,6 +248,42 @@ describe('CharacterCatalogCacheService', () => {
     ).toEqual([400, 300, 200, 100]);
   });
 
+  it('sorts cached character queries by captain boost metrics', async () => {
+    const repository = {
+      getAllCharacters: vi.fn().mockResolvedValue([
+        createCharacter(100, { captainHpBoost: 1.5, captainAtkBoost: 5, captainAverageBoost: 3.25 }),
+        createCharacter(300, { captainHpBoost: 1.2, captainAtkBoost: 6, captainAverageBoost: 3.6 }),
+        createCharacter(200, { captainHpBoost: 1.8, captainAtkBoost: 4, captainAverageBoost: 2.9 }),
+      ]),
+    };
+    const service = new CharacterCatalogCacheService(
+      repository as never,
+      { revision: () => 0 } as never,
+    );
+
+    await service.ensureLoaded();
+
+    const baseQuery = {
+      searchTerm: '',
+      typeFilter: '',
+      classFilter: '',
+      limit: 10,
+      offset: 0,
+    };
+
+    expect(
+      service.queryCharacters({ ...baseQuery, sortMode: 'captainHpBoost' }).map((character) => character.id),
+    ).toEqual([200, 100, 300]);
+    expect(
+      service.queryCharacters({ ...baseQuery, sortMode: 'captainAtkBoost' }).map((character) => character.id),
+    ).toEqual([300, 100, 200]);
+    expect(
+      service
+        .queryCharacters({ ...baseQuery, sortMode: 'captainAverageBoost' })
+        .map((character) => character.id),
+    ).toEqual([300, 100, 200]);
+  });
+
   it('returns characters by id while preserving the input order', async () => {
     let overrideRevision = 0;
     const repository = {
@@ -352,6 +388,9 @@ function createCharacter(
     stars: overrides.stars ?? 6,
     cost: overrides.cost ?? 55,
     combo: overrides.combo ?? 4,
+    captainHpBoost: overrides.captainHpBoost ?? 0,
+    captainAtkBoost: overrides.captainAtkBoost ?? 0,
+    captainAverageBoost: overrides.captainAverageBoost ?? 0,
     stats: overrides.stats ?? {
       min: { hp: 1000, atk: 500, rcv: 100 },
       max: { hp: 3000, atk: 1500, rcv: 300 },

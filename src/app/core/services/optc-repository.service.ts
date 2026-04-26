@@ -42,13 +42,52 @@ const SHIP_THUMBNAIL_PACK_ID = 'ship-thumbnails';
 const SHIP_THUMBNAIL_PACK_KEY = 'shipThumbnails';
 
 function buildCharacterPowerFirstOrderByClause(alias: string): string {
-  return `${alias}.id DESC`;
+  const prefix = alias ? `${alias}.` : '';
+  return `${prefix}id DESC`;
+}
+
+function buildCharacterBoostOrderByClause(alias: string, columnName: string): string {
+  const prefix = alias ? `${alias}.` : '';
+  return `${prefix}${columnName} DESC, ${prefix}id DESC, ${prefix}cost DESC, ${prefix}name COLLATE NOCASE ASC`;
+}
+
+function buildCharacterListOrderByClause(
+  alias: string,
+  sortMode: CharacterSearchQuery['sortMode'] | 'catalog',
+): string {
+  const prefix = alias ? `${alias}.` : '';
+
+  if (sortMode === 'captainHpBoost') {
+    return buildCharacterBoostOrderByClause(alias, 'captain_hp_boost');
+  }
+
+  if (sortMode === 'captainAtkBoost') {
+    return buildCharacterBoostOrderByClause(alias, 'captain_atk_boost');
+  }
+
+  if (sortMode === 'captainAverageBoost') {
+    return buildCharacterBoostOrderByClause(alias, 'captain_average_boost');
+  }
+
+  return `${prefix}stars DESC, ${prefix}id DESC`;
 }
 
 function buildDetailedCharacterOrderByClause(
   alias: string,
   sortMode: DetailedCharacterSearchQuery['sortMode'] | 'catalog',
 ): string {
+  if (sortMode === 'captainHpBoost') {
+    return buildCharacterBoostOrderByClause(alias, 'captain_hp_boost');
+  }
+
+  if (sortMode === 'captainAtkBoost') {
+    return buildCharacterBoostOrderByClause(alias, 'captain_atk_boost');
+  }
+
+  if (sortMode === 'captainAverageBoost') {
+    return buildCharacterBoostOrderByClause(alias, 'captain_average_boost');
+  }
+
   if (sortMode === 'nameAsc') {
     return `${alias}.name COLLATE NOCASE ASC, ${alias}.id ASC`;
   }
@@ -229,6 +268,37 @@ function parseNullableNumber(value: string | number | null): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function parseBoostNumber(value: string | number | null): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
+function compareBoostSortedCharacters(
+  left: CharacterRecord,
+  right: CharacterRecord,
+  key: 'captainHpBoost' | 'captainAtkBoost' | 'captainAverageBoost',
+): number {
+  const boostDifference = right[key] - left[key];
+
+  if (boostDifference !== 0) {
+    return boostDifference;
+  }
+
+  const idDifference = right.id - left.id;
+
+  if (idDifference !== 0) {
+    return idDifference;
+  }
+
+  const costDifference = right.cost - left.cost;
+
+  if (costDifference !== 0) {
+    return costDifference;
+  }
+
+  return left.name.localeCompare(right.name, undefined, { sensitivity: 'base' });
+}
+
 @Injectable({ providedIn: 'root' })
 export class OptcRepositoryService {
   private readonly sqlPromise: Promise<SqlJsStatic>;
@@ -282,6 +352,7 @@ export class OptcRepositoryService {
     const excludedCharacterClause = excludedCharacterIds.length
       ? `\n          AND id NOT IN (${excludedCharacterIds.map(() => '?').join(',')})`
       : '';
+    const orderByClause = buildCharacterListOrderByClause('', query.sortMode ?? 'catalog');
     const rows = await this.selectAll(
       `
         SELECT
@@ -302,6 +373,9 @@ export class OptcRepositoryService {
           max_atk,
           max_rcv,
           growth,
+          captain_hp_boost,
+          captain_atk_boost,
+          captain_average_boost,
           region_json,
           assets_json,
           search_text
@@ -311,7 +385,7 @@ export class OptcRepositoryService {
           AND (? = '' OR primary_class = ? OR secondary_class = ?)
           ${allowedCharacterClause}
           ${excludedCharacterClause}
-        ORDER BY stars DESC, id DESC
+        ORDER BY ${orderByClause}
         LIMIT ? OFFSET ?
       `,
       [
@@ -353,6 +427,9 @@ export class OptcRepositoryService {
           max_atk,
           max_rcv,
           growth,
+          captain_hp_boost,
+          captain_atk_boost,
+          captain_average_boost,
           region_json,
           assets_json,
           search_text
@@ -459,6 +536,9 @@ export class OptcRepositoryService {
             c.max_atk,
             c.max_rcv,
             c.growth,
+            c.captain_hp_boost,
+            c.captain_atk_boost,
+            c.captain_average_boost,
             c.region_json,
             c.assets_json,
             c.search_text,
@@ -554,6 +634,9 @@ export class OptcRepositoryService {
           c.max_atk,
           c.max_rcv,
           c.growth,
+          c.captain_hp_boost,
+          c.captain_atk_boost,
+          c.captain_average_boost,
           c.region_json,
           c.assets_json,
           c.search_text,
@@ -674,6 +757,9 @@ export class OptcRepositoryService {
             c.max_atk,
             c.max_rcv,
             c.growth,
+            c.captain_hp_boost,
+            c.captain_atk_boost,
+            c.captain_average_boost,
             c.region_json,
             c.assets_json,
             c.search_text,
@@ -769,6 +855,9 @@ export class OptcRepositoryService {
           max_atk,
           max_rcv,
           growth,
+          captain_hp_boost,
+          captain_atk_boost,
+          captain_average_boost,
           region_json,
           assets_json,
           search_text
@@ -810,6 +899,9 @@ export class OptcRepositoryService {
           c.max_atk,
           c.max_rcv,
           c.growth,
+          c.captain_hp_boost,
+          c.captain_atk_boost,
+          c.captain_average_boost,
           c.region_json,
           c.assets_json,
           c.search_text,
@@ -917,6 +1009,9 @@ export class OptcRepositoryService {
         stars: Number(row['stars']),
         cost: Number(row['cost']),
         combo: Number(row['combo']),
+        captainHpBoost: parseBoostNumber(row['captain_hp_boost']),
+        captainAtkBoost: parseBoostNumber(row['captain_atk_boost']),
+        captainAverageBoost: parseBoostNumber(row['captain_average_boost']),
         stats: {
           min: {
             hp: parseNullableNumber(row['min_hp']),
@@ -990,6 +1085,9 @@ export class OptcRepositoryService {
           c.max_atk,
           c.max_rcv,
           c.growth,
+          c.captain_hp_boost,
+          c.captain_atk_boost,
+          c.captain_average_boost,
           c.region_json,
           c.assets_json,
           c.search_text,
@@ -1008,6 +1106,18 @@ export class OptcRepositoryService {
     sortMode: DetailedCharacterSearchQuery['sortMode'] | 'catalog',
   ): CharacterDetailRecord[] {
     return [...records].sort((left, right) => {
+      if (sortMode === 'captainHpBoost') {
+        return compareBoostSortedCharacters(left, right, 'captainHpBoost');
+      }
+
+      if (sortMode === 'captainAtkBoost') {
+        return compareBoostSortedCharacters(left, right, 'captainAtkBoost');
+      }
+
+      if (sortMode === 'captainAverageBoost') {
+        return compareBoostSortedCharacters(left, right, 'captainAverageBoost');
+      }
+
       if (sortMode === 'newest') {
         return right.id - left.id;
       }

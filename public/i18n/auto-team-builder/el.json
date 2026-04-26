@@ -71,6 +71,19 @@
         "flexible": "Στο default mode ο builder δοκιμάζει πρώτα leaders χωρίς Super Type / Super Class effects και μετά επιτρέπει super leaders πριν χαλαρώσει classes ή types."
       }
     },
+    "leaderBoost": {
+      "label": "Leader boost priority",
+      "placeholder": "Επίλεξε boost priority",
+      "options": {
+        "HP": "HP",
+        "ATK": "ATK"
+      },
+      "support": {
+        "hp": "Το Captain και Friend Captain auto-fill προτιμά το μεγαλύτερο HP captain boost, μετά τον πιο πρόσφατο χαρακτήρα και μετά το μεγαλύτερο cost.",
+        "atk": "Το Captain και Friend Captain auto-fill προτιμά το μεγαλύτερο ATK captain boost, μετά τον πιο πρόσφατο χαρακτήρα και μετά το μεγαλύτερο cost.",
+        "average": "Το Captain και Friend Captain auto-fill προτιμά το μεγαλύτερο average HP και ATK captain boost, μετά τον πιο πρόσφατο χαρακτήρα και μετά το μεγαλύτερο cost."
+      }
+    },
     "favoritesOnly": {
       "toggle": "Χρησιμοποίησε favorites για auto-fill",
       "blockedMessage": "Το favorite-only auto-fill δεν είναι διαθέσιμο μέχρι να αποθηκεύσεις τουλάχιστον ένα favorite unit.",

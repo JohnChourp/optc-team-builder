@@ -43,8 +43,10 @@ import {
 import {
   AUTO_BUILD_MANUAL_SLOT_ROLES,
   AUTO_BUILD_MANUAL_SUB_SLOT_ROLES,
+  AUTO_BUILD_LEADER_BOOST_FILTERS,
   AUTO_TEAM_CANDIDATE_LIMIT,
   AUTO_TEAM_BUILDER_TYPES,
+  type AutoBuildLeaderBoostFilter,
   type AutoBuildManualSlotRole,
   type AutoBuildManualSlotSelection,
   type AutoBuildProgressSnapshot,
@@ -252,6 +254,7 @@ interface ShipPickerPanelState {
 interface AutoTeamBuilderDefaultFilterState {
   selectedTypes: AutoTeamBuilderType[];
   selectedClasses: string[];
+  leaderBoostFilters: AutoBuildLeaderBoostFilter[];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
   requireAllSlotsInLeaderSuperEffectScope: boolean;
@@ -299,6 +302,7 @@ function buildDefaultAutoTeamBuilderFilterState(
   return {
     selectedTypes: [...AUTO_TEAM_BUILDER_TYPES],
     selectedClasses: [...availableClasses],
+    leaderBoostFilters: [...AUTO_BUILD_LEADER_BOOST_FILTERS],
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
@@ -375,6 +379,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly ships = signal<ShipRecord[]>([]);
   public readonly selectedTypes = signal<AutoTeamBuilderType[]>([]);
   public readonly selectedClasses = signal<string[]>([]);
+  public readonly leaderBoostFilters = signal<AutoBuildLeaderBoostFilter[]>([
+    ...AUTO_BUILD_LEADER_BOOST_FILTERS,
+  ]);
   public readonly enemyMechanicDrafts = signal<EnemyMechanicDraft[]>([]);
   public readonly enemyMechanicPickerOpen = signal(false);
   public readonly requiredAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
@@ -472,6 +479,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly loadedEnemyPresetName = signal<string | null>(null);
 
   public readonly availableTypes = AUTO_TEAM_BUILDER_TYPES;
+  public readonly availableLeaderBoostFilters = AUTO_BUILD_LEADER_BOOST_FILTERS;
   public readonly manualCandidateViewportItemSize = MANUAL_CANDIDATE_VIEWPORT_ITEM_SIZE;
   public readonly excludedCandidateViewportItemSize = EXCLUDED_CANDIDATE_VIEWPORT_ITEM_SIZE;
   public readonly availableClasses = computed(() => this.summary()?.availableClasses ?? []);
@@ -765,6 +773,24 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       ? this.t('filters.classes.unselectAll')
       : this.t('filters.classes.selectAll'),
   );
+  public readonly leaderBoostFiltersLabel = computed(() =>
+    this.leaderBoostFilters()
+      .map((filter) => this.t(`filters.leaderBoost.options.${filter}`))
+      .join(' / '),
+  );
+  public readonly leaderBoostSupportLabel = computed(() => {
+    const filters = this.leaderBoostFilters();
+
+    if (filters.length === 1 && filters[0] === 'HP') {
+      return this.t('filters.leaderBoost.support.hp');
+    }
+
+    if (filters.length === 1 && filters[0] === 'ATK') {
+      return this.t('filters.leaderBoost.support.atk');
+    }
+
+    return this.t('filters.leaderBoost.support.average');
+  });
   public readonly typeSupportLabel = computed(() =>
     this.requireAllSelectedTypesInTeam()
       ? this.t('filters.types.support.strict')
@@ -1682,6 +1708,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     await this.refreshCharacterPickPanels();
   }
 
+  public onLeaderBoostFilterChange(
+    event: CustomEvent<{ value?: AutoBuildLeaderBoostFilter[] | AutoBuildLeaderBoostFilter | null }>,
+  ): void {
+    const nextFilters = this.resolveLeaderBoostFilters(event.detail.value);
+
+    this.leaderBoostFilters.set(nextFilters.length ? nextFilters : [...AUTO_BUILD_LEADER_BOOST_FILTERS]);
+    this.resetBuildState();
+  }
+
   public async onManualSearchChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
     this.manualSearchTerm.set((event.detail.value ?? '').trim());
     await this.refreshAppliedManualCandidates();
@@ -2309,6 +2344,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           favoriteCharacterIds: this.favoriteCharacterIds(),
           favoriteShipsOnly: this.favoriteShipsOnly(),
           favoriteShipIds: this.favoriteShipIds(),
+          leaderBoostFilters: this.leaderBoostFilters(),
           manualSlots: this.serializeManualSlots(),
           excludedCharacterIds: this.excludedCharacterIds(),
           manualShipId: this.selectedManualShipId(),
@@ -2406,6 +2442,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       favoriteCount: this.favoriteCharacterIds().length,
       favoriteShipsOnly: this.favoriteShipsOnly(),
       favoriteShipCount: this.favoriteShipIds().length,
+      leaderBoostFilters: this.leaderBoostFilters(),
       manualSlots: this.serializeManualSlots(),
       lockedCharacterIds: this.lockedCharacterIds(),
       lockedCharacters: this.lockedCharacters(),
@@ -2612,6 +2649,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.supportAbilityPickerOpen.set(false);
     this.selectedTypes.set(defaultFilters.selectedTypes);
     this.selectedClasses.set(defaultFilters.selectedClasses);
+    this.leaderBoostFilters.set(defaultFilters.leaderBoostFilters);
     this.enemyMechanicDrafts.set([]);
     this.requiredAbilityDrafts.set([]);
     this.crewmateAbilityDrafts.set([]);
@@ -2727,6 +2765,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
     this.selectedTypes.set([...state.selectedTypes]);
     this.selectedClasses.set([...state.selectedClasses]);
+    this.leaderBoostFilters.set([...state.leaderBoostFilters]);
     const migratedRequiredAbilities = mergeAbilityRequirements([
       ...state.requiredAbilities,
       ...deriveAbilityRequirementsFromEnemyMechanics(state.enemyMechanics),
@@ -3598,6 +3637,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
     return uniqueValues.filter((type): type is AutoTeamBuilderType =>
       this.availableTypes.includes(type),
+    );
+  }
+
+  private resolveLeaderBoostFilters(
+    value: AutoBuildLeaderBoostFilter[] | AutoBuildLeaderBoostFilter | null | undefined,
+  ): AutoBuildLeaderBoostFilter[] {
+    const nextValues = Array.isArray(value) ? value : value ? [value] : [];
+    const uniqueValues = [...new Set(nextValues)];
+
+    return uniqueValues.filter((filter): filter is AutoBuildLeaderBoostFilter =>
+      this.availableLeaderBoostFilters.includes(filter),
     );
   }
 

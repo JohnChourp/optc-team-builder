@@ -71,6 +71,19 @@
         "flexible": "Default mode tries leaders without Super Type / Super Class effects first, then allows super leaders before relaxing classes or types."
       }
     },
+    "leaderBoost": {
+      "label": "Leader boost priority",
+      "placeholder": "Select boost priority",
+      "options": {
+        "HP": "HP",
+        "ATK": "ATK"
+      },
+      "support": {
+        "hp": "Captain and Friend Captain auto-fill prefers the highest HP captain boost, then newest character, then higher cost.",
+        "atk": "Captain and Friend Captain auto-fill prefers the highest ATK captain boost, then newest character, then higher cost.",
+        "average": "Captain and Friend Captain auto-fill prefers the highest average of HP and ATK captain boosts, then newest character, then higher cost."
+      }
+    },
     "favoritesOnly": {
       "toggle": "Use favorites for auto-fill",
       "blockedMessage": "Favorite-only auto-fill is unavailable until you save at least one favorite unit.",

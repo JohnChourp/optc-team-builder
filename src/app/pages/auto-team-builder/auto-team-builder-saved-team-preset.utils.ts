@@ -1,4 +1,5 @@
 import {
+  AUTO_BUILD_LEADER_BOOST_FILTERS,
   AUTO_BUILD_MANUAL_SLOT_ROLES,
   createEmptyAutoBuildManualSlots,
 } from "../../core/models/auto-team-builder.models";
@@ -48,6 +49,7 @@ export function buildAutoTeamBuilderStateFromSavedTeam(
     favoritesOnly: false,
     allowAnyFriendCaptainAutoFill: false,
     favoriteShipsOnly: false,
+    leaderBoostFilters: [...AUTO_BUILD_LEADER_BOOST_FILTERS],
     manualSlots,
     lockedCharacterIds: [],
     excludedCharacterIds: [],

@@ -188,6 +188,45 @@ describe('import-optc-data ship thumbnail pack', () => {
     });
   });
 
+  it('precomputes captain HP, ATK, and average boosts from all captain variants', () => {
+    const [character] = normalizeCharacters(
+      [
+        [
+          'Boost Tester',
+          'DEX',
+          ['Fighter'],
+          6,
+          55,
+          4,
+          5,
+          99,
+          5_000_000,
+          1000,
+          500,
+          100,
+          3000,
+          1500,
+          300,
+          1,
+        ],
+      ],
+      {
+        1: {
+          captain: {
+            base: 'Boosts ATK of DEX characters by 5x and HP by 1.2x.',
+            llbbase: 'Boosts ATK of DEX characters by 5.5x and HP by 1.4x.',
+          },
+        },
+      },
+      [],
+      new Map(),
+    );
+
+    expect(character.captainHpBoost).toBe(1.4);
+    expect(character.captainAtkBoost).toBe(5.5);
+    expect(character.captainAverageBoost).toBe(3.45);
+  });
+
   it('supports object-based unit maps from the 2shankz source', () => {
     const [character] = normalizeCharacters(
       {

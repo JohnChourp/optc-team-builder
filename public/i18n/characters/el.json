@@ -114,7 +114,10 @@
       "nameAsc": "Όνομα A-Z",
       "nameDesc": "Όνομα Z-A",
       "idDesc": "Character ID πιο πρόσφατο πρώτα",
-      "idAsc": "Character ID πιο παλιό πρώτα"
+      "idAsc": "Character ID πιο παλιό πρώτα",
+      "captainHpBoost": "Captain HP boost",
+      "captainAtkBoost": "Captain ATK boost",
+      "captainAverageBoost": "Captain HP/ATK average"
     }
   },
   "stats": {

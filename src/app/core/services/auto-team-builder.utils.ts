@@ -118,7 +118,9 @@ interface ActiveLeaderSuperEffectScope {
 
 interface LeaderPairOption {
   captain: AutoBuildCandidate;
+  captainIndex: number;
   friendCaptain: AutoBuildCandidate;
+  friendCaptainIndex: number;
   score: number;
 }
 
@@ -172,13 +174,47 @@ function compareCaptainsBySelectionPreference(
   right: AutoBuildCandidate,
   input: AutoBuildInput,
 ): number {
-  const powerPreferenceDifference = compareCandidatesByPowerPreference(left, right);
+  const boostDifference =
+    resolveLeaderBoostPreferenceScore(right, input) - resolveLeaderBoostPreferenceScore(left, input);
 
-  if (powerPreferenceDifference !== 0) {
-    return powerPreferenceDifference;
+  if (boostDifference !== 0) {
+    return boostDifference;
+  }
+
+  const recencyDifference = right.character.id - left.character.id;
+
+  if (recencyDifference !== 0) {
+    return recencyDifference;
+  }
+
+  const costDifference = right.character.cost - left.character.cost;
+
+  if (costDifference !== 0) {
+    return costDifference;
   }
 
   return scoreCaptain(right, input) - scoreCaptain(left, input);
+}
+
+function resolveLeaderBoostPreferenceScore(
+  candidate: AutoBuildCandidate,
+  input: AutoBuildInput,
+): number {
+  const selectedFilters = new Set(input.leaderBoostFilters);
+
+  if (selectedFilters.has('HP') && selectedFilters.has('ATK')) {
+    return candidate.character.captainAverageBoost;
+  }
+
+  if (selectedFilters.has('HP')) {
+    return candidate.character.captainHpBoost;
+  }
+
+  if (selectedFilters.has('ATK')) {
+    return candidate.character.captainAtkBoost;
+  }
+
+  return candidate.character.captainAverageBoost;
 }
 
 export function resolveAutoBuildCharacterPowerPreferenceScore(
@@ -774,7 +810,10 @@ export function buildAutoTeamResult(
     return null;
   }
 
-  const leaderPairOptions = buildLeaderPairOptions(captainOptions, friendCaptainOptions, input);
+  const leaderPairOptions = buildLeaderPairOptions(captainOptions, friendCaptainOptions, input, {
+    preserveCaptainOrder: (manualSlotCandidateMap.get('captain') ?? []).length > 0,
+    preserveFriendCaptainOrder: manualFriendCaptainCandidates.length > 0,
+  });
 
   for (const leaderPair of leaderPairOptions) {
     const leaderSlots = [leaderPair.captain, leaderPair.friendCaptain];
@@ -996,6 +1035,10 @@ function buildLeaderPairOptions(
   captainOptions: AutoBuildCandidate[],
   friendCaptainOptions: AutoBuildCandidate[],
   input: AutoBuildInput,
+  orderOptions: {
+    preserveCaptainOrder: boolean;
+    preserveFriendCaptainOrder: boolean;
+  },
 ): LeaderPairOption[] {
   const leaderPairs: LeaderPairOption[] = [];
 
@@ -1003,7 +1046,9 @@ function buildLeaderPairOptions(
     friendCaptainOptions.forEach((friendCaptain, friendCaptainIndex) => {
       leaderPairs.push({
         captain,
+        captainIndex,
         friendCaptain,
+        friendCaptainIndex,
         score:
           scoreCaptain(captain, input) +
           scoreCaptain(friendCaptain, input) +
@@ -1014,17 +1059,17 @@ function buildLeaderPairOptions(
   });
 
   return leaderPairs.sort((left, right) => {
-    const captainDifference = compareCaptainsBySelectionPreference(left.captain, right.captain, input);
+    const captainDifference = orderOptions.preserveCaptainOrder
+      ? left.captainIndex - right.captainIndex
+      : compareCaptainsBySelectionPreference(left.captain, right.captain, input);
 
     if (captainDifference !== 0) {
       return captainDifference;
     }
 
-    const friendCaptainDifference = compareCaptainsBySelectionPreference(
-      left.friendCaptain,
-      right.friendCaptain,
-      input,
-    );
+    const friendCaptainDifference = orderOptions.preserveFriendCaptainOrder
+      ? left.friendCaptainIndex - right.friendCaptainIndex
+      : compareCaptainsBySelectionPreference(left.friendCaptain, right.friendCaptain, input);
 
     if (friendCaptainDifference !== 0) {
       return friendCaptainDifference;
