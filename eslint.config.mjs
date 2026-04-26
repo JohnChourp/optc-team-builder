@@ -1,7 +1,12 @@
-import js from "@eslint/js";
-import typescriptParser from "@typescript-eslint/parser";
-import typescriptPlugin from "@typescript-eslint/eslint-plugin";
-import globals from "globals";
+import { createRequire } from "node:module";
+
+const sharedRequire = createRequire(
+  new URL("../codex_utilities/Downloads/projects/package.json", import.meta.url),
+);
+const js = sharedRequire("@eslint/js");
+const typescriptParser = sharedRequire("@typescript-eslint/parser");
+const typescriptPlugin = sharedRequire("@typescript-eslint/eslint-plugin");
+const globals = sharedRequire("globals");
 
 const sharedGlobals = {
   ...globals.browser,

@@ -1755,6 +1755,16 @@
                       fill="outline"
                       color="light"
                       class="manual-candidate-action-button"
+                      [disabled]="building() || !canAddResultCharacterToManualSlot(slot)"
+                      (click)="addResultCharacterToManualSlot(slot)"
+                    >
+                      {{ t('manual.actions.addResult') }}
+                    </ion-button>
+                    <ion-button
+                      size="small"
+                      fill="outline"
+                      color="light"
+                      class="manual-candidate-action-button"
                       [disabled]="
                         building() ||
                         isExcludedCharacter(slot.character.id) ||

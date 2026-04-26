@@ -267,7 +267,8 @@
     },
     "actions": {
       "clearAll": "Καθαρισμός όλων",
-      "addChoice": "Προσθήκη OR"
+      "addChoice": "Προσθήκη OR",
+      "addResult": "Add"
     },
     "slotSelection": {
       "activeSummary": "Active slot: {{role}} ({{count}} picks)",

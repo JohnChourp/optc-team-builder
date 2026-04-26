@@ -5,7 +5,17 @@ import { spawnSync } from "node:child_process";
 const projectRoot = process.cwd();
 const i18nRoot = path.join(projectRoot, "public", "i18n");
 const srcRoot = path.join(projectRoot, "src", "app");
-const validatorCommand = "npx transloco-validator public/i18n/*.json public/i18n/**/*.json";
+const validatorBin = path.join(
+  projectRoot,
+  "..",
+  "codex_utilities",
+  "Downloads",
+  "projects",
+  "node_modules",
+  ".bin",
+  "transloco-validator",
+);
+const validatorCommand = `"${validatorBin}" public/i18n/*.json public/i18n/**/*.json`;
 
 const validatorResult = spawnSync(validatorCommand, {
   cwd: projectRoot,

@@ -1234,6 +1234,83 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.result()).toBeNull();
   });
 
+  it('adds a generated captain to the matching manual slot while keeping the result visible', async () => {
+    const { page } = await createPage();
+    const currentResult = createAutoBuildResult();
+
+    await page.ngOnInit();
+    page.result.set(currentResult);
+    page.currentTeamId.set('saved-auto-team');
+    page.saveFeedbackError.set('Save failed');
+
+    page.addResultCharacterToManualSlot(page.teamSlots()[0]!);
+
+    expect(page.manualSlots()).toEqual(
+      createManualSlots({
+        captain: [101],
+      }),
+    );
+    expect(page.lockedCharacterRecords()[101]?.name).toBe(currentResult.slots[0]!.character.name);
+    expect(page.result()).toBe(currentResult);
+    expect(page.currentTeamId()).toBeNull();
+    expect(page.saveFeedbackError()).toBe('');
+  });
+
+  it('adds generated subs to their matching manual sub slots', async () => {
+    const { page } = await createPage();
+    const currentResult = createAutoBuildResult();
+
+    await page.ngOnInit();
+    page.result.set(currentResult);
+
+    page.addResultCharacterToManualSlot(page.teamSlots()[2]!);
+    page.addResultCharacterToManualSlot(page.teamSlots()[5]!);
+
+    expect(page.manualSlots()).toEqual(
+      createManualSlots({
+        sub1: [103],
+        sub4: [106],
+      }),
+    );
+    expect(page.result()).toBe(currentResult);
+  });
+
+  it('does not add excluded generated characters to manual slots', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.result.set(createAutoBuildResult());
+    page.excludedCharacterIds.set([101]);
+
+    expect(page.canAddResultCharacterToManualSlot(page.teamSlots()[0]!)).toBe(false);
+
+    page.addResultCharacterToManualSlot(page.teamSlots()[0]!);
+
+    expect(page.manualSlots()).toEqual(createManualSlots());
+  });
+
+  it('keeps manual slot conflict rules when adding generated result characters', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.result.set(createAutoBuildResult());
+    page.manualSlots.set(
+      createManualSlots({
+        sub1: [101],
+      }),
+    );
+
+    expect(page.canAddResultCharacterToManualSlot(page.teamSlots()[0]!)).toBe(false);
+
+    page.addResultCharacterToManualSlot(page.teamSlots()[0]!);
+
+    expect(page.manualSlots()).toEqual(
+      createManualSlots({
+        sub1: [101],
+      }),
+    );
+  });
+
   it('excluding the current result ship recomputes the visible ship selection immediately', async () => {
     const { page } = await createPage();
     const currentResult = createAutoBuildResult();
@@ -1504,8 +1581,10 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain('[class.ship-candidate-icon--fallback]="!shipCard.ship.thumbUrl"');
     expect(template).toContain('@if (shipCard.ship.thumbUrl; as thumbUrl)');
     expect(template).toContain('(click)="toggleExcludedShip(shipSelection.ship.id)"');
+    expect(template).toContain('(click)="addResultCharacterToManualSlot(slot)"');
     expect(template).toContain('(click)="toggleExcludedCharacter(slot.character)"');
     expect(template).toContain("t('exclude.actions.addShip')");
+    expect(template).toContain("t('manual.actions.addResult')");
     expect(template).toContain("t('exclude.actions.add')");
     expect(template).toContain('@if (current.shipSelection; as shipSelection)');
     expect(template).not.toContain('leaderSuperSpecialCriteriaToggleLabel()');

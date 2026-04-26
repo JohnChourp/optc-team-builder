@@ -41,8 +41,9 @@ import {
 } from 'ionicons/icons';
 
 import {
-  AUTO_TEAM_CANDIDATE_LIMIT,
   AUTO_BUILD_MANUAL_SLOT_ROLES,
+  AUTO_BUILD_MANUAL_SUB_SLOT_ROLES,
+  AUTO_TEAM_CANDIDATE_LIMIT,
   AUTO_TEAM_BUILDER_TYPES,
   type AutoBuildManualSlotRole,
   type AutoBuildManualSlotSelection,
@@ -204,6 +205,7 @@ interface ManualSlotCardView {
 type TeamSlotViewModel = AutoBuildResult['slots'][number] & {
   trackKey: string;
   roleLabel: string;
+  manualSlotRole: AutoBuildManualSlotRole | null;
 };
 
 interface AppliedManualCharacterFilters {
@@ -1533,16 +1535,26 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly downloadTeamJsonLabel = computed(() => this.t('actions.downloadTeamJson'));
   public readonly teamSlots = computed<TeamSlotViewModel[]>(() => {
     const currentResult = this.result();
+    let subSlotIndex = 0;
 
     return (
-      currentResult?.slots.map((slot, index) => ({
-        ...slot,
-        trackKey:
-          slot.role === 'sub'
-            ? `sub:${index}:${slot.character.id}`
-            : `${slot.role}:${slot.character.id}`,
-        roleLabel: this.resolveRoleLabel(slot.role),
-      })) ?? []
+      currentResult?.slots.map((slot, index) => {
+        const manualSlotRole = this.resolveManualSlotRoleForResultSlot(slot.role, subSlotIndex);
+
+        if (slot.role === 'sub') {
+          subSlotIndex += 1;
+        }
+
+        return {
+          ...slot,
+          trackKey:
+            slot.role === 'sub'
+              ? `sub:${index}:${slot.character.id}`
+              : `${slot.role}:${slot.character.id}`,
+          roleLabel: this.resolveRoleLabel(slot.role),
+          manualSlotRole,
+        };
+      }) ?? []
     );
   });
 
@@ -2072,6 +2084,40 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       ),
     );
     this.resetBuildState();
+  }
+
+  public addResultCharacterToManualSlot(slot: TeamSlotViewModel): void {
+    const manualSlotRole = slot.manualSlotRole;
+
+    if (!manualSlotRole || !this.canAddResultCharacterToManualSlot(slot)) {
+      return;
+    }
+
+    this.cacheCharacterRecord(slot.character);
+    this.manualSlots.update((currentSlots) =>
+      currentSlots.map((manualSlot) =>
+        manualSlot.role === manualSlotRole
+          ? {
+              ...manualSlot,
+              characterIds: [...manualSlot.characterIds, slot.character.id],
+            }
+          : manualSlot,
+      ),
+    );
+    this.currentTeamId.set(null);
+    this.resetSaveFeedbackState();
+  }
+
+  public canAddResultCharacterToManualSlot(
+    slot: Pick<TeamSlotViewModel, 'character' | 'manualSlotRole'>,
+  ): boolean {
+    const manualSlotRole = slot.manualSlotRole;
+
+    if (!manualSlotRole || this.isCharacterSelectedInManualSlot(manualSlotRole, slot.character.id)) {
+      return false;
+    }
+
+    return this.canAssignCharacterToManualSlot(manualSlotRole, slot.character);
   }
 
   public clearManualSlot(role: AutoBuildManualSlotRole, event?: Event): void {
@@ -3432,6 +3478,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         return this.t('results.teamSlots.roles.sub');
       }
     }
+  }
+
+  private resolveManualSlotRoleForResultSlot(
+    role: 'captain' | 'friendCaptain' | 'sub',
+    subSlotIndex: number,
+  ): AutoBuildManualSlotRole | null {
+    if (role === 'captain' || role === 'friendCaptain') {
+      return role;
+    }
+
+    return AUTO_BUILD_MANUAL_SUB_SLOT_ROLES[subSlotIndex] ?? null;
   }
 
   private serializeManualRequiredAbilities(): AutoBuildAbilityRequirement[] {

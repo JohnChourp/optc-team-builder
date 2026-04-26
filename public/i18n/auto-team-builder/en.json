@@ -267,7 +267,8 @@
     },
     "actions": {
       "clearAll": "Clear all",
-      "addChoice": "Add OR"
+      "addChoice": "Add OR",
+      "addResult": "Add"
     },
     "slotSelection": {
       "activeSummary": "Active slot: {{role}} ({{count}} picks)",
