@@ -20,7 +20,10 @@ import { type CharacterBox, type DatasetManifest } from '../../core/models/optc.
 import { AnalyticsConsentService } from '../../core/services/analytics-consent.service';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { CharacterOverridesService } from '../../core/services/character-overrides.service';
-import { DriveBackupService } from '../../core/services/drive-backup.service';
+import {
+  DriveBackupService,
+  type DriveManualSyncPromptAction,
+} from '../../core/services/drive-backup.service';
 import { GoogleAccountService } from '../../core/services/google-account.service';
 import {
   InventoryCaptureImportService,
@@ -28,10 +31,7 @@ import {
 } from '../../core/services/inventory-capture-import.service';
 import { OptcbxImportService } from '../../core/services/optcbx-import.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
-import {
-  type DriveConflictResolution,
-  UserDataTransferService,
-} from '../../core/services/user-data-transfer.service';
+import { UserDataTransferService } from '../../core/services/user-data-transfer.service';
 import {
   UserStateService,
   type AutoTeamBuilderWorkerMode,
@@ -147,7 +147,7 @@ export class SettingsPage implements OnInit {
   public readonly analyticsConsent;
   public readonly analyticsConsentStatusKey;
   public readonly driveRemoteBackup;
-  public readonly driveRestorePrompt;
+  public readonly driveManualSyncPrompt;
   public readonly driveSyncMetadata;
   public readonly driveSyncStatus;
   public readonly drivePrimaryStateKey;
@@ -243,7 +243,7 @@ export class SettingsPage implements OnInit {
     this.analyticsConsent = this.analyticsConsentService.consent;
     this.analyticsConsentStatusKey = computed(() => `analytics.status.${this.analyticsConsent()}`);
     this.driveRemoteBackup = this.driveBackup.remoteBackup;
-    this.driveRestorePrompt = this.driveBackup.restorePrompt;
+    this.driveManualSyncPrompt = this.driveBackup.manualSyncPrompt;
     this.driveSyncMetadata = this.driveBackup.metadata;
     this.driveSyncStatus = this.driveBackup.syncStatus;
     this.localSyncScopeSummary = computed(() => this.userDataTransfer.getSyncScopeSummary());
@@ -272,7 +272,7 @@ export class SettingsPage implements OnInit {
         return 'driveSync.overview.restoring';
       }
 
-      if (this.driveRestorePrompt()) {
+      if (this.driveManualSyncPrompt()) {
         return 'driveSync.overview.conflict';
       }
 
@@ -364,8 +364,8 @@ export class SettingsPage implements OnInit {
     await this.signInWithGoogle(true);
   }
 
-  public async resolveDriveRestorePrompt(resolution: DriveConflictResolution): Promise<void> {
-    await this.driveBackup.resolveRestorePrompt(resolution);
+  public async resolveDriveManualSyncPrompt(action: DriveManualSyncPromptAction): Promise<void> {
+    await this.driveBackup.resolveManualSyncPrompt(action);
   }
 
   public async signInWithGoogle(forcePrompt = false): Promise<void> {
@@ -381,7 +381,7 @@ export class SettingsPage implements OnInit {
   }
 
   public async syncDriveNow(): Promise<void> {
-    await this.driveBackup.flushPendingUploads({
+    await this.driveBackup.startManualSync({
       interactiveAuth: true,
       reason: 'manual-sync',
     });

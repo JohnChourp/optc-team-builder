@@ -148,49 +148,38 @@
           </div>
         </div>
 
-        <div class="drive-sync-account">
-          <strong>{{ t('driveSync.account.label') }}</strong>
-          <span>
-            @if (googleAccountProfile(); as account) {
-              {{ account.email ?? account.name ?? account.id }}
-            } @else {
-              {{ t('driveSync.account.signedOut') }}
-            }
-          </span>
-        </div>
+        <div class="drive-sync-overview-grid">
+          <div class="drive-sync-summary">
+            <div>
+              <strong>{{ t('driveSync.status.label') }}</strong>
+              <span>{{ t(drivePrimaryStateKey()) }}</span>
+            </div>
+            <div>
+              <strong>{{ t('driveSync.status.lastChecked') }}</strong>
+              <span>{{ formatTimestamp(driveSyncMetadata().lastCheckedAt) }}</span>
+            </div>
+            <div>
+              <strong>{{ t('driveSync.status.lastUploaded') }}</strong>
+              <span>{{ formatTimestamp(driveSyncMetadata().lastUploadedExportedAt) }}</span>
+            </div>
+            <div>
+              <strong>{{ t('driveSync.status.lastDownloaded') }}</strong>
+              <span>{{ formatTimestamp(driveSyncMetadata().lastDownloadedExportedAt) }}</span>
+            </div>
+            <div>
+              <strong>{{ t('driveSync.status.remoteUpdated') }}</strong>
+              <span>{{ formatTimestamp(driveSyncMetadata().remoteModifiedTime) }}</span>
+            </div>
+            <div>
+              <strong>{{ t('driveSync.status.folder') }}</strong>
+              <span>{{ getDriveLocationStatus() }}</span>
+            </div>
+            <div>
+              <strong>{{ t('driveSync.status.file') }}</strong>
+              <span>{{ getDriveBackupFileStatus() }}</span>
+            </div>
+          </div>
 
-        <div class="drive-sync-summary">
-          <div>
-            <strong>{{ t('driveSync.status.label') }}</strong>
-            <span>{{ t(drivePrimaryStateKey()) }}</span>
-          </div>
-          <div>
-            <strong>{{ t('driveSync.status.lastChecked') }}</strong>
-            <span>{{ formatTimestamp(driveSyncMetadata().lastCheckedAt) }}</span>
-          </div>
-          <div>
-            <strong>{{ t('driveSync.status.lastUploaded') }}</strong>
-            <span>{{ formatTimestamp(driveSyncMetadata().lastUploadedExportedAt) }}</span>
-          </div>
-          <div>
-            <strong>{{ t('driveSync.status.lastDownloaded') }}</strong>
-            <span>{{ formatTimestamp(driveSyncMetadata().lastDownloadedExportedAt) }}</span>
-          </div>
-          <div>
-            <strong>{{ t('driveSync.status.remoteUpdated') }}</strong>
-            <span>{{ formatTimestamp(driveSyncMetadata().remoteModifiedTime) }}</span>
-          </div>
-          <div>
-            <strong>{{ t('driveSync.status.folder') }}</strong>
-            <span>{{ getDriveLocationStatus() }}</span>
-          </div>
-          <div>
-            <strong>{{ t('driveSync.status.file') }}</strong>
-            <span>{{ getDriveBackupFileStatus() }}</span>
-          </div>
-        </div>
-
-        <div class="drive-sync-panels">
           <div class="drive-sync-panel">
             <strong>{{ t('driveSync.summary.localTitle') }}</strong>
             <span>{{ getSummaryCountLabel('favorites', localSyncScopeSummary().favoriteCharacterCount) }}</span>
@@ -200,7 +189,9 @@
             <span>{{ getSummaryCountLabel('savedTeams', localSyncScopeSummary().savedTeamsCount) }}</span>
             <span>{{ getSummaryCountLabel('savedEnemies', localSyncScopeSummary().savedEnemiesCount) }}</span>
           </div>
+        </div>
 
+        <div class="drive-sync-panels">
           <div class="drive-sync-panel">
             <strong>{{ t('driveSync.summary.remoteTitle') }}</strong>
             @if (remoteSyncScopeSummary(); as remoteSummary) {
@@ -216,12 +207,6 @@
           </div>
         </div>
 
-        <p>{{ t('driveSync.scope') }}</p>
-        <p>{{ t('driveSync.localOnly') }}</p>
-        @if (!driveSyncMetadata().knownFolderId) {
-          <p>{{ t('driveSync.location.folderAfterSync') }}</p>
-        }
-
         <div class="transfer-actions">
           @if (!googleAccountAvailable()) {
             <ion-button fill="outline" color="medium" [disabled]="true">
@@ -232,20 +217,9 @@
               {{ t('driveSync.actions.signIn') }}
             </ion-button>
           } @else {
-            <ion-button fill="outline" color="light" (click)="refreshDriveInfo()">
-              {{ t('driveSync.actions.refresh') }}
-            </ion-button>
             <ion-button fill="outline" color="light" (click)="syncDriveNow()">
               {{ t('driveSync.actions.syncNow') }}
             </ion-button>
-            <ion-button fill="outline" color="warning" (click)="showDriveRestorePrompt()">
-              {{ t('driveSync.actions.restore') }}
-            </ion-button>
-            @if (driveOpenUrl()) {
-              <ion-button fill="outline" color="light" (click)="openDriveLocation()">
-                {{ t('driveSync.actions.openInDrive') }}
-              </ion-button>
-            }
             <ion-button fill="outline" color="light" (click)="signOutGoogle()">
               {{ t('driveSync.actions.signOut') }}
             </ion-button>
@@ -263,41 +237,56 @@
             class="transfer-feedback"
             [class.transfer-feedback--error]="driveSyncStatus().phase === 'error' || googleAccountStatus() === 'reconnect-required'"
             [class.transfer-feedback--warning]="driveSyncStatus().phase === 'needs-auth' || googleAccountStatus() === 'signed-out'"
-            [class.transfer-feedback--success]="driveSyncStatus().phase === 'idle' && !driveRestorePrompt()"
+            [class.transfer-feedback--success]="driveSyncStatus().phase === 'idle' && !driveManualSyncPrompt()"
           >
             <strong>{{ t('driveSync.feedback.title') }}</strong>
             <span>{{ driveSecondaryMessage() }}</span>
           </div>
         }
 
-        @if (driveRestorePrompt(); as prompt) {
+        @if (driveManualSyncPrompt(); as prompt) {
           <div class="transfer-feedback transfer-feedback--warning">
             <strong>{{
-              prompt.kind === 'restore'
-                ? t('driveSync.prompt.restoreTitle')
-                : t('driveSync.prompt.conflictTitle')
+              prompt.kind === 'upload-local'
+                ? t('driveSync.prompt.uploadLocalTitle')
+                : prompt.kind === 'restore-cloud'
+                  ? t('driveSync.prompt.restoreCloudTitle')
+                  : t('driveSync.prompt.conflictTitle')
             }}</strong>
             <span>{{
-              prompt.kind === 'restore'
-                ? t('driveSync.prompt.restoreCopy', {
-                    modifiedAt: formatTimestamp(prompt.remote.modifiedTime),
-                  })
-                : t('driveSync.prompt.conflictCopy', {
-                    modifiedAt: formatTimestamp(prompt.remote.modifiedTime),
-                  })
+              prompt.kind === 'upload-local'
+                ? t('driveSync.prompt.uploadLocalCopy')
+                : prompt.kind === 'restore-cloud'
+                  ? t('driveSync.prompt.restoreCloudCopy', {
+                      modifiedAt: formatTimestamp(prompt.remote?.modifiedTime),
+                    })
+                  : t('driveSync.prompt.conflictCopy', {
+                      modifiedAt: formatTimestamp(prompt.remote?.modifiedTime),
+                    })
             }}</span>
 
             <div class="transfer-actions">
-              <ion-button fill="outline" color="warning" (click)="resolveDriveRestorePrompt('restore')">
-                {{ t('driveSync.prompt.actions.restore') }}
-              </ion-button>
-              @if (prompt.kind === 'conflict') {
-                <ion-button fill="outline" color="light" (click)="resolveDriveRestorePrompt('merge')">
+              @if (prompt.kind === 'upload-local') {
+                <ion-button fill="outline" color="warning" (click)="resolveDriveManualSyncPrompt('upload-local')">
+                  {{ t('driveSync.prompt.actions.uploadLocal') }}
+                </ion-button>
+              } @else if (prompt.kind === 'restore-cloud') {
+                <ion-button fill="outline" color="warning" (click)="resolveDriveManualSyncPrompt('replace-local')">
+                  {{ t('driveSync.prompt.actions.replaceLocal') }}
+                </ion-button>
+              } @else {
+                <ion-button fill="outline" color="warning" (click)="resolveDriveManualSyncPrompt('merge-and-upload')">
                   {{ t('driveSync.prompt.actions.merge') }}
                 </ion-button>
+                <ion-button fill="outline" color="light" (click)="resolveDriveManualSyncPrompt('replace-cloud')">
+                  {{ t('driveSync.prompt.actions.replaceCloud') }}
+                </ion-button>
+                <ion-button fill="outline" color="light" (click)="resolveDriveManualSyncPrompt('replace-local')">
+                  {{ t('driveSync.prompt.actions.replaceLocal') }}
+                </ion-button>
               }
-              <ion-button fill="outline" color="medium" (click)="resolveDriveRestorePrompt('keep-local')">
-                {{ t('driveSync.prompt.actions.keepLocal') }}
+              <ion-button fill="outline" color="medium" (click)="resolveDriveManualSyncPrompt('cancel')">
+                {{ t('driveSync.prompt.actions.cancel') }}
               </ion-button>
             </div>
           </div>

@@ -124,11 +124,20 @@ describe("SettingsPage", () => {
     expect(template).toContain("t('analytics.links.cookies')");
     expect(template).toContain("t('driveSync.title')");
     expect(template).toContain("t('driveSync.actions.signIn')");
-    expect(template).toContain("t('driveSync.actions.refresh')");
     expect(template).toContain("t('driveSync.actions.syncNow')");
+    expect(template).toContain("t('driveSync.actions.signOut')");
     expect(template).toContain("t('driveSync.summary.localTitle')");
     expect(template).toContain("t('driveSync.summary.remoteTitle')");
-    expect(template).toContain("t('driveSync.prompt.actions.restore')");
+    expect(template).toContain("t('driveSync.prompt.actions.uploadLocal')");
+    expect(template).toContain("t('driveSync.prompt.actions.replaceCloud')");
+    expect(template).toContain("t('driveSync.prompt.actions.replaceLocal')");
+    expect(template).toContain("t('driveSync.prompt.actions.cancel')");
+    expect(template).not.toContain("driveSync.account");
+    expect(template).not.toContain("t('driveSync.scope')");
+    expect(template).not.toContain("t('driveSync.localOnly')");
+    expect(template).not.toContain("t('driveSync.actions.refresh')");
+    expect(template).not.toContain("t('driveSync.actions.restore')");
+    expect(template).not.toContain("t('driveSync.actions.openInDrive')");
     expect(template).toContain("t('sections.dataManagement')");
     expect(template).toContain("t('management.allData.export')");
     expect(template).toContain("t('management.allData.import')");
@@ -911,29 +920,18 @@ describe("SettingsPage", () => {
 
     await page.syncDriveNow();
 
-    expect(driveBackup.flushPendingUploads).toHaveBeenCalledWith({
+    expect(driveBackup.startManualSync).toHaveBeenCalledWith({
       interactiveAuth: true,
       reason: "manual-sync",
     });
   });
 
-  it("refreshes Drive metadata on demand", async () => {
+  it("resolves a manual Drive sync decision from settings", async () => {
     const { page, driveBackup } = createPage();
 
-    await page.refreshDriveInfo();
+    await page.resolveDriveManualSyncPrompt("merge-and-upload");
 
-    expect(driveBackup.refreshRemoteState).toHaveBeenCalledWith({
-      interactiveAuth: true,
-      reason: "manual-refresh",
-    });
-  });
-
-  it("opens the Drive restore prompt flow from settings", async () => {
-    const { page, driveBackup } = createPage();
-
-    await page.showDriveRestorePrompt();
-
-    expect(driveBackup.prepareRestorePrompt).toHaveBeenCalledOnce();
+    expect(driveBackup.resolveManualSyncPrompt).toHaveBeenCalledWith("merge-and-upload");
   });
 
   it("accepts analytics consent from settings", async () => {
@@ -963,8 +961,8 @@ function createPage() {
     createTeam("team-2", [1002, null, null, null, null, null]),
   ]);
   const savedEnemies = signal([createEnemy("enemy-1"), createEnemy("enemy-2")]);
-  const autoTeamBuilderWorkerPreference = signal({
-    mode: "auto" as const,
+  const autoTeamBuilderWorkerPreference = signal<{ mode: "auto" | "manual"; manualCount: number }>({
+    mode: "auto",
     manualCount: 7,
   });
   const analyticsConsent = signal<"accepted" | "rejected" | "unknown">("unknown");
@@ -1298,7 +1296,14 @@ function createPage() {
       analyticsConsent.set("rejected");
     }),
   };
-  const googleAccountProfile = signal(null);
+  const googleAccountProfile = signal<{
+    email: string;
+    familyName: string;
+    givenName: string;
+    id: string;
+    imageUrl: string | null;
+    name: string;
+  } | null>(null);
   const googleAccountStatus = signal<
     "initializing" | "reconnect-required" | "signed-in" | "signed-out" | "signing-in" | "unavailable"
   >("signed-out");
@@ -1319,7 +1324,7 @@ function createPage() {
     remoteSummary: null,
   });
   const driveRemoteBackup = signal(null);
-  const driveRestorePrompt = signal(null);
+  const driveManualSyncPrompt = signal(null);
   const driveSyncStatus = signal({
     phase: "idle" as const,
     detail: null,
@@ -1363,13 +1368,16 @@ function createPage() {
   };
   const driveBackup = {
     handleSettingsEntered: vi.fn().mockResolvedValue(undefined),
+    startManualSync: vi.fn().mockResolvedValue(false),
     flushPendingUploads: vi.fn().mockResolvedValue(true),
+    manualSyncPrompt: driveManualSyncPrompt,
     metadata: driveSyncMetadata,
     prepareRestorePrompt: vi.fn().mockResolvedValue(null),
     refreshRemoteState: vi.fn().mockResolvedValue(null),
     remoteBackup: driveRemoteBackup,
+    resolveManualSyncPrompt: vi.fn().mockResolvedValue(null),
     resolveRestorePrompt: vi.fn().mockResolvedValue(null),
-    restorePrompt: driveRestorePrompt,
+    restorePrompt: driveManualSyncPrompt,
     syncStatus: driveSyncStatus,
   };
   const page = new SettingsPage(

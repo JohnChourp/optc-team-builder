@@ -14,6 +14,10 @@ vi.mock('@capacitor/app', () => ({
   },
 }));
 
+interface FetchMockQueue {
+  mockResolvedValueOnce(value: Response): FetchMockQueue;
+}
+
 describe('DriveBackupService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -42,11 +46,45 @@ describe('DriveBackupService', () => {
     expect(addListener).not.toHaveBeenCalled();
   });
 
-  it('creates the Drive folder and canonical backup file on first manual sync even when local changes are not flagged', async () => {
-    const account = createGoogleAccountStub();
-    const syncState = createDriveSyncStateStub({
-      pendingLocalChanges: false,
+  it('reports when manual sync finds no local data and no Drive backup without creating Drive files', async () => {
+    const syncState = createDriveSyncStateStub();
+    const transfer = createTransferStub({ hasSyncScopedData: false });
+    const fetchMock = vi.mocked(fetch);
+
+    fetchMock.mockResolvedValueOnce(createJsonResponse({ files: [] }));
+
+    const service = new DriveBackupService(
+      {
+        googleDriveFolderName: 'OPTC Team Builder',
+        googleIosClientId: '',
+        googleWebClientId: '123456.apps.googleusercontent.com',
+      },
+      createGoogleAccountStub() as never,
+      syncState as never,
+      transfer as never,
+    );
+    await service.ready();
+
+    const didSync = await service.startManualSync({ interactiveAuth: true, reason: 'manual-sync' });
+
+    expect(didSync).toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls.map((call) => String(call[0])).some((url) => url.includes('/upload/drive/v3/files'))).toBe(false);
+    expect(service.manualSyncPrompt()).toBeNull();
+    expect(service.syncStatus().detail).toBe('No local data or Drive backup was found.');
+    expect(syncState.recordRemoteSnapshot).toHaveBeenCalledWith({
+      fileId: null,
+      folderId: null,
+      hasRemoteBackup: false,
+      remoteExportedAt: null,
+      remoteModifiedTime: null,
+      remoteSummary: null,
     });
+  });
+
+  it('asks to upload local data when no Drive backup exists, then creates the backup on confirmation', async () => {
+    const account = createGoogleAccountStub();
+    const syncState = createDriveSyncStateStub();
     const transfer = createTransferStub();
     const fetchMock = vi.mocked(fetch);
 
@@ -55,16 +93,7 @@ describe('DriveBackupService', () => {
       .mockResolvedValueOnce(createJsonResponse({ files: [] }))
       .mockResolvedValueOnce(createJsonResponse({ id: 'folder-1' }))
       .mockResolvedValueOnce(createJsonResponse({ files: [] }))
-      .mockResolvedValueOnce(
-        createJsonResponse({
-          appProperties: {
-            exportedAt: '2026-04-20T18:00:00.000Z',
-          },
-          id: 'file-1',
-          modifiedTime: '2026-04-20T18:00:05.000Z',
-          name: 'optc-all-data.latest.json',
-        }),
-      );
+      .mockResolvedValueOnce(createJsonResponse(createUploadedFilePayload('file-1')));
 
     const service = new DriveBackupService(
       {
@@ -77,10 +106,15 @@ describe('DriveBackupService', () => {
       transfer as never,
     );
     await service.ready();
+    await service.startManualSync({ interactiveAuth: true, reason: 'manual-sync' });
 
-    const didSync = await service.flushPendingUploads({ interactiveAuth: true, reason: 'manual-sync' });
+    expect(service.manualSyncPrompt()).toMatchObject({
+      kind: 'upload-local',
+      remote: null,
+    });
 
-    expect(didSync).toBe(true);
+    await service.resolveManualSyncPrompt('upload-local');
+
     expect(fetchMock).toHaveBeenCalledTimes(5);
     expect(String(fetchMock.mock.calls[4]?.[0])).toContain('/upload/drive/v3/files?uploadType=multipart');
     expect(syncState.recordUpload).toHaveBeenCalledWith({
@@ -98,58 +132,16 @@ describe('DriveBackupService', () => {
         savedTeamsCount: 2,
       },
     });
+    expect(service.manualSyncPrompt()).toBeNull();
   });
 
-  it('refreshes Drive metadata manually and caches the remote summary', async () => {
+  it('asks to use Drive data when local data is empty, then replaces this device on confirmation', async () => {
     const syncState = createDriveSyncStateStub();
     const transfer = createTransferStub({ hasSyncScopedData: false });
     const fetchMock = vi.mocked(fetch);
 
-    fetchMock
-      .mockResolvedValueOnce(
-        createJsonResponse({
-          files: [
-            {
-              id: 'folder-1',
-            },
-          ],
-        }),
-      )
-      .mockResolvedValueOnce(
-        createJsonResponse({
-          files: [
-            {
-              appProperties: {
-                exportedAt: '2026-04-20T18:00:00.000Z',
-              },
-              id: 'file-1',
-              modifiedTime: '2026-04-20T18:00:05.000Z',
-              name: 'optc-all-data.latest.json',
-            },
-          ],
-        }),
-      )
-      .mockResolvedValueOnce(
-        createTextResponse(
-          JSON.stringify({
-            exportedAt: '2026-04-20T18:00:00.000Z',
-            favorites: {
-              characters: [
-                { number: 1001, name: 'Luffy' },
-                { number: 1002, name: 'Zoro' },
-              ],
-            },
-            favoriteShips: {
-              exportedAt: '2026-04-20T18:00:00.000Z',
-              schemaVersion: 1,
-              ships: [{ id: 9003, name: 'Shark Superb' }],
-              source: 'favorite-ships',
-            },
-            schemaVersion: 1,
-            source: 'all-data',
-          }),
-        ),
-      );
+    mockRemoteBackupInspection(fetchMock);
+    fetchMock.mockResolvedValueOnce(createTextResponse(JSON.stringify(createRemoteAllDataPayload())));
 
     const service = new DriveBackupService(
       {
@@ -162,13 +154,26 @@ describe('DriveBackupService', () => {
       transfer as never,
     );
     await service.ready();
-    await service.refreshRemoteState({ interactiveAuth: true, reason: 'manual-refresh' });
+    await service.startManualSync({ interactiveAuth: true, reason: 'manual-sync' });
 
-    expect(syncState.recordRemoteSnapshot).toHaveBeenCalledWith({
+    expect(service.manualSyncPrompt()).toMatchObject({
+      kind: 'restore-cloud',
+      remote: {
+        fileId: 'file-1',
+      },
+    });
+
+    await service.resolveManualSyncPrompt('replace-local');
+
+    expect(transfer.applyAllDataPayload).toHaveBeenCalledWith(
+      expect.objectContaining({ source: 'all-data' }),
+      'restore',
+    );
+    expect(syncState.recordDownload).toHaveBeenCalledWith({
+      account: expect.any(Object),
+      exportedAt: '2026-04-20T18:00:00.000Z',
       fileId: 'file-1',
       folderId: 'folder-1',
-      hasRemoteBackup: true,
-      remoteExportedAt: '2026-04-20T18:00:00.000Z',
       remoteModifiedTime: '2026-04-20T18:00:05.000Z',
       remoteSummary: {
         characterBoxesCount: 0,
@@ -179,12 +184,77 @@ describe('DriveBackupService', () => {
         savedTeamsCount: 0,
       },
     });
-    expect(service.restorePrompt()).toMatchObject({
-      kind: 'restore',
-      remote: {
-        fileId: 'file-1',
+    expect(service.syncStatus().detail).toBe('This device data replaced with the Drive backup.');
+  });
+
+  it('merges Drive data into local data and immediately uploads the merged result', async () => {
+    const syncState = createDriveSyncStateStub();
+    const transfer = createTransferStub();
+    const fetchMock = vi.mocked(fetch);
+
+    mockRemoteBackupInspection(fetchMock);
+    fetchMock
+      .mockResolvedValueOnce(createTextResponse(JSON.stringify(createRemoteAllDataPayload())))
+      .mockResolvedValueOnce(createJsonResponse({ files: [createDriveFilePayload('file-1')] }))
+      .mockResolvedValueOnce(createJsonResponse(createUploadedFilePayload('file-1')));
+
+    const service = new DriveBackupService(
+      {
+        googleDriveFolderName: 'OPTC Team Builder',
+        googleIosClientId: '',
+        googleWebClientId: '123456.apps.googleusercontent.com',
       },
+      createGoogleAccountStub() as never,
+      syncState as never,
+      transfer as never,
+    );
+    await service.ready();
+    await service.startManualSync({ interactiveAuth: true, reason: 'manual-sync' });
+
+    expect(service.manualSyncPrompt()).toMatchObject({
+      kind: 'local-cloud-conflict',
     });
+
+    await service.resolveManualSyncPrompt('merge-and-upload');
+
+    expect(transfer.applyAllDataPayload).toHaveBeenCalledWith(
+      expect.objectContaining({ source: 'all-data' }),
+      'merge',
+    );
+    expect(syncState.recordDownload).toHaveBeenCalledOnce();
+    expect(syncState.recordUpload).toHaveBeenCalledOnce();
+    expect(String(fetchMock.mock.calls[5]?.[0])).toContain('/upload/drive/v3/files/file-1?uploadType=multipart');
+    expect(service.syncStatus().detail).toBe('Merged data uploaded to Drive.');
+  });
+
+  it('replaces the Drive backup with local data when both sides have data', async () => {
+    const syncState = createDriveSyncStateStub();
+    const transfer = createTransferStub();
+    const fetchMock = vi.mocked(fetch);
+
+    mockRemoteBackupInspection(fetchMock);
+    fetchMock
+      .mockResolvedValueOnce(createJsonResponse({ files: [createDriveFilePayload('file-1')] }))
+      .mockResolvedValueOnce(createJsonResponse(createUploadedFilePayload('file-1')));
+
+    const service = new DriveBackupService(
+      {
+        googleDriveFolderName: 'OPTC Team Builder',
+        googleIosClientId: '',
+        googleWebClientId: '123456.apps.googleusercontent.com',
+      },
+      createGoogleAccountStub() as never,
+      syncState as never,
+      transfer as never,
+    );
+    await service.ready();
+    await service.startManualSync({ interactiveAuth: true, reason: 'manual-sync' });
+    await service.resolveManualSyncPrompt('replace-cloud');
+
+    expect(transfer.applyAllDataPayload).not.toHaveBeenCalled();
+    expect(syncState.recordUpload).toHaveBeenCalledOnce();
+    expect(String(fetchMock.mock.calls[4]?.[0])).toContain('/upload/drive/v3/files/file-1?uploadType=multipart');
+    expect(service.syncStatus().detail).toBe('Drive backup replaced with this device data.');
   });
 
   it('does not auto-refresh when the settings page is entered', async () => {
@@ -274,6 +344,67 @@ function createGoogleAccountStub() {
     }),
     sessionRevision: signal(0),
   };
+}
+
+function createDriveFilePayload(fileId: string) {
+  return {
+    appProperties: {
+      exportedAt: '2026-04-20T18:00:00.000Z',
+    },
+    id: fileId,
+    modifiedTime: '2026-04-20T18:00:05.000Z',
+    name: 'optc-all-data.latest.json',
+  };
+}
+
+function createRemoteAllDataPayload() {
+  return {
+    exportedAt: '2026-04-20T18:00:00.000Z',
+    favorites: {
+      characters: [
+        { number: 1001, name: 'Luffy' },
+        { number: 1002, name: 'Zoro' },
+      ],
+    },
+    favoriteShips: {
+      exportedAt: '2026-04-20T18:00:00.000Z',
+      schemaVersion: 1,
+      ships: [{ id: 9003, name: 'Shark Superb' }],
+      source: 'favorite-ships',
+    },
+    schemaVersion: 1,
+    source: 'all-data',
+  };
+}
+
+function createUploadedFilePayload(fileId: string) {
+  return {
+    appProperties: {
+      exportedAt: '2026-04-20T18:00:00.000Z',
+    },
+    id: fileId,
+    modifiedTime: '2026-04-20T18:00:05.000Z',
+    name: 'optc-all-data.latest.json',
+  };
+}
+
+function mockRemoteBackupInspection(fetchMock: FetchMockQueue): void {
+  fetchMock
+    .mockResolvedValueOnce(
+      createJsonResponse({
+        files: [
+          {
+            id: 'folder-1',
+          },
+        ],
+      }),
+    )
+    .mockResolvedValueOnce(
+      createJsonResponse({
+        files: [createDriveFilePayload('file-1')],
+      }),
+    )
+    .mockResolvedValueOnce(createTextResponse(JSON.stringify(createRemoteAllDataPayload())));
 }
 
 function createJsonResponse(payload: unknown): Response {

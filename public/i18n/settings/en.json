@@ -52,7 +52,7 @@
     "location": {
       "fileMissing": "No backup file found",
       "fileVisible": "Visible in Drive",
-      "folderAfterSync": "The Drive folder will appear after the first successful sync.",
+      "folderAfterSync": "No Drive folder found",
       "folderVisible": "Visible in Drive",
       "notChecked": "Not checked yet"
     },
@@ -69,14 +69,18 @@
       "uploading": "Uploading"
     },
     "prompt": {
-      "conflictCopy": "A newer Drive backup was found, updated {{modifiedAt}}. Choose whether to restore it, merge it into this device, or keep the local data and overwrite Drive on the next sync.",
-      "conflictTitle": "Resolve Drive backup conflict",
-      "restoreCopy": "A Drive backup is available from {{modifiedAt}}. Restore it to this device or keep the current local state.",
-      "restoreTitle": "Restore backup from Drive",
+      "conflictCopy": "This device and Google Drive both have data. The Drive backup was updated {{modifiedAt}}. Choose exactly what Sync now should do.",
+      "conflictTitle": "Choose sync direction",
+      "restoreCloudCopy": "No local data was found. Use the Drive backup from {{modifiedAt}} on this device?",
+      "restoreCloudTitle": "Use Drive backup",
+      "uploadLocalCopy": "No Drive backup was found. Upload this device data to Google Drive?",
+      "uploadLocalTitle": "Upload this device data",
       "actions": {
-        "keepLocal": "Keep local",
+        "cancel": "Cancel",
         "merge": "Merge",
-        "restore": "Restore cloud"
+        "replaceCloud": "Replace Drive",
+        "replaceLocal": "Replace this device",
+        "uploadLocal": "Upload to Drive"
       }
     },
     "summary": {
