@@ -1,82 +1,98 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from 'vitest';
 
-import { routes } from "./app.routes";
+import { routes } from './app.routes';
 
-describe("app routes", () => {
-  it("registers the saved teams tab route", () => {
-    const tabsRoute = routes.find((route) => route.path === "tabs");
-    const savedTeamsRoute = tabsRoute?.children?.find((route) => route.path === "saved-teams");
+describe('app routes', () => {
+  it('registers the saved teams tab route', () => {
+    const tabsRoute = routes.find((route) => route.path === 'tabs');
+    const savedTeamsRoute = tabsRoute?.children?.find((route) => route.path === 'saved-teams');
 
     expect(savedTeamsRoute).toBeDefined();
-    expect(savedTeamsRoute?.loadComponent).toBeTypeOf("function");
+    expect(savedTeamsRoute?.loadComponent).toBeTypeOf('function');
   });
 
-  it("registers the character boxes route inside tabs", () => {
-    const tabsRoute = routes.find((route) => route.path === "tabs");
-    const characterBoxesRoute = tabsRoute?.children?.find((route) => route.path === "character-boxes");
+  it('registers the character boxes route inside tabs', () => {
+    const tabsRoute = routes.find((route) => route.path === 'tabs');
+    const characterBoxesRoute = tabsRoute?.children?.find(
+      (route) => route.path === 'character-boxes',
+    );
 
     expect(characterBoxesRoute).toBeDefined();
-    expect(characterBoxesRoute?.loadComponent).toBeTypeOf("function");
+    expect(characterBoxesRoute?.loadComponent).toBeTypeOf('function');
   });
 
-  it("registers the crew forge route inside tabs", () => {
-    const tabsRoute = routes.find((route) => route.path === "tabs");
-    const crewForgeRoute = tabsRoute?.children?.find((route) => route.path === "crew-forge");
+  it('registers the crew forge route inside tabs', () => {
+    const tabsRoute = routes.find((route) => route.path === 'tabs');
+    const crewForgeRoute = tabsRoute?.children?.find((route) => route.path === 'crew-forge');
 
     expect(crewForgeRoute).toBeDefined();
-    expect(crewForgeRoute?.loadComponent).toBeTypeOf("function");
+    expect(crewForgeRoute?.loadComponent).toBeTypeOf('function');
   });
 
-  it("registers the saved enemies route inside tabs", () => {
-    const tabsRoute = routes.find((route) => route.path === "tabs");
-    const savedEnemiesRoute = tabsRoute?.children?.find((route) => route.path === "saved-enemies");
+  it('registers the saved enemies route inside tabs', () => {
+    const tabsRoute = routes.find((route) => route.path === 'tabs');
+    const savedEnemiesRoute = tabsRoute?.children?.find((route) => route.path === 'saved-enemies');
 
     expect(savedEnemiesRoute).toBeDefined();
-    expect(savedEnemiesRoute?.loadComponent).toBeTypeOf("function");
+    expect(savedEnemiesRoute?.loadComponent).toBeTypeOf('function');
   });
 
-  it("redirects the legacy collection tab route to saved teams", () => {
-    const tabsRoute = routes.find((route) => route.path === "tabs");
-    const collectionRoute = tabsRoute?.children?.find((route) => route.path === "collection");
+  it('redirects the legacy collection tab route to saved teams', () => {
+    const tabsRoute = routes.find((route) => route.path === 'tabs');
+    const collectionRoute = tabsRoute?.children?.find((route) => route.path === 'collection');
 
-    expect(collectionRoute?.redirectTo).toBe("saved-teams");
-    expect(collectionRoute?.pathMatch).toBe("full");
+    expect(collectionRoute?.redirectTo).toBe('saved-teams');
+    expect(collectionRoute?.pathMatch).toBe('full');
   });
 
-  it("registers the privacy policy route inside the tabs shell", () => {
-    const tabsRoute = routes.find((route) => route.path === "tabs");
-    const privacyRoute = tabsRoute?.children?.find((route) => route.path === "privacy");
+  it('registers the privacy policy route inside the tabs shell', () => {
+    const tabsRoute = routes.find((route) => route.path === 'tabs');
+    const privacyRoute = tabsRoute?.children?.find((route) => route.path === 'privacy');
 
     expect(privacyRoute).toBeDefined();
-    expect(privacyRoute?.loadComponent).toBeTypeOf("function");
+    expect(privacyRoute?.loadComponent).toBeTypeOf('function');
   });
 
-  it("registers the cookie policy route inside the tabs shell", () => {
-    const tabsRoute = routes.find((route) => route.path === "tabs");
-    const cookieRoute = tabsRoute?.children?.find((route) => route.path === "cookies");
+  it('adds SEO route data for public indexable tab routes', () => {
+    const tabsRoute = routes.find((route) => route.path === 'tabs');
+    const publicRoutePaths = ['characters', 'team-builder', 'auto-team-builder', 'crew-forge'];
+
+    for (const path of publicRoutePaths) {
+      const route = tabsRoute?.children?.find((childRoute) => childRoute.path === path);
+      const seo = route?.data?.['seo'] as Record<string, unknown> | undefined;
+
+      expect(seo?.['title']).toBeTypeOf('string');
+      expect(seo?.['description']).toBeTypeOf('string');
+      expect(seo?.['canonicalPath']).toBe(`tabs/${path}`);
+    }
+  });
+
+  it('registers the cookie policy route inside the tabs shell', () => {
+    const tabsRoute = routes.find((route) => route.path === 'tabs');
+    const cookieRoute = tabsRoute?.children?.find((route) => route.path === 'cookies');
 
     expect(cookieRoute).toBeDefined();
-    expect(cookieRoute?.loadComponent).toBeTypeOf("function");
+    expect(cookieRoute?.loadComponent).toBeTypeOf('function');
   });
 
-  it("registers the terms of service route inside the tabs shell", () => {
-    const tabsRoute = routes.find((route) => route.path === "tabs");
-    const termsRoute = tabsRoute?.children?.find((route) => route.path === "terms");
+  it('registers the terms of service route inside the tabs shell', () => {
+    const tabsRoute = routes.find((route) => route.path === 'tabs');
+    const termsRoute = tabsRoute?.children?.find((route) => route.path === 'terms');
 
     expect(termsRoute).toBeDefined();
-    expect(termsRoute?.loadComponent).toBeTypeOf("function");
+    expect(termsRoute?.loadComponent).toBeTypeOf('function');
   });
 
-  it("redirects the legacy privacy, cookie, and terms routes into tabs", () => {
-    const privacyRoute = routes.find((route) => route.path === "privacy");
-    const cookieRoute = routes.find((route) => route.path === "cookies");
-    const termsRoute = routes.find((route) => route.path === "terms");
+  it('redirects the legacy privacy, cookie, and terms routes into tabs', () => {
+    const privacyRoute = routes.find((route) => route.path === 'privacy');
+    const cookieRoute = routes.find((route) => route.path === 'cookies');
+    const termsRoute = routes.find((route) => route.path === 'terms');
 
-    expect(privacyRoute?.redirectTo).toBe("tabs/privacy");
-    expect(privacyRoute?.pathMatch).toBe("full");
-    expect(cookieRoute?.redirectTo).toBe("tabs/cookies");
-    expect(cookieRoute?.pathMatch).toBe("full");
-    expect(termsRoute?.redirectTo).toBe("tabs/terms");
-    expect(termsRoute?.pathMatch).toBe("full");
+    expect(privacyRoute?.redirectTo).toBe('tabs/privacy');
+    expect(privacyRoute?.pathMatch).toBe('full');
+    expect(cookieRoute?.redirectTo).toBe('tabs/cookies');
+    expect(cookieRoute?.pathMatch).toBe('full');
+    expect(termsRoute?.redirectTo).toBe('tabs/terms');
+    expect(termsRoute?.pathMatch).toBe('full');
   });
 });

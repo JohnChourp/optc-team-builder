@@ -22,16 +22,16 @@
       "withTypes": "Auto-build {{types}} crews with {{mode}}"
     },
     "title": {
-      "defaultFlexible": "Assemble a balanced crew from your local dataset.",
-      "defaultStrict": "Assemble an exact-match crew from your local dataset.",
-      "withTypesFlexible": "Build a {{types}} crew with smart fallback when needed.",
-      "withTypesStrict": "Build a {{types}} crew with exact-match rules only."
+      "defaultFlexible": "Assemble an OPTC team from enemy mechanics and ability filters.",
+      "defaultStrict": "Assemble an exact-match OPTC team from enemy mechanics and ability filters.",
+      "withTypesFlexible": "Build a {{types}} OPTC team with smart fallback when needed.",
+      "withTypesStrict": "Build a {{types}} OPTC team with exact-match rules only."
     },
     "description": {
-      "defaultFlexible": "Pick classes, lock units, add utility requirements, and let the builder relax only what it must.",
-      "defaultStrict": "Pick classes, lock units, add utility requirements, and keep every selected rule mandatory.",
-      "withTypesFlexible": "The builder prioritizes {{types}} coverage first, then uses controlled fallback if the local pool is too narrow.",
-      "withTypesStrict": "The builder only accepts results that preserve {{types}} coverage and every strict filter you enabled."
+      "defaultFlexible": "Pick classes, lock units, add enemy mechanics and utility requirements, then let the auto team builder relax only what it must.",
+      "defaultStrict": "Pick classes, lock units, add enemy mechanics and utility requirements, and keep every selected rule mandatory.",
+      "withTypesFlexible": "The auto team builder prioritizes {{types}} coverage first, then uses controlled fallback if the local pool is too narrow.",
+      "withTypesStrict": "The auto team builder only accepts results that preserve {{types}} coverage and every strict filter you enabled."
     }
   },
   "filters": {

@@ -107,9 +107,11 @@ for (const character of characters) {
 }
 
 await writeSitemap(sitemapEntries);
+await writeRobotsTxt();
+await writeSitemapHtml();
 
 console.log(
-  `[seo] generated ${characters.length} character pages, ${publicRoutes.length} public pages, and sitemap.xml in ${path.relative(
+  `[seo] generated ${characters.length} character pages, ${publicRoutes.length} public pages, sitemap.xml, robots.txt, and sitemap.html in ${path.relative(
     projectRoot,
     outputDir,
   )}.`,
@@ -142,6 +144,61 @@ ${urls}
 `;
 
   await writeFile(path.join(outputDir, 'sitemap.xml'), sitemap);
+}
+
+async function writeRobotsTxt() {
+  const robots = `User-agent: *
+Allow: /
+
+Sitemap: ${buildAbsoluteUrl('sitemap.xml').replace(/\/$/u, '')}
+`;
+
+  await writeFile(path.join(outputDir, 'robots.txt'), robots);
+}
+
+async function writeSitemapHtml() {
+  const sitemapLinks = publicRoutes
+    .filter((route) => route.path.length > 0)
+    .map(
+      (route) => `      <li>
+        <a href="${escapeHtmlAttribute(buildAbsoluteUrl(route.path))}">${escapeHtml(route.title)}</a>
+        <p>${escapeHtml(route.description)}</p>
+      </li>`,
+    )
+    .join('\n');
+  const canonicalUrl = `${siteBaseUrl}/sitemap.html`;
+  const sitemapHtml = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sitemap | OPTC Team Builder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Public sitemap for the main OPTC Team Builder pages.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="${escapeHtmlAttribute(canonicalUrl)}">
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; background: #101820; color: #f8fbff; }
+    main { width: min(760px, calc(100% - 32px)); margin: 0 auto; padding: 48px 0; }
+    a { color: #f5c84c; font-weight: 700; }
+    p { color: rgba(248, 251, 255, 0.74); line-height: 1.6; }
+    ul { display: grid; gap: 18px; padding: 0; list-style: none; }
+    li { border-top: 1px solid rgba(255, 255, 255, 0.12); padding-top: 18px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>OPTC Team Builder Sitemap</h1>
+    <p>Links to the main public pages for browsing OPTC characters, building teams, using Auto Team Builder, importing Crew Forge screenshots, and reading legal information.</p>
+    <ul>
+${sitemapLinks}
+    </ul>
+  </main>
+</body>
+</html>
+`;
+
+  await writeFile(path.join(outputDir, 'sitemap.html'), sitemapHtml);
 }
 
 function buildStaticPageSeo(route) {

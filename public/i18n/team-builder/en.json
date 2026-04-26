@@ -45,6 +45,11 @@
     "shipLabel": "Ship",
     "teamNameLabel": "Crew name"
   },
+  "hero": {
+    "copy": "Build and manage One Piece Treasure Cruise teams with character slots, ship effects, favorites, and offline OPTC catalog data.",
+    "eyebrow": "Manual crew builder",
+    "title": "Create an OPTC team draft from your local character catalog."
+  },
   "shipPicker": {
     "confirm": "Use ship",
     "copy": "Pick a ship with its image and effect before saving this manual crew.",

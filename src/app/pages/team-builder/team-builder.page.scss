@@ -3,6 +3,20 @@
   gap: 18px;
 }
 
+.team-hero {
+  display: grid;
+  gap: 8px;
+  padding: 20px;
+  background:
+    linear-gradient(140deg, rgba(255, 255, 255, 0.9), rgba(26, 40, 73, 0.86)),
+    var(--app-surface-card);
+}
+
+.team-hero .section-title,
+.team-hero .section-copy {
+  color: #f8fbff;
+}
+
 .team-form,
 .slot-grid,
 .assign-panel,

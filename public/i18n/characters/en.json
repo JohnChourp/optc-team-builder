@@ -60,10 +60,10 @@
     "removeAria": "Remove {{name}} from favorites"
   },
   "hero": {
-    "copy": "{{characterCount}} units, {{detailCount}} detailed records, and {{rumbleCount}} rumble entries from the OPTC source repo.",
+    "copy": "Browse {{characterCount}} One Piece Treasure Cruise characters, {{detailCount}} detailed records, and {{rumbleCount}} rumble entries for OPTC team building.",
     "eyebrow": "Offline-first database",
     "favoritesCount": "{{count}} favorites",
-    "title": "Browse crews, filter fast, and prep teams without touching the network.",
+    "title": "Browse OPTC characters, filter fast, and prep teams without touching the network.",
     "typesCount": "{{count}} types"
   },
   "import": {
