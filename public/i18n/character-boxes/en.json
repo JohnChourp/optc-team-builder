@@ -80,6 +80,17 @@
     "list": "List view",
     "compact": "Compact view"
   },
+  "sort": {
+    "label": "Sort",
+    "placeholder": "Sort characters",
+    "options": {
+      "catalog": "Default order",
+      "nameAsc": "Name A-Z",
+      "nameDesc": "Name Z-A",
+      "idDesc": "Character ID newest first",
+      "idAsc": "Character ID oldest first"
+    }
+  },
   "favorites": {
     "addAria": "Add {{name}} to favorites",
     "removeAria": "Remove {{name}} from favorites"

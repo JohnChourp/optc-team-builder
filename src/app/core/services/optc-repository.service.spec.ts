@@ -267,6 +267,32 @@ describe('OptcRepositoryService', () => {
     });
   });
 
+  it('sorts overridden detailed character records by the local override name', async () => {
+    const service = createRepositoryService(
+      [
+        createCharacterRow({ id: 4101, name: 'Dataset Ace', type: 'DEX' }),
+        createCharacterRow({ id: 4102, name: 'Dataset Zoro', type: 'DEX' }),
+      ],
+      {
+        overrides: [
+          createOverride({ characterId: 4101, name: 'Zoro Local' }),
+          createOverride({ characterId: 4102, name: 'Ace Local' }),
+        ],
+      },
+    );
+
+    const result = await service.searchDetailedCharacters({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      sortMode: 'nameAsc',
+      limit: 10,
+      offset: 0,
+    });
+
+    expect(result.map((record) => record.id)).toEqual([4102, 4101]);
+  });
+
   it('uses local override types and classes for auto-builder candidate filtering', async () => {
     const service = createRepositoryService([createCharacterRow({ id: 4101, type: 'DEX' })], {
       overrides: [
@@ -666,6 +692,53 @@ describe('OptcRepositoryService', () => {
     });
 
     expect(result.map((record) => record.id)).toEqual([4104, 4103, 4102, 4101]);
+  });
+
+  it('sorts detailed character search by name and id before applying pagination', async () => {
+    const service = createRepositoryService([
+      createCharacterRow({ id: 300, name: 'Zoro', type: 'DEX' }),
+      createCharacterRow({ id: 100, name: 'Luffy', type: 'DEX' }),
+      createCharacterRow({ id: 200, name: 'Ace', type: 'DEX' }),
+      createCharacterRow({ id: 400, name: 'Brook', type: 'DEX' }),
+    ]);
+
+    const nameAscPage = await service.searchDetailedCharacters({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      sortMode: 'nameAsc',
+      limit: 2,
+      offset: 1,
+    });
+    const nameDesc = await service.searchDetailedCharacters({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      sortMode: 'nameDesc',
+      limit: 10,
+      offset: 0,
+    });
+    const idAsc = await service.searchDetailedCharacters({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      sortMode: 'idAsc',
+      limit: 10,
+      offset: 0,
+    });
+    const idDesc = await service.searchDetailedCharacters({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      sortMode: 'idDesc',
+      limit: 10,
+      offset: 0,
+    });
+
+    expect(nameAscPage.map((record) => record.id)).toEqual([400, 100]);
+    expect(nameDesc.map((record) => record.id)).toEqual([300, 100, 400, 200]);
+    expect(idAsc.map((record) => record.id)).toEqual([100, 200, 300, 400]);
+    expect(idDesc.map((record) => record.id)).toEqual([400, 300, 200, 100]);
   });
 
   it('queries detailed search directly without materializing the full catalog when no overrides exist', async () => {
@@ -1288,6 +1361,30 @@ function applyOrderingAndWindow(
     orderedRows = [...rows].sort(
       (left, right) => Number(right['id'] ?? 0) - Number(left['id'] ?? 0),
     );
+  } else if (query.includes('ORDER BY c.id ASC')) {
+    orderedRows = [...rows].sort(
+      (left, right) => Number(left['id'] ?? 0) - Number(right['id'] ?? 0),
+    );
+  } else if (query.includes('ORDER BY c.name COLLATE NOCASE ASC')) {
+    orderedRows = [...rows].sort((left, right) => {
+      const nameDifference = String(left['name'] ?? '').localeCompare(
+        String(right['name'] ?? ''),
+        undefined,
+        { sensitivity: 'base' },
+      );
+
+      return nameDifference || Number(left['id'] ?? 0) - Number(right['id'] ?? 0);
+    });
+  } else if (query.includes('ORDER BY c.name COLLATE NOCASE DESC')) {
+    orderedRows = [...rows].sort((left, right) => {
+      const nameDifference = String(right['name'] ?? '').localeCompare(
+        String(left['name'] ?? ''),
+        undefined,
+        { sensitivity: 'base' },
+      );
+
+      return nameDifference || Number(right['id'] ?? 0) - Number(left['id'] ?? 0);
+    });
   } else if (
     query.includes('ORDER BY c.stars DESC, c.id DESC') ||
     query.includes('ORDER BY stars DESC, id DESC')

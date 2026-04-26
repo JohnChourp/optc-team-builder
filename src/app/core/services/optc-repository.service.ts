@@ -45,6 +45,29 @@ function buildCharacterPowerFirstOrderByClause(alias: string): string {
   return `${alias}.id DESC`;
 }
 
+function buildDetailedCharacterOrderByClause(
+  alias: string,
+  sortMode: DetailedCharacterSearchQuery['sortMode'] | 'catalog',
+): string {
+  if (sortMode === 'nameAsc') {
+    return `${alias}.name COLLATE NOCASE ASC, ${alias}.id ASC`;
+  }
+
+  if (sortMode === 'nameDesc') {
+    return `${alias}.name COLLATE NOCASE DESC, ${alias}.id DESC`;
+  }
+
+  if (sortMode === 'idAsc') {
+    return `${alias}.id ASC`;
+  }
+
+  if (sortMode === 'idDesc' || sortMode === 'newest' || sortMode === 'powerFirst') {
+    return buildCharacterPowerFirstOrderByClause(alias);
+  }
+
+  return `${alias}.stars DESC, ${alias}.id DESC`;
+}
+
 function normalizeStringList(value: unknown): string[] {
   return (Array.isArray(value) ? value : [])
     .map((entry) => String(entry ?? '').trim())
@@ -411,10 +434,7 @@ export class OptcRepositoryService {
         queryParams.push(...excludedCharacterIds);
       }
 
-      const orderByClause =
-        query.sortMode === 'catalog'
-          ? 'c.stars DESC, c.id DESC'
-          : buildCharacterPowerFirstOrderByClause('c');
+      const orderByClause = buildDetailedCharacterOrderByClause('c', query.sortMode ?? 'catalog');
       const whereClause =
         whereClauses.length > 0 ? `WHERE ${whereClauses.join('\n          AND ')}` : '';
       const rows = await this.selectAll(
@@ -990,8 +1010,28 @@ export class OptcRepositoryService {
         return right.id - left.id;
       }
 
-      if (sortMode === 'powerFirst') {
+      if (sortMode === 'powerFirst' || sortMode === 'idDesc') {
         return right.id - left.id;
+      }
+
+      if (sortMode === 'idAsc') {
+        return left.id - right.id;
+      }
+
+      if (sortMode === 'nameAsc') {
+        const nameDifference = left.name.localeCompare(right.name, undefined, {
+          sensitivity: 'base',
+        });
+
+        return nameDifference || left.id - right.id;
+      }
+
+      if (sortMode === 'nameDesc') {
+        const nameDifference = right.name.localeCompare(left.name, undefined, {
+          sensitivity: 'base',
+        });
+
+        return nameDifference || right.id - left.id;
       }
 
       if (right.stars !== left.stars) {

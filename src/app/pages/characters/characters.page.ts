@@ -12,6 +12,8 @@ import {
   IonMenuButton,
   IonModal,
   IonSearchbar,
+  IonSelect,
+  IonSelectOption,
   IonSpinner,
   IonToggle,
   IonTitle,
@@ -31,7 +33,11 @@ import {
 } from 'ionicons/icons';
 
 import { type AutoBuildAbilityCatalog } from '../../core/models/auto-team-builder-ability.models';
-import { type CharacterListItem, type DatasetManifest } from '../../core/models/optc.models';
+import {
+  type CharacterListItem,
+  type CharacterSortMode,
+  type DatasetManifest,
+} from '../../core/models/optc.models';
 import {
   type OptcbxImportResult,
   type OptcbxParsedImport,
@@ -83,6 +89,8 @@ interface CharacterCatalogCardView {
     IonMenuButton,
     IonModal,
     IonSearchbar,
+    IonSelect,
+    IonSelectOption,
     IonSpinner,
     IonToggle,
     IonTitle,
@@ -109,6 +117,7 @@ export class CharactersPage implements OnInit {
   public readonly selectedClass = signal('');
   public readonly favoritesOnly = signal(false);
   public readonly hideFavorites = signal(false);
+  public readonly selectedSortMode = signal<CharacterSortMode>('catalog');
   public readonly specialAbilityPickerOpen = signal(false);
   public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly crewmateAbilityPickerOpen = signal(false);
@@ -379,6 +388,11 @@ export class CharactersPage implements OnInit {
 
   public setDisplayMode(displayMode: CharacterDisplayMode): void {
     this.displayMode.set(displayMode);
+  }
+
+  public async onSortModeChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
+    this.selectedSortMode.set(this.normalizeSortMode(event.detail.value));
+    await this.loadCharacters(true);
   }
 
   public openSpecialAbilityPicker(): void {
@@ -656,6 +670,7 @@ export class CharactersPage implements OnInit {
     this.selectedClass.set('');
     this.favoritesOnly.set(false);
     this.hideFavorites.set(false);
+    this.selectedSortMode.set('catalog');
     this.specialAbilityPickerOpen.set(false);
     this.specialAbilityDrafts.set([]);
     this.crewmateAbilityPickerOpen.set(false);
@@ -702,6 +717,7 @@ export class CharactersPage implements OnInit {
       classFilter: this.selectedClass(),
       allowedCharacterIds: this.resolveAllowedCharacterIds(),
       ...(excludedCharacterIds ? { excludedCharacterIds } : {}),
+      sortMode: this.selectedSortMode(),
       limit: PAGE_SIZE,
       offset: nextOffset,
     });
@@ -726,6 +742,12 @@ export class CharactersPage implements OnInit {
       this.supportFilterCharacterIds(),
       favoriteIds,
     ]);
+  }
+
+  private normalizeSortMode(value: string | null | undefined): CharacterSortMode {
+    return value === 'nameAsc' || value === 'nameDesc' || value === 'idDesc' || value === 'idAsc'
+      ? value
+      : 'catalog';
   }
 
   private filterOptions(options: string[], query: string, selectedValue: string): string[] {

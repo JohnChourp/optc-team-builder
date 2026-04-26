@@ -31,6 +31,7 @@ import {
   type CharacterBox,
   type CharacterDetailRecord,
   type CharacterListItem,
+  type CharacterSortMode,
   type DatasetManifest,
 } from '../../core/models/optc.models';
 import { type AutoBuildAbilityCatalog } from '../../core/models/auto-team-builder-ability.models';
@@ -100,6 +101,7 @@ export class CharacterBoxesPage implements OnInit {
   public readonly selectedClass = signal('');
   public readonly selectedFavoriteFilter = signal<CharacterBoxesFavoriteFilter>('all');
   public readonly selectedMembershipFilter = signal<CharacterBoxesMembershipFilter>('all');
+  public readonly selectedSortMode = signal<CharacterSortMode>('catalog');
   public readonly specialAbilityPickerOpen = signal(false);
   public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly crewmateAbilityPickerOpen = signal(false);
@@ -392,6 +394,11 @@ export class CharacterBoxesPage implements OnInit {
     await this.loadCharacters(true);
   }
 
+  public async onSortModeChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
+    this.selectedSortMode.set(this.normalizeSortMode(event.detail.value));
+    await this.loadCharacters(true);
+  }
+
   public setDisplayMode(mode: CharacterBoxesDisplayMode): void {
     this.displayMode.set(mode);
   }
@@ -540,6 +547,7 @@ export class CharacterBoxesPage implements OnInit {
     this.selectedClass.set('');
     this.selectedFavoriteFilter.set('all');
     this.selectedMembershipFilter.set('all');
+    this.selectedSortMode.set('catalog');
     this.specialAbilityPickerOpen.set(false);
     this.specialAbilityDrafts.set([]);
     this.crewmateAbilityPickerOpen.set(false);
@@ -629,6 +637,7 @@ export class CharacterBoxesPage implements OnInit {
       excludedCharacterIds: excludedCharacterIds.length
         ? [...new Set(excludedCharacterIds)]
         : undefined,
+      sortMode: this.selectedSortMode(),
       limit: PAGE_SIZE,
       offset: nextOffset,
     });
@@ -640,6 +649,12 @@ export class CharacterBoxesPage implements OnInit {
 
   private normalizeOptions(values: string[]): string[] {
     return [...new Set(values.map((value) => value.trim()).filter((value) => value.length > 0))];
+  }
+
+  private normalizeSortMode(value: string | null | undefined): CharacterSortMode {
+    return value === 'nameAsc' || value === 'nameDesc' || value === 'idDesc' || value === 'idAsc'
+      ? value
+      : 'catalog';
   }
 
   private t(key: string, params?: Record<string, string | number>): string {

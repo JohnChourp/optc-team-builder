@@ -177,6 +177,77 @@ describe('CharacterCatalogCacheService', () => {
     ).toEqual([]);
   });
 
+  it('sorts cached character queries before applying pagination', async () => {
+    let overrideRevision = 0;
+    const repository = {
+      getAllCharacters: vi
+        .fn()
+        .mockResolvedValue([
+          createCharacter(300, { name: 'Zoro' }),
+          createCharacter(100, { name: 'Luffy' }),
+          createCharacter(200, { name: 'Ace' }),
+          createCharacter(400, { name: 'Brook' }),
+        ]),
+    };
+    const service = new CharacterCatalogCacheService(
+      repository as never,
+      {
+        revision: () => overrideRevision,
+      } as never,
+    );
+
+    await service.ensureLoaded();
+
+    expect(
+      service
+        .queryCharacters({
+          searchTerm: '',
+          typeFilter: '',
+          classFilter: '',
+          sortMode: 'nameAsc',
+          limit: 2,
+          offset: 1,
+        })
+        .map((character) => character.id),
+    ).toEqual([400, 100]);
+    expect(
+      service
+        .queryCharacters({
+          searchTerm: '',
+          typeFilter: '',
+          classFilter: '',
+          sortMode: 'nameDesc',
+          limit: 10,
+          offset: 0,
+        })
+        .map((character) => character.id),
+    ).toEqual([300, 100, 400, 200]);
+    expect(
+      service
+        .queryCharacters({
+          searchTerm: '',
+          typeFilter: '',
+          classFilter: '',
+          sortMode: 'idAsc',
+          limit: 10,
+          offset: 0,
+        })
+        .map((character) => character.id),
+    ).toEqual([100, 200, 300, 400]);
+    expect(
+      service
+        .queryCharacters({
+          searchTerm: '',
+          typeFilter: '',
+          classFilter: '',
+          sortMode: 'idDesc',
+          limit: 10,
+          offset: 0,
+        })
+        .map((character) => character.id),
+    ).toEqual([400, 300, 200, 100]);
+  });
+
   it('returns characters by id while preserving the input order', async () => {
     let overrideRevision = 0;
     const repository = {

@@ -80,6 +80,17 @@
     "list": "Προβολή λίστας",
     "compact": "Συμπαγής προβολή"
   },
+  "sort": {
+    "label": "Ταξινόμηση",
+    "placeholder": "Ταξινόμηση χαρακτήρων",
+    "options": {
+      "catalog": "Προεπιλεγμένη σειρά",
+      "nameAsc": "Όνομα A-Z",
+      "nameDesc": "Όνομα Z-A",
+      "idDesc": "Character ID πιο πρόσφατο πρώτα",
+      "idAsc": "Character ID πιο παλιό πρώτα"
+    }
+  },
   "favorites": {
     "addAria": "Πρόσθεσε τον {{name}} στα favorites",
     "removeAria": "Αφαίρεσε τον {{name}} από τα favorites"

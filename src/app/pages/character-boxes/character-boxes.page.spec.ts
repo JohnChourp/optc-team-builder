@@ -159,6 +159,7 @@ describe('CharacterBoxesPage', () => {
       selectedClassesMatchMode: 'any',
       allowedCharacterIds: undefined,
       excludedCharacterIds: [202],
+      sortMode: 'catalog',
       limit: 48,
       offset: 0,
     });
@@ -192,6 +193,7 @@ describe('CharacterBoxesPage', () => {
       selectedClassesMatchMode: 'any',
       allowedCharacterIds: undefined,
       excludedCharacterIds: undefined,
+      sortMode: 'catalog',
       limit: 48,
       offset: 0,
     });
@@ -214,6 +216,7 @@ describe('CharacterBoxesPage', () => {
       selectedClassesMatchMode: 'any',
       allowedCharacterIds: [101, 303],
       excludedCharacterIds: undefined,
+      sortMode: 'catalog',
       limit: 48,
       offset: 0,
     });
@@ -236,6 +239,7 @@ describe('CharacterBoxesPage', () => {
       selectedClassesMatchMode: 'any',
       allowedCharacterIds: undefined,
       excludedCharacterIds: [101, 303],
+      sortMode: 'catalog',
       limit: 48,
       offset: 0,
     });
@@ -259,6 +263,7 @@ describe('CharacterBoxesPage', () => {
       selectedClassesMatchMode: 'any',
       allowedCharacterIds: [101],
       excludedCharacterIds: undefined,
+      sortMode: 'catalog',
       limit: 48,
       offset: 0,
     });
@@ -282,6 +287,7 @@ describe('CharacterBoxesPage', () => {
       selectedClassesMatchMode: 'any',
       allowedCharacterIds: undefined,
       excludedCharacterIds: [101],
+      sortMode: 'catalog',
       limit: 48,
       offset: 0,
     });
@@ -310,6 +316,7 @@ describe('CharacterBoxesPage', () => {
       selectedClassesMatchMode: 'any',
       allowedCharacterIds: [101],
       excludedCharacterIds: undefined,
+      sortMode: 'catalog',
       limit: 48,
       offset: 0,
     });
@@ -338,6 +345,31 @@ describe('CharacterBoxesPage', () => {
       selectedClassesMatchMode: 'any',
       allowedCharacterIds: [101],
       excludedCharacterIds: [101, 303],
+      sortMode: 'catalog',
+      limit: 48,
+      offset: 0,
+    });
+  });
+
+  it('passes the selected sort mode to repository searches', async () => {
+    const { page, repository } = createPage();
+
+    await page.onSortModeChange({
+      detail: {
+        value: 'idAsc',
+      },
+    } as CustomEvent<{ value?: string | null }>);
+
+    expect(page.selectedSortMode()).toBe('idAsc');
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: [],
+      selectedClassesMatchMode: 'any',
+      allowedCharacterIds: undefined,
+      excludedCharacterIds: undefined,
+      sortMode: 'idAsc',
       limit: 48,
       offset: 0,
     });
@@ -361,10 +393,16 @@ describe('CharacterBoxesPage', () => {
         value: 'notInBox',
       },
     } as CustomEvent<{ value?: string | null }>);
+    await page.onSortModeChange({
+      detail: {
+        value: 'nameDesc',
+      },
+    } as CustomEvent<{ value?: string | null }>);
     await page.clearFilters();
 
     expect(page.selectedFavoriteFilter()).toBe('all');
     expect(page.selectedMembershipFilter()).toBe('all');
+    expect(page.selectedSortMode()).toBe('catalog');
     expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
       selectedTypes: [],
@@ -373,6 +411,7 @@ describe('CharacterBoxesPage', () => {
       selectedClassesMatchMode: 'any',
       allowedCharacterIds: undefined,
       excludedCharacterIds: undefined,
+      sortMode: 'catalog',
       limit: 48,
       offset: 0,
     });
@@ -393,6 +432,9 @@ describe('CharacterBoxesPage', () => {
     expect(template).toContain("t('filters.favoritesOptions.favorites')");
     expect(template).toContain("t('filters.favoritesOptions.hideFavorites')");
     expect(template).toContain("t('filters.membershipPlaceholder')");
+    expect(template).toContain("t('sort.placeholder')");
+    expect(template).toContain('selectedSortMode()');
+    expect(template).toContain('onSortModeChange($event)');
     expect(template).toContain("t('displayMode.compact')");
     expect(template).toContain('toggleFavorite(card.character.id, $event)');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(card.character)"');

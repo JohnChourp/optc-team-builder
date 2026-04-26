@@ -106,6 +106,17 @@
   "search": {
     "placeholder": "Αναζήτηση σε ονόματα, classes, types..."
   },
+  "sort": {
+    "label": "Ταξινόμηση",
+    "placeholder": "Ταξινόμηση χαρακτήρων",
+    "options": {
+      "catalog": "Προεπιλεγμένη σειρά",
+      "nameAsc": "Όνομα A-Z",
+      "nameDesc": "Όνομα Z-A",
+      "idDesc": "Character ID πιο πρόσφατο πρώτα",
+      "idAsc": "Character ID πιο παλιό πρώτα"
+    }
+  },
   "stats": {
     "atk": "ATK",
     "hp": "HP",

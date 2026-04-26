@@ -106,6 +106,17 @@
   "search": {
     "placeholder": "Search names, classes, types..."
   },
+  "sort": {
+    "label": "Sort",
+    "placeholder": "Sort characters",
+    "options": {
+      "catalog": "Default order",
+      "nameAsc": "Name A-Z",
+      "nameDesc": "Name Z-A",
+      "idDesc": "Character ID newest first",
+      "idAsc": "Character ID oldest first"
+    }
+  },
   "stats": {
     "atk": "ATK",
     "hp": "HP",

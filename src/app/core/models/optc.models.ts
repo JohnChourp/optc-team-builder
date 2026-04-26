@@ -334,12 +334,22 @@ export interface DatasetManifest {
   packs: OfflinePackSummary[];
 }
 
+export type CharacterSortMode =
+  | 'catalog'
+  | 'newest'
+  | 'powerFirst'
+  | 'nameAsc'
+  | 'nameDesc'
+  | 'idDesc'
+  | 'idAsc';
+
 export interface CharacterSearchQuery {
   searchTerm: string;
   typeFilter: string;
   classFilter: string;
   allowedCharacterIds?: number[];
   excludedCharacterIds?: number[];
+  sortMode?: CharacterSortMode;
   limit: number;
   offset: number;
 }
@@ -352,7 +362,7 @@ export interface DetailedCharacterSearchQuery {
   selectedClassesMatchMode?: 'all' | 'any';
   allowedCharacterIds?: number[];
   excludedCharacterIds?: number[];
-  sortMode?: 'catalog' | 'newest' | 'powerFirst';
+  sortMode?: CharacterSortMode;
   limit: number;
   offset: number;
 }

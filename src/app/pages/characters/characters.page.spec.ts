@@ -17,6 +17,8 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonMenuButton: class {},
   IonModal: class {},
   IonSearchbar: class {},
+  IonSelect: class {},
+  IonSelectOption: class {},
   IonSpinner: class {},
   IonToggle: class {},
   IonTitle: class {},
@@ -107,6 +109,9 @@ describe('CharactersPage favorites tools', () => {
     expect(template).toContain("t('filters.hideFavorites.label')");
     expect(template).toContain('hideFavoritesSupportLabel()');
     expect(template).toContain('onHideFavoritesToggle($event)');
+    expect(template).toContain("t('sort.label')");
+    expect(template).toContain('selectedSortMode()');
+    expect(template).toContain('onSortModeChange($event)');
     expect(template).toContain("t('displayMode.compact')");
     expect(template).toContain('character-thumb-card');
     expect(template).toContain('toggleFavorite(card.character.id, $event)');
@@ -135,6 +140,7 @@ describe('CharactersPage favorites tools', () => {
       typeFilter: '',
       classFilter: '',
       allowedCharacterIds: [101, 202],
+      sortMode: 'catalog',
       limit: 48,
       offset: 0,
     });
@@ -158,6 +164,7 @@ describe('CharactersPage favorites tools', () => {
       classFilter: '',
       allowedCharacterIds: undefined,
       excludedCharacterIds: [101, 202],
+      sortMode: 'catalog',
       limit: 48,
       offset: 0,
     });
@@ -204,6 +211,7 @@ describe('CharactersPage favorites tools', () => {
       classFilter: '',
       allowedCharacterIds: undefined,
       excludedCharacterIds: [101],
+      sortMode: 'catalog',
       limit: 48,
       offset: 0,
     });
@@ -233,6 +241,28 @@ describe('CharactersPage favorites tools', () => {
       classFilter: '',
       allowedCharacterIds: undefined,
       excludedCharacterIds: [101],
+      sortMode: 'catalog',
+      limit: 48,
+      offset: 0,
+    });
+  });
+
+  it('passes the selected sort mode to cached searches', async () => {
+    const { page, characterCatalogCache } = createPage();
+
+    await page.onSortModeChange({
+      detail: {
+        value: 'nameAsc',
+      },
+    } as CustomEvent<{ value?: string | null }>);
+
+    expect(page.selectedSortMode()).toBe('nameAsc');
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      typeFilter: '',
+      classFilter: '',
+      allowedCharacterIds: undefined,
+      sortMode: 'nameAsc',
       limit: 48,
       offset: 0,
     });
@@ -263,6 +293,7 @@ describe('CharactersPage favorites tools', () => {
     page.selectedClass.set('Fighter');
     page.favoritesOnly.set(true);
     page.hideFavorites.set(true);
+    page.selectedSortMode.set('nameDesc');
     page.importModalOpen.set(true);
     page.importFileName.set('favorites.json');
     page.importErrorMessage.set('Bad file');
@@ -278,6 +309,7 @@ describe('CharactersPage favorites tools', () => {
     expect(page.selectedClass()).toBe('');
     expect(page.favoritesOnly()).toBe(false);
     expect(page.hideFavorites()).toBe(false);
+    expect(page.selectedSortMode()).toBe('catalog');
     expect(page.importModalOpen()).toBe(false);
     expect(page.importFileName()).toBe('');
     expect(page.parsedImport()).toBeNull();
@@ -286,6 +318,7 @@ describe('CharactersPage favorites tools', () => {
       typeFilter: '',
       classFilter: '',
       allowedCharacterIds: undefined,
+      sortMode: 'catalog',
       limit: 48,
       offset: 0,
     });
