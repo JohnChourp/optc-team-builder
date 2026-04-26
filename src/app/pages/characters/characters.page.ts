@@ -108,6 +108,7 @@ export class CharactersPage implements OnInit {
   public readonly selectedType = signal('');
   public readonly selectedClass = signal('');
   public readonly favoritesOnly = signal(false);
+  public readonly hideFavorites = signal(false);
   public readonly specialAbilityPickerOpen = signal(false);
   public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly crewmateAbilityPickerOpen = signal(false);
@@ -236,6 +237,15 @@ export class CharactersPage implements OnInit {
       };
     }),
   );
+  public readonly hideFavoritesSupportLabel = computed(() =>
+    this.favoriteIds().length
+      ? this.i18n.translate(
+          'filters.hideFavorites.withCount',
+          { count: this.favoriteIds().length },
+          'characters',
+        )
+      : this.i18n.translate('filters.hideFavorites.empty', undefined, 'characters'),
+  );
   public readonly favoritesOnlySupportLabel = computed(() =>
     this.favoriteIds().length
       ? this.i18n.translate(
@@ -349,6 +359,21 @@ export class CharactersPage implements OnInit {
 
   public async onFavoritesOnlyToggle(event: CustomEvent<{ checked: boolean }>): Promise<void> {
     this.favoritesOnly.set(event.detail.checked);
+
+    if (event.detail.checked) {
+      this.hideFavorites.set(false);
+    }
+
+    await this.loadCharacters(true);
+  }
+
+  public async onHideFavoritesToggle(event: CustomEvent<{ checked: boolean }>): Promise<void> {
+    this.hideFavorites.set(event.detail.checked);
+
+    if (event.detail.checked) {
+      this.favoritesOnly.set(false);
+    }
+
     await this.loadCharacters(true);
   }
 
@@ -460,7 +485,11 @@ export class CharactersPage implements OnInit {
   public async saveSupportAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
     this.supportAbilityDrafts.set(
       createAbilityRequirementDrafts(
-        serializeCategoryAbilityDrafts(drafts, this.availableSupportAbilityCatalogItems(), 'support'),
+        serializeCategoryAbilityDrafts(
+          drafts,
+          this.availableSupportAbilityCatalogItems(),
+          'support',
+        ),
       ),
     );
     this.supportAbilityPickerOpen.set(false);
@@ -571,7 +600,7 @@ export class CharactersPage implements OnInit {
       await this.userState.setFavoriteCharacterIds(nextFavoriteIds);
       this.importResult.set(importResult);
 
-      if (this.favoritesOnly()) {
+      if (this.favoritesOnly() || this.hideFavorites()) {
         await this.loadCharacters(true);
       }
     } catch (error) {
@@ -599,7 +628,7 @@ export class CharactersPage implements OnInit {
     event.stopPropagation();
     await this.userState.toggleFavorite(characterId);
 
-    if (this.favoritesOnly()) {
+    if (this.favoritesOnly() || this.hideFavorites()) {
       await this.loadCharacters(true);
     }
   }
@@ -614,7 +643,7 @@ export class CharactersPage implements OnInit {
 
     await this.userState.setFavoriteCharacterIds([]);
 
-    if (this.favoritesOnly()) {
+    if (this.favoritesOnly() || this.hideFavorites()) {
       await this.loadCharacters(true);
     }
   }
@@ -626,6 +655,7 @@ export class CharactersPage implements OnInit {
     this.selectedType.set('');
     this.selectedClass.set('');
     this.favoritesOnly.set(false);
+    this.hideFavorites.set(false);
     this.specialAbilityPickerOpen.set(false);
     this.specialAbilityDrafts.set([]);
     this.crewmateAbilityPickerOpen.set(false);
@@ -665,11 +695,13 @@ export class CharactersPage implements OnInit {
 
     await this.characterCatalogCache.ensureLoaded();
     const nextOffset = reset ? 0 : this.characters().length;
+    const excludedCharacterIds = this.hideFavorites() ? this.favoriteIds() : undefined;
     const nextPage = this.characterCatalogCache.queryCharacters({
       searchTerm: this.searchTerm(),
       typeFilter: this.selectedType(),
       classFilter: this.selectedClass(),
       allowedCharacterIds: this.resolveAllowedCharacterIds(),
+      ...(excludedCharacterIds ? { excludedCharacterIds } : {}),
       limit: PAGE_SIZE,
       offset: nextOffset,
     });

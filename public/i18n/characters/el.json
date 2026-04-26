@@ -11,6 +11,11 @@
       "label": "Class",
       "placeholder": "Πληκτρολόγησε για φιλτράρισμα ανά class"
     },
+    "hideFavorites": {
+      "empty": "Δεν υπάρχουν αποθηκευμένα favorites ακόμα.",
+      "label": "Κρύψε favorites",
+      "withCount": "Κρύβει τους {{count}} favorite χαρακτήρες σου από τα αποτελέσματα."
+    },
     "favoritesOnly": {
       "empty": "Δεν υπάρχουν αποθηκευμένα favorites ακόμα.",
       "label": "Μόνο favorites",

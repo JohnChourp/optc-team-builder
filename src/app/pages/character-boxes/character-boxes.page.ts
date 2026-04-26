@@ -51,7 +51,7 @@ import {
 import { UserStateService } from '../../core/services/user-state.service';
 
 const PAGE_SIZE = 48;
-type CharacterBoxesFavoriteFilter = 'all' | 'favorites';
+type CharacterBoxesFavoriteFilter = 'all' | 'favorites' | 'hideFavorites';
 type CharacterBoxesMembershipFilter = 'all' | 'inBox' | 'notInBox';
 type CharacterBoxesDisplayMode = 'list' | 'compact';
 
@@ -373,7 +373,11 @@ export class CharacterBoxesPage implements OnInit {
   public async onFavoriteFilterChange(
     event: CustomEvent<{ value?: string | null }>,
   ): Promise<void> {
-    this.selectedFavoriteFilter.set(event.detail.value === 'favorites' ? 'favorites' : 'all');
+    this.selectedFavoriteFilter.set(
+      event.detail.value === 'favorites' || event.detail.value === 'hideFavorites'
+        ? event.detail.value
+        : 'all',
+    );
     await this.loadCharacters(true);
   }
 
@@ -516,6 +520,10 @@ export class CharacterBoxesPage implements OnInit {
     event?.preventDefault();
     event?.stopPropagation();
     await this.userState.toggleFavorite(characterId);
+
+    if (this.selectedFavoriteFilter() !== 'all') {
+      await this.loadCharacters(true);
+    }
   }
 
   public isFavorite(characterId: number): boolean {
@@ -607,6 +615,10 @@ export class CharacterBoxesPage implements OnInit {
       this.potentialFilterCharacterIds(),
       this.supportFilterCharacterIds(),
     ]);
+    const excludedCharacterIds = [
+      ...(this.selectedMembershipFilter() === 'notInBox' ? selectedBoxCharacterIds : []),
+      ...(this.selectedFavoriteFilter() === 'hideFavorites' ? this.favoriteCharacterIds() : []),
+    ];
     const nextCharacters = await this.repository.searchDetailedCharacters({
       searchTerm: this.searchTerm(),
       selectedTypes: this.selectedType() ? [this.selectedType()] : [],
@@ -614,8 +626,9 @@ export class CharacterBoxesPage implements OnInit {
       selectedClasses: this.selectedClass() ? [this.selectedClass()] : [],
       selectedClassesMatchMode: 'any',
       allowedCharacterIds,
-      excludedCharacterIds:
-        this.selectedMembershipFilter() === 'notInBox' ? selectedBoxCharacterIds : undefined,
+      excludedCharacterIds: excludedCharacterIds.length
+        ? [...new Set(excludedCharacterIds)]
+        : undefined,
       limit: PAGE_SIZE,
       offset: nextOffset,
     });

@@ -3,6 +3,14 @@
     "addFavoriteAria": "Προσθήκη στα favorites",
     "removeFavoriteAria": "Αφαίρεση από τα favorites",
     "searchPlaceholder": "Βρες χαρακτήρα για αυτό το slot",
+    "favoritesOnly": {
+      "label": "Μόνο favorites",
+      "support": "Περιορίζει τα υποψήφια αποτελέσματα στους {{count}} favorite χαρακτήρες σου."
+    },
+    "hideFavorites": {
+      "label": "Κρύψε favorites",
+      "support": "Κρύβει {{count}} favorite χαρακτήρες από τα υποψήφια αποτελέσματα."
+    },
     "special": {
       "open": "Special filters ({{count}})",
       "eyebrow": "Special",

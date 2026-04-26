@@ -40,7 +40,8 @@
     "membershipPlaceholder": "Φίλτρο συμμετοχής στο box",
     "favoritesOptions": {
       "all": "Όλοι οι χαρακτήρες",
-      "favorites": "Μόνο favorites"
+      "favorites": "Μόνο favorites",
+      "hideFavorites": "Κρύψε favorites"
     },
     "membershipOptions": {
       "all": "Όλες οι καταστάσεις",

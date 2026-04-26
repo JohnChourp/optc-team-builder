@@ -11,6 +11,11 @@
       "label": "Class",
       "placeholder": "Type to filter by class"
     },
+    "hideFavorites": {
+      "empty": "No favorites saved yet.",
+      "label": "Hide favorites",
+      "withCount": "Hide your {{count}} favorited characters from results."
+    },
     "favoritesOnly": {
       "empty": "No favorites saved yet.",
       "label": "Show favorites only",

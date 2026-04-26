@@ -281,6 +281,18 @@
           ></ion-toggle>
         </div>
 
+        <div class="favorites-toggle-row">
+          <div class="favorites-toggle-copy">
+            <strong>{{ t('filters.hideFavorites.label') }}</strong>
+            <small>{{ hideFavoritesSupportLabel() }}</small>
+          </div>
+          <ion-toggle
+            color="warning"
+            [checked]="hideFavorites()"
+            (ionChange)="onHideFavoritesToggle($event)"
+          ></ion-toggle>
+        </div>
+
         <ion-searchbar
           class="vault-search"
           [debounce]="150"

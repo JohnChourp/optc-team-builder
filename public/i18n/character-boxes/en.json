@@ -40,7 +40,8 @@
     "membershipPlaceholder": "Filter by box membership",
     "favoritesOptions": {
       "all": "All characters",
-      "favorites": "Favorites only"
+      "favorites": "Favorites only",
+      "hideFavorites": "Hide favorites"
     },
     "membershipOptions": {
       "all": "All membership states",
