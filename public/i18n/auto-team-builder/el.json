@@ -82,6 +82,13 @@
         "hp": "Το Captain και Friend Captain auto-fill προτιμά το μεγαλύτερο HP captain boost, μετά τον πιο πρόσφατο χαρακτήρα και μετά το μεγαλύτερο cost.",
         "atk": "Το Captain και Friend Captain auto-fill προτιμά το μεγαλύτερο ATK captain boost, μετά τον πιο πρόσφατο χαρακτήρα και μετά το μεγαλύτερο cost.",
         "average": "Το Captain και Friend Captain auto-fill προτιμά το μεγαλύτερο average HP και ATK captain boost, μετά τον πιο πρόσφατο χαρακτήρα και μετά το μεγαλύτερο cost."
+      },
+      "range": {
+        "atkMin": "ATK από",
+        "atkMax": "ATK έως",
+        "hpMin": "HP από",
+        "hpMax": "HP έως",
+        "invalid": "Το ελάχιστο leader boost δεν μπορεί να είναι μεγαλύτερο από το μέγιστο."
       }
     },
     "favoritesOnly": {

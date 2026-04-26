@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   AUTO_TEAM_CANDIDATE_LIMIT,
   AUTO_TEAM_BUILDER_DEFAULT_TYPE,
+  createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
   type AutoBuildInput,
   type AutoBuildProgressSnapshot,
@@ -366,6 +367,7 @@ function createInput(
       | 'favoriteShipsOnly'
       | 'favoriteShipIds'
       | 'leaderBoostFilters'
+      | 'leaderBoostRanges'
       | 'manualSlots'
       | 'lockedCharacterIds'
       | 'excludedCharacterIds'
@@ -399,6 +401,7 @@ function createInput(
     favoriteShipsOnly: overrides.favoriteShipsOnly ?? false,
     favoriteShipIds: overrides.favoriteShipIds ?? [],
     leaderBoostFilters: overrides.leaderBoostFilters ?? ['HP', 'ATK'],
+    leaderBoostRanges: overrides.leaderBoostRanges ?? createEmptyAutoBuildLeaderBoostRanges(),
     manualSlots: overrides.manualSlots ?? createEmptyAutoBuildManualSlots(),
     lockedCharacterIds,
     excludedCharacterIds,

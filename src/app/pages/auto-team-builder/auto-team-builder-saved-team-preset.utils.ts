@@ -1,14 +1,15 @@
 import {
   AUTO_BUILD_LEADER_BOOST_FILTERS,
   AUTO_BUILD_MANUAL_SLOT_ROLES,
+  createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
-} from "../../core/models/auto-team-builder.models";
+} from '../../core/models/auto-team-builder.models';
 import {
   type CharacterListItem,
   type SavedTeam,
   type ShipRecord,
-} from "../../core/models/optc.models";
-import { type AutoTeamSelectionImportState } from "./auto-team-builder-export.utils";
+} from '../../core/models/optc.models';
+import { type AutoTeamSelectionImportState } from './auto-team-builder-export.utils';
 
 export function buildAutoTeamBuilderStateFromSavedTeam(
   team: SavedTeam,
@@ -22,11 +23,7 @@ export function buildAutoTeamBuilderStateFromSavedTeam(
   team.slots.forEach((characterId, index) => {
     const slotRole = AUTO_BUILD_MANUAL_SLOT_ROLES[index];
 
-    if (
-      !slotRole ||
-      typeof characterId !== "number" ||
-      !availableCharacterIdSet.has(characterId)
-    ) {
+    if (!slotRole || typeof characterId !== 'number' || !availableCharacterIdSet.has(characterId)) {
       return;
     }
 
@@ -50,13 +47,14 @@ export function buildAutoTeamBuilderStateFromSavedTeam(
     allowAnyFriendCaptainAutoFill: false,
     favoriteShipsOnly: false,
     leaderBoostFilters: [...AUTO_BUILD_LEADER_BOOST_FILTERS],
+    leaderBoostRanges: createEmptyAutoBuildLeaderBoostRanges(),
     manualSlots,
     lockedCharacterIds: [],
     excludedCharacterIds: [],
     selectedLeaderIds: [],
     captainLeaderId: null,
     manualShipId:
-      typeof team.shipId === "number" && availableShipIdSet.has(team.shipId) ? team.shipId : null,
+      typeof team.shipId === 'number' && availableShipIdSet.has(team.shipId) ? team.shipId : null,
     excludedShipIds: [],
   };
 }

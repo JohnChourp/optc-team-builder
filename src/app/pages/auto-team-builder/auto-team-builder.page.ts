@@ -47,11 +47,14 @@ import {
   AUTO_TEAM_CANDIDATE_LIMIT,
   AUTO_TEAM_BUILDER_TYPES,
   type AutoBuildLeaderBoostFilter,
+  type AutoBuildLeaderBoostRange,
+  type AutoBuildLeaderBoostRanges,
   type AutoBuildManualSlotRole,
   type AutoBuildManualSlotSelection,
   type AutoBuildProgressSnapshot,
   type AutoBuildResult,
   type AutoTeamBuilderType,
+  createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
 } from '../../core/models/auto-team-builder.models';
 import {
@@ -255,6 +258,7 @@ interface AutoTeamBuilderDefaultFilterState {
   selectedTypes: AutoTeamBuilderType[];
   selectedClasses: string[];
   leaderBoostFilters: AutoBuildLeaderBoostFilter[];
+  leaderBoostRanges: AutoBuildLeaderBoostRanges;
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
   requireAllSlotsInLeaderSuperEffectScope: boolean;
@@ -303,6 +307,7 @@ function buildDefaultAutoTeamBuilderFilterState(
     selectedTypes: [...AUTO_TEAM_BUILDER_TYPES],
     selectedClasses: [...availableClasses],
     leaderBoostFilters: [...AUTO_BUILD_LEADER_BOOST_FILTERS],
+    leaderBoostRanges: createEmptyAutoBuildLeaderBoostRanges(),
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
@@ -382,6 +387,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly leaderBoostFilters = signal<AutoBuildLeaderBoostFilter[]>([
     ...AUTO_BUILD_LEADER_BOOST_FILTERS,
   ]);
+  public readonly leaderBoostRanges = signal<AutoBuildLeaderBoostRanges>(
+    createEmptyAutoBuildLeaderBoostRanges(),
+  );
   public readonly enemyMechanicDrafts = signal<EnemyMechanicDraft[]>([]);
   public readonly enemyMechanicPickerOpen = signal(false);
   public readonly requiredAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
@@ -744,7 +752,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       !this.hasSelectedTypes() ||
       this.building() ||
       this.buildBlockedByCharacterScope() ||
-      this.buildBlockedByFavorites(),
+      this.buildBlockedByFavorites() ||
+      this.hasInvalidLeaderBoostRanges(),
   );
   public readonly hasStrictFilters = computed(
     () =>
@@ -791,6 +800,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
     return this.t('filters.leaderBoost.support.average');
   });
+  public readonly hasInvalidLeaderBoostRanges = computed(() =>
+    AUTO_BUILD_LEADER_BOOST_FILTERS.some((filter) => {
+      const range = this.leaderBoostRanges()[filter];
+
+      return range.min !== null && range.max !== null && range.min > range.max;
+    }),
+  );
+  public readonly leaderBoostRangeErrorLabel = computed(() =>
+    this.hasInvalidLeaderBoostRanges() ? this.t('filters.leaderBoost.range.invalid') : '',
+  );
   public readonly typeSupportLabel = computed(() =>
     this.requireAllSelectedTypesInTeam()
       ? this.t('filters.types.support.strict')
@@ -1709,11 +1728,34 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   }
 
   public onLeaderBoostFilterChange(
-    event: CustomEvent<{ value?: AutoBuildLeaderBoostFilter[] | AutoBuildLeaderBoostFilter | null }>,
+    event: CustomEvent<{
+      value?: AutoBuildLeaderBoostFilter[] | AutoBuildLeaderBoostFilter | null;
+    }>,
   ): void {
     const nextFilters = this.resolveLeaderBoostFilters(event.detail.value);
 
-    this.leaderBoostFilters.set(nextFilters.length ? nextFilters : [...AUTO_BUILD_LEADER_BOOST_FILTERS]);
+    this.leaderBoostFilters.set(
+      nextFilters.length ? nextFilters : [...AUTO_BUILD_LEADER_BOOST_FILTERS],
+    );
+    this.resetBuildState();
+  }
+
+  public onLeaderBoostRangeChange(
+    filter: AutoBuildLeaderBoostFilter,
+    bound: keyof AutoBuildLeaderBoostRange,
+    event: CustomEvent<{ value?: string | number | null }>,
+  ): void {
+    const nextBound = this.resolveLeaderBoostRangeBound(event.detail.value);
+    const currentRanges = this.leaderBoostRanges();
+
+    this.leaderBoostRanges.set({
+      HP: { ...currentRanges.HP },
+      ATK: { ...currentRanges.ATK },
+      [filter]: {
+        ...currentRanges[filter],
+        [bound]: nextBound,
+      },
+    });
     this.resetBuildState();
   }
 
@@ -2148,7 +2190,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   ): boolean {
     const manualSlotRole = slot.manualSlotRole;
 
-    if (!manualSlotRole || this.isCharacterSelectedInManualSlot(manualSlotRole, slot.character.id)) {
+    if (
+      !manualSlotRole ||
+      this.isCharacterSelectedInManualSlot(manualSlotRole, slot.character.id)
+    ) {
       return false;
     }
 
@@ -2345,6 +2390,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           favoriteShipsOnly: this.favoriteShipsOnly(),
           favoriteShipIds: this.favoriteShipIds(),
           leaderBoostFilters: this.leaderBoostFilters(),
+          leaderBoostRanges: this.cloneLeaderBoostRanges(this.leaderBoostRanges()),
           manualSlots: this.serializeManualSlots(),
           excludedCharacterIds: this.excludedCharacterIds(),
           manualShipId: this.selectedManualShipId(),
@@ -2443,6 +2489,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       favoriteShipsOnly: this.favoriteShipsOnly(),
       favoriteShipCount: this.favoriteShipIds().length,
       leaderBoostFilters: this.leaderBoostFilters(),
+      leaderBoostRanges: this.cloneLeaderBoostRanges(this.leaderBoostRanges()),
       manualSlots: this.serializeManualSlots(),
       lockedCharacterIds: this.lockedCharacterIds(),
       lockedCharacters: this.lockedCharacters(),
@@ -2650,6 +2697,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.selectedTypes.set(defaultFilters.selectedTypes);
     this.selectedClasses.set(defaultFilters.selectedClasses);
     this.leaderBoostFilters.set(defaultFilters.leaderBoostFilters);
+    this.leaderBoostRanges.set(this.cloneLeaderBoostRanges(defaultFilters.leaderBoostRanges));
     this.enemyMechanicDrafts.set([]);
     this.requiredAbilityDrafts.set([]);
     this.crewmateAbilityDrafts.set([]);
@@ -2766,6 +2814,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.selectedTypes.set([...state.selectedTypes]);
     this.selectedClasses.set([...state.selectedClasses]);
     this.leaderBoostFilters.set([...state.leaderBoostFilters]);
+    this.leaderBoostRanges.set(this.cloneLeaderBoostRanges(state.leaderBoostRanges));
     const migratedRequiredAbilities = mergeAbilityRequirements([
       ...state.requiredAbilities,
       ...deriveAbilityRequirementsFromEnemyMechanics(state.enemyMechanics),
@@ -3649,6 +3698,23 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     return uniqueValues.filter((filter): filter is AutoBuildLeaderBoostFilter =>
       this.availableLeaderBoostFilters.includes(filter),
     );
+  }
+
+  private resolveLeaderBoostRangeBound(value: string | number | null | undefined): number | null {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    const nextValue = Number(value);
+
+    return Number.isFinite(nextValue) && nextValue >= 0 ? nextValue : null;
+  }
+
+  private cloneLeaderBoostRanges(ranges: AutoBuildLeaderBoostRanges): AutoBuildLeaderBoostRanges {
+    return {
+      HP: { ...ranges.HP },
+      ATK: { ...ranges.ATK },
+    };
   }
 
   private buildManualCharacterCards(

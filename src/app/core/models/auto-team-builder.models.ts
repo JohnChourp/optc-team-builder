@@ -39,9 +39,26 @@ export type AutoTeamBuilderClass = (typeof AUTO_TEAM_BUILDER_CLASSES)[number];
 export type AutoBuildManualSlotRole = (typeof AUTO_BUILD_MANUAL_SLOT_ROLES)[number];
 export type AutoBuildLeaderBoostFilter = (typeof AUTO_BUILD_LEADER_BOOST_FILTERS)[number];
 
+export interface AutoBuildLeaderBoostRange {
+  min: number | null;
+  max: number | null;
+}
+
+export interface AutoBuildLeaderBoostRanges {
+  HP: AutoBuildLeaderBoostRange;
+  ATK: AutoBuildLeaderBoostRange;
+}
+
 export interface AutoBuildManualSlotSelection {
   role: AutoBuildManualSlotRole;
   characterIds: number[];
+}
+
+export function createEmptyAutoBuildLeaderBoostRanges(): AutoBuildLeaderBoostRanges {
+  return {
+    HP: { min: null, max: null },
+    ATK: { min: null, max: null },
+  };
 }
 
 export function createEmptyAutoBuildManualSlots(): AutoBuildManualSlotSelection[] {
@@ -67,6 +84,9 @@ export interface AutoBuildConstraints {
   favoriteShipsOnly?: boolean;
   favoriteShipIds?: number[];
   leaderBoostFilters?: AutoBuildLeaderBoostFilter[];
+  leaderBoostRanges?: Partial<
+    Record<AutoBuildLeaderBoostFilter, Partial<AutoBuildLeaderBoostRange> | null>
+  >;
   manualSlots?: AutoBuildManualSlotSelection[];
   lockedCharacterIds?: number[];
   excludedCharacterIds?: number[];
@@ -115,6 +135,7 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   favoriteShipsOnly: boolean;
   favoriteShipIds: number[];
   leaderBoostFilters: AutoBuildLeaderBoostFilter[];
+  leaderBoostRanges: AutoBuildLeaderBoostRanges;
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   excludedCharacterIds: number[];

@@ -148,6 +148,22 @@
   max-width: 100%;
 }
 
+.leader-boost-range-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.leader-boost-range-error {
+  color: #ffb4a8;
+}
+
+@media (max-width: 520px) {
+  .leader-boost-range-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .type-action-row {
   display: flex;
   justify-content: flex-start;

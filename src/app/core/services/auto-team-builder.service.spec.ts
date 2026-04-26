@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   AUTO_TEAM_CANDIDATE_LIMIT,
   AUTO_TEAM_BUILDER_DEFAULT_TYPE,
+  createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
   type AutoBuildManualSlotSelection,
   type AutoBuildInput,
@@ -1491,6 +1492,158 @@ describe('Auto team builder', () => {
     expect(result).not.toBeNull();
     expect(result?.slots[0]?.character.id).toBe(6403);
     expect(result?.slots[1]?.character.id).toBe(6403);
+  });
+
+  it('filters auto-filled leaders by ATK captain boost range before priority sorting', () => {
+    const result = buildAutoTeamResult(
+      [
+        createPowerFirstCaptainRecord({
+          id: 6603,
+          name: 'Outside ATK Range Leader',
+          cost: 65,
+          atkMultiplier: 6.5,
+          hpMultiplier: 1.4,
+          universal: true,
+        }),
+        createPowerFirstCaptainRecord({
+          id: 6404,
+          name: 'Inside ATK Range Leader',
+          cost: 55,
+          atkMultiplier: 5.25,
+          hpMultiplier: 1.4,
+          universal: true,
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        leaderBoostFilters: ['ATK'],
+        leaderBoostRanges: {
+          ATK: { min: 5, max: 5.5 },
+          HP: { min: null, max: null },
+        },
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(6404);
+    expect(result?.slots[1]?.character.id).toBe(6404);
+  });
+
+  it('filters auto-filled leaders by HP captain boost range', () => {
+    const result = buildAutoTeamResult(
+      [
+        createPowerFirstCaptainRecord({
+          id: 6604,
+          name: 'Low HP Leader',
+          cost: 65,
+          atkMultiplier: 5.5,
+          hpMultiplier: 1.2,
+          universal: true,
+        }),
+        createPowerFirstCaptainRecord({
+          id: 6405,
+          name: 'Inside HP Range Leader',
+          cost: 55,
+          atkMultiplier: 5.25,
+          hpMultiplier: 1.5,
+          universal: true,
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        leaderBoostFilters: ['HP'],
+        leaderBoostRanges: {
+          ATK: { min: null, max: null },
+          HP: { min: 1.3, max: 1.6 },
+        },
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(6405);
+    expect(result?.slots[1]?.character.id).toBe(6405);
+  });
+
+  it('excludes auto-filled leaders with missing parsed boosts when that range is active', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 6605,
+          name: 'Special Only ATK Leader',
+          captainAtkBoost: 0,
+          captainHpBoost: 1.3,
+          captainAverageBoost: 0.65,
+          primaryClass: 'Fighter',
+          secondaryClass: 'Free Spirit',
+          detail: {
+            captainAbility: 'Boosts HP of all characters by 1.3x.',
+            specialText: 'Boosts ATK of all characters by 9x for 1 turn.',
+          },
+        }),
+        createPowerFirstCaptainRecord({
+          id: 6406,
+          name: 'Parsed Captain ATK Leader',
+          cost: 55,
+          atkMultiplier: 5.25,
+          hpMultiplier: 1.3,
+          universal: true,
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        leaderBoostFilters: ['ATK'],
+        leaderBoostRanges: {
+          ATK: { min: 5, max: null },
+          HP: { min: null, max: null },
+        },
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(6406);
+    expect(result?.slots[1]?.character.id).toBe(6406);
+  });
+
+  it('does not apply leader boost ranges to manual leader slots', () => {
+    const result = buildAutoTeamResult(
+      [
+        createPowerFirstCaptainRecord({
+          id: 6407,
+          name: 'Manual Out Of Range Leader',
+          cost: 55,
+          atkMultiplier: 4,
+          hpMultiplier: 1.1,
+          universal: true,
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        leaderBoostRanges: {
+          ATK: { min: 6, max: null },
+          HP: { min: 1.5, max: null },
+        },
+        manualSlots: createManualSlots({
+          captain: [6407],
+          friendCaptain: [6407],
+        }),
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(6407);
+    expect(result?.slots[1]?.character.id).toBe(6407);
   });
 
   it('prefers higher-cost modern subs over low-cost utility outliers when coverage is already met', () => {
@@ -4802,6 +4955,7 @@ function createInput(
       | 'favoriteShipsOnly'
       | 'favoriteShipIds'
       | 'leaderBoostFilters'
+      | 'leaderBoostRanges'
       | 'manualSlots'
       | 'lockedCharacterIds'
       | 'excludedCharacterIds'
@@ -4820,6 +4974,7 @@ function createInput(
     favoriteShipsOnly: false,
     favoriteShipIds: [],
     leaderBoostFilters: ['HP', 'ATK'],
+    leaderBoostRanges: createEmptyAutoBuildLeaderBoostRanges(),
     lockedCharacterIds: [],
     excludedCharacterIds: [],
     captainCharacterId: null,
@@ -4851,6 +5006,7 @@ function createInput(
     favoriteShipsOnly: overrides.favoriteShipsOnly ?? false,
     favoriteShipIds: overrides.favoriteShipIds ?? [],
     leaderBoostFilters: overrides.leaderBoostFilters ?? ['HP', 'ATK'],
+    leaderBoostRanges: overrides.leaderBoostRanges ?? createEmptyAutoBuildLeaderBoostRanges(),
     manualSlots:
       overrides.manualSlots ??
       createManualSlotsFromLegacySelection(

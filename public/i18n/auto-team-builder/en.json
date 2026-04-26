@@ -82,6 +82,13 @@
         "hp": "Captain and Friend Captain auto-fill prefers the highest HP captain boost, then newest character, then higher cost.",
         "atk": "Captain and Friend Captain auto-fill prefers the highest ATK captain boost, then newest character, then higher cost.",
         "average": "Captain and Friend Captain auto-fill prefers the highest average of HP and ATK captain boosts, then newest character, then higher cost."
+      },
+      "range": {
+        "atkMin": "ATK from",
+        "atkMax": "ATK to",
+        "hpMin": "HP from",
+        "hpMax": "HP to",
+        "invalid": "Leader boost minimum cannot be greater than maximum."
       }
     },
     "favoritesOnly": {

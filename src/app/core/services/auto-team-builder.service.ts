@@ -14,12 +14,15 @@ import {
   type AutoBuildRosterInput,
   type AutoBuildInput,
   type AutoBuildLeaderBoostFilter,
+  type AutoBuildLeaderBoostRange,
+  type AutoBuildLeaderBoostRanges,
   type AutoBuildManualSlotRole,
   type AutoBuildManualSlotSelection,
   type AutoBuildProgressSnapshot,
   type AutoBuildResult,
   MAX_AUTO_BUILD_RANKED_RESULT_COUNT,
   type AutoTeamBuilderType,
+  createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
 } from '../models/auto-team-builder.models';
 import { type AutoBuildAbilityRequirement } from '../models/auto-team-builder-ability.models';
@@ -134,6 +137,7 @@ export class AutoTeamBuilderService {
     const manualShipId = this.normalizeCharacterId(constraints.manualShipId);
     const excludedShipIds = this.normalizeCharacterIds(constraints.excludedShipIds);
     const leaderBoostFilters = this.normalizeLeaderBoostFilters(constraints.leaderBoostFilters);
+    const leaderBoostRanges = this.normalizeLeaderBoostRanges(constraints.leaderBoostRanges);
 
     const input: AutoBuildInput = {
       types: normalizedTypes.length > 0 ? normalizedTypes : [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
@@ -154,6 +158,7 @@ export class AutoTeamBuilderService {
       favoriteShipsOnly,
       favoriteShipIds,
       leaderBoostFilters,
+      leaderBoostRanges,
       manualSlots,
       lockedCharacterIds,
       excludedCharacterIds,
@@ -179,6 +184,7 @@ export class AutoTeamBuilderService {
       })),
       favoriteShipIds: [...input.favoriteShipIds],
       leaderBoostFilters: [...input.leaderBoostFilters],
+      leaderBoostRanges: this.cloneLeaderBoostRanges(input.leaderBoostRanges),
       manualSlots: input.manualSlots.map((slot) => ({
         role: slot.role,
         characterIds: [...slot.characterIds],
@@ -1421,6 +1427,7 @@ export class AutoTeamBuilderService {
       favoriteShipsOnly: false,
       favoriteShipIds: [],
       leaderBoostFilters: this.normalizeLeaderBoostFilters(rosterInput.leaderBoostFilters),
+      leaderBoostRanges: this.normalizeLeaderBoostRanges(rosterInput.leaderBoostRanges),
       manualSlots: this.createExactManualSlots(
         captainCharacterId,
         friendCaptainCharacterId,
@@ -1564,9 +1571,45 @@ export class AutoTeamBuilderService {
       ),
     ];
 
-    return normalizedFilters.length > 0
-      ? normalizedFilters
-      : [...AUTO_BUILD_LEADER_BOOST_FILTERS];
+    return normalizedFilters.length > 0 ? normalizedFilters : [...AUTO_BUILD_LEADER_BOOST_FILTERS];
+  }
+
+  private normalizeLeaderBoostRanges(
+    ranges: AutoBuildConstraints['leaderBoostRanges'],
+  ): AutoBuildLeaderBoostRanges {
+    const normalizedRanges = createEmptyAutoBuildLeaderBoostRanges();
+
+    for (const filter of AUTO_BUILD_LEADER_BOOST_FILTERS) {
+      normalizedRanges[filter] = this.normalizeLeaderBoostRange(ranges?.[filter]);
+    }
+
+    return normalizedRanges;
+  }
+
+  private normalizeLeaderBoostRange(
+    range: Partial<AutoBuildLeaderBoostRange> | null | undefined,
+  ): AutoBuildLeaderBoostRange {
+    return {
+      min: this.normalizeLeaderBoostRangeBound(range?.min),
+      max: this.normalizeLeaderBoostRangeBound(range?.max),
+    };
+  }
+
+  private normalizeLeaderBoostRangeBound(value: unknown): number | null {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    const parsedValue = Number(value);
+
+    return Number.isFinite(parsedValue) && parsedValue >= 0 ? parsedValue : null;
+  }
+
+  private cloneLeaderBoostRanges(ranges: AutoBuildLeaderBoostRanges): AutoBuildLeaderBoostRanges {
+    return {
+      HP: { ...ranges.HP },
+      ATK: { ...ranges.ATK },
+    };
   }
 
   private normalizeManualSlots(

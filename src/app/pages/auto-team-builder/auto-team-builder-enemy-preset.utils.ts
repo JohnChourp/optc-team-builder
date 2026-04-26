@@ -1,11 +1,12 @@
 import {
   AUTO_BUILD_LEADER_BOOST_FILTERS,
   AUTO_TEAM_BUILDER_TYPES,
+  createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
   type AutoTeamBuilderType,
-} from "../../core/models/auto-team-builder.models";
-import { type SavedEnemy } from "../../core/models/optc.models";
-import { type AutoTeamSelectionImportState } from "./auto-team-builder-export.utils";
+} from '../../core/models/auto-team-builder.models';
+import { type SavedEnemy } from '../../core/models/optc.models';
+import { type AutoTeamSelectionImportState } from './auto-team-builder-export.utils';
 
 export function buildAutoTeamBuilderStateFromSavedEnemy(
   enemy: SavedEnemy,
@@ -35,6 +36,7 @@ export function buildAutoTeamBuilderStateFromSavedEnemy(
     allowAnyFriendCaptainAutoFill: false,
     favoriteShipsOnly: false,
     leaderBoostFilters: [...AUTO_BUILD_LEADER_BOOST_FILTERS],
+    leaderBoostRanges: createEmptyAutoBuildLeaderBoostRanges(),
     manualSlots: createEmptyAutoBuildManualSlots(),
     lockedCharacterIds: [],
     excludedCharacterIds: [],

@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
 import {
+  createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
   type AutoBuildManualSlotSelection,
   type AutoBuildProgressSnapshot,
@@ -123,6 +124,57 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
     page.onLeaderBoostFilterChange({ detail: { value: [] } } as CustomEvent<{ value: [] }>);
     expect(page.leaderBoostFilters()).toEqual(['HP', 'ATK']);
+  });
+
+  it('passes leader boost ranges to the builder and resets them', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.onLeaderBoostRangeChange('ATK', 'min', {
+      detail: { value: '5.25' },
+    } as CustomEvent<{ value: string }>);
+    page.onLeaderBoostRangeChange('ATK', 'max', {
+      detail: { value: '6' },
+    } as CustomEvent<{ value: string }>);
+    page.onLeaderBoostRangeChange('HP', 'min', {
+      detail: { value: '1.3' },
+    } as CustomEvent<{ value: string }>);
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.any(Array),
+      expect.objectContaining({
+        leaderBoostRanges: {
+          ATK: { min: 5.25, max: 6 },
+          HP: { min: 1.3, max: null },
+        },
+      }),
+      expect.any(Object),
+    );
+
+    await page.resetPage();
+    expect(page.leaderBoostRanges()).toEqual(createEmptyAutoBuildLeaderBoostRanges());
+  });
+
+  it('disables builds when a leader boost range minimum is greater than maximum', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    expect(page.buildDisabled()).toBe(false);
+
+    page.onLeaderBoostRangeChange('ATK', 'min', {
+      detail: { value: '6' },
+    } as CustomEvent<{ value: string }>);
+    page.onLeaderBoostRangeChange('ATK', 'max', {
+      detail: { value: '5' },
+    } as CustomEvent<{ value: string }>);
+
+    expect(page.hasInvalidLeaderBoostRanges()).toBe(true);
+    expect(page.buildDisabled()).toBe(true);
+    expect(page.leaderBoostRangeErrorLabel()).toBe(
+      'Leader boost minimum cannot be greater than maximum.',
+    );
   });
 
   it('keeps the build button label stable across selected filters', async () => {
@@ -2879,7 +2931,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 16,
+      schemaVersion: 17,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -2986,6 +3038,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       favoriteShipsOnly: false,
       favoriteShipCount: 0,
       leaderBoostFilters: ['HP', 'ATK'],
+      leaderBoostRanges: createEmptyAutoBuildLeaderBoostRanges(),
     });
     expect(payload.manualSelection.characters).toEqual([
       expect.objectContaining({
@@ -3029,6 +3082,41 @@ describe('AutoTeamBuilder preset export helpers', () => {
       id: 201,
       isLeader: true,
       leaderAssignment: 'dual',
+    });
+  });
+
+  it('exports leader boost ranges in schema 17 presets', () => {
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [],
+      enemyMechanics: [],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
+      requireUniqueBaseCharacterNames: false,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      leaderBoostRanges: {
+        ATK: { min: 5, max: 6 },
+        HP: { min: 1.25, max: 1.5 },
+      },
+      manualSlots: createManualSlots({
+        captain: [201],
+        friendCaptain: [201],
+      }),
+      lockedCharacterIds: [201],
+      lockedCharacters: [createCharacterRecord(201, 'Solo Leader')],
+      selectedLeaderIds: [201],
+      captainLeaderId: 201,
+      friendCaptainLeaderId: 201,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+
+    expect(payload.schemaVersion).toBe(17);
+    expect(payload.filters.leaderBoostRanges).toEqual({
+      ATK: { min: 5, max: 6 },
+      HP: { min: 1.25, max: 1.5 },
     });
   });
 
@@ -3221,6 +3309,47 @@ describe('AutoTeamBuilder preset import helpers', () => {
     ]);
   });
 
+  it('restores leader boost ranges from imported presets', () => {
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [],
+      enemyMechanics: [],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
+      requireUniqueBaseCharacterNames: false,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      leaderBoostRanges: {
+        ATK: { min: 5.25, max: 6 },
+        HP: { min: 1.3, max: null },
+      },
+      manualSlots: createManualSlots({
+        captain: [101],
+        friendCaptain: [101],
+      }),
+      lockedCharacterIds: [101],
+      lockedCharacters: [createCharacterRecord(101)],
+      selectedLeaderIds: [101],
+      captainLeaderId: 101,
+      friendCaptainLeaderId: 101,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+
+    const result = sanitizeAutoTeamSelectionImportPayload(payload, {
+      availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      availableClasses: ['Fighter', 'Slasher'],
+      abilityCatalogItems: [],
+      availableLockedCharacters: [createCharacterRecord(101)],
+    });
+
+    expect(result.state.leaderBoostRanges).toEqual({
+      ATK: { min: 5.25, max: 6 },
+      HP: { min: 1.3, max: null },
+    });
+  });
+
   it('defaults missing legacy preset character counts to 1', () => {
     const legacyPayload = {
       schemaVersion: 1,
@@ -3283,6 +3412,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
     expect(result.state.requireAllSlotsInLeaderSuperEffectScope).toBe(false);
     expect(result.state.allowAnyFriendCaptainAutoFill).toBe(false);
     expect(result.state.favoriteShipsOnly).toBe(false);
+    expect(result.state.leaderBoostRanges).toEqual(createEmptyAutoBuildLeaderBoostRanges());
     expect(result.warnings).toEqual([]);
   });
 
@@ -4186,6 +4316,8 @@ function createAutoBuildResult(
     allowAnyFriendCaptainAutoFill: false,
     favoriteShipsOnly: false,
     favoriteShipIds: [],
+    leaderBoostFilters: ['HP', 'ATK'],
+    leaderBoostRanges: createEmptyAutoBuildLeaderBoostRanges(),
     manualSlots: createManualSlots({
       captain: [101],
       friendCaptain: [102],
@@ -4220,6 +4352,11 @@ function createAutoBuildResult(
         conditionTags: [...mechanic.conditionTags],
       })),
       favoriteShipIds: [...input.favoriteShipIds],
+      leaderBoostFilters: [...input.leaderBoostFilters],
+      leaderBoostRanges: {
+        HP: { ...input.leaderBoostRanges.HP },
+        ATK: { ...input.leaderBoostRanges.ATK },
+      },
       manualSlots: input.manualSlots.map((slot) => ({
         role: slot.role,
         characterIds: [...slot.characterIds],

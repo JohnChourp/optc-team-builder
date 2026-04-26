@@ -3,30 +3,33 @@ import {
   AUTO_BUILD_MANUAL_SLOT_ROLES,
   AUTO_BUILD_MANUAL_SUB_SLOT_ROLES,
   type AutoBuildLeaderBoostFilter,
+  type AutoBuildLeaderBoostRange,
+  type AutoBuildLeaderBoostRanges,
   type AutoBuildResult,
   type AutoBuildManualSlotRole,
   type AutoBuildManualSlotSelection,
   type AutoTeamBuilderType,
+  createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
-} from "../../core/models/auto-team-builder.models";
+} from '../../core/models/auto-team-builder.models';
 import {
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityRequirement,
   type AutoBuildEnemyMechanicRequirement,
-} from "../../core/models/auto-team-builder-ability.models";
+} from '../../core/models/auto-team-builder-ability.models';
 import {
   type CharacterDetailRecord,
   type CharacterListItem,
   type ShipRecord,
-} from "../../core/models/optc.models";
+} from '../../core/models/optc.models';
 import {
   normalizeAbilityRequirementTurns,
   resolveNonNegativeInteger,
-} from "../../core/services/ability-requirement-draft.utils";
-import { normalizeEnemyMechanicRequirements } from "../../core/services/enemy-mechanic-draft.utils";
+} from '../../core/services/ability-requirement-draft.utils';
+import { normalizeEnemyMechanicRequirements } from '../../core/services/enemy-mechanic-draft.utils';
 
-type AutoTeamExportRole = AutoBuildResult["slots"][number]["role"];
-type AutoTeamExportLeaderAssignment = "captain" | "friendCaptain" | "dual" | null;
+type AutoTeamExportRole = AutoBuildResult['slots'][number]['role'];
+type AutoTeamExportLeaderAssignment = 'captain' | 'friendCaptain' | 'dual' | null;
 
 export interface AutoTeamExportSlot {
   slotIndex: number;
@@ -39,22 +42,22 @@ export interface AutoTeamExportSlot {
 
 export interface AutoTeamExportPayload {
   exportedAt: string;
-  source: "auto-team-builder";
-  requestedInput: AutoBuildResult["requestedInput"];
-  effectiveInput: AutoBuildResult["input"];
-  relaxation: AutoBuildResult["relaxation"];
-  coverage: AutoBuildResult["coverage"];
-  shipSelection: AutoBuildResult["shipSelection"];
+  source: 'auto-team-builder';
+  requestedInput: AutoBuildResult['requestedInput'];
+  effectiveInput: AutoBuildResult['input'];
+  relaxation: AutoBuildResult['relaxation'];
+  coverage: AutoBuildResult['coverage'];
+  shipSelection: AutoBuildResult['shipSelection'];
   team: AutoTeamExportSlot[];
 }
 
 export interface AutoTeamSelectionCharacterSummary {
   id: number;
   name: string;
-  type: CharacterListItem["type"];
-  primaryClass: CharacterListItem["primaryClass"];
-  secondaryClass: CharacterListItem["secondaryClass"];
-  imageUrl: CharacterListItem["imageUrl"];
+  type: CharacterListItem['type'];
+  primaryClass: CharacterListItem['primaryClass'];
+  secondaryClass: CharacterListItem['secondaryClass'];
+  imageUrl: CharacterListItem['imageUrl'];
   isLeader: boolean;
   leaderAssignment: AutoTeamExportLeaderAssignment;
 }
@@ -67,14 +70,14 @@ export interface AutoTeamSelectionShipSummary {
 }
 
 export interface AutoTeamSelectionExportPayload {
-  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16;
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17;
   exportedAt: string;
-  source: "auto-team-builder";
-  exportType: "preset";
+  source: 'auto-team-builder';
+  exportType: 'preset';
   filters: {
-    selectedTypes: AutoBuildResult["input"]["types"];
-    selectedClasses: AutoBuildResult["input"]["selectedClasses"];
-    requiredAbilities: AutoBuildResult["input"]["requiredAbilities"];
+    selectedTypes: AutoBuildResult['input']['types'];
+    selectedClasses: AutoBuildResult['input']['selectedClasses'];
+    requiredAbilities: AutoBuildResult['input']['requiredAbilities'];
     enemyMechanics?: AutoBuildEnemyMechanicRequirement[];
     requireAllSelectedTypesInTeam: boolean;
     requireAllSelectedClassesPerCharacter: boolean;
@@ -86,6 +89,7 @@ export interface AutoTeamSelectionExportPayload {
     favoriteShipsOnly?: boolean;
     favoriteShipCount?: number;
     leaderBoostFilters?: AutoBuildLeaderBoostFilter[];
+    leaderBoostRanges?: AutoBuildLeaderBoostRanges;
   };
   manualSelection: {
     manualSlots: AutoBuildManualSlotSelection[];
@@ -116,6 +120,7 @@ export interface AutoTeamSelectionImportState {
   allowAnyFriendCaptainAutoFill: boolean;
   favoriteShipsOnly: boolean;
   leaderBoostFilters: AutoBuildLeaderBoostFilter[];
+  leaderBoostRanges: AutoBuildLeaderBoostRanges;
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   excludedCharacterIds: number[];
@@ -141,7 +146,7 @@ export class AutoTeamSelectionImportError extends Error {
     public readonly parameters?: Record<string, string | number>,
   ) {
     super(key);
-    this.name = "AutoTeamSelectionImportError";
+    this.name = 'AutoTeamSelectionImportError';
   }
 }
 
@@ -154,10 +159,10 @@ interface SanitizeAutoTeamSelectionImportOptions {
 }
 
 interface BuildAutoTeamSelectionExportPayloadOptions {
-  selectedTypes: AutoBuildResult["input"]["types"];
-  selectedClasses: AutoBuildResult["input"]["selectedClasses"];
-  requiredAbilities: AutoBuildResult["input"]["requiredAbilities"];
-  enemyMechanics: AutoBuildResult["input"]["enemyMechanics"];
+  selectedTypes: AutoBuildResult['input']['types'];
+  selectedClasses: AutoBuildResult['input']['selectedClasses'];
+  requiredAbilities: AutoBuildResult['input']['requiredAbilities'];
+  enemyMechanics: AutoBuildResult['input']['enemyMechanics'];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
   requireAllSlotsInLeaderSuperEffectScope: boolean;
@@ -168,6 +173,9 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   favoriteShipsOnly?: boolean;
   favoriteShipCount?: number;
   leaderBoostFilters?: AutoBuildLeaderBoostFilter[];
+  leaderBoostRanges?: Partial<
+    Record<AutoBuildLeaderBoostFilter, Partial<AutoBuildLeaderBoostRange> | null>
+  >;
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   lockedCharacters: CharacterListItem[];
@@ -199,26 +207,26 @@ function resolveLeaderAssignment(
   const isFriendLeader = friendCaptainLeaderId === characterId;
 
   if (isCaptainLeader && isFriendLeader) {
-    return "dual";
+    return 'dual';
   }
 
   if (isCaptainLeader) {
-    return "captain";
+    return 'captain';
   }
 
   if (isFriendLeader) {
-    return "friendCaptain";
+    return 'friendCaptain';
   }
 
   return null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
 function normalizePositiveInteger(value: unknown): number | null {
-  if (typeof value === "number" && Number.isInteger(value) && value > 0) {
+  if (typeof value === 'number' && Number.isInteger(value) && value > 0) {
     return value;
   }
 
@@ -254,9 +262,61 @@ function normalizeLeaderBoostFilters(value: unknown): AutoBuildLeaderBoostFilter
     ),
   ];
 
-  return normalizedFilters.length > 0
-    ? normalizedFilters
-    : [...AUTO_BUILD_LEADER_BOOST_FILTERS];
+  return normalizedFilters.length > 0 ? normalizedFilters : [...AUTO_BUILD_LEADER_BOOST_FILTERS];
+}
+
+function normalizeLeaderBoostRanges(value: unknown): AutoBuildLeaderBoostRanges {
+  const normalizedRanges = createEmptyAutoBuildLeaderBoostRanges();
+  const source = isRecord(value) ? value : {};
+
+  for (const filter of AUTO_BUILD_LEADER_BOOST_FILTERS) {
+    normalizedRanges[filter] = normalizeLeaderBoostRange(source[filter]);
+  }
+
+  return normalizedRanges;
+}
+
+function normalizeLeaderBoostRange(value: unknown): AutoBuildLeaderBoostRange {
+  const source = isRecord(value) ? value : {};
+
+  return {
+    min: normalizeLeaderBoostRangeBound(source['min']),
+    max: normalizeLeaderBoostRangeBound(source['max']),
+  };
+}
+
+function normalizeLeaderBoostRangeBound(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const parsedValue = Number(value);
+
+  return Number.isFinite(parsedValue) && parsedValue >= 0 ? parsedValue : null;
+}
+
+function isLeaderBoostRangesShape(value: unknown): boolean {
+  if (value === undefined) {
+    return true;
+  }
+
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return AUTO_BUILD_LEADER_BOOST_FILTERS.every((filter) => {
+    const range = value[filter];
+
+    if (range === undefined) {
+      return true;
+    }
+
+    return (
+      isRecord(range) &&
+      (range['min'] === undefined || range['min'] === null || typeof range['min'] === 'number') &&
+      (range['max'] === undefined || range['max'] === null || typeof range['max'] === 'number')
+    );
+  });
 }
 
 function buildLegacyManualSlotsFromSelection(
@@ -265,11 +325,13 @@ function buildLegacyManualSlotsFromSelection(
   friendCaptainLeaderId: number | null,
 ): AutoBuildManualSlotSelection[] {
   const manualSlots = createEmptyAutoBuildManualSlots();
-  const captainSlot = manualSlots.find((slot) => slot.role === "captain");
-  const friendCaptainSlot = manualSlots.find((slot) => slot.role === "friendCaptain");
-  const leaderIds = new Set([captainLeaderId, friendCaptainLeaderId].filter(
-    (characterId): characterId is number => characterId !== null,
-  ));
+  const captainSlot = manualSlots.find((slot) => slot.role === 'captain');
+  const friendCaptainSlot = manualSlots.find((slot) => slot.role === 'friendCaptain');
+  const leaderIds = new Set(
+    [captainLeaderId, friendCaptainLeaderId].filter(
+      (characterId): characterId is number => characterId !== null,
+    ),
+  );
 
   if (captainSlot && captainLeaderId) {
     captainSlot.characterIds = [captainLeaderId];
@@ -300,10 +362,9 @@ function deriveLegacyManualSelectionFromManualSlots(manualSlots: AutoBuildManual
   friendCaptainLeaderId: number | null;
 } {
   const captainLeaderId =
-    manualSlots.find((slot) => slot.role === "captain")?.characterIds[0] ?? null;
+    manualSlots.find((slot) => slot.role === 'captain')?.characterIds[0] ?? null;
   const friendCaptainLeaderId =
-    manualSlots.find((slot) => slot.role === "friendCaptain")?.characterIds[0] ??
-    captainLeaderId;
+    manualSlots.find((slot) => slot.role === 'friendCaptain')?.characterIds[0] ?? captainLeaderId;
   const selectedLeaderIds = [
     ...new Set(
       [captainLeaderId, friendCaptainLeaderId].filter(
@@ -330,19 +391,22 @@ function sanitizeManualSlots(
   let duplicateCount = 0;
   let unknownCount = 0;
 
-  for (const rawSlot of (Array.isArray(value) ? value : [])) {
+  for (const rawSlot of Array.isArray(value) ? value : []) {
     if (!isRecord(rawSlot)) {
       continue;
     }
 
-    const role = rawSlot["role"];
+    const role = rawSlot['role'];
 
-    if (typeof role !== "string" || !AUTO_BUILD_MANUAL_SLOT_ROLES.includes(role as AutoBuildManualSlotRole)) {
+    if (
+      typeof role !== 'string' ||
+      !AUTO_BUILD_MANUAL_SLOT_ROLES.includes(role as AutoBuildManualSlotRole)
+    ) {
       continue;
     }
 
     const normalizedIds = collectPositiveIntegers(
-      Array.isArray(rawSlot["characterIds"]) ? rawSlot["characterIds"] : [],
+      Array.isArray(rawSlot['characterIds']) ? rawSlot['characterIds'] : [],
     );
     const currentIds = roleMap.get(role as AutoBuildManualSlotRole) ?? [];
     roleMap.set(role as AutoBuildManualSlotRole, [...currentIds, ...normalizedIds]);
@@ -354,7 +418,7 @@ function sanitizeManualSlots(
   for (const slot of manualSlots) {
     const nextIds: number[] = [];
 
-    for (const characterId of (roleMap.get(slot.role) ?? [])) {
+    for (const characterId of roleMap.get(slot.role) ?? []) {
       if (!availableLockedCharacterMap.has(characterId)) {
         unknownCount += 1;
         continue;
@@ -365,7 +429,11 @@ function sanitizeManualSlots(
           slot.role as (typeof AUTO_BUILD_MANUAL_SUB_SLOT_ROLES)[number],
         )
       ) {
-        if (usedLeaderIds.has(characterId) || usedSubIds.has(characterId) || nextIds.includes(characterId)) {
+        if (
+          usedLeaderIds.has(characterId) ||
+          usedSubIds.has(characterId) ||
+          nextIds.includes(characterId)
+        ) {
           duplicateCount += 1;
           continue;
         }
@@ -420,153 +488,154 @@ export function parseAutoTeamSelectionImportPayload(
   try {
     parsedPayload = JSON.parse(rawContent) as unknown;
   } catch {
-    throw new AutoTeamSelectionImportError("preset.errors.invalidJson");
+    throw new AutoTeamSelectionImportError('preset.errors.invalidJson');
   }
 
   if (!isRecord(parsedPayload)) {
-    throw new AutoTeamSelectionImportError("preset.errors.invalidPresetJson");
+    throw new AutoTeamSelectionImportError('preset.errors.invalidPresetJson');
   }
 
   if (
-    (parsedPayload["schemaVersion"] !== 1 &&
-      parsedPayload["schemaVersion"] !== 2 &&
-      parsedPayload["schemaVersion"] !== 3 &&
-      parsedPayload["schemaVersion"] !== 4 &&
-      parsedPayload["schemaVersion"] !== 5 &&
-      parsedPayload["schemaVersion"] !== 6 &&
-      parsedPayload["schemaVersion"] !== 7 &&
-      parsedPayload["schemaVersion"] !== 8 &&
-      parsedPayload["schemaVersion"] !== 9 &&
-      parsedPayload["schemaVersion"] !== 10 &&
-      parsedPayload["schemaVersion"] !== 11 &&
-      parsedPayload["schemaVersion"] !== 12 &&
-      parsedPayload["schemaVersion"] !== 13 &&
-      parsedPayload["schemaVersion"] !== 14 &&
-      parsedPayload["schemaVersion"] !== 15 &&
-      parsedPayload["schemaVersion"] !== 16) ||
-    parsedPayload["source"] !== "auto-team-builder" ||
-    parsedPayload["exportType"] !== "preset"
+    (parsedPayload['schemaVersion'] !== 1 &&
+      parsedPayload['schemaVersion'] !== 2 &&
+      parsedPayload['schemaVersion'] !== 3 &&
+      parsedPayload['schemaVersion'] !== 4 &&
+      parsedPayload['schemaVersion'] !== 5 &&
+      parsedPayload['schemaVersion'] !== 6 &&
+      parsedPayload['schemaVersion'] !== 7 &&
+      parsedPayload['schemaVersion'] !== 8 &&
+      parsedPayload['schemaVersion'] !== 9 &&
+      parsedPayload['schemaVersion'] !== 10 &&
+      parsedPayload['schemaVersion'] !== 11 &&
+      parsedPayload['schemaVersion'] !== 12 &&
+      parsedPayload['schemaVersion'] !== 13 &&
+      parsedPayload['schemaVersion'] !== 14 &&
+      parsedPayload['schemaVersion'] !== 15 &&
+      parsedPayload['schemaVersion'] !== 16 &&
+      parsedPayload['schemaVersion'] !== 17) ||
+    parsedPayload['source'] !== 'auto-team-builder' ||
+    parsedPayload['exportType'] !== 'preset'
   ) {
-    throw new AutoTeamSelectionImportError("preset.errors.unsupportedPreset");
+    throw new AutoTeamSelectionImportError('preset.errors.unsupportedPreset');
   }
 
-  const filters = parsedPayload["filters"];
-  const manualSelection = parsedPayload["manualSelection"];
+  const filters = parsedPayload['filters'];
+  const manualSelection = parsedPayload['manualSelection'];
 
   if (!isRecord(filters) || !isRecord(manualSelection)) {
-    throw new AutoTeamSelectionImportError("preset.errors.missingSections");
+    throw new AutoTeamSelectionImportError('preset.errors.missingSections');
   }
 
   if (
-    !Array.isArray(filters["selectedTypes"]) ||
-    !filters["selectedTypes"].every((type) => typeof type === "string") ||
-    !Array.isArray(filters["selectedClasses"]) ||
-    !filters["selectedClasses"].every((characterClass) => typeof characterClass === "string") ||
-    !Array.isArray(filters["requiredAbilities"]) ||
-    !filters["requiredAbilities"].every((requirement) => isRecord(requirement)) ||
+    !Array.isArray(filters['selectedTypes']) ||
+    !filters['selectedTypes'].every((type) => typeof type === 'string') ||
+    !Array.isArray(filters['selectedClasses']) ||
+    !filters['selectedClasses'].every((characterClass) => typeof characterClass === 'string') ||
+    !Array.isArray(filters['requiredAbilities']) ||
+    !filters['requiredAbilities'].every((requirement) => isRecord(requirement)) ||
     !(
-      filters["enemyMechanics"] === undefined ||
-      (
-        Array.isArray(filters["enemyMechanics"]) &&
-        filters["enemyMechanics"].every((mechanic) => isRecord(mechanic))
-      )
+      filters['enemyMechanics'] === undefined ||
+      (Array.isArray(filters['enemyMechanics']) &&
+        filters['enemyMechanics'].every((mechanic) => isRecord(mechanic)))
     ) ||
-    typeof filters["requireAllSelectedTypesInTeam"] !== "boolean" ||
-    typeof filters["requireAllSelectedClassesPerCharacter"] !== "boolean" ||
+    typeof filters['requireAllSelectedTypesInTeam'] !== 'boolean' ||
+    typeof filters['requireAllSelectedClassesPerCharacter'] !== 'boolean' ||
     !(
-      filters["requireAllSlotsInLeaderSuperEffectScope"] === undefined ||
-      typeof filters["requireAllSlotsInLeaderSuperEffectScope"] === "boolean"
+      filters['requireAllSlotsInLeaderSuperEffectScope'] === undefined ||
+      typeof filters['requireAllSlotsInLeaderSuperEffectScope'] === 'boolean'
     ) ||
     !(
-      filters["requireLeadersWithoutSuperEffects"] === undefined ||
-      typeof filters["requireLeadersWithoutSuperEffects"] === "boolean"
+      filters['requireLeadersWithoutSuperEffects'] === undefined ||
+      typeof filters['requireLeadersWithoutSuperEffects'] === 'boolean'
     ) ||
     !(
-      filters["requireAllSpecialsSupportTeam"] === undefined ||
-      typeof filters["requireAllSpecialsSupportTeam"] === "boolean"
+      filters['requireAllSpecialsSupportTeam'] === undefined ||
+      typeof filters['requireAllSpecialsSupportTeam'] === 'boolean'
     ) ||
     !(
-      filters["requireLeaderSuperSpecialCriteria"] === undefined ||
-      typeof filters["requireLeaderSuperSpecialCriteria"] === "boolean"
+      filters['requireLeaderSuperSpecialCriteria'] === undefined ||
+      typeof filters['requireLeaderSuperSpecialCriteria'] === 'boolean'
     ) ||
     !(
-      filters["requireUniqueBaseCharacterNames"] === undefined ||
-      typeof filters["requireUniqueBaseCharacterNames"] === "boolean"
+      filters['requireUniqueBaseCharacterNames'] === undefined ||
+      typeof filters['requireUniqueBaseCharacterNames'] === 'boolean'
     ) ||
     !(
-      filters["requireSameCaptainAndFriendCaptain"] === undefined ||
-      typeof filters["requireSameCaptainAndFriendCaptain"] === "boolean"
+      filters['requireSameCaptainAndFriendCaptain'] === undefined ||
+      typeof filters['requireSameCaptainAndFriendCaptain'] === 'boolean'
     ) ||
-    typeof filters["favoritesOnly"] !== "boolean" ||
+    typeof filters['favoritesOnly'] !== 'boolean' ||
     !(
-      filters["allowAnyFriendCaptainAutoFill"] === undefined ||
-      typeof filters["allowAnyFriendCaptainAutoFill"] === "boolean"
+      filters['allowAnyFriendCaptainAutoFill'] === undefined ||
+      typeof filters['allowAnyFriendCaptainAutoFill'] === 'boolean'
     ) ||
-    typeof filters["favoriteCount"] !== "number" ||
+    typeof filters['favoriteCount'] !== 'number' ||
     !(
-      filters["favoriteShipsOnly"] === undefined ||
-      typeof filters["favoriteShipsOnly"] === "boolean"
-    ) ||
-    !(
-      filters["favoriteShipCount"] === undefined ||
-      typeof filters["favoriteShipCount"] === "number"
+      filters['favoriteShipsOnly'] === undefined ||
+      typeof filters['favoriteShipsOnly'] === 'boolean'
     ) ||
     !(
-      filters["leaderBoostFilters"] === undefined ||
-      (
-        Array.isArray(filters["leaderBoostFilters"]) &&
-        filters["leaderBoostFilters"].every((filter) => typeof filter === "string")
-      )
-    ) ||
-    !Array.isArray(manualSelection["lockedCharacterIds"]) ||
-    !(
-      manualSelection["excludedCharacterIds"] === undefined ||
-      Array.isArray(manualSelection["excludedCharacterIds"])
-    ) ||
-    !Array.isArray(manualSelection["selectedLeaderIds"]) ||
-    !Array.isArray(manualSelection["characters"]) ||
-    !(
-      manualSelection["excludedShipIds"] === undefined ||
-      Array.isArray(manualSelection["excludedShipIds"])
+      filters['favoriteShipCount'] === undefined || typeof filters['favoriteShipCount'] === 'number'
     ) ||
     !(
-      manualSelection["excludedCharacters"] === undefined ||
-      Array.isArray(manualSelection["excludedCharacters"])
+      filters['leaderBoostFilters'] === undefined ||
+      (Array.isArray(filters['leaderBoostFilters']) &&
+        filters['leaderBoostFilters'].every((filter) => typeof filter === 'string'))
+    ) ||
+    !isLeaderBoostRangesShape(filters['leaderBoostRanges']) ||
+    !Array.isArray(manualSelection['lockedCharacterIds']) ||
+    !(
+      manualSelection['excludedCharacterIds'] === undefined ||
+      Array.isArray(manualSelection['excludedCharacterIds'])
+    ) ||
+    !Array.isArray(manualSelection['selectedLeaderIds']) ||
+    !Array.isArray(manualSelection['characters']) ||
+    !(
+      manualSelection['excludedShipIds'] === undefined ||
+      Array.isArray(manualSelection['excludedShipIds'])
     ) ||
     !(
-      manualSelection["excludedShips"] === undefined ||
-      Array.isArray(manualSelection["excludedShips"])
+      manualSelection['excludedCharacters'] === undefined ||
+      Array.isArray(manualSelection['excludedCharacters'])
+    ) ||
+    !(
+      manualSelection['excludedShips'] === undefined ||
+      Array.isArray(manualSelection['excludedShips'])
     )
   ) {
-    throw new AutoTeamSelectionImportError("preset.errors.schemaMismatch");
+    throw new AutoTeamSelectionImportError('preset.errors.schemaMismatch');
   }
 
   if (
-    !manualSelection["lockedCharacterIds"].every((characterId) => typeof characterId === "number") ||
-    !(
-      manualSelection["excludedCharacterIds"] === undefined ||
-      manualSelection["excludedCharacterIds"].every((characterId) => typeof characterId === "number")
-    ) ||
-    !manualSelection["selectedLeaderIds"].every((characterId) => typeof characterId === "number") ||
-    !(
-      manualSelection["captainLeaderId"] === null ||
-      typeof manualSelection["captainLeaderId"] === "number"
+    !manualSelection['lockedCharacterIds'].every(
+      (characterId) => typeof characterId === 'number',
     ) ||
     !(
-      manualSelection["friendCaptainLeaderId"] === null ||
-      typeof manualSelection["friendCaptainLeaderId"] === "number"
+      manualSelection['excludedCharacterIds'] === undefined ||
+      manualSelection['excludedCharacterIds'].every(
+        (characterId) => typeof characterId === 'number',
+      )
+    ) ||
+    !manualSelection['selectedLeaderIds'].every((characterId) => typeof characterId === 'number') ||
+    !(
+      manualSelection['captainLeaderId'] === null ||
+      typeof manualSelection['captainLeaderId'] === 'number'
     ) ||
     !(
-      manualSelection["manualShipId"] === undefined ||
-      manualSelection["manualShipId"] === null ||
-      typeof manualSelection["manualShipId"] === "number"
+      manualSelection['friendCaptainLeaderId'] === null ||
+      typeof manualSelection['friendCaptainLeaderId'] === 'number'
     ) ||
     !(
-      manualSelection["excludedShipIds"] === undefined ||
-      manualSelection["excludedShipIds"].every((shipId) => typeof shipId === "number")
+      manualSelection['manualShipId'] === undefined ||
+      manualSelection['manualShipId'] === null ||
+      typeof manualSelection['manualShipId'] === 'number'
+    ) ||
+    !(
+      manualSelection['excludedShipIds'] === undefined ||
+      manualSelection['excludedShipIds'].every((shipId) => typeof shipId === 'number')
     )
   ) {
-    throw new AutoTeamSelectionImportError("preset.errors.schemaMismatch");
+    throw new AutoTeamSelectionImportError('preset.errors.schemaMismatch');
   }
 
   return parsedPayload as unknown as AutoTeamSelectionExportPayload;
@@ -594,7 +663,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
     availableTypesSet.has(type as AutoTeamBuilderType),
   );
   const typeWarning = buildWarning(
-    "preset.warnings.unavailableTypes",
+    'preset.warnings.unavailableTypes',
     rawSelectedTypes.length - selectedTypes.length,
   );
 
@@ -602,13 +671,14 @@ export function sanitizeAutoTeamSelectionImportPayload(
     warnings.push(typeWarning);
   }
 
-  const rawSelectedClasses = [...new Set(payload.filters.selectedClasses.map((characterClass) => characterClass.trim()))]
-    .filter((characterClass) => characterClass.length > 0);
+  const rawSelectedClasses = [
+    ...new Set(payload.filters.selectedClasses.map((characterClass) => characterClass.trim())),
+  ].filter((characterClass) => characterClass.length > 0);
   const selectedClasses = rawSelectedClasses.filter((characterClass) =>
     availableClassesSet.has(characterClass),
   );
   const classWarning = buildWarning(
-    "preset.warnings.unavailableClasses",
+    'preset.warnings.unavailableClasses',
     rawSelectedClasses.length - selectedClasses.length,
   );
 
@@ -624,9 +694,8 @@ export function sanitizeAutoTeamSelectionImportPayload(
   );
 
   for (const rawRequirement of payload.filters.requiredAbilities) {
-    const abilityKey = typeof rawRequirement.abilityKey === "string"
-      ? rawRequirement.abilityKey.trim()
-      : "";
+    const abilityKey =
+      typeof rawRequirement.abilityKey === 'string' ? rawRequirement.abilityKey.trim() : '';
     const abilityCatalogItem = abilityCatalogMap.get(abilityKey);
 
     if (!abilityCatalogItem) {
@@ -635,20 +704,26 @@ export function sanitizeAutoTeamSelectionImportPayload(
     }
 
     const rawMinTurns = resolveNonNegativeInteger(
-      typeof rawRequirement.minTurns === "number" || typeof rawRequirement.minTurns === "string"
+      typeof rawRequirement.minTurns === 'number' || typeof rawRequirement.minTurns === 'string'
         ? rawRequirement.minTurns
         : null,
     );
     const minTurns = abilityCatalogItem.supportsTurns
       ? normalizeAbilityRequirementTurns(rawRequirement.minTurns)
       : null;
-    const rawRequiredCharacterCount = normalizePositiveInteger(rawRequirement.requiredCharacterCount);
+    const rawRequiredCharacterCount = normalizePositiveInteger(
+      rawRequirement.requiredCharacterCount,
+    );
     const requiredCharacterCount = rawRequiredCharacterCount ?? 1;
     const rawSlotTokens = Array.isArray(rawRequirement.slotTokens)
-      ? [...new Set(rawRequirement.slotTokens
-          .filter((token): token is string => typeof token === "string")
-          .map((token) => token.trim().toUpperCase())
-          .filter((token) => token.length > 0))]
+      ? [
+          ...new Set(
+            rawRequirement.slotTokens
+              .filter((token): token is string => typeof token === 'string')
+              .map((token) => token.trim().toUpperCase())
+              .filter((token) => token.length > 0),
+          ),
+        ]
       : [];
     const slotTokens = abilityCatalogItem.supportsSlotTokens
       ? rawSlotTokens.filter((token) => abilityCatalogItem.availableSlotTokens.includes(token))
@@ -656,24 +731,20 @@ export function sanitizeAutoTeamSelectionImportPayload(
 
     if (
       rawSlotTokens.length !== slotTokens.length ||
-      (
-        abilityCatalogItem.supportsTurns &&
+      (abilityCatalogItem.supportsTurns &&
         rawRequirement.minTurns !== null &&
         rawRequirement.minTurns !== undefined &&
-        rawMinTurns === null
-      ) ||
+        rawMinTurns === null) ||
       (!abilityCatalogItem.supportsTurns && rawRequirement.minTurns !== null) ||
       (!abilityCatalogItem.supportsSlotTokens && rawSlotTokens.length > 0) ||
-      (
-        rawRequirement.requiredCharacterCount !== undefined &&
+      (rawRequirement.requiredCharacterCount !== undefined &&
         rawRequirement.requiredCharacterCount !== null &&
-        rawRequiredCharacterCount === null
-      )
+        rawRequiredCharacterCount === null)
     ) {
       adjustedAbilityCount += 1;
     }
 
-    const identity = `${abilityKey}|${minTurns ?? "none"}|${slotTokens.join(",")}`;
+    const identity = `${abilityKey}|${minTurns ?? 'none'}|${slotTokens.join(',')}`;
     const existingRequirement = requiredAbilityMap.get(identity);
 
     if (existingRequirement) {
@@ -694,7 +765,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
   const requiredAbilities = [...requiredAbilityMap.values()];
 
   const invalidAbilityWarning = buildWarning(
-    "preset.warnings.unsupportedAbilities",
+    'preset.warnings.unsupportedAbilities',
     invalidAbilityCount,
   );
 
@@ -703,7 +774,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
   }
 
   const adjustedAbilityWarning = buildWarning(
-    "preset.warnings.adjustedAbilities",
+    'preset.warnings.adjustedAbilities',
     adjustedAbilityCount,
   );
 
@@ -712,7 +783,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
   }
 
   const rawManualSlots = sanitizeManualSlots(
-    payload.manualSelection["manualSlots"],
+    payload.manualSelection['manualSlots'],
     availableLockedCharacterMap,
   );
   let manualSlots = rawManualSlots.manualSlots;
@@ -720,7 +791,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
 
   if (hasManualSlots) {
     const missingManualSlotWarning = buildWarning(
-      "preset.warnings.missingLockedCharacters",
+      'preset.warnings.missingLockedCharacters',
       rawManualSlots.unknownCount,
     );
 
@@ -729,7 +800,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
     }
 
     const duplicateManualSlotWarning = buildWarning(
-      "preset.warnings.invalidLeaders",
+      'preset.warnings.invalidLeaders',
       rawManualSlots.duplicateCount,
     );
 
@@ -737,7 +808,9 @@ export function sanitizeAutoTeamSelectionImportPayload(
       warnings.push(duplicateManualSlotWarning);
     }
   } else {
-    const rawLockedCharacterIds = collectPositiveIntegers(payload.manualSelection.lockedCharacterIds);
+    const rawLockedCharacterIds = collectPositiveIntegers(
+      payload.manualSelection.lockedCharacterIds,
+    );
     const lockedCharacterIds = rawLockedCharacterIds.filter((characterId) =>
       availableLockedCharacterMap.has(characterId),
     );
@@ -746,7 +819,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
     ).length;
 
     const unknownLockedWarning = buildWarning(
-      "preset.warnings.missingLockedCharacters",
+      'preset.warnings.missingLockedCharacters',
       unknownLockedCount,
     );
 
@@ -760,10 +833,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
       .filter((characterId) => lockedCharacterIdSet.has(characterId))
       .slice(0, 2);
     const droppedLeaderCount = rawLeaderIds.length - selectedLeaderIds.length;
-    const droppedLeaderWarning = buildWarning(
-      "preset.warnings.invalidLeaders",
-      droppedLeaderCount,
-    );
+    const droppedLeaderWarning = buildWarning('preset.warnings.invalidLeaders', droppedLeaderCount);
 
     if (droppedLeaderWarning) {
       warnings.push(droppedLeaderWarning);
@@ -797,7 +867,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
       (characterId) => !selectedLeaderIds.includes(characterId),
     ).length;
     const unmappedLegacyLockedWarning = buildWarning(
-      "preset.warnings.lockedLimitExceeded",
+      'preset.warnings.lockedLimitExceeded',
       Math.max(0, legacySubCount - AUTO_BUILD_MANUAL_SUB_SLOT_ROLES.length),
     );
 
@@ -820,7 +890,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
 
   if (normalizedManualShipId && !availableShipMap.has(normalizedManualShipId)) {
     warnings.push({
-      key: "preset.warnings.missingManualShip",
+      key: 'preset.warnings.missingManualShip',
       params: { count: 1 },
     });
   }
@@ -836,13 +906,14 @@ export function sanitizeAutoTeamSelectionImportPayload(
   const excludedCharacterConflictSet = new Set(derivedManualSelection.lockedCharacterIds);
   const excludedCharacterIds = rawExcludedCharacterIds.filter(
     (characterId) =>
-      availableLockedCharacterMap.has(characterId) && !excludedCharacterConflictSet.has(characterId),
+      availableLockedCharacterMap.has(characterId) &&
+      !excludedCharacterConflictSet.has(characterId),
   );
   const conflictingExcludedCharacterCount = rawExcludedCharacterIds.filter((characterId) =>
     excludedCharacterConflictSet.has(characterId),
   ).length;
   const missingExcludedCharacterWarning = buildWarning(
-    "preset.warnings.missingExcludedCharacters",
+    'preset.warnings.missingExcludedCharacters',
     missingExcludedCharacterCount,
   );
 
@@ -851,7 +922,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
   }
 
   const conflictingExcludedCharacterWarning = buildWarning(
-    "preset.warnings.conflictingExcludedCharacters",
+    'preset.warnings.conflictingExcludedCharacters',
     conflictingExcludedCharacterCount,
   );
 
@@ -860,17 +931,22 @@ export function sanitizeAutoTeamSelectionImportPayload(
   }
 
   const rawExcludedShipIds = collectPositiveIntegers(
-    Array.isArray(payload.manualSelection.excludedShipIds) ? payload.manualSelection.excludedShipIds : [],
+    Array.isArray(payload.manualSelection.excludedShipIds)
+      ? payload.manualSelection.excludedShipIds
+      : [],
   );
-  const missingExcludedShipCount = rawExcludedShipIds.filter((shipId) => !availableShipMap.has(shipId))
-    .length;
+  const missingExcludedShipCount = rawExcludedShipIds.filter(
+    (shipId) => !availableShipMap.has(shipId),
+  ).length;
   const excludedShipIds = rawExcludedShipIds.filter(
     (shipId) => availableShipMap.has(shipId) && shipId !== manualShipId,
   );
   const conflictingExcludedShipCount =
-    manualShipId === null ? 0 : rawExcludedShipIds.filter((shipId) => shipId === manualShipId).length;
+    manualShipId === null
+      ? 0
+      : rawExcludedShipIds.filter((shipId) => shipId === manualShipId).length;
   const missingExcludedShipWarning = buildWarning(
-    "preset.warnings.missingExcludedShips",
+    'preset.warnings.missingExcludedShips',
     missingExcludedShipCount,
   );
 
@@ -879,7 +955,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
   }
 
   const conflictingExcludedShipWarning = buildWarning(
-    "preset.warnings.conflictingExcludedShips",
+    'preset.warnings.conflictingExcludedShips',
     conflictingExcludedShipCount,
   );
 
@@ -893,6 +969,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
       .requireLeadersWithoutSuperEffects === true,
   );
   const leaderBoostFilters = normalizeLeaderBoostFilters(payload.filters.leaderBoostFilters);
+  const leaderBoostRanges = normalizeLeaderBoostRanges(payload.filters.leaderBoostRanges);
 
   return {
     state: {
@@ -908,6 +985,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
       allowAnyFriendCaptainAutoFill: payload.filters.allowAnyFriendCaptainAutoFill === true,
       favoriteShipsOnly: payload.filters.favoriteShipsOnly === true,
       leaderBoostFilters,
+      leaderBoostRanges,
       manualSlots: normalizedManualSlots,
       lockedCharacterIds: derivedManualSelection.lockedCharacterIds,
       excludedCharacterIds,
@@ -931,7 +1009,7 @@ export function buildAutoTeamExportPayload(
 
   return {
     exportedAt,
-    source: "auto-team-builder",
+    source: 'auto-team-builder',
     requestedInput: result.requestedInput,
     effectiveInput: result.input,
     relaxation: result.relaxation,
@@ -977,6 +1055,7 @@ export function buildAutoTeamSelectionExportPayload({
   favoriteShipsOnly = false,
   favoriteShipCount = 0,
   leaderBoostFilters = [...AUTO_BUILD_LEADER_BOOST_FILTERS],
+  leaderBoostRanges = createEmptyAutoBuildLeaderBoostRanges(),
   manualSlots,
   lockedCharacterIds,
   lockedCharacters,
@@ -997,10 +1076,10 @@ export function buildAutoTeamSelectionExportPayload({
   }));
 
   return {
-    schemaVersion: 16,
+    schemaVersion: 17,
     exportedAt,
-    source: "auto-team-builder",
-    exportType: "preset",
+    source: 'auto-team-builder',
+    exportType: 'preset',
     filters: {
       selectedTypes: [...selectedTypes],
       selectedClasses: [...selectedClasses],
@@ -1024,6 +1103,7 @@ export function buildAutoTeamSelectionExportPayload({
       favoriteShipsOnly,
       favoriteShipCount,
       leaderBoostFilters: normalizeLeaderBoostFilters(leaderBoostFilters),
+      leaderBoostRanges: normalizeLeaderBoostRanges(leaderBoostRanges),
     },
     manualSelection: {
       manualSlots: normalizedManualSlots,
@@ -1081,7 +1161,7 @@ export function buildAutoTeamSelectionExportPayload({
 }
 
 function buildSafeTimestamp(exportedAt: string): string {
-  return exportedAt.replaceAll(/[^a-zA-Z0-9_-]+/g, "-");
+  return exportedAt.replaceAll(/[^a-zA-Z0-9_-]+/g, '-');
 }
 
 export function buildAutoTeamExportFilename(exportedAt: string): string {
@@ -1100,7 +1180,7 @@ function downloadJsonFile(
   payload: AutoTeamExportPayload | AutoTeamSelectionExportPayload | null,
   filename: string,
   documentReference: Document = document,
-  urlReference: Pick<typeof URL, "createObjectURL" | "revokeObjectURL"> = URL,
+  urlReference: Pick<typeof URL, 'createObjectURL' | 'revokeObjectURL'> = URL,
 ): void {
   if (!payload) {
     return;
@@ -1108,14 +1188,14 @@ function downloadJsonFile(
 
   const objectUrl = urlReference.createObjectURL(
     new Blob([JSON.stringify(payload, null, 2)], {
-      type: "application/json;charset=utf-8",
+      type: 'application/json;charset=utf-8',
     }),
   );
-  const anchor = documentReference.createElement("a");
+  const anchor = documentReference.createElement('a');
 
   anchor.href = objectUrl;
   anchor.download = filename;
-  anchor.style.display = "none";
+  anchor.style.display = 'none';
   documentReference.body.append(anchor);
 
   try {
@@ -1129,11 +1209,11 @@ function downloadJsonFile(
 export function downloadAutoTeamExport(
   payload: AutoTeamExportPayload | null,
   documentReference: Document = document,
-  urlReference: Pick<typeof URL, "createObjectURL" | "revokeObjectURL"> = URL,
+  urlReference: Pick<typeof URL, 'createObjectURL' | 'revokeObjectURL'> = URL,
 ): void {
   downloadJsonFile(
     payload,
-    payload ? buildAutoTeamExportFilename(payload.exportedAt) : "",
+    payload ? buildAutoTeamExportFilename(payload.exportedAt) : '',
     documentReference,
     urlReference,
   );
@@ -1142,11 +1222,11 @@ export function downloadAutoTeamExport(
 export function downloadAutoTeamSelectionExport(
   payload: AutoTeamSelectionExportPayload | null,
   documentReference: Document = document,
-  urlReference: Pick<typeof URL, "createObjectURL" | "revokeObjectURL"> = URL,
+  urlReference: Pick<typeof URL, 'createObjectURL' | 'revokeObjectURL'> = URL,
 ): void {
   downloadJsonFile(
     payload,
-    payload ? buildAutoTeamSelectionExportFilename(payload.exportedAt) : "",
+    payload ? buildAutoTeamSelectionExportFilename(payload.exportedAt) : '',
     documentReference,
     urlReference,
   );

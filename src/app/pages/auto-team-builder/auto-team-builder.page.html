@@ -224,6 +224,61 @@
                 </ion-select-option>
               }
             </ion-select>
+            <div class="leader-boost-range-grid">
+              <ion-input
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="0.01"
+                fill="outline"
+                [label]="t('filters.leaderBoost.range.atkMin')"
+                labelPlacement="stacked"
+                [value]="leaderBoostRanges().ATK.min"
+                [disabled]="building()"
+                (ionInput)="onLeaderBoostRangeChange('ATK', 'min', $event)"
+              ></ion-input>
+              <ion-input
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="0.01"
+                fill="outline"
+                [label]="t('filters.leaderBoost.range.atkMax')"
+                labelPlacement="stacked"
+                [value]="leaderBoostRanges().ATK.max"
+                [disabled]="building()"
+                (ionInput)="onLeaderBoostRangeChange('ATK', 'max', $event)"
+              ></ion-input>
+              <ion-input
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="0.01"
+                fill="outline"
+                [label]="t('filters.leaderBoost.range.hpMin')"
+                labelPlacement="stacked"
+                [value]="leaderBoostRanges().HP.min"
+                [disabled]="building()"
+                (ionInput)="onLeaderBoostRangeChange('HP', 'min', $event)"
+              ></ion-input>
+              <ion-input
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="0.01"
+                fill="outline"
+                [label]="t('filters.leaderBoost.range.hpMax')"
+                labelPlacement="stacked"
+                [value]="leaderBoostRanges().HP.max"
+                [disabled]="building()"
+                (ionInput)="onLeaderBoostRangeChange('HP', 'max', $event)"
+              ></ion-input>
+            </div>
+            @if (leaderBoostRangeErrorLabel()) {
+              <small class="leader-boost-range-error">
+                {{ leaderBoostRangeErrorLabel() }}
+              </small>
+            }
           </div>
 
           <div class="strict-toggle-row">
