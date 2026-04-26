@@ -5,6 +5,7 @@ import {
   AUTO_TEAM_BUILDER_TYPES,
   AUTO_TEAM_BUILDER_DEFAULT_TYPE,
   AUTO_BUILD_TOTAL_SLOT_COUNT,
+  AUTO_BUILD_LEADER_BOOST_FILTERS,
   AUTO_BUILD_MANUAL_SLOT_ROLES,
   AUTO_BUILD_MANUAL_SUB_SLOT_ROLES,
   type AutoBuildConstraints,
@@ -12,6 +13,7 @@ import {
   type AutoBuildRankedResults,
   type AutoBuildRosterInput,
   type AutoBuildInput,
+  type AutoBuildLeaderBoostFilter,
   type AutoBuildManualSlotRole,
   type AutoBuildManualSlotSelection,
   type AutoBuildProgressSnapshot,
@@ -131,6 +133,7 @@ export class AutoTeamBuilderService {
     const friendCaptainCharacterId = derivedManualSelection.friendCaptainCharacterId;
     const manualShipId = this.normalizeCharacterId(constraints.manualShipId);
     const excludedShipIds = this.normalizeCharacterIds(constraints.excludedShipIds);
+    const leaderBoostFilters = this.normalizeLeaderBoostFilters(constraints.leaderBoostFilters);
 
     const input: AutoBuildInput = {
       types: normalizedTypes.length > 0 ? normalizedTypes : [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
@@ -150,6 +153,7 @@ export class AutoTeamBuilderService {
       allowAnyFriendCaptainAutoFill,
       favoriteShipsOnly,
       favoriteShipIds,
+      leaderBoostFilters,
       manualSlots,
       lockedCharacterIds,
       excludedCharacterIds,
@@ -174,6 +178,7 @@ export class AutoTeamBuilderService {
         conditionTags: [...mechanic.conditionTags],
       })),
       favoriteShipIds: [...input.favoriteShipIds],
+      leaderBoostFilters: [...input.leaderBoostFilters],
       manualSlots: input.manualSlots.map((slot) => ({
         role: slot.role,
         characterIds: [...slot.characterIds],
@@ -1415,6 +1420,7 @@ export class AutoTeamBuilderService {
       allowAnyFriendCaptainAutoFill: false,
       favoriteShipsOnly: false,
       favoriteShipIds: [],
+      leaderBoostFilters: this.normalizeLeaderBoostFilters(rosterInput.leaderBoostFilters),
       manualSlots: this.createExactManualSlots(
         captainCharacterId,
         friendCaptainCharacterId,
@@ -1544,6 +1550,23 @@ export class AutoTeamBuilderService {
           .filter((characterId): characterId is number => characterId !== null),
       ),
     ];
+  }
+
+  private normalizeLeaderBoostFilters(
+    filters: AutoBuildLeaderBoostFilter[] | undefined,
+  ): AutoBuildLeaderBoostFilter[] {
+    const normalizedFilters = [
+      ...new Set(
+        (Array.isArray(filters) ? filters : AUTO_BUILD_LEADER_BOOST_FILTERS).filter(
+          (filter): filter is AutoBuildLeaderBoostFilter =>
+            AUTO_BUILD_LEADER_BOOST_FILTERS.includes(filter as AutoBuildLeaderBoostFilter),
+        ),
+      ),
+    ];
+
+    return normalizedFilters.length > 0
+      ? normalizedFilters
+      : [...AUTO_BUILD_LEADER_BOOST_FILTERS];
   }
 
   private normalizeManualSlots(

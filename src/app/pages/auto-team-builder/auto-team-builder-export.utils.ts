@@ -1,6 +1,8 @@
 import {
+  AUTO_BUILD_LEADER_BOOST_FILTERS,
   AUTO_BUILD_MANUAL_SLOT_ROLES,
   AUTO_BUILD_MANUAL_SUB_SLOT_ROLES,
+  type AutoBuildLeaderBoostFilter,
   type AutoBuildResult,
   type AutoBuildManualSlotRole,
   type AutoBuildManualSlotSelection,
@@ -65,7 +67,7 @@ export interface AutoTeamSelectionShipSummary {
 }
 
 export interface AutoTeamSelectionExportPayload {
-  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16;
   exportedAt: string;
   source: "auto-team-builder";
   exportType: "preset";
@@ -83,6 +85,7 @@ export interface AutoTeamSelectionExportPayload {
     favoriteCount: number;
     favoriteShipsOnly?: boolean;
     favoriteShipCount?: number;
+    leaderBoostFilters?: AutoBuildLeaderBoostFilter[];
   };
   manualSelection: {
     manualSlots: AutoBuildManualSlotSelection[];
@@ -112,6 +115,7 @@ export interface AutoTeamSelectionImportState {
   favoritesOnly: boolean;
   allowAnyFriendCaptainAutoFill: boolean;
   favoriteShipsOnly: boolean;
+  leaderBoostFilters: AutoBuildLeaderBoostFilter[];
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   excludedCharacterIds: number[];
@@ -163,6 +167,7 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   favoriteCount: number;
   favoriteShipsOnly?: boolean;
   favoriteShipCount?: number;
+  leaderBoostFilters?: AutoBuildLeaderBoostFilter[];
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   lockedCharacters: CharacterListItem[];
@@ -236,6 +241,22 @@ function collectPositiveIntegers(values: unknown[]): number[] {
   }
 
   return normalizedValues;
+}
+
+function normalizeLeaderBoostFilters(value: unknown): AutoBuildLeaderBoostFilter[] {
+  const normalizedFilters = [
+    ...new Set(
+      (Array.isArray(value) ? value : [])
+        .map((entry) => String(entry ?? '').trim())
+        .filter((entry): entry is AutoBuildLeaderBoostFilter =>
+          AUTO_BUILD_LEADER_BOOST_FILTERS.includes(entry as AutoBuildLeaderBoostFilter),
+        ),
+    ),
+  ];
+
+  return normalizedFilters.length > 0
+    ? normalizedFilters
+    : [...AUTO_BUILD_LEADER_BOOST_FILTERS];
 }
 
 function buildLegacyManualSlotsFromSelection(
@@ -421,7 +442,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload["schemaVersion"] !== 12 &&
       parsedPayload["schemaVersion"] !== 13 &&
       parsedPayload["schemaVersion"] !== 14 &&
-      parsedPayload["schemaVersion"] !== 15) ||
+      parsedPayload["schemaVersion"] !== 15 &&
+      parsedPayload["schemaVersion"] !== 16) ||
     parsedPayload["source"] !== "auto-team-builder" ||
     parsedPayload["exportType"] !== "preset"
   ) {
@@ -488,6 +510,13 @@ export function parseAutoTeamSelectionImportPayload(
     !(
       filters["favoriteShipCount"] === undefined ||
       typeof filters["favoriteShipCount"] === "number"
+    ) ||
+    !(
+      filters["leaderBoostFilters"] === undefined ||
+      (
+        Array.isArray(filters["leaderBoostFilters"]) &&
+        filters["leaderBoostFilters"].every((filter) => typeof filter === "string")
+      )
     ) ||
     !Array.isArray(manualSelection["lockedCharacterIds"]) ||
     !(
@@ -863,6 +892,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
     (payload.filters as { requireLeadersWithoutSuperEffects?: boolean })
       .requireLeadersWithoutSuperEffects === true,
   );
+  const leaderBoostFilters = normalizeLeaderBoostFilters(payload.filters.leaderBoostFilters);
 
   return {
     state: {
@@ -877,6 +907,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
       favoritesOnly: payload.filters.favoritesOnly,
       allowAnyFriendCaptainAutoFill: payload.filters.allowAnyFriendCaptainAutoFill === true,
       favoriteShipsOnly: payload.filters.favoriteShipsOnly === true,
+      leaderBoostFilters,
       manualSlots: normalizedManualSlots,
       lockedCharacterIds: derivedManualSelection.lockedCharacterIds,
       excludedCharacterIds,
@@ -945,6 +976,7 @@ export function buildAutoTeamSelectionExportPayload({
   favoriteCount,
   favoriteShipsOnly = false,
   favoriteShipCount = 0,
+  leaderBoostFilters = [...AUTO_BUILD_LEADER_BOOST_FILTERS],
   manualSlots,
   lockedCharacterIds,
   lockedCharacters,
@@ -965,7 +997,7 @@ export function buildAutoTeamSelectionExportPayload({
   }));
 
   return {
-    schemaVersion: 15,
+    schemaVersion: 16,
     exportedAt,
     source: "auto-team-builder",
     exportType: "preset",
@@ -991,6 +1023,7 @@ export function buildAutoTeamSelectionExportPayload({
       favoriteCount,
       favoriteShipsOnly,
       favoriteShipCount,
+      leaderBoostFilters: normalizeLeaderBoostFilters(leaderBoostFilters),
     },
     manualSelection: {
       manualSlots: normalizedManualSlots,

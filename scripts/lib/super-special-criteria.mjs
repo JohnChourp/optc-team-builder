@@ -56,13 +56,19 @@ function normalizeKey(value) {
 function buildAcceptedCharacterKeys(label) {
   const normalizedLabel = normalizeWhitespace(label);
   const acceptedKeys = new Set();
-  const normalizedKey = normalizeKey(normalizedLabel);
+  const labelWithoutBrackets = normalizeWhitespace(normalizedLabel.replace(/^\[([^\]]+)\]/, '$1'));
+  const labelWithoutGenericSuffix = normalizeWhitespace(
+    labelWithoutBrackets.replace(/\bcharacters?\b$/i, '').replace(/\bunits?\b$/i, ''),
+  );
+  const normalizedKey = normalizeKey(labelWithoutGenericSuffix);
 
   if (normalizedKey.length > 0) {
     acceptedKeys.add(normalizedKey);
   }
 
-  const labelWithoutParentheses = normalizeWhitespace(normalizedLabel.replace(/\([^)]*\)/g, ' '));
+  const labelWithoutParentheses = normalizeWhitespace(
+    labelWithoutGenericSuffix.replace(/\([^)]*\)/g, ' '),
+  );
   const labelWithoutParenthesesKey = normalizeKey(labelWithoutParentheses);
 
   if (labelWithoutParenthesesKey.length > 0) {
@@ -182,6 +188,9 @@ function parseFollowingBranch(text, fullMatch, rawCount, rawList) {
     branch: {
       branchType: 'character_count_any',
       requiredCount,
+      matchMode: tokens.every((token) => /^\s*\[[^\]]+\]/.test(token))
+        ? 'any_candidate'
+        : 'unique_options',
       options: tokens.map((token) => ({
         label: token,
         acceptedKeys: buildAcceptedCharacterKeys(token),
@@ -235,7 +244,9 @@ function normalizeRemainder(value) {
     value
       .replace(/this character must be captain/gi, ' ')
       .replace(/when this character is in combined form from super swap effect/gi, ' ')
+      .replace(/\bcan be launched as crewmate\b/gi, ' ')
       .replace(/at the final stage/gi, ' ')
+      .replace(/\b(?:not\s+including|excluding)\s+self\b/gi, ' ')
       .replace(/\b(your crew|the crew|your team|team)\b/gi, ' ')
       .replace(/\bmust\b/gi, ' ')
       .replace(/\bconsist\b/gi, ' ')
@@ -261,9 +272,11 @@ export function parseSuperSpecialCriteria(rawText) {
   }
 
   const matches = [];
+  const excludesSelf = /\b(?:not\s+including|excluding)\s+self\b/i.test(text);
   const followingPatterns = [
     /(?:your crew|the crew)\s+must\s+consist\s+of\s+any\s+(\d+)(?:\s+or\s+\d+)?\s+of\s+the\s+following,[^:]*:\s*(.+)$/i,
     /when\s+any\s+of\s+the\s+following\s+characters\s+are\s+on\s+the\s+crew[^:]*:\s*(.+)$/i,
+    /when\s+any\s+(\d+)\s+(.+?)\s+characters?\s+are\s+on\s+the\s+crew\b[^.]*\.?$/i,
   ];
 
   for (const pattern of followingPatterns) {
@@ -328,6 +341,7 @@ export function parseSuperSpecialCriteria(rawText) {
   return {
     rawText: text,
     requiresCaptain: /must be captain/i.test(text),
+    excludesSelf,
     rosterBranches,
     hasNonRosterBranches,
     parserStatus,

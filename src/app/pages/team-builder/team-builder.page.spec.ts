@@ -22,6 +22,7 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonSearchbar: class {},
   IonTextarea: class {},
   IonTitle: class {},
+  IonToggle: class {},
   IonToolbar: class {},
 }));
 
@@ -128,6 +129,10 @@ describe('TeamBuilderPage', () => {
     expect(template).toContain('character-detail-thumb-link');
     expect(template).toContain('character-detail-name-link');
     expect(template).toContain("t('displayMode.compact')");
+    expect(template).toContain("t('assign.favoritesOnly.label')");
+    expect(template).toContain('onFavoritesOnlyToggle($event)');
+    expect(template).toContain("t('assign.hideFavorites.label')");
+    expect(template).toContain('onHideFavoritesToggle($event)');
     expect(template).toContain('(click)="assignCharacter(card.character)"');
     expect(template).toContain('candidate-thumb-card');
     expect(template).toContain('<app-ship-picker');
@@ -151,6 +156,92 @@ describe('TeamBuilderPage', () => {
     expect(userState.toggleFavorite).toHaveBeenCalledWith(101);
   });
 
+  it('limits candidate searches to favorites when favorites only is enabled', async () => {
+    const { page, repository } = createPage({ favoriteIds: [101, 202] });
+
+    await page.onFavoritesOnlyToggle({
+      detail: {
+        checked: true,
+      },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.favoritesOnly()).toBe(true);
+    expect(page.hideFavorites()).toBe(false);
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      allowedCharacterIds: [101, 202],
+      limit: 24,
+      offset: 0,
+    });
+  });
+
+  it('excludes favorites from candidate searches when hide favorites is enabled', async () => {
+    const { page, repository } = createPage({ favoriteIds: [101, 202] });
+
+    await page.onHideFavoritesToggle({
+      detail: {
+        checked: true,
+      },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.hideFavorites()).toBe(true);
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      allowedCharacterIds: undefined,
+      excludedCharacterIds: [101, 202],
+      limit: 24,
+      offset: 0,
+    });
+  });
+
+  it('keeps the two candidate favorites modes mutually exclusive', async () => {
+    const { page } = createPage({ favoriteIds: [101] });
+
+    await page.onFavoritesOnlyToggle({
+      detail: {
+        checked: true,
+      },
+    } as CustomEvent<{ checked: boolean }>);
+    await page.onHideFavoritesToggle({
+      detail: {
+        checked: true,
+      },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.favoritesOnly()).toBe(false);
+    expect(page.hideFavorites()).toBe(true);
+  });
+
+  it('refreshes candidates after adding a favorite while hide favorites is active', async () => {
+    const { page, repository } = createPage();
+
+    await page.onHideFavoritesToggle({
+      detail: {
+        checked: true,
+      },
+    } as CustomEvent<{ checked: boolean }>);
+    repository.searchDetailedCharacters.mockClear();
+
+    await page.toggleFavorite(101, {
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    } as unknown as Event);
+
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      allowedCharacterIds: undefined,
+      excludedCharacterIds: [101],
+      limit: 24,
+      offset: 0,
+    });
+  });
+
   it('assigns characters from compact mode without affecting saved teams', async () => {
     const { page } = createPage();
 
@@ -172,6 +263,8 @@ describe('TeamBuilderPage', () => {
     page.selectedSlotIndex.set(4);
     page.currentTeamId.set('saved-team-1');
     page.candidateSearchTerm.set('Luffy');
+    page.favoritesOnly.set(true);
+    page.hideFavorites.set(true);
     page.slotCharacters.set([
       { id: 101 } as never,
       null,
@@ -189,6 +282,8 @@ describe('TeamBuilderPage', () => {
     expect(page.selectedSlotIndex()).toBe(0);
     expect(page.currentTeamId()).toBeNull();
     expect(page.candidateSearchTerm()).toBe('');
+    expect(page.favoritesOnly()).toBe(false);
+    expect(page.hideFavorites()).toBe(false);
     expect(page.slotCharacters()).toEqual(Array.from({ length: 6 }, () => null));
     expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
@@ -201,17 +296,24 @@ describe('TeamBuilderPage', () => {
   });
 });
 
-function createPage() {
+function createPage(overrides: { favoriteIds?: number[] } = {}) {
+  const favoriteCharacterIds = signal<number[]>(overrides.favoriteIds ?? []);
   const userState = {
     ready: vi.fn().mockResolvedValue(undefined),
-    favoriteCharacterIds: signal<number[]>([]),
+    favoriteCharacterIds,
     favoriteShipIds: signal<number[]>([]),
     savedTeams: signal([]),
     saveTeam: vi.fn().mockResolvedValue({
       id: 'saved-team-1',
     }),
     deleteTeam: vi.fn(),
-    toggleFavorite: vi.fn(),
+    toggleFavorite: vi.fn().mockImplementation(async (characterId: number) => {
+      favoriteCharacterIds.set(
+        favoriteCharacterIds().includes(characterId)
+          ? favoriteCharacterIds().filter((value) => value !== characterId)
+          : [characterId, ...favoriteCharacterIds()],
+      );
+    }),
     toggleShipFavorite: vi.fn().mockResolvedValue(undefined),
   };
   const repository = {

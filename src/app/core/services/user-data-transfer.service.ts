@@ -48,7 +48,6 @@ import {
 } from '../../pages/settings/favorite-ships-transfer.utils';
 import { AppI18nService } from './app-i18n.service';
 
-export type DriveConflictResolution = 'keep-local' | 'merge' | 'restore';
 export type DriveImportStrategy = 'merge' | 'restore';
 
 export interface SyncScopeSummary {

@@ -42,6 +42,7 @@ export interface CharacterCountAnySuperCriteriaBranch {
   branchType: 'character_count_any';
   requiredCount: number;
   options: SuperCriteriaCharacterOption[];
+  matchMode?: 'unique_options' | 'any_candidate';
 }
 
 export interface ClassOrTypeCountAnySuperCriteriaBranch {
@@ -65,6 +66,7 @@ export type SuperCriteriaBranch =
 export interface NormalizedSuperSpecialCriteria {
   rawText: string;
   requiresCaptain: boolean;
+  excludesSelf?: boolean;
   rosterBranches: SuperCriteriaBranch[];
   hasNonRosterBranches: boolean;
   parserStatus: 'roster_only' | 'mixed' | 'non_roster_only' | 'unsupported';
@@ -89,6 +91,9 @@ export interface CharacterRecord {
   stars: number;
   cost: number;
   combo: number;
+  captainHpBoost: number;
+  captainAtkBoost: number;
+  captainAverageBoost: number;
   stats: CharacterStats;
   regionAvailability: RegionAvailability;
   assets: CharacterAssets;
@@ -334,12 +339,25 @@ export interface DatasetManifest {
   packs: OfflinePackSummary[];
 }
 
+export type CharacterSortMode =
+  | 'catalog'
+  | 'newest'
+  | 'powerFirst'
+  | 'captainHpBoost'
+  | 'captainAtkBoost'
+  | 'captainAverageBoost'
+  | 'nameAsc'
+  | 'nameDesc'
+  | 'idDesc'
+  | 'idAsc';
+
 export interface CharacterSearchQuery {
   searchTerm: string;
   typeFilter: string;
   classFilter: string;
   allowedCharacterIds?: number[];
   excludedCharacterIds?: number[];
+  sortMode?: CharacterSortMode;
   limit: number;
   offset: number;
 }
@@ -352,7 +370,7 @@ export interface DetailedCharacterSearchQuery {
   selectedClassesMatchMode?: 'all' | 'any';
   allowedCharacterIds?: number[];
   excludedCharacterIds?: number[];
-  sortMode?: 'catalog' | 'newest' | 'powerFirst';
+  sortMode?: CharacterSortMode;
   limit: number;
   offset: number;
 }

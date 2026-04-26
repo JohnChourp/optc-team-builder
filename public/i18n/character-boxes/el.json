@@ -40,7 +40,8 @@
     "membershipPlaceholder": "Φίλτρο συμμετοχής στο box",
     "favoritesOptions": {
       "all": "Όλοι οι χαρακτήρες",
-      "favorites": "Μόνο favorites"
+      "favorites": "Μόνο favorites",
+      "hideFavorites": "Κρύψε favorites"
     },
     "membershipOptions": {
       "all": "Όλες οι καταστάσεις",
@@ -78,6 +79,20 @@
     "label": "Διάταξη χαρακτήρων",
     "list": "Προβολή λίστας",
     "compact": "Συμπαγής προβολή"
+  },
+  "sort": {
+    "label": "Ταξινόμηση",
+    "placeholder": "Ταξινόμηση χαρακτήρων",
+    "options": {
+      "catalog": "Προεπιλεγμένη σειρά",
+      "nameAsc": "Όνομα A-Z",
+      "nameDesc": "Όνομα Z-A",
+      "idDesc": "Character ID πιο πρόσφατο πρώτα",
+      "idAsc": "Character ID πιο παλιό πρώτα",
+      "captainHpBoost": "Captain HP boost",
+      "captainAtkBoost": "Captain ATK boost",
+      "captainAverageBoost": "Captain HP/ATK average"
+    }
   },
   "favorites": {
     "addAria": "Πρόσθεσε τον {{name}} στα favorites",

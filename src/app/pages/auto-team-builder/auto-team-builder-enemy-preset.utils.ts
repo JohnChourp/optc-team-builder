@@ -1,4 +1,5 @@
 import {
+  AUTO_BUILD_LEADER_BOOST_FILTERS,
   AUTO_TEAM_BUILDER_TYPES,
   createEmptyAutoBuildManualSlots,
   type AutoTeamBuilderType,
@@ -33,6 +34,7 @@ export function buildAutoTeamBuilderStateFromSavedEnemy(
     favoritesOnly: false,
     allowAnyFriendCaptainAutoFill: false,
     favoriteShipsOnly: false,
+    leaderBoostFilters: [...AUTO_BUILD_LEADER_BOOST_FILTERS],
     manualSlots: createEmptyAutoBuildManualSlots(),
     lockedCharacterIds: [],
     excludedCharacterIds: [],

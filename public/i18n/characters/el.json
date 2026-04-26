@@ -11,6 +11,11 @@
       "label": "Class",
       "placeholder": "Πληκτρολόγησε για φιλτράρισμα ανά class"
     },
+    "hideFavorites": {
+      "empty": "Δεν υπάρχουν αποθηκευμένα favorites ακόμα.",
+      "label": "Κρύψε favorites",
+      "withCount": "Κρύβει τους {{count}} favorite χαρακτήρες σου από τα αποτελέσματα."
+    },
     "favoritesOnly": {
       "empty": "Δεν υπάρχουν αποθηκευμένα favorites ακόμα.",
       "label": "Μόνο favorites",
@@ -100,6 +105,20 @@
   "loading": "Φόρτωση character catalog...",
   "search": {
     "placeholder": "Αναζήτηση σε ονόματα, classes, types..."
+  },
+  "sort": {
+    "label": "Ταξινόμηση",
+    "placeholder": "Ταξινόμηση χαρακτήρων",
+    "options": {
+      "catalog": "Προεπιλεγμένη σειρά",
+      "nameAsc": "Όνομα A-Z",
+      "nameDesc": "Όνομα Z-A",
+      "idDesc": "Character ID πιο πρόσφατο πρώτα",
+      "idAsc": "Character ID πιο παλιό πρώτα",
+      "captainHpBoost": "Captain HP boost",
+      "captainAtkBoost": "Captain ATK boost",
+      "captainAverageBoost": "Captain HP/ATK average"
+    }
   },
   "stats": {
     "atk": "ATK",

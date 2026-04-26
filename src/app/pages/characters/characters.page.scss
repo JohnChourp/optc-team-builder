@@ -133,6 +133,14 @@
   --highlight-color-focused: rgba(245, 200, 76, 0.8);
 }
 
+ion-select {
+  --background: rgba(255, 255, 255, 0.06);
+  --border-color: rgba(255, 255, 255, 0.14);
+  --border-radius: 18px;
+  --color: #f8fbff;
+  --highlight-color-focused: rgba(245, 200, 76, 0.8);
+}
+
 .filter-group span {
   color: rgba(248, 251, 255, 0.72);
   font-size: 0.82rem;
@@ -210,7 +218,9 @@
 .character-card--incomplete,
 .character-thumb-card--incomplete {
   border: 1px solid rgba(255, 98, 98, 0.72);
-  box-shadow: 0 0 0 1px rgba(255, 98, 98, 0.22), 0 14px 28px rgba(120, 12, 12, 0.18);
+  box-shadow:
+    0 0 0 1px rgba(255, 98, 98, 0.22),
+    0 14px 28px rgba(120, 12, 12, 0.18);
 }
 
 .character-card__link {
@@ -373,6 +383,10 @@
   justify-content: center;
 }
 
+.sort-filter {
+  max-width: 360px;
+}
+
 :host ion-modal.favorites-import-modal::part(backdrop) {
   background: rgba(7, 11, 23, 0.68);
 }
@@ -403,7 +417,7 @@
 
 .import-modal-head h2 {
   margin: 14px 0 8px;
-  font-family: "Bricolage Grotesque", sans-serif;
+  font-family: 'Bricolage Grotesque', sans-serif;
   font-size: clamp(1.7rem, 4vw, 2.2rem);
 }
 

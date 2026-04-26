@@ -67,8 +67,21 @@
     "leaderSuperEffectScope": {
       "toggle": "Απαίτησε κάθε slot να ταιριάζει στο leader super effect scope",
       "support": {
-        "strict": "Κάθε final slot πρέπει να ταιριάζει στο κοινό Super Type / Super Class effect scope του selected captain και friend captain.",
+        "strict": "Κάθε final slot πρέπει να ταιριάζει σε κάθε selected Super Type / Super Class / Super Special scope και τα activation requirements μένουν strict.",
         "flexible": "Στο default mode ο builder δοκιμάζει πρώτα leaders χωρίς Super Type / Super Class effects και μετά επιτρέπει super leaders πριν χαλαρώσει classes ή types."
+      }
+    },
+    "leaderBoost": {
+      "label": "Leader boost priority",
+      "placeholder": "Επίλεξε boost priority",
+      "options": {
+        "HP": "HP",
+        "ATK": "ATK"
+      },
+      "support": {
+        "hp": "Το Captain και Friend Captain auto-fill προτιμά το μεγαλύτερο HP captain boost, μετά τον πιο πρόσφατο χαρακτήρα και μετά το μεγαλύτερο cost.",
+        "atk": "Το Captain και Friend Captain auto-fill προτιμά το μεγαλύτερο ATK captain boost, μετά τον πιο πρόσφατο χαρακτήρα και μετά το μεγαλύτερο cost.",
+        "average": "Το Captain και Friend Captain auto-fill προτιμά το μεγαλύτερο average HP και ATK captain boost, μετά τον πιο πρόσφατο χαρακτήρα και μετά το μεγαλύτερο cost."
       }
     },
     "favoritesOnly": {

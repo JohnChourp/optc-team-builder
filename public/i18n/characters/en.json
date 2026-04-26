@@ -11,6 +11,11 @@
       "label": "Class",
       "placeholder": "Type to filter by class"
     },
+    "hideFavorites": {
+      "empty": "No favorites saved yet.",
+      "label": "Hide favorites",
+      "withCount": "Hide your {{count}} favorited characters from results."
+    },
     "favoritesOnly": {
       "empty": "No favorites saved yet.",
       "label": "Show favorites only",
@@ -100,6 +105,20 @@
   "loading": "Loading character catalog...",
   "search": {
     "placeholder": "Search names, classes, types..."
+  },
+  "sort": {
+    "label": "Sort",
+    "placeholder": "Sort characters",
+    "options": {
+      "catalog": "Default order",
+      "nameAsc": "Name A-Z",
+      "nameDesc": "Name Z-A",
+      "idDesc": "Character ID newest first",
+      "idAsc": "Character ID oldest first",
+      "captainHpBoost": "Captain HP boost",
+      "captainAtkBoost": "Captain ATK boost",
+      "captainAverageBoost": "Captain HP/ATK average"
+    }
   },
   "stats": {
     "atk": "ATK",

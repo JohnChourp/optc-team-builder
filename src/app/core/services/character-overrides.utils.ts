@@ -59,6 +59,8 @@ const OBJECT_OR_NULL_DETAIL_KEYS = [
   'superClass',
   'rumbleData',
 ] as const;
+const CAPTAIN_ATK_BOOST_PATTERN = /atk(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
+const CAPTAIN_HP_BOOST_PATTERN = /hp(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
 
 function deepClone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -128,6 +130,38 @@ export function createEmptyCharacterDetail(characterId: number): CharacterDetail
 
 export function cloneCharacterDetail(detail: CharacterDetail): CharacterDetail {
   return deepClone(detail);
+}
+
+function resolveCaptainBoosts(detail: CharacterDetail): {
+  captainHpBoost: number;
+  captainAtkBoost: number;
+  captainAverageBoost: number;
+} {
+  const captainTexts = [
+    ...detail.captainAbilityVariants
+      .map((variant) => variant.text.trim())
+      .filter((text) => text.length > 0),
+    detail.captainAbility ?? '',
+  ].filter((text, index, values) => text.length > 0 && values.indexOf(text) === index);
+  const captainHpBoost = extractHighestBoost(captainTexts, CAPTAIN_HP_BOOST_PATTERN);
+  const captainAtkBoost = extractHighestBoost(captainTexts, CAPTAIN_ATK_BOOST_PATTERN);
+
+  return {
+    captainHpBoost,
+    captainAtkBoost,
+    captainAverageBoost: (captainHpBoost + captainAtkBoost) / 2,
+  };
+}
+
+function extractHighestBoost(texts: string[], pattern: RegExp): number {
+  return texts.reduce((highest, text) => {
+    const textHighest = [...text.matchAll(pattern)].reduce((currentHighest, match) => {
+      const value = Number(match[1]);
+      return Number.isFinite(value) && value > currentHighest ? value : currentHighest;
+    }, highest);
+
+    return textHighest;
+  }, 0);
 }
 
 export function normalizeCharacterDetailInput(
@@ -284,6 +318,7 @@ export function applyOverrideToCharacterListItem(
     stars: override.stars,
     cost: override.cost,
     combo: override.combo,
+    ...resolveCaptainBoosts(override.detail),
     stats: {
       min: {
         hp: override.minHp,

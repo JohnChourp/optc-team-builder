@@ -3,6 +3,14 @@
     "addFavoriteAria": "Add to favorites",
     "removeFavoriteAria": "Remove from favorites",
     "searchPlaceholder": "Find a character for this slot",
+    "favoritesOnly": {
+      "label": "Show favorites only",
+      "support": "Limit candidate results to your {{count}} favorited characters."
+    },
+    "hideFavorites": {
+      "label": "Hide favorites",
+      "support": "Hide {{count}} favorited characters from candidate results."
+    },
     "special": {
       "open": "Special filters ({{count}})",
       "eyebrow": "Special",

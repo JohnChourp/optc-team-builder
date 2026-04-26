@@ -67,8 +67,21 @@
     "leaderSuperEffectScope": {
       "toggle": "Require every slot to match leader super effect scope",
       "support": {
-        "strict": "Every final slot must match the shared Super Type / Super Class effect scope of the selected captain and friend captain.",
+        "strict": "Every final slot must match every selected Super Type / Super Class / Super Special scope, and those activation requirements stay strict.",
         "flexible": "Default mode tries leaders without Super Type / Super Class effects first, then allows super leaders before relaxing classes or types."
+      }
+    },
+    "leaderBoost": {
+      "label": "Leader boost priority",
+      "placeholder": "Select boost priority",
+      "options": {
+        "HP": "HP",
+        "ATK": "ATK"
+      },
+      "support": {
+        "hp": "Captain and Friend Captain auto-fill prefers the highest HP captain boost, then newest character, then higher cost.",
+        "atk": "Captain and Friend Captain auto-fill prefers the highest ATK captain boost, then newest character, then higher cost.",
+        "average": "Captain and Friend Captain auto-fill prefers the highest average of HP and ATK captain boosts, then newest character, then higher cost."
       }
     },
     "favoritesOnly": {

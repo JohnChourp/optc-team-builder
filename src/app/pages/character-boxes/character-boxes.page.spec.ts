@@ -136,6 +136,35 @@ describe('CharacterBoxesPage', () => {
     );
   });
 
+  it('refreshes the current list after adding a favorite while hide favorites is active', async () => {
+    const { page, repository } = createPage();
+
+    await page.onFavoriteFilterChange({
+      detail: {
+        value: 'hideFavorites',
+      },
+    } as CustomEvent<{ value?: string | null }>);
+    repository.searchDetailedCharacters.mockClear();
+
+    await page.toggleFavorite(202, {
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    } as unknown as Event);
+
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: [],
+      selectedClassesMatchMode: 'any',
+      allowedCharacterIds: undefined,
+      excludedCharacterIds: [202],
+      sortMode: 'catalog',
+      limit: 48,
+      offset: 0,
+    });
+  });
+
   it('keeps box membership actions working in compact mode', async () => {
     const { page } = createPage();
 
@@ -164,6 +193,7 @@ describe('CharacterBoxesPage', () => {
       selectedClassesMatchMode: 'any',
       allowedCharacterIds: undefined,
       excludedCharacterIds: undefined,
+      sortMode: 'catalog',
       limit: 48,
       offset: 0,
     });
@@ -186,6 +216,30 @@ describe('CharacterBoxesPage', () => {
       selectedClassesMatchMode: 'any',
       allowedCharacterIds: [101, 303],
       excludedCharacterIds: undefined,
+      sortMode: 'catalog',
+      limit: 48,
+      offset: 0,
+    });
+  });
+
+  it('excludes favorites when the hide favorites filter is active', async () => {
+    const { page, repository } = createPage(undefined, [101, 303]);
+
+    await page.onFavoriteFilterChange({
+      detail: {
+        value: 'hideFavorites',
+      },
+    } as CustomEvent<{ value?: string | null }>);
+
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: [],
+      selectedClassesMatchMode: 'any',
+      allowedCharacterIds: undefined,
+      excludedCharacterIds: [101, 303],
+      sortMode: 'catalog',
       limit: 48,
       offset: 0,
     });
@@ -209,6 +263,7 @@ describe('CharacterBoxesPage', () => {
       selectedClassesMatchMode: 'any',
       allowedCharacterIds: [101],
       excludedCharacterIds: undefined,
+      sortMode: 'catalog',
       limit: 48,
       offset: 0,
     });
@@ -232,6 +287,7 @@ describe('CharacterBoxesPage', () => {
       selectedClassesMatchMode: 'any',
       allowedCharacterIds: undefined,
       excludedCharacterIds: [101],
+      sortMode: 'catalog',
       limit: 48,
       offset: 0,
     });
@@ -260,6 +316,60 @@ describe('CharacterBoxesPage', () => {
       selectedClassesMatchMode: 'any',
       allowedCharacterIds: [101],
       excludedCharacterIds: undefined,
+      sortMode: 'catalog',
+      limit: 48,
+      offset: 0,
+    });
+  });
+
+  it('combines the hide favorites filter with the in-box filter', async () => {
+    const { page, repository } = createPage(undefined, [101, 303]);
+
+    page.selectBox('box-1');
+    await page.onFavoriteFilterChange({
+      detail: {
+        value: 'hideFavorites',
+      },
+    } as CustomEvent<{ value?: string | null }>);
+    await page.onMembershipFilterChange({
+      detail: {
+        value: 'inBox',
+      },
+    } as CustomEvent<{ value?: string | null }>);
+
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: [],
+      selectedClassesMatchMode: 'any',
+      allowedCharacterIds: [101],
+      excludedCharacterIds: [101, 303],
+      sortMode: 'catalog',
+      limit: 48,
+      offset: 0,
+    });
+  });
+
+  it('passes the selected sort mode to repository searches', async () => {
+    const { page, repository } = createPage();
+
+    await page.onSortModeChange({
+      detail: {
+        value: 'idAsc',
+      },
+    } as CustomEvent<{ value?: string | null }>);
+
+    expect(page.selectedSortMode()).toBe('idAsc');
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: [],
+      selectedClassesMatchMode: 'any',
+      allowedCharacterIds: undefined,
+      excludedCharacterIds: undefined,
+      sortMode: 'idAsc',
       limit: 48,
       offset: 0,
     });
@@ -270,7 +380,7 @@ describe('CharacterBoxesPage', () => {
 
     await page.onFavoriteFilterChange({
       detail: {
-        value: 'favorites',
+        value: 'hideFavorites',
       },
     } as CustomEvent<{ value?: string | null }>);
     await page.onSearchChange({
@@ -283,10 +393,16 @@ describe('CharacterBoxesPage', () => {
         value: 'notInBox',
       },
     } as CustomEvent<{ value?: string | null }>);
+    await page.onSortModeChange({
+      detail: {
+        value: 'nameDesc',
+      },
+    } as CustomEvent<{ value?: string | null }>);
     await page.clearFilters();
 
     expect(page.selectedFavoriteFilter()).toBe('all');
     expect(page.selectedMembershipFilter()).toBe('all');
+    expect(page.selectedSortMode()).toBe('catalog');
     expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
       selectedTypes: [],
@@ -295,6 +411,7 @@ describe('CharacterBoxesPage', () => {
       selectedClassesMatchMode: 'any',
       allowedCharacterIds: undefined,
       excludedCharacterIds: undefined,
+      sortMode: 'catalog',
       limit: 48,
       offset: 0,
     });
@@ -312,7 +429,12 @@ describe('CharacterBoxesPage', () => {
     expect(template).toContain("t('editor.delete')");
     expect(template).toContain("t('editor.addFavorites'");
     expect(template).toContain("t('filters.favoritesPlaceholder')");
+    expect(template).toContain("t('filters.favoritesOptions.favorites')");
+    expect(template).toContain("t('filters.favoritesOptions.hideFavorites')");
     expect(template).toContain("t('filters.membershipPlaceholder')");
+    expect(template).toContain("t('sort.placeholder')");
+    expect(template).toContain('selectedSortMode()');
+    expect(template).toContain('onSortModeChange($event)');
     expect(template).toContain("t('displayMode.compact')");
     expect(template).toContain('toggleFavorite(card.character.id, $event)');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(card.character)"');

@@ -17,6 +17,8 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonMenuButton: class {},
   IonModal: class {},
   IonSearchbar: class {},
+  IonSelect: class {},
+  IonSelectOption: class {},
   IonSpinner: class {},
   IonToggle: class {},
   IonTitle: class {},
@@ -94,7 +96,7 @@ describe('CharactersPage favorites tools', () => {
     expect(page.importResult()?.matchedIds).toEqual([1001, 1002]);
   });
 
-  it('keeps the favorites-only controls in the template without bulk favorite action buttons', () => {
+  it('keeps both favorites filter controls in the template without bulk favorite action buttons', () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/characters/characters.page.html'),
       'utf8',
@@ -104,17 +106,23 @@ describe('CharactersPage favorites tools', () => {
     expect(template).toContain("t('filters.favoritesOnly.label')");
     expect(template).toContain('favoritesOnlySupportLabel()');
     expect(template).toContain('onFavoritesOnlyToggle($event)');
+    expect(template).toContain("t('filters.hideFavorites.label')");
+    expect(template).toContain('hideFavoritesSupportLabel()');
+    expect(template).toContain('onHideFavoritesToggle($event)');
+    expect(template).toContain("t('sort.label')");
+    expect(template).toContain('selectedSortMode()');
+    expect(template).toContain('onSortModeChange($event)');
     expect(template).toContain("t('displayMode.compact')");
     expect(template).toContain('character-thumb-card');
     expect(template).toContain('toggleFavorite(card.character.id, $event)');
-    expect(template).not.toContain("/tabs/character-boxes");
+    expect(template).not.toContain('/tabs/character-boxes');
     expect(template).not.toContain("t('tools.manageBoxes')");
     expect(template).not.toContain("t('tools.export')");
     expect(template).not.toContain("t('tools.import')");
     expect(template).not.toContain("t('favorites.clearAll')");
   });
 
-  it('filters searches down to favorites when the toggle is enabled', async () => {
+  it('filters searches down to favorites when the favorites-only toggle is enabled', async () => {
     const { page, characterCatalogCache } = createPage({
       favoriteIds: [101, 202],
     });
@@ -126,22 +134,66 @@ describe('CharactersPage favorites tools', () => {
     } as CustomEvent<{ checked: boolean }>);
 
     expect(page.favoritesOnly()).toBe(true);
+    expect(page.hideFavorites()).toBe(false);
     expect(characterCatalogCache.queryCharacters).toHaveBeenCalledWith({
       searchTerm: '',
       typeFilter: '',
       classFilter: '',
       allowedCharacterIds: [101, 202],
+      sortMode: 'catalog',
       limit: 48,
       offset: 0,
     });
   });
 
-  it('refreshes the current list after removing a favorite in favorites-only mode', async () => {
+  it('excludes favorites from searches when the hide toggle is enabled', async () => {
     const { page, characterCatalogCache } = createPage({
+      favoriteIds: [101, 202],
+    });
+
+    await page.onHideFavoritesToggle({
+      detail: {
+        checked: true,
+      },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.hideFavorites()).toBe(true);
+    expect(characterCatalogCache.queryCharacters).toHaveBeenCalledWith({
+      searchTerm: '',
+      typeFilter: '',
+      classFilter: '',
+      allowedCharacterIds: undefined,
+      excludedCharacterIds: [101, 202],
+      sortMode: 'catalog',
+      limit: 48,
+      offset: 0,
+    });
+  });
+
+  it('keeps the two favorites modes mutually exclusive', async () => {
+    const { page } = createPage({
       favoriteIds: [101],
     });
 
     await page.onFavoritesOnlyToggle({
+      detail: {
+        checked: true,
+      },
+    } as CustomEvent<{ checked: boolean }>);
+    await page.onHideFavoritesToggle({
+      detail: {
+        checked: true,
+      },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.favoritesOnly()).toBe(false);
+    expect(page.hideFavorites()).toBe(true);
+  });
+
+  it('refreshes the current list after adding a favorite in hide-favorites mode', async () => {
+    const { page, characterCatalogCache } = createPage();
+
+    await page.onHideFavoritesToggle({
       detail: {
         checked: true,
       },
@@ -157,20 +209,20 @@ describe('CharactersPage favorites tools', () => {
       searchTerm: '',
       typeFilter: '',
       classFilter: '',
-      allowedCharacterIds: [],
+      allowedCharacterIds: undefined,
+      excludedCharacterIds: [101],
+      sortMode: 'catalog',
       limit: 48,
       offset: 0,
     });
   });
 
-  it('keeps favorite filtering behavior intact in compact mode', async () => {
-    const { page, characterCatalogCache } = createPage({
-      favoriteIds: [101],
-    });
+  it('keeps hide-favorites filtering behavior intact in compact mode', async () => {
+    const { page, characterCatalogCache } = createPage();
 
     page.setDisplayMode('compact');
 
-    await page.onFavoritesOnlyToggle({
+    await page.onHideFavoritesToggle({
       detail: {
         checked: true,
       },
@@ -187,7 +239,30 @@ describe('CharactersPage favorites tools', () => {
       searchTerm: '',
       typeFilter: '',
       classFilter: '',
-      allowedCharacterIds: [],
+      allowedCharacterIds: undefined,
+      excludedCharacterIds: [101],
+      sortMode: 'catalog',
+      limit: 48,
+      offset: 0,
+    });
+  });
+
+  it('passes the selected sort mode to cached searches', async () => {
+    const { page, characterCatalogCache } = createPage();
+
+    await page.onSortModeChange({
+      detail: {
+        value: 'nameAsc',
+      },
+    } as CustomEvent<{ value?: string | null }>);
+
+    expect(page.selectedSortMode()).toBe('nameAsc');
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      typeFilter: '',
+      classFilter: '',
+      allowedCharacterIds: undefined,
+      sortMode: 'nameAsc',
       limit: 48,
       offset: 0,
     });
@@ -217,6 +292,8 @@ describe('CharactersPage favorites tools', () => {
     page.selectedType.set('DEX');
     page.selectedClass.set('Fighter');
     page.favoritesOnly.set(true);
+    page.hideFavorites.set(true);
+    page.selectedSortMode.set('nameDesc');
     page.importModalOpen.set(true);
     page.importFileName.set('favorites.json');
     page.importErrorMessage.set('Bad file');
@@ -231,6 +308,8 @@ describe('CharactersPage favorites tools', () => {
     expect(page.selectedType()).toBe('');
     expect(page.selectedClass()).toBe('');
     expect(page.favoritesOnly()).toBe(false);
+    expect(page.hideFavorites()).toBe(false);
+    expect(page.selectedSortMode()).toBe('catalog');
     expect(page.importModalOpen()).toBe(false);
     expect(page.importFileName()).toBe('');
     expect(page.parsedImport()).toBeNull();
@@ -239,6 +318,7 @@ describe('CharactersPage favorites tools', () => {
       typeFilter: '',
       classFilter: '',
       allowedCharacterIds: undefined,
+      sortMode: 'catalog',
       limit: 48,
       offset: 0,
     });
@@ -291,6 +371,14 @@ function createPage(overrides: { favoriteIds?: number[] } = {}) {
     ready: vi.fn().mockResolvedValue(undefined),
     setLanguage: vi.fn().mockResolvedValue(undefined),
     translate: vi.fn((key: string, params?: Record<string, string | number>) => {
+      if (key === 'filters.hideFavorites.withCount') {
+        return `Hide your ${params?.['count'] ?? 0} favorited characters from results.`;
+      }
+
+      if (key === 'filters.hideFavorites.empty') {
+        return 'No favorites saved yet.';
+      }
+
       if (key === 'filters.favoritesOnly.withCount') {
         return `Limit results to your ${params?.['count'] ?? 0} favorited characters.`;
       }

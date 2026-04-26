@@ -1,6 +1,10 @@
 import { Injectable, signal } from '@angular/core';
 
-import { type CharacterListItem, type CharacterSearchQuery } from '../models/optc.models';
+import {
+  type CharacterListItem,
+  type CharacterSearchQuery,
+  type CharacterSortMode,
+} from '../models/optc.models';
 import { CharacterOverridesService } from './character-overrides.service';
 import { OptcRepositoryService } from './optc-repository.service';
 
@@ -117,7 +121,9 @@ export class CharacterCatalogCacheService {
       return true;
     });
 
-    return filtered.slice(query.offset, query.offset + query.limit);
+    const sorted = this.sortCharacters(filtered, query.sortMode ?? 'catalog');
+
+    return sorted.slice(query.offset, query.offset + query.limit);
   }
 
   public getCharactersByIds(ids: number[]): CharacterListItem[] {
@@ -140,5 +146,76 @@ export class CharacterCatalogCacheService {
     ]
       .join(' ')
       .toLowerCase();
+  }
+
+  private sortCharacters(
+    characters: CharacterListItem[],
+    sortMode: CharacterSortMode,
+  ): CharacterListItem[] {
+    if (sortMode === 'catalog') {
+      return characters;
+    }
+
+    return [...characters].sort((left, right) => {
+      if (sortMode === 'captainHpBoost') {
+        return this.compareBoostSortedCharacters(left, right, 'captainHpBoost');
+      }
+
+      if (sortMode === 'captainAtkBoost') {
+        return this.compareBoostSortedCharacters(left, right, 'captainAtkBoost');
+      }
+
+      if (sortMode === 'captainAverageBoost') {
+        return this.compareBoostSortedCharacters(left, right, 'captainAverageBoost');
+      }
+
+      if (sortMode === 'nameAsc') {
+        const nameDifference = left.name.localeCompare(right.name, undefined, {
+          sensitivity: 'base',
+        });
+
+        return nameDifference || left.id - right.id;
+      }
+
+      if (sortMode === 'nameDesc') {
+        const nameDifference = right.name.localeCompare(left.name, undefined, {
+          sensitivity: 'base',
+        });
+
+        return nameDifference || right.id - left.id;
+      }
+
+      if (sortMode === 'idAsc') {
+        return left.id - right.id;
+      }
+
+      return right.id - left.id;
+    });
+  }
+
+  private compareBoostSortedCharacters(
+    left: CharacterListItem,
+    right: CharacterListItem,
+    key: 'captainHpBoost' | 'captainAtkBoost' | 'captainAverageBoost',
+  ): number {
+    const boostDifference = right[key] - left[key];
+
+    if (boostDifference !== 0) {
+      return boostDifference;
+    }
+
+    const idDifference = right.id - left.id;
+
+    if (idDifference !== 0) {
+      return idDifference;
+    }
+
+    const costDifference = right.cost - left.cost;
+
+    if (costDifference !== 0) {
+      return costDifference;
+    }
+
+    return left.name.localeCompare(right.name, undefined, { sensitivity: 'base' });
   }
 }

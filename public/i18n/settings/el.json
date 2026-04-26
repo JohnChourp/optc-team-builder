@@ -52,7 +52,7 @@
     "location": {
       "fileMissing": "Δεν βρέθηκε backup αρχείο",
       "fileVisible": "Ορατό στο Drive",
-      "folderAfterSync": "Ο φάκελος στο Drive θα εμφανιστεί μετά το πρώτο επιτυχημένο sync.",
+      "folderAfterSync": "Δεν βρέθηκε Drive folder",
       "folderVisible": "Ορατό στο Drive",
       "notChecked": "Δεν έχει γίνει έλεγχος ακόμη"
     },
@@ -69,14 +69,18 @@
       "uploading": "Γίνεται upload"
     },
     "prompt": {
-      "conflictCopy": "Βρέθηκε νεότερο Drive backup με ενημέρωση {{modifiedAt}}. Διάλεξε αν θα γίνει restore, merge με αυτή τη συσκευή ή αν θα κρατηθούν τα τοπικά δεδομένα και θα αντικαταστήσουν το Drive στο επόμενο sync.",
-      "conflictTitle": "Επίλυση σύγκρουσης Drive backup",
-      "restoreCopy": "Υπάρχει διαθέσιμο Drive backup από {{modifiedAt}}. Μπορείς να το επαναφέρεις σε αυτή τη συσκευή ή να κρατήσεις το τρέχον local state.",
-      "restoreTitle": "Restore backup από Drive",
+      "conflictCopy": "Υπάρχουν δεδομένα και σε αυτή τη συσκευή και στο Google Drive. Το Drive backup ενημερώθηκε {{modifiedAt}}. Διάλεξε ακριβώς τι θα κάνει το Sync τώρα.",
+      "conflictTitle": "Διάλεξε κατεύθυνση sync",
+      "restoreCloudCopy": "Δεν βρέθηκαν τοπικά δεδομένα. Να χρησιμοποιηθεί σε αυτή τη συσκευή το Drive backup από {{modifiedAt}};",
+      "restoreCloudTitle": "Χρήση Drive backup",
+      "uploadLocalCopy": "Δεν βρέθηκε Drive backup. Να ανέβουν τα δεδομένα αυτής της συσκευής στο Google Drive;",
+      "uploadLocalTitle": "Upload δεδομένων συσκευής",
       "actions": {
-        "keepLocal": "Κράτα τοπικά",
+        "cancel": "Άκυρο",
         "merge": "Merge",
-        "restore": "Restore cloud"
+        "replaceCloud": "Αντικατάσταση Drive",
+        "replaceLocal": "Αντικατάσταση συσκευής",
+        "uploadLocal": "Upload στο Drive"
       }
     },
     "summary": {

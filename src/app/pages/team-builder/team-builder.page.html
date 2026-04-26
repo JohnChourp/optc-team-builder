@@ -300,6 +300,30 @@
           (ionInput)="onSearchCandidates($event)"
         ></ion-searchbar>
 
+        <div class="assign-panel__favorite-filter">
+          <div>
+            <strong>{{ t('assign.favoritesOnly.label') }}</strong>
+            <small>{{ t('assign.favoritesOnly.support', { count: favoriteIds().length }) }}</small>
+          </div>
+          <ion-toggle
+            color="warning"
+            [checked]="favoritesOnly()"
+            (ionChange)="onFavoritesOnlyToggle($event)"
+          ></ion-toggle>
+        </div>
+
+        <div class="assign-panel__favorite-filter">
+          <div>
+            <strong>{{ t('assign.hideFavorites.label') }}</strong>
+            <small>{{ t('assign.hideFavorites.support', { count: favoriteIds().length }) }}</small>
+          </div>
+          <ion-toggle
+            color="warning"
+            [checked]="hideFavorites()"
+            (ionChange)="onHideFavoritesToggle($event)"
+          ></ion-toggle>
+        </div>
+
         <div class="view-toggle" [attr.aria-label]="t('displayMode.label')">
           <button
             type="button"

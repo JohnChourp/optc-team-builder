@@ -173,6 +173,9 @@
                   <ion-select-option value="favorites">
                     {{ t('filters.favoritesOptions.favorites') }}
                   </ion-select-option>
+                  <ion-select-option value="hideFavorites">
+                    {{ t('filters.favoritesOptions.hideFavorites') }}
+                  </ion-select-option>
                 </ion-select>
 
                 <ion-select
@@ -191,6 +194,38 @@
                   <ion-select-option value="notInBox">
                     {{ t('filters.membershipOptions.notInBox') }}
                   </ion-select-option>
+                </ion-select>
+
+                <ion-select
+                  interface="popover"
+                  fill="outline"
+                  [attr.aria-label]="t('sort.label')"
+                  [placeholder]="t('sort.placeholder')"
+                  [value]="selectedSortMode()"
+                  (ionChange)="onSortModeChange($event)"
+                >
+                  <ion-select-option value="catalog">{{
+                    t('sort.options.catalog')
+                  }}</ion-select-option>
+                  <ion-select-option value="nameAsc">{{
+                    t('sort.options.nameAsc')
+                  }}</ion-select-option>
+                  <ion-select-option value="nameDesc">
+                    {{ t('sort.options.nameDesc') }}
+                  </ion-select-option>
+                  <ion-select-option value="idDesc">{{
+                    t('sort.options.idDesc')
+                  }}</ion-select-option>
+                  <ion-select-option value="idAsc">{{ t('sort.options.idAsc') }}</ion-select-option>
+                  <ion-select-option value="captainHpBoost">{{
+                    t('sort.options.captainHpBoost')
+                  }}</ion-select-option>
+                  <ion-select-option value="captainAtkBoost">{{
+                    t('sort.options.captainAtkBoost')
+                  }}</ion-select-option>
+                  <ion-select-option value="captainAverageBoost">{{
+                    t('sort.options.captainAverageBoost')
+                  }}</ion-select-option>
                 </ion-select>
 
                 <ion-button fill="outline" color="light" (click)="clearFilters()">

@@ -16,6 +16,7 @@ import {
   IonSearchbar,
   IonTextarea,
   IonTitle,
+  IonToggle,
   IonToolbar,
 } from '@ionic/angular/standalone';
 import { boatOutline, heart, heartOutline } from 'ionicons/icons';
@@ -73,6 +74,7 @@ interface TeamBuilderCandidateCardView {
     IonSearchbar,
     IonTextarea,
     IonTitle,
+    IonToggle,
     IonToolbar,
     RouterLink,
     CharacterAbilityGroupsComponent,
@@ -96,6 +98,8 @@ export class TeamBuilderPage implements OnInit {
   public readonly potentialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly supportAbilityPickerOpen = signal(false);
   public readonly supportAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly favoritesOnly = signal(false);
+  public readonly hideFavorites = signal(false);
   public readonly candidateDisplayMode = signal<TeamBuilderCandidateDisplayMode>('list');
   public readonly candidateCharacters = signal<CharacterDetailRecord[]>([]);
   public readonly slotCharacters = signal<Array<CharacterDetailRecord | null>>(
@@ -248,6 +252,26 @@ export class TeamBuilderPage implements OnInit {
 
   public async onSearchCandidates(event: CustomEvent<{ value?: string | null }>): Promise<void> {
     this.candidateSearchTerm.set((event.detail.value ?? '').trim());
+    await this.refreshCandidateCharacters(this.candidateSearchTerm());
+  }
+
+  public async onFavoritesOnlyToggle(event: CustomEvent<{ checked: boolean }>): Promise<void> {
+    this.favoritesOnly.set(event.detail.checked);
+
+    if (event.detail.checked) {
+      this.hideFavorites.set(false);
+    }
+
+    await this.refreshCandidateCharacters(this.candidateSearchTerm());
+  }
+
+  public async onHideFavoritesToggle(event: CustomEvent<{ checked: boolean }>): Promise<void> {
+    this.hideFavorites.set(event.detail.checked);
+
+    if (event.detail.checked) {
+      this.favoritesOnly.set(false);
+    }
+
     await this.refreshCandidateCharacters(this.candidateSearchTerm());
   }
 
@@ -465,6 +489,8 @@ export class TeamBuilderPage implements OnInit {
     this.potentialAbilityDrafts.set([]);
     this.supportAbilityPickerOpen.set(false);
     this.supportAbilityDrafts.set([]);
+    this.favoritesOnly.set(false);
+    this.hideFavorites.set(false);
     this.selectedSlotIndex.set(0);
     this.resetEditor();
     await this.refreshCandidateCharacters(this.candidateSearchTerm());
@@ -474,6 +500,10 @@ export class TeamBuilderPage implements OnInit {
     event.preventDefault();
     event.stopPropagation();
     await this.userState.toggleFavorite(characterId);
+
+    if (this.favoritesOnly() || this.hideFavorites()) {
+      await this.refreshCandidateCharacters(this.candidateSearchTerm());
+    }
   }
 
   public isFavorite(characterId: number): boolean {
@@ -485,6 +515,9 @@ export class TeamBuilderPage implements OnInit {
   }
 
   private async refreshCandidateCharacters(searchTerm: string): Promise<void> {
+    const excludedCharacterIds = this.hideFavorites() ? this.favoriteIds() : undefined;
+    const favoriteIds = this.favoritesOnly() ? this.favoriteIds() : undefined;
+
     this.candidateCharacters.set(
       await this.repository.searchDetailedCharacters({
         searchTerm,
@@ -495,7 +528,9 @@ export class TeamBuilderPage implements OnInit {
           this.crewmateFilterCharacterIds(),
           this.potentialFilterCharacterIds(),
           this.supportFilterCharacterIds(),
+          favoriteIds,
         ]),
+        ...(excludedCharacterIds ? { excludedCharacterIds } : {}),
         limit: 24,
         offset: 0,
       }),

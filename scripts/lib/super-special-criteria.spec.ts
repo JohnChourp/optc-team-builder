@@ -36,6 +36,7 @@ describe('parseSuperSpecialCriteria', () => {
       rawText:
         'This character must be captain and the crew must consist of 6 Powerhouse or Driven characters.',
       requiresCaptain: true,
+      excludesSelf: false,
       hasNonRosterBranches: false,
       parserStatus: 'roster_only',
       rosterBranches: [
@@ -57,6 +58,7 @@ describe('parseSuperSpecialCriteria', () => {
     expect(result).toEqual({
       rawText: 'This character must be captain and HP must be below 30%.',
       requiresCaptain: true,
+      excludesSelf: false,
       hasNonRosterBranches: true,
       parserStatus: 'non_roster_only',
       rosterBranches: [],
@@ -77,6 +79,46 @@ describe('parseSuperSpecialCriteria', () => {
           requiredCount: 2,
         },
       ],
+    });
+  });
+
+  it('parses tag-list crew criteria that excludes self', () => {
+    const result = parseSuperSpecialCriteria(
+      'When any 3 [Straw Hat Pirates], [Giant], or [Four Emperors] characters are on the crew not including self, can be launched when character is a crewmate.',
+    );
+
+    expect(result).toMatchObject({
+      parserStatus: 'roster_only',
+      requiresCaptain: false,
+      excludesSelf: true,
+      rosterBranches: [
+        {
+          branchType: 'character_count_any',
+          requiredCount: 3,
+          matchMode: 'any_candidate',
+          options: [
+            {
+              label: '[Straw Hat Pirates]',
+              acceptedKeys: expect.arrayContaining(['straw hat pirates']),
+            },
+            {
+              label: '[Giant]',
+              acceptedKeys: expect.arrayContaining(['giant']),
+            },
+            {
+              label: '[Four Emperors]',
+              acceptedKeys: expect.arrayContaining(['four emperors']),
+            },
+          ],
+        },
+      ],
+    });
+    expect(result?.rosterBranches[0]).toMatchObject({
+      options: expect.arrayContaining([
+        expect.objectContaining({
+          acceptedKeys: expect.not.arrayContaining(['characters']),
+        }),
+      ]),
     });
   });
 });

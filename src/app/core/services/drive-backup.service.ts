@@ -1,4 +1,4 @@
-import { Inject, Injector, Optional, effect, Injectable, signal } from '@angular/core';
+import { Inject, Injector, Optional, effect, Injectable, signal, untracked } from '@angular/core';
 
 import { APP_SYNC_CONFIG, type AppSyncConfig } from '../sync/app-sync.config';
 import { GoogleAccountService, type GoogleAccountProfile } from './google-account.service';
@@ -11,7 +11,6 @@ import {
   parseAllDataImportCandidate,
 } from '../../pages/settings/all-data-transfer.utils';
 import {
-  type DriveConflictResolution,
   type SyncScopeSummary,
   UserDataTransferService,
 } from './user-data-transfer.service';
@@ -29,9 +28,17 @@ export interface DriveRemoteBackupInfo {
   modifiedTime: string | null;
 }
 
-export interface DriveRestorePrompt {
-  kind: 'conflict' | 'restore';
-  remote: DriveRemoteBackupInfo;
+export type DriveManualSyncPromptAction =
+  | 'cancel'
+  | 'merge-and-upload'
+  | 'replace-cloud'
+  | 'replace-local'
+  | 'upload-local';
+
+export interface DriveManualSyncPrompt {
+  folderId: string | null;
+  kind: 'local-cloud-conflict' | 'restore-cloud' | 'upload-local';
+  remote: DriveRemoteBackupInfo | null;
 }
 
 export interface DriveSyncStatus {
@@ -77,7 +84,7 @@ function createIdleStatus(detail: string | null = null): DriveSyncStatus {
 @Injectable({ providedIn: 'root' })
 export class DriveBackupService {
   public readonly remoteBackup = signal<DriveRemoteBackupInfo | null>(null);
-  public readonly restorePrompt = signal<DriveRestorePrompt | null>(null);
+  public readonly manualSyncPrompt = signal<DriveManualSyncPrompt | null>(null);
   public readonly syncStatus = signal<DriveSyncStatus>({
     detail: null,
     phase: 'disabled',
@@ -105,6 +112,98 @@ export class DriveBackupService {
     await this.readyPromise;
   }
 
+  public async startManualSync(options: {
+    interactiveAuth?: boolean;
+    reason?: string;
+  } = {}): Promise<boolean> {
+    await this.ready();
+
+    if (!this.account.isAvailable()) {
+      this.syncStatus.set({
+        detail: null,
+        phase: 'disabled',
+        updatedAt: new Date().toISOString(),
+      });
+      return false;
+    }
+
+    this.syncStatus.set({
+      detail: options.reason ?? 'Checking this device and Google Drive.',
+      phase: 'checking',
+      updatedAt: new Date().toISOString(),
+    });
+
+    try {
+      const accessToken = await this.account.ensureAccessToken({
+        interactive: options.interactiveAuth,
+      });
+
+      if (!accessToken) {
+        this.syncStatus.set({
+          detail: this.account.lastError(),
+          phase: 'needs-auth',
+          updatedAt: new Date().toISOString(),
+        });
+        return false;
+      }
+
+      const [hasLocalData, remoteSnapshot] = await Promise.all([
+        Promise.resolve(this.transfer.hasSyncScopedData()),
+        this.inspectRemoteSnapshot(accessToken, true),
+      ]);
+
+      this.remoteBackup.set(remoteSnapshot.backup);
+      await this.recordRemoteSnapshot(remoteSnapshot);
+
+      if (!hasLocalData && !remoteSnapshot.backup) {
+        this.manualSyncPrompt.set(null);
+        this.syncStatus.set(createIdleStatus('No local data or Drive backup was found.'));
+        return false;
+      }
+
+      if (hasLocalData && !remoteSnapshot.backup) {
+        this.manualSyncPrompt.set({
+          folderId: remoteSnapshot.folderId,
+          kind: 'upload-local',
+          remote: null,
+        });
+        this.syncStatus.set(
+          createIdleStatus('No Drive backup was found. Upload this device data to Drive?'),
+        );
+        return false;
+      }
+
+      if (!hasLocalData && remoteSnapshot.backup) {
+        this.manualSyncPrompt.set({
+          folderId: remoteSnapshot.folderId,
+          kind: 'restore-cloud',
+          remote: remoteSnapshot.backup,
+        });
+        this.syncStatus.set(
+          createIdleStatus('No local data was found. Use the Drive backup on this device?'),
+        );
+        return false;
+      }
+
+      this.manualSyncPrompt.set({
+        folderId: remoteSnapshot.folderId,
+        kind: 'local-cloud-conflict',
+        remote: remoteSnapshot.backup,
+      });
+      this.syncStatus.set(
+        createIdleStatus('Local data and Drive data were found. Choose how to sync.'),
+      );
+      return false;
+    } catch (error) {
+      this.syncStatus.set({
+        detail: this.resolveErrorMessage(error),
+        phase: 'error',
+        updatedAt: new Date().toISOString(),
+      });
+      return false;
+    }
+  }
+
   public async flushPendingUploads(options: {
     interactiveAuth?: boolean;
     reason?: string;
@@ -120,9 +219,9 @@ export class DriveBackupService {
       return false;
     }
 
-    if (this.restorePrompt()) {
+    if (this.manualSyncPrompt()) {
       this.syncStatus.set(
-        createIdleStatus('Resolve the pending Drive conflict before starting a manual sync.'),
+        createIdleStatus('Resolve the pending Drive sync decision before uploading.'),
       );
       return false;
     }
@@ -150,21 +249,14 @@ export class DriveBackupService {
       const remoteSnapshot = await this.inspectRemoteSnapshot(accessToken, true);
 
       this.remoteBackup.set(remoteSnapshot.backup);
-      await this.syncState.recordRemoteSnapshot({
-        fileId: remoteSnapshot.backup?.fileId ?? null,
-        folderId: remoteSnapshot.backup?.folderId ?? remoteSnapshot.folderId,
-        hasRemoteBackup: remoteSnapshot.backup !== null,
-        remoteExportedAt: remoteSnapshot.backup?.exportedAt ?? null,
-        remoteModifiedTime: remoteSnapshot.backup?.modifiedTime ?? null,
-        remoteSummary: remoteSnapshot.summary,
-      });
+      await this.recordRemoteSnapshot(remoteSnapshot);
 
       if (
         remoteSnapshot.backup &&
         this.syncState.pendingLocalChanges() &&
         this.isRemoteBackupNewer(remoteSnapshot.backup, this.syncState.metadata())
       ) {
-        this.setPromptForRemoteBackup(remoteSnapshot.backup);
+        this.setManualPromptForRemoteBackup(remoteSnapshot.backup);
         this.syncStatus.set(
           createIdleStatus('A newer Drive backup needs your decision before syncing.'),
         );
@@ -172,7 +264,7 @@ export class DriveBackupService {
       }
 
       if (remoteSnapshot.backup && !this.syncState.pendingLocalChanges()) {
-        this.restorePrompt.set(null);
+        this.manualSyncPrompt.set(null);
         this.syncStatus.set(createIdleStatus('Drive backup is already up to date.'));
         return true;
       }
@@ -183,25 +275,7 @@ export class DriveBackupService {
         updatedAt: new Date().toISOString(),
       });
 
-      const payload = await this.transfer.buildAllDataPayload();
-      const remoteSummary = this.transfer.getSyncScopeSummary();
-      const remoteBackup = await this.upsertRemoteBackup(
-        accessToken,
-        payload,
-        this.account.profile(),
-        remoteSnapshot.folderId,
-      );
-
-      this.remoteBackup.set(remoteBackup);
-      this.restorePrompt.set(null);
-      await this.syncState.recordUpload({
-        account: this.account.profile(),
-        exportedAt: payload.exportedAt,
-        fileId: remoteBackup.fileId,
-        folderId: remoteBackup.folderId,
-        remoteModifiedTime: remoteBackup.modifiedTime,
-        remoteSummary,
-      });
+      await this.uploadLocalData(accessToken, remoteSnapshot.folderId, 'Drive backup updated.');
       this.syncStatus.set(createIdleStatus('Drive backup updated.'));
 
       return true;
@@ -224,7 +298,7 @@ export class DriveBackupService {
     await this.syncState.markLocalChange();
   }
 
-  public async prepareRestorePrompt(): Promise<DriveRestorePrompt | null> {
+  public async prepareRestorePrompt(): Promise<DriveManualSyncPrompt | null> {
     await this.ready();
     const remoteBackup = await this.refreshRemoteState({
       interactiveAuth: true,
@@ -235,9 +309,9 @@ export class DriveBackupService {
       return null;
     }
 
-    this.setPromptForRemoteBackup(remoteBackup);
+    this.setManualPromptForRemoteBackup(remoteBackup);
 
-    return this.restorePrompt();
+    return this.manualSyncPrompt();
   }
 
   public async refreshRemoteState(options: {
@@ -278,19 +352,12 @@ export class DriveBackupService {
       const remoteSnapshot = await this.inspectRemoteSnapshot(accessToken, true);
 
       this.remoteBackup.set(remoteSnapshot.backup);
-      await this.syncState.recordRemoteSnapshot({
-        fileId: remoteSnapshot.backup?.fileId ?? null,
-        folderId: remoteSnapshot.backup?.folderId ?? remoteSnapshot.folderId,
-        hasRemoteBackup: remoteSnapshot.backup !== null,
-        remoteExportedAt: remoteSnapshot.backup?.exportedAt ?? null,
-        remoteModifiedTime: remoteSnapshot.backup?.modifiedTime ?? null,
-        remoteSummary: remoteSnapshot.summary,
-      });
+      await this.recordRemoteSnapshot(remoteSnapshot);
 
       if (remoteSnapshot.backup && this.isRemoteBackupNewer(remoteSnapshot.backup, this.syncState.metadata())) {
-        this.setPromptForRemoteBackup(remoteSnapshot.backup);
+        this.setManualPromptForRemoteBackup(remoteSnapshot.backup);
       } else {
-        this.restorePrompt.set(null);
+        this.manualSyncPrompt.set(null);
       }
 
       this.syncStatus.set(
@@ -314,33 +381,23 @@ export class DriveBackupService {
     }
   }
 
-  public async resolveRestorePrompt(
-    resolution: DriveConflictResolution,
+  public async resolveManualSyncPrompt(
+    action: DriveManualSyncPromptAction,
   ): Promise<AllDataTransferPayload | null> {
     await this.ready();
 
-    const prompt = this.restorePrompt();
+    const prompt = this.manualSyncPrompt();
 
     if (!prompt) {
       return null;
     }
 
-    if (resolution === 'keep-local') {
-      await this.syncState.markRemoteSeen(prompt.remote.modifiedTime);
-      await this.syncState.markLocalChange();
-      this.restorePrompt.set(null);
-      this.syncStatus.set(
-        createIdleStatus('Keeping local data. Use Sync now if you want to overwrite Drive.'),
-      );
+    if (action === 'cancel') {
+      this.manualSyncPrompt.set(null);
+      this.syncStatus.set(createIdleStatus('Drive sync cancelled.'));
 
       return null;
     }
-
-    this.syncStatus.set({
-      detail: resolution === 'restore' ? 'Restoring from Drive.' : 'Merging Drive backup locally.',
-      phase: 'downloading',
-      updatedAt: new Date().toISOString(),
-    });
 
     try {
       const accessToken = await this.account.ensureAccessToken({ interactive: true });
@@ -354,12 +411,37 @@ export class DriveBackupService {
         return null;
       }
 
+      if (action === 'upload-local' || action === 'replace-cloud') {
+        await this.uploadLocalData(
+          accessToken,
+          prompt.remote?.folderId ?? prompt.folderId,
+          action === 'replace-cloud'
+            ? 'Drive backup replaced with this device data.'
+            : 'This device data uploaded to Drive.',
+        );
+        return null;
+      }
+
+      if (!prompt.remote) {
+        this.syncStatus.set(createIdleStatus('No Drive backup is available for that action.'));
+        return null;
+      }
+
+      this.syncStatus.set({
+        detail:
+          action === 'replace-local'
+            ? 'Restoring from Drive.'
+            : 'Merging Drive backup locally.',
+        phase: 'downloading',
+        updatedAt: new Date().toISOString(),
+      });
+
       const payload = await this.downloadRemoteBackup(accessToken, prompt.remote.fileId);
       const remoteSummary = this.transfer.getSyncScopeSummaryFromPayload(payload);
 
       await this.transfer.applyAllDataPayload(
         payload,
-        resolution === 'restore' ? 'restore' : 'merge',
+        action === 'replace-local' ? 'restore' : 'merge',
       );
       await this.syncState.recordDownload({
         account: this.account.profile(),
@@ -370,19 +452,16 @@ export class DriveBackupService {
         remoteSummary,
       });
 
-      this.restorePrompt.set(null);
+      this.manualSyncPrompt.set(null);
       this.remoteBackup.set(prompt.remote);
 
-      if (resolution === 'merge') {
-        await this.syncState.markLocalChange();
+      if (action === 'merge-and-upload') {
+        await this.uploadLocalData(accessToken, prompt.remote.folderId, 'Merged data uploaded to Drive.');
+        return payload;
       }
 
       this.syncStatus.set(
-        createIdleStatus(
-          resolution === 'restore'
-            ? 'Local data restored from Drive.'
-            : 'Drive backup merged locally. Use Sync now to upload the merged data.',
-        ),
+        createIdleStatus('This device data replaced with the Drive backup.'),
       );
 
       return payload;
@@ -555,6 +634,17 @@ export class DriveBackupService {
     };
   }
 
+  private async recordRemoteSnapshot(remoteSnapshot: DriveRemoteSnapshot): Promise<void> {
+    await this.syncState.recordRemoteSnapshot({
+      fileId: remoteSnapshot.backup?.fileId ?? null,
+      folderId: remoteSnapshot.backup?.folderId ?? remoteSnapshot.folderId,
+      hasRemoteBackup: remoteSnapshot.backup !== null,
+      remoteExportedAt: remoteSnapshot.backup?.exportedAt ?? null,
+      remoteModifiedTime: remoteSnapshot.backup?.modifiedTime ?? null,
+      remoteSummary: remoteSnapshot.summary,
+    });
+  }
+
   private isRemoteBackupNewer(
     remoteBackup: DriveRemoteBackupInfo,
     metadata: StoredDriveSyncMetadata,
@@ -591,10 +681,10 @@ export class DriveBackupService {
         return;
       }
 
-      this.restorePrompt.set(null);
+      this.manualSyncPrompt.set(null);
 
       if (this.account.isSignedIn()) {
-        const metadata = this.syncState.metadata();
+        const metadata = untracked(() => this.syncState.metadata());
 
         this.remoteBackup.set(this.buildCachedRemoteBackup(metadata));
         this.syncStatus.set(
@@ -624,14 +714,50 @@ export class DriveBackupService {
     }, { injector: this.injector });
   }
 
-  private setPromptForRemoteBackup(remoteBackup: DriveRemoteBackupInfo): void {
-    this.restorePrompt.set({
+  private setManualPromptForRemoteBackup(remoteBackup: DriveRemoteBackupInfo): void {
+    this.manualSyncPrompt.set({
+      folderId: remoteBackup.folderId,
       kind:
         this.transfer.hasSyncScopedData() || this.syncState.pendingLocalChanges()
-          ? 'conflict'
-          : 'restore',
+          ? 'local-cloud-conflict'
+          : 'restore-cloud',
       remote: remoteBackup,
     });
+  }
+
+  private async uploadLocalData(
+    accessToken: string,
+    existingFolderId: string | null,
+    successMessage: string,
+  ): Promise<DriveRemoteBackupInfo> {
+    this.syncStatus.set({
+      detail: 'Uploading this device data to Drive.',
+      phase: 'uploading',
+      updatedAt: new Date().toISOString(),
+    });
+
+    const payload = await this.transfer.buildAllDataPayload();
+    const remoteSummary = this.transfer.getSyncScopeSummary();
+    const remoteBackup = await this.upsertRemoteBackup(
+      accessToken,
+      payload,
+      this.account.profile(),
+      existingFolderId,
+    );
+
+    this.remoteBackup.set(remoteBackup);
+    this.manualSyncPrompt.set(null);
+    await this.syncState.recordUpload({
+      account: this.account.profile(),
+      exportedAt: payload.exportedAt,
+      fileId: remoteBackup.fileId,
+      folderId: remoteBackup.folderId,
+      remoteModifiedTime: remoteBackup.modifiedTime,
+      remoteSummary,
+    });
+    this.syncStatus.set(createIdleStatus(successMessage));
+
+    return remoteBackup;
   }
 
   private async upsertRemoteBackup(

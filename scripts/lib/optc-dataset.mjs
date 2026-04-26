@@ -3,6 +3,8 @@ import path from 'node:path';
 
 export const validTypes = new Set(['STR', 'DEX', 'QCK', 'PSY', 'INT']);
 const invalidClassPattern = /^Class\d+$/i;
+const captainAtkBoostPattern = /atk(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
+const captainHpBoostPattern = /hp(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
 
 export function flattenValues(value) {
   if (Array.isArray(value)) {
@@ -50,6 +52,42 @@ export function createCharacterSearchText(nameOrOptions, type, classes) {
     .filter((value, index, values) => value.length > 0 && values.indexOf(value) === index)
     .join(' ')
     .toLowerCase();
+}
+
+export function resolveCharacterCaptainBoosts(characterOrDetail) {
+  const detail = characterOrDetail?.detail ?? characterOrDetail ?? {};
+  const captainTexts = resolveCaptainAbilityTexts(detail);
+  const captainHpBoost = extractHighestCaptainBoost(captainTexts, captainHpBoostPattern);
+  const captainAtkBoost = extractHighestCaptainBoost(captainTexts, captainAtkBoostPattern);
+
+  return {
+    captainHpBoost,
+    captainAtkBoost,
+    captainAverageBoost: (captainHpBoost + captainAtkBoost) / 2,
+  };
+}
+
+function resolveCaptainAbilityTexts(detail) {
+  const variantTexts = Array.isArray(detail?.captainAbilityVariants)
+    ? detail.captainAbilityVariants
+        .map((variant) => String(variant?.text ?? '').trim())
+        .filter((text) => text.length > 0)
+    : [];
+  const baseText = String(detail?.captainAbility ?? '').trim();
+
+  return [...variantTexts, baseText].filter(
+    (text, index, values) => text.length > 0 && values.indexOf(text) === index,
+  );
+}
+
+function extractHighestCaptainBoost(texts, pattern) {
+  return texts.reduce((highest, text) => {
+    const matches = [...text.matchAll(pattern)];
+    return matches.reduce((textHighest, match) => {
+      const value = Number(match[1]);
+      return Number.isFinite(value) && value > textHighest ? value : textHighest;
+    }, highest);
+  }, 0);
 }
 
 function normalizeCharacterSearchInput(nameOrOptions, type, classes) {
@@ -150,6 +188,9 @@ export function createSqlSeed(characters, ships, manifest) {
         max_atk INTEGER,
         max_rcv INTEGER,
         growth REAL,
+        captain_hp_boost REAL NOT NULL DEFAULT 0,
+        captain_atk_boost REAL NOT NULL DEFAULT 0,
+        captain_average_boost REAL NOT NULL DEFAULT 0,
         region_json TEXT NOT NULL,
         assets_json TEXT NOT NULL,
         search_text TEXT NOT NULL
@@ -178,10 +219,27 @@ export function createSqlSeed(characters, ships, manifest) {
   ];
 
   for (const character of characters) {
+    const resolvedCaptainBoosts = resolveCharacterCaptainBoosts(character);
+    const captainBoosts = {
+      captainHpBoost:
+        typeof character.captainHpBoost === 'number'
+          ? character.captainHpBoost
+          : resolvedCaptainBoosts.captainHpBoost,
+      captainAtkBoost:
+        typeof character.captainAtkBoost === 'number'
+          ? character.captainAtkBoost
+          : resolvedCaptainBoosts.captainAtkBoost,
+    };
+    captainBoosts.captainAverageBoost =
+      typeof character.captainAverageBoost === 'number'
+        ? character.captainAverageBoost
+        : (captainBoosts.captainHpBoost + captainBoosts.captainAtkBoost) / 2;
+
     statements.push(`
       INSERT INTO characters (
         id, name, is_incomplete, type, primary_class, secondary_class, classes_json, stars, cost, combo,
-        min_hp, min_atk, min_rcv, max_hp, max_atk, max_rcv, growth, region_json,
+        min_hp, min_atk, min_rcv, max_hp, max_atk, max_rcv, growth,
+        captain_hp_boost, captain_atk_boost, captain_average_boost, region_json,
         assets_json, search_text
       ) VALUES (
         ${sqlValue(character.id)},
@@ -201,6 +259,9 @@ export function createSqlSeed(characters, ships, manifest) {
         ${sqlValue(character.maxAtk)},
         ${sqlValue(character.maxRcv)},
         ${sqlValue(character.growth)},
+        ${sqlValue(captainBoosts.captainHpBoost)},
+        ${sqlValue(captainBoosts.captainAtkBoost)},
+        ${sqlValue(captainBoosts.captainAverageBoost)},
         ${sqlValue(JSON.stringify(character.regionAvailability))},
         ${sqlValue(JSON.stringify(character.assets))},
         ${sqlValue(character.searchText)}

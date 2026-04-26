@@ -281,6 +281,18 @@
           ></ion-toggle>
         </div>
 
+        <div class="favorites-toggle-row">
+          <div class="favorites-toggle-copy">
+            <strong>{{ t('filters.hideFavorites.label') }}</strong>
+            <small>{{ hideFavoritesSupportLabel() }}</small>
+          </div>
+          <ion-toggle
+            color="warning"
+            [checked]="hideFavorites()"
+            (ionChange)="onHideFavoritesToggle($event)"
+          ></ion-toggle>
+        </div>
+
         <ion-searchbar
           class="vault-search"
           [debounce]="150"
@@ -289,6 +301,35 @@
           [searchIcon]="searchIcon"
           (ionInput)="onSearchChange($event)"
         ></ion-searchbar>
+
+        <div class="filter-group sort-filter">
+          <span>{{ t('sort.label') }}</span>
+          <ion-select
+            interface="popover"
+            fill="outline"
+            [attr.aria-label]="t('sort.label')"
+            [placeholder]="t('sort.placeholder')"
+            [value]="selectedSortMode()"
+            (ionChange)="onSortModeChange($event)"
+          >
+            <ion-select-option value="catalog">{{ t('sort.options.catalog') }}</ion-select-option>
+            <ion-select-option value="nameAsc">{{ t('sort.options.nameAsc') }}</ion-select-option>
+            <ion-select-option value="nameDesc">
+              {{ t('sort.options.nameDesc') }}
+            </ion-select-option>
+            <ion-select-option value="idDesc">{{ t('sort.options.idDesc') }}</ion-select-option>
+            <ion-select-option value="idAsc">{{ t('sort.options.idAsc') }}</ion-select-option>
+            <ion-select-option value="captainHpBoost">
+              {{ t('sort.options.captainHpBoost') }}
+            </ion-select-option>
+            <ion-select-option value="captainAtkBoost">
+              {{ t('sort.options.captainAtkBoost') }}
+            </ion-select-option>
+            <ion-select-option value="captainAverageBoost">
+              {{ t('sort.options.captainAverageBoost') }}
+            </ion-select-option>
+          </ion-select>
+        </div>
 
         <div class="view-toggle" [attr.aria-label]="t('displayMode.label')">
           <button

@@ -40,7 +40,8 @@
     "membershipPlaceholder": "Filter by box membership",
     "favoritesOptions": {
       "all": "All characters",
-      "favorites": "Favorites only"
+      "favorites": "Favorites only",
+      "hideFavorites": "Hide favorites"
     },
     "membershipOptions": {
       "all": "All membership states",
@@ -78,6 +79,20 @@
     "label": "Character layout",
     "list": "List view",
     "compact": "Compact view"
+  },
+  "sort": {
+    "label": "Sort",
+    "placeholder": "Sort characters",
+    "options": {
+      "catalog": "Default order",
+      "nameAsc": "Name A-Z",
+      "nameDesc": "Name Z-A",
+      "idDesc": "Character ID newest first",
+      "idAsc": "Character ID oldest first",
+      "captainHpBoost": "Captain HP boost",
+      "captainAtkBoost": "Captain ATK boost",
+      "captainAverageBoost": "Captain HP/ATK average"
+    }
   },
   "favorites": {
     "addAria": "Add {{name}} to favorites",

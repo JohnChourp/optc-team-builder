@@ -31,6 +31,7 @@ import {
   type CharacterBox,
   type CharacterDetailRecord,
   type CharacterListItem,
+  type CharacterSortMode,
   type DatasetManifest,
 } from '../../core/models/optc.models';
 import { type AutoBuildAbilityCatalog } from '../../core/models/auto-team-builder-ability.models';
@@ -51,7 +52,7 @@ import {
 import { UserStateService } from '../../core/services/user-state.service';
 
 const PAGE_SIZE = 48;
-type CharacterBoxesFavoriteFilter = 'all' | 'favorites';
+type CharacterBoxesFavoriteFilter = 'all' | 'favorites' | 'hideFavorites';
 type CharacterBoxesMembershipFilter = 'all' | 'inBox' | 'notInBox';
 type CharacterBoxesDisplayMode = 'list' | 'compact';
 
@@ -100,6 +101,7 @@ export class CharacterBoxesPage implements OnInit {
   public readonly selectedClass = signal('');
   public readonly selectedFavoriteFilter = signal<CharacterBoxesFavoriteFilter>('all');
   public readonly selectedMembershipFilter = signal<CharacterBoxesMembershipFilter>('all');
+  public readonly selectedSortMode = signal<CharacterSortMode>('catalog');
   public readonly specialAbilityPickerOpen = signal(false);
   public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly crewmateAbilityPickerOpen = signal(false);
@@ -373,7 +375,11 @@ export class CharacterBoxesPage implements OnInit {
   public async onFavoriteFilterChange(
     event: CustomEvent<{ value?: string | null }>,
   ): Promise<void> {
-    this.selectedFavoriteFilter.set(event.detail.value === 'favorites' ? 'favorites' : 'all');
+    this.selectedFavoriteFilter.set(
+      event.detail.value === 'favorites' || event.detail.value === 'hideFavorites'
+        ? event.detail.value
+        : 'all',
+    );
     await this.loadCharacters(true);
   }
 
@@ -385,6 +391,11 @@ export class CharacterBoxesPage implements OnInit {
     this.selectedMembershipFilter.set(
       nextValue === 'inBox' || nextValue === 'notInBox' ? nextValue : 'all',
     );
+    await this.loadCharacters(true);
+  }
+
+  public async onSortModeChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
+    this.selectedSortMode.set(this.normalizeSortMode(event.detail.value));
     await this.loadCharacters(true);
   }
 
@@ -516,6 +527,10 @@ export class CharacterBoxesPage implements OnInit {
     event?.preventDefault();
     event?.stopPropagation();
     await this.userState.toggleFavorite(characterId);
+
+    if (this.selectedFavoriteFilter() !== 'all') {
+      await this.loadCharacters(true);
+    }
   }
 
   public isFavorite(characterId: number): boolean {
@@ -532,6 +547,7 @@ export class CharacterBoxesPage implements OnInit {
     this.selectedClass.set('');
     this.selectedFavoriteFilter.set('all');
     this.selectedMembershipFilter.set('all');
+    this.selectedSortMode.set('catalog');
     this.specialAbilityPickerOpen.set(false);
     this.specialAbilityDrafts.set([]);
     this.crewmateAbilityPickerOpen.set(false);
@@ -607,6 +623,10 @@ export class CharacterBoxesPage implements OnInit {
       this.potentialFilterCharacterIds(),
       this.supportFilterCharacterIds(),
     ]);
+    const excludedCharacterIds = [
+      ...(this.selectedMembershipFilter() === 'notInBox' ? selectedBoxCharacterIds : []),
+      ...(this.selectedFavoriteFilter() === 'hideFavorites' ? this.favoriteCharacterIds() : []),
+    ];
     const nextCharacters = await this.repository.searchDetailedCharacters({
       searchTerm: this.searchTerm(),
       selectedTypes: this.selectedType() ? [this.selectedType()] : [],
@@ -614,8 +634,10 @@ export class CharacterBoxesPage implements OnInit {
       selectedClasses: this.selectedClass() ? [this.selectedClass()] : [],
       selectedClassesMatchMode: 'any',
       allowedCharacterIds,
-      excludedCharacterIds:
-        this.selectedMembershipFilter() === 'notInBox' ? selectedBoxCharacterIds : undefined,
+      excludedCharacterIds: excludedCharacterIds.length
+        ? [...new Set(excludedCharacterIds)]
+        : undefined,
+      sortMode: this.selectedSortMode(),
       limit: PAGE_SIZE,
       offset: nextOffset,
     });
@@ -627,6 +649,18 @@ export class CharacterBoxesPage implements OnInit {
 
   private normalizeOptions(values: string[]): string[] {
     return [...new Set(values.map((value) => value.trim()).filter((value) => value.length > 0))];
+  }
+
+  private normalizeSortMode(value: string | null | undefined): CharacterSortMode {
+    return value === 'nameAsc' ||
+      value === 'nameDesc' ||
+      value === 'idDesc' ||
+      value === 'idAsc' ||
+      value === 'captainHpBoost' ||
+      value === 'captainAtkBoost' ||
+      value === 'captainAverageBoost'
+      ? value
+      : 'catalog';
   }
 
   private t(key: string, params?: Record<string, string | number>): string {
