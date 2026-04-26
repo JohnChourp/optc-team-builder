@@ -67,7 +67,7 @@
     "leaderSuperEffectScope": {
       "toggle": "Απαίτησε κάθε slot να ταιριάζει στο leader super effect scope",
       "support": {
-        "strict": "Κάθε final slot πρέπει να ταιριάζει στο κοινό Super Type / Super Class effect scope του selected captain και friend captain.",
+        "strict": "Κάθε final slot πρέπει να ταιριάζει σε κάθε selected Super Type / Super Class / Super Special scope και τα activation requirements μένουν strict.",
         "flexible": "Στο default mode ο builder δοκιμάζει πρώτα leaders χωρίς Super Type / Super Class effects και μετά επιτρέπει super leaders πριν χαλαρώσει classes ή types."
       }
     },

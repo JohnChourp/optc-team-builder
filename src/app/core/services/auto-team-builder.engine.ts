@@ -372,18 +372,12 @@ export class AutoTeamBuildFallbackPlanner {
       canRelaxLeaderSuperSpecialCriteria,
     );
     this.hasStrictConstraints = hasStrictAutoTeamBuildConstraints(requestedInput);
-    this.baseSubsetInput = requestedInput.requireAllSlotsInLeaderSuperEffectScope
+    this.baseSubsetInput = canRelaxLeaderSuperSpecialCriteria
       ? {
           ...requestedInput,
-          requireAllSlotsInLeaderSuperEffectScope: false,
-          minimumLeaderSuperEffectMatchingSlots: null,
+          requireLeaderSuperSpecialCriteria: false,
         }
-      : canRelaxLeaderSuperSpecialCriteria
-        ? {
-            ...requestedInput,
-            requireLeaderSuperSpecialCriteria: false,
-          }
-        : requestedInput;
+      : requestedInput;
     this.subsetCandidates = this.hasStrictConstraints
       ? []
       : buildSubsetCandidates(requestedInput, this.baseSubsetInput, records);
@@ -551,38 +545,7 @@ function buildZeroDropFallbackAttempts(
   const fixedAttempts: AutoTeamBuildPlannedAttempt[] = [];
 
   if (exactLeaderSuperEffectSlots !== null) {
-    for (
-      let matchingSlots = exactLeaderSuperEffectSlots - 1;
-      matchingSlots >= 2;
-      matchingSlots -= 1
-    ) {
-      fixedAttempts.push({
-        input: {
-          ...requestedInput,
-          minimumLeaderSuperEffectMatchingSlots: matchingSlots,
-        },
-        requireLeadersWithoutSuperEffects: false,
-        allowedLeadersWithSuperEffects: false,
-        droppedTypes: [],
-        droppedClasses: [],
-        ignoredLeaderSuperEffectScope: false,
-        ignoredLeaderSuperSpecialCriteria: false,
-      });
-    }
-
-    fixedAttempts.push({
-      input: {
-        ...requestedInput,
-        requireAllSlotsInLeaderSuperEffectScope: false,
-        minimumLeaderSuperEffectMatchingSlots: null,
-      },
-      requireLeadersWithoutSuperEffects: false,
-      allowedLeadersWithSuperEffects: false,
-      droppedTypes: [],
-      droppedClasses: [],
-      ignoredLeaderSuperEffectScope: true,
-      ignoredLeaderSuperSpecialCriteria: false,
-    });
+    return fixedAttempts;
   }
 
   if (exactLeaderSuperEffectSlots === null && exactAttemptRequiresNoSuperLeaders) {

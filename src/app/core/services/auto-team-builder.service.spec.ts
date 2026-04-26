@@ -1705,6 +1705,144 @@ describe('Auto team builder', () => {
     expect(result?.slots.some((slot) => slot.character.id === 7205)).toBe(false);
   });
 
+  it('enforces sub super special scope and activation criteria when strict super scope is enabled', () => {
+    const result = buildAutoTeamResult(
+      [
+        createLeaderWithSuperEffectScopeRecord(7260, {
+          type: 'STR',
+          primaryClass: 'Fighter',
+        }),
+        createStrSuperSpecialSubRecord(7261),
+        createTaggedStrSubRecord(7262, ['Straw Hat Pirates']),
+        createTaggedStrSubRecord(7263, ['Giant']),
+        createTaggedStrSubRecord(7264, ['Four Emperors']),
+        createSuperEffectScopeSubRecord(7265, {
+          type: 'STR',
+          primaryClass: 'Slasher',
+        }),
+      ],
+      createInput(['STR'], ['Fighter'], {
+        requireAllSlotsInLeaderSuperEffectScope: true,
+        requireLeaderSuperSpecialCriteria: true,
+        manualSlots: createManualSlots({
+          captain: [7260],
+          friendCaptain: [7260],
+          sub1: [7261],
+        }),
+        lockedCharacterIds: [7260, 7261],
+        captainCharacterId: 7260,
+        friendCaptainCharacterId: 7260,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.every((slot) => slot.character.type.includes('STR'))).toBe(true);
+    expect(result?.slots.some((slot) => slot.character.id === 7261)).toBe(true);
+  });
+
+  it('allows dual-type slots when one type matches a strict sub super special scope', () => {
+    const result = buildAutoTeamResult(
+      [
+        createLeaderWithSuperEffectScopeRecord(7266, {
+          type: 'STR',
+          primaryClass: 'Fighter',
+        }),
+        createStrSuperSpecialSubRecord(7267),
+        createTaggedStrSubRecord(7268, ['Straw Hat Pirates']),
+        createTaggedStrSubRecord(7269, ['Giant'], 'STR,DEX'),
+        createTaggedStrSubRecord(7270, ['Four Emperors']),
+        createSuperEffectScopeSubRecord(7271, {
+          type: 'STR',
+          primaryClass: 'Slasher',
+        }),
+      ],
+      createInput(['STR'], ['Fighter'], {
+        requireAllSlotsInLeaderSuperEffectScope: true,
+        requireLeaderSuperSpecialCriteria: true,
+        manualSlots: createManualSlots({
+          captain: [7266],
+          friendCaptain: [7266],
+          sub1: [7267],
+        }),
+        lockedCharacterIds: [7266, 7267],
+        captainCharacterId: 7266,
+        friendCaptainCharacterId: 7266,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 7269)).toBe(true);
+  });
+
+  it('rejects strict sub super special teams with a slot outside the effect scope', () => {
+    const result = buildAutoTeamResult(
+      [
+        createLeaderWithSuperEffectScopeRecord(7272, {
+          type: 'STR',
+          primaryClass: 'Fighter',
+        }),
+        createStrSuperSpecialSubRecord(7273),
+        createTaggedStrSubRecord(7274, ['Straw Hat Pirates']),
+        createTaggedStrSubRecord(7275, ['Giant']),
+        createTaggedStrSubRecord(7276, ['Four Emperors'], 'DEX'),
+        createSuperEffectScopeSubRecord(7277, {
+          type: 'STR',
+          primaryClass: 'Slasher',
+        }),
+      ],
+      createInput(['STR'], ['Fighter'], {
+        requireAllSlotsInLeaderSuperEffectScope: true,
+        requireLeaderSuperSpecialCriteria: true,
+        manualSlots: createManualSlots({
+          captain: [7272],
+          friendCaptain: [7272],
+          sub1: [7273],
+        }),
+        lockedCharacterIds: [7272, 7273],
+        captainCharacterId: 7272,
+        friendCaptainCharacterId: 7272,
+      }),
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('rejects strict sub super special teams when activation tags are not satisfied', () => {
+    const result = buildAutoTeamResult(
+      [
+        createLeaderWithSuperEffectScopeRecord(7278, {
+          type: 'STR',
+          primaryClass: 'Fighter',
+        }),
+        createStrSuperSpecialSubRecord(7279),
+        createTaggedStrSubRecord(7280, ['Straw Hat Pirates']),
+        createTaggedStrSubRecord(7281, ['Giant']),
+        createSuperEffectScopeSubRecord(7282, {
+          type: 'STR',
+          primaryClass: 'Slasher',
+        }),
+        createSuperEffectScopeSubRecord(7283, {
+          type: 'STR',
+          primaryClass: 'Driven',
+        }),
+      ],
+      createInput(['STR'], ['Fighter'], {
+        requireAllSlotsInLeaderSuperEffectScope: true,
+        requireLeaderSuperSpecialCriteria: true,
+        manualSlots: createManualSlots({
+          captain: [7278],
+          friendCaptain: [7278],
+          sub1: [7279],
+        }),
+        lockedCharacterIds: [7278, 7279],
+        captainCharacterId: 7278,
+        friendCaptainCharacterId: 7278,
+      }),
+    );
+
+    expect(result).toBeNull();
+  });
+
   it('intersects captain and friend captain super effect scopes', () => {
     const result = buildAutoTeamResult(
       [
@@ -2818,23 +2956,10 @@ describe('Auto team builder', () => {
       requireAllSlotsInLeaderSuperEffectScope: true,
     });
 
-    expect(result).not.toBeNull();
-    expect(result?.input.requireAllSlotsInLeaderSuperEffectScope).toBe(true);
-    expect(result?.input.minimumLeaderSuperEffectMatchingSlots).toBe(5);
-    expect(result?.input.requireLeaderSuperSpecialCriteria).toBe(true);
-    expect(result?.slots.filter((slot) => slot.character.type.includes('DEX'))).toHaveLength(5);
-    expect(result?.relaxation).toEqual({
-      usedFallback: true,
-      droppedTypes: [],
-      droppedClasses: [],
-      minimumLeaderSuperEffectMatchingSlots: 5,
-      allowedLeadersWithSuperEffects: false,
-      ignoredLeaderSuperEffectScope: false,
-      ignoredLeaderSuperSpecialCriteria: false,
-    });
+    expect(result).toBeNull();
   });
 
-  it('falls back to special criteria only after exhausting the leader super effect scope relaxations', async () => {
+  it('does not relax strict leader super effect scope before special criteria', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue([
         createLeaderWithSuperEffectScopeRecord(7250, {
@@ -2871,22 +2996,7 @@ describe('Auto team builder', () => {
       lockedCharacterIds: [7250, 7251],
     });
 
-    expect(result).not.toBeNull();
-    expect(result?.requestedInput.requireAllSlotsInLeaderSuperEffectScope).toBe(true);
-    expect(result?.requestedInput.requireLeaderSuperSpecialCriteria).toBe(true);
-    expect(result?.input.requireAllSlotsInLeaderSuperEffectScope).toBe(false);
-    expect(result?.input.minimumLeaderSuperEffectMatchingSlots).toBeNull();
-    expect(result?.input.requireLeaderSuperSpecialCriteria).toBe(true);
-    expect(result?.slots.some((slot) => slot.character.id === 7252)).toBe(true);
-    expect(result?.relaxation).toEqual({
-      usedFallback: true,
-      droppedTypes: [],
-      droppedClasses: [],
-      minimumLeaderSuperEffectMatchingSlots: null,
-      allowedLeadersWithSuperEffects: false,
-      ignoredLeaderSuperEffectScope: true,
-      ignoredLeaderSuperSpecialCriteria: false,
-    });
+    expect(result).toBeNull();
   });
 
   it('allows super leaders before dropping types or classes when the default exact attempt fails', async () => {
@@ -2937,7 +3047,7 @@ describe('Auto team builder', () => {
     expect(result?.relaxation.droppedTypes).toEqual(['INT']);
   });
 
-  it('keeps the requested scope filter untouched when scope mode is explicitly enabled', async () => {
+  it('keeps the requested strict super scope enabled when no selected unit has super effects', async () => {
     const repository = {
       getAutoBuilderCandidates: vi
         .fn()
@@ -2957,7 +3067,7 @@ describe('Auto team builder', () => {
 
     expect(result).not.toBeNull();
     expect(result?.requestedInput.requireAllSlotsInLeaderSuperEffectScope).toBe(true);
-    expect(result?.input.requireAllSlotsInLeaderSuperEffectScope).toBe(false);
+    expect(result?.input.requireAllSlotsInLeaderSuperEffectScope).toBe(true);
     expect(result?.relaxation.allowedLeadersWithSuperEffects).toBe(false);
   });
 
@@ -5632,6 +5742,7 @@ function createCharacterRecord(
   return {
     id: overrides.id,
     name: overrides.name ?? `Unit ${overrides.id}`,
+    searchText: overrides.searchText,
     type: overrides.type ?? AUTO_TEAM_BUILDER_DEFAULT_TYPE,
     classes,
     primaryClass: overrides.primaryClass,
@@ -5667,6 +5778,7 @@ function createCharacterRecord(
       superSpecialNotes: overrides.detail?.superSpecialNotes ?? null,
       superSpecialCriteria: overrides.detail?.superSpecialCriteria ?? null,
       partyConflictKeys: overrides.detail?.partyConflictKeys ?? [],
+      characterTags: overrides.detail?.characterTags ?? [],
       builderAbilities: overrides.detail?.builderAbilities ?? [],
       sailorAbilities: overrides.detail?.sailorAbilities ?? [],
       sailorNotes: overrides.detail?.sailorNotes ?? null,
@@ -5755,6 +5867,61 @@ function createSuperEffectScopeSubRecord(
     secondaryClass,
     detail: {
       specialText: 'Boosts ATK by 2x for 1 turn.',
+    },
+  });
+}
+
+function createStrSuperSpecialSubRecord(id: number): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    name: `STR Super Special ${id}`,
+    type: 'STR',
+    primaryClass: 'Fighter',
+    secondaryClass: 'Free Spirit',
+    detail: {
+      specialText: 'Boosts ATK by 2x for 1 turn.',
+      superSpecialText: 'Transforms STR characters into Super STR characters.',
+      superSpecialCriteriaText:
+        'When any 3 [Straw Hat Pirates], [Giant], or [Four Emperors] characters are on the crew not including self, can be launched when character is a crewmate.',
+      superSpecialCriteria: {
+        rawText:
+          'When any 3 [Straw Hat Pirates], [Giant], or [Four Emperors] characters are on the crew not including self, can be launched when character is a crewmate.',
+        requiresCaptain: false,
+        excludesSelf: true,
+        hasNonRosterBranches: false,
+        parserStatus: 'roster_only',
+        rosterBranches: [
+          {
+            branchType: 'character_count_any',
+            requiredCount: 3,
+            matchMode: 'any_candidate',
+            options: [
+              { label: '[Straw Hat Pirates]', acceptedKeys: ['straw hat pirates'] },
+              { label: '[Giant]', acceptedKeys: ['giant'] },
+              { label: '[Four Emperors]', acceptedKeys: ['four emperors'] },
+            ],
+          },
+        ],
+      },
+    },
+  });
+}
+
+function createTaggedStrSubRecord(
+  id: number,
+  characterTags: string[],
+  type = 'STR',
+): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    name: `${characterTags[0] ?? 'Tagged'} Unit ${id}`,
+    type,
+    searchText: characterTags.join(' ').toLowerCase(),
+    primaryClass: 'Fighter',
+    secondaryClass: 'Free Spirit',
+    detail: {
+      specialText: 'Boosts ATK by 2x for 1 turn.',
+      characterTags,
     },
   });
 }

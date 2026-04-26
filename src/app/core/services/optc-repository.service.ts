@@ -143,6 +143,7 @@ function normalizeSuperCriteriaBranch(value: unknown): SuperCriteriaBranch | nul
       ? {
           branchType,
           requiredCount,
+          matchMode: record['matchMode'] === 'any_candidate' ? 'any_candidate' : 'unique_options',
           options,
         }
       : null;
@@ -212,6 +213,7 @@ function normalizeSuperSpecialCriteria(value: unknown): NormalizedSuperSpecialCr
   return {
     rawText,
     requiresCaptain: Boolean(record['requiresCaptain']),
+    excludesSelf: Boolean(record['excludesSelf']),
     rosterBranches,
     hasNonRosterBranches: Boolean(record['hasNonRosterBranches']),
     parserStatus: normalizedParserStatus,

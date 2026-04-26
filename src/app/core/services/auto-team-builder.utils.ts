@@ -33,7 +33,7 @@ const CAPTAIN_ATK_PATTERN = /atk(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
 const CAPTAIN_HP_PATTERN = /hp(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
 const SCOPE_CLAUSE_PATTERN = /\b(?:of|for)\s+([^.;]{1,160}?)\s+(?:characters|units)\b/g;
 const SUPER_EFFECT_SCOPE_CLAUSE_PATTERN =
-  /\b(?:changes?|transforms?)\s+([^.;]{1,160}?)\s+(?:characters|units)\s+(?:to|into)\s+super\b/gi;
+  /\b(?:changes?|transforms?)\s+([^.;]{1,160}?)\s+(?:characters|units)\s+(?:to|into)\s+(?:a\s+|an\s+)?super\b/gi;
 const COST_UPPER_BOUND_PATTERN = /\bcost\s+(\d+)\s+or\s+(?:less|lower)\b/i;
 const HIGH_COST_PENALTY_PATTERN =
   /\b(?:reduces?|decreases?|cuts?|lowers?|weakens?)\b[^.]*\bcost\s+\d+\s+or\s+higher\b/i;
@@ -113,6 +113,7 @@ interface ActiveLeaderSuperEffectScope {
   hasClassRestriction: boolean;
   hasTypeRestriction: boolean;
   isParseable: boolean;
+  hasSuperEffects: boolean;
 }
 
 interface LeaderPairOption {
@@ -344,13 +345,56 @@ function resolveCandidatePartyConflictKeys(candidate: AutoBuildCandidate): strin
   return resolveCharacterPartyConflictKeys(candidate.character);
 }
 
+function normalizeSuperCriteriaKey(value: string): string {
+  return normalizePartyConflictKey(
+    value
+      .replace(/^\[([^\]]+)\]$/, '$1')
+      .replace(/\bcharacters?\b$/i, '')
+      .replace(/\bunits?\b$/i, ''),
+  );
+}
+
+function resolveCandidateSuperCriteriaKeys(candidate: AutoBuildCandidate): string[] {
+  const characterTags = Array.isArray(candidate.character.detail.characterTags)
+    ? candidate.character.detail.characterTags
+    : [];
+  const searchableText = [
+    candidate.character.name,
+    candidate.character.searchText ?? '',
+    candidate.character.primaryClass,
+    candidate.character.secondaryClass ?? '',
+    candidate.character.type,
+    ...candidate.character.classes,
+    ...characterTags,
+  ];
+
+  return [
+    ...new Set(
+      [...resolveCandidatePartyConflictKeys(candidate), ...searchableText]
+        .flatMap((value) =>
+          String(value ?? '')
+            .split(',')
+            .map((entry) => normalizeSuperCriteriaKey(entry)),
+        )
+        .filter((value) => value.length > 0),
+    ),
+  ];
+}
+
 function candidateMatchesSuperCriteriaCharacterOption(
   candidate: AutoBuildCandidate,
   option: { acceptedKeys: string[] },
 ): boolean {
-  const candidateKeys = resolveCandidatePartyConflictKeys(candidate);
+  const candidateKeys = resolveCandidateSuperCriteriaKeys(candidate);
 
-  return option.acceptedKeys.some((acceptedKey) => candidateKeys.includes(acceptedKey));
+  return option.acceptedKeys.some((acceptedKey) => {
+    const normalizedAcceptedKey = normalizeSuperCriteriaKey(acceptedKey);
+
+    return candidateKeys.some(
+      (candidateKey) =>
+        candidateKey === normalizedAcceptedKey || candidateKey.includes(normalizedAcceptedKey),
+    );
+  });
 }
 
 function candidateMatchesSuperCriteriaClassOrTypeBranch(
@@ -381,8 +425,19 @@ function candidateMatchesSuperCriteriaClassOrTypeBranch(
 
 function countSatisfiedCharacterOptions(
   candidates: AutoBuildCandidate[],
-  options: Array<{ acceptedKeys: string[] }>,
+  branch: Extract<
+    NonNullable<CharacterDetailRecord['detail']['superSpecialCriteria']>['rosterBranches'][number],
+    { branchType: 'character_count_any' }
+  >,
 ): number {
+  const options = branch.options;
+
+  if (branch.matchMode === 'any_candidate') {
+    return candidates.filter((candidate) =>
+      options.some((option) => candidateMatchesSuperCriteriaCharacterOption(candidate, option)),
+    ).length;
+  }
+
   const remainingOptions = [...options];
   let matches = 0;
 
@@ -456,7 +511,7 @@ function branchSatisfiedByCandidates(
   candidates: AutoBuildCandidate[],
 ): boolean {
   if (branch.branchType === 'character_count_any') {
-    return countSatisfiedCharacterOptions(candidates, branch.options) >= branch.requiredCount;
+    return countSatisfiedCharacterOptions(candidates, branch) >= branch.requiredCount;
   }
 
   if (branch.branchType === 'class_or_type_count_any') {
@@ -474,7 +529,7 @@ function resolveSuperCriteriaBranchProgress(
   candidates: AutoBuildCandidate[],
 ): number {
   if (branch.branchType === 'character_count_any') {
-    return Math.min(branch.requiredCount, countSatisfiedCharacterOptions(candidates, branch.options));
+    return Math.min(branch.requiredCount, countSatisfiedCharacterOptions(candidates, branch));
   }
 
   if (branch.branchType === 'class_or_type_count_any') {
@@ -490,11 +545,12 @@ function resolveSuperCriteriaBranchProgress(
   );
 }
 
-function leaderSuperCriteriaSatisfied(
-  leader: AutoBuildCandidate,
+function superCriteriaSatisfied(
+  superUnit: AutoBuildCandidate,
   candidates: AutoBuildCandidate[],
+  isLeader: boolean,
 ): boolean {
-  const criteria = leader.character.detail.superSpecialCriteria;
+  const criteria = superUnit.character.detail.superSpecialCriteria;
 
   if (!criteria) {
     return true;
@@ -504,49 +560,66 @@ function leaderSuperCriteriaSatisfied(
     return false;
   }
 
-  if (criteria.requiresCaptain) {
-    // This validation only runs for selected leaders, so the captain requirement is already met.
+  if (criteria.requiresCaptain && !isLeader) {
+    return false;
   }
 
-  return criteria.rosterBranches.some((branch) => branchSatisfiedByCandidates(branch, candidates));
+  const eligibleCandidates = criteria.excludesSelf
+    ? candidates.filter((candidate) => candidate.character.id !== superUnit.character.id)
+    : candidates;
+
+  return criteria.rosterBranches.some((branch) =>
+    branchSatisfiedByCandidates(branch, eligibleCandidates),
+  );
 }
 
-function resolveLeaderSuperCriteriaContribution(
+function resolveSuperCriteriaContribution(
   candidate: AutoBuildCandidate,
   leaders: AutoBuildCandidate[],
   selectedCandidates: AutoBuildCandidate[],
 ): number {
-  const nextCandidates = [...leaders, ...selectedCandidates, candidate];
+  const currentCandidates = [...leaders, ...selectedCandidates];
+  const nextCandidates = [...currentCandidates, candidate];
 
-  return leaders.reduce((total, leader) => {
-    const criteria = leader.character.detail.superSpecialCriteria;
+  return resolveUniqueCandidates(nextCandidates)
+    .filter((superUnit) => hasCandidateSuperEffects(superUnit))
+    .reduce((total, superUnit) => {
+      const criteria = superUnit.character.detail.superSpecialCriteria;
+      const isLeader = leaders.some((leader) => leader.character.id === superUnit.character.id);
+      const currentEligibleCandidates = criteria?.excludesSelf
+        ? currentCandidates.filter((current) => current.character.id !== superUnit.character.id)
+        : currentCandidates;
+      const nextEligibleCandidates = criteria?.excludesSelf
+        ? nextCandidates.filter((current) => current.character.id !== superUnit.character.id)
+        : nextCandidates;
 
-    if (
-      !criteria ||
-      criteria.parserStatus === 'non_roster_only' ||
-      criteria.parserStatus === 'unsupported' ||
-      leaderSuperCriteriaSatisfied(leader, [...leaders, ...selectedCandidates])
-    ) {
-      return total;
-    }
+      if (
+        !criteria ||
+        criteria.parserStatus === 'non_roster_only' ||
+        criteria.parserStatus === 'unsupported' ||
+        (criteria.requiresCaptain && !isLeader) ||
+        superCriteriaSatisfied(superUnit, currentCandidates, isLeader)
+      ) {
+        return total;
+      }
 
-    const currentProgress = criteria.rosterBranches.reduce(
-      (bestProgress, branch) =>
-        Math.max(bestProgress, resolveSuperCriteriaBranchProgress(branch, [...leaders, ...selectedCandidates])),
-      0,
-    );
-    const nextProgress = criteria.rosterBranches.reduce(
-      (bestProgress, branch) =>
-        Math.max(bestProgress, resolveSuperCriteriaBranchProgress(branch, nextCandidates)),
-      0,
-    );
+      const currentProgress = criteria.rosterBranches.reduce(
+        (bestProgress, branch) =>
+          Math.max(bestProgress, resolveSuperCriteriaBranchProgress(branch, currentEligibleCandidates)),
+        0,
+      );
+      const nextProgress = criteria.rosterBranches.reduce(
+        (bestProgress, branch) =>
+          Math.max(bestProgress, resolveSuperCriteriaBranchProgress(branch, nextEligibleCandidates)),
+        0,
+      );
 
-    return total + Math.max(nextProgress - currentProgress, 0);
-  }, 0);
+      return total + Math.max(nextProgress - currentProgress, 0);
+    }, 0);
 }
 
-function areLeaderSuperCriteriaSatisfied(
-  leaders: AutoBuildCandidate[],
+function areActiveSuperCriteriaSatisfied(
+  leaderSlots: AutoBuildCandidate[],
   teamCandidates: AutoBuildCandidate[],
   enabled: boolean,
 ): boolean {
@@ -554,7 +627,13 @@ function areLeaderSuperCriteriaSatisfied(
     return true;
   }
 
-  return leaders.every((leader) => leaderSuperCriteriaSatisfied(leader, teamCandidates));
+  const leaderIds = new Set(leaderSlots.map((leader) => leader.character.id));
+
+  return resolveUniqueCandidates(teamCandidates)
+    .filter((candidate) => hasCandidateSuperEffects(candidate))
+    .every((candidate) =>
+      superCriteriaSatisfied(candidate, teamCandidates, leaderIds.has(candidate.character.id)),
+    );
 }
 
 function hasAnyPartyConflictKey(
@@ -761,11 +840,15 @@ export function buildAutoTeamResult(
 
     const orderedSubs = orderSelectedSubCandidates(constrainedSubSelections, selectedSubs);
     const teamCandidates = [...leaderSlots, ...orderedSubs];
+    const activeSuperEffectScope = resolveActiveLeaderSuperEffectScope(teamCandidates);
 
     if (
       requiredLeaderSuperEffectMatchingSlots !== null &&
-      countLeaderSuperEffectScopeMatches(teamCandidates, leaderSuperEffectScope) <
+      (
+        !activeSuperEffectScope.isParseable ||
+        countLeaderSuperEffectScopeMatches(teamCandidates, activeSuperEffectScope) <
         requiredLeaderSuperEffectMatchingSlots
+      )
     ) {
       continue;
     }
@@ -778,7 +861,11 @@ export function buildAutoTeamResult(
 
     if (
       input.requireLeaderSuperSpecialCriteria &&
-      !areLeaderSuperCriteriaSatisfied(leaders, teamCandidates, input.requireLeaderSuperSpecialCriteria)
+      !areActiveSuperCriteriaSatisfied(
+        leaderSlots,
+        teamCandidates,
+        input.requireLeaderSuperSpecialCriteria,
+      )
     ) {
       continue;
     }
@@ -889,7 +976,7 @@ function resolveLeaderCandidateOptions(
   const candidatePool = (slotCandidates.length ? slotCandidates : candidates).filter(
     (candidate) =>
       candidate.tags.readableCaptainText &&
-      (!options.requireLeadersWithoutSuperEffects || !hasLeaderSuperEffects(candidate)) &&
+      (!options.requireLeadersWithoutSuperEffects || !hasCandidateSuperEffects(candidate)) &&
       leaderOnlyRequirements.every((requirement) =>
         leaderSatisfiesAbilityRequirement(candidate, requirement),
       ) &&
@@ -999,6 +1086,7 @@ function resolveConstrainedSubSelections(
           currentMatchedSuperEffectSlots +
           (matchesLeaderSuperEffectScope(candidate, leaderSuperEffectScope) ? 1 : 0);
         const remainingSlotsAfterPick = TEAM_SUB_SLOT_COUNT - (selectedSubs.length + 1);
+        const nextTeamPrefix = [...leaderSlots, ...selectedSubs, candidate];
 
         return !(
           leaderCharacterIdSet.has(candidate.character.id) ||
@@ -1008,6 +1096,10 @@ function resolveConstrainedSubSelections(
               hasAnyPartyConflictKey(candidate, selectedPartyConflictKeys))) ||
           (input.requireAllSelectedClassesPerCharacter && !candidate.matchesAllSelectedClasses) ||
           !matchesLeaderBuildScope(candidate, leaderCriteria) ||
+          !matchesActiveSuperEffectScopePrefix(
+            nextTeamPrefix,
+            requiredLeaderSuperEffectMatchingSlots,
+          ) ||
           !canStillReachLeaderSuperEffectRequirement(
             nextMatchedSuperEffectSlots,
             remainingSlotsAfterPick,
@@ -1218,6 +1310,15 @@ function selectSubs(
     return [];
   }
 
+  if (
+    !matchesActiveSuperEffectScopePrefix(
+      [...leaderSlots, ...selected],
+      requiredLeaderSuperEffectMatchingSlots,
+    )
+  ) {
+    return [];
+  }
+
   const selectedIds = new Set(selected.map((candidate) => candidate.character.id));
   const coverage = createTeamCoverageState(leaderCandidates);
   selected.forEach((candidate) => applyCandidateCoverage(coverage, candidate));
@@ -1230,6 +1331,10 @@ function selectSubs(
           (!hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) &&
             !hasAnyPartyConflictKey(candidate, selectedPartyConflictKeys))) &&
         matchesLeaderBuildScope(candidate, leaderCriteria) &&
+        matchesActiveSuperEffectScopePrefix(
+          [...leaderSlots, ...selected, candidate],
+          requiredLeaderSuperEffectMatchingSlots,
+        ) &&
         (!input.requireAllSelectedClassesPerCharacter || candidate.matchesAllSelectedClasses)
       );
     },
@@ -1245,6 +1350,10 @@ function selectSubs(
               countLeaderSuperEffectScopeMatches(selected, leaderSuperEffectScope) +
               (matchesLeaderSuperEffectScope(candidate, leaderSuperEffectScope) ? 1 : 0),
             TEAM_SUB_SLOT_COUNT - (selected.length + 1),
+            requiredLeaderSuperEffectMatchingSlots,
+          ) &&
+          matchesActiveSuperEffectScopePrefix(
+            [...leaderSlots, ...selected, candidate],
             requiredLeaderSuperEffectMatchingSlots,
           ) &&
           (!input.requireUniqueBaseCharacterNames ||
@@ -1423,7 +1532,7 @@ function scoreSubCandidate(
   score += newTypeCoverage * 36;
   score += matchedMissingAbilityCount * 58;
   score +=
-    resolveLeaderSuperCriteriaContribution(candidate, leaders, selected) *
+    resolveSuperCriteriaContribution(candidate, leaders, selected) *
     (input.requireLeaderSuperSpecialCriteria ? 160 : 36);
   score += candidate.matchesSelectedClass ? 18 : -8;
   score += candidate.recencyScore * 10;
@@ -2007,13 +2116,22 @@ export function resolveLeaderSuperEffectScopeFromEffectText(effectText: string):
   };
 }
 
-function resolveLeaderSuperEffectScope(leader: AutoBuildCandidate): ActiveLeaderSuperEffectScope {
-  const effectTexts = [leader.character.detail.superType, leader.character.detail.superClass]
-    .map(resolveLeaderSuperEffectText)
-    .filter((text): text is string => text.length > 0);
+function resolveCandidateSuperEffectScope(candidate: AutoBuildCandidate): ActiveLeaderSuperEffectScope {
+  const effectTexts = resolveCandidateSuperEffectTexts(candidate);
   const allowedClasses = new Set<string>();
   const allowedTypes = new Set<AutoTeamBuilderType>();
   let isParseable = false;
+
+  if (!effectTexts.length) {
+    return {
+      derivedAllowedClasses: [],
+      derivedAllowedTypes: [],
+      hasClassRestriction: false,
+      hasTypeRestriction: false,
+      isParseable: true,
+      hasSuperEffects: false,
+    };
+  }
 
   effectTexts.forEach((effectText) => {
     const scope = resolveLeaderSuperEffectScopeFromEffectText(effectText);
@@ -2035,33 +2153,47 @@ function resolveLeaderSuperEffectScope(leader: AutoBuildCandidate): ActiveLeader
     hasClassRestriction: allowedClasses.size > 0,
     hasTypeRestriction: allowedTypes.size > 0,
     isParseable,
+    hasSuperEffects: true,
   };
 }
 
 function resolveActiveLeaderSuperEffectScope(
-  leaders: AutoBuildCandidate[],
+  candidates: AutoBuildCandidate[],
 ): ActiveLeaderSuperEffectScope {
-  const uniqueLeaders = resolveUniqueCandidates(leaders);
-  const leaderScopes = uniqueLeaders.map((leader) => resolveLeaderSuperEffectScope(leader));
+  const activeSuperScopes = resolveUniqueCandidates(candidates)
+    .map((candidate) => resolveCandidateSuperEffectScope(candidate))
+    .filter((scope) => scope.hasSuperEffects);
 
-  if (leaderScopes.some((scope) => !scope.isParseable)) {
+  if (!activeSuperScopes.length) {
+    return {
+      derivedAllowedClasses: [],
+      derivedAllowedTypes: [],
+      hasClassRestriction: false,
+      hasTypeRestriction: false,
+      isParseable: true,
+      hasSuperEffects: false,
+    };
+  }
+
+  if (activeSuperScopes.some((scope) => !scope.isParseable)) {
     return {
       derivedAllowedClasses: [],
       derivedAllowedTypes: [],
       hasClassRestriction: false,
       hasTypeRestriction: false,
       isParseable: false,
+      hasSuperEffects: true,
     };
   }
 
   const classScope = resolveIntersectedLeaderDimension(
-    leaderScopes,
+    activeSuperScopes,
     AUTO_TEAM_BUILDER_CLASSES,
     (scope) => scope.derivedAllowedClasses,
     (scope) => scope.hasClassRestriction,
   );
   const typeScope = resolveIntersectedLeaderDimension(
-    leaderScopes,
+    activeSuperScopes,
     AUTO_TEAM_BUILDER_TYPES,
     (scope) => scope.derivedAllowedTypes,
     (scope) => scope.hasTypeRestriction,
@@ -2073,6 +2205,7 @@ function resolveActiveLeaderSuperEffectScope(
     hasClassRestriction: classScope.restricted,
     hasTypeRestriction: typeScope.restricted,
     isParseable: true,
+    hasSuperEffects: true,
   };
 }
 
@@ -2214,6 +2347,22 @@ function canStillReachLeaderSuperEffectRequirement(
   return requiredSlots === null || matchedSlots + remainingSlots >= requiredSlots;
 }
 
+function matchesActiveSuperEffectScopePrefix(
+  candidates: AutoBuildCandidate[],
+  requiredSlots: number | null,
+): boolean {
+  if (requiredSlots === null) {
+    return true;
+  }
+
+  const activeSuperEffectScope = resolveActiveLeaderSuperEffectScope(candidates);
+
+  return (
+    activeSuperEffectScope.isParseable &&
+    candidates.every((candidate) => matchesLeaderSuperEffectScope(candidate, activeSuperEffectScope))
+  );
+}
+
 function extractAllowedCaptainClasses(captainText: string): string[] {
   return extractAllowedScopeClasses(captainText);
 }
@@ -2280,7 +2429,7 @@ function extractSuperEffectScopeClauses(text: string): string[] {
     .filter(Boolean);
 }
 
-function resolveLeaderSuperEffectText(value: Record<string, unknown> | null): string {
+function resolveStructuredSuperEffectText(value: Record<string, unknown> | null): string {
   if (!value || typeof value !== 'object') {
     return '';
   }
@@ -2289,11 +2438,23 @@ function resolveLeaderSuperEffectText(value: Record<string, unknown> | null): st
   return typeof effectText === 'string' ? effectText.trim() : '';
 }
 
-function hasLeaderSuperEffects(candidate: AutoBuildCandidate): boolean {
-  return (
-    resolveLeaderSuperEffectText(candidate.character.detail.superType).length > 0 ||
-    resolveLeaderSuperEffectText(candidate.character.detail.superClass).length > 0
-  );
+function resolveCandidateSuperEffectTexts(candidate: AutoBuildCandidate): string[] {
+  const structuredEffectTexts = [
+    candidate.character.detail.superType,
+    candidate.character.detail.superClass,
+  ]
+    .map(resolveStructuredSuperEffectText)
+    .filter((text): text is string => text.length > 0);
+  const superSpecialText = normalizeText(candidate.character.detail.superSpecialText);
+
+  return [
+    ...structuredEffectTexts,
+    ...(superSpecialText && /\bsuper\b/i.test(superSpecialText) ? [superSpecialText] : []),
+  ];
+}
+
+function hasCandidateSuperEffects(candidate: AutoBuildCandidate): boolean {
+  return resolveCandidateSuperEffectTexts(candidate).length > 0;
 }
 
 function extractPenalizedCostUpperBound(text: string): number | null {

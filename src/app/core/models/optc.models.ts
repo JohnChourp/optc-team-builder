@@ -42,6 +42,7 @@ export interface CharacterCountAnySuperCriteriaBranch {
   branchType: 'character_count_any';
   requiredCount: number;
   options: SuperCriteriaCharacterOption[];
+  matchMode?: 'unique_options' | 'any_candidate';
 }
 
 export interface ClassOrTypeCountAnySuperCriteriaBranch {
@@ -65,6 +66,7 @@ export type SuperCriteriaBranch =
 export interface NormalizedSuperSpecialCriteria {
   rawText: string;
   requiresCaptain: boolean;
+  excludesSelf?: boolean;
   rosterBranches: SuperCriteriaBranch[];
   hasNonRosterBranches: boolean;
   parserStatus: 'roster_only' | 'mixed' | 'non_roster_only' | 'unsupported';
