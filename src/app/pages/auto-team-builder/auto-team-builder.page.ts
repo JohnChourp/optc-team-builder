@@ -53,7 +53,9 @@ import {
   type AutoBuildManualSlotSelection,
   type AutoBuildProgressSnapshot,
   type AutoBuildResult,
+  type AutoBuildCostRange,
   type AutoTeamBuilderType,
+  createEmptyAutoBuildCostRange,
   createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
 } from '../../core/models/auto-team-builder.models';
@@ -259,6 +261,7 @@ interface AutoTeamBuilderDefaultFilterState {
   selectedClasses: string[];
   leaderBoostFilters: AutoBuildLeaderBoostFilter[];
   leaderBoostRanges: AutoBuildLeaderBoostRanges;
+  costRange: AutoBuildCostRange;
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
   requireAllSlotsInLeaderSuperEffectScope: boolean;
@@ -308,6 +311,7 @@ function buildDefaultAutoTeamBuilderFilterState(
     selectedClasses: [...availableClasses],
     leaderBoostFilters: [...AUTO_BUILD_LEADER_BOOST_FILTERS],
     leaderBoostRanges: createEmptyAutoBuildLeaderBoostRanges(),
+    costRange: createEmptyAutoBuildCostRange(),
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
@@ -390,6 +394,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly leaderBoostRanges = signal<AutoBuildLeaderBoostRanges>(
     createEmptyAutoBuildLeaderBoostRanges(),
   );
+  public readonly costRange = signal<AutoBuildCostRange>(createEmptyAutoBuildCostRange());
   public readonly enemyMechanicDrafts = signal<EnemyMechanicDraft[]>([]);
   public readonly enemyMechanicPickerOpen = signal(false);
   public readonly requiredAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
@@ -753,7 +758,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       this.building() ||
       this.buildBlockedByCharacterScope() ||
       this.buildBlockedByFavorites() ||
-      this.hasInvalidLeaderBoostRanges(),
+      this.hasInvalidLeaderBoostRanges() ||
+      this.hasInvalidCostRange(),
   );
   public readonly hasStrictFilters = computed(
     () =>
@@ -809,6 +815,24 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   );
   public readonly leaderBoostRangeErrorLabel = computed(() =>
     this.hasInvalidLeaderBoostRanges() ? this.t('filters.leaderBoost.range.invalid') : '',
+  );
+  public readonly hasActiveCostRange = computed(() => {
+    const range = this.costRange();
+
+    return range.min !== null || range.max !== null;
+  });
+  public readonly hasInvalidCostRange = computed(() => {
+    const range = this.costRange();
+
+    return range.min !== null && range.max !== null && range.min > range.max;
+  });
+  public readonly costRangeSupportLabel = computed(() =>
+    this.hasActiveCostRange()
+      ? this.t('filters.cost.support.active')
+      : this.t('filters.cost.support.default'),
+  );
+  public readonly costRangeErrorLabel = computed(() =>
+    this.hasInvalidCostRange() ? this.t('filters.cost.range.invalid') : '',
   );
   public readonly typeSupportLabel = computed(() =>
     this.requireAllSelectedTypesInTeam()
@@ -1553,6 +1577,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         this.hasSelectedClasses() ||
         this.pageEnemyMechanics().length > 0 ||
         this.hasRequiredAbilities() ||
+        this.hasActiveCostRange() ||
         this.requireAllSelectedTypesInTeam() ||
         this.requireAllSelectedClassesPerCharacter() ||
         this.requireUniqueBaseCharacterNames() ||
@@ -1755,6 +1780,20 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         ...currentRanges[filter],
         [bound]: nextBound,
       },
+    });
+    this.resetBuildState();
+  }
+
+  public onCostRangeChange(
+    bound: keyof AutoBuildCostRange,
+    event: CustomEvent<{ value?: string | number | null }>,
+  ): void {
+    const nextBound = this.resolveCostRangeBound(event.detail.value);
+    const currentRange = this.costRange();
+
+    this.costRange.set({
+      ...currentRange,
+      [bound]: nextBound,
     });
     this.resetBuildState();
   }
@@ -2391,6 +2430,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           favoriteShipIds: this.favoriteShipIds(),
           leaderBoostFilters: this.leaderBoostFilters(),
           leaderBoostRanges: this.cloneLeaderBoostRanges(this.leaderBoostRanges()),
+          costRange: { ...this.costRange() },
           manualSlots: this.serializeManualSlots(),
           excludedCharacterIds: this.excludedCharacterIds(),
           manualShipId: this.selectedManualShipId(),
@@ -2490,6 +2530,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       favoriteShipCount: this.favoriteShipIds().length,
       leaderBoostFilters: this.leaderBoostFilters(),
       leaderBoostRanges: this.cloneLeaderBoostRanges(this.leaderBoostRanges()),
+      costRange: { ...this.costRange() },
       manualSlots: this.serializeManualSlots(),
       lockedCharacterIds: this.lockedCharacterIds(),
       lockedCharacters: this.lockedCharacters(),
@@ -2698,6 +2739,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.selectedClasses.set(defaultFilters.selectedClasses);
     this.leaderBoostFilters.set(defaultFilters.leaderBoostFilters);
     this.leaderBoostRanges.set(this.cloneLeaderBoostRanges(defaultFilters.leaderBoostRanges));
+    this.costRange.set({ ...defaultFilters.costRange });
     this.enemyMechanicDrafts.set([]);
     this.requiredAbilityDrafts.set([]);
     this.crewmateAbilityDrafts.set([]);
@@ -2815,6 +2857,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.selectedClasses.set([...state.selectedClasses]);
     this.leaderBoostFilters.set([...state.leaderBoostFilters]);
     this.leaderBoostRanges.set(this.cloneLeaderBoostRanges(state.leaderBoostRanges));
+    this.costRange.set({ ...state.costRange });
     const migratedRequiredAbilities = mergeAbilityRequirements([
       ...state.requiredAbilities,
       ...deriveAbilityRequirementsFromEnemyMechanics(state.enemyMechanics),
@@ -3708,6 +3751,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     const nextValue = Number(value);
 
     return Number.isFinite(nextValue) && nextValue >= 0 ? nextValue : null;
+  }
+
+  private resolveCostRangeBound(value: string | number | null | undefined): number | null {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    const nextValue = Number(value);
+
+    return Number.isInteger(nextValue) && nextValue >= 0 ? nextValue : null;
   }
 
   private cloneLeaderBoostRanges(ranges: AutoBuildLeaderBoostRanges): AutoBuildLeaderBoostRanges {

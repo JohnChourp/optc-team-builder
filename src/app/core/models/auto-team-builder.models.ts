@@ -49,6 +49,11 @@ export interface AutoBuildLeaderBoostRanges {
   ATK: AutoBuildLeaderBoostRange;
 }
 
+export interface AutoBuildCostRange {
+  min: number | null;
+  max: number | null;
+}
+
 export interface AutoBuildManualSlotSelection {
   role: AutoBuildManualSlotRole;
   characterIds: number[];
@@ -58,6 +63,13 @@ export function createEmptyAutoBuildLeaderBoostRanges(): AutoBuildLeaderBoostRan
   return {
     HP: { min: null, max: null },
     ATK: { min: null, max: null },
+  };
+}
+
+export function createEmptyAutoBuildCostRange(): AutoBuildCostRange {
+  return {
+    min: null,
+    max: null,
   };
 }
 
@@ -87,6 +99,7 @@ export interface AutoBuildConstraints {
   leaderBoostRanges?: Partial<
     Record<AutoBuildLeaderBoostFilter, Partial<AutoBuildLeaderBoostRange> | null>
   >;
+  costRange?: Partial<AutoBuildCostRange> | null;
   manualSlots?: AutoBuildManualSlotSelection[];
   lockedCharacterIds?: number[];
   excludedCharacterIds?: number[];
@@ -101,6 +114,7 @@ export interface AutoBuildCandidateQueryOptions {
   allowedCharacterIds?: number[];
   lockedCharacterIds?: number[];
   excludedCharacterIds?: number[];
+  costRange?: Partial<AutoBuildCostRange> | null;
 }
 
 export type AutoBuildBurstRole =
@@ -136,6 +150,7 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   favoriteShipIds: number[];
   leaderBoostFilters: AutoBuildLeaderBoostFilter[];
   leaderBoostRanges: AutoBuildLeaderBoostRanges;
+  costRange: AutoBuildCostRange;
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   excludedCharacterIds: number[];

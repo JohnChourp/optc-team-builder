@@ -9,6 +9,7 @@ import {
   AUTO_BUILD_MANUAL_SLOT_ROLES,
   AUTO_BUILD_MANUAL_SUB_SLOT_ROLES,
   type AutoBuildConstraints,
+  type AutoBuildCostRange,
   type AutoBuildRankedResult,
   type AutoBuildRankedResults,
   type AutoBuildRosterInput,
@@ -22,6 +23,7 @@ import {
   type AutoBuildResult,
   MAX_AUTO_BUILD_RANKED_RESULT_COUNT,
   type AutoTeamBuilderType,
+  createEmptyAutoBuildCostRange,
   createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
 } from '../models/auto-team-builder.models';
@@ -138,6 +140,7 @@ export class AutoTeamBuilderService {
     const excludedShipIds = this.normalizeCharacterIds(constraints.excludedShipIds);
     const leaderBoostFilters = this.normalizeLeaderBoostFilters(constraints.leaderBoostFilters);
     const leaderBoostRanges = this.normalizeLeaderBoostRanges(constraints.leaderBoostRanges);
+    const costRange = this.normalizeCostRange(constraints.costRange);
 
     const input: AutoBuildInput = {
       types: normalizedTypes.length > 0 ? normalizedTypes : [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
@@ -159,6 +162,7 @@ export class AutoTeamBuilderService {
       favoriteShipIds,
       leaderBoostFilters,
       leaderBoostRanges,
+      costRange,
       manualSlots,
       lockedCharacterIds,
       excludedCharacterIds,
@@ -185,6 +189,7 @@ export class AutoTeamBuilderService {
       favoriteShipIds: [...input.favoriteShipIds],
       leaderBoostFilters: [...input.leaderBoostFilters],
       leaderBoostRanges: this.cloneLeaderBoostRanges(input.leaderBoostRanges),
+      costRange: { ...input.costRange },
       manualSlots: input.manualSlots.map((slot) => ({
         role: slot.role,
         characterIds: [...slot.characterIds],
@@ -210,8 +215,6 @@ export class AutoTeamBuilderService {
     if (hasExplicitCandidateScope && (allowedCharacterIds?.length ?? 0) === 0) {
       return null;
     }
-
-    const autoFillCharacterIds = allowedCharacterIds ? [...allowedCharacterIds] : undefined;
 
     const requestedLeaderIds = [captainCharacterId, friendCaptainCharacterId].filter(
       (characterId): characterId is number =>
@@ -252,14 +255,31 @@ export class AutoTeamBuilderService {
         allowedCharacterIds,
         lockedCharacterIds,
         excludedCharacterIds,
+        costRange: this.hasActiveCostRange(requestedInput.costRange)
+          ? requestedInput.costRange
+          : undefined,
       },
     );
     const friendCaptainRecords = shouldFetchAnyFriendCaptainRecords
       ? await this.repository.getAutoBuilderCandidates([...AUTO_TEAM_BUILDER_TYPES], null, {
           lockedCharacterIds,
           excludedCharacterIds,
+          costRange: this.hasActiveCostRange(requestedInput.costRange)
+            ? requestedInput.costRange
+            : undefined,
         })
       : undefined;
+    const scopedFriendCaptainRecords =
+      friendCaptainRecords && this.hasActiveCostRange(requestedInput.costRange)
+        ? friendCaptainRecords.filter((record) =>
+            this.characterMatchesCostRange(record, requestedInput.costRange),
+          )
+        : friendCaptainRecords;
+    const resolvedAutoFillCharacterIds = this.resolveAutoFillCharacterIds(
+      records,
+      allowedCharacterIds,
+      requestedInput.costRange,
+    );
 
     this.throwIfCancelled(executionOptions.signal);
 
@@ -272,8 +292,8 @@ export class AutoTeamBuilderService {
         records,
         requestedInput,
         executionOptions,
-        friendCaptainRecords,
-        autoFillCharacterIds,
+        scopedFriendCaptainRecords,
+        resolvedAutoFillCharacterIds,
       ),
       shipsPromise,
     ]);
@@ -301,6 +321,7 @@ export class AutoTeamBuilderService {
       this.normalizeCharacterIds(rosterInput.favoriteCharacterIds),
     );
     const candidateCharacterIds = this.normalizeCharacterIds(rosterInput.candidateCharacterIds);
+    const rosterCostRange = this.normalizeCostRange(rosterInput.costRange);
     const favoritesOnly = rosterInput.favoritesOnly ?? false;
     const scopedRosterIds = normalizedRosterIds.filter((characterId) => {
       if (excludedCharacterIds.includes(characterId)) {
@@ -357,6 +378,7 @@ export class AutoTeamBuilderService {
         allowedCharacterIds: scopedRosterIds,
         lockedCharacterIds: lockedLeaderIds,
         excludedCharacterIds,
+        costRange: this.hasActiveCostRange(rosterCostRange) ? rosterCostRange : undefined,
       },
     );
 
@@ -1428,6 +1450,7 @@ export class AutoTeamBuilderService {
       favoriteShipIds: [],
       leaderBoostFilters: this.normalizeLeaderBoostFilters(rosterInput.leaderBoostFilters),
       leaderBoostRanges: this.normalizeLeaderBoostRanges(rosterInput.leaderBoostRanges),
+      costRange: this.normalizeCostRange(rosterInput.costRange),
       manualSlots: this.createExactManualSlots(
         captainCharacterId,
         friendCaptainCharacterId,
@@ -1559,6 +1582,30 @@ export class AutoTeamBuilderService {
     ];
   }
 
+  private resolveAutoFillCharacterIds(
+    records: CharacterDetailRecord[],
+    allowedCharacterIds: number[] | undefined,
+    costRange: AutoBuildCostRange,
+  ): number[] | undefined {
+    const hasCostRange = this.hasActiveCostRange(costRange);
+
+    if (!allowedCharacterIds && !hasCostRange) {
+      return undefined;
+    }
+
+    const allowedCharacterIdSet = allowedCharacterIds ? new Set(allowedCharacterIds) : null;
+
+    return records
+      .filter((record) => {
+        if (allowedCharacterIdSet && !allowedCharacterIdSet.has(record.id)) {
+          return false;
+        }
+
+        return !hasCostRange || this.characterMatchesCostRange(record, costRange);
+      })
+      .map((record) => record.id);
+  }
+
   private normalizeLeaderBoostFilters(
     filters: AutoBuildLeaderBoostFilter[] | undefined,
   ): AutoBuildLeaderBoostFilter[] {
@@ -1603,6 +1650,44 @@ export class AutoTeamBuilderService {
     const parsedValue = Number(value);
 
     return Number.isFinite(parsedValue) && parsedValue >= 0 ? parsedValue : null;
+  }
+
+  private normalizeCostRange(range: AutoBuildConstraints['costRange']): AutoBuildCostRange {
+    const normalizedRange = createEmptyAutoBuildCostRange();
+
+    normalizedRange.min = this.normalizeCostRangeBound(range?.min);
+    normalizedRange.max = this.normalizeCostRangeBound(range?.max);
+
+    return normalizedRange;
+  }
+
+  private normalizeCostRangeBound(value: unknown): number | null {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    const parsedValue = Number(value);
+
+    return Number.isInteger(parsedValue) && parsedValue >= 0 ? parsedValue : null;
+  }
+
+  private hasActiveCostRange(range: AutoBuildCostRange): boolean {
+    return range.min !== null || range.max !== null;
+  }
+
+  private characterMatchesCostRange(
+    character: Pick<CharacterDetailRecord, 'cost'>,
+    range: AutoBuildCostRange,
+  ): boolean {
+    if (range.min !== null && character.cost < range.min) {
+      return false;
+    }
+
+    if (range.max !== null && character.cost > range.max) {
+      return false;
+    }
+
+    return true;
   }
 
   private cloneLeaderBoostRanges(ranges: AutoBuildLeaderBoostRanges): AutoBuildLeaderBoostRanges {

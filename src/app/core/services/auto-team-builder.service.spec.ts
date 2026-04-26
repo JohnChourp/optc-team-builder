@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   AUTO_TEAM_CANDIDATE_LIMIT,
   AUTO_TEAM_BUILDER_DEFAULT_TYPE,
+  createEmptyAutoBuildCostRange,
   createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
   type AutoBuildManualSlotSelection,
@@ -2818,6 +2819,74 @@ describe('Auto team builder', () => {
     );
   });
 
+  it('applies cost range to auto-filled characters while allowing out-of-range manual slots', async () => {
+    const manualHighCostSub = createCharacterRecord({
+      id: 9001,
+      name: 'Manual High Cost Utility',
+      cost: 99,
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: 'Reduces Bind duration by 5 turns.',
+      },
+    });
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue([manualHighCostSub, ...createSingleTypeRecords()]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      costRange: { min: 1, max: 60 },
+      manualSlots: createManualSlots({
+        sub1: [9001],
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 9001)).toBe(true);
+    expect(
+      result?.slots
+        .filter((slot) => slot.character.id !== 9001)
+        .every((slot) => slot.character.cost >= 1 && slot.character.cost <= 60),
+    ).toBe(true);
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      ['DEX'],
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        selectedClasses: ['Fighter'],
+        allowedCharacterIds: undefined,
+        lockedCharacterIds: [9001],
+        excludedCharacterIds: [],
+        costRange: { min: 1, max: 60 },
+      },
+    );
+  });
+
+  it('returns no result when cost range excludes every auto-fill candidate', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      costRange: { min: 1, max: 10 },
+    });
+
+    expect(result).toBeNull();
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      ['DEX'],
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        selectedClasses: ['Fighter'],
+        allowedCharacterIds: undefined,
+        lockedCharacterIds: [],
+        excludedCharacterIds: [],
+        costRange: { min: 1, max: 10 },
+      },
+    );
+  });
+
   it('allows an auto-filled non-favorite friend captain while keeping other auto-filled slots in favorites', async () => {
     const favoriteCharacterIds = [5900, 5890, 5880, 5870, 5860];
     const broadFriendCaptain = createPowerFirstCaptainRecord({
@@ -4956,6 +5025,7 @@ function createInput(
       | 'favoriteShipIds'
       | 'leaderBoostFilters'
       | 'leaderBoostRanges'
+      | 'costRange'
       | 'manualSlots'
       | 'lockedCharacterIds'
       | 'excludedCharacterIds'
@@ -4975,6 +5045,7 @@ function createInput(
     favoriteShipIds: [],
     leaderBoostFilters: ['HP', 'ATK'],
     leaderBoostRanges: createEmptyAutoBuildLeaderBoostRanges(),
+    costRange: createEmptyAutoBuildCostRange(),
     lockedCharacterIds: [],
     excludedCharacterIds: [],
     captainCharacterId: null,
@@ -5007,6 +5078,7 @@ function createInput(
     favoriteShipIds: overrides.favoriteShipIds ?? [],
     leaderBoostFilters: overrides.leaderBoostFilters ?? ['HP', 'ATK'],
     leaderBoostRanges: overrides.leaderBoostRanges ?? createEmptyAutoBuildLeaderBoostRanges(),
+    costRange: overrides.costRange ?? createEmptyAutoBuildCostRange(),
     manualSlots:
       overrides.manualSlots ??
       createManualSlotsFromLegacySelection(

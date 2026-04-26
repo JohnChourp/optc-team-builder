@@ -2,6 +2,7 @@ import {
   AUTO_BUILD_LEADER_BOOST_FILTERS,
   AUTO_BUILD_MANUAL_SLOT_ROLES,
   AUTO_BUILD_MANUAL_SUB_SLOT_ROLES,
+  type AutoBuildCostRange,
   type AutoBuildLeaderBoostFilter,
   type AutoBuildLeaderBoostRange,
   type AutoBuildLeaderBoostRanges,
@@ -9,6 +10,7 @@ import {
   type AutoBuildManualSlotRole,
   type AutoBuildManualSlotSelection,
   type AutoTeamBuilderType,
+  createEmptyAutoBuildCostRange,
   createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
 } from '../../core/models/auto-team-builder.models';
@@ -70,7 +72,7 @@ export interface AutoTeamSelectionShipSummary {
 }
 
 export interface AutoTeamSelectionExportPayload {
-  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17;
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
   exportedAt: string;
   source: 'auto-team-builder';
   exportType: 'preset';
@@ -90,6 +92,7 @@ export interface AutoTeamSelectionExportPayload {
     favoriteShipCount?: number;
     leaderBoostFilters?: AutoBuildLeaderBoostFilter[];
     leaderBoostRanges?: AutoBuildLeaderBoostRanges;
+    costRange?: AutoBuildCostRange;
   };
   manualSelection: {
     manualSlots: AutoBuildManualSlotSelection[];
@@ -121,6 +124,7 @@ export interface AutoTeamSelectionImportState {
   favoriteShipsOnly: boolean;
   leaderBoostFilters: AutoBuildLeaderBoostFilter[];
   leaderBoostRanges: AutoBuildLeaderBoostRanges;
+  costRange: AutoBuildCostRange;
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   excludedCharacterIds: number[];
@@ -176,6 +180,7 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   leaderBoostRanges?: Partial<
     Record<AutoBuildLeaderBoostFilter, Partial<AutoBuildLeaderBoostRange> | null>
   >;
+  costRange?: Partial<AutoBuildCostRange> | null;
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   lockedCharacters: CharacterListItem[];
@@ -295,6 +300,26 @@ function normalizeLeaderBoostRangeBound(value: unknown): number | null {
   return Number.isFinite(parsedValue) && parsedValue >= 0 ? parsedValue : null;
 }
 
+function normalizeCostRange(value: unknown): AutoBuildCostRange {
+  const normalizedRange = createEmptyAutoBuildCostRange();
+  const source = isRecord(value) ? value : {};
+
+  normalizedRange.min = normalizeCostRangeBound(source['min']);
+  normalizedRange.max = normalizeCostRangeBound(source['max']);
+
+  return normalizedRange;
+}
+
+function normalizeCostRangeBound(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const parsedValue = Number(value);
+
+  return Number.isInteger(parsedValue) && parsedValue >= 0 ? parsedValue : null;
+}
+
 function isLeaderBoostRangesShape(value: unknown): boolean {
   if (value === undefined) {
     return true;
@@ -317,6 +342,18 @@ function isLeaderBoostRangesShape(value: unknown): boolean {
       (range['max'] === undefined || range['max'] === null || typeof range['max'] === 'number')
     );
   });
+}
+
+function isCostRangeShape(value: unknown): boolean {
+  if (value === undefined) {
+    return true;
+  }
+
+  return (
+    isRecord(value) &&
+    (value['min'] === undefined || value['min'] === null || typeof value['min'] === 'number') &&
+    (value['max'] === undefined || value['max'] === null || typeof value['max'] === 'number')
+  );
 }
 
 function buildLegacyManualSlotsFromSelection(
@@ -512,7 +549,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload['schemaVersion'] !== 14 &&
       parsedPayload['schemaVersion'] !== 15 &&
       parsedPayload['schemaVersion'] !== 16 &&
-      parsedPayload['schemaVersion'] !== 17) ||
+      parsedPayload['schemaVersion'] !== 17 &&
+      parsedPayload['schemaVersion'] !== 18) ||
     parsedPayload['source'] !== 'auto-team-builder' ||
     parsedPayload['exportType'] !== 'preset'
   ) {
@@ -583,6 +621,7 @@ export function parseAutoTeamSelectionImportPayload(
         filters['leaderBoostFilters'].every((filter) => typeof filter === 'string'))
     ) ||
     !isLeaderBoostRangesShape(filters['leaderBoostRanges']) ||
+    !isCostRangeShape(filters['costRange']) ||
     !Array.isArray(manualSelection['lockedCharacterIds']) ||
     !(
       manualSelection['excludedCharacterIds'] === undefined ||
@@ -970,6 +1009,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
   );
   const leaderBoostFilters = normalizeLeaderBoostFilters(payload.filters.leaderBoostFilters);
   const leaderBoostRanges = normalizeLeaderBoostRanges(payload.filters.leaderBoostRanges);
+  const costRange = normalizeCostRange(payload.filters.costRange);
 
   return {
     state: {
@@ -986,6 +1026,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
       favoriteShipsOnly: payload.filters.favoriteShipsOnly === true,
       leaderBoostFilters,
       leaderBoostRanges,
+      costRange,
       manualSlots: normalizedManualSlots,
       lockedCharacterIds: derivedManualSelection.lockedCharacterIds,
       excludedCharacterIds,
@@ -1056,6 +1097,7 @@ export function buildAutoTeamSelectionExportPayload({
   favoriteShipCount = 0,
   leaderBoostFilters = [...AUTO_BUILD_LEADER_BOOST_FILTERS],
   leaderBoostRanges = createEmptyAutoBuildLeaderBoostRanges(),
+  costRange = createEmptyAutoBuildCostRange(),
   manualSlots,
   lockedCharacterIds,
   lockedCharacters,
@@ -1076,7 +1118,7 @@ export function buildAutoTeamSelectionExportPayload({
   }));
 
   return {
-    schemaVersion: 17,
+    schemaVersion: 18,
     exportedAt,
     source: 'auto-team-builder',
     exportType: 'preset',
@@ -1104,6 +1146,7 @@ export function buildAutoTeamSelectionExportPayload({
       favoriteShipCount,
       leaderBoostFilters: normalizeLeaderBoostFilters(leaderBoostFilters),
       leaderBoostRanges: normalizeLeaderBoostRanges(leaderBoostRanges),
+      costRange: normalizeCostRange(costRange),
     },
     manualSelection: {
       manualSlots: normalizedManualSlots,

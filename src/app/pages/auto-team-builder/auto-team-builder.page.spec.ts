@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
 import {
+  createEmptyAutoBuildCostRange,
   createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
   type AutoBuildManualSlotSelection,
@@ -175,6 +176,55 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.leaderBoostRangeErrorLabel()).toBe(
       'Leader boost minimum cannot be greater than maximum.',
     );
+  });
+
+  it('passes cost ranges to the builder and resets them', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.onCostRangeChange('min', {
+      detail: { value: '20' },
+    } as CustomEvent<{ value: string }>);
+    page.onCostRangeChange('max', {
+      detail: { value: '60' },
+    } as CustomEvent<{ value: string }>);
+    page.onCostRangeChange('min', {
+      detail: { value: '20.5' },
+    } as CustomEvent<{ value: string }>);
+    page.onCostRangeChange('min', {
+      detail: { value: '20' },
+    } as CustomEvent<{ value: string }>);
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.any(Array),
+      expect.objectContaining({
+        costRange: { min: 20, max: 60 },
+      }),
+      expect.any(Object),
+    );
+
+    await page.resetPage();
+    expect(page.costRange()).toEqual(createEmptyAutoBuildCostRange());
+  });
+
+  it('disables builds when the cost range minimum is greater than maximum', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    expect(page.buildDisabled()).toBe(false);
+
+    page.onCostRangeChange('min', {
+      detail: { value: '61' },
+    } as CustomEvent<{ value: string }>);
+    page.onCostRangeChange('max', {
+      detail: { value: '60' },
+    } as CustomEvent<{ value: string }>);
+
+    expect(page.hasInvalidCostRange()).toBe(true);
+    expect(page.buildDisabled()).toBe(true);
+    expect(page.costRangeErrorLabel()).toBe('Minimum cost cannot be greater than maximum cost.');
   });
 
   it('keeps the build button label stable across selected filters', async () => {
@@ -2931,7 +2981,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 17,
+      schemaVersion: 18,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -2956,6 +3006,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
         favoriteCount: 3,
         favoriteShipsOnly: true,
         favoriteShipCount: 1,
+        costRange: createEmptyAutoBuildCostRange(),
       },
       manualSelection: {
         lockedCharacterIds: [102, 101],
@@ -3039,6 +3090,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       favoriteShipCount: 0,
       leaderBoostFilters: ['HP', 'ATK'],
       leaderBoostRanges: createEmptyAutoBuildLeaderBoostRanges(),
+      costRange: createEmptyAutoBuildCostRange(),
     });
     expect(payload.manualSelection.characters).toEqual([
       expect.objectContaining({
@@ -3085,7 +3137,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
     });
   });
 
-  it('exports leader boost ranges in schema 17 presets', () => {
+  it('exports leader boost and cost ranges in schema 18 presets', () => {
     const payload = buildAutoTeamSelectionExportPayload({
       selectedTypes: ['DEX'],
       selectedClasses: ['Fighter'],
@@ -3101,6 +3153,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
         ATK: { min: 5, max: 6 },
         HP: { min: 1.25, max: 1.5 },
       },
+      costRange: { min: 20, max: 60 },
       manualSlots: createManualSlots({
         captain: [201],
         friendCaptain: [201],
@@ -3113,11 +3166,12 @@ describe('AutoTeamBuilder preset export helpers', () => {
       exportedAt: '2026-03-25T10:00:00.000Z',
     });
 
-    expect(payload.schemaVersion).toBe(17);
+    expect(payload.schemaVersion).toBe(18);
     expect(payload.filters.leaderBoostRanges).toEqual({
       ATK: { min: 5, max: 6 },
       HP: { min: 1.25, max: 1.5 },
     });
+    expect(payload.filters.costRange).toEqual({ min: 20, max: 60 });
   });
 
   it('does not start a preset download when the payload is missing', () => {
@@ -3350,6 +3404,41 @@ describe('AutoTeamBuilder preset import helpers', () => {
     });
   });
 
+  it('restores cost ranges from imported presets', () => {
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [],
+      enemyMechanics: [],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
+      requireUniqueBaseCharacterNames: false,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      costRange: { min: 20, max: 60 },
+      manualSlots: createManualSlots({
+        captain: [101],
+        friendCaptain: [101],
+      }),
+      lockedCharacterIds: [101],
+      lockedCharacters: [createCharacterRecord(101)],
+      selectedLeaderIds: [101],
+      captainLeaderId: 101,
+      friendCaptainLeaderId: 101,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+
+    const result = sanitizeAutoTeamSelectionImportPayload(payload, {
+      availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      availableClasses: ['Fighter', 'Slasher'],
+      abilityCatalogItems: [],
+      availableLockedCharacters: [createCharacterRecord(101)],
+    });
+
+    expect(result.state.costRange).toEqual({ min: 20, max: 60 });
+  });
+
   it('defaults missing legacy preset character counts to 1', () => {
     const legacyPayload = {
       schemaVersion: 1,
@@ -3413,6 +3502,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
     expect(result.state.allowAnyFriendCaptainAutoFill).toBe(false);
     expect(result.state.favoriteShipsOnly).toBe(false);
     expect(result.state.leaderBoostRanges).toEqual(createEmptyAutoBuildLeaderBoostRanges());
+    expect(result.state.costRange).toEqual(createEmptyAutoBuildCostRange());
     expect(result.warnings).toEqual([]);
   });
 
@@ -4318,6 +4408,7 @@ function createAutoBuildResult(
     favoriteShipIds: [],
     leaderBoostFilters: ['HP', 'ATK'],
     leaderBoostRanges: createEmptyAutoBuildLeaderBoostRanges(),
+    costRange: createEmptyAutoBuildCostRange(),
     manualSlots: createManualSlots({
       captain: [101],
       friendCaptain: [102],
@@ -4357,6 +4448,7 @@ function createAutoBuildResult(
         HP: { ...input.leaderBoostRanges.HP },
         ATK: { ...input.leaderBoostRanges.ATK },
       },
+      costRange: { ...input.costRange },
       manualSlots: input.manualSlots.map((slot) => ({
         role: slot.role,
         characterIds: [...slot.characterIds],

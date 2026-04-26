@@ -865,7 +865,9 @@ function inputsMatch(left: AutoBuildInput, right: AutoBuildInput): boolean {
     left.requireAllSlotsInLeaderSuperEffectScope ===
       right.requireAllSlotsInLeaderSuperEffectScope &&
     left.minimumLeaderSuperEffectMatchingSlots === right.minimumLeaderSuperEffectMatchingSlots &&
-    left.requireLeaderSuperSpecialCriteria === right.requireLeaderSuperSpecialCriteria
+    left.requireLeaderSuperSpecialCriteria === right.requireLeaderSuperSpecialCriteria &&
+    left.costRange.min === right.costRange.min &&
+    left.costRange.max === right.costRange.max
   );
 }
 

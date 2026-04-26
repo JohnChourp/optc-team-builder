@@ -605,6 +605,21 @@ describe('OptcRepositoryService', () => {
     expect(result.map((record) => record.id)).toEqual([4102, 4101]);
   });
 
+  it('applies cost range filters to auto candidates while keeping locked candidates available', async () => {
+    const service = createRepositoryService([
+      createCharacterRow({ id: 4111, type: 'DEX', cost: 65 }),
+      createCharacterRow({ id: 4110, type: 'DEX', cost: 40 }),
+      createCharacterRow({ id: 4109, type: 'DEX', cost: 10 }),
+    ]);
+
+    const result = await service.getAutoBuilderCandidates(['DEX'], 1200, {
+      lockedCharacterIds: [4111],
+      costRange: { min: 20, max: 50 },
+    });
+
+    expect(result.map((record) => record.id)).toEqual([4111, 4110]);
+  });
+
   it('lets exclusions override favorite and locked candidate inclusion', async () => {
     const service = createRepositoryService([]);
     const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;

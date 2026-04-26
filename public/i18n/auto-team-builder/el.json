@@ -91,6 +91,18 @@
         "invalid": "Το ελάχιστο leader boost δεν μπορεί να είναι μεγαλύτερο από το μέγιστο."
       }
     },
+    "cost": {
+      "label": "Cost range για auto-fill",
+      "support": {
+        "default": "Άφησε και τα δύο πεδία κενά για να επιτρέπεται οποιοδήποτε cost στους auto-filled χαρακτήρες. Τα manual picks μένουν ελεύθερα.",
+        "active": "Μόνο auto-filled χαρακτήρες μέσα σε αυτό το cost range μπορούν να επιλεγούν. Τα manual picks μένουν ελεύθερα."
+      },
+      "range": {
+        "min": "Cost από",
+        "max": "Cost έως",
+        "invalid": "Το ελάχιστο cost δεν μπορεί να είναι μεγαλύτερο από το μέγιστο."
+      }
+    },
     "favoritesOnly": {
       "toggle": "Χρησιμοποίησε favorites για auto-fill",
       "blockedMessage": "Το favorite-only auto-fill δεν είναι διαθέσιμο μέχρι να αποθηκεύσεις τουλάχιστον ένα favorite unit.",

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   AUTO_TEAM_CANDIDATE_LIMIT,
   AUTO_TEAM_BUILDER_DEFAULT_TYPE,
+  createEmptyAutoBuildCostRange,
   createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
   type AutoBuildInput,
@@ -251,6 +252,24 @@ describe('runAutoTeamBuildSearch', () => {
     expect(attempts.some((attempt) => attempt.category === 'double')).toBe(true);
   });
 
+  it('preserves cost ranges on every fallback attempt', () => {
+    const planner = createAutoTeamBuildFallbackPlanner(
+      createInput(['DEX', 'INT'], ['Fighter', 'Slasher'], {
+        requireLeaderSuperSpecialCriteria: true,
+        costRange: { min: 20, max: 60 },
+      }),
+      createSingleTypeRecords(),
+    );
+
+    planner.scheduleInitialFallbackAttempts();
+
+    expect(
+      collectScheduledAttempts(planner).every((attempt) => {
+        return attempt.input.costRange.min === 20 && attempt.input.costRange.max === 60;
+      }),
+    ).toBe(true);
+  });
+
   it('caps the bounded subset plan at 31,744 total attempts for now', () => {
     const planner = createAutoTeamBuildFallbackPlanner(
       createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], createSyntheticClasses(10), {
@@ -368,6 +387,7 @@ function createInput(
       | 'favoriteShipIds'
       | 'leaderBoostFilters'
       | 'leaderBoostRanges'
+      | 'costRange'
       | 'manualSlots'
       | 'lockedCharacterIds'
       | 'excludedCharacterIds'
@@ -402,6 +422,7 @@ function createInput(
     favoriteShipIds: overrides.favoriteShipIds ?? [],
     leaderBoostFilters: overrides.leaderBoostFilters ?? ['HP', 'ATK'],
     leaderBoostRanges: overrides.leaderBoostRanges ?? createEmptyAutoBuildLeaderBoostRanges(),
+    costRange: overrides.costRange ?? createEmptyAutoBuildCostRange(),
     manualSlots: overrides.manualSlots ?? createEmptyAutoBuildManualSlots(),
     lockedCharacterIds,
     excludedCharacterIds,

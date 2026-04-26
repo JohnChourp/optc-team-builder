@@ -91,6 +91,18 @@
         "invalid": "Leader boost minimum cannot be greater than maximum."
       }
     },
+    "cost": {
+      "label": "Auto-fill cost range",
+      "support": {
+        "default": "Leave both fields empty to allow any cost for auto-filled characters. Manual picks remain unrestricted.",
+        "active": "Only auto-filled characters inside this cost range can be selected. Manual picks remain unrestricted."
+      },
+      "range": {
+        "min": "Cost from",
+        "max": "Cost to",
+        "invalid": "Minimum cost cannot be greater than maximum cost."
+      }
+    },
     "favoritesOnly": {
       "toggle": "Use favorites for auto-fill",
       "blockedMessage": "Favorite-only auto-fill is unavailable until you save at least one favorite unit.",

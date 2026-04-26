@@ -299,6 +299,41 @@ function compareBoostSortedCharacters(
   return left.name.localeCompare(right.name, undefined, { sensitivity: 'base' });
 }
 
+function normalizeCandidateCostRange(range: AutoBuildCandidateQueryOptions['costRange']): {
+  min: number | null;
+  max: number | null;
+} {
+  return {
+    min: normalizeCandidateCostRangeBound(range?.min),
+    max: normalizeCandidateCostRangeBound(range?.max),
+  };
+}
+
+function normalizeCandidateCostRangeBound(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const parsedValue = Number(value);
+
+  return Number.isInteger(parsedValue) && parsedValue >= 0 ? parsedValue : null;
+}
+
+function recordMatchesCandidateCostRange(
+  record: Pick<CharacterDetailRecord, 'cost'>,
+  range: { min: number | null; max: number | null },
+): boolean {
+  if (range.min !== null && record.cost < range.min) {
+    return false;
+  }
+
+  if (range.max !== null && record.cost > range.max) {
+    return false;
+  }
+
+  return true;
+}
+
 @Injectable({ providedIn: 'root' })
 export class OptcRepositoryService {
   private readonly sqlPromise: Promise<SqlJsStatic>;
@@ -697,6 +732,7 @@ export class OptcRepositoryService {
     const normalizedTypeFilters = [
       ...new Set(typeFilters.map((type) => type.trim().toUpperCase())),
     ];
+    const costRange = normalizeCandidateCostRange(options.costRange);
     await this.characterOverrides.ready();
     const overridesByCharacterId = this.characterOverrides.overridesByCharacterId();
     const allowedCharacterIdSet = allowedCharacterIds.length ? new Set(allowedCharacterIds) : null;
@@ -716,6 +752,16 @@ export class OptcRepositoryService {
       if (classClauses.length > 0) {
         whereClause = `(${whereClause} AND (${classClauses.join(' OR ')}))`;
         queryParams.push(...selectedClasses.map((selectedClass) => `%\"${selectedClass}\"%`));
+      }
+
+      if (costRange.min !== null) {
+        whereClause = `(${whereClause} AND c.cost >= ?)`;
+        queryParams.push(costRange.min);
+      }
+
+      if (costRange.max !== null) {
+        whereClause = `(${whereClause} AND c.cost <= ?)`;
+        queryParams.push(costRange.max);
       }
 
       if (lockedCharacterIds.length > 0) {
@@ -782,6 +828,13 @@ export class OptcRepositoryService {
           return false;
         }
 
+        if (
+          !lockedCharacterIdSet.has(record.id) &&
+          !recordMatchesCandidateCostRange(record, costRange)
+        ) {
+          return false;
+        }
+
         return !scopedAllowedCharacterIdSet || scopedAllowedCharacterIdSet.has(record.id);
       });
     } else {
@@ -813,6 +866,13 @@ export class OptcRepositoryService {
           !lockedCharacterIdSet.has(record.id) &&
           selectedClasses.length > 0 &&
           !this.matchesClasses(record, selectedClasses, 'any')
+        ) {
+          return false;
+        }
+
+        if (
+          !lockedCharacterIdSet.has(record.id) &&
+          !recordMatchesCandidateCostRange(record, costRange)
         ) {
           return false;
         }

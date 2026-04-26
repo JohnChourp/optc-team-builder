@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { type AutoBuildInput, type AutoBuildResult } from '../models/auto-team-builder.models';
+import {
+  type AutoBuildInput,
+  type AutoBuildResult,
+  createEmptyAutoBuildCostRange,
+} from '../models/auto-team-builder.models';
 import { type CharacterDetailRecord, type ShipRecord } from '../models/optc.models';
 import { resolveAutoBuildShipSelection } from './auto-team-builder-ship.utils';
 
@@ -196,6 +200,7 @@ function createResult(
     allowAnyFriendCaptainAutoFill: false,
     favoriteShipsOnly: false,
     favoriteShipIds: [],
+    costRange: createEmptyAutoBuildCostRange(),
     manualSlots: [],
     lockedCharacterIds: [],
     excludedCharacterIds: [],
