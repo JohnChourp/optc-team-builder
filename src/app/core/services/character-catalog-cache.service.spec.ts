@@ -290,14 +290,12 @@ function createCharacter(
       exactLocal: true,
       thumbnailGlobal: true,
       thumbnailJapan: false,
-      fullTransparent: false,
     },
     assets: overrides.assets ?? {
       exactLocal: null,
       thumbnailLocal: null,
       thumbnailGlobal: null,
       thumbnailJapan: null,
-      fullTransparent: null,
     },
     imageUrl: overrides.imageUrl ?? `assets/characters/${id}.png`,
   };

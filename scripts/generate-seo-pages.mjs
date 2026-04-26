@@ -362,12 +362,7 @@ function resolveCharacterImageUrl(character) {
     (assets.thumbnailGlobal
       ? `assets/offline-packs/thumbnails-glo/${assets.thumbnailGlobal}`
       : null) ??
-    (assets.thumbnailJapan
-      ? `assets/offline-packs/thumbnails-jap/${assets.thumbnailJapan}`
-      : null) ??
-    (assets.fullTransparent
-      ? `assets/offline-packs/full-transparent/${assets.fullTransparent}`
-      : null);
+    (assets.thumbnailJapan ? `assets/offline-packs/thumbnails-jap/${assets.thumbnailJapan}` : null);
 
   return typeof relativePath === 'string' && relativePath.trim().length > 0
     ? `${siteBaseUrl}/${relativePath.replace(/^\/+/, '')}`

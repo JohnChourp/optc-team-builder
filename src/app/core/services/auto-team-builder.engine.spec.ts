@@ -575,16 +575,14 @@ function createCharacterRecord(
       exactLocal: true,
       thumbnailGlobal: true,
       thumbnailJapan: false,
-      fullTransparent: true,
     },
     assets: overrides.assets ?? {
       exactLocal: `assets/characters/${id}.png`,
       thumbnailGlobal: `assets/characters/${id}-thumb.png`,
       thumbnailJapan: null,
-      fullTransparent: `assets/characters/${id}-full.png`,
     },
     imageUrl: overrides.imageUrl ?? `assets/characters/${id}-thumb.png`,
-    detailImageUrl: overrides.detailImageUrl ?? `assets/characters/${id}-full.png`,
+    detailImageUrl: overrides.detailImageUrl ?? `assets/characters/${id}.png`,
     detail: {
       characterId: id,
       captainAbility: overrides.detail?.captainAbility ?? null,

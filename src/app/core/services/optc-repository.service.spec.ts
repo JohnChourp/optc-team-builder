@@ -133,7 +133,6 @@ describe('OptcRepositoryService', () => {
                   thumbnailLocal: 'assets/exact-character-images/900001-thumb.jpg',
                   thumbnailGlobal: null,
                   thumbnailJapan: null,
-                  fullTransparent: null,
                 },
               }),
             ],
@@ -361,7 +360,6 @@ describe('OptcRepositoryService', () => {
             thumbnailLocal: null,
             thumbnailGlobal: 'assets/offline-packs/thumbnails-glo/4101-v1.png',
             thumbnailJapan: null,
-            fullTransparent: null,
           },
         }),
       ],
@@ -381,7 +379,6 @@ describe('OptcRepositoryService', () => {
             thumbnailLocal: null,
             thumbnailGlobal: 'assets/offline-packs/thumbnails-glo/4101-v2.png',
             thumbnailJapan: 'assets/offline-packs/thumbnails-jap/4101-v2.png',
-            fullTransparent: 'assets/offline-packs/full-transparent/4101-v2.png',
           },
         }),
       ],
@@ -406,7 +403,6 @@ describe('OptcRepositoryService', () => {
       assets: {
         exactLocal: 'assets/exact-character-images/4101-v1.png',
         thumbnailGlobal: 'assets/offline-packs/thumbnails-glo/4101-v1.png',
-        fullTransparent: null,
       },
     });
     expect(afterImportRecord).toMatchObject({
@@ -426,7 +422,6 @@ describe('OptcRepositoryService', () => {
         exactLocal: 'assets/exact-character-images/4101-v2.png',
         thumbnailGlobal: 'assets/offline-packs/thumbnails-glo/4101-v2.png',
         thumbnailJapan: 'assets/offline-packs/thumbnails-jap/4101-v2.png',
-        fullTransparent: 'assets/offline-packs/full-transparent/4101-v2.png',
       },
     });
   });
@@ -446,7 +441,6 @@ describe('OptcRepositoryService', () => {
             thumbnailLocal: 'assets/exact-character-images/900000-thumb.png',
             thumbnailGlobal: null,
             thumbnailJapan: null,
-            fullTransparent: null,
           },
         }),
       ],
@@ -1012,7 +1006,6 @@ function createCharacterRow(
       thumbnailLocal?: string | null;
       thumbnailGlobal: string | null;
       thumbnailJapan: string | null;
-      fullTransparent: string | null;
     };
   }> = {},
 ): TestSqlRow {
@@ -1048,7 +1041,6 @@ function createCharacterRow(
       exactLocal: true,
       thumbnailGlobal: true,
       thumbnailJapan: false,
-      fullTransparent: false,
     }),
     assets_json: JSON.stringify({
       ...(overrides.assets ?? {
@@ -1056,7 +1048,6 @@ function createCharacterRow(
         thumbnailLocal: null,
         thumbnailGlobal: null,
         thumbnailJapan: null,
-        fullTransparent: null,
       }),
     }),
     detail_json: JSON.stringify({

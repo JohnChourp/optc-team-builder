@@ -74,7 +74,6 @@ Supported `--download-images` modes:
 - `thumbnails-glo`: only global character thumbnails
 - `thumbnails-jap`: only japan character thumbnails
 - `ship-thumbnails`: only ship thumbnails
-- `full-transparent`: only full transparent character art
 - `thumbnails`: all thumbnail packs (`thumbnails-glo`, `thumbnails-jap`, `ship-thumbnails`)
 - `all`: metadata import plus every supported offline image pack
 
@@ -210,7 +209,6 @@ Available offline image packs also include:
 - `thumbnails-glo`
 - `thumbnails-jap`
 - `ship-thumbnails` for ship picker and saved team previews
-- `full-transparent`
 
 Local ship thumbnail overrides for upstream-missing ships live in `scripts/data/ship-thumbnail-overrides.json`.
 

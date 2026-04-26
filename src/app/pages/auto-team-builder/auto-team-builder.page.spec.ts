@@ -4030,16 +4030,14 @@ function createCharacterRecord(
       exactLocal: true,
       thumbnailGlobal: true,
       thumbnailJapan: false,
-      fullTransparent: true,
     },
     assets: {
       exactLocal: `assets/characters/${id}.png`,
       thumbnailGlobal: `assets/characters/${id}-thumb.png`,
       thumbnailJapan: null,
-      fullTransparent: `assets/characters/${id}-full.png`,
     },
     imageUrl: `assets/characters/${id}-thumb.png`,
-    detailImageUrl: `assets/characters/${id}-full.png`,
+    detailImageUrl: `assets/characters/${id}.png`,
     detail: {
       characterId: id,
       captainAbility: `${name} captain ability`,

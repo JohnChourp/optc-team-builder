@@ -20,7 +20,6 @@ export interface RegionAvailability {
   exactLocal: boolean;
   thumbnailGlobal: boolean;
   thumbnailJapan: boolean;
-  fullTransparent: boolean;
 }
 
 export interface CharacterSupportEntry {
@@ -76,7 +75,6 @@ export interface CharacterAssets {
   thumbnailLocal?: string | null;
   thumbnailGlobal: string | null;
   thumbnailJapan: string | null;
-  fullTransparent: string | null;
 }
 
 export interface CharacterRecord {

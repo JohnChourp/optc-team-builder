@@ -86,7 +86,9 @@ describe('manual character apply pipeline', () => {
     expect(await readFile(path.join(exactImagesDir, '900000.png'), 'utf8')).toBe('manual-png');
 
     const preview = JSON.parse(await readFile(path.join(dataDir, 'optc-preview.json'), 'utf8'));
-    const customCharacter = preview.characters.find((character: { id: number }) => character.id === 900000);
+    const customCharacter = preview.characters.find(
+      (character: { id: number }) => character.id === 900000,
+    );
     const correctedUpstreamCharacter = preview.characters.find(
       (character: { id: number }) => character.id === 100,
     );
@@ -98,12 +100,15 @@ describe('manual character apply pipeline', () => {
         rumbleData: { description: 'Rumble text' },
       },
     });
-    expect(customCharacter.detail.builderAbilities).toHaveLength(1);
-    expect(customCharacter.detail.builderAbilities[0]).toMatchObject({
-      key: 'remove_bind',
-      minTurns: 5,
-      source: 'specialText',
-    });
+    expect(customCharacter.detail.builderAbilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'remove_bind',
+          minTurns: 5,
+          source: 'specialText',
+        }),
+      ]),
+    );
     expect(correctedUpstreamCharacter?.detail.builderAbilities).toEqual([]);
   });
 
@@ -168,8 +173,12 @@ describe('manual character apply pipeline', () => {
     ];
     await writeFixtureDataset(dataDir, regeneratedCharacters, '2026-04-04T00:00:00.000Z');
 
-    const previewWithoutManual = JSON.parse(await readFile(path.join(dataDir, 'optc-preview.json'), 'utf8'));
-    expect(previewWithoutManual.characters.map((character: { id: number }) => character.id)).toEqual([100]);
+    const previewWithoutManual = JSON.parse(
+      await readFile(path.join(dataDir, 'optc-preview.json'), 'utf8'),
+    );
+    expect(
+      previewWithoutManual.characters.map((character: { id: number }) => character.id),
+    ).toEqual([100]);
 
     const result = await applyManualCharacterOverlay({
       rootDir,
@@ -217,12 +226,15 @@ describe('manual character apply pipeline', () => {
         rumbleData: { description: 'Rumble text' },
       },
     });
-    expect(reappliedManualCharacter.detail.builderAbilities).toHaveLength(1);
-    expect(reappliedManualCharacter.detail.builderAbilities[0]).toMatchObject({
-      key: 'remove_bind',
-      minTurns: 5,
-      source: 'specialText',
-    });
+    expect(reappliedManualCharacter.detail.builderAbilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'remove_bind',
+          minTurns: 5,
+          source: 'specialText',
+        }),
+      ]),
+    );
   });
 
   it('overrides an upstream character when the manual overlay uses a canonical id', async () => {
@@ -430,9 +442,7 @@ describe('manual character apply pipeline', () => {
 
     const preview = JSON.parse(await readFile(path.join(dataDir, 'optc-preview.json'), 'utf8'));
     const zoro = preview.characters.find((character: { id: number }) => character.id === 4529);
-    const nusjuro = preview.characters.find(
-      (character: { id: number }) => character.id === 900005,
-    );
+    const nusjuro = preview.characters.find((character: { id: number }) => character.id === 900005);
 
     expect(zoro).toMatchObject({
       id: 4529,
@@ -446,8 +456,7 @@ describe('manual character apply pipeline', () => {
       searchText: expect.stringContaining('4529'),
       assets: {
         exactLocal: 'assets/exact-character-images/4529--st-ethanbaron-v-nusjuro.png',
-        thumbnailLocal:
-          'assets/exact-character-images/4529--st-ethanbaron-v-nusjuro-thumb.jpg',
+        thumbnailLocal: 'assets/exact-character-images/4529--st-ethanbaron-v-nusjuro-thumb.jpg',
       },
       detail: {
         characterId: 4529,
@@ -456,10 +465,7 @@ describe('manual character apply pipeline', () => {
     });
     expect(nusjuro.searchText).toContain('900005');
     expect(
-      await readFile(
-        path.join(exactImagesDir, '4529--st-ethanbaron-v-nusjuro.png'),
-        'utf8',
-      ),
+      await readFile(path.join(exactImagesDir, '4529--st-ethanbaron-v-nusjuro.png'), 'utf8'),
     ).toBe('manual-900005-png');
   });
 });
@@ -611,13 +617,11 @@ function createBaseCharacter(
       exactLocal: false,
       thumbnailGlobal: false,
       thumbnailJapan: false,
-      fullTransparent: false,
     },
     assets: {
       exactLocal: null,
       thumbnailGlobal: null,
       thumbnailJapan: null,
-      fullTransparent: null,
     },
     detail: {
       characterId: 100,

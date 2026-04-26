@@ -1,17 +1,17 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from 'vitest';
 
-import { type CharacterListItem } from "../models/optc.models";
-import { OptcbxImportService } from "./optcbx-import.service";
+import { type CharacterListItem } from '../models/optc.models';
+import { OptcbxImportService } from './optcbx-import.service';
 
-describe("OptcbxImportService", () => {
-  it("parses a valid OPTCbx export with characters only", () => {
+describe('OptcbxImportService', () => {
+  it('parses a valid OPTCbx export with characters only', () => {
     const service = createService();
 
     const result = service.parseExport(
       JSON.stringify({
         characters: [
-          { name: "Luffy", number: 1001 },
-          { name: "Zoro", number: 1002 },
+          { name: 'Luffy', number: 1001 },
+          { name: 'Zoro', number: 1002 },
         ],
       }),
     );
@@ -20,13 +20,13 @@ describe("OptcbxImportService", () => {
     expect(result.duplicatesRemoved).toBe(0);
   });
 
-  it("parses a valid OPTCbx export that also contains thumbnails", () => {
+  it('parses a valid OPTCbx export that also contains thumbnails', () => {
     const service = createService();
 
     const result = service.parseExport(
       JSON.stringify({
-        characters: [{ name: "Nami", number: 2001 }],
-        thumbnails: ["thumb.png"],
+        characters: [{ name: 'Nami', number: 2001 }],
+        thumbnails: ['thumb.png'],
       }),
     );
 
@@ -34,30 +34,26 @@ describe("OptcbxImportService", () => {
     expect(result.duplicatesRemoved).toBe(0);
   });
 
-  it("rejects invalid JSON", () => {
+  it('rejects invalid JSON', () => {
     const service = createService();
 
-    expect(() => service.parseExport("{invalid")).toThrow("The selected file is not valid JSON.");
+    expect(() => service.parseExport('{invalid')).toThrow('The selected file is not valid JSON.');
   });
 
-  it("rejects payloads without a valid characters array", () => {
+  it('rejects payloads without a valid characters array', () => {
     const service = createService();
 
     expect(() => service.parseExport(JSON.stringify({ thumbnails: [] }))).toThrow(
-      "The selected file is not a raw OPTCbx export.",
+      'The selected file is not a raw OPTCbx export.',
     );
   });
 
-  it("removes duplicate character ids from the import", () => {
+  it('removes duplicate character ids from the import', () => {
     const service = createService();
 
     const result = service.parseExport(
       JSON.stringify({
-        characters: [
-          { number: 3001 },
-          { number: 3001 },
-          { number: "3002" },
-        ],
+        characters: [{ number: 3001 }, { number: 3001 }, { number: '3002' }],
       }),
     );
 
@@ -65,11 +61,8 @@ describe("OptcbxImportService", () => {
     expect(result.duplicatesRemoved).toBe(1);
   });
 
-  it("reports unmatched ids that are not present in the local dataset", async () => {
-    const service = createService([
-      createCharacter(4001),
-      createCharacter(4003),
-    ]);
+  it('reports unmatched ids that are not present in the local dataset', async () => {
+    const service = createService([createCharacter(4001), createCharacter(4003)]);
 
     const parsedImport = service.parseExport(
       JSON.stringify({
@@ -82,7 +75,7 @@ describe("OptcbxImportService", () => {
     expect(result.unmatchedIds).toEqual([4002]);
   });
 
-  it("computes merge counts against existing favorites", async () => {
+  it('computes merge counts against existing favorites', async () => {
     const service = createService([
       createCharacter(5001),
       createCharacter(5002),
@@ -115,9 +108,9 @@ function createCharacter(id: number): CharacterListItem {
   return {
     id,
     name: `Character ${id}`,
-    type: "DEX",
-    classes: ["Fighter"],
-    primaryClass: "Fighter",
+    type: 'DEX',
+    classes: ['Fighter'],
+    primaryClass: 'Fighter',
     secondaryClass: null,
     stars: 6,
     cost: 55,
@@ -131,14 +124,12 @@ function createCharacter(id: number): CharacterListItem {
       exactLocal: true,
       thumbnailGlobal: true,
       thumbnailJapan: false,
-      fullTransparent: false,
     },
     assets: {
       exactLocal: null,
       thumbnailGlobal: null,
       thumbnailJapan: null,
-      fullTransparent: null,
     },
-    imageUrl: "assets/placeholders/character-card.svg",
+    imageUrl: 'assets/placeholders/character-card.svg',
   };
 }

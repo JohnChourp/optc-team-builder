@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-24T09:22:38.628Z",
+  "generatedAt": "2026-04-26T10:29:00.760Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -3012,7 +3012,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1329,
+      "matchCount": 1330,
       "matchingCharacterIds": [
         209,
         210,
@@ -4341,6 +4341,7 @@
         4550,
         4551,
         4552,
+        4554,
         5013,
         5014
       ],
@@ -5252,24 +5253,18 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 4,
+      "matchCount": 2,
       "matchingCharacterIds": [
         3176,
-        3177,
-        4550,
-        4552
+        3177
       ],
       "sampleCharacterIds": [
         3176,
-        3177,
-        4550,
-        4552
+        3177
       ],
       "sampleTexts": [
         "Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated. If this character is your Captain/Friend Captain, increases duration of any Orb Amplification buffs by 1 turn.",
-        "Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated. If this character is your Captain/Friend Captain, increases duration of any Orb Amplification buffs by 1 turn.",
-        "Poisons all enemies. If enemy is immune to status effects, Delay, or any Poison when Special is launched, applies Paralysis (60% chance not to reduce action turns) to all enemies for 1 turn (ignoring immunity to all status effects). If crew has slot effect boost when Special is launched, boosts Slasher and Cerebral characters' ATK based on the damage reduction effect applied on the crew (e.g. if crew has 90% damage reduction, boosts ATK by 1.9x) for 1 turn, then after that, boosts [STR] and [INT] characters' slot effects by 3.25x for 3 turns (allows this effect to be further increased up to 2 times), reduces all enemies' Threshold Damage Reduction duration by 7 turns, removes all Poison effects on the crew, and becomes \"Crocodile & Mihawk\" for 3 turns. If field has \"Territory: [STR]\", \"Territory: [INT]\", or \"Territory: Slasher class\" and 2 or more [Cross Guild] [Four Emperors] characters are on the crew when Special is launched, allows crew to stack up to 2 different damage boosting effects (cannot stack the damage boost of the same type) for 1 turn",
-        "Reduces all enemies' DEF Up duration by 6 turns, heals crew by 25,000 HP, reduces damage taken by 80% for 1 turn, changes crew's [BLOCK] slots to character's own type, and boosts damage dealt to enemies affected by Delay and DEF Down by 2.25x for 1 turn. If 5 or more [Revolutionary Army] [Egghead Arc] characters are on the crew, halves all enemies' DEF for 1 turn, and boosts crew's ATK by 1.75x for 1 turn (effect can be overwritten with other ATK boost effects)"
+        "Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated. If this character is your Captain/Friend Captain, increases duration of any Orb Amplification buffs by 1 turn."
       ]
     },
     {
@@ -6065,27 +6060,24 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 5,
+      "matchCount": 4,
       "matchingCharacterIds": [
         3293,
         3776,
         4429,
-        4430,
-        4554
+        4430
       ],
       "sampleCharacterIds": [
         3293,
         3776,
         4429,
-        4430,
-        4554
+        4430
       ],
       "sampleTexts": [
         "Reduces Chain Multiplier Limit and Chain Coefficient Reduction duration by 5 turns, recovers 30% of crew's MAX HP and boosts the Color Affinity of Powerhouse and Driven characters by 1.75x for 1 turn. If your captain is a Driven or Powerhouse character, after 2 turns, boosts Orb Effects of Powerhouse and Driven characters by 2x for 1 turn.",
         "Reduces Special Cooldown of all characters by 1 turn, reduces enemies' Increased Defense duration by 5 turns and reduces Paralysis and ATK DOWN duration by 5 turns. If HP is above 99% when the special is activated, adds 1.0x to Chain multiplier for 1 turn, recovers 30% of crew's MAX HP otherwise.",
         "Deals 100x character's ATK in Typeless damage to one enemy, reduces enemies' Resilience duration by 6 turns, adds 1.2x to chain multiplier for 3 turns, and recovers 30% of crew's MAX HP. If HP is below 50% when the special is activated or your crew has 2+ [Navy] characters, carries over 0.1x-1.5x of Chain Multiplier on this turn to the next turn.",
-        "Reduces Special Cooldown of all characters by 1 turn, deals 100x character's ATK in Typeless damage to one enemy, reduces enemies' Resilience duration by 6 turns, adds 1.2x-1.8x to chain multiplier for 3 turns, and recovers 30% of crew's MAX HP. If HP is below 50% when the special is activated or your crew has 2+ [Navy] characters, locks all orbs for 2 turns, and carries over 0.1x-1.5x of Chain Multiplier on this turn to the next turn. If your crew has 3+ [Navy] characters, increases duration of any team Damage Nullification and Threshold Damage Reduction buffs by 1 turn.",
-        "Reduces crew's Despair duration by 2 turns, and launches the following effects based on character's Special launch status: (0) sets the chain multiplier's minimum value at 2.25 and maximum value at 17.5 for 1 turn, and then sets character's Special launch status to (1); (1) reduces crew's ATK Down duration by 1 turn, boosts the chain multiplier by +1.2 for 1 turn, and if character's slot is [BLOCK][BOMB][G] or Rainbow when Special is launched, sets character's Special launch status to (2): (2) prevents character's slot from being changed until character lands a PERFECT strike 1 time, applies \"Territory: [INT]\" to the field (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory) for 1 turn, and reduces crew's ATK Down duration by 2 turns (Special launch status effect is not stackable)"
+        "Reduces Special Cooldown of all characters by 1 turn, deals 100x character's ATK in Typeless damage to one enemy, reduces enemies' Resilience duration by 6 turns, adds 1.2x-1.8x to chain multiplier for 3 turns, and recovers 30% of crew's MAX HP. If HP is below 50% when the special is activated or your crew has 2+ [Navy] characters, locks all orbs for 2 turns, and carries over 0.1x-1.5x of Chain Multiplier on this turn to the next turn. If your crew has 3+ [Navy] characters, increases duration of any team Damage Nullification and Threshold Damage Reduction buffs by 1 turn."
       ]
     },
     {
@@ -6208,7 +6200,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 41,
+      "matchCount": 40,
       "matchingCharacterIds": [
         3754,
         3755,
@@ -6249,8 +6241,7 @@
         4436,
         4478,
         4486,
-        4524,
-        4551
+        4524
       ],
       "sampleCharacterIds": [
         3754,
@@ -6471,7 +6462,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 276,
+      "matchCount": 274,
       "matchingCharacterIds": [
         3365,
         3371,
@@ -6746,9 +6737,7 @@
         4536,
         4537,
         4543,
-        4544,
-        4550,
-        4553
+        4544
       ],
       "sampleCharacterIds": [
         3365,
@@ -6872,7 +6861,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 546,
+      "matchCount": 547,
       "matchingCharacterIds": [
         11,
         26,
@@ -7417,6 +7406,7 @@
         4548,
         4551,
         4552,
+        4553,
         4554,
         5013,
         5014
@@ -13609,7 +13599,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 102,
+      "matchCount": 103,
       "matchingCharacterIds": [
         379,
         380,
@@ -13711,6 +13701,7 @@
         4510,
         4511,
         4512,
+        4550,
         5031,
         5032
       ],
@@ -14861,7 +14852,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 18,
+      "matchCount": 19,
       "matchingCharacterIds": [
         1431,
         1432,
@@ -14880,7 +14871,8 @@
         4239,
         4240,
         4523,
-        4529
+        4529,
+        4553
       ],
       "sampleCharacterIds": [
         1431,
@@ -15224,7 +15216,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 262,
+      "matchCount": 261,
       "matchingCharacterIds": [
         13,
         14,
@@ -15486,8 +15478,7 @@
         4490,
         4517,
         4536,
-        4547,
-        4550
+        4547
       ],
       "sampleCharacterIds": [
         13,
@@ -15520,16 +15511,10 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1,
-      "matchingCharacterIds": [
-        4552
-      ],
-      "sampleCharacterIds": [
-        4552
-      ],
-      "sampleTexts": [
-        "Reduces all enemies' DEF Up duration by 6 turns, heals crew by 25,000 HP, reduces damage taken by 80% for 1 turn, changes crew's [BLOCK] slots to character's own type, and boosts damage dealt to enemies affected by Delay and DEF Down by 2.25x for 1 turn. If 5 or more [Revolutionary Army] [Egghead Arc] characters are on the crew, halves all enemies' DEF for 1 turn, and boosts crew's ATK by 1.75x for 1 turn (effect can be overwritten with other ATK boost effects)"
-      ]
+      "matchCount": 0,
+      "matchingCharacterIds": [],
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "inflict_poison",
@@ -17447,7 +17432,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 133,
+      "matchCount": 134,
       "matchingCharacterIds": [
         668,
         669,
@@ -17581,7 +17566,8 @@
         4355,
         4445,
         4528,
-        4531
+        4531,
+        4554
       ],
       "sampleCharacterIds": [
         668,
@@ -18068,27 +18054,21 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 5,
+      "matchCount": 3,
       "matchingCharacterIds": [
         3339,
         3661,
-        3980,
-        4551,
-        4554
+        3980
       ],
       "sampleCharacterIds": [
         3339,
         3661,
-        3980,
-        4551,
-        4554
+        3980
       ],
       "sampleTexts": [
         "Applies ATK DOWN and Chain Coefficient Reduction Immunity for 3 turns, recovers 6,000 HP at the end of the turn for 3 turns and boosts ATK of [DEX] and Free Spirit characters by 1.75x for 1 turn. After 1 turn, boosts ATK of [DEX] and Free Spirit characters by 2x for 1 turn.",
         "Applies PERFECTs Harder to Hit and Chain Coefficient Reduction Immunity for 3 turns and boosts Color Affinity of [DEX] and [PSY] characters by 1.75x for 1 turn. If during that turn you score 2 PERFECT hits, boosts base ATK of [DEX] and [PSY] characters by 900 for 1 turn in the following turn.",
-        "Delays all enemies by 2 turns, reduces Burn duration by 6 turns, applies Burn Immunity for 2 turns, boosts ATK of [INT] and [PSY] characters by 1.75x for 3 turns, boosts Orb Effects of [INT] and [PSY] characters by 1.75x for 3 turns, and deals 200x character's ATK in [INT] damage to all enemies at the end of the turn for 3 turns.",
-        "Reduces crew's Paralysis/Special Bind duration by 7 turns. If field has \"Territory: [QCK]\", \"Territory: [INT]\", or \"Territory: Free Spirit class\" and 2 or more [Blackbeard Pirates] [Four Emperors] characters are on the crew when Special is launched, boosts [QCK] and [INT] characters' chain multiplier growth rate of normal attacks up to +0.7 (GOOD +0.3; GREAT +0.5; PERFECT +0.7) for 3 turns. If enemy has damage reduction (except Threshold Damage Reduction) status and an [INT] is set as Support for character when Special is launched, applies \"Territory: Free Spirit class\" to the field<hidden> (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory)</hidden> for 2 turns. If enemy has damage reduction (except Threshold Damage Reduction) status and a [QCK] is set as Support for character when Special is launched, applies \"Territory: [QCK]\" to the field<hidden> (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory)</hidden> for 2 turns. If crew has ATK Up status when Special is launched, boosts Free Spirit, Driven, and Slasher characters' advantageous class effect by 1.75x for 1 turn, then after that, boosts [QCK] and [INT] characters' ATK by 3.25x for 3 turns (allows this effect to be further increased up to 2 times), and becomes \"Burgess & Shiryu\" for 3 turns",
-        "Reduces crew's Despair duration by 2 turns, and launches the following effects based on character's Special launch status: (0) sets the chain multiplier's minimum value at 2.25 and maximum value at 17.5 for 1 turn, and then sets character's Special launch status to (1); (1) reduces crew's ATK Down duration by 1 turn, boosts the chain multiplier by +1.2 for 1 turn, and if character's slot is [BLOCK][BOMB][G] or Rainbow when Special is launched, sets character's Special launch status to (2): (2) prevents character's slot from being changed until character lands a PERFECT strike 1 time, applies \"Territory: [INT]\" to the field (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory) for 1 turn, and reduces crew's ATK Down duration by 2 turns (Special launch status effect is not stackable)"
+        "Delays all enemies by 2 turns, reduces Burn duration by 6 turns, applies Burn Immunity for 2 turns, boosts ATK of [INT] and [PSY] characters by 1.75x for 3 turns, boosts Orb Effects of [INT] and [PSY] characters by 1.75x for 3 turns, and deals 200x character's ATK in [INT] damage to all enemies at the end of the turn for 3 turns."
       ]
     },
     {
@@ -18853,16 +18833,10 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1,
-      "matchingCharacterIds": [
-        4553
-      ],
-      "sampleCharacterIds": [
-        4553
-      ],
-      "sampleTexts": [
-        "Reduces character's Special Reverse by 3 turns. Boosts crew's base RCV by 80"
-      ]
+      "matchCount": 0,
+      "matchingCharacterIds": [],
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "crewmate_recover_remove_sfx",
@@ -20708,7 +20682,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 353,
+      "matchCount": 354,
       "matchingCharacterIds": [
         20,
         22,
@@ -21061,6 +21035,7 @@
         4538,
         4539,
         4549,
+        4552,
         5054,
         5055
       ],
@@ -22431,7 +22406,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 283,
+      "matchCount": 284,
       "matchingCharacterIds": [
         20,
         22,
@@ -22713,6 +22688,7 @@
         4529,
         4532,
         4549,
+        4552,
         4553,
         5054,
         5055
@@ -23641,7 +23617,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 276,
+      "matchCount": 277,
       "matchingCharacterIds": [
         20,
         22,
@@ -23917,6 +23893,7 @@
         4538,
         4539,
         4549,
+        4552,
         5054,
         5055
       ],
@@ -32621,7 +32598,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 113,
+      "matchCount": 114,
       "matchingCharacterIds": [
         232,
         263,
@@ -32735,7 +32712,8 @@
         4398,
         4399,
         4404,
-        4498
+        4498,
+        4554
       ],
       "sampleCharacterIds": [
         232,

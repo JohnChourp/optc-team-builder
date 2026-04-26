@@ -3354,7 +3354,9 @@ describe('Auto team builder', () => {
         type: 'result',
         runId: request.runId,
         result:
-          workerARunAttemptCount === 1 ? null : buildWorkerResult(createInput(['DEX'], ['Fighter'])),
+          workerARunAttemptCount === 1
+            ? null
+            : buildWorkerResult(createInput(['DEX'], ['Fighter'])),
       });
     });
     const workerB = new PooledFakeWorker((request) => {
@@ -3643,9 +3645,7 @@ describe('Auto team builder', () => {
     let now = 0;
     let deferredWorkerARunId: string | null = null;
     let deferredWorkerBRunId: string | null = null;
-    const performanceNowSpy = vi
-      .spyOn(globalThis.performance, 'now')
-      .mockImplementation(() => now);
+    const performanceNowSpy = vi.spyOn(globalThis.performance, 'now').mockImplementation(() => now);
 
     const workerA = new PooledFakeWorker((request) => {
       if (request.type === 'init') {
@@ -5648,13 +5648,11 @@ function createCharacterRecord(
       exactLocal: true,
       thumbnailGlobal: true,
       thumbnailJapan: false,
-      fullTransparent: false,
     },
     assets: overrides.assets ?? {
       exactLocal: null,
       thumbnailGlobal: null,
       thumbnailJapan: null,
-      fullTransparent: null,
     },
     imageUrl: overrides.imageUrl ?? 'assets/placeholders/character-card.svg',
     detailImageUrl: overrides.detailImageUrl ?? 'assets/placeholders/character-card.svg',

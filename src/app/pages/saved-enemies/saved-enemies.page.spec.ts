@@ -280,20 +280,22 @@ describe('SavedEnemiesPage', () => {
     page.applyParsedEnemyText();
 
     expect(page.enemyMechanicDrafts()).toEqual([]);
-    expect(page.requiredAbilityDrafts()).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        abilityKey: 'remove_special_bind',
-        requiredCharacterCount: 1,
-      }),
-      expect.objectContaining({
-        abilityKey: 'remove_paralysis',
-        requiredCharacterCount: 1,
-      }),
-      expect.objectContaining({
-        abilityKey: 'ignore_normal_attack_only',
-        requiredCharacterCount: 1,
-      }),
-    ]));
+    expect(page.requiredAbilityDrafts()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          abilityKey: 'remove_special_bind',
+          requiredCharacterCount: 1,
+        }),
+        expect.objectContaining({
+          abilityKey: 'remove_paralysis',
+          requiredCharacterCount: 1,
+        }),
+        expect.objectContaining({
+          abilityKey: 'ignore_normal_attack_only',
+          requiredCharacterCount: 1,
+        }),
+      ]),
+    );
 
     await page.saveEnemy();
 
@@ -425,11 +427,13 @@ describe('SavedEnemiesPage', () => {
 
     expect(userState.saveEnemy).toHaveBeenCalledWith(
       expect.objectContaining({
-        requiredAbilities: [expect.objectContaining({
-          abilityKey: 'ignore_normal_attack_only',
-          minTurns: null,
-          requiredCharacterCount: 3,
-        })],
+        requiredAbilities: [
+          expect.objectContaining({
+            abilityKey: 'ignore_normal_attack_only',
+            minTurns: null,
+            requiredCharacterCount: 3,
+          }),
+        ],
       }),
     );
   });
@@ -773,7 +777,7 @@ describe('SavedEnemiesPage', () => {
     expect(template).not.toContain('<app-special-ability-picker');
     expect(template).toContain('<app-character-image-picker');
     expect(template).not.toContain("t('hero.savedTeamsCta')");
-    expect(template).not.toContain("[routerLink]=\"['/tabs/saved-teams']\"");
+    expect(template).not.toContain('[routerLink]="[\'/tabs/saved-teams\']"');
     expect(template).not.toContain('editor.import.actions.openTable');
     expect(template).not.toContain('<app-saved-enemy-structured-requirements-modal');
     expect(template).not.toContain('resolveAbilityCatalogItem(draft.abilityKey)?.label');
@@ -1191,13 +1195,11 @@ function buildCharacter(id: number, name = `Character ${id}`) {
       exactLocal: false,
       thumbnailGlobal: true,
       thumbnailJapan: false,
-      fullTransparent: false,
     },
     assets: {
       exactLocal: null,
       thumbnailGlobal: `characters/${id}.png`,
       thumbnailJapan: null,
-      fullTransparent: null,
     },
     imageUrl: `assets/offline-packs/thumbnails-glo/characters/${id}.png`,
   };

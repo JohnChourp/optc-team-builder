@@ -24,7 +24,6 @@ export function createEmptyAssets() {
     thumbnailLocal: null,
     thumbnailGlobal: null,
     thumbnailJapan: null,
-    fullTransparent: null,
   };
 }
 
@@ -33,7 +32,6 @@ export function createEmptyRegionAvailability() {
     exactLocal: false,
     thumbnailGlobal: false,
     thumbnailJapan: false,
-    fullTransparent: false,
   };
 }
 
@@ -55,11 +53,7 @@ export function createCharacterSearchText(nameOrOptions, type, classes) {
 }
 
 function normalizeCharacterSearchInput(nameOrOptions, type, classes) {
-  if (
-    nameOrOptions &&
-    typeof nameOrOptions === 'object' &&
-    !Array.isArray(nameOrOptions)
-  ) {
+  if (nameOrOptions && typeof nameOrOptions === 'object' && !Array.isArray(nameOrOptions)) {
     const options = nameOrOptions;
 
     return {
@@ -72,7 +66,9 @@ function normalizeCharacterSearchInput(nameOrOptions, type, classes) {
           ? ''
           : String(options.canonicalId),
       aliases: Array.isArray(options.aliases)
-        ? options.aliases.map((entry) => String(entry ?? '').trim()).filter((entry) => entry.length > 0)
+        ? options.aliases
+            .map((entry) => String(entry ?? '').trim())
+            .filter((entry) => entry.length > 0)
         : [],
     };
   }
@@ -249,10 +245,6 @@ export function canResolveWithoutPlaceholder(character, packStatuses) {
   }
 
   if (installedByKey.get('thumbnailsJapan') && character.assets.thumbnailJapan) {
-    return true;
-  }
-
-  if (installedByKey.get('fullTransparent') && character.assets.fullTransparent) {
     return true;
   }
 

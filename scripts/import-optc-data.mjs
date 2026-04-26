@@ -111,13 +111,6 @@ export const packDefinitions = [
     listingPath: 'api/images/thumbnail',
     entryName: 'ship',
   },
-  {
-    key: 'fullTransparent',
-    id: 'full-transparent',
-    label: 'Transparent full art',
-    listingPath: 'api/images/full',
-    entryName: 'transparent',
-  },
 ];
 
 const typeSuffixOrder = new Map(
@@ -126,7 +119,6 @@ const typeSuffixOrder = new Map(
 const packKeyToField = {
   thumbnailsGlo: 'thumbnailGlobal',
   thumbnailsJapan: 'thumbnailJapan',
-  fullTransparent: 'fullTransparent',
 };
 const packEntryNameMap = {
   glo: 'thumbnailsGlo',
@@ -201,9 +193,7 @@ async function buildHttpError(response, url, source) {
   error.url = url;
   error.sourceKey = source.key;
   error.responseText = responseText;
-  error.isGithubRateLimit =
-    response.status === 403 &&
-    /rate limit exceeded/i.test(responseText);
+  error.isGithubRateLimit = response.status === 403 && /rate limit exceeded/i.test(responseText);
   return error;
 }
 
@@ -304,7 +294,10 @@ async function evaluateLegacyFile(relativePath, source) {
 }
 
 async function fetchVersion(source) {
-  const versionSource = await fetchText(buildSourceFileUrl(source, 'common/data/version.js'), source);
+  const versionSource = await fetchText(
+    buildSourceFileUrl(source, 'common/data/version.js'),
+    source,
+  );
   return extractSourceVersion(versionSource);
 }
 
@@ -316,16 +309,6 @@ function normalizePackPaths(tree, pack, source) {
       bytes: entry.size,
       url: buildSourceFileUrl(source, `${pack.listingPath}/${pack.entryName}/${entry.path}`),
     }));
-}
-
-function parseFullAssetUrl(url) {
-  const match = String(url).match(/\/api\/images\/full\/transparent\/(.+\.png)$/);
-
-  if (!match) {
-    return null;
-  }
-
-  return match[1];
 }
 
 async function buildPackTrees(source) {
@@ -392,9 +375,7 @@ export function shouldDownloadPack(mode, packId) {
 
   if (mode === 'thumbnails') {
     return (
-      packId === 'thumbnails-glo' ||
-      packId === 'thumbnails-jap' ||
-      packId === 'ship-thumbnails'
+      packId === 'thumbnails-glo' || packId === 'thumbnails-jap' || packId === 'ship-thumbnails'
     );
   }
 
@@ -559,7 +540,6 @@ function buildPackFileIndexes(packs) {
 
 export function buildDeterministicCharacterAssetsMap(characterCount, utilsWindow) {
   const thumbnailGetter = utilsWindow?.Utils?.getThumbnailUrl;
-  const fullArtGetter = utilsWindow?.Utils?.getBigThumbnailUrl;
   const assetMap = new Map();
 
   if (typeof thumbnailGetter !== 'function') {
@@ -571,8 +551,6 @@ export function buildDeterministicCharacterAssetsMap(characterCount, utilsWindow
     const thumbnails = thumbnailGetter(characterId, '');
     const globalReference = parseThumbnailAssetUrl(thumbnails?.glo ?? null);
     const japanReference = parseThumbnailAssetUrl(thumbnails?.jap ?? null);
-    const fullTransparentPath =
-      typeof fullArtGetter === 'function' ? parseFullAssetUrl(fullArtGetter(characterId, '')) : null;
 
     if (globalReference?.relativePath) {
       current.thumbnailGlobal = globalReference.relativePath;
@@ -580,10 +558,6 @@ export function buildDeterministicCharacterAssetsMap(characterCount, utilsWindow
 
     if (japanReference?.relativePath) {
       current.thumbnailJapan = japanReference.relativePath;
-    }
-
-    if (fullTransparentPath) {
-      current.fullTransparent = fullTransparentPath;
     }
 
     assetMap.set(characterId, current);
@@ -848,7 +822,10 @@ async function materializeExactImageSources(
     }
 
     const response = await fetch(
-      buildSourceFileUrl(source, `${pack.listingPath}/${pack.entryName}/${exactSource.relativePath}`),
+      buildSourceFileUrl(
+        source,
+        `${pack.listingPath}/${pack.entryName}/${exactSource.relativePath}`,
+      ),
       {
         headers: buildGithubRequestHeaders(),
       },
@@ -917,7 +894,9 @@ function toFiniteNumber(value) {
 }
 
 function parseUnitMapId(value) {
-  const match = String(value ?? '').trim().match(/^(\d+)(?:-(.+))?$/);
+  const match = String(value ?? '')
+    .trim()
+    .match(/^(\d+)(?:-(.+))?$/);
 
   if (!match) {
     return null;
@@ -946,7 +925,11 @@ function normalizeUnitTypeValue(value) {
   return normalizeUnitTypeTokens(value).join(',');
 }
 
-function normalizeUnitMapEntry(unitEntry, fallbackCharacterId, variantTypesByCharacterId = new Map()) {
+function normalizeUnitMapEntry(
+  unitEntry,
+  fallbackCharacterId,
+  variantTypesByCharacterId = new Map(),
+) {
   if (!unitEntry || typeof unitEntry !== 'object' || Array.isArray(unitEntry)) {
     return null;
   }
@@ -1046,7 +1029,8 @@ function buildNormalizedUnitEntries(units) {
       return !(parsedEntryId?.variantKey ?? parsedMapId?.variantKey);
     })
     .map(([rawCharacterId, entry]) => {
-      const fallbackCharacterId = parseUnitMapId(rawCharacterId)?.baseCharacterId ?? Number(rawCharacterId);
+      const fallbackCharacterId =
+        parseUnitMapId(rawCharacterId)?.baseCharacterId ?? Number(rawCharacterId);
 
       return normalizeUnitMapEntry(entry, fallbackCharacterId, variantTypesByCharacterId);
     })
@@ -1077,11 +1061,12 @@ function normalizeSupportData(rawSupportData) {
       const supportedCharactersText = String(
         entry?.supportedCharactersText ?? entry?.Characters ?? '',
       ).trim();
-      const levelDescriptions = (Array.isArray(entry?.levelDescriptions)
-        ? entry.levelDescriptions
-        : Array.isArray(entry?.description)
-          ? entry.description
-          : []
+      const levelDescriptions = (
+        Array.isArray(entry?.levelDescriptions)
+          ? entry.levelDescriptions
+          : Array.isArray(entry?.description)
+            ? entry.description
+            : []
       )
         .map((description) => String(description ?? '').trim())
         .filter((description) => description.length > 0);
@@ -1180,7 +1165,11 @@ function normalizeCaptainAbilityVariants(rawCaptainAbility) {
       : [];
   }
 
-  if (!rawCaptainAbility || typeof rawCaptainAbility !== 'object' || Array.isArray(rawCaptainAbility)) {
+  if (
+    !rawCaptainAbility ||
+    typeof rawCaptainAbility !== 'object' ||
+    Array.isArray(rawCaptainAbility)
+  ) {
     return [];
   }
 
@@ -1231,7 +1220,8 @@ export function normalizeCharacterDetail(detail, characterId, rumbleData = null)
   const normalizedCaptainAbilityVariants = normalizeCaptainAbilityVariants(detail.captain ?? null);
   const normalizedCaptainAbility = normalizedCaptainAbilityVariants[0]?.text ?? null;
   const normalizedSpecialText = normalizeLegacyAbilityText(detail.special ?? null) || null;
-  const normalizedSuperSpecialText = normalizeLegacyAbilityText(detail.superSpecial ?? null) || null;
+  const normalizedSuperSpecialText =
+    normalizeLegacyAbilityText(detail.superSpecial ?? null) || null;
   const normalizedSuperSpecialCriteriaText =
     normalizeLegacyAbilityText(detail.superSpecialCriteria ?? null) || null;
   const normalizedCaptainNotes = normalizeLegacyAbilityText(detail.captainNotes ?? null) || null;
@@ -1268,9 +1258,7 @@ export function normalizeCharacterDetail(detail, characterId, rumbleData = null)
         ? detail.superTandemData
         : null,
     finalTapData:
-      detail.finalTapData && typeof detail.finalTapData === 'object'
-        ? detail.finalTapData
-        : null,
+      detail.finalTapData && typeof detail.finalTapData === 'object' ? detail.finalTapData : null,
     rushSugoSpecialData:
       detail.rushSugoSpecialData && typeof detail.rushSugoSpecialData === 'object'
         ? detail.rushSugoSpecialData
@@ -1284,22 +1272,12 @@ export function normalizeCharacters(units, details, rumbleUnits, assetsById) {
   const rumbleById = new Map(rumbleUnits.map((entry) => [entry.id, entry]));
   const normalizedUnitEntries = buildNormalizedUnitEntries(units);
 
-  return normalizedUnitEntries.map(({ characterId, classes, type, name, stars, cost, combo, maxSockets, minHp, minAtk, minRcv, maxHp, maxAtk, maxRcv, growth }) => {
-    const assets = assetsById.get(characterId) ?? createEmptyAssets();
-    const detail = details[characterId] ?? {};
-    const normalizedDetail = normalizeCharacterDetail(
-      detail,
+  return normalizedUnitEntries.map(
+    ({
       characterId,
-      rumbleById.get(characterId) ?? null,
-    );
-
-    return {
-      id: characterId,
-      name,
-      type,
-      primaryClass: classes[0] ?? '',
-      secondaryClass: classes[1] ?? null,
       classes,
+      type,
+      name,
       stars,
       cost,
       combo,
@@ -1311,21 +1289,48 @@ export function normalizeCharacters(units, details, rumbleUnits, assetsById) {
       maxAtk,
       maxRcv,
       growth,
-      searchText: createCharacterSearchText({
+    }) => {
+      const assets = assetsById.get(characterId) ?? createEmptyAssets();
+      const detail = details[characterId] ?? {};
+      const normalizedDetail = normalizeCharacterDetail(
+        detail,
+        characterId,
+        rumbleById.get(characterId) ?? null,
+      );
+
+      return {
+        id: characterId,
         name,
         type,
+        primaryClass: classes[0] ?? '',
+        secondaryClass: classes[1] ?? null,
         classes,
-      }),
-      regionAvailability: {
-        exactLocal: Boolean(assets.exactLocal),
-        thumbnailGlobal: Boolean(assets.thumbnailGlobal),
-        thumbnailJapan: Boolean(assets.thumbnailJapan),
-        fullTransparent: Boolean(assets.fullTransparent),
-      },
-      assets,
-      detail: normalizedDetail,
-    };
-  });
+        stars,
+        cost,
+        combo,
+        maxSockets,
+        minHp,
+        minAtk,
+        minRcv,
+        maxHp,
+        maxAtk,
+        maxRcv,
+        growth,
+        searchText: createCharacterSearchText({
+          name,
+          type,
+          classes,
+        }),
+        regionAvailability: {
+          exactLocal: Boolean(assets.exactLocal),
+          thumbnailGlobal: Boolean(assets.thumbnailGlobal),
+          thumbnailJapan: Boolean(assets.thumbnailJapan),
+        },
+        assets,
+        detail: normalizedDetail,
+      };
+    },
+  );
 }
 
 function applyExactLocalAssets(characters, exactLocalPaths) {
@@ -1365,14 +1370,6 @@ function selectLocalizableExactSource(character) {
       source: 'upstream',
       packKey: 'thumbnailsJapan',
       relativePath: character.assets.thumbnailJapan,
-    };
-  }
-
-  if (character.assets.fullTransparent) {
-    return {
-      source: 'upstream',
-      packKey: 'fullTransparent',
-      relativePath: character.assets.fullTransparent,
     };
   }
 
@@ -1490,11 +1487,7 @@ async function main() {
     ? buildCharacterAssetsMap(packTrees)
     : buildDeterministicCharacterAssetsMap(characterIterationLimit, utilsWindow);
   const thumbnailOverrides = packListingAvailable
-    ? buildDeterministicThumbnailOverrides(
-        characterIterationLimit,
-        utilsWindow,
-        packFileIndexes,
-      )
+    ? buildDeterministicThumbnailOverrides(characterIterationLimit, utilsWindow, packFileIndexes)
     : new Map();
   const exactOverridePackAssets = buildPackAssetOverridesFromExactOverrides(imageOverrides);
   mergeThumbnailOverrides(assetsById, thumbnailOverrides);

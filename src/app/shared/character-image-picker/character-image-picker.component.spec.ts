@@ -234,13 +234,11 @@ function buildCharacters() {
         exactLocal: false,
         thumbnailGlobal: true,
         thumbnailJapan: false,
-        fullTransparent: false,
       },
       assets: {
         exactLocal: null,
         thumbnailGlobal: `characters/${id}.png`,
         thumbnailJapan: null,
-        fullTransparent: null,
       },
       imageUrl: `assets/offline-packs/thumbnails-glo/characters/${id}.png`,
     };

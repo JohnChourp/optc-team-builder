@@ -298,9 +298,7 @@ describe('upsert manual character cli', () => {
         path.join(fixture.sourceImageDir, '4529--st-ethanbaron-v-nusjuro.png'),
         'utf8',
       ),
-    ).toBe(
-      'canonical-png',
-    );
+    ).toBe('canonical-png');
     expect(
       await readFile(
         path.join(fixture.sourceImageDir, '4529--st-ethanbaron-v-nusjuro-thumb.jpg'),
@@ -344,13 +342,11 @@ async function createFixtureWorkspace() {
         exactLocal: false,
         thumbnailGlobal: false,
         thumbnailJapan: false,
-        fullTransparent: false,
       },
       assets: {
         exactLocal: null,
         thumbnailGlobal: null,
         thumbnailJapan: null,
-        fullTransparent: null,
       },
       detail: {
         characterId: 100,

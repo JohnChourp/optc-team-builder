@@ -1,29 +1,29 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from 'vitest';
 
-import { type CharacterDetailRecord } from "../../core/models/optc.models";
-import { buildCharacterDetailViewModel, buildRumbleCardModel } from "./character-detail.presenter";
+import { type CharacterDetailRecord } from '../../core/models/optc.models';
+import { buildCharacterDetailViewModel, buildRumbleCardModel } from './character-detail.presenter';
 
-describe("character-detail presenter", () => {
-  it("formats full rumble data into readable rows, pattern, and level entries", () => {
+describe('character-detail presenter', () => {
+  it('formats full rumble data into readable rows, pattern, and level entries', () => {
     const rumbleCard = buildRumbleCardModel({
       id: 13,
       stats: {
         def: 164,
-        rumbleType: "DBF",
+        rumbleType: 'DBF',
         spd: 124,
       },
       target: {
-        comparator: "lowest",
-        criteria: "HP",
+        comparator: 'lowest',
+        criteria: 'HP',
       },
       pattern: [
         {
-          action: "attack",
-          type: "Normal",
+          action: 'attack',
+          type: 'Normal',
         },
         {
-          action: "heal",
-          area: "Self",
+          action: 'heal',
+          area: 'Self',
           level: 2,
         },
       ],
@@ -31,11 +31,11 @@ describe("character-detail presenter", () => {
         {
           effects: [
             {
-              attributes: ["SPD"],
-              effect: "buff",
+              attributes: ['SPD'],
+              effect: 'buff',
               level: 3,
               targeting: {
-                targets: ["crew"],
+                targets: ['crew'],
               },
             },
           ],
@@ -46,15 +46,15 @@ describe("character-detail presenter", () => {
           cooldown: 23,
           effects: [
             {
-              attributes: ["Silence"],
+              attributes: ['Silence'],
               chance: 80,
               duration: 10,
-              effect: "hinderance",
+              effect: 'hinderance',
               targeting: {
                 count: 1,
-                priority: "highest",
-                stat: "ATK",
-                targets: ["enemies"],
+                priority: 'highest',
+                stat: 'ATK',
+                targets: ['enemies'],
               },
             },
           ],
@@ -64,72 +64,72 @@ describe("character-detail presenter", () => {
 
     expect(rumbleCard?.rows).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ label: "DEF", value: "164" }),
-        expect.objectContaining({ label: "SPD", value: "124" }),
-        expect.objectContaining({ labelKey: "fields.target", value: "lowest HP target" }),
+        expect.objectContaining({ label: 'DEF', value: '164' }),
+        expect.objectContaining({ label: 'SPD', value: '124' }),
+        expect.objectContaining({ labelKey: 'fields.target', value: 'lowest HP target' }),
       ]),
     );
     expect(rumbleCard?.lists).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          labelKey: "fields.pattern",
-          items: expect.arrayContaining(["attack • Normal", "heal • Self • Lv 2"]),
+          labelKey: 'fields.pattern',
+          items: expect.arrayContaining(['attack • Normal', 'heal • Self • Lv 2']),
         }),
       ]),
     );
     expect(rumbleCard?.entries).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          title: "Passive Lv 1",
+          title: 'Passive Lv 1',
           lists: expect.arrayContaining([
             expect.objectContaining({
-              labelKey: "fields.effects",
-              items: expect.arrayContaining(["buff • SPD • Lv 3 • crew"]),
+              labelKey: 'fields.effects',
+              items: expect.arrayContaining(['buff • SPD • Lv 3 • crew']),
             }),
           ]),
         }),
         expect.objectContaining({
-          title: "Special Lv 1",
+          title: 'Special Lv 1',
           rows: expect.arrayContaining([
-            expect.objectContaining({ labelKey: "fields.cooldown", value: "23" }),
+            expect.objectContaining({ labelKey: 'fields.cooldown', value: '23' }),
           ]),
         }),
       ]),
     );
   });
 
-  it("formats basedOn-only rumble data with resolved character name", () => {
+  it('formats basedOn-only rumble data with resolved character name', () => {
     const rumbleCard = buildRumbleCardModel(
       {
         id: 16,
         basedOn: 14,
       },
-      "Usopp - Tabasco Star",
+      'Usopp - Tabasco Star',
     );
 
     expect(rumbleCard?.texts).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          labelKey: "fields.inheritsFrom",
-          value: "Usopp - Tabasco Star",
+          labelKey: 'fields.inheritsFrom',
+          value: 'Usopp - Tabasco Star',
         }),
       ]),
     );
   });
 
-  it("formats unexpected rumble keys through structured fallback entries", () => {
+  it('formats unexpected rumble keys through structured fallback entries', () => {
     const rumbleCard = buildRumbleCardModel({
       id: 99,
       strangePayload: {
         alpha: 1,
-        beta: ["x", "y"],
+        beta: ['x', 'y'],
         gamma: {
-          delta: "z",
+          delta: 'z',
         },
       },
       anotherArray: [
         {
-          foo: "bar",
+          foo: 'bar',
           baz: 3,
         },
       ],
@@ -138,205 +138,206 @@ describe("character-detail presenter", () => {
     expect(rumbleCard?.entries).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          title: "Strange Payload",
+          title: 'Strange Payload',
           rows: expect.arrayContaining([
-            expect.objectContaining({ label: "Alpha", value: "1" }),
-            expect.objectContaining({ label: "Gamma Delta", value: "z" }),
+            expect.objectContaining({ label: 'Alpha', value: '1' }),
+            expect.objectContaining({ label: 'Gamma Delta', value: 'z' }),
           ]),
           lists: expect.arrayContaining([
-            expect.objectContaining({ label: "Beta", items: ["x", "y"] }),
+            expect.objectContaining({ label: 'Beta', items: ['x', 'y'] }),
           ]),
         }),
         expect.objectContaining({
-          title: "Another Array 1",
+          title: 'Another Array 1',
           rows: expect.arrayContaining([
-            expect.objectContaining({ label: "Foo", value: "bar" }),
-            expect.objectContaining({ label: "Baz", value: "3" }),
+            expect.objectContaining({ label: 'Foo', value: 'bar' }),
+            expect.objectContaining({ label: 'Baz', value: '3' }),
           ]),
         }),
       ]),
     );
   });
 
-  it("formats comma-backed multi-types for display", () => {
+  it('formats comma-backed multi-types for display', () => {
     const viewModel = buildCharacterDetailViewModel(
       createCharacterDetailRecord({
-        type: "STR,DEX",
+        type: 'STR,DEX',
       }),
     );
     const profileCard = viewModel.groups
       .flatMap((group) => group.cards)
-      .find((card) => card.titleKey === "sections.profile");
+      .find((card) => card.titleKey === 'sections.profile');
 
     expect(viewModel.heroMeta).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ labelKey: "fields.type", value: "STR / DEX" }),
+        expect.objectContaining({ labelKey: 'fields.type', value: 'STR / DEX' }),
       ]),
     );
     expect(profileCard?.rows).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ labelKey: "fields.type", value: "STR / DEX" }),
+        expect.objectContaining({ labelKey: 'fields.type', value: 'STR / DEX' }),
       ]),
     );
   });
 
-  it("builds support, synergy, and battle mode groups from the character detail record", () => {
-    const viewModel = buildCharacterDetailViewModel({
-      id: 501,
-      name: "Test Character",
-      type: "STR",
-      classes: ["Fighter", "Slasher"],
-      primaryClass: "Fighter",
-      secondaryClass: "Slasher",
-      stars: 6,
-      cost: 55,
-      combo: 4,
-      stats: {
-        min: { hp: 1200, atk: 600, rcv: 200 },
-        max: { hp: 3500, atk: 1800, rcv: 420 },
-        growth: 5,
-      },
-      regionAvailability: {
-        exactLocal: true,
-        thumbnailGlobal: true,
-        thumbnailJapan: true,
-        fullTransparent: true,
-      },
-      assets: {
-        exactLocal: null,
-        thumbnailGlobal: null,
-        thumbnailJapan: null,
-        fullTransparent: null,
-      },
-      imageUrl: "/assets/test.png",
-      detailImageUrl: "/assets/test-detail.png",
-      detail: {
-        characterId: 501,
-        captainAbility: "Boosts ATK.",
-        captainAbilityVariants: [
-          {
-            key: "base",
-            label: "Base Captain Ability",
-            text: "Boosts ATK.",
-          },
-        ],
-        captainNotes: null,
-        specialName: "Impact Burst",
-        specialText: "Deals damage.",
-        specialNotes: null,
-        superSpecialText: null,
-        superSpecialCriteriaText: null,
-        superSpecialNotes: null,
-        superSpecialCriteria: null,
-        partyConflictKeys: ["tony tony chopper"],
-        characterTags: ["Straw Hat Pirates", "Giant"],
-        builderAbilities: [
-          {
-            key: "bind",
-            label: "Bind removal",
-            minTurns: 5,
-            isCompleteRemoval: true,
-            slotTokens: ["captain"],
-            source: "specialText",
-            coverageMode: "explicit",
-          },
-        ],
-        sailorAbilities: [],
-        sailorNotes: "Works as sailor.",
-        limitBreak: [{ description: "Adds extra damage." }],
-        potentialAbilities: [{ Name: "Critical Hit", description: ["Increases crit chance."] }],
-        supportData: [
-          {
-            supportedCharactersText: "Luffy, Zoro",
-            levelDescriptions: ["Lv 5: boosts ATK."],
-          },
-        ],
-        swapData: null,
-        vsSpecial: null,
-        exSuperData: {
-          activationRequirement: "When character becomes Yamato & Momonosuke.",
-          exSuperSpecial: "Changes STR characters to Super STR.",
+  it('builds support, synergy, and battle mode groups from the character detail record', () => {
+    const viewModel = buildCharacterDetailViewModel(
+      {
+        id: 501,
+        name: 'Test Character',
+        type: 'STR',
+        classes: ['Fighter', 'Slasher'],
+        primaryClass: 'Fighter',
+        secondaryClass: 'Slasher',
+        stars: 6,
+        cost: 55,
+        combo: 4,
+        stats: {
+          min: { hp: 1200, atk: 600, rcv: 200 },
+          max: { hp: 3500, atk: 1800, rcv: 420 },
+          growth: 5,
         },
-        superType: {
-          class: "Fighter",
+        regionAvailability: {
+          exactLocal: true,
+          thumbnailGlobal: true,
+          thumbnailJapan: true,
         },
-        superTandemData: {
-          requirement: "At final battle and any 2 listed characters are on the crew",
-          levels: [
+        assets: {
+          exactLocal: null,
+          thumbnailGlobal: null,
+          thumbnailJapan: null,
+        },
+        imageUrl: '/assets/test.png',
+        detailImageUrl: '/assets/test-detail.png',
+        detail: {
+          characterId: 501,
+          captainAbility: 'Boosts ATK.',
+          captainAbilityVariants: [
             {
-              level: 5,
-              effect: "Applies ATK Boost (Tandem) of 2.5x to DEX and STR characters for 1 turn.",
+              key: 'base',
+              label: 'Base Captain Ability',
+              text: 'Boosts ATK.',
             },
           ],
-        },
-        finalTapData: {
-          requirement: "On the turn Special is launched during final Battle",
-          levels: [
-            { level: 1, effect: "Further boosts the chain multiplier of the final tap by 1.3x" },
+          captainNotes: null,
+          specialName: 'Impact Burst',
+          specialText: 'Deals damage.',
+          specialNotes: null,
+          superSpecialText: null,
+          superSpecialCriteriaText: null,
+          superSpecialNotes: null,
+          superSpecialCriteria: null,
+          partyConflictKeys: ['tony tony chopper'],
+          characterTags: ['Straw Hat Pirates', 'Giant'],
+          builderAbilities: [
             {
-              level: 5,
-              effect:
-                "Further increases crew's ATK and slot effect boosts by +0.5, and further boosts the chain multiplier of the final tap by 1.75x",
+              key: 'bind',
+              label: 'Bind removal',
+              minTurns: 5,
+              isCompleteRemoval: true,
+              slotTokens: ['captain'],
+              source: 'specialText',
+              coverageMode: 'explicit',
             },
           ],
-        },
-        rushSugoSpecialData: {
-          requirement: "At final battle when character performs the first tap of an attack",
-          levels: [
+          sailorAbilities: [],
+          sailorNotes: 'Works as sailor.',
+          limitBreak: [{ description: 'Adds extra damage.' }],
+          potentialAbilities: [{ Name: 'Critical Hit', description: ['Increases crit chance.'] }],
+          supportData: [
             {
-              level: 5,
-              effect: "Allows the crew to perform a Rush.",
+              supportedCharactersText: 'Luffy, Zoro',
+              levelDescriptions: ['Lv 5: boosts ATK.'],
             },
           ],
-        },
-        superClass: null,
-        switchEffectData: {
-          effect: "Removes character's Despair/Slot Bind.",
-        },
-        captainShiftData: {
-          shiftPosition: "BOTTOM-RIGHT",
-          shiftUses: 2,
-          effect: "Switches the captain with the bottom-right character.",
-        },
-        rumbleData: {
-          id: 501,
-          basedOn: 14,
+          swapData: null,
+          vsSpecial: null,
+          exSuperData: {
+            activationRequirement: 'When character becomes Yamato & Momonosuke.',
+            exSuperSpecial: 'Changes STR characters to Super STR.',
+          },
+          superType: {
+            class: 'Fighter',
+          },
+          superTandemData: {
+            requirement: 'At final battle and any 2 listed characters are on the crew',
+            levels: [
+              {
+                level: 5,
+                effect: 'Applies ATK Boost (Tandem) of 2.5x to DEX and STR characters for 1 turn.',
+              },
+            ],
+          },
+          finalTapData: {
+            requirement: 'On the turn Special is launched during final Battle',
+            levels: [
+              { level: 1, effect: 'Further boosts the chain multiplier of the final tap by 1.3x' },
+              {
+                level: 5,
+                effect:
+                  "Further increases crew's ATK and slot effect boosts by +0.5, and further boosts the chain multiplier of the final tap by 1.75x",
+              },
+            ],
+          },
+          rushSugoSpecialData: {
+            requirement: 'At final battle when character performs the first tap of an attack',
+            levels: [
+              {
+                level: 5,
+                effect: 'Allows the crew to perform a Rush.',
+              },
+            ],
+          },
+          superClass: null,
+          switchEffectData: {
+            effect: "Removes character's Despair/Slot Bind.",
+          },
+          captainShiftData: {
+            shiftPosition: 'BOTTOM-RIGHT',
+            shiftUses: 2,
+            effect: 'Switches the captain with the bottom-right character.',
+          },
+          rumbleData: {
+            id: 501,
+            basedOn: 14,
+          },
         },
       },
-    }, "Usopp - Tabasco Star");
+      'Usopp - Tabasco Star',
+    );
 
     expect(viewModel.groups.map((group) => group.titleKey)).toEqual(
       expect.arrayContaining([
-        "sections.abilities",
-        "sections.enhancements",
-        "sections.supportSynergy",
-        "sections.battleModes",
+        'sections.abilities',
+        'sections.enhancements',
+        'sections.supportSynergy',
+        'sections.battleModes',
       ]),
     );
     expect(viewModel.groups.flatMap((group) => group.cards.map((card) => card.titleKey))).toEqual(
       expect.arrayContaining([
-        "sections.teamSynergy",
-        "sections.supportData",
-        "sections.rumbleData",
-        "sections.exSuperData",
-        "sections.superTandemData",
-        "sections.finalTapData",
-        "sections.rushSugoSpecialData",
-        "sections.superType",
-        "sections.switchEffectData",
-        "sections.captainShiftData",
-        "sections.characterTags",
+        'sections.teamSynergy',
+        'sections.supportData',
+        'sections.rumbleData',
+        'sections.exSuperData',
+        'sections.superTandemData',
+        'sections.finalTapData',
+        'sections.rushSugoSpecialData',
+        'sections.superType',
+        'sections.switchEffectData',
+        'sections.captainShiftData',
+        'sections.characterTags',
       ]),
     );
   });
 
-  it("renders captain variants as separate entries and keeps captain notes separate", () => {
+  it('renders captain variants as separate entries and keeps captain notes separate', () => {
     const viewModel = buildCharacterDetailViewModel({
       id: 777,
-      name: "Captain Variant Test",
-      type: "INT",
-      classes: ["Driven"],
-      primaryClass: "Driven",
+      name: 'Captain Variant Test',
+      type: 'INT',
+      classes: ['Driven'],
+      primaryClass: 'Driven',
       secondaryClass: null,
       stars: 6,
       cost: 40,
@@ -350,32 +351,30 @@ describe("character-detail presenter", () => {
         exactLocal: true,
         thumbnailGlobal: true,
         thumbnailJapan: false,
-        fullTransparent: true,
       },
       assets: {
         exactLocal: null,
         thumbnailGlobal: null,
         thumbnailJapan: null,
-        fullTransparent: null,
       },
-      imageUrl: "/assets/test.png",
-      detailImageUrl: "/assets/test-detail.png",
+      imageUrl: '/assets/test.png',
+      detailImageUrl: '/assets/test-detail.png',
       detail: {
         characterId: 777,
-        captainAbility: "Base effect.",
+        captainAbility: 'Base effect.',
         captainAbilityVariants: [
           {
-            key: "base",
-            label: "Base Captain Ability",
-            text: "Base effect.",
+            key: 'base',
+            label: 'Base Captain Ability',
+            text: 'Base effect.',
           },
           {
-            key: "level1",
-            label: "Limit Break Level 1 Captain Ability",
-            text: "Level 1 effect.",
+            key: 'level1',
+            label: 'Limit Break Level 1 Captain Ability',
+            text: 'Level 1 effect.',
           },
         ],
-        captainNotes: "Stacks with other additional drop captains.",
+        captainNotes: 'Stacks with other additional drop captains.',
         specialName: null,
         specialText: null,
         specialNotes: null,
@@ -404,35 +403,35 @@ describe("character-detail presenter", () => {
 
     const captainCard = viewModel.groups
       .flatMap((group) => group.cards)
-      .find((card) => card.titleKey === "sections.captainAbility");
+      .find((card) => card.titleKey === 'sections.captainAbility');
 
     expect(captainCard?.entries).toEqual([
       expect.objectContaining({
-        title: "Base Captain Ability",
-        texts: [expect.objectContaining({ value: "Base effect." })],
+        title: 'Base Captain Ability',
+        texts: [expect.objectContaining({ value: 'Base effect.' })],
       }),
       expect.objectContaining({
-        title: "Limit Break Level 1 Captain Ability",
-        texts: [expect.objectContaining({ value: "Level 1 effect." })],
+        title: 'Limit Break Level 1 Captain Ability',
+        texts: [expect.objectContaining({ value: 'Level 1 effect.' })],
       }),
     ]);
     expect(captainCard?.texts).toEqual([
       expect.objectContaining({
-        labelKey: "fields.captainNotes",
-        value: "Stacks with other additional drop captains.",
-        tone: "muted",
+        labelKey: 'fields.captainNotes',
+        value: 'Stacks with other additional drop captains.',
+        tone: 'muted',
       }),
     ]);
   });
 
-  it("omits unknown numeric stat rows when manual character data is incomplete", () => {
+  it('omits unknown numeric stat rows when manual character data is incomplete', () => {
     const viewModel = buildCharacterDetailViewModel({
       id: 900000,
-      name: "Manual Pilot",
-      type: "DEX",
-      classes: ["Free Spirit", "Shooter"],
-      primaryClass: "Free Spirit",
-      secondaryClass: "Shooter",
+      name: 'Manual Pilot',
+      type: 'DEX',
+      classes: ['Free Spirit', 'Shooter'],
+      primaryClass: 'Free Spirit',
+      secondaryClass: 'Shooter',
       stars: 6,
       cost: 55,
       combo: 4,
@@ -445,23 +444,21 @@ describe("character-detail presenter", () => {
         exactLocal: true,
         thumbnailGlobal: false,
         thumbnailJapan: false,
-        fullTransparent: false,
       },
       assets: {
-        exactLocal: "assets/exact-character-images/900000.png",
+        exactLocal: 'assets/exact-character-images/900000.png',
         thumbnailGlobal: null,
         thumbnailJapan: null,
-        fullTransparent: null,
       },
-      imageUrl: "/assets/manual.png",
-      detailImageUrl: "/assets/manual.png",
+      imageUrl: '/assets/manual.png',
+      detailImageUrl: '/assets/manual.png',
       detail: {
         characterId: 900000,
         captainAbility: null,
         captainAbilityVariants: [],
         captainNotes: null,
-        specialName: "Verified Special",
-        specialText: "Verified text.",
+        specialName: 'Verified Special',
+        specialText: 'Verified text.',
         specialNotes: null,
         superSpecialText: null,
         superSpecialCriteriaText: null,
@@ -486,37 +483,45 @@ describe("character-detail presenter", () => {
     });
 
     expect(viewModel.heroMeta.map((row) => row.labelKey)).toEqual([
-      "fields.type",
-      "fields.primaryClass",
-      "fields.secondaryClass",
-      "fields.stars",
-      "fields.cost",
+      'fields.type',
+      'fields.primaryClass',
+      'fields.secondaryClass',
+      'fields.stars',
+      'fields.cost',
     ]);
     expect(viewModel.heroStats).toEqual([
-      expect.objectContaining({ labelKey: "stats.maxHp", value: "5,122" }),
-      expect.objectContaining({ labelKey: "stats.maxAtk", value: "2,190" }),
-      expect.objectContaining({ labelKey: "stats.maxRcv", value: "417" }),
+      expect.objectContaining({ labelKey: 'stats.maxHp', value: '5,122' }),
+      expect.objectContaining({ labelKey: 'stats.maxAtk', value: '2,190' }),
+      expect.objectContaining({ labelKey: 'stats.maxRcv', value: '417' }),
     ]);
 
     const maxStatsCard = viewModel.groups
       .flatMap((group) => group.cards)
-      .find((card) => card.titleKey === "sections.maxStats");
+      .find((card) => card.titleKey === 'sections.maxStats');
     expect(maxStatsCard?.rows).toEqual([
-      expect.objectContaining({ labelKey: "stats.maxHp", value: "5,122" }),
-      expect.objectContaining({ labelKey: "stats.maxAtk", value: "2,190" }),
-      expect.objectContaining({ labelKey: "stats.maxRcv", value: "417" }),
+      expect.objectContaining({ labelKey: 'stats.maxHp', value: '5,122' }),
+      expect.objectContaining({ labelKey: 'stats.maxAtk', value: '2,190' }),
+      expect.objectContaining({ labelKey: 'stats.maxRcv', value: '417' }),
     ]);
     expect(
-      viewModel.groups.flatMap((group) => group.cards).find((card) => card.titleKey === "sections.superTandemData"),
+      viewModel.groups
+        .flatMap((group) => group.cards)
+        .find((card) => card.titleKey === 'sections.superTandemData'),
     ).toBeUndefined();
     expect(
-      viewModel.groups.flatMap((group) => group.cards).find((card) => card.titleKey === "sections.finalTapData"),
+      viewModel.groups
+        .flatMap((group) => group.cards)
+        .find((card) => card.titleKey === 'sections.finalTapData'),
     ).toBeUndefined();
     expect(
-      viewModel.groups.flatMap((group) => group.cards).find((card) => card.titleKey === "sections.rushSugoSpecialData"),
+      viewModel.groups
+        .flatMap((group) => group.cards)
+        .find((card) => card.titleKey === 'sections.rushSugoSpecialData'),
     ).toBeUndefined();
     expect(
-      viewModel.groups.flatMap((group) => group.cards).find((card) => card.titleKey === "sections.characterTags"),
+      viewModel.groups
+        .flatMap((group) => group.cards)
+        .find((card) => card.titleKey === 'sections.characterTags'),
     ).toBeUndefined();
   });
 });
@@ -526,11 +531,11 @@ function createCharacterDetailRecord(
 ): CharacterDetailRecord {
   const base: CharacterDetailRecord = {
     id: 4276,
-    name: "Carrot & Dogstorm & Cat Viper - Moonlit Raging Sulongs",
-    type: "STR",
-    classes: ["Slasher", "Fighter"],
-    primaryClass: "Slasher",
-    secondaryClass: "Fighter",
+    name: 'Carrot & Dogstorm & Cat Viper - Moonlit Raging Sulongs',
+    type: 'STR',
+    classes: ['Slasher', 'Fighter'],
+    primaryClass: 'Slasher',
+    secondaryClass: 'Fighter',
     stars: 6,
     cost: 55,
     combo: 4,
@@ -543,16 +548,14 @@ function createCharacterDetailRecord(
       exactLocal: false,
       thumbnailGlobal: true,
       thumbnailJapan: true,
-      fullTransparent: true,
     },
     assets: {
       exactLocal: null,
-      thumbnailGlobal: "4/200/4276.png",
-      thumbnailJapan: "4/200/4276.png",
-      fullTransparent: "4/200/4276.png",
+      thumbnailGlobal: '4/200/4276.png',
+      thumbnailJapan: '4/200/4276.png',
     },
-    imageUrl: "/assets/test.png",
-    detailImageUrl: "/assets/test-detail.png",
+    imageUrl: '/assets/test.png',
+    detailImageUrl: '/assets/test-detail.png',
     isIncomplete: false,
     detail: {
       characterId: 4276,

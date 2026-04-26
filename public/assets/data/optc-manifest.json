@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-24T09:22:38.628Z",
+  "generatedAt": "2026-04-26T10:29:00.760Z",
   "sourceVersion": "36",
   "characterCount": 4532,
   "detailCount": 4447,
   "shipCount": 66,
-  "rumbleCount": 4509,
+  "rumbleCount": 4514,
   "availableTypes": [
     "DEX",
     "INT",
@@ -54,16 +54,6 @@
       "totalBytes": 502890,
       "installed": true,
       "checksum": "5f01f0889be3aa7a901634609253bf50146595b1"
-    },
-    {
-      "key": "fullTransparent",
-      "id": "full-transparent",
-      "label": "Transparent full art",
-      "localBasePath": "assets/offline-packs/full-transparent",
-      "fileCount": 4597,
-      "totalBytes": 588997866,
-      "installed": true,
-      "checksum": "fb22281b95ed50ae2d17b752b4453f2655e538dd"
     }
   ]
 }

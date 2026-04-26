@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { CrewForgeImageImportService } from './crew-forge-image-import.service';
-import type {
-  CharacterListItem,
-  CrewForgeImageProfile,
-} from '../models/optc.models';
+import type { CharacterListItem, CrewForgeImageProfile } from '../models/optc.models';
 
 describe('CrewForgeImageImportService', () => {
   it('resolves an exact profile by dimensions and preferred id', () => {
@@ -43,9 +40,9 @@ describe('CrewForgeImageImportService', () => {
       .fn()
       .mockImplementation((_: unknown, slot: { key: string }) => `crop-${slot.key}`);
     serviceWithPrivateApi.fingerprintImageDataUrl = vi.fn().mockResolvedValue([0, 1]);
-    serviceWithPrivateApi.getCatalogFingerprints = vi.fn().mockResolvedValue([
-      { characterId: 101, fingerprint: [0, 1] },
-    ]);
+    serviceWithPrivateApi.getCatalogFingerprints = vi
+      .fn()
+      .mockResolvedValue([{ characterId: 101, fingerprint: [0, 1] }]);
 
     await service.recognizeImage(
       'data:image/png;base64,ZmFrZQ==',
@@ -148,9 +145,9 @@ describe('CrewForgeImageImportService', () => {
       .fn()
       .mockImplementation((_: unknown, slot: { key: string }) => `crop-${slot.key}`);
     serviceWithPrivateApi.fingerprintImageDataUrl = vi.fn().mockResolvedValue([0.4, 0.6]);
-    serviceWithPrivateApi.getCatalogFingerprints = vi.fn().mockResolvedValue([
-      { characterId: 101, fingerprint: [0.1, 0.9] },
-    ]);
+    serviceWithPrivateApi.getCatalogFingerprints = vi
+      .fn()
+      .mockResolvedValue([{ characterId: 101, fingerprint: [0.1, 0.9] }]);
 
     const result = await service.recognizeImage(
       'data:image/png;base64,ZmFrZQ==',
@@ -210,13 +207,11 @@ function createCharacter(id: number): CharacterListItem {
       exactLocal: true,
       thumbnailGlobal: true,
       thumbnailJapan: false,
-      fullTransparent: false,
     },
     assets: {
       exactLocal: null,
       thumbnailGlobal: null,
       thumbnailJapan: null,
-      fullTransparent: null,
     },
   };
 }

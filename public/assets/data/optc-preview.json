@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-24T09:22:38.628Z",
+  "generatedAt": "2026-04-26T10:29:00.760Z",
   "characters": [
     {
       "id": 1,
@@ -25,15 +25,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0001.png",
-        "thumbnailJapan": "0/000/0001.png",
-        "fullTransparent": "0/000/0001.png"
+        "thumbnailJapan": "0/000/0001.png"
       },
       "detail": {
         "characterId": 1,
@@ -118,15 +116,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0002.png",
-        "thumbnailJapan": "0/000/0002.png",
-        "fullTransparent": "0/000/0002.png"
+        "thumbnailJapan": "0/000/0002.png"
       },
       "detail": {
         "characterId": 2,
@@ -217,15 +213,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0003.png",
-        "thumbnailJapan": "0/000/0003.png",
-        "fullTransparent": "0/000/0003.png"
+        "thumbnailJapan": "0/000/0003.png"
       },
       "detail": {
         "characterId": 3,
@@ -317,15 +311,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0004.png",
-        "thumbnailJapan": "0/000/0004.png",
-        "fullTransparent": "0/000/0004.png"
+        "thumbnailJapan": "0/000/0004.png"
       },
       "detail": {
         "characterId": 4,
@@ -493,15 +485,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0005.png",
-        "thumbnailJapan": "0/000/0005.png",
-        "fullTransparent": "0/000/0005.png"
+        "thumbnailJapan": "0/000/0005.png"
       },
       "detail": {
         "characterId": 5,
@@ -593,15 +583,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0006.png",
-        "thumbnailJapan": "0/000/0006.png",
-        "fullTransparent": "0/000/0006.png"
+        "thumbnailJapan": "0/000/0006.png"
       },
       "detail": {
         "characterId": 6,
@@ -693,15 +681,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0007.png",
-        "thumbnailJapan": "0/000/0007.png",
-        "fullTransparent": "0/000/0007.png"
+        "thumbnailJapan": "0/000/0007.png"
       },
       "detail": {
         "characterId": 7,
@@ -793,15 +779,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0008.png",
-        "thumbnailJapan": "0/000/0008.png",
-        "fullTransparent": "0/000/0008.png"
+        "thumbnailJapan": "0/000/0008.png"
       },
       "detail": {
         "characterId": 8,
@@ -978,15 +962,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0009.png",
-        "thumbnailJapan": "0/000/0009.png",
-        "fullTransparent": "0/000/0009.png"
+        "thumbnailJapan": "0/000/0009.png"
       },
       "detail": {
         "characterId": 9,
@@ -1077,15 +1059,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0010.png",
-        "thumbnailJapan": "0/000/0010.png",
-        "fullTransparent": "0/000/0010.png"
+        "thumbnailJapan": "0/000/0010.png"
       },
       "detail": {
         "characterId": 10,
@@ -1176,15 +1156,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0011.png",
-        "thumbnailJapan": "0/000/0011.png",
-        "fullTransparent": "0/000/0011.png"
+        "thumbnailJapan": "0/000/0011.png"
       },
       "detail": {
         "characterId": 11,
@@ -1275,15 +1253,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0012.png",
-        "thumbnailJapan": "0/000/0012.png",
-        "fullTransparent": "0/000/0012.png"
+        "thumbnailJapan": "0/000/0012.png"
       },
       "detail": {
         "characterId": 12,
@@ -1468,15 +1444,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0013.png",
-        "thumbnailJapan": "0/000/0013.png",
-        "fullTransparent": "0/000/0013.png"
+        "thumbnailJapan": "0/000/0013.png"
       },
       "detail": {
         "characterId": 13,
@@ -1769,15 +1743,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0014.png",
-        "thumbnailJapan": "0/000/0014.png",
-        "fullTransparent": "0/000/0014.png"
+        "thumbnailJapan": "0/000/0014.png"
       },
       "detail": {
         "characterId": 14,
@@ -2102,15 +2074,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0015.png",
-        "thumbnailJapan": "0/000/0015.png",
-        "fullTransparent": "0/000/0015.png"
+        "thumbnailJapan": "0/000/0015.png"
       },
       "detail": {
         "characterId": 15,
@@ -2403,15 +2373,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0016.png",
-        "thumbnailJapan": "0/000/0016.png",
-        "fullTransparent": "0/000/0016.png"
+        "thumbnailJapan": "0/000/0016.png"
       },
       "detail": {
         "characterId": 16,
@@ -2996,15 +2964,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0017.png",
-        "thumbnailJapan": "0/000/0017.png",
-        "fullTransparent": "0/000/0017.png"
+        "thumbnailJapan": "0/000/0017.png"
       },
       "detail": {
         "characterId": 17,
@@ -3095,15 +3061,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0018.png",
-        "thumbnailJapan": "0/000/0018.png",
-        "fullTransparent": "0/000/0018.png"
+        "thumbnailJapan": "0/000/0018.png"
       },
       "detail": {
         "characterId": 18,
@@ -3184,15 +3148,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0019.png",
-        "thumbnailJapan": "0/000/0019.png",
-        "fullTransparent": "0/000/0019.png"
+        "thumbnailJapan": "0/000/0019.png"
       },
       "detail": {
         "characterId": 19,
@@ -3284,15 +3246,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0020.png",
-        "thumbnailJapan": "0/000/0020.png",
-        "fullTransparent": "0/000/0020.png"
+        "thumbnailJapan": "0/000/0020.png"
       },
       "detail": {
         "characterId": 20,
@@ -3513,15 +3473,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0021.png",
-        "thumbnailJapan": "0/000/0021.png",
-        "fullTransparent": "0/000/0021.png"
+        "thumbnailJapan": "0/000/0021.png"
       },
       "detail": {
         "characterId": 21,
@@ -3613,15 +3571,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0022.png",
-        "thumbnailJapan": "0/000/0022.png",
-        "fullTransparent": "0/000/0022.png"
+        "thumbnailJapan": "0/000/0022.png"
       },
       "detail": {
         "characterId": 22,
@@ -3835,15 +3791,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0023.png",
-        "thumbnailJapan": "0/000/0023.png",
-        "fullTransparent": "0/000/0023.png"
+        "thumbnailJapan": "0/000/0023.png"
       },
       "detail": {
         "characterId": 23,
@@ -3935,15 +3889,13 @@
       "regionAvailability": {
         "exactLocal": false,
         "thumbnailGlobal": true,
-        "thumbnailJapan": true,
-        "fullTransparent": true
+        "thumbnailJapan": true
       },
       "assets": {
         "exactLocal": null,
         "thumbnailLocal": null,
         "thumbnailGlobal": "0/000/0024.png",
-        "thumbnailJapan": "0/000/0024.png",
-        "fullTransparent": "0/000/0024.png"
+        "thumbnailJapan": "0/000/0024.png"
       },
       "detail": {
         "characterId": 24,

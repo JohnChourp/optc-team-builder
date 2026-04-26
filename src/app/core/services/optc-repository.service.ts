@@ -875,14 +875,12 @@ export class OptcRepositoryService {
         thumbnailLocal: null,
         thumbnailGlobal: null,
         thumbnailJapan: null,
-        fullTransparent: null,
       });
 
       const regionAvailability = this.parseJson<RegionAvailability>(row['region_json'], {
         exactLocal: false,
         thumbnailGlobal: false,
         thumbnailJapan: false,
-        fullTransparent: false,
       });
 
       const record: CharacterListItem = {
@@ -912,7 +910,7 @@ export class OptcRepositoryService {
         },
         regionAvailability,
         assets,
-        imageUrl: this.resolveImageUrl(assets, false, installedPacks),
+        imageUrl: this.resolveImageUrl(assets, { preferExactLocal: false, installedPacks }),
       };
 
       return applyOverrideToCharacterListItem(
@@ -924,6 +922,8 @@ export class OptcRepositoryService {
 
   private async decorateCharacterDetailRows(rows: SqlRow[]): Promise<CharacterDetailRecord[]> {
     const records = await this.decorateCharacterRows(rows);
+    const manifest = await this.getDatasetManifest();
+    const installedPacks = new Map(manifest.packs.map((pack) => [pack.key, pack]));
     const overridesByCharacterId = this.characterOverrides.overridesByCharacterId();
 
     return records.map((record, index) =>
@@ -937,7 +937,10 @@ export class OptcRepositoryService {
             ),
             record.id,
           ),
-          detailImageUrl: this.resolveImageUrl(record.assets, true),
+          detailImageUrl: this.resolveImageUrl(record.assets, {
+            preferExactLocal: true,
+            installedPacks,
+          }),
         },
         overridesByCharacterId.get(record.id) ?? null,
       ),
@@ -1048,19 +1051,20 @@ export class OptcRepositoryService {
 
   private resolveImageUrl(
     assets: CharacterAssets,
-    preferFullArt: boolean,
-    installedPacks?: Map<string, OfflinePackSummary>,
+    options: {
+      preferExactLocal: boolean;
+      installedPacks?: Map<string, OfflinePackSummary>;
+    },
   ): string {
-    const packMap = installedPacks ?? new Map();
-    const fullArtInstalled = packMap.get('fullTransparent')?.installed ?? false;
+    const packMap = options.installedPacks ?? new Map();
     const thumbnailGloInstalled = packMap.get('thumbnailsGlo')?.installed ?? false;
     const thumbnailJapanInstalled = packMap.get('thumbnailsJapan')?.installed ?? false;
 
-    if (preferFullArt && fullArtInstalled && assets.fullTransparent) {
-      return this.toLocalAssetPath('full-transparent', assets.fullTransparent);
+    if (options.preferExactLocal && assets.exactLocal) {
+      return this.normalizeAssetUrl(assets.exactLocal);
     }
 
-    if (!preferFullArt && assets.thumbnailLocal) {
+    if (assets.thumbnailLocal) {
       return this.normalizeAssetUrl(assets.thumbnailLocal);
     }
 
@@ -1074,10 +1078,6 @@ export class OptcRepositoryService {
 
     if (thumbnailJapanInstalled && assets.thumbnailJapan) {
       return this.toLocalAssetPath('thumbnails-jap', assets.thumbnailJapan);
-    }
-
-    if (fullArtInstalled && assets.fullTransparent) {
-      return this.toLocalAssetPath('full-transparent', assets.fullTransparent);
     }
 
     return FALLBACK_CHARACTER_IMAGE;

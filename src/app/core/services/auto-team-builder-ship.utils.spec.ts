@@ -119,7 +119,10 @@ describe('auto team builder ship selection', () => {
           15,
         ),
         input: {
-          ...createResult(Array.from({ length: 6 }, (_, index) => createCharacter(index + 1)), 15).input,
+          ...createResult(
+            Array.from({ length: 6 }, (_, index) => createCharacter(index + 1)),
+            15,
+          ).input,
           excludedShipIds: [15],
         },
       },
@@ -140,7 +143,8 @@ describe('auto team builder ship selection', () => {
       {
         ...createResult(Array.from({ length: 6 }, (_, index) => createCharacter(index + 1))),
         input: {
-          ...createResult(Array.from({ length: 6 }, (_, index) => createCharacter(index + 1))).input,
+          ...createResult(Array.from({ length: 6 }, (_, index) => createCharacter(index + 1)))
+            .input,
           favoriteShipsOnly: true,
           favoriteShipIds: [15],
         },
@@ -162,7 +166,8 @@ describe('auto team builder ship selection', () => {
       {
         ...createResult(Array.from({ length: 6 }, (_, index) => createCharacter(index + 1))),
         input: {
-          ...createResult(Array.from({ length: 6 }, (_, index) => createCharacter(index + 1))).input,
+          ...createResult(Array.from({ length: 6 }, (_, index) => createCharacter(index + 1)))
+            .input,
           favoriteShipsOnly: true,
           favoriteShipIds: [15],
           excludedShipIds: [15],
@@ -244,13 +249,11 @@ function createCharacter(
       exactLocal: true,
       thumbnailGlobal: true,
       thumbnailJapan: false,
-      fullTransparent: false,
     },
     assets: {
       exactLocal: null,
       thumbnailGlobal: null,
       thumbnailJapan: null,
-      fullTransparent: null,
     },
     imageUrl: '/assets/test-character.png',
     detailImageUrl: '/assets/test-character-detail.png',

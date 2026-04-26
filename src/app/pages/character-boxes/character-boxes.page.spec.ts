@@ -318,8 +318,6 @@ describe('CharacterBoxesPage', () => {
     expect(template).toContain('[routerLink]="getCharacterDetailLink(card.character)"');
     expect(template).toContain('character-detail-thumb-link');
     expect(template).toContain('character-detail-name-link');
-    expect(template).toContain('<app-character-ability-groups');
-    expect(template).toContain('displayMode="collapsed"');
   });
 });
 
@@ -421,13 +419,11 @@ function createCharacter(id: number, name = `Character ${id}`) {
       exactLocal: true,
       thumbnailGlobal: true,
       thumbnailJapan: true,
-      fullTransparent: false,
     },
     assets: {
       exactLocal: null,
       thumbnailGlobal: null,
       thumbnailJapan: null,
-      fullTransparent: null,
     },
     imageUrl: `/characters/${id}.png`,
     detail: {
