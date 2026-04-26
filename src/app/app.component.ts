@@ -18,8 +18,9 @@ interface RouteSeoData {
 }
 
 const appSiteBaseUrl = 'https://johnchourp.github.io/optc-team-builder';
+const appHomeTitle = 'OPTC Team Builder | One Piece Treasure Cruise Tools';
 const defaultSeo: RouteSeoData = {
-  title: 'OPTC Team Builder',
+  title: appHomeTitle,
   description:
     'Fan-made One Piece Treasure Cruise team builder for browsing characters, ships, abilities, and preparing teams offline.',
   canonicalPath: '',

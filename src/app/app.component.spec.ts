@@ -147,7 +147,9 @@ describe('AppComponent', () => {
     routerStub.events.next(new NavigationEnd(1, '/tabs/settings', '/tabs/settings'));
     expect(analyticsStub.trackPageView).toHaveBeenCalledWith('/tabs/settings');
     expect(toolbarBackNavigationStub.recordNavigation).toHaveBeenCalledWith('/tabs/settings');
-    expect(titleStub.setTitle).toHaveBeenCalledWith('OPTC Team Builder');
+    expect(titleStub.setTitle).toHaveBeenCalledWith(
+      'OPTC Team Builder | One Piece Treasure Cruise Tools',
+    );
     expect(metaStub.updateTag).toHaveBeenCalledWith({ name: 'robots', content: 'noindex,follow' });
 
     analyticsStub.trackPageView.mockClear();

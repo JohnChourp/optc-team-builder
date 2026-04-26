@@ -11,55 +11,102 @@ const siteBaseUrl = normalizeSiteBaseUrl(
 );
 const generatedAt = new Date().toISOString().slice(0, 10);
 const siteName = 'OPTC Team Builder';
+const homePageTitle = 'OPTC Team Builder | One Piece Treasure Cruise Tools';
 const siteDescription =
   'Fan-made One Piece Treasure Cruise team builder for browsing characters, ships, abilities, and preparing teams offline.';
 
 const publicRoutes = [
   {
     path: '',
-    title: 'OPTC Team Builder',
+    title: homePageTitle,
     description: siteDescription,
+    heading: 'OPTC Team Builder for One Piece Treasure Cruise',
+    paragraphs: [
+      'OPTC Team Builder is a fan-made toolset for One Piece Treasure Cruise players who want a faster way to browse characters, compare abilities, and prepare crews before playing. The app keeps a large OPTC character catalog available with ids, names, types, classes, stars, costs, captain abilities, specials, support data, rumble data, and team-building details.',
+      'Use the character browser to search the catalog and open generated character pages with stable links. Use Team Builder to arrange a crew, pick ships, review slots, and keep favorite units close while planning. Auto Team Builder helps match enemy mechanics and ability requirements against the local catalog, so you can find useful candidates without manually checking every character.',
+      'Crew Forge supports importing crew screenshots and matching recognized slots back to the catalog. The app is designed around practical OPTC planning, offline-friendly data, and public static pages that search engines can understand. Start with the character list, build a team, try Auto Team Builder for mechanic coverage, or open the public sitemap for the main indexable pages.',
+      'The project is not an official Bandai Namco tool. It exists to make OPTC planning easier with clear links, readable character summaries, and generated pages that describe the same tools available in the web app.',
+    ],
+    links: [
+      { label: 'Browse OPTC characters', path: 'tabs/characters' },
+      { label: 'Build an OPTC team', path: 'tabs/team-builder' },
+      { label: 'Find teams by enemy mechanics', path: 'tabs/auto-team-builder' },
+      { label: 'Import crew screenshots', path: 'tabs/crew-forge' },
+      { label: 'Open the public sitemap', path: 'sitemap.html' },
+    ],
   },
   {
     path: 'tabs/characters',
     title: 'OPTC Characters | OPTC Team Builder',
     description:
       'Browse the One Piece Treasure Cruise character catalog with stats, classes, abilities, and team-building data.',
+    heading: 'OPTC Character Catalog',
+    paragraphs: [
+      'Browse the One Piece Treasure Cruise character catalog by id, name, type, class, stars, cost, and ability data. Character pages include searchable OPTC details for captain abilities, specials, support effects, rumble information, and team-building notes.',
+      'This page is the main entry point for finding units before opening a character detail page or adding candidates to a crew plan.',
+    ],
   },
   {
     path: 'tabs/team-builder',
     title: 'Team Builder | OPTC Team Builder',
     description:
       'Build and review One Piece Treasure Cruise teams with character slots, ships, favorites, and offline catalog data.',
+    heading: 'OPTC Team Builder',
+    paragraphs: [
+      'Build and review One Piece Treasure Cruise crews with character slots, ship choices, favorites, and offline catalog data. The team builder is intended for practical crew planning before playing quests, forests, events, or challenge content.',
+      'Use it with the character catalog to compare units, keep likely options together, and prepare team ideas with stable local data.',
+    ],
   },
   {
     path: 'tabs/auto-team-builder',
     title: 'Auto Team Builder | OPTC Team Builder',
     description:
       'Find OPTC team candidates by enemy mechanics, character abilities, type filters, and team-building requirements.',
+    heading: 'OPTC Auto Team Builder',
+    paragraphs: [
+      'Auto Team Builder helps find One Piece Treasure Cruise team candidates by enemy mechanics, character abilities, type filters, class filters, and team-building requirements. It is designed to reduce manual catalog checking when a quest needs specific utility.',
+      'Enter the mechanics or requirements you need covered, then review matching character candidates from the local OPTC data.',
+    ],
   },
   {
     path: 'tabs/crew-forge',
     title: 'Crew Forge | OPTC Team Builder',
     description:
       'Import crew screenshots and match recognized slots against the OPTC character catalog.',
+    heading: 'OPTC Crew Forge',
+    paragraphs: [
+      'Crew Forge imports One Piece Treasure Cruise crew screenshots and matches recognized slots against the OPTC character catalog. It helps turn an existing crew image into editable team data.',
+      'Use this tool when you want to rebuild, inspect, or refine a crew from a screenshot instead of searching for every character manually.',
+    ],
   },
   {
     path: 'privacy',
     title: 'Privacy Policy | OPTC Team Builder',
     description: 'Read the privacy policy for OPTC Team Builder.',
+    heading: 'Privacy Policy',
+    paragraphs: [
+      'Read how OPTC Team Builder handles privacy for the web app, including local app data, optional analytics consent, and related browser storage.',
+    ],
     aliases: ['tabs/privacy'],
   },
   {
     path: 'cookies',
     title: 'Cookie Policy | OPTC Team Builder',
     description: 'Read the cookie policy for OPTC Team Builder.',
+    heading: 'Cookie Policy',
+    paragraphs: [
+      'Read how OPTC Team Builder uses cookies or browser storage for app preferences, consent choices, and optional analytics behavior.',
+    ],
     aliases: ['tabs/cookies'],
   },
   {
     path: 'terms',
     title: 'Terms of Service | OPTC Team Builder',
     description: 'Read the terms of service for OPTC Team Builder.',
+    heading: 'Terms of Service',
+    paragraphs: [
+      'Read the terms for using OPTC Team Builder, a fan-made One Piece Treasure Cruise planning tool and character catalog.',
+    ],
     aliases: ['tabs/terms'],
   },
 ];
@@ -210,6 +257,7 @@ function buildStaticPageSeo(route) {
     description: route.description,
     canonicalUrl,
     imageUrl: null,
+    fallbackHtml: buildStaticFallbackHtml(route),
     jsonLd: buildJsonLd({
       '@type': 'WebPage',
       '@id': `${canonicalUrl}#webpage`,
@@ -232,6 +280,7 @@ function buildCharacterPageSeo(character) {
     description,
     canonicalUrl,
     imageUrl,
+    fallbackHtml: buildCharacterFallbackHtml(character, description),
     jsonLd: buildJsonLd({
       '@type': 'WebPage',
       '@id': `${canonicalUrl}#webpage`,
@@ -279,10 +328,12 @@ function injectSeo(html, seo) {
     throw new Error('Failed to inject SEO metadata because no <title> tag was found.');
   }
 
-  return removeExistingSeo(html).replace(
+  const withSeo = removeExistingSeo(html).replace(
     titlePattern,
     `<title>${escapeHtml(seo.title)}</title>\n${buildSeoTags(seo)}`,
   );
+
+  return injectAppRootFallback(withSeo, seo.fallbackHtml);
 }
 
 function buildSeoTags(seo) {
@@ -316,6 +367,73 @@ function removeExistingSeo(html) {
     .replace(/\s*<meta\s+property=["']og:[^"']+["'][^>]*>\n?/gi, '\n')
     .replace(/\s*<meta\s+name=["']twitter:[^"']+["'][^>]*>\n?/gi, '\n')
     .replace(/\s*<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>\n?/gi, '\n');
+}
+
+function injectAppRootFallback(html, fallbackHtml) {
+  const appRootPattern = /<app-root([^>]*)>[\s\S]*?<\/app-root>/i;
+
+  if (!appRootPattern.test(html)) {
+    throw new Error('Failed to inject fallback content because no <app-root> tag was found.');
+  }
+
+  return html.replace(
+    appRootPattern,
+    (_match, attributes = '') => `<app-root${attributes}>
+${fallbackHtml}
+  </app-root>`,
+  );
+}
+
+function buildStaticFallbackHtml(route) {
+  const paragraphs = route.paragraphs ?? [route.description];
+  const links = route.links?.length
+    ? `
+      <nav aria-label="Public OPTC Team Builder pages">
+        <ul>
+${route.links
+  .map(
+    (link) =>
+      `          <li><a href="${escapeHtmlAttribute(buildPublicLinkUrl(link.path))}">${escapeHtml(
+        link.label,
+      )}</a></li>`,
+  )
+  .join('\n')}
+        </ul>
+      </nav>`
+    : '';
+
+  return `    <main>
+      <h1>${escapeHtml(route.heading ?? route.title)}</h1>
+${paragraphs.map((paragraph) => `      <p>${escapeHtml(paragraph)}</p>`).join('\n')}${links}
+    </main>`;
+}
+
+function buildCharacterFallbackHtml(character, description) {
+  const classes = character.classes.length ? character.classes.join(' / ') : 'Unknown class';
+  const stats = [
+    character.type ? `Type: ${character.type}` : null,
+    `Classes: ${classes}`,
+    character.stars ? `Stars: ${character.stars}` : null,
+    character.cost ? `Cost: ${character.cost}` : null,
+  ].filter(Boolean);
+  const captainAbility = normalizeDetailText(character.detail?.captainAbility);
+  const specialName = normalizeDetailText(character.detail?.specialName);
+  const specialText = normalizeDetailText(character.detail?.specialText);
+  const detailParagraphs = [
+    captainAbility ? `Captain ability: ${truncateForMeta(captainAbility, 320)}` : null,
+    specialText
+      ? `Special${specialName ? ` "${specialName}"` : ''}: ${truncateForMeta(specialText, 340)}`
+      : null,
+  ].filter(Boolean);
+
+  return `    <main>
+      <h1>#${character.id} ${escapeHtml(character.name)}</h1>
+      <p>${escapeHtml(description)}</p>
+      <ul>
+${stats.map((stat) => `        <li>${escapeHtml(stat)}</li>`).join('\n')}
+      </ul>
+${detailParagraphs.map((paragraph) => `      <p>${escapeHtml(paragraph)}</p>`).join('\n')}
+    </main>`;
 }
 
 function normalizeCharacterRow(row, detail) {
@@ -382,6 +500,10 @@ function truncateForMeta(value, maxLength = 220) {
 function normalizeNumber(value) {
   const numberValue = Number(value);
   return Number.isFinite(numberValue) ? numberValue : 0;
+}
+
+function normalizeDetailText(value) {
+  return typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
 }
 
 function extractRows(sql, tableName) {
@@ -542,6 +664,14 @@ function buildAbsoluteUrl(routePath) {
   const normalizedRoutePath = routePath.replace(/^\/+|\/+$/g, '');
 
   return normalizedRoutePath.length ? `${siteBaseUrl}/${normalizedRoutePath}/` : `${siteBaseUrl}/`;
+}
+
+function buildPublicLinkUrl(routePath) {
+  const normalizedRoutePath = routePath.replace(/^\/+|\/+$/g, '');
+
+  return normalizedRoutePath.endsWith('.html')
+    ? `${siteBaseUrl}/${normalizedRoutePath}`
+    : buildAbsoluteUrl(normalizedRoutePath);
 }
 
 function normalizeSiteBaseUrl(value) {
