@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const tabPageTemplates = [
+  "src/app/pages/home/home.page.html",
   "src/app/pages/characters/characters.page.html",
   "src/app/pages/team-builder/team-builder.page.html",
   "src/app/pages/auto-team-builder/auto-team-builder.page.html",
@@ -20,7 +21,9 @@ describe("tabs drawer access", () => {
       const template = readFileSync(resolve(process.cwd(), templatePath), "utf8");
 
       expect(template).toContain("<ion-buttons slot=\"start\">");
-      expect(template).toContain("<ion-menu-button autoHide=\"false\"></ion-menu-button>");
+      expect(template).toContain(
+        '<ion-menu-button menu="tabs-navigation-menu" autoHide="false"></ion-menu-button>',
+      );
     }
   });
 });

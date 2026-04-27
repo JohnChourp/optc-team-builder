@@ -13,7 +13,7 @@ const generatedAt = new Date().toISOString().slice(0, 10);
 const siteName = 'OPTC Team Builder';
 const homePageTitle = 'OPTC Team Builder | One Piece Treasure Cruise Tools';
 const siteDescription =
-  'Fan-made One Piece Treasure Cruise team builder for browsing characters, ships, abilities, and preparing teams offline.';
+  'Plan One Piece Treasure Cruise crews with character search, team building, enemy mechanics, saved teams, screenshots, and offline-friendly tools.';
 
 const publicRoutes = [
   {
@@ -22,9 +22,9 @@ const publicRoutes = [
     description: siteDescription,
     heading: 'OPTC Team Builder for One Piece Treasure Cruise',
     paragraphs: [
-      'OPTC Team Builder is a fan-made toolset for One Piece Treasure Cruise players who want a faster way to browse characters, compare abilities, and prepare crews before playing. The app keeps a large OPTC character catalog available with ids, names, types, classes, stars, costs, captain abilities, specials, support data, rumble data, and team-building details.',
-      'Use the character browser to search the catalog and open generated character pages with stable links. Use Team Builder to arrange a crew, pick ships, review slots, and keep favorite units close while planning. Auto Team Builder helps match enemy mechanics and ability requirements against the local catalog, so you can find useful candidates without manually checking every character.',
-      'Crew Forge supports importing crew screenshots and matching recognized slots back to the catalog. The app is designed around practical OPTC planning, offline-friendly data, and public static pages that search engines can understand. Start with the character list, build a team, try Auto Team Builder for mechanic coverage, or open the public sitemap for the main indexable pages.',
+      'OPTC Team Builder is a fan-made workspace for One Piece Treasure Cruise players who want a faster way to find characters, compare abilities, plan crews, and keep useful setups organized. The app combines a searchable character catalog, manual Team Builder, Auto Team Builder, Crew Forge screenshot imports, saved teams, saved enemies, character boxes, and settings for import/export and backups.',
+      'Use Characters to search by name, type, class, favorites, and ability data before opening detailed character pages. Use Team Builder to fill crew slots, choose ships, review totals, write notes, and save offline team ideas. Auto Team Builder helps match enemy mechanics and ability requirements against the local catalog so you can discover useful candidates without checking every unit by hand.',
+      'Crew Forge can import a crew screenshot and match recognized slots back to editable OPTC character data. Saved Teams, Character Boxes, and Saved Enemies keep recurring planning data available in your browser, while Settings covers language, backups, Google Drive sync, analytics consent, and data transfer tools.',
       'The project is not an official Bandai Namco tool. It exists to make OPTC planning easier with clear links, readable character summaries, and generated pages that describe the same tools available in the web app.',
     ],
     links: [

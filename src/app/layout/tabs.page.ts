@@ -21,6 +21,7 @@ import {
   constructOutline,
   flashOutline,
   gridOutline,
+  homeOutline,
   peopleOutline,
   saveOutline,
 } from "ionicons/icons";
@@ -75,6 +76,11 @@ export class TabsPage {
     { id: "el", flag: "🇬🇷" },
   ];
   public readonly navigationItems: NavigationItem[] = [
+    {
+      icon: homeOutline,
+      labelKey: "tabs.home",
+      route: "/",
+    },
     {
       icon: gridOutline,
       labelKey: "tabs.characters",

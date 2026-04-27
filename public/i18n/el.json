@@ -313,11 +313,79 @@
     "requestedClasses": "Missing value for 'summary.requestedClasses'",
     "requestedTypes": "Missing value for 'summary.requestedTypes'"
   },
+  "home": {
+    "title": "Αρχική",
+    "hero": {
+      "eyebrow": "Fan-made εργαλεία OPTC",
+      "title": "Οργάνωσε πιο γρήγορα τις ομάδες σου στο One Piece Treasure Cruise",
+      "copy": "Το OPTC Team Builder μαζεύει αναζήτηση χαρακτήρων, χειροκίνητο team planning, enemy mechanics, αποθηκευμένες ομάδες, εισαγωγή screenshots και τοπικά δεδομένα σε ένα web app που δουλεύει φιλικά και offline."
+    },
+    "actions": {
+      "characters": "Άνοιγμα χαρακτήρων",
+      "teamBuilder": "Φτιάξε ομάδα",
+      "autoBuilder": "Auto Builder",
+      "crewForge": "Crew Forge"
+    },
+    "highlights": {
+      "ariaLabel": "Κύρια πλεονεκτήματα του OPTC Team Builder",
+      "offline": "Περιήγηση και planning με τοπικά OPTC δεδομένα",
+      "planning": "Από αναζήτηση χαρακτήρων σε ιδέες ομάδας πιο γρήγορα",
+      "localData": "Αποθήκευση ομάδων, εχθρών, boxes και ρυθμίσεων στον browser"
+    },
+    "features": {
+      "eyebrow": "Τι μπορείς να κάνεις",
+      "title": "Κάθε σελίδα βοηθάει σε διαφορετικό κομμάτι του planning",
+      "copy": "Χρησιμοποίησε το site σαν πρακτικό OPTC workspace: βρες units, σύγκρινε abilities, φτιάξε ομάδες, κράτα χρήσιμα setups και οργάνωσε τις επαναλαμβανόμενες δουλειές.",
+      "characters": {
+        "title": "Χαρακτήρες",
+        "copy": "Αναζήτησε και φίλτραρε το catalog με όνομα, type, class, ability data, favorites και αναλυτικές σελίδες χαρακτήρων."
+      },
+      "teamBuilder": {
+        "title": "Team Builder",
+        "copy": "Γέμισε crew slots, διάλεξε ships, δες totals, γράψε notes και αποθήκευσε ιδέες ομάδων για offline χρήση."
+      },
+      "autoBuilder": {
+        "title": "Auto Team Builder",
+        "copy": "Ταίριαξε enemy mechanics, ability requirements, classes, types, locked και excluded units με πιθανούς team candidates."
+      },
+      "crewForge": {
+        "title": "Crew Forge",
+        "copy": "Εισήγαγε crew screenshots και αντιστοίχισε τα αναγνωρισμένα slots με επεξεργάσιμα OPTC character data."
+      },
+      "savedTeams": {
+        "title": "Αποθηκευμένες ομάδες",
+        "copy": "Διαχειρίσου saved crews, δες slots και ships, φόρτωσε παλιές ιδέες και κάνε import ή export team data."
+      },
+      "characterBoxes": {
+        "title": "Boxes χαρακτήρων",
+        "copy": "Οργάνωσε τα owned units σε boxes ώστε το planning να βασίζεται στους χαρακτήρες που έχεις πραγματικά."
+      },
+      "savedEnemies": {
+        "title": "Αποθηκευμένοι εχθροί",
+        "copy": "Κράτα enemy presets και mechanics ώστε το Auto Team Builder να ξαναχρησιμοποιεί quest requirements αργότερα."
+      },
+      "settings": {
+        "title": "Ρυθμίσεις",
+        "copy": "Άλλαξε γλώσσα, διαχειρίσου imports και exports, backups, Google Drive sync και analytics consent."
+      }
+    },
+    "workflow": {
+      "eyebrow": "Απλή ροή",
+      "title": "Από την αναζήτηση σε αποθηκευμένη ομάδα",
+      "copy": "Ξεκίνα από έναν χαρακτήρα ή από requirement quest, χτίσε την ομάδα με manual ή automatic εργαλεία και κράτα το χρήσιμο αποτέλεσμα για την επόμενη φορά.",
+      "steps": {
+        "find": "Βρες χαρακτήρες με όνομα, ability, type, class, favorites ή enemy mechanics.",
+        "plan": "Φτιάξε την ομάδα χειροκίνητα, ζήτησε candidates από το Auto Team Builder ή εισήγαγε υπάρχον screenshot.",
+        "save": "Αποθήκευσε teams, boxes, enemies και settings τοπικά, με import/export εργαλεία όταν χρειάζεται να μεταφέρεις δεδομένα."
+      }
+    }
+  },
   "tabs": {
     "auto": "Auto",
     "characterBoxes": "Boxes χαρακτήρων",
     "characters": "Χαρακτήρες",
     "crewForge": "Crew Forge",
+    "home": "Αρχική",
     "languageSwitcherAriaLabel": "Εναλλαγή γλώσσας",
     "languageSwitchTo": "Αλλαγή γλώσσας σε {{ language }}",
     "menuTitle": "Μενού",

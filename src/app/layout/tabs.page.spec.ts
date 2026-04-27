@@ -21,6 +21,8 @@ describe("TabsPage", () => {
   it("uses the expected navigation and language-switcher definitions", () => {
     const component = readFileSync(resolve(process.cwd(), "src/app/layout/tabs.page.ts"), "utf8");
 
+    expect(component).toContain('"tabs.home"');
+    expect(component).toContain('route: "/"');
     expect(component).toContain('"tabs.characters"');
     expect(component).toContain('"tabs.team"');
     expect(component).toContain('"tabs.auto"');

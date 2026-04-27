@@ -313,11 +313,79 @@
     "requestedClasses": "Missing value for 'summary.requestedClasses'",
     "requestedTypes": "Missing value for 'summary.requestedTypes'"
   },
+  "home": {
+    "title": "Home",
+    "hero": {
+      "eyebrow": "Fan-made OPTC tools",
+      "title": "Plan One Piece Treasure Cruise crews faster",
+      "copy": "OPTC Team Builder brings character search, manual crew planning, enemy mechanics, saved teams, screenshot imports, and local data tools into one offline-friendly web app."
+    },
+    "actions": {
+      "characters": "Browse Characters",
+      "teamBuilder": "Build a Team",
+      "autoBuilder": "Use Auto Builder",
+      "crewForge": "Open Crew Forge"
+    },
+    "highlights": {
+      "ariaLabel": "OPTC Team Builder highlights",
+      "offline": "Browse and plan with local OPTC data",
+      "planning": "Move from character search to crew ideas quickly",
+      "localData": "Save teams, enemies, boxes, and settings in your browser"
+    },
+    "features": {
+      "eyebrow": "What you can do",
+      "title": "Every page has a planning job",
+      "copy": "Use the site as a practical OPTC workspace: find units, compare abilities, build crews, save useful setups, and keep repeat planning tasks organized.",
+      "characters": {
+        "title": "Characters",
+        "copy": "Search and filter the catalog by name, type, class, ability data, favorites, and detailed character pages."
+      },
+      "teamBuilder": {
+        "title": "Team Builder",
+        "copy": "Fill crew slots, pick ships, review totals, write notes, and save team ideas for offline reuse."
+      },
+      "autoBuilder": {
+        "title": "Auto Team Builder",
+        "copy": "Match enemy mechanics, ability requirements, classes, types, locks, and excluded units against candidate crews."
+      },
+      "crewForge": {
+        "title": "Crew Forge",
+        "copy": "Import crew screenshots and match recognized slots back to editable OPTC character data."
+      },
+      "savedTeams": {
+        "title": "Saved Teams",
+        "copy": "Manage saved crews, inspect their slots and ships, reload older ideas, and export or import team data."
+      },
+      "characterBoxes": {
+        "title": "Character Boxes",
+        "copy": "Organize owned units into boxes so team planning can focus on the characters you actually have."
+      },
+      "savedEnemies": {
+        "title": "Saved Enemies",
+        "copy": "Store enemy presets and mechanics so Auto Team Builder can reuse quest requirements later."
+      },
+      "settings": {
+        "title": "Settings",
+        "copy": "Change language, manage imports and exports, configure backups, Google Drive sync, and analytics consent."
+      }
+    },
+    "workflow": {
+      "eyebrow": "Simple flow",
+      "title": "From search to saved crew",
+      "copy": "Start with a unit or quest requirement, shape the crew with manual or automatic tools, then keep the useful result for the next run.",
+      "steps": {
+        "find": "Find characters by name, ability, type, class, favorites, or enemy mechanics.",
+        "plan": "Build the crew manually, ask Auto Team Builder for candidates, or import an existing screenshot.",
+        "save": "Save teams, boxes, enemies, and settings locally, with import/export tools when you need to move data."
+      }
+    }
+  },
   "tabs": {
     "auto": "Auto",
     "characterBoxes": "Character Boxes",
     "characters": "Characters",
     "crewForge": "Crew Forge",
+    "home": "Home",
     "languageSwitcherAriaLabel": "Language switcher",
     "languageSwitchTo": "Switch language to {{ language }}",
     "menuTitle": "Menu",

@@ -1,0 +1,100 @@
+<ng-container *transloco="let t; read: 'home'">
+  <ion-header class="ion-no-border">
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-menu-button menu="tabs-navigation-menu" autoHide="false"></ion-menu-button>
+      </ion-buttons>
+      <ion-title>{{ t('title') }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content [fullscreen]="true">
+    <div class="page-shell home-shell">
+      <section class="home-hero glass-card">
+        <div class="home-hero__copy">
+          <div class="section-label">
+            <ion-icon [icon]="sparklesIcon"></ion-icon>
+            <span>{{ t('hero.eyebrow') }}</span>
+          </div>
+          <h1 class="section-title">{{ t('hero.title') }}</h1>
+          <p class="section-copy">{{ t('hero.copy') }}</p>
+
+          <div class="home-actions">
+            @for (action of actions; track action.route) {
+              <ion-button
+                [color]="action.color"
+                [fill]="action.fill"
+                [routerLink]="[action.route]"
+                routerDirection="root"
+              >
+                {{ t(action.labelKey) }}
+              </ion-button>
+            }
+          </div>
+        </div>
+
+        <div class="home-hero__visual" aria-hidden="true">
+          <div class="home-brand-mark">
+            <img src="brand/favicon-master-v2-optimized.png" alt="" />
+          </div>
+          <div class="home-character-stack">
+            @for (characterImage of heroCharacters; track characterImage) {
+              <span class="home-character-thumb">
+                <img [src]="characterImage" alt="" loading="lazy" />
+              </span>
+            }
+          </div>
+        </div>
+      </section>
+
+      <section class="home-highlight-grid" [attr.aria-label]="t('highlights.ariaLabel')">
+        @for (highlightKey of highlights; track highlightKey) {
+          <article class="home-highlight glass-card">
+            <ion-icon [icon]="shieldIcon"></ion-icon>
+            <span>{{ t(highlightKey) }}</span>
+          </article>
+        }
+      </section>
+
+      <section class="home-section glass-card">
+        <div class="home-section__head">
+          <div>
+            <div class="section-label">{{ t('features.eyebrow') }}</div>
+            <h2>{{ t('features.title') }}</h2>
+          </div>
+          <p>{{ t('features.copy') }}</p>
+        </div>
+
+        <div class="home-feature-grid">
+          @for (feature of featureGroups; track feature.route) {
+            <a class="home-feature-card" [routerLink]="[feature.route]">
+              <ion-icon [icon]="feature.icon"></ion-icon>
+              <strong>{{ t(feature.titleKey) }}</strong>
+              <span>{{ t(feature.copyKey) }}</span>
+            </a>
+          }
+        </div>
+      </section>
+
+      <section class="home-workflow glass-card">
+        <div>
+          <div class="section-label">
+            <ion-icon [icon]="searchIcon"></ion-icon>
+            <span>{{ t('workflow.eyebrow') }}</span>
+          </div>
+          <h2>{{ t('workflow.title') }}</h2>
+          <p>{{ t('workflow.copy') }}</p>
+        </div>
+
+        <ol class="home-workflow__steps">
+          @for (stepKey of workflowSteps; track stepKey) {
+            <li>
+              <ion-icon [icon]="checkIcon"></ion-icon>
+              <span>{{ t(stepKey) }}</span>
+            </li>
+          }
+        </ol>
+      </section>
+    </div>
+  </ion-content>
+</ng-container>

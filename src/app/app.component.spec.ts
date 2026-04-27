@@ -192,6 +192,30 @@ describe('AppComponent', () => {
       content: 'https://johnchourp.github.io/optc-team-builder/tabs/auto-team-builder/',
     });
   });
+
+  it('indexes the root homepage with the canonical site URL', async () => {
+    routerStub = {
+      config: routes,
+      url: '/',
+      navigated: true,
+      events: new Subject<unknown>(),
+    };
+    const { AppComponent } = await import('./app.component');
+
+    new AppComponent();
+
+    expect(titleStub.setTitle).toHaveBeenCalledWith(
+      'OPTC Team Builder | One Piece Treasure Cruise Tools',
+    );
+    expect(metaStub.updateTag).toHaveBeenCalledWith({
+      name: 'robots',
+      content: 'index,follow',
+    });
+    expect(metaStub.updateTag).toHaveBeenCalledWith({
+      property: 'og:url',
+      content: 'https://johnchourp.github.io/optc-team-builder/',
+    });
+  });
 });
 
 function createAnalyticsConsentStub(initialConsent: AnalyticsConsentState) {

@@ -1,10 +1,33 @@
+import { type Route } from '@angular/router';
 import { describe, expect, it } from 'vitest';
 
 import { routes } from './app.routes';
 
 describe('app routes', () => {
+  it('registers the root homepage inside the drawer shell without redirecting to characters', () => {
+    const homeShellRoute = routes.find((route) => route.path === '');
+    const homeRoute = homeShellRoute?.children?.find((route) => route.path === '');
+    const seo = homeRoute?.data?.['seo'] as Record<string, unknown> | undefined;
+
+    expect(homeShellRoute?.loadComponent).toBeTypeOf('function');
+    expect(homeRoute).toBeDefined();
+    expect(homeRoute?.redirectTo).toBeUndefined();
+    expect(homeRoute?.loadComponent).toBeTypeOf('function');
+    expect(seo?.['title']).toBe('OPTC Team Builder | One Piece Treasure Cruise Tools');
+    expect(seo?.['description']).toBeTypeOf('string');
+    expect(seo?.['canonicalPath']).toBe('');
+  });
+
+  it('redirects the tabs shell root to characters for compatibility', () => {
+    const tabsRoute = findRouteByPath(routes, 'tabs');
+    const tabsRootRoute = tabsRoute?.children?.find((route) => route.path === '');
+
+    expect(tabsRootRoute?.redirectTo).toBe('characters');
+    expect(tabsRootRoute?.pathMatch).toBe('full');
+  });
+
   it('registers the saved teams tab route', () => {
-    const tabsRoute = routes.find((route) => route.path === 'tabs');
+    const tabsRoute = findRouteByPath(routes, 'tabs');
     const savedTeamsRoute = tabsRoute?.children?.find((route) => route.path === 'saved-teams');
 
     expect(savedTeamsRoute).toBeDefined();
@@ -12,7 +35,7 @@ describe('app routes', () => {
   });
 
   it('registers the character boxes route inside tabs', () => {
-    const tabsRoute = routes.find((route) => route.path === 'tabs');
+    const tabsRoute = findRouteByPath(routes, 'tabs');
     const characterBoxesRoute = tabsRoute?.children?.find(
       (route) => route.path === 'character-boxes',
     );
@@ -22,7 +45,7 @@ describe('app routes', () => {
   });
 
   it('registers the crew forge route inside tabs', () => {
-    const tabsRoute = routes.find((route) => route.path === 'tabs');
+    const tabsRoute = findRouteByPath(routes, 'tabs');
     const crewForgeRoute = tabsRoute?.children?.find((route) => route.path === 'crew-forge');
 
     expect(crewForgeRoute).toBeDefined();
@@ -30,7 +53,7 @@ describe('app routes', () => {
   });
 
   it('registers the saved enemies route inside tabs', () => {
-    const tabsRoute = routes.find((route) => route.path === 'tabs');
+    const tabsRoute = findRouteByPath(routes, 'tabs');
     const savedEnemiesRoute = tabsRoute?.children?.find((route) => route.path === 'saved-enemies');
 
     expect(savedEnemiesRoute).toBeDefined();
@@ -38,7 +61,7 @@ describe('app routes', () => {
   });
 
   it('redirects the legacy collection tab route to saved teams', () => {
-    const tabsRoute = routes.find((route) => route.path === 'tabs');
+    const tabsRoute = findRouteByPath(routes, 'tabs');
     const collectionRoute = tabsRoute?.children?.find((route) => route.path === 'collection');
 
     expect(collectionRoute?.redirectTo).toBe('saved-teams');
@@ -46,7 +69,7 @@ describe('app routes', () => {
   });
 
   it('registers the privacy policy route inside the tabs shell', () => {
-    const tabsRoute = routes.find((route) => route.path === 'tabs');
+    const tabsRoute = findRouteByPath(routes, 'tabs');
     const privacyRoute = tabsRoute?.children?.find((route) => route.path === 'privacy');
 
     expect(privacyRoute).toBeDefined();
@@ -54,7 +77,7 @@ describe('app routes', () => {
   });
 
   it('adds SEO route data for public indexable tab routes', () => {
-    const tabsRoute = routes.find((route) => route.path === 'tabs');
+    const tabsRoute = findRouteByPath(routes, 'tabs');
     const publicRoutePaths = ['characters', 'team-builder', 'auto-team-builder', 'crew-forge'];
 
     for (const path of publicRoutePaths) {
@@ -68,7 +91,7 @@ describe('app routes', () => {
   });
 
   it('registers the cookie policy route inside the tabs shell', () => {
-    const tabsRoute = routes.find((route) => route.path === 'tabs');
+    const tabsRoute = findRouteByPath(routes, 'tabs');
     const cookieRoute = tabsRoute?.children?.find((route) => route.path === 'cookies');
 
     expect(cookieRoute).toBeDefined();
@@ -76,7 +99,7 @@ describe('app routes', () => {
   });
 
   it('registers the terms of service route inside the tabs shell', () => {
-    const tabsRoute = routes.find((route) => route.path === 'tabs');
+    const tabsRoute = findRouteByPath(routes, 'tabs');
     const termsRoute = tabsRoute?.children?.find((route) => route.path === 'terms');
 
     expect(termsRoute).toBeDefined();
@@ -96,3 +119,19 @@ describe('app routes', () => {
     expect(termsRoute?.pathMatch).toBe('full');
   });
 });
+
+function findRouteByPath(routeList: readonly Route[], path: string): Route | undefined {
+  for (const route of routeList) {
+    if (route.path === path) {
+      return route;
+    }
+
+    const childRoute = route.children ? findRouteByPath(route.children, path) : undefined;
+
+    if (childRoute) {
+      return childRoute;
+    }
+  }
+
+  return undefined;
+}
