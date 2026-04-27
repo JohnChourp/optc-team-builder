@@ -25,10 +25,10 @@ import conflictOverrideCatalog from '../data/auto-team-builder-party-conflict-ov
 import { type CharacterDetailRecord, type CharacterListItem } from '../models/optc.models';
 import { matchesAbilityRequirement } from './auto-team-builder-ability-match.utils';
 
-const CAPTAIN_ATK_PATTERN = /atk(?:[^.]{0,120}?)?by\s+(\d+(?:\.\d+)?)x/gi;
-const CAPTAIN_HP_PATTERN = /hp(?:[^.]{0,120}?)?by\s+(\d+(?:\.\d+)?)x/gi;
 const CAPTAIN_BRANCH_PATTERN =
   /\b(always active|standard captain|powered up captain|rampage captain)\s*:\s*/gi;
+const CAPTAIN_EFFECT_CLAUSE_SEPARATOR =
+  /,\s+(?=(?:and\s+)?(?:boosts?|reduces?|makes?|changes?|increases?|restores?|deals?|cuts?|lowers?|decreases?|sets?|adds?)\b)|\s+\band\s+(?=(?:boosts?|reduces?|makes?|changes?|increases?|restores?|deals?|cuts?|lowers?|decreases?|sets?|adds?)\b)/gi;
 const SCOPE_CLAUSE_PATTERN = /\b(?:of|for)\s+([^.;]{1,160}?)\s+(?:characters|units)\b/g;
 const SUPER_EFFECT_SCOPE_CLAUSE_PATTERN =
   /\b(?:changes?|transforms?)\s+([^.;]{1,160}?)\s+(?:characters|units)\s+(?:to|into)\s+(?:a\s+|an\s+)?super\b/gi;
@@ -1827,11 +1827,17 @@ function parseEffectTags(
     includesAny(combinedText, ['threshold damage reduction']) ? 'threshold' : null,
     includesAny(combinedText, ['defense down', 'reduces the defense']) ? 'defenseDown' : null,
   ]);
-  const allCharacters = includesAny(captainText, ['all characters', 'all units']);
-  const allowedClasses = allCharacters ? [] : extractAllowedCaptainClasses(captainText);
-  const allowedTypes = allCharacters ? [] : extractAllowedCaptainTypes(captainText);
-  const maxAllowedCost = extractCaptainMaxAllowedCost(captainText);
+  const defaultCaptainText = extractDefaultCaptainBoostText(captainText);
+  const captainBoostScopeText = extractDefaultCaptainBoostClauses(defaultCaptainText).join('. ');
+  const allowedClasses = extractAllowedCaptainClasses(captainBoostScopeText);
+  const allowedTypes = extractAllowedCaptainTypes(captainBoostScopeText);
+  const maxAllowedCost = extractCaptainMaxAllowedCost(captainBoostScopeText);
   const hasCostRestriction = maxAllowedCost !== null;
+  const allCharacters =
+    allowedClasses.length === 0 &&
+    allowedTypes.length === 0 &&
+    !hasCostRestriction &&
+    includesAny(captainBoostScopeText, ['all characters', 'all units']);
   const matchedSelectedClasses = allCharacters
     ? [...selectedClasses]
     : selectedClasses.filter((selectedClass) =>
@@ -1866,8 +1872,8 @@ function parseEffectTags(
     burstRoles,
     consistencyRoles,
     utilityRoles,
-    captainAtkMultiplier: extractCaptainMultiplier(captainText, CAPTAIN_ATK_PATTERN),
-    captainHpMultiplier: extractCaptainMultiplier(captainText, CAPTAIN_HP_PATTERN),
+    captainAtkMultiplier: extractCaptainMultiplier(captainText, 'atk'),
+    captainHpMultiplier: extractCaptainMultiplier(captainText, 'hp'),
     readableCaptainText: captainText.length > 0,
     readableSpecialText: specialText.length > 0,
     readableSailorText: sailorText.length > 0,
@@ -2512,17 +2518,68 @@ function textMatchesClassScope(text: string, selectedClass: string): boolean {
   return textHasLabelToken(text, selectedClass);
 }
 
-function extractCaptainMultiplier(text: string, pattern: RegExp): number {
+function extractCaptainMultiplier(text: string, stat: 'atk' | 'hp'): number {
   const defaultCaptainText = extractDefaultCaptainBoostText(text);
+  const pattern = new RegExp(`\\b${stat}\\b[^.;]*?\\bby\\s+(\\d+(?:\\.\\d+)?)x`, 'gi');
 
-  return [...defaultCaptainText.matchAll(pattern)].reduce((highest, match) => {
-    if (isSelfOnlyCaptainBoostMatch(match[0])) {
-      return highest;
+  return extractDefaultCaptainBoostClauses(defaultCaptainText).reduce((highest, clause) => {
+    return [...clause.matchAll(pattern)].reduce((clauseHighest, match) => {
+      if (isSelfOnlyCaptainBoostMatch(match[0])) {
+        return clauseHighest;
+      }
+
+      const value = Number(match[1]);
+      return Number.isFinite(value) && value > clauseHighest ? value : clauseHighest;
+    }, highest);
+  }, 0);
+}
+
+function extractDefaultCaptainBoostClauses(text: string): string[] {
+  return splitCaptainEffectClauses(text).filter(
+    (clause) =>
+      !isConditionalCaptainBoostClause(clause) &&
+      /\bboosts?\b/i.test(clause) &&
+      /\b(?:atk|hp)\b/i.test(clause) &&
+      /\bby\s+\d+(?:\.\d+)?x\b/i.test(clause),
+  );
+}
+
+function splitCaptainEffectClauses(text: string): string[] {
+  return splitCaptainSentences(text)
+    .flatMap((clause) =>
+      isConditionalCaptainBoostClause(clause) ? [clause] : clause.split(CAPTAIN_EFFECT_CLAUSE_SEPARATOR),
+    )
+    .map((clause) => clause.trim())
+    .filter(Boolean);
+}
+
+function splitCaptainSentences(text: string): string[] {
+  const clauses: string[] = [];
+  let current = '';
+
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+    const previousCharacter = text[index - 1] ?? '';
+    const nextCharacter = text[index + 1] ?? '';
+    const isDecimalPoint =
+      character === '.' && /\d/.test(previousCharacter) && /\d/.test(nextCharacter);
+
+    if ((character === '.' && !isDecimalPoint) || character === ';') {
+      clauses.push(current);
+      current = '';
+      continue;
     }
 
-    const value = Number(match[1]);
-    return Number.isFinite(value) && value > highest ? value : highest;
-  }, 0);
+    current += character;
+  }
+
+  clauses.push(current);
+
+  return clauses;
+}
+
+function isConditionalCaptainBoostClause(clause: string): boolean {
+  return /^(?:if|when)\b/i.test(clause.trim());
 }
 
 function extractDefaultCaptainBoostText(text: string): string {

@@ -267,6 +267,44 @@ describe('import-optc-data ship thumbnail pack', () => {
     expect(character.captainAverageBoost).toBe(2.4);
   });
 
+  it('keeps conditional captain ATK boosts out of default boost fields', () => {
+    const [character] = normalizeCharacters(
+      [
+        [
+          'Brook - Freezing Chill of the Dead',
+          'PSY',
+          ['Slasher', 'Free Spirit'],
+          6,
+          55,
+          4,
+          5,
+          99,
+          5_000_000,
+          2002,
+          867,
+          155,
+          4004,
+          1733,
+          310,
+          1,
+        ],
+      ],
+      {
+        1: {
+          captain: {
+            base: "Reduces crew's current HP by 80% at the start of the fight, reduces Special Cooldown of all characters by 3 turns at the start of the fight, reduces VS Gauge of all characters by 3 at the start of the fight, boosts ATK of Slasher and Free Spirit characters by 5.25x, boosts HP of Slasher and Free Spirit characters by 1.4x, makes [PSY] and [TND] orbs beneficial for Slasher and Free Spirit characters. If your crew has 4+ [Straw Hat Pirates], [Paramythia-type] or [Scientist] characters and HP is below 25% at the start of the turn, boosts ATK of Slasher and Free Spirit characters by 6.3x instead.",
+          },
+        },
+      },
+      [],
+      new Map(),
+    );
+
+    expect(character.captainHpBoost).toBe(1.4);
+    expect(character.captainAtkBoost).toBe(5.25);
+    expect(character.captainAverageBoost).toBe(3.325);
+  });
+
   it('supports object-based unit maps from the 2shankz source', () => {
     const [character] = normalizeCharacters(
       {

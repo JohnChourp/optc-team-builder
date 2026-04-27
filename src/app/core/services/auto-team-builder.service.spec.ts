@@ -27,6 +27,8 @@ type AutoTeamBuilderServiceWithWorkerFactory = AutoTeamBuilderService & {
 };
 const BIG_MOM_CAPTAIN_ABILITY =
   '<b>Always Active: </b>Boosts HP of [STR], [DEX] and [QCK] characters by 1.3x and changes [RCV] orbs into [SEMLA] orbs.. <b>Standard Captain: </b>Boosts ATK of [STR], [DEX] and [QCK] characters by 3.5x. <b>Powered Up Captain: </b>Boosts ATK of this character by 4.25x, boosts ATK of [STR], [DEX] and [QCK] characters by 4x and reduces damage received by 15%. <b>Rampage Captain: </b>Boosts ATK of this character by 12x and own attacks will ignore damage reducing Barriers and Buffs, boosts ATK of [STR], [DEX] and [QCK] characters by 3.75x and boosts chances of getting [SEMLA] orbs.';
+const BROOK_CAPTAIN_ABILITY =
+  "Reduces crew's current HP by 80% at the start of the fight, reduces Special Cooldown of all characters by 3 turns at the start of the fight, reduces VS Gauge of all characters by 3 at the start of the fight, boosts ATK of Slasher and Free Spirit characters by 5.25x, boosts HP of Slasher and Free Spirit characters by 1.4x, makes [PSY] and [TND] orbs beneficial for Slasher and Free Spirit characters, and increases duration of any Color Affinity, Advantageous Class Effect and Status ATK Boosting buffs applied by Specials by 1 turn. If your crew has 4+ [Straw Hat Pirates], [Paramythia-type] or [Scientist] characters and HP is below 25% at the start of the turn, boosts ATK of Slasher and Free Spirit characters by 6.3x instead.";
 
 describe('Auto team builder', () => {
   it('parses type-targeted leader super effect scope text', () => {
@@ -104,6 +106,33 @@ describe('Auto team builder', () => {
       expect.arrayContaining(['matchingOrbs', 'orbChange', 'cooldownReduction']),
     );
     expect(candidate.tags.utilityRoles).toEqual(expect.arrayContaining(['bind', 'despair']));
+  });
+
+  it('ignores non-boost all-character captain clauses when deriving leader scope', () => {
+    const candidate = buildAutoBuildCandidate(
+      createCharacterRecord({
+        id: 4426,
+        name: 'Brook - Freezing Chill of the Dead',
+        type: 'PSY',
+        primaryClass: 'Slasher',
+        secondaryClass: 'Free Spirit',
+        detail: {
+          captainAbility: BROOK_CAPTAIN_ABILITY,
+        },
+      }),
+      createInput(['PSY'], ['Slasher', 'Free Spirit']),
+      0,
+      1,
+    );
+
+    expect(candidate.tags.captainAtkMultiplier).toBe(5.25);
+    expect(candidate.tags.captainHpMultiplier).toBe(1.4);
+    expect(candidate.tags.captainScope.allCharacters).toBe(false);
+    expect(candidate.tags.captainScope.allowedClasses).toEqual(
+      expect.arrayContaining(['Slasher', 'Free Spirit']),
+    );
+    expect(candidate.tags.captainScope.allowedClasses).toHaveLength(2);
+    expect(candidate.tags.captainScope.hasClassRestriction).toBe(true);
   });
 
   it('builds combined captain labels for partial multi-type coverage', () => {
@@ -1820,6 +1849,33 @@ describe('Auto team builder', () => {
       ),
     ).toBe(true);
     expect(result?.slots.some((slot) => slot.character.id === 2705)).toBe(false);
+  });
+
+  it('builds Brook teams only from Slasher and Free Spirit subs', () => {
+    const result = buildAutoTeamResult(createBrookLeaderTeamRecords(), {
+      ...createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], [], {
+        lockedCharacterIds: [4426],
+        captainCharacterId: 4426,
+        friendCaptainCharacterId: 4426,
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.leaderCriteria.derivedAllowedClasses).toEqual(
+      expect.arrayContaining(['Slasher', 'Free Spirit']),
+    );
+    expect(result?.coverage.leaderCriteria.derivedAllowedClasses).toHaveLength(2);
+    expect(result?.coverage.leaderCriteria.hasClassRestriction).toBe(true);
+    expect(
+      result?.slots
+        .slice(2)
+        .every((slot) =>
+          slot.character.classes.some((characterClass) =>
+            ['Slasher', 'Free Spirit'].includes(characterClass),
+          ),
+        ),
+    ).toBe(true);
+    expect(result?.slots.some((slot) => slot.character.id >= 9000)).toBe(false);
   });
 
   it('builds Big Mom teams only from STR, DEX, and QCK characters', () => {
@@ -5991,6 +6047,80 @@ function createKaidoLeaderTeamRecords(): CharacterDetailRecord[] {
       detail: {
         specialText:
           'Boosts ATK of Cerebral and Driven characters by 2.5x for 1 turn and boosts orb effects by 2.25x.',
+      },
+    }),
+  ];
+}
+
+function createBrookLeaderTeamRecords(): CharacterDetailRecord[] {
+  return [
+    createCharacterRecord({
+      id: 4426,
+      name: 'Brook - Freezing Chill of the Dead',
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Free Spirit',
+      captainHpBoost: 1.4,
+      captainAtkBoost: 5.25,
+      captainAverageBoost: 3.325,
+      detail: {
+        captainAbility: BROOK_CAPTAIN_ABILITY,
+        specialText:
+          'Boosts Color Affinity of PSY, Slasher and Free Spirit characters by 2.75x for 2 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4430,
+      type: 'DEX',
+      primaryClass: 'Slasher',
+      detail: {
+        specialText: 'Boosts ATK of Slasher characters by 2.5x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4431,
+      type: 'QCK',
+      primaryClass: 'Free Spirit',
+      detail: {
+        specialText: 'Boosts orb effects of Free Spirit characters by 2.25x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4432,
+      type: 'STR',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Powerhouse',
+      detail: {
+        specialText: 'Reduces Bind and Despair duration by 5 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4433,
+      type: 'INT',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Free Spirit',
+      detail: {
+        specialText: 'Changes crew orbs into Matching Orbs.',
+      },
+    }),
+    createCharacterRecord({
+      id: 9000,
+      type: 'INT',
+      primaryClass: 'Driven',
+      secondaryClass: 'Cerebral',
+      detail: {
+        specialText:
+          'Boosts ATK of Driven and Cerebral characters by 3x for 1 turn and changes crew orbs into Matching Orbs.',
+      },
+    }),
+    createCharacterRecord({
+      id: 9001,
+      type: 'STR',
+      primaryClass: 'Striker',
+      secondaryClass: 'Powerhouse',
+      detail: {
+        specialText:
+          'Boosts orb effects of Striker and Powerhouse characters by 3x for 1 turn and reduces Special Cooldown by 1 turn.',
       },
     }),
   ];

@@ -59,10 +59,10 @@ const OBJECT_OR_NULL_DETAIL_KEYS = [
   'superClass',
   'rumbleData',
 ] as const;
-const CAPTAIN_ATK_BOOST_PATTERN = /atk(?:[^.]{0,120}?)?by\s+(\d+(?:\.\d+)?)x/gi;
-const CAPTAIN_HP_BOOST_PATTERN = /hp(?:[^.]{0,120}?)?by\s+(\d+(?:\.\d+)?)x/gi;
 const CAPTAIN_BRANCH_PATTERN =
   /\b(always active|standard captain|powered up captain|rampage captain)\s*:\s*/gi;
+const CAPTAIN_EFFECT_CLAUSE_SEPARATOR =
+  /,\s+(?=(?:and\s+)?(?:boosts?|reduces?|makes?|changes?|increases?|restores?|deals?|cuts?|lowers?|decreases?|sets?|adds?)\b)|\s+\band\s+(?=(?:boosts?|reduces?|makes?|changes?|increases?|restores?|deals?|cuts?|lowers?|decreases?|sets?|adds?)\b)/gi;
 const DEFAULT_CAPTAIN_BRANCH_LABELS = new Set(['always active', 'standard captain']);
 const PREFERRED_DEFAULT_CAPTAIN_VARIANT_KEYS = [
   'base',
@@ -150,8 +150,8 @@ function resolveCaptainBoosts(detail: CharacterDetail): {
 } {
   const captainText = resolveDefaultCaptainAbilityText(detail);
   const defaultCaptainText = extractDefaultCaptainBoostText(captainText);
-  const captainHpBoost = extractHighestBoost(defaultCaptainText, CAPTAIN_HP_BOOST_PATTERN);
-  const captainAtkBoost = extractHighestBoost(defaultCaptainText, CAPTAIN_ATK_BOOST_PATTERN);
+  const captainHpBoost = extractHighestBoost(defaultCaptainText, 'hp');
+  const captainAtkBoost = extractHighestBoost(defaultCaptainText, 'atk');
 
   return {
     captainHpBoost,
@@ -204,15 +204,67 @@ function extractCaptainBranches(text: string): Array<{ label: string; text: stri
     .filter((branch) => branch.text.length > 0);
 }
 
-function extractHighestBoost(text: string, pattern: RegExp): number {
-  return [...text.matchAll(pattern)].reduce((highest, match) => {
-    if (isSelfOnlyCaptainBoostMatch(match[0])) {
-      return highest;
+function extractHighestBoost(text: string, stat: 'atk' | 'hp'): number {
+  const pattern = new RegExp(`\\b${stat}\\b[^.;]*?\\bby\\s+(\\d+(?:\\.\\d+)?)x`, 'gi');
+
+  return extractDefaultCaptainBoostClauses(text).reduce((highest, clause) => {
+    return [...clause.matchAll(pattern)].reduce((clauseHighest, match) => {
+      if (isSelfOnlyCaptainBoostMatch(match[0])) {
+        return clauseHighest;
+      }
+
+      const value = Number(match[1]);
+      return Number.isFinite(value) && value > clauseHighest ? value : clauseHighest;
+    }, highest);
+  }, 0);
+}
+
+function extractDefaultCaptainBoostClauses(text: string): string[] {
+  return splitCaptainEffectClauses(text).filter(
+    (clause) =>
+      !isConditionalCaptainBoostClause(clause) &&
+      /\bboosts?\b/i.test(clause) &&
+      /\b(?:atk|hp)\b/i.test(clause) &&
+      /\bby\s+\d+(?:\.\d+)?x\b/i.test(clause),
+  );
+}
+
+function splitCaptainEffectClauses(text: string): string[] {
+  return splitCaptainSentences(text)
+    .flatMap((clause) =>
+      isConditionalCaptainBoostClause(clause) ? [clause] : clause.split(CAPTAIN_EFFECT_CLAUSE_SEPARATOR),
+    )
+    .map((clause) => clause.trim())
+    .filter(Boolean);
+}
+
+function splitCaptainSentences(text: string): string[] {
+  const clauses: string[] = [];
+  let current = '';
+
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+    const previousCharacter = text[index - 1] ?? '';
+    const nextCharacter = text[index + 1] ?? '';
+    const isDecimalPoint =
+      character === '.' && /\d/.test(previousCharacter) && /\d/.test(nextCharacter);
+
+    if ((character === '.' && !isDecimalPoint) || character === ';') {
+      clauses.push(current);
+      current = '';
+      continue;
     }
 
-    const value = Number(match[1]);
-    return Number.isFinite(value) && value > highest ? value : highest;
-  }, 0);
+    current += character;
+  }
+
+  clauses.push(current);
+
+  return clauses;
+}
+
+function isConditionalCaptainBoostClause(clause: string): boolean {
+  return /^(?:if|when)\b/i.test(clause.trim());
 }
 
 function isSelfOnlyCaptainBoostMatch(matchText: string): boolean {
