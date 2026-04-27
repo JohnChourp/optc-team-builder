@@ -449,9 +449,6 @@ function sanitizeManualSlots(
     roleMap.set(role as AutoBuildManualSlotRole, [...currentIds, ...normalizedIds]);
   }
 
-  const usedLeaderIds = new Set<number>();
-  const usedSubIds = new Set<number>();
-
   for (const slot of manualSlots) {
     const nextIds: number[] = [];
 
@@ -461,31 +458,11 @@ function sanitizeManualSlots(
         continue;
       }
 
-      if (
-        AUTO_BUILD_MANUAL_SUB_SLOT_ROLES.includes(
-          slot.role as (typeof AUTO_BUILD_MANUAL_SUB_SLOT_ROLES)[number],
-        )
-      ) {
-        if (
-          usedLeaderIds.has(characterId) ||
-          usedSubIds.has(characterId) ||
-          nextIds.includes(characterId)
-        ) {
-          duplicateCount += 1;
-          continue;
-        }
-
-        usedSubIds.add(characterId);
-        nextIds.push(characterId);
-        continue;
-      }
-
-      if (usedSubIds.has(characterId) || nextIds.includes(characterId)) {
+      if (nextIds.includes(characterId)) {
         duplicateCount += 1;
         continue;
       }
 
-      usedLeaderIds.add(characterId);
       nextIds.push(characterId);
     }
 

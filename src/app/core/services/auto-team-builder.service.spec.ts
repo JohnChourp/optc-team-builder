@@ -3193,7 +3193,7 @@ describe('Auto team builder', () => {
     expect(result?.input.friendCaptainCharacterId).toBe(5925);
   });
 
-  it('derives legacy leader ids from slot-based manual selections and keeps shared leaders valid', async () => {
+  it('derives legacy leader ids from slot-based manual selections and preserves cross-slot OR picks', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
     };
@@ -3212,13 +3212,18 @@ describe('Auto team builder', () => {
       createManualSlots({
         captain: [5925, 5926],
         friendCaptain: [5925],
-        sub1: [5880],
-        sub2: [5870],
+        sub1: [5926, 5880],
+        sub2: [5880, 5870],
       }),
     );
     expect(result?.input.lockedCharacterIds).toEqual([5925, 5926, 5880, 5870]);
     expect(result?.input.captainCharacterId).toBe(5925);
     expect(result?.input.friendCaptainCharacterId).toBe(5925);
+    const nonFriendSlotIds =
+      result?.slots
+        .filter((slot) => slot.role !== 'friendCaptain')
+        .map((slot) => slot.character.id) ?? [];
+    expect(new Set(nonFriendSlotIds).size).toBe(nonFriendSlotIds.length);
   });
 
   it('prefers slot-based manual selections over legacy locked ids when both are provided', async () => {

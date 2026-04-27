@@ -302,6 +302,25 @@
       "addChoice": "Προσθήκη OR",
       "addResult": "Add"
     },
+    "copyModal": {
+      "eyebrow": "Manual copy",
+      "title": "Αντιγραφή manual picks",
+      "copy": "Διάλεξε picks από ένα slot και αντίγραψέ τα σε ένα ή περισσότερα target slots.",
+      "source": {
+        "title": "Source slot",
+        "copy": "Διάλεξε το slot και τα OR picks που θέλεις να αντιγράψεις.",
+        "empty": "Αυτό το slot δεν έχει OR picks για αντιγραφή."
+      },
+      "targets": {
+        "title": "Target slots",
+        "copy": "Τα copied picks ενώνονται με τα υπάρχοντα choices και τα διπλότυπα αγνοούνται.",
+        "sourceLabel": "Τρέχον source slot"
+      },
+      "actions": {
+        "open": "Αντιγραφή picks",
+        "apply": "Εφαρμογή αντιγραφής"
+      }
+    },
     "slotSelection": {
       "activeSummary": "Active slot: {{role}} ({{count}} picks)",
       "assignedTo": "Υπάρχει ήδη στα {{slots}}.",

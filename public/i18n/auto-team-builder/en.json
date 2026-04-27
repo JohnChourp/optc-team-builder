@@ -302,6 +302,25 @@
       "addChoice": "Add OR",
       "addResult": "Add"
     },
+    "copyModal": {
+      "eyebrow": "Manual copy",
+      "title": "Copy manual picks",
+      "copy": "Choose picks from one slot and copy them into one or more target slots.",
+      "source": {
+        "title": "Source slot",
+        "copy": "Select the slot and the OR picks you want to copy.",
+        "empty": "This slot has no OR picks to copy."
+      },
+      "targets": {
+        "title": "Target slots",
+        "copy": "Copied picks are merged with existing choices and duplicates are skipped.",
+        "sourceLabel": "Current source slot"
+      },
+      "actions": {
+        "open": "Copy picks",
+        "apply": "Apply copy"
+      }
+    },
     "slotSelection": {
       "activeSummary": "Active slot: {{role}} ({{count}} picks)",
       "assignedTo": "Already assigned to {{slots}}.",

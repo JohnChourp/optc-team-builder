@@ -1715,36 +1715,9 @@ export class AutoTeamBuilderService {
     }
 
     const normalizedSlots = createEmptyAutoBuildManualSlots();
-    const usedLeaderIds = new Set<number>();
-    const usedSubIds = new Set<number>();
 
     for (const slot of normalizedSlots) {
-      const nextIds: number[] = [];
-
-      for (const characterId of roleMap.get(slot.role) ?? []) {
-        if (
-          AUTO_BUILD_MANUAL_SUB_SLOT_ROLES.includes(
-            slot.role as (typeof AUTO_BUILD_MANUAL_SUB_SLOT_ROLES)[number],
-          )
-        ) {
-          if (usedLeaderIds.has(characterId) || usedSubIds.has(characterId)) {
-            continue;
-          }
-
-          usedSubIds.add(characterId);
-          nextIds.push(characterId);
-          continue;
-        }
-
-        if (usedSubIds.has(characterId) || nextIds.includes(characterId)) {
-          continue;
-        }
-
-        usedLeaderIds.add(characterId);
-        nextIds.push(characterId);
-      }
-
-      slot.characterIds = nextIds;
+      slot.characterIds = [...new Set(roleMap.get(slot.role) ?? [])];
     }
 
     return normalizedSlots;

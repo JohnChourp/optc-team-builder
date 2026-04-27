@@ -14,11 +14,14 @@ import { type ViewDidEnter, type ViewWillEnter } from '@ionic/angular';
 import {
   IonButton,
   IonButtons,
+  IonCheckbox,
   IonContent,
+  IonFooter,
   IonHeader,
   IonIcon,
   IonInput,
   IonMenuButton,
+  IonModal,
   IonSearchbar,
   IonSelect,
   IonSelectOption,
@@ -32,6 +35,8 @@ import {
   alertCircleOutline,
   boatOutline,
   checkmarkCircleOutline,
+  closeOutline,
+  copyOutline,
   heart,
   heartOutline,
   layersOutline,
@@ -209,6 +214,20 @@ interface ManualSlotCardView {
   isActive: boolean;
 }
 
+interface ManualCopyCharacterView {
+  character: CharacterListItem;
+  selected: boolean;
+}
+
+interface ManualCopyTargetSlotView {
+  role: AutoBuildManualSlotRole;
+  title: string;
+  support: string;
+  selectedCharacters: CharacterListItem[];
+  selected: boolean;
+  isSource: boolean;
+}
+
 type TeamSlotViewModel = AutoBuildResult['slots'][number] & {
   trackKey: string;
   roleLabel: string;
@@ -352,11 +371,14 @@ function matchesLeaderOnlyManualRequirements(
   imports: [
     IonButton,
     IonButtons,
+    IonCheckbox,
     IonContent,
+    IonFooter,
     IonHeader,
     IonIcon,
     IonInput,
     IonMenuButton,
+    IonModal,
     IonSearchbar,
     IonSelect,
     IonSelectOption,
@@ -457,6 +479,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     createEmptyAutoBuildManualSlots(),
   );
   public readonly activeManualSlotRole = signal<AutoBuildManualSlotRole>('captain');
+  public readonly manualCopyModalOpen = signal(false);
+  public readonly manualCopySourceRole = signal<AutoBuildManualSlotRole>('captain');
+  public readonly manualCopySelectedCharacterIds = signal<number[]>([]);
+  public readonly manualCopyTargetRoles = signal<AutoBuildManualSlotRole[]>([]);
   public readonly lockedCharacterRecords = signal<Record<number, CharacterListItem>>({});
   public readonly excludedCharacterIds = signal<number[]>([]);
   public readonly selectedManualShipId = signal<number | null>(null);
@@ -707,6 +733,44 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   );
   public readonly activeManualSlotSelectedCharacters = computed(
     () => this.activeManualSlot()?.selectedCharacters ?? [],
+  );
+  public readonly manualCopySourceCharacters = computed<ManualCopyCharacterView[]>(() => {
+    const sourceIds = this.resolveManualSlotSelection(this.manualCopySourceRole()).characterIds;
+    const selectedIdSet = new Set(this.manualCopySelectedCharacterIds());
+    const lockedRecords = this.lockedCharacterRecords();
+
+    return sourceIds
+      .map((characterId) => lockedRecords[characterId])
+      .filter((character): character is CharacterListItem => Boolean(character))
+      .map((character) => ({
+        character,
+        selected: selectedIdSet.has(character.id),
+      }));
+  });
+  public readonly manualCopySourceSlotTitle = computed(
+    () =>
+      this.manualSlotCards().find((slotCard) => slotCard.role === this.manualCopySourceRole())
+        ?.title ?? '',
+  );
+  public readonly manualCopyTargetSlots = computed<ManualCopyTargetSlotView[]>(() => {
+    const sourceRole = this.manualCopySourceRole();
+    const selectedTargetRoleSet = new Set(this.manualCopyTargetRoles());
+
+    return this.manualSlotCards().map((slotCard) => ({
+      role: slotCard.role,
+      title: slotCard.title,
+      support: slotCard.support,
+      selectedCharacters: slotCard.selectedCharacters,
+      selected: selectedTargetRoleSet.has(slotCard.role),
+      isSource: slotCard.role === sourceRole,
+    }));
+  });
+  public readonly manualCopyApplyDisabled = computed(
+    () =>
+      this.building() ||
+      this.manualCopySourceCharacters().length === 0 ||
+      this.manualCopySelectedCharacterIds().length === 0 ||
+      this.manualCopyTargetRoles().length === 0,
   );
   public readonly clearAllButtonDisabled = computed(
     () =>
@@ -1635,6 +1699,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly favoriteIcon = heart;
   public readonly favoriteOutlineIcon = heartOutline;
   public readonly manualFilterIcon = optionsOutline;
+  public readonly copyIcon = copyOutline;
+  public readonly closeIcon = closeOutline;
   public readonly presetImportSuccessIcon = checkmarkCircleOutline;
   public readonly presetImportErrorIcon = alertCircleOutline;
 
@@ -1984,6 +2050,115 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.activeManualSlotRole.set(role);
   }
 
+  public openManualCopyModal(): void {
+    if (this.building() || !this.hasLockedCharacters()) {
+      return;
+    }
+
+    const sourceRole = this.resolveDefaultManualCopySourceRole();
+
+    this.manualCopySourceRole.set(sourceRole);
+    this.manualCopySelectedCharacterIds.set([
+      ...this.resolveManualSlotSelection(sourceRole).characterIds,
+    ]);
+    this.manualCopyTargetRoles.set([]);
+    this.manualCopyModalOpen.set(true);
+  }
+
+  public closeManualCopyModal(): void {
+    this.manualCopyModalOpen.set(false);
+  }
+
+  public onManualCopySourceChange(event: CustomEvent<{ value?: string | null }>): void {
+    const nextRole = this.normalizeManualSlotRole(event.detail.value);
+
+    if (!nextRole) {
+      return;
+    }
+
+    this.manualCopySourceRole.set(nextRole);
+    this.manualCopySelectedCharacterIds.set([
+      ...this.resolveManualSlotSelection(nextRole).characterIds,
+    ]);
+    this.manualCopyTargetRoles.update((currentRoles) =>
+      currentRoles.filter((role) => role !== nextRole),
+    );
+  }
+
+  public toggleManualCopyCharacter(
+    characterId: number,
+    event: CustomEvent<{ checked?: boolean }>,
+  ): void {
+    const checked = event.detail.checked === true;
+
+    this.manualCopySelectedCharacterIds.update((currentIds) =>
+      checked
+        ? currentIds.includes(characterId)
+          ? currentIds
+          : [...currentIds, characterId]
+        : currentIds.filter((currentId) => currentId !== characterId),
+    );
+  }
+
+  public toggleManualCopyTarget(
+    role: AutoBuildManualSlotRole,
+    event: CustomEvent<{ checked?: boolean }>,
+  ): void {
+    if (role === this.manualCopySourceRole()) {
+      return;
+    }
+
+    const checked = event.detail.checked === true;
+
+    this.manualCopyTargetRoles.update((currentRoles) =>
+      checked
+        ? currentRoles.includes(role)
+          ? currentRoles
+          : [...currentRoles, role]
+        : currentRoles.filter((currentRole) => currentRole !== role),
+    );
+  }
+
+  public applyManualCopy(): void {
+    if (this.manualCopyApplyDisabled()) {
+      return;
+    }
+
+    const sourceCharacterIds = this.resolveManualSlotSelection(
+      this.manualCopySourceRole(),
+    ).characterIds;
+    const selectedCharacterIdSet = new Set(this.manualCopySelectedCharacterIds());
+    const copiedCharacterIds = sourceCharacterIds.filter((characterId) =>
+      selectedCharacterIdSet.has(characterId),
+    );
+    const targetRoleSet = new Set(this.manualCopyTargetRoles());
+
+    this.manualSlots.update((currentSlots) =>
+      currentSlots.map((slot) => {
+        if (!targetRoleSet.has(slot.role)) {
+          return slot;
+        }
+
+        const existingIdSet = new Set(slot.characterIds);
+        const nextCharacterIds = [...slot.characterIds];
+
+        for (const characterId of copiedCharacterIds) {
+          if (!existingIdSet.has(characterId)) {
+            existingIdSet.add(characterId);
+            nextCharacterIds.push(characterId);
+          }
+        }
+
+        return {
+          ...slot,
+          characterIds: nextCharacterIds,
+        };
+      }),
+    );
+    this.closeManualCopyModal();
+    this.resetBuildState();
+  }
+
   public onRequireAllSelectedTypesToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.requireAllSelectedTypesInTeam.set(event.detail.checked);
     this.resetBuildState();
@@ -2290,17 +2465,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       return true;
     }
 
-    if (this.isExcludedCharacter(character.id)) {
-      return false;
-    }
-
-    if (this.isLeaderManualSlotRole(role)) {
-      return !this.manualSlots().some(
-        (slot) => this.isSubManualSlotRole(slot.role) && slot.characterIds.includes(character.id),
-      );
-    }
-
-    return !this.manualSlots().some((slot) => slot.characterIds.includes(character.id));
+    return !this.isExcludedCharacter(character.id);
   }
 
   public canExcludeCharacter(characterId: number): boolean {
@@ -3469,6 +3634,26 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         characterIds: [],
       }
     );
+  }
+
+  private resolveDefaultManualCopySourceRole(): AutoBuildManualSlotRole {
+    const activeRole = this.activeManualSlotRole();
+
+    if (this.resolveManualSlotSelection(activeRole).characterIds.length > 0) {
+      return activeRole;
+    }
+
+    return (
+      this.manualSlots().find((slot) => slot.characterIds.length > 0)?.role ??
+      AUTO_BUILD_MANUAL_SLOT_ROLES[0]
+    );
+  }
+
+  private normalizeManualSlotRole(value: string | null | undefined): AutoBuildManualSlotRole | null {
+    return typeof value === 'string' &&
+      AUTO_BUILD_MANUAL_SLOT_ROLES.includes(value as AutoBuildManualSlotRole)
+      ? (value as AutoBuildManualSlotRole)
+      : null;
   }
 
   private serializeManualSlots(): AutoBuildManualSlotSelection[] {

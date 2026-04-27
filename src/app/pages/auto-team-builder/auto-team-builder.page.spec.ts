@@ -30,6 +30,7 @@ import {
 vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
   IonButtons: class {},
+  IonCheckbox: class {},
   IonContent: class {},
   IonFooter: class {},
   IonHeader: class {},
@@ -1139,6 +1140,100 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.manualSlots().find((slot) => slot.role === 'captain')?.characterIds).toEqual([412]);
   });
 
+  it('copies all manual picks from Captain to Friend Captain', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.manualSlots.set(createManualSlots({ captain: [101, 102] }));
+    page.lockedCharacterRecords.set({
+      101: createCharacterRecord(101),
+      102: createCharacterRecord(102),
+    });
+    page.activeManualSlotRole.set('captain');
+
+    page.openManualCopyModal();
+    page.toggleManualCopyTarget('friendCaptain', {
+      detail: { checked: true },
+    } as CustomEvent<{ checked: boolean }>);
+    page.applyManualCopy();
+
+    expect(page.manualSlots()).toEqual(
+      createManualSlots({
+        captain: [101, 102],
+        friendCaptain: [101, 102],
+      }),
+    );
+    expect(page.manualCopyModalOpen()).toBe(false);
+  });
+
+  it('copy-merges selected manual picks into multiple sub slots while preserving targets', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.manualSlots.set(
+      createManualSlots({
+        sub1: [301, 302],
+        sub2: [303],
+      }),
+    );
+    page.lockedCharacterRecords.set({
+      301: createCharacterRecord(301),
+      302: createCharacterRecord(302),
+      303: createCharacterRecord(303),
+    });
+    page.activeManualSlotRole.set('sub1');
+
+    page.openManualCopyModal();
+    page.toggleManualCopyCharacter(302, {
+      detail: { checked: false },
+    } as CustomEvent<{ checked: boolean }>);
+    page.toggleManualCopyTarget('sub2', {
+      detail: { checked: true },
+    } as CustomEvent<{ checked: boolean }>);
+    page.toggleManualCopyTarget('sub3', {
+      detail: { checked: true },
+    } as CustomEvent<{ checked: boolean }>);
+    page.applyManualCopy();
+
+    expect(page.manualSlots()).toEqual(
+      createManualSlots({
+        sub1: [301, 302],
+        sub2: [303, 301],
+        sub3: [301],
+      }),
+    );
+  });
+
+  it('does not duplicate copied manual picks already present in a target slot', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.manualSlots.set(
+      createManualSlots({
+        captain: [101, 102],
+        friendCaptain: [101],
+      }),
+    );
+    page.lockedCharacterRecords.set({
+      101: createCharacterRecord(101),
+      102: createCharacterRecord(102),
+    });
+    page.activeManualSlotRole.set('captain');
+
+    page.openManualCopyModal();
+    page.toggleManualCopyTarget('friendCaptain', {
+      detail: { checked: true },
+    } as CustomEvent<{ checked: boolean }>);
+    page.applyManualCopy();
+
+    expect(page.manualSlots()).toEqual(
+      createManualSlots({
+        captain: [101, 102],
+        friendCaptain: [101, 102],
+      }),
+    );
+  });
+
   it('keeps non-favorite manual candidates visible when favorites-only mode is enabled', async () => {
     const { page, userState } = await createPage();
     const favoriteCandidate = createCharacterRecord(411, 'Favorite Candidate');
@@ -1415,7 +1510,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.manualSlots()).toEqual(createManualSlots());
   });
 
-  it('keeps manual slot conflict rules when adding generated result characters', async () => {
+  it('allows generated result characters to become OR picks in another manual slot', async () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
@@ -1426,12 +1521,13 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       }),
     );
 
-    expect(page.canAddResultCharacterToManualSlot(page.teamSlots()[0]!)).toBe(false);
+    expect(page.canAddResultCharacterToManualSlot(page.teamSlots()[0]!)).toBe(true);
 
     page.addResultCharacterToManualSlot(page.teamSlots()[0]!);
 
     expect(page.manualSlots()).toEqual(
       createManualSlots({
+        captain: [101],
         sub1: [101],
       }),
     );
@@ -3361,6 +3457,61 @@ describe('AutoTeamBuilder preset import helpers', () => {
       { key: 'preset.warnings.unavailableClasses', params: { count: 1 } },
       { key: 'preset.warnings.unsupportedAbilities', params: { count: 1 } },
     ]);
+  });
+
+  it('keeps cross-slot manual OR picks when sanitizing imported presets', () => {
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [],
+      enemyMechanics: [],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
+      requireUniqueBaseCharacterNames: false,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      manualSlots: createManualSlots({
+        captain: [101, 102],
+        friendCaptain: [101],
+        sub1: [102, 103],
+        sub2: [103, 104],
+      }),
+      lockedCharacterIds: [101, 102, 103, 104],
+      lockedCharacters: [
+        createCharacterRecord(101),
+        createCharacterRecord(102),
+        createCharacterRecord(103),
+        createCharacterRecord(104),
+      ],
+      selectedLeaderIds: [101],
+      captainLeaderId: 101,
+      friendCaptainLeaderId: 101,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+
+    const result = sanitizeAutoTeamSelectionImportPayload(payload, {
+      availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      availableClasses: ['Fighter', 'Slasher'],
+      abilityCatalogItems: [],
+      availableLockedCharacters: [
+        createCharacterRecord(101),
+        createCharacterRecord(102),
+        createCharacterRecord(103),
+        createCharacterRecord(104),
+      ],
+    });
+
+    expect(result.state.manualSlots).toEqual(
+      createManualSlots({
+        captain: [101, 102],
+        friendCaptain: [101],
+        sub1: [102, 103],
+        sub2: [103, 104],
+      }),
+    );
+    expect(result.state.lockedCharacterIds).toEqual([101, 102, 103, 104]);
+    expect(result.warnings).toEqual([]);
   });
 
   it('restores leader boost ranges from imported presets', () => {

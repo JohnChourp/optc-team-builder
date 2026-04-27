@@ -674,15 +674,27 @@
 
               <div class="manual-locks-meta">
                 <strong>{{ manualSlotSummaryLabel() }}</strong>
-                <ion-button
-                  fill="clear"
-                  size="small"
-                  class="select-all-button"
-                  [disabled]="clearAllButtonDisabled()"
-                  (click)="clearAllManualSelections()"
-                >
-                  {{ t('manual.actions.clearAll') }}
-                </ion-button>
+                <div class="manual-locks-actions">
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    class="select-all-button"
+                    [disabled]="building() || !hasLockedCharacters()"
+                    (click)="openManualCopyModal()"
+                  >
+                    <ion-icon slot="start" [icon]="copyIcon"></ion-icon>
+                    {{ t('manual.copyModal.actions.open') }}
+                  </ion-button>
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    class="select-all-button"
+                    [disabled]="clearAllButtonDisabled()"
+                    (click)="clearAllManualSelections()"
+                  >
+                    {{ t('manual.actions.clearAll') }}
+                  </ion-button>
+                </div>
               </div>
 
               <div class="manual-filter-summary-card">
@@ -988,6 +1000,137 @@
             </div>
           </div>
         </section>
+
+        <ion-modal
+          [isOpen]="manualCopyModalOpen()"
+          cssClass="manual-copy-modal"
+          (didDismiss)="closeManualCopyModal()"
+        >
+          <ng-template>
+            <ion-header class="manual-copy-modal__header ion-no-border">
+              <ion-toolbar>
+                <div class="manual-copy-modal__head">
+                  <div>
+                    <div class="section-label">
+                      <ion-icon [icon]="copyIcon"></ion-icon>
+                      <span>{{ t('manual.copyModal.eyebrow') }}</span>
+                    </div>
+                    <h2>{{ t('manual.copyModal.title') }}</h2>
+                    <p>{{ t('manual.copyModal.copy') }}</p>
+                  </div>
+                </div>
+
+                <ion-buttons slot="end">
+                  <ion-button fill="clear" color="light" (click)="closeManualCopyModal()">
+                    <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                  </ion-button>
+                </ion-buttons>
+              </ion-toolbar>
+            </ion-header>
+
+            <ion-content class="manual-copy-modal__content">
+              <div class="manual-copy-modal__shell">
+                <section class="manual-copy-card">
+                  <div class="manual-copy-card__head">
+                    <h3>{{ t('manual.copyModal.source.title') }}</h3>
+                    <span>{{ t('manual.copyModal.source.copy') }}</span>
+                  </div>
+
+                  <ion-select
+                    interface="popover"
+                    fill="outline"
+                    [value]="manualCopySourceRole()"
+                    [selectedText]="manualCopySourceSlotTitle()"
+                    (ionChange)="onManualCopySourceChange($event)"
+                  >
+                    @for (slotCard of manualSlotCards(); track slotCard.role) {
+                      <ion-select-option
+                        [value]="slotCard.role"
+                        [disabled]="!slotCard.selectedCharacters.length"
+                      >
+                        {{ slotCard.title }}
+                      </ion-select-option>
+                    }
+                  </ion-select>
+
+                  @if (manualCopySourceCharacters().length) {
+                    <div class="manual-copy-list">
+                      @for (item of manualCopySourceCharacters(); track item.character.id) {
+                        <label class="manual-copy-item">
+                          <ion-checkbox
+                            [checked]="item.selected"
+                            [attr.aria-label]="item.character.name"
+                            (ionChange)="toggleManualCopyCharacter(item.character.id, $event)"
+                          ></ion-checkbox>
+                          <img
+                            [src]="item.character.imageUrl"
+                            [alt]="item.character.name"
+                            loading="lazy"
+                          />
+                          <span>{{ item.character.name }}</span>
+                        </label>
+                      }
+                    </div>
+                  } @else {
+                    <p class="manual-candidate-empty-state manual-candidate-empty-state--compact">
+                      {{ t('manual.copyModal.source.empty') }}
+                    </p>
+                  }
+                </section>
+
+                <section class="manual-copy-card">
+                  <div class="manual-copy-card__head">
+                    <h3>{{ t('manual.copyModal.targets.title') }}</h3>
+                    <span>{{ t('manual.copyModal.targets.copy') }}</span>
+                  </div>
+
+                  <div class="manual-copy-target-grid">
+                    @for (slotCard of manualCopyTargetSlots(); track slotCard.role) {
+                      <label
+                        class="manual-copy-target"
+                        [class.manual-copy-target--source]="slotCard.isSource"
+                      >
+                        <ion-checkbox
+                          [checked]="slotCard.selected"
+                          [disabled]="slotCard.isSource"
+                          [attr.aria-label]="slotCard.title"
+                          (ionChange)="toggleManualCopyTarget(slotCard.role, $event)"
+                        ></ion-checkbox>
+                        <span class="manual-copy-target__copy">
+                          <strong>{{ slotCard.title }}</strong>
+                          <small>
+                            {{
+                              slotCard.isSource
+                                ? t('manual.copyModal.targets.sourceLabel')
+                                : slotCard.support
+                            }}
+                          </small>
+                        </span>
+                      </label>
+                    }
+                  </div>
+                </section>
+              </div>
+            </ion-content>
+
+            <ion-footer class="manual-copy-modal__footer">
+              <ion-toolbar>
+                <div class="manual-copy-modal__actions">
+                  <ion-button fill="outline" color="light" (click)="closeManualCopyModal()">
+                    {{ 'common.actions.cancel' | transloco }}
+                  </ion-button>
+                  <ion-button
+                    color="warning"
+                    [disabled]="manualCopyApplyDisabled()"
+                    (click)="applyManualCopy()"
+                  >
+                    {{ t('manual.copyModal.actions.apply') }}
+                  </ion-button>
+                </div>
+              </ion-toolbar>
+            </ion-footer>
+          </ng-template>
+        </ion-modal>
 
         <section class="manual-locks-card">
           <div class="manual-locks-layout">
