@@ -117,7 +117,6 @@ interface LeaderPairOption {
   captainIndex: number;
   friendCaptain: AutoBuildCandidate;
   friendCaptainIndex: number;
-  score: number;
 }
 
 interface AutoTeamBuildAttemptOptions {
@@ -136,33 +135,26 @@ const PARTY_CONFLICT_KEY_OVERRIDES = new Map<number, string[]>(
   ]),
 );
 
-function resolvePowerFirstCostBucket(cost: number): number {
+function resolvePowerScoreCostBucket(cost: number): number {
   return cost >= 1 && cost <= 65 ? 0 : 1;
 }
 
-function compareCharactersByPowerPreference(
+function compareCharactersByIdThenCost(
   left: Pick<CharacterDetailRecord, 'cost' | 'id'>,
   right: Pick<CharacterDetailRecord, 'cost' | 'id'>,
 ): number {
-  const bucketDifference =
-    resolvePowerFirstCostBucket(left.cost) - resolvePowerFirstCostBucket(right.cost);
-
-  if (bucketDifference !== 0) {
-    return bucketDifference;
+  if (left.id !== right.id) {
+    return right.id - left.id;
   }
 
-  if (resolvePowerFirstCostBucket(left.cost) === 0 && left.cost !== right.cost) {
-    return right.cost - left.cost;
-  }
-
-  return right.id - left.id;
+  return right.cost - left.cost;
 }
 
-function compareCandidatesByPowerPreference(
+function compareCandidatesByIdThenCost(
   left: AutoBuildCandidate,
   right: AutoBuildCandidate,
 ): number {
-  return compareCharactersByPowerPreference(left.character, right.character);
+  return compareCharactersByIdThenCost(left.character, right.character);
 }
 
 function compareCaptainsBySelectionPreference(
@@ -178,19 +170,7 @@ function compareCaptainsBySelectionPreference(
     return boostDifference;
   }
 
-  const recencyDifference = right.character.id - left.character.id;
-
-  if (recencyDifference !== 0) {
-    return recencyDifference;
-  }
-
-  const costDifference = right.character.cost - left.character.cost;
-
-  if (costDifference !== 0) {
-    return costDifference;
-  }
-
-  return scoreCaptain(right, input) - scoreCaptain(left, input);
+  return right.character.id - left.character.id;
 }
 
 function resolveLeaderBoostPreferenceScore(
@@ -219,7 +199,7 @@ export function resolveAutoBuildCharacterPowerPreferenceScore(
 ): number {
   const { cost, id } = character;
 
-  if (resolvePowerFirstCostBucket(cost) === 0) {
+  if (resolvePowerScoreCostBucket(cost) === 0) {
     return cost + id / 1_000_000;
   }
 
@@ -233,10 +213,6 @@ export function resolveAutoBuildTeamPowerPreferenceScore(
     (total, character) => total + resolveAutoBuildCharacterPowerPreferenceScore(character),
     0,
   );
-}
-
-function resolveCandidatePowerPreferenceScore(candidate: AutoBuildCandidate): number {
-  return resolveAutoBuildCharacterPowerPreferenceScore(candidate.character);
 }
 
 function candidateMatchesAbilityRequirement(
@@ -805,13 +781,25 @@ export function buildAutoTeamResult(
   if (!manualSlotCandidateMap) {
     return null;
   }
+  const manualCharacterIdSet = new Set(input.manualSlots.flatMap((slot) => slot.characterIds));
+  const ignoredOverflowLockedCharacterIdSet =
+    input.lockedCharacterIds.length > manualCharacterIdSet.size && manualCharacterIdSet.size > 0
+      ? new Set(
+          input.lockedCharacterIds.filter((characterId) => !manualCharacterIdSet.has(characterId)),
+        )
+      : input.lockedCharacterIds.length > TEAM_SUB_SLOT_COUNT + 1
+        ? new Set(input.lockedCharacterIds.slice(TEAM_SUB_SLOT_COUNT + 1))
+        : null;
   const autoFillCandidateIdSet = options.autoFillCharacterIds
     ? new Set(options.autoFillCharacterIds)
     : null;
-  const autoFillCandidates = autoFillCandidateIdSet
-    ? candidates.filter((candidate) => autoFillCandidateIdSet.has(candidate.character.id))
-    : candidates;
-  const manualCharacterIdSet = new Set(input.manualSlots.flatMap((slot) => slot.characterIds));
+  const autoFillCandidates = (
+    autoFillCandidateIdSet
+      ? candidates.filter((candidate) => autoFillCandidateIdSet.has(candidate.character.id))
+      : candidates
+  ).filter(
+    (candidate) => !ignoredOverflowLockedCharacterIdSet?.has(candidate.character.id),
+  );
   const manualFriendCaptainCandidates = manualSlotCandidateMap.get('friendCaptain') ?? [];
   const friendCaptainCandidates = resolveFriendCaptainCandidatePool(
     input,
@@ -1108,11 +1096,6 @@ function buildLeaderPairOptions(
         captainIndex,
         friendCaptain,
         friendCaptainIndex,
-        score:
-          scoreCaptain(captain, input) +
-          scoreCaptain(friendCaptain, input) +
-          (captainOptions.length - captainIndex) / 100 +
-          (friendCaptainOptions.length - friendCaptainIndex) / 100,
       });
     });
   });
@@ -1134,7 +1117,7 @@ function buildLeaderPairOptions(
       return friendCaptainDifference;
     }
 
-    return right.score - left.score;
+    return 0;
   });
 }
 
@@ -1212,28 +1195,24 @@ function resolveConstrainedSubSelections(
         );
       })
       .sort((left, right) => {
-        const leftScore =
-          scoreSubCandidate(
-            left.candidate,
-            leaderCandidates,
-            leaderSlots,
-            currentCoverage,
-            selectedSubs,
-            leaderSuperEffectScope,
-            input,
-          ) +
-          (slotCandidates.length - left.index) / 100;
-        const rightScore =
-          scoreSubCandidate(
-            right.candidate,
-            leaderCandidates,
-            leaderSlots,
-            currentCoverage,
-            selectedSubs,
-            leaderSuperEffectScope,
-            input,
-          ) +
-          (slotCandidates.length - right.index) / 100;
+        const leftScore = scoreSubCandidate(
+          left.candidate,
+          leaderCandidates,
+          leaderSlots,
+          currentCoverage,
+          selectedSubs,
+          leaderSuperEffectScope,
+          input,
+        );
+        const rightScore = scoreSubCandidate(
+          right.candidate,
+          leaderCandidates,
+          leaderSlots,
+          currentCoverage,
+          selectedSubs,
+          leaderSuperEffectScope,
+          input,
+        );
 
         const scoreDifference = rightScore - leftScore;
 
@@ -1241,7 +1220,7 @@ function resolveConstrainedSubSelections(
           return scoreDifference;
         }
 
-        return compareCandidatesByPowerPreference(left.candidate, right.candidate);
+        return compareCandidatesByIdThenCost(left.candidate, right.candidate);
       });
 
     for (const { candidate } of rankedCandidates) {
@@ -1488,7 +1467,7 @@ function selectSubs(
           return currentScore > bestScore ? current : best;
         }
 
-        return compareCandidatesByPowerPreference(current, best) < 0 ? current : best;
+        return compareCandidatesByIdThenCost(current, best) < 0 ? current : best;
       }, null);
 
     if (!next) {
@@ -1516,55 +1495,6 @@ function resolveSlotReasonChips(reasonChips: string[], isLocked: boolean): strin
   }
 
   return nextChips.slice(0, 4);
-}
-
-function scoreCaptain(candidate: AutoBuildCandidate, input: AutoBuildInput): number {
-  let score = 0;
-  const matchedTypeCount = candidate.tags.captainScope.matchedSelectedTypeCount;
-  const matchedClassCount = candidate.tags.captainScope.matchedSelectedClassCount;
-  const matchedRequiredAbilityCount = input.requiredAbilities.filter((requirement) =>
-    leaderSatisfiesAbilityRequirement(candidate, requirement),
-  ).length;
-
-  score += candidate.tags.captainAtkMultiplier * 42;
-  score += candidate.tags.captainHpMultiplier * 12;
-  score += candidate.matchedSelectedClasses.length * 18;
-  score += matchedClassCount * 18;
-  score += matchedTypeCount * 12;
-  score += candidate.tags.captainScope.coversAllSelectedClasses ? 48 : 0;
-  score += candidate.tags.captainScope.coversAllSelectedTypes ? 56 : 0;
-  score += candidate.tags.captainScope.allCharacters ? 120 : 0;
-  score += candidate.tags.consistencyRoles.includes('cooldownReduction') ? 10 : 0;
-  score += candidate.tags.consistencyRoles.some(
-    (role) => role === 'matchingOrbs' || role === 'orbChange',
-  )
-    ? 8
-    : 0;
-  score += candidate.tags.utilityRoles.length ? 4 : 0;
-  score += matchedRequiredAbilityCount * 28;
-  score += candidate.recencyScore * 18;
-
-  if (!candidate.matchesSelectedClass) {
-    score -= 24;
-  }
-
-  if (!candidate.tags.readableCaptainText) {
-    score -= 100;
-  }
-
-  if (!matchedTypeCount && !candidate.tags.captainScope.allCharacters) {
-    score -= 18;
-  }
-
-  if (!matchedClassCount && candidate.matchesSelectedClass) {
-    score -= 6;
-  }
-
-  if (input.requiredAbilities.length && matchedRequiredAbilityCount === 0) {
-    score -= 18;
-  }
-
-  return score;
 }
 
 function scoreSubCandidate(
@@ -1628,8 +1558,6 @@ function scoreSubCandidate(
     resolveSuperCriteriaContribution(candidate, leaders, selected) *
     (input.requireLeaderSuperSpecialCriteria ? 160 : 36);
   score += candidate.matchesSelectedClass ? 18 : -8;
-  score += candidate.recencyScore * 10;
-  score += resolveCandidatePowerPreferenceScore(candidate);
   score += hasUniversalLeader ? 10 : 0;
   score += hasClassScopedLeader && candidate.matchesSelectedClass ? 12 : 0;
   score += hasFullClassCoverageLeader ? 8 : 0;

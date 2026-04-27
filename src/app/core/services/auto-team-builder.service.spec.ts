@@ -1265,16 +1265,16 @@ describe('Auto team builder', () => {
     expect(result?.slots.some((slot) => slot.character.id === 6000)).toBe(false);
   });
 
-  it('prefers higher leader boost over higher cost for automatic captains', () => {
+  it('prefers higher boost and newer id over higher captain cost', () => {
     const result = buildAutoTeamResult(
       [
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6100,
           name: 'Cost 65 Captain',
           cost: 65,
           atkMultiplier: 4.75,
         }),
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6101,
           name: 'Cost 55 Stronger Captain',
           cost: 55,
@@ -1297,14 +1297,14 @@ describe('Auto team builder', () => {
   it('prefers higher leader boost before newer id for automatic captains', () => {
     const result = buildAutoTeamResult(
       [
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6200,
           name: 'Older Stronger Captain',
           cost: 65,
           atkMultiplier: 9,
           universal: true,
         }),
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6201,
           name: 'Newer Weaker Captain',
           cost: 65,
@@ -1323,19 +1323,19 @@ describe('Auto team builder', () => {
     expect(result?.slots[1]?.character.id).toBe(6200);
   });
 
-  it('prefers higher leader boost before recency for automatic captains', () => {
+  it('prefers higher leader boost before newer id even when the weaker leader is newer', () => {
     const result = buildAutoTeamResult(
       [
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6300,
-          name: 'Older Ability-First Captain',
+          name: 'Older Stronger Captain',
           cost: 60,
           atkMultiplier: 9.25,
           universal: true,
         }),
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6305,
-          name: 'Newer Power-First Captain',
+          name: 'Newer Weaker Captain',
           cost: 60,
           atkMultiplier: 4.25,
         }),
@@ -1352,29 +1352,60 @@ describe('Auto team builder', () => {
     expect(result?.slots[1]?.character.id).toBe(6300);
   });
 
-  it('uses power-first ordering for captain and friend captain pair selection', () => {
+  it('prefers newer id over captain score when leader boost ties', () => {
     const result = buildAutoTeamResult(
       [
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
+          id: 6700,
+          name: 'Older Universal Captain',
+          cost: 65,
+          atkMultiplier: 5.25,
+          hpMultiplier: 1.3,
+          universal: true,
+        }),
+        createLeaderPriorityCaptainRecord({
+          id: 6701,
+          name: 'Newer Scoped Captain',
+          cost: 55,
+          atkMultiplier: 5.25,
+          hpMultiplier: 1.3,
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      INPUT,
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(6701);
+    expect(result?.slots[1]?.character.id).toBe(6701);
+  });
+
+  it('preserves manual captain and friend captain order', () => {
+    const result = buildAutoTeamResult(
+      [
+        createLeaderPriorityCaptainRecord({
           id: 6400,
           name: 'Captain Slot Cost 65',
           cost: 65,
           atkMultiplier: 4.5,
         }),
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6390,
           name: 'Captain Slot Stronger Cost 60',
           cost: 60,
           atkMultiplier: 8.5,
           universal: true,
         }),
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6500,
           name: 'Friend Slot Cost 65',
           cost: 65,
           atkMultiplier: 4.25,
         }),
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6490,
           name: 'Friend Slot Stronger Cost 55',
           cost: 55,
@@ -1402,7 +1433,7 @@ describe('Auto team builder', () => {
   it('uses the selected HP boost priority for automatic leader selection', () => {
     const result = buildAutoTeamResult(
       [
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6600,
           name: 'Newer Lower HP Leader',
           cost: 65,
@@ -1410,7 +1441,7 @@ describe('Auto team builder', () => {
           hpMultiplier: 1.2,
           universal: true,
         }),
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6401,
           name: 'Older Higher HP Leader',
           cost: 55,
@@ -1434,7 +1465,7 @@ describe('Auto team builder', () => {
   it('uses the selected ATK boost priority for automatic leader selection', () => {
     const result = buildAutoTeamResult(
       [
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6601,
           name: 'Newer Lower ATK Leader',
           cost: 65,
@@ -1442,7 +1473,7 @@ describe('Auto team builder', () => {
           hpMultiplier: 1.8,
           universal: true,
         }),
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6402,
           name: 'Older Higher ATK Leader',
           cost: 55,
@@ -1466,7 +1497,7 @@ describe('Auto team builder', () => {
   it('uses HP and ATK average boost when both leader boost filters are selected', () => {
     const result = buildAutoTeamResult(
       [
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6602,
           name: 'Newer Lower Average Leader',
           cost: 65,
@@ -1474,7 +1505,7 @@ describe('Auto team builder', () => {
           hpMultiplier: 1.1,
           universal: true,
         }),
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6403,
           name: 'Older Higher Average Leader',
           cost: 55,
@@ -1498,7 +1529,7 @@ describe('Auto team builder', () => {
   it('filters auto-filled leaders by ATK captain boost range before priority sorting', () => {
     const result = buildAutoTeamResult(
       [
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6603,
           name: 'Outside ATK Range Leader',
           cost: 65,
@@ -1506,7 +1537,7 @@ describe('Auto team builder', () => {
           hpMultiplier: 1.4,
           universal: true,
         }),
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6404,
           name: 'Inside ATK Range Leader',
           cost: 55,
@@ -1536,7 +1567,7 @@ describe('Auto team builder', () => {
   it('filters auto-filled leaders by HP captain boost range', () => {
     const result = buildAutoTeamResult(
       [
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6604,
           name: 'Low HP Leader',
           cost: 65,
@@ -1544,7 +1575,7 @@ describe('Auto team builder', () => {
           hpMultiplier: 1.2,
           universal: true,
         }),
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6405,
           name: 'Inside HP Range Leader',
           cost: 55,
@@ -1587,7 +1618,7 @@ describe('Auto team builder', () => {
             specialText: 'Boosts ATK of all characters by 9x for 1 turn.',
           },
         }),
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6406,
           name: 'Parsed Captain ATK Leader',
           cost: 55,
@@ -1617,7 +1648,7 @@ describe('Auto team builder', () => {
   it('does not apply leader boost ranges to manual leader slots', () => {
     const result = buildAutoTeamResult(
       [
-        createPowerFirstCaptainRecord({
+        createLeaderPriorityCaptainRecord({
           id: 6407,
           name: 'Manual Out Of Range Leader',
           cost: 55,
@@ -1647,7 +1678,7 @@ describe('Auto team builder', () => {
     expect(result?.slots[1]?.character.id).toBe(6407);
   });
 
-  it('prefers higher-cost modern subs over low-cost utility outliers when coverage is already met', () => {
+  it('prefers newer subs over higher-cost subs when coverage is otherwise equivalent', () => {
     const result = buildAutoTeamResult(
       [
         createCaptainRecord(),
@@ -1656,8 +1687,8 @@ describe('Auto team builder', () => {
         createUtilitySubRecord(),
         createCharacterRecord({
           id: 6200,
-          name: 'Modern Powerhouse Sub',
-          cost: 65,
+          name: 'Newer Low-Cost Redundant Sub',
+          cost: 20,
           primaryClass: 'Fighter',
           detail: {
             specialText: 'Deals 100x character ATK in typeless damage to one enemy.',
@@ -1665,12 +1696,11 @@ describe('Auto team builder', () => {
         }),
         createCharacterRecord({
           id: 267,
-          name: 'Rainbow Striped Dragon',
-          type: 'INT',
-          cost: 20,
+          name: 'Older High-Cost Redundant Sub',
+          cost: 65,
           primaryClass: 'Fighter',
           detail: {
-            specialText: 'Reduces the defense of all enemies by 50% for 1 turn.',
+            specialText: 'Deals 100x character ATK in typeless damage to one enemy.',
           },
         }),
       ],
@@ -2775,7 +2805,7 @@ describe('Auto team builder', () => {
 
   it('does not reuse a non-favorite manual friend captain as an auto-filled favorite-mode captain', async () => {
     const favoriteCharacterIds = [5900, 5890, 5880, 5870, 5860];
-    const manualFriendCaptain = createPowerFirstCaptainRecord({
+    const manualFriendCaptain = createLeaderPriorityCaptainRecord({
       id: 9000,
       name: 'Manual Non-Favorite Friend Captain',
       cost: 60,
@@ -2889,7 +2919,7 @@ describe('Auto team builder', () => {
 
   it('allows an auto-filled non-favorite friend captain while keeping other auto-filled slots in favorites', async () => {
     const favoriteCharacterIds = [5900, 5890, 5880, 5870, 5860];
-    const broadFriendCaptain = createPowerFirstCaptainRecord({
+    const broadFriendCaptain = createLeaderPriorityCaptainRecord({
       id: 9000,
       name: 'Broad Friend Captain',
       cost: 60,
@@ -4963,6 +4993,48 @@ it('ranks teams by distinct ability count before secondary coverage metrics', as
   );
 });
 
+it('ranks newer roster teams ahead of higher powerScore teams after coverage ties', async () => {
+  const repository = {
+    getAutoBuilderCandidates: vi.fn().mockResolvedValue([
+      createCaptainRecord(),
+      createUniversalCaptainRecord(),
+      createCharacterRecord({
+        id: 6200,
+        name: 'Newer Low-Cost Redundant Sub',
+        cost: 20,
+        primaryClass: 'Fighter',
+        detail: {
+          specialText: 'Deals 100x character ATK in typeless damage to one enemy.',
+        },
+      }),
+      createAtkSubRecord(),
+      createAffinitySubRecord(),
+      createUtilitySubRecord(),
+      createCharacterRecord({
+        id: 267,
+        name: 'Older High-Cost Redundant Sub',
+        cost: 65,
+        primaryClass: 'Fighter',
+        detail: {
+          specialText: 'Deals 100x character ATK in typeless damage to one enemy.',
+        },
+      }),
+    ]),
+  };
+  const service = new AutoTeamBuilderService(repository as never);
+
+  const result = await service.buildRankedTeamsFromRoster({
+    rosterCharacterIds: [5900, 5905, 6200, 5890, 5880, 5870, 267],
+    captainCharacterId: 5900,
+    friendCaptainCharacterId: 5905,
+    resultLimit: 10,
+  });
+  const firstTeamIds = result.results[0]?.slots.map((slot) => slot.character.id) ?? [];
+
+  expect(firstTeamIds).toContain(6200);
+  expect(firstTeamIds).not.toContain(267);
+});
+
 it('blocks ranked teams that violate party conflict rules', async () => {
   const repository = {
     getAutoBuilderCandidates: vi.fn().mockResolvedValue([
@@ -5146,7 +5218,7 @@ function createCaptainRecord(): CharacterDetailRecord {
   });
 }
 
-function createPowerFirstCaptainRecord({
+function createLeaderPriorityCaptainRecord({
   id,
   name,
   cost,

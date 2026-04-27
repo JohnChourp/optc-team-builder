@@ -1400,10 +1400,6 @@ export class AutoTeamBuilderService {
       return right.ranking.consistencyCoverageCount - left.ranking.consistencyCoverageCount;
     }
 
-    if (right.ranking.powerScore !== left.ranking.powerScore) {
-      return right.ranking.powerScore - left.ranking.powerScore;
-    }
-
     if (right.ranking.recencyScore !== left.ranking.recencyScore) {
       return right.ranking.recencyScore - left.ranking.recencyScore;
     }
