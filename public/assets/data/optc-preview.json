@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-26T16:55:50.372Z",
+  "generatedAt": "2026-04-27T04:37:19.067Z",
   "characters": [
     {
       "id": 1,
@@ -317,8 +317,8 @@
       "maxRcv": 227,
       "growth": 0,
       "captainHpBoost": 0,
-      "captainAtkBoost": 1.5,
-      "captainAverageBoost": 0.75,
+      "captainAtkBoost": 2,
+      "captainAverageBoost": 1,
       "searchText": "monkey d. luffy - gear 2 str fighter free spirit",
       "regionAvailability": {
         "exactLocal": false,
@@ -883,7 +883,7 @@
         "sailorAbilities": [
           "Restores Special Cooldown of this character by 1 turn when it is rewinded. Boosts base ATK of [DEX] characters by 40"
         ],
-        "sailorNotes": "#{rewind : 1}",
+        "sailorNotes": "#{rewind: 1}",
         "limitBreak": [
           "Boosts base HP by 30",
           "Boosts base RCV by 10",

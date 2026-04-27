@@ -922,10 +922,6 @@ function normalizeUnitTypeTokens(value) {
     .filter((entry) => validUnitTypeSet.has(entry));
 }
 
-function normalizeUnitTypeValue(value) {
-  return normalizeUnitTypeTokens(value).join(',');
-}
-
 function normalizeUnitMapEntry(
   unitEntry,
   fallbackCharacterId,
@@ -1226,6 +1222,10 @@ export function normalizeCharacterDetail(detail, characterId, rumbleData = null)
   const normalizedSuperSpecialCriteriaText =
     normalizeLegacyAbilityText(detail.superSpecialCriteria ?? null) || null;
   const normalizedCaptainNotes = normalizeLegacyAbilityText(detail.captainNotes ?? null) || null;
+  const normalizedSpecialNotes = normalizeLegacyAbilityText(detail.specialNotes ?? null) || null;
+  const normalizedSuperSpecialNotes =
+    normalizeLegacyAbilityText(detail.superSpecialNotes ?? null) || null;
+  const normalizedSailorNotes = normalizeLegacyAbilityText(detail.sailorNotes ?? null) || null;
   const normalizedSailorAbilities = flattenValues(detail.sailor ?? {})
     .map((entry) => normalizeLegacyAbilityText(entry))
     .filter((entry) => entry.length > 0);
@@ -1237,17 +1237,17 @@ export function normalizeCharacterDetail(detail, characterId, rumbleData = null)
     captainNotes: normalizedCaptainNotes,
     specialName: detail.specialName ?? null,
     specialText: normalizedSpecialText,
-    specialNotes: detail.specialNotes ?? null,
+    specialNotes: normalizedSpecialNotes,
     superSpecialText: normalizedSuperSpecialText,
     superSpecialCriteriaText: normalizedSuperSpecialCriteriaText,
-    superSpecialNotes: detail.superSpecialNotes ?? null,
+    superSpecialNotes: normalizedSuperSpecialNotes,
     superSpecialCriteria: normalizedSuperSpecialCriteriaText
       ? parseSuperSpecialCriteria(normalizedSuperSpecialCriteriaText)
       : null,
     partyConflictKeys: [],
     builderAbilities: [],
     sailorAbilities: normalizedSailorAbilities,
-    sailorNotes: detail.sailorNotes ?? null,
+    sailorNotes: normalizedSailorNotes,
     limitBreak: detail.limit ?? [],
     potentialAbilities: detail.potential ?? [],
     supportData: normalizeSupportData(detail.support),

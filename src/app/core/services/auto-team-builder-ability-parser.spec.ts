@@ -16,6 +16,7 @@ let analyzeBuilderAbilityText: (
   coverageMode?: 'explicit' | 'selectedDebuff';
 }>;
 let extractPrimaryAbilityBranchText: (value: unknown) => string;
+let normalizeLegacyAbilityText: (value: unknown) => string;
 let enrichCharactersWithBuilderAbilities: (
   characters: Array<{
     id: number;
@@ -46,6 +47,7 @@ beforeAll(async () => {
   ({
     analyzeBuilderAbilityText,
     extractPrimaryAbilityBranchText,
+    normalizeLegacyAbilityText,
     enrichCharactersWithBuilderAbilities,
   } = await import(
     pathToFileURL(resolve(process.cwd(), 'scripts/auto-team-builder-ability-parser.mjs')).href
@@ -68,6 +70,14 @@ function expectSourceOrder(filePath: string, orderedSnippets: string[]): void {
 }
 
 describe('auto team builder ability parser', () => {
+  it('normalizes legacy HTML ability text without dropping branch labels', () => {
+    expect(
+      normalizeLegacyAbilityText(
+        '<b>Always Active: </b>Boosts HP by 1.3x.<br><b>Standard Captain: </b>Boosts ATK by 3.5x.',
+      ),
+    ).toBe('Always Active: Boosts HP by 1.3x. Standard Captain: Boosts ATK by 3.5x.');
+  });
+
   it('enriches characters with builder abilities before generated dataset outputs are written', () => {
     expectSourceOrder('scripts/import-optc-data.mjs', [
       'await enrichCharactersWithBuilderAbilities(characters',
@@ -88,24 +98,28 @@ describe('auto team builder ability parser', () => {
         'Reduces Bind and Despair duration by 5 turns and boosts ATK of the crew by 2x for 1 turn.',
         'specialText',
       ),
-    ).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        key: 'remove_bind',
-        minTurns: 5,
-        slotTokens: [],
-        source: 'specialText',
-      }),
-      expect.objectContaining({
-        key: 'remove_despair',
-        minTurns: 5,
-        slotTokens: [],
-        source: 'specialText',
-      }),
-    ]));
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'remove_bind',
+          minTurns: 5,
+          slotTokens: [],
+          source: 'specialText',
+        }),
+        expect.objectContaining({
+          key: 'remove_despair',
+          minTurns: 5,
+          slotTokens: [],
+          source: 'specialText',
+        }),
+      ]),
+    );
   });
 
   it('extracts slot bind removal as a dedicated ability family', () => {
-    expect(analyzeBuilderAbilityText('Reduces Slot Bind duration by 3 turns.', 'specialText')).toEqual([
+    expect(
+      analyzeBuilderAbilityText('Reduces Slot Bind duration by 3 turns.', 'specialText'),
+    ).toEqual([
       expect.objectContaining({
         key: 'remove_slot_bind',
         minTurns: 3,
@@ -121,15 +135,17 @@ describe('auto team builder ability parser', () => {
         'Removes [DEX] and [STR] Slot Barrier completely and changes orbs.',
         'specialText',
       ),
-    ).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        key: 'remove_slot_barrier',
-        minTurns: 99,
-        isCompleteRemoval: true,
-        slotTokens: ['DEX', 'STR'],
-        source: 'specialText',
-      }),
-    ]));
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'remove_slot_barrier',
+          minTurns: 99,
+          isCompleteRemoval: true,
+          slotTokens: ['DEX', 'STR'],
+          source: 'specialText',
+        }),
+      ]),
+    );
   });
 
   it('extracts multiple unique effects from one special text without duplicates', () => {
@@ -182,7 +198,7 @@ describe('auto team builder ability parser', () => {
       "Deals 15x character's ATK in Typeless damage to one enemy, adds 0.3x to Chain multiplier for 1 turn, boosts Orb Effects of all characters by 1.5x for 1 turn. If Luffy is your Captain or Friend/Guest Captain, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for all characters for 3 turns. Deals 150x character's ATK in Typeless damage to one enemy, adds 0.7x to chain multiplier for 3 turns, boosts Orb Effects of all characters by 1.75x for 1 turn. If during that turn you score 3 PERFECT hits, boosts Orb Effects of all characters by 2x for 1 turn in the following turn. If Luffy is your Captain or Friend/Guest Captain, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for all characters for 3 turns. Reduces enemies' Increased Defense and Percent Damage Reduction duration by 2 turns.";
 
     expect(extractPrimaryAbilityBranchText(text)).not.toContain(
-      'Reduces enemies\' Increased Defense and Percent Damage Reduction duration by 2 turns',
+      "Reduces enemies' Increased Defense and Percent Damage Reduction duration by 2 turns",
     );
     expect(analyzeBuilderAbilityText(text, 'specialText')).not.toEqual(
       expect.arrayContaining([
@@ -252,39 +268,33 @@ describe('auto team builder ability parser', () => {
       'remove_healing_reduction',
       7,
     ],
-    [
-      'stun',
-      'Reduces stun duration by 2 turns.',
-      'remove_stun',
-      2,
-    ],
-    [
-      'enrage',
-      'Reduces enemy enrage duration by 3 turns.',
-      'remove_enemy_enrage',
-      3,
-    ],
+    ['stun', 'Reduces stun duration by 2 turns.', 'remove_stun', 2],
+    ['enrage', 'Reduces enemy enrage duration by 3 turns.', 'remove_enemy_enrage', 3],
   ])('extracts %s removal into the direct counter catalog', (_label, text, key, turns) => {
-    expect(analyzeBuilderAbilityText(text, 'specialText')).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        key,
-        minTurns: turns,
-      }),
-    ]));
+    expect(analyzeBuilderAbilityText(text, 'specialText')).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key,
+          minTurns: turns,
+        }),
+      ]),
+    );
   });
 
   it('extracts explicit pain removal from special text', () => {
     expect(
       analyzeBuilderAbilityText('Recovers HP and reduces Pain duration by 5 turns.', 'specialText'),
-    ).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        key: 'remove_pain',
-        label: 'Remove Pain',
-        minTurns: 5,
-        coverageMode: 'explicit',
-        source: 'specialText',
-      }),
-    ]));
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'remove_pain',
+          label: 'Remove Pain',
+          minTurns: 5,
+          coverageMode: 'explicit',
+          source: 'specialText',
+        }),
+      ]),
+    );
   });
 
   it('extracts explicit pain removal from captain text', () => {
@@ -293,15 +303,17 @@ describe('auto team builder ability parser', () => {
         'Boosts ATK by 5x, reduces Pain duration by 10 turns and recovers HP at end of turn.',
         'captainAbility',
       ),
-    ).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        key: 'remove_pain',
-        label: 'Remove Pain',
-        minTurns: 10,
-        coverageMode: 'explicit',
-        source: 'captainAbility',
-      }),
-    ]));
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'remove_pain',
+          label: 'Remove Pain',
+          minTurns: 10,
+          coverageMode: 'explicit',
+          source: 'captainAbility',
+        }),
+      ]),
+    );
   });
 
   it('extracts guaranteed extra-drop coverage from captain text', () => {
@@ -348,15 +360,17 @@ describe('auto team builder ability parser', () => {
         'Reduces 2 selected debuffs duration by 10 turns and changes all orbs into Matching orbs.',
         'specialText',
       ),
-    ).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        key: 'remove_pain',
-        label: 'Remove Pain',
-        minTurns: 10,
-        coverageMode: 'selectedDebuff',
-        source: 'specialText',
-      }),
-    ]));
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'remove_pain',
+          label: 'Remove Pain',
+          minTurns: 10,
+          coverageMode: 'selectedDebuff',
+          source: 'specialText',
+        }),
+      ]),
+    );
   });
 
   it('extracts singular selected debuff coverage with the actual turn count', () => {
@@ -365,15 +379,17 @@ describe('auto team builder ability parser', () => {
         'Delays all enemies by 1 turn and reduces 1 selected debuff duration by 5 turns.',
         'specialText',
       ),
-    ).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        key: 'remove_pain',
-        label: 'Remove Pain',
-        minTurns: 5,
-        coverageMode: 'selectedDebuff',
-        source: 'specialText',
-      }),
-    ]));
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'remove_pain',
+          label: 'Remove Pain',
+          minTurns: 5,
+          coverageMode: 'selectedDebuff',
+          source: 'specialText',
+        }),
+      ]),
+    );
   });
 
   it('ignores unsupported boost-only text to avoid false positives', () => {
@@ -734,7 +750,8 @@ describe('auto team builder ability parser', () => {
         id: 2035,
         detail: {
           specialText: null,
-          captainAbility: 'Boosts ATK by 1.75x and guarantees duplicating a drop upon completion of the island.',
+          captainAbility:
+            'Boosts ATK by 1.75x and guarantees duplicating a drop upon completion of the island.',
           captainAbilityVariants: [
             {
               key: 'base',
@@ -822,7 +839,11 @@ describe('auto team builder ability parser', () => {
       'Reduces Special Bind duration by 3 turns.',
       'crewmate_recover_special_bind',
     ],
-    ['slot utility', 'Makes [RCV] slots beneficial for all characters.', 'crewmate_make_slots_favorable'],
+    [
+      'slot utility',
+      'Makes [RCV] slots beneficial for all characters.',
+      'crewmate_make_slots_favorable',
+    ],
     [
       'special charge reduction',
       'Reduces Special Cooldown of this character by 2 turns at start of quest.',
@@ -977,7 +998,9 @@ describe('auto team builder ability parser', () => {
           potentialAbilities: [],
           superTandemData: {
             requirement: 'When a character performs Super Tandem',
-            levels: [{ level: 5, effect: 'Raises Boost Level of Slasher characters by 5 for 1 turn' }],
+            levels: [
+              { level: 5, effect: 'Raises Boost Level of Slasher characters by 5 for 1 turn' },
+            ],
           },
           finalTapData: {
             requirement: 'At final battle',
@@ -1137,7 +1160,7 @@ describe('auto team builder ability parser', () => {
             {
               supportedCharactersText: 'Zoro',
               levelDescriptions: [
-                'Adds 5% of this character\'s base ATK and HP to the supported character\'s base ATK and HP. Reduces damage received by 5%.',
+                "Adds 5% of this character's base ATK and HP to the supported character's base ATK and HP. Reduces damage received by 5%.",
               ],
             },
           ],
@@ -1150,9 +1173,15 @@ describe('auto team builder ability parser', () => {
 
     expect(characters[0]?.detail.builderAbilities).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ key: 'support_base_atk_boost_additional', source: 'supportData' }),
+        expect.objectContaining({
+          key: 'support_base_atk_boost_additional',
+          source: 'supportData',
+        }),
         expect.objectContaining({ key: 'support_base_hp_boost_additional', source: 'supportData' }),
-        expect.objectContaining({ key: 'support_damage_reduction_permanent', source: 'supportData' }),
+        expect.objectContaining({
+          key: 'support_damage_reduction_permanent',
+          source: 'supportData',
+        }),
       ]),
     );
     expect(catalog).toEqual(
@@ -1188,9 +1217,7 @@ describe('auto team builder ability parser', () => {
             },
             {
               supportedCharactersText: 'Sanji',
-              levelDescriptions: [
-                'Reduces enemy DEF Up duration by 1 turn.',
-              ],
+              levelDescriptions: ['Reduces enemy DEF Up duration by 1 turn.'],
             },
           ],
           builderAbilities: [],

@@ -25,8 +25,10 @@ import conflictOverrideCatalog from '../data/auto-team-builder-party-conflict-ov
 import { type CharacterDetailRecord, type CharacterListItem } from '../models/optc.models';
 import { matchesAbilityRequirement } from './auto-team-builder-ability-match.utils';
 
-const CAPTAIN_ATK_PATTERN = /atk(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
-const CAPTAIN_HP_PATTERN = /hp(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
+const CAPTAIN_ATK_PATTERN = /atk(?:[^.]{0,120}?)?by\s+(\d+(?:\.\d+)?)x/gi;
+const CAPTAIN_HP_PATTERN = /hp(?:[^.]{0,120}?)?by\s+(\d+(?:\.\d+)?)x/gi;
+const CAPTAIN_BRANCH_PATTERN =
+  /\b(always active|standard captain|powered up captain|rampage captain)\s*:\s*/gi;
 const SCOPE_CLAUSE_PATTERN = /\b(?:of|for)\s+([^.;]{1,160}?)\s+(?:characters|units)\b/g;
 const SUPER_EFFECT_SCOPE_CLAUSE_PATTERN =
   /\b(?:changes?|transforms?)\s+([^.;]{1,160}?)\s+(?:characters|units)\s+(?:to|into)\s+(?:a\s+|an\s+)?super\b/gi;
@@ -40,6 +42,7 @@ const TYPE_MATCH_PATTERNS = {
   PSY: ['[psy]', ' psy ', 'psy characters', 'psy units'],
   INT: ['[int]', ' int ', 'int characters', 'int units'],
 } as const;
+const DEFAULT_CAPTAIN_BRANCH_LABELS = new Set(['always active', 'standard captain']);
 
 const CHIP_LABELS = {
   atkBoost: 'ATK boost',
@@ -797,9 +800,7 @@ export function buildAutoTeamResult(
     autoFillCandidateIdSet
       ? candidates.filter((candidate) => autoFillCandidateIdSet.has(candidate.character.id))
       : candidates
-  ).filter(
-    (candidate) => !ignoredOverflowLockedCharacterIdSet?.has(candidate.character.id),
-  );
+  ).filter((candidate) => !ignoredOverflowLockedCharacterIdSet?.has(candidate.character.id));
   const manualFriendCaptainCandidates = manualSlotCandidateMap.get('friendCaptain') ?? [];
   const friendCaptainCandidates = resolveFriendCaptainCandidatePool(
     input,
@@ -1865,8 +1866,8 @@ function parseEffectTags(
     burstRoles,
     consistencyRoles,
     utilityRoles,
-    captainAtkMultiplier: extractHighestMultiplier(captainText, CAPTAIN_ATK_PATTERN),
-    captainHpMultiplier: extractHighestMultiplier(captainText, CAPTAIN_HP_PATTERN),
+    captainAtkMultiplier: extractCaptainMultiplier(captainText, CAPTAIN_ATK_PATTERN),
+    captainHpMultiplier: extractCaptainMultiplier(captainText, CAPTAIN_HP_PATTERN),
     readableCaptainText: captainText.length > 0,
     readableSpecialText: specialText.length > 0,
     readableSailorText: sailorText.length > 0,
@@ -2511,11 +2512,56 @@ function textMatchesClassScope(text: string, selectedClass: string): boolean {
   return textHasLabelToken(text, selectedClass);
 }
 
-function extractHighestMultiplier(text: string, pattern: RegExp): number {
-  return [...text.matchAll(pattern)].reduce((highest, match) => {
+function extractCaptainMultiplier(text: string, pattern: RegExp): number {
+  const defaultCaptainText = extractDefaultCaptainBoostText(text);
+
+  return [...defaultCaptainText.matchAll(pattern)].reduce((highest, match) => {
+    if (isSelfOnlyCaptainBoostMatch(match[0])) {
+      return highest;
+    }
+
     const value = Number(match[1]);
     return Number.isFinite(value) && value > highest ? value : highest;
   }, 0);
+}
+
+function extractDefaultCaptainBoostText(text: string): string {
+  const branches = extractCaptainBranches(text);
+
+  if (!branches.length) {
+    return text;
+  }
+
+  const defaultBranches = branches
+    .filter((branch) => DEFAULT_CAPTAIN_BRANCH_LABELS.has(branch.label))
+    .map((branch) => branch.text)
+    .filter(Boolean);
+
+  return defaultBranches.length ? defaultBranches.join('. ') : (branches[0]?.text ?? text);
+}
+
+function extractCaptainBranches(text: string): Array<{ label: string; text: string }> {
+  const matches = [...text.matchAll(CAPTAIN_BRANCH_PATTERN)];
+
+  return matches
+    .map((match, index) => {
+      const nextMatch = matches[index + 1] ?? null;
+      const start = (match.index ?? 0) + match[0].length;
+      const end = nextMatch?.index ?? text.length;
+
+      return {
+        label: String(match[1] ?? '').toLowerCase(),
+        text: text.slice(start, end).trim(),
+      };
+    })
+    .filter((branch) => branch.text.length > 0);
+}
+
+function isSelfOnlyCaptainBoostMatch(matchText: string): boolean {
+  return (
+    /\b(?:atk|hp)\b[^,.;]{0,80}\b(?:this character|self)\b/i.test(matchText) ||
+    /\bown\s+(?:atk|hp)\b/i.test(matchText)
+  );
 }
 
 function textHasAtkBoost(text: string): boolean {
@@ -2552,5 +2598,17 @@ function includesAny(text: string, patterns: string[]): boolean {
 }
 
 function normalizeText(value: string | null | undefined): string {
-  return typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return typeof value === 'string'
+    ? value
+        .replace(/<br\s*\/?>/gi, '. ')
+        .replace(/<(?:ul|ol)(?:\s[^>]*)?>/gi, ' ')
+        .replace(/<\/(?:p|div|li|ul|ol)>/gi, '. ')
+        .replace(/<li(?:\s[^>]*)?>/gi, ' ')
+        .replace(/<[^>]+>/g, '')
+        .replace(/\s+/g, ' ')
+        .replace(/\s+([,.;:])/g, '$1')
+        .replace(/(?:\s*\.\s*){2,}/g, '. ')
+        .trim()
+        .toLowerCase()
+    : '';
 }

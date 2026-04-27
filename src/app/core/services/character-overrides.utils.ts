@@ -59,8 +59,19 @@ const OBJECT_OR_NULL_DETAIL_KEYS = [
   'superClass',
   'rumbleData',
 ] as const;
-const CAPTAIN_ATK_BOOST_PATTERN = /atk(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
-const CAPTAIN_HP_BOOST_PATTERN = /hp(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
+const CAPTAIN_ATK_BOOST_PATTERN = /atk(?:[^.]{0,120}?)?by\s+(\d+(?:\.\d+)?)x/gi;
+const CAPTAIN_HP_BOOST_PATTERN = /hp(?:[^.]{0,120}?)?by\s+(\d+(?:\.\d+)?)x/gi;
+const CAPTAIN_BRANCH_PATTERN =
+  /\b(always active|standard captain|powered up captain|rampage captain)\s*:\s*/gi;
+const DEFAULT_CAPTAIN_BRANCH_LABELS = new Set(['always active', 'standard captain']);
+const PREFERRED_DEFAULT_CAPTAIN_VARIANT_KEYS = [
+  'base',
+  'captain',
+  'description',
+  'level0',
+  'llbbase',
+  'level1',
+];
 
 function deepClone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -137,14 +148,10 @@ function resolveCaptainBoosts(detail: CharacterDetail): {
   captainAtkBoost: number;
   captainAverageBoost: number;
 } {
-  const captainTexts = [
-    ...detail.captainAbilityVariants
-      .map((variant) => variant.text.trim())
-      .filter((text) => text.length > 0),
-    detail.captainAbility ?? '',
-  ].filter((text, index, values) => text.length > 0 && values.indexOf(text) === index);
-  const captainHpBoost = extractHighestBoost(captainTexts, CAPTAIN_HP_BOOST_PATTERN);
-  const captainAtkBoost = extractHighestBoost(captainTexts, CAPTAIN_ATK_BOOST_PATTERN);
+  const captainText = resolveDefaultCaptainAbilityText(detail);
+  const defaultCaptainText = extractDefaultCaptainBoostText(captainText);
+  const captainHpBoost = extractHighestBoost(defaultCaptainText, CAPTAIN_HP_BOOST_PATTERN);
+  const captainAtkBoost = extractHighestBoost(defaultCaptainText, CAPTAIN_ATK_BOOST_PATTERN);
 
   return {
     captainHpBoost,
@@ -153,15 +160,79 @@ function resolveCaptainBoosts(detail: CharacterDetail): {
   };
 }
 
-function extractHighestBoost(texts: string[], pattern: RegExp): number {
-  return texts.reduce((highest, text) => {
-    const textHighest = [...text.matchAll(pattern)].reduce((currentHighest, match) => {
-      const value = Number(match[1]);
-      return Number.isFinite(value) && value > currentHighest ? value : currentHighest;
-    }, highest);
+function resolveDefaultCaptainAbilityText(detail: CharacterDetail): string {
+  const preferredVariant = PREFERRED_DEFAULT_CAPTAIN_VARIANT_KEYS.map((key) =>
+    detail.captainAbilityVariants.find((variant) => variant.key.toLowerCase() === key),
+  ).find(Boolean);
+  const fallbackVariant = detail.captainAbilityVariants.find((variant) => variant.text);
 
-    return textHighest;
+  return (preferredVariant?.text ?? fallbackVariant?.text ?? detail.captainAbility ?? '').trim();
+}
+
+function extractDefaultCaptainBoostText(text: string): string {
+  const normalizedText = normalizeCaptainBoostText(text);
+  const branches = extractCaptainBranches(normalizedText);
+
+  if (!branches.length) {
+    return normalizedText;
+  }
+
+  const defaultBranches = branches
+    .filter((branch) => DEFAULT_CAPTAIN_BRANCH_LABELS.has(branch.label))
+    .map((branch) => branch.text)
+    .filter(Boolean);
+
+  return defaultBranches.length
+    ? defaultBranches.join('. ')
+    : (branches[0]?.text ?? normalizedText);
+}
+
+function extractCaptainBranches(text: string): Array<{ label: string; text: string }> {
+  const matches = [...text.matchAll(CAPTAIN_BRANCH_PATTERN)];
+
+  return matches
+    .map((match, index) => {
+      const nextMatch = matches[index + 1] ?? null;
+      const start = (match.index ?? 0) + match[0].length;
+      const end = nextMatch?.index ?? text.length;
+
+      return {
+        label: String(match[1] ?? '').toLowerCase(),
+        text: text.slice(start, end).trim(),
+      };
+    })
+    .filter((branch) => branch.text.length > 0);
+}
+
+function extractHighestBoost(text: string, pattern: RegExp): number {
+  return [...text.matchAll(pattern)].reduce((highest, match) => {
+    if (isSelfOnlyCaptainBoostMatch(match[0])) {
+      return highest;
+    }
+
+    const value = Number(match[1]);
+    return Number.isFinite(value) && value > highest ? value : highest;
   }, 0);
+}
+
+function isSelfOnlyCaptainBoostMatch(matchText: string): boolean {
+  const normalizedText = normalizeCaptainBoostText(matchText);
+
+  return (
+    /\b(?:atk|hp)\b[^,.;]{0,80}\b(?:this character|self)\b/i.test(normalizedText) ||
+    /\bown\s+(?:atk|hp)\b/i.test(normalizedText)
+  );
+}
+
+function normalizeCaptainBoostText(text: string): string {
+  return text
+    .replace(/<br\s*\/?>/gi, '. ')
+    .replace(/<(?:ul|ol)(?:\s[^>]*)?>/gi, ' ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s+([,.;:])/g, '$1')
+    .replace(/(?:\s*\.\s*){2,}/g, '. ')
+    .trim();
 }
 
 export function normalizeCharacterDetailInput(

@@ -25,6 +25,8 @@ const INPUT = createInput();
 type AutoTeamBuilderServiceWithWorkerFactory = AutoTeamBuilderService & {
   createWorker: () => Worker | null;
 };
+const BIG_MOM_CAPTAIN_ABILITY =
+  '<b>Always Active: </b>Boosts HP of [STR], [DEX] and [QCK] characters by 1.3x and changes [RCV] orbs into [SEMLA] orbs.. <b>Standard Captain: </b>Boosts ATK of [STR], [DEX] and [QCK] characters by 3.5x. <b>Powered Up Captain: </b>Boosts ATK of this character by 4.25x, boosts ATK of [STR], [DEX] and [QCK] characters by 4x and reduces damage received by 15%. <b>Rampage Captain: </b>Boosts ATK of this character by 12x and own attacks will ignore damage reducing Barriers and Buffs, boosts ATK of [STR], [DEX] and [QCK] characters by 3.75x and boosts chances of getting [SEMLA] orbs.';
 
 describe('Auto team builder', () => {
   it('parses type-targeted leader super effect scope text', () => {
@@ -49,6 +51,21 @@ describe('Auto team builder', () => {
       allowedTypes: [],
       isParseable: true,
     });
+  });
+
+  it('parses standard captain boost and scope from legacy Big Mom branch text', () => {
+    const candidate = buildAutoBuildCandidate(
+      createBigMomCaptainRecord(),
+      createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT']),
+      0,
+      1,
+    );
+
+    expect(candidate.captainText).not.toContain('<b>');
+    expect(candidate.tags.captainAtkMultiplier).toBe(3.5);
+    expect(candidate.tags.captainHpMultiplier).toBe(1.3);
+    expect(candidate.tags.captainScope.allowedTypes).toEqual(['DEX', 'STR', 'QCK']);
+    expect(candidate.tags.captainScope.hasTypeRestriction).toBe(true);
   });
 
   it('parses burst, consistency, utility, and multi-class captain scope from effect text', () => {
@@ -1645,6 +1662,37 @@ describe('Auto team builder', () => {
     expect(result?.slots[1]?.character.id).toBe(6406);
   });
 
+  it('excludes Big Mom from auto-filled leaders when ATK range starts at 6x', () => {
+    const result = buildAutoTeamResult(
+      [
+        createBigMomCaptainRecord(),
+        createLeaderPriorityCaptainRecord({
+          id: 6408,
+          name: 'Six Times Universal Leader',
+          cost: 55,
+          atkMultiplier: 6,
+          hpMultiplier: 1.3,
+          universal: true,
+        }),
+        createBigMomScopeSubRecord(6410, 'STR'),
+        createBigMomScopeSubRecord(6411, 'DEX'),
+        createBigMomScopeSubRecord(6412, 'QCK'),
+        createBigMomScopeSubRecord(6413, 'STR'),
+      ],
+      createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], ['Powerhouse'], {
+        leaderBoostFilters: ['ATK'],
+        leaderBoostRanges: {
+          ATK: { min: 6, max: null },
+          HP: { min: null, max: null },
+        },
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(6408);
+    expect(result?.slots[1]?.character.id).toBe(6408);
+  });
+
   it('does not apply leader boost ranges to manual leader slots', () => {
     const result = buildAutoTeamResult(
       [
@@ -1772,6 +1820,40 @@ describe('Auto team builder', () => {
       ),
     ).toBe(true);
     expect(result?.slots.some((slot) => slot.character.id === 2705)).toBe(false);
+  });
+
+  it('builds Big Mom teams only from STR, DEX, and QCK characters', () => {
+    const result = buildAutoTeamResult(createBigMomLeaderTeamRecords(), {
+      ...createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], ['Powerhouse'], {
+        manualSlots: createManualSlots({
+          captain: [2500],
+          friendCaptain: [2500],
+        }),
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.leaderCriteria.derivedAllowedTypes).toEqual(['DEX', 'STR', 'QCK']);
+    expect(result?.coverage.leaderCriteria.hasTypeRestriction).toBe(true);
+    expect(
+      result?.slots.slice(2).every((slot) => ['STR', 'DEX', 'QCK'].includes(slot.character.type)),
+    ).toBe(true);
+    expect(result?.slots.some((slot) => slot.character.id === 2605)).toBe(false);
+    expect(result?.slots.some((slot) => slot.character.id === 2606)).toBe(false);
+  });
+
+  it('fails when a locked Big Mom sub is outside STR, DEX, and QCK scope', () => {
+    const result = buildAutoTeamResult(createBigMomLeaderTeamRecords(), {
+      ...createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], ['Powerhouse'], {
+        manualSlots: createManualSlots({
+          captain: [2500],
+          friendCaptain: [2500],
+          sub1: [2605],
+        }),
+      }),
+    });
+
+    expect(result).toBeNull();
   });
 
   it('fails when a locked sub is outside the active leader scope', () => {
@@ -5249,6 +5331,49 @@ function createLeaderPriorityCaptainRecord({
       specialText: 'Changes crew orbs into Matching Orbs and reduces Special Cooldown by 1 turn.',
     },
   });
+}
+
+function createBigMomCaptainRecord(): CharacterDetailRecord {
+  return createCharacterRecord({
+    id: 2500,
+    name: 'Big Mom - Emperor Suffering from Hunger Pangs',
+    type: 'STR',
+    cost: 65,
+    captainHpBoost: 1.3,
+    captainAtkBoost: 3.5,
+    captainAverageBoost: 2.4,
+    primaryClass: 'Powerhouse',
+    secondaryClass: 'Driven',
+    detail: {
+      captainAbility: BIG_MOM_CAPTAIN_ABILITY,
+      specialText: 'Changes orbs, including [BLOCK] orbs, into [STR] orbs.',
+    },
+  });
+}
+
+function createBigMomScopeSubRecord(id: number, type: AutoTeamBuilderType): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    name: `Big Mom Scope Sub ${id}`,
+    type,
+    primaryClass: 'Powerhouse',
+    secondaryClass: 'Driven',
+    detail: {
+      specialText: 'Boosts orb effects of Powerhouse characters by 2x for 1 turn.',
+    },
+  });
+}
+
+function createBigMomLeaderTeamRecords(): CharacterDetailRecord[] {
+  return [
+    createBigMomCaptainRecord(),
+    createBigMomScopeSubRecord(2601, 'STR'),
+    createBigMomScopeSubRecord(2602, 'DEX'),
+    createBigMomScopeSubRecord(2603, 'QCK'),
+    createBigMomScopeSubRecord(2604, 'STR'),
+    createBigMomScopeSubRecord(2605, 'PSY'),
+    createBigMomScopeSubRecord(2606, 'INT'),
+  ];
 }
 
 function createStrictMixedCaptainRecord(): CharacterDetailRecord {

@@ -188,7 +188,7 @@ describe('import-optc-data ship thumbnail pack', () => {
     });
   });
 
-  it('precomputes captain HP, ATK, and average boosts from all captain variants', () => {
+  it('precomputes captain HP, ATK, and average boosts from the default captain variant', () => {
     const [character] = normalizeCharacters(
       [
         [
@@ -222,9 +222,49 @@ describe('import-optc-data ship thumbnail pack', () => {
       new Map(),
     );
 
-    expect(character.captainHpBoost).toBe(1.4);
-    expect(character.captainAtkBoost).toBe(5.5);
-    expect(character.captainAverageBoost).toBe(3.45);
+    expect(character.captainHpBoost).toBe(1.2);
+    expect(character.captainAtkBoost).toBe(5);
+    expect(character.captainAverageBoost).toBe(3.1);
+  });
+
+  it('uses standard captain branches and ignores self-only conditional boosts', () => {
+    const [character] = normalizeCharacters(
+      [
+        [
+          'Big Mom - Emperor Suffering from Hunger Pangs',
+          'STR',
+          ['Powerhouse', 'Driven'],
+          6,
+          65,
+          4,
+          5,
+          99,
+          5_000_000,
+          1840,
+          1025,
+          0,
+          4120,
+          1665,
+          0,
+          1,
+        ],
+      ],
+      {
+        1: {
+          captain: {
+            base: '<b>Always Active: </b>Boosts HP of [STR], [DEX] and [QCK] characters by 1.3x and changes [RCV] orbs into [SEMLA] orbs.. <b>Standard Captain: </b>Boosts ATK of [STR], [DEX] and [QCK] characters by 3.5x. <b>Powered Up Captain: </b>Boosts ATK of this character by 4.25x, boosts ATK of [STR], [DEX] and [QCK] characters by 4x. <b>Rampage Captain: </b>Boosts ATK of this character by 12x, boosts ATK of [STR], [DEX] and [QCK] characters by 3.75x.',
+            level1:
+              '<b>Always Active: </b>Boosts HP of [STR], [DEX] and [QCK] characters by 1.3x. <b>Standard Captain: </b>Boosts ATK of [STR], [DEX] and [QCK] characters by 3.75x.',
+          },
+        },
+      },
+      [],
+      new Map(),
+    );
+
+    expect(character.captainHpBoost).toBe(1.3);
+    expect(character.captainAtkBoost).toBe(3.5);
+    expect(character.captainAverageBoost).toBe(2.4);
   });
 
   it('supports object-based unit maps from the 2shankz source', () => {
@@ -421,6 +461,30 @@ describe('import-optc-data ship thumbnail pack', () => {
         text: 'LLB level 1 captain effect.',
       },
     ]);
+  });
+
+  it('strips legacy HTML from normalized captain text and notes', () => {
+    const detail = normalizeCharacterDetail(
+      {
+        captain:
+          '<b>Always Active: </b>Boosts HP by 1.3x.<br><b>Standard Captain: </b>Boosts ATK by 3.5x.',
+        captainNotes: 'First line.<br><b>Second line:</b> note.',
+        specialNotes: 'Special line.<br><b>Branch:</b> note.',
+        sailorNotes: 'Sailor line.<br><b>Branch:</b> note.',
+      },
+      2500,
+    );
+
+    expect(detail.captainAbility).toBe(
+      'Always Active: Boosts HP by 1.3x. Standard Captain: Boosts ATK by 3.5x.',
+    );
+    expect(detail.captainNotes).toBe('First line. Second line: note.');
+    expect(detail.specialNotes).toBe('Special line. Branch: note.');
+    expect(detail.sailorNotes).toBe('Sailor line. Branch: note.');
+    expect(detail.captainAbility).not.toContain('<b>');
+    expect(detail.captainNotes).not.toContain('<br>');
+    expect(detail.specialNotes).not.toContain('<br>');
+    expect(detail.sailorNotes).not.toContain('<br>');
   });
 
   it('labels dual captain branches without flattening them into one summary', () => {

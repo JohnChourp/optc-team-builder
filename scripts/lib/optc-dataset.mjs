@@ -3,8 +3,19 @@ import path from 'node:path';
 
 export const validTypes = new Set(['STR', 'DEX', 'QCK', 'PSY', 'INT']);
 const invalidClassPattern = /^Class\d+$/i;
-const captainAtkBoostPattern = /atk(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
-const captainHpBoostPattern = /hp(?:[^.]{0,120})?by\s+(\d+(?:\.\d+)?)x/gi;
+const captainAtkBoostPattern = /atk(?:[^.]{0,120}?)?by\s+(\d+(?:\.\d+)?)x/gi;
+const captainHpBoostPattern = /hp(?:[^.]{0,120}?)?by\s+(\d+(?:\.\d+)?)x/gi;
+const captainBranchPattern =
+  /\b(always active|standard captain|powered up captain|rampage captain)\s*:\s*/gi;
+const defaultCaptainBranchLabels = new Set(['always active', 'standard captain']);
+const preferredDefaultCaptainVariantKeys = [
+  'base',
+  'captain',
+  'description',
+  'level0',
+  'llbbase',
+  'level1',
+];
 
 export function flattenValues(value) {
   if (Array.isArray(value)) {
@@ -56,9 +67,10 @@ export function createCharacterSearchText(nameOrOptions, type, classes) {
 
 export function resolveCharacterCaptainBoosts(characterOrDetail) {
   const detail = characterOrDetail?.detail ?? characterOrDetail ?? {};
-  const captainTexts = resolveCaptainAbilityTexts(detail);
-  const captainHpBoost = extractHighestCaptainBoost(captainTexts, captainHpBoostPattern);
-  const captainAtkBoost = extractHighestCaptainBoost(captainTexts, captainAtkBoostPattern);
+  const captainText = resolveDefaultCaptainAbilityText(detail);
+  const defaultCaptainText = extractDefaultCaptainBoostText(captainText);
+  const captainHpBoost = extractHighestCaptainBoost(defaultCaptainText, captainHpBoostPattern);
+  const captainAtkBoost = extractHighestCaptainBoost(defaultCaptainText, captainAtkBoostPattern);
 
   return {
     captainHpBoost,
@@ -67,27 +79,86 @@ export function resolveCharacterCaptainBoosts(characterOrDetail) {
   };
 }
 
-function resolveCaptainAbilityTexts(detail) {
-  const variantTexts = Array.isArray(detail?.captainAbilityVariants)
+function resolveDefaultCaptainAbilityText(detail) {
+  const variants = Array.isArray(detail?.captainAbilityVariants)
     ? detail.captainAbilityVariants
-        .map((variant) => String(variant?.text ?? '').trim())
-        .filter((text) => text.length > 0)
     : [];
-  const baseText = String(detail?.captainAbility ?? '').trim();
+  const preferredVariant = preferredDefaultCaptainVariantKeys
+    .map((key) =>
+      variants.find((variant) => String(variant?.key ?? '').toLowerCase() === key && variant?.text),
+    )
+    .find(Boolean);
+  const fallbackVariant = variants.find((variant) => variant?.text);
 
-  return [...variantTexts, baseText].filter(
-    (text, index, values) => text.length > 0 && values.indexOf(text) === index,
+  return String(
+    preferredVariant?.text ?? fallbackVariant?.text ?? detail?.captainAbility ?? '',
+  ).trim();
+}
+
+function extractDefaultCaptainBoostText(text) {
+  const normalizedText = normalizeCaptainBoostText(text);
+  const branches = extractCaptainBranches(normalizedText);
+
+  if (!branches.length) {
+    return normalizedText;
+  }
+
+  const defaultBranches = branches
+    .filter((branch) => defaultCaptainBranchLabels.has(branch.label))
+    .map((branch) => branch.text)
+    .filter(Boolean);
+
+  return defaultBranches.length
+    ? defaultBranches.join('. ')
+    : (branches[0]?.text ?? normalizedText);
+}
+
+function extractCaptainBranches(text) {
+  const matches = [...text.matchAll(captainBranchPattern)];
+
+  return matches
+    .map((match, index) => {
+      const nextMatch = matches[index + 1] ?? null;
+      const start = (match.index ?? 0) + match[0].length;
+      const end = nextMatch?.index ?? text.length;
+
+      return {
+        label: String(match[1] ?? '').toLowerCase(),
+        text: text.slice(start, end).trim(),
+      };
+    })
+    .filter((branch) => branch.text.length > 0);
+}
+
+function extractHighestCaptainBoost(text, pattern) {
+  return [...text.matchAll(pattern)].reduce((highest, match) => {
+    if (isSelfOnlyCaptainBoostMatch(match[0])) {
+      return highest;
+    }
+
+    const value = Number(match[1]);
+    return Number.isFinite(value) && value > highest ? value : highest;
+  }, 0);
+}
+
+function isSelfOnlyCaptainBoostMatch(matchText) {
+  const normalizedText = normalizeCaptainBoostText(matchText);
+
+  return (
+    /\b(?:atk|hp)\b[^,.;]{0,80}\b(?:this character|self)\b/i.test(normalizedText) ||
+    /\bown\s+(?:atk|hp)\b/i.test(normalizedText)
   );
 }
 
-function extractHighestCaptainBoost(texts, pattern) {
-  return texts.reduce((highest, text) => {
-    const matches = [...text.matchAll(pattern)];
-    return matches.reduce((textHighest, match) => {
-      const value = Number(match[1]);
-      return Number.isFinite(value) && value > textHighest ? value : textHighest;
-    }, highest);
-  }, 0);
+function normalizeCaptainBoostText(text) {
+  return String(text ?? '')
+    .replace(/<br\s*\/?>/gi, '. ')
+    .replace(/<(?:ul|ol)(?:\s[^>]*)?>/gi, ' ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s+([,.;:])/g, '$1')
+    .replace(/(?:\s*\.\s*){2,}/g, '. ')
+    .trim();
 }
 
 function normalizeCharacterSearchInput(nameOrOptions, type, classes) {
