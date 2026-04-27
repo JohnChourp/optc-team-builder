@@ -15,6 +15,7 @@ interface RouteSeoData {
   title: string;
   description: string;
   canonicalPath: string;
+  indexable: boolean;
 }
 
 const appSiteBaseUrl = 'https://johnchourp.github.io/optc-team-builder';
@@ -24,6 +25,7 @@ const defaultSeo: RouteSeoData = {
   description:
     'Plan One Piece Treasure Cruise crews with character search, team building, enemy mechanics, saved teams, screenshots, and offline-friendly tools.',
   canonicalPath: '',
+  indexable: false,
 };
 
 @Component({
@@ -182,7 +184,7 @@ export class AppComponent {
   private updateRouteMetadata(url: string): void {
     const seo = this.findSeoDataForUrl(url);
     const canonicalUrl = this.buildCanonicalUrl(seo.canonicalPath);
-    const robotsContent = seo === defaultSeo ? 'noindex,follow' : 'index,follow';
+    const robotsContent = seo.indexable ? 'index,follow' : 'noindex,follow';
 
     this.title.setTitle(seo.title);
     this.meta.updateTag({ name: 'description', content: seo.description });
@@ -199,7 +201,7 @@ export class AppComponent {
     const normalizedUrl = this.normalizeRoutePath(url);
     const seo = this.findSeoDataInRoutes(this.router.config, normalizedUrl);
 
-    return seo ?? defaultSeo;
+    return seo ?? this.findGeneratedCharacterSeoData(normalizedUrl) ?? defaultSeo;
   }
 
   private findSeoDataInRoutes(
@@ -214,7 +216,7 @@ export class AppComponent {
         const seo = route.data?.['seo'];
 
         if (this.isRouteSeoData(seo)) {
-          return seo;
+          return { ...seo, indexable: true };
         }
       }
 
@@ -253,6 +255,64 @@ export class AppComponent {
       typeof candidate['description'] === 'string' &&
       typeof candidate['canonicalPath'] === 'string'
     );
+  }
+
+  private findGeneratedCharacterSeoData(normalizedUrl: string): RouteSeoData | null {
+    const match = /^characters\/([1-9]\d*)$/u.exec(normalizedUrl);
+
+    if (!match) {
+      return null;
+    }
+
+    const characterId = match[1]!;
+    const canonicalPath = `characters/${characterId}`;
+    const canonicalUrl = this.buildCanonicalUrl(canonicalPath);
+    const generatedTitle = this.readCurrentDocumentTitle(canonicalUrl);
+    const generatedDescription = this.readCurrentMetaDescription(canonicalUrl);
+
+    return {
+      title: generatedTitle ?? `OPTC Character #${characterId} | OPTC Team Builder`,
+      description:
+        generatedDescription ??
+        `View One Piece Treasure Cruise character #${characterId} stats, abilities, specials, support, rumble data, and team-building details.`,
+      canonicalPath,
+      indexable: true,
+    };
+  }
+
+  private readCurrentDocumentTitle(canonicalUrl: string): string | null {
+    if (typeof document === 'undefined' || !this.currentCanonicalMatches(canonicalUrl)) {
+      return null;
+    }
+
+    const title = document.title.trim();
+
+    return title.length > 0 ? title : null;
+  }
+
+  private readCurrentMetaDescription(canonicalUrl: string): string | null {
+    if (typeof document === 'undefined' || !this.currentCanonicalMatches(canonicalUrl)) {
+      return null;
+    }
+
+    const description = document
+      .querySelector<HTMLMetaElement>('meta[name="description"]')
+      ?.getAttribute('content')
+      ?.trim();
+
+    return description && description.length > 0 ? description : null;
+  }
+
+  private currentCanonicalMatches(canonicalUrl: string): boolean {
+    if (typeof document === 'undefined') {
+      return false;
+    }
+
+    const currentCanonical = document
+      .querySelector<HTMLLinkElement>('link[rel="canonical"]')
+      ?.getAttribute('href');
+
+    return currentCanonical === canonicalUrl;
   }
 
   private buildCanonicalUrl(routePath: string): string {

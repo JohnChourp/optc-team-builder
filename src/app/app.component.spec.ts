@@ -216,6 +216,106 @@ describe('AppComponent', () => {
       content: 'https://johnchourp.github.io/optc-team-builder/',
     });
   });
+
+  it('indexes public tool routes with their canonical URLs', async () => {
+    const publicRoutes = [
+      {
+        url: '/tabs/characters',
+        title: 'OPTC Characters | OPTC Team Builder',
+        canonicalUrl: 'https://johnchourp.github.io/optc-team-builder/tabs/characters/',
+      },
+      {
+        url: '/tabs/team-builder',
+        title: 'Team Builder | OPTC Team Builder',
+        canonicalUrl: 'https://johnchourp.github.io/optc-team-builder/tabs/team-builder/',
+      },
+      {
+        url: '/tabs/auto-team-builder',
+        title: 'Auto Team Builder | OPTC Team Builder',
+        canonicalUrl: 'https://johnchourp.github.io/optc-team-builder/tabs/auto-team-builder/',
+      },
+      {
+        url: '/tabs/crew-forge',
+        title: 'Crew Forge | OPTC Team Builder',
+        canonicalUrl: 'https://johnchourp.github.io/optc-team-builder/tabs/crew-forge/',
+      },
+    ];
+    const { AppComponent } = await import('./app.component');
+
+    for (const route of publicRoutes) {
+      titleStub.setTitle.mockClear();
+      metaStub.updateTag.mockClear();
+      routerStub = {
+        config: routes,
+        url: route.url,
+        navigated: true,
+        events: new Subject<unknown>(),
+      };
+
+      new AppComponent();
+
+      expect(titleStub.setTitle).toHaveBeenCalledWith(route.title);
+      expect(metaStub.updateTag).toHaveBeenCalledWith({
+        name: 'robots',
+        content: 'index,follow',
+      });
+      expect(metaStub.updateTag).toHaveBeenCalledWith({
+        property: 'og:url',
+        content: route.canonicalUrl,
+      });
+      routerStub.events.complete();
+    }
+  });
+
+  it('keeps generated character detail routes indexable at runtime', async () => {
+    routerStub = {
+      config: routes,
+      url: '/characters/1',
+      navigated: true,
+      events: new Subject<unknown>(),
+    };
+    const { AppComponent } = await import('./app.component');
+
+    new AppComponent();
+
+    expect(titleStub.setTitle).toHaveBeenCalledWith('OPTC Character #1 | OPTC Team Builder');
+    expect(metaStub.updateTag).toHaveBeenCalledWith({
+      name: 'robots',
+      content: 'index,follow',
+    });
+    expect(metaStub.updateTag).toHaveBeenCalledWith({
+      property: 'og:url',
+      content: 'https://johnchourp.github.io/optc-team-builder/characters/1/',
+    });
+  });
+
+  it('keeps private utility, edit, and unknown routes out of the index', async () => {
+    const nonIndexableRoutes = [
+      '/tabs/settings',
+      '/tabs/saved-teams',
+      '/characters/1/edit',
+      '/nope',
+    ];
+    const { AppComponent } = await import('./app.component');
+
+    for (const url of nonIndexableRoutes) {
+      metaStub.updateTag.mockClear();
+      routerStub = {
+        config: routes,
+        url,
+        navigated: true,
+        events: new Subject<unknown>(),
+      };
+
+      new AppComponent();
+
+      expect(metaStub.updateTag).toHaveBeenCalledWith({
+        name: 'robots',
+        content: 'noindex,follow',
+      });
+      routerStub.events.complete();
+    }
+  });
 });
 
 function createAnalyticsConsentStub(initialConsent: AnalyticsConsentState) {
