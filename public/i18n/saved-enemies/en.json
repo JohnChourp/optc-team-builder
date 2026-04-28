@@ -190,7 +190,11 @@
     "removeAbility": "Remove",
     "requirementSummary": {
       "characters": ">={{count}} chars",
-      "turns": "{{count}} turns"
+      "turns": "{{count}} turns",
+      "slotScopes": {
+        "leader": "Leader",
+        "sub": "Sub"
+      }
     },
     "toggles": {
       "classes": "Require all selected classes per slot",

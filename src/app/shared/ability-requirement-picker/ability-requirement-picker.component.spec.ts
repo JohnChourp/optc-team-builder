@@ -157,6 +157,48 @@ describe("AbilityRequirementPickerComponent", () => {
     ]);
   });
 
+  it("updates the selected row slot scope", () => {
+    const component = new AbilityRequirementPickerComponent();
+
+    component.catalogItems = [
+      {
+        key: "remove_bind",
+        label: "Remove Bind",
+        supportsTurns: true,
+        supportsSlotTokens: false,
+        availableSlotTokens: [],
+        availableSources: ["specialText"],
+        availableCoverageModes: ["explicit"],
+        matchCount: 10,
+        sampleCharacterIds: [101],
+        sampleTexts: ["Removes bind"],
+      },
+    ];
+    component.drafts = [
+      {
+        draftId: "bind-1",
+        abilityKey: "remove_bind",
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ];
+    component.isOpen = true;
+    component.ngOnChanges({
+      catalogItems: new SimpleChange([], component.catalogItems, true),
+      isOpen: new SimpleChange(false, true, true),
+    });
+
+    component.setSlotScope("bind-1", "leader");
+
+    expect(component.workingDrafts()).toEqual([
+      expect.objectContaining({
+        abilityKey: "remove_bind",
+        slotScope: "leader",
+      }),
+    ]);
+  });
+
   it("renders badge and conditional field blocks in the template", () => {
     const template = readFileSync(
       resolve(
@@ -170,6 +212,8 @@ describe("AbilityRequirementPickerComponent", () => {
     expect(template).toContain("ability-picker-mini-badge-list");
     expect(template).toContain("@if (row.supportsTurns)");
     expect(template).toContain('min="0"');
+    expect(template).toContain("ability-picker-segmented");
+    expect(template).toContain("setSlotScope(row.draft.draftId, 'leader')");
     expect(template).toContain("@if (row.supportsSlotTokens && row.availableSlotTokens.length)");
   });
 });

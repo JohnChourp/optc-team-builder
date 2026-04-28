@@ -28,6 +28,12 @@
   "fields": {
     "characters": "Χαρακτήρες",
     "turns": "Turns",
-    "slotTokens": "Slot tokens"
+    "slotTokens": "Slot tokens",
+    "slotScope": "Slot",
+    "slotScopes": {
+      "any": "Any",
+      "leader": "Leader",
+      "sub": "Sub"
+    }
   }
 }

@@ -15,6 +15,7 @@ import {
   createEmptyAutoBuildManualSlots,
 } from '../../core/models/auto-team-builder.models';
 import {
+  normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityRequirement,
   type AutoBuildEnemyMechanicRequirement,
@@ -72,7 +73,26 @@ export interface AutoTeamSelectionShipSummary {
 }
 
 export interface AutoTeamSelectionExportPayload {
-  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
+  schemaVersion:
+    | 1
+    | 2
+    | 3
+    | 4
+    | 5
+    | 6
+    | 7
+    | 8
+    | 9
+    | 10
+    | 11
+    | 12
+    | 13
+    | 14
+    | 15
+    | 16
+    | 17
+    | 18
+    | 19;
   exportedAt: string;
   source: 'auto-team-builder';
   exportType: 'preset';
@@ -527,7 +547,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload['schemaVersion'] !== 15 &&
       parsedPayload['schemaVersion'] !== 16 &&
       parsedPayload['schemaVersion'] !== 17 &&
-      parsedPayload['schemaVersion'] !== 18) ||
+      parsedPayload['schemaVersion'] !== 18 &&
+      parsedPayload['schemaVersion'] !== 19) ||
     parsedPayload['source'] !== 'auto-team-builder' ||
     parsedPayload['exportType'] !== 'preset'
   ) {
@@ -731,6 +752,9 @@ export function sanitizeAutoTeamSelectionImportPayload(
       rawRequirement.requiredCharacterCount,
     );
     const requiredCharacterCount = rawRequiredCharacterCount ?? 1;
+    const slotScope = normalizeAbilityRequirementSlotScope(
+      typeof rawRequirement.slotScope === 'string' ? rawRequirement.slotScope : null,
+    );
     const rawSlotTokens = Array.isArray(rawRequirement.slotTokens)
       ? [
           ...new Set(
@@ -755,12 +779,15 @@ export function sanitizeAutoTeamSelectionImportPayload(
       (!abilityCatalogItem.supportsSlotTokens && rawSlotTokens.length > 0) ||
       (rawRequirement.requiredCharacterCount !== undefined &&
         rawRequirement.requiredCharacterCount !== null &&
-        rawRequiredCharacterCount === null)
+        rawRequiredCharacterCount === null) ||
+      (rawRequirement.slotScope !== undefined &&
+        rawRequirement.slotScope !== null &&
+        rawRequirement.slotScope !== slotScope)
     ) {
       adjustedAbilityCount += 1;
     }
 
-    const identity = `${abilityKey}|${minTurns ?? 'none'}|${slotTokens.join(',')}`;
+    const identity = `${abilityKey}|${minTurns ?? 'none'}|${slotTokens.join(',')}|${slotScope}`;
     const existingRequirement = requiredAbilityMap.get(identity);
 
     if (existingRequirement) {
@@ -776,6 +803,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
       minTurns,
       slotTokens,
       requiredCharacterCount,
+      ...(slotScope !== 'any' ? { slotScope } : {}),
     });
   }
   const requiredAbilities = [...requiredAbilityMap.values()];
@@ -1095,7 +1123,7 @@ export function buildAutoTeamSelectionExportPayload({
   }));
 
   return {
-    schemaVersion: 18,
+    schemaVersion: 19,
     exportedAt,
     source: 'auto-team-builder',
     exportType: 'preset',

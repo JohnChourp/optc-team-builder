@@ -75,6 +75,10 @@ function normalizePositiveInteger(value: unknown): number | null {
   return typeof value === "number" && Number.isInteger(value) && value > 0 ? value : null;
 }
 
+function normalizeAbilitySlotScope(value: unknown): SavedEnemy["requiredAbilities"][number]["slotScope"] {
+  return value === "leader" || value === "sub" ? value : "any";
+}
+
 function normalizeTimestamp(value: unknown, fallback: string): string {
   if (typeof value !== "string") {
     return fallback;
@@ -158,6 +162,8 @@ function normalizeRequiredAbilities(value: unknown): SavedEnemy["requiredAbiliti
       return [];
     }
 
+    const slotScope = normalizeAbilitySlotScope(entry["slotScope"]);
+
     return [
       {
         abilityKey,
@@ -166,6 +172,7 @@ function normalizeRequiredAbilities(value: unknown): SavedEnemy["requiredAbiliti
           mapValue: (token) => token.toUpperCase(),
         }),
         requiredCharacterCount: normalizePositiveInteger(entry["requiredCharacterCount"]) ?? 1,
+        ...(slotScope !== "any" ? { slotScope } : {}),
       },
     ];
   });

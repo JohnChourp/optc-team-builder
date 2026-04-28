@@ -998,6 +998,12 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
           this.i18n.translate('editor.requirementSummary.characters', { count }, 'saved-enemies'),
         formatTurns: (count) =>
           this.i18n.translate('editor.requirementSummary.turns', { count }, 'saved-enemies'),
+        formatSlotScope: (scope) =>
+          this.i18n.translate(
+            `editor.requirementSummary.slotScopes.${scope}`,
+            undefined,
+            'saved-enemies',
+          ),
       },
     );
   }
@@ -1041,6 +1047,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       minTurns: draft.minTurns,
       slotTokens: draft.slotTokens,
       requiredCharacterCount: resolvePositiveInteger(draft.requiredCharacterCount) ?? 1,
+      slotScope: draft.slotScope,
     });
   }
 

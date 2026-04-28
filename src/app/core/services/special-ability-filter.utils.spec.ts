@@ -288,6 +288,7 @@ describe('special ability filter utils', () => {
             minTurns: 9,
             slotTokens: ['RCV'],
             requiredCharacterCount: 3,
+            slotScope: 'sub',
           },
         ],
         CATALOG_ITEMS,
@@ -299,6 +300,7 @@ describe('special ability filter utils', () => {
         minTurns: null,
         slotTokens: [],
         requiredCharacterCount: 3,
+        slotScope: 'sub',
       },
     ]);
   });

@@ -14,6 +14,7 @@ export type AutoBuildAbilityCategory =
   | 'support'
   | 'legacy';
 export type AutoBuildAbilityCoverageMode = 'explicit' | 'selectedDebuff';
+export type AutoBuildAbilitySlotScope = 'any' | 'leader' | 'sub';
 export type AutoBuildEnemyMechanicCategory =
   | 'enemyDefense'
   | 'crewDebuff'
@@ -76,6 +77,7 @@ export interface AutoBuildAbilityRequirement {
   minTurns: number | null;
   slotTokens: string[];
   requiredCharacterCount: number;
+  slotScope?: AutoBuildAbilitySlotScope;
 }
 
 export interface AutoBuildEnemyMechanicRequirement {
@@ -102,4 +104,12 @@ export interface AutoBuildEnemyMechanicCatalogItem {
   defaultConditionTags: AutoBuildEnemyMechanicConditionTag[];
   derivedAbilityKey: string | null;
   keywords: string[];
+}
+
+export function normalizeAbilityRequirementSlotScope(
+  value: string | null | undefined,
+): AutoBuildAbilitySlotScope {
+  const normalizedValue = typeof value === 'string' ? value.trim() : '';
+
+  return normalizedValue === 'leader' || normalizedValue === 'sub' ? normalizedValue : 'any';
 }

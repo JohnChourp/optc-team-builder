@@ -2,6 +2,7 @@ import {
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityCategory,
   type AutoBuildAbilityRequirement,
+  normalizeAbilityRequirementSlotScope,
 } from '../models/auto-team-builder-ability.models';
 import {
   createAbilityRequirementDrafts,
@@ -55,6 +56,7 @@ export function createCategoryAbilityDrafts(
           minTurns: catalogItem?.supportsTurns ? requirement.minTurns : null,
           slotTokens: catalogItem?.supportsSlotTokens ? [...requirement.slotTokens] : [],
           requiredCharacterCount: requirement.requiredCharacterCount,
+          slotScope: normalizeAbilityRequirementSlotScope(requirement.slotScope),
         };
       }),
   );

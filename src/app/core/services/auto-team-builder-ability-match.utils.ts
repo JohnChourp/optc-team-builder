@@ -1,4 +1,5 @@
 import {
+  normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityRequirement,
   type NormalizedBuilderAbility,
 } from '../models/auto-team-builder-ability.models';
@@ -24,7 +25,7 @@ const SELECTABLE_DEBUFF_COUNTER_KEYS = new Set([
 export function buildAbilityRequirementIdentity(
   requirement: AutoBuildAbilityRequirement,
 ): string {
-  return `${normalizeAbilityKey(requirement.abilityKey)}|${requirement.minTurns ?? 'none'}|${requirement.slotTokens.join(',')}|${requirement.requiredCharacterCount}`;
+  return `${normalizeAbilityKey(requirement.abilityKey)}|${requirement.minTurns ?? 'none'}|${requirement.slotTokens.join(',')}|${requirement.requiredCharacterCount}|${normalizeAbilityRequirementSlotScope(requirement.slotScope)}`;
 }
 
 export function matchesAbilityRequirement(

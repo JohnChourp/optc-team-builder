@@ -35,7 +35,10 @@ import {
   type AbilityRequirementDraft,
   type AbilityRequirementMiniBadge,
 } from '../../core/services/ability-requirement-draft.utils';
-import { type AutoBuildAbilityCatalogItem } from '../../core/models/auto-team-builder-ability.models';
+import {
+  type AutoBuildAbilityCatalogItem,
+  type AutoBuildAbilitySlotScope,
+} from '../../core/models/auto-team-builder-ability.models';
 
 interface AbilityRequirementCatalogTileView {
   item: AutoBuildAbilityCatalogItem;
@@ -155,7 +158,6 @@ export class AbilityRequirementPickerComponent implements OnChanges {
     }
 
     if (changes['isOpen'] && this.isOpen) {
-      console.log('AbilityRequirementPickerComponent component');
       this.searchTerm.set('');
       this.workingDrafts.set(cloneAbilityRequirementDrafts(this.drafts));
     }
@@ -207,6 +209,12 @@ export class AbilityRequirementPickerComponent implements OnChanges {
 
     this.patchDraft(draftId, {
       minTurns: nextValue,
+    });
+  }
+
+  public setSlotScope(draftId: string, slotScope: AutoBuildAbilitySlotScope): void {
+    this.patchDraft(draftId, {
+      slotScope,
     });
   }
 

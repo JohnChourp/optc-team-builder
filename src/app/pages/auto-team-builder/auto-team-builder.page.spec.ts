@@ -3194,7 +3194,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 18,
+      schemaVersion: 19,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -3379,7 +3379,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       exportedAt: '2026-03-25T10:00:00.000Z',
     });
 
-    expect(payload.schemaVersion).toBe(18);
+    expect(payload.schemaVersion).toBe(19);
     expect(payload.filters.leaderBoostRanges).toEqual({
       ATK: { min: 5, max: 6 },
       HP: { min: 1.25, max: 1.5 },

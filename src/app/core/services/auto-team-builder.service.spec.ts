@@ -217,7 +217,27 @@ describe('Auto team builder', () => {
     const result = buildAutoTeamResult(
       [
         emptyRecent,
-        createCaptainRecord(),
+        createCharacterRecord({
+          id: 5900,
+          primaryClass: 'Fighter',
+          secondaryClass: 'Free Spirit',
+          detail: {
+            captainAbility:
+              'Boosts ATK of DEX and Fighter characters by 5.25x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.',
+            specialText:
+              'Boosts orb effects of DEX and Fighter characters by 2.25x for 1 turn and changes orbs into Matching Orbs. Reduces Bind duration by 5 turns.',
+            builderAbilities: [
+              {
+                key: 'remove_bind',
+                label: 'Remove Bind',
+                minTurns: 5,
+                isCompleteRemoval: false,
+                slotTokens: [],
+                source: 'specialText',
+              },
+            ],
+          },
+        }),
         createAtkSubRecord(),
         createAffinitySubRecord(),
         createUtilitySubRecord(),
@@ -234,7 +254,27 @@ describe('Auto team builder', () => {
   it('covers required abilities team-wide across different characters', () => {
     const result = buildAutoTeamResult(
       [
-        createCaptainRecord(),
+        createCharacterRecord({
+          id: 5900,
+          primaryClass: 'Fighter',
+          secondaryClass: 'Free Spirit',
+          detail: {
+            captainAbility:
+              'Boosts ATK of DEX and Fighter characters by 5.25x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.',
+            specialText:
+              'Boosts orb effects of DEX and Fighter characters by 2.25x for 1 turn and changes orbs into Matching Orbs. Reduces Bind duration by 5 turns.',
+            builderAbilities: [
+              {
+                key: 'remove_bind',
+                label: 'Remove Bind',
+                minTurns: 5,
+                isCompleteRemoval: false,
+                slotTokens: [],
+                source: 'specialText',
+              },
+            ],
+          },
+        }),
         createCharacterRecord({
           id: 5801,
           primaryClass: 'Fighter',
@@ -345,6 +385,77 @@ describe('Auto team builder', () => {
     expect(result?.coverage.abilityRequirements.matched).toEqual([
       { abilityKey: 'remove_bind', minTurns: 5, slotTokens: [], requiredCharacterCount: 2 },
     ]);
+  });
+
+  it('matches leader-scoped ability requirements against captain or friend captain slots only', () => {
+    const result = buildAutoTeamResult(
+      [
+        createBindLeaderRecord(6810),
+        createCaptainRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+        createAtkSubRecord(),
+      ],
+      {
+        ...INPUT,
+        manualSlots: createManualSlots({
+          captain: [6810],
+        }),
+        captainCharacterId: 6810,
+        requiredAbilities: [
+          {
+            abilityKey: 'remove_bind',
+            minTurns: 5,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+            slotScope: 'leader',
+          },
+        ],
+      },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.abilityRequirements.matched).toEqual([
+      {
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+      },
+    ]);
+  });
+
+  it('does not let leader abilities satisfy sub-scoped ability requirements', () => {
+    const result = buildAutoTeamResult(
+      [
+        createBindLeaderRecord(6811),
+        createBindLeaderRecord(5900),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+        createAtkSubRecord(),
+      ],
+      {
+        ...INPUT,
+        manualSlots: createManualSlots({
+          captain: [6811],
+        }),
+        captainCharacterId: 6811,
+        requiredAbilities: [
+          {
+            abilityKey: 'remove_bind',
+            minTurns: 5,
+            slotTokens: [],
+            requiredCharacterCount: 2,
+            slotScope: 'sub',
+          },
+        ],
+      },
+    );
+
+    expect(result).toBeNull();
   });
 
   it('fails when the team does not reach the requested ability slot count', () => {
@@ -5578,6 +5689,30 @@ function createCaptainRecord(): CharacterDetailRecord {
         'Boosts ATK of DEX and Fighter characters by 5.25x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.',
       specialText:
         'Boosts orb effects of DEX and Fighter characters by 2.25x for 1 turn and changes orbs into Matching Orbs.',
+    },
+  });
+}
+
+function createBindLeaderRecord(id: number): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    primaryClass: 'Fighter',
+    secondaryClass: 'Free Spirit',
+    detail: {
+      captainAbility:
+        'Boosts ATK of DEX and Fighter characters by 5.25x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.',
+      specialText:
+        'Boosts orb effects of DEX and Fighter characters by 2.25x for 1 turn and changes orbs into Matching Orbs. Reduces Bind duration by 5 turns.',
+      builderAbilities: [
+        {
+          key: 'remove_bind',
+          label: 'Remove Bind',
+          minTurns: 5,
+          isCompleteRemoval: false,
+          slotTokens: [],
+          source: 'specialText',
+        },
+      ],
     },
   });
 }

@@ -27,7 +27,10 @@ import {
   createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
 } from '../models/auto-team-builder.models';
-import { type AutoBuildAbilityRequirement } from '../models/auto-team-builder-ability.models';
+import {
+  normalizeAbilityRequirementSlotScope,
+  type AutoBuildAbilityRequirement,
+} from '../models/auto-team-builder-ability.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
 import {
   AutoTeamBuildCancelledError,
@@ -179,6 +182,9 @@ export class AutoTeamBuilderService {
       requiredAbilities: input.requiredAbilities.map((requirement) => ({
         ...requirement,
         slotTokens: [...requirement.slotTokens],
+        ...(normalizeAbilityRequirementSlotScope(requirement.slotScope) !== 'any'
+          ? { slotScope: normalizeAbilityRequirementSlotScope(requirement.slotScope) }
+          : {}),
       })),
       enemyMechanics: input.enemyMechanics.map((mechanic) => ({
         ...mechanic,
@@ -1846,12 +1852,13 @@ export class AutoTeamBuilderService {
         requirement.requiredCharacterCount > 0
           ? Math.floor(requirement.requiredCharacterCount)
           : 1;
+      const slotScope = normalizeAbilityRequirementSlotScope(requirement.slotScope);
 
       if (normalizedAbilityKey.length === 0) {
         continue;
       }
 
-      const identity = `${normalizedAbilityKey}|${minTurns ?? 'none'}|${slotTokens.join(',')}`;
+      const identity = `${normalizedAbilityKey}|${minTurns ?? 'none'}|${slotTokens.join(',')}|${slotScope}`;
       const existingRequirement = normalizedRequirements.get(identity);
 
       if (existingRequirement) {
@@ -1867,6 +1874,7 @@ export class AutoTeamBuilderService {
         minTurns,
         slotTokens,
         requiredCharacterCount,
+        ...(slotScope !== 'any' ? { slotScope } : {}),
       });
     }
 

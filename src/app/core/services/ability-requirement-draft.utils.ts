@@ -22,8 +22,10 @@ import {
 } from "ionicons/icons";
 
 import {
+  normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityRequirement,
+  type AutoBuildAbilitySlotScope,
 } from "../models/auto-team-builder-ability.models";
 
 export interface AbilityRequirementDraft {
@@ -32,6 +34,7 @@ export interface AbilityRequirementDraft {
   minTurns: number | null;
   slotTokens: string[];
   requiredCharacterCount: number | null;
+  slotScope?: AutoBuildAbilitySlotScope;
 }
 
 export interface AbilityRequirementVisualMeta {
@@ -44,6 +47,7 @@ export interface AbilityRequirementVisualMeta {
 export interface AbilityRequirementSummaryFormatter {
   formatCharacters(count: number): string;
   formatTurns(count: number): string;
+  formatSlotScope?(scope: AutoBuildAbilitySlotScope): string;
 }
 
 export interface AbilityRequirementMiniBadge {
@@ -314,6 +318,7 @@ export function createAbilityRequirementDraft(
       : normalizeAbilityRequirementTurns(rawTurns),
     slotTokens: sanitizeSlotTokens(requirement?.slotTokens),
     requiredCharacterCount: resolvePositiveInteger(requirement?.requiredCharacterCount) ?? 1,
+    slotScope: normalizeAbilityRequirementSlotScope(requirement?.slotScope),
   };
 }
 
@@ -326,6 +331,7 @@ export function cloneAbilityRequirementDraft(
     minTurns: draft.minTurns,
     slotTokens: [...draft.slotTokens],
     requiredCharacterCount: draft.requiredCharacterCount,
+    slotScope: normalizeAbilityRequirementSlotScope(draft.slotScope),
   };
 }
 
@@ -438,11 +444,13 @@ export function serializeAbilityRequirementDrafts(
     const requiredCharacterCount = forceSingleCharacterCount
       ? 1
       : resolvePositiveInteger(draft.requiredCharacterCount) ?? 1;
+    const slotScope = normalizeAbilityRequirementSlotScope(draft.slotScope);
     const nextRequirement: AutoBuildAbilityRequirement = {
       abilityKey,
       minTurns,
       slotTokens,
       requiredCharacterCount,
+      ...(slotScope !== "any" ? { slotScope } : {}),
     };
 
     if (!dedupe) {
@@ -450,7 +458,7 @@ export function serializeAbilityRequirementDrafts(
       continue;
     }
 
-    const identity = `${abilityKey}|${minTurns ?? "none"}|${slotTokens.join(",")}`;
+    const identity = `${abilityKey}|${minTurns ?? "none"}|${slotTokens.join(",")}|${slotScope}`;
     const existingRequirement = requirements.get(identity);
 
     if (existingRequirement) {
@@ -481,6 +489,12 @@ export function formatAbilityRequirementSummary(
 
   if (normalizedTurns !== null) {
     suffixes.push(formatter.formatTurns(normalizedTurns));
+  }
+
+  const slotScope = normalizeAbilityRequirementSlotScope(requirement.slotScope);
+
+  if (slotScope !== "any") {
+    suffixes.push(formatter.formatSlotScope?.(slotScope) ?? slotScope);
   }
 
   if (requirement.slotTokens.length > 0) {

@@ -65,6 +65,7 @@ import {
   createEmptyAutoBuildManualSlots,
 } from '../../core/models/auto-team-builder.models';
 import {
+  normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityCatalog,
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityCoverageMode,
@@ -345,20 +346,24 @@ function resolveManualSlotRequiredAbilities(
   requirements: AutoBuildAbilityRequirement[],
   role: AutoBuildManualSlotRole,
 ): AutoBuildAbilityRequirement[] {
-  return role === 'captain' || role === 'friendCaptain'
-    ? requirements
-    : requirements.filter((requirement) => !EXTRA_DROP_ABILITY_KEY_SET.has(requirement.abilityKey));
+  const isLeaderRole = role === 'captain' || role === 'friendCaptain';
+
+  return requirements.filter((requirement) => {
+    if (EXTRA_DROP_ABILITY_KEY_SET.has(requirement.abilityKey)) {
+      return isLeaderRole;
+    }
+
+    const slotScope = normalizeAbilityRequirementSlotScope(requirement.slotScope);
+
+    return isLeaderRole ? slotScope !== 'sub' : slotScope !== 'leader';
+  });
 }
 
-function matchesLeaderOnlyManualRequirements(
+function matchesScopedManualRequirements(
   character: Pick<CharacterDetailRecord, 'detail'>,
   requirements: AutoBuildAbilityRequirement[],
 ): boolean {
-  const leaderOnlyRequirements = requirements.filter((requirement) =>
-    EXTRA_DROP_ABILITY_KEY_SET.has(requirement.abilityKey),
-  );
-
-  return leaderOnlyRequirements.every((requirement) =>
+  return requirements.every((requirement) =>
     character.detail.builderAbilities.some((ability) =>
       matchesAnyAbilityRequirement(ability, [requirement]),
     ),
@@ -547,6 +552,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       ...requirement,
       slotTokens: [...requirement.slotTokens],
       requiredCharacterCount: 1,
+      ...(normalizeAbilityRequirementSlotScope(requirement.slotScope) !== 'any'
+        ? { slotScope: normalizeAbilityRequirementSlotScope(requirement.slotScope) }
+        : {}),
     })),
   }));
   public readonly availableAbilityCatalogItems = computed(
@@ -3934,6 +3942,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       {
         formatCharacters: (count) => this.t('abilities.requirement.characters', { count }),
         formatTurns: (count) => this.t('abilities.requirement.turns', { count }),
+        formatSlotScope: (scope) => this.t(`abilities.requirement.slotScopes.${scope}`),
       },
     );
   }
@@ -3961,6 +3970,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       minTurns: draft.minTurns,
       slotTokens: draft.slotTokens,
       requiredCharacterCount: draft.requiredCharacterCount ?? 1,
+      slotScope: draft.slotScope,
     });
   }
 
@@ -4044,13 +4054,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     highlightedRequirements: AutoBuildAbilityRequirement[],
   ): ManualCharacterCardView[] {
     const activeRole = this.activeManualSlotRole();
+    const activeRoleRequirements = resolveManualSlotRequiredAbilities(
+      highlightedRequirements,
+      activeRole,
+    );
+    const requiredLeaderOnlyRequirements = activeRoleRequirements.filter((requirement) =>
+      EXTRA_DROP_ABILITY_KEY_SET.has(requirement.abilityKey),
+    );
     const visibleCharacters =
-      this.isLeaderManualSlotRole(activeRole) &&
-      highlightedRequirements.some((requirement) =>
-        EXTRA_DROP_ABILITY_KEY_SET.has(requirement.abilityKey),
-      )
+      requiredLeaderOnlyRequirements.length > 0
         ? characters.filter((character) =>
-            matchesLeaderOnlyManualRequirements(character, highlightedRequirements),
+            matchesScopedManualRequirements(character, requiredLeaderOnlyRequirements),
           )
         : characters;
 

@@ -599,7 +599,11 @@
     "selectableDebuff": "selectable debuff",
     "requirement": {
       "characters": ">={{count}} chars",
-      "turns": "{{count}} turns"
+      "turns": "{{count}} turns",
+      "slotScopes": {
+        "leader": "Leader",
+        "sub": "Sub"
+      }
     },
     "catalog": {
       "selectableDebuffOnly": "{{label}} (μόνο selectable debuff)",

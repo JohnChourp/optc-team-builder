@@ -20,7 +20,10 @@ import {
   type AutoBuildUtilityRole,
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
-import { type AutoBuildAbilityRequirement } from '../models/auto-team-builder-ability.models';
+import {
+  normalizeAbilityRequirementSlotScope,
+  type AutoBuildAbilityRequirement,
+} from '../models/auto-team-builder-ability.models';
 import conflictOverrideCatalog from '../data/auto-team-builder-party-conflict-overrides.json';
 import { type CharacterDetailRecord, type CharacterListItem } from '../models/optc.models';
 import { matchesAbilityRequirement } from './auto-team-builder-ability-match.utils';
@@ -186,10 +189,19 @@ function candidateMatchesAbilityRequirement(
 function cloneAbilityRequirement(
   requirement: AutoBuildAbilityRequirement,
 ): AutoBuildAbilityRequirement {
-  return {
+  const slotScope = normalizeAbilityRequirementSlotScope(requirement.slotScope);
+  const nextRequirement: AutoBuildAbilityRequirement = {
     ...requirement,
     slotTokens: [...requirement.slotTokens],
   };
+
+  if (slotScope === 'any') {
+    delete nextRequirement.slotScope;
+  } else {
+    nextRequirement.slotScope = slotScope;
+  }
+
+  return nextRequirement;
 }
 
 export function buildAutoBuildAbilityCoverageBreakdown(
@@ -570,26 +582,54 @@ function addCandidatePartyConflictKeys(
 function countMatchingAbilityRequirementSlots(
   candidates: AutoBuildCandidate[],
   requirement: AutoBuildAbilityRequirement,
+  leaderCandidates: AutoBuildCandidate[] = [],
 ): number {
-  return candidates.filter((candidate) =>
+  return resolveAbilityRequirementCandidatePool(
+    candidates,
+    requirement,
+    leaderCandidates,
+  ).filter((candidate) =>
     candidateMatchesAbilityRequirement(candidate, requirement),
   ).length;
 }
 
-function isLeaderOnlyAbilityRequirement(requirement: AutoBuildAbilityRequirement): boolean {
+function isExtraDropLeaderAbilityRequirement(requirement: AutoBuildAbilityRequirement): boolean {
   return EXTRA_DROP_LEADER_ABILITY_KEY_SET.has(requirement.abilityKey);
 }
 
-function splitAbilityRequirementsByScope(requirements: AutoBuildAbilityRequirement[]): {
+function isLeaderScopedAbilityRequirement(requirement: AutoBuildAbilityRequirement): boolean {
+  return (
+    normalizeAbilityRequirementSlotScope(requirement.slotScope) === 'leader' ||
+    isExtraDropLeaderAbilityRequirement(requirement)
+  );
+}
+
+function resolveAbilityRequirementCandidatePool(
+  candidates: AutoBuildCandidate[],
+  requirement: AutoBuildAbilityRequirement,
+  leaderCandidates: AutoBuildCandidate[],
+): AutoBuildCandidate[] {
+  if (isLeaderScopedAbilityRequirement(requirement)) {
+    return leaderCandidates;
+  }
+
+  if (normalizeAbilityRequirementSlotScope(requirement.slotScope) !== 'sub') {
+    return candidates;
+  }
+
+  return candidates.filter((candidate) => !leaderCandidates.includes(candidate));
+}
+
+function splitExtraDropAbilityRequirements(requirements: AutoBuildAbilityRequirement[]): {
   leaderOnlyRequirements: AutoBuildAbilityRequirement[];
   teamRequirements: AutoBuildAbilityRequirement[];
 } {
   return {
     leaderOnlyRequirements: requirements.filter((requirement) =>
-      isLeaderOnlyAbilityRequirement(requirement),
+      isExtraDropLeaderAbilityRequirement(requirement),
     ),
     teamRequirements: requirements.filter(
-      (requirement) => !isLeaderOnlyAbilityRequirement(requirement),
+      (requirement) => !isExtraDropLeaderAbilityRequirement(requirement),
     ),
   };
 }
@@ -626,15 +666,15 @@ function resolveAbilityCoverage(
   }
 
   const matched = requirements.filter((requirement) =>
-    isLeaderOnlyAbilityRequirement(requirement)
+    isExtraDropLeaderAbilityRequirement(requirement)
       ? leadersSatisfyAbilityRequirement(leaderCandidates, requirement)
-      : countMatchingAbilityRequirementSlots(candidates, requirement) >=
+      : countMatchingAbilityRequirementSlots(candidates, requirement, leaderCandidates) >=
         requirement.requiredCharacterCount,
   );
   const missing = requirements.filter((requirement) =>
-    isLeaderOnlyAbilityRequirement(requirement)
+    isExtraDropLeaderAbilityRequirement(requirement)
       ? !leadersSatisfyAbilityRequirement(leaderCandidates, requirement)
-      : countMatchingAbilityRequirementSlots(candidates, requirement) <
+      : countMatchingAbilityRequirementSlots(candidates, requirement, leaderCandidates) <
         requirement.requiredCharacterCount,
   );
 
@@ -888,7 +928,7 @@ function resolveLeaderCandidateOptions(
   input: AutoBuildInput,
   options: AutoTeamBuildAttemptOptions,
 ): AutoBuildCandidate[] {
-  const { leaderOnlyRequirements } = splitAbilityRequirementsByScope(input.requiredAbilities);
+  const { leaderOnlyRequirements } = splitExtraDropAbilityRequirements(input.requiredAbilities);
   const manualCandidateIdSet = new Set(slotCandidates.map((candidate) => candidate.character.id));
   const candidateMatchesLeaderConstraints = (
     candidate: AutoBuildCandidate,

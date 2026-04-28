@@ -190,7 +190,11 @@
     "removeAbility": "Αφαίρεση",
     "requirementSummary": {
       "characters": ">={{count}} chars",
-      "turns": "{{count}} turns"
+      "turns": "{{count}} turns",
+      "slotScopes": {
+        "leader": "Leader",
+        "sub": "Sub"
+      }
     },
     "toggles": {
       "classes": "Απαίτησε όλα τα selected classes σε κάθε slot",
