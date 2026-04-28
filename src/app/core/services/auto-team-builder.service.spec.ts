@@ -456,7 +456,7 @@ describe('Auto team builder', () => {
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
   });
 
-  it('does not let a sub-only extra-drop character satisfy leader-only extra-drop rules', () => {
+  it('relaxes a manual leader when only a sub has the requested leader-only extra-drop rule', () => {
     const input = createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], ['Fighter'], {
       captainCharacterId: 1588,
       friendCaptainCharacterId: 1588,
@@ -473,10 +473,17 @@ describe('Auto team builder', () => {
       ],
     });
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).not.toBe(1588);
+    expect(result?.slots[1]?.character.id).not.toBe(1588);
+    expect(result?.slots[0]?.character.detail.builderAbilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'extra_drop_guaranteed', source: 'captainAbility' }),
+      ]),
+    );
   });
 
-  it('fails when a manually selected captain lacks the required guaranteed extra-drop ability', () => {
+  it('relaxes a manually selected captain that lacks the required guaranteed extra-drop ability', () => {
     const input = createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], ['Fighter'], {
       captainCharacterId: 1588,
       friendCaptainCharacterId: 2035,
@@ -493,7 +500,9 @@ describe('Auto team builder', () => {
       ],
     });
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).not.toBe(1588);
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
   });
 
   it('allows matching base character names when the unique-name toggle is off', () => {
@@ -543,7 +552,7 @@ describe('Auto team builder', () => {
     );
   });
 
-  it('rejects teams that reuse the same base character name when the toggle is on', () => {
+  it('relaxes a manual sub that reuses the same base character name when the toggle is on', () => {
     const result = buildAutoTeamResult(
       [
         createCharacterRecord({
@@ -585,10 +594,11 @@ describe('Auto team builder', () => {
       }),
     );
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 5815)).toBe(false);
   });
 
-  it('rejects duplicate base names across manual leader and sub slot picks when the toggle is on', () => {
+  it('relaxes duplicate base names across manual leader and sub slot picks when the toggle is on', () => {
     const result = buildAutoTeamResult(
       [
         createCharacterRecord({
@@ -630,7 +640,8 @@ describe('Auto team builder', () => {
       }),
     );
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 5819)).toBe(false);
   });
 
   it('allows the friend captain to reuse the same base character name when the toggle is on', () => {
@@ -681,7 +692,7 @@ describe('Auto team builder', () => {
     );
   });
 
-  it('rejects a composite in-game conflict like General Franky and Tony Tony Chopper', () => {
+  it('relaxes a manual sub with a composite in-game conflict like General Franky and Tony Tony Chopper', () => {
     const result = buildAutoTeamResult(
       [
         createCharacterRecord({
@@ -723,7 +734,8 @@ describe('Auto team builder', () => {
       }),
     );
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 2797)).toBe(false);
   });
 
   it('allows a composite in-game conflict when the unique-name toggle is off', () => {
@@ -770,7 +782,7 @@ describe('Auto team builder', () => {
     expect(result).not.toBeNull();
   });
 
-  it('rejects overlapping explicit party conflict keys even when display names are unrelated', () => {
+  it('relaxes overlapping explicit party conflict keys even when display names are unrelated', () => {
     const result = buildAutoTeamResult(
       [
         createCharacterRecord({
@@ -814,7 +826,8 @@ describe('Auto team builder', () => {
       }),
     );
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 5829)).toBe(false);
   });
 
   it('rejects linked variants that share an explicit canonical conflict key', () => {
@@ -1959,7 +1972,7 @@ describe('Auto team builder', () => {
     expect(result?.slots.some((slot) => slot.character.id === 2606)).toBe(false);
   });
 
-  it('fails when a locked Big Mom sub is outside STR, DEX, and QCK scope', () => {
+  it('relaxes a manual Big Mom sub outside STR, DEX, and QCK scope', () => {
     const result = buildAutoTeamResult(createBigMomLeaderTeamRecords(), {
       ...createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], ['Powerhouse'], {
         manualSlots: createManualSlots({
@@ -1970,10 +1983,11 @@ describe('Auto team builder', () => {
       }),
     });
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 2605)).toBe(false);
   });
 
-  it('fails when a locked sub is outside the active leader scope', () => {
+  it('relaxes a manual sub outside the active leader scope', () => {
     const result = buildAutoTeamResult(createKaidoLeaderTeamRecords(), {
       ...createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], ['Powerhouse', 'Striker'], {
         lockedCharacterIds: [2700, 2705],
@@ -1982,7 +1996,8 @@ describe('Auto team builder', () => {
       }),
     });
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 2705)).toBe(false);
   });
 
   it('intersects dual leader class scope before filling subs', () => {
@@ -2253,7 +2268,7 @@ describe('Auto team builder', () => {
     expect(result?.slots.some((slot) => slot.character.id === 7269)).toBe(true);
   });
 
-  it('rejects strict sub super special teams with a slot outside the effect scope', () => {
+  it('relaxes a strict sub super special manual pick outside the effect scope', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderWithSuperEffectScopeRecord(7272, {
@@ -2283,10 +2298,11 @@ describe('Auto team builder', () => {
       }),
     );
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 7273)).toBe(false);
   });
 
-  it('rejects strict sub super special teams when activation tags are not satisfied', () => {
+  it('relaxes a strict sub super special manual pick when activation tags are not satisfied', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderWithSuperEffectScopeRecord(7278, {
@@ -2319,7 +2335,8 @@ describe('Auto team builder', () => {
       }),
     );
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 7279)).toBe(false);
   });
 
   it('intersects captain and friend captain super effect scopes', () => {
@@ -2378,7 +2395,7 @@ describe('Auto team builder', () => {
     expect(result?.slots.some((slot) => slot.character.id === 7215)).toBe(false);
   });
 
-  it('rejects manual sub picks outside the leader super effect scope', () => {
+  it('relaxes manual sub picks outside the leader super effect scope', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderWithSuperEffectScopeRecord(7220, {
@@ -2420,7 +2437,9 @@ describe('Auto team builder', () => {
       }),
     );
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 7225)).toBe(false);
+    expect(result?.slots.every((slot) => slot.character.type.includes('DEX'))).toBe(true);
   });
 
   it('rejects leaders without parseable super effect scope when the filter is enabled', () => {
@@ -3314,7 +3333,125 @@ describe('Auto team builder', () => {
     expect(result?.input.friendCaptainCharacterId).toBe(5925);
   });
 
-  it('returns null when a slot-based manual pick is missing from the available candidate pool', async () => {
+  it('auto-fills a manual slot when all OR picks are missing from the candidate pool', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      manualSlots: createManualSlots({
+        sub1: [999991, 999992, 999993, 999994, 999995],
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots).toHaveLength(6);
+    expect(
+      result?.slots.some((slot) =>
+        [999991, 999992, 999993, 999994, 999995].includes(slot.character.id),
+      ),
+    ).toBe(false);
+  });
+
+  it('relaxes only the manual slot that cannot be filled while preserving another manual slot', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      manualSlots: createManualSlots({
+        sub1: [999991, 999992, 999993, 999994, 999995],
+        sub2: [5880],
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[3]?.character.id).toBe(5880);
+    expect(result?.slots[3]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('prefers a usable manual sub pick before auto-filling that slot', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      manualSlots: createManualSlots({
+        sub1: [5860],
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[2]?.character.id).toBe(5860);
+    expect(result?.slots[2]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('relaxes a manual sub pick that blocks final ability coverage', async () => {
+    const createAbilitySub = (id: number, abilityKey: string): CharacterDetailRecord =>
+      createCharacterRecord({
+        id,
+        primaryClass: 'Fighter',
+        detail: {
+          specialText: `Covers ${abilityKey}.`,
+          builderAbilities: [
+            {
+              key: abilityKey,
+              label: abilityKey,
+              minTurns: null,
+              isCompleteRemoval: false,
+              slotTokens: [],
+              source: 'specialText',
+            },
+          ],
+        },
+      });
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue([
+        createCharacterRecord({
+          id: 9100,
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of all characters by 5x and HP by 1.3x.',
+          },
+        }),
+        createAbilitySub(9104, 'coverage_d'),
+        createAbilitySub(9103, 'coverage_c'),
+        createAbilitySub(9102, 'coverage_b'),
+        createAbilitySub(9101, 'coverage_a'),
+        createCharacterRecord({
+          id: 9000,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts chain by 1.1x for 1 turn.',
+          },
+        }),
+      ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      requiredAbilities: ['coverage_a', 'coverage_b', 'coverage_c', 'coverage_d'].map(
+        (abilityKey) => ({
+          abilityKey,
+          minTurns: null,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+        }),
+      ),
+      manualSlots: createManualSlots({
+        sub1: [9000],
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 9000)).toBe(false);
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+  });
+
+  it('falls back to auto leaders when a manual captain pick cannot be used', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
     };
@@ -3323,6 +3460,26 @@ describe('Auto team builder', () => {
     const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
       manualSlots: createManualSlots({
         captain: [999999],
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).not.toBe(999999);
+    expect(result?.slots[1]?.character.id).not.toBe(999999);
+  });
+
+  it('still returns null when no team can be built after relaxing manual picks', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createInsufficientStrictClassTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX'], {
+      requireAllSelectedClassesPerCharacter: true,
+      manualSlots: createManualSlots({
+        sub1: [999999],
       }),
     });
 
@@ -3511,7 +3668,7 @@ describe('Auto team builder', () => {
     expect(result).toBeNull();
   });
 
-  it('does not relax strict leader super effect scope before special criteria', async () => {
+  it('relaxes an invalid manual friend captain while preserving strict leader super effect scope', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue([
         createLeaderWithSuperEffectScopeRecord(7250, {
@@ -3548,7 +3705,10 @@ describe('Auto team builder', () => {
       lockedCharacterIds: [7250, 7251],
     });
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.slots[1]?.character.id).not.toBe(7251);
+    expect(result?.slots.every((slot) => slot.character.type.includes('DEX'))).toBe(true);
+    expect(result?.relaxation.ignoredLeaderSuperEffectScope).toBe(false);
   });
 
   it('allows super leaders before dropping types or classes when the default exact attempt fails', async () => {

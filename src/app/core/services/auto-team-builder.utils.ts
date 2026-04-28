@@ -64,7 +64,7 @@ const CHIP_LABELS = {
 } as const;
 const TEAM_SUB_SLOT_COUNT = 4;
 const GLOBAL_LEADER_OPTION_LIMIT = 8;
-const LOCKED_REASON_CHIP = 'Manual lock';
+const MANUAL_PICK_REASON_CHIP = 'Manual pick';
 const EXTRA_DROP_LEADER_ABILITY_KEY_SET = new Set(['extra_drop_any', 'extra_drop_guaranteed']);
 const CHARACTER_NAME_KEY_ALIASES: Record<string, string[]> = {
   aokiji: ['kuzan'],
@@ -662,10 +662,6 @@ export function buildAutoTeamResult(
   );
   const candidateById = new Map(candidates.map((candidate) => [candidate.character.id, candidate]));
   const manualSlotCandidateMap = resolveManualSlotCandidateMap(input.manualSlots, candidateById);
-
-  if (!manualSlotCandidateMap) {
-    return null;
-  }
   const manualCharacterIdSet = new Set(input.manualSlots.flatMap((slot) => slot.characterIds));
   const ignoredOverflowLockedCharacterIdSet =
     input.lockedCharacterIds.length > manualCharacterIdSet.size && manualCharacterIdSet.size > 0
@@ -686,7 +682,6 @@ export function buildAutoTeamResult(
   const manualFriendCaptainCandidates = manualSlotCandidateMap.get('friendCaptain') ?? [];
   const friendCaptainCandidates = resolveFriendCaptainCandidatePool(
     input,
-    manualFriendCaptainCandidates,
     autoFillCandidates,
     options.friendCaptainRecords ?? [],
   );
@@ -742,7 +737,7 @@ export function buildAutoTeamResult(
       continue;
     }
 
-    const constrainedSubSelections = resolveConstrainedSubSelections(
+    const constrainedSubSelectionOptions = resolveConstrainedSubSelectionOptions(
       manualSlotCandidateMap,
       leaders,
       leaderSlots,
@@ -751,94 +746,92 @@ export function buildAutoTeamResult(
       leaderSuperEffectScope,
     );
 
-    if (!constrainedSubSelections) {
-      continue;
-    }
-
-    const constrainedSubs = AUTO_BUILD_MANUAL_SUB_SLOT_ROLES.map((role) =>
-      constrainedSubSelections.get(role),
-    ).filter((candidate): candidate is AutoBuildCandidate => Boolean(candidate));
-    const selectedSubs = selectSubs(
-      autoFillCandidates,
-      leaders,
-      leaderSlots,
-      input,
-      leaderCriteria,
-      leaderSuperEffectScope,
-      constrainedSubs,
-    );
-
-    if (selectedSubs.length < TEAM_SUB_SLOT_COUNT) {
-      continue;
-    }
-
-    const orderedSubs = orderSelectedSubCandidates(constrainedSubSelections, selectedSubs);
-    const teamCandidates = [...leaderSlots, ...orderedSubs];
-    const activeSuperEffectScope = resolveActiveLeaderSuperEffectScope(teamCandidates);
-
-    if (
-      requiredLeaderSuperEffectMatchingSlots !== null &&
-      (!activeSuperEffectScope.isParseable ||
-        countLeaderSuperEffectScopeMatches(teamCandidates, activeSuperEffectScope) <
-          requiredLeaderSuperEffectMatchingSlots)
-    ) {
-      continue;
-    }
-
-    const coverage = summarizeCoverage(teamCandidates, input, leaderCriteria, leaderSlots);
-
-    if (input.requireAllSelectedTypesInTeam && !coverage.coversAllSelectedTypes) {
-      continue;
-    }
-
-    if (
-      input.requireLeaderSuperSpecialCriteria &&
-      !areActiveSuperCriteriaSatisfied(
+    for (const constrainedSubSelections of constrainedSubSelectionOptions) {
+      const constrainedSubs = AUTO_BUILD_MANUAL_SUB_SLOT_ROLES.map((role) =>
+        constrainedSubSelections.get(role),
+      ).filter((candidate): candidate is AutoBuildCandidate => Boolean(candidate));
+      const selectedSubs = selectSubs(
+        autoFillCandidates,
+        leaders,
         leaderSlots,
-        teamCandidates,
-        input.requireLeaderSuperSpecialCriteria,
-      )
-    ) {
-      continue;
+        input,
+        leaderCriteria,
+        leaderSuperEffectScope,
+        constrainedSubs,
+      );
+
+      if (selectedSubs.length < TEAM_SUB_SLOT_COUNT) {
+        continue;
+      }
+
+      const orderedSubs = orderSelectedSubCandidates(constrainedSubSelections, selectedSubs);
+      const teamCandidates = [...leaderSlots, ...orderedSubs];
+      const activeSuperEffectScope = resolveActiveLeaderSuperEffectScope(teamCandidates);
+
+      if (
+        requiredLeaderSuperEffectMatchingSlots !== null &&
+        (!activeSuperEffectScope.isParseable ||
+          countLeaderSuperEffectScopeMatches(teamCandidates, activeSuperEffectScope) <
+            requiredLeaderSuperEffectMatchingSlots)
+      ) {
+        continue;
+      }
+
+      const coverage = summarizeCoverage(teamCandidates, input, leaderCriteria, leaderSlots);
+
+      if (input.requireAllSelectedTypesInTeam && !coverage.coversAllSelectedTypes) {
+        continue;
+      }
+
+      if (
+        input.requireLeaderSuperSpecialCriteria &&
+        !areActiveSuperCriteriaSatisfied(
+          leaderSlots,
+          teamCandidates,
+          input.requireLeaderSuperSpecialCriteria,
+        )
+      ) {
+        continue;
+      }
+
+      if (input.requiredAbilities.length && !coverage.abilityRequirements.matchesAll) {
+        continue;
+      }
+
+      const slots: AutoBuildSlot[] = [
+        {
+          role: 'captain',
+          character: leaderPair.captain.character,
+          reasonChips: resolveSlotReasonChips(
+            leaderPair.captain.reasonChips,
+            manualCharacterIdSet.has(leaderPair.captain.character.id),
+          ),
+        },
+        {
+          role: 'friendCaptain',
+          character: leaderPair.friendCaptain.character,
+          reasonChips: resolveSlotReasonChips(
+            leaderPair.friendCaptain.reasonChips,
+            manualCharacterIdSet.has(leaderPair.friendCaptain.character.id),
+          ),
+        },
+        ...orderedSubs.map((candidate) => ({
+          role: 'sub' as const,
+          character: candidate.character,
+          reasonChips: resolveSlotReasonChips(
+            candidate.reasonChips,
+            manualCharacterIdSet.has(candidate.character.id),
+          ),
+        })),
+      ];
+
+      return {
+        input,
+        candidateCount: candidates.length,
+        slots,
+        coverage,
+      };
     }
-
-    if (input.requiredAbilities.length && !coverage.abilityRequirements.matchesAll) {
-      continue;
-    }
-
-    const slots: AutoBuildSlot[] = [
-      {
-        role: 'captain',
-        character: leaderPair.captain.character,
-        reasonChips: resolveSlotReasonChips(
-          leaderPair.captain.reasonChips,
-          manualCharacterIdSet.has(leaderPair.captain.character.id),
-        ),
-      },
-      {
-        role: 'friendCaptain',
-        character: leaderPair.friendCaptain.character,
-        reasonChips: resolveSlotReasonChips(
-          leaderPair.friendCaptain.reasonChips,
-          manualCharacterIdSet.has(leaderPair.friendCaptain.character.id),
-        ),
-      },
-      ...orderedSubs.map((candidate) => ({
-        role: 'sub' as const,
-        character: candidate.character,
-        reasonChips: resolveSlotReasonChips(
-          candidate.reasonChips,
-          manualCharacterIdSet.has(candidate.character.id),
-        ),
-      })),
-    ];
-
-    return {
-      input,
-      candidateCount: candidates.length,
-      slots,
-      coverage,
-    };
   }
 
   return null;
@@ -846,15 +839,10 @@ export function buildAutoTeamResult(
 
 function resolveFriendCaptainCandidatePool(
   input: AutoBuildInput,
-  manualFriendCaptainCandidates: AutoBuildCandidate[],
   candidates: AutoBuildCandidate[],
   friendCaptainRecords: CharacterDetailRecord[],
 ): AutoBuildCandidate[] {
-  if (
-    !input.allowAnyFriendCaptainAutoFill ||
-    manualFriendCaptainCandidates.length > 0 ||
-    friendCaptainRecords.length === 0
-  ) {
+  if (!input.allowAnyFriendCaptainAutoFill || friendCaptainRecords.length === 0) {
     return candidates;
   }
 
@@ -880,17 +868,13 @@ function resolveFriendCaptainCandidatePool(
 function resolveManualSlotCandidateMap(
   manualSlots: AutoBuildManualSlotSelection[],
   candidateById: Map<number, AutoBuildCandidate>,
-): Map<AutoBuildManualSlotRole, AutoBuildCandidate[]> | null {
+): Map<AutoBuildManualSlotRole, AutoBuildCandidate[]> {
   const slotCandidateMap = new Map<AutoBuildManualSlotRole, AutoBuildCandidate[]>();
 
   for (const slot of manualSlots) {
     const candidates = slot.characterIds
       .map((characterId) => candidateById.get(characterId))
       .filter((candidate): candidate is AutoBuildCandidate => Boolean(candidate));
-
-    if (candidates.length !== slot.characterIds.length) {
-      return null;
-    }
 
     slotCandidateMap.set(slot.role, candidates);
   }
@@ -905,9 +889,12 @@ function resolveLeaderCandidateOptions(
   options: AutoTeamBuildAttemptOptions,
 ): AutoBuildCandidate[] {
   const { leaderOnlyRequirements } = splitAbilityRequirementsByScope(input.requiredAbilities);
-  const applyAutoFillLeaderRanges = slotCandidates.length === 0;
-  const candidatePool = (slotCandidates.length ? slotCandidates : candidates).filter(
-    (candidate) =>
+  const manualCandidateIdSet = new Set(slotCandidates.map((candidate) => candidate.character.id));
+  const candidateMatchesLeaderConstraints = (
+    candidate: AutoBuildCandidate,
+    applyAutoFillLeaderRanges: boolean,
+  ): boolean =>
+    Boolean(
       candidate.tags.readableCaptainText &&
       (!applyAutoFillLeaderRanges || candidateMatchesLeaderBoostRanges(candidate, input)) &&
       (!options.requireLeadersWithoutSuperEffects || !hasCandidateSuperEffects(candidate)) &&
@@ -915,15 +902,17 @@ function resolveLeaderCandidateOptions(
         leaderSatisfiesAbilityRequirement(candidate, requirement),
       ) &&
       (!input.requireAllSelectedClassesPerCharacter || candidate.matchesAllSelectedClasses),
+    );
+  const manualCandidatePool = slotCandidates.filter((candidate) =>
+    candidateMatchesLeaderConstraints(candidate, false),
   );
+  const autoCandidatePool = candidates
+    .filter((candidate) => !manualCandidateIdSet.has(candidate.character.id))
+    .filter((candidate) => candidateMatchesLeaderConstraints(candidate, true))
+    .sort(compareCandidatesByNewestId)
+    .slice(0, GLOBAL_LEADER_OPTION_LIMIT);
 
-  if (!slotCandidates.length) {
-    return [...candidatePool]
-      .sort(compareCandidatesByNewestId)
-      .slice(0, GLOBAL_LEADER_OPTION_LIMIT);
-  }
-
-  return candidatePool;
+  return [...manualCandidatePool, ...autoCandidatePool];
 }
 
 function candidateMatchesLeaderBoostRanges(
@@ -1003,14 +992,14 @@ function buildLeaderPairOptions(
   });
 }
 
-function resolveConstrainedSubSelections(
+function* resolveConstrainedSubSelectionOptions(
   manualSlotCandidateMap: Map<AutoBuildManualSlotRole, AutoBuildCandidate[]>,
   leaders: AutoBuildCandidate[],
   leaderSlots: AutoBuildCandidate[],
   input: AutoBuildInput,
   leaderCriteria: ActiveLeaderCriteria,
   leaderSuperEffectScope: ActiveLeaderSuperEffectScope,
-): Map<AutoBuildManualSlotRole, AutoBuildCandidate> | null {
+): Generator<Map<AutoBuildManualSlotRole, AutoBuildCandidate>> {
   const leaderCandidates = resolveUniqueCandidates(leaders);
   const requiredLeaderSuperEffectMatchingSlots =
     resolveRequiredLeaderSuperEffectMatchingSlots(input);
@@ -1028,16 +1017,17 @@ function resolveConstrainedSubSelections(
     (role) => (manualSlotCandidateMap.get(role) ?? []).length > 0,
   );
 
-  const searchSelections = (
+  function* searchSelections(
     roleIndex: number,
     selectedSubMap: Map<AutoBuildManualSlotRole, AutoBuildCandidate>,
     selectedSubs: AutoBuildCandidate[],
     selectedIds: Set<number>,
     selectedPartyConflictKeys: Set<string>,
     currentCoverage: TeamCoverageState,
-  ): Map<AutoBuildManualSlotRole, AutoBuildCandidate> | null => {
+  ): Generator<Map<AutoBuildManualSlotRole, AutoBuildCandidate>> {
     if (roleIndex >= constrainedRoles.length) {
-      return selectedSubMap;
+      yield selectedSubMap;
+      return;
     }
 
     const role = constrainedRoles[roleIndex];
@@ -1094,7 +1084,7 @@ function resolveConstrainedSubSelections(
 
       applyCandidateCoverage(nextCoverage, candidate);
 
-      const result = searchSelections(
+      yield* searchSelections(
         roleIndex + 1,
         nextSelectedSubMap,
         nextSelectedSubs,
@@ -1102,16 +1092,19 @@ function resolveConstrainedSubSelections(
         nextSelectedPartyConflictKeys,
         nextCoverage,
       );
-
-      if (result) {
-        return result;
-      }
     }
 
-    return null;
-  };
+    yield* searchSelections(
+      roleIndex + 1,
+      selectedSubMap,
+      selectedSubs,
+      selectedIds,
+      selectedPartyConflictKeys,
+      currentCoverage,
+    );
+  }
 
-  return searchSelections(0, new Map(), [], new Set<number>(), new Set<string>(), coverage);
+  yield* searchSelections(0, new Map(), [], new Set<number>(), new Set<string>(), coverage);
 }
 
 function orderSelectedSubCandidates(
@@ -1381,11 +1374,11 @@ function selectSubs(
   return findNewestValidSelection(0, selected, selectedIds, selectedPartyConflictKeys) ?? selected;
 }
 
-function resolveSlotReasonChips(reasonChips: string[], isLocked: boolean): string[] {
+function resolveSlotReasonChips(reasonChips: string[], isManualPick: boolean): string[] {
   const nextChips = [...reasonChips];
 
-  if (isLocked && !nextChips.includes(LOCKED_REASON_CHIP)) {
-    nextChips.unshift(LOCKED_REASON_CHIP);
+  if (isManualPick && !nextChips.includes(MANUAL_PICK_REASON_CHIP)) {
+    nextChips.unshift(MANUAL_PICK_REASON_CHIP);
   }
 
   return nextChips.slice(0, 4);
