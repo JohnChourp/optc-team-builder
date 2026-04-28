@@ -1,13 +1,8 @@
-import { JSDOM } from 'jsdom';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { normalizeHtmlToText } from './html-text.utils';
 
 describe('normalizeHtmlToText', () => {
-  beforeAll(() => {
-    vi.stubGlobal('DOMParser', new JSDOM('').window.DOMParser);
-  });
-
   it('normalizes block and list HTML into readable text', () => {
     expect(
       normalizeHtmlToText(

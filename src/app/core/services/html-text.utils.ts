@@ -1,5 +1,3 @@
-const ELEMENT_NODE_TYPE = 1;
-const TEXT_NODE_TYPE = 3;
 const SKIPPED_ELEMENT_NAMES = new Set(['SCRIPT', 'STYLE', 'TEMPLATE']);
 const SENTENCE_BREAK_ELEMENT_NAMES = new Set(['P', 'DIV', 'LI', 'UL', 'OL']);
 const HTML_ENTITIES: Record<string, string> = {
@@ -15,56 +13,7 @@ export function normalizeHtmlToText(value: string | null | undefined): string {
     return '';
   }
 
-  const parsedDocument = parseHtmlDocument(value);
-
-  if (!parsedDocument) {
-    return normalizeExtractedText(parseHtmlTextWithoutDom(value));
-  }
-
-  const parts: string[] = [];
-  appendNodeText(parsedDocument.body, parts);
-
-  return normalizeExtractedText(parts.join(''));
-}
-
-function parseHtmlDocument(value: string): Document | null {
-  if (typeof DOMParser === 'undefined') {
-    return null;
-  }
-
-  return new DOMParser().parseFromString(value, 'text/html');
-}
-
-function appendNodeText(node: Node, parts: string[]): void {
-  if (node.nodeType === TEXT_NODE_TYPE) {
-    parts.push(node.textContent ?? '');
-    return;
-  }
-
-  if (node.nodeType !== ELEMENT_NODE_TYPE) {
-    return;
-  }
-
-  const elementName = node.nodeName.toUpperCase();
-
-  if (SKIPPED_ELEMENT_NAMES.has(elementName)) {
-    return;
-  }
-
-  if (elementName === 'BR') {
-    parts.push('. ');
-    return;
-  }
-
-  if (elementName === 'LI') {
-    parts.push(' ');
-  }
-
-  node.childNodes.forEach((childNode) => appendNodeText(childNode, parts));
-
-  if (SENTENCE_BREAK_ELEMENT_NAMES.has(elementName)) {
-    parts.push('. ');
-  }
+  return normalizeExtractedText(parseHtmlText(value));
 }
 
 function normalizeExtractedText(value: string): string {
@@ -75,7 +24,7 @@ function normalizeExtractedText(value: string): string {
     .trim();
 }
 
-function parseHtmlTextWithoutDom(value: string): string {
+function parseHtmlText(value: string): string {
   let index = 0;
   let text = '';
 
