@@ -41,6 +41,11 @@ interface HomeFeature {
   route: string;
 }
 
+interface HomeHeroCharacter {
+  alt: string;
+  src: string;
+}
+
 @Component({
   selector: 'app-home-page',
   standalone: true,
@@ -64,10 +69,19 @@ export class HomePage {
   public readonly sparklesIcon = sparklesOutline;
   public readonly searchIcon = searchOutline;
   public readonly shieldIcon = shieldCheckmarkOutline;
-  public readonly heroCharacters = [
-    'assets/exact-character-images/4208.png',
-    'assets/exact-character-images/4209.png',
-    'assets/exact-character-images/5601.png',
+  public readonly heroCharacters: readonly HomeHeroCharacter[] = [
+    {
+      alt: 'Kozuki Hiyori - Graveside Prayer character artwork',
+      src: 'assets/exact-character-images/4208.png',
+    },
+    {
+      alt: 'Kozuki Hiyori - Resounding Shamisen character artwork',
+      src: 'assets/exact-character-images/4209.png',
+    },
+    {
+      alt: 'Kid & Killer DEX character artwork',
+      src: 'assets/exact-character-images/5601.png',
+    },
   ];
   public readonly actions: readonly HomeAction[] = [
     {

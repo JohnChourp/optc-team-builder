@@ -33,14 +33,14 @@
           </div>
         </div>
 
-        <div class="home-hero__visual" aria-hidden="true">
+        <div class="home-hero__visual">
           <div class="home-brand-mark">
-            <img src="brand/favicon-master-v2-optimized.png" alt="" />
+            <img src="brand/favicon-master-v2-optimized.png" alt="OPTC Team Builder logo" />
           </div>
           <div class="home-character-stack">
-            @for (characterImage of heroCharacters; track characterImage) {
+            @for (characterImage of heroCharacters; track characterImage.src) {
               <span class="home-character-thumb">
-                <img [src]="characterImage" alt="" loading="lazy" />
+                <img [src]="characterImage.src" [alt]="characterImage.alt" loading="lazy" />
               </span>
             }
           </div>

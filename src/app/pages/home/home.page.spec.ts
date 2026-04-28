@@ -35,4 +35,23 @@ describe('HomePage', () => {
     expect(component).toContain("route: '/tabs/saved-enemies'");
     expect(component).toContain("route: '/tabs/settings'");
   });
+
+  it('keeps homepage hero images visible to audits with descriptive alt text', () => {
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/home/home.page.html'),
+      'utf8',
+    );
+    const component = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/home/home.page.ts'),
+      'utf8',
+    );
+
+    expect(template).not.toContain('class="home-hero__visual" aria-hidden="true"');
+    expect(template).not.toContain('alt=""');
+    expect(template).toContain('alt="OPTC Team Builder logo"');
+    expect(template).toContain('[alt]="characterImage.alt"');
+    expect(component).toContain('Kozuki Hiyori - Graveside Prayer character artwork');
+    expect(component).toContain('Kozuki Hiyori - Resounding Shamisen character artwork');
+    expect(component).toContain('Kid & Killer DEX character artwork');
+  });
 });
