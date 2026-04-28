@@ -1311,7 +1311,7 @@ describe('Auto team builder', () => {
     expect(result?.slots.some((slot) => slot.character.id === 6000)).toBe(false);
   });
 
-  it('prefers higher boost and newer id over higher captain cost', () => {
+  it('prefers newer captain id over higher captain cost', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderPriorityCaptainRecord({
@@ -1340,7 +1340,7 @@ describe('Auto team builder', () => {
     expect(result?.slots[1]?.character.id).toBe(6101);
   });
 
-  it('prefers higher leader boost before newer id for automatic captains', () => {
+  it('prefers newer id before higher leader boost for automatic captains', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderPriorityCaptainRecord({
@@ -1365,11 +1365,11 @@ describe('Auto team builder', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(6200);
-    expect(result?.slots[1]?.character.id).toBe(6200);
+    expect(result?.slots[0]?.character.id).toBe(6201);
+    expect(result?.slots[1]?.character.id).toBe(6201);
   });
 
-  it('prefers higher leader boost before newer id even when the weaker leader is newer', () => {
+  it('prefers newer id even when the newer automatic leader has a weaker boost', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderPriorityCaptainRecord({
@@ -1394,8 +1394,8 @@ describe('Auto team builder', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(6300);
-    expect(result?.slots[1]?.character.id).toBe(6300);
+    expect(result?.slots[0]?.character.id).toBe(6305);
+    expect(result?.slots[1]?.character.id).toBe(6305);
   });
 
   it('prefers newer id over captain score when leader boost ties', () => {
@@ -1476,7 +1476,7 @@ describe('Auto team builder', () => {
     expect(result?.slots[1]?.character.id).toBe(6500);
   });
 
-  it('uses the selected HP boost priority for automatic leader selection', () => {
+  it('does not let selected HP boost priority override newest-id automatic leader selection', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderPriorityCaptainRecord({
@@ -1504,11 +1504,11 @@ describe('Auto team builder', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(6401);
-    expect(result?.slots[1]?.character.id).toBe(6401);
+    expect(result?.slots[0]?.character.id).toBe(6600);
+    expect(result?.slots[1]?.character.id).toBe(6600);
   });
 
-  it('uses the selected ATK boost priority for automatic leader selection', () => {
+  it('does not let selected ATK boost priority override newest-id automatic leader selection', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderPriorityCaptainRecord({
@@ -1536,11 +1536,11 @@ describe('Auto team builder', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(6402);
-    expect(result?.slots[1]?.character.id).toBe(6402);
+    expect(result?.slots[0]?.character.id).toBe(6601);
+    expect(result?.slots[1]?.character.id).toBe(6601);
   });
 
-  it('uses HP and ATK average boost when both leader boost filters are selected', () => {
+  it('does not let selected HP and ATK boost priority override newest-id leader selection', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderPriorityCaptainRecord({
@@ -1568,8 +1568,8 @@ describe('Auto team builder', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(6403);
-    expect(result?.slots[1]?.character.id).toBe(6403);
+    expect(result?.slots[0]?.character.id).toBe(6602);
+    expect(result?.slots[1]?.character.id).toBe(6602);
   });
 
   it('filters auto-filled leaders by ATK captain boost range before priority sorting', () => {
@@ -1790,6 +1790,67 @@ describe('Auto team builder', () => {
 
     expect(teamIds).toContain(6200);
     expect(teamIds).not.toContain(267);
+  });
+
+  it('prefers newer sub id over an older higher-scoring sub', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 6200,
+          name: 'Newer Redundant Sub 1',
+          cost: 20,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Deals 100x character ATK in typeless damage to one enemy.',
+          },
+        }),
+        createCharacterRecord({
+          id: 6199,
+          name: 'Newer Redundant Sub 2',
+          cost: 20,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Deals 100x character ATK in typeless damage to one enemy.',
+          },
+        }),
+        createCharacterRecord({
+          id: 6198,
+          name: 'Newer Redundant Sub 3',
+          cost: 20,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Deals 100x character ATK in typeless damage to one enemy.',
+          },
+        }),
+        createCharacterRecord({
+          id: 6197,
+          name: 'Newer Redundant Sub 4',
+          cost: 20,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Deals 100x character ATK in typeless damage to one enemy.',
+          },
+        }),
+        createCharacterRecord({
+          id: 100,
+          name: 'Older High-Scoring ATK Sub',
+          cost: 65,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts ATK of Fighter characters by 2.5x for 1 turn.',
+          },
+        }),
+      ],
+      INPUT,
+    );
+
+    expect(result).not.toBeNull();
+
+    const teamIds = result?.slots.map((slot) => slot.character.id) ?? [];
+
+    expect(teamIds).toEqual([5900, 5900, 6200, 6199, 6198, 6197]);
+    expect(teamIds).not.toContain(100);
   });
 
   it('uses one selected leader for both captain slots', () => {

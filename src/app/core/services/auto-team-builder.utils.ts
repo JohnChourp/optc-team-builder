@@ -142,59 +142,15 @@ function resolvePowerScoreCostBucket(cost: number): number {
   return cost >= 1 && cost <= 65 ? 0 : 1;
 }
 
-function compareCharactersByIdThenCost(
-  left: Pick<CharacterDetailRecord, 'cost' | 'id'>,
-  right: Pick<CharacterDetailRecord, 'cost' | 'id'>,
+function compareCharactersByNewestId(
+  left: Pick<CharacterDetailRecord, 'id'>,
+  right: Pick<CharacterDetailRecord, 'id'>,
 ): number {
-  if (left.id !== right.id) {
-    return right.id - left.id;
-  }
-
-  return right.cost - left.cost;
+  return right.id - left.id;
 }
 
-function compareCandidatesByIdThenCost(
-  left: AutoBuildCandidate,
-  right: AutoBuildCandidate,
-): number {
-  return compareCharactersByIdThenCost(left.character, right.character);
-}
-
-function compareCaptainsBySelectionPreference(
-  left: AutoBuildCandidate,
-  right: AutoBuildCandidate,
-  input: AutoBuildInput,
-): number {
-  const boostDifference =
-    resolveLeaderBoostPreferenceScore(right, input) -
-    resolveLeaderBoostPreferenceScore(left, input);
-
-  if (boostDifference !== 0) {
-    return boostDifference;
-  }
-
-  return right.character.id - left.character.id;
-}
-
-function resolveLeaderBoostPreferenceScore(
-  candidate: AutoBuildCandidate,
-  input: AutoBuildInput,
-): number {
-  const selectedFilters = new Set(input.leaderBoostFilters);
-
-  if (selectedFilters.has('HP') && selectedFilters.has('ATK')) {
-    return candidate.character.captainAverageBoost;
-  }
-
-  if (selectedFilters.has('HP')) {
-    return candidate.character.captainHpBoost;
-  }
-
-  if (selectedFilters.has('ATK')) {
-    return candidate.character.captainAtkBoost;
-  }
-
-  return candidate.character.captainAverageBoost;
+function compareCandidatesByNewestId(left: AutoBuildCandidate, right: AutoBuildCandidate): number {
+  return compareCharactersByNewestId(left.character, right.character);
 }
 
 export function resolveAutoBuildCharacterPowerPreferenceScore(
@@ -551,29 +507,6 @@ function branchSatisfiedByCandidates(
   );
 }
 
-function resolveSuperCriteriaBranchProgress(
-  branch: NonNullable<
-    CharacterDetailRecord['detail']['superSpecialCriteria']
-  >['rosterBranches'][number],
-  candidates: AutoBuildCandidate[],
-): number {
-  if (branch.branchType === 'character_count_any') {
-    return Math.min(branch.requiredCount, countSatisfiedCharacterOptions(candidates, branch));
-  }
-
-  if (branch.branchType === 'class_or_type_count_any') {
-    return Math.min(
-      branch.requiredCount,
-      countMatchingSuperCriteriaBranchCandidates(candidates, branch),
-    );
-  }
-
-  return Math.min(
-    branch.requiredClasses.length + branch.requiredTypes.length,
-    countSatisfiedPresenceRequirements(candidates, branch),
-  );
-}
-
 function superCriteriaSatisfied(
   superUnit: AutoBuildCandidate,
   candidates: AutoBuildCandidate[],
@@ -600,57 +533,6 @@ function superCriteriaSatisfied(
   return criteria.rosterBranches.some((branch) =>
     branchSatisfiedByCandidates(branch, eligibleCandidates),
   );
-}
-
-function resolveSuperCriteriaContribution(
-  candidate: AutoBuildCandidate,
-  leaders: AutoBuildCandidate[],
-  selectedCandidates: AutoBuildCandidate[],
-): number {
-  const currentCandidates = [...leaders, ...selectedCandidates];
-  const nextCandidates = [...currentCandidates, candidate];
-
-  return resolveUniqueCandidates(nextCandidates)
-    .filter((superUnit) => hasCandidateSuperEffects(superUnit))
-    .reduce((total, superUnit) => {
-      const criteria = superUnit.character.detail.superSpecialCriteria;
-      const isLeader = leaders.some((leader) => leader.character.id === superUnit.character.id);
-      const currentEligibleCandidates = criteria?.excludesSelf
-        ? currentCandidates.filter((current) => current.character.id !== superUnit.character.id)
-        : currentCandidates;
-      const nextEligibleCandidates = criteria?.excludesSelf
-        ? nextCandidates.filter((current) => current.character.id !== superUnit.character.id)
-        : nextCandidates;
-
-      if (
-        !criteria ||
-        criteria.parserStatus === 'non_roster_only' ||
-        criteria.parserStatus === 'unsupported' ||
-        (criteria.requiresCaptain && !isLeader) ||
-        superCriteriaSatisfied(superUnit, currentCandidates, isLeader)
-      ) {
-        return total;
-      }
-
-      const currentProgress = criteria.rosterBranches.reduce(
-        (bestProgress, branch) =>
-          Math.max(
-            bestProgress,
-            resolveSuperCriteriaBranchProgress(branch, currentEligibleCandidates),
-          ),
-        0,
-      );
-      const nextProgress = criteria.rosterBranches.reduce(
-        (bestProgress, branch) =>
-          Math.max(
-            bestProgress,
-            resolveSuperCriteriaBranchProgress(branch, nextEligibleCandidates),
-          ),
-        0,
-      );
-
-      return total + Math.max(nextProgress - currentProgress, 0);
-    }, 0);
 }
 
 function areActiveSuperCriteriaSatisfied(
@@ -825,7 +707,7 @@ export function buildAutoTeamResult(
     return null;
   }
 
-  const leaderPairOptions = buildLeaderPairOptions(captainOptions, friendCaptainOptions, input, {
+  const leaderPairOptions = buildLeaderPairOptions(captainOptions, friendCaptainOptions, {
     preserveCaptainOrder: (manualSlotCandidateMap.get('captain') ?? []).length > 0,
     preserveFriendCaptainOrder: manualFriendCaptainCandidates.length > 0,
   });
@@ -1037,7 +919,7 @@ function resolveLeaderCandidateOptions(
 
   if (!slotCandidates.length) {
     return [...candidatePool]
-      .sort((left, right) => compareCaptainsBySelectionPreference(left, right, input))
+      .sort(compareCandidatesByNewestId)
       .slice(0, GLOBAL_LEADER_OPTION_LIMIT);
   }
 
@@ -1082,7 +964,6 @@ function captainBoostMatchesRange(
 function buildLeaderPairOptions(
   captainOptions: AutoBuildCandidate[],
   friendCaptainOptions: AutoBuildCandidate[],
-  input: AutoBuildInput,
   orderOptions: {
     preserveCaptainOrder: boolean;
     preserveFriendCaptainOrder: boolean;
@@ -1104,7 +985,7 @@ function buildLeaderPairOptions(
   return leaderPairs.sort((left, right) => {
     const captainDifference = orderOptions.preserveCaptainOrder
       ? left.captainIndex - right.captainIndex
-      : compareCaptainsBySelectionPreference(left.captain, right.captain, input);
+      : compareCandidatesByNewestId(left.captain, right.captain);
 
     if (captainDifference !== 0) {
       return captainDifference;
@@ -1112,7 +993,7 @@ function buildLeaderPairOptions(
 
     const friendCaptainDifference = orderOptions.preserveFriendCaptainOrder
       ? left.friendCaptainIndex - right.friendCaptainIndex
-      : compareCaptainsBySelectionPreference(left.friendCaptain, right.friendCaptain, input);
+      : compareCandidatesByNewestId(left.friendCaptain, right.friendCaptain);
 
     if (friendCaptainDifference !== 0) {
       return friendCaptainDifference;
@@ -1195,34 +1076,7 @@ function resolveConstrainedSubSelections(
           )
         );
       })
-      .sort((left, right) => {
-        const leftScore = scoreSubCandidate(
-          left.candidate,
-          leaderCandidates,
-          leaderSlots,
-          currentCoverage,
-          selectedSubs,
-          leaderSuperEffectScope,
-          input,
-        );
-        const rightScore = scoreSubCandidate(
-          right.candidate,
-          leaderCandidates,
-          leaderSlots,
-          currentCoverage,
-          selectedSubs,
-          leaderSuperEffectScope,
-          input,
-        );
-
-        const scoreDifference = rightScore - leftScore;
-
-        if (scoreDifference !== 0) {
-          return scoreDifference;
-        }
-
-        return compareCandidatesByIdThenCost(left.candidate, right.candidate);
-      });
+      .sort((left, right) => compareCandidatesByNewestId(left.candidate, right.candidate));
 
     for (const { candidate } of rankedCandidates) {
       const nextSelectedSubs = [...selectedSubs, candidate];
@@ -1401,91 +1255,130 @@ function selectSubs(
   }
 
   const selectedIds = new Set(selected.map((candidate) => candidate.character.id));
-  const coverage = createTeamCoverageState(leaderCandidates);
-  selected.forEach((candidate) => applyCandidateCoverage(coverage, candidate));
-  const pool = candidates.filter((candidate) => {
-    return (
-      !leaderCharacterIdSet.has(candidate.character.id) &&
-      !selectedIds.has(candidate.character.id) &&
-      (!input.requireUniqueBaseCharacterNames ||
-        (!hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) &&
-          !hasAnyPartyConflictKey(candidate, selectedPartyConflictKeys))) &&
-      matchesLeaderBuildScope(candidate, leaderCriteria) &&
-      matchesActiveSuperEffectScopePrefix(
-        [...leaderSlots, ...selected, candidate],
-        requiredLeaderSuperEffectMatchingSlots,
-      ) &&
-      (!input.requireAllSelectedClassesPerCharacter || candidate.matchesAllSelectedClasses)
-    );
-  });
+  const pool = candidates
+    .filter((candidate) => {
+      return (
+        !leaderCharacterIdSet.has(candidate.character.id) &&
+        !selectedIds.has(candidate.character.id) &&
+        (!input.requireUniqueBaseCharacterNames ||
+          (!hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) &&
+            !hasAnyPartyConflictKey(candidate, selectedPartyConflictKeys))) &&
+        matchesLeaderBuildScope(candidate, leaderCriteria) &&
+        matchesActiveSuperEffectScopePrefix(
+          [...leaderSlots, ...selected, candidate],
+          requiredLeaderSuperEffectMatchingSlots,
+        ) &&
+        (!input.requireAllSelectedClassesPerCharacter || candidate.matchesAllSelectedClasses)
+      );
+    })
+    .sort(compareCandidatesByNewestId);
 
-  while (selected.length < TEAM_SUB_SLOT_COUNT) {
-    const next = pool
-      .filter((candidate) => {
-        return (
-          !selectedIds.has(candidate.character.id) &&
-          canStillReachLeaderSuperEffectRequirement(
-            leaderSuperEffectMatchCount +
-              countLeaderSuperEffectScopeMatches(selected, leaderSuperEffectScope) +
-              (matchesLeaderSuperEffectScope(candidate, leaderSuperEffectScope) ? 1 : 0),
-            TEAM_SUB_SLOT_COUNT - (selected.length + 1),
-            requiredLeaderSuperEffectMatchingSlots,
-          ) &&
-          matchesActiveSuperEffectScopePrefix(
-            [...leaderSlots, ...selected, candidate],
-            requiredLeaderSuperEffectMatchingSlots,
-          ) &&
-          (!input.requireUniqueBaseCharacterNames ||
-            (!hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) &&
-              !hasAnyPartyConflictKey(candidate, selectedPartyConflictKeys)))
-        );
-      })
-      .reduce<AutoBuildCandidate | null>((best, current) => {
-        if (!best) {
-          return current;
-        }
+  const isCompleteSelectionValid = (nextSelection: AutoBuildCandidate[]): boolean => {
+    const teamCandidates = [...leaderSlots, ...nextSelection];
+    const activeSuperEffectScope = resolveActiveLeaderSuperEffectScope(teamCandidates);
 
-        const currentScore = scoreSubCandidate(
-          current,
-          leaderCandidates,
-          leaderSlots,
-          coverage,
-          selected,
-          leaderSuperEffectScope,
-          input,
-        );
-        const bestScore = scoreSubCandidate(
-          best,
-          leaderCandidates,
-          leaderSlots,
-          coverage,
-          selected,
-          leaderSuperEffectScope,
-          input,
-        );
-
-        if (currentScore !== bestScore) {
-          return currentScore > bestScore ? current : best;
-        }
-
-        return compareCandidatesByIdThenCost(current, best) < 0 ? current : best;
-      }, null);
-
-    if (!next) {
-      break;
+    if (
+      requiredLeaderSuperEffectMatchingSlots !== null &&
+      (!activeSuperEffectScope.isParseable ||
+        countLeaderSuperEffectScopeMatches(teamCandidates, activeSuperEffectScope) <
+          requiredLeaderSuperEffectMatchingSlots)
+    ) {
+      return false;
     }
 
-    selected.push(next);
-    selectedIds.add(next.character.id);
+    const nextCoverage = summarizeCoverage(teamCandidates, input, leaderCriteria, leaderSlots);
 
-    if (input.requireUniqueBaseCharacterNames) {
-      addCandidatePartyConflictKeys(selectedPartyConflictKeys, next);
+    if (input.requireAllSelectedTypesInTeam && !nextCoverage.coversAllSelectedTypes) {
+      return false;
     }
 
-    applyCandidateCoverage(coverage, next);
-  }
+    if (
+      input.requireLeaderSuperSpecialCriteria &&
+      !areActiveSuperCriteriaSatisfied(
+        leaderSlots,
+        teamCandidates,
+        input.requireLeaderSuperSpecialCriteria,
+      )
+    ) {
+      return false;
+    }
 
-  return selected;
+    if (input.requiredAbilities.length && !nextCoverage.abilityRequirements.matchesAll) {
+      return false;
+    }
+
+    return true;
+  };
+
+  const findNewestValidSelection = (
+    startIndex: number,
+    currentSelection: AutoBuildCandidate[],
+    currentSelectedIds: Set<number>,
+    currentPartyConflictKeys: Set<string>,
+  ): AutoBuildCandidate[] | null => {
+    if (currentSelection.length === TEAM_SUB_SLOT_COUNT) {
+      return isCompleteSelectionValid(currentSelection) ? currentSelection : null;
+    }
+
+    const remainingSlots = TEAM_SUB_SLOT_COUNT - currentSelection.length;
+
+    if (pool.length - startIndex < remainingSlots) {
+      return null;
+    }
+
+    for (let index = startIndex; index < pool.length; index += 1) {
+      const candidate = pool[index];
+
+      if (!candidate) {
+        continue;
+      }
+
+      if (
+        currentSelectedIds.has(candidate.character.id) ||
+        !canStillReachLeaderSuperEffectRequirement(
+          leaderSuperEffectMatchCount +
+            countLeaderSuperEffectScopeMatches(currentSelection, leaderSuperEffectScope) +
+            (matchesLeaderSuperEffectScope(candidate, leaderSuperEffectScope) ? 1 : 0),
+          TEAM_SUB_SLOT_COUNT - (currentSelection.length + 1),
+          requiredLeaderSuperEffectMatchingSlots,
+        ) ||
+        !matchesActiveSuperEffectScopePrefix(
+          [...leaderSlots, ...currentSelection, candidate],
+          requiredLeaderSuperEffectMatchingSlots,
+        ) ||
+        (input.requireUniqueBaseCharacterNames &&
+          (hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) ||
+            hasAnyPartyConflictKey(candidate, currentPartyConflictKeys)))
+      ) {
+        continue;
+      }
+
+      const nextSelection = [...currentSelection, candidate];
+      const nextSelectedIds = new Set(currentSelectedIds);
+      const nextPartyConflictKeys = new Set(currentPartyConflictKeys);
+
+      nextSelectedIds.add(candidate.character.id);
+
+      if (input.requireUniqueBaseCharacterNames) {
+        addCandidatePartyConflictKeys(nextPartyConflictKeys, candidate);
+      }
+
+      const result = findNewestValidSelection(
+        index + 1,
+        nextSelection,
+        nextSelectedIds,
+        nextPartyConflictKeys,
+      );
+
+      if (result) {
+        return result;
+      }
+    }
+
+    return null;
+  };
+
+  return findNewestValidSelection(0, selected, selectedIds, selectedPartyConflictKeys) ?? selected;
 }
 
 function resolveSlotReasonChips(reasonChips: string[], isLocked: boolean): string[] {
@@ -1496,236 +1389,6 @@ function resolveSlotReasonChips(reasonChips: string[], isLocked: boolean): strin
   }
 
   return nextChips.slice(0, 4);
-}
-
-function scoreSubCandidate(
-  candidate: AutoBuildCandidate,
-  leaders: AutoBuildCandidate[],
-  leaderSlots: AutoBuildCandidate[],
-  coverage: TeamCoverageState,
-  selected: AutoBuildCandidate[],
-  leaderSuperEffectScope: ActiveLeaderSuperEffectScope,
-  input: AutoBuildInput,
-): number {
-  let score = 0;
-  const currentTeam = [...leaderSlots, ...selected];
-  const requiredLeaderSuperEffectMatchingSlots =
-    resolveRequiredLeaderSuperEffectMatchingSlots(input);
-  const { teamRequirements } = splitAbilityRequirementsByScope(input.requiredAbilities);
-  const missingAbilityRequirements = resolveAbilityCoverage(currentTeam, teamRequirements).missing;
-  const matchedMissingAbilityCount = missingAbilityRequirements.filter((requirement) =>
-    candidateMatchesAbilityRequirement(candidate, requirement),
-  ).length;
-
-  const uncoveredSelectedClasses = input.selectedClasses.filter(
-    (selectedClass) => !coverage.selectedClasses.has(selectedClass),
-  );
-  const uncoveredSelectedTypes = input.types.filter((type) => !coverage.selectedTypes.has(type));
-  const newClassCoverage = candidate.matchedSelectedClasses.filter(
-    (selectedClass) => !coverage.selectedClasses.has(selectedClass),
-  ).length;
-  const newTypeCoverage = candidate.matchedSelectedTypes.filter(
-    (type) => !coverage.selectedTypes.has(type),
-  ).length;
-  const damageCoverageMissing =
-    !coverage.burst.has('colorAffinity') &&
-    !coverage.burst.has('chainBoost') &&
-    !coverage.burst.has('conditional');
-  const consistencyMissing = coverage.consistency.size === 0;
-  const utilityMissing = coverage.utility.size === 0;
-  const hasUniversalLeader = leaders.some((leader) => leader.tags.captainScope.allCharacters);
-  const hasClassScopedLeader = leaders.some((leader) => leader.tags.captainScope.matchesClass);
-  const hasFullClassCoverageLeader = leaders.some(
-    (leader) => leader.tags.captainScope.coversAllSelectedClasses,
-  );
-  const hasFullTypeCoverageLeader = leaders.some(
-    (leader) => leader.tags.captainScope.coversAllSelectedTypes,
-  );
-  const hasTypeScopedLeader = leaders.some(
-    (leader) => leader.tags.captainScope.matchedSelectedTypeCount > 0,
-  );
-  const currentLeaderSuperEffectMatches = countLeaderSuperEffectScopeMatches(
-    currentTeam,
-    leaderSuperEffectScope,
-  );
-  const nextLeaderSuperEffectMatches =
-    currentLeaderSuperEffectMatches +
-    (matchesLeaderSuperEffectScope(candidate, leaderSuperEffectScope) ? 1 : 0);
-
-  score += newClassCoverage * 44;
-  score += newTypeCoverage * 36;
-  score += matchedMissingAbilityCount * 58;
-  score +=
-    resolveSuperCriteriaContribution(candidate, leaders, selected) *
-    (input.requireLeaderSuperSpecialCriteria ? 160 : 36);
-  score += candidate.matchesSelectedClass ? 18 : -8;
-  score += hasUniversalLeader ? 10 : 0;
-  score += hasClassScopedLeader && candidate.matchesSelectedClass ? 12 : 0;
-  score += hasFullClassCoverageLeader ? 8 : 0;
-  score += hasFullTypeCoverageLeader ? 6 : 0;
-  score += hasTypeScopedLeader ? 3 : 0;
-
-  if (requiredLeaderSuperEffectMatchingSlots !== null) {
-    const currentMissingLeaderSuperEffectMatches = Math.max(
-      requiredLeaderSuperEffectMatchingSlots - currentLeaderSuperEffectMatches,
-      0,
-    );
-    const nextMissingLeaderSuperEffectMatches = Math.max(
-      requiredLeaderSuperEffectMatchingSlots - nextLeaderSuperEffectMatches,
-      0,
-    );
-    const improvedLeaderSuperEffectMatches =
-      currentMissingLeaderSuperEffectMatches - nextMissingLeaderSuperEffectMatches;
-
-    score += improvedLeaderSuperEffectMatches * 220;
-    score += matchesLeaderSuperEffectScope(candidate, leaderSuperEffectScope) ? 48 : -18;
-  }
-
-  if (newClassCoverage && newTypeCoverage) {
-    score += 12;
-  }
-
-  if (matchedMissingAbilityCount > 1) {
-    score += 10;
-  }
-
-  if (
-    input.requireAllSelectedClassesPerCharacter &&
-    uncoveredSelectedClasses.length > 0 &&
-    newClassCoverage === 0
-  ) {
-    score -= 18;
-  }
-
-  if (
-    input.requireAllSelectedTypesInTeam &&
-    uncoveredSelectedTypes.length > 0 &&
-    newTypeCoverage === 0
-  ) {
-    score -= 16;
-  }
-
-  if (missingAbilityRequirements.length > 0 && matchedMissingAbilityCount === 0) {
-    score -= 18;
-  }
-
-  score += scoreRolePresence(
-    candidate.tags.burstRoles,
-    'atkBoost',
-    coverage.burst.has('atkBoost'),
-    28,
-    4,
-  );
-  score += scoreRolePresence(
-    candidate.tags.burstRoles,
-    'orbBoost',
-    coverage.burst.has('orbBoost'),
-    24,
-    4,
-  );
-  score += scoreGroupedDamage(candidate, damageCoverageMissing);
-  score += scoreConsistency(candidate, consistencyMissing);
-  score += scoreUtility(candidate, utilityMissing);
-
-  if (candidate.tags.utilityRoles.includes('defenseDown') && damageCoverageMissing) {
-    score += 8;
-  }
-
-  if (!candidate.matchesSelectedClass && countSelectedClassMatches(selected) < 2) {
-    score -= 12;
-  }
-
-  if (addsNoNewCoverage(candidate, coverage, missingAbilityRequirements)) {
-    score -= candidate.matchesSelectedClass ? 6 : 14;
-  }
-
-  if (countSharedBurstRoles(candidate, selected) >= 2) {
-    score -= 8;
-  }
-
-  if (!candidate.matchesSelectedClass && input.selectedClasses.length) {
-    score -= 4;
-  }
-
-  return score;
-}
-
-function scoreGroupedDamage(candidate: AutoBuildCandidate, damageCoverageMissing: boolean): number {
-  let score = 0;
-
-  score += scoreRolePresence(
-    candidate.tags.burstRoles,
-    'colorAffinity',
-    false,
-    damageCoverageMissing ? 20 : 8,
-    4,
-  );
-  score += scoreRolePresence(
-    candidate.tags.burstRoles,
-    'chainBoost',
-    false,
-    damageCoverageMissing ? 16 : 8,
-    4,
-  );
-  score += scoreRolePresence(
-    candidate.tags.burstRoles,
-    'conditional',
-    false,
-    damageCoverageMissing ? 14 : 7,
-    4,
-  );
-
-  return score;
-}
-
-function scoreConsistency(candidate: AutoBuildCandidate, consistencyMissing: boolean): number {
-  let score = 0;
-
-  score += scoreRolePresence(
-    candidate.tags.consistencyRoles,
-    'matchingOrbs',
-    false,
-    consistencyMissing ? 16 : 6,
-    3,
-  );
-  score += scoreRolePresence(
-    candidate.tags.consistencyRoles,
-    'orbChange',
-    false,
-    consistencyMissing ? 12 : 5,
-    3,
-  );
-  score += scoreRolePresence(
-    candidate.tags.consistencyRoles,
-    'cooldownReduction',
-    false,
-    consistencyMissing ? 10 : 5,
-    2,
-  );
-
-  return score;
-}
-
-function scoreUtility(candidate: AutoBuildCandidate, utilityMissing: boolean): number {
-  if (!candidate.tags.utilityRoles.length) {
-    return 0;
-  }
-
-  return (utilityMissing ? 18 : 8) + candidate.tags.utilityRoles.length * 2;
-}
-
-function scoreRolePresence<T extends string>(
-  roles: readonly T[],
-  target: T,
-  alreadyCovered: boolean,
-  missingWeight: number,
-  coveredWeight: number,
-): number {
-  if (!roles.includes(target)) {
-    return 0;
-  }
-
-  return alreadyCovered ? coveredWeight : missingWeight;
 }
 
 function resolveSpecialScope(specialText: string): AutoBuildSpecialScope {
@@ -2014,39 +1677,6 @@ function applyCandidateCoverage(coverage: TeamCoverageState, candidate: AutoBuil
     coverage.selectedClasses.add(selectedClass),
   );
   candidate.matchedSelectedTypes.forEach((type) => coverage.selectedTypes.add(type));
-}
-
-function addsNoNewCoverage(
-  candidate: AutoBuildCandidate,
-  coverage: TeamCoverageState,
-  missingAbilityRequirements: AutoBuildAbilityRequirement[],
-): boolean {
-  return (
-    candidate.tags.burstRoles.every((role) => coverage.burst.has(role)) &&
-    candidate.tags.consistencyRoles.every((role) => coverage.consistency.has(role)) &&
-    candidate.tags.utilityRoles.every((role) => coverage.utility.has(role)) &&
-    candidate.matchedSelectedClasses.every((selectedClass) =>
-      coverage.selectedClasses.has(selectedClass),
-    ) &&
-    candidate.matchedSelectedTypes.every((type) => coverage.selectedTypes.has(type)) &&
-    missingAbilityRequirements.every(
-      (requirement) => !candidateMatchesAbilityRequirement(candidate, requirement),
-    )
-  );
-}
-
-function countSelectedClassMatches(selected: AutoBuildCandidate[]): number {
-  return selected.filter((candidate) => candidate.matchesSelectedClass).length;
-}
-
-function countSharedBurstRoles(
-  candidate: AutoBuildCandidate,
-  selected: AutoBuildCandidate[],
-): number {
-  return selected.reduce((count, entry) => {
-    const shared = candidate.tags.burstRoles.filter((role) => entry.tags.burstRoles.includes(role));
-    return count + shared.length;
-  }, 0);
 }
 
 function resolveMatchedSelectedClasses(
@@ -2547,7 +2177,9 @@ function extractDefaultCaptainBoostClauses(text: string): string[] {
 function splitCaptainEffectClauses(text: string): string[] {
   return splitCaptainSentences(text)
     .flatMap((clause) =>
-      isConditionalCaptainBoostClause(clause) ? [clause] : clause.split(CAPTAIN_EFFECT_CLAUSE_SEPARATOR),
+      isConditionalCaptainBoostClause(clause)
+        ? [clause]
+        : clause.split(CAPTAIN_EFFECT_CLAUSE_SEPARATOR),
     )
     .map((clause) => clause.trim())
     .filter(Boolean);
