@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { JSDOM } from 'jsdom';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import {
   AUTO_TEAM_CANDIDATE_LIMIT,
@@ -31,6 +32,10 @@ const BROOK_CAPTAIN_ABILITY =
   "Reduces crew's current HP by 80% at the start of the fight, reduces Special Cooldown of all characters by 3 turns at the start of the fight, reduces VS Gauge of all characters by 3 at the start of the fight, boosts ATK of Slasher and Free Spirit characters by 5.25x, boosts HP of Slasher and Free Spirit characters by 1.4x, makes [PSY] and [TND] orbs beneficial for Slasher and Free Spirit characters, and increases duration of any Color Affinity, Advantageous Class Effect and Status ATK Boosting buffs applied by Specials by 1 turn. If your crew has 4+ [Straw Hat Pirates], [Paramythia-type] or [Scientist] characters and HP is below 25% at the start of the turn, boosts ATK of Slasher and Free Spirit characters by 6.3x instead.";
 
 describe('Auto team builder', () => {
+  beforeAll(() => {
+    vi.stubGlobal('DOMParser', new JSDOM('').window.DOMParser);
+  });
+
   it('parses type-targeted leader super effect scope text', () => {
     expect(
       resolveLeaderSuperEffectScopeFromEffectText(
@@ -68,6 +73,32 @@ describe('Auto team builder', () => {
     expect(candidate.tags.captainHpMultiplier).toBe(1.3);
     expect(candidate.tags.captainScope.allowedTypes).toEqual(['DEX', 'STR', 'QCK']);
     expect(candidate.tags.captainScope.hasTypeRestriction).toBe(true);
+  });
+
+  it('normalizes HTML ability text before deriving candidate tags', () => {
+    const candidate = buildAutoBuildCandidate(
+      createCharacterRecord({
+        id: 5901,
+        primaryClass: 'Fighter',
+        detail: {
+          captainAbility:
+            '<p><b>Always Active: </b>Boosts HP of DEX characters by 1.3x &amp;lt;script&amp;gt;.</p><script>Boosts ATK of all characters by 99x.</script><ul><li><b>Standard Captain: </b>Boosts ATK of DEX characters by 3.5x.</li></ul>',
+          specialText:
+            '<div>Reduces Bind duration by 5 turns.<br>Changes orbs into Matching Orbs.</div><style>reduces Despair duration by 99 turns.</style>',
+        },
+      }),
+      createInput(['DEX'], ['Fighter']),
+      0,
+      1,
+    );
+
+    expect(candidate.captainText).toContain('&lt;script&gt;');
+    expect(candidate.captainText).not.toContain('<script>');
+    expect(candidate.tags.captainAtkMultiplier).toBe(3.5);
+    expect(candidate.tags.captainHpMultiplier).toBe(1.3);
+    expect(candidate.tags.captainScope.allowedTypes).toEqual(['DEX']);
+    expect(candidate.tags.utilityRoles).toEqual(expect.arrayContaining(['bind']));
+    expect(candidate.tags.utilityRoles).not.toContain('despair');
   });
 
   it('parses burst, consistency, utility, and multi-class captain scope from effect text', () => {

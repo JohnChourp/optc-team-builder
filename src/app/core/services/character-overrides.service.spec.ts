@@ -1,9 +1,12 @@
 import '@angular/compiler';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { JSDOM } from 'jsdom';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Preferences } from '@capacitor/preferences';
 
+import { type CharacterListItem, type LocalCharacterOverride } from '../models/optc.models';
 import { CharacterOverridesService } from './character-overrides.service';
+import { applyOverrideToCharacterListItem } from './character-overrides.utils';
 
 vi.mock('@capacitor/preferences', () => ({
   Preferences: {
@@ -13,6 +16,10 @@ vi.mock('@capacitor/preferences', () => ({
 }));
 
 describe('CharacterOverridesService', () => {
+  beforeAll(() => {
+    vi.stubGlobal('DOMParser', new JSDOM('').window.DOMParser);
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -98,9 +105,71 @@ describe('CharacterOverridesService', () => {
 
     expect(service.overrides().map((override) => override.characterId)).toEqual([4102]);
   });
+
+  it('derives override captain boosts from normalized HTML captain variants', () => {
+    const baseOverride = createOverride({ characterId: 4101 });
+    const override = createOverride({
+      characterId: 4101,
+      detail: {
+        ...baseOverride.detail,
+        captainAbilityVariants: [
+          {
+            key: 'base',
+            label: 'Base Captain Ability',
+            text: '<p><b>Always Active: </b>Boosts HP of DEX characters by 1.3x &amp;lt;script&amp;gt;.</p><script>Boosts ATK of all characters by 99x.</script><ul><li><b>Standard Captain: </b>Boosts ATK of DEX characters by 3.5x.</li></ul>',
+          },
+        ],
+      },
+    });
+
+    expect(applyOverrideToCharacterListItem(createCharacterListItem(4101), override)).toMatchObject(
+      {
+        captainHpBoost: 1.3,
+        captainAtkBoost: 3.5,
+        captainAverageBoost: 2.4,
+      },
+    );
+  });
 });
 
-function createOverride(overrides: Record<string, unknown> & { characterId: number }) {
+function createCharacterListItem(characterId: number): CharacterListItem {
+  return {
+    id: characterId,
+    name: `Character ${characterId}`,
+    isIncomplete: false,
+    type: 'DEX',
+    classes: ['Fighter'],
+    primaryClass: 'Fighter',
+    secondaryClass: null,
+    stars: 6,
+    cost: 55,
+    combo: 4,
+    captainHpBoost: 0,
+    captainAtkBoost: 0,
+    captainAverageBoost: 0,
+    stats: {
+      min: { hp: 1000, atk: 500, rcv: 100 },
+      max: { hp: 3000, atk: 1500, rcv: 300 },
+      growth: 1,
+    },
+    regionAvailability: {
+      exactLocal: true,
+      thumbnailGlobal: true,
+      thumbnailJapan: false,
+    },
+    assets: {
+      exactLocal: null,
+      thumbnailLocal: null,
+      thumbnailGlobal: null,
+      thumbnailJapan: null,
+    },
+    imageUrl: `assets/characters/${characterId}.png`,
+  };
+}
+
+function createOverride(
+  overrides: Record<string, unknown> & { characterId: number },
+): LocalCharacterOverride {
   return {
     characterId: overrides.characterId,
     name: overrides['name'] ?? `Override ${overrides.characterId}`,
@@ -152,5 +221,5 @@ function createOverride(overrides: Record<string, unknown> & { characterId: numb
     },
     createdAt: overrides['createdAt'] ?? '2026-04-13T09:15:00.000Z',
     updatedAt: overrides['updatedAt'] ?? '2026-04-13T09:15:00.000Z',
-  };
+  } as LocalCharacterOverride;
 }

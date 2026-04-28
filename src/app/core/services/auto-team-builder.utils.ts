@@ -27,6 +27,7 @@ import {
 import conflictOverrideCatalog from '../data/auto-team-builder-party-conflict-overrides.json';
 import { type CharacterDetailRecord, type CharacterListItem } from '../models/optc.models';
 import { matchesAbilityRequirement } from './auto-team-builder-ability-match.utils';
+import { normalizeHtmlToText } from './html-text.utils';
 
 const CAPTAIN_BRANCH_PATTERN =
   /\b(always active|standard captain|powered up captain|rampage captain)\s*:\s*/gi;
@@ -584,12 +585,8 @@ function countMatchingAbilityRequirementSlots(
   requirement: AutoBuildAbilityRequirement,
   leaderCandidates: AutoBuildCandidate[] = [],
 ): number {
-  return resolveAbilityRequirementCandidatePool(
-    candidates,
-    requirement,
-    leaderCandidates,
-  ).filter((candidate) =>
-    candidateMatchesAbilityRequirement(candidate, requirement),
+  return resolveAbilityRequirementCandidatePool(candidates, requirement, leaderCandidates).filter(
+    (candidate) => candidateMatchesAbilityRequirement(candidate, requirement),
   ).length;
 }
 
@@ -2320,17 +2317,5 @@ function includesAny(text: string, patterns: string[]): boolean {
 }
 
 function normalizeText(value: string | null | undefined): string {
-  return typeof value === 'string'
-    ? value
-        .replace(/<br\s*\/?>/gi, '. ')
-        .replace(/<(?:ul|ol)(?:\s[^>]*)?>/gi, ' ')
-        .replace(/<\/(?:p|div|li|ul|ol)>/gi, '. ')
-        .replace(/<li(?:\s[^>]*)?>/gi, ' ')
-        .replace(/<[^>]+>/g, '')
-        .replace(/\s+/g, ' ')
-        .replace(/\s+([,.;:])/g, '$1')
-        .replace(/(?:\s*\.\s*){2,}/g, '. ')
-        .trim()
-        .toLowerCase()
-    : '';
+  return normalizeHtmlToText(value).toLowerCase();
 }

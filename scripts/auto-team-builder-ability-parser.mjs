@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { normalizeHtmlToText } from './lib/html-text.mjs';
 
 const SPECIAL_ABILITY_DEFINITIONS = JSON.parse(
   readFileSync(new URL('./data/special-ability-definitions.json', import.meta.url), 'utf8'),
@@ -682,22 +683,7 @@ export function normalizeLegacyAbilityText(value) {
 }
 
 function normalizeHtmlAbilityText(value) {
-  return String(value)
-    .replace(/<br\s*\/?>/gi, '. ')
-    .replace(/<(?:ul|ol)(?:\s[^>]*)?>/gi, ' ')
-    .replace(/<\/(?:p|div|li|ul|ol)>/gi, '. ')
-    .replace(/<li(?:\s[^>]*)?>/gi, ' ')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
-    .replace(/\s+/g, ' ')
-    .replace(/\s+([,.;:])/g, '$1')
-    .replace(/(?:\s*\.\s*){2,}/g, '. ')
-    .trim();
+  return normalizeHtmlToText(value);
 }
 
 export function extractPrimaryAbilityBranchText(value) {

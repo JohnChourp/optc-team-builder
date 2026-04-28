@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { normalizeHtmlToText } from './html-text.mjs';
 
 export const validTypes = new Set(['STR', 'DEX', 'QCK', 'PSY', 'INT']);
 const invalidClassPattern = /^Class\d+$/i;
@@ -158,7 +159,9 @@ function extractDefaultCaptainBoostClauses(text) {
 function splitCaptainEffectClauses(text) {
   return splitCaptainSentences(text)
     .flatMap((clause) =>
-      isConditionalCaptainBoostClause(clause) ? [clause] : clause.split(captainEffectClauseSeparator),
+      isConditionalCaptainBoostClause(clause)
+        ? [clause]
+        : clause.split(captainEffectClauseSeparator),
     )
     .map((clause) => clause.trim())
     .filter(Boolean);
@@ -204,14 +207,7 @@ function isSelfOnlyCaptainBoostMatch(matchText) {
 }
 
 function normalizeCaptainBoostText(text) {
-  return String(text ?? '')
-    .replace(/<br\s*\/?>/gi, '. ')
-    .replace(/<(?:ul|ol)(?:\s[^>]*)?>/gi, ' ')
-    .replace(/<[^>]+>/g, '')
-    .replace(/\s+/g, ' ')
-    .replace(/\s+([,.;:])/g, '$1')
-    .replace(/(?:\s*\.\s*){2,}/g, '. ')
-    .trim();
+  return normalizeHtmlToText(text);
 }
 
 function normalizeCharacterSearchInput(nameOrOptions, type, classes) {

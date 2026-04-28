@@ -4,6 +4,7 @@ import {
   type CharacterListItem,
   type LocalCharacterOverride,
 } from '../models/optc.models';
+import { normalizeHtmlToText } from './html-text.utils';
 
 export interface LocalCharacterOverrideInput {
   characterId: number;
@@ -232,7 +233,9 @@ function extractDefaultCaptainBoostClauses(text: string): string[] {
 function splitCaptainEffectClauses(text: string): string[] {
   return splitCaptainSentences(text)
     .flatMap((clause) =>
-      isConditionalCaptainBoostClause(clause) ? [clause] : clause.split(CAPTAIN_EFFECT_CLAUSE_SEPARATOR),
+      isConditionalCaptainBoostClause(clause)
+        ? [clause]
+        : clause.split(CAPTAIN_EFFECT_CLAUSE_SEPARATOR),
     )
     .map((clause) => clause.trim())
     .filter(Boolean);
@@ -277,14 +280,7 @@ function isSelfOnlyCaptainBoostMatch(matchText: string): boolean {
 }
 
 function normalizeCaptainBoostText(text: string): string {
-  return text
-    .replace(/<br\s*\/?>/gi, '. ')
-    .replace(/<(?:ul|ol)(?:\s[^>]*)?>/gi, ' ')
-    .replace(/<[^>]+>/g, '')
-    .replace(/\s+/g, ' ')
-    .replace(/\s+([,.;:])/g, '$1')
-    .replace(/(?:\s*\.\s*){2,}/g, '. ')
-    .trim();
+  return normalizeHtmlToText(text);
 }
 
 export function normalizeCharacterDetailInput(

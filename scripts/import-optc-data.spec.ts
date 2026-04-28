@@ -252,7 +252,7 @@ describe('import-optc-data ship thumbnail pack', () => {
       {
         1: {
           captain: {
-            base: '<b>Always Active: </b>Boosts HP of [STR], [DEX] and [QCK] characters by 1.3x and changes [RCV] orbs into [SEMLA] orbs.. <b>Standard Captain: </b>Boosts ATK of [STR], [DEX] and [QCK] characters by 3.5x. <b>Powered Up Captain: </b>Boosts ATK of this character by 4.25x, boosts ATK of [STR], [DEX] and [QCK] characters by 4x. <b>Rampage Captain: </b>Boosts ATK of this character by 12x, boosts ATK of [STR], [DEX] and [QCK] characters by 3.75x.',
+            base: '<p><b>Always Active: </b>Boosts HP of [STR], [DEX] and [QCK] characters by 1.3x and changes [RCV] orbs into [SEMLA] orbs &amp;lt;script&amp;gt;.</p><script>Boosts ATK of all characters by 99x.</script><style>Boosts HP of all characters by 99x.</style><ul><li><b>Standard Captain: </b>Boosts ATK of [STR], [DEX] and [QCK] characters by 3.5x.</li></ul> <b>Powered Up Captain: </b>Boosts ATK of this character by 4.25x, boosts ATK of [STR], [DEX] and [QCK] characters by 4x. <b>Rampage Captain: </b>Boosts ATK of this character by 12x, boosts ATK of [STR], [DEX] and [QCK] characters by 3.75x.',
             level1:
               '<b>Always Active: </b>Boosts HP of [STR], [DEX] and [QCK] characters by 1.3x. <b>Standard Captain: </b>Boosts ATK of [STR], [DEX] and [QCK] characters by 3.75x.',
           },
