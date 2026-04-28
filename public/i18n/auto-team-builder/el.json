@@ -356,6 +356,16 @@
     "searchPlaceholder": {
       "characters": "Search by character name in exclude picks"
     },
+    "characterBox": {
+      "label": "Exclude character box",
+      "placeholder": "Επίλεξε box",
+      "none": "Χωρίς exclude box",
+      "support": {
+        "default": "Επίλεξε character box για να γίνουν excluded όλοι οι χαρακτήρες του χωρίς να εμφανιστούν ένας-ένας.",
+        "selected": "{{count}} χαρακτήρες από το {{name}} είναι excluded από αυτό το box.",
+        "empty": "Το {{name}} είναι άδειο, οπότε δεν προσθέτει character excludes."
+      }
+    },
     "candidates": {
       "countShips": "{{count}} ship candidates"
     },
@@ -380,6 +390,7 @@
     },
     "selectionSupport": {
       "removesLockedFrom": "Αν κάνεις exclude αυτόν τον character, θα αφαιρεθεί από τα {{slots}}.",
+      "alreadyInBox": "Είναι ήδη excluded από το {{name}}.",
       "clearsManualShip": "Αν κάνεις exclude αυτό το ship, θα καθαρίσει το current manual ship override."
     }
   },

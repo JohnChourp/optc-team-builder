@@ -1164,6 +1164,32 @@
                 </div>
               </div>
 
+              <div class="exclude-box-select-row">
+                <div class="strict-toggle-copy">
+                  <strong>{{ t('exclude.characterBox.label') }}</strong>
+                  <small>{{ excludeCharacterBoxSupportLabel() }}</small>
+                </div>
+                <ion-select
+                  interface="popover"
+                  class="strict-toggle-select"
+                  fill="outline"
+                  [placeholder]="t('exclude.characterBox.placeholder')"
+                  [value]="selectedExcludeCharacterBoxId() ?? ''"
+                  [selectedText]="selectedExcludeCharacterBoxLabel()"
+                  [disabled]="building()"
+                  (ionChange)="onExcludeCharacterBoxChange($event)"
+                >
+                  <ion-select-option value="">
+                    {{ t('exclude.characterBox.none') }}
+                  </ion-select-option>
+                  @for (characterBox of characterBoxes(); track characterBox.id) {
+                    <ion-select-option [value]="characterBox.id">
+                      {{ characterBox.name }}
+                    </ion-select-option>
+                  }
+                </ion-select>
+              </div>
+
               @if (hasExcludedCharacters()) {
                 <div class="selected-values-row manual-selected-row">
                   @for (character of excludedCharacters(); track character.id) {

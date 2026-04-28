@@ -1091,6 +1091,29 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
+  it('passes the union of individual and character-box excludes to the builder service', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.excludedCharacterIds.set([202, 999]);
+    page.selectedExcludeCharacterBoxId.set('box-1');
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({
+        excludedCharacterIds: [202, 999, 201, 203],
+      }),
+      expect.objectContaining({
+        onProgress: expect.any(Function),
+        signal: expect.any(AbortSignal),
+      }),
+    );
+  });
+
   it('passes favorite ship filters to the builder service', async () => {
     const { page, autoTeamBuilder, userState } = await createPage();
 
@@ -1374,6 +1397,21 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
+  it('blocks assigning characters excluded through the selected exclude box', async () => {
+    const { page } = await createPage();
+    const boxCandidate = createCharacterRecord(201, 'Box Candidate');
+
+    await page.ngOnInit();
+    page.selectedExcludeCharacterBoxId.set('box-1');
+    page.manualCandidates.set([boxCandidate]);
+    page.activeManualSlotRole.set('sub1');
+
+    expect(page.canAssignCharacterToManualSlot('sub1', boxCandidate)).toBe(false);
+    expect(page.manualCandidateCards()[0]?.selectionSupportLabel).toBe(
+      'Excluded picks cannot be assigned to final team slots.',
+    );
+  });
+
   it('uses the global remove translation for selected manual picks', async () => {
     const { page } = await createPage();
     const selectedCandidate = createCharacterRecord(415, 'Selected Candidate');
@@ -1422,6 +1460,85 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     page.excludedCandidates.set([excludedCandidate]);
 
     expect(page.excludedCharacterCards()[0]?.actionLabel).toBe('Remove');
+  });
+
+  it('does not list exclude-box characters as individual selected exclude chips', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.lockedCharacterRecords.set({
+      201: createCharacterRecord(201, 'Box Member'),
+      202: createCharacterRecord(202, 'Manual Exclude'),
+      203: createCharacterRecord(203, 'Box Member 2'),
+    });
+    page.selectedExcludeCharacterBoxId.set('box-1');
+    page.excludedCharacterIds.set([202]);
+
+    expect(page.excludedCharacters().map((character) => character.id)).toEqual([202]);
+    expect(page.effectiveExcludedCharacterIds()).toEqual([202, 201, 203]);
+    expect(page.excludedSelectionSummaryLabel()).toBe('3 excluded characters, 0 excluded ships.');
+  });
+
+  it('disables excluding a character that is already excluded through the selected box', async () => {
+    const { page } = await createPage();
+    const boxCandidate = createCharacterRecord(201, 'Box Candidate');
+
+    await page.ngOnInit();
+    page.selectedExcludeCharacterBoxId.set('box-1');
+    page.excludedCandidates.set([boxCandidate]);
+
+    expect(page.canExcludeCharacter(201)).toBe(false);
+    expect(page.excludedCharacterCards()[0]).toMatchObject({
+      isExcluded: false,
+      isSelectable: false,
+      actionLabel: 'Exclude',
+      selectionSupportLabel: 'Already excluded by Story Box.',
+    });
+  });
+
+  it('removes manual picks that belong to the newly selected exclude box', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.manualSlots.set(
+      createManualSlots({
+        captain: [201],
+        sub1: [999, 202],
+      }),
+    );
+
+    page.onExcludeCharacterBoxChange({
+      detail: { value: 'box-1' },
+    } as CustomEvent<{ value?: string | null }>);
+
+    expect(page.selectedExcludeCharacterBoxId()).toBe('box-1');
+    expect(page.manualSlots()).toEqual(
+      createManualSlots({
+        sub1: [999],
+      }),
+    );
+  });
+
+  it('keeps individual excludes removable when they overlap the selected exclude box', async () => {
+    const { page } = await createPage();
+    const overlappingCandidate = createCharacterRecord(201, 'Overlapping Candidate');
+
+    await page.ngOnInit();
+    page.selectedExcludeCharacterBoxId.set('box-1');
+    page.excludedCharacterIds.set([201]);
+    page.excludedCandidates.set([overlappingCandidate]);
+
+    expect(page.canExcludeCharacter(201)).toBe(true);
+    expect(page.excludedCharacterCards()[0]).toMatchObject({
+      isExcluded: true,
+      isSelectable: true,
+      actionLabel: 'Remove',
+    });
+
+    page.toggleExcludedCharacter(overlappingCandidate);
+
+    expect(page.excludedCharacterIds()).toEqual([]);
+    expect(page.effectiveExcludedCharacterIds()).toEqual([201, 202, 203]);
   });
 
   it('excluding the current manual ship override clears the manual ship and keeps the exclude', async () => {

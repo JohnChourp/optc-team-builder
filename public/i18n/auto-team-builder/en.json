@@ -356,6 +356,16 @@
     "searchPlaceholder": {
       "characters": "Search by character name in exclude picks"
     },
+    "characterBox": {
+      "label": "Exclude character box",
+      "placeholder": "Choose a box",
+      "none": "No exclude box",
+      "support": {
+        "default": "Choose a character box to exclude every character in it without listing them individually.",
+        "selected": "{{count}} characters from {{name}} are excluded through this box.",
+        "empty": "{{name}} is empty, so it does not add any character excludes."
+      }
+    },
     "candidates": {
       "countShips": "{{count}} ship candidates"
     },
@@ -380,6 +390,7 @@
     },
     "selectionSupport": {
       "removesLockedFrom": "Excluding this character will remove it from {{slots}}.",
+      "alreadyInBox": "Already excluded by {{name}}.",
       "clearsManualShip": "Excluding this ship will clear the current manual ship override."
     }
   },

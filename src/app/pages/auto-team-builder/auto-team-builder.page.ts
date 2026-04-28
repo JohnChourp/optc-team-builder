@@ -492,6 +492,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly requireAllSlotsInLeaderSuperEffectScope = signal(false);
   public readonly requireUniqueBaseCharacterNames = signal(false);
   public readonly selectedCharacterBoxId = signal<string | null>(null);
+  public readonly selectedExcludeCharacterBoxId = signal<string | null>(null);
   public readonly favoritesOnly = signal(false);
   public readonly allowAnyFriendCaptainAutoFill = signal(false);
   public readonly favoriteShipsOnly = signal(false);
@@ -787,6 +788,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly selectedCharacterBoxIds = computed(
     () => this.selectedCharacterBox()?.characterIds ?? [],
   );
+  public readonly selectedExcludeCharacterBox = computed<CharacterBox | null>(
+    () =>
+      this.characterBoxes().find(
+        (characterBox: CharacterBox) => characterBox.id === this.selectedExcludeCharacterBoxId(),
+      ) ?? null,
+  );
+  public readonly selectedExcludeCharacterBoxIds = computed(
+    () => this.selectedExcludeCharacterBox()?.characterIds ?? [],
+  );
+  public readonly effectiveExcludedCharacterIds = computed(() => [
+    ...new Set([...this.excludedCharacterIds(), ...this.selectedExcludeCharacterBoxIds()]),
+  ]);
   public readonly effectiveAutoBuildCandidateIds = computed<number[] | undefined>(() => {
     if (!this.selectedCharacterBox()) {
       return undefined;
@@ -974,10 +987,31 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   );
   public readonly excludedSelectionSummaryLabel = computed(() =>
     this.t('exclude.summary', {
-      characters: this.excludedCharacterIds().length,
+      characters: this.effectiveExcludedCharacterIds().length,
       ships: this.excludedShipIds().length,
     }),
   );
+  public readonly selectedExcludeCharacterBoxLabel = computed(
+    () => this.selectedExcludeCharacterBox()?.name ?? this.t('exclude.characterBox.none'),
+  );
+  public readonly excludeCharacterBoxSupportLabel = computed(() => {
+    const characterBox = this.selectedExcludeCharacterBox();
+
+    if (!characterBox) {
+      return this.t('exclude.characterBox.support.default');
+    }
+
+    if (this.selectedExcludeCharacterBoxIds().length === 0) {
+      return this.t('exclude.characterBox.support.empty', {
+        name: characterBox.name,
+      });
+    }
+
+    return this.t('exclude.characterBox.support.selected', {
+      name: characterBox.name,
+      count: this.selectedExcludeCharacterBoxIds().length,
+    });
+  });
   public readonly activeManualSlotSummaryLabel = computed(() => {
     const activeSlot = this.activeManualSlot();
 
@@ -1948,6 +1982,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       return;
     }
 
+    if (!this.canExcludeCharacter(character.id)) {
+      return;
+    }
+
     this.cacheCharacterRecord(character);
     this.removeCharacterFromAllManualSlots(character.id);
     this.excludedCharacterIds.update((currentIds) => [...currentIds, character.id]);
@@ -2017,6 +2055,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
   public isExcludedCharacter(characterId: number): boolean {
     return this.excludedCharacterIds().includes(characterId);
+  }
+
+  public isEffectivelyExcludedCharacter(characterId: number): boolean {
+    return this.effectiveExcludedCharacterIds().includes(characterId);
   }
 
   public isExcludedShip(shipId: number): boolean {
@@ -2195,6 +2237,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     const nextValue = typeof event.detail.value === 'string' ? event.detail.value.trim() : '';
 
     this.selectedCharacterBoxId.set(nextValue.length > 0 ? nextValue : null);
+    this.resetBuildState();
+  }
+
+  public onExcludeCharacterBoxChange(event: CustomEvent<{ value?: string | null }>): void {
+    const nextValue = typeof event.detail.value === 'string' ? event.detail.value.trim() : '';
+
+    this.selectedExcludeCharacterBoxId.set(nextValue.length > 0 ? nextValue : null);
+    this.removeCharactersFromAllManualSlots(this.selectedExcludeCharacterBoxIds());
     this.resetBuildState();
   }
 
@@ -2465,12 +2515,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       return true;
     }
 
-    return !this.isExcludedCharacter(character.id);
+    return !this.isEffectivelyExcludedCharacter(character.id);
   }
 
   public canExcludeCharacter(characterId: number): boolean {
-    void characterId;
-    return true;
+    return this.isExcludedCharacter(characterId)
+      ? true
+      : !this.selectedExcludeCharacterBoxIds().includes(characterId);
   }
 
   public canExcludeShip(shipId: number): boolean {
@@ -2597,7 +2648,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           leaderBoostRanges: this.cloneLeaderBoostRanges(this.leaderBoostRanges()),
           costRange: { ...this.costRange() },
           manualSlots: this.serializeManualSlots(),
-          excludedCharacterIds: this.excludedCharacterIds(),
+          excludedCharacterIds: this.effectiveExcludedCharacterIds(),
           manualShipId: this.selectedManualShipId(),
           excludedShipIds: this.excludedShipIds(),
         },
@@ -2937,6 +2988,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     );
     this.requireUniqueBaseCharacterNames.set(defaultFilters.requireUniqueBaseCharacterNames);
     this.selectedCharacterBoxId.set(null);
+    this.selectedExcludeCharacterBoxId.set(null);
     this.favoritesOnly.set(defaultFilters.favoritesOnly);
     this.allowAnyFriendCaptainAutoFill.set(defaultFilters.allowAnyFriendCaptainAutoFill);
     this.favoriteShipsOnly.set(defaultFilters.favoriteShipsOnly);
@@ -3069,6 +3121,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.requireAllSlotsInLeaderSuperEffectScope.set(state.requireAllSlotsInLeaderSuperEffectScope);
     this.requireUniqueBaseCharacterNames.set(state.requireUniqueBaseCharacterNames);
     this.selectedCharacterBoxId.set(null);
+    this.selectedExcludeCharacterBoxId.set(null);
     this.favoritesOnly.set(state.favoritesOnly);
     this.allowAnyFriendCaptainAutoFill.set(state.allowAnyFriendCaptainAutoFill);
     this.favoriteShipsOnly.set(state.favoriteShipsOnly);
@@ -3627,6 +3680,23 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     );
   }
 
+  private removeCharactersFromAllManualSlots(characterIds: number[]): void {
+    if (characterIds.length === 0) {
+      return;
+    }
+
+    const characterIdSet = new Set(characterIds);
+
+    this.manualSlots.update((currentSlots) =>
+      currentSlots.map((slot) => ({
+        ...slot,
+        characterIds: slot.characterIds.filter(
+          (selectedCharacterId) => !characterIdSet.has(selectedCharacterId),
+        ),
+      })),
+    );
+  }
+
   private resolveManualSlotSelection(role: AutoBuildManualSlotRole): AutoBuildManualSlotSelection {
     return (
       this.manualSlots().find((slot) => slot.role === role) ?? {
@@ -3649,7 +3719,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     );
   }
 
-  private normalizeManualSlotRole(value: string | null | undefined): AutoBuildManualSlotRole | null {
+  private normalizeManualSlotRole(
+    value: string | null | undefined,
+  ): AutoBuildManualSlotRole | null {
     return typeof value === 'string' &&
       AUTO_BUILD_MANUAL_SLOT_ROLES.includes(value as AutoBuildManualSlotRole)
       ? (value as AutoBuildManualSlotRole)
@@ -3719,7 +3791,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     characterId: number,
     activeRole: AutoBuildManualSlotRole,
   ): string | null {
-    if (this.isExcludedCharacter(characterId)) {
+    if (this.isEffectivelyExcludedCharacter(characterId)) {
       return this.t('manual.slotSelection.excluded');
     }
 
@@ -3737,6 +3809,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   }
 
   private resolveExcludedCharacterSelectionSupport(characterId: number): string | null {
+    const excludeCharacterBox = this.selectedExcludeCharacterBox();
+
+    if (
+      excludeCharacterBox &&
+      this.selectedExcludeCharacterBoxIds().includes(characterId) &&
+      !this.isExcludedCharacter(characterId)
+    ) {
+      return this.t('exclude.selectionSupport.alreadyInBox', {
+        name: excludeCharacterBox.name,
+      });
+    }
+
     const assignedRoles = this.manualSlots()
       .filter((slot) => slot.characterIds.includes(characterId))
       .map((slot) => this.getManualSlotTitle(slot.role));
@@ -4287,7 +4371,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         selectedClasses: this.selectedClasses(),
         allowedCharacterIds: allowedCharacterIds.length > 0 ? allowedCharacterIds : undefined,
         lockedCharacterIds: this.lockedCharacterIds(),
-        excludedCharacterIds: this.excludedCharacterIds(),
+        excludedCharacterIds: this.effectiveExcludedCharacterIds(),
       },
     );
   }
