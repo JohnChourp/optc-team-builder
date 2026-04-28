@@ -708,6 +708,17 @@
   gap: 6px;
 }
 
+.manual-similar-feedback {
+  padding: 8px 10px;
+  border: 1px solid rgba(245, 200, 76, 0.22);
+  border-radius: 12px;
+  background: rgba(245, 200, 76, 0.08);
+  color: rgba(248, 251, 255, 0.78);
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 .manual-leaders-card {
   display: grid;
   gap: 12px;
@@ -727,6 +738,44 @@
   padding: 6px 10px;
   border-radius: 14px;
   font-size: 0.74rem;
+}
+
+.manual-lock-chip__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.manual-lock-chip__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.manual-lock-chip__icon-button {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid rgba(245, 200, 76, 0.28);
+  border-radius: 50%;
+  background: rgba(245, 200, 76, 0.12);
+  color: #f5c84c;
+  cursor: pointer;
+}
+
+.manual-lock-chip__icon-button ion-icon {
+  font-size: 0.82rem;
+}
+
+.manual-lock-chip__icon-button:disabled,
+.manual-lock-chip__icon-button--disabled {
+  cursor: default;
+  opacity: 0.48;
+  pointer-events: none;
 }
 
 .manual-lock-chip--static {

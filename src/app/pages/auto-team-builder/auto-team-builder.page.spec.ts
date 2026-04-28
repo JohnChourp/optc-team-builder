@@ -1257,6 +1257,138 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
+  it('adds the best similar manual pick as an OR choice in the same slot', async () => {
+    const { page, repository } = await createPage();
+    const source = createCharacterRecord(301, 'Source Pick', [createBuilderAbility('remove_bind')]);
+    const similar = createCharacterRecord(401, 'Similar Pick', [
+      createBuilderAbility('remove_bind'),
+    ]);
+    const unrelated = createCharacterRecord(999, 'Unrelated Pick', [
+      createBuilderAbility('remove_slot_barrier'),
+    ]);
+
+    await page.ngOnInit();
+    page.manualSlots.set(createManualSlots({ sub1: [301] }));
+    page.lockedCharacterRecords.set({ 301: source });
+    repository.searchDetailedCharacters.mockResolvedValue([unrelated, similar]);
+
+    await page.addSimilarManualPick('sub1', source);
+
+    expect(page.manualSlots()).toEqual(createManualSlots({ sub1: [301, 401] }));
+    expect(page.lockedCharacterRecords()[401]?.name).toBe('Similar Pick');
+    expect(page.manualSimilarPickFeedback()).toBe(
+      'Added Similar Pick as a similar OR pick for Source Pick.',
+    );
+  });
+
+  it('ranks exact ability-key matches ahead of newer partial similar manual picks', async () => {
+    const { page, repository } = await createPage();
+    const source = createCharacterRecord(301, 'Source Pick', [
+      createBuilderAbility('remove_bind'),
+      createBuilderAbility('remove_slot_barrier'),
+    ]);
+    const newerPartial = createCharacterRecord(999, 'Newer Partial Pick', [
+      createBuilderAbility('remove_bind'),
+    ]);
+    const olderExact = createCharacterRecord(401, 'Older Exact Pick', [
+      createBuilderAbility('remove_bind'),
+      createBuilderAbility('remove_slot_barrier'),
+    ]);
+
+    await page.ngOnInit();
+    page.manualSlots.set(createManualSlots({ sub1: [301] }));
+    page.lockedCharacterRecords.set({ 301: source });
+    repository.searchDetailedCharacters.mockResolvedValue([newerPartial, olderExact]);
+
+    await page.addSimilarManualPick('sub1', source);
+
+    expect(page.manualSlots().find((slot) => slot.role === 'sub1')?.characterIds).toEqual([
+      301, 401,
+    ]);
+  });
+
+  it('uses newest id as the tie-breaker for equally similar manual picks', async () => {
+    const { page, repository } = await createPage();
+    const source = createCharacterRecord(301, 'Source Pick', [createBuilderAbility('remove_bind')]);
+    const olderExact = createCharacterRecord(401, 'Older Exact Pick', [
+      createBuilderAbility('remove_bind'),
+    ]);
+    const newerExact = createCharacterRecord(701, 'Newer Exact Pick', [
+      createBuilderAbility('remove_bind'),
+    ]);
+
+    await page.ngOnInit();
+    page.manualSlots.set(createManualSlots({ sub1: [301] }));
+    page.lockedCharacterRecords.set({ 301: source });
+    repository.searchDetailedCharacters.mockResolvedValue([olderExact, newerExact]);
+
+    await page.addSimilarManualPick('sub1', source);
+
+    expect(page.manualSlots().find((slot) => slot.role === 'sub1')?.characterIds).toEqual([
+      301, 701,
+    ]);
+  });
+
+  it('skips selected, excluded, and unique-base invalid similar manual candidates', async () => {
+    const { page, repository } = await createPage();
+    const source = createCharacterRecord(301, 'Source Pick', [createBuilderAbility('remove_bind')]);
+    const alreadySelected = createCharacterRecord(901, 'Already Selected Pick', [
+      createBuilderAbility('remove_bind'),
+    ]);
+    const excluded = createCharacterRecord(902, 'Excluded Pick', [createBuilderAbility('remove_bind')]);
+    const conflict = createCharacterRecord(903, 'Conflict Pick', [createBuilderAbility('remove_bind')]);
+    const otherSlotConflict = createCharacterRecord(302, 'Other Slot Conflict', [
+      createBuilderAbility('remove_slot_barrier'),
+    ]);
+    const fallback = createCharacterRecord(401, 'Fallback Pick', [createBuilderAbility('remove_bind')]);
+
+    source.detail.partyConflictKeys = ['same-base'];
+    alreadySelected.detail.partyConflictKeys = ['same-base'];
+    conflict.detail.partyConflictKeys = ['same-base'];
+    otherSlotConflict.detail.partyConflictKeys = ['same-base'];
+    fallback.detail.partyConflictKeys = ['fallback-base'];
+
+    await page.ngOnInit();
+    page.requireUniqueBaseCharacterNames.set(true);
+    page.excludedCharacterIds.set([902]);
+    page.manualSlots.set(createManualSlots({ sub1: [301, 901], sub2: [302] }));
+    page.lockedCharacterRecords.set({
+      301: source,
+      901: alreadySelected,
+      302: otherSlotConflict,
+    });
+    repository.searchDetailedCharacters.mockResolvedValue([
+      alreadySelected,
+      excluded,
+      conflict,
+      fallback,
+    ]);
+
+    await page.addSimilarManualPick('sub1', source);
+
+    expect(page.manualSlots().find((slot) => slot.role === 'sub1')?.characterIds).toEqual([
+      301, 901, 401,
+    ]);
+  });
+
+  it('leaves manual slots unchanged and shows feedback when no similar pick exists', async () => {
+    const { page, repository } = await createPage();
+    const source = createCharacterRecord(301, 'Source Pick', [createBuilderAbility('remove_bind')]);
+    const unrelated = createCharacterRecord(999, 'Unrelated Pick', [
+      createBuilderAbility('remove_slot_barrier'),
+    ]);
+
+    await page.ngOnInit();
+    page.manualSlots.set(createManualSlots({ sub1: [301] }));
+    page.lockedCharacterRecords.set({ 301: source });
+    repository.searchDetailedCharacters.mockResolvedValue([unrelated]);
+
+    await page.addSimilarManualPick('sub1', source);
+
+    expect(page.manualSlots()).toEqual(createManualSlots({ sub1: [301] }));
+    expect(page.manualSimilarPickFeedback()).toBe('No similar OR pick was found for Source Pick.');
+  });
+
   it('keeps non-favorite manual candidates visible when favorites-only mode is enabled', async () => {
     const { page, userState } = await createPage();
     const favoriteCandidate = createCharacterRecord(411, 'Favorite Candidate');
@@ -1921,9 +2053,14 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain('@if (shipCard.ship.thumbUrl; as thumbUrl)');
     expect(template).toContain('(click)="toggleExcludedShip(shipSelection.ship.id)"');
     expect(template).toContain('(click)="addResultCharacterToManualSlot(slot)"');
+    expect(template).toContain('(click)="addSimilarManualPick(slotCard.role, character, $event)"');
+    expect(template).toContain(
+      '(click)="addSimilarManualPick(activeManualSlotRole(), character, $event)"',
+    );
     expect(template).toContain('(click)="toggleExcludedCharacter(slot.character)"');
     expect(template).toContain("t('exclude.actions.addShip')");
     expect(template).toContain("t('manual.actions.addResult')");
+    expect(template).toContain("t('manual.similar.actions.addFor', { name: character.name })");
     expect(template).toContain("t('exclude.actions.add')");
     expect(template).toContain('@if (current.shipSelection; as shipSelection)');
     expect(template).not.toContain('leaderSuperSpecialCriteriaToggleLabel()');
@@ -4518,6 +4655,22 @@ describe('AutoTeamBuilder enemy preset handoff', () => {
     );
   });
 });
+
+function createBuilderAbility(
+  key: string,
+): CharacterDetailRecord['detail']['builderAbilities'][number] {
+  return {
+    key,
+    label: key
+      .split('_')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' '),
+    minTurns: null,
+    isCompleteRemoval: false,
+    slotTokens: [],
+    source: 'specialText',
+  };
+}
 
 function createCharacterRecord(
   id: number,

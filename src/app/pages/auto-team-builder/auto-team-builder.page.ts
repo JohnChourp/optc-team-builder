@@ -260,6 +260,12 @@ interface PresetImportFeedback {
   details: string[];
 }
 
+interface SimilarManualPickScore {
+  character: CharacterDetailRecord;
+  hasExactAbilityKeySet: boolean;
+  overlapCount: number;
+}
+
 type CharacterPickerPanelKey = 'manual' | 'excluded';
 
 interface CharacterPickerPanelState {
@@ -294,6 +300,7 @@ interface AutoTeamBuilderDefaultFilterState {
 const AUTO_TEAM_BUILD_BUTTON_LABEL = 'Auto Team Build';
 const CHARACTER_PICKER_PAGE_SIZE = 10;
 const CHARACTER_PICKER_SCROLL_LOAD_THRESHOLD = 4;
+const SIMILAR_MANUAL_PICK_CANDIDATE_LIMIT = 10_000;
 const SHIP_PICKER_PAGE_SIZE = 10;
 const SHIP_PICKER_SCROLL_LOAD_THRESHOLD_PX = 144;
 const MANUAL_CANDIDATE_VIEWPORT_ITEM_SIZE = 188;
@@ -521,6 +528,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly autoTeamBuilderAvailableWorkerCounts;
   public readonly presetImportFeedback = signal<PresetImportFeedback | null>(null);
   public readonly candidatePoolBoxFeedback = signal<PresetImportFeedback | null>(null);
+  public readonly manualSimilarPickFeedback = signal('');
   public readonly loadedEnemyPresetName = signal<string | null>(null);
 
   public readonly availableTypes = AUTO_TEAM_BUILDER_TYPES;
@@ -1743,6 +1751,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly manualFilterIcon = optionsOutline;
   public readonly copyIcon = copyOutline;
   public readonly closeIcon = closeOutline;
+  public readonly similarPickIcon = sparklesOutline;
   public readonly presetImportSuccessIcon = checkmarkCircleOutline;
   public readonly presetImportErrorIcon = alertCircleOutline;
 
@@ -2457,6 +2466,56 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.resetSaveFeedbackState();
   }
 
+  public async addSimilarManualPick(
+    role: AutoBuildManualSlotRole,
+    character: CharacterListItem,
+    event?: Event,
+  ): Promise<void> {
+    event?.stopPropagation();
+    this.manualSimilarPickFeedback.set('');
+
+    if (this.building() || !this.isCharacterSelectedInManualSlot(role, character.id)) {
+      return;
+    }
+
+    const sourceCharacter = await this.resolveDetailedManualPickCharacter(character);
+
+    if (!sourceCharacter) {
+      this.manualSimilarPickFeedback.set(
+        this.t('manual.similar.feedback.notFound', { name: character.name }),
+      );
+      return;
+    }
+
+    const similarPick = await this.resolveBestSimilarManualPick(role, sourceCharacter);
+
+    if (!similarPick) {
+      this.manualSimilarPickFeedback.set(
+        this.t('manual.similar.feedback.notFound', { name: character.name }),
+      );
+      return;
+    }
+
+    this.cacheCharacterRecord(similarPick);
+    this.manualSlots.update((currentSlots) =>
+      currentSlots.map((slot) =>
+        slot.role === role
+          ? {
+              ...slot,
+              characterIds: [...slot.characterIds, similarPick.id],
+            }
+          : slot,
+      ),
+    );
+    this.resetBuildState();
+    this.manualSimilarPickFeedback.set(
+      this.t('manual.similar.feedback.added', {
+        source: character.name,
+        match: similarPick.name,
+      }),
+    );
+  }
+
   public canAddResultCharacterToManualSlot(
     slot: Pick<TeamSlotViewModel, 'character' | 'manualSlotRole'>,
   ): boolean {
@@ -2902,6 +2961,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.buildProgress.set(null);
     this.result.set(null);
     this.errorMessage.set('');
+    this.manualSimilarPickFeedback.set('');
     this.currentTeamId.set(null);
     this.resetSaveFeedbackState();
   }
@@ -3703,6 +3763,132 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         ),
       })),
     );
+  }
+
+  private async resolveDetailedManualPickCharacter(
+    character: CharacterListItem,
+  ): Promise<CharacterDetailRecord | null> {
+    if (this.isDetailedCharacterRecord(character)) {
+      return character;
+    }
+
+    const [record] = await this.repository.searchDetailedCharacters({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      allowedCharacterIds: [character.id],
+      sortMode: 'newest',
+      limit: 1,
+      offset: 0,
+    });
+
+    return record ?? null;
+  }
+
+  private async resolveBestSimilarManualPick(
+    role: AutoBuildManualSlotRole,
+    sourceCharacter: CharacterDetailRecord,
+  ): Promise<CharacterDetailRecord | null> {
+    const candidates = await this.repository.searchDetailedCharacters({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      sortMode: 'newest',
+      limit: SIMILAR_MANUAL_PICK_CANDIDATE_LIMIT,
+      offset: 0,
+    });
+    const selectedInSlot = new Set(this.resolveManualSlotSelection(role).characterIds);
+    const rankedCandidates = candidates
+      .filter((candidate) => {
+        if (
+          candidate.id === sourceCharacter.id ||
+          selectedInSlot.has(candidate.id) ||
+          !this.canAssignCharacterToManualSlot(role, candidate)
+        ) {
+          return false;
+        }
+
+        return this.hasValidManualSlotAssignmentWithCandidate(role, candidate);
+      })
+      .map((candidate) => this.scoreSimilarManualPickCandidate(sourceCharacter, candidate))
+      .filter((score): score is SimilarManualPickScore => score !== null)
+      .sort((left, right) => {
+        if (left.hasExactAbilityKeySet !== right.hasExactAbilityKeySet) {
+          return left.hasExactAbilityKeySet ? -1 : 1;
+        }
+
+        if (left.overlapCount !== right.overlapCount) {
+          return right.overlapCount - left.overlapCount;
+        }
+
+        return right.character.id - left.character.id;
+      });
+
+    return rankedCandidates[0]?.character ?? null;
+  }
+
+  private scoreSimilarManualPickCandidate(
+    sourceCharacter: CharacterDetailRecord,
+    candidate: CharacterDetailRecord,
+  ): SimilarManualPickScore | null {
+    const sourceAbilityKeys = this.resolveBuilderAbilityKeySet(sourceCharacter);
+    const candidateAbilityKeys = this.resolveBuilderAbilityKeySet(candidate);
+    const overlapCount = [...sourceAbilityKeys].filter((abilityKey) =>
+      candidateAbilityKeys.has(abilityKey),
+    ).length;
+    const hasExactAbilityKeySet =
+      sourceAbilityKeys.size === candidateAbilityKeys.size &&
+      [...sourceAbilityKeys].every((abilityKey) => candidateAbilityKeys.has(abilityKey));
+
+    if (!hasExactAbilityKeySet && overlapCount === 0) {
+      return null;
+    }
+
+    return {
+      character: candidate,
+      hasExactAbilityKeySet,
+      overlapCount,
+    };
+  }
+
+  private resolveBuilderAbilityKeySet(character: CharacterDetailRecord): Set<string> {
+    return new Set(
+      character.detail.builderAbilities
+        .map((ability) => ability.key.trim())
+        .filter((abilityKey) => abilityKey.length > 0),
+    );
+  }
+
+  private hasValidManualSlotAssignmentWithCandidate(
+    role: AutoBuildManualSlotRole,
+    candidate: CharacterListItem,
+  ): boolean {
+    if (!this.requireUniqueBaseCharacterNames()) {
+      return true;
+    }
+
+    const lockedRecords = {
+      ...this.lockedCharacterRecords(),
+      [candidate.id]: candidate,
+    };
+    const filledSlots = this.manualSlots()
+      .map((slot) => ({
+        role: slot.role,
+        records: (slot.role === role ? [...slot.characterIds, candidate.id] : slot.characterIds)
+          .map((characterId) => lockedRecords[characterId])
+          .filter((record): record is CharacterListItem => Boolean(record)),
+      }))
+      .filter((slot) => slot.role !== 'friendCaptain' && slot.records.length > 0);
+
+    if (filledSlots.length < 2) {
+      return true;
+    }
+
+    return this.hasValidUniqueBaseNameAssignment(filledSlots, 0, new Set<string>());
+  }
+
+  private isDetailedCharacterRecord(character: CharacterListItem): character is CharacterDetailRecord {
+    return 'detail' in character && 'detailImageUrl' in character;
   }
 
   private resolveManualSlotSelection(role: AutoBuildManualSlotRole): AutoBuildManualSlotSelection {

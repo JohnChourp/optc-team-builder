@@ -708,6 +708,12 @@
                 </div>
               </div>
 
+              @if (manualSimilarPickFeedback()) {
+                <div class="manual-similar-feedback">
+                  {{ manualSimilarPickFeedback() }}
+                </div>
+              }
+
               <div class="manual-slot-grid">
                 @for (slotCard of manualSlotCards(); track slotCard.role) {
                   <button
@@ -742,7 +748,19 @@
                             class="selected-value-chip manual-lock-chip manual-lock-chip--static"
                           >
                             <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
-                            {{ character.name }}
+                            <span class="manual-lock-chip__label">{{ character.name }}</span>
+                            <button
+                              type="button"
+                              class="manual-lock-chip__icon-button"
+                              [disabled]="building()"
+                              [title]="t('manual.similar.actions.add')"
+                              [attr.aria-label]="
+                                t('manual.similar.actions.addFor', { name: character.name })
+                              "
+                              (click)="addSimilarManualPick(slotCard.role, character, $event)"
+                            >
+                              <ion-icon [icon]="similarPickIcon"></ion-icon>
+                            </button>
                           </span>
                         }
                       </div>
@@ -796,8 +814,29 @@
                         "
                       >
                         <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
-                        {{ character.name }}
-                        <span aria-hidden="true">×</span>
+                        <span class="manual-lock-chip__label">{{ character.name }}</span>
+                        <span class="manual-lock-chip__actions">
+                          <span
+                            role="button"
+                            tabindex="0"
+                            class="manual-lock-chip__icon-button"
+                            [class.manual-lock-chip__icon-button--disabled]="building()"
+                            [title]="t('manual.similar.actions.add')"
+                            [attr.aria-label]="
+                              t('manual.similar.actions.addFor', { name: character.name })
+                            "
+                            (click)="addSimilarManualPick(activeManualSlotRole(), character, $event)"
+                            (keydown.enter)="
+                              addSimilarManualPick(activeManualSlotRole(), character, $event)
+                            "
+                            (keydown.space)="
+                              addSimilarManualPick(activeManualSlotRole(), character, $event)
+                            "
+                          >
+                            <ion-icon [icon]="similarPickIcon"></ion-icon>
+                          </span>
+                          <span aria-hidden="true">×</span>
+                        </span>
                       </button>
                     }
                   </div>

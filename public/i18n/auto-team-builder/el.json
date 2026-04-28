@@ -302,6 +302,16 @@
       "addChoice": "Προσθήκη OR",
       "addResult": "Add"
     },
+    "similar": {
+      "actions": {
+        "add": "Βρες παρόμοιο OR pick",
+        "addFor": "Βρες παρόμοιο OR pick για {{name}}"
+      },
+      "feedback": {
+        "added": "Προστέθηκε ο {{match}} ως παρόμοιο OR pick για {{source}}.",
+        "notFound": "Δεν βρέθηκε παρόμοιο OR pick για {{name}}."
+      }
+    },
     "copyModal": {
       "eyebrow": "Manual copy",
       "title": "Αντιγραφή manual picks",

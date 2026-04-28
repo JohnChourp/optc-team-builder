@@ -302,6 +302,16 @@
       "addChoice": "Add OR",
       "addResult": "Add"
     },
+    "similar": {
+      "actions": {
+        "add": "Find similar OR pick",
+        "addFor": "Find similar OR pick for {{name}}"
+      },
+      "feedback": {
+        "added": "Added {{match}} as a similar OR pick for {{source}}.",
+        "notFound": "No similar OR pick was found for {{name}}."
+      }
+    },
     "copyModal": {
       "eyebrow": "Manual copy",
       "title": "Copy manual picks",
