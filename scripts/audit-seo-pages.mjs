@@ -165,6 +165,33 @@ async function auditGeneratedPages(urls) {
         `${relative(htmlPath)} must include crawlable fallback <main> content inside <app-root>.`,
       );
     }
+
+    if (routePath === '') {
+      auditRootFallbackHtml(html, htmlPath);
+    }
+  }
+}
+
+function auditRootFallbackHtml(html, htmlPath) {
+  if (!/<main\s+class=["']seo-fallback seo-home-fallback["']/iu.test(html)) {
+    errors.push(`${relative(htmlPath)} root fallback must render the styled homepage fallback.`);
+  }
+
+  if (/<main\s+class=["']seo-fallback seo-home-fallback["'][\s\S]*?\salt=["']["']/iu.test(html)) {
+    errors.push(`${relative(htmlPath)} root fallback images must not use empty alt text.`);
+  }
+
+  for (const routePath of [
+    'tabs/characters',
+    'tabs/team-builder',
+    'tabs/auto-team-builder',
+    'tabs/crew-forge',
+  ]) {
+    const expectedHref = buildAppRoutePath(routePath);
+
+    if (!html.includes(`href="${expectedHref}"`)) {
+      errors.push(`${relative(htmlPath)} root fallback must link to ${expectedHref}.`);
+    }
   }
 }
 
@@ -210,6 +237,13 @@ function buildAbsoluteUrl(routePath) {
   const normalizedRoutePath = routePath.replace(/^\/+|\/+$/gu, '');
 
   return normalizedRoutePath.length ? `${siteBaseUrl}/${normalizedRoutePath}/` : `${siteBaseUrl}/`;
+}
+
+function buildAppRoutePath(routePath) {
+  const normalizedRoutePath = routePath.replace(/^\/+|\/+$/gu, '');
+  const sitePath = new URL(siteBaseUrl).pathname.replace(/\/+$/gu, '');
+
+  return `${sitePath}/${normalizedRoutePath}/`.replace(/\/{2,}/gu, '/');
 }
 
 function normalizeSiteBaseUrl(value) {

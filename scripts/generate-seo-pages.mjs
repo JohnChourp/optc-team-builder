@@ -14,6 +14,20 @@ const siteName = 'OPTC Team Builder';
 const homePageTitle = 'OPTC Team Builder | One Piece Treasure Cruise Tools';
 const siteDescription =
   'Plan One Piece Treasure Cruise crews with character search, team building, enemy mechanics, saved teams, screenshots, and offline-friendly tools.';
+const homeFallbackHeroCharacters = [
+  {
+    alt: 'Kozuki Hiyori - Graveside Prayer character artwork',
+    src: 'assets/exact-character-images/4208.png',
+  },
+  {
+    alt: 'Kozuki Hiyori - Resounding Shamisen character artwork',
+    src: 'assets/exact-character-images/4209.png',
+  },
+  {
+    alt: 'Kid & Killer DEX character artwork',
+    src: 'assets/exact-character-images/5601.png',
+  },
+];
 
 const publicRoutes = [
   {
@@ -257,7 +271,7 @@ function buildStaticPageSeo(route) {
     description: route.description,
     canonicalUrl,
     imageUrl: null,
-    fallbackHtml: buildStaticFallbackHtml(route),
+    fallbackHtml: route.path === '' ? buildHomeFallbackHtml(route) : buildStaticFallbackHtml(route),
     jsonLd: buildJsonLd({
       '@type': 'WebPage',
       '@id': `${canonicalUrl}#webpage`,
@@ -402,9 +416,50 @@ ${route.links
       </nav>`
     : '';
 
-  return `    <main>
+  return `    <main class="seo-fallback seo-page-fallback">
       <h1>${escapeHtml(route.heading ?? route.title)}</h1>
 ${paragraphs.map((paragraph) => `      <p>${escapeHtml(paragraph)}</p>`).join('\n')}${links}
+    </main>`;
+}
+
+function buildHomeFallbackHtml(route) {
+  const actions = (route.links ?? []).filter((link) => link.path.startsWith('tabs/')).slice(0, 4);
+  const actionLinks = actions
+    .map(
+      (link) =>
+        `          <li><a href="${escapeHtmlAttribute(buildAppRoutePath(link.path))}">${escapeHtml(
+          link.label,
+        )}</a></li>`,
+    )
+    .join('\n');
+  const characterImages = homeFallbackHeroCharacters
+    .map(
+      (character) =>
+        `          <img src="${escapeHtmlAttribute(character.src)}" alt="${escapeHtmlAttribute(
+          character.alt,
+        )}" loading="lazy">`,
+    )
+    .join('\n');
+
+  return `    <main class="seo-fallback seo-home-fallback">
+      <section class="seo-home-copy" aria-labelledby="seo-home-title">
+        <span class="seo-home-label">Fan-made OPTC tools</span>
+        <h1 id="seo-home-title">Plan One Piece Treasure Cruise crews faster</h1>
+        <p>${escapeHtml(route.description)}</p>
+        <nav aria-label="Primary OPTC Team Builder pages">
+          <ul class="seo-home-actions">
+${actionLinks}
+          </ul>
+        </nav>
+      </section>
+      <section class="seo-home-visual" aria-label="OPTC Team Builder preview">
+        <div class="seo-home-brand">
+          <img src="brand/favicon-master-v2-optimized.png" alt="OPTC Team Builder logo">
+        </div>
+        <div class="seo-home-character-stack">
+${characterImages}
+        </div>
+      </section>
     </main>`;
 }
 
@@ -426,7 +481,7 @@ function buildCharacterFallbackHtml(character, description) {
       : null,
   ].filter(Boolean);
 
-  return `    <main>
+  return `    <main class="seo-fallback seo-page-fallback">
       <h1>#${character.id} ${escapeHtml(character.name)}</h1>
       <p>${escapeHtml(description)}</p>
       <ul>
@@ -672,6 +727,13 @@ function buildPublicLinkUrl(routePath) {
   return normalizedRoutePath.endsWith('.html')
     ? `${siteBaseUrl}/${normalizedRoutePath}`
     : buildAbsoluteUrl(normalizedRoutePath);
+}
+
+function buildAppRoutePath(routePath) {
+  const normalizedRoutePath = routePath.replace(/^\/+|\/+$/g, '');
+  const sitePath = new URL(siteBaseUrl).pathname.replace(/\/+$/g, '');
+
+  return `${sitePath}/${normalizedRoutePath}/`.replace(/\/{2,}/g, '/');
 }
 
 function normalizeSiteBaseUrl(value) {
