@@ -1,0 +1,651 @@
+<ng-container
+  *transloco="let t; scope: 'auto-team-builder-rumble'; read: 'auto-team-builder-rumble'"
+>
+  <ion-header class="ion-no-border">
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-menu-button menu="tabs-navigation-menu" autoHide="false"></ion-menu-button>
+      </ion-buttons>
+      <ion-title>{{ t('title') }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content [fullscreen]="true">
+    <div class="rumble-builder-shell">
+      <section class="glass-card hero-card">
+        <div class="hero-copy">
+          <div class="section-label">
+            <ion-icon [icon]="sparklesIcon"></ion-icon>
+            {{ t('hero.eyebrow') }}
+          </div>
+          <h1 class="section-title">{{ t('hero.title') }}</h1>
+          <p class="section-copy">{{ t('hero.copy') }}</p>
+        </div>
+
+        <div class="hero-actions">
+          <ion-button color="warning" [disabled]="buildDisabled()" (click)="buildTeam()">
+            <ion-icon slot="start" [icon]="refreshIcon"></ion-icon>
+            {{ loading() ? t('actions.building') : t('actions.rebuild') }}
+          </ion-button>
+          <ion-button
+            fill="outline"
+            color="light"
+            [disabled]="!canDownloadSettingsJson()"
+            (click)="downloadSettingsJson()"
+          >
+            {{ t('actions.downloadSettings') }}
+          </ion-button>
+          <ion-button
+            fill="outline"
+            color="light"
+            [disabled]="!canDownloadTeamJson()"
+            (click)="downloadTeamJson()"
+          >
+            {{ t('actions.downloadTeam') }}
+          </ion-button>
+          @if (!canDownloadTeamJson()) {
+            <small>{{ t('actions.downloadTeamSupport') }}</small>
+          }
+        </div>
+      </section>
+
+      <section class="glass-card controls-card">
+        <div class="controls-grid">
+          <div class="filter-card">
+            <span>{{ t('filters.types.label') }}</span>
+            <ion-select
+              interface="popover"
+              [multiple]="true"
+              fill="outline"
+              [placeholder]="t('filters.types.placeholder')"
+              [value]="selectedTypes()"
+              [selectedText]="selectedTypesLabel()"
+              [disabled]="loading()"
+              (ionChange)="onTypeChange($event)"
+            >
+              @for (item of availableTypes; track item) {
+                <ion-select-option [value]="item">{{ item }}</ion-select-option>
+              }
+            </ion-select>
+            @if (selectedTypes().length) {
+              <div class="selected-values-row">
+                @for (item of selectedTypes(); track item) {
+                  <button
+                    type="button"
+                    class="selected-value-chip"
+                    [disabled]="loading()"
+                    (click)="removeSelectedType(item)"
+                  >
+                    {{ item }}
+                    <span aria-hidden="true">×</span>
+                  </button>
+                }
+              </div>
+            }
+            <ion-button fill="clear" size="small" [disabled]="loading()" (click)="selectAllTypes()">
+              {{ selectAllTypesButtonLabel() }}
+            </ion-button>
+            <div class="strict-toggle-row strict-toggle-row--filter">
+              <div class="strict-toggle-copy">
+                <strong>{{ t('filters.types.onlyToggle') }}</strong>
+                <small>{{ onlySelectedTypesSupportLabel() }}</small>
+              </div>
+              <ion-toggle
+                color="warning"
+                [checked]="onlySelectedTypes()"
+                [disabled]="loading()"
+                (ionChange)="onOnlySelectedTypesToggle($event)"
+              ></ion-toggle>
+            </div>
+          </div>
+
+          <div class="filter-card">
+            <span>{{ t('filters.classes.label') }}</span>
+            <ion-select
+              interface="popover"
+              [multiple]="true"
+              fill="outline"
+              [placeholder]="t('filters.classes.placeholder')"
+              [value]="selectedClasses()"
+              [selectedText]="selectedClassesLabel()"
+              [disabled]="loading() || !availableClasses().length"
+              (ionChange)="onClassChange($event)"
+            >
+              @for (item of availableClasses(); track item) {
+                <ion-select-option [value]="item">{{ item }}</ion-select-option>
+              }
+            </ion-select>
+            @if (selectedClasses().length) {
+              <div class="selected-values-row">
+                @for (item of selectedClasses(); track item) {
+                  <button
+                    type="button"
+                    class="selected-value-chip"
+                    [disabled]="loading()"
+                    (click)="removeSelectedClass(item)"
+                  >
+                    {{ item }}
+                    <span aria-hidden="true">×</span>
+                  </button>
+                }
+              </div>
+            }
+            <ion-button
+              fill="clear"
+              size="small"
+              [disabled]="loading() || !availableClasses().length"
+              (click)="selectAllClasses()"
+            >
+              {{ selectAllClassesButtonLabel() }}
+            </ion-button>
+            <div class="strict-toggle-row strict-toggle-row--filter">
+              <div class="strict-toggle-copy">
+                <strong>{{ t('filters.classes.onlyToggle') }}</strong>
+                <small>{{ onlySelectedClassesSupportLabel() }}</small>
+              </div>
+              <ion-toggle
+                color="warning"
+                [checked]="onlySelectedClasses()"
+                [disabled]="loading()"
+                (ionChange)="onOnlySelectedClassesToggle($event)"
+              ></ion-toggle>
+            </div>
+          </div>
+        </div>
+
+        <div class="secondary-toggle-grid">
+          <div class="strict-toggle-row">
+            <div class="strict-toggle-copy">
+              <strong>{{ t('filters.favoritesOnly.toggle') }}</strong>
+              <small>{{ favoritesOnlySupportLabel() }}</small>
+            </div>
+            <ion-toggle
+              color="warning"
+              [checked]="favoritesOnly()"
+              [disabled]="loading()"
+              (ionChange)="onFavoritesOnlyToggle($event)"
+            ></ion-toggle>
+          </div>
+        </div>
+
+        @if (buildBlockedByFavorites()) {
+          <p class="favorites-only-warning">{{ t('filters.favoritesOnly.blockedMessage') }}</p>
+        }
+      </section>
+
+      @if (loading()) {
+        <section class="glass-card loading-card">
+          <ion-spinner name="crescent" class="loading-card__spinner"></ion-spinner>
+          <div class="loading-card__copy" role="status" aria-live="polite">
+            <div class="loading-card__progress-shell">
+              <div class="loading-card__progress-header">
+                <strong>{{ buildOverallProgressLabel() }}</strong>
+                @if (buildCurrentStepElapsedLabel()) {
+                  <span>{{ buildCurrentStepElapsedLabel() }}</span>
+                }
+              </div>
+              <div class="loading-card__progress-bar" aria-hidden="true">
+                <span
+                  class="loading-card__progress-bar-fill"
+                  [style.width.%]="buildOverallProgressPercent()"
+                ></span>
+              </div>
+            </div>
+            <div class="loading-progress-list">
+              @for (row of loadingProgressRows(); track $index) {
+                <div
+                  class="loading-progress-row"
+                  [class.loading-progress-row--visible]="row.visible"
+                  [class.loading-progress-row--muted]="row.tone === 'secondary'"
+                  [class.loading-progress-row--fallback]="row.tone === 'fallback'"
+                >
+                  <span>{{ row.displayText }}</span>
+                </div>
+              }
+            </div>
+            <section class="loading-card__performance">
+              <div class="loading-card__performance-copy">
+                <strong>{{ t('performance.title') }}</strong>
+                <small>{{ t('performance.copy') }}</small>
+              </div>
+              <div class="loading-card__performance-controls">
+                <label class="loading-card__performance-field">
+                  <span>{{ t('performance.mode.label') }}</span>
+                  <ion-select
+                    interface="popover"
+                    fill="outline"
+                    [value]="autoTeamBuilderWorkerPreference().mode"
+                    (ionChange)="onAutoTeamBuilderWorkerModeChange($event)"
+                  >
+                    <ion-select-option value="auto">
+                      {{ t('performance.mode.options.auto') }}
+                    </ion-select-option>
+                    <ion-select-option value="manual">
+                      {{ t('performance.mode.options.manual') }}
+                    </ion-select-option>
+                  </ion-select>
+                </label>
+                @if (autoTeamBuilderWorkerPreference().mode === 'manual') {
+                  <label class="loading-card__performance-field">
+                    <span>{{ t('performance.manualCount.label') }}</span>
+                    <ion-select
+                      interface="popover"
+                      fill="outline"
+                      [value]="autoTeamBuilderWorkerPreference().manualCount"
+                      (ionChange)="onAutoTeamBuilderManualWorkerCountChange($event)"
+                    >
+                      @for (count of autoTeamBuilderAvailableWorkerCounts(); track count) {
+                        <ion-select-option [value]="count">{{ count }}</ion-select-option>
+                      }
+                    </ion-select>
+                  </label>
+                }
+              </div>
+              <div class="loading-card__performance-summary">
+                <small>
+                  {{
+                    t('performance.runtime.detected', {
+                      count: autoTeamBuilderWorkerRuntime().detectedCoreCount,
+                    })
+                  }}
+                </small>
+                <small>
+                  {{
+                    t('performance.runtime.target', {
+                      count: autoTeamBuilderWorkerRuntime().effectiveCount,
+                    })
+                  }}
+                </small>
+                <small>{{ t('performance.runtime.applies') }}</small>
+              </div>
+            </section>
+          </div>
+        </section>
+      }
+
+      @if (!loading() && errorMessage()) {
+        <section class="glass-card state-card state-card--error">
+          <strong>{{ t('states.errorTitle') }}</strong>
+          <p>{{ errorMessage() }}</p>
+        </section>
+      }
+
+      @if (emptyStateVisible()) {
+        <section class="glass-card state-card">
+          <strong>{{ t('states.emptyTitle') }}</strong>
+          <p>{{ t('states.emptyCopy') }}</p>
+        </section>
+      }
+
+      @if (insufficientStateVisible()) {
+        <section class="glass-card state-card">
+          <strong>{{ t('states.insufficientTitle') }}</strong>
+          <p>
+            {{
+              t('states.insufficientCopy', {
+                selected: result()?.selectedCount ?? 0,
+                needed: activeSlotTargetCount + benchSlotTargetCount,
+              })
+            }}
+          </p>
+        </section>
+      }
+
+      @if (strictTypeBlockedStateVisible()) {
+        <section class="glass-card state-card">
+          <strong>{{ t('states.strictTypesTitle') }}</strong>
+          <p>
+            {{ t('states.hardFiltersCopy') }}
+          </p>
+        </section>
+      }
+
+      @if (relaxedStateVisible()) {
+        <section class="glass-card state-card">
+          <strong>{{ t('states.relaxedTitle') }}</strong>
+          <p>{{ t('states.relaxedCopy') }}</p>
+          <div class="chip-row">
+            @for (characterClass of result()?.droppedClasses ?? []; track characterClass) {
+              <span class="reason-chip">
+                {{ t('summary.droppedClass', { value: characterClass }) }}
+              </span>
+            }
+          </div>
+        </section>
+      }
+
+      @if (!loading() && result(); as currentResult) {
+        @if (currentResult.candidateCount > 0 && currentResult.selectedCount > 0) {
+          <section class="glass-card summary-card">
+            <div class="section-label">
+              <ion-icon [icon]="shieldIcon"></ion-icon>
+              {{ t('summary.eyebrow') }}
+            </div>
+            <div class="summary-grid">
+              <article>
+                <span>{{ t('summary.totalScore') }}</span>
+                <strong>{{ formatScore(currentResult.totalScore) }}</strong>
+              </article>
+              <article>
+                <span>{{ t('summary.candidates') }}</span>
+                <strong>{{ currentResult.candidateCount }}</strong>
+              </article>
+              <article>
+                <span>{{ t('summary.selected') }}</span>
+                <strong>{{ currentResult.selectedCount }}</strong>
+              </article>
+            </div>
+
+            <div class="coverage-grid">
+              <div class="coverage-block">
+                <span>{{ t('summary.requestedTypes') }}</span>
+                <div class="chip-row">
+                  @for (type of currentResult.requestedTypes; track type) {
+                    <span class="reason-chip">{{ type }}</span>
+                  } @empty {
+                    <span class="reason-chip reason-chip--muted">{{ t('summary.none') }}</span>
+                  }
+                </div>
+              </div>
+              <div class="coverage-block">
+                <span>{{ t('summary.finalTypes') }}</span>
+                <div class="chip-row">
+                  @for (type of currentResult.typeCoverage; track type) {
+                    <span class="reason-chip">{{ type }}</span>
+                  }
+                </div>
+              </div>
+              <div class="coverage-block">
+                <span>{{ t('summary.requestedClasses') }}</span>
+                <div class="chip-row">
+                  @for (characterClass of currentResult.requestedClasses; track characterClass) {
+                    <span class="reason-chip">{{ characterClass }}</span>
+                  } @empty {
+                    <span class="reason-chip reason-chip--muted">{{ t('summary.none') }}</span>
+                  }
+                </div>
+              </div>
+              <div class="coverage-block">
+                <span>{{ t('summary.finalClasses') }}</span>
+                <div class="chip-row">
+                  @for (characterClass of currentResult.classCoverage; track characterClass) {
+                    <span class="reason-chip">{{ characterClass }}</span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="coverage-block">
+              <span>{{ t('summary.roleCoverage') }}</span>
+              <div class="chip-row">
+                @for (role of currentResult.roleCoverage; track role) {
+                  <span class="reason-chip">{{ t(roleLabelKey(role)) }}</span>
+                }
+              </div>
+            </div>
+
+            <div class="coverage-block">
+              <span>{{ t('summary.topFactors') }}</span>
+              <div class="factor-list">
+                @for (factor of currentResult.topFactors; track factor) {
+                  <span>{{ factor }}</span>
+                }
+              </div>
+            </div>
+          </section>
+
+          <section class="glass-card team-section">
+            <div class="section-head">
+              <div>
+                <div class="section-label">{{ t('active.title') }}</div>
+                <h2>{{ t('active.copy', { count: activeSlotTargetCount }) }}</h2>
+              </div>
+            </div>
+            <div class="slot-grid">
+              @for (slot of currentResult.activeSlots; track slot.unit.character.id) {
+                <article class="rumble-slot-card">
+                  <a
+                    class="slot-image"
+                    [routerLink]="getCharacterDetailLink(slot)"
+                    [attr.aria-label]="slot.unit.character.name"
+                  >
+                    <img [src]="slot.unit.character.imageUrl" [alt]="slot.unit.character.name" />
+                  </a>
+                  <div class="slot-copy">
+                    <span class="slot-label">{{ formatSlotLabel(slot) }}</span>
+                    <a class="slot-name" [routerLink]="getCharacterDetailLink(slot)">
+                      {{ slot.unit.character.name }}
+                    </a>
+                    <ion-button
+                      class="slot-replace-button"
+                      fill="clear"
+                      color="light"
+                      size="small"
+                      [attr.aria-label]="t('slot.replaceAria', { name: slot.unit.character.name })"
+                      (click)="openManualCharacterPicker(slot)"
+                    >
+                      <ion-icon slot="icon-only" [icon]="editIcon"></ion-icon>
+                    </ion-button>
+                    <small>
+                      {{ slot.unit.character.type }} • {{ slot.unit.character.primaryClass }}
+                    </small>
+                    <div class="slot-score">
+                      <ion-icon [icon]="flashIcon"></ion-icon>
+                      {{ t('slot.score', { score: formatScore(slot.score) }) }}
+                    </div>
+                    @if (hasRumbleDetailRows(slot)) {
+                      <dl class="slot-rumble-details">
+                        @if (slot.unit.normalized.maxPassiveLevel) {
+                          <div class="slot-rumble-details__wide">
+                            <dt>{{ t('slot.passiveLevel', { level: slot.unit.normalized.maxPassiveLevel }) }}</dt>
+                            @if (slot.unit.normalized.maxPassiveEffects.length) {
+                              <dd>
+                                <ul class="slot-rumble-effects">
+                                  @for (effect of slot.unit.normalized.maxPassiveEffects; track effect) {
+                                    <li>{{ effect }}</li>
+                                  }
+                                </ul>
+                              </dd>
+                            }
+                          </div>
+                        }
+                        @if (slot.unit.normalized.maxSpecialLevel) {
+                          <div class="slot-rumble-details__wide">
+                            <dt>{{ t('slot.specialLevel', { level: slot.unit.normalized.maxSpecialLevel }) }}</dt>
+                            @if (slot.unit.normalized.maxSpecialCooldown) {
+                              <dd>{{ t('slot.cooldown', { value: slot.unit.normalized.maxSpecialCooldown }) }}</dd>
+                            }
+                            @if (slot.unit.normalized.maxSpecialEffects.length) {
+                              <dd>
+                                <ul class="slot-rumble-effects">
+                                  @for (effect of slot.unit.normalized.maxSpecialEffects; track effect) {
+                                    <li>{{ effect }}</li>
+                                  }
+                                </ul>
+                              </dd>
+                            }
+                          </div>
+                        }
+                        @if (slot.unit.normalized.baseResistances.length) {
+                          <div class="slot-rumble-details__wide">
+                            <dt>{{ t('slot.resistance') }}</dt>
+                            <dd>{{ formatResistanceList(slot) }}</dd>
+                          </div>
+                        }
+                      </dl>
+                    }
+                  </div>
+                </article>
+              }
+            </div>
+          </section>
+
+          <section class="glass-card team-section">
+            <div class="section-head">
+              <div>
+                <div class="section-label">{{ t('bench.title') }}</div>
+                <h2>{{ t('bench.copy', { count: benchSlotTargetCount }) }}</h2>
+              </div>
+            </div>
+            <div class="slot-grid">
+              @for (slot of currentResult.benchSlots; track slot.unit.character.id) {
+                <article class="rumble-slot-card rumble-slot-card--bench">
+                  <a
+                    class="slot-image"
+                    [routerLink]="getCharacterDetailLink(slot)"
+                    [attr.aria-label]="slot.unit.character.name"
+                  >
+                    <img [src]="slot.unit.character.imageUrl" [alt]="slot.unit.character.name" />
+                  </a>
+                  <div class="slot-copy">
+                    <span class="slot-label">{{ formatSlotLabel(slot) }}</span>
+                    <a class="slot-name" [routerLink]="getCharacterDetailLink(slot)">
+                      {{ slot.unit.character.name }}
+                    </a>
+                    <ion-button
+                      class="slot-replace-button"
+                      fill="clear"
+                      color="light"
+                      size="small"
+                      [attr.aria-label]="t('slot.replaceAria', { name: slot.unit.character.name })"
+                      (click)="openManualCharacterPicker(slot)"
+                    >
+                      <ion-icon slot="icon-only" [icon]="editIcon"></ion-icon>
+                    </ion-button>
+                    <small>
+                      {{ slot.unit.character.type }} • {{ slot.unit.character.primaryClass }}
+                    </small>
+                    <div class="slot-score">
+                      <ion-icon [icon]="flashIcon"></ion-icon>
+                      {{ t('slot.score', { score: formatScore(slot.score) }) }}
+                    </div>
+                    @if (hasRumbleDetailRows(slot)) {
+                      <dl class="slot-rumble-details">
+                        @if (slot.unit.normalized.maxPassiveLevel) {
+                          <div class="slot-rumble-details__wide">
+                            <dt>{{ t('slot.passiveLevel', { level: slot.unit.normalized.maxPassiveLevel }) }}</dt>
+                            @if (slot.unit.normalized.maxPassiveEffects.length) {
+                              <dd>
+                                <ul class="slot-rumble-effects">
+                                  @for (effect of slot.unit.normalized.maxPassiveEffects; track effect) {
+                                    <li>{{ effect }}</li>
+                                  }
+                                </ul>
+                              </dd>
+                            }
+                          </div>
+                        }
+                        @if (slot.unit.normalized.maxSpecialLevel) {
+                          <div class="slot-rumble-details__wide">
+                            <dt>{{ t('slot.specialLevel', { level: slot.unit.normalized.maxSpecialLevel }) }}</dt>
+                            @if (slot.unit.normalized.maxSpecialCooldown) {
+                              <dd>{{ t('slot.cooldown', { value: slot.unit.normalized.maxSpecialCooldown }) }}</dd>
+                            }
+                            @if (slot.unit.normalized.maxSpecialEffects.length) {
+                              <dd>
+                                <ul class="slot-rumble-effects">
+                                  @for (effect of slot.unit.normalized.maxSpecialEffects; track effect) {
+                                    <li>{{ effect }}</li>
+                                  }
+                                </ul>
+                              </dd>
+                            }
+                          </div>
+                        }
+                        @if (slot.unit.normalized.baseResistances.length) {
+                          <div class="slot-rumble-details__wide">
+                            <dt>{{ t('slot.resistance') }}</dt>
+                            <dd>{{ formatResistanceList(slot) }}</dd>
+                          </div>
+                        }
+                      </dl>
+                    }
+                  </div>
+                </article>
+              }
+            </div>
+          </section>
+        }
+      }
+    </div>
+  </ion-content>
+
+  <ion-modal
+    [isOpen]="manualPickerOpen()"
+    cssClass="rumble-manual-picker-modal"
+    (didDismiss)="closeManualCharacterPicker()"
+  >
+    <ng-template>
+      <ion-header class="rumble-manual-picker-header ion-no-border">
+        <ion-toolbar>
+          <div class="rumble-manual-picker-head">
+            <h2>{{ t('manualPicker.title') }}</h2>
+            <p>{{ t('manualPicker.copy') }}</p>
+          </div>
+          <ion-buttons slot="end">
+            <ion-button
+              fill="clear"
+              color="light"
+              [attr.aria-label]="t('manualPicker.close')"
+              (click)="closeManualCharacterPicker()"
+            >
+              <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="rumble-manual-picker-content">
+        <div class="rumble-manual-picker-shell">
+          <ion-searchbar
+            class="rumble-manual-picker-search"
+            [placeholder]="t('manualPicker.searchPlaceholder')"
+            [value]="manualPickerSearchTerm()"
+            debounce="150"
+            (ionInput)="onManualPickerSearch($event)"
+          ></ion-searchbar>
+
+          @if (manualPickerLoading()) {
+            <section class="rumble-manual-picker-state">
+              <ion-spinner name="crescent"></ion-spinner>
+              <span>{{ t('manualPicker.loading') }}</span>
+            </section>
+          } @else if (!manualPickerResults().length) {
+            <section class="rumble-manual-picker-state">
+              <strong>{{ t('manualPicker.emptyTitle') }}</strong>
+              <span>{{ t('manualPicker.emptyCopy') }}</span>
+            </section>
+          } @else {
+            <div class="rumble-manual-picker-grid">
+              @for (candidate of manualPickerResults(); track candidate.character.id) {
+                <button
+                  type="button"
+                  class="rumble-manual-picker-card"
+                  (click)="selectManualCharacter(candidate)"
+                >
+                  <img [src]="candidate.character.imageUrl" [alt]="candidate.character.name" />
+                  <span>
+                    <strong>{{ candidate.character.name }}</strong>
+                    <small>
+                      #{{ candidate.character.id }} • {{ candidate.character.type }} •
+                      {{ candidate.character.primaryClass }}
+                    </small>
+                    <small>{{ t('slot.score', { score: formatScore(candidate.baseScore) }) }}</small>
+                  </span>
+                </button>
+              }
+            </div>
+          }
+        </div>
+      </ion-content>
+
+      <ion-footer class="rumble-manual-picker-footer">
+        <ion-toolbar>
+          <ion-button fill="outline" color="light" (click)="closeManualCharacterPicker()">
+            {{ t('manualPicker.cancel') }}
+          </ion-button>
+        </ion-toolbar>
+      </ion-footer>
+    </ng-template>
+  </ion-modal>
+</ng-container>

@@ -34,6 +34,7 @@ import {
   applyPartyConflictKeys,
   normalizePartyConflictOverrideMap,
 } from './lib/party-conflict-keys.mjs';
+import { normalizeRumbleUnits } from './lib/rumble-data-normalizer.mjs';
 import { parseSuperSpecialCriteria } from './lib/super-special-criteria.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -1270,7 +1271,7 @@ export function normalizeCharacterDetail(detail, characterId, rumbleData = null)
 }
 
 export function normalizeCharacters(units, details, rumbleUnits, assetsById) {
-  const rumbleById = new Map(rumbleUnits.map((entry) => [entry.id, entry]));
+  const rumbleById = new Map(normalizeRumbleUnits(rumbleUnits).map((entry) => [entry.id, entry]));
   const normalizedUnitEntries = buildNormalizedUnitEntries(units);
 
   return normalizedUnitEntries.map(

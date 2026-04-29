@@ -188,6 +188,53 @@ describe('import-optc-data ship thumbnail pack', () => {
     });
   });
 
+  it('materializes Rumble overrides before attaching rumble data to characters', () => {
+    const [character] = normalizeCharacters(
+      [
+        [
+          'Rumble Override Tester',
+          'DEX',
+          ['Fighter'],
+          6,
+          55,
+          4,
+          5,
+          99,
+          5_000_000,
+          1000,
+          500,
+          100,
+          3000,
+          1500,
+          300,
+          1,
+        ],
+      ],
+      {},
+      [
+        {
+          id: 1,
+          ability: [
+            {
+              effects: [{ attributes: ['ATK'], effect: 'buff', level: 1 }],
+            },
+            {
+              effects: [{ override: { level: 2 } }],
+            },
+          ],
+        },
+      ],
+      new Map(),
+    );
+
+    expect(character.detail.rumbleData?.ability[1].effects[0]).toEqual({
+      attributes: ['ATK'],
+      effect: 'buff',
+      level: 2,
+    });
+    expect(JSON.stringify(character.detail.rumbleData)).not.toContain('override');
+  });
+
   it('precomputes captain HP, ATK, and average boosts from the default captain variant', () => {
     const [character] = normalizeCharacters(
       [

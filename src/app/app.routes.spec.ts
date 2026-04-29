@@ -52,6 +52,16 @@ describe('app routes', () => {
     expect(crewForgeRoute?.loadComponent).toBeTypeOf('function');
   });
 
+  it('registers the Auto Rumble Builder route inside tabs', () => {
+    const tabsRoute = findRouteByPath(routes, 'tabs');
+    const rumbleRoute = tabsRoute?.children?.find(
+      (route) => route.path === 'auto-team-builder-rumble',
+    );
+
+    expect(rumbleRoute).toBeDefined();
+    expect(rumbleRoute?.loadComponent).toBeTypeOf('function');
+  });
+
   it('registers the saved enemies route inside tabs', () => {
     const tabsRoute = findRouteByPath(routes, 'tabs');
     const savedEnemiesRoute = tabsRoute?.children?.find((route) => route.path === 'saved-enemies');
@@ -78,7 +88,13 @@ describe('app routes', () => {
 
   it('adds SEO route data for public indexable tab routes', () => {
     const tabsRoute = findRouteByPath(routes, 'tabs');
-    const publicRoutePaths = ['characters', 'team-builder', 'auto-team-builder', 'crew-forge'];
+    const publicRoutePaths = [
+      'characters',
+      'team-builder',
+      'auto-team-builder',
+      'auto-team-builder-rumble',
+      'crew-forge',
+    ];
 
     for (const path of publicRoutePaths) {
       const route = tabsRoute?.children?.find((childRoute) => childRoute.path === path);

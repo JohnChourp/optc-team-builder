@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-27T14:17:37.270Z",
+  "generatedAt": "2026-04-29T05:12:11.379Z",
   "characters": [
     {
       "id": 1,
@@ -1557,8 +1557,15 @@
             {
               "effects": [
                 {
-                  "override": {
-                    "level": 2
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 2,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -1566,8 +1573,15 @@
             {
               "effects": [
                 {
-                  "override": {
-                    "level": 3
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 3,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -1575,8 +1589,15 @@
             {
               "effects": [
                 {
-                  "override": {
-                    "level": 4
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 4,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -1584,8 +1605,15 @@
             {
               "effects": [
                 {
-                  "override": {
-                    "level": 5
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 5,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -1629,10 +1657,33 @@
             {
               "cooldown": 23,
               "effects": [
-                {},
                 {
-                  "override": {
-                    "duration": 11
+                  "amount": 5,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 80,
+                  "duration": 11,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -1640,10 +1691,33 @@
             {
               "cooldown": 23,
               "effects": [
-                {},
                 {
-                  "override": {
-                    "duration": 12
+                  "amount": 5,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 80,
+                  "duration": 12,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -1651,10 +1725,33 @@
             {
               "cooldown": 23,
               "effects": [
-                {},
                 {
-                  "override": {
-                    "duration": 13
+                  "amount": 5,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 80,
+                  "duration": 13,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -1662,10 +1759,33 @@
             {
               "cooldown": 23,
               "effects": [
-                {},
                 {
-                  "override": {
-                    "duration": 14
+                  "amount": 5,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 80,
+                  "duration": 14,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -1673,10 +1793,33 @@
             {
               "cooldown": 23,
               "effects": [
-                {},
                 {
-                  "override": {
-                    "duration": 15
+                  "amount": 5,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 80,
+                  "duration": 15,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -1684,10 +1827,33 @@
             {
               "cooldown": 23,
               "effects": [
-                {},
                 {
-                  "override": {
-                    "duration": 16
+                  "amount": 5,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 80,
+                  "duration": 16,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -1695,10 +1861,33 @@
             {
               "cooldown": 23,
               "effects": [
-                {},
                 {
-                  "override": {
-                    "duration": 17
+                  "amount": 5,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 80,
+                  "duration": 17,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -1706,10 +1895,33 @@
             {
               "cooldown": 23,
               "effects": [
-                {},
                 {
-                  "override": {
-                    "duration": 18
+                  "amount": 5,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 80,
+                  "duration": 18,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -1717,10 +1929,33 @@
             {
               "cooldown": 23,
               "effects": [
-                {},
                 {
-                  "override": {
-                    "duration": 19
+                  "amount": 5,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 80,
+                  "duration": 19,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -1859,8 +2094,15 @@
             {
               "effects": [
                 {
-                  "override": {
-                    "level": 2
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 2,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -1868,8 +2110,15 @@
             {
               "effects": [
                 {
-                  "override": {
-                    "level": 3
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 3,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -1877,8 +2126,15 @@
             {
               "effects": [
                 {
-                  "override": {
-                    "level": 4
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 4,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -1886,8 +2142,15 @@
             {
               "effects": [
                 {
-                  "override": {
-                    "level": 5
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 5,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -1932,24 +2195,32 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "override": {
-                    "chance": 63
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 63,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 },
-                {}
-              ]
-            },
-            {
-              "cooldown": 30,
-              "effects": [
                 {
-                  "override": {
-                    "chance": 67
-                  }
-                },
-                {
-                  "override": {
-                    "level": 4
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "level": 3,
+                  "duration": 15,
+                  "effect": "debuff",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -1958,13 +2229,32 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "override": {
-                    "chance": 71
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 67,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 },
                 {
-                  "override": {
-                    "level": 5
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "level": 4,
+                  "duration": 15,
+                  "effect": "debuff",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -1973,13 +2263,32 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "override": {
-                    "chance": 75
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 71,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 },
                 {
-                  "override": {
-                    "level": 6
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "level": 5,
+                  "duration": 15,
+                  "effect": "debuff",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -1988,13 +2297,32 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "override": {
-                    "chance": 79
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 75,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 },
                 {
-                  "override": {
-                    "level": 7
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "level": 6,
+                  "duration": 15,
+                  "effect": "debuff",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2003,13 +2331,32 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "override": {
-                    "chance": 83
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 79,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 },
                 {
-                  "override": {
-                    "level": 8
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "level": 7,
+                  "duration": 15,
+                  "effect": "debuff",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2018,13 +2365,32 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "override": {
-                    "chance": 87
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 83,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 },
                 {
-                  "override": {
-                    "level": 9
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "level": 8,
+                  "duration": 15,
+                  "effect": "debuff",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2033,13 +2399,32 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "override": {
-                    "chance": 91
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 87,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 },
                 {
-                  "override": {
-                    "level": 9
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "level": 9,
+                  "duration": 15,
+                  "effect": "debuff",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2048,13 +2433,66 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "override": {
-                    "chance": 96
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 91,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 },
                 {
-                  "override": {
-                    "level": 11
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "level": 9,
+                  "duration": 15,
+                  "effect": "debuff",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 96,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "level": 11,
+                  "duration": 15,
+                  "effect": "debuff",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2193,8 +2631,15 @@
             {
               "effects": [
                 {
-                  "override": {
-                    "level": 2
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 2,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -2202,8 +2647,15 @@
             {
               "effects": [
                 {
-                  "override": {
-                    "level": 3
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 3,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -2211,8 +2663,15 @@
             {
               "effects": [
                 {
-                  "override": {
-                    "level": 4
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 4,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -2220,8 +2679,15 @@
             {
               "effects": [
                 {
-                  "override": {
-                    "level": 5
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 5,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -2265,10 +2731,33 @@
             {
               "cooldown": 23,
               "effects": [
-                {},
                 {
-                  "override": {
-                    "duration": 11
+                  "amount": 10,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 80,
+                  "duration": 11,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2276,10 +2765,33 @@
             {
               "cooldown": 23,
               "effects": [
-                {},
                 {
-                  "override": {
-                    "duration": 12
+                  "amount": 10,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 80,
+                  "duration": 12,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2287,10 +2799,33 @@
             {
               "cooldown": 23,
               "effects": [
-                {},
                 {
-                  "override": {
-                    "duration": 13
+                  "amount": 10,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 80,
+                  "duration": 13,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2298,10 +2833,33 @@
             {
               "cooldown": 23,
               "effects": [
-                {},
                 {
-                  "override": {
-                    "duration": 14
+                  "amount": 10,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 80,
+                  "duration": 14,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2309,10 +2867,33 @@
             {
               "cooldown": 23,
               "effects": [
-                {},
                 {
-                  "override": {
-                    "duration": 15
+                  "amount": 10,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 80,
+                  "duration": 15,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2320,10 +2901,33 @@
             {
               "cooldown": 23,
               "effects": [
-                {},
                 {
-                  "override": {
-                    "duration": 16
+                  "amount": 10,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 80,
+                  "duration": 16,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2331,10 +2935,33 @@
             {
               "cooldown": 23,
               "effects": [
-                {},
                 {
-                  "override": {
-                    "duration": 17
+                  "amount": 10,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 80,
+                  "duration": 17,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2342,10 +2969,33 @@
             {
               "cooldown": 23,
               "effects": [
-                {},
                 {
-                  "override": {
-                    "duration": 18
+                  "amount": 10,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 80,
+                  "duration": 18,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2353,10 +3003,33 @@
             {
               "cooldown": 23,
               "effects": [
-                {},
                 {
-                  "override": {
-                    "duration": 20
+                  "amount": 10,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 80,
+                  "duration": 20,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2608,8 +3281,15 @@
             {
               "effects": [
                 {
-                  "override": {
-                    "level": 2
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 2,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -2617,8 +3297,15 @@
             {
               "effects": [
                 {
-                  "override": {
-                    "level": 3
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 3,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -2626,8 +3313,15 @@
             {
               "effects": [
                 {
-                  "override": {
-                    "level": 4
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 4,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -2635,8 +3329,15 @@
             {
               "effects": [
                 {
-                  "override": {
-                    "level": 5
+                  "attributes": [
+                    "SPD"
+                  ],
+                  "effect": "buff",
+                  "level": 5,
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -2681,24 +3382,32 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "override": {
-                    "chance": 63
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 63,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 },
-                {}
-              ]
-            },
-            {
-              "cooldown": 30,
-              "effects": [
                 {
-                  "override": {
-                    "chance": 67
-                  }
-                },
-                {
-                  "override": {
-                    "level": 4
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "level": 3,
+                  "duration": 15,
+                  "effect": "debuff",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2707,13 +3416,32 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "override": {
-                    "chance": 71
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 67,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 },
                 {
-                  "override": {
-                    "level": 5
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "level": 4,
+                  "duration": 15,
+                  "effect": "debuff",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2722,13 +3450,32 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "override": {
-                    "chance": 75
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 71,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 },
                 {
-                  "override": {
-                    "level": 6
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "level": 5,
+                  "duration": 15,
+                  "effect": "debuff",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2737,13 +3484,32 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "override": {
-                    "chance": 79
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 75,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 },
                 {
-                  "override": {
-                    "level": 7
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "level": 6,
+                  "duration": 15,
+                  "effect": "debuff",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2752,13 +3518,32 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "override": {
-                    "chance": 83
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 79,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 },
                 {
-                  "override": {
-                    "level": 8
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "level": 7,
+                  "duration": 15,
+                  "effect": "debuff",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2767,13 +3552,32 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "override": {
-                    "chance": 87
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 83,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 },
                 {
-                  "override": {
-                    "level": 9
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "level": 8,
+                  "duration": 15,
+                  "effect": "debuff",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2782,13 +3586,32 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "override": {
-                    "chance": 91
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 87,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 },
                 {
-                  "override": {
-                    "level": 9
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "level": 9,
+                  "duration": 15,
+                  "effect": "debuff",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2797,13 +3620,66 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "override": {
-                    "chance": 96
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 91,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 },
                 {
-                  "override": {
-                    "level": 11
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "level": 9,
+                  "duration": 15,
+                  "effect": "debuff",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "cooldown": 30,
+              "effects": [
+                {
+                  "attributes": [
+                    "Special Bind"
+                  ],
+                  "chance": 96,
+                  "duration": 10,
+                  "effect": "hinderance",
+                  "targeting": {
+                    "count": 1,
+                    "priority": "highest",
+                    "stat": "ATK",
+                    "targets": [
+                      "enemies"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "Accuracy"
+                  ],
+                  "level": 11,
+                  "duration": 15,
+                  "effect": "debuff",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2841,10 +3717,29 @@
             },
             {
               "effects": [
-                {},
                 {
-                  "override": {
-                    "level": 2
+                  "attributes": [
+                    "ATK"
+                  ],
+                  "level": 1,
+                  "effect": "buff",
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
+                  }
+                },
+                {
+                  "attributes": [
+                    "HP",
+                    "SPD"
+                  ],
+                  "level": 2,
+                  "effect": "buff",
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -2852,13 +3747,28 @@
             {
               "effects": [
                 {
-                  "override": {
-                    "level": 2
+                  "attributes": [
+                    "ATK"
+                  ],
+                  "level": 2,
+                  "effect": "buff",
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 },
                 {
-                  "override": {
-                    "level": 2
+                  "attributes": [
+                    "HP",
+                    "SPD"
+                  ],
+                  "level": 2,
+                  "effect": "buff",
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -2866,13 +3776,28 @@
             {
               "effects": [
                 {
-                  "override": {
-                    "level": 2
+                  "attributes": [
+                    "ATK"
+                  ],
+                  "level": 2,
+                  "effect": "buff",
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 },
                 {
-                  "override": {
-                    "level": 3
+                  "attributes": [
+                    "HP",
+                    "SPD"
+                  ],
+                  "level": 3,
+                  "effect": "buff",
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -2880,13 +3805,28 @@
             {
               "effects": [
                 {
-                  "override": {
-                    "level": 3
+                  "attributes": [
+                    "ATK"
+                  ],
+                  "level": 3,
+                  "effect": "buff",
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 },
                 {
-                  "override": {
-                    "level": 3
+                  "attributes": [
+                    "HP",
+                    "SPD"
+                  ],
+                  "level": 3,
+                  "effect": "buff",
+                  "targeting": {
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -2912,8 +3852,13 @@
               "uses": 2,
               "effects": [
                 {
-                  "override": {
-                    "amount": 625
+                  "amount": 625,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2922,8 +3867,13 @@
               "uses": 2,
               "effects": [
                 {
-                  "override": {
-                    "amount": 750
+                  "amount": 750,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2932,8 +3882,13 @@
               "uses": 2,
               "effects": [
                 {
-                  "override": {
-                    "amount": 875
+                  "amount": 875,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2942,8 +3897,13 @@
               "uses": 2,
               "effects": [
                 {
-                  "override": {
-                    "amount": 1000
+                  "amount": 1000,
+                  "effect": "damage",
+                  "type": "fixed",
+                  "targeting": {
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]

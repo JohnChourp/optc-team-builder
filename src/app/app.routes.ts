@@ -70,6 +70,21 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'auto-team-builder-rumble',
+            data: {
+              seo: {
+                title: 'Auto Rumble Builder | OPTC Team Builder',
+                description:
+                  'Build a Pirate Rumble team from local OPTC rumble data with deterministic scoring and synergy ranking.',
+                canonicalPath: 'tabs/auto-team-builder-rumble',
+              },
+            },
+            loadComponent: () =>
+              import('./pages/auto-team-builder-rumble/auto-team-builder-rumble.page').then(
+                (module) => module.AutoTeamBuilderRumblePage,
+              ),
+          },
+          {
             path: 'crew-forge',
             data: {
               seo: {

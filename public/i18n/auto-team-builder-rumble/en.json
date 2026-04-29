@@ -1,0 +1,143 @@
+{
+  "title": "Auto Rumble Builder",
+  "hero": {
+    "eyebrow": "Pirate Rumble",
+    "title": "Build the strongest local Rumble team.",
+    "copy": "Scores every rumble-capable unit from stats, cooldowns, effects, role coverage, and team synergy, then fills five active slots and three bench slots."
+  },
+  "actions": {
+    "rebuild": "Build team",
+    "building": "Building...",
+    "downloadSettings": "Download settings JSON",
+    "downloadTeam": "Download team JSON",
+    "downloadTeamSupport": "Build a valid Rumble team before downloading team data."
+  },
+  "filters": {
+    "types": {
+      "label": "Target types",
+      "placeholder": "Select types",
+      "empty": "Any type",
+      "selectAll": "Select all types",
+      "clearAll": "Clear types",
+      "onlyToggle": "Use only selected types",
+      "onlySupport": {
+        "soft": "Selected types guide scoring and can relax if needed.",
+        "strict": "Every generated unit must use only the selected type(s)."
+      }
+    },
+    "classes": {
+      "label": "Target classes",
+      "placeholder": "Select classes",
+      "empty": "Any class",
+      "selectAll": "Select all classes",
+      "clearAll": "Clear classes",
+      "onlyToggle": "Use only selected classes",
+      "onlySupport": {
+        "soft": "Selected classes guide scoring and can relax if needed.",
+        "strict": "Every generated unit must have at least one selected class."
+      }
+    },
+    "favoritesOnly": {
+      "toggle": "Use only favorites",
+      "blockedMessage": "Favorite-only Rumble build is unavailable until you save at least one favorite unit.",
+      "support": {
+        "empty": "No favorite units are currently saved on this device.",
+        "withCount": "Limit the Rumble candidate pool to your {{count}} saved favorite units."
+      }
+    }
+  },
+  "performance": {
+    "title": "Live worker scaling",
+    "copy": "Adjust the worker target without restarting the current build.",
+    "mode": {
+      "label": "Worker mode",
+      "options": {
+        "auto": "Auto",
+        "manual": "Manual"
+      }
+    },
+    "manualCount": {
+      "label": "Manual workers"
+    },
+    "runtime": {
+      "detected": "{{count}} detected cores on this device.",
+      "target": "Current target: {{count}} web worker(s).",
+      "applies": "The current build keeps using a worker thread while this target is updated."
+    }
+  },
+  "progress": {
+    "attempt": "Scanning relaxed Rumble pass {{current}} / {{total}}...",
+    "candidatePool": "{{count}} Rumble candidates in the current pool.",
+    "completed": "Rumble build completed.",
+    "currentStepElapsed": "{{duration}} elapsed",
+    "ignoringClasses": "Relaxing classes: {{classes}}",
+    "loadingCandidates": "Loading Rumble candidates from the local dataset...",
+    "overallProgressPercent": "Overall progress: {{percent}}%",
+    "preparingSearch": "Preparing Rumble fallback passes...",
+    "searchPasses": "{{attempts}} pass(es) across {{count}} candidates.",
+    "worstCaseEta": "Worst-case ETA: {{duration}}"
+  },
+  "states": {
+    "loading": "Building the best Rumble team from local data...",
+    "errorTitle": "Build failed",
+    "errorFallback": "Rumble team build failed.",
+    "emptyTitle": "No Rumble data found",
+    "emptyCopy": "The current filters do not leave any usable Rumble entries.",
+    "insufficientTitle": "Partial team built",
+    "insufficientCopy": "Selected {{selected}} of {{needed}} slots because duplicate conflicts or missing Rumble entries limited the pool.",
+    "strictTypesTitle": "No team matched the active only-selected filters",
+    "hardFiltersCopy": "No full Rumble team could be built while keeping the active only-selected type/class filters.",
+    "relaxedTitle": "Relaxed targets used",
+    "relaxedCopy": "The builder relaxed only the soft target values below to return a team."
+  },
+  "summary": {
+    "eyebrow": "Team score",
+    "totalScore": "Total score",
+    "candidates": "Candidates",
+    "selected": "Selected",
+    "roleCoverage": "Role coverage",
+    "topFactors": "Top factors",
+    "requestedTypes": "Requested types",
+    "finalTypes": "Final types",
+    "requestedClasses": "Requested classes",
+    "finalClasses": "Final classes",
+    "droppedClass": "Dropped class: {{value}}",
+    "none": "None"
+  },
+  "active": {
+    "title": "Active team",
+    "copy": "{{count}} active Rumble slots"
+  },
+  "bench": {
+    "title": "Bench",
+    "copy": "{{count}} bench slots"
+  },
+  "slot": {
+    "activeLabel": "Active {{index}}",
+    "benchLabel": "Bench {{index}}",
+    "score": "Score {{score}}",
+    "replaceAria": "Replace {{name}}",
+    "passiveLevel": "Passive Lv. {{level}}",
+    "specialLevel": "Special Lv. {{level}}",
+    "cooldown": "Cooldown {{value}}",
+    "resistance": "Resistance"
+  },
+  "manualPicker": {
+    "title": "Choose Rumble character",
+    "copy": "Replace the selected slot with a manually chosen Rumble-capable character.",
+    "searchPlaceholder": "Search by name, id, type, or class",
+    "loading": "Loading Rumble characters...",
+    "emptyTitle": "No characters found",
+    "emptyCopy": "Try a different search term.",
+    "close": "Close character picker",
+    "cancel": "Cancel"
+  },
+  "roleLabels": {
+    "attacker": "Damage",
+    "booster": "Buffs",
+    "defender": "Defense",
+    "disruptor": "Disruption",
+    "healer": "Healing",
+    "speed": "Speed"
+  }
+}

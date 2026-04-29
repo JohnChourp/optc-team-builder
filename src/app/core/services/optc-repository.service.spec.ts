@@ -157,6 +157,51 @@ describe('OptcRepositoryService', () => {
     expect(result.map((record) => record.id)).toEqual([4105, 4103, 4101]);
   });
 
+  it('returns only usable rumble records for the Rumble builder', async () => {
+    const service = createRepositoryService([
+      createCharacterRow({
+        id: 4101,
+        detail: {
+          rumbleData: null,
+        },
+      }),
+      createCharacterRow({
+        id: 4102,
+        detail: {
+          rumbleData: {
+            id: 4102,
+          },
+        },
+      }),
+      createCharacterRow({
+        id: 4103,
+        detail: {
+          rumbleData: {
+            id: 4103,
+            stats: {
+              rumbleType: 'ATK',
+              def: 140,
+              spd: 130,
+            },
+          },
+        },
+      }),
+      createCharacterRow({
+        id: 4104,
+        detail: {
+          rumbleData: {
+            id: 4104,
+            basedOn: 4103,
+          },
+        },
+      }),
+    ]);
+
+    const result = await service.getRumbleBuilderCandidates();
+
+    expect(result.map((record) => record.id)).toEqual([4104, 4103]);
+  });
+
   it('returns linked variants when searching by a shared canonical id', async () => {
     const service = createRepositoryService([]);
     const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;

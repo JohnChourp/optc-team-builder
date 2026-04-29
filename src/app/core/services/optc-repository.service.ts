@@ -979,6 +979,12 @@ export class OptcRepositoryService {
     return decorated.sort((left, right) => (order.get(left.id) ?? 0) - (order.get(right.id) ?? 0));
   }
 
+  public async getRumbleBuilderCandidates(): Promise<CharacterDetailRecord[]> {
+    const records = await this.getAllDetailedCharacters();
+
+    return records.filter((record) => this.hasUsableRumbleData(record.detail.rumbleData));
+  }
+
   public async getShips(): Promise<ShipRecord[]> {
     const manifest = await this.getDatasetManifest();
     const installedPacks = new Map(manifest.packs.map((pack) => [pack.key, pack]));
@@ -1259,6 +1265,14 @@ export class OptcRepositoryService {
     return matchMode === 'any'
       ? selectedClasses.some((characterClass) => recordClasses.has(characterClass))
       : selectedClasses.every((characterClass) => recordClasses.has(characterClass));
+  }
+
+  private hasUsableRumbleData(rumbleData: Record<string, unknown> | null): boolean {
+    if (!rumbleData || typeof rumbleData !== 'object' || Array.isArray(rumbleData)) {
+      return false;
+    }
+
+    return Object.keys(rumbleData).some((key) => key !== 'id');
   }
 
   private resolveImageUrl(

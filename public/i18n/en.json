@@ -382,6 +382,7 @@
   },
   "tabs": {
     "auto": "Auto",
+    "autoRumble": "Auto Rumble Builder",
     "characterBoxes": "Character Boxes",
     "characters": "Characters",
     "crewForge": "Crew Forge",

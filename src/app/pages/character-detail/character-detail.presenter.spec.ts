@@ -117,6 +117,42 @@ describe('character-detail presenter', () => {
     );
   });
 
+  it('formats materialized Rumble levels as real effects instead of override rows', () => {
+    const rumbleCard = buildRumbleCardModel({
+      id: 13,
+      ability: [
+        {
+          effects: [
+            {
+              attributes: ['SPD'],
+              effect: 'buff',
+              level: 1,
+              targeting: {
+                targets: ['crew'],
+              },
+            },
+          ],
+        },
+        {
+          effects: [
+            {
+              attributes: ['SPD'],
+              effect: 'buff',
+              level: 2,
+              targeting: {
+                targets: ['crew'],
+              },
+            },
+          ],
+        },
+      ],
+    });
+    const renderedText = JSON.stringify(rumbleCard);
+
+    expect(renderedText).toContain('buff • SPD • Lv 2 • crew');
+    expect(renderedText).not.toContain('Override');
+  });
+
   it('formats unexpected rumble keys through structured fallback entries', () => {
     const rumbleCard = buildRumbleCardModel({
       id: 99,

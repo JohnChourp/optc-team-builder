@@ -382,6 +382,7 @@
   },
   "tabs": {
     "auto": "Auto",
+    "autoRumble": "Auto Rumble Builder",
     "characterBoxes": "Boxes χαρακτήρων",
     "characters": "Χαρακτήρες",
     "crewForge": "Crew Forge",

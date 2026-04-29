@@ -24,6 +24,7 @@ import {
   homeOutline,
   peopleOutline,
   saveOutline,
+  shieldHalfOutline,
 } from "ionicons/icons";
 import { type SupportedLanguage } from "../core/i18n/app-i18n.types";
 import { AppI18nService } from "../core/services/app-i18n.service";
@@ -95,6 +96,11 @@ export class TabsPage {
       icon: flashOutline,
       labelKey: "tabs.auto",
       route: "/tabs/auto-team-builder",
+    },
+    {
+      icon: shieldHalfOutline,
+      labelKey: "tabs.autoRumble",
+      route: "/tabs/auto-team-builder-rumble",
     },
     {
       icon: constructOutline,

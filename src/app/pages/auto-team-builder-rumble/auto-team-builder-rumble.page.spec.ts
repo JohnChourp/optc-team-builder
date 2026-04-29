@@ -1,0 +1,423 @@
+import '@angular/compiler';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { describe, expect, it, vi } from 'vitest';
+
+import { type RumbleTeamResult } from '../../core/models/auto-team-builder-rumble.models';
+import * as rumbleExportUtils from './auto-team-builder-rumble-export.utils';
+import { AutoTeamBuilderRumblePage } from './auto-team-builder-rumble.page';
+
+vi.mock('@ionic/angular/standalone', () => ({
+  IonButton: class {},
+  IonButtons: class {},
+  IonContent: class {},
+  IonFooter: class {},
+  IonHeader: class {},
+  IonIcon: class {},
+  IonMenuButton: class {},
+  IonModal: class {},
+  IonSearchbar: class {},
+  IonSelect: class {},
+  IonSelectOption: class {},
+  IonSpinner: class {},
+  IonTitle: class {},
+  IonToggle: class {},
+  IonToolbar: class {},
+}));
+
+describe('AutoTeamBuilderRumblePage', () => {
+  it('builds a team on init and exposes summary state', async () => {
+    const result = createResult();
+    const { page, rumbleBuilder } = createPage(result);
+
+    await page.ngOnInit();
+
+    expect(rumbleBuilder.buildBestTeam).toHaveBeenCalledWith(
+      {
+        types: [],
+        selectedClasses: [],
+        onlySelectedTypes: false,
+        onlySelectedClasses: false,
+        favoritesOnly: false,
+        favoriteCharacterIds: [1001, 1002],
+      },
+      expect.objectContaining({
+        workerCount: 2,
+        getWorkerCount: expect.any(Function),
+        onProgress: expect.any(Function),
+      }),
+    );
+    expect(page.loading()).toBe(false);
+    expect(page.result()).toBe(result);
+    expect(page.emptyStateVisible()).toBe(false);
+    expect(page.insufficientStateVisible()).toBe(false);
+  });
+
+  it('shows the empty state when the builder returns no candidates', async () => {
+    const { page } = createPage({
+      ...createResult(),
+      activeSlots: [],
+      benchSlots: [],
+      candidateCount: 0,
+      selectedCount: 0,
+      totalScore: 0,
+    });
+
+    await page.ngOnInit();
+
+    expect(page.emptyStateVisible()).toBe(true);
+  });
+
+  it('shows the partial state when fewer than eight slots can be filled', async () => {
+    const { page } = createPage({
+      ...createResult(),
+      benchSlots: [],
+      selectedCount: 5,
+    });
+
+    await page.ngOnInit();
+
+    expect(page.insufficientStateVisible()).toBe(true);
+  });
+
+  it('shows the hard filter no-match state instead of a partial team', async () => {
+    const { page } = createPage({
+      ...createResult(),
+      activeSlots: [],
+      benchSlots: [],
+      candidateCount: 0,
+      selectedCount: 0,
+      input: {
+        ...createResult().input,
+        types: ['DEX'],
+        onlySelectedTypes: true,
+      },
+    });
+
+    await page.ngOnInit();
+
+    expect(page.strictTypeBlockedStateVisible()).toBe(true);
+    expect(page.insufficientStateVisible()).toBe(false);
+    expect(page.emptyStateVisible()).toBe(false);
+  });
+
+  it('captures builder errors without leaving the page loading', async () => {
+    const error = new Error('Dataset unavailable');
+    const { page } = createPage(error);
+
+    await page.ngOnInit();
+
+    expect(page.loading()).toBe(false);
+    expect(page.result()).toBeNull();
+    expect(page.errorMessage()).toBe('Dataset unavailable');
+  });
+
+  it('renders active and bench groups with rebuild controls in the template', () => {
+    const template = readFileSync(
+      resolve(
+        process.cwd(),
+        'src/app/pages/auto-team-builder-rumble/auto-team-builder-rumble.page.html',
+      ),
+      'utf8',
+    );
+
+    expect(template).toContain("scope: 'auto-team-builder-rumble'");
+    expect(template).toContain("t('actions.rebuild')");
+    expect(template).toContain("t('actions.downloadSettings')");
+    expect(template).toContain("t('actions.downloadTeam')");
+    expect(template).toContain("t('filters.favoritesOnly.toggle')");
+    expect(template).toContain("t('filters.types.onlyToggle')");
+    expect(template).toContain("t('filters.classes.onlyToggle')");
+    expect(template).toContain('onOnlySelectedTypesToggle($event)');
+    expect(template).toContain('onOnlySelectedClassesToggle($event)');
+    expect(template).toContain('onAutoTeamBuilderWorkerModeChange($event)');
+    expect(template).toContain("t('states.strictTypesTitle')");
+    expect(template).not.toContain("t('summary.droppedType'");
+    expect(template).toContain("t('active.title')");
+    expect(template).toContain("t('bench.title')");
+    expect(template).toContain('currentResult.activeSlots');
+    expect(template).toContain('currentResult.benchSlots');
+    expect(template).toContain('[routerLink]="getCharacterDetailLink(slot)"');
+    expect(template).toContain('(click)="openManualCharacterPicker(slot)"');
+    expect(template).toContain('manualPickerOpen()');
+    expect(template).toContain('selectManualCharacter(candidate)');
+    expect(template).not.toContain('slot.reasonChips');
+    expect(template).toContain("t('slot.passiveLevel'");
+    expect(template).toContain("t('slot.specialLevel'");
+    expect(template).toContain("t('slot.resistance')");
+    expect(template).toContain('slot.unit.normalized.baseResistances');
+    expect(template).toContain('slot.unit.normalized.maxPassiveEffects');
+    expect(template).toContain('slot.unit.normalized.maxSpecialEffects');
+    expect(template).not.toContain("t('slot.effects')");
+  });
+
+  it('formats slot Rumble detail rows from base values only', () => {
+    const { page } = createPage();
+    const slot = createSlot('active', 0);
+
+    expect(page.hasRumbleDetailRows(slot)).toBe(true);
+    expect(page.formatResistanceList(slot)).toBe('70% chance to resist Paralysis');
+    expect(page.formatResistanceList(slot)).not.toContain('100% chance');
+  });
+
+  it('passes selected filters and favorites to the builder', async () => {
+    const { page, rumbleBuilder } = createPage();
+
+    await page.ngOnInit();
+    page.onTypeChange({ detail: { value: ['DEX', 'STR'] } } as never);
+    page.onClassChange({ detail: { value: ['Fighter'] } } as never);
+    page.onOnlySelectedTypesToggle({ detail: { checked: true } } as never);
+    page.onOnlySelectedClassesToggle({ detail: { checked: true } } as never);
+    page.onFavoritesOnlyToggle({ detail: { checked: true } } as never);
+    await page.buildTeam();
+
+    expect(rumbleBuilder.buildBestTeam).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        types: ['DEX', 'STR'],
+        selectedClasses: ['Fighter'],
+        onlySelectedTypes: true,
+        onlySelectedClasses: true,
+        favoritesOnly: true,
+        favoriteCharacterIds: [1001, 1002],
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it('builds settings and team export payloads from current page state', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    page.onTypeChange({ detail: { value: ['DEX'] } } as never);
+    page.onClassChange({ detail: { value: ['Fighter'] } } as never);
+    page.onOnlySelectedTypesToggle({ detail: { checked: true } } as never);
+    page.onFavoritesOnlyToggle({ detail: { checked: true } } as never);
+
+    expect(page.buildSettingsExportPayload('2026-04-29T04:00:00.000Z')).toMatchObject({
+      schemaVersion: 1,
+      exportedAt: '2026-04-29T04:00:00.000Z',
+      source: 'auto-team-builder-rumble',
+      exportType: 'settings',
+      settings: {
+        types: ['DEX'],
+        selectedClasses: ['Fighter'],
+        onlySelectedTypes: true,
+        onlySelectedClasses: false,
+        favoritesOnly: true,
+        favoriteCharacterIds: [1001, 1002],
+      },
+      favoriteCount: 2,
+      workerPreference: { mode: 'auto', manualCount: 2 },
+    });
+    expect(page.buildTeamExportPayload('2026-04-29T04:00:00.000Z')?.team[0].unit.character).toEqual(
+      page.result()?.activeSlots[0].unit.character,
+    );
+  });
+
+  it('blocks team export when the current result is strict-type blocked', async () => {
+    const { page } = createPage({
+      ...createResult(),
+      activeSlots: [],
+      benchSlots: [],
+      selectedCount: 0,
+      input: {
+        ...createResult().input,
+        types: ['DEX'],
+        onlySelectedTypes: true,
+      },
+    });
+
+    await page.ngOnInit();
+
+    expect(page.canDownloadTeamJson()).toBe(false);
+    expect(page.buildTeamExportPayload()).toBeNull();
+  });
+
+  it('downloads settings and team json through the export helpers', async () => {
+    const settingsSpy = vi
+      .spyOn(rumbleExportUtils, 'downloadRumbleBuilderSettingsExport')
+      .mockImplementation(() => undefined);
+    const teamSpy = vi
+      .spyOn(rumbleExportUtils, 'downloadRumbleTeamExport')
+      .mockImplementation(() => undefined);
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    page.downloadSettingsJson();
+    page.downloadTeamJson();
+
+    expect(settingsSpy).toHaveBeenCalledWith(expect.objectContaining({ exportType: 'settings' }));
+    expect(teamSpy).toHaveBeenCalledWith(expect.objectContaining({ exportType: 'team' }));
+
+    settingsSpy.mockRestore();
+    teamSpy.mockRestore();
+  });
+
+  it('persists live worker preference changes', async () => {
+    const { page, userState } = createPage();
+
+    await page.onAutoTeamBuilderWorkerModeChange({ detail: { value: 'manual' } } as never);
+    await page.onAutoTeamBuilderManualWorkerCountChange({ detail: { value: 3 } } as never);
+
+    expect(userState.setAutoTeamBuilderWorkerPreference).toHaveBeenCalledWith({
+      mode: 'manual',
+      manualCount: 2,
+    });
+    expect(userState.setAutoTeamBuilderWorkerPreference).toHaveBeenCalledWith({
+      mode: 'auto',
+      manualCount: 3,
+    });
+  });
+
+  it('opens the manual picker and replaces the targeted slot', async () => {
+    const replacementSlot = createSlot('active', 99);
+    const { page, repository, rumbleBuilder } = createPage();
+
+    repository.getRumbleBuilderCandidates.mockResolvedValue([replacementSlot.unit.character]);
+    rumbleBuilder.scoreCandidates.mockReturnValue([replacementSlot.unit]);
+    await page.ngOnInit();
+    await page.openManualCharacterPicker(page.result()!.activeSlots[0]!);
+
+    expect(page.manualPickerOpen()).toBe(true);
+    expect(page.manualPickerResults().map((candidate) => candidate.character.id)).toEqual([
+      replacementSlot.unit.character.id,
+    ]);
+
+    page.selectManualCharacter(replacementSlot.unit);
+
+    expect(page.manualPickerOpen()).toBe(false);
+    expect(page.result()?.activeSlots[0]?.unit.character.id).toBe(
+      replacementSlot.unit.character.id,
+    );
+    expect(page.result()?.activeSlots[0]?.role).toBe('active');
+    expect(page.result()?.selectedCount).toBe(8);
+  });
+});
+
+function createPage(result: RumbleTeamResult | Error = createResult()) {
+  const rumbleBuilder = {
+    scoreCandidates: vi.fn().mockReturnValue([]),
+    buildBestTeam: vi.fn().mockImplementation(() => {
+      if (result instanceof Error) {
+        return Promise.reject(result);
+      }
+
+      return Promise.resolve(result);
+    }),
+  };
+  const repository = {
+    getDatasetManifest: vi.fn().mockResolvedValue({
+      availableClasses: ['Fighter', 'Slasher'],
+    }),
+    getRumbleBuilderCandidates: vi.fn().mockResolvedValue([]),
+  };
+  const userState = {
+    favoriteCharacterIds: vi.fn(() => [1001, 1002]),
+    autoTeamBuilderWorkerPreference: vi.fn(() => ({ mode: 'auto', manualCount: 2 })),
+    resolveAutoTeamBuilderWorkerPreference: vi.fn(() => ({
+      mode: 'auto',
+      manualCount: 2,
+      detectedCoreCount: 4,
+      effectiveCount: 2,
+      manualMaxCount: 3,
+      manualMaxPercent: 75,
+    })),
+    resolveAutoTeamBuilderWorkerCount: vi.fn(() => 2),
+    setAutoTeamBuilderWorkerPreference: vi.fn().mockResolvedValue(undefined),
+  };
+  const i18n = {
+    preloadScope: vi.fn().mockResolvedValue(undefined),
+    translate: vi.fn((key: string, params?: Record<string, string | number>) => {
+      if (key.endsWith('.empty')) {
+        return 'Any';
+      }
+
+      return params ? `${key}:${JSON.stringify(params)}` : key;
+    }),
+  };
+  const page = new AutoTeamBuilderRumblePage(
+    rumbleBuilder as never,
+    repository as never,
+    userState as never,
+    i18n as never,
+  );
+
+  return { page, rumbleBuilder, repository, userState };
+}
+
+function createResult(): RumbleTeamResult {
+  const activeSlots = Array.from({ length: 5 }, (_, index) => createSlot('active', index));
+  const benchSlots = Array.from({ length: 3 }, (_, index) => createSlot('bench', index + 5));
+
+  return {
+    activeSlots,
+    benchSlots,
+    candidateCount: 12,
+    selectedCount: 8,
+    totalScore: 1200,
+    roleCoverage: ['attacker', 'booster'],
+    typeCoverage: ['DEX', 'STR'],
+    classCoverage: ['Fighter'],
+    topFactors: ['Core power: Unit 1'],
+    input: {
+      types: [],
+      selectedClasses: [],
+      onlySelectedTypes: false,
+      onlySelectedClasses: false,
+      favoritesOnly: false,
+      favoriteCharacterIds: [],
+    },
+    requestedTypes: [],
+    requestedClasses: [],
+    resolvedTypes: [],
+    resolvedClasses: [],
+    droppedTypes: [],
+    droppedClasses: [],
+  };
+}
+
+function createSlot(
+  role: 'active' | 'bench',
+  index: number,
+): RumbleTeamResult['activeSlots'][number] {
+  const id = 1000 + index;
+
+  return {
+    role,
+    index,
+    score: 100 + index,
+    reasonChips: ['Damage'],
+    unit: {
+      character: {
+        id,
+        name: `Unit ${id}`,
+        type: 'DEX',
+        primaryClass: 'Fighter',
+        imageUrl: `assets/${id}.png`,
+      },
+      normalized: {
+        raw: {},
+        basedOnId: null,
+        rumbleType: 'ATK',
+        def: 120,
+        spd: 140,
+        cost: 55,
+        cooldown: 25,
+        targetLabel: null,
+        patternCount: 1,
+        maxPassiveLevel: 5,
+        maxSpecialLevel: 10,
+        maxPassiveEffects: ['ATK • Lv 5 • crew'],
+        maxSpecialEffects: ['damage • Amount 2,500 • fixed • 1 enemy'],
+        maxSpecialCooldown: 35,
+        baseResistances: ['70% chance to resist Paralysis'],
+        llbResistances: ['100% chance to resist Paralysis'],
+        passiveEffects: [],
+        specialEffects: [],
+        roleTags: ['attacker'],
+      },
+      reasonChips: ['Damage'],
+      conflictKeys: [`character:${id}`],
+    },
+  } as RumbleTeamResult['activeSlots'][number];
+}
