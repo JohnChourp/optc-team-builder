@@ -15,13 +15,22 @@ export type NormalizedRumbleRoleTag =
 
 export interface NormalizedRumbleEffect {
   source: 'ability' | 'special';
+  sourceLevel: number | null;
+  maxSourceLevel: number | null;
   effect: string;
   attributes: string[];
   level: number | null;
   amount: number | null;
   chance: number | null;
   duration: number | null;
+  type: string | null;
   target: string | null;
+  targetTokens: string[];
+  targetCount: number | null;
+  targetPriority: string | null;
+  targetStat: string | null;
+  targetScope: 'crew' | 'self' | 'enemies' | 'subset' | 'unknown';
+  isConditional: boolean;
 }
 
 export interface NormalizedRumbleData {

@@ -50,6 +50,20 @@ const EMPTY_INPUT: RumbleBuildInput = {
   favoriteCharacterIds: [],
 };
 
+const RUMBLE_SYNERGY_ATTRIBUTES = ['HP', 'ATK', 'DEF', 'RCV', 'Special CT'] as const;
+type RumbleSynergyAttribute = (typeof RUMBLE_SYNERGY_ATTRIBUTES)[number];
+
+const RUMBLE_SYNERGY_ATTRIBUTE_WEIGHTS: Record<RumbleSynergyAttribute, number> = {
+  HP: 34,
+  ATK: 42,
+  DEF: 38,
+  RCV: 30,
+  'Special CT': 46,
+};
+
+const ACTIVE_SLOT_WEIGHT = 1;
+const BENCH_SLOT_WEIGHT = 0.45;
+
 export function normalizeRumbleBuildInput(input: Partial<RumbleBuildInput> = {}): RumbleBuildInput {
   const typeSet = new Set<AutoTeamBuilderType>(AUTO_TEAM_BUILDER_TYPES);
   const types = [...new Set((input.types ?? []).filter((type) => typeSet.has(type)))];
@@ -215,9 +229,7 @@ export class RumbleTeamBuilderEngine {
     const roleCoverage = this.collectRoleCoverage(allUnits);
     const typeCoverage = this.collectTypeCoverage(allUnits);
     const classCoverage = this.collectClassCoverage(allUnits);
-    const totalScore =
-      this.scoreTeam(activeUnits, attempt) +
-      benchUnits.reduce((total, unit) => total + unit.baseScore * 0.45, 0);
+    const totalScore = this.scoreTeam(allUnits, attempt);
 
     return {
       activeSlots,
@@ -525,13 +537,244 @@ export class RumbleTeamBuilderEngine {
       (coveredRequestedClasses === attempt.resolvedClasses.length ? 1000 : 0);
 
     return (
-      units.reduce((total, unit) => total + unit.baseScore, 0) +
+      units.reduce(
+        (total, unit, index) => total + unit.baseScore * this.resolveSlotWeight(index),
+        0,
+      ) +
       sameTypeSynergy +
       sameClassSynergy +
       roleCoverageSynergy +
       rumbleTypeCoverageSynergy +
+      this.scoreRumbleEffectSynergy(units) +
       coverageBonus
     );
+  }
+
+  private scoreRumbleEffectSynergy(units: RumbleUnitScore[]): number {
+    return units.reduce((total, unit, sourceIndex) => {
+      const sourceWeight = this.resolveSlotWeight(sourceIndex);
+      const maxEffects = this.resolveMaxLevelEffects(unit.normalized);
+      const buffScore = maxEffects.reduce(
+        (effectTotal, effect) =>
+          effectTotal + this.scoreTeamBuffEffect(effect, unit, sourceIndex, units) * sourceWeight,
+        0,
+      );
+      const debuffScore = maxEffects.reduce(
+        (effectTotal, effect) => effectTotal + this.scoreEnemyDebuffEffect(effect) * sourceWeight,
+        0,
+      );
+
+      return total + buffScore + debuffScore;
+    }, 0);
+  }
+
+  private resolveMaxLevelEffects(normalized: NormalizedRumbleData): NormalizedRumbleEffect[] {
+    return [...normalized.passiveEffects, ...normalized.specialEffects].filter(
+      (effect) => effect.sourceLevel !== null && effect.sourceLevel === effect.maxSourceLevel,
+    );
+  }
+
+  private scoreTeamBuffEffect(
+    effect: NormalizedRumbleEffect,
+    sourceUnit: RumbleUnitScore,
+    sourceIndex: number,
+    units: RumbleUnitScore[],
+  ): number {
+    if (!this.isTeamBuffEffect(effect)) {
+      return 0;
+    }
+
+    const attributes = this.resolveSynergyAttributes(effect);
+
+    if (!attributes.length) {
+      return 0;
+    }
+
+    const recipientWeight = this.resolveBuffRecipientWeight(effect, sourceUnit, sourceIndex, units);
+
+    if (recipientWeight <= 0) {
+      return 0;
+    }
+
+    return (
+      this.scoreSynergyAttributes(attributes) *
+      this.resolveEffectStrength(effect) *
+      recipientWeight *
+      this.resolveEffectSourceWeight(effect) *
+      this.resolveConditionalWeight(effect)
+    );
+  }
+
+  private scoreEnemyDebuffEffect(effect: NormalizedRumbleEffect): number {
+    if (!this.isEnemyDebuffEffect(effect)) {
+      return 0;
+    }
+
+    const attributes = this.resolveSynergyAttributes(effect);
+
+    if (!attributes.length) {
+      return 0;
+    }
+
+    return (
+      this.scoreSynergyAttributes(attributes) *
+      this.resolveEffectStrength(effect) *
+      this.resolveEnemyCoverageWeight(effect) *
+      this.resolveEffectSourceWeight(effect) *
+      this.resolveConditionalWeight(effect)
+    );
+  }
+
+  private isTeamBuffEffect(effect: NormalizedRumbleEffect): boolean {
+    const normalizedEffect = effect.effect.toLowerCase();
+
+    return (
+      normalizedEffect.includes('buff') ||
+      normalizedEffect.includes('boost') ||
+      normalizedEffect.includes('recharge')
+    );
+  }
+
+  private isEnemyDebuffEffect(effect: NormalizedRumbleEffect): boolean {
+    const normalizedEffect = effect.effect.toLowerCase();
+
+    return (
+      effect.targetScope === 'enemies' &&
+      (normalizedEffect.includes('debuff') || normalizedEffect.includes('hinderance'))
+    );
+  }
+
+  private resolveBuffRecipientWeight(
+    effect: NormalizedRumbleEffect,
+    sourceUnit: RumbleUnitScore,
+    sourceIndex: number,
+    units: RumbleUnitScore[],
+  ): number {
+    if (effect.targetScope === 'self') {
+      return 0;
+    }
+
+    const matchedWeights = units
+      .map((unit, index) => ({ unit, index }))
+      .filter(({ index }) => index !== sourceIndex)
+      .filter(({ unit }) =>
+        this.effectTargetsCharacter(effect, sourceUnit.character, unit.character),
+      )
+      .map(({ index }) => this.resolveSlotWeight(index));
+    const totalWeight = matchedWeights.reduce((total, weight) => total + weight, 0);
+
+    if (effect.targetCount === null || effect.targetCount <= 0) {
+      return totalWeight;
+    }
+
+    return Math.min(totalWeight, effect.targetCount);
+  }
+
+  private effectTargetsCharacter(
+    effect: NormalizedRumbleEffect,
+    sourceCharacter: CharacterDetailRecord,
+    targetCharacter: CharacterDetailRecord,
+  ): boolean {
+    if (effect.targetScope === 'crew') {
+      return true;
+    }
+
+    if (effect.targetScope === 'self') {
+      return sourceCharacter.id === targetCharacter.id;
+    }
+
+    if (effect.targetScope !== 'subset') {
+      return false;
+    }
+
+    const characterTokens = this.resolveCharacterMatchTokens(targetCharacter);
+
+    return effect.targetTokens.some((token) =>
+      characterTokens.has(this.normalizeMatchToken(token)),
+    );
+  }
+
+  private resolveCharacterMatchTokens(character: CharacterDetailRecord): Set<string> {
+    const tokens = new Set<string>();
+
+    this.resolveCharacterTypes(character).forEach((type) => {
+      tokens.add(this.normalizeMatchToken(type));
+      tokens.add(this.normalizeMatchToken(`[${type}]`));
+    });
+    character.classes.forEach((characterClass) =>
+      tokens.add(this.normalizeMatchToken(characterClass)),
+    );
+    character.detail.characterTags?.forEach((tag) => tokens.add(this.normalizeMatchToken(tag)));
+
+    return tokens;
+  }
+
+  private resolveSynergyAttributes(effect: NormalizedRumbleEffect): RumbleSynergyAttribute[] {
+    const rawAttributes =
+      effect.attributes.length > 0 ? effect.attributes : effect.type ? [effect.type] : [];
+    const attributes = rawAttributes
+      .map((attribute) => this.normalizeSynergyAttribute(attribute))
+      .filter((attribute): attribute is RumbleSynergyAttribute => Boolean(attribute));
+
+    return [...new Set(attributes)];
+  }
+
+  private normalizeSynergyAttribute(value: string): RumbleSynergyAttribute | null {
+    const normalized = value
+      .replace(/^\[([^\]]+)\]$/, '$1')
+      .trim()
+      .toLowerCase();
+
+    if (normalized === 'special ct' || normalized === 'ct' || normalized === 'special cooldown') {
+      return 'Special CT';
+    }
+
+    return (
+      RUMBLE_SYNERGY_ATTRIBUTES.find((attribute) => attribute.toLowerCase() === normalized) ?? null
+    );
+  }
+
+  private scoreSynergyAttributes(attributes: RumbleSynergyAttribute[]): number {
+    return attributes.reduce(
+      (total, attribute) => total + RUMBLE_SYNERGY_ATTRIBUTE_WEIGHTS[attribute],
+      0,
+    );
+  }
+
+  private resolveEffectStrength(effect: NormalizedRumbleEffect): number {
+    if (effect.level !== null) {
+      return Math.max(1, effect.level);
+    }
+
+    if (effect.amount !== null) {
+      return Math.max(1, Math.min(10, Math.abs(effect.amount)));
+    }
+
+    if (effect.chance !== null) {
+      return Math.max(1, Math.min(10, effect.chance / 10));
+    }
+
+    return 1;
+  }
+
+  private resolveEnemyCoverageWeight(effect: NormalizedRumbleEffect): number {
+    if (effect.targetCount !== null && effect.targetCount > 0) {
+      return Math.min(2, Math.max(0.75, effect.targetCount * 0.75));
+    }
+
+    return 5;
+  }
+
+  private resolveEffectSourceWeight(effect: NormalizedRumbleEffect): number {
+    return effect.source === 'special' ? 1.15 : 1;
+  }
+
+  private resolveConditionalWeight(effect: NormalizedRumbleEffect): number {
+    return effect.isConditional ? 0.7 : 1;
+  }
+
+  private resolveSlotWeight(index: number): number {
+    return index < RUMBLE_ACTIVE_SLOT_COUNT ? ACTIVE_SLOT_WEIGHT : BENCH_SLOT_WEIGHT;
   }
 
   private normalizeLevelEffects(
@@ -542,12 +785,15 @@ export class RumbleTeamBuilderEngine {
       return [];
     }
 
-    return rawLevels.flatMap((levelEntry) => {
+    const maxSourceLevel = rawLevels.length;
+
+    return rawLevels.flatMap((levelEntry, index) => {
       const levelRecord = asRecord(levelEntry);
       const effects = Array.isArray(levelRecord?.['effects']) ? levelRecord['effects'] : [];
+      const sourceLevel = index + 1;
 
       return effects
-        .map((effect) => this.normalizeEffect(effect, source))
+        .map((effect) => this.normalizeEffect(effect, source, sourceLevel, maxSourceLevel))
         .filter((effect): effect is NormalizedRumbleEffect => Boolean(effect));
     });
   }
@@ -555,19 +801,24 @@ export class RumbleTeamBuilderEngine {
   private normalizeEffect(
     value: unknown,
     source: NormalizedRumbleEffect['source'],
+    sourceLevel: number | null = null,
+    maxSourceLevel: number | null = null,
   ): NormalizedRumbleEffect | null {
     const record = asRecord(value);
     const override = asRecord(record?.['override']);
-    const sourceRecord = override ?? record;
+    const sourceRecord = override && record ? { ...record, ...override } : (override ?? record);
 
     if (!sourceRecord || Object.keys(sourceRecord).length === 0) {
       return null;
     }
 
     const effect = sanitizeText(sourceRecord['effect']) ?? (override ? 'upgrade' : null);
+    const targeting = this.normalizeTargeting(sourceRecord['targeting']);
 
     return {
       source,
+      sourceLevel,
+      maxSourceLevel,
       effect: effect ?? 'effect',
       attributes: Array.isArray(sourceRecord['attributes'])
         ? sourceRecord['attributes']
@@ -578,7 +829,14 @@ export class RumbleTeamBuilderEngine {
       amount: toFiniteNumber(sourceRecord['amount']),
       chance: toFiniteNumber(sourceRecord['chance']),
       duration: toFiniteNumber(sourceRecord['duration']),
+      type: sanitizeText(sourceRecord['type']),
       target: this.formatTargeting(sourceRecord['targeting']),
+      targetTokens: targeting.targetTokens,
+      targetCount: targeting.targetCount,
+      targetPriority: targeting.targetPriority,
+      targetStat: targeting.targetStat,
+      targetScope: targeting.targetScope,
+      isConditional: Boolean(asRecord(sourceRecord['condition'])),
     };
   }
 
@@ -674,9 +932,7 @@ export class RumbleTeamBuilderEngine {
       record['duration'] !== undefined && record['duration'] !== null
         ? `${this.formatNumber(record['duration'])} duration`
         : null,
-      record['type'] !== undefined && record['type'] !== null
-        ? sanitizeText(record['type'])
-        : null,
+      record['type'] !== undefined && record['type'] !== null ? sanitizeText(record['type']) : null,
       record['repeat'] !== undefined && record['repeat'] !== null
         ? `Repeat ${this.formatNumber(record['repeat'])}`
         : null,
@@ -992,6 +1248,56 @@ export class RumbleTeamBuilderEngine {
     );
   }
 
+  private normalizeTargeting(
+    value: unknown,
+  ): Pick<
+    NormalizedRumbleEffect,
+    'targetTokens' | 'targetCount' | 'targetPriority' | 'targetStat' | 'targetScope'
+  > {
+    const record = asRecord(value);
+
+    if (!record) {
+      return {
+        targetTokens: [],
+        targetCount: null,
+        targetPriority: null,
+        targetStat: null,
+        targetScope: 'unknown',
+      };
+    }
+
+    const targetTokens = Array.isArray(record['targets'])
+      ? record['targets']
+          .map((target) => sanitizeText(target))
+          .filter((target): target is string => Boolean(target))
+      : [];
+    const normalizedTokens = targetTokens.map((target) => this.normalizeMatchToken(target));
+    const hasCrewTarget = normalizedTokens.some(
+      (target) => target === 'crew' || target === 'allies',
+    );
+    const hasSelfTarget = normalizedTokens.some((target) => target === 'self');
+    const hasEnemyTarget = normalizedTokens.some(
+      (target) => target === 'enemies' || target === 'enemy',
+    );
+    const targetScope: NormalizedRumbleEffect['targetScope'] = hasEnemyTarget
+      ? 'enemies'
+      : hasSelfTarget
+        ? 'self'
+        : hasCrewTarget
+          ? 'crew'
+          : targetTokens.length
+            ? 'subset'
+            : 'unknown';
+
+    return {
+      targetTokens,
+      targetCount: toFiniteNumber(record['count']),
+      targetPriority: sanitizeText(record['priority']),
+      targetStat: sanitizeText(record['stat']),
+      targetScope,
+    };
+  }
+
   private singularizeTarget(value: string): string {
     const normalized = value.toLowerCase();
 
@@ -1004,6 +1310,14 @@ export class RumbleTeamBuilderEngine {
     }
 
     return value;
+  }
+
+  private normalizeMatchToken(value: string): string {
+    return value
+      .replace(/^\[([^\]]+)\]$/, '$1')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
   }
 }
 

@@ -401,6 +401,350 @@ describe('AutoTeamBuilderRumbleService', () => {
     expect(topCandidate?.character.id).toBe(strong.id);
   });
 
+  it('selects max-level team buffs when they apply to multiple teammates', () => {
+    const service = createService();
+    const anchors = Array.from({ length: 7 }, (_, index) =>
+      createCharacter(8100 + index, {
+        primaryClass: 'Fighter',
+        classes: ['Fighter'],
+        partyConflictKeys: [`buff-anchor-${index}`],
+        rumbleData: createRumbleData(50 + index),
+      }),
+    );
+    const teamBuffer = createCharacter(8190, {
+      maxHp: 1400,
+      maxAtk: 500,
+      maxRcv: 90,
+      primaryClass: 'Fighter',
+      classes: ['Fighter'],
+      partyConflictKeys: ['team-buffer'],
+      rumbleData: {
+        id: 8190,
+        stats: { rumbleType: 'SPT', def: 10, spd: 10 },
+        ability: [
+          {
+            effects: [
+              {
+                attributes: ['ATK'],
+                effect: 'buff',
+                level: 1,
+                targeting: { targets: ['Fighter'] },
+              },
+            ],
+          },
+          {
+            effects: [
+              {
+                attributes: ['HP', 'ATK', 'DEF', 'RCV', 'Special CT'],
+                effect: 'buff',
+                level: 5,
+                targeting: { targets: ['Fighter'] },
+              },
+            ],
+          },
+        ],
+      },
+    });
+    const statStick = createCharacter(8191, {
+      maxHp: 7200,
+      maxAtk: 2800,
+      maxRcv: 500,
+      primaryClass: 'Shooter',
+      classes: ['Shooter'],
+      partyConflictKeys: ['stat-stick'],
+      rumbleData: {
+        id: 8191,
+        stats: { rumbleType: 'ATK', def: 220, spd: 180 },
+        ability: [
+          {
+            effects: [
+              { attributes: ['SPD'], effect: 'buff', level: 2, targeting: { targets: ['self'] } },
+            ],
+          },
+        ],
+      },
+    });
+
+    const result = service.buildTeamFromCandidates([...anchors, teamBuffer, statStick]);
+    const selectedIds = collectSelectedIds(result);
+
+    expect(selectedIds).toContain(teamBuffer.id);
+    expect(selectedIds).not.toContain(statStick.id);
+  });
+
+  it('prefers broad enemy stat debuffs over single-target debuffs', () => {
+    const service = createService();
+    const anchors = Array.from({ length: 7 }, (_, index) =>
+      createCharacter(8200 + index, {
+        partyConflictKeys: [`debuff-anchor-${index}`],
+        rumbleData: createRumbleData(60 + index),
+      }),
+    );
+    const wideDebuffer = createCharacter(8290, {
+      maxHp: 1200,
+      maxAtk: 450,
+      maxRcv: 80,
+      partyConflictKeys: ['enemy-debuffer-role'],
+      rumbleData: {
+        id: 8290,
+        stats: { rumbleType: 'DBF', def: 10, spd: 10 },
+        special: [
+          {
+            cooldown: 30,
+            effects: [
+              {
+                attributes: ['ATK'],
+                effect: 'debuff',
+                level: 1,
+                targeting: { count: 1, targets: ['enemies'] },
+              },
+            ],
+          },
+          {
+            cooldown: 30,
+            effects: [
+              {
+                attributes: ['HP', 'ATK', 'DEF', 'RCV', 'Special CT'],
+                effect: 'debuff',
+                level: 6,
+                targeting: { targets: ['enemies'] },
+              },
+            ],
+          },
+        ],
+      },
+    });
+    const narrowDebuffer = createCharacter(8291, {
+      maxHp: 1200,
+      maxAtk: 450,
+      maxRcv: 80,
+      partyConflictKeys: ['enemy-debuffer-role'],
+      rumbleData: {
+        id: 8291,
+        stats: { rumbleType: 'DBF', def: 10, spd: 10 },
+        special: [
+          {
+            cooldown: 30,
+            effects: [
+              {
+                attributes: ['HP', 'ATK', 'DEF', 'RCV', 'Special CT'],
+                effect: 'debuff',
+                level: 6,
+                targeting: { count: 1, priority: 'highest', stat: 'ATK', targets: ['enemies'] },
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    const result = service.buildTeamFromCandidates([...anchors, wideDebuffer, narrowDebuffer]);
+    const selectedIds = collectSelectedIds(result);
+
+    expect(selectedIds).toContain(wideDebuffer.id);
+    expect(selectedIds).not.toContain(narrowDebuffer.id);
+  });
+
+  it('does not treat self-only buffs as team buff synergy', () => {
+    const service = createService();
+    const anchors = Array.from({ length: 7 }, (_, index) =>
+      createCharacter(8300 + index, {
+        primaryClass: 'Fighter',
+        classes: ['Fighter'],
+        partyConflictKeys: [`self-anchor-${index}`],
+        rumbleData: createRumbleData(70 + index),
+      }),
+    );
+    const teamBuffer = createCharacter(8390, {
+      maxHp: 1300,
+      maxAtk: 500,
+      maxRcv: 90,
+      primaryClass: 'Fighter',
+      classes: ['Fighter'],
+      partyConflictKeys: ['small-team-buffer'],
+      rumbleData: {
+        id: 8390,
+        stats: { rumbleType: 'SPT', def: 10, spd: 10 },
+        ability: [
+          {
+            effects: [
+              {
+                attributes: ['ATK'],
+                effect: 'buff',
+                level: 3,
+                targeting: { targets: ['Fighter'] },
+              },
+            ],
+          },
+        ],
+      },
+    });
+    const selfBuffer = createCharacter(8391, {
+      maxHp: 1800,
+      maxAtk: 650,
+      maxRcv: 120,
+      primaryClass: 'Fighter',
+      classes: ['Fighter'],
+      partyConflictKeys: ['self-buffer'],
+      rumbleData: {
+        id: 8391,
+        stats: { rumbleType: 'SPT', def: 20, spd: 20 },
+        ability: [
+          {
+            effects: [
+              { attributes: ['ATK'], effect: 'buff', level: 20, targeting: { targets: ['self'] } },
+            ],
+          },
+        ],
+      },
+    });
+
+    const result = service.buildTeamFromCandidates([...anchors, teamBuffer, selfBuffer]);
+    const selectedIds = collectSelectedIds(result);
+
+    expect(selectedIds).toContain(teamBuffer.id);
+    expect(selectedIds).not.toContain(selfBuffer.id);
+  });
+
+  it('uses base max levels for synergy instead of LLB effects', () => {
+    const service = createService();
+    const anchors = Array.from({ length: 7 }, (_, index) =>
+      createCharacter(8400 + index, {
+        primaryClass: 'Fighter',
+        classes: ['Fighter'],
+        partyConflictKeys: [`llb-anchor-${index}`],
+        rumbleData: createRumbleData(80 + index),
+      }),
+    );
+    const baseBuffer = createCharacter(8490, {
+      maxHp: 1300,
+      maxAtk: 500,
+      maxRcv: 90,
+      primaryClass: 'Fighter',
+      classes: ['Fighter'],
+      partyConflictKeys: ['base-buffer'],
+      rumbleData: {
+        id: 8490,
+        stats: { rumbleType: 'SPT', def: 10, spd: 10 },
+        ability: [
+          {
+            effects: [
+              {
+                attributes: ['DEF'],
+                effect: 'buff',
+                level: 4,
+                targeting: { targets: ['Fighter'] },
+              },
+            ],
+          },
+        ],
+      },
+    });
+    const llbOnlyBuffer = createCharacter(8491, {
+      maxHp: 1600,
+      maxAtk: 600,
+      maxRcv: 110,
+      primaryClass: 'Fighter',
+      classes: ['Fighter'],
+      partyConflictKeys: ['llb-only-buffer'],
+      rumbleData: {
+        id: 8491,
+        stats: { rumbleType: 'SPT', def: 12, spd: 12 },
+        ability: [
+          {
+            effects: [
+              { attributes: ['ATK'], effect: 'buff', level: 1, targeting: { targets: ['self'] } },
+            ],
+          },
+        ],
+        llbability: [
+          {
+            effects: [
+              {
+                attributes: ['ATK'],
+                effect: 'buff',
+                level: 10,
+                targeting: { targets: ['Fighter'] },
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    const result = service.buildTeamFromCandidates([...anchors, baseBuffer, llbOnlyBuffer]);
+    const selectedIds = collectSelectedIds(result);
+
+    expect(selectedIds).toContain(baseBuffer.id);
+    expect(selectedIds).not.toContain(llbOnlyBuffer.id);
+  });
+
+  it('scores inherited max-level rumble buffs through basedOn data', () => {
+    const service = createService();
+    const anchors = Array.from({ length: 7 }, (_, index) =>
+      createCharacter(8500 + index, {
+        primaryClass: 'Fighter',
+        classes: ['Fighter'],
+        partyConflictKeys: [`inherited-anchor-${index}`],
+        rumbleData: createRumbleData(90 + index),
+      }),
+    );
+    const base = createCharacter(8589, {
+      primaryClass: 'Fighter',
+      classes: ['Fighter'],
+      rumbleData: {
+        id: 8589,
+        stats: { rumbleType: 'SPT', def: 10, spd: 10 },
+        ability: [
+          {
+            effects: [
+              {
+                attributes: ['ATK', 'Special CT'],
+                effect: 'buff',
+                level: 5,
+                targeting: { targets: ['Fighter'] },
+              },
+            ],
+          },
+        ],
+      },
+    });
+    const inheritedBuffer = createCharacter(8590, {
+      maxHp: 1300,
+      maxAtk: 500,
+      maxRcv: 90,
+      primaryClass: 'Fighter',
+      classes: ['Fighter'],
+      partyConflictKeys: ['inherited-buffer'],
+      rumbleData: { id: 8590, basedOn: 8589 },
+    });
+    const statStick = createCharacter(8591, {
+      maxHp: 6800,
+      maxAtk: 2600,
+      maxRcv: 460,
+      primaryClass: 'Shooter',
+      classes: ['Shooter'],
+      partyConflictKeys: ['inherited-stat-stick'],
+      rumbleData: {
+        id: 8591,
+        stats: { rumbleType: 'ATK', def: 210, spd: 170 },
+        ability: [
+          {
+            effects: [
+              { attributes: ['ATK'], effect: 'buff', level: 2, targeting: { targets: ['self'] } },
+            ],
+          },
+        ],
+      },
+    });
+
+    const result = service.buildTeamFromCandidates([...anchors, base, inheritedBuffer, statStick]);
+    const selectedIds = collectSelectedIds(result);
+
+    expect(selectedIds).toContain(inheritedBuffer.id);
+    expect(selectedIds).not.toContain(statStick.id);
+  });
+
   it('labels usable Rumble data without adding recency chips', () => {
     const service = createService();
     const [candidate] = service.scoreCandidates([
@@ -435,6 +779,12 @@ function createService(candidates: CharacterDetailRecord[] = []): AutoTeamBuilde
   return new AutoTeamBuilderRumbleService({
     getRumbleBuilderCandidates: vi.fn().mockResolvedValue(candidates),
   } as never);
+}
+
+function collectSelectedIds(
+  result: ReturnType<AutoTeamBuilderRumbleService['buildTeamFromCandidates']>,
+): number[] {
+  return [...result.activeSlots, ...result.benchSlots].map((slot) => slot.unit.character.id);
 }
 
 function createRumbleData(index: number): Record<string, unknown> {
