@@ -22,7 +22,8 @@
 .team-section,
 .state-card,
 .loading-card,
-.controls-card {
+.controls-card,
+.excluded-card {
   padding: 22px;
 }
 
@@ -90,9 +91,23 @@
 .summary-card,
 .team-section,
 .slot-copy,
-.controls-card {
+.controls-card,
+.excluded-card {
   display: grid;
   gap: 14px;
+}
+
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.section-head h2 {
+  overflow-wrap: anywhere;
 }
 
 .controls-grid {
@@ -244,6 +259,11 @@
   background: rgba(255, 255, 255, 0.04);
 }
 
+.loading-card__action {
+  align-self: start;
+  white-space: nowrap;
+}
+
 .loading-card__performance-copy {
   display: grid;
   gap: 4px;
@@ -335,6 +355,50 @@
   color: rgba(246, 241, 232, 0.68);
 }
 
+.excluded-character-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.excluded-character-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 5px 9px 5px 5px;
+  border: 1px solid rgba(255, 139, 118, 0.26);
+  border-radius: 999px;
+  background: rgba(255, 139, 118, 0.1);
+  color: #ffd6cc;
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.excluded-character-chip img {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.excluded-character-chip span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.excluded-character-chip ion-icon {
+  flex: 0 0 auto;
+  font-size: 0.9rem;
+}
+
+.excluded-card__empty {
+  margin: 0;
+  color: rgba(246, 241, 232, 0.68);
+}
+
 .slot-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -350,7 +414,7 @@
   align-items: start;
   gap: 14px;
   min-width: 0;
-  padding: 14px 52px 14px 14px;
+  padding: 14px 88px 14px 14px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.045);
@@ -386,10 +450,10 @@
   overflow-wrap: anywhere;
 }
 
-.slot-replace-button {
+.slot-replace-button,
+.slot-exclude-button {
   position: absolute;
   top: 8px;
-  right: 8px;
   z-index: 1;
   width: 32px;
   height: 32px;
@@ -401,6 +465,17 @@
   --background: rgba(255, 255, 255, 0.04);
   --background-hover: rgba(255, 255, 255, 0.08);
   --color: rgba(246, 241, 232, 0.72);
+}
+
+.slot-replace-button {
+  right: 44px;
+}
+
+.slot-exclude-button {
+  right: 8px;
+  --background: rgba(255, 139, 118, 0.08);
+  --background-hover: rgba(255, 139, 118, 0.16);
+  --color: rgba(255, 214, 204, 0.86);
 }
 
 .slot-score {

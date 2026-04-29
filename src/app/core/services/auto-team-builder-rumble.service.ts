@@ -90,6 +90,8 @@ export class AutoTeamBuilderRumbleService {
     if (workerCount > 1) {
       const workerResult = await this.runSearchInWorker(records, requestedInput, executionOptions);
 
+      this.throwIfCancelled(executionOptions.signal);
+
       if (workerResult) {
         return workerResult;
       }
@@ -98,6 +100,8 @@ export class AutoTeamBuilderRumbleService {
     const worker = this.createWorker();
 
     if (!worker) {
+      this.throwIfCancelled(executionOptions.signal);
+
       return runRumbleTeamBuildSearch(records, requestedInput, {
         onProgress: executionOptions.onProgress,
       });

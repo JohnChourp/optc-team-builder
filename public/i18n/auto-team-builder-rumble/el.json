@@ -8,6 +8,7 @@
   "actions": {
     "rebuild": "Χτίσε ομάδα",
     "building": "Χτίζεται...",
+    "cancelBuild": "Ακύρωση build",
     "downloadSettings": "Λήψη settings JSON",
     "downloadTeam": "Λήψη ομάδας JSON",
     "downloadTeamSupport": "Χτίσε έγκυρη Rumble ομάδα πριν κατεβάσεις team data."
@@ -117,10 +118,18 @@
     "benchLabel": "Bench {{index}}",
     "score": "Score {{score}}",
     "replaceAria": "Αντικατάσταση {{name}}",
+    "excludeAria": "Exclude {{name}} από τα Rumble builds",
     "passiveLevel": "Passive Lv. {{level}}",
     "specialLevel": "Special Lv. {{level}}",
     "cooldown": "Cooldown {{value}}",
     "resistance": "Resistance"
+  },
+  "excluded": {
+    "title": "Excluded characters",
+    "copy": "{{count}} character(s) blocked από το επόμενο Rumble build",
+    "empty": "Δεν υπάρχουν excluded Rumble characters.",
+    "clear": "Καθαρισμός excludes",
+    "removeAria": "Αφαίρεση {{name}} από τα excluded characters"
   },
   "manualPicker": {
     "title": "Επιλογή Rumble χαρακτήρα",

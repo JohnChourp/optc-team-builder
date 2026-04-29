@@ -173,6 +173,45 @@
         }
       </section>
 
+      @if (initialized()) {
+        <section class="glass-card excluded-card">
+          <div class="section-head">
+            <div>
+              <div class="section-label">{{ t('excluded.title') }}</div>
+              <h2>{{ t('excluded.copy', { count: excludedCharacterIds().length }) }}</h2>
+            </div>
+            <ion-button
+              fill="clear"
+              color="light"
+              size="small"
+              [disabled]="!hasExcludedCharacters() || loading()"
+              (click)="clearExcludedCharacters()"
+            >
+              {{ t('excluded.clear') }}
+            </ion-button>
+          </div>
+          @if (excludedCharacters().length) {
+            <div class="excluded-character-list">
+              @for (character of excludedCharacters(); track character.id) {
+                <button
+                  type="button"
+                  class="excluded-character-chip"
+                  [disabled]="loading()"
+                  [attr.aria-label]="t('excluded.removeAria', { name: character.name })"
+                  (click)="removeExcludedCharacter(character.id)"
+                >
+                  <img [src]="character.imageUrl" [alt]="character.name" />
+                  <span>{{ character.name }}</span>
+                  <ion-icon [icon]="closeIcon" aria-hidden="true"></ion-icon>
+                </button>
+              }
+            </div>
+          } @else {
+            <p class="excluded-card__empty">{{ t('excluded.empty') }}</p>
+          }
+        </section>
+      }
+
       @if (loading()) {
         <section class="glass-card loading-card">
           <ion-spinner name="crescent" class="loading-card__spinner"></ion-spinner>
@@ -260,6 +299,14 @@
               </div>
             </section>
           </div>
+          <ion-button
+            fill="outline"
+            color="light"
+            class="loading-card__action"
+            (click)="cancelBuild()"
+          >
+            {{ t('actions.cancelBuild') }}
+          </ion-button>
         </section>
       }
 
@@ -426,6 +473,16 @@
                     >
                       <ion-icon slot="icon-only" [icon]="editIcon"></ion-icon>
                     </ion-button>
+                    <ion-button
+                      class="slot-exclude-button"
+                      fill="clear"
+                      color="light"
+                      size="small"
+                      [attr.aria-label]="t('slot.excludeAria', { name: slot.unit.character.name })"
+                      (click)="excludeCharacter(slot)"
+                    >
+                      <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                    </ion-button>
                     <small>
                       {{ slot.unit.character.type }} • {{ slot.unit.character.primaryClass }}
                     </small>
@@ -511,6 +568,16 @@
                       (click)="openManualCharacterPicker(slot)"
                     >
                       <ion-icon slot="icon-only" [icon]="editIcon"></ion-icon>
+                    </ion-button>
+                    <ion-button
+                      class="slot-exclude-button"
+                      fill="clear"
+                      color="light"
+                      size="small"
+                      [attr.aria-label]="t('slot.excludeAria', { name: slot.unit.character.name })"
+                      (click)="excludeCharacter(slot)"
+                    >
+                      <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
                     </ion-button>
                     <small>
                       {{ slot.unit.character.type }} • {{ slot.unit.character.primaryClass }}

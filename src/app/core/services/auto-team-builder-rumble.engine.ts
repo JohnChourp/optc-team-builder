@@ -1324,7 +1324,7 @@ function applyCandidateScope(
   candidates: CharacterDetailRecord[],
   input: RumbleBuildInput,
 ): CharacterDetailRecord[] {
-  const scopedIds = input.candidateCharacterIds?.length
+  const scopedIds = input.candidateCharacterIds !== undefined
     ? new Set(input.candidateCharacterIds)
     : null;
   const favoriteIds = input.favoritesOnly ? new Set(input.favoriteCharacterIds) : null;

@@ -8,6 +8,7 @@
   "actions": {
     "rebuild": "Build team",
     "building": "Building...",
+    "cancelBuild": "Cancel build",
     "downloadSettings": "Download settings JSON",
     "downloadTeam": "Download team JSON",
     "downloadTeamSupport": "Build a valid Rumble team before downloading team data."
@@ -117,10 +118,18 @@
     "benchLabel": "Bench {{index}}",
     "score": "Score {{score}}",
     "replaceAria": "Replace {{name}}",
+    "excludeAria": "Exclude {{name}} from Rumble builds",
     "passiveLevel": "Passive Lv. {{level}}",
     "specialLevel": "Special Lv. {{level}}",
     "cooldown": "Cooldown {{value}}",
     "resistance": "Resistance"
+  },
+  "excluded": {
+    "title": "Excluded characters",
+    "copy": "{{count}} character(s) blocked from the next Rumble build",
+    "empty": "No Rumble characters are excluded.",
+    "clear": "Clear excludes",
+    "removeAria": "Remove {{name}} from excluded characters"
   },
   "manualPicker": {
     "title": "Choose Rumble character",

@@ -108,7 +108,7 @@ const ROLE_LABELS: Record<NormalizedRumbleRoleTag, string> = {
 })
 export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   public readonly result = signal<RumbleTeamResult | null>(null);
-  public readonly loading = signal(true);
+  public readonly loading = signal(false);
   public readonly initialized = signal(false);
   public readonly errorMessage = signal('');
   public readonly selectedTypes = signal<AutoTeamBuilderType[]>([]);
@@ -123,8 +123,11 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   public readonly manualPickerSearchTerm = signal('');
   public readonly manualPickerCandidates = signal<RumbleUnitScore[]>([]);
   public readonly manualPickerTarget = signal<ManualSlotTarget | null>(null);
+  public readonly excludedCharacterIds = signal<number[]>([]);
+  private readonly excludedCharacterRecordsById = signal<Record<number, CharacterDetailRecord>>({});
   private readonly buildProgressNowMs = signal(0);
   private readonly currentBuildStepStartedAtMs = signal<number | null>(null);
+  private buildAbortController: AbortController | null = null;
   private progressTicker: ReturnType<typeof globalThis.setInterval> | null = null;
 
   public readonly activeSlotTargetCount = RUMBLE_ACTIVE_SLOT_COUNT;
@@ -149,6 +152,14 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   public readonly buildDisabled = computed(
     () => this.loading() || this.buildBlockedByFavorites() || !this.initialized(),
   );
+  public readonly excludedCharacters = computed(() => {
+    const recordsById = this.excludedCharacterRecordsById();
+
+    return this.excludedCharacterIds()
+      .map((characterId) => recordsById[characterId] ?? null)
+      .filter((character): character is CharacterDetailRecord => Boolean(character));
+  });
+  public readonly hasExcludedCharacters = computed(() => this.excludedCharacterIds().length > 0);
   public readonly canDownloadSettingsJson = computed(() => this.initialized());
   public readonly canDownloadTeamJson = computed(() => {
     const currentResult = this.result();
@@ -202,11 +213,17 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       : this.t('filters.classes.onlySupport.soft'),
   );
   public readonly emptyStateVisible = computed(
-    () =>
-      !this.loading() &&
-      !this.errorMessage() &&
-      !this.strictTypeBlockedStateVisible() &&
-      (this.result()?.candidateCount ?? 0) === 0,
+    () => {
+      const currentResult = this.result();
+
+      return Boolean(
+        currentResult &&
+          !this.loading() &&
+          !this.errorMessage() &&
+          !this.strictTypeBlockedStateVisible() &&
+          currentResult.candidateCount === 0,
+      );
+    },
   );
   public readonly insufficientStateVisible = computed(() => {
     const currentResult = this.result();
@@ -376,10 +393,10 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
 
     this.availableClasses.set([...manifest.availableClasses]);
     this.initialized.set(true);
-    await this.buildTeam();
   }
 
   public ngOnDestroy(): void {
+    this.cancelBuild();
     this.stopBuildProgressTicker();
   }
 
@@ -388,6 +405,10 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       return;
     }
 
+    const previousResult = this.result();
+    const abortController = new AbortController();
+
+    this.buildAbortController = abortController;
     this.loading.set(true);
     this.errorMessage.set('');
     this.result.set(null);
@@ -396,10 +417,17 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
 
     try {
       const executionOptions: RumbleTeamBuildExecutionOptions = {
+        signal: abortController.signal,
         onProgress: (snapshot) => this.handleBuildProgressSnapshot(snapshot),
         workerCount: this.userState.resolveAutoTeamBuilderWorkerCount(),
         getWorkerCount: () => this.userState.resolveAutoTeamBuilderWorkerCount(),
       };
+      const candidateCharacterIds = await this.resolveCandidateCharacterIdsForBuild();
+
+      if (abortController.signal.aborted) {
+        throw new Error('Rumble team build cancelled.');
+      }
+
       this.result.set(
         await this.rumbleBuilder.buildBestTeam(
           {
@@ -409,11 +437,18 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
             onlySelectedClasses: this.onlySelectedClasses(),
             favoritesOnly: this.favoritesOnly(),
             favoriteCharacterIds: this.favoriteCharacterIds(),
+            candidateCharacterIds,
           },
           executionOptions,
         ),
       );
     } catch (error) {
+      if (abortController.signal.aborted || this.isRumbleBuildCancelledError(error)) {
+        this.result.set(previousResult);
+        this.errorMessage.set('');
+        return;
+      }
+
       this.result.set(null);
       this.errorMessage.set(
         error instanceof Error && error.message.trim().length > 0
@@ -421,10 +456,18 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
           : this.t('states.errorFallback'),
       );
     } finally {
+      if (this.buildAbortController === abortController) {
+        this.buildAbortController = null;
+      }
+
       this.stopBuildProgressTicker();
       this.buildProgress.set(null);
       this.loading.set(false);
     }
+  }
+
+  public cancelBuild(): void {
+    this.buildAbortController?.abort();
   }
 
   public buildSettingsExportPayload(
@@ -634,6 +677,33 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     this.closeManualCharacterPicker();
   }
 
+  public async excludeCharacter(slot: RumbleTeamSlot): Promise<void> {
+    if (this.loading()) {
+      return;
+    }
+
+    this.cacheExcludedCharacter(slot.unit.character);
+    this.excludedCharacterIds.update((currentIds) =>
+      currentIds.includes(slot.unit.character.id)
+        ? currentIds
+        : [...currentIds, slot.unit.character.id],
+    );
+    this.errorMessage.set('');
+    await this.buildTeam();
+  }
+
+  public removeExcludedCharacter(characterId: number): void {
+    this.excludedCharacterIds.update((currentIds) =>
+      currentIds.filter((currentId) => currentId !== characterId),
+    );
+    this.resetBuildState();
+  }
+
+  public clearExcludedCharacters(): void {
+    this.excludedCharacterIds.set([]);
+    this.resetBuildState();
+  }
+
   public roleLabelKey(role: NormalizedRumbleRoleTag): string {
     return ROLE_LABELS[role];
   }
@@ -669,7 +739,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
 
   private resolveSelectedCharacterIds(target: ManualSlotTarget | null): Set<number> {
     const currentResult = this.result();
-    const selectedIds = new Set<number>();
+    const selectedIds = new Set<number>(this.excludedCharacterIds());
 
     if (!currentResult) {
       return selectedIds;
@@ -684,6 +754,33 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     });
 
     return selectedIds;
+  }
+
+  private async resolveCandidateCharacterIdsForBuild(): Promise<number[] | undefined> {
+    const excludedIds = new Set(this.excludedCharacterIds());
+
+    if (!excludedIds.size) {
+      return undefined;
+    }
+
+    const candidates = await this.repository.getRumbleBuilderCandidates();
+
+    candidates.forEach((candidate) => {
+      if (excludedIds.has(candidate.id)) {
+        this.cacheExcludedCharacter(candidate);
+      }
+    });
+
+    return candidates
+      .map((candidate) => candidate.id)
+      .filter((candidateId) => !excludedIds.has(candidateId));
+  }
+
+  private cacheExcludedCharacter(character: CharacterDetailRecord): void {
+    this.excludedCharacterRecordsById.update((current) => ({
+      ...current,
+      [character.id]: character,
+    }));
   }
 
   private collectRoleCoverage(slots: RumbleTeamSlot[]): NormalizedRumbleRoleTag[] {
@@ -803,6 +900,10 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     const seconds = totalSeconds % 60;
 
     return `${minutes}m ${seconds}s`;
+  }
+
+  private isRumbleBuildCancelledError(error: unknown): boolean {
+    return error instanceof Error && error.message === 'Rumble team build cancelled.';
   }
 
   private t(

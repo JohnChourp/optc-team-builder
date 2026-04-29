@@ -26,11 +26,24 @@ vi.mock('@ionic/angular/standalone', () => ({
 }));
 
 describe('AutoTeamBuilderRumblePage', () => {
-  it('builds a team on init and exposes summary state', async () => {
+  it('initializes without auto-building on first entry', async () => {
+    const { page, rumbleBuilder } = createPage();
+
+    await page.ngOnInit();
+
+    expect(rumbleBuilder.buildBestTeam).not.toHaveBeenCalled();
+    expect(page.initialized()).toBe(true);
+    expect(page.loading()).toBe(false);
+    expect(page.result()).toBeNull();
+    expect(page.emptyStateVisible()).toBe(false);
+  });
+
+  it('builds a team on demand and exposes summary state', async () => {
     const result = createResult();
     const { page, rumbleBuilder } = createPage(result);
 
     await page.ngOnInit();
+    await page.buildTeam();
 
     expect(rumbleBuilder.buildBestTeam).toHaveBeenCalledWith(
       {
@@ -40,8 +53,10 @@ describe('AutoTeamBuilderRumblePage', () => {
         onlySelectedClasses: false,
         favoritesOnly: false,
         favoriteCharacterIds: [1001, 1002],
+        candidateCharacterIds: undefined,
       },
       expect.objectContaining({
+        signal: expect.any(AbortSignal),
         workerCount: 2,
         getWorkerCount: expect.any(Function),
         onProgress: expect.any(Function),
@@ -64,6 +79,7 @@ describe('AutoTeamBuilderRumblePage', () => {
     });
 
     await page.ngOnInit();
+    await page.buildTeam();
 
     expect(page.emptyStateVisible()).toBe(true);
   });
@@ -76,6 +92,7 @@ describe('AutoTeamBuilderRumblePage', () => {
     });
 
     await page.ngOnInit();
+    await page.buildTeam();
 
     expect(page.insufficientStateVisible()).toBe(true);
   });
@@ -95,6 +112,7 @@ describe('AutoTeamBuilderRumblePage', () => {
     });
 
     await page.ngOnInit();
+    await page.buildTeam();
 
     expect(page.strictTypeBlockedStateVisible()).toBe(true);
     expect(page.insufficientStateVisible()).toBe(false);
@@ -106,6 +124,7 @@ describe('AutoTeamBuilderRumblePage', () => {
     const { page } = createPage(error);
 
     await page.ngOnInit();
+    await page.buildTeam();
 
     expect(page.loading()).toBe(false);
     expect(page.result()).toBeNull();
@@ -139,6 +158,10 @@ describe('AutoTeamBuilderRumblePage', () => {
     expect(template).toContain('currentResult.benchSlots');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(slot)"');
     expect(template).toContain('(click)="openManualCharacterPicker(slot)"');
+    expect(template).toContain('(click)="excludeCharacter(slot)"');
+    expect(template).toContain('(click)="cancelBuild()"');
+    expect(template).toContain("t('excluded.title')");
+    expect(template).toContain('excludedCharacters()');
     expect(template).toContain('manualPickerOpen()');
     expect(template).toContain('selectManualCharacter(candidate)');
     expect(template).not.toContain('slot.reasonChips');
@@ -179,8 +202,11 @@ describe('AutoTeamBuilderRumblePage', () => {
         onlySelectedClasses: true,
         favoritesOnly: true,
         favoriteCharacterIds: [1001, 1002],
+        candidateCharacterIds: undefined,
       }),
-      expect.any(Object),
+      expect.objectContaining({
+        signal: expect.any(AbortSignal),
+      }),
     );
   });
 
@@ -188,10 +214,12 @@ describe('AutoTeamBuilderRumblePage', () => {
     const { page } = createPage();
 
     await page.ngOnInit();
+    await page.buildTeam();
     page.onTypeChange({ detail: { value: ['DEX'] } } as never);
     page.onClassChange({ detail: { value: ['Fighter'] } } as never);
     page.onOnlySelectedTypesToggle({ detail: { checked: true } } as never);
     page.onFavoritesOnlyToggle({ detail: { checked: true } } as never);
+    await page.buildTeam();
 
     expect(page.buildSettingsExportPayload('2026-04-29T04:00:00.000Z')).toMatchObject({
       schemaVersion: 1,
@@ -228,6 +256,7 @@ describe('AutoTeamBuilderRumblePage', () => {
     });
 
     await page.ngOnInit();
+    await page.buildTeam();
 
     expect(page.canDownloadTeamJson()).toBe(false);
     expect(page.buildTeamExportPayload()).toBeNull();
@@ -243,6 +272,7 @@ describe('AutoTeamBuilderRumblePage', () => {
     const { page } = createPage();
 
     await page.ngOnInit();
+    await page.buildTeam();
     page.downloadSettingsJson();
     page.downloadTeamJson();
 
@@ -276,6 +306,7 @@ describe('AutoTeamBuilderRumblePage', () => {
     repository.getRumbleBuilderCandidates.mockResolvedValue([replacementSlot.unit.character]);
     rumbleBuilder.scoreCandidates.mockReturnValue([replacementSlot.unit]);
     await page.ngOnInit();
+    await page.buildTeam();
     await page.openManualCharacterPicker(page.result()!.activeSlots[0]!);
 
     expect(page.manualPickerOpen()).toBe(true);
@@ -292,9 +323,106 @@ describe('AutoTeamBuilderRumblePage', () => {
     expect(page.result()?.activeSlots[0]?.role).toBe('active');
     expect(page.result()?.selectedCount).toBe(8);
   });
+
+  it('excludes a selected slot and rebuilds with that character removed from the candidate scope', async () => {
+    const result = createResult();
+    const { page, rumbleBuilder, repository } = createPage(result);
+    const excludedSlot = result.activeSlots[0]!;
+    const candidateCharacters = [...result.activeSlots, ...result.benchSlots].map(
+      (slot) => slot.unit.character,
+    );
+
+    repository.getRumbleBuilderCandidates.mockResolvedValue(candidateCharacters);
+    await page.ngOnInit();
+    await page.buildTeam();
+    await page.excludeCharacter(excludedSlot);
+
+    expect(page.excludedCharacterIds()).toEqual([excludedSlot.unit.character.id]);
+    expect(page.excludedCharacters().map((character) => character.id)).toEqual([
+      excludedSlot.unit.character.id,
+    ]);
+    expect(rumbleBuilder.buildBestTeam).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        candidateCharacterIds: candidateCharacters
+          .map((character) => character.id)
+          .filter((characterId) => characterId !== excludedSlot.unit.character.id),
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it('removes and clears excluded characters before future builds', async () => {
+    const result = createResult();
+    const { page, rumbleBuilder, repository } = createPage(result);
+    const candidateCharacters = [...result.activeSlots, ...result.benchSlots].map(
+      (slot) => slot.unit.character,
+    );
+
+    repository.getRumbleBuilderCandidates.mockResolvedValue(candidateCharacters);
+    await page.ngOnInit();
+    await page.buildTeam();
+    await page.excludeCharacter(result.activeSlots[0]!);
+    page.removeExcludedCharacter(result.activeSlots[0]!.unit.character.id);
+    await page.buildTeam();
+
+    expect(page.excludedCharacterIds()).toEqual([]);
+    expect(rumbleBuilder.buildBestTeam).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        candidateCharacterIds: undefined,
+      }),
+      expect.any(Object),
+    );
+
+    await page.excludeCharacter(result.activeSlots[1]!);
+    page.clearExcludedCharacters();
+
+    expect(page.excludedCharacterIds()).toEqual([]);
+    expect(page.result()).toBeNull();
+  });
+
+  it('cancels the active build and restores the previous result', async () => {
+    const previousResult = createResult();
+    const { page, rumbleBuilder } = createPage(previousResult);
+
+    rumbleBuilder.buildBestTeam.mockImplementation(
+      (
+        _input: unknown,
+        executionOptions?: {
+          signal?: AbortSignal;
+        },
+      ) =>
+        new Promise<never>((_resolve, reject) => {
+          executionOptions?.signal?.addEventListener(
+            'abort',
+            () => reject(new Error('Rumble team build cancelled.')),
+            { once: true },
+          );
+        }),
+    );
+
+    await page.ngOnInit();
+    page.result.set(previousResult);
+    const buildPromise = page.buildTeam();
+
+    await Promise.resolve();
+
+    expect(page.loading()).toBe(true);
+
+    page.cancelBuild();
+    await buildPromise;
+
+    expect(page.result()).toBe(previousResult);
+    expect(page.errorMessage()).toBe('');
+    expect(page.loading()).toBe(false);
+    expect(page.buildProgress()).toBeNull();
+  });
 });
 
 function createPage(result: RumbleTeamResult | Error = createResult()) {
+  const defaultCandidates =
+    result instanceof Error
+      ? []
+      : [...result.activeSlots, ...result.benchSlots].map((slot) => slot.unit.character);
   const rumbleBuilder = {
     scoreCandidates: vi.fn().mockReturnValue([]),
     buildBestTeam: vi.fn().mockImplementation(() => {
@@ -309,7 +437,7 @@ function createPage(result: RumbleTeamResult | Error = createResult()) {
     getDatasetManifest: vi.fn().mockResolvedValue({
       availableClasses: ['Fighter', 'Slasher'],
     }),
-    getRumbleBuilderCandidates: vi.fn().mockResolvedValue([]),
+    getRumbleBuilderCandidates: vi.fn().mockResolvedValue(defaultCandidates),
   };
   const userState = {
     favoriteCharacterIds: vi.fn(() => [1001, 1002]),
@@ -393,6 +521,7 @@ function createSlot(
         name: `Unit ${id}`,
         type: 'DEX',
         primaryClass: 'Fighter',
+        classes: ['Fighter'],
         imageUrl: `assets/${id}.png`,
       },
       normalized: {
