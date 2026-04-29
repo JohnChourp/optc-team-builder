@@ -17,6 +17,7 @@ import {
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
+import { resolveCharacterPartyConflictKeys } from './auto-team-builder.utils';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -1189,9 +1190,7 @@ export class RumbleTeamBuilderEngine {
   }
 
   private resolveConflictKeys(character: CharacterDetailRecord): string[] {
-    const keys = character.detail.partyConflictKeys
-      .map((key) => key.trim().toLowerCase())
-      .filter((key) => key.length > 0);
+    const keys = resolveCharacterPartyConflictKeys(character);
 
     return keys.length ? [...new Set(keys)] : [`character:${character.id}`];
   }

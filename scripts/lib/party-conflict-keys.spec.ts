@@ -22,6 +22,14 @@ describe('party conflict keys', () => {
     ]);
   });
 
+  it('derives Cora aliases for Corazon and Donquixote Rosinante conflicts', () => {
+    expect(resolveNameDerivedPartyConflictKeys('Cora - Grateful Love')).toEqual([
+      'cora',
+      'corazon',
+      'donquixote rosinante',
+    ]);
+  });
+
   it('applies manual override keys for General Franky composite conflicts', () => {
     const overrideMap = normalizePartyConflictOverrideMap({
       3574: ['franky', 'tony tony chopper'],

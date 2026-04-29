@@ -374,6 +374,39 @@ describe('AutoTeamBuilderRumbleService', () => {
     expect(selectedLuffyVariants).toHaveLength(1);
   });
 
+  it('avoids Cora and Corazon variants even when stored conflict keys do not overlap', () => {
+    const service = createService();
+    const result = service.buildTeamFromCandidates([
+      createCharacter(6021, {
+        name: 'Corazon & Law: Moonlight Day-Off - Creepy Night Halloween',
+        maxHp: 6000,
+        maxAtk: 3000,
+        maxRcv: 700,
+        partyConflictKeys: ['corazon & law: moonlight day-off'],
+        rumbleData: createRumbleData(40),
+      }),
+      createCharacter(6022, {
+        name: 'Cora - Grateful Love',
+        maxHp: 5900,
+        maxAtk: 2950,
+        maxRcv: 680,
+        partyConflictKeys: ['cora'],
+        rumbleData: createRumbleData(39),
+      }),
+      ...Array.from({ length: 8 }, (_, index) =>
+        createCharacter(6030 + index, {
+          partyConflictKeys: [`filler-${index}`],
+          rumbleData: createRumbleData(index),
+        }),
+      ),
+    ]);
+    const selectedCoraVariants = [...result.activeSlots, ...result.benchSlots].filter((slot) =>
+      slot.unit.conflictKeys.some((key) => key === 'cora' || key === 'corazon'),
+    );
+
+    expect(selectedCoraVariants).toHaveLength(1);
+  });
+
   it('ranks stronger rumble stats, cooldowns, and effects above weaker candidates', () => {
     const service = createService();
     const weak = createCharacter(1001, {

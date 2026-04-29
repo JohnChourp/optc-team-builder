@@ -786,6 +786,52 @@ describe('Auto team builder', () => {
     expect(result?.slots.some((slot) => slot.character.id === 5819)).toBe(false);
   });
 
+  it('relaxes Cora when Corazon is already selected and unique names are required', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 5830,
+          name: 'Corazon - Rain, Rain, Go Away',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.5x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 5831,
+          name: 'Portgas D. Ace',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.25x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 5832,
+          name: 'Cora - Grateful Love',
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts ATK of Fighter characters by 2.25x for 1 turn.',
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireUniqueBaseCharacterNames: true,
+        manualSlots: createManualSlots({
+          captain: [5830],
+          friendCaptain: [5831],
+          sub1: [5832],
+        }),
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 5832)).toBe(false);
+  });
+
   it('allows the friend captain to reuse the same base character name when the toggle is on', () => {
     const result = buildAutoTeamResult(
       [

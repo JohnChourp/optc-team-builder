@@ -76,6 +76,7 @@ const CHARACTER_NAME_KEY_ALIASES: Record<string, string[]> = {
   'big mom': ['charlotte linlin'],
   blackbeard: ['marshall d teach'],
   'bon clay': ['bentham'],
+  cora: ['corazon', 'donquixote rosinante'],
   corazon: ['donquixote rosinante'],
   'cat viper': ['nekomamushi'],
   dogstorm: ['inuarashi'],
