@@ -116,6 +116,11 @@
   "opponent": {
     "title": "Αντίπαλη ομάδα",
     "copy": "Διάλεξε χειροκίνητα αντίπαλη ομάδα και δες τα δικά της Rumble buffs.",
+    "awarenessToggle": "Χρήση αντίπαλης ομάδας στο build",
+    "awarenessSupport": {
+      "disabled": "Οι αντίπαλοι εμφανίζονται μόνο οπτικά και δεν επηρεάζουν το επόμενο build.",
+      "enabled": "Το επόμενο build θα κάνει counter σε {{count}} συμπληρωμένο(α) opponent slot(s)."
+    },
     "activeTitle": "Opponent active",
     "benchTitle": "Opponent bench",
     "emptySlot": "Κενό opponent slot",

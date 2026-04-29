@@ -221,6 +221,19 @@
             </div>
           </div>
 
+          <div class="strict-toggle-row opponent-awareness-toggle">
+            <div class="strict-toggle-copy">
+              <strong>{{ t('opponent.awarenessToggle') }}</strong>
+              <small>{{ opponentAwarenessSupportLabel() }}</small>
+            </div>
+            <ion-toggle
+              color="warning"
+              [checked]="opponentAwarenessEnabled()"
+              [disabled]="loading()"
+              (ionChange)="onOpponentAwarenessToggle($event)"
+            ></ion-toggle>
+          </div>
+
           <div class="opponent-team-group">
             <span>{{ t('opponent.activeTitle') }}</span>
             <div class="slot-grid">
@@ -816,7 +829,9 @@
                       #{{ candidate.character.id }} • {{ candidate.character.type }} •
                       {{ candidate.character.primaryClass }}
                     </small>
-                    <small>{{ t('slot.score', { score: formatScore(candidate.baseScore) }) }}</small>
+                    <small>{{
+                      t('slot.score', { score: formatScore(candidate.baseScore) })
+                    }}</small>
                   </span>
                 </button>
               }

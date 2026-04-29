@@ -83,6 +83,12 @@ export interface RumbleTeamSlot {
   reasonChips: string[];
 }
 
+export interface RumbleOpponentSlotContext {
+  characterId: number;
+  role: RumbleTeamSlotRole;
+  index: number;
+}
+
 export interface RumbleTeamResult {
   activeSlots: RumbleTeamSlot[];
   benchSlots: RumbleTeamSlot[];
@@ -110,6 +116,7 @@ export interface RumbleBuildInput {
   favoritesOnly: boolean;
   favoriteCharacterIds: number[];
   candidateCharacterIds?: number[];
+  opponentSlots: RumbleOpponentSlotContext[];
 }
 
 export type RumbleBuildProgressStage =

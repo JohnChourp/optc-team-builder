@@ -578,6 +578,169 @@ describe('AutoTeamBuilderRumbleService', () => {
     expect(selectedIds).not.toContain(narrowDebuffer.id);
   });
 
+  it('keeps the same build when opponent context is empty', () => {
+    const service = createService();
+    const candidates = Array.from({ length: 9 }, (_, index) =>
+      createCharacter(9100 + index, {
+        partyConflictKeys: [`empty-opponent-${index}`],
+        rumbleData: createRumbleData(100 + index),
+      }),
+    );
+
+    const baseline = service.buildTeamFromCandidates(candidates);
+    const withEmptyOpponent = service.buildTeamFromCandidates(candidates, { opponentSlots: [] });
+
+    expect(collectSelectedIds(withEmptyOpponent)).toEqual(collectSelectedIds(baseline));
+    expect(withEmptyOpponent.totalScore).toBe(baseline.totalScore);
+  });
+
+  it('weights active opponent slots above bench slots for matching debuffs', () => {
+    const service = createService();
+    const anchors = Array.from({ length: 7 }, (_, index) =>
+      createCharacter(9200 + index, {
+        maxHp: 1800,
+        maxAtk: 700,
+        maxRcv: 100,
+        partyConflictKeys: [`active-opponent-anchor-${index}`],
+        rumbleData: createRumbleData(120 + index),
+      }),
+    );
+    const activeThreat = createCharacter(9290, {
+      maxAtk: 7200,
+      type: 'DEX',
+      partyConflictKeys: ['active-threat'],
+      rumbleData: createRumbleData(130),
+    });
+    const benchThreat = createCharacter(9291, {
+      type: 'STR',
+      partyConflictKeys: ['bench-threat'],
+      rumbleData: {
+        ...createRumbleData(131),
+        stats: { rumbleType: 'DEF', def: 1000, spd: 80 },
+      },
+    });
+    const atkDebuffer = createCharacter(9292, {
+      maxHp: 2400,
+      maxAtk: 900,
+      maxRcv: 130,
+      partyConflictKeys: ['opponent-counter-role'],
+      rumbleData: createEnemyDebuffRumbleData(9292, ['ATK']),
+    });
+    const defDebuffer = createCharacter(9293, {
+      maxHp: 2400,
+      maxAtk: 900,
+      maxRcv: 130,
+      partyConflictKeys: ['opponent-counter-role'],
+      rumbleData: createEnemyDebuffRumbleData(9293, ['DEF']),
+    });
+
+    const result = service.buildTeamFromCandidates(
+      [...anchors, activeThreat, benchThreat, atkDebuffer, defDebuffer],
+      {
+        opponentSlots: [
+          { characterId: activeThreat.id, role: 'active', index: 0 },
+          { characterId: benchThreat.id, role: 'bench', index: 0 },
+        ],
+      },
+    );
+    const selectedIds = collectSelectedIds(result);
+
+    expect(selectedIds).toContain(atkDebuffer.id);
+    expect(selectedIds).not.toContain(defDebuffer.id);
+  });
+
+  it('prefers enemy debuffs that match opponent strengths when opponent-aware', () => {
+    const service = createService();
+    const anchors = Array.from({ length: 7 }, (_, index) =>
+      createCharacter(9300 + index, {
+        maxHp: 1800,
+        maxAtk: 700,
+        maxRcv: 100,
+        partyConflictKeys: [`matching-debuff-anchor-${index}`],
+        rumbleData: createRumbleData(140 + index),
+      }),
+    );
+    const opponent = createCharacter(9390, {
+      maxAtk: 7600,
+      partyConflictKeys: ['matching-debuff-opponent'],
+      rumbleData: createRumbleData(150),
+    });
+    const matchingDebuffer = createCharacter(9391, {
+      maxHp: 2400,
+      maxAtk: 900,
+      maxRcv: 130,
+      partyConflictKeys: ['matching-debuff-role'],
+      rumbleData: createEnemyDebuffRumbleData(9391, ['ATK']),
+    });
+    const unrelatedDebuffer = createCharacter(9392, {
+      maxHp: 2400,
+      maxAtk: 900,
+      maxRcv: 130,
+      partyConflictKeys: ['matching-debuff-role'],
+      rumbleData: createEnemyDebuffRumbleData(9392, ['RCV']),
+    });
+
+    const result = service.buildTeamFromCandidates(
+      [...anchors, opponent, matchingDebuffer, unrelatedDebuffer],
+      {
+        opponentSlots: [{ characterId: opponent.id, role: 'active', index: 0 }],
+      },
+    );
+    const selectedIds = collectSelectedIds(result);
+
+    expect(selectedIds).toContain(matchingDebuffer.id);
+    expect(selectedIds).not.toContain(unrelatedDebuffer.id);
+    expect(result.topFactors).toContain('Opponent counters: 1 matched');
+  });
+
+  it('prefers resistance and type damage reduction that match the opponent team', () => {
+    const service = createService();
+    const anchors = Array.from({ length: 7 }, (_, index) =>
+      createCharacter(9400 + index, {
+        maxHp: 1800,
+        maxAtk: 700,
+        maxRcv: 100,
+        partyConflictKeys: [`matching-resistance-anchor-${index}`],
+        rumbleData: createRumbleData(160 + index),
+      }),
+    );
+    const opponent = createCharacter(9490, {
+      type: 'STR',
+      partyConflictKeys: ['matching-resistance-opponent'],
+      rumbleData: createEnemyDebuffRumbleData(9490, ['Paralysis']),
+    });
+    const matchingResistance = createCharacter(9491, {
+      maxHp: 2600,
+      maxAtk: 850,
+      maxRcv: 130,
+      partyConflictKeys: ['matching-resistance-role'],
+      rumbleData: createResistanceRumbleData(9491, 'Paralysis', '[STR]'),
+    });
+    const unrelatedResistance = createCharacter(9492, {
+      maxHp: 2600,
+      maxAtk: 850,
+      maxRcv: 130,
+      partyConflictKeys: ['matching-resistance-role'],
+      rumbleData: createResistanceRumbleData(9492, 'Silence', '[DEX]'),
+    });
+
+    const result = service.buildTeamFromCandidates(
+      [...anchors, opponent, matchingResistance, unrelatedResistance],
+      {
+        opponentSlots: [{ characterId: opponent.id, role: 'active', index: 0 }],
+      },
+    );
+    const selectedSlots = [...result.activeSlots, ...result.benchSlots];
+
+    expect(selectedSlots.map((slot) => slot.unit.character.id)).toContain(matchingResistance.id);
+    expect(selectedSlots.map((slot) => slot.unit.character.id)).not.toContain(
+      unrelatedResistance.id,
+    );
+    expect(
+      selectedSlots.find((slot) => slot.unit.character.id === matchingResistance.id)?.reasonChips,
+    ).toEqual(expect.arrayContaining(['Opponent counter', 'Matched resistance']));
+  });
+
   it('does not treat self-only buffs as team buff synergy', () => {
     const service = createService();
     const anchors = Array.from({ length: 7 }, (_, index) =>
@@ -843,6 +1006,47 @@ function createRumbleData(index: number): Record<string, unknown> {
       {
         cooldown: 28 - Math.min(index, 8),
         effects: [{ effect: 'damage', amount: 3 + index }],
+      },
+    ],
+  };
+}
+
+function createEnemyDebuffRumbleData(id: number, attributes: string[]): Record<string, unknown> {
+  return {
+    id,
+    stats: { rumbleType: 'DBF', def: 30, spd: 30 },
+    special: [
+      {
+        cooldown: 24,
+        effects: [
+          {
+            attributes,
+            effect: 'debuff',
+            level: 6,
+            targeting: { targets: ['enemies'] },
+          },
+        ],
+      },
+    ],
+  };
+}
+
+function createResistanceRumbleData(
+  id: number,
+  debuffAttribute: string,
+  damageType: string,
+): Record<string, unknown> {
+  return {
+    id,
+    stats: { rumbleType: 'DEF', def: 65, spd: 45 },
+    resilience: [
+      { attribute: debuffAttribute, chance: 80, type: 'debuff' },
+      { attribute: damageType, percentage: 35, type: 'damage' },
+    ],
+    special: [
+      {
+        cooldown: 28,
+        effects: [{ effect: 'guard', attributes: ['DEF'], level: 2 }],
       },
     ],
   };

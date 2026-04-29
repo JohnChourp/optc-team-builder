@@ -57,6 +57,7 @@ describe('AutoTeamBuilderRumblePage', () => {
         favoritesOnly: false,
         favoriteCharacterIds: [1001, 1002],
         candidateCharacterIds: undefined,
+        opponentSlots: [],
       },
       expect.objectContaining({
         signal: expect.any(AbortSignal),
@@ -158,14 +159,17 @@ describe('AutoTeamBuilderRumblePage', () => {
     expect(template).toContain("t('active.title')");
     expect(template).toContain("t('bench.title')");
     expect(template).toContain("t('opponent.title')");
+    expect(template).toContain("t('opponent.awarenessToggle')");
+    expect(template).toContain('opponentAwarenessEnabled()');
+    expect(template).toContain('onOpponentAwarenessToggle($event)');
     expect(template).toContain('opponentActiveSlots()');
     expect(template).toContain('opponentBenchSlots()');
     expect(template).toContain('currentResult.activeSlots');
     expect(template).toContain('currentResult.benchSlots');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(slot)"');
     expect(template).toContain('(click)="openManualCharacterPicker(slot)"');
-    expect(template).toContain("(click)=\"openOpponentCharacterPicker('active', $index)\"");
-    expect(template).toContain("(click)=\"clearOpponentSlot('active', $index)\"");
+    expect(template).toContain('(click)="openOpponentCharacterPicker(\'active\', $index)"');
+    expect(template).toContain('(click)="clearOpponentSlot(\'active\', $index)"');
     expect(template).toContain('(click)="excludeCharacter(slot)"');
     expect(template).toContain('(click)="cancelBuild()"');
     expect(template).toContain("t('excluded.title')");
@@ -318,6 +322,7 @@ describe('AutoTeamBuilderRumblePage', () => {
         favoritesOnly: true,
         favoriteCharacterIds: [1001, 1002],
         candidateCharacterIds: undefined,
+        opponentSlots: [],
       }),
       expect.objectContaining({
         signal: expect.any(AbortSignal),
@@ -348,6 +353,7 @@ describe('AutoTeamBuilderRumblePage', () => {
         onlySelectedClasses: false,
         favoritesOnly: true,
         favoriteCharacterIds: [1001, 1002],
+        opponentSlots: [],
       },
       favoriteCount: 2,
       workerPreference: { mode: 'auto', manualCount: 2 },
@@ -472,6 +478,40 @@ describe('AutoTeamBuilderRumblePage', () => {
     await page.buildTeam();
 
     expect(page.result()?.selectedCount).toBe(8);
+    expect(page.opponentActiveSlots()[0]?.unit.character.id).toBe(opponentSlot.unit.character.id);
+  });
+
+  it('defaults opponent-aware builds off and only passes opponent slots when enabled', async () => {
+    const opponentSlot = createSlot('active', 0);
+    const opponentBenchSlot = createSlot('bench', 0);
+    opponentBenchSlot.unit.character.id = 1071;
+    const { page, rumbleBuilder } = createPage();
+
+    await page.ngOnInit();
+    page.opponentActiveSlots.set([opponentSlot, null, null, null, null]);
+    page.opponentBenchSlots.set([opponentBenchSlot, null, null]);
+    await page.buildTeam();
+
+    expect(page.opponentAwarenessEnabled()).toBe(false);
+    expect(rumbleBuilder.buildBestTeam).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        opponentSlots: [],
+      }),
+      expect.any(Object),
+    );
+
+    page.onOpponentAwarenessToggle({ detail: { checked: true } } as never);
+    await page.buildTeam();
+
+    expect(rumbleBuilder.buildBestTeam).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        opponentSlots: [
+          { characterId: opponentSlot.unit.character.id, role: 'active', index: 0 },
+          { characterId: opponentBenchSlot.unit.character.id, role: 'bench', index: 0 },
+        ],
+      }),
+      expect.any(Object),
+    );
     expect(page.opponentActiveSlots()[0]?.unit.character.id).toBe(opponentSlot.unit.character.id);
   });
 
@@ -706,6 +746,7 @@ function createResult(): RumbleTeamResult {
       onlySelectedClasses: false,
       favoritesOnly: false,
       favoriteCharacterIds: [],
+      opponentSlots: [],
     },
     requestedTypes: [],
     requestedClasses: [],
@@ -771,9 +812,7 @@ function createSlot(
   } as RumbleTeamResult['activeSlots'][number];
 }
 
-function createEffect(
-  overrides: Partial<NormalizedRumbleEffect> = {},
-): NormalizedRumbleEffect {
+function createEffect(overrides: Partial<NormalizedRumbleEffect> = {}): NormalizedRumbleEffect {
   return {
     source: overrides.source ?? 'ability',
     sourceLevel: overrides.sourceLevel ?? 1,

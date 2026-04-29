@@ -155,6 +155,7 @@ function cloneRumbleBuildInput(input: RumbleBuildInput): RumbleBuildInput {
     candidateCharacterIds: input.candidateCharacterIds
       ? [...input.candidateCharacterIds]
       : undefined,
+    opponentSlots: (input.opponentSlots ?? []).map((slot) => ({ ...slot })),
   };
 }
 

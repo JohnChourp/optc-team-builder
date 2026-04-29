@@ -116,6 +116,11 @@
   "opponent": {
     "title": "Opponent team",
     "copy": "Pick a manual opponent team and inspect its own Rumble buffs.",
+    "awarenessToggle": "Use opponent team for build",
+    "awarenessSupport": {
+      "disabled": "Opponent picks are shown only and will not affect the next build.",
+      "enabled": "The next build will counter {{count}} filled opponent slot(s)."
+    },
     "activeTitle": "Opponent active",
     "benchTitle": "Opponent bench",
     "emptySlot": "Empty opponent slot",

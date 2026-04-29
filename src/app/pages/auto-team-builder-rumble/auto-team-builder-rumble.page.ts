@@ -36,6 +36,7 @@ import {
   type NormalizedRumbleEffect,
   type NormalizedRumbleRoleTag,
   type RumbleBuildProgressSnapshot,
+  type RumbleOpponentSlotContext,
   type RumbleTeamResult,
   type RumbleTeamSlot,
   type RumbleTeamSlotRole,
@@ -146,6 +147,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   public readonly opponentBenchSlots = signal<OptionalRumbleTeamSlot[]>(
     createEmptyRumbleSlots(RUMBLE_BENCH_SLOT_COUNT),
   );
+  public readonly opponentAwarenessEnabled = signal(false);
   public readonly excludedCharacterIds = signal<number[]>([]);
   private readonly excludedCharacterRecordsById = signal<Record<number, CharacterDetailRecord>>({});
   private readonly buildProgressNowMs = signal(0);
@@ -182,6 +184,13 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       .filter((character): character is CharacterDetailRecord => Boolean(character));
   });
   public readonly hasExcludedCharacters = computed(() => this.excludedCharacterIds().length > 0);
+  public readonly opponentAwarenessSupportLabel = computed(() =>
+    this.opponentAwarenessEnabled()
+      ? this.t('opponent.awarenessSupport.enabled', {
+          count: this.collectOpponentTeamSlots().length,
+        })
+      : this.t('opponent.awarenessSupport.disabled'),
+  );
   public readonly canDownloadSettingsJson = computed(() => this.initialized());
   public readonly canDownloadTeamJson = computed(() => {
     const currentResult = this.result();
@@ -234,19 +243,17 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       ? this.t('filters.classes.onlySupport.strict')
       : this.t('filters.classes.onlySupport.soft'),
   );
-  public readonly emptyStateVisible = computed(
-    () => {
-      const currentResult = this.result();
+  public readonly emptyStateVisible = computed(() => {
+    const currentResult = this.result();
 
-      return Boolean(
-        currentResult &&
-          !this.loading() &&
-          !this.errorMessage() &&
-          !this.strictTypeBlockedStateVisible() &&
-          currentResult.candidateCount === 0,
-      );
-    },
-  );
+    return Boolean(
+      currentResult &&
+      !this.loading() &&
+      !this.errorMessage() &&
+      !this.strictTypeBlockedStateVisible() &&
+      currentResult.candidateCount === 0,
+    );
+  });
   public readonly insufficientStateVisible = computed(() => {
     const currentResult = this.result();
 
@@ -460,6 +467,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
             favoritesOnly: this.favoritesOnly(),
             favoriteCharacterIds: this.favoriteCharacterIds(),
             candidateCharacterIds,
+            opponentSlots: this.opponentAwarenessEnabled() ? this.buildOpponentSlotContexts() : [],
           },
           executionOptions,
         ),
@@ -504,6 +512,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
         onlySelectedClasses: this.onlySelectedClasses(),
         favoritesOnly: this.favoritesOnly(),
         favoriteCharacterIds: [...this.favoriteCharacterIds()],
+        opponentSlots: [],
       },
       favoriteCount: this.favoriteCharacterIds().length,
       workerPreference: this.autoTeamBuilderWorkerPreference(),
@@ -554,6 +563,11 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
 
   public onOnlySelectedClassesToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.onlySelectedClasses.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
+  public onOpponentAwarenessToggle(event: CustomEvent<{ checked: boolean }>): void {
+    this.opponentAwarenessEnabled.set(event.detail.checked);
     this.resetBuildState();
   }
 
@@ -730,10 +744,12 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   public clearOpponentSlot(role: RumbleTeamSlotRole, index: number): void {
     if (role === 'active') {
       this.opponentActiveSlots.update((slots) => this.replaceOptionalSlot(slots, index, null));
+      this.resetBuildStateAfterOpponentChange();
       return;
     }
 
     this.opponentBenchSlots.update((slots) => this.replaceOptionalSlot(slots, index, null));
+    this.resetBuildStateAfterOpponentChange();
   }
 
   public async excludeCharacter(slot: RumbleTeamSlot): Promise<void> {
@@ -811,12 +827,20 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       this.opponentActiveSlots.update((slots) =>
         this.replaceOptionalSlot(slots, target.index, replacementSlot),
       );
+      this.resetBuildStateAfterOpponentChange();
       return;
     }
 
     this.opponentBenchSlots.update((slots) =>
       this.replaceOptionalSlot(slots, target.index, replacementSlot),
     );
+    this.resetBuildStateAfterOpponentChange();
+  }
+
+  private resetBuildStateAfterOpponentChange(): void {
+    if (this.opponentAwarenessEnabled()) {
+      this.resetBuildState();
+    }
   }
 
   private resolveSelectedCharacterIds(target: ManualSlotTarget | null): Set<number> {
@@ -878,7 +902,9 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   }
 
   private collectTypeCoverage(slots: RumbleTeamSlot[]): string[] {
-    return [...new Set(slots.flatMap((slot) => this.resolveCharacterTypes(slot.unit.character)))].sort();
+    return [
+      ...new Set(slots.flatMap((slot) => this.resolveCharacterTypes(slot.unit.character))),
+    ].sort();
   }
 
   private collectClassCoverage(slots: RumbleTeamSlot[]): string[] {
@@ -916,6 +942,14 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     return [...this.opponentActiveSlots(), ...this.opponentBenchSlots()].filter(
       (slot): slot is RumbleTeamSlot => Boolean(slot),
     );
+  }
+
+  private buildOpponentSlotContexts(): RumbleOpponentSlotContext[] {
+    return this.collectOpponentTeamSlots().map((slot) => ({
+      characterId: slot.unit.character.id,
+      role: slot.role,
+      index: slot.index,
+    }));
   }
 
   private resolveSlotTotalBuffs(
@@ -979,7 +1013,11 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   }
 
   private resolveBuffStats(effect: NormalizedRumbleEffect): RumbleBuffStat[] {
-    const rawStats = effect.attributes.length ? effect.attributes : effect.type ? [effect.type] : [];
+    const rawStats = effect.attributes.length
+      ? effect.attributes
+      : effect.type
+        ? [effect.type]
+        : [];
     const stats = rawStats
       .map((stat) => this.normalizeBuffStat(stat))
       .filter((stat): stat is RumbleBuffStat => Boolean(stat));

@@ -7,6 +7,7 @@ import {
   type NormalizedRumbleRoleTag,
   type RumbleBuildInput,
   type RumbleBuildProgressSnapshot,
+  type RumbleOpponentSlotContext,
   type RumbleScoreBreakdown,
   type RumbleTeamResult,
   type RumbleTeamSlot,
@@ -20,6 +21,21 @@ import { type CharacterDetailRecord } from '../models/optc.models';
 import { resolveCharacterPartyConflictKeys } from './auto-team-builder.utils';
 
 type UnknownRecord = Record<string, unknown>;
+type OpponentCounterAttribute = RumbleSynergyAttribute | string;
+
+interface RumbleOpponentUnit {
+  unit: RumbleUnitScore;
+  slot: RumbleOpponentSlotContext;
+  weight: number;
+}
+
+interface RumbleOpponentProfile {
+  units: RumbleOpponentUnit[];
+  totalWeight: number;
+  attributeThreatWeights: Map<OpponentCounterAttribute, number>;
+  debuffThreatWeights: Map<OpponentCounterAttribute, number>;
+  typeWeights: Map<string, number>;
+}
 
 export interface RumbleBuildAttempt {
   resolvedTypes: AutoTeamBuilderType[];
@@ -49,6 +65,7 @@ const EMPTY_INPUT: RumbleBuildInput = {
   onlySelectedClasses: false,
   favoritesOnly: false,
   favoriteCharacterIds: [],
+  opponentSlots: [],
 };
 
 const RUMBLE_SYNERGY_ATTRIBUTES = ['HP', 'ATK', 'DEF', 'RCV', 'Special CT'] as const;
@@ -64,6 +81,13 @@ const RUMBLE_SYNERGY_ATTRIBUTE_WEIGHTS: Record<RumbleSynergyAttribute, number> =
 
 const ACTIVE_SLOT_WEIGHT = 1;
 const BENCH_SLOT_WEIGHT = 0.45;
+const EMPTY_OPPONENT_PROFILE: RumbleOpponentProfile = {
+  units: [],
+  totalWeight: 0,
+  attributeThreatWeights: new Map(),
+  debuffThreatWeights: new Map(),
+  typeWeights: new Map(),
+};
 
 export function normalizeRumbleBuildInput(input: Partial<RumbleBuildInput> = {}): RumbleBuildInput {
   const typeSet = new Set<AutoTeamBuilderType>(AUTO_TEAM_BUILDER_TYPES);
@@ -91,6 +115,7 @@ export function normalizeRumbleBuildInput(input: Partial<RumbleBuildInput> = {})
     candidateCharacterIds: input.candidateCharacterIds
       ? normalizePositiveIntegerCollection(input.candidateCharacterIds)
       : undefined,
+    opponentSlots: normalizeRumbleOpponentSlots(input.opponentSlots),
   };
 }
 
@@ -105,6 +130,9 @@ export function runRumbleTeamBuildSearch(
   const engine = new RumbleTeamBuilderEngine();
   const scopedCandidates = applyCandidateScope(candidates, input);
   const scoredCandidates = engine.scoreCandidates(scopedCandidates);
+  const opponentProfile = input.opponentSlots.length
+    ? engine.createOpponentProfile(engine.scoreCandidates(candidates), input.opponentSlots)
+    : EMPTY_OPPONENT_PROFILE;
   const attempts = createRumbleBuildAttempts(input);
 
   emitProgress(options, {
@@ -148,7 +176,12 @@ export function runRumbleTeamBuildSearch(
       },
     });
 
-    const result = engine.buildTeamFromScoredCandidates(scoredCandidates, input, attempt);
+    const result = engine.buildTeamFromScoredCandidates(
+      scoredCandidates,
+      input,
+      attempt,
+      opponentProfile,
+    );
     const attemptDuration = Math.max(0, now() - attemptStartedAt);
     totalCompletedMs += attemptDuration;
 
@@ -212,25 +245,31 @@ export class RumbleTeamBuilderEngine {
     scoredCandidates: RumbleUnitScore[],
     input: RumbleBuildInput,
     attempt: RumbleBuildAttempt,
+    opponentProfile: RumbleOpponentProfile = EMPTY_OPPONENT_PROFILE,
   ): RumbleTeamResult {
     if (!scoredCandidates.length) {
       return this.createEmptyResult(0, input, attempt);
     }
 
     const selectedUnits = this.improveTeam(
-      this.pickGreedyTeam(scoredCandidates, attempt),
+      this.pickGreedyTeam(scoredCandidates, attempt, opponentProfile),
       scoredCandidates,
       attempt,
+      opponentProfile,
     );
     const activeUnits = selectedUnits.slice(0, RUMBLE_ACTIVE_SLOT_COUNT);
     const benchUnits = selectedUnits.slice(RUMBLE_ACTIVE_SLOT_COUNT, RUMBLE_TOTAL_SLOT_COUNT);
-    const activeSlots = activeUnits.map((unit, index) => this.createSlot('active', index, unit));
-    const benchSlots = benchUnits.map((unit, index) => this.createSlot('bench', index, unit));
+    const activeSlots = activeUnits.map((unit, index) =>
+      this.createSlot('active', index, unit, opponentProfile),
+    );
+    const benchSlots = benchUnits.map((unit, index) =>
+      this.createSlot('bench', index, unit, opponentProfile),
+    );
     const allUnits = [...activeUnits, ...benchUnits];
     const roleCoverage = this.collectRoleCoverage(allUnits);
     const typeCoverage = this.collectTypeCoverage(allUnits);
     const classCoverage = this.collectClassCoverage(allUnits);
-    const totalScore = this.scoreTeam(allUnits, attempt);
+    const totalScore = this.scoreTeam(allUnits, attempt, opponentProfile);
 
     return {
       activeSlots,
@@ -241,7 +280,7 @@ export class RumbleTeamBuilderEngine {
       roleCoverage,
       typeCoverage,
       classCoverage,
-      topFactors: this.buildTopFactors(activeUnits, benchUnits, roleCoverage),
+      topFactors: this.buildTopFactors(activeUnits, benchUnits, roleCoverage, opponentProfile),
       input,
       requestedTypes: [...input.types],
       requestedClasses: [...input.selectedClasses],
@@ -263,6 +302,103 @@ export class RumbleTeamBuilderEngine {
       })
       .filter((candidate): candidate is RumbleUnitScore => Boolean(candidate))
       .sort(compareUnitScores);
+  }
+
+  public createOpponentProfile(
+    scoredCandidates: RumbleUnitScore[],
+    opponentSlots: RumbleOpponentSlotContext[],
+  ): RumbleOpponentProfile {
+    if (!opponentSlots.length) {
+      return EMPTY_OPPONENT_PROFILE;
+    }
+
+    const candidatesById = new Map(
+      scoredCandidates.map((candidate) => [candidate.character.id, candidate]),
+    );
+    const seenSlotKeys = new Set<string>();
+    const units: RumbleOpponentUnit[] = [];
+    const attributeThreatWeights = new Map<OpponentCounterAttribute, number>();
+    const debuffThreatWeights = new Map<OpponentCounterAttribute, number>();
+    const typeWeights = new Map<string, number>();
+
+    opponentSlots.forEach((slot) => {
+      const unit = candidatesById.get(slot.characterId);
+      const slotKey = `${slot.role}:${slot.index}`;
+
+      if (!unit || seenSlotKeys.has(slotKey)) {
+        return;
+      }
+
+      seenSlotKeys.add(slotKey);
+      const weight = slot.role === 'bench' ? BENCH_SLOT_WEIGHT : ACTIVE_SLOT_WEIGHT;
+      units.push({ unit, slot, weight });
+
+      this.addOpponentThreatWeight(
+        attributeThreatWeights,
+        'HP',
+        ((unit.character.stats.max.hp ?? 0) / 900) * weight,
+      );
+      this.addOpponentThreatWeight(
+        attributeThreatWeights,
+        'ATK',
+        ((unit.character.stats.max.atk ?? 0) / 260) * weight,
+      );
+      this.addOpponentThreatWeight(
+        attributeThreatWeights,
+        'RCV',
+        ((unit.character.stats.max.rcv ?? 0) / 110) * weight,
+      );
+      this.addOpponentThreatWeight(
+        attributeThreatWeights,
+        'DEF',
+        ((unit.normalized.def ?? 0) / 24) * weight,
+      );
+      this.addOpponentThreatWeight(
+        attributeThreatWeights,
+        'SPD',
+        ((unit.normalized.spd ?? 0) / 24) * weight,
+      );
+
+      if (unit.normalized.cooldown !== null) {
+        this.addOpponentThreatWeight(
+          attributeThreatWeights,
+          'Special CT',
+          (Math.max(0, 45 - unit.normalized.cooldown) / 4) * weight,
+        );
+      }
+
+      this.resolveCharacterTypes(unit.character).forEach((type) =>
+        this.addOpponentThreatWeight(typeWeights, type, weight),
+      );
+
+      this.resolveMaxLevelEffects(unit.normalized)
+        .filter((effect) => this.isEnemyDebuffEffect(effect))
+        .forEach((effect) => {
+          const attributes = this.resolveOpponentCounterAttributes(effect);
+          const effectWeight =
+            this.resolveEffectStrength(effect) *
+            this.resolveEnemyCoverageWeight(effect) *
+            this.resolveEffectSourceWeight(effect) *
+            this.resolveConditionalWeight(effect) *
+            weight;
+
+          attributes.forEach((attribute) =>
+            this.addOpponentThreatWeight(debuffThreatWeights, attribute, effectWeight),
+          );
+        });
+    });
+
+    if (!units.length) {
+      return EMPTY_OPPONENT_PROFILE;
+    }
+
+    return {
+      units,
+      totalWeight: units.reduce((total, unit) => total + unit.weight, 0),
+      attributeThreatWeights,
+      debuffThreatWeights,
+      typeWeights,
+    };
   }
 
   public normalizeRumbleData(
@@ -417,6 +553,7 @@ export class RumbleTeamBuilderEngine {
   private pickGreedyTeam(
     scoredCandidates: RumbleUnitScore[],
     attempt: RumbleBuildAttempt,
+    opponentProfile: RumbleOpponentProfile,
   ): RumbleUnitScore[] {
     const selected: RumbleUnitScore[] = [];
 
@@ -428,7 +565,7 @@ export class RumbleTeamBuilderEngine {
         .filter((candidate) => !this.hasConflict(candidate, selected))
         .map((candidate) => ({
           candidate,
-          score: this.scoreTeam([...selected, candidate], attempt),
+          score: this.scoreTeam([...selected, candidate], attempt, opponentProfile),
         }))
         .sort(
           (left, right) =>
@@ -449,11 +586,12 @@ export class RumbleTeamBuilderEngine {
     units: RumbleUnitScore[],
     scoredCandidates: RumbleUnitScore[],
     attempt: RumbleBuildAttempt,
+    opponentProfile: RumbleOpponentProfile,
   ): RumbleUnitScore[] {
     let current = [...units];
 
     for (let pass = 0; pass < 4; pass += 1) {
-      const currentScore = this.scoreTeam(current, attempt);
+      const currentScore = this.scoreTeam(current, attempt, opponentProfile);
       let bestTeam = current;
       let bestScore = currentScore;
 
@@ -476,7 +614,7 @@ export class RumbleTeamBuilderEngine {
             return;
           }
 
-          const nextScore = this.scoreTeam(nextTeam, attempt);
+          const nextScore = this.scoreTeam(nextTeam, attempt, opponentProfile);
 
           if (nextScore > bestScore + 0.1) {
             bestTeam = nextTeam;
@@ -495,7 +633,11 @@ export class RumbleTeamBuilderEngine {
     return current;
   }
 
-  private scoreTeam(units: RumbleUnitScore[], attempt: RumbleBuildAttempt): number {
+  private scoreTeam(
+    units: RumbleUnitScore[],
+    attempt: RumbleBuildAttempt,
+    opponentProfile: RumbleOpponentProfile,
+  ): number {
     const typeCounts = new Map<string, number>();
     const classCounts = new Map<string, number>();
     const roleSet = new Set<NormalizedRumbleRoleTag>();
@@ -547,6 +689,7 @@ export class RumbleTeamBuilderEngine {
       roleCoverageSynergy +
       rumbleTypeCoverageSynergy +
       this.scoreRumbleEffectSynergy(units) +
+      this.scoreOpponentCounterSynergy(units, opponentProfile) +
       coverageBonus
     );
   }
@@ -566,6 +709,113 @@ export class RumbleTeamBuilderEngine {
       );
 
       return total + buffScore + debuffScore;
+    }, 0);
+  }
+
+  private scoreOpponentCounterSynergy(
+    units: RumbleUnitScore[],
+    opponentProfile: RumbleOpponentProfile,
+  ): number {
+    if (!opponentProfile.units.length) {
+      return 0;
+    }
+
+    return units.reduce(
+      (total, unit, index) =>
+        total +
+        this.scoreUnitOpponentCounters(unit, opponentProfile) * this.resolveSlotWeight(index),
+      0,
+    );
+  }
+
+  private scoreUnitOpponentCounters(
+    unit: RumbleUnitScore,
+    opponentProfile: RumbleOpponentProfile,
+  ): number {
+    if (!opponentProfile.units.length) {
+      return 0;
+    }
+
+    const debuffScore = this.resolveMaxLevelEffects(unit.normalized)
+      .filter((effect) => this.isEnemyDebuffEffect(effect))
+      .reduce(
+        (total, effect) => total + this.scoreOpponentDebuffCounter(effect, opponentProfile),
+        0,
+      );
+    const resistanceScore = this.scoreOpponentResistanceCounters(unit, opponentProfile);
+
+    return debuffScore + resistanceScore;
+  }
+
+  private scoreOpponentDebuffCounter(
+    effect: NormalizedRumbleEffect,
+    opponentProfile: RumbleOpponentProfile,
+  ): number {
+    const attributes = this.resolveOpponentCounterAttributes(effect);
+
+    if (!attributes.length) {
+      return 0;
+    }
+
+    const threatWeight = attributes.reduce(
+      (total, attribute) => total + (opponentProfile.attributeThreatWeights.get(attribute) ?? 0),
+      0,
+    );
+
+    if (threatWeight <= 0) {
+      return 0;
+    }
+
+    const broadTargetWeight =
+      effect.targetCount === null || effect.targetCount <= 0
+        ? Math.max(1, opponentProfile.totalWeight)
+        : Math.min(Math.max(1, opponentProfile.totalWeight), effect.targetCount);
+
+    return (
+      (this.scoreSynergyAttributes(
+        attributes.filter((attribute): attribute is RumbleSynergyAttribute =>
+          this.isRumbleSynergyAttribute(attribute),
+        ),
+      ) *
+        0.45 +
+        18) *
+      this.resolveEffectStrength(effect) *
+      this.resolveEffectSourceWeight(effect) *
+      this.resolveConditionalWeight(effect) *
+      Math.min(2.5, Math.max(0.7, broadTargetWeight)) *
+      Math.min(2.4, Math.max(0.8, threatWeight / 9))
+    );
+  }
+
+  private scoreOpponentResistanceCounters(
+    unit: RumbleUnitScore,
+    opponentProfile: RumbleOpponentProfile,
+  ): number {
+    const resistanceTexts = [...unit.normalized.baseResistances, ...unit.normalized.llbResistances];
+
+    return resistanceTexts.reduce((total, resistanceText) => {
+      const debuffResistance = this.parseDebuffResistance(resistanceText);
+
+      if (debuffResistance) {
+        const threatWeight =
+          opponentProfile.debuffThreatWeights.get(debuffResistance.attribute) ?? 0;
+
+        if (threatWeight > 0) {
+          return total + Math.min(170, (debuffResistance.chance / 100) * threatWeight * 18);
+        }
+      }
+
+      const damageResistance = this.parseTypeDamageResistance(resistanceText);
+
+      if (damageResistance) {
+        const typeWeight = opponentProfile.typeWeights.get(damageResistance.type) ?? 0;
+
+        if (typeWeight > 0) {
+          return total + Math.min(130, (damageResistance.percentage / 100) * typeWeight * 135);
+        }
+      }
+
+      return total;
     }, 0);
   }
 
@@ -720,6 +970,46 @@ export class RumbleTeamBuilderEngine {
     return [...new Set(attributes)];
   }
 
+  private resolveOpponentCounterAttributes(
+    effect: NormalizedRumbleEffect,
+  ): OpponentCounterAttribute[] {
+    const rawAttributes = [
+      ...effect.attributes,
+      effect.type,
+      effect.targetStat,
+      effect.effect,
+    ].filter((attribute): attribute is string => Boolean(attribute));
+    const attributes = rawAttributes
+      .map((attribute) => this.normalizeOpponentCounterAttribute(attribute))
+      .filter((attribute): attribute is OpponentCounterAttribute => Boolean(attribute));
+
+    return [...new Set(attributes)];
+  }
+
+  private normalizeOpponentCounterAttribute(value: string): OpponentCounterAttribute | null {
+    const normalized = this.normalizeMatchToken(value);
+
+    if (!normalized || normalized === 'debuff' || normalized === 'hinderance') {
+      return null;
+    }
+
+    if (normalized === 'special cooldown' || normalized === 'ct') {
+      return 'Special CT';
+    }
+
+    const synergyAttribute = RUMBLE_SYNERGY_ATTRIBUTES.find(
+      (attribute) => attribute.toLowerCase() === normalized,
+    );
+
+    return synergyAttribute ?? normalized.replace(/\b\w/g, (character) => character.toUpperCase());
+  }
+
+  private isRumbleSynergyAttribute(
+    value: OpponentCounterAttribute,
+  ): value is RumbleSynergyAttribute {
+    return RUMBLE_SYNERGY_ATTRIBUTES.includes(value as RumbleSynergyAttribute);
+  }
+
   private normalizeSynergyAttribute(value: string): RumbleSynergyAttribute | null {
     const normalized = value
       .replace(/^\[([^\]]+)\]$/, '$1')
@@ -740,6 +1030,46 @@ export class RumbleTeamBuilderEngine {
       (total, attribute) => total + RUMBLE_SYNERGY_ATTRIBUTE_WEIGHTS[attribute],
       0,
     );
+  }
+
+  private addOpponentThreatWeight<T extends string>(
+    map: Map<T, number>,
+    key: T,
+    weight: number,
+  ): void {
+    if (weight <= 0) {
+      return;
+    }
+
+    map.set(key, (map.get(key) ?? 0) + weight);
+  }
+
+  private parseDebuffResistance(
+    value: string,
+  ): { attribute: OpponentCounterAttribute; chance: number } | null {
+    const match = value.match(/^(\d+(?:\.\d+)?)%\s+chance to resist\s+(.+)$/i);
+
+    if (!match) {
+      return null;
+    }
+
+    const attribute = this.normalizeOpponentCounterAttribute(match[2]);
+    const chance = toFiniteNumber(match[1]);
+
+    return attribute && chance !== null ? { attribute, chance } : null;
+  }
+
+  private parseTypeDamageResistance(value: string): { type: string; percentage: number } | null {
+    const match = value.match(/^(\d+(?:\.\d+)?)%\s+damage reduction from\s+([A-Z]+)\s+enemies$/i);
+
+    if (!match) {
+      return null;
+    }
+
+    const percentage = toFiniteNumber(match[1]);
+    const type = match[2].toUpperCase();
+
+    return percentage !== null ? { type, percentage } : null;
   }
 
   private resolveEffectStrength(effect: NormalizedRumbleEffect): number {
@@ -1121,6 +1451,7 @@ export class RumbleTeamBuilderEngine {
     activeUnits: RumbleUnitScore[],
     benchUnits: RumbleUnitScore[],
     roleCoverage: NormalizedRumbleRoleTag[],
+    opponentProfile: RumbleOpponentProfile,
   ): string[] {
     const bestUnits = [...activeUnits, ...benchUnits]
       .slice(0, 3)
@@ -1136,6 +1467,12 @@ export class RumbleTeamBuilderEngine {
         ? `Roles: ${roleCoverage.map((role) => ROLE_LABELS[role]).join(', ')}`
         : null,
       bestCooldown ? `Fastest CT: ${bestCooldown}` : null,
+      this.hasOpponentCounterCoverage([...activeUnits, ...benchUnits], opponentProfile)
+        ? `Opponent counters: ${this.countOpponentCounterUnits(
+            [...activeUnits, ...benchUnits],
+            opponentProfile,
+          )} matched`
+        : null,
     ].filter((factor): factor is string => Boolean(factor));
   }
 
@@ -1155,16 +1492,76 @@ export class RumbleTeamBuilderEngine {
     role: RumbleTeamSlot['role'],
     index: number,
     unit: RumbleUnitScore,
+    opponentProfile: RumbleOpponentProfile = EMPTY_OPPONENT_PROFILE,
   ): RumbleTeamSlot {
     const synergyScore = Math.round(unit.baseScore * (role === 'bench' ? 0.45 : 1));
+    const opponentReasonChips = this.buildOpponentCounterReasonChips(unit, opponentProfile);
 
     return {
       role,
       index,
       unit,
       score: synergyScore,
-      reasonChips: role === 'bench' ? ['Bench value', ...unit.reasonChips] : unit.reasonChips,
+      reasonChips:
+        role === 'bench'
+          ? ['Bench value', ...unit.reasonChips, ...opponentReasonChips]
+          : [...unit.reasonChips, ...opponentReasonChips],
     };
+  }
+
+  private hasOpponentCounterCoverage(
+    units: RumbleUnitScore[],
+    opponentProfile: RumbleOpponentProfile,
+  ): boolean {
+    return this.countOpponentCounterUnits(units, opponentProfile) > 0;
+  }
+
+  private countOpponentCounterUnits(
+    units: RumbleUnitScore[],
+    opponentProfile: RumbleOpponentProfile,
+  ): number {
+    if (!opponentProfile.units.length) {
+      return 0;
+    }
+
+    return units.filter((unit) => this.scoreUnitOpponentCounters(unit, opponentProfile) > 0).length;
+  }
+
+  private buildOpponentCounterReasonChips(
+    unit: RumbleUnitScore,
+    opponentProfile: RumbleOpponentProfile,
+  ): string[] {
+    if (!opponentProfile.units.length) {
+      return [];
+    }
+
+    const hasMatchedDebuff = this.resolveMaxLevelEffects(unit.normalized)
+      .filter((effect) => this.isEnemyDebuffEffect(effect))
+      .some((effect) =>
+        this.resolveOpponentCounterAttributes(effect).some((attribute) =>
+          opponentProfile.attributeThreatWeights.has(attribute),
+        ),
+      );
+    const hasMatchedResistance = [
+      ...unit.normalized.baseResistances,
+      ...unit.normalized.llbResistances,
+    ].some((resistanceText) => {
+      const debuffResistance = this.parseDebuffResistance(resistanceText);
+
+      if (debuffResistance && opponentProfile.debuffThreatWeights.has(debuffResistance.attribute)) {
+        return true;
+      }
+
+      const damageResistance = this.parseTypeDamageResistance(resistanceText);
+
+      return Boolean(damageResistance && opponentProfile.typeWeights.has(damageResistance.type));
+    });
+
+    return [
+      hasMatchedDebuff || hasMatchedResistance ? 'Opponent counter' : null,
+      hasMatchedDebuff ? 'Matched debuff' : null,
+      hasMatchedResistance ? 'Matched resistance' : null,
+    ].filter((chip): chip is string => Boolean(chip));
   }
 
   private hasUsableRumblePayload(normalized: NormalizedRumbleData): boolean {
@@ -1324,9 +1721,8 @@ function applyCandidateScope(
   candidates: CharacterDetailRecord[],
   input: RumbleBuildInput,
 ): CharacterDetailRecord[] {
-  const scopedIds = input.candidateCharacterIds !== undefined
-    ? new Set(input.candidateCharacterIds)
-    : null;
+  const scopedIds =
+    input.candidateCharacterIds !== undefined ? new Set(input.candidateCharacterIds) : null;
   const favoriteIds = input.favoritesOnly ? new Set(input.favoriteCharacterIds) : null;
   const onlyTypeSet = input.onlySelectedTypes ? new Set(input.types) : null;
   const onlyClassSet = input.onlySelectedClasses ? new Set(input.selectedClasses) : null;
@@ -1510,6 +1906,50 @@ function normalizePositiveIntegerCollection(values: number[] | undefined): numbe
   }
 
   return [...new Set(values.filter((value) => Number.isInteger(value) && value > 0))];
+}
+
+function normalizeRumbleOpponentSlots(
+  values: RumbleOpponentSlotContext[] | undefined,
+): RumbleOpponentSlotContext[] {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+
+  const normalizedSlots: RumbleOpponentSlotContext[] = [];
+  const seenKeys = new Set<string>();
+
+  values.forEach((value) => {
+    if (!value || typeof value !== 'object') {
+      return;
+    }
+
+    const characterId = Number(value.characterId);
+    const index = Number(value.index);
+    const role = value.role;
+    const maxIndex = role === 'active' ? RUMBLE_ACTIVE_SLOT_COUNT : RUMBLE_BENCH_SLOT_COUNT;
+
+    if (
+      (role !== 'active' && role !== 'bench') ||
+      !Number.isInteger(characterId) ||
+      characterId <= 0 ||
+      !Number.isInteger(index) ||
+      index < 0 ||
+      index >= maxIndex
+    ) {
+      return;
+    }
+
+    const key = `${role}:${index}`;
+
+    if (seenKeys.has(key)) {
+      return;
+    }
+
+    seenKeys.add(key);
+    normalizedSlots.push({ characterId, role, index });
+  });
+
+  return normalizedSlots;
 }
 
 function sanitizeText(value: unknown): string | null {
