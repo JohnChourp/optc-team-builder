@@ -3,7 +3,10 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
-import { type RumbleTeamResult } from '../../core/models/auto-team-builder-rumble.models';
+import {
+  type NormalizedRumbleEffect,
+  type RumbleTeamResult,
+} from '../../core/models/auto-team-builder-rumble.models';
 import * as rumbleExportUtils from './auto-team-builder-rumble-export.utils';
 import { AutoTeamBuilderRumblePage } from './auto-team-builder-rumble.page';
 
@@ -165,22 +168,128 @@ describe('AutoTeamBuilderRumblePage', () => {
     expect(template).toContain('manualPickerOpen()');
     expect(template).toContain('selectManualCharacter(candidate)');
     expect(template).not.toContain('slot.reasonChips');
-    expect(template).toContain("t('slot.passiveLevel'");
-    expect(template).toContain("t('slot.specialLevel'");
-    expect(template).toContain("t('slot.resistance')");
-    expect(template).toContain('slot.unit.normalized.baseResistances');
-    expect(template).toContain('slot.unit.normalized.maxPassiveEffects');
-    expect(template).toContain('slot.unit.normalized.maxSpecialEffects');
+    expect(template).toContain("t('slot.totalBuffs')");
+    expect(template).toContain("t('slot.noBuffs')");
+    expect(template).toContain('getSlotTotalBuffRows(slot)');
+    expect(template).not.toContain("t('slot.passiveLevel'");
+    expect(template).not.toContain("t('slot.specialLevel'");
+    expect(template).not.toContain("t('slot.resistance')");
+    expect(template).not.toContain('slot.unit.normalized.baseResistances');
+    expect(template).not.toContain('slot.unit.normalized.maxPassiveEffects');
+    expect(template).not.toContain('slot.unit.normalized.maxSpecialEffects');
+    expect(template).not.toContain('formatSlotLabel(slot)');
+    expect(template).not.toContain('formatScore(slot.score)');
+    expect(template).not.toContain('currentResult.totalScore');
     expect(template).not.toContain("t('slot.effects')");
   });
 
-  it('formats slot Rumble detail rows from base values only', () => {
+  it('summarizes total buffs received from passive and special effects', () => {
     const { page } = createPage();
-    const slot = createSlot('active', 0);
+    const result = createResult();
+    const slots = [...result.activeSlots, ...result.benchSlots];
+    const targetSlot = slots[0];
+    const nonMatchingSlot = slots[6];
 
-    expect(page.hasRumbleDetailRows(slot)).toBe(true);
-    expect(page.formatResistanceList(slot)).toBe('70% chance to resist Paralysis');
-    expect(page.formatResistanceList(slot)).not.toContain('100% chance');
+    targetSlot.unit.normalized.passiveEffects = [
+      createEffect({ attributes: ['ATK'], level: 3, targetScope: 'self', targetTokens: ['self'] }),
+    ];
+    targetSlot.unit.normalized.specialEffects = [
+      createEffect({
+        attributes: ['Special CT'],
+        level: 2,
+        source: 'special',
+        targetScope: 'crew',
+        targetTokens: ['crew'],
+      }),
+    ];
+    slots[1].unit.normalized.passiveEffects = [
+      createEffect({
+        attributes: ['HP'],
+        amount: 4,
+        targetScope: 'crew',
+        targetTokens: ['crew'],
+      }),
+    ];
+    slots[2].unit.normalized.specialEffects = [
+      createEffect({
+        attributes: ['DEF'],
+        level: 5,
+        source: 'special',
+        targetScope: 'subset',
+        targetTokens: ['Fighter'],
+      }),
+    ];
+    slots[3].unit.normalized.passiveEffects = [
+      createEffect({
+        attributes: ['RCV'],
+        effect: 'debuff',
+        level: 99,
+        targetScope: 'enemies',
+        targetTokens: ['enemies'],
+      }),
+    ];
+    slots[4].unit.normalized.specialEffects = [
+      createEffect({
+        attributes: ['SPD'],
+        effect: 'damage',
+        amount: 99,
+        source: 'special',
+        targetScope: 'crew',
+        targetTokens: ['crew'],
+      }),
+    ];
+    nonMatchingSlot.unit.character.classes = ['Shooter'];
+    nonMatchingSlot.unit.character.primaryClass = 'Shooter';
+    nonMatchingSlot.unit.normalized.baseResistances = ['70% chance to resist Paralysis'];
+    page.result.set(result);
+
+    expect(page.getSlotTotalBuffRows(targetSlot)).toEqual([
+      { stat: 'HP', value: '+4' },
+      { stat: 'ATK', value: '+3' },
+      { stat: 'DEF', value: '+5' },
+      { stat: 'Special CT', value: '+2' },
+    ]);
+    expect(page.getSlotTotalBuffRows(nonMatchingSlot)).toEqual([
+      { stat: 'HP', value: '+4' },
+      { stat: 'Special CT', value: '+2' },
+    ]);
+  });
+
+  it('limits counted buff recipients by targeting count and priority', () => {
+    const { page } = createPage();
+    const result = createResult();
+    const slots = [...result.activeSlots, ...result.benchSlots];
+
+    slots[0].unit.character.stats.max.atk = 100;
+    slots[1].unit.character.stats.max.atk = 9000;
+    slots[2].unit.character.stats.max.atk = 8000;
+    slots[3].unit.character.stats.max.atk = 700;
+    slots[0].unit.normalized.passiveEffects = [
+      createEffect({
+        attributes: ['SPD'],
+        level: 6,
+        targetCount: 2,
+        targetPriority: 'highest',
+        targetStat: 'ATK',
+        targetScope: 'crew',
+        targetTokens: ['crew'],
+      }),
+    ];
+    page.result.set(result);
+
+    expect(page.getSlotTotalBuffRows(slots[0])).toEqual([]);
+    expect(page.getSlotTotalBuffRows(slots[1])).toEqual([{ stat: 'SPD', value: '+6' }]);
+    expect(page.getSlotTotalBuffRows(slots[2])).toEqual([{ stat: 'SPD', value: '+6' }]);
+    expect(page.getSlotTotalBuffRows(slots[3])).toEqual([]);
+  });
+
+  it('returns no buff rows when the generated team gives no matching buffs', () => {
+    const { page } = createPage();
+    const result = createResult();
+
+    page.result.set(result);
+
+    expect(page.getSlotTotalBuffRows(result.activeSlots[0])).toEqual([]);
   });
 
   it('passes selected filters and favorites to the builder', async () => {
@@ -522,6 +631,14 @@ function createSlot(
         type: 'DEX',
         primaryClass: 'Fighter',
         classes: ['Fighter'],
+        stats: {
+          min: { hp: 1000, atk: 400, rcv: 120 },
+          max: { hp: 4200 + index, atk: 1900 + index, rcv: 320 + index },
+          growth: 3,
+        },
+        detail: {
+          characterTags: [],
+        },
         imageUrl: `assets/${id}.png`,
       },
       normalized: {
@@ -549,4 +666,28 @@ function createSlot(
       conflictKeys: [`character:${id}`],
     },
   } as RumbleTeamResult['activeSlots'][number];
+}
+
+function createEffect(
+  overrides: Partial<NormalizedRumbleEffect> = {},
+): NormalizedRumbleEffect {
+  return {
+    source: overrides.source ?? 'ability',
+    sourceLevel: overrides.sourceLevel ?? 1,
+    maxSourceLevel: overrides.maxSourceLevel ?? 1,
+    effect: overrides.effect ?? 'buff',
+    attributes: overrides.attributes ?? ['ATK'],
+    level: overrides.level ?? null,
+    amount: overrides.amount ?? null,
+    chance: overrides.chance ?? null,
+    duration: overrides.duration ?? null,
+    type: overrides.type ?? null,
+    target: overrides.target ?? null,
+    targetTokens: overrides.targetTokens ?? [],
+    targetCount: overrides.targetCount ?? null,
+    targetPriority: overrides.targetPriority ?? null,
+    targetStat: overrides.targetStat ?? null,
+    targetScope: overrides.targetScope ?? 'crew',
+    isConditional: overrides.isConditional ?? false,
+  };
 }

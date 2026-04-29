@@ -370,10 +370,6 @@
             </div>
             <div class="summary-grid">
               <article>
-                <span>{{ t('summary.totalScore') }}</span>
-                <strong>{{ formatScore(currentResult.totalScore) }}</strong>
-              </article>
-              <article>
                 <span>{{ t('summary.candidates') }}</span>
                 <strong>{{ currentResult.candidateCount }}</strong>
               </article>
@@ -459,7 +455,6 @@
                     <img [src]="slot.unit.character.imageUrl" [alt]="slot.unit.character.name" />
                   </a>
                   <div class="slot-copy">
-                    <span class="slot-label">{{ formatSlotLabel(slot) }}</span>
                     <a class="slot-name" [routerLink]="getCharacterDetailLink(slot)">
                       {{ slot.unit.character.name }}
                     </a>
@@ -486,51 +481,23 @@
                     <small>
                       {{ slot.unit.character.type }} • {{ slot.unit.character.primaryClass }}
                     </small>
-                    <div class="slot-score">
-                      <ion-icon [icon]="flashIcon"></ion-icon>
-                      {{ t('slot.score', { score: formatScore(slot.score) }) }}
-                    </div>
-                    @if (hasRumbleDetailRows(slot)) {
-                      <dl class="slot-rumble-details">
-                        @if (slot.unit.normalized.maxPassiveLevel) {
-                          <div class="slot-rumble-details__wide">
-                            <dt>{{ t('slot.passiveLevel', { level: slot.unit.normalized.maxPassiveLevel }) }}</dt>
-                            @if (slot.unit.normalized.maxPassiveEffects.length) {
-                              <dd>
-                                <ul class="slot-rumble-effects">
-                                  @for (effect of slot.unit.normalized.maxPassiveEffects; track effect) {
-                                    <li>{{ effect }}</li>
-                                  }
-                                </ul>
-                              </dd>
+                    <dl class="slot-rumble-details">
+                      <div class="slot-rumble-details__wide">
+                        <dt>{{ t('slot.totalBuffs') }}</dt>
+                        @if (getSlotTotalBuffRows(slot).length) {
+                          <dd class="slot-buff-grid">
+                            @for (buff of getSlotTotalBuffRows(slot); track buff.stat) {
+                              <span class="slot-buff-chip">
+                                <span>{{ buff.stat }}</span>
+                                <strong>{{ buff.value }}</strong>
+                              </span>
                             }
-                          </div>
+                          </dd>
+                        } @else {
+                          <dd>{{ t('slot.noBuffs') }}</dd>
                         }
-                        @if (slot.unit.normalized.maxSpecialLevel) {
-                          <div class="slot-rumble-details__wide">
-                            <dt>{{ t('slot.specialLevel', { level: slot.unit.normalized.maxSpecialLevel }) }}</dt>
-                            @if (slot.unit.normalized.maxSpecialCooldown) {
-                              <dd>{{ t('slot.cooldown', { value: slot.unit.normalized.maxSpecialCooldown }) }}</dd>
-                            }
-                            @if (slot.unit.normalized.maxSpecialEffects.length) {
-                              <dd>
-                                <ul class="slot-rumble-effects">
-                                  @for (effect of slot.unit.normalized.maxSpecialEffects; track effect) {
-                                    <li>{{ effect }}</li>
-                                  }
-                                </ul>
-                              </dd>
-                            }
-                          </div>
-                        }
-                        @if (slot.unit.normalized.baseResistances.length) {
-                          <div class="slot-rumble-details__wide">
-                            <dt>{{ t('slot.resistance') }}</dt>
-                            <dd>{{ formatResistanceList(slot) }}</dd>
-                          </div>
-                        }
-                      </dl>
-                    }
+                      </div>
+                    </dl>
                   </div>
                 </article>
               }
@@ -555,7 +522,6 @@
                     <img [src]="slot.unit.character.imageUrl" [alt]="slot.unit.character.name" />
                   </a>
                   <div class="slot-copy">
-                    <span class="slot-label">{{ formatSlotLabel(slot) }}</span>
                     <a class="slot-name" [routerLink]="getCharacterDetailLink(slot)">
                       {{ slot.unit.character.name }}
                     </a>
@@ -582,51 +548,23 @@
                     <small>
                       {{ slot.unit.character.type }} • {{ slot.unit.character.primaryClass }}
                     </small>
-                    <div class="slot-score">
-                      <ion-icon [icon]="flashIcon"></ion-icon>
-                      {{ t('slot.score', { score: formatScore(slot.score) }) }}
-                    </div>
-                    @if (hasRumbleDetailRows(slot)) {
-                      <dl class="slot-rumble-details">
-                        @if (slot.unit.normalized.maxPassiveLevel) {
-                          <div class="slot-rumble-details__wide">
-                            <dt>{{ t('slot.passiveLevel', { level: slot.unit.normalized.maxPassiveLevel }) }}</dt>
-                            @if (slot.unit.normalized.maxPassiveEffects.length) {
-                              <dd>
-                                <ul class="slot-rumble-effects">
-                                  @for (effect of slot.unit.normalized.maxPassiveEffects; track effect) {
-                                    <li>{{ effect }}</li>
-                                  }
-                                </ul>
-                              </dd>
+                    <dl class="slot-rumble-details">
+                      <div class="slot-rumble-details__wide">
+                        <dt>{{ t('slot.totalBuffs') }}</dt>
+                        @if (getSlotTotalBuffRows(slot).length) {
+                          <dd class="slot-buff-grid">
+                            @for (buff of getSlotTotalBuffRows(slot); track buff.stat) {
+                              <span class="slot-buff-chip">
+                                <span>{{ buff.stat }}</span>
+                                <strong>{{ buff.value }}</strong>
+                              </span>
                             }
-                          </div>
+                          </dd>
+                        } @else {
+                          <dd>{{ t('slot.noBuffs') }}</dd>
                         }
-                        @if (slot.unit.normalized.maxSpecialLevel) {
-                          <div class="slot-rumble-details__wide">
-                            <dt>{{ t('slot.specialLevel', { level: slot.unit.normalized.maxSpecialLevel }) }}</dt>
-                            @if (slot.unit.normalized.maxSpecialCooldown) {
-                              <dd>{{ t('slot.cooldown', { value: slot.unit.normalized.maxSpecialCooldown }) }}</dd>
-                            }
-                            @if (slot.unit.normalized.maxSpecialEffects.length) {
-                              <dd>
-                                <ul class="slot-rumble-effects">
-                                  @for (effect of slot.unit.normalized.maxSpecialEffects; track effect) {
-                                    <li>{{ effect }}</li>
-                                  }
-                                </ul>
-                              </dd>
-                            }
-                          </div>
-                        }
-                        @if (slot.unit.normalized.baseResistances.length) {
-                          <div class="slot-rumble-details__wide">
-                            <dt>{{ t('slot.resistance') }}</dt>
-                            <dd>{{ formatResistanceList(slot) }}</dd>
-                          </div>
-                        }
-                      </dl>
-                    }
+                      </div>
+                    </dl>
                   </div>
                 </article>
               }

@@ -92,7 +92,7 @@
     "relaxedCopy": "Ο builder χαλάρωσε μόνο τα παρακάτω soft target values για να επιστρέψει ομάδα."
   },
   "summary": {
-    "eyebrow": "Team score",
+    "eyebrow": "Σύνοψη ομάδας",
     "totalScore": "Συνολικό score",
     "candidates": "Candidates",
     "selected": "Selected",
@@ -114,15 +114,11 @@
     "copy": "{{count}} bench slots"
   },
   "slot": {
-    "activeLabel": "Active {{index}}",
-    "benchLabel": "Bench {{index}}",
     "score": "Score {{score}}",
     "replaceAria": "Αντικατάσταση {{name}}",
     "excludeAria": "Exclude {{name}} από τα Rumble builds",
-    "passiveLevel": "Passive Lv. {{level}}",
-    "specialLevel": "Special Lv. {{level}}",
-    "cooldown": "Cooldown {{value}}",
-    "resistance": "Resistance"
+    "totalBuffs": "Συνολικά buffs",
+    "noBuffs": "Κανένα team buff"
   },
   "excluded": {
     "title": "Excluded characters",

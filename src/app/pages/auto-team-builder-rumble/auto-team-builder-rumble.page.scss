@@ -285,7 +285,7 @@
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -299,8 +299,7 @@
 }
 
 .summary-grid span,
-.coverage-block > span,
-.slot-label {
+.coverage-block > span {
   color: rgba(246, 241, 232, 0.62);
   font-size: 0.76rem;
   font-weight: 700;
@@ -478,14 +477,6 @@
   --color: rgba(255, 214, 204, 0.86);
 }
 
-.slot-score {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #ffffff;
-  font-weight: 800;
-}
-
 .slot-rumble-details {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -533,6 +524,33 @@
   margin: 4px 0 0;
   padding-left: 18px;
   list-style: disc;
+}
+
+.slot-buff-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.slot-buff-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 4px 7px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.slot-buff-chip span {
+  color: rgba(246, 241, 232, 0.68);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.slot-buff-chip strong {
+  color: #ffffff;
+  font-size: 0.74rem;
 }
 
 .slot-rumble-effects li {

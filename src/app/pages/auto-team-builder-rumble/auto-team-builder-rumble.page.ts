@@ -21,7 +21,6 @@ import {
 import {
   closeOutline,
   createOutline,
-  flashOutline,
   refreshOutline,
   shieldHalfOutline,
   sparklesOutline,
@@ -34,6 +33,7 @@ import {
 import {
   RUMBLE_ACTIVE_SLOT_COUNT,
   RUMBLE_BENCH_SLOT_COUNT,
+  type NormalizedRumbleEffect,
   type NormalizedRumbleRoleTag,
   type RumbleBuildProgressSnapshot,
   type RumbleTeamResult,
@@ -70,6 +70,15 @@ interface LoadingProgressRow {
 interface ManualSlotTarget {
   role: RumbleTeamSlotRole;
   index: number;
+}
+
+const RUMBLE_BUFF_STATS = ['HP', 'ATK', 'DEF', 'RCV', 'SPD', 'Special CT'] as const;
+
+type RumbleBuffStat = (typeof RUMBLE_BUFF_STATS)[number];
+
+interface RumbleBuffSummaryRow {
+  stat: RumbleBuffStat;
+  value: string;
 }
 
 const ROLE_LABELS: Record<NormalizedRumbleRoleTag, string> = {
@@ -136,7 +145,6 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   public readonly sparklesIcon = sparklesOutline;
   public readonly refreshIcon = refreshOutline;
   public readonly shieldIcon = shieldHalfOutline;
-  public readonly flashIcon = flashOutline;
   public readonly editIcon = createOutline;
   public readonly closeIcon = closeOutline;
   public readonly favoriteCharacterIds;
@@ -593,26 +601,22 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     return Math.round(value).toLocaleString('en-US');
   }
 
-  public formatSlotLabel(slot: RumbleTeamSlot): string {
-    return slot.role === 'active'
-      ? this.t('slot.activeLabel', { index: slot.index + 1 })
-      : this.t('slot.benchLabel', { index: slot.index + 1 });
-  }
+  public getSlotTotalBuffRows(slot: RumbleTeamSlot): RumbleBuffSummaryRow[] {
+    const currentResult = this.result();
 
-  public hasRumbleDetailRows(slot: RumbleTeamSlot): boolean {
-    const normalized = slot.unit.normalized;
+    if (!currentResult) {
+      return [];
+    }
 
-    return Boolean(
-      normalized.maxPassiveLevel ||
-        normalized.maxSpecialLevel ||
-        normalized.maxPassiveEffects.length ||
-        normalized.maxSpecialEffects.length ||
-        normalized.baseResistances.length,
-    );
-  }
+    const slots = this.collectTeamSlots(currentResult);
+    const totals = this.resolveSlotTotalBuffs(slot, slots);
 
-  public formatResistanceList(slot: RumbleTeamSlot): string {
-    return slot.unit.normalized.baseResistances.join(' • ');
+    return RUMBLE_BUFF_STATS.map((stat) => ({ stat, total: totals[stat] }))
+      .filter(({ total }) => total > 0)
+      .map(({ stat, total }) => ({
+        stat,
+        value: `+${this.formatBuffTotal(total)}`,
+      }));
   }
 
   public async openManualCharacterPicker(slot: RumbleTeamSlot): Promise<void> {
@@ -816,6 +820,215 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       .split(/[,/]+/)
       .map((type) => type.trim().toUpperCase())
       .filter((type) => type.length > 0);
+  }
+
+  private collectTeamSlots(result: RumbleTeamResult): RumbleTeamSlot[] {
+    return [...result.activeSlots, ...result.benchSlots];
+  }
+
+  private resolveSlotTotalBuffs(
+    targetSlot: RumbleTeamSlot,
+    slots: RumbleTeamSlot[],
+  ): Record<RumbleBuffStat, number> {
+    const totals = this.createEmptyBuffTotals();
+
+    for (const sourceSlot of slots) {
+      for (const effect of this.resolveMaxLevelBuffEffects(sourceSlot)) {
+        const stats = this.resolveBuffStats(effect);
+
+        if (!stats.length || !this.effectAppliesToSlot(effect, targetSlot, sourceSlot, slots)) {
+          continue;
+        }
+
+        const value = effect.level ?? effect.amount ?? 1;
+
+        if (value <= 0) {
+          continue;
+        }
+
+        stats.forEach((stat) => {
+          totals[stat] += value;
+        });
+      }
+    }
+
+    return totals;
+  }
+
+  private createEmptyBuffTotals(): Record<RumbleBuffStat, number> {
+    return RUMBLE_BUFF_STATS.reduce(
+      (totals, stat) => ({
+        ...totals,
+        [stat]: 0,
+      }),
+      {} as Record<RumbleBuffStat, number>,
+    );
+  }
+
+  private resolveMaxLevelBuffEffects(slot: RumbleTeamSlot): NormalizedRumbleEffect[] {
+    return [...slot.unit.normalized.passiveEffects, ...slot.unit.normalized.specialEffects].filter(
+      (effect) =>
+        effect.sourceLevel !== null &&
+        effect.sourceLevel === effect.maxSourceLevel &&
+        this.isPositiveRumbleBuff(effect),
+    );
+  }
+
+  private isPositiveRumbleBuff(effect: NormalizedRumbleEffect): boolean {
+    const normalizedEffect = effect.effect.toLowerCase();
+
+    return (
+      effect.targetScope !== 'enemies' &&
+      effect.targetScope !== 'unknown' &&
+      (normalizedEffect.includes('buff') ||
+        normalizedEffect.includes('boost') ||
+        normalizedEffect.includes('recharge'))
+    );
+  }
+
+  private resolveBuffStats(effect: NormalizedRumbleEffect): RumbleBuffStat[] {
+    const rawStats = effect.attributes.length ? effect.attributes : effect.type ? [effect.type] : [];
+    const stats = rawStats
+      .map((stat) => this.normalizeBuffStat(stat))
+      .filter((stat): stat is RumbleBuffStat => Boolean(stat));
+
+    return [...new Set(stats)];
+  }
+
+  private effectAppliesToSlot(
+    effect: NormalizedRumbleEffect,
+    targetSlot: RumbleTeamSlot,
+    sourceSlot: RumbleTeamSlot,
+    slots: RumbleTeamSlot[],
+  ): boolean {
+    const eligibleSlots = this.resolveEligibleBuffTargetSlots(effect, sourceSlot, slots);
+
+    if (!eligibleSlots.some((slot) => slot.unit.character.id === targetSlot.unit.character.id)) {
+      return false;
+    }
+
+    if (effect.targetCount === null || effect.targetCount <= 0) {
+      return true;
+    }
+
+    return this.resolveLimitedBuffTargetSlots(effect, eligibleSlots, slots).some(
+      (slot) => slot.unit.character.id === targetSlot.unit.character.id,
+    );
+  }
+
+  private resolveEligibleBuffTargetSlots(
+    effect: NormalizedRumbleEffect,
+    sourceSlot: RumbleTeamSlot,
+    slots: RumbleTeamSlot[],
+  ): RumbleTeamSlot[] {
+    if (effect.targetScope === 'crew') {
+      return slots;
+    }
+
+    if (effect.targetScope === 'self') {
+      return slots.filter((slot) => slot.unit.character.id === sourceSlot.unit.character.id);
+    }
+
+    if (effect.targetScope !== 'subset') {
+      return [];
+    }
+
+    return slots.filter((slot) =>
+      effect.targetTokens.some((token) =>
+        this.resolveCharacterMatchTokens(slot.unit.character).has(this.normalizeMatchToken(token)),
+      ),
+    );
+  }
+
+  private resolveLimitedBuffTargetSlots(
+    effect: NormalizedRumbleEffect,
+    eligibleSlots: RumbleTeamSlot[],
+    slots: RumbleTeamSlot[],
+  ): RumbleTeamSlot[] {
+    const targetCount = Math.max(0, Math.floor(effect.targetCount ?? 0));
+
+    if (!targetCount) {
+      return [];
+    }
+
+    const targetStat = effect.targetStat ? this.normalizeBuffStat(effect.targetStat) : null;
+    const priority = effect.targetPriority?.toLowerCase() ?? '';
+    const direction = priority.includes('low') ? 1 : priority.includes('high') ? -1 : 0;
+    const orderedSlots = [...eligibleSlots].sort((left, right) => {
+      if (targetStat && direction !== 0) {
+        const leftValue = this.resolveTargetStatValue(left, targetStat);
+        const rightValue = this.resolveTargetStatValue(right, targetStat);
+        const valueDifference = (leftValue - rightValue) * direction;
+
+        if (valueDifference !== 0) {
+          return valueDifference;
+        }
+      }
+
+      return slots.indexOf(left) - slots.indexOf(right);
+    });
+
+    return orderedSlots.slice(0, targetCount);
+  }
+
+  private resolveTargetStatValue(slot: RumbleTeamSlot, stat: RumbleBuffStat): number {
+    switch (stat) {
+      case 'HP':
+        return slot.unit.character.stats?.max.hp ?? 0;
+      case 'ATK':
+        return slot.unit.character.stats?.max.atk ?? 0;
+      case 'DEF':
+        return slot.unit.normalized.def ?? 0;
+      case 'RCV':
+        return slot.unit.character.stats?.max.rcv ?? 0;
+      case 'SPD':
+        return slot.unit.normalized.spd ?? 0;
+      case 'Special CT':
+        return slot.unit.normalized.cooldown ?? 0;
+    }
+  }
+
+  private resolveCharacterMatchTokens(character: CharacterDetailRecord): Set<string> {
+    const tokens = new Set<string>();
+
+    this.resolveCharacterTypes(character).forEach((type) => {
+      tokens.add(this.normalizeMatchToken(type));
+      tokens.add(this.normalizeMatchToken(`[${type}]`));
+    });
+    character.classes.forEach((characterClass) =>
+      tokens.add(this.normalizeMatchToken(characterClass)),
+    );
+    character.detail?.characterTags?.forEach((tag) => tokens.add(this.normalizeMatchToken(tag)));
+
+    return tokens;
+  }
+
+  private normalizeBuffStat(value: string): RumbleBuffStat | null {
+    const normalized = value
+      .replace(/^\[([^\]]+)\]$/, '$1')
+      .trim()
+      .toLowerCase();
+
+    if (normalized === 'special ct' || normalized === 'ct' || normalized === 'special cooldown') {
+      return 'Special CT';
+    }
+
+    if (normalized === 'speed') {
+      return 'SPD';
+    }
+
+    return RUMBLE_BUFF_STATS.find((stat) => stat.toLowerCase() === normalized) ?? null;
+  }
+
+  private normalizeMatchToken(value: string): string {
+    return value
+      .replace(/^\[([^\]]+)\]$/, '$1')
+      .trim()
+      .toLowerCase();
+  }
+
+  private formatBuffTotal(value: number): string {
+    return Number.isInteger(value) ? value.toLocaleString('en-US') : value.toFixed(1);
   }
 
   private handleBuildProgressSnapshot(snapshot: RumbleBuildProgressSnapshot): void {

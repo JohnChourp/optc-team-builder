@@ -92,7 +92,7 @@
     "relaxedCopy": "The builder relaxed only the soft target values below to return a team."
   },
   "summary": {
-    "eyebrow": "Team score",
+    "eyebrow": "Team summary",
     "totalScore": "Total score",
     "candidates": "Candidates",
     "selected": "Selected",
@@ -114,15 +114,11 @@
     "copy": "{{count}} bench slots"
   },
   "slot": {
-    "activeLabel": "Active {{index}}",
-    "benchLabel": "Bench {{index}}",
     "score": "Score {{score}}",
     "replaceAria": "Replace {{name}}",
     "excludeAria": "Exclude {{name}} from Rumble builds",
-    "passiveLevel": "Passive Lv. {{level}}",
-    "specialLevel": "Special Lv. {{level}}",
-    "cooldown": "Cooldown {{value}}",
-    "resistance": "Resistance"
+    "totalBuffs": "Total buffs",
+    "noBuffs": "No team buffs"
   },
   "excluded": {
     "title": "Excluded characters",
