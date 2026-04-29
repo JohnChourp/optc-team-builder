@@ -23,6 +23,7 @@ describe('auto-team-builder-rumble-export utils', () => {
         favoritesOnly: true,
         favoriteCharacterIds: [101, 202],
         opponentSlots: [],
+        requireFullTeam: false,
       },
       favoriteCount: 2,
       workerPreference: { mode: 'manual', manualCount: 3 },
@@ -42,6 +43,7 @@ describe('auto-team-builder-rumble-export utils', () => {
         favoriteCharacterIds: [101, 202],
         candidateCharacterIds: undefined,
         opponentSlots: [],
+        requireFullTeam: false,
       },
       favoriteCount: 2,
       workerPreference: { mode: 'manual', manualCount: 3 },
@@ -54,6 +56,7 @@ describe('auto-team-builder-rumble-export utils', () => {
 
     expect(payload?.source).toBe('auto-team-builder-rumble');
     expect(payload?.exportType).toBe('team');
+    expect(payload?.requestedInput.requireFullTeam).toBe(true);
     expect(payload?.team).toHaveLength(2);
     expect(payload?.team[0].unit.character).toEqual(result.activeSlots[0].unit.character);
     expect(payload?.team[1].unit.character.detail.rumbleData).toEqual({ id: 202 });
@@ -86,6 +89,7 @@ describe('auto-team-builder-rumble-export utils', () => {
           favoritesOnly: false,
           favoriteCharacterIds: [],
           opponentSlots: [],
+          requireFullTeam: true,
         },
         favoriteCount: 0,
         workerPreference: { mode: 'auto', manualCount: 2 },
@@ -130,6 +134,7 @@ function createResult(): RumbleTeamResult {
       favoritesOnly: false,
       favoriteCharacterIds: [],
       opponentSlots: [],
+      requireFullTeam: true,
     },
     requestedTypes: ['DEX'],
     requestedClasses: ['Fighter'],

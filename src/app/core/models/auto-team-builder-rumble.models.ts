@@ -117,6 +117,7 @@ export interface RumbleBuildInput {
   favoriteCharacterIds: number[];
   candidateCharacterIds?: number[];
   opponentSlots: RumbleOpponentSlotContext[];
+  requireFullTeam: boolean;
 }
 
 export type RumbleBuildProgressStage =

@@ -969,6 +969,105 @@ describe('AutoTeamBuilderRumbleService', () => {
     expect(partialResult.activeSlots).toHaveLength(3);
     expect(partialResult.benchSlots).toHaveLength(0);
   });
+
+  it('keeps bench empty in optional mode when extra candidates add no utility', () => {
+    const service = createService();
+    const candidates = Array.from({ length: 8 }, (_, index) =>
+      createCharacter(7100 + index, {
+        maxHp: 5200 + index * 50,
+        maxAtk: 2100 + index * 20,
+        maxRcv: 360,
+        partyConflictKeys: [`optional-neutral-${index}`],
+        rumbleData: createRumbleData(index + 1),
+      }),
+    );
+
+    const result = service.buildTeamFromCandidates(candidates, { requireFullTeam: false });
+
+    expect(result.input.requireFullTeam).toBe(false);
+    expect(result.activeSlots).toHaveLength(5);
+    expect(result.benchSlots).toHaveLength(0);
+    expect(result.selectedCount).toBe(5);
+  });
+
+  it('adds optional bench units when they improve team buffs or enemy debuffs', () => {
+    const service = createService();
+    const anchors = Array.from({ length: 6 }, (_, index) =>
+      createCharacter(7200 + index, {
+        maxHp: 20000 + index * 100,
+        maxAtk: 70000 + index * 100,
+        maxRcv: 1200,
+        partyConflictKeys: [`optional-buff-anchor-${index}`],
+        rumbleData: createRumbleData(20 + index),
+      }),
+    );
+    const teamBuffer = createCharacter(7290, {
+      maxHp: 1200,
+      maxAtk: 500,
+      maxRcv: 80,
+      partyConflictKeys: ['optional-team-buffer'],
+      rumbleData: createCrewBuffRumbleData(7290, ['ATK'], 6),
+    });
+
+    const result = service.buildTeamFromCandidates([...anchors, teamBuffer], {
+      requireFullTeam: false,
+    });
+
+    expect(result.activeSlots).toHaveLength(5);
+    expect(result.benchSlots.map((slot) => slot.unit.character.id)).toContain(teamBuffer.id);
+  });
+
+  it('adds opponent-aware optional bench resistance and skips unrelated filler', () => {
+    const service = createService();
+    const anchors = Array.from({ length: 6 }, (_, index) =>
+      createCharacter(7300 + index, {
+        maxHp: 20000 + index * 100,
+        maxAtk: 70000 + index * 100,
+        maxRcv: 1200,
+        partyConflictKeys: [`optional-counter-anchor-${index}`],
+        rumbleData: createRumbleData(30 + index),
+      }),
+    );
+    const opponent = createCharacter(7390, {
+      type: 'STR',
+      partyConflictKeys: ['optional-counter-opponent'],
+      rumbleData: createEnemyDebuffRumbleData(7390, ['Paralysis']),
+    });
+    const matchingResistance = createCharacter(7391, {
+      maxHp: 1200,
+      maxAtk: 500,
+      maxRcv: 80,
+      partyConflictKeys: ['optional-counter-matching'],
+      rumbleData: createResistanceRumbleData(7391, 'Paralysis', '[STR]'),
+    });
+    const unrelatedResistance = createCharacter(7392, {
+      maxHp: 1200,
+      maxAtk: 500,
+      maxRcv: 80,
+      partyConflictKeys: ['optional-counter-unrelated'],
+      rumbleData: createResistanceRumbleData(7392, 'Silence', '[DEX]'),
+    });
+
+    const result = service.buildTeamFromCandidates(
+      [...anchors, opponent, matchingResistance, unrelatedResistance],
+      {
+        requireFullTeam: false,
+        candidateCharacterIds: [...anchors, matchingResistance, unrelatedResistance].map(
+          (character) => character.id,
+        ),
+        opponentSlots: [{ characterId: opponent.id, role: 'active', index: 0 }],
+      },
+    );
+    const benchIds = result.benchSlots.map((slot) => slot.unit.character.id);
+
+    expect(result.activeSlots).toHaveLength(5);
+    expect(benchIds).toContain(matchingResistance.id);
+    expect(benchIds).not.toContain(unrelatedResistance.id);
+    expect(
+      result.benchSlots.find((slot) => slot.unit.character.id === matchingResistance.id)
+        ?.reasonChips,
+    ).toEqual(expect.arrayContaining(['Opponent counter', 'Matched resistance']));
+  });
 });
 
 function createService(candidates: CharacterDetailRecord[] = []): AutoTeamBuilderRumbleService {
@@ -1047,6 +1146,29 @@ function createResistanceRumbleData(
       {
         cooldown: 28,
         effects: [{ effect: 'guard', attributes: ['DEF'], level: 2 }],
+      },
+    ],
+  };
+}
+
+function createCrewBuffRumbleData(
+  id: number,
+  attributes: string[],
+  level: number,
+): Record<string, unknown> {
+  return {
+    id,
+    stats: { rumbleType: 'BUF', def: 30, spd: 30 },
+    ability: [
+      {
+        effects: [
+          {
+            attributes,
+            effect: 'buff',
+            level,
+            targeting: { targets: ['crew'] },
+          },
+        ],
       },
     ],
   };

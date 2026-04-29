@@ -58,6 +58,7 @@ describe('AutoTeamBuilderRumblePage', () => {
         favoriteCharacterIds: [1001, 1002],
         candidateCharacterIds: undefined,
         opponentSlots: [],
+        requireFullTeam: true,
       },
       expect.objectContaining({
         signal: expect.any(AbortSignal),
@@ -99,6 +100,24 @@ describe('AutoTeamBuilderRumblePage', () => {
     await page.buildTeam();
 
     expect(page.insufficientStateVisible()).toBe(true);
+  });
+
+  it('does not show the partial state for a five-active optional bench team', async () => {
+    const { page } = createPage({
+      ...createResult(),
+      benchSlots: [],
+      selectedCount: 5,
+      input: {
+        ...createResult().input,
+        requireFullTeam: false,
+      },
+    });
+
+    await page.ngOnInit();
+    await page.buildTeam();
+
+    expect(page.insufficientStateVisible()).toBe(false);
+    expect(page.canDownloadTeamJson()).toBe(true);
   });
 
   it('shows the hard filter no-match state instead of a partial team', async () => {
@@ -149,10 +168,12 @@ describe('AutoTeamBuilderRumblePage', () => {
     expect(template).toContain("t('actions.downloadSettings')");
     expect(template).toContain("t('actions.downloadTeam')");
     expect(template).toContain("t('filters.favoritesOnly.toggle')");
+    expect(template).toContain("t('filters.optionalBench.toggle')");
     expect(template).toContain("t('filters.types.onlyToggle')");
     expect(template).toContain("t('filters.classes.onlyToggle')");
     expect(template).toContain('onOnlySelectedTypesToggle($event)');
     expect(template).toContain('onOnlySelectedClassesToggle($event)');
+    expect(template).toContain('onOptionalBenchToggle($event)');
     expect(template).toContain('onAutoTeamBuilderWorkerModeChange($event)');
     expect(template).toContain("t('states.strictTypesTitle')");
     expect(template).not.toContain("t('summary.droppedType'");
@@ -323,6 +344,7 @@ describe('AutoTeamBuilderRumblePage', () => {
         favoriteCharacterIds: [1001, 1002],
         candidateCharacterIds: undefined,
         opponentSlots: [],
+        requireFullTeam: true,
       }),
       expect.objectContaining({
         signal: expect.any(AbortSignal),
@@ -354,12 +376,30 @@ describe('AutoTeamBuilderRumblePage', () => {
         favoritesOnly: true,
         favoriteCharacterIds: [1001, 1002],
         opponentSlots: [],
+        requireFullTeam: true,
       },
       favoriteCount: 2,
       workerPreference: { mode: 'auto', manualCount: 2 },
     });
     expect(page.buildTeamExportPayload('2026-04-29T04:00:00.000Z')?.team[0].unit.character).toEqual(
       page.result()?.activeSlots[0].unit.character,
+    );
+  });
+
+  it('passes optional bench mode to the builder when enabled', async () => {
+    const { page, rumbleBuilder } = createPage();
+
+    await page.ngOnInit();
+    page.onOptionalBenchToggle({ detail: { checked: true } } as never);
+    await page.buildTeam();
+
+    expect(rumbleBuilder.buildBestTeam).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        requireFullTeam: false,
+      }),
+      expect.objectContaining({
+        signal: expect.any(AbortSignal),
+      }),
     );
   });
 
@@ -747,6 +787,7 @@ function createResult(): RumbleTeamResult {
       favoritesOnly: false,
       favoriteCharacterIds: [],
       opponentSlots: [],
+      requireFullTeam: true,
     },
     requestedTypes: [],
     requestedClasses: [],

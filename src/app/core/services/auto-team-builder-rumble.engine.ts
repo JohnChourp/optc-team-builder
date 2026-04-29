@@ -66,6 +66,7 @@ const EMPTY_INPUT: RumbleBuildInput = {
   favoritesOnly: false,
   favoriteCharacterIds: [],
   opponentSlots: [],
+  requireFullTeam: true,
 };
 
 const RUMBLE_SYNERGY_ATTRIBUTES = ['HP', 'ATK', 'DEF', 'RCV', 'Special CT'] as const;
@@ -81,6 +82,7 @@ const RUMBLE_SYNERGY_ATTRIBUTE_WEIGHTS: Record<RumbleSynergyAttribute, number> =
 
 const ACTIVE_SLOT_WEIGHT = 1;
 const BENCH_SLOT_WEIGHT = 0.45;
+const OPTIONAL_BENCH_UTILITY_THRESHOLD = 25;
 const EMPTY_OPPONENT_PROFILE: RumbleOpponentProfile = {
   units: [],
   totalWeight: 0,
@@ -116,6 +118,7 @@ export function normalizeRumbleBuildInput(input: Partial<RumbleBuildInput> = {})
       ? normalizePositiveIntegerCollection(input.candidateCharacterIds)
       : undefined,
     opponentSlots: normalizeRumbleOpponentSlots(input.opponentSlots),
+    requireFullTeam: input.requireFullTeam ?? true,
   };
 }
 
@@ -190,7 +193,7 @@ export function runRumbleTeamBuildSearch(
     }
 
     if (
-      result.selectedCount >= RUMBLE_TOTAL_SLOT_COUNT &&
+      result.selectedCount >= resolveRequiredSlotCount(input) &&
       satisfiesAttemptCoverage(result, attempt)
     ) {
       emitProgress(options, {
@@ -251,14 +254,17 @@ export class RumbleTeamBuilderEngine {
       return this.createEmptyResult(0, input, attempt);
     }
 
+    const targetCount = input.requireFullTeam ? RUMBLE_TOTAL_SLOT_COUNT : RUMBLE_ACTIVE_SLOT_COUNT;
     const selectedUnits = this.improveTeam(
-      this.pickGreedyTeam(scoredCandidates, attempt, opponentProfile),
+      this.pickGreedyTeam(scoredCandidates, attempt, opponentProfile, targetCount),
       scoredCandidates,
       attempt,
       opponentProfile,
     );
     const activeUnits = selectedUnits.slice(0, RUMBLE_ACTIVE_SLOT_COUNT);
-    const benchUnits = selectedUnits.slice(RUMBLE_ACTIVE_SLOT_COUNT, RUMBLE_TOTAL_SLOT_COUNT);
+    const benchUnits = input.requireFullTeam
+      ? selectedUnits.slice(RUMBLE_ACTIVE_SLOT_COUNT, RUMBLE_TOTAL_SLOT_COUNT)
+      : this.pickOptionalBenchUnits(activeUnits, scoredCandidates, opponentProfile);
     const activeSlots = activeUnits.map((unit, index) =>
       this.createSlot('active', index, unit, opponentProfile),
     );
@@ -554,10 +560,11 @@ export class RumbleTeamBuilderEngine {
     scoredCandidates: RumbleUnitScore[],
     attempt: RumbleBuildAttempt,
     opponentProfile: RumbleOpponentProfile,
+    targetCount: number,
   ): RumbleUnitScore[] {
     const selected: RumbleUnitScore[] = [];
 
-    while (selected.length < RUMBLE_TOTAL_SLOT_COUNT) {
+    while (selected.length < targetCount) {
       const next = scoredCandidates
         .filter(
           (candidate) => !selected.some((unit) => unit.character.id === candidate.character.id),
@@ -580,6 +587,65 @@ export class RumbleTeamBuilderEngine {
     }
 
     return selected;
+  }
+
+  private pickOptionalBenchUnits(
+    activeUnits: RumbleUnitScore[],
+    scoredCandidates: RumbleUnitScore[],
+    opponentProfile: RumbleOpponentProfile,
+  ): RumbleUnitScore[] {
+    const selectedBenchUnits: RumbleUnitScore[] = [];
+
+    while (selectedBenchUnits.length < RUMBLE_BENCH_SLOT_COUNT) {
+      const currentUnits = [...activeUnits, ...selectedBenchUnits];
+      const next = scoredCandidates
+        .filter(
+          (candidate) => !currentUnits.some((unit) => unit.character.id === candidate.character.id),
+        )
+        .filter((candidate) => !this.hasConflict(candidate, currentUnits))
+        .map((candidate) => ({
+          candidate,
+          utilityScore: this.scoreOptionalBenchUtility(
+            candidate,
+            currentUnits,
+            opponentProfile,
+          ),
+        }))
+        .filter(({ utilityScore }) => utilityScore >= OPTIONAL_BENCH_UTILITY_THRESHOLD)
+        .sort(
+          (left, right) =>
+            right.utilityScore - left.utilityScore ||
+            compareUnitScores(left.candidate, right.candidate),
+        )[0];
+
+      if (!next) {
+        break;
+      }
+
+      selectedBenchUnits.push(next.candidate);
+    }
+
+    return selectedBenchUnits;
+  }
+
+  private scoreOptionalBenchUtility(
+    candidate: RumbleUnitScore,
+    currentUnits: RumbleUnitScore[],
+    opponentProfile: RumbleOpponentProfile,
+  ): number {
+    const candidateIndex = currentUnits.length;
+    const nextUnits = [...currentUnits, candidate];
+    const maxEffects = this.resolveMaxLevelEffects(candidate.normalized);
+    const effectUtility = maxEffects.reduce((total, effect) => {
+      const buffScore = this.scoreTeamBuffEffect(effect, candidate, candidateIndex, nextUnits);
+      const debuffScore = this.scoreEnemyDebuffEffect(effect);
+
+      return total + (buffScore + debuffScore) * BENCH_SLOT_WEIGHT;
+    }, 0);
+    const opponentCounterUtility =
+      this.scoreUnitOpponentCounters(candidate, opponentProfile) * BENCH_SLOT_WEIGHT;
+
+    return effectUtility + opponentCounterUtility;
   }
 
   private improveTeam(
@@ -1823,6 +1889,10 @@ function satisfiesAttemptCoverage(result: RumbleTeamResult, attempt: RumbleBuild
     attempt.resolvedTypes.every((type) => result.typeCoverage.includes(type)) &&
     attempt.resolvedClasses.every((characterClass) => result.classCoverage.includes(characterClass))
   );
+}
+
+function resolveRequiredSlotCount(input: RumbleBuildInput): number {
+  return input.requireFullTeam ? RUMBLE_TOTAL_SLOT_COUNT : RUMBLE_ACTIVE_SLOT_COUNT;
 }
 
 function isBetterRumblePartial(

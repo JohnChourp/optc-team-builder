@@ -45,6 +45,13 @@
         "empty": "Δεν υπάρχουν favorite units αποθηκευμένα σε αυτή τη συσκευή.",
         "withCount": "Περιόρισε το Rumble candidate pool στα {{count}} favorite units σου."
       }
+    },
+    "optionalBench": {
+      "toggle": "Προαιρετικό bench",
+      "support": {
+        "disabled": "Χτίζει πέντε active slots και τρία bench slots.",
+        "enabled": "Χτίζει πέντε active slots και προσθέτει bench μόνο όταν βελτιώνει buffs, debuffs ή opponent counters."
+      }
     }
   },
   "performance": {
@@ -111,7 +118,8 @@
   },
   "bench": {
     "title": "Bench",
-    "copy": "{{count}} bench slots"
+    "copy": "{{count}} bench slots",
+    "optionalCopy": "Έως {{count}} προαιρετικά bench slots"
   },
   "opponent": {
     "title": "Αντίπαλη ομάδα",

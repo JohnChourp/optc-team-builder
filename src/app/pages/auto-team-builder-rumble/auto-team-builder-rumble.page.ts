@@ -135,6 +135,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   public readonly onlySelectedTypes = signal(false);
   public readonly onlySelectedClasses = signal(false);
   public readonly favoritesOnly = signal(false);
+  public readonly optionalBenchEnabled = signal(false);
   public readonly buildProgress = signal<RumbleBuildProgressSnapshot | null>(null);
   public readonly manualPickerOpen = signal(false);
   public readonly manualPickerLoading = signal(false);
@@ -198,7 +199,9 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     return Boolean(
       currentResult &&
       !this.strictTypeBlockedStateVisible() &&
-      currentResult.selectedCount > 0 &&
+      (currentResult.input.requireFullTeam
+        ? currentResult.selectedCount > 0
+        : currentResult.activeSlots.length >= this.activeSlotTargetCount) &&
       currentResult.activeSlots.length + currentResult.benchSlots.length > 0,
     );
   });
@@ -233,6 +236,11 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
         })
       : this.t('filters.favoritesOnly.support.empty'),
   );
+  public readonly optionalBenchSupportLabel = computed(() =>
+    this.optionalBenchEnabled()
+      ? this.t('filters.optionalBench.support.enabled')
+      : this.t('filters.optionalBench.support.disabled'),
+  );
   public readonly onlySelectedTypesSupportLabel = computed(() =>
     this.onlySelectedTypes()
       ? this.t('filters.types.onlySupport.strict')
@@ -257,14 +265,16 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   public readonly insufficientStateVisible = computed(() => {
     const currentResult = this.result();
 
+    if (!currentResult) {
+      return false;
+    }
+
     return (
       !this.loading() &&
       !this.errorMessage() &&
-      Boolean(currentResult) &&
       !this.strictTypeBlockedStateVisible() &&
-      (currentResult?.selectedCount ?? 0) <
-        this.activeSlotTargetCount + this.benchSlotTargetCount &&
-      (currentResult?.candidateCount ?? 0) > 0
+      currentResult.selectedCount < this.resolveRequiredSlotCount(currentResult) &&
+      currentResult.candidateCount > 0
     );
   });
   public readonly strictTypeBlockedStateVisible = computed(() => {
@@ -468,6 +478,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
             favoriteCharacterIds: this.favoriteCharacterIds(),
             candidateCharacterIds,
             opponentSlots: this.opponentAwarenessEnabled() ? this.buildOpponentSlotContexts() : [],
+            requireFullTeam: !this.optionalBenchEnabled(),
           },
           executionOptions,
         ),
@@ -513,6 +524,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
         favoritesOnly: this.favoritesOnly(),
         favoriteCharacterIds: [...this.favoriteCharacterIds()],
         opponentSlots: [],
+        requireFullTeam: !this.optionalBenchEnabled(),
       },
       favoriteCount: this.favoriteCharacterIds().length,
       workerPreference: this.autoTeamBuilderWorkerPreference(),
@@ -553,6 +565,11 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
 
   public onFavoritesOnlyToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.favoritesOnly.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
+  public onOptionalBenchToggle(event: CustomEvent<{ checked: boolean }>): void {
+    this.optionalBenchEnabled.set(event.detail.checked);
     this.resetBuildState();
   }
 
@@ -781,6 +798,18 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
 
   public roleLabelKey(role: NormalizedRumbleRoleTag): string {
     return ROLE_LABELS[role];
+  }
+
+  public benchSectionCopy(result: RumbleTeamResult): string {
+    return result.input.requireFullTeam
+      ? this.t('bench.copy', { count: this.benchSlotTargetCount })
+      : this.t('bench.optionalCopy', { count: this.benchSlotTargetCount });
+  }
+
+  public resolveRequiredSlotCount(result: RumbleTeamResult): number {
+    return result.input.requireFullTeam
+      ? this.activeSlotTargetCount + this.benchSlotTargetCount
+      : this.activeSlotTargetCount;
   }
 
   private resetBuildState(): void {

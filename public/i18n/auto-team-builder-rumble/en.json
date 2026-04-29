@@ -45,6 +45,13 @@
         "empty": "No favorite units are currently saved on this device.",
         "withCount": "Limit the Rumble candidate pool to your {{count}} saved favorite units."
       }
+    },
+    "optionalBench": {
+      "toggle": "Make bench optional",
+      "support": {
+        "disabled": "Build five active slots and three bench slots.",
+        "enabled": "Build five active slots, then add bench only when it improves buffs, debuffs, or opponent counters."
+      }
     }
   },
   "performance": {
@@ -111,7 +118,8 @@
   },
   "bench": {
     "title": "Bench",
-    "copy": "{{count}} bench slots"
+    "copy": "{{count}} bench slots",
+    "optionalCopy": "Up to {{count}} optional bench slots"
   },
   "opponent": {
     "title": "Opponent team",
