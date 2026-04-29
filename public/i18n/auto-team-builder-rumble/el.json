@@ -113,6 +113,18 @@
     "title": "Bench",
     "copy": "{{count}} bench slots"
   },
+  "opponent": {
+    "title": "Αντίπαλη ομάδα",
+    "copy": "Διάλεξε χειροκίνητα αντίπαλη ομάδα και δες τα δικά της Rumble buffs.",
+    "activeTitle": "Opponent active",
+    "benchTitle": "Opponent bench",
+    "emptySlot": "Κενό opponent slot",
+    "addSlot": "Επιλογή χαρακτήρα",
+    "addActiveAria": "Επιλογή opponent active slot {{index}}",
+    "addBenchAria": "Επιλογή opponent bench slot {{index}}",
+    "replaceAria": "Αντικατάσταση opponent {{name}}",
+    "removeAria": "Αφαίρεση opponent {{name}}"
+  },
   "slot": {
     "score": "Score {{score}}",
     "replaceAria": "Αντικατάσταση {{name}}",

@@ -157,10 +157,15 @@ describe('AutoTeamBuilderRumblePage', () => {
     expect(template).not.toContain("t('summary.droppedType'");
     expect(template).toContain("t('active.title')");
     expect(template).toContain("t('bench.title')");
+    expect(template).toContain("t('opponent.title')");
+    expect(template).toContain('opponentActiveSlots()');
+    expect(template).toContain('opponentBenchSlots()');
     expect(template).toContain('currentResult.activeSlots');
     expect(template).toContain('currentResult.benchSlots');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(slot)"');
     expect(template).toContain('(click)="openManualCharacterPicker(slot)"');
+    expect(template).toContain("(click)=\"openOpponentCharacterPicker('active', $index)\"");
+    expect(template).toContain("(click)=\"clearOpponentSlot('active', $index)\"");
     expect(template).toContain('(click)="excludeCharacter(slot)"');
     expect(template).toContain('(click)="cancelBuild()"');
     expect(template).toContain("t('excluded.title')");
@@ -171,6 +176,7 @@ describe('AutoTeamBuilderRumblePage', () => {
     expect(template).toContain("t('slot.totalBuffs')");
     expect(template).toContain("t('slot.noBuffs')");
     expect(template).toContain('getSlotTotalBuffRows(slot)');
+    expect(template).toContain('getOpponentSlotTotalBuffRows(opponentSlot)');
     expect(template).not.toContain("t('slot.passiveLevel'");
     expect(template).not.toContain("t('slot.specialLevel'");
     expect(template).not.toContain("t('slot.resistance')");
@@ -431,6 +437,103 @@ describe('AutoTeamBuilderRumblePage', () => {
     );
     expect(page.result()?.activeSlots[0]?.role).toBe('active');
     expect(page.result()?.selectedCount).toBe(8);
+  });
+
+  it('selects opponent characters before any team build', async () => {
+    const opponentSlot = createSlot('active', 30);
+    const { page, repository, rumbleBuilder } = createPage();
+
+    repository.getRumbleBuilderCandidates.mockResolvedValue([opponentSlot.unit.character]);
+    rumbleBuilder.scoreCandidates.mockReturnValue([opponentSlot.unit]);
+    await page.ngOnInit();
+    await page.openOpponentCharacterPicker('active', 0);
+
+    expect(page.manualPickerOpen()).toBe(true);
+    expect(page.manualPickerResults().map((candidate) => candidate.character.id)).toEqual([
+      opponentSlot.unit.character.id,
+    ]);
+
+    page.selectManualCharacter(opponentSlot.unit);
+
+    expect(page.manualPickerOpen()).toBe(false);
+    expect(page.opponentActiveSlots()[0]?.unit.character.id).toBe(opponentSlot.unit.character.id);
+    expect(page.result()).toBeNull();
+  });
+
+  it('keeps the opponent team when the player team is built again', async () => {
+    const opponentSlot = createSlot('active', 31);
+    const { page, repository, rumbleBuilder } = createPage();
+
+    repository.getRumbleBuilderCandidates.mockResolvedValue([opponentSlot.unit.character]);
+    rumbleBuilder.scoreCandidates.mockReturnValue([opponentSlot.unit]);
+    await page.ngOnInit();
+    await page.openOpponentCharacterPicker('active', 0);
+    page.selectManualCharacter(opponentSlot.unit);
+    await page.buildTeam();
+
+    expect(page.result()?.selectedCount).toBe(8);
+    expect(page.opponentActiveSlots()[0]?.unit.character.id).toBe(opponentSlot.unit.character.id);
+  });
+
+  it('summarizes opponent buffs from opponent slots only', () => {
+    const { page } = createPage();
+    const result = createResult();
+    const playerTarget = result.activeSlots[0];
+    const opponentTarget = createSlot('active', 40);
+    const opponentSource = createSlot('active', 41);
+
+    result.activeSlots[1].unit.normalized.passiveEffects = [
+      createEffect({
+        attributes: ['HP'],
+        level: 3,
+        targetScope: 'crew',
+        targetTokens: ['crew'],
+      }),
+    ];
+    opponentSource.unit.normalized.passiveEffects = [
+      createEffect({
+        attributes: ['ATK'],
+        level: 7,
+        targetScope: 'crew',
+        targetTokens: ['crew'],
+      }),
+    ];
+    page.result.set(result);
+    page.opponentActiveSlots.set([opponentTarget, opponentSource, null, null, null]);
+
+    expect(page.getSlotTotalBuffRows(playerTarget)).toEqual([{ stat: 'HP', value: '+3' }]);
+    expect(page.getOpponentSlotTotalBuffRows(opponentTarget)).toEqual([
+      { stat: 'ATK', value: '+7' },
+    ]);
+  });
+
+  it('filters opponent duplicates without blocking player team characters', async () => {
+    const result = createResult();
+    const existingOpponentSlot = createSlot('active', 50);
+    const playerSlotCandidate = result.activeSlots[0].unit;
+    const duplicateOpponentCandidate = existingOpponentSlot.unit;
+    const newOpponentSlot = createSlot('bench', 51);
+    const { page, repository, rumbleBuilder } = createPage(result);
+
+    repository.getRumbleBuilderCandidates.mockResolvedValue([
+      playerSlotCandidate.character,
+      duplicateOpponentCandidate.character,
+      newOpponentSlot.unit.character,
+    ]);
+    rumbleBuilder.scoreCandidates.mockReturnValue([
+      playerSlotCandidate,
+      duplicateOpponentCandidate,
+      newOpponentSlot.unit,
+    ]);
+    page.result.set(result);
+    page.opponentActiveSlots.set([existingOpponentSlot, null, null, null, null]);
+
+    await page.openOpponentCharacterPicker('bench', 0);
+
+    expect(page.manualPickerResults().map((candidate) => candidate.character.id)).toEqual([
+      playerSlotCandidate.character.id,
+      newOpponentSlot.unit.character.id,
+    ]);
   });
 
   it('excludes a selected slot and rebuilds with that character removed from the candidate scope', async () => {

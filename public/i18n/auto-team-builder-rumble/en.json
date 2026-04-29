@@ -113,6 +113,18 @@
     "title": "Bench",
     "copy": "{{count}} bench slots"
   },
+  "opponent": {
+    "title": "Opponent team",
+    "copy": "Pick a manual opponent team and inspect its own Rumble buffs.",
+    "activeTitle": "Opponent active",
+    "benchTitle": "Opponent bench",
+    "emptySlot": "Empty opponent slot",
+    "addSlot": "Choose character",
+    "addActiveAria": "Choose opponent active slot {{index}}",
+    "addBenchAria": "Choose opponent bench slot {{index}}",
+    "replaceAria": "Replace opponent {{name}}",
+    "removeAria": "Remove opponent {{name}}"
+  },
   "slot": {
     "score": "Score {{score}}",
     "replaceAria": "Replace {{name}}",

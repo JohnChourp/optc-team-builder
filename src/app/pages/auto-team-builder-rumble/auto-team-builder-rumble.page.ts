@@ -67,7 +67,11 @@ interface LoadingProgressRow {
   tone: LoadingProgressRowTone;
 }
 
+type ManualPickerTeam = 'player' | 'opponent';
+type OptionalRumbleTeamSlot = RumbleTeamSlot | null;
+
 interface ManualSlotTarget {
+  team: ManualPickerTeam;
   role: RumbleTeamSlotRole;
   index: number;
 }
@@ -89,6 +93,10 @@ const ROLE_LABELS: Record<NormalizedRumbleRoleTag, string> = {
   healer: 'roleLabels.healer',
   speed: 'roleLabels.speed',
 };
+
+function createEmptyRumbleSlots(count: number): OptionalRumbleTeamSlot[] {
+  return Array.from({ length: count }, () => null);
+}
 
 @Component({
   selector: 'app-auto-team-builder-rumble-page',
@@ -132,6 +140,12 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   public readonly manualPickerSearchTerm = signal('');
   public readonly manualPickerCandidates = signal<RumbleUnitScore[]>([]);
   public readonly manualPickerTarget = signal<ManualSlotTarget | null>(null);
+  public readonly opponentActiveSlots = signal<OptionalRumbleTeamSlot[]>(
+    createEmptyRumbleSlots(RUMBLE_ACTIVE_SLOT_COUNT),
+  );
+  public readonly opponentBenchSlots = signal<OptionalRumbleTeamSlot[]>(
+    createEmptyRumbleSlots(RUMBLE_BENCH_SLOT_COUNT),
+  );
   public readonly excludedCharacterIds = signal<number[]>([]);
   private readonly excludedCharacterRecordsById = signal<Record<number, CharacterDetailRecord>>({});
   private readonly buildProgressNowMs = signal(0);
@@ -608,7 +622,17 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       return [];
     }
 
-    const slots = this.collectTeamSlots(currentResult);
+    return this.getTeamSlotTotalBuffRows(slot, this.collectTeamSlots(currentResult));
+  }
+
+  public getOpponentSlotTotalBuffRows(slot: RumbleTeamSlot): RumbleBuffSummaryRow[] {
+    return this.getTeamSlotTotalBuffRows(slot, this.collectOpponentTeamSlots());
+  }
+
+  public getTeamSlotTotalBuffRows(
+    slot: RumbleTeamSlot,
+    slots: RumbleTeamSlot[],
+  ): RumbleBuffSummaryRow[] {
     const totals = this.resolveSlotTotalBuffs(slot, slots);
 
     return RUMBLE_BUFF_STATS.map((stat) => ({ stat, total: totals[stat] }))
@@ -620,7 +644,19 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   }
 
   public async openManualCharacterPicker(slot: RumbleTeamSlot): Promise<void> {
-    this.manualPickerTarget.set({ role: slot.role, index: slot.index });
+    return this.openManualCharacterPickerForTarget({
+      team: 'player',
+      role: slot.role,
+      index: slot.index,
+    });
+  }
+
+  public openOpponentCharacterPicker(role: RumbleTeamSlotRole, index: number): Promise<void> {
+    return this.openManualCharacterPickerForTarget({ team: 'opponent', role, index });
+  }
+
+  private async openManualCharacterPickerForTarget(target: ManualSlotTarget): Promise<void> {
+    this.manualPickerTarget.set(target);
     this.manualPickerSearchTerm.set('');
     this.manualPickerOpen.set(true);
 
@@ -652,7 +688,17 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     const target = this.manualPickerTarget();
     const currentResult = this.result();
 
-    if (!target || !currentResult) {
+    if (!target) {
+      return;
+    }
+
+    if (target.team === 'opponent') {
+      this.selectOpponentCharacter(target, candidate);
+      this.closeManualCharacterPicker();
+      return;
+    }
+
+    if (!currentResult) {
       return;
     }
 
@@ -679,6 +725,15 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       topFactors: this.buildManualTopFactors(selectedSlots),
     });
     this.closeManualCharacterPicker();
+  }
+
+  public clearOpponentSlot(role: RumbleTeamSlotRole, index: number): void {
+    if (role === 'active') {
+      this.opponentActiveSlots.update((slots) => this.replaceOptionalSlot(slots, index, null));
+      return;
+    }
+
+    this.opponentBenchSlots.update((slots) => this.replaceOptionalSlot(slots, index, null));
   }
 
   public async excludeCharacter(slot: RumbleTeamSlot): Promise<void> {
@@ -741,7 +796,38 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     return slots.map((slot) => (slot.index === replacement.index ? replacement : slot));
   }
 
+  private replaceOptionalSlot(
+    slots: OptionalRumbleTeamSlot[],
+    index: number,
+    replacement: OptionalRumbleTeamSlot,
+  ): OptionalRumbleTeamSlot[] {
+    return slots.map((slot, slotIndex) => (slotIndex === index ? replacement : slot));
+  }
+
+  private selectOpponentCharacter(target: ManualSlotTarget, candidate: RumbleUnitScore): void {
+    const replacementSlot = this.createManualSlot(target.role, target.index, candidate);
+
+    if (target.role === 'active') {
+      this.opponentActiveSlots.update((slots) =>
+        this.replaceOptionalSlot(slots, target.index, replacementSlot),
+      );
+      return;
+    }
+
+    this.opponentBenchSlots.update((slots) =>
+      this.replaceOptionalSlot(slots, target.index, replacementSlot),
+    );
+  }
+
   private resolveSelectedCharacterIds(target: ManualSlotTarget | null): Set<number> {
+    if (target?.team === 'opponent') {
+      return new Set(
+        this.collectOpponentTeamSlots()
+          .filter((slot) => !(slot.role === target.role && slot.index === target.index))
+          .map((slot) => slot.unit.character.id),
+      );
+    }
+
     const currentResult = this.result();
     const selectedIds = new Set<number>(this.excludedCharacterIds());
 
@@ -824,6 +910,12 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
 
   private collectTeamSlots(result: RumbleTeamResult): RumbleTeamSlot[] {
     return [...result.activeSlots, ...result.benchSlots];
+  }
+
+  private collectOpponentTeamSlots(): RumbleTeamSlot[] {
+    return [...this.opponentActiveSlots(), ...this.opponentBenchSlots()].filter(
+      (slot): slot is RumbleTeamSlot => Boolean(slot),
+    );
   }
 
   private resolveSlotTotalBuffs(

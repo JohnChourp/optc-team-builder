@@ -212,6 +212,187 @@
         </section>
       }
 
+      @if (initialized()) {
+        <section class="glass-card team-section opponent-team-section">
+          <div class="section-head">
+            <div>
+              <div class="section-label">{{ t('opponent.title') }}</div>
+              <h2>{{ t('opponent.copy') }}</h2>
+            </div>
+          </div>
+
+          <div class="opponent-team-group">
+            <span>{{ t('opponent.activeTitle') }}</span>
+            <div class="slot-grid">
+              @for (slot of opponentActiveSlots(); track $index) {
+                @if (slot; as opponentSlot) {
+                  <article class="rumble-slot-card">
+                    <a
+                      class="slot-image"
+                      [routerLink]="getCharacterDetailLink(opponentSlot)"
+                      [attr.aria-label]="opponentSlot.unit.character.name"
+                    >
+                      <img
+                        [src]="opponentSlot.unit.character.imageUrl"
+                        [alt]="opponentSlot.unit.character.name"
+                      />
+                    </a>
+                    <div class="slot-copy">
+                      <a class="slot-name" [routerLink]="getCharacterDetailLink(opponentSlot)">
+                        {{ opponentSlot.unit.character.name }}
+                      </a>
+                      <ion-button
+                        class="slot-replace-button"
+                        fill="clear"
+                        color="light"
+                        size="small"
+                        [attr.aria-label]="
+                          t('opponent.replaceAria', { name: opponentSlot.unit.character.name })
+                        "
+                        (click)="openOpponentCharacterPicker('active', $index)"
+                      >
+                        <ion-icon slot="icon-only" [icon]="editIcon"></ion-icon>
+                      </ion-button>
+                      <ion-button
+                        class="slot-exclude-button"
+                        fill="clear"
+                        color="light"
+                        size="small"
+                        [attr.aria-label]="
+                          t('opponent.removeAria', { name: opponentSlot.unit.character.name })
+                        "
+                        (click)="clearOpponentSlot('active', $index)"
+                      >
+                        <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                      </ion-button>
+                      <small>
+                        {{ opponentSlot.unit.character.type }} •
+                        {{ opponentSlot.unit.character.primaryClass }}
+                      </small>
+                      <dl class="slot-rumble-details">
+                        <div class="slot-rumble-details__wide">
+                          <dt>{{ t('slot.totalBuffs') }}</dt>
+                          @if (getOpponentSlotTotalBuffRows(opponentSlot).length) {
+                            <dd class="slot-buff-grid">
+                              @for (
+                                buff of getOpponentSlotTotalBuffRows(opponentSlot);
+                                track buff.stat
+                              ) {
+                                <span class="slot-buff-chip">
+                                  <span>{{ buff.stat }}</span>
+                                  <strong>{{ buff.value }}</strong>
+                                </span>
+                              }
+                            </dd>
+                          } @else {
+                            <dd>{{ t('slot.noBuffs') }}</dd>
+                          }
+                        </div>
+                      </dl>
+                    </div>
+                  </article>
+                } @else {
+                  <button
+                    type="button"
+                    class="rumble-slot-card opponent-empty-slot"
+                    [attr.aria-label]="t('opponent.addActiveAria', { index: $index + 1 })"
+                    (click)="openOpponentCharacterPicker('active', $index)"
+                  >
+                    <span>{{ t('opponent.emptySlot') }}</span>
+                    <strong>{{ t('opponent.addSlot') }}</strong>
+                  </button>
+                }
+              }
+            </div>
+          </div>
+
+          <div class="opponent-team-group">
+            <span>{{ t('opponent.benchTitle') }}</span>
+            <div class="slot-grid">
+              @for (slot of opponentBenchSlots(); track $index) {
+                @if (slot; as opponentSlot) {
+                  <article class="rumble-slot-card rumble-slot-card--bench">
+                    <a
+                      class="slot-image"
+                      [routerLink]="getCharacterDetailLink(opponentSlot)"
+                      [attr.aria-label]="opponentSlot.unit.character.name"
+                    >
+                      <img
+                        [src]="opponentSlot.unit.character.imageUrl"
+                        [alt]="opponentSlot.unit.character.name"
+                      />
+                    </a>
+                    <div class="slot-copy">
+                      <a class="slot-name" [routerLink]="getCharacterDetailLink(opponentSlot)">
+                        {{ opponentSlot.unit.character.name }}
+                      </a>
+                      <ion-button
+                        class="slot-replace-button"
+                        fill="clear"
+                        color="light"
+                        size="small"
+                        [attr.aria-label]="
+                          t('opponent.replaceAria', { name: opponentSlot.unit.character.name })
+                        "
+                        (click)="openOpponentCharacterPicker('bench', $index)"
+                      >
+                        <ion-icon slot="icon-only" [icon]="editIcon"></ion-icon>
+                      </ion-button>
+                      <ion-button
+                        class="slot-exclude-button"
+                        fill="clear"
+                        color="light"
+                        size="small"
+                        [attr.aria-label]="
+                          t('opponent.removeAria', { name: opponentSlot.unit.character.name })
+                        "
+                        (click)="clearOpponentSlot('bench', $index)"
+                      >
+                        <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                      </ion-button>
+                      <small>
+                        {{ opponentSlot.unit.character.type }} •
+                        {{ opponentSlot.unit.character.primaryClass }}
+                      </small>
+                      <dl class="slot-rumble-details">
+                        <div class="slot-rumble-details__wide">
+                          <dt>{{ t('slot.totalBuffs') }}</dt>
+                          @if (getOpponentSlotTotalBuffRows(opponentSlot).length) {
+                            <dd class="slot-buff-grid">
+                              @for (
+                                buff of getOpponentSlotTotalBuffRows(opponentSlot);
+                                track buff.stat
+                              ) {
+                                <span class="slot-buff-chip">
+                                  <span>{{ buff.stat }}</span>
+                                  <strong>{{ buff.value }}</strong>
+                                </span>
+                              }
+                            </dd>
+                          } @else {
+                            <dd>{{ t('slot.noBuffs') }}</dd>
+                          }
+                        </div>
+                      </dl>
+                    </div>
+                  </article>
+                } @else {
+                  <button
+                    type="button"
+                    class="rumble-slot-card rumble-slot-card--bench opponent-empty-slot"
+                    [attr.aria-label]="t('opponent.addBenchAria', { index: $index + 1 })"
+                    (click)="openOpponentCharacterPicker('bench', $index)"
+                  >
+                    <span>{{ t('opponent.emptySlot') }}</span>
+                    <strong>{{ t('opponent.addSlot') }}</strong>
+                  </button>
+                }
+              }
+            </div>
+          </div>
+        </section>
+      }
+
       @if (loading()) {
         <section class="glass-card loading-card">
           <ion-spinner name="crescent" class="loading-card__spinner"></ion-spinner>

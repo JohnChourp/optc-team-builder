@@ -405,6 +405,23 @@
   gap: 14px;
 }
 
+.opponent-team-section {
+  gap: 18px;
+}
+
+.opponent-team-group {
+  display: grid;
+  gap: 10px;
+}
+
+.opponent-team-group > span {
+  color: rgba(246, 241, 232, 0.62);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .rumble-slot-card {
   position: relative;
   display: grid;
@@ -425,6 +442,38 @@
 
 .rumble-slot-card--bench {
   background: rgba(255, 255, 255, 0.03);
+}
+
+.opponent-empty-slot {
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 132px;
+  align-content: center;
+  gap: 6px;
+  padding: 18px;
+  border-style: dashed;
+  color: #fff8ee;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.opponent-empty-slot span,
+.opponent-empty-slot strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.opponent-empty-slot span {
+  color: rgba(246, 241, 232, 0.62);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.opponent-empty-slot strong {
+  color: #f8d36b;
+  font-size: 0.95rem;
 }
 
 .slot-image {
