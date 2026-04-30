@@ -20,8 +20,8 @@
     "title": "Edit saved Rumble team"
   },
   "empty": {
-    "action": "Open Auto Rumble Builder",
-    "copy": "Save a Rumble team from the Auto Rumble Builder to keep it here.",
+    "action": "Open Auto Team Rumble Builder",
+    "copy": "Save a Rumble team from the Auto Team Rumble Builder to keep it here.",
     "title": "No saved Rumble teams yet."
   },
   "list": {

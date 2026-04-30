@@ -705,7 +705,9 @@
                             [attr.aria-label]="
                               t('manual.similar.actions.addFor', { name: character.name })
                             "
-                            (click)="addSimilarManualPick(activeManualSlotRole(), character, $event)"
+                            (click)="
+                              addSimilarManualPick(activeManualSlotRole(), character, $event)
+                            "
                             (keydown.enter)="
                               addSimilarManualPick(activeManualSlotRole(), character, $event)
                             "
@@ -1478,6 +1480,177 @@
             {{ buildButtonLabel() }}
           </ion-button>
         </div>
+
+        <section class="fixed-manual-team-card">
+          <div class="slot-grid__header">
+            <h2>{{ t('manualTeam.title') }}</h2>
+            <p>{{ t('manualTeam.copy') }}</p>
+          </div>
+
+          <div class="fixed-manual-team-fields">
+            <ion-input
+              [label]="t('manualTeam.fields.name')"
+              labelPlacement="stacked"
+              fill="outline"
+              [value]="fixedManualTeamName()"
+              (ionInput)="onFixedManualTeamNameChange($event)"
+            ></ion-input>
+            <ion-textarea
+              [label]="t('manualTeam.fields.notes')"
+              labelPlacement="stacked"
+              fill="outline"
+              autoGrow="true"
+              [value]="fixedManualTeamNotes()"
+              (ionInput)="onFixedManualTeamNotesChange($event)"
+            ></ion-textarea>
+          </div>
+
+          <div class="fixed-manual-team-ship">
+            <span>{{ t('manualTeam.ship.label') }}</span>
+            <strong>{{ fixedManualTeamSelectedShipLabel() }}</strong>
+          </div>
+
+          <div class="fixed-manual-team-slots">
+            @for (slot of fixedManualTeamSlots(); track index; let index = $index) {
+              <button
+                type="button"
+                class="fixed-manual-team-slot"
+                [class.fixed-manual-team-slot--active]="
+                  fixedManualTeamSelectedSlotIndex() === index
+                "
+                (click)="selectFixedManualTeamSlot(index)"
+              >
+                @if (slot) {
+                  <img [src]="slot.imageUrl" [alt]="slot.name" loading="lazy" />
+                  <span>
+                    <strong>{{ t('manualTeam.slots.label', { slot: index + 1 }) }}</strong>
+                    <small>{{ slot.name }}</small>
+                  </span>
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    color="warning"
+                    class="fixed-manual-team-slot__clear"
+                    (click)="clearFixedManualTeamSlot(index, $event)"
+                  >
+                    {{ 'common.actions.clear' | transloco }}
+                  </ion-button>
+                } @else {
+                  <img
+                    src="assets/placeholders/character-card.svg"
+                    [alt]="t('manualTeam.slots.emptyAlt')"
+                  />
+                  <span>
+                    <strong>{{ t('manualTeam.slots.label', { slot: index + 1 }) }}</strong>
+                    <small>{{ t('manualTeam.slots.empty') }}</small>
+                  </span>
+                }
+              </button>
+            }
+          </div>
+
+          <div class="fixed-manual-team-picker">
+            <div class="manual-locks-meta manual-locks-meta--candidates">
+              <strong>{{
+                t('manualTeam.picker.title', { slot: fixedManualTeamSelectedSlotIndex() + 1 })
+              }}</strong>
+              <small>{{ t('manualTeam.picker.copy') }}</small>
+            </div>
+            <ion-searchbar
+              [debounce]="150"
+              [placeholder]="t('manualTeam.picker.searchPlaceholder')"
+              [value]="fixedManualTeamSearchTerm()"
+              (ionInput)="onFixedManualTeamSearchChange($event)"
+            ></ion-searchbar>
+            @if (!fixedManualTeamCandidateCards().length) {
+              <div class="manual-candidate-empty-state">
+                {{ t('manualTeam.picker.empty') }}
+              </div>
+            }
+            @if (fixedManualTeamCandidateCards().length) {
+              <div class="fixed-manual-team-candidates">
+                @for (
+                  candidateCard of fixedManualTeamCandidateCards();
+                  track candidateCard.character.id
+                ) {
+                  <article
+                    class="manual-candidate-card manual-candidate-card--detailed fixed-manual-team-candidate"
+                    [class.manual-candidate-card--selected]="candidateCard.isAssignedToActiveSlot"
+                    [class.fixed-manual-team-candidate--assigned-other]="
+                      candidateCard.isAssignedToAnotherSlot
+                    "
+                  >
+                    <a
+                      class="character-detail-thumb-link"
+                      [routerLink]="getCharacterDetailLink(candidateCard.character)"
+                      [attr.aria-label]="candidateCard.character.name"
+                    >
+                      <img
+                        [src]="candidateCard.character.imageUrl"
+                        [alt]="candidateCard.character.name"
+                        loading="lazy"
+                      />
+                    </a>
+                    <div class="manual-candidate-copy">
+                      <a
+                        class="character-detail-name-link"
+                        [routerLink]="getCharacterDetailLink(candidateCard.character)"
+                      >
+                        {{ candidateCard.character.name }}
+                      </a>
+                      <span>{{ candidateCard.subtitle }}</span>
+                      @if (candidateCard.isAssignedToAnotherSlot) {
+                        <small class="manual-candidate-role manual-candidate-role--muted">
+                          {{ t('manualTeam.picker.assignedElsewhere') }}
+                        </small>
+                      }
+                    </div>
+                    <div class="manual-candidate-actions">
+                      <ion-button
+                        size="small"
+                        fill="outline"
+                        color="light"
+                        class="manual-candidate-action-button"
+                        [disabled]="candidateCard.isAssignedToActiveSlot"
+                        (click)="assignFixedManualTeamCharacter(candidateCard.character)"
+                      >
+                        {{ candidateCard.actionLabel }}
+                      </ion-button>
+                    </div>
+                  </article>
+                }
+              </div>
+            }
+          </div>
+
+          @if (fixedManualTeamSaveFeedbackError()) {
+            <section
+              class="preset-import-feedback preset-import-feedback--error save-team-feedback"
+              role="alert"
+              aria-live="assertive"
+            >
+              <ion-icon [icon]="presetImportErrorIcon"></ion-icon>
+              <div class="save-team-feedback__copy">
+                <strong>{{ t('save.error') }}</strong>
+              </div>
+            </section>
+          }
+
+          <div class="fixed-manual-team-actions">
+            <ion-button fill="outline" color="light" (click)="resetFixedManualTeam()">
+              {{ 'common.actions.reset' | transloco }}
+            </ion-button>
+            <ion-button
+              color="warning"
+              [disabled]="fixedManualTeamSaveDisabled()"
+              (click)="saveFixedManualTeam()"
+            >
+              {{
+                fixedManualTeamSaveUiLocked() ? t('save.savingLabel') : t('manualTeam.actions.save')
+              }}
+            </ion-button>
+          </div>
+        </section>
       </section>
 
       @if (building()) {

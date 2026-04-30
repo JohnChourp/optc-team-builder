@@ -21,7 +21,6 @@ import {
   cogOutline,
   flashOutline,
   gridOutline,
-  peopleOutline,
   saveOutline,
   searchOutline,
   shieldCheckmarkOutline,
@@ -95,12 +94,6 @@ export class HomePage {
     {
       color: 'light',
       fill: 'outline',
-      labelKey: 'actions.teamBuilder',
-      route: '/tabs/team-builder',
-    },
-    {
-      color: 'light',
-      fill: 'outline',
       labelKey: 'actions.autoBuilder',
       route: '/tabs/auto-team-builder',
     },
@@ -134,12 +127,6 @@ export class HomePage {
       titleKey: 'features.characters.title',
       copyKey: 'features.characters.copy',
       route: '/tabs/characters',
-    },
-    {
-      icon: peopleOutline,
-      titleKey: 'features.teamBuilder.title',
-      copyKey: 'features.teamBuilder.copy',
-      route: '/tabs/team-builder',
     },
     {
       icon: flashOutline,

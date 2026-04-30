@@ -47,7 +47,7 @@ describe('SavedRumbleTeamsPage', () => {
     ]);
   });
 
-  it('builds the Auto Rumble Builder query params for a saved team', () => {
+  it('builds the Auto Team Rumble Builder query params for a saved team', () => {
     const { page } = createPage();
 
     expect(page.getRumbleBuilderQueryParams({ id: 'rumble-1' })).toEqual({

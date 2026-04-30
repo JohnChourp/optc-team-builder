@@ -13,7 +13,6 @@ const sitemapHtmlPath = path.join(outputDir, 'sitemap.html');
 const publicToolPaths = new Set([
   '',
   'tabs/characters',
-  'tabs/team-builder',
   'tabs/auto-team-builder',
   'tabs/crew-forge',
   'privacy',
@@ -181,12 +180,7 @@ function auditRootFallbackHtml(html, htmlPath) {
     errors.push(`${relative(htmlPath)} root fallback images must not use empty alt text.`);
   }
 
-  for (const routePath of [
-    'tabs/characters',
-    'tabs/team-builder',
-    'tabs/auto-team-builder',
-    'tabs/crew-forge',
-  ]) {
+  for (const routePath of ['tabs/characters', 'tabs/auto-team-builder', 'tabs/crew-forge']) {
     const expectedHref = buildAppRoutePath(routePath);
 
     if (!html.includes(`href="${expectedHref}"`)) {

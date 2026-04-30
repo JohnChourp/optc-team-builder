@@ -6,7 +6,7 @@
     "exportJson": "Export JSON",
     "favorited": "Favorited",
     "importJson": "Import JSON",
-    "openTeamBuilder": "Open team builder",
+    "openTeamBuilder": "Open Auto Team Builder",
     "resetOverride": "Reset local changes",
     "summary": "Cost {{cost}} • {{stars}}★ unit"
   },

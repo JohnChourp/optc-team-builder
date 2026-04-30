@@ -2067,8 +2067,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain("'common.actions.reset' | transloco");
     expect(template).not.toContain('common.actions.viewDetails');
     expect(template).not.toContain('detail-link-button');
-    expect(template.match(/class="character-detail-thumb-link/g)).toHaveLength(3);
-    expect(template.match(/class="character-detail-name-link/g)).toHaveLength(3);
+    expect(template.match(/class="character-detail-thumb-link/g)).toHaveLength(4);
+    expect(template.match(/class="character-detail-name-link/g)).toHaveLength(4);
     expect(template).toContain('[routerLink]="getCharacterDetailLink(candidateCard.character)"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(slot.character)"');
     expect(template).toContain('(click)="saveTeam()"');
@@ -2119,9 +2119,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain('(click)="toggleExcludedShip(shipSelection.ship.id)"');
     expect(template).toContain('(click)="addResultCharacterToManualSlot(slot)"');
     expect(template).toContain('(click)="addSimilarManualPick(slotCard.role, character, $event)"');
-    expect(template).toContain(
-      '(click)="addSimilarManualPick(activeManualSlotRole(), character, $event)"',
-    );
+    expect(template).toContain('addSimilarManualPick(activeManualSlotRole(), character, $event)');
     expect(template).toContain('(click)="toggleExcludedCharacter(slot.character)"');
     expect(template).toContain("t('exclude.actions.addShip')");
     expect(template).toContain("t('manual.actions.addResult')");
@@ -2680,7 +2678,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
     await page.ionViewWillEnter();
 
-    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
+    expect(repository.searchDetailedCharacters).toHaveBeenCalledWith({
       searchTerm: '',
       selectedTypes: [],
       selectedClasses: [],
@@ -2705,8 +2703,12 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
     await page.ngOnInit();
 
-    expect(repository.searchDetailedCharacters).toHaveBeenCalledTimes(2);
-    expect(repository.searchDetailedCharacters.mock.calls).toEqual([
+    const characterPickerCalls = repository.searchDetailedCharacters.mock.calls.filter(
+      ([query]) => query.limit === 10,
+    );
+
+    expect(characterPickerCalls).toHaveLength(2);
+    expect(characterPickerCalls).toEqual([
       [
         expect.objectContaining({
           searchTerm: '',
@@ -2792,7 +2794,11 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     await page.onManualCandidatesScrolledIndexChange(6);
     await page.onExcludedCandidatesScrolledIndexChange(6);
 
-    expect(repository.searchDetailedCharacters.mock.calls).toEqual([
+    const characterPickerCalls = repository.searchDetailedCharacters.mock.calls.filter(
+      ([query]) => query.limit === 10,
+    );
+
+    expect(characterPickerCalls).toEqual([
       [
         expect.objectContaining({
           searchTerm: '',
@@ -3000,6 +3006,83 @@ describe('AutoTeamBuilderPage offline save', () => {
     await page.saveTeam();
 
     expect(userState.saveTeam).not.toHaveBeenCalled();
+  });
+
+  it('does not save a manual fixed team with zero selected slots', async () => {
+    const { page, userState } = await createPage();
+
+    await page.ngOnInit();
+    await page.saveFixedManualTeam();
+
+    expect(userState.saveTeam).not.toHaveBeenCalled();
+  });
+
+  it('saves a manual fixed team with six id or null slots and the selected ship id', async () => {
+    const { page, userState } = await createPage();
+
+    await page.ngOnInit();
+    page.fixedManualTeamName.set('Manual Crew');
+    page.fixedManualTeamNotes.set('Built by hand');
+    page.selectedManualShipId.set(9001);
+    page.fixedManualTeamSlots.set([
+      createCharacterRecord(201, 'Manual Captain'),
+      null,
+      createCharacterRecord(203, 'Manual Sub 1'),
+      null,
+      null,
+      createCharacterRecord(206, 'Manual Sub 4'),
+    ]);
+
+    await page.saveFixedManualTeam();
+
+    expect(userState.saveTeam).toHaveBeenCalledWith({
+      id: undefined,
+      name: 'Manual Crew',
+      notes: 'Built by hand',
+      shipId: 9001,
+      slots: [201, null, 203, null, null, 206],
+    });
+    expect(page.fixedManualTeamCurrentTeamId()).toBe('saved-auto-team');
+    expect(page.fixedManualTeamSaveUiLocked()).toBe(false);
+    expect(page.fixedManualTeamSaveFeedbackError()).toBe('');
+  });
+
+  it('ignores repeated manual fixed team save clicks while the save request is active', async () => {
+    const { page, userState } = await createPage();
+    let resolveSave: (value: { id: string }) => void = () => undefined;
+
+    userState.saveTeam.mockReturnValueOnce(
+      new Promise<{ id: string }>((resolve) => {
+        resolveSave = resolve;
+      }),
+    );
+
+    await page.ngOnInit();
+    page.fixedManualTeamSlots.set([createCharacterRecord(201), null, null, null, null, null]);
+
+    const firstSavePromise = page.saveFixedManualTeam();
+    await Promise.resolve();
+
+    await page.saveFixedManualTeam();
+
+    expect(userState.saveTeam).toHaveBeenCalledTimes(1);
+    expect(page.fixedManualTeamSaveUiLocked()).toBe(true);
+
+    resolveSave({ id: 'manual-team-id' });
+    await firstSavePromise;
+
+    expect(page.fixedManualTeamSaveUiLocked()).toBe(false);
+  });
+
+  it('clears the current manual fixed team id when fixed slots change', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.fixedManualTeamCurrentTeamId.set('manual-team-id');
+
+    page.assignFixedManualTeamCharacter(createCharacterRecord(201, 'Manual Captain'));
+
+    expect(page.fixedManualTeamCurrentTeamId()).toBeNull();
   });
 
   it('saves immediately and unlocks after the save finishes', async () => {
@@ -3396,7 +3479,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 20,
+      schemaVersion: 21,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -3411,6 +3494,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
             requiredCharacterCount: 2,
           },
         ],
+        requiredCharacterGroups: [],
         enemyMechanics: [],
         requireAllSelectedTypesInTeam: true,
         requireAllSelectedClassesPerCharacter: true,
@@ -3471,6 +3555,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       selectedTypes: ['DEX', 'PSY'],
       selectedClasses: ['Fighter', 'Slasher'],
       requiredAbilities: [],
+      requiredCharacterGroups: [],
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
@@ -3495,6 +3580,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       selectedTypes: ['DEX', 'PSY'],
       selectedClasses: ['Fighter', 'Slasher'],
       requiredAbilities: [],
+      requiredCharacterGroups: [],
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
@@ -3586,7 +3672,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       exportedAt: '2026-03-25T10:00:00.000Z',
     });
 
-    expect(payload.schemaVersion).toBe(20);
+    expect(payload.schemaVersion).toBe(21);
     expect(payload.filters.leaderBoostRanges).toEqual({
       ATK: { min: 5, max: 6 },
       HP: { min: 1.25, max: 1.5 },
@@ -4478,7 +4564,13 @@ describe('AutoTeamBuilderPage preset import state', () => {
         abilityKey: 'remove_bind',
         minTurns: null,
         slotTokens: [],
-        requiredCharacterCount: 2,
+        requiredCharacterCount: 1,
+      },
+      {
+        abilityKey: 'remove_bind',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: 1,
       },
     ]);
     expect(page.lockedCharacterIds()).toEqual([102, 101]);
@@ -4565,7 +4657,14 @@ describe('AutoTeamBuilderPage preset import state', () => {
 
     expect(page.selectedTypes()).toEqual(['DEX']);
     expect(page.selectedClasses()).toEqual(['Fighter']);
-    expect(page.pageRequiredAbilities()).toEqual([]);
+    expect(page.pageRequiredAbilities()).toEqual([
+      {
+        abilityKey: 'remove_slot_barrier',
+        minTurns: 2,
+        slotTokens: ['DEX'],
+        requiredCharacterCount: 1,
+      },
+    ]);
     expect(page.lockedCharacterIds()).toEqual([101]);
     expect(page.selectedLeaderIds()).toEqual([101]);
     expect(page.manualSlots()).toEqual(
@@ -4722,8 +4821,14 @@ describe('AutoTeamBuilder enemy preset handoff', () => {
     expect(page.pageEnemyMechanics()).toEqual([]);
     expect(page.pageRequiredAbilities()).toEqual([
       {
+        abilityKey: 'remove_enemy_barrier',
+        minTurns: 3,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+      {
         abilityKey: 'remove_bind',
-        minTurns: null,
+        minTurns: 5,
         slotTokens: [],
         requiredCharacterCount: 1,
       },
@@ -4767,8 +4872,14 @@ describe('AutoTeamBuilder enemy preset handoff', () => {
         enemyMechanics: [],
         requiredAbilities: [
           {
+            abilityKey: 'remove_enemy_barrier',
+            minTurns: 3,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+          },
+          {
             abilityKey: 'remove_bind',
-            minTurns: null,
+            minTurns: 5,
             slotTokens: [],
             requiredCharacterCount: 1,
           },

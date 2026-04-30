@@ -62,14 +62,16 @@ describe('app routes', () => {
     expect(crewForgeRoute?.loadComponent).toBeTypeOf('function');
   });
 
-  it('registers the Auto Rumble Builder route inside tabs', () => {
+  it('registers the Auto Team Rumble Builder route inside tabs', () => {
     const tabsRoute = findRouteByPath(routes, 'tabs');
     const rumbleRoute = tabsRoute?.children?.find(
       (route) => route.path === 'auto-team-builder-rumble',
     );
+    const seo = rumbleRoute?.data?.['seo'] as Record<string, unknown> | undefined;
 
     expect(rumbleRoute).toBeDefined();
     expect(rumbleRoute?.loadComponent).toBeTypeOf('function');
+    expect(seo?.['title']).toBe('Auto Team Rumble Builder | OPTC Team Builder');
   });
 
   it('registers the Rumble characters route inside tabs', () => {
@@ -120,7 +122,6 @@ describe('app routes', () => {
     const tabsRoute = findRouteByPath(routes, 'tabs');
     const publicRoutePaths = [
       'characters',
-      'team-builder',
       'auto-team-builder',
       'auto-team-builder-rumble',
       'rumble-characters',
@@ -135,6 +136,13 @@ describe('app routes', () => {
       expect(seo?.['description']).toBeTypeOf('string');
       expect(seo?.['canonicalPath']).toBe(`tabs/${path}`);
     }
+  });
+
+  it('does not register the removed standalone team-builder route', () => {
+    const tabsRoute = findRouteByPath(routes, 'tabs');
+    const teamBuilderRoute = tabsRoute?.children?.find((route) => route.path === 'team-builder');
+
+    expect(teamBuilderRoute).toBeUndefined();
   });
 
   it('registers the cookie policy route inside the tabs shell', () => {

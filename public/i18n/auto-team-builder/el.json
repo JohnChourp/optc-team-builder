@@ -284,6 +284,36 @@
       "name": "Auto Builder Pool {{count}}"
     }
   },
+  "manualTeam": {
+    "title": "Χειροκίνητη ομάδα",
+    "copy": "Χρησιμοποίησε αυτά τα έξι σταθερά slots όταν ξέρεις ήδη την ομάδα και θέλεις να την αποθηκεύσεις χωρίς αυτόματο build.",
+    "fields": {
+      "name": "Όνομα πληρώματος",
+      "notes": "Σημειώσεις"
+    },
+    "ship": {
+      "label": "Ship",
+      "none": "Δεν έχει επιλεγεί ship",
+      "selected": "{{name}}"
+    },
+    "slots": {
+      "empty": "Κενό slot",
+      "emptyAlt": "Κενό character slot",
+      "label": "Slot {{slot}}"
+    },
+    "picker": {
+      "assignedElsewhere": "Χρησιμοποιείται ήδη σε άλλο fixed slot.",
+      "copy": "Αναζήτησε στο catalog και βάλε χαρακτήρα στο active fixed slot.",
+      "empty": "Δεν βρέθηκαν χαρακτήρες για αυτό το manual team search.",
+      "searchPlaceholder": "Αναζήτηση χαρακτήρων για fixed team",
+      "title": "Assign slot {{slot}}"
+    },
+    "actions": {
+      "assign": "Assign",
+      "assigned": "Assigned",
+      "save": "Αποθήκευση manual team"
+    }
+  },
   "manual": {
     "title": "Manual picks",
     "copy": "Διάλεξε OR επιλογές ανά slot, κράτησε προαιρετικά manual ship και άφησε τα κενά slots να γεμίσουν αυτόματα.",
@@ -490,7 +520,7 @@
     "requestedTypes": "Requested types"
   },
   "save": {
-    "copy": "Αποθήκευσε το generated team offline με το ίδιο shared storage που χρησιμοποιεί και το Team Builder.",
+    "copy": "Αποθήκευσε το generated team offline στο κοινό saved-team storage.",
     "error": "Η αποθήκευση της ομάδας δεν ολοκληρώθηκε. Δοκίμασε ξανά.",
     "notesLabel": "Σημειώσεις",
     "saveOffline": "Αποθήκευση ομάδας offline",

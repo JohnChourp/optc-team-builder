@@ -323,9 +323,8 @@
     },
     "actions": {
       "characters": "Browse Characters",
-      "teamBuilder": "Build a Team",
-      "autoBuilder": "Use Auto Builder",
-      "autoRumble": "Use Rumble Builder",
+      "autoBuilder": "Open Auto Team Builder",
+      "autoRumble": "Open Auto Team Rumble Builder",
       "crewForge": "Open Crew Forge",
       "driveSync": "Open Drive Sync"
     },
@@ -338,21 +337,17 @@
     "features": {
       "eyebrow": "What you can do",
       "title": "Every page has a planning job",
-      "copy": "Use the site as a practical OPTC workspace: find units, compare abilities, build crews, save useful setups, and keep repeat planning tasks organized.",
+      "copy": "Use the site as a practical OPTC workspace: find units, compare abilities, build crews manually or automatically, save useful setups, and keep repeat planning tasks organized.",
       "characters": {
         "title": "Characters",
         "copy": "Search and filter the catalog by name, type, class, ability data, favorites, and detailed character pages."
       },
-      "teamBuilder": {
-        "title": "Team Builder",
-        "copy": "Fill crew slots, pick ships, review totals, write notes, and save team ideas for offline reuse."
-      },
       "autoBuilder": {
         "title": "Auto Team Builder",
-        "copy": "Match enemy mechanics, ability requirements, classes, types, locks, and excluded units against candidate crews."
+        "copy": "Build teams manually with fixed slots, or match enemy mechanics, ability requirements, classes, types, locks, and excluded units against candidate crews."
       },
       "autoRumble": {
-        "title": "Auto Rumble Builder",
+        "title": "Auto Team Rumble Builder",
         "copy": "Score rumble-capable units, compare synergy, and fill active and bench slots for Pirate Rumble teams."
       },
       "savedRumbleTeams": {
@@ -390,14 +385,14 @@
       "copy": "Start with a unit or quest requirement, shape the crew with manual or automatic tools, then keep the useful result for the next run.",
       "steps": {
         "find": "Find characters by name, ability, type, class, favorites, or enemy mechanics.",
-        "plan": "Build the crew manually, ask Auto Team Builder for candidates, or import an existing screenshot.",
+        "plan": "Build the crew manually inside Auto Team Builder, ask it for candidates, or import an existing screenshot.",
         "save": "Save teams, boxes, enemies, and settings locally, with import/export tools when you need to move data."
       }
     }
   },
   "tabs": {
-    "auto": "Auto",
-    "autoRumble": "Auto Rumble Builder",
+    "auto": "Auto Team Builder",
+    "autoRumble": "Auto Team Rumble Builder",
     "characterBoxes": "Character Boxes",
     "characters": "Characters",
     "crewForge": "Crew Forge",
@@ -412,8 +407,7 @@
     "savedRumbleTeams": "Saved Rumble Teams",
     "savedEnemies": "Saved Enemies",
     "settings": "Settings",
-    "savedTeams": "Saved Teams",
-    "team": "Team"
+    "savedTeams": "Saved Teams"
   },
   "analyticsConsent": {
     "banner": {

@@ -208,6 +208,14 @@ interface ManualCharacterCardView {
   selectionSupportLabel: string | null;
 }
 
+interface FixedManualTeamCandidateCardView {
+  character: CharacterDetailRecord;
+  subtitle: string;
+  isAssignedToActiveSlot: boolean;
+  isAssignedToAnotherSlot: boolean;
+  actionLabel: string;
+}
+
 interface ShipCandidateCardView {
   ship: ShipRecord;
   subtitle: string;
@@ -313,6 +321,7 @@ interface AutoTeamBuilderDefaultFilterState {
 }
 
 const AUTO_TEAM_BUILD_BUTTON_LABEL = 'Auto Team Build';
+const FIXED_MANUAL_TEAM_SLOT_COUNT = 6;
 const CHARACTER_PICKER_PAGE_SIZE = 10;
 const CHARACTER_PICKER_SCROLL_LOAD_THRESHOLD = 4;
 const SIMILAR_MANUAL_PICK_CANDIDATE_LIMIT = 10_000;
@@ -326,6 +335,10 @@ const EXTRA_DROP_ABILITY_KEY_SET = new Set([
   EXTRA_DROP_ANY_ABILITY_KEY,
   EXTRA_DROP_GUARANTEED_ABILITY_KEY,
 ]);
+
+function createEmptyFixedManualTeamSlots(): Array<CharacterDetailRecord | null> {
+  return Array.from({ length: FIXED_MANUAL_TEAM_SLOT_COUNT }, () => null);
+}
 
 function createCharacterPickerPanelState(): CharacterPickerPanelState {
   return {
@@ -517,6 +530,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly manualCopySourceRole = signal<AutoBuildManualSlotRole>('captain');
   public readonly manualCopySelectedCharacterIds = signal<number[]>([]);
   public readonly manualCopyTargetRoles = signal<AutoBuildManualSlotRole[]>([]);
+  public readonly fixedManualTeamSlots = signal<Array<CharacterDetailRecord | null>>(
+    createEmptyFixedManualTeamSlots(),
+  );
+  public readonly fixedManualTeamSelectedSlotIndex = signal(0);
+  public readonly fixedManualTeamSearchTerm = signal('');
+  public readonly fixedManualTeamCandidates = signal<CharacterDetailRecord[]>([]);
+  public readonly fixedManualTeamName = signal('');
+  public readonly fixedManualTeamNotes = signal('');
+  public readonly fixedManualTeamCurrentTeamId = signal<string | null>(null);
+  public readonly fixedManualTeamSaveUiLocked = signal(false);
+  public readonly fixedManualTeamSaveFeedbackError = signal('');
   public readonly lockedCharacterRecords = signal<Record<number, CharacterListItem>>({});
   public readonly excludedCharacterIds = signal<number[]>([]);
   public readonly selectedManualShipId = signal<number | null>(null);
@@ -856,6 +880,45 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       this.manualCopySourceCharacters().length === 0 ||
       this.manualCopySelectedCharacterIds().length === 0 ||
       this.manualCopyTargetRoles().length === 0,
+  );
+  public readonly fixedManualTeamFilledSlotCount = computed(
+    () => this.fixedManualTeamSlots().filter(Boolean).length,
+  );
+  public readonly fixedManualTeamSaveDisabled = computed(
+    () => this.fixedManualTeamSaveUiLocked() || this.fixedManualTeamFilledSlotCount() === 0,
+  );
+  public readonly fixedManualTeamSelectedSlot = computed(
+    () => this.fixedManualTeamSlots()[this.fixedManualTeamSelectedSlotIndex()] ?? null,
+  );
+  public readonly fixedManualTeamSelectedShipLabel = computed(() => {
+    const selectedShip = this.selectedManualShip();
+
+    return selectedShip
+      ? this.t('manualTeam.ship.selected', { name: selectedShip.name })
+      : this.t('manualTeam.ship.none');
+  });
+  public readonly fixedManualTeamCandidateCards = computed<FixedManualTeamCandidateCardView[]>(
+    () => {
+      const activeIndex = this.fixedManualTeamSelectedSlotIndex();
+      const slots = this.fixedManualTeamSlots();
+
+      return this.fixedManualTeamCandidates().map((character) => {
+        const assignedSlotIndex = slots.findIndex((slot) => slot?.id === character.id);
+
+        return {
+          character,
+          subtitle: [character.type, character.primaryClass, character.secondaryClass]
+            .filter((value): value is string => Boolean(value))
+            .join(' • '),
+          isAssignedToActiveSlot: assignedSlotIndex === activeIndex,
+          isAssignedToAnotherSlot: assignedSlotIndex !== -1 && assignedSlotIndex !== activeIndex,
+          actionLabel:
+            assignedSlotIndex === activeIndex
+              ? this.t('manualTeam.actions.assigned')
+              : this.t('manualTeam.actions.assign'),
+        };
+      });
+    },
   );
   public readonly clearAllButtonDisabled = computed(
     () =>
@@ -1861,6 +1924,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       ),
     );
     this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
+    this.fixedManualTeamName.set(this.i18n.translate('common.defaults.newCrew'));
   }
 
   public async ngOnInit(): Promise<void> {
@@ -2048,6 +2112,95 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
   public onNotesChange(event: CustomEvent<{ value?: string | null }>): void {
     this.notes.set((event.detail.value ?? '').toString());
+  }
+
+  public onFixedManualTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {
+    this.fixedManualTeamName.set((event.detail.value ?? '').trimStart());
+  }
+
+  public onFixedManualTeamNotesChange(event: CustomEvent<{ value?: string | null }>): void {
+    this.fixedManualTeamNotes.set((event.detail.value ?? '').toString());
+  }
+
+  public async onFixedManualTeamSearchChange(
+    event: CustomEvent<{ value?: string | null }>,
+  ): Promise<void> {
+    this.fixedManualTeamSearchTerm.set((event.detail.value ?? '').trim());
+    await this.refreshFixedManualTeamCandidates();
+  }
+
+  public selectFixedManualTeamSlot(index: number): void {
+    if (index < 0 || index >= FIXED_MANUAL_TEAM_SLOT_COUNT) {
+      return;
+    }
+
+    this.fixedManualTeamSelectedSlotIndex.set(index);
+  }
+
+  public assignFixedManualTeamCharacter(character: CharacterDetailRecord): void {
+    const selectedSlotIndex = this.fixedManualTeamSelectedSlotIndex();
+
+    this.fixedManualTeamSlots.update((currentSlots) =>
+      currentSlots.map((slot, index) => (index === selectedSlotIndex ? character : slot)),
+    );
+    this.fixedManualTeamCurrentTeamId.set(null);
+    this.fixedManualTeamSaveFeedbackError.set('');
+  }
+
+  public clearFixedManualTeamSlot(index: number, event?: Event): void {
+    event?.stopPropagation();
+
+    if (index < 0 || index >= FIXED_MANUAL_TEAM_SLOT_COUNT) {
+      return;
+    }
+
+    this.fixedManualTeamSlots.update((currentSlots) =>
+      currentSlots.map((slot, slotIndex) => (slotIndex === index ? null : slot)),
+    );
+    this.fixedManualTeamCurrentTeamId.set(null);
+    this.fixedManualTeamSaveFeedbackError.set('');
+  }
+
+  public async saveFixedManualTeam(): Promise<void> {
+    if (this.fixedManualTeamSaveDisabled()) {
+      return;
+    }
+
+    this.fixedManualTeamSaveUiLocked.set(true);
+    this.fixedManualTeamSaveFeedbackError.set('');
+
+    try {
+      const saved = await this.userState.saveTeam({
+        id: this.fixedManualTeamCurrentTeamId() ?? undefined,
+        name: this.fixedManualTeamName(),
+        notes: this.fixedManualTeamNotes(),
+        shipId: this.selectedManualShipId(),
+        slots: this.fixedManualTeamSlots().map((character) => character?.id ?? null),
+      });
+
+      this.fixedManualTeamCurrentTeamId.set(saved.id);
+    } catch (error) {
+      console.error(error);
+
+      if (this.destroyed) {
+        return;
+      }
+
+      this.fixedManualTeamSaveFeedbackError.set(this.t('save.error'));
+    } finally {
+      if (!this.destroyed) {
+        this.fixedManualTeamSaveUiLocked.set(false);
+      }
+    }
+  }
+
+  public resetFixedManualTeam(): void {
+    this.fixedManualTeamSlots.set(createEmptyFixedManualTeamSlots());
+    this.fixedManualTeamSelectedSlotIndex.set(0);
+    this.fixedManualTeamName.set(this.i18n.translate('common.defaults.newCrew'));
+    this.fixedManualTeamNotes.set('');
+    this.fixedManualTeamCurrentTeamId.set(null);
+    this.fixedManualTeamSaveFeedbackError.set('');
   }
 
   public setShipPickerMode(mode: 'characters' | 'ships'): void {
@@ -2587,7 +2740,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           ...group,
           abilities: [
             ...group.abilities.filter(
-              (requirement) => this.resolveAbilityCatalogItem(requirement.abilityKey)?.category !== category,
+              (requirement) =>
+                this.resolveAbilityCatalogItem(requirement.abilityKey)?.category !== category,
             ),
             ...nextRequirements.map((requirement) => ({
               ...requirement,
@@ -3238,6 +3392,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.excludePickerMode.set('characters');
     this.manualSlots.set(createEmptyAutoBuildManualSlots());
     this.activeManualSlotRole.set('captain');
+    this.fixedManualTeamSlots.set(createEmptyFixedManualTeamSlots());
+    this.fixedManualTeamSelectedSlotIndex.set(0);
+    this.fixedManualTeamSearchTerm.set('');
+    this.fixedManualTeamCandidates.set([]);
+    this.fixedManualTeamName.set(this.i18n.translate('common.defaults.newCrew'));
+    this.fixedManualTeamNotes.set('');
+    this.fixedManualTeamCurrentTeamId.set(null);
+    this.fixedManualTeamSaveUiLocked.set(false);
+    this.fixedManualTeamSaveFeedbackError.set('');
     this.excludedCharacterIds.set([]);
     this.selectedManualShipId.set(null);
     this.excludedShipIds.set([]);
@@ -3261,7 +3424,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.loadedEnemyPresetName.set(null);
     this.resetBuildState();
     this.syncShipPickerPanelStates();
-    await this.refreshCharacterPickPanels();
+    await Promise.all([this.refreshCharacterPickPanels(), this.refreshFixedManualTeamCandidates()]);
   }
 
   private async importSelectionPreset(file: File): Promise<void> {
@@ -3574,6 +3737,20 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       this.refreshAppliedManualCandidates(),
       this.refreshAppliedExcludedCandidates(),
     ]);
+  }
+
+  private async refreshFixedManualTeamCandidates(): Promise<void> {
+    const candidates = await this.repository.searchDetailedCharacters({
+      searchTerm: this.fixedManualTeamSearchTerm().trim(),
+      selectedTypes: [],
+      selectedClasses: [],
+      sortMode: 'powerFirst',
+      limit: 24,
+      offset: 0,
+    });
+
+    this.fixedManualTeamCandidates.set(this.dedupeCharacterRecords(candidates));
+    this.cacheCharacterRecords(candidates);
   }
 
   private async refreshCharacterPickerPanel(panel: CharacterPickerPanelKey): Promise<void> {

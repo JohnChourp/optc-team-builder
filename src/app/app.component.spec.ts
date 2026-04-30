@@ -225,11 +225,6 @@ describe('AppComponent', () => {
         canonicalUrl: 'https://johnchourp.github.io/optc-team-builder/tabs/characters/',
       },
       {
-        url: '/tabs/team-builder',
-        title: 'Team Builder | OPTC Team Builder',
-        canonicalUrl: 'https://johnchourp.github.io/optc-team-builder/tabs/team-builder/',
-      },
-      {
         url: '/tabs/auto-team-builder',
         title: 'Auto Team Builder | OPTC Team Builder',
         canonicalUrl: 'https://johnchourp.github.io/optc-team-builder/tabs/auto-team-builder/',

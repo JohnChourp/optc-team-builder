@@ -24,12 +24,22 @@ describe('TabsPage', () => {
     expect(component).toContain("'tabs.home'");
     expect(component).toContain("route: '/'");
     expect(component).toContain("'tabs.characters'");
-    expect(component).toContain("'tabs.team'");
+    expect(component).not.toContain("'tabs.team'");
     expect(component).toContain("'tabs.auto'");
+    expect(component).toContain("route: '/tabs/auto-team-builder'");
     expect(component).toContain("'tabs.autoRumble'");
     expect(component).toContain("route: '/tabs/auto-team-builder-rumble'");
     expect(component).toContain("'tabs.rumbleCharacters'");
     expect(component).toContain("route: '/tabs/rumble-characters'");
+    expect(component.indexOf("'tabs.rumbleCharacters'")).toBeLessThan(
+      component.indexOf("'tabs.characterBoxes'"),
+    );
+    expect(component.indexOf("'tabs.characterBoxes'")).toBeLessThan(
+      component.indexOf("'tabs.auto'"),
+    );
+    expect(component.indexOf("'tabs.savedTeams'")).toBeLessThan(
+      component.indexOf("'tabs.savedRumbleTeams'"),
+    );
     expect(component).toContain("'tabs.savedRumbleTeams'");
     expect(component).toContain("route: '/tabs/saved-rumble-teams'");
     expect(component).toContain("'tabs.crewForge'");

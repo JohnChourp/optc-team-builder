@@ -323,9 +323,8 @@
     },
     "actions": {
       "characters": "Άνοιγμα χαρακτήρων",
-      "teamBuilder": "Φτιάξε ομάδα",
-      "autoBuilder": "Auto Builder",
-      "autoRumble": "Rumble Builder",
+      "autoBuilder": "Auto Team Builder",
+      "autoRumble": "Auto Team Rumble Builder",
       "crewForge": "Crew Forge",
       "driveSync": "Drive Sync"
     },
@@ -338,21 +337,17 @@
     "features": {
       "eyebrow": "Τι μπορείς να κάνεις",
       "title": "Κάθε σελίδα βοηθάει σε διαφορετικό κομμάτι του planning",
-      "copy": "Χρησιμοποίησε το site σαν πρακτικό OPTC workspace: βρες units, σύγκρινε abilities, φτιάξε ομάδες, κράτα χρήσιμα setups και οργάνωσε τις επαναλαμβανόμενες δουλειές.",
+      "copy": "Χρησιμοποίησε το site σαν πρακτικό OPTC workspace: βρες units, σύγκρινε abilities, φτιάξε ομάδες χειροκίνητα ή αυτόματα, κράτα χρήσιμα setups και οργάνωσε τις επαναλαμβανόμενες δουλειές.",
       "characters": {
         "title": "Χαρακτήρες",
         "copy": "Αναζήτησε και φίλτραρε το catalog με όνομα, type, class, ability data, favorites και αναλυτικές σελίδες χαρακτήρων."
       },
-      "teamBuilder": {
-        "title": "Team Builder",
-        "copy": "Γέμισε crew slots, διάλεξε ships, δες totals, γράψε notes και αποθήκευσε ιδέες ομάδων για offline χρήση."
-      },
       "autoBuilder": {
         "title": "Auto Team Builder",
-        "copy": "Ταίριαξε enemy mechanics, ability requirements, classes, types, locked και excluded units με πιθανούς team candidates."
+        "copy": "Φτιάξε ομάδα χειροκίνητα με σταθερά slots ή ταίριαξε enemy mechanics, ability requirements, classes, types, locked και excluded units με πιθανούς team candidates."
       },
       "autoRumble": {
-        "title": "Auto Rumble Builder",
+        "title": "Auto Team Rumble Builder",
         "copy": "Βρες rumble-capable units, σύγκρινε synergy και γέμισε active και bench slots για Pirate Rumble teams."
       },
       "savedRumbleTeams": {
@@ -390,14 +385,14 @@
       "copy": "Ξεκίνα από έναν χαρακτήρα ή από requirement quest, χτίσε την ομάδα με manual ή automatic εργαλεία και κράτα το χρήσιμο αποτέλεσμα για την επόμενη φορά.",
       "steps": {
         "find": "Βρες χαρακτήρες με όνομα, ability, type, class, favorites ή enemy mechanics.",
-        "plan": "Φτιάξε την ομάδα χειροκίνητα, ζήτησε candidates από το Auto Team Builder ή εισήγαγε υπάρχον screenshot.",
+        "plan": "Φτιάξε την ομάδα χειροκίνητα μέσα στο Auto Team Builder, ζήτησε candidates ή εισήγαγε υπάρχον screenshot.",
         "save": "Αποθήκευσε teams, boxes, enemies και settings τοπικά, με import/export εργαλεία όταν χρειάζεται να μεταφέρεις δεδομένα."
       }
     }
   },
   "tabs": {
-    "auto": "Auto",
-    "autoRumble": "Auto Rumble Builder",
+    "auto": "Auto Team Builder",
+    "autoRumble": "Auto Team Rumble Builder",
     "characterBoxes": "Boxes χαρακτήρων",
     "characters": "Χαρακτήρες",
     "crewForge": "Crew Forge",
@@ -412,8 +407,7 @@
     "savedRumbleTeams": "Saved Rumble Teams",
     "savedEnemies": "Αποθηκευμένοι εχθροί",
     "settings": "Ρυθμίσεις",
-    "savedTeams": "Αποθηκευμένες ομάδες",
-    "team": "Ομάδα"
+    "savedTeams": "Αποθηκευμένες ομάδες"
   },
   "analyticsConsent": {
     "banner": {

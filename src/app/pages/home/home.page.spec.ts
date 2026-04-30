@@ -27,7 +27,6 @@ describe('HomePage', () => {
     );
 
     expect(component).toContain("route: '/tabs/characters'");
-    expect(component).toContain("route: '/tabs/team-builder'");
     expect(component).toContain("route: '/tabs/auto-team-builder'");
     expect(component).toContain("route: '/tabs/auto-team-builder-rumble'");
     expect(component).toContain("route: '/tabs/saved-rumble-teams'");
@@ -37,6 +36,7 @@ describe('HomePage', () => {
     expect(component).toContain("route: '/tabs/saved-enemies'");
     expect(component).toContain("route: '/tabs/drive-sync'");
     expect(component).toContain("route: '/tabs/settings'");
+    expect(component).not.toContain("route: '/tabs/team-builder'");
   });
 
   it('keeps homepage hero images visible to audits with descriptive alt text', () => {

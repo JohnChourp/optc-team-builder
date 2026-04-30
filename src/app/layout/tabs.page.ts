@@ -23,7 +23,6 @@ import {
   flashOutline,
   gridOutline,
   homeOutline,
-  peopleOutline,
   saveOutline,
   shieldHalfOutline,
 } from 'ionicons/icons';
@@ -89,9 +88,14 @@ export class TabsPage {
       route: '/tabs/characters',
     },
     {
-      icon: peopleOutline,
-      labelKey: 'tabs.team',
-      route: '/tabs/team-builder',
+      icon: shieldHalfOutline,
+      labelKey: 'tabs.rumbleCharacters',
+      route: '/tabs/rumble-characters',
+    },
+    {
+      icon: archiveOutline,
+      labelKey: 'tabs.characterBoxes',
+      route: '/tabs/character-boxes',
     },
     {
       icon: flashOutline,
@@ -104,9 +108,9 @@ export class TabsPage {
       route: '/tabs/auto-team-builder-rumble',
     },
     {
-      icon: shieldHalfOutline,
-      labelKey: 'tabs.rumbleCharacters',
-      route: '/tabs/rumble-characters',
+      icon: albumsOutline,
+      labelKey: 'tabs.savedTeams',
+      route: '/tabs/saved-teams',
     },
     {
       icon: shieldHalfOutline,
@@ -114,24 +118,14 @@ export class TabsPage {
       route: '/tabs/saved-rumble-teams',
     },
     {
-      icon: constructOutline,
-      labelKey: 'tabs.crewForge',
-      route: '/tabs/crew-forge',
-    },
-    {
-      icon: albumsOutline,
-      labelKey: 'tabs.savedTeams',
-      route: '/tabs/saved-teams',
-    },
-    {
-      icon: archiveOutline,
-      labelKey: 'tabs.characterBoxes',
-      route: '/tabs/character-boxes',
-    },
-    {
       icon: saveOutline,
       labelKey: 'tabs.savedEnemies',
       route: '/tabs/saved-enemies',
+    },
+    {
+      icon: constructOutline,
+      labelKey: 'tabs.crewForge',
+      route: '/tabs/crew-forge',
     },
     {
       icon: cloudDoneOutline,

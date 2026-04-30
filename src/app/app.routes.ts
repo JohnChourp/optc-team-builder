@@ -40,21 +40,6 @@ export const routes: Routes = [
               import('./pages/characters/characters.page').then((module) => module.CharactersPage),
           },
           {
-            path: 'team-builder',
-            data: {
-              seo: {
-                title: 'Team Builder | OPTC Team Builder',
-                description:
-                  'Build and review One Piece Treasure Cruise teams with character slots, ships, favorites, and offline catalog data.',
-                canonicalPath: 'tabs/team-builder',
-              },
-            },
-            loadComponent: () =>
-              import('./pages/team-builder/team-builder.page').then(
-                (module) => module.TeamBuilderPage,
-              ),
-          },
-          {
             path: 'auto-team-builder',
             data: {
               seo: {
@@ -73,7 +58,7 @@ export const routes: Routes = [
             path: 'auto-team-builder-rumble',
             data: {
               seo: {
-                title: 'Auto Rumble Builder | OPTC Team Builder',
+                title: 'Auto Team Rumble Builder | OPTC Team Builder',
                 description:
                   'Build a Pirate Rumble team from local OPTC rumble data with deterministic scoring and synergy ranking.',
                 canonicalPath: 'tabs/auto-team-builder-rumble',

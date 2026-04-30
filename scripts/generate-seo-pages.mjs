@@ -36,15 +36,14 @@ const publicRoutes = [
     description: siteDescription,
     heading: 'OPTC Team Builder for One Piece Treasure Cruise',
     paragraphs: [
-      'OPTC Team Builder is a fan-made workspace for One Piece Treasure Cruise players who want a faster way to find characters, compare abilities, plan crews, and keep useful setups organized. The app combines a searchable character catalog, manual Team Builder, Auto Team Builder, Crew Forge screenshot imports, saved teams, saved enemies, character boxes, and settings for import/export and backups.',
-      'Use Characters to search by name, type, class, favorites, and ability data before opening detailed character pages. Use Team Builder to fill crew slots, choose ships, review totals, write notes, and save offline team ideas. Auto Team Builder helps match enemy mechanics and ability requirements against the local catalog so you can discover useful candidates without checking every unit by hand.',
+      'OPTC Team Builder is a fan-made workspace for One Piece Treasure Cruise players who want a faster way to find characters, compare abilities, plan crews, and keep useful setups organized. The app combines a searchable character catalog, manual and automatic team building, Crew Forge screenshot imports, saved teams, saved enemies, character boxes, and settings for import/export and backups.',
+      'Use Characters to search by name, type, class, favorites, and ability data before opening detailed character pages. Auto Team Builder can fill fixed manual crew slots, choose ships, review notes, save offline team ideas, or match enemy mechanics and ability requirements against the local catalog so you can discover useful candidates without checking every unit by hand.',
       'Crew Forge can import a crew screenshot and match recognized slots back to editable OPTC character data. Saved Teams, Character Boxes, and Saved Enemies keep recurring planning data available in your browser, while Settings covers language, backups, Google Drive sync, analytics consent, and data transfer tools.',
       'The project is not an official Bandai Namco tool. It exists to make OPTC planning easier with clear links, readable character summaries, and generated pages that describe the same tools available in the web app.',
     ],
     links: [
       { label: 'Browse OPTC characters', path: 'tabs/characters' },
-      { label: 'Build an OPTC team', path: 'tabs/team-builder' },
-      { label: 'Find teams by enemy mechanics', path: 'tabs/auto-team-builder' },
+      { label: 'Build an OPTC team', path: 'tabs/auto-team-builder' },
       { label: 'Import crew screenshots', path: 'tabs/crew-forge' },
       { label: 'Open the public sitemap', path: 'sitemap.html' },
     ],
@@ -61,25 +60,14 @@ const publicRoutes = [
     ],
   },
   {
-    path: 'tabs/team-builder',
-    title: 'Team Builder | OPTC Team Builder',
-    description:
-      'Build and review One Piece Treasure Cruise teams with character slots, ships, favorites, and offline catalog data.',
-    heading: 'OPTC Team Builder',
-    paragraphs: [
-      'Build and review One Piece Treasure Cruise crews with character slots, ship choices, favorites, and offline catalog data. The team builder is intended for practical crew planning before playing quests, forests, events, or challenge content.',
-      'Use it with the character catalog to compare units, keep likely options together, and prepare team ideas with stable local data.',
-    ],
-  },
-  {
     path: 'tabs/auto-team-builder',
     title: 'Auto Team Builder | OPTC Team Builder',
     description:
-      'Find OPTC team candidates by enemy mechanics, character abilities, type filters, and team-building requirements.',
+      'Build OPTC teams manually or find candidates by enemy mechanics, character abilities, type filters, and team-building requirements.',
     heading: 'OPTC Auto Team Builder',
     paragraphs: [
-      'Auto Team Builder helps find One Piece Treasure Cruise team candidates by enemy mechanics, character abilities, type filters, class filters, and team-building requirements. It is designed to reduce manual catalog checking when a quest needs specific utility.',
-      'Enter the mechanics or requirements you need covered, then review matching character candidates from the local OPTC data.',
+      'Auto Team Builder helps build One Piece Treasure Cruise crews manually with fixed slots or automatically by enemy mechanics, character abilities, type filters, class filters, and team-building requirements.',
+      'Fill the crew yourself when you already know the team, or enter the mechanics and requirements you need covered to review matching character candidates from the local OPTC data.',
     ],
   },
   {
@@ -250,7 +238,7 @@ async function writeSitemapHtml() {
 <body>
   <main>
     <h1>OPTC Team Builder Sitemap</h1>
-    <p>Links to the main public pages for browsing OPTC characters, building teams, using Auto Team Builder, importing Crew Forge screenshots, and reading legal information.</p>
+    <p>Links to the main public pages for browsing OPTC characters, building teams with Auto Team Builder, importing Crew Forge screenshots, and reading legal information.</p>
     <ul>
 ${sitemapLinks}
     </ul>
