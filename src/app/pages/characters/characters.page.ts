@@ -32,7 +32,10 @@ import {
   sparklesOutline,
 } from 'ionicons/icons';
 
-import { type AutoBuildAbilityCatalog } from '../../core/models/auto-team-builder-ability.models';
+import {
+  type AutoBuildAbilityCatalog,
+  type AutoBuildAbilityCategory,
+} from '../../core/models/auto-team-builder-ability.models';
 import {
   type CharacterListItem,
   type CharacterSortMode,
@@ -67,12 +70,30 @@ import {
 
 const PAGE_SIZE = 48;
 type CharacterDisplayMode = 'list' | 'compact';
+type CompactAbilityFilterCategory = Extract<
+  AutoBuildAbilityCategory,
+  'special' | 'crewmate' | 'potential' | 'support'
+>;
 
 interface CharacterCatalogCardView {
   character: CharacterListItem;
   detailLink: string[];
   isFavorite: boolean;
   favoriteAriaLabel: string;
+}
+
+interface AbilityFilterBadgeView {
+  draftId: string;
+  abilityKey: string;
+  label: string;
+  badge: string;
+}
+
+interface AbilityFilterGroupView {
+  category: CompactAbilityFilterCategory;
+  labelKey: string;
+  clearLabelKey: string;
+  badges: AbilityFilterBadgeView[];
 }
 
 @Component({
@@ -126,7 +147,7 @@ export class CharactersPage implements OnInit {
   public readonly potentialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly supportAbilityPickerOpen = signal(false);
   public readonly supportAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
-  public readonly displayMode = signal<CharacterDisplayMode>('list');
+  public readonly displayMode = signal<CharacterDisplayMode>('compact');
   public readonly favoriteIds;
   public readonly canDownloadFavoritesExport = computed(() => this.favoriteIds().length > 0);
   public readonly canClearAllFavorites = computed(() => this.favoriteIds().length > 0);
@@ -229,6 +250,30 @@ export class CharactersPage implements OnInit {
       this.availableSupportAbilityCatalogItems(),
       'support',
     ),
+  );
+  public readonly activeAbilityFilterGroups = computed<AbilityFilterGroupView[]>(() =>
+    [
+      this.buildAbilityFilterGroup(
+        'special',
+        this.specialAbilityDrafts(),
+        this.availableSpecialAbilityCatalogItems(),
+      ),
+      this.buildAbilityFilterGroup(
+        'crewmate',
+        this.crewmateAbilityDrafts(),
+        this.availableCrewmateAbilityCatalogItems(),
+      ),
+      this.buildAbilityFilterGroup(
+        'potential',
+        this.potentialAbilityDrafts(),
+        this.availablePotentialAbilityCatalogItems(),
+      ),
+      this.buildAbilityFilterGroup(
+        'support',
+        this.supportAbilityDrafts(),
+        this.availableSupportAbilityCatalogItems(),
+      ),
+    ].filter((group) => group.badges.length > 0),
   );
   public readonly characterCardViews = computed<CharacterCatalogCardView[]>(() =>
     this.characters().map((character) => {
@@ -515,6 +560,48 @@ export class CharactersPage implements OnInit {
     await this.loadCharacters(true);
   }
 
+  public async removeAbilityFilterBadge(
+    category: CompactAbilityFilterCategory,
+    draftId: string,
+  ): Promise<void> {
+    const updateDrafts = (drafts: AbilityRequirementDraft[]) =>
+      drafts.filter((draft) => draft.draftId !== draftId);
+
+    switch (category) {
+      case 'special':
+        this.specialAbilityDrafts.update(updateDrafts);
+        break;
+      case 'crewmate':
+        this.crewmateAbilityDrafts.update(updateDrafts);
+        break;
+      case 'potential':
+        this.potentialAbilityDrafts.update(updateDrafts);
+        break;
+      case 'support':
+        this.supportAbilityDrafts.update(updateDrafts);
+        break;
+    }
+
+    await this.loadCharacters(true);
+  }
+
+  public async clearAbilityFilterCategory(category: CompactAbilityFilterCategory): Promise<void> {
+    switch (category) {
+      case 'special':
+        await this.clearSpecialAbilityFilters();
+        break;
+      case 'crewmate':
+        await this.clearCrewmateAbilityFilters();
+        break;
+      case 'potential':
+        await this.clearPotentialAbilityFilters();
+        break;
+      case 'support':
+        await this.clearSupportAbilityFilters();
+        break;
+    }
+  }
+
   public async loadMore(): Promise<void> {
     if (this.loadingMore() || !this.hasMore()) {
       return;
@@ -767,6 +854,41 @@ export class CharactersPage implements OnInit {
       .filter((option) => option.toLowerCase().includes(normalizedQuery))
       .filter((option) => option !== selectedValue)
       .slice(0, 8);
+  }
+
+  private buildAbilityFilterGroup(
+    category: CompactAbilityFilterCategory,
+    drafts: AbilityRequirementDraft[],
+    catalogItems: { key: string; label: string }[],
+  ): AbilityFilterGroupView {
+    const catalogMap = new Map(catalogItems.map((item) => [item.key, item.label] as const));
+
+    return {
+      category,
+      labelKey: `filters.${category}.label`,
+      clearLabelKey: `filters.${category}.clear`,
+      badges: drafts.map((draft) => {
+        const label = catalogMap.get(draft.abilityKey) ?? draft.abilityKey;
+
+        return {
+          draftId: draft.draftId,
+          abilityKey: draft.abilityKey,
+          label,
+          badge: this.resolveAbilityBadge(label),
+        };
+      }),
+    };
+  }
+
+  private resolveAbilityBadge(label: string): string {
+    return label
+      .replace(/\[[^\]]+\]/g, ' ')
+      .replace(/[^A-Za-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('');
   }
 
   private async loadImportFile(file: File): Promise<void> {

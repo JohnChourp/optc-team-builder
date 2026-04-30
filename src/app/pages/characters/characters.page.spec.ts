@@ -30,22 +30,23 @@ describe('CharactersPage favorites tools', () => {
     vi.unstubAllGlobals();
   });
 
-  it('defaults to list display mode', () => {
+  it('defaults to compact display mode', () => {
     const { page } = createPage();
 
-    expect(page.displayMode()).toBe('list');
-    expect(page.isCompactDisplayMode()).toBe(false);
+    expect(page.displayMode()).toBe('compact');
+    expect(page.isCompactDisplayMode()).toBe(true);
   });
 
   it('switches between list and compact display modes', () => {
     const { page } = createPage();
 
+    page.setDisplayMode('list');
+    expect(page.displayMode()).toBe('list');
+    expect(page.isCompactDisplayMode()).toBe(false);
+
     page.setDisplayMode('compact');
     expect(page.displayMode()).toBe('compact');
     expect(page.isCompactDisplayMode()).toBe(true);
-
-    page.setDisplayMode('list');
-    expect(page.displayMode()).toBe('list');
   });
 
   it('disables favorites export when there are no favorites', () => {
@@ -103,6 +104,11 @@ describe('CharactersPage favorites tools', () => {
     );
 
     expect(template).toContain("'common.actions.reset' | transloco");
+    expect(template).toContain('ability-filter-rail');
+    expect(template).toContain('activeAbilityFilterGroups()');
+    expect(template).toContain('removeAbilityFilterBadge(group.category, badge.draftId)');
+    expect(template).toContain('clearAbilityFilterCategory(group.category)');
+    expect(template).toContain('compact-toolbar');
     expect(template).toContain("t('filters.favoritesOnly.label')");
     expect(template).toContain('favoritesOnlySupportLabel()');
     expect(template).toContain('onFavoritesOnlyToggle($event)');
@@ -120,6 +126,106 @@ describe('CharactersPage favorites tools', () => {
     expect(template).not.toContain("t('tools.export')");
     expect(template).not.toContain("t('tools.import')");
     expect(template).not.toContain("t('favorites.clearAll')");
+  });
+
+  it('shows selected ability filters as compact badge groups', () => {
+    const { page } = createPage();
+
+    page.abilityCatalog.set({
+      abilities: [
+        {
+          key: 'remove_bind',
+          label: 'Remove Bind',
+          category: 'special',
+        },
+        {
+          key: 'crewmate_recover_paralysis',
+          label: 'Status Effect Recovery: Paralysis',
+          category: 'crewmate',
+        },
+      ],
+    } as never);
+    page.specialAbilityDrafts.set([
+      {
+        draftId: 'special-1',
+        abilityKey: 'remove_bind',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: null,
+      },
+    ]);
+    page.crewmateAbilityDrafts.set([
+      {
+        draftId: 'crewmate-1',
+        abilityKey: 'crewmate_recover_paralysis',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: null,
+      },
+    ]);
+
+    expect(page.activeAbilityFilterGroups()).toEqual([
+      {
+        category: 'special',
+        labelKey: 'filters.special.label',
+        clearLabelKey: 'filters.special.clear',
+        badges: [
+          {
+            draftId: 'special-1',
+            abilityKey: 'remove_bind',
+            label: 'Remove Bind',
+            badge: 'RB',
+          },
+        ],
+      },
+      {
+        category: 'crewmate',
+        labelKey: 'filters.crewmate.label',
+        clearLabelKey: 'filters.crewmate.clear',
+        badges: [
+          {
+            draftId: 'crewmate-1',
+            abilityKey: 'crewmate_recover_paralysis',
+            label: 'Status Effect Recovery: Paralysis',
+            badge: 'SE',
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('removes a single selected ability badge and reloads results', async () => {
+    const { page, characterCatalogCache } = createPage();
+
+    page.specialAbilityDrafts.set([
+      {
+        draftId: 'special-1',
+        abilityKey: 'remove_bind',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: null,
+      },
+      {
+        draftId: 'special-2',
+        abilityKey: 'remove_despair',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: null,
+      },
+    ]);
+
+    await page.removeAbilityFilterBadge('special', 'special-1');
+
+    expect(page.specialAbilityDrafts().map((draft) => draft.draftId)).toEqual(['special-2']);
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      typeFilter: '',
+      classFilter: '',
+      allowedCharacterIds: undefined,
+      sortMode: 'catalog',
+      limit: 48,
+      offset: 0,
+    });
   });
 
   it('filters searches down to favorites when the favorites-only toggle is enabled', async () => {
@@ -294,6 +400,42 @@ describe('CharactersPage favorites tools', () => {
     page.favoritesOnly.set(true);
     page.hideFavorites.set(true);
     page.selectedSortMode.set('nameDesc');
+    page.specialAbilityDrafts.set([
+      {
+        draftId: 'special-1',
+        abilityKey: 'remove_bind',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: null,
+      },
+    ]);
+    page.crewmateAbilityDrafts.set([
+      {
+        draftId: 'crewmate-1',
+        abilityKey: 'crewmate_recover_paralysis',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: null,
+      },
+    ]);
+    page.potentialAbilityDrafts.set([
+      {
+        draftId: 'potential-1',
+        abilityKey: 'potential_reduce_no_healing',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: null,
+      },
+    ]);
+    page.supportAbilityDrafts.set([
+      {
+        draftId: 'support-1',
+        abilityKey: 'support_remove_bind',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: null,
+      },
+    ]);
     page.importModalOpen.set(true);
     page.importFileName.set('favorites.json');
     page.importErrorMessage.set('Bad file');
@@ -310,6 +452,10 @@ describe('CharactersPage favorites tools', () => {
     expect(page.favoritesOnly()).toBe(false);
     expect(page.hideFavorites()).toBe(false);
     expect(page.selectedSortMode()).toBe('catalog');
+    expect(page.specialAbilityDrafts()).toEqual([]);
+    expect(page.crewmateAbilityDrafts()).toEqual([]);
+    expect(page.potentialAbilityDrafts()).toEqual([]);
+    expect(page.supportAbilityDrafts()).toEqual([]);
     expect(page.importModalOpen()).toBe(false);
     expect(page.importFileName()).toBe('');
     expect(page.parsedImport()).toBeNull();

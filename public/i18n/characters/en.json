@@ -7,6 +7,7 @@
   "empty": "No characters matched the current search and filters.",
   "filters": {
     "active": "Active filter: {{value}}",
+    "abilityRailLabel": "Ability filter categories",
     "class": {
       "label": "Class",
       "placeholder": "Type to filter by class"
@@ -25,6 +26,7 @@
       "label": "Special filters",
       "support": "{{count}} selected effects. Results must match every selected effect.",
       "open": "Open Special picker",
+      "clear": "Clear",
       "eyebrow": "Special",
       "title": "Special filters",
       "copy": "Filter characters by Special effects."
@@ -33,6 +35,7 @@
       "label": "Crewmate Ability filters",
       "support": "{{count}} selected effects. Results must match every selected effect.",
       "open": "Open Crewmate picker",
+      "clear": "Clear",
       "eyebrow": "Crewmate Ability",
       "title": "Crewmate Ability filters",
       "copy": "Pick Crewmate effects. Results must cover every selected effect."
@@ -41,6 +44,7 @@
       "label": "Potential Ability filters",
       "support": "{{count}} selected effects. Results must match every selected effect.",
       "open": "Open Potential picker",
+      "clear": "Clear",
       "eyebrow": "Potential Ability",
       "title": "Potential Ability filters",
       "copy": "Pick Potential effects. Results must cover every selected effect."
@@ -53,6 +57,7 @@
       "label": "Support Ability filters",
       "support": "{{count}} selected effects. Results must match every selected effect.",
       "open": "Open Support picker",
+      "clear": "Clear",
       "eyebrow": "Support Ability",
       "title": "Support Ability filters",
       "copy": "Pick Support effects. Results must cover every selected effect."

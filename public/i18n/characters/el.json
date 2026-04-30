@@ -7,6 +7,7 @@
   "empty": "Κανένας χαρακτήρας δεν ταίριαξε με το τωρινό search και τα φίλτρα.",
   "filters": {
     "active": "Ενεργό φίλτρο: {{value}}",
+    "abilityRailLabel": "Κατηγορίες ability filters",
     "class": {
       "label": "Class",
       "placeholder": "Πληκτρολόγησε για φιλτράρισμα ανά class"
@@ -25,6 +26,7 @@
       "label": "Special filters",
       "support": "{{count}} επιλεγμένα effects. Τα αποτελέσματα πρέπει να έχουν όλα τα επιλεγμένα effects.",
       "open": "Άνοιγμα Special picker",
+      "clear": "Καθαρισμός",
       "eyebrow": "Special",
       "title": "Special filters",
       "copy": "Φίλτραρε χαρακτήρες με βάση τα Special effects."
@@ -33,6 +35,7 @@
       "label": "Crewmate Ability filters",
       "support": "{{count}} επιλεγμένα effects. Τα αποτελέσματα πρέπει να έχουν όλα τα επιλεγμένα effects.",
       "open": "Άνοιγμα Crewmate picker",
+      "clear": "Καθαρισμός",
       "eyebrow": "Crewmate Ability",
       "title": "Crewmate Ability filters",
       "copy": "Επίλεξε Crewmate effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect."
@@ -41,6 +44,7 @@
       "label": "Potential Ability filters",
       "support": "{{count}} επιλεγμένα effects. Τα αποτελέσματα πρέπει να έχουν όλα τα επιλεγμένα effects.",
       "open": "Άνοιγμα Potential picker",
+      "clear": "Καθαρισμός",
       "eyebrow": "Potential Ability",
       "title": "Potential Ability filters",
       "copy": "Επίλεξε Potential effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect."
@@ -53,6 +57,7 @@
       "label": "Support Ability filters",
       "support": "{{count}} selected effects. Τα αποτελέσματα πρέπει να έχουν όλα τα επιλεγμένα effects.",
       "open": "Άνοιγμα Support picker",
+      "clear": "Καθαρισμός",
       "eyebrow": "Support Ability",
       "title": "Support Ability filters",
       "copy": "Επίλεξε Support effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect."
