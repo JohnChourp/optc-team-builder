@@ -1272,7 +1272,20 @@ export class OptcRepositoryService {
       return false;
     }
 
-    return Object.keys(rumbleData).some((key) => key !== 'id');
+    if (typeof rumbleData['basedOn'] === 'number') {
+      return true;
+    }
+
+    return [
+      'ability',
+      'special',
+      'llbability',
+      'llbspecial',
+      'gpability',
+      'gpspecial',
+      'resilience',
+      'llbresilience',
+    ].some((key) => Array.isArray(rumbleData[key]) && rumbleData[key].length > 0);
   }
 
   private resolveImageUrl(

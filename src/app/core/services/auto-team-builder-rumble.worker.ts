@@ -17,6 +17,7 @@ addEventListener('message', ({ data }: MessageEvent<AutoTeamBuilderRumbleWorkerR
       data.requestedInput,
       {
         activeWorkerCount: 1,
+        resultMode: data.resultMode,
         onProgress: (snapshot) => {
           const response: AutoTeamBuilderRumbleWorkerResponse = {
             type: 'progress',

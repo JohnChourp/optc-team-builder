@@ -195,11 +195,36 @@ describe('OptcRepositoryService', () => {
           },
         },
       }),
+      createCharacterRow({
+        id: 4105,
+        detail: {
+          rumbleData: {
+            id: 4105,
+            ability: [
+              {
+                effects: [
+                  {
+                    attributes: ['ATK'],
+                    effect: 'buff',
+                    level: 5,
+                    targeting: { targets: ['crew'] },
+                  },
+                ],
+              },
+            ],
+            stats: {
+              rumbleType: 'ATK',
+              def: 140,
+              spd: 130,
+            },
+          },
+        },
+      }),
     ]);
 
     const result = await service.getRumbleBuilderCandidates();
 
-    expect(result.map((record) => record.id)).toEqual([4104, 4103]);
+    expect(result.map((record) => record.id)).toEqual([4105, 4104]);
   });
 
   it('returns linked variants when searching by a shared canonical id', async () => {

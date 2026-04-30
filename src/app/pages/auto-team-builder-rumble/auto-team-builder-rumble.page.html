@@ -727,16 +727,17 @@
                 </div>
               </section>
 
-              <section class="glass-card team-section">
-                <div class="section-head">
-                  <div>
-                    <div class="section-label">{{ t('bench.title') }}</div>
-                    <h2>{{ benchSectionCopy(currentResult) }}</h2>
+              @if (currentResult.input.requireFullTeam) {
+                <section class="glass-card team-section">
+                  <div class="section-head">
+                    <div>
+                      <div class="section-label">{{ t('bench.title') }}</div>
+                      <h2>{{ benchSectionCopy(currentResult) }}</h2>
+                    </div>
                   </div>
-                </div>
-                <div class="slot-grid">
-                  @for (slot of currentResult.benchSlots; track slot.unit.character.id) {
-                    <article class="rumble-slot-card rumble-slot-card--bench">
+                  <div class="slot-grid">
+                    @for (slot of currentResult.benchSlots; track slot.unit.character.id) {
+                      <article class="rumble-slot-card rumble-slot-card--bench">
                   <a
                     class="slot-image"
                     [routerLink]="getCharacterDetailLink(slot)"
@@ -784,10 +785,11 @@
                       </div>
                     </dl>
                   </div>
-                    </article>
-                  }
-                </div>
-              </section>
+                      </article>
+                    }
+                  </div>
+                </section>
+              }
             </div>
           </div>
         }

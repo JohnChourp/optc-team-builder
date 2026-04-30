@@ -4,6 +4,7 @@ import {
   type NormalizedRumbleData,
   type RumbleBuildInput,
   type RumbleBuildProgressSnapshot,
+  type RumbleBuildResultMode,
   type RumbleTeamResult,
   type RumbleUnitScore,
 } from '../models/auto-team-builder-rumble.models';
@@ -24,6 +25,7 @@ export interface RumbleTeamBuildExecutionOptions {
   signal?: AbortSignal;
   workerCount?: number;
   getWorkerCount?: () => number;
+  resultMode?: RumbleBuildResultMode;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -73,16 +75,22 @@ export class AutoTeamBuilderRumbleService {
   public buildTeamFromCandidates(
     candidates: CharacterDetailRecord[],
     input: Partial<RumbleBuildInput> = {},
+    executionOptions: Pick<RumbleTeamBuildExecutionOptions, 'resultMode'> = {},
   ): RumbleTeamResult {
-    return this.engine.buildTeamFromCandidates(candidates, input);
+    return this.engine.buildTeamFromCandidates(candidates, input, {
+      resultMode: executionOptions.resultMode,
+    });
   }
 
   public buildTeamsFromCandidates(
     candidates: CharacterDetailRecord[],
     input: Partial<RumbleBuildInput> = {},
     limit = 2,
+    executionOptions: Pick<RumbleTeamBuildExecutionOptions, 'resultMode'> = {},
   ): RumbleTeamResult[] {
-    return this.engine.buildTeamsFromCandidates(candidates, input, limit);
+    return this.engine.buildTeamsFromCandidates(candidates, input, limit, {
+      resultMode: executionOptions.resultMode,
+    });
   }
 
   public scoreCandidates(candidates: CharacterDetailRecord[]): RumbleUnitScore[] {
@@ -130,6 +138,7 @@ export class AutoTeamBuilderRumbleService {
         {
           onProgress: executionOptions.onProgress,
           activeWorkerCount: 1,
+          resultMode: executionOptions.resultMode,
         },
         limit,
       );
@@ -250,6 +259,7 @@ export class AutoTeamBuilderRumbleService {
         requestedInput,
         workerCount: this.resolveDesiredWorkerCount(executionOptions),
         limit,
+        resultMode: executionOptions.resultMode,
       };
 
       worker.postMessage(request);

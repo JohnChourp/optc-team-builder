@@ -49,7 +49,8 @@ describe('AutoTeamBuilderRumblePage', () => {
     await page.ngOnInit();
     await page.buildTeam();
 
-    expect(rumbleBuilder.buildBestTeams).toHaveBeenCalledWith(
+    expect(rumbleBuilder.buildBestTeams).toHaveBeenNthCalledWith(
+      1,
       {
         types: [],
         selectedClasses: [],
@@ -67,7 +68,17 @@ describe('AutoTeamBuilderRumblePage', () => {
         getWorkerCount: expect.any(Function),
         onProgress: expect.any(Function),
       }),
+      1,
+    );
+    expect(rumbleBuilder.buildBestTeams).toHaveBeenNthCalledWith(
       2,
+      expect.objectContaining({
+        requireFullTeam: false,
+      }),
+      expect.objectContaining({
+        resultMode: 'closestCost',
+      }),
+      1,
     );
     expect(page.loading()).toBe(false);
     expect(page.result()).toBe(result);
@@ -125,13 +136,15 @@ describe('AutoTeamBuilderRumblePage', () => {
 
   it('switches between generated teams and compares the selected result', async () => {
     const firstResult = createResult();
-    const secondResult = createResult(100);
+    const secondResult = createActiveOnlyResult(createResult(100));
     secondResult.totalScore = firstResult.totalScore - 75;
     secondResult.roleCoverage = ['attacker'];
     secondResult.typeCoverage = ['DEX'];
     const { page, rumbleBuilder } = createPage(firstResult);
 
-    rumbleBuilder.buildBestTeams.mockResolvedValue([firstResult, secondResult]);
+    rumbleBuilder.buildBestTeams.mockImplementation((input: Partial<RumbleTeamResult['input']>) =>
+      Promise.resolve(input.requireFullTeam === false ? [secondResult] : [firstResult]),
+    );
 
     await page.ngOnInit();
     await page.buildTeam();
@@ -154,6 +167,8 @@ describe('AutoTeamBuilderRumblePage', () => {
       firstResult.activeSlots[0].unit.character.id,
     );
     expect(payload?.team[0].unit.character.id).toBe(secondResult.activeSlots[0].unit.character.id);
+    expect(payload?.teams[1].benchSlots).toEqual([]);
+    expect(payload?.teams[1].requestedInput.requireFullTeam).toBe(false);
   });
 
   it('shows the empty state when the builder returns no candidates', async () => {
@@ -185,18 +200,24 @@ describe('AutoTeamBuilderRumblePage', () => {
     expect(page.insufficientStateVisible()).toBe(true);
   });
 
-  it('shows the partial state for a five-active no-bench team', async () => {
+  it('treats the second five-active no-bench team as complete', async () => {
     const { page } = createPage({
       ...createResult(),
       benchSlots: [],
       selectedCount: 5,
+      input: {
+        ...createResult().input,
+        requireFullTeam: false,
+      },
     });
 
     await page.ngOnInit();
     await page.buildTeam();
+    page.selectTeam(1);
 
-    expect(page.insufficientStateVisible()).toBe(true);
-    expect(page.canDownloadTeamJson()).toBe(false);
+    expect(page.result()?.input.requireFullTeam).toBe(false);
+    expect(page.insufficientStateVisible()).toBe(false);
+    expect(page.canDownloadTeamJson()).toBe(true);
   });
 
   it('shows the hard filter no-match state instead of a partial team', async () => {
@@ -258,6 +279,7 @@ describe('AutoTeamBuilderRumblePage', () => {
     expect(template).toContain('selectTeam($index)');
     expect(template).toContain('comparisonRows()');
     expect(template).toContain('team-flip-panel--alternate');
+    expect(template).toContain('currentResult.input.requireFullTeam');
     expect(template).toContain("t('states.strictTypesTitle')");
     expect(template).not.toContain("t('summary.droppedType'");
     expect(template).toContain("t('active.title')");
@@ -322,19 +344,23 @@ describe('AutoTeamBuilderRumblePage', () => {
     );
   });
 
-  it('formats player and opponent Rumble cost usage from normalized costs', () => {
+  it('formats full team cost from active and bench, and active-only cost from active slots', () => {
     const { page } = createPage();
     const result = createResult();
 
-    result.activeSlots[0].unit.normalized.cost = 55;
-    result.activeSlots[1].unit.normalized.cost = 30;
-    result.benchSlots[0].unit.normalized.cost = 20;
+    result.activeSlots.forEach((slot) => {
+      slot.unit.normalized.cost = 10;
+    });
+    result.benchSlots[0].unit.normalized.cost = 60;
+    result.benchSlots[1].unit.normalized.cost = 70;
+    result.benchSlots[2].unit.normalized.cost = 80;
     page.opponentActiveSlots.set([createSlot('active', 40), null, null, null, null]);
     page.opponentBenchSlots.set([createSlot('bench', 41), null, null]);
     page.opponentActiveSlots()[0]!.unit.normalized.cost = 70;
     page.opponentBenchSlots()[0]!.unit.normalized.cost = 15;
 
-    expect(page.formatTeamRumbleCostUsage(result)).toBe('380 / 300');
+    expect(page.formatTeamRumbleCostUsage(result)).toBe('260 / 300');
+    expect(page.formatTeamRumbleCostUsage(createActiveOnlyResult(result))).toBe('50 / 300');
     expect(page.opponentRumbleCostUsage()).toBe('85 / 300');
   });
 
@@ -447,6 +473,53 @@ describe('AutoTeamBuilderRumblePage', () => {
     expect(page.getSlotTotalBuffRows(slots[3])).toEqual([]);
   });
 
+  it('counts broad Rumble buffs even when imported data has no structured targeting', () => {
+    const { page } = createPage();
+    const result = createActiveOnlyResult(createResult());
+
+    result.activeSlots[0].unit.normalized.passiveEffects = [
+      createEffect({
+        attributes: ['ATK'],
+        level: 5,
+        targetScope: 'unknown',
+        targetTokens: [],
+      }),
+    ];
+    page.teamResults.set([createResult(), result]);
+    page.selectTeam(1);
+
+    expect(page.getSlotTotalBuffRows(result.activeSlots[1])).toEqual([
+      { stat: 'ATK', label: 'ATK', value: '+5' },
+    ]);
+  });
+
+  it('summarizes subset buffs on the selected active-only generated team', () => {
+    const { page } = createPage();
+    const firstResult = createResult();
+    const secondResult = createActiveOnlyResult(createResult(100));
+
+    secondResult.activeSlots[0].unit.normalized.passiveEffects = [
+      createEffect({
+        attributes: ['ATK', 'HP'],
+        level: 4,
+        targetScope: 'subset',
+        targetTokens: ['[DEX]', 'Slasher'],
+      }),
+    ];
+    secondResult.activeSlots[1].unit.character.type = 'PSY';
+    secondResult.activeSlots[1].unit.character.classes = ['Slasher', 'Driven'];
+    secondResult.activeSlots[2].unit.character.type = 'INT';
+    secondResult.activeSlots[2].unit.character.classes = ['Shooter'];
+    page.teamResults.set([firstResult, secondResult]);
+    page.selectTeam(1);
+
+    expect(page.getSlotTotalBuffRows(secondResult.activeSlots[1])).toEqual([
+      { stat: 'HP', label: 'HP', value: '+4' },
+      { stat: 'ATK', label: 'ATK', value: '+4' },
+    ]);
+    expect(page.getSlotTotalBuffRows(secondResult.activeSlots[2])).toEqual([]);
+  });
+
   it('returns no buff rows when the generated team gives no matching buffs', () => {
     const { page } = createPage();
     const result = createResult();
@@ -467,7 +540,8 @@ describe('AutoTeamBuilderRumblePage', () => {
     page.onFavoritesOnlyToggle({ detail: { checked: true } } as never);
     await page.buildTeam();
 
-    expect(rumbleBuilder.buildBestTeams).toHaveBeenLastCalledWith(
+    expect(rumbleBuilder.buildBestTeams).toHaveBeenNthCalledWith(
+      1,
       expect.objectContaining({
         types: ['DEX', 'STR'],
         selectedClasses: ['Fighter'],
@@ -482,7 +556,24 @@ describe('AutoTeamBuilderRumblePage', () => {
       expect.objectContaining({
         signal: expect.any(AbortSignal),
       }),
-      2,
+      1,
+    );
+    expect(rumbleBuilder.buildBestTeams).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        types: ['DEX', 'STR'],
+        selectedClasses: ['Fighter'],
+        onlySelectedTypes: true,
+        onlySelectedClasses: true,
+        favoritesOnly: true,
+        favoriteCharacterIds: [1001, 1002],
+        candidateCharacterIds: undefined,
+        opponentSlots: [],
+        requireFullTeam: false,
+      }),
+      expect.objectContaining({
+        resultMode: 'closestCost',
+      }),
+      1,
     );
   });
 
@@ -662,7 +753,7 @@ describe('AutoTeamBuilderRumblePage', () => {
         opponentSlots: [],
       }),
       expect.any(Object),
-      2,
+      1,
     );
 
     page.onOpponentAwarenessToggle({ detail: { checked: true } } as never);
@@ -676,7 +767,7 @@ describe('AutoTeamBuilderRumblePage', () => {
         ],
       }),
       expect.any(Object),
-      2,
+      1,
     );
     expect(page.opponentActiveSlots()[0]?.unit.character.id).toBe(opponentSlot.unit.character.id);
   });
@@ -778,7 +869,7 @@ describe('AutoTeamBuilderRumblePage', () => {
           .filter((characterId) => characterId !== excludedSlot.unit.character.id),
       }),
       expect.any(Object),
-      2,
+      1,
     );
   });
 
@@ -802,7 +893,7 @@ describe('AutoTeamBuilderRumblePage', () => {
         candidateCharacterIds: undefined,
       }),
       expect.any(Object),
-      2,
+      1,
     );
 
     await page.excludeCharacter(result.activeSlots[1]!);
@@ -857,12 +948,14 @@ function createPage(result: RumbleTeamResult | Error = createResult()) {
       : [...result.activeSlots, ...result.benchSlots].map((slot) => slot.unit.character);
   const rumbleBuilder = {
     scoreCandidates: vi.fn().mockReturnValue([]),
-    buildBestTeams: vi.fn().mockImplementation(() => {
+    buildBestTeams: vi.fn().mockImplementation((input: Partial<RumbleTeamResult['input']>) => {
       if (result instanceof Error) {
         return Promise.reject(result);
       }
 
-      return Promise.resolve([result]);
+      return Promise.resolve([
+        input.requireFullTeam === false ? createActiveOnlyResult(result) : result,
+      ]);
     }),
   };
   const repository = {
@@ -955,6 +1048,19 @@ function createResult(offset = 0): RumbleTeamResult {
     resolvedClasses: [],
     droppedTypes: [],
     droppedClasses: [],
+  };
+}
+
+function createActiveOnlyResult(source: RumbleTeamResult): RumbleTeamResult {
+  return {
+    ...source,
+    benchSlots: [],
+    selectedCount: source.activeSlots.length,
+    totalScore: Math.max(0, source.totalScore - 75),
+    input: {
+      ...source.input,
+      requireFullTeam: false,
+    },
   };
 }
 

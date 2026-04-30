@@ -35,6 +35,7 @@ import {
   RUMBLE_BENCH_SLOT_COUNT,
   type NormalizedRumbleEffect,
   type NormalizedRumbleRoleTag,
+  type RumbleBuildInput,
   type RumbleBuildProgressSnapshot,
   type RumbleOpponentSlotContext,
   type RumbleTeamResult,
@@ -330,8 +331,8 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       ),
       this.buildComparisonRow(
         'comparison.rumbleCost',
-        this.resolveRumbleCostTotal(this.collectTeamSlots(currentResult)) -
-          this.resolveRumbleCostTotal(this.collectTeamSlots(otherResult)),
+        this.resolveRumbleCostTotal(this.collectTeamCostSlots(currentResult)) -
+          this.resolveRumbleCostTotal(this.collectTeamCostSlots(otherResult)),
         true,
       ),
       this.buildComparisonRow(
@@ -581,23 +582,42 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
         throw new Error('Rumble team build cancelled.');
       }
 
-      this.teamResults.set(
-        await this.rumbleBuilder.buildBestTeams(
-          {
-            types: this.selectedTypes(),
-            selectedClasses: this.selectedClasses(),
-            onlySelectedTypes: this.onlySelectedTypes(),
-            onlySelectedClasses: this.onlySelectedClasses(),
-            favoritesOnly: this.favoritesOnly(),
-            favoriteCharacterIds: this.favoriteCharacterIds(),
-            candidateCharacterIds,
-            opponentSlots: this.opponentAwarenessEnabled() ? this.buildOpponentSlotContexts() : [],
-            requireFullTeam: true,
-          },
-          executionOptions,
-          2,
-        ),
+      const baseInput: Partial<RumbleBuildInput> = {
+        types: this.selectedTypes(),
+        selectedClasses: this.selectedClasses(),
+        onlySelectedTypes: this.onlySelectedTypes(),
+        onlySelectedClasses: this.onlySelectedClasses(),
+        favoritesOnly: this.favoritesOnly(),
+        favoriteCharacterIds: this.favoriteCharacterIds(),
+        candidateCharacterIds,
+        opponentSlots: this.opponentAwarenessEnabled() ? this.buildOpponentSlotContexts() : [],
+      };
+      const fullTeamResults = await this.rumbleBuilder.buildBestTeams(
+        {
+          ...baseInput,
+          requireFullTeam: true,
+        },
+        executionOptions,
+        1,
       );
+
+      if (abortController.signal.aborted) {
+        throw new Error('Rumble team build cancelled.');
+      }
+
+      const activeOnlyResults = await this.rumbleBuilder.buildBestTeams(
+        {
+          ...baseInput,
+          requireFullTeam: false,
+        },
+        {
+          ...executionOptions,
+          resultMode: 'closestCost',
+        },
+        1,
+      );
+
+      this.teamResults.set(this.combineGeneratedTeamResults(fullTeamResults, activeOnlyResults));
       this.selectedTeamIndex.set(0);
     } catch (error) {
       if (abortController.signal.aborted || this.isRumbleBuildCancelledError(error)) {
@@ -779,7 +799,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   }
 
   public formatTeamRumbleCostUsage(result: RumbleTeamResult): string {
-    return this.formatRumbleCostUsage(this.collectTeamSlots(result));
+    return this.formatRumbleCostUsage(this.collectTeamCostSlots(result));
   }
 
   public opponentRumbleCostUsage(): string {
@@ -954,6 +974,22 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     return result.input.requireFullTeam
       ? this.activeSlotTargetCount + this.benchSlotTargetCount
       : this.activeSlotTargetCount;
+  }
+
+  private combineGeneratedTeamResults(
+    fullTeamResults: RumbleTeamResult[],
+    activeOnlyResults: RumbleTeamResult[],
+  ): RumbleTeamResult[] {
+    const fullTeamResult = fullTeamResults[0] ?? null;
+    const activeOnlyResult = activeOnlyResults[0] ?? null;
+
+    if (!fullTeamResult) {
+      return activeOnlyResult ? [activeOnlyResult] : [];
+    }
+
+    return activeOnlyResult && activeOnlyResult.selectedCount > 0
+      ? [fullTeamResult, activeOnlyResult]
+      : [fullTeamResult];
   }
 
   private resetBuildState(): void {
@@ -1156,6 +1192,10 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     return [...result.activeSlots, ...result.benchSlots];
   }
 
+  private collectTeamCostSlots(result: RumbleTeamResult): RumbleTeamSlot[] {
+    return result.input.requireFullTeam ? this.collectTeamSlots(result) : result.activeSlots;
+  }
+
   private collectOpponentTeamSlots(): RumbleTeamSlot[] {
     return [...this.opponentActiveSlots(), ...this.opponentBenchSlots()].filter(
       (slot): slot is RumbleTeamSlot => Boolean(slot),
@@ -1249,7 +1289,6 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
 
     return (
       effect.targetScope !== 'enemies' &&
-      effect.targetScope !== 'unknown' &&
       (normalizedEffect.includes('buff') ||
         normalizedEffect.includes('boost') ||
         normalizedEffect.includes('recharge'))
@@ -1301,6 +1340,10 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
 
     if (effect.targetScope === 'self') {
       return slots.filter((slot) => slot.unit.character.id === sourceSlot.unit.character.id);
+    }
+
+    if (effect.targetScope === 'unknown') {
+      return slots;
     }
 
     if (effect.targetScope !== 'subset') {

@@ -1122,6 +1122,47 @@ describe('AutoTeamBuilderRumbleService', () => {
     expect(resolveSelectedRumbleCost(result)).toBeLessThanOrEqual(300);
   });
 
+  it('prioritizes active-only teams closest to 300 cost in closest-cost mode', () => {
+    const service = createService();
+    const lowCostPowerUnits = Array.from({ length: 5 }, (_, index) =>
+      createCharacter(7400 + index, {
+        maxHp: 90000 + index * 100,
+        maxAtk: 300000 + index * 100,
+        maxRcv: 5000,
+        partyConflictKeys: [`low-cost-power-${index}`],
+        rumbleData: {
+          ...createRumbleData(100 + index),
+          cost: 10,
+        },
+      }),
+    );
+    const targetCostUnits = Array.from({ length: 5 }, (_, index) =>
+      createCharacter(7450 + index, {
+        maxHp: 2000 + index * 100,
+        maxAtk: 700 + index * 100,
+        maxRcv: 80,
+        partyConflictKeys: [`target-cost-${index}`],
+        rumbleData: {
+          ...createRumbleData(120 + index),
+          cost: 60,
+        },
+      }),
+    );
+
+    const result = service.buildTeamFromCandidates(
+      [...lowCostPowerUnits, ...targetCostUnits],
+      { requireFullTeam: false },
+      { resultMode: 'closestCost' },
+    );
+
+    expect(result.activeSlots).toHaveLength(5);
+    expect(result.benchSlots).toHaveLength(0);
+    expect(resolveSelectedRumbleCost(result)).toBe(300);
+    expect(
+      result.activeSlots.map((slot) => slot.unit.character.id).sort((left, right) => left - right),
+    ).toEqual(targetCostUnits.map((unit) => unit.id).sort((left, right) => left - right));
+  });
+
   it('does not add optional bench units only for buffs or enemy debuffs while benched', () => {
     const service = createService();
     const anchors = Array.from({ length: 5 }, (_, index) =>

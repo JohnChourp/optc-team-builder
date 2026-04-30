@@ -1,6 +1,7 @@
 import {
   type RumbleBuildInput,
   type RumbleBuildProgressSnapshot,
+  type RumbleBuildResultMode,
   type RumbleTeamResult,
 } from '../models/auto-team-builder-rumble.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
@@ -12,6 +13,7 @@ export interface AutoTeamBuilderRumbleWorkerRunRequest {
   requestedInput: RumbleBuildInput;
   workerCount: number;
   limit: number;
+  resultMode?: RumbleBuildResultMode;
 }
 
 export interface AutoTeamBuilderRumbleWorkerProgressResponse {

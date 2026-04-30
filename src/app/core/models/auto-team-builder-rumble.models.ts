@@ -112,6 +112,8 @@ export interface RumbleTeamResultSet {
   teams: RumbleTeamResult[];
 }
 
+export type RumbleBuildResultMode = 'score' | 'closestCost';
+
 export interface RumbleBuildInput {
   types: AutoTeamBuilderType[];
   selectedClasses: string[];
