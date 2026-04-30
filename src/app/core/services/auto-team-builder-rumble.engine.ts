@@ -116,6 +116,7 @@ const EMPTY_INPUT: RumbleBuildInput = {
   onlySelectedClasses: false,
   favoritesOnly: false,
   favoriteCharacterIds: [],
+  characterBoxId: null,
   opponentSlots: [],
   buffFocus: DEFAULT_RUMBLE_BUFF_FOCUS,
   requireFullTeam: true,
@@ -172,6 +173,7 @@ export function normalizeRumbleBuildInput(input: Partial<RumbleBuildInput> = {})
     onlySelectedClasses: input.onlySelectedClasses ?? false,
     favoritesOnly: input.favoritesOnly ?? false,
     favoriteCharacterIds: normalizePositiveIntegerCollection(input.favoriteCharacterIds),
+    characterBoxId: normalizeOptionalString(input.characterBoxId),
     candidateCharacterIds: input.candidateCharacterIds
       ? normalizePositiveIntegerCollection(input.candidateCharacterIds)
       : undefined,
@@ -959,9 +961,7 @@ export class RumbleTeamBuilderEngine {
       }
 
       variants = dedupeScoredUnitGroups(nextVariants)
-        .sort((left, right) =>
-          compareRumbleScoredUnitGroups(left, right, resultMode, targetCount),
-        )
+        .sort((left, right) => compareRumbleScoredUnitGroups(left, right, resultMode, targetCount))
         .slice(0, beamWidth)
         .map((variant) => variant.units);
 
@@ -1499,9 +1499,7 @@ export class RumbleTeamBuilderEngine {
     return synergyAttribute ?? normalized.replace(/\b\w/g, (character) => character.toUpperCase());
   }
 
-  private isRumbleSynergyAttribute(
-    value: OpponentCounterAttribute,
-  ): value is RumbleBuffFocusStat {
+  private isRumbleSynergyAttribute(value: OpponentCounterAttribute): value is RumbleBuffFocusStat {
     return RUMBLE_BUFF_FOCUS_STATS.includes(value as RumbleBuffFocusStat);
   }
 
@@ -2382,10 +2380,7 @@ function compareRumbleResults(left: RumbleTeamResult, right: RumbleTeamResult): 
   );
 }
 
-function compareClosestCostRumbleResults(
-  left: RumbleTeamResult,
-  right: RumbleTeamResult,
-): number {
+function compareClosestCostRumbleResults(left: RumbleTeamResult, right: RumbleTeamResult): number {
   const leftCostGap = Math.abs(RUMBLE_TEAM_COST_LIMIT - resolveRumbleResultCost(left));
   const rightCostGap = Math.abs(RUMBLE_TEAM_COST_LIMIT - resolveRumbleResultCost(right));
 
@@ -2546,6 +2541,12 @@ function normalizePositiveIntegerCollection(values: number[] | undefined): numbe
   }
 
   return [...new Set(values.filter((value) => Number.isInteger(value) && value > 0))];
+}
+
+function normalizeOptionalString(value: string | null | undefined): string | null {
+  const normalized = typeof value === 'string' ? value.trim() : '';
+
+  return normalized.length ? normalized : null;
 }
 
 function normalizeRumbleOpponentSlots(

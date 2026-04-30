@@ -466,6 +466,25 @@ describe('AutoTeamBuilderRumbleService', () => {
     ).toEqual([]);
   });
 
+  it('intersects explicit candidate ids with favorites when both filters are active', () => {
+    const service = createService();
+    const result = service.buildTeamFromCandidates(
+      [
+        createCharacter(5311, { type: 'DEX', rumbleData: createRumbleData(1) }),
+        createCharacter(5312, { type: 'DEX', rumbleData: createRumbleData(2) }),
+        createCharacter(5313, { type: 'DEX', rumbleData: createRumbleData(3) }),
+      ],
+      {
+        favoritesOnly: true,
+        favoriteCharacterIds: [5312, 5313],
+        candidateCharacterIds: [5311, 5312],
+      },
+    );
+
+    expect(result.candidateCount).toBe(1);
+    expect(result.activeSlots.map((slot) => slot.unit.character.id)).toEqual([5312]);
+  });
+
   it('returns an empty result when favorite-only has no saved favorites', async () => {
     const service = createService([
       createCharacter(5401, { type: 'DEX', rumbleData: createRumbleData(1) }),

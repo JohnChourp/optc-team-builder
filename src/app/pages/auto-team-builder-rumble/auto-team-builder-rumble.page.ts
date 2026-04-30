@@ -53,7 +53,7 @@ import {
   type RumbleTeamSlotRole,
   type RumbleUnitScore,
 } from '../../core/models/auto-team-builder-rumble.models';
-import { type CharacterDetailRecord } from '../../core/models/optc.models';
+import { type CharacterBox, type CharacterDetailRecord } from '../../core/models/optc.models';
 import {
   AutoTeamBuilderRumbleService,
   type RumbleTeamBuildExecutionOptions,
@@ -179,6 +179,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   public readonly onlySelectedTypes = signal(false);
   public readonly onlySelectedClasses = signal(false);
   public readonly favoritesOnly = signal(false);
+  public readonly selectedCharacterBoxId = signal<string | null>(null);
   public readonly buildProgress = signal<RumbleBuildProgressSnapshot | null>(null);
   public readonly manualPickerOpen = signal(false);
   public readonly manualPickerLoading = signal(false);
@@ -216,6 +217,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   public readonly promoteIcon = chevronUpOutline;
   public readonly demoteIcon = chevronDownOutline;
   public readonly favoriteCharacterIds;
+  public readonly characterBoxes;
   public readonly autoTeamBuilderWorkerPreference;
   public readonly autoTeamBuilderWorkerRuntime;
   public readonly autoTeamBuilderAvailableWorkerCounts;
@@ -235,11 +237,44 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     () => this.currentResult()?.droppedClasses ?? [],
   );
   public readonly hasFavoriteCharacters = computed(() => this.favoriteCharacterIds().length > 0);
+  public readonly selectedCharacterBox = computed(() =>
+    this.resolveCharacterBoxById(this.selectedCharacterBoxId()),
+  );
+  public readonly selectedCharacterBoxCharacterIds = computed(
+    () => this.selectedCharacterBox()?.characterIds ?? [],
+  );
+  public readonly selectedCharacterBoxFavoriteCount = computed(() => {
+    const boxCharacterIds = new Set(this.selectedCharacterBoxCharacterIds());
+
+    if (!boxCharacterIds.size) {
+      return 0;
+    }
+
+    return this.favoriteCharacterIds().filter((characterId) => boxCharacterIds.has(characterId))
+      .length;
+  });
   public readonly buildBlockedByFavorites = computed(
     () => this.favoritesOnly() && !this.hasFavoriteCharacters(),
   );
+  public readonly buildBlockedByCharacterBox = computed(
+    () =>
+      Boolean(this.selectedCharacterBox()) && this.selectedCharacterBoxCharacterIds().length === 0,
+  );
+  public readonly buildBlockedByBoxFavorites = computed(
+    () =>
+      this.favoritesOnly() &&
+      Boolean(this.selectedCharacterBox()) &&
+      this.hasFavoriteCharacters() &&
+      this.selectedCharacterBoxCharacterIds().length > 0 &&
+      this.selectedCharacterBoxFavoriteCount() === 0,
+  );
   public readonly buildDisabled = computed(
-    () => this.loading() || this.buildBlockedByFavorites() || !this.initialized(),
+    () =>
+      this.loading() ||
+      this.buildBlockedByFavorites() ||
+      this.buildBlockedByCharacterBox() ||
+      this.buildBlockedByBoxFavorites() ||
+      !this.initialized(),
   );
   public readonly excludedCharacters = computed(() => {
     const recordsById = this.excludedCharacterRecordsById();
@@ -304,6 +339,28 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
         })
       : this.t('filters.favoritesOnly.support.empty'),
   );
+  public readonly characterBoxSupportLabel = computed(() => {
+    const selectedBox = this.selectedCharacterBox();
+
+    if (!this.characterBoxes().length) {
+      return this.t('filters.characterBox.support.noBoxes');
+    }
+
+    if (!selectedBox) {
+      return this.t('filters.characterBox.support.all');
+    }
+
+    if (this.favoritesOnly()) {
+      return this.t('filters.characterBox.support.withFavorites', {
+        count: this.selectedCharacterBoxFavoriteCount(),
+        total: selectedBox.characterIds.length,
+      });
+    }
+
+    return this.t('filters.characterBox.support.withCount', {
+      count: selectedBox.characterIds.length,
+    });
+  });
   public readonly onlySelectedTypesSupportLabel = computed(() =>
     this.onlySelectedTypes()
       ? this.t('filters.types.onlySupport.strict')
@@ -542,9 +599,11 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   });
   public readonly manualPickerResults = computed(() => {
     const searchTerm = this.manualPickerSearchTerm().trim().toLowerCase();
-    const selectedIds = this.resolveSelectedCharacterIds(this.manualPickerTarget());
+    const target = this.manualPickerTarget();
+    const selectedIds = this.resolveSelectedCharacterIds(target);
 
     return this.manualPickerCandidates()
+      .filter((candidate) => this.manualPickerCandidateMatchesScope(candidate, target))
       .filter((candidate) => !selectedIds.has(candidate.character.id))
       .filter((candidate) => {
         if (!searchTerm) {
@@ -574,6 +633,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     private readonly router: Router,
   ) {
     this.favoriteCharacterIds = this.userState.favoriteCharacterIds;
+    this.characterBoxes = this.userState.characterBoxes;
     this.autoTeamBuilderWorkerPreference = this.userState.autoTeamBuilderWorkerPreference;
     this.autoTeamBuilderWorkerRuntime = computed(() =>
       this.userState.resolveAutoTeamBuilderWorkerPreference(),
@@ -601,7 +661,14 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   }
 
   public async buildTeam(): Promise<void> {
-    if (!this.initialized() || this.buildBlockedByFavorites()) {
+    this.clearMissingSelectedCharacterBox();
+
+    if (
+      !this.initialized() ||
+      this.buildBlockedByFavorites() ||
+      this.buildBlockedByCharacterBox() ||
+      this.buildBlockedByBoxFavorites()
+    ) {
       return;
     }
 
@@ -637,6 +704,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
         onlySelectedClasses: this.onlySelectedClasses(),
         favoritesOnly: this.favoritesOnly(),
         favoriteCharacterIds: this.favoriteCharacterIds(),
+        characterBoxId: this.selectedCharacterBox()?.id ?? null,
         candidateCharacterIds,
         opponentSlots: this.opponentAwarenessEnabled() ? this.buildOpponentSlotContexts() : [],
         buffFocus: this.buffFocus(),
@@ -817,6 +885,11 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
 
   public onFavoritesOnlyToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.favoritesOnly.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
+  public onCharacterBoxChange(event: CustomEvent<{ value?: string | null }>): void {
+    this.selectedCharacterBoxId.set(this.normalizeCharacterBoxId(event.detail.value));
     this.resetBuildState();
   }
 
@@ -1158,6 +1231,8 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   }
 
   private buildCurrentRumbleSettings(): RumbleBuildInput {
+    this.clearMissingSelectedCharacterBox();
+
     return {
       types: [...this.selectedTypes()],
       selectedClasses: [...this.selectedClasses()],
@@ -1165,6 +1240,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       onlySelectedClasses: this.onlySelectedClasses(),
       favoritesOnly: this.favoritesOnly(),
       favoriteCharacterIds: [...this.favoriteCharacterIds()],
+      characterBoxId: this.selectedCharacterBox()?.id ?? null,
       opponentSlots: [],
       buffFocus: this.buffFocus().map((preference) => ({ ...preference })),
       requireFullTeam: true,
@@ -1229,6 +1305,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     this.onlySelectedTypes.set(Boolean(settings.onlySelectedTypes));
     this.onlySelectedClasses.set(Boolean(settings.onlySelectedClasses));
     this.favoritesOnly.set(Boolean(settings.favoritesOnly));
+    this.selectedCharacterBoxId.set(this.normalizeCharacterBoxId(settings.characterBoxId));
     this.buffFocus.set(this.resolveImportedBuffFocus(settings.buffFocus));
     this.errorMessage.set('');
   }
@@ -1637,7 +1714,17 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   }
 
   private async resolveCandidateCharacterIdsForBuild(): Promise<number[] | undefined> {
+    const selectedBox = this.selectedCharacterBox();
     const excludedIds = new Set(this.excludedCharacterIds());
+
+    if (selectedBox) {
+      const favoriteIds = this.favoritesOnly() ? new Set(this.favoriteCharacterIds()) : null;
+
+      return [...new Set(selectedBox.characterIds)].filter(
+        (characterId) =>
+          !excludedIds.has(characterId) && (!favoriteIds || favoriteIds.has(characterId)),
+      );
+    }
 
     if (!excludedIds.size) {
       return undefined;
@@ -1654,6 +1741,47 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     return candidates
       .map((candidate) => candidate.id)
       .filter((candidateId) => !excludedIds.has(candidateId));
+  }
+
+  private manualPickerCandidateMatchesScope(
+    candidate: RumbleUnitScore,
+    target: ManualSlotTarget | null,
+  ): boolean {
+    if (target?.team === 'opponent') {
+      return true;
+    }
+
+    const selectedBox = this.selectedCharacterBox();
+
+    if (selectedBox && !selectedBox.characterIds.includes(candidate.character.id)) {
+      return false;
+    }
+
+    return !this.favoritesOnly() || this.favoriteCharacterIds().includes(candidate.character.id);
+  }
+
+  private resolveCharacterBoxById(characterBoxId: string | null): CharacterBox | null {
+    if (!characterBoxId) {
+      return null;
+    }
+
+    return this.characterBoxes().find((box) => box.id === characterBoxId) ?? null;
+  }
+
+  private normalizeCharacterBoxId(value: string | null | undefined): string | null {
+    const normalizedBoxId = typeof value === 'string' ? value.trim() : '';
+
+    if (!normalizedBoxId) {
+      return null;
+    }
+
+    return this.resolveCharacterBoxById(normalizedBoxId)?.id ?? null;
+  }
+
+  private clearMissingSelectedCharacterBox(): void {
+    if (this.selectedCharacterBoxId() && !this.selectedCharacterBox()) {
+      this.selectedCharacterBoxId.set(null);
+    }
   }
 
   private cacheExcludedCharacter(character: CharacterDetailRecord): void {

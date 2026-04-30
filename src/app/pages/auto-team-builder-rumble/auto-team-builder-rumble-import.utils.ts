@@ -39,6 +39,7 @@ function cloneRumbleBuildInput(input: RumbleBuildInput): RumbleBuildInput {
     onlySelectedClasses: input.onlySelectedClasses,
     favoritesOnly: input.favoritesOnly,
     favoriteCharacterIds: [...input.favoriteCharacterIds],
+    characterBoxId: input.characterBoxId ?? null,
     candidateCharacterIds: input.candidateCharacterIds
       ? [...input.candidateCharacterIds]
       : undefined,

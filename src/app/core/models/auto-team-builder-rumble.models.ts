@@ -13,21 +13,9 @@ export type NormalizedRumbleRoleTag =
   | 'healer'
   | 'speed';
 
-export const RUMBLE_BUFF_FOCUS_STATS = [
-  'ATK',
-  'HP',
-  'DEF',
-  'SPD',
-  'RCV',
-  'Special CT',
-] as const;
+export const RUMBLE_BUFF_FOCUS_STATS = ['ATK', 'HP', 'DEF', 'SPD', 'RCV', 'Special CT'] as const;
 
-export const RUMBLE_BUFF_FOCUS_RANKS = [
-  'primary',
-  'secondary',
-  'tertiary',
-  'ignored',
-] as const;
+export const RUMBLE_BUFF_FOCUS_RANKS = ['primary', 'secondary', 'tertiary', 'ignored'] as const;
 
 export type RumbleBuffFocusStat = (typeof RUMBLE_BUFF_FOCUS_STATS)[number];
 export type RumbleBuffFocusRank = (typeof RUMBLE_BUFF_FOCUS_RANKS)[number];
@@ -154,6 +142,7 @@ export interface RumbleBuildInput {
   onlySelectedClasses: boolean;
   favoritesOnly: boolean;
   favoriteCharacterIds: number[];
+  characterBoxId?: string | null;
   candidateCharacterIds?: number[];
   opponentSlots: RumbleOpponentSlotContext[];
   buffFocus: RumbleBuffFocusPreference[];

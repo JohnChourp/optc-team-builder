@@ -28,6 +28,7 @@ describe('auto-team-builder-rumble import utils', () => {
           onlySelectedClasses: false,
           favoritesOnly: false,
           favoriteCharacterIds: [],
+          characterBoxId: 'box-1',
           opponentSlots: [],
           buffFocus: DEFAULT_RUMBLE_BUFF_FOCUS,
           requireFullTeam: true,
@@ -38,6 +39,7 @@ describe('auto-team-builder-rumble import utils', () => {
     );
 
     expect(payload.settings.types).toEqual(['DEX']);
+    expect(payload.settings.characterBoxId).toBe('box-1');
     expect(payload.exportType).toBe('settings');
   });
 
@@ -121,6 +123,7 @@ function createResult(): RumbleTeamResult {
       onlySelectedClasses: false,
       favoritesOnly: false,
       favoriteCharacterIds: [],
+      characterBoxId: null,
       opponentSlots: [],
       buffFocus: DEFAULT_RUMBLE_BUFF_FOCUS,
       requireFullTeam: true,

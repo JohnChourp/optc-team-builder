@@ -25,6 +25,7 @@ describe('auto-team-builder-rumble-export utils', () => {
         onlySelectedClasses: false,
         favoritesOnly: true,
         favoriteCharacterIds: [101, 202],
+        characterBoxId: 'box-1',
         opponentSlots: [],
         buffFocus: [
           { stat: 'ATK', rank: 'primary' },
@@ -52,6 +53,7 @@ describe('auto-team-builder-rumble-export utils', () => {
         onlySelectedClasses: false,
         favoritesOnly: true,
         favoriteCharacterIds: [101, 202],
+        characterBoxId: 'box-1',
         candidateCharacterIds: undefined,
         opponentSlots: [],
         buffFocus: [
@@ -121,6 +123,7 @@ describe('auto-team-builder-rumble-export utils', () => {
           onlySelectedClasses: false,
           favoritesOnly: false,
           favoriteCharacterIds: [],
+          characterBoxId: null,
           opponentSlots: [],
           buffFocus: DEFAULT_RUMBLE_BUFF_FOCUS,
           requireFullTeam: true,
@@ -167,6 +170,7 @@ function createResult(offset = 0): RumbleTeamResult {
       onlySelectedClasses: false,
       favoritesOnly: false,
       favoriteCharacterIds: [],
+      characterBoxId: null,
       opponentSlots: [],
       buffFocus: DEFAULT_RUMBLE_BUFF_FOCUS,
       requireFullTeam: true,

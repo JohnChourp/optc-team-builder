@@ -200,6 +200,7 @@ function cloneRumbleBuildInput(input: RumbleBuildInput): RumbleBuildInput {
     onlySelectedClasses: input.onlySelectedClasses,
     favoritesOnly: input.favoritesOnly,
     favoriteCharacterIds: [...input.favoriteCharacterIds],
+    characterBoxId: input.characterBoxId ?? null,
     candidateCharacterIds: input.candidateCharacterIds
       ? [...input.candidateCharacterIds]
       : undefined,
@@ -291,10 +292,7 @@ function buildRumbleOpponentTeamExport(slots: RumbleTeamSlot[]): RumbleOpponentT
   };
 }
 
-function buildRumbleTeamExportSlot(
-  slot: RumbleTeamSlot,
-  slotIndex: number,
-): RumbleTeamExportSlot {
+function buildRumbleTeamExportSlot(slot: RumbleTeamSlot, slotIndex: number): RumbleTeamExportSlot {
   return {
     slotIndex,
     role: slot.role,

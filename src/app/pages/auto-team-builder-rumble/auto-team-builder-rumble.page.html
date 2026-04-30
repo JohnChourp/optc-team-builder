@@ -110,6 +110,28 @@
       <section class="glass-card controls-card">
         <div class="controls-grid">
           <div class="filter-card">
+            <span>{{ t('filters.characterBox.label') }}</span>
+            <ion-select
+              interface="popover"
+              fill="outline"
+              [placeholder]="t('filters.characterBox.placeholder')"
+              [value]="selectedCharacterBoxId() ?? ''"
+              [disabled]="loading() || !characterBoxes().length"
+              (ionChange)="onCharacterBoxChange($event)"
+            >
+              <ion-select-option value="">
+                {{ t('filters.characterBox.options.all') }}
+              </ion-select-option>
+              @for (box of characterBoxes(); track box.id) {
+                <ion-select-option [value]="box.id">
+                  {{ box.name }} ({{ box.characterIds.length }})
+                </ion-select-option>
+              }
+            </ion-select>
+            <small class="filter-support-copy">{{ characterBoxSupportLabel() }}</small>
+          </div>
+
+          <div class="filter-card">
             <span>{{ t('filters.types.label') }}</span>
             <ion-select
               interface="popover"
@@ -267,6 +289,14 @@
 
         @if (buildBlockedByFavorites()) {
           <p class="favorites-only-warning">{{ t('filters.favoritesOnly.blockedMessage') }}</p>
+        }
+        @if (buildBlockedByCharacterBox()) {
+          <p class="favorites-only-warning">{{ t('filters.characterBox.emptyMessage') }}</p>
+        }
+        @if (buildBlockedByBoxFavorites()) {
+          <p class="favorites-only-warning">
+            {{ t('filters.characterBox.emptyFavoritesMessage') }}
+          </p>
         }
       </section>
 

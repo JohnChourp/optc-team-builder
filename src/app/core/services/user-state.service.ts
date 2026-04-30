@@ -1226,6 +1226,7 @@ export class UserStateService {
       onlySelectedClasses: Boolean(input?.onlySelectedClasses),
       favoritesOnly: Boolean(input?.favoritesOnly),
       favoriteCharacterIds: this.normalizePositiveIntegerCollection(input?.favoriteCharacterIds),
+      characterBoxId: this.normalizeEntityId(input?.characterBoxId ?? undefined),
       candidateCharacterIds: input?.candidateCharacterIds
         ? this.normalizePositiveIntegerCollection(input.candidateCharacterIds)
         : undefined,

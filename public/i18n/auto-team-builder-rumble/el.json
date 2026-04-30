@@ -71,6 +71,21 @@
         "strict": "Κάθε generated unit πρέπει να έχει τουλάχιστον ένα selected class."
       }
     },
+    "characterBox": {
+      "label": "Character box",
+      "placeholder": "Επίλεξε character box",
+      "emptyMessage": "Το επιλεγμένο character box είναι άδειο.",
+      "emptyFavoritesMessage": "Το επιλεγμένο character box δεν περιέχει favorite units.",
+      "options": {
+        "all": "Όλοι οι Rumble χαρακτήρες"
+      },
+      "support": {
+        "all": "Χρησιμοποίησε κάθε τοπικό character με Rumble data.",
+        "noBoxes": "Δημιούργησε character box για να περιορίσεις τα Rumble builds σε αυτό.",
+        "withCount": "Περιόρισε το Rumble candidate pool στους {{count}} character(s) αυτού του box.",
+        "withFavorites": "{{count}} από {{total}} character(s) σε αυτό το box είναι favorites."
+      }
+    },
     "favoritesOnly": {
       "toggle": "Use only favorites",
       "blockedMessage": "Το favorite-only Rumble build δεν είναι διαθέσιμο μέχρι να αποθηκεύσεις τουλάχιστον ένα favorite unit.",

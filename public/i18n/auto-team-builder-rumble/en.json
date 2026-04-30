@@ -71,6 +71,21 @@
         "strict": "Every generated unit must have at least one selected class."
       }
     },
+    "characterBox": {
+      "label": "Character box",
+      "placeholder": "Select character box",
+      "emptyMessage": "The selected character box is empty.",
+      "emptyFavoritesMessage": "The selected character box does not contain any favorite units.",
+      "options": {
+        "all": "All Rumble characters"
+      },
+      "support": {
+        "all": "Use every Rumble-capable local character.",
+        "noBoxes": "Create a character box to limit Rumble builds to that box.",
+        "withCount": "Limit the Rumble candidate pool to {{count}} character(s) in this box.",
+        "withFavorites": "{{count}} of {{total}} character(s) in this box are currently favorites."
+      }
+    },
     "favoritesOnly": {
       "toggle": "Use only favorites",
       "blockedMessage": "Favorite-only Rumble build is unavailable until you save at least one favorite unit.",

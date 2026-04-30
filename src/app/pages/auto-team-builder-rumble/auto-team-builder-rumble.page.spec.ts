@@ -125,6 +125,7 @@ describe('AutoTeamBuilderRumblePage', () => {
         onlySelectedClasses: false,
         favoritesOnly: false,
         favoriteCharacterIds: [1001, 1002],
+        characterBoxId: null,
         candidateCharacterIds: undefined,
         opponentSlots: [],
         buffFocus: DEFAULT_RUMBLE_BUFF_FOCUS,
@@ -343,6 +344,9 @@ describe('AutoTeamBuilderRumblePage', () => {
     expect(template).toContain("['/tabs/saved-rumble-teams']");
     expect(template).toContain("t('actions.downloadSettings')");
     expect(template).toContain("t('actions.downloadTeam')");
+    expect(template).toContain("t('filters.characterBox.label')");
+    expect(template).toContain('onCharacterBoxChange($event)');
+    expect(template).toContain('characterBoxSupportLabel()');
     expect(template).toContain("t('filters.favoritesOnly.toggle')");
     expect(template).toContain("t('filters.buffFocus.label')");
     expect(template).toContain('buffFocusRanks');
@@ -630,6 +634,7 @@ describe('AutoTeamBuilderRumblePage', () => {
         onlySelectedClasses: true,
         favoritesOnly: true,
         favoriteCharacterIds: [1001, 1002],
+        characterBoxId: null,
         candidateCharacterIds: undefined,
         opponentSlots: [],
         buffFocus: DEFAULT_RUMBLE_BUFF_FOCUS,
@@ -648,6 +653,7 @@ describe('AutoTeamBuilderRumblePage', () => {
         onlySelectedClasses: true,
         favoritesOnly: true,
         favoriteCharacterIds: [1001, 1002],
+        characterBoxId: null,
         candidateCharacterIds: undefined,
         opponentSlots: [],
         buffFocus: DEFAULT_RUMBLE_BUFF_FOCUS,
@@ -712,6 +718,7 @@ describe('AutoTeamBuilderRumblePage', () => {
         onlySelectedClasses: false,
         favoritesOnly: true,
         favoriteCharacterIds: [1001, 1002],
+        characterBoxId: null,
         opponentSlots: [],
         buffFocus: DEFAULT_RUMBLE_BUFF_FOCUS,
         requireFullTeam: true,
@@ -771,7 +778,9 @@ describe('AutoTeamBuilderRumblePage', () => {
   });
 
   it('imports settings without replacing the current generated teams', async () => {
-    const { page } = createPage();
+    const { page } = createPage(createResult(), {
+      characterBoxes: [createBox('box-1', 'Saved Box', [1001])],
+    });
 
     await page.ngOnInit();
     await page.buildTeam();
@@ -791,6 +800,7 @@ describe('AutoTeamBuilderRumblePage', () => {
             onlySelectedClasses: true,
             favoritesOnly: true,
             favoriteCharacterIds: [1001],
+            characterBoxId: 'box-1',
             opponentSlots: [],
             buffFocus: [{ stat: 'SPD', rank: 'primary' }],
             requireFullTeam: true,
@@ -806,6 +816,7 @@ describe('AutoTeamBuilderRumblePage', () => {
     expect(page.onlySelectedTypes()).toBe(true);
     expect(page.onlySelectedClasses()).toBe(true);
     expect(page.favoritesOnly()).toBe(true);
+    expect(page.selectedCharacterBoxId()).toBe('box-1');
     expect(page.buffFocus().find((preference) => preference.stat === 'SPD')?.rank).toBe('primary');
     expect(page.teamResults()).toBe(existingResults);
     expect(page.importFeedback()?.tone).toBe('success');
@@ -1073,6 +1084,129 @@ describe('AutoTeamBuilderRumblePage', () => {
     ]);
   });
 
+  it('limits Rumble builds to the selected live character box', async () => {
+    const { page, rumbleBuilder } = createPage(createResult(), {
+      characterBoxes: [
+        createBox('box-1', 'Rumble Box', [1001, 1003, 1005]),
+        createBox('box-2', 'Other Box', [1002]),
+      ],
+    });
+
+    await page.ngOnInit();
+    page.onCharacterBoxChange({ detail: { value: 'box-1' } } as never);
+    await page.buildTeam();
+
+    expect(rumbleBuilder.buildBestTeams).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        characterBoxId: 'box-1',
+        candidateCharacterIds: [1001, 1003, 1005],
+      }),
+      expect.any(Object),
+      1,
+    );
+  });
+
+  it('intersects the selected character box with favorites before building', async () => {
+    const { page, rumbleBuilder } = createPage(createResult(), {
+      characterBoxes: [createBox('box-1', 'Favorite Box', [1001, 1003, 1005])],
+    });
+
+    await page.ngOnInit();
+    page.onCharacterBoxChange({ detail: { value: 'box-1' } } as never);
+    page.onFavoritesOnlyToggle({ detail: { checked: true } } as never);
+    await page.buildTeam();
+
+    expect(rumbleBuilder.buildBestTeams).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        characterBoxId: 'box-1',
+        favoritesOnly: true,
+        candidateCharacterIds: [1001],
+      }),
+      expect.any(Object),
+      1,
+    );
+  });
+
+  it('blocks empty selected boxes and boxes without favorite overlap', async () => {
+    const { page, rumbleBuilder } = createPage(createResult(), {
+      characterBoxes: [
+        createBox('empty-box', 'Empty Box', []),
+        createBox('no-favorites-box', 'No Favorites Box', [1003]),
+      ],
+    });
+
+    await page.ngOnInit();
+    page.onCharacterBoxChange({ detail: { value: 'empty-box' } } as never);
+    await page.buildTeam();
+
+    expect(page.buildBlockedByCharacterBox()).toBe(true);
+    expect(rumbleBuilder.buildBestTeams).not.toHaveBeenCalled();
+
+    page.onCharacterBoxChange({ detail: { value: 'no-favorites-box' } } as never);
+    page.onFavoritesOnlyToggle({ detail: { checked: true } } as never);
+    await page.buildTeam();
+
+    expect(page.buildBlockedByBoxFavorites()).toBe(true);
+    expect(rumbleBuilder.buildBestTeams).not.toHaveBeenCalled();
+  });
+
+  it('removes excluded characters from the selected character box scope', async () => {
+    const result = createResult();
+    const { page, rumbleBuilder } = createPage(result, {
+      characterBoxes: [createBox('box-1', 'Rumble Box', [1000, 1001, 1002])],
+    });
+
+    await page.ngOnInit();
+    page.onCharacterBoxChange({ detail: { value: 'box-1' } } as never);
+    page.excludedCharacterIds.set([1001]);
+    await page.buildTeam();
+
+    expect(rumbleBuilder.buildBestTeams).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        candidateCharacterIds: [1000, 1002],
+      }),
+      expect.any(Object),
+      1,
+    );
+  });
+
+  it('clears missing character box ids from imported settings', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    await (page as never as { importSettingsJson(file: File): Promise<void> }).importSettingsJson({
+      name: 'settings.json',
+      text: vi.fn().mockResolvedValue(
+        JSON.stringify({
+          schemaVersion: 2,
+          exportedAt: '2026-04-30T09:00:00.000Z',
+          source: 'auto-team-builder-rumble',
+          exportType: 'settings',
+          settings: {
+            types: [],
+            selectedClasses: [],
+            onlySelectedTypes: false,
+            onlySelectedClasses: false,
+            favoritesOnly: false,
+            favoriteCharacterIds: [],
+            characterBoxId: 'deleted-box',
+            opponentSlots: [],
+            buffFocus: DEFAULT_RUMBLE_BUFF_FOCUS,
+            requireFullTeam: true,
+          },
+          favoriteCount: 0,
+          workerPreference: { mode: 'auto', manualCount: 2 },
+        }),
+      ),
+    } as never);
+
+    expect(page.selectedCharacterBoxId()).toBeNull();
+    expect(page.buildSettingsExportPayload().settings.characterBoxId).toBeNull();
+  });
+
   it('excludes a selected slot and rebuilds with that character removed from the candidate scope', async () => {
     const result = createResult();
     const { page, rumbleBuilder, repository } = createPage(result);
@@ -1174,6 +1308,13 @@ function createPage(
   options: {
     savedRumbleTeamId?: string | null;
     savedRumbleTeam?: Record<string, unknown> | null;
+    characterBoxes?: Array<{
+      id: string;
+      name: string;
+      characterIds: number[];
+      createdAt: string;
+      updatedAt: string;
+    }>;
   } = {},
 ) {
   const defaultCandidates =
@@ -1206,6 +1347,7 @@ function createPage(
   const userState = {
     ready: vi.fn().mockResolvedValue(undefined),
     favoriteCharacterIds: vi.fn(() => [1001, 1002]),
+    characterBoxes: vi.fn(() => options.characterBoxes ?? []),
     autoTeamBuilderWorkerPreference: vi.fn(() => ({ mode: 'auto', manualCount: 2 })),
     resolveAutoTeamBuilderWorkerPreference: vi.fn(() => ({
       mode: 'auto',
@@ -1300,6 +1442,7 @@ function createResult(offset = 0): RumbleTeamResult {
       onlySelectedClasses: false,
       favoritesOnly: false,
       favoriteCharacterIds: [],
+      characterBoxId: null,
       opponentSlots: [],
       buffFocus: DEFAULT_RUMBLE_BUFF_FOCUS,
       requireFullTeam: true,
@@ -1380,6 +1523,16 @@ function createSlot(
       conflictKeys: [`character:${id}`],
     },
   } as RumbleTeamResult['activeSlots'][number];
+}
+
+function createBox(id: string, name: string, characterIds: number[]) {
+  return {
+    id,
+    name,
+    characterIds,
+    createdAt: '2026-04-30T09:00:00.000Z',
+    updatedAt: '2026-04-30T09:00:00.000Z',
+  };
 }
 
 function createEffect(overrides: Partial<NormalizedRumbleEffect> = {}): NormalizedRumbleEffect {
