@@ -304,6 +304,45 @@
   background: rgba(255, 255, 255, 0.03);
 }
 
+.saved-required-character-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: 10px;
+}
+
+.saved-required-character-card {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.saved-required-character-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.saved-required-character-card__head h4 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 0.98rem;
+  line-height: 1.3;
+}
+
+.saved-required-character-card__head small {
+  color: rgba(248, 251, 255, 0.62);
+  line-height: 1.35;
+}
+
+.saved-required-character-actions {
+  justify-content: flex-start;
+}
+
 .enemy-import-card,
 .enemy-image-card {
   display: grid;

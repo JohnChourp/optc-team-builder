@@ -1,6 +1,7 @@
 import {
   type AutoBuildAbilityRequirement,
   type AutoBuildEnemyMechanicRequirement,
+  type AutoBuildRequiredCharacterGroup,
   type NormalizedBuilderAbility,
 } from './auto-team-builder-ability.models';
 import { type CharacterDetailRecord, type ShipRecord } from './optc.models';
@@ -88,6 +89,7 @@ export interface AutoBuildConstraints {
   requireLeaderSuperSpecialCriteria?: boolean;
   requireUniqueBaseCharacterNames?: boolean;
   requiredAbilities?: AutoBuildAbilityRequirement[];
+  requiredCharacterGroups?: AutoBuildRequiredCharacterGroup[];
   enemyMechanics?: AutoBuildEnemyMechanicRequirement[];
   candidateCharacterIds?: number[];
   favoritesOnly?: boolean;
@@ -145,6 +147,7 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   minimumLeaderSuperEffectMatchingSlots: number | null;
   requireUniqueBaseCharacterNames: boolean;
   requiredAbilities: AutoBuildAbilityRequirement[];
+  requiredCharacterGroups: AutoBuildRequiredCharacterGroup[];
   enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   favoritesOnly: boolean;
   allowAnyFriendCaptainAutoFill: boolean;
@@ -266,6 +269,12 @@ export interface AutoBuildCoverageSummary {
     requested: AutoBuildAbilityRequirement[];
     matched: AutoBuildAbilityRequirement[];
     missing: AutoBuildAbilityRequirement[];
+    matchesAll: boolean;
+  };
+  requiredCharacterGroups: {
+    requested: AutoBuildRequiredCharacterGroup[];
+    matched: AutoBuildRequiredCharacterGroup[];
+    missing: AutoBuildRequiredCharacterGroup[];
     matchesAll: boolean;
   };
   burst: string[];

@@ -19,6 +19,7 @@ import {
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityRequirement,
   type AutoBuildEnemyMechanicRequirement,
+  type AutoBuildRequiredCharacterGroup,
 } from '../../core/models/auto-team-builder-ability.models';
 import {
   type CharacterDetailRecord,
@@ -30,6 +31,11 @@ import {
   resolveNonNegativeInteger,
 } from '../../core/services/ability-requirement-draft.utils';
 import { normalizeEnemyMechanicRequirements } from '../../core/services/enemy-mechanic-draft.utils';
+import {
+  cloneRequiredCharacterGroups,
+  expandRequiredAbilitiesToCharacterGroups,
+  MAX_REQUIRED_CHARACTER_GROUPS,
+} from '../../core/services/required-character-groups.utils';
 
 type AutoTeamExportRole = AutoBuildResult['slots'][number]['role'];
 type AutoTeamExportLeaderAssignment = 'captain' | 'friendCaptain' | 'dual' | null;
@@ -93,7 +99,8 @@ export interface AutoTeamSelectionExportPayload {
     | 17
     | 18
     | 19
-    | 20;
+    | 20
+    | 21;
   exportedAt: string;
   source: 'auto-team-builder';
   exportType: 'preset';
@@ -101,6 +108,7 @@ export interface AutoTeamSelectionExportPayload {
     selectedTypes: AutoBuildResult['input']['types'];
     selectedClasses: AutoBuildResult['input']['selectedClasses'];
     requiredAbilities: AutoBuildResult['input']['requiredAbilities'];
+    requiredCharacterGroups?: AutoBuildRequiredCharacterGroup[];
     enemyMechanics?: AutoBuildEnemyMechanicRequirement[];
     requireAllSelectedTypesInTeam: boolean;
     requireAllSelectedClassesPerCharacter: boolean;
@@ -137,6 +145,7 @@ export interface AutoTeamSelectionImportState {
   selectedTypes: AutoTeamBuilderType[];
   selectedClasses: string[];
   requiredAbilities: AutoBuildAbilityRequirement[];
+  requiredCharacterGroups?: AutoBuildRequiredCharacterGroup[];
   enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
@@ -190,6 +199,7 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   selectedTypes: AutoBuildResult['input']['types'];
   selectedClasses: AutoBuildResult['input']['selectedClasses'];
   requiredAbilities: AutoBuildResult['input']['requiredAbilities'];
+  requiredCharacterGroups?: AutoBuildRequiredCharacterGroup[];
   enemyMechanics: AutoBuildResult['input']['enemyMechanics'];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
@@ -555,7 +565,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload['schemaVersion'] !== 17 &&
       parsedPayload['schemaVersion'] !== 18 &&
       parsedPayload['schemaVersion'] !== 19 &&
-      parsedPayload['schemaVersion'] !== 20) ||
+      parsedPayload['schemaVersion'] !== 20 &&
+      parsedPayload['schemaVersion'] !== 21) ||
     parsedPayload['source'] !== 'auto-team-builder' ||
     parsedPayload['exportType'] !== 'preset'
   ) {
@@ -576,6 +587,16 @@ export function parseAutoTeamSelectionImportPayload(
     !filters['selectedClasses'].every((characterClass) => typeof characterClass === 'string') ||
     !Array.isArray(filters['requiredAbilities']) ||
     !filters['requiredAbilities'].every((requirement) => isRecord(requirement)) ||
+    !(
+      filters['requiredCharacterGroups'] === undefined ||
+      (Array.isArray(filters['requiredCharacterGroups']) &&
+        filters['requiredCharacterGroups'].every(
+          (group) =>
+            isRecord(group) &&
+            Array.isArray(group['abilities']) &&
+            group['abilities'].every((requirement) => isRecord(requirement)),
+        ))
+    ) ||
     !(
       filters['enemyMechanics'] === undefined ||
       (Array.isArray(filters['enemyMechanics']) &&
@@ -805,6 +826,84 @@ export function sanitizeAutoTeamSelectionImportPayload(
     });
   }
 
+  const requiredCharacterGroups: AutoBuildRequiredCharacterGroup[] = [];
+  const rawRequiredCharacterGroups = Array.isArray(payload.filters.requiredCharacterGroups)
+    ? payload.filters.requiredCharacterGroups
+    : [];
+
+  for (const [groupIndex, rawGroup] of rawRequiredCharacterGroups.entries()) {
+    if (requiredCharacterGroups.length >= MAX_REQUIRED_CHARACTER_GROUPS) {
+      adjustedAbilityCount += 1;
+      continue;
+    }
+
+    const abilities: AutoBuildAbilityRequirement[] = [];
+
+    for (const rawRequirement of Array.isArray(rawGroup.abilities) ? rawGroup.abilities : []) {
+      const abilityKey =
+        typeof rawRequirement.abilityKey === 'string' ? rawRequirement.abilityKey.trim() : '';
+      const abilityCatalogItem = abilityCatalogMap.get(abilityKey);
+
+      if (!abilityCatalogItem) {
+        invalidAbilityCount += 1;
+        continue;
+      }
+
+      const minTurns = abilityCatalogItem.supportsTurns
+        ? normalizeAbilityRequirementTurns(rawRequirement.minTurns)
+        : null;
+      const slotScope = normalizeAbilityRequirementSlotScope(
+        typeof rawRequirement.slotScope === 'string' ? rawRequirement.slotScope : null,
+      );
+      const rawSlotTokens = Array.isArray(rawRequirement.slotTokens)
+        ? [
+            ...new Set(
+              rawRequirement.slotTokens
+                .filter((token): token is string => typeof token === 'string')
+                .map((token) => token.trim().toUpperCase())
+                .filter((token) => token.length > 0),
+            ),
+          ]
+        : [];
+      const slotTokens = abilityCatalogItem.supportsSlotTokens
+        ? rawSlotTokens.filter((token) => abilityCatalogItem.availableSlotTokens.includes(token))
+        : [];
+
+      if (
+        rawSlotTokens.length !== slotTokens.length ||
+        (!abilityCatalogItem.supportsTurns && rawRequirement.minTurns !== null) ||
+        (!abilityCatalogItem.supportsSlotTokens && rawSlotTokens.length > 0) ||
+        rawRequirement.requiredCharacterCount !== 1
+      ) {
+        adjustedAbilityCount += 1;
+      }
+
+      abilities.push({
+        abilityKey,
+        minTurns,
+        slotTokens,
+        requiredCharacterCount: 1,
+        ...(slotScope !== 'any' ? { slotScope } : {}),
+      });
+    }
+
+    if (abilities.length > 0) {
+      requiredCharacterGroups.push({
+        id:
+          typeof rawGroup.id === 'string' && rawGroup.id.trim().length > 0
+            ? rawGroup.id.trim()
+            : `imported-${groupIndex + 1}`,
+        abilities,
+      });
+    }
+  }
+
+  if (!requiredCharacterGroups.length && requiredAbilities.length) {
+    const migrated = expandRequiredAbilitiesToCharacterGroups(requiredAbilities);
+    requiredCharacterGroups.push(...migrated.groups);
+    adjustedAbilityCount += migrated.truncatedCount;
+  }
+
   const invalidAbilityWarning = buildWarning(
     'preset.warnings.unsupportedAbilities',
     invalidAbilityCount,
@@ -1026,6 +1125,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
       selectedTypes,
       selectedClasses,
       requiredAbilities,
+      requiredCharacterGroups,
       enemyMechanics,
       requireAllSelectedTypesInTeam: payload.filters.requireAllSelectedTypesInTeam,
       requireAllSelectedClassesPerCharacter: payload.filters.requireAllSelectedClassesPerCharacter,
@@ -1096,6 +1196,7 @@ export function buildAutoTeamSelectionExportPayload({
   selectedTypes,
   selectedClasses,
   requiredAbilities,
+  requiredCharacterGroups = [],
   enemyMechanics,
   requireAllSelectedTypesInTeam,
   requireAllSelectedClassesPerCharacter,
@@ -1131,7 +1232,7 @@ export function buildAutoTeamSelectionExportPayload({
   }));
 
   return {
-    schemaVersion: 20,
+    schemaVersion: 21,
     exportedAt,
     source: 'auto-team-builder',
     exportType: 'preset',
@@ -1142,6 +1243,7 @@ export function buildAutoTeamSelectionExportPayload({
         ...requirement,
         slotTokens: [...requirement.slotTokens],
       })),
+      requiredCharacterGroups: cloneRequiredCharacterGroups(requiredCharacterGroups),
       enemyMechanics: enemyMechanics.map((mechanic) => ({
         ...mechanic,
         triggerTags: [...mechanic.triggerTags],

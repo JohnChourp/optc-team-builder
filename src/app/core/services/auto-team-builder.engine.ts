@@ -903,7 +903,8 @@ export function satisfiesRequestedAutoTeamBuildCoverage(
     result &&
     result.coverage.coversAllSelectedClasses &&
     result.coverage.coversAllSelectedTypes &&
-    result.coverage.abilityRequirements.matchesAll,
+    result.coverage.abilityRequirements.matchesAll &&
+    result.coverage.requiredCharacterGroups.matchesAll,
   );
 }
 

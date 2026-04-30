@@ -668,6 +668,25 @@
     "loadedDescription": "Φορτώθηκε το enemy preset: {{name}}.",
     "loadedTitle": "Το enemy preset είναι έτοιμο."
   },
+  "requiredCharacters": {
+    "title": "Required characters",
+    "copy": "Πρόσθεσε έως 6 required slots. Όλα τα abilities μέσα σε μία κάρτα πρέπει να καλυφθούν από τον ίδιο τελικό χαρακτήρα.",
+    "configured": "{{count}} required characters",
+    "empty": "Δεν έχουν οριστεί required characters ακόμα.",
+    "cardTitle": "Character {{index}}",
+    "cardEmpty": "Δεν έχουν επιλεγεί abilities για αυτόν τον χαρακτήρα.",
+    "abilityCount": "{{count}} abilities",
+    "pickerCopy": "Τα επιλεγμένα abilities θα απαιτούνται σε αυτό το character slot.",
+    "actions": {
+      "add": "+ Character"
+    },
+    "categories": {
+      "special": "Special",
+      "crewmate": "Crewmate",
+      "potential": "Potential",
+      "support": "Support"
+    }
+  },
   "specialFilters": {
     "eyebrow": "Special",
     "title": "Special filters",

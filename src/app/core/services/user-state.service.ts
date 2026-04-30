@@ -19,6 +19,10 @@ import {
 import { type AutoBuildAbilityRequirement } from '../models/auto-team-builder-ability.models';
 import { AUTO_TEAM_BUILDER_TYPES } from '../models/auto-team-builder.models';
 import {
+  cloneRequiredCharacterGroups,
+  expandRequiredAbilitiesToCharacterGroups,
+} from './required-character-groups.utils';
+import {
   DEFAULT_RUMBLE_BUFF_FOCUS,
   RUMBLE_ACTIVE_SLOT_COUNT,
   RUMBLE_BENCH_SLOT_COUNT,
@@ -590,7 +594,8 @@ export class UserStateService {
   }
 
   public async saveEnemy(
-    input: Omit<SavedEnemy, 'id' | 'createdAt' | 'updatedAt'> & { id?: string },
+    input: Omit<SavedEnemy, 'id' | 'createdAt' | 'updatedAt' | 'requiredCharacterGroups'> &
+      Partial<Pick<SavedEnemy, 'requiredCharacterGroups'>> & { id?: string },
   ): Promise<SavedEnemy> {
     await this.ready();
 
@@ -1075,6 +1080,7 @@ export class UserStateService {
       }),
       selectedClasses: this.normalizeStringCollection(enemy.selectedClasses),
       requiredAbilities: this.normalizeRequiredAbilities(enemy.requiredAbilities),
+      requiredCharacterGroups: this.normalizeSavedEnemyRequiredCharacterGroups(enemy),
       enemyMechanics: normalizeEnemyMechanicRequirements(enemy.enemyMechanics),
       requireAllSelectedTypesInTeam: Boolean(enemy.requireAllSelectedTypesInTeam),
       requireAllSelectedClassesPerCharacter: Boolean(enemy.requireAllSelectedClassesPerCharacter),
@@ -1624,6 +1630,20 @@ export class UserStateService {
     return Math.max(0, Math.min(1, normalizedValue));
   }
 
+  private normalizeSavedEnemyRequiredCharacterGroups(
+    enemy: Pick<SavedEnemy, 'requiredAbilities'> & Partial<SavedEnemy>,
+  ): SavedEnemy['requiredCharacterGroups'] {
+    const groups = cloneRequiredCharacterGroups(enemy.requiredCharacterGroups);
+
+    if (groups.length > 0) {
+      return groups;
+    }
+
+    return expandRequiredAbilitiesToCharacterGroups(
+      this.normalizeRequiredAbilities(enemy.requiredAbilities),
+    ).groups;
+  }
+
   private normalizeRequiredAbilities(
     requirements: AutoBuildAbilityRequirement[] | undefined,
   ): AutoBuildAbilityRequirement[] {
@@ -1669,6 +1689,9 @@ export class UserStateService {
         minTurns,
         slotTokens,
         requiredCharacterCount,
+        ...(requirement.slotScope === 'leader' || requirement.slotScope === 'sub'
+          ? { slotScope: requirement.slotScope }
+          : {}),
       });
     });
 

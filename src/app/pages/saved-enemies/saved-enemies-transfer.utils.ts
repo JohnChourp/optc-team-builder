@@ -1,4 +1,8 @@
 import { type SavedEnemy } from "../../core/models/optc.models";
+import {
+  cloneRequiredCharacterGroups,
+  expandRequiredAbilitiesToCharacterGroups,
+} from "../../core/services/required-character-groups.utils";
 
 export interface SavedEnemiesTransferPayload {
   schemaVersion: 1;
@@ -178,6 +182,37 @@ function normalizeRequiredAbilities(value: unknown): SavedEnemy["requiredAbiliti
   });
 }
 
+function normalizeRequiredCharacterGroups(
+  value: unknown,
+  fallbackRequiredAbilities: SavedEnemy["requiredAbilities"],
+): SavedEnemy["requiredCharacterGroups"] {
+  if (!Array.isArray(value)) {
+    return expandRequiredAbilitiesToCharacterGroups(fallbackRequiredAbilities).groups;
+  }
+
+  const groups = cloneRequiredCharacterGroups(
+    value.flatMap((entry, index) => {
+      if (!isRecord(entry)) {
+        return [];
+      }
+
+      return [
+        {
+          id:
+            typeof entry["id"] === "string" && entry["id"].trim().length > 0
+              ? entry["id"].trim()
+              : `imported-${index + 1}`,
+          abilities: normalizeRequiredAbilities(entry["abilities"]),
+        },
+      ];
+    }),
+  );
+
+  return groups.length > 0
+    ? groups
+    : expandRequiredAbilitiesToCharacterGroups(fallbackRequiredAbilities).groups;
+}
+
 function normalizeEnemyMechanics(value: unknown): SavedEnemy["enemyMechanics"] {
   if (!Array.isArray(value)) {
     return [];
@@ -216,6 +251,8 @@ function normalizeEnemyMechanics(value: unknown): SavedEnemy["enemyMechanics"] {
 }
 
 function cloneSavedEnemy(enemy: SavedEnemy): SavedEnemy {
+  const requiredCharacterGroups = cloneRequiredCharacterGroups(enemy.requiredCharacterGroups);
+
   return {
     ...enemy,
     selectedTypes: [...enemy.selectedTypes],
@@ -224,6 +261,7 @@ function cloneSavedEnemy(enemy: SavedEnemy): SavedEnemy {
       ...requirement,
       slotTokens: [...requirement.slotTokens],
     })),
+    ...(requiredCharacterGroups.length ? { requiredCharacterGroups } : {}),
     enemyMechanics: enemy.enemyMechanics.map((mechanic) => ({
       ...mechanic,
       triggerTags: [...mechanic.triggerTags],
@@ -295,6 +333,9 @@ export function parseSavedEnemiesImportPayloadValue(
           requiredAbilities: Array.isArray(enemy["requiredAbilities"])
             ? enemy["requiredAbilities"]
             : [],
+          ...(Array.isArray(enemy["requiredCharacterGroups"])
+            ? { requiredCharacterGroups: enemy["requiredCharacterGroups"] }
+            : {}),
           enemyMechanics: Array.isArray(enemy["enemyMechanics"]) ? enemy["enemyMechanics"] : [],
           requireAllSelectedTypesInTeam: Boolean(enemy["requireAllSelectedTypesInTeam"]),
           requireAllSelectedClassesPerCharacter: Boolean(
@@ -351,6 +392,7 @@ export function sanitizeSavedEnemiesImportPayload(
       return;
     }
 
+    const requiredAbilities = normalizeRequiredAbilities(enemy["requiredAbilities"]);
     const sanitizedEnemy: SavedEnemy = {
       id: normalizedEnemyId,
       name:
@@ -364,7 +406,11 @@ export function sanitizeSavedEnemiesImportPayload(
         mapValue: (value) => value.toUpperCase(),
       }),
       selectedClasses: normalizeStringArray(enemy["selectedClasses"]),
-      requiredAbilities: normalizeRequiredAbilities(enemy["requiredAbilities"]),
+      requiredAbilities,
+      requiredCharacterGroups: normalizeRequiredCharacterGroups(
+        enemy["requiredCharacterGroups"],
+        requiredAbilities,
+      ),
       enemyMechanics: normalizeEnemyMechanics(enemy["enemyMechanics"]),
       requireAllSelectedTypesInTeam: Boolean(enemy["requireAllSelectedTypesInTeam"]),
       requireAllSelectedClassesPerCharacter: Boolean(

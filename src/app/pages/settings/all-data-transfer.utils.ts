@@ -5,6 +5,7 @@ import { type SavedRumbleTeamsTransferPayload } from '../saved-rumble-teams/save
 import { type SavedEnemiesTransferPayload } from '../saved-enemies/saved-enemies-transfer.utils';
 import { type CharacterBoxesTransferPayload } from '../character-boxes/character-boxes-transfer.utils';
 import { type CharacterOverridesTransferPayload } from '../character-detail/character-overrides-transfer.utils';
+import { cloneRequiredCharacterGroups } from '../../core/services/required-character-groups.utils';
 
 export interface AllDataTransferPayload {
   schemaVersion: 1;
@@ -122,21 +123,26 @@ function cloneSavedEnemiesPayload(
 
   return {
     ...payload,
-    enemies: payload.enemies.map((enemy) => ({
-      ...enemy,
-      selectedTypes: [...enemy.selectedTypes],
-      selectedClasses: [...enemy.selectedClasses],
-      requiredAbilities: enemy.requiredAbilities.map((requirement) => ({
-        ...requirement,
-        slotTokens: [...requirement.slotTokens],
-      })),
-      enemyMechanics: enemy.enemyMechanics.map((mechanic) => ({
-        ...mechanic,
-        triggerTags: [...mechanic.triggerTags],
-        responseTags: [...mechanic.responseTags],
-        conditionTags: [...mechanic.conditionTags],
-      })),
-    })),
+    enemies: payload.enemies.map((enemy) => {
+      const requiredCharacterGroups = cloneRequiredCharacterGroups(enemy.requiredCharacterGroups);
+
+      return {
+        ...enemy,
+        selectedTypes: [...enemy.selectedTypes],
+        selectedClasses: [...enemy.selectedClasses],
+        requiredAbilities: enemy.requiredAbilities.map((requirement) => ({
+          ...requirement,
+          slotTokens: [...requirement.slotTokens],
+        })),
+        ...(requiredCharacterGroups.length ? { requiredCharacterGroups } : {}),
+        enemyMechanics: enemy.enemyMechanics.map((mechanic) => ({
+          ...mechanic,
+          triggerTags: [...mechanic.triggerTags],
+          responseTags: [...mechanic.responseTags],
+          conditionTags: [...mechanic.conditionTags],
+        })),
+      };
+    }),
   };
 }
 

@@ -414,6 +414,7 @@ function createInput(
     types,
     selectedClasses,
     requiredAbilities: [],
+    requiredCharacterGroups: [],
     enemyMechanics: [],
     requireAllSelectedTypesInTeam: overrides.requireAllSelectedTypesInTeam ?? false,
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,

@@ -86,6 +86,11 @@ export interface AutoBuildAbilityRequirement {
   slotScope?: AutoBuildAbilitySlotScope;
 }
 
+export interface AutoBuildRequiredCharacterGroup {
+  id: string;
+  abilities: AutoBuildAbilityRequirement[];
+}
+
 export interface AutoBuildEnemyMechanicRequirement {
   mechanicKey: string;
   category: AutoBuildEnemyMechanicCategory;

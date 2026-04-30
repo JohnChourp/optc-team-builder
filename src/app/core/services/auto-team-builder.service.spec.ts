@@ -419,6 +419,117 @@ describe('Auto team builder', () => {
     ]);
   });
 
+  it('requires all abilities in a required character group on the same team slot', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 5821,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces Bind duration by 5 turns.',
+            builderAbilities: [
+              {
+                key: 'remove_bind',
+                label: 'Remove Bind',
+                minTurns: 5,
+                isCompleteRemoval: false,
+                slotTokens: [],
+                source: 'specialText',
+              },
+            ],
+          },
+        }),
+        createCharacterRecord({
+          id: 5822,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces Despair duration by 5 turns.',
+            builderAbilities: [
+              {
+                key: 'remove_despair',
+                label: 'Remove Despair',
+                minTurns: 5,
+                isCompleteRemoval: false,
+                slotTokens: [],
+                source: 'specialText',
+              },
+            ],
+          },
+        }),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      {
+        ...INPUT,
+        requiredCharacterGroups: [
+          {
+            id: 'group-1',
+            abilities: [
+              { abilityKey: 'remove_bind', minTurns: 5, slotTokens: [], requiredCharacterCount: 1 },
+              {
+                abilityKey: 'remove_despair',
+                minTurns: 5,
+                slotTokens: [],
+                requiredCharacterCount: 1,
+              },
+            ],
+          },
+        ],
+      },
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('matches required character groups against distinct final slots', () => {
+    const sharedUtility = {
+      key: 'remove_bind',
+      label: 'Remove Bind',
+      minTurns: 5,
+      isCompleteRemoval: false,
+      slotTokens: [],
+      source: 'specialText' as const,
+    };
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 5823,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces Bind duration by 5 turns.',
+            builderAbilities: [sharedUtility],
+          },
+        }),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+        createAtkSubRecord(),
+      ],
+      {
+        ...INPUT,
+        requiredCharacterGroups: [
+          {
+            id: 'group-1',
+            abilities: [
+              { abilityKey: 'remove_bind', minTurns: 5, slotTokens: [], requiredCharacterCount: 1 },
+            ],
+          },
+          {
+            id: 'group-2',
+            abilities: [
+              { abilityKey: 'remove_bind', minTurns: 5, slotTokens: [], requiredCharacterCount: 1 },
+            ],
+          },
+        ],
+      },
+    );
+
+    expect(result).toBeNull();
+  });
+
   it('matches leader-scoped ability requirements against captain or friend captain slots only', () => {
     const result = buildAutoTeamResult(
       [
@@ -5815,6 +5926,7 @@ function createInput(
       | 'captainCharacterId'
       | 'friendCaptainCharacterId'
       | 'excludedShipIds'
+      | 'requiredCharacterGroups'
     >
   > = {
     requireAllSelectedTypesInTeam: false,
@@ -5847,6 +5959,7 @@ function createInput(
     types,
     selectedClasses,
     requiredAbilities: [],
+    requiredCharacterGroups: overrides.requiredCharacterGroups ?? [],
     enemyMechanics: [],
     requireAllSelectedTypesInTeam: overrides.requireAllSelectedTypesInTeam ?? false,
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
@@ -6317,6 +6430,12 @@ function buildWorkerResult(
       },
       abilityRequirements: {
         ...abilityRequirements,
+      },
+      requiredCharacterGroups: {
+        requested: [],
+        matched: [],
+        missing: [],
+        matchesAll: true,
       },
       burst: [],
       consistency: [],

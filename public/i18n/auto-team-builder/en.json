@@ -668,6 +668,25 @@
     "loadedDescription": "Loaded enemy preset: {{name}}.",
     "loadedTitle": "Enemy preset ready."
   },
+  "requiredCharacters": {
+    "title": "Required characters",
+    "copy": "Add up to 6 required team slots. Every ability inside one card must be covered by the same final character.",
+    "configured": "{{count}} required characters",
+    "empty": "No required characters defined yet.",
+    "cardTitle": "Character {{index}}",
+    "cardEmpty": "No abilities selected for this character.",
+    "abilityCount": "{{count}} abilities",
+    "pickerCopy": "Selected abilities will be required on this character slot.",
+    "actions": {
+      "add": "+ Character"
+    },
+    "categories": {
+      "special": "Special",
+      "crewmate": "Crewmate",
+      "potential": "Potential",
+      "support": "Support"
+    }
+  },
   "specialFilters": {
     "eyebrow": "Special",
     "title": "Special filters",

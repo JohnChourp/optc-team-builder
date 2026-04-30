@@ -4944,6 +4944,7 @@ function createAutoBuildResult(
     types: ['DEX', 'PSY'],
     selectedClasses: ['Fighter', 'Slasher'],
     requiredAbilities: [],
+    requiredCharacterGroups: [],
     enemyMechanics: [],
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
@@ -4987,6 +4988,7 @@ function createAutoBuildResult(
         ...requirement,
         slotTokens: [...requirement.slotTokens],
       })),
+      requiredCharacterGroups: [],
       enemyMechanics: input.enemyMechanics.map((mechanic) => ({
         ...mechanic,
         triggerTags: [...mechanic.triggerTags],
@@ -5040,6 +5042,12 @@ function createAutoBuildResult(
         allSlotsMatch: true,
       },
       abilityRequirements: {
+        requested: [],
+        matched: [],
+        missing: [],
+        matchesAll: true,
+      },
+      requiredCharacterGroups: {
         requested: [],
         matched: [],
         missing: [],

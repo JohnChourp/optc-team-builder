@@ -195,6 +195,7 @@ function createResult(
     requireAllSelectedClassesPerCharacter: false,
     requireUniqueBaseCharacterNames: false,
     requiredAbilities: [],
+    requiredCharacterGroups: [],
     enemyMechanics: [],
     favoritesOnly: false,
     allowAnyFriendCaptainAutoFill: false,

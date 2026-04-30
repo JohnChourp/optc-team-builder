@@ -39,6 +39,7 @@ export function buildAutoTeamBuilderStateFromSavedTeam(
     selectedTypes: [],
     selectedClasses: [],
     requiredAbilities: [],
+    requiredCharacterGroups: [],
     enemyMechanics: [],
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,

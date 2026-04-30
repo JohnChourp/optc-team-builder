@@ -175,17 +175,19 @@
                       </div>
 
                       <div class="ability-picker-row__fields">
-                        <label class="ability-picker-field">
-                          <span>{{ t('fields.characters') }}</span>
-                          <ion-input
-                            type="number"
-                            min="1"
-                            inputmode="numeric"
-                            fill="outline"
-                            [value]="row.draft.requiredCharacterCount ?? ''"
-                            (ionInput)="onRequiredCharacterCountChange(row.draft.draftId, $event)"
-                          ></ion-input>
-                        </label>
+                        @if (showCharacterCount) {
+                          <label class="ability-picker-field">
+                            <span>{{ t('fields.characters') }}</span>
+                            <ion-input
+                              type="number"
+                              min="1"
+                              inputmode="numeric"
+                              fill="outline"
+                              [value]="row.draft.requiredCharacterCount ?? ''"
+                              (ionInput)="onRequiredCharacterCountChange(row.draft.draftId, $event)"
+                            ></ion-input>
+                          </label>
+                        }
 
                         @if (row.supportsTurns) {
                           <label class="ability-picker-field">

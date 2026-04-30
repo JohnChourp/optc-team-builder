@@ -30,6 +30,7 @@ import {
 import {
   normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityRequirement,
+  type AutoBuildRequiredCharacterGroup,
 } from '../models/auto-team-builder-ability.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
 import {
@@ -44,6 +45,7 @@ import {
 import { resolveAutoBuildShipSelection } from './auto-team-builder-ship.utils';
 import { normalizeEnemyMechanicRequirements } from './enemy-mechanic-draft.utils';
 import { OptcRepositoryService } from './optc-repository.service';
+import { cloneRequiredCharacterGroups } from './required-character-groups.utils';
 import {
   buildAutoBuildAbilityCoverageBreakdown,
   buildAutoTeamResult,
@@ -125,6 +127,9 @@ export class AutoTeamBuilderService {
     const candidateCharacterIds = this.normalizeCharacterIds(constraints.candidateCharacterIds);
     const favoriteShipIds = this.normalizeCharacterIds(constraints.favoriteShipIds);
     const requiredAbilities = this.normalizeRequiredAbilities(constraints.requiredAbilities ?? []);
+    const requiredCharacterGroups = cloneRequiredCharacterGroups(
+      constraints.requiredCharacterGroups,
+    );
     const enemyMechanics = normalizeEnemyMechanicRequirements(constraints.enemyMechanics ?? []);
     const normalizedManualSlots = this.normalizeManualSlots(constraints.manualSlots);
     const hasManualSlots = normalizedManualSlots.some((slot) => slot.characterIds.length > 0);
@@ -171,6 +176,7 @@ export class AutoTeamBuilderService {
       requireLeaderSuperSpecialCriteria: constraints.requireLeaderSuperSpecialCriteria ?? true,
       requireUniqueBaseCharacterNames: constraints.requireUniqueBaseCharacterNames ?? false,
       requiredAbilities,
+      requiredCharacterGroups,
       enemyMechanics,
       favoritesOnly,
       allowAnyFriendCaptainAutoFill,
@@ -201,6 +207,7 @@ export class AutoTeamBuilderService {
           ? { slotScope: normalizeAbilityRequirementSlotScope(requirement.slotScope) }
           : {}),
       })),
+      requiredCharacterGroups: cloneRequiredCharacterGroups(input.requiredCharacterGroups),
       enemyMechanics: input.enemyMechanics.map((mechanic) => ({
         ...mechanic,
         triggerTags: [...mechanic.triggerTags],
@@ -341,6 +348,9 @@ export class AutoTeamBuilderService {
     const normalizedRosterIds = this.normalizeCharacterIds(rosterInput.rosterCharacterIds);
     const resultLimit = this.normalizeRankedResultLimit(rosterInput.resultLimit);
     const requiredAbilities = this.normalizeRequiredAbilities(rosterInput.requiredAbilities ?? []);
+    const requiredCharacterGroups = cloneRequiredCharacterGroups(
+      rosterInput.requiredCharacterGroups,
+    );
     const enemyMechanics = normalizeEnemyMechanicRequirements(rosterInput.enemyMechanics ?? []);
     const excludedCharacterIds = this.normalizeCharacterIds(rosterInput.excludedCharacterIds);
     const favoriteCharacterIds = new Set(
@@ -472,6 +482,7 @@ export class AutoTeamBuilderService {
           {
             ...rosterInput,
             requiredAbilities,
+            requiredCharacterGroups,
             enemyMechanics,
           },
         );
@@ -1467,6 +1478,7 @@ export class AutoTeamBuilderService {
     subIds: number[],
     rosterInput: AutoBuildRosterInput & {
       requiredAbilities: AutoBuildAbilityRequirement[];
+      requiredCharacterGroups: AutoBuildRequiredCharacterGroup[];
       enemyMechanics: AutoBuildInput['enemyMechanics'];
     },
   ): AutoBuildInput {
@@ -1488,6 +1500,7 @@ export class AutoTeamBuilderService {
         ...requirement,
         slotTokens: [...requirement.slotTokens],
       })),
+      requiredCharacterGroups: cloneRequiredCharacterGroups(rosterInput.requiredCharacterGroups),
       enemyMechanics: rosterInput.enemyMechanics.map((mechanic) => ({
         ...mechanic,
         triggerTags: [...mechanic.triggerTags],

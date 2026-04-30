@@ -23,11 +23,13 @@ import {
 import {
   normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityRequirement,
+  type AutoBuildRequiredCharacterGroup,
 } from '../models/auto-team-builder-ability.models';
 import conflictOverrideCatalog from '../data/auto-team-builder-party-conflict-overrides.json';
 import { type CharacterDetailRecord, type CharacterListItem } from '../models/optc.models';
 import { matchesAbilityRequirement } from './auto-team-builder-ability-match.utils';
 import { normalizeHtmlToText } from './html-text.utils';
+import { cloneRequiredCharacterGroup } from './required-character-groups.utils';
 
 const CAPTAIN_BRANCH_PATTERN =
   /\b(always active|standard captain|powered up captain|rampage captain)\s*:\s*/gi;
@@ -188,6 +190,12 @@ function candidateMatchesAbilityRequirement(
   return candidate.character.detail.builderAbilities.some((ability) =>
     matchesAbilityRequirement(ability, requirement),
   );
+}
+
+function cloneRequiredCharacterGroupsForCoverage(
+  groups: AutoBuildRequiredCharacterGroup[],
+): AutoBuildRequiredCharacterGroup[] {
+  return groups.map((group) => cloneRequiredCharacterGroup(group));
 }
 
 function cloneAbilityRequirement(
@@ -610,6 +618,99 @@ function resolveAbilityRequirementCandidatePool(
   return candidates.filter((candidate) => !leaderCandidates.includes(candidate));
 }
 
+function candidateCanSatisfyAbilityRequirementInSlot(
+  candidate: AutoBuildCandidate,
+  requirement: AutoBuildAbilityRequirement,
+  leaderCandidates: AutoBuildCandidate[],
+): boolean {
+  if (!candidateMatchesAbilityRequirement(candidate, requirement)) {
+    return false;
+  }
+
+  const isLeader = leaderCandidates.includes(candidate);
+
+  if (isLeaderScopedAbilityRequirement(requirement)) {
+    return isLeader;
+  }
+
+  if (normalizeAbilityRequirementSlotScope(requirement.slotScope) === 'sub') {
+    return !isLeader;
+  }
+
+  return true;
+}
+
+function candidateMatchesRequiredCharacterGroup(
+  candidate: AutoBuildCandidate,
+  group: AutoBuildRequiredCharacterGroup,
+  leaderCandidates: AutoBuildCandidate[],
+): boolean {
+  return (
+    group.abilities.length > 0 &&
+    group.abilities.every((requirement) =>
+      candidateCanSatisfyAbilityRequirementInSlot(candidate, requirement, leaderCandidates),
+    )
+  );
+}
+
+function resolveMatchedRequiredCharacterGroupIndexes(
+  candidates: AutoBuildCandidate[],
+  groups: AutoBuildRequiredCharacterGroup[],
+  leaderCandidates: AutoBuildCandidate[],
+): Set<number> {
+  const groupOrder = groups
+    .map((group, index) => ({ group, index }))
+    .sort(
+      (left, right) =>
+        right.group.abilities.length - left.group.abilities.length || left.index - right.index,
+    );
+  const candidateAssignment = new Map<number, number>();
+
+  const assignGroup = (groupOrderIndex: number, visitedCandidateIndexes: Set<number>): boolean => {
+    const groupEntry = groupOrder[groupOrderIndex];
+
+    if (!groupEntry) {
+      return false;
+    }
+
+    for (let candidateIndex = 0; candidateIndex < candidates.length; candidateIndex += 1) {
+      if (visitedCandidateIndexes.has(candidateIndex)) {
+        continue;
+      }
+
+      const candidate = candidates[candidateIndex];
+
+      if (
+        !candidate ||
+        !candidateMatchesRequiredCharacterGroup(candidate, groupEntry.group, leaderCandidates)
+      ) {
+        continue;
+      }
+
+      visitedCandidateIndexes.add(candidateIndex);
+      const assignedGroupIndex = candidateAssignment.get(candidateIndex);
+
+      if (
+        assignedGroupIndex === undefined ||
+        assignGroup(assignedGroupIndex, visitedCandidateIndexes)
+      ) {
+        candidateAssignment.set(candidateIndex, groupOrderIndex);
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  for (let groupOrderIndex = 0; groupOrderIndex < groupOrder.length; groupOrderIndex += 1) {
+    assignGroup(groupOrderIndex, new Set<number>());
+  }
+
+  return new Set(
+    [...candidateAssignment.values()].map((groupOrderIndex) => groupOrder[groupOrderIndex]!.index),
+  );
+}
+
 function splitExtraDropAbilityRequirements(requirements: AutoBuildAbilityRequirement[]): {
   leaderOnlyRequirements: AutoBuildAbilityRequirement[];
   teamRequirements: AutoBuildAbilityRequirement[];
@@ -840,6 +941,36 @@ function resolveAbilityCoverage(
   };
 }
 
+function resolveRequiredCharacterGroupCoverage(
+  candidates: AutoBuildCandidate[],
+  groups: AutoBuildRequiredCharacterGroup[],
+  leaderCandidates: AutoBuildCandidate[] = [],
+): AutoBuildCoverageSummary['requiredCharacterGroups'] {
+  if (!groups.length) {
+    return {
+      requested: [],
+      matched: [],
+      missing: [],
+      matchesAll: true,
+    };
+  }
+
+  const matchedIndexes = resolveMatchedRequiredCharacterGroupIndexes(
+    candidates,
+    groups,
+    leaderCandidates,
+  );
+  const matched = groups.filter((_, index) => matchedIndexes.has(index));
+  const missing = groups.filter((_, index) => !matchedIndexes.has(index));
+
+  return {
+    requested: cloneRequiredCharacterGroupsForCoverage(groups),
+    matched: cloneRequiredCharacterGroupsForCoverage(matched),
+    missing: cloneRequiredCharacterGroupsForCoverage(missing),
+    matchesAll: missing.length === 0,
+  };
+}
+
 export function buildAutoTeamResult(
   records: CharacterDetailRecord[],
   input: AutoBuildInput,
@@ -1001,7 +1132,10 @@ export function buildAutoTeamResult(
         continue;
       }
 
-      if (input.requiredAbilities.length && !coverage.abilityRequirements.matchesAll) {
+      if (
+        (input.requiredAbilities.length && !coverage.abilityRequirements.matchesAll) ||
+        (input.requiredCharacterGroups.length && !coverage.requiredCharacterGroups.matchesAll)
+      ) {
         continue;
       }
 
@@ -1506,7 +1640,10 @@ function selectSubs(
       return false;
     }
 
-    if (input.requiredAbilities.length && !nextCoverage.abilityRequirements.matchesAll) {
+    if (
+      (input.requiredAbilities.length && !nextCoverage.abilityRequirements.matchesAll) ||
+      (input.requiredCharacterGroups.length && !nextCoverage.requiredCharacterGroups.matchesAll)
+    ) {
       return false;
     }
 
@@ -1817,10 +1954,16 @@ function summarizeCoverage(
     input.requiredAbilities,
     leaderCandidates,
   );
+  const requiredCharacterGroups = resolveRequiredCharacterGroupCoverage(
+    candidates,
+    input.requiredCharacterGroups,
+    leaderCandidates,
+  );
 
   return {
     leaderCriteria: summarizeLeaderCriteria(candidates, leaderCriteria),
     abilityRequirements,
+    requiredCharacterGroups,
     burst: [...burst].map((role) => CHIP_LABELS[role]),
     consistency: [...consistency].map((role) => CHIP_LABELS[role]),
     utility: [...utility].map((role) => CHIP_LABELS[role]),

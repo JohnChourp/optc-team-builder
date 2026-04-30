@@ -87,6 +87,7 @@ export class AbilityRequirementPickerComponent implements OnChanges {
   @Input({ required: true }) public copy = '';
   @Input({ required: true }) public drafts: AbilityRequirementDraft[] = [];
   @Input({ required: true }) public catalogItems: AutoBuildAbilityCatalogItem[] = [];
+  @Input() public showCharacterCount = true;
   @Output() public readonly dismiss = new EventEmitter<void>();
   @Output() public readonly saveDrafts = new EventEmitter<AbilityRequirementDraft[]>();
 
