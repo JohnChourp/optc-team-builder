@@ -655,7 +655,9 @@ describe('auto team builder ability parser', () => {
     expect(catalog.find((item) => item.key === 'remove_bind')).toEqual(
       expect.objectContaining({
         category: 'special',
+        supportsTurns: true,
         matchingCharacterIds: [910001],
+        turnMatchingCharacterIds: [{ minTurns: 5, characterIds: [910001] }],
         matchCount: 1,
       }),
     );
@@ -876,7 +878,18 @@ describe('auto team builder ability parser', () => {
         expect.objectContaining({
           key,
           source: 'sailorAbilities',
-          minTurns: null,
+        }),
+      ]),
+    );
+  });
+
+  it('carries turn requirements onto structured crewmate recovery abilities', () => {
+    expect(analyzeBuilderAbilityText('Reduces Special Bind duration by 3 turns.', 'sailorAbilities')).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'crewmate_recover_special_bind',
+          source: 'sailorAbilities',
+          minTurns: 3,
         }),
       ]),
     );
@@ -898,7 +911,7 @@ describe('auto team builder ability parser', () => {
       },
     ];
 
-    await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
 
     expect(characters[0]?.detail.builderAbilities).toEqual(
       expect.arrayContaining([
@@ -909,8 +922,15 @@ describe('auto team builder ability parser', () => {
         expect.objectContaining({
           key: 'crewmate_special_charge_start_of_quest',
           source: 'sailorAbilities',
+          minTurns: 2,
         }),
       ]),
+    );
+    expect(catalog.find((item) => item.key === 'crewmate_special_charge_start_of_quest')).toEqual(
+      expect.objectContaining({
+        supportsTurns: true,
+        turnMatchingCharacterIds: [{ minTurns: 2, characterIds: [5001] }],
+      }),
     );
   });
 
@@ -1028,7 +1048,7 @@ describe('auto team builder ability parser', () => {
       },
     ];
 
-    await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
 
     expect(characters[0]?.detail.builderAbilities).toEqual(
       expect.arrayContaining([
@@ -1039,16 +1059,24 @@ describe('auto team builder ability parser', () => {
         expect.objectContaining({
           key: 'potential_super_tandem_boost',
           source: 'superTandemData',
+          minTurns: 1,
         }),
         expect.objectContaining({
           key: 'potential_final_tap_sugo_special',
           source: 'finalTapData',
+          minTurns: 1,
         }),
         expect.objectContaining({
           key: 'potential_rush_sugo_special',
           source: 'rushSugoSpecialData',
         }),
       ]),
+    );
+    expect(catalog.find((item) => item.key === 'potential_super_tandem_boost')).toEqual(
+      expect.objectContaining({
+        supportsTurns: true,
+        turnMatchingCharacterIds: [{ minTurns: 1, characterIds: [6002] }],
+      }),
     );
   });
 
@@ -1141,13 +1169,14 @@ describe('auto team builder ability parser', () => {
       },
     ];
 
-    await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
 
     expect(characters[0]?.detail.builderAbilities).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           key: 'support_type_effect_boost',
           source: 'supportData',
+          minTurns: 1,
         }),
       ]),
     );
@@ -1155,6 +1184,51 @@ describe('auto team builder ability parser', () => {
       expect.arrayContaining([
         expect.objectContaining({
           key: 'support_atk_boost',
+          source: 'supportData',
+        }),
+      ]),
+    );
+    expect(catalog.find((item) => item.key === 'support_type_effect_boost')).toEqual(
+      expect.objectContaining({
+        supportsTurns: true,
+        turnMatchingCharacterIds: [{ minTurns: 1, characterIds: [7001] }],
+      }),
+    );
+  });
+
+  it('keeps support boost duration separate from status recovery turns in mixed support text', async () => {
+    const characters = [
+      {
+        id: 7006,
+        detail: {
+          specialText: null,
+          captainAbility: null,
+          sailorAbilities: [],
+          supportData: [
+            {
+              supportedCharactersText: 'Monkey D. Luffy',
+              levelDescriptions: [
+                'Boosts ATK of supported character by 1.75x for 1 turn and reduces Special Bind duration by 3 turns.',
+              ],
+            },
+          ],
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(characters[0]?.detail.builderAbilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'support_atk_boost',
+          minTurns: 1,
+          source: 'supportData',
+        }),
+        expect.objectContaining({
+          key: 'support_status_effect_recovery_special_bind',
+          minTurns: 3,
           source: 'supportData',
         }),
       ]),

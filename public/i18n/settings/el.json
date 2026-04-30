@@ -132,6 +132,7 @@
         "uploadLocal": "Δημιουργεί το πρώτο ορατό Drive backup από αυτή τη συσκευή."
       },
       "emptySection": "Δεν υπάρχουν rows σε αυτό το section.",
+      "emptyFilter": "Δεν υπάρχουν rows σε αυτή την κατηγορία.",
       "eyebrow": "Έλεγχος backup με review",
       "processing": "Ετοιμάζεται το Drive sync...",
       "sectionCounts": "{{added}} προσθήκες · {{changed}} αλλαγές · {{kept}} κρατημένα · {{removed}} αφαιρέσεις",

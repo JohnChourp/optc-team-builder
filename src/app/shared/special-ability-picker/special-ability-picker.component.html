@@ -75,7 +75,12 @@
                           <span class="special-ability-tile__badge">{{ tile.badge }}</span>
                           <span class="special-ability-tile__copy">
                             <strong>{{ tile.item.label }}</strong>
-                            <small>{{ t('catalog.matchCount', { count: tile.item.matchCount }) }}</small>
+                            <span class="special-ability-tile__meta">
+                              <small>{{ t('catalog.matchCount', { count: tile.item.matchCount }) }}</small>
+                              @if (tile.item.supportsTurns) {
+                                <small>{{ t('catalog.hints.turns') }}</small>
+                              }
+                            </span>
                           </span>
                         </button>
                       }
@@ -102,15 +107,34 @@
             } @else {
               <div class="special-ability-selected-list">
                 @for (row of selectedRows(); track row.draft.draftId) {
-                  <button
-                    type="button"
-                    class="special-ability-selected-chip"
-                    (click)="removeDraft(row.draft.draftId)"
-                  >
-                    <span class="special-ability-tile__badge">{{ row.badge }}</span>
-                    <span>{{ row.label }}</span>
-                    <small aria-hidden="true">x</small>
-                  </button>
+                  <article class="special-ability-selected-row">
+                    <div class="special-ability-selected-row__head">
+                      <span class="special-ability-tile__badge">{{ row.badge }}</span>
+                      <strong>{{ row.label }}</strong>
+                      <ion-button
+                        fill="clear"
+                        color="danger"
+                        size="small"
+                        (click)="removeDraft(row.draft.draftId)"
+                      >
+                        {{ 'common.actions.remove' | transloco }}
+                      </ion-button>
+                    </div>
+
+                    @if (row.supportsTurns) {
+                      <label class="special-ability-field">
+                        <span>{{ t('fields.turns') }}</span>
+                        <ion-input
+                          type="number"
+                          min="0"
+                          inputmode="numeric"
+                          fill="outline"
+                          [value]="row.draft.minTurns ?? ''"
+                          (ionInput)="onRequiredTurnsChange(row.draft.draftId, $event)"
+                        ></ion-input>
+                      </label>
+                    }
+                  </article>
                 }
               </div>
             }

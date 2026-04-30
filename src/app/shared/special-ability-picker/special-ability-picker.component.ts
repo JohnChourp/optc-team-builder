@@ -15,6 +15,7 @@ import {
   IonContent,
   IonHeader,
   IonIcon,
+  IonInput,
   IonModal,
   IonSearchbar,
   IonToolbar,
@@ -28,6 +29,7 @@ import {
 import {
   cloneAbilityRequirementDrafts,
   createAbilityRequirementDraft,
+  resolveNonNegativeInteger,
   type AbilityRequirementDraft,
 } from '../../core/services/ability-requirement-draft.utils';
 
@@ -52,6 +54,7 @@ interface CategoryAbilitySectionView {
     IonContent,
     IonHeader,
     IonIcon,
+    IonInput,
     IonModal,
     IonSearchbar,
     IonToolbar,
@@ -95,6 +98,7 @@ export class SpecialAbilityPickerComponent implements OnChanges {
       item: catalogMap.get(draft.abilityKey),
       label: catalogMap.get(draft.abilityKey)?.label ?? draft.abilityKey,
       badge: this.resolveBadge(catalogMap.get(draft.abilityKey)?.label ?? draft.abilityKey),
+      supportsTurns: catalogMap.get(draft.abilityKey)?.supportsTurns ?? false,
     }));
   });
   public readonly filteredSections = computed<CategoryAbilitySectionView[]>(() => {
@@ -178,6 +182,17 @@ export class SpecialAbilityPickerComponent implements OnChanges {
     this.workingDrafts.update((drafts) => drafts.filter((draft) => draft.draftId !== draftId));
   }
 
+  public onRequiredTurnsChange(
+    draftId: string,
+    event: CustomEvent<{ value?: string | number | null }> | Event,
+  ): void {
+    const minTurns = resolveNonNegativeInteger(this.resolveInputEventValue(event));
+
+    this.workingDrafts.update((drafts) =>
+      drafts.map((draft) => (draft.draftId === draftId ? { ...draft, minTurns } : draft)),
+    );
+  }
+
   public clearAll(): void {
     this.workingDrafts.set([]);
   }
@@ -210,5 +225,15 @@ export class SpecialAbilityPickerComponent implements OnChanges {
       .slice(0, 2)
       .map((part) => part[0]?.toUpperCase() ?? '')
       .join('');
+  }
+
+  private resolveInputEventValue(
+    event: CustomEvent<{ value?: string | number | null }> | Event,
+  ): string | number | null | undefined {
+    if ('detail' in event && typeof event.detail === 'object' && event.detail !== null) {
+      return event.detail.value;
+    }
+
+    return (event.target as HTMLInputElement | null)?.value;
   }
 }

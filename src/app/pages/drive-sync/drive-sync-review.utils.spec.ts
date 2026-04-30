@@ -85,6 +85,24 @@ describe('drive sync review utils', () => {
     expect(payload.favoriteShips?.ships.map((ship) => ship.id)).toEqual([9001, 9002, 9003]);
   });
 
+  it('recalculates row status counts after a removed row is kept', () => {
+    let draft = buildDriveSyncReviewDraft(
+      createLocalPayload(),
+      createDrivePayload(),
+      'replace-local',
+    );
+
+    draft = updateDriveSyncReviewRowChoice(draft, 'favoriteShips', '9002', 'device');
+
+    const section = draft.sections.find((entry) => entry.key === 'favoriteShips');
+    const row = findRow(draft, 'favoriteShips', '9002');
+
+    expect(row?.choice).toBe('device');
+    expect(row?.status).toBe('added');
+    expect(section?.addedCount).toBe(2);
+    expect(section?.removedCount).toBe(0);
+  });
+
   it('defaults replace Drive to device data but lets Drive-only rows be kept', () => {
     let draft = buildDriveSyncReviewDraft(
       createLocalPayload(),

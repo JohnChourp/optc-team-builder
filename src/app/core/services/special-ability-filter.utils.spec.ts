@@ -6,6 +6,7 @@ import {
   getAbilityCatalogItemsByCategory,
   intersectAbilityMatchingCharacterIds,
   resolveCategoryAbilityMatchingCharacterIds,
+  resolveSpecialAbilityMatchingCharacterIds,
   serializeCategoryAbilityDrafts,
 } from './special-ability-filter.utils';
 
@@ -17,12 +18,16 @@ const CATALOG_ITEMS: AutoBuildAbilityCatalogItem[] = [
     groupLabel: 'Boost Damage',
     groupOrder: 1,
     effectOrder: 1,
-    supportsTurns: false,
+    supportsTurns: true,
     supportsSlotTokens: false,
     availableSlotTokens: [],
     availableSources: ['specialText'],
     matchCount: 2,
     matchingCharacterIds: [10, 20],
+    turnMatchingCharacterIds: [
+      { minTurns: 1, characterIds: [10] },
+      { minTurns: 2, characterIds: [20] },
+    ],
     sampleCharacterIds: [],
     sampleTexts: [],
   },
@@ -39,6 +44,10 @@ const CATALOG_ITEMS: AutoBuildAbilityCatalogItem[] = [
     availableSources: ['sailorAbilities'],
     matchCount: 2,
     matchingCharacterIds: [20, 30],
+    turnMatchingCharacterIds: [
+      { minTurns: 3, characterIds: [20] },
+      { minTurns: 7, characterIds: [30] },
+    ],
     sampleCharacterIds: [],
     sampleTexts: [],
   },
@@ -202,6 +211,56 @@ describe('special ability filter utils', () => {
         'crewmate',
       ),
     ).toEqual([30, 20]);
+  });
+
+  it('filters category matches by minimum turns when requested', () => {
+    expect(
+      resolveCategoryAbilityMatchingCharacterIds(
+        [
+          {
+            abilityKey: 'crewmate_atk_boost_fighter',
+            minTurns: 5,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+          },
+        ],
+        CATALOG_ITEMS,
+        'crewmate',
+      ),
+    ).toEqual([30]);
+  });
+
+  it('returns no category matches when no turn bucket satisfies the requested turns', () => {
+    expect(
+      resolveCategoryAbilityMatchingCharacterIds(
+        [
+          {
+            abilityKey: 'crewmate_atk_boost_fighter',
+            minTurns: 9,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+          },
+        ],
+        CATALOG_ITEMS,
+        'crewmate',
+      ),
+    ).toEqual([]);
+  });
+
+  it('filters special matches by minimum turns through the special helper', () => {
+    expect(
+      resolveSpecialAbilityMatchingCharacterIds(
+        [
+          {
+            abilityKey: 'boost_atk',
+            minTurns: 2,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+          },
+        ],
+        CATALOG_ITEMS,
+      ),
+    ).toEqual([20]);
   });
 
   it('returns no results when a selected category effect has no matches', () => {

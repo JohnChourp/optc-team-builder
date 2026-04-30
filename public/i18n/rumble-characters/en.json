@@ -1,0 +1,96 @@
+{
+  "title": "Rumble Characters",
+  "actions": {
+    "loadMore": "Load more units",
+    "reset": "Reset"
+  },
+  "card": {
+    "score": "Score {{score}}"
+  },
+  "favorites": {
+    "addAria": "Add {{name}} to favorites",
+    "removeAria": "Remove {{name}} from favorites"
+  },
+  "filters": {
+    "buffFocus": {
+      "label": "Build focus",
+      "support": "Higher lanes add more weight to those Rumble stats and buffs while the full Rumble score still leads the ranking.",
+      "empty": "No stats",
+      "promoteAria": "Promote {{stat}} focus",
+      "demoteAria": "Demote {{stat}} focus",
+      "ranks": {
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "tertiary": "Tertiary",
+        "ignored": "Ignored"
+      }
+    },
+    "class": {
+      "all": "All classes",
+      "label": "Class",
+      "placeholder": "Select class"
+    },
+    "favoritesOnly": {
+      "empty": "No favorites saved yet.",
+      "label": "Show favorites only",
+      "withCount": "Limit results to your {{count}} favorited Rumble characters."
+    },
+    "hideFavorites": {
+      "empty": "No favorites saved yet.",
+      "label": "Hide favorites",
+      "withCount": "Hide your {{count}} favorited Rumble characters from results."
+    },
+    "maxCooldown": {
+      "label": "Max CT",
+      "placeholder": "Any CT"
+    },
+    "maxCost": {
+      "label": "Max cost",
+      "placeholder": "Any cost"
+    },
+    "roles": {
+      "label": "Roles",
+      "placeholder": "Select roles"
+    },
+    "rumbleType": {
+      "all": "All Rumble types",
+      "label": "Rumble type",
+      "placeholder": "Select type"
+    },
+    "type": {
+      "all": "All types",
+      "label": "Type",
+      "placeholder": "Select type"
+    }
+  },
+  "hero": {
+    "eyebrow": "Pirate Rumble catalog",
+    "favoritesCount": "{{count}} favorites",
+    "rumbleCount": "{{count}} Rumble entries",
+    "title": "Rank the strongest Rumble units from every local character."
+  },
+  "roles": {
+    "attacker": "Attacker",
+    "booster": "Booster",
+    "defender": "Defender",
+    "disruptor": "Disruptor",
+    "healer": "Healer",
+    "speed": "Speed"
+  },
+  "search": {
+    "placeholder": "Search names, roles, types..."
+  },
+  "states": {
+    "empty": "No Rumble characters matched the current filters.",
+    "errorFallback": "Rumble characters could not be loaded.",
+    "loading": "Loading Rumble characters..."
+  },
+  "stats": {
+    "atk": "ATK",
+    "ct": "CT",
+    "def": "DEF",
+    "hp": "HP",
+    "rcv": "RCV",
+    "spd": "SPD"
+  }
+}

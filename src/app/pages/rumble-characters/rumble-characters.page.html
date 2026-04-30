@@ -1,0 +1,308 @@
+<ng-container *transloco="let t; scope: 'rumble-characters'; read: 'rumble-characters'">
+  <ion-header class="ion-no-border">
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-menu-button menu="tabs-navigation-menu" autoHide="false"></ion-menu-button>
+      </ion-buttons>
+      <ion-title>{{ t('title') }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content [fullscreen]="true">
+    <div class="page-shell rumble-characters-shell">
+      <section class="catalog-summary glass-card">
+        <div class="catalog-summary__title">
+          <div class="section-label">
+            <ion-icon [icon]="sparklesIcon"></ion-icon>
+            <span>{{ t('hero.eyebrow') }}</span>
+          </div>
+          <h1>{{ t('hero.title') }}</h1>
+        </div>
+
+        <div class="catalog-summary__meta">
+          <div class="meta-pill">
+            <ion-icon [icon]="shieldIcon"></ion-icon>
+            <span>{{ t('hero.rumbleCount', { count: summary()?.rumbleCount ?? 0 }) }}</span>
+          </div>
+          <div class="meta-pill">
+            <ion-icon [icon]="favoriteIcon"></ion-icon>
+            <span>{{ t('hero.favoritesCount', { count: favoriteIds().length }) }}</span>
+          </div>
+          <ion-button fill="outline" color="light" size="small" (click)="resetPage()">
+            {{ t('actions.reset') }}
+          </ion-button>
+        </div>
+      </section>
+
+      <section class="glass-card controls-card controls-card--compact">
+        <div class="compact-toolbar">
+          <ion-searchbar
+            class="vault-search"
+            [debounce]="150"
+            [placeholder]="t('search.placeholder')"
+            [value]="searchTerm()"
+            [searchIcon]="searchIcon"
+            (ionInput)="onSearchChange($event)"
+          ></ion-searchbar>
+
+          <div class="quick-filter">
+            <span>{{ t('filters.type.label') }}</span>
+            <ion-select
+              interface="popover"
+              fill="outline"
+              [placeholder]="t('filters.type.placeholder')"
+              [value]="selectedType()"
+              (ionChange)="onTypeChange($event)"
+            >
+              <ion-select-option value="">{{ t('filters.type.all') }}</ion-select-option>
+              @for (type of availableTypes(); track type) {
+                <ion-select-option [value]="type">{{ type }}</ion-select-option>
+              }
+            </ion-select>
+          </div>
+
+          <div class="quick-filter">
+            <span>{{ t('filters.class.label') }}</span>
+            <ion-select
+              interface="popover"
+              fill="outline"
+              [placeholder]="t('filters.class.placeholder')"
+              [value]="selectedClass()"
+              (ionChange)="onClassChange($event)"
+            >
+              <ion-select-option value="">{{ t('filters.class.all') }}</ion-select-option>
+              @for (characterClass of availableClasses(); track characterClass) {
+                <ion-select-option [value]="characterClass">{{ characterClass }}</ion-select-option>
+              }
+            </ion-select>
+          </div>
+
+          <label
+            class="toggle-chip"
+            [class.toggle-chip--active]="favoritesOnly()"
+            [title]="favoritesOnlySupportLabel()"
+          >
+            <span>{{ t('filters.favoritesOnly.label') }}</span>
+            <ion-toggle
+              color="warning"
+              [checked]="favoritesOnly()"
+              (ionChange)="onFavoritesOnlyToggle($event)"
+            ></ion-toggle>
+          </label>
+
+          <label
+            class="toggle-chip"
+            [class.toggle-chip--active]="hideFavorites()"
+            [title]="hideFavoritesSupportLabel()"
+          >
+            <span>{{ t('filters.hideFavorites.label') }}</span>
+            <ion-toggle
+              color="warning"
+              [checked]="hideFavorites()"
+              (ionChange)="onHideFavoritesToggle($event)"
+            ></ion-toggle>
+          </label>
+        </div>
+
+        <div class="rumble-filter-grid">
+          <div class="quick-filter">
+            <span>{{ t('filters.roles.label') }}</span>
+            <ion-select
+              interface="popover"
+              [multiple]="true"
+              fill="outline"
+              [placeholder]="t('filters.roles.placeholder')"
+              [value]="selectedRoles()"
+              (ionChange)="onRolesChange($event)"
+            >
+              @for (role of availableRoles; track role) {
+                <ion-select-option [value]="role">{{ t(roleLabelKey(role)) }}</ion-select-option>
+              }
+            </ion-select>
+          </div>
+
+          <div class="quick-filter">
+            <span>{{ t('filters.rumbleType.label') }}</span>
+            <ion-select
+              interface="popover"
+              fill="outline"
+              [placeholder]="t('filters.rumbleType.placeholder')"
+              [value]="selectedRumbleType()"
+              (ionChange)="onRumbleTypeChange($event)"
+            >
+              <ion-select-option value="">{{ t('filters.rumbleType.all') }}</ion-select-option>
+              @for (rumbleType of availableRumbleTypes(); track rumbleType) {
+                <ion-select-option [value]="rumbleType">{{ rumbleType }}</ion-select-option>
+              }
+            </ion-select>
+          </div>
+
+          <div class="quick-filter">
+            <span>{{ t('filters.maxCooldown.label') }}</span>
+            <ion-input
+              type="number"
+              inputmode="numeric"
+              fill="outline"
+              [placeholder]="t('filters.maxCooldown.placeholder')"
+              [value]="maxCooldownInput()"
+              (ionInput)="onMaxCooldownChange($event)"
+            ></ion-input>
+          </div>
+
+          <div class="quick-filter">
+            <span>{{ t('filters.maxCost.label') }}</span>
+            <ion-input
+              type="number"
+              inputmode="numeric"
+              fill="outline"
+              [placeholder]="t('filters.maxCost.placeholder')"
+              [value]="maxCostInput()"
+              (ionInput)="onMaxCostChange($event)"
+            ></ion-input>
+          </div>
+        </div>
+
+        <div class="buff-focus-card">
+          <div class="buff-focus-card__head">
+            <span>{{ t('filters.buffFocus.label') }}</span>
+            <small>{{ t('filters.buffFocus.support') }}</small>
+          </div>
+          <div class="buff-focus-lanes">
+            @for (rank of buffFocusRanks; track rank) {
+              <div class="buff-focus-lane">
+                <strong>{{ t(buffFocusLabelKey(rank)) }}</strong>
+                <div class="buff-focus-chip-list">
+                  @for (stat of buffFocusStatsForRank(rank); track stat) {
+                    <span class="buff-focus-chip">
+                      <span>{{ shortBuffStatLabel(stat) }}</span>
+                      <button
+                        type="button"
+                        [disabled]="!canMoveBuffFocusStat(stat, 'up')"
+                        [attr.aria-label]="t('filters.buffFocus.promoteAria', { stat })"
+                        (click)="moveBuffFocusStat(stat, 'up')"
+                      >
+                        <ion-icon [icon]="promoteIcon"></ion-icon>
+                      </button>
+                      <button
+                        type="button"
+                        [disabled]="!canMoveBuffFocusStat(stat, 'down')"
+                        [attr.aria-label]="t('filters.buffFocus.demoteAria', { stat })"
+                        (click)="moveBuffFocusStat(stat, 'down')"
+                      >
+                        <ion-icon [icon]="demoteIcon"></ion-icon>
+                      </button>
+                    </span>
+                  } @empty {
+                    <span class="buff-focus-empty">{{ t('filters.buffFocus.empty') }}</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </section>
+
+      @if (loading()) {
+        <section class="loading-card glass-card">
+          <ion-spinner name="crescent"></ion-spinner>
+          <span>{{ t('states.loading') }}</span>
+        </section>
+      } @else if (errorMessage()) {
+        <section class="loading-card glass-card empty-card">
+          <span>{{ errorMessage() }}</span>
+        </section>
+      } @else if (!cardViews().length) {
+        <section class="loading-card glass-card empty-card">
+          <span>{{ t('states.empty') }}</span>
+        </section>
+      } @else {
+        <section class="rumble-character-grid">
+          @for (card of cardViews(); track card.character.id) {
+            <article
+              class="rumble-character-card glass-card"
+              [class.rumble-character-card--incomplete]="card.character.isIncomplete"
+            >
+              <button
+                type="button"
+                class="favorite-button rumble-character-card__favorite"
+                [attr.aria-label]="card.favoriteAriaLabel"
+                (click)="toggleFavorite(card.character.id, $event)"
+              >
+                <ion-icon [icon]="card.isFavorite ? favoriteIcon : favoriteOutlineIcon"></ion-icon>
+              </button>
+
+              <a class="rumble-character-card__link" [routerLink]="card.detailLink">
+                <img [src]="card.character.imageUrl" [alt]="card.character.name" loading="lazy" />
+
+                <div class="rumble-character-card__content">
+                  <div class="rumble-character-card__head">
+                    <h2>{{ card.character.name }}</h2>
+                    <span>{{ t('card.score', { score: formatScore(card.rankedScore.focusedScore) }) }}</span>
+                  </div>
+
+                  <div class="chip-row">
+                    <span>{{ card.character.type }}</span>
+                    <span>{{ card.character.primaryClass }}</span>
+                    @if (card.character.secondaryClass) {
+                      <span>{{ card.character.secondaryClass }}</span>
+                    }
+                    @if (card.rankedScore.unit.normalized.rumbleType) {
+                      <span>{{ card.rankedScore.unit.normalized.rumbleType }}</span>
+                    }
+                  </div>
+
+                  <div class="metrics-row">
+                    <div>
+                      <strong>{{ formatStat(card.character.stats.max.atk) }}</strong>
+                      <span>{{ t('stats.atk') }}</span>
+                    </div>
+                    <div>
+                      <strong>{{ formatStat(card.character.stats.max.hp) }}</strong>
+                      <span>{{ t('stats.hp') }}</span>
+                    </div>
+                    <div>
+                      <strong>{{ formatStat(card.rankedScore.unit.normalized.def) }}</strong>
+                      <span>{{ t('stats.def') }}</span>
+                    </div>
+                    <div>
+                      <strong>{{ formatStat(card.rankedScore.unit.normalized.spd) }}</strong>
+                      <span>{{ t('stats.spd') }}</span>
+                    </div>
+                    <div>
+                      <strong>{{ formatStat(card.character.stats.max.rcv) }}</strong>
+                      <span>{{ t('stats.rcv') }}</span>
+                    </div>
+                    <div>
+                      <strong>{{ formatStat(card.rankedScore.unit.normalized.cooldown) }}</strong>
+                      <span>{{ t('stats.ct') }}</span>
+                    </div>
+                  </div>
+
+                  <div class="role-row">
+                    @for (role of roleSummary(card.rankedScore); track role) {
+                      <span>{{ t(roleLabelKey(role)) }}</span>
+                    }
+                  </div>
+
+                  <div class="reason-row">
+                    @for (chip of card.rankedScore.unit.reasonChips.slice(0, 4); track chip) {
+                      <span>{{ chip }}</span>
+                    }
+                  </div>
+                </div>
+              </a>
+            </article>
+          }
+        </section>
+      }
+
+      @if (!loading() && hasMore()) {
+        <div class="load-more">
+          <ion-button fill="outline" color="light" (click)="loadMore()">
+            {{ t('actions.loadMore') }}
+          </ion-button>
+        </div>
+      }
+    </div>
+  </ion-content>
+</ng-container>

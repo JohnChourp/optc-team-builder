@@ -85,6 +85,21 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'rumble-characters',
+            data: {
+              seo: {
+                title: 'Rumble Characters | OPTC Team Builder',
+                description:
+                  'Rank One Piece Treasure Cruise Pirate Rumble characters by full Rumble score, favorites, core filters, and custom stat focus.',
+                canonicalPath: 'tabs/rumble-characters',
+              },
+            },
+            loadComponent: () =>
+              import('./pages/rumble-characters/rumble-characters.page').then(
+                (module) => module.RumbleCharactersPage,
+              ),
+          },
+          {
             path: 'crew-forge',
             data: {
               seo: {

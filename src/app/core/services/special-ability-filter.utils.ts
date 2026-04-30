@@ -6,6 +6,7 @@ import {
 } from '../models/auto-team-builder-ability.models';
 import {
   createAbilityRequirementDrafts,
+  normalizeAbilityRequirementTurns,
   serializeAbilityRequirementDrafts,
   type AbilityRequirementDraft,
 } from './ability-requirement-draft.utils';
@@ -96,7 +97,10 @@ export function resolveCategoryAbilityMatchingCharacterIds(
   let matchingIds: Set<number> | null = null;
 
   for (const requirement of categoryRequirements) {
-    const itemIds = catalogMap.get(requirement.abilityKey)?.matchingCharacterIds ?? [];
+    const catalogItem = catalogMap.get(requirement.abilityKey);
+    const itemIds = catalogItem
+      ? resolveRequirementMatchingCharacterIds(catalogItem, requirement)
+      : [];
 
     if (itemIds.length === 0) {
       return [];
@@ -116,6 +120,25 @@ export function resolveCategoryAbilityMatchingCharacterIds(
   }
 
   return [...(matchingIds ?? new Set<number>())].sort((left, right) => right - left);
+}
+
+function resolveRequirementMatchingCharacterIds(
+  catalogItem: AutoBuildAbilityCatalogItem,
+  requirement: AutoBuildAbilityRequirement,
+): number[] {
+  const minTurns = normalizeAbilityRequirementTurns(requirement.minTurns);
+
+  if (minTurns === null) {
+    return catalogItem.matchingCharacterIds ?? [];
+  }
+
+  return [
+    ...new Set(
+      (catalogItem.turnMatchingCharacterIds ?? [])
+        .filter((bucket) => bucket.minTurns >= minTurns)
+        .flatMap((bucket) => bucket.characterIds),
+    ),
+  ];
 }
 
 export function intersectAbilityMatchingCharacterIds(

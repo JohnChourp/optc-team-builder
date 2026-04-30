@@ -18,7 +18,11 @@ describe('DriveSyncPage', () => {
     expect(template).toContain("openReviewedSync('merge-and-upload')");
     expect(template).toContain("openReviewedSync('replace-cloud')");
     expect(template).toContain("openReviewedSync('replace-local')");
-    expect(template).toContain('<ion-modal [isOpen]="reviewDraft() !== null"');
+    expect(template).toContain('class="drive-review-modal"');
+    expect(template).toContain('[isOpen]="reviewDraft() !== null"');
+    expect(template).toContain('@for (filter of reviewStatusFilters; track filter)');
+    expect(template).toContain('setReviewFilter(filter)');
+    expect(template).toContain('filteredReviewSections()');
     expect(template).toContain('onReviewChoiceChange(section.key, row.key, $event)');
     expect(template).toContain('confirmReview()');
   });
@@ -33,5 +37,6 @@ describe('DriveSyncPage', () => {
     expect(component).toContain('commitReviewedManualSync(');
     expect(component).toContain('buildDriveSyncReviewDraft(');
     expect(component).toContain('buildReviewedAllDataPayload(draft)');
+    expect(component).toContain("reviewFilter = signal<DriveSyncReviewRowStatus | 'all'>('all')");
   });
 });

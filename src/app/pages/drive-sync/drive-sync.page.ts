@@ -36,6 +36,8 @@ import {
   type DriveSyncReviewChoice,
   type DriveSyncReviewDraft,
   type DriveSyncReviewRow,
+  type DriveSyncReviewRowStatus,
+  type DriveSyncReviewSection,
   type DriveSyncReviewSectionKey,
   updateDriveSyncReviewRowChoice,
 } from './drive-sync-review.utils';
@@ -79,7 +81,14 @@ export class DriveSyncPage {
   public readonly localSyncScopeSummary;
   public readonly remoteSyncScopeSummary;
   public readonly reviewDraft = signal<DriveSyncReviewDraft | null>(null);
+  public readonly reviewFilter = signal<DriveSyncReviewRowStatus | 'all'>('all');
   public readonly reviewOpening = signal(false);
+  public readonly reviewStatusFilters = [
+    'added',
+    'changed',
+    'kept',
+    'removed',
+  ] as const satisfies readonly DriveSyncReviewRowStatus[];
   public readonly reviewSubmitting = signal(false);
 
   private readonly reviewCharacterMap = signal<Map<number, CharacterListItem>>(new Map());
@@ -87,14 +96,45 @@ export class DriveSyncPage {
   public readonly reviewTotals = computed(() => {
     const draft = this.reviewDraft();
     const rows = draft?.sections.flatMap((section) => section.rows) ?? [];
+    const counts = this.countReviewRows(rows);
 
     return {
-      added: rows.filter((row) => row.status === 'added').length,
-      changed: rows.filter((row) => row.status === 'changed').length,
-      kept: rows.filter((row) => row.status === 'kept').length,
-      removed: rows.filter((row) => row.choice === 'remove').length,
+      ...counts,
       total: rows.length,
     };
+  });
+
+  public readonly filteredReviewSections = computed(() => {
+    const draft = this.reviewDraft();
+    const filter = this.reviewFilter();
+
+    if (!draft) {
+      return [];
+    }
+
+    return draft.sections.flatMap((section): DriveSyncReviewSection[] => {
+      const rows =
+        filter === 'all'
+          ? section.rows
+          : section.rows.filter((row) => this.getReviewRowStatus(row) === filter);
+
+      if (!rows.length) {
+        return [];
+      }
+
+      const counts = this.countReviewRows(rows);
+
+      return [
+        {
+          ...section,
+          addedCount: counts.added,
+          changedCount: counts.changed,
+          keptCount: counts.kept,
+          removedCount: counts.removed,
+          rows,
+        },
+      ];
+    });
   });
 
   public readonly driveOpenUrl = computed(() => {
@@ -192,6 +232,7 @@ export class DriveSyncPage {
 
       if (success) {
         this.reviewDraft.set(null);
+        this.reviewFilter.set('all');
       }
     } finally {
       this.reviewSubmitting.set(false);
@@ -204,6 +245,7 @@ export class DriveSyncPage {
     }
 
     this.reviewDraft.set(null);
+    this.reviewFilter.set('all');
   }
 
   public formatTimestamp(value: string | null | undefined): string {
@@ -284,11 +326,15 @@ export class DriveSyncPage {
   }
 
   public getReviewStatusLabelKey(row: DriveSyncReviewRow): string {
-    if (row.choice === 'remove') {
+    if (this.getReviewRowStatus(row) === 'removed') {
       return 'driveSync.review.status.removed';
     }
 
     return `driveSync.review.status.${row.status}`;
+  }
+
+  public getReviewStatsLabelKey(status: DriveSyncReviewRowStatus): string {
+    return `driveSync.review.stats.${status}`;
   }
 
   public getSectionLabelKey(sectionKey: DriveSyncReviewSectionKey): string {
@@ -324,6 +370,10 @@ export class DriveSyncPage {
     this.reviewDraft.set(updateDriveSyncReviewRowChoice(draft, sectionKey, rowKey, choice));
   }
 
+  public setReviewFilter(status: DriveSyncReviewRowStatus): void {
+    this.reviewFilter.update((currentFilter) => (currentFilter === status ? 'all' : status));
+  }
+
   public openDriveLocation(): void {
     const url = this.driveOpenUrl();
 
@@ -346,6 +396,7 @@ export class DriveSyncPage {
 
       const draft = buildDriveSyncReviewDraft(preview.localPayload, preview.drivePayload, action);
 
+      this.reviewFilter.set('all');
       this.reviewDraft.set(draft);
       await this.loadReviewCharacters(draft);
     } finally {
@@ -416,5 +467,22 @@ export class DriveSyncPage {
     this.reviewCharacterMap.set(
       new Map(characters.map((character) => [character.id, character] as const)),
     );
+  }
+
+  private countReviewRows(rows: DriveSyncReviewRow[]): Record<DriveSyncReviewRowStatus, number> {
+    return {
+      added: rows.filter((row) => this.getReviewRowStatus(row) === 'added').length,
+      changed: rows.filter((row) => this.getReviewRowStatus(row) === 'changed').length,
+      kept: rows.filter((row) => this.getReviewRowStatus(row) === 'kept').length,
+      removed: rows.filter((row) => this.getReviewRowStatus(row) === 'removed').length,
+    };
+  }
+
+  private getReviewRowStatus(row: DriveSyncReviewRow): DriveSyncReviewRowStatus {
+    if (row.choice === 'remove') {
+      return 'removed';
+    }
+
+    return row.status;
   }
 }

@@ -105,6 +105,11 @@ export class TabsPage {
     },
     {
       icon: shieldHalfOutline,
+      labelKey: 'tabs.rumbleCharacters',
+      route: '/tabs/rumble-characters',
+    },
+    {
+      icon: shieldHalfOutline,
       labelKey: 'tabs.savedRumbleTeams',
       route: '/tabs/saved-rumble-teams',
     },

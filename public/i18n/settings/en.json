@@ -132,6 +132,7 @@
         "uploadLocal": "Create the first visible Drive backup from this device."
       },
       "emptySection": "No rows in this section.",
+      "emptyFilter": "No rows in this category.",
       "eyebrow": "Reviewed backup control",
       "processing": "Preparing Drive sync...",
       "sectionCounts": "{{added}} added · {{changed}} changed · {{kept}} kept · {{removed}} removed",

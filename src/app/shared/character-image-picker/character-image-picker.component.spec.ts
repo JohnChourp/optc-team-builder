@@ -13,6 +13,7 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonFooter: class {},
   IonHeader: class {},
   IonIcon: class {},
+  IonInput: class {},
   IonModal: class {},
   IonSearchbar: class {},
   IonSelect: class {},

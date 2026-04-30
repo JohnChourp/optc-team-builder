@@ -676,6 +676,84 @@ const TURN_PATTERNS = [
 const SELECTED_DEBUFF_PAIN_PATTERNS = [
   /(?:reduces?|removes?)\s+(?:\d+\s+)?selected\s+debuffs?\s+(?:duration\s+)?by\s+(\d+)\s+turns?/gi,
 ];
+const STRUCTURED_TURN_SOURCE_ALIASES = new Map([
+  ['crewmate_recover_special_bind', ['remove_special_bind']],
+  ['crewmate_recover_special_reverse', ['reduce_special_charge']],
+  ['crewmate_recover_remove_sfx', ['remove_sfx']],
+  ['crewmate_recover_paralysis', ['remove_paralysis']],
+  ['crewmate_recover_burn', ['remove_burn']],
+  ['crewmate_recover_poisons', ['remove_poison']],
+  ['crewmate_recover_stun', ['remove_stun']],
+  ['crewmate_special_charge_start_of_quest', ['reduce_special_charge']],
+  ['crewmate_special_charge_when_specials_used_by_others', ['reduce_special_charge']],
+  ['crewmate_special_charge_when_taking_damage', ['reduce_special_charge']],
+  ['crewmate_special_charge_when_afflicted_by_paralysis', ['reduce_special_charge']],
+  ['support_status_effect_recovery_despair', ['remove_despair']],
+  ['support_status_effect_recovery_bind', ['remove_bind']],
+  ['support_status_effect_recovery_paralysis', ['remove_paralysis']],
+  ['support_status_effect_recovery_special_bind', ['remove_special_bind']],
+  ['support_status_effect_recovery_poisons', ['remove_poison']],
+  ['support_status_effect_recovery_burn', ['remove_burn']],
+  ['support_status_effect_recovery_increased_damage_taken', ['remove_increase_damage_taken']],
+  ['support_status_effect_recovery_atk_down', ['remove_atk_down']],
+  [
+    'support_status_effect_recovery_reduce_chain_multiplier_growth_rate',
+    ['remove_chain_coefficient_reduction'],
+  ],
+  ['support_status_effect_recovery_lock_chain_multiplier', ['remove_chain_multiplier_limit']],
+  ['support_status_effect_recovery_remove_sfx', ['remove_sfx']],
+  ['support_reduce_enemy_effect_turns_def_up', ['remove_enemy_increased_defense']],
+  ['support_reduce_enemy_effect_turns_def_up_tap_timing', ['remove_enemy_increased_defense']],
+  ['support_reduce_enemy_effect_turns_damage_reduction', ['remove_damage_reduction']],
+  ['support_reduce_enemy_effect_turns_damage_reduction_tap_timing', ['remove_damage_reduction']],
+  ['support_reduce_enemy_effect_turns_damage_threshold', ['remove_threshold_damage_reduction']],
+  [
+    'support_reduce_enemy_effect_turns_damage_threshold_tap_timing',
+    ['remove_threshold_damage_reduction'],
+  ],
+  [
+    'support_reduce_enemy_effect_turns_end_of_turn_damage',
+    ['remove_enemy_end_of_turn_damage_percent_cut'],
+  ],
+  [
+    'support_reduce_enemy_effect_turns_end_of_turn_damage_tap_timing',
+    ['remove_enemy_end_of_turn_damage_percent_cut'],
+  ],
+  ['support_reduce_enemy_effect_turns_enrage', ['remove_enemy_enrage']],
+  ['support_reduce_enemy_effect_turns_atk_boost', ['remove_enemy_atk_up']],
+  ['support_reduce_enemy_effect_turns_resilience', ['remove_resilience']],
+  ['support_reduce_enemy_effect_turns_barrier', ['remove_enemy_barrier']],
+]);
+const STRUCTURED_GENERIC_TURN_KEYS = new Set([
+  'crewmate_special_charge_start_of_quest',
+  'crewmate_special_charge_when_specials_used_by_others',
+  'crewmate_special_charge_when_taking_damage',
+  'crewmate_special_charge_when_afflicted_by_paralysis',
+]);
+const SUPPORT_GENERIC_TURN_KEYS = new Set([
+  'support_atk_boost',
+  'support_type_effect_boost',
+  'support_slot_effect_boost',
+  'support_chain_multiplier_boost',
+  'support_chain_multiplier_lock',
+  'support_additional_damage_boost',
+  'support_base_atk_boost_damage',
+  'support_damage_boost_against_certain_enemies',
+  'support_damage_boost_delay',
+  'support_damage_boost_def_down',
+  'support_damage_boost_poison',
+  'support_damage_boost_venom',
+  'support_damage_boost_progressive_poison',
+  'support_damage_boost_other',
+  'support_damage_reduction_turn',
+  'support_damage_reduction_nullification',
+  'support_apply_status_effect_def_down',
+  'support_apply_status_effect_unique_effect',
+  'support_apply_status_effect_poison',
+  'support_apply_status_effect_increased_damage_taken',
+  'support_apply_status_effect_reduce_resistance',
+  'support_apply_status_effect_delay',
+]);
 
 export function normalizeLegacyAbilityText(value) {
   const fragments = [...new Set(extractTextFragments(value))].filter(Boolean);
@@ -718,6 +796,68 @@ export function extractPrimaryAbilityBranchText(value) {
   }
 
   return selectedSentences.join('. ');
+}
+
+function resolveStructuredTurnMinTurns(key, normalizedText) {
+  const aliases = STRUCTURED_TURN_SOURCE_ALIASES.get(key) ?? [key];
+  const minTurns = [];
+
+  TURN_PATTERNS.forEach(({ pattern, resolveTurns }) => {
+    for (const match of normalizedText.matchAll(pattern)) {
+      const rawTarget = String(match[1] ?? '').trim();
+      const turns = resolveTurns(match);
+
+      if (!Number.isFinite(turns) || turns <= 0) {
+        continue;
+      }
+
+      normalizeTargetSegments(rawTarget).forEach((segment) => {
+        resolveAbilityDefinitions(segment).forEach((normalized) => {
+          if (aliases.includes(normalized.key)) {
+            minTurns.push(Math.floor(turns));
+          }
+        });
+      });
+    }
+  });
+
+  if (aliases.includes(PAIN_ABILITY_KEY)) {
+    SELECTED_DEBUFF_PAIN_PATTERNS.forEach((pattern) => {
+      for (const match of normalizedText.matchAll(pattern)) {
+        const turns = Number(match[1]);
+
+        if (Number.isFinite(turns) && turns > 0) {
+          minTurns.push(Math.floor(turns));
+        }
+      }
+    });
+  }
+
+  if (minTurns.length > 0) {
+    return Math.max(...minTurns);
+  }
+
+  return STRUCTURED_GENERIC_TURN_KEYS.has(key) ? resolveMaxTurnCountFromText(normalizedText) : null;
+}
+
+function resolveMaxTurnCountFromText(value) {
+  const normalizedText = extractPrimaryAbilityBranchText(value);
+  const minTurns = [...normalizedText.matchAll(/\b(?:by|for)\s+(\d+)\s+turns?\b/gi)]
+    .map((match) => Number(match[1]))
+    .filter((turns) => Number.isFinite(turns) && turns > 0)
+    .map((turns) => Math.floor(turns));
+
+  return minTurns.length > 0 ? Math.max(...minTurns) : null;
+}
+
+function resolveMaxDurationTurnCountFromText(value) {
+  const normalizedText = extractPrimaryAbilityBranchText(value);
+  const minTurns = [...normalizedText.matchAll(/\bfor\s+(\d+)\s+turns?\b/gi)]
+    .map((match) => Number(match[1]))
+    .filter((turns) => Number.isFinite(turns) && turns > 0)
+    .map((turns) => Math.floor(turns));
+
+  return minTurns.length > 0 ? Math.max(...minTurns) : null;
 }
 
 export function analyzeBuilderAbilityText(value, source) {
@@ -808,7 +948,7 @@ export function analyzeBuilderAbilityText(value, source) {
       addAbility(abilities, seen, {
         key,
         label: definition.label,
-        minTurns: null,
+        minTurns: resolveStructuredTurnMinTurns(key, normalizedText),
         isCompleteRemoval: false,
         slotTokens: [],
         source,
@@ -828,7 +968,7 @@ export function analyzeBuilderAbilityText(value, source) {
       addAbility(abilities, seen, {
         key,
         label: definition.label,
-        minTurns: null,
+        minTurns: resolveStructuredTurnMinTurns(key, normalizedText),
         isCompleteRemoval: false,
         slotTokens: [],
         source,
@@ -856,7 +996,7 @@ function resolvePotentialAbilityKey(name) {
   return POTENTIAL_ABILITY_ALIASES.get(normalizePotentialAbilityLabel(name)) ?? null;
 }
 
-function addStructuredPotentialAbility(abilities, seen, key, source) {
+function addStructuredPotentialAbility(abilities, seen, key, source, minTurns = null) {
   const definition = STRUCTURED_ABILITY_METADATA_BY_KEY.get(key);
 
   if (!definition) {
@@ -866,7 +1006,7 @@ function addStructuredPotentialAbility(abilities, seen, key, source) {
   addAbility(abilities, seen, {
     key,
     label: definition.label,
-    minTurns: null,
+    minTurns,
     isCompleteRemoval: false,
     slotTokens: [],
     source,
@@ -895,21 +1035,27 @@ function extractPotentialBuilderAbilities(character) {
     addStructuredPotentialAbility(abilities, seen, 'potential_super_tandem', 'superTandemData');
 
     if (isSuperTandemBoostData(character.detail.superTandemData)) {
+      const minTurns = resolveMaxDurationTurnCountFromText(character.detail.superTandemData);
+
       addStructuredPotentialAbility(
         abilities,
         seen,
         'potential_super_tandem_boost',
         'superTandemData',
+        minTurns,
       );
     }
   }
 
   if (character.detail?.finalTapData) {
+    const minTurns = resolveMaxDurationTurnCountFromText(character.detail.finalTapData);
+
     addStructuredPotentialAbility(
       abilities,
       seen,
       'potential_final_tap_sugo_special',
       'finalTapData',
+      minTurns,
     );
   }
 
@@ -944,7 +1090,7 @@ function resolvePotentialSampleText(character) {
   return fragments.join('. ');
 }
 
-function addStructuredSupportAbility(abilities, seen, key) {
+function addStructuredSupportAbility(abilities, seen, key, minTurns = null) {
   const definition = STRUCTURED_ABILITY_METADATA_BY_KEY.get(key);
 
   if (!definition) {
@@ -954,7 +1100,7 @@ function addStructuredSupportAbility(abilities, seen, key) {
   addAbility(abilities, seen, {
     key,
     label: definition.label,
-    minTurns: null,
+    minTurns,
     isCompleteRemoval: false,
     slotTokens: [],
     source: 'supportData',
@@ -977,11 +1123,26 @@ function extractSupportBuilderAbilities(character) {
     }
 
     collectSupportAbilityKeys(canonicalText).forEach((key) =>
-      addStructuredSupportAbility(abilities, seen, key),
+      addStructuredSupportAbility(
+        abilities,
+        seen,
+        key,
+        resolveSupportAbilityMinTurns(key, canonicalText),
+      ),
     );
   });
 
   return abilities;
+}
+
+function resolveSupportAbilityMinTurns(key, text) {
+  const aliasedMinTurns = resolveStructuredTurnMinTurns(key, text);
+
+  if (aliasedMinTurns !== null) {
+    return aliasedMinTurns;
+  }
+
+  return SUPPORT_GENERIC_TURN_KEYS.has(key) ? resolveMaxDurationTurnCountFromText(text) : null;
 }
 
 function resolveSupportCanonicalText(entry) {
@@ -1513,6 +1674,15 @@ export async function enrichCharactersWithBuilderAbilities(
           current.matchCount = current.matchingCharacterIds.size;
         }
 
+        if (Number.isFinite(ability.minTurns) && ability.minTurns > 0) {
+          const minTurns = Math.floor(ability.minTurns);
+          const turnCharacterIds =
+            current.turnMatchingCharacterIds.get(minTurns) ?? new Set();
+
+          turnCharacterIds.add(character.id);
+          current.turnMatchingCharacterIds.set(minTurns, turnCharacterIds);
+        }
+
         if (
           current.sampleCharacterIds.length < 5 &&
           !current.sampleCharacterIds.includes(character.id)
@@ -1561,7 +1731,7 @@ export async function enrichCharactersWithBuilderAbilities(
         groupLabel: metadata?.groupLabel ?? null,
         groupOrder: metadata?.groupOrder ?? null,
         effectOrder: metadata?.effectOrder ?? null,
-        supportsTurns: metadata ? false : entry.supportsTurns,
+        supportsTurns: entry.supportsTurns,
         supportsSlotTokens: metadata ? false : entry.supportsSlotTokens,
         availableSlotTokens: metadata
           ? []
@@ -1576,6 +1746,12 @@ export async function enrichCharactersWithBuilderAbilities(
           : [DEFAULT_COVERAGE_MODE],
         matchCount: entry.matchCount,
         matchingCharacterIds: [...entry.matchingCharacterIds].sort((left, right) => left - right),
+        turnMatchingCharacterIds: [...entry.turnMatchingCharacterIds.entries()]
+          .sort(([leftTurns], [rightTurns]) => leftTurns - rightTurns)
+          .map(([minTurns, characterIds]) => ({
+            minTurns,
+            characterIds: [...characterIds].sort((left, right) => left - right),
+          })),
         sampleCharacterIds: [...entry.sampleCharacterIds],
         sampleTexts: [...entry.sampleTexts],
       };
@@ -1712,6 +1888,7 @@ function createCatalogAccumulator(key, label) {
     availableCoverageModes: new Set(),
     matchCount: 0,
     matchingCharacterIds: new Set(),
+    turnMatchingCharacterIds: new Map(),
     sampleCharacterIds: [],
     sampleTexts: [],
   };

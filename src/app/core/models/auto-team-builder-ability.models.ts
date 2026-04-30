@@ -61,8 +61,14 @@ export interface AutoBuildAbilityCatalogItem {
   availableCoverageModes?: AutoBuildAbilityCoverageMode[];
   matchCount: number;
   matchingCharacterIds?: number[];
+  turnMatchingCharacterIds?: AutoBuildAbilityTurnMatchingCharacterIds[];
   sampleCharacterIds: number[];
   sampleTexts: string[];
+}
+
+export interface AutoBuildAbilityTurnMatchingCharacterIds {
+  minTurns: number;
+  characterIds: number[];
 }
 
 export interface AutoBuildAbilityCatalog {

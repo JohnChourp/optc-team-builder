@@ -72,6 +72,16 @@ describe('app routes', () => {
     expect(rumbleRoute?.loadComponent).toBeTypeOf('function');
   });
 
+  it('registers the Rumble characters route inside tabs', () => {
+    const tabsRoute = findRouteByPath(routes, 'tabs');
+    const rumbleCharactersRoute = tabsRoute?.children?.find(
+      (route) => route.path === 'rumble-characters',
+    );
+
+    expect(rumbleCharactersRoute).toBeDefined();
+    expect(rumbleCharactersRoute?.loadComponent).toBeTypeOf('function');
+  });
+
   it('registers the saved enemies route inside tabs', () => {
     const tabsRoute = findRouteByPath(routes, 'tabs');
     const savedEnemiesRoute = tabsRoute?.children?.find((route) => route.path === 'saved-enemies');
@@ -113,6 +123,7 @@ describe('app routes', () => {
       'team-builder',
       'auto-team-builder',
       'auto-team-builder-rumble',
+      'rumble-characters',
       'crew-forge',
     ];
 

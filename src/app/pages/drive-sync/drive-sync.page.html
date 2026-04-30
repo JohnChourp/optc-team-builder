@@ -277,7 +277,11 @@
     </div>
   </ion-content>
 
-  <ion-modal [isOpen]="reviewDraft() !== null" (didDismiss)="closeReview()">
+  <ion-modal
+    class="drive-review-modal"
+    [isOpen]="reviewDraft() !== null"
+    (didDismiss)="closeReview()"
+  >
     <ng-template>
       <ion-header class="ion-no-border">
         <ion-toolbar>
@@ -306,20 +310,21 @@
               <strong>{{ t('driveSync.review.summaryTitle') }}</strong>
               <span>{{ t('driveSync.review.summaryCopy', { count: reviewTotals().total }) }}</span>
               <div class="drive-review-stats">
-                <span>{{
-                  t('driveSync.review.stats.added', { count: reviewTotals().added })
-                }}</span>
-                <span>{{
-                  t('driveSync.review.stats.changed', { count: reviewTotals().changed })
-                }}</span>
-                <span>{{ t('driveSync.review.stats.kept', { count: reviewTotals().kept }) }}</span>
-                <span>{{
-                  t('driveSync.review.stats.removed', { count: reviewTotals().removed })
-                }}</span>
+                @for (filter of reviewStatusFilters; track filter) {
+                  <button
+                    type="button"
+                    class="drive-review-stat"
+                    [class.drive-review-stat--active]="reviewFilter() === filter"
+                    [attr.aria-pressed]="reviewFilter() === filter"
+                    (click)="setReviewFilter(filter)"
+                  >
+                    {{ t(getReviewStatsLabelKey(filter), { count: reviewTotals()[filter] }) }}
+                  </button>
+                }
               </div>
             </section>
 
-            @for (section of draft.sections; track section.key) {
+            @for (section of filteredReviewSections(); track section.key) {
               <section class="drive-review-section">
                 <div class="drive-review-section__head">
                   <strong>{{ t(getSectionLabelKey(section.key)) }}</strong>
@@ -369,6 +374,10 @@
                   }
                 </div>
               </section>
+            } @empty {
+              <div class="transfer-feedback">
+                <span>{{ t('driveSync.review.emptyFilter') }}</span>
+              </div>
             }
 
             <div class="drive-review-actions">

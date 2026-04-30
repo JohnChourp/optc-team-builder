@@ -225,9 +225,12 @@ export function updateDriveSyncReviewRowChoice(
           return row;
         }
 
+        const nextChoice = row.choices.includes(choice) ? choice : row.choice;
+
         return {
           ...row,
-          choice: row.choices.includes(choice) ? choice : row.choice,
+          choice: nextChoice,
+          status: getRowStatus(row.deviceItem, row.driveItem, nextChoice),
         };
       });
 

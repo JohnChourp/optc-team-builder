@@ -1,6 +1,5 @@
 import {
   DEFAULT_RUMBLE_BUFF_FOCUS,
-  RUMBLE_BUFF_FOCUS_RANKS,
   RUMBLE_BUFF_FOCUS_STATS,
   RUMBLE_ACTIVE_SLOT_COUNT,
   RUMBLE_BENCH_SLOT_COUNT,
@@ -9,7 +8,6 @@ import {
   type NormalizedRumbleEffect,
   type NormalizedRumbleRoleTag,
   type RumbleBuffFocusPreference,
-  type RumbleBuffFocusRank,
   type RumbleBuffFocusStat,
   type RumbleBuildInput,
   type RumbleBuildProgressSnapshot,
@@ -25,6 +23,10 @@ import {
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
+import {
+  buildRumbleBuffFocusWeightMap,
+  normalizeRumbleBuffFocus,
+} from './auto-team-builder-rumble-focus.utils';
 import { resolveCharacterPartyConflictKeys } from './auto-team-builder.utils';
 
 type UnknownRecord = Record<string, unknown>;
@@ -129,13 +131,6 @@ const RUMBLE_SYNERGY_ATTRIBUTE_WEIGHTS: Record<RumbleBuffFocusStat, number> = {
   SPD: 36,
   RCV: 30,
   'Special CT': 46,
-};
-
-const RUMBLE_BUFF_FOCUS_RANK_WEIGHTS: Record<RumbleBuffFocusRank, number> = {
-  primary: 1.75,
-  secondary: 1,
-  tertiary: 0.55,
-  ignored: 0,
 };
 
 const ACTIVE_SLOT_WEIGHT = 1;
@@ -2591,56 +2586,6 @@ function normalizeRumbleOpponentSlots(
   });
 
   return normalizedSlots;
-}
-
-function normalizeRumbleBuffFocus(
-  values: RumbleBuffFocusPreference[] | undefined,
-): RumbleBuffFocusPreference[] {
-  const statSet = new Set<RumbleBuffFocusStat>(RUMBLE_BUFF_FOCUS_STATS);
-  const rankSet = new Set<RumbleBuffFocusRank>(RUMBLE_BUFF_FOCUS_RANKS);
-  const byStat = new Map<RumbleBuffFocusStat, RumbleBuffFocusRank>();
-
-  if (Array.isArray(values)) {
-    values.forEach((value) => {
-      if (!value || typeof value !== 'object') {
-        return;
-      }
-
-      const stat = value.stat;
-      const rank = value.rank;
-
-      if (!statSet.has(stat) || !rankSet.has(rank) || byStat.has(stat)) {
-        return;
-      }
-
-      byStat.set(stat, rank);
-    });
-  }
-
-  DEFAULT_RUMBLE_BUFF_FOCUS.forEach((preference) => {
-    if (!byStat.has(preference.stat)) {
-      byStat.set(preference.stat, preference.rank);
-    }
-  });
-
-  return RUMBLE_BUFF_FOCUS_STATS.map((stat) => ({
-    stat,
-    rank: byStat.get(stat) ?? 'ignored',
-  }));
-}
-
-function buildRumbleBuffFocusWeightMap(
-  buffFocus: RumbleBuffFocusPreference[],
-): Record<RumbleBuffFocusStat, number> {
-  const normalizedFocus = normalizeRumbleBuffFocus(buffFocus);
-
-  return normalizedFocus.reduce(
-    (weights, preference) => ({
-      ...weights,
-      [preference.stat]: RUMBLE_BUFF_FOCUS_RANK_WEIGHTS[preference.rank],
-    }),
-    {} as Record<RumbleBuffFocusStat, number>,
-  );
 }
 
 function sanitizeText(value: unknown): string | null {

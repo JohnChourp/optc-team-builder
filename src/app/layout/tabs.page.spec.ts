@@ -28,6 +28,8 @@ describe('TabsPage', () => {
     expect(component).toContain("'tabs.auto'");
     expect(component).toContain("'tabs.autoRumble'");
     expect(component).toContain("route: '/tabs/auto-team-builder-rumble'");
+    expect(component).toContain("'tabs.rumbleCharacters'");
+    expect(component).toContain("route: '/tabs/rumble-characters'");
     expect(component).toContain("'tabs.savedRumbleTeams'");
     expect(component).toContain("route: '/tabs/saved-rumble-teams'");
     expect(component).toContain("'tabs.crewForge'");

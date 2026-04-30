@@ -59,6 +59,12 @@ import {
   type RumbleTeamBuildExecutionOptions,
 } from '../../core/services/auto-team-builder-rumble.service';
 import { AppI18nService } from '../../core/services/app-i18n.service';
+import {
+  canMoveRumbleBuffFocusStat,
+  getRumbleBuffFocusStatsForRank,
+  moveRumbleBuffFocusStat,
+  type RumbleBuffFocusDirection,
+} from '../../core/services/auto-team-builder-rumble-focus.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import {
   UserStateService,
@@ -105,7 +111,6 @@ const RUMBLE_BUFF_STATS = ['HP', 'ATK', 'DEF', 'RCV', 'SPD', 'Special CT'] as co
 const RUMBLE_TEAM_COST_LIMIT = 300;
 
 type RumbleBuffStat = (typeof RUMBLE_BUFF_STATS)[number];
-type RumbleBuffFocusDirection = 'up' | 'down';
 
 interface RumbleBuffSummaryRow {
   stat: RumbleBuffStat;
@@ -921,20 +926,14 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   }
 
   public buffFocusStatsForRank(rank: RumbleBuffFocusRank): RumbleBuffFocusStat[] {
-    return this.buffFocus()
-      .filter((preference) => preference.rank === rank)
-      .map((preference) => preference.stat);
+    return getRumbleBuffFocusStatsForRank(this.buffFocus(), rank);
   }
 
   public canMoveBuffFocusStat(
     stat: RumbleBuffFocusStat,
     direction: RumbleBuffFocusDirection,
   ): boolean {
-    const rankIndex = this.resolveBuffFocusRankIndex(this.resolveBuffFocusRank(stat));
-
-    return direction === 'up'
-      ? rankIndex > 0
-      : rankIndex >= 0 && rankIndex < RUMBLE_BUFF_FOCUS_RANKS.length - 1;
+    return canMoveRumbleBuffFocusStat(this.buffFocus(), stat, direction);
   }
 
   public moveBuffFocusStat(stat: RumbleBuffFocusStat, direction: RumbleBuffFocusDirection): void {
@@ -942,32 +941,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       return;
     }
 
-    const currentRankIndex = this.resolveBuffFocusRankIndex(this.resolveBuffFocusRank(stat));
-    const nextRankIndex = direction === 'up' ? currentRankIndex - 1 : currentRankIndex + 1;
-    const nextRank = RUMBLE_BUFF_FOCUS_RANKS[nextRankIndex];
-
-    if (!nextRank) {
-      return;
-    }
-
-    this.buffFocus.update((currentFocus) =>
-      RUMBLE_BUFF_FOCUS_STATS.map((currentStat) => {
-        const currentPreference = currentFocus.find(
-          (preference) => preference.stat === currentStat,
-        );
-
-        return {
-          stat: currentStat,
-          rank:
-            currentStat === stat
-              ? nextRank
-              : (currentPreference?.rank ??
-                DEFAULT_RUMBLE_BUFF_FOCUS.find((preference) => preference.stat === currentStat)
-                  ?.rank ??
-                'ignored'),
-        };
-      }),
-    );
+    this.buffFocus.update((currentFocus) => moveRumbleBuffFocusStat(currentFocus, stat, direction));
     this.resetBuildState();
   }
 
@@ -1672,18 +1646,6 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     if (this.opponentAwarenessEnabled()) {
       this.resetBuildState();
     }
-  }
-
-  private resolveBuffFocusRank(stat: RumbleBuffFocusStat): RumbleBuffFocusRank {
-    return (
-      this.buffFocus().find((preference) => preference.stat === stat)?.rank ??
-      DEFAULT_RUMBLE_BUFF_FOCUS.find((preference) => preference.stat === stat)?.rank ??
-      'ignored'
-    );
-  }
-
-  private resolveBuffFocusRankIndex(rank: RumbleBuffFocusRank): number {
-    return Math.max(0, RUMBLE_BUFF_FOCUS_RANKS.indexOf(rank));
   }
 
   private resolveSelectedCharacterIds(target: ManualSlotTarget | null): Set<number> {

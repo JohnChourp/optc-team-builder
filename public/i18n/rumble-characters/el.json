@@ -1,0 +1,96 @@
+{
+  "title": "Rumble χαρακτήρες",
+  "actions": {
+    "loadMore": "Φόρτωση περισσότερων units",
+    "reset": "Reset"
+  },
+  "card": {
+    "score": "Score {{score}}"
+  },
+  "favorites": {
+    "addAria": "Προσθήκη του {{name}} στα favorites",
+    "removeAria": "Αφαίρεση του {{name}} από τα favorites"
+  },
+  "filters": {
+    "buffFocus": {
+      "label": "Build focus",
+      "support": "Τα πιο πάνω lanes προσθέτουν περισσότερο βάρος σε αυτά τα Rumble stats και buffs, ενώ το full Rumble score παραμένει η βάση της κατάταξης.",
+      "empty": "Κανένα stat",
+      "promoteAria": "Ανέβασε το {{stat}} focus",
+      "demoteAria": "Κατέβασε το {{stat}} focus",
+      "ranks": {
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "tertiary": "Tertiary",
+        "ignored": "Ignored"
+      }
+    },
+    "class": {
+      "all": "Όλα τα classes",
+      "label": "Class",
+      "placeholder": "Επίλεξε class"
+    },
+    "favoritesOnly": {
+      "empty": "Δεν υπάρχουν αποθηκευμένα favorites ακόμα.",
+      "label": "Μόνο favorites",
+      "withCount": "Περιορισμός στους {{count}} favorite Rumble χαρακτήρες σου."
+    },
+    "hideFavorites": {
+      "empty": "Δεν υπάρχουν αποθηκευμένα favorites ακόμα.",
+      "label": "Κρύψε favorites",
+      "withCount": "Κρύβει τους {{count}} favorite Rumble χαρακτήρες σου από τα αποτελέσματα."
+    },
+    "maxCooldown": {
+      "label": "Max CT",
+      "placeholder": "Οποιοδήποτε CT"
+    },
+    "maxCost": {
+      "label": "Max cost",
+      "placeholder": "Οποιοδήποτε cost"
+    },
+    "roles": {
+      "label": "Roles",
+      "placeholder": "Επίλεξε roles"
+    },
+    "rumbleType": {
+      "all": "Όλα τα Rumble types",
+      "label": "Rumble type",
+      "placeholder": "Επίλεξε type"
+    },
+    "type": {
+      "all": "Όλα τα types",
+      "label": "Type",
+      "placeholder": "Επίλεξε type"
+    }
+  },
+  "hero": {
+    "eyebrow": "Pirate Rumble catalog",
+    "favoritesCount": "{{count}} favorites",
+    "rumbleCount": "{{count}} Rumble entries",
+    "title": "Ταξινόμησε τα δυνατότερα Rumble units από όλους τους τοπικούς χαρακτήρες."
+  },
+  "roles": {
+    "attacker": "Attacker",
+    "booster": "Booster",
+    "defender": "Defender",
+    "disruptor": "Disruptor",
+    "healer": "Healer",
+    "speed": "Speed"
+  },
+  "search": {
+    "placeholder": "Search σε ονόματα, roles, types..."
+  },
+  "states": {
+    "empty": "Κανένας Rumble χαρακτήρας δεν ταίριαξε με τα τωρινά φίλτρα.",
+    "errorFallback": "Δεν μπόρεσαν να φορτωθούν οι Rumble χαρακτήρες.",
+    "loading": "Φόρτωση Rumble χαρακτήρων..."
+  },
+  "stats": {
+    "atk": "ATK",
+    "ct": "CT",
+    "def": "DEF",
+    "hp": "HP",
+    "rcv": "RCV",
+    "spd": "SPD"
+  }
+}
