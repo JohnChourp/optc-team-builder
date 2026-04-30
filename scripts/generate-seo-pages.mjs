@@ -14,6 +14,26 @@ const siteName = 'OPTC Team Builder';
 const homePageTitle = 'OPTC Team Builder | One Piece Treasure Cruise Tools';
 const siteDescription =
   'Plan One Piece Treasure Cruise crews with character search, team building, enemy mechanics, saved teams, screenshots, and offline-friendly tools.';
+const googleTagManagerHeadHtml = `  <!-- Google Tag Manager consent bootstrap -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = window.gtag || function() { window.dataLayer.push(arguments); };
+    window.gtag("consent", "default", {
+      analytics_storage: "denied",
+      wait_for_update: 500,
+    });
+  </script>
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-TBW6L4T');</script>
+  <!-- End Google Tag Manager -->`;
+const googleTagManagerBodyHtml = `  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TBW6L4T"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->`;
 const homeFallbackHeroCharacters = [
   {
     alt: 'Kozuki Hiyori - Graveside Prayer character artwork',
@@ -219,6 +239,7 @@ async function writeSitemapHtml() {
   const sitemapHtml = `<!doctype html>
 <html lang="en">
 <head>
+${googleTagManagerHeadHtml}
   <meta charset="utf-8">
   <title>Sitemap | OPTC Team Builder</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -236,6 +257,7 @@ async function writeSitemapHtml() {
   </style>
 </head>
 <body>
+${googleTagManagerBodyHtml}
   <main>
     <h1>OPTC Team Builder Sitemap</h1>
     <p>Links to the main public pages for browsing OPTC characters, building teams with Auto Team Builder, importing Crew Forge screenshots, and reading legal information.</p>
