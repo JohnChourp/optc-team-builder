@@ -284,39 +284,81 @@
           <div class="strict-toggle-row strict-toggle-row--select">
             <div class="strict-toggle-copy">
               <strong>{{ t('filters.cost.label') }}</strong>
-              <small>{{ costRangeSupportLabel() }}</small>
+              <small>{{ t('filters.cost.support') }}</small>
             </div>
-            <div class="cost-range-grid">
-              <ion-input
-                type="number"
-                inputmode="numeric"
-                min="0"
-                step="1"
-                fill="outline"
-                [label]="t('filters.cost.range.min')"
-                labelPlacement="stacked"
-                [value]="costRange().min"
-                [disabled]="building()"
-                (ionInput)="onCostRangeChange('min', $event)"
-              ></ion-input>
-              <ion-input
-                type="number"
-                inputmode="numeric"
-                min="0"
-                step="1"
-                fill="outline"
-                [label]="t('filters.cost.range.max')"
-                labelPlacement="stacked"
-                [value]="costRange().max"
-                [disabled]="building()"
-                (ionInput)="onCostRangeChange('max', $event)"
-              ></ion-input>
+            <div class="cost-scope-grid">
+              <div class="strict-toggle-copy cost-scope-copy">
+                <strong>{{ t('filters.cost.leaders.label') }}</strong>
+                <small>{{ leaderCostRangeSupportLabel() }}</small>
+              </div>
+              <div class="cost-range-grid">
+                <ion-input
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  step="1"
+                  fill="outline"
+                  [label]="t('filters.cost.leaders.range.min')"
+                  labelPlacement="stacked"
+                  [value]="leaderCostRange().min"
+                  [disabled]="building()"
+                  (ionInput)="onLeaderCostRangeChange('min', $event)"
+                ></ion-input>
+                <ion-input
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  step="1"
+                  fill="outline"
+                  [label]="t('filters.cost.leaders.range.max')"
+                  labelPlacement="stacked"
+                  [value]="leaderCostRange().max"
+                  [disabled]="building()"
+                  (ionInput)="onLeaderCostRangeChange('max', $event)"
+                ></ion-input>
+              </div>
+              @if (leaderCostRangeErrorLabel()) {
+                <small class="cost-range-error">
+                  {{ leaderCostRangeErrorLabel() }}
+                </small>
+              }
+
+              <div class="strict-toggle-copy cost-scope-copy">
+                <strong>{{ t('filters.cost.subs.label') }}</strong>
+                <small>{{ subCostRangeSupportLabel() }}</small>
+              </div>
+              <div class="cost-range-grid">
+                <ion-input
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  step="1"
+                  fill="outline"
+                  [label]="t('filters.cost.subs.range.min')"
+                  labelPlacement="stacked"
+                  [value]="subCostRange().min"
+                  [disabled]="building()"
+                  (ionInput)="onSubCostRangeChange('min', $event)"
+                ></ion-input>
+                <ion-input
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  step="1"
+                  fill="outline"
+                  [label]="t('filters.cost.subs.range.max')"
+                  labelPlacement="stacked"
+                  [value]="subCostRange().max"
+                  [disabled]="building()"
+                  (ionInput)="onSubCostRangeChange('max', $event)"
+                ></ion-input>
+              </div>
+              @if (subCostRangeErrorLabel()) {
+                <small class="cost-range-error">
+                  {{ subCostRangeErrorLabel() }}
+                </small>
+              }
             </div>
-            @if (costRangeErrorLabel()) {
-              <small class="cost-range-error">
-                {{ costRangeErrorLabel() }}
-              </small>
-            }
           </div>
 
           <div class="strict-toggle-row">

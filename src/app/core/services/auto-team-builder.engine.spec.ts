@@ -252,11 +252,12 @@ describe('runAutoTeamBuildSearch', () => {
     expect(attempts.some((attempt) => attempt.category === 'double')).toBe(true);
   });
 
-  it('preserves cost ranges on every fallback attempt', () => {
+  it('preserves scoped cost ranges on every fallback attempt', () => {
     const planner = createAutoTeamBuildFallbackPlanner(
       createInput(['DEX', 'INT'], ['Fighter', 'Slasher'], {
         requireLeaderSuperSpecialCriteria: true,
-        costRange: { min: 20, max: 60 },
+        leaderCostRange: { min: 20, max: 60 },
+        subCostRange: { min: 10, max: 40 },
       }),
       createSingleTypeRecords(),
     );
@@ -265,7 +266,12 @@ describe('runAutoTeamBuildSearch', () => {
 
     expect(
       collectScheduledAttempts(planner).every((attempt) => {
-        return attempt.input.costRange.min === 20 && attempt.input.costRange.max === 60;
+        return (
+          attempt.input.leaderCostRange.min === 20 &&
+          attempt.input.leaderCostRange.max === 60 &&
+          attempt.input.subCostRange.min === 10 &&
+          attempt.input.subCostRange.max === 40
+        );
       }),
     ).toBe(true);
   });
@@ -388,6 +394,8 @@ function createInput(
       | 'leaderBoostFilters'
       | 'leaderBoostRanges'
       | 'costRange'
+      | 'leaderCostRange'
+      | 'subCostRange'
       | 'manualSlots'
       | 'lockedCharacterIds'
       | 'excludedCharacterIds'
@@ -423,6 +431,8 @@ function createInput(
     leaderBoostFilters: overrides.leaderBoostFilters ?? ['HP', 'ATK'],
     leaderBoostRanges: overrides.leaderBoostRanges ?? createEmptyAutoBuildLeaderBoostRanges(),
     costRange: overrides.costRange ?? createEmptyAutoBuildCostRange(),
+    leaderCostRange: overrides.leaderCostRange ?? overrides.costRange ?? createEmptyAutoBuildCostRange(),
+    subCostRange: overrides.subCostRange ?? overrides.costRange ?? createEmptyAutoBuildCostRange(),
     manualSlots: overrides.manualSlots ?? createEmptyAutoBuildManualSlots(),
     lockedCharacterIds,
     excludedCharacterIds,

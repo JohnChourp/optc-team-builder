@@ -82,6 +82,11 @@ interface PooledWorkerState {
   retiring: boolean;
 }
 
+interface AutoTeamBuildScopedAutoFillCharacterIds {
+  leaderAutoFillCharacterIds?: number[];
+  subAutoFillCharacterIds?: number[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class AutoTeamBuilderService {
   public constructor(private readonly repository: OptcRepositoryService) {}
@@ -144,6 +149,14 @@ export class AutoTeamBuilderService {
     const leaderBoostFilters = this.normalizeLeaderBoostFilters(constraints.leaderBoostFilters);
     const leaderBoostRanges = this.normalizeLeaderBoostRanges(constraints.leaderBoostRanges);
     const costRange = this.normalizeCostRange(constraints.costRange);
+    const leaderCostRange =
+      constraints.leaderCostRange !== undefined
+        ? this.normalizeCostRange(constraints.leaderCostRange)
+        : { ...costRange };
+    const subCostRange =
+      constraints.subCostRange !== undefined
+        ? this.normalizeCostRange(constraints.subCostRange)
+        : { ...costRange };
 
     const input: AutoBuildInput = {
       types: normalizedTypes.length > 0 ? normalizedTypes : [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
@@ -166,6 +179,8 @@ export class AutoTeamBuilderService {
       leaderBoostFilters,
       leaderBoostRanges,
       costRange,
+      leaderCostRange,
+      subCostRange,
       manualSlots,
       lockedCharacterIds,
       excludedCharacterIds,
@@ -196,6 +211,8 @@ export class AutoTeamBuilderService {
       leaderBoostFilters: [...input.leaderBoostFilters],
       leaderBoostRanges: this.cloneLeaderBoostRanges(input.leaderBoostRanges),
       costRange: { ...input.costRange },
+      leaderCostRange: { ...input.leaderCostRange },
+      subCostRange: { ...input.subCostRange },
       manualSlots: input.manualSlots.map((slot) => ({
         role: slot.role,
         characterIds: [...slot.characterIds],
@@ -261,27 +278,29 @@ export class AutoTeamBuilderService {
         allowedCharacterIds,
         lockedCharacterIds,
         excludedCharacterIds,
-        costRange: this.hasActiveCostRange(requestedInput.costRange)
-          ? requestedInput.costRange
-          : undefined,
       },
     );
     const friendCaptainRecords = shouldFetchAnyFriendCaptainRecords
       ? await this.repository.getAutoBuilderCandidates([...AUTO_TEAM_BUILDER_TYPES], null, {
           lockedCharacterIds,
           excludedCharacterIds,
-          costRange: this.hasActiveCostRange(requestedInput.costRange)
-            ? requestedInput.costRange
-            : undefined,
         })
       : undefined;
-    const scopedFriendCaptainRecords =
-      friendCaptainRecords && this.hasActiveCostRange(requestedInput.costRange)
-        ? friendCaptainRecords.filter((record) =>
-            this.characterMatchesCostRange(record, requestedInput.costRange),
-          )
-        : friendCaptainRecords;
-    const resolvedAutoFillCharacterIds = this.resolveAutoFillCharacterIds(
+    const scopedAutoFillCharacterIds = {
+      leaderAutoFillCharacterIds: this.resolveLeaderAutoFillCharacterIds(
+        records,
+        friendCaptainRecords,
+        allowedCharacterIds,
+        requestedInput.leaderCostRange,
+      ),
+      subAutoFillCharacterIds: this.resolveAutoFillCharacterIds(
+        records,
+        allowedCharacterIds,
+        requestedInput.subCostRange,
+      ),
+    };
+
+    const legacyAutoFillCharacterIds = this.resolveAutoFillCharacterIds(
       records,
       allowedCharacterIds,
       requestedInput.costRange,
@@ -298,8 +317,9 @@ export class AutoTeamBuilderService {
         records,
         requestedInput,
         executionOptions,
-        scopedFriendCaptainRecords,
-        resolvedAutoFillCharacterIds,
+        friendCaptainRecords,
+        scopedAutoFillCharacterIds,
+        legacyAutoFillCharacterIds,
       ),
       shipsPromise,
     ]);
@@ -508,6 +528,7 @@ export class AutoTeamBuilderService {
     requestedInput: AutoBuildInput,
     executionOptions: AutoTeamBuildExecutionOptions,
     friendCaptainRecords?: CharacterDetailRecord[],
+    scopedAutoFillCharacterIds: AutoTeamBuildScopedAutoFillCharacterIds = {},
     autoFillCharacterIds?: number[],
   ): Promise<AutoBuildResult | null> {
     const fallbackPlanner = createAutoTeamBuildFallbackPlanner(requestedInput, records);
@@ -522,6 +543,7 @@ export class AutoTeamBuilderService {
           fallbackPlanner,
           requestedWorkerCount,
           friendCaptainRecords,
+          scopedAutoFillCharacterIds,
           autoFillCharacterIds,
         );
       } catch (error) {
@@ -534,6 +556,8 @@ export class AutoTeamBuilderService {
           isCancelled: () => executionOptions.signal?.aborted ?? false,
           friendCaptainRecords,
           autoFillCharacterIds,
+          leaderAutoFillCharacterIds: scopedAutoFillCharacterIds.leaderAutoFillCharacterIds,
+          subAutoFillCharacterIds: scopedAutoFillCharacterIds.subAutoFillCharacterIds,
         });
       }
     }
@@ -546,6 +570,8 @@ export class AutoTeamBuilderService {
         isCancelled: () => executionOptions.signal?.aborted ?? false,
         friendCaptainRecords,
         autoFillCharacterIds,
+        leaderAutoFillCharacterIds: scopedAutoFillCharacterIds.leaderAutoFillCharacterIds,
+        subAutoFillCharacterIds: scopedAutoFillCharacterIds.subAutoFillCharacterIds,
       });
     }
 
@@ -556,6 +582,7 @@ export class AutoTeamBuilderService {
         requestedInput,
         executionOptions,
         friendCaptainRecords,
+        scopedAutoFillCharacterIds,
         autoFillCharacterIds,
       );
     } catch (error) {
@@ -570,6 +597,8 @@ export class AutoTeamBuilderService {
         isCancelled: () => executionOptions.signal?.aborted ?? false,
         friendCaptainRecords,
         autoFillCharacterIds,
+        leaderAutoFillCharacterIds: scopedAutoFillCharacterIds.leaderAutoFillCharacterIds,
+        subAutoFillCharacterIds: scopedAutoFillCharacterIds.subAutoFillCharacterIds,
       });
     }
   }
@@ -581,6 +610,7 @@ export class AutoTeamBuilderService {
     fallbackPlanner: AutoTeamBuildFallbackPlanner,
     requestedWorkerCount: number,
     friendCaptainRecords?: CharacterDetailRecord[],
+    scopedAutoFillCharacterIds: AutoTeamBuildScopedAutoFillCharacterIds = {},
     autoFillCharacterIds?: number[],
   ): Promise<AutoBuildResult | null> {
     const workers = this.createWorkerPool(requestedWorkerCount);
@@ -595,6 +625,8 @@ export class AutoTeamBuilderService {
           isCancelled: () => executionOptions.signal?.aborted ?? false,
           friendCaptainRecords,
           autoFillCharacterIds,
+          leaderAutoFillCharacterIds: scopedAutoFillCharacterIds.leaderAutoFillCharacterIds,
+          subAutoFillCharacterIds: scopedAutoFillCharacterIds.subAutoFillCharacterIds,
         });
       }
 
@@ -604,6 +636,7 @@ export class AutoTeamBuilderService {
         requestedInput,
         executionOptions,
         friendCaptainRecords,
+        scopedAutoFillCharacterIds,
         autoFillCharacterIds,
       );
     }
@@ -616,6 +649,7 @@ export class AutoTeamBuilderService {
             records,
             executionOptions.signal,
             friendCaptainRecords,
+            scopedAutoFillCharacterIds,
             autoFillCharacterIds,
           ),
         ),
@@ -669,6 +703,7 @@ export class AutoTeamBuilderService {
         !requestedInput.requireAllSlotsInLeaderSuperEffectScope,
         executionOptions.signal,
         friendCaptainRecords,
+        scopedAutoFillCharacterIds,
         autoFillCharacterIds,
       );
 
@@ -722,6 +757,7 @@ export class AutoTeamBuilderService {
         timingState,
         records.length,
         friendCaptainRecords,
+        scopedAutoFillCharacterIds,
         autoFillCharacterIds,
       );
 
@@ -737,6 +773,7 @@ export class AutoTeamBuilderService {
     requestedInput: AutoBuildInput,
     executionOptions: AutoTeamBuildExecutionOptions,
     friendCaptainRecords?: CharacterDetailRecord[],
+    scopedAutoFillCharacterIds: AutoTeamBuildScopedAutoFillCharacterIds = {},
     autoFillCharacterIds?: number[],
   ): Promise<AutoBuildResult | null> {
     const runId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -809,6 +846,8 @@ export class AutoTeamBuilderService {
         records,
         friendCaptainRecords,
         autoFillCharacterIds,
+        leaderAutoFillCharacterIds: scopedAutoFillCharacterIds.leaderAutoFillCharacterIds,
+        subAutoFillCharacterIds: scopedAutoFillCharacterIds.subAutoFillCharacterIds,
         requestedInput,
       };
 
@@ -821,6 +860,7 @@ export class AutoTeamBuilderService {
     records: CharacterDetailRecord[],
     signal?: AbortSignal,
     friendCaptainRecords?: CharacterDetailRecord[],
+    scopedAutoFillCharacterIds: AutoTeamBuildScopedAutoFillCharacterIds = {},
     autoFillCharacterIds?: number[],
   ): Promise<void> {
     return new Promise<void>((resolve, reject) => {
@@ -882,6 +922,8 @@ export class AutoTeamBuilderService {
         records,
         friendCaptainRecords,
         autoFillCharacterIds,
+        leaderAutoFillCharacterIds: scopedAutoFillCharacterIds.leaderAutoFillCharacterIds,
+        subAutoFillCharacterIds: scopedAutoFillCharacterIds.subAutoFillCharacterIds,
       } satisfies AutoTeamBuilderWorkerRequest);
     });
   }
@@ -893,6 +935,7 @@ export class AutoTeamBuilderService {
     requireLeadersWithoutSuperEffects: boolean,
     signal?: AbortSignal,
     friendCaptainRecords?: CharacterDetailRecord[],
+    scopedAutoFillCharacterIds: AutoTeamBuildScopedAutoFillCharacterIds = {},
     autoFillCharacterIds?: number[],
   ): Promise<AutoBuildResult | null> {
     const runId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -959,6 +1002,8 @@ export class AutoTeamBuilderService {
         requireLeadersWithoutSuperEffects,
         friendCaptainRecords,
         autoFillCharacterIds,
+        leaderAutoFillCharacterIds: scopedAutoFillCharacterIds.leaderAutoFillCharacterIds,
+        subAutoFillCharacterIds: scopedAutoFillCharacterIds.subAutoFillCharacterIds,
       } satisfies AutoTeamBuilderWorkerRequest);
     });
   }
@@ -972,6 +1017,7 @@ export class AutoTeamBuilderService {
     timingState: AutoTeamBuildTimingState,
     candidateCount: number,
     friendCaptainRecords?: CharacterDetailRecord[],
+    scopedAutoFillCharacterIds: AutoTeamBuildScopedAutoFillCharacterIds = {},
     autoFillCharacterIds?: number[],
   ): Promise<AutoBuildResult | null> {
     return new Promise<AutoBuildResult | null>((resolve, reject) => {
@@ -1070,6 +1116,7 @@ export class AutoTeamBuilderService {
             records,
             executionOptions.signal,
             friendCaptainRecords,
+            scopedAutoFillCharacterIds,
             autoFillCharacterIds,
           )
             .then(() => {
@@ -1228,6 +1275,7 @@ export class AutoTeamBuilderService {
             nextAttempt.requireLeadersWithoutSuperEffects,
             executionOptions.signal,
             friendCaptainRecords,
+            scopedAutoFillCharacterIds,
             autoFillCharacterIds,
           )
             .then((result) => {
@@ -1453,6 +1501,14 @@ export class AutoTeamBuilderService {
       leaderBoostFilters: this.normalizeLeaderBoostFilters(rosterInput.leaderBoostFilters),
       leaderBoostRanges: this.normalizeLeaderBoostRanges(rosterInput.leaderBoostRanges),
       costRange: this.normalizeCostRange(rosterInput.costRange),
+      leaderCostRange:
+        rosterInput.leaderCostRange !== undefined
+          ? this.normalizeCostRange(rosterInput.leaderCostRange)
+          : this.normalizeCostRange(rosterInput.costRange),
+      subCostRange:
+        rosterInput.subCostRange !== undefined
+          ? this.normalizeCostRange(rosterInput.subCostRange)
+          : this.normalizeCostRange(rosterInput.costRange),
       manualSlots: this.createExactManualSlots(
         captainCharacterId,
         friendCaptainCharacterId,
@@ -1606,6 +1662,30 @@ export class AutoTeamBuilderService {
         return !hasCostRange || this.characterMatchesCostRange(record, costRange);
       })
       .map((record) => record.id);
+  }
+
+  private resolveLeaderAutoFillCharacterIds(
+    records: CharacterDetailRecord[],
+    friendCaptainRecords: CharacterDetailRecord[] | undefined,
+    allowedCharacterIds: number[] | undefined,
+    costRange: AutoBuildCostRange,
+  ): number[] | undefined {
+    const baseCharacterIds = this.resolveAutoFillCharacterIds(records, allowedCharacterIds, costRange);
+    const hasCostRange = this.hasActiveCostRange(costRange);
+
+    if (!friendCaptainRecords?.length) {
+      return baseCharacterIds;
+    }
+
+    if (!baseCharacterIds && !hasCostRange) {
+      return undefined;
+    }
+
+    const friendCaptainCharacterIds = friendCaptainRecords
+      .filter((record) => !hasCostRange || this.characterMatchesCostRange(record, costRange))
+      .map((record) => record.id);
+
+    return [...new Set([...(baseCharacterIds ?? []), ...friendCaptainCharacterIds])];
   }
 
   private normalizeLeaderBoostFilters(

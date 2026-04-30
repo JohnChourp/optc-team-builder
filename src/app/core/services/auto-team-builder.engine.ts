@@ -15,6 +15,8 @@ export interface AutoTeamBuildSearchOptions {
   now?: () => number;
   friendCaptainRecords?: CharacterDetailRecord[];
   autoFillCharacterIds?: number[];
+  leaderAutoFillCharacterIds?: number[];
+  subAutoFillCharacterIds?: number[];
 }
 
 export interface AutoTeamBuildPlannedAttempt {
@@ -129,6 +131,8 @@ export function runAutoTeamBuildSearch(
     resolveExactAttemptRequiresNoSuperLeaders(requestedInput),
     options.friendCaptainRecords,
     options.autoFillCharacterIds,
+    options.leaderAutoFillCharacterIds,
+    options.subAutoFillCharacterIds,
   );
 
   if (satisfiesRequestedAutoTeamBuildCoverage(exactResult)) {
@@ -178,6 +182,8 @@ export function runAutoTeamBuildSearch(
       plannedAttempt.requireLeadersWithoutSuperEffects,
       options.friendCaptainRecords,
       options.autoFillCharacterIds,
+      options.leaderAutoFillCharacterIds,
+      options.subAutoFillCharacterIds,
     );
     const fallbackEndedAt = timingState.now();
 
@@ -302,11 +308,15 @@ export function runAutoTeamBuildAttempt(
   requireLeadersWithoutSuperEffects: boolean,
   friendCaptainRecords?: CharacterDetailRecord[],
   autoFillCharacterIds?: number[],
+  leaderAutoFillCharacterIds?: number[],
+  subAutoFillCharacterIds?: number[],
 ): AutoBuildResult | null {
   const attempt = buildAutoTeamResult(records, input, {
     requireLeadersWithoutSuperEffects,
     friendCaptainRecords,
     autoFillCharacterIds,
+    leaderAutoFillCharacterIds,
+    subAutoFillCharacterIds,
   });
 
   if (!attempt) {
@@ -866,8 +876,10 @@ function inputsMatch(left: AutoBuildInput, right: AutoBuildInput): boolean {
       right.requireAllSlotsInLeaderSuperEffectScope &&
     left.minimumLeaderSuperEffectMatchingSlots === right.minimumLeaderSuperEffectMatchingSlots &&
     left.requireLeaderSuperSpecialCriteria === right.requireLeaderSuperSpecialCriteria &&
-    left.costRange.min === right.costRange.min &&
-    left.costRange.max === right.costRange.max
+    left.leaderCostRange.min === right.leaderCostRange.min &&
+    left.leaderCostRange.max === right.leaderCostRange.max &&
+    left.subCostRange.min === right.subCostRange.min &&
+    left.subCostRange.max === right.subCostRange.max
   );
 }
 

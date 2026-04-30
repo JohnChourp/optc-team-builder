@@ -21,6 +21,7 @@ import {
   hasReadableEffectText,
   resolveLeaderSuperEffectScopeFromEffectText,
 } from './auto-team-builder.utils';
+import { type AutoTeamBuilderWorkerRequest } from './auto-team-builder.worker.models';
 
 const INPUT = createInput();
 type AutoTeamBuilderServiceWithWorkerFactory = AutoTeamBuilderService & {
@@ -3294,7 +3295,6 @@ describe('Auto team builder', () => {
         allowedCharacterIds: undefined,
         lockedCharacterIds: [9001],
         excludedCharacterIds: [],
-        costRange: { min: 1, max: 60 },
       },
     );
   });
@@ -3318,9 +3318,70 @@ describe('Auto team builder', () => {
         allowedCharacterIds: undefined,
         lockedCharacterIds: [],
         excludedCharacterIds: [],
-        costRange: { min: 1, max: 10 },
       },
     );
+  });
+
+  it('applies leader cost range only to auto-filled leaders', async () => {
+    const outOfRangeNewestLeader = createCharacterRecord({
+      id: 9999,
+      name: 'Out of Range Newest Leader',
+      cost: 99,
+      primaryClass: 'Fighter',
+      detail: {
+        captainAbility:
+          'Boosts ATK of DEX and Fighter characters by 5.5x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.',
+        specialText: 'Boosts orb effects of DEX and Fighter characters by 2.25x for 1 turn.',
+      },
+    });
+    const highCostSubs = [
+      createAtkSubRecord(),
+      createAffinitySubRecord(),
+      createUtilitySubRecord(),
+      createConsistencySubRecord(),
+    ].map((record) => ({ ...record, cost: 99 }));
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue([outOfRangeNewestLeader, createCaptainRecord(), ...highCostSubs]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      leaderCostRange: { min: 1, max: 60 },
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(5900);
+    expect(result?.slots[1]?.character.id).toBe(5900);
+    expect(
+      result?.slots
+        .filter((slot) => slot.role === 'sub')
+        .some((slot) => slot.character.cost > 60),
+    ).toBe(true);
+  });
+
+  it('applies sub cost range only to auto-filled subs', async () => {
+    const highCostCaptain = { ...createCaptainRecord(), cost: 99 };
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue([highCostCaptain, ...createSingleTypeRecords().slice(1)]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      subCostRange: { min: 1, max: 60 },
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.cost).toBe(99);
+    expect(result?.slots[1]?.character.cost).toBe(99);
+    expect(
+      result?.slots
+        .filter((slot) => slot.role === 'sub')
+        .every((slot) => slot.character.cost >= 1 && slot.character.cost <= 60),
+    ).toBe(true);
   });
 
   it('allows an auto-filled non-favorite friend captain while keeping other auto-filled slots in favorites', async () => {
@@ -5650,6 +5711,8 @@ function createInput(
       | 'leaderBoostFilters'
       | 'leaderBoostRanges'
       | 'costRange'
+      | 'leaderCostRange'
+      | 'subCostRange'
       | 'manualSlots'
       | 'lockedCharacterIds'
       | 'excludedCharacterIds'
@@ -5670,6 +5733,8 @@ function createInput(
     leaderBoostFilters: ['HP', 'ATK'],
     leaderBoostRanges: createEmptyAutoBuildLeaderBoostRanges(),
     costRange: createEmptyAutoBuildCostRange(),
+    leaderCostRange: createEmptyAutoBuildCostRange(),
+    subCostRange: createEmptyAutoBuildCostRange(),
     lockedCharacterIds: [],
     excludedCharacterIds: [],
     captainCharacterId: null,
@@ -5703,6 +5768,8 @@ function createInput(
     leaderBoostFilters: overrides.leaderBoostFilters ?? ['HP', 'ATK'],
     leaderBoostRanges: overrides.leaderBoostRanges ?? createEmptyAutoBuildLeaderBoostRanges(),
     costRange: overrides.costRange ?? createEmptyAutoBuildCostRange(),
+    leaderCostRange: overrides.leaderCostRange ?? overrides.costRange ?? createEmptyAutoBuildCostRange(),
+    subCostRange: overrides.subCostRange ?? overrides.costRange ?? createEmptyAutoBuildCostRange(),
     manualSlots:
       overrides.manualSlots ??
       createManualSlotsFromLegacySelection(
@@ -6077,89 +6144,15 @@ function createSyntheticClasses(count: number): string[] {
 
 class FakeWorker extends EventTarget {
   public terminated = false;
-  public readonly requests: Array<
-    | {
-        type: 'run';
-        runId: string;
-        records: CharacterDetailRecord[];
-        friendCaptainRecords?: CharacterDetailRecord[];
-        autoFillCharacterIds?: number[];
-        requestedInput: AutoBuildInput;
-      }
-    | {
-        type: 'init';
-        records: CharacterDetailRecord[];
-        friendCaptainRecords?: CharacterDetailRecord[];
-        autoFillCharacterIds?: number[];
-      }
-    | {
-        type: 'runAttempt';
-        runId: string;
-        input: AutoBuildInput;
-        requestedInput: AutoBuildInput;
-        requireLeadersWithoutSuperEffects: boolean;
-        friendCaptainRecords?: CharacterDetailRecord[];
-        autoFillCharacterIds?: number[];
-      }
-  > = [];
+  public readonly requests: AutoTeamBuilderWorkerRequest[] = [];
 
   public constructor(
-    private readonly onPostMessage?: (
-      request:
-        | {
-            type: 'run';
-            runId: string;
-            records: CharacterDetailRecord[];
-            friendCaptainRecords?: CharacterDetailRecord[];
-            autoFillCharacterIds?: number[];
-            requestedInput: AutoBuildInput;
-          }
-        | {
-            type: 'init';
-            records: CharacterDetailRecord[];
-            friendCaptainRecords?: CharacterDetailRecord[];
-            autoFillCharacterIds?: number[];
-          }
-        | {
-            type: 'runAttempt';
-            runId: string;
-            input: AutoBuildInput;
-            requestedInput: AutoBuildInput;
-            requireLeadersWithoutSuperEffects: boolean;
-            friendCaptainRecords?: CharacterDetailRecord[];
-            autoFillCharacterIds?: number[];
-          },
-    ) => void,
+    private readonly onPostMessage?: (request: AutoTeamBuilderWorkerRequest) => void,
   ) {
     super();
   }
 
-  public postMessage(
-    request:
-      | {
-          type: 'run';
-          runId: string;
-          records: CharacterDetailRecord[];
-          friendCaptainRecords?: CharacterDetailRecord[];
-          autoFillCharacterIds?: number[];
-          requestedInput: AutoBuildInput;
-        }
-      | {
-          type: 'init';
-          records: CharacterDetailRecord[];
-          friendCaptainRecords?: CharacterDetailRecord[];
-          autoFillCharacterIds?: number[];
-        }
-      | {
-          type: 'runAttempt';
-          runId: string;
-          input: AutoBuildInput;
-          requestedInput: AutoBuildInput;
-          requireLeadersWithoutSuperEffects: boolean;
-          friendCaptainRecords?: CharacterDetailRecord[];
-          autoFillCharacterIds?: number[];
-        },
-  ): void {
+  public postMessage(request: AutoTeamBuilderWorkerRequest): void {
     this.requests.push(request);
     this.onPostMessage?.(request);
   }

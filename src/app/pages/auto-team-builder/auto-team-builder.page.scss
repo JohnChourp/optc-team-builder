@@ -155,6 +155,15 @@
   gap: 10px;
 }
 
+.cost-scope-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.cost-scope-copy {
+  padding-top: 4px;
+}
+
 .leader-boost-range-error,
 .cost-range-error {
   color: #ffb4a8;

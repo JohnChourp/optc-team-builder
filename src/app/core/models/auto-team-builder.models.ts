@@ -100,6 +100,8 @@ export interface AutoBuildConstraints {
     Record<AutoBuildLeaderBoostFilter, Partial<AutoBuildLeaderBoostRange> | null>
   >;
   costRange?: Partial<AutoBuildCostRange> | null;
+  leaderCostRange?: Partial<AutoBuildCostRange> | null;
+  subCostRange?: Partial<AutoBuildCostRange> | null;
   manualSlots?: AutoBuildManualSlotSelection[];
   lockedCharacterIds?: number[];
   excludedCharacterIds?: number[];
@@ -151,6 +153,8 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   leaderBoostFilters: AutoBuildLeaderBoostFilter[];
   leaderBoostRanges: AutoBuildLeaderBoostRanges;
   costRange: AutoBuildCostRange;
+  leaderCostRange: AutoBuildCostRange;
+  subCostRange: AutoBuildCostRange;
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   excludedCharacterIds: number[];

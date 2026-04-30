@@ -92,15 +92,31 @@
       }
     },
     "cost": {
-      "label": "Auto-fill cost range",
-      "support": {
-        "default": "Leave both fields empty to allow any cost for auto-filled characters. Manual picks remain unrestricted.",
-        "active": "Only auto-filled characters inside this cost range can be selected. Manual picks remain unrestricted."
+      "label": "Auto-fill cost ranges",
+      "support": "Set separate cost ranges for auto-filled leaders and subs. Manual picks remain unrestricted.",
+      "leaders": {
+        "label": "Leader auto-fill cost range",
+        "support": {
+          "default": "Leave both fields empty to allow any cost for auto-filled Captain and Friend Captain.",
+          "active": "Only auto-filled Captain and Friend Captain inside this cost range can be selected."
+        },
+        "range": {
+          "min": "Leader cost from",
+          "max": "Leader cost to",
+          "invalid": "Minimum leader cost cannot be greater than maximum leader cost."
+        }
       },
-      "range": {
-        "min": "Cost from",
-        "max": "Cost to",
-        "invalid": "Minimum cost cannot be greater than maximum cost."
+      "subs": {
+        "label": "Sub auto-fill cost range",
+        "support": {
+          "default": "Leave both fields empty to allow any cost for auto-filled subs.",
+          "active": "Only auto-filled subs inside this cost range can be selected."
+        },
+        "range": {
+          "min": "Sub cost from",
+          "max": "Sub cost to",
+          "invalid": "Minimum sub cost cannot be greater than maximum sub cost."
+        }
       }
     },
     "favoritesOnly": {

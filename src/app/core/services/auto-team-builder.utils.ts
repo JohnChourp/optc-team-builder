@@ -131,6 +131,8 @@ interface AutoTeamBuildAttemptOptions {
   requireLeadersWithoutSuperEffects?: boolean;
   friendCaptainRecords?: CharacterDetailRecord[];
   autoFillCharacterIds?: number[];
+  leaderAutoFillCharacterIds?: number[];
+  subAutoFillCharacterIds?: number[];
 }
 
 type PartyConflictCharacter = Pick<CharacterListItem, 'id' | 'name'> &
@@ -709,23 +711,36 @@ export function buildAutoTeamResult(
       : input.lockedCharacterIds.length > TEAM_SUB_SLOT_COUNT + 1
         ? new Set(input.lockedCharacterIds.slice(TEAM_SUB_SLOT_COUNT + 1))
         : null;
-  const autoFillCandidateIdSet = options.autoFillCharacterIds
-    ? new Set(options.autoFillCharacterIds)
-    : null;
-  const autoFillCandidates = (
-    autoFillCandidateIdSet
-      ? candidates.filter((candidate) => autoFillCandidateIdSet.has(candidate.character.id))
+  const leaderAutoFillCandidateIdSet = options.leaderAutoFillCharacterIds
+    ? new Set(options.leaderAutoFillCharacterIds)
+    : options.autoFillCharacterIds
+      ? new Set(options.autoFillCharacterIds)
+      : null;
+  const subAutoFillCandidateIdSet = options.subAutoFillCharacterIds
+    ? new Set(options.subAutoFillCharacterIds)
+    : options.autoFillCharacterIds
+      ? new Set(options.autoFillCharacterIds)
+      : null;
+  const leaderAutoFillCandidates = (
+    leaderAutoFillCandidateIdSet
+      ? candidates.filter((candidate) => leaderAutoFillCandidateIdSet.has(candidate.character.id))
+      : candidates
+  ).filter((candidate) => !ignoredOverflowLockedCharacterIdSet?.has(candidate.character.id));
+  const subAutoFillCandidates = (
+    subAutoFillCandidateIdSet
+      ? candidates.filter((candidate) => subAutoFillCandidateIdSet.has(candidate.character.id))
       : candidates
   ).filter((candidate) => !ignoredOverflowLockedCharacterIdSet?.has(candidate.character.id));
   const manualFriendCaptainCandidates = manualSlotCandidateMap.get('friendCaptain') ?? [];
   const friendCaptainCandidates = resolveFriendCaptainCandidatePool(
     input,
-    autoFillCandidates,
+    leaderAutoFillCandidates,
     options.friendCaptainRecords ?? [],
+    leaderAutoFillCandidateIdSet,
   );
   const captainOptions = resolveLeaderCandidateOptions(
     manualSlotCandidateMap.get('captain') ?? [],
-    autoFillCandidates,
+    leaderAutoFillCandidates,
     input,
     options,
   );
@@ -789,7 +804,7 @@ export function buildAutoTeamResult(
         constrainedSubSelections.get(role),
       ).filter((candidate): candidate is AutoBuildCandidate => Boolean(candidate));
       const selectedSubs = selectSubs(
-        autoFillCandidates,
+        subAutoFillCandidates,
         leaders,
         leaderSlots,
         input,
@@ -879,14 +894,17 @@ function resolveFriendCaptainCandidatePool(
   input: AutoBuildInput,
   candidates: AutoBuildCandidate[],
   friendCaptainRecords: CharacterDetailRecord[],
+  leaderAutoFillCandidateIdSet: Set<number> | null,
 ): AutoBuildCandidate[] {
   if (!input.allowAnyFriendCaptainAutoFill || friendCaptainRecords.length === 0) {
     return candidates;
   }
 
   const candidateById = new Map(candidates.map((candidate) => [candidate.character.id, candidate]));
-  const usableFriendCaptainRecords = friendCaptainRecords.filter((record) =>
-    hasReadableEffectText(record),
+  const usableFriendCaptainRecords = friendCaptainRecords.filter(
+    (record) =>
+      hasReadableEffectText(record) &&
+      (!leaderAutoFillCandidateIdSet || leaderAutoFillCandidateIdSet.has(record.id)),
   );
 
   usableFriendCaptainRecords.forEach((record, index) => {

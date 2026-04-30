@@ -6,6 +6,8 @@ export interface AutoTeamBuilderWorkerInitRequest {
   records: CharacterDetailRecord[];
   friendCaptainRecords?: CharacterDetailRecord[];
   autoFillCharacterIds?: number[];
+  leaderAutoFillCharacterIds?: number[];
+  subAutoFillCharacterIds?: number[];
 }
 
 export interface AutoTeamBuilderWorkerRunRequest {
@@ -14,6 +16,8 @@ export interface AutoTeamBuilderWorkerRunRequest {
   records: CharacterDetailRecord[];
   friendCaptainRecords?: CharacterDetailRecord[];
   autoFillCharacterIds?: number[];
+  leaderAutoFillCharacterIds?: number[];
+  subAutoFillCharacterIds?: number[];
   requestedInput: AutoBuildInput;
 }
 
@@ -25,6 +29,8 @@ export interface AutoTeamBuilderWorkerRunAttemptRequest {
   requireLeadersWithoutSuperEffects: boolean;
   friendCaptainRecords?: CharacterDetailRecord[];
   autoFillCharacterIds?: number[];
+  leaderAutoFillCharacterIds?: number[];
+  subAutoFillCharacterIds?: number[];
 }
 
 export interface AutoTeamBuilderWorkerReadyResponse {

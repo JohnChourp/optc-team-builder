@@ -92,15 +92,31 @@
       }
     },
     "cost": {
-      "label": "Cost range για auto-fill",
-      "support": {
-        "default": "Άφησε και τα δύο πεδία κενά για να επιτρέπεται οποιοδήποτε cost στους auto-filled χαρακτήρες. Τα manual picks μένουν ελεύθερα.",
-        "active": "Μόνο auto-filled χαρακτήρες μέσα σε αυτό το cost range μπορούν να επιλεγούν. Τα manual picks μένουν ελεύθερα."
+      "label": "Cost ranges για auto-fill",
+      "support": "Όρισε ξεχωριστά cost ranges για auto-filled leaders και subs. Τα manual picks μένουν ελεύθερα.",
+      "leaders": {
+        "label": "Cost range για leaders",
+        "support": {
+          "default": "Άφησε και τα δύο πεδία κενά για να επιτρέπεται οποιοδήποτε cost σε auto-filled Captain και Friend Captain.",
+          "active": "Μόνο auto-filled Captain και Friend Captain μέσα σε αυτό το cost range μπορούν να επιλεγούν."
+        },
+        "range": {
+          "min": "Leader cost από",
+          "max": "Leader cost έως",
+          "invalid": "Το ελάχιστο leader cost δεν μπορεί να είναι μεγαλύτερο από το μέγιστο."
+        }
       },
-      "range": {
-        "min": "Cost από",
-        "max": "Cost έως",
-        "invalid": "Το ελάχιστο cost δεν μπορεί να είναι μεγαλύτερο από το μέγιστο."
+      "subs": {
+        "label": "Cost range για subs",
+        "support": {
+          "default": "Άφησε και τα δύο πεδία κενά για να επιτρέπεται οποιοδήποτε cost στα auto-filled subs.",
+          "active": "Μόνο auto-filled subs μέσα σε αυτό το cost range μπορούν να επιλεγούν."
+        },
+        "range": {
+          "min": "Sub cost από",
+          "max": "Sub cost έως",
+          "invalid": "Το ελάχιστο sub cost δεν μπορεί να είναι μεγαλύτερο από το μέγιστο."
+        }
       }
     },
     "favoritesOnly": {

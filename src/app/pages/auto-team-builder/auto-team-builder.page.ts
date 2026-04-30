@@ -287,7 +287,8 @@ interface AutoTeamBuilderDefaultFilterState {
   selectedClasses: string[];
   leaderBoostFilters: AutoBuildLeaderBoostFilter[];
   leaderBoostRanges: AutoBuildLeaderBoostRanges;
-  costRange: AutoBuildCostRange;
+  leaderCostRange: AutoBuildCostRange;
+  subCostRange: AutoBuildCostRange;
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
   requireAllSlotsInLeaderSuperEffectScope: boolean;
@@ -338,7 +339,8 @@ function buildDefaultAutoTeamBuilderFilterState(
     selectedClasses: [...availableClasses],
     leaderBoostFilters: [...AUTO_BUILD_LEADER_BOOST_FILTERS],
     leaderBoostRanges: createEmptyAutoBuildLeaderBoostRanges(),
-    costRange: createEmptyAutoBuildCostRange(),
+    leaderCostRange: createEmptyAutoBuildCostRange(),
+    subCostRange: createEmptyAutoBuildCostRange(),
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
@@ -428,7 +430,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly leaderBoostRanges = signal<AutoBuildLeaderBoostRanges>(
     createEmptyAutoBuildLeaderBoostRanges(),
   );
-  public readonly costRange = signal<AutoBuildCostRange>(createEmptyAutoBuildCostRange());
+  public readonly leaderCostRange = signal<AutoBuildCostRange>(createEmptyAutoBuildCostRange());
+  public readonly subCostRange = signal<AutoBuildCostRange>(createEmptyAutoBuildCostRange());
   public readonly enemyMechanicDrafts = signal<EnemyMechanicDraft[]>([]);
   public readonly enemyMechanicPickerOpen = signal(false);
   public readonly requiredAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
@@ -852,7 +855,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       this.buildBlockedByCharacterScope() ||
       this.buildBlockedByFavorites() ||
       this.hasInvalidLeaderBoostRanges() ||
-      this.hasInvalidCostRange(),
+      this.hasInvalidCostRanges(),
   );
   public readonly hasStrictFilters = computed(
     () =>
@@ -909,23 +912,37 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly leaderBoostRangeErrorLabel = computed(() =>
     this.hasInvalidLeaderBoostRanges() ? this.t('filters.leaderBoost.range.invalid') : '',
   );
-  public readonly hasActiveCostRange = computed(() => {
-    const range = this.costRange();
-
-    return range.min !== null || range.max !== null;
-  });
-  public readonly hasInvalidCostRange = computed(() => {
-    const range = this.costRange();
-
-    return range.min !== null && range.max !== null && range.min > range.max;
-  });
-  public readonly costRangeSupportLabel = computed(() =>
-    this.hasActiveCostRange()
-      ? this.t('filters.cost.support.active')
-      : this.t('filters.cost.support.default'),
+  public readonly hasActiveLeaderCostRange = computed(() =>
+    this.hasActiveCostRange(this.leaderCostRange()),
   );
-  public readonly costRangeErrorLabel = computed(() =>
-    this.hasInvalidCostRange() ? this.t('filters.cost.range.invalid') : '',
+  public readonly hasActiveSubCostRange = computed(() => this.hasActiveCostRange(this.subCostRange()));
+  public readonly hasActiveCostRanges = computed(
+    () => this.hasActiveLeaderCostRange() || this.hasActiveSubCostRange(),
+  );
+  public readonly hasInvalidLeaderCostRange = computed(() =>
+    this.hasInvalidCostRange(this.leaderCostRange()),
+  );
+  public readonly hasInvalidSubCostRange = computed(() =>
+    this.hasInvalidCostRange(this.subCostRange()),
+  );
+  public readonly hasInvalidCostRanges = computed(
+    () => this.hasInvalidLeaderCostRange() || this.hasInvalidSubCostRange(),
+  );
+  public readonly leaderCostRangeSupportLabel = computed(() =>
+    this.hasActiveLeaderCostRange()
+      ? this.t('filters.cost.leaders.support.active')
+      : this.t('filters.cost.leaders.support.default'),
+  );
+  public readonly subCostRangeSupportLabel = computed(() =>
+    this.hasActiveSubCostRange()
+      ? this.t('filters.cost.subs.support.active')
+      : this.t('filters.cost.subs.support.default'),
+  );
+  public readonly leaderCostRangeErrorLabel = computed(() =>
+    this.hasInvalidLeaderCostRange() ? this.t('filters.cost.leaders.range.invalid') : '',
+  );
+  public readonly subCostRangeErrorLabel = computed(() =>
+    this.hasInvalidSubCostRange() ? this.t('filters.cost.subs.range.invalid') : '',
   );
   public readonly typeSupportLabel = computed(() =>
     this.requireAllSelectedTypesInTeam()
@@ -1691,7 +1708,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         this.hasSelectedClasses() ||
         this.pageEnemyMechanics().length > 0 ||
         this.hasRequiredAbilities() ||
-        this.hasActiveCostRange() ||
+        this.hasActiveCostRanges() ||
         this.requireAllSelectedTypesInTeam() ||
         this.requireAllSelectedClassesPerCharacter() ||
         this.requireUniqueBaseCharacterNames() ||
@@ -1901,14 +1918,28 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.resetBuildState();
   }
 
-  public onCostRangeChange(
+  public onLeaderCostRangeChange(
     bound: keyof AutoBuildCostRange,
     event: CustomEvent<{ value?: string | number | null }>,
   ): void {
     const nextBound = this.resolveCostRangeBound(event.detail.value);
-    const currentRange = this.costRange();
+    const currentRange = this.leaderCostRange();
 
-    this.costRange.set({
+    this.leaderCostRange.set({
+      ...currentRange,
+      [bound]: nextBound,
+    });
+    this.resetBuildState();
+  }
+
+  public onSubCostRangeChange(
+    bound: keyof AutoBuildCostRange,
+    event: CustomEvent<{ value?: string | number | null }>,
+  ): void {
+    const nextBound = this.resolveCostRangeBound(event.detail.value);
+    const currentRange = this.subCostRange();
+
+    this.subCostRange.set({
       ...currentRange,
       [bound]: nextBound,
     });
@@ -2713,7 +2744,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           favoriteShipIds: this.favoriteShipIds(),
           leaderBoostFilters: this.leaderBoostFilters(),
           leaderBoostRanges: this.cloneLeaderBoostRanges(this.leaderBoostRanges()),
-          costRange: { ...this.costRange() },
+          leaderCostRange: { ...this.leaderCostRange() },
+          subCostRange: { ...this.subCostRange() },
           manualSlots: this.serializeManualSlots(),
           excludedCharacterIds: this.effectiveExcludedCharacterIds(),
           manualShipId: this.selectedManualShipId(),
@@ -2813,7 +2845,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       favoriteShipCount: this.favoriteShipIds().length,
       leaderBoostFilters: this.leaderBoostFilters(),
       leaderBoostRanges: this.cloneLeaderBoostRanges(this.leaderBoostRanges()),
-      costRange: { ...this.costRange() },
+      leaderCostRange: { ...this.leaderCostRange() },
+      subCostRange: { ...this.subCostRange() },
       manualSlots: this.serializeManualSlots(),
       lockedCharacterIds: this.lockedCharacterIds(),
       lockedCharacters: this.lockedCharacters(),
@@ -3023,7 +3056,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.selectedClasses.set(defaultFilters.selectedClasses);
     this.leaderBoostFilters.set(defaultFilters.leaderBoostFilters);
     this.leaderBoostRanges.set(this.cloneLeaderBoostRanges(defaultFilters.leaderBoostRanges));
-    this.costRange.set({ ...defaultFilters.costRange });
+    this.leaderCostRange.set({ ...defaultFilters.leaderCostRange });
+    this.subCostRange.set({ ...defaultFilters.subCostRange });
     this.enemyMechanicDrafts.set([]);
     this.requiredAbilityDrafts.set([]);
     this.crewmateAbilityDrafts.set([]);
@@ -3142,7 +3176,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.selectedClasses.set([...state.selectedClasses]);
     this.leaderBoostFilters.set([...state.leaderBoostFilters]);
     this.leaderBoostRanges.set(this.cloneLeaderBoostRanges(state.leaderBoostRanges));
-    this.costRange.set({ ...state.costRange });
+    this.leaderCostRange.set({ ...state.leaderCostRange });
+    this.subCostRange.set({ ...state.subCostRange });
     const migratedRequiredAbilities = mergeAbilityRequirements([
       ...state.requiredAbilities,
       ...deriveAbilityRequirementsFromEnemyMechanics(state.enemyMechanics),
@@ -4226,6 +4261,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     const nextValue = Number(value);
 
     return Number.isInteger(nextValue) && nextValue >= 0 ? nextValue : null;
+  }
+
+  private hasActiveCostRange(range: AutoBuildCostRange): boolean {
+    return range.min !== null || range.max !== null;
+  }
+
+  private hasInvalidCostRange(range: AutoBuildCostRange): boolean {
+    return range.min !== null && range.max !== null && range.min > range.max;
   }
 
   private cloneLeaderBoostRanges(ranges: AutoBuildLeaderBoostRanges): AutoBuildLeaderBoostRanges {

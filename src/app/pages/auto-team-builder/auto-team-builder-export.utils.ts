@@ -92,7 +92,8 @@ export interface AutoTeamSelectionExportPayload {
     | 16
     | 17
     | 18
-    | 19;
+    | 19
+    | 20;
   exportedAt: string;
   source: 'auto-team-builder';
   exportType: 'preset';
@@ -113,6 +114,8 @@ export interface AutoTeamSelectionExportPayload {
     leaderBoostFilters?: AutoBuildLeaderBoostFilter[];
     leaderBoostRanges?: AutoBuildLeaderBoostRanges;
     costRange?: AutoBuildCostRange;
+    leaderCostRange?: AutoBuildCostRange;
+    subCostRange?: AutoBuildCostRange;
   };
   manualSelection: {
     manualSlots: AutoBuildManualSlotSelection[];
@@ -144,7 +147,8 @@ export interface AutoTeamSelectionImportState {
   favoriteShipsOnly: boolean;
   leaderBoostFilters: AutoBuildLeaderBoostFilter[];
   leaderBoostRanges: AutoBuildLeaderBoostRanges;
-  costRange: AutoBuildCostRange;
+  leaderCostRange: AutoBuildCostRange;
+  subCostRange: AutoBuildCostRange;
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   excludedCharacterIds: number[];
@@ -201,6 +205,8 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
     Record<AutoBuildLeaderBoostFilter, Partial<AutoBuildLeaderBoostRange> | null>
   >;
   costRange?: Partial<AutoBuildCostRange> | null;
+  leaderCostRange?: Partial<AutoBuildCostRange> | null;
+  subCostRange?: Partial<AutoBuildCostRange> | null;
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   lockedCharacters: CharacterListItem[];
@@ -548,7 +554,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload['schemaVersion'] !== 16 &&
       parsedPayload['schemaVersion'] !== 17 &&
       parsedPayload['schemaVersion'] !== 18 &&
-      parsedPayload['schemaVersion'] !== 19) ||
+      parsedPayload['schemaVersion'] !== 19 &&
+      parsedPayload['schemaVersion'] !== 20) ||
     parsedPayload['source'] !== 'auto-team-builder' ||
     parsedPayload['exportType'] !== 'preset'
   ) {
@@ -620,6 +627,8 @@ export function parseAutoTeamSelectionImportPayload(
     ) ||
     !isLeaderBoostRangesShape(filters['leaderBoostRanges']) ||
     !isCostRangeShape(filters['costRange']) ||
+    !isCostRangeShape(filters['leaderCostRange']) ||
+    !isCostRangeShape(filters['subCostRange']) ||
     !Array.isArray(manualSelection['lockedCharacterIds']) ||
     !(
       manualSelection['excludedCharacterIds'] === undefined ||
@@ -1015,6 +1024,14 @@ export function sanitizeAutoTeamSelectionImportPayload(
   const leaderBoostFilters = normalizeLeaderBoostFilters(payload.filters.leaderBoostFilters);
   const leaderBoostRanges = normalizeLeaderBoostRanges(payload.filters.leaderBoostRanges);
   const costRange = normalizeCostRange(payload.filters.costRange);
+  const leaderCostRange =
+    payload.filters.leaderCostRange !== undefined
+      ? normalizeCostRange(payload.filters.leaderCostRange)
+      : { ...costRange };
+  const subCostRange =
+    payload.filters.subCostRange !== undefined
+      ? normalizeCostRange(payload.filters.subCostRange)
+      : { ...costRange };
 
   return {
     state: {
@@ -1031,7 +1048,8 @@ export function sanitizeAutoTeamSelectionImportPayload(
       favoriteShipsOnly: payload.filters.favoriteShipsOnly === true,
       leaderBoostFilters,
       leaderBoostRanges,
-      costRange,
+      leaderCostRange,
+      subCostRange,
       manualSlots: normalizedManualSlots,
       lockedCharacterIds: derivedManualSelection.lockedCharacterIds,
       excludedCharacterIds,
@@ -1103,6 +1121,8 @@ export function buildAutoTeamSelectionExportPayload({
   leaderBoostFilters = [...AUTO_BUILD_LEADER_BOOST_FILTERS],
   leaderBoostRanges = createEmptyAutoBuildLeaderBoostRanges(),
   costRange = createEmptyAutoBuildCostRange(),
+  leaderCostRange = costRange,
+  subCostRange = costRange,
   manualSlots,
   lockedCharacterIds,
   lockedCharacters,
@@ -1123,7 +1143,7 @@ export function buildAutoTeamSelectionExportPayload({
   }));
 
   return {
-    schemaVersion: 19,
+    schemaVersion: 20,
     exportedAt,
     source: 'auto-team-builder',
     exportType: 'preset',
@@ -1152,6 +1172,8 @@ export function buildAutoTeamSelectionExportPayload({
       leaderBoostFilters: normalizeLeaderBoostFilters(leaderBoostFilters),
       leaderBoostRanges: normalizeLeaderBoostRanges(leaderBoostRanges),
       costRange: normalizeCostRange(costRange),
+      leaderCostRange: normalizeCostRange(leaderCostRange),
+      subCostRange: normalizeCostRange(subCostRange),
     },
     manualSelection: {
       manualSlots: normalizedManualSlots,
