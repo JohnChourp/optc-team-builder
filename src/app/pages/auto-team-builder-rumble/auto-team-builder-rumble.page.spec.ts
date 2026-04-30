@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  DEFAULT_RUMBLE_BUFF_FOCUS,
   type NormalizedRumbleEffect,
   type RumbleBuildProgressSnapshot,
   type RumbleTeamResult,
@@ -60,6 +61,7 @@ describe('AutoTeamBuilderRumblePage', () => {
         favoriteCharacterIds: [1001, 1002],
         candidateCharacterIds: undefined,
         opponentSlots: [],
+        buffFocus: DEFAULT_RUMBLE_BUFF_FOCUS,
         requireFullTeam: true,
       },
       expect.objectContaining({
@@ -268,6 +270,10 @@ describe('AutoTeamBuilderRumblePage', () => {
     expect(template).toContain("t('actions.downloadSettings')");
     expect(template).toContain("t('actions.downloadTeam')");
     expect(template).toContain("t('filters.favoritesOnly.toggle')");
+    expect(template).toContain("t('filters.buffFocus.label')");
+    expect(template).toContain('buffFocusRanks');
+    expect(template).toContain('moveBuffFocusStat(stat, \'up\')');
+    expect(template).toContain('moveBuffFocusStat(stat, \'down\')');
     expect(template).not.toContain("t('filters.optionalBench.toggle')");
     expect(template).toContain("t('filters.types.onlyToggle')");
     expect(template).toContain("t('filters.classes.onlyToggle')");
@@ -290,6 +296,7 @@ describe('AutoTeamBuilderRumblePage', () => {
     expect(template).toContain('formatTeamRumbleCostUsage(currentResult)');
     expect(template).toContain('opponentRumbleCostUsage()');
     expect(template).toContain("t('opponent.awarenessToggle')");
+    expect(template).toContain('opponentDebuffRuleLabel()');
     expect(template).toContain('opponentAwarenessEnabled()');
     expect(template).toContain('onOpponentAwarenessToggle($event)');
     expect(template).toContain('opponentActiveSlots()');
@@ -551,6 +558,7 @@ describe('AutoTeamBuilderRumblePage', () => {
         favoriteCharacterIds: [1001, 1002],
         candidateCharacterIds: undefined,
         opponentSlots: [],
+        buffFocus: DEFAULT_RUMBLE_BUFF_FOCUS,
         requireFullTeam: true,
       }),
       expect.objectContaining({
@@ -568,11 +576,39 @@ describe('AutoTeamBuilderRumblePage', () => {
         favoriteCharacterIds: [1001, 1002],
         candidateCharacterIds: undefined,
         opponentSlots: [],
+        buffFocus: DEFAULT_RUMBLE_BUFF_FOCUS,
         requireFullTeam: false,
       }),
       expect.objectContaining({
         resultMode: 'closestCost',
       }),
+      1,
+    );
+  });
+
+  it('passes selected buff focus ranks to the builder', async () => {
+    const { page, rumbleBuilder } = createPage();
+
+    await page.ngOnInit();
+    page.moveBuffFocusStat('SPD', 'up');
+    page.moveBuffFocusStat('ATK', 'down');
+    await page.buildTeam();
+
+    expect(page.buffFocusStatsForRank('primary')).toEqual(['HP', 'DEF', 'SPD']);
+    expect(page.buffFocusStatsForRank('secondary')).toEqual(['ATK', 'RCV', 'Special CT']);
+    expect(rumbleBuilder.buildBestTeams).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        buffFocus: [
+          { stat: 'ATK', rank: 'secondary' },
+          { stat: 'HP', rank: 'primary' },
+          { stat: 'DEF', rank: 'primary' },
+          { stat: 'SPD', rank: 'primary' },
+          { stat: 'RCV', rank: 'secondary' },
+          { stat: 'Special CT', rank: 'secondary' },
+        ],
+      }),
+      expect.any(Object),
       1,
     );
   });
@@ -591,7 +627,7 @@ describe('AutoTeamBuilderRumblePage', () => {
     page.opponentBenchSlots.set([createSlot('bench', 51), null, null]);
 
     expect(page.buildSettingsExportPayload('2026-04-29T04:00:00.000Z')).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       exportedAt: '2026-04-29T04:00:00.000Z',
       source: 'auto-team-builder-rumble',
       exportType: 'settings',
@@ -603,6 +639,7 @@ describe('AutoTeamBuilderRumblePage', () => {
         favoritesOnly: true,
         favoriteCharacterIds: [1001, 1002],
         opponentSlots: [],
+        buffFocus: DEFAULT_RUMBLE_BUFF_FOCUS,
         requireFullTeam: true,
       },
       favoriteCount: 2,
@@ -1040,6 +1077,7 @@ function createResult(offset = 0): RumbleTeamResult {
       favoritesOnly: false,
       favoriteCharacterIds: [],
       opponentSlots: [],
+      buffFocus: DEFAULT_RUMBLE_BUFF_FOCUS,
       requireFullTeam: true,
     },
     requestedTypes: [],

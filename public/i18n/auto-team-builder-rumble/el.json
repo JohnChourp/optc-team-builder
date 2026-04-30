@@ -45,6 +45,19 @@
         "empty": "Δεν υπάρχουν favorite units αποθηκευμένα σε αυτή τη συσκευή.",
         "withCount": "Περιόρισε το Rumble candidate pool στα {{count}} favorite units σου."
       }
+    },
+    "buffFocus": {
+      "label": "Buff focus",
+      "support": "Τα πιο πάνω lanes κάνουν τον builder να μετράει περισσότερο αυτά τα team buffs. Stats στο ίδιο lane μετράνε ισότιμα σαν average.",
+      "empty": "Κανένα stat",
+      "promoteAria": "Ανέβασε το {{stat}} buff focus",
+      "demoteAria": "Κατέβασε το {{stat}} buff focus",
+      "ranks": {
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "tertiary": "Tertiary",
+        "ignored": "Ignored"
+      }
     }
   },
   "performance": {
@@ -140,6 +153,10 @@
     "awarenessSupport": {
       "disabled": "Οι αντίπαλοι εμφανίζονται μόνο οπτικά και δεν επηρεάζουν το επόμενο build.",
       "enabled": "Το επόμενο build θα κάνει counter σε {{count}} συμπληρωμένο(α) opponent slot(s)."
+    },
+    "debuffRule": {
+      "disabled": "Τα enemy debuffs δεν επηρεάζουν το scoring εκτός αν το toggle είναι ενεργό και υπάρχει συμπληρωμένο opponent slot.",
+      "enabled": "Τα enemy debuffs μπορούν να μετρήσουν περισσότερο από μερικά self buffs όταν φτιάχνουν δυνατότερο matchup."
     },
     "activeTitle": "Opponent active",
     "benchTitle": "Opponent bench",

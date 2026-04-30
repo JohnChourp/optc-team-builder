@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { type RumbleBuildProgressSnapshot } from '../models/auto-team-builder-rumble.models';
+import {
+  DEFAULT_RUMBLE_BUFF_FOCUS,
+  type RumbleBuildProgressSnapshot,
+} from '../models/auto-team-builder-rumble.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
 import { AutoTeamBuilderRumbleService } from './auto-team-builder-rumble.service';
 
@@ -630,7 +633,177 @@ describe('AutoTeamBuilderRumbleService', () => {
     expect(selectedIds).not.toContain(statStick.id);
   });
 
-  it('prefers broad enemy stat debuffs over single-target debuffs', () => {
+  it('defaults to ATK, HP, and DEF buffs over secondary buff stats', () => {
+    const service = createService();
+    const anchors = Array.from({ length: 7 }, (_, index) =>
+      createCharacter(8150 + index, {
+        primaryClass: 'Fighter',
+        classes: ['Fighter'],
+        partyConflictKeys: [`default-focus-anchor-${index}`],
+        rumbleData: createRumbleData(55 + index),
+      }),
+    );
+    const primaryBuffer = createCharacter(8180, {
+      maxHp: 1200,
+      maxAtk: 450,
+      maxRcv: 80,
+      primaryClass: 'Fighter',
+      classes: ['Fighter'],
+      partyConflictKeys: ['default-focus-buffer'],
+      rumbleData: createCrewBuffRumbleData(8180, ['ATK', 'HP', 'DEF'], 8),
+    });
+    const secondaryBuffer = createCharacter(8181, {
+      maxHp: 1200,
+      maxAtk: 450,
+      maxRcv: 80,
+      primaryClass: 'Fighter',
+      classes: ['Fighter'],
+      partyConflictKeys: ['default-focus-buffer'],
+      rumbleData: createCrewBuffRumbleData(8181, ['SPD', 'RCV', 'Special CT'], 8),
+    });
+
+    const result = service.buildTeamFromCandidates([...anchors, primaryBuffer, secondaryBuffer]);
+    const selectedIds = collectSelectedIds(result);
+
+    expect(result.input.buffFocus).toEqual(DEFAULT_RUMBLE_BUFF_FOCUS);
+    expect(selectedIds).toContain(primaryBuffer.id);
+    expect(selectedIds).not.toContain(secondaryBuffer.id);
+  });
+
+  it('uses equal rank focus for stats in the same lane', () => {
+    const service = createService();
+    const anchors = Array.from({ length: 7 }, (_, index) =>
+      createCharacter(8160 + index, {
+        primaryClass: 'Fighter',
+        classes: ['Fighter'],
+        partyConflictKeys: [`equal-focus-anchor-${index}`],
+        rumbleData: createRumbleData(65 + index),
+      }),
+    );
+    const atkBuffer = createCharacter(8192, {
+      maxHp: 1200,
+      maxAtk: 450,
+      maxRcv: 80,
+      primaryClass: 'Fighter',
+      classes: ['Fighter'],
+      partyConflictKeys: ['equal-focus-atk-buffer'],
+      rumbleData: createCrewBuffRumbleData(8192, ['ATK'], 7),
+    });
+    const spdBuffer = createCharacter(8193, {
+      maxHp: 1200,
+      maxAtk: 450,
+      maxRcv: 80,
+      primaryClass: 'Fighter',
+      classes: ['Fighter'],
+      partyConflictKeys: ['equal-focus-spd-buffer'],
+      rumbleData: createCrewBuffRumbleData(8193, ['SPD'], 7),
+    });
+    const ignoredRcvBuffer = createCharacter(8194, {
+      maxHp: 1200,
+      maxAtk: 450,
+      maxRcv: 80,
+      primaryClass: 'Fighter',
+      classes: ['Fighter'],
+      partyConflictKeys: ['equal-focus-rcv-buffer'],
+      rumbleData: createCrewBuffRumbleData(8194, ['RCV'], 7),
+    });
+
+    const result = service.buildTeamFromCandidates(
+      [...anchors, atkBuffer, spdBuffer, ignoredRcvBuffer],
+      {
+        buffFocus: [
+          { stat: 'ATK', rank: 'primary' },
+          { stat: 'HP', rank: 'ignored' },
+          { stat: 'DEF', rank: 'ignored' },
+          { stat: 'SPD', rank: 'primary' },
+          { stat: 'RCV', rank: 'ignored' },
+          { stat: 'Special CT', rank: 'ignored' },
+        ],
+      },
+    );
+    const selectedIds = collectSelectedIds(result);
+
+    expect(selectedIds).toContain(atkBuffer.id);
+    expect(selectedIds).toContain(spdBuffer.id);
+    expect(selectedIds).not.toContain(ignoredRcvBuffer.id);
+  });
+
+  it('does not add focused buff synergy for ignored stats', () => {
+    const service = createService();
+    const anchors = Array.from({ length: 7 }, (_, index) =>
+      createCharacter(8170 + index, {
+        primaryClass: 'Fighter',
+        classes: ['Fighter'],
+        partyConflictKeys: [`ignored-focus-anchor-${index}`],
+        rumbleData: createRumbleData(75 + index),
+      }),
+    );
+    const ignoredAtkBuffer = createCharacter(8195, {
+      maxHp: 1200,
+      maxAtk: 450,
+      maxRcv: 80,
+      primaryClass: 'Fighter',
+      classes: ['Fighter'],
+      partyConflictKeys: ['ignored-focus-buffer'],
+      rumbleData: createCrewBuffRumbleData(8195, ['ATK'], 30),
+    });
+    const hpBuffer = createCharacter(8196, {
+      maxHp: 1200,
+      maxAtk: 450,
+      maxRcv: 80,
+      primaryClass: 'Fighter',
+      classes: ['Fighter'],
+      partyConflictKeys: ['ignored-focus-buffer'],
+      rumbleData: createCrewBuffRumbleData(8196, ['HP'], 30),
+    });
+
+    const result = service.buildTeamFromCandidates([...anchors, ignoredAtkBuffer, hpBuffer], {
+      buffFocus: [
+        { stat: 'ATK', rank: 'ignored' },
+        { stat: 'HP', rank: 'primary' },
+        { stat: 'DEF', rank: 'ignored' },
+        { stat: 'SPD', rank: 'ignored' },
+        { stat: 'RCV', rank: 'ignored' },
+        { stat: 'Special CT', rank: 'ignored' },
+      ],
+    });
+    const selectedIds = collectSelectedIds(result);
+
+    expect(selectedIds).toContain(hpBuffer.id);
+    expect(selectedIds).not.toContain(ignoredAtkBuffer.id);
+  });
+
+  it('does not value enemy debuffs without opponent-aware slots', () => {
+    const service = createService();
+    const anchors = Array.from({ length: 7 }, (_, index) =>
+      createCharacter(8210 + index, {
+        partyConflictKeys: [`no-opponent-debuff-anchor-${index}`],
+        rumbleData: createRumbleData(61 + index),
+      }),
+    );
+    const broadDebuffer = createCharacter(8288, {
+      maxHp: 1200,
+      maxAtk: 450,
+      maxRcv: 80,
+      partyConflictKeys: ['no-opponent-debuff-role'],
+      rumbleData: createEnemyDebuffRumbleData(8288, ['HP', 'ATK', 'DEF', 'RCV', 'Special CT']),
+    });
+    const smallBuffer = createCharacter(8289, {
+      maxHp: 1200,
+      maxAtk: 450,
+      maxRcv: 80,
+      partyConflictKeys: ['no-opponent-debuff-role'],
+      rumbleData: createCrewBuffRumbleData(8289, ['HP'], 35),
+    });
+
+    const result = service.buildTeamFromCandidates([...anchors, broadDebuffer, smallBuffer]);
+    const selectedIds = collectSelectedIds(result);
+
+    expect(selectedIds).toContain(smallBuffer.id);
+    expect(selectedIds).not.toContain(broadDebuffer.id);
+  });
+
+  it('prefers broad enemy stat debuffs over single-target debuffs when opponent-aware', () => {
     const service = createService();
     const anchors = Array.from({ length: 4 }, (_, index) =>
       createCharacter(8200 + index, {
@@ -696,7 +869,23 @@ describe('AutoTeamBuilderRumbleService', () => {
       },
     });
 
-    const result = service.buildTeamFromCandidates([...anchors, wideDebuffer, narrowDebuffer]);
+    const opponent = createCharacter(8292, {
+      maxHp: 8500,
+      maxAtk: 5200,
+      maxRcv: 800,
+      partyConflictKeys: ['wide-debuff-opponent'],
+      rumbleData: createRumbleData(70),
+    });
+
+    const result = service.buildTeamFromCandidates(
+      [...anchors, wideDebuffer, narrowDebuffer, opponent],
+      {
+        candidateCharacterIds: [...anchors, wideDebuffer, narrowDebuffer].map(
+          (character) => character.id,
+        ),
+        opponentSlots: [{ characterId: opponent.id, role: 'active', index: 0 }],
+      },
+    );
     const selectedIds = collectSelectedIds(result);
 
     expect(selectedIds).toContain(wideDebuffer.id);
@@ -808,6 +997,9 @@ describe('AutoTeamBuilderRumbleService', () => {
     const result = service.buildTeamFromCandidates(
       [...anchors, opponent, matchingDebuffer, unrelatedDebuffer],
       {
+        candidateCharacterIds: [...anchors, matchingDebuffer, unrelatedDebuffer].map(
+          (character) => character.id,
+        ),
         opponentSlots: [{ characterId: opponent.id, role: 'active', index: 0 }],
       },
     );

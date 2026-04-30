@@ -153,6 +153,45 @@
           </div>
         </div>
 
+        <div class="buff-focus-card">
+          <div class="buff-focus-card__head">
+            <span>{{ t('filters.buffFocus.label') }}</span>
+            <small>{{ t('filters.buffFocus.support') }}</small>
+          </div>
+          <div class="buff-focus-lanes">
+            @for (rank of buffFocusRanks; track rank) {
+              <div class="buff-focus-lane">
+                <strong>{{ t(buffFocusLabelKey(rank)) }}</strong>
+                <div class="buff-focus-chip-list">
+                  @for (stat of buffFocusStatsForRank(rank); track stat) {
+                    <span class="buff-focus-chip">
+                      <span>{{ stat === 'Special CT' ? 'CT' : stat }}</span>
+                      <button
+                        type="button"
+                        [disabled]="loading() || !canMoveBuffFocusStat(stat, 'up')"
+                        [attr.aria-label]="t('filters.buffFocus.promoteAria', { stat })"
+                        (click)="moveBuffFocusStat(stat, 'up')"
+                      >
+                        <ion-icon [icon]="promoteIcon"></ion-icon>
+                      </button>
+                      <button
+                        type="button"
+                        [disabled]="loading() || !canMoveBuffFocusStat(stat, 'down')"
+                        [attr.aria-label]="t('filters.buffFocus.demoteAria', { stat })"
+                        (click)="moveBuffFocusStat(stat, 'down')"
+                      >
+                        <ion-icon [icon]="demoteIcon"></ion-icon>
+                      </button>
+                    </span>
+                  } @empty {
+                    <span class="buff-focus-empty">{{ t('filters.buffFocus.empty') }}</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
         <div class="secondary-toggle-grid">
           <div class="strict-toggle-row">
             <div class="strict-toggle-copy">
@@ -229,6 +268,7 @@
             <div class="strict-toggle-copy">
               <strong>{{ t('opponent.awarenessToggle') }}</strong>
               <small>{{ opponentAwarenessSupportLabel() }}</small>
+              <small>{{ opponentDebuffRuleLabel() }}</small>
             </div>
             <ion-toggle
               color="warning"

@@ -45,6 +45,19 @@
         "empty": "No favorite units are currently saved on this device.",
         "withCount": "Limit the Rumble candidate pool to your {{count}} saved favorite units."
       }
+    },
+    "buffFocus": {
+      "label": "Buff focus",
+      "support": "Higher lanes make the builder value those team buffs more. Stats in the same lane are averaged equally.",
+      "empty": "No stats",
+      "promoteAria": "Promote {{stat}} buff focus",
+      "demoteAria": "Demote {{stat}} buff focus",
+      "ranks": {
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "tertiary": "Tertiary",
+        "ignored": "Ignored"
+      }
     }
   },
   "performance": {
@@ -140,6 +153,10 @@
     "awarenessSupport": {
       "disabled": "Opponent picks are shown only and will not affect the next build.",
       "enabled": "The next build will counter {{count}} filled opponent slot(s)."
+    },
+    "debuffRule": {
+      "disabled": "Enemy debuffs do not influence scoring unless this toggle is on and an opponent slot is filled.",
+      "enabled": "Enemy debuffs can outweigh some self-buff value when they create a stronger matchup."
     },
     "activeTitle": "Opponent active",
     "benchTitle": "Opponent bench",

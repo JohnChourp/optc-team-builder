@@ -6,7 +6,7 @@ import {
 } from '../../core/models/auto-team-builder-rumble.models';
 
 export interface RumbleBuilderSettingsExportPayload {
-  schemaVersion: 1;
+  schemaVersion: 2;
   exportedAt: string;
   source: 'auto-team-builder-rumble';
   exportType: 'settings';
@@ -55,7 +55,7 @@ export interface RumbleOpponentTeamExport {
 }
 
 export interface RumbleTeamExportPayload {
-  schemaVersion: 1;
+  schemaVersion: 2;
   exportedAt: string;
   source: 'auto-team-builder-rumble';
   exportType: 'team';
@@ -94,7 +94,7 @@ export function buildRumbleBuilderSettingsExportPayload({
   workerPreference: AutoTeamBuilderWorkerPreference;
 }): RumbleBuilderSettingsExportPayload {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     exportedAt,
     source: 'auto-team-builder-rumble',
     exportType: 'settings',
@@ -130,7 +130,7 @@ export function buildRumbleTeamExportPayload(
   );
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     exportedAt,
     source: 'auto-team-builder-rumble',
     exportType: 'team',
@@ -204,6 +204,7 @@ function cloneRumbleBuildInput(input: RumbleBuildInput): RumbleBuildInput {
       ? [...input.candidateCharacterIds]
       : undefined,
     opponentSlots: (input.opponentSlots ?? []).map((slot) => ({ ...slot })),
+    buffFocus: input.buffFocus.map((preference) => ({ ...preference })),
     requireFullTeam: input.requireFullTeam,
   };
 }

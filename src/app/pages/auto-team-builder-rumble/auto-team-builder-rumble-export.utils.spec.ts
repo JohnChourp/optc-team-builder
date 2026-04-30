@@ -9,7 +9,10 @@ import {
   downloadRumbleBuilderSettingsExport,
   downloadRumbleTeamExport,
 } from './auto-team-builder-rumble-export.utils';
-import { type RumbleTeamResult } from '../../core/models/auto-team-builder-rumble.models';
+import {
+  DEFAULT_RUMBLE_BUFF_FOCUS,
+  type RumbleTeamResult,
+} from '../../core/models/auto-team-builder-rumble.models';
 
 describe('auto-team-builder-rumble-export utils', () => {
   it('builds a settings export payload with current filters and worker preference', () => {
@@ -23,6 +26,14 @@ describe('auto-team-builder-rumble-export utils', () => {
         favoritesOnly: true,
         favoriteCharacterIds: [101, 202],
         opponentSlots: [],
+        buffFocus: [
+          { stat: 'ATK', rank: 'primary' },
+          { stat: 'HP', rank: 'secondary' },
+          { stat: 'DEF', rank: 'ignored' },
+          { stat: 'SPD', rank: 'tertiary' },
+          { stat: 'RCV', rank: 'ignored' },
+          { stat: 'Special CT', rank: 'secondary' },
+        ],
         requireFullTeam: false,
       },
       favoriteCount: 2,
@@ -30,7 +41,7 @@ describe('auto-team-builder-rumble-export utils', () => {
     });
 
     expect(payload).toEqual({
-      schemaVersion: 1,
+      schemaVersion: 2,
       exportedAt: '2026-04-29T04:00:00.000Z',
       source: 'auto-team-builder-rumble',
       exportType: 'settings',
@@ -43,6 +54,14 @@ describe('auto-team-builder-rumble-export utils', () => {
         favoriteCharacterIds: [101, 202],
         candidateCharacterIds: undefined,
         opponentSlots: [],
+        buffFocus: [
+          { stat: 'ATK', rank: 'primary' },
+          { stat: 'HP', rank: 'secondary' },
+          { stat: 'DEF', rank: 'ignored' },
+          { stat: 'SPD', rank: 'tertiary' },
+          { stat: 'RCV', rank: 'ignored' },
+          { stat: 'Special CT', rank: 'secondary' },
+        ],
         requireFullTeam: false,
       },
       favoriteCount: 2,
@@ -103,6 +122,7 @@ describe('auto-team-builder-rumble-export utils', () => {
           favoritesOnly: false,
           favoriteCharacterIds: [],
           opponentSlots: [],
+          buffFocus: DEFAULT_RUMBLE_BUFF_FOCUS,
           requireFullTeam: true,
         },
         favoriteCount: 0,
@@ -148,6 +168,7 @@ function createResult(offset = 0): RumbleTeamResult {
       favoritesOnly: false,
       favoriteCharacterIds: [],
       opponentSlots: [],
+      buffFocus: DEFAULT_RUMBLE_BUFF_FOCUS,
       requireFullTeam: true,
     },
     requestedTypes: ['DEX'],

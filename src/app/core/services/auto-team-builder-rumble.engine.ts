@@ -1,10 +1,16 @@
 import {
+  DEFAULT_RUMBLE_BUFF_FOCUS,
+  RUMBLE_BUFF_FOCUS_RANKS,
+  RUMBLE_BUFF_FOCUS_STATS,
   RUMBLE_ACTIVE_SLOT_COUNT,
   RUMBLE_BENCH_SLOT_COUNT,
   RUMBLE_TOTAL_SLOT_COUNT,
   type NormalizedRumbleData,
   type NormalizedRumbleEffect,
   type NormalizedRumbleRoleTag,
+  type RumbleBuffFocusPreference,
+  type RumbleBuffFocusRank,
+  type RumbleBuffFocusStat,
   type RumbleBuildInput,
   type RumbleBuildProgressSnapshot,
   type RumbleBuildResultMode,
@@ -22,7 +28,7 @@ import { type CharacterDetailRecord } from '../models/optc.models';
 import { resolveCharacterPartyConflictKeys } from './auto-team-builder.utils';
 
 type UnknownRecord = Record<string, unknown>;
-type OpponentCounterAttribute = RumbleSynergyAttribute | string;
+type OpponentCounterAttribute = RumbleBuffFocusStat | string;
 
 interface RumbleOpponentUnit {
   unit: RumbleUnitScore;
@@ -43,6 +49,7 @@ export interface RumbleBuildAttempt {
   resolvedClasses: string[];
   droppedTypes: AutoTeamBuilderType[];
   droppedClasses: string[];
+  buffFocus: RumbleBuffFocusPreference[];
 }
 
 export interface RumbleBuildSearchOptions {
@@ -110,18 +117,24 @@ const EMPTY_INPUT: RumbleBuildInput = {
   favoritesOnly: false,
   favoriteCharacterIds: [],
   opponentSlots: [],
+  buffFocus: DEFAULT_RUMBLE_BUFF_FOCUS,
   requireFullTeam: true,
 };
 
-const RUMBLE_SYNERGY_ATTRIBUTES = ['HP', 'ATK', 'DEF', 'RCV', 'Special CT'] as const;
-type RumbleSynergyAttribute = (typeof RUMBLE_SYNERGY_ATTRIBUTES)[number];
-
-const RUMBLE_SYNERGY_ATTRIBUTE_WEIGHTS: Record<RumbleSynergyAttribute, number> = {
+const RUMBLE_SYNERGY_ATTRIBUTE_WEIGHTS: Record<RumbleBuffFocusStat, number> = {
   HP: 34,
   ATK: 42,
   DEF: 38,
+  SPD: 36,
   RCV: 30,
   'Special CT': 46,
+};
+
+const RUMBLE_BUFF_FOCUS_RANK_WEIGHTS: Record<RumbleBuffFocusRank, number> = {
+  primary: 1.75,
+  secondary: 1,
+  tertiary: 0.55,
+  ignored: 0,
 };
 
 const ACTIVE_SLOT_WEIGHT = 1;
@@ -163,6 +176,7 @@ export function normalizeRumbleBuildInput(input: Partial<RumbleBuildInput> = {})
       ? normalizePositiveIntegerCollection(input.candidateCharacterIds)
       : undefined,
     opponentSlots: normalizeRumbleOpponentSlots(input.opponentSlots),
+    buffFocus: normalizeRumbleBuffFocus(input.buffFocus),
     requireFullTeam: input.requireFullTeam ?? true,
   };
 }
@@ -1147,7 +1161,7 @@ export class RumbleTeamBuilderEngine {
       sameClassSynergy +
       roleCoverageSynergy +
       rumbleTypeCoverageSynergy +
-      this.scoreRumbleEffectSynergy(units) +
+      this.scoreRumbleEffectSynergy(units, attempt.buffFocus) +
       this.scoreOpponentCounterSynergy(units, opponentProfile) +
       coverageBonus
     );
@@ -1186,7 +1200,10 @@ export class RumbleTeamBuilderEngine {
     });
   }
 
-  private scoreRumbleEffectSynergy(units: RumbleUnitScore[]): number {
+  private scoreRumbleEffectSynergy(
+    units: RumbleUnitScore[],
+    buffFocus: RumbleBuffFocusPreference[],
+  ): number {
     const activeUnits = units.slice(0, RUMBLE_ACTIVE_SLOT_COUNT);
 
     return activeUnits.reduce((total, unit, sourceIndex) => {
@@ -1195,15 +1212,12 @@ export class RumbleTeamBuilderEngine {
       const buffScore = maxEffects.reduce(
         (effectTotal, effect) =>
           effectTotal +
-          this.scoreTeamBuffEffect(effect, unit, sourceIndex, activeUnits) * sourceWeight,
-        0,
-      );
-      const debuffScore = maxEffects.reduce(
-        (effectTotal, effect) => effectTotal + this.scoreEnemyDebuffEffect(effect) * sourceWeight,
+          this.scoreTeamBuffEffect(effect, unit, sourceIndex, activeUnits, buffFocus) *
+            sourceWeight,
         0,
       );
 
-      return total + buffScore + debuffScore;
+      return total + buffScore;
     }, 0);
   }
 
@@ -1269,7 +1283,7 @@ export class RumbleTeamBuilderEngine {
 
     return (
       (this.scoreSynergyAttributes(
-        attributes.filter((attribute): attribute is RumbleSynergyAttribute =>
+        attributes.filter((attribute): attribute is RumbleBuffFocusStat =>
           this.isRumbleSynergyAttribute(attribute),
         ),
       ) *
@@ -1326,6 +1340,7 @@ export class RumbleTeamBuilderEngine {
     sourceUnit: RumbleUnitScore,
     sourceIndex: number,
     units: RumbleUnitScore[],
+    buffFocus: RumbleBuffFocusPreference[],
   ): number {
     if (!this.isTeamBuffEffect(effect)) {
       return 0;
@@ -1344,29 +1359,9 @@ export class RumbleTeamBuilderEngine {
     }
 
     return (
-      this.scoreSynergyAttributes(attributes) *
+      this.scoreSynergyAttributes(attributes, buffFocus) *
       this.resolveEffectStrength(effect) *
       recipientWeight *
-      this.resolveEffectSourceWeight(effect) *
-      this.resolveConditionalWeight(effect)
-    );
-  }
-
-  private scoreEnemyDebuffEffect(effect: NormalizedRumbleEffect): number {
-    if (!this.isEnemyDebuffEffect(effect)) {
-      return 0;
-    }
-
-    const attributes = this.resolveSynergyAttributes(effect);
-
-    if (!attributes.length) {
-      return 0;
-    }
-
-    return (
-      this.scoreSynergyAttributes(attributes) *
-      this.resolveEffectStrength(effect) *
-      this.resolveEnemyCoverageWeight(effect) *
       this.resolveEffectSourceWeight(effect) *
       this.resolveConditionalWeight(effect)
     );
@@ -1460,12 +1455,12 @@ export class RumbleTeamBuilderEngine {
     return tokens;
   }
 
-  private resolveSynergyAttributes(effect: NormalizedRumbleEffect): RumbleSynergyAttribute[] {
+  private resolveSynergyAttributes(effect: NormalizedRumbleEffect): RumbleBuffFocusStat[] {
     const rawAttributes =
       effect.attributes.length > 0 ? effect.attributes : effect.type ? [effect.type] : [];
     const attributes = rawAttributes
       .map((attribute) => this.normalizeSynergyAttribute(attribute))
-      .filter((attribute): attribute is RumbleSynergyAttribute => Boolean(attribute));
+      .filter((attribute): attribute is RumbleBuffFocusStat => Boolean(attribute));
 
     return [...new Set(attributes)];
   }
@@ -1497,7 +1492,7 @@ export class RumbleTeamBuilderEngine {
       return 'Special CT';
     }
 
-    const synergyAttribute = RUMBLE_SYNERGY_ATTRIBUTES.find(
+    const synergyAttribute = RUMBLE_BUFF_FOCUS_STATS.find(
       (attribute) => attribute.toLowerCase() === normalized,
     );
 
@@ -1506,11 +1501,11 @@ export class RumbleTeamBuilderEngine {
 
   private isRumbleSynergyAttribute(
     value: OpponentCounterAttribute,
-  ): value is RumbleSynergyAttribute {
-    return RUMBLE_SYNERGY_ATTRIBUTES.includes(value as RumbleSynergyAttribute);
+  ): value is RumbleBuffFocusStat {
+    return RUMBLE_BUFF_FOCUS_STATS.includes(value as RumbleBuffFocusStat);
   }
 
-  private normalizeSynergyAttribute(value: string): RumbleSynergyAttribute | null {
+  private normalizeSynergyAttribute(value: string): RumbleBuffFocusStat | null {
     const normalized = value
       .replace(/^\[([^\]]+)\]$/, '$1')
       .trim()
@@ -1521,13 +1516,19 @@ export class RumbleTeamBuilderEngine {
     }
 
     return (
-      RUMBLE_SYNERGY_ATTRIBUTES.find((attribute) => attribute.toLowerCase() === normalized) ?? null
+      RUMBLE_BUFF_FOCUS_STATS.find((attribute) => attribute.toLowerCase() === normalized) ?? null
     );
   }
 
-  private scoreSynergyAttributes(attributes: RumbleSynergyAttribute[]): number {
+  private scoreSynergyAttributes(
+    attributes: RumbleBuffFocusStat[],
+    buffFocus: RumbleBuffFocusPreference[] = DEFAULT_RUMBLE_BUFF_FOCUS,
+  ): number {
+    const focusWeights = buildRumbleBuffFocusWeightMap(buffFocus);
+
     return attributes.reduce(
-      (total, attribute) => total + RUMBLE_SYNERGY_ATTRIBUTE_WEIGHTS[attribute],
+      (total, attribute) =>
+        total + RUMBLE_SYNERGY_ATTRIBUTE_WEIGHTS[attribute] * focusWeights[attribute],
       0,
     );
   }
@@ -1687,6 +1688,10 @@ export class RumbleTeamBuilderEngine {
     effect: NormalizedRumbleEffect,
     source: NormalizedRumbleEffect['source'],
   ): number {
+    if (this.isEnemyDebuffEffect(effect)) {
+      return 0;
+    }
+
     const normalizedEffect = effect.effect.toLowerCase();
     const attributes = effect.attributes.join(' ').toLowerCase();
     const sourceWeight = source === 'special' ? 1.25 : 1;
@@ -2291,6 +2296,7 @@ function createRumbleBuildAttempts(input: RumbleBuildInput): RumbleBuildAttempt[
         droppedClasses: input.selectedClasses.filter(
           (characterClass) => !resolvedClasses.includes(characterClass),
         ),
+        buffFocus: [...input.buffFocus],
       });
     }
   }
@@ -2311,6 +2317,7 @@ function createExactAttempt(input: RumbleBuildInput): RumbleBuildAttempt {
     resolvedClasses: [...input.selectedClasses],
     droppedTypes: [],
     droppedClasses: [],
+    buffFocus: [...input.buffFocus],
   };
 }
 
@@ -2583,6 +2590,56 @@ function normalizeRumbleOpponentSlots(
   });
 
   return normalizedSlots;
+}
+
+function normalizeRumbleBuffFocus(
+  values: RumbleBuffFocusPreference[] | undefined,
+): RumbleBuffFocusPreference[] {
+  const statSet = new Set<RumbleBuffFocusStat>(RUMBLE_BUFF_FOCUS_STATS);
+  const rankSet = new Set<RumbleBuffFocusRank>(RUMBLE_BUFF_FOCUS_RANKS);
+  const byStat = new Map<RumbleBuffFocusStat, RumbleBuffFocusRank>();
+
+  if (Array.isArray(values)) {
+    values.forEach((value) => {
+      if (!value || typeof value !== 'object') {
+        return;
+      }
+
+      const stat = value.stat;
+      const rank = value.rank;
+
+      if (!statSet.has(stat) || !rankSet.has(rank) || byStat.has(stat)) {
+        return;
+      }
+
+      byStat.set(stat, rank);
+    });
+  }
+
+  DEFAULT_RUMBLE_BUFF_FOCUS.forEach((preference) => {
+    if (!byStat.has(preference.stat)) {
+      byStat.set(preference.stat, preference.rank);
+    }
+  });
+
+  return RUMBLE_BUFF_FOCUS_STATS.map((stat) => ({
+    stat,
+    rank: byStat.get(stat) ?? 'ignored',
+  }));
+}
+
+function buildRumbleBuffFocusWeightMap(
+  buffFocus: RumbleBuffFocusPreference[],
+): Record<RumbleBuffFocusStat, number> {
+  const normalizedFocus = normalizeRumbleBuffFocus(buffFocus);
+
+  return normalizedFocus.reduce(
+    (weights, preference) => ({
+      ...weights,
+      [preference.stat]: RUMBLE_BUFF_FOCUS_RANK_WEIGHTS[preference.rank],
+    }),
+    {} as Record<RumbleBuffFocusStat, number>,
+  );
 }
 
 function sanitizeText(value: unknown): string | null {

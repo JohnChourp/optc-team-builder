@@ -13,6 +13,39 @@ export type NormalizedRumbleRoleTag =
   | 'healer'
   | 'speed';
 
+export const RUMBLE_BUFF_FOCUS_STATS = [
+  'ATK',
+  'HP',
+  'DEF',
+  'SPD',
+  'RCV',
+  'Special CT',
+] as const;
+
+export const RUMBLE_BUFF_FOCUS_RANKS = [
+  'primary',
+  'secondary',
+  'tertiary',
+  'ignored',
+] as const;
+
+export type RumbleBuffFocusStat = (typeof RUMBLE_BUFF_FOCUS_STATS)[number];
+export type RumbleBuffFocusRank = (typeof RUMBLE_BUFF_FOCUS_RANKS)[number];
+
+export interface RumbleBuffFocusPreference {
+  stat: RumbleBuffFocusStat;
+  rank: RumbleBuffFocusRank;
+}
+
+export const DEFAULT_RUMBLE_BUFF_FOCUS: RumbleBuffFocusPreference[] = [
+  { stat: 'ATK', rank: 'primary' },
+  { stat: 'HP', rank: 'primary' },
+  { stat: 'DEF', rank: 'primary' },
+  { stat: 'SPD', rank: 'secondary' },
+  { stat: 'RCV', rank: 'secondary' },
+  { stat: 'Special CT', rank: 'secondary' },
+];
+
 export interface NormalizedRumbleEffect {
   source: 'ability' | 'special';
   sourceLevel: number | null;
@@ -123,6 +156,7 @@ export interface RumbleBuildInput {
   favoriteCharacterIds: number[];
   candidateCharacterIds?: number[];
   opponentSlots: RumbleOpponentSlotContext[];
+  buffFocus: RumbleBuffFocusPreference[];
   requireFullTeam: boolean;
 }
 

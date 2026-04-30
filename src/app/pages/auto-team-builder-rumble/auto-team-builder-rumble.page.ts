@@ -19,6 +19,8 @@ import {
   IonToolbar,
 } from '@ionic/angular/standalone';
 import {
+  chevronDownOutline,
+  chevronUpOutline,
   closeOutline,
   createOutline,
   refreshOutline,
@@ -31,10 +33,16 @@ import {
   type AutoTeamBuilderType,
 } from '../../core/models/auto-team-builder.models';
 import {
+  DEFAULT_RUMBLE_BUFF_FOCUS,
+  RUMBLE_BUFF_FOCUS_RANKS,
+  RUMBLE_BUFF_FOCUS_STATS,
   RUMBLE_ACTIVE_SLOT_COUNT,
   RUMBLE_BENCH_SLOT_COUNT,
   type NormalizedRumbleEffect,
   type NormalizedRumbleRoleTag,
+  type RumbleBuffFocusPreference,
+  type RumbleBuffFocusRank,
+  type RumbleBuffFocusStat,
   type RumbleBuildInput,
   type RumbleBuildProgressSnapshot,
   type RumbleOpponentSlotContext,
@@ -82,6 +90,7 @@ const RUMBLE_BUFF_STATS = ['HP', 'ATK', 'DEF', 'RCV', 'SPD', 'Special CT'] as co
 const RUMBLE_TEAM_COST_LIMIT = 300;
 
 type RumbleBuffStat = (typeof RUMBLE_BUFF_STATS)[number];
+type RumbleBuffFocusDirection = 'up' | 'down';
 
 interface RumbleBuffSummaryRow {
   stat: RumbleBuffStat;
@@ -162,6 +171,9 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     createEmptyRumbleSlots(RUMBLE_BENCH_SLOT_COUNT),
   );
   public readonly opponentAwarenessEnabled = signal(false);
+  public readonly buffFocus = signal<RumbleBuffFocusPreference[]>(
+    DEFAULT_RUMBLE_BUFF_FOCUS.map((preference) => ({ ...preference })),
+  );
   public readonly excludedCharacterIds = signal<number[]>([]);
   private readonly excludedCharacterRecordsById = signal<Record<number, CharacterDetailRecord>>({});
   private readonly buildProgressNowMs = signal(0);
@@ -177,10 +189,13 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   public readonly shieldIcon = shieldHalfOutline;
   public readonly editIcon = createOutline;
   public readonly closeIcon = closeOutline;
+  public readonly promoteIcon = chevronUpOutline;
+  public readonly demoteIcon = chevronDownOutline;
   public readonly favoriteCharacterIds;
   public readonly autoTeamBuilderWorkerPreference;
   public readonly autoTeamBuilderWorkerRuntime;
   public readonly autoTeamBuilderAvailableWorkerCounts;
+  public readonly buffFocusRanks = RUMBLE_BUFF_FOCUS_RANKS;
 
   public readonly hasResult = computed(() => this.currentResult() !== null);
   public readonly hasAlternateTeams = computed(() => this.teamResults().length > 1);
@@ -216,6 +231,11 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
           count: this.collectOpponentTeamSlots().length,
         })
       : this.t('opponent.awarenessSupport.disabled'),
+  );
+  public readonly opponentDebuffRuleLabel = computed(() =>
+    this.opponentAwarenessEnabled() && this.collectOpponentTeamSlots().length > 0
+      ? this.t('opponent.debuffRule.enabled')
+      : this.t('opponent.debuffRule.disabled'),
   );
   public readonly canDownloadSettingsJson = computed(() => this.initialized());
   public readonly canDownloadTeamJson = computed(() => {
@@ -591,6 +611,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
         favoriteCharacterIds: this.favoriteCharacterIds(),
         candidateCharacterIds,
         opponentSlots: this.opponentAwarenessEnabled() ? this.buildOpponentSlotContexts() : [],
+        buffFocus: this.buffFocus(),
       };
       const fullTeamResults = await this.rumbleBuilder.buildBestTeams(
         {
@@ -662,6 +683,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
         favoritesOnly: this.favoritesOnly(),
         favoriteCharacterIds: [...this.favoriteCharacterIds()],
         opponentSlots: [],
+        buffFocus: this.buffFocus().map((preference) => ({ ...preference })),
         requireFullTeam: true,
       },
       favoriteCount: this.favoriteCharacterIds().length,
@@ -730,6 +752,63 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
 
   public onOpponentAwarenessToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.opponentAwarenessEnabled.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
+  public buffFocusLabelKey(rank: RumbleBuffFocusRank): string {
+    return `filters.buffFocus.ranks.${rank}`;
+  }
+
+  public buffFocusStatsForRank(rank: RumbleBuffFocusRank): RumbleBuffFocusStat[] {
+    return this.buffFocus()
+      .filter((preference) => preference.rank === rank)
+      .map((preference) => preference.stat);
+  }
+
+  public canMoveBuffFocusStat(
+    stat: RumbleBuffFocusStat,
+    direction: RumbleBuffFocusDirection,
+  ): boolean {
+    const rankIndex = this.resolveBuffFocusRankIndex(this.resolveBuffFocusRank(stat));
+
+    return direction === 'up'
+      ? rankIndex > 0
+      : rankIndex >= 0 && rankIndex < RUMBLE_BUFF_FOCUS_RANKS.length - 1;
+  }
+
+  public moveBuffFocusStat(
+    stat: RumbleBuffFocusStat,
+    direction: RumbleBuffFocusDirection,
+  ): void {
+    if (this.loading()) {
+      return;
+    }
+
+    const currentRankIndex = this.resolveBuffFocusRankIndex(this.resolveBuffFocusRank(stat));
+    const nextRankIndex =
+      direction === 'up' ? currentRankIndex - 1 : currentRankIndex + 1;
+    const nextRank = RUMBLE_BUFF_FOCUS_RANKS[nextRankIndex];
+
+    if (!nextRank) {
+      return;
+    }
+
+    this.buffFocus.update((currentFocus) =>
+      RUMBLE_BUFF_FOCUS_STATS.map((currentStat) => {
+        const currentPreference = currentFocus.find((preference) => preference.stat === currentStat);
+
+        return {
+          stat: currentStat,
+          rank:
+            currentStat === stat
+              ? nextRank
+              : (currentPreference?.rank ??
+                DEFAULT_RUMBLE_BUFF_FOCUS.find((preference) => preference.stat === currentStat)
+                  ?.rank ??
+                'ignored'),
+        };
+      }),
+    );
     this.resetBuildState();
   }
 
@@ -1095,6 +1174,18 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     if (this.opponentAwarenessEnabled()) {
       this.resetBuildState();
     }
+  }
+
+  private resolveBuffFocusRank(stat: RumbleBuffFocusStat): RumbleBuffFocusRank {
+    return (
+      this.buffFocus().find((preference) => preference.stat === stat)?.rank ??
+      DEFAULT_RUMBLE_BUFF_FOCUS.find((preference) => preference.stat === stat)?.rank ??
+      'ignored'
+    );
+  }
+
+  private resolveBuffFocusRankIndex(rank: RumbleBuffFocusRank): number {
+    return Math.max(0, RUMBLE_BUFF_FOCUS_RANKS.indexOf(rank));
   }
 
   private resolveSelectedCharacterIds(target: ManualSlotTarget | null): Set<number> {
