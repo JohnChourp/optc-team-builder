@@ -83,6 +83,7 @@ type RumbleBuffStat = (typeof RUMBLE_BUFF_STATS)[number];
 
 interface RumbleBuffSummaryRow {
   stat: RumbleBuffStat;
+  label: string;
   value: string;
 }
 
@@ -642,6 +643,13 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     return ['/characters', slot.unit.character.id.toString()];
   }
 
+  public formatSlotTooltip(slot: RumbleTeamSlot): string {
+    const character = slot.unit.character;
+    const typeClassLine = [character.type, character.primaryClass].filter(Boolean).join(' • ');
+
+    return typeClassLine ? `${character.name}\n${typeClassLine}` : character.name;
+  }
+
   public formatScore(value: number): string {
     return Math.round(value).toLocaleString('en-US');
   }
@@ -670,6 +678,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       .filter(({ total }) => total > 0)
       .map(({ stat, total }) => ({
         stat,
+        label: this.formatBuffStatLabel(stat),
         value: `+${this.formatBuffTotal(total)}`,
       }));
   }
@@ -1188,6 +1197,10 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
 
   private formatBuffTotal(value: number): string {
     return Number.isInteger(value) ? value.toLocaleString('en-US') : value.toFixed(1);
+  }
+
+  private formatBuffStatLabel(stat: RumbleBuffStat): string {
+    return stat === 'Special CT' ? 'CT' : stat;
   }
 
   private handleBuildProgressSnapshot(snapshot: RumbleBuildProgressSnapshot): void {

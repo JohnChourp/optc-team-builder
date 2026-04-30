@@ -256,6 +256,7 @@
                       class="slot-image"
                       [routerLink]="getCharacterDetailLink(opponentSlot)"
                       [attr.aria-label]="opponentSlot.unit.character.name"
+                      [attr.title]="formatSlotTooltip(opponentSlot)"
                     >
                       <img
                         [src]="opponentSlot.unit.character.imageUrl"
@@ -263,9 +264,6 @@
                       />
                     </a>
                     <div class="slot-copy">
-                      <a class="slot-name" [routerLink]="getCharacterDetailLink(opponentSlot)">
-                        {{ opponentSlot.unit.character.name }}
-                      </a>
                       <ion-button
                         class="slot-replace-button"
                         fill="clear"
@@ -290,10 +288,6 @@
                       >
                         <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
                       </ion-button>
-                      <small>
-                        {{ opponentSlot.unit.character.type }} •
-                        {{ opponentSlot.unit.character.primaryClass }}
-                      </small>
                       <dl class="slot-rumble-details">
                         <div class="slot-rumble-details__wide">
                           <dt>{{ t('slot.totalBuffs') }}</dt>
@@ -304,7 +298,7 @@
                                 track buff.stat
                               ) {
                                 <span class="slot-buff-chip">
-                                  <span>{{ buff.stat }}</span>
+                                  <span>{{ buff.label }}</span>
                                   <strong>{{ buff.value }}</strong>
                                 </span>
                               }
@@ -341,6 +335,7 @@
                       class="slot-image"
                       [routerLink]="getCharacterDetailLink(opponentSlot)"
                       [attr.aria-label]="opponentSlot.unit.character.name"
+                      [attr.title]="formatSlotTooltip(opponentSlot)"
                     >
                       <img
                         [src]="opponentSlot.unit.character.imageUrl"
@@ -348,9 +343,6 @@
                       />
                     </a>
                     <div class="slot-copy">
-                      <a class="slot-name" [routerLink]="getCharacterDetailLink(opponentSlot)">
-                        {{ opponentSlot.unit.character.name }}
-                      </a>
                       <ion-button
                         class="slot-replace-button"
                         fill="clear"
@@ -375,10 +367,6 @@
                       >
                         <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
                       </ion-button>
-                      <small>
-                        {{ opponentSlot.unit.character.type }} •
-                        {{ opponentSlot.unit.character.primaryClass }}
-                      </small>
                       <dl class="slot-rumble-details">
                         <div class="slot-rumble-details__wide">
                           <dt>{{ t('slot.totalBuffs') }}</dt>
@@ -389,7 +377,7 @@
                                 track buff.stat
                               ) {
                                 <span class="slot-buff-chip">
-                                  <span>{{ buff.stat }}</span>
+                                  <span>{{ buff.label }}</span>
                                   <strong>{{ buff.value }}</strong>
                                 </span>
                               }
@@ -657,13 +645,11 @@
                     class="slot-image"
                     [routerLink]="getCharacterDetailLink(slot)"
                     [attr.aria-label]="slot.unit.character.name"
+                    [attr.title]="formatSlotTooltip(slot)"
                   >
                     <img [src]="slot.unit.character.imageUrl" [alt]="slot.unit.character.name" />
                   </a>
                   <div class="slot-copy">
-                    <a class="slot-name" [routerLink]="getCharacterDetailLink(slot)">
-                      {{ slot.unit.character.name }}
-                    </a>
                     <ion-button
                       class="slot-replace-button"
                       fill="clear"
@@ -684,9 +670,6 @@
                     >
                       <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
                     </ion-button>
-                    <small>
-                      {{ slot.unit.character.type }} • {{ slot.unit.character.primaryClass }}
-                    </small>
                     <dl class="slot-rumble-details">
                       <div class="slot-rumble-details__wide">
                         <dt>{{ t('slot.totalBuffs') }}</dt>
@@ -694,7 +677,7 @@
                           <dd class="slot-buff-grid">
                             @for (buff of getSlotTotalBuffRows(slot); track buff.stat) {
                               <span class="slot-buff-chip">
-                                <span>{{ buff.stat }}</span>
+                                <span>{{ buff.label }}</span>
                                 <strong>{{ buff.value }}</strong>
                               </span>
                             }
@@ -724,13 +707,11 @@
                     class="slot-image"
                     [routerLink]="getCharacterDetailLink(slot)"
                     [attr.aria-label]="slot.unit.character.name"
+                    [attr.title]="formatSlotTooltip(slot)"
                   >
                     <img [src]="slot.unit.character.imageUrl" [alt]="slot.unit.character.name" />
                   </a>
                   <div class="slot-copy">
-                    <a class="slot-name" [routerLink]="getCharacterDetailLink(slot)">
-                      {{ slot.unit.character.name }}
-                    </a>
                     <ion-button
                       class="slot-replace-button"
                       fill="clear"
@@ -751,9 +732,6 @@
                     >
                       <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
                     </ion-button>
-                    <small>
-                      {{ slot.unit.character.type }} • {{ slot.unit.character.primaryClass }}
-                    </small>
                     <dl class="slot-rumble-details">
                       <div class="slot-rumble-details__wide">
                         <dt>{{ t('slot.totalBuffs') }}</dt>
@@ -761,7 +739,7 @@
                           <dd class="slot-buff-grid">
                             @for (buff of getSlotTotalBuffRows(slot); track buff.stat) {
                               <span class="slot-buff-chip">
-                                <span>{{ buff.stat }}</span>
+                                <span>{{ buff.label }}</span>
                                 <strong>{{ buff.value }}</strong>
                               </span>
                             }

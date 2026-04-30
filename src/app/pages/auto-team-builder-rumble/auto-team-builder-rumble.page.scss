@@ -430,14 +430,14 @@
   align-items: start;
   gap: 14px;
   min-width: 0;
-  padding: 14px 88px 14px 14px;
+  padding: 14px 82px 14px 14px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.045);
 }
 
 .slot-copy {
-  align-content: start;
+  display: contents;
 }
 
 .rumble-slot-card--bench {
@@ -491,13 +491,6 @@
   object-fit: cover;
 }
 
-.slot-name {
-  color: #fff8ee;
-  font-weight: 800;
-  text-decoration: none;
-  overflow-wrap: anywhere;
-}
-
 .slot-replace-button,
 .slot-exclude-button {
   position: absolute;
@@ -530,16 +523,16 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  margin: 10px 0 0;
+  grid-column: 1 / -1;
+  margin: 0;
   min-width: 0;
 }
 
 .slot-rumble-details div {
   min-width: 0;
-  padding: 8px 9px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.045);
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .slot-rumble-details__wide {
@@ -576,30 +569,36 @@
 }
 
 .slot-buff-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(86px, auto));
   gap: 6px;
+  align-items: start;
+  justify-content: start;
 }
 
 .slot-buff-chip {
   display: inline-flex;
   align-items: center;
+  justify-content: space-between;
   gap: 5px;
-  min-width: 0;
+  min-width: 86px;
   padding: 4px 7px;
   border-radius: 7px;
   background: rgba(255, 255, 255, 0.06);
+  white-space: nowrap;
 }
 
 .slot-buff-chip span {
   color: rgba(246, 241, 232, 0.68);
   font-size: 0.68rem;
   font-weight: 800;
+  overflow-wrap: normal;
 }
 
 .slot-buff-chip strong {
   color: #ffffff;
   font-size: 0.74rem;
+  overflow-wrap: normal;
 }
 
 .slot-rumble-effects li {

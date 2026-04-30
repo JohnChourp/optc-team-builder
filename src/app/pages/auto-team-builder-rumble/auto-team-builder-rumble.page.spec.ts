@@ -188,6 +188,8 @@ describe('AutoTeamBuilderRumblePage', () => {
     expect(template).toContain('currentResult.activeSlots');
     expect(template).toContain('currentResult.benchSlots');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(slot)"');
+    expect(template).toContain('[attr.title]="formatSlotTooltip(slot)"');
+    expect(template).toContain('[attr.title]="formatSlotTooltip(opponentSlot)"');
     expect(template).toContain('(click)="openManualCharacterPicker(slot)"');
     expect(template).toContain('(click)="openOpponentCharacterPicker(\'active\', $index)"');
     expect(template).toContain('(click)="clearOpponentSlot(\'active\', $index)"');
@@ -202,6 +204,10 @@ describe('AutoTeamBuilderRumblePage', () => {
     expect(template).toContain("t('slot.noBuffs')");
     expect(template).toContain('getSlotTotalBuffRows(slot)');
     expect(template).toContain('getOpponentSlotTotalBuffRows(opponentSlot)');
+    expect(template).toContain('{{ buff.label }}');
+    expect(template).not.toContain('class="slot-name"');
+    expect(template).not.toContain('{{ slot.unit.character.type }} • {{ slot.unit.character.primaryClass }}');
+    expect(template).not.toContain('{{ opponentSlot.unit.character.type }} •');
     expect(template).not.toContain("t('slot.passiveLevel'");
     expect(template).not.toContain("t('slot.specialLevel'");
     expect(template).not.toContain("t('slot.resistance')");
@@ -212,6 +218,19 @@ describe('AutoTeamBuilderRumblePage', () => {
     expect(template).not.toContain('formatScore(slot.score)');
     expect(template).not.toContain('currentResult.totalScore');
     expect(template).not.toContain("t('slot.effects')");
+  });
+
+  it('formats slot image tooltips with name, type, and class', () => {
+    const { page } = createPage();
+    const slot = createSlot('active', 1);
+
+    slot.unit.character.name = 'Master Caesar Clown - Scientist Wreathed in Toxic Gas';
+    slot.unit.character.type = 'DEX';
+    slot.unit.character.primaryClass = 'Cerebral';
+
+    expect(page.formatSlotTooltip(slot)).toBe(
+      'Master Caesar Clown - Scientist Wreathed in Toxic Gas\nDEX • Cerebral',
+    );
   });
 
   it('summarizes total buffs received from passive and special effects', () => {
@@ -275,14 +294,14 @@ describe('AutoTeamBuilderRumblePage', () => {
     page.result.set(result);
 
     expect(page.getSlotTotalBuffRows(targetSlot)).toEqual([
-      { stat: 'HP', value: '+4' },
-      { stat: 'ATK', value: '+3' },
-      { stat: 'DEF', value: '+5' },
-      { stat: 'Special CT', value: '+2' },
+      { stat: 'HP', label: 'HP', value: '+4' },
+      { stat: 'ATK', label: 'ATK', value: '+3' },
+      { stat: 'DEF', label: 'DEF', value: '+5' },
+      { stat: 'Special CT', label: 'CT', value: '+2' },
     ]);
     expect(page.getSlotTotalBuffRows(nonMatchingSlot)).toEqual([
-      { stat: 'HP', value: '+4' },
-      { stat: 'Special CT', value: '+2' },
+      { stat: 'HP', label: 'HP', value: '+4' },
+      { stat: 'Special CT', label: 'CT', value: '+2' },
     ]);
   });
 
@@ -309,8 +328,12 @@ describe('AutoTeamBuilderRumblePage', () => {
     page.result.set(result);
 
     expect(page.getSlotTotalBuffRows(slots[0])).toEqual([]);
-    expect(page.getSlotTotalBuffRows(slots[1])).toEqual([{ stat: 'SPD', value: '+6' }]);
-    expect(page.getSlotTotalBuffRows(slots[2])).toEqual([{ stat: 'SPD', value: '+6' }]);
+    expect(page.getSlotTotalBuffRows(slots[1])).toEqual([
+      { stat: 'SPD', label: 'SPD', value: '+6' },
+    ]);
+    expect(page.getSlotTotalBuffRows(slots[2])).toEqual([
+      { stat: 'SPD', label: 'SPD', value: '+6' },
+    ]);
     expect(page.getSlotTotalBuffRows(slots[3])).toEqual([]);
   });
 
@@ -581,9 +604,11 @@ describe('AutoTeamBuilderRumblePage', () => {
     page.result.set(result);
     page.opponentActiveSlots.set([opponentTarget, opponentSource, null, null, null]);
 
-    expect(page.getSlotTotalBuffRows(playerTarget)).toEqual([{ stat: 'HP', value: '+3' }]);
+    expect(page.getSlotTotalBuffRows(playerTarget)).toEqual([
+      { stat: 'HP', label: 'HP', value: '+3' },
+    ]);
     expect(page.getOpponentSlotTotalBuffRows(opponentTarget)).toEqual([
-      { stat: 'ATK', value: '+7' },
+      { stat: 'ATK', label: 'ATK', value: '+7' },
     ]);
   });
 
