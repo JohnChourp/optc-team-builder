@@ -129,6 +129,21 @@ export const routes: Routes = [
               import('./pages/settings/settings.page').then((module) => module.SettingsPage),
           },
           {
+            path: 'drive-sync',
+            data: {
+              seo: {
+                title: 'Google Drive Sync | OPTC Team Builder',
+                description:
+                  'Review, merge, replace, and back up OPTC Team Builder device data with a visible Google Drive backup.',
+                canonicalPath: 'tabs/drive-sync',
+              },
+            },
+            loadComponent: () =>
+              import('./pages/drive-sync/drive-sync.page').then(
+                (module) => module.DriveSyncPage,
+              ),
+          },
+          {
             path: 'privacy',
             data: {
               seo: {

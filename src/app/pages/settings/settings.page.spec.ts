@@ -122,16 +122,18 @@ describe("SettingsPage", () => {
     expect(template).toContain("t('analytics.actions.reject')");
     expect(template).toContain("t('analytics.links.privacy')");
     expect(template).toContain("t('analytics.links.cookies')");
-    expect(template).toContain("t('driveSync.title')");
-    expect(template).toContain("t('driveSync.actions.signIn')");
-    expect(template).toContain("t('driveSync.actions.syncNow')");
-    expect(template).toContain("t('driveSync.actions.signOut')");
-    expect(template).toContain("t('driveSync.summary.localTitle')");
-    expect(template).toContain("t('driveSync.summary.remoteTitle')");
-    expect(template).toContain("t('driveSync.prompt.actions.uploadLocal')");
-    expect(template).toContain("t('driveSync.prompt.actions.replaceCloud')");
-    expect(template).toContain("t('driveSync.prompt.actions.replaceLocal')");
-    expect(template).toContain("t('driveSync.prompt.actions.cancel')");
+    expect(template).not.toContain("t('driveSync.title')");
+    expect(template).not.toContain("t('driveSync.actions.openPage')");
+    expect(template).not.toContain("[routerLink]=\"['/tabs/drive-sync']\"");
+    expect(template).not.toContain("t('driveSync.actions.signIn')");
+    expect(template).not.toContain("t('driveSync.actions.syncNow')");
+    expect(template).not.toContain("t('driveSync.actions.signOut')");
+    expect(template).not.toContain("t('driveSync.summary.localTitle')");
+    expect(template).not.toContain("t('driveSync.summary.remoteTitle')");
+    expect(template).not.toContain("t('driveSync.prompt.actions.uploadLocal')");
+    expect(template).not.toContain("t('driveSync.prompt.actions.replaceCloud')");
+    expect(template).not.toContain("t('driveSync.prompt.actions.replaceLocal')");
+    expect(template).not.toContain("t('driveSync.prompt.actions.cancel')");
     expect(template).not.toContain("driveSync.account");
     expect(template).not.toContain("t('driveSync.scope')");
     expect(template).not.toContain("t('driveSync.localOnly')");
@@ -160,6 +162,11 @@ describe("SettingsPage", () => {
     expect(template).toContain("t('management.savedEnemies.export')");
     expect(template).toContain("t('management.savedEnemies.import')");
     expect(template).toContain("t('management.savedEnemies.deleteAll')");
+    expect(template).not.toContain("t('sections.commands')");
+    expect(template).not.toContain("t('sections.packStatus')");
+    expect(template).not.toContain("manifest()?.packs");
+    expect(template).not.toContain("packState.installed");
+    expect(template).not.toContain("npm run data:import:all");
   });
 
   it("exports all favorites through the shared OPTCbx payload helper", async () => {

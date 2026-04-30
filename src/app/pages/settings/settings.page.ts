@@ -16,7 +16,7 @@ import {
 } from '@ionic/angular/standalone';
 import { TranslocoDirective } from '@jsverse/transloco';
 
-import { type CharacterBox, type DatasetManifest } from '../../core/models/optc.models';
+import { type CharacterBox } from '../../core/models/optc.models';
 import { AnalyticsConsentService } from '../../core/services/analytics-consent.service';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { CharacterOverridesService } from '../../core/services/character-overrides.service';
@@ -134,7 +134,6 @@ interface CombinedImportSectionError {
   styleUrl: './settings.page.scss',
 })
 export class SettingsPage implements OnInit {
-  public readonly manifest = signal<DatasetManifest | null>(null);
   public readonly favoriteIds;
   public readonly favoriteShipIds;
   public readonly characterBoxes;
@@ -206,11 +205,6 @@ export class SettingsPage implements OnInit {
   public readonly characterOverridesFeedback = signal<TransferFeedback | null>(null);
   public readonly savedTeamsFeedback = signal<TransferFeedback | null>(null);
   public readonly savedEnemiesFeedback = signal<TransferFeedback | null>(null);
-
-  public readonly commands = [
-    'npm run data:import:all',
-    'npm run data:import:all -- --source=optc-db',
-  ];
 
   public constructor(
     private readonly repository: OptcRepositoryService,
@@ -315,7 +309,6 @@ export class SettingsPage implements OnInit {
 
   public async ngOnInit(): Promise<void> {
     await Promise.all([this.userState.ready(), this.characterOverrideState.ready()]);
-    this.manifest.set(await this.repository.getDatasetManifest());
   }
 
   public ionViewDidEnter(): void {

@@ -17,6 +17,7 @@ import {
   archiveOutline,
   cameraOutline,
   checkmarkCircleOutline,
+  cloudDoneOutline,
   cogOutline,
   flashOutline,
   gridOutline,
@@ -24,6 +25,7 @@ import {
   saveOutline,
   searchOutline,
   shieldCheckmarkOutline,
+  shieldHalfOutline,
   sparklesOutline,
 } from 'ionicons/icons';
 
@@ -105,8 +107,20 @@ export class HomePage {
     {
       color: 'light',
       fill: 'outline',
+      labelKey: 'actions.autoRumble',
+      route: '/tabs/auto-team-builder-rumble',
+    },
+    {
+      color: 'light',
+      fill: 'outline',
       labelKey: 'actions.crewForge',
       route: '/tabs/crew-forge',
+    },
+    {
+      color: 'light',
+      fill: 'outline',
+      labelKey: 'actions.driveSync',
+      route: '/tabs/drive-sync',
     },
   ];
   public readonly highlights = ['highlights.offline', 'highlights.planning', 'highlights.localData'];
@@ -128,6 +142,12 @@ export class HomePage {
       titleKey: 'features.autoBuilder.title',
       copyKey: 'features.autoBuilder.copy',
       route: '/tabs/auto-team-builder',
+    },
+    {
+      icon: shieldHalfOutline,
+      titleKey: 'features.autoRumble.title',
+      copyKey: 'features.autoRumble.copy',
+      route: '/tabs/auto-team-builder-rumble',
     },
     {
       icon: cameraOutline,
@@ -152,6 +172,12 @@ export class HomePage {
       titleKey: 'features.savedEnemies.title',
       copyKey: 'features.savedEnemies.copy',
       route: '/tabs/saved-enemies',
+    },
+    {
+      icon: cloudDoneOutline,
+      titleKey: 'features.driveSync.title',
+      copyKey: 'features.driveSync.copy',
+      route: '/tabs/drive-sync',
     },
     {
       icon: cogOutline,

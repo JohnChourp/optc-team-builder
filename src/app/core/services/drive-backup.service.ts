@@ -35,10 +35,22 @@ export type DriveManualSyncPromptAction =
   | 'replace-local'
   | 'upload-local';
 
+export type DriveReviewedSyncAction = Exclude<
+  DriveManualSyncPromptAction,
+  'cancel' | 'upload-local'
+>;
+
 export interface DriveManualSyncPrompt {
   folderId: string | null;
   kind: 'local-cloud-conflict' | 'restore-cloud' | 'upload-local';
   remote: DriveRemoteBackupInfo | null;
+}
+
+export interface DriveReviewedSyncPreview {
+  action: DriveReviewedSyncAction;
+  drivePayload: AllDataTransferPayload;
+  localPayload: AllDataTransferPayload;
+  prompt: DriveManualSyncPrompt;
 }
 
 export interface DriveSyncStatus {
@@ -475,6 +487,142 @@ export class DriveBackupService {
     }
   }
 
+  public async prepareReviewedManualSync(
+    action: DriveReviewedSyncAction,
+  ): Promise<DriveReviewedSyncPreview | null> {
+    await this.ready();
+
+    const prompt = this.manualSyncPrompt();
+
+    if (!prompt?.remote) {
+      this.syncStatus.set(createIdleStatus('No Drive backup is available for that action.'));
+      return null;
+    }
+
+    this.syncStatus.set({
+      detail: 'Downloading Drive backup for review.',
+      phase: 'downloading',
+      updatedAt: new Date().toISOString(),
+    });
+
+    try {
+      const accessToken = await this.account.ensureAccessToken({ interactive: true });
+
+      if (!accessToken) {
+        this.syncStatus.set({
+          detail: this.account.lastError(),
+          phase: 'needs-auth',
+          updatedAt: new Date().toISOString(),
+        });
+        return null;
+      }
+
+      const [localPayload, drivePayload] = await Promise.all([
+        this.transfer.buildAllDataPayload(),
+        this.downloadRemoteBackup(accessToken, prompt.remote.fileId),
+      ]);
+
+      this.syncStatus.set(createIdleStatus('Drive backup ready for review.'));
+
+      return {
+        action,
+        drivePayload,
+        localPayload,
+        prompt,
+      };
+    } catch (error) {
+      this.syncStatus.set({
+        detail: this.resolveErrorMessage(error),
+        phase: 'error',
+        updatedAt: new Date().toISOString(),
+      });
+      return null;
+    }
+  }
+
+  public async commitReviewedManualSync(
+    action: DriveReviewedSyncAction,
+    payload: AllDataTransferPayload,
+  ): Promise<boolean> {
+    await this.ready();
+
+    const prompt = this.manualSyncPrompt();
+
+    if (!prompt) {
+      return false;
+    }
+
+    try {
+      const accessToken = await this.account.ensureAccessToken({ interactive: true });
+
+      if (!accessToken) {
+        this.syncStatus.set({
+          detail: this.account.lastError(),
+          phase: 'needs-auth',
+          updatedAt: new Date().toISOString(),
+        });
+        return false;
+      }
+
+      if (action === 'replace-cloud') {
+        await this.uploadReviewedPayload(
+          accessToken,
+          payload,
+          prompt.remote?.folderId ?? prompt.folderId,
+          'Drive backup replaced with reviewed data.',
+        );
+        return true;
+      }
+
+      if (!prompt.remote) {
+        this.syncStatus.set(createIdleStatus('No Drive backup is available for that action.'));
+        return false;
+      }
+
+      this.syncStatus.set({
+        detail:
+          action === 'replace-local'
+            ? 'Applying reviewed Drive backup to this device.'
+            : 'Applying reviewed merged backup to this device.',
+        phase: 'downloading',
+        updatedAt: new Date().toISOString(),
+      });
+
+      const reviewedSummary = this.transfer.getSyncScopeSummaryFromPayload(payload);
+
+      await this.transfer.applyAllDataPayload(payload, 'restore');
+      await this.syncState.recordDownload({
+        account: this.account.profile(),
+        exportedAt: prompt.remote.exportedAt,
+        fileId: prompt.remote.fileId,
+        folderId: prompt.remote.folderId,
+        remoteModifiedTime: prompt.remote.modifiedTime,
+        remoteSummary: reviewedSummary,
+      });
+
+      this.manualSyncPrompt.set(null);
+      this.remoteBackup.set(prompt.remote);
+
+      if (action === 'merge-and-upload') {
+        await this.uploadLocalData(accessToken, prompt.remote.folderId, 'Reviewed merge uploaded to Drive.');
+        return true;
+      }
+
+      this.syncStatus.set(
+        createIdleStatus('This device data replaced with reviewed Drive data.'),
+      );
+
+      return true;
+    } catch (error) {
+      this.syncStatus.set({
+        detail: this.resolveErrorMessage(error),
+        phase: 'error',
+        updatedAt: new Date().toISOString(),
+      });
+      return false;
+    }
+  }
+
   private buildCachedRemoteBackup(metadata: StoredDriveSyncMetadata): DriveRemoteBackupInfo | null {
     if (!metadata.hasRemoteBackup || !metadata.knownBackupFileId || !metadata.knownFolderId) {
       return null;
@@ -738,6 +886,41 @@ export class DriveBackupService {
 
     const payload = await this.transfer.buildAllDataPayload();
     const remoteSummary = this.transfer.getSyncScopeSummary();
+    const remoteBackup = await this.upsertRemoteBackup(
+      accessToken,
+      payload,
+      this.account.profile(),
+      existingFolderId,
+    );
+
+    this.remoteBackup.set(remoteBackup);
+    this.manualSyncPrompt.set(null);
+    await this.syncState.recordUpload({
+      account: this.account.profile(),
+      exportedAt: payload.exportedAt,
+      fileId: remoteBackup.fileId,
+      folderId: remoteBackup.folderId,
+      remoteModifiedTime: remoteBackup.modifiedTime,
+      remoteSummary,
+    });
+    this.syncStatus.set(createIdleStatus(successMessage));
+
+    return remoteBackup;
+  }
+
+  private async uploadReviewedPayload(
+    accessToken: string,
+    payload: AllDataTransferPayload,
+    existingFolderId: string | null,
+    successMessage: string,
+  ): Promise<DriveRemoteBackupInfo> {
+    this.syncStatus.set({
+      detail: 'Uploading reviewed data to Drive.',
+      phase: 'uploading',
+      updatedAt: new Date().toISOString(),
+    });
+
+    const remoteSummary = this.transfer.getSyncScopeSummaryFromPayload(payload);
     const remoteBackup = await this.upsertRemoteBackup(
       accessToken,
       payload,

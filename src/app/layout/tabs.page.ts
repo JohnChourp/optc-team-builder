@@ -17,6 +17,7 @@ import { TranslocoPipe } from "@jsverse/transloco";
 import {
   albumsOutline,
   archiveOutline,
+  cloudDoneOutline,
   cogOutline,
   constructOutline,
   flashOutline,
@@ -121,6 +122,11 @@ export class TabsPage {
       icon: saveOutline,
       labelKey: "tabs.savedEnemies",
       route: "/tabs/saved-enemies",
+    },
+    {
+      icon: cloudDoneOutline,
+      labelKey: "tabs.driveSync",
+      route: "/tabs/drive-sync",
     },
     {
       icon: cogOutline,

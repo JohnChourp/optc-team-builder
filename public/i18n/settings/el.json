@@ -2,7 +2,7 @@
   "intro": {
     "eyebrow": "Έλεγχος εφαρμογής",
     "title": "Διαχειρίσου γλώσσα, backups και offline δεδομένα από ένα σημείο.",
-    "copy": "Χρησιμοποίησε αυτή τη σελίδα για να αλλάξεις προτιμήσεις της εφαρμογής, να κρατήσεις backups των τοπικών δεδομένων και να ελέγξεις ποια OPTC packs είναι εγκατεστημένα στη συσκευή."
+    "copy": "Χρησιμοποίησε αυτή τη σελίδα για να αλλάξεις προτιμήσεις της εφαρμογής, να διαχειριστείς τοπικά δεδομένα και να ελέγξεις τα optional analytics."
   },
   "language": {
     "label": "Γλώσσα",
@@ -38,6 +38,7 @@
     },
     "actions": {
       "openInDrive": "Άνοιγμα στο Drive",
+      "openPage": "Άνοιγμα Drive Sync",
       "refresh": "Έλεγχος Drive",
       "reconnect": "Επανασύνδεση Google",
       "restore": "Restore από Drive",
@@ -99,6 +100,7 @@
       "lastUploaded": "Τελευταίο upload",
       "never": "Ποτέ",
       "remoteUpdated": "Τελευταία ενημέρωση Drive",
+      "title": "Κατάσταση Drive",
       "phase": {
         "checking": "Έλεγχος Drive",
         "disabled": "Απενεργοποιημένο",
@@ -108,6 +110,54 @@
         "needs-auth": "Απαιτείται sign in",
         "uploading": "Γίνεται upload backup"
       }
+    },
+    "review": {
+      "actions": {
+        "merge-and-upload": "Review merge",
+        "replace-cloud": "Review αντικατάστασης Drive",
+        "replace-local": "Review αντικατάστασης συσκευής"
+      },
+      "choiceLabel": "Αποτέλεσμα",
+      "choices": {
+        "device": "Κράτα συσκευή",
+        "drive": "Χρήση Drive",
+        "remove": "Αφαίρεση"
+      },
+      "close": "Κλείσιμο",
+      "confirm": "Εφαρμογή reviewed sync",
+      "decision": {
+        "merge": "Συνδυάζει και τις δύο πλευρές. Το Drive κερδίζει στα changed items εκτός αν αλλάξεις row.",
+        "replaceCloud": "Το Drive ξεκινά σαν αντίγραφο αυτής της συσκευής. Μπορείς να κρατήσεις Drive-only rows.",
+        "replaceLocal": "Η συσκευή ξεκινά σαν αντίγραφο του Drive. Μπορείς να κρατήσεις device-only rows.",
+        "uploadLocal": "Δημιουργεί το πρώτο ορατό Drive backup από αυτή τη συσκευή."
+      },
+      "emptySection": "Δεν υπάρχουν rows σε αυτό το section.",
+      "eyebrow": "Έλεγχος backup με review",
+      "processing": "Ετοιμάζεται το Drive sync...",
+      "sectionCounts": "{{added}} προσθήκες · {{changed}} αλλαγές · {{kept}} κρατημένα · {{removed}} αφαιρέσεις",
+      "sections": {
+        "characterBoxes": "Character boxes",
+        "characterOverrides": "Character overrides",
+        "favoriteShips": "Favorite ships",
+        "favorites": "Favorite characters",
+        "savedEnemies": "Saved enemies",
+        "savedTeams": "Saved teams"
+      },
+      "stats": {
+        "added": "{{count}} προσθήκες",
+        "changed": "{{count}} αλλαγές",
+        "kept": "{{count}} κρατημένα",
+        "removed": "{{count}} αφαιρέσεις"
+      },
+      "status": {
+        "added": "Προσθήκη",
+        "changed": "Αλλαγή",
+        "kept": "Μένει",
+        "removed": "Αφαίρεση"
+      },
+      "summaryCopy": "{{count}} rows μπορούν να αλλάξουν πριν γραφτεί οτιδήποτε.",
+      "summaryTitle": "Έλεγξε το ακριβές αποτέλεσμα",
+      "title": "Έλεγξε ακριβώς τι αλλάζει το Drive sync."
     }
   },
   "performance": {
@@ -327,15 +377,9 @@
       "title": "Saved Teams"
     }
   },
-  "packState": {
-    "installed": "Εγκατεστημένο",
-    "notInstalled": "Μη εγκατεστημένο"
-  },
   "sections": {
     "analytics": "Analytics και cookies",
-    "commands": "Commands ενημέρωσης dataset",
-    "dataManagement": "Backups και μεταφορές",
-    "packStatus": "Εγκατεστημένα packs"
+    "dataManagement": "Backups και μεταφορές"
   },
   "title": "Ρυθμίσεις"
 }

@@ -70,6 +70,16 @@ describe('app routes', () => {
     expect(savedEnemiesRoute?.loadComponent).toBeTypeOf('function');
   });
 
+  it('registers the Drive sync route inside tabs', () => {
+    const tabsRoute = findRouteByPath(routes, 'tabs');
+    const driveSyncRoute = tabsRoute?.children?.find((route) => route.path === 'drive-sync');
+    const seo = driveSyncRoute?.data?.['seo'] as Record<string, unknown> | undefined;
+
+    expect(driveSyncRoute).toBeDefined();
+    expect(driveSyncRoute?.loadComponent).toBeTypeOf('function');
+    expect(seo?.['canonicalPath']).toBe('tabs/drive-sync');
+  });
+
   it('redirects the legacy collection tab route to saved teams', () => {
     const tabsRoute = findRouteByPath(routes, 'tabs');
     const collectionRoute = tabsRoute?.children?.find((route) => route.path === 'collection');

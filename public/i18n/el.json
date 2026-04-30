@@ -324,7 +324,9 @@
       "characters": "Άνοιγμα χαρακτήρων",
       "teamBuilder": "Φτιάξε ομάδα",
       "autoBuilder": "Auto Builder",
-      "crewForge": "Crew Forge"
+      "autoRumble": "Rumble Builder",
+      "crewForge": "Crew Forge",
+      "driveSync": "Drive Sync"
     },
     "highlights": {
       "ariaLabel": "Κύρια πλεονεκτήματα του OPTC Team Builder",
@@ -348,6 +350,10 @@
         "title": "Auto Team Builder",
         "copy": "Ταίριαξε enemy mechanics, ability requirements, classes, types, locked και excluded units με πιθανούς team candidates."
       },
+      "autoRumble": {
+        "title": "Auto Rumble Builder",
+        "copy": "Βρες rumble-capable units, σύγκρινε synergy και γέμισε active και bench slots για Pirate Rumble teams."
+      },
       "crewForge": {
         "title": "Crew Forge",
         "copy": "Εισήγαγε crew screenshots και αντιστοίχισε τα αναγνωρισμένα slots με επεξεργάσιμα OPTC character data."
@@ -363,6 +369,10 @@
       "savedEnemies": {
         "title": "Αποθηκευμένοι εχθροί",
         "copy": "Κράτα enemy presets και mechanics ώστε το Auto Team Builder να ξαναχρησιμοποιεί quest requirements αργότερα."
+      },
+      "driveSync": {
+        "title": "Google Drive Sync",
+        "copy": "Δες ακριβώς τι αλλάζει πριν κάνεις merge, αντικατάσταση συσκευής ή αντικατάσταση του Drive backup."
       },
       "settings": {
         "title": "Ρυθμίσεις",
@@ -387,6 +397,7 @@
     "characters": "Χαρακτήρες",
     "crewForge": "Crew Forge",
     "home": "Αρχική",
+    "driveSync": "Drive Sync",
     "languageSwitcherAriaLabel": "Εναλλαγή γλώσσας",
     "languageSwitchTo": "Αλλαγή γλώσσας σε {{ language }}",
     "menuTitle": "Μενού",

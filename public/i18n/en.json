@@ -324,7 +324,9 @@
       "characters": "Browse Characters",
       "teamBuilder": "Build a Team",
       "autoBuilder": "Use Auto Builder",
-      "crewForge": "Open Crew Forge"
+      "autoRumble": "Use Rumble Builder",
+      "crewForge": "Open Crew Forge",
+      "driveSync": "Open Drive Sync"
     },
     "highlights": {
       "ariaLabel": "OPTC Team Builder highlights",
@@ -348,6 +350,10 @@
         "title": "Auto Team Builder",
         "copy": "Match enemy mechanics, ability requirements, classes, types, locks, and excluded units against candidate crews."
       },
+      "autoRumble": {
+        "title": "Auto Rumble Builder",
+        "copy": "Score rumble-capable units, compare synergy, and fill active and bench slots for Pirate Rumble teams."
+      },
       "crewForge": {
         "title": "Crew Forge",
         "copy": "Import crew screenshots and match recognized slots back to editable OPTC character data."
@@ -363,6 +369,10 @@
       "savedEnemies": {
         "title": "Saved Enemies",
         "copy": "Store enemy presets and mechanics so Auto Team Builder can reuse quest requirements later."
+      },
+      "driveSync": {
+        "title": "Google Drive Sync",
+        "copy": "Review exactly what changes before merging, replacing this device, or replacing the visible Drive backup."
       },
       "settings": {
         "title": "Settings",
@@ -387,6 +397,7 @@
     "characters": "Characters",
     "crewForge": "Crew Forge",
     "home": "Home",
+    "driveSync": "Drive Sync",
     "languageSwitcherAriaLabel": "Language switcher",
     "languageSwitchTo": "Switch language to {{ language }}",
     "menuTitle": "Menu",

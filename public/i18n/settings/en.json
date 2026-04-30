@@ -2,7 +2,7 @@
   "intro": {
     "eyebrow": "App controls",
     "title": "Manage language, backups, and offline data from one place.",
-    "copy": "Use this page to change app preferences, back up device-local data, and inspect the installed OPTC packs on this device."
+    "copy": "Use this page to change app preferences, manage device-local data, and control optional analytics."
   },
   "language": {
     "label": "Language",
@@ -38,6 +38,7 @@
     },
     "actions": {
       "openInDrive": "Open in Drive",
+      "openPage": "Open Drive Sync",
       "refresh": "Refresh Drive",
       "reconnect": "Reconnect Google",
       "restore": "Restore from Drive",
@@ -99,6 +100,7 @@
       "lastUploaded": "Last upload",
       "never": "Never",
       "remoteUpdated": "Latest Drive update",
+      "title": "Drive status",
       "phase": {
         "checking": "Checking Drive",
         "disabled": "Disabled",
@@ -108,6 +110,54 @@
         "needs-auth": "Sign in required",
         "uploading": "Uploading backup"
       }
+    },
+    "review": {
+      "actions": {
+        "merge-and-upload": "Review merge",
+        "replace-cloud": "Review Drive replacement",
+        "replace-local": "Review device replacement"
+      },
+      "choiceLabel": "Result",
+      "choices": {
+        "device": "Keep device",
+        "drive": "Use Drive",
+        "remove": "Remove"
+      },
+      "close": "Close",
+      "confirm": "Apply reviewed sync",
+      "decision": {
+        "merge": "Combine both sides. Drive wins changed items unless you switch a row.",
+        "replaceCloud": "Drive starts as a copy of this device. You can keep Drive-only rows.",
+        "replaceLocal": "This device starts as a copy of Drive. You can keep device-only rows.",
+        "uploadLocal": "Create the first visible Drive backup from this device."
+      },
+      "emptySection": "No rows in this section.",
+      "eyebrow": "Reviewed backup control",
+      "processing": "Preparing Drive sync...",
+      "sectionCounts": "{{added}} added · {{changed}} changed · {{kept}} kept · {{removed}} removed",
+      "sections": {
+        "characterBoxes": "Character boxes",
+        "characterOverrides": "Character overrides",
+        "favoriteShips": "Favorite ships",
+        "favorites": "Favorite characters",
+        "savedEnemies": "Saved enemies",
+        "savedTeams": "Saved teams"
+      },
+      "stats": {
+        "added": "{{count}} added",
+        "changed": "{{count}} changed",
+        "kept": "{{count}} kept",
+        "removed": "{{count}} removed"
+      },
+      "status": {
+        "added": "Added",
+        "changed": "Changed",
+        "kept": "Kept",
+        "removed": "Removed"
+      },
+      "summaryCopy": "{{count}} reviewed rows can be changed before anything is written.",
+      "summaryTitle": "Review the exact result",
+      "title": "Control exactly what Drive sync changes."
     }
   },
   "performance": {
@@ -327,15 +377,9 @@
       "title": "Saved Teams"
     }
   },
-  "packState": {
-    "installed": "Installed",
-    "notInstalled": "Not installed"
-  },
   "sections": {
     "analytics": "Analytics & cookies",
-    "commands": "Dataset import commands",
-    "dataManagement": "Backups and transfers",
-    "packStatus": "Installed packs"
+    "dataManagement": "Backups and transfers"
   },
   "title": "Settings"
 }

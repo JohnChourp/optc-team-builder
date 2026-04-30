@@ -32,6 +32,8 @@ describe("TabsPage", () => {
     expect(component).toContain('"tabs.savedTeams"');
     expect(component).toContain('"tabs.characterBoxes"');
     expect(component).toContain('"tabs.savedEnemies"');
+    expect(component).toContain('"tabs.driveSync"');
+    expect(component).toContain('route: "/tabs/drive-sync"');
     expect(component).toContain('"tabs.settings"');
     expect(component).toContain('{ id: "en", flag: "🇬🇧" }');
     expect(component).toContain('{ id: "el", flag: "🇬🇷" }');

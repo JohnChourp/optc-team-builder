@@ -4,17 +4,13 @@
 }
 
 .intro-card,
-.command-card,
 .analytics-card,
 .performance-card,
-.data-card,
-.pack-list {
+.data-card {
   padding: 18px;
 }
 
-.command-card,
 .analytics-card,
-.drive-card,
 .performance-card {
   display: grid;
   gap: 10px;
@@ -72,61 +68,13 @@
   background: rgba(255, 255, 255, 0.03);
 }
 
-.drive-sync-summary,
-.drive-sync-panel {
-  display: grid;
-  gap: 8px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.drive-sync-summary strong,
-.drive-sync-panel strong {
-  color: #ffffff;
-}
-
-.drive-sync-summary span,
-.drive-sync-panel span {
-  color: rgba(248, 251, 255, 0.72);
-}
-
-.drive-sync-summary > div {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 8px 16px;
-}
-
-.drive-sync-overview-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
-  gap: 12px;
-}
-
-.drive-sync-panels {
-  display: grid;
-  gap: 12px;
-}
-
-.command-card code {
-  display: block;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.04);
-  color: #f5c84c;
-  font-family: "SF Mono", "Menlo", monospace;
-}
-
 .section-head p,
-.transfer-card__head p,
-.pack-card span {
+.transfer-card__head p {
   margin: 0;
   color: rgba(248, 251, 255, 0.58);
 }
 
-.data-card,
-.pack-list {
+.data-card {
   display: grid;
   gap: 16px;
 }
@@ -139,7 +87,6 @@
 }
 
 .section-head h2,
-.pack-card strong,
 .transfer-card__head strong {
   color: #ffffff;
 }
@@ -243,31 +190,8 @@
   background: rgba(255, 107, 107, 0.14);
 }
 
-.pack-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.pack-state {
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(248, 251, 255, 0.72);
-}
-
-.pack-state.installed {
-  background: rgba(245, 200, 76, 0.16);
-  color: #f5c84c;
-}
-
 @media (max-width: 720px) {
-  .transfer-card__head > div,
-  .pack-card {
+  .transfer-card__head > div {
     flex-direction: column;
     align-items: flex-start;
   }
