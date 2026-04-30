@@ -23,6 +23,7 @@ import {
 import {
   normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityRequirement,
+  type AutoBuildBattleRequirement,
   type AutoBuildRequiredCharacterGroup,
 } from '../models/auto-team-builder-ability.models';
 import conflictOverrideCatalog from '../data/auto-team-builder-party-conflict-overrides.json';
@@ -30,6 +31,7 @@ import { type CharacterDetailRecord, type CharacterListItem } from '../models/op
 import { matchesAbilityRequirement } from './auto-team-builder-ability-match.utils';
 import { normalizeHtmlToText } from './html-text.utils';
 import { cloneRequiredCharacterGroup } from './required-character-groups.utils';
+import { cloneBattleRequirements } from './auto-team-builder-battle.utils';
 
 const CAPTAIN_BRANCH_PATTERN =
   /\b(always active|standard captain|powered up captain|rampage captain)\s*:\s*/gi;
@@ -971,6 +973,108 @@ function resolveRequiredCharacterGroupCoverage(
   };
 }
 
+function canAssignBattleGroups(
+  candidates: AutoBuildCandidate[],
+  groups: AutoBuildRequiredCharacterGroup[],
+  leaderCandidates: AutoBuildCandidate[],
+  globallyUsedCandidateIndexes: Set<number>,
+): Set<number> | null {
+  if (!groups.length) {
+    return new Set<number>();
+  }
+
+  const orderedGroups = groups
+    .map((group, index) => ({ group, index }))
+    .sort(
+      (left, right) =>
+        right.group.abilities.length - left.group.abilities.length || left.index - right.index,
+    );
+
+  const assignGroup = (
+    groupIndex: number,
+    battleUsedCandidateIndexes: Set<number>,
+  ): Set<number> | null => {
+    const groupEntry = orderedGroups[groupIndex];
+
+    if (!groupEntry) {
+      return battleUsedCandidateIndexes;
+    }
+
+    for (let candidateIndex = 0; candidateIndex < candidates.length; candidateIndex += 1) {
+      if (globallyUsedCandidateIndexes.has(candidateIndex)) {
+        continue;
+      }
+
+      const candidate = candidates[candidateIndex];
+
+      if (
+        !candidate ||
+        !candidateMatchesRequiredCharacterGroup(candidate, groupEntry.group, leaderCandidates)
+      ) {
+        continue;
+      }
+
+      const nextUsed = new Set(battleUsedCandidateIndexes);
+      nextUsed.add(candidateIndex);
+      const assigned = assignGroup(groupIndex + 1, nextUsed);
+
+      if (assigned) {
+        return assigned;
+      }
+    }
+
+    return null;
+  };
+
+  return assignGroup(0, new Set<number>());
+}
+
+function resolveBattleRequirementCoverage(
+  candidates: AutoBuildCandidate[],
+  battles: AutoBuildBattleRequirement[] | undefined,
+  leaderCandidates: AutoBuildCandidate[] = [],
+): NonNullable<AutoBuildCoverageSummary['battleRequirements']> {
+  const requested = cloneBattleRequirements(battles);
+
+  if (!requested.length) {
+    return {
+      requested: [],
+      matched: [],
+      missing: [],
+      matchesAll: true,
+    };
+  }
+
+  const matchedIndexes = new Set<number>();
+  const globallyUsedCandidateIndexes = new Set<number>();
+
+  requested.forEach((battle, battleIndex) => {
+    const battleUsedIndexes = canAssignBattleGroups(
+      candidates,
+      battle.requiredCharacterGroups,
+      leaderCandidates,
+      globallyUsedCandidateIndexes,
+    );
+
+    if (!battleUsedIndexes) {
+      return;
+    }
+
+    matchedIndexes.add(battleIndex);
+    battleUsedIndexes.forEach((candidateIndex) => globallyUsedCandidateIndexes.add(candidateIndex));
+  });
+
+  const matched = requested.filter((_, index) => matchedIndexes.has(index));
+  const missing = requested.filter((_, index) => !matchedIndexes.has(index));
+
+  return {
+    requested,
+    matched: cloneBattleRequirements(matched),
+    missing: cloneBattleRequirements(missing),
+    matchesAll: missing.length === 0,
+  };
+}
+
 export function buildAutoTeamResult(
   records: CharacterDetailRecord[],
   input: AutoBuildInput,
@@ -1134,7 +1238,9 @@ export function buildAutoTeamResult(
 
       if (
         (input.requiredAbilities.length && !coverage.abilityRequirements.matchesAll) ||
-        (input.requiredCharacterGroups.length && !coverage.requiredCharacterGroups.matchesAll)
+        (input.requiredCharacterGroups.length && !coverage.requiredCharacterGroups.matchesAll) ||
+        ((input.battleRequirements?.length ?? 0) > 0 &&
+          !coverage.battleRequirements?.matchesAll)
       ) {
         continue;
       }
@@ -1642,7 +1748,9 @@ function selectSubs(
 
     if (
       (input.requiredAbilities.length && !nextCoverage.abilityRequirements.matchesAll) ||
-      (input.requiredCharacterGroups.length && !nextCoverage.requiredCharacterGroups.matchesAll)
+      (input.requiredCharacterGroups.length && !nextCoverage.requiredCharacterGroups.matchesAll) ||
+      ((input.battleRequirements?.length ?? 0) > 0 &&
+        !nextCoverage.battleRequirements?.matchesAll)
     ) {
       return false;
     }
@@ -1959,11 +2067,17 @@ function summarizeCoverage(
     input.requiredCharacterGroups,
     leaderCandidates,
   );
+  const battleRequirements = resolveBattleRequirementCoverage(
+    candidates,
+    input.battleRequirements,
+    leaderCandidates,
+  );
 
   return {
     leaderCriteria: summarizeLeaderCriteria(candidates, leaderCriteria),
     abilityRequirements,
     requiredCharacterGroups,
+    battleRequirements,
     burst: [...burst].map((role) => CHIP_LABELS[role]),
     consistency: [...consistency].map((role) => CHIP_LABELS[role]),
     utility: [...utility].map((role) => CHIP_LABELS[role]),

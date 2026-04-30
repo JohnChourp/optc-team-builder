@@ -12,6 +12,7 @@ import {
   type AutoBuildProgressSnapshot,
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
+import { type AutoBuildAbilitySource } from '../models/auto-team-builder-ability.models';
 import { type CharacterDetailRecord, type ShipRecord } from '../models/optc.models';
 import { AutoTeamBuildCancelledError } from './auto-team-builder.engine';
 import { AutoTeamBuilderService } from './auto-team-builder.service';
@@ -523,6 +524,111 @@ describe('Auto team builder', () => {
               { abilityKey: 'remove_bind', minTurns: 5, slotTokens: [], requiredCharacterCount: 1 },
             ],
           },
+        ],
+      },
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('allows one character to merge multiple required character bundles inside the same battle', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 9821,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces Special Bind and ATK Down duration by 5 turns.',
+            sailorAbilities: ['Reduces Special Bind duration on this character by 5 turns.'],
+            builderAbilities: [
+              createBuilderAbility('remove_special_bind', 'Remove Special Bind', 5, 'specialText'),
+              createBuilderAbility('remove_atk_down', 'Remove ATK Down', 5, 'specialText'),
+              createBuilderAbility(
+                'crewmate_recover_special_bind',
+                'Crewmate Special Bind Recovery',
+                5,
+                'sailorAbilities',
+              ),
+            ],
+          },
+        }),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+        createAtkSubRecord(),
+      ],
+      {
+        ...INPUT,
+        requiredCharacterGroups: [],
+        battleRequirements: [
+          {
+            id: 'battle-1',
+            title: 'Battle 1',
+            enemyMechanics: [],
+            requiredCharacterGroups: [
+              {
+                id: 'special-bind-character',
+                abilities: [
+                  {
+                    abilityKey: 'remove_special_bind',
+                    minTurns: 5,
+                    slotTokens: [],
+                    requiredCharacterCount: 1,
+                  },
+                  {
+                    abilityKey: 'crewmate_recover_special_bind',
+                    minTurns: 5,
+                    slotTokens: [],
+                    requiredCharacterCount: 1,
+                  },
+                ],
+              },
+              {
+                id: 'atk-down-character',
+                abilities: [
+                  {
+                    abilityKey: 'remove_atk_down',
+                    minTurns: 5,
+                    slotTokens: [],
+                    requiredCharacterCount: 1,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.map((slot) => slot.character.id)).toContain(9821);
+    expect(result?.coverage.battleRequirements?.matchesAll).toBe(true);
+  });
+
+  it('does not reuse the same battle counter across different battles', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 9822,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces Bind duration by 5 turns.',
+            builderAbilities: [createBuilderAbility('remove_bind', 'Remove Bind', 5)],
+          },
+        }),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+        createAtkSubRecord(),
+      ],
+      {
+        ...INPUT,
+        requiredCharacterGroups: [],
+        battleRequirements: [
+          createBindBattleRequirement('battle-1'),
+          createBindBattleRequirement('battle-2'),
         ],
       },
     );
@@ -5927,6 +6033,7 @@ function createInput(
       | 'friendCaptainCharacterId'
       | 'excludedShipIds'
       | 'requiredCharacterGroups'
+      | 'battleRequirements'
     >
   > = {
     requireAllSelectedTypesInTeam: false,
@@ -5960,6 +6067,7 @@ function createInput(
     selectedClasses,
     requiredAbilities: [],
     requiredCharacterGroups: overrides.requiredCharacterGroups ?? [],
+    battleRequirements: overrides.battleRequirements ?? [],
     enemyMechanics: [],
     requireAllSelectedTypesInTeam: overrides.requireAllSelectedTypesInTeam ?? false,
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
@@ -7031,6 +7139,43 @@ function createTeamwideSpecialScopedRecords(): CharacterDetailRecord[] {
       },
     }),
   ];
+}
+
+function createBuilderAbility(
+  key: string,
+  label: string,
+  minTurns: number | null,
+  source: AutoBuildAbilitySource = 'specialText',
+): CharacterDetailRecord['detail']['builderAbilities'][number] {
+  return {
+    key,
+    label,
+    minTurns,
+    isCompleteRemoval: false,
+    slotTokens: [],
+    source,
+  };
+}
+
+function createBindBattleRequirement(id: string): NonNullable<AutoBuildInput['battleRequirements']>[number] {
+  return {
+    id,
+    title: id,
+    enemyMechanics: [],
+    requiredCharacterGroups: [
+      {
+        id: `${id}-bind`,
+        abilities: [
+          {
+            abilityKey: 'remove_bind',
+            minTurns: 5,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+          },
+        ],
+      },
+    ],
+  };
 }
 
 function createCharacterRecord(

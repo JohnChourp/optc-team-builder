@@ -1,5 +1,6 @@
 import {
   type AutoBuildAbilityRequirement,
+  type AutoBuildBattleRequirement,
   type AutoBuildEnemyMechanicRequirement,
   type AutoBuildRequiredCharacterGroup,
   type NormalizedBuilderAbility,
@@ -90,6 +91,7 @@ export interface AutoBuildConstraints {
   requireUniqueBaseCharacterNames?: boolean;
   requiredAbilities?: AutoBuildAbilityRequirement[];
   requiredCharacterGroups?: AutoBuildRequiredCharacterGroup[];
+  battleRequirements?: AutoBuildBattleRequirement[];
   enemyMechanics?: AutoBuildEnemyMechanicRequirement[];
   candidateCharacterIds?: number[];
   favoritesOnly?: boolean;
@@ -148,6 +150,7 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   requireUniqueBaseCharacterNames: boolean;
   requiredAbilities: AutoBuildAbilityRequirement[];
   requiredCharacterGroups: AutoBuildRequiredCharacterGroup[];
+  battleRequirements?: AutoBuildBattleRequirement[];
   enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   favoritesOnly: boolean;
   allowAnyFriendCaptainAutoFill: boolean;
@@ -275,6 +278,12 @@ export interface AutoBuildCoverageSummary {
     requested: AutoBuildRequiredCharacterGroup[];
     matched: AutoBuildRequiredCharacterGroup[];
     missing: AutoBuildRequiredCharacterGroup[];
+    matchesAll: boolean;
+  };
+  battleRequirements?: {
+    requested: AutoBuildBattleRequirement[];
+    matched: AutoBuildBattleRequirement[];
+    missing: AutoBuildBattleRequirement[];
     matchesAll: boolean;
   };
   burst: string[];

@@ -409,17 +409,17 @@
 
           <div class="manual-locks-meta ability-requirements-meta">
             <strong>
-              {{ t('requiredCharacters.configured', { count: requiredCharacterGroups().length }) }}
+              {{ t('requiredCharacters.battleConfigured', { count: requiredBattleViews().length }) }}
             </strong>
             <div class="ability-requirements-actions">
               <ion-button
                 fill="clear"
                 size="small"
                 class="select-all-button"
-                [disabled]="!canAddRequiredCharacterGroup()"
-                (click)="addRequiredCharacterGroup()"
+                [disabled]="!canAddBattleRequirement()"
+                (click)="addBattleRequirement()"
               >
-                {{ t('requiredCharacters.actions.add') }}
+                {{ t('requiredCharacters.actions.addBattle') }}
               </ion-button>
               <ion-button
                 fill="clear"
@@ -433,85 +433,136 @@
             </div>
           </div>
 
-          @if (!requiredCharacterGroupViews().length) {
+          @if (!requiredBattleViews().length) {
             <p class="favorites-only-warning">
               {{ t('requiredCharacters.empty') }}
             </p>
           }
 
-          @if (requiredCharacterGroupViews().length) {
-            <div class="required-character-grid">
-              @for (view of requiredCharacterGroupViews(); track view.group.id) {
-                <article class="required-character-card">
+          @if (requiredBattleViews().length) {
+            <div class="required-battle-grid">
+              @for (battleView of requiredBattleViews(); track battleView.battle.id) {
+                <article class="required-battle-card">
                   <div class="required-character-card__head">
                     <div>
-                      <h3>{{ view.title }}</h3>
+                      <h3>{{ battleView.title }}</h3>
                       <small>
-                        {{ t('requiredCharacters.abilityCount', { count: view.abilityCount }) }}
+                        {{
+                          t('requiredCharacters.configured', {
+                            count: battleView.requiredCharacterCount,
+                          })
+                        }}
                       </small>
                     </div>
-                    <ion-button
-                      fill="clear"
-                      color="danger"
-                      size="small"
-                      [disabled]="building()"
-                      (click)="removeRequiredCharacterGroup(view.group.id)"
-                    >
-                      {{ 'common.actions.remove' | transloco }}
-                    </ion-button>
+                    <div class="ability-requirements-actions">
+                      <ion-button
+                        fill="clear"
+                        size="small"
+                        class="select-all-button"
+                        [disabled]="!canAddRequiredCharacterGroup(battleView.battle.id)"
+                        (click)="addRequiredCharacterGroup(battleView.battle.id)"
+                      >
+                        {{ t('requiredCharacters.actions.add') }}
+                      </ion-button>
+                      <ion-button
+                        fill="clear"
+                        color="danger"
+                        size="small"
+                        [disabled]="building() || requiredBattleViews().length <= 1"
+                        (click)="removeBattleRequirement(battleView.battle.id)"
+                      >
+                        {{ 'common.actions.remove' | transloco }}
+                      </ion-button>
+                    </div>
                   </div>
 
-                  <div class="ability-requirements-actions required-character-actions">
-                    <ion-button
-                      fill="outline"
-                      size="small"
-                      [disabled]="building() || !availableSpecialAbilityCatalogItems().length"
-                      (click)="openRequiredCharacterAbilityPicker(view.group.id, 'special')"
-                    >
-                      {{ t('requiredCharacters.categories.special') }}
-                    </ion-button>
-                    <ion-button
-                      fill="outline"
-                      size="small"
-                      [disabled]="building() || !availableCrewmateAbilityCatalogItems().length"
-                      (click)="openRequiredCharacterAbilityPicker(view.group.id, 'crewmate')"
-                    >
-                      {{ t('requiredCharacters.categories.crewmate') }}
-                    </ion-button>
-                    <ion-button
-                      fill="outline"
-                      size="small"
-                      [disabled]="building() || !availablePotentialAbilityCatalogItems().length"
-                      (click)="openRequiredCharacterAbilityPicker(view.group.id, 'potential')"
-                    >
-                      {{ t('requiredCharacters.categories.potential') }}
-                    </ion-button>
-                    <ion-button
-                      fill="outline"
-                      size="small"
-                      [disabled]="building() || !availableSupportAbilityCatalogItems().length"
-                      (click)="openRequiredCharacterAbilityPicker(view.group.id, 'support')"
-                    >
-                      {{ t('requiredCharacters.categories.support') }}
-                    </ion-button>
-                  </div>
-
-                  @if (!view.chips.length) {
+                  @if (!battleView.groupViews.length) {
                     <p class="favorites-only-warning">
-                      {{ t('requiredCharacters.cardEmpty') }}
+                      {{ t('requiredCharacters.empty') }}
                     </p>
                   }
 
-                  @if (view.chips.length) {
-                    <div class="selected-values-row ability-requirements-selected-row">
-                      @for (chip of view.chips; track chip.draftId) {
-                        <span class="selected-value-chip ability-requirement-chip">
-                          <span class="ability-visual-chip" [attr.data-tone]="chip.visual.tone">
-                            <ion-icon [icon]="chip.visual.icon"></ion-icon>
-                            <small>{{ chip.visual.badge }}</small>
-                          </span>
-                          <span>{{ chip.label }}</span>
-                        </span>
+                  @if (battleView.groupViews.length) {
+                    <div class="required-character-grid">
+                      @for (view of battleView.groupViews; track view.group.id) {
+                        <article class="required-character-card">
+                          <div class="required-character-card__head">
+                            <div>
+                              <h3>{{ view.title }}</h3>
+                              <small>
+                                {{
+                                  t('requiredCharacters.abilityCount', {
+                                    count: view.abilityCount,
+                                  })
+                                }}
+                              </small>
+                            </div>
+                            <ion-button
+                              fill="clear"
+                              color="danger"
+                              size="small"
+                              [disabled]="building()"
+                              (click)="removeRequiredCharacterGroup(view.battleId, view.group.id)"
+                            >
+                              {{ 'common.actions.remove' | transloco }}
+                            </ion-button>
+                          </div>
+
+                          <div class="ability-requirements-actions required-character-actions">
+                            <ion-button
+                              fill="outline"
+                              size="small"
+                              [disabled]="building() || !availableSpecialAbilityCatalogItems().length"
+                              (click)="openRequiredCharacterAbilityPicker(view.battleId, view.group.id, 'special')"
+                            >
+                              {{ t('requiredCharacters.categories.special') }}
+                            </ion-button>
+                            <ion-button
+                              fill="outline"
+                              size="small"
+                              [disabled]="building() || !availableCrewmateAbilityCatalogItems().length"
+                              (click)="openRequiredCharacterAbilityPicker(view.battleId, view.group.id, 'crewmate')"
+                            >
+                              {{ t('requiredCharacters.categories.crewmate') }}
+                            </ion-button>
+                            <ion-button
+                              fill="outline"
+                              size="small"
+                              [disabled]="building() || !availablePotentialAbilityCatalogItems().length"
+                              (click)="openRequiredCharacterAbilityPicker(view.battleId, view.group.id, 'potential')"
+                            >
+                              {{ t('requiredCharacters.categories.potential') }}
+                            </ion-button>
+                            <ion-button
+                              fill="outline"
+                              size="small"
+                              [disabled]="building() || !availableSupportAbilityCatalogItems().length"
+                              (click)="openRequiredCharacterAbilityPicker(view.battleId, view.group.id, 'support')"
+                            >
+                              {{ t('requiredCharacters.categories.support') }}
+                            </ion-button>
+                          </div>
+
+                          @if (!view.chips.length) {
+                            <p class="favorites-only-warning">
+                              {{ t('requiredCharacters.cardEmpty') }}
+                            </p>
+                          }
+
+                          @if (view.chips.length) {
+                            <div class="selected-values-row ability-requirements-selected-row">
+                              @for (chip of view.chips; track chip.draftId) {
+                                <span class="selected-value-chip ability-requirement-chip">
+                                  <span class="ability-visual-chip" [attr.data-tone]="chip.visual.tone">
+                                    <ion-icon [icon]="chip.visual.icon"></ion-icon>
+                                    <small>{{ chip.visual.badge }}</small>
+                                  </span>
+                                  <span>{{ chip.label }}</span>
+                                </span>
+                              }
+                            </div>
+                          }
+                        </article>
                       }
                     </div>
                   }

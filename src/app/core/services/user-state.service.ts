@@ -19,6 +19,10 @@ import {
 import { type AutoBuildAbilityRequirement } from '../models/auto-team-builder-ability.models';
 import { AUTO_TEAM_BUILDER_TYPES } from '../models/auto-team-builder.models';
 import {
+  cloneBattleRequirements,
+  normalizeBattleRequirementsWithLegacyFallback,
+} from './auto-team-builder-battle.utils';
+import {
   cloneRequiredCharacterGroups,
   expandRequiredAbilitiesToCharacterGroups,
 } from './required-character-groups.utils';
@@ -594,8 +598,11 @@ export class UserStateService {
   }
 
   public async saveEnemy(
-    input: Omit<SavedEnemy, 'id' | 'createdAt' | 'updatedAt' | 'requiredCharacterGroups'> &
-      Partial<Pick<SavedEnemy, 'requiredCharacterGroups'>> & { id?: string },
+    input: Omit<
+      SavedEnemy,
+      'id' | 'createdAt' | 'updatedAt' | 'requiredCharacterGroups' | 'battleRequirements'
+    > &
+      Partial<Pick<SavedEnemy, 'requiredCharacterGroups' | 'battleRequirements'>> & { id?: string },
   ): Promise<SavedEnemy> {
     await this.ready();
 
@@ -1069,6 +1076,18 @@ export class UserStateService {
   ): SavedEnemy {
     const now = new Date().toISOString();
 
+    const requiredAbilities = this.normalizeRequiredAbilities(enemy.requiredAbilities);
+    const enemyMechanics = normalizeEnemyMechanicRequirements(enemy.enemyMechanics);
+    const requiredCharacterGroups = this.normalizeSavedEnemyRequiredCharacterGroups({
+      ...enemy,
+      requiredAbilities,
+    });
+    const battleRequirements = normalizeBattleRequirementsWithLegacyFallback({
+      battles: enemy.battleRequirements,
+      requiredCharacterGroups,
+      enemyMechanics,
+    });
+
     return {
       id: this.normalizeEntityId(enemy.id) ?? existing?.id ?? this.createEnemyId(),
       name: this.normalizeEnemyName(enemy.name),
@@ -1079,9 +1098,10 @@ export class UserStateService {
         mapValue: (value) => value.toUpperCase(),
       }),
       selectedClasses: this.normalizeStringCollection(enemy.selectedClasses),
-      requiredAbilities: this.normalizeRequiredAbilities(enemy.requiredAbilities),
-      requiredCharacterGroups: this.normalizeSavedEnemyRequiredCharacterGroups(enemy),
-      enemyMechanics: normalizeEnemyMechanicRequirements(enemy.enemyMechanics),
+      requiredAbilities,
+      requiredCharacterGroups,
+      battleRequirements,
+      enemyMechanics,
       requireAllSelectedTypesInTeam: Boolean(enemy.requireAllSelectedTypesInTeam),
       requireAllSelectedClassesPerCharacter: Boolean(enemy.requireAllSelectedClassesPerCharacter),
       createdAt: this.normalizeTimestamp(enemy.createdAt, existing?.createdAt ?? now),

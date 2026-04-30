@@ -700,15 +700,18 @@
   },
   "requiredCharacters": {
     "title": "Required characters",
-    "copy": "Add up to 6 required team slots. Every ability inside one card must be covered by the same final character.",
+    "copy": "Create battles, then add required character cards inside each battle. Every ability inside one card must be covered by the same final character.",
     "configured": "{{count}} required characters",
+    "battleConfigured": "{{count}} battles",
     "empty": "No required characters defined yet.",
+    "battleTitle": "Battle {{index}}",
     "cardTitle": "Character {{index}}",
     "cardEmpty": "No abilities selected for this character.",
     "abilityCount": "{{count}} abilities",
     "pickerCopy": "Selected abilities will be required on this character slot.",
     "actions": {
-      "add": "+ Character"
+      "add": "+ Character",
+      "addBattle": "+ Battle"
     },
     "categories": {
       "special": "Special",

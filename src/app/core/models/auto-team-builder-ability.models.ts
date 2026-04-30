@@ -91,6 +91,13 @@ export interface AutoBuildRequiredCharacterGroup {
   abilities: AutoBuildAbilityRequirement[];
 }
 
+export interface AutoBuildBattleRequirement {
+  id: string;
+  title: string;
+  enemyMechanics: AutoBuildEnemyMechanicRequirement[];
+  requiredCharacterGroups: AutoBuildRequiredCharacterGroup[];
+}
+
 export interface AutoBuildEnemyMechanicRequirement {
   mechanicKey: string;
   category: AutoBuildEnemyMechanicCategory;

@@ -68,6 +68,7 @@ import {
   normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityCatalog,
   type AutoBuildAbilityCatalogItem,
+  type AutoBuildBattleRequirement,
   type AutoBuildAbilityCoverageMode,
   type AutoBuildAbilityRequirement,
   type AutoBuildEnemyMechanicCatalogItem,
@@ -143,11 +144,14 @@ import {
   serializeSpecialAbilityDrafts,
 } from '../../core/services/special-ability-filter.utils';
 import {
-  cloneRequiredCharacterGroups,
-  createRequiredCharacterGroup,
-  expandRequiredAbilitiesToCharacterGroups,
-  MAX_REQUIRED_CHARACTER_GROUPS,
-} from '../../core/services/required-character-groups.utils';
+  addEmptyGroupToBattle,
+  cloneBattleRequirements,
+  createEmptyBattleRequirement,
+  flattenBattleRequiredCharacterGroups,
+  MAX_AUTO_BUILD_BATTLE_COUNT,
+  normalizeBattleRequirementsWithLegacyFallback,
+} from '../../core/services/auto-team-builder-battle.utils';
+import { MAX_REQUIRED_CHARACTER_GROUPS } from '../../core/services/required-character-groups.utils';
 
 type LoadingProgressRowTone = 'primary' | 'secondary' | 'fallback';
 
@@ -185,10 +189,18 @@ interface AbilityRequirementSummaryChipView {
 type RequiredCharacterAbilityCategory = 'special' | 'crewmate' | 'potential' | 'support';
 
 interface RequiredCharacterGroupView {
+  battleId: string;
   group: AutoBuildRequiredCharacterGroup;
   title: string;
   abilityCount: number;
   chips: AbilityRequirementSummaryChipView[];
+}
+
+interface RequiredBattleView {
+  battle: AutoBuildBattleRequirement;
+  title: string;
+  requiredCharacterCount: number;
+  groupViews: RequiredCharacterGroupView[];
 }
 
 interface EnemyMechanicSummaryChipView {
@@ -469,8 +481,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly potentialAbilityPickerOpen = signal(false);
   public readonly supportAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly supportAbilityPickerOpen = signal(false);
-  public readonly requiredCharacterGroups = signal<AutoBuildRequiredCharacterGroup[]>([]);
+  public readonly battleRequirements = signal<AutoBuildBattleRequirement[]>([]);
   public readonly activeRequiredCharacterGroupId = signal<string | null>(null);
+  public readonly activeRequiredCharacterBattleId = signal<string | null>(null);
   public readonly activeRequiredCharacterAbilityCategory =
     signal<RequiredCharacterAbilityCategory>('special');
   public readonly requiredCharacterAbilityPickerOpen = signal(false);
@@ -637,8 +650,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       new Map(this.availableEnemyMechanicCatalogItems().map((item) => [item.key, item] as const)),
   );
   public readonly pageRequiredAbilities = computed(() => this.serializeManualRequiredAbilities());
+  public readonly pageBattleRequirements = computed(() =>
+    cloneBattleRequirements(this.battleRequirements()),
+  );
   public readonly pageRequiredCharacterGroups = computed(() =>
-    cloneRequiredCharacterGroups(this.requiredCharacterGroups()),
+    flattenBattleRequiredCharacterGroups(this.pageBattleRequirements()),
   );
   public readonly hasSelectedClasses = computed(() => this.selectedClasses().length > 0);
   public readonly hasSelectedTypes = computed(() => this.selectedTypes().length > 0);
@@ -722,26 +738,38 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       visual: resolveAbilityRequirementVisual(draft.abilityKey),
     })),
   );
-  public readonly requiredCharacterGroupViews = computed<RequiredCharacterGroupView[]>(() =>
-    this.requiredCharacterGroups().map((group, index) => ({
-      group,
-      title: this.t('requiredCharacters.cardTitle', { index: index + 1 }),
-      abilityCount: group.abilities.length,
-      chips: group.abilities.map((requirement, abilityIndex) => ({
-        draftId: `${group.id}-${abilityIndex}`,
-        label: this.formatAbilityRequirement(requirement),
-        visual: resolveAbilityRequirementVisual(requirement.abilityKey),
+  public readonly requiredBattleViews = computed<RequiredBattleView[]>(() =>
+    this.battleRequirements().map((battle, battleIndex) => ({
+      battle,
+      title: battle.title || this.t('requiredCharacters.battleTitle', { index: battleIndex + 1 }),
+      requiredCharacterCount: battle.requiredCharacterGroups.length,
+      groupViews: battle.requiredCharacterGroups.map((group, groupIndex) => ({
+        battleId: battle.id,
+        group,
+        title: this.t('requiredCharacters.cardTitle', { index: groupIndex + 1 }),
+        abilityCount: group.abilities.length,
+        chips: group.abilities.map((requirement, abilityIndex) => ({
+          draftId: `${battle.id}-${group.id}-${abilityIndex}`,
+          label: this.formatAbilityRequirement(requirement),
+          visual: resolveAbilityRequirementVisual(requirement.abilityKey),
+        })),
       })),
     })),
   );
-  public readonly canAddRequiredCharacterGroup = computed(
-    () => !this.building() && this.requiredCharacterGroups().length < MAX_REQUIRED_CHARACTER_GROUPS,
+  public readonly canAddBattleRequirement = computed(
+    () => !this.building() && this.battleRequirements().length < MAX_AUTO_BUILD_BATTLE_COUNT,
   );
   public readonly activeRequiredCharacterGroup = computed(
-    () =>
-      this.requiredCharacterGroups().find(
-        (group) => group.id === this.activeRequiredCharacterGroupId(),
-      ) ?? null,
+    () => {
+      const activeBattleId = this.activeRequiredCharacterBattleId();
+      const activeGroupId = this.activeRequiredCharacterGroupId();
+
+      return (
+        this.battleRequirements()
+          .find((battle) => !activeBattleId || battle.id === activeBattleId)
+          ?.requiredCharacterGroups.find((group) => group.id === activeGroupId) ?? null
+      );
+    },
   );
   public readonly activeRequiredCharacterAbilityDrafts = computed(() =>
     createAbilityRequirementDrafts(
@@ -2673,21 +2701,76 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     await this.refreshCharacterPickPanels();
   }
 
-  public async addRequiredCharacterGroup(): Promise<void> {
-    if (!this.canAddRequiredCharacterGroup()) {
+  public canAddRequiredCharacterGroup(battleId: string): boolean {
+    const battle = this.battleRequirements().find((entry) => entry.id === battleId);
+
+    return (
+      !this.building() &&
+      Boolean(battle) &&
+      (battle?.requiredCharacterGroups.length ?? 0) < MAX_REQUIRED_CHARACTER_GROUPS
+    );
+  }
+
+  public async addBattleRequirement(): Promise<void> {
+    if (!this.canAddBattleRequirement()) {
       return;
     }
 
-    this.requiredCharacterGroups.update((groups) => [...groups, createRequiredCharacterGroup()]);
+    this.battleRequirements.update((battles) => [
+      ...battles,
+      createEmptyBattleRequirement(battles.length),
+    ]);
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
   }
 
-  public async removeRequiredCharacterGroup(groupId: string): Promise<void> {
-    this.requiredCharacterGroups.update((groups) => groups.filter((group) => group.id !== groupId));
+  public async addRequiredCharacterGroup(battleId: string): Promise<void> {
+    if (!this.canAddRequiredCharacterGroup(battleId)) {
+      return;
+    }
 
-    if (this.activeRequiredCharacterGroupId() === groupId) {
+    this.battleRequirements.update((battles) => addEmptyGroupToBattle(battles, battleId));
+    this.resetBuildState();
+    await this.refreshCharacterPickPanels();
+  }
+
+  public async removeBattleRequirement(battleId: string): Promise<void> {
+    if (this.battleRequirements().length <= 1) {
+      return;
+    }
+
+    this.battleRequirements.update((battles) => battles.filter((battle) => battle.id !== battleId));
+
+    if (this.activeRequiredCharacterBattleId() === battleId) {
       this.requiredCharacterAbilityPickerOpen.set(false);
+      this.activeRequiredCharacterBattleId.set(null);
+      this.activeRequiredCharacterGroupId.set(null);
+    }
+
+    this.resetBuildState();
+    await this.refreshCharacterPickPanels();
+  }
+
+  public async removeRequiredCharacterGroup(battleId: string, groupId: string): Promise<void> {
+    this.battleRequirements.update((battles) =>
+      battles.map((battle) =>
+        battle.id === battleId
+          ? {
+              ...battle,
+              requiredCharacterGroups: battle.requiredCharacterGroups.filter(
+                (group) => group.id !== groupId,
+              ),
+            }
+          : battle,
+      ),
+    );
+
+    if (
+      this.activeRequiredCharacterBattleId() === battleId &&
+      this.activeRequiredCharacterGroupId() === groupId
+    ) {
+      this.requiredCharacterAbilityPickerOpen.set(false);
+      this.activeRequiredCharacterBattleId.set(null);
       this.activeRequiredCharacterGroupId.set(null);
     }
 
@@ -2696,6 +2779,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   }
 
   public openRequiredCharacterAbilityPicker(
+    battleId: string,
     groupId: string,
     category: RequiredCharacterAbilityCategory,
   ): void {
@@ -2703,6 +2787,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       return;
     }
 
+    this.activeRequiredCharacterBattleId.set(battleId);
     this.activeRequiredCharacterGroupId.set(groupId);
     this.activeRequiredCharacterAbilityCategory.set(category);
     this.requiredCharacterAbilityPickerOpen.set(true);
@@ -2710,6 +2795,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
   public closeRequiredCharacterAbilityPicker(): void {
     this.requiredCharacterAbilityPickerOpen.set(false);
+    this.activeRequiredCharacterBattleId.set(null);
     this.activeRequiredCharacterGroupId.set(null);
   }
 
@@ -2717,9 +2803,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     drafts: AbilityRequirementDraft[],
   ): Promise<void> {
     const activeGroupId = this.activeRequiredCharacterGroupId();
+    const activeBattleId = this.activeRequiredCharacterBattleId();
     const category = this.activeRequiredCharacterAbilityCategory();
 
-    if (!activeGroupId) {
+    if (!activeBattleId || !activeGroupId) {
       this.requiredCharacterAbilityPickerOpen.set(false);
       return;
     }
@@ -2730,29 +2817,38 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         ? serializeSpecialAbilityDrafts(drafts, catalogItems, { dedupe: false })
         : serializeCategoryAbilityDrafts(drafts, catalogItems, category, { dedupe: false });
 
-    this.requiredCharacterGroups.update((groups) =>
-      groups.map((group) => {
-        if (group.id !== activeGroupId) {
-          return group;
-        }
+    this.battleRequirements.update((battles) =>
+      battles.map((battle) =>
+        battle.id === activeBattleId
+          ? {
+              ...battle,
+              requiredCharacterGroups: battle.requiredCharacterGroups.map((group) => {
+                if (group.id !== activeGroupId) {
+                  return group;
+                }
 
-        return {
-          ...group,
-          abilities: [
-            ...group.abilities.filter(
-              (requirement) =>
-                this.resolveAbilityCatalogItem(requirement.abilityKey)?.category !== category,
-            ),
-            ...nextRequirements.map((requirement) => ({
-              ...requirement,
-              slotTokens: [...requirement.slotTokens],
-              requiredCharacterCount: 1,
-            })),
-          ],
-        };
-      }),
+                return {
+                  ...group,
+                  abilities: [
+                    ...group.abilities.filter(
+                      (requirement) =>
+                        this.resolveAbilityCatalogItem(requirement.abilityKey)?.category !==
+                        category,
+                    ),
+                    ...nextRequirements.map((requirement) => ({
+                      ...requirement,
+                      slotTokens: [...requirement.slotTokens],
+                      requiredCharacterCount: 1,
+                    })),
+                  ],
+                };
+              }),
+            }
+          : battle,
+      ),
     );
     this.requiredCharacterAbilityPickerOpen.set(false);
+    this.activeRequiredCharacterBattleId.set(null);
     this.activeRequiredCharacterGroupId.set(null);
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
@@ -3045,7 +3141,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           requireAllSlotsInLeaderSuperEffectScope: this.requireAllSlotsInLeaderSuperEffectScope(),
           requireUniqueBaseCharacterNames: this.requireUniqueBaseCharacterNames(),
           requiredAbilities: this.pageRequiredAbilities(),
-          requiredCharacterGroups: this.pageRequiredCharacterGroups(),
+          requiredCharacterGroups: [],
+          battleRequirements: this.pageBattleRequirements(),
           enemyMechanics: this.pageEnemyMechanics(),
           favoritesOnly: this.favoritesOnly(),
           allowAnyFriendCaptainAutoFill: this.allowAnyFriendCaptainAutoFill(),
@@ -3143,7 +3240,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       selectedTypes: this.selectedTypes(),
       selectedClasses: this.selectedClasses(),
       requiredAbilities: this.pageRequiredAbilities(),
-      requiredCharacterGroups: this.pageRequiredCharacterGroups(),
+      requiredCharacterGroups: [],
+      battleRequirements: this.pageBattleRequirements(),
       enemyMechanics: this.pageEnemyMechanics(),
       requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
       requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
@@ -3364,6 +3462,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.potentialAbilityPickerOpen.set(false);
     this.supportAbilityPickerOpen.set(false);
     this.requiredCharacterAbilityPickerOpen.set(false);
+    this.activeRequiredCharacterBattleId.set(null);
     this.activeRequiredCharacterGroupId.set(null);
     this.selectedTypes.set(defaultFilters.selectedTypes);
     this.selectedClasses.set(defaultFilters.selectedClasses);
@@ -3376,7 +3475,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.crewmateAbilityDrafts.set([]);
     this.potentialAbilityDrafts.set([]);
     this.supportAbilityDrafts.set([]);
-    this.requiredCharacterGroups.set([]);
+    this.battleRequirements.set([createEmptyBattleRequirement(0)]);
     this.lockedCharacterRecords.set({});
     this.manualSearchTerm.set('');
     this.manualShipSearchTerm.set('');
@@ -3514,10 +3613,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.crewmateAbilityDrafts.set([]);
     this.potentialAbilityDrafts.set([]);
     this.supportAbilityDrafts.set([]);
-    this.requiredCharacterGroups.set(
-      (state.requiredCharacterGroups?.length ?? 0)
-        ? cloneRequiredCharacterGroups(state.requiredCharacterGroups)
-        : expandRequiredAbilitiesToCharacterGroups(migratedRequiredAbilities).groups,
+    this.battleRequirements.set(
+      normalizeBattleRequirementsWithLegacyFallback({
+        battles: state.battleRequirements,
+        requiredCharacterGroups: state.requiredCharacterGroups,
+        requiredAbilities: manualRequiredAbilities,
+        enemyMechanics: state.enemyMechanics,
+      }),
     );
     this.lockedCharacterRecords.set({});
     for (const character of availableLockedCharacters) this.cacheCharacterRecord(character);
@@ -4449,7 +4551,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   }
 
   private serializeManualRequiredAbilities(): AutoBuildAbilityRequirement[] {
-    const groupRequirements = this.requiredCharacterGroups().flatMap((group) =>
+    const groupRequirements = this.pageRequiredCharacterGroups().flatMap((group) =>
       group.abilities.map((requirement) => ({
         ...requirement,
         slotTokens: [...requirement.slotTokens],

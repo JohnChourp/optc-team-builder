@@ -1,5 +1,6 @@
 import {
   type AutoBuildAbilityRequirement,
+  type AutoBuildBattleRequirement,
   type AutoBuildEnemyMechanicRequirement,
   type AutoBuildRequiredCharacterGroup,
   type NormalizedBuilderAbility,
@@ -312,6 +313,7 @@ export interface SavedEnemy {
   selectedClasses: string[];
   requiredAbilities: AutoBuildAbilityRequirement[];
   requiredCharacterGroups?: AutoBuildRequiredCharacterGroup[];
+  battleRequirements?: AutoBuildBattleRequirement[];
   enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;

@@ -1,5 +1,9 @@
 import { type SavedEnemy } from "../../core/models/optc.models";
 import {
+  cloneBattleRequirements,
+  normalizeBattleRequirementsWithLegacyFallback,
+} from "../../core/services/auto-team-builder-battle.utils";
+import {
   cloneRequiredCharacterGroups,
   expandRequiredAbilitiesToCharacterGroups,
 } from "../../core/services/required-character-groups.utils";
@@ -262,6 +266,9 @@ function cloneSavedEnemy(enemy: SavedEnemy): SavedEnemy {
       slotTokens: [...requirement.slotTokens],
     })),
     ...(requiredCharacterGroups.length ? { requiredCharacterGroups } : {}),
+    ...(enemy.battleRequirements?.length
+      ? { battleRequirements: cloneBattleRequirements(enemy.battleRequirements) }
+      : {}),
     enemyMechanics: enemy.enemyMechanics.map((mechanic) => ({
       ...mechanic,
       triggerTags: [...mechanic.triggerTags],
@@ -336,6 +343,9 @@ export function parseSavedEnemiesImportPayloadValue(
           ...(Array.isArray(enemy["requiredCharacterGroups"])
             ? { requiredCharacterGroups: enemy["requiredCharacterGroups"] }
             : {}),
+          ...(Array.isArray(enemy["battleRequirements"])
+            ? { battleRequirements: enemy["battleRequirements"] }
+            : {}),
           enemyMechanics: Array.isArray(enemy["enemyMechanics"]) ? enemy["enemyMechanics"] : [],
           requireAllSelectedTypesInTeam: Boolean(enemy["requireAllSelectedTypesInTeam"]),
           requireAllSelectedClassesPerCharacter: Boolean(
@@ -393,6 +403,11 @@ export function sanitizeSavedEnemiesImportPayload(
     }
 
     const requiredAbilities = normalizeRequiredAbilities(enemy["requiredAbilities"]);
+    const enemyMechanics = normalizeEnemyMechanics(enemy["enemyMechanics"]);
+    const requiredCharacterGroups = normalizeRequiredCharacterGroups(
+      enemy["requiredCharacterGroups"],
+      requiredAbilities,
+    );
     const sanitizedEnemy: SavedEnemy = {
       id: normalizedEnemyId,
       name:
@@ -407,11 +422,15 @@ export function sanitizeSavedEnemiesImportPayload(
       }),
       selectedClasses: normalizeStringArray(enemy["selectedClasses"]),
       requiredAbilities,
-      requiredCharacterGroups: normalizeRequiredCharacterGroups(
-        enemy["requiredCharacterGroups"],
-        requiredAbilities,
-      ),
-      enemyMechanics: normalizeEnemyMechanics(enemy["enemyMechanics"]),
+      requiredCharacterGroups,
+      battleRequirements: normalizeBattleRequirementsWithLegacyFallback({
+        battles: Array.isArray(enemy["battleRequirements"])
+          ? (enemy["battleRequirements"] as SavedEnemy["battleRequirements"])
+          : undefined,
+        requiredCharacterGroups,
+        enemyMechanics,
+      }),
+      enemyMechanics,
       requireAllSelectedTypesInTeam: Boolean(enemy["requireAllSelectedTypesInTeam"]),
       requireAllSelectedClassesPerCharacter: Boolean(
         enemy["requireAllSelectedClassesPerCharacter"],

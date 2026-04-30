@@ -700,15 +700,18 @@
   },
   "requiredCharacters": {
     "title": "Required characters",
-    "copy": "Πρόσθεσε έως 6 required slots. Όλα τα abilities μέσα σε μία κάρτα πρέπει να καλυφθούν από τον ίδιο τελικό χαρακτήρα.",
+    "copy": "Δημιούργησε battles και πρόσθεσε required character cards μέσα σε κάθε battle. Όλα τα abilities μέσα σε μία κάρτα πρέπει να καλυφθούν από τον ίδιο τελικό χαρακτήρα.",
     "configured": "{{count}} required characters",
+    "battleConfigured": "{{count}} battles",
     "empty": "Δεν έχουν οριστεί required characters ακόμα.",
+    "battleTitle": "Battle {{index}}",
     "cardTitle": "Character {{index}}",
     "cardEmpty": "Δεν έχουν επιλεγεί abilities για αυτόν τον χαρακτήρα.",
     "abilityCount": "{{count}} abilities",
     "pickerCopy": "Τα επιλεγμένα abilities θα απαιτούνται σε αυτό το character slot.",
     "actions": {
-      "add": "+ Character"
+      "add": "+ Character",
+      "addBattle": "+ Battle"
     },
     "categories": {
       "special": "Special",

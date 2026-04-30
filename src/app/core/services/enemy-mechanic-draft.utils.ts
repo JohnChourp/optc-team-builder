@@ -594,7 +594,7 @@ export function serializeEnemyMechanicDrafts(
 }
 
 export function normalizeEnemyMechanicRequirements(
-  requirements: AutoBuildEnemyMechanicRequirement[] | undefined,
+  requirements: readonly AutoBuildEnemyMechanicRequirement[] | undefined,
 ): AutoBuildEnemyMechanicRequirement[] {
   if (!Array.isArray(requirements)) {
     return [];

@@ -18,6 +18,7 @@ import {
   normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityRequirement,
+  type AutoBuildBattleRequirement,
   type AutoBuildEnemyMechanicRequirement,
   type AutoBuildRequiredCharacterGroup,
 } from '../../core/models/auto-team-builder-ability.models';
@@ -31,6 +32,10 @@ import {
   resolveNonNegativeInteger,
 } from '../../core/services/ability-requirement-draft.utils';
 import { normalizeEnemyMechanicRequirements } from '../../core/services/enemy-mechanic-draft.utils';
+import {
+  cloneBattleRequirements,
+  normalizeBattleRequirementsWithLegacyFallback,
+} from '../../core/services/auto-team-builder-battle.utils';
 import {
   cloneRequiredCharacterGroups,
   expandRequiredAbilitiesToCharacterGroups,
@@ -100,7 +105,8 @@ export interface AutoTeamSelectionExportPayload {
     | 18
     | 19
     | 20
-    | 21;
+    | 21
+    | 22;
   exportedAt: string;
   source: 'auto-team-builder';
   exportType: 'preset';
@@ -109,6 +115,7 @@ export interface AutoTeamSelectionExportPayload {
     selectedClasses: AutoBuildResult['input']['selectedClasses'];
     requiredAbilities: AutoBuildResult['input']['requiredAbilities'];
     requiredCharacterGroups?: AutoBuildRequiredCharacterGroup[];
+    battleRequirements?: AutoBuildBattleRequirement[];
     enemyMechanics?: AutoBuildEnemyMechanicRequirement[];
     requireAllSelectedTypesInTeam: boolean;
     requireAllSelectedClassesPerCharacter: boolean;
@@ -146,6 +153,7 @@ export interface AutoTeamSelectionImportState {
   selectedClasses: string[];
   requiredAbilities: AutoBuildAbilityRequirement[];
   requiredCharacterGroups?: AutoBuildRequiredCharacterGroup[];
+  battleRequirements?: AutoBuildBattleRequirement[];
   enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
@@ -200,6 +208,7 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   selectedClasses: AutoBuildResult['input']['selectedClasses'];
   requiredAbilities: AutoBuildResult['input']['requiredAbilities'];
   requiredCharacterGroups?: AutoBuildRequiredCharacterGroup[];
+  battleRequirements?: AutoBuildBattleRequirement[];
   enemyMechanics: AutoBuildResult['input']['enemyMechanics'];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
@@ -566,7 +575,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload['schemaVersion'] !== 18 &&
       parsedPayload['schemaVersion'] !== 19 &&
       parsedPayload['schemaVersion'] !== 20 &&
-      parsedPayload['schemaVersion'] !== 21) ||
+      parsedPayload['schemaVersion'] !== 21 &&
+      parsedPayload['schemaVersion'] !== 22) ||
     parsedPayload['source'] !== 'auto-team-builder' ||
     parsedPayload['exportType'] !== 'preset'
   ) {
@@ -595,6 +605,23 @@ export function parseAutoTeamSelectionImportPayload(
             isRecord(group) &&
             Array.isArray(group['abilities']) &&
             group['abilities'].every((requirement) => isRecord(requirement)),
+        ))
+    ) ||
+    !(
+      filters['battleRequirements'] === undefined ||
+      (Array.isArray(filters['battleRequirements']) &&
+        filters['battleRequirements'].every(
+          (battle) =>
+            isRecord(battle) &&
+            Array.isArray(battle['enemyMechanics']) &&
+            battle['enemyMechanics'].every((mechanic) => isRecord(mechanic)) &&
+            Array.isArray(battle['requiredCharacterGroups']) &&
+            battle['requiredCharacterGroups'].every(
+              (group) =>
+                isRecord(group) &&
+                Array.isArray(group['abilities']) &&
+                group['abilities'].every((requirement) => isRecord(requirement)),
+            ),
         ))
     ) ||
     !(
@@ -904,6 +931,125 @@ export function sanitizeAutoTeamSelectionImportPayload(
     adjustedAbilityCount += migrated.truncatedCount;
   }
 
+  const rawBattleRequirements = Array.isArray(payload.filters.battleRequirements)
+    ? payload.filters.battleRequirements
+    : [];
+  const battleRequirements: AutoBuildBattleRequirement[] = [];
+
+  for (const [battleIndex, rawBattle] of rawBattleRequirements.entries()) {
+    if (!isRecord(rawBattle)) {
+      continue;
+    }
+
+    const battleGroups: AutoBuildRequiredCharacterGroup[] = [];
+
+    for (const [groupIndex, rawGroup] of (
+      Array.isArray(rawBattle['requiredCharacterGroups'])
+        ? rawBattle['requiredCharacterGroups']
+        : []
+    ).entries()) {
+      if (!isRecord(rawGroup) || battleGroups.length >= MAX_REQUIRED_CHARACTER_GROUPS) {
+        adjustedAbilityCount += 1;
+        continue;
+      }
+
+      const abilities: AutoBuildAbilityRequirement[] = [];
+
+      for (const rawRequirement of Array.isArray(rawGroup['abilities'])
+        ? rawGroup['abilities']
+        : []) {
+        if (!isRecord(rawRequirement)) {
+          continue;
+        }
+
+        const abilityKey =
+          typeof rawRequirement['abilityKey'] === 'string'
+            ? rawRequirement['abilityKey'].trim()
+            : '';
+        const abilityCatalogItem = abilityCatalogMap.get(abilityKey);
+
+        if (!abilityCatalogItem) {
+          invalidAbilityCount += 1;
+          continue;
+        }
+
+        const minTurns = abilityCatalogItem.supportsTurns
+          ? normalizeAbilityRequirementTurns(rawRequirement['minTurns'])
+          : null;
+        const slotScope = normalizeAbilityRequirementSlotScope(
+          typeof rawRequirement['slotScope'] === 'string' ? rawRequirement['slotScope'] : null,
+        );
+        const rawSlotTokens = Array.isArray(rawRequirement['slotTokens'])
+          ? [
+              ...new Set(
+                rawRequirement['slotTokens']
+                  .filter((token): token is string => typeof token === 'string')
+                  .map((token) => token.trim().toUpperCase())
+                  .filter((token) => token.length > 0),
+              ),
+            ]
+          : [];
+        const slotTokens = abilityCatalogItem.supportsSlotTokens
+          ? rawSlotTokens.filter((token) => abilityCatalogItem.availableSlotTokens.includes(token))
+          : [];
+
+        if (
+          rawSlotTokens.length !== slotTokens.length ||
+          (!abilityCatalogItem.supportsTurns && rawRequirement['minTurns'] !== null) ||
+          (!abilityCatalogItem.supportsSlotTokens && rawSlotTokens.length > 0) ||
+          rawRequirement['requiredCharacterCount'] !== 1
+        ) {
+          adjustedAbilityCount += 1;
+        }
+
+        abilities.push({
+          abilityKey,
+          minTurns,
+          slotTokens,
+          requiredCharacterCount: 1,
+          ...(slotScope !== 'any' ? { slotScope } : {}),
+        });
+      }
+
+      if (abilities.length > 0) {
+        battleGroups.push({
+          id:
+            typeof rawGroup['id'] === 'string' && rawGroup['id'].trim().length > 0
+              ? rawGroup['id'].trim()
+              : `imported-${battleIndex + 1}-${groupIndex + 1}`,
+          abilities,
+        });
+      }
+    }
+
+    const enemyMechanics = normalizeEnemyMechanicRequirements(
+      Array.isArray(rawBattle['enemyMechanics'])
+        ? (rawBattle['enemyMechanics'] as AutoBuildEnemyMechanicRequirement[])
+        : [],
+    );
+
+    if (battleGroups.length || enemyMechanics.length) {
+      battleRequirements.push({
+        id:
+          typeof rawBattle['id'] === 'string' && rawBattle['id'].trim().length > 0
+            ? rawBattle['id'].trim()
+            : `battle-${battleIndex + 1}`,
+        title:
+          typeof rawBattle['title'] === 'string' && rawBattle['title'].trim().length > 0
+            ? rawBattle['title'].trim()
+            : `Battle ${battleIndex + 1}`,
+        enemyMechanics,
+        requiredCharacterGroups: battleGroups,
+      });
+    }
+  }
+
+  const normalizedBattleRequirements = normalizeBattleRequirementsWithLegacyFallback({
+    battles: battleRequirements,
+    requiredCharacterGroups,
+    enemyMechanics,
+  });
+
   const invalidAbilityWarning = buildWarning(
     'preset.warnings.unsupportedAbilities',
     invalidAbilityCount,
@@ -1125,7 +1271,8 @@ export function sanitizeAutoTeamSelectionImportPayload(
       selectedTypes,
       selectedClasses,
       requiredAbilities,
-      requiredCharacterGroups,
+      requiredCharacterGroups: normalizedBattleRequirements.length ? [] : requiredCharacterGroups,
+      battleRequirements: normalizedBattleRequirements,
       enemyMechanics,
       requireAllSelectedTypesInTeam: payload.filters.requireAllSelectedTypesInTeam,
       requireAllSelectedClassesPerCharacter: payload.filters.requireAllSelectedClassesPerCharacter,
@@ -1197,6 +1344,7 @@ export function buildAutoTeamSelectionExportPayload({
   selectedClasses,
   requiredAbilities,
   requiredCharacterGroups = [],
+  battleRequirements = [],
   enemyMechanics,
   requireAllSelectedTypesInTeam,
   requireAllSelectedClassesPerCharacter,
@@ -1230,9 +1378,10 @@ export function buildAutoTeamSelectionExportPayload({
     role: slot.role,
     characterIds: [...slot.characterIds],
   }));
+  const normalizedBattleRequirements = cloneBattleRequirements(battleRequirements);
 
   return {
-    schemaVersion: 21,
+    schemaVersion: normalizedBattleRequirements.length ? 22 : 21,
     exportedAt,
     source: 'auto-team-builder',
     exportType: 'preset',
@@ -1244,6 +1393,9 @@ export function buildAutoTeamSelectionExportPayload({
         slotTokens: [...requirement.slotTokens],
       })),
       requiredCharacterGroups: cloneRequiredCharacterGroups(requiredCharacterGroups),
+      ...(normalizedBattleRequirements.length
+        ? { battleRequirements: normalizedBattleRequirements }
+        : {}),
       enemyMechanics: enemyMechanics.map((mechanic) => ({
         ...mechanic,
         triggerTags: [...mechanic.triggerTags],

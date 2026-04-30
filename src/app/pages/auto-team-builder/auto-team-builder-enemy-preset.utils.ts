@@ -7,6 +7,8 @@ import {
   type AutoTeamBuilderType,
 } from '../../core/models/auto-team-builder.models';
 import { type SavedEnemy } from '../../core/models/optc.models';
+import { normalizeBattleRequirementsWithLegacyFallback } from '../../core/services/auto-team-builder-battle.utils';
+import { splitManualAbilityRequirementsFromEnemyMechanics } from '../../core/services/enemy-mechanic-draft.utils';
 import { expandRequiredAbilitiesToCharacterGroups } from '../../core/services/required-character-groups.utils';
 import { type AutoTeamSelectionImportState } from './auto-team-builder-export.utils';
 
@@ -14,6 +16,10 @@ export function buildAutoTeamBuilderStateFromSavedEnemy(
   enemy: SavedEnemy,
 ): AutoTeamSelectionImportState {
   const availableTypes = new Set<AutoTeamBuilderType>(AUTO_TEAM_BUILDER_TYPES);
+  const manualRequiredAbilities = splitManualAbilityRequirementsFromEnemyMechanics(
+    enemy.requiredAbilities,
+    enemy.enemyMechanics,
+  );
 
   return {
     selectedTypes: enemy.selectedTypes.filter((type): type is AutoTeamBuilderType =>
@@ -34,6 +40,12 @@ export function buildAutoTeamBuilderStateFromSavedEnemy(
           })),
         }))
       : expandRequiredAbilitiesToCharacterGroups(enemy.requiredAbilities).groups,
+    battleRequirements: normalizeBattleRequirementsWithLegacyFallback({
+      battles: enemy.battleRequirements,
+      requiredAbilities: manualRequiredAbilities,
+      requiredCharacterGroups: enemy.requiredCharacterGroups,
+      enemyMechanics: enemy.enemyMechanics,
+    }),
     enemyMechanics: enemy.enemyMechanics.map((mechanic) => ({
       ...mechanic,
       triggerTags: [...mechanic.triggerTags],
