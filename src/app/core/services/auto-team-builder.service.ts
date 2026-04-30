@@ -1670,7 +1670,11 @@ export class AutoTeamBuilderService {
     allowedCharacterIds: number[] | undefined,
     costRange: AutoBuildCostRange,
   ): number[] | undefined {
-    const baseCharacterIds = this.resolveAutoFillCharacterIds(records, allowedCharacterIds, costRange);
+    const baseCharacterIds = this.resolveAutoFillCharacterIds(
+      records,
+      allowedCharacterIds,
+      costRange,
+    );
     const hasCostRange = this.hasActiveCostRange(costRange);
 
     if (!friendCaptainRecords?.length) {
@@ -1911,7 +1915,7 @@ export class AutoTeamBuilderService {
   private normalizeRequiredAbilities(
     requirements: AutoBuildAbilityRequirement[],
   ): AutoBuildAbilityRequirement[] {
-    const normalizedRequirements = new Map<string, AutoBuildAbilityRequirement>();
+    const normalizedRequirements: AutoBuildAbilityRequirement[] = [];
 
     for (const requirement of requirements) {
       const abilityKey = requirement.abilityKey.trim();
@@ -1938,18 +1942,7 @@ export class AutoTeamBuilderService {
         continue;
       }
 
-      const identity = `${normalizedAbilityKey}|${minTurns ?? 'none'}|${slotTokens.join(',')}|${slotScope}`;
-      const existingRequirement = normalizedRequirements.get(identity);
-
-      if (existingRequirement) {
-        existingRequirement.requiredCharacterCount = Math.max(
-          existingRequirement.requiredCharacterCount,
-          requiredCharacterCount,
-        );
-        continue;
-      }
-
-      normalizedRequirements.set(identity, {
+      normalizedRequirements.push({
         abilityKey: normalizedAbilityKey,
         minTurns,
         slotTokens,
@@ -1958,6 +1951,6 @@ export class AutoTeamBuilderService {
       });
     }
 
-    return [...normalizedRequirements.values()];
+    return normalizedRequirements;
   }
 }

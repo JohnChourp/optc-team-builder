@@ -894,6 +894,57 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(repository.searchDetailedCharacters).toHaveBeenCalledTimes(2);
   });
 
+  it('preserves duplicate turn requirements from the shared ability picker', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+
+    await page.saveAbilityPicker([
+      {
+        draftId: 'atk-down-5',
+        abilityKey: 'remove_atk_down',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+      {
+        draftId: 'atk-down-7',
+        abilityKey: 'remove_atk_down',
+        minTurns: 7,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ]);
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({
+        requiredAbilities: [
+          {
+            abilityKey: 'remove_atk_down',
+            minTurns: 5,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+          },
+          {
+            abilityKey: 'remove_atk_down',
+            minTurns: 7,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+          },
+        ],
+      }),
+      expect.objectContaining({
+        onProgress: expect.any(Function),
+        signal: expect.any(AbortSignal),
+      }),
+    );
+  });
+
   it('keeps enemy mechanics out of the Special-only requirement list on save', async () => {
     const { page, repository } = await createPage();
 
@@ -1343,12 +1394,18 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     const alreadySelected = createCharacterRecord(901, 'Already Selected Pick', [
       createBuilderAbility('remove_bind'),
     ]);
-    const excluded = createCharacterRecord(902, 'Excluded Pick', [createBuilderAbility('remove_bind')]);
-    const conflict = createCharacterRecord(903, 'Conflict Pick', [createBuilderAbility('remove_bind')]);
+    const excluded = createCharacterRecord(902, 'Excluded Pick', [
+      createBuilderAbility('remove_bind'),
+    ]);
+    const conflict = createCharacterRecord(903, 'Conflict Pick', [
+      createBuilderAbility('remove_bind'),
+    ]);
     const otherSlotConflict = createCharacterRecord(302, 'Other Slot Conflict', [
       createBuilderAbility('remove_slot_barrier'),
     ]);
-    const fallback = createCharacterRecord(401, 'Fallback Pick', [createBuilderAbility('remove_bind')]);
+    const fallback = createCharacterRecord(401, 'Fallback Pick', [
+      createBuilderAbility('remove_bind'),
+    ]);
 
     source.detail.partyConflictKeys = ['same-base'];
     alreadySelected.detail.partyConflictKeys = ['same-base'];
@@ -3894,12 +3951,15 @@ describe('AutoTeamBuilder preset import helpers', () => {
       },
     };
 
-    const result = sanitizeAutoTeamSelectionImportPayload(legacyPayload as AutoTeamSelectionExportPayload, {
-      availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
-      availableClasses: ['Fighter', 'Slasher'],
-      abilityCatalogItems: [],
-      availableLockedCharacters: [createCharacterRecord(101)],
-    });
+    const result = sanitizeAutoTeamSelectionImportPayload(
+      legacyPayload as AutoTeamSelectionExportPayload,
+      {
+        availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+        availableClasses: ['Fighter', 'Slasher'],
+        abilityCatalogItems: [],
+        availableLockedCharacters: [createCharacterRecord(101)],
+      },
+    );
 
     expect(result.state.leaderCostRange).toEqual({ min: 20, max: 60 });
     expect(result.state.subCostRange).toEqual({ min: 20, max: 60 });
@@ -4191,7 +4251,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
     ]);
   });
 
-  it('merges duplicate imported ability requirements by keeping the max character count', () => {
+  it('preserves duplicate imported ability requirements as separate rows', () => {
     const payload = buildAutoTeamSelectionExportPayload({
       selectedTypes: ['DEX'],
       selectedClasses: ['Fighter'],
@@ -4249,6 +4309,12 @@ describe('AutoTeamBuilder preset import helpers', () => {
     });
 
     expect(result.state.requiredAbilities).toEqual([
+      {
+        abilityKey: 'remove_slot_barrier',
+        minTurns: 3,
+        slotTokens: ['DEX'],
+        requiredCharacterCount: 1,
+      },
       {
         abilityKey: 'remove_slot_barrier',
         minTurns: 3,
@@ -5087,6 +5153,26 @@ async function createPage(
           matchingCharacterIds: [101, 102],
           sampleCharacterIds: [101],
           sampleTexts: ['Reduces Bind duration by 5 turns'],
+        },
+        {
+          key: 'remove_atk_down',
+          label: 'ATK Down',
+          category: 'special',
+          groupLabel: 'Reduce Status Effect Duration',
+          groupOrder: 6,
+          effectOrder: 2,
+          supportsTurns: true,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['specialText'],
+          matchCount: 10,
+          matchingCharacterIds: [101, 102],
+          turnMatchingCharacterIds: [
+            { minTurns: 5, characterIds: [101] },
+            { minTurns: 7, characterIds: [102] },
+          ],
+          sampleCharacterIds: [101],
+          sampleTexts: ['Reduces ATK Down duration by 5 turns'],
         },
         {
           key: 'remove_slot_barrier',

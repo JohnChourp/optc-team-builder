@@ -151,10 +151,9 @@ const CATALOG_ITEMS: AutoBuildAbilityCatalogItem[] = [
 
 describe('special ability filter utils', () => {
   it('returns only the requested category', () => {
-    expect(getAbilityCatalogItemsByCategory(CATALOG_ITEMS, 'crewmate').map((item) => item.key)).toEqual([
-      'crewmate_atk_boost_fighter',
-      'crewmate_hp_recovery_eot',
-    ]);
+    expect(
+      getAbilityCatalogItemsByCategory(CATALOG_ITEMS, 'crewmate').map((item) => item.key),
+    ).toEqual(['crewmate_atk_boost_fighter', 'crewmate_hp_recovery_eot']);
   });
 
   it('serializes category drafts with normalized strict-and fields', () => {
@@ -181,15 +180,55 @@ describe('special ability filter utils', () => {
     ]);
   });
 
-  it('returns only potential items for the potential category', () => {
-    expect(getAbilityCatalogItemsByCategory(CATALOG_ITEMS, 'potential').map((item) => item.key)).toEqual([
-      'potential_barrier_pierce',
-      'potential_final_tap_sugo_special',
+  it('preserves duplicate category drafts when dedupe is disabled', () => {
+    expect(
+      serializeCategoryAbilityDrafts(
+        [
+          {
+            draftId: 'crewmate-1',
+            abilityKey: 'crewmate_atk_boost_fighter',
+            minTurns: 3,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+          },
+          {
+            draftId: 'crewmate-2',
+            abilityKey: 'crewmate_atk_boost_fighter',
+            minTurns: 7,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+          },
+        ],
+        CATALOG_ITEMS,
+        'crewmate',
+        { dedupe: false },
+      ),
+    ).toEqual([
+      {
+        abilityKey: 'crewmate_atk_boost_fighter',
+        minTurns: 3,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+      {
+        abilityKey: 'crewmate_atk_boost_fighter',
+        minTurns: 7,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
     ]);
   });
 
+  it('returns only potential items for the potential category', () => {
+    expect(
+      getAbilityCatalogItemsByCategory(CATALOG_ITEMS, 'potential').map((item) => item.key),
+    ).toEqual(['potential_barrier_pierce', 'potential_final_tap_sugo_special']);
+  });
+
   it('returns only support items for the support category', () => {
-    expect(getAbilityCatalogItemsByCategory(CATALOG_ITEMS, 'support').map((item) => item.key)).toEqual([
+    expect(
+      getAbilityCatalogItemsByCategory(CATALOG_ITEMS, 'support').map((item) => item.key),
+    ).toEqual([
       'support_atk_boost',
       'support_reduce_enemy_effect_turns_def_up',
       'support_apply_status_effect_delay',
@@ -228,6 +267,29 @@ describe('special ability filter utils', () => {
         'crewmate',
       ),
     ).toEqual([30]);
+  });
+
+  it('unions duplicate same-ability category matches before intersecting other groups', () => {
+    expect(
+      resolveCategoryAbilityMatchingCharacterIds(
+        [
+          {
+            abilityKey: 'crewmate_atk_boost_fighter',
+            minTurns: 3,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+          },
+          {
+            abilityKey: 'crewmate_atk_boost_fighter',
+            minTurns: 7,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+          },
+        ],
+        CATALOG_ITEMS,
+        'crewmate',
+      ),
+    ).toEqual([30, 20]);
   });
 
   it('returns no category matches when no turn bucket satisfies the requested turns', () => {

@@ -734,7 +734,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
 
   let invalidAbilityCount = 0;
   let adjustedAbilityCount = 0;
-  const requiredAbilityMap = new Map<string, AutoBuildAbilityRequirement>();
+  const requiredAbilities: AutoBuildAbilityRequirement[] = [];
   const enemyMechanics = normalizeEnemyMechanicRequirements(
     Array.isArray(payload.filters.enemyMechanics) ? payload.filters.enemyMechanics : [],
   );
@@ -796,18 +796,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
       adjustedAbilityCount += 1;
     }
 
-    const identity = `${abilityKey}|${minTurns ?? 'none'}|${slotTokens.join(',')}|${slotScope}`;
-    const existingRequirement = requiredAbilityMap.get(identity);
-
-    if (existingRequirement) {
-      existingRequirement.requiredCharacterCount = Math.max(
-        existingRequirement.requiredCharacterCount,
-        requiredCharacterCount,
-      );
-      continue;
-    }
-
-    requiredAbilityMap.set(identity, {
+    requiredAbilities.push({
       abilityKey,
       minTurns,
       slotTokens,
@@ -815,7 +804,6 @@ export function sanitizeAutoTeamSelectionImportPayload(
       ...(slotScope !== 'any' ? { slotScope } : {}),
     });
   }
-  const requiredAbilities = [...requiredAbilityMap.values()];
 
   const invalidAbilityWarning = buildWarning(
     'preset.warnings.unsupportedAbilities',

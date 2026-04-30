@@ -452,6 +452,12 @@ describe('UserStateService saved teams', () => {
           abilityKey: 'remove_bind',
           minTurns: 5,
           slotTokens: [],
+          requiredCharacterCount: 1,
+        },
+        {
+          abilityKey: 'remove_bind',
+          minTurns: 5,
+          slotTokens: [],
           requiredCharacterCount: 2,
         },
       ],

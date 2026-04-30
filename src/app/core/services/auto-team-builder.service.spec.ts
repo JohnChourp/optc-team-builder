@@ -1143,6 +1143,104 @@ describe('Auto team builder', () => {
     expect(result).toBeNull();
   });
 
+  it('does not let one stronger character satisfy duplicate same-ability requirements', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 5814,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces ATK Down duration by 7 turns.',
+            builderAbilities: [
+              {
+                key: 'remove_atk_down',
+                label: 'Remove ATK Down',
+                minTurns: 7,
+                isCompleteRemoval: false,
+                slotTokens: [],
+                source: 'specialText',
+              },
+            ],
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      {
+        ...INPUT,
+        requiredAbilities: [
+          { abilityKey: 'remove_atk_down', minTurns: 5, slotTokens: [], requiredCharacterCount: 1 },
+          { abilityKey: 'remove_atk_down', minTurns: 7, slotTokens: [], requiredCharacterCount: 1 },
+        ],
+      },
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('matches duplicate same-ability turn requirements with separate team slots', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 5815,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces ATK Down duration by 5 turns.',
+            builderAbilities: [
+              {
+                key: 'remove_atk_down',
+                label: 'Remove ATK Down',
+                minTurns: 5,
+                isCompleteRemoval: false,
+                slotTokens: [],
+                source: 'specialText',
+              },
+            ],
+          },
+        }),
+        createCharacterRecord({
+          id: 5816,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces ATK Down duration by 7 turns.',
+            builderAbilities: [
+              {
+                key: 'remove_atk_down',
+                label: 'Remove ATK Down',
+                minTurns: 7,
+                isCompleteRemoval: false,
+                slotTokens: [],
+                source: 'specialText',
+              },
+            ],
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      {
+        ...INPUT,
+        requiredAbilities: [
+          { abilityKey: 'remove_atk_down', minTurns: 5, slotTokens: [], requiredCharacterCount: 1 },
+          { abilityKey: 'remove_atk_down', minTurns: 7, slotTokens: [], requiredCharacterCount: 1 },
+        ],
+      },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+    expect(result?.coverage.abilityRequirements.matched).toEqual([
+      { abilityKey: 'remove_atk_down', minTurns: 5, slotTokens: [], requiredCharacterCount: 1 },
+      { abilityKey: 'remove_atk_down', minTurns: 7, slotTokens: [], requiredCharacterCount: 1 },
+    ]);
+  });
+
   it('matches at least N turns and typed slot tokens for slot barrier requirements', () => {
     const result = buildAutoTeamResult(
       [
@@ -3355,9 +3453,7 @@ describe('Auto team builder', () => {
     expect(result?.slots[0]?.character.id).toBe(5900);
     expect(result?.slots[1]?.character.id).toBe(5900);
     expect(
-      result?.slots
-        .filter((slot) => slot.role === 'sub')
-        .some((slot) => slot.character.cost > 60),
+      result?.slots.filter((slot) => slot.role === 'sub').some((slot) => slot.character.cost > 60),
     ).toBe(true);
   });
 
@@ -5768,7 +5864,8 @@ function createInput(
     leaderBoostFilters: overrides.leaderBoostFilters ?? ['HP', 'ATK'],
     leaderBoostRanges: overrides.leaderBoostRanges ?? createEmptyAutoBuildLeaderBoostRanges(),
     costRange: overrides.costRange ?? createEmptyAutoBuildCostRange(),
-    leaderCostRange: overrides.leaderCostRange ?? overrides.costRange ?? createEmptyAutoBuildCostRange(),
+    leaderCostRange:
+      overrides.leaderCostRange ?? overrides.costRange ?? createEmptyAutoBuildCostRange(),
     subCostRange: overrides.subCostRange ?? overrides.costRange ?? createEmptyAutoBuildCostRange(),
     manualSlots:
       overrides.manualSlots ??

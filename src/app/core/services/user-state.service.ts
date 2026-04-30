@@ -1631,7 +1631,7 @@ export class UserStateService {
       return [];
     }
 
-    const normalizedRequirements = new Map<string, AutoBuildAbilityRequirement>();
+    const normalizedRequirements: AutoBuildAbilityRequirement[] = [];
 
     requirements.forEach((requirement) => {
       if (!requirement || typeof requirement !== 'object') {
@@ -1663,18 +1663,8 @@ export class UserStateService {
         requirement.requiredCharacterCount > 0
           ? requirement.requiredCharacterCount
           : 1;
-      const key = `${abilityKey}|${minTurns ?? 'none'}|${slotTokens.join(',')}`;
-      const existing = normalizedRequirements.get(key);
 
-      if (existing) {
-        existing.requiredCharacterCount = Math.max(
-          existing.requiredCharacterCount,
-          requiredCharacterCount,
-        );
-        return;
-      }
-
-      normalizedRequirements.set(key, {
+      normalizedRequirements.push({
         abilityKey,
         minTurns,
         slotTokens,
@@ -1682,7 +1672,7 @@ export class UserStateService {
       });
     });
 
-    return [...normalizedRequirements.values()];
+    return normalizedRequirements;
   }
 
   private normalizeTimestamp(value: string | undefined, fallback: string): string {

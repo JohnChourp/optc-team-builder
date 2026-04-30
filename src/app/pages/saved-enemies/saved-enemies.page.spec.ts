@@ -242,6 +242,62 @@ describe('SavedEnemiesPage', () => {
     expect(page.editorOpen()).toBe(false);
   });
 
+  it('preserves duplicate ability rows when editing an enemy preset', async () => {
+    const { page, userState } = createPage();
+
+    await page.ngOnInit();
+    page.openEditModal({
+      ...page.savedEnemies()[0]!,
+      enemyMechanics: [],
+      requiredAbilities: [
+        {
+          abilityKey: 'remove_bind',
+          minTurns: 5,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+        },
+        {
+          abilityKey: 'remove_bind',
+          minTurns: 7,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+        },
+      ],
+    });
+
+    expect(page.requiredAbilityDrafts()).toEqual([
+      expect.objectContaining({
+        abilityKey: 'remove_bind',
+        requiredCharacterCount: 1,
+      }),
+      expect.objectContaining({
+        abilityKey: 'remove_bind',
+        requiredCharacterCount: 1,
+      }),
+    ]);
+
+    await page.saveEnemy();
+
+    expect(userState.saveEnemy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requiredAbilities: [
+          {
+            abilityKey: 'remove_bind',
+            minTurns: null,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+          },
+          {
+            abilityKey: 'remove_bind',
+            minTurns: null,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+          },
+        ],
+      }),
+    );
+  });
+
   it('parses pasted enemy text, applies it to the draft, and persists it through saveEnemy', async () => {
     const { page, userState } = createPage();
 

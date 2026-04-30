@@ -168,12 +168,6 @@ export class AbilityRequirementPickerComponent implements OnChanges {
   }
 
   public onCatalogItemSelect(item: AutoBuildAbilityCatalogItem): void {
-    const existingDraft = this.workingDrafts().find((draft) => draft.abilityKey === item.key);
-
-    if (existingDraft) {
-      return;
-    }
-
     this.workingDrafts.update((currentDrafts) => [
       ...currentDrafts,
       createAbilityRequirementDraft(item),

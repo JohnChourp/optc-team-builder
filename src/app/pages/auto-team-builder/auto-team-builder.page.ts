@@ -117,7 +117,6 @@ import {
   createAbilityRequirementDrafts,
   formatAbilityRequirementSummary,
   resolveAbilityRequirementVisual,
-  serializeAbilityRequirementDrafts,
   type AbilityRequirementDraft,
   type AbilityRequirementVisualMeta,
 } from '../../core/services/ability-requirement-draft.utils';
@@ -126,7 +125,6 @@ import {
   deriveAbilityRequirementsFromEnemyMechanics,
   formatEnemyMechanicSummary,
   getEnemyMechanicCatalogItems,
-  mergeAbilityRequirements,
   resolveEnemyMechanicVisual,
   serializeEnemyMechanicDrafts,
   splitManualAbilityRequirementsFromEnemyMechanics,
@@ -593,9 +591,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     () =>
       new Map(this.availableEnemyMechanicCatalogItems().map((item) => [item.key, item] as const)),
   );
-  public readonly pageRequiredAbilities = computed(() =>
-    mergeAbilityRequirements(this.serializeManualRequiredAbilities()),
-  );
+  public readonly pageRequiredAbilities = computed(() => this.serializeManualRequiredAbilities());
   public readonly hasSelectedClasses = computed(() => this.selectedClasses().length > 0);
   public readonly hasSelectedTypes = computed(() => this.selectedTypes().length > 0);
   public readonly hasRequiredAbilities = computed(() => this.pageRequiredAbilities().length > 0);
@@ -915,7 +911,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly hasActiveLeaderCostRange = computed(() =>
     this.hasActiveCostRange(this.leaderCostRange()),
   );
-  public readonly hasActiveSubCostRange = computed(() => this.hasActiveCostRange(this.subCostRange()));
+  public readonly hasActiveSubCostRange = computed(() =>
+    this.hasActiveCostRange(this.subCostRange()),
+  );
   public readonly hasActiveCostRanges = computed(
     () => this.hasActiveLeaderCostRange() || this.hasActiveSubCostRange(),
   );
@@ -2342,6 +2340,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     const requirements = serializeSpecialAbilityDrafts(
       drafts,
       this.availableSpecialAbilityCatalogItems(),
+      { dedupe: false },
     );
 
     this.requiredAbilityDrafts.set(createAbilityRequirementDrafts(requirements));
@@ -2373,6 +2372,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       drafts,
       this.availableCrewmateAbilityCatalogItems(),
       'crewmate',
+      { dedupe: false },
     );
 
     this.crewmateAbilityDrafts.set(createAbilityRequirementDrafts(requirements));
@@ -2404,6 +2404,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       drafts,
       this.availablePotentialAbilityCatalogItems(),
       'potential',
+      { dedupe: false },
     );
 
     this.potentialAbilityDrafts.set(createAbilityRequirementDrafts(requirements));
@@ -2435,6 +2436,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       drafts,
       this.availableSupportAbilityCatalogItems(),
       'support',
+      { dedupe: false },
     );
 
     this.supportAbilityDrafts.set(createAbilityRequirementDrafts(requirements));
@@ -3178,10 +3180,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.leaderBoostRanges.set(this.cloneLeaderBoostRanges(state.leaderBoostRanges));
     this.leaderCostRange.set({ ...state.leaderCostRange });
     this.subCostRange.set({ ...state.subCostRange });
-    const migratedRequiredAbilities = mergeAbilityRequirements([
-      ...state.requiredAbilities,
+    const manualRequiredAbilities = splitManualAbilityRequirementsFromEnemyMechanics(
+      state.requiredAbilities,
+      state.enemyMechanics,
+    );
+    const migratedRequiredAbilities = [
+      ...manualRequiredAbilities,
       ...deriveAbilityRequirementsFromEnemyMechanics(state.enemyMechanics),
-    ]);
+    ];
     this.enemyMechanicDrafts.set([]);
     this.requiredAbilityDrafts.set(
       createSpecialAbilityDrafts(migratedRequiredAbilities, this.availableAbilityCatalogItems()),
@@ -3922,7 +3928,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     return this.hasValidUniqueBaseNameAssignment(filledSlots, 0, new Set<string>());
   }
 
-  private isDetailedCharacterRecord(character: CharacterListItem): character is CharacterDetailRecord {
+  private isDetailedCharacterRecord(
+    character: CharacterListItem,
+  ): character is CharacterDetailRecord {
     return 'detail' in character && 'detailImageUrl' in character;
   }
 
@@ -4125,21 +4133,25 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       ...serializeSpecialAbilityDrafts(
         this.requiredAbilityDrafts(),
         this.availableSpecialAbilityCatalogItems(),
+        { dedupe: false },
       ),
       ...serializeCategoryAbilityDrafts(
         this.crewmateAbilityDrafts(),
         this.availableCrewmateAbilityCatalogItems(),
         'crewmate',
+        { dedupe: false },
       ),
       ...serializeCategoryAbilityDrafts(
         this.potentialAbilityDrafts(),
         this.availablePotentialAbilityCatalogItems(),
         'potential',
+        { dedupe: false },
       ),
       ...serializeCategoryAbilityDrafts(
         this.supportAbilityDrafts(),
         this.availableSupportAbilityCatalogItems(),
         'support',
+        { dedupe: false },
       ),
     ];
   }

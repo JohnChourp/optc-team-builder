@@ -427,7 +427,10 @@ const ENEMY_MECHANIC_VISUALS: Record<string, Omit<EnemyMechanicVisualMeta, 'isFa
 
 function createEnemyMechanicCatalogItem(
   item: Partial<AutoBuildEnemyMechanicCatalogItem> &
-    Pick<AutoBuildEnemyMechanicCatalogItem, 'key' | 'label' | 'category' | 'derivedAbilityKey' | 'keywords'>,
+    Pick<
+      AutoBuildEnemyMechanicCatalogItem,
+      'key' | 'label' | 'category' | 'derivedAbilityKey' | 'keywords'
+    >,
 ): AutoBuildEnemyMechanicCatalogItem {
   return {
     supportsTurns: true,
@@ -487,9 +490,8 @@ export function createEnemyMechanicDraft(
     draftId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     mechanicKey: requirement?.mechanicKey?.trim() ?? item?.key ?? '',
     category: requirement?.category ?? item?.category ?? 'enemyDefense',
-    minTurns: item?.supportsTurns === false
-      ? null
-      : resolvePositiveInteger(requirement?.minTurns) ?? 1,
+    minTurns:
+      item?.supportsTurns === false ? null : (resolvePositiveInteger(requirement?.minTurns) ?? 1),
     requiredCharacterCount: resolvePositiveInteger(requirement?.requiredCharacterCount),
     triggerTags: sanitizeTags(
       requirement?.triggerTags,
@@ -553,7 +555,7 @@ export function applyCatalogEnemyMechanicToDraft(
     ...draft,
     mechanicKey,
     category: catalogItem.category,
-    minTurns: catalogItem.supportsTurns ? resolvePositiveInteger(draft.minTurns) ?? 1 : null,
+    minTurns: catalogItem.supportsTurns ? (resolvePositiveInteger(draft.minTurns) ?? 1) : null,
     requiredCharacterCount: resolvePositiveInteger(draft.requiredCharacterCount),
     triggerTags: sanitizeTags(
       draft.triggerTags,
@@ -606,7 +608,8 @@ export function normalizeEnemyMechanicRequirements(
     }
 
     const catalogItem = resolveEnemyMechanicCatalogItem(requirement.mechanicKey);
-    const mechanicKey = typeof requirement.mechanicKey === 'string' ? requirement.mechanicKey.trim() : '';
+    const mechanicKey =
+      typeof requirement.mechanicKey === 'string' ? requirement.mechanicKey.trim() : '';
 
     if (!mechanicKey.length) {
       return;
@@ -703,7 +706,9 @@ export function mergeAbilityRequirements(
       return;
     }
 
-    const slotTokens = [...new Set(requirement.slotTokens.map((token) => token.trim().toUpperCase()))]
+    const slotTokens = [
+      ...new Set(requirement.slotTokens.map((token) => token.trim().toUpperCase())),
+    ]
       .filter((token) => token.length > 0)
       .sort((left, right) => left.localeCompare(right));
     const mergeKey = `${abilityKey}|${slotTokens.join(',')}`;
@@ -713,7 +718,10 @@ export function mergeAbilityRequirements(
 
     if (existing) {
       existing.minTurns = resolveMaxTurns(existing.minTurns, minTurns);
-      existing.requiredCharacterCount = Math.max(existing.requiredCharacterCount, requiredCharacterCount);
+      existing.requiredCharacterCount = Math.max(
+        existing.requiredCharacterCount,
+        requiredCharacterCount,
+      );
       return;
     }
 
@@ -734,11 +742,13 @@ export function splitManualAbilityRequirementsFromEnemyMechanics(
 ): AutoBuildAbilityRequirement[] {
   const derivedRequirements = deriveAbilityRequirementsFromEnemyMechanics(mechanics);
   const derivedRequirementMap = new Map(
-    derivedRequirements.map((requirement) => [buildAbilityIdentity(requirement), requirement] as const),
+    derivedRequirements.map(
+      (requirement) => [buildAbilityIdentity(requirement), requirement] as const,
+    ),
   );
 
-  return mergeAbilityRequirements(
-    effectiveRequirements.filter((requirement) => {
+  return effectiveRequirements
+    .filter((requirement) => {
       const derivedRequirement = derivedRequirementMap.get(buildAbilityIdentity(requirement));
 
       if (!derivedRequirement) {
@@ -747,10 +757,19 @@ export function splitManualAbilityRequirementsFromEnemyMechanics(
 
       return (
         (requirement.requiredCharacterCount ?? 1) > derivedRequirement.requiredCharacterCount ||
-        resolvePositiveInteger(requirement.minTurns) !== resolvePositiveInteger(derivedRequirement.minTurns)
+        resolvePositiveInteger(requirement.minTurns) !==
+          resolvePositiveInteger(derivedRequirement.minTurns)
       );
-    }),
-  );
+    })
+    .map((requirement) => ({
+      abilityKey: requirement.abilityKey.trim(),
+      minTurns: resolvePositiveInteger(requirement.minTurns),
+      slotTokens: [...new Set(requirement.slotTokens.map((token) => token.trim().toUpperCase()))]
+        .filter((token) => token.length > 0)
+        .sort((left, right) => left.localeCompare(right)),
+      requiredCharacterCount: resolvePositiveInteger(requirement.requiredCharacterCount) ?? 1,
+      ...(requirement.slotScope ? { slotScope: requirement.slotScope } : {}),
+    }));
 }
 
 export function formatEnemyMechanicSummary(
@@ -765,15 +784,21 @@ export function formatEnemyMechanicSummary(
   }
 
   if (requirement.triggerTags.length) {
-    suffixes.push(requirement.triggerTags.map((tag) => formatter.resolveTriggerTag(tag)).join(' / '));
+    suffixes.push(
+      requirement.triggerTags.map((tag) => formatter.resolveTriggerTag(tag)).join(' / '),
+    );
   }
 
   if (requirement.responseTags.length) {
-    suffixes.push(requirement.responseTags.map((tag) => formatter.resolveResponseTag(tag)).join(' / '));
+    suffixes.push(
+      requirement.responseTags.map((tag) => formatter.resolveResponseTag(tag)).join(' / '),
+    );
   }
 
   if (requirement.conditionTags.length) {
-    suffixes.push(requirement.conditionTags.map((tag) => formatter.resolveConditionTag(tag)).join(' / '));
+    suffixes.push(
+      requirement.conditionTags.map((tag) => formatter.resolveConditionTag(tag)).join(' / '),
+    );
   }
 
   const label = resolveLabel(requirement.mechanicKey);

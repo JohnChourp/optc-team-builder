@@ -583,16 +583,6 @@ function addCandidatePartyConflictKeys(
   resolveCandidatePartyConflictKeys(candidate).forEach((key) => usedPartyConflictKeys.add(key));
 }
 
-function countMatchingAbilityRequirementSlots(
-  candidates: AutoBuildCandidate[],
-  requirement: AutoBuildAbilityRequirement,
-  leaderCandidates: AutoBuildCandidate[] = [],
-): number {
-  return resolveAbilityRequirementCandidatePool(candidates, requirement, leaderCandidates).filter(
-    (candidate) => candidateMatchesAbilityRequirement(candidate, requirement),
-  ).length;
-}
-
 function isExtraDropLeaderAbilityRequirement(requirement: AutoBuildAbilityRequirement): boolean {
   return EXTRA_DROP_LEADER_ABILITY_KEY_SET.has(requirement.abilityKey);
 }
@@ -651,6 +641,153 @@ function leadersSatisfyAbilityRequirement(
   );
 }
 
+interface AbilityRequirementDemand {
+  requirement: AutoBuildAbilityRequirement;
+  requirementIndex: number;
+  demandIndex: number;
+}
+
+function buildAbilityRequirementDemandGroupKey(requirement: AutoBuildAbilityRequirement): string {
+  return `${requirement.abilityKey.trim()}|${normalizeAbilityRequirementSlotScope(requirement.slotScope)}`;
+}
+
+function compareAbilityRequirementDemandStrictness(
+  left: AbilityRequirementDemand,
+  right: AbilityRequirementDemand,
+): number {
+  const leftTurns = left.requirement.minTurns ?? 0;
+  const rightTurns = right.requirement.minTurns ?? 0;
+
+  return (
+    rightTurns - leftTurns ||
+    right.requirement.slotTokens.length - left.requirement.slotTokens.length ||
+    right.requirement.slotTokens.join(',').localeCompare(left.requirement.slotTokens.join(',')) ||
+    left.requirementIndex - right.requirementIndex ||
+    left.demandIndex - right.demandIndex
+  );
+}
+
+function resolveMatchedAbilityDemandIndexes(
+  demands: AbilityRequirementDemand[],
+  candidates: AutoBuildCandidate[],
+): Set<number> {
+  const orderedDemands = [...demands].sort(compareAbilityRequirementDemandStrictness);
+  const candidateAssignment = new Map<number, number>();
+
+  const assignDemand = (
+    demandOrderIndex: number,
+    visitedCandidateIndexes: Set<number>,
+  ): boolean => {
+    const demand = orderedDemands[demandOrderIndex];
+
+    if (!demand) {
+      return false;
+    }
+
+    for (let candidateIndex = 0; candidateIndex < candidates.length; candidateIndex += 1) {
+      if (visitedCandidateIndexes.has(candidateIndex)) {
+        continue;
+      }
+
+      const candidate = candidates[candidateIndex];
+
+      if (!candidate || !candidateMatchesAbilityRequirement(candidate, demand.requirement)) {
+        continue;
+      }
+
+      visitedCandidateIndexes.add(candidateIndex);
+      const assignedDemandIndex = candidateAssignment.get(candidateIndex);
+
+      if (
+        assignedDemandIndex === undefined ||
+        assignDemand(assignedDemandIndex, visitedCandidateIndexes)
+      ) {
+        candidateAssignment.set(candidateIndex, demandOrderIndex);
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  for (let demandOrderIndex = 0; demandOrderIndex < orderedDemands.length; demandOrderIndex += 1) {
+    assignDemand(demandOrderIndex, new Set<number>());
+  }
+
+  return new Set(
+    [...candidateAssignment.values()].map((demandOrderIndex) => {
+      const demand = orderedDemands[demandOrderIndex]!;
+
+      return demand.demandIndex;
+    }),
+  );
+}
+
+function resolveMatchedTeamAbilityRequirementIndexes(
+  candidates: AutoBuildCandidate[],
+  requirements: AutoBuildAbilityRequirement[],
+  leaderCandidates: AutoBuildCandidate[],
+): Set<number> {
+  const demandGroups = new Map<string, AbilityRequirementDemand[]>();
+  let demandIndex = 0;
+
+  requirements.forEach((requirement, requirementIndex) => {
+    const groupKey = buildAbilityRequirementDemandGroupKey(requirement);
+    const demands = demandGroups.get(groupKey) ?? [];
+
+    for (let index = 0; index < requirement.requiredCharacterCount; index += 1) {
+      demands.push({
+        requirement,
+        requirementIndex,
+        demandIndex,
+      });
+      demandIndex += 1;
+    }
+
+    demandGroups.set(groupKey, demands);
+  });
+
+  const matchedRequirementIndexes = new Set<number>();
+
+  for (const demands of demandGroups.values()) {
+    const [firstDemand] = demands;
+
+    if (!firstDemand) {
+      continue;
+    }
+
+    const candidatePool = resolveAbilityRequirementCandidatePool(
+      candidates,
+      firstDemand.requirement,
+      leaderCandidates,
+    );
+    const matchedDemandIndexes = resolveMatchedAbilityDemandIndexes(demands, candidatePool);
+    const matchedCountsByRequirement = new Map<number, number>();
+
+    for (const demand of demands) {
+      if (!matchedDemandIndexes.has(demand.demandIndex)) {
+        continue;
+      }
+
+      matchedCountsByRequirement.set(
+        demand.requirementIndex,
+        (matchedCountsByRequirement.get(demand.requirementIndex) ?? 0) + 1,
+      );
+    }
+
+    for (const demand of demands) {
+      if (
+        (matchedCountsByRequirement.get(demand.requirementIndex) ?? 0) >=
+        demand.requirement.requiredCharacterCount
+      ) {
+        matchedRequirementIndexes.add(demand.requirementIndex);
+      }
+    }
+  }
+
+  return matchedRequirementIndexes;
+}
+
 function resolveAbilityCoverage(
   candidates: AutoBuildCandidate[],
   requirements: AutoBuildAbilityRequirement[],
@@ -665,18 +802,35 @@ function resolveAbilityCoverage(
     };
   }
 
-  const matched = requirements.filter((requirement) =>
-    isExtraDropLeaderAbilityRequirement(requirement)
-      ? leadersSatisfyAbilityRequirement(leaderCandidates, requirement)
-      : countMatchingAbilityRequirementSlots(candidates, requirement, leaderCandidates) >=
-        requirement.requiredCharacterCount,
+  const teamRequirementIndexes = requirements
+    .map((requirement, index) => ({ requirement, index }))
+    .filter(({ requirement }) => !isExtraDropLeaderAbilityRequirement(requirement));
+  const matchedTeamRequirementIndexes = resolveMatchedTeamAbilityRequirementIndexes(
+    candidates,
+    teamRequirementIndexes.map(({ requirement }) => requirement),
+    leaderCandidates,
   );
-  const missing = requirements.filter((requirement) =>
-    isExtraDropLeaderAbilityRequirement(requirement)
-      ? !leadersSatisfyAbilityRequirement(leaderCandidates, requirement)
-      : countMatchingAbilityRequirementSlots(candidates, requirement, leaderCandidates) <
-        requirement.requiredCharacterCount,
-  );
+  const matchedRequirementIndexes = new Set<number>();
+
+  requirements.forEach((requirement, requirementIndex) => {
+    if (isExtraDropLeaderAbilityRequirement(requirement)) {
+      if (leadersSatisfyAbilityRequirement(leaderCandidates, requirement)) {
+        matchedRequirementIndexes.add(requirementIndex);
+      }
+
+      return;
+    }
+
+    const teamRequirementIndex = teamRequirementIndexes.findIndex(
+      ({ index }) => index === requirementIndex,
+    );
+
+    if (matchedTeamRequirementIndexes.has(teamRequirementIndex)) {
+      matchedRequirementIndexes.add(requirementIndex);
+    }
+  });
+  const matched = requirements.filter((_, index) => matchedRequirementIndexes.has(index));
+  const missing = requirements.filter((_, index) => !matchedRequirementIndexes.has(index));
 
   return {
     requested: requirements.map((requirement) => cloneAbilityRequirement(requirement)),

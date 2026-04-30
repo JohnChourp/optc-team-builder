@@ -11,6 +11,10 @@ import {
   type AbilityRequirementDraft,
 } from './ability-requirement-draft.utils';
 
+interface SerializeCategoryAbilityDraftOptions {
+  dedupe?: boolean;
+}
+
 function sortCatalogItems(
   items: readonly AutoBuildAbilityCatalogItem[],
 ): AutoBuildAbilityCatalogItem[] {
@@ -67,13 +71,14 @@ export function serializeCategoryAbilityDrafts(
   drafts: readonly AbilityRequirementDraft[],
   catalogItems: readonly AutoBuildAbilityCatalogItem[],
   category: AutoBuildAbilityCategory,
+  options: SerializeCategoryAbilityDraftOptions = {},
 ): AutoBuildAbilityRequirement[] {
   const categoryKeys = getCategoryAbilityKeys(catalogItems, category);
 
   return serializeAbilityRequirementDrafts(
     drafts.filter((draft) => categoryKeys.has(draft.abilityKey)),
     {
-      dedupe: true,
+      dedupe: options.dedupe ?? true,
       catalogMap: new Map(catalogItems.map((item) => [item.key, item] as const)),
     },
   );
@@ -94,13 +99,11 @@ export function resolveCategoryAbilityMatchingCharacterIds(
   }
 
   const catalogMap = new Map(catalogItems.map((item) => [item.key, item] as const));
+  const groupedRequirements = groupCategoryRequirements(categoryRequirements);
   let matchingIds: Set<number> | null = null;
 
-  for (const requirement of categoryRequirements) {
-    const catalogItem = catalogMap.get(requirement.abilityKey);
-    const itemIds = catalogItem
-      ? resolveRequirementMatchingCharacterIds(catalogItem, requirement)
-      : [];
+  for (const requirements of groupedRequirements) {
+    const itemIds = resolveRequirementGroupMatchingCharacterIds(requirements, catalogMap);
 
     if (itemIds.length === 0) {
       return [];
@@ -120,6 +123,43 @@ export function resolveCategoryAbilityMatchingCharacterIds(
   }
 
   return [...(matchingIds ?? new Set<number>())].sort((left, right) => right - left);
+}
+
+function groupCategoryRequirements(
+  requirements: readonly AutoBuildAbilityRequirement[],
+): AutoBuildAbilityRequirement[][] {
+  const groups = new Map<string, AutoBuildAbilityRequirement[]>();
+
+  for (const requirement of requirements) {
+    const groupKey = `${requirement.abilityKey.trim()}|${normalizeAbilityRequirementSlotScope(requirement.slotScope)}`;
+    const currentGroup = groups.get(groupKey);
+
+    if (currentGroup) {
+      currentGroup.push(requirement);
+    } else {
+      groups.set(groupKey, [requirement]);
+    }
+  }
+
+  return [...groups.values()];
+}
+
+function resolveRequirementGroupMatchingCharacterIds(
+  requirements: readonly AutoBuildAbilityRequirement[],
+  catalogMap: ReadonlyMap<string, AutoBuildAbilityCatalogItem>,
+): number[] {
+  const groupIds = new Set<number>();
+
+  for (const requirement of requirements) {
+    const catalogItem = catalogMap.get(requirement.abilityKey);
+    const itemIds = catalogItem
+      ? resolveRequirementMatchingCharacterIds(catalogItem, requirement)
+      : [];
+
+    itemIds.forEach((characterId) => groupIds.add(characterId));
+  }
+
+  return [...groupIds];
 }
 
 function resolveRequirementMatchingCharacterIds(
@@ -180,8 +220,9 @@ export function createSpecialAbilityDrafts(
 export function serializeSpecialAbilityDrafts(
   drafts: readonly AbilityRequirementDraft[],
   catalogItems: readonly AutoBuildAbilityCatalogItem[],
+  options: SerializeCategoryAbilityDraftOptions = {},
 ): AutoBuildAbilityRequirement[] {
-  return serializeCategoryAbilityDrafts(drafts, catalogItems, 'special');
+  return serializeCategoryAbilityDrafts(drafts, catalogItems, 'special', options);
 }
 
 export function resolveSpecialAbilityMatchingCharacterIds(
