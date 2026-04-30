@@ -23,9 +23,53 @@
         </div>
 
         <div class="hero-actions">
+          <input
+            #settingsImportInput
+            type="file"
+            accept="application/json,.json"
+            class="visually-hidden-file"
+            (change)="onSettingsFileSelected($event, settingsImportInput)"
+          />
+          <input
+            #teamImportInput
+            type="file"
+            accept="application/json,.json"
+            class="visually-hidden-file"
+            (change)="onTeamFileSelected($event, teamImportInput)"
+          />
           <ion-button color="warning" [disabled]="buildDisabled()" (click)="buildTeam()">
             <ion-icon slot="start" [icon]="refreshIcon"></ion-icon>
             {{ loading() ? t('actions.building') : t('actions.rebuild') }}
+          </ion-button>
+          <ion-button
+            fill="outline"
+            color="light"
+            [disabled]="loading()"
+            (click)="openFilePicker(settingsImportInput)"
+          >
+            <ion-icon slot="start" [icon]="importIcon"></ion-icon>
+            {{ t('actions.importSettings') }}
+          </ion-button>
+          <ion-button
+            fill="outline"
+            color="light"
+            [disabled]="loading()"
+            (click)="openFilePicker(teamImportInput)"
+          >
+            <ion-icon slot="start" [icon]="importIcon"></ion-icon>
+            {{ t('actions.importTeam') }}
+          </ion-button>
+          <ion-button
+            fill="outline"
+            color="warning"
+            [disabled]="!canSaveRumbleTeam()"
+            (click)="saveCurrentRumbleTeam()"
+          >
+            <ion-icon slot="start" [icon]="saveIcon"></ion-icon>
+            {{ t('actions.save') }}
+          </ion-button>
+          <ion-button fill="clear" color="light" [routerLink]="['/tabs/saved-rumble-teams']">
+            {{ t('actions.savedRumbleTeams') }}
           </ion-button>
           <ion-button
             fill="outline"
@@ -48,6 +92,20 @@
           }
         </div>
       </section>
+
+      @if (importFeedback(); as feedback) {
+        <section
+          class="glass-card state-card import-feedback-card"
+          [class.import-feedback-card--warning]="feedback.tone === 'warning'"
+          [class.import-feedback-card--success]="feedback.tone === 'success'"
+          [class.import-feedback-card--error]="feedback.tone === 'error'"
+        >
+          <strong>{{ feedback.title }}</strong>
+          @for (detail of feedback.details; track detail) {
+            <p>{{ detail }}</p>
+          }
+        </section>
+      }
 
       <section class="glass-card controls-card">
         <div class="controls-grid">
@@ -715,53 +773,60 @@
                 <div class="slot-grid">
                   @for (slot of currentResult.activeSlots; track slot.unit.character.id) {
                     <article class="rumble-slot-card">
-                  <a
-                    class="slot-image"
-                    [routerLink]="getCharacterDetailLink(slot)"
-                    [attr.aria-label]="slot.unit.character.name"
-                    [attr.title]="formatSlotTooltip(slot)"
-                  >
-                    <img [src]="slot.unit.character.imageUrl" [alt]="slot.unit.character.name" />
-                  </a>
-                  <div class="slot-copy">
-                    <ion-button
-                      class="slot-replace-button"
-                      fill="clear"
-                      color="light"
-                      size="small"
-                      [attr.aria-label]="t('slot.replaceAria', { name: slot.unit.character.name })"
-                      (click)="openManualCharacterPicker(slot)"
-                    >
-                      <ion-icon slot="icon-only" [icon]="editIcon"></ion-icon>
-                    </ion-button>
-                    <ion-button
-                      class="slot-exclude-button"
-                      fill="clear"
-                      color="light"
-                      size="small"
-                      [attr.aria-label]="t('slot.excludeAria', { name: slot.unit.character.name })"
-                      (click)="excludeCharacter(slot)"
-                    >
-                      <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
-                    </ion-button>
-                    <dl class="slot-rumble-details">
-                      <div class="slot-rumble-details__wide">
-                        <dt>{{ t('slot.totalBuffs') }}</dt>
-                        @if (getSlotTotalBuffRows(slot).length) {
-                          <dd class="slot-buff-grid">
-                            @for (buff of getSlotTotalBuffRows(slot); track buff.stat) {
-                              <span class="slot-buff-chip">
-                                <span>{{ buff.label }}</span>
-                                <strong>{{ buff.value }}</strong>
-                              </span>
+                      <a
+                        class="slot-image"
+                        [routerLink]="getCharacterDetailLink(slot)"
+                        [attr.aria-label]="slot.unit.character.name"
+                        [attr.title]="formatSlotTooltip(slot)"
+                      >
+                        <img
+                          [src]="slot.unit.character.imageUrl"
+                          [alt]="slot.unit.character.name"
+                        />
+                      </a>
+                      <div class="slot-copy">
+                        <ion-button
+                          class="slot-replace-button"
+                          fill="clear"
+                          color="light"
+                          size="small"
+                          [attr.aria-label]="
+                            t('slot.replaceAria', { name: slot.unit.character.name })
+                          "
+                          (click)="openManualCharacterPicker(slot)"
+                        >
+                          <ion-icon slot="icon-only" [icon]="editIcon"></ion-icon>
+                        </ion-button>
+                        <ion-button
+                          class="slot-exclude-button"
+                          fill="clear"
+                          color="light"
+                          size="small"
+                          [attr.aria-label]="
+                            t('slot.excludeAria', { name: slot.unit.character.name })
+                          "
+                          (click)="excludeCharacter(slot)"
+                        >
+                          <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                        </ion-button>
+                        <dl class="slot-rumble-details">
+                          <div class="slot-rumble-details__wide">
+                            <dt>{{ t('slot.totalBuffs') }}</dt>
+                            @if (getSlotTotalBuffRows(slot).length) {
+                              <dd class="slot-buff-grid">
+                                @for (buff of getSlotTotalBuffRows(slot); track buff.stat) {
+                                  <span class="slot-buff-chip">
+                                    <span>{{ buff.label }}</span>
+                                    <strong>{{ buff.value }}</strong>
+                                  </span>
+                                }
+                              </dd>
+                            } @else {
+                              <dd>{{ t('slot.noBuffs') }}</dd>
                             }
-                          </dd>
-                        } @else {
-                          <dd>{{ t('slot.noBuffs') }}</dd>
-                        }
+                          </div>
+                        </dl>
                       </div>
-                    </dl>
-                  </div>
                     </article>
                   }
                 </div>
@@ -778,53 +843,60 @@
                   <div class="slot-grid">
                     @for (slot of currentResult.benchSlots; track slot.unit.character.id) {
                       <article class="rumble-slot-card rumble-slot-card--bench">
-                  <a
-                    class="slot-image"
-                    [routerLink]="getCharacterDetailLink(slot)"
-                    [attr.aria-label]="slot.unit.character.name"
-                    [attr.title]="formatSlotTooltip(slot)"
-                  >
-                    <img [src]="slot.unit.character.imageUrl" [alt]="slot.unit.character.name" />
-                  </a>
-                  <div class="slot-copy">
-                    <ion-button
-                      class="slot-replace-button"
-                      fill="clear"
-                      color="light"
-                      size="small"
-                      [attr.aria-label]="t('slot.replaceAria', { name: slot.unit.character.name })"
-                      (click)="openManualCharacterPicker(slot)"
-                    >
-                      <ion-icon slot="icon-only" [icon]="editIcon"></ion-icon>
-                    </ion-button>
-                    <ion-button
-                      class="slot-exclude-button"
-                      fill="clear"
-                      color="light"
-                      size="small"
-                      [attr.aria-label]="t('slot.excludeAria', { name: slot.unit.character.name })"
-                      (click)="excludeCharacter(slot)"
-                    >
-                      <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
-                    </ion-button>
-                    <dl class="slot-rumble-details">
-                      <div class="slot-rumble-details__wide">
-                        <dt>{{ t('slot.totalBuffs') }}</dt>
-                        @if (getSlotTotalBuffRows(slot).length) {
-                          <dd class="slot-buff-grid">
-                            @for (buff of getSlotTotalBuffRows(slot); track buff.stat) {
-                              <span class="slot-buff-chip">
-                                <span>{{ buff.label }}</span>
-                                <strong>{{ buff.value }}</strong>
-                              </span>
-                            }
-                          </dd>
-                        } @else {
-                          <dd>{{ t('slot.noBuffs') }}</dd>
-                        }
-                      </div>
-                    </dl>
-                  </div>
+                        <a
+                          class="slot-image"
+                          [routerLink]="getCharacterDetailLink(slot)"
+                          [attr.aria-label]="slot.unit.character.name"
+                          [attr.title]="formatSlotTooltip(slot)"
+                        >
+                          <img
+                            [src]="slot.unit.character.imageUrl"
+                            [alt]="slot.unit.character.name"
+                          />
+                        </a>
+                        <div class="slot-copy">
+                          <ion-button
+                            class="slot-replace-button"
+                            fill="clear"
+                            color="light"
+                            size="small"
+                            [attr.aria-label]="
+                              t('slot.replaceAria', { name: slot.unit.character.name })
+                            "
+                            (click)="openManualCharacterPicker(slot)"
+                          >
+                            <ion-icon slot="icon-only" [icon]="editIcon"></ion-icon>
+                          </ion-button>
+                          <ion-button
+                            class="slot-exclude-button"
+                            fill="clear"
+                            color="light"
+                            size="small"
+                            [attr.aria-label]="
+                              t('slot.excludeAria', { name: slot.unit.character.name })
+                            "
+                            (click)="excludeCharacter(slot)"
+                          >
+                            <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                          </ion-button>
+                          <dl class="slot-rumble-details">
+                            <div class="slot-rumble-details__wide">
+                              <dt>{{ t('slot.totalBuffs') }}</dt>
+                              @if (getSlotTotalBuffRows(slot).length) {
+                                <dd class="slot-buff-grid">
+                                  @for (buff of getSlotTotalBuffRows(slot); track buff.stat) {
+                                    <span class="slot-buff-chip">
+                                      <span>{{ buff.label }}</span>
+                                      <strong>{{ buff.value }}</strong>
+                                    </span>
+                                  }
+                                </dd>
+                              } @else {
+                                <dd>{{ t('slot.noBuffs') }}</dd>
+                              }
+                            </div>
+                          </dl>
+                        </div>
                       </article>
                     }
                   </div>

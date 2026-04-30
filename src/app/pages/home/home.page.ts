@@ -123,7 +123,11 @@ export class HomePage {
       route: '/tabs/drive-sync',
     },
   ];
-  public readonly highlights = ['highlights.offline', 'highlights.planning', 'highlights.localData'];
+  public readonly highlights = [
+    'highlights.offline',
+    'highlights.planning',
+    'highlights.localData',
+  ];
   public readonly featureGroups: readonly HomeFeature[] = [
     {
       icon: gridOutline,
@@ -148,6 +152,12 @@ export class HomePage {
       titleKey: 'features.autoRumble.title',
       copyKey: 'features.autoRumble.copy',
       route: '/tabs/auto-team-builder-rumble',
+    },
+    {
+      icon: shieldHalfOutline,
+      titleKey: 'features.savedRumbleTeams.title',
+      copyKey: 'features.savedRumbleTeams.copy',
+      route: '/tabs/saved-rumble-teams',
     },
     {
       icon: cameraOutline,

@@ -1,6 +1,7 @@
 import { type OptcbxFavoritesExportPayload } from '../characters/characters-favorites.utils';
 import { type FavoriteShipsTransferPayload } from './favorite-ships-transfer.utils';
 import { type SavedTeamsTransferPayload } from '../saved-teams/saved-teams-transfer.utils';
+import { type SavedRumbleTeamsTransferPayload } from '../saved-rumble-teams/saved-rumble-teams-transfer.utils';
 import { type SavedEnemiesTransferPayload } from '../saved-enemies/saved-enemies-transfer.utils';
 import { type CharacterBoxesTransferPayload } from '../character-boxes/character-boxes-transfer.utils';
 import { type CharacterOverridesTransferPayload } from '../character-detail/character-overrides-transfer.utils';
@@ -12,6 +13,7 @@ export interface AllDataTransferPayload {
   favorites?: OptcbxFavoritesExportPayload;
   favoriteShips?: FavoriteShipsTransferPayload;
   savedTeams?: SavedTeamsTransferPayload;
+  savedRumbleTeams?: SavedRumbleTeamsTransferPayload;
   savedEnemies?: SavedEnemiesTransferPayload;
   characterBoxes?: CharacterBoxesTransferPayload;
   characterOverrides?: CharacterOverridesTransferPayload;
@@ -22,6 +24,7 @@ export type AllDataImportCandidate =
   | { kind: 'favorites'; payload: unknown }
   | { kind: 'favorite-ships'; payload: unknown }
   | { kind: 'saved-teams'; payload: unknown }
+  | { kind: 'saved-rumble-teams'; payload: unknown }
   | { kind: 'saved-enemies'; payload: unknown }
   | { kind: 'character-boxes'; payload: unknown }
   | { kind: 'character-overrides'; payload: unknown };
@@ -97,6 +100,19 @@ function cloneSavedTeamsPayload(
   };
 }
 
+function cloneSavedRumbleTeamsPayload(
+  payload: SavedRumbleTeamsTransferPayload | undefined,
+): SavedRumbleTeamsTransferPayload | undefined {
+  if (!payload) {
+    return undefined;
+  }
+
+  return {
+    ...payload,
+    rumbleTeams: payload.rumbleTeams.map((rumbleTeam) => JSON.parse(JSON.stringify(rumbleTeam))),
+  };
+}
+
 function cloneSavedEnemiesPayload(
   payload: SavedEnemiesTransferPayload | undefined,
 ): SavedEnemiesTransferPayload | undefined {
@@ -158,6 +174,7 @@ export function buildAllDataTransferPayload(
     favorites?: OptcbxFavoritesExportPayload;
     favoriteShips?: FavoriteShipsTransferPayload;
     savedTeams?: SavedTeamsTransferPayload;
+    savedRumbleTeams?: SavedRumbleTeamsTransferPayload;
     savedEnemies?: SavedEnemiesTransferPayload;
     characterBoxes?: CharacterBoxesTransferPayload;
     characterOverrides?: CharacterOverridesTransferPayload;
@@ -171,6 +188,7 @@ export function buildAllDataTransferPayload(
     favorites: cloneFavoritesPayload(sections.favorites),
     favoriteShips: cloneFavoriteShipsPayload(sections.favoriteShips),
     savedTeams: cloneSavedTeamsPayload(sections.savedTeams),
+    savedRumbleTeams: cloneSavedRumbleTeamsPayload(sections.savedRumbleTeams),
     savedEnemies: cloneSavedEnemiesPayload(sections.savedEnemies),
     characterBoxes: cloneCharacterBoxesPayload(sections.characterBoxes),
     characterOverrides: cloneCharacterOverridesPayload(sections.characterOverrides),
@@ -270,6 +288,13 @@ export function parseAllDataImportCandidate(rawContent: string): AllDataImportCa
   if (parsedPayload['schemaVersion'] === 1 && source === 'saved-teams') {
     return {
       kind: 'saved-teams',
+      payload: parsedPayload,
+    };
+  }
+
+  if (parsedPayload['schemaVersion'] === 1 && source === 'saved-rumble-teams') {
+    return {
+      kind: 'saved-rumble-teams',
       payload: parsedPayload,
     };
   }

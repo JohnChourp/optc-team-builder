@@ -9,7 +9,11 @@ import { type AllDataTransferPayload } from '../settings/all-data-transfer.utils
 
 describe('drive sync review utils', () => {
   it('builds item-level diff rows for every sync section', () => {
-    const draft = buildDriveSyncReviewDraft(createLocalPayload(), createDrivePayload(), 'merge-and-upload');
+    const draft = buildDriveSyncReviewDraft(
+      createLocalPayload(),
+      createDrivePayload(),
+      'merge-and-upload',
+    );
 
     expect(draft.sections.map((section) => section.key)).toEqual([
       'favorites',
@@ -17,6 +21,7 @@ describe('drive sync review utils', () => {
       'characterBoxes',
       'characterOverrides',
       'savedTeams',
+      'savedRumbleTeams',
       'savedEnemies',
     ]);
     expect(draft.sections.every((section) => section.rows.length > 0)).toBe(true);
@@ -27,11 +32,16 @@ describe('drive sync review utils', () => {
     expect(findRow(draft, 'characterBoxes', 'box-1')?.status).toBe('changed');
     expect(findRow(draft, 'characterOverrides', '1001')?.status).toBe('changed');
     expect(findRow(draft, 'savedTeams', 'team-1')?.status).toBe('changed');
+    expect(findRow(draft, 'savedRumbleTeams', 'rumble-1')?.status).toBe('changed');
     expect(findRow(draft, 'savedEnemies', 'enemy-1')?.status).toBe('changed');
   });
 
   it('defaults merge to Drive on conflicts while keeping device-only rows', () => {
-    const draft = buildDriveSyncReviewDraft(createLocalPayload(), createDrivePayload(), 'merge-and-upload');
+    const draft = buildDriveSyncReviewDraft(
+      createLocalPayload(),
+      createDrivePayload(),
+      'merge-and-upload',
+    );
     const payload = buildReviewedAllDataPayload(draft, '2026-04-21T10:00:00.000Z');
 
     expect(payload.favorites?.characters).toEqual([
@@ -45,16 +55,27 @@ describe('drive sync review utils', () => {
       { id: 9003, name: 'Shark Superb' },
     ]);
     expect(payload.characterBoxes?.boxes.find((box) => box.id === 'box-1')?.name).toBe('Drive box');
-    expect(payload.characterBoxes?.boxes.find((box) => box.id === 'box-2')?.name).toBe('Device only box');
-    expect(payload.characterOverrides?.overrides.find((override) => override.characterId === 1001)?.name).toBe(
-      'Override Drive',
+    expect(payload.characterBoxes?.boxes.find((box) => box.id === 'box-2')?.name).toBe(
+      'Device only box',
     );
+    expect(
+      payload.characterOverrides?.overrides.find((override) => override.characterId === 1001)?.name,
+    ).toBe('Override Drive');
     expect(payload.savedTeams?.teams.find((team) => team.id === 'team-1')?.name).toBe('Drive team');
-    expect(payload.savedEnemies?.enemies.find((enemy) => enemy.id === 'enemy-1')?.name).toBe('Drive enemy');
+    expect(payload.savedRumbleTeams?.rumbleTeams.find((team) => team.id === 'rumble-1')?.name).toBe(
+      'Drive rumble',
+    );
+    expect(payload.savedEnemies?.enemies.find((enemy) => enemy.id === 'enemy-1')?.name).toBe(
+      'Drive enemy',
+    );
   });
 
   it('defaults replace device to Drive data but lets device-only rows be kept', () => {
-    let draft = buildDriveSyncReviewDraft(createLocalPayload(), createDrivePayload(), 'replace-local');
+    let draft = buildDriveSyncReviewDraft(
+      createLocalPayload(),
+      createDrivePayload(),
+      'replace-local',
+    );
 
     expect(findRow(draft, 'favoriteShips', '9002')?.choice).toBe('remove');
 
@@ -65,7 +86,11 @@ describe('drive sync review utils', () => {
   });
 
   it('defaults replace Drive to device data but lets Drive-only rows be kept', () => {
-    let draft = buildDriveSyncReviewDraft(createLocalPayload(), createDrivePayload(), 'replace-cloud');
+    let draft = buildDriveSyncReviewDraft(
+      createLocalPayload(),
+      createDrivePayload(),
+      'replace-cloud',
+    );
 
     expect(findRow(draft, 'favorites', '1003')?.choice).toBe('remove');
 
@@ -73,9 +98,7 @@ describe('drive sync review utils', () => {
     const payload = buildReviewedAllDataPayload(draft);
 
     expect(payload.favorites?.characters.map((character) => character.number)).toEqual([
-      1001,
-      1002,
-      1003,
+      1001, 1002, 1003,
     ]);
   });
 });
@@ -135,6 +158,12 @@ function createLocalPayload(): AllDataTransferPayload {
       source: 'saved-teams',
       teams: [createTeam('team-1', 'Device team')],
     },
+    savedRumbleTeams: {
+      exportedAt: '2026-04-20T18:00:00.000Z',
+      rumbleTeams: [createRumbleTeam('rumble-1', 'Device rumble')],
+      schemaVersion: 1,
+      source: 'saved-rumble-teams',
+    },
     schemaVersion: 1,
     source: 'all-data',
   };
@@ -182,6 +211,12 @@ function createDrivePayload(): AllDataTransferPayload {
       schemaVersion: 1,
       source: 'saved-teams',
       teams: [createTeam('team-1', 'Drive team')],
+    },
+    savedRumbleTeams: {
+      exportedAt: '2026-04-20T19:00:00.000Z',
+      rumbleTeams: [createRumbleTeam('rumble-1', 'Drive rumble')],
+      schemaVersion: 1,
+      source: 'saved-rumble-teams',
     },
     schemaVersion: 1,
     source: 'all-data',
@@ -278,6 +313,32 @@ function createTeam(id: string, name: string) {
     notes: '',
     shipId: null,
     slots: [1001, null, null, null, null, null],
+    updatedAt: '2026-04-20T18:00:00.000Z',
+  };
+}
+
+function createRumbleTeam(id: string, name: string) {
+  return {
+    createdAt: '2026-04-20T18:00:00.000Z',
+    id,
+    name,
+    notes: '',
+    opponentActiveCharacterIds: [null, null, null, null, null],
+    opponentAwarenessEnabled: false,
+    opponentBenchCharacterIds: [null, null, null],
+    selectedTeamIndex: 0,
+    settings: {
+      buffFocus: [],
+      favoriteCharacterIds: [],
+      favoritesOnly: false,
+      onlySelectedClasses: false,
+      onlySelectedTypes: false,
+      opponentSlots: [],
+      requireFullTeam: true,
+      selectedClasses: [],
+      types: [],
+    },
+    teams: [],
     updatedAt: '2026-04-20T18:00:00.000Z',
   };
 }

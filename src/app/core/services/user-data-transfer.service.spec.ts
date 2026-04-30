@@ -140,6 +140,7 @@ describe('UserDataTransferService', () => {
       favoriteCharacterCount: 2,
       favoriteShipCount: 1,
       savedEnemiesCount: 1,
+      savedRumbleTeamsCount: 0,
       savedTeamsCount: 1,
     });
   });
@@ -185,6 +186,7 @@ function createDependencies() {
       updatedAt: '2026-04-20T18:00:00.000Z',
     },
   ]);
+  const savedRumbleTeams = signal([]);
   const overrides = signal([]);
   const repository = {
     getCharactersByIds: vi.fn().mockImplementation(async (ids: number[]) =>
@@ -237,6 +239,7 @@ function createDependencies() {
     characterBoxes,
     savedTeams,
     savedEnemies,
+    savedRumbleTeams,
     setFavoriteCharacterIds: vi.fn().mockImplementation(async (nextIds: number[]) => {
       favoriteCharacterIds.set(nextIds);
     }),
@@ -252,6 +255,7 @@ function createDependencies() {
     clearAllCharacterBoxes: vi.fn().mockResolvedValue(undefined),
     clearAllSavedTeams: vi.fn().mockResolvedValue(undefined),
     clearAllSavedEnemies: vi.fn().mockResolvedValue(undefined),
+    clearAllSavedRumbleTeams: vi.fn().mockResolvedValue(undefined),
     mergeImportedCharacterBoxes: vi.fn().mockResolvedValue({
       addedCount: 1,
       boxes: [],
@@ -265,6 +269,11 @@ function createDependencies() {
     mergeImportedTeams: vi.fn().mockResolvedValue({
       addedCount: 1,
       teams: [],
+      updatedCount: 0,
+    }),
+    mergeImportedRumbleTeams: vi.fn().mockResolvedValue({
+      addedCount: 1,
+      rumbleTeams: [],
       updatedCount: 0,
     }),
   };

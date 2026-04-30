@@ -302,6 +302,7 @@ export class DriveSyncPage {
       | 'favorites'
       | 'favoriteShips'
       | 'savedEnemies'
+      | 'savedRumbleTeams'
       | 'savedTeams',
     count: number,
   ): string {

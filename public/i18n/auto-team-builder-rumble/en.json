@@ -9,9 +9,42 @@
     "rebuild": "Build team",
     "building": "Building...",
     "cancelBuild": "Cancel build",
+    "importSettings": "Import settings",
+    "importTeam": "Import team",
+    "save": "Save",
+    "savedRumbleTeams": "Saved Rumble Teams",
     "downloadSettings": "Download settings JSON",
     "downloadTeam": "Download team JSON",
     "downloadTeamSupport": "Build a valid Rumble team before downloading team data."
+  },
+  "import": {
+    "errorTitle": "Import failed",
+    "loadedFromFile": "Loaded {{fileName}}.",
+    "settingsSuccessTitle": "Settings imported",
+    "teamSuccessTitle": "Team imported",
+    "teamWarningTitle": "Team imported with warnings",
+    "teamStats": {
+      "loadedTeams": "Loaded {{count}} Rumble team(s).",
+      "unknownSlots": "Skipped {{count}} unavailable character slot(s)."
+    },
+    "errors": {
+      "emptyTeam": "The team import did not contain any usable Rumble teams.",
+      "generic": "The selected file could not be imported.",
+      "invalidJson": "The selected file is not valid JSON.",
+      "invalidPayload": "The JSON does not match the expected Rumble builder schema.",
+      "unsupportedSchema": "The selected JSON is not supported by this Rumble builder import."
+    }
+  },
+  "load": {
+    "loadedSavedTeam": "Loaded saved Rumble team \"{{name}}\".",
+    "successTitle": "Saved Rumble team loaded",
+    "warningTitle": "Saved Rumble team loaded with warnings"
+  },
+  "save": {
+    "defaultName": "Rumble Team {{timestamp}}",
+    "prompt": "Saved Rumble team name",
+    "successDetail": "Saved \"{{name}}\".",
+    "successTitle": "Rumble team saved"
   },
   "filters": {
     "types": {

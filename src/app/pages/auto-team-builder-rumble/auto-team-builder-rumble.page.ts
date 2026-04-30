@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import {
   IonButton,
@@ -22,8 +22,10 @@ import {
   chevronDownOutline,
   chevronUpOutline,
   closeOutline,
+  cloudUploadOutline,
   createOutline,
   refreshOutline,
+  saveOutline,
   shieldHalfOutline,
   sparklesOutline,
 } from 'ionicons/icons';
@@ -67,6 +69,19 @@ import {
   type RumbleBuilderSettingsExportPayload,
   type RumbleTeamExportPayload,
 } from './auto-team-builder-rumble-export.utils';
+import {
+  RumbleBuilderImportError,
+  buildOpponentCharacterIdSlotsFromImportPayload,
+  buildSavedRumbleTeamResultSnapshot,
+  buildSavedRumbleTeamResultSnapshotsFromImportPayload,
+  parseRumbleBuilderSettingsImportPayload,
+  parseRumbleTeamImportPayload,
+} from './auto-team-builder-rumble-import.utils';
+import {
+  type SavedRumbleTeam,
+  type SavedRumbleTeamResult,
+  type SavedRumbleTeamSlot,
+} from '../../core/models/saved-rumble-team.models';
 
 type LoadingProgressRowTone = 'primary' | 'secondary' | 'fallback';
 
@@ -102,6 +117,12 @@ interface RumbleComparisonRow {
   labelKey: string;
   value: string;
   tone: 'positive' | 'negative' | 'neutral';
+}
+
+interface RumbleImportFeedback {
+  details: string[];
+  title: string;
+  tone: 'error' | 'success' | 'warning';
 }
 
 const ROLE_LABELS: Record<NormalizedRumbleRoleTag, string> = {
@@ -175,6 +196,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     DEFAULT_RUMBLE_BUFF_FOCUS.map((preference) => ({ ...preference })),
   );
   public readonly excludedCharacterIds = signal<number[]>([]);
+  public readonly importFeedback = signal<RumbleImportFeedback | null>(null);
   private readonly excludedCharacterRecordsById = signal<Record<number, CharacterDetailRecord>>({});
   private readonly buildProgressNowMs = signal(0);
   private readonly currentBuildStepStartedAtMs = signal<number | null>(null);
@@ -189,6 +211,8 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   public readonly shieldIcon = shieldHalfOutline;
   public readonly editIcon = createOutline;
   public readonly closeIcon = closeOutline;
+  public readonly importIcon = cloudUploadOutline;
+  public readonly saveIcon = saveOutline;
   public readonly promoteIcon = chevronUpOutline;
   public readonly demoteIcon = chevronDownOutline;
   public readonly favoriteCharacterIds;
@@ -238,6 +262,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       : this.t('opponent.debuffRule.disabled'),
   );
   public readonly canDownloadSettingsJson = computed(() => this.initialized());
+  public readonly canSaveRumbleTeam = computed(() => this.initialized() && !this.loading());
   public readonly canDownloadTeamJson = computed(() => {
     const currentResult = this.currentResult();
 
@@ -545,6 +570,8 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     private readonly repository: OptcRepositoryService,
     private readonly userState: UserStateService,
     private readonly i18n: AppI18nService,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
   ) {
     this.favoriteCharacterIds = this.userState.favoriteCharacterIds;
     this.autoTeamBuilderWorkerPreference = this.userState.autoTeamBuilderWorkerPreference;
@@ -560,11 +587,12 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   }
 
   public async ngOnInit(): Promise<void> {
-    await Promise.all([this.i18n.preloadScope('auto-team-builder-rumble')]);
+    await Promise.all([this.i18n.preloadScope('auto-team-builder-rumble'), this.userState.ready()]);
     const manifest = await this.repository.getDatasetManifest();
 
     this.availableClasses.set([...manifest.availableClasses]);
     this.initialized.set(true);
+    await this.applySavedRumbleTeamFromRoute();
   }
 
   public ngOnDestroy(): void {
@@ -675,17 +703,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   ): RumbleBuilderSettingsExportPayload {
     return rumbleExportUtils.buildRumbleBuilderSettingsExportPayload({
       exportedAt,
-      settings: {
-        types: [...this.selectedTypes()],
-        selectedClasses: [...this.selectedClasses()],
-        onlySelectedTypes: this.onlySelectedTypes(),
-        onlySelectedClasses: this.onlySelectedClasses(),
-        favoritesOnly: this.favoritesOnly(),
-        favoriteCharacterIds: [...this.favoriteCharacterIds()],
-        opponentSlots: [],
-        buffFocus: this.buffFocus().map((preference) => ({ ...preference })),
-        requireFullTeam: true,
-      },
+      settings: this.buildCurrentRumbleSettings(),
       favoriteCount: this.favoriteCharacterIds().length,
       workerPreference: this.autoTeamBuilderWorkerPreference(),
     });
@@ -713,6 +731,76 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
 
   public downloadTeamJson(): void {
     rumbleExportUtils.downloadRumbleTeamExport(this.buildTeamExportPayload());
+  }
+
+  public openFilePicker(input: HTMLInputElement): void {
+    input.click();
+  }
+
+  public async onSettingsFileSelected(event: Event, input: HTMLInputElement): Promise<void> {
+    const target = event.target as HTMLInputElement;
+    const [file] = Array.from(target.files ?? []);
+
+    input.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    await this.importSettingsJson(file);
+  }
+
+  public async onTeamFileSelected(event: Event, input: HTMLInputElement): Promise<void> {
+    const target = event.target as HTMLInputElement;
+    const [file] = Array.from(target.files ?? []);
+
+    input.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    await this.importTeamJson(file);
+  }
+
+  public async saveCurrentRumbleTeam(): Promise<void> {
+    if (!this.canSaveRumbleTeam()) {
+      return;
+    }
+
+    const defaultName = this.buildDefaultRumbleTeamName();
+    const promptedName =
+      typeof globalThis.prompt === 'function'
+        ? globalThis.prompt(this.t('save.prompt'), defaultName)
+        : defaultName;
+    const name = promptedName?.trim();
+
+    if (!name) {
+      return;
+    }
+
+    const savedRumbleTeam = await this.userState.saveRumbleTeam({
+      name,
+      notes: '',
+      settings: this.buildCurrentRumbleSettings(),
+      teams: this.teamResults()
+        .slice(0, 2)
+        .map((result) => buildSavedRumbleTeamResultSnapshot(result)),
+      selectedTeamIndex: this.selectedTeamIndex(),
+      opponentActiveCharacterIds: this.opponentActiveSlots().map(
+        (slot) => slot?.unit.character.id ?? null,
+      ),
+      opponentBenchCharacterIds: this.opponentBenchSlots().map(
+        (slot) => slot?.unit.character.id ?? null,
+      ),
+      opponentAwarenessEnabled: this.opponentAwarenessEnabled(),
+    });
+
+    this.importFeedback.set({
+      tone: 'success',
+      title: this.t('save.successTitle'),
+      details: [this.t('save.successDetail', { name: savedRumbleTeam.name })],
+    });
   }
 
   public onTypeChange(
@@ -776,17 +864,13 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       : rankIndex >= 0 && rankIndex < RUMBLE_BUFF_FOCUS_RANKS.length - 1;
   }
 
-  public moveBuffFocusStat(
-    stat: RumbleBuffFocusStat,
-    direction: RumbleBuffFocusDirection,
-  ): void {
+  public moveBuffFocusStat(stat: RumbleBuffFocusStat, direction: RumbleBuffFocusDirection): void {
     if (this.loading()) {
       return;
     }
 
     const currentRankIndex = this.resolveBuffFocusRankIndex(this.resolveBuffFocusRank(stat));
-    const nextRankIndex =
-      direction === 'up' ? currentRankIndex - 1 : currentRankIndex + 1;
+    const nextRankIndex = direction === 'up' ? currentRankIndex - 1 : currentRankIndex + 1;
     const nextRank = RUMBLE_BUFF_FOCUS_RANKS[nextRankIndex];
 
     if (!nextRank) {
@@ -795,7 +879,9 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
 
     this.buffFocus.update((currentFocus) =>
       RUMBLE_BUFF_FOCUS_STATS.map((currentStat) => {
-        const currentPreference = currentFocus.find((preference) => preference.stat === currentStat);
+        const currentPreference = currentFocus.find(
+          (preference) => preference.stat === currentStat,
+        );
 
         return {
           stat: currentStat,
@@ -1069,6 +1155,341 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     return activeOnlyResult && activeOnlyResult.selectedCount > 0
       ? [fullTeamResult, activeOnlyResult]
       : [fullTeamResult];
+  }
+
+  private buildCurrentRumbleSettings(): RumbleBuildInput {
+    return {
+      types: [...this.selectedTypes()],
+      selectedClasses: [...this.selectedClasses()],
+      onlySelectedTypes: this.onlySelectedTypes(),
+      onlySelectedClasses: this.onlySelectedClasses(),
+      favoritesOnly: this.favoritesOnly(),
+      favoriteCharacterIds: [...this.favoriteCharacterIds()],
+      opponentSlots: [],
+      buffFocus: this.buffFocus().map((preference) => ({ ...preference })),
+      requireFullTeam: true,
+    };
+  }
+
+  private async importSettingsJson(file: File): Promise<void> {
+    try {
+      const payload = parseRumbleBuilderSettingsImportPayload(await file.text());
+
+      this.applyRumbleSettings(payload.settings);
+      this.importFeedback.set({
+        tone: 'success',
+        title: this.t('import.settingsSuccessTitle'),
+        details: [this.t('import.loadedFromFile', { fileName: file.name })],
+      });
+    } catch (error) {
+      this.importFeedback.set({
+        tone: 'error',
+        title: this.t('import.errorTitle'),
+        details: [this.resolveImportError(error)],
+      });
+    }
+  }
+
+  private async importTeamJson(file: File): Promise<void> {
+    try {
+      const payload = parseRumbleTeamImportPayload(await file.text());
+      const snapshots = buildSavedRumbleTeamResultSnapshotsFromImportPayload(payload);
+      const opponentSlots = buildOpponentCharacterIdSlotsFromImportPayload(payload);
+      const applyResult = await this.applyRumbleTeamSnapshots({
+        opponentActiveCharacterIds: opponentSlots.active,
+        opponentBenchCharacterIds: opponentSlots.bench,
+        selectedTeamIndex: payload.selectedTeamIndex,
+        teams: snapshots,
+      });
+      const unknownSlotCount = applyResult.unknownSlotCount + opponentSlots.unknownSlotCount;
+
+      this.importFeedback.set({
+        tone: unknownSlotCount > 0 ? 'warning' : 'success',
+        title: this.t(unknownSlotCount > 0 ? 'import.teamWarningTitle' : 'import.teamSuccessTitle'),
+        details: [
+          this.t('import.loadedFromFile', { fileName: file.name }),
+          this.t('import.teamStats.loadedTeams', { count: applyResult.teamCount }),
+          ...(unknownSlotCount > 0
+            ? [this.t('import.teamStats.unknownSlots', { count: unknownSlotCount })]
+            : []),
+        ],
+      });
+    } catch (error) {
+      this.importFeedback.set({
+        tone: 'error',
+        title: this.t('import.errorTitle'),
+        details: [this.resolveImportError(error)],
+      });
+    }
+  }
+
+  private applyRumbleSettings(settings: RumbleBuildInput): void {
+    this.selectedTypes.set(this.resolveSelectedTypes(settings.types));
+    this.selectedClasses.set(this.resolveSelectedClasses(settings.selectedClasses));
+    this.onlySelectedTypes.set(Boolean(settings.onlySelectedTypes));
+    this.onlySelectedClasses.set(Boolean(settings.onlySelectedClasses));
+    this.favoritesOnly.set(Boolean(settings.favoritesOnly));
+    this.buffFocus.set(this.resolveImportedBuffFocus(settings.buffFocus));
+    this.errorMessage.set('');
+  }
+
+  private async applySavedRumbleTeamFromRoute(): Promise<void> {
+    const savedRumbleTeamId =
+      this.route.snapshot.queryParamMap.get('savedRumbleTeamId')?.trim() ?? '';
+
+    if (!savedRumbleTeamId.length) {
+      return;
+    }
+
+    const savedRumbleTeam = this.userState.getSavedRumbleTeamById(savedRumbleTeamId);
+
+    if (!savedRumbleTeam) {
+      await this.clearSavedRumbleTeamQueryParam();
+      return;
+    }
+
+    await this.loadSavedRumbleTeam(savedRumbleTeam);
+    await this.clearSavedRumbleTeamQueryParam();
+  }
+
+  private async loadSavedRumbleTeam(savedRumbleTeam: SavedRumbleTeam): Promise<void> {
+    this.applyRumbleSettings(savedRumbleTeam.settings);
+    this.opponentAwarenessEnabled.set(savedRumbleTeam.opponentAwarenessEnabled);
+    const applyResult = await this.applyRumbleTeamSnapshots(savedRumbleTeam);
+
+    this.importFeedback.set({
+      tone: applyResult.unknownSlotCount > 0 ? 'warning' : 'success',
+      title: this.t(applyResult.unknownSlotCount > 0 ? 'load.warningTitle' : 'load.successTitle'),
+      details: [
+        this.t('load.loadedSavedTeam', { name: savedRumbleTeam.name }),
+        ...(applyResult.unknownSlotCount > 0
+          ? [this.t('import.teamStats.unknownSlots', { count: applyResult.unknownSlotCount })]
+          : []),
+      ],
+    });
+  }
+
+  private async clearSavedRumbleTeamQueryParam(): Promise<void> {
+    await this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { savedRumbleTeamId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  private async applyRumbleTeamSnapshots(input: {
+    opponentActiveCharacterIds: Array<number | null>;
+    opponentBenchCharacterIds: Array<number | null>;
+    selectedTeamIndex: number;
+    teams: SavedRumbleTeamResult[];
+  }): Promise<{ teamCount: number; unknownSlotCount: number }> {
+    const characterIds = this.collectRumbleSnapshotCharacterIds(input);
+    const characters = characterIds.length
+      ? await this.repository.getDetailedCharactersByIds(characterIds)
+      : [];
+    const scoredCandidates = this.rumbleBuilder.scoreCandidates(characters);
+    const scoreByCharacterId = new Map(
+      scoredCandidates.map((candidate) => [candidate.character.id, candidate] as const),
+    );
+    let unknownSlotCount = 0;
+    const teamResults = input.teams
+      .map((team) => {
+        const hydrated = this.hydrateSavedRumbleTeamResult(team, scoreByCharacterId);
+
+        unknownSlotCount += hydrated.unknownSlotCount;
+
+        return hydrated.result;
+      })
+      .filter((result): result is RumbleTeamResult => Boolean(result))
+      .slice(0, 2);
+    const hydratedOpponent = this.hydrateOpponentSlots(input, scoreByCharacterId);
+
+    unknownSlotCount += hydratedOpponent.unknownSlotCount;
+    this.teamResults.set(teamResults);
+    this.selectedTeamIndex.set(
+      input.selectedTeamIndex >= 0 && input.selectedTeamIndex < teamResults.length
+        ? input.selectedTeamIndex
+        : 0,
+    );
+    this.opponentActiveSlots.set(hydratedOpponent.activeSlots);
+    this.opponentBenchSlots.set(hydratedOpponent.benchSlots);
+    this.errorMessage.set('');
+
+    return { teamCount: teamResults.length, unknownSlotCount };
+  }
+
+  private collectRumbleSnapshotCharacterIds(input: {
+    opponentActiveCharacterIds: Array<number | null>;
+    opponentBenchCharacterIds: Array<number | null>;
+    teams: SavedRumbleTeamResult[];
+  }): number[] {
+    return [
+      ...new Set(
+        [
+          ...input.teams.flatMap((team) => [
+            ...team.activeSlots.map((slot) => slot.characterId),
+            ...team.benchSlots.map((slot) => slot.characterId),
+          ]),
+          ...input.opponentActiveCharacterIds,
+          ...input.opponentBenchCharacterIds,
+        ].filter((characterId): characterId is number => typeof characterId === 'number'),
+      ),
+    ];
+  }
+
+  private hydrateSavedRumbleTeamResult(
+    snapshot: SavedRumbleTeamResult,
+    scoreByCharacterId: Map<number, RumbleUnitScore>,
+  ): { result: RumbleTeamResult | null; unknownSlotCount: number } {
+    let unknownSlotCount = 0;
+    const activeSlots = snapshot.activeSlots
+      .map((slot) => {
+        const hydratedSlot = this.hydrateSavedRumbleTeamSlot(slot, scoreByCharacterId);
+
+        if (!hydratedSlot) {
+          unknownSlotCount += 1;
+        }
+
+        return hydratedSlot;
+      })
+      .filter((slot): slot is RumbleTeamSlot => Boolean(slot));
+    const benchSlots = snapshot.benchSlots
+      .map((slot) => {
+        const hydratedSlot = this.hydrateSavedRumbleTeamSlot(slot, scoreByCharacterId);
+
+        if (!hydratedSlot) {
+          unknownSlotCount += 1;
+        }
+
+        return hydratedSlot;
+      })
+      .filter((slot): slot is RumbleTeamSlot => Boolean(slot));
+    const selectedSlots = [...activeSlots, ...benchSlots];
+
+    if (!selectedSlots.length) {
+      return { result: null, unknownSlotCount };
+    }
+
+    return {
+      result: {
+        ...snapshot,
+        activeSlots,
+        benchSlots,
+        selectedCount: selectedSlots.length,
+        totalScore: selectedSlots.reduce((total, slot) => total + slot.score, 0),
+        roleCoverage: this.collectRoleCoverage(selectedSlots),
+        typeCoverage: this.collectTypeCoverage(selectedSlots),
+        classCoverage: this.collectClassCoverage(selectedSlots),
+        topFactors: snapshot.topFactors.length
+          ? [...snapshot.topFactors]
+          : this.buildManualTopFactors(selectedSlots),
+      },
+      unknownSlotCount,
+    };
+  }
+
+  private hydrateSavedRumbleTeamSlot(
+    slot: SavedRumbleTeamSlot,
+    scoreByCharacterId: Map<number, RumbleUnitScore>,
+  ): RumbleTeamSlot | null {
+    const unit = scoreByCharacterId.get(slot.characterId);
+
+    if (!unit) {
+      return null;
+    }
+
+    const hydratedSlot = this.createManualSlot(slot.role, slot.index, unit);
+
+    return {
+      ...hydratedSlot,
+      score: Number.isFinite(slot.score) ? slot.score : hydratedSlot.score,
+      reasonChips: slot.reasonChips.length ? [...slot.reasonChips] : hydratedSlot.reasonChips,
+    };
+  }
+
+  private hydrateOpponentSlots(
+    input: {
+      opponentActiveCharacterIds: Array<number | null>;
+      opponentBenchCharacterIds: Array<number | null>;
+    },
+    scoreByCharacterId: Map<number, RumbleUnitScore>,
+  ): {
+    activeSlots: OptionalRumbleTeamSlot[];
+    benchSlots: OptionalRumbleTeamSlot[];
+    unknownSlotCount: number;
+  } {
+    let unknownSlotCount = 0;
+    const activeSlots = Array.from({ length: RUMBLE_ACTIVE_SLOT_COUNT }, (_value, index) => {
+      const characterId = input.opponentActiveCharacterIds[index];
+
+      if (typeof characterId !== 'number') {
+        return null;
+      }
+
+      const unit = scoreByCharacterId.get(characterId);
+
+      if (!unit) {
+        unknownSlotCount += 1;
+        return null;
+      }
+
+      return this.createManualSlot('active', index, unit);
+    });
+    const benchSlots = Array.from({ length: RUMBLE_BENCH_SLOT_COUNT }, (_value, index) => {
+      const characterId = input.opponentBenchCharacterIds[index];
+
+      if (typeof characterId !== 'number') {
+        return null;
+      }
+
+      const unit = scoreByCharacterId.get(characterId);
+
+      if (!unit) {
+        unknownSlotCount += 1;
+        return null;
+      }
+
+      return this.createManualSlot('bench', index, unit);
+    });
+
+    return { activeSlots, benchSlots, unknownSlotCount };
+  }
+
+  private resolveImportedBuffFocus(
+    buffFocus: RumbleBuffFocusPreference[] | undefined,
+  ): RumbleBuffFocusPreference[] {
+    return RUMBLE_BUFF_FOCUS_STATS.map((stat) => {
+      const preference = buffFocus?.find((currentPreference) => currentPreference.stat === stat);
+
+      return {
+        stat,
+        rank:
+          preference && RUMBLE_BUFF_FOCUS_RANKS.includes(preference.rank)
+            ? preference.rank
+            : (DEFAULT_RUMBLE_BUFF_FOCUS.find(
+                (defaultPreference) => defaultPreference.stat === stat,
+              )?.rank ?? 'ignored'),
+      };
+    });
+  }
+
+  private buildDefaultRumbleTeamName(): string {
+    const now = new Date();
+    const timestamp =
+      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-` +
+      `${String(now.getDate()).padStart(2, '0')} ` +
+      `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    return this.t('save.defaultName', { timestamp });
+  }
+
+  private resolveImportError(error: RumbleBuilderImportError | Error | unknown): string {
+    if (error && typeof error === 'object' && 'key' in error && typeof error.key === 'string') {
+      return this.t(error.key);
+    }
+
+    return this.t('import.errors.generic');
   }
 
   private resetBuildState(): void {

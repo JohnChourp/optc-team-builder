@@ -112,6 +112,13 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'saved-rumble-teams',
+            loadComponent: () =>
+              import('./pages/saved-rumble-teams/saved-rumble-teams.page').then(
+                (module) => module.SavedRumbleTeamsPage,
+              ),
+          },
+          {
             path: 'saved-enemies',
             loadComponent: () =>
               import('./pages/saved-enemies/saved-enemies.page').then(
@@ -139,9 +146,7 @@ export const routes: Routes = [
               },
             },
             loadComponent: () =>
-              import('./pages/drive-sync/drive-sync.page').then(
-                (module) => module.DriveSyncPage,
-              ),
+              import('./pages/drive-sync/drive-sync.page').then((module) => module.DriveSyncPage),
           },
           {
             path: 'privacy',

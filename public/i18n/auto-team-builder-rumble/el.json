@@ -9,9 +9,42 @@
     "rebuild": "Χτίσε ομάδα",
     "building": "Χτίζεται...",
     "cancelBuild": "Ακύρωση build",
+    "importSettings": "Import settings",
+    "importTeam": "Import team",
+    "save": "Αποθήκευση",
+    "savedRumbleTeams": "Saved Rumble Teams",
     "downloadSettings": "Λήψη settings JSON",
     "downloadTeam": "Λήψη ομάδας JSON",
     "downloadTeamSupport": "Χτίσε έγκυρη Rumble ομάδα πριν κατεβάσεις team data."
+  },
+  "import": {
+    "errorTitle": "Το import απέτυχε",
+    "loadedFromFile": "Φορτώθηκε το {{fileName}}.",
+    "settingsSuccessTitle": "Τα settings έγιναν import",
+    "teamSuccessTitle": "Η ομάδα έγινε import",
+    "teamWarningTitle": "Η ομάδα έγινε import με παρατηρήσεις",
+    "teamStats": {
+      "loadedTeams": "Φορτώθηκαν {{count}} Rumble team(s).",
+      "unknownSlots": "Αγνοήθηκαν {{count}} unavailable character slot(s)."
+    },
+    "errors": {
+      "emptyTeam": "Το team import δεν περιείχε usable Rumble teams.",
+      "generic": "Το αρχείο δεν μπόρεσε να εισαχθεί.",
+      "invalidJson": "Το αρχείο δεν είναι έγκυρο JSON.",
+      "invalidPayload": "Το JSON δεν ταιριάζει με το expected Rumble builder schema.",
+      "unsupportedSchema": "Το selected JSON δεν υποστηρίζεται από αυτό το Rumble builder import."
+    }
+  },
+  "load": {
+    "loadedSavedTeam": "Φορτώθηκε το saved Rumble team \"{{name}}\".",
+    "successTitle": "Το saved Rumble team φορτώθηκε",
+    "warningTitle": "Το saved Rumble team φορτώθηκε με παρατηρήσεις"
+  },
+  "save": {
+    "defaultName": "Rumble Team {{timestamp}}",
+    "prompt": "Όνομα saved Rumble team",
+    "successDetail": "Αποθηκεύτηκε το \"{{name}}\".",
+    "successTitle": "Το Rumble team αποθηκεύτηκε"
   },
   "filters": {
     "types": {

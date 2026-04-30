@@ -56,7 +56,8 @@
       "none": "Κανένα",
       "untitledBox": "Box χωρίς τίτλο",
       "untitledEnemy": "Εχθρός χωρίς τίτλο",
-      "untitledCrew": "Πλήρωμα χωρίς τίτλο"
+      "untitledCrew": "Πλήρωμα χωρίς τίτλο",
+      "untitledRumbleTeam": "Rumble ομάδα χωρίς τίτλο"
     },
     "languages": {
       "el": "Ελληνικά",
@@ -354,6 +355,10 @@
         "title": "Auto Rumble Builder",
         "copy": "Βρες rumble-capable units, σύγκρινε synergy και γέμισε active και bench slots για Pirate Rumble teams."
       },
+      "savedRumbleTeams": {
+        "title": "Saved Rumble Teams",
+        "copy": "Φόρτωσε saved Rumble builds με settings, δύο team variants και opponent picks."
+      },
       "crewForge": {
         "title": "Crew Forge",
         "copy": "Εισήγαγε crew screenshots και αντιστοίχισε τα αναγνωρισμένα slots με επεξεργάσιμα OPTC character data."
@@ -403,6 +408,7 @@
     "menuTitle": "Μενού",
     "navigationAriaLabel": "Κύρια πλοήγηση",
     "offline": "Offline",
+    "savedRumbleTeams": "Saved Rumble Teams",
     "savedEnemies": "Αποθηκευμένοι εχθροί",
     "settings": "Ρυθμίσεις",
     "savedTeams": "Αποθηκευμένες ομάδες",

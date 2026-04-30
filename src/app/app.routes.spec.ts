@@ -34,6 +34,16 @@ describe('app routes', () => {
     expect(savedTeamsRoute?.loadComponent).toBeTypeOf('function');
   });
 
+  it('registers the saved Rumble teams tab route', () => {
+    const tabsRoute = findRouteByPath(routes, 'tabs');
+    const savedRumbleTeamsRoute = tabsRoute?.children?.find(
+      (route) => route.path === 'saved-rumble-teams',
+    );
+
+    expect(savedRumbleTeamsRoute).toBeDefined();
+    expect(savedRumbleTeamsRoute?.loadComponent).toBeTypeOf('function');
+  });
+
   it('registers the character boxes route inside tabs', () => {
     const tabsRoute = findRouteByPath(routes, 'tabs');
     const characterBoxesRoute = tabsRoute?.children?.find(

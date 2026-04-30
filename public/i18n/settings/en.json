@@ -141,6 +141,7 @@
         "favoriteShips": "Favorite ships",
         "favorites": "Favorite characters",
         "savedEnemies": "Saved enemies",
+        "savedRumbleTeams": "Saved Rumble teams",
         "savedTeams": "Saved teams"
       },
       "stats": {
@@ -197,6 +198,7 @@
       "favorites": "{{count}} favorites",
       "favoriteShips": "{{count}} favorite ships",
       "savedEnemies": "{{count}} saved enemies",
+      "savedRumbleTeams": "{{count}} saved Rumble teams",
       "savedTeams": "{{count}} saved teams"
     },
     "allData": {
@@ -375,6 +377,22 @@
       "import": "Import saved teams",
       "processing": "Importing saved teams...",
       "title": "Saved Teams"
+    },
+    "savedRumbleTeams": {
+      "errors": {
+        "generic": "The saved Rumble teams data could not be imported.",
+        "invalidPayload": "The JSON does not match the expected saved Rumble teams schema.",
+        "unsupportedSchema": "The selected JSON is not supported by the current saved Rumble teams import schema."
+      },
+      "feedback": {
+        "loadedFromFile": "Loaded {{fileName}}.",
+        "stats": {
+          "added": "Added {{count}} saved Rumble teams.",
+          "updated": "Updated {{count}} saved Rumble teams."
+        },
+        "successTitle": "Saved Rumble teams imported"
+      },
+      "title": "Saved Rumble Teams"
     }
   },
   "sections": {

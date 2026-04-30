@@ -17,6 +17,22 @@ import {
   type SavedTeam,
 } from '../models/optc.models';
 import { type AutoBuildAbilityRequirement } from '../models/auto-team-builder-ability.models';
+import { AUTO_TEAM_BUILDER_TYPES } from '../models/auto-team-builder.models';
+import {
+  DEFAULT_RUMBLE_BUFF_FOCUS,
+  RUMBLE_ACTIVE_SLOT_COUNT,
+  RUMBLE_BENCH_SLOT_COUNT,
+  RUMBLE_BUFF_FOCUS_RANKS,
+  RUMBLE_BUFF_FOCUS_STATS,
+  type RumbleBuildInput,
+  type RumbleBuffFocusPreference,
+  type RumbleTeamSlotRole,
+} from '../models/auto-team-builder-rumble.models';
+import {
+  type SavedRumbleTeam,
+  type SavedRumbleTeamResult,
+  type SavedRumbleTeamSlot,
+} from '../models/saved-rumble-team.models';
 import { AppI18nService } from './app-i18n.service';
 import { DriveSyncStateService } from './drive-sync-state.service';
 import { normalizeEnemyMechanicRequirements } from './enemy-mechanic-draft.utils';
@@ -27,6 +43,7 @@ const RECENTS_KEY = 'recentCharacterIds';
 const CHARACTER_BOXES_KEY = 'characterBoxes';
 const SAVED_TEAMS_KEY = 'savedTeams';
 const SAVED_ENEMIES_KEY = 'savedEnemies';
+const SAVED_RUMBLE_TEAMS_KEY = 'savedRumbleTeams';
 const CREW_FORGE_IMAGE_PROFILES_KEY = 'crewForgeImageProfiles';
 const CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY = 'crewForgeLastImageProfileId';
 const AUTO_TEAM_BUILDER_WORKER_PREFERENCE_KEY = 'autoTeamBuilderWorkerPreference';
@@ -61,6 +78,7 @@ export class UserStateService {
   public readonly characterBoxes = signal<CharacterBox[]>([]);
   public readonly savedTeams = signal<SavedTeam[]>([]);
   public readonly savedEnemies = signal<SavedEnemy[]>([]);
+  public readonly savedRumbleTeams = signal<SavedRumbleTeam[]>([]);
   public readonly crewForgeImageProfiles = computed<CrewForgeImageProfile[]>(() => [
     ...BUILT_IN_CREW_FORGE_IMAGE_PROFILES,
     ...this.userCrewForgeImageProfiles(),
@@ -719,6 +737,122 @@ export class UserStateService {
     };
   }
 
+  public getSavedRumbleTeamById(rumbleTeamId: string): SavedRumbleTeam | null {
+    const normalizedRumbleTeamId = this.normalizeEntityId(rumbleTeamId);
+
+    if (!normalizedRumbleTeamId) {
+      return null;
+    }
+
+    return (
+      this.savedRumbleTeams().find((rumbleTeam) => rumbleTeam.id === normalizedRumbleTeamId) ?? null
+    );
+  }
+
+  public async saveRumbleTeam(
+    input: Omit<SavedRumbleTeam, 'id' | 'createdAt' | 'updatedAt'> & { id?: string },
+  ): Promise<SavedRumbleTeam> {
+    await this.ready();
+
+    const existing = this.savedRumbleTeams().find((rumbleTeam) => rumbleTeam.id === input.id);
+    const savedRumbleTeam = this.normalizeSavedRumbleTeam(
+      {
+        ...input,
+        id: input.id ?? this.createRumbleTeamId(),
+      },
+      existing,
+    );
+    const next = existing
+      ? this.savedRumbleTeams().map((rumbleTeam) =>
+          rumbleTeam.id === savedRumbleTeam.id ? savedRumbleTeam : rumbleTeam,
+        )
+      : [savedRumbleTeam, ...this.savedRumbleTeams()];
+
+    await this.replaceSavedRumbleTeams(next);
+
+    return savedRumbleTeam;
+  }
+
+  public async deleteRumbleTeam(rumbleTeamId: string): Promise<void> {
+    await this.ready();
+    const normalizedRumbleTeamId = this.normalizeEntityId(rumbleTeamId);
+
+    if (!normalizedRumbleTeamId) {
+      return;
+    }
+
+    const next = this.savedRumbleTeams().filter(
+      (rumbleTeam) => rumbleTeam.id !== normalizedRumbleTeamId,
+    );
+
+    if (next.length === this.savedRumbleTeams().length) {
+      return;
+    }
+
+    await this.replaceSavedRumbleTeams(next);
+  }
+
+  public async clearAllSavedRumbleTeams(): Promise<void> {
+    await this.ready();
+    await this.replaceSavedRumbleTeams([]);
+  }
+
+  public async mergeImportedRumbleTeams(
+    rumbleTeams: SavedRumbleTeam[],
+  ): Promise<{ addedCount: number; updatedCount: number; rumbleTeams: SavedRumbleTeam[] }> {
+    await this.ready();
+
+    const currentRumbleTeams = this.savedRumbleTeams();
+    const currentRumbleTeamMap = new Map(
+      currentRumbleTeams.map((rumbleTeam) => [rumbleTeam.id, rumbleTeam] as const),
+    );
+    const mergedRumbleTeams: SavedRumbleTeam[] = [];
+    const importedRumbleTeamIds = new Set<string>();
+    let addedCount = 0;
+    let updatedCount = 0;
+
+    rumbleTeams.forEach((rumbleTeam) => {
+      const existingRumbleTeam = currentRumbleTeamMap.get(rumbleTeam.id);
+      const normalizedRumbleTeam = this.normalizeSavedRumbleTeam(
+        existingRumbleTeam
+          ? {
+              ...rumbleTeam,
+              createdAt: undefined,
+              updatedAt: undefined,
+            }
+          : rumbleTeam,
+        existingRumbleTeam,
+      );
+
+      if (importedRumbleTeamIds.has(normalizedRumbleTeam.id)) {
+        return;
+      }
+
+      importedRumbleTeamIds.add(normalizedRumbleTeam.id);
+
+      if (currentRumbleTeamMap.has(normalizedRumbleTeam.id)) {
+        updatedCount += 1;
+      } else {
+        addedCount += 1;
+      }
+
+      mergedRumbleTeams.push(normalizedRumbleTeam);
+    });
+
+    const next = [
+      ...mergedRumbleTeams,
+      ...currentRumbleTeams.filter((rumbleTeam) => !importedRumbleTeamIds.has(rumbleTeam.id)),
+    ];
+
+    await this.replaceSavedRumbleTeams(next);
+
+    return {
+      addedCount,
+      updatedCount,
+      rumbleTeams: next,
+    };
+  }
+
   private async hydrate(): Promise<void> {
     const [
       favorites,
@@ -727,6 +861,7 @@ export class UserStateService {
       characterBoxes,
       teams,
       enemies,
+      rumbleTeams,
       crewForgeImageProfiles,
       crewForgeLastImageProfileId,
       autoTeamBuilderWorkerPreference,
@@ -737,6 +872,7 @@ export class UserStateService {
       this.readJson<CharacterBox[]>(CHARACTER_BOXES_KEY, []),
       this.readJson<SavedTeam[]>(SAVED_TEAMS_KEY, []),
       this.readJson<SavedEnemy[]>(SAVED_ENEMIES_KEY, []),
+      this.readJson<SavedRumbleTeam[]>(SAVED_RUMBLE_TEAMS_KEY, []),
       this.readJson<CrewForgeImageProfile[]>(CREW_FORGE_IMAGE_PROFILES_KEY, []),
       this.readJson<string | null>(CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY, null),
       this.readJson<AutoTeamBuilderWorkerPreference>(
@@ -755,6 +891,9 @@ export class UserStateService {
     );
     this.savedTeams.set(teams.map((team) => this.normalizeSavedTeam(team)));
     this.savedEnemies.set(enemies.map((enemy) => this.normalizeSavedEnemy(enemy)));
+    this.savedRumbleTeams.set(
+      rumbleTeams.map((rumbleTeam) => this.normalizeSavedRumbleTeam(rumbleTeam)),
+    );
     this.userCrewForgeImageProfiles.set(
       crewForgeImageProfiles
         .map((profile) => this.normalizeCrewForgeImageProfile(profile))
@@ -804,6 +943,7 @@ export class UserStateService {
         CHARACTER_BOXES_KEY,
         SAVED_TEAMS_KEY,
         SAVED_ENEMIES_KEY,
+        SAVED_RUMBLE_TEAMS_KEY,
       ].includes(key)
     ) {
       return;
@@ -825,6 +965,11 @@ export class UserStateService {
   private async replaceSavedEnemies(enemies: SavedEnemy[]): Promise<void> {
     this.savedEnemies.set(enemies);
     await this.persistJson(SAVED_ENEMIES_KEY, enemies);
+  }
+
+  private async replaceSavedRumbleTeams(rumbleTeams: SavedRumbleTeam[]): Promise<void> {
+    this.savedRumbleTeams.set(rumbleTeams);
+    await this.persistJson(SAVED_RUMBLE_TEAMS_KEY, rumbleTeams);
   }
 
   private async replaceCrewForgeImageProfiles(profiles: CrewForgeImageProfile[]): Promise<void> {
@@ -936,6 +1081,213 @@ export class UserStateService {
       createdAt: this.normalizeTimestamp(enemy.createdAt, existing?.createdAt ?? now),
       updatedAt: this.normalizeTimestamp(enemy.updatedAt, now),
     };
+  }
+
+  private normalizeSavedRumbleTeam(
+    rumbleTeam: Pick<
+      SavedRumbleTeam,
+      | 'name'
+      | 'notes'
+      | 'settings'
+      | 'teams'
+      | 'selectedTeamIndex'
+      | 'opponentActiveCharacterIds'
+      | 'opponentBenchCharacterIds'
+      | 'opponentAwarenessEnabled'
+    > &
+      Partial<SavedRumbleTeam>,
+    existing?: SavedRumbleTeam,
+  ): SavedRumbleTeam {
+    const now = new Date().toISOString();
+    const teams = (Array.isArray(rumbleTeam.teams) ? rumbleTeam.teams : [])
+      .map((team) => this.normalizeSavedRumbleTeamResult(team))
+      .filter((team): team is SavedRumbleTeamResult => Boolean(team))
+      .slice(0, 2);
+    const selectedTeamIndex =
+      typeof rumbleTeam.selectedTeamIndex === 'number' &&
+      Number.isInteger(rumbleTeam.selectedTeamIndex) &&
+      rumbleTeam.selectedTeamIndex >= 0 &&
+      rumbleTeam.selectedTeamIndex < Math.max(1, teams.length)
+        ? rumbleTeam.selectedTeamIndex
+        : 0;
+
+    return {
+      id: this.normalizeEntityId(rumbleTeam.id) ?? existing?.id ?? this.createRumbleTeamId(),
+      name: this.normalizeRumbleTeamName(rumbleTeam.name),
+      notes: this.normalizeNotes(rumbleTeam.notes),
+      settings: this.normalizeRumbleBuildInput(rumbleTeam.settings),
+      teams,
+      selectedTeamIndex,
+      opponentActiveCharacterIds: this.normalizeNullableCharacterIdSlots(
+        rumbleTeam.opponentActiveCharacterIds,
+        RUMBLE_ACTIVE_SLOT_COUNT,
+      ),
+      opponentBenchCharacterIds: this.normalizeNullableCharacterIdSlots(
+        rumbleTeam.opponentBenchCharacterIds,
+        RUMBLE_BENCH_SLOT_COUNT,
+      ),
+      opponentAwarenessEnabled: Boolean(rumbleTeam.opponentAwarenessEnabled),
+      createdAt: this.normalizeTimestamp(rumbleTeam.createdAt, existing?.createdAt ?? now),
+      updatedAt: this.normalizeTimestamp(rumbleTeam.updatedAt, now),
+    };
+  }
+
+  private normalizeSavedRumbleTeamResult(
+    result: Partial<SavedRumbleTeamResult> | null | undefined,
+  ): SavedRumbleTeamResult | null {
+    if (!result || typeof result !== 'object') {
+      return null;
+    }
+
+    const activeSlots = this.normalizeSavedRumbleTeamSlots(
+      result.activeSlots,
+      'active',
+      RUMBLE_ACTIVE_SLOT_COUNT,
+    );
+    const benchSlots = this.normalizeSavedRumbleTeamSlots(
+      result.benchSlots,
+      'bench',
+      RUMBLE_BENCH_SLOT_COUNT,
+    );
+
+    if (!activeSlots.length && !benchSlots.length) {
+      return null;
+    }
+
+    return {
+      activeSlots,
+      benchSlots,
+      candidateCount: this.normalizeNonNegativeInteger(result.candidateCount),
+      classCoverage: this.normalizeStringCollection(result.classCoverage),
+      droppedClasses: this.normalizeStringCollection(result.droppedClasses),
+      droppedTypes: this.normalizeAutoBuilderTypes(result.droppedTypes),
+      input: this.normalizeRumbleBuildInput(result.input),
+      requestedClasses: this.normalizeStringCollection(result.requestedClasses),
+      requestedTypes: this.normalizeAutoBuilderTypes(result.requestedTypes),
+      resolvedClasses: this.normalizeStringCollection(result.resolvedClasses),
+      resolvedTypes: this.normalizeAutoBuilderTypes(result.resolvedTypes),
+      roleCoverage: this.normalizeRumbleRoleCoverage(result.roleCoverage),
+      selectedCount: Math.max(
+        activeSlots.length + benchSlots.length,
+        this.normalizeNonNegativeInteger(result.selectedCount),
+      ),
+      topFactors: this.normalizeStringCollection(result.topFactors),
+      totalScore: this.normalizeNumber(result.totalScore, 0),
+      typeCoverage: this.normalizeStringCollection(result.typeCoverage, {
+        mapValue: (value) => value.toUpperCase(),
+      }),
+    };
+  }
+
+  private normalizeSavedRumbleTeamSlots(
+    slots: SavedRumbleTeamSlot[] | undefined,
+    role: RumbleTeamSlotRole,
+    maxCount: number,
+  ): SavedRumbleTeamSlot[] {
+    return (Array.isArray(slots) ? slots : [])
+      .map((slot, fallbackIndex) => {
+        if (!slot || typeof slot !== 'object') {
+          return null;
+        }
+
+        const characterId = this.normalizePositiveInteger(slot.characterId);
+
+        if (!characterId) {
+          return null;
+        }
+
+        const index =
+          typeof slot.index === 'number' &&
+          Number.isInteger(slot.index) &&
+          slot.index >= 0 &&
+          slot.index < maxCount
+            ? slot.index
+            : fallbackIndex;
+
+        return {
+          characterId,
+          index,
+          reasonChips: this.normalizeStringCollection(slot.reasonChips),
+          role,
+          score: this.normalizeNumber(slot.score, 0),
+        };
+      })
+      .filter((slot): slot is SavedRumbleTeamSlot => Boolean(slot))
+      .slice(0, maxCount);
+  }
+
+  private normalizeRumbleBuildInput(
+    input: Partial<RumbleBuildInput> | null | undefined,
+  ): RumbleBuildInput {
+    return {
+      types: this.normalizeAutoBuilderTypes(input?.types),
+      selectedClasses: this.normalizeStringCollection(input?.selectedClasses),
+      onlySelectedTypes: Boolean(input?.onlySelectedTypes),
+      onlySelectedClasses: Boolean(input?.onlySelectedClasses),
+      favoritesOnly: Boolean(input?.favoritesOnly),
+      favoriteCharacterIds: this.normalizePositiveIntegerCollection(input?.favoriteCharacterIds),
+      candidateCharacterIds: input?.candidateCharacterIds
+        ? this.normalizePositiveIntegerCollection(input.candidateCharacterIds)
+        : undefined,
+      opponentSlots: [],
+      buffFocus: this.normalizeRumbleBuffFocus(input?.buffFocus),
+      requireFullTeam: input?.requireFullTeam !== false,
+    };
+  }
+
+  private normalizeRumbleBuffFocus(
+    buffFocus: RumbleBuffFocusPreference[] | undefined,
+  ): RumbleBuffFocusPreference[] {
+    const focusByStat = new Map(
+      (Array.isArray(buffFocus) ? buffFocus : [])
+        .filter((preference) =>
+          RUMBLE_BUFF_FOCUS_STATS.includes(preference?.stat as RumbleBuffFocusPreference['stat']),
+        )
+        .map(
+          (preference) =>
+            [
+              preference.stat,
+              RUMBLE_BUFF_FOCUS_RANKS.includes(preference.rank) ? preference.rank : 'ignored',
+            ] as const,
+        ),
+    );
+
+    return RUMBLE_BUFF_FOCUS_STATS.map((stat) => ({
+      stat,
+      rank:
+        focusByStat.get(stat) ??
+        DEFAULT_RUMBLE_BUFF_FOCUS.find((preference) => preference.stat === stat)?.rank ??
+        'ignored',
+    }));
+  }
+
+  private normalizeNullableCharacterIdSlots(
+    values: Array<number | null> | undefined,
+    count: number,
+  ): Array<number | null> {
+    return Array.from({ length: count }, (_value, index) => {
+      const value = values?.[index];
+
+      return this.normalizePositiveInteger(value);
+    });
+  }
+
+  private normalizeAutoBuilderTypes(values: string[] | undefined): RumbleBuildInput['types'] {
+    const validTypes = new Set<string>(AUTO_TEAM_BUILDER_TYPES);
+
+    return this.normalizeStringCollection(values, {
+      mapValue: (value) => value.toUpperCase(),
+    }).filter((value) => validTypes.has(value)) as RumbleBuildInput['types'];
+  }
+
+  private normalizeRumbleRoleCoverage(
+    values: SavedRumbleTeamResult['roleCoverage'] | undefined,
+  ): SavedRumbleTeamResult['roleCoverage'] {
+    const validRoles = new Set(['attacker', 'booster', 'defender', 'disruptor', 'healer', 'speed']);
+
+    return this.normalizeStringCollection(values).filter((value) =>
+      validRoles.has(value),
+    ) as SavedRumbleTeamResult['roleCoverage'];
   }
 
   private normalizeCrewForgeImageProfile(
@@ -1166,6 +1518,14 @@ export class UserStateService {
     return enemyName.trim() || this.i18n.translate('common.defaults.untitledEnemy');
   }
 
+  private normalizeRumbleTeamName(rumbleTeamName: string | undefined): string {
+    if (typeof rumbleTeamName !== 'string') {
+      return this.i18n.translate('common.defaults.untitledRumbleTeam');
+    }
+
+    return rumbleTeamName.trim() || this.i18n.translate('common.defaults.untitledRumbleTeam');
+  }
+
   private normalizeTeamSlots(slots: Array<number | null> | undefined): Array<number | null> {
     return Array.from({ length: 6 }, (_, index) => {
       const value = slots?.[index];
@@ -1344,6 +1704,10 @@ export class UserStateService {
 
   private createEnemyId(): string {
     return `enemy-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  private createRumbleTeamId(): string {
+    return `rumble-team-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   }
 
   private createCharacterBoxId(): string {

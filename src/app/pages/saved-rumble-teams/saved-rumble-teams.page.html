@@ -1,0 +1,175 @@
+<ng-container *transloco="let t; scope: 'saved-rumble-teams'; read: 'saved-rumble-teams'">
+  <ion-header class="ion-no-border">
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-menu-button menu="tabs-navigation-menu" autoHide="false"></ion-menu-button>
+      </ion-buttons>
+      <ion-title>{{ t('title') }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content [fullscreen]="true">
+    <div class="page-shell saved-rumble-teams-shell">
+      <section class="glass-card hero-card">
+        <div class="section-label">
+          <ion-icon [icon]="shieldIcon"></ion-icon>
+          {{ t('hero.eyebrow') }}
+        </div>
+        <h1 class="section-title">{{ t('hero.title') }}</h1>
+        <p class="section-copy">{{ t('hero.copy') }}</p>
+      </section>
+
+      @if (loading()) {
+        <section class="glass-card loading-card">
+          <ion-spinner name="crescent"></ion-spinner>
+          <span>{{ t('loading') }}</span>
+        </section>
+      }
+
+      @if (!loading() && !hasSavedRumbleTeams()) {
+        <section class="glass-card empty-card">
+          <h2>{{ t('empty.title') }}</h2>
+          <p>{{ t('empty.copy') }}</p>
+          <ion-button color="warning" [routerLink]="['/tabs/auto-team-builder-rumble']">
+            {{ t('empty.action') }}
+          </ion-button>
+        </section>
+      }
+
+      @if (!loading() && savedRumbleTeamCards().length) {
+        <section class="glass-card section-card">
+          <div class="section-head">
+            <div>
+              <h2>{{ t('list.title') }}</h2>
+              <span>{{ t('list.total', { count: savedRumbleTeams().length }) }}</span>
+            </div>
+          </div>
+
+          <div class="saved-rumble-team-list">
+            @for (card of savedRumbleTeamCards(); track card.team.id) {
+              <article>
+                <div class="saved-rumble-team-head">
+                  <div class="saved-rumble-team-copy">
+                    <strong>{{ card.team.name }}</strong>
+                    <p>{{ card.team.notes || ('common.defaults.noNotesYet' | transloco) }}</p>
+                    <div class="saved-rumble-team-meta">
+                      <span>{{ t('meta.updated', { value: card.updatedLabel }) }}</span>
+                      <span>{{ t('meta.teams', { count: card.teamCount }) }}</span>
+                      <span>{{ t('meta.opponents', { count: card.opponentCount }) }}</span>
+                    </div>
+                  </div>
+                  <div class="saved-rumble-team-actions">
+                    <ion-button
+                      fill="outline"
+                      color="warning"
+                      [routerLink]="['/tabs/auto-team-builder-rumble']"
+                      [queryParams]="getRumbleBuilderQueryParams(card.team)"
+                    >
+                      {{ t('actions.load') }}
+                    </ion-button>
+                    <ion-button fill="clear" color="light" (click)="openEditModal(card.team)">
+                      <ion-icon slot="start" [icon]="editIcon"></ion-icon>
+                      {{ t('actions.edit') }}
+                    </ion-button>
+                    <ion-button
+                      fill="clear"
+                      color="danger"
+                      (click)="confirmAndDeleteRumbleTeam(card.team.id)"
+                    >
+                      {{ 'common.actions.delete' | transloco }}
+                    </ion-button>
+                  </div>
+                </div>
+
+                <div class="saved-rumble-team-preview" [attr.aria-label]="t('preview.ariaLabel')">
+                  @for (slot of card.slots; track $index) {
+                    @if (slot; as currentSlot) {
+                      <a
+                        class="saved-rumble-team-slot saved-rumble-team-slot--filled"
+                        [routerLink]="getCharacterDetailLink(currentSlot)"
+                        [attr.aria-label]="
+                          t('preview.viewDetailsAria', { name: currentSlot.name, slot: $index + 1 })
+                        "
+                      >
+                        <img [src]="currentSlot.imageUrl" [alt]="currentSlot.name" loading="lazy" />
+                      </a>
+                    } @else {
+                      <span
+                        class="saved-rumble-team-slot"
+                        [attr.aria-label]="t('preview.emptySlotAria', { slot: $index + 1 })"
+                      >
+                        <img
+                          src="assets/placeholders/character-card.svg"
+                          [alt]="t('preview.emptySlotAlt')"
+                          loading="lazy"
+                        />
+                      </span>
+                    }
+                  }
+                </div>
+              </article>
+            }
+          </div>
+        </section>
+      }
+    </div>
+
+    <ion-modal
+      [isOpen]="editModalOpen()"
+      cssClass="saved-rumble-teams-edit-modal"
+      (didDismiss)="closeEditModal()"
+    >
+      <ng-template>
+        <ion-header class="edit-modal-header ion-no-border">
+          <ion-toolbar>
+            <div class="edit-modal-head">
+              <div>
+                <div class="section-label">{{ t('edit.eyebrow') }}</div>
+                <h2>{{ t('edit.title') }}</h2>
+              </div>
+              <ion-buttons>
+                <ion-button fill="clear" color="light" (click)="closeEditModal()">
+                  <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                </ion-button>
+              </ion-buttons>
+            </div>
+          </ion-toolbar>
+        </ion-header>
+
+        <ion-content class="edit-modal-content">
+          <div class="edit-modal-shell">
+            <p>{{ t('edit.copy') }}</p>
+            <label>
+              <span>{{ t('edit.nameLabel') }}</span>
+              <ion-input
+                fill="outline"
+                [value]="editRumbleTeamName()"
+                (ionInput)="onEditRumbleTeamNameChange($event)"
+              ></ion-input>
+            </label>
+            <label>
+              <span>{{ t('edit.notesLabel') }}</span>
+              <ion-textarea
+                fill="outline"
+                autoGrow="true"
+                [value]="editNotes()"
+                (ionInput)="onEditNotesChange($event)"
+              ></ion-textarea>
+            </label>
+          </div>
+        </ion-content>
+
+        <ion-footer class="edit-modal-footer">
+          <ion-toolbar>
+            <ion-button fill="outline" color="light" (click)="closeEditModal()">
+              {{ 'common.actions.cancel' | transloco }}
+            </ion-button>
+            <ion-button color="warning" [disabled]="savingEdit()" (click)="saveEditedRumbleTeam()">
+              {{ 'common.actions.save' | transloco }}
+            </ion-button>
+          </ion-toolbar>
+        </ion-footer>
+      </ng-template>
+    </ion-modal>
+  </ion-content>
+</ng-container>

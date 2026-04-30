@@ -56,7 +56,8 @@
       "none": "None",
       "untitledBox": "Untitled Box",
       "untitledEnemy": "Untitled Enemy",
-      "untitledCrew": "Untitled Crew"
+      "untitledCrew": "Untitled Crew",
+      "untitledRumbleTeam": "Untitled Rumble Team"
     },
     "languages": {
       "el": "Greek",
@@ -354,6 +355,10 @@
         "title": "Auto Rumble Builder",
         "copy": "Score rumble-capable units, compare synergy, and fill active and bench slots for Pirate Rumble teams."
       },
+      "savedRumbleTeams": {
+        "title": "Saved Rumble Teams",
+        "copy": "Reload saved Rumble builds with their settings, two team variants, and opponent picks."
+      },
       "crewForge": {
         "title": "Crew Forge",
         "copy": "Import crew screenshots and match recognized slots back to editable OPTC character data."
@@ -403,6 +408,7 @@
     "menuTitle": "Menu",
     "navigationAriaLabel": "Main navigation",
     "offline": "Offline",
+    "savedRumbleTeams": "Saved Rumble Teams",
     "savedEnemies": "Saved Enemies",
     "settings": "Settings",
     "savedTeams": "Saved Teams",

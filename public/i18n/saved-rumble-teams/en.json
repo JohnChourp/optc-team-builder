@@ -1,0 +1,43 @@
+{
+  "title": "Saved Rumble Teams",
+  "hero": {
+    "copy": "Saved Rumble teams keep the builder settings, generated teams, and opponent picks together on this device.",
+    "eyebrow": "Pirate Rumble",
+    "title": "Reload Rumble team plans without rebuilding from scratch."
+  },
+  "actions": {
+    "edit": "Edit",
+    "load": "Load"
+  },
+  "confirm": {
+    "deleteSingle": "Delete saved Rumble team \"{{name}}\"?"
+  },
+  "edit": {
+    "copy": "Update the saved Rumble team's name and notes without changing its teams or settings.",
+    "eyebrow": "Rumble update",
+    "nameLabel": "Team name",
+    "notesLabel": "Notes",
+    "title": "Edit saved Rumble team"
+  },
+  "empty": {
+    "action": "Open Auto Rumble Builder",
+    "copy": "Save a Rumble team from the Auto Rumble Builder to keep it here.",
+    "title": "No saved Rumble teams yet."
+  },
+  "list": {
+    "title": "Saved Rumble Teams",
+    "total": "{{count}} total"
+  },
+  "loading": "Loading saved Rumble teams...",
+  "meta": {
+    "opponents": "{{count}} opponent slot(s)",
+    "teams": "{{count}} team(s)",
+    "updated": "Updated {{value}}"
+  },
+  "preview": {
+    "ariaLabel": "Saved Rumble team character slots",
+    "emptySlotAlt": "Empty slot",
+    "emptySlotAria": "Empty Rumble slot {{slot}}",
+    "viewDetailsAria": "View details for {{name}} in Rumble slot {{slot}}"
+  }
+}

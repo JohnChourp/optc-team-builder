@@ -8,6 +8,7 @@ export type DriveSyncReviewSectionKey =
   | 'favoriteShips'
   | 'favorites'
   | 'savedEnemies'
+  | 'savedRumbleTeams'
   | 'savedTeams';
 
 export type DriveSyncReviewChoice = 'device' | 'drive' | 'remove';
@@ -55,6 +56,7 @@ const sectionOrder: DriveSyncReviewSectionKey[] = [
   'characterBoxes',
   'characterOverrides',
   'savedTeams',
+  'savedRumbleTeams',
   'savedEnemies',
 ];
 
@@ -134,6 +136,21 @@ const sectionConfigs: SectionConfig<never>[] = [
   },
   {
     buildPayload: (items, exportedAt) => ({
+      savedRumbleTeams: {
+        exportedAt,
+        rumbleTeams: items,
+        schemaVersion: 1,
+        source: 'saved-rumble-teams',
+      },
+    }),
+    detail: (item) => `${readArray(item, 'teams').length} teams`,
+    getItems: (payload) => (payload.savedRumbleTeams?.rumbleTeams ?? []) as never[],
+    key: 'savedRumbleTeams',
+    label: (item) => readString(item, 'name') || readString(item, 'id') || 'Saved Rumble team',
+    rowKey: (item) => readString(item, 'id'),
+  },
+  {
+    buildPayload: (items, exportedAt) => ({
       savedEnemies: {
         enemies: items,
         exportedAt,
@@ -157,7 +174,9 @@ export function buildDriveSyncReviewDraft(
 ): DriveSyncReviewDraft {
   return {
     action,
-    sections: sectionConfigs.map((config) => buildReviewSection(localPayload, drivePayload, action, config)),
+    sections: sectionConfigs.map((config) =>
+      buildReviewSection(localPayload, drivePayload, action, config),
+    ),
   };
 }
 
@@ -169,7 +188,8 @@ export function buildReviewedAllDataPayload(
     (payload, section) => {
       const config = getSectionConfig(section.key);
       const items = section.rows.flatMap((row) => {
-        const item = row.choice === 'device' ? row.deviceItem : row.choice === 'drive' ? row.driveItem : null;
+        const item =
+          row.choice === 'device' ? row.deviceItem : row.choice === 'drive' ? row.driveItem : null;
 
         return item === null ? [] : [cloneValue(item)];
       });
@@ -261,12 +281,13 @@ function buildSectionWithCounts(
 }
 
 function cloneValue<T>(value: T): T {
-  return value === null || value === undefined
-    ? value
-    : (JSON.parse(JSON.stringify(value)) as T);
+  return value === null || value === undefined ? value : (JSON.parse(JSON.stringify(value)) as T);
 }
 
-function getAvailableChoices(deviceItem: unknown | null, driveItem: unknown | null): DriveSyncReviewChoice[] {
+function getAvailableChoices(
+  deviceItem: unknown | null,
+  driveItem: unknown | null,
+): DriveSyncReviewChoice[] {
   return [
     ...(deviceItem ? (['device'] as const) : []),
     ...(driveItem ? (['drive'] as const) : []),

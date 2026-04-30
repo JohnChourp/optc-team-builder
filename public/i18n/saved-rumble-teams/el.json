@@ -1,0 +1,43 @@
+{
+  "title": "Saved Rumble Teams",
+  "hero": {
+    "copy": "Τα saved Rumble teams κρατούν builder settings, generated teams και opponent picks μαζί σε αυτή τη συσκευή.",
+    "eyebrow": "Pirate Rumble",
+    "title": "Φόρτωσε ξανά Rumble team plans χωρίς νέο build από την αρχή."
+  },
+  "actions": {
+    "edit": "Επεξεργασία",
+    "load": "Φόρτωση"
+  },
+  "confirm": {
+    "deleteSingle": "Να διαγραφεί το saved Rumble team \"{{name}}\";"
+  },
+  "edit": {
+    "copy": "Άλλαξε όνομα και σημειώσεις χωρίς να πειραχτούν teams ή settings.",
+    "eyebrow": "Ενημέρωση Rumble",
+    "nameLabel": "Όνομα team",
+    "notesLabel": "Σημειώσεις",
+    "title": "Επεξεργασία saved Rumble team"
+  },
+  "empty": {
+    "action": "Άνοιγμα Auto Rumble Builder",
+    "copy": "Αποθήκευσε Rumble team από το Auto Rumble Builder για να εμφανιστεί εδώ.",
+    "title": "Δεν υπάρχουν saved Rumble teams ακόμα."
+  },
+  "list": {
+    "title": "Saved Rumble Teams",
+    "total": "{{count}} συνολικά"
+  },
+  "loading": "Φόρτωση saved Rumble teams...",
+  "meta": {
+    "opponents": "{{count}} opponent slot(s)",
+    "teams": "{{count}} team(s)",
+    "updated": "Ενημερώθηκε {{value}}"
+  },
+  "preview": {
+    "ariaLabel": "Slots χαρακτήρων saved Rumble team",
+    "emptySlotAlt": "Κενό slot",
+    "emptySlotAria": "Κενό Rumble slot {{slot}}",
+    "viewDetailsAria": "Προβολή λεπτομερειών για τον {{name}} στο Rumble slot {{slot}}"
+  }
+}

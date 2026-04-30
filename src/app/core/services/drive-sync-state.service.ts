@@ -62,6 +62,7 @@ function normalizeSyncScopeSummary(value: unknown): SyncScopeSummary | null {
     favoriteCharacterCount: normalizeSummaryCount(record['favoriteCharacterCount']),
     favoriteShipCount: normalizeSummaryCount(record['favoriteShipCount']),
     savedEnemiesCount: normalizeSummaryCount(record['savedEnemiesCount']),
+    savedRumbleTeamsCount: normalizeSummaryCount(record['savedRumbleTeamsCount']),
     savedTeamsCount: normalizeSummaryCount(record['savedTeamsCount']),
   };
 }

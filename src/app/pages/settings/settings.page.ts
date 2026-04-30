@@ -181,8 +181,9 @@ export class SettingsPage implements OnInit {
 
     return Boolean(
       preview &&
-        (preview.payload.characterIds.length > 0 || preview.payload.shipIds.length > 0) &&
-        (preview.payload.characterIds.length === 0 || this.inventoryCaptureBoxName().trim().length > 0),
+      (preview.payload.characterIds.length > 0 || preview.payload.shipIds.length > 0) &&
+      (preview.payload.characterIds.length === 0 ||
+        this.inventoryCaptureBoxName().trim().length > 0),
     );
   });
 
@@ -478,10 +479,7 @@ export class SettingsPage implements OnInit {
     await this.importSavedEnemies(file);
   }
 
-  public async onInventoryOptcbxFileSelected(
-    event: Event,
-    input: HTMLInputElement,
-  ): Promise<void> {
+  public async onInventoryOptcbxFileSelected(event: Event, input: HTMLInputElement): Promise<void> {
     const file = this.extractSelectedFile(event, input);
 
     if (!file) {
@@ -504,9 +502,7 @@ export class SettingsPage implements OnInit {
     await this.prepareInventoryCapturePreview(file, 'screenshot');
   }
 
-  public onInventoryCaptureBoxSelectionChange(
-    event: CustomEvent<{ value?: string | null }>,
-  ): void {
+  public onInventoryCaptureBoxSelectionChange(event: CustomEvent<{ value?: string | null }>): void {
     const nextSelection = typeof event.detail.value === 'string' ? event.detail.value : 'new';
     const existingBox = nextSelection === 'new' ? null : this.findInventoryTargetBox(nextSelection);
 
@@ -735,9 +731,7 @@ export class SettingsPage implements OnInit {
     }
   }
 
-  private buildInventoryCapturePreviewFeedback(
-    preview: InventoryCapturePreview,
-  ): TransferFeedback {
+  private buildInventoryCapturePreviewFeedback(preview: InventoryCapturePreview): TransferFeedback {
     const details = [
       this.i18n.translate(
         'management.inventoryCapture.feedback.previewReady',
@@ -986,6 +980,21 @@ export class SettingsPage implements OnInit {
             [],
           );
           break;
+        case 'saved-rumble-teams':
+          feedback = this.buildCombinedAllDataFeedback(
+            file.name,
+            [
+              {
+                label: this.resolveAllDataSectionLabel('savedRumbleTeams'),
+                feedback: await this.importSavedRumbleTeamsContent({
+                  fileName: file.name,
+                  parsedPayload: importCandidate.payload,
+                }),
+              },
+            ],
+            [],
+          );
+          break;
         case 'saved-enemies':
           feedback = this.buildCombinedAllDataFeedback(
             file.name,
@@ -1057,7 +1066,9 @@ export class SettingsPage implements OnInit {
         failedSections,
         label: this.resolveAllDataSectionLabel('favorites'),
         run: async () => {
-          const stats = await this.userDataTransfer.importFavoritesPayload(payload.favorites as unknown);
+          const stats = await this.userDataTransfer.importFavoritesPayload(
+            payload.favorites as unknown,
+          );
 
           return this.buildFavoritesImportFeedback(stats.duplicatesRemoved, {
             addedCount: stats.addedCount,
@@ -1114,6 +1125,22 @@ export class SettingsPage implements OnInit {
           }),
         successfulSections,
         resolveError: (error) => this.resolveCharacterBoxesImportError(error),
+      });
+    }
+
+    if (payload.savedRumbleTeams !== undefined) {
+      await this.collectAllDataSectionResult({
+        failedSections,
+        label: this.resolveAllDataSectionLabel('savedRumbleTeams'),
+        run: async () =>
+          this.buildSavedRumbleTeamsImportFeedback({
+            ...(await this.userDataTransfer.importSavedRumbleTeamsPayload(
+              payload.savedRumbleTeams as unknown,
+            )),
+            fileName,
+          }),
+        successfulSections,
+        resolveError: (error) => this.resolveSavedRumbleTeamsImportError(error),
       });
     }
 
@@ -1217,6 +1244,7 @@ export class SettingsPage implements OnInit {
       | 'favoriteShips'
       | 'favorites'
       | 'savedEnemies'
+      | 'savedRumbleTeams'
       | 'savedTeams',
   ): string {
     switch (section) {
@@ -1230,6 +1258,8 @@ export class SettingsPage implements OnInit {
         return this.i18n.translate('management.characterOverrides.title', undefined, 'settings');
       case 'savedTeams':
         return this.i18n.translate('management.savedTeams.title', undefined, 'settings');
+      case 'savedRumbleTeams':
+        return this.i18n.translate('management.savedRumbleTeams.title', undefined, 'settings');
       case 'savedEnemies':
         return this.i18n.translate('management.savedEnemies.title', undefined, 'settings');
     }
@@ -1906,6 +1936,70 @@ export class SettingsPage implements OnInit {
     }
 
     return this.i18n.translate('import.errors.generic', undefined, 'saved-teams');
+  }
+
+  private async importSavedRumbleTeamsContent(input: {
+    fileName: string;
+    parsedPayload: unknown;
+  }): Promise<TransferFeedback> {
+    const stats = await this.userDataTransfer.importSavedRumbleTeamsPayload(input.parsedPayload);
+
+    return this.buildSavedRumbleTeamsImportFeedback({
+      ...stats,
+      fileName: input.fileName,
+    });
+  }
+
+  private buildSavedRumbleTeamsImportFeedback(stats: {
+    addedCount: number;
+    fileName: string;
+    updatedCount: number;
+  }): TransferFeedback {
+    const details = [
+      this.i18n.translate(
+        'management.savedRumbleTeams.feedback.loadedFromFile',
+        { fileName: stats.fileName },
+        'settings',
+      ),
+    ];
+
+    if (stats.addedCount > 0) {
+      details.push(
+        this.i18n.translate(
+          'management.savedRumbleTeams.feedback.stats.added',
+          { count: stats.addedCount },
+          'settings',
+        ),
+      );
+    }
+
+    if (stats.updatedCount > 0) {
+      details.push(
+        this.i18n.translate(
+          'management.savedRumbleTeams.feedback.stats.updated',
+          { count: stats.updatedCount },
+          'settings',
+        ),
+      );
+    }
+
+    return {
+      tone: 'success',
+      title: this.i18n.translate(
+        'management.savedRumbleTeams.feedback.successTitle',
+        undefined,
+        'settings',
+      ),
+      details,
+    };
+  }
+
+  private resolveSavedRumbleTeamsImportError(error: Error | unknown): string {
+    if (error && typeof error === 'object' && 'key' in error && typeof error.key === 'string') {
+      return this.i18n.translate(error.key, undefined, 'settings');
+    }
+
+    return this.i18n.translate('management.savedRumbleTeams.errors.generic', undefined, 'settings');
   }
 
   private async importSavedEnemies(file: File): Promise<void> {

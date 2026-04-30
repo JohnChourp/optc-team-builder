@@ -39,7 +39,16 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 10px;
-  max-width: 420px;
+  max-width: 680px;
+}
+
+.visually-hidden-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .hero-actions small {
@@ -85,6 +94,22 @@
 }
 
 .state-card--error {
+  border-color: rgba(255, 139, 118, 0.34);
+}
+
+.import-feedback-card {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.import-feedback-card--success {
+  border-color: rgba(95, 214, 154, 0.34);
+}
+
+.import-feedback-card--warning {
+  border-color: rgba(247, 191, 84, 0.42);
+}
+
+.import-feedback-card--error {
   border-color: rgba(255, 139, 118, 0.34);
 }
 

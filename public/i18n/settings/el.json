@@ -141,6 +141,7 @@
         "favoriteShips": "Favorite ships",
         "favorites": "Favorite characters",
         "savedEnemies": "Saved enemies",
+        "savedRumbleTeams": "Saved Rumble teams",
         "savedTeams": "Saved teams"
       },
       "stats": {
@@ -197,6 +198,7 @@
       "favorites": "{{count}} favorites",
       "favoriteShips": "{{count}} αγαπημένα καράβια",
       "savedEnemies": "{{count}} saved enemies",
+      "savedRumbleTeams": "{{count}} saved Rumble teams",
       "savedTeams": "{{count}} saved teams"
     },
     "allData": {
@@ -375,6 +377,22 @@
       "import": "Εισαγωγή saved teams",
       "processing": "Γίνεται import των saved teams...",
       "title": "Saved Teams"
+    },
+    "savedRumbleTeams": {
+      "errors": {
+        "generic": "Τα saved Rumble teams δεν μπόρεσαν να εισαχθούν.",
+        "invalidPayload": "Το JSON δεν ταιριάζει με το expected saved Rumble teams schema.",
+        "unsupportedSchema": "Το selected JSON δεν υποστηρίζεται από το current saved Rumble teams import schema."
+      },
+      "feedback": {
+        "loadedFromFile": "Φορτώθηκε το {{fileName}}.",
+        "stats": {
+          "added": "Προστέθηκαν {{count}} saved Rumble teams.",
+          "updated": "Ενημερώθηκαν {{count}} saved Rumble teams."
+        },
+        "successTitle": "Τα saved Rumble teams έγιναν import"
+      },
+      "title": "Saved Rumble Teams"
     }
   },
   "sections": {

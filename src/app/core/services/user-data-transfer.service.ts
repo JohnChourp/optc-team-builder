@@ -36,6 +36,10 @@ import {
   type SavedTeamsTransferPayload,
 } from '../../pages/saved-teams/saved-teams-transfer.utils';
 import {
+  buildSavedRumbleTeamsTransferPayload,
+  parseSavedRumbleTeamsImportPayloadValue,
+} from '../../pages/saved-rumble-teams/saved-rumble-teams-transfer.utils';
+import {
   buildAllDataTransferPayload,
   type AllDataTransferPayload,
 } from '../../pages/settings/all-data-transfer.utils';
@@ -56,6 +60,7 @@ export interface SyncScopeSummary {
   favoriteCharacterCount: number;
   favoriteShipCount: number;
   savedEnemiesCount: number;
+  savedRumbleTeamsCount: number;
   savedTeamsCount: number;
 }
 
@@ -107,12 +112,18 @@ export interface SavedEnemiesImportSummary {
   updatedCount: number;
 }
 
+export interface SavedRumbleTeamsImportSummary {
+  addedCount: number;
+  updatedCount: number;
+}
+
 export interface AllDataApplySummary {
   characterBoxes?: CharacterBoxesImportSummary;
   characterOverrides?: CharacterOverridesImportSummary;
   favoriteShips?: FavoriteShipsImportSummary;
   favorites?: FavoritesImportSummary;
   savedEnemies?: SavedEnemiesImportSummary;
+  savedRumbleTeams?: SavedRumbleTeamsImportSummary;
   savedTeams?: SavedTeamsImportSummary;
 }
 
@@ -147,7 +158,9 @@ export class UserDataTransferService {
     }
 
     if (payload.favoriteShips !== undefined) {
-      summary.favoriteShips = await this.importFavoriteShipsPayload(payload.favoriteShips as unknown);
+      summary.favoriteShips = await this.importFavoriteShipsPayload(
+        payload.favoriteShips as unknown,
+      );
     }
 
     if (payload.savedTeams !== undefined) {
@@ -155,7 +168,9 @@ export class UserDataTransferService {
     }
 
     if (payload.characterBoxes !== undefined) {
-      summary.characterBoxes = await this.importCharacterBoxesPayload(payload.characterBoxes as unknown);
+      summary.characterBoxes = await this.importCharacterBoxesPayload(
+        payload.characterBoxes as unknown,
+      );
     }
 
     if (payload.characterOverrides !== undefined) {
@@ -168,10 +183,18 @@ export class UserDataTransferService {
       summary.savedEnemies = await this.importSavedEnemiesPayload(payload.savedEnemies as unknown);
     }
 
+    if (payload.savedRumbleTeams !== undefined) {
+      summary.savedRumbleTeams = await this.importSavedRumbleTeamsPayload(
+        payload.savedRumbleTeams as unknown,
+      );
+    }
+
     return summary;
   }
 
-  public async buildAllDataPayload(exportedAt = new Date().toISOString()): Promise<AllDataTransferPayload> {
+  public async buildAllDataPayload(
+    exportedAt = new Date().toISOString(),
+  ): Promise<AllDataTransferPayload> {
     await this.ready();
     const [favorites, favoriteShips] = await Promise.all([
       this.buildFavoritesExportPayload(),
@@ -186,6 +209,7 @@ export class UserDataTransferService {
         characterOverrides: this.buildCharacterOverridesExportPayload(),
         savedTeams: buildSavedTeamsTransferPayload(this.userState.savedTeams()),
         savedEnemies: buildSavedEnemiesTransferPayload(this.userState.savedEnemies()),
+        savedRumbleTeams: buildSavedRumbleTeamsTransferPayload(this.userState.savedRumbleTeams()),
       },
       exportedAt,
     );
@@ -200,6 +224,7 @@ export class UserDataTransferService {
       this.characterOverrides.clearAllOverrides(),
       this.userState.clearAllSavedTeams(),
       this.userState.clearAllSavedEnemies(),
+      this.userState.clearAllSavedRumbleTeams(),
     ]);
   }
 
@@ -210,6 +235,7 @@ export class UserDataTransferService {
       favoriteCharacterCount: this.userState.favoriteCharacterIds().length,
       favoriteShipCount: this.userState.favoriteShipIds().length,
       savedEnemiesCount: this.userState.savedEnemies().length,
+      savedRumbleTeamsCount: this.userState.savedRumbleTeams().length,
       savedTeamsCount: this.userState.savedTeams().length,
     };
   }
@@ -223,7 +249,8 @@ export class UserDataTransferService {
       summary.characterBoxesCount > 0 ||
       summary.characterOverridesCount > 0 ||
       summary.savedTeamsCount > 0 ||
-      summary.savedEnemiesCount > 0
+      summary.savedEnemiesCount > 0 ||
+      summary.savedRumbleTeamsCount > 0
     );
   }
 
@@ -234,6 +261,7 @@ export class UserDataTransferService {
       favoriteCharacterCount: payload.favorites?.characters.length ?? 0,
       favoriteShipCount: payload.favoriteShips?.ships.length ?? 0,
       savedEnemiesCount: payload.savedEnemies?.enemies.length ?? 0,
+      savedRumbleTeamsCount: payload.savedRumbleTeams?.rumbleTeams.length ?? 0,
       savedTeamsCount: payload.savedTeams?.teams.length ?? 0,
     };
   }
@@ -391,6 +419,19 @@ export class UserDataTransferService {
     };
   }
 
+  public async importSavedRumbleTeamsPayload(
+    payload: unknown,
+  ): Promise<SavedRumbleTeamsImportSummary> {
+    await this.ready();
+    const parsedPayload = parseSavedRumbleTeamsImportPayloadValue(payload);
+    const mergeResult = await this.userState.mergeImportedRumbleTeams(parsedPayload.rumbleTeams);
+
+    return {
+      addedCount: mergeResult.addedCount,
+      updatedCount: mergeResult.updatedCount,
+    };
+  }
+
   private async buildFavoriteShipsExportPayload(): Promise<FavoriteShipsTransferPayload> {
     return buildFavoriteShipsTransferPayload(
       this.userState.favoriteShipIds(),
@@ -412,10 +453,15 @@ export class UserDataTransferService {
   }
 
   private buildCharacterOverridesExportPayload(): CharacterOverridesTransferPayload {
-    return buildCharacterOverridesTransferPayload(this.characterOverrides.overrides() as LocalCharacterOverride[]);
+    return buildCharacterOverridesTransferPayload(
+      this.characterOverrides.overrides() as LocalCharacterOverride[],
+    );
   }
 
-  private mergeFavoriteShipIds(importedShipIds: number[], currentFavoriteShipIds: number[]): number[] {
+  private mergeFavoriteShipIds(
+    importedShipIds: number[],
+    currentFavoriteShipIds: number[],
+  ): number[] {
     const nextFavoriteShipIds: number[] = [];
     const seenShipIds = new Set<number>();
 

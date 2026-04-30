@@ -43,6 +43,72 @@ describe('AutoTeamBuilderRumblePage', () => {
     expect(page.emptyStateVisible()).toBe(false);
   });
 
+  it('loads a saved Rumble team from the route query param', async () => {
+    const result = createResult();
+    const savedRumbleTeam = {
+      id: 'saved-rumble-1',
+      name: 'Saved Rumble',
+      notes: '',
+      settings: {
+        ...result.input,
+        types: ['DEX'],
+      },
+      teams: [
+        {
+          ...result,
+          activeSlots: result.activeSlots.map((slot) => ({
+            characterId: slot.unit.character.id,
+            index: slot.index,
+            reasonChips: slot.reasonChips,
+            role: slot.role,
+            score: slot.score,
+          })),
+          benchSlots: result.benchSlots.map((slot) => ({
+            characterId: slot.unit.character.id,
+            index: slot.index,
+            reasonChips: slot.reasonChips,
+            role: slot.role,
+            score: slot.score,
+          })),
+        },
+      ],
+      selectedTeamIndex: 0,
+      opponentActiveCharacterIds: [result.activeSlots[0].unit.character.id, null, null, null, null],
+      opponentBenchCharacterIds: [null, null, null],
+      opponentAwarenessEnabled: true,
+      createdAt: '2026-04-30T09:00:00.000Z',
+      updatedAt: '2026-04-30T09:00:00.000Z',
+    };
+    const { page, repository, router, rumbleBuilder } = createPage(result, {
+      savedRumbleTeamId: 'saved-rumble-1',
+      savedRumbleTeam,
+    });
+
+    repository.getDetailedCharactersByIds.mockResolvedValue(
+      [...result.activeSlots, ...result.benchSlots].map((slot) => slot.unit.character),
+    );
+    rumbleBuilder.scoreCandidates.mockReturnValue(
+      [...result.activeSlots, ...result.benchSlots].map((slot) => slot.unit),
+    );
+
+    await page.ngOnInit();
+
+    expect(page.selectedTypes()).toEqual(['DEX']);
+    expect(page.teamResults()).toHaveLength(1);
+    expect(page.opponentAwarenessEnabled()).toBe(true);
+    expect(page.opponentActiveSlots()[0]?.unit.character.id).toBe(
+      result.activeSlots[0].unit.character.id,
+    );
+    expect(router.navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: { savedRumbleTeamId: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      }),
+    );
+  });
+
   it('builds a team on demand and exposes summary state', async () => {
     const result = createResult();
     const { page, rumbleBuilder } = createPage(result);
@@ -267,13 +333,21 @@ describe('AutoTeamBuilderRumblePage', () => {
 
     expect(template).toContain("scope: 'auto-team-builder-rumble'");
     expect(template).toContain("t('actions.rebuild')");
+    expect(template).toContain("t('actions.importSettings')");
+    expect(template).toContain("t('actions.importTeam')");
+    expect(template).toContain("t('actions.save')");
+    expect(template).toContain("t('actions.savedRumbleTeams')");
+    expect(template).toContain('onSettingsFileSelected($event, settingsImportInput)');
+    expect(template).toContain('onTeamFileSelected($event, teamImportInput)');
+    expect(template).toContain('saveCurrentRumbleTeam()');
+    expect(template).toContain("['/tabs/saved-rumble-teams']");
     expect(template).toContain("t('actions.downloadSettings')");
     expect(template).toContain("t('actions.downloadTeam')");
     expect(template).toContain("t('filters.favoritesOnly.toggle')");
     expect(template).toContain("t('filters.buffFocus.label')");
     expect(template).toContain('buffFocusRanks');
-    expect(template).toContain('moveBuffFocusStat(stat, \'up\')');
-    expect(template).toContain('moveBuffFocusStat(stat, \'down\')');
+    expect(template).toContain("moveBuffFocusStat(stat, 'up')");
+    expect(template).toContain("moveBuffFocusStat(stat, 'down')");
     expect(template).not.toContain("t('filters.optionalBench.toggle')");
     expect(template).toContain("t('filters.types.onlyToggle')");
     expect(template).toContain("t('filters.classes.onlyToggle')");
@@ -696,6 +770,123 @@ describe('AutoTeamBuilderRumblePage', () => {
     teamSpy.mockRestore();
   });
 
+  it('imports settings without replacing the current generated teams', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    await page.buildTeam();
+    const existingResults = page.teamResults();
+    await (page as never as { importSettingsJson(file: File): Promise<void> }).importSettingsJson({
+      name: 'settings.json',
+      text: vi.fn().mockResolvedValue(
+        JSON.stringify({
+          schemaVersion: 2,
+          exportedAt: '2026-04-30T09:00:00.000Z',
+          source: 'auto-team-builder-rumble',
+          exportType: 'settings',
+          settings: {
+            types: ['DEX'],
+            selectedClasses: ['Fighter'],
+            onlySelectedTypes: true,
+            onlySelectedClasses: true,
+            favoritesOnly: true,
+            favoriteCharacterIds: [1001],
+            opponentSlots: [],
+            buffFocus: [{ stat: 'SPD', rank: 'primary' }],
+            requireFullTeam: true,
+          },
+          favoriteCount: 1,
+          workerPreference: { mode: 'auto', manualCount: 2 },
+        }),
+      ),
+    } as never);
+
+    expect(page.selectedTypes()).toEqual(['DEX']);
+    expect(page.selectedClasses()).toEqual(['Fighter']);
+    expect(page.onlySelectedTypes()).toBe(true);
+    expect(page.onlySelectedClasses()).toBe(true);
+    expect(page.favoritesOnly()).toBe(true);
+    expect(page.buffFocus().find((preference) => preference.stat === 'SPD')?.rank).toBe('primary');
+    expect(page.teamResults()).toBe(existingResults);
+    expect(page.importFeedback()?.tone).toBe('success');
+  });
+
+  it('imports team results and opponent slots without changing filters', async () => {
+    const result = createResult();
+    const { page, repository, rumbleBuilder } = createPage(result);
+
+    await page.ngOnInit();
+    page.onTypeChange({ detail: { value: ['PSY'] } } as never);
+    const payload = rumbleExportUtils.buildRumbleTeamExportPayload(
+      result,
+      '2026-04-30T09:00:00.000Z',
+      {
+        allResults: [result, createActiveOnlyResult(result)],
+        selectedTeamIndex: 1,
+        opponentSlots: [createSlot('active', 50), createSlot('bench', 51)],
+      },
+    );
+
+    repository.getDetailedCharactersByIds.mockResolvedValue(
+      [
+        ...result.activeSlots,
+        ...result.benchSlots,
+        createSlot('active', 50),
+        createSlot('bench', 51),
+      ].map((slot) => slot.unit.character),
+    );
+    rumbleBuilder.scoreCandidates.mockReturnValue(
+      [
+        ...result.activeSlots,
+        ...result.benchSlots,
+        createSlot('active', 50),
+        createSlot('bench', 51),
+      ].map((slot) => slot.unit),
+    );
+
+    await (page as never as { importTeamJson(file: File): Promise<void> }).importTeamJson({
+      name: 'team.json',
+      text: vi.fn().mockResolvedValue(JSON.stringify(payload)),
+    } as never);
+
+    expect(page.selectedTypes()).toEqual(['PSY']);
+    expect(page.teamResults()).toHaveLength(2);
+    expect(page.selectedTeamIndex()).toBe(1);
+    expect(page.opponentActiveSlots()[0]?.unit.character.id).toBe(1050);
+    expect(page.opponentBenchSlots()[0]?.unit.character.id).toBe(1051);
+  });
+
+  it('saves current settings, teams, and opponent slots as a saved Rumble team', async () => {
+    const promptSpy = vi.fn().mockReturnValue('Saved rumble');
+    vi.stubGlobal('prompt', promptSpy);
+    const { page, userState } = createPage();
+
+    await page.ngOnInit();
+    await page.buildTeam();
+    page.opponentActiveSlots.set([createSlot('active', 60), null, null, null, null]);
+
+    await page.saveCurrentRumbleTeam();
+
+    expect(userState.saveRumbleTeam).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Saved rumble',
+        teams: expect.arrayContaining([
+          expect.objectContaining({
+            activeSlots: expect.arrayContaining([expect.objectContaining({ characterId: 1000 })]),
+          }),
+        ]),
+        opponentActiveCharacterIds: [1060, null, null, null, null],
+        opponentBenchCharacterIds: [null, null, null],
+        settings: expect.objectContaining({
+          buffFocus: DEFAULT_RUMBLE_BUFF_FOCUS,
+        }),
+      }),
+    );
+    expect(page.importFeedback()?.tone).toBe('success');
+
+    vi.unstubAllGlobals();
+  });
+
   it('persists live worker preference changes', async () => {
     const { page, userState } = createPage();
 
@@ -978,7 +1169,13 @@ describe('AutoTeamBuilderRumblePage', () => {
   });
 });
 
-function createPage(result: RumbleTeamResult | Error = createResult()) {
+function createPage(
+  result: RumbleTeamResult | Error = createResult(),
+  options: {
+    savedRumbleTeamId?: string | null;
+    savedRumbleTeam?: Record<string, unknown> | null;
+  } = {},
+) {
   const defaultCandidates =
     result instanceof Error
       ? []
@@ -1000,8 +1197,14 @@ function createPage(result: RumbleTeamResult | Error = createResult()) {
       availableClasses: ['Fighter', 'Slasher'],
     }),
     getRumbleBuilderCandidates: vi.fn().mockResolvedValue(defaultCandidates),
+    getDetailedCharactersByIds: vi
+      .fn()
+      .mockImplementation((ids: number[]) =>
+        Promise.resolve(defaultCandidates.filter((candidate) => ids.includes(candidate.id))),
+      ),
   };
   const userState = {
+    ready: vi.fn().mockResolvedValue(undefined),
     favoriteCharacterIds: vi.fn(() => [1001, 1002]),
     autoTeamBuilderWorkerPreference: vi.fn(() => ({ mode: 'auto', manualCount: 2 })),
     resolveAutoTeamBuilderWorkerPreference: vi.fn(() => ({
@@ -1014,6 +1217,15 @@ function createPage(result: RumbleTeamResult | Error = createResult()) {
     })),
     resolveAutoTeamBuilderWorkerCount: vi.fn(() => 2),
     setAutoTeamBuilderWorkerPreference: vi.fn().mockResolvedValue(undefined),
+    saveRumbleTeam: vi.fn().mockImplementation(async (input: Record<string, unknown>) => ({
+      ...input,
+      id: 'rumble-team-1',
+      createdAt: '2026-04-30T09:00:00.000Z',
+      updatedAt: '2026-04-30T09:00:00.000Z',
+    })),
+    getSavedRumbleTeamById: vi.fn((id: string) =>
+      id === options.savedRumbleTeamId ? (options.savedRumbleTeam ?? null) : null,
+    ),
   };
   const i18n = {
     preloadScope: vi.fn().mockResolvedValue(undefined),
@@ -1025,14 +1237,26 @@ function createPage(result: RumbleTeamResult | Error = createResult()) {
       return params ? `${key}:${JSON.stringify(params)}` : key;
     }),
   };
+  const route = {
+    snapshot: {
+      queryParamMap: {
+        get: vi.fn((key: string) =>
+          key === 'savedRumbleTeamId' ? options.savedRumbleTeamId : null,
+        ),
+      },
+    },
+  };
+  const router = { navigate: vi.fn().mockResolvedValue(true) };
   const page = new AutoTeamBuilderRumblePage(
     rumbleBuilder as never,
     repository as never,
     userState as never,
     i18n as never,
+    route as never,
+    router as never,
   );
 
-  return { page, rumbleBuilder, repository, userState };
+  return { page, rumbleBuilder, repository, route, router, userState };
 }
 
 function createProgressSnapshot(

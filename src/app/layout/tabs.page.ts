@@ -1,5 +1,5 @@
-import { Component, inject } from "@angular/core";
-import { RouterLink, RouterLinkActive, type IsActiveMatchOptions } from "@angular/router";
+import { Component, inject } from '@angular/core';
+import { RouterLink, RouterLinkActive, type IsActiveMatchOptions } from '@angular/router';
 import {
   IonContent,
   IonHeader,
@@ -12,8 +12,8 @@ import {
   IonRouterOutlet,
   IonTitle,
   IonToolbar,
-} from "@ionic/angular/standalone";
-import { TranslocoPipe } from "@jsverse/transloco";
+} from '@ionic/angular/standalone';
+import { TranslocoPipe } from '@jsverse/transloco';
 import {
   albumsOutline,
   archiveOutline,
@@ -26,9 +26,9 @@ import {
   peopleOutline,
   saveOutline,
   shieldHalfOutline,
-} from "ionicons/icons";
-import { type SupportedLanguage } from "../core/i18n/app-i18n.types";
-import { AppI18nService } from "../core/services/app-i18n.service";
+} from 'ionicons/icons';
+import { type SupportedLanguage } from '../core/i18n/app-i18n.types';
+import { AppI18nService } from '../core/services/app-i18n.service';
 
 interface NavigationItem {
   icon: string | readonly string[];
@@ -42,7 +42,7 @@ interface LanguageItem {
 }
 
 @Component({
-  selector: "app-tabs-page",
+  selector: 'app-tabs-page',
   standalone: true,
   imports: [
     IonContent,
@@ -60,78 +60,83 @@ interface LanguageItem {
     RouterLinkActive,
     TranslocoPipe,
   ],
-  templateUrl: "./tabs.page.html",
-  styleUrl: "./tabs.page.scss",
+  templateUrl: './tabs.page.html',
+  styleUrl: './tabs.page.scss',
 })
 export class TabsPage {
   private readonly i18n = inject(AppI18nService);
 
   public readonly activeLanguage = this.i18n.activeLanguage;
   public readonly navItemActiveMatchOptions: IsActiveMatchOptions = {
-    paths: "exact",
-    queryParams: "subset",
-    fragment: "ignored",
-    matrixParams: "ignored",
+    paths: 'exact',
+    queryParams: 'subset',
+    fragment: 'ignored',
+    matrixParams: 'ignored',
   };
   public readonly availableLanguages: readonly LanguageItem[] = [
-    { id: "en", flag: "🇬🇧" },
-    { id: "el", flag: "🇬🇷" },
+    { id: 'en', flag: '🇬🇧' },
+    { id: 'el', flag: '🇬🇷' },
   ];
   public readonly navigationItems: NavigationItem[] = [
     {
       icon: homeOutline,
-      labelKey: "tabs.home",
-      route: "/",
+      labelKey: 'tabs.home',
+      route: '/',
     },
     {
       icon: gridOutline,
-      labelKey: "tabs.characters",
-      route: "/tabs/characters",
+      labelKey: 'tabs.characters',
+      route: '/tabs/characters',
     },
     {
       icon: peopleOutline,
-      labelKey: "tabs.team",
-      route: "/tabs/team-builder",
+      labelKey: 'tabs.team',
+      route: '/tabs/team-builder',
     },
     {
       icon: flashOutline,
-      labelKey: "tabs.auto",
-      route: "/tabs/auto-team-builder",
+      labelKey: 'tabs.auto',
+      route: '/tabs/auto-team-builder',
     },
     {
       icon: shieldHalfOutline,
-      labelKey: "tabs.autoRumble",
-      route: "/tabs/auto-team-builder-rumble",
+      labelKey: 'tabs.autoRumble',
+      route: '/tabs/auto-team-builder-rumble',
+    },
+    {
+      icon: shieldHalfOutline,
+      labelKey: 'tabs.savedRumbleTeams',
+      route: '/tabs/saved-rumble-teams',
     },
     {
       icon: constructOutline,
-      labelKey: "tabs.crewForge",
-      route: "/tabs/crew-forge",
+      labelKey: 'tabs.crewForge',
+      route: '/tabs/crew-forge',
     },
     {
       icon: albumsOutline,
-      labelKey: "tabs.savedTeams",
-      route: "/tabs/saved-teams",
+      labelKey: 'tabs.savedTeams',
+      route: '/tabs/saved-teams',
     },
     {
       icon: archiveOutline,
-      labelKey: "tabs.characterBoxes",
-      route: "/tabs/character-boxes",
+      labelKey: 'tabs.characterBoxes',
+      route: '/tabs/character-boxes',
     },
     {
       icon: saveOutline,
-      labelKey: "tabs.savedEnemies",
-      route: "/tabs/saved-enemies",
+      labelKey: 'tabs.savedEnemies',
+      route: '/tabs/saved-enemies',
     },
     {
       icon: cloudDoneOutline,
-      labelKey: "tabs.driveSync",
-      route: "/tabs/drive-sync",
+      labelKey: 'tabs.driveSync',
+      route: '/tabs/drive-sync',
     },
     {
       icon: cogOutline,
-      labelKey: "tabs.settings",
-      route: "/tabs/settings",
+      labelKey: 'tabs.settings',
+      route: '/tabs/settings',
     },
   ];
 
