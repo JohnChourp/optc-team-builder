@@ -166,18 +166,6 @@
               (ionChange)="onFavoritesOnlyToggle($event)"
             ></ion-toggle>
           </div>
-          <div class="strict-toggle-row">
-            <div class="strict-toggle-copy">
-              <strong>{{ t('filters.optionalBench.toggle') }}</strong>
-              <small>{{ optionalBenchSupportLabel() }}</small>
-            </div>
-            <ion-toggle
-              color="warning"
-              [checked]="optionalBenchEnabled()"
-              [disabled]="loading()"
-              (ionChange)="onOptionalBenchToggle($event)"
-            ></ion-toggle>
-          </div>
         </div>
 
         @if (buildBlockedByFavorites()) {
@@ -230,6 +218,10 @@
             <div>
               <div class="section-label">{{ t('opponent.title') }}</div>
               <h2>{{ t('opponent.copy') }}</h2>
+            </div>
+            <div class="team-cost-pill">
+              <span>{{ t('opponent.rumbleCost') }}</span>
+              <strong>{{ opponentRumbleCostUsage() }}</strong>
             </div>
           </div>
 
@@ -524,8 +516,8 @@
           <p>
             {{
               t('states.insufficientCopy', {
-                selected: result()?.selectedCount ?? 0,
-                needed: result() ? resolveRequiredSlotCount(result()!) : activeSlotTargetCount,
+                selected: currentSelectedCount(),
+                needed: currentRequiredSlotCount(),
               })
             }}
           </p>
@@ -546,7 +538,7 @@
           <strong>{{ t('states.relaxedTitle') }}</strong>
           <p>{{ t('states.relaxedCopy') }}</p>
           <div class="chip-row">
-            @for (characterClass of result()?.droppedClasses ?? []; track characterClass) {
+            @for (characterClass of currentDroppedClasses(); track characterClass) {
               <span class="reason-chip">
                 {{ t('summary.droppedClass', { value: characterClass }) }}
               </span>
@@ -555,12 +547,29 @@
         </section>
       }
 
-      @if (!loading() && result(); as currentResult) {
+      @if (!loading() && currentResult(); as currentResult) {
         @if (currentResult.candidateCount > 0 && currentResult.selectedCount > 0) {
           <section class="glass-card summary-card">
-            <div class="section-label">
-              <ion-icon [icon]="shieldIcon"></ion-icon>
-              {{ t('summary.eyebrow') }}
+            <div class="summary-head">
+              <div class="section-label">
+                <ion-icon [icon]="shieldIcon"></ion-icon>
+                {{ t('summary.eyebrow') }}
+              </div>
+              @if (hasAlternateTeams()) {
+                <div class="team-switch" role="group" [attr.aria-label]="t('teams.switchAria')">
+                  @for (team of teamResults(); track $index) {
+                    <button
+                      type="button"
+                      class="team-switch__button"
+                      [class.team-switch__button--active]="selectedTeamIndex() === $index"
+                      [disabled]="loading()"
+                      (click)="selectTeam($index)"
+                    >
+                      {{ t('teams.option', { index: $index + 1 }) }}
+                    </button>
+                  }
+                </div>
+              }
             </div>
             <div class="summary-grid">
               <article>
@@ -570,6 +579,10 @@
               <article>
                 <span>{{ t('summary.selected') }}</span>
                 <strong>{{ currentResult.selectedCount }}</strong>
+              </article>
+              <article>
+                <span>{{ t('summary.rumbleCost') }}</span>
+                <strong>{{ formatTeamRumbleCostUsage(currentResult) }}</strong>
               </article>
             </div>
 
@@ -629,18 +642,39 @@
                 }
               </div>
             </div>
+
+            @if (comparisonRows().length) {
+              <div class="comparison-grid">
+                @for (row of comparisonRows(); track row.labelKey) {
+                  <article
+                    class="comparison-chip"
+                    [class.comparison-chip--positive]="row.tone === 'positive'"
+                    [class.comparison-chip--negative]="row.tone === 'negative'"
+                    [class.comparison-chip--neutral]="row.tone === 'neutral'"
+                  >
+                    <span>{{ t(row.labelKey) }}</span>
+                    <strong>{{ row.value }}</strong>
+                  </article>
+                }
+              </div>
+            }
           </section>
 
-          <section class="glass-card team-section">
-            <div class="section-head">
-              <div>
-                <div class="section-label">{{ t('active.title') }}</div>
-                <h2>{{ t('active.copy', { count: activeSlotTargetCount }) }}</h2>
-              </div>
-            </div>
-            <div class="slot-grid">
-              @for (slot of currentResult.activeSlots; track slot.unit.character.id) {
-                <article class="rumble-slot-card">
+          <div class="team-flip-shell">
+            <div
+              class="team-flip-panel"
+              [class.team-flip-panel--alternate]="selectedTeamIndex() % 2 === 1"
+            >
+              <section class="glass-card team-section">
+                <div class="section-head">
+                  <div>
+                    <div class="section-label">{{ t('active.title') }}</div>
+                    <h2>{{ t('active.copy', { count: activeSlotTargetCount }) }}</h2>
+                  </div>
+                </div>
+                <div class="slot-grid">
+                  @for (slot of currentResult.activeSlots; track slot.unit.character.id) {
+                    <article class="rumble-slot-card">
                   <a
                     class="slot-image"
                     [routerLink]="getCharacterDetailLink(slot)"
@@ -688,21 +722,21 @@
                       </div>
                     </dl>
                   </div>
-                </article>
-              }
-            </div>
-          </section>
+                    </article>
+                  }
+                </div>
+              </section>
 
-          <section class="glass-card team-section">
-            <div class="section-head">
-              <div>
-                <div class="section-label">{{ t('bench.title') }}</div>
-                <h2>{{ benchSectionCopy(currentResult) }}</h2>
-              </div>
-            </div>
-            <div class="slot-grid">
-              @for (slot of currentResult.benchSlots; track slot.unit.character.id) {
-                <article class="rumble-slot-card rumble-slot-card--bench">
+              <section class="glass-card team-section">
+                <div class="section-head">
+                  <div>
+                    <div class="section-label">{{ t('bench.title') }}</div>
+                    <h2>{{ benchSectionCopy(currentResult) }}</h2>
+                  </div>
+                </div>
+                <div class="slot-grid">
+                  @for (slot of currentResult.benchSlots; track slot.unit.character.id) {
+                    <article class="rumble-slot-card rumble-slot-card--bench">
                   <a
                     class="slot-image"
                     [routerLink]="getCharacterDetailLink(slot)"
@@ -750,10 +784,12 @@
                       </div>
                     </dl>
                   </div>
-                </article>
-              }
+                    </article>
+                  }
+                </div>
+              </section>
             </div>
-          </section>
+          </div>
         }
       }
     </div>

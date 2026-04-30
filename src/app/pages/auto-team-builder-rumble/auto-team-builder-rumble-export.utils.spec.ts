@@ -52,12 +52,26 @@ describe('auto-team-builder-rumble-export utils', () => {
 
   it('builds a team export payload with full slot unit character data', () => {
     const result = createResult();
-    const payload = buildRumbleTeamExportPayload(result, '2026-04-29T04:00:00.000Z');
+    const alternateResult = createResult(1000);
+    const opponentActiveSlot = createSlot('active', 0, 301);
+    const opponentBenchSlot = createSlot('bench', 0, 302);
+    const payload = buildRumbleTeamExportPayload(result, '2026-04-29T04:00:00.000Z', {
+      allResults: [result, alternateResult],
+      selectedTeamIndex: 0,
+      opponentSlots: [opponentActiveSlot, opponentBenchSlot],
+    });
 
     expect(payload?.source).toBe('auto-team-builder-rumble');
     expect(payload?.exportType).toBe('team');
+    expect(payload?.selectedTeamIndex).toBe(0);
     expect(payload?.requestedInput.requireFullTeam).toBe(true);
     expect(payload?.team).toHaveLength(2);
+    expect(payload?.teams).toHaveLength(2);
+    expect(payload?.teams[0].isSelected).toBe(true);
+    expect(payload?.teams[1].team[0].unit.character.id).toBe(1101);
+    expect(payload?.opponentTeam.team.map((slot) => slot.unit.character.id)).toEqual([301, 302]);
+    expect(payload?.opponentTeam.totalRumbleCost).toBe(110);
+    expect(payload?.totalRumbleCost).toBe(110);
     expect(payload?.team[0].unit.character).toEqual(result.activeSlots[0].unit.character);
     expect(payload?.team[1].unit.character.detail.rumbleData).toEqual({ id: 202 });
   });
@@ -115,10 +129,10 @@ describe('auto-team-builder-rumble-export utils', () => {
   });
 });
 
-function createResult(): RumbleTeamResult {
+function createResult(offset = 0): RumbleTeamResult {
   return {
-    activeSlots: [createSlot('active', 0, 101)],
-    benchSlots: [createSlot('bench', 0, 202)],
+    activeSlots: [createSlot('active', 0, 101 + offset)],
+    benchSlots: [createSlot('bench', 0, 202 + offset)],
     candidateCount: 2,
     selectedCount: 2,
     totalScore: 300,

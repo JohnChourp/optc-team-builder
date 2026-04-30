@@ -11,6 +11,7 @@ export interface AutoTeamBuilderRumbleWorkerRunRequest {
   records: CharacterDetailRecord[];
   requestedInput: RumbleBuildInput;
   workerCount: number;
+  limit: number;
 }
 
 export interface AutoTeamBuilderRumbleWorkerProgressResponse {
@@ -22,7 +23,7 @@ export interface AutoTeamBuilderRumbleWorkerProgressResponse {
 export interface AutoTeamBuilderRumbleWorkerResultResponse {
   type: 'result';
   runId: string;
-  result: RumbleTeamResult;
+  results: RumbleTeamResult[];
 }
 
 export interface AutoTeamBuilderRumbleWorkerErrorResponse {

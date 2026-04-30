@@ -11,7 +11,7 @@ import { type CharacterDetailRecord } from '../models/optc.models';
 import {
   RumbleTeamBuilderEngine,
   normalizeRumbleBuildInput,
-  runRumbleTeamBuildSearch,
+  runRumbleTeamBuildSearches,
 } from './auto-team-builder-rumble.engine';
 import { OptcRepositoryService } from './optc-repository.service';
 import {
@@ -36,10 +36,18 @@ export class AutoTeamBuilderRumbleService {
     input: Partial<RumbleBuildInput> = {},
     executionOptions: RumbleTeamBuildExecutionOptions = {},
   ): Promise<RumbleTeamResult> {
+    return (await this.buildBestTeams(input, executionOptions, 1))[0];
+  }
+
+  public async buildBestTeams(
+    input: Partial<RumbleBuildInput> = {},
+    executionOptions: RumbleTeamBuildExecutionOptions = {},
+    limit = 2,
+  ): Promise<RumbleTeamResult[]> {
     const requestedInput = normalizeRumbleBuildInput(input);
 
     if (requestedInput.favoritesOnly && requestedInput.favoriteCharacterIds.length === 0) {
-      return this.engine.createEmptyResult(0, requestedInput);
+      return [this.engine.createEmptyResult(0, requestedInput)];
     }
 
     executionOptions.onProgress?.({
@@ -59,7 +67,7 @@ export class AutoTeamBuilderRumbleService {
     const records = await this.repository.getRumbleBuilderCandidates();
     this.throwIfCancelled(executionOptions.signal);
 
-    return this.runBuild(records, requestedInput, executionOptions);
+    return this.runBuild(records, requestedInput, executionOptions, limit);
   }
 
   public buildTeamFromCandidates(
@@ -67,6 +75,14 @@ export class AutoTeamBuilderRumbleService {
     input: Partial<RumbleBuildInput> = {},
   ): RumbleTeamResult {
     return this.engine.buildTeamFromCandidates(candidates, input);
+  }
+
+  public buildTeamsFromCandidates(
+    candidates: CharacterDetailRecord[],
+    input: Partial<RumbleBuildInput> = {},
+    limit = 2,
+  ): RumbleTeamResult[] {
+    return this.engine.buildTeamsFromCandidates(candidates, input, limit);
   }
 
   public scoreCandidates(candidates: CharacterDetailRecord[]): RumbleUnitScore[] {
@@ -84,11 +100,17 @@ export class AutoTeamBuilderRumbleService {
     records: CharacterDetailRecord[],
     requestedInput: RumbleBuildInput,
     executionOptions: RumbleTeamBuildExecutionOptions,
-  ): Promise<RumbleTeamResult> {
+    limit: number,
+  ): Promise<RumbleTeamResult[]> {
     const workerCount = this.normalizeWorkerCount(executionOptions.workerCount);
 
     if (workerCount > 1) {
-      const workerResult = await this.runSearchInWorker(records, requestedInput, executionOptions);
+      const workerResult = await this.runSearchInWorker(
+        records,
+        requestedInput,
+        executionOptions,
+        limit,
+      );
 
       this.throwIfCancelled(executionOptions.signal);
 
@@ -102,9 +124,15 @@ export class AutoTeamBuilderRumbleService {
     if (!worker) {
       this.throwIfCancelled(executionOptions.signal);
 
-      return runRumbleTeamBuildSearch(records, requestedInput, {
-        onProgress: executionOptions.onProgress,
-      });
+      return runRumbleTeamBuildSearches(
+        records,
+        requestedInput,
+        {
+          onProgress: executionOptions.onProgress,
+          activeWorkerCount: 1,
+        },
+        limit,
+      );
     }
 
     try {
@@ -113,6 +141,7 @@ export class AutoTeamBuilderRumbleService {
         records,
         requestedInput,
         executionOptions,
+        limit,
       );
     } finally {
       worker.terminate();
@@ -123,7 +152,8 @@ export class AutoTeamBuilderRumbleService {
     records: CharacterDetailRecord[],
     requestedInput: RumbleBuildInput,
     executionOptions: RumbleTeamBuildExecutionOptions,
-  ): Promise<RumbleTeamResult | null> {
+    limit: number,
+  ): Promise<RumbleTeamResult[] | null> {
     const worker = this.createWorker();
 
     if (!worker) {
@@ -136,6 +166,7 @@ export class AutoTeamBuilderRumbleService {
         records,
         requestedInput,
         executionOptions,
+        limit,
       );
     } catch {
       return null;
@@ -149,10 +180,11 @@ export class AutoTeamBuilderRumbleService {
     records: CharacterDetailRecord[],
     requestedInput: RumbleBuildInput,
     executionOptions: RumbleTeamBuildExecutionOptions,
-  ): Promise<RumbleTeamResult> {
+    limit: number,
+  ): Promise<RumbleTeamResult[]> {
     const runId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-    return new Promise<RumbleTeamResult>((resolve, reject) => {
+    return new Promise<RumbleTeamResult[]>((resolve, reject) => {
       let settled = false;
 
       const cleanup = () => {
@@ -160,14 +192,14 @@ export class AutoTeamBuilderRumbleService {
         worker.removeEventListener('error', handleError);
         executionOptions.signal?.removeEventListener('abort', handleAbort);
       };
-      const resolveOnce = (result: RumbleTeamResult) => {
+      const resolveOnce = (results: RumbleTeamResult[]) => {
         if (settled) {
           return;
         }
 
         settled = true;
         cleanup();
-        resolve(result);
+        resolve(results);
       };
       const rejectOnce = (error: Error) => {
         if (settled) {
@@ -193,7 +225,7 @@ export class AutoTeamBuilderRumbleService {
         }
 
         if (data.type === 'result') {
-          resolveOnce(data.result);
+          resolveOnce(data.results);
           return;
         }
 
@@ -217,6 +249,7 @@ export class AutoTeamBuilderRumbleService {
         records,
         requestedInput,
         workerCount: this.resolveDesiredWorkerCount(executionOptions),
+        limit,
       };
 
       worker.postMessage(request);

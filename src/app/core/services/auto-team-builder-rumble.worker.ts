@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import { runRumbleTeamBuildSearch } from './auto-team-builder-rumble.engine';
+import { runRumbleTeamBuildSearches } from './auto-team-builder-rumble.engine';
 import {
   type AutoTeamBuilderRumbleWorkerRequest,
   type AutoTeamBuilderRumbleWorkerResponse,
@@ -12,21 +12,27 @@ addEventListener('message', ({ data }: MessageEvent<AutoTeamBuilderRumbleWorkerR
   }
 
   try {
-    const result = runRumbleTeamBuildSearch(data.records, data.requestedInput, {
-      onProgress: (snapshot) => {
-        const response: AutoTeamBuilderRumbleWorkerResponse = {
-          type: 'progress',
-          runId: data.runId,
-          snapshot,
-        };
+    const results = runRumbleTeamBuildSearches(
+      data.records,
+      data.requestedInput,
+      {
+        activeWorkerCount: 1,
+        onProgress: (snapshot) => {
+          const response: AutoTeamBuilderRumbleWorkerResponse = {
+            type: 'progress',
+            runId: data.runId,
+            snapshot,
+          };
 
-        postMessage(response);
+          postMessage(response);
+        },
       },
-    });
+      data.limit,
+    );
     const response: AutoTeamBuilderRumbleWorkerResponse = {
       type: 'result',
       runId: data.runId,
-      result,
+      results,
     };
 
     postMessage(response);

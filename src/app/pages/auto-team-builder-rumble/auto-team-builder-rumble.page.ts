@@ -78,6 +78,7 @@ interface ManualSlotTarget {
 }
 
 const RUMBLE_BUFF_STATS = ['HP', 'ATK', 'DEF', 'RCV', 'SPD', 'Special CT'] as const;
+const RUMBLE_TEAM_COST_LIMIT = 300;
 
 type RumbleBuffStat = (typeof RUMBLE_BUFF_STATS)[number];
 
@@ -85,6 +86,12 @@ interface RumbleBuffSummaryRow {
   stat: RumbleBuffStat;
   label: string;
   value: string;
+}
+
+interface RumbleComparisonRow {
+  labelKey: string;
+  value: string;
+  tone: 'positive' | 'negative' | 'neutral';
 }
 
 const ROLE_LABELS: Record<NormalizedRumbleRoleTag, string> = {
@@ -126,7 +133,12 @@ function createEmptyRumbleSlots(count: number): OptionalRumbleTeamSlot[] {
   styleUrl: './auto-team-builder-rumble.page.scss',
 })
 export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
-  public readonly result = signal<RumbleTeamResult | null>(null);
+  public readonly teamResults = signal<RumbleTeamResult[]>([]);
+  public readonly selectedTeamIndex = signal(0);
+  public readonly currentResult = computed(
+    () => this.teamResults()[this.selectedTeamIndex()] ?? null,
+  );
+  public readonly result = computed(() => this.currentResult());
   public readonly loading = signal(false);
   public readonly initialized = signal(false);
   public readonly errorMessage = signal('');
@@ -136,7 +148,6 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   public readonly onlySelectedTypes = signal(false);
   public readonly onlySelectedClasses = signal(false);
   public readonly favoritesOnly = signal(false);
-  public readonly optionalBenchEnabled = signal(false);
   public readonly buildProgress = signal<RumbleBuildProgressSnapshot | null>(null);
   public readonly manualPickerOpen = signal(false);
   public readonly manualPickerLoading = signal(false);
@@ -170,7 +181,19 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   public readonly autoTeamBuilderWorkerRuntime;
   public readonly autoTeamBuilderAvailableWorkerCounts;
 
-  public readonly hasResult = computed(() => this.result() !== null);
+  public readonly hasResult = computed(() => this.currentResult() !== null);
+  public readonly hasAlternateTeams = computed(() => this.teamResults().length > 1);
+  public readonly currentSelectedCount = computed(() => this.currentResult()?.selectedCount ?? 0);
+  public readonly currentRequiredSlotCount = computed(() => {
+    const currentResult = this.currentResult();
+
+    return currentResult
+      ? this.resolveRequiredSlotCount(currentResult)
+      : this.activeSlotTargetCount + this.benchSlotTargetCount;
+  });
+  public readonly currentDroppedClasses = computed(
+    () => this.currentResult()?.droppedClasses ?? [],
+  );
   public readonly hasFavoriteCharacters = computed(() => this.favoriteCharacterIds().length > 0);
   public readonly buildBlockedByFavorites = computed(
     () => this.favoritesOnly() && !this.hasFavoriteCharacters(),
@@ -195,14 +218,12 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   );
   public readonly canDownloadSettingsJson = computed(() => this.initialized());
   public readonly canDownloadTeamJson = computed(() => {
-    const currentResult = this.result();
+    const currentResult = this.currentResult();
 
     return Boolean(
       currentResult &&
       !this.strictTypeBlockedStateVisible() &&
-      (currentResult.input.requireFullTeam
-        ? currentResult.selectedCount > 0
-        : currentResult.activeSlots.length >= this.activeSlotTargetCount) &&
+      currentResult.selectedCount >= this.resolveRequiredSlotCount(currentResult) &&
       currentResult.activeSlots.length + currentResult.benchSlots.length > 0,
     );
   });
@@ -237,11 +258,6 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
         })
       : this.t('filters.favoritesOnly.support.empty'),
   );
-  public readonly optionalBenchSupportLabel = computed(() =>
-    this.optionalBenchEnabled()
-      ? this.t('filters.optionalBench.support.enabled')
-      : this.t('filters.optionalBench.support.disabled'),
-  );
   public readonly onlySelectedTypesSupportLabel = computed(() =>
     this.onlySelectedTypes()
       ? this.t('filters.types.onlySupport.strict')
@@ -253,7 +269,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       : this.t('filters.classes.onlySupport.soft'),
   );
   public readonly emptyStateVisible = computed(() => {
-    const currentResult = this.result();
+    const currentResult = this.currentResult();
 
     return Boolean(
       currentResult &&
@@ -264,7 +280,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     );
   });
   public readonly insufficientStateVisible = computed(() => {
-    const currentResult = this.result();
+    const currentResult = this.currentResult();
 
     if (!currentResult) {
       return false;
@@ -279,7 +295,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     );
   });
   public readonly strictTypeBlockedStateVisible = computed(() => {
-    const currentResult = this.result();
+    const currentResult = this.currentResult();
 
     return Boolean(
       currentResult &&
@@ -290,7 +306,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     );
   });
   public readonly relaxedStateVisible = computed(() => {
-    const currentResult = this.result();
+    const currentResult = this.currentResult();
 
     return Boolean(
       currentResult &&
@@ -299,10 +315,47 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       currentResult.droppedClasses.length > 0,
     );
   });
+  public readonly comparisonRows = computed(() => {
+    const currentResult = this.currentResult();
+    const otherResult = this.resolveOtherResult();
+
+    if (!currentResult || !otherResult) {
+      return [];
+    }
+
+    return [
+      this.buildComparisonRow(
+        'comparison.score',
+        currentResult.totalScore - otherResult.totalScore,
+      ),
+      this.buildComparisonRow(
+        'comparison.rumbleCost',
+        this.resolveRumbleCostTotal(this.collectTeamSlots(currentResult)) -
+          this.resolveRumbleCostTotal(this.collectTeamSlots(otherResult)),
+        true,
+      ),
+      this.buildComparisonRow(
+        'comparison.roles',
+        currentResult.roleCoverage.length - otherResult.roleCoverage.length,
+      ),
+      this.buildComparisonRow(
+        'comparison.types',
+        currentResult.typeCoverage.length - otherResult.typeCoverage.length,
+      ),
+      this.buildComparisonRow(
+        'comparison.classes',
+        currentResult.classCoverage.length - otherResult.classCoverage.length,
+      ),
+      this.buildComparisonRow(
+        'comparison.buffs',
+        this.resolveTeamBuffTotal(currentResult) - this.resolveTeamBuffTotal(otherResult),
+      ),
+    ];
+  });
   public readonly buildOverallProgressPercent = computed(() => {
     const progress = this.buildProgress();
 
-    if (!progress || !progress.totalAttempts) {
+    if (!progress) {
       return 0;
     }
 
@@ -310,9 +363,27 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       return 100;
     }
 
-    const currentAttempt = Math.min(progress.completedAttempts + 1, progress.totalAttempts);
+    const totalAttempts = Math.max(1, progress.totalAttempts);
+    const totalPhases = totalAttempts + 1;
+    const innerProgress =
+      typeof progress.completedWorkUnits === 'number' &&
+      typeof progress.totalWorkUnits === 'number' &&
+      progress.totalWorkUnits > 0
+        ? Math.max(0, Math.min(1, progress.completedWorkUnits / progress.totalWorkUnits))
+        : 0;
+    const completedSearchPhases =
+      progress.stage === 'scoringCandidates' || progress.stage === 'loadingCandidates' ? 0 : 1;
+    const completedAttemptProgress =
+      progress.stage === 'attempt' ||
+      progress.stage === 'selectingSlots' ||
+      progress.stage === 'improvingTeam'
+        ? Math.max(0, Math.min(totalAttempts, progress.completedAttempts + innerProgress))
+        : Math.max(0, Math.min(totalAttempts, progress.completedAttempts));
+    const percent = Math.round(
+      ((completedSearchPhases + completedAttemptProgress) / totalPhases) * 100,
+    );
 
-    return Math.max(0, Math.min(100, Math.round((currentAttempt / progress.totalAttempts) * 100)));
+    return Math.max(0, Math.min(99, percent));
   });
   public readonly buildOverallProgressLabel = computed(() =>
     this.t('progress.overallProgressPercent', { percent: this.buildOverallProgressPercent() }),
@@ -356,6 +427,46 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
               count: progress.candidateCount.toLocaleString(),
             })
           : '',
+        tone: 'secondary',
+      },
+      {
+        text:
+          typeof progress?.checkedCandidates === 'number' &&
+          typeof progress.totalCandidatesToCheck === 'number' &&
+          progress.totalCandidatesToCheck > 0
+            ? this.t('progress.candidateChecks', {
+                checked: progress.checkedCandidates.toLocaleString(),
+                total: progress.totalCandidatesToCheck.toLocaleString(),
+              })
+            : '',
+        tone: 'secondary',
+      },
+      {
+        text:
+          typeof progress?.currentSlot === 'number' &&
+          typeof progress.totalSlots === 'number' &&
+          progress.totalSlots > 0
+            ? this.t('progress.slotProgress', {
+                current: progress.currentSlot,
+                total: progress.totalSlots,
+              })
+            : '',
+        tone: 'secondary',
+      },
+      {
+        text:
+          typeof progress?.retainedVariants === 'number'
+            ? this.t('progress.retainedVariants', {
+                count: progress.retainedVariants.toLocaleString(),
+              })
+            : '',
+        tone: 'secondary',
+      },
+      {
+        text:
+          typeof progress?.activeWorkerCount === 'number'
+            ? this.t('progress.activeWorkers', { count: progress.activeWorkerCount })
+            : '',
         tone: 'secondary',
       },
       {
@@ -445,13 +556,15 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       return;
     }
 
-    const previousResult = this.result();
+    const previousTeamResults = this.teamResults();
+    const previousTeamIndex = this.selectedTeamIndex();
     const abortController = new AbortController();
 
     this.buildAbortController = abortController;
     this.loading.set(true);
     this.errorMessage.set('');
-    this.result.set(null);
+    this.teamResults.set([]);
+    this.selectedTeamIndex.set(0);
     this.buildProgress.set(null);
     this.startBuildProgressTicker();
 
@@ -468,8 +581,8 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
         throw new Error('Rumble team build cancelled.');
       }
 
-      this.result.set(
-        await this.rumbleBuilder.buildBestTeam(
+      this.teamResults.set(
+        await this.rumbleBuilder.buildBestTeams(
           {
             types: this.selectedTypes(),
             selectedClasses: this.selectedClasses(),
@@ -479,19 +592,23 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
             favoriteCharacterIds: this.favoriteCharacterIds(),
             candidateCharacterIds,
             opponentSlots: this.opponentAwarenessEnabled() ? this.buildOpponentSlotContexts() : [],
-            requireFullTeam: !this.optionalBenchEnabled(),
+            requireFullTeam: true,
           },
           executionOptions,
+          2,
         ),
       );
+      this.selectedTeamIndex.set(0);
     } catch (error) {
       if (abortController.signal.aborted || this.isRumbleBuildCancelledError(error)) {
-        this.result.set(previousResult);
+        this.teamResults.set(previousTeamResults);
+        this.selectedTeamIndex.set(previousTeamIndex);
         this.errorMessage.set('');
         return;
       }
 
-      this.result.set(null);
+      this.teamResults.set([]);
+      this.selectedTeamIndex.set(0);
       this.errorMessage.set(
         error instanceof Error && error.message.trim().length > 0
           ? error.message
@@ -525,7 +642,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
         favoritesOnly: this.favoritesOnly(),
         favoriteCharacterIds: [...this.favoriteCharacterIds()],
         opponentSlots: [],
-        requireFullTeam: !this.optionalBenchEnabled(),
+        requireFullTeam: true,
       },
       favoriteCount: this.favoriteCharacterIds().length,
       workerPreference: this.autoTeamBuilderWorkerPreference(),
@@ -536,7 +653,11 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     exportedAt = new Date().toISOString(),
   ): RumbleTeamExportPayload | null {
     return this.canDownloadTeamJson()
-      ? rumbleExportUtils.buildRumbleTeamExportPayload(this.result(), exportedAt)
+      ? rumbleExportUtils.buildRumbleTeamExportPayload(this.currentResult(), exportedAt, {
+          allResults: this.teamResults(),
+          selectedTeamIndex: this.selectedTeamIndex(),
+          opponentSlots: this.collectOpponentTeamSlots(),
+        })
       : null;
   }
 
@@ -569,11 +690,6 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     this.resetBuildState();
   }
 
-  public onOptionalBenchToggle(event: CustomEvent<{ checked: boolean }>): void {
-    this.optionalBenchEnabled.set(event.detail.checked);
-    this.resetBuildState();
-  }
-
   public onOnlySelectedTypesToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.onlySelectedTypes.set(event.detail.checked);
     this.resetBuildState();
@@ -582,6 +698,14 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   public onOnlySelectedClassesToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.onlySelectedClasses.set(event.detail.checked);
     this.resetBuildState();
+  }
+
+  public selectTeam(index: number): void {
+    if (this.loading() || index < 0 || index >= this.teamResults().length) {
+      return;
+    }
+
+    this.selectedTeamIndex.set(index);
   }
 
   public onOpponentAwarenessToggle(event: CustomEvent<{ checked: boolean }>): void {
@@ -654,6 +778,14 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     return Math.round(value).toLocaleString('en-US');
   }
 
+  public formatTeamRumbleCostUsage(result: RumbleTeamResult): string {
+    return this.formatRumbleCostUsage(this.collectTeamSlots(result));
+  }
+
+  public opponentRumbleCostUsage(): string {
+    return this.formatRumbleCostUsage(this.collectOpponentTeamSlots());
+  }
+
   public getSlotTotalBuffRows(slot: RumbleTeamSlot): RumbleBuffSummaryRow[] {
     const currentResult = this.result();
 
@@ -661,11 +793,16 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       return [];
     }
 
-    return this.getTeamSlotTotalBuffRows(slot, this.collectTeamSlots(currentResult));
+    return this.getTeamSlotTotalBuffRows(slot, currentResult.activeSlots);
   }
 
   public getOpponentSlotTotalBuffRows(slot: RumbleTeamSlot): RumbleBuffSummaryRow[] {
-    return this.getTeamSlotTotalBuffRows(slot, this.collectOpponentTeamSlots());
+    return this.getTeamSlotTotalBuffRows(
+      slot,
+      this.opponentActiveSlots().filter((activeSlot): activeSlot is RumbleTeamSlot =>
+        Boolean(activeSlot),
+      ),
+    );
   }
 
   public getTeamSlotTotalBuffRows(
@@ -753,7 +890,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
         : currentResult.benchSlots;
     const selectedSlots = [...activeSlots, ...benchSlots];
 
-    this.result.set({
+    this.updateCurrentResult({
       ...currentResult,
       activeSlots,
       benchSlots,
@@ -809,10 +946,8 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     return ROLE_LABELS[role];
   }
 
-  public benchSectionCopy(result: RumbleTeamResult): string {
-    return result.input.requireFullTeam
-      ? this.t('bench.copy', { count: this.benchSlotTargetCount })
-      : this.t('bench.optionalCopy', { count: this.benchSlotTargetCount });
+  public benchSectionCopy(_result: RumbleTeamResult): string {
+    return this.t('bench.copy', { count: this.benchSlotTargetCount });
   }
 
   public resolveRequiredSlotCount(result: RumbleTeamResult): number {
@@ -826,8 +961,53 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       return;
     }
 
-    this.result.set(null);
+    this.teamResults.set([]);
+    this.selectedTeamIndex.set(0);
     this.errorMessage.set('');
+  }
+
+  private updateCurrentResult(updatedResult: RumbleTeamResult): void {
+    const targetIndex = this.selectedTeamIndex();
+
+    this.teamResults.update((results) =>
+      results.map((result, index) => (index === targetIndex ? updatedResult : result)),
+    );
+  }
+
+  private resolveOtherResult(): RumbleTeamResult | null {
+    return this.teamResults().find((_result, index) => index !== this.selectedTeamIndex()) ?? null;
+  }
+
+  private buildComparisonRow(
+    labelKey: string,
+    delta: number,
+    lowerIsBetter = false,
+  ): RumbleComparisonRow {
+    const roundedDelta = Math.round(delta);
+    const tone =
+      roundedDelta === 0
+        ? 'neutral'
+        : lowerIsBetter
+          ? roundedDelta < 0
+            ? 'positive'
+            : 'negative'
+          : roundedDelta > 0
+            ? 'positive'
+            : 'negative';
+
+    return {
+      labelKey,
+      value: this.formatSignedNumber(roundedDelta),
+      tone,
+    };
+  }
+
+  private formatSignedNumber(value: number): string {
+    if (value > 0) {
+      return `+${value.toLocaleString('en-US')}`;
+    }
+
+    return value.toLocaleString('en-US');
   }
 
   private createManualSlot(
@@ -979,6 +1159,32 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   private collectOpponentTeamSlots(): RumbleTeamSlot[] {
     return [...this.opponentActiveSlots(), ...this.opponentBenchSlots()].filter(
       (slot): slot is RumbleTeamSlot => Boolean(slot),
+    );
+  }
+
+  private formatRumbleCostUsage(slots: RumbleTeamSlot[]): string {
+    return `${this.resolveRumbleCostTotal(slots).toLocaleString('en-US')} / ${RUMBLE_TEAM_COST_LIMIT.toLocaleString('en-US')}`;
+  }
+
+  private resolveRumbleCostTotal(slots: RumbleTeamSlot[]): number {
+    return slots.reduce((total, slot) => total + this.resolveSlotRumbleCost(slot), 0);
+  }
+
+  private resolveSlotRumbleCost(slot: RumbleTeamSlot): number {
+    const cost = slot.unit.normalized.cost;
+
+    return typeof cost === 'number' && Number.isFinite(cost) && cost > 0 ? cost : 0;
+  }
+
+  private resolveTeamBuffTotal(result: RumbleTeamResult): number {
+    return result.activeSlots.reduce(
+      (teamTotal, slot) =>
+        teamTotal +
+        Object.values(this.resolveSlotTotalBuffs(slot, result.activeSlots)).reduce(
+          (slotTotal, value) => slotTotal + value,
+          0,
+        ),
+      0,
     );
   }
 

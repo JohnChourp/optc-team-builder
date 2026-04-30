@@ -47,7 +47,48 @@ export interface RumbleBuildAttempt {
 export interface RumbleBuildSearchOptions {
   onProgress?: (snapshot: RumbleBuildProgressSnapshot) => void;
   now?: () => number;
+  activeWorkerCount?: number;
 }
+
+interface RumbleCandidateScoringProgress {
+  completedWorkUnits: number;
+  totalWorkUnits: number;
+  checkedCandidates: number;
+  totalCandidatesToCheck: number;
+}
+
+interface RumbleCandidateScoringOptions {
+  onProgress?: (progress: RumbleCandidateScoringProgress) => void;
+}
+
+interface RumbleVariantProgressSnapshot {
+  stage: 'selectingSlots' | 'improvingTeam';
+  completedWorkUnits: number;
+  totalWorkUnits: number;
+  currentSlot?: number;
+  totalSlots?: number;
+  checkedCandidates?: number;
+  totalCandidatesToCheck?: number;
+  retainedVariants?: number;
+}
+
+interface RumbleVariantBuildOptions {
+  onProgress?: (snapshot: RumbleVariantProgressSnapshot) => void;
+}
+
+interface RumbleScoredUnitGroup {
+  units: RumbleUnitScore[];
+  score: number;
+  key: string;
+}
+
+interface RumbleImprovementProgressState {
+  completedWorkUnits: number;
+  totalWorkUnits: number;
+  retainedVariants: number;
+}
+
+type RumbleTeamScoreCache = Map<string, number>;
 
 const ROLE_LABELS: Record<NormalizedRumbleRoleTag, string> = {
   attacker: 'Damage',
@@ -82,7 +123,8 @@ const RUMBLE_SYNERGY_ATTRIBUTE_WEIGHTS: Record<RumbleSynergyAttribute, number> =
 
 const ACTIVE_SLOT_WEIGHT = 1;
 const BENCH_SLOT_WEIGHT = 0.45;
-const OPTIONAL_BENCH_UTILITY_THRESHOLD = 25;
+const RUMBLE_TEAM_COST_LIMIT = 300;
+const RUMBLE_PROGRESS_EMIT_INTERVAL = 250;
 const EMPTY_OPPONENT_PROFILE: RumbleOpponentProfile = {
   units: [],
   totalWeight: 0,
@@ -127,16 +169,50 @@ export function runRumbleTeamBuildSearch(
   requestedInput: Partial<RumbleBuildInput> = {},
   options: RumbleBuildSearchOptions = {},
 ): RumbleTeamResult {
+  return runRumbleTeamBuildSearches(candidates, requestedInput, options, 1)[0];
+}
+
+export function runRumbleTeamBuildSearches(
+  candidates: CharacterDetailRecord[],
+  requestedInput: Partial<RumbleBuildInput> = {},
+  options: RumbleBuildSearchOptions = {},
+  limit = 2,
+): RumbleTeamResult[] {
   const input = normalizeRumbleBuildInput(requestedInput);
+  const resultLimit = normalizeResultLimit(limit);
   const now = options.now ?? (() => Date.now());
   const searchStartedAt = now();
   const engine = new RumbleTeamBuilderEngine();
+  const activeWorkerCount = options.activeWorkerCount ?? 1;
+  const attempts = createRumbleBuildAttempts(input);
   const scopedCandidates = applyCandidateScope(candidates, input);
-  const scoredCandidates = engine.scoreCandidates(scopedCandidates);
+  const scoredCandidates = engine.scoreCandidates(scopedCandidates, {
+    onProgress: (progress) =>
+      emitProgress(options, {
+        stage: 'scoringCandidates',
+        candidateCount: scopedCandidates.length,
+        completedAttempts: 0,
+        totalAttempts: attempts.length,
+        attemptCountFinal: true,
+        currentDroppedTypes: [],
+        currentDroppedClasses: [],
+        elapsedMs: Math.max(0, now() - searchStartedAt),
+        estimatedRemainingMs: null,
+        messageKey: 'progress.scoringCandidates',
+        messageParams: {
+          current: progress.checkedCandidates,
+          total: progress.totalCandidatesToCheck,
+        },
+        completedWorkUnits: progress.completedWorkUnits,
+        totalWorkUnits: progress.totalWorkUnits,
+        checkedCandidates: progress.checkedCandidates,
+        totalCandidatesToCheck: progress.totalCandidatesToCheck,
+        activeWorkerCount,
+      }),
+  });
   const opponentProfile = input.opponentSlots.length
     ? engine.createOpponentProfile(engine.scoreCandidates(candidates), input.opponentSlots)
     : EMPTY_OPPONENT_PROFILE;
-  const attempts = createRumbleBuildAttempts(input);
 
   emitProgress(options, {
     stage: 'preparingSearch',
@@ -149,13 +225,14 @@ export function runRumbleTeamBuildSearch(
     elapsedMs: Math.max(0, now() - searchStartedAt),
     estimatedRemainingMs: null,
     messageKey: 'progress.preparingSearch',
+    activeWorkerCount,
   });
 
   if (!scoredCandidates.length) {
-    return engine.createEmptyResult(0, input, attempts[0] ?? createExactAttempt(input));
+    return [engine.createEmptyResult(0, input, attempts[0] ?? createExactAttempt(input))];
   }
 
-  let bestPartial: RumbleTeamResult | null = null;
+  let bestPartials: RumbleTeamResult[] = [];
   let totalCompletedMs = 0;
 
   for (let index = 0; index < attempts.length; index += 1) {
@@ -177,25 +254,64 @@ export function runRumbleTeamBuildSearch(
         current: index + 1,
         total: attempts.length,
       },
+      activeWorkerCount,
     });
 
-    const result = engine.buildTeamFromScoredCandidates(
+    const results = engine.buildTeamVariantsFromScoredCandidates(
       scoredCandidates,
       input,
       attempt,
       opponentProfile,
+      resultLimit,
+      {
+        onProgress: (progress) =>
+          emitProgress(options, {
+            stage: progress.stage,
+            candidateCount: scoredCandidates.length,
+            completedAttempts: index,
+            totalAttempts: attempts.length,
+            attemptCountFinal: true,
+            currentDroppedTypes: attempt.droppedTypes,
+            currentDroppedClasses: attempt.droppedClasses,
+            elapsedMs: Math.max(0, now() - searchStartedAt),
+            estimatedRemainingMs: estimateRemainingMs(totalCompletedMs, index, attempts.length),
+            messageKey:
+              progress.stage === 'selectingSlots'
+                ? 'progress.selectingSlots'
+                : 'progress.improvingTeam',
+            messageParams: {
+              current: progress.completedWorkUnits,
+              total: progress.totalWorkUnits,
+              slot: progress.currentSlot ?? 0,
+              totalSlots: progress.totalSlots ?? 0,
+              count: scoredCandidates.length,
+            },
+            completedWorkUnits: progress.completedWorkUnits,
+            totalWorkUnits: progress.totalWorkUnits,
+            currentSlot: progress.currentSlot,
+            totalSlots: progress.totalSlots,
+            checkedCandidates: progress.checkedCandidates,
+            totalCandidatesToCheck: progress.totalCandidatesToCheck,
+            retainedVariants: progress.retainedVariants,
+            activeWorkerCount,
+          }),
+      },
     );
     const attemptDuration = Math.max(0, now() - attemptStartedAt);
     totalCompletedMs += attemptDuration;
+    bestPartials = collectUniqueRumbleResults(
+      [...bestPartials, ...results],
+      resultLimit,
+      compareRumblePartials,
+    );
 
-    if (isBetterRumblePartial(result, bestPartial)) {
-      bestPartial = result;
-    }
+    const validResults = results.filter(
+      (result) =>
+        result.selectedCount >= resolveRequiredSlotCount(input) &&
+        satisfiesAttemptCoverage(result, attempt),
+    );
 
-    if (
-      result.selectedCount >= resolveRequiredSlotCount(input) &&
-      satisfiesAttemptCoverage(result, attempt)
-    ) {
+    if (validResults.length) {
       emitProgress(options, {
         stage: 'completed',
         candidateCount: scoredCandidates.length,
@@ -207,18 +323,22 @@ export function runRumbleTeamBuildSearch(
         elapsedMs: Math.max(0, now() - searchStartedAt),
         estimatedRemainingMs: 0,
         messageKey: 'progress.completed',
+        activeWorkerCount,
       });
-      return result;
+      return collectUniqueRumbleResults(validResults, resultLimit, compareRumbleResults);
     }
   }
 
-  const fallbackResult =
-    bestPartial ??
-    engine.createEmptyResult(scoredCandidates.length, input, {
-      ...attempts[0],
-      resolvedTypes: [...input.types],
-      droppedTypes: [],
-    });
+  const fallbackResults = bestPartials.length
+    ? bestPartials
+    : [
+        engine.createEmptyResult(scoredCandidates.length, input, {
+          ...attempts[0],
+          resolvedTypes: [...input.types],
+          droppedTypes: [],
+        }),
+      ];
+  const primaryFallbackResult = fallbackResults[0];
 
   emitProgress(options, {
     stage: 'completed',
@@ -226,14 +346,15 @@ export function runRumbleTeamBuildSearch(
     completedAttempts: attempts.length,
     totalAttempts: attempts.length,
     attemptCountFinal: true,
-    currentDroppedTypes: fallbackResult.droppedTypes,
-    currentDroppedClasses: fallbackResult.droppedClasses,
+    currentDroppedTypes: primaryFallbackResult.droppedTypes,
+    currentDroppedClasses: primaryFallbackResult.droppedClasses,
     elapsedMs: Math.max(0, now() - searchStartedAt),
     estimatedRemainingMs: 0,
     messageKey: 'progress.completed',
+    activeWorkerCount,
   });
 
-  return fallbackResult;
+  return fallbackResults;
 }
 
 export class RumbleTeamBuilderEngine {
@@ -244,27 +365,139 @@ export class RumbleTeamBuilderEngine {
     return runRumbleTeamBuildSearch(candidates, requestedInput);
   }
 
+  public buildTeamsFromCandidates(
+    candidates: CharacterDetailRecord[],
+    requestedInput: Partial<RumbleBuildInput> = {},
+    limit = 2,
+  ): RumbleTeamResult[] {
+    return runRumbleTeamBuildSearches(candidates, requestedInput, {}, limit);
+  }
+
   public buildTeamFromScoredCandidates(
     scoredCandidates: RumbleUnitScore[],
     input: RumbleBuildInput,
     attempt: RumbleBuildAttempt,
     opponentProfile: RumbleOpponentProfile = EMPTY_OPPONENT_PROFILE,
   ): RumbleTeamResult {
+    return this.buildTeamVariantsFromScoredCandidates(
+      scoredCandidates,
+      input,
+      attempt,
+      opponentProfile,
+      1,
+    )[0];
+  }
+
+  public buildTeamVariantsFromScoredCandidates(
+    scoredCandidates: RumbleUnitScore[],
+    input: RumbleBuildInput,
+    attempt: RumbleBuildAttempt,
+    opponentProfile: RumbleOpponentProfile = EMPTY_OPPONENT_PROFILE,
+    limit = 2,
+    options: RumbleVariantBuildOptions = {},
+  ): RumbleTeamResult[] {
     if (!scoredCandidates.length) {
-      return this.createEmptyResult(0, input, attempt);
+      return [this.createEmptyResult(0, input, attempt)];
     }
 
     const targetCount = input.requireFullTeam ? RUMBLE_TOTAL_SLOT_COUNT : RUMBLE_ACTIVE_SLOT_COUNT;
-    const selectedUnits = this.improveTeam(
-      this.pickGreedyTeam(scoredCandidates, attempt, opponentProfile, targetCount),
+    const scoreCache: RumbleTeamScoreCache = new Map();
+    const greedyUnitGroups = this.pickGreedyTeamVariants(
       scoredCandidates,
       attempt,
       opponentProfile,
+      targetCount,
+      limit,
+      scoreCache,
+      options,
     );
+    const selectedUnitGroups: RumbleUnitScore[][] = [];
+    const plannedImprovementGroups = greedyUnitGroups.length + (greedyUnitGroups[0]?.length ?? 0);
+    const improvementProgress: RumbleImprovementProgressState = {
+      completedWorkUnits: 0,
+      totalWorkUnits: Math.max(
+        1,
+        plannedImprovementGroups * 4 * targetCount * scoredCandidates.length,
+      ),
+      retainedVariants: plannedImprovementGroups,
+    };
+
+    greedyUnitGroups.forEach((units) => {
+      selectedUnitGroups.push(
+        this.improveTeam(
+          units,
+          scoredCandidates,
+          attempt,
+          opponentProfile,
+          scoreCache,
+          options,
+          improvementProgress,
+        ),
+      );
+    });
+    selectedUnitGroups.push(...greedyUnitGroups);
+
+    const primaryUnits = selectedUnitGroups[0] ?? [];
+
+    primaryUnits.forEach((unitToAvoid) => {
+      const alternateCandidates = scoredCandidates.filter(
+        (candidate) => candidate.character.id !== unitToAvoid.character.id,
+      );
+
+      if (!alternateCandidates.length) {
+        return;
+      }
+
+      const alternateUnits = this.pickGreedyTeam(
+        alternateCandidates,
+        attempt,
+        opponentProfile,
+        targetCount,
+        scoreCache,
+      );
+
+      selectedUnitGroups.push(
+        this.improveTeam(
+          alternateUnits,
+          alternateCandidates,
+          attempt,
+          opponentProfile,
+          scoreCache,
+          options,
+          improvementProgress,
+        ),
+        alternateUnits,
+      );
+    });
+
+    return collectUniqueRumbleResults(
+      selectedUnitGroups.map((selectedUnits) =>
+        this.createResultFromSelectedUnits(
+          selectedUnits,
+          scoredCandidates.length,
+          input,
+          attempt,
+          opponentProfile,
+          scoreCache,
+        ),
+      ),
+      normalizeResultLimit(limit),
+      compareRumbleResults,
+    );
+  }
+
+  private createResultFromSelectedUnits(
+    selectedUnits: RumbleUnitScore[],
+    candidateCount: number,
+    input: RumbleBuildInput,
+    attempt: RumbleBuildAttempt,
+    opponentProfile: RumbleOpponentProfile,
+    scoreCache: RumbleTeamScoreCache = new Map(),
+  ): RumbleTeamResult {
     const activeUnits = selectedUnits.slice(0, RUMBLE_ACTIVE_SLOT_COUNT);
     const benchUnits = input.requireFullTeam
       ? selectedUnits.slice(RUMBLE_ACTIVE_SLOT_COUNT, RUMBLE_TOTAL_SLOT_COUNT)
-      : this.pickOptionalBenchUnits(activeUnits, scoredCandidates, opponentProfile);
+      : [];
     const activeSlots = activeUnits.map((unit, index) =>
       this.createSlot('active', index, unit, opponentProfile),
     );
@@ -275,12 +508,12 @@ export class RumbleTeamBuilderEngine {
     const roleCoverage = this.collectRoleCoverage(allUnits);
     const typeCoverage = this.collectTypeCoverage(allUnits);
     const classCoverage = this.collectClassCoverage(allUnits);
-    const totalScore = this.scoreTeam(allUnits, attempt, opponentProfile);
+    const totalScore = this.scoreTeamCached(allUnits, attempt, opponentProfile, scoreCache);
 
     return {
       activeSlots,
       benchSlots,
-      candidateCount: scoredCandidates.length,
+      candidateCount,
       selectedCount: activeSlots.length + benchSlots.length,
       totalScore: Math.round(totalScore),
       roleCoverage,
@@ -297,17 +530,33 @@ export class RumbleTeamBuilderEngine {
     };
   }
 
-  public scoreCandidates(candidates: CharacterDetailRecord[]): RumbleUnitScore[] {
+  public scoreCandidates(
+    candidates: CharacterDetailRecord[],
+    options: RumbleCandidateScoringOptions = {},
+  ): RumbleUnitScore[] {
     const byCharacterId = new Map(candidates.map((candidate) => [candidate.id, candidate]));
+    const scoredCandidates: RumbleUnitScore[] = [];
 
-    return candidates
-      .map((candidate) => {
-        const normalized = this.normalizeRumbleData(candidate, byCharacterId);
+    this.emitCandidateScoringProgress(options, 0, candidates.length);
 
-        return normalized ? this.scoreCandidate(candidate, normalized) : null;
-      })
-      .filter((candidate): candidate is RumbleUnitScore => Boolean(candidate))
-      .sort(compareUnitScores);
+    candidates.forEach((candidate, index) => {
+      const normalized = this.normalizeRumbleData(candidate, byCharacterId);
+
+      if (normalized) {
+        scoredCandidates.push(this.scoreCandidate(candidate, normalized));
+      }
+
+      const checkedCandidates = index + 1;
+
+      if (
+        checkedCandidates % RUMBLE_PROGRESS_EMIT_INTERVAL === 0 ||
+        checkedCandidates === candidates.length
+      ) {
+        this.emitCandidateScoringProgress(options, checkedCandidates, candidates.length);
+      }
+    });
+
+    return scoredCandidates.sort(compareUnitScores);
   }
 
   public createOpponentProfile(
@@ -561,6 +810,7 @@ export class RumbleTeamBuilderEngine {
     attempt: RumbleBuildAttempt,
     opponentProfile: RumbleOpponentProfile,
     targetCount: number,
+    scoreCache: RumbleTeamScoreCache = new Map(),
   ): RumbleUnitScore[] {
     const selected: RumbleUnitScore[] = [];
 
@@ -570,9 +820,15 @@ export class RumbleTeamBuilderEngine {
           (candidate) => !selected.some((unit) => unit.character.id === candidate.character.id),
         )
         .filter((candidate) => !this.hasConflict(candidate, selected))
+        .filter((candidate) => this.isWithinRumbleCostLimit([...selected, candidate]))
         .map((candidate) => ({
           candidate,
-          score: this.scoreTeam([...selected, candidate], attempt, opponentProfile),
+          score: this.scoreTeamCached(
+            [...selected, candidate],
+            attempt,
+            opponentProfile,
+            scoreCache,
+          ),
         }))
         .sort(
           (left, right) =>
@@ -589,63 +845,102 @@ export class RumbleTeamBuilderEngine {
     return selected;
   }
 
-  private pickOptionalBenchUnits(
-    activeUnits: RumbleUnitScore[],
+  private pickGreedyTeamVariants(
     scoredCandidates: RumbleUnitScore[],
+    attempt: RumbleBuildAttempt,
     opponentProfile: RumbleOpponentProfile,
-  ): RumbleUnitScore[] {
-    const selectedBenchUnits: RumbleUnitScore[] = [];
+    targetCount: number,
+    limit: number,
+    scoreCache: RumbleTeamScoreCache,
+    options: RumbleVariantBuildOptions = {},
+  ): RumbleUnitScore[][] {
+    const resultLimit = normalizeResultLimit(limit);
+    const beamWidth = Math.max(resultLimit * 4, 8);
+    let variants: RumbleUnitScore[][] = [[]];
+    let completedWorkUnits = 0;
+    const totalWorkUnits = Math.max(
+      scoredCandidates.length,
+      scoredCandidates.length * (1 + Math.max(0, targetCount - 1) * beamWidth),
+    );
 
-    while (selectedBenchUnits.length < RUMBLE_BENCH_SLOT_COUNT) {
-      const currentUnits = [...activeUnits, ...selectedBenchUnits];
-      const next = scoredCandidates
-        .filter(
-          (candidate) => !currentUnits.some((unit) => unit.character.id === candidate.character.id),
-        )
-        .filter((candidate) => !this.hasConflict(candidate, currentUnits))
-        .map((candidate) => ({
-          candidate,
-          utilityScore: this.scoreOptionalBenchUtility(
-            candidate,
-            currentUnits,
-            opponentProfile,
-          ),
-        }))
-        .filter(({ utilityScore }) => utilityScore >= OPTIONAL_BENCH_UTILITY_THRESHOLD)
-        .sort(
-          (left, right) =>
-            right.utilityScore - left.utilityScore ||
-            compareUnitScores(left.candidate, right.candidate),
-        )[0];
+    for (let slotIndex = 0; slotIndex < targetCount; slotIndex += 1) {
+      const nextVariants: RumbleScoredUnitGroup[] = [];
+      const totalCandidatesToCheck = variants.length * scoredCandidates.length;
+      let checkedCandidates = 0;
 
-      if (!next) {
+      variants.forEach((selected) => {
+        const selectedIds = new Set(selected.map((unit) => unit.character.id));
+
+        scoredCandidates.forEach((candidate) => {
+          checkedCandidates += 1;
+          completedWorkUnits += 1;
+
+          if (
+            completedWorkUnits % RUMBLE_PROGRESS_EMIT_INTERVAL === 0 ||
+            checkedCandidates === totalCandidatesToCheck
+          ) {
+            options.onProgress?.({
+              stage: 'selectingSlots',
+              completedWorkUnits: Math.min(completedWorkUnits, totalWorkUnits),
+              totalWorkUnits,
+              currentSlot: slotIndex + 1,
+              totalSlots: targetCount,
+              checkedCandidates,
+              totalCandidatesToCheck,
+              retainedVariants: variants.length,
+            });
+          }
+
+          if (selectedIds.has(candidate.character.id)) {
+            return;
+          }
+
+          if (this.hasConflict(candidate, selected)) {
+            return;
+          }
+
+          const nextUnits = [...selected, candidate];
+
+          if (!this.isWithinRumbleCostLimit(nextUnits)) {
+            return;
+          }
+
+          nextVariants.push({
+            units: nextUnits,
+            score: this.scoreTeamCached(nextUnits, attempt, opponentProfile, scoreCache),
+            key: buildUnitGroupKey(nextUnits),
+          });
+        });
+      });
+
+      if (!nextVariants.length) {
         break;
       }
 
-      selectedBenchUnits.push(next.candidate);
+      variants = dedupeScoredUnitGroups(nextVariants)
+        .sort((left, right) => right.score - left.score || left.key.localeCompare(right.key))
+        .slice(0, beamWidth)
+        .map((variant) => variant.units);
+
+      options.onProgress?.({
+        stage: 'selectingSlots',
+        completedWorkUnits: Math.min(completedWorkUnits, totalWorkUnits),
+        totalWorkUnits,
+        currentSlot: slotIndex + 1,
+        totalSlots: targetCount,
+        checkedCandidates,
+        totalCandidatesToCheck,
+        retainedVariants: variants.length,
+      });
     }
 
-    return selectedBenchUnits;
-  }
+    if (!variants.length || variants.every((variant) => variant.length === 0)) {
+      return [
+        this.pickGreedyTeam(scoredCandidates, attempt, opponentProfile, targetCount, scoreCache),
+      ];
+    }
 
-  private scoreOptionalBenchUtility(
-    candidate: RumbleUnitScore,
-    currentUnits: RumbleUnitScore[],
-    opponentProfile: RumbleOpponentProfile,
-  ): number {
-    const candidateIndex = currentUnits.length;
-    const nextUnits = [...currentUnits, candidate];
-    const maxEffects = this.resolveMaxLevelEffects(candidate.normalized);
-    const effectUtility = maxEffects.reduce((total, effect) => {
-      const buffScore = this.scoreTeamBuffEffect(effect, candidate, candidateIndex, nextUnits);
-      const debuffScore = this.scoreEnemyDebuffEffect(effect);
-
-      return total + (buffScore + debuffScore) * BENCH_SLOT_WEIGHT;
-    }, 0);
-    const opponentCounterUtility =
-      this.scoreUnitOpponentCounters(candidate, opponentProfile) * BENCH_SLOT_WEIGHT;
-
-    return effectUtility + opponentCounterUtility;
+    return variants;
   }
 
   private improveTeam(
@@ -653,16 +948,45 @@ export class RumbleTeamBuilderEngine {
     scoredCandidates: RumbleUnitScore[],
     attempt: RumbleBuildAttempt,
     opponentProfile: RumbleOpponentProfile,
+    scoreCache: RumbleTeamScoreCache,
+    options: RumbleVariantBuildOptions = {},
+    progressState: RumbleImprovementProgressState = {
+      completedWorkUnits: 0,
+      totalWorkUnits: Math.max(1, 4 * Math.max(1, units.length) * scoredCandidates.length),
+      retainedVariants: 1,
+    },
   ): RumbleUnitScore[] {
     let current = [...units];
 
     for (let pass = 0; pass < 4; pass += 1) {
-      const currentScore = this.scoreTeam(current, attempt, opponentProfile);
+      const currentScore = this.scoreTeamCached(current, attempt, opponentProfile, scoreCache);
       let bestTeam = current;
       let bestScore = currentScore;
+      let checkedCandidates = 0;
+      const totalCandidatesToCheck = current.length * scoredCandidates.length;
 
       current.forEach((_existingUnit, existingIndex) => {
         scoredCandidates.forEach((candidate) => {
+          checkedCandidates += 1;
+          progressState.completedWorkUnits += 1;
+
+          if (
+            progressState.completedWorkUnits % RUMBLE_PROGRESS_EMIT_INTERVAL === 0 ||
+            checkedCandidates === totalCandidatesToCheck
+          ) {
+            options.onProgress?.({
+              stage: 'improvingTeam',
+              completedWorkUnits: Math.min(
+                progressState.completedWorkUnits,
+                progressState.totalWorkUnits,
+              ),
+              totalWorkUnits: progressState.totalWorkUnits,
+              checkedCandidates,
+              totalCandidatesToCheck,
+              retainedVariants: progressState.retainedVariants,
+            });
+          }
+
           if (current.some((unit) => unit.character.id === candidate.character.id)) {
             return;
           }
@@ -670,6 +994,10 @@ export class RumbleTeamBuilderEngine {
           const nextTeam = current.map((unit, index) =>
             index === existingIndex ? candidate : unit,
           );
+
+          if (!this.isWithinRumbleCostLimit(nextTeam)) {
+            return;
+          }
 
           if (
             this.hasConflict(
@@ -680,7 +1008,7 @@ export class RumbleTeamBuilderEngine {
             return;
           }
 
-          const nextScore = this.scoreTeam(nextTeam, attempt, opponentProfile);
+          const nextScore = this.scoreTeamCached(nextTeam, attempt, opponentProfile, scoreCache);
 
           if (nextScore > bestScore + 0.1) {
             bestTeam = nextTeam;
@@ -760,13 +1088,49 @@ export class RumbleTeamBuilderEngine {
     );
   }
 
+  private scoreTeamCached(
+    units: RumbleUnitScore[],
+    attempt: RumbleBuildAttempt,
+    opponentProfile: RumbleOpponentProfile,
+    scoreCache: RumbleTeamScoreCache,
+  ): number {
+    const key = buildUnitGroupKey(units);
+    const cachedScore = scoreCache.get(key);
+
+    if (cachedScore !== undefined) {
+      return cachedScore;
+    }
+
+    const score = this.scoreTeam(units, attempt, opponentProfile);
+
+    scoreCache.set(key, score);
+
+    return score;
+  }
+
+  private emitCandidateScoringProgress(
+    options: RumbleCandidateScoringOptions,
+    checkedCandidates: number,
+    totalCandidatesToCheck: number,
+  ): void {
+    options.onProgress?.({
+      completedWorkUnits: checkedCandidates,
+      totalWorkUnits: totalCandidatesToCheck,
+      checkedCandidates,
+      totalCandidatesToCheck,
+    });
+  }
+
   private scoreRumbleEffectSynergy(units: RumbleUnitScore[]): number {
-    return units.reduce((total, unit, sourceIndex) => {
-      const sourceWeight = this.resolveSlotWeight(sourceIndex);
+    const activeUnits = units.slice(0, RUMBLE_ACTIVE_SLOT_COUNT);
+
+    return activeUnits.reduce((total, unit, sourceIndex) => {
+      const sourceWeight = ACTIVE_SLOT_WEIGHT;
       const maxEffects = this.resolveMaxLevelEffects(unit.normalized);
       const buffScore = maxEffects.reduce(
         (effectTotal, effect) =>
-          effectTotal + this.scoreTeamBuffEffect(effect, unit, sourceIndex, units) * sourceWeight,
+          effectTotal +
+          this.scoreTeamBuffEffect(effect, unit, sourceIndex, activeUnits) * sourceWeight,
         0,
       );
       const debuffScore = maxEffects.reduce(
@@ -786,12 +1150,13 @@ export class RumbleTeamBuilderEngine {
       return 0;
     }
 
-    return units.reduce(
-      (total, unit, index) =>
-        total +
-        this.scoreUnitOpponentCounters(unit, opponentProfile) * this.resolveSlotWeight(index),
-      0,
-    );
+    return units
+      .slice(0, RUMBLE_ACTIVE_SLOT_COUNT)
+      .reduce(
+        (total, unit) =>
+          total + this.scoreUnitOpponentCounters(unit, opponentProfile) * ACTIVE_SLOT_WEIGHT,
+        0,
+      );
   }
 
   private scoreUnitOpponentCounters(
@@ -1172,6 +1537,22 @@ export class RumbleTeamBuilderEngine {
 
   private resolveSlotWeight(index: number): number {
     return index < RUMBLE_ACTIVE_SLOT_COUNT ? ACTIVE_SLOT_WEIGHT : BENCH_SLOT_WEIGHT;
+  }
+
+  private isWithinRumbleCostLimit(units: RumbleUnitScore[]): boolean {
+    return this.resolveTotalRumbleCost(units) <= RUMBLE_TEAM_COST_LIMIT;
+  }
+
+  private resolveTotalRumbleCost(units: RumbleUnitScore[]): number {
+    return units.reduce((total, unit) => total + this.resolveRumbleCost(unit), 0);
+  }
+
+  private resolveRumbleCost(unit: RumbleUnitScore): number {
+    const cost = unit.normalized.cost;
+
+    return typeof cost === 'number' && Number.isFinite(cost) && cost > 0
+      ? cost
+      : RUMBLE_TEAM_COST_LIMIT + 1;
   }
 
   private normalizeLevelEffects(
@@ -1895,24 +2276,77 @@ function resolveRequiredSlotCount(input: RumbleBuildInput): number {
   return input.requireFullTeam ? RUMBLE_TOTAL_SLOT_COUNT : RUMBLE_ACTIVE_SLOT_COUNT;
 }
 
-function isBetterRumblePartial(
-  candidate: RumbleTeamResult,
-  current: RumbleTeamResult | null,
-): boolean {
-  if (!current) {
-    return true;
-  }
+function normalizeResultLimit(limit: number): number {
+  return Number.isFinite(limit) ? Math.max(1, Math.floor(limit)) : 1;
+}
 
-  const candidateCoverage = candidate.resolvedTypes.length + candidate.resolvedClasses.length;
-  const currentCoverage = current.resolvedTypes.length + current.resolvedClasses.length;
+function collectUniqueRumbleResults(
+  results: RumbleTeamResult[],
+  limit: number,
+  comparator: (left: RumbleTeamResult, right: RumbleTeamResult) => number,
+): RumbleTeamResult[] {
+  const uniqueResults: RumbleTeamResult[] = [];
+  const seenKeys = new Set<string>();
+
+  [...results].sort(comparator).forEach((result) => {
+    const key = buildRumbleResultKey(result);
+
+    if (seenKeys.has(key) || uniqueResults.length >= limit) {
+      return;
+    }
+
+    seenKeys.add(key);
+    uniqueResults.push(result);
+  });
+
+  return uniqueResults;
+}
+
+function compareRumbleResults(left: RumbleTeamResult, right: RumbleTeamResult): number {
+  return (
+    right.totalScore - left.totalScore ||
+    right.selectedCount - left.selectedCount ||
+    buildRumbleResultKey(left).localeCompare(buildRumbleResultKey(right))
+  );
+}
+
+function compareRumblePartials(left: RumbleTeamResult, right: RumbleTeamResult): number {
+  const leftCoverage = left.resolvedTypes.length + left.resolvedClasses.length;
+  const rightCoverage = right.resolvedTypes.length + right.resolvedClasses.length;
 
   return (
-    candidateCoverage > currentCoverage ||
-    (candidateCoverage === currentCoverage && candidate.selectedCount > current.selectedCount) ||
-    (candidateCoverage === currentCoverage &&
-      candidate.selectedCount === current.selectedCount &&
-      candidate.totalScore > current.totalScore)
+    rightCoverage - leftCoverage ||
+    right.selectedCount - left.selectedCount ||
+    right.totalScore - left.totalScore ||
+    buildRumbleResultKey(left).localeCompare(buildRumbleResultKey(right))
   );
+}
+
+function buildRumbleResultKey(result: RumbleTeamResult): string {
+  return [...result.activeSlots, ...result.benchSlots]
+    .map((slot) => slot.unit.character.id)
+    .sort((left, right) => left - right)
+    .join(':');
+}
+
+function dedupeScoredUnitGroups(unitGroups: RumbleScoredUnitGroup[]): RumbleScoredUnitGroup[] {
+  const seenKeys = new Set<string>();
+  const uniqueGroups: RumbleScoredUnitGroup[] = [];
+
+  unitGroups.forEach((unitGroup) => {
+    if (seenKeys.has(unitGroup.key)) {
+      return;
+    }
+
+    seenKeys.add(unitGroup.key);
+    uniqueGroups.push(unitGroup);
+  });
+
+  return uniqueGroups;
+}
+
+function buildUnitGroupKey(unitGroup: RumbleUnitScore[]): string {
+  return unitGroup.map((unit) => unit.character.id).join(':');
 }
 
 function estimateRemainingMs(

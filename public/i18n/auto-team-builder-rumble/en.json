@@ -45,18 +45,11 @@
         "empty": "No favorite units are currently saved on this device.",
         "withCount": "Limit the Rumble candidate pool to your {{count}} saved favorite units."
       }
-    },
-    "optionalBench": {
-      "toggle": "Make bench optional",
-      "support": {
-        "disabled": "Build five active slots and three bench slots.",
-        "enabled": "Build five active slots, then add bench only when it improves buffs, debuffs, or opponent counters."
-      }
     }
   },
   "performance": {
-    "title": "Live worker scaling",
-    "copy": "Adjust the worker target without restarting the current build.",
+    "title": "Rumble worker preference",
+    "copy": "This Rumble build runs in one worker thread. The worker target is saved for builders that support pooled execution.",
     "mode": {
       "label": "Worker mode",
       "options": {
@@ -69,20 +62,27 @@
     },
     "runtime": {
       "detected": "{{count}} detected cores on this device.",
-      "target": "Current target: {{count}} web worker(s).",
-      "applies": "The current build keeps using a worker thread while this target is updated."
+      "target": "Saved target: {{count}} web worker(s).",
+      "applies": "Active Rumble execution: 1 worker thread."
     }
   },
   "progress": {
     "attempt": "Scanning relaxed Rumble pass {{current}} / {{total}}...",
+    "activeWorkers": "Active Rumble workers: {{count}}.",
+    "candidateChecks": "{{checked}} / {{total}} candidate checks in the current step.",
     "candidatePool": "{{count}} Rumble candidates in the current pool.",
     "completed": "Rumble build completed.",
     "currentStepElapsed": "{{duration}} elapsed",
     "ignoringClasses": "Relaxing classes: {{classes}}",
+    "improvingTeam": "Improving Rumble team variants...",
     "loadingCandidates": "Loading Rumble candidates from the local dataset...",
     "overallProgressPercent": "Overall progress: {{percent}}%",
     "preparingSearch": "Preparing Rumble fallback passes...",
+    "retainedVariants": "{{count}} candidate team variant(s) retained.",
+    "scoringCandidates": "Scoring Rumble candidate {{current}} / {{total}}...",
     "searchPasses": "{{attempts}} pass(es) across {{count}} candidates.",
+    "selectingSlots": "Selecting Rumble slot {{slot}} / {{totalSlots}} across {{count}} candidates...",
+    "slotProgress": "Slot {{current}} / {{total}}.",
     "worstCaseEta": "Worst-case ETA: {{duration}}"
   },
   "states": {
@@ -103,6 +103,7 @@
     "totalScore": "Total score",
     "candidates": "Candidates",
     "selected": "Selected",
+    "rumbleCost": "Rumble cost",
     "roleCoverage": "Role coverage",
     "topFactors": "Top factors",
     "requestedTypes": "Requested types",
@@ -112,14 +113,25 @@
     "droppedClass": "Dropped class: {{value}}",
     "none": "None"
   },
+  "teams": {
+    "switchAria": "Switch generated Rumble team",
+    "option": "Team {{index}}"
+  },
+  "comparison": {
+    "score": "Score",
+    "rumbleCost": "Cost",
+    "roles": "Roles",
+    "types": "Types",
+    "classes": "Classes",
+    "buffs": "Buffs"
+  },
   "active": {
     "title": "Active team",
     "copy": "{{count}} active Rumble slots"
   },
   "bench": {
     "title": "Bench",
-    "copy": "{{count}} bench slots",
-    "optionalCopy": "Up to {{count}} optional bench slots"
+    "copy": "{{count}} bench slots"
   },
   "opponent": {
     "title": "Opponent team",
@@ -131,6 +143,7 @@
     },
     "activeTitle": "Opponent active",
     "benchTitle": "Opponent bench",
+    "rumbleCost": "Rumble cost",
     "emptySlot": "Empty opponent slot",
     "addSlot": "Choose character",
     "addActiveAria": "Choose opponent active slot {{index}}",

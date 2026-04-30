@@ -45,18 +45,11 @@
         "empty": "Δεν υπάρχουν favorite units αποθηκευμένα σε αυτή τη συσκευή.",
         "withCount": "Περιόρισε το Rumble candidate pool στα {{count}} favorite units σου."
       }
-    },
-    "optionalBench": {
-      "toggle": "Προαιρετικό bench",
-      "support": {
-        "disabled": "Χτίζει πέντε active slots και τρία bench slots.",
-        "enabled": "Χτίζει πέντε active slots και προσθέτει bench μόνο όταν βελτιώνει buffs, debuffs ή opponent counters."
-      }
     }
   },
   "performance": {
-    "title": "Live worker scaling",
-    "copy": "Άλλαξε το worker target χωρίς restart στο τρέχον build.",
+    "title": "Rumble worker preference",
+    "copy": "Αυτό το Rumble build τρέχει σε ένα worker thread. Το worker target αποθηκεύεται για builders που υποστηρίζουν pooled execution.",
     "mode": {
       "label": "Worker mode",
       "options": {
@@ -69,20 +62,27 @@
     },
     "runtime": {
       "detected": "{{count}} detected cores σε αυτή τη συσκευή.",
-      "target": "Τρέχον target: {{count}} web worker(s).",
-      "applies": "Το τρέχον build συνεχίζει σε worker thread όσο ενημερώνεται αυτό το target."
+      "target": "Αποθηκευμένο target: {{count}} web worker(s).",
+      "applies": "Ενεργό Rumble execution: 1 worker thread."
     }
   },
   "progress": {
     "attempt": "Σκανάρεται relaxed Rumble pass {{current}} / {{total}}...",
+    "activeWorkers": "Ενεργοί Rumble workers: {{count}}.",
+    "candidateChecks": "{{checked}} / {{total}} candidate checks στο τρέχον βήμα.",
     "candidatePool": "{{count}} Rumble candidates στο τρέχον pool.",
     "completed": "Το Rumble build ολοκληρώθηκε.",
     "currentStepElapsed": "{{duration}} elapsed",
     "ignoringClasses": "Χαλάρωση classes: {{classes}}",
+    "improvingTeam": "Βελτίωση Rumble team variants...",
     "loadingCandidates": "Φόρτωση Rumble candidates από το τοπικό dataset...",
     "overallProgressPercent": "Συνολική πρόοδος: {{percent}}%",
     "preparingSearch": "Προετοιμασία Rumble fallback passes...",
+    "retainedVariants": "{{count}} candidate team variant(s) κρατήθηκαν.",
+    "scoringCandidates": "Βαθμολόγηση Rumble candidate {{current}} / {{total}}...",
     "searchPasses": "{{attempts}} pass(es) σε {{count}} candidates.",
+    "selectingSlots": "Επιλογή Rumble slot {{slot}} / {{totalSlots}} σε {{count}} candidates...",
+    "slotProgress": "Slot {{current}} / {{total}}.",
     "worstCaseEta": "Worst-case ETA: {{duration}}"
   },
   "states": {
@@ -103,6 +103,7 @@
     "totalScore": "Συνολικό score",
     "candidates": "Candidates",
     "selected": "Selected",
+    "rumbleCost": "Rumble cost",
     "roleCoverage": "Role coverage",
     "topFactors": "Top factors",
     "requestedTypes": "Requested types",
@@ -112,14 +113,25 @@
     "droppedClass": "Dropped class: {{value}}",
     "none": "Κανένα"
   },
+  "teams": {
+    "switchAria": "Αλλαγή generated Rumble ομάδας",
+    "option": "Team {{index}}"
+  },
+  "comparison": {
+    "score": "Score",
+    "rumbleCost": "Cost",
+    "roles": "Roles",
+    "types": "Types",
+    "classes": "Classes",
+    "buffs": "Buffs"
+  },
   "active": {
     "title": "Active team",
     "copy": "{{count}} active Rumble slots"
   },
   "bench": {
     "title": "Bench",
-    "copy": "{{count}} bench slots",
-    "optionalCopy": "Έως {{count}} προαιρετικά bench slots"
+    "copy": "{{count}} bench slots"
   },
   "opponent": {
     "title": "Αντίπαλη ομάδα",
@@ -131,6 +143,7 @@
     },
     "activeTitle": "Opponent active",
     "benchTitle": "Opponent bench",
+    "rumbleCost": "Rumble cost",
     "emptySlot": "Κενό opponent slot",
     "addSlot": "Επιλογή χαρακτήρα",
     "addActiveAria": "Επιλογή opponent active slot {{index}}",

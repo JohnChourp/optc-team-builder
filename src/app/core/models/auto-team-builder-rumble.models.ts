@@ -108,6 +108,10 @@ export interface RumbleTeamResult {
   droppedClasses: string[];
 }
 
+export interface RumbleTeamResultSet {
+  teams: RumbleTeamResult[];
+}
+
 export interface RumbleBuildInput {
   types: AutoTeamBuilderType[];
   selectedClasses: string[];
@@ -122,8 +126,11 @@ export interface RumbleBuildInput {
 
 export type RumbleBuildProgressStage =
   | 'loadingCandidates'
+  | 'scoringCandidates'
   | 'preparingSearch'
   | 'attempt'
+  | 'selectingSlots'
+  | 'improvingTeam'
   | 'completed';
 
 export interface RumbleBuildProgressSnapshot {
@@ -138,4 +145,12 @@ export interface RumbleBuildProgressSnapshot {
   estimatedRemainingMs: number | null;
   messageKey: string;
   messageParams?: Record<string, string | number>;
+  completedWorkUnits?: number;
+  totalWorkUnits?: number;
+  currentSlot?: number;
+  totalSlots?: number;
+  checkedCandidates?: number;
+  totalCandidatesToCheck?: number;
+  retainedVariants?: number;
+  activeWorkerCount?: number;
 }

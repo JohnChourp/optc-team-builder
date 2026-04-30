@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { type RumbleBuildProgressSnapshot } from '../models/auto-team-builder-rumble.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
 import { AutoTeamBuilderRumbleService } from './auto-team-builder-rumble.service';
 
@@ -136,6 +137,130 @@ describe('AutoTeamBuilderRumbleService', () => {
     expect(result.benchSlots).toHaveLength(3);
     expect(result.selectedCount).toBe(8);
     expect(result.totalScore).toBeGreaterThan(0);
+  });
+
+  it('keeps the selected Rumble team at or below 300 cost', () => {
+    const service = createService();
+    const expensiveCandidates = Array.from({ length: 8 }, (_, index) =>
+      createCharacter(5050 + index, {
+        partyConflictKeys: [`expensive-${index}`],
+        rumbleData: {
+          ...createRumbleData(index),
+          cost: 80,
+        },
+      }),
+    );
+
+    const result = service.buildTeamFromCandidates(expensiveCandidates);
+    const totalCost = resolveSelectedRumbleCost(result);
+
+    expect(totalCost).toBeLessThanOrEqual(300);
+    expect(result.activeSlots.length + result.benchSlots.length).toBeLessThan(8);
+  });
+
+  it('fills full active and bench slots when eight units fit under 300 Rumble cost', () => {
+    const service = createService();
+    const candidates = Array.from({ length: 8 }, (_, index) =>
+      createCharacter(5060 + index, {
+        partyConflictKeys: [`cost-fit-${index}`],
+        rumbleData: {
+          ...createRumbleData(index),
+          cost: 30,
+        },
+      }),
+    );
+
+    const result = service.buildTeamFromCandidates(candidates);
+
+    expect(result.activeSlots).toHaveLength(5);
+    expect(result.benchSlots).toHaveLength(3);
+    expect(resolveSelectedRumbleCost(result)).toBe(240);
+  });
+
+  it('reports inner Rumble build progress before completion', async () => {
+    const candidates = Array.from({ length: 12 }, (_, index) =>
+      createCharacter(5075 + index, {
+        partyConflictKeys: [`progress-${index}`],
+        rumbleData: createRumbleData(index),
+      }),
+    );
+    const service = createService(candidates);
+    const progressSnapshots: RumbleBuildProgressSnapshot[] = [];
+
+    await service.buildBestTeams(
+      {},
+      {
+        onProgress: (snapshot) => progressSnapshots.push(snapshot),
+      },
+      2,
+    );
+
+    expect(progressSnapshots.some((snapshot) => snapshot.stage === 'scoringCandidates')).toBe(true);
+    expect(progressSnapshots.some((snapshot) => snapshot.stage === 'selectingSlots')).toBe(true);
+    expect(progressSnapshots.some((snapshot) => snapshot.stage === 'improvingTeam')).toBe(true);
+    expect(progressSnapshots.at(-1)?.stage).toBe('completed');
+    expect(
+      progressSnapshots
+        .filter((snapshot) => snapshot.stage !== 'completed')
+        .every(
+          (snapshot) =>
+            snapshot.completedWorkUnits === undefined ||
+            snapshot.totalWorkUnits === undefined ||
+            snapshot.completedWorkUnits <= snapshot.totalWorkUnits,
+        ),
+    ).toBe(true);
+    expect(
+      progressSnapshots.find((snapshot) => snapshot.stage === 'selectingSlots')
+        ?.totalCandidatesToCheck,
+    ).toBeGreaterThan(0);
+  });
+
+  it('returns the top two unique full teams within the Rumble cost cap', () => {
+    const service = createService();
+    const candidates = Array.from({ length: 12 }, (_, index) =>
+      createCharacter(5080 + index, {
+        type: index % 2 === 0 ? 'DEX' : 'STR',
+        partyConflictKeys: [`multi-team-${index}`],
+        rumbleData: {
+          ...createRumbleData(index),
+          cost: 30,
+        },
+      }),
+    );
+
+    const results = service.buildTeamsFromCandidates(candidates, {}, 2);
+    const resultKeys = results.map((result) => collectSelectedIds(result).sort().join(':'));
+
+    expect(results).toHaveLength(2);
+    expect(new Set(resultKeys).size).toBe(2);
+    expect(results[0].totalScore).toBeGreaterThanOrEqual(results[1].totalScore);
+    results.forEach((result) => {
+      expect(result.activeSlots).toHaveLength(5);
+      expect(result.benchSlots).toHaveLength(3);
+      expect(resolveSelectedRumbleCost(result)).toBeLessThanOrEqual(300);
+    });
+  });
+
+  it('can select a late-pool team buffer when its buffs make the team stronger', () => {
+    const service = createService();
+    const anchorCandidates = Array.from({ length: 12 }, (_, index) =>
+      createCharacter(6100 + index, {
+        partyConflictKeys: [`late-buffer-anchor-${index}`],
+        rumbleData: {
+          ...createRumbleData(index),
+          ability: [{ effects: [{ effect: 'damage', amount: 2 + index }] }],
+        },
+      }),
+    );
+    const lateBuffer = createCharacter(6999, {
+      name: 'Late Broad Buffer',
+      partyConflictKeys: ['late-broad-buffer'],
+      rumbleData: createCrewBuffRumbleData(6999, ['ATK', 'DEF', 'Special CT'], 60),
+    });
+
+    const result = service.buildTeamFromCandidates([...anchorCandidates, lateBuffer]);
+
+    expect(collectSelectedIds(result)).toContain(lateBuffer.id);
   });
 
   it('keeps requested type and class coverage when possible', () => {
@@ -507,7 +632,7 @@ describe('AutoTeamBuilderRumbleService', () => {
 
   it('prefers broad enemy stat debuffs over single-target debuffs', () => {
     const service = createService();
-    const anchors = Array.from({ length: 7 }, (_, index) =>
+    const anchors = Array.from({ length: 4 }, (_, index) =>
       createCharacter(8200 + index, {
         partyConflictKeys: [`debuff-anchor-${index}`],
         rumbleData: createRumbleData(60 + index),
@@ -596,7 +721,7 @@ describe('AutoTeamBuilderRumbleService', () => {
 
   it('weights active opponent slots above bench slots for matching debuffs', () => {
     const service = createService();
-    const anchors = Array.from({ length: 7 }, (_, index) =>
+    const anchors = Array.from({ length: 4 }, (_, index) =>
       createCharacter(9200 + index, {
         maxHp: 1800,
         maxAtk: 700,
@@ -651,7 +776,7 @@ describe('AutoTeamBuilderRumbleService', () => {
 
   it('prefers enemy debuffs that match opponent strengths when opponent-aware', () => {
     const service = createService();
-    const anchors = Array.from({ length: 7 }, (_, index) =>
+    const anchors = Array.from({ length: 4 }, (_, index) =>
       createCharacter(9300 + index, {
         maxHp: 1800,
         maxAtk: 700,
@@ -695,7 +820,7 @@ describe('AutoTeamBuilderRumbleService', () => {
 
   it('prefers resistance and type damage reduction that match the opponent team', () => {
     const service = createService();
-    const anchors = Array.from({ length: 7 }, (_, index) =>
+    const anchors = Array.from({ length: 4 }, (_, index) =>
       createCharacter(9400 + index, {
         maxHp: 1800,
         maxAtk: 700,
@@ -727,6 +852,9 @@ describe('AutoTeamBuilderRumbleService', () => {
     const result = service.buildTeamFromCandidates(
       [...anchors, opponent, matchingResistance, unrelatedResistance],
       {
+        candidateCharacterIds: [...anchors, matchingResistance, unrelatedResistance].map(
+          (character) => character.id,
+        ),
         opponentSlots: [{ characterId: opponent.id, role: 'active', index: 0 }],
       },
     );
@@ -743,7 +871,7 @@ describe('AutoTeamBuilderRumbleService', () => {
 
   it('does not treat self-only buffs as team buff synergy', () => {
     const service = createService();
-    const anchors = Array.from({ length: 7 }, (_, index) =>
+    const anchors = Array.from({ length: 4 }, (_, index) =>
       createCharacter(8300 + index, {
         primaryClass: 'Fighter',
         classes: ['Fighter'],
@@ -781,7 +909,7 @@ describe('AutoTeamBuilderRumbleService', () => {
       maxRcv: 120,
       primaryClass: 'Fighter',
       classes: ['Fighter'],
-      partyConflictKeys: ['self-buffer'],
+      partyConflictKeys: ['small-team-buffer'],
       rumbleData: {
         id: 8391,
         stats: { rumbleType: 'SPT', def: 20, spd: 20 },
@@ -970,15 +1098,18 @@ describe('AutoTeamBuilderRumbleService', () => {
     expect(partialResult.benchSlots).toHaveLength(0);
   });
 
-  it('keeps bench empty in optional mode when extra candidates add no utility', () => {
+  it('always keeps bench empty in optional mode', () => {
     const service = createService();
     const candidates = Array.from({ length: 8 }, (_, index) =>
       createCharacter(7100 + index, {
-        maxHp: 5200 + index * 50,
-        maxAtk: 2100 + index * 20,
+        maxHp: 20000 + index * 100,
+        maxAtk: 70000 + index * 100,
         maxRcv: 360,
-        partyConflictKeys: [`optional-neutral-${index}`],
-        rumbleData: createRumbleData(index + 1),
+        partyConflictKeys: [`optional-active-only-${index}`],
+        rumbleData: {
+          ...createRumbleData(index + 1),
+          cost: 55,
+        },
       }),
     );
 
@@ -988,17 +1119,21 @@ describe('AutoTeamBuilderRumbleService', () => {
     expect(result.activeSlots).toHaveLength(5);
     expect(result.benchSlots).toHaveLength(0);
     expect(result.selectedCount).toBe(5);
+    expect(resolveSelectedRumbleCost(result)).toBeLessThanOrEqual(300);
   });
 
-  it('adds optional bench units when they improve team buffs or enemy debuffs', () => {
+  it('does not add optional bench units only for buffs or enemy debuffs while benched', () => {
     const service = createService();
-    const anchors = Array.from({ length: 6 }, (_, index) =>
+    const anchors = Array.from({ length: 5 }, (_, index) =>
       createCharacter(7200 + index, {
         maxHp: 20000 + index * 100,
         maxAtk: 70000 + index * 100,
         maxRcv: 1200,
         partyConflictKeys: [`optional-buff-anchor-${index}`],
-        rumbleData: createRumbleData(20 + index),
+        rumbleData: {
+          ...createRumbleData(20 + index),
+          cost: 55,
+        },
       }),
     );
     const teamBuffer = createCharacter(7290, {
@@ -1006,7 +1141,23 @@ describe('AutoTeamBuilderRumbleService', () => {
       maxAtk: 500,
       maxRcv: 80,
       partyConflictKeys: ['optional-team-buffer'],
-      rumbleData: createCrewBuffRumbleData(7290, ['ATK'], 6),
+      rumbleData: {
+        ...createCrewBuffRumbleData(7290, ['ATK'], 20),
+        cost: 20,
+        special: [
+          {
+            cooldown: 20,
+            effects: [
+              {
+                attributes: ['ATK', 'DEF', 'Special CT'],
+                effect: 'debuff',
+                level: 20,
+                targeting: { targets: ['enemies'] },
+              },
+            ],
+          },
+        ],
+      },
     });
 
     const result = service.buildTeamFromCandidates([...anchors, teamBuffer], {
@@ -1014,59 +1165,51 @@ describe('AutoTeamBuilderRumbleService', () => {
     });
 
     expect(result.activeSlots).toHaveLength(5);
-    expect(result.benchSlots.map((slot) => slot.unit.character.id)).toContain(teamBuffer.id);
+    expect(result.benchSlots.map((slot) => slot.unit.character.id)).not.toContain(teamBuffer.id);
   });
 
-  it('adds opponent-aware optional bench resistance and skips unrelated filler', () => {
+  it('does not add optional bench units even when strong replacements remain available', () => {
     const service = createService();
-    const anchors = Array.from({ length: 6 }, (_, index) =>
+    const anchors = Array.from({ length: 5 }, (_, index) =>
       createCharacter(7300 + index, {
-        maxHp: 20000 + index * 100,
-        maxAtk: 70000 + index * 100,
+        maxHp: 40000 + index * 100,
+        maxAtk: 200000 + index * 100,
         maxRcv: 1200,
         partyConflictKeys: [`optional-counter-anchor-${index}`],
-        rumbleData: createRumbleData(30 + index),
+        rumbleData: {
+          ...createRumbleData(30 + index),
+          cost: 50,
+        },
       }),
     );
-    const opponent = createCharacter(7390, {
-      type: 'STR',
-      partyConflictKeys: ['optional-counter-opponent'],
-      rumbleData: createEnemyDebuffRumbleData(7390, ['Paralysis']),
+    const strongReplacement = createCharacter(7391, {
+      maxHp: 30000,
+      maxAtk: 100000,
+      maxRcv: 900,
+      partyConflictKeys: ['optional-strong-replacement'],
+      rumbleData: {
+        ...createRumbleData(90),
+        cost: 30,
+      },
     });
-    const matchingResistance = createCharacter(7391, {
+    const weakFiller = createCharacter(7392, {
       maxHp: 1200,
       maxAtk: 500,
       maxRcv: 80,
-      partyConflictKeys: ['optional-counter-matching'],
-      rumbleData: createResistanceRumbleData(7391, 'Paralysis', '[STR]'),
-    });
-    const unrelatedResistance = createCharacter(7392, {
-      maxHp: 1200,
-      maxAtk: 500,
-      maxRcv: 80,
-      partyConflictKeys: ['optional-counter-unrelated'],
-      rumbleData: createResistanceRumbleData(7392, 'Silence', '[DEX]'),
+      partyConflictKeys: ['optional-weak-filler'],
+      rumbleData: {
+        ...createRumbleData(91),
+        cost: 20,
+      },
     });
 
-    const result = service.buildTeamFromCandidates(
-      [...anchors, opponent, matchingResistance, unrelatedResistance],
-      {
-        requireFullTeam: false,
-        candidateCharacterIds: [...anchors, matchingResistance, unrelatedResistance].map(
-          (character) => character.id,
-        ),
-        opponentSlots: [{ characterId: opponent.id, role: 'active', index: 0 }],
-      },
-    );
-    const benchIds = result.benchSlots.map((slot) => slot.unit.character.id);
+    const result = service.buildTeamFromCandidates([...anchors, strongReplacement, weakFiller], {
+      requireFullTeam: false,
+    });
 
     expect(result.activeSlots).toHaveLength(5);
-    expect(benchIds).toContain(matchingResistance.id);
-    expect(benchIds).not.toContain(unrelatedResistance.id);
-    expect(
-      result.benchSlots.find((slot) => slot.unit.character.id === matchingResistance.id)
-        ?.reasonChips,
-    ).toEqual(expect.arrayContaining(['Opponent counter', 'Matched resistance']));
+    expect(result.benchSlots).toHaveLength(0);
+    expect(resolveSelectedRumbleCost(result)).toBeLessThanOrEqual(300);
   });
 });
 
@@ -1082,9 +1225,19 @@ function collectSelectedIds(
   return [...result.activeSlots, ...result.benchSlots].map((slot) => slot.unit.character.id);
 }
 
+function resolveSelectedRumbleCost(
+  result: ReturnType<AutoTeamBuilderRumbleService['buildTeamFromCandidates']>,
+): number {
+  return [...result.activeSlots, ...result.benchSlots].reduce(
+    (total, slot) => total + (slot.unit.normalized.cost ?? 0),
+    0,
+  );
+}
+
 function createRumbleData(index: number): Record<string, unknown> {
   return {
     id: index + 1,
+    cost: 30,
     stats: {
       rumbleType: index % 3 === 0 ? 'ATK' : 'BAL',
       def: 80 + index * 4,
