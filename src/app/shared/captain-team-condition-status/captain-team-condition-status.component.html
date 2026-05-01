@@ -1,0 +1,22 @@
+<ng-container
+  *transloco="let t; scope: 'captain-team-condition-status'; read: 'captain-team-condition-status'"
+>
+  @if (status; as currentStatus) {
+    <div
+      class="captain-team-condition-status"
+      [class.captain-team-condition-status--compact]="compact"
+      [class.captain-team-condition-status--full]="currentStatus.state === 'full'"
+      [class.captain-team-condition-status--partial]="currentStatus.state === 'partial'"
+      [class.captain-team-condition-status--none]="currentStatus.state === 'none'"
+      [class.captain-team-condition-status--pending]="currentStatus.state === 'pending'"
+      role="status"
+      aria-live="polite"
+    >
+      <ion-icon [icon]="iconName(currentStatus)" aria-hidden="true"></ion-icon>
+      <div>
+        <strong>{{ t(titleKey(currentStatus)) }}</strong>
+        <span>{{ t(detailKey(currentStatus), detailParams(currentStatus)) }}</span>
+      </div>
+    </div>
+  }
+</ng-container>

@@ -120,6 +120,54 @@
             </div>
           </section>
 
+          @if (view.captainAbilitySummary || current.detail.builderAbilities.length) {
+            <section class="ability-summary-section glass-card">
+              <div class="group-section__head">
+                <div class="section-label">{{ t('sections.abilitySummary') }}</div>
+              </div>
+
+              @if (view.captainAbilitySummary; as captainSummary) {
+                @if (captainSummary.variants.length) {
+                  <div class="captain-ability-summary">
+                    @for (variant of captainSummary.variants; track $index) {
+                      <article class="captain-ability-summary__variant">
+                        <span class="detail-text__label">
+                          @if (variant.labelKey) {
+                            {{ t(variant.labelKey) }}
+                          } @else {
+                            {{ variant.label }}
+                          }
+                        </span>
+                        <p>{{ variant.value }}</p>
+                      </article>
+                    }
+                  </div>
+                }
+
+                @if (captainSummary.recognizedAbilities.length) {
+                  <div class="captain-ability-summary__recognized">
+                    <span class="detail-list-block__label">
+                      {{ t('fields.recognizedCaptainAbilities') }}
+                    </span>
+                    <app-character-ability-groups
+                      [abilities]="captainSummary.recognizedAbilities"
+                      [catalogItems]="abilityCatalog()?.abilities ?? []"
+                      displayMode="collapsed"
+                    ></app-character-ability-groups>
+                  </div>
+                }
+              }
+
+              @if (current.detail.builderAbilities.length) {
+                <app-character-ability-groups
+                  [abilities]="current.detail.builderAbilities"
+                  [catalogItems]="abilityCatalog()?.abilities ?? []"
+                  displayMode="full"
+                ></app-character-ability-groups>
+              }
+            </section>
+          }
+
           @for (group of view.groups; track group.titleKey) {
             <section class="group-section">
               <div class="group-section__head">

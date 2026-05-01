@@ -24,6 +24,14 @@
   },
   "filters": {
     "abilityRailLabel": "Ability filters",
+    "bestAbilityMatchesFirst": "Πρώτα τα καλύτερα ability matches",
+    "captainAbilityCoverage": {
+      "toggle": "Πλήρες Captain Ability coverage",
+      "support": {
+        "simple": "Δείχνει units που καλύπτονται από το standard HP/ATK boost scope του Captain.",
+        "full": "Δείχνει μόνο units που καλύπτονται από όλα τα targetable Captain Ability clauses."
+      }
+    },
     "crewmateCopy": "Φίλτραρε τα καλυπτόμενα character results με Crewmate Ability tags.",
     "crewmateEyebrow": "Crewmate Ability",
     "crewmateTitle": "Crewmate Ability filters",

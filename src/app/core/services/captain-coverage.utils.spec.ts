@@ -17,6 +17,10 @@ describe('resolveCaptainCoverage', () => {
     const coverage = resolveCaptainCoverage(captain, target);
 
     expect(coverage.matches).toBe(true);
+    expect(coverage.boosts).toEqual({
+      hp: 1.3,
+      atk: 5,
+    });
     expect(coverage.chips).toEqual([
       {
         kind: 'universal',
@@ -41,6 +45,10 @@ describe('resolveCaptainCoverage', () => {
     const coverage = resolveCaptainCoverage(captain, target);
 
     expect(coverage.matches).toBe(true);
+    expect(coverage.boosts).toEqual({
+      hp: 1.4,
+      atk: 5,
+    });
     expect(coverage.chips).toEqual(
       expect.arrayContaining([
         {
@@ -57,6 +65,59 @@ describe('resolveCaptainCoverage', () => {
         },
       ]),
     );
+  });
+
+  it('keeps scoped captain boosts at zero when the target does not match', () => {
+    const captain = createCharacter({
+      id: 1006,
+      captainAbility: 'Boosts ATK of [DEX] characters by 5x and HP by 1.2x.',
+    });
+    const target = createCharacter({ id: 2006, type: 'STR', classes: ['Shooter', 'Driven'] });
+
+    const coverage = resolveCaptainCoverage(captain, target);
+
+    expect(coverage.matches).toBe(false);
+    expect(coverage.boosts).toEqual({
+      hp: 0,
+      atk: 0,
+    });
+  });
+
+  it('extracts ATK and HP from a combined matching boost clause', () => {
+    const captain = createCharacter({
+      id: 1007,
+      captainAbility: 'Boosts ATK of DEX, Fighter and Slasher characters by 5.25x and HP by 1.4x.',
+    });
+    const target = createCharacter({
+      id: 2007,
+      type: 'DEX',
+      classes: ['Shooter', 'Free Spirit'],
+    });
+
+    const coverage = resolveCaptainCoverage(captain, target);
+
+    expect(coverage.matches).toBe(true);
+    expect(coverage.boosts).toEqual({
+      hp: 1.4,
+      atk: 5.25,
+    });
+  });
+
+  it('uses default captain branches instead of powered-up or conditional boost values', () => {
+    const captain = createCharacter({
+      id: 1008,
+      captainAbility:
+        'Always Active: Boosts HP of [DEX] characters by 1.3x. Standard Captain: Boosts ATK of [DEX] characters by 3.5x. Powered Up Captain: Boosts ATK of [DEX] characters by 6x and HP by 1.5x. If HP is below 50%, boosts ATK of [DEX] characters by 7x instead.',
+    });
+    const target = createCharacter({ id: 2008, type: 'DEX', classes: ['Shooter', 'Driven'] });
+
+    const coverage = resolveCaptainCoverage(captain, target);
+
+    expect(coverage.matches).toBe(true);
+    expect(coverage.boosts).toEqual({
+      hp: 1.3,
+      atk: 3.5,
+    });
   });
 
   it('rejects a captain when any character-targeted clause misses the selected character', () => {
@@ -95,6 +156,18 @@ describe('resolveCaptainCoverage', () => {
       id: 3001,
       type: 'STR',
       classes: ['Shooter', 'Free Spirit'],
+      characterTags: ['Worst Generation'],
+    });
+    const untaggedBoostedTarget = createCharacter({
+      id: 3003,
+      type: 'STR',
+      classes: ['Shooter', 'Free Spirit'],
+    });
+    const taggedUnboostedTarget = createCharacter({
+      id: 3004,
+      type: 'QCK',
+      classes: ['Shooter', 'Free Spirit'],
+      characterTags: ['Kid Pirates'],
     });
     const nonMatchingTarget = createCharacter({
       id: 3002,
@@ -103,12 +176,31 @@ describe('resolveCaptainCoverage', () => {
     });
 
     const matchingCoverage = resolveCaptainCoverage(captain, matchingTarget);
+    const untaggedBoostedCoverage = resolveCaptainCoverage(captain, untaggedBoostedTarget);
+    const taggedUnboostedCoverage = resolveCaptainCoverage(captain, taggedUnboostedTarget);
     const nonMatchingCoverage = resolveCaptainCoverage(captain, nonMatchingTarget);
 
     expect(matchingCoverage.matches).toBe(true);
+    expect(matchingCoverage.boosts).toEqual({
+      hp: 1.3,
+      atk: 5,
+    });
+    expect(matchingCoverage.chips).toEqual(
+      expect.arrayContaining([
+        {
+          kind: 'tag',
+          label: 'Worst Generation',
+        },
+      ]),
+    );
     expect(matchingCoverage.neutralNotes).toContain(
       'reduces Special Cooldown of this character by 4 turns at the start of the fight',
     );
+    expect(untaggedBoostedCoverage.matches).toBe(false);
+    expect(untaggedBoostedCoverage.uncoveredClauses).toContain(
+      'requires crew has 4 [Kid Pirates] / [Worst Generation] / [Land of Wano Arc] characters or crew has 6 [Kid Pirates] / [Worst Generation] / [Egghead Arc] characters',
+    );
+    expect(taggedUnboostedCoverage.matches).toBe(false);
     expect(nonMatchingCoverage.matches).toBe(false);
     expect(nonMatchingCoverage.uncoveredClauses).toEqual(
       expect.arrayContaining([
@@ -139,6 +231,7 @@ describe('resolveCaptainCoverage', () => {
 function createCharacter(
   overrides: Partial<CharacterDetailRecord> & {
     captainAbility?: string;
+    characterTags?: string[];
     classes?: string[];
     cost?: number;
     id: number;
@@ -193,6 +286,7 @@ function createCharacter(
       superSpecialNotes: null,
       superSpecialCriteria: null,
       partyConflictKeys: [],
+      characterTags: overrides.characterTags ?? [],
       builderAbilities: [],
       sailorAbilities: [],
       sailorNotes: null,

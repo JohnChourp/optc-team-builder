@@ -40,6 +40,7 @@ export type AutoTeamBuilderType = (typeof AUTO_TEAM_BUILDER_TYPES)[number];
 export type AutoTeamBuilderClass = (typeof AUTO_TEAM_BUILDER_CLASSES)[number];
 export type AutoBuildManualSlotRole = (typeof AUTO_BUILD_MANUAL_SLOT_ROLES)[number];
 export type AutoBuildLeaderBoostFilter = (typeof AUTO_BUILD_LEADER_BOOST_FILTERS)[number];
+export type AutoBuildCaptainAbilityCoverageMode = 'simpleBoostScope' | 'fullAbilityCoverage';
 
 export interface AutoBuildLeaderBoostRange {
   min: number | null;
@@ -86,6 +87,7 @@ export interface AutoBuildConstraints {
   requireAllSelectedTypesInTeam?: boolean;
   requireAllSelectedClassesPerCharacter?: boolean;
   requireAllSlotsInLeaderSuperEffectScope?: boolean;
+  requireFullCaptainAbilityCoverage?: boolean;
   minimumLeaderSuperEffectMatchingSlots?: number | null;
   requireLeaderSuperSpecialCriteria?: boolean;
   requireUniqueBaseCharacterNames?: boolean;
@@ -147,6 +149,7 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   selectedClasses: string[];
   requireLeaderSuperSpecialCriteria: boolean;
   requireAllSlotsInLeaderSuperEffectScope: boolean;
+  requireFullCaptainAbilityCoverage: boolean;
   minimumLeaderSuperEffectMatchingSlots: number | null;
   requireUniqueBaseCharacterNames: boolean;
   requiredAbilities: AutoBuildAbilityRequirement[];
@@ -202,6 +205,19 @@ export interface AutoBuildSpecialScope {
   hasQualifyingEffect: boolean;
 }
 
+export interface AutoBuildLeaderTagConditionBranch {
+  requiredCount: number;
+  labels: string[];
+  acceptedKeys: string[];
+  text: string;
+}
+
+export interface AutoBuildLeaderTagConditionSet {
+  leaderId: number;
+  leaderName: string;
+  branches: AutoBuildLeaderTagConditionBranch[];
+}
+
 export interface AutoBuildEffectTags {
   captainScope: {
     allCharacters: boolean;
@@ -218,6 +234,7 @@ export interface AutoBuildEffectTags {
     matchedSelectedTypeCount: number;
     coversAllSelectedTypes: boolean;
     matchesClass: boolean;
+    tagConditionBranches: AutoBuildLeaderTagConditionBranch[];
   };
   specialScope: AutoBuildSpecialScope;
   burstRoles: AutoBuildBurstRole[];
@@ -232,6 +249,7 @@ export interface AutoBuildEffectTags {
 
 export interface AutoBuildLeaderCriteriaSummary {
   source: 'captainAbility';
+  coverageMode: AutoBuildCaptainAbilityCoverageMode;
   captainLeaderId: number | null;
   friendCaptainLeaderId: number | null;
   leaderIds: number[];
@@ -243,6 +261,7 @@ export interface AutoBuildLeaderCriteriaSummary {
   maxAllowedCost: number | null;
   hasClassRestriction: boolean;
   hasTypeRestriction: boolean;
+  tagConditionSets: AutoBuildLeaderTagConditionSet[];
   matchingSlots: number;
   totalSlots: number;
   allSlotsMatch: boolean;

@@ -28,13 +28,19 @@ import {
 } from 'ionicons/icons';
 
 import {
+  type CharacterDetailRecord,
   type CharacterListItem,
   type SavedTeam,
   type ShipRecord,
 } from '../../core/models/optc.models';
 import { AppI18nService } from '../../core/services/app-i18n.service';
+import {
+  resolveCaptainTeamConditionStatus,
+  type CaptainTeamConditionStatus,
+} from '../../core/services/captain-team-condition-status.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
+import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
 import {
   buildSavedTeamsTransferPayload,
   clearUnavailableSavedTeamSlots,
@@ -51,6 +57,7 @@ interface SavedTeamPreviewCard {
   shipThumbUrl: string | null;
   team: SavedTeam;
   slots: Array<CharacterListItem | null>;
+  conditionStatus: CaptainTeamConditionStatus;
 }
 
 interface SavedTeamsImportFeedback {
@@ -77,6 +84,7 @@ interface SavedTeamsImportFeedback {
     IonTextarea,
     IonTitle,
     IonToolbar,
+    CaptainTeamConditionStatusComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,
@@ -345,7 +353,7 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
       ),
     ];
     const [characters, ships] = await Promise.all([
-      this.repository.getCharactersByIds(characterIds),
+      this.repository.getDetailedCharactersByIds(characterIds),
       this.repository.getShips(),
     ]);
     const characterMap = new Map(characters.map((character) => [character.id, character] as const));
@@ -356,6 +364,10 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
         const ship = typeof team.shipId === 'number' ? (shipMap.get(team.shipId) ?? null) : null;
         const shipThumbUrl = ship?.thumbUrl ?? null;
 
+        const slots = team.slots.map((slotId) =>
+          typeof slotId === 'number' ? (characterMap.get(slotId) ?? null) : null,
+        );
+
         return {
           team,
           ship,
@@ -363,14 +375,37 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
             ship?.name ?? this.i18n.translate('ship.noShipLabel', undefined, 'saved-teams'),
           shipThumbUrl,
           hasShipThumbnail: Boolean(shipThumbUrl),
-          slots: team.slots.map((slotId) =>
-            typeof slotId === 'number' ? (characterMap.get(slotId) ?? null) : null,
-          ),
+          slots,
+          conditionStatus: this.resolveSavedTeamConditionStatus(slots),
         };
       }),
     );
     this.pruneSelection();
     this.loading.set(false);
+  }
+
+  private resolveSavedTeamConditionStatus(
+    slots: Array<CharacterDetailRecord | null>,
+  ): CaptainTeamConditionStatus {
+    return resolveCaptainTeamConditionStatus({
+      expectedSlotCount: 6,
+      leaders: [
+        {
+          role: 'captain',
+          label: this.i18n.translate('condition.roles.captain', undefined, 'saved-teams'),
+          character: slots[0] ?? null,
+        },
+        {
+          role: 'friendCaptain',
+          label: this.i18n.translate('condition.roles.friendCaptain', undefined, 'saved-teams'),
+          character: slots[1] ?? null,
+        },
+      ],
+      slotLabels: slots.map((_slot, index) =>
+        this.i18n.translate('condition.slotLabel', { slot: index + 1 }, 'saved-teams'),
+      ),
+      slots,
+    });
   }
 
   private setTeamSelection(teamId: string, selected: boolean): void {

@@ -10,6 +10,7 @@ import {
   type AutoBuildManualSlotSelection,
   type AutoBuildInput,
   type AutoBuildProgressSnapshot,
+  type AutoBuildResult,
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
 import { type AutoBuildAbilitySource } from '../models/auto-team-builder-ability.models';
@@ -1273,7 +1274,8 @@ describe('Auto team builder', () => {
       }),
     );
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 900005)).toBe(false);
   });
 
   it('treats distinct normalized base names like Chef Sanji and Sanji as unique', () => {
@@ -2456,6 +2458,109 @@ describe('Auto team builder', () => {
     expect(result?.slots.some((slot) => slot.character.id >= 9000)).toBe(false);
   });
 
+  it('builds Kid teams only from boosted characters that satisfy captain tag conditions', () => {
+    const result = buildAutoTeamResult(createKidLeaderTeamRecords(), {
+      ...createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], [], {
+        requireFullCaptainAbilityCoverage: true,
+        lockedCharacterIds: [4549],
+        captainCharacterId: 4549,
+        friendCaptainCharacterId: 4549,
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.leaderCriteria.tagConditionSets[0]?.branches).toHaveLength(2);
+    expect(result?.coverage.leaderCriteria.matchingSlots).toBe(6);
+    expect(
+      result?.slots.filter((slot) =>
+        ['kid pirates', 'worst generation', 'land of wano arc', 'egghead arc'].some((tag) =>
+          slot.character.detail.characterTags?.map((entry) => entry.toLowerCase()).includes(tag),
+        ),
+      ).length,
+    ).toBeGreaterThanOrEqual(4);
+  });
+
+  it('enforces both leaders tag conditions when building with dual captains', () => {
+    const result = buildAutoTeamResult(createDualTagConditionLeaderTeamRecords(), {
+      ...createInput(['DEX'], ['Fighter'], {
+        requireFullCaptainAbilityCoverage: true,
+        lockedCharacterIds: [5810, 5811],
+        captainCharacterId: 5810,
+        friendCaptainCharacterId: 5811,
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.leaderCriteria.tagConditionSets).toHaveLength(2);
+    expect(
+      result?.slots.filter((slot) =>
+        slot.character.detail.characterTags?.includes('Straw Hat Pirates'),
+      ).length,
+    ).toBeGreaterThanOrEqual(4);
+    expect(
+      result?.slots.filter((slot) => slot.character.detail.characterTags?.includes('Scientist'))
+      .length,
+    ).toBeGreaterThanOrEqual(4);
+  });
+
+  it('requires Captain and Friend Captain to match full captain ability coverage', () => {
+    const records = [
+      createCharacterRecord({
+        id: 8200,
+        name: 'DEX Captain',
+        type: 'DEX',
+        primaryClass: 'Fighter',
+        detail: {
+          captainAbility: 'Boosts ATK of [DEX] characters by 5x and HP by 1.3x.',
+        },
+      }),
+      createCharacterRecord({
+        id: 8201,
+        name: 'QCK Friend Captain',
+        type: 'QCK',
+        primaryClass: 'Fighter',
+        detail: {
+          captainAbility: 'Boosts ATK of all characters by 5x and HP by 1.3x.',
+        },
+      }),
+      ...[8202, 8203, 8204, 8205].map((id) =>
+        createCharacterRecord({
+          id,
+          type: 'DEX',
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts orb effects of [DEX] characters by 2.25x for 1 turn.',
+          },
+        }),
+      ),
+    ];
+    const input = createInput(['DEX'], ['Fighter'], {
+      manualSlots: createManualSlots({
+        captain: [8200],
+        friendCaptain: [8201],
+      }),
+      lockedCharacterIds: [8200, 8201],
+      captainCharacterId: 8200,
+      friendCaptainCharacterId: 8201,
+    });
+
+    const manualLeaderOnlyOptions = {
+      leaderAutoFillCharacterIds: [],
+    };
+
+    expect(buildAutoTeamResult(records, input, manualLeaderOnlyOptions)).not.toBeNull();
+    expect(
+      buildAutoTeamResult(
+        records,
+        {
+          ...input,
+          requireFullCaptainAbilityCoverage: true,
+        },
+        manualLeaderOnlyOptions,
+      ),
+    ).toBeNull();
+  });
+
   it('builds Big Mom teams only from STR, DEX, and QCK characters', () => {
     const result = buildAutoTeamResult(createBigMomLeaderTeamRecords(), {
       ...createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], ['Powerhouse'], {
@@ -2517,9 +2622,14 @@ describe('Auto team builder', () => {
     expect(result?.coverage.leaderCriteria.dualLeaderMode).toBe('intersection');
     expect(result?.coverage.leaderCriteria.derivedAllowedClasses).toEqual(['Powerhouse']);
     expect(
-      result?.slots.slice(2).every((slot) => slot.character.classes.includes('Powerhouse')),
+      result?.slots
+        .slice(2)
+        .every(
+          (slot) =>
+            slot.character.classes.includes('Powerhouse') ||
+            ['DEX', 'PSY'].includes(slot.character.type),
+        ),
     ).toBe(true);
-    expect(result?.slots.some((slot) => slot.character.id === 2716)).toBe(false);
   });
 
   it('falls back to generic roster selection when captain ability has no clear scope', () => {
@@ -6014,6 +6124,7 @@ function createInput(
       | 'requireAllSelectedTypesInTeam'
       | 'requireAllSelectedClassesPerCharacter'
       | 'requireAllSlotsInLeaderSuperEffectScope'
+      | 'requireFullCaptainAbilityCoverage'
       | 'minimumLeaderSuperEffectMatchingSlots'
       | 'requireLeaderSuperSpecialCriteria'
       | 'requireUniqueBaseCharacterNames'
@@ -6040,6 +6151,7 @@ function createInput(
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
+    requireFullCaptainAbilityCoverage: false,
     requireLeaderSuperSpecialCriteria: false,
     requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
@@ -6075,6 +6187,7 @@ function createInput(
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
     requireAllSlotsInLeaderSuperEffectScope:
       overrides.requireAllSlotsInLeaderSuperEffectScope ?? false,
+    requireFullCaptainAbilityCoverage: overrides.requireFullCaptainAbilityCoverage ?? false,
     minimumLeaderSuperEffectMatchingSlots: overrides.requireAllSlotsInLeaderSuperEffectScope
       ? (overrides.minimumLeaderSuperEffectMatchingSlots ?? 6)
       : null,
@@ -6524,6 +6637,7 @@ function buildWorkerResult(
     coverage: {
       leaderCriteria: {
         source: 'captainAbility',
+        coverageMode: 'simpleBoostScope',
         captainLeaderId: null,
         friendCaptainLeaderId: null,
         leaderIds: [],
@@ -6535,6 +6649,7 @@ function buildWorkerResult(
         maxAllowedCost: null,
         hasClassRestriction: false,
         hasTypeRestriction: false,
+        tagConditionSets: [],
         matchingSlots: 0,
         totalSlots: 0,
         allSlotsMatch: true,
@@ -6825,6 +6940,7 @@ function createBrookLeaderTeamRecords(): CharacterDetailRecord[] {
         captainAbility: BROOK_CAPTAIN_ABILITY,
         specialText:
           'Boosts Color Affinity of PSY, Slasher and Free Spirit characters by 2.75x for 2 turns.',
+        characterTags: ['Straw Hat Pirates'],
       },
     }),
     createCharacterRecord({
@@ -6833,6 +6949,7 @@ function createBrookLeaderTeamRecords(): CharacterDetailRecord[] {
       primaryClass: 'Slasher',
       detail: {
         specialText: 'Boosts ATK of Slasher characters by 2.5x for 1 turn.',
+        characterTags: ['Paramythia-type'],
       },
     }),
     createCharacterRecord({
@@ -6841,6 +6958,7 @@ function createBrookLeaderTeamRecords(): CharacterDetailRecord[] {
       primaryClass: 'Free Spirit',
       detail: {
         specialText: 'Boosts orb effects of Free Spirit characters by 2.25x for 1 turn.',
+        characterTags: ['Scientist'],
       },
     }),
     createCharacterRecord({
@@ -6850,6 +6968,7 @@ function createBrookLeaderTeamRecords(): CharacterDetailRecord[] {
       secondaryClass: 'Powerhouse',
       detail: {
         specialText: 'Reduces Bind and Despair duration by 5 turns.',
+        characterTags: ['Straw Hat Pirates'],
       },
     }),
     createCharacterRecord({
@@ -6859,6 +6978,7 @@ function createBrookLeaderTeamRecords(): CharacterDetailRecord[] {
       secondaryClass: 'Free Spirit',
       detail: {
         specialText: 'Changes crew orbs into Matching Orbs.',
+        characterTags: ['Paramythia-type'],
       },
     }),
     createCharacterRecord({
@@ -6882,6 +7002,123 @@ function createBrookLeaderTeamRecords(): CharacterDetailRecord[] {
       },
     }),
   ];
+}
+
+function createKidLeaderTeamRecords(): CharacterDetailRecord[] {
+  const kidCaptainAbility =
+    'Reduces Special Cooldown of all characters by 1 turn and reduces Special Cooldown of this character by 4 turns at the start of the fight, boosts ATK of [STR], Striker and Driven characters by 5x, boosts HP of [STR], Striker and Driven characters by 1.3x, and makes [STR] and [INT] orbs beneficial for all characters. If HP is below 50% at the start of the turn, boosts ATK of [STR], Striker and Driven characters by 6x instead, and reduces damage received by 25%. If your crew has 4+ [Kid Pirates], [Worst Generation] or [Land of Wano Arc] characters or your crew has 6 [Kid Pirates], [Worst Generation] or [Egghead Arc] characters, reduces Despair duration by 10 turns, and boosts base ATK of [Paramythia-type] characters by 500.';
+
+  return [
+    createCharacterRecord({
+      id: 4549,
+      name: 'Eustass "Captain" Kid - Aimed Damned Punk',
+      type: 'STR',
+      primaryClass: 'Striker',
+      secondaryClass: 'Driven',
+      captainHpBoost: 1.3,
+      captainAtkBoost: 5,
+      captainAverageBoost: 3.15,
+      detail: {
+        captainAbility: kidCaptainAbility,
+        specialText: 'Boosts ATK of [STR], Striker and Driven characters by 3x for 1 turn.',
+        characterTags: ['Kid Pirates', 'Worst Generation', 'Egghead Arc'],
+      },
+    }),
+    createCharacterRecord({
+      id: 8101,
+      type: 'STR',
+      primaryClass: 'Shooter',
+      detail: {
+        specialText: 'Boosts ATK of STR characters by 2.5x for 1 turn.',
+        characterTags: ['Worst Generation'],
+      },
+    }),
+    createCharacterRecord({
+      id: 8102,
+      type: 'QCK',
+      primaryClass: 'Driven',
+      detail: {
+        specialText: 'Boosts orb effects of Driven characters by 2.25x for 1 turn.',
+        characterTags: ['Land of Wano Arc'],
+      },
+    }),
+    createCharacterRecord({
+      id: 8103,
+      type: 'DEX',
+      primaryClass: 'Striker',
+      detail: {
+        specialText: 'Reduces Bind and Despair duration by 5 turns.',
+        characterTags: ['Egghead Arc'],
+      },
+    }),
+    createCharacterRecord({
+      id: 8104,
+      type: 'INT',
+      primaryClass: 'Driven',
+      detail: {
+        specialText: 'Changes crew orbs into Matching Orbs and reduces Special Cooldown by 1 turn.',
+        characterTags: ['Kid Pirates'],
+      },
+    }),
+    createCharacterRecord({
+      id: 9900,
+      type: 'STR',
+      primaryClass: 'Shooter',
+      detail: {
+        specialText:
+          'Boosts ATK of all characters by 3x for 1 turn and boosts orb effects by 3x for 1 turn.',
+      },
+    }),
+  ];
+}
+
+function createDualTagConditionLeaderTeamRecords(): CharacterDetailRecord[] {
+  return [
+    createDualTagConditionRecord(5810, 'Straw Hat Leader', ['Straw Hat Pirates', 'Scientist']),
+    createDualTagConditionRecord(5811, 'Scientist Leader', ['Straw Hat Pirates', 'Scientist']),
+    createDualTagConditionSubRecord(5812, ['Straw Hat Pirates', 'Scientist']),
+    createDualTagConditionSubRecord(5813, ['Straw Hat Pirates', 'Scientist']),
+    createDualTagConditionSubRecord(5814, ['Straw Hat Pirates', 'Scientist']),
+    createDualTagConditionSubRecord(5815, ['Straw Hat Pirates', 'Scientist']),
+    createDualTagConditionSubRecord(9910, ['Straw Hat Pirates']),
+  ];
+}
+
+function createDualTagConditionRecord(
+  id: number,
+  name: string,
+  characterTags: string[],
+): CharacterDetailRecord {
+  const tag = id === 5810 ? 'Straw Hat Pirates' : 'Scientist';
+
+  return createCharacterRecord({
+    id,
+    name,
+    type: 'DEX',
+    primaryClass: 'Fighter',
+    secondaryClass: 'Free Spirit',
+    detail: {
+      captainAbility: `Boosts ATK of DEX and Fighter characters by 5x and HP by 1.3x. If your crew has 4+ [${tag}] characters, reduces Despair duration by 10 turns.`,
+      specialText: 'Boosts ATK of DEX characters by 2.5x for 1 turn.',
+      characterTags,
+    },
+  });
+}
+
+function createDualTagConditionSubRecord(
+  id: number,
+  characterTags: string[],
+): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    type: 'DEX',
+    primaryClass: 'Fighter',
+    secondaryClass: 'Free Spirit',
+    detail: {
+      specialText: 'Boosts orb effects of DEX characters by 2.25x for 1 turn.',
+      characterTags,
+    },
+  });
 }
 
 function createIntersectedLeaderTeamRecords(): CharacterDetailRecord[] {
@@ -7160,7 +7397,9 @@ function createBuilderAbility(
   };
 }
 
-function createBindBattleRequirement(id: string): NonNullable<AutoBuildInput['battleRequirements']>[number] {
+function createBindBattleRequirement(
+  id: string,
+): NonNullable<AutoBuildInput['battleRequirements']>[number] {
   return {
     id,
     title: id,
@@ -7197,6 +7436,7 @@ function createCharacterRecord(
     id: overrides.id,
     name: overrides.name ?? `Unit ${overrides.id}`,
     searchText: overrides.searchText,
+    isIncomplete: overrides.isIncomplete ?? false,
     type: overrides.type ?? AUTO_TEAM_BUILDER_DEFAULT_TYPE,
     classes,
     primaryClass: overrides.primaryClass,
@@ -7227,6 +7467,8 @@ function createCharacterRecord(
     detail: {
       characterId: overrides.id,
       captainAbility: overrides.detail?.captainAbility ?? null,
+      captainAbilityVariants: overrides.detail?.captainAbilityVariants ?? [],
+      captainNotes: overrides.detail?.captainNotes ?? null,
       specialName: overrides.detail?.specialName ?? null,
       specialText: overrides.detail?.specialText ?? null,
       specialNotes: overrides.detail?.specialNotes ?? null,

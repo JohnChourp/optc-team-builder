@@ -7,6 +7,13 @@
     "deleteSelected": "Να διαγραφούν {{count}} επιλεγμένες ομάδες;",
     "deleteSingle": "Να διαγραφεί η ομάδα \"{{name}}\";"
   },
+  "condition": {
+    "roles": {
+      "captain": "Captain",
+      "friendCaptain": "Friend Captain"
+    },
+    "slotLabel": "Slot {{slot}}"
+  },
   "empty": "Δεν υπάρχουν αποθηκευμένες ομάδες ακόμα.",
   "edit": {
     "actions": {

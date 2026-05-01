@@ -58,6 +58,26 @@
   gap: 14px;
 }
 
+.captain-condition-panel {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+}
+
+.captain-condition-panel--full {
+  border-color: rgba(67, 214, 128, 0.5);
+  box-shadow: 0 0 0 1px rgba(67, 214, 128, 0.16);
+}
+
+.captain-condition-panel--partial {
+  border-color: rgba(245, 200, 76, 0.5);
+  box-shadow: 0 0 0 1px rgba(245, 200, 76, 0.14);
+}
+
+.captain-condition-panel--none {
+  border-color: rgba(255, 112, 112, 0.38);
+  box-shadow: 0 0 0 1px rgba(255, 112, 112, 0.1);
+}
+
 .controls-grid > * {
   min-width: 0;
 }
@@ -1403,6 +1423,10 @@
 
 .result-grid {
   grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.result-grid.captain-condition-panel {
+  padding: 12px;
 }
 
 .result-ship-card {

@@ -958,6 +958,16 @@ function normalizeUnitMapEntry(
   };
 }
 
+export function normalizeCharacterTags(value) {
+  return [
+    ...new Set(
+      flattenValues(value)
+        .map((entry) => String(entry ?? '').trim())
+        .filter((entry) => entry.length > 0),
+    ),
+  ];
+}
+
 function buildNormalizedUnitEntries(units) {
   if (Array.isArray(units)) {
     return units.flatMap((entry, index) => {
@@ -1214,7 +1224,12 @@ function normalizeCaptainAbilityVariants(rawCaptainAbility) {
   return variants;
 }
 
-export function normalizeCharacterDetail(detail, characterId, rumbleData = null) {
+export function normalizeCharacterDetail(
+  detail,
+  characterId,
+  rumbleData = null,
+  characterTags = [],
+) {
   const normalizedCaptainAbilityVariants = normalizeCaptainAbilityVariants(detail.captain ?? null);
   const normalizedCaptainAbility = normalizedCaptainAbilityVariants[0]?.text ?? null;
   const normalizedSpecialText = normalizeLegacyAbilityText(detail.special ?? null) || null;
@@ -1246,6 +1261,7 @@ export function normalizeCharacterDetail(detail, characterId, rumbleData = null)
       ? parseSuperSpecialCriteria(normalizedSuperSpecialCriteriaText)
       : null,
     partyConflictKeys: [],
+    characterTags: normalizeCharacterTags(characterTags),
     builderAbilities: [],
     sailorAbilities: normalizedSailorAbilities,
     sailorNotes: normalizedSailorNotes,
@@ -1270,7 +1286,7 @@ export function normalizeCharacterDetail(detail, characterId, rumbleData = null)
   };
 }
 
-export function normalizeCharacters(units, details, rumbleUnits, assetsById) {
+export function normalizeCharacters(units, details, rumbleUnits, assetsById, tagsById = {}) {
   const rumbleById = new Map(normalizeRumbleUnits(rumbleUnits).map((entry) => [entry.id, entry]));
   const normalizedUnitEntries = buildNormalizedUnitEntries(units);
 
@@ -1298,6 +1314,7 @@ export function normalizeCharacters(units, details, rumbleUnits, assetsById) {
         detail,
         characterId,
         rumbleById.get(characterId) ?? null,
+        tagsById?.[characterId] ?? tagsById?.[String(characterId)] ?? [],
       );
       const captainBoosts = resolveCharacterCaptainBoosts(normalizedDetail);
 
@@ -1324,6 +1341,7 @@ export function normalizeCharacters(units, details, rumbleUnits, assetsById) {
           name,
           type,
           classes,
+          aliases: normalizedDetail.characterTags,
         }),
         regionAvailability: {
           exactLocal: Boolean(assets.exactLocal),
@@ -1444,6 +1462,7 @@ async function main() {
   const [
     unitsWindow,
     detailsWindow,
+    tagsWindow,
     shipsWindow,
     utilsWindow,
     rumble,
@@ -1454,6 +1473,7 @@ async function main() {
   ] = await Promise.all([
     evaluateLegacyFile('common/data/units.js', selectedSource),
     evaluateLegacyFile('common/data/details.js', selectedSource),
+    evaluateLegacyFile('common/data/tags.js', selectedSource),
     evaluateLegacyFile('common/data/ships.js', selectedSource),
     evaluateLegacyFile('common/js/utils.js', selectedSource),
     fetchJson(buildSourceFileUrl(selectedSource, 'common/data/rumble.json'), selectedSource),
@@ -1507,7 +1527,13 @@ async function main() {
   );
   const characters = applyPartyConflictKeys(
     applyExactLocalAssets(
-      normalizeCharacters(unitsWindow.units, detailsWindow.details, rumble.units ?? [], assetsById),
+      normalizeCharacters(
+        unitsWindow.units,
+        detailsWindow.details,
+        rumble.units ?? [],
+        assetsById,
+        tagsWindow.tags ?? {},
+      ),
       manualExactLocalPaths,
     ),
     partyConflictOverrides,

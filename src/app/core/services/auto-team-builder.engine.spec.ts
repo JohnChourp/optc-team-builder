@@ -436,6 +436,7 @@ function createInput(
       | 'requireAllSelectedTypesInTeam'
       | 'requireAllSelectedClassesPerCharacter'
       | 'requireAllSlotsInLeaderSuperEffectScope'
+      | 'requireFullCaptainAbilityCoverage'
       | 'minimumLeaderSuperEffectMatchingSlots'
       | 'requireLeaderSuperSpecialCriteria'
       | 'requireUniqueBaseCharacterNames'
@@ -473,6 +474,7 @@ function createInput(
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
     requireAllSlotsInLeaderSuperEffectScope:
       overrides.requireAllSlotsInLeaderSuperEffectScope ?? false,
+    requireFullCaptainAbilityCoverage: overrides.requireFullCaptainAbilityCoverage ?? false,
     minimumLeaderSuperEffectMatchingSlots: overrides.requireAllSlotsInLeaderSuperEffectScope
       ? (overrides.minimumLeaderSuperEffectMatchingSlots ?? 6)
       : null,
@@ -707,6 +709,7 @@ function createCharacterRecord(
   return {
     id,
     name: overrides.name ?? `Character ${id}`,
+    isIncomplete: overrides.isIncomplete ?? false,
     type: overrides.type ?? 'DEX',
     classes: overrides.classes ?? ([primaryClass, secondaryClass].filter(Boolean) as string[]),
     primaryClass,
@@ -737,10 +740,17 @@ function createCharacterRecord(
     detail: {
       characterId: id,
       captainAbility: overrides.detail?.captainAbility ?? null,
+      captainAbilityVariants: overrides.detail?.captainAbilityVariants ?? [],
+      captainNotes: overrides.detail?.captainNotes ?? null,
       specialName: overrides.detail?.specialName ?? `Special ${id}`,
       specialText: overrides.detail?.specialText ?? null,
       specialNotes: overrides.detail?.specialNotes ?? null,
+      superSpecialText: overrides.detail?.superSpecialText ?? null,
+      superSpecialCriteriaText: overrides.detail?.superSpecialCriteriaText ?? null,
+      superSpecialNotes: overrides.detail?.superSpecialNotes ?? null,
+      superSpecialCriteria: overrides.detail?.superSpecialCriteria ?? null,
       partyConflictKeys: overrides.detail?.partyConflictKeys ?? [],
+      characterTags: overrides.detail?.characterTags ?? [],
       builderAbilities: overrides.detail?.builderAbilities ?? [],
       sailorAbilities: overrides.detail?.sailorAbilities ?? [],
       sailorNotes: overrides.detail?.sailorNotes ?? null,

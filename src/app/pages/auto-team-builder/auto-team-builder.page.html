@@ -410,6 +410,19 @@
               (ionChange)="onRequireAllSlotsInLeaderSuperEffectScopeToggle($event)"
             ></ion-toggle>
           </div>
+
+          <div class="strict-toggle-row">
+            <div class="strict-toggle-copy">
+              <strong>{{ captainAbilityCoverageToggleLabel() }}</strong>
+              <small>{{ captainAbilityCoverageSupportLabel() }}</small>
+            </div>
+            <ion-toggle
+              color="warning"
+              [checked]="requireFullCaptainAbilityCoverage()"
+              [disabled]="building()"
+              (ionChange)="onRequireFullCaptainAbilityCoverageToggle($event)"
+            ></ion-toggle>
+          </div>
         </div>
 
         <section class="ability-requirements-card">
@@ -545,7 +558,6 @@
                               {{ t('requiredCharacters.cardEmpty') }}
                             </p>
                           }
-
                         </article>
                       }
                     </div>
@@ -1516,7 +1528,14 @@
           </ion-button>
         </div>
 
-        <section class="fixed-manual-team-card">
+        <section
+          class="fixed-manual-team-card captain-condition-panel"
+          [class.captain-condition-panel--full]="fixedManualTeamConditionStatus()?.state === 'full'"
+          [class.captain-condition-panel--partial]="
+            fixedManualTeamConditionStatus()?.state === 'partial'
+          "
+          [class.captain-condition-panel--none]="fixedManualTeamConditionStatus()?.state === 'none'"
+        >
           <div class="slot-grid__header">
             <h2>{{ t('manualTeam.title') }}</h2>
             <p>{{ t('manualTeam.copy') }}</p>
@@ -1588,6 +1607,12 @@
               </button>
             }
           </div>
+
+          @if (fixedManualTeamConditionStatus(); as conditionStatus) {
+            <app-captain-team-condition-status
+              [status]="conditionStatus"
+            ></app-captain-team-condition-status>
+          }
 
           <div class="fixed-manual-team-picker">
             <div class="manual-locks-meta manual-locks-meta--candidates">
@@ -2112,7 +2137,20 @@
             <span>{{ favoriteShipsOnlyResultWarning() }}</span>
           </section>
         }
-        <section class="result-grid">
+        @if (resultTeamConditionStatus(); as conditionStatus) {
+          <app-captain-team-condition-status
+            [status]="conditionStatus"
+          ></app-captain-team-condition-status>
+        }
+
+        <section
+          class="result-grid captain-condition-panel"
+          [class.captain-condition-panel--full]="resultTeamConditionStatus()?.state === 'full'"
+          [class.captain-condition-panel--partial]="
+            resultTeamConditionStatus()?.state === 'partial'
+          "
+          [class.captain-condition-panel--none]="resultTeamConditionStatus()?.state === 'none'"
+        >
           @for (slot of teamSlots(); track slot.trackKey) {
             <article class="glass-card result-card">
               <div class="result-card__head">

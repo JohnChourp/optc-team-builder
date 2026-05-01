@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-30T14:31:12.941Z",
+  "generatedAt": "2026-05-01T14:06:47.490Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -19,7 +19,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1749,
+      "matchCount": 1750,
       "matchingCharacterIds": [
         1,
         2,
@@ -1766,6 +1766,7 @@
         4543,
         4545,
         4549,
+        4556,
         5013,
         5014,
         5029,
@@ -3018,7 +3019,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1330,
+      "matchCount": 1331,
       "matchingCharacterIds": [
         209,
         210,
@@ -4348,6 +4349,7 @@
         4551,
         4552,
         4554,
+        4556,
         5013,
         5014
       ],
@@ -5263,19 +5265,22 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 2,
+      "matchCount": 3,
       "matchingCharacterIds": [
         3176,
-        3177
+        3177,
+        4556
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
         3176,
-        3177
+        3177,
+        4556
       ],
       "sampleTexts": [
         "Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated. If this character is your Captain/Friend Captain, increases duration of any Orb Amplification buffs by 1 turn.",
-        "Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated. If this character is your Captain/Friend Captain, increases duration of any Orb Amplification buffs by 1 turn."
+        "Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated. If this character is your Captain/Friend Captain, increases duration of any Orb Amplification buffs by 1 turn.",
+        "Applies Ignited status to all enemies (ignoring immunity to all status effects or immunity excluding certain status effect) for 1 turn (deals 100x enemy ATK in non-type damage at end of enemy turn; Ignited damage effect will not be applied after an enemy's preemptive action), reduces crew's Bind duration by 6 turns, boosts Fighter characters' ATK by 3x for 3 turns (allows this effect to be further increased up to 2 times), and launches the following effects based on character's Special launch status: (1) reduces all enemies' DEF Up duration by 6 turns, reduces character's Special charge time by 13 turns, and sets character's Special launch status to (2). If crew's HP is 10% or below or character's Special launch status is (2) when Special is launched, changes crew's slots (including [BLOCK] slots and unless slot is [DEX]) to [DEX], boosts damage dealt to Ignited enemies by 2.25x for 1 turn, and reduces bottom-row characters' Special charge time by 3 turns (Special launch status (1) effect and \"If crew's HP is 10% or below or character's Special launch status is (2) when Special is launched\" effect are not stackable)"
       ]
     },
     {
@@ -8054,7 +8059,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1468,
+      "matchCount": 1469,
       "matchingCharacterIds": [
         21,
         23,
@@ -9514,6 +9519,7 @@
         4546,
         4547,
         4552,
+        4556,
         5013,
         5014,
         5029,
@@ -9557,7 +9563,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 622,
+      "matchCount": 623,
       "matchingCharacterIds": [
         566,
         570,
@@ -10179,6 +10185,7 @@
         4546,
         4547,
         4552,
+        4556,
         5031,
         5032
       ],
@@ -10260,7 +10267,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 831,
+      "matchCount": 832,
       "matchingCharacterIds": [
         228,
         265,
@@ -11090,6 +11097,7 @@
         4547,
         4551,
         4553,
+        4556,
         5031,
         5032,
         5056
@@ -11904,7 +11912,8 @@
             4525,
             4532,
             4545,
-            4553
+            4553,
+            4556
           ]
         },
         {
@@ -18052,7 +18061,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 255,
+      "matchCount": 256,
       "matchingCharacterIds": [
         1411,
         1412,
@@ -18308,7 +18317,8 @@
         4534,
         4546,
         4548,
-        4552
+        4552,
+        4556
       ],
       "turnMatchingCharacterIds": [
         {
@@ -18572,7 +18582,8 @@
             4526,
             4527,
             4548,
-            4552
+            4552,
+            4556
           ]
         },
         {
@@ -21054,11 +21065,17 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 0,
-      "matchingCharacterIds": [],
+      "matchCount": 1,
+      "matchingCharacterIds": [
+        4556
+      ],
       "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [],
-      "sampleTexts": []
+      "sampleCharacterIds": [
+        4556
+      ],
+      "sampleTexts": [
+        "Applies Ignited status to all enemies (ignoring immunity to all status effects or immunity excluding certain status effect) for 1 turn (deals 100x enemy ATK in non-type damage at end of enemy turn; Ignited damage effect will not be applied after an enemy's preemptive action), reduces crew's Bind duration by 6 turns, boosts Fighter characters' ATK by 3x for 3 turns (allows this effect to be further increased up to 2 times), and launches the following effects based on character's Special launch status: (1) reduces all enemies' DEF Up duration by 6 turns, reduces character's Special charge time by 13 turns, and sets character's Special launch status to (2). If crew's HP is 10% or below or character's Special launch status is (2) when Special is launched, changes crew's slots (including [BLOCK] slots and unless slot is [DEX]) to [DEX], boosts damage dealt to Ignited enemies by 2.25x for 1 turn, and reduces bottom-row characters' Special charge time by 3 turns (Special launch status (1) effect and \"If crew's HP is 10% or below or character's Special launch status is (2) when Special is launched\" effect are not stackable)"
+      ]
     },
     {
       "key": "inflict_poison",
@@ -21666,7 +21683,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 492,
+      "matchCount": 493,
       "matchingCharacterIds": [
         950,
         951,
@@ -22159,7 +22176,8 @@
         4543,
         4544,
         4549,
-        4553
+        4553,
+        4556
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -26986,7 +27004,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 354,
+      "matchCount": 355,
       "matchingCharacterIds": [
         20,
         22,
@@ -27340,6 +27358,7 @@
         4539,
         4549,
         4552,
+        4556,
         5054,
         5055
       ],
@@ -31515,7 +31534,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 40,
+      "matchCount": 41,
       "matchingCharacterIds": [
         4364,
         4365,
@@ -31556,7 +31575,8 @@
         4544,
         4547,
         4550,
-        4551
+        4551,
+        4556
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -33415,7 +33435,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 505,
+      "matchCount": 506,
       "matchingCharacterIds": [
         12,
         20,
@@ -33921,6 +33941,7 @@
         4552,
         4553,
         4554,
+        4556,
         5014
       ],
       "turnMatchingCharacterIds": [],
@@ -33955,7 +33976,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 338,
+      "matchCount": 339,
       "matchingCharacterIds": [
         16,
         257,
@@ -34294,7 +34315,8 @@
         4538,
         4539,
         4545,
-        4547
+        4547,
+        4556
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -37693,7 +37715,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 37,
+      "matchCount": 38,
       "matchingCharacterIds": [
         365,
         2273,
@@ -37731,6 +37753,7 @@
         4453,
         4494,
         4495,
+        4556,
         5056
       ],
       "turnMatchingCharacterIds": [],

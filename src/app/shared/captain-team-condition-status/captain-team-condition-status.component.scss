@@ -1,0 +1,62 @@
+.captain-team-condition-status {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #f8fbff;
+}
+
+.captain-team-condition-status ion-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.captain-team-condition-status > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.captain-team-condition-status strong,
+.captain-team-condition-status span {
+  overflow-wrap: anywhere;
+}
+
+.captain-team-condition-status strong {
+  font-size: 0.92rem;
+  line-height: 1.25;
+}
+
+.captain-team-condition-status span {
+  color: rgba(248, 251, 255, 0.68);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.captain-team-condition-status--compact {
+  padding: 8px 10px;
+}
+
+.captain-team-condition-status--full {
+  border-color: rgba(67, 214, 128, 0.48);
+  background: rgba(67, 214, 128, 0.12);
+}
+
+.captain-team-condition-status--partial {
+  border-color: rgba(245, 200, 76, 0.5);
+  background: rgba(245, 200, 76, 0.12);
+}
+
+.captain-team-condition-status--none {
+  border-color: rgba(255, 112, 112, 0.42);
+  background: rgba(255, 112, 112, 0.1);
+}
+
+.captain-team-condition-status--pending {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+}

@@ -108,6 +108,8 @@ export class AutoTeamBuilderService {
     const favoriteShipsOnly = constraints.favoriteShipsOnly ?? false;
     const requireAllSlotsInLeaderSuperEffectScope =
       constraints.requireAllSlotsInLeaderSuperEffectScope ?? false;
+    const requireFullCaptainAbilityCoverage =
+      constraints.requireFullCaptainAbilityCoverage ?? false;
     const normalizedTypes = normalizeSelectedTypes(selectedTypes);
     const normalizedClasses: string[] = [];
 
@@ -182,6 +184,7 @@ export class AutoTeamBuilderService {
       requireAllSelectedClassesPerCharacter:
         constraints.requireAllSelectedClassesPerCharacter ?? false,
       requireAllSlotsInLeaderSuperEffectScope,
+      requireFullCaptainAbilityCoverage,
       minimumLeaderSuperEffectMatchingSlots: requireAllSlotsInLeaderSuperEffectScope
         ? (constraints.minimumLeaderSuperEffectMatchingSlots ?? AUTO_BUILD_TOTAL_SLOT_COUNT)
         : null,
@@ -1516,6 +1519,7 @@ export class AutoTeamBuilderService {
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSlotsInLeaderSuperEffectScope,
+      requireFullCaptainAbilityCoverage: rosterInput.requireFullCaptainAbilityCoverage ?? false,
       minimumLeaderSuperEffectMatchingSlots: requireAllSlotsInLeaderSuperEffectScope
         ? (rosterInput.minimumLeaderSuperEffectMatchingSlots ?? AUTO_BUILD_TOTAL_SLOT_COUNT)
         : null,

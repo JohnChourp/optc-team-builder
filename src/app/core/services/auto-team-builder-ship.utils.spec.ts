@@ -4,6 +4,7 @@ import {
   type AutoBuildInput,
   type AutoBuildResult,
   createEmptyAutoBuildCostRange,
+  createEmptyAutoBuildLeaderBoostRanges,
 } from '../models/auto-team-builder.models';
 import { type CharacterDetailRecord, type ShipRecord } from '../models/optc.models';
 import { resolveAutoBuildShipSelection } from './auto-team-builder-ship.utils';
@@ -193,6 +194,10 @@ function createResult(
     selectedClasses: ['Free Spirit'],
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
+    requireAllSlotsInLeaderSuperEffectScope: false,
+    requireFullCaptainAbilityCoverage: false,
+    minimumLeaderSuperEffectMatchingSlots: null,
+    requireLeaderSuperSpecialCriteria: false,
     requireUniqueBaseCharacterNames: false,
     requiredAbilities: [],
     requiredCharacterGroups: [],
@@ -201,6 +206,8 @@ function createResult(
     allowAnyFriendCaptainAutoFill: false,
     favoriteShipsOnly: false,
     favoriteShipIds: [],
+    leaderBoostFilters: ['HP', 'ATK'],
+    leaderBoostRanges: createEmptyAutoBuildLeaderBoostRanges(),
     costRange: createEmptyAutoBuildCostRange(),
     leaderCostRange: createEmptyAutoBuildCostRange(),
     subCostRange: createEmptyAutoBuildCostRange(),
@@ -269,10 +276,17 @@ function createCharacter(
     detail: {
       characterId: id,
       captainAbility: null,
+      captainAbilityVariants: [],
+      captainNotes: null,
       specialName: null,
       specialText: null,
       specialNotes: null,
+      superSpecialText: null,
+      superSpecialCriteriaText: null,
+      superSpecialNotes: null,
+      superSpecialCriteria: null,
       partyConflictKeys: [],
+      characterTags: [],
       builderAbilities: [],
       sailorAbilities: [],
       sailorNotes: null,
@@ -286,5 +300,9 @@ function createCharacter(
       rumbleData: null,
     },
     ...overrides,
+    isIncomplete: overrides.isIncomplete ?? false,
+    captainHpBoost: overrides.captainHpBoost ?? 1.3,
+    captainAtkBoost: overrides.captainAtkBoost ?? 5,
+    captainAverageBoost: overrides.captainAverageBoost ?? 3.15,
   };
 }

@@ -47,7 +47,7 @@ describe('SavedTeamsPage', () => {
     await page.ngOnInit();
 
     expect(page.loading()).toBe(false);
-    expect(repository.getCharactersByIds).toHaveBeenCalledWith([101, 202, 303, 404, 505]);
+    expect(repository.getDetailedCharactersByIds).toHaveBeenCalledWith([101, 202, 303, 404, 505]);
     expect(repository.getShips).toHaveBeenCalledOnce();
     expect(page.savedTeamCards()).toHaveLength(2);
     expect(page.savedTeamCards()[0]?.slots.map((slot) => slot?.id ?? null)).toEqual([
@@ -81,6 +81,30 @@ describe('SavedTeamsPage', () => {
       shipThumbUrl: 'assets/offline-packs/ship-thumbnails/ship_0001_t2.png',
       hasShipThumbnail: true,
     });
+  });
+
+  it('hydrates captain condition status for saved team cards', async () => {
+    const { page } = createPage({
+      savedTeams: [
+        {
+          id: 'full-team',
+          name: 'Full Team',
+          notes: '',
+          shipId: null,
+          slots: [101, 102, 103, 104, 105, 106],
+          createdAt: '2026-03-29T10:00:00.000Z',
+          updatedAt: '2026-03-29T10:00:00.000Z',
+        },
+      ],
+    });
+
+    await page.ngOnInit();
+
+    expect(page.savedTeamCards()[0]?.conditionStatus.state).toBe('full');
+    expect(page.savedTeamCards()[0]?.conditionStatus.passedLeaderLabels).toEqual([
+      'Captain',
+      'Friend Captain',
+    ]);
   });
 
   it('selects all teams and enables bulk actions', async () => {
@@ -210,11 +234,15 @@ describe('SavedTeamsPage', () => {
     expect(template).toContain('ion-textarea');
     expect(template).toContain('edit-modal-shell');
     expect(template).toContain('saved-team-preview');
+    expect(template).toContain('<app-captain-team-condition-status');
+    expect(template).toContain('teamCard.conditionStatus');
+    expect(template).toContain('captain-condition-panel--full');
+    expect(template).toContain('captain-condition-panel--partial');
     expect(template).toContain('saved-team-ship');
     expect(template).toContain("t('ship.label')");
     expect(template).toContain("t('ship.thumbnailAlt'");
     expect(template).toContain('[icon]="shipIcon"');
-    expect(template).toContain("[routerLink]=\"['/tabs/auto-team-builder']\"");
+    expect(template).toContain('[routerLink]="[\'/tabs/auto-team-builder\']"');
     expect(template).toContain('[queryParams]="getTeamBuilderQueryParams(teamCard.team)"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(currentSlot)"');
     expect(template).not.toContain('openImportModal()');
@@ -327,41 +355,43 @@ function createPage(overrides: { savedTeams?: ReturnType<typeof buildSavedTeams>
       const targetIds = new Set(teamIds);
       savedTeams.set(savedTeams().filter((team) => !targetIds.has(team.id)));
     }),
-    mergeImportedTeams: vi.fn().mockImplementation(async (teams: ReturnType<typeof buildSavedTeams>) => {
-      const currentTeams = savedTeams();
-      const currentTeamMap = new Map(currentTeams.map((team) => [team.id, team] as const));
-      const mergedTeams: typeof teams = [];
-      const importedTeamIds = new Set<string>();
-      let addedCount = 0;
-      let updatedCount = 0;
+    mergeImportedTeams: vi
+      .fn()
+      .mockImplementation(async (teams: ReturnType<typeof buildSavedTeams>) => {
+        const currentTeams = savedTeams();
+        const currentTeamMap = new Map(currentTeams.map((team) => [team.id, team] as const));
+        const mergedTeams: typeof teams = [];
+        const importedTeamIds = new Set<string>();
+        let addedCount = 0;
+        let updatedCount = 0;
 
-      teams.forEach((team) => {
-        if (importedTeamIds.has(team.id)) {
-          return;
-        }
+        teams.forEach((team) => {
+          if (importedTeamIds.has(team.id)) {
+            return;
+          }
 
-        importedTeamIds.add(team.id);
+          importedTeamIds.add(team.id);
 
-        if (currentTeamMap.has(team.id)) {
-          updatedCount += 1;
-        } else {
-          addedCount += 1;
-        }
+          if (currentTeamMap.has(team.id)) {
+            updatedCount += 1;
+          } else {
+            addedCount += 1;
+          }
 
-        mergedTeams.push(team);
-      });
+          mergedTeams.push(team);
+        });
 
-      savedTeams.set([
-        ...mergedTeams,
-        ...currentTeams.filter((team) => !importedTeamIds.has(team.id)),
-      ]);
+        savedTeams.set([
+          ...mergedTeams,
+          ...currentTeams.filter((team) => !importedTeamIds.has(team.id)),
+        ]);
 
-      return {
-        addedCount,
-        updatedCount,
-        teams: mergedTeams,
-      };
-    }),
+        return {
+          addedCount,
+          updatedCount,
+          teams: mergedTeams,
+        };
+      }),
     saveTeam: vi
       .fn()
       .mockImplementation(
@@ -396,21 +426,24 @@ function createPage(overrides: { savedTeams?: ReturnType<typeof buildSavedTeams>
   const repository = {
     getCharactersByIds: vi
       .fn()
-      .mockResolvedValue([
-        createCharacter(101, 'Zoro'),
-        createCharacter(202, 'Law'),
-        createCharacter(303, 'Luffy'),
-        createCharacter(404, 'Nami'),
-        createCharacter(505, 'Robin'),
-      ]),
-    getShips: vi.fn().mockResolvedValue([
-      createShip(
-        9001,
-        'Going Merry',
-        'ship_0001_t2.png',
-        'assets/offline-packs/ship-thumbnails/ship_0001_t2.png',
+      .mockImplementation(async (ids: number[]) =>
+        ids.map((id) => createCharacter(id, `Unit ${id}`)),
       ),
-    ]),
+    getDetailedCharactersByIds: vi
+      .fn()
+      .mockImplementation(async (ids: number[]) =>
+        ids.map((id) => createCharacter(id, `Unit ${id}`)),
+      ),
+    getShips: vi
+      .fn()
+      .mockResolvedValue([
+        createShip(
+          9001,
+          'Going Merry',
+          'ship_0001_t2.png',
+          'assets/offline-packs/ship-thumbnails/ship_0001_t2.png',
+        ),
+      ]),
   };
   const i18n = {
     translate: vi.fn((key: string, params?: Record<string, string | number>) => {
@@ -470,6 +503,18 @@ function createPage(overrides: { savedTeams?: ReturnType<typeof buildSavedTeams>
         return 'No ship';
       }
 
+      if (key === 'condition.roles.captain') {
+        return 'Captain';
+      }
+
+      if (key === 'condition.roles.friendCaptain') {
+        return 'Friend Captain';
+      }
+
+      if (key === 'condition.slotLabel') {
+        return `Slot ${params?.['slot'] ?? ''}`;
+      }
+
       return key;
     }),
   };
@@ -502,19 +547,76 @@ function buildSavedTeams() {
 }
 
 function createCharacter(id: number, name: string) {
+  const captainAbility =
+    id === 101
+      ? 'Boosts ATK of all characters by 5x.'
+      : id === 102
+        ? 'Boosts HP of all characters by 1.3x.'
+        : null;
+
   return {
     id,
     name,
+    searchText: '',
+    isIncomplete: false,
+    type: id % 2 === 0 ? 'DEX' : 'PSY',
+    classes: ['Fighter', 'Slasher'],
+    primaryClass: 'Fighter',
+    secondaryClass: 'Slasher',
+    stars: 5,
+    cost: 55,
+    combo: 4,
+    captainHpBoost: 0,
+    captainAtkBoost: 0,
+    captainAverageBoost: 0,
+    stats: {
+      min: { hp: null, atk: null, rcv: null },
+      max: { hp: null, atk: null, rcv: null },
+      growth: null,
+    },
+    regionAvailability: {
+      exactLocal: false,
+      thumbnailGlobal: false,
+      thumbnailJapan: false,
+    },
+    assets: {
+      exactLocal: null,
+      thumbnailGlobal: null,
+      thumbnailJapan: null,
+    },
     imageUrl: `assets/${id}.png`,
+    detailImageUrl: `assets/${id}.png`,
+    detail: {
+      characterId: id,
+      captainAbility,
+      captainAbilityVariants: [],
+      captainNotes: null,
+      specialName: null,
+      specialText: null,
+      specialNotes: null,
+      superSpecialText: null,
+      superSpecialCriteriaText: null,
+      superSpecialNotes: null,
+      superSpecialCriteria: null,
+      partyConflictKeys: [],
+      characterTags: [],
+      builderAbilities: [],
+      sailorAbilities: [],
+      sailorNotes: null,
+      limitBreak: [],
+      potentialAbilities: [],
+      supportData: [],
+      swapData: null,
+      vsSpecial: null,
+      superType: null,
+      superClass: null,
+      captainShiftData: null,
+      rumbleData: null,
+    },
   };
 }
 
-function createShip(
-  id: number,
-  name: string,
-  thumb: string | null,
-  thumbUrl: string | null,
-) {
+function createShip(id: number, name: string, thumb: string | null, thumbUrl: string | null) {
   return {
     id,
     name,

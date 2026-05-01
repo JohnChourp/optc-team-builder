@@ -1,0 +1,16 @@
+{
+  "detail": {
+    "fullDual": "Captain και Friend Captain καλύπτουν πλήρως αυτή την ομάδα.",
+    "fullSingle": "Ο Captain καλύπτει πλήρως αυτή την ομάδα.",
+    "none": "Κανένας επιλεγμένος leader δεν καλύπτει πλήρως την ολοκληρωμένη ομάδα.",
+    "partial": "Περνάει ο/η {{passed}}. Έλεγξε {{failed}} πριν βασιστείς σε αυτή την ομάδα.",
+    "pending": "{{filled}} / {{total}} slots γεμάτα. Ολοκλήρωσε την ομάδα για να ελεγχθούν τα captain conditions."
+  },
+  "title": {
+    "fullDual": "Περνούν και οι δύο leaders",
+    "fullSingle": "Το Captain condition περνάει",
+    "none": "Το Captain condition δεν περνάει",
+    "partial": "Περνάει μόνο ένας leader",
+    "pending": "Εκκρεμεί έλεγχος condition"
+  }
+}

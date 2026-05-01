@@ -32,7 +32,12 @@
         </div>
       </section>
 
-      <section class="team-budget-panel glass-card">
+      <section
+        class="team-budget-panel glass-card captain-condition-panel"
+        [class.captain-condition-panel--full]="teamConditionStatus()?.state === 'full'"
+        [class.captain-condition-panel--partial]="teamConditionStatus()?.state === 'partial'"
+        [class.captain-condition-panel--none]="teamConditionStatus()?.state === 'none'"
+      >
         <div class="target-panel__copy">
           <div class="section-label">{{ t('team.eyebrow') }}</div>
           <h2>{{ t('team.title') }}</h2>
@@ -98,15 +103,25 @@
           }
         </div>
 
+        @if (teamConditionStatus(); as conditionStatus) {
+          <app-captain-team-condition-status
+            [status]="conditionStatus"
+          ></app-captain-team-condition-status>
+        }
+
         @if (selectedCaptain(); as captain) {
-          <div class="selected-target">
+          <a
+            class="selected-target"
+            [routerLink]="['/characters', captain.id]"
+            [attr.aria-label]="t('results.openCharacterDetails')"
+          >
             <img [src]="captain.imageUrl" [alt]="captain.name" loading="lazy" />
             <div>
               <span>{{ t('team.selectedCaptain') }}</span>
               <strong>{{ captain.name }}</strong>
               <small>#{{ captain.id }} - {{ selectedCaptainSubtitle() }}</small>
             </div>
-          </div>
+          </a>
         }
       </section>
 
@@ -137,10 +152,39 @@
             class="coverage-ability-filters"
             [items]="abilityFilterRailItems()"
             [ariaLabel]="t('filters.abilityRailLabel')"
-            [disabled]="!selectedCaptainDetail()"
+            [disabled]="loading()"
             (selectCategory)="openAbilityFilterCategory($event)"
             (clearCategory)="clearAbilityFilterCategory($event)"
           ></app-ability-filter-rail>
+
+          <label
+            class="ability-rank-toggle"
+            [class.ability-rank-toggle--active]="abilityMatchRankingEnabled()"
+          >
+            <span>{{ t('filters.bestAbilityMatchesFirst') }}</span>
+            <ion-toggle
+              justify="space-between"
+              [checked]="abilityMatchRankingEnabled()"
+              [disabled]="abilityMatchRankingDisabled()"
+              (ionChange)="onAbilityMatchRankingChange($event)"
+            ></ion-toggle>
+          </label>
+
+          <label
+            class="ability-rank-toggle"
+            [class.ability-rank-toggle--active]="requireFullCaptainAbilityCoverage()"
+          >
+            <div class="ability-rank-toggle__copy">
+              <span>{{ t('filters.captainAbilityCoverage.toggle') }}</span>
+              <small>{{ captainAbilityCoverageSupportLabel() }}</small>
+            </div>
+            <ion-toggle
+              justify="space-between"
+              [checked]="requireFullCaptainAbilityCoverage()"
+              [disabled]="!selectedCaptainDetail()"
+              (ionChange)="onRequireFullCaptainAbilityCoverageChange($event)"
+            ></ion-toggle>
+          </label>
 
           <app-special-ability-picker
             [isOpen]="specialAbilityPickerOpen()"
@@ -295,6 +339,19 @@
                 </a>
 
                 <div class="captain-result__body">
+                  <div class="captain-result__boosts" aria-label="Captain boosts">
+                    <span>HP:{{ formatBoost(card.coverage.boosts.hp) }}</span>
+                    <span>ATK:{{ formatBoost(card.coverage.boosts.atk) }}</span>
+                  </div>
+
+                  @if (card.matchedAbilityBadges.length) {
+                    <div class="captain-result__ability-badges">
+                      @for (badge of card.matchedAbilityBadges; track badge.key) {
+                        <span class="captain-result__ability-badge">{{ badge.label }}</span>
+                      }
+                    </div>
+                  }
+
                   <ion-button
                     size="small"
                     fill="outline"

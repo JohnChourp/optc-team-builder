@@ -1,3 +1,4 @@
+import { type NormalizedBuilderAbility } from "../../core/models/auto-team-builder-ability.models";
 import { type CharacterDetailRecord } from "../../core/models/optc.models";
 
 type DisplayLabel = {
@@ -36,9 +37,15 @@ export interface DetailDisplayGroup {
   cards: DetailDisplayCard[];
 }
 
+export interface CharacterDetailCaptainAbilitySummary {
+  variants: DetailDisplayText[];
+  recognizedAbilities: NormalizedBuilderAbility[];
+}
+
 export interface CharacterDetailViewModel {
   heroMeta: DetailDisplayRow[];
   heroStats: DetailDisplayRow[];
+  captainAbilitySummary: CharacterDetailCaptainAbilitySummary | null;
   groups: DetailDisplayGroup[];
 }
 
@@ -73,6 +80,7 @@ export function buildCharacterDetailViewModel(
       ...createOptionalNumberRow("stats.maxAtk", character.stats.max.atk),
       ...createOptionalNumberRow("stats.maxRcv", character.stats.max.rcv),
     ],
+    captainAbilitySummary: buildCaptainAbilitySummary(character),
     groups,
   };
 }
@@ -172,6 +180,36 @@ export function resolveRumbleBasedOnId(rumbleData: Record<string, unknown> | nul
   const basedOnId = Number(basedOnValue);
 
   return Number.isInteger(basedOnId) && basedOnId > 0 ? basedOnId : null;
+}
+
+function buildCaptainAbilitySummary(
+  character: CharacterDetailRecord,
+): CharacterDetailCaptainAbilitySummary | null {
+  const { detail } = character;
+  const captainAbilityVariants = detail.captainAbilityVariants.length
+    ? detail.captainAbilityVariants
+    : detail.captainAbility
+      ? [
+          {
+            key: "captain",
+            label: "Captain Ability",
+            text: detail.captainAbility,
+          },
+        ]
+      : [];
+  const variants = captainAbilityVariants
+    .map((entry) => createText(undefined, entry.text, "default", entry.label))
+    .filter((entry) => entry.value.trim().length > 0);
+  const recognizedAbilities = detail.builderAbilities.filter(
+    (ability) => ability.source === "captainAbility",
+  );
+
+  return variants.length || recognizedAbilities.length
+    ? {
+        variants,
+        recognizedAbilities,
+      }
+    : null;
 }
 
 function buildOverviewGroup(character: CharacterDetailRecord): DetailDisplayGroup {

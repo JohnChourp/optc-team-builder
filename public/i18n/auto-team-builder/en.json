@@ -11,7 +11,8 @@
     "strictModes": {
       "typeCoverage": "team-wide type coverage",
       "perCharacterClasses": "per-slot class matching",
-      "leaderSuperEffectScope": "leader super effect scope"
+      "leaderSuperEffectScope": "leader super effect scope",
+      "captainAbilityCoverage": "full captain ability coverage"
     },
     "strictMode": {
       "flexible": "flexible fallback enabled",
@@ -69,6 +70,13 @@
       "support": {
         "strict": "Every final slot must match every selected Super Type / Super Class / Super Special scope, and those activation requirements stay strict.",
         "flexible": "Default mode tries leaders without Super Type / Super Class effects first, then allows super leaders before relaxing classes or types."
+      }
+    },
+    "captainAbilityCoverage": {
+      "toggle": "Require full Captain Ability coverage",
+      "support": {
+        "simple": "Default mode filters teams by the leader's standard HP/ATK boost scope only.",
+        "full": "Every final slot, including Captain and Friend Captain, must satisfy all targetable Captain Ability clauses."
       }
     },
     "leaderBoost": {

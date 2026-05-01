@@ -9,6 +9,7 @@ import {
   extractSourceVersion,
   normalizeCharacters,
   normalizeCharacterDetail,
+  normalizeCharacterTags,
   packDefinitions,
   parseArgs,
   resolveImportSource,
@@ -506,6 +507,46 @@ describe('import-optc-data ship thumbnail pack', () => {
         },
       ],
     });
+  });
+
+  it('imports upstream character tags into normalized details and search text', () => {
+    const characters = normalizeCharacters(
+      {
+        '4549': {
+          id: '4549',
+          name: 'Eustass "Captain" Kid - Aimed Damned Punk',
+          type: 'STR',
+          class: ['Striker', 'Driven'],
+          stars: '6+',
+          cost: 65,
+          combo: 4,
+        },
+      },
+      {
+        4549: {
+          captain: 'Boosts ATK of [STR], Striker and Driven characters by 5x.',
+        },
+      },
+      [],
+      new Map(),
+      {
+        4549: ['Kid Pirates', 'Worst Generation', 'Egghead Arc'],
+      },
+    );
+
+    expect(characters[0]?.detail.characterTags).toEqual([
+      'Kid Pirates',
+      'Worst Generation',
+      'Egghead Arc',
+    ]);
+    expect(characters[0]?.searchText).toContain('kid pirates');
+    expect(characters[0]?.searchText).toContain('worst generation');
+  });
+
+  it('normalizes character tags from mixed upstream values', () => {
+    expect(normalizeCharacterTags(['Kid Pirates', ['Kid Pirates', ' Egghead Arc '], null])).toEqual(
+      ['Kid Pirates', 'Egghead Arc'],
+    );
   });
 
   it('preserves structured captain variants and notes without concatenating them', () => {

@@ -76,7 +76,14 @@
           </div>
           <div class="saved-team-list">
             @for (teamCard of savedTeamCards(); track teamCard.team.id) {
-              <article>
+              <article
+                class="captain-condition-panel"
+                [class.captain-condition-panel--full]="teamCard.conditionStatus.state === 'full'"
+                [class.captain-condition-panel--partial]="
+                  teamCard.conditionStatus.state === 'partial'
+                "
+                [class.captain-condition-panel--none]="teamCard.conditionStatus.state === 'none'"
+              >
                 <div class="saved-team-head">
                   <label class="saved-team-check">
                     <ion-checkbox
@@ -159,6 +166,10 @@
                     }
                   }
                 </div>
+                <app-captain-team-condition-status
+                  [status]="teamCard.conditionStatus"
+                  [compact]="true"
+                ></app-captain-team-condition-status>
               </article>
             }
           </div>

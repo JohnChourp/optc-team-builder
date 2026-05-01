@@ -2086,6 +2086,11 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).not.toContain('ability-requirements-selected-row');
     expect(template).toContain('<app-ability-requirement-picker');
     expect(template).toContain('<app-character-ability-groups');
+    expect(template).toContain('<app-captain-team-condition-status');
+    expect(template).toContain('resultTeamConditionStatus()');
+    expect(template).toContain('fixedManualTeamConditionStatus()');
+    expect(template).toContain('captain-condition-panel--full');
+    expect(template).toContain('captain-condition-panel--partial');
     expect(template).not.toContain('<app-enemy-mechanic-picker');
     expect(template).not.toContain('<app-special-ability-picker');
     expect(template).not.toContain('<app-ship-picker');
@@ -2134,6 +2139,44 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).not.toContain('leaderSuperSpecialCriteriaToggleLabel()');
     expect(template).toContain("t('fallback.allowedLeadersWithSuperEffects')");
     expect(template).toContain("t('fallback.ignoredLeaderSuperSpecialCriteria')");
+  });
+
+  it('reports partial captain condition status for generated result teams', async () => {
+    const { page } = await createPage();
+    const captain = createCharacterRecord(101);
+    const friendCaptain = createCharacterRecord(102);
+
+    captain.detail.captainAbility = 'Boosts ATK of all characters by 5x.';
+    friendCaptain.detail.captainAbility = 'Boosts HP of [DEX] characters by 1.3x.';
+    page.result.set(
+      createAutoBuildResult([
+        { role: 'captain', character: captain, reasonChips: [] },
+        { role: 'friendCaptain', character: friendCaptain, reasonChips: [] },
+        { role: 'sub', character: createCharacterRecord(103), reasonChips: [] },
+        { role: 'sub', character: createCharacterRecord(104), reasonChips: [] },
+        { role: 'sub', character: createCharacterRecord(105), reasonChips: [] },
+        { role: 'sub', character: createCharacterRecord(106), reasonChips: [] },
+      ]),
+    );
+
+    expect(page.resultTeamConditionStatus()?.state).toBe('partial');
+    expect(page.resultTeamConditionStatus()?.passedLeaderLabels).toEqual(['Captain']);
+    expect(page.resultTeamConditionStatus()?.failedLeaderLabels).toEqual(['Friend Captain']);
+  });
+
+  it('reports full captain condition status for fixed manual teams', async () => {
+    const { page } = await createPage();
+    const slots = [101, 102, 103, 104, 105, 106].map((id) => createCharacterRecord(id));
+
+    slots[0]!.detail.captainAbility = 'Boosts ATK of all characters by 5x.';
+    slots[1]!.detail.captainAbility = 'Boosts HP of all characters by 1.3x.';
+    page.fixedManualTeamSlots.set(slots);
+
+    expect(page.fixedManualTeamConditionStatus()?.state).toBe('full');
+    expect(page.fixedManualTeamConditionStatus()?.passedLeaderLabels).toEqual([
+      'Captain',
+      'Friend Captain',
+    ]);
   });
 
   it('resets the full page state through resetPage', async () => {
@@ -2797,10 +2840,12 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     page.selectManualSlot('sub1');
     page.manualCandidates.set([cheapSub, expensiveSub]);
 
-    expect(page.manualCandidateCards().map((card) => ({
-      id: card.character.id,
-      selectable: card.isSelectableInActiveSlot,
-    }))).toEqual([
+    expect(
+      page.manualCandidateCards().map((card) => ({
+        id: card.character.id,
+        selectable: card.isSelectableInActiveSlot,
+      })),
+    ).toEqual([
       { id: 802, selectable: true },
       { id: 803, selectable: false },
     ]);
@@ -3524,7 +3569,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 23,
+      schemaVersion: 24,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -3544,6 +3589,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
         requireAllSelectedTypesInTeam: true,
         requireAllSelectedClassesPerCharacter: true,
         requireAllSlotsInLeaderSuperEffectScope: true,
+        requireFullCaptainAbilityCoverage: false,
         requireUniqueBaseCharacterNames: true,
         favoritesOnly: true,
         allowAnyFriendCaptainAutoFill: true,
@@ -3605,6 +3651,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSlotsInLeaderSuperEffectScope: false,
+      requireFullCaptainAbilityCoverage: false,
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: true,
       allowAnyFriendCaptainAutoFill: false,
@@ -3630,6 +3677,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
       requireAllSlotsInLeaderSuperEffectScope: false,
+      requireFullCaptainAbilityCoverage: false,
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: true,
       allowAnyFriendCaptainAutoFill: false,
@@ -3688,7 +3736,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
     });
   });
 
-  it('exports leader boost, scoped cost ranges, and max total cost in schema 23 presets', () => {
+  it('exports leader boost, scoped cost ranges, and max total cost in schema 24 presets', () => {
     const payload = buildAutoTeamSelectionExportPayload({
       selectedTypes: ['DEX'],
       selectedClasses: ['Fighter'],
@@ -3719,7 +3767,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       exportedAt: '2026-03-25T10:00:00.000Z',
     });
 
-    expect(payload.schemaVersion).toBe(23);
+    expect(payload.schemaVersion).toBe(24);
     expect(payload.filters.leaderBoostRanges).toEqual({
       ATK: { min: 5, max: 6 },
       HP: { min: 1.25, max: 1.5 },
@@ -4969,6 +5017,7 @@ function createCharacterRecord(
   return {
     id,
     name,
+    isIncomplete: false,
     type: id % 2 === 0 ? 'DEX' : 'PSY',
     classes: ['Fighter', 'Slasher'],
     primaryClass: 'Fighter',
@@ -5010,7 +5059,12 @@ function createCharacterRecord(
       specialName: `${name} special`,
       specialText: `${name} special text`,
       specialNotes: null,
+      superSpecialText: null,
+      superSpecialCriteriaText: null,
+      superSpecialNotes: null,
+      superSpecialCriteria: null,
       partyConflictKeys: [],
+      characterTags: [],
       builderAbilities,
       sailorAbilities: [`${name} sailor`],
       sailorNotes: null,
@@ -5110,6 +5164,7 @@ function createAutoBuildResult(
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
+    requireFullCaptainAbilityCoverage: false,
     minimumLeaderSuperEffectMatchingSlots: null,
     requireLeaderSuperSpecialCriteria: false,
     requireUniqueBaseCharacterNames: false,
@@ -5189,6 +5244,7 @@ function createAutoBuildResult(
     coverage: {
       leaderCriteria: {
         source: 'captainAbility',
+        coverageMode: 'simpleBoostScope',
         captainLeaderId: 101,
         friendCaptainLeaderId: 102,
         leaderIds: [101, 102],
@@ -5200,6 +5256,7 @@ function createAutoBuildResult(
         maxAllowedCost: null,
         hasClassRestriction: true,
         hasTypeRestriction: true,
+        tagConditionSets: [],
         matchingSlots: 6,
         totalSlots: 6,
         allSlotsMatch: true,

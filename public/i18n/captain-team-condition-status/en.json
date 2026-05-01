@@ -1,0 +1,16 @@
+{
+  "detail": {
+    "fullDual": "Captain and Friend Captain fully cover this team.",
+    "fullSingle": "The Captain fully covers this team.",
+    "none": "No selected leader fully covers the complete team.",
+    "partial": "{{passed}} passes. Check {{failed}} before relying on this team.",
+    "pending": "{{filled}} / {{total}} slots filled. Complete the team to verify captain conditions."
+  },
+  "title": {
+    "fullDual": "Both leaders pass",
+    "fullSingle": "Captain condition met",
+    "none": "Captain condition not met",
+    "partial": "Only one leader passes",
+    "pending": "Condition check pending"
+  }
+}

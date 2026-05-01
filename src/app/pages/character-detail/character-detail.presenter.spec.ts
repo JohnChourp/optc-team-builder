@@ -460,6 +460,86 @@ describe('character-detail presenter', () => {
     ]);
   });
 
+  it('exposes captain ability variants and captain-sourced parsed abilities for the top summary', () => {
+    const viewModel = buildCharacterDetailViewModel(
+      createCharacterDetailRecord({
+        detail: {
+          captainAbility: 'Base effect.',
+          captainAbilityVariants: [
+            {
+              key: 'base',
+              label: 'Base Captain Ability',
+              text: 'Base effect.',
+            },
+            {
+              key: 'level1',
+              label: 'Limit Break Level 1 Captain Ability',
+              text: 'Level 1 effect.',
+            },
+          ],
+          builderAbilities: [
+            {
+              key: 'reduce_damage',
+              label: 'Reduce Damage',
+              minTurns: null,
+              isCompleteRemoval: false,
+              slotTokens: [],
+              source: 'captainAbility',
+              coverageMode: 'explicit',
+            },
+            {
+              key: 'remove_bind',
+              label: 'Remove Bind',
+              minTurns: 5,
+              isCompleteRemoval: false,
+              slotTokens: [],
+              source: 'specialText',
+              coverageMode: 'explicit',
+            },
+          ],
+        },
+      }),
+    );
+
+    expect(viewModel.captainAbilitySummary?.variants).toEqual([
+      expect.objectContaining({ label: 'Base Captain Ability', value: 'Base effect.' }),
+      expect.objectContaining({
+        label: 'Limit Break Level 1 Captain Ability',
+        value: 'Level 1 effect.',
+      }),
+    ]);
+    expect(viewModel.captainAbilitySummary?.recognizedAbilities).toEqual([
+      expect.objectContaining({
+        key: 'reduce_damage',
+        source: 'captainAbility',
+      }),
+    ]);
+  });
+
+  it('falls back to the raw captain ability when no captain variants exist', () => {
+    const viewModel = buildCharacterDetailViewModel(
+      createCharacterDetailRecord({
+        detail: {
+          captainAbility: 'Boosts ATK of crew by 5x.',
+          captainAbilityVariants: [],
+          builderAbilities: [],
+        },
+      }),
+    );
+
+    expect(viewModel.captainAbilitySummary).toEqual(
+      expect.objectContaining({
+        variants: [
+          expect.objectContaining({
+            label: 'Captain Ability',
+            value: 'Boosts ATK of crew by 5x.',
+          }),
+        ],
+        recognizedAbilities: [],
+      }),
+    );
+  });
+
   it('omits unknown numeric stat rows when manual character data is incomplete', () => {
     const viewModel = buildCharacterDetailViewModel({
       id: 900000,
@@ -562,9 +642,15 @@ describe('character-detail presenter', () => {
   });
 });
 
-function createCharacterDetailRecord(
-  overrides: Partial<CharacterDetailRecord> = {},
-): CharacterDetailRecord {
+type CharacterDetailRecordOverrides = Partial<Omit<CharacterDetailRecord, 'detail' | 'stats'>> & {
+  detail?: Partial<CharacterDetailRecord['detail']>;
+  stats?: Partial<Omit<CharacterDetailRecord['stats'], 'max' | 'min'>> & {
+    max?: Partial<CharacterDetailRecord['stats']['max']>;
+    min?: Partial<CharacterDetailRecord['stats']['min']>;
+  };
+};
+
+function createCharacterDetailRecord(overrides: CharacterDetailRecordOverrides = {}): CharacterDetailRecord {
   const base: CharacterDetailRecord = {
     id: 4276,
     name: 'Carrot & Dogstorm & Cat Viper - Moonlit Raging Sulongs',

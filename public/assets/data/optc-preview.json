@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-30T14:31:12.941Z",
+  "generatedAt": "2026-05-01T14:06:47.490Z",
   "characters": [
     {
       "id": 1,
@@ -52,6 +52,7 @@
           "monkey d. luffy",
           "luffy"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "special_damage",
@@ -152,6 +153,7 @@
           "monkey d. luffy",
           "luffy"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "special_damage",
@@ -252,6 +254,7 @@
           "monkey d. luffy",
           "luffy"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "special_damage",
@@ -353,6 +356,7 @@
           "monkey d. luffy",
           "luffy"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "special_damage",
@@ -530,6 +534,7 @@
           "roronoa zoro",
           "zoro"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "special_damage",
@@ -631,6 +636,7 @@
           "roronoa zoro",
           "zoro"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "special_damage",
@@ -732,6 +738,7 @@
           "roronoa zoro",
           "zoro"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "special_damage",
@@ -833,6 +840,7 @@
           "roronoa zoro",
           "zoro"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "special_damage",
@@ -1018,6 +1026,7 @@
         "partyConflictKeys": [
           "nami"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "heal_hp",
@@ -1118,6 +1127,7 @@
         "partyConflictKeys": [
           "nami"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "special_damage",
@@ -1218,6 +1228,7 @@
         "partyConflictKeys": [
           "nami"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "reduce_damage",
@@ -1318,6 +1329,7 @@
         "partyConflictKeys": [
           "nami"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "special_damage",
@@ -1512,6 +1524,7 @@
         "partyConflictKeys": [
           "usopp"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "apply_delay",
@@ -2049,6 +2062,7 @@
         "partyConflictKeys": [
           "usopp"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "apply_delay",
@@ -2586,6 +2600,7 @@
         "partyConflictKeys": [
           "usopp"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "apply_delay",
@@ -3123,6 +3138,7 @@
         "partyConflictKeys": [
           "sogeking"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "special_damage",
@@ -4004,6 +4020,7 @@
         "partyConflictKeys": [
           "sanji"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "heal_hp",
@@ -4104,6 +4121,7 @@
         "partyConflictKeys": [
           "sanji"
         ],
+        "characterTags": [],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
@@ -4195,6 +4213,7 @@
           "chef sanji",
           "sanji"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "heal_hp",
@@ -4295,6 +4314,7 @@
         "partyConflictKeys": [
           "sanji"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "deal_fixed_damage",
@@ -4526,6 +4546,7 @@
           "tony tony chopper",
           "chopper"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "change_slots",
@@ -4627,6 +4648,7 @@
           "tony tony chopper",
           "chopper"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "special_damage",
@@ -4850,6 +4872,7 @@
           "tony tony chopper",
           "chopper"
         ],
+        "characterTags": [],
         "builderAbilities": [
           {
             "key": "change_slots",
@@ -4951,6 +4974,7 @@
           "tony tony chopper",
           "chopper"
         ],
+        "characterTags": [],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,

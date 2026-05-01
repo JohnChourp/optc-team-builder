@@ -13,6 +13,7 @@ import {
 import { TranslocoDirective } from '@jsverse/transloco';
 import { heart, heartOutline } from 'ionicons/icons';
 
+import { type AutoBuildAbilityCatalog } from '../../core/models/auto-team-builder-ability.models';
 import { type CharacterDetailRecord } from '../../core/models/optc.models';
 import { CharacterOverridesService } from '../../core/services/character-overrides.service';
 import { createLocalCharacterOverrideFromRecord } from '../../core/services/character-overrides.utils';
@@ -28,6 +29,7 @@ import {
   buildCharacterDetailViewModel,
   resolveRumbleBasedOnId,
 } from './character-detail.presenter';
+import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
 import { ToolbarBackButtonComponent } from '../../shared/toolbar-back-button/toolbar-back-button.component';
 
 @Component({
@@ -43,6 +45,7 @@ import { ToolbarBackButtonComponent } from '../../shared/toolbar-back-button/too
     IonTitle,
     IonToolbar,
     RouterLink,
+    CharacterAbilityGroupsComponent,
     ToolbarBackButtonComponent,
     TranslocoDirective,
   ],
@@ -51,6 +54,7 @@ import { ToolbarBackButtonComponent } from '../../shared/toolbar-back-button/too
 })
 export class CharacterDetailPage implements OnInit {
   public readonly character = signal<CharacterDetailRecord | null>(null);
+  public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly rumbleBasedOnName = signal<string | null>(null);
   public readonly loading = signal(true);
   public readonly transferFeedback = signal<{ tone: 'error' | 'success'; message: string } | null>(
@@ -96,7 +100,12 @@ export class CharacterDetailPage implements OnInit {
     }
 
     await this.userState.ready();
-    await this.loadCharacter(characterId, true);
+    const [abilityCatalog] = await Promise.all([
+      this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
+      this.loadCharacter(characterId, true),
+    ]);
+
+    this.abilityCatalog.set(abilityCatalog);
     this.loading.set(false);
   }
 

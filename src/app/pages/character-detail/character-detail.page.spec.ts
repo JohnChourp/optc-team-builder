@@ -14,6 +14,14 @@ describe('CharacterDetailPage template', () => {
     expect(template).toContain("t(group.titleKey)");
     expect(template).toContain('hero-meta-grid');
     expect(template).toContain('hero-stats-grid');
+    expect(template).toContain('<app-character-ability-groups');
+    expect(template).toContain('[abilities]="current.detail.builderAbilities"');
+    expect(template).toContain('view.captainAbilitySummary');
+    expect(template).toContain('captainSummary.variants');
+    expect(template).toContain('[abilities]="captainSummary.recognizedAbilities"');
+    expect(template).toContain('[catalogItems]="abilityCatalog()?.abilities ?? []"');
+    expect(template).toContain("t('fields.recognizedCaptainAbilities')");
+    expect(template).toContain("t('sections.abilitySummary')");
     expect(template).toContain('detail-card');
     expect(template).toContain('meta.labelKey');
     expect(template).toContain('list.labelKey');
