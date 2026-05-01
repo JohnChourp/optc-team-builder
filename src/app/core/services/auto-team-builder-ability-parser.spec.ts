@@ -69,6 +69,14 @@ function expectSourceOrder(filePath: string, orderedSnippets: string[]): void {
   }
 }
 
+function extractAbilityKeys(
+  abilities: Array<{
+    key: string;
+  }>,
+): string[] {
+  return abilities.map((ability) => ability.key);
+}
+
 describe('auto team builder ability parser', () => {
   it('normalizes legacy HTML ability text without dropping branch labels', () => {
     expect(
@@ -123,6 +131,64 @@ describe('auto team builder ability parser', () => {
           key: 'remove_despair',
           minTurns: 5,
           slotTokens: [],
+          source: 'specialText',
+        }),
+      ]),
+    );
+  });
+
+  it('does not treat Special Bind as generic Bind', () => {
+    const abilities = analyzeBuilderAbilityText(
+      'Reduces Special Bind duration by 10 turns.',
+      'specialText',
+    );
+
+    expect(abilities).toEqual([
+      expect.objectContaining({
+        key: 'remove_special_bind',
+        minTurns: 10,
+        source: 'specialText',
+      }),
+    ]);
+    expect(extractAbilityKeys(abilities)).not.toContain('remove_bind');
+  });
+
+  it('extracts Paralysis and Special Bind without adding generic Bind', () => {
+    const abilities = analyzeBuilderAbilityText(
+      'Reduces Paralysis and Special Bind duration by 10 turns on this character.',
+      'specialText',
+    );
+
+    expect(abilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'remove_paralysis',
+          minTurns: 10,
+          source: 'specialText',
+        }),
+        expect.objectContaining({
+          key: 'remove_special_bind',
+          minTurns: 10,
+          source: 'specialText',
+        }),
+      ]),
+    );
+    expect(extractAbilityKeys(abilities)).not.toContain('remove_bind');
+  });
+
+  it('keeps real Bind when text also includes Special Bind', () => {
+    expect(
+      analyzeBuilderAbilityText('Reduces Bind and Special Bind duration by 4 turns.', 'specialText'),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'remove_bind',
+          minTurns: 4,
+          source: 'specialText',
+        }),
+        expect.objectContaining({
+          key: 'remove_special_bind',
+          minTurns: 4,
           source: 'specialText',
         }),
       ]),
@@ -893,6 +959,47 @@ describe('auto team builder ability parser', () => {
         }),
       ]),
     );
+  });
+
+  it('does not add generic Bind from Garling-style Special Bind text across sources', async () => {
+    const characters = [
+      {
+        id: 4410,
+        detail: {
+          specialText:
+            'Deals 2,000,000 Fixed True damage, ignoring Normal Attack Only, to one enemy, and reduces Special Bind duration by 10 turns.',
+          captainAbility:
+            'Reduces Paralysis and Special Bind duration by 10 turns on [Five Elders] and [Celestial Dragon] characters.',
+          sailorAbilities: [
+            'Reduces Paralysis and Special Bind duration by 10 turns on this character; makes [RCV] and [TND] orbs beneficial for this character.',
+          ],
+          supportData: [
+            {
+              supportedCharactersText: 'Characters with cost 99 or more',
+              levelDescriptions: [
+                'Once per adventure, when an enemy inflicts you with Special Bind, reduces Special Bind duration by 6 turns on the supported character.',
+              ],
+            },
+          ],
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    const abilityKeys = extractAbilityKeys(characters[0]?.detail.builderAbilities ?? []);
+    expect(abilityKeys).toEqual(
+      expect.arrayContaining([
+        'remove_special_bind',
+        'remove_paralysis',
+        'crewmate_recover_special_bind',
+        'crewmate_recover_paralysis',
+        'support_status_effect_recovery_special_bind',
+      ]),
+    );
+    expect(abilityKeys).not.toContain('remove_bind');
+    expect(abilityKeys).not.toContain('support_status_effect_recovery_bind');
   });
 
   it('adds crewmate-derived builder abilities from sailor abilities to the character detail', async () => {

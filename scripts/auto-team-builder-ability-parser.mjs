@@ -520,8 +520,10 @@ const TARGET_ALIASES = [
     label: 'Remove Bind',
     matcher: (target) =>
       (target === 'bind' || target.endsWith(' bind')) &&
+      !target.includes('special bind') &&
       !target.includes('slot bind') &&
-      !target.includes('orb bind'),
+      !target.includes('orb bind') &&
+      !target.includes('ship bind'),
   },
   {
     key: 'remove_despair',
@@ -1481,7 +1483,7 @@ function addSupportStatusRecoveryKeys(keys, text) {
     ],
     [
       'support_status_effect_recovery_bind',
-      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\bbind\b/i,
+      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}(?<!\bspecial\s)(?<!\bslot\s)(?<!\borb\s)(?<!\bship\s)\bbind\b/i,
     ],
     [
       'support_status_effect_recovery_paralysis',
