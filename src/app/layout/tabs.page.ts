@@ -24,6 +24,7 @@ import {
   gridOutline,
   homeOutline,
   saveOutline,
+  shieldCheckmarkOutline,
   shieldHalfOutline,
 } from 'ionicons/icons';
 import { type SupportedLanguage } from '../core/i18n/app-i18n.types';
@@ -101,6 +102,11 @@ export class TabsPage {
       icon: flashOutline,
       labelKey: 'tabs.auto',
       route: '/tabs/auto-team-builder',
+    },
+    {
+      icon: shieldCheckmarkOutline,
+      labelKey: 'tabs.captainCoverage',
+      route: '/tabs/captain-coverage',
     },
     {
       icon: shieldHalfOutline,

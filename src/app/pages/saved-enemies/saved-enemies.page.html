@@ -555,66 +555,29 @@
                                 </ion-button>
                               </div>
 
-                              <div class="card-actions saved-required-character-actions">
-                                <ion-button
-                                  fill="outline"
-                                  color="warning"
-                                  size="small"
-                                  [disabled]="savingEnemy() || !availableSpecialAbilityCatalogItems().length"
-                                  (click)="openRequiredCharacterAbilityPicker(view.battleId, view.group.id, 'special')"
-                                >
-                                  {{ t('editor.requiredCharacters.categories.special') }}
-                                </ion-button>
-                                <ion-button
-                                  fill="outline"
-                                  color="warning"
-                                  size="small"
-                                  [disabled]="savingEnemy() || !availableCrewmateAbilityCatalogItems().length"
-                                  (click)="openRequiredCharacterAbilityPicker(view.battleId, view.group.id, 'crewmate')"
-                                >
-                                  {{ t('editor.requiredCharacters.categories.crewmate') }}
-                                </ion-button>
-                                <ion-button
-                                  fill="outline"
-                                  color="warning"
-                                  size="small"
-                                  [disabled]="savingEnemy() || !availablePotentialAbilityCatalogItems().length"
-                                  (click)="openRequiredCharacterAbilityPicker(view.battleId, view.group.id, 'potential')"
-                                >
-                                  {{ t('editor.requiredCharacters.categories.potential') }}
-                                </ion-button>
-                                <ion-button
-                                  fill="outline"
-                                  color="warning"
-                                  size="small"
-                                  [disabled]="savingEnemy() || !availableSupportAbilityCatalogItems().length"
-                                  (click)="openRequiredCharacterAbilityPicker(view.battleId, view.group.id, 'support')"
-                                >
-                                  {{ t('editor.requiredCharacters.categories.support') }}
-                                </ion-button>
-                              </div>
+                              <app-ability-filter-rail
+                                [items]="requiredCharacterAbilityRailItems(view)"
+                                [disabled]="savingEnemy()"
+                                (selectCategory)="
+                                  openRequiredCharacterAbilityPicker(
+                                    view.battleId,
+                                    view.group.id,
+                                    $event
+                                  )
+                                "
+                                (clearCategory)="
+                                  clearRequiredCharacterAbilityCategory(
+                                    view.battleId,
+                                    view.group.id,
+                                    $event
+                                  )
+                                "
+                              ></app-ability-filter-rail>
 
                               @if (!view.chips.length) {
                                 <p class="editor-empty-copy">
                                   {{ t('editor.requiredCharacters.cardEmpty') }}
                                 </p>
-                              }
-
-                              @if (view.chips.length) {
-                                <div class="selected-values-row">
-                                  @for (chip of view.chips; track chip.draftId) {
-                                    <span class="selected-value-chip editor-ability-chip">
-                                      <span
-                                        class="editor-ability-chip__icon"
-                                        [attr.data-tone]="chip.visual.tone"
-                                      >
-                                        <ion-icon [icon]="chip.visual.icon"></ion-icon>
-                                        <small>{{ chip.visual.badge }}</small>
-                                      </span>
-                                      <span>{{ chip.label }}</span>
-                                    </span>
-                                  }
-                                </div>
                               }
                             </article>
                           }

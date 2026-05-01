@@ -337,14 +337,22 @@
     "features": {
       "eyebrow": "What you can do",
       "title": "Every page has a planning job",
-      "copy": "Use the site as a practical OPTC workspace: find units, compare abilities, build crews manually or automatically, save useful setups, and keep repeat planning tasks organized.",
+      "copy": "Use the site as a practical OPTC workspace: find units, compare abilities, check Rumble and captain coverage, build crews manually or automatically, save useful setups, and keep repeat planning tasks organized.",
       "characters": {
         "title": "Characters",
         "copy": "Search and filter the catalog by name, type, class, ability data, favorites, and detailed character pages."
       },
+      "rumbleCharacters": {
+        "title": "Rumble Characters",
+        "copy": "Rank Pirate Rumble units by score, favorites, core filters, and custom stat focus before building teams."
+      },
       "autoBuilder": {
         "title": "Auto Team Builder",
         "copy": "Build teams manually with fixed slots, or match enemy mechanics, ability requirements, classes, types, locks, and excluded units against candidate crews."
+      },
+      "captainCoverage": {
+        "title": "Captain Coverage",
+        "copy": "Pick a character and find captain abilities that fully cover it under strict type, class, cost, universal, and self-scope matching."
       },
       "autoRumble": {
         "title": "Auto Team Rumble Builder",
@@ -393,6 +401,7 @@
   "tabs": {
     "auto": "Auto Team Builder",
     "autoRumble": "Auto Team Rumble Builder",
+    "captainCoverage": "Captain Coverage",
     "characterBoxes": "Character Boxes",
     "characters": "Characters",
     "crewForge": "Crew Forge",

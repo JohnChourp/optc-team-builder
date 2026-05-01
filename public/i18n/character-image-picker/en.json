@@ -31,6 +31,26 @@
     "supportTitle": "Support Ability filters",
     "supportCopy": "These filters are local to image selection and do not change the saved enemy."
   },
+  "sort": {
+    "label": "Sort",
+    "options": {
+      "catalog": "Default order",
+      "nameAsc": "Name A-Z",
+      "nameDesc": "Name Z-A",
+      "idDesc": "Character ID newest first",
+      "idAsc": "Character ID oldest first",
+      "captainHpBoost": "Captain HP boost",
+      "captainAtkBoost": "Captain ATK boost",
+      "captainAverageBoost": "Captain HP/ATK average"
+    }
+  },
+  "idOrder": {
+    "label": "ID order",
+    "options": {
+      "newest": "Newest ID",
+      "oldest": "Oldest ID"
+    }
+  },
   "actions": {
     "loadMore": "Load more",
     "useImage": "Use character image"

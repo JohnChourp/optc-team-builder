@@ -1,0 +1,103 @@
+{
+  "boosts": {
+    "ariaLabel": "Τιμές captain boost",
+    "atk": "ATK",
+    "avg": "AVG",
+    "hp": "HP"
+  },
+  "empty": {
+    "noResults": {
+      "copy": "Κανένα captain ability δεν καλύπτει πλήρως τον επιλεγμένο χαρακτήρα με την τρέχουσα αναζήτηση.",
+      "title": "Δεν βρέθηκαν captains"
+    },
+    "noTarget": {
+      "copy": "Διάλεξε πρώτα έναν χαρακτήρα. Τα αποτελέσματα θα δείχνουν μόνο captains που το πλήρες primary captain ability τους τον καλύπτει.",
+      "title": "Επίλεξε χαρακτήρα"
+    }
+  },
+  "hero": {
+    "captainsCount": "{{count}} captains",
+    "charactersCount": "{{count}} χαρακτήρες",
+    "copy": "Διάλεξε unit και κράτα μόνο captains που το ability τους εφαρμόζει πλήρως σε αυτό, με type, class, cost, universal και self-only clauses.",
+    "eyebrow": "Strict captain scope",
+    "title": "Βρες captains που καλύπτουν πλήρως έναν χαρακτήρα"
+  },
+  "filters": {
+    "favoritesOnly": "Μόνο favorites",
+    "hideFavorites": "Κρύψε favorites"
+  },
+  "displayMode": {
+    "compact": "Compact view",
+    "label": "Τρόπος εμφάνισης captain results",
+    "list": "List view"
+  },
+  "loading": "Φόρτωση captain δεδομένων...",
+  "picker": {
+    "copy": "Διάλεξε τον χαρακτήρα που πρέπει να καλύπτει κάθε captain ability clause.",
+    "title": "Επιλογή target χαρακτήρα"
+  },
+  "results": {
+    "eyebrow": "Matching captains",
+    "neutralNotes": "{{count}} neutral notes",
+    "title": "Captain αποτελέσματα",
+    "titleWithCount": "{{count}} matching captains"
+  },
+  "search": {
+    "placeholder": "Αναζήτηση στους matching captains..."
+  },
+  "sort": {
+    "label": "Ταξινόμηση captain coverage",
+    "options": {
+      "catalog": "Προεπιλεγμένη σειρά",
+      "captainAtkBoost": "Captain ATK boost",
+      "captainAverageBoost": "Captain HP/ATK average",
+      "captainHpBoost": "Captain HP boost",
+      "idAsc": "Παλαιότερο character ID πρώτα",
+      "idDesc": "Νεότερο character ID πρώτα",
+      "nameAsc": "Όνομα A-Z",
+      "nameDesc": "Όνομα Z-A"
+    }
+  },
+  "idOrder": {
+    "label": "Σειρά ID",
+    "options": {
+      "newest": "Νεότερο ID",
+      "oldest": "Παλαιότερο ID"
+    }
+  },
+  "target": {
+    "change": "Αλλαγή χαρακτήρα",
+    "copy": "Ο επιλεγμένος χαρακτήρας ελέγχεται απέναντι σε κάθε parsed character-targeted clause του captain ability.",
+    "empty": "Δεν έχει επιλεγεί target",
+    "eyebrow": "Target χαρακτήρας",
+    "select": "Επιλογή χαρακτήρα",
+    "selected": "Επιλεγμένος",
+    "title": "Διάλεξε τον χαρακτήρα που θέλεις να καλύπτεται"
+  },
+  "team": {
+    "actions": {
+      "useCaptain": "Βάλε ως Captain"
+    },
+    "copy": "Παρακολούθησε Captain και τέσσερα subs με συνολικό cost budget. Το Friend Captain cost δεν μετράει.",
+    "cost": {
+      "active": "{{used}} / {{max}} cost. Μένουν {{remaining}}.",
+      "default": "Χωρίς max team cost",
+      "input": "Μέγιστο συνολικό cost",
+      "label": "Cost budget",
+      "overBudget": "{{used}} cost ξεπερνά το όριο {{max}}.",
+      "slot": "{{name}} · Cost {{cost}}"
+    },
+    "empty": "Κενό slot",
+    "emptyAlt": "Κενό team slot",
+    "eyebrow": "Team budget",
+    "picker": {
+      "copy": "Διάλεξε χαρακτήρα που χωράει στο remaining team cost."
+    },
+    "slots": {
+      "captain": "Captain",
+      "sub": "Sub {{index}}"
+    },
+    "title": "Χτίσιμο μέσα στο cost"
+  },
+  "title": "Captain Coverage"
+}

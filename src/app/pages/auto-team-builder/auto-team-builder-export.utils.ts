@@ -106,7 +106,8 @@ export interface AutoTeamSelectionExportPayload {
     | 19
     | 20
     | 21
-    | 22;
+    | 22
+    | 23;
   exportedAt: string;
   source: 'auto-team-builder';
   exportType: 'preset';
@@ -131,6 +132,7 @@ export interface AutoTeamSelectionExportPayload {
     costRange?: AutoBuildCostRange;
     leaderCostRange?: AutoBuildCostRange;
     subCostRange?: AutoBuildCostRange;
+    maxTotalCost?: number | null;
   };
   manualSelection: {
     manualSlots: AutoBuildManualSlotSelection[];
@@ -166,6 +168,7 @@ export interface AutoTeamSelectionImportState {
   leaderBoostRanges: AutoBuildLeaderBoostRanges;
   leaderCostRange: AutoBuildCostRange;
   subCostRange: AutoBuildCostRange;
+  maxTotalCost: number | null;
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   excludedCharacterIds: number[];
@@ -226,6 +229,7 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   costRange?: Partial<AutoBuildCostRange> | null;
   leaderCostRange?: Partial<AutoBuildCostRange> | null;
   subCostRange?: Partial<AutoBuildCostRange> | null;
+  maxTotalCost?: number | null;
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   lockedCharacters: CharacterListItem[];
@@ -356,6 +360,16 @@ function normalizeCostRange(value: unknown): AutoBuildCostRange {
 }
 
 function normalizeCostRangeBound(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const parsedValue = Number(value);
+
+  return Number.isInteger(parsedValue) && parsedValue >= 0 ? parsedValue : null;
+}
+
+function normalizeMaxTotalCost(value: unknown): number | null {
   if (value === null || value === undefined || value === '') {
     return null;
   }
@@ -576,7 +590,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload['schemaVersion'] !== 19 &&
       parsedPayload['schemaVersion'] !== 20 &&
       parsedPayload['schemaVersion'] !== 21 &&
-      parsedPayload['schemaVersion'] !== 22) ||
+      parsedPayload['schemaVersion'] !== 22 &&
+      parsedPayload['schemaVersion'] !== 23) ||
     parsedPayload['source'] !== 'auto-team-builder' ||
     parsedPayload['exportType'] !== 'preset'
   ) {
@@ -677,6 +692,11 @@ export function parseAutoTeamSelectionImportPayload(
     !isCostRangeShape(filters['costRange']) ||
     !isCostRangeShape(filters['leaderCostRange']) ||
     !isCostRangeShape(filters['subCostRange']) ||
+    !(
+      filters['maxTotalCost'] === undefined ||
+      filters['maxTotalCost'] === null ||
+      typeof filters['maxTotalCost'] === 'number'
+    ) ||
     !Array.isArray(manualSelection['lockedCharacterIds']) ||
     !(
       manualSelection['excludedCharacterIds'] === undefined ||
@@ -1265,6 +1285,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
     payload.filters.subCostRange !== undefined
       ? normalizeCostRange(payload.filters.subCostRange)
       : { ...costRange };
+  const maxTotalCost = normalizeMaxTotalCost(payload.filters.maxTotalCost);
 
   return {
     state: {
@@ -1285,6 +1306,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
       leaderBoostRanges,
       leaderCostRange,
       subCostRange,
+      maxTotalCost,
       manualSlots: normalizedManualSlots,
       lockedCharacterIds: derivedManualSelection.lockedCharacterIds,
       excludedCharacterIds,
@@ -1360,6 +1382,7 @@ export function buildAutoTeamSelectionExportPayload({
   costRange = createEmptyAutoBuildCostRange(),
   leaderCostRange = costRange,
   subCostRange = costRange,
+  maxTotalCost = null,
   manualSlots,
   lockedCharacterIds,
   lockedCharacters,
@@ -1381,7 +1404,7 @@ export function buildAutoTeamSelectionExportPayload({
   const normalizedBattleRequirements = cloneBattleRequirements(battleRequirements);
 
   return {
-    schemaVersion: normalizedBattleRequirements.length ? 22 : 21,
+    schemaVersion: 23,
     exportedAt,
     source: 'auto-team-builder',
     exportType: 'preset',
@@ -1416,6 +1439,7 @@ export function buildAutoTeamSelectionExportPayload({
       costRange: normalizeCostRange(costRange),
       leaderCostRange: normalizeCostRange(leaderCostRange),
       subCostRange: normalizeCostRange(subCostRange),
+      maxTotalCost: normalizeMaxTotalCost(maxTotalCost),
     },
     manualSelection: {
       manualSlots: normalizedManualSlots,

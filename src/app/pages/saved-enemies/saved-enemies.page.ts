@@ -41,6 +41,10 @@ import { AppI18nService } from '../../core/services/app-i18n.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
+import {
+  AbilityFilterRailComponent,
+  type AbilityFilterRailItem,
+} from '../../shared/ability-filter-rail/ability-filter-rail.component';
 import { CharacterImagePickerComponent } from '../../shared/character-image-picker/character-image-picker.component';
 import {
   createAbilityRequirementDrafts,
@@ -157,6 +161,7 @@ interface ParsedEnemyTextAbilityCategorySectionView {
     IonToolbar,
     CharacterImagePickerComponent,
     AbilityRequirementPickerComponent,
+    AbilityFilterRailComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,
@@ -925,6 +930,49 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.requiredCharacterAbilityPickerOpen.set(true);
   }
 
+  public requiredCharacterAbilityRailItems(
+    view: SavedEnemyRequiredCharacterGroupView,
+  ): AbilityFilterRailItem[] {
+    return [
+      this.buildRequiredCharacterAbilityRailItem(view, 'special'),
+      this.buildRequiredCharacterAbilityRailItem(view, 'crewmate'),
+      this.buildRequiredCharacterAbilityRailItem(view, 'potential'),
+      this.buildRequiredCharacterAbilityRailItem(view, 'support'),
+    ];
+  }
+
+  public clearRequiredCharacterAbilityCategory(
+    battleId: string,
+    groupId: string,
+    category: RequiredCharacterAbilityCategory,
+  ): void {
+    if (this.savingEnemy()) {
+      return;
+    }
+
+    this.battleRequirements.update((battles) =>
+      battles.map((battle) =>
+        battle.id === battleId
+          ? {
+              ...battle,
+              requiredCharacterGroups: battle.requiredCharacterGroups.map((group) =>
+                group.id === groupId
+                  ? {
+                      ...group,
+                      abilities: group.abilities.filter(
+                        (requirement) =>
+                          this.resolveAbilityCatalogItem(requirement.abilityKey)?.category !==
+                          category,
+                      ),
+                    }
+                  : group,
+              ),
+            }
+          : battle,
+      ),
+    );
+  }
+
   public closeRequiredCharacterAbilityPicker(): void {
     this.requiredCharacterAbilityPickerOpen.set(false);
     this.activeRequiredCharacterBattleId.set(null);
@@ -1324,6 +1372,44 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
           ),
       },
     );
+  }
+
+  private buildRequiredCharacterAbilityRailItem(
+    view: SavedEnemyRequiredCharacterGroupView,
+    category: RequiredCharacterAbilityCategory,
+  ): AbilityFilterRailItem {
+    return {
+      category,
+      label: this.i18n.translate(
+        `editor.requiredCharacters.categories.${category}`,
+        undefined,
+        'saved-enemies',
+      ),
+      count: view.group.abilities.filter(
+        (requirement) =>
+          this.resolveAbilityCatalogItem(requirement.abilityKey)?.category === category,
+      ).length,
+      disabled: this.savingEnemy() || this.resolveCategoryCatalogItems(category).length === 0,
+    };
+  }
+
+  private resolveAbilityCatalogItem(abilityKey: string) {
+    return this.abilityCatalogMap().get(abilityKey);
+  }
+
+  private resolveCategoryCatalogItems(
+    category: RequiredCharacterAbilityCategory,
+  ): AutoBuildAbilityCatalog['abilities'] {
+    switch (category) {
+      case 'crewmate':
+        return this.availableCrewmateAbilityCatalogItems();
+      case 'potential':
+        return this.availablePotentialAbilityCatalogItems();
+      case 'support':
+        return this.availableSupportAbilityCatalogItems();
+      default:
+        return this.availableSpecialAbilityCatalogItems();
+    }
   }
 
   public resolveRequiredAbilitySelectedText(draft: AbilityRequirementDraft): string {

@@ -727,8 +727,8 @@ describe('OptcRepositoryService', () => {
 
   it('uses the default catalog sort for detailed character search when no explicit sort mode is provided', async () => {
     const service = createRepositoryService([
-      createCharacterRow({ id: 4102, type: 'DEX', stars: 6 }),
-      createCharacterRow({ id: 4101, type: 'DEX', stars: 5 }),
+      createCharacterRow({ id: 4102, type: 'DEX', stars: 5 }),
+      createCharacterRow({ id: 4101, type: 'DEX', stars: 6 }),
     ]);
 
     const result = await service.searchDetailedCharacters({
@@ -740,6 +740,25 @@ describe('OptcRepositoryService', () => {
     });
 
     expect(result.map((record) => record.id)).toEqual([4102, 4101]);
+  });
+
+  it('uses oldest-first ID order for default detailed character search when requested', async () => {
+    const service = createRepositoryService([
+      createCharacterRow({ id: 4102, type: 'DEX', stars: 5 }),
+      createCharacterRow({ id: 4101, type: 'DEX', stars: 6 }),
+    ]);
+
+    const result = await service.searchDetailedCharacters({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      sortMode: 'catalog',
+      idOrder: 'oldest',
+      limit: 10,
+      offset: 0,
+    });
+
+    expect(result.map((record) => record.id)).toEqual([4101, 4102]);
   });
 
   it('uses newest-first sort for detailed character search when the picker requests it', async () => {
@@ -799,6 +818,12 @@ describe('OptcRepositoryService', () => {
         captainAtkBoost: 4,
         captainAverageBoost: 2.9,
       }),
+      createCharacterRow({
+        id: 4104,
+        captainHpBoost: 1.8,
+        captainAtkBoost: 4,
+        captainAverageBoost: 2.9,
+      }),
     ]);
     const baseQuery = {
       searchTerm: '',
@@ -812,12 +837,21 @@ describe('OptcRepositoryService', () => {
       (await service.searchDetailedCharacters({ ...baseQuery, sortMode: 'captainHpBoost' })).map(
         (record) => record.id,
       ),
-    ).toEqual([4102, 4101, 4103]);
+    ).toEqual([4104, 4102, 4101, 4103]);
+    expect(
+      (
+        await service.searchDetailedCharacters({
+          ...baseQuery,
+          sortMode: 'captainHpBoost',
+          idOrder: 'oldest',
+        })
+      ).map((record) => record.id),
+    ).toEqual([4102, 4104, 4101, 4103]);
     expect(
       (await service.searchDetailedCharacters({ ...baseQuery, sortMode: 'captainAtkBoost' })).map(
         (record) => record.id,
       ),
-    ).toEqual([4103, 4101, 4102]);
+    ).toEqual([4103, 4101, 4104, 4102]);
     expect(
       (
         await service.searchDetailedCharacters({
@@ -825,7 +859,7 @@ describe('OptcRepositoryService', () => {
           sortMode: 'captainAverageBoost',
         })
       ).map((record) => record.id),
-    ).toEqual([4103, 4101, 4102]);
+    ).toEqual([4103, 4101, 4104, 4102]);
   });
 
   it('sorts detailed character search by name and id before applying pagination', async () => {
@@ -873,6 +907,34 @@ describe('OptcRepositoryService', () => {
     expect(nameDesc.map((record) => record.id)).toEqual([300, 100, 400, 200]);
     expect(idAsc.map((record) => record.id)).toEqual([100, 200, 300, 400]);
     expect(idDesc.map((record) => record.id)).toEqual([400, 300, 200, 100]);
+  });
+
+  it('uses selected ID order as the name sort tie-breaker', async () => {
+    const service = createRepositoryService([
+      createCharacterRow({ id: 300, name: 'Luffy', type: 'DEX' }),
+      createCharacterRow({ id: 100, name: 'Luffy', type: 'DEX' }),
+      createCharacterRow({ id: 200, name: 'Ace', type: 'DEX' }),
+    ]);
+    const baseQuery = {
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      sortMode: 'nameAsc' as const,
+      limit: 10,
+      offset: 0,
+    };
+
+    expect((await service.searchDetailedCharacters(baseQuery)).map((record) => record.id)).toEqual([
+      200, 300, 100,
+    ]);
+    expect(
+      (
+        await service.searchDetailedCharacters({
+          ...baseQuery,
+          idOrder: 'oldest',
+        })
+      ).map((record) => record.id),
+    ).toEqual([200, 100, 300]);
   });
 
   it('queries detailed search directly without materializing the full catalog when no overrides exist', async () => {
@@ -1502,11 +1564,11 @@ function applyOrderingAndWindow(
       (left, right) => Number(right['id'] ?? 0) - Number(left['id'] ?? 0),
     );
   } else if (query.includes('captain_hp_boost DESC')) {
-    orderedRows = sortRowsByBoost(rows, 'captain_hp_boost');
+    orderedRows = sortRowsByBoost(rows, 'captain_hp_boost', resolveSqlIdOrder(query));
   } else if (query.includes('captain_atk_boost DESC')) {
-    orderedRows = sortRowsByBoost(rows, 'captain_atk_boost');
+    orderedRows = sortRowsByBoost(rows, 'captain_atk_boost', resolveSqlIdOrder(query));
   } else if (query.includes('captain_average_boost DESC')) {
-    orderedRows = sortRowsByBoost(rows, 'captain_average_boost');
+    orderedRows = sortRowsByBoost(rows, 'captain_average_boost', resolveSqlIdOrder(query));
   } else if (query.includes('ORDER BY c.id ASC')) {
     orderedRows = [...rows].sort(
       (left, right) => Number(left['id'] ?? 0) - Number(right['id'] ?? 0),
@@ -1519,7 +1581,7 @@ function applyOrderingAndWindow(
         { sensitivity: 'base' },
       );
 
-      return nameDifference || Number(left['id'] ?? 0) - Number(right['id'] ?? 0);
+      return nameDifference || compareSqlRowIds(left, right, resolveSqlIdOrder(query));
     });
   } else if (query.includes('ORDER BY c.name COLLATE NOCASE DESC')) {
     orderedRows = [...rows].sort((left, right) => {
@@ -1529,7 +1591,7 @@ function applyOrderingAndWindow(
         { sensitivity: 'base' },
       );
 
-      return nameDifference || Number(right['id'] ?? 0) - Number(left['id'] ?? 0);
+      return nameDifference || compareSqlRowIds(left, right, resolveSqlIdOrder(query));
     });
   } else if (
     query.includes('ORDER BY c.stars DESC, c.id DESC') ||
@@ -1556,7 +1618,11 @@ function applyOrderingAndWindow(
   return orderedRows;
 }
 
-function sortRowsByBoost(rows: TestSqlRow[], key: string): TestSqlRow[] {
+function sortRowsByBoost(
+  rows: TestSqlRow[],
+  key: string,
+  idOrder: 'newest' | 'oldest' = 'newest',
+): TestSqlRow[] {
   return [...rows].sort((left, right) => {
     const boostDifference = Number(right[key] ?? 0) - Number(left[key] ?? 0);
 
@@ -1564,7 +1630,7 @@ function sortRowsByBoost(rows: TestSqlRow[], key: string): TestSqlRow[] {
       return boostDifference;
     }
 
-    const idDifference = Number(right['id'] ?? 0) - Number(left['id'] ?? 0);
+    const idDifference = compareSqlRowIds(left, right, idOrder);
 
     if (idDifference !== 0) {
       return idDifference;
@@ -1572,6 +1638,21 @@ function sortRowsByBoost(rows: TestSqlRow[], key: string): TestSqlRow[] {
 
     return Number(right['cost'] ?? 0) - Number(left['cost'] ?? 0);
   });
+}
+
+function resolveSqlIdOrder(query: string): 'newest' | 'oldest' {
+  return query.includes('c.id ASC') || query.includes('id ASC') ? 'oldest' : 'newest';
+}
+
+function compareSqlRowIds(
+  left: TestSqlRow,
+  right: TestSqlRow,
+  idOrder: 'newest' | 'oldest',
+): number {
+  const leftId = Number(left['id'] ?? 0);
+  const rightId = Number(right['id'] ?? 0);
+
+  return idOrder === 'oldest' ? leftId - rightId : rightId - leftId;
 }
 
 function countOccurrences(value: string, needle: string): number {

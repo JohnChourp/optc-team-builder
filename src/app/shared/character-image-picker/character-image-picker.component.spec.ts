@@ -41,6 +41,8 @@ describe('CharacterImagePickerComponent', () => {
       searchTerm: '',
       typeFilter: '',
       classFilter: '',
+      sortMode: 'catalog',
+      idOrder: 'newest',
       limit: 48,
       offset: 0,
     });
@@ -71,6 +73,8 @@ describe('CharacterImagePickerComponent', () => {
       searchTerm: 'Luffy',
       typeFilter: 'DEX',
       classFilter: 'Fighter',
+      sortMode: 'catalog',
+      idOrder: 'newest',
       limit: 48,
       offset: 0,
     });
@@ -96,6 +100,8 @@ describe('CharacterImagePickerComponent', () => {
       searchTerm: '',
       typeFilter: '',
       classFilter: '',
+      sortMode: 'catalog',
+      idOrder: 'newest',
       limit: 48,
       offset: 48,
     });
@@ -137,6 +143,56 @@ describe('CharacterImagePickerComponent', () => {
     expect(component.selectedCharacterActionLabel()).toBe(component.characters()[1]!.name);
   });
 
+  it('reloads the catalog when the sort mode changes', async () => {
+    const { component, characterCatalogCache } = createComponent();
+
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+    });
+    await flushPromises();
+
+    await component.onSortModeChange({
+      detail: { value: 'captainAtkBoost' },
+    } as CustomEvent<{ value?: string | null }>);
+
+    expect(component.selectedSortMode()).toBe('captainAtkBoost');
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      typeFilter: '',
+      classFilter: '',
+      sortMode: 'captainAtkBoost',
+      idOrder: 'newest',
+      limit: 48,
+      offset: 0,
+    });
+  });
+
+  it('reloads the catalog when the ID order changes', async () => {
+    const { component, characterCatalogCache } = createComponent();
+
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+    });
+    await flushPromises();
+
+    await component.onIdOrderChange({
+      detail: { value: 'oldest' },
+    } as CustomEvent<{ value?: string | null }>);
+
+    expect(component.selectedIdOrder()).toBe('oldest');
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      typeFilter: '',
+      classFilter: '',
+      sortMode: 'catalog',
+      idOrder: 'oldest',
+      limit: 48,
+      offset: 0,
+    });
+  });
+
   it('renders the search, filters and confirm action in the template', () => {
     const template = readFileSync(
       resolve(
@@ -149,6 +205,19 @@ describe('CharacterImagePickerComponent', () => {
     expect(template).toContain("t('catalog.searchPlaceholder')");
     expect(template).toContain("t('filters.type')");
     expect(template).toContain("t('filters.class')");
+    expect(template).toContain("t('sort.label')");
+    expect(template).toContain('selectedSortMode()');
+    expect(template).toContain('onSortModeChange($event)');
+    expect(template).toContain("t('idOrder.label')");
+    expect(template).toContain('selectedIdOrder()');
+    expect(template).toContain('onIdOrderChange($event)');
+    expect(template).toContain('<app-ability-filter-rail');
+    expect(template).toContain('openAbilityFilterCategory($event)');
+    expect(template).toContain('clearAbilityFilterCategory($event)');
+    expect(template).toContain('value="captainAtkBoost"');
+    expect(template).not.toContain('value="idDesc"');
+    expect(template).not.toContain('value="idAsc"');
+    expect(template).not.toContain('character-image-picker-filter-row');
     expect(template).toContain('(click)="selectCharacter(character)"');
     expect(template).toContain('(click)="loadMore()"');
     expect(template).toContain('(click)="save()"');
@@ -242,6 +311,10 @@ function buildCharacters() {
         thumbnailJapan: null,
       },
       imageUrl: `assets/offline-packs/thumbnails-glo/characters/${id}.png`,
+      captainHpBoost: id % 5,
+      captainAtkBoost: id % 7,
+      captainAverageBoost: id % 6,
+      isIncomplete: false,
     };
   });
 }

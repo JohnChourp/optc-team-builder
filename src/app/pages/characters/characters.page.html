@@ -37,85 +37,12 @@
       </section>
 
       <section class="glass-card controls-card controls-card--compact">
-        <div class="ability-filter-rail" [attr.aria-label]="t('filters.abilityRailLabel')">
-          <button
-            type="button"
-            class="ability-filter-chip"
-            [class.ability-filter-chip--active]="specialAbilityDrafts().length > 0"
-            [disabled]="!availableSpecialAbilityCatalogItems().length"
-            (click)="openSpecialAbilityPicker()"
-          >
-            <span>{{ t('filters.special.eyebrow') }}</span>
-            <strong>{{ specialAbilityDrafts().length }}</strong>
-          </button>
-
-          <button
-            type="button"
-            class="ability-filter-chip"
-            [class.ability-filter-chip--active]="crewmateAbilityDrafts().length > 0"
-            [disabled]="!availableCrewmateAbilityCatalogItems().length"
-            (click)="openCrewmateAbilityPicker()"
-          >
-            <span>{{ t('filters.crewmate.eyebrow') }}</span>
-            <strong>{{ crewmateAbilityDrafts().length }}</strong>
-          </button>
-
-          <button
-            type="button"
-            class="ability-filter-chip"
-            [class.ability-filter-chip--active]="potentialAbilityDrafts().length > 0"
-            [disabled]="!availablePotentialAbilityCatalogItems().length"
-            (click)="openPotentialAbilityPicker()"
-          >
-            <span>{{ t('filters.potential.eyebrow') }}</span>
-            <strong>{{ potentialAbilityDrafts().length }}</strong>
-          </button>
-
-          <button
-            type="button"
-            class="ability-filter-chip"
-            [class.ability-filter-chip--active]="supportAbilityDrafts().length > 0"
-            [disabled]="!availableSupportAbilityCatalogItems().length"
-            (click)="openSupportAbilityPicker()"
-          >
-            <span>{{ t('filters.support.eyebrow') }}</span>
-            <strong>{{ supportAbilityDrafts().length }}</strong>
-          </button>
-        </div>
-
-        @if (activeAbilityFilterGroups().length) {
-          <div class="active-filter-strips">
-            @for (group of activeAbilityFilterGroups(); track group.category) {
-              <div class="active-filter-strip">
-                <div class="active-filter-strip__head">
-                  <span>{{ t(group.labelKey) }}</span>
-                  <button
-                    type="button"
-                    class="active-filter-strip__clear"
-                    (click)="clearAbilityFilterCategory(group.category)"
-                  >
-                    {{ t(group.clearLabelKey) }}
-                  </button>
-                </div>
-
-                <div class="active-filter-strip__badges">
-                  @for (badge of group.badges; track badge.draftId) {
-                    <button
-                      type="button"
-                      class="active-filter-badge"
-                      [title]="badge.label"
-                      (click)="removeAbilityFilterBadge(group.category, badge.draftId)"
-                    >
-                      <span>{{ badge.badge }}</span>
-                      <strong>{{ badge.label }}</strong>
-                      <small aria-hidden="true">x</small>
-                    </button>
-                  }
-                </div>
-              </div>
-            }
-          </div>
-        }
+        <app-ability-filter-rail
+          [items]="abilityFilterRailItems()"
+          [ariaLabel]="t('filters.abilityRailLabel')"
+          (selectCategory)="openAbilityFilterCategory($event)"
+          (clearCategory)="clearAbilityFilterCategory($event)"
+        ></app-ability-filter-rail>
 
         <app-special-ability-picker
           [isOpen]="specialAbilityPickerOpen()"
@@ -278,8 +205,6 @@
               <ion-select-option value="nameDesc">
                 {{ t('sort.options.nameDesc') }}
               </ion-select-option>
-              <ion-select-option value="idDesc">{{ t('sort.options.idDesc') }}</ion-select-option>
-              <ion-select-option value="idAsc">{{ t('sort.options.idAsc') }}</ion-select-option>
               <ion-select-option value="captainHpBoost">
                 {{ t('sort.options.captainHpBoost') }}
               </ion-select-option>
@@ -289,6 +214,20 @@
               <ion-select-option value="captainAverageBoost">
                 {{ t('sort.options.captainAverageBoost') }}
               </ion-select-option>
+            </ion-select>
+          </div>
+
+          <div class="quick-filter sort-filter">
+            <span>{{ t('idOrder.label') }}</span>
+            <ion-select
+              interface="popover"
+              fill="outline"
+              [attr.aria-label]="t('idOrder.label')"
+              [value]="selectedIdOrder()"
+              (ionChange)="onIdOrderChange($event)"
+            >
+              <ion-select-option value="newest">{{ t('idOrder.options.newest') }}</ion-select-option>
+              <ion-select-option value="oldest">{{ t('idOrder.options.oldest') }}</ion-select-option>
             </ion-select>
           </div>
 

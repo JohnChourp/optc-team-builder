@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 
 import {
+  type CharacterIdOrder,
   type CharacterListItem,
   type CharacterSearchQuery,
   type CharacterSortMode,
@@ -86,6 +87,10 @@ export class CharacterCatalogCacheService {
     const normalizedSearchTerm = query.searchTerm.trim().toLowerCase();
     const normalizedTypeFilter = query.typeFilter.trim().toLowerCase();
     const normalizedClassFilter = query.classFilter.trim().toLowerCase();
+    const maxCost =
+      query.maxCost === null || query.maxCost === undefined || !Number.isInteger(query.maxCost)
+        ? null
+        : Math.max(0, query.maxCost);
     const filtered = this.catalog().filter((character) => {
       if (allowedCharacterIdSet && !allowedCharacterIdSet.has(character.id)) {
         return false;
@@ -118,10 +123,14 @@ export class CharacterCatalogCacheService {
         return false;
       }
 
+      if (maxCost !== null && character.cost > maxCost) {
+        return false;
+      }
+
       return true;
     });
 
-    const sorted = this.sortCharacters(filtered, query.sortMode ?? 'catalog');
+    const sorted = this.sortCharacters(filtered, query.sortMode ?? 'catalog', query.idOrder);
 
     return sorted.slice(query.offset, query.offset + query.limit);
   }
@@ -151,22 +160,19 @@ export class CharacterCatalogCacheService {
   private sortCharacters(
     characters: CharacterListItem[],
     sortMode: CharacterSortMode,
+    idOrder: CharacterIdOrder | undefined = 'newest',
   ): CharacterListItem[] {
-    if (sortMode === 'catalog') {
-      return characters;
-    }
-
     return [...characters].sort((left, right) => {
       if (sortMode === 'captainHpBoost') {
-        return this.compareBoostSortedCharacters(left, right, 'captainHpBoost');
+        return this.compareBoostSortedCharacters(left, right, 'captainHpBoost', idOrder);
       }
 
       if (sortMode === 'captainAtkBoost') {
-        return this.compareBoostSortedCharacters(left, right, 'captainAtkBoost');
+        return this.compareBoostSortedCharacters(left, right, 'captainAtkBoost', idOrder);
       }
 
       if (sortMode === 'captainAverageBoost') {
-        return this.compareBoostSortedCharacters(left, right, 'captainAverageBoost');
+        return this.compareBoostSortedCharacters(left, right, 'captainAverageBoost', idOrder);
       }
 
       if (sortMode === 'nameAsc') {
@@ -174,7 +180,7 @@ export class CharacterCatalogCacheService {
           sensitivity: 'base',
         });
 
-        return nameDifference || left.id - right.id;
+        return nameDifference || compareCharacterIds(left.id, right.id, idOrder);
       }
 
       if (sortMode === 'nameDesc') {
@@ -182,14 +188,18 @@ export class CharacterCatalogCacheService {
           sensitivity: 'base',
         });
 
-        return nameDifference || right.id - left.id;
+        return nameDifference || compareCharacterIds(left.id, right.id, idOrder);
       }
 
       if (sortMode === 'idAsc') {
         return left.id - right.id;
       }
 
-      return right.id - left.id;
+      if (sortMode === 'idDesc' || sortMode === 'newest' || sortMode === 'powerFirst') {
+        return right.id - left.id;
+      }
+
+      return compareCharacterIds(left.id, right.id, idOrder);
     });
   }
 
@@ -197,6 +207,7 @@ export class CharacterCatalogCacheService {
     left: CharacterListItem,
     right: CharacterListItem,
     key: 'captainHpBoost' | 'captainAtkBoost' | 'captainAverageBoost',
+    idOrder: CharacterIdOrder | undefined,
   ): number {
     const boostDifference = right[key] - left[key];
 
@@ -204,7 +215,7 @@ export class CharacterCatalogCacheService {
       return boostDifference;
     }
 
-    const idDifference = right.id - left.id;
+    const idDifference = compareCharacterIds(left.id, right.id, idOrder);
 
     if (idDifference !== 0) {
       return idDifference;
@@ -218,4 +229,12 @@ export class CharacterCatalogCacheService {
 
     return left.name.localeCompare(right.name, undefined, { sensitivity: 'base' });
   }
+}
+
+function compareCharacterIds(
+  leftId: number,
+  rightId: number,
+  idOrder: CharacterIdOrder | undefined,
+): number {
+  return idOrder === 'oldest' ? leftId - rightId : rightId - leftId;
 }

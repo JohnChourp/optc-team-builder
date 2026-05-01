@@ -879,7 +879,8 @@ function inputsMatch(left: AutoBuildInput, right: AutoBuildInput): boolean {
     left.leaderCostRange.min === right.leaderCostRange.min &&
     left.leaderCostRange.max === right.leaderCostRange.max &&
     left.subCostRange.min === right.subCostRange.min &&
-    left.subCostRange.max === right.subCostRange.max
+    left.subCostRange.max === right.subCostRange.max &&
+    left.maxTotalCost === right.maxTotalCost
   );
 }
 

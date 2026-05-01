@@ -125,6 +125,13 @@
       "captainAverageBoost": "Captain HP/ATK average"
     }
   },
+  "idOrder": {
+    "label": "ID order",
+    "options": {
+      "newest": "Newest ID",
+      "oldest": "Oldest ID"
+    }
+  },
   "stats": {
     "atk": "ATK",
     "hp": "HP",

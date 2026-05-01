@@ -106,6 +106,7 @@ export interface AutoBuildConstraints {
   costRange?: Partial<AutoBuildCostRange> | null;
   leaderCostRange?: Partial<AutoBuildCostRange> | null;
   subCostRange?: Partial<AutoBuildCostRange> | null;
+  maxTotalCost?: number | null;
   manualSlots?: AutoBuildManualSlotSelection[];
   lockedCharacterIds?: number[];
   excludedCharacterIds?: number[];
@@ -161,6 +162,7 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   costRange: AutoBuildCostRange;
   leaderCostRange: AutoBuildCostRange;
   subCostRange: AutoBuildCostRange;
+  maxTotalCost: number | null;
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   excludedCharacterIds: number[];
@@ -179,6 +181,7 @@ export interface AutoBuildRosterInput extends Omit<
   captainCharacterId?: number | null;
   friendCaptainCharacterId?: number | null;
   resultLimit?: number | null;
+  maxTotalCost?: number | null;
 }
 
 export interface AutoBuildShipSelection {

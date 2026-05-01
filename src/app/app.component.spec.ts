@@ -230,6 +230,22 @@ describe('AppComponent', () => {
         canonicalUrl: 'https://johnchourp.github.io/optc-team-builder/tabs/auto-team-builder/',
       },
       {
+        url: '/tabs/captain-coverage',
+        title: 'Captain Coverage | OPTC Team Builder',
+        canonicalUrl: 'https://johnchourp.github.io/optc-team-builder/tabs/captain-coverage/',
+      },
+      {
+        url: '/tabs/auto-team-builder-rumble',
+        title: 'Auto Team Rumble Builder | OPTC Team Builder',
+        canonicalUrl:
+          'https://johnchourp.github.io/optc-team-builder/tabs/auto-team-builder-rumble/',
+      },
+      {
+        url: '/tabs/rumble-characters',
+        title: 'Rumble Characters | OPTC Team Builder',
+        canonicalUrl: 'https://johnchourp.github.io/optc-team-builder/tabs/rumble-characters/',
+      },
+      {
         url: '/tabs/crew-forge',
         title: 'Crew Forge | OPTC Team Builder',
         canonicalUrl: 'https://johnchourp.github.io/optc-team-builder/tabs/crew-forge/',

@@ -160,6 +160,7 @@ describe('CharacterBoxesPage', () => {
       allowedCharacterIds: undefined,
       excludedCharacterIds: [202],
       sortMode: 'catalog',
+      idOrder: 'newest',
       limit: 48,
       offset: 0,
     });
@@ -194,6 +195,7 @@ describe('CharacterBoxesPage', () => {
       allowedCharacterIds: undefined,
       excludedCharacterIds: undefined,
       sortMode: 'catalog',
+      idOrder: 'newest',
       limit: 48,
       offset: 0,
     });
@@ -217,6 +219,7 @@ describe('CharacterBoxesPage', () => {
       allowedCharacterIds: [101, 303],
       excludedCharacterIds: undefined,
       sortMode: 'catalog',
+      idOrder: 'newest',
       limit: 48,
       offset: 0,
     });
@@ -240,6 +243,7 @@ describe('CharacterBoxesPage', () => {
       allowedCharacterIds: undefined,
       excludedCharacterIds: [101, 303],
       sortMode: 'catalog',
+      idOrder: 'newest',
       limit: 48,
       offset: 0,
     });
@@ -264,6 +268,7 @@ describe('CharacterBoxesPage', () => {
       allowedCharacterIds: [101],
       excludedCharacterIds: undefined,
       sortMode: 'catalog',
+      idOrder: 'newest',
       limit: 48,
       offset: 0,
     });
@@ -288,6 +293,7 @@ describe('CharacterBoxesPage', () => {
       allowedCharacterIds: undefined,
       excludedCharacterIds: [101],
       sortMode: 'catalog',
+      idOrder: 'newest',
       limit: 48,
       offset: 0,
     });
@@ -317,6 +323,7 @@ describe('CharacterBoxesPage', () => {
       allowedCharacterIds: [101],
       excludedCharacterIds: undefined,
       sortMode: 'catalog',
+      idOrder: 'newest',
       limit: 48,
       offset: 0,
     });
@@ -346,6 +353,7 @@ describe('CharacterBoxesPage', () => {
       allowedCharacterIds: [101],
       excludedCharacterIds: [101, 303],
       sortMode: 'catalog',
+      idOrder: 'newest',
       limit: 48,
       offset: 0,
     });
@@ -356,11 +364,11 @@ describe('CharacterBoxesPage', () => {
 
     await page.onSortModeChange({
       detail: {
-        value: 'idAsc',
+        value: 'nameAsc',
       },
     } as CustomEvent<{ value?: string | null }>);
 
-    expect(page.selectedSortMode()).toBe('idAsc');
+    expect(page.selectedSortMode()).toBe('nameAsc');
     expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
       selectedTypes: [],
@@ -369,7 +377,33 @@ describe('CharacterBoxesPage', () => {
       selectedClassesMatchMode: 'any',
       allowedCharacterIds: undefined,
       excludedCharacterIds: undefined,
-      sortMode: 'idAsc',
+      sortMode: 'nameAsc',
+      idOrder: 'newest',
+      limit: 48,
+      offset: 0,
+    });
+  });
+
+  it('passes the selected ID order to repository searches', async () => {
+    const { page, repository } = createPage();
+
+    await page.onIdOrderChange({
+      detail: {
+        value: 'oldest',
+      },
+    } as CustomEvent<{ value?: string | null }>);
+
+    expect(page.selectedIdOrder()).toBe('oldest');
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: [],
+      selectedClassesMatchMode: 'any',
+      allowedCharacterIds: undefined,
+      excludedCharacterIds: undefined,
+      sortMode: 'catalog',
+      idOrder: 'oldest',
       limit: 48,
       offset: 0,
     });
@@ -398,11 +432,17 @@ describe('CharacterBoxesPage', () => {
         value: 'nameDesc',
       },
     } as CustomEvent<{ value?: string | null }>);
+    await page.onIdOrderChange({
+      detail: {
+        value: 'oldest',
+      },
+    } as CustomEvent<{ value?: string | null }>);
     await page.clearFilters();
 
     expect(page.selectedFavoriteFilter()).toBe('all');
     expect(page.selectedMembershipFilter()).toBe('all');
     expect(page.selectedSortMode()).toBe('catalog');
+    expect(page.selectedIdOrder()).toBe('newest');
     expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
       selectedTypes: [],
@@ -412,6 +452,7 @@ describe('CharacterBoxesPage', () => {
       allowedCharacterIds: undefined,
       excludedCharacterIds: undefined,
       sortMode: 'catalog',
+      idOrder: 'newest',
       limit: 48,
       offset: 0,
     });
@@ -435,6 +476,11 @@ describe('CharacterBoxesPage', () => {
     expect(template).toContain("t('sort.placeholder')");
     expect(template).toContain('selectedSortMode()');
     expect(template).toContain('onSortModeChange($event)');
+    expect(template).toContain("t('idOrder.label')");
+    expect(template).toContain('selectedIdOrder()');
+    expect(template).toContain('onIdOrderChange($event)');
+    expect(template).not.toContain('value="idDesc"');
+    expect(template).not.toContain('value="idAsc"');
     expect(template).toContain("t('displayMode.compact')");
     expect(template).toContain('toggleFavorite(card.character.id, $event)');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(card.character)"');

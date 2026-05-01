@@ -244,6 +244,91 @@
         </section>
 
         <section class="glass-card editor-card">
+          <div class="section-label">{{ t('sections.builderAbilities') }}</div>
+          <p class="section-copy">{{ t('builderAbilities.copy') }}</p>
+          <app-ability-filter-rail
+            [items]="[
+              {
+                category: 'special',
+                label: t('builderAbilities.categories.special'),
+                count: specialAbilityDrafts().length,
+                disabled: !availableSpecialAbilityCatalogItems().length
+              },
+              {
+                category: 'crewmate',
+                label: t('builderAbilities.categories.crewmate'),
+                count: crewmateAbilityDrafts().length,
+                disabled: !availableCrewmateAbilityCatalogItems().length
+              },
+              {
+                category: 'potential',
+                label: t('builderAbilities.categories.potential'),
+                count: potentialAbilityDrafts().length,
+                disabled: !availablePotentialAbilityCatalogItems().length
+              },
+              {
+                category: 'support',
+                label: t('builderAbilities.categories.support'),
+                count: supportAbilityDrafts().length,
+                disabled: !availableSupportAbilityCatalogItems().length
+              }
+            ]"
+            [disabled]="saving()"
+            [ariaLabel]="t('builderAbilities.railLabel')"
+            (selectCategory)="openBuilderAbilityPicker($event)"
+            (clearCategory)="clearBuilderAbilityCategory($event)"
+          ></app-ability-filter-rail>
+
+          <app-special-ability-picker
+            [isOpen]="specialAbilityPickerOpen()"
+            category="special"
+            [eyebrow]="t('builderAbilities.categories.special')"
+            [title]="t('builderAbilities.pickers.special.title')"
+            [copy]="t('builderAbilities.pickers.special.copy')"
+            [drafts]="specialAbilityDrafts()"
+            [catalogItems]="availableSpecialAbilityCatalogItems()"
+            (dismiss)="closeBuilderAbilityPicker('special')"
+            (saveDrafts)="saveBuilderAbilityPicker('special', $event)"
+          ></app-special-ability-picker>
+
+          <app-special-ability-picker
+            [isOpen]="crewmateAbilityPickerOpen()"
+            category="crewmate"
+            [eyebrow]="t('builderAbilities.categories.crewmate')"
+            [title]="t('builderAbilities.pickers.crewmate.title')"
+            [copy]="t('builderAbilities.pickers.crewmate.copy')"
+            [drafts]="crewmateAbilityDrafts()"
+            [catalogItems]="availableCrewmateAbilityCatalogItems()"
+            (dismiss)="closeBuilderAbilityPicker('crewmate')"
+            (saveDrafts)="saveBuilderAbilityPicker('crewmate', $event)"
+          ></app-special-ability-picker>
+
+          <app-special-ability-picker
+            [isOpen]="potentialAbilityPickerOpen()"
+            category="potential"
+            [eyebrow]="t('builderAbilities.categories.potential')"
+            [title]="t('builderAbilities.pickers.potential.title')"
+            [copy]="t('builderAbilities.pickers.potential.copy')"
+            [drafts]="potentialAbilityDrafts()"
+            [catalogItems]="availablePotentialAbilityCatalogItems()"
+            (dismiss)="closeBuilderAbilityPicker('potential')"
+            (saveDrafts)="saveBuilderAbilityPicker('potential', $event)"
+          ></app-special-ability-picker>
+
+          <app-special-ability-picker
+            [isOpen]="supportAbilityPickerOpen()"
+            category="support"
+            [eyebrow]="t('builderAbilities.categories.support')"
+            [title]="t('builderAbilities.pickers.support.title')"
+            [copy]="t('builderAbilities.pickers.support.copy')"
+            [drafts]="supportAbilityDrafts()"
+            [catalogItems]="availableSupportAbilityCatalogItems()"
+            (dismiss)="closeBuilderAbilityPicker('support')"
+            (saveDrafts)="saveBuilderAbilityPicker('support', $event)"
+          ></app-special-ability-picker>
+        </section>
+
+        <section class="glass-card editor-card">
           <div class="section-label">{{ t('sections.advancedJson') }}</div>
           <p class="section-copy">{{ t('advanced.copy') }}</p>
           <ion-textarea

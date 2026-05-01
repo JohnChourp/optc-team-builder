@@ -204,6 +204,31 @@ describe('CharacterCatalogCacheService', () => {
           searchTerm: '',
           typeFilter: '',
           classFilter: '',
+          sortMode: 'catalog',
+          limit: 10,
+          offset: 0,
+        })
+        .map((character) => character.id),
+    ).toEqual([400, 300, 200, 100]);
+    expect(
+      service
+        .queryCharacters({
+          searchTerm: '',
+          typeFilter: '',
+          classFilter: '',
+          sortMode: 'catalog',
+          idOrder: 'oldest',
+          limit: 2,
+          offset: 1,
+        })
+        .map((character) => character.id),
+    ).toEqual([200, 300]);
+    expect(
+      service
+        .queryCharacters({
+          searchTerm: '',
+          typeFilter: '',
+          classFilter: '',
           sortMode: 'nameAsc',
           limit: 2,
           offset: 1,
@@ -253,6 +278,7 @@ describe('CharacterCatalogCacheService', () => {
       getAllCharacters: vi.fn().mockResolvedValue([
         createCharacter(100, { captainHpBoost: 1.5, captainAtkBoost: 5, captainAverageBoost: 3.25 }),
         createCharacter(300, { captainHpBoost: 1.2, captainAtkBoost: 6, captainAverageBoost: 3.6 }),
+        createCharacter(400, { captainHpBoost: 1.8, captainAtkBoost: 4, captainAverageBoost: 2.9 }),
         createCharacter(200, { captainHpBoost: 1.8, captainAtkBoost: 4, captainAverageBoost: 2.9 }),
       ]),
     };
@@ -273,15 +299,20 @@ describe('CharacterCatalogCacheService', () => {
 
     expect(
       service.queryCharacters({ ...baseQuery, sortMode: 'captainHpBoost' }).map((character) => character.id),
-    ).toEqual([200, 100, 300]);
+    ).toEqual([400, 200, 100, 300]);
+    expect(
+      service
+        .queryCharacters({ ...baseQuery, sortMode: 'captainHpBoost', idOrder: 'oldest' })
+        .map((character) => character.id),
+    ).toEqual([200, 400, 100, 300]);
     expect(
       service.queryCharacters({ ...baseQuery, sortMode: 'captainAtkBoost' }).map((character) => character.id),
-    ).toEqual([300, 100, 200]);
+    ).toEqual([300, 100, 400, 200]);
     expect(
       service
         .queryCharacters({ ...baseQuery, sortMode: 'captainAverageBoost' })
         .map((character) => character.id),
-    ).toEqual([300, 100, 200]);
+    ).toEqual([300, 100, 400, 200]);
   });
 
   it('returns characters by id while preserving the input order', async () => {
@@ -343,7 +374,7 @@ describe('CharacterCatalogCacheService', () => {
           offset: 0,
         })
         .map((character) => character.id),
-    ).toEqual([4529, 900005]);
+    ).toEqual([900005, 4529]);
   });
 
   it('reloads the cached catalog after the override revision changes', async () => {

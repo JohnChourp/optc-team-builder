@@ -52,6 +52,7 @@ export function buildAutoTeamBuilderStateFromSavedTeam(
     leaderBoostRanges: createEmptyAutoBuildLeaderBoostRanges(),
     leaderCostRange: createEmptyAutoBuildCostRange(),
     subCostRange: createEmptyAutoBuildCostRange(),
+    maxTotalCost: null,
     manualSlots,
     lockedCharacterIds: [],
     excludedCharacterIds: [],

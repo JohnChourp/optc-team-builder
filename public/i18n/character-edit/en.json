@@ -10,6 +10,7 @@
     "core": "Core",
     "stats": "Stats",
     "images": "Images",
+    "builderAbilities": "Builder abilities",
     "advancedJson": "Advanced JSON"
   },
   "fields": {
@@ -36,6 +37,34 @@
   },
   "advanced": {
     "copy": "Edit the full override payload below. Images stay outside this JSON editor and are managed in the Images section."
+  },
+  "builderAbilities": {
+    "copy": "Edit the auto-builder ability tags stored on this character.",
+    "railLabel": "Builder ability categories",
+    "categories": {
+      "special": "Special",
+      "crewmate": "Crewmate",
+      "potential": "Potential",
+      "support": "Support"
+    },
+    "pickers": {
+      "special": {
+        "title": "Special abilities",
+        "copy": "Choose special effects this character can cover."
+      },
+      "crewmate": {
+        "title": "Crewmate abilities",
+        "copy": "Choose sailor, swap, and crew utility effects this character can cover."
+      },
+      "potential": {
+        "title": "Potential abilities",
+        "copy": "Choose potential abilities this character can cover."
+      },
+      "support": {
+        "title": "Support abilities",
+        "copy": "Choose support effects this character can cover."
+      }
+    }
   },
   "actions": {
     "save": "Save local override",

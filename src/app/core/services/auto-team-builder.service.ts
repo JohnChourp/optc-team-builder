@@ -173,6 +173,7 @@ export class AutoTeamBuilderService {
       constraints.subCostRange !== undefined
         ? this.normalizeCostRange(constraints.subCostRange)
         : { ...costRange };
+    const maxTotalCost = this.normalizeMaxTotalCost(constraints.maxTotalCost);
 
     const input: AutoBuildInput = {
       types: normalizedTypes.length > 0 ? normalizedTypes : [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
@@ -199,6 +200,7 @@ export class AutoTeamBuilderService {
       costRange,
       leaderCostRange,
       subCostRange,
+      maxTotalCost,
       manualSlots,
       lockedCharacterIds,
       excludedCharacterIds,
@@ -233,6 +235,7 @@ export class AutoTeamBuilderService {
       costRange: { ...input.costRange },
       leaderCostRange: { ...input.leaderCostRange },
       subCostRange: { ...input.subCostRange },
+      maxTotalCost: input.maxTotalCost,
       manualSlots: input.manualSlots.map((slot) => ({
         role: slot.role,
         characterIds: [...slot.characterIds],
@@ -1545,6 +1548,7 @@ export class AutoTeamBuilderService {
         rosterInput.subCostRange !== undefined
           ? this.normalizeCostRange(rosterInput.subCostRange)
           : this.normalizeCostRange(rosterInput.costRange),
+      maxTotalCost: this.normalizeMaxTotalCost(rosterInput.maxTotalCost),
       manualSlots: this.createExactManualSlots(
         captainCharacterId,
         friendCaptainCharacterId,
@@ -1784,6 +1788,16 @@ export class AutoTeamBuilderService {
   }
 
   private normalizeCostRangeBound(value: unknown): number | null {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    const parsedValue = Number(value);
+
+    return Number.isInteger(parsedValue) && parsedValue >= 0 ? parsedValue : null;
+  }
+
+  private normalizeMaxTotalCost(value: unknown): number | null {
     if (value === null || value === undefined || value === '') {
       return null;
     }

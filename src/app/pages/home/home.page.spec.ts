@@ -27,7 +27,9 @@ describe('HomePage', () => {
     );
 
     expect(component).toContain("route: '/tabs/characters'");
+    expect(component).toContain("route: '/tabs/rumble-characters'");
     expect(component).toContain("route: '/tabs/auto-team-builder'");
+    expect(component).toContain("route: '/tabs/captain-coverage'");
     expect(component).toContain("route: '/tabs/auto-team-builder-rumble'");
     expect(component).toContain("route: '/tabs/saved-rumble-teams'");
     expect(component).toContain("route: '/tabs/crew-forge'");

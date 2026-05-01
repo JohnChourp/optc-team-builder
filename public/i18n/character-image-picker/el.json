@@ -31,6 +31,26 @@
     "supportTitle": "Support Ability filters",
     "supportCopy": "Αυτά τα φίλτρα είναι τοπικά μόνο για την επιλογή εικόνας και δεν αλλάζουν το saved enemy."
   },
+  "sort": {
+    "label": "Ταξινόμηση",
+    "options": {
+      "catalog": "Προεπιλεγμένη σειρά",
+      "nameAsc": "Όνομα A-Z",
+      "nameDesc": "Όνομα Z-A",
+      "idDesc": "Νεότερο character ID πρώτα",
+      "idAsc": "Παλαιότερο character ID πρώτα",
+      "captainHpBoost": "Captain HP boost",
+      "captainAtkBoost": "Captain ATK boost",
+      "captainAverageBoost": "Captain HP/ATK average"
+    }
+  },
+  "idOrder": {
+    "label": "Σειρά ID",
+    "options": {
+      "newest": "Νεότερο ID",
+      "oldest": "Παλαιότερο ID"
+    }
+  },
   "actions": {
     "loadMore": "Φόρτωση περισσότερων",
     "useImage": "Χρήση εικόνας χαρακτήρα"

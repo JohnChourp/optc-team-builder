@@ -125,6 +125,13 @@
       "captainAverageBoost": "Captain HP/ATK average"
     }
   },
+  "idOrder": {
+    "label": "Σειρά ID",
+    "options": {
+      "newest": "Νεότερο ID",
+      "oldest": "Παλαιότερο ID"
+    }
+  },
   "stats": {
     "atk": "ATK",
     "hp": "HP",

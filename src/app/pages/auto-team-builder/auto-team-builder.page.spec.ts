@@ -199,6 +199,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     page.onSubCostRangeChange('max', {
       detail: { value: '40' },
     } as CustomEvent<{ value: string }>);
+    page.onMaxTotalCostChange({
+      detail: { value: '300' },
+    } as CustomEvent<{ value: string }>);
     await page.buildTeam();
 
     expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
@@ -207,6 +210,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       expect.objectContaining({
         leaderCostRange: { min: 20, max: 60 },
         subCostRange: { min: 10, max: 40 },
+        maxTotalCost: 300,
       }),
       expect.any(Object),
     );
@@ -214,6 +218,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     await page.resetPage();
     expect(page.leaderCostRange()).toEqual(createEmptyAutoBuildCostRange());
     expect(page.subCostRange()).toEqual(createEmptyAutoBuildCostRange());
+    expect(page.maxTotalCost()).toBeNull();
   });
 
   it('disables builds when a scoped cost range minimum is greater than maximum', async () => {
@@ -333,17 +338,12 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.building()).toBe(false);
   });
 
-  it('passes the unique-base-name toggle to the builder service', async () => {
+  it('passes duplicate-character protection to the builder service by default', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
     await page.ngOnInit();
     page.selectedClasses.set(['Fighter']);
     page.selectedTypes.set(['DEX']);
-    await page.onRequireUniqueBaseCharacterNamesToggle({
-      detail: { checked: true },
-    } as CustomEvent<{
-      checked: boolean;
-    }>);
     await page.buildTeam();
 
     expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
@@ -752,17 +752,18 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.favoriteShipsOnly()).toBe(false);
   });
 
-  it('disables unique-name matching immediately', async () => {
+  it('keeps duplicate-character protection enabled without a visible toggle', async () => {
     const { page } = await createPage();
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
+      'utf8',
+    );
 
     await page.ngOnInit();
-    page.requireUniqueBaseCharacterNames.set(true);
 
-    page.onRequireUniqueBaseCharacterNamesToggle({
-      detail: { checked: false },
-    } as CustomEvent<{ checked: boolean }>);
-
-    expect(page.requireUniqueBaseCharacterNames()).toBe(false);
+    expect(page.requireUniqueBaseCharacterNames()).toBe(true);
+    expect(template).not.toContain('onRequireUniqueBaseCharacterNamesToggle');
+    expect(template).not.toContain('uniqueBaseCharacterNamesToggleLabel()');
   });
 
   it('passes configured ability requirements to the builder service', async () => {
@@ -2079,6 +2080,10 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain('{{ buildButtonLabel() }}');
     expect(template).not.toContain('slot.abilityChips');
     expect(template).not.toContain('slot.snippet');
+    expect(template).toContain('<app-ability-filter-rail');
+    expect(template).toContain('requiredCharacterAbilityRailItems(view)');
+    expect(template).toContain('clearRequiredCharacterAbilityCategory(');
+    expect(template).not.toContain('ability-requirements-selected-row');
     expect(template).toContain('<app-ability-requirement-picker');
     expect(template).toContain('<app-character-ability-groups');
     expect(template).not.toContain('<app-enemy-mechanic-picker');
@@ -2273,11 +2278,6 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     await page.ngOnInit();
     page.selectedClasses.set(['Fighter']);
     page.selectedTypes.set(['DEX']);
-    await page.onRequireUniqueBaseCharacterNamesToggle({
-      detail: { checked: true },
-    } as CustomEvent<{
-      checked: boolean;
-    }>);
     page.manualSlots.set(
       createManualSlots({
         captain: [3574],
@@ -2779,6 +2779,33 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     ).toEqual([706, 705, 704, 703, 702, 701]);
   });
 
+  it('marks manual candidates that do not fit the remaining max total cost as blocked', async () => {
+    const { page } = await createPage();
+    const captain = createCharacterRecord(801, 'Budget Captain');
+    const cheapSub = createCharacterRecord(802, 'Cheap Sub');
+    const expensiveSub = createCharacterRecord(803, 'Expensive Sub');
+
+    captain.cost = 80;
+    cheapSub.cost = 20;
+    expensiveSub.cost = 21;
+
+    await page.ngOnInit();
+    page.onMaxTotalCostChange({
+      detail: { value: '100' },
+    } as CustomEvent<{ value: string }>);
+    page.toggleCharacterInActiveManualSlot(captain);
+    page.selectManualSlot('sub1');
+    page.manualCandidates.set([cheapSub, expensiveSub]);
+
+    expect(page.manualCandidateCards().map((card) => ({
+      id: card.character.id,
+      selectable: card.isSelectableInActiveSlot,
+    }))).toEqual([
+      { id: 802, selectable: true },
+      { id: 803, selectable: false },
+    ]);
+  });
+
   it('loads more manual and excluded candidates in 10-item batches when the virtual list nears the end', async () => {
     const { page, repository } = await createPage();
     const records = Array.from({ length: 26 }, (_, index) =>
@@ -3083,6 +3110,29 @@ describe('AutoTeamBuilderPage offline save', () => {
     page.assignFixedManualTeamCharacter(createCharacterRecord(201, 'Manual Captain'));
 
     expect(page.fixedManualTeamCurrentTeamId()).toBeNull();
+  });
+
+  it('filters fixed manual team candidates by remaining max total cost when replacing a slot', async () => {
+    const { page } = await createPage();
+    const captain = createCharacterRecord(901, 'Fixed Captain');
+    const currentSub = createCharacterRecord(902, 'Current Sub');
+    const fittingReplacement = createCharacterRecord(903, 'Fitting Replacement');
+    const expensiveReplacement = createCharacterRecord(904, 'Expensive Replacement');
+
+    captain.cost = 80;
+    currentSub.cost = 20;
+    fittingReplacement.cost = 20;
+    expensiveReplacement.cost = 21;
+
+    await page.ngOnInit();
+    page.onMaxTotalCostChange({
+      detail: { value: '100' },
+    } as CustomEvent<{ value: string }>);
+    page.fixedManualTeamSlots.set([captain, null, currentSub, null, null, null]);
+    page.fixedManualTeamSelectedSlotIndex.set(2);
+    page.fixedManualTeamCandidates.set([fittingReplacement, expensiveReplacement]);
+
+    expect(page.fixedManualTeamCandidateCards().map((card) => card.character.id)).toEqual([903]);
   });
 
   it('saves immediately and unlocks after the save finishes', async () => {
@@ -3445,11 +3495,6 @@ describe('AutoTeamBuilderPage preset export state', () => {
     } as CustomEvent<{
       checked: boolean;
     }>);
-    await page.onRequireUniqueBaseCharacterNamesToggle({
-      detail: { checked: true },
-    } as CustomEvent<{
-      checked: boolean;
-    }>);
     await page.onFavoritesOnlyToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
@@ -3479,7 +3524,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 21,
+      schemaVersion: 23,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -3596,6 +3641,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       costRange: createEmptyAutoBuildCostRange(),
       leaderCostRange: createEmptyAutoBuildCostRange(),
       subCostRange: createEmptyAutoBuildCostRange(),
+      maxTotalCost: null,
     });
     expect(payload.manualSelection.characters).toEqual([
       expect.objectContaining({
@@ -3642,7 +3688,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
     });
   });
 
-  it('exports leader boost and scoped cost ranges in schema 20 presets', () => {
+  it('exports leader boost, scoped cost ranges, and max total cost in schema 23 presets', () => {
     const payload = buildAutoTeamSelectionExportPayload({
       selectedTypes: ['DEX'],
       selectedClasses: ['Fighter'],
@@ -3660,6 +3706,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       },
       leaderCostRange: { min: 20, max: 60 },
       subCostRange: { min: 10, max: 40 },
+      maxTotalCost: 300,
       manualSlots: createManualSlots({
         captain: [201],
         friendCaptain: [201],
@@ -3672,13 +3719,14 @@ describe('AutoTeamBuilder preset export helpers', () => {
       exportedAt: '2026-03-25T10:00:00.000Z',
     });
 
-    expect(payload.schemaVersion).toBe(21);
+    expect(payload.schemaVersion).toBe(23);
     expect(payload.filters.leaderBoostRanges).toEqual({
       ATK: { min: 5, max: 6 },
       HP: { min: 1.25, max: 1.5 },
     });
     expect(payload.filters.leaderCostRange).toEqual({ min: 20, max: 60 });
     expect(payload.filters.subCostRange).toEqual({ min: 10, max: 40 });
+    expect(payload.filters.maxTotalCost).toBe(300);
   });
 
   it('does not start a preset download when the payload is missing', () => {
@@ -3980,6 +4028,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       favoriteCount: 0,
       leaderCostRange: { min: 20, max: 60 },
       subCostRange: { min: 10, max: 40 },
+      maxTotalCost: 300,
       manualSlots: createManualSlots({
         captain: [101],
         friendCaptain: [101],
@@ -4001,6 +4050,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
 
     expect(result.state.leaderCostRange).toEqual({ min: 20, max: 60 });
     expect(result.state.subCostRange).toEqual({ min: 10, max: 40 });
+    expect(result.state.maxTotalCost).toBe(300);
   });
 
   it('restores legacy cost range imports into both scoped cost ranges', () => {
@@ -5072,6 +5122,7 @@ function createAutoBuildResult(
     costRange: createEmptyAutoBuildCostRange(),
     leaderCostRange: createEmptyAutoBuildCostRange(),
     subCostRange: createEmptyAutoBuildCostRange(),
+    maxTotalCost: null,
     manualSlots: createManualSlots({
       captain: [101],
       friendCaptain: [102],
@@ -5115,6 +5166,7 @@ function createAutoBuildResult(
       costRange: { ...input.costRange },
       leaderCostRange: { ...input.leaderCostRange },
       subCostRange: { ...input.subCostRange },
+      maxTotalCost: input.maxTotalCost,
       manualSlots: input.manualSlots.map((slot) => ({
         role: slot.role,
         characterIds: [...slot.characterIds],

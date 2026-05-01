@@ -74,6 +74,17 @@ describe('app routes', () => {
     expect(seo?.['title']).toBe('Auto Team Rumble Builder | OPTC Team Builder');
   });
 
+  it('registers the Captain Coverage route inside tabs', () => {
+    const tabsRoute = findRouteByPath(routes, 'tabs');
+    const coverageRoute = tabsRoute?.children?.find((route) => route.path === 'captain-coverage');
+    const seo = coverageRoute?.data?.['seo'] as Record<string, unknown> | undefined;
+
+    expect(coverageRoute).toBeDefined();
+    expect(coverageRoute?.loadComponent).toBeTypeOf('function');
+    expect(seo?.['title']).toBe('Captain Coverage | OPTC Team Builder');
+    expect(seo?.['canonicalPath']).toBe('tabs/captain-coverage');
+  });
+
   it('registers the Rumble characters route inside tabs', () => {
     const tabsRoute = findRouteByPath(routes, 'tabs');
     const rumbleCharactersRoute = tabsRoute?.children?.find(
@@ -123,6 +134,7 @@ describe('app routes', () => {
     const publicRoutePaths = [
       'characters',
       'auto-team-builder',
+      'captain-coverage',
       'auto-team-builder-rumble',
       'rumble-characters',
       'crew-forge',

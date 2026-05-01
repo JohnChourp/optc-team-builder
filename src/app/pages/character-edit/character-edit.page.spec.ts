@@ -13,7 +13,13 @@ describe('CharacterEditPage template', () => {
     expect(template).toContain("t('sections.core')");
     expect(template).toContain("t('sections.stats')");
     expect(template).toContain("t('sections.images')");
+    expect(template).toContain("t('sections.builderAbilities')");
     expect(template).toContain("t('sections.advancedJson')");
+    expect(template).toContain('<app-ability-filter-rail');
+    expect(template).toContain('openBuilderAbilityPicker($event)');
+    expect(template).toContain('clearBuilderAbilityCategory($event)');
+    expect(template).toContain('<app-special-ability-picker');
+    expect(template).toContain("saveBuilderAbilityPicker('special', $event)");
     expect(template).toContain('onThumbnailFileSelected');
     expect(template).toContain('onDetailFileSelected');
     expect(template).toContain('applyAdvancedJson()');

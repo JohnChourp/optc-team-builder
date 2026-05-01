@@ -10,6 +10,7 @@
     "core": "Core",
     "stats": "Stats",
     "images": "Images",
+    "builderAbilities": "Builder abilities",
     "advancedJson": "Advanced JSON"
   },
   "fields": {
@@ -36,6 +37,34 @@
   },
   "advanced": {
     "copy": "Επεξεργάσου παρακάτω ολόκληρο το payload του override. Οι εικόνες μένουν έξω από αυτό το JSON editor και διαχειρίζονται από το Images section."
+  },
+  "builderAbilities": {
+    "copy": "Επεξεργάσου τα auto-builder ability tags που είναι αποθηκευμένα σε αυτόν τον χαρακτήρα.",
+    "railLabel": "Κατηγορίες builder abilities",
+    "categories": {
+      "special": "Special",
+      "crewmate": "Crewmate",
+      "potential": "Potential",
+      "support": "Support"
+    },
+    "pickers": {
+      "special": {
+        "title": "Special abilities",
+        "copy": "Διάλεξε special effects που μπορεί να καλύψει ο χαρακτήρας."
+      },
+      "crewmate": {
+        "title": "Crewmate abilities",
+        "copy": "Διάλεξε sailor, swap και crew utility effects που μπορεί να καλύψει ο χαρακτήρας."
+      },
+      "potential": {
+        "title": "Potential abilities",
+        "copy": "Διάλεξε potential abilities που μπορεί να καλύψει ο χαρακτήρας."
+      },
+      "support": {
+        "title": "Support abilities",
+        "copy": "Διάλεξε support effects που μπορεί να καλύψει ο χαρακτήρας."
+      }
+    }
   },
   "actions": {
     "save": "Αποθήκευση local override",

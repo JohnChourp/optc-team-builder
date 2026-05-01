@@ -276,6 +276,58 @@ describe('runAutoTeamBuildSearch', () => {
     ).toBe(true);
   });
 
+  it('preserves max total cost on every fallback attempt', () => {
+    const planner = createAutoTeamBuildFallbackPlanner(
+      createInput(['DEX', 'INT'], ['Fighter', 'Slasher'], {
+        requireLeaderSuperSpecialCriteria: true,
+        maxTotalCost: 300,
+      }),
+      createSingleTypeRecords(),
+    );
+
+    planner.scheduleInitialFallbackAttempts();
+
+    expect(collectScheduledAttempts(planner).every((attempt) => attempt.input.maxTotalCost === 300))
+      .toBe(true);
+  });
+
+  it('allows Captain plus four subs at the exact max total cost while ignoring Friend Captain cost', () => {
+    const records = createBudgetRecords();
+    const result = runAutoTeamBuildSearch(
+      records,
+      createInput(['DEX'], ['Fighter'], {
+        maxTotalCost: 300,
+        manualSlots: createBudgetManualSlots(),
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.map((slot) => slot.character.cost)).toEqual([100, 999, 50, 50, 50, 50]);
+  });
+
+  it('rejects manual teams above the max total cost', () => {
+    const result = runAutoTeamBuildSearch(
+      createBudgetRecords(),
+      createInput(['DEX'], ['Fighter'], {
+        maxTotalCost: 299,
+        manualSlots: createBudgetManualSlots(),
+      }),
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('rejects auto-filled teams above the max total cost', () => {
+    const result = runAutoTeamBuildSearch(
+      createSingleTypeRecords(),
+      createInput(['DEX'], ['Fighter'], {
+        maxTotalCost: 100,
+      }),
+    );
+
+    expect(result).toBeNull();
+  });
+
   it('caps the bounded subset plan at 31,744 total attempts for now', () => {
     const planner = createAutoTeamBuildFallbackPlanner(
       createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], createSyntheticClasses(10), {
@@ -396,6 +448,7 @@ function createInput(
       | 'costRange'
       | 'leaderCostRange'
       | 'subCostRange'
+      | 'maxTotalCost'
       | 'manualSlots'
       | 'lockedCharacterIds'
       | 'excludedCharacterIds'
@@ -434,6 +487,7 @@ function createInput(
     costRange: overrides.costRange ?? createEmptyAutoBuildCostRange(),
     leaderCostRange: overrides.leaderCostRange ?? overrides.costRange ?? createEmptyAutoBuildCostRange(),
     subCostRange: overrides.subCostRange ?? overrides.costRange ?? createEmptyAutoBuildCostRange(),
+    maxTotalCost: overrides.maxTotalCost ?? null,
     manualSlots: overrides.manualSlots ?? createEmptyAutoBuildManualSlots(),
     lockedCharacterIds,
     excludedCharacterIds,
@@ -465,6 +519,63 @@ function createSingleTypeRecords(): CharacterDetailRecord[] {
     createUtilitySubRecord(),
     createConsistencySubRecord(),
   ];
+}
+
+function createBudgetRecords(): CharacterDetailRecord[] {
+  return [
+    createCharacterRecord({
+      id: 7000,
+      cost: 100,
+      primaryClass: 'Fighter',
+      secondaryClass: 'Slasher',
+      detail: {
+        captainAbility: 'Boosts ATK of Fighter characters by 5x.',
+        specialText: 'Boosts ATK of crew by 2x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 7001,
+      cost: 999,
+      primaryClass: 'Fighter',
+      secondaryClass: 'Slasher',
+      detail: {
+        captainAbility: 'Boosts ATK of Fighter characters by 5x.',
+        specialText: 'Boosts orb effects of crew by 2x for 1 turn.',
+      },
+    }),
+    ...[7010, 7011, 7012, 7013].map((id) =>
+      createCharacterRecord({
+        id,
+        cost: 50,
+        primaryClass: 'Fighter',
+        secondaryClass: 'Slasher',
+        detail: {
+          specialText:
+            'Boosts ATK of Fighter characters by 2x and changes crew orbs into Matching Orbs.',
+        },
+      }),
+    ),
+  ];
+}
+
+function createBudgetManualSlots() {
+  return createEmptyAutoBuildManualSlots().map((slot) => ({
+    role: slot.role,
+    characterIds:
+      slot.role === 'captain'
+        ? [7000]
+        : slot.role === 'friendCaptain'
+          ? [7001]
+          : slot.role === 'sub1'
+            ? [7010]
+            : slot.role === 'sub2'
+              ? [7011]
+              : slot.role === 'sub3'
+                ? [7012]
+                : slot.role === 'sub4'
+                  ? [7013]
+                  : [],
+  }));
 }
 
 function createStrictMixedTeamRecords(): CharacterDetailRecord[] {

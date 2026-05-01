@@ -25,10 +25,13 @@ import {
 } from '@ionic/angular/standalone';
 import { closeOutline } from 'ionicons/icons';
 
+import { type AutoBuildAbilityCatalog } from '../../core/models/auto-team-builder-ability.models';
 import {
-  type AutoBuildAbilityCatalog,
-} from '../../core/models/auto-team-builder-ability.models';
-import { type CharacterListItem, type DatasetManifest } from '../../core/models/optc.models';
+  type CharacterIdOrder,
+  type CharacterListItem,
+  type CharacterSortMode,
+  type DatasetManifest,
+} from '../../core/models/optc.models';
 import {
   createAbilityRequirementDrafts,
   type AbilityRequirementDraft,
@@ -43,6 +46,10 @@ import {
   serializeCategoryAbilityDrafts,
   serializeSpecialAbilityDrafts,
 } from '../../core/services/special-ability-filter.utils';
+import {
+  AbilityFilterRailComponent,
+  type AbilityFilterRailCategory,
+} from '../ability-filter-rail/ability-filter-rail.component';
 import { SpecialAbilityPickerComponent } from '../special-ability-picker/special-ability-picker.component';
 
 const PAGE_SIZE = 48;
@@ -63,6 +70,7 @@ const PAGE_SIZE = 48;
     IonSelectOption,
     IonSpinner,
     IonToolbar,
+    AbilityFilterRailComponent,
     SpecialAbilityPickerComponent,
     TranslocoDirective,
     TranslocoPipe,
@@ -75,6 +83,7 @@ export class CharacterImagePickerComponent implements OnChanges {
   @Input({ required: true }) public title = '';
   @Input({ required: true }) public copy = '';
   @Input() public applyingSelection = false;
+  @Input() public maxCost: number | null = null;
   @Output() public readonly dismiss = new EventEmitter<void>();
   @Output() public readonly saveSelection = new EventEmitter<CharacterListItem>();
 
@@ -85,6 +94,8 @@ export class CharacterImagePickerComponent implements OnChanges {
   public readonly searchTerm = signal('');
   public readonly selectedType = signal('');
   public readonly selectedClass = signal('');
+  public readonly selectedSortMode = signal<CharacterSortMode>('catalog');
+  public readonly selectedIdOrder = signal<CharacterIdOrder>('newest');
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly specialAbilityPickerOpen = signal(false);
@@ -186,6 +197,11 @@ export class CharacterImagePickerComponent implements OnChanges {
       this.dismissReason = null;
       this.resetState();
       void this.initializePicker();
+      return;
+    }
+
+    if (changes['maxCost'] && this.isOpen) {
+      void this.loadCharacters(true);
     }
   }
 
@@ -213,6 +229,28 @@ export class CharacterImagePickerComponent implements OnChanges {
     }
 
     this.selectedClass.set(typeof event.detail.value === 'string' ? event.detail.value : '');
+    await this.loadCharacters(true);
+  }
+
+  public async onSortModeChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
+    if (this.applyingSelection) {
+      return;
+    }
+
+    const value = event.detail.value;
+
+    if (isCharacterSortMode(value)) {
+      this.selectedSortMode.set(value);
+      await this.loadCharacters(true);
+    }
+  }
+
+  public async onIdOrderChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
+    if (this.applyingSelection) {
+      return;
+    }
+
+    this.selectedIdOrder.set(normalizeCharacterIdOrder(event.detail.value));
     await this.loadCharacters(true);
   }
 
@@ -328,7 +366,11 @@ export class CharacterImagePickerComponent implements OnChanges {
   public async saveSupportAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
     this.supportAbilityDrafts.set(
       createAbilityRequirementDrafts(
-        serializeCategoryAbilityDrafts(drafts, this.availableSupportAbilityCatalogItems(), 'support'),
+        serializeCategoryAbilityDrafts(
+          drafts,
+          this.availableSupportAbilityCatalogItems(),
+          'support',
+        ),
       ),
     );
     this.supportAbilityPickerOpen.set(false);
@@ -338,6 +380,40 @@ export class CharacterImagePickerComponent implements OnChanges {
   public async clearSupportAbilityFilters(): Promise<void> {
     this.supportAbilityDrafts.set([]);
     await this.loadCharacters(true);
+  }
+
+  public openAbilityFilterCategory(category: AbilityFilterRailCategory): void {
+    switch (category) {
+      case 'special':
+        this.openSpecialAbilityPicker();
+        break;
+      case 'crewmate':
+        this.openCrewmateAbilityPicker();
+        break;
+      case 'potential':
+        this.openPotentialAbilityPicker();
+        break;
+      case 'support':
+        this.openSupportAbilityPicker();
+        break;
+    }
+  }
+
+  public async clearAbilityFilterCategory(category: AbilityFilterRailCategory): Promise<void> {
+    switch (category) {
+      case 'special':
+        await this.clearSpecialAbilityFilters();
+        break;
+      case 'crewmate':
+        await this.clearCrewmateAbilityFilters();
+        break;
+      case 'potential':
+        await this.clearPotentialAbilityFilters();
+        break;
+      case 'support':
+        await this.clearSupportAbilityFilters();
+        break;
+    }
   }
 
   public selectCharacter(character: CharacterListItem): void {
@@ -388,13 +464,18 @@ export class CharacterImagePickerComponent implements OnChanges {
           : Promise.resolve(null),
         this.characterCatalogCache.ensureLoaded(),
       ]);
-      const characters = this.characterCatalogCache.queryCharacters({
+      const query = {
         searchTerm: '',
         typeFilter: '',
         classFilter: '',
+        sortMode: this.selectedSortMode(),
+        idOrder: this.selectedIdOrder(),
         limit: PAGE_SIZE,
         offset: 0,
-      });
+      };
+      const characters = this.characterCatalogCache.queryCharacters(
+        this.maxCost === null ? query : { ...query, maxCost: this.maxCost },
+      );
 
       this.summary.set(summary);
       this.abilityCatalog.set(abilityCatalog);
@@ -425,11 +506,14 @@ export class CharacterImagePickerComponent implements OnChanges {
         searchTerm: this.searchTerm().trim(),
         typeFilter: this.selectedType(),
         classFilter: this.selectedClass(),
+        sortMode: this.selectedSortMode(),
+        idOrder: this.selectedIdOrder(),
         limit: PAGE_SIZE,
         offset: nextOffset,
       };
+      const scopedQuery = this.maxCost === null ? query : { ...query, maxCost: this.maxCost };
       const nextPage = this.characterCatalogCache.queryCharacters(
-        allowedCharacterIds === undefined ? query : { ...query, allowedCharacterIds },
+        allowedCharacterIds === undefined ? scopedQuery : { ...scopedQuery, allowedCharacterIds },
       );
 
       this.characters.set(reset ? nextPage : [...this.characters(), ...nextPage]);
@@ -464,6 +548,8 @@ export class CharacterImagePickerComponent implements OnChanges {
     this.searchTerm.set('');
     this.selectedType.set('');
     this.selectedClass.set('');
+    this.selectedSortMode.set('catalog');
+    this.selectedIdOrder.set('newest');
     this.specialAbilityPickerOpen.set(false);
     this.specialAbilityDrafts.set([]);
     this.crewmateAbilityPickerOpen.set(false);
@@ -481,4 +567,19 @@ export class CharacterImagePickerComponent implements OnChanges {
       left.localeCompare(right),
     );
   }
+}
+
+function isCharacterSortMode(value: string | null | undefined): value is CharacterSortMode {
+  return (
+    value === 'catalog' ||
+    value === 'nameAsc' ||
+    value === 'nameDesc' ||
+    value === 'captainHpBoost' ||
+    value === 'captainAtkBoost' ||
+    value === 'captainAverageBoost'
+  );
+}
+
+function normalizeCharacterIdOrder(value: string | null | undefined): CharacterIdOrder {
+  return value === 'oldest' ? 'oldest' : 'newest';
 }

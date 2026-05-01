@@ -30,6 +30,7 @@ import {
 import {
   type CharacterBox,
   type CharacterDetailRecord,
+  type CharacterIdOrder,
   type CharacterListItem,
   type CharacterSortMode,
   type DatasetManifest,
@@ -102,6 +103,7 @@ export class CharacterBoxesPage implements OnInit {
   public readonly selectedFavoriteFilter = signal<CharacterBoxesFavoriteFilter>('all');
   public readonly selectedMembershipFilter = signal<CharacterBoxesMembershipFilter>('all');
   public readonly selectedSortMode = signal<CharacterSortMode>('catalog');
+  public readonly selectedIdOrder = signal<CharacterIdOrder>('newest');
   public readonly specialAbilityPickerOpen = signal(false);
   public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly crewmateAbilityPickerOpen = signal(false);
@@ -399,6 +401,11 @@ export class CharacterBoxesPage implements OnInit {
     await this.loadCharacters(true);
   }
 
+  public async onIdOrderChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
+    this.selectedIdOrder.set(this.normalizeIdOrder(event.detail.value));
+    await this.loadCharacters(true);
+  }
+
   public setDisplayMode(mode: CharacterBoxesDisplayMode): void {
     this.displayMode.set(mode);
   }
@@ -548,6 +555,7 @@ export class CharacterBoxesPage implements OnInit {
     this.selectedFavoriteFilter.set('all');
     this.selectedMembershipFilter.set('all');
     this.selectedSortMode.set('catalog');
+    this.selectedIdOrder.set('newest');
     this.specialAbilityPickerOpen.set(false);
     this.specialAbilityDrafts.set([]);
     this.crewmateAbilityPickerOpen.set(false);
@@ -638,6 +646,7 @@ export class CharacterBoxesPage implements OnInit {
         ? [...new Set(excludedCharacterIds)]
         : undefined,
       sortMode: this.selectedSortMode(),
+      idOrder: this.selectedIdOrder(),
       limit: PAGE_SIZE,
       offset: nextOffset,
     });
@@ -654,13 +663,15 @@ export class CharacterBoxesPage implements OnInit {
   private normalizeSortMode(value: string | null | undefined): CharacterSortMode {
     return value === 'nameAsc' ||
       value === 'nameDesc' ||
-      value === 'idDesc' ||
-      value === 'idAsc' ||
       value === 'captainHpBoost' ||
       value === 'captainAtkBoost' ||
       value === 'captainAverageBoost'
       ? value
       : 'catalog';
+  }
+
+  private normalizeIdOrder(value: string | null | undefined): CharacterIdOrder {
+    return value === 'oldest' ? 'oldest' : 'newest';
   }
 
   private t(key: string, params?: Record<string, string | number>): string {

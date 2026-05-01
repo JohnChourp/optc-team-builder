@@ -119,6 +119,17 @@
         }
       }
     },
+    "totalCost": {
+      "label": "Μέγιστο συνολικό team cost",
+      "support": {
+        "default": "Άφησέ το κενό για χωρίς συνολικό cost limit. Το Friend Captain cost αγνοείται.",
+        "active": "Χρησιμοποιούνται {{used}} / {{max}} cost. Μένουν {{remaining}} cost για Captain και subs."
+      },
+      "range": {
+        "max": "Team cost limit",
+        "overBudget": "Τα manual picks χρησιμοποιούν {{used}} cost, πάνω από το όριο {{max}}."
+      }
+    },
     "favoritesOnly": {
       "toggle": "Χρησιμοποίησε favorites για auto-fill",
       "blockedMessage": "Το favorite-only auto-fill δεν είναι διαθέσιμο μέχρι να αποθηκεύσεις τουλάχιστον ένα favorite unit.",
@@ -296,6 +307,11 @@
       "none": "Δεν έχει επιλεγεί ship",
       "selected": "{{name}}"
     },
+    "costBudget": {
+      "label": "Cost budget",
+      "default": "Χωρίς max team cost",
+      "active": "{{used}} / {{max}} cost. Μένουν {{remaining}}."
+    },
     "slots": {
       "empty": "Κενό slot",
       "emptyAlt": "Κενό character slot",
@@ -380,6 +396,7 @@
     "slotSelection": {
       "activeSummary": "Active slot: {{role}} ({{count}} picks)",
       "assignedTo": "Υπάρχει ήδη στα {{slots}}.",
+      "costBudget": "Αυτό το pick δεν χωράει στο remaining team cost.",
       "excluded": "Τα excluded picks δεν μπορούν να μπουν στα τελικά team slots.",
       "noneActive": "Διάλεξε slot για να κάνεις edit."
     },

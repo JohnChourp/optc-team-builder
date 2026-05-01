@@ -119,6 +119,17 @@
         }
       }
     },
+    "totalCost": {
+      "label": "Max total team cost",
+      "support": {
+        "default": "Leave empty for no total cost limit. Friend Captain cost is ignored.",
+        "active": "{{used}} / {{max}} cost used. {{remaining}} cost remains for Captain and subs."
+      },
+      "range": {
+        "max": "Team cost limit",
+        "overBudget": "Manual picks use {{used}} cost, above the {{max}} limit."
+      }
+    },
     "favoritesOnly": {
       "toggle": "Use favorites for auto-fill",
       "blockedMessage": "Favorite-only auto-fill is unavailable until you save at least one favorite unit.",
@@ -296,6 +307,11 @@
       "none": "No ship selected",
       "selected": "{{name}}"
     },
+    "costBudget": {
+      "label": "Cost budget",
+      "default": "No max team cost",
+      "active": "{{used}} / {{max}} cost used. {{remaining}} remaining."
+    },
     "slots": {
       "empty": "Empty slot",
       "emptyAlt": "Empty character slot",
@@ -380,6 +396,7 @@
     "slotSelection": {
       "activeSummary": "Active slot: {{role}} ({{count}} picks)",
       "assignedTo": "Already assigned to {{slots}}.",
+      "costBudget": "This pick does not fit the remaining team cost.",
       "excluded": "Excluded picks cannot be assigned to final team slots.",
       "noneActive": "Choose a slot to start editing."
     },

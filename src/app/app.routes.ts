@@ -12,7 +12,7 @@ export const routes: Routes = [
           seo: {
             title: 'OPTC Team Builder | One Piece Treasure Cruise Tools',
             description:
-              'Plan One Piece Treasure Cruise crews with character search, team building, enemy mechanics, saved teams, screenshots, and offline-friendly tools.',
+              'Plan OPTC crews with character search, Rumble rankings, captain coverage, auto team building, Crew Forge, saved teams, enemies, boxes, Drive sync, and offline tools.',
             canonicalPath: '',
           },
         },
@@ -52,6 +52,21 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./pages/auto-team-builder/auto-team-builder.page').then(
                 (module) => module.AutoTeamBuilderPage,
+              ),
+          },
+          {
+            path: 'captain-coverage',
+            data: {
+              seo: {
+                title: 'Captain Coverage | OPTC Team Builder',
+                description:
+                  'Pick an OPTC character and find captain abilities that fully cover that character under strict type, class, cost, universal, and self-scope matching.',
+                canonicalPath: 'tabs/captain-coverage',
+              },
+            },
+            loadComponent: () =>
+              import('./pages/captain-coverage/captain-coverage.page').then(
+                (module) => module.CaptainCoveragePage,
               ),
           },
           {

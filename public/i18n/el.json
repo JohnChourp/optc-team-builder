@@ -337,14 +337,22 @@
     "features": {
       "eyebrow": "Τι μπορείς να κάνεις",
       "title": "Κάθε σελίδα βοηθάει σε διαφορετικό κομμάτι του planning",
-      "copy": "Χρησιμοποίησε το site σαν πρακτικό OPTC workspace: βρες units, σύγκρινε abilities, φτιάξε ομάδες χειροκίνητα ή αυτόματα, κράτα χρήσιμα setups και οργάνωσε τις επαναλαμβανόμενες δουλειές.",
+      "copy": "Χρησιμοποίησε το site σαν πρακτικό OPTC workspace: βρες units, σύγκρινε abilities, έλεγξε Rumble και captain coverage, φτιάξε ομάδες χειροκίνητα ή αυτόματα, κράτα χρήσιμα setups και οργάνωσε τις επαναλαμβανόμενες δουλειές.",
       "characters": {
         "title": "Χαρακτήρες",
         "copy": "Αναζήτησε και φίλτραρε το catalog με όνομα, type, class, ability data, favorites και αναλυτικές σελίδες χαρακτήρων."
       },
+      "rumbleCharacters": {
+        "title": "Rumble χαρακτήρες",
+        "copy": "Κατάταξε Pirate Rumble units με score, favorites, core filters και custom stat focus πριν φτιάξεις teams."
+      },
       "autoBuilder": {
         "title": "Auto Team Builder",
         "copy": "Φτιάξε ομάδα χειροκίνητα με σταθερά slots ή ταίριαξε enemy mechanics, ability requirements, classes, types, locked και excluded units με πιθανούς team candidates."
+      },
+      "captainCoverage": {
+        "title": "Captain Coverage",
+        "copy": "Διάλεξε χαρακτήρα και βρες captain abilities που τον καλύπτουν πλήρως με strict type, class, cost, universal και self-scope matching."
       },
       "autoRumble": {
         "title": "Auto Team Rumble Builder",
@@ -393,6 +401,7 @@
   "tabs": {
     "auto": "Auto Team Builder",
     "autoRumble": "Auto Team Rumble Builder",
+    "captainCoverage": "Captain Coverage",
     "characterBoxes": "Boxes χαρακτήρων",
     "characters": "Χαρακτήρες",
     "crewForge": "Crew Forge",

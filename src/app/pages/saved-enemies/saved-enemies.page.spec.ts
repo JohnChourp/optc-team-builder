@@ -829,6 +829,9 @@ describe('SavedEnemiesPage', () => {
     expect(template).not.toContain('editor.toggles.classes');
     expect(template).not.toContain('editor.toggles.specials');
     expect(template).not.toContain('<app-enemy-mechanic-picker');
+    expect(template).toContain('<app-ability-filter-rail');
+    expect(template).toContain('requiredCharacterAbilityRailItems(view)');
+    expect(template).toContain('clearRequiredCharacterAbilityCategory(');
     expect(template).toContain('<app-ability-requirement-picker');
     expect(template).not.toContain('<app-special-ability-picker');
     expect(template).toContain('<app-character-image-picker');

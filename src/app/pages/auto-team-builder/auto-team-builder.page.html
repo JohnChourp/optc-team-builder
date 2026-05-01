@@ -288,6 +288,30 @@
             </div>
             <div class="cost-scope-grid">
               <div class="strict-toggle-copy cost-scope-copy">
+                <strong>{{ t('filters.totalCost.label') }}</strong>
+                <small>{{ manualTeamCostBudgetSupportLabel() }}</small>
+              </div>
+              <div class="cost-range-grid">
+                <ion-input
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  step="1"
+                  fill="outline"
+                  [label]="t('filters.totalCost.range.max')"
+                  labelPlacement="stacked"
+                  [value]="maxTotalCost()"
+                  [disabled]="building()"
+                  (ionInput)="onMaxTotalCostChange($event)"
+                ></ion-input>
+              </div>
+              @if (manualTeamCostBudgetErrorLabel()) {
+                <small class="cost-range-error">
+                  {{ manualTeamCostBudgetErrorLabel() }}
+                </small>
+              }
+
+              <div class="strict-toggle-copy cost-scope-copy">
                 <strong>{{ t('filters.cost.leaders.label') }}</strong>
                 <small>{{ leaderCostRangeSupportLabel() }}</small>
               </div>
@@ -386,19 +410,6 @@
               (ionChange)="onRequireAllSlotsInLeaderSuperEffectScopeToggle($event)"
             ></ion-toggle>
           </div>
-
-          <div class="strict-toggle-row">
-            <div class="strict-toggle-copy">
-              <strong>{{ uniqueBaseCharacterNamesToggleLabel() }}</strong>
-              <small>{{ uniqueBaseCharacterNamesSupportLabel() }}</small>
-            </div>
-            <ion-toggle
-              color="warning"
-              [checked]="requireUniqueBaseCharacterNames()"
-              [disabled]="building()"
-              (ionChange)="onRequireUniqueBaseCharacterNamesToggle($event)"
-            ></ion-toggle>
-          </div>
         </div>
 
         <section class="ability-requirements-card">
@@ -409,7 +420,9 @@
 
           <div class="manual-locks-meta ability-requirements-meta">
             <strong>
-              {{ t('requiredCharacters.battleConfigured', { count: requiredBattleViews().length }) }}
+              {{
+                t('requiredCharacters.battleConfigured', { count: requiredBattleViews().length })
+              }}
             </strong>
             <div class="ability-requirements-actions">
               <ion-button
@@ -508,40 +521,24 @@
                             </ion-button>
                           </div>
 
-                          <div class="ability-requirements-actions required-character-actions">
-                            <ion-button
-                              fill="outline"
-                              size="small"
-                              [disabled]="building() || !availableSpecialAbilityCatalogItems().length"
-                              (click)="openRequiredCharacterAbilityPicker(view.battleId, view.group.id, 'special')"
-                            >
-                              {{ t('requiredCharacters.categories.special') }}
-                            </ion-button>
-                            <ion-button
-                              fill="outline"
-                              size="small"
-                              [disabled]="building() || !availableCrewmateAbilityCatalogItems().length"
-                              (click)="openRequiredCharacterAbilityPicker(view.battleId, view.group.id, 'crewmate')"
-                            >
-                              {{ t('requiredCharacters.categories.crewmate') }}
-                            </ion-button>
-                            <ion-button
-                              fill="outline"
-                              size="small"
-                              [disabled]="building() || !availablePotentialAbilityCatalogItems().length"
-                              (click)="openRequiredCharacterAbilityPicker(view.battleId, view.group.id, 'potential')"
-                            >
-                              {{ t('requiredCharacters.categories.potential') }}
-                            </ion-button>
-                            <ion-button
-                              fill="outline"
-                              size="small"
-                              [disabled]="building() || !availableSupportAbilityCatalogItems().length"
-                              (click)="openRequiredCharacterAbilityPicker(view.battleId, view.group.id, 'support')"
-                            >
-                              {{ t('requiredCharacters.categories.support') }}
-                            </ion-button>
-                          </div>
+                          <app-ability-filter-rail
+                            [items]="requiredCharacterAbilityRailItems(view)"
+                            [disabled]="building()"
+                            (selectCategory)="
+                              openRequiredCharacterAbilityPicker(
+                                view.battleId,
+                                view.group.id,
+                                $event
+                              )
+                            "
+                            (clearCategory)="
+                              clearRequiredCharacterAbilityCategory(
+                                view.battleId,
+                                view.group.id,
+                                $event
+                              )
+                            "
+                          ></app-ability-filter-rail>
 
                           @if (!view.chips.length) {
                             <p class="favorites-only-warning">
@@ -549,19 +546,6 @@
                             </p>
                           }
 
-                          @if (view.chips.length) {
-                            <div class="selected-values-row ability-requirements-selected-row">
-                              @for (chip of view.chips; track chip.draftId) {
-                                <span class="selected-value-chip ability-requirement-chip">
-                                  <span class="ability-visual-chip" [attr.data-tone]="chip.visual.tone">
-                                    <ion-icon [icon]="chip.visual.icon"></ion-icon>
-                                    <small>{{ chip.visual.badge }}</small>
-                                  </span>
-                                  <span>{{ chip.label }}</span>
-                                </span>
-                              }
-                            </div>
-                          }
                         </article>
                       }
                     </div>
@@ -1559,6 +1543,11 @@
           <div class="fixed-manual-team-ship">
             <span>{{ t('manualTeam.ship.label') }}</span>
             <strong>{{ fixedManualTeamSelectedShipLabel() }}</strong>
+          </div>
+
+          <div class="fixed-manual-team-ship">
+            <span>{{ t('manualTeam.costBudget.label') }}</span>
+            <strong>{{ fixedManualTeamCostBudgetLabel() }}</strong>
           </div>
 
           <div class="fixed-manual-team-slots">

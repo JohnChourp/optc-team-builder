@@ -1161,6 +1161,10 @@ export function buildAutoTeamResult(
     const requiredLeaderSuperEffectMatchingSlots =
       resolveRequiredLeaderSuperEffectMatchingSlots(input);
 
+    if (!teamCostWithinBudget(input, leaderPair.captain, [])) {
+      continue;
+    }
+
     if (
       requiredLeaderSuperEffectMatchingSlots !== null &&
       (!leaderSuperEffectScope.isParseable ||
@@ -1505,6 +1509,7 @@ function* resolveConstrainedSubSelectionOptions(
               hasAnyPartyConflictKey(candidate, selectedPartyConflictKeys))) ||
           (input.requireAllSelectedClassesPerCharacter && !candidate.matchesAllSelectedClasses) ||
           !matchesLeaderBuildScope(candidate, leaderCriteria) ||
+          !canAddSubWithinTeamCostBudget(input, leaderSlots[0], selectedSubs, candidate) ||
           !matchesActiveSuperEffectScopePrefix(
             nextTeamPrefix,
             requiredLeaderSuperEffectMatchingSlots,
@@ -1677,6 +1682,10 @@ function selectSubs(
     return [];
   }
 
+  if (!teamCostWithinBudget(input, leaderSlots[0], selected)) {
+    return [];
+  }
+
   if (
     !canStillReachLeaderSuperEffectRequirement(
       leaderSuperEffectMatchCount +
@@ -1707,6 +1716,7 @@ function selectSubs(
           (!hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) &&
             !hasAnyPartyConflictKey(candidate, selectedPartyConflictKeys))) &&
         matchesLeaderBuildScope(candidate, leaderCriteria) &&
+        canAddSubWithinTeamCostBudget(input, leaderSlots[0], selected, candidate) &&
         matchesActiveSuperEffectScopePrefix(
           [...leaderSlots, ...selected, candidate],
           requiredLeaderSuperEffectMatchingSlots,
@@ -1765,7 +1775,10 @@ function selectSubs(
     currentPartyConflictKeys: Set<string>,
   ): AutoBuildCandidate[] | null => {
     if (currentSelection.length === TEAM_SUB_SLOT_COUNT) {
-      return isCompleteSelectionValid(currentSelection) ? currentSelection : null;
+      return teamCostWithinBudget(input, leaderSlots[0], currentSelection) &&
+        isCompleteSelectionValid(currentSelection)
+        ? currentSelection
+        : null;
     }
 
     const remainingSlots = TEAM_SUB_SLOT_COUNT - currentSelection.length;
@@ -1794,6 +1807,7 @@ function selectSubs(
           [...leaderSlots, ...currentSelection, candidate],
           requiredLeaderSuperEffectMatchingSlots,
         ) ||
+        !canAddSubWithinTeamCostBudget(input, leaderSlots[0], currentSelection, candidate) ||
         (input.requireUniqueBaseCharacterNames &&
           (hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) ||
             hasAnyPartyConflictKey(candidate, currentPartyConflictKeys)))
@@ -1827,6 +1841,33 @@ function selectSubs(
   };
 
   return findNewestValidSelection(0, selected, selectedIds, selectedPartyConflictKeys) ?? selected;
+}
+
+function resolveCountedTeamCost(
+  captain: AutoBuildCandidate,
+  subs: AutoBuildCandidate[],
+): number {
+  return (
+    captain.character.cost +
+    subs.reduce((total, candidate) => total + candidate.character.cost, 0)
+  );
+}
+
+function teamCostWithinBudget(
+  input: Pick<AutoBuildInput, 'maxTotalCost'>,
+  captain: AutoBuildCandidate,
+  subs: AutoBuildCandidate[],
+): boolean {
+  return input.maxTotalCost === null || resolveCountedTeamCost(captain, subs) <= input.maxTotalCost;
+}
+
+function canAddSubWithinTeamCostBudget(
+  input: Pick<AutoBuildInput, 'maxTotalCost'>,
+  captain: AutoBuildCandidate,
+  selectedSubs: AutoBuildCandidate[],
+  candidate: AutoBuildCandidate,
+): boolean {
+  return teamCostWithinBudget(input, captain, [...selectedSubs, candidate]);
 }
 
 function resolveSlotReasonChips(reasonChips: string[], isManualPick: boolean): string[] {

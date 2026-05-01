@@ -74,97 +74,85 @@
               </label>
             </div>
 
-            <div class="character-image-picker-filter-grid">
-              <ion-button
+            <label class="character-image-picker-field">
+              <span>{{ t('sort.label') }}</span>
+              <ion-select
+                interface="popover"
                 fill="outline"
-                color="warning"
-                [disabled]="applyingSelection || !availableSpecialAbilityCatalogItems().length"
-                (click)="openSpecialAbilityPicker()"
+                [value]="selectedSortMode()"
+                [disabled]="applyingSelection"
+                (ionChange)="onSortModeChange($event)"
               >
-                {{ t('filters.special') }}
-                @if (specialAbilityDrafts().length) {
-                  <span>&nbsp;({{ specialAbilityDrafts().length }})</span>
-                }
-              </ion-button>
+                <ion-select-option value="catalog">
+                  {{ t('sort.options.catalog') }}
+                </ion-select-option>
+                <ion-select-option value="nameAsc">
+                  {{ t('sort.options.nameAsc') }}
+                </ion-select-option>
+                <ion-select-option value="nameDesc">
+                  {{ t('sort.options.nameDesc') }}
+                </ion-select-option>
+                <ion-select-option value="captainHpBoost">
+                  {{ t('sort.options.captainHpBoost') }}
+                </ion-select-option>
+                <ion-select-option value="captainAtkBoost">
+                  {{ t('sort.options.captainAtkBoost') }}
+                </ion-select-option>
+                <ion-select-option value="captainAverageBoost">
+                  {{ t('sort.options.captainAverageBoost') }}
+                </ion-select-option>
+              </ion-select>
+            </label>
 
-              <ion-button
-                fill="clear"
-                color="light"
-                [disabled]="applyingSelection || !specialAbilityDrafts().length"
-                (click)="clearSpecialAbilityFilters()"
-              >
-                {{ t('filters.clearSpecial') }}
-              </ion-button>
-            </div>
-
-            <div class="character-image-picker-filter-grid">
-              <ion-button
+            <label class="character-image-picker-field">
+              <span>{{ t('idOrder.label') }}</span>
+              <ion-select
+                interface="popover"
                 fill="outline"
-                color="warning"
-                [disabled]="applyingSelection || !availableCrewmateAbilityCatalogItems().length"
-                (click)="openCrewmateAbilityPicker()"
+                [value]="selectedIdOrder()"
+                [disabled]="applyingSelection"
+                (ionChange)="onIdOrderChange($event)"
               >
-                {{ t('filters.crewmate') }}
-                @if (crewmateAbilityDrafts().length) {
-                  <span>&nbsp;({{ crewmateAbilityDrafts().length }})</span>
-                }
-              </ion-button>
+                <ion-select-option value="newest">
+                  {{ t('idOrder.options.newest') }}
+                </ion-select-option>
+                <ion-select-option value="oldest">
+                  {{ t('idOrder.options.oldest') }}
+                </ion-select-option>
+              </ion-select>
+            </label>
 
-              <ion-button
-                fill="clear"
-                color="light"
-                [disabled]="applyingSelection || !crewmateAbilityDrafts().length"
-                (click)="clearCrewmateAbilityFilters()"
-              >
-                {{ t('filters.clearCrewmate') }}
-              </ion-button>
-            </div>
-
-            <div class="character-image-picker-filter-grid">
-              <ion-button
-                fill="outline"
-                color="warning"
-                [disabled]="applyingSelection || !availablePotentialAbilityCatalogItems().length"
-                (click)="openPotentialAbilityPicker()"
-              >
-                {{ t('filters.potential') }}
-                @if (potentialAbilityDrafts().length) {
-                  <span>&nbsp;({{ potentialAbilityDrafts().length }})</span>
-                }
-              </ion-button>
-
-              <ion-button
-                fill="clear"
-                color="light"
-                [disabled]="applyingSelection || !potentialAbilityDrafts().length"
-                (click)="clearPotentialAbilityFilters()"
-              >
-                {{ t('filters.clearPotential') }}
-              </ion-button>
-            </div>
-
-            <div class="character-image-picker-filter-grid">
-              <ion-button
-                fill="outline"
-                color="warning"
-                [disabled]="applyingSelection || !availableSupportAbilityCatalogItems().length"
-                (click)="openSupportAbilityPicker()"
-              >
-                {{ t('filters.support') }}
-                @if (supportAbilityDrafts().length) {
-                  <span>&nbsp;({{ supportAbilityDrafts().length }})</span>
-                }
-              </ion-button>
-
-              <ion-button
-                fill="clear"
-                color="light"
-                [disabled]="applyingSelection || !supportAbilityDrafts().length"
-                (click)="clearSupportAbilityFilters()"
-              >
-                {{ t('filters.clearSupport') }}
-              </ion-button>
-            </div>
+            <app-ability-filter-rail
+              [disabled]="applyingSelection"
+              [items]="[
+                {
+                  category: 'special',
+                  label: t('filters.specialEyebrow'),
+                  count: specialAbilityDrafts().length,
+                  disabled: !availableSpecialAbilityCatalogItems().length,
+                },
+                {
+                  category: 'crewmate',
+                  label: t('filters.crewmateEyebrow'),
+                  count: crewmateAbilityDrafts().length,
+                  disabled: !availableCrewmateAbilityCatalogItems().length,
+                },
+                {
+                  category: 'potential',
+                  label: t('filters.potentialEyebrow'),
+                  count: potentialAbilityDrafts().length,
+                  disabled: !availablePotentialAbilityCatalogItems().length,
+                },
+                {
+                  category: 'support',
+                  label: t('filters.supportEyebrow'),
+                  count: supportAbilityDrafts().length,
+                  disabled: !availableSupportAbilityCatalogItems().length,
+                },
+              ]"
+              (selectCategory)="openAbilityFilterCategory($event)"
+              (clearCategory)="clearAbilityFilterCategory($event)"
+            ></app-ability-filter-rail>
 
             <app-special-ability-picker
               [isOpen]="specialAbilityPickerOpen()"

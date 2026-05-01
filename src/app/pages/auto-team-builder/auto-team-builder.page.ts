@@ -152,6 +152,10 @@ import {
   normalizeBattleRequirementsWithLegacyFallback,
 } from '../../core/services/auto-team-builder-battle.utils';
 import { MAX_REQUIRED_CHARACTER_GROUPS } from '../../core/services/required-character-groups.utils';
+import {
+  AbilityFilterRailComponent,
+  type AbilityFilterRailItem,
+} from '../../shared/ability-filter-rail/ability-filter-rail.component';
 
 type LoadingProgressRowTone = 'primary' | 'secondary' | 'fallback';
 
@@ -323,6 +327,7 @@ interface AutoTeamBuilderDefaultFilterState {
   leaderBoostRanges: AutoBuildLeaderBoostRanges;
   leaderCostRange: AutoBuildCostRange;
   subCostRange: AutoBuildCostRange;
+  maxTotalCost: number | null;
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
   requireAllSlotsInLeaderSuperEffectScope: boolean;
@@ -380,6 +385,7 @@ function buildDefaultAutoTeamBuilderFilterState(
     leaderBoostRanges: createEmptyAutoBuildLeaderBoostRanges(),
     leaderCostRange: createEmptyAutoBuildCostRange(),
     subCostRange: createEmptyAutoBuildCostRange(),
+    maxTotalCost: null,
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
@@ -441,6 +447,7 @@ function matchesScopedManualRequirements(
     IonToggle,
     IonToolbar,
     ScrollingModule,
+    AbilityFilterRailComponent,
     AbilityRequirementPickerComponent,
     CharacterAbilityGroupsComponent,
     RouterLink,
@@ -471,6 +478,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   );
   public readonly leaderCostRange = signal<AutoBuildCostRange>(createEmptyAutoBuildCostRange());
   public readonly subCostRange = signal<AutoBuildCostRange>(createEmptyAutoBuildCostRange());
+  public readonly maxTotalCost = signal<number | null>(null);
   public readonly enemyMechanicDrafts = signal<EnemyMechanicDraft[]>([]);
   public readonly enemyMechanicPickerOpen = signal(false);
   public readonly requiredAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
@@ -561,7 +569,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
   public readonly requireAllSlotsInLeaderSuperEffectScope = signal(false);
-  public readonly requireUniqueBaseCharacterNames = signal(false);
+  public readonly requireUniqueBaseCharacterNames = signal(true);
   public readonly selectedCharacterBoxId = signal<string | null>(null);
   public readonly selectedExcludeCharacterBoxId = signal<string | null>(null);
   public readonly favoritesOnly = signal(false);
@@ -759,18 +767,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly canAddBattleRequirement = computed(
     () => !this.building() && this.battleRequirements().length < MAX_AUTO_BUILD_BATTLE_COUNT,
   );
-  public readonly activeRequiredCharacterGroup = computed(
-    () => {
-      const activeBattleId = this.activeRequiredCharacterBattleId();
-      const activeGroupId = this.activeRequiredCharacterGroupId();
+  public readonly activeRequiredCharacterGroup = computed(() => {
+    const activeBattleId = this.activeRequiredCharacterBattleId();
+    const activeGroupId = this.activeRequiredCharacterGroupId();
 
-      return (
-        this.battleRequirements()
-          .find((battle) => !activeBattleId || battle.id === activeBattleId)
-          ?.requiredCharacterGroups.find((group) => group.id === activeGroupId) ?? null
-      );
-    },
-  );
+    return (
+      this.battleRequirements()
+        .find((battle) => !activeBattleId || battle.id === activeBattleId)
+        ?.requiredCharacterGroups.find((group) => group.id === activeGroupId) ?? null
+    );
+  });
   public readonly activeRequiredCharacterAbilityDrafts = computed(() =>
     createAbilityRequirementDrafts(
       this.activeRequiredCharacterGroup()?.abilities.filter(
@@ -925,12 +931,35 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       ? this.t('manualTeam.ship.selected', { name: selectedShip.name })
       : this.t('manualTeam.ship.none');
   });
+  public readonly fixedManualTeamBudgetCost = computed(() =>
+    this.fixedManualTeamSlots().reduce((total, character, index) => {
+      if (!character || index === 1) {
+        return total;
+      }
+
+      return total + character.cost;
+    }, 0),
+  );
+  public readonly fixedManualTeamRemainingCost = computed(() =>
+    this.resolveRemainingCostValue(this.fixedManualTeamBudgetCost()),
+  );
+  public readonly fixedManualTeamCostBudgetLabel = computed(() =>
+    this.hasActiveMaxTotalCost()
+      ? this.t('manualTeam.costBudget.active', {
+          used: this.fixedManualTeamBudgetCost(),
+          remaining: this.fixedManualTeamRemainingCost(),
+          max: this.maxTotalCost() ?? 0,
+        })
+      : this.t('manualTeam.costBudget.default'),
+  );
   public readonly fixedManualTeamCandidateCards = computed<FixedManualTeamCandidateCardView[]>(
     () => {
       const activeIndex = this.fixedManualTeamSelectedSlotIndex();
       const slots = this.fixedManualTeamSlots();
 
-      return this.fixedManualTeamCandidates().map((character) => {
+      return this.fixedManualTeamCandidates().filter((character) =>
+        this.canAssignFixedManualTeamCharacter(character),
+      ).map((character) => {
         const assignedSlotIndex = slots.findIndex((slot) => slot?.id === character.id);
 
         return {
@@ -1086,6 +1115,30 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly hasInvalidCostRanges = computed(
     () => this.hasInvalidLeaderCostRange() || this.hasInvalidSubCostRange(),
   );
+  public readonly hasActiveMaxTotalCost = computed(() => this.maxTotalCost() !== null);
+  public readonly manualTeamBudgetCost = computed(() =>
+    this.resolveManualSlotsBudgetCost(this.manualSlots()),
+  );
+  public readonly manualTeamRemainingCost = computed(() =>
+    this.resolveRemainingCostValue(this.manualTeamBudgetCost()),
+  );
+  public readonly manualTeamCostBudgetSupportLabel = computed(() =>
+    this.hasActiveMaxTotalCost()
+      ? this.t('filters.totalCost.support.active', {
+          used: this.manualTeamBudgetCost(),
+          remaining: this.manualTeamRemainingCost(),
+          max: this.maxTotalCost() ?? 0,
+        })
+      : this.t('filters.totalCost.support.default'),
+  );
+  public readonly manualTeamCostBudgetErrorLabel = computed(() =>
+    this.maxTotalCost() !== null && this.manualTeamBudgetCost() > this.maxTotalCost()!
+      ? this.t('filters.totalCost.range.overBudget', {
+          used: this.manualTeamBudgetCost(),
+          max: this.maxTotalCost()!,
+        })
+      : '',
+  );
   public readonly leaderCostRangeSupportLabel = computed(() =>
     this.hasActiveLeaderCostRange()
       ? this.t('filters.cost.leaders.support.active')
@@ -1111,11 +1164,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.requireAllSelectedClassesPerCharacter()
       ? this.t('filters.classes.support.strict')
       : this.t('filters.classes.support.flexible'),
-  );
-  public readonly uniqueBaseCharacterNamesSupportLabel = computed(() =>
-    this.requireUniqueBaseCharacterNames()
-      ? this.t('filters.uniqueNames.support.strict')
-      : this.t('filters.uniqueNames.support.flexible'),
   );
   public readonly leaderSuperEffectScopeSupportLabel = computed(() =>
     this.requireAllSlotsInLeaderSuperEffectScope()
@@ -1378,9 +1426,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly classStrictToggleLabel = computed(() => this.t('filters.classes.toggle'));
   public readonly leaderSuperEffectScopeToggleLabel = computed(() =>
     this.t('filters.leaderSuperEffectScope.toggle'),
-  );
-  public readonly uniqueBaseCharacterNamesToggleLabel = computed(() =>
-    this.t('filters.uniqueNames.toggle'),
   );
   public readonly favoritesOnlyToggleLabel = computed(() => this.t('filters.favoritesOnly.toggle'));
   public readonly allowAnyFriendCaptainAutoFillToggleLabel = computed(() =>
@@ -1867,9 +1912,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         this.pageEnemyMechanics().length > 0 ||
         this.hasRequiredAbilities() ||
         this.hasActiveCostRanges() ||
+        this.hasActiveMaxTotalCost() ||
         this.requireAllSelectedTypesInTeam() ||
         this.requireAllSelectedClassesPerCharacter() ||
-        this.requireUniqueBaseCharacterNames() ||
         this.favoritesOnly() ||
         this.favoriteShipsOnly() ||
         this.hasSelectedManualShip() ||
@@ -2105,6 +2150,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.resetBuildState();
   }
 
+  public onMaxTotalCostChange(event: CustomEvent<{ value?: string | number | null }>): void {
+    this.maxTotalCost.set(this.resolveCostRangeBound(event.detail.value));
+    this.resetBuildState();
+  }
+
   public async onManualSearchChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
     this.manualSearchTerm.set((event.detail.value ?? '').trim());
     await this.refreshAppliedManualCandidates();
@@ -2167,6 +2217,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
   public assignFixedManualTeamCharacter(character: CharacterDetailRecord): void {
     const selectedSlotIndex = this.fixedManualTeamSelectedSlotIndex();
+
+    if (!this.canAssignFixedManualTeamCharacter(character)) {
+      return;
+    }
 
     this.fixedManualTeamSlots.update((currentSlots) =>
       currentSlots.map((slot, index) => (index === selectedSlotIndex ? character : slot)),
@@ -2481,7 +2535,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         const nextCharacterIds = [...slot.characterIds];
 
         for (const characterId of copiedCharacterIds) {
-          if (!existingIdSet.has(characterId)) {
+          const character = this.lockedCharacterRecords()[characterId];
+
+          if (
+            character &&
+            !existingIdSet.has(characterId) &&
+            this.canAssignCharacterToManualSlot(slot.role, character)
+          ) {
             existingIdSet.add(characterId);
             nextCharacterIds.push(characterId);
           }
@@ -2511,11 +2571,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     event: CustomEvent<{ checked: boolean }>,
   ): void {
     this.requireAllSlotsInLeaderSuperEffectScope.set(event.detail.checked);
-    this.resetBuildState();
-  }
-
-  public onRequireUniqueBaseCharacterNamesToggle(event: CustomEvent<{ checked: boolean }>): void {
-    this.requireUniqueBaseCharacterNames.set(event.detail.checked);
     this.resetBuildState();
   }
 
@@ -2793,6 +2848,52 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.requiredCharacterAbilityPickerOpen.set(true);
   }
 
+  public requiredCharacterAbilityRailItems(
+    view: RequiredCharacterGroupView,
+  ): AbilityFilterRailItem[] {
+    return [
+      this.buildRequiredCharacterAbilityRailItem(view, 'special'),
+      this.buildRequiredCharacterAbilityRailItem(view, 'crewmate'),
+      this.buildRequiredCharacterAbilityRailItem(view, 'potential'),
+      this.buildRequiredCharacterAbilityRailItem(view, 'support'),
+    ];
+  }
+
+  public async clearRequiredCharacterAbilityCategory(
+    battleId: string,
+    groupId: string,
+    category: RequiredCharacterAbilityCategory,
+  ): Promise<void> {
+    if (this.building()) {
+      return;
+    }
+
+    this.battleRequirements.update((battles) =>
+      battles.map((battle) =>
+        battle.id === battleId
+          ? {
+              ...battle,
+              requiredCharacterGroups: battle.requiredCharacterGroups.map((group) =>
+                group.id === groupId
+                  ? {
+                      ...group,
+                      abilities: group.abilities.filter(
+                        (requirement) =>
+                          this.resolveAbilityCatalogItem(requirement.abilityKey)?.category !==
+                          category,
+                      ),
+                    }
+                  : group,
+              ),
+            }
+          : battle,
+      ),
+    );
+
+    this.resetBuildState();
+    await this.refreshCharacterPickPanels();
+  }
+
   public closeRequiredCharacterAbilityPicker(): void {
     this.requiredCharacterAbilityPickerOpen.set(false);
     this.activeRequiredCharacterBattleId.set(null);
@@ -3012,13 +3113,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
   public canAssignCharacterToManualSlot(
     role: AutoBuildManualSlotRole,
-    character: Pick<CharacterDetailRecord, 'id' | 'detail'>,
+    character: Pick<CharacterDetailRecord, 'id' | 'cost'>,
   ): boolean {
     if (this.isCharacterSelectedInManualSlot(role, character.id)) {
       return true;
     }
 
-    return !this.isEffectivelyExcludedCharacter(character.id);
+    return (
+      !this.isEffectivelyExcludedCharacter(character.id) &&
+      this.characterFitsManualTeamBudget(role, character)
+    );
   }
 
   public canExcludeCharacter(characterId: number): boolean {
@@ -3139,7 +3243,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
           requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
           requireAllSlotsInLeaderSuperEffectScope: this.requireAllSlotsInLeaderSuperEffectScope(),
-          requireUniqueBaseCharacterNames: this.requireUniqueBaseCharacterNames(),
+          requireUniqueBaseCharacterNames: true,
           requiredAbilities: this.pageRequiredAbilities(),
           requiredCharacterGroups: [],
           battleRequirements: this.pageBattleRequirements(),
@@ -3153,6 +3257,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           leaderBoostRanges: this.cloneLeaderBoostRanges(this.leaderBoostRanges()),
           leaderCostRange: { ...this.leaderCostRange() },
           subCostRange: { ...this.subCostRange() },
+          maxTotalCost: this.maxTotalCost(),
           manualSlots: this.serializeManualSlots(),
           excludedCharacterIds: this.effectiveExcludedCharacterIds(),
           manualShipId: this.selectedManualShipId(),
@@ -3246,7 +3351,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
       requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
       requireAllSlotsInLeaderSuperEffectScope: this.requireAllSlotsInLeaderSuperEffectScope(),
-      requireUniqueBaseCharacterNames: this.requireUniqueBaseCharacterNames(),
+      requireUniqueBaseCharacterNames: true,
       favoritesOnly: this.favoritesOnly(),
       allowAnyFriendCaptainAutoFill: this.allowAnyFriendCaptainAutoFill(),
       favoriteCount: this.favoriteCharacterIds().length,
@@ -3256,6 +3361,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       leaderBoostRanges: this.cloneLeaderBoostRanges(this.leaderBoostRanges()),
       leaderCostRange: { ...this.leaderCostRange() },
       subCostRange: { ...this.subCostRange() },
+      maxTotalCost: this.maxTotalCost(),
       manualSlots: this.serializeManualSlots(),
       lockedCharacterIds: this.lockedCharacterIds(),
       lockedCharacters: this.lockedCharacters(),
@@ -3470,6 +3576,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.leaderBoostRanges.set(this.cloneLeaderBoostRanges(defaultFilters.leaderBoostRanges));
     this.leaderCostRange.set({ ...defaultFilters.leaderCostRange });
     this.subCostRange.set({ ...defaultFilters.subCostRange });
+    this.maxTotalCost.set(defaultFilters.maxTotalCost);
     this.enemyMechanicDrafts.set([]);
     this.requiredAbilityDrafts.set([]);
     this.crewmateAbilityDrafts.set([]);
@@ -3510,7 +3617,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.requireAllSlotsInLeaderSuperEffectScope.set(
       defaultFilters.requireAllSlotsInLeaderSuperEffectScope,
     );
-    this.requireUniqueBaseCharacterNames.set(defaultFilters.requireUniqueBaseCharacterNames);
+    this.requireUniqueBaseCharacterNames.set(true);
     this.selectedCharacterBoxId.set(null);
     this.selectedExcludeCharacterBoxId.set(null);
     this.favoritesOnly.set(defaultFilters.favoritesOnly);
@@ -3600,6 +3707,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.leaderBoostRanges.set(this.cloneLeaderBoostRanges(state.leaderBoostRanges));
     this.leaderCostRange.set({ ...state.leaderCostRange });
     this.subCostRange.set({ ...state.subCostRange });
+    this.maxTotalCost.set(state.maxTotalCost);
     const manualRequiredAbilities = splitManualAbilityRequirementsFromEnemyMechanics(
       state.requiredAbilities,
       state.enemyMechanics,
@@ -3636,7 +3744,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.requireAllSelectedTypesInTeam.set(state.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(state.requireAllSelectedClassesPerCharacter);
     this.requireAllSlotsInLeaderSuperEffectScope.set(state.requireAllSlotsInLeaderSuperEffectScope);
-    this.requireUniqueBaseCharacterNames.set(state.requireUniqueBaseCharacterNames);
+    this.requireUniqueBaseCharacterNames.set(true);
     this.selectedCharacterBoxId.set(null);
     this.selectedExcludeCharacterBoxId.set(null);
     this.favoritesOnly.set(state.favoritesOnly);
@@ -3725,14 +3833,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       return this.favoritesOnlyBlockedMessage();
     }
 
-    if (this.requireUniqueBaseCharacterNames()) {
-      const manualConflictNames = this.resolveManualUniqueBaseNameConflictNames();
+    const manualConflictNames = this.resolveManualUniqueBaseNameConflictNames();
 
-      if (manualConflictNames.length > 0) {
-        return this.t('errors.uniqueNames.manualConflict', {
-          names: manualConflictNames.join(' / '),
-        });
-      }
+    if (manualConflictNames.length > 0) {
+      return this.t('errors.uniqueNames.manualConflict', {
+        names: manualConflictNames.join(' / '),
+      });
     }
 
     const lockedCount = this.manualSelectionCount();
@@ -3749,9 +3855,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       activeRequirements.push(this.t('errors.requirements.classCoverage'));
     }
 
-    if (this.requireUniqueBaseCharacterNames()) {
-      activeRequirements.push(this.t('errors.requirements.uniqueCharacterNames'));
-    }
+    activeRequirements.push(this.t('errors.requirements.uniqueCharacterNames'));
 
     if (this.hasRequiredAbilities()) {
       activeRequirements.push(
@@ -4326,10 +4430,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     role: AutoBuildManualSlotRole,
     candidate: CharacterListItem,
   ): boolean {
-    if (!this.requireUniqueBaseCharacterNames()) {
-      return true;
-    }
-
     const lockedRecords = {
       ...this.lockedCharacterRecords(),
       [candidate.id]: candidate,
@@ -4454,6 +4554,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       return this.t('manual.slotSelection.excluded');
     }
 
+    const character = this.lockedCharacterRecords()[characterId];
+
+    if (character && !this.characterFitsManualTeamBudget(activeRole, character)) {
+      return this.t('manual.slotSelection.costBudget');
+    }
+
     const assignedRoles = this.manualSlots()
       .filter((slot) => slot.role !== activeRole && slot.characterIds.includes(characterId))
       .map((slot) => this.getManualSlotTitle(slot.role));
@@ -4548,6 +4654,36 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     }
 
     return AUTO_BUILD_MANUAL_SUB_SLOT_ROLES[subSlotIndex] ?? null;
+  }
+
+  private buildRequiredCharacterAbilityRailItem(
+    view: RequiredCharacterGroupView,
+    category: RequiredCharacterAbilityCategory,
+  ): AbilityFilterRailItem {
+    return {
+      category,
+      label: this.t(`requiredCharacters.categories.${category}`),
+      count: view.group.abilities.filter(
+        (requirement) =>
+          this.resolveAbilityCatalogItem(requirement.abilityKey)?.category === category,
+      ).length,
+      disabled: this.building() || this.resolveCategoryCatalogItems(category).length === 0,
+    };
+  }
+
+  private resolveCategoryCatalogItems(
+    category: RequiredCharacterAbilityCategory,
+  ): AutoBuildAbilityCatalogItem[] {
+    switch (category) {
+      case 'special':
+        return this.availableSpecialAbilityCatalogItems();
+      case 'crewmate':
+        return this.availableCrewmateAbilityCatalogItems();
+      case 'potential':
+        return this.availablePotentialAbilityCatalogItems();
+      case 'support':
+        return this.availableSupportAbilityCatalogItems();
+    }
   }
 
   private serializeManualRequiredAbilities(): AutoBuildAbilityRequirement[] {
@@ -4793,6 +4929,62 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         selectionSupportLabel: this.resolveExcludedCharacterSelectionSupport(character.id),
       };
     });
+  }
+
+  private resolveRemainingCostValue(currentCost: number): number {
+    const maxTotalCost = this.maxTotalCost();
+
+    return maxTotalCost === null ? 0 : Math.max(0, maxTotalCost - currentCost);
+  }
+
+  private resolveManualSlotsBudgetCost(slots: AutoBuildManualSlotSelection[]): number {
+    const lockedRecords = this.lockedCharacterRecords();
+
+    return slots.reduce((total, slot) => {
+      if (slot.role === 'friendCaptain') {
+        return total;
+      }
+
+      return (
+        total +
+        slot.characterIds.reduce(
+          (slotTotal, characterId) => slotTotal + (lockedRecords[characterId]?.cost ?? 0),
+          0,
+        )
+      );
+    }, 0);
+  }
+
+  private characterFitsManualTeamBudget(
+    role: AutoBuildManualSlotRole,
+    character: Pick<CharacterListItem, 'cost'>,
+  ): boolean {
+    const maxTotalCost = this.maxTotalCost();
+
+    if (maxTotalCost === null || role === 'friendCaptain') {
+      return true;
+    }
+
+    return this.manualTeamBudgetCost() + character.cost <= maxTotalCost;
+  }
+
+  private canAssignFixedManualTeamCharacter(character: Pick<CharacterDetailRecord, 'id' | 'cost'>): boolean {
+    const maxTotalCost = this.maxTotalCost();
+
+    if (maxTotalCost === null) {
+      return true;
+    }
+
+    const activeIndex = this.fixedManualTeamSelectedSlotIndex();
+
+    if (activeIndex === 1) {
+      return true;
+    }
+
+    const currentSlot = this.fixedManualTeamSlots()[activeIndex];
+    const currentSlotCost = currentSlot?.cost ?? 0;
+
+    return this.fixedManualTeamBudgetCost() - currentSlotCost + character.cost <= maxTotalCost;
   }
 
   private buildCharacterSubtitle(character: CharacterDetailRecord): string {

@@ -14,6 +14,14 @@ import {
 } from '@ionic/angular/standalone';
 import { TranslocoDirective } from '@jsverse/transloco';
 
+import {
+  type AutoBuildAbilityCatalog,
+  type AutoBuildAbilityCatalogItem,
+  type AutoBuildAbilityCategory,
+  type AutoBuildAbilityRequirement,
+  type AutoBuildAbilitySource,
+  type NormalizedBuilderAbility,
+} from '../../core/models/auto-team-builder-ability.models';
 import { type CharacterDetail, type CharacterDetailRecord } from '../../core/models/optc.models';
 import { CharacterOverridesService } from '../../core/services/character-overrides.service';
 import {
@@ -23,6 +31,21 @@ import {
   normalizeLocalCharacterOverride,
 } from '../../core/services/character-overrides.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import {
+  createAbilityRequirementDrafts,
+  type AbilityRequirementDraft,
+} from '../../core/services/ability-requirement-draft.utils';
+import {
+  createCategoryAbilityDrafts,
+  getAbilityCatalogItemsByCategory,
+  serializeCategoryAbilityDrafts,
+  serializeSpecialAbilityDrafts,
+} from '../../core/services/special-ability-filter.utils';
+import {
+  AbilityFilterRailComponent,
+  type AbilityFilterRailCategory,
+} from '../../shared/ability-filter-rail/ability-filter-rail.component';
+import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
 import { ToolbarBackButtonComponent } from '../../shared/toolbar-back-button/toolbar-back-button.component';
 
 type EditorFeedbackTone = 'error' | 'success';
@@ -46,6 +69,8 @@ interface EditorFeedback {
     IonTitle,
     IonToggle,
     IonToolbar,
+    AbilityFilterRailComponent,
+    SpecialAbilityPickerComponent,
     ToolbarBackButtonComponent,
     TranslocoDirective,
   ],
@@ -75,6 +100,15 @@ export class CharacterEditPage implements OnInit {
   public readonly maxRcv = signal('');
   public readonly growth = signal('');
   public readonly detailDraft = signal<CharacterDetail>(normalizeCharacterDetailInput(0, null));
+  public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
+  public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly specialAbilityPickerOpen = signal(false);
+  public readonly crewmateAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly crewmateAbilityPickerOpen = signal(false);
+  public readonly potentialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly potentialAbilityPickerOpen = signal(false);
+  public readonly supportAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly supportAbilityPickerOpen = signal(false);
   public readonly thumbnailImageDataUrl = signal<string | null>(null);
   public readonly detailImageDataUrl = signal<string | null>(null);
   public readonly thumbnailPreviewUrl = computed(
@@ -95,6 +129,24 @@ export class CharacterEditPage implements OnInit {
 
     return currentCharacter ? this.characterOverrides.hasOverride(currentCharacter.id) : false;
   });
+  public readonly availableAbilityCatalogItems = computed(
+    () => this.abilityCatalog()?.abilities ?? [],
+  );
+  public readonly availableSpecialAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.availableAbilityCatalogItems(), 'special'),
+  );
+  public readonly availableCrewmateAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.availableAbilityCatalogItems(), 'crewmate'),
+  );
+  public readonly availablePotentialAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.availableAbilityCatalogItems(), 'potential'),
+  );
+  public readonly availableSupportAbilityCatalogItems = computed(() =>
+    getAbilityCatalogItemsByCategory(this.availableAbilityCatalogItems(), 'support'),
+  );
+  private readonly abilityCatalogMap = computed(
+    () => new Map(this.availableAbilityCatalogItems().map((item) => [item.key, item] as const)),
+  );
 
   private readonly thumbnailMaxDimension = 320;
   private readonly detailMaxDimension = 1200;
@@ -216,6 +268,67 @@ export class CharacterEditPage implements OnInit {
     this.detailImageDataUrl.set(null);
   }
 
+  public openBuilderAbilityPicker(category: AbilityFilterRailCategory): void {
+    if (!this.resolveCategoryCatalogItems(category).length) {
+      return;
+    }
+
+    switch (category) {
+      case 'crewmate':
+        this.crewmateAbilityPickerOpen.set(true);
+        break;
+      case 'potential':
+        this.potentialAbilityPickerOpen.set(true);
+        break;
+      case 'support':
+        this.supportAbilityPickerOpen.set(true);
+        break;
+      default:
+        this.specialAbilityPickerOpen.set(true);
+        break;
+    }
+  }
+
+  public closeBuilderAbilityPicker(category: AbilityFilterRailCategory): void {
+    switch (category) {
+      case 'crewmate':
+        this.crewmateAbilityPickerOpen.set(false);
+        break;
+      case 'potential':
+        this.potentialAbilityPickerOpen.set(false);
+        break;
+      case 'support':
+        this.supportAbilityPickerOpen.set(false);
+        break;
+      default:
+        this.specialAbilityPickerOpen.set(false);
+        break;
+    }
+  }
+
+  public saveBuilderAbilityPicker(
+    category: AbilityFilterRailCategory,
+    drafts: AbilityRequirementDraft[],
+  ): void {
+    const catalogItems = this.resolveCategoryCatalogItems(category);
+    const nextDrafts = createAbilityRequirementDrafts(
+      category === 'special'
+        ? serializeSpecialAbilityDrafts(drafts, catalogItems)
+        : serializeCategoryAbilityDrafts(drafts, catalogItems, category),
+    );
+
+    this.setBuilderAbilityDrafts(category, nextDrafts);
+    this.closeBuilderAbilityPicker(category);
+    this.syncBuilderAbilitiesFromDrafts();
+    this.syncAdvancedJsonFromStructured();
+  }
+
+  public clearBuilderAbilityCategory(category: AbilityFilterRailCategory): void {
+    this.setBuilderAbilityDrafts(category, []);
+    this.syncBuilderAbilitiesFromDrafts();
+    this.syncAdvancedJsonFromStructured();
+  }
+
   public applyAdvancedJson(): void {
     const parsedOverride = this.parseAdvancedJson();
 
@@ -293,9 +406,13 @@ export class CharacterEditPage implements OnInit {
 
     try {
       await this.characterOverrides.ready();
-      const character = await this.repository.getCharacterById(characterId);
+      const [character, abilityCatalog] = await Promise.all([
+        this.repository.getCharacterById(characterId),
+        this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
+      ]);
 
       this.character.set(character);
+      this.abilityCatalog.set(abilityCatalog);
 
       if (character) {
         this.seedDraft(character);
@@ -328,6 +445,7 @@ export class CharacterEditPage implements OnInit {
     this.maxRcv.set(this.formatNullableNumber(override.maxRcv));
     this.growth.set(this.formatNullableNumber(override.growth));
     this.detailDraft.set(normalizeCharacterDetailInput(character.id, override.detail));
+    this.seedBuilderAbilityDrafts(this.detailDraft().builderAbilities);
     this.thumbnailImageDataUrl.set(override.images.thumbnailDataUrl);
     this.detailImageDataUrl.set(override.images.detailDataUrl);
     this.advancedJsonDirty.set(false);
@@ -448,10 +566,155 @@ export class CharacterEditPage implements OnInit {
     this.maxRcv.set(this.formatNullableNumber(override.maxRcv));
     this.growth.set(this.formatNullableNumber(override.growth));
     this.detailDraft.set(normalizeCharacterDetailInput(override.characterId, override.detail));
+    this.seedBuilderAbilityDrafts(this.detailDraft().builderAbilities);
     this.advancedJsonDirty.set(false);
     this.advancedJsonValue.set(
       JSON.stringify(createEditableCharacterOverridePayload(override), null, 2),
     );
+  }
+
+  private seedBuilderAbilityDrafts(abilities: readonly NormalizedBuilderAbility[]): void {
+    const requirements = abilities.map((ability) => this.createBuilderAbilityRequirement(ability));
+    const catalogItems = this.availableAbilityCatalogItems();
+
+    this.specialAbilityDrafts.set(
+      createCategoryAbilityDrafts(requirements, catalogItems, 'special'),
+    );
+    this.crewmateAbilityDrafts.set(
+      createCategoryAbilityDrafts(requirements, catalogItems, 'crewmate'),
+    );
+    this.potentialAbilityDrafts.set(
+      createCategoryAbilityDrafts(requirements, catalogItems, 'potential'),
+    );
+    this.supportAbilityDrafts.set(
+      createCategoryAbilityDrafts(requirements, catalogItems, 'support'),
+    );
+  }
+
+  private syncBuilderAbilitiesFromDrafts(): void {
+    const currentDetail = this.detailDraft();
+    const existingAbilityMap = new Map(
+      currentDetail.builderAbilities.map((ability) => [ability.key, ability] as const),
+    );
+    const serializedRequirements = [
+      ...serializeSpecialAbilityDrafts(
+        this.specialAbilityDrafts(),
+        this.availableSpecialAbilityCatalogItems(),
+      ),
+      ...serializeCategoryAbilityDrafts(
+        this.crewmateAbilityDrafts(),
+        this.availableCrewmateAbilityCatalogItems(),
+        'crewmate',
+      ),
+      ...serializeCategoryAbilityDrafts(
+        this.potentialAbilityDrafts(),
+        this.availablePotentialAbilityCatalogItems(),
+        'potential',
+      ),
+      ...serializeCategoryAbilityDrafts(
+        this.supportAbilityDrafts(),
+        this.availableSupportAbilityCatalogItems(),
+        'support',
+      ),
+    ];
+    const selectedKeys = new Set(
+      serializedRequirements.map((requirement) => requirement.abilityKey),
+    );
+    const nextBuilderAbilities = [
+      ...currentDetail.builderAbilities.filter(
+        (ability) => !this.abilityCatalogMap().has(ability.key) && !selectedKeys.has(ability.key),
+      ),
+      ...serializedRequirements.map((requirement) =>
+        this.createBuilderAbilityFromRequirement(requirement, existingAbilityMap),
+      ),
+    ];
+
+    this.detailDraft.set({
+      ...currentDetail,
+      builderAbilities: nextBuilderAbilities,
+    });
+  }
+
+  private createBuilderAbilityRequirement(
+    ability: NormalizedBuilderAbility,
+  ): AutoBuildAbilityRequirement {
+    return {
+      abilityKey: ability.key,
+      minTurns: ability.minTurns,
+      slotTokens: [...ability.slotTokens],
+      requiredCharacterCount: 1,
+    };
+  }
+
+  private createBuilderAbilityFromRequirement(
+    requirement: AutoBuildAbilityRequirement,
+    existingAbilityMap: ReadonlyMap<string, NormalizedBuilderAbility>,
+  ): NormalizedBuilderAbility {
+    const existingAbility = existingAbilityMap.get(requirement.abilityKey);
+    const catalogItem = this.abilityCatalogMap().get(requirement.abilityKey);
+
+    return {
+      key: requirement.abilityKey,
+      label: existingAbility?.label ?? catalogItem?.label ?? requirement.abilityKey,
+      minTurns: requirement.minTurns,
+      isCompleteRemoval:
+        existingAbility?.isCompleteRemoval ?? requirement.abilityKey.startsWith('remove_'),
+      slotTokens: [...requirement.slotTokens],
+      source: existingAbility?.source ?? this.resolveBuilderAbilitySource(catalogItem?.category),
+      coverageMode:
+        existingAbility?.coverageMode ??
+        (catalogItem?.availableCoverageModes?.includes('explicit') ? 'explicit' : undefined),
+    };
+  }
+
+  private setBuilderAbilityDrafts(
+    category: AbilityFilterRailCategory,
+    drafts: AbilityRequirementDraft[],
+  ): void {
+    switch (category) {
+      case 'crewmate':
+        this.crewmateAbilityDrafts.set(drafts);
+        break;
+      case 'potential':
+        this.potentialAbilityDrafts.set(drafts);
+        break;
+      case 'support':
+        this.supportAbilityDrafts.set(drafts);
+        break;
+      default:
+        this.specialAbilityDrafts.set(drafts);
+        break;
+    }
+  }
+
+  private resolveCategoryCatalogItems(
+    category: AbilityFilterRailCategory,
+  ): AutoBuildAbilityCatalogItem[] {
+    switch (category) {
+      case 'crewmate':
+        return this.availableCrewmateAbilityCatalogItems();
+      case 'potential':
+        return this.availablePotentialAbilityCatalogItems();
+      case 'support':
+        return this.availableSupportAbilityCatalogItems();
+      default:
+        return this.availableSpecialAbilityCatalogItems();
+    }
+  }
+
+  private resolveBuilderAbilitySource(
+    category: AutoBuildAbilityCategory | undefined,
+  ): AutoBuildAbilitySource {
+    switch (category) {
+      case 'crewmate':
+        return 'sailorAbilities';
+      case 'potential':
+        return 'potentialAbilities';
+      case 'support':
+        return 'supportData';
+      default:
+        return 'specialText';
+    }
   }
 
   private async loadSelectedImage(

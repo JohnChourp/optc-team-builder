@@ -355,13 +355,17 @@ export type CharacterSortMode =
   | 'idDesc'
   | 'idAsc';
 
+export type CharacterIdOrder = 'newest' | 'oldest';
+
 export interface CharacterSearchQuery {
   searchTerm: string;
   typeFilter: string;
   classFilter: string;
   allowedCharacterIds?: number[];
   excludedCharacterIds?: number[];
+  maxCost?: number | null;
   sortMode?: CharacterSortMode;
+  idOrder?: CharacterIdOrder;
   limit: number;
   offset: number;
 }
@@ -375,6 +379,7 @@ export interface DetailedCharacterSearchQuery {
   allowedCharacterIds?: number[];
   excludedCharacterIds?: number[];
   sortMode?: CharacterSortMode;
+  idOrder?: CharacterIdOrder;
   limit: number;
   offset: number;
 }

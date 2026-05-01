@@ -13,7 +13,7 @@ const generatedAt = new Date().toISOString().slice(0, 10);
 const siteName = 'OPTC Team Builder';
 const homePageTitle = 'OPTC Team Builder | One Piece Treasure Cruise Tools';
 const siteDescription =
-  'Plan One Piece Treasure Cruise crews with character search, team building, enemy mechanics, saved teams, screenshots, and offline-friendly tools.';
+  'Plan OPTC crews with character search, Rumble rankings, captain coverage, auto team building, Crew Forge, saved teams, enemies, boxes, Drive sync, and offline tools.';
 const googleTagManagerHeadHtml = `  <!-- Google Tag Manager consent bootstrap -->
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -56,14 +56,17 @@ const publicRoutes = [
     description: siteDescription,
     heading: 'OPTC Team Builder for One Piece Treasure Cruise',
     paragraphs: [
-      'OPTC Team Builder is a fan-made workspace for One Piece Treasure Cruise players who want a faster way to find characters, compare abilities, plan crews, and keep useful setups organized. The app combines a searchable character catalog, manual and automatic team building, Crew Forge screenshot imports, saved teams, saved enemies, character boxes, and settings for import/export and backups.',
-      'Use Characters to search by name, type, class, favorites, and ability data before opening detailed character pages. Auto Team Builder can fill fixed manual crew slots, choose ships, review notes, save offline team ideas, or match enemy mechanics and ability requirements against the local catalog so you can discover useful candidates without checking every unit by hand.',
-      'Crew Forge can import a crew screenshot and match recognized slots back to editable OPTC character data. Saved Teams, Character Boxes, and Saved Enemies keep recurring planning data available in your browser, while Settings covers language, backups, Google Drive sync, analytics consent, and data transfer tools.',
+      'OPTC Team Builder is a fan-made workspace for One Piece Treasure Cruise players who want a faster way to find characters, compare abilities, check Rumble rankings and captain coverage, plan crews, and keep useful setups organized. The app combines a searchable character catalog, manual and automatic team building, Pirate Rumble tools, Crew Forge screenshot imports, saved teams, saved enemies, character boxes, Drive sync, and settings for import/export and backups.',
+      'Use Characters to search by name, type, class, favorites, and ability data before opening detailed character pages. Rumble Characters ranks Pirate Rumble units, Captain Coverage finds leaders that fully cover a chosen unit, and Auto Team Builder can fill fixed manual crew slots or match enemy mechanics and ability requirements against the local catalog.',
+      'Auto Team Rumble Builder scores rumble-capable units and fills active and bench slots. Crew Forge can import a crew screenshot and match recognized slots back to editable OPTC character data. Saved Teams, Saved Rumble Teams, Character Boxes, and Saved Enemies keep recurring planning data available in your browser, while Settings and Drive Sync cover language, backups, analytics consent, and data transfer tools.',
       'The project is not an official Bandai Namco tool. It exists to make OPTC planning easier with clear links, readable character summaries, and generated pages that describe the same tools available in the web app.',
     ],
     links: [
       { label: 'Browse OPTC characters', path: 'tabs/characters' },
+      { label: 'Rank Pirate Rumble characters', path: 'tabs/rumble-characters' },
+      { label: 'Check captain coverage', path: 'tabs/captain-coverage' },
       { label: 'Build an OPTC team', path: 'tabs/auto-team-builder' },
+      { label: 'Build a Pirate Rumble team', path: 'tabs/auto-team-builder-rumble' },
       { label: 'Import crew screenshots', path: 'tabs/crew-forge' },
       { label: 'Open the public sitemap', path: 'sitemap.html' },
     ],
@@ -80,6 +83,17 @@ const publicRoutes = [
     ],
   },
   {
+    path: 'tabs/rumble-characters',
+    title: 'Rumble Characters | OPTC Team Builder',
+    description:
+      'Rank One Piece Treasure Cruise Pirate Rumble characters by full Rumble score, favorites, core filters, and custom stat focus.',
+    heading: 'OPTC Rumble Characters',
+    paragraphs: [
+      'Rumble Characters ranks One Piece Treasure Cruise Pirate Rumble units by score, favorites, core filters, and custom stat focus.',
+      'Use this page before building Pirate Rumble teams when you need to compare units by rumble data instead of regular quest abilities.',
+    ],
+  },
+  {
     path: 'tabs/auto-team-builder',
     title: 'Auto Team Builder | OPTC Team Builder',
     description:
@@ -88,6 +102,28 @@ const publicRoutes = [
     paragraphs: [
       'Auto Team Builder helps build One Piece Treasure Cruise crews manually with fixed slots or automatically by enemy mechanics, character abilities, type filters, class filters, and team-building requirements.',
       'Fill the crew yourself when you already know the team, or enter the mechanics and requirements you need covered to review matching character candidates from the local OPTC data.',
+    ],
+  },
+  {
+    path: 'tabs/captain-coverage',
+    title: 'Captain Coverage | OPTC Team Builder',
+    description:
+      'Pick an OPTC character and find captain abilities that fully cover that character under strict type, class, cost, universal, and self-scope matching.',
+    heading: 'OPTC Captain Coverage',
+    paragraphs: [
+      'Captain Coverage helps pick an OPTC character and find captain abilities that fully cover it under strict type, class, cost, universal, and self-scope matching.',
+      'Use this page when you want to verify which leaders naturally include a target character before committing to a crew plan.',
+    ],
+  },
+  {
+    path: 'tabs/auto-team-builder-rumble',
+    title: 'Auto Team Rumble Builder | OPTC Team Builder',
+    description:
+      'Build a Pirate Rumble team from local OPTC rumble data with deterministic scoring and synergy ranking.',
+    heading: 'OPTC Auto Team Rumble Builder',
+    paragraphs: [
+      'Auto Team Rumble Builder builds Pirate Rumble teams from local OPTC rumble data with deterministic scoring and synergy ranking.',
+      'Use this page to compare active and bench candidates, inspect synergy, and shape Rumble teams from the same local data used elsewhere in the app.',
     ],
   },
   {
@@ -433,7 +469,7 @@ ${paragraphs.map((paragraph) => `      <p>${escapeHtml(paragraph)}</p>`).join('\
 }
 
 function buildHomeFallbackHtml(route) {
-  const actions = (route.links ?? []).filter((link) => link.path.startsWith('tabs/')).slice(0, 4);
+  const actions = (route.links ?? []).filter((link) => link.path.startsWith('tabs/'));
   const actionLinks = actions
     .map(
       (link) =>

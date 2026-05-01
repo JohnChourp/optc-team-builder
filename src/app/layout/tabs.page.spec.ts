@@ -27,6 +27,8 @@ describe('TabsPage', () => {
     expect(component).not.toContain("'tabs.team'");
     expect(component).toContain("'tabs.auto'");
     expect(component).toContain("route: '/tabs/auto-team-builder'");
+    expect(component).toContain("'tabs.captainCoverage'");
+    expect(component).toContain("route: '/tabs/captain-coverage'");
     expect(component).toContain("'tabs.autoRumble'");
     expect(component).toContain("route: '/tabs/auto-team-builder-rumble'");
     expect(component).toContain("'tabs.rumbleCharacters'");

@@ -1,0 +1,27 @@
+<div class="ability-filter-rail" [attr.aria-label]="ariaLabel || null">
+  @for (item of items; track item.category) {
+    <div class="ability-filter-chip-wrap">
+      <button
+        type="button"
+        class="ability-filter-chip"
+        [class.ability-filter-chip--active]="item.count > 0"
+        [disabled]="isDisabled(item)"
+        (click)="open(item)"
+      >
+        <span>{{ item.label }}</span>
+        <strong>{{ item.count }}</strong>
+      </button>
+      @if (item.count > 0) {
+        <button
+          type="button"
+          class="ability-filter-chip__clear"
+          [disabled]="isClearDisabled(item)"
+          (click)="clear(item, $event)"
+          [attr.aria-label]="'Clear ' + item.label"
+        >
+          x
+        </button>
+      }
+    </div>
+  }
+</div>

@@ -63,6 +63,7 @@ export function buildAutoTeamBuilderStateFromSavedEnemy(
     leaderBoostRanges: createEmptyAutoBuildLeaderBoostRanges(),
     leaderCostRange: createEmptyAutoBuildCostRange(),
     subCostRange: createEmptyAutoBuildCostRange(),
+    maxTotalCost: null,
     manualSlots: createEmptyAutoBuildManualSlots(),
     lockedCharacterIds: [],
     excludedCharacterIds: [],

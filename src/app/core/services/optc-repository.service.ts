@@ -17,6 +17,7 @@ import {
   type CharacterSearchQuery,
   type DatasetManifest,
   type NormalizedSuperSpecialCriteria,
+  type CharacterIdOrder,
   type OfflinePackSummary,
   type RegionAvailability,
   type ShipRecord,
@@ -46,54 +47,88 @@ function buildCharacterPowerFirstOrderByClause(alias: string): string {
   return `${prefix}id DESC`;
 }
 
-function buildCharacterBoostOrderByClause(alias: string, columnName: string): string {
+function resolveCharacterIdOrderDirection(idOrder: CharacterIdOrder | undefined): 'ASC' | 'DESC' {
+  return idOrder === 'oldest' ? 'ASC' : 'DESC';
+}
+
+function buildCharacterIdOrderByClause(
+  alias: string,
+  idOrder: CharacterIdOrder | undefined,
+): string {
   const prefix = alias ? `${alias}.` : '';
-  return `${prefix}${columnName} DESC, ${prefix}id DESC, ${prefix}cost DESC, ${prefix}name COLLATE NOCASE ASC`;
+  return `${prefix}id ${resolveCharacterIdOrderDirection(idOrder)}`;
+}
+
+function buildCharacterBoostOrderByClause(
+  alias: string,
+  columnName: string,
+  idOrder: CharacterIdOrder | undefined,
+): string {
+  const prefix = alias ? `${alias}.` : '';
+  return `${prefix}${columnName} DESC, ${buildCharacterIdOrderByClause(alias, idOrder)}, ${prefix}cost DESC, ${prefix}name COLLATE NOCASE ASC`;
 }
 
 function buildCharacterListOrderByClause(
   alias: string,
   sortMode: CharacterSearchQuery['sortMode'] | 'catalog',
+  idOrder: CharacterIdOrder | undefined,
 ): string {
   const prefix = alias ? `${alias}.` : '';
 
   if (sortMode === 'captainHpBoost') {
-    return buildCharacterBoostOrderByClause(alias, 'captain_hp_boost');
+    return buildCharacterBoostOrderByClause(alias, 'captain_hp_boost', idOrder);
   }
 
   if (sortMode === 'captainAtkBoost') {
-    return buildCharacterBoostOrderByClause(alias, 'captain_atk_boost');
+    return buildCharacterBoostOrderByClause(alias, 'captain_atk_boost', idOrder);
   }
 
   if (sortMode === 'captainAverageBoost') {
-    return buildCharacterBoostOrderByClause(alias, 'captain_average_boost');
+    return buildCharacterBoostOrderByClause(alias, 'captain_average_boost', idOrder);
   }
 
-  return `${prefix}stars DESC, ${prefix}id DESC`;
+  if (sortMode === 'nameAsc') {
+    return `${prefix}name COLLATE NOCASE ASC, ${buildCharacterIdOrderByClause(alias, idOrder)}`;
+  }
+
+  if (sortMode === 'nameDesc') {
+    return `${prefix}name COLLATE NOCASE DESC, ${buildCharacterIdOrderByClause(alias, idOrder)}`;
+  }
+
+  if (sortMode === 'idAsc') {
+    return `${prefix}id ASC`;
+  }
+
+  if (sortMode === 'idDesc' || sortMode === 'newest' || sortMode === 'powerFirst') {
+    return buildCharacterPowerFirstOrderByClause(alias);
+  }
+
+  return buildCharacterIdOrderByClause(alias, idOrder);
 }
 
 function buildDetailedCharacterOrderByClause(
   alias: string,
   sortMode: DetailedCharacterSearchQuery['sortMode'] | 'catalog',
+  idOrder: CharacterIdOrder | undefined,
 ): string {
   if (sortMode === 'captainHpBoost') {
-    return buildCharacterBoostOrderByClause(alias, 'captain_hp_boost');
+    return buildCharacterBoostOrderByClause(alias, 'captain_hp_boost', idOrder);
   }
 
   if (sortMode === 'captainAtkBoost') {
-    return buildCharacterBoostOrderByClause(alias, 'captain_atk_boost');
+    return buildCharacterBoostOrderByClause(alias, 'captain_atk_boost', idOrder);
   }
 
   if (sortMode === 'captainAverageBoost') {
-    return buildCharacterBoostOrderByClause(alias, 'captain_average_boost');
+    return buildCharacterBoostOrderByClause(alias, 'captain_average_boost', idOrder);
   }
 
   if (sortMode === 'nameAsc') {
-    return `${alias}.name COLLATE NOCASE ASC, ${alias}.id ASC`;
+    return `${alias}.name COLLATE NOCASE ASC, ${buildCharacterIdOrderByClause(alias, idOrder)}`;
   }
 
   if (sortMode === 'nameDesc') {
-    return `${alias}.name COLLATE NOCASE DESC, ${alias}.id DESC`;
+    return `${alias}.name COLLATE NOCASE DESC, ${buildCharacterIdOrderByClause(alias, idOrder)}`;
   }
 
   if (sortMode === 'idAsc') {
@@ -104,7 +139,7 @@ function buildDetailedCharacterOrderByClause(
     return buildCharacterPowerFirstOrderByClause(alias);
   }
 
-  return `${alias}.stars DESC, ${alias}.id DESC`;
+  return buildCharacterIdOrderByClause(alias, idOrder);
 }
 
 function normalizeStringList(value: unknown): string[] {
@@ -277,6 +312,7 @@ function compareBoostSortedCharacters(
   left: CharacterRecord,
   right: CharacterRecord,
   key: 'captainHpBoost' | 'captainAtkBoost' | 'captainAverageBoost',
+  idOrder: CharacterIdOrder | undefined = 'newest',
 ): number {
   const boostDifference = right[key] - left[key];
 
@@ -284,7 +320,7 @@ function compareBoostSortedCharacters(
     return boostDifference;
   }
 
-  const idDifference = right.id - left.id;
+  const idDifference = compareCharacterIds(left.id, right.id, idOrder);
 
   if (idDifference !== 0) {
     return idDifference;
@@ -297,6 +333,14 @@ function compareBoostSortedCharacters(
   }
 
   return left.name.localeCompare(right.name, undefined, { sensitivity: 'base' });
+}
+
+function compareCharacterIds(
+  leftId: number,
+  rightId: number,
+  idOrder: CharacterIdOrder | undefined,
+): number {
+  return idOrder === 'oldest' ? leftId - rightId : rightId - leftId;
 }
 
 function normalizeCandidateCostRange(range: AutoBuildCandidateQueryOptions['costRange']): {
@@ -387,7 +431,11 @@ export class OptcRepositoryService {
     const excludedCharacterClause = excludedCharacterIds.length
       ? `\n          AND id NOT IN (${excludedCharacterIds.map(() => '?').join(',')})`
       : '';
-    const orderByClause = buildCharacterListOrderByClause('', query.sortMode ?? 'catalog');
+    const orderByClause = buildCharacterListOrderByClause(
+      '',
+      query.sortMode ?? 'catalog',
+      query.idOrder,
+    );
     const rows = await this.selectAll(
       `
         SELECT
@@ -548,7 +596,11 @@ export class OptcRepositoryService {
         queryParams.push(...excludedCharacterIds);
       }
 
-      const orderByClause = buildDetailedCharacterOrderByClause('c', query.sortMode ?? 'catalog');
+      const orderByClause = buildDetailedCharacterOrderByClause(
+        'c',
+        query.sortMode ?? 'catalog',
+        query.idOrder,
+      );
       const whereClause =
         whereClauses.length > 0 ? `WHERE ${whereClauses.join('\n          AND ')}` : '';
       const rows = await this.selectAll(
@@ -643,6 +695,7 @@ export class OptcRepositoryService {
         return true;
       }),
       query.sortMode ?? 'catalog',
+      query.idOrder,
     );
 
     return filteredRecords.slice(query.offset, query.offset + query.limit);
@@ -1170,18 +1223,19 @@ export class OptcRepositoryService {
   private sortDetailedRecords(
     records: CharacterDetailRecord[],
     sortMode: DetailedCharacterSearchQuery['sortMode'] | 'catalog',
+    idOrder: CharacterIdOrder | undefined = 'newest',
   ): CharacterDetailRecord[] {
     return [...records].sort((left, right) => {
       if (sortMode === 'captainHpBoost') {
-        return compareBoostSortedCharacters(left, right, 'captainHpBoost');
+        return compareBoostSortedCharacters(left, right, 'captainHpBoost', idOrder);
       }
 
       if (sortMode === 'captainAtkBoost') {
-        return compareBoostSortedCharacters(left, right, 'captainAtkBoost');
+        return compareBoostSortedCharacters(left, right, 'captainAtkBoost', idOrder);
       }
 
       if (sortMode === 'captainAverageBoost') {
-        return compareBoostSortedCharacters(left, right, 'captainAverageBoost');
+        return compareBoostSortedCharacters(left, right, 'captainAverageBoost', idOrder);
       }
 
       if (sortMode === 'newest') {
@@ -1201,7 +1255,7 @@ export class OptcRepositoryService {
           sensitivity: 'base',
         });
 
-        return nameDifference || left.id - right.id;
+        return nameDifference || compareCharacterIds(left.id, right.id, idOrder);
       }
 
       if (sortMode === 'nameDesc') {
@@ -1209,14 +1263,10 @@ export class OptcRepositoryService {
           sensitivity: 'base',
         });
 
-        return nameDifference || right.id - left.id;
+        return nameDifference || compareCharacterIds(left.id, right.id, idOrder);
       }
 
-      if (right.stars !== left.stars) {
-        return right.stars - left.stars;
-      }
-
-      return right.id - left.id;
+      return compareCharacterIds(left.id, right.id, idOrder);
     });
   }
 

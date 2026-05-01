@@ -6026,6 +6026,7 @@ function createInput(
       | 'costRange'
       | 'leaderCostRange'
       | 'subCostRange'
+      | 'maxTotalCost'
       | 'manualSlots'
       | 'lockedCharacterIds'
       | 'excludedCharacterIds'
@@ -6050,6 +6051,7 @@ function createInput(
     costRange: createEmptyAutoBuildCostRange(),
     leaderCostRange: createEmptyAutoBuildCostRange(),
     subCostRange: createEmptyAutoBuildCostRange(),
+    maxTotalCost: null,
     lockedCharacterIds: [],
     excludedCharacterIds: [],
     captainCharacterId: null,
@@ -6088,6 +6090,7 @@ function createInput(
     leaderCostRange:
       overrides.leaderCostRange ?? overrides.costRange ?? createEmptyAutoBuildCostRange(),
     subCostRange: overrides.subCostRange ?? overrides.costRange ?? createEmptyAutoBuildCostRange(),
+    maxTotalCost: overrides.maxTotalCost ?? null,
     manualSlots:
       overrides.manualSlots ??
       createManualSlotsFromLegacySelection(

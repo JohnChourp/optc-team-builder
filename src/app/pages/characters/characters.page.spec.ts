@@ -105,9 +105,11 @@ describe('CharactersPage favorites tools', () => {
 
     expect(template).toContain("'common.actions.reset' | transloco");
     expect(template).toContain('ability-filter-rail');
-    expect(template).toContain('activeAbilityFilterGroups()');
-    expect(template).toContain('removeAbilityFilterBadge(group.category, badge.draftId)');
-    expect(template).toContain('clearAbilityFilterCategory(group.category)');
+    expect(template).toContain('abilityFilterRailItems()');
+    expect(template).toContain('openAbilityFilterCategory($event)');
+    expect(template).toContain('clearAbilityFilterCategory($event)');
+    expect(template).not.toContain('activeAbilityFilterGroups()');
+    expect(template).not.toContain('removeAbilityFilterBadge');
     expect(template).toContain('compact-toolbar');
     expect(template).toContain("t('filters.favoritesOnly.label')");
     expect(template).toContain('favoritesOnlySupportLabel()');
@@ -118,6 +120,11 @@ describe('CharactersPage favorites tools', () => {
     expect(template).toContain("t('sort.label')");
     expect(template).toContain('selectedSortMode()');
     expect(template).toContain('onSortModeChange($event)');
+    expect(template).toContain("t('idOrder.label')");
+    expect(template).toContain('selectedIdOrder()');
+    expect(template).toContain('onIdOrderChange($event)');
+    expect(template).not.toContain('value="idDesc"');
+    expect(template).not.toContain('value="idAsc"');
     expect(template).toContain("t('displayMode.compact')");
     expect(template).toContain('character-thumb-card');
     expect(template).toContain('toggleFavorite(card.character.id, $event)');
@@ -128,7 +135,7 @@ describe('CharactersPage favorites tools', () => {
     expect(template).not.toContain("t('favorites.clearAll')");
   });
 
-  it('shows selected ability filters as compact badge groups', () => {
+  it('shows selected ability filters as count-only rail items', () => {
     const { page } = createPage();
 
     page.abilityCatalog.set({
@@ -164,37 +171,29 @@ describe('CharactersPage favorites tools', () => {
       },
     ]);
 
-    expect(page.activeAbilityFilterGroups()).toEqual([
-      {
-        category: 'special',
-        labelKey: 'filters.special.label',
-        clearLabelKey: 'filters.special.clear',
-        badges: [
-          {
-            draftId: 'special-1',
-            abilityKey: 'remove_bind',
-            label: 'Remove Bind',
-            badge: 'RB',
-          },
-        ],
-      },
-      {
-        category: 'crewmate',
-        labelKey: 'filters.crewmate.label',
-        clearLabelKey: 'filters.crewmate.clear',
-        badges: [
-          {
-            draftId: 'crewmate-1',
-            abilityKey: 'crewmate_recover_paralysis',
-            label: 'Status Effect Recovery: Paralysis',
-            badge: 'SE',
-          },
-        ],
-      },
-    ]);
+    expect(page.abilityFilterRailItems()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          category: 'special',
+          count: 1,
+        }),
+        expect.objectContaining({
+          category: 'crewmate',
+          count: 1,
+        }),
+        expect.objectContaining({
+          category: 'potential',
+          count: 0,
+        }),
+        expect.objectContaining({
+          category: 'support',
+          count: 0,
+        }),
+      ]),
+    );
   });
 
-  it('removes a single selected ability badge and reloads results', async () => {
+  it('clears a selected ability category from the rail and reloads results', async () => {
     const { page, characterCatalogCache } = createPage();
 
     page.specialAbilityDrafts.set([
@@ -214,15 +213,16 @@ describe('CharactersPage favorites tools', () => {
       },
     ]);
 
-    await page.removeAbilityFilterBadge('special', 'special-1');
+    await page.clearAbilityFilterCategory('special');
 
-    expect(page.specialAbilityDrafts().map((draft) => draft.draftId)).toEqual(['special-2']);
+    expect(page.specialAbilityDrafts()).toEqual([]);
     expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
       typeFilter: '',
       classFilter: '',
       allowedCharacterIds: undefined,
       sortMode: 'catalog',
+      idOrder: 'newest',
       limit: 48,
       offset: 0,
     });
@@ -247,6 +247,7 @@ describe('CharactersPage favorites tools', () => {
       classFilter: '',
       allowedCharacterIds: [101, 202],
       sortMode: 'catalog',
+      idOrder: 'newest',
       limit: 48,
       offset: 0,
     });
@@ -271,6 +272,7 @@ describe('CharactersPage favorites tools', () => {
       allowedCharacterIds: undefined,
       excludedCharacterIds: [101, 202],
       sortMode: 'catalog',
+      idOrder: 'newest',
       limit: 48,
       offset: 0,
     });
@@ -318,6 +320,7 @@ describe('CharactersPage favorites tools', () => {
       allowedCharacterIds: undefined,
       excludedCharacterIds: [101],
       sortMode: 'catalog',
+      idOrder: 'newest',
       limit: 48,
       offset: 0,
     });
@@ -348,6 +351,7 @@ describe('CharactersPage favorites tools', () => {
       allowedCharacterIds: undefined,
       excludedCharacterIds: [101],
       sortMode: 'catalog',
+      idOrder: 'newest',
       limit: 48,
       offset: 0,
     });
@@ -369,6 +373,29 @@ describe('CharactersPage favorites tools', () => {
       classFilter: '',
       allowedCharacterIds: undefined,
       sortMode: 'nameAsc',
+      idOrder: 'newest',
+      limit: 48,
+      offset: 0,
+    });
+  });
+
+  it('passes the selected ID order to cached searches', async () => {
+    const { page, characterCatalogCache } = createPage();
+
+    await page.onIdOrderChange({
+      detail: {
+        value: 'oldest',
+      },
+    } as CustomEvent<{ value?: string | null }>);
+
+    expect(page.selectedIdOrder()).toBe('oldest');
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      typeFilter: '',
+      classFilter: '',
+      allowedCharacterIds: undefined,
+      sortMode: 'catalog',
+      idOrder: 'oldest',
       limit: 48,
       offset: 0,
     });
@@ -400,6 +427,7 @@ describe('CharactersPage favorites tools', () => {
     page.favoritesOnly.set(true);
     page.hideFavorites.set(true);
     page.selectedSortMode.set('nameDesc');
+    page.selectedIdOrder.set('oldest');
     page.specialAbilityDrafts.set([
       {
         draftId: 'special-1',
@@ -452,6 +480,7 @@ describe('CharactersPage favorites tools', () => {
     expect(page.favoritesOnly()).toBe(false);
     expect(page.hideFavorites()).toBe(false);
     expect(page.selectedSortMode()).toBe('catalog');
+    expect(page.selectedIdOrder()).toBe('newest');
     expect(page.specialAbilityDrafts()).toEqual([]);
     expect(page.crewmateAbilityDrafts()).toEqual([]);
     expect(page.potentialAbilityDrafts()).toEqual([]);
@@ -465,6 +494,7 @@ describe('CharactersPage favorites tools', () => {
       classFilter: '',
       allowedCharacterIds: undefined,
       sortMode: 'catalog',
+      idOrder: 'newest',
       limit: 48,
       offset: 0,
     });

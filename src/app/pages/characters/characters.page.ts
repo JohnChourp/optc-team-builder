@@ -34,9 +34,9 @@ import {
 
 import {
   type AutoBuildAbilityCatalog,
-  type AutoBuildAbilityCategory,
 } from '../../core/models/auto-team-builder-ability.models';
 import {
+  type CharacterIdOrder,
   type CharacterListItem,
   type CharacterSortMode,
   type DatasetManifest,
@@ -64,16 +64,18 @@ import {
 } from '../../core/services/special-ability-filter.utils';
 import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
 import {
+  AbilityFilterRailComponent,
+  type AbilityFilterRailItem,
+  type AbilityFilterRailCategory,
+} from '../../shared/ability-filter-rail/ability-filter-rail.component';
+import {
   buildOptcbxFavoritesExportPayload,
   downloadOptcbxFavoritesExport,
 } from './characters-favorites.utils';
 
 const PAGE_SIZE = 48;
 type CharacterDisplayMode = 'list' | 'compact';
-type CompactAbilityFilterCategory = Extract<
-  AutoBuildAbilityCategory,
-  'special' | 'crewmate' | 'potential' | 'support'
->;
+type CompactAbilityFilterCategory = AbilityFilterRailCategory;
 
 interface CharacterCatalogCardView {
   character: CharacterListItem;
@@ -116,6 +118,7 @@ interface AbilityFilterGroupView {
     IonToggle,
     IonTitle,
     IonToolbar,
+    AbilityFilterRailComponent,
     SpecialAbilityPickerComponent,
     RouterLink,
     TranslocoDirective,
@@ -139,6 +142,7 @@ export class CharactersPage implements OnInit {
   public readonly favoritesOnly = signal(false);
   public readonly hideFavorites = signal(false);
   public readonly selectedSortMode = signal<CharacterSortMode>('catalog');
+  public readonly selectedIdOrder = signal<CharacterIdOrder>('newest');
   public readonly specialAbilityPickerOpen = signal(false);
   public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly crewmateAbilityPickerOpen = signal(false);
@@ -275,6 +279,32 @@ export class CharactersPage implements OnInit {
       ),
     ].filter((group) => group.badges.length > 0),
   );
+  public readonly abilityFilterRailItems = computed<AbilityFilterRailItem[]>(() => [
+    {
+      category: 'special',
+      label: this.i18n.translate('filters.special.eyebrow', undefined, 'characters'),
+      count: this.specialAbilityDrafts().length,
+      disabled: !this.availableSpecialAbilityCatalogItems().length,
+    },
+    {
+      category: 'crewmate',
+      label: this.i18n.translate('filters.crewmate.eyebrow', undefined, 'characters'),
+      count: this.crewmateAbilityDrafts().length,
+      disabled: !this.availableCrewmateAbilityCatalogItems().length,
+    },
+    {
+      category: 'potential',
+      label: this.i18n.translate('filters.potential.eyebrow', undefined, 'characters'),
+      count: this.potentialAbilityDrafts().length,
+      disabled: !this.availablePotentialAbilityCatalogItems().length,
+    },
+    {
+      category: 'support',
+      label: this.i18n.translate('filters.support.eyebrow', undefined, 'characters'),
+      count: this.supportAbilityDrafts().length,
+      disabled: !this.availableSupportAbilityCatalogItems().length,
+    },
+  ]);
   public readonly characterCardViews = computed<CharacterCatalogCardView[]>(() =>
     this.characters().map((character) => {
       const isFavorite = this.isFavorite(character.id);
@@ -440,6 +470,11 @@ export class CharactersPage implements OnInit {
     await this.loadCharacters(true);
   }
 
+  public async onIdOrderChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
+    this.selectedIdOrder.set(this.normalizeIdOrder(event.detail.value));
+    await this.loadCharacters(true);
+  }
+
   public openSpecialAbilityPicker(): void {
     if (!this.availableSpecialAbilityCatalogItems().length) {
       return;
@@ -602,6 +637,23 @@ export class CharactersPage implements OnInit {
     }
   }
 
+  public openAbilityFilterCategory(category: CompactAbilityFilterCategory): void {
+    switch (category) {
+      case 'special':
+        this.openSpecialAbilityPicker();
+        break;
+      case 'crewmate':
+        this.openCrewmateAbilityPicker();
+        break;
+      case 'potential':
+        this.openPotentialAbilityPicker();
+        break;
+      case 'support':
+        this.openSupportAbilityPicker();
+        break;
+    }
+  }
+
   public async loadMore(): Promise<void> {
     if (this.loadingMore() || !this.hasMore()) {
       return;
@@ -758,6 +810,7 @@ export class CharactersPage implements OnInit {
     this.favoritesOnly.set(false);
     this.hideFavorites.set(false);
     this.selectedSortMode.set('catalog');
+    this.selectedIdOrder.set('newest');
     this.specialAbilityPickerOpen.set(false);
     this.specialAbilityDrafts.set([]);
     this.crewmateAbilityPickerOpen.set(false);
@@ -805,6 +858,7 @@ export class CharactersPage implements OnInit {
       allowedCharacterIds: this.resolveAllowedCharacterIds(),
       ...(excludedCharacterIds ? { excludedCharacterIds } : {}),
       sortMode: this.selectedSortMode(),
+      idOrder: this.selectedIdOrder(),
       limit: PAGE_SIZE,
       offset: nextOffset,
     });
@@ -834,13 +888,15 @@ export class CharactersPage implements OnInit {
   private normalizeSortMode(value: string | null | undefined): CharacterSortMode {
     return value === 'nameAsc' ||
       value === 'nameDesc' ||
-      value === 'idDesc' ||
-      value === 'idAsc' ||
       value === 'captainHpBoost' ||
       value === 'captainAtkBoost' ||
       value === 'captainAverageBoost'
       ? value
       : 'catalog';
+  }
+
+  private normalizeIdOrder(value: string | null | undefined): CharacterIdOrder {
+    return value === 'oldest' ? 'oldest' : 'newest';
   }
 
   private filterOptions(options: string[], query: string, selectedValue: string): string[] {
