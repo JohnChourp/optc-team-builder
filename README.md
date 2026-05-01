@@ -127,7 +127,7 @@ If the Google OAuth IDs are missing, the config step prints a warning because th
 Google OAuth setup for the web client must include at least these authorized JavaScript origins:
 
 - `http://localhost:8400`
-- `https://johnchourp.github.io`
+- `https://optcteambuilder.com`
 
 ## GitHub Pages deploy
 

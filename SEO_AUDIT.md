@@ -46,7 +46,7 @@ Date: 2026-04-26
 ## Existing SEO Features Found
 
 - Angular/Ionic standalone app with Angular routes.
-- `build:pages` runs `config:app:web-strict`, production build with `--base-href /optc-team-builder/`, then `seo:pages`.
+- `build:pages` runs `config:app:web-strict`, production build with `--base-href /`, then `seo:pages`.
 - `seo:pages` runs `scripts/generate-seo-pages.mjs`.
 - `src/index.html` already had base SEO metadata, canonical, Open Graph, Twitter card tags, JSON-LD, and GitHub Pages route restore logic.
 - `scripts/generate-seo-pages.mjs` already generated public static pages, character detail pages from `public/assets/data/optc-seed.sql`, and `sitemap.xml`.
@@ -85,15 +85,15 @@ Date: 2026-04-26
 
 The generated `dist/optc-team-builder/browser/sitemap.xml` includes:
 
-- `https://johnchourp.github.io/optc-team-builder/`
-- `https://johnchourp.github.io/optc-team-builder/tabs/characters/`
-- `https://johnchourp.github.io/optc-team-builder/tabs/team-builder/`
-- `https://johnchourp.github.io/optc-team-builder/tabs/auto-team-builder/`
-- `https://johnchourp.github.io/optc-team-builder/tabs/crew-forge/`
-- `https://johnchourp.github.io/optc-team-builder/privacy/`
-- `https://johnchourp.github.io/optc-team-builder/cookies/`
-- `https://johnchourp.github.io/optc-team-builder/terms/`
-- Generated `https://johnchourp.github.io/optc-team-builder/characters/:id/` pages.
+- `https://optcteambuilder.com/`
+- `https://optcteambuilder.com/tabs/characters/`
+- `https://optcteambuilder.com/tabs/team-builder/`
+- `https://optcteambuilder.com/tabs/auto-team-builder/`
+- `https://optcteambuilder.com/tabs/crew-forge/`
+- `https://optcteambuilder.com/privacy/`
+- `https://optcteambuilder.com/cookies/`
+- `https://optcteambuilder.com/terms/`
+- Generated `https://optcteambuilder.com/characters/:id/` pages.
 
 The verified generated sitemap currently has 4,540 URLs: 8 public pages plus 4,532 character pages.
 
@@ -116,7 +116,7 @@ The verified generated sitemap currently has 4,540 URLs: 8 public pages plus 4,5
 User-agent: *
 Allow: /
 
-Sitemap: https://johnchourp.github.io/optc-team-builder/sitemap.xml
+Sitemap: https://optcteambuilder.com/sitemap.xml
 ```
 
 ## 404.html Status
@@ -129,7 +129,7 @@ Static generated route pages remain the SEO path. The 404 fallback is only for d
 
 - GitHub Pages serves unknown client routes through the 404 fallback, so unknown/private routes should not be treated as sitemap SEO pages.
 - Static generated `/characters/:id/` pages are better SEO targets than relying on the 404 fallback.
-- Canonical URLs must include the `/optc-team-builder/` project subpath.
+- Canonical URLs must use the custom domain root path.
 
 ## Needs Manual Approval
 
@@ -147,11 +147,11 @@ Static generated route pages remain the SEO path. The 404 fallback is only for d
 
 ## Manual Actions After Deploy
 
-- Submit sitemap to Google Search Console: `https://johnchourp.github.io/optc-team-builder/sitemap.xml`
-- Submit sitemap to Bing Webmaster Tools: `https://johnchourp.github.io/optc-team-builder/sitemap.xml`
-- Inspect `https://johnchourp.github.io/optc-team-builder/`
-- Inspect `https://johnchourp.github.io/optc-team-builder/tabs/characters/`
-- Inspect one generated character page, for example `https://johnchourp.github.io/optc-team-builder/characters/1/`
+- Submit sitemap to Google Search Console: `https://optcteambuilder.com/sitemap.xml`
+- Submit sitemap to Bing Webmaster Tools: `https://optcteambuilder.com/sitemap.xml`
+- Inspect `https://optcteambuilder.com/`
+- Inspect `https://optcteambuilder.com/tabs/characters/`
+- Inspect one generated character page, for example `https://optcteambuilder.com/characters/1/`
 - Request indexing after deployment.
 - Verify canonical URLs after deployment.
 - Test direct refresh on:

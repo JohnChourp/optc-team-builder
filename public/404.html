@@ -23,10 +23,8 @@
   <meta name="robots" content="noindex">
   <script>
     (function redirectGithubPagesRoute() {
-      var pathSegments = window.location.pathname.split("/").filter(Boolean);
-      var basePath = pathSegments.length > 0 ? "/" + pathSegments[0] + "/" : "/";
-      var routePath = window.location.pathname.slice(basePath.length - 1) || "/";
-      var redirectUrl = new URL(basePath, window.location.origin);
+      var routePath = window.location.pathname || "/";
+      var redirectUrl = new URL("/", window.location.origin);
 
       redirectUrl.searchParams.set("__gh_path__", routePath);
       redirectUrl.searchParams.set("__gh_search__", window.location.search.slice(1));

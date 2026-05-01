@@ -7,7 +7,7 @@ const defaultSeedPath = path.join(projectRoot, 'public', 'assets', 'data', 'optc
 const outputDir = path.resolve(process.env.SEO_OUTPUT_DIR ?? defaultOutputDir);
 const seedPath = path.resolve(process.env.SEO_SEED_PATH ?? defaultSeedPath);
 const siteBaseUrl = normalizeSiteBaseUrl(
-  process.env.SEO_SITE_BASE_URL ?? 'https://johnchourp.github.io/optc-team-builder',
+  process.env.SEO_SITE_BASE_URL ?? 'https://optcteambuilder.com',
 );
 const generatedAt = new Date().toISOString().slice(0, 10);
 const siteName = 'OPTC Team Builder';

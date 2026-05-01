@@ -189,7 +189,7 @@ describe('AppComponent', () => {
     expect(titleStub.setTitle).toHaveBeenCalledWith('Auto Team Builder | OPTC Team Builder');
     expect(metaStub.updateTag).toHaveBeenCalledWith({
       property: 'og:url',
-      content: 'https://johnchourp.github.io/optc-team-builder/tabs/auto-team-builder/',
+      content: 'https://optcteambuilder.com/tabs/auto-team-builder/',
     });
   });
 
@@ -213,7 +213,7 @@ describe('AppComponent', () => {
     });
     expect(metaStub.updateTag).toHaveBeenCalledWith({
       property: 'og:url',
-      content: 'https://johnchourp.github.io/optc-team-builder/',
+      content: 'https://optcteambuilder.com/',
     });
   });
 
@@ -222,33 +222,33 @@ describe('AppComponent', () => {
       {
         url: '/tabs/characters',
         title: 'OPTC Characters | OPTC Team Builder',
-        canonicalUrl: 'https://johnchourp.github.io/optc-team-builder/tabs/characters/',
+        canonicalUrl: 'https://optcteambuilder.com/tabs/characters/',
       },
       {
         url: '/tabs/auto-team-builder',
         title: 'Auto Team Builder | OPTC Team Builder',
-        canonicalUrl: 'https://johnchourp.github.io/optc-team-builder/tabs/auto-team-builder/',
+        canonicalUrl: 'https://optcteambuilder.com/tabs/auto-team-builder/',
       },
       {
         url: '/tabs/captain-coverage',
         title: 'Captain Coverage | OPTC Team Builder',
-        canonicalUrl: 'https://johnchourp.github.io/optc-team-builder/tabs/captain-coverage/',
+        canonicalUrl: 'https://optcteambuilder.com/tabs/captain-coverage/',
       },
       {
         url: '/tabs/auto-team-builder-rumble',
         title: 'Auto Team Rumble Builder | OPTC Team Builder',
         canonicalUrl:
-          'https://johnchourp.github.io/optc-team-builder/tabs/auto-team-builder-rumble/',
+          'https://optcteambuilder.com/tabs/auto-team-builder-rumble/',
       },
       {
         url: '/tabs/rumble-characters',
         title: 'Rumble Characters | OPTC Team Builder',
-        canonicalUrl: 'https://johnchourp.github.io/optc-team-builder/tabs/rumble-characters/',
+        canonicalUrl: 'https://optcteambuilder.com/tabs/rumble-characters/',
       },
       {
         url: '/tabs/crew-forge',
         title: 'Crew Forge | OPTC Team Builder',
-        canonicalUrl: 'https://johnchourp.github.io/optc-team-builder/tabs/crew-forge/',
+        canonicalUrl: 'https://optcteambuilder.com/tabs/crew-forge/',
       },
     ];
     const { AppComponent } = await import('./app.component');
@@ -296,7 +296,7 @@ describe('AppComponent', () => {
     });
     expect(metaStub.updateTag).toHaveBeenCalledWith({
       property: 'og:url',
-      content: 'https://johnchourp.github.io/optc-team-builder/characters/1/',
+      content: 'https://optcteambuilder.com/characters/1/',
     });
   });
 

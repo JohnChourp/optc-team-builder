@@ -18,7 +18,7 @@ interface RouteSeoData {
   indexable: boolean;
 }
 
-const appSiteBaseUrl = 'https://johnchourp.github.io/optc-team-builder';
+const appSiteBaseUrl = 'https://optcteambuilder.com';
 const appHomeTitle = 'OPTC Team Builder | One Piece Treasure Cruise Tools';
 const defaultSeo: RouteSeoData = {
   title: appHomeTitle,

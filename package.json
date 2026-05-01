@@ -7,7 +7,7 @@
     "ng": "ng",
     "start": "npm run config:app && ng serve",
     "build": "npm run config:app && ng build",
-    "build:pages": "npm run config:app:web-strict && ng build --configuration production --base-href /optc-team-builder/ && npm run seo:pages && npm run seo:audit",
+    "build:pages": "npm run config:app:web-strict && ng build --configuration production --base-href / && npm run seo:pages && npm run seo:audit",
     "seo:pages": "node ./scripts/generate-seo-pages.mjs",
     "seo:audit": "node ./scripts/audit-seo-pages.mjs",
     "watch": "npm run config:app && ng build --watch --configuration development",

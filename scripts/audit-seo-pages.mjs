@@ -5,7 +5,7 @@ const projectRoot = path.resolve(import.meta.dirname, '..');
 const defaultOutputDir = path.join(projectRoot, 'dist', 'optc-team-builder', 'browser');
 const outputDir = path.resolve(process.env.SEO_OUTPUT_DIR ?? defaultOutputDir);
 const siteBaseUrl = normalizeSiteBaseUrl(
-  process.env.SEO_SITE_BASE_URL ?? 'https://johnchourp.github.io/optc-team-builder',
+  process.env.SEO_SITE_BASE_URL ?? 'https://optcteambuilder.com',
 );
 const sitemapPath = path.join(outputDir, 'sitemap.xml');
 const robotsPath = path.join(outputDir, 'robots.txt');
