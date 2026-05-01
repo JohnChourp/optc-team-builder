@@ -506,11 +506,11 @@ export class AutoTeamBuilderService {
           leaderPair.friendCaptainId,
           subIds,
           {
-          ...rosterInput,
-          requiredAbilities,
-          requiredCharacterGroups: hasBattleRequirementInput ? [] : requiredCharacterGroups,
-          battleRequirements,
-          enemyMechanics,
+            ...rosterInput,
+            requiredAbilities,
+            requiredCharacterGroups: hasBattleRequirementInput ? [] : requiredCharacterGroups,
+            battleRequirements,
+            enemyMechanics,
           },
         );
         const result = buildAutoTeamResult(teamRecords, input);
@@ -731,60 +731,6 @@ export class AutoTeamBuilderService {
           total: projectedTotalAttempts,
         },
       });
-
-      // Wait point 1: the exact attempt always runs first so pooled fallbacks only start once
-      // the strictest search has definitively failed to satisfy the requested coverage.
-      const exactResult = await this.runAttemptInInitializedWorker(
-        workers[0],
-        requestedInput,
-        requestedInput,
-        !requestedInput.requireAllSlotsInLeaderSuperEffectScope,
-        executionOptions.signal,
-        friendCaptainRecords,
-        scopedAutoFillCharacterIds,
-        autoFillCharacterIds,
-      );
-
-      if (satisfiesRequestedAutoTeamBuildCoverage(exactResult)) {
-        this.emitProgress(executionOptions, {
-          stage: 'completed',
-          candidateCount: records.length,
-          completedAttempts: 1,
-          totalAttempts: 1,
-          attemptCountFinal: true,
-          ...this.buildTimingSnapshot(timingState, 1, 1, workers.length),
-          currentDroppedTypes: [],
-          currentDroppedClasses: [],
-          currentAllowedLeadersWithSuperEffects: false,
-          currentIgnoredLeaderSuperSpecialCriteria: false,
-          messageKey: 'progress.completed',
-        });
-        return exactResult;
-      }
-
-      fallbackPlanner.scheduleInitialFallbackAttempts();
-
-      if (!fallbackPlanner.hasPendingScheduledAttempts()) {
-        this.emitProgress(executionOptions, {
-          stage: 'completed',
-          candidateCount: records.length,
-          completedAttempts: 1,
-          totalAttempts: fallbackPlanner.getTotalAttempts(),
-          attemptCountFinal: true,
-          ...this.buildTimingSnapshot(
-            timingState,
-            fallbackPlanner.getTotalAttempts(),
-            1,
-            workers.length,
-          ),
-          currentDroppedTypes: [],
-          currentDroppedClasses: [],
-          currentAllowedLeadersWithSuperEffects: false,
-          currentIgnoredLeaderSuperSpecialCriteria: false,
-          messageKey: 'progress.completed',
-        });
-        return null;
-      }
 
       const result = await this.runPooledFallbackAttempts(
         workers,
@@ -1063,9 +1009,11 @@ export class AutoTeamBuilderService {
       const managedWorkers = new Map<Worker, PooledWorkerState>();
       const availableWorkers: PooledWorkerState[] = [];
       let settled = false;
+      let exactAttemptCompleted = false;
       let inFlightCount = 0;
       let pendingWorkerInitializations = 0;
       let growthDisabled = false;
+      let speculativeFallbackError: unknown = null;
 
       workers.forEach((worker) => {
         const state: PooledWorkerState = {
@@ -1077,6 +1025,11 @@ export class AutoTeamBuilderService {
         managedWorkers.set(worker, state);
         availableWorkers.push(state);
       });
+
+      const exactWorkerState = availableWorkers.shift()!;
+
+      exactWorkerState.busy = true;
+      fallbackPlanner.scheduleInitialFallbackAttempts();
 
       const getActiveWorkerCount = (): number => Math.max(1, managedWorkers.size);
       const getDesiredWorkerCount = (): number =>
@@ -1191,6 +1144,45 @@ export class AutoTeamBuilderService {
         }
       };
 
+      const completeExactAttempt = (result: AutoBuildResult | null): void => {
+        if (settled) {
+          return;
+        }
+
+        exactAttemptCompleted = true;
+        exactWorkerState.busy = false;
+
+        if (satisfiesRequestedAutoTeamBuildCoverage(result)) {
+          resolveOnce(result, 1);
+          return;
+        }
+
+        if (speculativeFallbackError !== null) {
+          rejectOnce(speculativeFallbackError);
+          return;
+        }
+
+        if (exactWorkerState.retiring) {
+          terminateWorkerState(exactWorkerState);
+        } else if (managedWorkers.has(exactWorkerState.worker)) {
+          availableWorkers.push(exactWorkerState);
+        }
+
+        reconcilePoolSize();
+        tryResolveOrderedResult();
+
+        if (!settled) {
+          dispatchAvailableAttempts();
+        }
+      };
+      const handleFallbackAttemptError = (error: unknown): void => {
+        if (!exactAttemptCompleted) {
+          speculativeFallbackError = error;
+          return;
+        }
+
+        rejectOnce(error);
+      };
       const resolveOnce = (result: AutoBuildResult | null, completedAttemptCount: number): void => {
         if (settled) {
           return;
@@ -1226,6 +1218,10 @@ export class AutoTeamBuilderService {
         reject(error);
       };
       const tryResolveOrderedResult = (): void => {
+        if (!exactAttemptCompleted) {
+          return;
+        }
+
         // Wait point 2: pooled fallback results resolve in planned order on purpose, so a later
         // successful attempt can still wait behind earlier unfinished attempts.
         for (
@@ -1335,27 +1331,46 @@ export class AutoTeamBuilderService {
                 availableWorkers.push(workerState);
               }
 
-              if (!satisfiesRequestedAutoTeamBuildCoverage(result)) {
+              const attemptSatisfiesRequestedCoverage =
+                satisfiesRequestedAutoTeamBuildCoverage(result);
+
+              if (!attemptSatisfiesRequestedCoverage) {
                 fallbackPlanner.recordFailedFallbackAttempt(nextAttempt);
               }
 
               reconcilePoolSize();
               tryResolveOrderedResult();
 
-              if (!settled) {
+              if (!settled && (exactAttemptCompleted || !attemptSatisfiesRequestedCoverage)) {
                 // Wait point 3: as soon as a worker finishes, dispatch the next queued fallback in
                 // the same promise chain without adding any timer-based delay.
                 dispatchAvailableAttempts();
               }
             })
             .catch((error) => {
-              rejectOnce(error);
+              handleFallbackAttemptError(error);
             });
         }
 
         tryResolveOrderedResult();
       };
 
+      void this.runAttemptInInitializedWorker(
+        exactWorkerState.worker,
+        requestedInput,
+        requestedInput,
+        !requestedInput.requireAllSlotsInLeaderSuperEffectScope,
+        executionOptions.signal,
+        friendCaptainRecords,
+        scopedAutoFillCharacterIds,
+        autoFillCharacterIds,
+      )
+        .then((result) => {
+          completeExactAttempt(result);
+        })
+        .catch((error) => {
+          rejectOnce(error);
+        });
       dispatchAvailableAttempts();
     });
   }

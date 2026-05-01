@@ -2499,7 +2499,7 @@ describe('Auto team builder', () => {
     ).toBeGreaterThanOrEqual(4);
     expect(
       result?.slots.filter((slot) => slot.character.detail.characterTags?.includes('Scientist'))
-      .length,
+        .length,
     ).toBeGreaterThanOrEqual(4);
   });
 
@@ -4826,6 +4826,146 @@ describe('Auto team builder', () => {
     );
   });
 
+  it('keeps exact result priority when a speculative fallback finishes first', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    let exactRunId: string | null = null;
+    const fallbackResult = buildWorkerResult(createInput(['DEX'], ['Fighter']));
+    const exactResult = buildWorkerResult(createInput(['DEX', 'INT'], ['Fighter']));
+    const workerA = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerA.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (request.type === 'runAttempt') {
+        exactRunId = request.runId;
+      }
+    });
+    const workerB = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerB.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (request.type === 'runAttempt') {
+        workerB.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: fallbackResult,
+        });
+      }
+    });
+    const createWorkerSpy = vi.spyOn(
+      service as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
+
+    let settled = false;
+    const buildPromise = service
+      .buildTeam(
+        ['Fighter'],
+        ['DEX', 'INT'],
+        { requireLeaderSuperSpecialCriteria: false },
+        { workerCount: 2 },
+      )
+      .then((result) => {
+        settled = true;
+        return result;
+      });
+
+    await flushMicrotasks();
+
+    expect(settled).toBe(false);
+    expect(exactRunId).not.toBeNull();
+
+    workerA.emitMessage({
+      type: 'result',
+      runId: exactRunId,
+      result: exactResult,
+    });
+
+    const result = await buildPromise;
+
+    expect(result?.input).toEqual(exactResult.input);
+    expect(result?.input).not.toEqual(fallbackResult.input);
+  });
+
+  it('reuses a speculative fallback result when the exact attempt fails', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    let exactRunId: string | null = null;
+    let fallbackRunAttemptCount = 0;
+    const fallbackResult = buildWorkerResult(createInput(['DEX'], ['Fighter']));
+    const workerA = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerA.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (request.type === 'runAttempt') {
+        exactRunId = request.runId;
+      }
+    });
+    const workerB = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerB.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (request.type === 'runAttempt') {
+        fallbackRunAttemptCount += 1;
+        workerB.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: fallbackResult,
+        });
+      }
+    });
+    const createWorkerSpy = vi.spyOn(
+      service as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
+
+    let settled = false;
+    const buildPromise = service
+      .buildTeam(
+        ['Fighter'],
+        ['DEX', 'INT'],
+        { requireLeaderSuperSpecialCriteria: false },
+        { workerCount: 2 },
+      )
+      .then((result) => {
+        settled = true;
+        return result;
+      });
+
+    await flushMicrotasks();
+
+    expect(settled).toBe(false);
+    expect(exactRunId).not.toBeNull();
+    expect(fallbackRunAttemptCount).toBe(1);
+
+    workerA.emitMessage({
+      type: 'result',
+      runId: exactRunId,
+      result: null,
+    });
+
+    const result = await buildPromise;
+
+    expect(result?.input).toEqual(fallbackResult.input);
+    expect(fallbackRunAttemptCount).toBe(1);
+  });
+
   it('shrinks idle pooled workers immediately when the desired worker count is lower', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
@@ -5262,7 +5402,7 @@ describe('Auto team builder', () => {
       getShips: vi.fn().mockResolvedValue([]),
     };
     const service = new AutoTeamBuilderService(repository as never);
-    const deferredFallbackRunIds: string[] = [];
+    const deferredFallbacks: Array<{ worker: PooledFakeWorker; runId: string }> = [];
     const workerA = new PooledFakeWorker((request) => {
       if (request.type === 'init') {
         workerA.emitMessage({ type: 'ready' });
@@ -5291,7 +5431,7 @@ describe('Auto team builder', () => {
         request.input.selectedClasses.length === 1 &&
         !request.requireLeadersWithoutSuperEffects
       ) {
-        deferredFallbackRunIds.push(request.runId);
+        deferredFallbacks.push({ worker: workerA, runId: request.runId });
         return;
       }
 
@@ -5301,11 +5441,30 @@ describe('Auto team builder', () => {
           runId: request.runId,
           result: null,
         });
+        return;
+      }
+
+      if (request.input.types.length === 1 && request.input.selectedClasses.length === 1) {
+        workerA.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: buildWorkerResult(createInput(['DEX'], ['Fighter'])),
+        });
       }
     });
     const workerB = new PooledFakeWorker((request) => {
       if (request.type === 'init') {
         workerB.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (
+        request.type === 'runAttempt' &&
+        request.input.types.length === 2 &&
+        request.input.selectedClasses.length === 1 &&
+        !request.requireLeadersWithoutSuperEffects
+      ) {
+        deferredFallbacks.push({ worker: workerB, runId: request.runId });
         return;
       }
 
@@ -5355,11 +5514,11 @@ describe('Auto team builder', () => {
 
     await flushMicrotasks();
     expect(settled).toBe(false);
-    expect(deferredFallbackRunIds).toHaveLength(1);
+    expect(deferredFallbacks).toHaveLength(1);
 
-    workerA.emitMessage({
+    deferredFallbacks[0]!.worker.emitMessage({
       type: 'result',
-      runId: deferredFallbackRunIds[0],
+      runId: deferredFallbacks[0]!.runId,
       result: null,
     });
 
@@ -5532,6 +5691,20 @@ describe('Auto team builder', () => {
       if (
         request.type === 'runAttempt' &&
         request.input.types.length === 2 &&
+        request.input.selectedClasses.length === 1 &&
+        !request.requireLeadersWithoutSuperEffects
+      ) {
+        workerB.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: null,
+        });
+        return;
+      }
+
+      if (
+        request.type === 'runAttempt' &&
+        request.input.types.length === 2 &&
         request.input.selectedClasses.length === 0
       ) {
         workerB.emitMessage({
@@ -5637,6 +5810,20 @@ describe('Auto team builder', () => {
     const workerB = new PooledFakeWorker((request) => {
       if (request.type === 'init') {
         workerB.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (
+        request.type === 'runAttempt' &&
+        request.input.types.length === 2 &&
+        request.input.selectedClasses.length === 1 &&
+        !request.requireLeadersWithoutSuperEffects
+      ) {
+        workerB.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: null,
+        });
         return;
       }
 
