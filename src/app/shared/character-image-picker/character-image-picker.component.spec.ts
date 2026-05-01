@@ -25,6 +25,7 @@ vi.mock('@ionic/angular/standalone', () => ({
 describe('CharacterImagePickerComponent', () => {
   afterEach(() => {
     vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('loads the manifest and the first page when the modal opens', async () => {
@@ -48,6 +49,19 @@ describe('CharacterImagePickerComponent', () => {
     });
     expect(component.characters()).toHaveLength(48);
     expect(component.hasMore()).toBe(true);
+  });
+
+  it('logs the modal name when it opens', async () => {
+    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const { component } = createComponent();
+
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+    });
+    await flushPromises();
+
+    expect(consoleLogSpy).toHaveBeenCalledWith('[Modal Open] CharacterImagePickerComponent');
   });
 
   it('reloads the catalog when search and filters change', async () => {
@@ -193,6 +207,48 @@ describe('CharacterImagePickerComponent', () => {
     });
   });
 
+  it('filters the picker by favorites and hidden favorites', async () => {
+    const { component, characterCatalogCache } = createComponent({ favoriteIds: [1, 3] });
+
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+    });
+    await flushPromises();
+
+    await component.toggleFavoritesOnly();
+
+    expect(component.favoritesOnly()).toBe(true);
+    expect(component.hideFavorites()).toBe(false);
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      typeFilter: '',
+      classFilter: '',
+      sortMode: 'catalog',
+      idOrder: 'newest',
+      limit: 48,
+      offset: 0,
+      allowedCharacterIds: [1, 3],
+    });
+    expect(component.characters().map((character) => character.id)).toEqual([1, 3]);
+
+    await component.toggleHideFavorites();
+
+    expect(component.favoritesOnly()).toBe(false);
+    expect(component.hideFavorites()).toBe(true);
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      typeFilter: '',
+      classFilter: '',
+      sortMode: 'catalog',
+      idOrder: 'newest',
+      limit: 48,
+      offset: 0,
+      excludedCharacterIds: [1, 3],
+    });
+    expect(component.characters().some((character) => [1, 3].includes(character.id))).toBe(false);
+  });
+
   it('renders the search, filters and confirm action in the template', () => {
     const template = readFileSync(
       resolve(
@@ -211,6 +267,10 @@ describe('CharacterImagePickerComponent', () => {
     expect(template).toContain("t('idOrder.label')");
     expect(template).toContain('selectedIdOrder()');
     expect(template).toContain('onIdOrderChange($event)');
+    expect(template).toContain("t('filters.favoritesOnly')");
+    expect(template).toContain('toggleFavoritesOnly()');
+    expect(template).toContain("t('filters.hideFavorites')");
+    expect(template).toContain('toggleHideFavorites()');
     expect(template).toContain('<app-ability-filter-rail');
     expect(template).toContain('openAbilityFilterCategory($event)');
     expect(template).toContain('clearAbilityFilterCategory($event)');
@@ -232,7 +292,7 @@ describe('CharacterImagePickerComponent', () => {
   });
 });
 
-function createComponent() {
+function createComponent({ favoriteIds = [] }: { favoriteIds?: number[] } = {}) {
   const availableCharacters = buildCharacters();
   const repository = {
     getDatasetManifest: vi.fn().mockResolvedValue({
@@ -253,10 +313,20 @@ function createComponent() {
       const searchTerm = String(query['searchTerm'] ?? '').toLowerCase();
       const typeFilter = String(query['typeFilter'] ?? '');
       const classFilter = String(query['classFilter'] ?? '');
+      const allowedCharacterIds = Array.isArray(query['allowedCharacterIds'])
+        ? new Set(query['allowedCharacterIds'])
+        : null;
+      const excludedCharacterIds = new Set(
+        Array.isArray(query['excludedCharacterIds']) ? query['excludedCharacterIds'] : [],
+      );
       const offset = Number(query['offset'] ?? 0);
       const limit = Number(query['limit'] ?? 24);
 
       return availableCharacters
+        .filter((character) =>
+          allowedCharacterIds === null ? true : allowedCharacterIds.has(character.id),
+        )
+        .filter((character) => !excludedCharacterIds.has(character.id))
         .filter((character) => character.name.toLowerCase().includes(searchTerm))
         .filter((character) => !typeFilter || character.type === typeFilter)
         .filter(
@@ -268,15 +338,20 @@ function createComponent() {
         .slice(offset, offset + limit);
     }),
   };
+  const userState = {
+    favoriteCharacterIds: vi.fn(() => favoriteIds),
+    ready: vi.fn().mockResolvedValue(undefined),
+  };
   const component = new CharacterImagePickerComponent(
     repository as never,
     characterCatalogCache as never,
+    userState as never,
   );
 
   component.title = 'Pick character image';
   component.copy = 'Choose one OPTC portrait.';
 
-  return { component, repository, characterCatalogCache };
+  return { component, repository, characterCatalogCache, userState };
 }
 
 function buildCharacters() {

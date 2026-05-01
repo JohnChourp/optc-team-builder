@@ -10,6 +10,8 @@
     "class": "Class",
     "anyType": "Όλα τα types",
     "anyClass": "Όλα τα classes",
+    "favoritesOnly": "Μόνο favorites",
+    "hideFavorites": "Κρύψε favorites",
     "special": "Special filters",
     "clearSpecial": "Καθαρισμός Special",
     "specialEyebrow": "Special",

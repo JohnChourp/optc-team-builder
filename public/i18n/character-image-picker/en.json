@@ -10,6 +10,8 @@
     "class": "Class",
     "anyType": "All types",
     "anyClass": "All classes",
+    "favoritesOnly": "Show favorites only",
+    "hideFavorites": "Hide favorites",
     "special": "Special filters",
     "clearSpecial": "Clear Special",
     "specialEyebrow": "Special",

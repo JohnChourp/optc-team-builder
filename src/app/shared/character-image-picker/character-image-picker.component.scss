@@ -68,6 +68,20 @@
   text-transform: uppercase;
 }
 
+.character-image-picker-favorite-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.character-image-picker-favorite-filter {
+  min-height: 42px;
+}
+
+.character-image-picker-favorite-filter--active {
+  font-weight: 800;
+}
+
 .character-image-picker-empty {
   display: grid;
   justify-items: center;

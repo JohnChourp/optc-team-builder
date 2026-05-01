@@ -29,6 +29,7 @@ import { type AutoBuildAbilityCatalog } from '../../core/models/auto-team-builde
 import {
   type CharacterIdOrder,
   type CharacterListItem,
+  type CharacterSearchQuery,
   type CharacterSortMode,
   type DatasetManifest,
 } from '../../core/models/optc.models';
@@ -38,6 +39,7 @@ import {
 } from '../../core/services/ability-requirement-draft.utils';
 import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import { UserStateService } from '../../core/services/user-state.service';
 import {
   getAbilityCatalogItemsByCategory,
   intersectAbilityMatchingCharacterIds,
@@ -53,6 +55,7 @@ import {
 import { SpecialAbilityPickerComponent } from '../special-ability-picker/special-ability-picker.component';
 
 const PAGE_SIZE = 48;
+const CHARACTER_IMAGE_PICKER_MODAL_NAME = 'CharacterImagePickerComponent';
 
 @Component({
   selector: 'app-character-image-picker',
@@ -83,6 +86,7 @@ export class CharacterImagePickerComponent implements OnChanges {
   @Input({ required: true }) public title = '';
   @Input({ required: true }) public copy = '';
   @Input() public applyingSelection = false;
+  @Input() public allowedCharacterIds: number[] | null = null;
   @Input() public maxCost: number | null = null;
   @Output() public readonly dismiss = new EventEmitter<void>();
   @Output() public readonly saveSelection = new EventEmitter<CharacterListItem>();
@@ -96,6 +100,8 @@ export class CharacterImagePickerComponent implements OnChanges {
   public readonly selectedClass = signal('');
   public readonly selectedSortMode = signal<CharacterSortMode>('catalog');
   public readonly selectedIdOrder = signal<CharacterIdOrder>('newest');
+  public readonly favoritesOnly = signal(false);
+  public readonly hideFavorites = signal(false);
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly specialAbilityPickerOpen = signal(false);
@@ -190,17 +196,19 @@ export class CharacterImagePickerComponent implements OnChanges {
   public constructor(
     private readonly repository: OptcRepositoryService,
     private readonly characterCatalogCache: CharacterCatalogCacheService,
+    private readonly userState: UserStateService,
   ) {}
 
   public ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen'] && this.isOpen) {
+      console.log(`[Modal Open] ${CHARACTER_IMAGE_PICKER_MODAL_NAME}`);
       this.dismissReason = null;
       this.resetState();
       void this.initializePicker();
       return;
     }
 
-    if (changes['maxCost'] && this.isOpen) {
+    if ((changes['maxCost'] || changes['allowedCharacterIds']) && this.isOpen) {
       void this.loadCharacters(true);
     }
   }
@@ -251,6 +259,36 @@ export class CharacterImagePickerComponent implements OnChanges {
     }
 
     this.selectedIdOrder.set(normalizeCharacterIdOrder(event.detail.value));
+    await this.loadCharacters(true);
+  }
+
+  public async toggleFavoritesOnly(): Promise<void> {
+    if (this.applyingSelection) {
+      return;
+    }
+
+    const nextValue = !this.favoritesOnly();
+    this.favoritesOnly.set(nextValue);
+
+    if (nextValue) {
+      this.hideFavorites.set(false);
+    }
+
+    await this.loadCharacters(true);
+  }
+
+  public async toggleHideFavorites(): Promise<void> {
+    if (this.applyingSelection) {
+      return;
+    }
+
+    const nextValue = !this.hideFavorites();
+    this.hideFavorites.set(nextValue);
+
+    if (nextValue) {
+      this.favoritesOnly.set(false);
+    }
+
     await this.loadCharacters(true);
   }
 
@@ -457,7 +495,8 @@ export class CharacterImagePickerComponent implements OnChanges {
     this.loading.set(true);
 
     try {
-      const [summary, abilityCatalog] = await Promise.all([
+      const [, summary, abilityCatalog] = await Promise.all([
+        this.userState.ready(),
         this.repository.getDatasetManifest(),
         typeof this.repository.getAutoBuilderAbilityCatalog === 'function'
           ? this.repository.getAutoBuilderAbilityCatalog().catch(() => null)
@@ -473,9 +512,7 @@ export class CharacterImagePickerComponent implements OnChanges {
         limit: PAGE_SIZE,
         offset: 0,
       };
-      const characters = this.characterCatalogCache.queryCharacters(
-        this.maxCost === null ? query : { ...query, maxCost: this.maxCost },
-      );
+      const characters = this.characterCatalogCache.queryCharacters(this.applyPickerScope(query));
 
       this.summary.set(summary);
       this.abilityCatalog.set(abilityCatalog);
@@ -494,7 +531,7 @@ export class CharacterImagePickerComponent implements OnChanges {
     }
 
     try {
-      await this.characterCatalogCache.ensureLoaded();
+      await Promise.all([this.userState.ready(), this.characterCatalogCache.ensureLoaded()]);
       const nextOffset = reset ? 0 : this.characters().length;
       const allowedCharacterIds = intersectAbilityMatchingCharacterIds([
         this.specialFilterCharacterIds(),
@@ -511,9 +548,10 @@ export class CharacterImagePickerComponent implements OnChanges {
         limit: PAGE_SIZE,
         offset: nextOffset,
       };
-      const scopedQuery = this.maxCost === null ? query : { ...query, maxCost: this.maxCost };
       const nextPage = this.characterCatalogCache.queryCharacters(
-        allowedCharacterIds === undefined ? scopedQuery : { ...scopedQuery, allowedCharacterIds },
+        this.applyPickerScope(
+          allowedCharacterIds === undefined ? query : { ...query, allowedCharacterIds },
+        ),
       );
 
       this.characters.set(reset ? nextPage : [...this.characters(), ...nextPage]);
@@ -550,6 +588,8 @@ export class CharacterImagePickerComponent implements OnChanges {
     this.selectedClass.set('');
     this.selectedSortMode.set('catalog');
     this.selectedIdOrder.set('newest');
+    this.favoritesOnly.set(false);
+    this.hideFavorites.set(false);
     this.specialAbilityPickerOpen.set(false);
     this.specialAbilityDrafts.set([]);
     this.crewmateAbilityPickerOpen.set(false);
@@ -560,6 +600,32 @@ export class CharacterImagePickerComponent implements OnChanges {
     this.supportAbilityDrafts.set([]);
     this.characters.set([]);
     this.selectedCharacter.set(null);
+  }
+
+  private applyPickerScope(query: CharacterSearchQuery): CharacterSearchQuery {
+    const favoriteCharacterIds = this.userState.favoriteCharacterIds();
+    const scopedAllowedCharacterIds =
+      this.allowedCharacterIds === null
+        ? query.allowedCharacterIds
+        : intersectAbilityMatchingCharacterIds([
+            query.allowedCharacterIds,
+            this.allowedCharacterIds,
+          ]);
+    const favoriteScopedAllowedCharacterIds = this.favoritesOnly()
+      ? intersectAbilityMatchingCharacterIds([scopedAllowedCharacterIds, favoriteCharacterIds])
+      : scopedAllowedCharacterIds;
+    const excludedCharacterIds = this.hideFavorites()
+      ? [...(query.excludedCharacterIds ?? []), ...favoriteCharacterIds]
+      : query.excludedCharacterIds;
+
+    return {
+      ...query,
+      ...(this.maxCost === null ? {} : { maxCost: this.maxCost }),
+      ...(favoriteScopedAllowedCharacterIds === undefined
+        ? {}
+        : { allowedCharacterIds: favoriteScopedAllowedCharacterIds }),
+      ...(excludedCharacterIds === undefined ? {} : { excludedCharacterIds }),
+    };
   }
 
   private normalizeOptions(values: string[]): string[] {

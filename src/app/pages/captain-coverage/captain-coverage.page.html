@@ -32,52 +32,6 @@
         </div>
       </section>
 
-      <section class="target-panel glass-card">
-        <div class="target-panel__copy">
-          <div class="section-label">{{ t('target.eyebrow') }}</div>
-          <h2>{{ t('target.title') }}</h2>
-          <p>{{ t('target.copy') }}</p>
-        </div>
-
-        @if (selectedTarget(); as target) {
-          <div class="selected-target">
-            <img [src]="target.imageUrl" [alt]="target.name" loading="lazy" />
-            <div>
-              <span>{{ t('target.selected') }}</span>
-              <strong>{{ target.name }}</strong>
-              <small>#{{ target.id }} - {{ targetSubtitle() }}</small>
-            </div>
-          </div>
-        } @else {
-          <div class="target-empty">
-            <span>{{ t('target.empty') }}</span>
-          </div>
-        }
-
-        <div class="target-actions">
-          <ion-button color="warning" (click)="openPicker()">
-            <ion-icon slot="start" [icon]="swapIcon"></ion-icon>
-            {{ selectedTarget() ? t('target.change') : t('target.select') }}
-          </ion-button>
-          <ion-button
-            fill="outline"
-            color="light"
-            [disabled]="!selectedTarget()"
-            (click)="clearTarget()"
-          >
-            {{ 'common.actions.clear' | transloco }}
-          </ion-button>
-        </div>
-      </section>
-
-      <app-character-image-picker
-        [isOpen]="pickerOpen()"
-        [title]="t('picker.title')"
-        [copy]="t('picker.copy')"
-        (dismiss)="closePicker()"
-        (saveSelection)="saveTargetSelection($event)"
-      ></app-character-image-picker>
-
       <section class="team-budget-panel glass-card">
         <div class="target-panel__copy">
           <div class="section-label">{{ t('team.eyebrow') }}</div>
@@ -137,38 +91,104 @@
                 />
                 <span>
                   <strong>{{ teamSlotLabel(index) }}</strong>
-                  <small>{{ t('team.empty') }}</small>
+                  <small>{{ index === 0 ? t('team.captainRequired') : t('team.empty') }}</small>
                 </span>
               }
             </button>
           }
         </div>
+
+        @if (selectedCaptain(); as captain) {
+          <div class="selected-target">
+            <img [src]="captain.imageUrl" [alt]="captain.name" loading="lazy" />
+            <div>
+              <span>{{ t('team.selectedCaptain') }}</span>
+              <strong>{{ captain.name }}</strong>
+              <small>#{{ captain.id }} - {{ selectedCaptainSubtitle() }}</small>
+            </div>
+          </div>
+        }
       </section>
 
       <app-character-image-picker
         [isOpen]="teamPickerOpen()"
         [title]="activeTeamSlotTitle()"
-        [copy]="t('team.picker.copy')"
+        [copy]="t(activeTeamSlotIndex() === 0 ? 'team.picker.captainCopy' : 'team.picker.copy')"
+        [allowedCharacterIds]="activeTeamSlotAllowedCharacterIds()"
         [maxCost]="teamPickerMaxCost()"
         (dismiss)="closeTeamSlotPicker()"
         (saveSelection)="saveTeamSlotSelection($event)"
       ></app-character-image-picker>
 
-      <section
-        class="results-panel glass-card"
-        [class.results-panel--compact]="isCompactDisplayMode()"
-      >
+      <section class="results-panel glass-card">
         <div class="results-toolbar">
           <div>
             <div class="section-label">{{ t('results.eyebrow') }}</div>
             <h2>
               {{
-                selectedTarget()
-                  ? t('results.titleWithCount', { count: totalMatchingCaptains() })
+                selectedCaptainDetail()
+                  ? t('results.titleWithCount', { count: totalMatchingCharacters() })
                   : t('results.title')
               }}
             </h2>
           </div>
+
+          <app-ability-filter-rail
+            class="coverage-ability-filters"
+            [items]="abilityFilterRailItems()"
+            [ariaLabel]="t('filters.abilityRailLabel')"
+            [disabled]="!selectedCaptainDetail()"
+            (selectCategory)="openAbilityFilterCategory($event)"
+            (clearCategory)="clearAbilityFilterCategory($event)"
+          ></app-ability-filter-rail>
+
+          <app-special-ability-picker
+            [isOpen]="specialAbilityPickerOpen()"
+            category="special"
+            [eyebrow]="t('filters.specialEyebrow')"
+            [title]="t('filters.specialTitle')"
+            [copy]="t('filters.specialCopy')"
+            [drafts]="specialAbilityDrafts()"
+            [catalogItems]="availableSpecialAbilityCatalogItems()"
+            (dismiss)="closeSpecialAbilityPicker()"
+            (saveDrafts)="saveSpecialAbilityPicker($event)"
+          ></app-special-ability-picker>
+
+          <app-special-ability-picker
+            [isOpen]="crewmateAbilityPickerOpen()"
+            category="crewmate"
+            [eyebrow]="t('filters.crewmateEyebrow')"
+            [title]="t('filters.crewmateTitle')"
+            [copy]="t('filters.crewmateCopy')"
+            [drafts]="crewmateAbilityDrafts()"
+            [catalogItems]="availableCrewmateAbilityCatalogItems()"
+            (dismiss)="closeCrewmateAbilityPicker()"
+            (saveDrafts)="saveCrewmateAbilityPicker($event)"
+          ></app-special-ability-picker>
+
+          <app-special-ability-picker
+            [isOpen]="potentialAbilityPickerOpen()"
+            category="potential"
+            [eyebrow]="t('filters.potentialEyebrow')"
+            [title]="t('filters.potentialTitle')"
+            [copy]="t('filters.potentialCopy')"
+            [drafts]="potentialAbilityDrafts()"
+            [catalogItems]="availablePotentialAbilityCatalogItems()"
+            (dismiss)="closePotentialAbilityPicker()"
+            (saveDrafts)="savePotentialAbilityPicker($event)"
+          ></app-special-ability-picker>
+
+          <app-special-ability-picker
+            [isOpen]="supportAbilityPickerOpen()"
+            category="support"
+            [eyebrow]="t('filters.supportEyebrow')"
+            [title]="t('filters.supportTitle')"
+            [copy]="t('filters.supportCopy')"
+            [drafts]="supportAbilityDrafts()"
+            [catalogItems]="availableSupportAbilityCatalogItems()"
+            (dismiss)="closeSupportAbilityPicker()"
+            (saveDrafts)="saveSupportAbilityPicker($event)"
+          ></app-special-ability-picker>
 
           <div class="results-controls">
             <ion-button
@@ -176,7 +196,7 @@
               [class.favorite-filter-button--active]="favoritesOnly()"
               [fill]="favoritesOnly() ? 'solid' : 'outline'"
               color="warning"
-              [disabled]="!selectedTarget()"
+              [disabled]="!selectedCaptainDetail()"
               (click)="toggleFavoritesOnly()"
             >
               {{ t('filters.favoritesOnly') }}
@@ -187,37 +207,16 @@
               [class.favorite-filter-button--active]="hideFavorites()"
               [fill]="hideFavorites() ? 'solid' : 'outline'"
               color="light"
-              [disabled]="!selectedTarget()"
+              [disabled]="!selectedCaptainDetail()"
               (click)="toggleHideFavorites()"
             >
               {{ t('filters.hideFavorites') }}
             </ion-button>
 
-            <div class="view-toggle" [attr.aria-label]="t('displayMode.label')">
-              <button
-                type="button"
-                class="view-toggle__button"
-                [class.view-toggle__button--active]="!isCompactDisplayMode()"
-                [disabled]="!selectedTarget()"
-                (click)="setDisplayMode('list')"
-              >
-                {{ t('displayMode.list') }}
-              </button>
-              <button
-                type="button"
-                class="view-toggle__button"
-                [class.view-toggle__button--active]="isCompactDisplayMode()"
-                [disabled]="!selectedTarget()"
-                (click)="setDisplayMode('compact')"
-              >
-                {{ t('displayMode.compact') }}
-              </button>
-            </div>
-
             <ion-searchbar
               class="coverage-search"
               [debounce]="150"
-              [disabled]="!selectedTarget()"
+              [disabled]="!selectedCaptainDetail()"
               [placeholder]="t('search.placeholder')"
               [searchIcon]="searchIcon"
               [value]="searchTerm()"
@@ -227,7 +226,7 @@
             <ion-select
               interface="popover"
               fill="outline"
-              [disabled]="!selectedTarget()"
+              [disabled]="!selectedCaptainDetail()"
               [attr.aria-label]="t('sort.label')"
               [value]="selectedSortMode()"
               (ionChange)="onSortModeChange($event)"
@@ -253,13 +252,17 @@
             <ion-select
               interface="popover"
               fill="outline"
-              [disabled]="!selectedTarget()"
+              [disabled]="!selectedCaptainDetail()"
               [attr.aria-label]="t('idOrder.label')"
               [value]="selectedIdOrder()"
               (ionChange)="onIdOrderChange($event)"
             >
-              <ion-select-option value="newest">{{ t('idOrder.options.newest') }}</ion-select-option>
-              <ion-select-option value="oldest">{{ t('idOrder.options.oldest') }}</ion-select-option>
+              <ion-select-option value="newest">{{
+                t('idOrder.options.newest')
+              }}</ion-select-option>
+              <ion-select-option value="oldest">{{
+                t('idOrder.options.oldest')
+              }}</ion-select-option>
             </ion-select>
           </div>
         </div>
@@ -269,10 +272,10 @@
             <ion-spinner name="crescent"></ion-spinner>
             <span>{{ t('loading') }}</span>
           </div>
-        } @else if (!selectedTarget()) {
+        } @else if (!selectedCaptainDetail()) {
           <div class="panel-empty panel-empty--large">
-            <strong>{{ t('empty.noTarget.title') }}</strong>
-            <span>{{ t('empty.noTarget.copy') }}</span>
+            <strong>{{ t('empty.noCaptain.title') }}</strong>
+            <span>{{ t('empty.noCaptain.copy') }}</span>
           </div>
         } @else if (!resultCards().length) {
           <div class="panel-empty panel-empty--large">
@@ -281,65 +284,25 @@
           </div>
         } @else {
           <div class="captain-result-list">
-            @for (card of resultCards(); track trackCaptain($index, card)) {
+            @for (card of resultCards(); track trackCharacter($index, card)) {
               <article class="captain-result">
-                <a class="captain-result__thumb" [routerLink]="card.detailLink">
-                  <img [src]="card.captain.imageUrl" [alt]="card.captain.name" loading="lazy" />
+                <a
+                  class="captain-result__thumb"
+                  [routerLink]="card.detailLink"
+                  [attr.aria-label]="t('results.openCharacterDetails')"
+                >
+                  <img [src]="card.character.imageUrl" alt="" loading="lazy" />
                 </a>
 
                 <div class="captain-result__body">
-                  <div class="captain-result__title-row">
-                    <div>
-                      <a [routerLink]="card.detailLink">{{ card.captain.name }}</a>
-                      <small>#{{ card.captain.id }} - {{ card.subtitle }}</small>
-                    </div>
-
-                    <div class="boost-grid" [attr.aria-label]="t('boosts.ariaLabel')">
-                      <span
-                        >{{ t('boosts.atk') }}
-                        <strong>{{ formatBoost(card.captain.captainAtkBoost) }}</strong></span
-                      >
-                      <span
-                        >{{ t('boosts.hp') }}
-                        <strong>{{ formatBoost(card.captain.captainHpBoost) }}</strong></span
-                      >
-                      <span
-                        >{{ t('boosts.avg') }}
-                        <strong>{{ formatBoost(card.captain.captainAverageBoost) }}</strong></span
-                      >
-                    </div>
-                  </div>
-
-                  <div class="coverage-chip-row">
-                    @for (chip of card.coverage.chips; track trackChip($index, chip)) {
-                      <span
-                        class="coverage-chip"
-                        [class.coverage-chip--class]="chip.kind === 'class'"
-                        [class.coverage-chip--cost]="chip.kind === 'cost'"
-                        [class.coverage-chip--self]="chip.kind === 'self'"
-                        [class.coverage-chip--universal]="chip.kind === 'universal'"
-                      >
-                        {{ chip.label }}
-                      </span>
-                    }
-                  </div>
-
-                  <p>{{ card.coverage.captainText }}</p>
-
-                  @if (card.coverage.neutralNotes.length) {
-                    <small class="neutral-note">
-                      {{ t('results.neutralNotes', { count: card.coverage.neutralNotes.length }) }}
-                    </small>
-                  }
-
                   <ion-button
                     size="small"
                     fill="outline"
                     color="warning"
-                    [disabled]="!canAssignTeamSlotCharacter(0, card.captain)"
-                    (click)="assignCaptainFromResult(card.captain)"
+                    [disabled]="card.assignableSlotIndex === null"
+                    (click)="assignCharacterFromResult(card)"
                   >
-                    {{ t('team.actions.useCaptain') }}
+                    {{ t('team.actions.addToTeam') }}
                   </ion-button>
                 </div>
               </article>

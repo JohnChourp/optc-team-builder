@@ -6,47 +6,51 @@
     "hp": "HP"
   },
   "empty": {
-    "noResults": {
-      "copy": "No captain ability fully covers the selected character with the current search.",
-      "title": "No matching captains"
+    "noCaptain": {
+      "copy": "Choose a Captain in the team slot first. Results will show sub candidates covered by that Captain ability.",
+      "title": "Select a Captain"
     },
-    "noTarget": {
-      "copy": "Choose one character first. Results will only show captains whose full primary captain ability covers that character.",
-      "title": "Select a character"
+    "noResults": {
+      "copy": "No covered character fits the current team slots, cost budget, search, favorites, and ability filters.",
+      "title": "No matching characters"
     }
   },
   "hero": {
     "captainsCount": "{{count}} captains",
     "charactersCount": "{{count}} characters",
-    "copy": "Pick a unit and filter captains down to abilities that fully apply to that unit across type, class, cost, universal, and self-only clauses.",
+    "copy": "Pick a Captain in the team slot, then filter characters down to units covered by that Captain ability across type, class, cost, universal, and self-only clauses.",
     "eyebrow": "Strict captain scope",
-    "title": "Find captains that fully cover one character"
+    "title": "Find characters covered by your Captain"
   },
   "filters": {
+    "abilityRailLabel": "Ability filters",
+    "crewmateCopy": "Filter covered character results by Crewmate Ability tags.",
+    "crewmateEyebrow": "Crewmate Ability",
+    "crewmateTitle": "Crewmate Ability filters",
     "favoritesOnly": "Show favorites only",
-    "hideFavorites": "Hide favorites"
-  },
-  "displayMode": {
-    "compact": "Compact view",
-    "label": "Captain result display mode",
-    "list": "List view"
+    "hideFavorites": "Hide favorites",
+    "potentialCopy": "Filter covered character results by Potential Ability tags.",
+    "potentialEyebrow": "Potential Ability",
+    "potentialTitle": "Potential Ability filters",
+    "specialCopy": "Filter covered character results by Special tags.",
+    "specialEyebrow": "Special",
+    "specialTitle": "Special filters",
+    "supportCopy": "Filter covered character results by Support Ability tags.",
+    "supportEyebrow": "Support Ability",
+    "supportTitle": "Support Ability filters"
   },
   "loading": "Loading captain data...",
-  "picker": {
-    "copy": "Choose the character that every captain ability clause must cover.",
-    "title": "Select target character"
-  },
   "results": {
-    "eyebrow": "Matching captains",
-    "neutralNotes": "{{count}} neutral notes",
-    "title": "Captain results",
-    "titleWithCount": "{{count}} matching captains"
+    "eyebrow": "Covered characters",
+    "openCharacterDetails": "Open character details",
+    "title": "Character results",
+    "titleWithCount": "{{count}} covered characters"
   },
   "search": {
-    "placeholder": "Search matching captains..."
+    "placeholder": "Search covered characters..."
   },
   "sort": {
-    "label": "Sort captain coverage results",
+    "label": "Sort character coverage results",
     "options": {
       "catalog": "Default order",
       "captainAtkBoost": "Captain ATK boost",
@@ -65,20 +69,12 @@
       "oldest": "Oldest ID"
     }
   },
-  "target": {
-    "change": "Change character",
-    "copy": "The selected character is checked against every parsed character-targeted clause in each captain ability.",
-    "empty": "No target selected",
-    "eyebrow": "Target character",
-    "select": "Select character",
-    "selected": "Selected",
-    "title": "Choose the character to cover"
-  },
   "team": {
     "actions": {
-      "useCaptain": "Use as Captain"
+      "addToTeam": "Add to team"
     },
-    "copy": "Track the Captain and four subs against a total cost budget. Friend Captain cost is not counted.",
+    "captainRequired": "Select Captain",
+    "copy": "Choose a Captain and four subs against a total cost budget. Friend Captain cost is not counted.",
     "cost": {
       "active": "{{used}} / {{max}} cost used. {{remaining}} remaining.",
       "default": "No max team cost",
@@ -89,15 +85,17 @@
     },
     "empty": "Empty slot",
     "emptyAlt": "Empty team slot",
-    "eyebrow": "Team budget",
+    "eyebrow": "Team coverage",
     "picker": {
+      "captainCopy": "Choose a Captain. Only characters with captain abilities are shown.",
       "copy": "Choose a character that fits the remaining team cost."
     },
+    "selectedCaptain": "Selected Captain",
     "slots": {
       "captain": "Captain",
       "sub": "Sub {{index}}"
     },
-    "title": "Build within cost"
+    "title": "Build from a Captain"
   },
   "title": "Captain Coverage"
 }

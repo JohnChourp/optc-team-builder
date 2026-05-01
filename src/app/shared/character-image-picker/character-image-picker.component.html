@@ -122,6 +122,30 @@
               </ion-select>
             </label>
 
+            <div class="character-image-picker-favorite-filters">
+              <ion-button
+                class="character-image-picker-favorite-filter"
+                [class.character-image-picker-favorite-filter--active]="favoritesOnly()"
+                [fill]="favoritesOnly() ? 'solid' : 'outline'"
+                color="warning"
+                [disabled]="applyingSelection"
+                (click)="toggleFavoritesOnly()"
+              >
+                {{ t('filters.favoritesOnly') }}
+              </ion-button>
+
+              <ion-button
+                class="character-image-picker-favorite-filter"
+                [class.character-image-picker-favorite-filter--active]="hideFavorites()"
+                [fill]="hideFavorites() ? 'solid' : 'outline'"
+                color="light"
+                [disabled]="applyingSelection"
+                (click)="toggleHideFavorites()"
+              >
+                {{ t('filters.hideFavorites') }}
+              </ion-button>
+            </div>
+
             <app-ability-filter-rail
               [disabled]="applyingSelection"
               [items]="[

@@ -6,44 +6,48 @@
     "hp": "HP"
   },
   "empty": {
-    "noResults": {
-      "copy": "Κανένα captain ability δεν καλύπτει πλήρως τον επιλεγμένο χαρακτήρα με την τρέχουσα αναζήτηση.",
-      "title": "Δεν βρέθηκαν captains"
+    "noCaptain": {
+      "copy": "Διάλεξε πρώτα Captain στο team slot. Τα αποτελέσματα θα δείχνουν subs που καλύπτονται από το captain ability του.",
+      "title": "Επίλεξε Captain"
     },
-    "noTarget": {
-      "copy": "Διάλεξε πρώτα έναν χαρακτήρα. Τα αποτελέσματα θα δείχνουν μόνο captains που το πλήρες primary captain ability τους τον καλύπτει.",
-      "title": "Επίλεξε χαρακτήρα"
+    "noResults": {
+      "copy": "Κανένας καλυπτόμενος χαρακτήρας δεν χωράει με τα τρέχοντα team slots, cost budget, search, favorites και ability filters.",
+      "title": "Δεν βρέθηκαν χαρακτήρες"
     }
   },
   "hero": {
     "captainsCount": "{{count}} captains",
     "charactersCount": "{{count}} χαρακτήρες",
-    "copy": "Διάλεξε unit και κράτα μόνο captains που το ability τους εφαρμόζει πλήρως σε αυτό, με type, class, cost, universal και self-only clauses.",
+    "copy": "Διάλεξε Captain στο team slot και μετά κράτα μόνο χαρακτήρες που καλύπτονται από το ability του, με type, class, cost, universal και self-only clauses.",
     "eyebrow": "Strict captain scope",
-    "title": "Βρες captains που καλύπτουν πλήρως έναν χαρακτήρα"
+    "title": "Βρες χαρακτήρες που καλύπτει ο Captain σου"
   },
   "filters": {
+    "abilityRailLabel": "Ability filters",
+    "crewmateCopy": "Φίλτραρε τα καλυπτόμενα character results με Crewmate Ability tags.",
+    "crewmateEyebrow": "Crewmate Ability",
+    "crewmateTitle": "Crewmate Ability filters",
     "favoritesOnly": "Μόνο favorites",
-    "hideFavorites": "Κρύψε favorites"
-  },
-  "displayMode": {
-    "compact": "Compact view",
-    "label": "Τρόπος εμφάνισης captain results",
-    "list": "List view"
+    "hideFavorites": "Κρύψε favorites",
+    "potentialCopy": "Φίλτραρε τα καλυπτόμενα character results με Potential Ability tags.",
+    "potentialEyebrow": "Potential Ability",
+    "potentialTitle": "Potential Ability filters",
+    "specialCopy": "Φίλτραρε τα καλυπτόμενα character results με Special tags.",
+    "specialEyebrow": "Special",
+    "specialTitle": "Special filters",
+    "supportCopy": "Φίλτραρε τα καλυπτόμενα character results με Support Ability tags.",
+    "supportEyebrow": "Support Ability",
+    "supportTitle": "Support Ability filters"
   },
   "loading": "Φόρτωση captain δεδομένων...",
-  "picker": {
-    "copy": "Διάλεξε τον χαρακτήρα που πρέπει να καλύπτει κάθε captain ability clause.",
-    "title": "Επιλογή target χαρακτήρα"
-  },
   "results": {
-    "eyebrow": "Matching captains",
-    "neutralNotes": "{{count}} neutral notes",
-    "title": "Captain αποτελέσματα",
-    "titleWithCount": "{{count}} matching captains"
+    "eyebrow": "Covered characters",
+    "openCharacterDetails": "Άνοιγμα character details",
+    "title": "Character αποτελέσματα",
+    "titleWithCount": "{{count}} covered characters"
   },
   "search": {
-    "placeholder": "Αναζήτηση στους matching captains..."
+    "placeholder": "Αναζήτηση στους covered χαρακτήρες..."
   },
   "sort": {
     "label": "Ταξινόμηση captain coverage",
@@ -65,20 +69,12 @@
       "oldest": "Παλαιότερο ID"
     }
   },
-  "target": {
-    "change": "Αλλαγή χαρακτήρα",
-    "copy": "Ο επιλεγμένος χαρακτήρας ελέγχεται απέναντι σε κάθε parsed character-targeted clause του captain ability.",
-    "empty": "Δεν έχει επιλεγεί target",
-    "eyebrow": "Target χαρακτήρας",
-    "select": "Επιλογή χαρακτήρα",
-    "selected": "Επιλεγμένος",
-    "title": "Διάλεξε τον χαρακτήρα που θέλεις να καλύπτεται"
-  },
   "team": {
     "actions": {
-      "useCaptain": "Βάλε ως Captain"
+      "addToTeam": "Προσθήκη στο team"
     },
-    "copy": "Παρακολούθησε Captain και τέσσερα subs με συνολικό cost budget. Το Friend Captain cost δεν μετράει.",
+    "captainRequired": "Επίλεξε Captain",
+    "copy": "Διάλεξε Captain και τέσσερα subs με συνολικό cost budget. Το Friend Captain cost δεν μετράει.",
     "cost": {
       "active": "{{used}} / {{max}} cost. Μένουν {{remaining}}.",
       "default": "Χωρίς max team cost",
@@ -89,15 +85,17 @@
     },
     "empty": "Κενό slot",
     "emptyAlt": "Κενό team slot",
-    "eyebrow": "Team budget",
+    "eyebrow": "Team coverage",
     "picker": {
+      "captainCopy": "Διάλεξε Captain. Εμφανίζονται μόνο χαρακτήρες με captain abilities.",
       "copy": "Διάλεξε χαρακτήρα που χωράει στο remaining team cost."
     },
+    "selectedCaptain": "Επιλεγμένος Captain",
     "slots": {
       "captain": "Captain",
       "sub": "Sub {{index}}"
     },
-    "title": "Χτίσιμο μέσα στο cost"
+    "title": "Χτίσιμο από Captain"
   },
   "title": "Captain Coverage"
 }

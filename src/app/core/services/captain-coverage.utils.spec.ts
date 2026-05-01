@@ -4,6 +4,9 @@ import { type CharacterDetailRecord, type CharacterListItem } from '../models/op
 import { resolveCaptainCoverage } from './captain-coverage.utils';
 
 describe('resolveCaptainCoverage', () => {
+  const kidAimedDamnedPunkCaptainAbility =
+    'Reduces Special Cooldown of all characters by 1 turn and reduces Special Cooldown of this character by 4 turns at the start of the fight, boosts ATK of [STR], Striker and Driven characters by 5x, boosts HP of [STR], Striker and Driven characters by 1.3x, and makes [STR] and [INT] orbs beneficial for all characters. If HP is below 50% at the start of the turn, boosts ATK of [STR], Striker and Driven characters by 6x instead, and reduces damage received by 25%. If your crew has 4+ [Kid Pirates], [Worst Generation] or [Land of Wano Arc] characters or your crew has 6 [Kid Pirates], [Worst Generation] or [Egghead Arc] characters, reduces Despair duration by 10 turns, and boosts base ATK of [Paramythia-type] characters by 500.';
+
   it('treats all-character captain clauses as universal coverage', () => {
     const captain = createCharacter({
       id: 1001,
@@ -79,6 +82,40 @@ describe('resolveCaptainCoverage', () => {
 
     expect(resolveCaptainCoverage(captain, createCharacter({ id: 1004 })).matches).toBe(true);
     expect(resolveCaptainCoverage(captain, createCharacter({ id: 2004 })).matches).toBe(false);
+  });
+
+  it('keeps unmatched self-only riders from blocking Kid Aimed Damned Punk coverage', () => {
+    const captain = createCharacter({
+      id: 4549,
+      captainAbility: kidAimedDamnedPunkCaptainAbility,
+      type: 'STR',
+      classes: ['Striker', 'Driven'],
+    });
+    const matchingTarget = createCharacter({
+      id: 3001,
+      type: 'STR',
+      classes: ['Shooter', 'Free Spirit'],
+    });
+    const nonMatchingTarget = createCharacter({
+      id: 3002,
+      type: 'QCK',
+      classes: ['Shooter', 'Free Spirit'],
+    });
+
+    const matchingCoverage = resolveCaptainCoverage(captain, matchingTarget);
+    const nonMatchingCoverage = resolveCaptainCoverage(captain, nonMatchingTarget);
+
+    expect(matchingCoverage.matches).toBe(true);
+    expect(matchingCoverage.neutralNotes).toContain(
+      'reduces Special Cooldown of this character by 4 turns at the start of the fight',
+    );
+    expect(nonMatchingCoverage.matches).toBe(false);
+    expect(nonMatchingCoverage.uncoveredClauses).toEqual(
+      expect.arrayContaining([
+        'boosts ATK of [STR], Striker and Driven characters by 5x',
+        'boosts HP of [STR], Striker and Driven characters by 1.3x',
+      ]),
+    );
   });
 
   it('keeps neutral captain notes from excluding an otherwise covered captain', () => {

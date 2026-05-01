@@ -54,9 +54,22 @@ export function resolveCaptainCoverage(
     return createEmptyCoverageResult(captainText);
   }
 
-  const clauses = splitCaptainCoverageClauses(captainText).map((clause) =>
+  const resolvedClauses = splitCaptainCoverageClauses(captainText).map((clause) =>
     resolveCaptainCoverageClause(captain, target, clause),
   );
+  const hasNonSelfOnlyTargetableClause = resolvedClauses.some(
+    (clause) => clause.status !== 'neutral' && !isUnmatchedSelfOnlyClause(clause),
+  );
+  const clauses = hasNonSelfOnlyTargetableClause
+    ? resolvedClauses.map((clause) =>
+        isUnmatchedSelfOnlyClause(clause)
+          ? {
+              ...clause,
+              status: 'neutral' as const,
+            }
+          : clause,
+      )
+    : resolvedClauses;
   const targetableClauses = clauses.filter((clause) => clause.status !== 'neutral');
   const uncoveredClauses = targetableClauses
     .filter((clause) => clause.status === 'uncovered')
@@ -246,6 +259,21 @@ function resolveCostScopes(clause: string, target: CharacterListItem): CostScope
   }
 
   return scopes;
+}
+
+function isUnmatchedSelfOnlyClause(clause: CaptainCoverageClauseResult): boolean {
+  return (
+    clause.status === 'uncovered' &&
+    SELF_SCOPE_PATTERN.test(clause.text) &&
+    !UNIVERSAL_SCOPE_PATTERN.test(clause.text) &&
+    extractAllowedTypes(clause.text).length === 0 &&
+    extractAllowedClasses(clause.text).length === 0 &&
+    !hasCostScope(clause.text)
+  );
+}
+
+function hasCostScope(clause: string): boolean {
+  return /\bcost\s+\d+\s+or\s+(?:less|lower|below|higher|more)\b/i.test(clause);
 }
 
 function dedupeCoverageChips(chips: CaptainCoverageChip[]): CaptainCoverageChip[] {
