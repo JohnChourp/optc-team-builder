@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 
 import {
   AUTO_TEAM_CANDIDATE_LIMIT,
+  AUTO_TEAM_BUILDER_CLASSES,
   AUTO_TEAM_BUILDER_TYPES,
   AUTO_TEAM_BUILDER_DEFAULT_TYPE,
   AUTO_BUILD_TOTAL_SLOT_COUNT,
@@ -35,12 +36,18 @@ import {
 import { type CharacterDetailRecord } from '../models/optc.models';
 import {
   AutoTeamBuildCancelledError,
+  buildAutoTeamBuildTimingSnapshot,
+  createAutoTeamBuildTimingState,
   createAutoTeamBuildFallbackPlanner,
   isAutoTeamBuildCancelledError,
   normalizeSelectedTypes,
+  recordAutoTeamBuildFallbackTiming,
   runAutoTeamBuildSearch,
   satisfiesRequestedAutoTeamBuildCoverage,
+  type AutoTeamBuildFallbackAttemptCategory,
   type AutoTeamBuildFallbackPlanner,
+  type AutoTeamBuildInFlightFallbackTiming,
+  type AutoTeamBuildTimingState,
 } from './auto-team-builder.engine';
 import { resolveAutoBuildShipSelection } from './auto-team-builder-ship.utils';
 import { normalizeEnemyMechanicRequirements } from './enemy-mechanic-draft.utils';
@@ -55,6 +62,7 @@ import {
   buildAutoTeamResult,
   resolveAutoBuildTeamPowerPreferenceScore,
 } from './auto-team-builder.utils';
+import { resolveCaptainCoverage } from './captain-coverage.utils';
 import {
   type AutoTeamBuilderWorkerRequest,
   type AutoTeamBuilderWorkerResponse,
@@ -70,13 +78,11 @@ export interface AutoTeamBuildExecutionOptions {
 const LEGACY_ABILITY_KEY_ALIASES: Record<string, string> = {
   remove_defense_up: 'remove_enemy_increased_defense',
 };
-
-interface AutoTeamBuildTimingState {
-  searchStartedAt: number;
-  totalCompletedFallbackMs: number;
-  completedFallbackAttempts: number;
-  now: () => number;
-}
+const DEEP_FALLBACK_ATTEMPT_THRESHOLD = 30_000;
+const DEEP_FALLBACK_WORKER_COUNT = 2;
+const PREFERRED_LEADER_MAX_SCHEDULED_FALLBACK_ATTEMPTS = 256;
+const MAX_DYNAMIC_TOTAL_ATTEMPTS = 31_744;
+const PREFERRED_LEADER_AUTO_FILL_LIMIT = 8;
 
 interface PooledFallbackAttemptResult {
   result: AutoBuildResult | null;
@@ -93,9 +99,79 @@ interface AutoTeamBuildScopedAutoFillCharacterIds {
   subAutoFillCharacterIds?: number[];
 }
 
+export interface AutoTeamBuildCaptainCoverageScopeOptions {
+  captainCharacterId?: number | null;
+  friendCaptainCharacterId?: number | null;
+  requireFullCaptainAbilityCoverage?: boolean;
+}
+
+export class AutoTeamBuildSearchTooLargeError extends Error {
+  public constructor(
+    message = 'This exhaustive auto team search is too large for this browser session.',
+  ) {
+    super(message);
+    this.name = 'AutoTeamBuildSearchTooLargeError';
+  }
+}
+
+export function isAutoTeamBuildSearchTooLargeError(
+  error: unknown,
+): error is AutoTeamBuildSearchTooLargeError {
+  return error instanceof AutoTeamBuildSearchTooLargeError;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AutoTeamBuilderService {
   public constructor(private readonly repository: OptcRepositoryService) {}
+
+  public resolveCaptainCoveredCandidateRecords(
+    records: CharacterDetailRecord[],
+    options: AutoTeamBuildCaptainCoverageScopeOptions,
+  ): CharacterDetailRecord[] {
+    const leaderIds = [
+      options.captainCharacterId ?? null,
+      options.friendCaptainCharacterId ?? null,
+    ].filter(
+      (characterId, index, values): characterId is number =>
+        characterId !== null &&
+        Number.isInteger(characterId) &&
+        characterId > 0 &&
+        values.indexOf(characterId) === index,
+    );
+
+    if (!leaderIds.length || !records.length) {
+      return records;
+    }
+
+    const recordById = new Map(records.map((record) => [record.id, record] as const));
+    const leaders = leaderIds
+      .map((characterId) => recordById.get(characterId))
+      .filter((record): record is CharacterDetailRecord => Boolean(record));
+
+    if (!leaders.length) {
+      return records;
+    }
+
+    const retainedLeaderIds = new Set(leaders.map((leader) => leader.id));
+    const coverageMode = options.requireFullCaptainAbilityCoverage
+      ? 'fullAbilityCoverage'
+      : 'simpleBoostScope';
+
+    return records.filter((record) => {
+      if (retainedLeaderIds.has(record.id)) {
+        return true;
+      }
+
+      return leaders.every(
+        (leader) =>
+          resolveCaptainCoverage(leader, record, {
+            coverageMode,
+            targetCharacterTags: record.detail.characterTags ?? [],
+            includeTeamTagClauses: false,
+          }).matches,
+      );
+    });
+  }
 
   public async buildTeam(
     selectedClasses: string[] = [],
@@ -242,6 +318,7 @@ export class AutoTeamBuilderService {
       manualSlots: input.manualSlots.map((slot) => ({
         role: slot.role,
         characterIds: [...slot.characterIds],
+        requiredCharacterId: slot.requiredCharacterId,
       })),
       lockedCharacterIds: [...input.lockedCharacterIds],
       excludedCharacterIds: [...input.excludedCharacterIds],
@@ -312,22 +389,34 @@ export class AutoTeamBuilderService {
           excludedCharacterIds,
         })
       : undefined;
+    const captainCoveredRecords = this.resolveCaptainCoveredCandidateRecords(records, {
+      captainCharacterId,
+      friendCaptainCharacterId,
+      requireFullCaptainAbilityCoverage,
+    });
+    const captainCoveredFriendCaptainRecords = friendCaptainRecords
+      ? this.resolveCaptainCoveredCandidateRecords(friendCaptainRecords, {
+          captainCharacterId,
+          friendCaptainCharacterId,
+          requireFullCaptainAbilityCoverage,
+        })
+      : undefined;
     const scopedAutoFillCharacterIds = {
       leaderAutoFillCharacterIds: this.resolveLeaderAutoFillCharacterIds(
-        records,
-        friendCaptainRecords,
+        captainCoveredRecords,
+        captainCoveredFriendCaptainRecords,
         allowedCharacterIds,
-        requestedInput.leaderCostRange,
+        requestedInput,
       ),
       subAutoFillCharacterIds: this.resolveAutoFillCharacterIds(
-        records,
+        captainCoveredRecords,
         allowedCharacterIds,
         requestedInput.subCostRange,
       ),
     };
 
     const legacyAutoFillCharacterIds = this.resolveAutoFillCharacterIds(
-      records,
+      captainCoveredRecords,
       allowedCharacterIds,
       requestedInput.costRange,
     );
@@ -340,10 +429,10 @@ export class AutoTeamBuilderService {
         : Promise.resolve([]);
     const [result, ships] = await Promise.all([
       this.executeSearch(
-        records,
+        captainCoveredRecords,
         requestedInput,
         executionOptions,
-        friendCaptainRecords,
+        captainCoveredFriendCaptainRecords,
         scopedAutoFillCharacterIds,
         legacyAutoFillCharacterIds,
       ),
@@ -569,24 +658,55 @@ export class AutoTeamBuilderService {
     scopedAutoFillCharacterIds: AutoTeamBuildScopedAutoFillCharacterIds = {},
     autoFillCharacterIds?: number[],
   ): Promise<AutoBuildResult | null> {
-    const fallbackPlanner = createAutoTeamBuildFallbackPlanner(requestedInput, records);
+    const usesPreferredLeaderFastPath = this.usesPreferredLeaderFastPath(
+      requestedInput,
+      scopedAutoFillCharacterIds,
+    );
+    const maxScheduledFallbackAttempts = usesPreferredLeaderFastPath
+      ? PREFERRED_LEADER_MAX_SCHEDULED_FALLBACK_ATTEMPTS
+      : undefined;
+    const projectedUnboundedTotalAttempts =
+      this.resolveProjectedUnboundedTotalAttempts(requestedInput);
+    const fallbackPlanner = createAutoTeamBuildFallbackPlanner(requestedInput, records, {
+      maxScheduledFallbackAttempts,
+    });
     const requestedWorkerCount = this.normalizeWorkerCount(executionOptions.workerCount);
+    const projectedTotalAttempts = fallbackPlanner.getProjectedTotalAttempts();
+    const isDeepFallbackSearch = this.isDeepFallbackSearch(
+      Math.max(projectedTotalAttempts, projectedUnboundedTotalAttempts),
+    );
+    const pooledWorkerCount = this.resolvePooledWorkerCount(
+      requestedWorkerCount,
+      Math.max(projectedTotalAttempts, projectedUnboundedTotalAttempts),
+    );
 
     if (requestedWorkerCount > 1 && fallbackPlanner.hasPotentialFallbackAttempts()) {
       try {
-        return await this.runSearchWithWorkerPool(
+        const result = await this.runSearchWithWorkerPool(
           records,
           requestedInput,
           executionOptions,
           fallbackPlanner,
-          requestedWorkerCount,
+          pooledWorkerCount,
+          isDeepFallbackSearch ? DEEP_FALLBACK_WORKER_COUNT : null,
           friendCaptainRecords,
           scopedAutoFillCharacterIds,
           autoFillCharacterIds,
+          maxScheduledFallbackAttempts,
+        );
+
+        return this.resolveBoundedFallbackResult(
+          result,
+          usesPreferredLeaderFastPath,
+          projectedUnboundedTotalAttempts,
         );
       } catch (error) {
         if (isAutoTeamBuildCancelledError(error)) {
           throw error;
+        }
+
+        if (isDeepFallbackSearch) {
+          throw new AutoTeamBuildSearchTooLargeError();
         }
 
         return runAutoTeamBuildSearch(records, requestedInput, {
@@ -596,6 +716,7 @@ export class AutoTeamBuilderService {
           autoFillCharacterIds,
           leaderAutoFillCharacterIds: scopedAutoFillCharacterIds.leaderAutoFillCharacterIds,
           subAutoFillCharacterIds: scopedAutoFillCharacterIds.subAutoFillCharacterIds,
+          maxScheduledFallbackAttempts,
         });
       }
     }
@@ -603,6 +724,10 @@ export class AutoTeamBuilderService {
     const worker = this.createWorker();
 
     if (!worker) {
+      if (isDeepFallbackSearch) {
+        throw new AutoTeamBuildSearchTooLargeError();
+      }
+
       return runAutoTeamBuildSearch(records, requestedInput, {
         onProgress: executionOptions.onProgress,
         isCancelled: () => executionOptions.signal?.aborted ?? false,
@@ -610,11 +735,12 @@ export class AutoTeamBuilderService {
         autoFillCharacterIds,
         leaderAutoFillCharacterIds: scopedAutoFillCharacterIds.leaderAutoFillCharacterIds,
         subAutoFillCharacterIds: scopedAutoFillCharacterIds.subAutoFillCharacterIds,
+        maxScheduledFallbackAttempts,
       });
     }
 
     try {
-      return await this.runSearchInWorker(
+      const result = await this.runSearchInWorker(
         worker,
         records,
         requestedInput,
@@ -622,6 +748,13 @@ export class AutoTeamBuilderService {
         friendCaptainRecords,
         scopedAutoFillCharacterIds,
         autoFillCharacterIds,
+        maxScheduledFallbackAttempts,
+      );
+
+      return this.resolveBoundedFallbackResult(
+        result,
+        usesPreferredLeaderFastPath,
+        projectedUnboundedTotalAttempts,
       );
     } catch (error) {
       worker.terminate();
@@ -630,6 +763,10 @@ export class AutoTeamBuilderService {
         throw error;
       }
 
+      if (isDeepFallbackSearch) {
+        throw new AutoTeamBuildSearchTooLargeError();
+      }
+
       return runAutoTeamBuildSearch(records, requestedInput, {
         onProgress: executionOptions.onProgress,
         isCancelled: () => executionOptions.signal?.aborted ?? false,
@@ -637,6 +774,7 @@ export class AutoTeamBuilderService {
         autoFillCharacterIds,
         leaderAutoFillCharacterIds: scopedAutoFillCharacterIds.leaderAutoFillCharacterIds,
         subAutoFillCharacterIds: scopedAutoFillCharacterIds.subAutoFillCharacterIds,
+        maxScheduledFallbackAttempts,
       });
     }
   }
@@ -647,9 +785,11 @@ export class AutoTeamBuilderService {
     executionOptions: AutoTeamBuildExecutionOptions,
     fallbackPlanner: AutoTeamBuildFallbackPlanner,
     requestedWorkerCount: number,
+    maxWorkerCount: number | null,
     friendCaptainRecords?: CharacterDetailRecord[],
     scopedAutoFillCharacterIds: AutoTeamBuildScopedAutoFillCharacterIds = {},
     autoFillCharacterIds?: number[],
+    maxScheduledFallbackAttempts?: number,
   ): Promise<AutoBuildResult | null> {
     const workers = this.createWorkerPool(requestedWorkerCount);
 
@@ -665,6 +805,7 @@ export class AutoTeamBuilderService {
           autoFillCharacterIds,
           leaderAutoFillCharacterIds: scopedAutoFillCharacterIds.leaderAutoFillCharacterIds,
           subAutoFillCharacterIds: scopedAutoFillCharacterIds.subAutoFillCharacterIds,
+          maxScheduledFallbackAttempts,
         });
       }
 
@@ -676,6 +817,7 @@ export class AutoTeamBuilderService {
         friendCaptainRecords,
         scopedAutoFillCharacterIds,
         autoFillCharacterIds,
+        maxScheduledFallbackAttempts,
       );
     }
 
@@ -740,6 +882,7 @@ export class AutoTeamBuilderService {
         executionOptions,
         timingState,
         records.length,
+        maxWorkerCount,
         friendCaptainRecords,
         scopedAutoFillCharacterIds,
         autoFillCharacterIds,
@@ -759,6 +902,7 @@ export class AutoTeamBuilderService {
     friendCaptainRecords?: CharacterDetailRecord[],
     scopedAutoFillCharacterIds: AutoTeamBuildScopedAutoFillCharacterIds = {},
     autoFillCharacterIds?: number[],
+    maxScheduledFallbackAttempts?: number,
   ): Promise<AutoBuildResult | null> {
     const runId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
@@ -832,6 +976,7 @@ export class AutoTeamBuilderService {
         autoFillCharacterIds,
         leaderAutoFillCharacterIds: scopedAutoFillCharacterIds.leaderAutoFillCharacterIds,
         subAutoFillCharacterIds: scopedAutoFillCharacterIds.subAutoFillCharacterIds,
+        maxScheduledFallbackAttempts,
         requestedInput,
       };
 
@@ -1000,6 +1145,7 @@ export class AutoTeamBuilderService {
     executionOptions: AutoTeamBuildExecutionOptions,
     timingState: AutoTeamBuildTimingState,
     candidateCount: number,
+    maxWorkerCount: number | null,
     friendCaptainRecords?: CharacterDetailRecord[],
     scopedAutoFillCharacterIds: AutoTeamBuildScopedAutoFillCharacterIds = {},
     autoFillCharacterIds?: number[],
@@ -1008,6 +1154,7 @@ export class AutoTeamBuilderService {
       const completedAttempts = new Map<number, PooledFallbackAttemptResult>();
       const managedWorkers = new Map<Worker, PooledWorkerState>();
       const availableWorkers: PooledWorkerState[] = [];
+      const inFlightFallbackTimings = new Map<number, AutoTeamBuildInFlightFallbackTiming>();
       let settled = false;
       let exactAttemptCompleted = false;
       let inFlightCount = 0;
@@ -1032,8 +1179,13 @@ export class AutoTeamBuilderService {
       fallbackPlanner.scheduleInitialFallbackAttempts();
 
       const getActiveWorkerCount = (): number => Math.max(1, managedWorkers.size);
+      const getInFlightFallbackTimings = (): AutoTeamBuildInFlightFallbackTiming[] => [
+        ...inFlightFallbackTimings.values(),
+      ];
+      const getPendingFallbackCategories = (): AutoTeamBuildFallbackAttemptCategory[] =>
+        fallbackPlanner.getPendingScheduledFallbackAttemptCategories();
       const getDesiredWorkerCount = (): number =>
-        this.resolveDesiredWorkerCount(executionOptions, workers.length);
+        this.resolveDesiredWorkerCount(executionOptions, workers.length, maxWorkerCount);
       const removeAvailableWorker = (state: PooledWorkerState): void => {
         const index = availableWorkers.indexOf(state);
 
@@ -1200,6 +1352,8 @@ export class AutoTeamBuilderService {
             fallbackPlanner.getTotalAttempts(),
             completedAttemptCount,
             getActiveWorkerCount(),
+            [],
+            [],
           ),
           currentDroppedTypes: [],
           currentDroppedClasses: [],
@@ -1276,6 +1430,11 @@ export class AutoTeamBuilderService {
 
           workerState.busy = true;
           inFlightCount += 1;
+          const startedAt = timingState.now();
+          inFlightFallbackTimings.set(nextAttempt.sequence, {
+            category: nextAttempt.category,
+            startedAt,
+          });
           this.emitProgress(executionOptions, {
             stage: 'fallbackAttempt',
             candidateCount,
@@ -1287,6 +1446,8 @@ export class AutoTeamBuilderService {
               fallbackPlanner.getTotalAttempts(),
               1 + timingState.completedFallbackAttempts,
               getActiveWorkerCount(),
+              getPendingFallbackCategories(),
+              getInFlightFallbackTimings(),
             ),
             currentDroppedTypes: nextAttempt.droppedTypes,
             currentDroppedClasses: nextAttempt.droppedClasses,
@@ -1301,7 +1462,6 @@ export class AutoTeamBuilderService {
             },
           });
 
-          const startedAt = timingState.now();
           void this.runAttemptInInitializedWorker(
             workerState.worker,
             nextAttempt.input,
@@ -1318,8 +1478,12 @@ export class AutoTeamBuilderService {
               }
 
               inFlightCount -= 1;
-              timingState.totalCompletedFallbackMs += Math.max(0, timingState.now() - startedAt);
-              timingState.completedFallbackAttempts += 1;
+              inFlightFallbackTimings.delete(nextAttempt.sequence);
+              recordAutoTeamBuildFallbackTiming(
+                timingState,
+                nextAttempt.category,
+                Math.max(0, timingState.now() - startedAt),
+              );
               completedAttempts.set(nextAttempt.sequence, {
                 result,
               });
@@ -1333,6 +1497,11 @@ export class AutoTeamBuilderService {
 
               const attemptSatisfiesRequestedCoverage =
                 satisfiesRequestedAutoTeamBuildCoverage(result);
+
+              if (exactAttemptCompleted && attemptSatisfiesRequestedCoverage) {
+                resolveOnce(result, 1 + timingState.completedFallbackAttempts);
+                return;
+              }
 
               if (!attemptSatisfiesRequestedCoverage) {
                 fallbackPlanner.recordFailedFallbackAttempt(nextAttempt);
@@ -1348,6 +1517,20 @@ export class AutoTeamBuilderService {
               }
             })
             .catch((error) => {
+              if (settled) {
+                return;
+              }
+
+              inFlightCount = Math.max(0, inFlightCount - 1);
+              inFlightFallbackTimings.delete(nextAttempt.sequence);
+              workerState.busy = false;
+
+              if (managedWorkers.has(workerState.worker)) {
+                terminateWorkerState(workerState);
+              } else {
+                workerState.worker.terminate();
+              }
+
               handleFallbackAttemptError(error);
             });
         }
@@ -1411,12 +1594,7 @@ export class AutoTeamBuilderService {
         ? (): number => globalThis.performance.now()
         : (): number => Date.now();
 
-    return {
-      searchStartedAt: now(),
-      totalCompletedFallbackMs: 0,
-      completedFallbackAttempts: 0,
-      now,
-    };
+    return createAutoTeamBuildTimingState(now);
   }
 
   private buildTimingSnapshot(
@@ -1424,28 +1602,17 @@ export class AutoTeamBuilderService {
     totalAttempts: number,
     completedAttempts: number,
     activeWorkerCount: number,
+    remainingCategories?: AutoTeamBuildFallbackAttemptCategory[],
+    inFlightAttempts?: AutoTeamBuildInFlightFallbackTiming[],
   ): Pick<
     AutoBuildProgressSnapshot,
     'elapsedMs' | 'estimatedRemainingMs' | 'averageFallbackAttemptMs' | 'completedFallbackAttempts'
   > {
-    const elapsedMs = Math.max(0, timingState.now() - timingState.searchStartedAt);
-    const averageFallbackAttemptMs =
-      timingState.completedFallbackAttempts > 0
-        ? timingState.totalCompletedFallbackMs / timingState.completedFallbackAttempts
-        : null;
-    const remainingFallbackAttempts = Math.max(totalAttempts - completedAttempts - 1, 0);
-    const estimatedRemainingMs =
-      averageFallbackAttemptMs !== null && remainingFallbackAttempts > 0
-        ? averageFallbackAttemptMs *
-          Math.ceil(remainingFallbackAttempts / Math.max(activeWorkerCount, 1))
-        : null;
-
-    return {
-      elapsedMs,
-      estimatedRemainingMs,
-      averageFallbackAttemptMs,
-      completedFallbackAttempts: timingState.completedFallbackAttempts,
-    };
+    return buildAutoTeamBuildTimingSnapshot(timingState, totalAttempts, completedAttempts, {
+      activeWorkerCount,
+      remainingCategories,
+      inFlightAttempts,
+    });
   }
 
   private emitProgress(
@@ -1469,16 +1636,135 @@ export class AutoTeamBuilderService {
     return Math.max(1, Math.floor(workerCount ?? 1));
   }
 
+  private isDeepFallbackSearch(projectedTotalAttempts: number): boolean {
+    return projectedTotalAttempts >= DEEP_FALLBACK_ATTEMPT_THRESHOLD;
+  }
+
+  private usesPreferredLeaderFastPath(
+    input: AutoBuildInput,
+    scopedAutoFillCharacterIds: AutoTeamBuildScopedAutoFillCharacterIds,
+  ): boolean {
+    const hasManualLeader = input.manualSlots.some(
+      (slot) =>
+        (slot.role === 'captain' || slot.role === 'friendCaptain') && slot.characterIds.length > 0,
+    );
+
+    return (
+      hasManualLeader || (scopedAutoFillCharacterIds.leaderAutoFillCharacterIds?.length ?? 0) > 0
+    );
+  }
+
+  private resolveProjectedUnboundedTotalAttempts(input: AutoBuildInput): number {
+    const typeSubsetCount = this.shouldTreatSelectedTypesAsNeutral(input)
+      ? 1
+      : this.resolveBoundedSubsetCount(input.types.length, true);
+    const classSubsetCount = this.shouldTreatSelectedClassesAsNeutral(input)
+      ? 1
+      : this.resolveBoundedSubsetCount(input.selectedClasses.length, false);
+
+    return this.multiplyWithCap(typeSubsetCount, classSubsetCount, MAX_DYNAMIC_TOTAL_ATTEMPTS);
+  }
+
+  private shouldTreatSelectedTypesAsNeutral(input: AutoBuildInput): boolean {
+    return (
+      !input.requireAllSelectedTypesInTeam &&
+      this.sameUnorderedValues(input.types, AUTO_TEAM_BUILDER_TYPES)
+    );
+  }
+
+  private shouldTreatSelectedClassesAsNeutral(input: AutoBuildInput): boolean {
+    return (
+      !input.requireAllSelectedClassesPerCharacter &&
+      this.sameUnorderedValues(input.selectedClasses, AUTO_TEAM_BUILDER_CLASSES)
+    );
+  }
+
+  private sameUnorderedValues<T>(left: readonly T[], right: readonly T[]): boolean {
+    if (left.length !== right.length) {
+      return false;
+    }
+
+    const rightValues = new Set(right);
+    return left.every((value) => rightValues.has(value));
+  }
+
+  private resolveBoundedSubsetCount(length: number, excludeEmptySubset: boolean): number {
+    let total = 1;
+
+    for (let index = 0; index < length; index += 1) {
+      if (total >= MAX_DYNAMIC_TOTAL_ATTEMPTS) {
+        return MAX_DYNAMIC_TOTAL_ATTEMPTS;
+      }
+
+      total *= 2;
+    }
+
+    if (!excludeEmptySubset) {
+      return Math.min(total, MAX_DYNAMIC_TOTAL_ATTEMPTS);
+    }
+
+    return Math.max(Math.min(total, MAX_DYNAMIC_TOTAL_ATTEMPTS) - 1, 0);
+  }
+
+  private multiplyWithCap(left: number, right: number, cap: number): number {
+    if (left === 0 || right === 0) {
+      return 0;
+    }
+
+    if (left > Math.floor(cap / right)) {
+      return cap;
+    }
+
+    return left * right;
+  }
+
+  private resolveBoundedFallbackResult(
+    result: AutoBuildResult | null,
+    usesPreferredLeaderFastPath: boolean,
+    projectedUnboundedTotalAttempts: number,
+  ): AutoBuildResult | null {
+    if (
+      result === null &&
+      usesPreferredLeaderFastPath &&
+      this.isDeepFallbackSearch(projectedUnboundedTotalAttempts)
+    ) {
+      throw new AutoTeamBuildSearchTooLargeError();
+    }
+
+    return result;
+  }
+
+  private resolvePooledWorkerCount(
+    requestedWorkerCount: number,
+    projectedTotalAttempts: number,
+  ): number {
+    if (!this.isDeepFallbackSearch(projectedTotalAttempts)) {
+      return requestedWorkerCount;
+    }
+
+    return Math.min(requestedWorkerCount, DEEP_FALLBACK_WORKER_COUNT);
+  }
+
   private resolveDesiredWorkerCount(
     executionOptions: AutoTeamBuildExecutionOptions,
     fallbackWorkerCount: number,
+    maxWorkerCount: number | null = null,
   ): number {
+    const clampWorkerCount = (workerCount: number): number =>
+      maxWorkerCount === null ? workerCount : Math.min(workerCount, maxWorkerCount);
+
     try {
-      return this.normalizeWorkerCount(
-        executionOptions.getWorkerCount?.() ?? executionOptions.workerCount ?? fallbackWorkerCount,
+      return clampWorkerCount(
+        this.normalizeWorkerCount(
+          executionOptions.getWorkerCount?.() ??
+            executionOptions.workerCount ??
+            fallbackWorkerCount,
+        ),
       );
     } catch {
-      return this.normalizeWorkerCount(executionOptions.workerCount ?? fallbackWorkerCount);
+      return clampWorkerCount(
+        this.normalizeWorkerCount(executionOptions.workerCount ?? fallbackWorkerCount),
+      );
     }
   }
 
@@ -1727,28 +2013,143 @@ export class AutoTeamBuilderService {
     records: CharacterDetailRecord[],
     friendCaptainRecords: CharacterDetailRecord[] | undefined,
     allowedCharacterIds: number[] | undefined,
-    costRange: AutoBuildCostRange,
+    input: Pick<
+      AutoBuildInput,
+      | 'leaderCostRange'
+      | 'leaderBoostFilters'
+      | 'leaderBoostRanges'
+      | 'allowAnyFriendCaptainAutoFill'
+    >,
   ): number[] | undefined {
-    const baseCharacterIds = this.resolveAutoFillCharacterIds(
+    const baseCharacterIds = this.resolvePreferredLeaderAutoFillCharacterIds(
       records,
       allowedCharacterIds,
-      costRange,
+      input,
     );
-    const hasCostRange = this.hasActiveCostRange(costRange);
 
-    if (!friendCaptainRecords?.length) {
+    if (!input.allowAnyFriendCaptainAutoFill || !friendCaptainRecords?.length) {
       return baseCharacterIds;
     }
 
-    if (!baseCharacterIds && !hasCostRange) {
+    const friendCaptainCharacterIds = this.resolvePreferredLeaderAutoFillCharacterIds(
+      friendCaptainRecords,
+      allowedCharacterIds,
+      input,
+    );
+
+    return [...new Set([...(baseCharacterIds ?? []), ...(friendCaptainCharacterIds ?? [])])];
+  }
+
+  private resolvePreferredLeaderAutoFillCharacterIds(
+    records: CharacterDetailRecord[],
+    allowedCharacterIds: number[] | undefined,
+    input: Pick<AutoBuildInput, 'leaderCostRange' | 'leaderBoostFilters' | 'leaderBoostRanges'>,
+  ): number[] | undefined {
+    if (!records.length) {
       return undefined;
     }
 
-    const friendCaptainCharacterIds = friendCaptainRecords
-      .filter((record) => !hasCostRange || this.characterMatchesCostRange(record, costRange))
+    const allowedCharacterIdSet = allowedCharacterIds ? new Set(allowedCharacterIds) : null;
+    const rankedIds = records
+      .filter((record) => {
+        if (allowedCharacterIdSet && !allowedCharacterIdSet.has(record.id)) {
+          return false;
+        }
+
+        return (
+          this.characterMatchesCostRange(record, input.leaderCostRange) &&
+          this.characterMatchesLeaderBoostRanges(record, input.leaderBoostRanges)
+        );
+      })
+      .sort((left, right) => this.comparePreferredLeaderAutoFillRecords(left, right, input))
+      .slice(0, PREFERRED_LEADER_AUTO_FILL_LIMIT)
       .map((record) => record.id);
 
-    return [...new Set([...(baseCharacterIds ?? []), ...friendCaptainCharacterIds])];
+    return rankedIds.length ? rankedIds : undefined;
+  }
+
+  private comparePreferredLeaderAutoFillRecords(
+    left: CharacterDetailRecord,
+    right: CharacterDetailRecord,
+    input: Pick<AutoBuildInput, 'leaderBoostFilters'>,
+  ): number {
+    const boostDifference =
+      this.resolveLeaderBoostPriorityScore(right, input.leaderBoostFilters) -
+      this.resolveLeaderBoostPriorityScore(left, input.leaderBoostFilters);
+
+    if (boostDifference !== 0) {
+      return boostDifference;
+    }
+
+    if (right.id !== left.id) {
+      return right.id - left.id;
+    }
+
+    if (right.cost !== left.cost) {
+      return right.cost - left.cost;
+    }
+
+    return left.name.localeCompare(right.name, undefined, { sensitivity: 'base' });
+  }
+
+  private resolveLeaderBoostPriorityScore(
+    character: Pick<
+      CharacterDetailRecord,
+      'captainHpBoost' | 'captainAtkBoost' | 'captainAverageBoost'
+    >,
+    filters: AutoBuildLeaderBoostFilter[],
+  ): number {
+    const selectedFilters = filters.length ? filters : [...AUTO_BUILD_LEADER_BOOST_FILTERS];
+
+    if (selectedFilters.includes('HP') && selectedFilters.includes('ATK')) {
+      return this.normalizeBoostScore(character.captainAverageBoost);
+    }
+
+    if (selectedFilters.includes('HP')) {
+      return this.normalizeBoostScore(character.captainHpBoost);
+    }
+
+    if (selectedFilters.includes('ATK')) {
+      return this.normalizeBoostScore(character.captainAtkBoost);
+    }
+
+    return this.normalizeBoostScore(character.captainAverageBoost);
+  }
+
+  private normalizeBoostScore(value: number): number {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  private characterMatchesLeaderBoostRanges(
+    character: Pick<CharacterDetailRecord, 'captainHpBoost' | 'captainAtkBoost'>,
+    ranges: AutoBuildLeaderBoostRanges,
+  ): boolean {
+    return (
+      this.captainBoostMatchesRange(character.captainAtkBoost, ranges.ATK) &&
+      this.captainBoostMatchesRange(character.captainHpBoost, ranges.HP)
+    );
+  }
+
+  private captainBoostMatchesRange(boost: number, range: AutoBuildLeaderBoostRange): boolean {
+    const hasActiveRange = range.min !== null || range.max !== null;
+
+    if (!hasActiveRange) {
+      return true;
+    }
+
+    if (!Number.isFinite(boost) || boost <= 0) {
+      return false;
+    }
+
+    if (range.min !== null && boost < range.min) {
+      return false;
+    }
+
+    if (range.max !== null && boost > range.max) {
+      return false;
+    }
+
+    return true;
   }
 
   private normalizeLeaderBoostFilters(
@@ -1855,7 +2256,10 @@ export class AutoTeamBuilderService {
   private normalizeManualSlots(
     manualSlots: AutoBuildManualSlotSelection[] | undefined,
   ): AutoBuildManualSlotSelection[] {
-    const roleMap = new Map<AutoBuildManualSlotRole, number[]>();
+    const roleMap = new Map<
+      AutoBuildManualSlotRole,
+      { characterIds: number[]; requiredCharacterId: number | null }
+    >();
 
     for (const slot of manualSlots ?? []) {
       if (!slot || typeof slot !== 'object' || !AUTO_BUILD_MANUAL_SLOT_ROLES.includes(slot.role)) {
@@ -1869,14 +2273,24 @@ export class AutoTeamBuilderService {
             .filter((characterId): characterId is number => characterId !== null),
         ),
       ];
+      const requiredCharacterId = this.normalizeCharacterId(slot.requiredCharacterId);
 
-      roleMap.set(slot.role, normalizedCharacterIds);
+      roleMap.set(slot.role, {
+        characterIds: normalizedCharacterIds,
+        requiredCharacterId:
+          requiredCharacterId !== null && normalizedCharacterIds.includes(requiredCharacterId)
+            ? requiredCharacterId
+            : null,
+      });
     }
 
     const normalizedSlots = createEmptyAutoBuildManualSlots();
 
     for (const slot of normalizedSlots) {
-      slot.characterIds = [...new Set(roleMap.get(slot.role) ?? [])];
+      const roleSelection = roleMap.get(slot.role);
+
+      slot.characterIds = [...new Set(roleSelection?.characterIds ?? [])];
+      slot.requiredCharacterId = roleSelection?.requiredCharacterId ?? null;
     }
 
     return normalizedSlots;

@@ -382,6 +382,12 @@
         "notFound": "Δεν βρέθηκε παρόμοιο OR pick για {{name}}."
       }
     },
+    "required": {
+      "actions": {
+        "requireFor": "Υποχρεωτικά ο {{name}} σε αυτό το slot",
+        "clearFor": "Κάνε τον {{name}} προαιρετικό OR pick"
+      }
+    },
     "copyModal": {
       "eyebrow": "Manual copy",
       "title": "Αντιγραφή manual picks",
@@ -525,7 +531,7 @@
     "scoringWithTypes": "Γίνεται scoring για team candidates {{types}}...",
     "workEstimate": "Upper-bound scheduled rescans του pool: {{attempts}} x {{count}} = ~{{total}} candidate checks",
     "workEstimateGrowing": "Upper-bound scheduled rescans του pool so far: {{attempts}} x {{count}} = ~{{total}} candidate checks",
-    "worstCaseEta": "Περίπου worst-case χρόνος για να ελεγχθούν τα υπόλοιπα fallbacks: {{duration}}"
+    "worstCaseEta": "Εκτιμώμενος χρόνος για να ελεγχθούν τα υπόλοιπα fallbacks: {{duration}}"
   },
   "fallback": {
     "copy": "Τα πάνω filters έμειναν όπως τα διάλεξες. Η ομάδα χτίστηκε αφού αγνοήθηκαν μόνο τα παρακάτω requirements.",
@@ -640,6 +646,7 @@
   },
   "errors": {
     "buildFailed": "Το auto build απέτυχε απρόσμενα. Δοκίμασε ξανά.",
+    "searchTooLarge": "Η αναζήτηση είναι πολύ μεγάλη για αυτό το browser session. Δοκίμασε λιγότερα types/classes ή βάλε manual slots και τρέξ' το ξανά.",
     "uniqueNames": {
       "manualConflict": "Τα current manual slot choices δημιουργούν ήδη το ίδιο in-game character conflict εκτός του Friend Captain slot: {{names}}."
     },

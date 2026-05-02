@@ -108,7 +108,8 @@ export interface AutoTeamSelectionExportPayload {
     | 21
     | 22
     | 23
-    | 24;
+    | 24
+    | 25;
   exportedAt: string;
   source: 'auto-team-builder';
   exportType: 'preset';
@@ -487,7 +488,10 @@ function sanitizeManualSlots(
   availableLockedCharacterMap: Map<number, CharacterListItem>,
 ): { manualSlots: AutoBuildManualSlotSelection[]; duplicateCount: number; unknownCount: number } {
   const manualSlots = createEmptyAutoBuildManualSlots();
-  const roleMap = new Map<AutoBuildManualSlotRole, number[]>();
+  const roleMap = new Map<
+    AutoBuildManualSlotRole,
+    { characterIds: number[]; requiredCharacterId: number | null }
+  >();
   let duplicateCount = 0;
   let unknownCount = 0;
 
@@ -508,14 +512,25 @@ function sanitizeManualSlots(
     const normalizedIds = collectPositiveIntegers(
       Array.isArray(rawSlot['characterIds']) ? rawSlot['characterIds'] : [],
     );
-    const currentIds = roleMap.get(role as AutoBuildManualSlotRole) ?? [];
-    roleMap.set(role as AutoBuildManualSlotRole, [...currentIds, ...normalizedIds]);
+    const normalizedRequiredCharacterId =
+      collectPositiveIntegers([rawSlot['requiredCharacterId']])[0] ?? null;
+    const currentSelection = roleMap.get(role as AutoBuildManualSlotRole) ?? {
+      characterIds: [],
+      requiredCharacterId: null,
+    };
+
+    roleMap.set(role as AutoBuildManualSlotRole, {
+      characterIds: [...currentSelection.characterIds, ...normalizedIds],
+      requiredCharacterId: normalizedRequiredCharacterId ?? currentSelection.requiredCharacterId,
+    });
   }
 
   for (const slot of manualSlots) {
     const nextIds: number[] = [];
 
-    for (const characterId of roleMap.get(slot.role) ?? []) {
+    const roleSelection = roleMap.get(slot.role);
+
+    for (const characterId of roleSelection?.characterIds ?? []) {
       if (!availableLockedCharacterMap.has(characterId)) {
         unknownCount += 1;
         continue;
@@ -530,6 +545,10 @@ function sanitizeManualSlots(
     }
 
     slot.characterIds = nextIds;
+    slot.requiredCharacterId =
+      roleSelection?.requiredCharacterId && nextIds.includes(roleSelection.requiredCharacterId)
+        ? roleSelection.requiredCharacterId
+        : null;
   }
 
   return {
@@ -596,7 +615,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload['schemaVersion'] !== 21 &&
       parsedPayload['schemaVersion'] !== 22 &&
       parsedPayload['schemaVersion'] !== 23 &&
-      parsedPayload['schemaVersion'] !== 24) ||
+      parsedPayload['schemaVersion'] !== 24 &&
+      parsedPayload['schemaVersion'] !== 25) ||
     parsedPayload['source'] !== 'auto-team-builder' ||
     parsedPayload['exportType'] !== 'preset'
   ) {
@@ -972,10 +992,9 @@ export function sanitizeAutoTeamSelectionImportPayload(
 
     const battleGroups: AutoBuildRequiredCharacterGroup[] = [];
 
-    for (const [groupIndex, rawGroup] of (
-      Array.isArray(rawBattle['requiredCharacterGroups'])
-        ? rawBattle['requiredCharacterGroups']
-        : []
+    for (const [groupIndex, rawGroup] of (Array.isArray(rawBattle['requiredCharacterGroups'])
+      ? rawBattle['requiredCharacterGroups']
+      : []
     ).entries()) {
       if (!isRecord(rawGroup) || battleGroups.length >= MAX_REQUIRED_CHARACTER_GROUPS) {
         adjustedAbilityCount += 1;
@@ -1194,6 +1213,10 @@ export function sanitizeAutoTeamSelectionImportPayload(
   const normalizedManualSlots = manualSlots.map((slot) => ({
     role: slot.role,
     characterIds: [...slot.characterIds],
+    requiredCharacterId:
+      slot.requiredCharacterId != null && slot.characterIds.includes(slot.requiredCharacterId)
+        ? slot.requiredCharacterId
+        : null,
   }));
   const derivedManualSelection = deriveLegacyManualSelectionFromManualSlots(normalizedManualSlots);
 
@@ -1307,8 +1330,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
       requireAllSelectedTypesInTeam: payload.filters.requireAllSelectedTypesInTeam,
       requireAllSelectedClassesPerCharacter: payload.filters.requireAllSelectedClassesPerCharacter,
       requireAllSlotsInLeaderSuperEffectScope,
-      requireFullCaptainAbilityCoverage:
-        payload.filters.requireFullCaptainAbilityCoverage === true,
+      requireFullCaptainAbilityCoverage: payload.filters.requireFullCaptainAbilityCoverage === true,
       requireUniqueBaseCharacterNames: payload.filters.requireUniqueBaseCharacterNames === true,
       favoritesOnly: payload.filters.favoritesOnly,
       allowAnyFriendCaptainAutoFill: payload.filters.allowAnyFriendCaptainAutoFill === true,
@@ -1412,11 +1434,15 @@ export function buildAutoTeamSelectionExportPayload({
   const normalizedManualSlots = manualSlots.map((slot) => ({
     role: slot.role,
     characterIds: [...slot.characterIds],
+    requiredCharacterId:
+      slot.requiredCharacterId != null && slot.characterIds.includes(slot.requiredCharacterId)
+        ? slot.requiredCharacterId
+        : null,
   }));
   const normalizedBattleRequirements = cloneBattleRequirements(battleRequirements);
 
   return {
-    schemaVersion: 24,
+    schemaVersion: 25,
     exportedAt,
     source: 'auto-team-builder',
     exportType: 'preset',

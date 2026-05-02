@@ -60,6 +60,7 @@ export interface AutoBuildCostRange {
 export interface AutoBuildManualSlotSelection {
   role: AutoBuildManualSlotRole;
   characterIds: number[];
+  requiredCharacterId?: number | null;
 }
 
 export function createEmptyAutoBuildLeaderBoostRanges(): AutoBuildLeaderBoostRanges {
@@ -80,6 +81,7 @@ export function createEmptyAutoBuildManualSlots(): AutoBuildManualSlotSelection[
   return AUTO_BUILD_MANUAL_SLOT_ROLES.map((role) => ({
     role,
     characterIds: [],
+    requiredCharacterId: null,
   }));
 }
 

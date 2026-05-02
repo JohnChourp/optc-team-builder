@@ -382,6 +382,12 @@
         "notFound": "No similar OR pick was found for {{name}}."
       }
     },
+    "required": {
+      "actions": {
+        "requireFor": "Require {{name}} in this slot",
+        "clearFor": "Make {{name}} an optional OR pick"
+      }
+    },
     "copyModal": {
       "eyebrow": "Manual copy",
       "title": "Copy manual picks",
@@ -525,7 +531,7 @@
     "scoringWithTypes": "Scoring {{types}} team candidates...",
     "workEstimate": "Upper-bound scheduled pool rescans: {{attempts}} x {{count}} = ~{{total}} candidate checks",
     "workEstimateGrowing": "Upper-bound scheduled pool rescans so far: {{attempts}} x {{count}} = ~{{total}} candidate checks",
-    "worstCaseEta": "Approx. worst-case to check the remaining fallbacks: {{duration}}"
+    "worstCaseEta": "Estimated time to check the remaining fallbacks: {{duration}}"
   },
   "fallback": {
     "copy": "Your top-level filters stayed the same. The builder only relaxed the requirements below in order to return a team.",
@@ -640,6 +646,7 @@
   },
   "errors": {
     "buildFailed": "The auto build failed unexpectedly. Please try again.",
+    "searchTooLarge": "This search is too large for this browser session. Try narrowing types/classes or adding manual slots, then run it again.",
     "uniqueNames": {
       "manualConflict": "The current manual slot choices already create the same in-game character conflict outside the Friend Captain slot: {{names}}."
     },

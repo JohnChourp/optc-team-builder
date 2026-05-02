@@ -503,6 +503,47 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     });
   });
 
+  it('creates a candidate pool box from the captain-covered pool instead of the raw repository pool', async () => {
+    const { page, repository, userState, autoTeamBuilder } = await createPage();
+    const coveredCandidate = createCharacterRecord(301, 'Covered Candidate');
+    const uncoveredCandidate = createCharacterRecord(302, 'Uncovered Candidate');
+    const captain = createCharacterRecord(901, 'Selected Captain');
+
+    repository.getAutoBuilderCandidates.mockResolvedValue([
+      coveredCandidate,
+      uncoveredCandidate,
+      captain,
+    ]);
+    autoTeamBuilder.resolveCaptainCoveredCandidateRecords.mockReturnValue([
+      coveredCandidate,
+      captain,
+    ]);
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX']);
+    page.selectedClasses.set(['Fighter']);
+    page.manualSlots.set(
+      createManualSlots({
+        captain: [901],
+      }),
+    );
+
+    await page.createCandidatePoolBox();
+
+    expect(autoTeamBuilder.resolveCaptainCoveredCandidateRecords).toHaveBeenCalledWith(
+      [coveredCandidate, uncoveredCandidate, captain],
+      {
+        captainCharacterId: 901,
+        friendCaptainCharacterId: 901,
+        requireFullCaptainAbilityCoverage: false,
+      },
+    );
+    expect(userState.saveCharacterBox).toHaveBeenCalledWith({
+      name: 'Auto Builder Pool 1',
+      characterIds: [301, 901],
+    });
+  });
+
   it('creates a candidate pool box without truncating scopes larger than 1200 candidates', async () => {
     const { page, repository, userState } = await createPage();
     const candidateRecords = Array.from({ length: 1202 }, (_, index) =>
@@ -1104,10 +1145,15 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     page.selectedClasses.set(['Fighter']);
     page.selectedTypes.set(['DEX']);
     page.manualSlots.set(
-      createManualSlots({
-        captain: [101, 102],
-        sub1: [103, 104],
-      }),
+      createManualSlots(
+        {
+          captain: [101, 102],
+          sub1: [103, 104],
+        },
+        {
+          sub1: 104,
+        },
+      ),
     );
     await page.buildTeam();
 
@@ -1115,10 +1161,15 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       ['Fighter'],
       ['DEX'],
       expect.objectContaining({
-        manualSlots: createManualSlots({
-          captain: [101, 102],
-          sub1: [103, 104],
-        }),
+        manualSlots: createManualSlots(
+          {
+            captain: [101, 102],
+            sub1: [103, 104],
+          },
+          {
+            sub1: 104,
+          },
+        ),
       }),
       expect.objectContaining({
         onProgress: expect.any(Function),
@@ -1247,6 +1298,57 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       }),
     );
     expect(page.manualCopyModalOpen()).toBe(false);
+  });
+
+  it('toggles one required manual pick per slot', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.manualSlots.set(createManualSlots({ sub1: [301, 302] }));
+    page.lockedCharacterRecords.set({
+      301: createCharacterRecord(301),
+      302: createCharacterRecord(302),
+    });
+
+    page.toggleRequiredManualSlotCharacter('sub1', 301);
+
+    expect(page.manualSlots().find((slot) => slot.role === 'sub1')?.requiredCharacterId).toBe(301);
+    expect(page.manualSlotCards().find((slot) => slot.role === 'sub1')?.selectedCharacters).toEqual(
+      [
+        expect.objectContaining({ id: 301, isRequiredInManualSlot: true }),
+        expect.objectContaining({ id: 302, isRequiredInManualSlot: false }),
+      ],
+    );
+
+    page.toggleRequiredManualSlotCharacter('sub1', 302);
+
+    expect(page.manualSlots().find((slot) => slot.role === 'sub1')?.requiredCharacterId).toBe(302);
+
+    page.toggleRequiredManualSlotCharacter('sub1', 302);
+
+    expect(page.manualSlots().find((slot) => slot.role === 'sub1')?.requiredCharacterId).toBeNull();
+  });
+
+  it('clears required manual pick when the character or slot is removed', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.manualSlots.set(createManualSlots({ sub1: [301, 302] }, { sub1: 301 }));
+
+    page.removeCharacterFromManualSlot('sub1', 301);
+
+    expect(page.manualSlots().find((slot) => slot.role === 'sub1')).toMatchObject({
+      characterIds: [302],
+      requiredCharacterId: null,
+    });
+
+    page.toggleRequiredManualSlotCharacter('sub1', 302);
+    page.clearManualSlot('sub1');
+
+    expect(page.manualSlots().find((slot) => slot.role === 'sub1')).toMatchObject({
+      characterIds: [],
+      requiredCharacterId: null,
+    });
   });
 
   it('copy-merges selected manual picks into multiple sub slots while preserving targets', async () => {
@@ -2410,34 +2512,6 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         visible: true,
         tone: 'secondary',
       },
-      {
-        key: 'droppedTypes',
-        text: 'Ignoring types: STR / INT',
-        displayText: 'Ignoring types: STR / INT',
-        visible: true,
-        tone: 'fallback',
-      },
-      {
-        key: 'droppedClasses',
-        text: '',
-        displayText: '\u00A0',
-        visible: false,
-        tone: 'fallback',
-      },
-      {
-        key: 'leaderSuperEffects',
-        text: '',
-        displayText: '\u00A0',
-        visible: false,
-        tone: 'fallback',
-      },
-      {
-        key: 'superSpecialCriteria',
-        text: '',
-        displayText: '\u00A0',
-        visible: false,
-        tone: 'fallback',
-      },
     ]);
   });
 
@@ -2467,14 +2541,14 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     });
 
     expect(page.buildWorstCaseEtaLabel()).toBe(
-      'Approx. worst-case to check the remaining fallbacks: ~1m 1s',
+      'Estimated time to check the remaining fallbacks: ~1m 1s',
     );
     expect(page.loadingProgressRows()).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           key: 'eta',
-          text: 'Approx. worst-case to check the remaining fallbacks: ~1m 1s',
-          displayText: 'Approx. worst-case to check the remaining fallbacks: ~1m 1s',
+          text: 'Estimated time to check the remaining fallbacks: ~1m 1s',
+          displayText: 'Estimated time to check the remaining fallbacks: ~1m 1s',
           visible: true,
           tone: 'fallback',
         }),
@@ -2509,40 +2583,6 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
     expect(page.buildOverallProgressPercent()).toBe(50);
     expect(page.buildOverallProgressLabel()).toBe('Overall progress: 50%');
-  });
-
-  it('shows a live elapsed counter while the current step stays the same', async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-04-22T05:20:00.000Z'));
-    const { page } = await createPage();
-
-    await page.ngOnInit();
-    page['startBuildProgressTicker']();
-    page['handleBuildProgressSnapshot']({
-      stage: 'fallbackAttempt',
-      candidateCount: 1200,
-      completedAttempts: 1,
-      totalAttempts: 4,
-      attemptCountFinal: false,
-      elapsedMs: 91000,
-      estimatedRemainingMs: 61000,
-      averageFallbackAttemptMs: 15000,
-      completedFallbackAttempts: 1,
-      currentDroppedTypes: [],
-      currentDroppedClasses: ['Fighter'],
-      currentAllowedLeadersWithSuperEffects: false,
-      currentIgnoredLeaderSuperSpecialCriteria: false,
-      messageKey: 'progress.fallbackAttempt',
-      messageParams: {
-        current: 2,
-        total: 4,
-      },
-    });
-
-    vi.advanceTimersByTime(12_000);
-
-    expect(page.buildCurrentStepElapsedLabel()).toBe('Current step live: 12s');
-    page['stopBuildProgressTicker']();
   });
 
   it('formats short, minute, and hour fallback eta durations', async () => {
@@ -3569,7 +3609,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 24,
+      schemaVersion: 25,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -3736,7 +3776,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
     });
   });
 
-  it('exports leader boost, scoped cost ranges, and max total cost in schema 24 presets', () => {
+  it('exports leader boost, scoped cost ranges, max total cost, and required manual picks in schema 25 presets', () => {
     const payload = buildAutoTeamSelectionExportPayload({
       selectedTypes: ['DEX'],
       selectedClasses: ['Fighter'],
@@ -3755,10 +3795,15 @@ describe('AutoTeamBuilder preset export helpers', () => {
       leaderCostRange: { min: 20, max: 60 },
       subCostRange: { min: 10, max: 40 },
       maxTotalCost: 300,
-      manualSlots: createManualSlots({
-        captain: [201],
-        friendCaptain: [201],
-      }),
+      manualSlots: createManualSlots(
+        {
+          captain: [201],
+          friendCaptain: [201],
+        },
+        {
+          captain: 201,
+        },
+      ),
       lockedCharacterIds: [201],
       lockedCharacters: [createCharacterRecord(201, 'Solo Leader')],
       selectedLeaderIds: [201],
@@ -3767,7 +3812,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       exportedAt: '2026-03-25T10:00:00.000Z',
     });
 
-    expect(payload.schemaVersion).toBe(24);
+    expect(payload.schemaVersion).toBe(25);
     expect(payload.filters.leaderBoostRanges).toEqual({
       ATK: { min: 5, max: 6 },
       HP: { min: 1.25, max: 1.5 },
@@ -3775,6 +3820,11 @@ describe('AutoTeamBuilder preset export helpers', () => {
     expect(payload.filters.leaderCostRange).toEqual({ min: 20, max: 60 });
     expect(payload.filters.subCostRange).toEqual({ min: 10, max: 40 });
     expect(payload.filters.maxTotalCost).toBe(300);
+    expect(payload.manualSelection.manualSlots.find((slot) => slot.role === 'captain')).toEqual({
+      role: 'captain',
+      characterIds: [201],
+      requiredCharacterId: 201,
+    });
   });
 
   it('does not start a preset download when the payload is missing', () => {
@@ -4019,6 +4069,104 @@ describe('AutoTeamBuilder preset import helpers', () => {
     );
     expect(result.state.lockedCharacterIds).toEqual([101, 102, 103, 104]);
     expect(result.warnings).toEqual([]);
+  });
+
+  it('preserves valid required manual picks and clears invalid required manual picks on import', () => {
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [],
+      enemyMechanics: [],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
+      requireUniqueBaseCharacterNames: false,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      manualSlots: createManualSlots(
+        {
+          captain: [101],
+          sub1: [102],
+        },
+        {
+          captain: 101,
+          sub1: 999,
+        },
+      ),
+      lockedCharacterIds: [101, 102],
+      lockedCharacters: [createCharacterRecord(101), createCharacterRecord(102)],
+      selectedLeaderIds: [101],
+      captainLeaderId: 101,
+      friendCaptainLeaderId: 101,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+    payload.manualSelection.manualSlots.find((slot) => slot.role === 'sub1')!.requiredCharacterId =
+      999;
+
+    const result = sanitizeAutoTeamSelectionImportPayload(payload, {
+      availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      availableClasses: ['Fighter', 'Slasher'],
+      abilityCatalogItems: [],
+      availableLockedCharacters: [createCharacterRecord(101), createCharacterRecord(102)],
+    });
+
+    expect(result.state.manualSlots.find((slot) => slot.role === 'captain')).toMatchObject({
+      characterIds: [101],
+      requiredCharacterId: 101,
+    });
+    expect(result.state.manualSlots.find((slot) => slot.role === 'sub1')).toMatchObject({
+      characterIds: [102],
+      requiredCharacterId: null,
+    });
+  });
+
+  it('preserves required manual captain and friend captain picks for 4556 presets', () => {
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      selectedClasses: ['Fighter', 'Free Spirit'],
+      requiredAbilities: [],
+      enemyMechanics: [],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
+      requireUniqueBaseCharacterNames: true,
+      favoritesOnly: true,
+      favoriteCount: 1159,
+      manualSlots: createManualSlots(
+        {
+          captain: [4556],
+          friendCaptain: [4556],
+        },
+        {
+          captain: 4556,
+          friendCaptain: 4556,
+        },
+      ),
+      lockedCharacterIds: [4556],
+      lockedCharacters: [createCharacterRecord(4556)],
+      selectedLeaderIds: [4556],
+      captainLeaderId: 4556,
+      friendCaptainLeaderId: 4556,
+      exportedAt: '2026-05-02T11:50:58.655Z',
+    });
+
+    const result = sanitizeAutoTeamSelectionImportPayload(payload, {
+      availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      availableClasses: ['Fighter', 'Free Spirit'],
+      abilityCatalogItems: [],
+      availableLockedCharacters: [createCharacterRecord(4556)],
+    });
+
+    expect(result.state.manualSlots.find((slot) => slot.role === 'captain')).toMatchObject({
+      characterIds: [4556],
+      requiredCharacterId: 4556,
+    });
+    expect(result.state.manualSlots.find((slot) => slot.role === 'friendCaptain')).toMatchObject({
+      characterIds: [4556],
+      requiredCharacterId: 4556,
+    });
+    expect(result.state.captainLeaderId).toBe(4556);
+    expect(result.state.selectedLeaderIds).toEqual([4556]);
   });
 
   it('restores leader boost ranges from imported presets', () => {
@@ -5134,10 +5282,12 @@ function filterCharactersForManualQuery(
 
 function createManualSlots(
   overrides: Partial<Record<AutoBuildManualSlotSelection['role'], number[]>> = {},
+  requiredOverrides: Partial<Record<AutoBuildManualSlotSelection['role'], number | null>> = {},
 ): AutoBuildManualSlotSelection[] {
   return createEmptyAutoBuildManualSlots().map((slot) => ({
     role: slot.role,
     characterIds: [...(overrides[slot.role] ?? [])],
+    requiredCharacterId: requiredOverrides[slot.role] ?? null,
   }));
 }
 
@@ -5430,6 +5580,9 @@ async function createPage(
   };
   const autoTeamBuilder = {
     buildTeam: vi.fn().mockResolvedValue(null),
+    resolveCaptainCoveredCandidateRecords: vi
+      .fn()
+      .mockImplementation((records: CharacterDetailRecord[]) => records),
   };
   const savedTeams = signal([
     createSavedTeam('team-1', {

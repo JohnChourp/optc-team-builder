@@ -3,12 +3,18 @@
 import { runAutoTeamBuildAttempt, runAutoTeamBuildSearch } from './auto-team-builder.engine';
 import { type CharacterDetailRecord } from '../models/optc.models';
 import {
+  prepareAutoTeamBuildContext,
+  type PreparedAutoTeamBuildContext,
+} from './auto-team-builder.utils';
+import {
   type AutoTeamBuilderWorkerRequest,
   type AutoTeamBuilderWorkerResponse,
 } from './auto-team-builder.worker.models';
 
 let cachedRecords: CharacterDetailRecord[] | null = null;
 let cachedFriendCaptainRecords: CharacterDetailRecord[] | undefined;
+let cachedContext: PreparedAutoTeamBuildContext | null = null;
+let cachedFriendCaptainContext: PreparedAutoTeamBuildContext | undefined;
 let cachedAutoFillCharacterIds: number[] | undefined;
 let cachedLeaderAutoFillCharacterIds: number[] | undefined;
 let cachedSubAutoFillCharacterIds: number[] | undefined;
@@ -17,6 +23,10 @@ addEventListener('message', ({ data }: MessageEvent<AutoTeamBuilderWorkerRequest
   if (data.type === 'init') {
     cachedRecords = data.records;
     cachedFriendCaptainRecords = data.friendCaptainRecords;
+    cachedContext = prepareAutoTeamBuildContext(data.records);
+    cachedFriendCaptainContext = data.friendCaptainRecords
+      ? prepareAutoTeamBuildContext(data.friendCaptainRecords)
+      : undefined;
     cachedAutoFillCharacterIds = data.autoFillCharacterIds;
     cachedLeaderAutoFillCharacterIds = data.leaderAutoFillCharacterIds;
     cachedSubAutoFillCharacterIds = data.subAutoFillCharacterIds;
@@ -51,6 +61,10 @@ addEventListener('message', ({ data }: MessageEvent<AutoTeamBuilderWorkerRequest
         data.autoFillCharacterIds ?? cachedAutoFillCharacterIds,
         data.leaderAutoFillCharacterIds ?? cachedLeaderAutoFillCharacterIds,
         data.subAutoFillCharacterIds ?? cachedSubAutoFillCharacterIds,
+        cachedContext ?? prepareAutoTeamBuildContext(cachedRecords),
+        data.friendCaptainRecords
+          ? prepareAutoTeamBuildContext(data.friendCaptainRecords)
+          : cachedFriendCaptainContext,
       );
       const response: AutoTeamBuilderWorkerResponse = {
         type: 'result',
@@ -78,9 +92,14 @@ addEventListener('message', ({ data }: MessageEvent<AutoTeamBuilderWorkerRequest
   try {
     const result = runAutoTeamBuildSearch(data.records, data.requestedInput, {
       friendCaptainRecords: data.friendCaptainRecords,
+      preparedContext: prepareAutoTeamBuildContext(data.records),
+      friendCaptainContext: data.friendCaptainRecords
+        ? prepareAutoTeamBuildContext(data.friendCaptainRecords)
+        : undefined,
       autoFillCharacterIds: data.autoFillCharacterIds,
       leaderAutoFillCharacterIds: data.leaderAutoFillCharacterIds,
       subAutoFillCharacterIds: data.subAutoFillCharacterIds,
+      maxScheduledFallbackAttempts: data.maxScheduledFallbackAttempts,
       onProgress: (snapshot) => {
         const response: AutoTeamBuilderWorkerResponse = {
           type: 'progress',

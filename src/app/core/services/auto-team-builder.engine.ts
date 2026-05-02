@@ -1,5 +1,6 @@
 import {
   AUTO_BUILD_TOTAL_SLOT_COUNT,
+  AUTO_TEAM_BUILDER_CLASSES,
   AUTO_TEAM_BUILDER_TYPES,
   type AutoBuildInput,
   type AutoBuildProgressSnapshot,
@@ -7,16 +8,24 @@ import {
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
-import { buildAutoTeamResult, resolveCharacterTypeTokens } from './auto-team-builder.utils';
+import {
+  buildAutoTeamResultFromPreparedContext,
+  prepareAutoTeamBuildContext,
+  resolveCharacterTypeTokens,
+  type PreparedAutoTeamBuildContext,
+} from './auto-team-builder.utils';
 
 export interface AutoTeamBuildSearchOptions {
   onProgress?: (snapshot: AutoBuildProgressSnapshot) => void;
   isCancelled?: () => boolean;
   now?: () => number;
   friendCaptainRecords?: CharacterDetailRecord[];
+  preparedContext?: PreparedAutoTeamBuildContext;
+  friendCaptainContext?: PreparedAutoTeamBuildContext;
   autoFillCharacterIds?: number[];
   leaderAutoFillCharacterIds?: number[];
   subAutoFillCharacterIds?: number[];
+  maxScheduledFallbackAttempts?: number;
 }
 
 export interface AutoTeamBuildPlannedAttempt {
@@ -30,7 +39,7 @@ export interface AutoTeamBuildPlannedAttempt {
 }
 
 type AutoTeamBuildDroppedFilterKind = 'type' | 'class';
-type AutoTeamBuildFallbackAttemptCategory = 'meta' | 'single' | 'double' | 'subset';
+export type AutoTeamBuildFallbackAttemptCategory = 'meta' | 'single' | 'double' | 'subset';
 
 interface AutoTeamBuildFilterDropDescriptor {
   id: string;
@@ -49,26 +58,49 @@ interface AutoTeamBuildSubsetCandidate {
   remainingClassCount: number;
 }
 
+export interface AutoTeamBuildFallbackPlannerOptions {
+  maxScheduledFallbackAttempts?: number;
+}
+
 export interface AutoTeamBuildScheduledAttempt extends AutoTeamBuildPlannedAttempt {
   sequence: number;
   category: AutoTeamBuildFallbackAttemptCategory;
   droppedFilterIds: string[];
 }
 
-interface AutoTeamBuildTimingState {
+interface AutoTeamBuildFallbackCategoryTiming {
+  completedAttempts: number;
+  totalMs: number;
+  averageMs: number;
+}
+
+export interface AutoTeamBuildTimingState {
   searchStartedAt: number;
   totalCompletedFallbackMs: number;
   completedFallbackAttempts: number;
+  recentAverageFallbackMs: number | null;
+  categoryTimings: Map<AutoTeamBuildFallbackAttemptCategory, AutoTeamBuildFallbackCategoryTiming>;
   now: () => number;
+}
+
+export interface AutoTeamBuildInFlightFallbackTiming {
+  category: AutoTeamBuildFallbackAttemptCategory;
+  startedAt: number;
 }
 
 type AutoBuildProgressSnapshotBase = Omit<
   AutoBuildProgressSnapshot,
   'elapsedMs' | 'estimatedRemainingMs' | 'averageFallbackAttemptMs' | 'completedFallbackAttempts'
->;
+> & {
+  activeWorkerCount?: number;
+  remainingFallbackCategories?: AutoTeamBuildFallbackAttemptCategory[];
+  inFlightFallbackTimings?: AutoTeamBuildInFlightFallbackTiming[];
+};
 
 const MAX_DYNAMIC_TOTAL_ATTEMPTS = 31_744;
 const MAX_DYNAMIC_SCHEDULED_FALLBACK_ATTEMPTS = MAX_DYNAMIC_TOTAL_ATTEMPTS - 1;
+const RECENT_FALLBACK_AVERAGE_ALPHA = 0.35;
+const MIN_CATEGORY_TIMING_SAMPLE_COUNT = 2;
 
 export class AutoTeamBuildCancelledError extends Error {
   public constructor(message = 'Auto team build cancelled.') {
@@ -89,7 +121,15 @@ export function runAutoTeamBuildSearch(
   options: AutoTeamBuildSearchOptions = {},
 ): AutoBuildResult | null {
   const timingState = createTimingState(options);
-  const planner = createAutoTeamBuildFallbackPlanner(requestedInput, records);
+  const preparedContext = options.preparedContext ?? prepareAutoTeamBuildContext(records);
+  const friendCaptainContext =
+    options.friendCaptainContext ??
+    (options.friendCaptainRecords
+      ? prepareAutoTeamBuildContext(options.friendCaptainRecords)
+      : undefined);
+  const planner = createAutoTeamBuildFallbackPlanner(requestedInput, records, {
+    maxScheduledFallbackAttempts: options.maxScheduledFallbackAttempts,
+  });
   const projectedTotalAttempts = planner.getProjectedTotalAttempts();
 
   assertNotCancelled(options);
@@ -133,6 +173,8 @@ export function runAutoTeamBuildSearch(
     options.autoFillCharacterIds,
     options.leaderAutoFillCharacterIds,
     options.subAutoFillCharacterIds,
+    preparedContext,
+    friendCaptainContext,
   );
 
   if (satisfiesRequestedAutoTeamBuildCoverage(exactResult)) {
@@ -155,12 +197,17 @@ export function runAutoTeamBuildSearch(
     plannedAttempt = planner.takeNextScheduledAttempt()
   ) {
     assertNotCancelled(options);
+    const remainingCategories: AutoTeamBuildFallbackAttemptCategory[] = [
+      plannedAttempt.category,
+      ...planner.getPendingScheduledFallbackAttemptCategories(),
+    ];
     emitProgress(options, timingState, {
       stage: 'fallbackAttempt',
       candidateCount: records.length,
       completedAttempts,
       totalAttempts: planner.getTotalAttempts(),
       attemptCountFinal: planner.isAttemptCountFinal(),
+      remainingFallbackCategories: remainingCategories,
       currentDroppedTypes: plannedAttempt.droppedTypes,
       currentDroppedClasses: plannedAttempt.droppedClasses,
       currentAllowedLeadersWithSuperEffects: plannedAttempt.allowedLeadersWithSuperEffects,
@@ -184,11 +231,16 @@ export function runAutoTeamBuildSearch(
       options.autoFillCharacterIds,
       options.leaderAutoFillCharacterIds,
       options.subAutoFillCharacterIds,
+      preparedContext,
+      friendCaptainContext,
     );
     const fallbackEndedAt = timingState.now();
 
-    timingState.totalCompletedFallbackMs += Math.max(0, fallbackEndedAt - fallbackStartedAt);
-    timingState.completedFallbackAttempts += 1;
+    recordAutoTeamBuildFallbackTiming(
+      timingState,
+      plannedAttempt.category,
+      Math.max(0, fallbackEndedAt - fallbackStartedAt),
+    );
 
     if (satisfiesRequestedAutoTeamBuildCoverage(relaxedResult)) {
       emitCompletedProgress(
@@ -228,6 +280,8 @@ function emitCompletedProgress(
     completedAttempts,
     totalAttempts,
     attemptCountFinal: true,
+    remainingFallbackCategories: [],
+    inFlightFallbackTimings: [],
     currentDroppedTypes: [],
     currentDroppedClasses: [],
     currentAllowedLeadersWithSuperEffects: false,
@@ -241,11 +295,27 @@ function emitProgress(
   timingState: AutoTeamBuildTimingState,
   snapshot: AutoBuildProgressSnapshotBase,
 ): void {
+  const {
+    activeWorkerCount,
+    remainingFallbackCategories,
+    inFlightFallbackTimings,
+    ...progressSnapshot
+  } = snapshot;
+
   options.onProgress?.({
-    ...buildTimingSnapshot(timingState, snapshot.totalAttempts, snapshot.completedAttempts),
-    ...snapshot,
-    currentDroppedTypes: [...snapshot.currentDroppedTypes],
-    currentDroppedClasses: [...snapshot.currentDroppedClasses],
+    ...buildAutoTeamBuildTimingSnapshot(
+      timingState,
+      progressSnapshot.totalAttempts,
+      progressSnapshot.completedAttempts,
+      {
+        activeWorkerCount,
+        remainingCategories: remainingFallbackCategories,
+        inFlightAttempts: inFlightFallbackTimings,
+      },
+    ),
+    ...progressSnapshot,
+    currentDroppedTypes: [...progressSnapshot.currentDroppedTypes],
+    currentDroppedClasses: [...progressSnapshot.currentDroppedClasses],
   });
 }
 
@@ -258,31 +328,82 @@ function assertNotCancelled(options: AutoTeamBuildSearchOptions): void {
 function createTimingState(options: AutoTeamBuildSearchOptions): AutoTeamBuildTimingState {
   const now = options.now ?? resolveCurrentTimestamp;
 
+  return createAutoTeamBuildTimingState(now);
+}
+
+export function createAutoTeamBuildTimingState(
+  now: () => number = resolveCurrentTimestamp,
+): AutoTeamBuildTimingState {
   return {
     searchStartedAt: now(),
     totalCompletedFallbackMs: 0,
     completedFallbackAttempts: 0,
+    recentAverageFallbackMs: null,
+    categoryTimings: new Map(),
     now,
   };
 }
 
-function buildTimingSnapshot(
+export function recordAutoTeamBuildFallbackTiming(
+  timingState: AutoTeamBuildTimingState,
+  category: AutoTeamBuildFallbackAttemptCategory,
+  durationMs: number,
+): void {
+  const normalizedDurationMs = Math.max(0, durationMs);
+  const categoryTiming = timingState.categoryTimings.get(category) ?? {
+    completedAttempts: 0,
+    totalMs: 0,
+    averageMs: 0,
+  };
+
+  categoryTiming.completedAttempts += 1;
+  categoryTiming.totalMs += normalizedDurationMs;
+  categoryTiming.averageMs = categoryTiming.totalMs / categoryTiming.completedAttempts;
+  timingState.categoryTimings.set(category, categoryTiming);
+  timingState.totalCompletedFallbackMs += normalizedDurationMs;
+  timingState.completedFallbackAttempts += 1;
+  timingState.recentAverageFallbackMs =
+    timingState.recentAverageFallbackMs === null
+      ? normalizedDurationMs
+      : timingState.recentAverageFallbackMs * (1 - RECENT_FALLBACK_AVERAGE_ALPHA) +
+        normalizedDurationMs * RECENT_FALLBACK_AVERAGE_ALPHA;
+}
+
+export function buildAutoTeamBuildTimingSnapshot(
   timingState: AutoTeamBuildTimingState,
   totalAttempts: number,
   completedAttempts: number,
+  options: {
+    activeWorkerCount?: number;
+    remainingCategories?: AutoTeamBuildFallbackAttemptCategory[];
+    inFlightAttempts?: AutoTeamBuildInFlightFallbackTiming[];
+  } = {},
 ): Pick<
   AutoBuildProgressSnapshot,
   'elapsedMs' | 'estimatedRemainingMs' | 'averageFallbackAttemptMs' | 'completedFallbackAttempts'
 > {
   const elapsedMs = Math.max(0, timingState.now() - timingState.searchStartedAt);
-  const averageFallbackAttemptMs =
-    timingState.completedFallbackAttempts > 0
-      ? timingState.totalCompletedFallbackMs / timingState.completedFallbackAttempts
-      : null;
-  const remainingFallbackAttempts = Math.max(totalAttempts - completedAttempts - 1, 0);
+  const averageFallbackAttemptMs = resolveFallbackDefaultTimingMs(timingState);
+  const remainingCategories =
+    options.remainingCategories ??
+    Array.from({
+      length: Math.max(totalAttempts - completedAttempts - 1, 0),
+    }).map(() => null);
+  const pendingFallbackMs = remainingCategories.reduce(
+    (total, category) => total + resolveFallbackCategoryTimingMs(timingState, category),
+    0,
+  );
+  const inFlightFallbackMs = (options.inFlightAttempts ?? []).reduce((total, attempt) => {
+    const elapsedAttemptMs = Math.max(0, timingState.now() - attempt.startedAt);
+    const predictedAttemptMs = resolveFallbackCategoryTimingMs(timingState, attempt.category);
+
+    return total + Math.max(predictedAttemptMs, elapsedAttemptMs);
+  }, 0);
+  const estimatedFallbackMs = pendingFallbackMs + inFlightFallbackMs;
+  const activeWorkerCount = Math.max(options.activeWorkerCount ?? 1, 1);
   const estimatedRemainingMs =
-    averageFallbackAttemptMs !== null && remainingFallbackAttempts > 0
-      ? averageFallbackAttemptMs * remainingFallbackAttempts
+    averageFallbackAttemptMs !== null && estimatedFallbackMs > 0
+      ? estimatedFallbackMs / activeWorkerCount
       : null;
 
   return {
@@ -291,6 +412,35 @@ function buildTimingSnapshot(
     averageFallbackAttemptMs,
     completedFallbackAttempts: timingState.completedFallbackAttempts,
   };
+}
+
+function resolveFallbackDefaultTimingMs(timingState: AutoTeamBuildTimingState): number | null {
+  if (timingState.recentAverageFallbackMs !== null) {
+    return timingState.recentAverageFallbackMs;
+  }
+
+  return timingState.completedFallbackAttempts > 0
+    ? timingState.totalCompletedFallbackMs / timingState.completedFallbackAttempts
+    : null;
+}
+
+function resolveFallbackCategoryTimingMs(
+  timingState: AutoTeamBuildTimingState,
+  category: AutoTeamBuildFallbackAttemptCategory | null,
+): number {
+  const defaultTimingMs = resolveFallbackDefaultTimingMs(timingState);
+
+  if (category === null) {
+    return defaultTimingMs ?? 0;
+  }
+
+  const categoryTiming = timingState.categoryTimings.get(category);
+
+  if (categoryTiming && categoryTiming.completedAttempts >= MIN_CATEGORY_TIMING_SAMPLE_COUNT) {
+    return categoryTiming.averageMs;
+  }
+
+  return defaultTimingMs ?? categoryTiming?.averageMs ?? 0;
 }
 
 function resolveCurrentTimestamp(): number {
@@ -310,10 +460,13 @@ export function runAutoTeamBuildAttempt(
   autoFillCharacterIds?: number[],
   leaderAutoFillCharacterIds?: number[],
   subAutoFillCharacterIds?: number[],
+  preparedContext: PreparedAutoTeamBuildContext = prepareAutoTeamBuildContext(records),
+  friendCaptainContext?: PreparedAutoTeamBuildContext,
 ): AutoBuildResult | null {
-  const attempt = buildAutoTeamResult(records, input, {
+  const attempt = buildAutoTeamResultFromPreparedContext(preparedContext, input, {
     requireLeadersWithoutSuperEffects,
     friendCaptainRecords,
+    friendCaptainContext,
     autoFillCharacterIds,
     leaderAutoFillCharacterIds,
     subAutoFillCharacterIds,
@@ -367,6 +520,7 @@ export class AutoTeamBuildFallbackPlanner {
   public constructor(
     private readonly requestedInput: AutoBuildInput,
     records: CharacterDetailRecord[],
+    options: AutoTeamBuildFallbackPlannerOptions = {},
   ) {
     const exactLeaderSuperEffectSlots =
       resolveRequestedLeaderSuperEffectMatchingSlots(requestedInput);
@@ -394,6 +548,7 @@ export class AutoTeamBuildFallbackPlanner {
     this.maxScheduledFallbackAttempts = resolveMaxScheduledFallbackAttemptCount(
       requestedInput,
       this.zeroDropAttempts.length,
+      options.maxScheduledFallbackAttempts,
     );
     this.projectedScheduledFallbackAttemptCount = resolveProjectedScheduledFallbackAttemptCount(
       this.zeroDropAttempts,
@@ -425,6 +580,10 @@ export class AutoTeamBuildFallbackPlanner {
 
   public hasPendingScheduledAttempts(): boolean {
     return this.nextDispatchIndex < this.scheduledAttempts.length;
+  }
+
+  public getPendingScheduledFallbackAttemptCategories(): AutoTeamBuildFallbackAttemptCategory[] {
+    return this.scheduledAttempts.slice(this.nextDispatchIndex).map((attempt) => attempt.category);
   }
 
   public scheduleInitialFallbackAttempts(): void {
@@ -506,8 +665,9 @@ export class AutoTeamBuildFallbackPlanner {
 export function createAutoTeamBuildFallbackPlanner(
   requestedInput: AutoBuildInput,
   records: CharacterDetailRecord[],
+  options: AutoTeamBuildFallbackPlannerOptions = {},
 ): AutoTeamBuildFallbackPlanner {
-  return new AutoTeamBuildFallbackPlanner(requestedInput, records);
+  return new AutoTeamBuildFallbackPlanner(requestedInput, records, options);
 }
 
 function resolveProjectedScheduledFallbackAttemptCount(
@@ -599,8 +759,12 @@ function buildSubsetCandidates(
   const supportByFilterId = new Map(
     filterDescriptors.map((descriptor) => [descriptor.id, descriptor.support] as const),
   );
-  const typeSubsets = buildSubsets(baseInput.types, 1);
-  const classSubsets = buildSubsets(baseInput.selectedClasses, 0);
+  const typeSubsets = shouldTreatSelectedTypesAsNeutral(requestedInput)
+    ? [baseInput.types]
+    : buildSubsets(baseInput.types, 1);
+  const classSubsets = shouldTreatSelectedClassesAsNeutral(requestedInput)
+    ? [baseInput.selectedClasses]
+    : buildSubsets(baseInput.selectedClasses, 0);
   const candidates: AutoTeamBuildSubsetCandidate[] = [];
 
   for (const types of typeSubsets) {
@@ -668,7 +832,7 @@ function buildSortedFilterDropDescriptors(
   records: CharacterDetailRecord[],
 ): AutoTeamBuildFilterDropDescriptor[] {
   const typeDescriptors: AutoTeamBuildFilterDropDescriptor[] =
-    requestedInput.types.length > 1
+    requestedInput.types.length > 1 && !shouldTreatSelectedTypesAsNeutral(requestedInput)
       ? requestedInput.types.map((type) => ({
           id: buildDroppedFilterId('type', type),
           kind: 'type',
@@ -676,12 +840,14 @@ function buildSortedFilterDropDescriptors(
           support: resolveTypeSupport(records, type),
         }))
       : [];
-  const classDescriptors = requestedInput.selectedClasses.map((selectedClass) => ({
-    id: buildDroppedFilterId('class', selectedClass),
-    kind: 'class' as const,
-    value: selectedClass,
-    support: resolveClassSupport(records, selectedClass),
-  }));
+  const classDescriptors = shouldTreatSelectedClassesAsNeutral(requestedInput)
+    ? []
+    : requestedInput.selectedClasses.map((selectedClass) => ({
+        id: buildDroppedFilterId('class', selectedClass),
+        kind: 'class' as const,
+        value: selectedClass,
+        support: resolveClassSupport(records, selectedClass),
+      }));
 
   return [...typeDescriptors, ...classDescriptors].sort(compareFilterDescriptors);
 }
@@ -733,19 +899,35 @@ function resolveSubsetAttemptCategory(
 function resolveMaxScheduledFallbackAttemptCount(
   requestedInput: AutoBuildInput,
   zeroDropAttemptCount: number,
+  configuredMaxScheduledFallbackAttempts?: number,
 ): number {
   const theoreticalSubsetTotalAttempts = resolveTheoreticalSubsetTotalAttempts(requestedInput);
   const theoreticalSubsetFallbackAttempts = Math.max(theoreticalSubsetTotalAttempts - 1, 0);
+  const dynamicMaxScheduledFallbackAttempts = Math.max(
+    zeroDropAttemptCount,
+    Math.min(MAX_DYNAMIC_SCHEDULED_FALLBACK_ATTEMPTS, theoreticalSubsetFallbackAttempts),
+  );
+
+  if (configuredMaxScheduledFallbackAttempts === undefined) {
+    return dynamicMaxScheduledFallbackAttempts;
+  }
 
   return Math.max(
     zeroDropAttemptCount,
-    Math.min(MAX_DYNAMIC_SCHEDULED_FALLBACK_ATTEMPTS, theoreticalSubsetFallbackAttempts),
+    Math.min(
+      dynamicMaxScheduledFallbackAttempts,
+      Math.max(0, Math.floor(configuredMaxScheduledFallbackAttempts)),
+    ),
   );
 }
 
 function resolveTheoreticalSubsetTotalAttempts(input: AutoBuildInput): number {
-  const typeSubsetCount = resolveBoundedSubsetCount(input.types.length, true);
-  const classSubsetCount = resolveBoundedSubsetCount(input.selectedClasses.length, false);
+  const typeSubsetCount = shouldTreatSelectedTypesAsNeutral(input)
+    ? 1
+    : resolveBoundedSubsetCount(input.types.length, true);
+  const classSubsetCount = shouldTreatSelectedClassesAsNeutral(input)
+    ? 1
+    : resolveBoundedSubsetCount(input.selectedClasses.length, false);
 
   return multiplyWithCap(typeSubsetCount, classSubsetCount, MAX_DYNAMIC_TOTAL_ATTEMPTS);
 }
@@ -902,11 +1084,36 @@ export function satisfiesRequestedAutoTeamBuildCoverage(
 ): result is AutoBuildResult {
   return Boolean(
     result &&
-    result.coverage.coversAllSelectedClasses &&
-    result.coverage.coversAllSelectedTypes &&
+    (shouldTreatSelectedClassesAsNeutral(result.requestedInput) ||
+      result.coverage.coversAllSelectedClasses) &&
+    (shouldTreatSelectedTypesAsNeutral(result.requestedInput) ||
+      result.coverage.coversAllSelectedTypes) &&
     result.coverage.abilityRequirements.matchesAll &&
     result.coverage.requiredCharacterGroups.matchesAll,
   );
+}
+
+function shouldTreatSelectedTypesAsNeutral(input: AutoBuildInput): boolean {
+  return (
+    !input.requireAllSelectedTypesInTeam &&
+    sameUnorderedValues(input.types, AUTO_TEAM_BUILDER_TYPES)
+  );
+}
+
+function shouldTreatSelectedClassesAsNeutral(input: AutoBuildInput): boolean {
+  return (
+    !input.requireAllSelectedClassesPerCharacter &&
+    sameUnorderedValues(input.selectedClasses, AUTO_TEAM_BUILDER_CLASSES)
+  );
+}
+
+function sameUnorderedValues<T>(left: readonly T[], right: readonly T[]): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  const rightValues = new Set(right);
+  return left.every((value) => rightValues.has(value));
 }
 
 function resolveClassSupport(records: CharacterDetailRecord[], selectedClass: string): number {

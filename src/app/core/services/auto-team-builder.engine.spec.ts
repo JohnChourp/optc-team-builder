@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   AUTO_TEAM_CANDIDATE_LIMIT,
+  AUTO_TEAM_BUILDER_CLASSES,
   AUTO_TEAM_BUILDER_DEFAULT_TYPE,
+  AUTO_TEAM_BUILDER_TYPES,
   createEmptyAutoBuildCostRange,
   createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
@@ -13,9 +15,90 @@ import {
 import { type CharacterDetailRecord } from '../models/optc.models';
 import {
   AutoTeamBuildCancelledError,
+  buildAutoTeamBuildTimingSnapshot,
+  createAutoTeamBuildTimingState,
   createAutoTeamBuildFallbackPlanner,
+  recordAutoTeamBuildFallbackTiming,
   runAutoTeamBuildSearch,
 } from './auto-team-builder.engine';
+
+describe('auto team build fallback timing estimates', () => {
+  it('uses a recent average that reacts faster than the lifetime average', () => {
+    let now = 0;
+    const timingState = createAutoTeamBuildTimingState(() => now);
+
+    recordAutoTeamBuildFallbackTiming(timingState, 'single', 1000);
+    recordAutoTeamBuildFallbackTiming(timingState, 'single', 100);
+    recordAutoTeamBuildFallbackTiming(timingState, 'single', 100);
+    recordAutoTeamBuildFallbackTiming(timingState, 'single', 100);
+    recordAutoTeamBuildFallbackTiming(timingState, 'single', 100);
+    recordAutoTeamBuildFallbackTiming(timingState, 'single', 100);
+    recordAutoTeamBuildFallbackTiming(timingState, 'single', 100);
+
+    const lifetimeAverage =
+      timingState.totalCompletedFallbackMs / timingState.completedFallbackAttempts;
+    const snapshot = buildAutoTeamBuildTimingSnapshot(timingState, 12, 5, {
+      remainingCategories: ['double', 'double', 'double'],
+    });
+
+    expect(snapshot.averageFallbackAttemptMs).toBeLessThan(lifetimeAverage);
+    expect(snapshot.estimatedRemainingMs).toBe(snapshot.averageFallbackAttemptMs! * 3);
+  });
+
+  it('uses category averages once enough samples exist', () => {
+    const timingState = createAutoTeamBuildTimingState(() => 0);
+
+    recordAutoTeamBuildFallbackTiming(timingState, 'meta', 10);
+    recordAutoTeamBuildFallbackTiming(timingState, 'meta', 20);
+    recordAutoTeamBuildFallbackTiming(timingState, 'subset', 100);
+    recordAutoTeamBuildFallbackTiming(timingState, 'subset', 120);
+
+    const metaSnapshot = buildAutoTeamBuildTimingSnapshot(timingState, 10, 5, {
+      remainingCategories: ['meta', 'meta'],
+    });
+    const subsetSnapshot = buildAutoTeamBuildTimingSnapshot(timingState, 10, 5, {
+      remainingCategories: ['subset', 'subset'],
+    });
+
+    expect(metaSnapshot.estimatedRemainingMs).toBe(30);
+    expect(subsetSnapshot.estimatedRemainingMs).toBe(220);
+  });
+
+  it('accounts for elapsed in-flight fallback attempts', () => {
+    let now = 0;
+    const timingState = createAutoTeamBuildTimingState(() => now);
+
+    recordAutoTeamBuildFallbackTiming(timingState, 'single', 100);
+    recordAutoTeamBuildFallbackTiming(timingState, 'single', 100);
+    now = 250;
+
+    const snapshot = buildAutoTeamBuildTimingSnapshot(timingState, 10, 3, {
+      remainingCategories: [],
+      inFlightAttempts: [{ category: 'single', startedAt: 0 }],
+    });
+
+    expect(snapshot.estimatedRemainingMs).toBe(250);
+  });
+
+  it('scales category-aware estimates by active worker count', () => {
+    const timingState = createAutoTeamBuildTimingState(() => 0);
+
+    recordAutoTeamBuildFallbackTiming(timingState, 'single', 90);
+    recordAutoTeamBuildFallbackTiming(timingState, 'single', 90);
+
+    const twoWorkerSnapshot = buildAutoTeamBuildTimingSnapshot(timingState, 10, 3, {
+      activeWorkerCount: 2,
+      remainingCategories: ['single', 'single', 'single', 'single'],
+    });
+    const fourWorkerSnapshot = buildAutoTeamBuildTimingSnapshot(timingState, 10, 3, {
+      activeWorkerCount: 4,
+      remainingCategories: ['single', 'single', 'single', 'single'],
+    });
+
+    expect(twoWorkerSnapshot.estimatedRemainingMs).toBe(180);
+    expect(fourWorkerSnapshot.estimatedRemainingMs).toBe(90);
+  });
+});
 
 describe('runAutoTeamBuildSearch', () => {
   it('emits deterministic progress stages for exact and fallback attempts', () => {
@@ -160,16 +243,30 @@ describe('runAutoTeamBuildSearch', () => {
     const snapshots: AutoBuildProgressSnapshot[] = [];
 
     expect(() =>
-      runAutoTeamBuildSearch(createSingleTypeRecords(), createInput(['DEX', 'INT'], ['Fighter']), {
-        onProgress: (snapshot) => {
-          snapshots.push(snapshot);
-
-          if (snapshot.stage === 'exactAttempt') {
-            cancelled = true;
-          }
+      runAutoTeamBuildSearch(
+        createSingleTypeRecords(),
+        {
+          ...createInput(['DEX', 'INT'], ['Fighter']),
+          requiredAbilities: [
+            {
+              abilityKey: 'remove_slot_barrier',
+              minTurns: 3,
+              slotTokens: ['DEX'],
+              requiredCharacterCount: 1,
+            },
+          ],
         },
-        isCancelled: () => cancelled,
-      }),
+        {
+          onProgress: (snapshot) => {
+            snapshots.push(snapshot);
+
+            if (snapshot.stage === 'exactAttempt') {
+              cancelled = true;
+            }
+          },
+          isCancelled: () => cancelled,
+        },
+      ),
     ).toThrowError(AutoTeamBuildCancelledError);
     expect(snapshots.map((snapshot) => snapshot.stage)).toEqual([
       'preparingSearch',
@@ -287,8 +384,9 @@ describe('runAutoTeamBuildSearch', () => {
 
     planner.scheduleInitialFallbackAttempts();
 
-    expect(collectScheduledAttempts(planner).every((attempt) => attempt.input.maxTotalCost === 300))
-      .toBe(true);
+    expect(
+      collectScheduledAttempts(planner).every((attempt) => attempt.input.maxTotalCost === 300),
+    ).toBe(true);
   });
 
   it('allows Captain plus four subs at the exact max total cost while ignoring Friend Captain cost', () => {
@@ -330,7 +428,7 @@ describe('runAutoTeamBuildSearch', () => {
 
   it('caps the bounded subset plan at 31,744 total attempts for now', () => {
     const planner = createAutoTeamBuildFallbackPlanner(
-      createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], createSyntheticClasses(10), {
+      createInput(['DEX', 'STR', 'QCK', 'PSY'], createSyntheticClasses(12), {
         requireLeaderSuperSpecialCriteria: true,
       }),
       createSingleTypeRecords(),
@@ -342,6 +440,34 @@ describe('runAutoTeamBuildSearch', () => {
     expect(planner.getTotalAttempts()).toBe(31_744);
     expect(planner.getTotalAttempts()).toBeGreaterThan(1024);
     expect(planner.isAttemptCountFinal()).toBe(true);
+  });
+
+  it('treats all selected types and classes as neutral when strict coverage is off', () => {
+    const planner = createAutoTeamBuildFallbackPlanner(
+      createInput([...AUTO_TEAM_BUILDER_TYPES], [...AUTO_TEAM_BUILDER_CLASSES], {
+        requireLeaderSuperSpecialCriteria: true,
+      }),
+      createSingleTypeRecords(),
+    );
+
+    planner.scheduleInitialFallbackAttempts();
+
+    expect(planner.getScheduledFallbackAttemptCount()).toBe(2);
+    expect(planner.getTotalAttempts()).toBe(3);
+    expect(collectScheduledAttempts(planner)).toEqual([
+      expect.objectContaining({
+        category: 'meta',
+        droppedTypes: [],
+        droppedClasses: [],
+        ignoredLeaderSuperSpecialCriteria: false,
+      }),
+      expect.objectContaining({
+        category: 'meta',
+        droppedTypes: [],
+        droppedClasses: [],
+        ignoredLeaderSuperSpecialCriteria: true,
+      }),
+    ]);
   });
 
   it('orders single-filter drops by ascending pool support', () => {
@@ -487,7 +613,8 @@ function createInput(
     leaderBoostFilters: overrides.leaderBoostFilters ?? ['HP', 'ATK'],
     leaderBoostRanges: overrides.leaderBoostRanges ?? createEmptyAutoBuildLeaderBoostRanges(),
     costRange: overrides.costRange ?? createEmptyAutoBuildCostRange(),
-    leaderCostRange: overrides.leaderCostRange ?? overrides.costRange ?? createEmptyAutoBuildCostRange(),
+    leaderCostRange:
+      overrides.leaderCostRange ?? overrides.costRange ?? createEmptyAutoBuildCostRange(),
     subCostRange: overrides.subCostRange ?? overrides.costRange ?? createEmptyAutoBuildCostRange(),
     maxTotalCost: overrides.maxTotalCost ?? null,
     manualSlots: overrides.manualSlots ?? createEmptyAutoBuildManualSlots(),

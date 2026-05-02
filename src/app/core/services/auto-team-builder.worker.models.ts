@@ -1,4 +1,8 @@
-import { type AutoBuildInput, type AutoBuildProgressSnapshot, type AutoBuildResult } from '../models/auto-team-builder.models';
+import {
+  type AutoBuildInput,
+  type AutoBuildProgressSnapshot,
+  type AutoBuildResult,
+} from '../models/auto-team-builder.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
 
 export interface AutoTeamBuilderWorkerInitRequest {
@@ -18,6 +22,7 @@ export interface AutoTeamBuilderWorkerRunRequest {
   autoFillCharacterIds?: number[];
   leaderAutoFillCharacterIds?: number[];
   subAutoFillCharacterIds?: number[];
+  maxScheduledFallbackAttempts?: number;
   requestedInput: AutoBuildInput;
 }
 

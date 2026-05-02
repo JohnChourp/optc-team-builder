@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
-import { type ViewDidEnter, type ViewWillEnter } from '@ionic/angular';
+import { type ViewWillEnter } from '@ionic/angular';
 import {
   IonButton,
   IonButtons,
@@ -40,6 +40,8 @@ import {
   heart,
   heartOutline,
   layersOutline,
+  lockClosedOutline,
+  lockOpenOutline,
   optionsOutline,
   shieldHalfOutline,
   sparklesOutline,
@@ -85,6 +87,7 @@ import {
 } from '../../core/models/optc.models';
 import {
   AutoTeamBuilderService,
+  isAutoTeamBuildSearchTooLargeError,
   type AutoTeamBuildExecutionOptions,
 } from '../../core/services/auto-team-builder.service';
 import { AppI18nService } from '../../core/services/app-i18n.service';
@@ -229,6 +232,10 @@ interface ManualCharacterCardView {
   selectionSupportLabel: string | null;
 }
 
+type ManualSlotSelectedCharacterView = CharacterListItem & {
+  isRequiredInManualSlot: boolean;
+};
+
 interface FixedManualTeamCandidateCardView {
   character: CharacterDetailRecord;
   subtitle: string;
@@ -253,7 +260,8 @@ interface ManualSlotCardView {
   role: AutoBuildManualSlotRole;
   title: string;
   support: string;
-  selectedCharacters: CharacterListItem[];
+  selectedCharacters: ManualSlotSelectedCharacterView[];
+  requiredCharacterId: number | null;
   isLeaderSlot: boolean;
   isActive: boolean;
 }
@@ -465,12 +473,10 @@ function matchesScopedManualRequirements(
   templateUrl: './auto-team-builder.page.html',
   styleUrl: './auto-team-builder.page.scss',
 })
-export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, ViewWillEnter {
+export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   @ViewChild(IonContent) private content?: IonContent;
 
   private buildAbortController: AbortController | null = null;
-  private buildProgressTickerId: ReturnType<typeof globalThis.setInterval> | null = null;
-  private currentBuildProgressSignature = '';
   private resetAfterBuildCancellation = false;
   private destroyed = false;
   public readonly summary = signal<DatasetManifest | null>(null);
@@ -588,8 +594,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly notes = signal('');
   public readonly building = signal(false);
   public readonly buildProgress = signal<AutoBuildProgressSnapshot | null>(null);
-  private readonly buildProgressNowMs = signal(0);
-  private readonly currentBuildStepStartedAtMs = signal<number | null>(null);
   public readonly result = signal<AutoBuildResult | null>(null);
   public readonly errorMessage = signal('');
   public readonly currentTeamId = signal<string | null>(null);
@@ -870,9 +874,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       role: slot.role,
       title: this.getManualSlotTitle(slot.role),
       support: this.getManualSlotSupport(slot.role, slot.characterIds.length),
+      requiredCharacterId: slot.requiredCharacterId ?? null,
       selectedCharacters: slot.characterIds
         .map((characterId) => lockedRecords[characterId])
-        .filter(Boolean),
+        .filter(Boolean)
+        .map((character) => ({
+          ...character,
+          isRequiredInManualSlot: character.id === slot.requiredCharacterId,
+        })),
       isLeaderSlot: this.isLeaderManualSlotRole(slot.role),
       isActive: slot.role === this.activeManualSlotRole(),
     }));
@@ -1574,18 +1583,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly buildOverallProgressLabel = computed(() =>
     this.t('progress.overallProgressPercent', { percent: this.buildOverallProgressPercent() }),
   );
-  public readonly buildCurrentStepElapsedLabel = computed(() => {
-    const progress = this.buildProgress();
-    const startedAt = this.currentBuildStepStartedAtMs();
-
-    if (!progress || startedAt === null || progress.stage === 'completed') {
-      return '';
-    }
-
-    return this.t('progress.currentStepElapsed', {
-      duration: this.formatLiveDuration(Math.max(0, this.buildProgressNowMs() - startedAt)),
-    });
-  });
   public readonly buildCandidateProgressLabel = computed(() => {
     const progress = this.buildProgress();
 
@@ -1631,30 +1628,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
 
     return progress ? this.t('progress.searchMeaning') : '';
   });
-  public readonly buildDroppedTypesLabel = computed(() => {
-    const droppedTypes = this.buildProgress()?.currentDroppedTypes ?? [];
-
-    return droppedTypes.length > 0
-      ? this.t('progress.ignoringTypes', { types: droppedTypes.join(' / ') })
-      : '';
-  });
-  public readonly buildDroppedClassesLabel = computed(() => {
-    const droppedClasses = this.buildProgress()?.currentDroppedClasses ?? [];
-
-    return droppedClasses.length > 0
-      ? this.t('progress.ignoringClasses', { classes: droppedClasses.join(' / ') })
-      : '';
-  });
-  public readonly buildAllowedLeadersWithSuperEffectsLabel = computed(() =>
-    this.buildProgress()?.currentAllowedLeadersWithSuperEffects
-      ? this.t('progress.allowingLeadersWithSuperEffects')
-      : '',
-  );
-  public readonly buildIgnoredLeaderSuperSpecialCriteriaLabel = computed(() =>
-    this.buildProgress()?.currentIgnoredLeaderSuperSpecialCriteria
-      ? this.t('progress.ignoringLeaderSuperSpecialCriteria')
-      : '',
-  );
   public readonly buildWorstCaseEtaLabel = computed(() => {
     const estimatedRemainingMs = this.buildProgress()?.estimatedRemainingMs;
 
@@ -1695,26 +1668,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         key: 'candidatePool',
         text: this.buildCandidateProgressLabel(),
         tone: 'secondary',
-      },
-      {
-        key: 'droppedTypes',
-        text: this.buildDroppedTypesLabel(),
-        tone: 'fallback',
-      },
-      {
-        key: 'droppedClasses',
-        text: this.buildDroppedClassesLabel(),
-        tone: 'fallback',
-      },
-      {
-        key: 'leaderSuperEffects',
-        text: this.buildAllowedLeadersWithSuperEffectsLabel(),
-        tone: 'fallback',
-      },
-      {
-        key: 'superSpecialCriteria',
-        text: this.buildIgnoredLeaderSuperSpecialCriteriaLabel(),
-        tone: 'fallback',
       },
     ];
 
@@ -2054,6 +2007,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   public readonly copyIcon = copyOutline;
   public readonly closeIcon = closeOutline;
   public readonly similarPickIcon = sparklesOutline;
+  public readonly requiredManualPickIcon = lockClosedOutline;
+  public readonly optionalManualPickIcon = lockOpenOutline;
   public readonly presetImportSuccessIcon = checkmarkCircleOutline;
   public readonly presetImportErrorIcon = alertCircleOutline;
 
@@ -2109,7 +2064,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
     this.crewmateAbilityPickerOpen.set(false);
-    this.stopBuildProgressTicker();
     this.cancelBuild();
   }
 
@@ -2120,10 +2074,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     if (!appliedSavedTeamPreset) {
       await this.applyEnemyPresetFromRoute();
     }
-  }
-
-  public ionViewDidEnter(): void {
-    console.log('AutoTeamBuilderPage component');
   }
 
   public async onAutoTeamBuilderWorkerModeChange(
@@ -2632,6 +2582,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         return {
           ...slot,
           characterIds: nextCharacterIds,
+          requiredCharacterId: nextCharacterIds.includes(slot.requiredCharacterId ?? -1)
+            ? slot.requiredCharacterId
+            : null,
         };
       }),
     );
@@ -2656,9 +2609,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.resetBuildState();
   }
 
-  public onRequireFullCaptainAbilityCoverageToggle(
-    event: CustomEvent<{ checked: boolean }>,
-  ): void {
+  public onRequireFullCaptainAbilityCoverageToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.requireFullCaptainAbilityCoverage.set(event.detail.checked);
     this.resetBuildState();
   }
@@ -3063,6 +3014,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           ? {
               ...slot,
               characterIds: [...slot.characterIds, character.id],
+              requiredCharacterId: slot.requiredCharacterId ?? null,
             }
           : slot,
       ),
@@ -3084,6 +3036,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           ? {
               ...manualSlot,
               characterIds: [...manualSlot.characterIds, slot.character.id],
+              requiredCharacterId: manualSlot.requiredCharacterId ?? null,
             }
           : manualSlot,
       ),
@@ -3129,6 +3082,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           ? {
               ...slot,
               characterIds: [...slot.characterIds, similarPick.id],
+              requiredCharacterId: slot.requiredCharacterId ?? null,
             }
           : slot,
       ),
@@ -3165,6 +3119,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
           ? {
               ...slot,
               characterIds: [],
+              requiredCharacterId: null,
             }
           : slot,
       ),
@@ -3186,11 +3141,55 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
               characterIds: slot.characterIds.filter(
                 (selectedCharacterId) => selectedCharacterId !== characterId,
               ),
+              requiredCharacterId:
+                slot.requiredCharacterId === characterId ? null : slot.requiredCharacterId,
             }
           : slot,
       ),
     );
     this.resetBuildState();
+  }
+
+  public toggleRequiredManualSlotCharacter(
+    role: AutoBuildManualSlotRole,
+    characterId: number,
+    event?: Event,
+  ): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+
+    if (this.building()) {
+      return;
+    }
+
+    this.manualSlots.update((currentSlots) =>
+      currentSlots.map((slot) => {
+        if (slot.role !== role || !slot.characterIds.includes(characterId)) {
+          return slot;
+        }
+
+        return {
+          ...slot,
+          requiredCharacterId: slot.requiredCharacterId === characterId ? null : characterId,
+        };
+      }),
+    );
+    this.resetBuildState();
+  }
+
+  public requiredManualPickButtonLabel(
+    role: AutoBuildManualSlotRole,
+    character: Pick<CharacterListItem, 'id' | 'name'>,
+  ): string {
+    return this.resolveManualSlotSelection(role).requiredCharacterId === character.id
+      ? this.t('manual.required.actions.clearFor', { name: character.name })
+      : this.t('manual.required.actions.requireFor', { name: character.name });
+  }
+
+  public requiredManualPickButtonIcon(role: AutoBuildManualSlotRole, characterId: number): string {
+    return this.resolveManualSlotSelection(role).requiredCharacterId === characterId
+      ? this.requiredManualPickIcon
+      : this.optionalManualPickIcon;
   }
 
   public isCharacterSelectedInManualSlot(
@@ -3314,7 +3313,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     this.buildAbortController = abortController;
     this.building.set(true);
     this.resetBuildState();
-    this.startBuildProgressTicker();
     void this.scrollToBottom();
 
     try {
@@ -3376,12 +3374,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         return;
       }
 
+      if (isAutoTeamBuildSearchTooLargeError(error)) {
+        this.errorMessage.set(this.t('errors.searchTooLarge'));
+        void this.scrollToBottom();
+        return;
+      }
+
       console.error(error);
       this.errorMessage.set(this.t('errors.buildFailed'));
       void this.scrollToBottom();
     } finally {
       this.buildAbortController = null;
-      this.stopBuildProgressTicker();
       this.buildProgress.set(null);
       this.building.set(false);
     }
@@ -3596,7 +3599,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   }
 
   private resetBuildState(): void {
-    this.stopBuildProgressTicker();
     this.buildProgress.set(null);
     this.result.set(null);
     this.errorMessage.set('');
@@ -3606,48 +3608,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
   }
 
   private handleBuildProgressSnapshot(snapshot: AutoBuildProgressSnapshot): void {
-    const now = Date.now();
-    const nextSignature = this.buildProgressSnapshotSignature(snapshot);
-
-    this.buildProgressNowMs.set(now);
-
-    if (nextSignature !== this.currentBuildProgressSignature) {
-      this.currentBuildProgressSignature = nextSignature;
-      this.currentBuildStepStartedAtMs.set(now);
-    }
-
     this.buildProgress.set(snapshot);
-  }
-
-  private buildProgressSnapshotSignature(snapshot: AutoBuildProgressSnapshot): string {
-    return [
-      snapshot.stage,
-      snapshot.completedAttempts,
-      snapshot.currentDroppedTypes.join('|'),
-      snapshot.currentDroppedClasses.join('|'),
-      snapshot.currentAllowedLeadersWithSuperEffects ? '1' : '0',
-      snapshot.currentIgnoredLeaderSuperSpecialCriteria ? '1' : '0',
-      snapshot.messageKey,
-      String(snapshot.messageParams?.['current'] ?? ''),
-    ].join('::');
-  }
-
-  private startBuildProgressTicker(): void {
-    this.stopBuildProgressTicker();
-    this.buildProgressNowMs.set(Date.now());
-    this.buildProgressTickerId = globalThis.setInterval(() => {
-      this.buildProgressNowMs.set(Date.now());
-    }, 1000);
-  }
-
-  private stopBuildProgressTicker(): void {
-    if (this.buildProgressTickerId !== null) {
-      globalThis.clearInterval(this.buildProgressTickerId);
-      this.buildProgressTickerId = null;
-    }
-
-    this.currentBuildProgressSignature = '';
-    this.currentBuildStepStartedAtMs.set(null);
   }
 
   private async resetPageState(): Promise<void> {
@@ -3827,6 +3788,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       state.manualSlots.map((slot) => ({
         role: slot.role,
         characterIds: [...slot.characterIds],
+        requiredCharacterId:
+          slot.requiredCharacterId != null && slot.characterIds.includes(slot.requiredCharacterId)
+            ? slot.requiredCharacterId
+            : null,
       })),
     );
     this.activeManualSlotRole.set(this.resolveInitialManualSlotRole(state.manualSlots));
@@ -4404,6 +4369,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         characterIds: slot.characterIds.filter(
           (selectedCharacterId) => selectedCharacterId !== characterId,
         ),
+        requiredCharacterId:
+          slot.requiredCharacterId === characterId ? null : slot.requiredCharacterId,
       })),
     );
   }
@@ -4421,6 +4388,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         characterIds: slot.characterIds.filter(
           (selectedCharacterId) => !characterIdSet.has(selectedCharacterId),
         ),
+        requiredCharacterId:
+          slot.requiredCharacterId != null && characterIdSet.has(slot.requiredCharacterId)
+            ? null
+            : (slot.requiredCharacterId ?? null),
       })),
     );
   }
@@ -4554,6 +4525,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       this.manualSlots().find((slot) => slot.role === role) ?? {
         role,
         characterIds: [],
+        requiredCharacterId: null,
       }
     );
   }
@@ -4584,6 +4556,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     return this.manualSlots().map((slot) => ({
       role: slot.role,
       characterIds: [...slot.characterIds],
+      requiredCharacterId:
+        slot.requiredCharacterId != null && slot.characterIds.includes(slot.requiredCharacterId)
+          ? slot.requiredCharacterId
+          : null,
     }));
   }
 
@@ -5310,19 +5286,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
     return `~${hours}h ${minutes}m`;
   }
 
-  private formatLiveDuration(durationMs: number): string {
-    const totalSeconds = Math.max(0, Math.floor(durationMs / 1000));
-
-    if (totalSeconds < 60) {
-      return `${totalSeconds}s`;
-    }
-
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-
-    return `${minutes}m ${seconds}s`;
-  }
-
   private t(
     key: string,
     parameters?: Record<string, string | number | boolean | null | undefined>,
@@ -5341,7 +5304,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
       return [];
     }
 
-    return this.repository.getAutoBuilderCandidates(
+    const records = await this.repository.getAutoBuilderCandidates(
       this.selectedTypes(),
       AUTO_TEAM_CANDIDATE_LIMIT,
       {
@@ -5351,6 +5314,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewDidEnter, Vie
         excludedCharacterIds: this.effectiveExcludedCharacterIds(),
       },
     );
+
+    return this.autoTeamBuilder.resolveCaptainCoveredCandidateRecords(records, {
+      captainCharacterId: this.effectiveCaptainLeaderId(),
+      friendCaptainCharacterId: this.effectiveFriendLeaderId(),
+      requireFullCaptainAbilityCoverage: this.requireFullCaptainAbilityCoverage(),
+    });
   }
 
   private resolveCurrentAutoBuildAllowedCharacterIds(): number[] {

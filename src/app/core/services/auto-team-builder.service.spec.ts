@@ -3,7 +3,9 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import {
   AUTO_TEAM_CANDIDATE_LIMIT,
+  AUTO_TEAM_BUILDER_CLASSES,
   AUTO_TEAM_BUILDER_DEFAULT_TYPE,
+  AUTO_TEAM_BUILDER_TYPES,
   createEmptyAutoBuildCostRange,
   createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
@@ -16,11 +18,16 @@ import {
 import { type AutoBuildAbilitySource } from '../models/auto-team-builder-ability.models';
 import { type CharacterDetailRecord, type ShipRecord } from '../models/optc.models';
 import { AutoTeamBuildCancelledError } from './auto-team-builder.engine';
-import { AutoTeamBuilderService } from './auto-team-builder.service';
+import {
+  AutoTeamBuildSearchTooLargeError,
+  AutoTeamBuilderService,
+} from './auto-team-builder.service';
 import {
   buildAutoBuildCandidate,
+  buildAutoTeamResultFromPreparedContext,
   buildAutoTeamResult,
   hasReadableEffectText,
+  prepareAutoTeamBuildContext,
   resolveLeaderSuperEffectScopeFromEffectText,
 } from './auto-team-builder.utils';
 import { type AutoTeamBuilderWorkerRequest } from './auto-team-builder.worker.models';
@@ -37,6 +44,76 @@ const BROOK_CAPTAIN_ABILITY =
 describe('Auto team builder', () => {
   beforeAll(() => {
     vi.stubGlobal('DOMParser', new JSDOM('').window.DOMParser);
+  });
+
+  it('keeps the synthetic favorites regression anchored on newest favorite 4556', () => {
+    const favoriteIds = createSynthetic4556FavoriteIds();
+
+    expect(favoriteIds).toContain(4556);
+    expect(favoriteIds).toContain(4549);
+    expect(Math.max(...favoriteIds)).toBe(4556);
+  });
+
+  it('loads the synthetic preset with required manual 4556 leaders and all broad filters selected', () => {
+    const preset = createSynthetic4556Preset();
+
+    expect(
+      preset.manualSelection?.manualSlots?.find((slot) => slot.role === 'captain')?.characterIds,
+    ).toContain(4556);
+    expect(
+      preset.manualSelection?.manualSlots?.find((slot) => slot.role === 'friendCaptain')
+        ?.characterIds,
+    ).toContain(4556);
+    expect(
+      preset.manualSelection?.manualSlots?.find((slot) => slot.role === 'captain')
+        ?.requiredCharacterId,
+    ).toBe(4556);
+    expect(
+      preset.manualSelection?.manualSlots?.find((slot) => slot.role === 'friendCaptain')
+        ?.requiredCharacterId,
+    ).toBe(4556);
+    expect(preset.manualSelection?.captainLeaderId).toBe(4556);
+    expect(preset.manualSelection?.friendCaptainLeaderId).toBe(4556);
+    expect(preset.filters?.selectedTypes).toEqual([...AUTO_TEAM_BUILDER_TYPES]);
+    expect(preset.filters?.selectedClasses).toEqual([...AUTO_TEAM_BUILDER_CLASSES]);
+    expect(preset.filters?.favoritesOnly).toBe(true);
+  });
+
+  it('completes the exported broad-filter 4556 leader case without a 257-attempt fallback plan', async () => {
+    const favoriteIds = createSynthetic4556FavoriteIds();
+    const progressSnapshots: AutoBuildProgressSnapshot[] = [];
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createExported4556ReproRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        favoritesOnly: true,
+        favoriteCharacterIds: favoriteIds,
+        requireUniqueBaseCharacterNames: true,
+        manualSlots: createManualLeaderSlots(4556),
+      },
+      {
+        workerCount: 1,
+        onProgress: (snapshot) => progressSnapshots.push(snapshot),
+      },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(4556);
+    expect(result?.slots[1]?.character.id).toBe(4556);
+    expect(
+      progressSnapshots.find((snapshot) => snapshot.stage === 'exactAttempt')?.totalAttempts,
+    ).toBeLessThan(257);
+    expect(progressSnapshots.some((snapshot) => snapshot.totalAttempts === 257)).toBe(false);
+    expect(progressSnapshots.at(-1)).toMatchObject({
+      stage: 'completed',
+      attemptCountFinal: true,
+    });
   });
 
   it('parses type-targeted leader super effect scope text', () => {
@@ -76,6 +153,18 @@ describe('Auto team builder', () => {
     expect(candidate.tags.captainHpMultiplier).toBe(1.3);
     expect(candidate.tags.captainScope.allowedTypes).toEqual(['DEX', 'STR', 'QCK']);
     expect(candidate.tags.captainScope.hasTypeRestriction).toBe(true);
+  });
+
+  it('matches the prepared-context builder result with the compatibility builder', () => {
+    const records = createStrictMixedTeamRecords();
+    const input = createInput(['DEX', 'PSY'], ['Fighter', 'Slasher'], {
+      requireUniqueBaseCharacterNames: true,
+    });
+    const context = prepareAutoTeamBuildContext(records);
+
+    expect(buildAutoTeamResultFromPreparedContext(context, input)).toEqual(
+      buildAutoTeamResult(records, input),
+    );
   });
 
   it('normalizes HTML ability text before deriving candidate tags', () => {
@@ -1859,7 +1948,7 @@ describe('Auto team builder', () => {
     expect(result?.slots[1]?.character.id).toBe(6101);
   });
 
-  it('prefers newer id before higher leader boost for automatic captains', () => {
+  it('prefers higher average leader boost before newer id for automatic captains', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderPriorityCaptainRecord({
@@ -1884,11 +1973,11 @@ describe('Auto team builder', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(6201);
-    expect(result?.slots[1]?.character.id).toBe(6201);
+    expect(result?.slots[0]?.character.id).toBe(6200);
+    expect(result?.slots[1]?.character.id).toBe(6200);
   });
 
-  it('prefers newer id even when the newer automatic leader has a weaker boost', () => {
+  it('keeps boost priority ahead of newer id for automatic captains', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderPriorityCaptainRecord({
@@ -1913,8 +2002,8 @@ describe('Auto team builder', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(6305);
-    expect(result?.slots[1]?.character.id).toBe(6305);
+    expect(result?.slots[0]?.character.id).toBe(6300);
+    expect(result?.slots[1]?.character.id).toBe(6300);
   });
 
   it('prefers newer id over captain score when leader boost ties', () => {
@@ -1995,7 +2084,7 @@ describe('Auto team builder', () => {
     expect(result?.slots[1]?.character.id).toBe(6500);
   });
 
-  it('does not let selected HP boost priority override newest-id automatic leader selection', () => {
+  it('uses selected HP boost priority for automatic leader selection', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderPriorityCaptainRecord({
@@ -2023,11 +2112,11 @@ describe('Auto team builder', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(6600);
-    expect(result?.slots[1]?.character.id).toBe(6600);
+    expect(result?.slots[0]?.character.id).toBe(6401);
+    expect(result?.slots[1]?.character.id).toBe(6401);
   });
 
-  it('does not let selected ATK boost priority override newest-id automatic leader selection', () => {
+  it('uses selected ATK boost priority for automatic leader selection', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderPriorityCaptainRecord({
@@ -2055,11 +2144,11 @@ describe('Auto team builder', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(6601);
-    expect(result?.slots[1]?.character.id).toBe(6601);
+    expect(result?.slots[0]?.character.id).toBe(6402);
+    expect(result?.slots[1]?.character.id).toBe(6402);
   });
 
-  it('does not let selected HP and ATK boost priority override newest-id leader selection', () => {
+  it('uses selected HP and ATK average boost priority for automatic leader selection', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderPriorityCaptainRecord({
@@ -2087,8 +2176,8 @@ describe('Auto team builder', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(6602);
-    expect(result?.slots[1]?.character.id).toBe(6602);
+    expect(result?.slots[0]?.character.id).toBe(6403);
+    expect(result?.slots[1]?.character.id).toBe(6403);
   });
 
   it('filters auto-filled leaders by ATK captain boost range before priority sorting', () => {
@@ -2694,6 +2783,115 @@ describe('Auto team builder', () => {
     );
 
     expect(result).toBeNull();
+  });
+
+  it('prunes unsupported super special subs before searching strict teams', () => {
+    const unsupportedIds = Array.from({ length: 48 }, (_, index) => 9000 + index);
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 7330,
+          name: 'Strict Search Captain',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of all characters by 5x and their HP by 1.3x.',
+            specialText: 'Boosts orb effects of crew by 2.25x for 1 turn.',
+          },
+        }),
+        ...unsupportedIds.map((id) => createUnsupportedSuperSpecialSubRecord(id)),
+        createCharacterRecord({
+          id: 7324,
+          name: 'Valid Strict Sub 1',
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Boosts ATK of crew by 2x for 1 turn.' },
+        }),
+        createCharacterRecord({
+          id: 7323,
+          name: 'Valid Strict Sub 2',
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Boosts orb effects of crew by 2x for 1 turn.' },
+        }),
+        createCharacterRecord({
+          id: 7322,
+          name: 'Valid Strict Sub 3',
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Reduces Bind duration by 5 turns.' },
+        }),
+        createCharacterRecord({
+          id: 7321,
+          name: 'Valid Strict Sub 4',
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Reduces Paralysis duration by 5 turns.' },
+        }),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireLeaderSuperSpecialCriteria: true,
+        manualSlots: createManualSlots({
+          captain: [7330],
+          friendCaptain: [7330],
+        }),
+        lockedCharacterIds: [7330],
+        captainCharacterId: 7330,
+        friendCaptainCharacterId: 7330,
+      }),
+    );
+    const resultIds = result?.slots.map((slot) => slot.character.id) ?? [];
+
+    expect(result).not.toBeNull();
+    expect(resultIds.some((id) => unsupportedIds.includes(id))).toBe(false);
+    expect(resultIds).toEqual([7330, 7330, 7324, 7323, 7322, 7321]);
+  });
+
+  it('keeps required unsupported super special manual subs available to relaxed fallback attempts', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue([
+        createCharacterRecord({
+          id: 7340,
+          name: 'Fallback Captain',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of all characters by 5x and their HP by 1.3x.',
+            specialText: 'Boosts orb effects of crew by 2.25x for 1 turn.',
+          },
+        }),
+        createNonRosterSuperSpecialSubRecord(7341),
+        createCharacterRecord({
+          id: 7342,
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Boosts ATK of crew by 2x for 1 turn.' },
+        }),
+        createCharacterRecord({
+          id: 7343,
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Reduces Bind duration by 5 turns.' },
+        }),
+        createCharacterRecord({
+          id: 7344,
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Reduces Paralysis duration by 5 turns.' },
+        }),
+      ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      manualSlots: createManualSlots(
+        {
+          captain: [7340],
+          friendCaptain: [7340],
+          sub1: [7341],
+        },
+        {
+          sub1: 7341,
+        },
+      ),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.requestedInput.requireLeaderSuperSpecialCriteria).toBe(true);
+    expect(result?.input.requireLeaderSuperSpecialCriteria).toBe(false);
+    expect(result?.relaxation.ignoredLeaderSuperSpecialCriteria).toBe(true);
+    expect(result?.slots.some((slot) => slot.character.id === 7341)).toBe(true);
   });
 
   it('accepts a mixed super special criteria leader when the roster branch is satisfied', () => {
@@ -3433,6 +3631,224 @@ describe('Auto team builder', () => {
     );
   });
 
+  it('prunes favorite-only search progress to the selected captain coverage pool', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createCaptainCoveragePruneRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const progressSnapshots: AutoBuildProgressSnapshot[] = [];
+
+    const result = await service.buildTeam(
+      ['Fighter'],
+      ['DEX'],
+      {
+        favoritesOnly: true,
+        favoriteCharacterIds: [8300, 8301, 8302, 8303, 8304, 8305],
+        manualSlots: createManualSlots({
+          captain: [8300],
+        }),
+      },
+      {
+        onProgress: (snapshot) => progressSnapshots.push(snapshot),
+      },
+    );
+
+    expect(result?.candidateCount).toBe(5);
+    expect(result?.slots.some((slot) => slot.character.id === 8305)).toBe(false);
+    expect(progressSnapshots.some((snapshot) => snapshot.candidateCount === 5)).toBe(true);
+    expect(progressSnapshots.every((snapshot) => snapshot.candidateCount !== 6)).toBe(true);
+  });
+
+  it('excludes candidates outside the selected captain standard boost scope in simple mode', () => {
+    const service = new AutoTeamBuilderService({} as never);
+    const pruned = service.resolveCaptainCoveredCandidateRecords(
+      createCaptainCoveragePruneRecords(),
+      {
+        captainCharacterId: 8300,
+        requireFullCaptainAbilityCoverage: false,
+      },
+    );
+
+    expect(pruned.map((record) => record.id)).toEqual([8300, 8301, 8302, 8303, 8304]);
+  });
+
+  it('uses full per-slot captain ability coverage for pool pruning without requiring team tag clauses per character', () => {
+    const service = new AutoTeamBuilderService({} as never);
+    const captain = createCharacterRecord({
+      id: 8310,
+      primaryClass: 'Fighter',
+      type: 'DEX',
+      detail: {
+        captainAbility:
+          'Boosts ATK of [DEX] characters by 5x and their HP by 1.3x, makes [DEX] orbs beneficial for [DEX] characters. If your crew has 4+ [Straw Hat Pirates] characters, reduces Despair duration by 10 turns.',
+      },
+    });
+    const untaggedDexSub = createCharacterRecord({
+      id: 8311,
+      primaryClass: 'Fighter',
+      type: 'DEX',
+      detail: {
+        specialText: 'Reduces Bind duration by 5 turns.',
+      },
+    });
+    const simpleOnlySub = createCharacterRecord({
+      id: 8312,
+      primaryClass: 'Fighter',
+      type: 'DEX',
+      detail: {
+        specialText: 'Reduces Paralysis duration by 5 turns.',
+      },
+    });
+    const fullRiderCaptain = createCharacterRecord({
+      id: 8313,
+      primaryClass: 'Fighter',
+      type: 'DEX',
+      detail: {
+        captainAbility:
+          'Boosts ATK of [DEX] characters by 5x and their HP by 1.3x, makes [STR] orbs beneficial for [STR] characters.',
+      },
+    });
+
+    const tagAwarePruned = service.resolveCaptainCoveredCandidateRecords(
+      [captain, untaggedDexSub],
+      {
+        captainCharacterId: 8310,
+        requireFullCaptainAbilityCoverage: true,
+      },
+    );
+    const fullRiderPruned = service.resolveCaptainCoveredCandidateRecords(
+      [fullRiderCaptain, simpleOnlySub],
+      {
+        captainCharacterId: 8313,
+        requireFullCaptainAbilityCoverage: true,
+      },
+    );
+
+    expect(tagAwarePruned.map((record) => record.id)).toEqual([8310, 8311]);
+    expect(fullRiderPruned.map((record) => record.id)).toEqual([8313]);
+  });
+
+  it('intersects selected captain and friend captain coverage while retaining selected leaders', () => {
+    const service = new AutoTeamBuilderService({} as never);
+    const records = [
+      createCharacterRecord({
+        id: 8320,
+        primaryClass: 'Fighter',
+        type: 'DEX',
+        detail: {
+          captainAbility: 'Boosts ATK of [DEX] characters by 5x and their HP by 1.3x.',
+        },
+      }),
+      createCharacterRecord({
+        id: 8321,
+        primaryClass: 'Slasher',
+        type: 'PSY',
+        detail: {
+          captainAbility: 'Boosts ATK of Fighter characters by 5x and their HP by 1.3x.',
+        },
+      }),
+      createCharacterRecord({
+        id: 8322,
+        primaryClass: 'Fighter',
+        type: 'DEX',
+        detail: {
+          specialText: 'Reduces Bind duration by 5 turns.',
+        },
+      }),
+      createCharacterRecord({
+        id: 8323,
+        primaryClass: 'Shooter',
+        type: 'DEX',
+        detail: {
+          specialText: 'Reduces Despair duration by 5 turns.',
+        },
+      }),
+      createCharacterRecord({
+        id: 8324,
+        primaryClass: 'Fighter',
+        type: 'PSY',
+        detail: {
+          specialText: 'Reduces Paralysis duration by 5 turns.',
+        },
+      }),
+    ];
+
+    const pruned = service.resolveCaptainCoveredCandidateRecords(records, {
+      captainCharacterId: 8320,
+      friendCaptainCharacterId: 8321,
+    });
+
+    expect(pruned.map((record) => record.id)).toEqual([8320, 8321, 8322]);
+  });
+
+  it('retains the selected leader record even when its own captain scope is self-only', () => {
+    const service = new AutoTeamBuilderService({} as never);
+    const captain = createCharacterRecord({
+      id: 8330,
+      primaryClass: 'Fighter',
+      type: 'DEX',
+      detail: {
+        captainAbility: 'Boosts ATK of this character by 6x.',
+      },
+    });
+    const sub = createCharacterRecord({
+      id: 8331,
+      primaryClass: 'Fighter',
+      type: 'DEX',
+      detail: {
+        specialText: 'Reduces Bind duration by 5 turns.',
+      },
+    });
+
+    const pruned = service.resolveCaptainCoveredCandidateRecords([captain, sub], {
+      captainCharacterId: 8330,
+    });
+
+    expect(pruned.map((record) => record.id)).toEqual([8330]);
+  });
+
+  it('prunes any-friend-captain auto-fill by the selected captain coverage', async () => {
+    const coveredFriendCaptain = createCharacterRecord({
+      id: 8350,
+      name: 'Covered Friend Captain',
+      primaryClass: 'Fighter',
+      type: 'DEX',
+      detail: {
+        captainAbility: 'Boosts ATK of [DEX] characters by 5.25x and their HP by 1.3x.',
+      },
+    });
+    const uncoveredNewestFriendCaptain = createCharacterRecord({
+      id: 9999,
+      name: 'Uncovered Friend Captain',
+      primaryClass: 'Fighter',
+      type: 'PSY',
+      detail: {
+        captainAbility: 'Boosts ATK of [PSY] characters by 5.25x and their HP by 1.3x.',
+      },
+    });
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValueOnce(createCaptainCoveragePruneRecords())
+        .mockResolvedValueOnce([
+          uncoveredNewestFriendCaptain,
+          coveredFriendCaptain,
+          createCaptainCoveragePruneRecords()[0]!,
+        ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      allowAnyFriendCaptainAutoFill: true,
+      manualSlots: createManualSlots({
+        captain: [8300],
+      }),
+    });
+
+    expect(result?.slots[1]?.character.id).toBe(8350);
+    expect(result?.slots.some((slot) => slot.character.id === 9999)).toBe(false);
+  });
+
   it('builds teams from favorites only when favorites mode is enabled', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
@@ -3784,6 +4200,89 @@ describe('Auto team builder', () => {
     ).toBe(true);
   });
 
+  it('selects the newest eligible favorite as the preferred auto-filled leader', async () => {
+    const newestFavoriteLeader = createLeaderPriorityCaptainRecord({
+      id: 4556,
+      name: 'Portgas D. Ace - The Man Who Came for an Emperor of the Sea',
+      cost: 55,
+      atkMultiplier: 5.5,
+      hpMultiplier: 1.4,
+      universal: true,
+    });
+    const olderFavoriteLeader = createLeaderPriorityCaptainRecord({
+      id: 4549,
+      name: 'Eustass "Captain" Kid - Aimed Damned Punk',
+      cost: 65,
+      atkMultiplier: 5.5,
+      hpMultiplier: 1.4,
+      universal: true,
+    });
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue([
+          newestFavoriteLeader,
+          olderFavoriteLeader,
+          createAtkSubRecord(),
+          createAffinitySubRecord(),
+          createUtilitySubRecord(),
+          createConsistencySubRecord(),
+        ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      favoritesOnly: true,
+      favoriteCharacterIds: [4556, 4549, 5890, 5880, 5870, 5860],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(4556);
+    expect(result?.slots[1]?.character.id).toBe(4556);
+  });
+
+  it('selects the newest eligible favorite inside the leader cost range', async () => {
+    const newestFavoriteLeader = createLeaderPriorityCaptainRecord({
+      id: 4556,
+      name: 'Portgas D. Ace - The Man Who Came for an Emperor of the Sea',
+      cost: 55,
+      atkMultiplier: 5.5,
+      hpMultiplier: 1.4,
+      universal: true,
+    });
+    const costEligibleFavoriteLeader = createLeaderPriorityCaptainRecord({
+      id: 4549,
+      name: 'Eustass "Captain" Kid - Aimed Damned Punk',
+      cost: 65,
+      atkMultiplier: 5.5,
+      hpMultiplier: 1.4,
+      universal: true,
+    });
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue([
+          newestFavoriteLeader,
+          costEligibleFavoriteLeader,
+          createAtkSubRecord(),
+          createAffinitySubRecord(),
+          createUtilitySubRecord(),
+          createConsistencySubRecord(),
+        ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      favoritesOnly: true,
+      favoriteCharacterIds: [4556, 4549, 5890, 5880, 5870, 5860],
+      leaderCostRange: { min: 65, max: null },
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(4549);
+    expect(result?.slots[1]?.character.id).toBe(4549);
+  });
+
   it('applies sub cost range only to auto-filled subs', async () => {
     const highCostCaptain = { ...createCaptainRecord(), cost: 99 };
     const repository = {
@@ -3807,7 +4306,7 @@ describe('Auto team builder', () => {
     ).toBe(true);
   });
 
-  it('allows an auto-filled non-favorite friend captain while keeping other auto-filled slots in favorites', async () => {
+  it('keeps auto-filled friend captain inside favorites when favorites mode is enabled', async () => {
     const favoriteCharacterIds = [5900, 5890, 5880, 5870, 5860];
     const broadFriendCaptain = createLeaderPriorityCaptainRecord({
       id: 9000,
@@ -3832,12 +4331,10 @@ describe('Auto team builder', () => {
 
     expect(result).not.toBeNull();
     expect(result?.slots[1]?.role).toBe('friendCaptain');
-    expect(result?.slots[1]?.character.id).toBe(9000);
-    expect(
-      result?.slots
-        .filter((slot) => slot.role !== 'friendCaptain')
-        .every((slot) => favoriteCharacterIds.includes(slot.character.id)),
-    ).toBe(true);
+    expect(result?.slots[1]?.character.id).toBe(5900);
+    expect(result?.slots.every((slot) => favoriteCharacterIds.includes(slot.character.id))).toBe(
+      true,
+    );
     expect(repository.getAutoBuilderCandidates).toHaveBeenNthCalledWith(
       1,
       ['DEX'],
@@ -4061,6 +4558,76 @@ describe('Auto team builder', () => {
     expect(result?.slots[2]?.reasonChips).toContain('Manual pick');
   });
 
+  it('keeps a required manual captain in the captain slot', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createDualLeaderMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      manualSlots: createManualSlots(
+        {
+          captain: [5927, 5925],
+          friendCaptain: [5925],
+        },
+        {
+          captain: 5925,
+        },
+      ),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(5925);
+    expect(result?.input.manualSlots.find((slot) => slot.role === 'captain')).toMatchObject({
+      characterIds: [5927, 5925],
+      requiredCharacterId: 5925,
+    });
+  });
+
+  it('keeps a required manual friend captain in the friend captain slot', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createDualLeaderMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      manualSlots: createManualSlots(
+        {
+          captain: [5925],
+          friendCaptain: [5925, 5927],
+        },
+        {
+          friendCaptain: 5927,
+        },
+      ),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[1]?.character.id).toBe(5927);
+  });
+
+  it('keeps a required manual sub in its exact sub slot', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      manualSlots: createManualSlots(
+        {
+          sub2: [5880],
+        },
+        {
+          sub2: 5880,
+        },
+      ),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[3]?.character.id).toBe(5880);
+    expect(result?.slots[3]?.reasonChips).toContain('Manual pick');
+  });
+
   it('relaxes a manual sub pick that blocks final ability coverage', async () => {
     const createAbilitySub = (id: number, abilityKey: string): CharacterDetailRecord =>
       createCharacterRecord({
@@ -4123,6 +4690,71 @@ describe('Auto team builder', () => {
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
   });
 
+  it('returns null when a required manual sub pick blocks final ability coverage', async () => {
+    const createAbilitySub = (id: number, abilityKey: string): CharacterDetailRecord =>
+      createCharacterRecord({
+        id,
+        primaryClass: 'Fighter',
+        detail: {
+          specialText: `Covers ${abilityKey}.`,
+          builderAbilities: [
+            {
+              key: abilityKey,
+              label: abilityKey,
+              minTurns: null,
+              isCompleteRemoval: false,
+              slotTokens: [],
+              source: 'specialText',
+            },
+          ],
+        },
+      });
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue([
+        createCharacterRecord({
+          id: 9100,
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of all characters by 5x and HP by 1.3x.',
+          },
+        }),
+        createAbilitySub(9104, 'coverage_d'),
+        createAbilitySub(9103, 'coverage_c'),
+        createAbilitySub(9102, 'coverage_b'),
+        createAbilitySub(9101, 'coverage_a'),
+        createCharacterRecord({
+          id: 9000,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts chain by 1.1x for 1 turn.',
+          },
+        }),
+      ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      requiredAbilities: ['coverage_a', 'coverage_b', 'coverage_c', 'coverage_d'].map(
+        (abilityKey) => ({
+          abilityKey,
+          minTurns: null,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+        }),
+      ),
+      manualSlots: createManualSlots(
+        {
+          sub1: [9000],
+        },
+        {
+          sub1: 9000,
+        },
+      ),
+    });
+
+    expect(result).toBeNull();
+  });
+
   it('falls back to auto leaders when a manual captain pick cannot be used', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
@@ -4138,6 +4770,26 @@ describe('Auto team builder', () => {
     expect(result).not.toBeNull();
     expect(result?.slots[0]?.character.id).not.toBe(999999);
     expect(result?.slots[1]?.character.id).not.toBe(999999);
+  });
+
+  it('returns null when a required manual captain pick cannot be used', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      manualSlots: createManualSlots(
+        {
+          captain: [999999],
+        },
+        {
+          captain: 999999,
+        },
+      ),
+    });
+
+    expect(result).toBeNull();
   });
 
   it('still returns null when no team can be built after relaxing manual picks', async () => {
@@ -5387,22 +6039,24 @@ describe('Auto team builder', () => {
       resizedSnapshot!.totalAttempts - resizedSnapshot!.completedAttempts - 1,
       0,
     );
-    const oneWorkerEstimate =
-      resizedSnapshot!.averageFallbackAttemptMs! * Math.ceil(remainingFallbackAttempts / 2);
+    const remainingAndInFlightAttempts = remainingFallbackAttempts + 1;
     const threeWorkerEstimate =
-      resizedSnapshot!.averageFallbackAttemptMs! * Math.ceil(remainingFallbackAttempts / 3);
+      (resizedSnapshot!.averageFallbackAttemptMs! * remainingAndInFlightAttempts) / 3;
+    const twoWorkerEstimate =
+      (resizedSnapshot!.averageFallbackAttemptMs! * remainingAndInFlightAttempts) / 2;
 
     expect(resizedSnapshot!.estimatedRemainingMs).toBe(threeWorkerEstimate);
-    expect(resizedSnapshot!.estimatedRemainingMs).not.toBe(oneWorkerEstimate);
+    expect(resizedSnapshot!.estimatedRemainingMs).not.toBe(twoWorkerEstimate);
   });
 
-  it('waits for earlier pooled fallback attempts before resolving a later valid result', async () => {
+  it('resolves a later valid pooled fallback result without waiting for earlier in-flight attempts', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
       getShips: vi.fn().mockResolvedValue([]),
     };
     const service = new AutoTeamBuilderService(repository as never);
     const deferredFallbacks: Array<{ worker: PooledFakeWorker; runId: string }> = [];
+    let deferredValidFallback: { worker: PooledFakeWorker; runId: string } | null = null;
     const workerA = new PooledFakeWorker((request) => {
       if (request.type === 'init') {
         workerA.emitMessage({ type: 'ready' });
@@ -5445,11 +6099,7 @@ describe('Auto team builder', () => {
       }
 
       if (request.input.types.length === 1 && request.input.selectedClasses.length === 1) {
-        workerA.emitMessage({
-          type: 'result',
-          runId: request.runId,
-          result: buildWorkerResult(createInput(['DEX'], ['Fighter'])),
-        });
+        deferredValidFallback = { worker: workerA, runId: request.runId };
       }
     });
     const workerB = new PooledFakeWorker((request) => {
@@ -5513,14 +6163,20 @@ describe('Auto team builder', () => {
       });
 
     await flushMicrotasks();
-    expect(settled).toBe(false);
+    await flushMicrotasks();
     expect(deferredFallbacks).toHaveLength(1);
+    expect(deferredValidFallback).not.toBeNull();
+    expect(settled).toBe(false);
 
-    deferredFallbacks[0]!.worker.emitMessage({
+    deferredValidFallback!.worker.emitMessage({
       type: 'result',
-      runId: deferredFallbacks[0]!.runId,
-      result: null,
+      runId: deferredValidFallback!.runId,
+      result: buildWorkerResult(createInput(['DEX'], ['Fighter'])),
     });
+
+    await flushMicrotasks();
+    await flushMicrotasks();
+    expect(settled).toBe(true);
 
     const result = await buildPromise;
 
@@ -5981,7 +6637,7 @@ describe('Auto team builder', () => {
     expect(workerB.terminated).toBe(true);
   });
 
-  it('reports pooled fallback progress beyond the legacy 1024-attempt ceiling', async () => {
+  it('reports bounded pooled fallback progress for the preferred leader fast path', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
       getShips: vi.fn().mockResolvedValue([]),
@@ -6033,8 +6689,8 @@ describe('Auto team builder', () => {
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
 
     const result = await service.buildTeam(
-      createSyntheticClasses(10),
-      ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      createSyntheticClasses(8),
+      ['DEX', 'STR', 'QCK', 'PSY'],
       {
         requireLeaderSuperSpecialCriteria: true,
       },
@@ -6044,19 +6700,133 @@ describe('Auto team builder', () => {
       },
     );
 
-    expect(result).not.toBeNull();
+    expect(result).toBeNull();
     expect(runAttemptCount).toBeGreaterThanOrEqual(2);
     expect(
       progressSnapshots.find((snapshot) => snapshot.stage === 'exactAttempt')?.totalAttempts,
-    ).toBe(31_744);
+    ).toBe(257);
     expect(
       progressSnapshots.find(
-        (snapshot) => snapshot.stage === 'fallbackAttempt' && snapshot.totalAttempts === 31_744,
+        (snapshot) => snapshot.stage === 'fallbackAttempt' && snapshot.totalAttempts === 257,
       ),
     ).toBeDefined();
-    expect(progressSnapshots.at(-1)?.totalAttempts).toBe(31_744);
+    expect(progressSnapshots.at(-1)?.totalAttempts).toBe(257);
     expect(progressSnapshots.at(-1)?.attemptCountFinal).toBe(true);
-    expect(progressSnapshots.at(-1)?.totalAttempts).toBeGreaterThan(1024);
+    expect(progressSnapshots.at(-1)?.stage).toBe('completed');
+    expect(progressSnapshots.at(-1)?.totalAttempts).toBeLessThan(31_744);
+  });
+
+  it('throttles deep pooled fallback searches and keeps the preferred leader attempt set bounded', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const progressSnapshots: AutoBuildProgressSnapshot[] = [];
+    const successfulWorkerResult = buildAutoTeamResult(
+      createStrictMixedTeamRecords(),
+      createInput(['DEX'], ['Fighter', 'Slasher']),
+    );
+    let runAttemptCount = 0;
+    const workerA = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerA.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (request.type === 'runAttempt') {
+        runAttemptCount += 1;
+        workerA.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: runAttemptCount === 1 ? null : successfulWorkerResult,
+        });
+      }
+    });
+    const workerB = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerB.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (request.type === 'runAttempt') {
+        runAttemptCount += 1;
+        workerB.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: runAttemptCount === 1 ? null : successfulWorkerResult,
+        });
+      }
+    });
+    const createWorkerSpy = vi.spyOn(
+      service as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
+
+    await expect(
+      service.buildTeam(
+        createSyntheticClasses(12),
+        ['DEX', 'STR', 'QCK', 'PSY'],
+        {
+          requireLeaderSuperSpecialCriteria: true,
+        },
+        {
+          workerCount: 4,
+          getWorkerCount: () => 4,
+          onProgress: (snapshot) => progressSnapshots.push(snapshot),
+        },
+      ),
+    ).rejects.toBeInstanceOf(AutoTeamBuildSearchTooLargeError);
+
+    expect(createWorkerSpy).toHaveBeenCalledTimes(2);
+    expect(
+      progressSnapshots.find((snapshot) => snapshot.stage === 'exactAttempt')?.totalAttempts,
+    ).toBe(257);
+    expect(progressSnapshots.some((snapshot) => snapshot.totalAttempts === 257)).toBe(true);
+  });
+
+  it('does not retry a deep pooled worker failure on the main thread', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const workerA = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerA.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (request.type === 'runAttempt') {
+        workerA.emitError();
+      }
+    });
+    const workerB = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerB.emitMessage({ type: 'ready' });
+      }
+    });
+    const createWorkerSpy = vi.spyOn(
+      service as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
+
+    await expect(
+      service.buildTeam(
+        createSyntheticClasses(12),
+        ['DEX', 'STR', 'QCK', 'PSY'],
+        {
+          requireLeaderSuperSpecialCriteria: true,
+        },
+        {
+          workerCount: 4,
+        },
+      ),
+    ).rejects.toBeInstanceOf(AutoTeamBuildSearchTooLargeError);
+
+    expect(createWorkerSpy).toHaveBeenCalledTimes(2);
   });
 
   it('falls back to the main-thread engine when pooled worker initialization fails', async () => {
@@ -6410,10 +7180,12 @@ function createInput(
 
 function createManualSlots(
   overrides: Partial<Record<AutoBuildManualSlotSelection['role'], number[]>> = {},
+  requiredOverrides: Partial<Record<AutoBuildManualSlotSelection['role'], number | null>> = {},
 ): AutoBuildManualSlotSelection[] {
   return createEmptyAutoBuildManualSlots().map((slot) => ({
     role: slot.role,
     characterIds: [...(overrides[slot.role] ?? [])],
+    requiredCharacterId: requiredOverrides[slot.role] ?? null,
   }));
 }
 
@@ -6442,6 +7214,61 @@ function createManualSlotsFromLegacySelection(
       .filter((characterId) => !selectedLeaderIds.includes(characterId))
       .slice(3, 4),
   });
+}
+
+function createCaptainCoveragePruneRecords(): CharacterDetailRecord[] {
+  return [
+    createCharacterRecord({
+      id: 8300,
+      name: 'Coverage Captain',
+      primaryClass: 'Fighter',
+      type: 'DEX',
+      detail: {
+        captainAbility: 'Boosts ATK of [DEX] characters by 5x and their HP by 1.3x.',
+        specialText: 'Boosts orb effects of [DEX] characters by 2.25x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 8301,
+      primaryClass: 'Fighter',
+      type: 'DEX',
+      detail: {
+        specialText: 'Reduces Bind duration by 5 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 8302,
+      primaryClass: 'Fighter',
+      type: 'DEX',
+      detail: {
+        specialText: 'Reduces Despair duration by 5 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 8303,
+      primaryClass: 'Fighter',
+      type: 'DEX',
+      detail: {
+        specialText: 'Boosts ATK of [DEX] characters by 2.25x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 8304,
+      primaryClass: 'Fighter',
+      type: 'DEX',
+      detail: {
+        specialText: 'Changes orbs of [DEX] characters into Matching Orbs.',
+      },
+    }),
+    createCharacterRecord({
+      id: 8305,
+      primaryClass: 'Fighter',
+      type: 'PSY',
+      detail: {
+        specialText: 'Reduces Paralysis duration by 5 turns.',
+      },
+    }),
+  ];
 }
 
 function createCaptainRecord(): CharacterDetailRecord {
@@ -6763,6 +7590,85 @@ function createSyntheticClasses(count: number): string[] {
   return Array.from({ length: count }, (_, index) => `Synthetic Class ${index + 1}`);
 }
 
+function createManualLeaderSlots(characterId: number): AutoBuildManualSlotSelection[] {
+  return createEmptyAutoBuildManualSlots().map((slot) =>
+    slot.role === 'captain' || slot.role === 'friendCaptain'
+      ? {
+          ...slot,
+          characterIds: [characterId],
+          requiredCharacterId: characterId,
+        }
+      : slot,
+  );
+}
+
+function createSynthetic4556FavoriteIds(): number[] {
+  return [4556, 4554, 4549, 4548, 4541];
+}
+
+function createSynthetic4556Preset(): {
+  manualSelection: {
+    manualSlots: AutoBuildManualSlotSelection[];
+    captainLeaderId: number;
+    friendCaptainLeaderId: number;
+  };
+  filters: { selectedTypes: string[]; selectedClasses: string[]; favoritesOnly: boolean };
+} {
+  return {
+    manualSelection: {
+      manualSlots: createManualLeaderSlots(4556),
+      captainLeaderId: 4556,
+      friendCaptainLeaderId: 4556,
+    },
+    filters: {
+      selectedTypes: [...AUTO_TEAM_BUILDER_TYPES],
+      selectedClasses: [...AUTO_TEAM_BUILDER_CLASSES],
+      favoritesOnly: true,
+    },
+  };
+}
+
+function createExported4556ReproRecords(): CharacterDetailRecord[] {
+  return [
+    createCharacterRecord({
+      id: 4556,
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      detail: {
+        captainAbility:
+          'Boosts ATK of DEX and Fighter characters by 5.25x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.',
+        specialText:
+          'Boosts orb effects of DEX and Fighter characters by 2.25x for 1 turn and changes orbs into Matching Orbs.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4554,
+      primaryClass: 'Fighter',
+      detail: { specialText: 'Boosts ATK of Fighter characters by 2.5x for 1 turn.' },
+    }),
+    createCharacterRecord({
+      id: 4549,
+      primaryClass: 'Fighter',
+      detail: { specialText: 'Boosts color affinity of DEX characters by 2x for 1 turn.' },
+    }),
+    createCharacterRecord({
+      id: 4548,
+      primaryClass: 'Fighter',
+      detail: {
+        specialText:
+          'Reduces Bind and Despair duration by 5 turns and reduces Threshold Damage Reduction duration by 5 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4541,
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: 'Changes crew orbs into Matching Orbs and reduces Special Cooldown by 1 turn.',
+      },
+    }),
+  ];
+}
+
 class FakeWorker extends EventTarget {
   public terminated = false;
   public readonly requests: AutoTeamBuilderWorkerRequest[] = [];
@@ -6784,6 +7690,10 @@ class FakeWorker extends EventTarget {
 
   public emitMessage(data: unknown): void {
     this.dispatchEvent(new MessageEvent('message', { data }));
+  }
+
+  public emitError(): void {
+    this.dispatchEvent(new Event('error') as ErrorEvent);
   }
 }
 
@@ -7846,6 +8756,18 @@ function createMixedRosterSuperCriteria(
   };
 }
 
+function createUnsupportedSuperCriteria(): NonNullable<
+  CharacterDetailRecord['detail']['superSpecialCriteria']
+> {
+  return {
+    rawText: 'This super special criteria cannot be parsed into roster requirements.',
+    requiresCaptain: false,
+    hasNonRosterBranches: true,
+    parserStatus: 'unsupported',
+    rosterBranches: [],
+  };
+}
+
 function createNonRosterSuperCriteria(): NonNullable<
   CharacterDetailRecord['detail']['superSpecialCriteria']
 > {
@@ -7856,6 +8778,35 @@ function createNonRosterSuperCriteria(): NonNullable<
     parserStatus: 'non_roster_only',
     rosterBranches: [],
   };
+}
+
+function createUnsupportedSuperSpecialSubRecord(id: number): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    name: `Unsupported Super Special ${id}`,
+    primaryClass: 'Fighter',
+    detail: {
+      specialText: 'Boosts ATK of crew by 2x for 1 turn.',
+      superSpecialText: 'Transforms Fighter characters into a Super class.',
+      superSpecialCriteriaText:
+        'This super special activation text is not supported by the roster parser.',
+      superSpecialCriteria: createUnsupportedSuperCriteria(),
+    },
+  });
+}
+
+function createNonRosterSuperSpecialSubRecord(id: number): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    name: `Non-roster Super Special ${id}`,
+    primaryClass: 'Fighter',
+    detail: {
+      specialText: 'Boosts ATK of crew by 2x for 1 turn.',
+      superSpecialText: 'Transforms Fighter characters into a Super class.',
+      superSpecialCriteriaText: createNonRosterSuperCriteria().rawText,
+      superSpecialCriteria: createNonRosterSuperCriteria(),
+    },
+  });
 }
 
 function createShipRecord(id: number, name: string, description: string): ShipRecord {

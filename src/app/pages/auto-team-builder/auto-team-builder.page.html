@@ -679,6 +679,29 @@
                             <button
                               type="button"
                               class="manual-lock-chip__icon-button"
+                              [class.manual-lock-chip__icon-button--active]="
+                                character.isRequiredInManualSlot
+                              "
+                              [disabled]="building()"
+                              [title]="requiredManualPickButtonLabel(slotCard.role, character)"
+                              [attr.aria-label]="
+                                requiredManualPickButtonLabel(slotCard.role, character)
+                              "
+                              (click)="
+                                toggleRequiredManualSlotCharacter(
+                                  slotCard.role,
+                                  character.id,
+                                  $event
+                                )
+                              "
+                            >
+                              <ion-icon
+                                [icon]="requiredManualPickButtonIcon(slotCard.role, character.id)"
+                              ></ion-icon>
+                            </button>
+                            <button
+                              type="button"
+                              class="manual-lock-chip__icon-button"
                               [disabled]="building()"
                               [title]="t('manual.similar.actions.add')"
                               [attr.aria-label]="
@@ -743,6 +766,48 @@
                         <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
                         <span class="manual-lock-chip__label">{{ character.name }}</span>
                         <span class="manual-lock-chip__actions">
+                          <span
+                            role="button"
+                            tabindex="0"
+                            class="manual-lock-chip__icon-button"
+                            [class.manual-lock-chip__icon-button--active]="
+                              character.isRequiredInManualSlot
+                            "
+                            [class.manual-lock-chip__icon-button--disabled]="building()"
+                            [title]="
+                              requiredManualPickButtonLabel(activeManualSlotRole(), character)
+                            "
+                            [attr.aria-label]="
+                              requiredManualPickButtonLabel(activeManualSlotRole(), character)
+                            "
+                            (click)="
+                              toggleRequiredManualSlotCharacter(
+                                activeManualSlotRole(),
+                                character.id,
+                                $event
+                              )
+                            "
+                            (keydown.enter)="
+                              toggleRequiredManualSlotCharacter(
+                                activeManualSlotRole(),
+                                character.id,
+                                $event
+                              )
+                            "
+                            (keydown.space)="
+                              toggleRequiredManualSlotCharacter(
+                                activeManualSlotRole(),
+                                character.id,
+                                $event
+                              )
+                            "
+                          >
+                            <ion-icon
+                              [icon]="
+                                requiredManualPickButtonIcon(activeManualSlotRole(), character.id)
+                              "
+                            ></ion-icon>
+                          </span>
                           <span
                             role="button"
                             tabindex="0"
@@ -1725,9 +1790,6 @@
             <div class="loading-card__progress-shell">
               <div class="loading-card__progress-header">
                 <strong>{{ buildOverallProgressLabel() }}</strong>
-                @if (buildCurrentStepElapsedLabel()) {
-                  <span>{{ buildCurrentStepElapsedLabel() }}</span>
-                }
               </div>
               <div class="loading-card__progress-bar" aria-hidden="true">
                 <span
