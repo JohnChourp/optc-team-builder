@@ -32,8 +32,8 @@ import conflictOverrideCatalog from '../data/auto-team-builder-party-conflict-ov
 import { type CharacterDetailRecord, type CharacterListItem } from '../models/optc.models';
 import { matchesAbilityRequirement } from './auto-team-builder-ability-match.utils';
 import {
+  type CaptainTagConditionBranch,
   captainTagBranchesSatisfied,
-  characterMatchesAnyCaptainTagBranch,
   countCaptainTagBranchMatches,
   parseCaptainTagConditionBranches,
 } from './captain-tag-conditions.utils';
@@ -157,6 +157,7 @@ interface AutoTeamBuildAttemptOptions {
 interface SubAbilityDemandContext {
   requirements: AutoBuildAbilityRequirement[];
   battleRequirements: AutoBuildBattleRequirement[];
+  leaderTagConditionSets: ActiveLeaderCriteria['tagConditionSets'];
   battleAssignmentMode: BattleRequirementAssignmentMode;
 }
 
@@ -801,18 +802,19 @@ function resolveMatchedRequiredCharacterGroupIndexes(
   );
 }
 
-function splitExtraDropAbilityRequirements(requirements: AutoBuildAbilityRequirement[]): {
-  leaderOnlyRequirements: AutoBuildAbilityRequirement[];
-  teamRequirements: AutoBuildAbilityRequirement[];
-} {
-  return {
-    leaderOnlyRequirements: requirements.filter((requirement) =>
-      isExtraDropLeaderAbilityRequirement(requirement),
-    ),
-    teamRequirements: requirements.filter(
-      (requirement) => !isExtraDropLeaderAbilityRequirement(requirement),
-    ),
-  };
+function resolveLeaderScopedAbilityRequirements(
+  requirements: AutoBuildAbilityRequirement[],
+): AutoBuildAbilityRequirement[] {
+  return requirements.filter((requirement) => isLeaderScopedAbilityRequirement(requirement));
+}
+
+function resolveCaptainSourceAbilityRequirements(
+  requirements: AutoBuildAbilityRequirement[],
+): AutoBuildAbilityRequirement[] {
+  return requirements.filter(
+    (requirement) =>
+      normalizeAbilityRequirementSourceScope(requirement.sourceScope) === 'captainAbility',
+  );
 }
 
 function leaderSatisfiesAbilityRequirement(
@@ -1570,7 +1572,9 @@ function resolveLeaderCandidateOptions(
   options: AutoTeamBuildAttemptOptions,
   allowAutoFill = true,
 ): AutoBuildCandidate[] {
-  const { leaderOnlyRequirements } = splitExtraDropAbilityRequirements(input.requiredAbilities);
+  const extraDropLeaderRequirements = input.requiredAbilities.filter((requirement) =>
+    isExtraDropLeaderAbilityRequirement(requirement),
+  );
   const manualCandidateIdSet = new Set(slotCandidates.map((candidate) => candidate.character.id));
   const candidateMatchesLeaderConstraints = (
     candidate: AutoBuildCandidate,
@@ -1580,7 +1584,7 @@ function resolveLeaderCandidateOptions(
       candidate.tags.readableCaptainText &&
       (!applyAutoFillLeaderRanges || candidateMatchesLeaderBoostRanges(candidate, input)) &&
       (!options.requireLeadersWithoutSuperEffects || !hasCandidateSuperEffects(candidate)) &&
-      leaderOnlyRequirements.every((requirement) =>
+      extraDropLeaderRequirements.every((requirement) =>
         leaderSatisfiesAbilityRequirement(candidate, requirement),
       ) &&
       (!input.requireAllSelectedClassesPerCharacter || candidate.matchesAllSelectedClasses),
@@ -1616,6 +1620,14 @@ function compareAutoFillLeaderCandidates(
     return preferredIdDifference;
   }
 
+  const leaderRequirementDifference =
+    resolveLeaderRequirementPriorityScore(right, input) -
+    resolveLeaderRequirementPriorityScore(left, input);
+
+  if (leaderRequirementDifference !== 0) {
+    return leaderRequirementDifference;
+  }
+
   const boostDifference =
     resolveLeaderBoostPriorityScore(right, input.leaderBoostFilters) -
     resolveLeaderBoostPriorityScore(left, input.leaderBoostFilters);
@@ -1631,6 +1643,19 @@ function compareAutoFillLeaderCandidates(
   }
 
   return compareCandidatesByHighestCost(left, right);
+}
+
+function resolveLeaderRequirementPriorityScore(
+  candidate: AutoBuildCandidate,
+  input: AutoBuildInput,
+): number {
+  return resolveLeaderScopedAbilityRequirements(input.requiredAbilities).reduce(
+    (score, requirement) =>
+      leaderSatisfiesAbilityRequirement(candidate, requirement)
+        ? score + Math.max(1, requirement.requiredCharacterCount)
+        : score,
+    0,
+  );
 }
 
 function comparePreferredLeaderIdOrder(
@@ -2106,6 +2131,7 @@ function selectSubs(
   const subAbilityDemandContext = collectSubAbilityDemandContext(
     input,
     battleRequirementAssignmentMode,
+    leaderCriteria,
   );
   const pool = candidates
     .filter((candidate) => {
@@ -2286,7 +2312,8 @@ function compareAutoFillSubCandidates(
 ): number {
   if (
     subAbilityDemandContext.requirements.length > 0 ||
-    subAbilityDemandContext.battleRequirements.length > 0
+    subAbilityDemandContext.battleRequirements.length > 0 ||
+    subAbilityDemandContext.leaderTagConditionSets.length > 0
   ) {
     if (subAbilityDemandContext.battleAssignmentMode === 'strict') {
       const strictGroupPreferenceDifference =
@@ -2307,6 +2334,14 @@ function compareAutoFillSubCandidates(
 
     if (demandDifference !== 0) {
       return demandDifference;
+    }
+
+    const leaderTagConditionDifference =
+      resolveLeaderTagConditionDemandScore(right, subAbilityDemandContext) -
+      resolveLeaderTagConditionDemandScore(left, subAbilityDemandContext);
+
+    if (leaderTagConditionDifference !== 0) {
+      return leaderTagConditionDifference;
     }
 
     if (subAbilityDemandContext.battleAssignmentMode === 'strict') {
@@ -2340,6 +2375,7 @@ function compareAutoFillSubCandidates(
 function collectSubAbilityDemandContext(
   input: AutoBuildInput,
   battleAssignmentMode: BattleRequirementAssignmentMode,
+  leaderCriteria: ActiveLeaderCriteria,
 ): SubAbilityDemandContext {
   const requirements = [
     ...input.requiredAbilities,
@@ -2358,6 +2394,7 @@ function collectSubAbilityDemandContext(
             ),
           ]),
     battleRequirements,
+    leaderTagConditionSets: leaderCriteria.tagConditionSets,
     battleAssignmentMode,
   };
 }
@@ -2408,6 +2445,28 @@ function resolveStrictBattleGroupDemandScore(
 
     return Math.max(bestScore, group.abilities.length);
   }, 0);
+}
+
+function resolveLeaderTagConditionDemandScore(
+  candidate: AutoBuildCandidate,
+  demandContext: SubAbilityDemandContext,
+): number {
+  return demandContext.leaderTagConditionSets.reduce(
+    (score, set) =>
+      score +
+      set.branches.filter((branch) =>
+        branch.acceptedKeys.some((key) =>
+          (candidate.character.detail.characterTags ?? [])
+            .map((tag) => normalizeTagKeyForDemand(tag))
+            .includes(key),
+        ),
+      ).length,
+    0,
+  );
+}
+
+function normalizeTagKeyForDemand(value: string): string {
+  return value.trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
 function resolveStrictBattleGroupSpreadScore(
@@ -2593,9 +2652,7 @@ function parseEffectTags(
   const allowedClasses = extractAllowedCaptainClasses(captainBoostScopeText);
   const allowedTypes = extractAllowedCaptainTypes(captainBoostScopeText);
   const maxAllowedCost = extractCaptainMaxAllowedCost(captainBoostScopeText);
-  const tagConditionBranches = input.requireFullCaptainAbilityCoverage
-    ? parseCaptainTagConditionBranches(captainText)
-    : [];
+  const tagConditionBranches = parseCaptainTagConditionBranches(captainText);
   const hasCostRestriction = maxAllowedCost !== null;
   const allCharacters =
     allowedClasses.length === 0 &&
@@ -2880,10 +2937,32 @@ function resolveActiveLeaderCriteria(
       .map((leader) => ({
         leaderId: leader.character.id,
         leaderName: leader.character.name,
-        branches: leader.tags.captainScope.tagConditionBranches,
+        branches: resolveActiveLeaderTagConditionBranches(leader, input),
       }))
       .filter((set) => set.branches.length > 0),
   };
+}
+
+function resolveActiveLeaderTagConditionBranches(
+  leader: AutoBuildCandidate,
+  input: AutoBuildInput,
+): CaptainTagConditionBranch[] {
+  if (input.requireFullCaptainAbilityCoverage) {
+    return leader.tags.captainScope.tagConditionBranches;
+  }
+
+  const captainRequirements = resolveCaptainSourceAbilityRequirements(input.requiredAbilities);
+
+  if (
+    captainRequirements.length === 0 ||
+    !captainRequirements.some((requirement) =>
+      leaderSatisfiesAbilityRequirement(leader, requirement),
+    )
+  ) {
+    return [];
+  }
+
+  return leader.tags.captainScope.tagConditionBranches;
 }
 
 export function resolveLeaderSuperEffectScopeFromEffectText(effectText: string): {
@@ -3117,12 +3196,14 @@ function matchesActiveLeaderCriteria(
     ? candidate.character.cost <= (leaderCriteria.maxAllowedCost ?? Number.POSITIVE_INFINITY)
     : true;
   const hasDimensionScope = leaderCriteria.hasClassRestriction || leaderCriteria.hasTypeRestriction;
-  const matchesDimensionScope = hasDimensionScope ? matchesClassScope || matchesTypeScope : true;
-  const matchesTagScope = leaderCriteria.tagConditionSets.every((set) =>
-    characterMatchesAnyCaptainTagBranch(candidate.character, set.branches),
-  );
+  const hasConditionalCaptainRequirement = leaderCriteria.tagConditionSets.length > 0;
+  const matchesDimensionScope = hasConditionalCaptainRequirement
+    ? true
+    : hasDimensionScope
+      ? matchesClassScope || matchesTypeScope
+      : true;
 
-  return matchesDimensionScope && matchesCostScope && matchesTagScope;
+  return matchesDimensionScope && matchesCostScope;
 }
 
 function matchesLeaderSuperEffectScope(

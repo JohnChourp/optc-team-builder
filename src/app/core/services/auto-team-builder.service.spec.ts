@@ -2918,6 +2918,78 @@ describe('Auto team builder', () => {
     ).toBeGreaterThanOrEqual(4);
   });
 
+  it('prefers Kid for selected captain despair coverage and enforces only the needed tag branch', () => {
+    const result = buildAutoTeamResult(createKidCaptainRequirementRecords(), {
+      ...createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], [], {
+        requiredAbilities: [
+          {
+            abilityKey: 'remove_despair',
+            minTurns: 8,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+            slotScope: 'leader',
+            sourceScope: 'captainAbility',
+          },
+        ],
+        battleRequirements: [
+          createBattleRequirement('special-bind', [
+            createAbilityRequirement('remove_special_bind', 5),
+            createAbilityRequirement('crewmate_recover_special_bind', 5),
+          ]),
+          createBattleRequirement('threshold-resilience', [
+            createAbilityRequirement('remove_threshold_damage_reduction', 5),
+            createAbilityRequirement('remove_resilience', 5),
+          ]),
+          createBattleRequirement('bind', [createAbilityRequirement('remove_bind', 6)]),
+        ],
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(4549);
+    expect(result?.slots[1]?.character.id).toBe(4549);
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+    expect(result?.coverage.battleRequirements?.matchesAll).toBe(true);
+    expect(result?.coverage.leaderCriteria.tagConditionSets[0]?.branches).toHaveLength(2);
+    expect(result?.slots.some((slot) => slot.character.id === 3431)).toBe(true);
+  });
+
+  it('keeps favorites strict when a non-favorite counter is required', async () => {
+    const records = createKidCaptainRequirementRecords();
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockImplementation(async (_types, _limit, query) => {
+        const allowedIds = Array.isArray(query?.allowedCharacterIds)
+          ? new Set<number>(query.allowedCharacterIds)
+          : null;
+
+        return allowedIds ? records.filter((record) => allowedIds.has(record.id)) : records;
+      }),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam([], ['DEX', 'STR', 'QCK', 'PSY', 'INT'], {
+      favoritesOnly: true,
+      favoriteCharacterIds: [4549, 3750, 3870, 3431],
+      requiredAbilities: [
+        {
+          abilityKey: 'remove_despair',
+          minTurns: 8,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+          slotScope: 'leader',
+          sourceScope: 'captainAbility',
+        },
+      ],
+      battleRequirements: [
+        createBattleRequirement('defense-up', [
+          createAbilityRequirement('remove_enemy_increased_defense', 6),
+        ]),
+      ],
+    });
+
+    expect(result).toBeNull();
+  });
+
   it('enforces both leaders tag conditions when building with dual captains', () => {
     const result = buildAutoTeamResult(createDualTagConditionLeaderTeamRecords(), {
       ...createInput(['DEX'], ['Fighter'], {
@@ -7450,6 +7522,7 @@ function createInput(
       | 'captainCharacterId'
       | 'friendCaptainCharacterId'
       | 'excludedShipIds'
+      | 'requiredAbilities'
       | 'requiredCharacterGroups'
       | 'battleRequirements'
     >
@@ -7485,7 +7558,7 @@ function createInput(
   return {
     types,
     selectedClasses,
-    requiredAbilities: [],
+    requiredAbilities: overrides.requiredAbilities ?? [],
     requiredCharacterGroups: overrides.requiredCharacterGroups ?? [],
     battleRequirements: overrides.battleRequirements ?? [],
     enemyMechanics: [],
@@ -8483,6 +8556,9 @@ function createKidLeaderTeamRecords(): CharacterDetailRecord[] {
         captainAbility: kidCaptainAbility,
         specialText: 'Boosts ATK of [STR], Striker and Driven characters by 3x for 1 turn.',
         characterTags: ['Kid Pirates', 'Worst Generation', 'Egghead Arc'],
+        builderAbilities: [
+          createBuilderAbility('remove_despair', 'Remove Despair', 10, 'captainAbility'),
+        ],
       },
     }),
     createCharacterRecord({
@@ -8531,6 +8607,117 @@ function createKidLeaderTeamRecords(): CharacterDetailRecord[] {
       },
     }),
   ];
+}
+
+function createKidCaptainRequirementRecords(): CharacterDetailRecord[] {
+  return [
+    ...createKidLeaderTeamRecords(),
+    createLeaderPriorityCaptainRecord({
+      id: 4557,
+      name: 'Newer Universal Leader',
+      cost: 65,
+      atkMultiplier: 5.75,
+      hpMultiplier: 1.5,
+      universal: true,
+    }),
+    createCharacterRecord({
+      id: 3750,
+      name: 'Kaido - Dragon Confronting the Moonlight',
+      type: 'QCK',
+      primaryClass: 'Driven',
+      secondaryClass: 'Powerhouse',
+      detail: {
+        specialText: 'Reduces Special Bind duration by 5 turns.',
+        characterTags: ['Animal Kingdom Pirates', 'Land of Wano Arc'],
+        builderAbilities: [
+          createBuilderAbility('remove_special_bind', 'Remove Special Bind', 5),
+          createBuilderAbility(
+            'crewmate_recover_special_bind',
+            'Status Effect Recovery: Special Bind',
+            5,
+            'sailorAbilities',
+          ),
+        ],
+      },
+    }),
+    createCharacterRecord({
+      id: 3870,
+      name: 'Jack the Drought - Settling a Score',
+      type: 'INT',
+      primaryClass: 'Driven',
+      secondaryClass: 'Striker',
+      detail: {
+        specialText: 'Reduces Bind duration by 6 turns.',
+        characterTags: ['Animal Kingdom Pirates', 'Land of Wano Arc'],
+        builderAbilities: [createBuilderAbility('remove_bind', 'Remove Bind', 6)],
+      },
+    }),
+    createCharacterRecord({
+      id: 4556,
+      name: 'Portgas D. Ace - The Man Who Came for an Emperor of the Sea',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: "Reduces all enemies' DEF Up duration by 6 turns.",
+        characterTags: ['Spade Pirates', 'Land of Wano Arc'],
+        builderAbilities: [
+          createBuilderAbility(
+            'remove_enemy_increased_defense',
+            'Remove Increased Defense',
+            6,
+          ),
+        ],
+      },
+    }),
+    createCharacterRecord({
+      id: 3431,
+      name: 'Sasaki - Tobi Roppo Assembled',
+      type: 'DEX',
+      primaryClass: 'Driven',
+      secondaryClass: 'Powerhouse',
+      detail: {
+        specialText: "Reduces enemies' Threshold Damage Reduction and Resilience by 5 turns.",
+        characterTags: [],
+        builderAbilities: [
+          createBuilderAbility(
+            'remove_threshold_damage_reduction',
+            'Remove Threshold Damage Reduction',
+            5,
+          ),
+          createBuilderAbility('remove_resilience', 'Remove Resilience', 5),
+        ],
+      },
+    }),
+  ];
+}
+
+function createAbilityRequirement(
+  abilityKey: string,
+  minTurns: number | null,
+): AutoBuildInput['requiredAbilities'][number] {
+  return {
+    abilityKey,
+    minTurns,
+    slotTokens: [],
+    requiredCharacterCount: 1,
+  };
+}
+
+function createBattleRequirement(
+  id: string,
+  abilities: AutoBuildInput['requiredAbilities'],
+): NonNullable<AutoBuildInput['battleRequirements']>[number] {
+  return {
+    id,
+    title: id,
+    enemyMechanics: [],
+    requiredCharacterGroups: [
+      {
+        id: `${id}-group`,
+        abilities,
+      },
+    ],
+  };
 }
 
 function createDualTagConditionLeaderTeamRecords(): CharacterDetailRecord[] {

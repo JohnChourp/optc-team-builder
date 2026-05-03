@@ -252,11 +252,114 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   exportedAt?: string;
 }
 
+interface SanitizedImportedAbilityRequirement {
+  adjusted: boolean;
+  invalid: boolean;
+  requirement: AutoBuildAbilityRequirement | null;
+}
+
 function resolveImportedLeaderSuperEffectScopeState(
   requireAllSlotsInLeaderSuperEffectScope: boolean,
   requireLeadersWithoutSuperEffects: boolean,
 ): boolean {
   return requireAllSlotsInLeaderSuperEffectScope || requireLeadersWithoutSuperEffects;
+}
+
+function sanitizeImportedAbilityRequirement(
+  rawRequirement: Partial<AutoBuildAbilityRequirement>,
+  abilityCatalogMap: ReadonlyMap<string, AutoBuildAbilityCatalogItem>,
+  options: { forceSingleCharacterCount?: boolean } = {},
+): SanitizedImportedAbilityRequirement {
+  const abilityKey =
+    typeof rawRequirement.abilityKey === 'string'
+      ? rawRequirement.abilityKey.trim()
+      : '';
+  const abilityCatalogItem = abilityCatalogMap.get(abilityKey);
+
+  if (!abilityCatalogItem) {
+    return {
+      adjusted: false,
+      invalid: true,
+      requirement: null,
+    };
+  }
+
+  const rawMinTurns = resolveNonNegativeInteger(
+    typeof rawRequirement.minTurns === 'number' ||
+      typeof rawRequirement.minTurns === 'string'
+      ? rawRequirement.minTurns
+      : null,
+  );
+  const minTurns = abilityCatalogItem.supportsTurns
+    ? normalizeAbilityRequirementTurns(rawRequirement.minTurns ?? null)
+    : null;
+  const rawRequiredCharacterCount = normalizePositiveInteger(
+    rawRequirement.requiredCharacterCount,
+  );
+  const requiredCharacterCount = options.forceSingleCharacterCount
+    ? 1
+    : (rawRequiredCharacterCount ?? 1);
+  const slotScope = normalizeAbilityRequirementSlotScope(
+    typeof rawRequirement.slotScope === 'string' ? rawRequirement.slotScope : null,
+  );
+  const sourceScope = normalizeAbilityRequirementSourceScope(
+    typeof rawRequirement.sourceScope === 'string' ? rawRequirement.sourceScope : null,
+  );
+  const rawSlotTokens = Array.isArray(rawRequirement.slotTokens)
+    ? [
+        ...new Set(
+          rawRequirement.slotTokens
+            .filter((token): token is string => typeof token === 'string')
+            .map((token) => token.trim().toUpperCase())
+            .filter((token) => token.length > 0),
+        ),
+      ]
+    : [];
+  const slotTokens = abilityCatalogItem.supportsSlotTokens
+    ? rawSlotTokens.filter((token) => abilityCatalogItem.availableSlotTokens.includes(token))
+    : [];
+  const hasInvalidTurns =
+    abilityCatalogItem.supportsTurns &&
+    rawRequirement.minTurns !== null &&
+    rawRequirement.minTurns !== undefined &&
+    rawMinTurns === null;
+  const hasUnsupportedTurns =
+    !abilityCatalogItem.supportsTurns &&
+    rawRequirement.minTurns !== null &&
+    rawRequirement.minTurns !== undefined;
+  const hasInvalidRequiredCharacterCount =
+    rawRequirement.requiredCharacterCount !== undefined &&
+    rawRequirement.requiredCharacterCount !== null &&
+    (rawRequiredCharacterCount === null ||
+      (options.forceSingleCharacterCount && rawRequiredCharacterCount !== 1));
+  const hasInvalidSlotScope =
+    rawRequirement.slotScope !== undefined &&
+    rawRequirement.slotScope !== null &&
+    rawRequirement.slotScope !== slotScope;
+  const hasInvalidSourceScope =
+    rawRequirement.sourceScope !== undefined &&
+    rawRequirement.sourceScope !== null &&
+    rawRequirement.sourceScope !== sourceScope;
+
+  return {
+    adjusted:
+      rawSlotTokens.length !== slotTokens.length ||
+      hasInvalidTurns ||
+      hasUnsupportedTurns ||
+      (!abilityCatalogItem.supportsSlotTokens && rawSlotTokens.length > 0) ||
+      hasInvalidRequiredCharacterCount ||
+      hasInvalidSlotScope ||
+      hasInvalidSourceScope,
+    invalid: false,
+    requirement: {
+      abilityKey,
+      minTurns,
+      slotTokens,
+      requiredCharacterCount,
+      ...(slotScope !== 'any' ? { slotScope } : {}),
+      ...(sourceScope ? { sourceScope } : {}),
+    },
+  };
 }
 
 function resolveLeaderAssignment(
@@ -844,76 +947,18 @@ export function sanitizeAutoTeamSelectionImportPayload(
   );
 
   for (const rawRequirement of payload.filters.requiredAbilities) {
-    const abilityKey =
-      typeof rawRequirement.abilityKey === 'string' ? rawRequirement.abilityKey.trim() : '';
-    const abilityCatalogItem = abilityCatalogMap.get(abilityKey);
+    const sanitized = sanitizeImportedAbilityRequirement(rawRequirement, abilityCatalogMap);
 
-    if (!abilityCatalogItem) {
+    if (sanitized.invalid) {
       invalidAbilityCount += 1;
       continue;
     }
 
-    const rawMinTurns = resolveNonNegativeInteger(
-      typeof rawRequirement.minTurns === 'number' || typeof rawRequirement.minTurns === 'string'
-        ? rawRequirement.minTurns
-        : null,
-    );
-    const minTurns = abilityCatalogItem.supportsTurns
-      ? normalizeAbilityRequirementTurns(rawRequirement.minTurns)
-      : null;
-    const rawRequiredCharacterCount = normalizePositiveInteger(
-      rawRequirement.requiredCharacterCount,
-    );
-    const requiredCharacterCount = rawRequiredCharacterCount ?? 1;
-    const slotScope = normalizeAbilityRequirementSlotScope(
-      typeof rawRequirement.slotScope === 'string' ? rawRequirement.slotScope : null,
-    );
-    const sourceScope = normalizeAbilityRequirementSourceScope(
-      typeof rawRequirement.sourceScope === 'string' ? rawRequirement.sourceScope : null,
-    );
-    const rawSlotTokens = Array.isArray(rawRequirement.slotTokens)
-      ? [
-          ...new Set(
-            rawRequirement.slotTokens
-              .filter((token): token is string => typeof token === 'string')
-              .map((token) => token.trim().toUpperCase())
-              .filter((token) => token.length > 0),
-          ),
-        ]
-      : [];
-    const slotTokens = abilityCatalogItem.supportsSlotTokens
-      ? rawSlotTokens.filter((token) => abilityCatalogItem.availableSlotTokens.includes(token))
-      : [];
-
-    if (
-      rawSlotTokens.length !== slotTokens.length ||
-      (abilityCatalogItem.supportsTurns &&
-        rawRequirement.minTurns !== null &&
-        rawRequirement.minTurns !== undefined &&
-        rawMinTurns === null) ||
-      (!abilityCatalogItem.supportsTurns && rawRequirement.minTurns !== null) ||
-      (!abilityCatalogItem.supportsSlotTokens && rawSlotTokens.length > 0) ||
-      (rawRequirement.requiredCharacterCount !== undefined &&
-        rawRequirement.requiredCharacterCount !== null &&
-        rawRequiredCharacterCount === null) ||
-      (rawRequirement.slotScope !== undefined &&
-        rawRequirement.slotScope !== null &&
-        rawRequirement.slotScope !== slotScope) ||
-      (rawRequirement.sourceScope !== undefined &&
-        rawRequirement.sourceScope !== null &&
-        rawRequirement.sourceScope !== sourceScope)
-    ) {
+    if (sanitized.adjusted) {
       adjustedAbilityCount += 1;
     }
 
-    requiredAbilities.push({
-      abilityKey,
-      minTurns,
-      slotTokens,
-      requiredCharacterCount,
-      ...(slotScope !== 'any' ? { slotScope } : {}),
-      ...(sourceScope ? { sourceScope } : {}),
-    });
+    requiredAbilities.push(sanitized.requirement!);
   }
 
   const requiredCharacterGroups: AutoBuildRequiredCharacterGroup[] = [];
@@ -930,58 +975,20 @@ export function sanitizeAutoTeamSelectionImportPayload(
     const abilities: AutoBuildAbilityRequirement[] = [];
 
     for (const rawRequirement of Array.isArray(rawGroup.abilities) ? rawGroup.abilities : []) {
-      const abilityKey =
-        typeof rawRequirement.abilityKey === 'string' ? rawRequirement.abilityKey.trim() : '';
-      const abilityCatalogItem = abilityCatalogMap.get(abilityKey);
+      const sanitized = sanitizeImportedAbilityRequirement(rawRequirement, abilityCatalogMap, {
+        forceSingleCharacterCount: true,
+      });
 
-      if (!abilityCatalogItem) {
+      if (sanitized.invalid) {
         invalidAbilityCount += 1;
         continue;
       }
 
-      const minTurns = abilityCatalogItem.supportsTurns
-        ? normalizeAbilityRequirementTurns(rawRequirement.minTurns)
-        : null;
-      const slotScope = normalizeAbilityRequirementSlotScope(
-        typeof rawRequirement.slotScope === 'string' ? rawRequirement.slotScope : null,
-      );
-      const sourceScope = normalizeAbilityRequirementSourceScope(
-        typeof rawRequirement.sourceScope === 'string' ? rawRequirement.sourceScope : null,
-      );
-      const rawSlotTokens = Array.isArray(rawRequirement.slotTokens)
-        ? [
-            ...new Set(
-              rawRequirement.slotTokens
-                .filter((token): token is string => typeof token === 'string')
-                .map((token) => token.trim().toUpperCase())
-                .filter((token) => token.length > 0),
-            ),
-          ]
-        : [];
-      const slotTokens = abilityCatalogItem.supportsSlotTokens
-        ? rawSlotTokens.filter((token) => abilityCatalogItem.availableSlotTokens.includes(token))
-        : [];
-
-      if (
-        rawSlotTokens.length !== slotTokens.length ||
-        (!abilityCatalogItem.supportsTurns && rawRequirement.minTurns !== null) ||
-        (!abilityCatalogItem.supportsSlotTokens && rawSlotTokens.length > 0) ||
-        rawRequirement.requiredCharacterCount !== 1 ||
-        (rawRequirement.sourceScope !== undefined &&
-          rawRequirement.sourceScope !== null &&
-          rawRequirement.sourceScope !== sourceScope)
-      ) {
+      if (sanitized.adjusted) {
         adjustedAbilityCount += 1;
       }
 
-      abilities.push({
-        abilityKey,
-        minTurns,
-        slotTokens,
-        requiredCharacterCount: 1,
-        ...(slotScope !== 'any' ? { slotScope } : {}),
-        ...(sourceScope ? { sourceScope } : {}),
-      });
+      abilities.push(sanitized.requirement!);
     }
 
     if (abilities.length > 0) {
@@ -1035,60 +1042,20 @@ export function sanitizeAutoTeamSelectionImportPayload(
           continue;
         }
 
-        const abilityKey =
-          typeof rawRequirement['abilityKey'] === 'string'
-            ? rawRequirement['abilityKey'].trim()
-            : '';
-        const abilityCatalogItem = abilityCatalogMap.get(abilityKey);
+        const sanitized = sanitizeImportedAbilityRequirement(rawRequirement, abilityCatalogMap, {
+          forceSingleCharacterCount: true,
+        });
 
-        if (!abilityCatalogItem) {
+        if (sanitized.invalid) {
           invalidAbilityCount += 1;
           continue;
         }
 
-        const minTurns = abilityCatalogItem.supportsTurns
-          ? normalizeAbilityRequirementTurns(rawRequirement['minTurns'])
-          : null;
-        const slotScope = normalizeAbilityRequirementSlotScope(
-          typeof rawRequirement['slotScope'] === 'string' ? rawRequirement['slotScope'] : null,
-        );
-        const sourceScope = normalizeAbilityRequirementSourceScope(
-          typeof rawRequirement['sourceScope'] === 'string' ? rawRequirement['sourceScope'] : null,
-        );
-        const rawSlotTokens = Array.isArray(rawRequirement['slotTokens'])
-          ? [
-              ...new Set(
-                rawRequirement['slotTokens']
-                  .filter((token): token is string => typeof token === 'string')
-                  .map((token) => token.trim().toUpperCase())
-                  .filter((token) => token.length > 0),
-              ),
-            ]
-          : [];
-        const slotTokens = abilityCatalogItem.supportsSlotTokens
-          ? rawSlotTokens.filter((token) => abilityCatalogItem.availableSlotTokens.includes(token))
-          : [];
-
-        if (
-          rawSlotTokens.length !== slotTokens.length ||
-          (!abilityCatalogItem.supportsTurns && rawRequirement['minTurns'] !== null) ||
-          (!abilityCatalogItem.supportsSlotTokens && rawSlotTokens.length > 0) ||
-          rawRequirement['requiredCharacterCount'] !== 1 ||
-          (rawRequirement['sourceScope'] !== undefined &&
-            rawRequirement['sourceScope'] !== null &&
-            rawRequirement['sourceScope'] !== sourceScope)
-        ) {
+        if (sanitized.adjusted) {
           adjustedAbilityCount += 1;
         }
 
-        abilities.push({
-          abilityKey,
-          minTurns,
-          slotTokens,
-          requiredCharacterCount: 1,
-          ...(slotScope !== 'any' ? { slotScope } : {}),
-          ...(sourceScope ? { sourceScope } : {}),
-        });
+        abilities.push(sanitized.requirement!);
       }
 
       if (abilities.length > 0) {

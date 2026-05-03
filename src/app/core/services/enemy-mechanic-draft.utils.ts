@@ -769,6 +769,7 @@ export function splitManualAbilityRequirementsFromEnemyMechanics(
         .sort((left, right) => left.localeCompare(right)),
       requiredCharacterCount: resolvePositiveInteger(requirement.requiredCharacterCount) ?? 1,
       ...(requirement.slotScope ? { slotScope: requirement.slotScope } : {}),
+      ...(requirement.sourceScope ? { sourceScope: requirement.sourceScope } : {}),
     }));
 }
 

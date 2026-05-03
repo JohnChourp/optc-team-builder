@@ -671,7 +671,7 @@
     "requirements": {
       "abilityCoverage": "ability coverage for {{abilities}}",
       "classCoverage": "per-slot class coverage",
-      "favoritesScope": " while keeping favorite-only auto-fill for open slots",
+      "favoritesScope": " while keeping favorite-only auto-fill for open slots; non-favorite counters are not considered",
       "flexible": "No flexible team matched {{types}} while keeping {{requirements}}{{favoritesScope}}.",
       "separator": " and ",
       "superSpecialCriteria": "leader Super Special criteria coverage",

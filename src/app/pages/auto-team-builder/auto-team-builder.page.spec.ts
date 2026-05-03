@@ -2260,6 +2260,23 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       abilityCount: 1,
       abilities: [
         {
+          key: 'remove_despair',
+          label: 'Despair',
+          category: 'special',
+          groupLabel: 'Reduce Status Effect Duration',
+          groupOrder: 6,
+          effectOrder: 0,
+          supportsTurns: true,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['captainAbility', 'specialText'],
+          matchCount: 10,
+          matchingCharacterIds: [4549],
+          turnMatchingCharacterIds: [{ minTurns: 10, characterIds: [4549] }],
+          sampleCharacterIds: [4549],
+          sampleTexts: ['Reduces Despair duration by 10 turns'],
+        },
+        {
           key: 'remove_bind',
           label: 'Bind',
           category: 'special',
@@ -2304,6 +2321,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       'support',
     ]);
     expect(page.availableCaptainAbilityCatalogItems().map((item) => item.key)).toEqual([
+      'remove_despair',
       'remove_bind',
     ]);
 
@@ -4703,6 +4721,101 @@ describe('AutoTeamBuilder preset import helpers', () => {
     expect(page.requiredAbilitySummaryChips().map((chip) => chip.label)).not.toContain(
       'Any Extra Drop',
     );
+  });
+
+  it('roundtrips leader-scoped captain ability requirements without import warnings', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.abilityCatalog.set({
+      ...(page.abilityCatalog() ?? {
+        generatedAt: '2026-05-03T07:53:03.922Z',
+        sourceVersion: 'test',
+        abilityCount: 0,
+        abilities: [],
+      }),
+      abilityCount: (page.abilityCatalog()?.abilityCount ?? 0) + 1,
+      abilities: [
+        {
+          key: 'remove_despair',
+          label: 'Despair',
+          category: 'special',
+          groupLabel: 'Reduce Status Effect Duration',
+          groupOrder: 6,
+          effectOrder: 0,
+          supportsTurns: true,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['captainAbility', 'specialText'],
+          matchCount: 10,
+          matchingCharacterIds: [4549],
+          turnMatchingCharacterIds: [{ minTurns: 10, characterIds: [4549] }],
+          sampleCharacterIds: [4549],
+          sampleTexts: ['Reduces Despair duration by 10 turns'],
+        },
+        ...(page.abilityCatalog()?.abilities ?? []),
+      ],
+    });
+
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [
+        {
+          abilityKey: 'remove_despair',
+          minTurns: 8,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+          slotScope: 'leader',
+          sourceScope: 'captainAbility',
+        },
+      ],
+      enemyMechanics: [],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
+      requireUniqueBaseCharacterNames: false,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      manualSlots: createEmptyAutoBuildManualSlots(),
+      lockedCharacterIds: [],
+      lockedCharacters: [],
+      selectedLeaderIds: [],
+      captainLeaderId: null,
+      friendCaptainLeaderId: null,
+      exportedAt: '2026-05-03T07:53:03.922Z',
+    });
+
+    const result = sanitizeAutoTeamSelectionImportPayload(payload, {
+      availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      availableClasses: ['Fighter', 'Slasher'],
+      abilityCatalogItems: page.availableAbilityCatalogItems(),
+      availableLockedCharacters: [],
+    });
+
+    await page['applySelectionPresetState'](result.state, []);
+
+    expect(result.warnings).toEqual([]);
+    expect(page.captainAbilityDrafts()).toEqual([
+      expect.objectContaining({
+        abilityKey: 'remove_despair',
+        minTurns: 8,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      }),
+    ]);
+    expect(page.pageRequiredAbilities()).toEqual([
+      {
+        abilityKey: 'remove_despair',
+        minTurns: 8,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      },
+    ]);
   });
 
   it('roundtrips enemy mechanics alongside effective required counters', () => {
