@@ -42,6 +42,11 @@ export interface CaptainCoverageResult {
   uncoveredClauses: string[];
 }
 
+export interface CaptainAbilityCoverageSummary {
+  captainCoverageClauses: string[];
+  fullCoverageClauses: string[];
+}
+
 export interface CaptainCoverageOptions {
   coverageMode?: AutoBuildCaptainAbilityCoverageMode;
   targetCharacterTags?: readonly string[];
@@ -72,6 +77,31 @@ const DEFAULT_CAPTAIN_BRANCH_LABELS = new Set([
 ]);
 const CAPTAIN_EFFECT_CLAUSE_SEPARATOR =
   /,\s+(?=(?:and\s+)?(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b)|\s+and\s+(?=(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b)/gi;
+
+export function summarizeCaptainAbilityCoverageText(
+  captainText: string | null | undefined,
+): CaptainAbilityCoverageSummary {
+  const normalizedCaptainText = normalizeHtmlToText(captainText);
+
+  if (!normalizedCaptainText) {
+    return {
+      captainCoverageClauses: [],
+      fullCoverageClauses: [],
+    };
+  }
+
+  const captainCoverageClauses = extractDefaultCaptainBoostClauses(
+    extractDefaultCaptainBoostText(normalizedCaptainText),
+  );
+  const fullCoverageClauses = splitCaptainCoverageClauses(normalizedCaptainText).filter(
+    isTargetableCaptainCoverageClause,
+  );
+
+  return {
+    captainCoverageClauses,
+    fullCoverageClauses,
+  };
+}
 
 export function resolveCaptainCoverage(
   captain: CharacterDetailRecord,
@@ -286,6 +316,10 @@ function splitCaptainCoverageClauses(captainText: string): string[] {
     .split(CLAUSE_BOUNDARY_PATTERN)
     .map(normalizeCoverageClause)
     .filter(Boolean);
+}
+
+function isTargetableCaptainCoverageClause(clause: string): boolean {
+  return TARGETABLE_CHARACTER_EFFECT_PATTERN.test(clause);
 }
 
 function extractDefaultCaptainBoostText(captainText: string): string {

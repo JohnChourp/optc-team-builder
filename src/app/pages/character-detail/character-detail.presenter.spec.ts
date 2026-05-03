@@ -362,12 +362,15 @@ describe('character-detail presenter', () => {
         'sections.superType',
         'sections.switchEffectData',
         'sections.captainShiftData',
-        'sections.characterTags',
       ]),
     );
+    expect(
+      viewModel.groups.flatMap((group) => group.cards.map((card) => card.titleKey)),
+    ).not.toContain('sections.characterTags');
+    expect(viewModel.captainAbilitySummary?.characterTags).toEqual(['Straw Hat Pirates', 'Giant']);
   });
 
-  it('renders captain variants as separate entries and keeps captain notes separate', () => {
+  it('renders captain variants and notes in the top summary without duplicating a detail card', () => {
     const viewModel = buildCharacterDetailViewModel({
       id: 777,
       name: 'Captain Variant Test',
@@ -441,42 +444,44 @@ describe('character-detail presenter', () => {
       .flatMap((group) => group.cards)
       .find((card) => card.titleKey === 'sections.captainAbility');
 
-    expect(captainCard?.entries).toEqual([
+    expect(captainCard).toBeUndefined();
+    expect(viewModel.captainAbilitySummary?.coverageEntries).toEqual([
       expect.objectContaining({
-        title: 'Base Captain Ability',
-        texts: [expect.objectContaining({ value: 'Base effect.' })],
+        label: 'Base Captain Ability',
+        text: 'Base effect.',
+        captainCoverageClauses: [],
+        fullCoverageClauses: [],
       }),
       expect.objectContaining({
-        title: 'Limit Break Level 1 Captain Ability',
-        texts: [expect.objectContaining({ value: 'Level 1 effect.' })],
-      }),
-    ]);
-    expect(captainCard?.texts).toEqual([
-      expect.objectContaining({
-        labelKey: 'fields.captainNotes',
-        value: 'Stacks with other additional drop captains.',
-        tone: 'muted',
+        label: 'Limit Break Level 1 Captain Ability',
+        text: 'Level 1 effect.',
+        captainCoverageClauses: [],
+        fullCoverageClauses: [],
       }),
     ]);
+    expect(viewModel.captainAbilitySummary?.captainNotes).toBe(
+      'Stacks with other additional drop captains.',
+    );
   });
 
-  it('exposes captain ability variants and captain-sourced parsed abilities for the top summary', () => {
+  it('exposes captain coverage entries and captain-sourced parsed abilities for the top summary', () => {
     const viewModel = buildCharacterDetailViewModel(
       createCharacterDetailRecord({
         detail: {
-          captainAbility: 'Base effect.',
+          captainAbility: 'Boosts ATK of DEX characters by 5x.',
           captainAbilityVariants: [
             {
               key: 'base',
               label: 'Base Captain Ability',
-              text: 'Base effect.',
+              text: 'Boosts ATK of DEX characters by 5x.',
             },
             {
               key: 'level1',
               label: 'Limit Break Level 1 Captain Ability',
-              text: 'Level 1 effect.',
+              text: 'Boosts ATK of DEX characters by 5x and HP by 1.3x. Reduces Bind duration by 10 turns.',
             },
           ],
+          characterTags: ['Driven', 'Super Sugo-Fest Exclusive'],
           builderAbilities: [
             {
               key: 'reduce_damage',
@@ -501,11 +506,21 @@ describe('character-detail presenter', () => {
       }),
     );
 
-    expect(viewModel.captainAbilitySummary?.variants).toEqual([
-      expect.objectContaining({ label: 'Base Captain Ability', value: 'Base effect.' }),
+    expect(viewModel.captainAbilitySummary?.coverageEntries).toEqual([
+      expect.objectContaining({
+        label: 'Base Captain Ability',
+        text: 'Boosts ATK of DEX characters by 5x.',
+        captainCoverageClauses: ['Boosts ATK of DEX characters by 5x'],
+        fullCoverageClauses: [],
+      }),
       expect.objectContaining({
         label: 'Limit Break Level 1 Captain Ability',
-        value: 'Level 1 effect.',
+        text: 'Boosts ATK of DEX characters by 5x and HP by 1.3x. Reduces Bind duration by 10 turns.',
+        captainCoverageClauses: ['Boosts ATK of DEX characters by 5x and HP by 1.3x'],
+        fullCoverageClauses: [
+          'Boosts ATK of DEX characters by 5x and HP by 1.3x',
+          'Reduces Bind duration by 10 turns',
+        ],
       }),
     ]);
     expect(viewModel.captainAbilitySummary?.recognizedAbilities).toEqual([
@@ -513,6 +528,10 @@ describe('character-detail presenter', () => {
         key: 'reduce_damage',
         source: 'captainAbility',
       }),
+    ]);
+    expect(viewModel.captainAbilitySummary?.characterTags).toEqual([
+      'Driven',
+      'Super Sugo-Fest Exclusive',
     ]);
   });
 
@@ -529,13 +548,36 @@ describe('character-detail presenter', () => {
 
     expect(viewModel.captainAbilitySummary).toEqual(
       expect.objectContaining({
-        variants: [
+        coverageEntries: [
           expect.objectContaining({
             label: 'Captain Ability',
-            value: 'Boosts ATK of crew by 5x.',
+            text: 'Boosts ATK of crew by 5x.',
+            captainCoverageClauses: ['Boosts ATK of crew by 5x'],
+            fullCoverageClauses: [],
           }),
         ],
+        captainNotes: null,
         recognizedAbilities: [],
+        characterTags: [],
+      }),
+    );
+  });
+
+  it('keeps character tags in the top summary even without captain ability data', () => {
+    const viewModel = buildCharacterDetailViewModel(
+      createCharacterDetailRecord({
+        detail: {
+          characterTags: ['Straw Hat Pirates', 'Global Anniversary'],
+        },
+      }),
+    );
+
+    expect(viewModel.captainAbilitySummary).toEqual(
+      expect.objectContaining({
+        coverageEntries: [],
+        captainNotes: null,
+        recognizedAbilities: [],
+        characterTags: ['Straw Hat Pirates', 'Global Anniversary'],
       }),
     );
   });
@@ -614,11 +656,7 @@ describe('character-detail presenter', () => {
     const maxStatsCard = viewModel.groups
       .flatMap((group) => group.cards)
       .find((card) => card.titleKey === 'sections.maxStats');
-    expect(maxStatsCard?.rows).toEqual([
-      expect.objectContaining({ labelKey: 'stats.maxHp', value: '5,122' }),
-      expect.objectContaining({ labelKey: 'stats.maxAtk', value: '2,190' }),
-      expect.objectContaining({ labelKey: 'stats.maxRcv', value: '417' }),
-    ]);
+    expect(maxStatsCard).toBeUndefined();
     expect(
       viewModel.groups
         .flatMap((group) => group.cards)
@@ -650,7 +688,9 @@ type CharacterDetailRecordOverrides = Partial<Omit<CharacterDetailRecord, 'detai
   };
 };
 
-function createCharacterDetailRecord(overrides: CharacterDetailRecordOverrides = {}): CharacterDetailRecord {
+function createCharacterDetailRecord(
+  overrides: CharacterDetailRecordOverrides = {},
+): CharacterDetailRecord {
   const base: CharacterDetailRecord = {
     id: 4276,
     name: 'Carrot & Dogstorm & Cat Viper - Moonlit Raging Sulongs',

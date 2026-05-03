@@ -136,6 +136,11 @@
   padding: 16px;
 }
 
+.ability-summary-block {
+  display: grid;
+  gap: 8px;
+}
+
 .captain-ability-summary,
 .captain-ability-summary__recognized {
   display: grid;

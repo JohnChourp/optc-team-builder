@@ -11,17 +11,25 @@ describe('CharacterDetailPage template', () => {
 
     expect(template).toContain('[src]="heroImageUrl()"');
     expect(template).toContain('<app-toolbar-back-button></app-toolbar-back-button>');
-    expect(template).toContain("t(group.titleKey)");
+    expect(template).toContain('t(group.titleKey)');
     expect(template).toContain('hero-meta-grid');
     expect(template).toContain('hero-stats-grid');
     expect(template).toContain('<app-character-ability-groups');
     expect(template).toContain('[abilities]="current.detail.builderAbilities"');
     expect(template).toContain('view.captainAbilitySummary');
-    expect(template).toContain('captainSummary.variants');
+    expect(template).toContain('captainSummary.coverageEntries');
+    expect(template).toContain('entry.text');
+    expect(template).toContain('captainSummary.captainNotes');
+    expect(template).toContain('entry.captainCoverageClauses');
+    expect(template).toContain('entry.fullCoverageClauses');
     expect(template).toContain('[abilities]="captainSummary.recognizedAbilities"');
+    expect(template).toContain('captainSummary.characterTags');
     expect(template).toContain('[catalogItems]="abilityCatalog()?.abilities ?? []"');
     expect(template).toContain("t('fields.recognizedCaptainAbilities')");
     expect(template).toContain("t('sections.abilitySummary')");
+    expect(template).toContain("t('sections.captainCoverageAbility')");
+    expect(template).toContain("t('sections.fullCoverage')");
+    expect(template).toContain("t('sections.characterTags')");
     expect(template).toContain('detail-card');
     expect(template).toContain('meta.labelKey');
     expect(template).toContain('list.labelKey');

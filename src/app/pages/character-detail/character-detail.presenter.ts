@@ -1,5 +1,6 @@
 import { type NormalizedBuilderAbility } from '../../core/models/auto-team-builder-ability.models';
 import { type CharacterDetailRecord } from '../../core/models/optc.models';
+import { summarizeCaptainAbilityCoverageText } from '../../core/services/captain-coverage.utils';
 
 type DisplayLabel = {
   label?: string;
@@ -38,8 +39,17 @@ export interface DetailDisplayGroup {
 }
 
 export interface CharacterDetailCaptainAbilitySummary {
-  variants: DetailDisplayText[];
+  coverageEntries: CharacterDetailCaptainCoverageEntry[];
+  captainNotes: string | null;
   recognizedAbilities: NormalizedBuilderAbility[];
+  characterTags: string[];
+}
+
+export interface CharacterDetailCaptainCoverageEntry {
+  label?: string;
+  text: string;
+  captainCoverageClauses: string[];
+  fullCoverageClauses: string[];
 }
 
 export interface CharacterDetailViewModel {
@@ -205,25 +215,64 @@ function buildCaptainAbilitySummary(
           },
         ]
       : [];
-  const variants = captainAbilityVariants
-    .map((entry) => createText(undefined, entry.text, 'default', entry.label))
-    .filter((entry) => entry.value.trim().length > 0);
+  const coverageEntries = captainAbilityVariants
+    .map((entry) => {
+      const text = entry.text.trim();
+      const coverage = summarizeCaptainAbilityCoverageText(entry.text);
+      const fullCoverageClauses = hasDistinctFullCoverage(
+        coverage.captainCoverageClauses,
+        coverage.fullCoverageClauses,
+      )
+        ? coverage.fullCoverageClauses
+        : [];
+
+      return {
+        label: entry.label,
+        text,
+        captainCoverageClauses: coverage.captainCoverageClauses,
+        fullCoverageClauses,
+      };
+    })
+    .filter(
+      (entry) =>
+        entry.text.length ||
+        entry.captainCoverageClauses.length ||
+        entry.fullCoverageClauses.length,
+    );
+  const captainNotes = detail.captainNotes?.trim() || null;
   const recognizedAbilities = detail.builderAbilities.filter(
     (ability) => ability.source === 'captainAbility',
   );
+  const characterTags = (detail.characterTags ?? []).filter((tag) => tag.trim().length > 0);
 
-  return variants.length || recognizedAbilities.length
+  return coverageEntries.length ||
+    captainNotes ||
+    recognizedAbilities.length ||
+    characterTags.length
     ? {
-        variants,
+        coverageEntries,
+        captainNotes,
         recognizedAbilities,
+        characterTags,
       }
     : null;
 }
 
+function hasDistinctFullCoverage(
+  captainCoverageClauses: string[],
+  fullCoverageClauses: string[],
+): boolean {
+  const simpleKeys = captainCoverageClauses.map(normalizeCoverageSummaryClause);
+  const fullKeys = fullCoverageClauses.map(normalizeCoverageSummaryClause);
+
+  return fullKeys.length !== simpleKeys.length || fullKeys.some((key) => !simpleKeys.includes(key));
+}
+
+function normalizeCoverageSummaryClause(clause: string): string {
+  return clause.replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
 function buildOverviewGroup(character: CharacterDetailRecord): DetailDisplayGroup {
-  const characterTags = (character.detail.characterTags ?? []).filter(
-    (tag) => tag.trim().length > 0,
-  );
   const profileRows: DetailDisplayRow[] = [
     createRow('fields.type', formatCharacterType(character.type)),
     createRow('fields.primaryClass', character.primaryClass),
@@ -233,15 +282,6 @@ function buildOverviewGroup(character: CharacterDetailRecord): DetailDisplayGrou
     createRow('fields.stars', formatNumber(character.stars)),
     createRow('fields.cost', formatNumber(character.cost)),
     createRow('fields.combo', formatNumber(character.combo)),
-  ];
-  const maxStatsRows: DetailDisplayRow[] = [
-    ...createOptionalNumberRow('stats.maxHp', character.stats.max.hp),
-    ...createOptionalNumberRow('stats.maxAtk', character.stats.max.atk),
-    ...createOptionalNumberRow('stats.maxRcv', character.stats.max.rcv),
-    ...createOptionalNumberRow('fields.minHp', character.stats.min.hp),
-    ...createOptionalNumberRow('fields.minAtk', character.stats.min.atk),
-    ...createOptionalNumberRow('fields.minRcv', character.stats.min.rcv),
-    ...createOptionalNumberRow('fields.growth', character.stats.growth),
   ];
 
   return {
@@ -255,30 +295,6 @@ function buildOverviewGroup(character: CharacterDetailRecord): DetailDisplayGrou
         entries: [],
         chips: [],
       },
-      ...(maxStatsRows.length
-        ? [
-            {
-              titleKey: 'sections.maxStats',
-              rows: maxStatsRows,
-              texts: [],
-              lists: [],
-              entries: [],
-              chips: [],
-            },
-          ]
-        : []),
-      ...(characterTags.length
-        ? [
-            {
-              titleKey: 'sections.characterTags',
-              rows: [],
-              texts: [],
-              lists: [],
-              entries: [],
-              chips: characterTags,
-            },
-          ]
-        : []),
     ],
   };
 }
@@ -286,36 +302,6 @@ function buildOverviewGroup(character: CharacterDetailRecord): DetailDisplayGrou
 function buildAbilitiesGroup(character: CharacterDetailRecord): DetailDisplayGroup | null {
   const { detail } = character;
   const cards: DetailDisplayCard[] = [];
-  const captainAbilityVariants = detail.captainAbilityVariants.length
-    ? detail.captainAbilityVariants
-    : detail.captainAbility
-      ? [
-          {
-            key: 'captain',
-            label: 'Captain Ability',
-            text: detail.captainAbility,
-          },
-        ]
-      : [];
-
-  if (captainAbilityVariants.length || detail.captainNotes) {
-    cards.push({
-      titleKey: 'sections.captainAbility',
-      rows: [],
-      texts: detail.captainNotes
-        ? [createText('fields.captainNotes', detail.captainNotes, 'muted')]
-        : [],
-      lists: [],
-      entries: captainAbilityVariants.map((entry) => ({
-        title: entry.label,
-        rows: [],
-        texts: [createText(undefined, entry.text)],
-        lists: [],
-        chips: [],
-      })),
-      chips: [],
-    });
-  }
 
   if (detail.specialName || detail.specialText || detail.specialNotes) {
     cards.push({
