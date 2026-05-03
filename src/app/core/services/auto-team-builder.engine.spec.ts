@@ -293,12 +293,7 @@ describe('runAutoTeamBuildSearch', () => {
 
     expect(result).not.toBeNull();
     expect(result?.slots.map((slot) => slot.character.id)).toEqual([
-      9000,
-      9000,
-      9003,
-      9002,
-      9001,
-      9012,
+      9000, 9000, 9003, 9002, 9001, 9012,
     ]);
     expect(result?.coverage.leaderCriteria.matchingSlots).toBe(5);
   });
@@ -810,8 +805,7 @@ function createSingleTypeRecords(): CharacterDetailRecord[] {
 function createCaptainCoverageManualSlots(captainId: number) {
   return createEmptyAutoBuildManualSlots().map((slot) => ({
     role: slot.role,
-    characterIds:
-      slot.role === 'captain' || slot.role === 'friendCaptain' ? [captainId] : [],
+    characterIds: slot.role === 'captain' || slot.role === 'friendCaptain' ? [captainId] : [],
   }));
 }
 
@@ -1099,7 +1093,6 @@ function createCharacterRecord(
       builderAbilities: overrides.detail?.builderAbilities ?? [],
       sailorAbilities: overrides.detail?.sailorAbilities ?? [],
       sailorNotes: overrides.detail?.sailorNotes ?? null,
-      limitBreak: overrides.detail?.limitBreak ?? [],
       potentialAbilities: overrides.detail?.potentialAbilities ?? [],
       supportData: overrides.detail?.supportData ?? [],
       swapData: overrides.detail?.swapData ?? null,

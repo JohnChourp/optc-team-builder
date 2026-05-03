@@ -8,9 +8,7 @@
       "type": "STR",
       "primaryClass": "Fighter",
       "secondaryClass": null,
-      "classes": [
-        "Fighter"
-      ],
+      "classes": ["Fighter"],
       "stars": 2,
       "starsLabel": "2",
       "cost": 1,
@@ -49,10 +47,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "monkey d. luffy",
-          "luffy"
-        ],
+        "partyConflictKeys": ["monkey d. luffy", "luffy"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -67,7 +62,6 @@
         ],
         "sailorAbilities": [],
         "sailorNotes": null,
-        "limitBreak": [],
         "potentialAbilities": [],
         "supportData": [],
         "swapData": null,
@@ -104,9 +98,7 @@
       "type": "STR",
       "primaryClass": "Fighter",
       "secondaryClass": null,
-      "classes": [
-        "Fighter"
-      ],
+      "classes": ["Fighter"],
       "stars": 3,
       "starsLabel": "3",
       "cost": 4,
@@ -151,10 +143,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "monkey d. luffy",
-          "luffy"
-        ],
+        "partyConflictKeys": ["monkey d. luffy", "luffy"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -169,7 +158,6 @@
         ],
         "sailorAbilities": [],
         "sailorNotes": null,
-        "limitBreak": [],
         "potentialAbilities": [],
         "supportData": [],
         "swapData": null,
@@ -206,9 +194,7 @@
       "type": "STR",
       "primaryClass": "Fighter",
       "secondaryClass": null,
-      "classes": [
-        "Fighter"
-      ],
+      "classes": ["Fighter"],
       "stars": 4,
       "starsLabel": "4",
       "cost": 7,
@@ -253,10 +239,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "monkey d. luffy",
-          "luffy"
-        ],
+        "partyConflictKeys": ["monkey d. luffy", "luffy"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -271,7 +254,6 @@
         ],
         "sailorAbilities": [],
         "sailorNotes": null,
-        "limitBreak": [],
         "potentialAbilities": [],
         "supportData": [],
         "swapData": null,
@@ -308,10 +290,7 @@
       "type": "STR",
       "primaryClass": "Fighter",
       "secondaryClass": "Free Spirit",
-      "classes": [
-        "Fighter",
-        "Free Spirit"
-      ],
+      "classes": ["Fighter", "Free Spirit"],
       "stars": 5,
       "starsLabel": "5",
       "cost": 15,
@@ -356,10 +335,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "monkey d. luffy",
-          "luffy"
-        ],
+        "partyConflictKeys": ["monkey d. luffy", "luffy"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -403,23 +379,6 @@
           "Boosts base ATK of this character by 100 if this character is the last in the chain to attack. Makes [QCK] orbs beneficial for this character"
         ],
         "sailorNotes": "#{beneficial}",
-        "limitBreak": [
-          "Reduce base Special Cooldown by 1 turn",
-          "Boosts base ATK by 30",
-          "Boosts base RCV by 20",
-          "Acquire Potential 1: Enrage/Reduce Increase Damage Taken duration",
-          "Boosts base HP by 30",
-          "Boosts base RCV by 30",
-          "Reduce base Special Cooldown by 1 turn",
-          "Boosts base HP by 40",
-          "Boosts base HP by 50",
-          "Acquire Sailor Ability 1: Boosts base ATK of this character by 100 if this character is the last in the chain to attack",
-          "Boosts base HP by 50",
-          "Reduce base Special Cooldown by 1 turn",
-          "Reduce base Special Cooldown by 1 turn",
-          "Acquire Sailor Ability 2: Makes [QCK] orbs beneficial for this character",
-          "Acquire Potential 2: Reduce No Healing duration"
-        ],
         "potentialAbilities": [
           {
             "Name": "Enrage/Reduce Increase Damage Taken duration",
@@ -429,9 +388,7 @@
           },
           {
             "Name": "Reduce No Healing duration",
-            "description": [
-              "Reduces No Healing duration by 4 turns"
-            ]
+            "description": ["Reduces No Healing duration by 4 turns"]
           }
         ],
         "supportData": [
@@ -476,9 +433,7 @@
       "type": "DEX",
       "primaryClass": "Slasher",
       "secondaryClass": null,
-      "classes": [
-        "Slasher"
-      ],
+      "classes": ["Slasher"],
       "stars": 3,
       "starsLabel": "3",
       "cost": 4,
@@ -523,10 +478,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "roronoa zoro",
-          "zoro"
-        ],
+        "partyConflictKeys": ["roronoa zoro", "zoro"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -541,7 +493,6 @@
         ],
         "sailorAbilities": [],
         "sailorNotes": null,
-        "limitBreak": [],
         "potentialAbilities": [],
         "supportData": [],
         "swapData": null,
@@ -578,10 +529,7 @@
       "type": "DEX",
       "primaryClass": "Slasher",
       "secondaryClass": "Driven",
-      "classes": [
-        "Slasher",
-        "Driven"
-      ],
+      "classes": ["Slasher", "Driven"],
       "stars": 4,
       "starsLabel": "4",
       "cost": 7,
@@ -626,10 +574,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "roronoa zoro",
-          "zoro"
-        ],
+        "partyConflictKeys": ["roronoa zoro", "zoro"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -644,7 +589,6 @@
         ],
         "sailorAbilities": [],
         "sailorNotes": null,
-        "limitBreak": [],
         "potentialAbilities": [],
         "supportData": [],
         "swapData": null,
@@ -681,10 +625,7 @@
       "type": "DEX",
       "primaryClass": "Slasher",
       "secondaryClass": "Driven",
-      "classes": [
-        "Slasher",
-        "Driven"
-      ],
+      "classes": ["Slasher", "Driven"],
       "stars": 4,
       "starsLabel": "4",
       "cost": 9,
@@ -729,10 +670,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "roronoa zoro",
-          "zoro"
-        ],
+        "partyConflictKeys": ["roronoa zoro", "zoro"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -747,7 +685,6 @@
         ],
         "sailorAbilities": [],
         "sailorNotes": null,
-        "limitBreak": [],
         "potentialAbilities": [],
         "supportData": [],
         "swapData": null,
@@ -784,10 +721,7 @@
       "type": "DEX",
       "primaryClass": "Slasher",
       "secondaryClass": "Driven",
-      "classes": [
-        "Slasher",
-        "Driven"
-      ],
+      "classes": ["Slasher", "Driven"],
       "stars": 5,
       "starsLabel": "5",
       "cost": 15,
@@ -832,10 +766,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "roronoa zoro",
-          "zoro"
-        ],
+        "partyConflictKeys": ["roronoa zoro", "zoro"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -888,29 +819,10 @@
           "Restores Special Cooldown of this character by 1 turn when it is rewinded. Boosts base ATK of [DEX] characters by 40"
         ],
         "sailorNotes": "#{rewind: 1}",
-        "limitBreak": [
-          "Boosts base HP by 30",
-          "Boosts base RCV by 10",
-          "Boosts base HP by 40",
-          "Acquire Potential 1: [QCK] Damage Reduction",
-          "Boosts base ATK by 20",
-          "Boosts base RCV by 20",
-          "Acquire Sailor Ability 1: Restores Special Cooldown of this character by 1 turn when it is rewinded",
-          "Boosts base RCV by 30",
-          "Boosts base ATK by 30",
-          "Boosts base HP by 50",
-          "Boosts base ATK by 40",
-          "Acquire Sailor Ability 2: Boosts base ATK of [DEX] characters by 40",
-          "Boosts base HP by 70",
-          "Acquire 1 additional Socket slot",
-          "Acquire Potential 2: Critical Hit"
-        ],
         "potentialAbilities": [
           {
             "Name": "[QCK] Damage Reduction",
-            "description": [
-              "Reduces damage taken from [QCK] characters by 5%"
-            ]
+            "description": ["Reduces damage taken from [QCK] characters by 5%"]
           },
           {
             "Name": "Critical Hit",
@@ -961,9 +873,7 @@
       "type": "INT",
       "primaryClass": "Striker",
       "secondaryClass": null,
-      "classes": [
-        "Striker"
-      ],
+      "classes": ["Striker"],
       "stars": 3,
       "starsLabel": "3",
       "cost": 4,
@@ -1008,9 +918,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "nami"
-        ],
+        "partyConflictKeys": ["nami"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -1025,7 +933,6 @@
         ],
         "sailorAbilities": [],
         "sailorNotes": null,
-        "limitBreak": [],
         "potentialAbilities": [],
         "supportData": [],
         "swapData": null,
@@ -1062,10 +969,7 @@
       "type": "INT",
       "primaryClass": "Striker",
       "secondaryClass": "Cerebral",
-      "classes": [
-        "Striker",
-        "Cerebral"
-      ],
+      "classes": ["Striker", "Cerebral"],
       "stars": 4,
       "starsLabel": "4",
       "cost": 7,
@@ -1110,9 +1014,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "nami"
-        ],
+        "partyConflictKeys": ["nami"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -1127,7 +1029,6 @@
         ],
         "sailorAbilities": [],
         "sailorNotes": null,
-        "limitBreak": [],
         "potentialAbilities": [],
         "supportData": [],
         "swapData": null,
@@ -1164,10 +1065,7 @@
       "type": "INT",
       "primaryClass": "Striker",
       "secondaryClass": "Cerebral",
-      "classes": [
-        "Striker",
-        "Cerebral"
-      ],
+      "classes": ["Striker", "Cerebral"],
       "stars": 4,
       "starsLabel": "4",
       "cost": 9,
@@ -1212,9 +1110,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "nami"
-        ],
+        "partyConflictKeys": ["nami"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -1229,7 +1125,6 @@
         ],
         "sailorAbilities": [],
         "sailorNotes": null,
-        "limitBreak": [],
         "potentialAbilities": [],
         "supportData": [],
         "swapData": null,
@@ -1266,10 +1161,7 @@
       "type": "INT",
       "primaryClass": "Striker",
       "secondaryClass": "Cerebral",
-      "classes": [
-        "Striker",
-        "Cerebral"
-      ],
+      "classes": ["Striker", "Cerebral"],
       "stars": 5,
       "starsLabel": "5",
       "cost": 15,
@@ -1314,9 +1206,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "nami"
-        ],
+        "partyConflictKeys": ["nami"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -1378,23 +1268,6 @@
           "Makes [RCV] orbs beneficial for [INT] characters. Boosts base ATK, HP and RCV of [INT] characters by 50"
         ],
         "sailorNotes": "#{beneficial}",
-        "limitBreak": [
-          "Boosts base ATK by 10",
-          "Boosts base RCV by 10",
-          "Boosts base RCV by 10",
-          "Acquire Potential 1: Pinch Healing",
-          "Boosts base HP by 40",
-          "Acquire Sailor Ability 1: Makes [RCV] orbs beneficial for [INT] characters",
-          "Boosts base HP by 60",
-          "Boosts base ATK by 40",
-          "Boosts base RCV by 20",
-          "Acquire 1 additional Socket slot",
-          "Boosts base ATK by 50",
-          "Boosts base RCV by 30",
-          "Boosts base HP by 80",
-          "Acquire Sailor Ability 2: Boosts base ATK, HP and RCV of [INT] characters by 50",
-          "Acquire Potential 2: Reduce Slot Bind duration"
-        ],
         "potentialAbilities": [
           {
             "Name": "Pinch Healing",
@@ -1404,9 +1277,7 @@
           },
           {
             "Name": "Reduce Slot Bind duration",
-            "description": [
-              "Reduces Slot Bind duration by 7 turns on this character"
-            ]
+            "description": ["Reduces Slot Bind duration by 7 turns on this character"]
           }
         ],
         "supportData": [
@@ -1451,9 +1322,7 @@
       "type": "PSY",
       "primaryClass": "Shooter",
       "secondaryClass": null,
-      "classes": [
-        "Shooter"
-      ],
+      "classes": ["Shooter"],
       "stars": 3,
       "starsLabel": "3",
       "cost": 4,
@@ -1498,9 +1367,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "usopp"
-        ],
+        "partyConflictKeys": ["usopp"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -1515,7 +1382,6 @@
         ],
         "sailorAbilities": [],
         "sailorNotes": null,
-        "limitBreak": [],
         "potentialAbilities": [],
         "supportData": [],
         "swapData": null,
@@ -1531,15 +1397,11 @@
             {
               "effects": [
                 {
-                  "attributes": [
-                    "SPD"
-                  ],
+                  "attributes": ["SPD"],
                   "effect": "buff",
                   "level": 5,
                   "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
+                    "targets": ["crew"]
                   }
                 }
               ]
@@ -1557,15 +1419,11 @@
                     "count": 1,
                     "priority": "highest",
                     "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                    "targets": ["enemies"]
                   }
                 },
                 {
-                  "attributes": [
-                    "Special Bind"
-                  ],
+                  "attributes": ["Special Bind"],
                   "chance": 80,
                   "duration": 19,
                   "effect": "hinderance",
@@ -1573,9 +1431,7 @@
                     "count": 1,
                     "priority": "highest",
                     "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                    "targets": ["enemies"]
                   }
                 }
               ]
@@ -1620,9 +1476,7 @@
       "type": "PSY",
       "primaryClass": "Shooter",
       "secondaryClass": null,
-      "classes": [
-        "Shooter"
-      ],
+      "classes": ["Shooter"],
       "stars": 4,
       "starsLabel": "4",
       "cost": 7,
@@ -1667,9 +1521,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "usopp"
-        ],
+        "partyConflictKeys": ["usopp"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -1684,7 +1536,6 @@
         ],
         "sailorAbilities": [],
         "sailorNotes": null,
-        "limitBreak": [],
         "potentialAbilities": [],
         "supportData": [],
         "swapData": null,
@@ -1700,15 +1551,11 @@
             {
               "effects": [
                 {
-                  "attributes": [
-                    "SPD"
-                  ],
+                  "attributes": ["SPD"],
                   "effect": "buff",
                   "level": 5,
                   "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
+                    "targets": ["crew"]
                   }
                 }
               ]
@@ -1719,9 +1566,7 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "attributes": [
-                    "Special Bind"
-                  ],
+                  "attributes": ["Special Bind"],
                   "chance": 96,
                   "duration": 10,
                   "effect": "hinderance",
@@ -1729,22 +1574,16 @@
                     "count": 1,
                     "priority": "highest",
                     "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                    "targets": ["enemies"]
                   }
                 },
                 {
-                  "attributes": [
-                    "Accuracy"
-                  ],
+                  "attributes": ["Accuracy"],
                   "level": 11,
                   "duration": 15,
                   "effect": "debuff",
                   "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
+                    "targets": ["enemies"]
                   }
                 }
               ]
@@ -1789,9 +1628,7 @@
       "type": "PSY",
       "primaryClass": "Shooter",
       "secondaryClass": null,
-      "classes": [
-        "Shooter"
-      ],
+      "classes": ["Shooter"],
       "stars": 4,
       "starsLabel": "4",
       "cost": 9,
@@ -1836,9 +1673,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "usopp"
-        ],
+        "partyConflictKeys": ["usopp"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -1853,7 +1688,6 @@
         ],
         "sailorAbilities": [],
         "sailorNotes": null,
-        "limitBreak": [],
         "potentialAbilities": [],
         "supportData": [],
         "swapData": null,
@@ -1869,15 +1703,11 @@
             {
               "effects": [
                 {
-                  "attributes": [
-                    "SPD"
-                  ],
+                  "attributes": ["SPD"],
                   "effect": "buff",
                   "level": 5,
                   "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
+                    "targets": ["crew"]
                   }
                 }
               ]
@@ -1895,15 +1725,11 @@
                     "count": 1,
                     "priority": "highest",
                     "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                    "targets": ["enemies"]
                   }
                 },
                 {
-                  "attributes": [
-                    "Special Bind"
-                  ],
+                  "attributes": ["Special Bind"],
                   "chance": 80,
                   "duration": 20,
                   "effect": "hinderance",
@@ -1911,9 +1737,7 @@
                     "count": 1,
                     "priority": "highest",
                     "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                    "targets": ["enemies"]
                   }
                 }
               ]
@@ -1958,9 +1782,7 @@
       "type": "PSY",
       "primaryClass": "Shooter",
       "secondaryClass": null,
-      "classes": [
-        "Shooter"
-      ],
+      "classes": ["Shooter"],
       "stars": 5,
       "starsLabel": "5",
       "cost": 15,
@@ -2005,9 +1827,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "sogeking"
-        ],
+        "partyConflictKeys": ["sogeking"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -2083,27 +1903,8 @@
             "coverageMode": "explicit"
           }
         ],
-        "sailorAbilities": [
-          "Boosts base ATK, HP and RCV of Shooter characters by 20"
-        ],
+        "sailorAbilities": ["Boosts base ATK, HP and RCV of Shooter characters by 20"],
         "sailorNotes": null,
-        "limitBreak": [
-          "Boosts base RCV by 10",
-          "Boosts base RCV by 20",
-          "Boosts base RCV by 30",
-          "Acquire Potential 1: Reduce No Healing duration",
-          "Boosts base HP by 30",
-          "Boosts base HP by 40",
-          "Boosts base ATK by 20",
-          "Boosts base ATK by 30",
-          "Reduce base Special Cooldown by 1 turn",
-          "Boosts base ATK by 40",
-          "Acquire 1 additional Socket slot",
-          "Boosts base HP by 60",
-          "Boosts base HP by 80",
-          "Acquire Sailor Ability 1: Boosts base ATK, HP and RCV of Shooter characters by 20",
-          "Acquire Potential 2: Barrier Penetration"
-        ],
         "potentialAbilities": [
           {
             "Name": "Reduce No Healing duration",
@@ -2139,15 +1940,11 @@
             {
               "effects": [
                 {
-                  "attributes": [
-                    "SPD"
-                  ],
+                  "attributes": ["SPD"],
                   "effect": "buff",
                   "level": 5,
                   "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
+                    "targets": ["crew"]
                   }
                 }
               ]
@@ -2158,9 +1955,7 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "attributes": [
-                    "Special Bind"
-                  ],
+                  "attributes": ["Special Bind"],
                   "chance": 96,
                   "duration": 10,
                   "effect": "hinderance",
@@ -2168,22 +1963,16 @@
                     "count": 1,
                     "priority": "highest",
                     "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
+                    "targets": ["enemies"]
                   }
                 },
                 {
-                  "attributes": [
-                    "Accuracy"
-                  ],
+                  "attributes": ["Accuracy"],
                   "level": 11,
                   "duration": 15,
                   "effect": "debuff",
                   "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
+                    "targets": ["enemies"]
                   }
                 }
               ]
@@ -2193,28 +1982,19 @@
             {
               "effects": [
                 {
-                  "attributes": [
-                    "ATK"
-                  ],
+                  "attributes": ["ATK"],
                   "level": 3,
                   "effect": "buff",
                   "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
+                    "targets": ["crew"]
                   }
                 },
                 {
-                  "attributes": [
-                    "HP",
-                    "SPD"
-                  ],
+                  "attributes": ["HP", "SPD"],
                   "level": 3,
                   "effect": "buff",
                   "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
+                    "targets": ["crew"]
                   }
                 }
               ]
@@ -2229,9 +2009,7 @@
                   "effect": "damage",
                   "type": "fixed",
                   "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
+                    "targets": ["enemies"]
                   }
                 }
               ]
@@ -2283,9 +2061,7 @@
       "type": "QCK",
       "primaryClass": "Fighter",
       "secondaryClass": null,
-      "classes": [
-        "Fighter"
-      ],
+      "classes": ["Fighter"],
       "stars": 3,
       "starsLabel": "3",
       "cost": 4,
@@ -2330,9 +2106,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "sanji"
-        ],
+        "partyConflictKeys": ["sanji"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -2347,7 +2121,6 @@
         ],
         "sailorAbilities": [],
         "sailorNotes": null,
-        "limitBreak": [],
         "potentialAbilities": [],
         "supportData": [],
         "swapData": null,
@@ -2384,10 +2157,7 @@
       "type": "QCK",
       "primaryClass": "Fighter",
       "secondaryClass": "Powerhouse",
-      "classes": [
-        "Fighter",
-        "Powerhouse"
-      ],
+      "classes": ["Fighter", "Powerhouse"],
       "stars": 4,
       "starsLabel": "4",
       "cost": 7,
@@ -2432,14 +2202,11 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "sanji"
-        ],
+        "partyConflictKeys": ["sanji"],
         "characterTags": [],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
-        "limitBreak": [],
         "potentialAbilities": [],
         "supportData": [],
         "swapData": null,
@@ -2476,10 +2243,7 @@
       "type": "QCK",
       "primaryClass": "Fighter",
       "secondaryClass": "Powerhouse",
-      "classes": [
-        "Fighter",
-        "Powerhouse"
-      ],
+      "classes": ["Fighter", "Powerhouse"],
       "stars": 4,
       "starsLabel": "4",
       "cost": 9,
@@ -2524,10 +2288,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "chef sanji",
-          "sanji"
-        ],
+        "partyConflictKeys": ["chef sanji", "sanji"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -2542,7 +2303,6 @@
         ],
         "sailorAbilities": [],
         "sailorNotes": null,
-        "limitBreak": [],
         "potentialAbilities": [],
         "supportData": [],
         "swapData": null,
@@ -2579,10 +2339,7 @@
       "type": "QCK",
       "primaryClass": "Fighter",
       "secondaryClass": "Powerhouse",
-      "classes": [
-        "Fighter",
-        "Powerhouse"
-      ],
+      "classes": ["Fighter", "Powerhouse"],
       "stars": 5,
       "starsLabel": "5",
       "cost": 15,
@@ -2627,9 +2384,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "sanji"
-        ],
+        "partyConflictKeys": ["sanji"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -2727,29 +2482,10 @@
           "Makes [RCV] orbs beneficial for all characters. Boosts base ATK, HP and RCV of all characters by 40"
         ],
         "sailorNotes": "#{beneficial}",
-        "limitBreak": [
-          "Boosts base HP by 30",
-          "Boosts base RCV by 10",
-          "Boosts base ATK by 40",
-          "Acquire Potential 1: [STR] Damage Reduction",
-          "Boosts base HP by 60",
-          "Boosts base RCV by 20",
-          "Reduce base Special Cooldown by 1 turn",
-          "Boosts base ATK by 60",
-          "Acquire Sailor Ability 1: Makes [RCV] orbs beneficial for all characters",
-          "Boosts base RCV by 20",
-          "Reduce base Special Cooldown by 1 turn",
-          "Boosts base RCV by 30",
-          "Boosts base HP by 90",
-          "Acquire Sailor Ability 2: Boosts base ATK, HP and RCV of all characters by 40",
-          "Acquire Potential 2: Pinch Healing"
-        ],
         "potentialAbilities": [
           {
             "Name": "[STR] Damage Reduction",
-            "description": [
-              "Reduces damage taken from [STR] characters by 5%"
-            ]
+            "description": ["Reduces damage taken from [STR] characters by 5%"]
           },
           {
             "Name": "Pinch Healing",
@@ -2800,9 +2536,7 @@
       "type": "PSY",
       "primaryClass": "Fighter",
       "secondaryClass": null,
-      "classes": [
-        "Fighter"
-      ],
+      "classes": ["Fighter"],
       "stars": 3,
       "starsLabel": "3",
       "cost": 4,
@@ -2847,10 +2581,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "tony tony chopper",
-          "chopper"
-        ],
+        "partyConflictKeys": ["tony tony chopper", "chopper"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -2865,7 +2596,6 @@
         ],
         "sailorAbilities": [],
         "sailorNotes": null,
-        "limitBreak": [],
         "potentialAbilities": [],
         "supportData": [],
         "swapData": null,
@@ -2902,10 +2632,7 @@
       "type": "PSY",
       "primaryClass": "Fighter",
       "secondaryClass": "Free Spirit",
-      "classes": [
-        "Fighter",
-        "Free Spirit"
-      ],
+      "classes": ["Fighter", "Free Spirit"],
       "stars": 4,
       "starsLabel": "4",
       "cost": 9,
@@ -2950,10 +2677,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "tony tony chopper",
-          "chopper"
-        ],
+        "partyConflictKeys": ["tony tony chopper", "chopper"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -3042,29 +2766,10 @@
           "Makes [TND] orbs beneficial for this character. Boosts base ATK, HP and RCV of all characters by 30"
         ],
         "sailorNotes": "#{beneficial}",
-        "limitBreak": [
-          "Boosts base RCV by 20",
-          "Boosts base HP by 40",
-          "Boosts base RCV by 30",
-          "Acquire Potential 1: [INT] Damage Reduction",
-          "Boosts base HP by 60",
-          "Reduce base Special Cooldown by 1 turn",
-          "Boosts base ATK by 50",
-          "Acquire Sailor Ability 1: Makes [TND] orbs beneficial for this character",
-          "Boosts base HP by 100",
-          "Acquire 1 additional Socket slot",
-          "Reduce base Special Cooldown by 2 turns",
-          "Boosts base ATK by 50",
-          "Acquire 1 additional Socket slot",
-          "Acquire Sailor Ability 2: Boosts base ATK, HP and RCV of all characters by 30",
-          "Acquire Potential 2: Pinch Healing"
-        ],
         "potentialAbilities": [
           {
             "Name": "[INT] Damage Reduction",
-            "description": [
-              "Reduces damage taken from [INT] characters by 5%"
-            ]
+            "description": ["Reduces damage taken from [INT] characters by 5%"]
           },
           {
             "Name": "Pinch Healing",
@@ -3115,10 +2820,7 @@
       "type": "INT",
       "primaryClass": "Fighter",
       "secondaryClass": "Cerebral",
-      "classes": [
-        "Fighter",
-        "Cerebral"
-      ],
+      "classes": ["Fighter", "Cerebral"],
       "stars": 4,
       "starsLabel": "4",
       "cost": 9,
@@ -3163,10 +2865,7 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "tony tony chopper",
-          "chopper"
-        ],
+        "partyConflictKeys": ["tony tony chopper", "chopper"],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -3181,7 +2880,6 @@
         ],
         "sailorAbilities": [],
         "sailorNotes": null,
-        "limitBreak": [],
         "potentialAbilities": [],
         "supportData": [],
         "swapData": null,
@@ -3218,10 +2916,7 @@
       "type": "STR",
       "primaryClass": "Fighter",
       "secondaryClass": "Powerhouse",
-      "classes": [
-        "Fighter",
-        "Powerhouse"
-      ],
+      "classes": ["Fighter", "Powerhouse"],
       "stars": 4,
       "starsLabel": "4",
       "cost": 9,
@@ -3266,15 +2961,11 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": [
-          "tony tony chopper",
-          "chopper"
-        ],
+        "partyConflictKeys": ["tony tony chopper", "chopper"],
         "characterTags": [],
         "builderAbilities": [],
         "sailorAbilities": [],
         "sailorNotes": null,
-        "limitBreak": [],
         "potentialAbilities": [],
         "supportData": [],
         "swapData": null,

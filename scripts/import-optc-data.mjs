@@ -1309,7 +1309,6 @@ export function normalizeCharacterDetail(
     builderAbilities: [],
     sailorAbilities: normalizedSailorAbilities,
     sailorNotes: normalizedSailorNotes,
-    limitBreak: detail.limit ?? [],
     potentialAbilities: normalizePotentialAbilities(detail.potential),
     supportData: normalizeSupportData(detail.support),
     swapData: detail.swap ?? null,

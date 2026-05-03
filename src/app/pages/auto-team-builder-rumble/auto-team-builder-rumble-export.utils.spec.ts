@@ -244,7 +244,6 @@ function createSlot(
           builderAbilities: [],
           sailorAbilities: [],
           sailorNotes: null,
-          limitBreak: [],
           potentialAbilities: [],
           supportData: [],
           swapData: null,

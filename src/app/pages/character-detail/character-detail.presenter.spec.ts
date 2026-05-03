@@ -343,7 +343,6 @@ describe('character-detail presenter', () => {
           ],
           sailorAbilities: [],
           sailorNotes: 'Works as sailor.',
-          limitBreak: [{ description: 'Adds extra damage.' }],
           potentialAbilities: [{ Name: 'Critical Hit', description: ['Increases crit chance.'] }],
           supportData: [
             {
@@ -493,7 +492,6 @@ describe('character-detail presenter', () => {
         builderAbilities: [],
         sailorAbilities: [],
         sailorNotes: null,
-        limitBreak: [],
         potentialAbilities: [],
         supportData: [],
         swapData: null,
@@ -693,7 +691,6 @@ describe('character-detail presenter', () => {
         builderAbilities: [],
         sailorAbilities: [],
         sailorNotes: null,
-        limitBreak: [],
         potentialAbilities: [],
         supportData: [],
         swapData: null,
@@ -805,7 +802,6 @@ function createCharacterDetailRecord(
       builderAbilities: [],
       sailorAbilities: [],
       sailorNotes: null,
-      limitBreak: [],
       potentialAbilities: [],
       supportData: [],
       swapData: null,

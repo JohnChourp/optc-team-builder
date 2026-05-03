@@ -119,7 +119,6 @@ export interface CharacterDetail {
   builderAbilities: NormalizedBuilderAbility[];
   sailorAbilities: string[];
   sailorNotes: string | null;
-  limitBreak: Array<{ description: string }>;
   potentialAbilities: Array<{ Name?: string; description?: string[] }>;
   supportData: CharacterSupportEntry[];
   swapData: Record<string, unknown> | null;

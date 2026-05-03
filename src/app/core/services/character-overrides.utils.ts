@@ -45,7 +45,6 @@ const ARRAY_DETAIL_KEYS = [
   'characterTags',
   'builderAbilities',
   'sailorAbilities',
-  'limitBreak',
   'potentialAbilities',
   'supportData',
 ] as const;
@@ -126,7 +125,6 @@ export function createEmptyCharacterDetail(characterId: number): CharacterDetail
     builderAbilities: [],
     sailorAbilities: [],
     sailorNotes: null,
-    limitBreak: [],
     potentialAbilities: [],
     supportData: [],
     swapData: null,

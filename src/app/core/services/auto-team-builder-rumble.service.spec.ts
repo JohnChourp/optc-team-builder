@@ -1651,7 +1651,6 @@ function createCharacter(
       builderAbilities: [],
       sailorAbilities: [],
       sailorNotes: null,
-      limitBreak: [],
       potentialAbilities: [],
       supportData: [],
       swapData: null,

@@ -365,24 +365,6 @@ function buildEnhancementsGroup(character: CharacterDetailRecord): DetailDisplay
   const { detail } = character;
   const cards: DetailDisplayCard[] = [];
 
-  if (detail.limitBreak.length) {
-    cards.push({
-      titleKey: 'sections.limitBreak',
-      rows: [],
-      texts: [],
-      lists: [
-        createList(
-          undefined,
-          detail.limitBreak
-            .map((entry) => sanitizeText(entry.description))
-            .filter((entry): entry is string => Boolean(entry)),
-        ),
-      ],
-      entries: [],
-      chips: [],
-    });
-  }
-
   if (detail.potentialAbilities.length) {
     cards.push({
       titleKey: 'sections.potentialAbilities',

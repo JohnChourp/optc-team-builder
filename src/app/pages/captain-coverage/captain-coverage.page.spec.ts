@@ -858,7 +858,6 @@ function createCharacter(
       builderAbilities: overrides.builderAbilities ?? [],
       sailorAbilities: [],
       sailorNotes: null,
-      limitBreak: [],
       potentialAbilities: [],
       supportData: [],
       swapData: null,

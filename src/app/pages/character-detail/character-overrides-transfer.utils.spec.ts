@@ -129,7 +129,6 @@ function createOverride(characterId: number) {
       builderAbilities: [],
       sailorAbilities: [],
       sailorNotes: null,
-      limitBreak: [],
       potentialAbilities: [],
       supportData: [],
       swapData: null,

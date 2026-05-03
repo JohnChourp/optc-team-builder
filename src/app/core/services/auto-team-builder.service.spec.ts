@@ -3091,9 +3091,9 @@ describe('Auto team builder', () => {
     );
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
     expect(result?.coverage.battleRequirements?.matchesAll).toBe(true);
-    expect(result?.requestedInput.requiredAbilities.map((requirement) => requirement.abilityKey)).toEqual([
-      'remove_despair',
-    ]);
+    expect(
+      result?.requestedInput.requiredAbilities.map((requirement) => requirement.abilityKey),
+    ).toEqual(['remove_despair']);
   });
 
   it('uses flexible same-battle group coverage when strict battle spread is infeasible', () => {
@@ -8852,11 +8852,7 @@ function createKidCaptainRequirementRecords(): CharacterDetailRecord[] {
         characterTags: ['Spade Pirates', 'Land of Wano Arc'],
         builderAbilities: [
           createBuilderAbility('remove_bind', 'Remove Bind', 6),
-          createBuilderAbility(
-            'remove_enemy_increased_defense',
-            'Remove Increased Defense',
-            6,
-          ),
+          createBuilderAbility('remove_enemy_increased_defense', 'Remove Increased Defense', 6),
         ],
       },
     }),
@@ -9325,7 +9321,6 @@ function createCharacterRecord(
       builderAbilities: overrides.detail?.builderAbilities ?? [],
       sailorAbilities: overrides.detail?.sailorAbilities ?? [],
       sailorNotes: overrides.detail?.sailorNotes ?? null,
-      limitBreak: overrides.detail?.limitBreak ?? [],
       potentialAbilities: overrides.detail?.potentialAbilities ?? [],
       supportData: overrides.detail?.supportData ?? [],
       swapData: overrides.detail?.swapData ?? null,

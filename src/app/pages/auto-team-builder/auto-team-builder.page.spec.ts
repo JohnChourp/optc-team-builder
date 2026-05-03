@@ -2336,7 +2336,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain('[showLeaderBoostControls]="true"');
     expect(template).toContain('[leaderBoostFilters]="leaderBoostFilters()"');
     expect(template).toContain('[leaderBoostRanges]="leaderBoostRanges()"');
-    expect(template).toContain('(saveLeaderBoostSettings)="saveCaptainLeaderBoostSettings($event)"');
+    expect(template).toContain(
+      '(saveLeaderBoostSettings)="saveCaptainLeaderBoostSettings($event)"',
+    );
     expect(template).not.toContain("t('filters.leaderBoost.label')");
     expect(template).not.toContain('(ionChange)="onLeaderBoostFilterChange($event)"');
     expect(template).not.toContain('captainAbilityCoverageToggleLabel()');
@@ -3341,9 +3343,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         offset: 0,
       }),
     );
-    expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual([
-      825,
-    ]);
+    expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
+      [825],
+    );
   });
 
   it('ignores stale manual candidate responses when the search term changes quickly', async () => {
@@ -3617,9 +3619,9 @@ describe('AutoTeamBuilderPage offline save', () => {
     const matchingCharacter = createCharacterRecord(905, 'Manual Search Result');
 
     await page.ngOnInit();
-    repository.searchDetailedCharacters.mockResolvedValueOnce([]).mockResolvedValueOnce([
-      matchingCharacter,
-    ]);
+    repository.searchDetailedCharacters
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([matchingCharacter]);
     await page.openFixedManualTeamPickerModal(1);
     await page.onFixedManualTeamSearchChange({
       detail: { value: 'Manual Search' },
@@ -5848,7 +5850,6 @@ function createCharacterRecord(
       builderAbilities,
       sailorAbilities: [`${name} sailor`],
       sailorNotes: null,
-      limitBreak: [{ description: `${name} limit break` }],
       potentialAbilities: [{ Name: `${name} potential`, description: [`${name} potential text`] }],
       supportData: [],
       swapData: null,

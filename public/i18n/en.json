@@ -275,7 +275,6 @@
   "sections": {
     "captainAbility": "Missing value for 'sections.captainAbility'",
     "commands": "Missing value for 'sections.commands'",
-    "limitBreak": "Missing value for 'sections.limitBreak'",
     "packStatus": "Missing value for 'sections.packStatus'",
     "potentialAbilities": "Missing value for 'sections.potentialAbilities'",
     "releaseNote": "Missing value for 'sections.releaseNote'",

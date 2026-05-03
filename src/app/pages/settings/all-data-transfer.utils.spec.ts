@@ -116,7 +116,6 @@ describe('All data transfer helpers', () => {
             builderAbilities: [],
             sailorAbilities: [],
             sailorNotes: null,
-            limitBreak: [],
             potentialAbilities: [],
             supportData: [],
             swapData: null,

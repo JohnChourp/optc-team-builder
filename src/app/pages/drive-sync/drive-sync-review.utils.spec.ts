@@ -284,7 +284,6 @@ function createOverride(characterId: number, name: string) {
       characterId,
       detailImageUrl: '',
       finalTapData: null,
-      limitBreak: [],
       partyConflictKeys: [],
       potentialAbilities: [],
       rumbleData: null,

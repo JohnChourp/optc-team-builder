@@ -603,7 +603,6 @@ function createCharacter(id: number, name: string) {
       builderAbilities: [],
       sailorAbilities: [],
       sailorNotes: null,
-      limitBreak: [],
       potentialAbilities: [],
       supportData: [],
       swapData: null,

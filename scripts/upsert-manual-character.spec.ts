@@ -357,7 +357,6 @@ async function createFixtureWorkspace() {
         builderAbilities: [],
         sailorAbilities: [],
         sailorNotes: null,
-        limitBreak: [],
         potentialAbilities: [],
         supportData: [],
         swapData: null,

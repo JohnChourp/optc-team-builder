@@ -1435,7 +1435,6 @@ export class OptcRepositoryService {
       builderAbilities: [],
       sailorAbilities: [],
       sailorNotes: null,
-      limitBreak: [],
       potentialAbilities: [],
       supportData: [],
       swapData: null,
@@ -1453,9 +1452,15 @@ export class OptcRepositoryService {
   }
 
   private normalizeCharacterDetail(detail: CharacterDetail, characterId: number): CharacterDetail {
-    const normalizedDetail = detail as CharacterDetail & {
+    const normalizedDetail = {
+      ...(detail as CharacterDetail & {
+        limitBreak?: unknown;
+      }),
+    } as CharacterDetail & {
       specialAbilities?: CharacterDetail['builderAbilities'];
+      limitBreak?: unknown;
     };
+    delete normalizedDetail.limitBreak;
 
     return {
       ...this.emptyDetail(characterId),

@@ -23,7 +23,6 @@ const MANUAL_DETAIL_NULLABLE_TEXT_KEYS = [
 ];
 const MANUAL_DETAIL_ARRAY_OBJECT_KEYS = [
   'captainAbilityVariants',
-  'limitBreak',
   'potentialAbilities',
   'supportData',
   'builderAbilities',
@@ -65,7 +64,6 @@ export function createEmptyManualDetail(characterId) {
     builderAbilities: [],
     sailorAbilities: [],
     sailorNotes: null,
-    limitBreak: [],
     potentialAbilities: [],
     supportData: [],
     swapData: null,
@@ -428,14 +426,6 @@ function normalizeNonNegativeNumber(value, label) {
   }
 
   return parsed;
-}
-
-function normalizeOptionalNonNegativeNumber(value, label, fallback) {
-  if (value === null || value === undefined || value === '') {
-    return fallback;
-  }
-
-  return normalizeNonNegativeNumber(value, label);
 }
 
 function normalizeNullableNonNegativeNumber(value, label) {
