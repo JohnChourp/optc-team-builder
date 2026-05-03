@@ -10,6 +10,7 @@
     "build:pages": "npm run config:app:web-strict && ng build --configuration production --base-href / && npm run seo:pages && npm run seo:audit",
     "seo:pages": "node ./scripts/generate-seo-pages.mjs",
     "seo:audit": "node ./scripts/audit-seo-pages.mjs",
+    "seo:indexnow": "node ./scripts/submit-indexnow.mjs",
     "watch": "npm run config:app && ng build --watch --configuration development",
     "test": "ng test",
     "i18n:extract": "../codex_utilities/Downloads/projects/node_modules/.bin/transloco-keys-manager extract --project optc-team-builder",

@@ -10,6 +10,8 @@ const siteBaseUrl = normalizeSiteBaseUrl(
 const sitemapPath = path.join(outputDir, 'sitemap.xml');
 const robotsPath = path.join(outputDir, 'robots.txt');
 const sitemapHtmlPath = path.join(outputDir, 'sitemap.html');
+const indexNowKey = '0e9b739514c64e9a9a762120955f79dc';
+const indexNowKeyPath = path.join(outputDir, `${indexNowKey}.txt`);
 const publicToolPaths = new Set([
   '',
   'tabs/characters',
@@ -18,6 +20,12 @@ const publicToolPaths = new Set([
   'tabs/captain-coverage',
   'tabs/auto-team-builder-rumble',
   'tabs/crew-forge',
+  'tools/optc-team-builder',
+  'tools/optc-auto-team-builder',
+  'tools/optc-rumble-team-builder',
+  'tools/optc-character-database',
+  'guides/how-to-build-an-optc-team',
+  'guides/optc-pirate-rumble-team-building',
   'privacy',
   'cookies',
   'terms',
@@ -34,6 +42,7 @@ const forbiddenSitemapPaths = new Set([
 const errors = [];
 
 await auditRobotsTxt();
+await auditIndexNowKey();
 const sitemapUrls = await auditSitemapXml();
 await auditGeneratedPages(sitemapUrls);
 await auditSitemapHtml();
@@ -64,6 +73,14 @@ async function auditRobotsTxt() {
 
   if (!robots.split(/\r?\n/u).includes(expectedSitemapLine)) {
     errors.push(`robots.txt must reference "${expectedSitemapLine}".`);
+  }
+}
+
+async function auditIndexNowKey() {
+  const keyFile = await readRequiredTextFile(indexNowKeyPath);
+
+  if (keyFile.trim() !== indexNowKey) {
+    errors.push(`${relative(indexNowKeyPath)} must contain the IndexNow key.`);
   }
 }
 
@@ -138,6 +155,7 @@ async function auditGeneratedPages(urls) {
       'content',
     );
     const title = html.match(/<title>([\s\S]*?)<\/title>/iu)?.[1]?.trim() ?? '';
+    const jsonLd = parseJsonLd(html, htmlPath);
 
     if (canonicalHrefs.length !== 1) {
       errors.push(`${relative(htmlPath)} must include exactly one canonical link.`);
@@ -168,8 +186,18 @@ async function auditGeneratedPages(urls) {
       );
     }
 
+    if (/\.seo-fallback\s*\{[^}]*display:\s*none\s*!important/iu.test(html)) {
+      errors.push(`${relative(htmlPath)} must not hide SEO fallback content by default.`);
+    }
+
+    auditJsonLdGraph(jsonLd, htmlPath, routePath);
+
     if (routePath === '') {
       auditRootFallbackHtml(html, htmlPath);
+    }
+
+    if (/^characters\/[1-9]\d*$/u.test(routePath)) {
+      auditCharacterFallbackHtml(html, htmlPath);
     }
   }
 }
@@ -190,8 +218,11 @@ function auditRootFallbackHtml(html, htmlPath) {
     'tabs/captain-coverage',
     'tabs/auto-team-builder-rumble',
     'tabs/crew-forge',
+    'tools/optc-team-builder',
+    'tools/optc-character-database',
+    'guides/how-to-build-an-optc-team',
   ]) {
-    const expectedHref = buildAppRoutePath(routePath);
+    const expectedHref = buildAbsoluteUrl(routePath);
 
     if (!html.includes(`href="${expectedHref}"`)) {
       errors.push(`${relative(htmlPath)} root fallback must link to ${expectedHref}.`);
@@ -199,11 +230,33 @@ function auditRootFallbackHtml(html, htmlPath) {
   }
 }
 
+function auditCharacterFallbackHtml(html, htmlPath) {
+  for (const expectedText of [
+    'OPTC Team Builder character tools',
+    'Browse OPTC characters',
+    'Open Auto Team Builder',
+    'Rank Rumble characters',
+  ]) {
+    if (!html.includes(expectedText)) {
+      errors.push(`${relative(htmlPath)} character fallback must include "${expectedText}".`);
+    }
+  }
+}
+
 async function auditSitemapHtml() {
+  let sitemapHtml = '';
+
   try {
     await access(sitemapHtmlPath);
+    sitemapHtml = await readFile(sitemapHtmlPath, 'utf8');
   } catch {
     errors.push('sitemap.html must be generated next to sitemap.xml.');
+  }
+
+  for (const expectedText of ['Main public pages', 'Newest generated OPTC character pages']) {
+    if (sitemapHtml && !sitemapHtml.includes(expectedText)) {
+      errors.push(`sitemap.html must include "${expectedText}".`);
+    }
   }
 }
 
@@ -225,6 +278,59 @@ function isAllowedSitemapPath(routePath) {
   return publicToolPaths.has(routePath) || /^characters\/[1-9]\d*$/u.test(routePath);
 }
 
+function parseJsonLd(html, htmlPath) {
+  const match = html.match(
+    /<script\s+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/iu,
+  );
+
+  if (!match) {
+    errors.push(`${relative(htmlPath)} must include JSON-LD structured data.`);
+    return null;
+  }
+
+  try {
+    return JSON.parse(decodeHtmlScript(match[1] ?? '').trim());
+  } catch (error) {
+    errors.push(`${relative(htmlPath)} must include valid JSON-LD.`);
+
+    if (error instanceof Error) {
+      errors.push(error.message);
+    }
+
+    return null;
+  }
+}
+
+function auditJsonLdGraph(jsonLd, htmlPath, routePath) {
+  const graph = Array.isArray(jsonLd?.['@graph']) ? jsonLd['@graph'] : [];
+
+  if (!graph.length) {
+    errors.push(`${relative(htmlPath)} JSON-LD must include @graph nodes.`);
+    return;
+  }
+
+  if (!graph.some((node) => node?.['@type'] === 'WebSite' && node?.potentialAction?.['@type'] === 'SearchAction')) {
+    errors.push(`${relative(htmlPath)} JSON-LD WebSite must include SearchAction.`);
+  }
+
+  if (!graph.some((node) => node?.['@type'] === 'BreadcrumbList')) {
+    errors.push(`${relative(htmlPath)} JSON-LD must include BreadcrumbList.`);
+  }
+
+  if (routePath.startsWith('tools/') && !graph.some((node) => node?.['@type'] === 'SoftwareApplication')) {
+    errors.push(`${relative(htmlPath)} tool pages must include SoftwareApplication JSON-LD.`);
+  }
+
+  if (
+    ['tabs/characters', 'tabs/rumble-characters', 'tools/optc-character-database'].includes(
+      routePath,
+    ) &&
+    !graph.some((node) => node?.['@type'] === 'CollectionPage')
+  ) {
+    errors.push(`${relative(htmlPath)} catalog pages must include CollectionPage JSON-LD.`);
+  }
+}
+
 function htmlPathForRoute(routePath) {
   return routePath.length === 0
     ? path.join(outputDir, 'index.html')
@@ -241,13 +347,6 @@ function buildAbsoluteUrl(routePath) {
   const normalizedRoutePath = routePath.replace(/^\/+|\/+$/gu, '');
 
   return normalizedRoutePath.length ? `${siteBaseUrl}/${normalizedRoutePath}/` : `${siteBaseUrl}/`;
-}
-
-function buildAppRoutePath(routePath) {
-  const normalizedRoutePath = routePath.replace(/^\/+|\/+$/gu, '');
-  const sitePath = new URL(siteBaseUrl).pathname.replace(/\/+$/gu, '');
-
-  return `${sitePath}/${normalizedRoutePath}/`.replace(/\/{2,}/gu, '/');
 }
 
 function normalizeSiteBaseUrl(value) {
@@ -274,6 +373,10 @@ function decodeHtmlAttribute(value) {
     .replaceAll('&gt;', '>')
     .replaceAll('&lt;', '<')
     .replaceAll('&amp;', '&');
+}
+
+function decodeHtmlScript(value) {
+  return String(value).replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&amp;', '&');
 }
 
 function relative(filePath) {

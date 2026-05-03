@@ -173,7 +173,7 @@
     }
 
     .seo-fallback {
-      display: none !important;
+      display: block;
     }
 
     @keyframes app-bootstrap-spin {
@@ -182,6 +182,13 @@
       }
     }
   </style>
+  <noscript>
+    <style>
+      .app-bootstrap-loader {
+        display: none !important;
+      }
+    </style>
+  </noscript>
 </head>
 <body>
   <!-- Google Tag Manager (noscript) -->

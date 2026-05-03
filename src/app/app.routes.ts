@@ -1,5 +1,8 @@
 import { Routes } from '@angular/router';
 
+const loadSeoContentPage = () =>
+  import('./pages/seo-content/seo-content.page').then((module) => module.SeoContentPage);
+
 export const routes: Routes = [
   {
     path: '',
@@ -222,6 +225,228 @@ export const routes: Routes = [
       import('./pages/character-edit/character-edit.page').then(
         (module) => module.CharacterEditPage,
       ),
+  },
+  {
+    path: 'tools/optc-team-builder',
+    data: {
+      contentIcon: 'tools',
+      seo: {
+        title: 'OPTC Team Builder Tool | One Piece Treasure Cruise Crew Planner',
+        description:
+          'Use OPTC Team Builder to search One Piece Treasure Cruise characters, compare abilities, plan crews, and jump into auto team-building tools.',
+        canonicalPath: 'tools/optc-team-builder',
+      },
+      content: {
+        eyebrow: 'OPTC tool',
+        title: 'OPTC Team Builder Tool',
+        summary:
+          'A fan-made One Piece Treasure Cruise crew planner for searching characters, checking ability coverage, and moving quickly from a unit idea to a playable team.',
+        sections: [
+          {
+            title: 'Search before you build',
+            copy: 'Start from the character catalog when you need names, ids, types, classes, specials, supports, and captain ability context before choosing crew slots.',
+          },
+          {
+            title: 'Move into real tools',
+            copy: 'Use the live Characters, Captain Coverage, Auto Team Builder, and Crew Forge screens instead of copying data between separate spreadsheets.',
+          },
+          {
+            title: 'Keep planning data local',
+            copy: 'Saved teams, saved enemies, character boxes, and backups stay in your browser unless you choose to use Drive sync.',
+          },
+        ],
+        links: [
+          { label: 'Browse OPTC characters', route: '/tabs/characters' },
+          { label: 'Open Auto Team Builder', route: '/tabs/auto-team-builder' },
+        ],
+      },
+    },
+    loadComponent: loadSeoContentPage,
+  },
+  {
+    path: 'tools/optc-auto-team-builder',
+    data: {
+      contentIcon: 'flash',
+      seo: {
+        title: 'OPTC Auto Team Builder | Enemy Mechanics and Ability Filters',
+        description:
+          'Build One Piece Treasure Cruise teams by enemy mechanics, ability requirements, manual slots, type filters, class filters, and character candidates.',
+        canonicalPath: 'tools/optc-auto-team-builder',
+      },
+      content: {
+        eyebrow: 'Auto builder',
+        title: 'OPTC Auto Team Builder',
+        summary:
+          'Find One Piece Treasure Cruise crew candidates by describing the mechanics and ability coverage your team needs.',
+        sections: [
+          {
+            title: 'Mechanic-first planning',
+            copy: 'Enter bind, despair, paralysis, barriers, damage reduction, orb problems, interrupts, and other enemy requirements to narrow the character pool.',
+          },
+          {
+            title: 'Manual slots stay useful',
+            copy: 'Lock known captains or key subs first, then let the builder search around the characters you already want to use.',
+          },
+          {
+            title: 'Readable candidate results',
+            copy: 'Generated teams and fallback candidates are ranked with coverage details so you can understand why a unit was selected.',
+          },
+        ],
+        links: [
+          { label: 'Open Auto Team Builder', route: '/tabs/auto-team-builder' },
+          { label: 'Check captain coverage', route: '/tabs/captain-coverage' },
+        ],
+      },
+    },
+    loadComponent: loadSeoContentPage,
+  },
+  {
+    path: 'tools/optc-rumble-team-builder',
+    data: {
+      contentIcon: 'rumble',
+      seo: {
+        title: 'OPTC Pirate Rumble Team Builder | Rumble Rankings and Synergy',
+        description:
+          'Build Pirate Rumble teams in OPTC with local Rumble data, active and bench slots, score ranking, type focus, and synergy checks.',
+        canonicalPath: 'tools/optc-rumble-team-builder',
+      },
+      content: {
+        eyebrow: 'Pirate Rumble',
+        title: 'OPTC Pirate Rumble Team Builder',
+        summary:
+          'Compare Pirate Rumble units and build active and bench slots from local One Piece Treasure Cruise Rumble data.',
+        sections: [
+          {
+            title: 'Rumble-specific scoring',
+            copy: 'The Rumble tools prioritize passive effects, special effects, stats, roles, type focus, and synergy instead of regular quest-only ability text.',
+          },
+          {
+            title: 'Active and bench slots',
+            copy: 'Build around the slots you care about, review suggested teams, and inspect dropped or resolved type choices.',
+          },
+          {
+            title: 'Useful for tier-list research',
+            copy: 'Rumble Characters gives a searchable ranking surface for players comparing OPTC Pirate Rumble units before building a team.',
+          },
+        ],
+        links: [
+          { label: 'Build a Rumble team', route: '/tabs/auto-team-builder-rumble' },
+          { label: 'Rank Rumble characters', route: '/tabs/rumble-characters' },
+        ],
+      },
+    },
+    loadComponent: loadSeoContentPage,
+  },
+  {
+    path: 'tools/optc-character-database',
+    data: {
+      contentIcon: 'catalog',
+      seo: {
+        title: 'OPTC Character Database | One Piece Treasure Cruise Search',
+        description:
+          'Search the OPTC character database by id, name, type, class, specials, captain abilities, support effects, and Pirate Rumble data.',
+        canonicalPath: 'tools/optc-character-database',
+      },
+      content: {
+        eyebrow: 'Character database',
+        title: 'OPTC Character Database',
+        summary:
+          'Search One Piece Treasure Cruise character data and open generated detail pages with stats, abilities, supports, and Rumble information.',
+        sections: [
+          {
+            title: 'Character search',
+            copy: 'Use names, ids, types, classes, and ability text to find the units you need for a crew or Rumble setup.',
+          },
+          {
+            title: 'Detail pages',
+            copy: 'Generated character pages expose crawlable summaries for captain ability, special, support, and Pirate Rumble data where available.',
+          },
+          {
+            title: 'Connected planning',
+            copy: 'Character pages link back into the app tools so search and team planning stay connected.',
+          },
+        ],
+        links: [
+          { label: 'Open Characters', route: '/tabs/characters' },
+          { label: 'Open Rumble Characters', route: '/tabs/rumble-characters' },
+        ],
+      },
+    },
+    loadComponent: loadSeoContentPage,
+  },
+  {
+    path: 'guides/how-to-build-an-optc-team',
+    data: {
+      contentIcon: 'tools',
+      seo: {
+        title: 'How to Build an OPTC Team | One Piece Treasure Cruise Guide',
+        description:
+          'Learn a practical OPTC team-building workflow: pick captains, cover enemy mechanics, choose utility, lock manual slots, and compare candidates.',
+        canonicalPath: 'guides/how-to-build-an-optc-team',
+      },
+      content: {
+        eyebrow: 'Team-building guide',
+        title: 'How to Build an OPTC Team',
+        summary:
+          'A practical workflow for One Piece Treasure Cruise players who need to turn enemy mechanics and available units into a working crew.',
+        sections: [
+          {
+            title: 'Start with the captain',
+            copy: 'Pick a captain that covers the key characters you want to use, then verify type, class, cost, universal, and self-scope coverage.',
+          },
+          {
+            title: 'Map the mechanics',
+            copy: 'List the enemy mechanics that must be handled, including bind, despair, paralysis, barriers, damage reduction, orb problems, and interrupts.',
+          },
+          {
+            title: 'Lock and search',
+            copy: 'Place known units in manual slots, then use ability filters and generated candidates to fill missing utility and damage roles.',
+          },
+        ],
+        links: [
+          { label: 'Check captain coverage', route: '/tabs/captain-coverage' },
+          { label: 'Open Auto Team Builder', route: '/tabs/auto-team-builder' },
+        ],
+      },
+    },
+    loadComponent: loadSeoContentPage,
+  },
+  {
+    path: 'guides/optc-pirate-rumble-team-building',
+    data: {
+      contentIcon: 'rumble',
+      seo: {
+        title: 'OPTC Pirate Rumble Team Building Guide | Rumble Builder',
+        description:
+          'Build better OPTC Pirate Rumble teams by comparing Rumble passives, specials, stats, roles, active slots, bench slots, and type synergy.',
+        canonicalPath: 'guides/optc-pirate-rumble-team-building',
+      },
+      content: {
+        eyebrow: 'Pirate Rumble guide',
+        title: 'OPTC Pirate Rumble Team Building',
+        summary:
+          'Use Rumble-specific data to compare units, shape active and bench slots, and understand team synergy before saving a setup.',
+        sections: [
+          {
+            title: 'Use Rumble data',
+            copy: 'Regular specials and captain abilities do not describe the whole Rumble picture. Compare passive effects, special effects, cooldown, defense, speed, and role tags.',
+          },
+          {
+            title: 'Balance roles',
+            copy: 'Strong Rumble teams usually need damage, survivability, control, and support effects distributed across active and bench slots.',
+          },
+          {
+            title: 'Compare before saving',
+            copy: 'Use Rumble Characters for unit ranking, then use Auto Team Rumble Builder to test team combinations and save useful results.',
+          },
+        ],
+        links: [
+          { label: 'Rank Rumble characters', route: '/tabs/rumble-characters' },
+          { label: 'Build a Rumble team', route: '/tabs/auto-team-builder-rumble' },
+        ],
+      },
+    },
+    loadComponent: loadSeoContentPage,
   },
   {
     path: 'privacy',

@@ -14,6 +14,8 @@ const siteName = 'OPTC Team Builder';
 const homePageTitle = 'OPTC Team Builder | One Piece Treasure Cruise Tools';
 const siteDescription =
   'Plan OPTC crews with character search, Rumble rankings, captain coverage, auto team building, Crew Forge, saved teams, enemies, boxes, Drive sync, and offline tools.';
+const defaultImageUrl = `${siteBaseUrl}/brand/favicon-master-v2-optimized.png`;
+const indexNowKey = '0e9b739514c64e9a9a762120955f79dc';
 const googleTagManagerHeadHtml = `  <!-- Google Tag Manager consent bootstrap -->
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -68,6 +70,9 @@ const publicRoutes = [
       { label: 'Build an OPTC team', path: 'tabs/auto-team-builder' },
       { label: 'Build a Pirate Rumble team', path: 'tabs/auto-team-builder-rumble' },
       { label: 'Import crew screenshots', path: 'tabs/crew-forge' },
+      { label: 'OPTC team builder tool', path: 'tools/optc-team-builder' },
+      { label: 'OPTC character database', path: 'tools/optc-character-database' },
+      { label: 'How to build an OPTC team', path: 'guides/how-to-build-an-optc-team' },
       { label: 'Open the public sitemap', path: 'sitemap.html' },
     ],
   },
@@ -81,6 +86,11 @@ const publicRoutes = [
       'Browse the One Piece Treasure Cruise character catalog by id, name, type, class, stars, cost, and ability data. Character pages include searchable OPTC details for captain abilities, specials, support effects, rumble information, and team-building notes.',
       'This page is the main entry point for finding units before opening a character detail page or adding candidates to a crew plan.',
     ],
+    schemaType: 'CollectionPage',
+    links: [
+      { label: 'Use the OPTC character database', path: 'tools/optc-character-database' },
+      { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },
+    ],
   },
   {
     path: 'tabs/rumble-characters',
@@ -91,6 +101,11 @@ const publicRoutes = [
     paragraphs: [
       'Rumble Characters ranks One Piece Treasure Cruise Pirate Rumble units by score, favorites, core filters, and custom stat focus.',
       'Use this page before building Pirate Rumble teams when you need to compare units by rumble data instead of regular quest abilities.',
+    ],
+    schemaType: 'CollectionPage',
+    links: [
+      { label: 'Build a Pirate Rumble team', path: 'tabs/auto-team-builder-rumble' },
+      { label: 'Read the Pirate Rumble team-building guide', path: 'guides/optc-pirate-rumble-team-building' },
     ],
   },
   {
@@ -103,6 +118,10 @@ const publicRoutes = [
       'Auto Team Builder helps build One Piece Treasure Cruise crews manually with fixed slots or automatically by enemy mechanics, character abilities, type filters, class filters, and team-building requirements.',
       'Fill the crew yourself when you already know the team, or enter the mechanics and requirements you need covered to review matching character candidates from the local OPTC data.',
     ],
+    links: [
+      { label: 'Read how to build an OPTC team', path: 'guides/how-to-build-an-optc-team' },
+      { label: 'Browse OPTC characters', path: 'tabs/characters' },
+    ],
   },
   {
     path: 'tabs/captain-coverage',
@@ -113,6 +132,10 @@ const publicRoutes = [
     paragraphs: [
       'Captain Coverage helps pick an OPTC character and find captain abilities that fully cover it under strict type, class, cost, universal, and self-scope matching.',
       'Use this page when you want to verify which leaders naturally include a target character before committing to a crew plan.',
+    ],
+    links: [
+      { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },
+      { label: 'Browse OPTC characters', path: 'tabs/characters' },
     ],
   },
   {
@@ -125,6 +148,10 @@ const publicRoutes = [
       'Auto Team Rumble Builder builds Pirate Rumble teams from local OPTC rumble data with deterministic scoring and synergy ranking.',
       'Use this page to compare active and bench candidates, inspect synergy, and shape Rumble teams from the same local data used elsewhere in the app.',
     ],
+    links: [
+      { label: 'Rank Rumble characters', path: 'tabs/rumble-characters' },
+      { label: 'Read the Pirate Rumble team-building guide', path: 'guides/optc-pirate-rumble-team-building' },
+    ],
   },
   {
     path: 'tabs/crew-forge',
@@ -135,6 +162,118 @@ const publicRoutes = [
     paragraphs: [
       'Crew Forge imports One Piece Treasure Cruise crew screenshots and matches recognized slots against the OPTC character catalog. It helps turn an existing crew image into editable team data.',
       'Use this tool when you want to rebuild, inspect, or refine a crew from a screenshot instead of searching for every character manually.',
+    ],
+    links: [
+      { label: 'Browse matched OPTC characters', path: 'tabs/characters' },
+      { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },
+    ],
+  },
+  {
+    path: 'tools/optc-team-builder',
+    title: 'OPTC Team Builder Tool | One Piece Treasure Cruise Crew Planner',
+    description:
+      'Use OPTC Team Builder to search One Piece Treasure Cruise characters, compare abilities, plan crews, and jump into auto team-building tools.',
+    heading: 'OPTC Team Builder Tool',
+    schemaType: 'SoftwareApplication',
+    paragraphs: [
+      'OPTC Team Builder is a fan-made One Piece Treasure Cruise crew planner for finding characters, comparing abilities, checking captain coverage, and moving quickly from unit search to team planning.',
+      'The tool connects a searchable OPTC character database with Auto Team Builder, Pirate Rumble tools, Crew Forge screenshot imports, saved teams, saved enemies, character boxes, and Drive sync.',
+      'Use it when you need a practical OPTC team builder rather than a static list of characters or a general game guide.',
+    ],
+    links: [
+      { label: 'Browse OPTC characters', path: 'tabs/characters' },
+      { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },
+      { label: 'Check captain coverage', path: 'tabs/captain-coverage' },
+    ],
+  },
+  {
+    path: 'tools/optc-auto-team-builder',
+    title: 'OPTC Auto Team Builder | Enemy Mechanics and Ability Filters',
+    description:
+      'Build One Piece Treasure Cruise teams by enemy mechanics, ability requirements, manual slots, type filters, class filters, and character candidates.',
+    heading: 'OPTC Auto Team Builder',
+    schemaType: 'SoftwareApplication',
+    paragraphs: [
+      'The OPTC Auto Team Builder helps players search for One Piece Treasure Cruise crew candidates by enemy mechanics, ability requirements, type filters, class filters, and manually locked slots.',
+      'Start with known captains or key subs, then describe the bind, despair, paralysis, barriers, damage reduction, orb issues, interrupts, and other coverage the team needs.',
+      'Generated teams and candidate fallbacks stay connected to the local character catalog so you can inspect the units behind each suggestion.',
+    ],
+    links: [
+      { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },
+      { label: 'Read how to build an OPTC team', path: 'guides/how-to-build-an-optc-team' },
+      { label: 'Browse OPTC characters', path: 'tabs/characters' },
+    ],
+  },
+  {
+    path: 'tools/optc-rumble-team-builder',
+    title: 'OPTC Pirate Rumble Team Builder | Rumble Rankings and Synergy',
+    description:
+      'Build Pirate Rumble teams in OPTC with local Rumble data, active and bench slots, score ranking, type focus, and synergy checks.',
+    heading: 'OPTC Pirate Rumble Team Builder',
+    schemaType: 'SoftwareApplication',
+    paragraphs: [
+      'The OPTC Pirate Rumble Team Builder focuses on Rumble-specific data instead of regular quest-only abilities. It compares passive effects, special effects, stats, roles, type focus, and synergy.',
+      'Use the builder to fill active and bench slots, inspect suggested combinations, and compare how different units contribute to a Pirate Rumble setup.',
+      'The Rumble Characters ranking page supports tier-list research before you commit a team to saved Rumble results.',
+    ],
+    links: [
+      { label: 'Build a Pirate Rumble team', path: 'tabs/auto-team-builder-rumble' },
+      { label: 'Rank Rumble characters', path: 'tabs/rumble-characters' },
+      { label: 'Read the Pirate Rumble guide', path: 'guides/optc-pirate-rumble-team-building' },
+    ],
+  },
+  {
+    path: 'tools/optc-character-database',
+    title: 'OPTC Character Database | One Piece Treasure Cruise Search',
+    description:
+      'Search the OPTC character database by id, name, type, class, specials, captain abilities, support effects, and Pirate Rumble data.',
+    heading: 'OPTC Character Database',
+    schemaType: 'CollectionPage',
+    paragraphs: [
+      'The OPTC character database gives One Piece Treasure Cruise players a searchable catalog of character ids, names, types, classes, stats, captain abilities, specials, support effects, and Pirate Rumble information.',
+      'Generated character detail pages make individual units easier to find from search engines while keeping links back into the live app tools.',
+      'Use this page as the entry point when you know the unit you need but still want connected team-building, captain coverage, or Rumble planning.',
+    ],
+    links: [
+      { label: 'Open Characters', path: 'tabs/characters' },
+      { label: 'Open Rumble Characters', path: 'tabs/rumble-characters' },
+      { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },
+    ],
+  },
+  {
+    path: 'guides/how-to-build-an-optc-team',
+    title: 'How to Build an OPTC Team | One Piece Treasure Cruise Guide',
+    description:
+      'Learn a practical OPTC team-building workflow: pick captains, cover enemy mechanics, choose utility, lock manual slots, and compare candidates.',
+    heading: 'How to Build an OPTC Team',
+    schemaType: 'WebPage',
+    paragraphs: [
+      'A strong One Piece Treasure Cruise team starts with the content you are trying to clear. Pick captains that cover the important characters, then list the enemy mechanics the crew must answer.',
+      'After the captain choice, cover bind, despair, paralysis, barriers, damage reduction, orb problems, interrupts, and other utility requirements before filling pure damage slots.',
+      'In OPTC Team Builder, you can lock known units in manual slots and let Auto Team Builder search for candidates that cover the remaining mechanics and ability requirements.',
+    ],
+    links: [
+      { label: 'Check captain coverage', path: 'tabs/captain-coverage' },
+      { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },
+      { label: 'Browse OPTC characters', path: 'tabs/characters' },
+    ],
+  },
+  {
+    path: 'guides/optc-pirate-rumble-team-building',
+    title: 'OPTC Pirate Rumble Team Building Guide | Rumble Builder',
+    description:
+      'Build better OPTC Pirate Rumble teams by comparing Rumble passives, specials, stats, roles, active slots, bench slots, and type synergy.',
+    heading: 'OPTC Pirate Rumble Team Building',
+    schemaType: 'WebPage',
+    paragraphs: [
+      'Pirate Rumble team building in OPTC depends on Rumble-specific passives, specials, cooldowns, defense, speed, roles, and type synergy rather than only regular quest abilities.',
+      'Start by comparing Rumble units, then shape active and bench slots around damage, survivability, control, and support effects.',
+      'Use Rumble Characters for unit ranking and Auto Team Rumble Builder to test combinations before saving useful teams.',
+    ],
+    links: [
+      { label: 'Rank Rumble characters', path: 'tabs/rumble-characters' },
+      { label: 'Build a Pirate Rumble team', path: 'tabs/auto-team-builder-rumble' },
+      { label: 'Open the OPTC team builder tool', path: 'tools/optc-team-builder' },
     ],
   },
   {
@@ -191,6 +330,7 @@ if (!characters.length) {
   throw new Error(`No character rows found in ${seedPath}.`);
 }
 
+const relatedCharactersByConflictKey = buildRelatedCharactersByConflictKey(characters);
 const sitemapEntries = [];
 
 for (const route of publicRoutes) {
@@ -213,10 +353,11 @@ for (const character of characters) {
 
 await writeSitemap(sitemapEntries);
 await writeRobotsTxt();
+await writeIndexNowKey();
 await writeSitemapHtml();
 
 console.log(
-  `[seo] generated ${characters.length} character pages, ${publicRoutes.length} public pages, sitemap.xml, robots.txt, and sitemap.html in ${path.relative(
+  `[seo] generated ${characters.length} character pages, ${publicRoutes.length} public pages, sitemap.xml, robots.txt, IndexNow key, and sitemap.html in ${path.relative(
     projectRoot,
     outputDir,
   )}.`,
@@ -261,14 +402,38 @@ Sitemap: ${buildAbsoluteUrl('sitemap.xml').replace(/\/$/u, '')}
   await writeFile(path.join(outputDir, 'robots.txt'), robots);
 }
 
+async function writeIndexNowKey() {
+  await writeFile(path.join(outputDir, `${indexNowKey}.txt`), indexNowKey);
+}
+
 async function writeSitemapHtml() {
-  const sitemapLinks = publicRoutes
+  const routeLinks = publicRoutes
     .filter((route) => route.path.length > 0)
     .map(
       (route) => `      <li>
         <a href="${escapeHtmlAttribute(buildAbsoluteUrl(route.path))}">${escapeHtml(route.title)}</a>
         <p>${escapeHtml(route.description)}</p>
       </li>`,
+    )
+    .join('\n');
+  const characterEntryLinks = [
+    { label: 'Newest generated OPTC character pages', characters: characters.slice(-12).reverse() },
+    { label: 'Early OPTC character pages', characters: characters.slice(0, 12) },
+  ]
+    .map(
+      (group) => `    <section>
+      <h2>${escapeHtml(group.label)}</h2>
+      <ul>
+${group.characters
+  .map(
+    (character) => `        <li>
+          <a href="${escapeHtmlAttribute(buildAbsoluteUrl(`characters/${character.id}`))}">#${character.id} ${escapeHtml(character.name)}</a>
+          <p>${escapeHtml(buildCharacterDescription(character))}</p>
+        </li>`,
+  )
+  .join('\n')}
+      </ul>
+    </section>`,
     )
     .join('\n');
   const canonicalUrl = `${siteBaseUrl}/sitemap.html`;
@@ -288,6 +453,7 @@ ${googleTagManagerHeadHtml}
     main { width: min(760px, calc(100% - 32px)); margin: 0 auto; padding: 48px 0; }
     a { color: #f5c84c; font-weight: 700; }
     p { color: rgba(248, 251, 255, 0.74); line-height: 1.6; }
+    h2 { margin-top: 36px; }
     ul { display: grid; gap: 18px; padding: 0; list-style: none; }
     li { border-top: 1px solid rgba(255, 255, 255, 0.12); padding-top: 18px; }
   </style>
@@ -296,10 +462,14 @@ ${googleTagManagerHeadHtml}
 ${googleTagManagerBodyHtml}
   <main>
     <h1>OPTC Team Builder Sitemap</h1>
-    <p>Links to the main public pages for browsing OPTC characters, building teams with Auto Team Builder, importing Crew Forge screenshots, and reading legal information.</p>
+    <p>Links to the main public pages for browsing OPTC characters, building teams with Auto Team Builder, importing Crew Forge screenshots, reading OPTC guides, and opening representative generated character pages.</p>
+    <section>
+      <h2>Main public pages</h2>
     <ul>
-${sitemapLinks}
+${routeLinks}
     </ul>
+    </section>
+${characterEntryLinks}
   </main>
 </body>
 </html>
@@ -311,22 +481,30 @@ ${sitemapLinks}
 function buildStaticPageSeo(route) {
   const canonicalPath = route.canonicalPath ?? route.path;
   const canonicalUrl = buildAbsoluteUrl(canonicalPath);
+  const pageType = route.schemaType === 'CollectionPage' ? 'CollectionPage' : 'WebPage';
+  const extraGraphNodes = route.schemaType === 'SoftwareApplication' || route.path.startsWith('tools/')
+    ? [buildSoftwareApplicationNode(route, canonicalUrl)]
+    : [];
 
   return {
     title: route.title,
     description: route.description,
     canonicalUrl,
-    imageUrl: null,
+    imageUrl: defaultImageUrl,
     fallbackHtml: route.path === '' ? buildHomeFallbackHtml(route) : buildStaticFallbackHtml(route),
-    jsonLd: buildJsonLd({
-      '@type': 'WebPage',
-      '@id': `${canonicalUrl}#webpage`,
-      url: canonicalUrl,
-      name: route.title,
-      description: route.description,
-      isPartOf: { '@id': `${buildAbsoluteUrl('')}#website` },
-      inLanguage: 'en',
-    }),
+    jsonLd: buildJsonLd(
+      {
+        '@type': pageType,
+        '@id': `${canonicalUrl}#webpage`,
+        url: canonicalUrl,
+        name: route.title,
+        description: route.description,
+        isPartOf: { '@id': `${buildAbsoluteUrl('')}#website` },
+        inLanguage: 'en',
+        ...(defaultImageUrl ? { image: defaultImageUrl } : {}),
+      },
+      [buildBreadcrumbNode(canonicalUrl, route.heading ?? route.title, canonicalPath), ...extraGraphNodes],
+    ),
   };
 }
 
@@ -341,29 +519,32 @@ function buildCharacterPageSeo(character) {
     canonicalUrl,
     imageUrl,
     fallbackHtml: buildCharacterFallbackHtml(character, description),
-    jsonLd: buildJsonLd({
-      '@type': 'WebPage',
-      '@id': `${canonicalUrl}#webpage`,
-      url: canonicalUrl,
-      name: `#${character.id} ${character.name}`,
-      description,
-      isPartOf: { '@id': `${buildAbsoluteUrl('')}#website` },
-      inLanguage: 'en',
-      about: {
-        '@type': 'Thing',
-        name: character.name,
-        identifier: String(character.id),
-        additionalType: 'One Piece Treasure Cruise character',
+    jsonLd: buildJsonLd(
+      {
+        '@type': 'WebPage',
+        '@id': `${canonicalUrl}#webpage`,
+        url: canonicalUrl,
+        name: `#${character.id} ${character.name}`,
         description,
-        ...(imageUrl ? { image: imageUrl } : {}),
-        ...(character.type ? { disambiguatingDescription: character.type } : {}),
-        ...(character.classes.length ? { keywords: character.classes.join(', ') } : {}),
+        isPartOf: { '@id': `${buildAbsoluteUrl('')}#website` },
+        inLanguage: 'en',
+        about: {
+          '@type': 'Thing',
+          name: character.name,
+          identifier: String(character.id),
+          additionalType: 'One Piece Treasure Cruise character',
+          description,
+          ...(imageUrl ? { image: imageUrl } : {}),
+          ...(character.type ? { disambiguatingDescription: character.type } : {}),
+          ...(character.classes.length ? { keywords: character.classes.join(', ') } : {}),
+        },
       },
-    }),
+      [buildBreadcrumbNode(canonicalUrl, `#${character.id} ${character.name}`, `characters/${character.id}`)],
+    ),
   };
 }
 
-function buildJsonLd(pageNode) {
+function buildJsonLd(pageNode, extraGraphNodes = []) {
   return {
     '@context': 'https://schema.org',
     '@graph': [
@@ -375,9 +556,61 @@ function buildJsonLd(pageNode) {
         url: buildAbsoluteUrl(''),
         description: siteDescription,
         inLanguage: 'en',
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: `${buildAbsoluteUrl('tabs/characters')}?q={search_term_string}`,
+          'query-input': 'required name=search_term_string',
+        },
       },
       pageNode,
+      ...extraGraphNodes,
     ],
+  };
+}
+
+function buildSoftwareApplicationNode(route, canonicalUrl) {
+  return {
+    '@type': 'SoftwareApplication',
+    '@id': `${canonicalUrl}#software`,
+    name: route.heading ?? route.title,
+    applicationCategory: 'GameApplication',
+    operatingSystem: 'Web browser',
+    url: canonicalUrl,
+    description: route.description,
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+    },
+    isPartOf: { '@id': `${buildAbsoluteUrl('')}#website` },
+  };
+}
+
+function buildBreadcrumbNode(canonicalUrl, name, routePath) {
+  const normalizedRoutePath = routePath.replace(/^\/+|\/+$/g, '');
+  const itemListElement = [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: siteName,
+      item: buildAbsoluteUrl(''),
+    },
+    ...(normalizedRoutePath
+      ? [
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name,
+            item: canonicalUrl,
+          },
+        ]
+      : []),
+  ];
+
+  return {
+    '@type': 'BreadcrumbList',
+    '@id': `${canonicalUrl}#breadcrumb`,
+    itemListElement,
   };
 }
 
@@ -469,11 +702,11 @@ ${paragraphs.map((paragraph) => `      <p>${escapeHtml(paragraph)}</p>`).join('\
 }
 
 function buildHomeFallbackHtml(route) {
-  const actions = (route.links ?? []).filter((link) => link.path.startsWith('tabs/'));
+  const actions = route.links ?? [];
   const actionLinks = actions
     .map(
       (link) =>
-        `          <li><a href="${escapeHtmlAttribute(buildAppRoutePath(link.path))}">${escapeHtml(
+        `          <li><a href="${escapeHtmlAttribute(buildPublicLinkUrl(link.path))}">${escapeHtml(
           link.label,
         )}</a></li>`,
     )
@@ -520,12 +753,45 @@ function buildCharacterFallbackHtml(character, description) {
   const captainAbility = normalizeDetailText(character.detail?.captainAbility);
   const specialName = normalizeDetailText(character.detail?.specialName);
   const specialText = normalizeDetailText(character.detail?.specialText);
+  const supportSummary = buildSupportSummary(character.detail?.supportData);
+  const rumblePassive = buildRumbleSummary(character.detail?.rumbleData, 'ability');
+  const rumbleSpecial = buildRumbleSummary(character.detail?.rumbleData, 'special');
+  const relatedCharacters = findRelatedCharacters(character);
+  const appLinks = [
+    { label: 'Browse OPTC characters', path: 'tabs/characters' },
+    { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },
+    { label: 'Rank Rumble characters', path: 'tabs/rumble-characters' },
+    ...(character.type
+      ? [{ label: `Browse ${character.type} characters`, path: 'tabs/characters' }]
+      : []),
+    ...character.classes.slice(0, 2).map((characterClass) => ({
+      label: `Browse ${characterClass} characters`,
+      path: 'tabs/characters',
+    })),
+  ];
   const detailParagraphs = [
     captainAbility ? `Captain ability: ${truncateForMeta(captainAbility, 320)}` : null,
     specialText
       ? `Special${specialName ? ` "${specialName}"` : ''}: ${truncateForMeta(specialText, 340)}`
       : null,
+    supportSummary ? `Support: ${truncateForMeta(supportSummary, 260)}` : null,
+    rumblePassive ? `Pirate Rumble passive: ${truncateForMeta(rumblePassive, 260)}` : null,
+    rumbleSpecial ? `Pirate Rumble special: ${truncateForMeta(rumbleSpecial, 260)}` : null,
   ].filter(Boolean);
+  const relatedLinks = relatedCharacters.length
+    ? `
+      <h2>Related OPTC characters</h2>
+      <ul>
+${relatedCharacters
+  .map(
+    (relatedCharacter) =>
+      `        <li><a href="${escapeHtmlAttribute(
+        buildAbsoluteUrl(`characters/${relatedCharacter.id}`),
+      )}">#${relatedCharacter.id} ${escapeHtml(relatedCharacter.name)}</a></li>`,
+  )
+  .join('\n')}
+      </ul>`
+    : '';
 
   return `    <main class="seo-fallback seo-page-fallback">
       <h1>#${character.id} ${escapeHtml(character.name)}</h1>
@@ -534,7 +800,139 @@ function buildCharacterFallbackHtml(character, description) {
 ${stats.map((stat) => `        <li>${escapeHtml(stat)}</li>`).join('\n')}
       </ul>
 ${detailParagraphs.map((paragraph) => `      <p>${escapeHtml(paragraph)}</p>`).join('\n')}
+      <nav aria-label="OPTC Team Builder character tools">
+        <ul>
+${appLinks
+  .map(
+    (link) =>
+      `          <li><a href="${escapeHtmlAttribute(buildPublicLinkUrl(link.path))}">${escapeHtml(
+        link.label,
+      )}</a></li>`,
+  )
+  .join('\n')}
+        </ul>
+      </nav>${relatedLinks}
     </main>`;
+}
+
+function buildSupportSummary(supportData) {
+  if (!Array.isArray(supportData) || supportData.length === 0) {
+    return '';
+  }
+
+  const supportEntry = supportData.find((entry) => entry && typeof entry === 'object');
+
+  if (!supportEntry) {
+    return '';
+  }
+
+  const supportedCharacters = normalizeDetailText(
+    supportEntry.supportedCharactersText ?? supportEntry.Characters,
+  );
+  const descriptions = Array.isArray(supportEntry.description)
+    ? supportEntry.description.map((item) => normalizeDetailText(item)).filter(Boolean)
+    : [];
+  const effect = descriptions.at(-1) ?? '';
+
+  return [supportedCharacters ? `Supports ${supportedCharacters}` : '', effect]
+    .filter(Boolean)
+    .join(' - ');
+}
+
+function buildRumbleSummary(rumbleData, key) {
+  if (!rumbleData || typeof rumbleData !== 'object' || Array.isArray(rumbleData)) {
+    return '';
+  }
+
+  const entries = Array.isArray(rumbleData[key]) ? rumbleData[key] : [];
+  const entry = entries.at(-1);
+  const effect = normalizeRumbleLevelEntry(entry);
+
+  if (effect) {
+    return effect;
+  }
+
+  if (key === 'ability') {
+    const stats = rumbleData.stats && typeof rumbleData.stats === 'object' ? rumbleData.stats : {};
+    const rumbleType = normalizeDetailText(stats.rumbleType);
+    const def = normalizeDetailText(stats.def);
+    const spd = normalizeDetailText(stats.spd);
+
+    return [
+      rumbleType ? `Rumble type ${rumbleType}` : '',
+      def ? `DEF ${def}` : '',
+      spd ? `SPD ${spd}` : '',
+    ]
+      .filter(Boolean)
+      .join(', ');
+  }
+
+  return '';
+}
+
+function normalizeRumbleLevelEntry(entry) {
+  if (!entry) {
+    return '';
+  }
+
+  if (typeof entry === 'string') {
+    return normalizeDetailText(entry);
+  }
+
+  if (typeof entry !== 'object' || Array.isArray(entry)) {
+    return normalizeDetailText(entry);
+  }
+
+  const candidate =
+    entry.description ??
+    entry.effect ??
+    entry.text ??
+    entry.details ??
+    entry.summary ??
+    Object.entries(entry)
+      .filter(([, value]) => typeof value === 'string' || typeof value === 'number')
+      .map(([key, value]) => `${humanizeSlug(key)}: ${value}`)
+      .join(', ');
+
+  return normalizeDetailText(candidate);
+}
+
+function buildRelatedCharactersByConflictKey(characterList) {
+  const relatedByKey = new Map();
+
+  for (const character of characterList) {
+    for (const key of character.detail?.partyConflictKeys ?? []) {
+      const normalizedKey = normalizeDetailText(key).toLowerCase();
+
+      if (!normalizedKey) {
+        continue;
+      }
+
+      const relatedCharacters = relatedByKey.get(normalizedKey) ?? [];
+      relatedCharacters.push(character);
+      relatedByKey.set(normalizedKey, relatedCharacters);
+    }
+  }
+
+  return relatedByKey;
+}
+
+function findRelatedCharacters(character) {
+  const related = new Map();
+
+  for (const key of character.detail?.partyConflictKeys ?? []) {
+    const normalizedKey = normalizeDetailText(key).toLowerCase();
+
+    for (const relatedCharacter of relatedCharactersByConflictKey.get(normalizedKey) ?? []) {
+      if (relatedCharacter.id !== character.id) {
+        related.set(relatedCharacter.id, relatedCharacter);
+      }
+    }
+  }
+
+  return [...related.values()]
+    .sort((left, right) => Math.abs(left.id - character.id) - Math.abs(right.id - character.id))
+    .slice(0, 5);
 }
 
 function normalizeCharacterRow(row, detail) {
@@ -784,6 +1182,14 @@ function buildAppRoutePath(routePath) {
 
 function normalizeSiteBaseUrl(value) {
   return String(value).trim().replace(/\/+$/g, '');
+}
+
+function humanizeSlug(value) {
+  return String(value)
+    .replace(/[-_]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
 function escapeHtml(value) {

@@ -150,6 +150,29 @@ describe('app routes', () => {
     }
   });
 
+  it('registers public SEO content routes for tools and guides', () => {
+    const publicContentPaths = [
+      'tools/optc-team-builder',
+      'tools/optc-auto-team-builder',
+      'tools/optc-rumble-team-builder',
+      'tools/optc-character-database',
+      'guides/how-to-build-an-optc-team',
+      'guides/optc-pirate-rumble-team-building',
+    ];
+
+    for (const path of publicContentPaths) {
+      const route = findRouteByPath(routes, path);
+      const seo = route?.data?.['seo'] as Record<string, unknown> | undefined;
+      const content = route?.data?.['content'] as Record<string, unknown> | undefined;
+
+      expect(route?.loadComponent).toBeTypeOf('function');
+      expect(seo?.['title']).toBeTypeOf('string');
+      expect(seo?.['description']).toBeTypeOf('string');
+      expect(seo?.['canonicalPath']).toBe(path);
+      expect(content?.['title']).toBeTypeOf('string');
+    }
+  });
+
   it('does not register the removed standalone team-builder route', () => {
     const tabsRoute = findRouteByPath(routes, 'tabs');
     const teamBuilderRoute = tabsRoute?.children?.find((route) => route.path === 'team-builder');

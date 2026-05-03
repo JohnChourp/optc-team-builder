@@ -1,0 +1,40 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="tabs-navigation-menu" autoHide="false"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>{{ page.title }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="page-shell seo-content-shell">
+    <section class="seo-content-hero glass-card">
+      <div>
+        <div class="section-label">
+          <ion-icon [icon]="primaryIcon"></ion-icon>
+          <span>{{ page.eyebrow }}</span>
+        </div>
+        <h1 class="section-title">{{ page.title }}</h1>
+        <p class="section-copy">{{ page.summary }}</p>
+      </div>
+
+      <div class="seo-content-actions">
+        @for (link of page.links; track link.route) {
+          <ion-button color="warning" fill="solid" [routerLink]="[link.route]" routerDirection="root">
+            {{ link.label }}
+          </ion-button>
+        }
+      </div>
+    </section>
+
+    <section class="seo-content-grid">
+      @for (section of page.sections; track section.title) {
+        <article class="seo-content-card glass-card">
+          <h2>{{ section.title }}</h2>
+          <p>{{ section.copy }}</p>
+        </article>
+      }
+    </section>
+  </div>
+</ion-content>
