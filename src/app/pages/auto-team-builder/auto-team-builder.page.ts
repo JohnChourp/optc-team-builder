@@ -3980,11 +3980,29 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     activeRequirements.push(this.t('errors.requirements.uniqueCharacterNames'));
 
-    if (this.hasRequiredAbilities()) {
+    const battleRequirements = this.pageBattleRequirements();
+    const abilityRequirementsForFailure = this.pageRequiredAbilities().filter(
+      (requirement) =>
+        battleRequirements.length === 0 ||
+        normalizeAbilityRequirementSlotScope(requirement.slotScope) === 'leader' ||
+        normalizeAbilityRequirementSourceScope(requirement.sourceScope) === 'captainAbility',
+    );
+
+    if (abilityRequirementsForFailure.length > 0) {
       activeRequirements.push(
         this.t('errors.requirements.abilityCoverage', {
-          abilities: this.pageRequiredAbilities()
+          abilities: abilityRequirementsForFailure
             .map((requirement) => this.formatAbilityRequirement(requirement))
+            .join(' • '),
+        }),
+      );
+    }
+
+    if (battleRequirements.length > 0) {
+      activeRequirements.push(
+        this.t('errors.requirements.battleCoverage', {
+          battles: battleRequirements
+            .map((battle) => this.formatBattleRequirementForFailure(battle))
             .join(' • '),
         }),
       );
@@ -4898,6 +4916,19 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         formatSourceScope: (scope) => this.t(`abilities.requirement.sourceScopes.${scope}`),
       },
     );
+  }
+
+  private formatBattleRequirementForFailure(battle: AutoBuildBattleRequirement): string {
+    const groupLabels = battle.requiredCharacterGroups
+      .map((group) =>
+        group.abilities
+          .map((requirement) => this.formatAbilityRequirement(requirement))
+          .join(' + '),
+      )
+      .filter((label) => label.length > 0);
+    const battleLabel = battle.title.trim().length ? battle.title.trim() : battle.id;
+
+    return groupLabels.length ? `${battleLabel}: ${groupLabels.join(' / ')}` : battleLabel;
   }
 
   public formatEnemyMechanic(requirement: AutoBuildEnemyMechanicRequirement): string {

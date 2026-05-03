@@ -2954,6 +2954,90 @@ describe('Auto team builder', () => {
     expect(result?.slots.some((slot) => slot.character.id === 3431)).toBe(true);
   });
 
+  it('builds the Kid favorites preset by anchoring battle counters before filler subs', async () => {
+    const records = createKidCaptainRequirementRecords();
+    const favoriteCharacterIds = [4549, 3750, 3870, 4556, 3431];
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockImplementation(async (_types, _limit, query) => {
+        const allowedIds = Array.isArray(query?.allowedCharacterIds)
+          ? new Set<number>(query.allowedCharacterIds)
+          : null;
+
+        return allowedIds ? records.filter((record) => allowedIds.has(record.id)) : records;
+      }),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam([], ['DEX', 'STR', 'QCK', 'PSY', 'INT'], {
+      favoritesOnly: true,
+      favoriteCharacterIds,
+      requiredAbilities: [
+        {
+          abilityKey: 'remove_despair',
+          minTurns: 8,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+          slotScope: 'leader',
+          sourceScope: 'captainAbility',
+        },
+        createAbilityRequirement('remove_atk_down', 5),
+        createAbilityRequirement('remove_threshold_damage_reduction', 5),
+        createAbilityRequirement('remove_resilience', 5),
+        createAbilityRequirement('remove_enemy_increased_defense', 4),
+        createAbilityRequirement('remove_special_bind', 5),
+        createAbilityRequirement('crewmate_recover_special_bind', 5),
+        createAbilityRequirement('remove_bind', 6),
+      ],
+      battleRequirements: [
+        createBattleRequirement('battle-1', [createAbilityRequirement('remove_atk_down', 5)]),
+        createBattleRequirementWithGroups('battle-2', [
+          [createAbilityRequirement('remove_threshold_damage_reduction', 5)],
+          [createAbilityRequirement('remove_resilience', 5)],
+        ]),
+        createBattleRequirementWithGroups('battle-3', [
+          [createAbilityRequirement('remove_enemy_increased_defense', 4)],
+          [
+            createAbilityRequirement('remove_special_bind', 5),
+            createAbilityRequirement('crewmate_recover_special_bind', 5),
+          ],
+          [createAbilityRequirement('remove_bind', 6)],
+        ]),
+      ],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.every((slot) => favoriteCharacterIds.includes(slot.character.id))).toBe(
+      true,
+    );
+    expect(result?.slots[0]?.character.id).toBe(4549);
+    expect(result?.slots[1]?.character.id).toBe(4549);
+    expect(result?.slots.map((slot) => slot.character.id)).toEqual(
+      expect.arrayContaining([3750, 3870, 4556, 3431]),
+    );
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+    expect(result?.coverage.battleRequirements?.matchesAll).toBe(true);
+    expect(result?.requestedInput.requiredAbilities.map((requirement) => requirement.abilityKey)).toEqual([
+      'remove_despair',
+    ]);
+  });
+
+  it('uses flexible same-battle group coverage when strict battle spread is infeasible', () => {
+    const result = buildAutoTeamResult(createKidCaptainRequirementRecords(), {
+      ...createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], [], {
+        battleRequirements: [
+          createBattleRequirementWithGroups('threshold-resilience', [
+            [createAbilityRequirement('remove_threshold_damage_reduction', 5)],
+            [createAbilityRequirement('remove_resilience', 5)],
+          ]),
+        ],
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.battleRequirements?.matchesAll).toBe(true);
+    expect(result?.slots.some((slot) => slot.character.id === 3431)).toBe(true);
+  });
+
   it('keeps favorites strict when a non-favorite counter is required', async () => {
     const records = createKidCaptainRequirementRecords();
     const repository = {
@@ -8649,7 +8733,10 @@ function createKidCaptainRequirementRecords(): CharacterDetailRecord[] {
       detail: {
         specialText: 'Reduces Bind duration by 6 turns.',
         characterTags: ['Animal Kingdom Pirates', 'Land of Wano Arc'],
-        builderAbilities: [createBuilderAbility('remove_bind', 'Remove Bind', 6)],
+        builderAbilities: [
+          createBuilderAbility('remove_atk_down', 'Remove ATK Down', 6),
+          createBuilderAbility('remove_bind', 'Remove Bind', 6),
+        ],
       },
     }),
     createCharacterRecord({
@@ -8661,6 +8748,7 @@ function createKidCaptainRequirementRecords(): CharacterDetailRecord[] {
         specialText: "Reduces all enemies' DEF Up duration by 6 turns.",
         characterTags: ['Spade Pirates', 'Land of Wano Arc'],
         builderAbilities: [
+          createBuilderAbility('remove_bind', 'Remove Bind', 6),
           createBuilderAbility(
             'remove_enemy_increased_defense',
             'Remove Increased Defense',
@@ -8707,16 +8795,21 @@ function createBattleRequirement(
   id: string,
   abilities: AutoBuildInput['requiredAbilities'],
 ): NonNullable<AutoBuildInput['battleRequirements']>[number] {
+  return createBattleRequirementWithGroups(id, [abilities]);
+}
+
+function createBattleRequirementWithGroups(
+  id: string,
+  abilityGroups: AutoBuildInput['requiredAbilities'][],
+): NonNullable<AutoBuildInput['battleRequirements']>[number] {
   return {
     id,
     title: id,
     enemyMechanics: [],
-    requiredCharacterGroups: [
-      {
-        id: `${id}-group`,
-        abilities,
-      },
-    ],
+    requiredCharacterGroups: abilityGroups.map((abilities, index) => ({
+      id: `${id}-group-${index + 1}`,
+      abilities,
+    })),
   };
 }
 

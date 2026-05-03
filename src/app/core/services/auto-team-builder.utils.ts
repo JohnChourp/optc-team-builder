@@ -158,6 +158,7 @@ interface SubAbilityDemandContext {
   requirements: AutoBuildAbilityRequirement[];
   battleRequirements: AutoBuildBattleRequirement[];
   leaderTagConditionSets: ActiveLeaderCriteria['tagConditionSets'];
+  leaderTagConditionPrefix: AutoBuildCandidate[];
   battleAssignmentMode: BattleRequirementAssignmentMode;
 }
 
@@ -2132,6 +2133,7 @@ function selectSubs(
     input,
     battleRequirementAssignmentMode,
     leaderCriteria,
+    [...leaderSlots, ...selected],
   );
   const pool = candidates
     .filter((candidate) => {
@@ -2301,6 +2303,205 @@ function selectSubs(
     return null;
   };
 
+  const canAddCandidateToSelection = (
+    candidate: AutoBuildCandidate,
+    currentSelection: AutoBuildCandidate[],
+    currentPartyConflictKeys: Set<string>,
+  ): boolean => {
+    return (
+      currentSelection.length < TEAM_SUB_SLOT_COUNT &&
+      canStillReachLeaderSuperEffectRequirement(
+        leaderSuperEffectMatchCount +
+          countLeaderSuperEffectScopeMatches(currentSelection, leaderSuperEffectScope) +
+          (matchesLeaderSuperEffectScope(candidate, leaderSuperEffectScope) ? 1 : 0),
+        TEAM_SUB_SLOT_COUNT - (currentSelection.length + 1),
+        requiredLeaderSuperEffectMatchingSlots,
+      ) &&
+      canStillReachLeaderTagConditions(
+        [...leaderSlots, ...currentSelection, candidate],
+        TEAM_SUB_SLOT_COUNT - (currentSelection.length + 1),
+        leaderCriteria,
+      ) &&
+      matchesActiveSuperEffectScopePrefix(
+        [...leaderSlots, ...currentSelection, candidate],
+        requiredLeaderSuperEffectMatchingSlots,
+      ) &&
+      canCandidateJoinStrictSuperCriteriaSearch(
+        candidate,
+        leaderSlots,
+        input.requireLeaderSuperSpecialCriteria,
+      ) &&
+      canAddSubWithinTeamCostBudget(input, leaderSlots[0], currentSelection, candidate) &&
+      (!input.requireUniqueBaseCharacterNames ||
+        (!hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) &&
+          !hasAnyPartyConflictKey(candidate, currentPartyConflictKeys)))
+    );
+  };
+
+  const appendCandidateToSelection = (
+    candidate: AutoBuildCandidate,
+    currentSelection: AutoBuildCandidate[],
+    currentSelectedIds: Set<number>,
+    currentPartyConflictKeys: Set<string>,
+  ): {
+    partyConflictKeys: Set<string>;
+    selectedIds: Set<number>;
+    selection: AutoBuildCandidate[];
+  } => {
+    const nextSelection = [...currentSelection, candidate];
+    const nextSelectedIds = new Set(currentSelectedIds);
+    const nextPartyConflictKeys = new Set(currentPartyConflictKeys);
+
+    nextSelectedIds.add(candidate.character.id);
+
+    if (input.requireUniqueBaseCharacterNames) {
+      addCandidatePartyConflictKeys(nextPartyConflictKeys, candidate);
+    }
+
+    return {
+      partyConflictKeys: nextPartyConflictKeys,
+      selectedIds: nextSelectedIds,
+      selection: nextSelection,
+    };
+  };
+
+  const findCounterAnchoredValidSelection = (): AutoBuildCandidate[] | null => {
+    const battleRequirements = input.battleRequirements ?? [];
+
+    if (!battleRequirements.length) {
+      return null;
+    }
+
+    const battleAssignmentCandidates = resolveUniqueCandidates([
+      ...leaderSlots,
+      ...selected,
+      ...pool,
+    ]);
+
+    const assignBattle = (
+      battleIndex: number,
+      currentSelection: AutoBuildCandidate[],
+      currentSelectedIds: Set<number>,
+      currentPartyConflictKeys: Set<string>,
+      globallyUsedCharacterIds: Set<number>,
+    ): AutoBuildCandidate[] | null => {
+      const battle = battleRequirements[battleIndex];
+
+      if (!battle) {
+        return findNewestValidSelection(
+          0,
+          currentSelection,
+          currentSelectedIds,
+          currentPartyConflictKeys,
+        );
+      }
+
+      const groups = battle.requiredCharacterGroups
+        .map((group, index) => ({ group, index }))
+        .sort(
+          (left, right) =>
+            right.group.abilities.length - left.group.abilities.length || left.index - right.index,
+        );
+
+      const assignGroup = (
+        groupIndex: number,
+        battleUsedCharacterIds: Set<number>,
+        nextSelection: AutoBuildCandidate[],
+        nextSelectedIds: Set<number>,
+        nextPartyConflictKeys: Set<string>,
+      ): AutoBuildCandidate[] | null => {
+        const groupEntry = groups[groupIndex];
+
+        if (!groupEntry) {
+          const nextGloballyUsedCharacterIds = new Set(globallyUsedCharacterIds);
+          battleUsedCharacterIds.forEach((characterId) =>
+            nextGloballyUsedCharacterIds.add(characterId),
+          );
+
+          return assignBattle(
+            battleIndex + 1,
+            nextSelection,
+            nextSelectedIds,
+            nextPartyConflictKeys,
+            nextGloballyUsedCharacterIds,
+          );
+        }
+
+        for (const candidate of battleAssignmentCandidates) {
+          const characterId = candidate.character.id;
+
+          if (
+            globallyUsedCharacterIds.has(characterId) ||
+            (battleRequirementAssignmentMode === 'strict' &&
+              battleUsedCharacterIds.has(characterId)) ||
+            !candidateMatchesRequiredCharacterGroup(candidate, groupEntry.group, leaderCandidates)
+          ) {
+            continue;
+          }
+
+          const candidateAlreadyAvailable =
+            leaderCharacterIdSet.has(characterId) || nextSelectedIds.has(characterId);
+
+          if (
+            !candidateAlreadyAvailable &&
+            !canAddCandidateToSelection(candidate, nextSelection, nextPartyConflictKeys)
+          ) {
+            continue;
+          }
+
+          const nextBattleUsedCharacterIds = new Set(battleUsedCharacterIds);
+          nextBattleUsedCharacterIds.add(characterId);
+
+          const assignmentState = candidateAlreadyAvailable
+            ? {
+                partyConflictKeys: nextPartyConflictKeys,
+                selectedIds: nextSelectedIds,
+                selection: nextSelection,
+              }
+            : appendCandidateToSelection(
+                candidate,
+                nextSelection,
+                nextSelectedIds,
+                nextPartyConflictKeys,
+              );
+          const result = assignGroup(
+            groupIndex + 1,
+            nextBattleUsedCharacterIds,
+            assignmentState.selection,
+            assignmentState.selectedIds,
+            assignmentState.partyConflictKeys,
+          );
+
+          if (result) {
+            return result;
+          }
+        }
+
+        return null;
+      };
+
+      return assignGroup(
+        0,
+        new Set<number>(),
+        currentSelection,
+        currentSelectedIds,
+        currentPartyConflictKeys,
+      );
+    };
+
+    return assignBattle(0, selected, selectedIds, selectedPartyConflictKeys, new Set<number>());
+  };
+
+  const counterAnchoredSelection = findCounterAnchoredValidSelection();
+
+  if (counterAnchoredSelection) {
+    return counterAnchoredSelection;
+  }
+
+  if ((input.battleRequirements?.length ?? 0) > 0 && battleRequirementAssignmentMode === 'strict') {
+    return [];
+  }
+
   return findNewestValidSelection(0, selected, selectedIds, selectedPartyConflictKeys) ?? selected;
 }
 
@@ -2376,6 +2577,7 @@ function collectSubAbilityDemandContext(
   input: AutoBuildInput,
   battleAssignmentMode: BattleRequirementAssignmentMode,
   leaderCriteria: ActiveLeaderCriteria,
+  leaderTagConditionPrefix: AutoBuildCandidate[],
 ): SubAbilityDemandContext {
   const requirements = [
     ...input.requiredAbilities,
@@ -2395,6 +2597,7 @@ function collectSubAbilityDemandContext(
           ]),
     battleRequirements,
     leaderTagConditionSets: leaderCriteria.tagConditionSets,
+    leaderTagConditionPrefix,
     battleAssignmentMode,
   };
 }
@@ -2451,18 +2654,40 @@ function resolveLeaderTagConditionDemandScore(
   candidate: AutoBuildCandidate,
   demandContext: SubAbilityDemandContext,
 ): number {
-  return demandContext.leaderTagConditionSets.reduce(
-    (score, set) =>
-      score +
-      set.branches.filter((branch) =>
-        branch.acceptedKeys.some((key) =>
-          (candidate.character.detail.characterTags ?? [])
-            .map((tag) => normalizeTagKeyForDemand(tag))
-            .includes(key),
-        ),
-      ).length,
-    0,
+  const prefixCharacters = demandContext.leaderTagConditionPrefix.map(
+    (prefixCandidate) => prefixCandidate.character,
   );
+
+  return demandContext.leaderTagConditionSets.reduce((score, set) => {
+    if (
+      set.branches.some(
+        (branch) => countCaptainTagBranchMatches(prefixCharacters, branch) >= branch.requiredCount,
+      )
+    ) {
+      return score;
+    }
+
+    return (
+      score +
+      set.branches.reduce((bestGain, branch) => {
+        if (
+          !branch.acceptedKeys.some((key) =>
+            (candidate.character.detail.characterTags ?? [])
+              .map((tag) => normalizeTagKeyForDemand(tag))
+              .includes(key),
+          )
+        ) {
+          return bestGain;
+        }
+
+        const currentMatches = countCaptainTagBranchMatches(prefixCharacters, branch);
+        const currentDeficit = Math.max(0, branch.requiredCount - currentMatches);
+        const nextDeficit = Math.max(0, branch.requiredCount - currentMatches - 1);
+
+        return Math.max(bestGain, currentDeficit - nextDeficit);
+      }, 0)
+    );
+  }, 0);
 }
 
 function normalizeTagKeyForDemand(value: string): string {

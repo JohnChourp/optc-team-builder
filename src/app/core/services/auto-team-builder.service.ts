@@ -29,6 +29,7 @@ import {
   createEmptyAutoBuildManualSlots,
 } from '../models/auto-team-builder.models';
 import {
+  normalizeAbilityRequirementSourceScope,
   normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityRequirement,
   type AutoBuildRequiredCharacterGroup,
@@ -208,7 +209,9 @@ export class AutoTeamBuilderService {
     );
     const candidateCharacterIds = this.normalizeCharacterIds(constraints.candidateCharacterIds);
     const favoriteShipIds = this.normalizeCharacterIds(constraints.favoriteShipIds);
-    const requiredAbilities = this.normalizeRequiredAbilities(constraints.requiredAbilities ?? []);
+    const normalizedRequiredAbilities = this.normalizeRequiredAbilities(
+      constraints.requiredAbilities ?? [],
+    );
     const requiredCharacterGroups = cloneRequiredCharacterGroups(
       constraints.requiredCharacterGroups,
     );
@@ -220,6 +223,9 @@ export class AutoTeamBuilderService {
     });
     const hasBattleRequirementInput =
       battleRequirements.length > 0 || (constraints.battleRequirements?.length ?? 0) > 0;
+    const requiredAbilities = hasBattleRequirementInput
+      ? this.filterBattleInputRequiredAbilities(normalizedRequiredAbilities)
+      : normalizedRequiredAbilities;
     const normalizedManualSlots = this.normalizeManualSlots(constraints.manualSlots);
     const hasManualSlots = normalizedManualSlots.some((slot) => slot.characterIds.length > 0);
     const legacyManualSelection = this.normalizeLegacyManualSelection(
@@ -455,7 +461,9 @@ export class AutoTeamBuilderService {
   ): Promise<AutoBuildRankedResults> {
     const normalizedRosterIds = this.normalizeCharacterIds(rosterInput.rosterCharacterIds);
     const resultLimit = this.normalizeRankedResultLimit(rosterInput.resultLimit);
-    const requiredAbilities = this.normalizeRequiredAbilities(rosterInput.requiredAbilities ?? []);
+    const normalizedRequiredAbilities = this.normalizeRequiredAbilities(
+      rosterInput.requiredAbilities ?? [],
+    );
     const requiredCharacterGroups = cloneRequiredCharacterGroups(
       rosterInput.requiredCharacterGroups,
     );
@@ -467,6 +475,9 @@ export class AutoTeamBuilderService {
     });
     const hasBattleRequirementInput =
       battleRequirements.length > 0 || (rosterInput.battleRequirements?.length ?? 0) > 0;
+    const requiredAbilities = hasBattleRequirementInput
+      ? this.filterBattleInputRequiredAbilities(normalizedRequiredAbilities)
+      : normalizedRequiredAbilities;
     const excludedCharacterIds = this.normalizeCharacterIds(rosterInput.excludedCharacterIds);
     const favoriteCharacterIds = new Set(
       this.normalizeCharacterIds(rosterInput.favoriteCharacterIds),
@@ -2420,6 +2431,7 @@ export class AutoTeamBuilderService {
           ? Math.floor(requirement.requiredCharacterCount)
           : 1;
       const slotScope = normalizeAbilityRequirementSlotScope(requirement.slotScope);
+      const sourceScope = normalizeAbilityRequirementSourceScope(requirement.sourceScope);
 
       if (normalizedAbilityKey.length === 0) {
         continue;
@@ -2431,9 +2443,20 @@ export class AutoTeamBuilderService {
         slotTokens,
         requiredCharacterCount,
         ...(slotScope !== 'any' ? { slotScope } : {}),
+        ...(sourceScope ? { sourceScope } : {}),
       });
     }
 
     return normalizedRequirements;
+  }
+
+  private filterBattleInputRequiredAbilities(
+    requirements: AutoBuildAbilityRequirement[],
+  ): AutoBuildAbilityRequirement[] {
+    return requirements.filter(
+      (requirement) =>
+        normalizeAbilityRequirementSlotScope(requirement.slotScope) === 'leader' ||
+        normalizeAbilityRequirementSourceScope(requirement.sourceScope) === 'captainAbility',
+    );
   }
 }

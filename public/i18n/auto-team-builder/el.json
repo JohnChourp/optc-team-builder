@@ -670,6 +670,7 @@
     },
     "requirements": {
       "abilityCoverage": "ability coverage για {{abilities}}",
+      "battleCoverage": "battle counter coverage για {{battles}}",
       "classCoverage": "class coverage σε κάθε slot",
       "favoritesScope": " κρατώντας favorite-only auto-fill για τα ανοιχτά slots· non-favorite counters δεν εξετάζονται",
       "flexible": "Δεν βρέθηκε flexible ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",

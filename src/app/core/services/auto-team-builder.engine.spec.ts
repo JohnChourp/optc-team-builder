@@ -10,6 +10,7 @@ import {
   createEmptyAutoBuildManualSlots,
   type AutoBuildInput,
   type AutoBuildProgressSnapshot,
+  type AutoBuildResult,
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
@@ -20,6 +21,7 @@ import {
   createAutoTeamBuildFallbackPlanner,
   recordAutoTeamBuildFallbackTiming,
   runAutoTeamBuildSearch,
+  satisfiesRequestedAutoTeamBuildCoverage,
 } from './auto-team-builder.engine';
 
 describe('auto team build fallback timing estimates', () => {
@@ -236,6 +238,98 @@ describe('runAutoTeamBuildSearch', () => {
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
     });
+  });
+
+  it('does not accept fallback coverage when requested battle requirements are still missing', () => {
+    const requestedInput: AutoBuildInput = {
+      ...createInput(['DEX'], ['Fighter']),
+      battleRequirements: [
+        {
+          id: 'battle-1',
+          title: 'Battle 1',
+          enemyMechanics: [],
+          requiredCharacterGroups: [
+            {
+              id: 'battle-1-group',
+              abilities: [
+                {
+                  abilityKey: 'remove_bind',
+                  minTurns: 6,
+                  slotTokens: [],
+                  requiredCharacterCount: 1,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const result = {
+      input: requestedInput,
+      requestedInput,
+      candidateCount: 0,
+      slots: [],
+      shipSelection: null,
+      relaxation: {
+        usedFallback: true,
+        droppedTypes: [],
+        droppedClasses: [],
+        minimumLeaderSuperEffectMatchingSlots: null,
+        allowedLeadersWithSuperEffects: false,
+        ignoredLeaderSuperEffectScope: false,
+        ignoredLeaderSuperSpecialCriteria: false,
+      },
+      coverage: {
+        leaderCriteria: {
+          source: 'captainAbility',
+          coverageMode: 'simpleBoostScope',
+          captainLeaderId: null,
+          friendCaptainLeaderId: null,
+          leaderIds: [],
+          leaderNames: [],
+          dualLeaderMode: 'single',
+          derivedAllowedClasses: [],
+          derivedAllowedTypes: [],
+          hasCostRestriction: false,
+          maxAllowedCost: null,
+          hasClassRestriction: false,
+          hasTypeRestriction: false,
+          tagConditionSets: [],
+          matchingSlots: 0,
+          totalSlots: 0,
+          allSlotsMatch: true,
+        },
+        abilityRequirements: {
+          requested: [],
+          matched: [],
+          missing: [],
+          matchesAll: true,
+        },
+        requiredCharacterGroups: {
+          requested: [],
+          matched: [],
+          missing: [],
+          matchesAll: true,
+        },
+        battleRequirements: {
+          requested: requestedInput.battleRequirements!,
+          matched: [],
+          missing: requestedInput.battleRequirements!,
+          matchesAll: false,
+        },
+        burst: [],
+        consistency: [],
+        utility: [],
+        coveredSelectedClasses: [],
+        coveredSelectedTypes: [],
+        coversAllSelectedClasses: true,
+        coversAllSelectedTypes: true,
+        selectedClassMatches: 0,
+        selectedTypeMatches: 0,
+      },
+    } satisfies AutoBuildResult;
+
+    expect(satisfiesRequestedAutoTeamBuildCoverage(result)).toBe(false);
   });
 
   it('throws cancellation before starting the next attempt', () => {

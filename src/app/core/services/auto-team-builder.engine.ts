@@ -1089,7 +1089,9 @@ export function satisfiesRequestedAutoTeamBuildCoverage(
     (shouldTreatSelectedTypesAsNeutral(result.requestedInput) ||
       result.coverage.coversAllSelectedTypes) &&
     result.coverage.abilityRequirements.matchesAll &&
-    result.coverage.requiredCharacterGroups.matchesAll,
+    result.coverage.requiredCharacterGroups.matchesAll &&
+    ((result.requestedInput.battleRequirements?.length ?? 0) === 0 ||
+      result.coverage.battleRequirements?.matchesAll === true),
   );
 }
 
