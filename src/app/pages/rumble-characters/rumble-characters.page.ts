@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, type OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import {
@@ -141,7 +141,9 @@ export class RumbleCharactersPage implements OnInit {
         .filter(Boolean),
     ),
   );
-  public readonly maxCooldown = computed(() => this.normalizePositiveNumber(this.maxCooldownInput()));
+  public readonly maxCooldown = computed(() =>
+    this.normalizePositiveNumber(this.maxCooldownInput()),
+  );
   public readonly maxCost = computed(() => this.normalizePositiveNumber(this.maxCostInput()));
   public readonly rankedScores = computed(() =>
     rankRumbleCharacters(this.candidates(), this.buffFocus()),
@@ -406,7 +408,10 @@ export class RumbleCharactersPage implements OnInit {
 
     const maxCooldown = this.maxCooldown();
 
-    if (maxCooldown !== null && (unit.normalized.cooldown ?? Number.POSITIVE_INFINITY) > maxCooldown) {
+    if (
+      maxCooldown !== null &&
+      (unit.normalized.cooldown ?? Number.POSITIVE_INFINITY) > maxCooldown
+    ) {
       return false;
     }
 

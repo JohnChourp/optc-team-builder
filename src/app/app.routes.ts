@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+import { type Routes } from '@angular/router';
 
 const loadSeoContentPage = () =>
   import('./pages/seo-content/seo-content.page').then((module) => module.SeoContentPage);

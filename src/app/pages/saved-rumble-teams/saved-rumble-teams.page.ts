@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, type OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { type ViewWillEnter } from '@ionic/angular';
 import {

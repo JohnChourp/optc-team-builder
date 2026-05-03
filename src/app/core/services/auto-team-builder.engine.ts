@@ -495,7 +495,8 @@ export function runAutoTeamBuildAttempt(
       ),
       minimumLeaderSuperEffectMatchingSlots: input.minimumLeaderSuperEffectMatchingSlots,
       allowedLeadersWithSuperEffects,
-      ...(requestedInput.requireFullCaptainAbilityCoverage && input.allowPartialCaptainAbilityCoverage
+      ...(requestedInput.requireFullCaptainAbilityCoverage &&
+      input.allowPartialCaptainAbilityCoverage
         ? { ignoredCaptainAbilityCoverage: true }
         : {}),
       ignoredLeaderSuperEffectScope: Boolean(

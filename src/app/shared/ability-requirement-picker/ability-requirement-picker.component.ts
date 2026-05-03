@@ -2,9 +2,9 @@ import {
   Component,
   EventEmitter,
   Input,
-  OnChanges,
+  type OnChanges,
   Output,
-  SimpleChanges,
+  type SimpleChanges,
   computed,
   signal,
 } from '@angular/core';
@@ -370,11 +370,7 @@ export class AbilityRequirementPickerComponent implements OnChanges {
   }
 
   private normalizeLeaderBoostFilters(
-    value:
-      | readonly AutoBuildLeaderBoostFilter[]
-      | AutoBuildLeaderBoostFilter
-      | null
-      | undefined,
+    value: readonly AutoBuildLeaderBoostFilter[] | AutoBuildLeaderBoostFilter | null | undefined,
   ): AutoBuildLeaderBoostFilter[] {
     const nextValues = Array.isArray(value) ? value : value ? [value] : [];
     const uniqueValues = [...new Set(nextValues)];

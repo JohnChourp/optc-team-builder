@@ -1,7 +1,7 @@
 import {
   Component,
-  OnDestroy,
-  OnInit,
+  type OnDestroy,
+  type OnInit,
   ViewChild,
   computed,
   signal,

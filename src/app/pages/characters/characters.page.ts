@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, type OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
@@ -32,9 +32,7 @@ import {
   sparklesOutline,
 } from 'ionicons/icons';
 
-import {
-  type AutoBuildAbilityCatalog,
-} from '../../core/models/auto-team-builder-ability.models';
+import { type AutoBuildAbilityCatalog } from '../../core/models/auto-team-builder-ability.models';
 import {
   type CharacterIdOrder,
   type CharacterListItem,

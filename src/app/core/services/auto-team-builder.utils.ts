@@ -105,10 +105,17 @@ const CHARACTER_NAME_KEY_ALIASES: Record<string, string[]> = {
   'miss goldenweek': ['marianne'],
   'miss merry christmas': ['drophy'],
   'miss valentine': ['mikita'],
+  franosuke: ['franky'],
+  luffytaro: ['luffy', 'monkey d luffy'],
+  onami: ['nami'],
+  orobi: ['robin'],
+  'soba mask': ['sanji'],
   'tenguyama hitetsu': ['kozuki sukiyaki'],
+  usohachi: ['usopp'],
   whitebeard: ['edward newgate'],
   violet: ['viola'],
   z: ['zephyr'],
+  zorojuro: ['zoro', 'roronoa zoro'],
 };
 
 interface TeamCoverageState {
@@ -2096,7 +2103,9 @@ function selectSubs(
   }
 
   if (
-    selected.some((candidate) => !matchesLeaderBuildScopeForAttempt(candidate, leaderCriteria, input))
+    selected.some(
+      (candidate) => !matchesLeaderBuildScopeForAttempt(candidate, leaderCriteria, input),
+    )
   ) {
     return [];
   }
@@ -2546,10 +2555,7 @@ function compareAutoFillSubCandidates(
   ) {
     if (subAbilityDemandContext.battleAssignmentMode === 'strict') {
       const strictGroupPreferenceDifference =
-        resolveStrictBattleGroupPreferenceScore(
-          right,
-          subAbilityDemandContext.battleRequirements,
-        ) -
+        resolveStrictBattleGroupPreferenceScore(right, subAbilityDemandContext.battleRequirements) -
         resolveStrictBattleGroupPreferenceScore(left, subAbilityDemandContext.battleRequirements);
 
       if (strictGroupPreferenceDifference !== 0) {

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, type OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   IonButton,

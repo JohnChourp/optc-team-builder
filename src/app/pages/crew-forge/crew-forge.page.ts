@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, type OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import {
@@ -97,16 +97,16 @@ export class CrewForgePage implements OnInit {
   public readonly crewForgeImageProfiles;
   public readonly crewForgeLastImageProfileId;
 
-  public readonly recognizedRosterCharacterIds = computed(() =>
-    [
-      ...new Set(
-        (this.imageImportRecognition()?.slots ?? [])
-          .map((slot) => slot.characterId)
-          .filter((characterId): characterId is number => typeof characterId === 'number'),
-      ),
-    ],
+  public readonly recognizedRosterCharacterIds = computed(() => [
+    ...new Set(
+      (this.imageImportRecognition()?.slots ?? [])
+        .map((slot) => slot.characterId)
+        .filter((characterId): characterId is number => typeof characterId === 'number'),
+    ),
+  ]);
+  public readonly recognizedRosterCount = computed(
+    () => this.recognizedRosterCharacterIds().length,
   );
-  public readonly recognizedRosterCount = computed(() => this.recognizedRosterCharacterIds().length);
   public readonly buildReady = computed(
     () => this.recognizedRosterCount() >= MINIMUM_RECOGNIZED_ROSTER_COUNT,
   );
@@ -306,7 +306,11 @@ export class CrewForgePage implements OnInit {
     this.recognitionPickerOpen.set(false);
   }
 
-  public applyRecognitionCandidate(slotKey: string, characterId: number | null, confidence = 1): void {
+  public applyRecognitionCandidate(
+    slotKey: string,
+    characterId: number | null,
+    confidence = 1,
+  ): void {
     const currentRecognition = this.imageImportRecognition();
 
     if (!currentRecognition) {
@@ -314,7 +318,12 @@ export class CrewForgePage implements OnInit {
     }
 
     this.imageImportRecognition.set(
-      this.crewForgeImageImport.applyManualSelection(currentRecognition, slotKey, characterId, confidence),
+      this.crewForgeImageImport.applyManualSelection(
+        currentRecognition,
+        slotKey,
+        characterId,
+        confidence,
+      ),
     );
     this.results.set([]);
     this.errorMessage.set('');
@@ -390,13 +399,10 @@ export class CrewForgePage implements OnInit {
     });
   }
 
-  public abilityLabels(
-    abilities: AutoBuildAbilityCoverageBreakdownItem[],
-    limit = 8,
-  ): string[] {
-    return abilities.slice(0, limit).map((ability) =>
-      ability.count > 1 ? `${ability.label} ×${ability.count}` : ability.label,
-    );
+  public abilityLabels(abilities: AutoBuildAbilityCoverageBreakdownItem[], limit = 8): string[] {
+    return abilities
+      .slice(0, limit)
+      .map((ability) => (ability.count > 1 ? `${ability.label} ×${ability.count}` : ability.label));
   }
 
   private resolveCharacter(characterId: number | null): CharacterListItem | null {

@@ -4,13 +4,26 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/app",
+    "target": "ESNext",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "resolveJsonModule": true,
+    "useDefineForClassFields": true,
+    "verbatimModuleSyntax": true,
+    "forceConsistentCasingInFileNames": true,
+    "noErrorTruncation": true,
     "types": []
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "src/**/*.spec.ts"
-  ]
+  "angularCompilerOptions": {
+    "strictTemplates": true,
+    "strictInputAccessModifiers": true,
+    "strictStandalone": true,
+    "typeCheckHostBindings": true,
+    "extendedDiagnostics": {
+      "defaultCategory": "error"
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts"]
 }

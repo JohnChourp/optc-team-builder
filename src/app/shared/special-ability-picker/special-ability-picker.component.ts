@@ -2,9 +2,9 @@ import {
   Component,
   EventEmitter,
   Input,
-  OnChanges,
+  type OnChanges,
   Output,
-  SimpleChanges,
+  type SimpleChanges,
   computed,
   signal,
 } from '@angular/core';

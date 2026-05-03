@@ -1,3 +1,4 @@
+import '@angular/compiler';
 import { JSDOM } from 'jsdom';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -28,6 +29,7 @@ import {
   buildAutoTeamResult,
   hasReadableEffectText,
   prepareAutoTeamBuildContext,
+  resolveCharacterPartyConflictKeys,
   resolveLeaderSuperEffectScopeFromEffectText,
 } from './auto-team-builder.utils';
 import { type AutoTeamBuilderWorkerRequest } from './auto-team-builder.worker.models';
@@ -1643,6 +1645,79 @@ describe('Auto team builder', () => {
 
     expect(result).not.toBeNull();
     expect(result?.slots.some((slot) => slot.character.id === 900005)).toBe(false);
+  });
+
+  it('treats Wano straw hat aliases as duplicate in-game characters', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 4233,
+          name: 'Dorry & Broggy - Retaliating Against the Threat to the Homeland',
+          primaryClass: 'Free Spirit',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Free Spirit characters by 5.5x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 4550,
+          name: 'Crocodile & Mihawk - Powers Needed to Build Their Utopia',
+          primaryClass: 'Free Spirit',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Free Spirit characters by 5.25x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 3065,
+          name: 'Luffy & Sanji - A Joint Struggle Underpinned by Trust',
+          primaryClass: 'Free Spirit',
+          detail: {
+            specialText: 'Boosts ATK of Free Spirit characters by 2.5x for 1 turn.',
+          },
+        }),
+        createCharacterRecord({
+          id: 2802,
+          name: 'Luffytaro & Zorojuro - Land of Wano Savior',
+          primaryClass: 'Free Spirit',
+          detail: {
+            specialText: 'Boosts Orb Effects of Free Spirit characters by 2.5x for 1 turn.',
+          },
+        }),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+        createAtkSubRecord(),
+      ],
+      createInput(['DEX'], ['Free Spirit'], {
+        requireUniqueBaseCharacterNames: true,
+        manualSlots: createManualSlots({
+          captain: [4233],
+          friendCaptain: [4550],
+          sub1: [3065],
+          sub2: [2802],
+        }),
+      }),
+    );
+
+    const slotIds = result?.slots.map((slot) => slot.character.id) ?? [];
+
+    expect(result).not.toBeNull();
+    expect(slotIds).toContain(3065);
+    expect(slotIds).not.toContain(2802);
+  });
+
+  it('normalizes straw hat alter egos into canonical party conflict keys', () => {
+    const conflictKeys = [
+      ...resolveCharacterPartyConflictKeys({ id: 2802, name: 'Luffytaro & Zorojuro' }),
+      ...resolveCharacterPartyConflictKeys({ id: 9101, name: 'Onami' }),
+      ...resolveCharacterPartyConflictKeys({ id: 9102, name: 'Usohachi' }),
+      ...resolveCharacterPartyConflictKeys({ id: 9103, name: 'Franosuke' }),
+      ...resolveCharacterPartyConflictKeys({ id: 9104, name: 'Orobi' }),
+      ...resolveCharacterPartyConflictKeys({ id: 9105, name: 'Soba Mask' }),
+    ];
+
+    expect(conflictKeys).toEqual(
+      expect.arrayContaining(['luffy', 'zoro', 'nami', 'usopp', 'franky', 'robin', 'sanji']),
+    );
   });
 
   it('treats distinct normalized base names like Chef Sanji and Sanji as unique', () => {
