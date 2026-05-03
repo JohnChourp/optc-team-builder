@@ -1,4 +1,3 @@
-import { ScrollingModule } from '@angular/cdk/scrolling';
 import {
   Component,
   OnDestroy,
@@ -37,6 +36,7 @@ import {
   checkmarkCircleOutline,
   closeOutline,
   copyOutline,
+  createOutline,
   heart,
   heartOutline,
   layersOutline,
@@ -121,7 +121,10 @@ import {
 } from './auto-team-builder-export.utils';
 import { buildAutoTeamBuilderStateFromSavedEnemy } from './auto-team-builder-enemy-preset.utils';
 import { buildAutoTeamBuilderStateFromSavedTeam } from './auto-team-builder-saved-team-preset.utils';
-import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
+import {
+  AbilityRequirementPickerComponent,
+  type AbilityRequirementPickerLeaderBoostSettings,
+} from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
 import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
 import {
@@ -289,6 +292,7 @@ type TeamSlotViewModel = AutoBuildResult['slots'][number] & {
   trackKey: string;
   roleLabel: string;
   manualSlotRole: AutoBuildManualSlotRole | null;
+  characterTags: string[];
 };
 
 interface AppliedManualCharacterFilters {
@@ -359,12 +363,10 @@ interface AutoTeamBuilderDefaultFilterState {
 const AUTO_TEAM_BUILD_BUTTON_LABEL = 'Auto Team Build';
 const FIXED_MANUAL_TEAM_SLOT_COUNT = 6;
 const CHARACTER_PICKER_PAGE_SIZE = 10;
-const CHARACTER_PICKER_SCROLL_LOAD_THRESHOLD = 4;
+const CHARACTER_PICKER_SCROLL_LOAD_THRESHOLD_PX = 144;
 const SIMILAR_MANUAL_PICK_CANDIDATE_LIMIT = 10_000;
 const SHIP_PICKER_PAGE_SIZE = 10;
 const SHIP_PICKER_SCROLL_LOAD_THRESHOLD_PX = 144;
-const MANUAL_CANDIDATE_VIEWPORT_ITEM_SIZE = 188;
-const EXCLUDED_CANDIDATE_VIEWPORT_ITEM_SIZE = 236;
 const EXTRA_DROP_ANY_ABILITY_KEY = 'extra_drop_any';
 const EXTRA_DROP_GUARANTEED_ABILITY_KEY = 'extra_drop_guaranteed';
 const EXTRA_DROP_ABILITY_KEY_SET = new Set([
@@ -408,7 +410,7 @@ function buildDefaultAutoTeamBuilderFilterState(
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
-    requireFullCaptainAbilityCoverage: false,
+    requireFullCaptainAbilityCoverage: true,
     requireUniqueBaseCharacterNames: true,
     favoritesOnly: true,
     allowAnyFriendCaptainAutoFill: false,
@@ -469,7 +471,6 @@ function matchesScopedManualRequirements(
     IonTitle,
     IonToggle,
     IonToolbar,
-    ScrollingModule,
     AbilityFilterRailComponent,
     AbilityRequirementPickerComponent,
     CaptainTeamConditionStatusComponent,
@@ -567,6 +568,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   );
   public readonly shipPickerMode = signal<'characters' | 'ships'>('characters');
   public readonly excludePickerMode = signal<'characters' | 'ships'>('characters');
+  public readonly manualPickerModalOpen = signal(false);
+  public readonly excludePickerModalOpen = signal(false);
+  public readonly fixedManualTeamPickerModalOpen = signal(false);
   public readonly manualSlots = signal<AutoBuildManualSlotSelection[]>(
     createEmptyAutoBuildManualSlots(),
   );
@@ -593,7 +597,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
   public readonly requireAllSlotsInLeaderSuperEffectScope = signal(false);
-  public readonly requireFullCaptainAbilityCoverage = signal(false);
+  public readonly requireFullCaptainAbilityCoverage = signal(true);
   public readonly requireUniqueBaseCharacterNames = signal(true);
   public readonly selectedCharacterBoxId = signal<string | null>(null);
   public readonly selectedExcludeCharacterBoxId = signal<string | null>(null);
@@ -623,8 +627,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public readonly availableTypes = AUTO_TEAM_BUILDER_TYPES;
   public readonly availableLeaderBoostFilters = AUTO_BUILD_LEADER_BOOST_FILTERS;
-  public readonly manualCandidateViewportItemSize = MANUAL_CANDIDATE_VIEWPORT_ITEM_SIZE;
-  public readonly excludedCandidateViewportItemSize = EXCLUDED_CANDIDATE_VIEWPORT_ITEM_SIZE;
   public readonly availableClasses = computed(() => this.summary()?.availableClasses ?? []);
   public readonly selectedManualShip = computed(
     () => this.ships().find((ship) => ship.id === this.selectedManualShipId()) ?? null,
@@ -754,6 +756,45 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       visual: resolveAbilityRequirementVisual(draft.abilityKey),
     })),
   );
+  public readonly captainLeaderBoostSummaryChips = computed<AbilityRequirementSummaryChipView[]>(
+    () => {
+      const chips: AbilityRequirementSummaryChipView[] = [];
+      const filters = this.leaderBoostFilters();
+      const ranges = this.leaderBoostRanges();
+
+      if (!(filters.includes('HP') && filters.includes('ATK'))) {
+        chips.push({
+          draftId: 'leader-boost-priority',
+          label: this.t('captainAbilityFilters.leaderBoost.priorityChip', {
+            priority: this.leaderBoostFiltersLabel(),
+          }),
+          visual: resolveAbilityRequirementVisual('captain_leader_boost_priority'),
+        });
+      }
+
+      if (this.hasActiveLeaderBoostRange(ranges.ATK)) {
+        chips.push({
+          draftId: 'leader-boost-atk',
+          label: this.formatLeaderBoostRangeSummary('ATK', ranges.ATK),
+          visual: resolveAbilityRequirementVisual('captain_atk_boost'),
+        });
+      }
+
+      if (this.hasActiveLeaderBoostRange(ranges.HP)) {
+        chips.push({
+          draftId: 'leader-boost-hp',
+          label: this.formatLeaderBoostRangeSummary('HP', ranges.HP),
+          visual: resolveAbilityRequirementVisual('captain_hp_boost'),
+        });
+      }
+
+      return chips;
+    },
+  );
+  public readonly captainFilterSummaryChips = computed<AbilityRequirementSummaryChipView[]>(() => [
+    ...this.captainAbilitySummaryChips(),
+    ...this.captainLeaderBoostSummaryChips(),
+  ]);
   public readonly requiredAbilitySummaryChips = computed<AbilityRequirementSummaryChipView[]>(() =>
     this.requiredAbilityDrafts().map((draft) => ({
       draftId: draft.draftId,
@@ -1702,14 +1743,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }));
   });
   public readonly cancelBuildButtonLabel = computed(() => this.t('actions.cancelBuild'));
-  public readonly trackManualCandidateCardById = (
-    _index: number,
-    candidateCard: ManualCharacterCardView,
-  ): number => candidateCard.character.id;
-  public readonly trackExcludedCharacterCardById = (
-    _index: number,
-    candidateCard: ExcludedCharacterCardView,
-  ): number => candidateCard.character.id;
   public readonly candidatePoolLabel = computed(() => {
     const isFavoritesOnly = this.result()?.input.favoritesOnly ?? this.favoritesOnly();
 
@@ -1875,6 +1908,38 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       total: leaderCriteria.totalSlots,
     });
   });
+  public readonly captainAbilityCoverageReportLabel = computed(() => {
+    const status = this.resultTeamConditionStatus();
+
+    if (!status) {
+      return this.t('results.captainAbilityCoverage.pending');
+    }
+
+    if (status.state === 'full') {
+      return this.t('results.captainAbilityCoverage.full');
+    }
+
+    return this.t('results.captainAbilityCoverage.partial', {
+      matched: this.resolveCaptainCoverageMatchedSlotCount(status),
+      total: this.resolveCaptainCoverageTotalSlotCount(status),
+    });
+  });
+  public readonly captainAbilityCoverageMissingLabels = computed(() => {
+    const status = this.resultTeamConditionStatus();
+
+    if (!status || status.state === 'full') {
+      return [];
+    }
+
+    return status.leaderStatuses
+      .filter((leaderStatus) => leaderStatus.missingSlotLabels.length > 0)
+      .map((leaderStatus) =>
+        this.t('results.captainAbilityCoverage.missingLeaderSlots', {
+          leader: leaderStatus.label,
+          slots: leaderStatus.missingSlotLabels.join(' / '),
+        }),
+      );
+  });
   public readonly requiredAbilitySummaryLabel = computed(() => {
     const requirements = this.pageRequiredAbilities();
     const current = this.result();
@@ -1960,7 +2025,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           character: slots.find((slot) => slot.role === 'friendCaptain')?.character ?? null,
         },
       ],
-      slotLabels: slots.map((slot) => slot.roleLabel),
+      slotLabels: this.resolveResultTeamConditionSlotLabels(slots),
       slots: slots.map((slot) => slot.character),
     });
   });
@@ -2016,6 +2081,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
               : `${slot.role}:${slot.character.id}`,
           roleLabel: this.resolveRoleLabel(slot.role),
           manualSlotRole,
+          characterTags: (slot.character.detail.characterTags ?? []).filter(
+            (tag) => tag.trim().length > 0,
+          ),
         };
       }) ?? []
     );
@@ -2030,6 +2098,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly manualFilterIcon = optionsOutline;
   public readonly copyIcon = copyOutline;
   public readonly closeIcon = closeOutline;
+  public readonly editIcon = createOutline;
   public readonly similarPickIcon = sparklesOutline;
   public readonly requiredManualPickIcon = lockClosedOutline;
   public readonly optionalManualPickIcon = lockOpenOutline;
@@ -2090,6 +2159,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.abilityPickerOpen.set(false);
     this.crewmateAbilityPickerOpen.set(false);
     this.cancelBuild();
+    this.closeManualPickerModal();
+    this.closeExcludePickerModal();
+    this.closeFixedManualTeamPickerModal();
   }
 
   public async ionViewWillEnter(): Promise<void> {
@@ -2222,8 +2294,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.syncShipPickerPanelState('manual', { reset: true });
   }
 
-  public async onManualCandidatesScrolledIndexChange(index: number): Promise<void> {
-    await this.loadMoreCharacterPickerPanel('manual', index, this.manualCandidateCards().length);
+  public async onManualCharacterListScroll(event: Event): Promise<void> {
+    await this.loadMoreCharacterPickerPanelOnScroll('manual', event);
   }
 
   public async onExcludeCharacterSearchChange(
@@ -2233,12 +2305,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     await this.refreshAppliedExcludedCandidates();
   }
 
-  public async onExcludedCandidatesScrolledIndexChange(index: number): Promise<void> {
-    await this.loadMoreCharacterPickerPanel(
-      'excluded',
-      index,
-      this.excludedCharacterCards().length,
-    );
+  public async onExcludedCharacterListScroll(event: Event): Promise<void> {
+    await this.loadMoreCharacterPickerPanelOnScroll('excluded', event);
   }
 
   public onTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {
@@ -2272,6 +2340,35 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.fixedManualTeamSelectedSlotIndex.set(index);
   }
 
+  public async openFixedManualTeamPickerModal(index: number): Promise<void> {
+    if (index < 0 || index >= FIXED_MANUAL_TEAM_SLOT_COUNT) {
+      return;
+    }
+
+    this.fixedManualTeamSelectedSlotIndex.set(index);
+    await this.refreshFixedManualTeamCandidates();
+    this.fixedManualTeamPickerModalOpen.set(true);
+  }
+
+  public closeFixedManualTeamPickerModal(): void {
+    this.fixedManualTeamPickerModalOpen.set(false);
+  }
+
+  public async openFixedManualTeamSlotDetail(index: number): Promise<void> {
+    if (index < 0 || index >= FIXED_MANUAL_TEAM_SLOT_COUNT) {
+      return;
+    }
+
+    const character = this.fixedManualTeamSlots()[index];
+    const detailLink = this.getCharacterDetailLink(character);
+
+    if (!detailLink) {
+      return;
+    }
+
+    await this.router.navigate(detailLink);
+  }
+
   public assignFixedManualTeamCharacter(character: CharacterDetailRecord): void {
     const selectedSlotIndex = this.fixedManualTeamSelectedSlotIndex();
 
@@ -2284,6 +2381,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     );
     this.fixedManualTeamCurrentTeamId.set(null);
     this.fixedManualTeamSaveFeedbackError.set('');
+    this.closeFixedManualTeamPickerModal();
   }
 
   public clearFixedManualTeamSlot(index: number, event?: Event): void {
@@ -2334,6 +2432,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   public resetFixedManualTeam(): void {
+    this.closeFixedManualTeamPickerModal();
     this.fixedManualTeamSlots.set(createEmptyFixedManualTeamSlots());
     this.fixedManualTeamSelectedSlotIndex.set(0);
     this.fixedManualTeamName.set(this.i18n.translate('common.defaults.newCrew'));
@@ -2350,6 +2449,32 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public setExcludePickerMode(mode: 'characters' | 'ships'): void {
     this.excludePickerMode.set(mode);
     this.syncShipPickerPanelState('excluded', { reset: true });
+  }
+
+  public openManualPickerModal(): void {
+    if (this.building()) {
+      return;
+    }
+
+    this.syncShipPickerPanelState('manual', { reset: true });
+    this.manualPickerModalOpen.set(true);
+  }
+
+  public closeManualPickerModal(): void {
+    this.manualPickerModalOpen.set(false);
+  }
+
+  public openExcludePickerModal(): void {
+    if (this.building()) {
+      return;
+    }
+
+    this.syncShipPickerPanelState('excluded', { reset: true });
+    this.excludePickerModalOpen.set(true);
+  }
+
+  public closeExcludePickerModal(): void {
+    this.excludePickerModalOpen.set(false);
   }
 
   public onExcludeShipSearchChange(event: CustomEvent<{ value?: string | null }>): void {
@@ -2721,8 +2846,19 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     await this.refreshCharacterPickPanels();
   }
 
+  public saveCaptainLeaderBoostSettings(
+    settings: AbilityRequirementPickerLeaderBoostSettings,
+  ): void {
+    this.leaderBoostFilters.set(
+      settings.filters.length ? [...settings.filters] : [...AUTO_BUILD_LEADER_BOOST_FILTERS],
+    );
+    this.leaderBoostRanges.set(this.cloneLeaderBoostRanges(settings.ranges));
+  }
+
   public async clearCaptainAbilityFilters(): Promise<void> {
     this.captainAbilityDrafts.set([]);
+    this.leaderBoostFilters.set([...AUTO_BUILD_LEADER_BOOST_FILTERS]);
+    this.leaderBoostRanges.set(createEmptyAutoBuildLeaderBoostRanges());
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
   }
@@ -3705,6 +3841,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.excludedShipPanelState.set(createShipPickerPanelState());
     this.shipPickerMode.set('characters');
     this.excludePickerMode.set('characters');
+    this.manualPickerModalOpen.set(false);
+    this.excludePickerModalOpen.set(false);
+    this.fixedManualTeamPickerModalOpen.set(false);
     this.manualSlots.set(createEmptyAutoBuildManualSlots());
     this.activeManualSlotRole.set('captain');
     this.fixedManualTeamSlots.set(createEmptyFixedManualTeamSlots());
@@ -3866,7 +4005,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.requireAllSelectedTypesInTeam.set(state.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(state.requireAllSelectedClassesPerCharacter);
     this.requireAllSlotsInLeaderSuperEffectScope.set(state.requireAllSlotsInLeaderSuperEffectScope);
-    this.requireFullCaptainAbilityCoverage.set(state.requireFullCaptainAbilityCoverage);
+    this.requireFullCaptainAbilityCoverage.set(true);
     this.requireUniqueBaseCharacterNames.set(true);
     this.selectedCharacterBoxId.set(null);
     this.selectedExcludeCharacterBoxId.set(null);
@@ -4147,11 +4286,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
   }
 
-  private async loadMoreCharacterPickerPanel(
-    panel: CharacterPickerPanelKey,
-    scrolledIndex: number,
-    itemCount: number,
-  ): Promise<void> {
+  private async loadMoreCharacterPickerPanel(panel: CharacterPickerPanelKey): Promise<void> {
     const panelState = this.getCharacterPickerPanelState(panel);
     const currentState = panelState();
 
@@ -4159,8 +4294,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       currentState.loadingInitial ||
       currentState.loadingMore ||
       !currentState.hasMore ||
-      itemCount === 0 ||
-      scrolledIndex + CHARACTER_PICKER_SCROLL_LOAD_THRESHOLD < itemCount
+      this.getCharacterPickerCandidates(panel)().length === 0
     ) {
       return;
     }
@@ -4216,6 +4350,43 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
             },
       );
     }
+  }
+
+  private async loadMoreCharacterPickerPanelOnScroll(
+    panel: CharacterPickerPanelKey,
+    event: Event,
+  ): Promise<void> {
+    const container = event.target as {
+      scrollTop: number;
+      clientHeight: number;
+      scrollHeight: number;
+    } | null;
+
+    if (!this.shouldLoadMoreCharacterPickerPanel(container)) {
+      return;
+    }
+
+    await this.loadMoreCharacterPickerPanel(panel);
+  }
+
+  private shouldLoadMoreCharacterPickerPanel(
+    container:
+      | {
+          scrollTop: number;
+          clientHeight: number;
+          scrollHeight: number;
+        }
+      | null
+      | undefined,
+  ): boolean {
+    if (!container) {
+      return false;
+    }
+
+    const remainingDistance =
+      container.scrollHeight - (container.scrollTop + container.clientHeight);
+
+    return remainingDistance <= CHARACTER_PICKER_SCROLL_LOAD_THRESHOLD_PX;
   }
 
   private async searchDetailedCharacterPage(
@@ -5033,6 +5204,65 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   private hasInvalidCostRange(range: AutoBuildCostRange): boolean {
     return range.min !== null && range.max !== null && range.min > range.max;
+  }
+
+  private resolveCaptainCoverageMatchedSlotCount(status: CaptainTeamConditionStatus): number {
+    return status.leaderStatuses.reduce(
+      (total, leaderStatus) => total + leaderStatus.matchingSlotCount,
+      0,
+    );
+  }
+
+  private resolveCaptainCoverageTotalSlotCount(status: CaptainTeamConditionStatus): number {
+    return status.expectedSlotCount * status.leaderStatuses.length;
+  }
+
+  private resolveResultTeamConditionSlotLabels(slots: TeamSlotViewModel[]): string[] {
+    let subSlotIndex = 0;
+
+    return slots.map((slot) => {
+      if (slot.role !== 'sub') {
+        return slot.roleLabel;
+      }
+
+      subSlotIndex += 1;
+      return `${slot.roleLabel} ${subSlotIndex}`;
+    });
+  }
+
+  private hasActiveLeaderBoostRange(range: AutoBuildLeaderBoostRange): boolean {
+    return range.min !== null || range.max !== null;
+  }
+
+  private formatLeaderBoostRangeSummary(
+    filter: AutoBuildLeaderBoostFilter,
+    range: AutoBuildLeaderBoostRange,
+  ): string {
+    if (range.min !== null && range.max !== null) {
+      return this.t('captainAbilityFilters.leaderBoost.rangeChip.between', {
+        boost: this.t(`filters.leaderBoost.options.${filter}`),
+        min: range.min,
+        max: range.max,
+      });
+    }
+
+    if (range.min !== null) {
+      return this.t('captainAbilityFilters.leaderBoost.rangeChip.from', {
+        boost: this.t(`filters.leaderBoost.options.${filter}`),
+        min: range.min,
+      });
+    }
+
+    if (range.max !== null) {
+      return this.t('captainAbilityFilters.leaderBoost.rangeChip.to', {
+        boost: this.t(`filters.leaderBoost.options.${filter}`),
+        max: range.max,
+      });
+    }
+
+    return this.t('captainAbilityFilters.leaderBoost.rangeChip.any', {
+      boost: this.t(`filters.leaderBoost.options.${filter}`),
+    });
   }
 
   private cloneLeaderBoostRanges(ranges: AutoBuildLeaderBoostRanges): AutoBuildLeaderBoostRanges {

@@ -19,6 +19,8 @@ import {
   IonInput,
   IonModal,
   IonSearchbar,
+  IonSelect,
+  IonSelectOption,
   IonToolbar,
 } from '@ionic/angular/standalone';
 import { closeOutline, optionsOutline } from 'ionicons/icons';
@@ -39,6 +41,13 @@ import {
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilitySlotScope,
 } from '../../core/models/auto-team-builder-ability.models';
+import {
+  AUTO_BUILD_LEADER_BOOST_FILTERS,
+  createEmptyAutoBuildLeaderBoostRanges,
+  type AutoBuildLeaderBoostFilter,
+  type AutoBuildLeaderBoostRange,
+  type AutoBuildLeaderBoostRanges,
+} from '../../core/models/auto-team-builder.models';
 
 interface AbilityRequirementCatalogTileView {
   item: AutoBuildAbilityCatalogItem;
@@ -59,6 +68,11 @@ interface AbilityRequirementSelectedRowView {
   painSelectableBadges: AbilityRequirementMiniBadge[];
 }
 
+export interface AbilityRequirementPickerLeaderBoostSettings {
+  filters: AutoBuildLeaderBoostFilter[];
+  ranges: AutoBuildLeaderBoostRanges;
+}
+
 @Component({
   selector: 'app-ability-requirement-picker',
   standalone: true,
@@ -72,6 +86,8 @@ interface AbilityRequirementSelectedRowView {
     IonInput,
     IonModal,
     IonSearchbar,
+    IonSelect,
+    IonSelectOption,
     IonToolbar,
     TranslocoDirective,
     TranslocoPipe,
@@ -88,14 +104,36 @@ export class AbilityRequirementPickerComponent implements OnChanges {
   @Input({ required: true }) public drafts: AbilityRequirementDraft[] = [];
   @Input({ required: true }) public catalogItems: AutoBuildAbilityCatalogItem[] = [];
   @Input() public showCharacterCount = true;
+  @Input() public showLeaderBoostControls = false;
+  @Input() public leaderBoostFilters: AutoBuildLeaderBoostFilter[] = [
+    ...AUTO_BUILD_LEADER_BOOST_FILTERS,
+  ];
+  @Input() public leaderBoostRanges: AutoBuildLeaderBoostRanges =
+    createEmptyAutoBuildLeaderBoostRanges();
   @Output() public readonly dismiss = new EventEmitter<void>();
   @Output() public readonly saveDrafts = new EventEmitter<AbilityRequirementDraft[]>();
+  @Output() public readonly saveLeaderBoostSettings =
+    new EventEmitter<AbilityRequirementPickerLeaderBoostSettings>();
 
   public readonly closeIcon = closeOutline;
   public readonly pickerIcon = optionsOutline;
+  public readonly availableLeaderBoostFilters = AUTO_BUILD_LEADER_BOOST_FILTERS;
   public readonly searchTerm = signal('');
   public readonly workingDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly catalogItemsState = signal<AutoBuildAbilityCatalogItem[]>([]);
+  public readonly workingLeaderBoostFilters = signal<AutoBuildLeaderBoostFilter[]>([
+    ...AUTO_BUILD_LEADER_BOOST_FILTERS,
+  ]);
+  public readonly workingLeaderBoostRanges = signal<AutoBuildLeaderBoostRanges>(
+    createEmptyAutoBuildLeaderBoostRanges(),
+  );
+  public readonly hasInvalidLeaderBoostRanges = computed(() =>
+    AUTO_BUILD_LEADER_BOOST_FILTERS.some((filter) => {
+      const range = this.workingLeaderBoostRanges()[filter];
+
+      return range.min !== null && range.max !== null && range.min > range.max;
+    }),
+  );
   public readonly selectedDraftCounts = computed(() => {
     const counts = new Map<string, number>();
 
@@ -161,6 +199,8 @@ export class AbilityRequirementPickerComponent implements OnChanges {
     if (changes['isOpen'] && this.isOpen) {
       this.searchTerm.set('');
       this.workingDrafts.set(cloneAbilityRequirementDrafts(this.drafts));
+      this.workingLeaderBoostFilters.set(this.normalizeLeaderBoostFilters(this.leaderBoostFilters));
+      this.workingLeaderBoostRanges.set(this.cloneLeaderBoostRanges(this.leaderBoostRanges));
     }
   }
 
@@ -233,8 +273,48 @@ export class AbilityRequirementPickerComponent implements OnChanges {
     );
   }
 
+  public onLeaderBoostFilterChange(
+    event: CustomEvent<{
+      value?: AutoBuildLeaderBoostFilter[] | AutoBuildLeaderBoostFilter | null;
+    }>,
+  ): void {
+    const nextFilters = this.normalizeLeaderBoostFilters(event.detail.value);
+
+    this.workingLeaderBoostFilters.set(
+      nextFilters.length ? nextFilters : [...AUTO_BUILD_LEADER_BOOST_FILTERS],
+    );
+  }
+
+  public onLeaderBoostRangeChange(
+    filter: AutoBuildLeaderBoostFilter,
+    bound: keyof AutoBuildLeaderBoostRange,
+    event: CustomEvent<{ value?: string | number | null }>,
+  ): void {
+    const nextBound = this.resolveLeaderBoostRangeBound(event.detail.value);
+    const currentRanges = this.workingLeaderBoostRanges();
+
+    this.workingLeaderBoostRanges.set({
+      HP: { ...currentRanges.HP },
+      ATK: { ...currentRanges.ATK },
+      [filter]: {
+        ...currentRanges[filter],
+        [bound]: nextBound,
+      },
+    });
+  }
+
   public save(): void {
+    if (this.hasInvalidLeaderBoostRanges()) {
+      return;
+    }
+
     this.dismissReason = 'save';
+    if (this.showLeaderBoostControls) {
+      this.saveLeaderBoostSettings.emit({
+        filters: [...this.workingLeaderBoostFilters()],
+        ranges: this.cloneLeaderBoostRanges(this.workingLeaderBoostRanges()),
+      });
+    }
     this.saveDrafts.emit(cloneAbilityRequirementDrafts(this.workingDrafts()));
   }
 
@@ -287,5 +367,45 @@ export class AbilityRequirementPickerComponent implements OnChanges {
     }
 
     return (event.target as HTMLInputElement | null)?.value;
+  }
+
+  private normalizeLeaderBoostFilters(
+    value:
+      | readonly AutoBuildLeaderBoostFilter[]
+      | AutoBuildLeaderBoostFilter
+      | null
+      | undefined,
+  ): AutoBuildLeaderBoostFilter[] {
+    const nextValues = Array.isArray(value) ? value : value ? [value] : [];
+    const uniqueValues = [...new Set(nextValues)];
+
+    return uniqueValues.filter((filter): filter is AutoBuildLeaderBoostFilter =>
+      AUTO_BUILD_LEADER_BOOST_FILTERS.includes(filter as AutoBuildLeaderBoostFilter),
+    );
+  }
+
+  private resolveLeaderBoostRangeBound(value: string | number | null | undefined): number | null {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    const nextValue = Number(value);
+
+    return Number.isFinite(nextValue) && nextValue >= 0 ? nextValue : null;
+  }
+
+  private cloneLeaderBoostRanges(
+    ranges: Partial<Record<AutoBuildLeaderBoostFilter, Partial<AutoBuildLeaderBoostRange> | null>>,
+  ): AutoBuildLeaderBoostRanges {
+    return {
+      HP: {
+        min: this.resolveLeaderBoostRangeBound(ranges.HP?.min),
+        max: this.resolveLeaderBoostRangeBound(ranges.HP?.max),
+      },
+      ATK: {
+        min: this.resolveLeaderBoostRangeBound(ranges.ATK?.min),
+        max: this.resolveLeaderBoostRangeBound(ranges.ATK?.max),
+      },
+    };
   }
 }

@@ -127,6 +127,86 @@
                 </div>
               </div>
 
+              @if (showLeaderBoostControls) {
+                <section class="ability-picker-leader-boost">
+                  <div class="ability-picker-leader-boost__head">
+                    <strong>{{ t('leaderBoost.title') }}</strong>
+                    <small>{{ t('leaderBoost.copy') }}</small>
+                  </div>
+
+                  <label class="ability-picker-field">
+                    <span>{{ t('leaderBoost.priority.label') }}</span>
+                    <ion-select
+                      interface="popover"
+                      [multiple]="true"
+                      fill="outline"
+                      [placeholder]="t('leaderBoost.priority.placeholder')"
+                      [value]="workingLeaderBoostFilters()"
+                      (ionChange)="onLeaderBoostFilterChange($event)"
+                    >
+                      @for (item of availableLeaderBoostFilters; track item) {
+                        <ion-select-option [value]="item">
+                          {{ t('leaderBoost.priority.options.' + item) }}
+                        </ion-select-option>
+                      }
+                    </ion-select>
+                  </label>
+
+                  <div class="ability-picker-leader-boost__ranges">
+                    <ion-input
+                      type="number"
+                      inputmode="decimal"
+                      min="0"
+                      step="0.01"
+                      fill="outline"
+                      [label]="t('leaderBoost.range.atkMin')"
+                      labelPlacement="stacked"
+                      [value]="workingLeaderBoostRanges().ATK.min"
+                      (ionInput)="onLeaderBoostRangeChange('ATK', 'min', $event)"
+                    ></ion-input>
+                    <ion-input
+                      type="number"
+                      inputmode="decimal"
+                      min="0"
+                      step="0.01"
+                      fill="outline"
+                      [label]="t('leaderBoost.range.atkMax')"
+                      labelPlacement="stacked"
+                      [value]="workingLeaderBoostRanges().ATK.max"
+                      (ionInput)="onLeaderBoostRangeChange('ATK', 'max', $event)"
+                    ></ion-input>
+                    <ion-input
+                      type="number"
+                      inputmode="decimal"
+                      min="0"
+                      step="0.01"
+                      fill="outline"
+                      [label]="t('leaderBoost.range.hpMin')"
+                      labelPlacement="stacked"
+                      [value]="workingLeaderBoostRanges().HP.min"
+                      (ionInput)="onLeaderBoostRangeChange('HP', 'min', $event)"
+                    ></ion-input>
+                    <ion-input
+                      type="number"
+                      inputmode="decimal"
+                      min="0"
+                      step="0.01"
+                      fill="outline"
+                      [label]="t('leaderBoost.range.hpMax')"
+                      labelPlacement="stacked"
+                      [value]="workingLeaderBoostRanges().HP.max"
+                      (ionInput)="onLeaderBoostRangeChange('HP', 'max', $event)"
+                    ></ion-input>
+                  </div>
+
+                  @if (hasInvalidLeaderBoostRanges()) {
+                    <small class="ability-picker-leader-boost__error">
+                      {{ t('leaderBoost.range.invalid') }}
+                    </small>
+                  }
+                </section>
+              }
+
               @if (!selectedRows().length) {
                 <div class="ability-picker-empty ability-picker-empty--selected">
                   <strong>{{ t('selected.emptyTitle') }}</strong>
@@ -274,7 +354,11 @@
             <ion-button fill="clear" color="light" (click)="cancel()">
               {{ 'common.actions.cancel' | transloco }}
             </ion-button>
-            <ion-button color="warning" (click)="save()">
+            <ion-button
+              color="warning"
+              [disabled]="hasInvalidLeaderBoostRanges()"
+              (click)="save()"
+            >
               {{ 'common.actions.save' | transloco }}
             </ion-button>
           </div>

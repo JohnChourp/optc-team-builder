@@ -152,6 +152,7 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   requireLeaderSuperSpecialCriteria: boolean;
   requireAllSlotsInLeaderSuperEffectScope: boolean;
   requireFullCaptainAbilityCoverage: boolean;
+  allowPartialCaptainAbilityCoverage?: boolean;
   minimumLeaderSuperEffectMatchingSlots: number | null;
   requireUniqueBaseCharacterNames: boolean;
   requiredAbilities: AutoBuildAbilityRequirement[];
@@ -329,6 +330,7 @@ export interface AutoBuildRelaxationSummary {
   allowedLeadersWithSuperEffects: boolean;
   ignoredLeaderSuperEffectScope: boolean;
   ignoredLeaderSuperSpecialCriteria: boolean;
+  ignoredCaptainAbilityCoverage?: boolean;
 }
 
 export type AutoBuildProgressStage =

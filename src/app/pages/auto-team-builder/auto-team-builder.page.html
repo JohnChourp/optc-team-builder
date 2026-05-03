@@ -150,6 +150,58 @@
         </div>
 
         <div class="secondary-toggle-grid">
+          <div class="favorite-scope-grid">
+            <div class="strict-toggle-row">
+              <div class="strict-toggle-copy">
+                <strong>{{ favoritesOnlyToggleLabel() }}</strong>
+                <small>{{ favoritesOnlySupportLabel() }}</small>
+              </div>
+              <ion-toggle
+                color="warning"
+                [checked]="favoritesOnly()"
+                [disabled]="building()"
+                (ionChange)="onFavoritesOnlyToggle($event)"
+              ></ion-toggle>
+            </div>
+
+            <div class="strict-toggle-row">
+              <div class="strict-toggle-copy">
+                <strong>{{ favoriteShipsOnlyToggleLabel() }}</strong>
+                <small>{{ favoriteShipsOnlySupportLabel() }}</small>
+              </div>
+              <ion-toggle
+                color="warning"
+                [checked]="favoriteShipsOnly()"
+                [disabled]="building()"
+                (ionChange)="onFavoriteShipsOnlyToggle($event)"
+              ></ion-toggle>
+            </div>
+          </div>
+
+          <div class="strict-toggle-row strict-toggle-row--select strict-toggle-row--total-cost">
+            <div class="strict-toggle-copy">
+              <strong>{{ t('filters.totalCost.label') }}</strong>
+              <small>{{ manualTeamCostBudgetSupportLabel() }}</small>
+            </div>
+            <ion-input
+              type="number"
+              inputmode="numeric"
+              min="0"
+              step="1"
+              fill="outline"
+              [label]="t('filters.totalCost.range.max')"
+              labelPlacement="stacked"
+              [value]="maxTotalCost()"
+              [disabled]="building()"
+              (ionInput)="onMaxTotalCostChange($event)"
+            ></ion-input>
+            @if (manualTeamCostBudgetErrorLabel()) {
+              <small class="cost-range-error">
+                {{ manualTeamCostBudgetErrorLabel() }}
+              </small>
+            }
+          </div>
+
           <div class="strict-toggle-row strict-toggle-row--select">
             <div class="strict-toggle-copy">
               <strong>{{ t('filters.characterBox.label') }}</strong>
@@ -176,141 +228,12 @@
             </ion-select>
           </div>
 
-          <div class="strict-toggle-row">
-            <div class="strict-toggle-copy">
-              <strong>{{ favoritesOnlyToggleLabel() }}</strong>
-              <small>{{ favoritesOnlySupportLabel() }}</small>
-            </div>
-            <ion-toggle
-              color="warning"
-              [checked]="favoritesOnly()"
-              [disabled]="building()"
-              (ionChange)="onFavoritesOnlyToggle($event)"
-            ></ion-toggle>
-          </div>
-
-          <div class="strict-toggle-row">
-            <div class="strict-toggle-copy">
-              <strong>{{ allowAnyFriendCaptainAutoFillToggleLabel() }}</strong>
-              <small>{{ allowAnyFriendCaptainAutoFillSupportLabel() }}</small>
-            </div>
-            <ion-toggle
-              color="warning"
-              [checked]="allowAnyFriendCaptainAutoFill()"
-              [disabled]="building()"
-              (ionChange)="onAllowAnyFriendCaptainAutoFillToggle($event)"
-            ></ion-toggle>
-          </div>
-
-          <div class="strict-toggle-row strict-toggle-row--select">
-            <div class="strict-toggle-copy">
-              <strong>{{ t('filters.leaderBoost.label') }}</strong>
-              <small>{{ leaderBoostSupportLabel() }}</small>
-            </div>
-            <ion-select
-              interface="popover"
-              class="strict-toggle-select"
-              fill="outline"
-              [multiple]="true"
-              [placeholder]="t('filters.leaderBoost.placeholder')"
-              [value]="leaderBoostFilters()"
-              [selectedText]="leaderBoostFiltersLabel()"
-              [disabled]="building()"
-              (ionChange)="onLeaderBoostFilterChange($event)"
-            >
-              @for (item of availableLeaderBoostFilters; track item) {
-                <ion-select-option [value]="item">
-                  {{ t('filters.leaderBoost.options.' + item) }}
-                </ion-select-option>
-              }
-            </ion-select>
-            <div class="leader-boost-range-grid">
-              <ion-input
-                type="number"
-                inputmode="decimal"
-                min="0"
-                step="0.01"
-                fill="outline"
-                [label]="t('filters.leaderBoost.range.atkMin')"
-                labelPlacement="stacked"
-                [value]="leaderBoostRanges().ATK.min"
-                [disabled]="building()"
-                (ionInput)="onLeaderBoostRangeChange('ATK', 'min', $event)"
-              ></ion-input>
-              <ion-input
-                type="number"
-                inputmode="decimal"
-                min="0"
-                step="0.01"
-                fill="outline"
-                [label]="t('filters.leaderBoost.range.atkMax')"
-                labelPlacement="stacked"
-                [value]="leaderBoostRanges().ATK.max"
-                [disabled]="building()"
-                (ionInput)="onLeaderBoostRangeChange('ATK', 'max', $event)"
-              ></ion-input>
-              <ion-input
-                type="number"
-                inputmode="decimal"
-                min="0"
-                step="0.01"
-                fill="outline"
-                [label]="t('filters.leaderBoost.range.hpMin')"
-                labelPlacement="stacked"
-                [value]="leaderBoostRanges().HP.min"
-                [disabled]="building()"
-                (ionInput)="onLeaderBoostRangeChange('HP', 'min', $event)"
-              ></ion-input>
-              <ion-input
-                type="number"
-                inputmode="decimal"
-                min="0"
-                step="0.01"
-                fill="outline"
-                [label]="t('filters.leaderBoost.range.hpMax')"
-                labelPlacement="stacked"
-                [value]="leaderBoostRanges().HP.max"
-                [disabled]="building()"
-                (ionInput)="onLeaderBoostRangeChange('HP', 'max', $event)"
-              ></ion-input>
-            </div>
-            @if (leaderBoostRangeErrorLabel()) {
-              <small class="leader-boost-range-error">
-                {{ leaderBoostRangeErrorLabel() }}
-              </small>
-            }
-          </div>
-
-          <div class="strict-toggle-row strict-toggle-row--select">
+          <div class="strict-toggle-row strict-toggle-row--select strict-toggle-row--cost">
             <div class="strict-toggle-copy">
               <strong>{{ t('filters.cost.label') }}</strong>
               <small>{{ t('filters.cost.support') }}</small>
             </div>
             <div class="cost-scope-grid">
-              <div class="strict-toggle-copy cost-scope-copy">
-                <strong>{{ t('filters.totalCost.label') }}</strong>
-                <small>{{ manualTeamCostBudgetSupportLabel() }}</small>
-              </div>
-              <div class="cost-range-grid">
-                <ion-input
-                  type="number"
-                  inputmode="numeric"
-                  min="0"
-                  step="1"
-                  fill="outline"
-                  [label]="t('filters.totalCost.range.max')"
-                  labelPlacement="stacked"
-                  [value]="maxTotalCost()"
-                  [disabled]="building()"
-                  (ionInput)="onMaxTotalCostChange($event)"
-                ></ion-input>
-              </div>
-              @if (manualTeamCostBudgetErrorLabel()) {
-                <small class="cost-range-error">
-                  {{ manualTeamCostBudgetErrorLabel() }}
-                </small>
-              }
-
               <div class="strict-toggle-copy cost-scope-copy">
                 <strong>{{ t('filters.cost.leaders.label') }}</strong>
                 <small>{{ leaderCostRangeSupportLabel() }}</small>
@@ -384,45 +307,6 @@
               }
             </div>
           </div>
-
-          <div class="strict-toggle-row">
-            <div class="strict-toggle-copy">
-              <strong>{{ favoriteShipsOnlyToggleLabel() }}</strong>
-              <small>{{ favoriteShipsOnlySupportLabel() }}</small>
-            </div>
-            <ion-toggle
-              color="warning"
-              [checked]="favoriteShipsOnly()"
-              [disabled]="building()"
-              (ionChange)="onFavoriteShipsOnlyToggle($event)"
-            ></ion-toggle>
-          </div>
-
-          <div class="strict-toggle-row">
-            <div class="strict-toggle-copy">
-              <strong>{{ leaderSuperEffectScopeToggleLabel() }}</strong>
-              <small>{{ leaderSuperEffectScopeSupportLabel() }}</small>
-            </div>
-            <ion-toggle
-              color="warning"
-              [checked]="requireAllSlotsInLeaderSuperEffectScope()"
-              [disabled]="building()"
-              (ionChange)="onRequireAllSlotsInLeaderSuperEffectScopeToggle($event)"
-            ></ion-toggle>
-          </div>
-
-          <div class="strict-toggle-row">
-            <div class="strict-toggle-copy">
-              <strong>{{ captainAbilityCoverageToggleLabel() }}</strong>
-              <small>{{ captainAbilityCoverageSupportLabel() }}</small>
-            </div>
-            <ion-toggle
-              color="warning"
-              [checked]="requireFullCaptainAbilityCoverage()"
-              [disabled]="building()"
-              (ionChange)="onRequireFullCaptainAbilityCoverageToggle($event)"
-            ></ion-toggle>
-          </div>
         </div>
 
         <section class="ability-requirements-card">
@@ -435,7 +319,7 @@
             <strong>
               {{
                 t('captainAbilityFilters.configuredRows', {
-                  count: captainAbilitySummaryChips().length,
+                  count: captainFilterSummaryChips().length,
                 })
               }}
             </strong>
@@ -453,7 +337,7 @@
                 fill="clear"
                 color="danger"
                 size="small"
-                [disabled]="building() || !captainAbilitySummaryChips().length"
+                [disabled]="building() || !captainFilterSummaryChips().length"
                 (click)="clearCaptainAbilityFilters()"
               >
                 {{ t('captainAbilityFilters.actions.clearRequirements') }}
@@ -461,9 +345,9 @@
             </div>
           </div>
 
-          @if (captainAbilitySummaryChips().length) {
+          @if (captainFilterSummaryChips().length) {
             <div class="selected-values-row">
-              @for (chip of captainAbilitySummaryChips(); track chip.draftId) {
+              @for (chip of captainFilterSummaryChips(); track chip.draftId) {
                 <span class="selected-value-chip">{{ chip.label }}</span>
               }
             </div>
@@ -481,7 +365,11 @@
           [drafts]="captainAbilityDrafts()"
           [catalogItems]="availableCaptainAbilityCatalogItems()"
           [showCharacterCount]="false"
+          [showLeaderBoostControls]="true"
+          [leaderBoostFilters]="leaderBoostFilters()"
+          [leaderBoostRanges]="leaderBoostRanges()"
           (dismiss)="closeCaptainAbilityPicker()"
+          (saveLeaderBoostSettings)="saveCaptainLeaderBoostSettings($event)"
           (saveDrafts)="saveCaptainAbilityPicker($event)"
         ></app-ability-requirement-picker>
 
@@ -666,6 +554,15 @@
                     fill="clear"
                     size="small"
                     class="select-all-button"
+                    [disabled]="building()"
+                    (click)="openManualPickerModal()"
+                  >
+                    {{ t('manual.actions.editPicks') }}
+                  </ion-button>
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    class="select-all-button"
                     [disabled]="building() || !hasLockedCharacters()"
                     (click)="openManualCopyModal()"
                   >
@@ -786,7 +683,36 @@
               </div>
             </div>
 
-            <div class="manual-locks-search-panel">
+            <ion-modal
+              [isOpen]="manualPickerModalOpen()"
+              cssClass="pick-editor-modal"
+              (didDismiss)="closeManualPickerModal()"
+            >
+              <ng-template>
+                <ion-header class="pick-editor-modal__header ion-no-border">
+                  <ion-toolbar>
+                    <div class="pick-editor-modal__head">
+                      <div>
+                        <div class="section-label">
+                          <ion-icon [icon]="manualFilterIcon"></ion-icon>
+                          <span>{{ t('manual.modal.eyebrow') }}</span>
+                        </div>
+                        <h2>{{ t('manual.modal.title') }}</h2>
+                        <p>{{ t('manual.modal.copy') }}</p>
+                      </div>
+                    </div>
+
+                    <ion-buttons slot="end">
+                      <ion-button fill="clear" color="light" (click)="closeManualPickerModal()">
+                        <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                      </ion-button>
+                    </ion-buttons>
+                  </ion-toolbar>
+                </ion-header>
+
+                <ion-content class="pick-editor-modal__content">
+                  <div class="pick-editor-modal__shell">
+                    <div class="manual-locks-search-panel pick-editor-modal__panel">
               <div class="manual-panel-toggle">
                 <button
                   type="button"
@@ -913,16 +839,12 @@
                   </div>
                 }
                 @if (manualCandidateCards().length) {
-                  <cdk-virtual-scroll-viewport
-                    class="manual-candidate-viewport manual-candidate-viewport--manual"
-                    [itemSize]="manualCandidateViewportItemSize"
-                    (scrolledIndexChange)="onManualCandidatesScrolledIndexChange($event)"
+                  <div
+                    class="manual-candidate-list manual-candidate-list--sidebar manual-candidate-list--characters manual-candidate-list--manual-characters"
+                    (scroll)="onManualCharacterListScroll($event)"
                   >
+                    @for (candidateCard of manualCandidateCards(); track candidateCard.character.id) {
                     <article
-                      *cdkVirtualFor="
-                        let candidateCard of manualCandidateCards();
-                        trackBy: trackManualCandidateCardById
-                      "
                       class="manual-candidate-card manual-candidate-card--detailed manual-candidate-card--sidebar"
                       [class.manual-candidate-card--selected]="candidateCard.isSelectedInActiveSlot"
                       [class.manual-candidate-card--blocked]="
@@ -977,7 +899,8 @@
                         </ion-button>
                       </div>
                     </article>
-                  </cdk-virtual-scroll-viewport>
+                    }
+                  </div>
                   @if (manualCandidatesLoadingMore()) {
                     <div class="manual-candidate-loading-more">
                       <ion-spinner name="crescent"></ion-spinner>
@@ -1090,7 +1013,11 @@
                   </div>
                 }
               }
-            </div>
+                    </div>
+                  </div>
+                </ion-content>
+              </ng-template>
+            </ion-modal>
           </div>
         </section>
 
@@ -1240,6 +1167,15 @@
                     fill="clear"
                     size="small"
                     class="select-all-button"
+                    [disabled]="building()"
+                    (click)="openExcludePickerModal()"
+                  >
+                    {{ t('exclude.actions.editExcludes') }}
+                  </ion-button>
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    class="select-all-button"
                     [disabled]="building() || !hasExcludedCharacters()"
                     (click)="clearExcludedCharacters()"
                   >
@@ -1323,7 +1259,36 @@
               }
             </div>
 
-            <div class="manual-locks-search-panel">
+            <ion-modal
+              [isOpen]="excludePickerModalOpen()"
+              cssClass="pick-editor-modal"
+              (didDismiss)="closeExcludePickerModal()"
+            >
+              <ng-template>
+                <ion-header class="pick-editor-modal__header ion-no-border">
+                  <ion-toolbar>
+                    <div class="pick-editor-modal__head">
+                      <div>
+                        <div class="section-label">
+                          <ion-icon [icon]="manualFilterIcon"></ion-icon>
+                          <span>{{ t('exclude.modal.eyebrow') }}</span>
+                        </div>
+                        <h2>{{ t('exclude.modal.title') }}</h2>
+                        <p>{{ t('exclude.modal.copy') }}</p>
+                      </div>
+                    </div>
+
+                    <ion-buttons slot="end">
+                      <ion-button fill="clear" color="light" (click)="closeExcludePickerModal()">
+                        <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                      </ion-button>
+                    </ion-buttons>
+                  </ion-toolbar>
+                </ion-header>
+
+                <ion-content class="pick-editor-modal__content">
+                  <div class="pick-editor-modal__shell">
+                    <div class="manual-locks-search-panel pick-editor-modal__panel">
               <div class="manual-panel-toggle">
                 <button
                   type="button"
@@ -1361,16 +1326,12 @@
                   </div>
                 }
                 @if (excludedCharacterCards().length) {
-                  <cdk-virtual-scroll-viewport
-                    class="manual-candidate-viewport manual-candidate-viewport--exclude"
-                    [itemSize]="excludedCandidateViewportItemSize"
-                    (scrolledIndexChange)="onExcludedCandidatesScrolledIndexChange($event)"
+                  <div
+                    class="manual-candidate-list manual-candidate-list--sidebar manual-candidate-list--characters manual-candidate-list--exclude-characters"
+                    (scroll)="onExcludedCharacterListScroll($event)"
                   >
+                    @for (candidateCard of excludedCharacterCards(); track candidateCard.character.id) {
                     <article
-                      *cdkVirtualFor="
-                        let candidateCard of excludedCharacterCards();
-                        trackBy: trackExcludedCharacterCardById
-                      "
                       class="manual-candidate-card manual-candidate-card--detailed manual-candidate-card--sidebar"
                       [class.manual-candidate-card--selected]="candidateCard.isExcluded"
                       [class.manual-candidate-card--blocked]="
@@ -1435,7 +1396,8 @@
                         </ion-button>
                       </div>
                     </article>
-                  </cdk-virtual-scroll-viewport>
+                    }
+                  </div>
                   @if (excludedCandidatesLoadingMore()) {
                     <div class="manual-candidate-loading-more">
                       <ion-spinner name="crescent"></ion-spinner>
@@ -1533,7 +1495,11 @@
                   </div>
                 }
               }
-            </div>
+                    </div>
+                  </div>
+                </ion-content>
+              </ng-template>
+            </ion-modal>
           </div>
         </section>
 
@@ -1696,13 +1662,17 @@
 
           <div class="fixed-manual-team-slots">
             @for (slot of fixedManualTeamSlots(); track index; let index = $index) {
-              <button
-                type="button"
+              <article
                 class="fixed-manual-team-slot"
                 [class.fixed-manual-team-slot--active]="
                   fixedManualTeamSelectedSlotIndex() === index
                 "
-                (click)="selectFixedManualTeamSlot(index)"
+                [class.fixed-manual-team-slot--empty]="!slot"
+                [attr.role]="slot ? 'link' : null"
+                [attr.tabindex]="slot ? '0' : null"
+                (click)="openFixedManualTeamSlotDetail(index)"
+                (keydown.enter)="openFixedManualTeamSlotDetail(index)"
+                (keydown.space)="$event.preventDefault(); openFixedManualTeamSlotDetail(index)"
               >
                 @if (slot) {
                   <img [src]="slot.imageUrl" [alt]="slot.name" loading="lazy" />
@@ -1710,6 +1680,17 @@
                     <strong>{{ t('manualTeam.slots.label', { slot: index + 1 }) }}</strong>
                     <small>{{ slot.name }}</small>
                   </span>
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    color="light"
+                    class="fixed-manual-team-slot__edit"
+                    [title]="t('manualTeam.actions.editSlot', { slot: index + 1 })"
+                    [attr.aria-label]="t('manualTeam.actions.editSlot', { slot: index + 1 })"
+                    (click)="$event.stopPropagation(); openFixedManualTeamPickerModal(index)"
+                  >
+                    <ion-icon slot="icon-only" [icon]="editIcon"></ion-icon>
+                  </ion-button>
                   <ion-button
                     fill="clear"
                     size="small"
@@ -1728,8 +1709,19 @@
                     <strong>{{ t('manualTeam.slots.label', { slot: index + 1 }) }}</strong>
                     <small>{{ t('manualTeam.slots.empty') }}</small>
                   </span>
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    color="light"
+                    class="fixed-manual-team-slot__edit"
+                    [title]="t('manualTeam.actions.editSlot', { slot: index + 1 })"
+                    [attr.aria-label]="t('manualTeam.actions.editSlot', { slot: index + 1 })"
+                    (click)="$event.stopPropagation(); openFixedManualTeamPickerModal(index)"
+                  >
+                    <ion-icon slot="icon-only" [icon]="editIcon"></ion-icon>
+                  </ion-button>
                 }
-              </button>
+              </article>
             }
           </div>
 
@@ -1739,79 +1731,127 @@
             ></app-captain-team-condition-status>
           }
 
-          <div class="fixed-manual-team-picker">
-            <div class="manual-locks-meta manual-locks-meta--candidates">
-              <strong>{{
-                t('manualTeam.picker.title', { slot: fixedManualTeamSelectedSlotIndex() + 1 })
-              }}</strong>
-              <small>{{ t('manualTeam.picker.copy') }}</small>
-            </div>
-            <ion-searchbar
-              [debounce]="150"
-              [placeholder]="t('manualTeam.picker.searchPlaceholder')"
-              [value]="fixedManualTeamSearchTerm()"
-              (ionInput)="onFixedManualTeamSearchChange($event)"
-            ></ion-searchbar>
-            @if (!fixedManualTeamCandidateCards().length) {
-              <div class="manual-candidate-empty-state">
-                {{ t('manualTeam.picker.empty') }}
-              </div>
-            }
-            @if (fixedManualTeamCandidateCards().length) {
-              <div class="fixed-manual-team-candidates">
-                @for (
-                  candidateCard of fixedManualTeamCandidateCards();
-                  track candidateCard.character.id
-                ) {
-                  <article
-                    class="manual-candidate-card manual-candidate-card--detailed fixed-manual-team-candidate"
-                    [class.manual-candidate-card--selected]="candidateCard.isAssignedToActiveSlot"
-                    [class.fixed-manual-team-candidate--assigned-other]="
-                      candidateCard.isAssignedToAnotherSlot
-                    "
-                  >
-                    <a
-                      class="character-detail-thumb-link"
-                      [routerLink]="getCharacterDetailLink(candidateCard.character)"
-                      [attr.aria-label]="candidateCard.character.name"
+          <ion-modal
+            [isOpen]="fixedManualTeamPickerModalOpen()"
+            cssClass="pick-editor-modal"
+            (didDismiss)="closeFixedManualTeamPickerModal()"
+          >
+            <ng-template>
+              <ion-header class="pick-editor-modal__header ion-no-border">
+                <ion-toolbar>
+                  <div class="pick-editor-modal__head">
+                    <div>
+                      <div class="section-label">
+                        <ion-icon [icon]="editIcon"></ion-icon>
+                        <span>{{ t('manualTeam.modal.eyebrow') }}</span>
+                      </div>
+                      <h2>
+                        {{
+                          t('manualTeam.picker.title', {
+                            slot: fixedManualTeamSelectedSlotIndex() + 1
+                          })
+                        }}
+                      </h2>
+                      <p>{{ t('manualTeam.picker.copy') }}</p>
+                    </div>
+                  </div>
+
+                  <ion-buttons slot="end">
+                    <ion-button
+                      fill="clear"
+                      color="light"
+                      [attr.aria-label]="t('manualTeam.modal.close')"
+                      (click)="closeFixedManualTeamPickerModal()"
                     >
-                      <img
-                        [src]="candidateCard.character.imageUrl"
-                        [alt]="candidateCard.character.name"
-                        loading="lazy"
-                      />
-                    </a>
-                    <div class="manual-candidate-copy">
-                      <a
-                        class="character-detail-name-link"
-                        [routerLink]="getCharacterDetailLink(candidateCard.character)"
-                      >
-                        {{ candidateCard.character.name }}
-                      </a>
-                      <span>{{ candidateCard.subtitle }}</span>
-                      @if (candidateCard.isAssignedToAnotherSlot) {
-                        <small class="manual-candidate-role manual-candidate-role--muted">
-                          {{ t('manualTeam.picker.assignedElsewhere') }}
-                        </small>
-                      }
+                      <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                    </ion-button>
+                  </ion-buttons>
+                </ion-toolbar>
+              </ion-header>
+
+              <ion-content class="pick-editor-modal__content">
+                <div class="pick-editor-modal__shell">
+                  <div class="fixed-manual-team-picker pick-editor-modal__panel">
+                    <div class="manual-locks-meta manual-locks-meta--candidates">
+                      <strong>{{
+                        t('manualTeam.picker.title', {
+                          slot: fixedManualTeamSelectedSlotIndex() + 1
+                        })
+                      }}</strong>
+                      <small>{{ t('manualTeam.picker.copy') }}</small>
                     </div>
-                    <div class="manual-candidate-actions">
-                      <ion-button
-                        size="small"
-                        fill="outline"
-                        color="light"
-                        class="manual-candidate-action-button"
-                        [disabled]="candidateCard.isAssignedToActiveSlot"
-                        (click)="assignFixedManualTeamCharacter(candidateCard.character)"
-                      >
-                        {{ candidateCard.actionLabel }}
-                      </ion-button>
-                    </div>
-                  </article>
-                }
-              </div>
-            }
-          </div>
+                    <ion-searchbar
+                      [debounce]="150"
+                      [placeholder]="t('manualTeam.picker.searchPlaceholder')"
+                      [value]="fixedManualTeamSearchTerm()"
+                      (ionInput)="onFixedManualTeamSearchChange($event)"
+                    ></ion-searchbar>
+                    @if (!fixedManualTeamCandidateCards().length) {
+                      <div class="manual-candidate-empty-state">
+                        {{ t('manualTeam.picker.empty') }}
+                      </div>
+                    }
+                    @if (fixedManualTeamCandidateCards().length) {
+                      <div class="fixed-manual-team-candidates">
+                        @for (
+                          candidateCard of fixedManualTeamCandidateCards();
+                          track candidateCard.character.id
+                        ) {
+                          <article
+                            class="manual-candidate-card manual-candidate-card--detailed fixed-manual-team-candidate"
+                            [class.manual-candidate-card--selected]="
+                              candidateCard.isAssignedToActiveSlot
+                            "
+                            [class.fixed-manual-team-candidate--assigned-other]="
+                              candidateCard.isAssignedToAnotherSlot
+                            "
+                          >
+                            <a
+                              class="character-detail-thumb-link"
+                              [routerLink]="getCharacterDetailLink(candidateCard.character)"
+                              [attr.aria-label]="candidateCard.character.name"
+                            >
+                              <img
+                                [src]="candidateCard.character.imageUrl"
+                                [alt]="candidateCard.character.name"
+                                loading="lazy"
+                              />
+                            </a>
+                            <div class="manual-candidate-copy">
+                              <a
+                                class="character-detail-name-link"
+                                [routerLink]="getCharacterDetailLink(candidateCard.character)"
+                              >
+                                {{ candidateCard.character.name }}
+                              </a>
+                              <span>{{ candidateCard.subtitle }}</span>
+                              @if (candidateCard.isAssignedToAnotherSlot) {
+                                <small class="manual-candidate-role manual-candidate-role--muted">
+                                  {{ t('manualTeam.picker.assignedElsewhere') }}
+                                </small>
+                              }
+                            </div>
+                            <div class="manual-candidate-actions">
+                              <ion-button
+                                size="small"
+                                fill="outline"
+                                color="light"
+                                class="manual-candidate-action-button"
+                                [disabled]="candidateCard.isAssignedToActiveSlot"
+                                (click)="assignFixedManualTeamCharacter(candidateCard.character)"
+                              >
+                                {{ candidateCard.actionLabel }}
+                              </ion-button>
+                            </div>
+                          </article>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              </ion-content>
+            </ng-template>
+          </ion-modal>
 
           @if (fixedManualTeamSaveFeedbackError()) {
             <section
@@ -2089,6 +2129,20 @@
               </div>
             </div>
             <div>
+              <span>{{ t('coverage.groups.captainAbilityCoverage') }}</span>
+              <div class="chip-row">
+                <small
+                  class="coverage-chip summary-status-chip"
+                  [class.fallback-chip]="captainAbilityCoverageMissingLabels().length"
+                >
+                  {{ captainAbilityCoverageReportLabel() }}
+                </small>
+                @for (item of captainAbilityCoverageMissingLabels(); track item) {
+                  <small class="coverage-chip fallback-chip">{{ item }}</small>
+                }
+              </div>
+            </div>
+            <div>
               <span>{{ t('coverage.groups.abilityRequirements') }}</span>
               <div class="chip-row">
                 <small class="coverage-chip summary-status-chip">{{
@@ -2316,6 +2370,13 @@
                       • {{ slot.character.secondaryClass }}
                     }
                   </span>
+                  @if (slot.characterTags.length) {
+                    <div class="chip-row result-character-tag-row">
+                      @for (tag of slot.characterTags; track tag) {
+                        <small class="character-tag-chip">{{ tag }}</small>
+                      }
+                    </div>
+                  }
                   <div class="chip-row">
                     @for (chip of slot.reasonChips; track $index) {
                       <small class="reason-chip">{{ chip }}</small>

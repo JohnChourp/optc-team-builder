@@ -160,6 +160,112 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.leaderBoostRanges()).toEqual(createEmptyAutoBuildLeaderBoostRanges());
   });
 
+  it('saves leader boost settings from the Captain Ability picker and summarizes active requirements', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.saveCaptainLeaderBoostSettings({
+      filters: ['ATK'],
+      ranges: {
+        ATK: { min: 5.25, max: 6 },
+        HP: { min: 1.3, max: null },
+      },
+    });
+
+    expect(page.leaderBoostFilters()).toEqual(['ATK']);
+    expect(page.leaderBoostRanges()).toEqual({
+      ATK: { min: 5.25, max: 6 },
+      HP: { min: 1.3, max: null },
+    });
+    expect(page.captainLeaderBoostSummaryChips().map((chip) => chip.label)).toEqual([
+      'Priority: ATK',
+      'ATK 5.25-6',
+      'HP from 1.3',
+    ]);
+    expect(page.captainFilterSummaryChips()).toEqual(page.captainLeaderBoostSummaryChips());
+  });
+
+  it('clears Captain Ability filters and leader boost settings together', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.captainAbilityDrafts.set([
+      {
+        draftId: 'captain-bind',
+        abilityKey: 'remove_bind',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      },
+    ]);
+    page.saveCaptainLeaderBoostSettings({
+      filters: ['HP'],
+      ranges: {
+        ATK: { min: null, max: null },
+        HP: { min: 1.3, max: 1.5 },
+      },
+    });
+
+    await page.clearCaptainAbilityFilters();
+
+    expect(page.captainAbilityDrafts()).toEqual([]);
+    expect(page.leaderBoostFilters()).toEqual(['HP', 'ATK']);
+    expect(page.leaderBoostRanges()).toEqual(createEmptyAutoBuildLeaderBoostRanges());
+    expect(page.captainFilterSummaryChips()).toEqual([]);
+  });
+
+  it('uses hidden full Captain Ability coverage by default when building', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX']);
+    page.selectedClasses.set(['Fighter']);
+
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({
+        requireFullCaptainAbilityCoverage: true,
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it('reports partial full Captain Ability coverage and exposes result character tags', async () => {
+    const { page } = await createPage();
+    const captain = createCharacterRecord(200, 'DEX Captain');
+    const dexSub = createCharacterRecord(202, 'DEX Sub');
+    const psySub = createCharacterRecord(203, 'PSY Sub');
+
+    captain.detail.captainAbility = 'Boosts ATK of [DEX] characters by 5x and HP by 1.3x.';
+    captain.detail.characterTags = ['Straw Hat Pirates'];
+    dexSub.detail.characterTags = ['Land of Wano'];
+    psySub.detail.characterTags = ['Kid Pirates', 'Worst Generation'];
+    page.result.set(
+      createAutoBuildResult([
+        { role: 'captain', character: captain, reasonChips: ['Captain slot'] },
+        { role: 'friendCaptain', character: captain, reasonChips: ['Friend captain slot'] },
+        { role: 'sub', character: dexSub, reasonChips: ['Covered'] },
+        { role: 'sub', character: dexSub, reasonChips: ['Covered'] },
+        { role: 'sub', character: dexSub, reasonChips: ['Covered'] },
+        { role: 'sub', character: psySub, reasonChips: ['Partial'] },
+      ]),
+    );
+
+    expect(page.teamSlots()[5]?.characterTags).toEqual(['Kid Pirates', 'Worst Generation']);
+    expect(page.captainAbilityCoverageReportLabel()).toBe(
+      '10 / 12 Captain Ability slot checks covered.',
+    );
+    expect(page.captainAbilityCoverageMissingLabels()).toEqual([
+      'Captain misses Sub 4.',
+      'Friend Captain misses Sub 4.',
+    ]);
+  });
+
   it('disables builds when a leader boost range minimum is greater than maximum', async () => {
     const { page } = await createPage();
 
@@ -535,7 +641,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       {
         captainCharacterId: 901,
         friendCaptainCharacterId: 901,
-        requireFullCaptainAbilityCoverage: false,
+        requireFullCaptainAbilityCoverage: true,
       },
     );
     expect(userState.saveCharacterBox).toHaveBeenCalledWith({
@@ -1042,6 +1148,40 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
     page.clearManualShipSelection();
     expect(page.selectedManualShipId()).toBeNull();
+  });
+
+  it('opens and closes the compact manual picker modal without changing picker state', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.setShipPickerMode('ships');
+
+    page.openManualPickerModal();
+
+    expect(page.manualPickerModalOpen()).toBe(true);
+    expect(page.shipPickerMode()).toBe('ships');
+    expect(page.visibleManualShipCandidates()).toHaveLength(2);
+
+    page.closeManualPickerModal();
+
+    expect(page.manualPickerModalOpen()).toBe(false);
+  });
+
+  it('opens and closes the compact exclude picker modal without changing picker state', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.setExcludePickerMode('ships');
+
+    page.openExcludePickerModal();
+
+    expect(page.excludePickerModalOpen()).toBe(true);
+    expect(page.excludePickerMode()).toBe('ships');
+    expect(page.visibleExcludedShipCandidates()).toHaveLength(2);
+
+    page.closeExcludePickerModal();
+
+    expect(page.excludePickerModalOpen()).toBe(false);
   });
 
   it('keeps the full ship catalog available inline for manual ship selection while marking excluded ships as blocked', async () => {
@@ -2192,6 +2332,17 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain('captainAbilityFilters.title');
     expect(template).toContain('captainAbilityDrafts()');
     expect(template).toContain('availableCaptainAbilityCatalogItems()');
+    expect(template).toContain('captainFilterSummaryChips()');
+    expect(template).toContain('[showLeaderBoostControls]="true"');
+    expect(template).toContain('[leaderBoostFilters]="leaderBoostFilters()"');
+    expect(template).toContain('[leaderBoostRanges]="leaderBoostRanges()"');
+    expect(template).toContain('(saveLeaderBoostSettings)="saveCaptainLeaderBoostSettings($event)"');
+    expect(template).not.toContain("t('filters.leaderBoost.label')");
+    expect(template).not.toContain('(ionChange)="onLeaderBoostFilterChange($event)"');
+    expect(template).not.toContain('captainAbilityCoverageToggleLabel()');
+    expect(template).not.toContain('onRequireFullCaptainAbilityCoverageToggle($event)');
+    expect(template).toContain('captainAbilityCoverageReportLabel()');
+    expect(template).toContain('slot.characterTags');
     expect(template).toContain('clearRequiredCharacterAbilityCategory(');
     expect(template).not.toContain('ability-requirements-selected-row');
     expect(template).toContain('<app-ability-requirement-picker');
@@ -2204,9 +2355,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).not.toContain('<app-enemy-mechanic-picker');
     expect(template).not.toContain('<app-special-ability-picker');
     expect(template).not.toContain('<app-ship-picker');
-    expect(template).toContain('leaderSuperEffectScopeToggleLabel()');
-    expect(template).toContain('allowAnyFriendCaptainAutoFillToggleLabel()');
-    expect(template).toContain('(ionChange)="onAllowAnyFriendCaptainAutoFillToggle($event)"');
+    expect(template).not.toContain('leaderSuperEffectScopeToggleLabel()');
+    expect(template).not.toContain('allowAnyFriendCaptainAutoFillToggleLabel()');
+    expect(template).not.toContain('(ionChange)="onAllowAnyFriendCaptainAutoFillToggle($event)"');
     expect(template).toContain('favoriteShipsOnlyToggleLabel()');
     expect(template).toContain('[value]="manualShipSearchTerm()"');
     expect(template).toContain('(ionInput)="onManualShipSearchChange($event)"');
@@ -2214,14 +2365,12 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain('(scroll)="onExcludedShipListScroll($event)"');
     expect(template).toContain("t('ships.actions.selected')");
     expect(template).toContain('(click)="toggleShipFavorite(shipCard.ship.id)"');
-    expect(template).toContain('<cdk-virtual-scroll-viewport');
-    expect(template).toContain(
-      '(scrolledIndexChange)="onManualCandidatesScrolledIndexChange($event)"',
-    );
-    expect(template).toContain(
-      '(scrolledIndexChange)="onExcludedCandidatesScrolledIndexChange($event)"',
-    );
-    expect(template).toContain('*cdkVirtualFor=');
+    expect(template).not.toContain('<cdk-virtual-scroll-viewport');
+    expect(template).not.toContain('*cdkVirtualFor=');
+    expect(template).toContain('(scroll)="onManualCharacterListScroll($event)"');
+    expect(template).toContain('(scroll)="onExcludedCharacterListScroll($event)"');
+    expect(template).toContain('manual-candidate-list--manual-characters');
+    expect(template).toContain('manual-candidate-list--exclude-characters');
     expect(template).not.toContain('abilityRequirements.placeholders.selectAbility');
     expect(template).not.toContain('filters.extraDrop');
     expect(template).not.toContain('shipSearchTerm()');
@@ -3038,7 +3187,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     ]);
   });
 
-  it('loads more manual and excluded candidates in 10-item batches when the virtual list nears the end', async () => {
+  it('loads more manual and excluded candidates in 10-item batches when the character lists scroll near the end', async () => {
     const { page, repository } = await createPage();
     const records = Array.from({ length: 26 }, (_, index) =>
       createCharacterRecord(600 + index, `Paged Candidate ${index + 1}`),
@@ -3050,8 +3199,16 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
     await page.ngOnInit();
 
-    await page.onManualCandidatesScrolledIndexChange(6);
-    await page.onExcludedCandidatesScrolledIndexChange(6);
+    const nearBottomScrollEvent = {
+      target: {
+        scrollTop: 340,
+        clientHeight: 300,
+        scrollHeight: 760,
+      },
+    } as unknown as Event;
+
+    await page.onManualCharacterListScroll(nearBottomScrollEvent);
+    await page.onExcludedCharacterListScroll(nearBottomScrollEvent);
 
     const characterPickerCalls = repository.searchDetailedCharacters.mock.calls.filter(
       ([query]) => query.limit === 10,
@@ -3113,6 +3270,80 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         .reverse()
         .slice(0, 20),
     );
+  });
+
+  it('keeps the character loading-more state active while a manual picker page is pending', async () => {
+    const { page, repository } = await createPage();
+    const records = Array.from({ length: 20 }, (_, index) =>
+      createCharacterRecord(700 + index, `Loading Candidate ${index + 1}`),
+    );
+    let resolveNextPage: (() => void) | undefined;
+
+    repository.searchDetailedCharacters.mockImplementation((query) => {
+      if (query.offset === 10) {
+        return new Promise<CharacterDetailRecord[]>((resolve) => {
+          resolveNextPage = () => resolve(filterCharactersForManualQuery(records, query));
+        });
+      }
+
+      return Promise.resolve(filterCharactersForManualQuery(records, query));
+    });
+
+    await page.ngOnInit();
+
+    const loadPromise = page.onManualCharacterListScroll({
+      target: {
+        scrollTop: 340,
+        clientHeight: 300,
+        scrollHeight: 760,
+      },
+    } as unknown as Event);
+
+    expect(page.manualCandidatesLoadingMore()).toBe(true);
+
+    resolveNextPage?.();
+    await loadPromise;
+
+    expect(page.manualCandidatesLoadingMore()).toBe(false);
+    expect(page.manualCandidates()).toHaveLength(20);
+  });
+
+  it('resets manual character paging when the manual picker search changes', async () => {
+    const { page, repository } = await createPage();
+    const records = Array.from({ length: 26 }, (_, index) =>
+      createCharacterRecord(800 + index, `Search Reset Candidate ${index + 1}`),
+    );
+
+    repository.searchDetailedCharacters.mockImplementation(async (query) =>
+      filterCharactersForManualQuery(records, query),
+    );
+
+    await page.ngOnInit();
+    await page.onManualCharacterListScroll({
+      target: {
+        scrollTop: 340,
+        clientHeight: 300,
+        scrollHeight: 760,
+      },
+    } as unknown as Event);
+
+    expect(page.manualCandidates()).toHaveLength(20);
+
+    repository.searchDetailedCharacters.mockClear();
+    await page.onManualSearchChange({
+      detail: { value: 'Candidate 26' },
+    } as CustomEvent<{ value: string }>);
+
+    expect(repository.searchDetailedCharacters).toHaveBeenCalledWith(
+      expect.objectContaining({
+        searchTerm: 'Candidate 26',
+        limit: 10,
+        offset: 0,
+      }),
+    );
+    expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual([
+      825,
+    ]);
   });
 
   it('ignores stale manual candidate responses when the search term changes quickly', async () => {
@@ -3342,6 +3573,89 @@ describe('AutoTeamBuilderPage offline save', () => {
     page.assignFixedManualTeamCharacter(createCharacterRecord(201, 'Manual Captain'));
 
     expect(page.fixedManualTeamCurrentTeamId()).toBeNull();
+  });
+
+  it('opens and closes the manual fixed team slot picker modal for a slot', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    await page.openFixedManualTeamPickerModal(2);
+
+    expect(page.fixedManualTeamSelectedSlotIndex()).toBe(2);
+    expect(page.fixedManualTeamPickerModalOpen()).toBe(true);
+
+    page.closeFixedManualTeamPickerModal();
+
+    expect(page.fixedManualTeamPickerModalOpen()).toBe(false);
+  });
+
+  it('opens character detail from a filled manual fixed team slot without opening the picker modal', async () => {
+    const { page, router } = await createPage();
+
+    await page.ngOnInit();
+    page.fixedManualTeamSlots.set([createCharacterRecord(201), null, null, null, null, null]);
+
+    await page.openFixedManualTeamSlotDetail(0);
+
+    expect(router.navigate).toHaveBeenCalledWith(['/characters', '201']);
+    expect(page.fixedManualTeamPickerModalOpen()).toBe(false);
+  });
+
+  it('does not navigate or open the picker modal from an empty manual fixed team slot', async () => {
+    const { page, router } = await createPage();
+
+    await page.ngOnInit();
+
+    await page.openFixedManualTeamSlotDetail(1);
+
+    expect(router.navigate).not.toHaveBeenCalled();
+    expect(page.fixedManualTeamPickerModalOpen()).toBe(false);
+  });
+
+  it('keeps the fixed manual team search handler functional inside the picker modal', async () => {
+    const { page, repository } = await createPage();
+    const matchingCharacter = createCharacterRecord(905, 'Manual Search Result');
+
+    await page.ngOnInit();
+    repository.searchDetailedCharacters.mockResolvedValueOnce([]).mockResolvedValueOnce([
+      matchingCharacter,
+    ]);
+    await page.openFixedManualTeamPickerModal(1);
+    await page.onFixedManualTeamSearchChange({
+      detail: { value: 'Manual Search' },
+    } as CustomEvent<{ value: string }>);
+
+    expect(page.fixedManualTeamPickerModalOpen()).toBe(true);
+    expect(page.fixedManualTeamSearchTerm()).toBe('Manual Search');
+    expect(page.fixedManualTeamCandidates()).toEqual([matchingCharacter]);
+  });
+
+  it('assigns a manual fixed team modal candidate to the active slot and closes the modal', async () => {
+    const { page } = await createPage();
+    const candidate = createCharacterRecord(906, 'Modal Candidate');
+
+    await page.ngOnInit();
+    await page.openFixedManualTeamPickerModal(3);
+
+    page.assignFixedManualTeamCharacter(candidate);
+
+    expect(page.fixedManualTeamSlots()[3]).toBe(candidate);
+    expect(page.fixedManualTeamSlots().filter(Boolean)).toEqual([candidate]);
+    expect(page.fixedManualTeamPickerModalOpen()).toBe(false);
+  });
+
+  it('clears a manual fixed team compact slot without opening the picker modal', async () => {
+    const { page } = await createPage();
+    const stopPropagation = vi.fn();
+
+    await page.ngOnInit();
+    page.fixedManualTeamSlots.set([createCharacterRecord(201), null, null, null, null, null]);
+
+    page.clearFixedManualTeamSlot(0, { stopPropagation } as unknown as Event);
+
+    expect(stopPropagation).toHaveBeenCalled();
+    expect(page.fixedManualTeamSlots()[0]).toBeNull();
+    expect(page.fixedManualTeamPickerModalOpen()).toBe(false);
   });
 
   it('filters fixed manual team candidates by remaining max total cost when replacing a slot', async () => {
@@ -3776,7 +4090,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
         requireAllSelectedTypesInTeam: true,
         requireAllSelectedClassesPerCharacter: true,
         requireAllSlotsInLeaderSuperEffectScope: true,
-        requireFullCaptainAbilityCoverage: false,
+        requireFullCaptainAbilityCoverage: true,
         requireUniqueBaseCharacterNames: true,
         favoritesOnly: true,
         allowAnyFriendCaptainAutoFill: true,
@@ -5149,6 +5463,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
     expect(page.requireAllSelectedTypesInTeam()).toBe(true);
     expect(page.requireAllSelectedClassesPerCharacter()).toBe(true);
     expect(page.requireAllSlotsInLeaderSuperEffectScope()).toBe(true);
+    expect(page.requireFullCaptainAbilityCoverage()).toBe(true);
     expect(page.requireUniqueBaseCharacterNames()).toBe(true);
     expect(page.favoritesOnly()).toBe(true);
     expect(page.allowAnyFriendCaptainAutoFill()).toBe(true);

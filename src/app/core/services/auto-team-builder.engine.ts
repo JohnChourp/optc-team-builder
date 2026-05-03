@@ -468,8 +468,12 @@ export function runAutoTeamBuildAttempt(
     friendCaptainRecords,
     friendCaptainContext,
     autoFillCharacterIds,
-    leaderAutoFillCharacterIds,
-    subAutoFillCharacterIds,
+    leaderAutoFillCharacterIds: input.allowPartialCaptainAbilityCoverage
+      ? autoFillCharacterIds
+      : leaderAutoFillCharacterIds,
+    subAutoFillCharacterIds: input.allowPartialCaptainAbilityCoverage
+      ? autoFillCharacterIds
+      : subAutoFillCharacterIds,
   });
 
   if (!attempt) {
@@ -491,6 +495,9 @@ export function runAutoTeamBuildAttempt(
       ),
       minimumLeaderSuperEffectMatchingSlots: input.minimumLeaderSuperEffectMatchingSlots,
       allowedLeadersWithSuperEffects,
+      ...(requestedInput.requireFullCaptainAbilityCoverage && input.allowPartialCaptainAbilityCoverage
+        ? { ignoredCaptainAbilityCoverage: true }
+        : {}),
       ignoredLeaderSuperEffectScope: Boolean(
         requestedInput.requireAllSlotsInLeaderSuperEffectScope &&
         !input.requireAllSlotsInLeaderSuperEffectScope,
@@ -507,6 +514,7 @@ export function runAutoTeamBuildAttempt(
 export class AutoTeamBuildFallbackPlanner {
   private readonly zeroDropAttempts: AutoTeamBuildPlannedAttempt[];
   private readonly subsetCandidates: AutoTeamBuildSubsetCandidate[];
+  private readonly relaxedAttempts: AutoTeamBuildPlannedAttempt[];
   private readonly projectedScheduledFallbackAttemptCount: number;
   private readonly scheduledAttempts: AutoTeamBuildScheduledAttempt[] = [];
   private readonly scheduledAttemptKeys = new Set<string>();
@@ -545,21 +553,34 @@ export class AutoTeamBuildFallbackPlanner {
     this.subsetCandidates = this.hasStrictConstraints
       ? []
       : buildSubsetCandidates(requestedInput, this.baseSubsetInput, records);
+    this.relaxedAttempts = requestedInput.requireFullCaptainAbilityCoverage
+      ? buildRelaxedCaptainCoverageAttempts(
+          requestedInput,
+          exactAttemptRequiresNoSuperLeaders,
+          this.zeroDropAttempts,
+          this.subsetCandidates,
+        )
+      : [];
     this.maxScheduledFallbackAttempts = resolveMaxScheduledFallbackAttemptCount(
       requestedInput,
-      this.zeroDropAttempts.length,
+      this.zeroDropAttempts.length + this.relaxedAttempts.length,
       options.maxScheduledFallbackAttempts,
     );
     this.projectedScheduledFallbackAttemptCount = resolveProjectedScheduledFallbackAttemptCount(
       this.zeroDropAttempts,
       this.subsetCandidates,
+      this.relaxedAttempts,
       this.maxScheduledFallbackAttempts,
     );
     this.attemptCountFinal = !this.hasPotentialFallbackAttempts();
   }
 
   public hasPotentialFallbackAttempts(): boolean {
-    return this.zeroDropAttempts.length > 0 || this.subsetCandidates.length > 0;
+    return (
+      this.zeroDropAttempts.length > 0 ||
+      this.subsetCandidates.length > 0 ||
+      this.relaxedAttempts.length > 0
+    );
   }
 
   public getTotalAttempts(): number {
@@ -604,6 +625,11 @@ export class AutoTeamBuildFallbackPlanner {
           candidate.category,
           candidate.droppedFilterIds,
         );
+      }
+    });
+    this.relaxedAttempts.forEach((attempt) => {
+      if (this.scheduledAttempts.length < this.maxScheduledFallbackAttempts) {
+        this.enqueueScheduledAttempt(attempt, attemptCategoryFromRelaxedAttempt(attempt), []);
       }
     });
     this.refreshAttemptCountFinal();
@@ -673,6 +699,7 @@ export function createAutoTeamBuildFallbackPlanner(
 function resolveProjectedScheduledFallbackAttemptCount(
   zeroDropAttempts: AutoTeamBuildPlannedAttempt[],
   subsetCandidates: AutoTeamBuildSubsetCandidate[],
+  relaxedAttempts: AutoTeamBuildPlannedAttempt[],
   maxScheduledFallbackAttempts: number,
 ): number {
   if (maxScheduledFallbackAttempts <= 0) {
@@ -702,8 +729,58 @@ function resolveProjectedScheduledFallbackAttemptCount(
   subsetCandidates.forEach((candidate) => {
     tryScheduleAttempt(candidate.attempt);
   });
+  relaxedAttempts.forEach((attempt) => {
+    tryScheduleAttempt(attempt);
+  });
 
   return scheduledAttemptCount;
+}
+
+function buildRelaxedCaptainCoverageAttempts(
+  requestedInput: AutoBuildInput,
+  exactAttemptRequiresNoSuperLeaders: boolean,
+  zeroDropAttempts: AutoTeamBuildPlannedAttempt[],
+  subsetCandidates: AutoTeamBuildSubsetCandidate[],
+): AutoTeamBuildPlannedAttempt[] {
+  const exactRelaxedAttempt: AutoTeamBuildPlannedAttempt = {
+    input: {
+      ...requestedInput,
+      allowPartialCaptainAbilityCoverage: true,
+    },
+    requireLeadersWithoutSuperEffects: exactAttemptRequiresNoSuperLeaders,
+    allowedLeadersWithSuperEffects: false,
+    droppedTypes: [],
+    droppedClasses: [],
+    ignoredLeaderSuperEffectScope: false,
+    ignoredLeaderSuperSpecialCriteria: false,
+  };
+  const relaxedCopies = [
+    exactRelaxedAttempt,
+    ...zeroDropAttempts.map((attempt) => relaxCaptainCoverageAttempt(attempt)),
+    ...subsetCandidates.map((candidate) => relaxCaptainCoverageAttempt(candidate.attempt)),
+  ];
+
+  return dedupeFallbackAttempts(relaxedCopies);
+}
+
+function relaxCaptainCoverageAttempt(
+  attempt: AutoTeamBuildPlannedAttempt,
+): AutoTeamBuildPlannedAttempt {
+  return {
+    ...attempt,
+    input: {
+      ...attempt.input,
+      allowPartialCaptainAbilityCoverage: true,
+    },
+  };
+}
+
+function attemptCategoryFromRelaxedAttempt(
+  attempt: AutoTeamBuildPlannedAttempt,
+): AutoTeamBuildFallbackAttemptCategory {
+  const droppedFilterCount = attempt.droppedTypes.length + attempt.droppedClasses.length;
+
+  return droppedFilterCount === 0 ? 'meta' : resolveSubsetAttemptCategory(droppedFilterCount);
 }
 
 function buildZeroDropFallbackAttempts(
@@ -1036,6 +1113,7 @@ function buildFallbackAttemptKey(attempt: AutoTeamBuildPlannedAttempt): string {
     attempt.input.requireLeaderSuperSpecialCriteria ? '1' : '0',
     attempt.input.requireAllSlotsInLeaderSuperEffectScope ? '1' : '0',
     attempt.input.minimumLeaderSuperEffectMatchingSlots ?? 'null',
+    attempt.input.allowPartialCaptainAbilityCoverage ? 'partial-captain' : 'full-captain',
     attempt.requireLeadersWithoutSuperEffects ? '1' : '0',
   ].join('::');
 }
@@ -1056,6 +1134,8 @@ function inputsMatch(left: AutoBuildInput, right: AutoBuildInput): boolean {
     sameOrderedValues(left.selectedClasses, right.selectedClasses) &&
     left.requireAllSlotsInLeaderSuperEffectScope ===
       right.requireAllSlotsInLeaderSuperEffectScope &&
+    Boolean(left.allowPartialCaptainAbilityCoverage) ===
+      Boolean(right.allowPartialCaptainAbilityCoverage) &&
     left.minimumLeaderSuperEffectMatchingSlots === right.minimumLeaderSuperEffectMatchingSlots &&
     left.requireLeaderSuperSpecialCriteria === right.requireLeaderSuperSpecialCriteria &&
     left.leaderCostRange.min === right.leaderCostRange.min &&

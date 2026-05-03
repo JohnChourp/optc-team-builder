@@ -240,6 +240,69 @@ describe('runAutoTeamBuildSearch', () => {
     });
   });
 
+  it('returns a relaxed partial captain coverage team only after full coverage is impossible', () => {
+    const result = runAutoTeamBuildSearch(
+      createPartialCaptainCoverageRecords(),
+      createInput(['DEX', 'PSY'], ['Fighter'], {
+        requireFullCaptainAbilityCoverage: true,
+        manualSlots: createCaptainCoverageManualSlots(9000),
+        lockedCharacterIds: [9000],
+        captainCharacterId: 9000,
+        friendCaptainCharacterId: 9000,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.input.allowPartialCaptainAbilityCoverage).toBe(true);
+    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBe(true);
+    expect(result?.coverage.leaderCriteria.coverageMode).toBe('fullAbilityCoverage');
+    expect(result?.coverage.leaderCriteria.matchingSlots).toBeLessThan(
+      result?.coverage.leaderCriteria.totalSlots ?? 0,
+    );
+  });
+
+  it('keeps a full captain coverage team ahead of relaxed partial coverage', () => {
+    const result = runAutoTeamBuildSearch(
+      createFullCaptainCoverageRecords(),
+      createInput(['DEX', 'PSY'], ['Fighter'], {
+        requireFullCaptainAbilityCoverage: true,
+        manualSlots: createCaptainCoverageManualSlots(9000),
+        lockedCharacterIds: [9000],
+        captainCharacterId: 9000,
+        friendCaptainCharacterId: 9000,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.input.allowPartialCaptainAbilityCoverage).toBeUndefined();
+    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBeUndefined();
+    expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
+  });
+
+  it('prefers the relaxed captain coverage team with more covered slots', () => {
+    const result = runAutoTeamBuildSearch(
+      createPartialCaptainCoverageRecords({ extraUncoveredSubs: true }),
+      createInput(['DEX', 'PSY'], ['Fighter'], {
+        requireFullCaptainAbilityCoverage: true,
+        manualSlots: createCaptainCoverageManualSlots(9000),
+        lockedCharacterIds: [9000],
+        captainCharacterId: 9000,
+        friendCaptainCharacterId: 9000,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.map((slot) => slot.character.id)).toEqual([
+      9000,
+      9000,
+      9003,
+      9002,
+      9001,
+      9012,
+    ]);
+    expect(result?.coverage.leaderCriteria.matchingSlots).toBe(5);
+  });
+
   it('does not accept fallback coverage when requested battle requirements are still missing', () => {
     const requestedInput: AutoBuildInput = {
       ...createInput(['DEX'], ['Fighter']),
@@ -742,6 +805,67 @@ function createSingleTypeRecords(): CharacterDetailRecord[] {
     createUtilitySubRecord(),
     createConsistencySubRecord(),
   ];
+}
+
+function createCaptainCoverageManualSlots(captainId: number) {
+  return createEmptyAutoBuildManualSlots().map((slot) => ({
+    role: slot.role,
+    characterIds:
+      slot.role === 'captain' || slot.role === 'friendCaptain' ? [captainId] : [],
+  }));
+}
+
+function createPartialCaptainCoverageRecords(
+  options: { extraUncoveredSubs?: boolean } = {},
+): CharacterDetailRecord[] {
+  return [
+    createCaptainCoverageCaptainRecord(),
+    createCaptainCoverageDexSubRecord(9001),
+    createCaptainCoverageDexSubRecord(9002),
+    createCaptainCoverageDexSubRecord(9003),
+    createCaptainCoveragePsySubRecord(9010),
+    ...(options.extraUncoveredSubs
+      ? [createCaptainCoveragePsySubRecord(9011), createCaptainCoveragePsySubRecord(9012)]
+      : []),
+  ];
+}
+
+function createFullCaptainCoverageRecords(): CharacterDetailRecord[] {
+  return [...createPartialCaptainCoverageRecords(), createCaptainCoverageDexSubRecord(9004)];
+}
+
+function createCaptainCoverageCaptainRecord(): CharacterDetailRecord {
+  return createCharacterRecord({
+    id: 9000,
+    type: 'DEX',
+    primaryClass: 'Fighter',
+    detail: {
+      captainAbility: 'Boosts ATK of [DEX] characters by 5x and HP by 1.3x.',
+      specialText: 'Boosts ATK of [DEX] characters by 2.25x for 1 turn.',
+    },
+  });
+}
+
+function createCaptainCoverageDexSubRecord(id: number): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    type: 'DEX',
+    primaryClass: 'Fighter',
+    detail: {
+      specialText: 'Boosts orb effects of [DEX] characters by 2.25x for 1 turn.',
+    },
+  });
+}
+
+function createCaptainCoveragePsySubRecord(id: number): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    type: 'PSY',
+    primaryClass: 'Fighter',
+    detail: {
+      specialText: 'Reduces Bind duration by 5 turns.',
+    },
+  });
 }
 
 function createBudgetRecords(): CharacterDetailRecord[] {

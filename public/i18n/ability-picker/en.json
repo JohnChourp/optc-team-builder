@@ -25,6 +25,25 @@
     "emptyTitle": "No abilities selected yet",
     "emptyCopy": "Pick one or more {{eyebrow}} effects. Character results must match every selected effect."
   },
+  "leaderBoost": {
+    "title": "Leader boost requirements",
+    "copy": "These settings apply only when Captain or Friend Captain is auto-filled.",
+    "priority": {
+      "label": "Priority",
+      "placeholder": "Select boost priority",
+      "options": {
+        "HP": "HP",
+        "ATK": "ATK"
+      }
+    },
+    "range": {
+      "atkMin": "ATK from",
+      "atkMax": "ATK to",
+      "hpMin": "HP from",
+      "hpMax": "HP to",
+      "invalid": "Leader boost minimum cannot be greater than maximum."
+    }
+  },
   "fields": {
     "characters": "Characters",
     "turns": "Turns",

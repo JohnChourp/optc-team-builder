@@ -332,9 +332,14 @@
       "searchPlaceholder": "Αναζήτηση χαρακτήρων για fixed team",
       "title": "Assign slot {{slot}}"
     },
+    "modal": {
+      "close": "Κλείσιμο manual team picker",
+      "eyebrow": "Fixed slot picker"
+    },
     "actions": {
       "assign": "Assign",
       "assigned": "Assigned",
+      "editSlot": "Edit slot {{slot}}",
       "save": "Αποθήκευση manual team"
     }
   },
@@ -363,12 +368,18 @@
     "searchPlaceholder": {
       "characters": "Search by character name in manual picks"
     },
+    "modal": {
+      "eyebrow": "Manual picker",
+      "title": "Edit manual picks",
+      "copy": "Διάλεξε character OR picks ανά slot ή όρισε manual ship override."
+    },
     "empty": {
       "loadingCandidates": "Γίνεται φόρτωση manual candidates...",
       "noCandidates": "Δεν βρέθηκαν χαρακτήρες για το current manual search."
     },
     "actions": {
       "clearAll": "Καθαρισμός όλων",
+      "editPicks": "Edit picks",
       "addChoice": "Προσθήκη OR",
       "addResult": "Add"
     },
@@ -443,6 +454,11 @@
     "searchPlaceholder": {
       "characters": "Search by character name in exclude picks"
     },
+    "modal": {
+      "eyebrow": "Exclude picker",
+      "title": "Edit excludes",
+      "copy": "Διάλεξε χαρακτήρες ή ships που θα μένουν έξω από το τελικό team."
+    },
     "characterBox": {
       "label": "Exclude character box",
       "placeholder": "Επίλεξε box",
@@ -465,7 +481,8 @@
       "add": "Exclude",
       "addShip": "Exclude",
       "clearCharacters": "Καθαρισμός characters",
-      "clearShips": "Καθαρισμός ships"
+      "clearShips": "Καθαρισμός ships",
+      "editExcludes": "Edit excludes"
     },
     "badges": {
       "ship": "Excluded ship"
@@ -566,6 +583,7 @@
     "groups": {
       "abilityRequirements": "Ability requirements",
       "burst": "Burst",
+      "captainAbilityCoverage": "Captain Ability coverage",
       "classCoverage": "Class coverage",
       "classRequest": "Class request",
       "consistency": "Consistency",
@@ -604,6 +622,12 @@
       "scopePending": "Το leader scope θα υπολογιστεί μετά από επιτυχημένο build.",
       "sourceDual": "Προέκυψε από τους δύο selected leaders",
       "sourceSingle": "Προέκυψε από τον active captain"
+    },
+    "captainAbilityCoverage": {
+      "full": "Το full Captain Ability coverage περνάει.",
+      "missingLeaderSlots": "{{leader}} δεν καλύπτει {{slots}}.",
+      "partial": "{{matched}} / {{total}} Captain Ability slot checks καλύπτονται.",
+      "pending": "Το Captain Ability coverage θα υπολογιστεί μετά από επιτυχημένο build."
     },
     "none": "Κανένα",
     "requiredAbilities": {
@@ -762,6 +786,15 @@
     "configuredRows": "{{count}} επιλεγμένα Captain effects",
     "empty": "Δεν έχουν επιλεγεί Captain Ability effects ακόμη.",
     "pickerCopy": "Τα επιλεγμένα effects ισχύουν για όλο το event, όχι για ένα μόνο battle.",
+    "leaderBoost": {
+      "priorityChip": "Priority: {{priority}}",
+      "rangeChip": {
+        "between": "{{boost}} {{min}}-{{max}}",
+        "from": "{{boost}} από {{min}}",
+        "to": "{{boost}} έως {{max}}",
+        "any": "{{boost}} οποιοδήποτε boost"
+      }
+    },
     "actions": {
       "openPicker": "Άνοιγμα Captain picker",
       "clearRequirements": "Καθαρισμός Captain filters"

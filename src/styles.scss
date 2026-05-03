@@ -91,6 +91,7 @@ img {
 .special-ability-picker-modal::part(backdrop),
 .character-image-picker-modal::part(backdrop),
 .enemy-mechanic-picker-modal::part(backdrop),
+.pick-editor-modal::part(backdrop),
 .ship-picker-modal::part(backdrop),
 .saved-teams-edit-modal::part(backdrop),
 .saved-enemies-editor-modal::part(backdrop) {
@@ -102,6 +103,7 @@ img {
 .special-ability-picker-modal::part(content),
 .character-image-picker-modal::part(content),
 .enemy-mechanic-picker-modal::part(content),
+.pick-editor-modal::part(content),
 .ship-picker-modal::part(content),
 .saved-teams-edit-modal::part(content),
 .saved-enemies-editor-modal::part(content) {
@@ -115,12 +117,21 @@ img {
   box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
 }
 
+.pick-editor-modal::part(content) {
+  width: min(1040px, calc(100vw - 28px));
+  height: min(860px, calc(100vh - 28px));
+  max-width: min(1040px, calc(100vw - 28px));
+  max-height: min(860px, calc(100vh - 28px));
+  border-radius: 24px;
+}
+
 @media (max-width: 679px) {
   .manual-filter-modal::part(content),
   .ability-picker-modal::part(content),
   .special-ability-picker-modal::part(content),
   .character-image-picker-modal::part(content),
   .enemy-mechanic-picker-modal::part(content),
+  .pick-editor-modal::part(content),
   .ship-picker-modal::part(content),
   .saved-teams-edit-modal::part(content),
   .saved-enemies-editor-modal::part(content) {

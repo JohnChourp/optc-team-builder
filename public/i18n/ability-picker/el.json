@@ -25,6 +25,25 @@
     "emptyTitle": "Δεν έχουν επιλεγεί abilities ακόμα",
     "emptyCopy": "Επίλεξε ένα ή περισσότερα effects {{eyebrow}}. Τα αποτελέσματα χαρακτήρων πρέπει να καλύπτουν κάθε επιλεγμένο effect."
   },
+  "leaderBoost": {
+    "title": "Leader boost requirements",
+    "copy": "Αυτές οι ρυθμίσεις ισχύουν μόνο όταν ο Captain ή ο Friend Captain μπαίνει με auto-fill.",
+    "priority": {
+      "label": "Priority",
+      "placeholder": "Επίλεξε boost priority",
+      "options": {
+        "HP": "HP",
+        "ATK": "ATK"
+      }
+    },
+    "range": {
+      "atkMin": "ATK από",
+      "atkMax": "ATK έως",
+      "hpMin": "HP από",
+      "hpMax": "HP έως",
+      "invalid": "Το minimum leader boost δεν μπορεί να είναι μεγαλύτερο από το maximum."
+    }
+  },
   "fields": {
     "characters": "Χαρακτήρες",
     "turns": "Turns",

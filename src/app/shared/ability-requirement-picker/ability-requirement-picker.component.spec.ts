@@ -16,6 +16,8 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonInput: class {},
   IonModal: class {},
   IonSearchbar: class {},
+  IonSelect: class {},
+  IonSelectOption: class {},
   IonToolbar: class {},
 }));
 
@@ -283,6 +285,123 @@ describe('AbilityRequirementPickerComponent', () => {
     ]);
   });
 
+  it('keeps leader boost controls opt-in and does not emit settings by default', () => {
+    const component = new AbilityRequirementPickerComponent();
+    const settingsSpy = vi.spyOn(component.saveLeaderBoostSettings, 'emit');
+
+    component.drafts = [];
+    component.catalogItems = [];
+    component.isOpen = true;
+    component.ngOnChanges({
+      catalogItems: new SimpleChange([], component.catalogItems, true),
+      isOpen: new SimpleChange(false, true, true),
+    });
+
+    component.save();
+
+    expect(component.showLeaderBoostControls).toBe(false);
+    expect(settingsSpy).not.toHaveBeenCalled();
+  });
+
+  it('emits edited leader boost priority and ranges when enabled', () => {
+    const component = new AbilityRequirementPickerComponent();
+    const settingsSpy = vi.spyOn(component.saveLeaderBoostSettings, 'emit');
+
+    component.showLeaderBoostControls = true;
+    component.leaderBoostFilters = ['HP', 'ATK'];
+    component.leaderBoostRanges = {
+      ATK: { min: null, max: null },
+      HP: { min: null, max: null },
+    };
+    component.drafts = [];
+    component.catalogItems = [];
+    component.isOpen = true;
+    component.ngOnChanges({
+      catalogItems: new SimpleChange([], component.catalogItems, true),
+      isOpen: new SimpleChange(false, true, true),
+    });
+
+    component.onLeaderBoostFilterChange({ detail: { value: ['ATK'] } } as CustomEvent<{
+      value: ['ATK'];
+    }>);
+    component.onLeaderBoostRangeChange('ATK', 'min', {
+      detail: { value: '5.25' },
+    } as CustomEvent<{ value: string }>);
+    component.onLeaderBoostRangeChange('ATK', 'max', {
+      detail: { value: '6' },
+    } as CustomEvent<{ value: string }>);
+    component.onLeaderBoostRangeChange('HP', 'min', {
+      detail: { value: '1.3' },
+    } as CustomEvent<{ value: string }>);
+    component.save();
+
+    expect(settingsSpy).toHaveBeenCalledWith({
+      filters: ['ATK'],
+      ranges: {
+        ATK: { min: 5.25, max: 6 },
+        HP: { min: 1.3, max: null },
+      },
+    });
+  });
+
+  it('does not emit leader boost changes when dismissed without saving', () => {
+    const component = new AbilityRequirementPickerComponent();
+    const settingsSpy = vi.spyOn(component.saveLeaderBoostSettings, 'emit');
+    const inputRanges = {
+      ATK: { min: null, max: null },
+      HP: { min: null, max: null },
+    };
+
+    component.showLeaderBoostControls = true;
+    component.leaderBoostFilters = ['HP', 'ATK'];
+    component.leaderBoostRanges = inputRanges;
+    component.drafts = [];
+    component.catalogItems = [];
+    component.isOpen = true;
+    component.ngOnChanges({
+      catalogItems: new SimpleChange([], component.catalogItems, true),
+      isOpen: new SimpleChange(false, true, true),
+    });
+
+    component.onLeaderBoostRangeChange('ATK', 'min', {
+      detail: { value: '5' },
+    } as CustomEvent<{ value: string }>);
+    component.cancel();
+
+    expect(settingsSpy).not.toHaveBeenCalled();
+    expect(inputRanges).toEqual({
+      ATK: { min: null, max: null },
+      HP: { min: null, max: null },
+    });
+  });
+
+  it('blocks saving when leader boost range bounds are invalid', () => {
+    const component = new AbilityRequirementPickerComponent();
+    const settingsSpy = vi.spyOn(component.saveLeaderBoostSettings, 'emit');
+    const draftsSpy = vi.spyOn(component.saveDrafts, 'emit');
+
+    component.showLeaderBoostControls = true;
+    component.drafts = [];
+    component.catalogItems = [];
+    component.isOpen = true;
+    component.ngOnChanges({
+      catalogItems: new SimpleChange([], component.catalogItems, true),
+      isOpen: new SimpleChange(false, true, true),
+    });
+
+    component.onLeaderBoostRangeChange('HP', 'min', {
+      detail: { value: '1.5' },
+    } as CustomEvent<{ value: string }>);
+    component.onLeaderBoostRangeChange('HP', 'max', {
+      detail: { value: '1.3' },
+    } as CustomEvent<{ value: string }>);
+    component.save();
+
+    expect(component.hasInvalidLeaderBoostRanges()).toBe(true);
+    expect(settingsSpy).not.toHaveBeenCalled();
+    expect(draftsSpy).not.toHaveBeenCalled();
+  });
+
   it('renders badge and conditional field blocks in the template', () => {
     const template = readFileSync(
       resolve(
@@ -299,5 +418,9 @@ describe('AbilityRequirementPickerComponent', () => {
     expect(template).toContain('ability-picker-segmented');
     expect(template).toContain("setSlotScope(row.draft.draftId, 'leader')");
     expect(template).toContain('@if (row.supportsSlotTokens && row.availableSlotTokens.length)');
+    expect(template).toContain('@if (showLeaderBoostControls)');
+    expect(template).toContain("t('leaderBoost.range.atkMin')");
+    expect(template).toContain("onLeaderBoostRangeChange('HP', 'max', $event)");
+    expect(template).toContain('[disabled]="hasInvalidLeaderBoostRanges()"');
   });
 });

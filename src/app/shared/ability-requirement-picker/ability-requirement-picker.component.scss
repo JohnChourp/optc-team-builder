@@ -358,6 +358,55 @@
   --color: #f8fbff;
 }
 
+.ability-picker-field ion-select {
+  --background: rgba(255, 255, 255, 0.05);
+  --border-radius: 16px;
+  --color: #f8fbff;
+  width: 100%;
+  min-width: 0;
+}
+
+.ability-picker-leader-boost {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(245, 200, 76, 0.2);
+  background: rgba(245, 200, 76, 0.06);
+}
+
+.ability-picker-leader-boost__head {
+  display: grid;
+  gap: 4px;
+}
+
+.ability-picker-leader-boost__head strong {
+  color: #ffffff;
+  font-size: 0.92rem;
+}
+
+.ability-picker-leader-boost__head small {
+  color: rgba(248, 251, 255, 0.64);
+  line-height: 1.45;
+}
+
+.ability-picker-leader-boost__ranges {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ability-picker-leader-boost__ranges ion-input {
+  --background: rgba(255, 255, 255, 0.05);
+  --border-radius: 16px;
+  --color: #f8fbff;
+}
+
+.ability-picker-leader-boost__error {
+  color: #ffb4a8;
+  line-height: 1.4;
+}
+
 .ability-picker-segmented {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -458,7 +507,8 @@
   }
 
   .ability-picker-row__head,
-  .ability-picker-row__fields {
+  .ability-picker-row__fields,
+  .ability-picker-leader-boost__ranges {
     grid-template-columns: minmax(0, 1fr);
     flex-direction: column;
     align-items: stretch;

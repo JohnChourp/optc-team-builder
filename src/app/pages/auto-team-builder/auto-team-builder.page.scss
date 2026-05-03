@@ -55,7 +55,7 @@
 .summary-grid,
 .result-grid {
   display: grid;
-  gap: 14px;
+  gap: 10px;
 }
 
 .captain-condition-panel {
@@ -84,17 +84,23 @@
 
 .secondary-toggle-grid {
   display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.favorite-scope-grid {
+  display: grid;
   gap: 10px;
-  margin-top: 12px;
+  min-width: 0;
 }
 
 .fixed-type-card,
 .class-select-card,
 .summary-card {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
-  padding: 16px;
+  padding: 12px;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.04);
 }
@@ -120,10 +126,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 10px;
   min-width: 0;
-  padding: 12px 14px;
-  border-radius: 18px;
+  padding: 10px 12px;
+  border-radius: 16px;
   background: rgba(255, 255, 255, 0.05);
 }
 
@@ -145,20 +151,21 @@
 .strict-toggle-copy {
   display: grid;
   flex: 1;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
 
 .strict-toggle-copy strong {
   color: #ffffff;
-  font-size: 0.92rem;
-  line-height: 1.4;
+  font-size: 0.88rem;
+  line-height: 1.3;
   overflow-wrap: anywhere;
 }
 
 .strict-toggle-copy small {
   color: rgba(248, 251, 255, 0.62);
-  line-height: 1.45;
+  font-size: 0.78rem;
+  line-height: 1.35;
   overflow-wrap: anywhere;
 }
 
@@ -175,9 +182,13 @@
   gap: 10px;
 }
 
+.cost-range-grid > ion-input:only-child {
+  grid-column: 1 / -1;
+}
+
 .cost-scope-grid {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .cost-scope-copy {
@@ -270,6 +281,7 @@
 .manual-locks-layout {
   display: grid;
   gap: 14px;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .manual-locks-overview,
@@ -350,13 +362,15 @@
 
 .manual-slot-grid {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 8px;
 }
 
 .manual-slot-card {
   display: grid;
   gap: 8px;
-  padding: 10px;
+  min-width: 0;
+  padding: 9px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.03);
@@ -906,22 +920,19 @@
   max-height: 472px;
 }
 
-.manual-candidate-viewport {
-  width: 100%;
-  overflow: auto;
-  border-radius: 18px;
+.manual-candidate-list--characters {
+  grid-template-columns: minmax(0, 1fr);
+  max-height: min(58vh, 520px);
+  padding-right: 2px;
+  overflow-y: auto;
 }
 
-.manual-candidate-viewport--manual {
-  height: 440px;
+.manual-candidate-list--manual-characters {
+  max-height: min(58vh, 440px);
 }
 
-.manual-candidate-viewport--exclude {
-  height: 472px;
-}
-
-.manual-candidate-viewport .cdk-virtual-scroll-content-wrapper {
-  width: 100%;
+.manual-candidate-list--exclude-characters {
+  max-height: min(58vh, 472px);
 }
 
 .manual-candidate-card {
@@ -946,16 +957,6 @@
   border-radius: 16px;
   align-items: start;
   min-height: 132px;
-}
-
-.manual-candidate-viewport--manual .manual-candidate-card--sidebar {
-  height: 176px;
-  min-height: 176px;
-}
-
-.manual-candidate-viewport--exclude .manual-candidate-card--sidebar {
-  height: 224px;
-  min-height: 224px;
 }
 
 .manual-candidate-card--selected {
@@ -1176,7 +1177,53 @@
 }
 
 .manual-candidate-empty-state--compact {
-  padding: 14px;
+  padding: 10px 12px;
+  font-size: 0.82rem;
+}
+
+.pick-editor-modal__header ion-toolbar {
+  --background: linear-gradient(180deg, rgba(18, 25, 46, 1), rgba(14, 20, 37, 1));
+  --border-width: 0;
+  --min-height: auto;
+  --padding-start: 20px;
+  --padding-end: 10px;
+  --padding-top: 18px;
+  --padding-bottom: 0;
+}
+
+.pick-editor-modal__head {
+  min-width: 0;
+  padding-inline-end: 52px;
+}
+
+.pick-editor-modal__head h2 {
+  margin: 8px 0 6px;
+  color: #ffffff;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  line-height: 1.1;
+}
+
+.pick-editor-modal__head p {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.68);
+  line-height: 1.45;
+}
+
+.pick-editor-modal__content {
+  --background: linear-gradient(180deg, rgba(14, 20, 37, 1), rgba(10, 14, 27, 1));
+}
+
+.pick-editor-modal__shell {
+  display: grid;
+  min-height: 100%;
+  padding: 14px 20px 20px;
+}
+
+.pick-editor-modal__panel {
+  align-self: stretch;
+  max-height: none;
+  overflow: hidden;
 }
 
 .manual-candidate-loading-more {
@@ -1400,6 +1447,16 @@
 .reason-chip {
   background: rgba(255, 255, 255, 0.08);
   color: #f3f7ff;
+}
+
+.result-character-tag-row {
+  margin-top: -2px;
+}
+
+.character-tag-chip {
+  background: rgba(255, 255, 255, 0.055);
+  color: rgba(248, 251, 255, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .result-ability-chip-row {
@@ -1840,7 +1897,7 @@
 
 .fixed-manual-team-slot {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-columns: 48px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   min-width: 0;
@@ -1853,6 +1910,15 @@
   cursor: pointer;
   font: inherit;
   text-align: left;
+}
+
+.fixed-manual-team-slot:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
+}
+
+.fixed-manual-team-slot--empty {
+  cursor: default;
 }
 
 .fixed-manual-team-slot--active {
@@ -1884,6 +1950,15 @@
   color: rgba(248, 251, 255, 0.68);
 }
 
+.fixed-manual-team-slot__edit {
+  align-self: start;
+  justify-self: end;
+  min-height: 34px;
+  margin: -4px -4px 0 0;
+  --padding-start: 8px;
+  --padding-end: 8px;
+}
+
 .fixed-manual-team-slot__clear {
   grid-column: 1 / -1;
   justify-self: start;
@@ -1891,7 +1966,7 @@
 }
 
 .fixed-manual-team-candidates {
-  max-height: 420px;
+  max-height: min(58vh, 520px);
   overflow-y: auto;
   padding-right: 2px;
 }
@@ -2017,10 +2092,8 @@ ion-toggle {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .manual-locks-layout {
-    grid-template-columns: minmax(240px, 0.72fr) minmax(0, 1.28fr);
-    column-gap: 16px;
-    align-items: start;
+  .manual-slot-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .fixed-manual-team-fields {
@@ -2042,8 +2115,38 @@ ion-toggle {
     padding-right: 4px;
   }
 
+  .manual-candidate-list--characters {
+    grid-template-columns: minmax(0, 1fr);
+    max-height: min(72vh, 760px);
+  }
+
   .secondary-toggle-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .favorite-scope-grid {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .strict-toggle-row--cost {
+    grid-column: 1 / -1;
+  }
+
+  .strict-toggle-row--cost .cost-scope-grid {
+    grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1.1fr);
+    align-items: start;
+    column-gap: 14px;
+    row-gap: 12px;
+  }
+
+  .strict-toggle-row--cost .cost-scope-copy {
+    padding-top: 0;
+  }
+
+  .strict-toggle-row--cost .cost-range-error {
+    grid-column: 2;
+    margin-top: -6px;
   }
 
   .summary-grid {
@@ -2117,6 +2220,24 @@ ion-toggle {
   .manual-locks-actions,
   .manual-copy-modal__actions {
     justify-content: stretch;
+  }
+
+  .pick-editor-modal__header ion-toolbar {
+    --padding-start: 16px;
+    --padding-end: 8px;
+    --padding-top: 14px;
+  }
+
+  .pick-editor-modal__shell {
+    padding: 12px 14px 16px;
+  }
+
+  .pick-editor-modal__panel {
+    padding: 10px;
+  }
+
+  .manual-candidate-list--sidebar {
+    max-height: 58vh;
   }
 
   .ability-requirements-actions {

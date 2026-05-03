@@ -332,9 +332,14 @@
       "searchPlaceholder": "Search characters for the fixed team",
       "title": "Assign slot {{slot}}"
     },
+    "modal": {
+      "close": "Close manual team picker",
+      "eyebrow": "Fixed slot picker"
+    },
     "actions": {
       "assign": "Assign",
       "assigned": "Assigned",
+      "editSlot": "Edit slot {{slot}}",
       "save": "Save manual team"
     }
   },
@@ -363,12 +368,18 @@
     "searchPlaceholder": {
       "characters": "Search by character name in manual picks"
     },
+    "modal": {
+      "eyebrow": "Manual picker",
+      "title": "Edit manual picks",
+      "copy": "Choose character OR picks per slot or set the manual ship override."
+    },
     "empty": {
       "loadingCandidates": "Loading manual candidates...",
       "noCandidates": "No characters matched the current manual search."
     },
     "actions": {
       "clearAll": "Clear all",
+      "editPicks": "Edit picks",
       "addChoice": "Add OR",
       "addResult": "Add"
     },
@@ -443,6 +454,11 @@
     "searchPlaceholder": {
       "characters": "Search by character name in exclude picks"
     },
+    "modal": {
+      "eyebrow": "Exclude picker",
+      "title": "Edit excludes",
+      "copy": "Choose characters or ships to keep out of the final team."
+    },
     "characterBox": {
       "label": "Exclude character box",
       "placeholder": "Choose a box",
@@ -465,7 +481,8 @@
       "add": "Exclude",
       "addShip": "Exclude",
       "clearCharacters": "Clear characters",
-      "clearShips": "Clear ships"
+      "clearShips": "Clear ships",
+      "editExcludes": "Edit excludes"
     },
     "badges": {
       "ship": "Excluded ship"
@@ -566,6 +583,7 @@
     "groups": {
       "abilityRequirements": "Ability requirements",
       "burst": "Burst",
+      "captainAbilityCoverage": "Captain Ability coverage",
       "classCoverage": "Class coverage",
       "classRequest": "Class request",
       "consistency": "Consistency",
@@ -604,6 +622,12 @@
       "scopePending": "Leader scope will be calculated after a successful build.",
       "sourceDual": "Derived from both selected leaders",
       "sourceSingle": "Derived from the active captain"
+    },
+    "captainAbilityCoverage": {
+      "full": "Full Captain Ability coverage passed.",
+      "missingLeaderSlots": "{{leader}} misses {{slots}}.",
+      "partial": "{{matched}} / {{total}} Captain Ability slot checks covered.",
+      "pending": "Captain Ability coverage will be calculated after a successful build."
     },
     "none": "None",
     "requiredAbilities": {
@@ -762,6 +786,15 @@
     "configuredRows": "{{count}} selected Captain effects",
     "empty": "No Captain Ability effects selected yet.",
     "pickerCopy": "Selected effects apply to the whole event, not to a single battle.",
+    "leaderBoost": {
+      "priorityChip": "Priority: {{priority}}",
+      "rangeChip": {
+        "between": "{{boost}} {{min}}-{{max}}",
+        "from": "{{boost}} from {{min}}",
+        "to": "{{boost}} to {{max}}",
+        "any": "{{boost}} any boost"
+      }
+    },
     "actions": {
       "openPicker": "Open Captain picker",
       "clearRequirements": "Clear Captain filters"

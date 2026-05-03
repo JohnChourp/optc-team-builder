@@ -4136,7 +4136,7 @@ describe('Auto team builder', () => {
     );
   });
 
-  it('prunes favorite-only search progress to the selected captain coverage pool', async () => {
+  it('keeps scoped auto-fill inside selected captain coverage while retaining the raw pool for fallback', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createCaptainCoveragePruneRecords()),
     };
@@ -4158,10 +4158,34 @@ describe('Auto team builder', () => {
       },
     );
 
-    expect(result?.candidateCount).toBe(5);
+    expect(result?.candidateCount).toBe(6);
     expect(result?.slots.some((slot) => slot.character.id === 8305)).toBe(false);
-    expect(progressSnapshots.some((snapshot) => snapshot.candidateCount === 5)).toBe(true);
-    expect(progressSnapshots.every((snapshot) => snapshot.candidateCount !== 6)).toBe(true);
+    expect(progressSnapshots.some((snapshot) => snapshot.candidateCount === 6)).toBe(true);
+  });
+
+  it('builds a relaxed partial captain coverage fallback from candidates outside the strict pool', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createPartialCaptainCoverageFallbackRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX', 'PSY'], {
+      requireFullCaptainAbilityCoverage: true,
+      manualSlots: createManualSlots({
+        captain: [8300],
+        friendCaptain: [8300],
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.input.allowPartialCaptainAbilityCoverage).toBe(true);
+    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBe(true);
+    expect(result?.slots.some((slot) => slot.character.id === 8305)).toBe(true);
+    expect(result?.coverage.leaderCriteria.matchingSlots).toBeLessThan(
+      result?.coverage.leaderCriteria.totalSlots ?? 0,
+    );
   });
 
   it('excludes candidates outside the selected captain standard boost scope in simple mode', () => {
@@ -7775,6 +7799,10 @@ function createCaptainCoveragePruneRecords(): CharacterDetailRecord[] {
       },
     }),
   ];
+}
+
+function createPartialCaptainCoverageFallbackRecords(): CharacterDetailRecord[] {
+  return createCaptainCoveragePruneRecords().filter((record) => record.id !== 8304);
 }
 
 function createCaptainRecord(): CharacterDetailRecord {

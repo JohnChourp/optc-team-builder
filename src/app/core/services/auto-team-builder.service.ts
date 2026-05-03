@@ -422,7 +422,7 @@ export class AutoTeamBuilderService {
     };
 
     const legacyAutoFillCharacterIds = this.resolveAutoFillCharacterIds(
-      captainCoveredRecords,
+      records,
       allowedCharacterIds,
       requestedInput.costRange,
     );
@@ -435,10 +435,10 @@ export class AutoTeamBuilderService {
         : Promise.resolve([]);
     const [result, ships] = await Promise.all([
       this.executeSearch(
-        captainCoveredRecords,
+        records,
         requestedInput,
         executionOptions,
-        captainCoveredFriendCaptainRecords,
+        friendCaptainRecords,
         scopedAutoFillCharacterIds,
         legacyAutoFillCharacterIds,
       ),
@@ -1414,6 +1414,15 @@ export class AutoTeamBuilderService {
           resolveOnce(null, fallbackPlanner.getTotalAttempts());
         }
       };
+      const haveAllEarlierAttemptsCompleted = (sequence: number): boolean => {
+        for (let index = 0; index < sequence; index += 1) {
+          if (!completedAttempts.has(index)) {
+            return false;
+          }
+        }
+
+        return true;
+      };
       const dispatchAvailableAttempts = (): void => {
         if (settled) {
           return;
@@ -1509,7 +1518,12 @@ export class AutoTeamBuilderService {
               const attemptSatisfiesRequestedCoverage =
                 satisfiesRequestedAutoTeamBuildCoverage(result);
 
-              if (exactAttemptCompleted && attemptSatisfiesRequestedCoverage) {
+              if (
+                exactAttemptCompleted &&
+                attemptSatisfiesRequestedCoverage &&
+                (!result?.relaxation.ignoredCaptainAbilityCoverage ||
+                  haveAllEarlierAttemptsCompleted(nextAttempt.sequence))
+              ) {
                 resolveOnce(result, 1 + timingState.completedFallbackAttempts);
                 return;
               }
