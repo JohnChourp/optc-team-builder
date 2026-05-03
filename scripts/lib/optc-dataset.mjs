@@ -299,6 +299,7 @@ export function createSqlSeed(characters, ships, manifest) {
         secondary_class TEXT,
         classes_json TEXT NOT NULL,
         stars INTEGER NOT NULL,
+        stars_label TEXT NOT NULL,
         cost INTEGER NOT NULL,
         combo INTEGER NOT NULL,
         min_hp INTEGER,
@@ -357,7 +358,7 @@ export function createSqlSeed(characters, ships, manifest) {
 
     statements.push(`
       INSERT INTO characters (
-        id, name, is_incomplete, type, primary_class, secondary_class, classes_json, stars, cost, combo,
+        id, name, is_incomplete, type, primary_class, secondary_class, classes_json, stars, stars_label, cost, combo,
         min_hp, min_atk, min_rcv, max_hp, max_atk, max_rcv, growth,
         captain_hp_boost, captain_atk_boost, captain_average_boost, region_json,
         assets_json, search_text
@@ -370,6 +371,7 @@ export function createSqlSeed(characters, ships, manifest) {
         ${sqlValue(character.secondaryClass)},
         ${sqlValue(JSON.stringify(character.classes))},
         ${sqlValue(character.stars)},
+        ${sqlValue(character.starsLabel ?? String(character.stars))},
         ${sqlValue(character.cost)},
         ${sqlValue(character.combo)},
         ${sqlValue(character.minHp)},
@@ -444,6 +446,7 @@ export function createUnresolvedCatalog(characters, packStatuses, sourceVersion,
       id: character.id,
       name: character.name,
       stars: character.stars,
+      starsLabel: character.starsLabel ?? String(character.stars),
       type: character.type,
       classes: character.classes,
       primaryClass: character.primaryClass,

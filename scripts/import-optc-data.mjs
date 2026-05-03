@@ -895,6 +895,18 @@ function toFiniteNumber(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function normalizeStars(value) {
+  const text = String(value ?? '').trim();
+  const match = text.match(/\d+/);
+  const numericValue = match ? Number(match[0]) : Number(value);
+  const stars = Number.isFinite(numericValue) ? numericValue : 0;
+
+  return {
+    stars,
+    starsLabel: text.length ? text : String(stars),
+  };
+}
+
 function parseUnitMapId(value) {
   const match = String(value ?? '')
     .trim()
@@ -937,6 +949,7 @@ function normalizeUnitMapEntry(
   const classes = normalizeCharacterClasses(unitEntry.class ?? []);
   const explicitType = String(unitEntry.type ?? '').trim();
   const variantType = (variantTypesByCharacterId.get(characterId) ?? []).join(',');
+  const normalizedStars = normalizeStars(unitEntry.stars);
 
   return {
     characterId,
@@ -944,7 +957,8 @@ function normalizeUnitMapEntry(
     classes,
     type: explicitType || variantType,
     name: String(unitEntry.name ?? '').trim(),
-    stars: toFiniteNumber(unitEntry.stars),
+    stars: normalizedStars.stars,
+    starsLabel: normalizedStars.starsLabel,
     cost: toFiniteNumber(unitEntry.cost),
     combo: toFiniteNumber(unitEntry.combo),
     maxSockets: toFiniteNumber(unitEntry.sockets),
@@ -977,6 +991,7 @@ function buildNormalizedUnitEntries(units) {
 
       const characterId = index + 1;
       const classes = normalizeCharacterClasses(entry[2]);
+      const normalizedStars = normalizeStars(entry[3]);
 
       return [
         {
@@ -985,7 +1000,8 @@ function buildNormalizedUnitEntries(units) {
           classes,
           type: entry[1],
           name: entry[0],
-          stars: toFiniteNumber(entry[3]),
+          stars: normalizedStars.stars,
+          starsLabel: normalizedStars.starsLabel,
           cost: toFiniteNumber(entry[4]),
           combo: toFiniteNumber(entry[5]),
           maxSockets: toFiniteNumber(entry[6]),
@@ -1078,14 +1094,42 @@ function normalizeSupportData(rawSupportData) {
       )
         .map((description) => String(description ?? '').trim())
         .filter((description) => description.length > 0);
+      const maxLevelDescription = levelDescriptions.at(-1);
 
-      if (!supportedCharactersText.length && levelDescriptions.length === 0) {
+      if (!supportedCharactersText.length && !maxLevelDescription) {
         return null;
       }
 
       return {
         supportedCharactersText,
-        levelDescriptions,
+        levelDescriptions: maxLevelDescription ? [maxLevelDescription] : [],
+      };
+    })
+    .filter((entry) => Boolean(entry));
+}
+
+function normalizePotentialAbilities(rawPotentialAbilities) {
+  return (Array.isArray(rawPotentialAbilities) ? rawPotentialAbilities : [])
+    .map((entry, index) => {
+      const name = String(entry?.Name ?? entry?.name ?? '').trim();
+      const descriptions = (
+        Array.isArray(entry?.description)
+          ? entry.description
+          : Array.isArray(entry?.descriptions)
+            ? entry.descriptions
+            : []
+      )
+        .map((description) => String(description ?? '').trim())
+        .filter((description) => description.length > 0);
+      const maxDescription = descriptions.at(-1);
+
+      if (!name.length && !maxDescription) {
+        return null;
+      }
+
+      return {
+        ...(name.length ? { Name: name } : { Name: `Potential ${index + 1}` }),
+        description: maxDescription ? [maxDescription] : [],
       };
     })
     .filter((entry) => Boolean(entry));
@@ -1266,7 +1310,7 @@ export function normalizeCharacterDetail(
     sailorAbilities: normalizedSailorAbilities,
     sailorNotes: normalizedSailorNotes,
     limitBreak: detail.limit ?? [],
-    potentialAbilities: detail.potential ?? [],
+    potentialAbilities: normalizePotentialAbilities(detail.potential),
     supportData: normalizeSupportData(detail.support),
     swapData: detail.swap ?? null,
     vsSpecial: detail.vsSpecial ?? null,
@@ -1297,6 +1341,7 @@ export function normalizeCharacters(units, details, rumbleUnits, assetsById, tag
       type,
       name,
       stars,
+      starsLabel,
       cost,
       combo,
       maxSockets,
@@ -1326,6 +1371,7 @@ export function normalizeCharacters(units, details, rumbleUnits, assetsById, tag
         secondaryClass: classes[1] ?? null,
         classes,
         stars,
+        starsLabel,
         cost,
         combo,
         maxSockets,

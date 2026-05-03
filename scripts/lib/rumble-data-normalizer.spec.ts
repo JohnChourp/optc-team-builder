@@ -29,7 +29,8 @@ describe('rumble-data-normalizer', () => {
       ],
     });
 
-    expect(normalized.ability[1].effects[0]).toEqual({
+    expect(normalized.ability).toHaveLength(1);
+    expect(normalized.ability[0].effects[0]).toEqual({
       attributes: ['SPD'],
       effect: 'buff',
       level: 2,
@@ -72,7 +73,8 @@ describe('rumble-data-normalizer', () => {
       ],
     });
 
-    expect(normalized.special[1].effects).toEqual([
+    expect(normalized.special).toHaveLength(1);
+    expect(normalized.special[0].effects).toEqual([
       {
         amount: 5,
         effect: 'damage',
@@ -136,12 +138,14 @@ describe('rumble-data-normalizer', () => {
       ],
     });
 
-    expect(normalized.gpability[1].effects[0]).toMatchObject({
+    expect(normalized.gpability).toHaveLength(1);
+    expect(normalized.gpspecial).toHaveLength(1);
+    expect(normalized.gpability[0].effects[0]).toMatchObject({
       attributes: ['HP'],
       effect: 'buff',
       level: 3,
     });
-    expect(normalized.gpspecial[1].effects[0]).toMatchObject({
+    expect(normalized.gpspecial[0].effects[0]).toMatchObject({
       attributes: ['ATK', 'DEF'],
       duration: 27,
       effect: 'debuff',
@@ -196,12 +200,14 @@ describe('rumble-data-normalizer', () => {
       ],
     });
 
-    expect(normalized.llbability[1].effects[0]).toEqual({
+    expect(normalized.llbability).toHaveLength(1);
+    expect(normalized.llbspecial).toHaveLength(1);
+    expect(normalized.llbability[0].effects[0]).toEqual({
       attributes: ['ATK'],
       effect: 'buff',
       level: 16,
     });
-    expect(normalized.llbspecial[1].effects[0]).toEqual({
+    expect(normalized.llbspecial[0].effects[0]).toEqual({
       amount: 3700,
       effect: 'damage',
       type: 'fixed',
@@ -224,5 +230,6 @@ describe('rumble-data-normalizer', () => {
     ]);
 
     expect(JSON.stringify(normalized)).not.toContain('override');
+    expect(normalized[0].ability).toHaveLength(1);
   });
 });

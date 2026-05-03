@@ -16,7 +16,7 @@ export function normalizeRumbleData(rawRumbleData) {
 
   for (const key of leveledRumbleSectionKeys) {
     if (Array.isArray(normalized[key])) {
-      normalized[key] = materializeLeveledSection(normalized[key]);
+      normalized[key] = selectMaxLeveledEntry(materializeLeveledSection(normalized[key]));
     }
   }
 
@@ -31,6 +31,26 @@ export function normalizeRumbleUnits(rawRumbleUnits) {
   return rawRumbleUnits
     .map((entry) => normalizeRumbleData(entry))
     .filter((entry) => isRecord(entry));
+}
+
+function selectMaxLeveledEntry(levels) {
+  const maxLevel = [...levels]
+    .reverse()
+    .find((level) => isMeaningfulLeveledEntry(level));
+
+  return maxLevel ? [cloneValue(maxLevel)] : [];
+}
+
+function isMeaningfulLeveledEntry(level) {
+  if (!isRecord(level)) {
+    return level !== null && level !== undefined && String(level).trim().length > 0;
+  }
+
+  if (Array.isArray(level.effects)) {
+    return level.effects.some((effect) => isRecord(effect) && Object.keys(effect).length > 0);
+  }
+
+  return Object.keys(level).length > 0;
 }
 
 function materializeLeveledSection(levels) {

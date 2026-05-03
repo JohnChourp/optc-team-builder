@@ -91,6 +91,7 @@ export interface CharacterRecord {
   primaryClass: string;
   secondaryClass: string | null;
   stars: number;
+  starsLabel?: string;
   cost: number;
   combo: number;
   captainHpBoost: number;

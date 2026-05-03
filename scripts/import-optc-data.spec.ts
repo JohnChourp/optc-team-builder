@@ -228,7 +228,8 @@ describe('import-optc-data ship thumbnail pack', () => {
       new Map(),
     );
 
-    expect(character.detail.rumbleData?.ability[1].effects[0]).toEqual({
+    expect(character.detail.rumbleData?.ability).toHaveLength(1);
+    expect(character.detail.rumbleData?.ability[0].effects[0]).toEqual({
       attributes: ['ATK'],
       effect: 'buff',
       level: 2,
@@ -491,7 +492,7 @@ describe('import-optc-data ship thumbnail pack', () => {
     expect(detail.supportData).toEqual([
       {
         supportedCharactersText: 'Roronoa Zoro, Nami and Usopp',
-        levelDescriptions: ['Level 1 effect.', 'Level 2 effect.'],
+        levelDescriptions: ['Level 2 effect.'],
       },
     ]);
     expect(detail.superSpecialText).toContain('transforms Free Spirit characters');
@@ -539,8 +540,51 @@ describe('import-optc-data ship thumbnail pack', () => {
       'Worst Generation',
       'Egghead Arc',
     ]);
+    expect(characters[0]).toMatchObject({
+      stars: 6,
+      starsLabel: '6+',
+    });
     expect(characters[0]?.searchText).toContain('kid pirates');
     expect(characters[0]?.searchText).toContain('worst generation');
+  });
+
+  it('keeps only max potential and support levels in normalized character details', () => {
+    const detail = normalizeCharacterDetail(
+      {
+        potential: [
+          {
+            Name: 'Barrier Penetration',
+            description: [
+              'This character ignores barriers above 99% HP.',
+              'This character ignores barriers.',
+            ],
+          },
+        ],
+        support: [
+          {
+            Characters: '[STR] Powerhouse characters',
+            description: [
+              'Boosts Color Affinity by 1.1x.',
+              'Boosts Color Affinity by 1.5x.',
+            ],
+          },
+        ],
+      },
+      4306,
+    );
+
+    expect(detail.potentialAbilities).toEqual([
+      {
+        Name: 'Barrier Penetration',
+        description: ['This character ignores barriers.'],
+      },
+    ]);
+    expect(detail.supportData).toEqual([
+      {
+        supportedCharactersText: '[STR] Powerhouse characters',
+        levelDescriptions: ['Boosts Color Affinity by 1.5x.'],
+      },
+    ]);
   });
 
   it('normalizes character tags from mixed upstream values', () => {

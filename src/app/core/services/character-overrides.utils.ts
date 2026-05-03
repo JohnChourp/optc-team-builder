@@ -435,6 +435,7 @@ export function applyOverrideToCharacterListItem(
     primaryClass: primaryClass ?? character.primaryClass,
     secondaryClass: secondaryClass ?? null,
     stars: override.stars,
+    starsLabel: String(override.stars),
     cost: override.cost,
     combo: override.combo,
     ...resolveCaptainBoosts(override.detail),

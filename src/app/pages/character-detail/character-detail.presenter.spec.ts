@@ -80,7 +80,7 @@ describe('character-detail presenter', () => {
     expect(rumbleCard?.entries).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          title: 'Passive Lv 1',
+          title: 'Passive',
           lists: expect.arrayContaining([
             expect.objectContaining({
               labelKey: 'fields.effects',
@@ -89,7 +89,7 @@ describe('character-detail presenter', () => {
           ]),
         }),
         expect.objectContaining({
-          title: 'Special Lv 1',
+          title: 'Special',
           rows: expect.arrayContaining([
             expect.objectContaining({ labelKey: 'fields.cooldown', value: '23' }),
           ]),
@@ -200,23 +200,88 @@ describe('character-detail presenter', () => {
         type: 'STR,DEX',
       }),
     );
-    const profileCard = viewModel.groups
-      .flatMap((group) => group.cards)
-      .find((card) => card.titleKey === 'sections.profile');
-
     expect(viewModel.heroMeta).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ labelKey: 'fields.type', value: 'STR / DEX' }),
       ]),
     );
-    expect(profileCard?.rows).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ labelKey: 'fields.type', value: 'STR / DEX' }),
-      ]),
+    expect(viewModel.groups.map((group) => group.titleKey)).not.toContain('sections.overview');
+  });
+
+  it('uses starsLabel for hero rarity when present', () => {
+    const viewModel = buildCharacterDetailViewModel(
+      createCharacterDetailRecord({
+        stars: 6,
+        starsLabel: '6+',
+      }),
+    );
+
+    expect(viewModel.heroMeta).toEqual(
+      expect.arrayContaining([expect.objectContaining({ labelKey: 'fields.stars', value: '6+' })]),
     );
   });
 
-  it('builds support, synergy, and battle mode groups from the character detail record', () => {
+  it('shows support targets and only the max support effect', () => {
+    const viewModel = buildCharacterDetailViewModel(
+      createCharacterDetailRecord({
+        detail: {
+          supportData: [
+            {
+              supportedCharactersText: '[STR] Powerhouse characters',
+              levelDescriptions: ['Boosts Color Affinity by 1.5x.'],
+            },
+          ],
+        },
+      }),
+    );
+    const supportCard = viewModel.groups
+      .flatMap((group) => group.cards)
+      .find((card) => card.titleKey === 'sections.supportData');
+
+    expect(supportCard?.entries).toEqual([
+      expect.objectContaining({
+        rows: [
+          expect.objectContaining({
+            labelKey: 'support.supportedCharactersLabel',
+            value: '[STR] Powerhouse characters',
+          }),
+        ],
+        lists: [
+          expect.objectContaining({
+            labelKey: 'support.maxLevelEffect',
+            items: ['Boosts Color Affinity by 1.5x.'],
+          }),
+        ],
+      }),
+    ]);
+  });
+
+  it('renders max-only Rumble sections with user-facing titles', () => {
+    const rumbleCard = buildRumbleCardModel({
+      id: 4306,
+      ability: [{ effects: [{ attributes: ['ATK'], effect: 'buff', level: 5 }] }],
+      special: [{ cooldown: 28, effects: [{ amount: 2.5, effect: 'damage', type: 'atk' }] }],
+      llbability: [{ effects: [{ attributes: ['ATK'], effect: 'buff', level: 6 }] }],
+      llbspecial: [{ cooldown: 28, effects: [{ amount: 2.75, effect: 'damage', type: 'atk' }] }],
+      gpability: [{ effects: [{ attributes: ['HP', 'SPD'], effect: 'buff', level: 3 }] }],
+      gpspecial: [{ uses: 2, effects: [{ amount: 1000, effect: 'damage', type: 'fixed' }] }],
+      resilience: [{ attribute: 'Special Bind', chance: 100, type: 'debuff' }],
+      llbresilience: [{ attribute: '[DEX]', percentage: 40, type: 'damage' }],
+    });
+
+    expect(rumbleCard?.entries.map((entry) => entry.title)).toEqual([
+      'Passive',
+      'Special',
+      'LLB Passive',
+      'LLB Special',
+      'GP Passive',
+      'GP Special',
+      'Resilience',
+      'LLB Resilience',
+    ]);
+  });
+
+  it('builds support and battle mode groups from the character detail record', () => {
     const viewModel = buildCharacterDetailViewModel(
       {
         id: 501,
@@ -346,13 +411,12 @@ describe('character-detail presenter', () => {
       expect.arrayContaining([
         'sections.abilities',
         'sections.enhancements',
-        'sections.supportSynergy',
+        'sections.supportData',
         'sections.battleModes',
       ]),
     );
     expect(viewModel.groups.flatMap((group) => group.cards.map((card) => card.titleKey))).toEqual(
       expect.arrayContaining([
-        'sections.teamSynergy',
         'sections.supportData',
         'sections.rumbleData',
         'sections.exSuperData',
@@ -367,6 +431,9 @@ describe('character-detail presenter', () => {
     expect(
       viewModel.groups.flatMap((group) => group.cards.map((card) => card.titleKey)),
     ).not.toContain('sections.characterTags');
+    expect(
+      viewModel.groups.flatMap((group) => group.cards.map((card) => card.titleKey)),
+    ).not.toContain('sections.teamSynergy');
     expect(viewModel.captainAbilitySummary?.characterTags).toEqual(['Straw Hat Pirates', 'Giant']);
   });
 

@@ -168,6 +168,7 @@ async function loadCurrentDataset(seedPath, manifestPath) {
     'characters',
     'captain_average_boost',
   );
+  const hasStarsLabelColumn = tableHasColumn(database, 'characters', 'stars_label');
   const characters = selectAll(
     database,
     `
@@ -180,6 +181,7 @@ async function loadCurrentDataset(seedPath, manifestPath) {
         c.secondary_class,
         c.classes_json,
         c.stars,
+        ${hasStarsLabelColumn ? 'c.stars_label' : 'CAST(c.stars AS TEXT) AS stars_label'},
         c.cost,
         c.combo,
         c.min_hp,
@@ -250,6 +252,7 @@ function hydrateCharacterRow(row) {
         : null,
     classes: Array.isArray(classes) ? classes.map((entry) => String(entry)) : [],
     stars: Number(row.stars),
+    starsLabel: String(row.stars_label ?? row.stars),
     cost: Number(row.cost),
     combo: Number(row.combo),
     minHp: parseNullableNumber(row.min_hp),

@@ -1300,6 +1300,7 @@ function createCharacterRow(
       overrides.classes ?? [primaryClass, secondaryClass].filter(Boolean),
     ),
     stars: overrides.stars ?? 6,
+    stars_label: String(overrides.stars ?? 6),
     cost: overrides.cost ?? 55,
     combo: 4,
     min_hp: 1000,

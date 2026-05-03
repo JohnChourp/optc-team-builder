@@ -45,7 +45,7 @@
                 {{
                   t('hero.summary', {
                     cost: current.cost,
-                    stars: current.stars,
+                    stars: current.starsLabel ?? current.stars,
                   })
                 }}
               </p>
@@ -221,7 +221,10 @@
 
               <div class="group-grid">
                 @for (card of group.cards; track $index) {
-                  <article class="glass-card detail-card">
+                  <article
+                    class="glass-card detail-card"
+                    [class.detail-card--rumble]="card.titleKey === 'sections.rumbleData'"
+                  >
                     <div class="detail-card__head">
                       <h2>
                         @if (card.titleKey) {

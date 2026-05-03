@@ -88,6 +88,7 @@
     "notesLabel": "Notes"
   },
   "support": {
+    "maxLevelEffect": "Max level effect",
     "supportedCharactersLabel": "Supported characters"
   },
   "stats": {

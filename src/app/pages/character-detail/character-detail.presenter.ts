@@ -64,24 +64,42 @@ type UnknownRecord = Record<string, unknown>;
 const RUMBLE_KNOWN_KEYS = new Set([
   'ability',
   'basedOn',
+  'cost',
+  'gpability',
+  'gpcondition',
+  'gpspecial',
   'id',
+  'llbability',
+  'llbresilience',
+  'llbspecial',
   'pattern',
+  'resilience',
   'special',
   'stats',
   'target',
 ]);
+
+const RUMBLE_LEVELED_SECTION_CONFIGS = [
+  { key: 'ability', title: 'Passive' },
+  { key: 'special', title: 'Special' },
+  { key: 'llbability', title: 'LLB Passive' },
+  { key: 'llbspecial', title: 'LLB Special' },
+  { key: 'gpability', title: 'GP Passive' },
+  { key: 'gpspecial', title: 'GP Special' },
+] as const;
 
 export function buildCharacterDetailViewModel(
   character: CharacterDetailRecord,
   basedOnCharacterName: string | null = null,
 ): CharacterDetailViewModel {
   const groups: DetailDisplayGroup[] = [
-    buildOverviewGroup(character),
     buildAbilitiesGroup(character),
     buildEnhancementsGroup(character),
-    buildSupportSynergyGroup(character),
+    buildSupportGroup(character),
     buildBattleModesGroup(character, basedOnCharacterName),
   ].filter((group): group is DetailDisplayGroup => group !== null);
+
+  const starsDisplay = formatStars(character);
 
   return {
     heroMeta: [
@@ -90,7 +108,7 @@ export function buildCharacterDetailViewModel(
       ...(character.secondaryClass
         ? [createRow('fields.secondaryClass', character.secondaryClass)]
         : []),
-      createRow('fields.stars', formatNumber(character.stars)),
+      createRow('fields.stars', starsDisplay),
       createRow('fields.cost', formatNumber(character.cost)),
     ],
     heroStats: [
@@ -157,23 +175,20 @@ export function buildRumbleCardModel(
     lists.push(createList('fields.pattern', pattern));
   }
 
-  const abilityEntries = Array.isArray(rumbleData['ability'])
-    ? rumbleData['ability']
-        .map((entry, index) => buildRumbleLevelEntry('fields.passiveLevel', index + 1, entry))
-        .filter((entry): entry is DetailDisplayEntry => entry !== null)
-    : [];
-
-  const specialEntries = Array.isArray(rumbleData['special'])
-    ? rumbleData['special']
-        .map((entry, index) => buildRumbleLevelEntry('fields.specialLevel', index + 1, entry))
-        .filter((entry): entry is DetailDisplayEntry => entry !== null)
-    : [];
+  const leveledEntries = RUMBLE_LEVELED_SECTION_CONFIGS.flatMap(({ key, title }) =>
+    buildRumbleMaxSectionEntry(title, rumbleData[key]),
+  );
+  const staticEntries = [
+    ...buildRumbleStaticSectionEntries('Resilience', rumbleData['resilience']),
+    ...buildRumbleStaticSectionEntries('LLB Resilience', rumbleData['llbresilience']),
+  ];
+  const gpConditionEntries = buildStructuredEntries('GP Condition', rumbleData['gpcondition']);
 
   const extraEntries = Object.entries(rumbleData)
     .filter(([key]) => !RUMBLE_KNOWN_KEYS.has(key))
     .flatMap(([key, value]) => buildStructuredEntries(humanizeKey(key), value));
 
-  entries.push(...abilityEntries, ...specialEntries, ...extraEntries);
+  entries.push(...leveledEntries, ...staticEntries, ...gpConditionEntries, ...extraEntries);
 
   if (!rows.length && !texts.length && !lists.length && !entries.length) {
     return null;
@@ -270,33 +285,6 @@ function hasDistinctFullCoverage(
 
 function normalizeCoverageSummaryClause(clause: string): string {
   return clause.replace(/\s+/g, ' ').trim().toLowerCase();
-}
-
-function buildOverviewGroup(character: CharacterDetailRecord): DetailDisplayGroup {
-  const profileRows: DetailDisplayRow[] = [
-    createRow('fields.type', formatCharacterType(character.type)),
-    createRow('fields.primaryClass', character.primaryClass),
-    ...(character.secondaryClass
-      ? [createRow('fields.secondaryClass', character.secondaryClass)]
-      : []),
-    createRow('fields.stars', formatNumber(character.stars)),
-    createRow('fields.cost', formatNumber(character.cost)),
-    createRow('fields.combo', formatNumber(character.combo)),
-  ];
-
-  return {
-    titleKey: 'sections.overview',
-    cards: [
-      {
-        titleKey: 'sections.profile',
-        rows: profileRows,
-        texts: [],
-        lists: [],
-        entries: [],
-        chips: [],
-      },
-    ],
-  };
 }
 
 function buildAbilitiesGroup(character: CharacterDetailRecord): DetailDisplayGroup | null {
@@ -430,7 +418,7 @@ function buildEnhancementsGroup(character: CharacterDetailRecord): DetailDisplay
     : null;
 }
 
-function buildSupportSynergyGroup(character: CharacterDetailRecord): DetailDisplayGroup | null {
+function buildSupportGroup(character: CharacterDetailRecord): DetailDisplayGroup | null {
   const { detail } = character;
   const cards: DetailDisplayCard[] = [];
 
@@ -442,11 +430,20 @@ function buildSupportSynergyGroup(character: CharacterDetailRecord): DetailDispl
       lists: [],
       entries: detail.supportData
         .map((entry, index) => ({
-          title: sanitizeText(entry.supportedCharactersText) ?? `Support ${index + 1}`,
-          rows: [],
+          title: `Support ${index + 1}`,
+          rows: [
+            ...(sanitizeText(entry.supportedCharactersText)
+              ? [
+                  createRow(
+                    'support.supportedCharactersLabel',
+                    sanitizeText(entry.supportedCharactersText) ?? '',
+                  ),
+                ]
+              : []),
+          ],
           texts: [],
           lists: entry.levelDescriptions.length
-            ? [createList('fields.levels', entry.levelDescriptions)]
+            ? [createList('support.maxLevelEffect', entry.levelDescriptions)]
             : [],
           chips: [],
         }))
@@ -455,50 +452,9 @@ function buildSupportSynergyGroup(character: CharacterDetailRecord): DetailDispl
     });
   }
 
-  if (detail.builderAbilities.length || detail.partyConflictKeys.length) {
-    cards.push({
-      titleKey: 'sections.teamSynergy',
-      rows: [],
-      texts: [],
-      lists: detail.partyConflictKeys.length
-        ? [
-            createList(
-              'fields.conflicts',
-              detail.partyConflictKeys.map((value) => humanizeValue(value)),
-            ),
-          ]
-        : [],
-      entries: detail.builderAbilities.map((ability) => ({
-        title: ability.label,
-        rows: [
-          createRow('fields.source', humanizeValue(ability.source)),
-          createRow('fields.completeRemoval', ability.isCompleteRemoval ? 'Yes' : 'No'),
-          ...(ability.minTurns !== null
-            ? [createRow('fields.turns', formatNumber(ability.minTurns))]
-            : []),
-          ...(ability.slotTokens.length
-            ? [
-                createRow(
-                  'fields.slots',
-                  ability.slotTokens.map((token) => humanizeValue(token)).join(', '),
-                ),
-              ]
-            : []),
-          ...(ability.coverageMode
-            ? [createRow('fields.coverage', humanizeValue(ability.coverageMode))]
-            : []),
-        ],
-        texts: [],
-        lists: [],
-        chips: [],
-      })),
-      chips: [],
-    });
-  }
-
   return cards.length
     ? {
-        titleKey: 'sections.supportSynergy',
+        titleKey: 'sections.supportData',
         cards,
       }
     : null;
@@ -831,11 +787,40 @@ function flattenStructuredValue(
   });
 }
 
-function buildRumbleLevelEntry(
-  titleKey: string,
-  level: number,
-  value: unknown,
-): DetailDisplayEntry | null {
+function buildRumbleMaxSectionEntry(title: string, value: unknown): DetailDisplayEntry[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const maxEntry = [...value].reverse().find((entry) => buildRumbleLevelEntry(title, entry));
+  const builtEntry = buildRumbleLevelEntry(title, maxEntry);
+
+  return builtEntry ? [builtEntry] : [];
+}
+
+function buildRumbleStaticSectionEntries(title: string, value: unknown): DetailDisplayEntry[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const items = value
+    .map((entry) => formatRumbleStaticEntry(entry))
+    .filter((entry): entry is string => Boolean(entry));
+
+  return items.length
+    ? [
+        {
+          title,
+          rows: [],
+          texts: [],
+          lists: [createList(undefined, items)],
+          chips: [],
+        },
+      ]
+    : [];
+}
+
+function buildRumbleLevelEntry(title: string, value: unknown): DetailDisplayEntry | null {
   const record = asRecord(value);
 
   if (!record) {
@@ -899,12 +884,36 @@ function buildRumbleLevelEntry(
   }
 
   return {
-    title: `${titleKey === 'fields.passiveLevel' ? 'Passive' : 'Special'} Lv ${level}`,
+    title,
     rows,
     texts: [],
     lists,
     chips: [],
   };
+}
+
+function formatRumbleStaticEntry(value: unknown): string | null {
+  const record = asRecord(value);
+
+  if (!record) {
+    return formatScalar(value);
+  }
+
+  const parts = [
+    sanitizeText(record['type']),
+    sanitizeText(record['attribute']),
+    record['chance'] !== undefined && record['chance'] !== null
+      ? `${formatScalar(record['chance'])}% chance`
+      : null,
+    record['percentage'] !== undefined && record['percentage'] !== null
+      ? `${formatScalar(record['percentage'])}%`
+      : null,
+    record['amount'] !== undefined && record['amount'] !== null
+      ? `Amount ${formatScalar(record['amount'])}`
+      : null,
+  ].filter((part): part is string => Boolean(part));
+
+  return parts.length ? parts.join(' • ') : summarizeUnknownValue(record);
 }
 
 function formatRumblePatternStep(value: unknown): string | null {
@@ -1071,6 +1080,12 @@ function formatNumber(value: unknown): string {
   const numericValue = Number(value);
 
   return Number.isFinite(numericValue) ? numericValue.toLocaleString('en-US') : String(value ?? '');
+}
+
+function formatStars(character: Pick<CharacterDetailRecord, 'stars' | 'starsLabel'>): string {
+  const starsLabel = character.starsLabel?.trim();
+
+  return starsLabel?.length ? starsLabel : formatNumber(character.stars);
 }
 
 function formatCharacterType(value: string): string {

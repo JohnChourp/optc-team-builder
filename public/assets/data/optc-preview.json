@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-01T15:15:20.301Z",
+  "generatedAt": "2026-05-03T17:52:07.233Z",
   "characters": [
     {
       "id": 1,
@@ -12,6 +12,7 @@
         "Fighter"
       ],
       "stars": 2,
+      "starsLabel": "2",
       "cost": 1,
       "combo": 5,
       "minHp": 42,
@@ -107,6 +108,7 @@
         "Fighter"
       ],
       "stars": 3,
+      "starsLabel": "3",
       "cost": 4,
       "combo": 6,
       "minHp": 130,
@@ -208,6 +210,7 @@
         "Fighter"
       ],
       "stars": 4,
+      "starsLabel": "4",
       "cost": 7,
       "combo": 6,
       "minHp": 404,
@@ -310,6 +313,7 @@
         "Free Spirit"
       ],
       "stars": 5,
+      "starsLabel": "5",
       "cost": 15,
       "combo": 8,
       "minHp": 902,
@@ -420,20 +424,12 @@
           {
             "Name": "Enrage/Reduce Increase Damage Taken duration",
             "description": [
-              "Boosts base ATK by 20 the turn after taking damage and reduces Increase Damage Taken duration by 1 turn",
-              "Boosts base ATK by 30 the turn after taking damage and reduces Increase Damage Taken duration by 1 turn",
-              "Boosts base ATK by 40 the turn after taking damage and reduces Increase Damage Taken duration by 1 turn",
-              "Boosts base ATK by 50 the turn after taking damage and reduces Increase Damage Taken duration by 1 turn",
               "Boosts base ATK by 100 the turn after taking damage and reduces Increase Damage Taken duration by 2 turns"
             ]
           },
           {
             "Name": "Reduce No Healing duration",
             "description": [
-              "Reduces No Healing duration by 1 turn",
-              "Reduces No Healing duration by 1 turn",
-              "Reduces No Healing duration by 2 turns",
-              "Reduces No Healing duration by 3 turns",
               "Reduces No Healing duration by 4 turns"
             ]
           }
@@ -442,10 +438,6 @@
           {
             "supportedCharactersText": "All characters",
             "levelDescriptions": [
-              "Adds 1% of this character's base ATK to the supported character's base ATK",
-              "Adds 2% of this character's base ATK to the supported character's base ATK",
-              "Adds 3% of this character's base ATK to the supported character's base ATK",
-              "Adds 4% of this character's base ATK to the supported character's base ATK",
               "Adds 5% of this character's base ATK to the supported character's base ATK"
             ]
           }
@@ -488,6 +480,7 @@
         "Slasher"
       ],
       "stars": 3,
+      "starsLabel": "3",
       "cost": 4,
       "combo": 6,
       "minHp": 126,
@@ -590,6 +583,7 @@
         "Driven"
       ],
       "stars": 4,
+      "starsLabel": "4",
       "cost": 7,
       "combo": 6,
       "minHp": 426,
@@ -692,6 +686,7 @@
         "Driven"
       ],
       "stars": 4,
+      "starsLabel": "4",
       "cost": 9,
       "combo": 4,
       "minHp": 462,
@@ -794,6 +789,7 @@
         "Driven"
       ],
       "stars": 5,
+      "starsLabel": "5",
       "cost": 15,
       "combo": 9,
       "minHp": 724,
@@ -913,20 +909,12 @@
           {
             "Name": "[QCK] Damage Reduction",
             "description": [
-              "Reduces damage taken from [QCK] characters by 1%",
-              "Reduces damage taken from [QCK] characters by 2%",
-              "Reduces damage taken from [QCK] characters by 3%",
-              "Reduces damage taken from [QCK] characters by 4%",
               "Reduces damage taken from [QCK] characters by 5%"
             ]
           },
           {
             "Name": "Critical Hit",
             "description": [
-              "If you hit a PERFECT with this character, there is a 10% chance to deal 3% of this character's attack in extra damage",
-              "If you hit a PERFECT with this character, there is a 10% chance to deal 5% of this character's attack in extra damage",
-              "If you hit a PERFECT with this character, there is a 15% chance to deal 5% of this character's attack in extra damage",
-              "If you hit a PERFECT with this character, there is a 20% chance to deal 5% of this character's attack in extra damage",
               "If you hit a PERFECT with this character, there is a 40% chance to deal 7% of this character's attack in extra damage"
             ]
           }
@@ -935,10 +923,6 @@
           {
             "supportedCharactersText": "[DEX] characters",
             "levelDescriptions": [
-              "Adds 1% of this character's base ATK and HP to the supported character's base ATK and HP",
-              "Adds 1% of this character's base ATK and HP to the supported character's base ATK and HP",
-              "Adds 2% of this character's base ATK and HP to the supported character's base ATK and HP",
-              "Adds 3% of this character's base ATK and HP to the supported character's base ATK and HP",
               "Adds 4% of this character's base ATK and HP to the supported character's base ATK and HP"
             ]
           }
@@ -981,6 +965,7 @@
         "Striker"
       ],
       "stars": 3,
+      "starsLabel": "3",
       "cost": 4,
       "combo": 4,
       "minHp": 72,
@@ -1082,6 +1067,7 @@
         "Cerebral"
       ],
       "stars": 4,
+      "starsLabel": "4",
       "cost": 7,
       "combo": 5,
       "minHp": 336,
@@ -1183,6 +1169,7 @@
         "Cerebral"
       ],
       "stars": 4,
+      "starsLabel": "4",
       "cost": 9,
       "combo": 5,
       "minHp": 348,
@@ -1284,6 +1271,7 @@
         "Cerebral"
       ],
       "stars": 5,
+      "starsLabel": "5",
       "cost": 15,
       "combo": 4,
       "minHp": 494,
@@ -1411,20 +1399,12 @@
           {
             "Name": "Pinch Healing",
             "description": [
-              "If HP is below 10% at the start of the turn, recovers 0.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
-              "If HP is below 15% at the start of the turn, recovers 0.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
-              "If HP is below 20% at the start of the turn, recovers 0.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
-              "If HP is below 30% at the start of the turn, recovers 0.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
               "If HP is below 50% at the start of the turn, recovers 1x this character's RCV at the end of the turn for each time you hit a PERFECT with this character"
             ]
           },
           {
             "Name": "Reduce Slot Bind duration",
             "description": [
-              "Reduces Slot Bind duration by 1 turn on this character",
-              "Reduces Slot Bind duration by 2 turns on this character",
-              "Reduces Slot Bind duration by 3 turns on this character",
-              "Reduces Slot Bind duration by 5 turns on this character",
               "Reduces Slot Bind duration by 7 turns on this character"
             ]
           }
@@ -1433,10 +1413,6 @@
           {
             "supportedCharactersText": "[INT] characters",
             "levelDescriptions": [
-              "Adds 1% of this character's base ATK and RCV to the supported character's base ATK and RCV",
-              "Adds 1% of this character's base ATK and RCV to the supported character's base ATK and RCV",
-              "Adds 2% of this character's base ATK and RCV to the supported character's base ATK and RCV",
-              "Adds 3% of this character's base ATK and RCV to the supported character's base ATK and RCV",
               "Adds 4% of this character's base ATK and RCV to the supported character's base ATK and RCV"
             ]
           }
@@ -1479,6 +1455,7 @@
         "Shooter"
       ],
       "stars": 3,
+      "starsLabel": "3",
       "cost": 4,
       "combo": 5,
       "minHp": 50,
@@ -1558,70 +1535,6 @@
                     "SPD"
                   ],
                   "effect": "buff",
-                  "level": 1,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "effects": [
-                {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 2,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "effects": [
-                {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 3,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "effects": [
-                {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 4,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "effects": [
-                {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
                   "level": 5,
                   "targeting": {
                     "targets": [
@@ -1633,312 +1546,6 @@
             }
           ],
           "special": [
-            {
-              "cooldown": 23,
-              "effects": [
-                {
-                  "amount": 5,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 80,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 23,
-              "effects": [
-                {
-                  "amount": 5,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 80,
-                  "duration": 11,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 23,
-              "effects": [
-                {
-                  "amount": 5,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 80,
-                  "duration": 12,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 23,
-              "effects": [
-                {
-                  "amount": 5,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 80,
-                  "duration": 13,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 23,
-              "effects": [
-                {
-                  "amount": 5,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 80,
-                  "duration": 14,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 23,
-              "effects": [
-                {
-                  "amount": 5,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 80,
-                  "duration": 15,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 23,
-              "effects": [
-                {
-                  "amount": 5,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 80,
-                  "duration": 16,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 23,
-              "effects": [
-                {
-                  "amount": 5,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 80,
-                  "duration": 17,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 23,
-              "effects": [
-                {
-                  "amount": 5,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 80,
-                  "duration": 18,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
             {
               "cooldown": 23,
               "effects": [
@@ -2017,6 +1624,7 @@
         "Shooter"
       ],
       "stars": 4,
+      "starsLabel": "4",
       "cost": 7,
       "combo": 6,
       "minHp": 286,
@@ -2096,70 +1704,6 @@
                     "SPD"
                   ],
                   "effect": "buff",
-                  "level": 1,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "effects": [
-                {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 2,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "effects": [
-                {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 3,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "effects": [
-                {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 4,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "effects": [
-                {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
                   "level": 5,
                   "targeting": {
                     "targets": [
@@ -2171,312 +1715,6 @@
             }
           ],
           "special": [
-            {
-              "cooldown": 30,
-              "effects": [
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 59,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "level": 3,
-                  "duration": 15,
-                  "effect": "debuff",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 30,
-              "effects": [
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 63,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "level": 3,
-                  "duration": 15,
-                  "effect": "debuff",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 30,
-              "effects": [
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 67,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "level": 4,
-                  "duration": 15,
-                  "effect": "debuff",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 30,
-              "effects": [
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 71,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "level": 5,
-                  "duration": 15,
-                  "effect": "debuff",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 30,
-              "effects": [
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 75,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "level": 6,
-                  "duration": 15,
-                  "effect": "debuff",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 30,
-              "effects": [
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 79,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "level": 7,
-                  "duration": 15,
-                  "effect": "debuff",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 30,
-              "effects": [
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 83,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "level": 8,
-                  "duration": 15,
-                  "effect": "debuff",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 30,
-              "effects": [
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 87,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "level": 9,
-                  "duration": 15,
-                  "effect": "debuff",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 30,
-              "effects": [
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 91,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "level": 9,
-                  "duration": 15,
-                  "effect": "debuff",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
             {
               "cooldown": 30,
               "effects": [
@@ -2555,6 +1793,7 @@
         "Shooter"
       ],
       "stars": 4,
+      "starsLabel": "4",
       "cost": 9,
       "combo": 6,
       "minHp": 444,
@@ -2634,70 +1873,6 @@
                     "SPD"
                   ],
                   "effect": "buff",
-                  "level": 1,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "effects": [
-                {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 2,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "effects": [
-                {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 3,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "effects": [
-                {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 4,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "effects": [
-                {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
                   "level": 5,
                   "targeting": {
                     "targets": [
@@ -2709,312 +1884,6 @@
             }
           ],
           "special": [
-            {
-              "cooldown": 23,
-              "effects": [
-                {
-                  "amount": 10,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 80,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 23,
-              "effects": [
-                {
-                  "amount": 10,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 80,
-                  "duration": 11,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 23,
-              "effects": [
-                {
-                  "amount": 10,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 80,
-                  "duration": 12,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 23,
-              "effects": [
-                {
-                  "amount": 10,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 80,
-                  "duration": 13,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 23,
-              "effects": [
-                {
-                  "amount": 10,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 80,
-                  "duration": 14,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 23,
-              "effects": [
-                {
-                  "amount": 10,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 80,
-                  "duration": 15,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 23,
-              "effects": [
-                {
-                  "amount": 10,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 80,
-                  "duration": 16,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 23,
-              "effects": [
-                {
-                  "amount": 10,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 80,
-                  "duration": 17,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 23,
-              "effects": [
-                {
-                  "amount": 10,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 80,
-                  "duration": 18,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
             {
               "cooldown": 23,
               "effects": [
@@ -3093,6 +1962,7 @@
         "Shooter"
       ],
       "stars": 5,
+      "starsLabel": "5",
       "cost": 15,
       "combo": 7,
       "minHp": 638,
@@ -3238,20 +2108,12 @@
           {
             "Name": "Reduce No Healing duration",
             "description": [
-              "If your crew has 6 Shooter characters, reduces No Healing duration by 1 turn",
-              "If your crew has 5 Shooter characters, reduces No Healing duration by 1 turn",
-              "If your crew has 4 Shooter characters, reduces No Healing duration by 1 turn",
-              "If your crew has 4 Shooter characters, reduces No Healing duration by 2 turns",
               "If your crew has 4 Shooter characters, reduces No Healing duration by 3 turns"
             ]
           },
           {
             "Name": "Barrier Penetration",
             "description": [
-              "This character's normal attack will ignore barriers if HP is above 99% at the start of the turn",
-              "This character's normal attack will ignore barriers if HP is above 99% at the start of the turn",
-              "This character's normal attack will ignore barriers if HP is above 99% at the start of the turn",
-              "This character's normal attack will ignore barriers if HP is above 80% at the start of the turn",
               "This character's normal attack will ignore barriers if HP is above 50% at the start of the turn"
             ]
           }
@@ -3260,10 +2122,6 @@
           {
             "supportedCharactersText": "Shooter characters",
             "levelDescriptions": [
-              "Reduces damage received from [INT] characters by 1%. Adds 1% of this character's base ATK to the supported character's base ATK",
-              "Reduces damage received from [INT] characters by 1%. Adds 1% of this character's base ATK to the supported character's base ATK",
-              "Reduces damage received from [INT] characters by 2%. Adds 2% of this character's base ATK to the supported character's base ATK",
-              "Reduces damage received from [INT] characters by 2%. Adds 2% of this character's base ATK to the supported character's base ATK",
               "Reduces damage received from [INT] characters by 3%. Adds 3% of this character's base ATK to the supported character's base ATK"
             ]
           }
@@ -3285,70 +2143,6 @@
                     "SPD"
                   ],
                   "effect": "buff",
-                  "level": 1,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "effects": [
-                {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 2,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "effects": [
-                {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 3,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "effects": [
-                {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
-                  "level": 4,
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "effects": [
-                {
-                  "attributes": [
-                    "SPD"
-                  ],
-                  "effect": "buff",
                   "level": 5,
                   "targeting": {
                     "targets": [
@@ -3360,312 +2154,6 @@
             }
           ],
           "special": [
-            {
-              "cooldown": 30,
-              "effects": [
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 59,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "level": 3,
-                  "duration": 15,
-                  "effect": "debuff",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 30,
-              "effects": [
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 63,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "level": 3,
-                  "duration": 15,
-                  "effect": "debuff",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 30,
-              "effects": [
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 67,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "level": 4,
-                  "duration": 15,
-                  "effect": "debuff",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 30,
-              "effects": [
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 71,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "level": 5,
-                  "duration": 15,
-                  "effect": "debuff",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 30,
-              "effects": [
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 75,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "level": 6,
-                  "duration": 15,
-                  "effect": "debuff",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 30,
-              "effects": [
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 79,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "level": 7,
-                  "duration": 15,
-                  "effect": "debuff",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 30,
-              "effects": [
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 83,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "level": 8,
-                  "duration": 15,
-                  "effect": "debuff",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 30,
-              "effects": [
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 87,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "level": 9,
-                  "duration": 15,
-                  "effect": "debuff",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "cooldown": 30,
-              "effects": [
-                {
-                  "attributes": [
-                    "Special Bind"
-                  ],
-                  "chance": 91,
-                  "duration": 10,
-                  "effect": "hinderance",
-                  "targeting": {
-                    "count": 1,
-                    "priority": "highest",
-                    "stat": "ATK",
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "Accuracy"
-                  ],
-                  "level": 9,
-                  "duration": 15,
-                  "effect": "debuff",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
             {
               "cooldown": 30,
               "effects": [
@@ -3708,122 +2196,6 @@
                   "attributes": [
                     "ATK"
                   ],
-                  "level": 1,
-                  "effect": "buff",
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "HP",
-                    "SPD"
-                  ],
-                  "level": 1,
-                  "effect": "buff",
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "effects": [
-                {
-                  "attributes": [
-                    "ATK"
-                  ],
-                  "level": 1,
-                  "effect": "buff",
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "HP",
-                    "SPD"
-                  ],
-                  "level": 2,
-                  "effect": "buff",
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "effects": [
-                {
-                  "attributes": [
-                    "ATK"
-                  ],
-                  "level": 2,
-                  "effect": "buff",
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "HP",
-                    "SPD"
-                  ],
-                  "level": 2,
-                  "effect": "buff",
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "effects": [
-                {
-                  "attributes": [
-                    "ATK"
-                  ],
-                  "level": 2,
-                  "effect": "buff",
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                },
-                {
-                  "attributes": [
-                    "HP",
-                    "SPD"
-                  ],
-                  "level": 3,
-                  "effect": "buff",
-                  "targeting": {
-                    "targets": [
-                      "crew"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "effects": [
-                {
-                  "attributes": [
-                    "ATK"
-                  ],
                   "level": 3,
                   "effect": "buff",
                   "targeting": {
@@ -3849,66 +2221,6 @@
             }
           ],
           "gpspecial": [
-            {
-              "uses": 2,
-              "effects": [
-                {
-                  "amount": 500,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "uses": 2,
-              "effects": [
-                {
-                  "amount": 625,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "uses": 2,
-              "effects": [
-                {
-                  "amount": 750,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "uses": 2,
-              "effects": [
-                {
-                  "amount": 875,
-                  "effect": "damage",
-                  "type": "fixed",
-                  "targeting": {
-                    "targets": [
-                      "enemies"
-                    ]
-                  }
-                }
-              ]
-            },
             {
               "uses": 2,
               "effects": [
@@ -3975,6 +2287,7 @@
         "Fighter"
       ],
       "stars": 3,
+      "starsLabel": "3",
       "cost": 4,
       "combo": 6,
       "minHp": 136,
@@ -4076,6 +2389,7 @@
         "Powerhouse"
       ],
       "stars": 4,
+      "starsLabel": "4",
       "cost": 7,
       "combo": 5,
       "minHp": 486,
@@ -4167,6 +2481,7 @@
         "Powerhouse"
       ],
       "stars": 4,
+      "starsLabel": "4",
       "cost": 9,
       "combo": 4,
       "minHp": 494,
@@ -4269,6 +2584,7 @@
         "Powerhouse"
       ],
       "stars": 5,
+      "starsLabel": "5",
       "cost": 15,
       "combo": 4,
       "minHp": 406,
@@ -4432,20 +2748,12 @@
           {
             "Name": "[STR] Damage Reduction",
             "description": [
-              "Reduces damage taken from [STR] characters by 1%",
-              "Reduces damage taken from [STR] characters by 2%",
-              "Reduces damage taken from [STR] characters by 3%",
-              "Reduces damage taken from [STR] characters by 4%",
               "Reduces damage taken from [STR] characters by 5%"
             ]
           },
           {
             "Name": "Pinch Healing",
             "description": [
-              "If HP is below 5% at the start of the turn, recovers 1x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
-              "If HP is below 5% at the start of the turn, recovers 1.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
-              "If HP is below 5% at the start of the turn, recovers 1.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
-              "If HP is below 10% at the start of the turn, recovers 1.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
               "If HP is below 20% at the start of the turn, recovers 1.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character"
             ]
           }
@@ -4454,10 +2762,6 @@
           {
             "supportedCharactersText": "Powerhouse characters",
             "levelDescriptions": [
-              "Adds 1% of this character's base ATK and HP to the supported character's base ATK and HP",
-              "Adds 1% of this character's base ATK and HP to the supported character's base ATK and HP",
-              "Adds 2% of this character's base ATK and HP to the supported character's base ATK and HP",
-              "Adds 3% of this character's base ATK and HP to the supported character's base ATK and HP",
               "Adds 4% of this character's base ATK and HP to the supported character's base ATK and HP"
             ]
           }
@@ -4500,6 +2804,7 @@
         "Fighter"
       ],
       "stars": 3,
+      "starsLabel": "3",
       "cost": 4,
       "combo": 5,
       "minHp": 52,
@@ -4602,6 +2907,7 @@
         "Free Spirit"
       ],
       "stars": 4,
+      "starsLabel": "4",
       "cost": 9,
       "combo": 5,
       "minHp": 306,
@@ -4757,20 +3063,12 @@
           {
             "Name": "[INT] Damage Reduction",
             "description": [
-              "Reduces damage taken from [INT] characters by 1%",
-              "Reduces damage taken from [INT] characters by 2%",
-              "Reduces damage taken from [INT] characters by 3%",
-              "Reduces damage taken from [INT] characters by 4%",
               "Reduces damage taken from [INT] characters by 5%"
             ]
           },
           {
             "Name": "Pinch Healing",
             "description": [
-              "If HP is below 20% at the start of the turn, recovers 0.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
-              "If HP is below 25% at the start of the turn, recovers 1x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
-              "If HP is below 30% at the start of the turn, recovers 1x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
-              "If HP is below 40% at the start of the turn, recovers 1x this character's RCV at the end of the turn for each time you hit a PERFECT with this character",
               "If HP is below 40% at the start of the turn, recovers 1.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character"
             ]
           }
@@ -4779,10 +3077,6 @@
           {
             "supportedCharactersText": "Fighter characters",
             "levelDescriptions": [
-              "Adds 1% of this character's base ATK and HP to the supported character's base ATK and HP",
-              "Adds 1% of this character's base ATK and HP to the supported character's base ATK and HP",
-              "Adds 2% of this character's base ATK and HP to the supported character's base ATK and HP",
-              "Adds 3% of this character's base ATK and HP to the supported character's base ATK and HP",
               "Adds 4% of this character's base ATK and HP to the supported character's base ATK and HP"
             ]
           }
@@ -4826,6 +3120,7 @@
         "Cerebral"
       ],
       "stars": 4,
+      "starsLabel": "4",
       "cost": 9,
       "combo": 5,
       "minHp": 258,
@@ -4928,6 +3223,7 @@
         "Powerhouse"
       ],
       "stars": 4,
+      "starsLabel": "4",
       "cost": 9,
       "combo": 4,
       "minHp": 356,
