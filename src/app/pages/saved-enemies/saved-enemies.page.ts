@@ -70,6 +70,7 @@ import {
   createCategoryAbilityDrafts,
   createSpecialAbilityDrafts,
   getAbilityCatalogItemsByCategory,
+  isCaptainAbilityRequirement,
   serializeCategoryAbilityDrafts,
   serializeSpecialAbilityDrafts,
 } from '../../core/services/special-ability-filter.utils';
@@ -325,54 +326,52 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       visual: resolveAbilityRequirementVisual(draft.abilityKey),
     })),
   );
-  public readonly battleRequirementViews = computed<SavedEnemyBattleView[]>(
-    () =>
-      this.battleRequirements().map((battle, battleIndex) => ({
-        battle,
+  public readonly battleRequirementViews = computed<SavedEnemyBattleView[]>(() =>
+    this.battleRequirements().map((battle, battleIndex) => ({
+      battle,
+      title: this.i18n.translate(
+        'editor.requiredCharacters.battleTitle',
+        { index: battleIndex + 1 },
+        'saved-enemies',
+      ),
+      requiredCharacterCount: battle.requiredCharacterGroups.length,
+      groupViews: battle.requiredCharacterGroups.map((group, groupIndex) => ({
+        battleId: battle.id,
+        group,
         title: this.i18n.translate(
-          'editor.requiredCharacters.battleTitle',
-          { index: battleIndex + 1 },
+          'editor.requiredCharacters.cardTitle',
+          { index: groupIndex + 1 },
           'saved-enemies',
         ),
-        requiredCharacterCount: battle.requiredCharacterGroups.length,
-        groupViews: battle.requiredCharacterGroups.map((group, groupIndex) => ({
-          battleId: battle.id,
-          group,
-          title: this.i18n.translate(
-            'editor.requiredCharacters.cardTitle',
-            { index: groupIndex + 1 },
-            'saved-enemies',
-          ),
-          abilityCount: group.abilities.length,
-          chips: group.abilities.map((requirement, abilityIndex) => ({
-            draftId: `${battle.id}-${group.id}-${abilityIndex}`,
-            label: this.formatAbilityRequirement(requirement),
-            visual: resolveAbilityRequirementVisual(requirement.abilityKey),
-          })),
+        abilityCount: group.abilities.length,
+        chips: group.abilities.map((requirement, abilityIndex) => ({
+          draftId: `${battle.id}-${group.id}-${abilityIndex}`,
+          label: this.formatAbilityRequirement(requirement),
+          visual: resolveAbilityRequirementVisual(requirement.abilityKey),
         })),
       })),
+    })),
   );
   public readonly canAddBattleRequirement = computed(
     () => !this.savingEnemy() && this.battleRequirements().length < MAX_AUTO_BUILD_BATTLE_COUNT,
   );
-  public readonly activeRequiredCharacterGroup = computed(
-    () => {
-      const activeBattleId = this.activeRequiredCharacterBattleId();
-      const activeGroupId = this.activeRequiredCharacterGroupId();
+  public readonly activeRequiredCharacterGroup = computed(() => {
+    const activeBattleId = this.activeRequiredCharacterBattleId();
+    const activeGroupId = this.activeRequiredCharacterGroupId();
 
-      return (
-        this.battleRequirements()
-          .find((battle) => !activeBattleId || battle.id === activeBattleId)
-          ?.requiredCharacterGroups.find((group) => group.id === activeGroupId) ?? null
-      );
-    },
-  );
+    return (
+      this.battleRequirements()
+        .find((battle) => !activeBattleId || battle.id === activeBattleId)
+        ?.requiredCharacterGroups.find((group) => group.id === activeGroupId) ?? null
+    );
+  });
   public readonly activeRequiredCharacterAbilityDrafts = computed(() =>
     createAbilityRequirementDrafts(
       this.activeRequiredCharacterGroup()?.abilities.filter(
         (requirement) =>
           this.abilityCatalogMap().get(requirement.abilityKey)?.category ===
-          this.activeRequiredCharacterAbilityCategory(),
+            this.activeRequiredCharacterAbilityCategory() &&
+          !isCaptainAbilityRequirement(requirement),
       ) ?? [],
     ),
   );
@@ -961,8 +960,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
                       ...group,
                       abilities: group.abilities.filter(
                         (requirement) =>
-                          this.resolveAbilityCatalogItem(requirement.abilityKey)?.category !==
-                          category,
+                          !this.requiredCharacterRequirementMatchesCategory(requirement, category),
                       ),
                     }
                   : group,
@@ -1010,8 +1008,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
                   abilities: [
                     ...group.abilities.filter(
                       (requirement) =>
-                        this.abilityCatalogMap().get(requirement.abilityKey)?.category !==
-                        category,
+                        !this.requiredCharacterRequirementMatchesCategory(requirement, category),
                     ),
                     ...nextRequirements.map((requirement) => ({
                       ...requirement,
@@ -1113,17 +1110,15 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
         'support',
       ),
     );
-    this.battleRequirements.set(
-      [
-        createAutoBuildBattleRequirement({
-          id: 'battle-1',
-          title: 'Battle 1',
-          enemyMechanics: parsedResult.enemyMechanics,
-          requiredCharacterGroups: expandRequiredAbilitiesToCharacterGroups(selectedRequirements)
-            .groups,
-        }),
-      ],
-    );
+    this.battleRequirements.set([
+      createAutoBuildBattleRequirement({
+        id: 'battle-1',
+        title: 'Battle 1',
+        enemyMechanics: parsedResult.enemyMechanics,
+        requiredCharacterGroups:
+          expandRequiredAbilitiesToCharacterGroups(selectedRequirements).groups,
+      }),
+    ]);
     this.parsedAbilitySelectionOpen.set(false);
   }
 
@@ -1341,6 +1336,12 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
             undefined,
             'saved-enemies',
           ),
+        formatSourceScope: (scope) =>
+          this.i18n.translate(
+            `editor.requirementSummary.sourceScopes.${scope}`,
+            undefined,
+            'saved-enemies',
+          ),
       },
     );
   }
@@ -1385,12 +1386,21 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
         undefined,
         'saved-enemies',
       ),
-      count: view.group.abilities.filter(
-        (requirement) =>
-          this.resolveAbilityCatalogItem(requirement.abilityKey)?.category === category,
+      count: view.group.abilities.filter((requirement) =>
+        this.requiredCharacterRequirementMatchesCategory(requirement, category),
       ).length,
       disabled: this.savingEnemy() || this.resolveCategoryCatalogItems(category).length === 0,
     };
+  }
+
+  private requiredCharacterRequirementMatchesCategory(
+    requirement: AutoBuildAbilityRequirement,
+    category: RequiredCharacterAbilityCategory,
+  ): boolean {
+    return (
+      this.resolveAbilityCatalogItem(requirement.abilityKey)?.category === category &&
+      !isCaptainAbilityRequirement(requirement)
+    );
   }
 
   private resolveAbilityCatalogItem(abilityKey: string) {
@@ -1423,6 +1433,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       slotTokens: draft.slotTokens,
       requiredCharacterCount: resolvePositiveInteger(draft.requiredCharacterCount) ?? 1,
       slotScope: draft.slotScope,
+      sourceScope: draft.sourceScope,
     });
   }
 

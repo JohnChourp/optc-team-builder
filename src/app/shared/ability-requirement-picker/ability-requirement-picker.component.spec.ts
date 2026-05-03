@@ -146,6 +146,57 @@ describe('AbilityRequirementPickerComponent', () => {
     expect(emittedDrafts).not.toBe(component.workingDrafts());
   });
 
+  it('preserves captain source scope in working and saved drafts', () => {
+    const component = new AbilityRequirementPickerComponent();
+    const emitSpy = vi.spyOn(component.saveDrafts, 'emit');
+
+    component.catalogItems = [
+      {
+        key: 'remove_bind',
+        label: 'Remove Bind',
+        supportsTurns: true,
+        supportsSlotTokens: false,
+        availableSlotTokens: [],
+        availableSources: ['captainAbility', 'specialText'],
+        availableCoverageModes: ['explicit'],
+        matchCount: 10,
+        sampleCharacterIds: [101],
+        sampleTexts: ['Removes bind'],
+      },
+    ];
+    component.drafts = [
+      {
+        draftId: 'captain-bind-1',
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      },
+    ];
+    component.isOpen = true;
+    component.ngOnChanges({
+      catalogItems: new SimpleChange([], component.catalogItems, true),
+      isOpen: new SimpleChange(false, true, true),
+    });
+
+    component.save();
+
+    expect(component.workingDrafts()).toEqual([
+      expect.objectContaining({
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      }),
+    ]);
+    expect(emitSpy.mock.calls[0]?.[0]).toEqual([
+      expect.objectContaining({
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      }),
+    ]);
+  });
+
   it('keeps turns value 0 in working drafts so it can serialize as ignore turns', () => {
     const component = new AbilityRequirementPickerComponent();
 

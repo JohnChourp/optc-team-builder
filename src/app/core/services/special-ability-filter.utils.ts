@@ -2,6 +2,7 @@ import {
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityCategory,
   type AutoBuildAbilityRequirement,
+  normalizeAbilityRequirementSourceScope,
   normalizeAbilityRequirementSlotScope,
 } from '../models/auto-team-builder-ability.models';
 import {
@@ -42,6 +43,18 @@ export function getAbilityCatalogItemsByCategory(
   return sortCatalogItems(catalogItems.filter((item) => item.category === category));
 }
 
+export function isCaptainAbilityRequirement(requirement: AutoBuildAbilityRequirement): boolean {
+  return normalizeAbilityRequirementSourceScope(requirement.sourceScope) === 'captainAbility';
+}
+
+export function getCaptainAbilityCatalogItems(
+  catalogItems: readonly AutoBuildAbilityCatalogItem[],
+): AutoBuildAbilityCatalogItem[] {
+  return sortCatalogItems(
+    catalogItems.filter((item) => item.availableSources.includes('captainAbility')),
+  );
+}
+
 export function createCategoryAbilityDrafts(
   requirements: readonly AutoBuildAbilityRequirement[],
   catalogItems: readonly AutoBuildAbilityCatalogItem[],
@@ -52,7 +65,10 @@ export function createCategoryAbilityDrafts(
 
   return createAbilityRequirementDrafts(
     requirements
-      .filter((requirement) => categoryKeys.has(requirement.abilityKey))
+      .filter(
+        (requirement) =>
+          categoryKeys.has(requirement.abilityKey) && !isCaptainAbilityRequirement(requirement),
+      )
       .map((requirement) => {
         const catalogItem = catalogMap.get(requirement.abilityKey);
 
@@ -76,7 +92,11 @@ export function serializeCategoryAbilityDrafts(
   const categoryKeys = getCategoryAbilityKeys(catalogItems, category);
 
   return serializeAbilityRequirementDrafts(
-    drafts.filter((draft) => categoryKeys.has(draft.abilityKey)),
+    drafts.filter(
+      (draft) =>
+        categoryKeys.has(draft.abilityKey) &&
+        normalizeAbilityRequirementSourceScope(draft.sourceScope) !== 'captainAbility',
+    ),
     {
       dedupe: options.dedupe ?? true,
       catalogMap: new Map(catalogItems.map((item) => [item.key, item] as const)),
@@ -90,8 +110,9 @@ export function resolveCategoryAbilityMatchingCharacterIds(
   category: AutoBuildAbilityCategory,
 ): number[] | undefined {
   const categoryKeys = getCategoryAbilityKeys(catalogItems, category);
-  const categoryRequirements = requirements.filter((requirement) =>
-    categoryKeys.has(requirement.abilityKey),
+  const categoryRequirements = requirements.filter(
+    (requirement) =>
+      categoryKeys.has(requirement.abilityKey) && !isCaptainAbilityRequirement(requirement),
   );
 
   if (categoryRequirements.length === 0) {
@@ -131,7 +152,7 @@ function groupCategoryRequirements(
   const groups = new Map<string, AutoBuildAbilityRequirement[]>();
 
   for (const requirement of requirements) {
-    const groupKey = `${requirement.abilityKey.trim()}|${normalizeAbilityRequirementSlotScope(requirement.slotScope)}`;
+    const groupKey = `${requirement.abilityKey.trim()}|${normalizeAbilityRequirementSlotScope(requirement.slotScope)}|${normalizeAbilityRequirementSourceScope(requirement.sourceScope) ?? 'any'}`;
     const currentGroup = groups.get(groupKey);
 
     if (currentGroup) {
@@ -217,12 +238,66 @@ export function createSpecialAbilityDrafts(
   return createCategoryAbilityDrafts(requirements, catalogItems, 'special');
 }
 
+export function createCaptainAbilityDrafts(
+  requirements: readonly AutoBuildAbilityRequirement[],
+  catalogItems: readonly AutoBuildAbilityCatalogItem[],
+): AbilityRequirementDraft[] {
+  const captainAbilityKeys = new Set(
+    getCaptainAbilityCatalogItems(catalogItems).map((item) => item.key),
+  );
+
+  return createAbilityRequirementDrafts(
+    requirements
+      .filter(
+        (requirement) =>
+          captainAbilityKeys.has(requirement.abilityKey) &&
+          isCaptainAbilityRequirement(requirement),
+      )
+      .map((requirement) => ({
+        abilityKey: requirement.abilityKey,
+        minTurns: requirement.minTurns,
+        slotTokens: [...requirement.slotTokens],
+        requiredCharacterCount: requirement.requiredCharacterCount,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      })),
+  );
+}
+
 export function serializeSpecialAbilityDrafts(
   drafts: readonly AbilityRequirementDraft[],
   catalogItems: readonly AutoBuildAbilityCatalogItem[],
   options: SerializeCategoryAbilityDraftOptions = {},
 ): AutoBuildAbilityRequirement[] {
   return serializeCategoryAbilityDrafts(drafts, catalogItems, 'special', options);
+}
+
+export function serializeCaptainAbilityDrafts(
+  drafts: readonly AbilityRequirementDraft[],
+  catalogItems: readonly AutoBuildAbilityCatalogItem[],
+  options: SerializeCategoryAbilityDraftOptions = {},
+): AutoBuildAbilityRequirement[] {
+  const captainAbilityKeys = new Set(
+    getCaptainAbilityCatalogItems(catalogItems).map((item) => item.key),
+  );
+
+  return serializeAbilityRequirementDrafts(
+    drafts
+      .filter((draft) => captainAbilityKeys.has(draft.abilityKey))
+      .map((draft) => ({
+        ...draft,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      })),
+    {
+      dedupe: options.dedupe ?? true,
+      catalogMap: new Map(catalogItems.map((item) => [item.key, item] as const)),
+    },
+  ).map((requirement) => ({
+    ...requirement,
+    slotScope: 'leader',
+    sourceScope: 'captainAbility',
+  }));
 }
 
 export function resolveSpecialAbilityMatchingCharacterIds(

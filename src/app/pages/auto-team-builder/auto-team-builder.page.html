@@ -427,6 +427,66 @@
 
         <section class="ability-requirements-card">
           <div class="slot-grid__header">
+            <h2>{{ t('captainAbilityFilters.title') }}</h2>
+            <p>{{ t('captainAbilityFilters.copy') }}</p>
+          </div>
+
+          <div class="manual-locks-meta ability-requirements-meta">
+            <strong>
+              {{
+                t('captainAbilityFilters.configuredRows', {
+                  count: captainAbilitySummaryChips().length,
+                })
+              }}
+            </strong>
+            <div class="ability-requirements-actions">
+              <ion-button
+                fill="clear"
+                size="small"
+                class="select-all-button"
+                [disabled]="building() || !availableCaptainAbilityCatalogItems().length"
+                (click)="openCaptainAbilityPicker()"
+              >
+                {{ t('captainAbilityFilters.actions.openPicker') }}
+              </ion-button>
+              <ion-button
+                fill="clear"
+                color="danger"
+                size="small"
+                [disabled]="building() || !captainAbilitySummaryChips().length"
+                (click)="clearCaptainAbilityFilters()"
+              >
+                {{ t('captainAbilityFilters.actions.clearRequirements') }}
+              </ion-button>
+            </div>
+          </div>
+
+          @if (captainAbilitySummaryChips().length) {
+            <div class="selected-values-row">
+              @for (chip of captainAbilitySummaryChips(); track chip.draftId) {
+                <span class="selected-value-chip">{{ chip.label }}</span>
+              }
+            </div>
+          } @else {
+            <p class="favorites-only-warning">
+              {{ t('captainAbilityFilters.empty') }}
+            </p>
+          }
+        </section>
+
+        <app-ability-requirement-picker
+          [isOpen]="captainAbilityPickerOpen()"
+          [title]="t('captainAbilityFilters.title')"
+          [copy]="t('captainAbilityFilters.pickerCopy')"
+          [drafts]="captainAbilityDrafts()"
+          [catalogItems]="availableCaptainAbilityCatalogItems()"
+          [showCharacterCount]="false"
+          (dismiss)="closeCaptainAbilityPicker()"
+          (saveDrafts)="saveCaptainAbilityPicker($event)"
+        ></app-ability-requirement-picker>
+
+        <section class="ability-requirements-card">
+          <div class="slot-grid__header">
             <h2>{{ t('requiredCharacters.title') }}</h2>
             <p>{{ t('requiredCharacters.copy') }}</p>
           </div>

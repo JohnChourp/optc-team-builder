@@ -2166,6 +2166,10 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
       'utf8',
     );
+    const source = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.ts'),
+      'utf8',
+    );
 
     expect(template).toContain("'common.actions.reset' | transloco");
     expect(template).not.toContain('common.actions.viewDetails');
@@ -2184,6 +2188,10 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).not.toContain('slot.snippet');
     expect(template).toContain('<app-ability-filter-rail');
     expect(template).toContain('requiredCharacterAbilityRailItems(view)');
+    expect(source).not.toContain("this.buildRequiredCharacterAbilityRailItem(view, 'captain')");
+    expect(template).toContain('captainAbilityFilters.title');
+    expect(template).toContain('captainAbilityDrafts()');
+    expect(template).toContain('availableCaptainAbilityCatalogItems()');
     expect(template).toContain('clearRequiredCharacterAbilityCategory(');
     expect(template).not.toContain('ability-requirements-selected-row');
     expect(template).toContain('<app-ability-requirement-picker');
@@ -2241,6 +2249,127 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).not.toContain('leaderSuperSpecialCriteriaToggleLabel()');
     expect(template).toContain("t('fallback.allowedLeadersWithSuperEffects')");
     expect(template).toContain("t('fallback.ignoredLeaderSuperSpecialCriteria')");
+  });
+
+  it('saves global Captain ability requirements independently from battle Special requirements', async () => {
+    const { page } = await createPage();
+
+    page.abilityCatalog.set({
+      generatedAt: '2026-03-25T10:00:00.000Z',
+      sourceVersion: 'test',
+      abilityCount: 1,
+      abilities: [
+        {
+          key: 'remove_bind',
+          label: 'Bind',
+          category: 'special',
+          supportsTurns: true,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['captainAbility', 'specialText'],
+          matchCount: 10,
+          sampleCharacterIds: [101],
+          sampleTexts: ['Reduces Bind duration by 5 turns'],
+        },
+      ],
+    });
+    page.battleRequirements.set([
+      {
+        id: 'battle-1',
+        title: 'Battle 1',
+        enemyMechanics: [],
+        requiredCharacterGroups: [
+          {
+            id: 'group-1',
+            abilities: [
+              {
+                abilityKey: 'remove_bind',
+                minTurns: 5,
+                slotTokens: [],
+                requiredCharacterCount: 1,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    const groupView = page.requiredBattleViews()[0]!.groupViews[0]!;
+    const railItems = page.requiredCharacterAbilityRailItems(groupView);
+
+    expect(railItems.map((item) => item.category)).toEqual([
+      'special',
+      'crewmate',
+      'potential',
+      'support',
+    ]);
+    expect(page.availableCaptainAbilityCatalogItems().map((item) => item.key)).toEqual([
+      'remove_bind',
+    ]);
+
+    page.openCaptainAbilityPicker();
+    expect(page.captainAbilityPickerOpen()).toBe(true);
+
+    await page.saveCaptainAbilityPicker([
+      {
+        draftId: 'captain-bind',
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ]);
+
+    expect(page.captainAbilityDrafts()).toEqual([
+      expect.objectContaining({
+        abilityKey: 'remove_bind',
+        draftId: expect.any(String),
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      }),
+    ]);
+    expect(page.battleRequirements()[0]!.requiredCharacterGroups[0]!.abilities).toEqual([
+      {
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ]);
+    expect(page.pageRequiredAbilities()).toEqual([
+      {
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      },
+      {
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ]);
+
+    await page.clearRequiredCharacterAbilityCategory('battle-1', 'group-1', 'special');
+
+    expect(page.battleRequirements()[0]!.requiredCharacterGroups[0]!.abilities).toEqual([]);
+    expect(page.captainAbilityDrafts()).toEqual([
+      expect.objectContaining({
+        abilityKey: 'remove_bind',
+        draftId: expect.any(String),
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      }),
+    ]);
   });
 
   it('reports partial captain condition status for generated result teams', async () => {
@@ -3609,7 +3738,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 25,
+      schemaVersion: 26,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -3776,7 +3905,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
     });
   });
 
-  it('exports leader boost, scoped cost ranges, max total cost, and required manual picks in schema 25 presets', () => {
+  it('exports leader boost, scoped cost ranges, max total cost, and required manual picks in schema 26 presets', () => {
     const payload = buildAutoTeamSelectionExportPayload({
       selectedTypes: ['DEX'],
       selectedClasses: ['Fighter'],
@@ -3812,7 +3941,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       exportedAt: '2026-03-25T10:00:00.000Z',
     });
 
-    expect(payload.schemaVersion).toBe(25);
+    expect(payload.schemaVersion).toBe(26);
     expect(payload.filters.leaderBoostRanges).toEqual({
       ATK: { min: 5, max: 6 },
       HP: { min: 1.25, max: 1.5 },
@@ -4247,6 +4376,81 @@ describe('AutoTeamBuilder preset import helpers', () => {
     expect(result.state.leaderCostRange).toEqual({ min: 20, max: 60 });
     expect(result.state.subCostRange).toEqual({ min: 10, max: 40 });
     expect(result.state.maxTotalCost).toBe(300);
+  });
+
+  it('round-trips global captain-source required ability requirements in presets', () => {
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [
+        {
+          abilityKey: 'remove_bind',
+          minTurns: 5,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+          slotScope: 'leader',
+          sourceScope: 'captainAbility',
+        },
+      ],
+      enemyMechanics: [],
+      battleRequirements: [
+        {
+          id: 'battle-1',
+          title: 'Battle 1',
+          enemyMechanics: [],
+          requiredCharacterGroups: [],
+        },
+      ],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
+      requireUniqueBaseCharacterNames: false,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      manualSlots: createManualSlots({
+        captain: [101],
+        friendCaptain: [101],
+      }),
+      lockedCharacterIds: [101],
+      lockedCharacters: [createCharacterRecord(101)],
+      selectedLeaderIds: [101],
+      captainLeaderId: 101,
+      friendCaptainLeaderId: 101,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+
+    const result = sanitizeAutoTeamSelectionImportPayload(payload, {
+      availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      availableClasses: ['Fighter', 'Slasher'],
+      abilityCatalogItems: [
+        {
+          key: 'remove_bind',
+          label: 'Bind',
+          category: 'special',
+          supportsTurns: true,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['captainAbility', 'specialText'],
+          matchCount: 10,
+          sampleCharacterIds: [101],
+          sampleTexts: ['Reduces Bind duration by 5 turns'],
+        },
+      ],
+      availableLockedCharacters: [createCharacterRecord(101)],
+    });
+
+    expect(payload.schemaVersion).toBe(26);
+    expect(result.state.requiredAbilities).toEqual([
+      {
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      },
+    ]);
+    expect(result.state.battleRequirements).toEqual([]);
   });
 
   it('restores legacy cost range imports into both scoped cost ranges', () => {

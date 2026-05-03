@@ -22,6 +22,7 @@ import {
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
 import {
+  normalizeAbilityRequirementSourceScope,
   normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityRequirement,
   type AutoBuildBattleRequirement,
@@ -141,6 +142,8 @@ interface LeaderPairOption {
   friendCaptainIndex: number;
 }
 
+type BattleRequirementAssignmentMode = 'strict' | 'flexible';
+
 interface AutoTeamBuildAttemptOptions {
   requireLeadersWithoutSuperEffects?: boolean;
   friendCaptainRecords?: CharacterDetailRecord[];
@@ -148,6 +151,13 @@ interface AutoTeamBuildAttemptOptions {
   autoFillCharacterIds?: number[];
   leaderAutoFillCharacterIds?: number[];
   subAutoFillCharacterIds?: number[];
+  battleRequirementAssignmentMode?: BattleRequirementAssignmentMode;
+}
+
+interface SubAbilityDemandContext {
+  requirements: AutoBuildAbilityRequirement[];
+  battleRequirements: AutoBuildBattleRequirement[];
+  battleAssignmentMode: BattleRequirementAssignmentMode;
 }
 
 export interface PreparedAutoBuildRecord {
@@ -243,6 +253,7 @@ function cloneAbilityRequirement(
   requirement: AutoBuildAbilityRequirement,
 ): AutoBuildAbilityRequirement {
   const slotScope = normalizeAbilityRequirementSlotScope(requirement.slotScope);
+  const sourceScope = normalizeAbilityRequirementSourceScope(requirement.sourceScope);
   const nextRequirement: AutoBuildAbilityRequirement = {
     ...requirement,
     slotTokens: [...requirement.slotTokens],
@@ -252,6 +263,12 @@ function cloneAbilityRequirement(
     delete nextRequirement.slotScope;
   } else {
     nextRequirement.slotScope = slotScope;
+  }
+
+  if (sourceScope) {
+    nextRequirement.sourceScope = sourceScope;
+  } else {
+    delete nextRequirement.sourceScope;
   }
 
   return nextRequirement;
@@ -670,6 +687,7 @@ function isExtraDropLeaderAbilityRequirement(requirement: AutoBuildAbilityRequir
 function isLeaderScopedAbilityRequirement(requirement: AutoBuildAbilityRequirement): boolean {
   return (
     normalizeAbilityRequirementSlotScope(requirement.slotScope) === 'leader' ||
+    normalizeAbilityRequirementSourceScope(requirement.sourceScope) === 'captainAbility' ||
     isExtraDropLeaderAbilityRequirement(requirement)
   );
 }
@@ -821,7 +839,7 @@ interface AbilityRequirementDemand {
 }
 
 function buildAbilityRequirementDemandGroupKey(requirement: AutoBuildAbilityRequirement): string {
-  return `${requirement.abilityKey.trim()}|${normalizeAbilityRequirementSlotScope(requirement.slotScope)}`;
+  return `${requirement.abilityKey.trim()}|${normalizeAbilityRequirementSlotScope(requirement.slotScope)}|${normalizeAbilityRequirementSourceScope(requirement.sourceScope) ?? 'any'}`;
 }
 
 function compareAbilityRequirementDemandStrictness(
@@ -1048,6 +1066,7 @@ function canAssignBattleGroups(
   groups: AutoBuildRequiredCharacterGroup[],
   leaderCandidates: AutoBuildCandidate[],
   globallyUsedCandidateIndexes: Set<number>,
+  assignmentMode: BattleRequirementAssignmentMode,
 ): Set<number> | null {
   if (!groups.length) {
     return new Set<number>();
@@ -1071,7 +1090,10 @@ function canAssignBattleGroups(
     }
 
     for (let candidateIndex = 0; candidateIndex < candidates.length; candidateIndex += 1) {
-      if (globallyUsedCandidateIndexes.has(candidateIndex)) {
+      if (
+        globallyUsedCandidateIndexes.has(candidateIndex) ||
+        (assignmentMode === 'strict' && battleUsedCandidateIndexes.has(candidateIndex))
+      ) {
         continue;
       }
 
@@ -1103,6 +1125,7 @@ function resolveBattleRequirementCoverage(
   candidates: AutoBuildCandidate[],
   battles: AutoBuildBattleRequirement[] | undefined,
   leaderCandidates: AutoBuildCandidate[] = [],
+  assignmentMode: BattleRequirementAssignmentMode = 'flexible',
 ): NonNullable<AutoBuildCoverageSummary['battleRequirements']> {
   const requested = cloneBattleRequirements(battles);
 
@@ -1124,6 +1147,7 @@ function resolveBattleRequirementCoverage(
       battle.requiredCharacterGroups,
       leaderCandidates,
       globallyUsedCandidateIndexes,
+      assignmentMode,
     );
 
     if (!battleUsedIndexes) {
@@ -1271,164 +1295,189 @@ export function buildAutoTeamResultFromPreparedContext(
     preserveCaptainOrder: (manualSlotCandidateMap.get('captain') ?? []).length > 0,
     preserveFriendCaptainOrder: manualFriendCaptainCandidates.length > 0,
   });
+  const battleRequirementAssignmentModes = resolveBattleRequirementAssignmentModes(input, options);
 
-  for (const leaderPair of leaderPairOptions) {
-    const leaderSlots = [leaderPair.captain, leaderPair.friendCaptain];
-    const leaders = resolveUniqueCandidates(leaderSlots);
-    const leaderCriteria = resolveActiveLeaderCriteria(
-      leaders,
-      leaderPair.captain.character.id,
-      leaderPair.friendCaptain.character.id,
-      input,
-    );
-    const leaderSuperEffectScope = resolveActiveLeaderSuperEffectScope(leaders);
-    const requiredLeaderSuperEffectMatchingSlots =
-      resolveRequiredLeaderSuperEffectMatchingSlots(input);
-
-    if (!teamCostWithinBudget(input, leaderPair.captain, [])) {
-      continue;
-    }
-
-    if (
-      requiredLeaderSuperEffectMatchingSlots !== null &&
-      (!leaderSuperEffectScope.isParseable ||
-        leaders.some((leader) => !matchesLeaderSuperEffectScope(leader, leaderSuperEffectScope)))
-    ) {
-      continue;
-    }
-
-    if (
-      !canStillReachLeaderSuperEffectRequirement(
-        countLeaderSuperEffectScopeMatches(leaderSlots, leaderSuperEffectScope),
-        TEAM_SUB_SLOT_COUNT,
-        requiredLeaderSuperEffectMatchingSlots,
-      )
-    ) {
-      continue;
-    }
-
-    if (!canStillReachLeaderTagConditions(leaderSlots, TEAM_SUB_SLOT_COUNT, leaderCriteria)) {
-      continue;
-    }
-
-    if (
-      input.requireFullCaptainAbilityCoverage &&
-      leaderSlots.some((leader) => !matchesLeaderBuildScope(leader, leaderCriteria))
-    ) {
-      continue;
-    }
-
-    const constrainedSubSelectionOptions = resolveConstrainedSubSelectionOptions(
-      manualSlotCandidateMap,
-      requiredManualSlotCandidateMap,
-      leaders,
-      leaderSlots,
-      input,
-      leaderCriteria,
-      leaderSuperEffectScope,
-    );
-
-    for (const constrainedSubSelections of constrainedSubSelectionOptions) {
-      const constrainedSubs = AUTO_BUILD_MANUAL_SUB_SLOT_ROLES.map((role) =>
-        constrainedSubSelections.get(role),
-      ).filter((candidate): candidate is AutoBuildCandidate => Boolean(candidate));
-      const selectedSubs = selectSubs(
-        subAutoFillCandidates,
+  for (const battleRequirementAssignmentMode of battleRequirementAssignmentModes) {
+    for (const leaderPair of leaderPairOptions) {
+      const leaderSlots = [leaderPair.captain, leaderPair.friendCaptain];
+      const leaders = resolveUniqueCandidates(leaderSlots);
+      const leaderCriteria = resolveActiveLeaderCriteria(
         leaders,
-        leaderSlots,
+        leaderPair.captain.character.id,
+        leaderPair.friendCaptain.character.id,
         input,
-        leaderCriteria,
-        leaderSuperEffectScope,
-        constrainedSubs,
       );
+      const leaderSuperEffectScope = resolveActiveLeaderSuperEffectScope(leaders);
+      const requiredLeaderSuperEffectMatchingSlots =
+        resolveRequiredLeaderSuperEffectMatchingSlots(input);
 
-      if (selectedSubs.length < TEAM_SUB_SLOT_COUNT) {
+      if (!teamCostWithinBudget(input, leaderPair.captain, [])) {
         continue;
       }
 
-      const orderedSubs = orderSelectedSubCandidates(constrainedSubSelections, selectedSubs);
-      const teamCandidates = [...leaderSlots, ...orderedSubs];
-      const activeSuperEffectScope = resolveActiveLeaderSuperEffectScope(teamCandidates);
-
       if (
         requiredLeaderSuperEffectMatchingSlots !== null &&
-        (!activeSuperEffectScope.isParseable ||
-          countLeaderSuperEffectScopeMatches(teamCandidates, activeSuperEffectScope) <
-            requiredLeaderSuperEffectMatchingSlots)
+        (!leaderSuperEffectScope.isParseable ||
+          leaders.some((leader) => !matchesLeaderSuperEffectScope(leader, leaderSuperEffectScope)))
       ) {
         continue;
       }
 
-      const coverage = summarizeCoverage(teamCandidates, input, leaderCriteria, leaderSlots);
-
-      if (input.requireFullCaptainAbilityCoverage && !coverage.leaderCriteria.allSlotsMatch) {
-        continue;
-      }
-
-      if (!matchesActiveLeaderTagConditions(teamCandidates, leaderCriteria)) {
-        continue;
-      }
-
-      if (input.requireAllSelectedTypesInTeam && !coverage.coversAllSelectedTypes) {
-        continue;
-      }
-
       if (
-        input.requireLeaderSuperSpecialCriteria &&
-        !areActiveSuperCriteriaSatisfied(
-          leaderSlots,
-          teamCandidates,
-          input.requireLeaderSuperSpecialCriteria,
+        !canStillReachLeaderSuperEffectRequirement(
+          countLeaderSuperEffectScopeMatches(leaderSlots, leaderSuperEffectScope),
+          TEAM_SUB_SLOT_COUNT,
+          requiredLeaderSuperEffectMatchingSlots,
         )
       ) {
         continue;
       }
 
+      if (!canStillReachLeaderTagConditions(leaderSlots, TEAM_SUB_SLOT_COUNT, leaderCriteria)) {
+        continue;
+      }
+
       if (
-        (input.requiredAbilities.length && !coverage.abilityRequirements.matchesAll) ||
-        (input.requiredCharacterGroups.length && !coverage.requiredCharacterGroups.matchesAll) ||
-        ((input.battleRequirements?.length ?? 0) > 0 && !coverage.battleRequirements?.matchesAll)
+        input.requireFullCaptainAbilityCoverage &&
+        leaderSlots.some((leader) => !matchesLeaderBuildScope(leader, leaderCriteria))
       ) {
         continue;
       }
 
-      const slots: AutoBuildSlot[] = [
-        {
-          role: 'captain',
-          character: leaderPair.captain.character,
-          reasonChips: resolveSlotReasonChips(
-            leaderPair.captain.reasonChips,
-            manualCharacterIdSet.has(leaderPair.captain.character.id),
-          ),
-        },
-        {
-          role: 'friendCaptain',
-          character: leaderPair.friendCaptain.character,
-          reasonChips: resolveSlotReasonChips(
-            leaderPair.friendCaptain.reasonChips,
-            manualCharacterIdSet.has(leaderPair.friendCaptain.character.id),
-          ),
-        },
-        ...orderedSubs.map((candidate) => ({
-          role: 'sub' as const,
-          character: candidate.character,
-          reasonChips: resolveSlotReasonChips(
-            candidate.reasonChips,
-            manualCharacterIdSet.has(candidate.character.id),
-          ),
-        })),
-      ];
-
-      return {
+      const constrainedSubSelectionOptions = resolveConstrainedSubSelectionOptions(
+        manualSlotCandidateMap,
+        requiredManualSlotCandidateMap,
+        leaders,
+        leaderSlots,
         input,
-        candidateCount: candidates.length,
-        slots,
-        coverage,
-      };
+        leaderCriteria,
+        leaderSuperEffectScope,
+      );
+
+      for (const constrainedSubSelections of constrainedSubSelectionOptions) {
+        const constrainedSubs = AUTO_BUILD_MANUAL_SUB_SLOT_ROLES.map((role) =>
+          constrainedSubSelections.get(role),
+        ).filter((candidate): candidate is AutoBuildCandidate => Boolean(candidate));
+        const selectedSubs = selectSubs(
+          subAutoFillCandidates,
+          leaders,
+          leaderSlots,
+          input,
+          leaderCriteria,
+          leaderSuperEffectScope,
+          battleRequirementAssignmentMode,
+          constrainedSubs,
+        );
+
+        if (selectedSubs.length < TEAM_SUB_SLOT_COUNT) {
+          continue;
+        }
+
+        const orderedSubs = orderSelectedSubCandidates(constrainedSubSelections, selectedSubs);
+        const teamCandidates = [...leaderSlots, ...orderedSubs];
+        const activeSuperEffectScope = resolveActiveLeaderSuperEffectScope(teamCandidates);
+
+        if (
+          requiredLeaderSuperEffectMatchingSlots !== null &&
+          (!activeSuperEffectScope.isParseable ||
+            countLeaderSuperEffectScopeMatches(teamCandidates, activeSuperEffectScope) <
+              requiredLeaderSuperEffectMatchingSlots)
+        ) {
+          continue;
+        }
+
+        const coverage = summarizeCoverage(
+          teamCandidates,
+          input,
+          leaderCriteria,
+          leaderSlots,
+          battleRequirementAssignmentMode,
+        );
+
+        if (input.requireFullCaptainAbilityCoverage && !coverage.leaderCriteria.allSlotsMatch) {
+          continue;
+        }
+
+        if (!matchesActiveLeaderTagConditions(teamCandidates, leaderCriteria)) {
+          continue;
+        }
+
+        if (input.requireAllSelectedTypesInTeam && !coverage.coversAllSelectedTypes) {
+          continue;
+        }
+
+        if (
+          input.requireLeaderSuperSpecialCriteria &&
+          !areActiveSuperCriteriaSatisfied(
+            leaderSlots,
+            teamCandidates,
+            input.requireLeaderSuperSpecialCriteria,
+          )
+        ) {
+          continue;
+        }
+
+        if (
+          (input.requiredAbilities.length && !coverage.abilityRequirements.matchesAll) ||
+          (input.requiredCharacterGroups.length && !coverage.requiredCharacterGroups.matchesAll) ||
+          ((input.battleRequirements?.length ?? 0) > 0 && !coverage.battleRequirements?.matchesAll)
+        ) {
+          continue;
+        }
+
+        const slots: AutoBuildSlot[] = [
+          {
+            role: 'captain',
+            character: leaderPair.captain.character,
+            reasonChips: resolveSlotReasonChips(
+              leaderPair.captain.reasonChips,
+              manualCharacterIdSet.has(leaderPair.captain.character.id),
+            ),
+          },
+          {
+            role: 'friendCaptain',
+            character: leaderPair.friendCaptain.character,
+            reasonChips: resolveSlotReasonChips(
+              leaderPair.friendCaptain.reasonChips,
+              manualCharacterIdSet.has(leaderPair.friendCaptain.character.id),
+            ),
+          },
+          ...orderedSubs.map((candidate) => ({
+            role: 'sub' as const,
+            character: candidate.character,
+            reasonChips: resolveSlotReasonChips(
+              candidate.reasonChips,
+              manualCharacterIdSet.has(candidate.character.id),
+            ),
+          })),
+        ];
+
+        return {
+          input,
+          candidateCount: candidates.length,
+          slots,
+          coverage,
+        };
+      }
     }
   }
 
   return null;
+}
+
+function resolveBattleRequirementAssignmentModes(
+  input: AutoBuildInput,
+  options: AutoTeamBuildAttemptOptions,
+): BattleRequirementAssignmentMode[] {
+  if (options.battleRequirementAssignmentMode) {
+    return [options.battleRequirementAssignmentMode];
+  }
+
+  const hasMultiGroupBattle = (input.battleRequirements ?? []).some(
+    (battle) => battle.requiredCharacterGroups.length > 1,
+  );
+
+  return hasMultiGroupBattle ? ['strict', 'flexible'] : ['strict'];
 }
 
 function resolveFriendCaptainCandidatePool(
@@ -1955,6 +2004,7 @@ function selectSubs(
   input: AutoBuildInput,
   leaderCriteria: ActiveLeaderCriteria,
   leaderSuperEffectScope: ActiveLeaderSuperEffectScope,
+  battleRequirementAssignmentMode: BattleRequirementAssignmentMode,
   lockedSubs: AutoBuildCandidate[] = [],
 ): AutoBuildCandidate[] {
   const selected = resolveUniqueCandidates(lockedSubs);
@@ -2053,6 +2103,10 @@ function selectSubs(
   }
 
   const selectedIds = new Set(selected.map((candidate) => candidate.character.id));
+  const subAbilityDemandContext = collectSubAbilityDemandContext(
+    input,
+    battleRequirementAssignmentMode,
+  );
   const pool = candidates
     .filter((candidate) => {
       return (
@@ -2080,7 +2134,9 @@ function selectSubs(
         (!input.requireAllSelectedClassesPerCharacter || candidate.matchesAllSelectedClasses)
       );
     })
-    .sort(compareCandidatesByNewestId);
+    .sort((left, right) =>
+      compareAutoFillSubCandidates(left, right, input, subAbilityDemandContext),
+    );
 
   const isCompleteSelectionValid = (nextSelection: AutoBuildCandidate[]): boolean => {
     const teamCandidates = [...leaderSlots, ...nextSelection];
@@ -2095,7 +2151,13 @@ function selectSubs(
       return false;
     }
 
-    const nextCoverage = summarizeCoverage(teamCandidates, input, leaderCriteria, leaderSlots);
+    const nextCoverage = summarizeCoverage(
+      teamCandidates,
+      input,
+      leaderCriteria,
+      leaderSlots,
+      battleRequirementAssignmentMode,
+    );
 
     if (input.requireFullCaptainAbilityCoverage && !nextCoverage.leaderCriteria.allSlotsMatch) {
       return false;
@@ -2214,6 +2276,184 @@ function selectSubs(
   };
 
   return findNewestValidSelection(0, selected, selectedIds, selectedPartyConflictKeys) ?? selected;
+}
+
+function compareAutoFillSubCandidates(
+  left: AutoBuildCandidate,
+  right: AutoBuildCandidate,
+  input: AutoBuildInput,
+  subAbilityDemandContext: SubAbilityDemandContext,
+): number {
+  if (
+    subAbilityDemandContext.requirements.length > 0 ||
+    subAbilityDemandContext.battleRequirements.length > 0
+  ) {
+    if (subAbilityDemandContext.battleAssignmentMode === 'strict') {
+      const strictGroupPreferenceDifference =
+        resolveStrictBattleGroupPreferenceScore(
+          right,
+          subAbilityDemandContext.battleRequirements,
+        ) -
+        resolveStrictBattleGroupPreferenceScore(left, subAbilityDemandContext.battleRequirements);
+
+      if (strictGroupPreferenceDifference !== 0) {
+        return strictGroupPreferenceDifference;
+      }
+    }
+
+    const demandDifference =
+      resolveSubAbilityDemandScore(right, subAbilityDemandContext) -
+      resolveSubAbilityDemandScore(left, subAbilityDemandContext);
+
+    if (demandDifference !== 0) {
+      return demandDifference;
+    }
+
+    if (subAbilityDemandContext.battleAssignmentMode === 'strict') {
+      const battleGroupSpreadDifference =
+        resolveStrictBattleGroupSpreadScore(left, subAbilityDemandContext.battleRequirements) -
+        resolveStrictBattleGroupSpreadScore(right, subAbilityDemandContext.battleRequirements);
+
+      if (battleGroupSpreadDifference !== 0) {
+        return battleGroupSpreadDifference;
+      }
+    }
+
+    const coverageDifference =
+      resolveSubCoverageRoleScore(right) - resolveSubCoverageRoleScore(left);
+
+    if (coverageDifference !== 0) {
+      return coverageDifference;
+    }
+  }
+
+  const selectedFilterDifference =
+    resolveSubSelectedFilterScore(right, input) - resolveSubSelectedFilterScore(left, input);
+
+  if (selectedFilterDifference !== 0) {
+    return selectedFilterDifference;
+  }
+
+  return compareCandidatesByNewestId(left, right);
+}
+
+function collectSubAbilityDemandContext(
+  input: AutoBuildInput,
+  battleAssignmentMode: BattleRequirementAssignmentMode,
+): SubAbilityDemandContext {
+  const requirements = [
+    ...input.requiredAbilities,
+    ...input.requiredCharacterGroups.flatMap((group) => group.abilities),
+  ];
+  const battleRequirements = input.battleRequirements ?? [];
+
+  return {
+    requirements:
+      battleAssignmentMode === 'strict'
+        ? filterSubAbilityDemands(requirements)
+        : filterSubAbilityDemands([
+            ...requirements,
+            ...battleRequirements.flatMap((battle) =>
+              battle.requiredCharacterGroups.flatMap((group) => group.abilities),
+            ),
+          ]),
+    battleRequirements,
+    battleAssignmentMode,
+  };
+}
+
+function resolveSubAbilityDemandScore(
+  candidate: AutoBuildCandidate,
+  demandContext: SubAbilityDemandContext,
+): number {
+  const requirementScore = demandContext.requirements.reduce((score, demand) => {
+    if (!candidateMatchesAbilityRequirement(candidate, demand)) {
+      return score;
+    }
+
+    return score + Math.max(1, demand.requiredCharacterCount);
+  }, 0);
+
+  if (demandContext.battleAssignmentMode !== 'strict') {
+    return requirementScore;
+  }
+
+  return (
+    requirementScore +
+    demandContext.battleRequirements.reduce(
+      (score, battle) => score + resolveStrictBattleGroupDemandScore(candidate, battle),
+      0,
+    )
+  );
+}
+
+function filterSubAbilityDemands(
+  requirements: AutoBuildAbilityRequirement[],
+): AutoBuildAbilityRequirement[] {
+  return requirements.filter(
+    (requirement) =>
+      normalizeAbilityRequirementSlotScope(requirement.slotScope) !== 'leader' &&
+      normalizeAbilityRequirementSourceScope(requirement.sourceScope) !== 'captainAbility',
+  );
+}
+
+function resolveStrictBattleGroupDemandScore(
+  candidate: AutoBuildCandidate,
+  battle: AutoBuildBattleRequirement,
+): number {
+  return battle.requiredCharacterGroups.reduce((bestScore, group) => {
+    if (!candidateMatchesRequiredCharacterGroup(candidate, group, [])) {
+      return bestScore;
+    }
+
+    return Math.max(bestScore, group.abilities.length);
+  }, 0);
+}
+
+function resolveStrictBattleGroupSpreadScore(
+  candidate: AutoBuildCandidate,
+  battles: AutoBuildBattleRequirement[],
+): number {
+  return battles.reduce(
+    (score, battle) =>
+      score +
+      battle.requiredCharacterGroups.filter((group) =>
+        candidateMatchesRequiredCharacterGroup(candidate, group, []),
+      ).length,
+    0,
+  );
+}
+
+function resolveStrictBattleGroupPreferenceScore(
+  candidate: AutoBuildCandidate,
+  battles: AutoBuildBattleRequirement[],
+): number {
+  const spreadScore = resolveStrictBattleGroupSpreadScore(candidate, battles);
+
+  if (spreadScore === 1) {
+    return 2;
+  }
+
+  return spreadScore > 1 ? 1 : 0;
+}
+
+function resolveSubCoverageRoleScore(candidate: AutoBuildCandidate): number {
+  return (
+    candidate.tags.burstRoles.length +
+    candidate.tags.consistencyRoles.length +
+    candidate.tags.utilityRoles.length
+  );
+}
+
+function resolveSubSelectedFilterScore(
+  candidate: AutoBuildCandidate,
+  input: AutoBuildInput,
+): number {
+  return (
+    candidate.matchedSelectedTypes.length +
+    candidate.matchedSelectedClasses.length +
+    (input.requireAllSelectedClassesPerCharacter && candidate.matchesAllSelectedClasses ? 1 : 0)
+  );
 }
 
 function resolveCountedTeamCost(captain: AutoBuildCandidate, subs: AutoBuildCandidate[]): number {
@@ -2450,6 +2690,7 @@ function summarizeCoverage(
   input: AutoBuildInput,
   leaderCriteria: ActiveLeaderCriteria,
   leaderCandidates: AutoBuildCandidate[],
+  battleRequirementAssignmentMode: BattleRequirementAssignmentMode = 'flexible',
 ): AutoBuildCoverageSummary {
   const burst = new Set<AutoBuildBurstRole>();
   const consistency = new Set<AutoBuildConsistencyRole>();
@@ -2485,6 +2726,7 @@ function summarizeCoverage(
     candidates,
     input.battleRequirements,
     leaderCandidates,
+    battleRequirementAssignmentMode,
   );
 
   return {

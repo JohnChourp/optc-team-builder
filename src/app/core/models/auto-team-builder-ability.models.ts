@@ -7,14 +7,10 @@ export type AutoBuildAbilitySource =
   | 'superTandemData'
   | 'finalTapData'
   | 'rushSugoSpecialData';
-export type AutoBuildAbilityCategory =
-  | 'special'
-  | 'crewmate'
-  | 'potential'
-  | 'support'
-  | 'legacy';
+export type AutoBuildAbilityCategory = 'special' | 'crewmate' | 'potential' | 'support' | 'legacy';
 export type AutoBuildAbilityCoverageMode = 'explicit' | 'selectedDebuff';
 export type AutoBuildAbilitySlotScope = 'any' | 'leader' | 'sub';
+export type AutoBuildAbilityRequirementSourceScope = 'captainAbility';
 export type AutoBuildEnemyMechanicCategory =
   | 'enemyDefense'
   | 'crewDebuff'
@@ -27,15 +23,8 @@ export type AutoBuildEnemyMechanicTriggerTag =
   | 'onOrbBoost'
   | 'onDelay'
   | 'onOrbChange';
-export type AutoBuildEnemyMechanicResponseTag =
-  | 'removeBuffs'
-  | 'applyDebuffs'
-  | 'heal'
-  | 'shield';
-export type AutoBuildEnemyMechanicConditionTag =
-  | 'hpThreshold'
-  | 'turnCounter'
-  | 'revive';
+export type AutoBuildEnemyMechanicResponseTag = 'removeBuffs' | 'applyDebuffs' | 'heal' | 'shield';
+export type AutoBuildEnemyMechanicConditionTag = 'hpThreshold' | 'turnCounter' | 'revive';
 
 export interface NormalizedBuilderAbility {
   key: string;
@@ -84,6 +73,7 @@ export interface AutoBuildAbilityRequirement {
   slotTokens: string[];
   requiredCharacterCount: number;
   slotScope?: AutoBuildAbilitySlotScope;
+  sourceScope?: AutoBuildAbilityRequirementSourceScope;
 }
 
 export interface AutoBuildRequiredCharacterGroup {
@@ -130,4 +120,12 @@ export function normalizeAbilityRequirementSlotScope(
   const normalizedValue = typeof value === 'string' ? value.trim() : '';
 
   return normalizedValue === 'leader' || normalizedValue === 'sub' ? normalizedValue : 'any';
+}
+
+export function normalizeAbilityRequirementSourceScope(
+  value: string | null | undefined,
+): AutoBuildAbilityRequirementSourceScope | null {
+  const normalizedValue = typeof value === 'string' ? value.trim() : '';
+
+  return normalizedValue === 'captainAbility' ? normalizedValue : null;
 }

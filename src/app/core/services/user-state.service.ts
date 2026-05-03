@@ -1712,6 +1712,9 @@ export class UserStateService {
         ...(requirement.slotScope === 'leader' || requirement.slotScope === 'sub'
           ? { slotScope: requirement.slotScope }
           : {}),
+        ...(requirement.sourceScope === 'captainAbility'
+          ? { sourceScope: requirement.sourceScope }
+          : {}),
       });
     });
 

@@ -215,6 +215,9 @@
       "slotScopes": {
         "leader": "Leader",
         "sub": "Sub"
+      },
+      "sourceScopes": {
+        "captainAbility": "Captain ability"
       }
     },
     "toggles": {

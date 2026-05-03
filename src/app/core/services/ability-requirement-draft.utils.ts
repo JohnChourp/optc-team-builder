@@ -19,14 +19,16 @@ import {
   trendingUpOutline,
   trendingDownOutline,
   warningOutline,
-} from "ionicons/icons";
+} from 'ionicons/icons';
 
 import {
+  normalizeAbilityRequirementSourceScope,
   normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityRequirement,
+  type AutoBuildAbilityRequirementSourceScope,
   type AutoBuildAbilitySlotScope,
-} from "../models/auto-team-builder-ability.models";
+} from '../models/auto-team-builder-ability.models';
 
 export interface AbilityRequirementDraft {
   draftId: string;
@@ -35,12 +37,13 @@ export interface AbilityRequirementDraft {
   slotTokens: string[];
   requiredCharacterCount: number | null;
   slotScope?: AutoBuildAbilitySlotScope;
+  sourceScope?: AutoBuildAbilityRequirementSourceScope;
 }
 
 export interface AbilityRequirementVisualMeta {
   icon: string;
   badge: string;
-  tone: "gold" | "red" | "teal" | "blue" | "violet" | "green" | "orange" | "neutral";
+  tone: 'gold' | 'red' | 'teal' | 'blue' | 'violet' | 'green' | 'orange' | 'neutral';
   isFallback: boolean;
 }
 
@@ -48,13 +51,14 @@ export interface AbilityRequirementSummaryFormatter {
   formatCharacters(count: number): string;
   formatTurns(count: number): string;
   formatSlotScope?(scope: AutoBuildAbilitySlotScope): string;
+  formatSourceScope?(scope: AutoBuildAbilityRequirementSourceScope): string;
 }
 
 export interface AbilityRequirementMiniBadge {
   abilityKey: string;
   label: string;
   badge: string;
-  tone: AbilityRequirementVisualMeta["tone"];
+  tone: AbilityRequirementVisualMeta['tone'];
 }
 
 interface SerializeAbilityRequirementDraftOptions {
@@ -65,209 +69,209 @@ interface SerializeAbilityRequirementDraftOptions {
 
 const FALLBACK_ABILITY_VISUAL: AbilityRequirementVisualMeta = {
   icon: helpCircleOutline,
-  badge: "UT",
-  tone: "neutral",
+  badge: 'UT',
+  tone: 'neutral',
   isFallback: true,
 };
 
-const ABILITY_VISUALS: Record<string, Omit<AbilityRequirementVisualMeta, "isFallback">> = {
+const ABILITY_VISUALS: Record<string, Omit<AbilityRequirementVisualMeta, 'isFallback'>> = {
   deal_fixed_damage: {
     icon: pulseOutline,
-    badge: "FIX",
-    tone: "orange",
+    badge: 'FIX',
+    tone: 'orange',
   },
   extra_drop_any: {
     icon: sparklesOutline,
-    badge: "DROP",
-    tone: "green",
+    badge: 'DROP',
+    tone: 'green',
   },
   extra_drop_guaranteed: {
     icon: sparklesOutline,
-    badge: "GDRP",
-    tone: "gold",
+    badge: 'GDRP',
+    tone: 'gold',
   },
   inflict_poison: {
     icon: flaskOutline,
-    badge: "POI",
-    tone: "green",
+    badge: 'POI',
+    tone: 'green',
   },
   ignore_normal_attack_only: {
     icon: banOutline,
-    badge: "NAO",
-    tone: "violet",
+    badge: 'NAO',
+    tone: 'violet',
   },
   remove_atk_down: {
     icon: trendingDownOutline,
-    badge: "ATK",
-    tone: "red",
+    badge: 'ATK',
+    tone: 'red',
   },
   remove_bind: {
     icon: linkOutline,
-    badge: "BD",
-    tone: "gold",
+    badge: 'BD',
+    tone: 'gold',
   },
   remove_blindness: {
     icon: eyeOffOutline,
-    badge: "BL",
-    tone: "blue",
+    badge: 'BL',
+    tone: 'blue',
   },
   remove_burn: {
     icon: flameOutline,
-    badge: "BR",
-    tone: "red",
+    badge: 'BR',
+    tone: 'red',
   },
   remove_chain_coefficient_reduction: {
     icon: gitNetworkOutline,
-    badge: "CH",
-    tone: "teal",
+    badge: 'CH',
+    tone: 'teal',
   },
   remove_chain_multiplier_limit: {
     icon: gitNetworkOutline,
-    badge: "CL",
-    tone: "teal",
+    badge: 'CL',
+    tone: 'teal',
   },
   remove_damage_reduction: {
     icon: shieldOutline,
-    badge: "DR",
-    tone: "blue",
+    badge: 'DR',
+    tone: 'blue',
   },
   remove_despair: {
     icon: sadOutline,
-    badge: "DS",
-    tone: "violet",
+    badge: 'DS',
+    tone: 'violet',
   },
   remove_increase_damage_taken: {
     icon: warningOutline,
-    badge: "DT",
-    tone: "orange",
+    badge: 'DT',
+    tone: 'orange',
   },
   remove_no_healing: {
     icon: medkitOutline,
-    badge: "NH",
-    tone: "teal",
+    badge: 'NH',
+    tone: 'teal',
   },
   remove_enemy_atk_up: {
     icon: trendingUpOutline,
-    badge: "ATK",
-    tone: "red",
+    badge: 'ATK',
+    tone: 'red',
   },
   remove_enemy_barrier: {
     icon: gridOutline,
-    badge: "BAR",
-    tone: "blue",
+    badge: 'BAR',
+    tone: 'blue',
   },
   remove_enemy_damage_nullification: {
     icon: banOutline,
-    badge: "DN",
-    tone: "violet",
+    badge: 'DN',
+    tone: 'violet',
   },
   remove_enemy_end_of_turn_damage_percent_cut: {
     icon: warningOutline,
-    badge: "EOT",
-    tone: "orange",
+    badge: 'EOT',
+    tone: 'orange',
   },
   remove_enemy_end_of_turn_heal: {
     icon: medkitOutline,
-    badge: "HEAL",
-    tone: "green",
+    badge: 'HEAL',
+    tone: 'green',
   },
   remove_enemy_enrage: {
     icon: flameOutline,
-    badge: "ENG",
-    tone: "red",
+    badge: 'ENG',
+    tone: 'red',
   },
   remove_enemy_increased_defense: {
     icon: shieldOutline,
-    badge: "DEF",
-    tone: "teal",
+    badge: 'DEF',
+    tone: 'teal',
   },
   remove_enemy_orb_based_damage_reduction: {
     icon: gridOutline,
-    badge: "ORB",
-    tone: "teal",
+    badge: 'ORB',
+    tone: 'teal',
   },
   remove_pain: {
     icon: pulseOutline,
-    badge: "PN",
-    tone: "red",
+    badge: 'PN',
+    tone: 'red',
   },
   remove_paralysis: {
     icon: flashOutline,
-    badge: "PR",
-    tone: "gold",
+    badge: 'PR',
+    tone: 'gold',
   },
   remove_poison: {
     icon: flaskOutline,
-    badge: "PS",
-    tone: "green",
+    badge: 'PS',
+    tone: 'green',
   },
   remove_resilience: {
     icon: shieldOutline,
-    badge: "RS",
-    tone: "green",
+    badge: 'RS',
+    tone: 'green',
   },
   remove_sailor_despair: {
     icon: sadOutline,
-    badge: "SD",
-    tone: "violet",
+    badge: 'SD',
+    tone: 'violet',
   },
   remove_ship_bind: {
     icon: boatOutline,
-    badge: "SB",
-    tone: "teal",
+    badge: 'SB',
+    tone: 'teal',
   },
   remove_slot_barrier: {
     icon: gridOutline,
-    badge: "SL",
-    tone: "blue",
+    badge: 'SL',
+    tone: 'blue',
   },
   remove_slot_bind: {
     icon: lockOpenOutline,
-    badge: "SBD",
-    tone: "gold",
+    badge: 'SBD',
+    tone: 'gold',
   },
   remove_special_bind: {
     icon: sparklesOutline,
-    badge: "SP",
-    tone: "orange",
+    badge: 'SP',
+    tone: 'orange',
   },
   remove_stun: {
     icon: flashOutline,
-    badge: "ST",
-    tone: "violet",
+    badge: 'ST',
+    tone: 'violet',
   },
   remove_threshold_damage_reduction: {
     icon: removeCircleOutline,
-    badge: "TH",
-    tone: "blue",
+    badge: 'TH',
+    tone: 'blue',
   },
   remove_healing_reduction: {
     icon: medkitOutline,
-    badge: "HR",
-    tone: "teal",
+    badge: 'HR',
+    tone: 'teal',
   },
   remove_defense_up: {
     icon: shieldOutline,
-    badge: "DEF",
-    tone: "teal",
+    badge: 'DEF',
+    tone: 'teal',
   },
 };
 
 const PAIN_SELECTABLE_DEBUFF_KEYS = [
-  { abilityKey: "remove_enemy_atk_up", label: "ATK Up" },
-  { abilityKey: "remove_enemy_barrier", label: "Barrier" },
-  { abilityKey: "remove_enemy_damage_nullification", label: "Damage Nullification" },
+  { abilityKey: 'remove_enemy_atk_up', label: 'ATK Up' },
+  { abilityKey: 'remove_enemy_barrier', label: 'Barrier' },
+  { abilityKey: 'remove_enemy_damage_nullification', label: 'Damage Nullification' },
   {
-    abilityKey: "remove_enemy_end_of_turn_damage_percent_cut",
-    label: "End of Turn Damage/Percent Cut",
+    abilityKey: 'remove_enemy_end_of_turn_damage_percent_cut',
+    label: 'End of Turn Damage/Percent Cut',
   },
-  { abilityKey: "remove_enemy_end_of_turn_heal", label: "End of Turn Heal" },
-  { abilityKey: "remove_enemy_enrage", label: "Enrage" },
-  { abilityKey: "remove_enemy_increased_defense", label: "Increased Defense" },
-  { abilityKey: "remove_enemy_orb_based_damage_reduction", label: "Orb-Based Damage Reduction" },
-  { abilityKey: "remove_damage_reduction", label: "Percent Damage Reduction" },
-  { abilityKey: "remove_resilience", label: "Resilience" },
-  { abilityKey: "remove_threshold_damage_reduction", label: "Threshold Damage Reduction" },
+  { abilityKey: 'remove_enemy_end_of_turn_heal', label: 'End of Turn Heal' },
+  { abilityKey: 'remove_enemy_enrage', label: 'Enrage' },
+  { abilityKey: 'remove_enemy_increased_defense', label: 'Increased Defense' },
+  { abilityKey: 'remove_enemy_orb_based_damage_reduction', label: 'Orb-Based Damage Reduction' },
+  { abilityKey: 'remove_damage_reduction', label: 'Percent Damage Reduction' },
+  { abilityKey: 'remove_resilience', label: 'Resilience' },
+  { abilityKey: 'remove_threshold_damage_reduction', label: 'Threshold Damage Reduction' },
 ] as const;
 
 export function resolveAbilityRequirementVisual(abilityKey: string): AbilityRequirementVisualMeta {
@@ -286,7 +290,7 @@ export function resolveAbilityRequirementVisual(abilityKey: string): AbilityRequ
 export function resolveAbilityRequirementPainSelectableDebuffBadges(
   abilityKey: string,
 ): AbilityRequirementMiniBadge[] {
-  if (abilityKey !== "remove_pain") {
+  if (abilityKey !== 'remove_pain') {
     return [];
   }
 
@@ -310,7 +314,7 @@ export function createAbilityRequirementDraft(
 
   return {
     draftId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    abilityKey: requirement?.abilityKey?.trim() ?? item?.key ?? "",
+    abilityKey: requirement?.abilityKey?.trim() ?? item?.key ?? '',
     minTurns: item?.supportsTurns
       ? rawTurns === undefined || rawTurns === null
         ? 1
@@ -319,6 +323,9 @@ export function createAbilityRequirementDraft(
     slotTokens: sanitizeSlotTokens(requirement?.slotTokens),
     requiredCharacterCount: resolvePositiveInteger(requirement?.requiredCharacterCount) ?? 1,
     slotScope: normalizeAbilityRequirementSlotScope(requirement?.slotScope),
+    ...(normalizeAbilityRequirementSourceScope(requirement?.sourceScope)
+      ? { sourceScope: normalizeAbilityRequirementSourceScope(requirement?.sourceScope)! }
+      : {}),
   };
 }
 
@@ -332,6 +339,9 @@ export function cloneAbilityRequirementDraft(
     slotTokens: [...draft.slotTokens],
     requiredCharacterCount: draft.requiredCharacterCount,
     slotScope: normalizeAbilityRequirementSlotScope(draft.slotScope),
+    ...(normalizeAbilityRequirementSourceScope(draft.sourceScope)
+      ? { sourceScope: normalizeAbilityRequirementSourceScope(draft.sourceScope)! }
+      : {}),
   };
 }
 
@@ -360,7 +370,7 @@ export function applyCatalogAbilityToDraft(
     minTurns: catalogItem?.supportsTurns
       ? draft.minTurns === null
         ? 1
-        : resolveNonNegativeInteger(draft.minTurns) ?? 1
+        : (resolveNonNegativeInteger(draft.minTurns) ?? 1)
       : null,
     slotTokens: catalogItem?.supportsSlotTokens
       ? sanitizeSlotTokens(draft.slotTokens).filter((token) =>
@@ -370,11 +380,9 @@ export function applyCatalogAbilityToDraft(
   };
 }
 
-export function resolvePositiveInteger(
-  value: number | string | null | undefined,
-): number | null {
+export function resolvePositiveInteger(value: number | string | null | undefined): number | null {
   const normalizedValue =
-    typeof value === "number" ? `${value}` : typeof value === "string" ? value.trim() : "";
+    typeof value === 'number' ? `${value}` : typeof value === 'string' ? value.trim() : '';
 
   if (!/^\d+$/.test(normalizedValue)) {
     return null;
@@ -389,7 +397,7 @@ export function resolveNonNegativeInteger(
   value: number | string | null | undefined,
 ): number | null {
   const normalizedValue =
-    typeof value === "number" ? `${value}` : typeof value === "string" ? value.trim() : "";
+    typeof value === 'number' ? `${value}` : typeof value === 'string' ? value.trim() : '';
 
   if (!/^\d+$/.test(normalizedValue)) {
     return null;
@@ -434,23 +442,26 @@ export function serializeAbilityRequirementDrafts(
         ? normalizeAbilityRequirementTurns(draft.minTurns)
         : null
       : normalizeAbilityRequirementTurns(draft.minTurns);
-    const slotTokens = catalogItem?.supportsSlotTokens === false
-      ? []
-      : sanitizeSlotTokens(draft.slotTokens).filter((token) =>
-          catalogItem?.availableSlotTokens?.length
-            ? catalogItem.availableSlotTokens.includes(token)
-            : true,
-        );
+    const slotTokens =
+      catalogItem?.supportsSlotTokens === false
+        ? []
+        : sanitizeSlotTokens(draft.slotTokens).filter((token) =>
+            catalogItem?.availableSlotTokens?.length
+              ? catalogItem.availableSlotTokens.includes(token)
+              : true,
+          );
     const requiredCharacterCount = forceSingleCharacterCount
       ? 1
-      : resolvePositiveInteger(draft.requiredCharacterCount) ?? 1;
+      : (resolvePositiveInteger(draft.requiredCharacterCount) ?? 1);
     const slotScope = normalizeAbilityRequirementSlotScope(draft.slotScope);
+    const sourceScope = normalizeAbilityRequirementSourceScope(draft.sourceScope);
     const nextRequirement: AutoBuildAbilityRequirement = {
       abilityKey,
       minTurns,
       slotTokens,
       requiredCharacterCount,
-      ...(slotScope !== "any" ? { slotScope } : {}),
+      ...(slotScope !== 'any' ? { slotScope } : {}),
+      ...(sourceScope ? { sourceScope } : {}),
     };
 
     if (!dedupe) {
@@ -458,7 +469,7 @@ export function serializeAbilityRequirementDrafts(
       continue;
     }
 
-    const identity = `${abilityKey}|${minTurns ?? "none"}|${slotTokens.join(",")}|${slotScope}`;
+    const identity = `${abilityKey}|${minTurns ?? 'none'}|${slotTokens.join(',')}|${slotScope}|${sourceScope ?? 'any'}`;
     const existingRequirement = requirements.get(identity);
 
     if (existingRequirement) {
@@ -493,17 +504,23 @@ export function formatAbilityRequirementSummary(
 
   const slotScope = normalizeAbilityRequirementSlotScope(requirement.slotScope);
 
-  if (slotScope !== "any") {
+  if (slotScope !== 'any') {
     suffixes.push(formatter.formatSlotScope?.(slotScope) ?? slotScope);
   }
 
+  const sourceScope = normalizeAbilityRequirementSourceScope(requirement.sourceScope);
+
+  if (sourceScope) {
+    suffixes.push(formatter.formatSourceScope?.(sourceScope) ?? sourceScope);
+  }
+
   if (requirement.slotTokens.length > 0) {
-    suffixes.push(requirement.slotTokens.join(" / "));
+    suffixes.push(requirement.slotTokens.join(' / '));
   }
 
   const label = resolveLabel(requirement.abilityKey);
 
-  return suffixes.length > 0 ? `${label} (${suffixes.join(" • ")})` : label;
+  return suffixes.length > 0 ? `${label} (${suffixes.join(' • ')})` : label;
 }
 
 function sanitizeSlotTokens(slotTokens: string[] | null | undefined): string[] {

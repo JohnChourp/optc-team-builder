@@ -691,6 +691,9 @@
       "slotScopes": {
         "leader": "Leader",
         "sub": "Sub"
+      },
+      "sourceScopes": {
+        "captainAbility": "Captain ability"
       }
     },
     "catalog": {
@@ -750,6 +753,17 @@
       "crewmate": "Crewmate",
       "potential": "Potential",
       "support": "Support"
+    }
+  },
+  "captainAbilityFilters": {
+    "title": "Captain ability requirements",
+    "copy": "Pick event-wide Captain Ability effects. Either Captain or Friend Captain must provide each selected effect from their Captain Ability.",
+    "configuredRows": "{{count}} selected Captain effects",
+    "empty": "No Captain Ability effects selected yet.",
+    "pickerCopy": "Selected effects apply to the whole event, not to a single battle.",
+    "actions": {
+      "openPicker": "Open Captain picker",
+      "clearRequirements": "Clear Captain filters"
     }
   },
   "specialFilters": {

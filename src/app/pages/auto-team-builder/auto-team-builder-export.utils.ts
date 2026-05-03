@@ -15,6 +15,7 @@ import {
   createEmptyAutoBuildManualSlots,
 } from '../../core/models/auto-team-builder.models';
 import {
+  normalizeAbilityRequirementSourceScope,
   normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityRequirement,
@@ -109,7 +110,8 @@ export interface AutoTeamSelectionExportPayload {
     | 22
     | 23
     | 24
-    | 25;
+    | 25
+    | 26;
   exportedAt: string;
   source: 'auto-team-builder';
   exportType: 'preset';
@@ -282,6 +284,10 @@ function resolveLeaderAssignment(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isCaptainSourceRequirement(requirement: AutoBuildAbilityRequirement): boolean {
+  return normalizeAbilityRequirementSourceScope(requirement.sourceScope) === 'captainAbility';
 }
 
 function normalizePositiveInteger(value: unknown): number | null {
@@ -616,7 +622,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload['schemaVersion'] !== 22 &&
       parsedPayload['schemaVersion'] !== 23 &&
       parsedPayload['schemaVersion'] !== 24 &&
-      parsedPayload['schemaVersion'] !== 25) ||
+      parsedPayload['schemaVersion'] !== 25 &&
+      parsedPayload['schemaVersion'] !== 26) ||
     parsedPayload['source'] !== 'auto-team-builder' ||
     parsedPayload['exportType'] !== 'preset'
   ) {
@@ -861,6 +868,9 @@ export function sanitizeAutoTeamSelectionImportPayload(
     const slotScope = normalizeAbilityRequirementSlotScope(
       typeof rawRequirement.slotScope === 'string' ? rawRequirement.slotScope : null,
     );
+    const sourceScope = normalizeAbilityRequirementSourceScope(
+      typeof rawRequirement.sourceScope === 'string' ? rawRequirement.sourceScope : null,
+    );
     const rawSlotTokens = Array.isArray(rawRequirement.slotTokens)
       ? [
           ...new Set(
@@ -888,7 +898,10 @@ export function sanitizeAutoTeamSelectionImportPayload(
         rawRequiredCharacterCount === null) ||
       (rawRequirement.slotScope !== undefined &&
         rawRequirement.slotScope !== null &&
-        rawRequirement.slotScope !== slotScope)
+        rawRequirement.slotScope !== slotScope) ||
+      (rawRequirement.sourceScope !== undefined &&
+        rawRequirement.sourceScope !== null &&
+        rawRequirement.sourceScope !== sourceScope)
     ) {
       adjustedAbilityCount += 1;
     }
@@ -899,6 +912,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
       slotTokens,
       requiredCharacterCount,
       ...(slotScope !== 'any' ? { slotScope } : {}),
+      ...(sourceScope ? { sourceScope } : {}),
     });
   }
 
@@ -931,6 +945,9 @@ export function sanitizeAutoTeamSelectionImportPayload(
       const slotScope = normalizeAbilityRequirementSlotScope(
         typeof rawRequirement.slotScope === 'string' ? rawRequirement.slotScope : null,
       );
+      const sourceScope = normalizeAbilityRequirementSourceScope(
+        typeof rawRequirement.sourceScope === 'string' ? rawRequirement.sourceScope : null,
+      );
       const rawSlotTokens = Array.isArray(rawRequirement.slotTokens)
         ? [
             ...new Set(
@@ -949,7 +966,10 @@ export function sanitizeAutoTeamSelectionImportPayload(
         rawSlotTokens.length !== slotTokens.length ||
         (!abilityCatalogItem.supportsTurns && rawRequirement.minTurns !== null) ||
         (!abilityCatalogItem.supportsSlotTokens && rawSlotTokens.length > 0) ||
-        rawRequirement.requiredCharacterCount !== 1
+        rawRequirement.requiredCharacterCount !== 1 ||
+        (rawRequirement.sourceScope !== undefined &&
+          rawRequirement.sourceScope !== null &&
+          rawRequirement.sourceScope !== sourceScope)
       ) {
         adjustedAbilityCount += 1;
       }
@@ -960,6 +980,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
         slotTokens,
         requiredCharacterCount: 1,
         ...(slotScope !== 'any' ? { slotScope } : {}),
+        ...(sourceScope ? { sourceScope } : {}),
       });
     }
 
@@ -974,8 +995,12 @@ export function sanitizeAutoTeamSelectionImportPayload(
     }
   }
 
-  if (!requiredCharacterGroups.length && requiredAbilities.length) {
-    const migrated = expandRequiredAbilitiesToCharacterGroups(requiredAbilities);
+  const battleScopedRequiredAbilities = requiredAbilities.filter(
+    (requirement) => !isCaptainSourceRequirement(requirement),
+  );
+
+  if (!requiredCharacterGroups.length && battleScopedRequiredAbilities.length) {
+    const migrated = expandRequiredAbilitiesToCharacterGroups(battleScopedRequiredAbilities);
     requiredCharacterGroups.push(...migrated.groups);
     adjustedAbilityCount += migrated.truncatedCount;
   }
@@ -1027,6 +1052,9 @@ export function sanitizeAutoTeamSelectionImportPayload(
         const slotScope = normalizeAbilityRequirementSlotScope(
           typeof rawRequirement['slotScope'] === 'string' ? rawRequirement['slotScope'] : null,
         );
+        const sourceScope = normalizeAbilityRequirementSourceScope(
+          typeof rawRequirement['sourceScope'] === 'string' ? rawRequirement['sourceScope'] : null,
+        );
         const rawSlotTokens = Array.isArray(rawRequirement['slotTokens'])
           ? [
               ...new Set(
@@ -1045,7 +1073,10 @@ export function sanitizeAutoTeamSelectionImportPayload(
           rawSlotTokens.length !== slotTokens.length ||
           (!abilityCatalogItem.supportsTurns && rawRequirement['minTurns'] !== null) ||
           (!abilityCatalogItem.supportsSlotTokens && rawSlotTokens.length > 0) ||
-          rawRequirement['requiredCharacterCount'] !== 1
+          rawRequirement['requiredCharacterCount'] !== 1 ||
+          (rawRequirement['sourceScope'] !== undefined &&
+            rawRequirement['sourceScope'] !== null &&
+            rawRequirement['sourceScope'] !== sourceScope)
         ) {
           adjustedAbilityCount += 1;
         }
@@ -1056,6 +1087,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
           slotTokens,
           requiredCharacterCount: 1,
           ...(slotScope !== 'any' ? { slotScope } : {}),
+          ...(sourceScope ? { sourceScope } : {}),
         });
       }
 
@@ -1442,7 +1474,7 @@ export function buildAutoTeamSelectionExportPayload({
   const normalizedBattleRequirements = cloneBattleRequirements(battleRequirements);
 
   return {
-    schemaVersion: 25,
+    schemaVersion: 26,
     exportedAt,
     source: 'auto-team-builder',
     exportType: 'preset',

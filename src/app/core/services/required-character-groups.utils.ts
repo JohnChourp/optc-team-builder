@@ -1,4 +1,5 @@
 import {
+  normalizeAbilityRequirementSourceScope,
   normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityRequirement,
   type AutoBuildRequiredCharacterGroup,
@@ -29,7 +30,8 @@ export function normalizeRequiredCharacterGroupAbility(
     return null;
   }
 
-  const abilityKey = typeof requirement.abilityKey === 'string' ? requirement.abilityKey.trim() : '';
+  const abilityKey =
+    typeof requirement.abilityKey === 'string' ? requirement.abilityKey.trim() : '';
 
   if (!abilityKey.length) {
     return null;
@@ -52,6 +54,7 @@ export function normalizeRequiredCharacterGroupAbility(
       ]
     : [];
   const slotScope = normalizeAbilityRequirementSlotScope(requirement.slotScope);
+  const sourceScope = normalizeAbilityRequirementSourceScope(requirement.sourceScope);
   const normalized: AutoBuildAbilityRequirement = {
     abilityKey,
     minTurns,
@@ -61,6 +64,10 @@ export function normalizeRequiredCharacterGroupAbility(
 
   if (slotScope !== 'any') {
     normalized.slotScope = slotScope;
+  }
+
+  if (sourceScope) {
+    normalized.sourceScope = sourceScope;
   }
 
   return normalized;

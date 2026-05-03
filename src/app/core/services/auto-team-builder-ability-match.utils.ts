@@ -1,4 +1,5 @@
 import {
+  normalizeAbilityRequirementSourceScope,
   normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityRequirement,
   type NormalizedBuilderAbility,
@@ -22,10 +23,8 @@ const SELECTABLE_DEBUFF_COUNTER_KEYS = new Set([
   'remove_enemy_orb_based_damage_reduction',
 ]);
 
-export function buildAbilityRequirementIdentity(
-  requirement: AutoBuildAbilityRequirement,
-): string {
-  return `${normalizeAbilityKey(requirement.abilityKey)}|${requirement.minTurns ?? 'none'}|${requirement.slotTokens.join(',')}|${requirement.requiredCharacterCount}|${normalizeAbilityRequirementSlotScope(requirement.slotScope)}`;
+export function buildAbilityRequirementIdentity(requirement: AutoBuildAbilityRequirement): string {
+  return `${normalizeAbilityKey(requirement.abilityKey)}|${requirement.minTurns ?? 'none'}|${requirement.slotTokens.join(',')}|${requirement.requiredCharacterCount}|${normalizeAbilityRequirementSlotScope(requirement.slotScope)}|${normalizeAbilityRequirementSourceScope(requirement.sourceScope) ?? 'any'}`;
 }
 
 export function matchesAbilityRequirement(
@@ -34,6 +33,11 @@ export function matchesAbilityRequirement(
 ): boolean {
   const normalizedAbilityKey = normalizeAbilityKey(ability.key);
   const normalizedRequirementKey = normalizeAbilityKey(requirement.abilityKey);
+  const sourceScope = normalizeAbilityRequirementSourceScope(requirement.sourceScope);
+
+  if (sourceScope && ability.source !== sourceScope) {
+    return false;
+  }
 
   if (
     normalizedAbilityKey !== normalizedRequirementKey &&
@@ -74,10 +78,10 @@ export function builderAbilitiesMatchAllRequirements(
   abilities: NormalizedBuilderAbility[],
   requirements: AutoBuildAbilityRequirement[],
 ): boolean {
-  return requirements.every((requirement) =>
-    Number(
-      abilities.some((ability) => matchesAbilityRequirement(ability, requirement)),
-    ) >= requirement.requiredCharacterCount,
+  return requirements.every(
+    (requirement) =>
+      Number(abilities.some((ability) => matchesAbilityRequirement(ability, requirement))) >=
+      requirement.requiredCharacterCount,
   );
 }
 

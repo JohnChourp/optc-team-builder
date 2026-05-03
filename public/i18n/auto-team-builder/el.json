@@ -691,6 +691,9 @@
       "slotScopes": {
         "leader": "Leader",
         "sub": "Sub"
+      },
+      "sourceScopes": {
+        "captainAbility": "Captain ability"
       }
     },
     "catalog": {
@@ -750,6 +753,17 @@
       "crewmate": "Crewmate",
       "potential": "Potential",
       "support": "Support"
+    }
+  },
+  "captainAbilityFilters": {
+    "title": "Captain ability requirements",
+    "copy": "Επίλεξε event-wide Captain Ability effects. Είτε ο Captain είτε ο Friend Captain πρέπει να παρέχει κάθε επιλεγμένο effect από το Captain Ability του.",
+    "configuredRows": "{{count}} επιλεγμένα Captain effects",
+    "empty": "Δεν έχουν επιλεγεί Captain Ability effects ακόμη.",
+    "pickerCopy": "Τα επιλεγμένα effects ισχύουν για όλο το event, όχι για ένα μόνο battle.",
+    "actions": {
+      "openPicker": "Άνοιγμα Captain picker",
+      "clearRequirements": "Καθαρισμός Captain filters"
     }
   },
   "specialFilters": {

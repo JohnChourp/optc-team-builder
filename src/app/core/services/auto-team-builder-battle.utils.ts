@@ -1,4 +1,5 @@
 import {
+  normalizeAbilityRequirementSourceScope,
   type AutoBuildAbilityRequirement,
   type AutoBuildBattleRequirement,
   type AutoBuildEnemyMechanicRequirement,
@@ -95,9 +96,13 @@ export function normalizeBattleRequirementsWithLegacyFallback(options: {
   const legacyEnemyMechanics = normalizeEnemyMechanicRequirements(options.enemyMechanics ?? []);
   const legacyRequiredGroups = cloneRequiredCharacterGroups(options.requiredCharacterGroups);
   const manualRequiredAbilities = Array.isArray(options.requiredAbilities)
-    ? options.requiredAbilities
+    ? options.requiredAbilities.filter(
+        (requirement) =>
+          normalizeAbilityRequirementSourceScope(requirement.sourceScope) !== 'captainAbility',
+      )
     : [];
-  const derivedRequiredAbilities = deriveAbilityRequirementsFromEnemyMechanics(legacyEnemyMechanics);
+  const derivedRequiredAbilities =
+    deriveAbilityRequirementsFromEnemyMechanics(legacyEnemyMechanics);
   const fallbackRequiredGroups =
     legacyRequiredGroups.length > 0
       ? legacyRequiredGroups

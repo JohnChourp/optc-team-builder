@@ -696,6 +696,108 @@ describe('Auto team builder', () => {
     expect(result?.coverage.battleRequirements?.matchesAll).toBe(true);
   });
 
+  it('prefers distinct characters for same-battle required character groups when they fit', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 9830,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces Special Bind and ATK Down duration by 5 turns.',
+            sailorAbilities: ['Reduces Special Bind duration on this character by 5 turns.'],
+            builderAbilities: [
+              createBuilderAbility('remove_special_bind', 'Remove Special Bind', 5, 'specialText'),
+              createBuilderAbility('remove_atk_down', 'Remove ATK Down', 5, 'specialText'),
+              createBuilderAbility(
+                'crewmate_recover_special_bind',
+                'Crewmate Special Bind Recovery',
+                5,
+                'sailorAbilities',
+              ),
+            ],
+          },
+        }),
+        createCharacterRecord({
+          id: 9828,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces Special Bind duration by 5 turns.',
+            sailorAbilities: ['Reduces Special Bind duration on this character by 5 turns.'],
+            builderAbilities: [
+              createBuilderAbility('remove_special_bind', 'Remove Special Bind', 5, 'specialText'),
+              createBuilderAbility(
+                'crewmate_recover_special_bind',
+                'Crewmate Special Bind Recovery',
+                5,
+                'sailorAbilities',
+              ),
+            ],
+          },
+        }),
+        createCharacterRecord({
+          id: 9829,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces ATK Down duration by 5 turns.',
+            builderAbilities: [
+              createBuilderAbility('remove_atk_down', 'Remove ATK Down', 5, 'specialText'),
+            ],
+          },
+        }),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+      ],
+      {
+        ...INPUT,
+        requiredCharacterGroups: [],
+        battleRequirements: [
+          {
+            id: 'battle-1',
+            title: 'Battle 1',
+            enemyMechanics: [],
+            requiredCharacterGroups: [
+              {
+                id: 'special-bind-character',
+                abilities: [
+                  {
+                    abilityKey: 'remove_special_bind',
+                    minTurns: 5,
+                    slotTokens: [],
+                    requiredCharacterCount: 1,
+                  },
+                  {
+                    abilityKey: 'crewmate_recover_special_bind',
+                    minTurns: 5,
+                    slotTokens: [],
+                    requiredCharacterCount: 1,
+                  },
+                ],
+              },
+              {
+                id: 'atk-down-character',
+                abilities: [
+                  {
+                    abilityKey: 'remove_atk_down',
+                    minTurns: 5,
+                    slotTokens: [],
+                    requiredCharacterCount: 1,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    );
+    const slotIds = result?.slots.map((slot) => slot.character.id) ?? [];
+
+    expect(result).not.toBeNull();
+    expect(slotIds).toContain(9828);
+    expect(slotIds).toContain(9829);
+    expect(result?.coverage.battleRequirements?.matchesAll).toBe(true);
+  });
+
   it('does not reuse the same battle counter across different battles', () => {
     const result = buildAutoTeamResult(
       [
@@ -762,6 +864,182 @@ describe('Auto team builder', () => {
         slotTokens: [],
         requiredCharacterCount: 1,
         slotScope: 'leader',
+      },
+    ]);
+  });
+
+  it('matches global captain-source ability requirements against a captain ability leader', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainAbilityBindLeaderRecord(6820),
+        createCaptainRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+        createAtkSubRecord(),
+      ],
+      {
+        ...INPUT,
+        manualSlots: createManualSlots({
+          captain: [6820],
+        }),
+        captainCharacterId: 6820,
+        requiredAbilities: [
+          {
+            abilityKey: 'remove_bind',
+            minTurns: 5,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+            slotScope: 'leader',
+            sourceScope: 'captainAbility',
+          },
+        ],
+      },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+    expect(result?.coverage.abilityRequirements.matched).toEqual([
+      {
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      },
+    ]);
+  });
+
+  it('does not let special text satisfy global captain-source ability requirements', () => {
+    const result = buildAutoTeamResult(
+      [
+        createBindLeaderRecord(6821),
+        createCaptainRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+        createAtkSubRecord(),
+      ],
+      {
+        ...INPUT,
+        manualSlots: createManualSlots({
+          captain: [6821],
+        }),
+        captainCharacterId: 6821,
+        requiredAbilities: [
+          {
+            abilityKey: 'remove_bind',
+            minTurns: 5,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+            slotScope: 'leader',
+            sourceScope: 'captainAbility',
+          },
+        ],
+      },
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('lets the friend captain satisfy global captain-source ability requirements', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCaptainAbilityBindLeaderRecord(6822),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+        createAtkSubRecord(),
+      ],
+      {
+        ...INPUT,
+        manualSlots: createManualSlots({
+          captain: [5900],
+          friendCaptain: [6822],
+        }),
+        captainCharacterId: 5900,
+        friendCaptainCharacterId: 6822,
+        requiredAbilities: [
+          {
+            abilityKey: 'remove_bind',
+            minTurns: 5,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+            slotScope: 'leader',
+            sourceScope: 'captainAbility',
+          },
+        ],
+      },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.find((slot) => slot.role === 'friendCaptain')?.character.id).toBe(6822);
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+  });
+
+  it('keeps normal special and captain-source requirements separate for the same ability key', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainAbilityBindLeaderRecord(6823),
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 6824,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces Bind duration by 5 turns.',
+            builderAbilities: [createBuilderAbility('remove_bind', 'Remove Bind', 5)],
+          },
+        }),
+        createAffinitySubRecord(),
+        createConsistencySubRecord(),
+        createAtkSubRecord(),
+      ],
+      {
+        ...INPUT,
+        manualSlots: createManualSlots({
+          captain: [6823],
+        }),
+        captainCharacterId: 6823,
+        requiredAbilities: [
+          {
+            abilityKey: 'remove_bind',
+            minTurns: 5,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+            slotScope: 'leader',
+            sourceScope: 'captainAbility',
+          },
+          {
+            abilityKey: 'remove_bind',
+            minTurns: 5,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+            slotScope: 'sub',
+          },
+        ],
+      },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.map((slot) => slot.character.id)).toContain(6824);
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+    expect(result?.coverage.abilityRequirements.matched).toEqual([
+      {
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      },
+      {
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'sub',
       },
     ]);
   });
@@ -2459,6 +2737,77 @@ describe('Auto team builder', () => {
 
     expect(teamIds).toEqual([5900, 5900, 6200, 6199, 6198, 6197]);
     expect(teamIds).not.toContain(100);
+  });
+
+  it('surfaces required ability counters before newer unrelated subs', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 6200,
+          name: 'Newer Redundant Sub 1',
+          cost: 20,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Deals 100x character ATK in typeless damage to one enemy.',
+          },
+        }),
+        createCharacterRecord({
+          id: 6199,
+          name: 'Newer Redundant Sub 2',
+          cost: 20,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Deals 100x character ATK in typeless damage to one enemy.',
+          },
+        }),
+        createCharacterRecord({
+          id: 6198,
+          name: 'Newer Redundant Sub 3',
+          cost: 20,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Deals 100x character ATK in typeless damage to one enemy.',
+          },
+        }),
+        createCharacterRecord({
+          id: 6197,
+          name: 'Newer Redundant Sub 4',
+          cost: 20,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Deals 100x character ATK in typeless damage to one enemy.',
+          },
+        }),
+        createCharacterRecord({
+          id: 100,
+          name: 'Older Bind Counter',
+          cost: 20,
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces Bind duration by 5 turns.',
+            builderAbilities: [createBuilderAbility('remove_bind', 'Remove Bind', 5)],
+          },
+        }),
+      ],
+      {
+        ...INPUT,
+        requiredAbilities: [
+          {
+            abilityKey: 'remove_bind',
+            minTurns: 5,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+          },
+        ],
+      },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.map((slot) => slot.character.id)).toEqual([
+      5900, 5900, 100, 6200, 6199, 6198,
+    ]);
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
   });
 
   it('uses one selected leader for both captain slots', () => {
@@ -7305,6 +7654,21 @@ function createBindLeaderRecord(id: number): CharacterDetailRecord {
           source: 'specialText',
         },
       ],
+    },
+  });
+}
+
+function createCaptainAbilityBindLeaderRecord(id: number): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    primaryClass: 'Fighter',
+    secondaryClass: 'Free Spirit',
+    detail: {
+      captainAbility:
+        'Boosts ATK of DEX and Fighter characters by 5.25x and HP by 1.3x, reduces Bind duration by 5 turns.',
+      specialText:
+        'Boosts orb effects of DEX and Fighter characters by 2.25x for 1 turn and changes orbs into Matching Orbs.',
+      builderAbilities: [createBuilderAbility('remove_bind', 'Remove Bind', 5, 'captainAbility')],
     },
   });
 }
