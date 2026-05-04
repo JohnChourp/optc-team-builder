@@ -315,6 +315,11 @@ const SPECIAL_ABILITY_MATCHERS = [
   key,
   patterns,
 }));
+const CAPTAIN_ABILITY_SPECIAL_MATCHER_EXCLUDED_KEYS = new Set([
+  'boost_atk',
+  'boost_rcv',
+  'boost_max_hp',
+]);
 const CREWMATE_STAT_SCOPE_MATCHERS = {
   crew: [/\b(?:crew|all characters?)\b/i],
   self: [/\b(?:this character|self|own)\b/i],
@@ -939,11 +944,15 @@ export function analyzeBuilderAbilityText(value, source) {
     addAbility(abilities, seen, ability);
   });
 
-  if (source === 'specialText') {
+  if (source === 'specialText' || source === 'captainAbility') {
     SPECIAL_ABILITY_MATCHERS.forEach(({ key, patterns }) => {
       const definition = STRUCTURED_ABILITY_METADATA_BY_KEY.get(key);
 
-      if (!definition || !patterns.some((pattern) => pattern.test(normalizedText))) {
+      if (
+        !definition ||
+        (source === 'captainAbility' && CAPTAIN_ABILITY_SPECIAL_MATCHER_EXCLUDED_KEYS.has(key)) ||
+        !patterns.some((pattern) => pattern.test(normalizedText))
+      ) {
         return;
       }
 
@@ -1678,8 +1687,7 @@ export async function enrichCharactersWithBuilderAbilities(
 
         if (Number.isFinite(ability.minTurns) && ability.minTurns > 0) {
           const minTurns = Math.floor(ability.minTurns);
-          const turnCharacterIds =
-            current.turnMatchingCharacterIds.get(minTurns) ?? new Set();
+          const turnCharacterIds = current.turnMatchingCharacterIds.get(minTurns) ?? new Set();
 
           turnCharacterIds.add(character.id);
           current.turnMatchingCharacterIds.set(minTurns, turnCharacterIds);

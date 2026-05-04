@@ -244,13 +244,12 @@ function candidateMatchesAbilityRequirement(
   candidate: AutoBuildCandidate,
   requirement: AutoBuildAbilityRequirement,
 ): boolean {
-  if (isIgnoredCaptainAbilityRequirement(requirement)) {
-    return false;
-  }
+  const sourceScope = normalizeAbilityRequirementSourceScope(requirement.sourceScope);
 
   return candidate.character.detail.builderAbilities.some((ability) =>
-    ability.source !== 'captainAbility' &&
-    matchesAbilityRequirement(ability, requirement),
+    !sourceScope && ability.source === 'captainAbility'
+      ? false
+      : matchesAbilityRequirement(ability, requirement),
   );
 }
 
@@ -734,6 +733,7 @@ function filterIgnoredCaptainAbilityBattleRequirements(
 function isLeaderScopedAbilityRequirement(requirement: AutoBuildAbilityRequirement): boolean {
   return (
     normalizeAbilityRequirementSlotScope(requirement.slotScope) === 'leader' ||
+    normalizeAbilityRequirementSourceScope(requirement.sourceScope) === 'captainAbility' ||
     isExtraDropLeaderAbilityRequirement(requirement)
   );
 }
@@ -852,9 +852,7 @@ function resolveMatchedRequiredCharacterGroupIndexes(
 function resolveLeaderScopedAbilityRequirements(
   requirements: AutoBuildAbilityRequirement[],
 ): AutoBuildAbilityRequirement[] {
-  return filterIgnoredCaptainAbilityRequirements(requirements).filter((requirement) =>
-    isLeaderScopedAbilityRequirement(requirement),
-  );
+  return requirements.filter((requirement) => isLeaderScopedAbilityRequirement(requirement));
 }
 
 function leaderSatisfiesAbilityRequirement(
@@ -870,7 +868,7 @@ function leadersSatisfyAbilityRequirement(
 ): boolean {
   return (
     leaders.length > 0 &&
-    leaders.every((leader) => leaderSatisfiesAbilityRequirement(leader, requirement))
+    leaders.some((leader) => leaderSatisfiesAbilityRequirement(leader, requirement))
   );
 }
 
@@ -1026,7 +1024,7 @@ function resolveAbilityCoverage(
   requirements: AutoBuildAbilityRequirement[],
   leaderCandidates: AutoBuildCandidate[] = [],
 ): AutoBuildAbilityCoverageState & { matchesAll: boolean } {
-  const activeRequirements = filterIgnoredCaptainAbilityRequirements(requirements);
+  const activeRequirements = requirements;
 
   if (!activeRequirements.length) {
     return {
@@ -1527,9 +1525,7 @@ function resolveBattleRequirementAssignmentModes(
 
   const hasMultiGroupBattle = filterIgnoredCaptainAbilityBattleRequirements(
     input.battleRequirements,
-  ).some(
-    (battle) => battle.requiredCharacterGroups.length > 1,
-  );
+  ).some((battle) => battle.requiredCharacterGroups.length > 1);
 
   return hasMultiGroupBattle ? ['strict', 'flexible'] : ['strict'];
 }
@@ -1624,9 +1620,6 @@ function resolveLeaderCandidateOptions(
   options: AutoTeamBuildAttemptOptions,
   allowAutoFill = true,
 ): AutoBuildCandidate[] {
-  const extraDropLeaderRequirements = input.requiredAbilities.filter((requirement) =>
-    isExtraDropLeaderAbilityRequirement(requirement),
-  );
   const manualCandidateIdSet = new Set(slotCandidates.map((candidate) => candidate.character.id));
   const candidateMatchesLeaderConstraints = (
     candidate: AutoBuildCandidate,
@@ -1636,9 +1629,6 @@ function resolveLeaderCandidateOptions(
       candidate.tags.readableCaptainText &&
       (!applyAutoFillLeaderRanges || candidateMatchesLeaderBoostRanges(candidate, input)) &&
       (!options.requireLeadersWithoutSuperEffects || !hasCandidateSuperEffects(candidate)) &&
-      extraDropLeaderRequirements.every((requirement) =>
-        leaderSatisfiesAbilityRequirement(candidate, requirement),
-      ) &&
       (!input.requireAllSelectedClassesPerCharacter || candidate.matchesAllSelectedClasses),
     );
   const manualCandidatePool = slotCandidates.filter((candidate) =>
@@ -2669,7 +2659,9 @@ function collectSubAbilityDemandContext(
       (group) => group.abilities,
     ),
   ];
-  const battleRequirements = filterIgnoredCaptainAbilityBattleRequirements(input.battleRequirements);
+  const battleRequirements = filterIgnoredCaptainAbilityBattleRequirements(
+    input.battleRequirements,
+  );
 
   return {
     requirements:

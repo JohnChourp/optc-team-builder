@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-04T17:58:39.793Z",
+  "generatedAt": "2026-05-04T19:00:09.131Z",
   "characters": [
     {
       "id": 1,
@@ -980,6 +980,15 @@
             "isCompleteRemoval": false,
             "slotTokens": [],
             "source": "specialText",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "reduce_damage",
+            "label": "Reduce Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "captainAbility",
             "coverageMode": "explicit"
           }
         ],

@@ -224,7 +224,9 @@ describe('Auto team builder', () => {
     expect(candidate.tags.captainScope.coversAllSelectedTypes).toBe(true);
     expect(candidate.tags.captainScope.matchesClass).toBe(true);
     expect(candidate.matchesAllSelectedClasses).toBe(false);
-    expect(candidate.tags.burstRoles).toEqual(expect.arrayContaining(['orbBoost', 'colorAffinity']));
+    expect(candidate.tags.burstRoles).toEqual(
+      expect.arrayContaining(['orbBoost', 'colorAffinity']),
+    );
     expect(candidate.tags.burstRoles).not.toContain('atkBoost');
     expect(candidate.tags.consistencyRoles).toEqual(
       expect.arrayContaining(['matchingOrbs', 'orbChange', 'cooldownReduction']),
@@ -869,7 +871,7 @@ describe('Auto team builder', () => {
     ]);
   });
 
-  it('ignores global captain-source ability requirements for boost coverage', () => {
+  it('matches global captain-source ability requirements from a leader Captain Ability', () => {
     const result = buildAutoTeamResult(
       [
         createCaptainAbilityBindLeaderRecord(6820),
@@ -900,11 +902,55 @@ describe('Auto team builder', () => {
 
     expect(result).not.toBeNull();
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+    expect(result?.coverage.abilityRequirements.requested).toEqual([
+      {
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      },
+    ]);
+    expect(result?.coverage.abilityRequirements.matched).toEqual([
+      {
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      },
+    ]);
+  });
+
+  it('does not turn full Captain Ability coverage into selected captain-source requirements', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainAbilityBindLeaderRecord(6820),
+        createCaptainRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+        createAtkSubRecord(),
+      ],
+      {
+        ...INPUT,
+        manualSlots: createManualSlots({
+          captain: [6820],
+        }),
+        captainCharacterId: 6820,
+        requireFullCaptainAbilityCoverage: true,
+        requiredAbilities: [],
+      },
+    );
+
+    expect(result).not.toBeNull();
     expect(result?.coverage.abilityRequirements.requested).toEqual([]);
     expect(result?.coverage.abilityRequirements.matched).toEqual([]);
   });
 
-  it('drops captain-source ability requirements instead of matching special text', () => {
+  it('does not match a captain-source ability requirement from leader Special text', () => {
     const result = buildAutoTeamResult(
       [
         createBindLeaderRecord(6821),
@@ -933,12 +979,10 @@ describe('Auto team builder', () => {
       },
     );
 
-    expect(result).not.toBeNull();
-    expect(result?.coverage.abilityRequirements.requested).toEqual([]);
-    expect(result?.coverage.abilityRequirements.matched).toEqual([]);
+    expect(result).toBeNull();
   });
 
-  it('drops friend-captain source ability requirements from coverage', () => {
+  it('matches friend-captain source ability requirements from Friend Captain Ability', () => {
     const result = buildAutoTeamResult(
       [
         createCaptainRecord(),
@@ -972,10 +1016,29 @@ describe('Auto team builder', () => {
     expect(result).not.toBeNull();
     expect(result?.slots.find((slot) => slot.role === 'friendCaptain')?.character.id).toBe(6822);
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
-    expect(result?.coverage.abilityRequirements.requested).toEqual([]);
+    expect(result?.coverage.abilityRequirements.requested).toEqual([
+      {
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      },
+    ]);
+    expect(result?.coverage.abilityRequirements.matched).toEqual([
+      {
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      },
+    ]);
   });
 
-  it('keeps normal special requirements after dropping captain-source requirements', () => {
+  it('keeps normal special requirements alongside captain-source requirements', () => {
     const result = buildAutoTeamResult(
       [
         createCaptainAbilityBindLeaderRecord(6823),
@@ -1022,6 +1085,14 @@ describe('Auto team builder', () => {
     expect(result?.slots.map((slot) => slot.character.id)).toContain(6824);
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
     expect(result?.coverage.abilityRequirements.matched).toEqual([
+      {
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      },
       {
         abilityKey: 'remove_bind',
         minTurns: 5,
@@ -2945,15 +3016,13 @@ describe('Auto team builder', () => {
         const classes = slot.character.classes;
 
         return (
-          slot.character.type === 'STR' ||
-          classes.includes('Striker') ||
-          classes.includes('Driven')
+          slot.character.type === 'STR' || classes.includes('Striker') || classes.includes('Driven')
         );
       }),
     ).toBe(true);
   });
 
-  it('ignores selected captain despair coverage while satisfying battle counters', () => {
+  it('keeps selected captain despair coverage global while satisfying battle counters', () => {
     const result = buildAutoTeamResult(createKidCaptainRequirementRecords(), {
       ...createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], [], {
         requiredAbilities: [
@@ -2981,7 +3050,26 @@ describe('Auto team builder', () => {
     });
 
     expect(result).not.toBeNull();
-    expect(result?.coverage.abilityRequirements.requested).toEqual([]);
+    expect(result?.coverage.abilityRequirements.requested).toEqual([
+      {
+        abilityKey: 'remove_despair',
+        minTurns: 8,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      },
+    ]);
+    expect(result?.coverage.abilityRequirements.matched).toEqual([
+      {
+        abilityKey: 'remove_despair',
+        minTurns: 8,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      },
+    ]);
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
     expect(result?.coverage.battleRequirements?.matchesAll).toBe(true);
     expect(result?.coverage.leaderCriteria.tagConditionSets).toEqual([]);
@@ -3051,7 +3139,7 @@ describe('Auto team builder', () => {
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
     expect(
       result?.coverage.abilityRequirements.requested.map((requirement) => requirement.abilityKey),
-    ).not.toContain('remove_despair');
+    ).toContain('remove_despair');
     expect(result?.coverage.battleRequirements?.matchesAll).toBe(true);
   });
 
@@ -4796,6 +4884,60 @@ describe('Auto team builder', () => {
     expect(result).not.toBeNull();
     expect(result?.slots[0]?.character.id).toBe(4556);
     expect(result?.slots[1]?.character.id).toBe(4556);
+  });
+
+  it('prioritizes auto-filled leaders that match selected Captain Ability effects', async () => {
+    const newestFavoriteLeader = createLeaderPriorityCaptainRecord({
+      id: 4556,
+      name: 'Newer Generic Leader',
+      cost: 55,
+      atkMultiplier: 5.5,
+      hpMultiplier: 1.4,
+      universal: true,
+    });
+    const captainEffectLeader = createLeaderPriorityCaptainRecord({
+      id: 4549,
+      name: 'Older Captain Effect Leader',
+      cost: 65,
+      atkMultiplier: 5.5,
+      hpMultiplier: 1.4,
+      universal: true,
+    });
+    captainEffectLeader.detail.builderAbilities = [
+      createBuilderAbility('remove_bind', 'Remove Bind', 5, 'captainAbility'),
+    ];
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue([
+          newestFavoriteLeader,
+          captainEffectLeader,
+          createAtkSubRecord(),
+          createAffinitySubRecord(),
+          createUtilitySubRecord(),
+          createConsistencySubRecord(),
+        ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      favoritesOnly: true,
+      favoriteCharacterIds: [4556, 4549, 5890, 5880, 5870, 5860],
+      requiredAbilities: [
+        {
+          abilityKey: 'remove_bind',
+          minTurns: 5,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+          slotScope: 'leader',
+          sourceScope: 'captainAbility',
+        },
+      ],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(4549);
+    expect(result?.slots[1]?.character.id).toBe(4549);
   });
 
   it('selects the newest eligible favorite inside the leader cost range', async () => {

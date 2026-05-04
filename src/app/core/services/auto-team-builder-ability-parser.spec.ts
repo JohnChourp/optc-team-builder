@@ -178,7 +178,10 @@ describe('auto team builder ability parser', () => {
 
   it('keeps real Bind when text also includes Special Bind', () => {
     expect(
-      analyzeBuilderAbilityText('Reduces Bind and Special Bind duration by 4 turns.', 'specialText'),
+      analyzeBuilderAbilityText(
+        'Reduces Bind and Special Bind duration by 4 turns.',
+        'specialText',
+      ),
     ).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -295,7 +298,45 @@ describe('auto team builder ability parser', () => {
     expect(extractPrimaryAbilityBranchText(text)).not.toContain(
       'reduces Paralysis by 5 turns for 3 turns',
     );
-    expect(analyzeBuilderAbilityText(text, 'captainAbility')).toEqual([]);
+    expect(analyzeBuilderAbilityText(text, 'captainAbility')).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'reduce_special_charge', source: 'captainAbility' }),
+        expect.objectContaining({ key: 'make_slots_favorable', source: 'captainAbility' }),
+        expect.objectContaining({
+          key: 'chain_multiplier_multiplicative_boost',
+          source: 'captainAbility',
+        }),
+      ]),
+    );
+    expect(analyzeBuilderAbilityText(text, 'captainAbility')).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ key: 'remove_paralysis' })]),
+    );
+  });
+
+  it('extracts representable captain ability effects without standard leader stat boosts', () => {
+    const abilities = analyzeBuilderAbilityText(
+      'Boosts ATK of all characters by 5x, boosts RCV of crew by 1.5x, boosts max HP by 1.3x, reduces Special Cooldown of all characters by 1 turn, reduces damage received by 20%, makes [DEX] orbs beneficial for all characters, boosts chain multiplier by 1.5x, reduces Bind duration by 5 turns and guarantees duplicating a drop upon completion of the island.',
+      'captainAbility',
+    );
+    const abilityKeys = extractAbilityKeys(abilities);
+
+    expect(abilityKeys).toEqual(
+      expect.arrayContaining([
+        'remove_bind',
+        'extra_drop_any',
+        'extra_drop_guaranteed',
+        'chain_multiplier_multiplicative_boost',
+        'reduce_damage',
+        'make_slots_favorable',
+        'reduce_special_charge',
+      ]),
+    );
+    expect(abilityKeys).not.toContain('boost_atk');
+    expect(abilityKeys).not.toContain('boost_rcv');
+    expect(abilityKeys).not.toContain('boost_max_hp');
+    expect(new Set(abilities.map((ability) => ability.source))).toEqual(
+      new Set(['captainAbility']),
+    );
   });
 
   it.each([
@@ -519,12 +560,14 @@ describe('auto team builder ability parser', () => {
         "Boosts ATK by 5x and deals 10% of enemies' current HP in True damage, ignoring Normal Attack Only, to all enemies at the end of each turn.",
         'captainAbility',
       ),
-    ).toEqual([
-      expect.objectContaining({
-        key: 'ignore_normal_attack_only',
-        source: 'captainAbility',
-      }),
-    ]);
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'ignore_normal_attack_only',
+          source: 'captainAbility',
+        }),
+      ]),
+    );
   });
 
   it('extracts fixed damage coverage from special text', () => {
@@ -950,7 +993,9 @@ describe('auto team builder ability parser', () => {
   });
 
   it('carries turn requirements onto structured crewmate recovery abilities', () => {
-    expect(analyzeBuilderAbilityText('Reduces Special Bind duration by 3 turns.', 'sailorAbilities')).toEqual(
+    expect(
+      analyzeBuilderAbilityText('Reduces Special Bind duration by 3 turns.', 'sailorAbilities'),
+    ).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           key: 'crewmate_recover_special_bind',

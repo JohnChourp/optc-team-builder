@@ -529,7 +529,7 @@ describe('character-detail presenter', () => {
     );
   });
 
-  it('exposes slim captain coverage entries without captain-sourced parsed abilities', () => {
+  it('exposes slim captain coverage entries with captain-sourced parsed abilities', () => {
     const viewModel = buildCharacterDetailViewModel(
       createCharacterDetailRecord({
         detail: {
@@ -585,7 +585,14 @@ describe('character-detail presenter', () => {
         fullCoverageClauses: [],
       }),
     ]);
-    expect(viewModel.captainAbilitySummary?.recognizedAbilities).toEqual([]);
+    expect(viewModel.captainAbilitySummary?.recognizedAbilities).toEqual([
+      expect.objectContaining({
+        key: 'reduce_damage',
+        label: 'Reduce Damage',
+        minTurns: null,
+        source: 'captainAbility',
+      }),
+    ]);
     expect(viewModel.captainAbilitySummary?.characterTags).toEqual([
       'Driven',
       'Super Sugo-Fest Exclusive',

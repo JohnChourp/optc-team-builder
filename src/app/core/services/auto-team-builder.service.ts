@@ -64,6 +64,7 @@ import {
   resolveAutoBuildTeamPowerPreferenceScore,
 } from './auto-team-builder.utils';
 import { resolveCaptainCoverage } from './captain-coverage.utils';
+import { matchesAbilityRequirement } from './auto-team-builder-ability-match.utils';
 import {
   type AutoTeamBuilderWorkerRequest,
   type AutoTeamBuilderWorkerResponse,
@@ -2044,6 +2045,7 @@ export class AutoTeamBuilderService {
       | 'leaderBoostFilters'
       | 'leaderBoostRanges'
       | 'allowAnyFriendCaptainAutoFill'
+      | 'requiredAbilities'
     >,
   ): number[] | undefined {
     const baseCharacterIds = this.resolvePreferredLeaderAutoFillCharacterIds(
@@ -2068,7 +2070,10 @@ export class AutoTeamBuilderService {
   private resolvePreferredLeaderAutoFillCharacterIds(
     records: CharacterDetailRecord[],
     allowedCharacterIds: number[] | undefined,
-    input: Pick<AutoBuildInput, 'leaderCostRange' | 'leaderBoostFilters' | 'leaderBoostRanges'>,
+    input: Pick<
+      AutoBuildInput,
+      'leaderCostRange' | 'leaderBoostFilters' | 'leaderBoostRanges' | 'requiredAbilities'
+    >,
   ): number[] | undefined {
     if (!records.length) {
       return undefined;
@@ -2096,8 +2101,16 @@ export class AutoTeamBuilderService {
   private comparePreferredLeaderAutoFillRecords(
     left: CharacterDetailRecord,
     right: CharacterDetailRecord,
-    input: Pick<AutoBuildInput, 'leaderBoostFilters'>,
+    input: Pick<AutoBuildInput, 'leaderBoostFilters' | 'requiredAbilities'>,
   ): number {
+    const captainAbilityRequirementDifference =
+      this.resolveCaptainAbilityRequirementPriorityScore(right, input.requiredAbilities) -
+      this.resolveCaptainAbilityRequirementPriorityScore(left, input.requiredAbilities);
+
+    if (captainAbilityRequirementDifference !== 0) {
+      return captainAbilityRequirementDifference;
+    }
+
     const boostDifference =
       this.resolveLeaderBoostPriorityScore(right, input.leaderBoostFilters) -
       this.resolveLeaderBoostPriorityScore(left, input.leaderBoostFilters);
@@ -2115,6 +2128,24 @@ export class AutoTeamBuilderService {
     }
 
     return left.name.localeCompare(right.name, undefined, { sensitivity: 'base' });
+  }
+
+  private resolveCaptainAbilityRequirementPriorityScore(
+    character: CharacterDetailRecord,
+    requirements: AutoBuildAbilityRequirement[],
+  ): number {
+    return requirements.reduce((score, requirement) => {
+      if (normalizeAbilityRequirementSourceScope(requirement.sourceScope) !== 'captainAbility') {
+        return score;
+      }
+
+      const matchesRequirement = character.detail.builderAbilities.some(
+        (ability) =>
+          ability.source === 'captainAbility' && matchesAbilityRequirement(ability, requirement),
+      );
+
+      return matchesRequirement ? score + Math.max(1, requirement.requiredCharacterCount) : score;
+    }, 0);
   }
 
   private resolveLeaderBoostPriorityScore(

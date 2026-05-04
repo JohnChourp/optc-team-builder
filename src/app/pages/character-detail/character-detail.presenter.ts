@@ -255,7 +255,9 @@ function buildCaptainAbilitySummary(
         entry.fullCoverageClauses.length,
     );
   const captainNotes = detail.captainNotes?.trim() || null;
-  const recognizedAbilities: NormalizedBuilderAbility[] = [];
+  const recognizedAbilities = detail.builderAbilities.filter(
+    (ability) => ability.source === 'captainAbility',
+  );
   const characterTags = (detail.characterTags ?? []).filter((tag) => tag.trim().length > 0);
 
   return coverageEntries.length ||
