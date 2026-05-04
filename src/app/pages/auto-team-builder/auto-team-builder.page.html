@@ -202,6 +202,19 @@
             }
           </div>
 
+          <div class="strict-toggle-row strict-toggle-row--filter">
+            <div class="strict-toggle-copy">
+              <strong>{{ bothLeadersCaptainCoverageToggleLabel() }}</strong>
+              <small>{{ bothLeadersCaptainCoverageSupportLabel() }}</small>
+            </div>
+            <ion-toggle
+              color="warning"
+              [checked]="requireBothLeadersFullCaptainAbilityCoverage()"
+              [disabled]="building()"
+              (ionChange)="onRequireBothLeadersFullCaptainAbilityCoverageToggle($event)"
+            ></ion-toggle>
+          </div>
+
           <div class="strict-toggle-row strict-toggle-row--select">
             <div class="strict-toggle-copy">
               <strong>{{ t('filters.characterBox.label') }}</strong>

@@ -3216,7 +3216,65 @@ describe('Auto team builder', () => {
     ).toBeGreaterThanOrEqual(4);
   });
 
-  it('requires Captain and Friend Captain to match full captain ability coverage', () => {
+  it('allows a one-leader-passes team when strict both-leader captain coverage is off', () => {
+    const result = buildAutoTeamResult(createBothLeaderStrictCoverageRecords(), {
+      ...createInput(['DEX', 'QCK', 'STR'], ['Fighter', 'Powerhouse'], {
+        requireFullCaptainAbilityCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        manualSlots: createManualSlots(
+          {
+            captain: [4202, 4556],
+            friendCaptain: [4521],
+          },
+          {
+            friendCaptain: 4521,
+          },
+        ),
+        lockedCharacterIds: [4521],
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(4202);
+    expect(result?.slots[1]?.character.id).toBe(4521);
+    expect(result?.coverage.leaderCriteria.tagConditionSets).toEqual([]);
+    expect(result?.input.excludedCharacterIds).not.toContain(4202);
+  });
+
+  it('skips bad captain candidates until both leaders pass captain coverage conditions', () => {
+    const result = buildAutoTeamResult(createBothLeaderStrictCoverageRecords(), {
+      ...createInput(['DEX', 'QCK', 'STR'], ['Fighter', 'Powerhouse'], {
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        manualSlots: createManualSlots(
+          {
+            captain: [4202, 4556],
+            friendCaptain: [4521],
+          },
+          {
+            friendCaptain: 4521,
+          },
+        ),
+        lockedCharacterIds: [4521],
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(4556);
+    expect(result?.slots[0]?.character.id).not.toBe(4202);
+    expect(result?.slots[1]?.character.id).toBe(4521);
+    expect(result?.coverage.leaderCriteria.tagConditionSets).toHaveLength(1);
+    expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
+    expect(result?.input.excludedCharacterIds).not.toContain(4202);
+    expect(
+      result?.slots.filter((slot) =>
+        slot.character.detail.characterTags?.some((tag) => ['Navy', 'Egghead Arc'].includes(tag)),
+      ).length,
+    ).toBeGreaterThanOrEqual(4);
+  });
+
+  it('requires Captain and Friend Captain to match captain ability coverage', () => {
     const records = [
       createCharacterRecord({
         id: 8200,
@@ -3261,7 +3319,7 @@ describe('Auto team builder', () => {
       leaderAutoFillCharacterIds: [],
     };
 
-    expect(buildAutoTeamResult(records, input, manualLeaderOnlyOptions)).not.toBeNull();
+    expect(buildAutoTeamResult(records, input, manualLeaderOnlyOptions)).toBeNull();
     expect(
       buildAutoTeamResult(
         records,
@@ -3342,6 +3400,88 @@ describe('Auto team builder', () => {
             slot.character.classes.includes('Powerhouse') ||
             ['DEX', 'PSY'].includes(slot.character.type),
         ),
+    ).toBe(true);
+  });
+
+  it('requires both base branches of a dual-character leader before filling subs', () => {
+    const result = buildAutoTeamResult(createStrictDualCharacterLeaderRecords(), {
+      ...createInput(['DEX', 'QCK', 'PSY', 'STR', 'INT'], ['Fighter', 'Powerhouse'], {
+        requireFullCaptainAbilityCoverage: true,
+        lockedCharacterIds: [4521],
+        captainCharacterId: 4521,
+        friendCaptainCharacterId: 4521,
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
+    expect(result?.slots.some((slot) => slot.character.id === 4525)).toBe(false);
+    expect(result?.slots.some((slot) => slot.character.id === 4526)).toBe(false);
+    expect(
+      result?.slots
+        .slice(2)
+        .every(
+          (slot) =>
+            slot.character.classes.some((characterClass) =>
+              ['Fighter', 'Powerhouse'].includes(characterClass),
+            ),
+        ),
+    ).toBe(true);
+  });
+
+  it('rejects a type-only captain that does not cover every base type of a required dual friend captain', () => {
+    const result = buildAutoTeamResult(createStrictDualTargetCaptainPairRecords(), {
+      ...createInput(['DEX', 'STR', 'QCK', 'PSY'], ['Fighter', 'Powerhouse'], {
+        requireFullCaptainAbilityCoverage: true,
+        lockedCharacterIds: [4521],
+        manualSlots: createManualSlots(
+          {
+            captain: [4306, 4310],
+            friendCaptain: [4521],
+          },
+          {
+            friendCaptain: 4521,
+          },
+        ),
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(4310);
+    expect(result?.slots[0]?.character.id).not.toBe(4306);
+    expect(result?.slots[1]?.character.id).toBe(4521);
+    expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
+  });
+
+  it('excludes mixed-type subs outside a type-only captain scope', () => {
+    const result = buildAutoTeamResult(createStrictTypeOnlyCaptainTeamRecords(), {
+      ...createInput(['DEX', 'STR', 'QCK', 'PSY'], [], {
+        requireFullCaptainAbilityCoverage: true,
+        lockedCharacterIds: [4306],
+        manualSlots: createManualSlots(
+          {
+            captain: [4306],
+            friendCaptain: [4306],
+          },
+          {
+            captain: 4306,
+            friendCaptain: 4306,
+          },
+        ),
+      }),
+    });
+
+    const allowedTypes = new Set(['DEX', 'STR']);
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
+    expect(result?.slots.some((slot) => [4322, 4348, 4268].includes(slot.character.id))).toBe(
+      false,
+    );
+    expect(
+      result?.slots.every((slot) =>
+        slot.character.type.split(',').every((type) => allowedTypes.has(type.trim())),
+      ),
     ).toBe(true);
   });
 
@@ -4279,29 +4419,29 @@ describe('Auto team builder', () => {
     expect(progressSnapshots.some((snapshot) => snapshot.candidateCount === 6)).toBe(true);
   });
 
-  it('builds a relaxed partial captain coverage fallback from candidates outside the strict pool', async () => {
+  it('builds a strict simple captain coverage fallback without ignored partial coverage', async () => {
     const repository = {
       getAutoBuilderCandidates: vi
         .fn()
-        .mockResolvedValue(createPartialCaptainCoverageFallbackRecords()),
+        .mockResolvedValue(createSimpleCaptainCoverageFallbackRecords()),
     };
     const service = new AutoTeamBuilderService(repository as never);
 
-    const result = await service.buildTeam(['Fighter'], ['DEX', 'PSY'], {
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
       requireFullCaptainAbilityCoverage: true,
       manualSlots: createManualSlots({
-        captain: [8300],
-        friendCaptain: [8300],
+        captain: [8360],
+        friendCaptain: [8360],
       }),
     });
 
     expect(result).not.toBeNull();
-    expect(result?.input.allowPartialCaptainAbilityCoverage).toBe(true);
-    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBe(true);
-    expect(result?.slots.some((slot) => slot.character.id === 8305)).toBe(true);
-    expect(result?.coverage.leaderCriteria.matchingSlots).toBeLessThan(
-      result?.coverage.leaderCriteria.totalSlots ?? 0,
-    );
+    expect(result?.input.requireFullCaptainAbilityCoverage).toBe(false);
+    expect(result?.input.allowPartialCaptainAbilityCoverage).toBeUndefined();
+    expect(result?.relaxation.downgradedCaptainAbilityCoverageToSimple).toBe(true);
+    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBeUndefined();
+    expect(result?.coverage.leaderCriteria.coverageMode).toBe('simpleBoostScope');
+    expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
   });
 
   it('excludes candidates outside the selected captain standard boost scope in simple mode', () => {
@@ -7781,6 +7921,7 @@ function createInput(
       | 'requireAllSelectedClassesPerCharacter'
       | 'requireAllSlotsInLeaderSuperEffectScope'
       | 'requireFullCaptainAbilityCoverage'
+      | 'requireBothLeadersFullCaptainAbilityCoverage'
       | 'minimumLeaderSuperEffectMatchingSlots'
       | 'requireLeaderSuperSpecialCriteria'
       | 'requireUniqueBaseCharacterNames'
@@ -7809,6 +7950,7 @@ function createInput(
     requireAllSelectedClassesPerCharacter: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
     requireFullCaptainAbilityCoverage: false,
+    requireBothLeadersFullCaptainAbilityCoverage: false,
     requireLeaderSuperSpecialCriteria: false,
     requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
@@ -7845,6 +7987,8 @@ function createInput(
     requireAllSlotsInLeaderSuperEffectScope:
       overrides.requireAllSlotsInLeaderSuperEffectScope ?? false,
     requireFullCaptainAbilityCoverage: overrides.requireFullCaptainAbilityCoverage ?? false,
+    requireBothLeadersFullCaptainAbilityCoverage:
+      overrides.requireBothLeadersFullCaptainAbilityCoverage ?? false,
     minimumLeaderSuperEffectMatchingSlots: overrides.requireAllSlotsInLeaderSuperEffectScope
       ? (overrides.minimumLeaderSuperEffectMatchingSlots ?? 6)
       : null,
@@ -7971,8 +8115,30 @@ function createCaptainCoveragePruneRecords(): CharacterDetailRecord[] {
   ];
 }
 
-function createPartialCaptainCoverageFallbackRecords(): CharacterDetailRecord[] {
-  return createCaptainCoveragePruneRecords().filter((record) => record.id !== 8304);
+function createSimpleCaptainCoverageFallbackRecords(): CharacterDetailRecord[] {
+  return [
+    createCharacterRecord({
+      id: 8360,
+      name: 'Simple Fallback Captain',
+      primaryClass: 'Fighter',
+      type: 'DEX',
+      detail: {
+        captainAbility:
+          'Boosts ATK of [DEX] characters by 5x and their HP by 1.3x. If HP is below 50%, boosts ATK of [PSY] characters by 6x instead.',
+        specialText: 'Boosts orb effects of [DEX] characters by 2.25x for 1 turn.',
+      },
+    }),
+    ...[8361, 8362, 8363, 8364].map((id) =>
+      createCharacterRecord({
+        id,
+        primaryClass: 'Fighter',
+        type: 'DEX',
+        detail: {
+          specialText: 'Reduces Bind duration by 5 turns.',
+        },
+      }),
+    ),
+  ];
 }
 
 function createCaptainRecord(): CharacterDetailRecord {
@@ -9059,6 +9225,91 @@ function createDualTagConditionSubRecord(
   });
 }
 
+function createBothLeaderStrictCoverageRecords(): CharacterDetailRecord[] {
+  const character1Text =
+    'Boosts ATK of [QCK], Fighter and Powerhouse characters by 4.75x, boosts ATK of all other characters by 3.5x, and boosts HP of [QCK], Fighter and Powerhouse characters by 1.35x. If your crew has 4+ [Egghead Arc] or [Navy] characters, increases boost effects of ATK Up and Orb Amplification buffs by 1.1x.';
+  const character2Text =
+    'Boosts ATK of [DEX], Fighter and Powerhouse characters by 4.75x, boosts ATK of all other characters by 3.5x, and boosts HP of [DEX], Fighter and Powerhouse characters by 1.35x. If your crew has 4+ [Egghead Arc] or [Navy] characters, increases boost effects of ATK Up and Orb Amplification buffs by 1.1x.';
+
+  return [
+    createCharacterRecord({
+      id: 4202,
+      name: 'Jinbe - Warning Allowed Captain',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      detail: {
+        captainAbility: 'Boosts ATK of Fighter characters by 5.5x and HP by 1.3x.',
+        specialText: 'Boosts orb effects of Fighter characters by 2.5x for 1 turn.',
+        partyConflictKeys: ['manual-captain-choice'],
+        characterTags: ['Straw Hat Pirates'],
+      },
+    }),
+    createCharacterRecord({
+      id: 4556,
+      name: 'Portgas D. Ace - Strict Captain',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Striker',
+      detail: {
+        captainAbility: 'Boosts ATK of Fighter characters by 5.25x and HP by 1.3x.',
+        specialText: 'Boosts ATK of Fighter characters by 2.75x for 1 turn.',
+        partyConflictKeys: ['manual-captain-choice'],
+        characterTags: ['Navy'],
+      },
+    }),
+    createCharacterRecord({
+      id: 4521,
+      name: 'Garp & Coby - Combined Fists of Mentor and Protege',
+      type: 'QCK,DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      detail: {
+        captainAbility: character1Text,
+        captainAbilityVariants: [
+          {
+            key: 'character1',
+            label: 'Captain Ability (Character 1)',
+            text: character1Text,
+          },
+          {
+            key: 'character2',
+            label: 'Captain Ability (Character 2)',
+            text: character2Text,
+          },
+          {
+            key: 'combined',
+            label: 'Captain Ability (Combined)',
+            text: 'Boosts ATK of [DEX], [QCK], Fighter and Powerhouse characters by 5.75x.',
+          },
+        ],
+        specialText: 'Boosts ATK of Fighter and Powerhouse characters by 2.25x for 1 turn.',
+        characterTags: ['Navy'],
+      },
+    }),
+    createStrictCoverageFighterSub(4561, ['Navy']),
+    createStrictCoverageFighterSub(4562, ['Egghead Arc']),
+    createStrictCoverageFighterSub(4563, []),
+    createStrictCoverageFighterSub(4564, []),
+  ];
+}
+
+function createStrictCoverageFighterSub(
+  id: number,
+  characterTags: string[],
+): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    type: 'STR',
+    primaryClass: 'Fighter',
+    secondaryClass: 'Powerhouse',
+    detail: {
+      specialText: 'Reduces Bind duration by 5 turns.',
+      characterTags,
+    },
+  });
+}
+
 function createIntersectedLeaderTeamRecords(): CharacterDetailRecord[] {
   return [
     createCharacterRecord({
@@ -9127,6 +9378,267 @@ function createIntersectedLeaderTeamRecords(): CharacterDetailRecord[] {
       detail: {
         specialText:
           'Boosts ATK of Striker and Cerebral characters by 2.75x for 1 turn and boosts orb effects by 2.5x.',
+      },
+    }),
+  ];
+}
+
+function createStrictDualCharacterLeaderRecords(): CharacterDetailRecord[] {
+  const character1Text =
+    'Boosts ATK of [QCK], Fighter and Powerhouse characters by 4.75x, boosts ATK of all other characters by 3.5x, and boosts HP of [QCK], Fighter and Powerhouse characters by 1.35x.';
+  const character2Text =
+    'Boosts ATK of [DEX], Fighter and Powerhouse characters by 4.75x, boosts ATK of all other characters by 3.5x, and boosts HP of [DEX], Fighter and Powerhouse characters by 1.35x.';
+
+  return [
+    createCharacterRecord({
+      id: 4521,
+      name: 'Garp & Coby - Combined Fists of Mentor and Protege',
+      type: 'QCK,DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      detail: {
+        captainAbility: character1Text,
+        captainAbilityVariants: [
+          {
+            key: 'character1',
+            label: 'Captain Ability (Character 1)',
+            text: character1Text,
+          },
+          {
+            key: 'character2',
+            label: 'Captain Ability (Character 2)',
+            text: character2Text,
+          },
+          {
+            key: 'combined',
+            label: 'Captain Ability (Combined)',
+            text: 'Boosts ATK and HP of all characters by 5.75x.',
+          },
+        ],
+        specialText: 'Boosts ATK of Fighter and Powerhouse characters by 2.25x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4522,
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      detail: {
+        specialText: 'Boosts orb effects of Fighter characters by 2.25x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4523,
+      type: 'STR',
+      primaryClass: 'Powerhouse',
+      secondaryClass: 'Shooter',
+      detail: {
+        specialText: 'Boosts color affinity of Powerhouse characters by 2x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4524,
+      type: 'DEX,QCK',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      detail: {
+        specialText: 'Reduces Bind and Despair duration by 5 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4525,
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Cerebral',
+      detail: {
+        specialText: 'Changes crew orbs into Matching Orbs.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4526,
+      type: 'QCK',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Cerebral',
+      detail: {
+        specialText: 'Reduces Paralysis duration by 5 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4527,
+      type: 'INT',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Slasher',
+      detail: {
+        specialText: 'Reduces Special Cooldown by 1 turn.',
+      },
+    }),
+  ];
+}
+
+function createStrictDualTargetCaptainPairRecords(): CharacterDetailRecord[] {
+  const character1Text =
+    'Boosts ATK of [QCK], Fighter and Powerhouse characters by 4.75x, boosts ATK of all other characters by 3.5x, and boosts HP of [QCK], Fighter and Powerhouse characters by 1.35x.';
+  const character2Text =
+    'Boosts ATK of [DEX], Fighter and Powerhouse characters by 4.75x, boosts ATK of all other characters by 3.5x, and boosts HP of [DEX], Fighter and Powerhouse characters by 1.35x.';
+
+  return [
+    createCharacterRecord({
+      id: 4521,
+      name: 'Garp & Coby - Combined Fists of Mentor and Protege',
+      type: 'QCK,DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      detail: {
+        captainAbility: character1Text,
+        captainAbilityVariants: [
+          {
+            key: 'character1',
+            label: 'Captain Ability (Character 1)',
+            text: character1Text,
+          },
+          {
+            key: 'character2',
+            label: 'Captain Ability (Character 2)',
+            text: character2Text,
+          },
+          {
+            key: 'combined',
+            label: 'Captain Ability (Combined)',
+            text: 'Boosts ATK and HP of all characters by 5.75x.',
+          },
+        ],
+        specialText: 'Boosts ATK of Fighter and Powerhouse characters by 2.25x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4306,
+      name: 'Bartholomew Kuma - Selfless Impulse',
+      type: 'STR',
+      primaryClass: 'Powerhouse',
+      secondaryClass: 'Shooter',
+      detail: {
+        captainAbility:
+          'Boosts ATK of [STR] and [DEX] characters by 5x, boosts HP of [STR] and [DEX] characters by 2x.',
+        specialText: 'Reduces Bind duration by 5 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4310,
+      name: 'Universal Fighter Captain',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 5x and boosts HP of all characters by 1.3x.',
+        specialText: 'Reduces Despair duration by 5 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4311,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: 'Boosts orb effects of Fighter characters by 2.25x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4312,
+      type: 'STR',
+      primaryClass: 'Powerhouse',
+      detail: {
+        specialText: 'Boosts color affinity of Powerhouse characters by 2x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4313,
+      type: 'STR,DEX',
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: 'Changes crew orbs into Matching Orbs.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4314,
+      type: 'DEX',
+      primaryClass: 'Powerhouse',
+      detail: {
+        specialText: 'Reduces Paralysis duration by 5 turns.',
+      },
+    }),
+  ];
+}
+
+function createStrictTypeOnlyCaptainTeamRecords(): CharacterDetailRecord[] {
+  return [
+    createCharacterRecord({
+      id: 4306,
+      name: 'Bartholomew Kuma - Selfless Impulse',
+      type: 'STR',
+      primaryClass: 'Powerhouse',
+      secondaryClass: 'Shooter',
+      detail: {
+        captainAbility:
+          'Boosts ATK of [STR] and [DEX] characters by 5x, boosts HP of [STR] and [DEX] characters by 2x.',
+        specialText: 'Reduces Bind duration by 5 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4307,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: 'Boosts ATK of [DEX] characters by 2.25x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4309,
+      type: 'STR',
+      primaryClass: 'Powerhouse',
+      detail: {
+        specialText: 'Boosts orb effects of [STR] characters by 2.25x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4311,
+      type: 'STR,DEX',
+      primaryClass: 'Cerebral',
+      detail: {
+        specialText: 'Reduces Bind and Despair duration by 5 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4312,
+      type: 'DEX',
+      primaryClass: 'Driven',
+      detail: {
+        specialText: 'Changes crew orbs into Matching Orbs.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4322,
+      name: 'Luffy & Lucci - Overlapping Guns',
+      type: 'DEX,QCK',
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: 'Boosts chain by 1.2x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4348,
+      name: 'Sabo & Bonney - Chance Meeting Between Intruders',
+      type: 'PSY,DEX',
+      primaryClass: 'Cerebral',
+      detail: {
+        specialText: 'Reduces Paralysis duration by 5 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4268,
+      name: 'Big Mom & Katakuri - Beginning of Hell',
+      type: 'QCK,DEX',
+      primaryClass: 'Driven',
+      detail: {
+        specialText: 'Reduces Threshold Damage Reduction duration by 5 turns.',
       },
     }),
   ];

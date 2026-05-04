@@ -235,6 +235,26 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
+  it('passes strict both-leader Captain Ability coverage to the builder when enabled', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.onRequireBothLeadersFullCaptainAbilityCoverageToggle({
+      detail: { checked: true },
+    } as CustomEvent<{ checked: boolean }>);
+    await page.buildTeam();
+
+    expect(page.requireBothLeadersFullCaptainAbilityCoverage()).toBe(true);
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.any(Array),
+      expect.objectContaining({
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+      }),
+      expect.any(Object),
+    );
+  });
+
   it('reports partial full Captain Ability coverage and exposes result character tags', async () => {
     const { page } = await createPage();
     const captain = createCharacterRecord(200, 'DEX Captain');
@@ -642,6 +662,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         captainCharacterId: 901,
         friendCaptainCharacterId: 901,
         requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: false,
       },
     );
     expect(userState.saveCharacterBox).toHaveBeenCalledWith({
@@ -2343,6 +2364,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).not.toContain('(ionChange)="onLeaderBoostFilterChange($event)"');
     expect(template).not.toContain('captainAbilityCoverageToggleLabel()');
     expect(template).not.toContain('onRequireFullCaptainAbilityCoverageToggle($event)');
+    expect(template).toContain('bothLeadersCaptainCoverageToggleLabel()');
+    expect(template).toContain('onRequireBothLeadersFullCaptainAbilityCoverageToggle($event)');
     expect(template).toContain('captainAbilityCoverageReportLabel()');
     expect(template).toContain('slot.characterTags');
     expect(template).toContain('clearRequiredCharacterAbilityCategory(');
@@ -4039,6 +4062,11 @@ describe('AutoTeamBuilderPage preset export state', () => {
     } as CustomEvent<{
       checked: boolean;
     }>);
+    page.onRequireBothLeadersFullCaptainAbilityCoverageToggle({
+      detail: { checked: true },
+    } as CustomEvent<{
+      checked: boolean;
+    }>);
     await page.onFavoritesOnlyToggle({ detail: { checked: true } } as CustomEvent<{
       checked: boolean;
     }>);
@@ -4068,7 +4096,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 26,
+      schemaVersion: 27,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -4089,6 +4117,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
         requireAllSelectedClassesPerCharacter: true,
         requireAllSlotsInLeaderSuperEffectScope: true,
         requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
         requireUniqueBaseCharacterNames: true,
         favoritesOnly: true,
         allowAnyFriendCaptainAutoFill: true,
@@ -4151,6 +4180,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       requireAllSelectedClassesPerCharacter: false,
       requireAllSlotsInLeaderSuperEffectScope: false,
       requireFullCaptainAbilityCoverage: false,
+      requireBothLeadersFullCaptainAbilityCoverage: false,
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: true,
       allowAnyFriendCaptainAutoFill: false,
@@ -4177,6 +4207,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       requireAllSelectedClassesPerCharacter: false,
       requireAllSlotsInLeaderSuperEffectScope: false,
       requireFullCaptainAbilityCoverage: false,
+      requireBothLeadersFullCaptainAbilityCoverage: false,
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: true,
       allowAnyFriendCaptainAutoFill: false,
@@ -4235,7 +4266,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
     });
   });
 
-  it('exports leader boost, scoped cost ranges, max total cost, and required manual picks in schema 26 presets', () => {
+  it('exports leader boost, scoped cost ranges, max total cost, and required manual picks in schema 27 presets', () => {
     const payload = buildAutoTeamSelectionExportPayload({
       selectedTypes: ['DEX'],
       selectedClasses: ['Fighter'],
@@ -4271,7 +4302,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       exportedAt: '2026-03-25T10:00:00.000Z',
     });
 
-    expect(payload.schemaVersion).toBe(26);
+    expect(payload.schemaVersion).toBe(27);
     expect(payload.filters.leaderBoostRanges).toEqual({
       ATK: { min: 5, max: 6 },
       HP: { min: 1.25, max: 1.5 },
@@ -4769,7 +4800,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       availableLockedCharacters: [createCharacterRecord(101)],
     });
 
-    expect(payload.schemaVersion).toBe(26);
+    expect(payload.schemaVersion).toBe(27);
     expect(result.state.requiredAbilities).toEqual([
       {
         abilityKey: 'remove_bind',
@@ -4891,6 +4922,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       },
     ]);
     expect(result.state.requireAllSlotsInLeaderSuperEffectScope).toBe(false);
+    expect(result.state.requireBothLeadersFullCaptainAbilityCoverage).toBe(false);
     expect(result.state.allowAnyFriendCaptainAutoFill).toBe(false);
     expect(result.state.favoriteShipsOnly).toBe(false);
     expect(result.state.leaderBoostRanges).toEqual(createEmptyAutoBuildLeaderBoostRanges());
@@ -5355,6 +5387,8 @@ describe('AutoTeamBuilderPage preset import state', () => {
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: true,
       requireAllSlotsInLeaderSuperEffectScope: true,
+      requireFullCaptainAbilityCoverage: true,
+      requireBothLeadersFullCaptainAbilityCoverage: true,
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: true,
       allowAnyFriendCaptainAutoFill: true,
@@ -5462,6 +5496,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
     expect(page.requireAllSelectedClassesPerCharacter()).toBe(true);
     expect(page.requireAllSlotsInLeaderSuperEffectScope()).toBe(true);
     expect(page.requireFullCaptainAbilityCoverage()).toBe(true);
+    expect(page.requireBothLeadersFullCaptainAbilityCoverage()).toBe(true);
     expect(page.requireUniqueBaseCharacterNames()).toBe(true);
     expect(page.favoritesOnly()).toBe(true);
     expect(page.allowAnyFriendCaptainAutoFill()).toBe(true);
@@ -5944,6 +5979,7 @@ function createAutoBuildResult(
     requireAllSelectedClassesPerCharacter: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
     requireFullCaptainAbilityCoverage: false,
+    requireBothLeadersFullCaptainAbilityCoverage: false,
     minimumLeaderSuperEffectMatchingSlots: null,
     requireLeaderSuperSpecialCriteria: false,
     requireUniqueBaseCharacterNames: false,

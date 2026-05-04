@@ -12,7 +12,8 @@
       "typeCoverage": "team-wide type coverage",
       "perCharacterClasses": "per-slot class matching",
       "leaderSuperEffectScope": "leader super effect scope",
-      "captainAbilityCoverage": "full captain ability coverage"
+      "captainAbilityCoverage": "full captain ability coverage",
+      "bothLeadersCaptainCoverage": "both leaders captain coverage"
     },
     "strictMode": {
       "flexible": "flexible fallback enabled",
@@ -77,6 +78,13 @@
       "support": {
         "simple": "Default mode filters teams by the leader's standard HP/ATK boost scope only.",
         "full": "Every final slot, including Captain and Friend Captain, must satisfy all targetable Captain Ability clauses."
+      }
+    },
+    "bothLeadersCaptainCoverage": {
+      "toggle": "Require both leaders to pass Captain Ability coverage",
+      "support": {
+        "flexible": "Allow teams where only one leader fully passes, and show the warning in the result.",
+        "strict": "Captain and Friend Captain must both fully pass every slot and team-count Captain Ability condition."
       }
     },
     "leaderBoost": {

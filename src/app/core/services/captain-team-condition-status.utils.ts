@@ -5,8 +5,10 @@ import {
   countCaptainTagBranchMatches,
   parseCaptainTagConditionBranches,
 } from './captain-tag-conditions.utils';
-import { resolveCaptainCoverage } from './captain-coverage.utils';
-import { normalizeHtmlToText } from './html-text.utils';
+import {
+  resolveCaptainCoverage,
+  resolveRequiredCaptainCoverageBranchTexts,
+} from './captain-coverage.utils';
 
 export type CaptainTeamConditionLeaderRole = 'captain' | 'friendCaptain';
 export type CaptainTeamConditionState = 'pending' | 'full' | 'partial' | 'none';
@@ -84,10 +86,12 @@ function resolveLeaderTeamConditionStatus(
   slotLabels: readonly string[],
   coverageMode: AutoBuildCaptainAbilityCoverageMode,
 ): CaptainTeamConditionLeaderStatus {
-  const captainText = normalizeHtmlToText(leader.character?.detail.captainAbility ?? null);
+  const captainBranches = leader.character
+    ? resolveRequiredCaptainCoverageBranchTexts(leader.character)
+    : [];
   const tagConditionBranches =
-    coverageMode === 'fullAbilityCoverage' && captainText
-      ? parseCaptainTagConditionBranches(captainText)
+    coverageMode === 'fullAbilityCoverage'
+      ? captainBranches.flatMap((branch) => parseCaptainTagConditionBranches(branch.text))
       : [];
   const slotCoverage = leader.character
     ? slots.map((slot) =>
@@ -105,7 +109,7 @@ function resolveLeaderTeamConditionStatus(
     .filter((label): label is string => label !== null);
   const tagConditionsSatisfied =
     tagConditionBranches.length === 0 || captainTagBranchesSatisfied(slots, tagConditionBranches);
-  const hasCaptainAbility = captainText.length > 0;
+  const hasCaptainAbility = captainBranches.length > 0;
 
   return {
     role: leader.role,

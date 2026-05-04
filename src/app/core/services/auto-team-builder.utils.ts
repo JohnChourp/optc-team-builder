@@ -14,6 +14,8 @@ import {
   type AutoBuildEffectTags,
   type AutoBuildInput,
   type AutoBuildLeaderCriteriaSummary,
+  type AutoBuildLeaderTagConditionBranch,
+  type AutoBuildLeaderTagConditionSet,
   type AutoBuildManualSlotRole,
   type AutoBuildManualSlotSelection,
   type AutoBuildSpecialScope,
@@ -35,8 +37,14 @@ import {
   captainTagBranchesSatisfied,
   countCaptainTagBranchMatches,
   normalizeCaptainTagKey,
+  parseCaptainTagConditionBranches,
 } from './captain-tag-conditions.utils';
-import { resolveCaptainBoostScope, resolveCaptainCoverage } from './captain-coverage.utils';
+import {
+  hasSelfOnlyCaptainCoverageText,
+  resolveCaptainBoostScope,
+  resolveCaptainCoverage,
+  resolveRequiredCaptainCoverageBranchTexts,
+} from './captain-coverage.utils';
 import { normalizeHtmlToText } from './html-text.utils';
 import { cloneRequiredCharacterGroup } from './required-character-groups.utils';
 import { cloneBattleRequirements } from './auto-team-builder-battle.utils';
@@ -214,9 +222,15 @@ function compareCandidatesByHighestCost(
 }
 
 function resolveCaptainAbilityCoverageMode(
-  input: Pick<AutoBuildInput, 'requireFullCaptainAbilityCoverage'>,
+  input: Pick<
+    AutoBuildInput,
+    'requireFullCaptainAbilityCoverage' | 'requireBothLeadersFullCaptainAbilityCoverage'
+  >,
 ): AutoBuildCaptainAbilityCoverageMode {
-  return input.requireFullCaptainAbilityCoverage ? 'fullAbilityCoverage' : 'simpleBoostScope';
+  return input.requireFullCaptainAbilityCoverage ||
+    input.requireBothLeadersFullCaptainAbilityCoverage
+    ? 'fullAbilityCoverage'
+    : 'simpleBoostScope';
 }
 
 export function resolveAutoBuildCharacterPowerPreferenceScore(
@@ -3222,6 +3236,9 @@ function resolveActiveLeaderCriteria(
     (leader) => leader.tags.captainScope.allowedCharacterTags,
     (leader) => leader.tags.captainScope.hasCharacterTagRestriction,
   );
+  const tagConditionSets = input.requireBothLeadersFullCaptainAbilityCoverage
+    ? resolveLeaderTagConditionSets(uniqueLeaders)
+    : [];
 
   return {
     source: 'captainAbility',
@@ -3240,8 +3257,45 @@ function resolveActiveLeaderCriteria(
     hasClassRestriction: classScope.restricted,
     hasTypeRestriction: typeScope.restricted,
     hasCharacterTagRestriction: characterTagScope.restricted,
-    tagConditionSets: [],
+    tagConditionSets,
   };
+}
+
+function resolveLeaderTagConditionSets(
+  leaders: readonly AutoBuildCandidate[],
+): AutoBuildLeaderTagConditionSet[] {
+  return leaders
+    .map((leader) => {
+      const branches = dedupeLeaderTagConditionBranches(
+        resolveRequiredCaptainCoverageBranchTexts(leader.character).flatMap((branch) =>
+          parseCaptainTagConditionBranches(branch.text),
+        ),
+      );
+
+      return {
+        leaderId: leader.character.id,
+        leaderName: leader.character.name,
+        branches,
+      };
+    })
+    .filter((set) => set.branches.length > 0);
+}
+
+function dedupeLeaderTagConditionBranches(
+  branches: AutoBuildLeaderTagConditionBranch[],
+): AutoBuildLeaderTagConditionBranch[] {
+  const seen = new Set<string>();
+
+  return branches.filter((branch) => {
+    const key = `${branch.requiredCount}:${branch.acceptedKeys.join('|')}`;
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
 }
 
 export function resolveLeaderSuperEffectScopeFromEffectText(effectText: string): {
@@ -3440,15 +3494,34 @@ function matchesActiveLeaderCriteria(
   candidate: AutoBuildCandidate,
   leaderCriteria: ActiveLeaderCriteria,
 ): boolean {
+  const branchAwareCoverageResults = leaderCriteria.leaders.map((leader) =>
+    resolveCaptainCoverage(leader.character, candidate.character, {
+      coverageMode: leaderCriteria.coverageMode,
+      targetCharacterTags: candidate.character.detail.characterTags ?? [],
+      includeTeamTagClauses: false,
+    }),
+  );
+
   if (leaderCriteria.coverageMode === 'fullAbilityCoverage') {
-    return leaderCriteria.leaders.every(
-      (leader) =>
-        resolveCaptainCoverage(leader.character, candidate.character, {
-          coverageMode: 'fullAbilityCoverage',
-          targetCharacterTags: candidate.character.detail.characterTags ?? [],
-          includeTeamTagClauses: false,
-        }).matches,
+    return branchAwareCoverageResults.every((coverage) => coverage.matches);
+  }
+
+  const simpleCoverageResults = leaderCriteria.leaders.map((leader, index) => ({
+    coverage: branchAwareCoverageResults[index]!,
+    hasSelfOnlyCoverage: hasSelfOnlyCaptainCoverageText(leader.character),
+  }));
+
+  if (simpleCoverageResults.some((result) => result.coverage.targetableClauseCount > 0)) {
+    return simpleCoverageResults.every(
+      (result) =>
+        result.coverage.targetableClauseCount > 0
+          ? result.coverage.matches
+          : !result.hasSelfOnlyCoverage,
     );
+  }
+
+  if (simpleCoverageResults.some((result) => result.hasSelfOnlyCoverage)) {
+    return false;
   }
 
   const matchesClassScope = leaderCriteria.hasClassRestriction
@@ -3460,7 +3533,8 @@ function matchesActiveLeaderCriteria(
     : false;
   const characterTypes = resolveCharacterTypeTokens(candidate.character.type);
   const matchesTypeScope = leaderCriteria.hasTypeRestriction
-    ? characterTypes.some((type) => leaderCriteria.derivedAllowedTypes.includes(type))
+    ? characterTypes.length > 0 &&
+      characterTypes.every((type) => leaderCriteria.derivedAllowedTypes.includes(type))
     : false;
   const characterTagKeys = (candidate.character.detail.characterTags ?? []).map((tag) =>
     normalizeCaptainTagKey(tag),
@@ -3516,13 +3590,16 @@ function matchesLeaderBuildScopeForAttempt(
   leaderCriteria: ActiveLeaderCriteria,
   input: AutoBuildInput,
 ): boolean {
-  return input.allowPartialCaptainAbilityCoverage
+  return input.allowPartialCaptainAbilityCoverage &&
+    !input.requireBothLeadersFullCaptainAbilityCoverage
     ? true
     : matchesLeaderBuildScope(candidate, leaderCriteria);
 }
 
 function shouldEnforceCaptainAbilityCoverage(input: AutoBuildInput): boolean {
-  return input.requireFullCaptainAbilityCoverage && !input.allowPartialCaptainAbilityCoverage;
+  return (
+    input.requireBothLeadersFullCaptainAbilityCoverage || !input.allowPartialCaptainAbilityCoverage
+  );
 }
 
 function resolveLeaderCriteriaCoveragePreferenceScore(

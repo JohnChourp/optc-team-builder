@@ -12,7 +12,8 @@
       "typeCoverage": "κάλυψη types στην ομάδα",
       "perCharacterClasses": "match classes σε κάθε slot",
       "leaderSuperEffectScope": "match στο leader super effect scope",
-      "captainAbilityCoverage": "πλήρες captain ability coverage"
+      "captainAbilityCoverage": "πλήρες captain ability coverage",
+      "bothLeadersCaptainCoverage": "captain ability coverage και από τους δύο leaders"
     },
     "strictMode": {
       "flexible": "με flexible fallback",
@@ -77,6 +78,13 @@
       "support": {
         "simple": "Το default mode φιλτράρει την ομάδα μόνο με το standard HP/ATK boost scope του leader.",
         "full": "Κάθε final slot, μαζί με Captain και Friend Captain, πρέπει να καλύπτει όλα τα targetable Captain Ability clauses."
+      }
+    },
+    "bothLeadersCaptainCoverage": {
+      "toggle": "Απαίτησε να περνούν και οι δύο leaders το Captain Ability coverage",
+      "support": {
+        "flexible": "Επίτρεψε ομάδες όπου περνάει πλήρως μόνο ένας leader και δείξε warning στο αποτέλεσμα.",
+        "strict": "Captain και Friend Captain πρέπει να περνούν πλήρως κάθε slot και κάθε team-count Captain Ability condition."
       }
     },
     "leaderBoost": {

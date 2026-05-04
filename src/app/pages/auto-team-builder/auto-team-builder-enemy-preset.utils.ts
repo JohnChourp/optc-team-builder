@@ -56,6 +56,7 @@ export function buildAutoTeamBuilderStateFromSavedEnemy(
     requireAllSelectedClassesPerCharacter: enemy.requireAllSelectedClassesPerCharacter,
     requireAllSlotsInLeaderSuperEffectScope: false,
     requireFullCaptainAbilityCoverage: false,
+    requireBothLeadersFullCaptainAbilityCoverage: false,
     requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
     allowAnyFriendCaptainAutoFill: false,

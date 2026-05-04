@@ -196,6 +196,7 @@ function createResult(
     requireAllSelectedClassesPerCharacter: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
     requireFullCaptainAbilityCoverage: false,
+    requireBothLeadersFullCaptainAbilityCoverage: false,
     minimumLeaderSuperEffectMatchingSlots: null,
     requireLeaderSuperSpecialCriteria: false,
     requireUniqueBaseCharacterNames: false,

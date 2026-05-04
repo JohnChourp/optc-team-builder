@@ -111,7 +111,8 @@ export interface AutoTeamSelectionExportPayload {
     | 23
     | 24
     | 25
-    | 26;
+    | 26
+    | 27;
   exportedAt: string;
   source: 'auto-team-builder';
   exportType: 'preset';
@@ -126,6 +127,7 @@ export interface AutoTeamSelectionExportPayload {
     requireAllSelectedClassesPerCharacter: boolean;
     requireAllSlotsInLeaderSuperEffectScope?: boolean;
     requireFullCaptainAbilityCoverage?: boolean;
+    requireBothLeadersFullCaptainAbilityCoverage?: boolean;
     requireUniqueBaseCharacterNames: boolean;
     favoritesOnly: boolean;
     allowAnyFriendCaptainAutoFill?: boolean;
@@ -166,6 +168,7 @@ export interface AutoTeamSelectionImportState {
   requireAllSelectedClassesPerCharacter: boolean;
   requireAllSlotsInLeaderSuperEffectScope: boolean;
   requireFullCaptainAbilityCoverage: boolean;
+  requireBothLeadersFullCaptainAbilityCoverage: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
   allowAnyFriendCaptainAutoFill: boolean;
@@ -223,6 +226,7 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   requireAllSelectedClassesPerCharacter: boolean;
   requireAllSlotsInLeaderSuperEffectScope: boolean;
   requireFullCaptainAbilityCoverage?: boolean;
+  requireBothLeadersFullCaptainAbilityCoverage?: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
   allowAnyFriendCaptainAutoFill?: boolean;
@@ -726,7 +730,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload['schemaVersion'] !== 23 &&
       parsedPayload['schemaVersion'] !== 24 &&
       parsedPayload['schemaVersion'] !== 25 &&
-      parsedPayload['schemaVersion'] !== 26) ||
+      parsedPayload['schemaVersion'] !== 26 &&
+      parsedPayload['schemaVersion'] !== 27) ||
     parsedPayload['source'] !== 'auto-team-builder' ||
     parsedPayload['exportType'] !== 'preset'
   ) {
@@ -788,6 +793,10 @@ export function parseAutoTeamSelectionImportPayload(
     !(
       filters['requireFullCaptainAbilityCoverage'] === undefined ||
       typeof filters['requireFullCaptainAbilityCoverage'] === 'boolean'
+    ) ||
+    !(
+      filters['requireBothLeadersFullCaptainAbilityCoverage'] === undefined ||
+      typeof filters['requireBothLeadersFullCaptainAbilityCoverage'] === 'boolean'
     ) ||
     !(
       filters['requireLeadersWithoutSuperEffects'] === undefined ||
@@ -1330,6 +1339,8 @@ export function sanitizeAutoTeamSelectionImportPayload(
       requireAllSelectedClassesPerCharacter: payload.filters.requireAllSelectedClassesPerCharacter,
       requireAllSlotsInLeaderSuperEffectScope,
       requireFullCaptainAbilityCoverage: payload.filters.requireFullCaptainAbilityCoverage === true,
+      requireBothLeadersFullCaptainAbilityCoverage:
+        payload.filters.requireBothLeadersFullCaptainAbilityCoverage === true,
       requireUniqueBaseCharacterNames: payload.filters.requireUniqueBaseCharacterNames === true,
       favoritesOnly: payload.filters.favoritesOnly,
       allowAnyFriendCaptainAutoFill: payload.filters.allowAnyFriendCaptainAutoFill === true,
@@ -1404,6 +1415,7 @@ export function buildAutoTeamSelectionExportPayload({
   requireAllSelectedClassesPerCharacter,
   requireAllSlotsInLeaderSuperEffectScope,
   requireFullCaptainAbilityCoverage = false,
+  requireBothLeadersFullCaptainAbilityCoverage = false,
   requireUniqueBaseCharacterNames,
   favoritesOnly,
   allowAnyFriendCaptainAutoFill = false,
@@ -1441,7 +1453,7 @@ export function buildAutoTeamSelectionExportPayload({
   const normalizedBattleRequirements = cloneBattleRequirements(battleRequirements);
 
   return {
-    schemaVersion: 26,
+    schemaVersion: 27,
     exportedAt,
     source: 'auto-team-builder',
     exportType: 'preset',
@@ -1466,6 +1478,7 @@ export function buildAutoTeamSelectionExportPayload({
       requireAllSelectedClassesPerCharacter,
       requireAllSlotsInLeaderSuperEffectScope,
       requireFullCaptainAbilityCoverage,
+      requireBothLeadersFullCaptainAbilityCoverage,
       requireUniqueBaseCharacterNames,
       favoritesOnly,
       allowAnyFriendCaptainAutoFill,

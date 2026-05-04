@@ -352,6 +352,7 @@ interface AutoTeamBuilderDefaultFilterState {
   requireAllSelectedClassesPerCharacter: boolean;
   requireAllSlotsInLeaderSuperEffectScope: boolean;
   requireFullCaptainAbilityCoverage: boolean;
+  requireBothLeadersFullCaptainAbilityCoverage: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
   allowAnyFriendCaptainAutoFill: boolean;
@@ -409,6 +410,7 @@ function buildDefaultAutoTeamBuilderFilterState(
     requireAllSelectedClassesPerCharacter: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
     requireFullCaptainAbilityCoverage: true,
+    requireBothLeadersFullCaptainAbilityCoverage: false,
     requireUniqueBaseCharacterNames: true,
     favoritesOnly: true,
     allowAnyFriendCaptainAutoFill: false,
@@ -599,6 +601,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
   public readonly requireAllSlotsInLeaderSuperEffectScope = signal(false);
   public readonly requireFullCaptainAbilityCoverage = signal(true);
+  public readonly requireBothLeadersFullCaptainAbilityCoverage = signal(false);
   public readonly requireUniqueBaseCharacterNames = signal(true);
   public readonly selectedCharacterBoxId = signal<string | null>(null);
   public readonly selectedExcludeCharacterBoxId = signal<string | null>(null);
@@ -1131,7 +1134,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.requireAllSelectedTypesInTeam() ||
       this.requireAllSelectedClassesPerCharacter() ||
       this.requireAllSlotsInLeaderSuperEffectScope() ||
-      this.requireFullCaptainAbilityCoverage(),
+      this.requireFullCaptainAbilityCoverage() ||
+      this.requireBothLeadersFullCaptainAbilityCoverage(),
   );
   public readonly allClassesSelected = computed(
     () =>
@@ -1259,6 +1263,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.requireFullCaptainAbilityCoverage()
       ? this.t('filters.captainAbilityCoverage.support.full')
       : this.t('filters.captainAbilityCoverage.support.simple'),
+  );
+  public readonly bothLeadersCaptainCoverageSupportLabel = computed(() =>
+    this.requireBothLeadersFullCaptainAbilityCoverage()
+      ? this.t('filters.bothLeadersCaptainCoverage.support.strict')
+      : this.t('filters.bothLeadersCaptainCoverage.support.flexible'),
   );
   public readonly favoritesOnlySupportLabel = computed(() =>
     this.hasFavoriteCharacters()
@@ -1520,6 +1529,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly captainAbilityCoverageToggleLabel = computed(() =>
     this.t('filters.captainAbilityCoverage.toggle'),
   );
+  public readonly bothLeadersCaptainCoverageToggleLabel = computed(() =>
+    this.t('filters.bothLeadersCaptainCoverage.toggle'),
+  );
   public readonly favoritesOnlyToggleLabel = computed(() => this.t('filters.favoritesOnly.toggle'));
   public readonly allowAnyFriendCaptainAutoFillToggleLabel = computed(() =>
     this.t('filters.allowAnyFriendCaptainAutoFill.toggle'),
@@ -1586,6 +1598,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     if (this.requireFullCaptainAbilityCoverage()) {
       strictModes.push(this.t('hero.strictModes.captainAbilityCoverage'));
+    }
+
+    if (this.requireBothLeadersFullCaptainAbilityCoverage()) {
+      strictModes.push(this.t('hero.strictModes.bothLeadersCaptainCoverage'));
     }
 
     return strictModes.length > 0
@@ -2022,7 +2038,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     return resolveCaptainTeamConditionStatus({
       expectedSlotCount: 6,
-      coverageMode: this.requireFullCaptainAbilityCoverage()
+      coverageMode:
+        this.requireFullCaptainAbilityCoverage() ||
+        this.requireBothLeadersFullCaptainAbilityCoverage()
         ? 'fullAbilityCoverage'
         : 'simpleBoostScope',
       leaders: [
@@ -2051,7 +2069,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
       return resolveCaptainTeamConditionStatus({
         expectedSlotCount: FIXED_MANUAL_TEAM_SLOT_COUNT,
-        coverageMode: this.requireFullCaptainAbilityCoverage()
+        coverageMode:
+          this.requireFullCaptainAbilityCoverage() ||
+          this.requireBothLeadersFullCaptainAbilityCoverage()
           ? 'fullAbilityCoverage'
           : 'simpleBoostScope',
         leaders: [
@@ -2773,6 +2793,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public onRequireFullCaptainAbilityCoverageToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.requireFullCaptainAbilityCoverage.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
+  public onRequireBothLeadersFullCaptainAbilityCoverageToggle(
+    event: CustomEvent<{ checked: boolean }>,
+  ): void {
+    this.requireBothLeadersFullCaptainAbilityCoverage.set(event.detail.checked);
     this.resetBuildState();
   }
 
@@ -3535,6 +3562,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
           requireAllSlotsInLeaderSuperEffectScope: this.requireAllSlotsInLeaderSuperEffectScope(),
           requireFullCaptainAbilityCoverage: this.requireFullCaptainAbilityCoverage(),
+          requireBothLeadersFullCaptainAbilityCoverage:
+            this.requireBothLeadersFullCaptainAbilityCoverage(),
           requireUniqueBaseCharacterNames: true,
           requiredAbilities: this.pageRequiredAbilities(),
           requiredCharacterGroups: [],
@@ -3649,6 +3678,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
       requireAllSlotsInLeaderSuperEffectScope: this.requireAllSlotsInLeaderSuperEffectScope(),
       requireFullCaptainAbilityCoverage: this.requireFullCaptainAbilityCoverage(),
+      requireBothLeadersFullCaptainAbilityCoverage:
+        this.requireBothLeadersFullCaptainAbilityCoverage(),
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: this.favoritesOnly(),
       allowAnyFriendCaptainAutoFill: this.allowAnyFriendCaptainAutoFill(),
@@ -3878,6 +3909,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       defaultFilters.requireAllSlotsInLeaderSuperEffectScope,
     );
     this.requireFullCaptainAbilityCoverage.set(defaultFilters.requireFullCaptainAbilityCoverage);
+    this.requireBothLeadersFullCaptainAbilityCoverage.set(
+      defaultFilters.requireBothLeadersFullCaptainAbilityCoverage,
+    );
     this.requireUniqueBaseCharacterNames.set(true);
     this.selectedCharacterBoxId.set(null);
     this.selectedExcludeCharacterBoxId.set(null);
@@ -4015,6 +4049,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.requireAllSelectedClassesPerCharacter.set(state.requireAllSelectedClassesPerCharacter);
     this.requireAllSlotsInLeaderSuperEffectScope.set(state.requireAllSlotsInLeaderSuperEffectScope);
     this.requireFullCaptainAbilityCoverage.set(true);
+    this.requireBothLeadersFullCaptainAbilityCoverage.set(
+      state.requireBothLeadersFullCaptainAbilityCoverage,
+    );
     this.requireUniqueBaseCharacterNames.set(true);
     this.selectedCharacterBoxId.set(null);
     this.selectedExcludeCharacterBoxId.set(null);
@@ -5676,6 +5713,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       captainCharacterId: this.effectiveCaptainLeaderId(),
       friendCaptainCharacterId: this.effectiveFriendLeaderId(),
       requireFullCaptainAbilityCoverage: this.requireFullCaptainAbilityCoverage(),
+      requireBothLeadersFullCaptainAbilityCoverage:
+        this.requireBothLeadersFullCaptainAbilityCoverage(),
     });
   }
 

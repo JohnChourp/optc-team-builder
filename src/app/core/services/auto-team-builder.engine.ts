@@ -496,8 +496,15 @@ export function runAutoTeamBuildAttempt(
       minimumLeaderSuperEffectMatchingSlots: input.minimumLeaderSuperEffectMatchingSlots,
       allowedLeadersWithSuperEffects,
       ...(requestedInput.requireFullCaptainAbilityCoverage &&
-      input.allowPartialCaptainAbilityCoverage
+      input.allowPartialCaptainAbilityCoverage &&
+      !requestedInput.requireBothLeadersFullCaptainAbilityCoverage
         ? { ignoredCaptainAbilityCoverage: true }
+        : {}),
+      ...(requestedInput.requireFullCaptainAbilityCoverage &&
+      !input.requireFullCaptainAbilityCoverage &&
+      !input.allowPartialCaptainAbilityCoverage &&
+      !requestedInput.requireBothLeadersFullCaptainAbilityCoverage
+        ? { downgradedCaptainAbilityCoverageToSimple: true }
         : {}),
       ignoredLeaderSuperEffectScope: Boolean(
         requestedInput.requireAllSlotsInLeaderSuperEffectScope &&
@@ -554,14 +561,16 @@ export class AutoTeamBuildFallbackPlanner {
     this.subsetCandidates = this.hasStrictConstraints
       ? []
       : buildSubsetCandidates(requestedInput, this.baseSubsetInput, records);
-    this.relaxedAttempts = requestedInput.requireFullCaptainAbilityCoverage
-      ? buildRelaxedCaptainCoverageAttempts(
-          requestedInput,
-          exactAttemptRequiresNoSuperLeaders,
-          this.zeroDropAttempts,
-          this.subsetCandidates,
-        )
-      : [];
+    this.relaxedAttempts =
+      requestedInput.requireFullCaptainAbilityCoverage &&
+      !requestedInput.requireBothLeadersFullCaptainAbilityCoverage
+        ? buildSimpleCaptainCoverageFallbackAttempts(
+            requestedInput,
+            exactAttemptRequiresNoSuperLeaders,
+            this.zeroDropAttempts,
+            this.subsetCandidates,
+          )
+        : [];
     this.maxScheduledFallbackAttempts = resolveMaxScheduledFallbackAttemptCount(
       requestedInput,
       this.zeroDropAttempts.length + this.relaxedAttempts.length,
@@ -737,17 +746,14 @@ function resolveProjectedScheduledFallbackAttemptCount(
   return scheduledAttemptCount;
 }
 
-function buildRelaxedCaptainCoverageAttempts(
+function buildSimpleCaptainCoverageFallbackAttempts(
   requestedInput: AutoBuildInput,
   exactAttemptRequiresNoSuperLeaders: boolean,
   zeroDropAttempts: AutoTeamBuildPlannedAttempt[],
   subsetCandidates: AutoTeamBuildSubsetCandidate[],
 ): AutoTeamBuildPlannedAttempt[] {
-  const exactRelaxedAttempt: AutoTeamBuildPlannedAttempt = {
-    input: {
-      ...requestedInput,
-      allowPartialCaptainAbilityCoverage: true,
-    },
+  const exactSimpleAttempt: AutoTeamBuildPlannedAttempt = {
+    input: downgradeCaptainCoverageInputToSimple(requestedInput),
     requireLeadersWithoutSuperEffects: exactAttemptRequiresNoSuperLeaders,
     allowedLeadersWithSuperEffects: false,
     droppedTypes: [],
@@ -755,24 +761,34 @@ function buildRelaxedCaptainCoverageAttempts(
     ignoredLeaderSuperEffectScope: false,
     ignoredLeaderSuperSpecialCriteria: false,
   };
-  const relaxedCopies = [
-    exactRelaxedAttempt,
-    ...zeroDropAttempts.map((attempt) => relaxCaptainCoverageAttempt(attempt)),
-    ...subsetCandidates.map((candidate) => relaxCaptainCoverageAttempt(candidate.attempt)),
+  const simpleCopies = [
+    exactSimpleAttempt,
+    ...zeroDropAttempts.map((attempt) => downgradeCaptainCoverageAttemptToSimple(attempt)),
+    ...subsetCandidates.map((candidate) =>
+      downgradeCaptainCoverageAttemptToSimple(candidate.attempt),
+    ),
   ];
 
-  return dedupeFallbackAttempts(relaxedCopies);
+  return dedupeFallbackAttempts(simpleCopies);
 }
 
-function relaxCaptainCoverageAttempt(
+function downgradeCaptainCoverageAttemptToSimple(
   attempt: AutoTeamBuildPlannedAttempt,
 ): AutoTeamBuildPlannedAttempt {
   return {
     ...attempt,
-    input: {
-      ...attempt.input,
-      allowPartialCaptainAbilityCoverage: true,
-    },
+    input: downgradeCaptainCoverageInputToSimple(attempt.input),
+  };
+}
+
+function downgradeCaptainCoverageInputToSimple(input: AutoBuildInput): AutoBuildInput {
+  const { allowPartialCaptainAbilityCoverage, ...strictInput } = input;
+
+  void allowPartialCaptainAbilityCoverage;
+
+  return {
+    ...strictInput,
+    requireFullCaptainAbilityCoverage: false,
   };
 }
 
@@ -1113,8 +1129,12 @@ function buildFallbackAttemptKey(attempt: AutoTeamBuildPlannedAttempt): string {
     attempt.input.selectedClasses.join('|'),
     attempt.input.requireLeaderSuperSpecialCriteria ? '1' : '0',
     attempt.input.requireAllSlotsInLeaderSuperEffectScope ? '1' : '0',
+    attempt.input.requireFullCaptainAbilityCoverage ? 'full-captain' : 'simple-captain',
+    attempt.input.requireBothLeadersFullCaptainAbilityCoverage
+      ? 'both-leaders-captain'
+      : 'leader-scope-captain',
     attempt.input.minimumLeaderSuperEffectMatchingSlots ?? 'null',
-    attempt.input.allowPartialCaptainAbilityCoverage ? 'partial-captain' : 'full-captain',
+    attempt.input.allowPartialCaptainAbilityCoverage ? 'partial-captain' : 'strict-captain',
     attempt.requireLeadersWithoutSuperEffects ? '1' : '0',
   ].join('::');
 }
@@ -1135,6 +1155,9 @@ function inputsMatch(left: AutoBuildInput, right: AutoBuildInput): boolean {
     sameOrderedValues(left.selectedClasses, right.selectedClasses) &&
     left.requireAllSlotsInLeaderSuperEffectScope ===
       right.requireAllSlotsInLeaderSuperEffectScope &&
+    left.requireFullCaptainAbilityCoverage === right.requireFullCaptainAbilityCoverage &&
+    left.requireBothLeadersFullCaptainAbilityCoverage ===
+      right.requireBothLeadersFullCaptainAbilityCoverage &&
     Boolean(left.allowPartialCaptainAbilityCoverage) ===
       Boolean(right.allowPartialCaptainAbilityCoverage) &&
     left.minimumLeaderSuperEffectMatchingSlots === right.minimumLeaderSuperEffectMatchingSlots &&

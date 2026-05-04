@@ -157,6 +157,152 @@ describe('resolveCaptainTeamConditionStatus', () => {
     expect(status.passedLeaderLabels).toEqual([]);
   });
 
+  it('requires both base branches of a dual-character captain to cover every slot', () => {
+    const character1Text =
+      'Boosts ATK of [QCK], Fighter and Powerhouse characters by 4.75x and boosts HP of [QCK], Fighter and Powerhouse characters by 1.35x.';
+    const character2Text =
+      'Boosts ATK of [DEX], Fighter and Powerhouse characters by 4.75x and boosts HP of [DEX], Fighter and Powerhouse characters by 1.35x.';
+    const captain = createCharacter({
+      id: 4521,
+      type: 'QCK,DEX',
+      captainAbility: character1Text,
+      captainAbilityVariants: [
+        {
+          key: 'character1',
+          label: 'Captain Ability (Character 1)',
+          text: character1Text,
+        },
+        {
+          key: 'character2',
+          label: 'Captain Ability (Character 2)',
+          text: character2Text,
+        },
+        {
+          key: 'combined',
+          label: 'Captain Ability (Combined)',
+          text: 'Boosts ATK and HP of all characters by 5.75x.',
+        },
+      ],
+    });
+
+    const status = resolveCaptainTeamConditionStatus({
+      expectedSlotCount: 3,
+      leaders: [{ role: 'captain', label: 'Captain', character: captain }],
+      slotLabels: ['Captain', 'Sub 1', 'Sub 2'],
+      slots: [
+        captain,
+        createCharacter({ id: 4522, type: 'PSY', classes: ['Fighter', 'Cerebral'] }),
+        createCharacter({ id: 4523, type: 'DEX', classes: ['Shooter', 'Cerebral'] }),
+      ],
+    });
+
+    expect(status.state).toBe('none');
+    expect(status.leaderStatuses[0]?.missingSlotLabels).toEqual(['Sub 2']);
+  });
+
+  it('marks a type-only captain as missing a dual friend captain branch outside its type scope', () => {
+    const kuma = createCharacter({
+      id: 4306,
+      type: 'STR',
+      classes: ['Powerhouse', 'Shooter'],
+      captainAbility:
+        'Boosts ATK of [STR] and [DEX] characters by 5x and boosts HP of [STR] and [DEX] characters by 2x.',
+    });
+    const character1Text =
+      'Boosts ATK of [QCK], Fighter and Powerhouse characters by 4.75x and boosts HP of [QCK], Fighter and Powerhouse characters by 1.35x.';
+    const character2Text =
+      'Boosts ATK of [DEX], Fighter and Powerhouse characters by 4.75x and boosts HP of [DEX], Fighter and Powerhouse characters by 1.35x.';
+    const garpCoby = createCharacter({
+      id: 4521,
+      type: 'QCK,DEX',
+      classes: ['Fighter', 'Powerhouse'],
+      captainAbility: character1Text,
+      captainAbilityVariants: [
+        {
+          key: 'character1',
+          label: 'Captain Ability (Character 1)',
+          text: character1Text,
+        },
+        {
+          key: 'character2',
+          label: 'Captain Ability (Character 2)',
+          text: character2Text,
+        },
+        {
+          key: 'combined',
+          label: 'Captain Ability (Combined)',
+          text: 'Boosts ATK and HP of all characters by 5.75x.',
+        },
+      ],
+    });
+    const status = resolveCaptainTeamConditionStatus({
+      expectedSlotCount: 3,
+      leaders: [
+        { role: 'captain', label: 'Captain', character: kuma },
+        { role: 'friendCaptain', label: 'Friend Captain', character: garpCoby },
+      ],
+      slotLabels: ['Captain', 'Friend Captain', 'Sub 1'],
+      slots: [kuma, garpCoby, createCharacter({ id: 4307, type: 'DEX', classes: ['Fighter'] })],
+    });
+
+    expect(status.state).toBe('partial');
+    expect(status.failedLeaderLabels).toEqual(['Captain']);
+    expect(status.leaderStatuses[0]?.missingSlotLabels).toEqual(['Friend Captain']);
+    expect(status.leaderStatuses[1]?.passed).toBe(true);
+  });
+
+  it('uses dual captain branch text for visible team-count tag conditions', () => {
+    const character1Text =
+      'Boosts ATK of [QCK], Fighter and Powerhouse characters by 4.75x and boosts HP by 1.35x. If your crew has 4+ [Egghead Arc] or [Navy] characters, boosts ATK by 5.75x instead.';
+    const character2Text =
+      'Boosts ATK of [DEX], Fighter and Powerhouse characters by 4.75x and boosts HP by 1.35x. If your crew has 4+ [Egghead Arc] or [Navy] characters, boosts ATK by 5.75x instead.';
+    const captain = createCharacter({
+      id: 4521,
+      type: 'QCK,DEX',
+      classes: ['Fighter', 'Powerhouse'],
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+      captainAbilityVariants: [
+        {
+          key: 'character1',
+          label: 'Captain Ability (Character 1)',
+          text: character1Text,
+        },
+        {
+          key: 'character2',
+          label: 'Captain Ability (Character 2)',
+          text: character2Text,
+        },
+        {
+          key: 'combined',
+          label: 'Captain Ability (Combined)',
+          text: 'Boosts ATK and HP of all characters by 5.75x.',
+        },
+      ],
+      characterTags: ['Navy'],
+    });
+    const status = resolveCaptainTeamConditionStatus({
+      expectedSlotCount: 4,
+      leaders: [{ role: 'captain', label: 'Captain', character: captain }],
+      slotLabels: ['Captain', 'Sub 1', 'Sub 2', 'Sub 3'],
+      slots: [
+        captain,
+        createCharacter({ id: 4522, type: 'PSY', classes: ['Fighter'], characterTags: ['Navy'] }),
+        createCharacter({
+          id: 4523,
+          type: 'STR',
+          classes: ['Powerhouse'],
+          characterTags: ['Egghead Arc'],
+        }),
+        createCharacter({ id: 4524, type: 'INT', classes: ['Fighter'] }),
+      ],
+    });
+
+    expect(status.state).toBe('none');
+    expect(status.leaderStatuses[0]?.matchesAllSlots).toBe(true);
+    expect(status.leaderStatuses[0]?.tagConditionsSatisfied).toBe(false);
+    expect(status.leaderStatuses[0]?.passed).toBe(false);
+  });
+
   it('keeps incomplete teams pending even when the filled slots are covered', () => {
     const captain = createCharacter({
       id: 1001,
@@ -226,6 +372,7 @@ describe('resolveCaptainTeamConditionStatus', () => {
 function createCharacter(
   overrides: Partial<CharacterDetailRecord> & {
     captainAbility?: string | null;
+    captainAbilityVariants?: CharacterDetailRecord['detail']['captainAbilityVariants'];
     characterTags?: string[];
     classes?: string[];
     cost?: number;
@@ -271,7 +418,7 @@ function createCharacter(
     detail: {
       characterId: overrides.id,
       captainAbility: overrides.captainAbility ?? null,
-      captainAbilityVariants: [],
+      captainAbilityVariants: overrides.captainAbilityVariants ?? [],
       captainNotes: null,
       specialName: null,
       specialText: null,

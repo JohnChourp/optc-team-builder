@@ -62,6 +62,72 @@ describe('resolveCaptainCoverage', () => {
     );
   });
 
+  it('requires every target type token to fit a type-only captain boost scope', () => {
+    const captain = createCharacter({
+      id: 4306,
+      captainAbility:
+        'Boosts ATK of [STR] and [DEX] characters by 5x, boosts HP of [STR] and [DEX] characters by 2x.',
+    });
+
+    const dexCoverage = resolveCaptainCoverage(
+      captain,
+      createCharacter({ id: 4307, type: 'DEX' }),
+    );
+    const strCoverage = resolveCaptainCoverage(
+      captain,
+      createCharacter({ id: 4308, type: 'STR' }),
+    );
+    const strDexCoverage = resolveCaptainCoverage(
+      captain,
+      createCharacter({ id: 4309, type: 'STR,DEX' }),
+    );
+    const dexQckCoverage = resolveCaptainCoverage(
+      captain,
+      createCharacter({ id: 4310, type: 'DEX,QCK' }),
+    );
+    const qckDexCoverage = resolveCaptainCoverage(
+      captain,
+      createCharacter({ id: 4311, type: 'QCK,DEX' }),
+    );
+    const psyDexCoverage = resolveCaptainCoverage(
+      captain,
+      createCharacter({ id: 4312, type: 'PSY,DEX' }),
+    );
+
+    expect(dexCoverage.matches).toBe(true);
+    expect(strCoverage.matches).toBe(true);
+    expect(strDexCoverage.matches).toBe(true);
+    expect(dexQckCoverage.matches).toBe(false);
+    expect(qckDexCoverage.matches).toBe(false);
+    expect(psyDexCoverage.matches).toBe(false);
+    expect(dexQckCoverage.boosts).toEqual({ hp: 0, atk: 0 });
+  });
+
+  it('allows class coverage to cover a mixed-type target independently of strict type scope', () => {
+    const captain = createCharacter({
+      id: 4313,
+      captainAbility:
+        'Boosts ATK of [DEX], Fighter and Powerhouse characters by 5x and boosts HP of [DEX], Fighter and Powerhouse characters by 1.3x.',
+    });
+    const mixedFighter = createCharacter({
+      id: 4314,
+      type: 'DEX,QCK',
+      classes: ['Fighter', 'Cerebral'],
+    });
+    const mixedShooter = createCharacter({
+      id: 4315,
+      type: 'DEX,QCK',
+      classes: ['Shooter', 'Cerebral'],
+    });
+
+    const fighterCoverage = resolveCaptainCoverage(captain, mixedFighter);
+    const shooterCoverage = resolveCaptainCoverage(captain, mixedShooter);
+
+    expect(fighterCoverage.matches).toBe(true);
+    expect(fighterCoverage.chips).toEqual([{ kind: 'class', label: 'Fighter' }]);
+    expect(shooterCoverage.matches).toBe(false);
+  });
+
   it('matches direct character tag boost targets', () => {
     const captain = createCharacter({
       id: 1009,
@@ -189,6 +255,76 @@ describe('resolveCaptainCoverage', () => {
     expect(coverage.uncoveredClauses).toEqual([]);
   });
 
+  it('requires both non-combined dual captain branches for coverage', () => {
+    const character1Text =
+      'Boosts ATK of [QCK], Fighter and Powerhouse characters by 4.75x, boosts ATK of all other characters by 3.5x, and boosts HP of [QCK], Fighter and Powerhouse characters by 1.35x.';
+    const character2Text =
+      'Boosts ATK of [DEX], Fighter and Powerhouse characters by 4.75x, boosts ATK of all other characters by 3.5x, and boosts HP of [DEX], Fighter and Powerhouse characters by 1.35x.';
+    const captain = createCharacter({
+      id: 4521,
+      captainAbility: character1Text,
+      captainAbilityVariants: [
+        {
+          key: 'character1',
+          label: 'Captain Ability (Character 1)',
+          text: character1Text,
+        },
+        {
+          key: 'character2',
+          label: 'Captain Ability (Character 2)',
+          text: character2Text,
+        },
+        {
+          key: 'combined',
+          label: 'Captain Ability (Combined)',
+          text: 'Boosts ATK and HP of all characters by 5.75x.',
+        },
+      ],
+    });
+
+    const fighterCoverage = resolveCaptainCoverage(
+      captain,
+      createCharacter({ id: 4522, type: 'PSY', classes: ['Fighter', 'Cerebral'] }),
+    );
+    const dexOnlyCoverage = resolveCaptainCoverage(
+      captain,
+      createCharacter({ id: 4523, type: 'DEX', classes: ['Shooter', 'Cerebral'] }),
+    );
+    const qckOnlyCoverage = resolveCaptainCoverage(
+      captain,
+      createCharacter({ id: 4524, type: 'QCK', classes: ['Shooter', 'Cerebral'] }),
+    );
+    const combinedOnlyCoverage = resolveCaptainCoverage(
+      captain,
+      createCharacter({ id: 4525, type: 'STR', classes: ['Shooter', 'Cerebral'] }),
+    );
+
+    expect(fighterCoverage.matches).toBe(true);
+    expect(fighterCoverage.boosts).toEqual({ hp: 1.35, atk: 4.75 });
+    expect(
+      resolveCaptainCoverage(captain, createCharacter({ id: 4526, type: 'PSY' }), {
+        coverageMode: 'simpleBoostScope',
+      }).matches,
+    ).toBe(true);
+    expect(dexOnlyCoverage.matches).toBe(false);
+    expect(
+      resolveCaptainCoverage(
+        captain,
+        createCharacter({ id: 4527, type: 'DEX', classes: ['Shooter', 'Cerebral'] }),
+        { coverageMode: 'simpleBoostScope' },
+      ).matches,
+    ).toBe(false);
+    expect(dexOnlyCoverage.uncoveredClauses).toEqual(
+      expect.arrayContaining([expect.stringContaining('HP of [QCK]')]),
+    );
+    expect(qckOnlyCoverage.matches).toBe(false);
+    expect(qckOnlyCoverage.uncoveredClauses).toEqual(
+      expect.arrayContaining([expect.stringContaining('HP of [DEX]')]),
+    );
+    expect(combinedOnlyCoverage.matches).toBe(false);
+    expect(combinedOnlyCoverage.captainText).not.toContain('5.75x');
+  });
+
   it('ignores self-only boost clauses', () => {
     const captain = createCharacter({
       id: 1004,
@@ -270,6 +406,7 @@ describe('resolveCaptainCoverage', () => {
 function createCharacter(
   overrides: Partial<CharacterDetailRecord> & {
     captainAbility?: string;
+    captainAbilityVariants?: CharacterDetailRecord['detail']['captainAbilityVariants'];
     characterTags?: string[];
     classes?: string[];
     cost?: number;
@@ -315,7 +452,7 @@ function createCharacter(
     detail: {
       characterId: overrides.id,
       captainAbility: overrides.captainAbility ?? null,
-      captainAbilityVariants: [],
+      captainAbilityVariants: overrides.captainAbilityVariants ?? [],
       captainNotes: null,
       specialName: null,
       specialText: null,

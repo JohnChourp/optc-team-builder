@@ -240,25 +240,76 @@ describe('runAutoTeamBuildSearch', () => {
     });
   });
 
-  it('returns a relaxed partial captain coverage team only after full coverage is impossible', () => {
+  it('returns a strict simple captain coverage team only after full coverage is impossible', () => {
     const result = runAutoTeamBuildSearch(
-      createPartialCaptainCoverageRecords(),
-      createInput(['DEX', 'PSY'], ['Fighter'], {
+      createSimpleCaptainCoverageFallbackRecords(),
+      createInput(['DEX'], ['Fighter'], {
         requireFullCaptainAbilityCoverage: true,
-        manualSlots: createCaptainCoverageManualSlots(9000),
-        lockedCharacterIds: [9000],
-        captainCharacterId: 9000,
-        friendCaptainCharacterId: 9000,
+        manualSlots: createCaptainCoverageManualSlots(9020),
+        lockedCharacterIds: [9020],
+        captainCharacterId: 9020,
+        friendCaptainCharacterId: 9020,
       }),
     );
 
     expect(result).not.toBeNull();
-    expect(result?.input.allowPartialCaptainAbilityCoverage).toBe(true);
-    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBe(true);
-    expect(result?.coverage.leaderCriteria.coverageMode).toBe('fullAbilityCoverage');
-    expect(result?.coverage.leaderCriteria.matchingSlots).toBeLessThan(
-      result?.coverage.leaderCriteria.totalSlots ?? 0,
+    expect(result?.input.requireFullCaptainAbilityCoverage).toBe(false);
+    expect(result?.input.allowPartialCaptainAbilityCoverage).toBeUndefined();
+    expect(result?.relaxation.downgradedCaptainAbilityCoverageToSimple).toBe(true);
+    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBeUndefined();
+    expect(result?.coverage.leaderCriteria.coverageMode).toBe('simpleBoostScope');
+    expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
+  });
+
+  it('does not downgrade captain coverage when strict both-leader coverage is required', () => {
+    const result = runAutoTeamBuildSearch(
+      createSimpleCaptainCoverageFallbackRecords(),
+      createInput(['DEX'], ['Fighter'], {
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        manualSlots: createCaptainCoverageManualSlots(9020),
+        lockedCharacterIds: [9020],
+        captainCharacterId: 9020,
+        friendCaptainCharacterId: 9020,
+      }),
     );
+
+    expect(result).toBeNull();
+  });
+
+  it('preserves strict both-leader coverage across unrelated fallback attempts', () => {
+    const planner = createAutoTeamBuildFallbackPlanner(
+      createInput(['DEX'], ['Fighter'], {
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        requireLeaderSuperSpecialCriteria: true,
+        manualSlots: createCaptainCoverageManualSlots(9020),
+        lockedCharacterIds: [9020],
+        captainCharacterId: 9020,
+        friendCaptainCharacterId: 9020,
+      }),
+      createSimpleCaptainCoverageFallbackRecords(),
+    );
+
+    planner.scheduleInitialFallbackAttempts();
+
+    const attempts = collectScheduledAttempts(planner);
+
+    expect(attempts).toContainEqual(
+      expect.objectContaining({
+        droppedTypes: [],
+        droppedClasses: [],
+        ignoredLeaderSuperSpecialCriteria: true,
+      }),
+    );
+    expect(
+      attempts.every(
+        (attempt) =>
+          attempt.input.requireBothLeadersFullCaptainAbilityCoverage &&
+          attempt.input.requireFullCaptainAbilityCoverage &&
+          !attempt.input.allowPartialCaptainAbilityCoverage,
+      ),
+    ).toBe(true);
   });
 
   it('keeps a full captain coverage team ahead of relaxed partial coverage', () => {
@@ -279,7 +330,7 @@ describe('runAutoTeamBuildSearch', () => {
     expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
   });
 
-  it('prefers the relaxed captain coverage team with more covered slots', () => {
+  it('does not return ignored partial captain coverage when strict simple coverage is impossible', () => {
     const result = runAutoTeamBuildSearch(
       createPartialCaptainCoverageRecords({ extraUncoveredSubs: true }),
       createInput(['DEX', 'PSY'], ['Fighter'], {
@@ -291,11 +342,7 @@ describe('runAutoTeamBuildSearch', () => {
       }),
     );
 
-    expect(result).not.toBeNull();
-    expect(result?.slots.map((slot) => slot.character.id)).toEqual([
-      9000, 9000, 9003, 9002, 9001, 9012,
-    ]);
-    expect(result?.coverage.leaderCriteria.matchingSlots).toBe(5);
+    expect(result).toBeNull();
   });
 
   it('does not accept fallback coverage when requested battle requirements are still missing', () => {
@@ -717,6 +764,7 @@ function createInput(
       | 'requireAllSelectedClassesPerCharacter'
       | 'requireAllSlotsInLeaderSuperEffectScope'
       | 'requireFullCaptainAbilityCoverage'
+      | 'requireBothLeadersFullCaptainAbilityCoverage'
       | 'minimumLeaderSuperEffectMatchingSlots'
       | 'requireLeaderSuperSpecialCriteria'
       | 'requireUniqueBaseCharacterNames'
@@ -755,6 +803,8 @@ function createInput(
     requireAllSlotsInLeaderSuperEffectScope:
       overrides.requireAllSlotsInLeaderSuperEffectScope ?? false,
     requireFullCaptainAbilityCoverage: overrides.requireFullCaptainAbilityCoverage ?? false,
+    requireBothLeadersFullCaptainAbilityCoverage:
+      overrides.requireBothLeadersFullCaptainAbilityCoverage ?? false,
     minimumLeaderSuperEffectMatchingSlots: overrides.requireAllSlotsInLeaderSuperEffectScope
       ? (overrides.minimumLeaderSuperEffectMatchingSlots ?? 6)
       : null,
@@ -828,6 +878,25 @@ function createPartialCaptainCoverageRecords(
 
 function createFullCaptainCoverageRecords(): CharacterDetailRecord[] {
   return [...createPartialCaptainCoverageRecords(), createCaptainCoverageDexSubRecord(9004)];
+}
+
+function createSimpleCaptainCoverageFallbackRecords(): CharacterDetailRecord[] {
+  return [
+    createCharacterRecord({
+      id: 9020,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      detail: {
+        captainAbility:
+          'Boosts ATK of [DEX] characters by 5x and HP by 1.3x. If HP is below 50%, boosts ATK of [PSY] characters by 6x instead.',
+        specialText: 'Boosts ATK of [DEX] characters by 2.25x for 1 turn.',
+      },
+    }),
+    createCaptainCoverageDexSubRecord(9021),
+    createCaptainCoverageDexSubRecord(9022),
+    createCaptainCoverageDexSubRecord(9023),
+    createCaptainCoverageDexSubRecord(9024),
+  ];
 }
 
 function createCaptainCoverageCaptainRecord(): CharacterDetailRecord {

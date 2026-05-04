@@ -90,6 +90,7 @@ export interface AutoBuildConstraints {
   requireAllSelectedClassesPerCharacter?: boolean;
   requireAllSlotsInLeaderSuperEffectScope?: boolean;
   requireFullCaptainAbilityCoverage?: boolean;
+  requireBothLeadersFullCaptainAbilityCoverage?: boolean;
   minimumLeaderSuperEffectMatchingSlots?: number | null;
   requireLeaderSuperSpecialCriteria?: boolean;
   requireUniqueBaseCharacterNames?: boolean;
@@ -152,6 +153,7 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   requireLeaderSuperSpecialCriteria: boolean;
   requireAllSlotsInLeaderSuperEffectScope: boolean;
   requireFullCaptainAbilityCoverage: boolean;
+  requireBothLeadersFullCaptainAbilityCoverage: boolean;
   allowPartialCaptainAbilityCoverage?: boolean;
   minimumLeaderSuperEffectMatchingSlots: number | null;
   requireUniqueBaseCharacterNames: boolean;
@@ -335,6 +337,7 @@ export interface AutoBuildRelaxationSummary {
   ignoredLeaderSuperEffectScope: boolean;
   ignoredLeaderSuperSpecialCriteria: boolean;
   ignoredCaptainAbilityCoverage?: boolean;
+  downgradedCaptainAbilityCoverageToSimple?: boolean;
 }
 
 export type AutoBuildProgressStage =

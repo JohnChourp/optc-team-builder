@@ -4,7 +4,11 @@ import {
   type AutoBuildCaptainAbilityCoverageMode,
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
-import { type CharacterDetailRecord, type CharacterListItem } from '../models/optc.models';
+import {
+  type CharacterCaptainAbilityVariant,
+  type CharacterDetailRecord,
+  type CharacterListItem,
+} from '../models/optc.models';
 import { normalizeCaptainTagKey } from './captain-tag-conditions.utils';
 import { normalizeHtmlToText } from './html-text.utils';
 
@@ -55,6 +59,12 @@ export interface CaptainCoverageOptions {
   coverageMode?: AutoBuildCaptainAbilityCoverageMode;
   targetCharacterTags?: readonly string[];
   includeTeamTagClauses?: boolean;
+}
+
+export interface CaptainCoverageBranchText {
+  key: string;
+  label: string;
+  text: string;
 }
 
 const UNIVERSAL_SCOPE_PATTERN = /\b(?:all|all characters|all units|all crewmates|crew)\b/i;
@@ -147,13 +157,29 @@ export function resolveCaptainCoverage(
   target: CharacterListItem,
   options: CaptainCoverageOptions = {},
 ): CaptainCoverageResult {
-  const captainText = normalizeHtmlToText(captain.detail.captainAbility);
-  const coverageMode = options.coverageMode ?? 'fullAbilityCoverage';
+  const branches = resolveRequiredCaptainCoverageBranchTexts(captain);
 
-  if (!captainText) {
-    return createEmptyCoverageResult(captainText);
+  if (!branches.length) {
+    return createEmptyCoverageResult('');
   }
 
+  const branchResults = branches.map((branch) =>
+    resolveCaptainCoverageForText(branch.text, target, options),
+  );
+
+  if (branchResults.length === 1) {
+    return branchResults[0]!;
+  }
+
+  return mergeCaptainCoverageBranchResults(branchResults);
+}
+
+function resolveCaptainCoverageForText(
+  captainText: string,
+  target: CharacterListItem,
+  options: CaptainCoverageOptions = {},
+): CaptainCoverageResult {
+  const coverageMode = options.coverageMode ?? 'fullAbilityCoverage';
   const resolvedClauses = resolveCaptainBoostScope(captainText, coverageMode).clauses.map(
     (clause) => resolveCaptainCoverageClause(target, clause, options),
   );
@@ -179,6 +205,113 @@ export function resolveCaptainCoverage(
     targetableClauseCount: targetableClauses.length,
     uncoveredClauses,
   };
+}
+
+export function resolveRequiredCaptainCoverageBranchTexts(
+  captain: CharacterDetailRecord,
+): CaptainCoverageBranchText[] {
+  const dualBaseVariants = resolveDualBaseCaptainAbilityVariants(
+    captain.detail.captainAbilityVariants,
+  );
+
+  if (dualBaseVariants.length === 2) {
+    return dualBaseVariants;
+  }
+
+  const captainText = normalizeHtmlToText(captain.detail.captainAbility);
+
+  return captainText
+    ? [
+        {
+          key: 'captain',
+          label: 'Captain Ability',
+          text: captainText,
+        },
+      ]
+    : [];
+}
+
+export function hasSelfOnlyCaptainCoverageText(captain: CharacterDetailRecord): boolean {
+  return resolveRequiredCaptainCoverageBranchTexts(captain).some((branch) =>
+    splitCaptainEffectClauses(branch.text).some((clause) => {
+      const normalizedClause = normalizeCoverageClause(clause);
+
+      return (
+        /\bboosts?\b/i.test(normalizedClause) &&
+        /\b(?:atk|hp)\b/i.test(normalizedClause) &&
+        CAPTAIN_MULTIPLIER_PATTERN.test(normalizedClause) &&
+        isSelfOnlyCaptainBoostMatch(normalizedClause)
+      );
+    }),
+  );
+}
+
+function resolveDualBaseCaptainAbilityVariants(
+  variants: readonly CharacterCaptainAbilityVariant[],
+): CaptainCoverageBranchText[] {
+  const character1 = variants.find((variant) => isDualBaseCaptainAbilityVariant(variant, 1));
+  const character2 = variants.find((variant) => isDualBaseCaptainAbilityVariant(variant, 2));
+
+  if (!character1 || !character2) {
+    return [];
+  }
+
+  const branches = [character1, character2]
+    .map((variant) => ({
+      key: variant.key,
+      label: variant.label,
+      text: normalizeHtmlToText(variant.text),
+    }))
+    .filter((variant) => variant.text.length > 0);
+
+  return branches.length === 2 ? branches : [];
+}
+
+function isDualBaseCaptainAbilityVariant(
+  variant: CharacterCaptainAbilityVariant,
+  characterNumber: 1 | 2,
+): boolean {
+  const key = normalizeVariantIdentity(variant.key);
+  const label = normalizeVariantIdentity(variant.label);
+  const characterToken = `character${characterNumber}`;
+
+  return key === characterToken || label.includes(characterToken);
+}
+
+function normalizeVariantIdentity(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function mergeCaptainCoverageBranchResults(
+  branchResults: readonly CaptainCoverageResult[],
+): CaptainCoverageResult {
+  const clauses = branchResults.flatMap((result) => result.clauses);
+  const targetableClauses = clauses.filter((clause) => clause.status !== 'neutral');
+
+  return {
+    boosts: mergeCaptainCoverageBranchBoosts(branchResults),
+    captainText: branchResults.map((result) => result.captainText).join('. '),
+    chips: dedupeCoverageChips(targetableClauses.flatMap((clause) => clause.chips)),
+    clauses,
+    coveredClauses: branchResults.flatMap((result) => result.coveredClauses),
+    matches: branchResults.every((result) => result.matches),
+    neutralNotes: branchResults.flatMap((result) => result.neutralNotes),
+    targetableClauseCount: targetableClauses.length,
+    uncoveredClauses: branchResults.flatMap((result) => result.uncoveredClauses),
+  };
+}
+
+function mergeCaptainCoverageBranchBoosts(
+  branchResults: readonly CaptainCoverageResult[],
+): CaptainCoverageBoosts {
+  return {
+    hp: resolveLowestPositiveBranchBoost(branchResults.map((result) => result.boosts.hp)),
+    atk: resolveLowestPositiveBranchBoost(branchResults.map((result) => result.boosts.atk)),
+  };
+}
+
+function resolveLowestPositiveBranchBoost(values: readonly number[]): number {
+  return values.length > 0 && values.every((value) => value > 0) ? Math.min(...values) : 0;
 }
 
 function resolveCaptainCoverageBoosts(
@@ -404,6 +537,10 @@ function resolveMatchingTypeScopes(
 ): AutoTeamBuilderType[] {
   const targetTypes = resolveCharacterTypeTokens(target.type);
   const allowedTypes = extractAllowedTypesFromBoostClause(clause);
+
+  if (!targetTypes.length || !targetTypes.every((type) => allowedTypes.includes(type))) {
+    return [];
+  }
 
   return AUTO_TEAM_BUILDER_TYPES.filter(
     (type) => targetTypes.includes(type) && allowedTypes.includes(type),

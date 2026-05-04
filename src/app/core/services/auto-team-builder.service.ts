@@ -63,7 +63,10 @@ import {
   buildAutoTeamResult,
   resolveAutoBuildTeamPowerPreferenceScore,
 } from './auto-team-builder.utils';
-import { resolveCaptainCoverage } from './captain-coverage.utils';
+import {
+  hasSelfOnlyCaptainCoverageText,
+  resolveCaptainCoverage,
+} from './captain-coverage.utils';
 import { matchesAbilityRequirement } from './auto-team-builder-ability-match.utils';
 import {
   type AutoTeamBuilderWorkerRequest,
@@ -105,6 +108,7 @@ export interface AutoTeamBuildCaptainCoverageScopeOptions {
   captainCharacterId?: number | null;
   friendCaptainCharacterId?: number | null;
   requireFullCaptainAbilityCoverage?: boolean;
+  requireBothLeadersFullCaptainAbilityCoverage?: boolean;
 }
 
 export class AutoTeamBuildSearchTooLargeError extends Error {
@@ -155,7 +159,9 @@ export class AutoTeamBuilderService {
     }
 
     const retainedLeaderIds = new Set(leaders.map((leader) => leader.id));
-    const coverageMode = options.requireFullCaptainAbilityCoverage
+    const coverageMode =
+      options.requireFullCaptainAbilityCoverage ||
+      options.requireBothLeadersFullCaptainAbilityCoverage
       ? 'fullAbilityCoverage'
       : 'simpleBoostScope';
 
@@ -164,14 +170,17 @@ export class AutoTeamBuilderService {
         return true;
       }
 
-      return leaders.every(
-        (leader) =>
-          resolveCaptainCoverage(leader, record, {
-            coverageMode,
-            targetCharacterTags: record.detail.characterTags ?? [],
-            includeTeamTagClauses: false,
-          }).matches,
-      );
+      return leaders.every((leader) => {
+        const coverage = resolveCaptainCoverage(leader, record, {
+          coverageMode,
+          targetCharacterTags: record.detail.characterTags ?? [],
+          includeTeamTagClauses: false,
+        });
+
+        return coverage.targetableClauseCount === 0 && coverageMode === 'simpleBoostScope'
+          ? !hasSelfOnlyCaptainCoverageText(leader)
+          : coverage.matches;
+      });
     });
   }
 
@@ -188,6 +197,8 @@ export class AutoTeamBuilderService {
       constraints.requireAllSlotsInLeaderSuperEffectScope ?? false;
     const requireFullCaptainAbilityCoverage =
       constraints.requireFullCaptainAbilityCoverage ?? false;
+    const requireBothLeadersFullCaptainAbilityCoverage =
+      constraints.requireBothLeadersFullCaptainAbilityCoverage ?? false;
     const normalizedTypes = normalizeSelectedTypes(selectedTypes);
     const normalizedClasses: string[] = [];
 
@@ -268,6 +279,7 @@ export class AutoTeamBuilderService {
         constraints.requireAllSelectedClassesPerCharacter ?? false,
       requireAllSlotsInLeaderSuperEffectScope,
       requireFullCaptainAbilityCoverage,
+      requireBothLeadersFullCaptainAbilityCoverage,
       minimumLeaderSuperEffectMatchingSlots: requireAllSlotsInLeaderSuperEffectScope
         ? (constraints.minimumLeaderSuperEffectMatchingSlots ?? AUTO_BUILD_TOTAL_SLOT_COUNT)
         : null,
@@ -400,12 +412,14 @@ export class AutoTeamBuilderService {
       captainCharacterId,
       friendCaptainCharacterId,
       requireFullCaptainAbilityCoverage,
+      requireBothLeadersFullCaptainAbilityCoverage,
     });
     const captainCoveredFriendCaptainRecords = friendCaptainRecords
       ? this.resolveCaptainCoveredCandidateRecords(friendCaptainRecords, {
           captainCharacterId,
           friendCaptainCharacterId,
           requireFullCaptainAbilityCoverage,
+          requireBothLeadersFullCaptainAbilityCoverage,
         })
       : undefined;
     const scopedAutoFillCharacterIds = {
@@ -1518,11 +1532,14 @@ export class AutoTeamBuilderService {
 
               const attemptSatisfiesRequestedCoverage =
                 satisfiesRequestedAutoTeamBuildCoverage(result);
+              const hasRelaxedCaptainCoverage =
+                result?.relaxation.ignoredCaptainAbilityCoverage ||
+                result?.relaxation.downgradedCaptainAbilityCoverageToSimple;
 
               if (
                 exactAttemptCompleted &&
                 attemptSatisfiesRequestedCoverage &&
-                (!result?.relaxation.ignoredCaptainAbilityCoverage ||
+                (!hasRelaxedCaptainCoverage ||
                   haveAllEarlierAttemptsCompleted(nextAttempt.sequence))
               ) {
                 resolveOnce(result, 1 + timingState.completedFallbackAttempts);
@@ -1847,6 +1864,8 @@ export class AutoTeamBuilderService {
       requireAllSelectedClassesPerCharacter: false,
       requireAllSlotsInLeaderSuperEffectScope,
       requireFullCaptainAbilityCoverage: rosterInput.requireFullCaptainAbilityCoverage ?? false,
+      requireBothLeadersFullCaptainAbilityCoverage:
+        rosterInput.requireBothLeadersFullCaptainAbilityCoverage ?? false,
       minimumLeaderSuperEffectMatchingSlots: requireAllSlotsInLeaderSuperEffectScope
         ? (rosterInput.minimumLeaderSuperEffectMatchingSlots ?? AUTO_BUILD_TOTAL_SLOT_COUNT)
         : null,
