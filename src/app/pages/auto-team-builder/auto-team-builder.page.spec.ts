@@ -2402,7 +2402,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain("t('fallback.ignoredLeaderSuperSpecialCriteria')");
   });
 
-  it('saves global Captain ability requirements independently from battle Special requirements', async () => {
+  it('ignores global Captain ability requirements while preserving battle Special requirements', async () => {
     const { page } = await createPage();
 
     page.abilityCatalog.set({
@@ -2471,13 +2471,10 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       'potential',
       'support',
     ]);
-    expect(page.availableCaptainAbilityCatalogItems().map((item) => item.key)).toEqual([
-      'remove_despair',
-      'remove_bind',
-    ]);
+    expect(page.availableCaptainAbilityCatalogItems().map((item) => item.key)).toEqual([]);
 
     page.openCaptainAbilityPicker();
-    expect(page.captainAbilityPickerOpen()).toBe(true);
+    expect(page.captainAbilityPickerOpen()).toBe(false);
 
     await page.saveCaptainAbilityPicker([
       {
@@ -2489,17 +2486,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       },
     ]);
 
-    expect(page.captainAbilityDrafts()).toEqual([
-      expect.objectContaining({
-        abilityKey: 'remove_bind',
-        draftId: expect.any(String),
-        minTurns: 5,
-        slotTokens: [],
-        requiredCharacterCount: 1,
-        slotScope: 'leader',
-        sourceScope: 'captainAbility',
-      }),
-    ]);
+    expect(page.captainAbilityDrafts()).toEqual([]);
     expect(page.battleRequirements()[0]!.requiredCharacterGroups[0]!.abilities).toEqual([
       {
         abilityKey: 'remove_bind',
@@ -2514,31 +2501,13 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         minTurns: 5,
         slotTokens: [],
         requiredCharacterCount: 1,
-        slotScope: 'leader',
-        sourceScope: 'captainAbility',
-      },
-      {
-        abilityKey: 'remove_bind',
-        minTurns: 5,
-        slotTokens: [],
-        requiredCharacterCount: 1,
       },
     ]);
 
     await page.clearRequiredCharacterAbilityCategory('battle-1', 'group-1', 'special');
 
     expect(page.battleRequirements()[0]!.requiredCharacterGroups[0]!.abilities).toEqual([]);
-    expect(page.captainAbilityDrafts()).toEqual([
-      expect.objectContaining({
-        abilityKey: 'remove_bind',
-        draftId: expect.any(String),
-        minTurns: 5,
-        slotTokens: [],
-        requiredCharacterCount: 1,
-        slotScope: 'leader',
-        sourceScope: 'captainAbility',
-      }),
-    ]);
+    expect(page.captainAbilityDrafts()).toEqual([]);
   });
 
   it('reports partial captain condition status for generated result teams', async () => {
@@ -3948,8 +3917,8 @@ describe('AutoTeamBuilder export helpers', () => {
   });
 });
 
-describe('AutoTeamBuilderPage leader cost scope labels', () => {
-  it('shows the leader cost restriction when present', async () => {
+describe('AutoTeamBuilderPage leader scope labels', () => {
+  it('ignores legacy leader cost restriction fields in the scope summary', async () => {
     const { page } = await createPage();
     const baseResult = createAutoBuildResult();
 
@@ -3975,7 +3944,7 @@ describe('AutoTeamBuilderPage leader cost scope labels', () => {
 
     expect(page.leaderCriteriaCostLabel()).toBe('Cost 40 or less');
     expect(page.leaderCriteriaScopeSummaryLabel()).toBe(
-      '4 / 6 slots match the derived leader scope.',
+      'Leader abilities do not restrict class, type, or character tag coverage.',
     );
   });
 });
@@ -5039,7 +5008,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
     );
   });
 
-  it('roundtrips leader-scoped captain ability requirements without import warnings', async () => {
+  it('drops leader-scoped captain ability requirements without import warnings', async () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
@@ -5112,26 +5081,8 @@ describe('AutoTeamBuilder preset import helpers', () => {
     await page['applySelectionPresetState'](result.state, []);
 
     expect(result.warnings).toEqual([]);
-    expect(page.captainAbilityDrafts()).toEqual([
-      expect.objectContaining({
-        abilityKey: 'remove_despair',
-        minTurns: 8,
-        slotTokens: [],
-        requiredCharacterCount: 1,
-        slotScope: 'leader',
-        sourceScope: 'captainAbility',
-      }),
-    ]);
-    expect(page.pageRequiredAbilities()).toEqual([
-      {
-        abilityKey: 'remove_despair',
-        minTurns: 8,
-        slotTokens: [],
-        requiredCharacterCount: 1,
-        slotScope: 'leader',
-        sourceScope: 'captainAbility',
-      },
-    ]);
+    expect(page.captainAbilityDrafts()).toEqual([]);
+    expect(page.pageRequiredAbilities()).toEqual([]);
   });
 
   it('roundtrips enemy mechanics alongside effective required counters', () => {
@@ -6035,10 +5986,12 @@ function createAutoBuildResult(
         dualLeaderMode: 'intersection',
         derivedAllowedClasses: ['Fighter', 'Slasher'],
         derivedAllowedTypes: ['DEX', 'PSY'],
+        derivedAllowedCharacterTags: [],
         hasCostRestriction: false,
         maxAllowedCost: null,
         hasClassRestriction: true,
         hasTypeRestriction: true,
+        hasCharacterTagRestriction: false,
         tagConditionSets: [],
         matchingSlots: 6,
         totalSlots: 6,

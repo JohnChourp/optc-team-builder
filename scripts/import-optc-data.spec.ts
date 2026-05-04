@@ -354,6 +354,44 @@ describe('import-optc-data ship thumbnail pack', () => {
     expect(character.captainAverageBoost).toBe(3.325);
   });
 
+  it('ignores additionally-labeled Action Special captain boosts when precomputing defaults', () => {
+    const [character] = normalizeCharacters(
+      [
+        [
+          'Luffy & Bonney',
+          'INT',
+          ['Free Spirit', 'Cerebral'],
+          6,
+          55,
+          4,
+          5,
+          99,
+          5_000_000,
+          1924,
+          4308,
+          291,
+          1924,
+          4308,
+          291,
+          1,
+        ],
+      ],
+      {
+        1: {
+          captain: {
+            base: 'Boosts ATK of [INT], Free Spirit and Cerebral characters by 6x, boosts HP of [INT], Free Spirit and Cerebral characters by 1.2x, and makes [INT] and [RCV] orbs beneficial for all characters. If your crew has 4+ [Straw Hat Pirates] or [Egghead Arc] characters, boosts ATK of [Bonney Pirates], [Revolutionary Army], [Straw Hat Pirates], [Scientist] and [Egghead Arc] characters by 1.1x, boosts ATK of [INT], Free Spirit and Cerebral characters by 6.6x instead if they have the applicable tag, and allows effects that inflict Increase Damage Taken and Weaken to ignore Debuff Protection; additionally, if this character is your Captain and performs EXCELLENT with their Action Special, for 3 turns boosts ATK of [Bonney Pirates], [Revolutionary Army], [Straw Hat Pirates], [Scientist] and [Egghead Arc] characters by 1.4x instead, and boosts ATK of [INT], Free Spirit and Cerebral characters by 8.4x instead if they have the applicable tag.',
+          },
+        },
+      },
+      [],
+      new Map(),
+    );
+
+    expect(character.captainHpBoost).toBe(1.2);
+    expect(character.captainAtkBoost).toBe(6);
+    expect(character.captainAverageBoost).toBe(3.6);
+  });
+
   it('supports object-based unit maps from the 2shankz source', () => {
     const [character] = normalizeCharacters(
       {
@@ -563,10 +601,7 @@ describe('import-optc-data ship thumbnail pack', () => {
         support: [
           {
             Characters: '[STR] Powerhouse characters',
-            description: [
-              'Boosts Color Affinity by 1.1x.',
-              'Boosts Color Affinity by 1.5x.',
-            ],
+            description: ['Boosts Color Affinity by 1.1x.', 'Boosts Color Affinity by 1.5x.'],
           },
         ],
       },

@@ -13,7 +13,10 @@ import {
 import { TranslocoDirective } from '@jsverse/transloco';
 import { heart, heartOutline } from 'ionicons/icons';
 
-import { type AutoBuildAbilityCatalog } from '../../core/models/auto-team-builder-ability.models';
+import {
+  type AutoBuildAbilityCatalog,
+  type NormalizedBuilderAbility,
+} from '../../core/models/auto-team-builder-ability.models';
 import { type CharacterDetailRecord } from '../../core/models/optc.models';
 import { CharacterOverridesService } from '../../core/services/character-overrides.service';
 import { createLocalCharacterOverrideFromRecord } from '../../core/services/character-overrides.utils';
@@ -115,6 +118,10 @@ export class CharacterDetailPage implements OnInit {
 
   public isFavorite(characterId: number): boolean {
     return this.favoriteIds().includes(characterId);
+  }
+
+  public displayBuilderAbilities(character: CharacterDetailRecord): NormalizedBuilderAbility[] {
+    return character.detail.builderAbilities.filter((ability) => ability.source !== 'captainAbility');
   }
 
   public exportCharacterOverride(character: CharacterDetailRecord): void {

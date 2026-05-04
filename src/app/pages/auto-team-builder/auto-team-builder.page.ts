@@ -146,16 +146,11 @@ import {
   type EnemyMechanicVisualMeta,
 } from '../../core/services/enemy-mechanic-draft.utils';
 import {
-  createCategoryAbilityDrafts,
-  createCaptainAbilityDrafts,
-  createSpecialAbilityDrafts,
   getAbilityCatalogItemsByCategory,
-  getCaptainAbilityCatalogItems,
   intersectAbilityMatchingCharacterIds,
   isCaptainAbilityRequirement,
   resolveCategoryAbilityMatchingCharacterIds,
   resolveSpecialAbilityMatchingCharacterIds,
-  serializeCaptainAbilityDrafts,
   serializeCategoryAbilityDrafts,
   serializeSpecialAbilityDrafts,
 } from '../../core/services/special-ability-filter.utils';
@@ -432,9 +427,13 @@ function resolveManualSlotRequiredAbilities(
     const slotScope = normalizeAbilityRequirementSlotScope(requirement.slotScope);
     const sourceScope = normalizeAbilityRequirementSourceScope(requirement.sourceScope);
 
+    if (sourceScope === 'captainAbility') {
+      return false;
+    }
+
     return isLeaderRole
       ? slotScope !== 'sub'
-      : slotScope !== 'leader' && sourceScope !== 'captainAbility';
+      : slotScope !== 'leader';
   });
 }
 
@@ -444,7 +443,7 @@ function matchesScopedManualRequirements(
 ): boolean {
   return requirements.every((requirement) =>
     character.detail.builderAbilities.some((ability) =>
-      matchesAnyAbilityRequirement(ability, [requirement]),
+      ability.source !== 'captainAbility' && matchesAnyAbilityRequirement(ability, [requirement]),
     ),
   );
 }
@@ -666,8 +665,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly availableSpecialAbilityCatalogItems = computed(() =>
     getAbilityCatalogItemsByCategory(this.availableAbilityCatalogItems(), 'special'),
   );
-  public readonly availableCaptainAbilityCatalogItems = computed(() =>
-    getCaptainAbilityCatalogItems(this.availableAbilityCatalogItems()),
+  public readonly availableCaptainAbilityCatalogItems = computed<AutoBuildAbilityCatalogItem[]>(
+    () => [],
   );
   public readonly availableCrewmateAbilityCatalogItems = computed(() =>
     getAbilityCatalogItemsByCategory(this.availableAbilityCatalogItems(), 'crewmate'),
@@ -749,12 +748,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       visual: resolveAbilityRequirementVisual(requirement.abilityKey),
     })),
   );
-  public readonly captainAbilitySummaryChips = computed<AbilityRequirementSummaryChipView[]>(() =>
-    this.captainAbilityDrafts().map((draft) => ({
-      draftId: draft.draftId,
-      label: this.resolveRequiredAbilitySelectedText(draft),
-      visual: resolveAbilityRequirementVisual(draft.abilityKey),
-    })),
+  public readonly captainAbilitySummaryChips = computed<AbilityRequirementSummaryChipView[]>(
+    () => [],
   );
   public readonly captainLeaderBoostSummaryChips = computed<AbilityRequirementSummaryChipView[]>(
     () => {
@@ -1875,6 +1870,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       ? leaderCriteria.derivedAllowedTypes.join(' / ')
       : this.t('results.leaderCriteria.noTypeRestriction');
   });
+  public readonly leaderCriteriaCharacterTagsLabel = computed(() => {
+    const leaderCriteria = this.result()?.coverage.leaderCriteria;
+
+    if (!leaderCriteria) {
+      return this.t('results.leaderCriteria.noData');
+    }
+
+    return leaderCriteria.hasCharacterTagRestriction
+      ? leaderCriteria.derivedAllowedCharacterTags.join(' / ')
+      : this.t('results.leaderCriteria.noCharacterTagRestriction');
+  });
   public readonly leaderCriteriaCostLabel = computed(() => {
     const leaderCriteria = this.result()?.coverage.leaderCriteria;
 
@@ -1898,7 +1904,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     if (
       !leaderCriteria.hasClassRestriction &&
       !leaderCriteria.hasTypeRestriction &&
-      !leaderCriteria.hasCostRestriction
+      !leaderCriteria.hasCharacterTagRestriction
     ) {
       return this.t('results.leaderCriteria.noRestriction');
     }
@@ -2831,16 +2837,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.captainAbilityPickerOpen.set(false);
   }
 
-  public async saveCaptainAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
-    const requirements = serializeCaptainAbilityDrafts(
-      drafts,
-      this.availableCaptainAbilityCatalogItems(),
-      { dedupe: false },
-    );
-
-    this.captainAbilityDrafts.set(
-      createCaptainAbilityDrafts(requirements, this.availableCaptainAbilityCatalogItems()),
-    );
+  public async saveCaptainAbilityPicker(_drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.captainAbilityDrafts.set([]);
     this.captainAbilityPickerOpen.set(false);
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
@@ -3961,19 +3959,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       state.requiredAbilities,
       state.enemyMechanics,
     );
-    const captainRequiredAbilities = manualRequiredAbilities.filter((requirement) =>
-      isCaptainAbilityRequirement(requirement),
-    );
     const nonCaptainRequiredAbilities = manualRequiredAbilities.filter(
       (requirement) => !isCaptainAbilityRequirement(requirement),
     );
     this.enemyMechanicDrafts.set([]);
-    this.captainAbilityDrafts.set(
-      createCaptainAbilityDrafts(
-        captainRequiredAbilities,
-        this.availableCaptainAbilityCatalogItems(),
-      ),
-    );
+    this.captainAbilityDrafts.set([]);
     this.requiredAbilityDrafts.set([]);
     this.crewmateAbilityDrafts.set([]);
     this.potentialAbilityDrafts.set([]);
@@ -4123,8 +4113,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const abilityRequirementsForFailure = this.pageRequiredAbilities().filter(
       (requirement) =>
         battleRequirements.length === 0 ||
-        normalizeAbilityRequirementSlotScope(requirement.slotScope) === 'leader' ||
-        normalizeAbilityRequirementSourceScope(requirement.sourceScope) === 'captainAbility',
+        normalizeAbilityRequirementSlotScope(requirement.slotScope) === 'leader',
     );
 
     if (abilityRequirementsForFailure.length > 0) {
@@ -5019,11 +5008,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   private serializeManualRequiredAbilities(): AutoBuildAbilityRequirement[] {
-    const captainRequirements = serializeCaptainAbilityDrafts(
-      this.captainAbilityDrafts(),
-      this.availableCaptainAbilityCatalogItems(),
-      { dedupe: false },
-    );
     const groupRequirements = this.pageRequiredCharacterGroups().flatMap((group) =>
       group.abilities.map((requirement) => ({
         ...requirement,
@@ -5033,11 +5017,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     );
 
     if (groupRequirements.length) {
-      return [...captainRequirements, ...groupRequirements];
+      return groupRequirements;
     }
 
     return [
-      ...captainRequirements,
       ...serializeSpecialAbilityDrafts(
         this.requiredAbilityDrafts(),
         this.availableSpecialAbilityCatalogItems(),
@@ -5087,6 +5070,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         formatSourceScope: (scope) => this.t(`abilities.requirement.sourceScopes.${scope}`),
       },
     );
+  }
+
+  public displayBuilderAbilities(character: CharacterDetailRecord): NormalizedBuilderAbility[] {
+    return character.detail.builderAbilities.filter((ability) => ability.source !== 'captainAbility');
   }
 
   private formatBattleRequirementForFailure(battle: AutoBuildBattleRequirement): string {
@@ -5502,8 +5489,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     options: { includeEmptyState?: boolean } = {},
   ): CharacterAbilityChipView[] {
     const includeEmptyState = options.includeEmptyState ?? true;
+    const visibleAbilities = abilities.filter((ability) => ability.source !== 'captainAbility');
 
-    if (abilities.length === 0) {
+    if (visibleAbilities.length === 0) {
       if (!includeEmptyState) {
         return [];
       }
@@ -5521,7 +5509,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const seen = new Set<string>();
     const chipViews: CharacterAbilityChipView[] = [];
 
-    for (const ability of abilities) {
+    for (const ability of visibleAbilities) {
       const key = `${ability.key}|${ability.minTurns ?? 'none'}|${ability.slotTokens.join(',')}|${ability.source}|${ability.coverageMode ?? 'explicit'}`;
 
       if (seen.has(key)) {

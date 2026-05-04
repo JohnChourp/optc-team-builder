@@ -529,7 +529,7 @@ describe('character-detail presenter', () => {
     );
   });
 
-  it('exposes captain coverage entries and captain-sourced parsed abilities for the top summary', () => {
+  it('exposes slim captain coverage entries without captain-sourced parsed abilities', () => {
     const viewModel = buildCharacterDetailViewModel(
       createCharacterDetailRecord({
         detail: {
@@ -582,18 +582,10 @@ describe('character-detail presenter', () => {
         label: 'Limit Break Level 1 Captain Ability',
         text: 'Boosts ATK of DEX characters by 5x and HP by 1.3x. Reduces Bind duration by 10 turns.',
         captainCoverageClauses: ['Boosts ATK of DEX characters by 5x and HP by 1.3x'],
-        fullCoverageClauses: [
-          'Boosts ATK of DEX characters by 5x and HP by 1.3x',
-          'Reduces Bind duration by 10 turns',
-        ],
+        fullCoverageClauses: [],
       }),
     ]);
-    expect(viewModel.captainAbilitySummary?.recognizedAbilities).toEqual([
-      expect.objectContaining({
-        key: 'reduce_damage',
-        source: 'captainAbility',
-      }),
-    ]);
+    expect(viewModel.captainAbilitySummary?.recognizedAbilities).toEqual([]);
     expect(viewModel.captainAbilitySummary?.characterTags).toEqual([
       'Driven',
       'Super Sugo-Fest Exclusive',

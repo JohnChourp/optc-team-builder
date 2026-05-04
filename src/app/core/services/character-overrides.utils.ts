@@ -265,7 +265,9 @@ function splitCaptainSentences(text: string): string[] {
 }
 
 function isConditionalCaptainBoostClause(clause: string): boolean {
-  return /^(?:if|when)\b/i.test(clause.trim());
+  return /^(?:(?:and|or|also|additionally|furthermore|then|otherwise)\b,?\s*)*(?:if|when)\b/i.test(
+    clause.trim(),
+  );
 }
 
 function isSelfOnlyCaptainBoostMatch(matchText: string): boolean {

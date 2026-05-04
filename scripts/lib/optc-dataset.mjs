@@ -8,6 +8,8 @@ const captainBranchPattern =
   /\b(always active|standard captain|powered up captain|rampage captain)\s*:\s*/gi;
 const captainEffectClauseSeparator =
   /,\s+(?=(?:and\s+)?(?:boosts?|reduces?|makes?|changes?|increases?|restores?|deals?|cuts?|lowers?|decreases?|sets?|adds?)\b)|\s+\band\s+(?=(?:boosts?|reduces?|makes?|changes?|increases?|restores?|deals?|cuts?|lowers?|decreases?|sets?|adds?)\b)/gi;
+const conditionalCaptainBoostPrefixPattern =
+  /^(?:(?:and|or|also|additionally|furthermore|then|otherwise)\b,?\s*)*(?:if|when)\b/i;
 const defaultCaptainBranchLabels = new Set(['always active', 'standard captain']);
 const preferredDefaultCaptainVariantKeys = [
   'base',
@@ -194,7 +196,7 @@ function splitCaptainSentences(text) {
 }
 
 function isConditionalCaptainBoostClause(clause) {
-  return /^(?:if|when)\b/i.test(clause.trim());
+  return conditionalCaptainBoostPrefixPattern.test(clause.trim());
 }
 
 function isSelfOnlyCaptainBoostMatch(matchText) {

@@ -226,10 +226,12 @@ export interface AutoBuildEffectTags {
     allCharacters: boolean;
     allowedClasses: string[];
     allowedTypes: AutoTeamBuilderType[];
+    allowedCharacterTags: string[];
     hasCostRestriction: boolean;
     maxAllowedCost: number | null;
     hasClassRestriction: boolean;
     hasTypeRestriction: boolean;
+    hasCharacterTagRestriction: boolean;
     matchedSelectedClasses: string[];
     matchedSelectedClassCount: number;
     coversAllSelectedClasses: boolean;
@@ -260,10 +262,12 @@ export interface AutoBuildLeaderCriteriaSummary {
   dualLeaderMode: 'single' | 'intersection';
   derivedAllowedClasses: string[];
   derivedAllowedTypes: AutoTeamBuilderType[];
+  derivedAllowedCharacterTags: string[];
   hasCostRestriction: boolean;
   maxAllowedCost: number | null;
   hasClassRestriction: boolean;
   hasTypeRestriction: boolean;
+  hasCharacterTagRestriction: boolean;
   tagConditionSets: AutoBuildLeaderTagConditionSet[];
   matchingSlots: number;
   totalSlots: number;

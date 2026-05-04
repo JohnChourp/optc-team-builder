@@ -195,7 +195,7 @@ describe('Auto team builder', () => {
     expect(candidate.tags.utilityRoles).not.toContain('despair');
   });
 
-  it('parses burst, consistency, utility, and multi-class captain scope from effect text', () => {
+  it('parses burst, consistency, utility, and multi-class captain scope from slim effect text', () => {
     const candidate = buildAutoBuildCandidate(
       createCharacterRecord({
         id: 5900,
@@ -224,9 +224,8 @@ describe('Auto team builder', () => {
     expect(candidate.tags.captainScope.coversAllSelectedTypes).toBe(true);
     expect(candidate.tags.captainScope.matchesClass).toBe(true);
     expect(candidate.matchesAllSelectedClasses).toBe(false);
-    expect(candidate.tags.burstRoles).toEqual(
-      expect.arrayContaining(['atkBoost', 'orbBoost', 'colorAffinity']),
-    );
+    expect(candidate.tags.burstRoles).toEqual(expect.arrayContaining(['orbBoost', 'colorAffinity']));
+    expect(candidate.tags.burstRoles).not.toContain('atkBoost');
     expect(candidate.tags.consistencyRoles).toEqual(
       expect.arrayContaining(['matchingOrbs', 'orbChange', 'cooldownReduction']),
     );
@@ -282,7 +281,7 @@ describe('Auto team builder', () => {
     expect(candidate.reasonChips).toContain('DEX / PSY captain');
   });
 
-  it('derives a hard captain cost restriction from low-cost-only Buggy text', () => {
+  it('ignores low-cost-only Buggy text when deriving captain boost scope', () => {
     const candidate = buildAutoBuildCandidate(
       createCharacterRecord({
         id: 2035,
@@ -303,8 +302,8 @@ describe('Auto team builder', () => {
       1,
     );
 
-    expect(candidate.tags.captainScope.hasCostRestriction).toBe(true);
-    expect(candidate.tags.captainScope.maxAllowedCost).toBe(40);
+    expect(candidate.tags.captainScope.hasCostRestriction).toBe(false);
+    expect(candidate.tags.captainScope.maxAllowedCost).toBeNull();
   });
 
   it('does not treat bonus low-cost captain branches as a hard cost restriction', () => {
@@ -870,7 +869,7 @@ describe('Auto team builder', () => {
     ]);
   });
 
-  it('matches global captain-source ability requirements against a captain ability leader', () => {
+  it('ignores global captain-source ability requirements for boost coverage', () => {
     const result = buildAutoTeamResult(
       [
         createCaptainAbilityBindLeaderRecord(6820),
@@ -901,19 +900,11 @@ describe('Auto team builder', () => {
 
     expect(result).not.toBeNull();
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
-    expect(result?.coverage.abilityRequirements.matched).toEqual([
-      {
-        abilityKey: 'remove_bind',
-        minTurns: 5,
-        slotTokens: [],
-        requiredCharacterCount: 1,
-        slotScope: 'leader',
-        sourceScope: 'captainAbility',
-      },
-    ]);
+    expect(result?.coverage.abilityRequirements.requested).toEqual([]);
+    expect(result?.coverage.abilityRequirements.matched).toEqual([]);
   });
 
-  it('does not let special text satisfy global captain-source ability requirements', () => {
+  it('drops captain-source ability requirements instead of matching special text', () => {
     const result = buildAutoTeamResult(
       [
         createBindLeaderRecord(6821),
@@ -942,10 +933,12 @@ describe('Auto team builder', () => {
       },
     );
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.coverage.abilityRequirements.requested).toEqual([]);
+    expect(result?.coverage.abilityRequirements.matched).toEqual([]);
   });
 
-  it('lets the friend captain satisfy global captain-source ability requirements', () => {
+  it('drops friend-captain source ability requirements from coverage', () => {
     const result = buildAutoTeamResult(
       [
         createCaptainRecord(),
@@ -979,9 +972,10 @@ describe('Auto team builder', () => {
     expect(result).not.toBeNull();
     expect(result?.slots.find((slot) => slot.role === 'friendCaptain')?.character.id).toBe(6822);
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+    expect(result?.coverage.abilityRequirements.requested).toEqual([]);
   });
 
-  it('keeps normal special and captain-source requirements separate for the same ability key', () => {
+  it('keeps normal special requirements after dropping captain-source requirements', () => {
     const result = buildAutoTeamResult(
       [
         createCaptainAbilityBindLeaderRecord(6823),
@@ -1028,14 +1022,6 @@ describe('Auto team builder', () => {
     expect(result?.slots.map((slot) => slot.character.id)).toContain(6824);
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
     expect(result?.coverage.abilityRequirements.matched).toEqual([
-      {
-        abilityKey: 'remove_bind',
-        minTurns: 5,
-        slotTokens: [],
-        requiredCharacterCount: 1,
-        slotScope: 'leader',
-        sourceScope: 'captainAbility',
-      },
       {
         abilityKey: 'remove_bind',
         minTurns: 5,
@@ -1156,7 +1142,7 @@ describe('Auto team builder', () => {
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
   });
 
-  it('requires both leader slots to satisfy guaranteed extra-drop requirements', () => {
+  it('does not satisfy guaranteed extra-drop requirements from captain-source abilities', () => {
     const input = createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], ['Fighter']);
     const result = buildAutoTeamResult(createExtraDropLeaderSelectionRecords(), {
       ...input,
@@ -1170,23 +1156,10 @@ describe('Auto team builder', () => {
       ],
     });
 
-    expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.detail.builderAbilities).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ key: 'extra_drop_guaranteed', source: 'captainAbility' }),
-      ]),
-    );
-    expect(result?.slots[1]?.character.detail.builderAbilities).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ key: 'extra_drop_guaranteed', source: 'captainAbility' }),
-      ]),
-    );
-    expect(result?.slots[0]?.character.id).not.toBe(1588);
-    expect(result?.slots[1]?.character.id).not.toBe(1588);
-    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+    expect(result).toBeNull();
   });
 
-  it('relaxes a manual leader when only a sub has the requested leader-only extra-drop rule', () => {
+  it('ignores sub-only captain-source extra-drop abilities for generic requirements', () => {
     const input = createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], ['Fighter'], {
       captainCharacterId: 1588,
       friendCaptainCharacterId: 1588,
@@ -1203,17 +1176,10 @@ describe('Auto team builder', () => {
       ],
     });
 
-    expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).not.toBe(1588);
-    expect(result?.slots[1]?.character.id).not.toBe(1588);
-    expect(result?.slots[0]?.character.detail.builderAbilities).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ key: 'extra_drop_guaranteed', source: 'captainAbility' }),
-      ]),
-    );
+    expect(result).toBeNull();
   });
 
-  it('relaxes a manually selected captain that lacks the required guaranteed extra-drop ability', () => {
+  it('does not relax a manually selected captain for captain-source extra-drop coverage', () => {
     const input = createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], ['Fighter'], {
       captainCharacterId: 1588,
       friendCaptainCharacterId: 2035,
@@ -1230,9 +1196,7 @@ describe('Auto team builder', () => {
       ],
     });
 
-    expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).not.toBe(1588);
-    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+    expect(result).toBeNull();
   });
 
   it('allows matching base character names when the unique-name toggle is off', () => {
@@ -2027,7 +1991,7 @@ describe('Auto team builder', () => {
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
   });
 
-  it('allows captain-sourced pain removal to satisfy a higher turn requirement', () => {
+  it('does not use captain-sourced pain removal to satisfy required ability coverage', () => {
     const result = buildAutoTeamResult(
       [
         createCharacterRecord({
@@ -2063,8 +2027,7 @@ describe('Auto team builder', () => {
       },
     );
 
-    expect(result).not.toBeNull();
-    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+    expect(result).toBeNull();
   });
 
   it('fails when pain removal coverage does not reach the requested turn count', () => {
@@ -2106,7 +2069,7 @@ describe('Auto team builder', () => {
     expect(result).toBeNull();
   });
 
-  it('allows captain-sourced builder abilities to satisfy a requirement', () => {
+  it('does not use captain-sourced builder abilities to satisfy a requirement', () => {
     const result = buildAutoTeamResult(
       [
         createCharacterRecord({
@@ -2146,16 +2109,7 @@ describe('Auto team builder', () => {
       },
     );
 
-    expect(result).not.toBeNull();
-    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
-    expect(result?.coverage.abilityRequirements.matched).toEqual([
-      {
-        abilityKey: 'ignore_normal_attack_only',
-        minTurns: null,
-        slotTokens: [],
-        requiredCharacterCount: 1,
-      },
-    ]);
+    expect(result).toBeNull();
   });
 
   it('fails when no candidate covers the required ability tokens', () => {
@@ -2971,7 +2925,7 @@ describe('Auto team builder', () => {
     expect(result?.slots.some((slot) => slot.character.id >= 9000)).toBe(false);
   });
 
-  it('builds Kid teams only from boosted characters that satisfy captain tag conditions', () => {
+  it('builds Kid teams only from boosted characters while ignoring captain tag conditions', () => {
     const result = buildAutoTeamResult(createKidLeaderTeamRecords(), {
       ...createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], [], {
         requireFullCaptainAbilityCoverage: true,
@@ -2982,18 +2936,24 @@ describe('Auto team builder', () => {
     });
 
     expect(result).not.toBeNull();
-    expect(result?.coverage.leaderCriteria.tagConditionSets[0]?.branches).toHaveLength(2);
+    expect(result?.coverage.leaderCriteria.tagConditionSets).toEqual([]);
+    expect(result?.coverage.leaderCriteria.derivedAllowedCharacterTags).toEqual([]);
+    expect(result?.coverage.leaderCriteria.hasCharacterTagRestriction).toBe(false);
     expect(result?.coverage.leaderCriteria.matchingSlots).toBe(6);
     expect(
-      result?.slots.filter((slot) =>
-        ['kid pirates', 'worst generation', 'land of wano arc', 'egghead arc'].some((tag) =>
-          slot.character.detail.characterTags?.map((entry) => entry.toLowerCase()).includes(tag),
-        ),
-      ).length,
-    ).toBeGreaterThanOrEqual(4);
+      result?.slots.every((slot) => {
+        const classes = slot.character.classes;
+
+        return (
+          slot.character.type === 'STR' ||
+          classes.includes('Striker') ||
+          classes.includes('Driven')
+        );
+      }),
+    ).toBe(true);
   });
 
-  it('prefers Kid for selected captain despair coverage and enforces only the needed tag branch', () => {
+  it('ignores selected captain despair coverage while satisfying battle counters', () => {
     const result = buildAutoTeamResult(createKidCaptainRequirementRecords(), {
       ...createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], [], {
         requiredAbilities: [
@@ -3021,17 +2981,16 @@ describe('Auto team builder', () => {
     });
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(4549);
-    expect(result?.slots[1]?.character.id).toBe(4549);
+    expect(result?.coverage.abilityRequirements.requested).toEqual([]);
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
     expect(result?.coverage.battleRequirements?.matchesAll).toBe(true);
-    expect(result?.coverage.leaderCriteria.tagConditionSets[0]?.branches).toHaveLength(2);
+    expect(result?.coverage.leaderCriteria.tagConditionSets).toEqual([]);
     expect(result?.slots.some((slot) => slot.character.id === 3431)).toBe(true);
   });
 
   it('builds the Kid favorites preset by anchoring battle counters before filler subs', async () => {
     const records = createKidCaptainRequirementRecords();
-    const favoriteCharacterIds = [4549, 3750, 3870, 4556, 3431];
+    const favoriteCharacterIds = [4549, 3750, 3870, 4556, 3431, 8102];
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockImplementation(async (_types, _limit, query) => {
         const allowedIds = Array.isArray(query?.allowedCharacterIds)
@@ -3090,10 +3049,10 @@ describe('Auto team builder', () => {
       expect.arrayContaining([3750, 3870, 4556, 3431]),
     );
     expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
-    expect(result?.coverage.battleRequirements?.matchesAll).toBe(true);
     expect(
-      result?.requestedInput.requiredAbilities.map((requirement) => requirement.abilityKey),
-    ).toEqual(['remove_despair']);
+      result?.coverage.abilityRequirements.requested.map((requirement) => requirement.abilityKey),
+    ).not.toContain('remove_despair');
+    expect(result?.coverage.battleRequirements?.matchesAll).toBe(true);
   });
 
   it('uses flexible same-battle group coverage when strict battle spread is infeasible', () => {
@@ -3149,7 +3108,7 @@ describe('Auto team builder', () => {
     expect(result).toBeNull();
   });
 
-  it('enforces both leaders tag conditions when building with dual captains', () => {
+  it('ignores both leaders team-count tag conditions when building with dual captains', () => {
     const result = buildAutoTeamResult(createDualTagConditionLeaderTeamRecords(), {
       ...createInput(['DEX'], ['Fighter'], {
         requireFullCaptainAbilityCoverage: true,
@@ -3160,12 +3119,9 @@ describe('Auto team builder', () => {
     });
 
     expect(result).not.toBeNull();
-    expect(result?.coverage.leaderCriteria.tagConditionSets).toHaveLength(2);
-    expect(
-      result?.slots.filter((slot) =>
-        slot.character.detail.characterTags?.includes('Straw Hat Pirates'),
-      ).length,
-    ).toBeGreaterThanOrEqual(4);
+    expect(result?.coverage.leaderCriteria.tagConditionSets).toEqual([]);
+    expect(result?.coverage.leaderCriteria.derivedAllowedCharacterTags).toEqual([]);
+    expect(result?.coverage.leaderCriteria.hasCharacterTagRestriction).toBe(false);
     expect(
       result?.slots.filter((slot) => slot.character.detail.characterTags?.includes('Scientist'))
         .length,
@@ -3319,7 +3275,7 @@ describe('Auto team builder', () => {
     expect(result?.slots.some((slot) => slot.character.id === 2724)).toBe(true);
   });
 
-  it('filters dual Buggy teams to cost-40-or-less characters', () => {
+  it('does not apply Buggy cost-only captain text as leader restriction', () => {
     const result = buildAutoTeamResult(createBuggyLeaderTeamRecords(), {
       ...createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], [], {
         lockedCharacterIds: [2035],
@@ -3329,11 +3285,8 @@ describe('Auto team builder', () => {
     });
 
     expect(result).not.toBeNull();
-    expect(result?.coverage.leaderCriteria.hasCostRestriction).toBe(true);
-    expect(result?.coverage.leaderCriteria.maxAllowedCost).toBe(40);
-    expect(result?.slots.every((slot) => slot.character.cost <= 40)).toBe(true);
-    expect(result?.slots.some((slot) => slot.character.id === 2534)).toBe(false);
-    expect(result?.slots.some((slot) => slot.character.id === 2577)).toBe(false);
+    expect(result?.coverage.leaderCriteria.hasCostRestriction).toBe(false);
+    expect(result?.coverage.leaderCriteria.maxAllowedCost).toBeNull();
   });
 
   it('rejects a leader with only non-roster super special criteria when the toggle is enabled', () => {
@@ -4329,7 +4282,7 @@ describe('Auto team builder', () => {
     );
 
     expect(tagAwarePruned.map((record) => record.id)).toEqual([8310, 8311]);
-    expect(fullRiderPruned.map((record) => record.id)).toEqual([8313]);
+    expect(fullRiderPruned.map((record) => record.id)).toEqual([8313, 8312]);
   });
 
   it('intersects selected captain and friend captain coverage while retaining selected leaders', () => {
@@ -8366,10 +8319,12 @@ function buildWorkerResult(
         dualLeaderMode: 'single',
         derivedAllowedClasses: [],
         derivedAllowedTypes: [],
+        derivedAllowedCharacterTags: [],
         hasCostRestriction: false,
         maxAllowedCost: null,
         hasClassRestriction: false,
         hasTypeRestriction: false,
+        hasCharacterTagRestriction: false,
         tagConditionSets: [],
         matchingSlots: 0,
         totalSlots: 0,
@@ -8847,6 +8802,7 @@ function createKidCaptainRequirementRecords(): CharacterDetailRecord[] {
       name: 'Portgas D. Ace - The Man Who Came for an Emperor of the Sea',
       type: 'DEX',
       primaryClass: 'Fighter',
+      secondaryClass: 'Striker',
       detail: {
         specialText: "Reduces all enemies' DEF Up duration by 6 turns.",
         characterTags: ['Spade Pirates', 'Land of Wano Arc'],

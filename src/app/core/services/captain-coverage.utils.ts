@@ -5,14 +5,10 @@ import {
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
 import { type CharacterDetailRecord, type CharacterListItem } from '../models/optc.models';
-import {
-  type CaptainTagConditionBranch,
-  normalizeCaptainTagKey,
-  parseCaptainTagConditionBranches,
-} from './captain-tag-conditions.utils';
+import { normalizeCaptainTagKey } from './captain-tag-conditions.utils';
 import { normalizeHtmlToText } from './html-text.utils';
 
-export type CaptainCoverageChipKind = 'class' | 'cost' | 'self' | 'tag' | 'type' | 'universal';
+export type CaptainCoverageChipKind = 'class' | 'tag' | 'type';
 
 export interface CaptainCoverageChip {
   kind: CaptainCoverageChipKind;
@@ -47,27 +43,26 @@ export interface CaptainAbilityCoverageSummary {
   fullCoverageClauses: string[];
 }
 
+export interface CaptainBoostScopeSummary {
+  clauses: string[];
+  allCharacters: boolean;
+  allowedClasses: string[];
+  allowedTypes: AutoTeamBuilderType[];
+  allowedCharacterTags: string[];
+}
+
 export interface CaptainCoverageOptions {
   coverageMode?: AutoBuildCaptainAbilityCoverageMode;
   targetCharacterTags?: readonly string[];
   includeTeamTagClauses?: boolean;
 }
 
-interface CostScope {
-  label: string;
-  matches: boolean;
-}
-
-const UNIVERSAL_SCOPE_PATTERN = /\b(?:all characters|all units|all crewmates|crew)\b/i;
+const UNIVERSAL_SCOPE_PATTERN = /\b(?:all|all characters|all units|all crewmates|crew)\b/i;
 const SELF_SCOPE_PATTERN = /\b(?:this character|own attacks|their own attacks)\b/i;
-const TARGETABLE_CHARACTER_EFFECT_PATTERN =
-  /\b(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b/i;
 const BRANCH_LABEL_PATTERN =
   /\b(?:Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
 const CAPTAIN_BRANCH_PATTERN =
   /\b(Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
-const CLAUSE_BOUNDARY_PATTERN =
-  /(?:[.;]\s+|,\s+(?=(?:and\s+)?(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b)|\s+and\s+(?=(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b))/gi;
 const DEFAULT_CAPTAIN_BRANCH_LABELS = new Set([
   'always active',
   'standard captain',
@@ -77,6 +72,17 @@ const DEFAULT_CAPTAIN_BRANCH_LABELS = new Set([
 ]);
 const CAPTAIN_EFFECT_CLAUSE_SEPARATOR =
   /,\s+(?=(?:and\s+)?(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b)|\s+and\s+(?=(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b)/gi;
+const CONDITIONAL_CAPTAIN_BOOST_PREFIX_PATTERN =
+  /^(?:(?:and|or|also|additionally|furthermore|then|otherwise)\b,?\s*)*(?:if|when)\b/i;
+const CAPTAIN_MULTIPLIER_PATTERN =
+  /\bby\s+(?:a\s+further\s+|an?\s+additional\s+|another\s+)?\d+(?:\.\d+)?x\b/i;
+const BRACKETED_LABEL_PATTERN = /\[([^\]]+)\]/g;
+const BOOST_TARGET_FRAGMENT_PATTERNS = [
+  /\b(?:of|for)\s+([^.;]{1,220}?)\s+(?:characters|units)\b/gi,
+  /\b(?:of|for)\s+(crew)\b/gi,
+  /\bboosts?\s+([^.;]{1,220}?)\s+(?:characters|units)(?:'|’)?\s+(?:atk|hp)\b/gi,
+  /\bboosts?\s+(crew)(?:'|’)?s?\s+(?:atk|hp)\b/gi,
+] as const;
 
 export function summarizeCaptainAbilityCoverageText(
   captainText: string | null | undefined,
@@ -90,17 +96,50 @@ export function summarizeCaptainAbilityCoverageText(
     };
   }
 
-  const captainCoverageClauses = extractDefaultCaptainBoostClauses(
-    extractDefaultCaptainBoostText(normalizedCaptainText),
-  );
-  const fullCoverageClauses = splitCaptainCoverageClauses(normalizedCaptainText).filter(
-    isTargetableCaptainCoverageClause,
-  );
+  const captainCoverageClauses = resolveCaptainBoostScope(
+    normalizedCaptainText,
+    'simpleBoostScope',
+  ).clauses;
+  const fullCoverageClauses = resolveCaptainBoostScope(
+    normalizedCaptainText,
+    'fullAbilityCoverage',
+  ).clauses;
 
   return {
     captainCoverageClauses,
     fullCoverageClauses,
   };
+}
+
+export function resolveCaptainBoostScope(
+  captainText: string | null | undefined,
+  coverageMode: AutoBuildCaptainAbilityCoverageMode = 'fullAbilityCoverage',
+): CaptainBoostScopeSummary {
+  const normalizedCaptainText = normalizeHtmlToText(captainText);
+
+  if (!normalizedCaptainText) {
+    return createEmptyCaptainBoostScope();
+  }
+
+  const clauses =
+    coverageMode === 'simpleBoostScope'
+      ? extractDefaultCaptainBoostClauses(extractDefaultCaptainBoostText(normalizedCaptainText))
+      : extractCaptainBoostScopeClauses(normalizedCaptainText, true);
+
+  return clauses.reduce<CaptainBoostScopeSummary>((scope, clause) => {
+    const normalizedClause = normalizeCoverageClause(clause);
+    const allowedTypes = extractAllowedTypesFromBoostClause(normalizedClause);
+    const allowedClasses = extractAllowedClassesFromBoostClause(normalizedClause);
+    const allowedCharacterTags = extractAllowedCharacterTagsFromBoostClause(normalizedClause);
+
+    return {
+      clauses: [...scope.clauses, normalizedClause],
+      allCharacters: scope.allCharacters || boostClauseHasUniversalScope(normalizedClause),
+      allowedClasses: mergeUniqueValues(scope.allowedClasses, allowedClasses),
+      allowedTypes: mergeOrderedValues(AUTO_TEAM_BUILDER_TYPES, scope.allowedTypes, allowedTypes),
+      allowedCharacterTags: mergeUniqueValues(scope.allowedCharacterTags, allowedCharacterTags),
+    };
+  }, createEmptyCaptainBoostScope());
 }
 
 export function resolveCaptainCoverage(
@@ -115,31 +154,10 @@ export function resolveCaptainCoverage(
     return createEmptyCoverageResult(captainText);
   }
 
-  const tagConditionBranches =
-    coverageMode === 'fullAbilityCoverage' && options.includeTeamTagClauses !== false
-      ? parseCaptainTagConditionBranches(captainText)
-      : [];
-  const captainClauses =
-    coverageMode === 'simpleBoostScope'
-      ? extractDefaultCaptainBoostClauses(extractDefaultCaptainBoostText(captainText))
-      : splitCaptainCoverageClauses(captainText);
-  const resolvedClauses = [
-    ...captainClauses.map((clause) => resolveCaptainCoverageClause(captain, target, clause)),
-    ...resolveCaptainTagCoverageClauses(target, tagConditionBranches, options),
-  ];
-  const hasNonSelfOnlyTargetableClause = resolvedClauses.some(
-    (clause) => clause.status !== 'neutral' && !isUnmatchedSelfOnlyClause(clause),
+  const resolvedClauses = resolveCaptainBoostScope(captainText, coverageMode).clauses.map(
+    (clause) => resolveCaptainCoverageClause(target, clause, options),
   );
-  const clauses = hasNonSelfOnlyTargetableClause
-    ? resolvedClauses.map((clause) =>
-        isUnmatchedSelfOnlyClause(clause)
-          ? {
-              ...clause,
-              status: 'neutral' as const,
-            }
-          : clause,
-      )
-    : resolvedClauses;
+  const clauses = resolvedClauses;
   const targetableClauses = clauses.filter((clause) => clause.status !== 'neutral');
   const uncoveredClauses = targetableClauses
     .filter((clause) => clause.status === 'uncovered')
@@ -149,7 +167,7 @@ export function resolveCaptainCoverage(
     .map((clause) => clause.text);
 
   return {
-    boosts: resolveCaptainCoverageBoosts(captain, target, captainText),
+    boosts: resolveCaptainCoverageBoosts(target, captainText, options),
     captainText,
     chips: dedupeCoverageChips(targetableClauses.flatMap((clause) => clause.chips)),
     clauses,
@@ -164,13 +182,13 @@ export function resolveCaptainCoverage(
 }
 
 function resolveCaptainCoverageBoosts(
-  captain: CharacterDetailRecord,
   target: CharacterListItem,
   captainText: string,
+  options: CaptainCoverageOptions = {},
 ): CaptainCoverageBoosts {
-  return extractDefaultCaptainBoostClauses(extractDefaultCaptainBoostText(captainText)).reduce(
+  return resolveCaptainBoostScope(captainText, 'simpleBoostScope').clauses.reduce(
     (boosts, clause) => {
-      const coverage = resolveCaptainCoverageClause(captain, target, clause);
+      const coverage = resolveCaptainCoverageClause(target, clause, options);
 
       if (coverage.status !== 'covered') {
         return boosts;
@@ -185,37 +203,6 @@ function resolveCaptainCoverageBoosts(
   );
 }
 
-function resolveCaptainTagCoverageClauses(
-  target: CharacterListItem,
-  branches: readonly CaptainTagConditionBranch[],
-  options: CaptainCoverageOptions,
-): CaptainCoverageClauseResult[] {
-  if (!branches.length) {
-    return [];
-  }
-
-  const targetTagKeys = resolveTargetCaptainTagKeys(target, options);
-  const matchedLabels = [
-    ...new Set(
-      branches.flatMap((branch) =>
-        branch.labels.filter((label) => targetTagKeys.includes(normalizeCaptainTagKey(label))),
-      ),
-    ),
-  ];
-  const matches = matchedLabels.length > 0;
-
-  return [
-    {
-      text: `requires ${branches.map((branch) => branch.text).join(' or ')}`,
-      status: matches ? 'covered' : 'uncovered',
-      chips: matchedLabels.map((label) => ({
-        kind: 'tag',
-        label,
-      })),
-    },
-  ];
-}
-
 function resolveTargetCaptainTagKeys(
   target: CharacterListItem,
   options: CaptainCoverageOptions,
@@ -227,43 +214,21 @@ function resolveTargetCaptainTagKeys(
 }
 
 function resolveCaptainCoverageClause(
-  captain: CharacterDetailRecord,
   target: CharacterListItem,
   clause: string,
+  options: CaptainCoverageOptions,
 ): CaptainCoverageClauseResult {
   const normalizedClause = normalizeCoverageClause(clause);
   const chips: CaptainCoverageChip[] = [];
 
-  if (!TARGETABLE_CHARACTER_EFFECT_PATTERN.test(normalizedClause)) {
-    return {
-      text: normalizedClause,
-      status: 'neutral',
-      chips,
-    };
-  }
-
-  const isSelfScoped = SELF_SCOPE_PATTERN.test(normalizedClause);
-  const isUniversal = !isSelfScoped && UNIVERSAL_SCOPE_PATTERN.test(normalizedClause);
+  const isUniversal = boostClauseHasUniversalScope(normalizedClause);
   const matchingTypes = resolveMatchingTypeScopes(normalizedClause, target);
   const matchingClasses = resolveMatchingClassScopes(normalizedClause, target);
-  const costScopes = resolveCostScopes(normalizedClause, target);
-  const hasTypeScope = extractAllowedTypes(normalizedClause).length > 0;
-  const hasClassScope = extractAllowedClasses(normalizedClause).length > 0;
-  const hasCostScope = costScopes.length > 0;
-
-  if (isSelfScoped) {
-    chips.push({
-      kind: 'self',
-      label: 'Self',
-    });
-  }
-
-  if (isUniversal) {
-    chips.push({
-      kind: 'universal',
-      label: 'Universal',
-    });
-  }
+  const matchingTags = resolveMatchingCharacterTagScopes(normalizedClause, target, options);
+  const hasTypeScope = extractAllowedTypesFromBoostClause(normalizedClause).length > 0;
+  const hasClassScope = extractAllowedClassesFromBoostClause(normalizedClause).length > 0;
+  const hasCharacterTagScope =
+    extractAllowedCharacterTagsFromBoostClause(normalizedClause).length > 0;
 
   matchingTypes.forEach((type) =>
     chips.push({
@@ -277,17 +242,14 @@ function resolveCaptainCoverageClause(
       label: characterClass,
     }),
   );
-  costScopes
-    .filter((scope) => scope.matches)
-    .forEach((scope) =>
-      chips.push({
-        kind: 'cost',
-        label: scope.label,
-      }),
-    );
+  matchingTags.forEach((tag) =>
+    chips.push({
+      kind: 'tag',
+      label: tag,
+    }),
+  );
 
-  const hasTargetScope =
-    isSelfScoped || isUniversal || hasTypeScope || hasClassScope || hasCostScope;
+  const hasTargetScope = isUniversal || hasTypeScope || hasClassScope || hasCharacterTagScope;
 
   if (!hasTargetScope) {
     return {
@@ -297,29 +259,16 @@ function resolveCaptainCoverageClause(
     };
   }
 
-  const selfMatches = isSelfScoped ? captain.id === target.id : false;
   const typeMatches = hasTypeScope ? matchingTypes.length > 0 : false;
   const classMatches = hasClassScope ? matchingClasses.length > 0 : false;
-  const costMatches = hasCostScope ? costScopes.some((scope) => scope.matches) : false;
-  const covered = isUniversal || selfMatches || typeMatches || classMatches || costMatches;
+  const tagMatches = hasCharacterTagScope ? matchingTags.length > 0 : false;
+  const covered = isUniversal || typeMatches || classMatches || tagMatches;
 
   return {
     text: normalizedClause,
     status: covered ? 'covered' : 'uncovered',
     chips: dedupeCoverageChips(chips),
   };
-}
-
-function splitCaptainCoverageClauses(captainText: string): string[] {
-  return captainText
-    .replace(BRANCH_LABEL_PATTERN, '. ')
-    .split(CLAUSE_BOUNDARY_PATTERN)
-    .map(normalizeCoverageClause)
-    .filter(Boolean);
-}
-
-function isTargetableCaptainCoverageClause(clause: string): boolean {
-  return TARGETABLE_CHARACTER_EFFECT_PATTERN.test(clause);
 }
 
 function extractDefaultCaptainBoostText(captainText: string): string {
@@ -355,12 +304,29 @@ function extractCaptainBranches(text: string): Array<{ label: string; text: stri
 }
 
 function extractDefaultCaptainBoostClauses(text: string): string[] {
-  return splitCaptainEffectClauses(text).filter(
+  return extractCaptainBoostScopeClauses(text, false);
+}
+
+function extractCaptainBoostScopeClauses(text: string, includeConditional: boolean): string[] {
+  return splitCaptainEffectClauses(text.replace(BRANCH_LABEL_PATTERN, '. ')).filter(
     (clause) =>
-      !isConditionalCaptainBoostClause(clause) &&
-      /\bboosts?\b/i.test(clause) &&
-      /\b(?:atk|hp)\b/i.test(clause) &&
-      /\bby\s+\d+(?:\.\d+)?x\b/i.test(clause),
+      (includeConditional || !isConditionalCaptainBoostClause(clause)) &&
+      isCaptainBoostScopeClause(clause),
+  );
+}
+
+function isCaptainBoostScopeClause(clause: string): boolean {
+  const normalizedClause = normalizeCoverageClause(clause);
+
+  return (
+    /\bboosts?\b/i.test(normalizedClause) &&
+    /\b(?:atk|hp)\b/i.test(normalizedClause) &&
+    CAPTAIN_MULTIPLIER_PATTERN.test(normalizedClause) &&
+    !SELF_SCOPE_PATTERN.test(normalizedClause) &&
+    (boostClauseHasUniversalScope(normalizedClause) ||
+      extractAllowedTypesFromBoostClause(normalizedClause).length > 0 ||
+      extractAllowedClassesFromBoostClause(normalizedClause).length > 0 ||
+      extractAllowedCharacterTagsFromBoostClause(normalizedClause).length > 0)
   );
 }
 
@@ -401,11 +367,14 @@ function splitCaptainSentences(text: string): string[] {
 }
 
 function isConditionalCaptainBoostClause(clause: string): boolean {
-  return /^(?:if|when)\b/i.test(clause.trim());
+  return CONDITIONAL_CAPTAIN_BOOST_PREFIX_PATTERN.test(clause.trim());
 }
 
 function extractCaptainBoost(clause: string, stat: 'atk' | 'hp'): number {
-  const pattern = new RegExp(`\\b${stat}\\b[^.;]*?\\bby\\s+(\\d+(?:\\.\\d+)?)x`, 'gi');
+  const pattern = new RegExp(
+    `\\b${stat}\\b[^.;]*?\\bby\\s+(?:a\\s+further\\s+|an?\\s+additional\\s+|another\\s+)?(\\d+(?:\\.\\d+)?)x`,
+    'gi',
+  );
 
   return [...clause.matchAll(pattern)].reduce((highest, match) => {
     if (isSelfOnlyCaptainBoostMatch(match[0])) {
@@ -434,7 +403,7 @@ function resolveMatchingTypeScopes(
   target: CharacterListItem,
 ): AutoTeamBuilderType[] {
   const targetTypes = resolveCharacterTypeTokens(target.type);
-  const allowedTypes = extractAllowedTypes(clause);
+  const allowedTypes = extractAllowedTypesFromBoostClause(clause);
 
   return AUTO_TEAM_BUILDER_TYPES.filter(
     (type) => targetTypes.includes(type) && allowedTypes.includes(type),
@@ -448,8 +417,12 @@ function resolveCharacterTypeTokens(typeValue: string): AutoTeamBuilderType[] {
   );
 }
 
-function extractAllowedTypes(clause: string): AutoTeamBuilderType[] {
-  return AUTO_TEAM_BUILDER_TYPES.filter((type) => textMatchesTypeScope(clause, type));
+function extractAllowedTypesFromBoostClause(clause: string): AutoTeamBuilderType[] {
+  const fragments = extractBoostTargetFragments(clause);
+
+  return AUTO_TEAM_BUILDER_TYPES.filter((type) =>
+    fragments.some((fragment) => textMatchesTypeScope(fragment, type)),
+  );
 }
 
 function textMatchesTypeScope(clause: string, type: AutoTeamBuilderType): boolean {
@@ -459,58 +432,101 @@ function textMatchesTypeScope(clause: string, type: AutoTeamBuilderType): boolea
 function resolveMatchingClassScopes(clause: string, target: CharacterListItem): string[] {
   const targetClasses = target.classes.map((characterClass) => characterClass.toLowerCase());
 
-  return extractAllowedClasses(clause).filter((characterClass) =>
+  return extractAllowedClassesFromBoostClause(clause).filter((characterClass) =>
     targetClasses.includes(characterClass.toLowerCase()),
   );
 }
 
-function extractAllowedClasses(clause: string): string[] {
+function extractAllowedClassesFromBoostClause(clause: string): string[] {
+  const fragments = extractBoostTargetFragments(clause);
+
   return AUTO_TEAM_BUILDER_CLASSES.filter((characterClass) =>
-    new RegExp(`\\b${escapeRegExp(characterClass)}\\b`, 'i').test(clause),
+    fragments.some((fragment) =>
+      new RegExp(`\\b${escapeRegExp(characterClass)}\\b`, 'i').test(fragment),
+    ),
   );
 }
 
-function resolveCostScopes(clause: string, target: CharacterListItem): CostScope[] {
-  const scopes: CostScope[] = [];
+function resolveMatchingCharacterTagScopes(
+  clause: string,
+  target: CharacterListItem,
+  options: CaptainCoverageOptions,
+): string[] {
+  const targetTagKeys = resolveTargetCaptainTagKeys(target, options);
 
-  for (const match of clause.matchAll(/\bcost\s+(\d+)\s+or\s+(?:less|lower|below)\b/gi)) {
-    const maxCost = Number(match[1]);
-
-    if (Number.isFinite(maxCost)) {
-      scopes.push({
-        label: `Cost <= ${maxCost}`,
-        matches: target.cost <= maxCost,
-      });
-    }
-  }
-
-  for (const match of clause.matchAll(/\bcost\s+(\d+)\s+or\s+(?:higher|more)\b/gi)) {
-    const minCost = Number(match[1]);
-
-    if (Number.isFinite(minCost)) {
-      scopes.push({
-        label: `Cost >= ${minCost}`,
-        matches: target.cost >= minCost,
-      });
-    }
-  }
-
-  return scopes;
-}
-
-function isUnmatchedSelfOnlyClause(clause: CaptainCoverageClauseResult): boolean {
-  return (
-    clause.status === 'uncovered' &&
-    SELF_SCOPE_PATTERN.test(clause.text) &&
-    !UNIVERSAL_SCOPE_PATTERN.test(clause.text) &&
-    extractAllowedTypes(clause.text).length === 0 &&
-    extractAllowedClasses(clause.text).length === 0 &&
-    !hasCostScope(clause.text)
+  return extractAllowedCharacterTagsFromBoostClause(clause).filter((tag) =>
+    targetTagKeys.includes(normalizeCaptainTagKey(tag)),
   );
 }
 
-function hasCostScope(clause: string): boolean {
-  return /\bcost\s+\d+\s+or\s+(?:less|lower|below|higher|more)\b/i.test(clause);
+function extractAllowedCharacterTagsFromBoostClause(clause: string): string[] {
+  return [
+    ...new Set(
+      extractBoostTargetFragments(clause)
+        .flatMap((fragment) =>
+          [...fragment.matchAll(BRACKETED_LABEL_PATTERN)].map((match) =>
+            String(match[1] ?? '').trim(),
+          ),
+        )
+        .filter((label) => label.length > 0)
+        .filter(
+          (label) =>
+            !AUTO_TEAM_BUILDER_TYPES.some(
+              (type) => normalizeCaptainTagKey(type) === normalizeCaptainTagKey(label),
+            ),
+        )
+        .filter(
+          (label) =>
+            !AUTO_TEAM_BUILDER_CLASSES.some(
+              (characterClass) =>
+                normalizeCaptainTagKey(characterClass) === normalizeCaptainTagKey(label),
+            ),
+        ),
+    ),
+  ];
+}
+
+function extractBoostTargetFragments(clause: string): string[] {
+  return [
+    ...new Set(
+      BOOST_TARGET_FRAGMENT_PATTERNS.flatMap((pattern) =>
+        [...clause.matchAll(pattern)].map((match) => normalizeCoverageClause(match[1] ?? '')),
+      ).filter(Boolean),
+    ),
+  ];
+}
+
+function boostClauseHasUniversalScope(clause: string): boolean {
+  return extractBoostTargetFragments(clause).some((fragment) =>
+    UNIVERSAL_SCOPE_PATTERN.test(fragment),
+  );
+}
+
+function createEmptyCaptainBoostScope(): CaptainBoostScopeSummary {
+  return {
+    clauses: [],
+    allCharacters: false,
+    allowedClasses: [],
+    allowedTypes: [],
+    allowedCharacterTags: [],
+  };
+}
+
+function mergeUniqueValues<T extends string>(existing: T[], incoming: readonly T[]): T[] {
+  return [...existing, ...incoming].filter(
+    (value, index, values) =>
+      values.findIndex((candidate) => candidate.toLowerCase() === value.toLowerCase()) === index,
+  );
+}
+
+function mergeOrderedValues<T extends string>(
+  orderedValues: readonly T[],
+  existing: T[],
+  incoming: readonly T[],
+): T[] {
+  const selected = new Set([...existing, ...incoming]);
+
+  return orderedValues.filter((value) => selected.has(value));
 }
 
 function dedupeCoverageChips(chips: CaptainCoverageChip[]): CaptainCoverageChip[] {

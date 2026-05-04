@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { type CharacterDetailRecord, type CharacterListItem } from '../models/optc.models';
-import { resolveCaptainCoverage } from './captain-coverage.utils';
+import { type CharacterDetailRecord } from '../models/optc.models';
+import {
+  resolveCaptainBoostScope,
+  resolveCaptainCoverage,
+  summarizeCaptainAbilityCoverageText,
+} from './captain-coverage.utils';
 
 describe('resolveCaptainCoverage', () => {
   const kidAimedDamnedPunkCaptainAbility =
@@ -21,15 +25,10 @@ describe('resolveCaptainCoverage', () => {
       hp: 1.3,
       atk: 5,
     });
-    expect(coverage.chips).toEqual([
-      {
-        kind: 'universal',
-        label: 'Universal',
-      },
-    ]);
+    expect(coverage.chips).toEqual([]);
   });
 
-  it('matches type, class, and cost scoped captain clauses against the selected character', () => {
+  it('matches type and class scoped captain boost clauses without cost coverage', () => {
     const captain = createCharacter({
       id: 1002,
       captainAbility:
@@ -59,12 +58,39 @@ describe('resolveCaptainCoverage', () => {
           kind: 'class',
           label: 'Fighter',
         },
-        {
-          kind: 'cost',
-          label: 'Cost <= 40',
-        },
       ]),
     );
+  });
+
+  it('matches direct character tag boost targets', () => {
+    const captain = createCharacter({
+      id: 1009,
+      captainAbility:
+        'Boosts ATK of [Straw Hat Pirates] and [Egghead Arc] characters by 5x and HP by 1.3x.',
+    });
+    const taggedTarget = createCharacter({
+      id: 2009,
+      type: 'QCK',
+      classes: ['Shooter', 'Driven'],
+      characterTags: ['Egghead Arc'],
+    });
+    const untaggedTarget = createCharacter({
+      id: 2010,
+      type: 'QCK',
+      classes: ['Shooter', 'Driven'],
+      characterTags: ['Kid Pirates'],
+    });
+
+    const taggedCoverage = resolveCaptainCoverage(captain, taggedTarget);
+    const untaggedCoverage = resolveCaptainCoverage(captain, untaggedTarget);
+
+    expect(resolveCaptainBoostScope(captain.detail.captainAbility).allowedCharacterTags).toEqual([
+      'Straw Hat Pirates',
+      'Egghead Arc',
+    ]);
+    expect(taggedCoverage.matches).toBe(true);
+    expect(taggedCoverage.chips).toEqual([{ kind: 'tag', label: 'Egghead Arc' }]);
+    expect(untaggedCoverage.matches).toBe(false);
   });
 
   it('keeps scoped captain boosts at zero when the target does not match', () => {
@@ -120,7 +146,35 @@ describe('resolveCaptainCoverage', () => {
     });
   });
 
-  it('rejects a captain when any character-targeted clause misses the selected character', () => {
+  it('keeps additionally-labeled Action Special boosts out of default captain coverage', () => {
+    const captainAbility =
+      'Launches the following effect at start of fight: reduces Special Cooldown of all characters by 3 turns. Boosts ATK of [INT], Free Spirit and Cerebral characters by 6x, boosts HP of [INT], Free Spirit and Cerebral characters by 1.2x, and makes [INT] and [RCV] orbs beneficial for all characters. If your crew has 4+ [Straw Hat Pirates] or [Egghead Arc] characters, boosts ATK of [Bonney Pirates], [Revolutionary Army], [Straw Hat Pirates], [Scientist] and [Egghead Arc] characters by 1.1x, boosts ATK of [INT], Free Spirit and Cerebral characters by 6.6x instead if they have the applicable tag, and allows effects that inflict Increase Damage Taken and Weaken to ignore Debuff Protection; additionally, if this character is your Captain and performs EXCELLENT with their Action Special, for 3 turns boosts ATK of [Bonney Pirates], [Revolutionary Army], [Straw Hat Pirates], [Scientist] and [Egghead Arc] characters by 1.4x instead, and boosts ATK of [INT], Free Spirit and Cerebral characters by 8.4x instead if they have the applicable tag.';
+    const captain = createCharacter({
+      id: 4490,
+      captainAbility,
+      type: 'INT',
+      classes: ['Free Spirit', 'Cerebral'],
+    });
+    const target = createCharacter({
+      id: 5001,
+      type: 'INT',
+      classes: ['Shooter', 'Driven'],
+      characterTags: ['Straw Hat Pirates'],
+    });
+
+    expect(summarizeCaptainAbilityCoverageText(captainAbility).captainCoverageClauses).toEqual([
+      'Boosts ATK of [INT], Free Spirit and Cerebral characters by 6x',
+      'boosts HP of [INT], Free Spirit and Cerebral characters by 1.2x',
+    ]);
+    expect(
+      resolveCaptainCoverage(captain, target, { coverageMode: 'simpleBoostScope' }).boosts,
+    ).toEqual({
+      hp: 1.2,
+      atk: 6,
+    });
+  });
+
+  it('ignores non-boost captain target clauses for coverage', () => {
     const captain = createCharacter({
       id: 1003,
       captainAbility:
@@ -130,22 +184,22 @@ describe('resolveCaptainCoverage', () => {
 
     const coverage = resolveCaptainCoverage(captain, target);
 
-    expect(coverage.matches).toBe(false);
+    expect(coverage.matches).toBe(true);
     expect(coverage.coveredClauses).toHaveLength(1);
-    expect(coverage.uncoveredClauses).toEqual(['makes [STR] orbs beneficial for [STR] characters']);
+    expect(coverage.uncoveredClauses).toEqual([]);
   });
 
-  it('covers self-only clauses only when the selected character is the captain', () => {
+  it('ignores self-only boost clauses', () => {
     const captain = createCharacter({
       id: 1004,
       captainAbility: 'Boosts ATK of this character by 6x.',
     });
 
-    expect(resolveCaptainCoverage(captain, createCharacter({ id: 1004 })).matches).toBe(true);
+    expect(resolveCaptainCoverage(captain, createCharacter({ id: 1004 })).matches).toBe(false);
     expect(resolveCaptainCoverage(captain, createCharacter({ id: 2004 })).matches).toBe(false);
   });
 
-  it('keeps unmatched self-only riders from blocking Kid Aimed Damned Punk coverage', () => {
+  it('ignores Kid team-count tags and non-boost riders while keeping type/class boost coverage', () => {
     const captain = createCharacter({
       id: 4549,
       captainAbility: kidAimedDamnedPunkCaptainAbility,
@@ -185,21 +239,9 @@ describe('resolveCaptainCoverage', () => {
       hp: 1.3,
       atk: 5,
     });
-    expect(matchingCoverage.chips).toEqual(
-      expect.arrayContaining([
-        {
-          kind: 'tag',
-          label: 'Worst Generation',
-        },
-      ]),
-    );
-    expect(matchingCoverage.neutralNotes).toContain(
-      'reduces Special Cooldown of this character by 4 turns at the start of the fight',
-    );
-    expect(untaggedBoostedCoverage.matches).toBe(false);
-    expect(untaggedBoostedCoverage.uncoveredClauses).toContain(
-      'requires crew has 4 [Kid Pirates] / [Worst Generation] / [Land of Wano Arc] characters or crew has 6 [Kid Pirates] / [Worst Generation] / [Egghead Arc] characters',
-    );
+    expect(matchingCoverage.chips).toEqual([{ kind: 'type', label: 'STR' }]);
+    expect(matchingCoverage.neutralNotes).toEqual([]);
+    expect(untaggedBoostedCoverage.matches).toBe(true);
     expect(taggedUnboostedCoverage.matches).toBe(false);
     expect(nonMatchingCoverage.matches).toBe(false);
     expect(nonMatchingCoverage.uncoveredClauses).toEqual(
@@ -221,10 +263,7 @@ describe('resolveCaptainCoverage', () => {
     const coverage = resolveCaptainCoverage(captain, target);
 
     expect(coverage.matches).toBe(true);
-    expect(coverage.neutralNotes).toEqual([
-      'reduces damage received by 20%',
-      'guarantees duplicating a drop upon completion of the island',
-    ]);
+    expect(coverage.neutralNotes).toEqual([]);
   });
 });
 

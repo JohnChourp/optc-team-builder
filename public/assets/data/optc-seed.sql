@@ -164986,8 +164986,8 @@ DROP TABLE IF EXISTS meta;
         291,
         0,
         1.2,
-        8.4,
-        4.8,
+        6,
+        3.6,
         '{"exactLocal":false,"thumbnailGlobal":true,"thumbnailJapan":true}',
         '{"exactLocal":null,"thumbnailLocal":null,"thumbnailGlobal":"4/400/4490.png","thumbnailJapan":"4/400/4490.png"}',
         'luffy & bonney int free spirit cerebral straw hat pirates bonney pirates four emperors worst generation mythical zoan-type paramythia-type egghead arc'
@@ -168368,4 +168368,4 @@ DROP TABLE IF EXISTS meta;
 
 
     INSERT INTO meta (key, value)
-    VALUES ('manifest', '{"generatedAt":"2026-05-03T17:52:07.233Z","sourceVersion":"36","characterCount":4533,"detailCount":4448,"shipCount":66,"rumbleCount":4515,"availableTypes":["DEX","INT","PSY","QCK","STR"],"availableClasses":["Booster","Cerebral","Driven","Evolver","Fighter","Free Spirit","Powerhouse","Shooter","Slasher","Striker"],"packs":[{"key":"thumbnailsGlo","id":"thumbnails-glo","label":"Global thumbnails","localBasePath":"assets/offline-packs/thumbnails-glo","fileCount":5259,"totalBytes":53389037,"installed":true,"checksum":"df94f79786955eedd082930b70946c4aa0d71e27"},{"key":"thumbnailsJapan","id":"thumbnails-jap","label":"Japan thumbnails","localBasePath":"assets/offline-packs/thumbnails-jap","fileCount":5454,"totalBytes":112700178,"installed":true,"checksum":"dd8283e86a3614e7105a6c59d6d153c189ecab65"},{"key":"shipThumbnails","id":"ship-thumbnails","label":"Ship thumbnails","localBasePath":"assets/offline-packs/ship-thumbnails","fileCount":63,"totalBytes":502890,"installed":true,"checksum":"5f01f0889be3aa7a901634609253bf50146595b1"}]}');
+    VALUES ('manifest', '{"generatedAt":"2026-05-04T17:58:39.793Z","sourceVersion":"36","characterCount":4533,"detailCount":4448,"shipCount":66,"rumbleCount":4515,"availableTypes":["DEX","INT","PSY","QCK","STR"],"availableClasses":["Booster","Cerebral","Driven","Evolver","Fighter","Free Spirit","Powerhouse","Shooter","Slasher","Striker"],"packs":[{"key":"thumbnailsGlo","id":"thumbnails-glo","label":"Global thumbnails","localBasePath":"assets/offline-packs/thumbnails-glo","fileCount":5259,"totalBytes":53389037,"installed":true,"checksum":"df94f79786955eedd082930b70946c4aa0d71e27"},{"key":"thumbnailsJapan","id":"thumbnails-jap","label":"Japan thumbnails","localBasePath":"assets/offline-packs/thumbnails-jap","fileCount":5454,"totalBytes":112700178,"installed":true,"checksum":"dd8283e86a3614e7105a6c59d6d153c189ecab65"},{"key":"shipThumbnails","id":"ship-thumbnails","label":"Ship thumbnails","localBasePath":"assets/offline-packs/ship-thumbnails","fileCount":63,"totalBytes":502890,"installed":true,"checksum":"5f01f0889be3aa7a901634609253bf50146595b1"}]}');

@@ -165,10 +165,11 @@ describe('CaptainCoveragePage', () => {
     } as CustomEvent<{ checked: boolean }>);
 
     expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'Rejected Untagged STR Candidate',
       'Covered Driven Candidate',
       'Covered STR Candidate',
     ]);
-    expect(page.totalMatchingCharacters()).toBe(2);
+    expect(page.totalMatchingCharacters()).toBe(3);
   });
 
   it('filters covered character results by search text and favorite state', async () => {

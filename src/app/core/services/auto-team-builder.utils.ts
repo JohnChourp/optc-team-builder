@@ -32,12 +32,11 @@ import conflictOverrideCatalog from '../data/auto-team-builder-party-conflict-ov
 import { type CharacterDetailRecord, type CharacterListItem } from '../models/optc.models';
 import { matchesAbilityRequirement } from './auto-team-builder-ability-match.utils';
 import {
-  type CaptainTagConditionBranch,
   captainTagBranchesSatisfied,
   countCaptainTagBranchMatches,
-  parseCaptainTagConditionBranches,
+  normalizeCaptainTagKey,
 } from './captain-tag-conditions.utils';
-import { resolveCaptainCoverage } from './captain-coverage.utils';
+import { resolveCaptainBoostScope, resolveCaptainCoverage } from './captain-coverage.utils';
 import { normalizeHtmlToText } from './html-text.utils';
 import { cloneRequiredCharacterGroup } from './required-character-groups.utils';
 import { cloneBattleRequirements } from './auto-team-builder-battle.utils';
@@ -50,8 +49,6 @@ const SCOPE_CLAUSE_PATTERN = /\b(?:of|for)\s+([^.;]{1,160}?)\s+(?:characters|uni
 const SUPER_EFFECT_SCOPE_CLAUSE_PATTERN =
   /\b(?:changes?|transforms?)\s+([^.;]{1,160}?)\s+(?:characters|units)\s+(?:to|into)\s+(?:a\s+|an\s+)?super\b/gi;
 const COST_UPPER_BOUND_PATTERN = /\bcost\s+(\d+)\s+or\s+(?:less|lower)\b/i;
-const HIGH_COST_PENALTY_PATTERN =
-  /\b(?:reduces?|decreases?|cuts?|lowers?|weakens?)\b[^.]*\bcost\s+\d+\s+or\s+higher\b/i;
 const TYPE_MATCH_PATTERNS = {
   DEX: ['[dex]', ' dex ', 'dex characters', 'dex units'],
   STR: ['[str]', ' str ', 'str characters', 'str units'],
@@ -247,7 +244,12 @@ function candidateMatchesAbilityRequirement(
   candidate: AutoBuildCandidate,
   requirement: AutoBuildAbilityRequirement,
 ): boolean {
+  if (isIgnoredCaptainAbilityRequirement(requirement)) {
+    return false;
+  }
+
   return candidate.character.detail.builderAbilities.some((ability) =>
+    ability.source !== 'captainAbility' &&
     matchesAbilityRequirement(ability, requirement),
   );
 }
@@ -289,24 +291,26 @@ export function buildAutoBuildAbilityCoverageBreakdown(
   const abilityMap = new Map<string, AutoBuildAbilityCoverageBreakdownItem>();
 
   characters.forEach((character) => {
-    character.detail.builderAbilities.forEach((ability) => {
-      const existing = abilityMap.get(ability.key);
+    character.detail.builderAbilities
+      .filter((ability) => ability.source !== 'captainAbility')
+      .forEach((ability) => {
+        const existing = abilityMap.get(ability.key);
 
-      if (existing) {
-        if (!existing.characterIds.includes(character.id)) {
-          existing.characterIds.push(character.id);
-          existing.count += 1;
+        if (existing) {
+          if (!existing.characterIds.includes(character.id)) {
+            existing.characterIds.push(character.id);
+            existing.count += 1;
+          }
+          return;
         }
-        return;
-      }
 
-      abilityMap.set(ability.key, {
-        key: ability.key,
-        label: ability.label,
-        count: 1,
-        characterIds: [character.id],
+        abilityMap.set(ability.key, {
+          key: ability.key,
+          label: ability.label,
+          count: 1,
+          characterIds: [character.id],
+        });
       });
-    });
   });
 
   const sortedAbilities = [...abilityMap.values()].sort((left, right) => {
@@ -693,10 +697,43 @@ function isExtraDropLeaderAbilityRequirement(requirement: AutoBuildAbilityRequir
   return EXTRA_DROP_LEADER_ABILITY_KEY_SET.has(requirement.abilityKey);
 }
 
+function isIgnoredCaptainAbilityRequirement(requirement: AutoBuildAbilityRequirement): boolean {
+  return normalizeAbilityRequirementSourceScope(requirement.sourceScope) === 'captainAbility';
+}
+
+function filterIgnoredCaptainAbilityRequirements(
+  requirements: AutoBuildAbilityRequirement[],
+): AutoBuildAbilityRequirement[] {
+  return requirements.filter((requirement) => !isIgnoredCaptainAbilityRequirement(requirement));
+}
+
+function filterIgnoredCaptainAbilityRequirementGroups(
+  groups: AutoBuildRequiredCharacterGroup[],
+): AutoBuildRequiredCharacterGroup[] {
+  return groups
+    .map((group) => ({
+      ...group,
+      abilities: filterIgnoredCaptainAbilityRequirements(group.abilities),
+    }))
+    .filter((group) => group.abilities.length > 0);
+}
+
+function filterIgnoredCaptainAbilityBattleRequirements(
+  battles: AutoBuildBattleRequirement[] | undefined,
+): AutoBuildBattleRequirement[] {
+  return cloneBattleRequirements(battles)
+    .map((battle) => ({
+      ...battle,
+      requiredCharacterGroups: filterIgnoredCaptainAbilityRequirementGroups(
+        battle.requiredCharacterGroups,
+      ),
+    }))
+    .filter((battle) => battle.requiredCharacterGroups.length > 0);
+}
+
 function isLeaderScopedAbilityRequirement(requirement: AutoBuildAbilityRequirement): boolean {
   return (
     normalizeAbilityRequirementSlotScope(requirement.slotScope) === 'leader' ||
-    normalizeAbilityRequirementSourceScope(requirement.sourceScope) === 'captainAbility' ||
     isExtraDropLeaderAbilityRequirement(requirement)
   );
 }
@@ -744,9 +781,11 @@ function candidateMatchesRequiredCharacterGroup(
   group: AutoBuildRequiredCharacterGroup,
   leaderCandidates: AutoBuildCandidate[],
 ): boolean {
+  const abilities = filterIgnoredCaptainAbilityRequirements(group.abilities);
+
   return (
-    group.abilities.length > 0 &&
-    group.abilities.every((requirement) =>
+    abilities.length > 0 &&
+    abilities.every((requirement) =>
       candidateCanSatisfyAbilityRequirementInSlot(candidate, requirement, leaderCandidates),
     )
   );
@@ -813,15 +852,8 @@ function resolveMatchedRequiredCharacterGroupIndexes(
 function resolveLeaderScopedAbilityRequirements(
   requirements: AutoBuildAbilityRequirement[],
 ): AutoBuildAbilityRequirement[] {
-  return requirements.filter((requirement) => isLeaderScopedAbilityRequirement(requirement));
-}
-
-function resolveCaptainSourceAbilityRequirements(
-  requirements: AutoBuildAbilityRequirement[],
-): AutoBuildAbilityRequirement[] {
-  return requirements.filter(
-    (requirement) =>
-      normalizeAbilityRequirementSourceScope(requirement.sourceScope) === 'captainAbility',
+  return filterIgnoredCaptainAbilityRequirements(requirements).filter((requirement) =>
+    isLeaderScopedAbilityRequirement(requirement),
   );
 }
 
@@ -994,7 +1026,9 @@ function resolveAbilityCoverage(
   requirements: AutoBuildAbilityRequirement[],
   leaderCandidates: AutoBuildCandidate[] = [],
 ): AutoBuildAbilityCoverageState & { matchesAll: boolean } {
-  if (!requirements.length) {
+  const activeRequirements = filterIgnoredCaptainAbilityRequirements(requirements);
+
+  if (!activeRequirements.length) {
     return {
       requested: [],
       matched: [],
@@ -1003,7 +1037,7 @@ function resolveAbilityCoverage(
     };
   }
 
-  const teamRequirementIndexes = requirements
+  const teamRequirementIndexes = activeRequirements
     .map((requirement, index) => ({ requirement, index }))
     .filter(({ requirement }) => !isExtraDropLeaderAbilityRequirement(requirement));
   const matchedTeamRequirementIndexes = resolveMatchedTeamAbilityRequirementIndexes(
@@ -1013,7 +1047,7 @@ function resolveAbilityCoverage(
   );
   const matchedRequirementIndexes = new Set<number>();
 
-  requirements.forEach((requirement, requirementIndex) => {
+  activeRequirements.forEach((requirement, requirementIndex) => {
     if (isExtraDropLeaderAbilityRequirement(requirement)) {
       if (leadersSatisfyAbilityRequirement(leaderCandidates, requirement)) {
         matchedRequirementIndexes.add(requirementIndex);
@@ -1030,11 +1064,11 @@ function resolveAbilityCoverage(
       matchedRequirementIndexes.add(requirementIndex);
     }
   });
-  const matched = requirements.filter((_, index) => matchedRequirementIndexes.has(index));
-  const missing = requirements.filter((_, index) => !matchedRequirementIndexes.has(index));
+  const matched = activeRequirements.filter((_, index) => matchedRequirementIndexes.has(index));
+  const missing = activeRequirements.filter((_, index) => !matchedRequirementIndexes.has(index));
 
   return {
-    requested: requirements.map((requirement) => cloneAbilityRequirement(requirement)),
+    requested: activeRequirements.map((requirement) => cloneAbilityRequirement(requirement)),
     matched: matched.map((requirement) => cloneAbilityRequirement(requirement)),
     missing: missing.map((requirement) => cloneAbilityRequirement(requirement)),
     matchesAll: missing.length === 0,
@@ -1046,7 +1080,9 @@ function resolveRequiredCharacterGroupCoverage(
   groups: AutoBuildRequiredCharacterGroup[],
   leaderCandidates: AutoBuildCandidate[] = [],
 ): AutoBuildCoverageSummary['requiredCharacterGroups'] {
-  if (!groups.length) {
+  const activeGroups = filterIgnoredCaptainAbilityRequirementGroups(groups);
+
+  if (!activeGroups.length) {
     return {
       requested: [],
       matched: [],
@@ -1057,14 +1093,14 @@ function resolveRequiredCharacterGroupCoverage(
 
   const matchedIndexes = resolveMatchedRequiredCharacterGroupIndexes(
     candidates,
-    groups,
+    activeGroups,
     leaderCandidates,
   );
-  const matched = groups.filter((_, index) => matchedIndexes.has(index));
-  const missing = groups.filter((_, index) => !matchedIndexes.has(index));
+  const matched = activeGroups.filter((_, index) => matchedIndexes.has(index));
+  const missing = activeGroups.filter((_, index) => !matchedIndexes.has(index));
 
   return {
-    requested: cloneRequiredCharacterGroupsForCoverage(groups),
+    requested: cloneRequiredCharacterGroupsForCoverage(activeGroups),
     matched: cloneRequiredCharacterGroupsForCoverage(matched),
     missing: cloneRequiredCharacterGroupsForCoverage(missing),
     matchesAll: missing.length === 0,
@@ -1137,7 +1173,7 @@ function resolveBattleRequirementCoverage(
   leaderCandidates: AutoBuildCandidate[] = [],
   assignmentMode: BattleRequirementAssignmentMode = 'flexible',
 ): NonNullable<AutoBuildCoverageSummary['battleRequirements']> {
-  const requested = cloneBattleRequirements(battles);
+  const requested = filterIgnoredCaptainAbilityBattleRequirements(battles);
 
   if (!requested.length) {
     return {
@@ -1489,7 +1525,9 @@ function resolveBattleRequirementAssignmentModes(
     return [options.battleRequirementAssignmentMode];
   }
 
-  const hasMultiGroupBattle = (input.battleRequirements ?? []).some(
+  const hasMultiGroupBattle = filterIgnoredCaptainAbilityBattleRequirements(
+    input.battleRequirements,
+  ).some(
     (battle) => battle.requiredCharacterGroups.length > 1,
   );
 
@@ -2402,7 +2440,9 @@ function selectSubs(
   };
 
   const findCounterAnchoredValidSelection = (): AutoBuildCandidate[] | null => {
-    const battleRequirements = input.battleRequirements ?? [];
+    const battleRequirements = filterIgnoredCaptainAbilityBattleRequirements(
+      input.battleRequirements,
+    );
 
     if (!battleRequirements.length) {
       return null;
@@ -2624,10 +2664,12 @@ function collectSubAbilityDemandContext(
   leaderTagConditionPrefix: AutoBuildCandidate[],
 ): SubAbilityDemandContext {
   const requirements = [
-    ...input.requiredAbilities,
-    ...input.requiredCharacterGroups.flatMap((group) => group.abilities),
+    ...filterIgnoredCaptainAbilityRequirements(input.requiredAbilities),
+    ...filterIgnoredCaptainAbilityRequirementGroups(input.requiredCharacterGroups).flatMap(
+      (group) => group.abilities,
+    ),
   ];
-  const battleRequirements = input.battleRequirements ?? [];
+  const battleRequirements = filterIgnoredCaptainAbilityBattleRequirements(input.battleRequirements);
 
   return {
     requirements:
@@ -2886,48 +2928,43 @@ function parseEffectTags(
 ): AutoBuildEffectTags {
   const selectedClasses = input.selectedClasses;
   const selectedTypes = input.types;
-  const combinedText = [captainText, specialText, sailorText].filter(Boolean).join(' ');
+  const abilityText = [specialText, sailorText].filter(Boolean).join(' ');
   const burstRoles = uniqueRoles<AutoBuildBurstRole>([
-    textHasAtkBoost(combinedText) ? 'atkBoost' : null,
-    includesAny(combinedText, ['orb effects', 'slot effect']) ? 'orbBoost' : null,
-    combinedText.includes('color affinity') ? 'colorAffinity' : null,
-    includesAny(combinedText, [
+    textHasAtkBoost(abilityText) ? 'atkBoost' : null,
+    includesAny(abilityText, ['orb effects', 'slot effect']) ? 'orbBoost' : null,
+    abilityText.includes('color affinity') ? 'colorAffinity' : null,
+    includesAny(abilityText, [
       'boosts the chain multiplier',
       'boost chain',
       'chain multiplier by +',
     ])
       ? 'chainBoost'
       : null,
-    includesAny(combinedText, ['conditional', 'against enemies with', 'if the enemy is'])
+    includesAny(abilityText, ['conditional', 'against enemies with', 'if the enemy is'])
       ? 'conditional'
       : null,
   ]);
   const consistencyRoles = uniqueRoles<AutoBuildConsistencyRole>([
-    combinedText.includes('matching orbs') ? 'matchingOrbs' : null,
-    combinedText.includes('changes') && combinedText.includes('orbs') ? 'orbChange' : null,
-    combinedText.includes('special cooldown') ? 'cooldownReduction' : null,
+    abilityText.includes('matching orbs') ? 'matchingOrbs' : null,
+    abilityText.includes('changes') && abilityText.includes('orbs') ? 'orbChange' : null,
+    abilityText.includes('special cooldown') ? 'cooldownReduction' : null,
   ]);
   const utilityRoles = uniqueRoles<AutoBuildUtilityRole>([
-    combinedText.includes('bind') ? 'bind' : null,
-    combinedText.includes('despair') ? 'despair' : null,
-    combinedText.includes('paralysis') ? 'paralysis' : null,
-    combinedText.includes('atk down') ? 'atkDown' : null,
-    includesAny(combinedText, ['damage reduction']) ? 'damageReduction' : null,
-    includesAny(combinedText, ['threshold damage reduction']) ? 'threshold' : null,
-    includesAny(combinedText, ['defense down', 'reduces the defense']) ? 'defenseDown' : null,
+    abilityText.includes('bind') ? 'bind' : null,
+    abilityText.includes('despair') ? 'despair' : null,
+    abilityText.includes('paralysis') ? 'paralysis' : null,
+    abilityText.includes('atk down') ? 'atkDown' : null,
+    includesAny(abilityText, ['damage reduction']) ? 'damageReduction' : null,
+    includesAny(abilityText, ['threshold damage reduction']) ? 'threshold' : null,
+    includesAny(abilityText, ['defense down', 'reduces the defense']) ? 'defenseDown' : null,
   ]);
-  const defaultCaptainText = extractDefaultCaptainBoostText(captainText);
-  const captainBoostScopeText = extractDefaultCaptainBoostClauses(defaultCaptainText).join('. ');
-  const allowedClasses = extractAllowedCaptainClasses(captainBoostScopeText);
-  const allowedTypes = extractAllowedCaptainTypes(captainBoostScopeText);
-  const maxAllowedCost = extractCaptainMaxAllowedCost(captainBoostScopeText);
-  const tagConditionBranches = parseCaptainTagConditionBranches(captainText);
-  const hasCostRestriction = maxAllowedCost !== null;
-  const allCharacters =
-    allowedClasses.length === 0 &&
-    allowedTypes.length === 0 &&
-    !hasCostRestriction &&
-    includesAny(captainBoostScopeText, ['all characters', 'all units']);
+  const captainBoostScope = resolveCaptainBoostScope(captainText, 'simpleBoostScope');
+  const allowedClasses = captainBoostScope.allowedClasses;
+  const allowedTypes = captainBoostScope.allowedTypes;
+  const allowedCharacterTags = captainBoostScope.allowedCharacterTags;
+  const hasCostRestriction = false;
+  const maxAllowedCost = null;
+  const allCharacters = captainBoostScope.allCharacters;
   const matchedSelectedClasses = allCharacters
     ? [...selectedClasses]
     : selectedClasses.filter((selectedClass) =>
@@ -2944,10 +2981,12 @@ function parseEffectTags(
       allCharacters,
       allowedClasses,
       allowedTypes,
+      allowedCharacterTags,
       hasCostRestriction,
       maxAllowedCost,
       hasClassRestriction: !allCharacters && allowedClasses.length > 0,
       hasTypeRestriction: !allCharacters && allowedTypes.length > 0,
+      hasCharacterTagRestriction: !allCharacters && allowedCharacterTags.length > 0,
       matchedSelectedClasses,
       matchedSelectedClassCount: matchedSelectedClasses.length,
       coversAllSelectedClasses:
@@ -2957,7 +2996,7 @@ function parseEffectTags(
       coversAllSelectedTypes:
         selectedTypes.length > 0 && matchedSelectedTypes.length === selectedTypes.length,
       matchesClass: matchedSelectedClasses.length > 0,
-      tagConditionBranches,
+      tagConditionBranches: [],
     },
     specialScope: resolveSpecialScope(specialText),
     burstRoles,
@@ -3185,7 +3224,12 @@ function resolveActiveLeaderCriteria(
     (leader) => leader.tags.captainScope.allowedTypes,
     (leader) => leader.tags.captainScope.hasTypeRestriction,
   );
-  const costScope = resolveIntersectedLeaderCostScope(uniqueLeaders);
+  const characterTagScope = resolveIntersectedLeaderDimension(
+    uniqueLeaders,
+    resolveOrderedLeaderCharacterTags(uniqueLeaders),
+    (leader) => leader.tags.captainScope.allowedCharacterTags,
+    (leader) => leader.tags.captainScope.hasCharacterTagRestriction,
+  );
 
   return {
     source: 'captainAbility',
@@ -3198,40 +3242,14 @@ function resolveActiveLeaderCriteria(
     dualLeaderMode: uniqueLeaders.length > 1 ? 'intersection' : 'single',
     derivedAllowedClasses: classScope.values,
     derivedAllowedTypes: typeScope.values,
-    hasCostRestriction: costScope.restricted,
-    maxAllowedCost: costScope.maxAllowedCost,
+    derivedAllowedCharacterTags: characterTagScope.values,
+    hasCostRestriction: false,
+    maxAllowedCost: null,
     hasClassRestriction: classScope.restricted,
     hasTypeRestriction: typeScope.restricted,
-    tagConditionSets: uniqueLeaders
-      .map((leader) => ({
-        leaderId: leader.character.id,
-        leaderName: leader.character.name,
-        branches: resolveActiveLeaderTagConditionBranches(leader, input),
-      }))
-      .filter((set) => set.branches.length > 0),
+    hasCharacterTagRestriction: characterTagScope.restricted,
+    tagConditionSets: [],
   };
-}
-
-function resolveActiveLeaderTagConditionBranches(
-  leader: AutoBuildCandidate,
-  input: AutoBuildInput,
-): CaptainTagConditionBranch[] {
-  if (input.requireFullCaptainAbilityCoverage) {
-    return leader.tags.captainScope.tagConditionBranches;
-  }
-
-  const captainRequirements = resolveCaptainSourceAbilityRequirements(input.requiredAbilities);
-
-  if (
-    captainRequirements.length === 0 ||
-    !captainRequirements.some((requirement) =>
-      leaderSatisfiesAbilityRequirement(leader, requirement),
-    )
-  ) {
-    return [];
-  }
-
-  return leader.tags.captainScope.tagConditionBranches;
 }
 
 export function resolveLeaderSuperEffectScopeFromEffectText(effectText: string): {
@@ -3377,26 +3395,15 @@ function resolveIntersectedLeaderDimension<T extends string, TSource>(
   };
 }
 
-function resolveIntersectedLeaderCostScope(leaders: AutoBuildCandidate[]): {
-  maxAllowedCost: number | null;
-  restricted: boolean;
-} {
-  const costLimits = leaders
-    .filter((leader) => leader.tags.captainScope.hasCostRestriction)
-    .map((leader) => leader.tags.captainScope.maxAllowedCost)
-    .filter((value): value is number => value !== null);
-
-  if (!costLimits.length) {
-    return {
-      maxAllowedCost: null,
-      restricted: false,
-    };
-  }
-
-  return {
-    maxAllowedCost: Math.min(...costLimits),
-    restricted: true,
-  };
+function resolveOrderedLeaderCharacterTags(leaders: AutoBuildCandidate[]): string[] {
+  return leaders
+    .flatMap((leader) => leader.tags.captainScope.allowedCharacterTags)
+    .filter(
+      (tag, index, values) =>
+        values.findIndex(
+          (candidate) => normalizeCaptainTagKey(candidate) === normalizeCaptainTagKey(tag),
+        ) === index,
+    );
 }
 
 function summarizeLeaderCriteria(
@@ -3417,10 +3424,12 @@ function summarizeLeaderCriteria(
     dualLeaderMode: leaderCriteria.dualLeaderMode,
     derivedAllowedClasses: [...leaderCriteria.derivedAllowedClasses],
     derivedAllowedTypes: [...leaderCriteria.derivedAllowedTypes],
+    derivedAllowedCharacterTags: [...leaderCriteria.derivedAllowedCharacterTags],
     hasCostRestriction: leaderCriteria.hasCostRestriction,
     maxAllowedCost: leaderCriteria.maxAllowedCost,
     hasClassRestriction: leaderCriteria.hasClassRestriction,
     hasTypeRestriction: leaderCriteria.hasTypeRestriction,
+    hasCharacterTagRestriction: leaderCriteria.hasCharacterTagRestriction,
     tagConditionSets: leaderCriteria.tagConditionSets.map((set) => ({
       ...set,
       branches: set.branches.map((branch) => ({
@@ -3461,18 +3470,23 @@ function matchesActiveLeaderCriteria(
   const matchesTypeScope = leaderCriteria.hasTypeRestriction
     ? characterTypes.some((type) => leaderCriteria.derivedAllowedTypes.includes(type))
     : false;
-  const matchesCostScope = leaderCriteria.hasCostRestriction
-    ? candidate.character.cost <= (leaderCriteria.maxAllowedCost ?? Number.POSITIVE_INFINITY)
+  const characterTagKeys = (candidate.character.detail.characterTags ?? []).map((tag) =>
+    normalizeCaptainTagKey(tag),
+  );
+  const matchesCharacterTagScope = leaderCriteria.hasCharacterTagRestriction
+    ? leaderCriteria.derivedAllowedCharacterTags.some((tag) =>
+        characterTagKeys.includes(normalizeCaptainTagKey(tag)),
+      )
+    : false;
+  const hasDimensionScope =
+    leaderCriteria.hasClassRestriction ||
+    leaderCriteria.hasTypeRestriction ||
+    leaderCriteria.hasCharacterTagRestriction;
+  const matchesDimensionScope = hasDimensionScope
+    ? matchesClassScope || matchesTypeScope || matchesCharacterTagScope
     : true;
-  const hasDimensionScope = leaderCriteria.hasClassRestriction || leaderCriteria.hasTypeRestriction;
-  const hasConditionalCaptainRequirement = leaderCriteria.tagConditionSets.length > 0;
-  const matchesDimensionScope = hasConditionalCaptainRequirement
-    ? true
-    : hasDimensionScope
-      ? matchesClassScope || matchesTypeScope
-      : true;
 
-  return matchesDimensionScope && matchesCostScope;
+  return matchesDimensionScope;
 }
 
 function matchesLeaderSuperEffectScope(
@@ -3588,14 +3602,6 @@ function matchesActiveSuperEffectScopePrefix(
   );
 }
 
-function extractAllowedCaptainClasses(captainText: string): string[] {
-  return extractAllowedScopeClasses(captainText);
-}
-
-function extractAllowedCaptainTypes(captainText: string): AutoTeamBuilderType[] {
-  return extractAllowedScopeTypes(captainText);
-}
-
 function extractAllowedSpecialClasses(specialText: string): string[] {
   return extractAllowedScopeClasses(specialText);
 }
@@ -3622,16 +3628,6 @@ function extractAllowedScopeTypesFromClauses(clauses: string[]): AutoTeamBuilder
   return AUTO_TEAM_BUILDER_TYPES.filter((type) =>
     clauses.some((clause) => textMatchesTypeScope(clause, type)),
   );
-}
-
-function extractCaptainMaxAllowedCost(text: string): number | null {
-  const scopedMaxAllowedCost = extractScopedMaxAllowedCost(text);
-
-  if (scopedMaxAllowedCost !== null) {
-    return scopedMaxAllowedCost;
-  }
-
-  return HIGH_COST_PENALTY_PATTERN.test(text) ? extractPenalizedCostUpperBound(text) : null;
 }
 
 function extractScopedMaxAllowedCost(text: string): number | null {
@@ -3680,18 +3676,6 @@ function resolveCandidateSuperEffectTexts(candidate: AutoBuildCandidate): string
 
 function hasCandidateSuperEffects(candidate: AutoBuildCandidate): boolean {
   return resolveCandidateSuperEffectTexts(candidate).length > 0;
-}
-
-function extractPenalizedCostUpperBound(text: string): number | null {
-  const normalizedText = normalizeText(text);
-  const match = normalizedText.match(/\bcost\s+(\d+)\s+or\s+higher\b/);
-
-  if (!match) {
-    return null;
-  }
-
-  const lowerBound = Number(match[1]);
-  return Number.isFinite(lowerBound) ? lowerBound - 1 : null;
 }
 
 function extractCostUpperBound(text: string): number | null {
@@ -3772,7 +3756,9 @@ function splitCaptainSentences(text: string): string[] {
 }
 
 function isConditionalCaptainBoostClause(clause: string): boolean {
-  return /^(?:if|when)\b/i.test(clause.trim());
+  return /^(?:(?:and|or|also|additionally|furthermore|then|otherwise)\b,?\s*)*(?:if|when)\b/i.test(
+    clause.trim(),
+  );
 }
 
 function extractDefaultCaptainBoostText(text: string): string {

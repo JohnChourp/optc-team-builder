@@ -203,9 +203,9 @@
                 }
               }
 
-              @if (current.detail.builderAbilities.length) {
+              @if (displayBuilderAbilities(current).length) {
                 <app-character-ability-groups
-                  [abilities]="current.detail.builderAbilities"
+                  [abilities]="displayBuilderAbilities(current)"
                   [catalogItems]="abilityCatalog()?.abilities ?? []"
                   displayMode="full"
                 ></app-character-ability-groups>

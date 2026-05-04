@@ -15,7 +15,7 @@ describe('CharacterDetailPage template', () => {
     expect(template).toContain('hero-meta-grid');
     expect(template).toContain('hero-stats-grid');
     expect(template).toContain('<app-character-ability-groups');
-    expect(template).toContain('[abilities]="current.detail.builderAbilities"');
+    expect(template).toContain('[abilities]="displayBuilderAbilities(current)"');
     expect(template).toContain('view.captainAbilitySummary');
     expect(template).toContain('captainSummary.coverageEntries');
     expect(template).toContain('entry.text');

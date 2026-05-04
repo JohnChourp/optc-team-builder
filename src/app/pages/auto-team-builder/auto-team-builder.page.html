@@ -2172,9 +2172,9 @@
               </div>
             </div>
             <div>
-              <span>{{ t('coverage.groups.leaderCost') }}</span>
+              <span>{{ t('coverage.groups.leaderTags') }}</span>
               <div class="chip-row">
-                <small class="coverage-chip">{{ leaderCriteriaCostLabel() }}</small>
+                <small class="coverage-chip">{{ leaderCriteriaCharacterTagsLabel() }}</small>
               </div>
             </div>
             <div>
@@ -2383,7 +2383,7 @@
                     }
                   </div>
                   <app-character-ability-groups
-                    [abilities]="slot.character.detail.builderAbilities"
+                    [abilities]="displayBuilderAbilities(slot.character)"
                     [catalogItems]="abilityCatalog()?.abilities ?? []"
                     [highlightedRequirements]="current.coverage.abilityRequirements.matched"
                     displayMode="full"

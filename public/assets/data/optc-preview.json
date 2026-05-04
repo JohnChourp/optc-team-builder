@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-03T17:52:07.233Z",
+  "generatedAt": "2026-05-04T17:58:39.793Z",
   "characters": [
     {
       "id": 1,
@@ -8,7 +8,9 @@
       "type": "STR",
       "primaryClass": "Fighter",
       "secondaryClass": null,
-      "classes": ["Fighter"],
+      "classes": [
+        "Fighter"
+      ],
       "stars": 2,
       "starsLabel": "2",
       "cost": 1,
@@ -47,7 +49,10 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["monkey d. luffy", "luffy"],
+        "partyConflictKeys": [
+          "monkey d. luffy",
+          "luffy"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -98,7 +103,9 @@
       "type": "STR",
       "primaryClass": "Fighter",
       "secondaryClass": null,
-      "classes": ["Fighter"],
+      "classes": [
+        "Fighter"
+      ],
       "stars": 3,
       "starsLabel": "3",
       "cost": 4,
@@ -143,7 +150,10 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["monkey d. luffy", "luffy"],
+        "partyConflictKeys": [
+          "monkey d. luffy",
+          "luffy"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -194,7 +204,9 @@
       "type": "STR",
       "primaryClass": "Fighter",
       "secondaryClass": null,
-      "classes": ["Fighter"],
+      "classes": [
+        "Fighter"
+      ],
       "stars": 4,
       "starsLabel": "4",
       "cost": 7,
@@ -239,7 +251,10 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["monkey d. luffy", "luffy"],
+        "partyConflictKeys": [
+          "monkey d. luffy",
+          "luffy"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -290,7 +305,10 @@
       "type": "STR",
       "primaryClass": "Fighter",
       "secondaryClass": "Free Spirit",
-      "classes": ["Fighter", "Free Spirit"],
+      "classes": [
+        "Fighter",
+        "Free Spirit"
+      ],
       "stars": 5,
       "starsLabel": "5",
       "cost": 15,
@@ -335,7 +353,10 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["monkey d. luffy", "luffy"],
+        "partyConflictKeys": [
+          "monkey d. luffy",
+          "luffy"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -388,7 +409,9 @@
           },
           {
             "Name": "Reduce No Healing duration",
-            "description": ["Reduces No Healing duration by 4 turns"]
+            "description": [
+              "Reduces No Healing duration by 4 turns"
+            ]
           }
         ],
         "supportData": [
@@ -433,7 +456,9 @@
       "type": "DEX",
       "primaryClass": "Slasher",
       "secondaryClass": null,
-      "classes": ["Slasher"],
+      "classes": [
+        "Slasher"
+      ],
       "stars": 3,
       "starsLabel": "3",
       "cost": 4,
@@ -478,7 +503,10 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["roronoa zoro", "zoro"],
+        "partyConflictKeys": [
+          "roronoa zoro",
+          "zoro"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -529,7 +557,10 @@
       "type": "DEX",
       "primaryClass": "Slasher",
       "secondaryClass": "Driven",
-      "classes": ["Slasher", "Driven"],
+      "classes": [
+        "Slasher",
+        "Driven"
+      ],
       "stars": 4,
       "starsLabel": "4",
       "cost": 7,
@@ -574,7 +605,10 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["roronoa zoro", "zoro"],
+        "partyConflictKeys": [
+          "roronoa zoro",
+          "zoro"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -625,7 +659,10 @@
       "type": "DEX",
       "primaryClass": "Slasher",
       "secondaryClass": "Driven",
-      "classes": ["Slasher", "Driven"],
+      "classes": [
+        "Slasher",
+        "Driven"
+      ],
       "stars": 4,
       "starsLabel": "4",
       "cost": 9,
@@ -670,7 +707,10 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["roronoa zoro", "zoro"],
+        "partyConflictKeys": [
+          "roronoa zoro",
+          "zoro"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -721,7 +761,10 @@
       "type": "DEX",
       "primaryClass": "Slasher",
       "secondaryClass": "Driven",
-      "classes": ["Slasher", "Driven"],
+      "classes": [
+        "Slasher",
+        "Driven"
+      ],
       "stars": 5,
       "starsLabel": "5",
       "cost": 15,
@@ -766,7 +809,10 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["roronoa zoro", "zoro"],
+        "partyConflictKeys": [
+          "roronoa zoro",
+          "zoro"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -822,7 +868,9 @@
         "potentialAbilities": [
           {
             "Name": "[QCK] Damage Reduction",
-            "description": ["Reduces damage taken from [QCK] characters by 5%"]
+            "description": [
+              "Reduces damage taken from [QCK] characters by 5%"
+            ]
           },
           {
             "Name": "Critical Hit",
@@ -873,7 +921,9 @@
       "type": "INT",
       "primaryClass": "Striker",
       "secondaryClass": null,
-      "classes": ["Striker"],
+      "classes": [
+        "Striker"
+      ],
       "stars": 3,
       "starsLabel": "3",
       "cost": 4,
@@ -918,7 +968,9 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["nami"],
+        "partyConflictKeys": [
+          "nami"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -969,7 +1021,10 @@
       "type": "INT",
       "primaryClass": "Striker",
       "secondaryClass": "Cerebral",
-      "classes": ["Striker", "Cerebral"],
+      "classes": [
+        "Striker",
+        "Cerebral"
+      ],
       "stars": 4,
       "starsLabel": "4",
       "cost": 7,
@@ -1014,7 +1069,9 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["nami"],
+        "partyConflictKeys": [
+          "nami"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -1065,7 +1122,10 @@
       "type": "INT",
       "primaryClass": "Striker",
       "secondaryClass": "Cerebral",
-      "classes": ["Striker", "Cerebral"],
+      "classes": [
+        "Striker",
+        "Cerebral"
+      ],
       "stars": 4,
       "starsLabel": "4",
       "cost": 9,
@@ -1110,7 +1170,9 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["nami"],
+        "partyConflictKeys": [
+          "nami"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -1161,7 +1223,10 @@
       "type": "INT",
       "primaryClass": "Striker",
       "secondaryClass": "Cerebral",
-      "classes": ["Striker", "Cerebral"],
+      "classes": [
+        "Striker",
+        "Cerebral"
+      ],
       "stars": 5,
       "starsLabel": "5",
       "cost": 15,
@@ -1206,7 +1271,9 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["nami"],
+        "partyConflictKeys": [
+          "nami"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -1277,7 +1344,9 @@
           },
           {
             "Name": "Reduce Slot Bind duration",
-            "description": ["Reduces Slot Bind duration by 7 turns on this character"]
+            "description": [
+              "Reduces Slot Bind duration by 7 turns on this character"
+            ]
           }
         ],
         "supportData": [
@@ -1322,7 +1391,9 @@
       "type": "PSY",
       "primaryClass": "Shooter",
       "secondaryClass": null,
-      "classes": ["Shooter"],
+      "classes": [
+        "Shooter"
+      ],
       "stars": 3,
       "starsLabel": "3",
       "cost": 4,
@@ -1367,7 +1438,9 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["usopp"],
+        "partyConflictKeys": [
+          "usopp"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -1397,11 +1470,15 @@
             {
               "effects": [
                 {
-                  "attributes": ["SPD"],
+                  "attributes": [
+                    "SPD"
+                  ],
                   "effect": "buff",
                   "level": 5,
                   "targeting": {
-                    "targets": ["crew"]
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -1419,11 +1496,15 @@
                     "count": 1,
                     "priority": "highest",
                     "stat": "ATK",
-                    "targets": ["enemies"]
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 },
                 {
-                  "attributes": ["Special Bind"],
+                  "attributes": [
+                    "Special Bind"
+                  ],
                   "chance": 80,
                   "duration": 19,
                   "effect": "hinderance",
@@ -1431,7 +1512,9 @@
                     "count": 1,
                     "priority": "highest",
                     "stat": "ATK",
-                    "targets": ["enemies"]
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -1476,7 +1559,9 @@
       "type": "PSY",
       "primaryClass": "Shooter",
       "secondaryClass": null,
-      "classes": ["Shooter"],
+      "classes": [
+        "Shooter"
+      ],
       "stars": 4,
       "starsLabel": "4",
       "cost": 7,
@@ -1521,7 +1606,9 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["usopp"],
+        "partyConflictKeys": [
+          "usopp"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -1551,11 +1638,15 @@
             {
               "effects": [
                 {
-                  "attributes": ["SPD"],
+                  "attributes": [
+                    "SPD"
+                  ],
                   "effect": "buff",
                   "level": 5,
                   "targeting": {
-                    "targets": ["crew"]
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -1566,7 +1657,9 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "attributes": ["Special Bind"],
+                  "attributes": [
+                    "Special Bind"
+                  ],
                   "chance": 96,
                   "duration": 10,
                   "effect": "hinderance",
@@ -1574,16 +1667,22 @@
                     "count": 1,
                     "priority": "highest",
                     "stat": "ATK",
-                    "targets": ["enemies"]
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 },
                 {
-                  "attributes": ["Accuracy"],
+                  "attributes": [
+                    "Accuracy"
+                  ],
                   "level": 11,
                   "duration": 15,
                   "effect": "debuff",
                   "targeting": {
-                    "targets": ["enemies"]
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -1628,7 +1727,9 @@
       "type": "PSY",
       "primaryClass": "Shooter",
       "secondaryClass": null,
-      "classes": ["Shooter"],
+      "classes": [
+        "Shooter"
+      ],
       "stars": 4,
       "starsLabel": "4",
       "cost": 9,
@@ -1673,7 +1774,9 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["usopp"],
+        "partyConflictKeys": [
+          "usopp"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -1703,11 +1806,15 @@
             {
               "effects": [
                 {
-                  "attributes": ["SPD"],
+                  "attributes": [
+                    "SPD"
+                  ],
                   "effect": "buff",
                   "level": 5,
                   "targeting": {
-                    "targets": ["crew"]
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -1725,11 +1832,15 @@
                     "count": 1,
                     "priority": "highest",
                     "stat": "ATK",
-                    "targets": ["enemies"]
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 },
                 {
-                  "attributes": ["Special Bind"],
+                  "attributes": [
+                    "Special Bind"
+                  ],
                   "chance": 80,
                   "duration": 20,
                   "effect": "hinderance",
@@ -1737,7 +1848,9 @@
                     "count": 1,
                     "priority": "highest",
                     "stat": "ATK",
-                    "targets": ["enemies"]
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -1782,7 +1895,9 @@
       "type": "PSY",
       "primaryClass": "Shooter",
       "secondaryClass": null,
-      "classes": ["Shooter"],
+      "classes": [
+        "Shooter"
+      ],
       "stars": 5,
       "starsLabel": "5",
       "cost": 15,
@@ -1827,7 +1942,9 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["sogeking"],
+        "partyConflictKeys": [
+          "sogeking"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -1903,7 +2020,9 @@
             "coverageMode": "explicit"
           }
         ],
-        "sailorAbilities": ["Boosts base ATK, HP and RCV of Shooter characters by 20"],
+        "sailorAbilities": [
+          "Boosts base ATK, HP and RCV of Shooter characters by 20"
+        ],
         "sailorNotes": null,
         "potentialAbilities": [
           {
@@ -1940,11 +2059,15 @@
             {
               "effects": [
                 {
-                  "attributes": ["SPD"],
+                  "attributes": [
+                    "SPD"
+                  ],
                   "effect": "buff",
                   "level": 5,
                   "targeting": {
-                    "targets": ["crew"]
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -1955,7 +2078,9 @@
               "cooldown": 30,
               "effects": [
                 {
-                  "attributes": ["Special Bind"],
+                  "attributes": [
+                    "Special Bind"
+                  ],
                   "chance": 96,
                   "duration": 10,
                   "effect": "hinderance",
@@ -1963,16 +2088,22 @@
                     "count": 1,
                     "priority": "highest",
                     "stat": "ATK",
-                    "targets": ["enemies"]
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 },
                 {
-                  "attributes": ["Accuracy"],
+                  "attributes": [
+                    "Accuracy"
+                  ],
                   "level": 11,
                   "duration": 15,
                   "effect": "debuff",
                   "targeting": {
-                    "targets": ["enemies"]
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -1982,19 +2113,28 @@
             {
               "effects": [
                 {
-                  "attributes": ["ATK"],
+                  "attributes": [
+                    "ATK"
+                  ],
                   "level": 3,
                   "effect": "buff",
                   "targeting": {
-                    "targets": ["crew"]
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 },
                 {
-                  "attributes": ["HP", "SPD"],
+                  "attributes": [
+                    "HP",
+                    "SPD"
+                  ],
                   "level": 3,
                   "effect": "buff",
                   "targeting": {
-                    "targets": ["crew"]
+                    "targets": [
+                      "crew"
+                    ]
                   }
                 }
               ]
@@ -2009,7 +2149,9 @@
                   "effect": "damage",
                   "type": "fixed",
                   "targeting": {
-                    "targets": ["enemies"]
+                    "targets": [
+                      "enemies"
+                    ]
                   }
                 }
               ]
@@ -2061,7 +2203,9 @@
       "type": "QCK",
       "primaryClass": "Fighter",
       "secondaryClass": null,
-      "classes": ["Fighter"],
+      "classes": [
+        "Fighter"
+      ],
       "stars": 3,
       "starsLabel": "3",
       "cost": 4,
@@ -2106,7 +2250,9 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["sanji"],
+        "partyConflictKeys": [
+          "sanji"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -2157,7 +2303,10 @@
       "type": "QCK",
       "primaryClass": "Fighter",
       "secondaryClass": "Powerhouse",
-      "classes": ["Fighter", "Powerhouse"],
+      "classes": [
+        "Fighter",
+        "Powerhouse"
+      ],
       "stars": 4,
       "starsLabel": "4",
       "cost": 7,
@@ -2202,7 +2351,9 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["sanji"],
+        "partyConflictKeys": [
+          "sanji"
+        ],
         "characterTags": [],
         "builderAbilities": [],
         "sailorAbilities": [],
@@ -2243,7 +2394,10 @@
       "type": "QCK",
       "primaryClass": "Fighter",
       "secondaryClass": "Powerhouse",
-      "classes": ["Fighter", "Powerhouse"],
+      "classes": [
+        "Fighter",
+        "Powerhouse"
+      ],
       "stars": 4,
       "starsLabel": "4",
       "cost": 9,
@@ -2288,7 +2442,10 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["chef sanji", "sanji"],
+        "partyConflictKeys": [
+          "chef sanji",
+          "sanji"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -2339,7 +2496,10 @@
       "type": "QCK",
       "primaryClass": "Fighter",
       "secondaryClass": "Powerhouse",
-      "classes": ["Fighter", "Powerhouse"],
+      "classes": [
+        "Fighter",
+        "Powerhouse"
+      ],
       "stars": 5,
       "starsLabel": "5",
       "cost": 15,
@@ -2384,7 +2544,9 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["sanji"],
+        "partyConflictKeys": [
+          "sanji"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -2485,7 +2647,9 @@
         "potentialAbilities": [
           {
             "Name": "[STR] Damage Reduction",
-            "description": ["Reduces damage taken from [STR] characters by 5%"]
+            "description": [
+              "Reduces damage taken from [STR] characters by 5%"
+            ]
           },
           {
             "Name": "Pinch Healing",
@@ -2536,7 +2700,9 @@
       "type": "PSY",
       "primaryClass": "Fighter",
       "secondaryClass": null,
-      "classes": ["Fighter"],
+      "classes": [
+        "Fighter"
+      ],
       "stars": 3,
       "starsLabel": "3",
       "cost": 4,
@@ -2581,7 +2747,10 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["tony tony chopper", "chopper"],
+        "partyConflictKeys": [
+          "tony tony chopper",
+          "chopper"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -2632,7 +2801,10 @@
       "type": "PSY",
       "primaryClass": "Fighter",
       "secondaryClass": "Free Spirit",
-      "classes": ["Fighter", "Free Spirit"],
+      "classes": [
+        "Fighter",
+        "Free Spirit"
+      ],
       "stars": 4,
       "starsLabel": "4",
       "cost": 9,
@@ -2677,7 +2849,10 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["tony tony chopper", "chopper"],
+        "partyConflictKeys": [
+          "tony tony chopper",
+          "chopper"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -2769,7 +2944,9 @@
         "potentialAbilities": [
           {
             "Name": "[INT] Damage Reduction",
-            "description": ["Reduces damage taken from [INT] characters by 5%"]
+            "description": [
+              "Reduces damage taken from [INT] characters by 5%"
+            ]
           },
           {
             "Name": "Pinch Healing",
@@ -2820,7 +2997,10 @@
       "type": "INT",
       "primaryClass": "Fighter",
       "secondaryClass": "Cerebral",
-      "classes": ["Fighter", "Cerebral"],
+      "classes": [
+        "Fighter",
+        "Cerebral"
+      ],
       "stars": 4,
       "starsLabel": "4",
       "cost": 9,
@@ -2865,7 +3045,10 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["tony tony chopper", "chopper"],
+        "partyConflictKeys": [
+          "tony tony chopper",
+          "chopper"
+        ],
         "characterTags": [],
         "builderAbilities": [
           {
@@ -2916,7 +3099,10 @@
       "type": "STR",
       "primaryClass": "Fighter",
       "secondaryClass": "Powerhouse",
-      "classes": ["Fighter", "Powerhouse"],
+      "classes": [
+        "Fighter",
+        "Powerhouse"
+      ],
       "stars": 4,
       "starsLabel": "4",
       "cost": 9,
@@ -2961,7 +3147,10 @@
         "superSpecialCriteriaText": null,
         "superSpecialNotes": null,
         "superSpecialCriteria": null,
-        "partyConflictKeys": ["tony tony chopper", "chopper"],
+        "partyConflictKeys": [
+          "tony tony chopper",
+          "chopper"
+        ],
         "characterTags": [],
         "builderAbilities": [],
         "sailorAbilities": [],

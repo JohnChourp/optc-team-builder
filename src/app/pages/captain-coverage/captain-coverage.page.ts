@@ -283,7 +283,9 @@ export class CaptainCoveragePage implements OnInit {
       .filter(({ coverage }) => coverage.matches)
       .filter(({ character }) => !this.hasPartyConflict(character, selectedConflictKeys))
       .map(({ character, coverage }) => {
-        const abilities = characterDetailsById.get(character.id)?.detail.builderAbilities ?? [];
+        const abilities = (characterDetailsById.get(character.id)?.detail.builderAbilities ?? []).filter(
+          (ability) => ability.source !== 'captainAbility',
+        );
         const abilityMatchCount = this.countMatchedAbilityRequirements(
           abilities,
           selectedAbilityRequirements,
@@ -768,7 +770,6 @@ export class CaptainCoveragePage implements OnInit {
       character.primaryClass,
       character.secondaryClass ?? '',
       ...character.classes,
-      coverage.captainText,
       ...coverage.chips.map((chip) => chip.label),
     ]
       .join(' ')
