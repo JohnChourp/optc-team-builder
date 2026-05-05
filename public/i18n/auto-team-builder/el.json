@@ -66,6 +66,7 @@
     "characterTags": {
       "label": "Character Tags",
       "placeholder": "Επίλεξε character tags",
+      "noMatches": "Δεν βρέθηκαν tags",
       "toggle": "Απαίτησε τα selected tags στην ομάδα",
       "support": {
         "strict": "Κάθε selected character tag πρέπει να εμφανίζεται κάπου στην τελική ομάδα. Ένας χαρακτήρας μπορεί να καλύψει πολλά tags.",

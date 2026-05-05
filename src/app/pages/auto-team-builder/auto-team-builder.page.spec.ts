@@ -131,6 +131,32 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
+  it('filters character tag autocomplete suggestions and adds the selected tag', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.onCharacterTagSearchChange({
+      detail: {
+        value: 'wor',
+      },
+    } as CustomEvent<{ value: string }>);
+
+    expect(page.filteredCharacterTagSuggestions()).toEqual(['Worst Generation']);
+
+    page.selectFirstCharacterTagSuggestion();
+
+    expect(page.selectedCharacterTags()).toEqual(['Worst Generation']);
+    expect(page.characterTagSearchTerm()).toBe('');
+
+    page.onCharacterTagSearchChange({
+      detail: {
+        value: 'wor',
+      },
+    } as CustomEvent<{ value: string }>);
+
+    expect(page.filteredCharacterTagSuggestions()).toEqual([]);
+  });
+
   it('applies ability-derived requirement source tags and names from the modal', async () => {
     const { page, repository } = await createPage();
     const source = createCharacterRecord(990, 'Requirement Source');

@@ -378,6 +378,7 @@ interface AutoTeamBuilderDefaultFilterState {
 
 const AUTO_TEAM_BUILD_BUTTON_LABEL = 'Auto Team Build';
 const FIXED_MANUAL_TEAM_SLOT_COUNT = 6;
+const CHARACTER_TAG_SUGGESTION_LIMIT = 12;
 const CHARACTER_PICKER_PAGE_SIZE = 10;
 const CHARACTER_PICKER_SCROLL_LOAD_THRESHOLD_PX = 144;
 const SIMILAR_MANUAL_PICK_CANDIDATE_LIMIT = 10_000;
@@ -521,6 +522,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly selectedClasses = signal<string[]>([]);
   public readonly availableCharacterTags = signal<string[]>([]);
   public readonly selectedCharacterTags = signal<string[]>([]);
+  public readonly characterTagSearchTerm = signal('');
   public readonly selectedCharacterNames = signal<string[]>([]);
   public readonly characterNameDraft = signal('');
   public readonly leaderBoostFilters = signal<AutoBuildLeaderBoostFilter[]>([
@@ -1674,9 +1676,32 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly selectedTypesLabel = computed(() =>
     this.formatSelectedTypes(this.selectedTypes()),
   );
-  public readonly selectedCharacterTagsLabel = computed(() =>
-    this.formatSelectedValues(this.selectedCharacterTags()),
-  );
+  public readonly filteredCharacterTagSuggestions = computed(() => {
+    const searchTerm = this.normalizeCharacterTagSearchTerm(this.characterTagSearchTerm());
+
+    if (!searchTerm) {
+      return [];
+    }
+
+    const selectedTagKeys = new Set(
+      this.selectedCharacterTags().map((tag) => tag.toLowerCase()),
+    );
+
+    return this.availableCharacterTags()
+      .filter((tag) => !selectedTagKeys.has(tag.toLowerCase()))
+      .filter((tag) => tag.toLowerCase().includes(searchTerm))
+      .sort((left, right) => {
+        const leftStartsWith = left.toLowerCase().startsWith(searchTerm);
+        const rightStartsWith = right.toLowerCase().startsWith(searchTerm);
+
+        if (leftStartsWith !== rightStartsWith) {
+          return leftStartsWith ? -1 : 1;
+        }
+
+        return left.localeCompare(right);
+      })
+      .slice(0, CHARACTER_TAG_SUGGESTION_LIMIT);
+  });
   public readonly selectedCharacterNamesLabel = computed(() =>
     this.formatSelectedValues(this.selectedCharacterNames()),
   );
@@ -2470,11 +2495,29 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     await this.refreshCharacterPickPanels();
   }
 
-  public onCharacterTagChange(
-    event: CustomEvent<{ value?: string[] | string | null }>,
-  ): void {
-    this.selectedCharacterTags.set(this.resolveSelectedCharacterTags(event.detail.value));
+  public onCharacterTagSearchChange(event: CustomEvent<{ value?: string | null }>): void {
+    this.characterTagSearchTerm.set((event.detail.value ?? '').toString());
+  }
+
+  public addSelectedCharacterTag(characterTag: string): void {
+    const currentTags = this.selectedCharacterTags();
+    const nextTags = this.resolveSelectedCharacterTags([...currentTags, characterTag]);
+
+    if (nextTags.length === currentTags.length) {
+      return;
+    }
+
+    this.selectedCharacterTags.set(nextTags);
+    this.characterTagSearchTerm.set('');
     this.resetBuildState();
+  }
+
+  public selectFirstCharacterTagSuggestion(): void {
+    const [firstSuggestion] = this.filteredCharacterTagSuggestions();
+
+    if (firstSuggestion) {
+      this.addSelectedCharacterTag(firstSuggestion);
+    }
   }
 
   public onCharacterNameDraftChange(event: CustomEvent<{ value?: string | null }>): void {
@@ -4185,6 +4228,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.selectedTypes.set(defaultFilters.selectedTypes);
     this.selectedClasses.set(defaultFilters.selectedClasses);
     this.selectedCharacterTags.set(defaultFilters.selectedCharacterTags);
+    this.characterTagSearchTerm.set('');
     this.selectedCharacterNames.set(defaultFilters.selectedCharacterNames);
     this.characterNameDraft.set('');
     this.leaderBoostFilters.set(defaultFilters.leaderBoostFilters);
@@ -5624,6 +5668,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     return [...uniqueTags.values()];
+  }
+
+  private normalizeCharacterTagSearchTerm(value: string): string {
+    return value.trim().replace(/\s+/g, ' ').toLowerCase();
   }
 
   private normalizeCharacterNameFilter(value: string): string {

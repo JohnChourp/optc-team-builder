@@ -71,7 +71,7 @@ import {
   downloadOptcbxFavoritesExport,
 } from './characters-favorites.utils';
 
-const PAGE_SIZE = 48;
+const PAGE_SIZE = 100;
 type CharacterDisplayMode = 'list' | 'compact';
 type CompactAbilityFilterCategory = AbilityFilterRailCategory;
 

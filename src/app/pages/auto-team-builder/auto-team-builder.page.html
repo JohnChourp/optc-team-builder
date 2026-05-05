@@ -150,22 +150,37 @@
 
           <div class="character-filter-card">
             <span>{{ t('filters.characterTags.label') }}</span>
-            <ion-select
-              interface="popover"
-              [multiple]="true"
-              fill="outline"
-              [placeholder]="t('filters.characterTags.placeholder')"
-              [value]="selectedCharacterTags()"
-              [selectedText]="selectedCharacterTagsLabel()"
-              [disabled]="building() || !availableCharacterTags().length"
-              (ionChange)="onCharacterTagChange($event)"
-            >
-              @for (item of availableCharacterTags(); track item) {
-                <ion-select-option [value]="item">
-                  {{ item }}
-                </ion-select-option>
+            <div class="character-tag-combobox">
+              <ion-searchbar
+                class="character-tag-search"
+                autocomplete="off"
+                [debounce]="0"
+                [placeholder]="t('filters.characterTags.placeholder')"
+                [value]="characterTagSearchTerm()"
+                [disabled]="building() || !availableCharacterTags().length"
+                (ionInput)="onCharacterTagSearchChange($event)"
+                (keydown.enter)="selectFirstCharacterTagSuggestion()"
+              ></ion-searchbar>
+              @if (characterTagSearchTerm().trim()) {
+                <div class="character-tag-suggestions" role="listbox">
+                  @for (item of filteredCharacterTagSuggestions(); track item) {
+                    <button
+                      type="button"
+                      class="character-tag-suggestion"
+                      role="option"
+                      [disabled]="building()"
+                      (click)="addSelectedCharacterTag(item)"
+                    >
+                      {{ item }}
+                    </button>
+                  } @empty {
+                    <small class="character-tag-suggestions__empty">
+                      {{ t('filters.characterTags.noMatches') }}
+                    </small>
+                  }
+                </div>
               }
-            </ion-select>
+            </div>
             @if (selectedCharacterTags().length) {
               <div class="selected-values-row">
                 @for (item of selectedCharacterTags(); track item) {

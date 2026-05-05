@@ -223,7 +223,7 @@ describe('CharactersPage favorites tools', () => {
       allowedCharacterIds: undefined,
       sortMode: 'catalog',
       idOrder: 'newest',
-      limit: 48,
+      limit: 100,
       offset: 0,
     });
   });
@@ -248,7 +248,7 @@ describe('CharactersPage favorites tools', () => {
       allowedCharacterIds: [101, 202],
       sortMode: 'catalog',
       idOrder: 'newest',
-      limit: 48,
+      limit: 100,
       offset: 0,
     });
   });
@@ -273,7 +273,7 @@ describe('CharactersPage favorites tools', () => {
       excludedCharacterIds: [101, 202],
       sortMode: 'catalog',
       idOrder: 'newest',
-      limit: 48,
+      limit: 100,
       offset: 0,
     });
   });
@@ -321,7 +321,7 @@ describe('CharactersPage favorites tools', () => {
       excludedCharacterIds: [101],
       sortMode: 'catalog',
       idOrder: 'newest',
-      limit: 48,
+      limit: 100,
       offset: 0,
     });
   });
@@ -352,7 +352,7 @@ describe('CharactersPage favorites tools', () => {
       excludedCharacterIds: [101],
       sortMode: 'catalog',
       idOrder: 'newest',
-      limit: 48,
+      limit: 100,
       offset: 0,
     });
   });
@@ -374,7 +374,7 @@ describe('CharactersPage favorites tools', () => {
       allowedCharacterIds: undefined,
       sortMode: 'nameAsc',
       idOrder: 'newest',
-      limit: 48,
+      limit: 100,
       offset: 0,
     });
   });
@@ -396,7 +396,7 @@ describe('CharactersPage favorites tools', () => {
       allowedCharacterIds: undefined,
       sortMode: 'catalog',
       idOrder: 'oldest',
-      limit: 48,
+      limit: 100,
       offset: 0,
     });
   });
@@ -495,7 +495,7 @@ describe('CharactersPage favorites tools', () => {
       allowedCharacterIds: undefined,
       sortMode: 'catalog',
       idOrder: 'newest',
-      limit: 48,
+      limit: 100,
       offset: 0,
     });
   });
