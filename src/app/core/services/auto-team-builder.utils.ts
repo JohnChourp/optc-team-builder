@@ -112,6 +112,8 @@ const CHARACTER_NAME_KEY_ALIASES: Record<string, string[]> = {
   'miss valentine': ['mikita'],
   franosuke: ['franky'],
   luffytaro: ['luffy', 'monkey d luffy'],
+  olin: ['big mom', 'charlotte linlin'],
+  'olin the oiran': ['big mom', 'charlotte linlin'],
   onami: ['nami'],
   orobi: ['robin'],
   'soba mask': ['sanji'],
@@ -665,7 +667,7 @@ function canCandidateJoinStrictSuperCriteriaSearch(
   leaderSlots: AutoBuildCandidate[],
   enabled: boolean,
 ): boolean {
-  if (!enabled || !hasCandidateSuperEffects(candidate)) {
+  if (!enabled || !hasCandidateSuperSpecialCriteria(candidate)) {
     return true;
   }
 
@@ -686,10 +688,36 @@ function areActiveSuperCriteriaSatisfied(
   const leaderIds = new Set(leaderSlots.map((leader) => leader.character.id));
 
   return resolveUniqueCandidates(teamCandidates)
-    .filter((candidate) => hasCandidateSuperEffects(candidate))
+    .filter((candidate) => hasCandidateSuperSpecialCriteria(candidate))
     .every((candidate) =>
       superCriteriaSatisfied(candidate, teamCandidates, leaderIds.has(candidate.character.id)),
     );
+}
+
+export function resolveUnsatisfiedSuperSpecialCriteriaCharacterNames(
+  slots: AutoBuildSlot[],
+  input: AutoBuildInput,
+): string[] {
+  const candidates = slots.map((slot, index) =>
+    buildAutoBuildCandidate(slot.character, input, index, slots.length),
+  );
+  const leaderIds = new Set(
+    slots
+      .filter((slot) => slot.role === 'captain' || slot.role === 'friendCaptain')
+      .map((slot) => slot.character.id),
+  );
+
+  return [
+    ...new Set(
+      resolveUniqueCandidates(candidates)
+        .filter((candidate) => hasCandidateSuperSpecialCriteria(candidate))
+        .filter(
+          (candidate) =>
+            !superCriteriaSatisfied(candidate, candidates, leaderIds.has(candidate.character.id)),
+        )
+        .map((candidate) => candidate.character.name),
+    ),
+  ];
 }
 
 function hasAnyPartyConflictKey(
@@ -3512,11 +3540,10 @@ function matchesActiveLeaderCriteria(
   }));
 
   if (simpleCoverageResults.some((result) => result.coverage.targetableClauseCount > 0)) {
-    return simpleCoverageResults.every(
-      (result) =>
-        result.coverage.targetableClauseCount > 0
-          ? result.coverage.matches
-          : !result.hasSelfOnlyCoverage,
+    return simpleCoverageResults.every((result) =>
+      result.coverage.targetableClauseCount > 0
+        ? result.coverage.matches
+        : !result.hasSelfOnlyCoverage,
     );
   }
 
@@ -3745,6 +3772,10 @@ function resolveCandidateSuperEffectTexts(candidate: AutoBuildCandidate): string
 
 function hasCandidateSuperEffects(candidate: AutoBuildCandidate): boolean {
   return resolveCandidateSuperEffectTexts(candidate).length > 0;
+}
+
+function hasCandidateSuperSpecialCriteria(candidate: AutoBuildCandidate): boolean {
+  return candidate.character.detail.superSpecialCriteria !== null;
 }
 
 function extractCostUpperBound(text: string): number | null {

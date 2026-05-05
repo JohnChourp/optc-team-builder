@@ -30,6 +30,17 @@ describe('party conflict keys', () => {
     ]);
   });
 
+  it('derives Big Mom aliases for Olin variants', () => {
+    expect(resolveNameDerivedPartyConflictKeys('Olin - Emperor with Amnesia')).toEqual(
+      expect.arrayContaining(['olin', 'big mom', 'charlotte linlin']),
+    );
+    expect(
+      resolveNameDerivedPartyConflictKeys('Olin the Oiran - Mighty Combination Attack'),
+    ).toEqual(
+      expect.arrayContaining(['olin the oiran', 'oiran', 'big mom', 'charlotte linlin']),
+    );
+  });
+
   it('applies manual override keys for General Franky composite conflicts', () => {
     const overrideMap = normalizePartyConflictOverrideMap({
       3574: ['franky', 'tony tony chopper'],

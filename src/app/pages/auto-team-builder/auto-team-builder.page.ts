@@ -353,6 +353,7 @@ interface AutoTeamBuilderDefaultFilterState {
   requireAllSlotsInLeaderSuperEffectScope: boolean;
   requireFullCaptainAbilityCoverage: boolean;
   requireBothLeadersFullCaptainAbilityCoverage: boolean;
+  requireSuperSpecialCriteriaCoverage: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
   allowAnyFriendCaptainAutoFill: boolean;
@@ -411,6 +412,7 @@ function buildDefaultAutoTeamBuilderFilterState(
     requireAllSlotsInLeaderSuperEffectScope: false,
     requireFullCaptainAbilityCoverage: true,
     requireBothLeadersFullCaptainAbilityCoverage: false,
+    requireSuperSpecialCriteriaCoverage: false,
     requireUniqueBaseCharacterNames: true,
     favoritesOnly: true,
     allowAnyFriendCaptainAutoFill: false,
@@ -602,6 +604,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly requireAllSlotsInLeaderSuperEffectScope = signal(false);
   public readonly requireFullCaptainAbilityCoverage = signal(true);
   public readonly requireBothLeadersFullCaptainAbilityCoverage = signal(false);
+  public readonly requireSuperSpecialCriteriaCoverage = signal(false);
   public readonly requireUniqueBaseCharacterNames = signal(true);
   public readonly selectedCharacterBoxId = signal<string | null>(null);
   public readonly selectedExcludeCharacterBoxId = signal<string | null>(null);
@@ -1135,7 +1138,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.requireAllSelectedClassesPerCharacter() ||
       this.requireAllSlotsInLeaderSuperEffectScope() ||
       this.requireFullCaptainAbilityCoverage() ||
-      this.requireBothLeadersFullCaptainAbilityCoverage(),
+      this.requireBothLeadersFullCaptainAbilityCoverage() ||
+      this.requireSuperSpecialCriteriaCoverage(),
   );
   public readonly allClassesSelected = computed(
     () =>
@@ -1268,6 +1272,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.requireBothLeadersFullCaptainAbilityCoverage()
       ? this.t('filters.bothLeadersCaptainCoverage.support.strict')
       : this.t('filters.bothLeadersCaptainCoverage.support.flexible'),
+  );
+  public readonly superSpecialCriteriaCoverageSupportLabel = computed(() =>
+    this.requireSuperSpecialCriteriaCoverage()
+      ? this.t('filters.superSpecialCriteriaCoverage.support.strict')
+      : this.t('filters.superSpecialCriteriaCoverage.support.flexible'),
   );
   public readonly favoritesOnlySupportLabel = computed(() =>
     this.hasFavoriteCharacters()
@@ -1532,6 +1541,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly bothLeadersCaptainCoverageToggleLabel = computed(() =>
     this.t('filters.bothLeadersCaptainCoverage.toggle'),
   );
+  public readonly superSpecialCriteriaCoverageToggleLabel = computed(() =>
+    this.t('filters.superSpecialCriteriaCoverage.toggle'),
+  );
   public readonly favoritesOnlyToggleLabel = computed(() => this.t('filters.favoritesOnly.toggle'));
   public readonly allowAnyFriendCaptainAutoFillToggleLabel = computed(() =>
     this.t('filters.allowAnyFriendCaptainAutoFill.toggle'),
@@ -1602,6 +1614,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     if (this.requireBothLeadersFullCaptainAbilityCoverage()) {
       strictModes.push(this.t('hero.strictModes.bothLeadersCaptainCoverage'));
+    }
+
+    if (this.requireSuperSpecialCriteriaCoverage()) {
+      strictModes.push(this.t('hero.strictModes.superSpecialCriteriaCoverage'));
     }
 
     return strictModes.length > 0
@@ -1802,6 +1818,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly resultIgnoredLeaderSuperSpecialCriteria = computed(
     () => this.result()?.relaxation.ignoredLeaderSuperSpecialCriteria ?? false,
   );
+  public readonly ignoredSuperSpecialCriteriaCharacterNames = computed(
+    () => this.result()?.relaxation.ignoredSuperSpecialCriteriaCharacterNames ?? [],
+  );
+  public readonly ignoredSuperSpecialCriteriaLabel = computed(() => {
+    const names = this.ignoredSuperSpecialCriteriaCharacterNames();
+
+    return names.length
+      ? this.t('fallback.ignoredSuperSpecialCriteriaWithNames', {
+          names: names.join(', '),
+        })
+      : this.t('fallback.ignoredSuperSpecialCriteria');
+  });
   public readonly selectedClassSummaryLabel = computed(() => {
     const current = this.result();
 
@@ -2041,8 +2069,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       coverageMode:
         this.requireFullCaptainAbilityCoverage() ||
         this.requireBothLeadersFullCaptainAbilityCoverage()
-        ? 'fullAbilityCoverage'
-        : 'simpleBoostScope',
+          ? 'fullAbilityCoverage'
+          : 'simpleBoostScope',
       leaders: [
         {
           role: 'captain',
@@ -2072,8 +2100,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         coverageMode:
           this.requireFullCaptainAbilityCoverage() ||
           this.requireBothLeadersFullCaptainAbilityCoverage()
-          ? 'fullAbilityCoverage'
-          : 'simpleBoostScope',
+            ? 'fullAbilityCoverage'
+            : 'simpleBoostScope',
         leaders: [
           {
             role: 'captain',
@@ -2800,6 +2828,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     event: CustomEvent<{ checked: boolean }>,
   ): void {
     this.requireBothLeadersFullCaptainAbilityCoverage.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
+  public onRequireSuperSpecialCriteriaCoverageToggle(
+    event: CustomEvent<{ checked: boolean }>,
+  ): void {
+    this.requireSuperSpecialCriteriaCoverage.set(event.detail.checked);
     this.resetBuildState();
   }
 
@@ -3564,6 +3599,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           requireFullCaptainAbilityCoverage: this.requireFullCaptainAbilityCoverage(),
           requireBothLeadersFullCaptainAbilityCoverage:
             this.requireBothLeadersFullCaptainAbilityCoverage(),
+          strictSuperSpecialCriteriaCoverage: this.requireSuperSpecialCriteriaCoverage(),
           requireUniqueBaseCharacterNames: true,
           requiredAbilities: this.pageRequiredAbilities(),
           requiredCharacterGroups: [],
@@ -3680,6 +3716,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       requireFullCaptainAbilityCoverage: this.requireFullCaptainAbilityCoverage(),
       requireBothLeadersFullCaptainAbilityCoverage:
         this.requireBothLeadersFullCaptainAbilityCoverage(),
+      requireSuperSpecialCriteriaCoverage: this.requireSuperSpecialCriteriaCoverage(),
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: this.favoritesOnly(),
       allowAnyFriendCaptainAutoFill: this.allowAnyFriendCaptainAutoFill(),
@@ -3912,6 +3949,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.requireBothLeadersFullCaptainAbilityCoverage.set(
       defaultFilters.requireBothLeadersFullCaptainAbilityCoverage,
     );
+    this.requireSuperSpecialCriteriaCoverage.set(
+      defaultFilters.requireSuperSpecialCriteriaCoverage,
+    );
     this.requireUniqueBaseCharacterNames.set(true);
     this.selectedCharacterBoxId.set(null);
     this.selectedExcludeCharacterBoxId.set(null);
@@ -4048,10 +4088,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.requireAllSelectedTypesInTeam.set(state.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(state.requireAllSelectedClassesPerCharacter);
     this.requireAllSlotsInLeaderSuperEffectScope.set(state.requireAllSlotsInLeaderSuperEffectScope);
-    this.requireFullCaptainAbilityCoverage.set(true);
+    this.requireFullCaptainAbilityCoverage.set(state.requireFullCaptainAbilityCoverage);
     this.requireBothLeadersFullCaptainAbilityCoverage.set(
       state.requireBothLeadersFullCaptainAbilityCoverage,
     );
+    this.requireSuperSpecialCriteriaCoverage.set(state.requireSuperSpecialCriteriaCoverage);
     this.requireUniqueBaseCharacterNames.set(true);
     this.selectedCharacterBoxId.set(null);
     this.selectedExcludeCharacterBoxId.set(null);

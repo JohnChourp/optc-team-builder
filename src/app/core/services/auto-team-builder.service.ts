@@ -63,10 +63,7 @@ import {
   buildAutoTeamResult,
   resolveAutoBuildTeamPowerPreferenceScore,
 } from './auto-team-builder.utils';
-import {
-  hasSelfOnlyCaptainCoverageText,
-  resolveCaptainCoverage,
-} from './captain-coverage.utils';
+import { hasSelfOnlyCaptainCoverageText, resolveCaptainCoverage } from './captain-coverage.utils';
 import { matchesAbilityRequirement } from './auto-team-builder-ability-match.utils';
 import {
   type AutoTeamBuilderWorkerRequest,
@@ -162,8 +159,8 @@ export class AutoTeamBuilderService {
     const coverageMode =
       options.requireFullCaptainAbilityCoverage ||
       options.requireBothLeadersFullCaptainAbilityCoverage
-      ? 'fullAbilityCoverage'
-      : 'simpleBoostScope';
+        ? 'fullAbilityCoverage'
+        : 'simpleBoostScope';
 
     return records.filter((record) => {
       if (retainedLeaderIds.has(record.id)) {
@@ -199,6 +196,8 @@ export class AutoTeamBuilderService {
       constraints.requireFullCaptainAbilityCoverage ?? false;
     const requireBothLeadersFullCaptainAbilityCoverage =
       constraints.requireBothLeadersFullCaptainAbilityCoverage ?? false;
+    const strictSuperSpecialCriteriaCoverage =
+      constraints.strictSuperSpecialCriteriaCoverage ?? false;
     const normalizedTypes = normalizeSelectedTypes(selectedTypes);
     const normalizedClasses: string[] = [];
 
@@ -284,6 +283,7 @@ export class AutoTeamBuilderService {
         ? (constraints.minimumLeaderSuperEffectMatchingSlots ?? AUTO_BUILD_TOTAL_SLOT_COUNT)
         : null,
       requireLeaderSuperSpecialCriteria: constraints.requireLeaderSuperSpecialCriteria ?? true,
+      strictSuperSpecialCriteriaCoverage,
       requireUniqueBaseCharacterNames: constraints.requireUniqueBaseCharacterNames ?? false,
       requiredAbilities,
       requiredCharacterGroups: hasBattleRequirementInput ? [] : requiredCharacterGroups,
@@ -1870,6 +1870,7 @@ export class AutoTeamBuilderService {
         ? (rosterInput.minimumLeaderSuperEffectMatchingSlots ?? AUTO_BUILD_TOTAL_SLOT_COUNT)
         : null,
       requireLeaderSuperSpecialCriteria: rosterInput.requireLeaderSuperSpecialCriteria ?? true,
+      strictSuperSpecialCriteriaCoverage: rosterInput.strictSuperSpecialCriteriaCoverage ?? false,
       requireUniqueBaseCharacterNames: rosterInput.requireUniqueBaseCharacterNames ?? false,
       requiredAbilities: rosterInput.requiredAbilities.map((requirement) => ({
         ...requirement,

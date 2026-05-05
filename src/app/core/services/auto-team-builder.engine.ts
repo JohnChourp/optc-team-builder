@@ -12,6 +12,7 @@ import {
   buildAutoTeamResultFromPreparedContext,
   prepareAutoTeamBuildContext,
   resolveCharacterTypeTokens,
+  resolveUnsatisfiedSuperSpecialCriteriaCharacterNames,
   type PreparedAutoTeamBuildContext,
 } from './auto-team-builder.utils';
 
@@ -483,6 +484,12 @@ export function runAutoTeamBuildAttempt(
   const allowedLeadersWithSuperEffects = Boolean(
     !requestedInput.requireAllSlotsInLeaderSuperEffectScope && !requireLeadersWithoutSuperEffects,
   );
+  const ignoredLeaderSuperSpecialCriteria = Boolean(
+    requestedInput.requireLeaderSuperSpecialCriteria && !input.requireLeaderSuperSpecialCriteria,
+  );
+  const ignoredSuperSpecialCriteriaCharacterNames = ignoredLeaderSuperSpecialCriteria
+    ? resolveUnsatisfiedSuperSpecialCriteriaCharacterNames(attempt.slots, requestedInput)
+    : [];
 
   return {
     ...attempt,
@@ -510,10 +517,10 @@ export function runAutoTeamBuildAttempt(
         requestedInput.requireAllSlotsInLeaderSuperEffectScope &&
         !input.requireAllSlotsInLeaderSuperEffectScope,
       ),
-      ignoredLeaderSuperSpecialCriteria: Boolean(
-        requestedInput.requireLeaderSuperSpecialCriteria &&
-        !input.requireLeaderSuperSpecialCriteria,
-      ),
+      ignoredLeaderSuperSpecialCriteria,
+      ...(ignoredSuperSpecialCriteriaCharacterNames.length
+        ? { ignoredSuperSpecialCriteriaCharacterNames }
+        : {}),
     },
     shipSelection: null,
   };
@@ -522,7 +529,6 @@ export function runAutoTeamBuildAttempt(
 export class AutoTeamBuildFallbackPlanner {
   private readonly zeroDropAttempts: AutoTeamBuildPlannedAttempt[];
   private readonly subsetCandidates: AutoTeamBuildSubsetCandidate[];
-  private readonly relaxedAttempts: AutoTeamBuildPlannedAttempt[];
   private readonly projectedScheduledFallbackAttemptCount: number;
   private readonly scheduledAttempts: AutoTeamBuildScheduledAttempt[] = [];
   private readonly scheduledAttemptKeys = new Set<string>();
@@ -543,7 +549,9 @@ export class AutoTeamBuildFallbackPlanner {
     const exactAttemptRequiresNoSuperLeaders =
       resolveExactAttemptRequiresNoSuperLeaders(requestedInput);
     const canRelaxLeaderSuperSpecialCriteria =
-      requestedInput.requireLeaderSuperSpecialCriteria && exactLeaderSuperEffectSlots === null;
+      requestedInput.requireLeaderSuperSpecialCriteria &&
+      !requestedInput.strictSuperSpecialCriteriaCoverage &&
+      exactLeaderSuperEffectSlots === null;
 
     this.zeroDropAttempts = buildZeroDropFallbackAttempts(
       requestedInput,
@@ -561,36 +569,21 @@ export class AutoTeamBuildFallbackPlanner {
     this.subsetCandidates = this.hasStrictConstraints
       ? []
       : buildSubsetCandidates(requestedInput, this.baseSubsetInput, records);
-    this.relaxedAttempts =
-      requestedInput.requireFullCaptainAbilityCoverage &&
-      !requestedInput.requireBothLeadersFullCaptainAbilityCoverage
-        ? buildSimpleCaptainCoverageFallbackAttempts(
-            requestedInput,
-            exactAttemptRequiresNoSuperLeaders,
-            this.zeroDropAttempts,
-            this.subsetCandidates,
-          )
-        : [];
     this.maxScheduledFallbackAttempts = resolveMaxScheduledFallbackAttemptCount(
       requestedInput,
-      this.zeroDropAttempts.length + this.relaxedAttempts.length,
+      this.zeroDropAttempts.length,
       options.maxScheduledFallbackAttempts,
     );
     this.projectedScheduledFallbackAttemptCount = resolveProjectedScheduledFallbackAttemptCount(
       this.zeroDropAttempts,
       this.subsetCandidates,
-      this.relaxedAttempts,
       this.maxScheduledFallbackAttempts,
     );
     this.attemptCountFinal = !this.hasPotentialFallbackAttempts();
   }
 
   public hasPotentialFallbackAttempts(): boolean {
-    return (
-      this.zeroDropAttempts.length > 0 ||
-      this.subsetCandidates.length > 0 ||
-      this.relaxedAttempts.length > 0
-    );
+    return this.zeroDropAttempts.length > 0 || this.subsetCandidates.length > 0;
   }
 
   public getTotalAttempts(): number {
@@ -635,11 +628,6 @@ export class AutoTeamBuildFallbackPlanner {
           candidate.category,
           candidate.droppedFilterIds,
         );
-      }
-    });
-    this.relaxedAttempts.forEach((attempt) => {
-      if (this.scheduledAttempts.length < this.maxScheduledFallbackAttempts) {
-        this.enqueueScheduledAttempt(attempt, attemptCategoryFromRelaxedAttempt(attempt), []);
       }
     });
     this.refreshAttemptCountFinal();
@@ -709,7 +697,6 @@ export function createAutoTeamBuildFallbackPlanner(
 function resolveProjectedScheduledFallbackAttemptCount(
   zeroDropAttempts: AutoTeamBuildPlannedAttempt[],
   subsetCandidates: AutoTeamBuildSubsetCandidate[],
-  relaxedAttempts: AutoTeamBuildPlannedAttempt[],
   maxScheduledFallbackAttempts: number,
 ): number {
   if (maxScheduledFallbackAttempts <= 0) {
@@ -739,65 +726,7 @@ function resolveProjectedScheduledFallbackAttemptCount(
   subsetCandidates.forEach((candidate) => {
     tryScheduleAttempt(candidate.attempt);
   });
-  relaxedAttempts.forEach((attempt) => {
-    tryScheduleAttempt(attempt);
-  });
-
   return scheduledAttemptCount;
-}
-
-function buildSimpleCaptainCoverageFallbackAttempts(
-  requestedInput: AutoBuildInput,
-  exactAttemptRequiresNoSuperLeaders: boolean,
-  zeroDropAttempts: AutoTeamBuildPlannedAttempt[],
-  subsetCandidates: AutoTeamBuildSubsetCandidate[],
-): AutoTeamBuildPlannedAttempt[] {
-  const exactSimpleAttempt: AutoTeamBuildPlannedAttempt = {
-    input: downgradeCaptainCoverageInputToSimple(requestedInput),
-    requireLeadersWithoutSuperEffects: exactAttemptRequiresNoSuperLeaders,
-    allowedLeadersWithSuperEffects: false,
-    droppedTypes: [],
-    droppedClasses: [],
-    ignoredLeaderSuperEffectScope: false,
-    ignoredLeaderSuperSpecialCriteria: false,
-  };
-  const simpleCopies = [
-    exactSimpleAttempt,
-    ...zeroDropAttempts.map((attempt) => downgradeCaptainCoverageAttemptToSimple(attempt)),
-    ...subsetCandidates.map((candidate) =>
-      downgradeCaptainCoverageAttemptToSimple(candidate.attempt),
-    ),
-  ];
-
-  return dedupeFallbackAttempts(simpleCopies);
-}
-
-function downgradeCaptainCoverageAttemptToSimple(
-  attempt: AutoTeamBuildPlannedAttempt,
-): AutoTeamBuildPlannedAttempt {
-  return {
-    ...attempt,
-    input: downgradeCaptainCoverageInputToSimple(attempt.input),
-  };
-}
-
-function downgradeCaptainCoverageInputToSimple(input: AutoBuildInput): AutoBuildInput {
-  const { allowPartialCaptainAbilityCoverage, ...strictInput } = input;
-
-  void allowPartialCaptainAbilityCoverage;
-
-  return {
-    ...strictInput,
-    requireFullCaptainAbilityCoverage: false,
-  };
-}
-
-function attemptCategoryFromRelaxedAttempt(
-  attempt: AutoTeamBuildPlannedAttempt,
-): AutoTeamBuildFallbackAttemptCategory {
-  const droppedFilterCount = attempt.droppedTypes.length + attempt.droppedClasses.length;
-
-  return droppedFilterCount === 0 ? 'meta' : resolveSubsetAttemptCategory(droppedFilterCount);
 }
 
 function buildZeroDropFallbackAttempts(
@@ -1128,6 +1057,9 @@ function buildFallbackAttemptKey(attempt: AutoTeamBuildPlannedAttempt): string {
     attempt.input.types.join('|'),
     attempt.input.selectedClasses.join('|'),
     attempt.input.requireLeaderSuperSpecialCriteria ? '1' : '0',
+    attempt.input.strictSuperSpecialCriteriaCoverage
+      ? 'strict-super-special'
+      : 'best-effort-super-special',
     attempt.input.requireAllSlotsInLeaderSuperEffectScope ? '1' : '0',
     attempt.input.requireFullCaptainAbilityCoverage ? 'full-captain' : 'simple-captain',
     attempt.input.requireBothLeadersFullCaptainAbilityCoverage
@@ -1162,6 +1094,7 @@ function inputsMatch(left: AutoBuildInput, right: AutoBuildInput): boolean {
       Boolean(right.allowPartialCaptainAbilityCoverage) &&
     left.minimumLeaderSuperEffectMatchingSlots === right.minimumLeaderSuperEffectMatchingSlots &&
     left.requireLeaderSuperSpecialCriteria === right.requireLeaderSuperSpecialCriteria &&
+    left.strictSuperSpecialCriteriaCoverage === right.strictSuperSpecialCriteriaCoverage &&
     left.leaderCostRange.min === right.leaderCostRange.min &&
     left.leaderCostRange.max === right.leaderCostRange.max &&
     left.subCostRange.min === right.subCostRange.min &&

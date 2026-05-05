@@ -20,6 +20,8 @@ const CHARACTER_NAME_KEY_ALIASES = {
   'miss goldenweek': ['marianne'],
   'miss merry christmas': ['drophy'],
   'miss valentine': ['mikita'],
+  olin: ['big mom', 'charlotte linlin'],
+  'olin the oiran': ['big mom', 'charlotte linlin'],
   'tenguyama hitetsu': ['kozuki sukiyaki'],
   whitebeard: ['edward newgate'],
   violet: ['viola'],

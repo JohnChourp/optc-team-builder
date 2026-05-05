@@ -13,7 +13,8 @@
       "perCharacterClasses": "match classes σε κάθε slot",
       "leaderSuperEffectScope": "match στο leader super effect scope",
       "captainAbilityCoverage": "πλήρες captain ability coverage",
-      "bothLeadersCaptainCoverage": "captain ability coverage και από τους δύο leaders"
+      "bothLeadersCaptainCoverage": "captain ability coverage και από τους δύο leaders",
+      "superSpecialCriteriaCoverage": "κάλυψη Super Special criteria"
     },
     "strictMode": {
       "flexible": "με flexible fallback",
@@ -85,6 +86,13 @@
       "support": {
         "flexible": "Επίτρεψε ομάδες όπου περνάει πλήρως μόνο ένας leader και δείξε warning στο αποτέλεσμα.",
         "strict": "Captain και Friend Captain πρέπει να περνούν πλήρως κάθε slot και κάθε team-count Captain Ability condition."
+      }
+    },
+    "superSpecialCriteriaCoverage": {
+      "toggle": "Απαίτησε κάλυψη Super Special Criteria",
+      "support": {
+        "flexible": "Ο builder προσπαθεί πρώτα να ενεργοποιεί όλα τα Super Special Criteria της ομάδας και δείχνει warning αν χρειαστεί να τα χαλαρώσει.",
+        "strict": "Κάθε final unit με Super Special Criteria πρέπει να μπορεί να ενεργοποιηθεί στο battle."
       }
     },
     "leaderBoost": {
@@ -544,7 +552,7 @@
     "fallbackAttempt": "Fallback attempt {{current}} / {{total}}",
     "allowingLeadersWithSuperEffects": "Επιτρέπονται leaders με super effects",
     "ignoringClasses": "Ignoring classes: {{classes}}",
-    "ignoringLeaderSuperSpecialCriteria": "Αγνόησε τα leader Super Special criteria",
+    "ignoringLeaderSuperSpecialCriteria": "Αγνόησε τα Super Special criteria",
     "ignoringTypes": "Ignoring types: {{types}}",
     "loadingCandidates": "Φόρτωση candidates από το local dataset...",
     "overallProgressPercent": "Συνολικό progress: {{percent}}%",
@@ -563,7 +571,9 @@
     "allowedLeadersWithSuperEffects": "Επιτράπηκαν leaders με super effects",
     "droppedClasses": "Dropped classes",
     "droppedTypes": "Dropped types",
-    "ignoredLeaderSuperSpecialCriteria": "Αγνόησε τα leader Super Special criteria",
+    "ignoredLeaderSuperSpecialCriteria": "Αγνόησε τα Super Special criteria",
+    "ignoredSuperSpecialCriteria": "Το Super Special δεν θα ενεργοποιηθεί για το final team.",
+    "ignoredSuperSpecialCriteriaWithNames": "Το Super Special δεν θα ενεργοποιηθεί για: {{names}}",
     "title": "Χρησιμοποιήθηκε relaxed fallback"
   },
   "summary": {
@@ -708,7 +718,7 @@
       "favoritesScope": " κρατώντας favorite-only auto-fill για τα ανοιχτά slots· non-favorite counters δεν εξετάζονται",
       "flexible": "Δεν βρέθηκε flexible ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
       "separator": " και ",
-      "superSpecialCriteria": "κάλυψη των leader Super Special criteria",
+      "superSpecialCriteria": "κάλυψη των Super Special criteria",
       "strict": "Δεν βρέθηκε strict ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
       "typeCoverage": "κάλυψη types στην ομάδα",
       "uniqueCharacterNames": "μοναδικές in-game character identities σε όλη την ομάδα εκτός Friend Captain"

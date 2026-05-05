@@ -1455,6 +1455,53 @@ describe('Auto team builder', () => {
     expect(result?.slots.some((slot) => slot.character.id === 5832)).toBe(false);
   });
 
+  it('relaxes Big Mom dual units when Olin is already selected and unique names are required', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 3766,
+          name: 'Olin the Oiran - Mighty Combination Attack',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.25x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 4522,
+          name: 'Blackbeard & Kuzan - Common Interests',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.25x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 4268,
+          name: 'Big Mom & Katakuri - Beginning of Hell',
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts ATK of Fighter characters by 2.5x for 1 turn.',
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireUniqueBaseCharacterNames: true,
+        manualSlots: createManualSlots({
+          captain: [3766],
+          friendCaptain: [4522],
+          sub1: [4268],
+        }),
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 4268)).toBe(false);
+    expect(result?.slots.some((slot) => slot.character.id === 5890)).toBe(true);
+  });
+
   it('allows the friend captain to reuse the same base character name when the toggle is on', () => {
     const result = buildAutoTeamResult(
       [
@@ -3420,11 +3467,10 @@ describe('Auto team builder', () => {
     expect(
       result?.slots
         .slice(2)
-        .every(
-          (slot) =>
-            slot.character.classes.some((characterClass) =>
-              ['Fighter', 'Powerhouse'].includes(characterClass),
-            ),
+        .every((slot) =>
+          slot.character.classes.some((characterClass) =>
+            ['Fighter', 'Powerhouse'].includes(characterClass),
+          ),
         ),
     ).toBe(true);
   });
@@ -3652,7 +3698,59 @@ describe('Auto team builder', () => {
     expect(result?.requestedInput.requireLeaderSuperSpecialCriteria).toBe(true);
     expect(result?.input.requireLeaderSuperSpecialCriteria).toBe(false);
     expect(result?.relaxation.ignoredLeaderSuperSpecialCriteria).toBe(true);
+    expect(result?.relaxation.ignoredSuperSpecialCriteriaCharacterNames).toEqual([
+      'Non-roster Super Special 7341',
+    ]);
     expect(result?.slots.some((slot) => slot.character.id === 7341)).toBe(true);
+  });
+
+  it('rejects unsupported super special manual subs when strict criteria coverage is enabled', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue([
+        createCharacterRecord({
+          id: 7340,
+          name: 'Fallback Captain',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of all characters by 5x and their HP by 1.3x.',
+            specialText: 'Boosts orb effects of crew by 2.25x for 1 turn.',
+          },
+        }),
+        createNonRosterSuperSpecialSubRecord(7341),
+        createCharacterRecord({
+          id: 7342,
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Boosts ATK of crew by 2x for 1 turn.' },
+        }),
+        createCharacterRecord({
+          id: 7343,
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Reduces Bind duration by 5 turns.' },
+        }),
+        createCharacterRecord({
+          id: 7344,
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Reduces Paralysis duration by 5 turns.' },
+        }),
+      ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      strictSuperSpecialCriteriaCoverage: true,
+      manualSlots: createManualSlots(
+        {
+          captain: [7340],
+          friendCaptain: [7340],
+          sub1: [7341],
+        },
+        {
+          sub1: 7341,
+        },
+      ),
+    });
+
+    expect(result).toBeNull();
   });
 
   it('accepts a mixed super special criteria leader when the roster branch is satisfied', () => {
@@ -4419,7 +4517,7 @@ describe('Auto team builder', () => {
     expect(progressSnapshots.some((snapshot) => snapshot.candidateCount === 6)).toBe(true);
   });
 
-  it('builds a strict simple captain coverage fallback without ignored partial coverage', async () => {
+  it('does not downgrade full captain coverage to simple coverage', async () => {
     const repository = {
       getAutoBuilderCandidates: vi
         .fn()
@@ -4435,13 +4533,7 @@ describe('Auto team builder', () => {
       }),
     });
 
-    expect(result).not.toBeNull();
-    expect(result?.input.requireFullCaptainAbilityCoverage).toBe(false);
-    expect(result?.input.allowPartialCaptainAbilityCoverage).toBeUndefined();
-    expect(result?.relaxation.downgradedCaptainAbilityCoverageToSimple).toBe(true);
-    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBeUndefined();
-    expect(result?.coverage.leaderCriteria.coverageMode).toBe('simpleBoostScope');
-    expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
+    expect(result).toBeNull();
   });
 
   it('excludes candidates outside the selected captain standard boost scope in simple mode', () => {
@@ -5754,6 +5846,7 @@ describe('Auto team builder', () => {
       allowedLeadersWithSuperEffects: true,
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: true,
+      ignoredSuperSpecialCriteriaCharacterNames: ['Monkey D. Luffy'],
     });
   });
 
@@ -7924,6 +8017,7 @@ function createInput(
       | 'requireBothLeadersFullCaptainAbilityCoverage'
       | 'minimumLeaderSuperEffectMatchingSlots'
       | 'requireLeaderSuperSpecialCriteria'
+      | 'strictSuperSpecialCriteriaCoverage'
       | 'requireUniqueBaseCharacterNames'
       | 'favoritesOnly'
       | 'allowAnyFriendCaptainAutoFill'
@@ -7952,6 +8046,7 @@ function createInput(
     requireFullCaptainAbilityCoverage: false,
     requireBothLeadersFullCaptainAbilityCoverage: false,
     requireLeaderSuperSpecialCriteria: false,
+    strictSuperSpecialCriteriaCoverage: false,
     requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
     allowAnyFriendCaptainAutoFill: false,
@@ -7993,6 +8088,7 @@ function createInput(
       ? (overrides.minimumLeaderSuperEffectMatchingSlots ?? 6)
       : null,
     requireLeaderSuperSpecialCriteria: overrides.requireLeaderSuperSpecialCriteria ?? false,
+    strictSuperSpecialCriteriaCoverage: overrides.strictSuperSpecialCriteriaCoverage ?? false,
     requireUniqueBaseCharacterNames: overrides.requireUniqueBaseCharacterNames ?? false,
     favoritesOnly: overrides.favoritesOnly ?? false,
     allowAnyFriendCaptainAutoFill: overrides.allowAnyFriendCaptainAutoFill ?? false,
@@ -9529,7 +9625,8 @@ function createStrictDualTargetCaptainPairRecords(): CharacterDetailRecord[] {
       primaryClass: 'Fighter',
       secondaryClass: 'Powerhouse',
       detail: {
-        captainAbility: 'Boosts ATK of all characters by 5x and boosts HP of all characters by 1.3x.',
+        captainAbility:
+          'Boosts ATK of all characters by 5x and boosts HP of all characters by 1.3x.',
         specialText: 'Reduces Despair duration by 5 turns.',
       },
     }),

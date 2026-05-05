@@ -93,6 +93,7 @@ export interface AutoBuildConstraints {
   requireBothLeadersFullCaptainAbilityCoverage?: boolean;
   minimumLeaderSuperEffectMatchingSlots?: number | null;
   requireLeaderSuperSpecialCriteria?: boolean;
+  strictSuperSpecialCriteriaCoverage?: boolean;
   requireUniqueBaseCharacterNames?: boolean;
   requiredAbilities?: AutoBuildAbilityRequirement[];
   requiredCharacterGroups?: AutoBuildRequiredCharacterGroup[];
@@ -157,6 +158,7 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   allowPartialCaptainAbilityCoverage?: boolean;
   minimumLeaderSuperEffectMatchingSlots: number | null;
   requireUniqueBaseCharacterNames: boolean;
+  strictSuperSpecialCriteriaCoverage: boolean;
   requiredAbilities: AutoBuildAbilityRequirement[];
   requiredCharacterGroups: AutoBuildRequiredCharacterGroup[];
   battleRequirements?: AutoBuildBattleRequirement[];
@@ -336,6 +338,7 @@ export interface AutoBuildRelaxationSummary {
   allowedLeadersWithSuperEffects: boolean;
   ignoredLeaderSuperEffectScope: boolean;
   ignoredLeaderSuperSpecialCriteria: boolean;
+  ignoredSuperSpecialCriteriaCharacterNames?: string[];
   ignoredCaptainAbilityCoverage?: boolean;
   downgradedCaptainAbilityCoverageToSimple?: boolean;
 }

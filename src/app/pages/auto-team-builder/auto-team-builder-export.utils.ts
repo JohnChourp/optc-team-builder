@@ -112,7 +112,8 @@ export interface AutoTeamSelectionExportPayload {
     | 24
     | 25
     | 26
-    | 27;
+    | 27
+    | 28;
   exportedAt: string;
   source: 'auto-team-builder';
   exportType: 'preset';
@@ -128,6 +129,7 @@ export interface AutoTeamSelectionExportPayload {
     requireAllSlotsInLeaderSuperEffectScope?: boolean;
     requireFullCaptainAbilityCoverage?: boolean;
     requireBothLeadersFullCaptainAbilityCoverage?: boolean;
+    requireSuperSpecialCriteriaCoverage?: boolean;
     requireUniqueBaseCharacterNames: boolean;
     favoritesOnly: boolean;
     allowAnyFriendCaptainAutoFill?: boolean;
@@ -169,6 +171,7 @@ export interface AutoTeamSelectionImportState {
   requireAllSlotsInLeaderSuperEffectScope: boolean;
   requireFullCaptainAbilityCoverage: boolean;
   requireBothLeadersFullCaptainAbilityCoverage: boolean;
+  requireSuperSpecialCriteriaCoverage: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
   allowAnyFriendCaptainAutoFill: boolean;
@@ -227,6 +230,7 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   requireAllSlotsInLeaderSuperEffectScope: boolean;
   requireFullCaptainAbilityCoverage?: boolean;
   requireBothLeadersFullCaptainAbilityCoverage?: boolean;
+  requireSuperSpecialCriteriaCoverage?: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
   allowAnyFriendCaptainAutoFill?: boolean;
@@ -275,9 +279,7 @@ function sanitizeImportedAbilityRequirement(
   options: { forceSingleCharacterCount?: boolean } = {},
 ): SanitizedImportedAbilityRequirement {
   const abilityKey =
-    typeof rawRequirement.abilityKey === 'string'
-      ? rawRequirement.abilityKey.trim()
-      : '';
+    typeof rawRequirement.abilityKey === 'string' ? rawRequirement.abilityKey.trim() : '';
   const abilityCatalogItem = abilityCatalogMap.get(abilityKey);
 
   if (!abilityCatalogItem) {
@@ -289,17 +291,14 @@ function sanitizeImportedAbilityRequirement(
   }
 
   const rawMinTurns = resolveNonNegativeInteger(
-    typeof rawRequirement.minTurns === 'number' ||
-      typeof rawRequirement.minTurns === 'string'
+    typeof rawRequirement.minTurns === 'number' || typeof rawRequirement.minTurns === 'string'
       ? rawRequirement.minTurns
       : null,
   );
   const minTurns = abilityCatalogItem.supportsTurns
     ? normalizeAbilityRequirementTurns(rawRequirement.minTurns ?? null)
     : null;
-  const rawRequiredCharacterCount = normalizePositiveInteger(
-    rawRequirement.requiredCharacterCount,
-  );
+  const rawRequiredCharacterCount = normalizePositiveInteger(rawRequirement.requiredCharacterCount);
   const requiredCharacterCount = options.forceSingleCharacterCount
     ? 1
     : (rawRequiredCharacterCount ?? 1);
@@ -731,7 +730,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload['schemaVersion'] !== 24 &&
       parsedPayload['schemaVersion'] !== 25 &&
       parsedPayload['schemaVersion'] !== 26 &&
-      parsedPayload['schemaVersion'] !== 27) ||
+      parsedPayload['schemaVersion'] !== 27 &&
+      parsedPayload['schemaVersion'] !== 28) ||
     parsedPayload['source'] !== 'auto-team-builder' ||
     parsedPayload['exportType'] !== 'preset'
   ) {
@@ -797,6 +797,10 @@ export function parseAutoTeamSelectionImportPayload(
     !(
       filters['requireBothLeadersFullCaptainAbilityCoverage'] === undefined ||
       typeof filters['requireBothLeadersFullCaptainAbilityCoverage'] === 'boolean'
+    ) ||
+    !(
+      filters['requireSuperSpecialCriteriaCoverage'] === undefined ||
+      typeof filters['requireSuperSpecialCriteriaCoverage'] === 'boolean'
     ) ||
     !(
       filters['requireLeadersWithoutSuperEffects'] === undefined ||
@@ -1341,6 +1345,8 @@ export function sanitizeAutoTeamSelectionImportPayload(
       requireFullCaptainAbilityCoverage: payload.filters.requireFullCaptainAbilityCoverage === true,
       requireBothLeadersFullCaptainAbilityCoverage:
         payload.filters.requireBothLeadersFullCaptainAbilityCoverage === true,
+      requireSuperSpecialCriteriaCoverage:
+        payload.filters.requireSuperSpecialCriteriaCoverage === true,
       requireUniqueBaseCharacterNames: payload.filters.requireUniqueBaseCharacterNames === true,
       favoritesOnly: payload.filters.favoritesOnly,
       allowAnyFriendCaptainAutoFill: payload.filters.allowAnyFriendCaptainAutoFill === true,
@@ -1416,6 +1422,7 @@ export function buildAutoTeamSelectionExportPayload({
   requireAllSlotsInLeaderSuperEffectScope,
   requireFullCaptainAbilityCoverage = false,
   requireBothLeadersFullCaptainAbilityCoverage = false,
+  requireSuperSpecialCriteriaCoverage = false,
   requireUniqueBaseCharacterNames,
   favoritesOnly,
   allowAnyFriendCaptainAutoFill = false,
@@ -1453,7 +1460,7 @@ export function buildAutoTeamSelectionExportPayload({
   const normalizedBattleRequirements = cloneBattleRequirements(battleRequirements);
 
   return {
-    schemaVersion: 27,
+    schemaVersion: 28,
     exportedAt,
     source: 'auto-team-builder',
     exportType: 'preset',
@@ -1479,6 +1486,7 @@ export function buildAutoTeamSelectionExportPayload({
       requireAllSlotsInLeaderSuperEffectScope,
       requireFullCaptainAbilityCoverage,
       requireBothLeadersFullCaptainAbilityCoverage,
+      requireSuperSpecialCriteriaCoverage,
       requireUniqueBaseCharacterNames,
       favoritesOnly,
       allowAnyFriendCaptainAutoFill,

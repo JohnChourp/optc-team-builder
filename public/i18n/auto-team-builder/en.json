@@ -13,7 +13,8 @@
       "perCharacterClasses": "per-slot class matching",
       "leaderSuperEffectScope": "leader super effect scope",
       "captainAbilityCoverage": "full captain ability coverage",
-      "bothLeadersCaptainCoverage": "both leaders captain coverage"
+      "bothLeadersCaptainCoverage": "both leaders captain coverage",
+      "superSpecialCriteriaCoverage": "Super Special criteria coverage"
     },
     "strictMode": {
       "flexible": "flexible fallback enabled",
@@ -85,6 +86,13 @@
       "support": {
         "flexible": "Allow teams where only one leader fully passes, and show the warning in the result.",
         "strict": "Captain and Friend Captain must both fully pass every slot and team-count Captain Ability condition."
+      }
+    },
+    "superSpecialCriteriaCoverage": {
+      "toggle": "Require Super Special Criteria coverage",
+      "support": {
+        "flexible": "The builder tries to activate every team's Super Special Criteria first and warns if it must relax them.",
+        "strict": "Every final unit with Super Special Criteria must be activatable in battle."
       }
     },
     "leaderBoost": {
@@ -544,7 +552,7 @@
     "fallbackAttempt": "Fallback attempt {{current}} / {{total}}",
     "allowingLeadersWithSuperEffects": "Allowing leaders with super effects",
     "ignoringClasses": "Ignoring classes: {{classes}}",
-    "ignoringLeaderSuperSpecialCriteria": "Ignoring leader Super Special criteria",
+    "ignoringLeaderSuperSpecialCriteria": "Ignoring Super Special criteria",
     "ignoringTypes": "Ignoring types: {{types}}",
     "loadingCandidates": "Loading candidates from the local dataset...",
     "overallProgressPercent": "Overall progress: {{percent}}%",
@@ -563,7 +571,9 @@
     "allowedLeadersWithSuperEffects": "Allowed leaders with super effects",
     "droppedClasses": "Dropped classes",
     "droppedTypes": "Dropped types",
-    "ignoredLeaderSuperSpecialCriteria": "Ignored leader Super Special criteria",
+    "ignoredLeaderSuperSpecialCriteria": "Ignored Super Special criteria",
+    "ignoredSuperSpecialCriteria": "Super Special will not activate for the final team.",
+    "ignoredSuperSpecialCriteriaWithNames": "Super Special will not activate for: {{names}}",
     "title": "Relaxed fallback used"
   },
   "summary": {
@@ -708,7 +718,7 @@
       "favoritesScope": " while keeping favorite-only auto-fill for open slots; non-favorite counters are not considered",
       "flexible": "No flexible team matched {{types}} while keeping {{requirements}}{{favoritesScope}}.",
       "separator": " and ",
-      "superSpecialCriteria": "leader Super Special criteria coverage",
+      "superSpecialCriteria": "Super Special criteria coverage",
       "strict": "No strict team matched {{types}} while keeping {{requirements}}{{favoritesScope}}.",
       "typeCoverage": "team-wide type coverage",
       "uniqueCharacterNames": "unique in-game character identities across the team except Friend Captain"

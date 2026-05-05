@@ -240,7 +240,7 @@ describe('runAutoTeamBuildSearch', () => {
     });
   });
 
-  it('returns a strict simple captain coverage team only after full coverage is impossible', () => {
+  it('does not downgrade full captain coverage to simple coverage', () => {
     const result = runAutoTeamBuildSearch(
       createSimpleCaptainCoverageFallbackRecords(),
       createInput(['DEX'], ['Fighter'], {
@@ -252,13 +252,7 @@ describe('runAutoTeamBuildSearch', () => {
       }),
     );
 
-    expect(result).not.toBeNull();
-    expect(result?.input.requireFullCaptainAbilityCoverage).toBe(false);
-    expect(result?.input.allowPartialCaptainAbilityCoverage).toBeUndefined();
-    expect(result?.relaxation.downgradedCaptainAbilityCoverageToSimple).toBe(true);
-    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBeUndefined();
-    expect(result?.coverage.leaderCriteria.coverageMode).toBe('simpleBoostScope');
-    expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
+    expect(result).toBeNull();
   });
 
   it('does not downgrade captain coverage when strict both-leader coverage is required', () => {
@@ -671,6 +665,27 @@ describe('runAutoTeamBuildSearch', () => {
     ]);
   });
 
+  it('does not relax Super Special criteria when strict coverage is on', () => {
+    const planner = createAutoTeamBuildFallbackPlanner(
+      createInput([...AUTO_TEAM_BUILDER_TYPES], [...AUTO_TEAM_BUILDER_CLASSES], {
+        requireLeaderSuperSpecialCriteria: true,
+        strictSuperSpecialCriteriaCoverage: true,
+      }),
+      createSingleTypeRecords(),
+    );
+
+    planner.scheduleInitialFallbackAttempts();
+
+    expect(collectScheduledAttempts(planner)).toEqual([
+      expect.objectContaining({
+        category: 'meta',
+        droppedTypes: [],
+        droppedClasses: [],
+        ignoredLeaderSuperSpecialCriteria: false,
+      }),
+    ]);
+  });
+
   it('orders single-filter drops by ascending pool support', () => {
     const planner = createAutoTeamBuildFallbackPlanner(
       createInput(['DEX', 'INT'], ['Fighter'], {
@@ -767,6 +782,7 @@ function createInput(
       | 'requireBothLeadersFullCaptainAbilityCoverage'
       | 'minimumLeaderSuperEffectMatchingSlots'
       | 'requireLeaderSuperSpecialCriteria'
+      | 'strictSuperSpecialCriteriaCoverage'
       | 'requireUniqueBaseCharacterNames'
       | 'favoritesOnly'
       | 'allowAnyFriendCaptainAutoFill'
@@ -809,6 +825,7 @@ function createInput(
       ? (overrides.minimumLeaderSuperEffectMatchingSlots ?? 6)
       : null,
     requireLeaderSuperSpecialCriteria: overrides.requireLeaderSuperSpecialCriteria ?? false,
+    strictSuperSpecialCriteriaCoverage: overrides.strictSuperSpecialCriteriaCoverage ?? false,
     requireUniqueBaseCharacterNames: overrides.requireUniqueBaseCharacterNames ?? false,
     favoritesOnly: overrides.favoritesOnly ?? false,
     allowAnyFriendCaptainAutoFill: overrides.allowAnyFriendCaptainAutoFill ?? false,
