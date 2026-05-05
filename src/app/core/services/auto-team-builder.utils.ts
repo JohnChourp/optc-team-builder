@@ -19,6 +19,7 @@ import {
   type AutoBuildLeaderTagConditionSet,
   type AutoBuildManualSlotRole,
   type AutoBuildManualSlotSelection,
+  type AutoBuildProgressExclusionCounts,
   type AutoBuildSpecialScope,
   type AutoBuildSlot,
   type AutoBuildUtilityRole,
@@ -180,7 +181,12 @@ interface AutoTeamBuildAttemptOptions {
 
 type AutoBuildLeaderPairProgress = Pick<
   AutoBuildAttemptProgressSnapshot,
-  'currentCaptainId' | 'currentCaptainName' | 'currentFriendCaptainId' | 'currentFriendCaptainName'
+  | 'currentCaptainId'
+  | 'currentCaptainName'
+  | 'currentFriendCaptainId'
+  | 'currentFriendCaptainName'
+  | 'leaderPairIndex'
+  | 'totalLeaderPairs'
 >;
 
 interface SubAbilityDemandContext {
@@ -209,6 +215,36 @@ export interface PreparedAutoTeamBuildContext {
 type PartyConflictCharacter = Pick<CharacterListItem, 'id' | 'name'> &
   Partial<Pick<CharacterDetailRecord, 'detail'>>;
 
+function createProgressExclusionCounts(): AutoBuildProgressExclusionCounts {
+  return {
+    total: 0,
+    alreadyUsed: 0,
+    duplicateBaseCharacter: 0,
+    leaderScope: 0,
+    costBudget: 0,
+    missingRequiredGroup: 0,
+  };
+}
+
+function incrementProgressExclusionCount(
+  counts: AutoBuildProgressExclusionCounts,
+  key: Exclude<keyof AutoBuildProgressExclusionCounts, 'total'>,
+  amount = 1,
+): void {
+  if (amount <= 0) {
+    return;
+  }
+
+  counts[key] += amount;
+  counts.total += amount;
+}
+
+function cloneProgressExclusionCounts(
+  counts: AutoBuildProgressExclusionCounts,
+): AutoBuildProgressExclusionCounts {
+  return { ...counts };
+}
+
 function emitAttemptProgress(
   onProgress: AutoTeamBuildAttemptOptions['onProgress'] | undefined,
   progress: AutoBuildAttemptProgressSnapshot,
@@ -236,6 +272,18 @@ function emitAttemptProgress(
 
     if (typeof progress.totalCandidatesToCheck === 'number') {
       normalizedProgress.totalCandidatesToCheck = Math.max(1, progress.totalCandidatesToCheck);
+    }
+
+    if (progress.permanentExclusionCounts) {
+      normalizedProgress.permanentExclusionCounts = cloneProgressExclusionCounts(
+        progress.permanentExclusionCounts,
+      );
+    }
+
+    if (progress.currentExclusionCounts) {
+      normalizedProgress.currentExclusionCounts = cloneProgressExclusionCounts(
+        progress.currentExclusionCounts,
+      );
     }
 
     onProgress(normalizedProgress);
@@ -1609,6 +1657,8 @@ export function buildAutoTeamResultFromPreparedContext(
         currentCaptainName: leaderPair.captain.character.name,
         currentFriendCaptainId: leaderPair.friendCaptain.character.id,
         currentFriendCaptainName: leaderPair.friendCaptain.character.name,
+        leaderPairIndex: checkedLeaderPairWorkUnits,
+        totalLeaderPairs: totalLeaderPairWorkUnits,
       };
       emitAttemptProgress(
         options.onProgress,
@@ -2349,6 +2399,15 @@ export function hasReadableEffectText(record: CharacterDetailRecord): boolean {
   );
 }
 
+function countBattleRequiredCharacterGroups(
+  battleRequirements: AutoBuildBattleRequirement[],
+): number {
+  return battleRequirements.reduce(
+    (total, battle) => total + battle.requiredCharacterGroups.length,
+    0,
+  );
+}
+
 function selectSubs(
   candidates: AutoBuildCandidate[],
   leaders: AutoBuildCandidate[],
@@ -2456,6 +2515,47 @@ function selectSubs(
     return [];
   }
 
+  const activeBattleRequirements = filterIgnoredCaptainAbilityBattleRequirements(
+    input.battleRequirements,
+  );
+  const strictBattleRequiredGroupCount =
+    countBattleRequiredCharacterGroups(activeBattleRequirements);
+
+  if (battleRequirementAssignmentMode === 'strict' && strictBattleRequiredGroupCount > 0) {
+    const uniqueAssignedCharacterCount = resolveUniqueCandidates([
+      ...leaderSlots,
+      ...selected,
+    ]).length;
+    const availableUniqueAssigneeCapacity =
+      uniqueAssignedCharacterCount + (TEAM_SUB_SLOT_COUNT - selected.length);
+
+    if (strictBattleRequiredGroupCount > availableUniqueAssigneeCapacity) {
+      const currentExclusionCounts = createProgressExclusionCounts();
+      incrementProgressExclusionCount(
+        currentExclusionCounts,
+        'missingRequiredGroup',
+        strictBattleRequiredGroupCount - availableUniqueAssigneeCapacity,
+      );
+      emitAttemptProgress(
+        onProgress,
+        {
+          completedWorkUnits: 0,
+          totalWorkUnits: 1,
+          checkedCandidates: 0,
+          totalCandidatesToCheck: 1,
+          currentSlot: Math.min(selected.length + 1, TEAM_SUB_SLOT_COUNT),
+          totalSlots: TEAM_SUB_SLOT_COUNT,
+          subPoolSize: 0,
+          searchNodesVisited: 0,
+          currentExclusionCounts,
+          ...leaderPairProgress,
+        },
+        true,
+      );
+      return [];
+    }
+  }
+
   const selectedIds = new Set(selected.map((candidate) => candidate.character.id));
   const subAbilityDemandContext = collectSubAbilityDemandContext(
     input,
@@ -2463,37 +2563,65 @@ function selectSubs(
     leaderCriteria,
     [...leaderSlots, ...selected],
   );
+  const permanentExclusionCounts = createProgressExclusionCounts();
   const pool = candidates
     .filter((candidate) => {
-      return (
-        !leaderCharacterIdSet.has(candidate.character.id) &&
-        !selectedIds.has(candidate.character.id) &&
-        (!input.requireUniqueBaseCharacterNames ||
-          (!hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) &&
-            !hasAnyPartyConflictKey(candidate, selectedPartyConflictKeys))) &&
-        matchesLeaderBuildScopeForAttempt(candidate, leaderCriteria, input) &&
-        canCandidateJoinStrictActivationCriteriaSearch(candidate, leaderSlots, input) &&
-        (!shouldEnforceCaptainAbilityCoverage(input) ||
-          canStillReachLeaderTagConditions(
+      if (
+        leaderCharacterIdSet.has(candidate.character.id) ||
+        selectedIds.has(candidate.character.id)
+      ) {
+        incrementProgressExclusionCount(permanentExclusionCounts, 'alreadyUsed');
+        return false;
+      }
+
+      if (
+        input.requireUniqueBaseCharacterNames &&
+        (hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) ||
+          hasAnyPartyConflictKey(candidate, selectedPartyConflictKeys))
+      ) {
+        incrementProgressExclusionCount(permanentExclusionCounts, 'duplicateBaseCharacter');
+        return false;
+      }
+
+      if (
+        !matchesLeaderBuildScopeForAttempt(candidate, leaderCriteria, input) ||
+        !canCandidateJoinStrictActivationCriteriaSearch(candidate, leaderSlots, input) ||
+        (shouldEnforceCaptainAbilityCoverage(input) &&
+          !canStillReachLeaderTagConditions(
             [...leaderSlots, ...selected, candidate],
             TEAM_SUB_SLOT_COUNT - selected.length - 1,
             leaderCriteria,
-          )) &&
-        canAddSubWithinTeamCostBudget(input, leaderSlots[0], selected, candidate) &&
-        matchesActiveSuperEffectScopePrefix(
+          )) ||
+        !matchesActiveSuperEffectScopePrefix(
           [...leaderSlots, ...selected, candidate],
           requiredLeaderSuperEffectMatchingSlots,
-        ) &&
-        (!input.requireAllSelectedClassesPerCharacter || candidate.matchesAllSelectedClasses)
-      );
+        ) ||
+        (input.requireAllSelectedClassesPerCharacter && !candidate.matchesAllSelectedClasses)
+      ) {
+        incrementProgressExclusionCount(permanentExclusionCounts, 'leaderScope');
+        return false;
+      }
+
+      if (!canAddSubWithinTeamCostBudget(input, leaderSlots[0], selected, candidate)) {
+        incrementProgressExclusionCount(permanentExclusionCounts, 'costBudget');
+        return false;
+      }
+
+      return true;
     })
     .sort((left, right) =>
       compareAutoFillSubCandidates(left, right, input, subAbilityDemandContext, leaderCriteria),
     );
   let subSearchWorkUnits = 0;
+  const currentExclusionCounts = createProgressExclusionCounts();
   const estimatedSubSearchWorkUnits = Math.max(
     1,
-    pool.length * Math.max(1, TEAM_SUB_SLOT_COUNT - selected.length),
+    pool.length *
+      Math.max(
+        1,
+        TEAM_SUB_SLOT_COUNT - selected.length,
+        battleRequirementAssignmentMode === 'strict' ? strictBattleRequiredGroupCount : 0,
+      ),
   );
   const emitSubSearchProgress = (currentSelectionLength: number, force = false): void => {
     const totalWorkUnits = Math.max(
@@ -2510,6 +2638,10 @@ function selectSubs(
         totalCandidatesToCheck: Math.max(1, pool.length),
         currentSlot: Math.min(currentSelectionLength + 1, TEAM_SUB_SLOT_COUNT),
         totalSlots: TEAM_SUB_SLOT_COUNT,
+        subPoolSize: pool.length,
+        searchNodesVisited: subSearchWorkUnits,
+        permanentExclusionCounts,
+        currentExclusionCounts,
         ...leaderPairProgress,
       },
       force,
@@ -2611,8 +2743,12 @@ function selectSubs(
         continue;
       }
 
+      if (currentSelectedIds.has(candidate.character.id)) {
+        incrementProgressExclusionCount(currentExclusionCounts, 'alreadyUsed');
+        continue;
+      }
+
       if (
-        currentSelectedIds.has(candidate.character.id) ||
         !canStillReachLeaderSuperEffectRequirement(
           leaderSuperEffectMatchCount +
             countLeaderSuperEffectScopeMatches(currentSelection, leaderSuperEffectScope) +
@@ -2630,12 +2766,23 @@ function selectSubs(
           [...leaderSlots, ...currentSelection, candidate],
           requiredLeaderSuperEffectMatchingSlots,
         ) ||
-        !canCandidateJoinStrictActivationCriteriaSearch(candidate, leaderSlots, input) ||
-        !canAddSubWithinTeamCostBudget(input, leaderSlots[0], currentSelection, candidate) ||
-        (input.requireUniqueBaseCharacterNames &&
-          (hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) ||
-            hasAnyPartyConflictKey(candidate, currentPartyConflictKeys)))
+        !canCandidateJoinStrictActivationCriteriaSearch(candidate, leaderSlots, input)
       ) {
+        incrementProgressExclusionCount(currentExclusionCounts, 'leaderScope');
+        continue;
+      }
+
+      if (!canAddSubWithinTeamCostBudget(input, leaderSlots[0], currentSelection, candidate)) {
+        incrementProgressExclusionCount(currentExclusionCounts, 'costBudget');
+        continue;
+      }
+
+      if (
+        input.requireUniqueBaseCharacterNames &&
+        (hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) ||
+          hasAnyPartyConflictKey(candidate, currentPartyConflictKeys))
+      ) {
+        incrementProgressExclusionCount(currentExclusionCounts, 'duplicateBaseCharacter');
         continue;
       }
 
@@ -2724,9 +2871,7 @@ function selectSubs(
   };
 
   const findCounterAnchoredValidSelection = (): AutoBuildCandidate[] | null => {
-    const battleRequirements = filterIgnoredCaptainAbilityBattleRequirements(
-      input.battleRequirements,
-    );
+    const battleRequirements = activeBattleRequirements;
 
     if (!battleRequirements.length) {
       return null;
@@ -2757,10 +2902,23 @@ function selectSubs(
       }
 
       const groups = battle.requiredCharacterGroups
-        .map((group, index) => ({ group, index }))
+        .map((group, index) => {
+          const matchingCandidates = battleAssignmentCandidates.filter((candidate) =>
+            candidateMatchesRequiredCharacterGroup(candidate, group, leaderCandidates),
+          );
+
+          return {
+            group,
+            index,
+            matchingCandidates,
+            missingCandidateCount: battleAssignmentCandidates.length - matchingCandidates.length,
+          };
+        })
         .sort(
           (left, right) =>
-            right.group.abilities.length - left.group.abilities.length || left.index - right.index,
+            left.matchingCandidates.length - right.matchingCandidates.length ||
+            right.group.abilities.length - left.group.abilities.length ||
+            left.index - right.index,
         );
 
       const assignGroup = (
@@ -2787,7 +2945,22 @@ function selectSubs(
           );
         }
 
-        for (const candidate of battleAssignmentCandidates) {
+        if (!groupEntry.matchingCandidates.length) {
+          incrementProgressExclusionCount(
+            currentExclusionCounts,
+            'missingRequiredGroup',
+            Math.max(1, groupEntry.missingCandidateCount),
+          );
+          return null;
+        }
+
+        incrementProgressExclusionCount(
+          currentExclusionCounts,
+          'missingRequiredGroup',
+          groupEntry.missingCandidateCount,
+        );
+
+        for (const candidate of groupEntry.matchingCandidates) {
           subSearchWorkUnits += 1;
           emitSubSearchProgress(nextSelection.length);
 
@@ -2796,9 +2969,9 @@ function selectSubs(
           if (
             globallyUsedCharacterIds.has(characterId) ||
             (battleRequirementAssignmentMode === 'strict' &&
-              battleUsedCharacterIds.has(characterId)) ||
-            !candidateMatchesRequiredCharacterGroup(candidate, groupEntry.group, leaderCandidates)
+              battleUsedCharacterIds.has(characterId))
           ) {
+            incrementProgressExclusionCount(currentExclusionCounts, 'alreadyUsed');
             continue;
           }
 
@@ -2809,6 +2982,19 @@ function selectSubs(
             !candidateAlreadyAvailable &&
             !canAddCandidateToSelection(candidate, nextSelection, nextPartyConflictKeys)
           ) {
+            if (
+              input.requireUniqueBaseCharacterNames &&
+              (hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) ||
+                hasAnyPartyConflictKey(candidate, nextPartyConflictKeys))
+            ) {
+              incrementProgressExclusionCount(currentExclusionCounts, 'duplicateBaseCharacter');
+            } else if (
+              !canAddSubWithinTeamCostBudget(input, leaderSlots[0], nextSelection, candidate)
+            ) {
+              incrementProgressExclusionCount(currentExclusionCounts, 'costBudget');
+            } else {
+              incrementProgressExclusionCount(currentExclusionCounts, 'leaderScope');
+            }
             continue;
           }
 
@@ -3466,10 +3652,7 @@ function resolveCoveredSelectedCharacterNames(
       visitedCandidateIds.add(candidateId);
       const currentNameIndex = matchedNameByCandidateId.get(candidateId);
 
-      if (
-        currentNameIndex === undefined ||
-        tryAssignName(currentNameIndex, visitedCandidateIds)
-      ) {
+      if (currentNameIndex === undefined || tryAssignName(currentNameIndex, visitedCandidateIds)) {
         matchedNameByCandidateId.set(candidateId, nameIndex);
         matchedCandidateByNameIndex.set(nameIndex, candidateId);
         return true;

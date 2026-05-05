@@ -374,6 +374,15 @@ export type AutoBuildProgressStage =
   | 'fallbackAttempt'
   | 'completed';
 
+export interface AutoBuildProgressExclusionCounts {
+  total: number;
+  alreadyUsed: number;
+  duplicateBaseCharacter: number;
+  leaderScope: number;
+  costBudget: number;
+  missingRequiredGroup: number;
+}
+
 export interface AutoBuildProgressSnapshot {
   stage: AutoBuildProgressStage;
   candidateCount: number;
@@ -401,6 +410,12 @@ export interface AutoBuildProgressSnapshot {
   currentCaptainName?: string;
   currentFriendCaptainId?: number;
   currentFriendCaptainName?: string;
+  leaderPairIndex?: number;
+  totalLeaderPairs?: number;
+  subPoolSize?: number;
+  searchNodesVisited?: number;
+  permanentExclusionCounts?: AutoBuildProgressExclusionCounts;
+  currentExclusionCounts?: AutoBuildProgressExclusionCounts;
 }
 
 export interface AutoBuildAttemptProgressSnapshot {
@@ -414,6 +429,12 @@ export interface AutoBuildAttemptProgressSnapshot {
   currentCaptainName?: string;
   currentFriendCaptainId?: number;
   currentFriendCaptainName?: string;
+  leaderPairIndex?: number;
+  totalLeaderPairs?: number;
+  subPoolSize?: number;
+  searchNodesVisited?: number;
+  permanentExclusionCounts?: AutoBuildProgressExclusionCounts;
+  currentExclusionCounts?: AutoBuildProgressExclusionCounts;
 }
 
 export interface AutoBuildCoreResult {

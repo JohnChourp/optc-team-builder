@@ -2978,6 +2978,13 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         tone: 'secondary',
       },
       {
+        key: 'leaderPairPosition',
+        text: '',
+        displayText: '\u00A0',
+        visible: false,
+        tone: 'secondary',
+      },
+      {
         key: 'attemptWork',
         text: '',
         displayText: '\u00A0',
@@ -2986,6 +2993,34 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       },
       {
         key: 'candidateChecks',
+        text: '',
+        displayText: '\u00A0',
+        visible: false,
+        tone: 'secondary',
+      },
+      {
+        key: 'subPool',
+        text: '',
+        displayText: '\u00A0',
+        visible: false,
+        tone: 'secondary',
+      },
+      {
+        key: 'searchNodes',
+        text: '',
+        displayText: '\u00A0',
+        visible: false,
+        tone: 'secondary',
+      },
+      {
+        key: 'currentExclusions',
+        text: '',
+        displayText: '\u00A0',
+        visible: false,
+        tone: 'secondary',
+      },
+      {
+        key: 'permanentExclusions',
         text: '',
         displayText: '\u00A0',
         visible: false,
@@ -3197,8 +3232,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         }),
         expect.objectContaining({
           key: 'leaderPair',
-          text:
-            'Trying leaders: Captain Monkey D. Luffy - Future Pirate King (#4556) / Friend Eustass Kid - Whole Quest (#4549)',
+          text: 'Trying leaders: Captain Monkey D. Luffy - Future Pirate King (#4556) / Friend Eustass Kid - Whole Quest (#4549)',
           visible: true,
         }),
         expect.objectContaining({
@@ -3218,6 +3252,131 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         }),
       ]),
     );
+  });
+
+  it('shows detailed leader pair, sub pool, search node, and exclusion progress rows', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.buildProgress.set({
+      stage: 'exactAttempt',
+      candidateCount: 1161,
+      completedAttempts: 0,
+      totalAttempts: 2,
+      attemptCountFinal: false,
+      elapsedMs: 12_000,
+      estimatedRemainingMs: null,
+      averageFallbackAttemptMs: null,
+      completedFallbackAttempts: 0,
+      completedWorkUnits: 32,
+      totalWorkUnits: 128,
+      checkedCandidates: 32,
+      totalCandidatesToCheck: 1161,
+      leaderPairIndex: 2,
+      totalLeaderPairs: 8,
+      subPoolSize: 37,
+      searchNodesVisited: 1024,
+      currentExclusionCounts: {
+        total: 10,
+        alreadyUsed: 2,
+        duplicateBaseCharacter: 3,
+        leaderScope: 4,
+        costBudget: 1,
+        missingRequiredGroup: 0,
+      },
+      permanentExclusionCounts: {
+        total: 6,
+        alreadyUsed: 2,
+        duplicateBaseCharacter: 1,
+        leaderScope: 2,
+        costBudget: 1,
+        missingRequiredGroup: 0,
+      },
+      currentCaptainId: 4478,
+      currentCaptainName: 'King - Unleashing Tension',
+      currentFriendCaptainId: 4229,
+      currentFriendCaptainName: 'S-Snake & S-Hawk & S-Shark',
+      currentDroppedTypes: [],
+      currentDroppedClasses: [],
+      currentAllowedLeadersWithSuperEffects: false,
+      currentIgnoredLeaderSuperSpecialCriteria: false,
+      messageKey: 'progress.exactAttempt',
+      messageParams: {
+        current: 1,
+        total: 2,
+      },
+    });
+
+    expect(page.loadingProgressRows()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'leaderPairPosition',
+          text: 'Leader pair 2 / 8 in this attempt',
+          visible: true,
+        }),
+        expect.objectContaining({
+          key: 'subPool',
+          text: '37 sub candidates after permanent filters',
+          visible: true,
+        }),
+        expect.objectContaining({
+          key: 'searchNodes',
+          text: '1,024 recursive search nodes visited in this attempt',
+          visible: true,
+        }),
+        expect.objectContaining({
+          key: 'currentExclusions',
+          text: 'Current search skips: 10 (used 2, duplicate 3, leader scope 4, budget 1, no group 0)',
+          visible: true,
+        }),
+        expect.objectContaining({
+          key: 'permanentExclusions',
+          text: 'Filtered before DFS: 6 (used 2, duplicate 1, leader scope 2, budget 1, no group 0)',
+          visible: true,
+        }),
+      ]),
+    );
+  });
+
+  it('keeps displayed progress percent from moving backward when recursive work grows', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+
+    page['handleBuildProgressSnapshot']({
+      stage: 'exactAttempt',
+      candidateCount: 1200,
+      completedAttempts: 0,
+      totalAttempts: 1,
+      attemptCountFinal: false,
+      elapsedMs: 12_000,
+      estimatedRemainingMs: null,
+      averageFallbackAttemptMs: null,
+      completedFallbackAttempts: 0,
+      completedWorkUnits: 80,
+      totalWorkUnits: 100,
+      currentDroppedTypes: [],
+      currentDroppedClasses: [],
+      currentAllowedLeadersWithSuperEffects: false,
+      currentIgnoredLeaderSuperSpecialCriteria: false,
+      messageKey: 'progress.exactAttempt',
+      messageParams: {
+        current: 1,
+        total: 1,
+      },
+    });
+
+    expect(page.buildOverallProgressPercent()).toBe(80);
+
+    page['handleBuildProgressSnapshot']({
+      ...page.buildProgress()!,
+      completedWorkUnits: 100,
+      totalWorkUnits: 500,
+      searchNodesVisited: 500,
+    });
+
+    expect(page.buildOverallProgressPercent()).toBe(80);
+    expect(page.buildOverallProgressLabel()).toBe('Overall progress: 80%');
   });
 
   it('formats short, minute, and hour fallback eta durations', async () => {
@@ -4282,6 +4441,32 @@ describe('AutoTeamBuilder export helpers', () => {
     expect(exportedJson.team[1]?.leaderAssignment).toBe('friendCaptain');
     expect(exportedJson.team[2]?.isFavorite).toBe(true);
     expect(exportedJson.team[0]?.character.detail.characterId).toBe(101);
+  });
+
+  it('builds a Settings saved-team import payload from the current result', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.result.set(createAutoBuildResult());
+    page.teamName.set('Importable Auto Team');
+    page.notes.set('Use on the current quest.');
+
+    expect(page.buildSavedTeamImportPayload('2026-05-05T20:14:45.183Z')).toEqual({
+      schemaVersion: 1,
+      source: 'saved-teams',
+      exportedAt: '2026-05-05T20:14:45.183Z',
+      teams: [
+        {
+          id: 'auto-team-builder-2026-05-05T20-14-45-183Z',
+          name: 'Importable Auto Team',
+          notes: 'Use on the current quest.',
+          shipId: null,
+          slots: [101, 102, 103, 104, 105, 106],
+          createdAt: '2026-05-05T20:14:45.183Z',
+          updatedAt: '2026-05-05T20:14:45.183Z',
+        },
+      ],
+    });
   });
 });
 

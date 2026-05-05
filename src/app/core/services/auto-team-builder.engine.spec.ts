@@ -251,6 +251,61 @@ describe('runAutoTeamBuildSearch', () => {
     });
   });
 
+  it('skips impossible duplicate strict-battle leader pairs before sub DFS', () => {
+    const snapshots: AutoBuildProgressSnapshot[] = [];
+    const result = runAutoTeamBuildSearch(
+      createStrictBattleGroupRecords(),
+      createInput(['DEX'], ['Fighter'], {
+        battleRequirements: createStrictSixGroupBattleRequirements(),
+        requireUniqueBaseCharacterNames: true,
+      }),
+      {
+        onProgress: (snapshot) => snapshots.push(snapshot),
+      },
+    );
+
+    expect(result?.relaxation.usedFallback).toBe(false);
+    expect(result?.slots.map((slot) => slot.character.id)).toEqual([
+      9606, 9605, 9604, 9603, 9602, 9601,
+    ]);
+
+    const duplicateLeaderPairPrune = snapshots.find(
+      (snapshot) =>
+        snapshot.stage === 'exactAttempt' &&
+        snapshot.currentCaptainId === 9606 &&
+        snapshot.currentFriendCaptainId === 9606 &&
+        snapshot.subPoolSize === 0 &&
+        (snapshot.currentExclusionCounts?.missingRequiredGroup ?? 0) > 0,
+    );
+    const validLeaderPairSearch = snapshots.find(
+      (snapshot) =>
+        snapshot.stage === 'exactAttempt' &&
+        snapshot.currentCaptainId === 9606 &&
+        snapshot.currentFriendCaptainId === 9605 &&
+        typeof snapshot.subPoolSize === 'number' &&
+        snapshot.subPoolSize > 0,
+    );
+
+    expect(duplicateLeaderPairPrune).toMatchObject({
+      leaderPairIndex: 1,
+      totalLeaderPairs: 8,
+      searchNodesVisited: 0,
+      currentExclusionCounts: expect.objectContaining({
+        missingRequiredGroup: 1,
+        total: 1,
+      }),
+    });
+    expect(validLeaderPairSearch).toMatchObject({
+      leaderPairIndex: 2,
+      totalLeaderPairs: 8,
+      subPoolSize: 4,
+      searchNodesVisited: expect.any(Number),
+      permanentExclusionCounts: expect.objectContaining({
+        alreadyUsed: 2,
+      }),
+    });
+  });
+
   it('returns the first relaxed result that restores requested class and type coverage', () => {
     const records = createSingleTypeRecords();
     const requestedInput = createInput(['DEX', 'INT'], ['Fighter']);
@@ -509,10 +564,7 @@ describe('runAutoTeamBuildSearch', () => {
       snapshots
         .filter((snapshot) => typeof snapshot.completedWorkUnits !== 'number')
         .map((snapshot) => snapshot.stage),
-    ).toEqual([
-      'preparingSearch',
-      'exactAttempt',
-    ]);
+    ).toEqual(['preparingSearch', 'exactAttempt']);
   });
 
   it('does not relax required abilities during fallback attempts', () => {
@@ -937,6 +989,7 @@ function createInput(
       | 'captainCharacterId'
       | 'friendCaptainCharacterId'
       | 'excludedShipIds'
+      | 'battleRequirements'
     >
   > = {},
 ): AutoBuildInput {
@@ -953,10 +1006,10 @@ function createInput(
     requiredAbilities: [],
     requiredCharacterGroups: [],
     enemyMechanics: [],
+    battleRequirements: overrides.battleRequirements ?? [],
     requireAllSelectedTypesInTeam: overrides.requireAllSelectedTypesInTeam ?? false,
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
-    requireAllSelectedCharacterTagsInTeam:
-      overrides.requireAllSelectedCharacterTagsInTeam ?? false,
+    requireAllSelectedCharacterTagsInTeam: overrides.requireAllSelectedCharacterTagsInTeam ?? false,
     requireAllSelectedCharacterNamesInTeam:
       overrides.requireAllSelectedCharacterNamesInTeam ?? false,
     requireAllSlotsInLeaderSuperEffectScope:
@@ -1014,6 +1067,89 @@ function createSingleTypeRecords(): CharacterDetailRecord[] {
     createUtilitySubRecord(),
     createConsistencySubRecord(),
   ];
+}
+
+function createStrictSixGroupBattleRequirements(): NonNullable<
+  AutoBuildInput['battleRequirements']
+> {
+  return [
+    {
+      id: 'strict-six-groups',
+      title: 'Strict six groups',
+      enemyMechanics: [],
+      requiredCharacterGroups: [
+        createBattleGroupRequirement('bind', 'remove_bind'),
+        createBattleGroupRequirement('atk-down', 'remove_atk_down'),
+        createBattleGroupRequirement('threshold', 'remove_threshold_damage_reduction'),
+        createBattleGroupRequirement('resilience', 'remove_resilience'),
+        createBattleGroupRequirement('defense', 'remove_enemy_increased_defense'),
+        createBattleGroupRequirement('special-bind', 'remove_special_bind'),
+      ],
+    },
+  ];
+}
+
+function createBattleGroupRequirement(
+  id: string,
+  abilityKey: string,
+): NonNullable<AutoBuildInput['battleRequirements']>[number]['requiredCharacterGroups'][number] {
+  return {
+    id,
+    abilities: [
+      {
+        abilityKey,
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ],
+  };
+}
+
+function createStrictBattleGroupRecords(): CharacterDetailRecord[] {
+  return [
+    createStrictBattleGroupRecord(9606, 'King - Unleashing Tension', 'remove_bind', {
+      isLeader: true,
+    }),
+    createStrictBattleGroupRecord(9605, 'S-Snake & S-Hawk & S-Shark', 'remove_atk_down', {
+      isLeader: true,
+    }),
+    createStrictBattleGroupRecord(9604, 'Thresho', 'remove_threshold_damage_reduction'),
+    createStrictBattleGroupRecord(9603, 'Resilio', 'remove_resilience'),
+    createStrictBattleGroupRecord(9602, 'Defendo', 'remove_enemy_increased_defense'),
+    createStrictBattleGroupRecord(9601, 'Specbind', 'remove_special_bind'),
+  ];
+}
+
+function createStrictBattleGroupRecord(
+  id: number,
+  name: string,
+  abilityKey: string,
+  options: { isLeader?: boolean } = {},
+): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    name,
+    primaryClass: 'Fighter',
+    secondaryClass: 'Slasher',
+    detail: {
+      captainAbility: options.isLeader
+        ? 'Boosts ATK of Fighter characters by 5x and HP by 1.3x.'
+        : null,
+      specialText: `${abilityKey} by 5 turns.`,
+      partyConflictKeys: [`strict-battle-${id}`],
+      builderAbilities: [
+        {
+          key: abilityKey,
+          label: abilityKey,
+          minTurns: 5,
+          isCompleteRemoval: false,
+          slotTokens: [],
+          source: 'specialText',
+        },
+      ],
+    },
+  });
 }
 
 function createCaptainCoverageManualSlots(captainId: number) {

@@ -530,7 +530,10 @@
                     </div>
                   } @else if (requirementSourceCandidateCards().length) {
                     <div class="manual-candidate-list manual-candidate-list--characters">
-                      @for (source of requirementSourceCandidateCards(); track source.character.id) {
+                      @for (
+                        source of requirementSourceCandidateCards();
+                        track source.character.id
+                      ) {
                         <article class="manual-candidate-card manual-candidate-card--detailed">
                           <a
                             class="character-detail-thumb-link"
@@ -2685,6 +2688,15 @@
               (click)="downloadTeamJson()"
             >
               {{ downloadTeamJsonLabel() }}
+            </ion-button>
+            <ion-button
+              fill="outline"
+              color="warning"
+              class="download-team-button"
+              [disabled]="!canDownloadTeamJson()"
+              (click)="downloadSavedTeamImportJson()"
+            >
+              {{ downloadSavedTeamImportJsonLabel() }}
             </ion-button>
           </div>
         </section>

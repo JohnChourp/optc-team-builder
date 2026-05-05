@@ -58,6 +58,7 @@ import {
   type AutoBuildLeaderBoostRanges,
   type AutoBuildManualSlotRole,
   type AutoBuildManualSlotSelection,
+  type AutoBuildProgressExclusionCounts,
   type AutoBuildProgressSnapshot,
   type AutoBuildResult,
   type AutoBuildCostRange,
@@ -122,6 +123,10 @@ import {
 import { buildAutoTeamBuilderStateFromSavedEnemy } from './auto-team-builder-enemy-preset.utils';
 import { buildAutoTeamBuilderStateFromSavedTeam } from './auto-team-builder-saved-team-preset.utils';
 import {
+  buildSavedTeamsTransferPayload,
+  downloadSavedTeamsExport,
+} from '../saved-teams/saved-teams-transfer.utils';
+import {
   AbilityRequirementPickerComponent,
   type AbilityRequirementPickerLeaderBoostSettings,
 } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
@@ -182,8 +187,13 @@ interface LoadingProgressRow {
     | 'message'
     | 'currentStepElapsed'
     | 'leaderPair'
+    | 'leaderPairPosition'
     | 'attemptWork'
     | 'candidateChecks'
+    | 'subPool'
+    | 'searchNodes'
+    | 'currentExclusions'
+    | 'permanentExclusions'
     | 'activeWorkers'
     | 'searchPasses'
     | 'workEstimate'
@@ -522,6 +532,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private destroyed = false;
   private readonly buildProgressNowMs = signal(0);
   private readonly currentBuildStepStartedAtMs = signal<number | null>(null);
+  private readonly buildProgressFloorPercent = signal(0);
   private progressTicker: ReturnType<typeof globalThis.setInterval> | null = null;
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
@@ -746,7 +757,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   );
   public readonly hasSelectedClasses = computed(() => this.selectedClasses().length > 0);
   public readonly hasSelectedTypes = computed(() => this.selectedTypes().length > 0);
-  public readonly hasSelectedCharacterTags = computed(() => this.selectedCharacterTags().length > 0);
+  public readonly hasSelectedCharacterTags = computed(
+    () => this.selectedCharacterTags().length > 0,
+  );
   public readonly hasSelectedCharacterNames = computed(
     () => this.selectedCharacterNames().length > 0,
   );
@@ -1691,9 +1704,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return [];
     }
 
-    const selectedTagKeys = new Set(
-      this.selectedCharacterTags().map((tag) => tag.toLowerCase()),
-    );
+    const selectedTagKeys = new Set(this.selectedCharacterTags().map((tag) => tag.toLowerCase()));
 
     return this.availableCharacterTags()
       .filter((tag) => !selectedTagKeys.has(tag.toLowerCase()))
@@ -1798,7 +1809,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly buildOverallProgressPercent = computed(() => {
     const progress = this.buildProgress();
 
-    if (!progress || !progress.totalAttempts) {
+    if (!progress) {
       return 0;
     }
 
@@ -1806,19 +1817,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return 100;
     }
 
-    const innerProgress =
-      typeof progress.completedWorkUnits === 'number' &&
-      typeof progress.totalWorkUnits === 'number' &&
-      progress.totalWorkUnits > 0
-        ? Math.max(0, Math.min(1, progress.completedWorkUnits / progress.totalWorkUnits))
-        : 0;
-    const activeSearchProgress =
-      progress.stage === 'exactAttempt' || progress.stage === 'fallbackAttempt'
-        ? progress.completedAttempts + innerProgress
-        : progress.completedAttempts;
-    const percent = Math.round((activeSearchProgress / progress.totalAttempts) * 100);
-
-    return Math.max(0, Math.min(99, percent));
+    return Math.max(this.buildProgressFloorPercent(), this.resolveBuildProgressPercent(progress));
   });
   public readonly buildOverallProgressLabel = computed(() =>
     this.t('progress.overallProgressPercent', { percent: this.buildOverallProgressPercent() }),
@@ -1853,6 +1852,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         })
       : '';
   });
+  public readonly buildLeaderPairPositionLabel = computed(() => {
+    const progress = this.buildProgress();
+
+    return typeof progress?.leaderPairIndex === 'number' &&
+      typeof progress.totalLeaderPairs === 'number' &&
+      progress.totalLeaderPairs > 0
+      ? this.t('progress.leaderPairPosition', {
+          current: progress.leaderPairIndex.toLocaleString(),
+          total: progress.totalLeaderPairs.toLocaleString(),
+        })
+      : '';
+  });
   public readonly buildAttemptWorkLabel = computed(() => {
     const progress = this.buildProgress();
 
@@ -1877,6 +1888,32 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         })
       : '';
   });
+  public readonly buildSubPoolLabel = computed(() => {
+    const subPoolSize = this.buildProgress()?.subPoolSize;
+
+    return typeof subPoolSize === 'number'
+      ? this.t('progress.subPool', { count: subPoolSize.toLocaleString() })
+      : '';
+  });
+  public readonly buildSearchNodesLabel = computed(() => {
+    const searchNodesVisited = this.buildProgress()?.searchNodesVisited;
+
+    return typeof searchNodesVisited === 'number'
+      ? this.t('progress.searchNodes', { count: searchNodesVisited.toLocaleString() })
+      : '';
+  });
+  public readonly buildCurrentExclusionsLabel = computed(() =>
+    this.formatProgressExclusionCounts(
+      'progress.currentExclusions',
+      this.buildProgress()?.currentExclusionCounts,
+    ),
+  );
+  public readonly buildPermanentExclusionsLabel = computed(() =>
+    this.formatProgressExclusionCounts(
+      'progress.permanentExclusions',
+      this.buildProgress()?.permanentExclusionCounts,
+    ),
+  );
   public readonly buildActiveWorkersLabel = computed(() => {
     const activeWorkerCount = this.buildProgress()?.activeWorkerCount;
 
@@ -1956,6 +1993,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         tone: 'secondary',
       },
       {
+        key: 'leaderPairPosition',
+        text: this.buildLeaderPairPositionLabel(),
+        tone: 'secondary',
+      },
+      {
         key: 'attemptWork',
         text: this.buildAttemptWorkLabel(),
         tone: 'secondary',
@@ -1963,6 +2005,26 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       {
         key: 'candidateChecks',
         text: this.buildCandidateChecksLabel(),
+        tone: 'secondary',
+      },
+      {
+        key: 'subPool',
+        text: this.buildSubPoolLabel(),
+        tone: 'secondary',
+      },
+      {
+        key: 'searchNodes',
+        text: this.buildSearchNodesLabel(),
+        tone: 'secondary',
+      },
+      {
+        key: 'currentExclusions',
+        text: this.buildCurrentExclusionsLabel(),
+        tone: 'secondary',
+      },
+      {
+        key: 'permanentExclusions',
+        text: this.buildPermanentExclusionsLabel(),
         tone: 'secondary',
       },
       {
@@ -2370,6 +2432,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   );
   public readonly canDownloadTeamJson = computed(() => Boolean(this.result()));
   public readonly downloadTeamJsonLabel = computed(() => this.t('actions.downloadTeamJson'));
+  public readonly downloadSavedTeamImportJsonLabel = computed(() =>
+    this.t('actions.downloadSavedTeamImportJson'),
+  );
   public readonly resultTeamConditionStatus = computed<CaptainTeamConditionStatus | null>(() => {
     const slots = this.teamSlots();
 
@@ -4129,6 +4194,33 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     );
   }
 
+  public buildSavedTeamImportPayload(exportedAt = new Date().toISOString()) {
+    const current = this.result();
+
+    if (!current) {
+      return null;
+    }
+
+    const fallbackName = this.i18n.translate('common.defaults.newCrew');
+    const normalizedName = this.teamName().trim() || fallbackName;
+    const normalizedTimestamp = exportedAt.replace(/[^0-9A-Za-z]+/g, '-').replace(/^-|-$/g, '');
+
+    return buildSavedTeamsTransferPayload(
+      [
+        {
+          id: `auto-team-builder-${normalizedTimestamp || Date.now()}`,
+          name: normalizedName,
+          notes: this.notes().trim(),
+          shipId: current.shipSelection?.ship.id ?? null,
+          slots: current.slots.map((slot) => slot.character.id),
+          createdAt: exportedAt,
+          updatedAt: exportedAt,
+        },
+      ],
+      exportedAt,
+    );
+  }
+
   public buildSelectionExportPayload(
     exportedAt = new Date().toISOString(),
   ): AutoTeamSelectionExportPayload | null {
@@ -4273,6 +4365,52 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     downloadAutoTeamExport(this.buildTeamExportPayload());
   }
 
+  public downloadSavedTeamImportJson(): void {
+    downloadSavedTeamsExport(this.buildSavedTeamImportPayload());
+  }
+
+  private resolveBuildProgressPercent(progress: AutoBuildProgressSnapshot): number {
+    if (!progress.totalAttempts) {
+      return 0;
+    }
+
+    if (progress.stage === 'completed') {
+      return 100;
+    }
+
+    const innerProgress =
+      typeof progress.completedWorkUnits === 'number' &&
+      typeof progress.totalWorkUnits === 'number' &&
+      progress.totalWorkUnits > 0
+        ? Math.max(0, Math.min(1, progress.completedWorkUnits / progress.totalWorkUnits))
+        : 0;
+    const activeSearchProgress =
+      progress.stage === 'exactAttempt' || progress.stage === 'fallbackAttempt'
+        ? progress.completedAttempts + innerProgress
+        : progress.completedAttempts;
+    const percent = Math.round((activeSearchProgress / progress.totalAttempts) * 100);
+
+    return Math.max(0, Math.min(99, percent));
+  }
+
+  private formatProgressExclusionCounts(
+    translationKey: string,
+    counts: AutoBuildProgressExclusionCounts | undefined,
+  ): string {
+    if (!counts || counts.total <= 0) {
+      return '';
+    }
+
+    return this.t(translationKey, {
+      total: counts.total.toLocaleString(),
+      alreadyUsed: counts.alreadyUsed.toLocaleString(),
+      duplicateBaseCharacter: counts.duplicateBaseCharacter.toLocaleString(),
+      leaderScope: counts.leaderScope.toLocaleString(),
+      costBudget: counts.costBudget.toLocaleString(),
+      missingRequiredGroup: counts.missingRequiredGroup.toLocaleString(),
+    });
+  }
+
   public async saveTeam(): Promise<void> {
     const current = this.result();
 
@@ -4310,6 +4448,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   private resetBuildState(): void {
     this.buildProgress.set(null);
+    this.buildProgressFloorPercent.set(0);
     this.result.set(null);
     this.errorMessage.set('');
     this.manualSimilarPickFeedback.set('');
@@ -4327,6 +4466,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.currentBuildStepStartedAtMs.set(Date.now());
     }
 
+    this.buildProgressFloorPercent.set(
+      snapshot.stage === 'completed'
+        ? 100
+        : Math.max(this.buildProgressFloorPercent(), this.resolveBuildProgressPercent(snapshot)),
+    );
     this.buildProgress.set(snapshot);
   }
 
