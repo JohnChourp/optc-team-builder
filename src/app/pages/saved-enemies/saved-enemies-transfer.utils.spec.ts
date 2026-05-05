@@ -41,6 +41,8 @@ describe('Saved enemies transfer helpers', () => {
           imageDataUrl: 'data:image/jpeg;base64,Zm9yZXN0LWJvc3M=',
           selectedTypes: ['DEX', 'PSY'],
           selectedClasses: ['Fighter'],
+          selectedCharacterTags: [],
+          selectedCharacterNames: [],
           requiredAbilities: [
             {
               abilityKey: 'remove_bind',
@@ -356,6 +358,8 @@ describe('Saved enemies transfer helpers', () => {
           imageDataUrl: null,
           selectedTypes: ['DEX', 'INT'],
           selectedClasses: ['Cerebral'],
+          selectedCharacterTags: [],
+          selectedCharacterNames: [],
           requiredAbilities: [
             {
               abilityKey: 'ignore_normal_attack_only',
@@ -378,6 +382,8 @@ describe('Saved enemies transfer helpers', () => {
           ],
           requireAllSelectedTypesInTeam: false,
           requireAllSelectedClassesPerCharacter: false,
+          requireAllSelectedCharacterTagsInTeam: false,
+          requireAllSelectedCharacterNamesInTeam: false,
           createdAt: '2026-04-22T04:53:22.812Z',
           updatedAt: '2026-04-22T04:53:22.812Z',
         },

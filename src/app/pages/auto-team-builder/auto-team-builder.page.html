@@ -147,6 +147,112 @@
               ></ion-toggle>
             </div>
           </div>
+
+          <div class="character-filter-card">
+            <span>{{ t('filters.characterTags.label') }}</span>
+            <ion-select
+              interface="popover"
+              [multiple]="true"
+              fill="outline"
+              [placeholder]="t('filters.characterTags.placeholder')"
+              [value]="selectedCharacterTags()"
+              [selectedText]="selectedCharacterTagsLabel()"
+              [disabled]="building() || !availableCharacterTags().length"
+              (ionChange)="onCharacterTagChange($event)"
+            >
+              @for (item of availableCharacterTags(); track item) {
+                <ion-select-option [value]="item">
+                  {{ item }}
+                </ion-select-option>
+              }
+            </ion-select>
+            @if (selectedCharacterTags().length) {
+              <div class="selected-values-row">
+                @for (item of selectedCharacterTags(); track item) {
+                  <button
+                    type="button"
+                    class="selected-value-chip"
+                    [disabled]="building()"
+                    (click)="removeSelectedCharacterTag(item)"
+                  >
+                    {{ item }}
+                    <span aria-hidden="true">×</span>
+                  </button>
+                }
+              </div>
+            }
+            <div class="strict-toggle-row strict-toggle-row--filter">
+              <div class="strict-toggle-copy">
+                <strong>{{ characterTagStrictToggleLabel() }}</strong>
+                <small>{{ characterTagSupportLabel() }}</small>
+              </div>
+              <ion-toggle
+                color="warning"
+                [checked]="requireAllSelectedCharacterTagsInTeam()"
+                [disabled]="building()"
+                (ionChange)="onRequireAllSelectedCharacterTagsToggle($event)"
+              ></ion-toggle>
+            </div>
+          </div>
+
+          <div class="character-filter-card">
+            <span>{{ t('filters.characterNames.label') }}</span>
+            <div class="character-name-filter-row">
+              <ion-input
+                fill="outline"
+                [placeholder]="t('filters.characterNames.placeholder')"
+                [value]="characterNameDraft()"
+                [disabled]="building()"
+                (ionInput)="onCharacterNameDraftChange($event)"
+                (keyup.enter)="addCharacterNameFilter()"
+              ></ion-input>
+              <ion-button
+                color="warning"
+                [disabled]="building() || !characterNameDraft().trim()"
+                (click)="addCharacterNameFilter()"
+              >
+                {{ t('filters.characterNames.add') }}
+              </ion-button>
+            </div>
+            @if (selectedCharacterNames().length) {
+              <div class="selected-values-row">
+                @for (item of selectedCharacterNames(); track item) {
+                  <button
+                    type="button"
+                    class="selected-value-chip"
+                    [disabled]="building()"
+                    (click)="removeSelectedCharacterName(item)"
+                  >
+                    {{ item }}
+                    <span aria-hidden="true">×</span>
+                  </button>
+                }
+              </div>
+            }
+            <div class="control-action-row">
+              <ion-button
+                fill="clear"
+                size="small"
+                class="select-all-button"
+                [disabled]="building()"
+                (click)="openRequirementSourceModal()"
+              >
+                {{ t('filters.characterRequirements.actions.open') }}
+              </ion-button>
+            </div>
+            <div class="strict-toggle-row strict-toggle-row--filter">
+              <div class="strict-toggle-copy">
+                <strong>{{ characterNameStrictToggleLabel() }}</strong>
+                <small>{{ characterNameSupportLabel() }}</small>
+              </div>
+              <ion-toggle
+                color="warning"
+                [checked]="requireAllSelectedCharacterNamesInTeam()"
+                [disabled]="building()"
+                (ionChange)="onRequireAllSelectedCharacterNamesToggle($event)"
+              ></ion-toggle>
+            </div>
+          </div>
         </div>
 
         <div class="secondary-toggle-grid">
@@ -360,6 +466,117 @@
             </div>
           </div>
         </div>
+
+        <ion-modal
+          [isOpen]="requirementSourceModalOpen()"
+          cssClass="pick-editor-modal"
+          (didDismiss)="closeRequirementSourceModal()"
+        >
+          <ng-template>
+            <ion-header class="pick-editor-modal__header ion-no-border">
+              <ion-toolbar>
+                <div class="pick-editor-modal__head">
+                  <div>
+                    <div class="section-label">
+                      <ion-icon [icon]="manualFilterIcon"></ion-icon>
+                      <span>{{ t('filters.characterRequirements.modal.eyebrow') }}</span>
+                    </div>
+                    <h2>{{ t('filters.characterRequirements.modal.title') }}</h2>
+                    <p>{{ t('filters.characterRequirements.modal.copy') }}</p>
+                  </div>
+                </div>
+
+                <ion-buttons slot="end">
+                  <ion-button fill="clear" color="light" (click)="closeRequirementSourceModal()">
+                    <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                  </ion-button>
+                </ion-buttons>
+              </ion-toolbar>
+            </ion-header>
+
+            <ion-content class="pick-editor-modal__content">
+              <div class="pick-editor-modal__shell">
+                <div class="manual-locks-search-panel pick-editor-modal__panel">
+                  <div class="manual-locks-meta manual-locks-meta--candidates">
+                    <strong>{{ requirementSourceCandidatesSummaryLabel() }}</strong>
+                    <small>{{ t('filters.characterRequirements.modal.support') }}</small>
+                  </div>
+
+                  <ion-searchbar
+                    [value]="requirementSourceSearchTerm()"
+                    [placeholder]="t('filters.characterRequirements.modal.searchPlaceholder')"
+                    debounce="200"
+                    (ionInput)="onRequirementSourceSearchChange($event)"
+                  ></ion-searchbar>
+
+                  @if (requirementSourceCandidatesLoading()) {
+                    <div class="manual-candidate-empty-state">
+                      <ion-spinner name="crescent"></ion-spinner>
+                    </div>
+                  } @else if (requirementSourceCandidateCards().length) {
+                    <div class="manual-candidate-list manual-candidate-list--characters">
+                      @for (source of requirementSourceCandidateCards(); track source.character.id) {
+                        <article class="manual-candidate-card manual-candidate-card--detailed">
+                          <a
+                            class="character-detail-thumb-link"
+                            [routerLink]="getCharacterDetailLink(source.character)"
+                          >
+                            <img
+                              [src]="source.character.imageUrl"
+                              [alt]="source.character.name"
+                              loading="lazy"
+                            />
+                          </a>
+                          <div class="manual-candidate-copy">
+                            <div class="manual-candidate-copy__header">
+                              <a
+                                class="character-detail-name-link"
+                                [routerLink]="getCharacterDetailLink(source.character)"
+                              >
+                                {{ source.character.name }}
+                              </a>
+                            </div>
+                            <span>{{ source.subtitle }}</span>
+                            @if (source.characterTags.length) {
+                              <div class="manual-candidate-chip-row">
+                                @for (item of source.characterTags; track item) {
+                                  <small class="manual-ability-chip manual-ability-chip--matched">
+                                    {{ item }}
+                                  </small>
+                                }
+                              </div>
+                            }
+                            @if (source.characterNames.length) {
+                              <div class="manual-candidate-chip-row">
+                                @for (item of source.characterNames; track item) {
+                                  <small class="manual-ability-chip">
+                                    {{ item }}
+                                  </small>
+                                }
+                              </div>
+                            }
+                          </div>
+                          <ion-button
+                            class="manual-candidate-action-button"
+                            color="warning"
+                            [disabled]="building()"
+                            (click)="applyRequirementSourceCharacter(source.character)"
+                          >
+                            {{ t('filters.characterRequirements.actions.apply') }}
+                          </ion-button>
+                        </article>
+                      }
+                    </div>
+                  } @else {
+                    <div class="manual-candidate-empty-state">
+                      {{ t('filters.characterRequirements.modal.empty') }}
+                    </div>
+                  }
+                </div>
+              </div>
+            </ion-content>
+          </ng-template>
+        </ion-modal>
 
         <section class="ability-requirements-card">
           <div class="slot-grid__header">
@@ -2150,6 +2367,30 @@
                   </div>
                 </div>
               }
+              @if (droppedResultCharacterTags().length) {
+                <div>
+                  <span>{{ t('fallback.droppedCharacterTags') }}</span>
+                  <div class="chip-row">
+                    @for (item of droppedResultCharacterTags(); track item) {
+                      <small class="coverage-chip fallback-chip">
+                        {{ item }}
+                      </small>
+                    }
+                  </div>
+                </div>
+              }
+              @if (droppedResultCharacterNames().length) {
+                <div>
+                  <span>{{ t('fallback.droppedCharacterNames') }}</span>
+                  <div class="chip-row">
+                    @for (item of droppedResultCharacterNames(); track item) {
+                      <small class="coverage-chip fallback-chip">
+                        {{ item }}
+                      </small>
+                    }
+                  </div>
+                </div>
+              }
               @if (resultAllowedLeadersWithSuperEffects()) {
                 <div>
                   <span>{{ t('fallback.allowedLeadersWithSuperEffects') }}</span>
@@ -2180,6 +2421,24 @@
             <span>{{ t('summary.requestedTypes') }}</span>
             <strong>{{ requestedResultTypesLabel() }}</strong>
             <small>{{ t('summary.effectiveTypes', { value: effectiveResultTypesLabel() }) }}</small>
+          </article>
+          <article class="glass-card summary-card">
+            <span>{{ t('summary.requestedCharacterTags') }}</span>
+            <strong>{{ requestedResultCharacterTagsLabel() }}</strong>
+            <small>{{
+              t('summary.effectiveCharacterTags', {
+                value: effectiveResultCharacterTagsLabel(),
+              })
+            }}</small>
+          </article>
+          <article class="glass-card summary-card">
+            <span>{{ t('summary.requestedCharacterNames') }}</span>
+            <strong>{{ requestedResultCharacterNamesLabel() }}</strong>
+            <small>{{
+              t('summary.effectiveCharacterNames', {
+                value: effectiveResultCharacterNamesLabel(),
+              })
+            }}</small>
           </article>
           <article class="glass-card summary-card">
             <span>{{ t('summary.candidatePool') }}</span>
@@ -2256,6 +2515,22 @@
               <div class="chip-row">
                 <small class="coverage-chip summary-status-chip">{{
                   selectedTypeSummaryLabel()
+                }}</small>
+              </div>
+            </div>
+            <div>
+              <span>{{ t('coverage.groups.characterTagRequest') }}</span>
+              <div class="chip-row">
+                <small class="coverage-chip summary-status-chip">{{
+                  selectedCharacterTagSummaryLabel()
+                }}</small>
+              </div>
+            </div>
+            <div>
+              <span>{{ t('coverage.groups.characterNameRequest') }}</span>
+              <div class="chip-row">
+                <small class="coverage-chip summary-status-chip">{{
+                  selectedCharacterNameSummaryLabel()
                 }}</small>
               </div>
             </div>

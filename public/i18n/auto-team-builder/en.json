@@ -11,6 +11,8 @@
     "strictModes": {
       "typeCoverage": "team-wide type coverage",
       "perCharacterClasses": "per-slot class matching",
+      "characterTags": "team-wide character tag coverage",
+      "characterNames": "required character names",
       "leaderSuperEffectScope": "leader super effect scope",
       "captainAbilityCoverage": "full captain ability coverage",
       "bothLeadersCaptainCoverage": "both leaders captain coverage",
@@ -59,6 +61,40 @@
       "support": {
         "strict": "Every selected unit in the final team must match all selected classes.",
         "flexible": "Selected classes guide captain scope and candidate weighting without blocking fallback."
+      }
+    },
+    "characterTags": {
+      "label": "Character Tags",
+      "placeholder": "Select character tags",
+      "toggle": "Require selected tags in team",
+      "support": {
+        "strict": "Every selected character tag must appear somewhere in the final team. One character can cover multiple tags.",
+        "flexible": "Selected character tags are preferences first and can be relaxed in fallback."
+      }
+    },
+    "characterNames": {
+      "label": "Character Names",
+      "placeholder": "Type a name, e.g. zoro",
+      "add": "Add",
+      "toggle": "Require selected names in team",
+      "support": {
+        "strict": "Every selected name must be covered by a distinct final team slot.",
+        "flexible": "Selected names are preferred and fuzzy-matched, but can be relaxed in fallback."
+      }
+    },
+    "characterRequirements": {
+      "actions": {
+        "open": "Use ability requirements",
+        "apply": "Apply"
+      },
+      "modal": {
+        "eyebrow": "Requirement sources",
+        "title": "Choose a requirement source",
+        "copy": "Only characters with extractable Captain, Full Coverage, Super Special, or Super Tandem roster requirements are shown.",
+        "support": "Apply copies ability-derived required tags and names into the relaxed filters.",
+        "searchPlaceholder": "Search requirement source characters",
+        "count": "{{count}} source characters",
+        "empty": "No source characters with extractable roster requirements matched this search."
       }
     },
     "uniqueNames": {
@@ -578,6 +614,8 @@
     "copy": "Your top-level filters stayed the same. The builder only relaxed the requirements below in order to return a team.",
     "allowedLeadersWithSuperEffects": "Allowed leaders with super effects",
     "droppedClasses": "Dropped classes",
+    "droppedCharacterNames": "Dropped character names",
+    "droppedCharacterTags": "Dropped character tags",
     "droppedTypes": "Dropped types",
     "ignoredLeaderSuperSpecialCriteria": "Ignored Super Special criteria",
     "ignoredSuperSpecialCriteria": "Super Special will not activate for the final team.",
@@ -590,9 +628,13 @@
     "burstCoverage": "Burst coverage",
     "candidatePool": "Candidate pool",
     "effectiveClasses": "Effective: {{value}}",
+    "effectiveCharacterNames": "Effective: {{value}}",
+    "effectiveCharacterTags": "Effective: {{value}}",
     "effectiveTypes": "Effective: {{value}}",
     "noBurstTags": "No burst tags",
     "requestedClasses": "Requested classes",
+    "requestedCharacterNames": "Requested character names",
+    "requestedCharacterTags": "Requested character tags",
     "requestedTypes": "Requested types"
   },
   "save": {
@@ -612,6 +654,8 @@
       "abilityRequirements": "Ability requirements",
       "burst": "Burst",
       "captainAbilityCoverage": "Captain Ability coverage",
+      "characterNameRequest": "Character name request",
+      "characterTagRequest": "Character tag request",
       "classCoverage": "Class coverage",
       "classRequest": "Class request",
       "consistency": "Consistency",
@@ -678,6 +722,20 @@
       "strictPending": "Strict type coverage is enabled and will be validated after the build.",
       "strictResolved": "{{covered}} / {{total}} selected types are covered in the final team."
     },
+    "selectedCharacterTagSummary": {
+      "coverage": "{{covered}} / {{total}} selected character tags covered across {{matchingSlots}} matching slots.",
+      "flexiblePending": "Character tag coverage will be evaluated after the build.",
+      "noRequirement": "No character tag requirement selected.",
+      "strictPending": "Strict character tag coverage is enabled and will be validated after the build.",
+      "strictResolved": "{{covered}} / {{total}} selected character tags are covered in the final team."
+    },
+    "selectedCharacterNameSummary": {
+      "coverage": "{{covered}} / {{total}} selected character names covered across {{matchingSlots}} matching slots.",
+      "flexiblePending": "Character name coverage will be evaluated after the build.",
+      "noRequirement": "No character name requirement selected.",
+      "strictPending": "Strict character name coverage is enabled and will be validated after the build.",
+      "strictResolved": "{{covered}} / {{total}} selected character names are covered by distinct final slots."
+    },
     "teamSlots": {
       "noSnippet": "No readable captain or special text was parsed.",
       "roles": {
@@ -724,6 +782,8 @@
     "requirements": {
       "abilityCoverage": "ability coverage for {{abilities}}",
       "battleCoverage": "battle counter coverage for {{battles}}",
+      "characterNameCoverage": "team-wide character name coverage",
+      "characterTagCoverage": "team-wide character tag coverage",
       "classCoverage": "per-slot class coverage",
       "favoritesScope": " while keeping favorite-only auto-fill for open slots; non-favorite counters are not considered",
       "flexible": "No flexible team matched {{types}} while keeping {{requirements}}{{favoritesScope}}.",

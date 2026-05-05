@@ -1066,10 +1066,14 @@ export class UserStateService {
       | 'imageDataUrl'
       | 'selectedTypes'
       | 'selectedClasses'
+      | 'selectedCharacterTags'
+      | 'selectedCharacterNames'
       | 'requiredAbilities'
       | 'enemyMechanics'
       | 'requireAllSelectedTypesInTeam'
       | 'requireAllSelectedClassesPerCharacter'
+      | 'requireAllSelectedCharacterTagsInTeam'
+      | 'requireAllSelectedCharacterNamesInTeam'
     > &
       Partial<SavedEnemy>,
     existing?: SavedEnemy,
@@ -1098,12 +1102,22 @@ export class UserStateService {
         mapValue: (value) => value.toUpperCase(),
       }),
       selectedClasses: this.normalizeStringCollection(enemy.selectedClasses),
+      selectedCharacterTags: this.normalizeStringCollection(enemy.selectedCharacterTags ?? []),
+      selectedCharacterNames: this.normalizeStringCollection(enemy.selectedCharacterNames ?? [], {
+        mapValue: (value) => value.toLowerCase(),
+      }),
       requiredAbilities,
       requiredCharacterGroups,
       battleRequirements,
       enemyMechanics,
       requireAllSelectedTypesInTeam: Boolean(enemy.requireAllSelectedTypesInTeam),
       requireAllSelectedClassesPerCharacter: Boolean(enemy.requireAllSelectedClassesPerCharacter),
+      requireAllSelectedCharacterTagsInTeam: Boolean(
+        enemy.requireAllSelectedCharacterTagsInTeam,
+      ),
+      requireAllSelectedCharacterNamesInTeam: Boolean(
+        enemy.requireAllSelectedCharacterNamesInTeam,
+      ),
       createdAt: this.normalizeTimestamp(enemy.createdAt, existing?.createdAt ?? now),
       updatedAt: this.normalizeTimestamp(enemy.updatedAt, now),
     };

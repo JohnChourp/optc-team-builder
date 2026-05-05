@@ -11,6 +11,8 @@ import { type CharacterDetailRecord } from '../models/optc.models';
 import {
   buildAutoTeamResultFromPreparedContext,
   prepareAutoTeamBuildContext,
+  normalizeAutoBuildCharacterMatchKey,
+  resolveCharacterPartyConflictKeys,
   resolveCharacterTypeTokens,
   resolveUnsatisfiedSuperSpecialCriteriaCharacterNames,
   resolveUnsatisfiedSuperTandemCriteriaCharacterNames,
@@ -36,11 +38,13 @@ export interface AutoTeamBuildPlannedAttempt {
   allowedLeadersWithSuperEffects: boolean;
   droppedTypes: AutoTeamBuilderType[];
   droppedClasses: string[];
+  droppedCharacterTags: string[];
+  droppedCharacterNames: string[];
   ignoredLeaderSuperEffectScope: boolean;
   ignoredLeaderSuperSpecialCriteria: boolean;
 }
 
-type AutoTeamBuildDroppedFilterKind = 'type' | 'class';
+type AutoTeamBuildDroppedFilterKind = 'type' | 'class' | 'characterTag' | 'characterName';
 export type AutoTeamBuildFallbackAttemptCategory = 'meta' | 'single' | 'double' | 'subset';
 
 interface AutoTeamBuildFilterDropDescriptor {
@@ -56,8 +60,7 @@ interface AutoTeamBuildSubsetCandidate {
   droppedFilterIds: string[];
   droppedCount: number;
   droppedSupport: number;
-  remainingTypeCount: number;
-  remainingClassCount: number;
+  remainingFilterCount: number;
 }
 
 export interface AutoTeamBuildFallbackPlannerOptions {
@@ -507,6 +510,12 @@ export function runAutoTeamBuildAttempt(
       droppedClasses: requestedInput.selectedClasses.filter(
         (selectedClass) => !input.selectedClasses.includes(selectedClass),
       ),
+      droppedCharacterTags: (requestedInput.selectedCharacterTags ?? []).filter(
+        (selectedTag) => !(input.selectedCharacterTags ?? []).includes(selectedTag),
+      ),
+      droppedCharacterNames: (requestedInput.selectedCharacterNames ?? []).filter(
+        (selectedName) => !(input.selectedCharacterNames ?? []).includes(selectedName),
+      ),
       minimumLeaderSuperEffectMatchingSlots: input.minimumLeaderSuperEffectMatchingSlots,
       allowedLeadersWithSuperEffects,
       ...(requestedInput.requireFullCaptainAbilityCoverage &&
@@ -776,6 +785,8 @@ function buildZeroDropFallbackAttempts(
       allowedLeadersWithSuperEffects: true,
       droppedTypes: [],
       droppedClasses: [],
+      droppedCharacterTags: [],
+      droppedCharacterNames: [],
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
     });
@@ -791,6 +802,8 @@ function buildZeroDropFallbackAttempts(
       allowedLeadersWithSuperEffects: true,
       droppedTypes: [],
       droppedClasses: [],
+      droppedCharacterTags: [],
+      droppedCharacterNames: [],
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: true,
     });
@@ -806,6 +819,8 @@ function buildZeroDropFallbackAttempts(
       allowedLeadersWithSuperEffects: exactAttemptRequiresNoSuperLeaders,
       droppedTypes: [],
       droppedClasses: [],
+      droppedCharacterTags: [],
+      droppedCharacterNames: [],
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
     });
@@ -822,6 +837,8 @@ function buildZeroDropFallbackAttempts(
       allowedLeadersWithSuperEffects: true,
       droppedTypes: [],
       droppedClasses: [],
+      droppedCharacterTags: [],
+      droppedCharacterNames: [],
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: true,
     });
@@ -839,49 +856,50 @@ function buildSubsetCandidates(
   const supportByFilterId = new Map(
     filterDescriptors.map((descriptor) => [descriptor.id, descriptor.support] as const),
   );
-  const typeSubsets = shouldTreatSelectedTypesAsNeutral(requestedInput)
-    ? [baseInput.types]
-    : buildSubsets(baseInput.types, 1);
-  const classSubsets = shouldTreatSelectedClassesAsNeutral(requestedInput)
-    ? [baseInput.selectedClasses]
-    : buildSubsets(baseInput.selectedClasses, 0);
   const candidates: AutoTeamBuildSubsetCandidate[] = [];
+  const descriptorDropSubsets = buildDescriptorDropSubsets(filterDescriptors);
 
-  for (const types of typeSubsets) {
-    for (const selectedClasses of classSubsets) {
-      if (
-        sameOrderedValues(types, baseInput.types) &&
-        sameOrderedValues(selectedClasses, baseInput.selectedClasses)
-      ) {
-        continue;
-      }
+  for (const droppedFilterIds of descriptorDropSubsets) {
+    const droppedFilterIdSet = new Set(droppedFilterIds);
+    const nextTypes = requestedInput.types.filter(
+      (type) => !droppedFilterIdSet.has(buildDroppedFilterId('type', type)),
+    );
 
-      const droppedTypes = requestedInput.types.filter((type) => !types.includes(type));
-      const droppedClasses = requestedInput.selectedClasses.filter(
-        (selectedClass) => !selectedClasses.includes(selectedClass),
-      );
-      const droppedFilterIds = [
-        ...droppedTypes.map((type) => buildDroppedFilterId('type', type)),
-        ...droppedClasses.map((selectedClass) => buildDroppedFilterId('class', selectedClass)),
-      ];
-
-      if (droppedFilterIds.length === 0) {
-        continue;
-      }
-
-      candidates.push({
-        attempt: buildSubsetAttempt(requestedInput, baseInput, types, selectedClasses),
-        category: resolveSubsetAttemptCategory(droppedFilterIds.length),
-        droppedFilterIds,
-        droppedCount: droppedFilterIds.length,
-        droppedSupport: droppedFilterIds.reduce(
-          (sum, filterId) => sum + (supportByFilterId.get(filterId) ?? 0),
-          0,
-        ),
-        remainingTypeCount: types.length,
-        remainingClassCount: selectedClasses.length,
-      });
+    if (!nextTypes.length) {
+      continue;
     }
+
+    const nextClasses = requestedInput.selectedClasses.filter(
+      (selectedClass) => !droppedFilterIdSet.has(buildDroppedFilterId('class', selectedClass)),
+    );
+    const selectedCharacterTags = requestedInput.selectedCharacterTags ?? [];
+    const selectedCharacterNames = requestedInput.selectedCharacterNames ?? [];
+    const nextCharacterTags = selectedCharacterTags.filter(
+      (selectedTag) => !droppedFilterIdSet.has(buildDroppedFilterId('characterTag', selectedTag)),
+    );
+    const nextCharacterNames = selectedCharacterNames.filter(
+      (selectedName) => !droppedFilterIdSet.has(buildDroppedFilterId('characterName', selectedName)),
+    );
+
+    candidates.push({
+      attempt: buildSubsetAttempt(
+        requestedInput,
+        baseInput,
+        nextTypes,
+        nextClasses,
+        nextCharacterTags,
+        nextCharacterNames,
+      ),
+      category: resolveSubsetAttemptCategory(droppedFilterIds.length),
+      droppedFilterIds,
+      droppedCount: droppedFilterIds.length,
+      droppedSupport: droppedFilterIds.reduce(
+        (sum, filterId) => sum + (supportByFilterId.get(filterId) ?? 0),
+        0,
+      ),
+      remainingFilterCount:
+        nextTypes.length + nextClasses.length + nextCharacterTags.length + nextCharacterNames.length,
+    });
   }
 
   return dedupeSubsetCandidates(
@@ -890,12 +908,8 @@ function buildSubsetCandidates(
         return left.droppedCount - right.droppedCount;
       }
 
-      if (left.remainingTypeCount !== right.remainingTypeCount) {
-        return right.remainingTypeCount - left.remainingTypeCount;
-      }
-
-      if (left.remainingClassCount !== right.remainingClassCount) {
-        return right.remainingClassCount - left.remainingClassCount;
+      if (left.remainingFilterCount !== right.remainingFilterCount) {
+        return right.remainingFilterCount - left.remainingFilterCount;
       }
 
       if (left.droppedSupport !== right.droppedSupport) {
@@ -928,8 +942,31 @@ function buildSortedFilterDropDescriptors(
         value: selectedClass,
         support: resolveClassSupport(records, selectedClass),
       }));
+  const characterTagDescriptors: AutoTeamBuildFilterDropDescriptor[] =
+    (requestedInput.selectedCharacterTags ?? []).length > 0
+      ? (requestedInput.selectedCharacterTags ?? []).map((selectedTag) => ({
+          id: buildDroppedFilterId('characterTag', selectedTag),
+          kind: 'characterTag',
+          value: selectedTag,
+          support: resolveCharacterTagSupport(records, selectedTag),
+        }))
+      : [];
+  const characterNameDescriptors: AutoTeamBuildFilterDropDescriptor[] =
+    (requestedInput.selectedCharacterNames ?? []).length > 0
+      ? (requestedInput.selectedCharacterNames ?? []).map((selectedName) => ({
+          id: buildDroppedFilterId('characterName', selectedName),
+          kind: 'characterName',
+          value: selectedName,
+          support: resolveCharacterNameSupport(records, selectedName),
+        }))
+      : [];
 
-  return [...typeDescriptors, ...classDescriptors].sort(compareFilterDescriptors);
+  return [
+    ...typeDescriptors,
+    ...classDescriptors,
+    ...characterTagDescriptors,
+    ...characterNameDescriptors,
+  ].sort(compareFilterDescriptors);
 }
 
 function buildSubsetAttempt(
@@ -937,12 +974,16 @@ function buildSubsetAttempt(
   baseInput: AutoBuildInput,
   nextTypes: AutoTeamBuilderType[],
   nextClasses: string[],
+  nextCharacterTags: string[],
+  nextCharacterNames: string[],
 ): AutoTeamBuildPlannedAttempt {
   return {
     input: {
       ...requestedInput,
       types: nextTypes,
       selectedClasses: nextClasses,
+      selectedCharacterTags: nextCharacterTags,
+      selectedCharacterNames: nextCharacterNames,
       requireAllSlotsInLeaderSuperEffectScope: baseInput.requireAllSlotsInLeaderSuperEffectScope,
       minimumLeaderSuperEffectMatchingSlots: baseInput.minimumLeaderSuperEffectMatchingSlots,
       requireLeaderSuperSpecialCriteria: baseInput.requireLeaderSuperSpecialCriteria,
@@ -953,6 +994,12 @@ function buildSubsetAttempt(
     droppedTypes: requestedInput.types.filter((type) => !nextTypes.includes(type)),
     droppedClasses: requestedInput.selectedClasses.filter(
       (selectedClass) => !nextClasses.includes(selectedClass),
+    ),
+    droppedCharacterTags: (requestedInput.selectedCharacterTags ?? []).filter(
+      (selectedTag) => !nextCharacterTags.includes(selectedTag),
+    ),
+    droppedCharacterNames: (requestedInput.selectedCharacterNames ?? []).filter(
+      (selectedName) => !nextCharacterNames.includes(selectedName),
     ),
     ignoredLeaderSuperEffectScope:
       requestedInput.requireAllSlotsInLeaderSuperEffectScope &&
@@ -1003,14 +1050,13 @@ function resolveMaxScheduledFallbackAttemptCount(
 }
 
 function resolveTheoreticalSubsetTotalAttempts(input: AutoBuildInput): number {
-  const typeSubsetCount = shouldTreatSelectedTypesAsNeutral(input)
-    ? 1
-    : resolveBoundedSubsetCount(input.types.length, true);
-  const classSubsetCount = shouldTreatSelectedClassesAsNeutral(input)
-    ? 1
-    : resolveBoundedSubsetCount(input.selectedClasses.length, false);
+  const relaxedFilterCount =
+    (shouldTreatSelectedTypesAsNeutral(input) ? 0 : input.types.length) +
+    (shouldTreatSelectedClassesAsNeutral(input) ? 0 : input.selectedClasses.length) +
+    (input.selectedCharacterTags ?? []).length +
+    (input.selectedCharacterNames ?? []).length;
 
-  return multiplyWithCap(typeSubsetCount, classSubsetCount, MAX_DYNAMIC_TOTAL_ATTEMPTS);
+  return resolveBoundedSubsetCount(relaxedFilterCount, true);
 }
 
 function resolveBoundedSubsetCount(length: number, excludeEmptySubset: boolean): number {
@@ -1031,32 +1077,39 @@ function resolveBoundedSubsetCount(length: number, excludeEmptySubset: boolean):
   return Math.max(Math.min(total, MAX_DYNAMIC_TOTAL_ATTEMPTS) - 1, 0);
 }
 
-function multiplyWithCap(left: number, right: number, cap: number): number {
-  if (left === 0 || right === 0) {
-    return 0;
-  }
+function buildDescriptorDropSubsets(
+  descriptors: AutoTeamBuildFilterDropDescriptor[],
+): string[][] {
+  const subsets: string[][] = [];
 
-  if (left > Math.floor(cap / right)) {
-    return cap;
-  }
-
-  return left * right;
-}
-
-function buildSubsets<T>(values: T[], minLength: number): T[][] {
-  const subsets: T[][] = [];
-
-  for (let mask = 0; mask < 1 << values.length; mask += 1) {
-    const subset = values.filter((_, index) => (mask & (1 << index)) !== 0);
-
-    if (subset.length >= minLength) {
-      subsets.push(subset);
+  const visit = (index: number, selectedIds: string[]): void => {
+    if (subsets.length >= MAX_DYNAMIC_TOTAL_ATTEMPTS) {
+      return;
     }
-  }
+
+    if (index >= descriptors.length) {
+      if (selectedIds.length > 0) {
+        subsets.push([...selectedIds]);
+      }
+
+      return;
+    }
+
+    visit(index + 1, selectedIds);
+
+    if (subsets.length >= MAX_DYNAMIC_TOTAL_ATTEMPTS) {
+      return;
+    }
+
+    selectedIds.push(descriptors[index]!.id);
+    visit(index + 1, selectedIds);
+    selectedIds.pop();
+  };
+
+  visit(0, []);
 
   return subsets;
 }
-
 function buildDroppedFilterId(kind: AutoTeamBuildDroppedFilterKind, value: string): string {
   return `${kind}:${value}`;
 }
@@ -1070,10 +1123,23 @@ function compareFilterDescriptors(
   }
 
   if (left.kind !== right.kind) {
-    return left.kind === 'type' ? -1 : 1;
+    return resolveDroppedFilterKindOrder(left.kind) - resolveDroppedFilterKindOrder(right.kind);
   }
 
   return left.value.localeCompare(right.value);
+}
+
+function resolveDroppedFilterKindOrder(kind: AutoTeamBuildDroppedFilterKind): number {
+  switch (kind) {
+    case 'type':
+      return 0;
+    case 'class':
+      return 1;
+    case 'characterTag':
+      return 2;
+    case 'characterName':
+      return 3;
+  }
 }
 
 function dedupeFallbackAttempts(
@@ -1114,6 +1180,10 @@ function buildFallbackAttemptKey(attempt: AutoTeamBuildPlannedAttempt): string {
   return [
     attempt.input.types.join('|'),
     attempt.input.selectedClasses.join('|'),
+    (attempt.input.selectedCharacterTags ?? []).join('|'),
+    (attempt.input.selectedCharacterNames ?? []).join('|'),
+    attempt.input.requireAllSelectedCharacterTagsInTeam ? 'strict-tags' : 'relaxed-tags',
+    attempt.input.requireAllSelectedCharacterNamesInTeam ? 'strict-names' : 'relaxed-names',
     attempt.input.requireLeaderSuperSpecialCriteria ? '1' : '0',
     attempt.input.strictSuperSpecialCriteriaCoverage
       ? 'strict-super-special'
@@ -1135,7 +1205,10 @@ function buildFallbackAttemptKey(attempt: AutoTeamBuildPlannedAttempt): string {
 
 export function hasStrictAutoTeamBuildConstraints(input: AutoBuildInput): boolean {
   return Boolean(
-    input.requireAllSelectedTypesInTeam || input.requireAllSelectedClassesPerCharacter,
+    input.requireAllSelectedTypesInTeam ||
+      input.requireAllSelectedClassesPerCharacter ||
+      input.requireAllSelectedCharacterTagsInTeam ||
+      input.requireAllSelectedCharacterNamesInTeam,
   );
 }
 
@@ -1147,6 +1220,15 @@ function inputsMatch(left: AutoBuildInput, right: AutoBuildInput): boolean {
   return (
     sameOrderedValues(left.types, right.types) &&
     sameOrderedValues(left.selectedClasses, right.selectedClasses) &&
+    sameOrderedValues(left.selectedCharacterTags ?? [], right.selectedCharacterTags ?? []) &&
+    sameOrderedValues(left.selectedCharacterNames ?? [], right.selectedCharacterNames ?? []) &&
+    Boolean(left.requireAllSelectedTypesInTeam) === Boolean(right.requireAllSelectedTypesInTeam) &&
+    Boolean(left.requireAllSelectedClassesPerCharacter) ===
+      Boolean(right.requireAllSelectedClassesPerCharacter) &&
+    Boolean(left.requireAllSelectedCharacterTagsInTeam) ===
+      Boolean(right.requireAllSelectedCharacterTagsInTeam) &&
+    Boolean(left.requireAllSelectedCharacterNamesInTeam) ===
+      Boolean(right.requireAllSelectedCharacterNamesInTeam) &&
     left.requireAllSlotsInLeaderSuperEffectScope ===
       right.requireAllSlotsInLeaderSuperEffectScope &&
     left.requireFullCaptainAbilityCoverage === right.requireFullCaptainAbilityCoverage &&
@@ -1189,11 +1271,23 @@ export function satisfiesRequestedAutoTeamBuildCoverage(
       result.coverage.coversAllSelectedClasses) &&
     (shouldTreatSelectedTypesAsNeutral(result.requestedInput) ||
       result.coverage.coversAllSelectedTypes) &&
+    (shouldTreatSelectedCharacterTagsAsNeutral(result.requestedInput) ||
+      result.coverage.coversAllSelectedCharacterTags) &&
+    (shouldTreatSelectedCharacterNamesAsNeutral(result.requestedInput) ||
+      result.coverage.coversAllSelectedCharacterNames) &&
     result.coverage.abilityRequirements.matchesAll &&
     result.coverage.requiredCharacterGroups.matchesAll &&
     ((result.requestedInput.battleRequirements?.length ?? 0) === 0 ||
       result.coverage.battleRequirements?.matchesAll === true),
   );
+}
+
+function shouldTreatSelectedCharacterTagsAsNeutral(input: AutoBuildInput): boolean {
+  return (input.selectedCharacterTags ?? []).length === 0;
+}
+
+function shouldTreatSelectedCharacterNamesAsNeutral(input: AutoBuildInput): boolean {
+  return (input.selectedCharacterNames ?? []).length === 0;
 }
 
 function shouldTreatSelectedTypesAsNeutral(input: AutoBuildInput): boolean {
@@ -1225,6 +1319,49 @@ function resolveClassSupport(records: CharacterDetailRecord[], selectedClass: st
   return records.filter((record) =>
     record.classes.some((recordClass) => recordClass.toLowerCase() === normalizedSelectedClass),
   ).length;
+}
+
+function resolveCharacterTagSupport(records: CharacterDetailRecord[], selectedTag: string): number {
+  const normalizedSelectedTag = normalizeAutoBuildCharacterMatchKey(selectedTag);
+
+  return records.filter((record) =>
+    (record.detail.characterTags ?? []).some(
+      (tag) => normalizeAutoBuildCharacterMatchKey(tag) === normalizedSelectedTag,
+    ),
+  ).length;
+}
+
+function resolveCharacterNameSupport(records: CharacterDetailRecord[], selectedName: string): number {
+  const normalizedSelectedName = normalizeAutoBuildCharacterMatchKey(selectedName);
+
+  return records.filter((record) =>
+    resolveCharacterNameMatchKeys(record).some(
+      (key) => key === normalizedSelectedName || key.includes(normalizedSelectedName),
+    ),
+  ).length;
+}
+
+function resolveCharacterNameMatchKeys(record: CharacterDetailRecord): string[] {
+  return [
+    ...new Set(
+      [
+        record.name,
+        record.searchText ?? '',
+        record.primaryClass,
+        record.secondaryClass ?? '',
+        record.type,
+        ...record.classes,
+        ...(record.detail.characterTags ?? []),
+        ...resolveCharacterPartyConflictKeys(record),
+      ]
+        .flatMap((value) =>
+          String(value ?? '')
+            .split(',')
+            .map((entry) => normalizeAutoBuildCharacterMatchKey(entry)),
+        )
+        .filter((value) => value.length > 0),
+    ),
+  ];
 }
 
 function resolveTypeSupport(

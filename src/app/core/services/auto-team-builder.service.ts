@@ -202,6 +202,12 @@ export class AutoTeamBuilderService {
       constraints.strictSuperTandemCriteriaCoverage ?? false;
     const normalizedTypes = normalizeSelectedTypes(selectedTypes);
     const normalizedClasses: string[] = [];
+    const normalizedCharacterTags = this.normalizeSelectedTextFilters(
+      constraints.selectedCharacterTags,
+    );
+    const normalizedCharacterNames = this.normalizeSelectedTextFilters(
+      constraints.selectedCharacterNames,
+    );
 
     for (const currentClass of selectedClasses) {
       const nextClass = currentClass.trim();
@@ -275,9 +281,15 @@ export class AutoTeamBuilderService {
     const input: AutoBuildInput = {
       types: normalizedTypes.length > 0 ? normalizedTypes : [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
       selectedClasses: normalizedClasses,
+      selectedCharacterTags: normalizedCharacterTags,
+      selectedCharacterNames: normalizedCharacterNames,
       requireAllSelectedTypesInTeam: constraints.requireAllSelectedTypesInTeam ?? false,
       requireAllSelectedClassesPerCharacter:
         constraints.requireAllSelectedClassesPerCharacter ?? false,
+      requireAllSelectedCharacterTagsInTeam:
+        constraints.requireAllSelectedCharacterTagsInTeam ?? false,
+      requireAllSelectedCharacterNamesInTeam:
+        constraints.requireAllSelectedCharacterNamesInTeam ?? false,
       requireAllSlotsInLeaderSuperEffectScope,
       requireFullCaptainAbilityCoverage,
       requireBothLeadersFullCaptainAbilityCoverage,
@@ -316,6 +328,8 @@ export class AutoTeamBuilderService {
       ...input,
       types: [...input.types],
       selectedClasses: [...input.selectedClasses],
+      selectedCharacterTags: [...input.selectedCharacterTags],
+      selectedCharacterNames: [...input.selectedCharacterNames],
       requiredAbilities: input.requiredAbilities.map((requirement) => ({
         ...requirement,
         slotTokens: [...requirement.slotTokens],
@@ -1708,8 +1722,20 @@ export class AutoTeamBuilderService {
     const classSubsetCount = this.shouldTreatSelectedClassesAsNeutral(input)
       ? 1
       : this.resolveBoundedSubsetCount(input.selectedClasses.length, false);
+    const characterTagCount = (input.selectedCharacterTags ?? []).length;
+    const characterNameCount = (input.selectedCharacterNames ?? []).length;
+    const characterTagSubsetCount = characterTagCount
+      ? this.resolveBoundedSubsetCount(characterTagCount, false)
+      : 1;
+    const characterNameSubsetCount = characterNameCount
+      ? this.resolveBoundedSubsetCount(characterNameCount, false)
+      : 1;
 
-    return this.multiplyWithCap(typeSubsetCount, classSubsetCount, MAX_DYNAMIC_TOTAL_ATTEMPTS);
+    return [typeSubsetCount, classSubsetCount, characterTagSubsetCount, characterNameSubsetCount]
+      .reduce(
+        (total, current) => this.multiplyWithCap(total, current, MAX_DYNAMIC_TOTAL_ATTEMPTS),
+        1,
+      );
   }
 
   private shouldTreatSelectedTypesAsNeutral(input: AutoBuildInput): boolean {
@@ -1864,8 +1890,14 @@ export class AutoTeamBuilderService {
     return {
       types: [...AUTO_TEAM_BUILDER_TYPES],
       selectedClasses: [],
+      selectedCharacterTags: this.normalizeSelectedTextFilters(rosterInput.selectedCharacterTags),
+      selectedCharacterNames: this.normalizeSelectedTextFilters(rosterInput.selectedCharacterNames),
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
+      requireAllSelectedCharacterTagsInTeam:
+        rosterInput.requireAllSelectedCharacterTagsInTeam ?? false,
+      requireAllSelectedCharacterNamesInTeam:
+        rosterInput.requireAllSelectedCharacterNamesInTeam ?? false,
       requireAllSlotsInLeaderSuperEffectScope,
       requireFullCaptainAbilityCoverage: rosterInput.requireFullCaptainAbilityCoverage ?? false,
       requireBothLeadersFullCaptainAbilityCoverage:
@@ -2035,6 +2067,25 @@ export class AutoTeamBuilderService {
           .filter((characterId): characterId is number => characterId !== null),
       ),
     ];
+  }
+
+  private normalizeSelectedTextFilters(values: string[] | undefined): string[] {
+    const normalizedValues: string[] = [];
+
+    for (const value of values ?? []) {
+      const normalizedValue = String(value ?? '').trim().replace(/\s+/g, ' ');
+
+      if (
+        normalizedValue.length === 0 ||
+        normalizedValues.some((entry) => entry.toLowerCase() === normalizedValue.toLowerCase())
+      ) {
+        continue;
+      }
+
+      normalizedValues.push(normalizedValue);
+    }
+
+    return normalizedValues;
   }
 
   private resolveAutoFillCharacterIds(

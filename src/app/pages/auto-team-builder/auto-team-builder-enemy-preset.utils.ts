@@ -26,6 +26,8 @@ export function buildAutoTeamBuilderStateFromSavedEnemy(
       availableTypes.has(type as AutoTeamBuilderType),
     ),
     selectedClasses: [...enemy.selectedClasses],
+    selectedCharacterTags: [...(enemy.selectedCharacterTags ?? [])],
+    selectedCharacterNames: [...(enemy.selectedCharacterNames ?? [])],
     requiredAbilities: enemy.requiredAbilities.map((requirement) => ({
       ...requirement,
       slotTokens: [...requirement.slotTokens],
@@ -55,6 +57,8 @@ export function buildAutoTeamBuilderStateFromSavedEnemy(
     })),
     requireAllSelectedTypesInTeam: enemy.requireAllSelectedTypesInTeam,
     requireAllSelectedClassesPerCharacter: enemy.requireAllSelectedClassesPerCharacter,
+    requireAllSelectedCharacterTagsInTeam: enemy.requireAllSelectedCharacterTagsInTeam === true,
+    requireAllSelectedCharacterNamesInTeam: enemy.requireAllSelectedCharacterNamesInTeam === true,
     requireAllSlotsInLeaderSuperEffectScope: false,
     requireFullCaptainAbilityCoverage: false,
     requireBothLeadersFullCaptainAbilityCoverage: false,

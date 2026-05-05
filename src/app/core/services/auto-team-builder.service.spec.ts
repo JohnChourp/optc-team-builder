@@ -4471,6 +4471,116 @@ describe('Auto team builder', () => {
     expect(result).toBeNull();
   });
 
+  it('covers strict character tag requirements with one slot matching multiple tags', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 7101,
+          name: 'Tagged Utility',
+          primaryClass: 'Fighter',
+          detail: {
+            characterTags: ['Straw Hat Pirates', 'Driven'],
+            specialText: 'Reduces Bind duration by 5 turns.',
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        selectedCharacterTags: ['Straw Hat Pirates', 'Driven'],
+        requireAllSelectedCharacterTagsInTeam: true,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.coveredSelectedCharacterTags).toEqual([
+      'Straw Hat Pirates',
+      'Driven',
+    ]);
+    expect(result?.coverage.coversAllSelectedCharacterTags).toBe(true);
+  });
+
+  it('fails strict character tag coverage when a selected tag cannot be covered', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        selectedCharacterTags: ['Minks'],
+        requireAllSelectedCharacterTagsInTeam: true,
+      }),
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('requires selected character names to be covered by distinct final slots', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 7110,
+          name: 'Monkey D. Luffy & Roronoa Zoro',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.25x.',
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        selectedCharacterNames: ['luffy', 'zoro'],
+        requireAllSelectedCharacterNamesInTeam: true,
+      }),
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('fuzzy-matches selected character names against final team variants', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 7121,
+          name: 'Roronoa Zoro, King of Hell',
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts ATK of Fighter characters by 2.5x for 1 turn.',
+          },
+        }),
+        createCharacterRecord({
+          id: 7122,
+          name: 'Monkey D. Luffy Gear 5',
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Boosts orb effects of Fighter characters by 2.25x for 1 turn.',
+          },
+        }),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        selectedCharacterNames: ['zoro', 'luffy'],
+        requireAllSelectedCharacterNamesInTeam: true,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.coveredSelectedCharacterNames).toEqual(['zoro', 'luffy']);
+    expect(result?.coverage.coversAllSelectedCharacterNames).toBe(true);
+  });
+
   it('builds a team only when every chosen unit has all selected classes in strict class mode', () => {
     const result = buildAutoTeamResult(createAllClassStrictTeamRecords(), {
       ...createInput(['DEX'], ['Fighter', 'Slasher']),
@@ -5960,6 +6070,8 @@ describe('Auto team builder', () => {
       usedFallback: false,
       droppedTypes: [],
       droppedClasses: [],
+      droppedCharacterTags: [],
+      droppedCharacterNames: [],
       minimumLeaderSuperEffectMatchingSlots: null,
       allowedLeadersWithSuperEffects: false,
       ignoredLeaderSuperEffectScope: false,
@@ -6001,6 +6113,8 @@ describe('Auto team builder', () => {
       usedFallback: true,
       droppedTypes: [],
       droppedClasses: [],
+      droppedCharacterTags: [],
+      droppedCharacterNames: [],
       minimumLeaderSuperEffectMatchingSlots: null,
       allowedLeadersWithSuperEffects: true,
       ignoredLeaderSuperEffectScope: false,
@@ -6220,6 +6334,8 @@ describe('Auto team builder', () => {
       usedFallback: true,
       droppedTypes: [],
       droppedClasses: ['Shooter'],
+      droppedCharacterTags: [],
+      droppedCharacterNames: [],
       minimumLeaderSuperEffectMatchingSlots: null,
       allowedLeadersWithSuperEffects: true,
       ignoredLeaderSuperEffectScope: false,
@@ -6259,12 +6375,34 @@ describe('Auto team builder', () => {
       usedFallback: true,
       droppedTypes: ['INT'],
       droppedClasses: [],
+      droppedCharacterTags: [],
+      droppedCharacterNames: [],
       minimumLeaderSuperEffectMatchingSlots: null,
       allowedLeadersWithSuperEffects: true,
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: true,
       ignoredSuperTandemCriteria: false,
     });
+  });
+
+  it('drops relaxed character tag and name filters when fallback needs to recover a team', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      selectedCharacterTags: ['Minks'],
+      selectedCharacterNames: ['zoro'],
+      requireFullCaptainAbilityCoverage: false,
+      requireSuperTandemCriteria: false,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.input.selectedCharacterTags).toEqual([]);
+    expect(result?.input.selectedCharacterNames).toEqual([]);
+    expect(result?.relaxation.droppedCharacterTags).toEqual(['Minks']);
+    expect(result?.relaxation.droppedCharacterNames).toEqual(['zoro']);
   });
 
   it('does not relax filters when any strict toggle is enabled', async () => {
@@ -8208,6 +8346,10 @@ function createInput(
       AutoBuildInput,
       | 'requireAllSelectedTypesInTeam'
       | 'requireAllSelectedClassesPerCharacter'
+      | 'selectedCharacterTags'
+      | 'selectedCharacterNames'
+      | 'requireAllSelectedCharacterTagsInTeam'
+      | 'requireAllSelectedCharacterNamesInTeam'
       | 'requireAllSlotsInLeaderSuperEffectScope'
       | 'requireFullCaptainAbilityCoverage'
       | 'requireBothLeadersFullCaptainAbilityCoverage'
@@ -8240,6 +8382,10 @@ function createInput(
   > = {
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
+    selectedCharacterTags: [],
+    selectedCharacterNames: [],
+    requireAllSelectedCharacterTagsInTeam: false,
+    requireAllSelectedCharacterNamesInTeam: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
     requireFullCaptainAbilityCoverage: false,
     requireBothLeadersFullCaptainAbilityCoverage: false,
@@ -8273,12 +8419,18 @@ function createInput(
   return {
     types,
     selectedClasses,
+    selectedCharacterTags: overrides.selectedCharacterTags ?? [],
+    selectedCharacterNames: overrides.selectedCharacterNames ?? [],
     requiredAbilities: overrides.requiredAbilities ?? [],
     requiredCharacterGroups: overrides.requiredCharacterGroups ?? [],
     battleRequirements: overrides.battleRequirements ?? [],
     enemyMechanics: [],
     requireAllSelectedTypesInTeam: overrides.requireAllSelectedTypesInTeam ?? false,
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
+    requireAllSelectedCharacterTagsInTeam:
+      overrides.requireAllSelectedCharacterTagsInTeam ?? false,
+    requireAllSelectedCharacterNamesInTeam:
+      overrides.requireAllSelectedCharacterNamesInTeam ?? false,
     requireAllSlotsInLeaderSuperEffectScope:
       overrides.requireAllSlotsInLeaderSuperEffectScope ?? false,
     requireFullCaptainAbilityCoverage: overrides.requireFullCaptainAbilityCoverage ?? false,

@@ -86,8 +86,12 @@ export function createEmptyAutoBuildManualSlots(): AutoBuildManualSlotSelection[
 }
 
 export interface AutoBuildConstraints {
+  selectedCharacterTags?: string[];
+  selectedCharacterNames?: string[];
   requireAllSelectedTypesInTeam?: boolean;
   requireAllSelectedClassesPerCharacter?: boolean;
+  requireAllSelectedCharacterTagsInTeam?: boolean;
+  requireAllSelectedCharacterNamesInTeam?: boolean;
   requireAllSlotsInLeaderSuperEffectScope?: boolean;
   requireFullCaptainAbilityCoverage?: boolean;
   requireBothLeadersFullCaptainAbilityCoverage?: boolean;
@@ -153,6 +157,10 @@ export type AutoBuildUtilityRole =
 export interface AutoBuildInput extends AutoBuildConstraints {
   types: AutoTeamBuilderType[];
   selectedClasses: string[];
+  selectedCharacterTags: string[];
+  selectedCharacterNames: string[];
+  requireAllSelectedCharacterTagsInTeam: boolean;
+  requireAllSelectedCharacterNamesInTeam: boolean;
   requireLeaderSuperSpecialCriteria: boolean;
   requireAllSlotsInLeaderSuperEffectScope: boolean;
   requireFullCaptainAbilityCoverage: boolean;
@@ -292,6 +300,8 @@ export interface AutoBuildCandidate {
   matchesAllSelectedClasses: boolean;
   matchedSelectedClasses: string[];
   matchedSelectedTypes: AutoTeamBuilderType[];
+  matchedSelectedCharacterTags: string[];
+  matchedSelectedCharacterNames: string[];
   tags: AutoBuildEffectTags;
   reasonChips: string[];
   recencyScore: number;
@@ -328,16 +338,24 @@ export interface AutoBuildCoverageSummary {
   utility: string[];
   coveredSelectedClasses: string[];
   coveredSelectedTypes: AutoTeamBuilderType[];
+  coveredSelectedCharacterTags: string[];
+  coveredSelectedCharacterNames: string[];
   coversAllSelectedClasses: boolean;
   coversAllSelectedTypes: boolean;
+  coversAllSelectedCharacterTags: boolean;
+  coversAllSelectedCharacterNames: boolean;
   selectedClassMatches: number;
   selectedTypeMatches: number;
+  selectedCharacterTagMatches: number;
+  selectedCharacterNameMatches: number;
 }
 
 export interface AutoBuildRelaxationSummary {
   usedFallback: boolean;
   droppedTypes: AutoTeamBuilderType[];
   droppedClasses: string[];
+  droppedCharacterTags: string[];
+  droppedCharacterNames: string[];
   minimumLeaderSuperEffectMatchingSlots: number | null;
   allowedLeadersWithSuperEffects: boolean;
   ignoredLeaderSuperEffectScope: boolean;

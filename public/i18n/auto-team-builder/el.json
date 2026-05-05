@@ -11,6 +11,8 @@
     "strictModes": {
       "typeCoverage": "κάλυψη types στην ομάδα",
       "perCharacterClasses": "match classes σε κάθε slot",
+      "characterTags": "κάλυψη character tags στην ομάδα",
+      "characterNames": "υποχρεωτικά character names",
       "leaderSuperEffectScope": "match στο leader super effect scope",
       "captainAbilityCoverage": "πλήρες captain ability coverage",
       "bothLeadersCaptainCoverage": "captain ability coverage και από τους δύο leaders",
@@ -59,6 +61,40 @@
       "support": {
         "strict": "Κάθε χαρακτήρας της τελικής ομάδας πρέπει να ταιριάζει σε όλα τα selected classes.",
         "flexible": "Τα selected classes καθοδηγούν το captain scope και το weighting χωρίς να μπλοκάρουν το fallback."
+      }
+    },
+    "characterTags": {
+      "label": "Character Tags",
+      "placeholder": "Επίλεξε character tags",
+      "toggle": "Απαίτησε τα selected tags στην ομάδα",
+      "support": {
+        "strict": "Κάθε selected character tag πρέπει να εμφανίζεται κάπου στην τελική ομάδα. Ένας χαρακτήρας μπορεί να καλύψει πολλά tags.",
+        "flexible": "Τα selected character tags είναι πρώτα preferences και μπορούν να χαλαρώσουν στο fallback."
+      }
+    },
+    "characterNames": {
+      "label": "Character Names",
+      "placeholder": "Γράψε όνομα, π.χ. zoro",
+      "add": "Προσθήκη",
+      "toggle": "Απαίτησε τα selected names στην ομάδα",
+      "support": {
+        "strict": "Κάθε selected name πρέπει να καλυφθεί από ξεχωριστό final team slot.",
+        "flexible": "Τα selected names προτιμώνται με fuzzy matching, αλλά μπορούν να χαλαρώσουν στο fallback."
+      }
+    },
+    "characterRequirements": {
+      "actions": {
+        "open": "Χρήση ability requirements",
+        "apply": "Εφαρμογή"
+      },
+      "modal": {
+        "eyebrow": "Requirement sources",
+        "title": "Επίλεξε requirement source",
+        "copy": "Εμφανίζονται μόνο χαρακτήρες με extractable Captain, Full Coverage, Super Special ή Super Tandem roster requirements.",
+        "support": "Η εφαρμογή αντιγράφει τα ability-derived required tags και names στα relaxed filters.",
+        "searchPlaceholder": "Αναζήτηση source χαρακτήρων",
+        "count": "{{count}} source χαρακτήρες",
+        "empty": "Δεν βρέθηκαν source χαρακτήρες με extractable roster requirements για αυτή την αναζήτηση."
       }
     },
     "uniqueNames": {
@@ -578,6 +614,8 @@
     "copy": "Τα πάνω filters έμειναν όπως τα διάλεξες. Η ομάδα χτίστηκε αφού αγνοήθηκαν μόνο τα παρακάτω requirements.",
     "allowedLeadersWithSuperEffects": "Επιτράπηκαν leaders με super effects",
     "droppedClasses": "Dropped classes",
+    "droppedCharacterNames": "Dropped character names",
+    "droppedCharacterTags": "Dropped character tags",
     "droppedTypes": "Dropped types",
     "ignoredLeaderSuperSpecialCriteria": "Αγνόησε τα Super Special criteria",
     "ignoredSuperSpecialCriteria": "Το Super Special δεν θα ενεργοποιηθεί για το final team.",
@@ -590,9 +628,13 @@
     "burstCoverage": "Burst coverage",
     "candidatePool": "Candidate pool",
     "effectiveClasses": "Effective: {{value}}",
+    "effectiveCharacterNames": "Effective: {{value}}",
+    "effectiveCharacterTags": "Effective: {{value}}",
     "effectiveTypes": "Effective: {{value}}",
     "noBurstTags": "No burst tags",
     "requestedClasses": "Requested classes",
+    "requestedCharacterNames": "Requested character names",
+    "requestedCharacterTags": "Requested character tags",
     "requestedTypes": "Requested types"
   },
   "save": {
@@ -612,6 +654,8 @@
       "abilityRequirements": "Ability requirements",
       "burst": "Burst",
       "captainAbilityCoverage": "Captain Ability coverage",
+      "characterNameRequest": "Character name request",
+      "characterTagRequest": "Character tag request",
       "classCoverage": "Class coverage",
       "classRequest": "Class request",
       "consistency": "Consistency",
@@ -678,6 +722,20 @@
       "strictPending": "Το strict type coverage είναι ενεργό και θα ελεγχθεί μετά το build.",
       "strictResolved": "{{covered}} / {{total}} selected types καλύπτονται στην τελική ομάδα."
     },
+    "selectedCharacterTagSummary": {
+      "coverage": "{{covered}} / {{total}} selected character tags καλύφθηκαν σε {{matchingSlots}} matching slots.",
+      "flexiblePending": "Το character tag coverage θα αξιολογηθεί μετά το build.",
+      "noRequirement": "Δεν υπάρχει character tag requirement.",
+      "strictPending": "Το strict character tag coverage είναι ενεργό και θα ελεγχθεί μετά το build.",
+      "strictResolved": "{{covered}} / {{total}} selected character tags καλύπτονται στην τελική ομάδα."
+    },
+    "selectedCharacterNameSummary": {
+      "coverage": "{{covered}} / {{total}} selected character names καλύφθηκαν σε {{matchingSlots}} matching slots.",
+      "flexiblePending": "Το character name coverage θα αξιολογηθεί μετά το build.",
+      "noRequirement": "Δεν υπάρχει character name requirement.",
+      "strictPending": "Το strict character name coverage είναι ενεργό και θα ελεγχθεί μετά το build.",
+      "strictResolved": "{{covered}} / {{total}} selected character names καλύπτονται από ξεχωριστά final slots."
+    },
     "teamSlots": {
       "noSnippet": "Δεν βρέθηκε readable captain ή special text.",
       "roles": {
@@ -724,6 +782,8 @@
     "requirements": {
       "abilityCoverage": "ability coverage για {{abilities}}",
       "battleCoverage": "battle counter coverage για {{battles}}",
+      "characterNameCoverage": "κάλυψη character names στην ομάδα",
+      "characterTagCoverage": "κάλυψη character tags στην ομάδα",
       "classCoverage": "class coverage σε κάθε slot",
       "favoritesScope": " κρατώντας favorite-only auto-fill για τα ανοιχτά slots· non-favorite counters δεν εξετάζονται",
       "flexible": "Δεν βρέθηκε flexible ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",

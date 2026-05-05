@@ -105,6 +105,66 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
+  it('passes selected character tag and name filters to the builder service', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.selectedCharacterTags.set(['Straw Hat Pirates']);
+    page.selectedCharacterNames.set(['zoro', 'luffy']);
+    page.requireAllSelectedCharacterTagsInTeam.set(true);
+    page.requireAllSelectedCharacterNamesInTeam.set(true);
+
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({
+        selectedCharacterTags: ['Straw Hat Pirates'],
+        selectedCharacterNames: ['zoro', 'luffy'],
+        requireAllSelectedCharacterTagsInTeam: true,
+        requireAllSelectedCharacterNamesInTeam: true,
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it('applies ability-derived requirement source tags and names from the modal', async () => {
+    const { page, repository } = await createPage();
+    const source = createCharacterRecord(990, 'Requirement Source');
+
+    source.detail.superSpecialCriteria = {
+      rawText: 'Any 2 of [Straw Hat Pirates] or Roronoa Zoro',
+      requiresCaptain: false,
+      hasNonRosterBranches: false,
+      parserStatus: 'roster_only',
+      rosterBranches: [
+        {
+          branchType: 'character_count_any',
+          requiredCount: 2,
+          matchMode: 'any_candidate',
+          options: [
+            { label: '[Straw Hat Pirates]', acceptedKeys: ['straw hat pirates'] },
+            { label: 'Roronoa Zoro', acceptedKeys: ['roronoa zoro'] },
+          ],
+        },
+      ],
+    };
+    repository.searchDetailedCharacters.mockResolvedValue([source]);
+
+    await page.ngOnInit();
+    await page.openRequirementSourceModal();
+
+    expect(page.requirementSourceCandidateCards()).toHaveLength(1);
+    page.applyRequirementSourceCharacter(source);
+
+    expect(page.selectedCharacterTags()).toEqual(['Straw Hat Pirates']);
+    expect(page.selectedCharacterNames()).toEqual(['roronoa zoro']);
+    expect(page.requirementSourceModalOpen()).toBe(false);
+  });
+
   it('passes the selected leader boost filters to the builder and restores empty selections', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
@@ -2405,8 +2465,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain("'common.actions.reset' | transloco");
     expect(template).not.toContain('common.actions.viewDetails');
     expect(template).not.toContain('detail-link-button');
-    expect(template.match(/class="character-detail-thumb-link/g)).toHaveLength(4);
-    expect(template.match(/class="character-detail-name-link/g)).toHaveLength(4);
+    expect(template.match(/class="character-detail-thumb-link/g)).toHaveLength(5);
+    expect(template.match(/class="character-detail-name-link/g)).toHaveLength(5);
     expect(template).toContain('[routerLink]="getCharacterDetailLink(candidateCard.character)"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(slot.character)"');
     expect(template).toContain('(click)="saveTeam()"');
@@ -2681,6 +2741,10 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     await page.ngOnInit();
     page.selectedTypes.set(['DEX']);
     page.selectedClasses.set(['Fighter']);
+    page.selectedCharacterTags.set(['Straw Hat Pirates']);
+    page.selectedCharacterNames.set(['zoro']);
+    page.requireAllSelectedCharacterTagsInTeam.set(true);
+    page.requireAllSelectedCharacterNamesInTeam.set(true);
     page.enemyMechanicDrafts.set([
       {
         draftId: 'barrier-1',
@@ -2736,6 +2800,10 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
     expect(page.selectedTypes()).toEqual([...page.availableTypes]);
     expect(page.selectedClasses()).toEqual([...page.availableClasses()]);
+    expect(page.selectedCharacterTags()).toEqual([]);
+    expect(page.selectedCharacterNames()).toEqual([]);
+    expect(page.requireAllSelectedCharacterTagsInTeam()).toBe(false);
+    expect(page.requireAllSelectedCharacterNamesInTeam()).toBe(false);
     expect(page.enemyMechanicDrafts()).toEqual([]);
     expect(page.requiredAbilityDrafts()).toEqual([]);
     expect(page.manualSlots()).toEqual(createManualSlots());
@@ -4173,13 +4241,15 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 29,
+      schemaVersion: 30,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
       filters: {
         selectedTypes: ['DEX', 'PSY'],
         selectedClasses: ['Fighter', 'Slasher'],
+        selectedCharacterTags: [],
+        selectedCharacterNames: [],
         requiredAbilities: [
           {
             abilityKey: 'remove_bind',
@@ -4192,6 +4262,8 @@ describe('AutoTeamBuilderPage preset export state', () => {
         enemyMechanics: [],
         requireAllSelectedTypesInTeam: true,
         requireAllSelectedClassesPerCharacter: true,
+        requireAllSelectedCharacterTagsInTeam: false,
+        requireAllSelectedCharacterNamesInTeam: false,
         requireAllSlotsInLeaderSuperEffectScope: true,
         requireFullCaptainAbilityCoverage: true,
         requireBothLeadersFullCaptainAbilityCoverage: true,
@@ -4252,11 +4324,15 @@ describe('AutoTeamBuilder preset export helpers', () => {
     const payload = buildAutoTeamSelectionExportPayload({
       selectedTypes: ['DEX', 'PSY'],
       selectedClasses: ['Fighter', 'Slasher'],
+      selectedCharacterTags: [],
+      selectedCharacterNames: [],
       requiredAbilities: [],
       requiredCharacterGroups: [],
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
+      requireAllSelectedCharacterTagsInTeam: false,
+      requireAllSelectedCharacterNamesInTeam: false,
       requireAllSlotsInLeaderSuperEffectScope: false,
       requireFullCaptainAbilityCoverage: false,
       requireBothLeadersFullCaptainAbilityCoverage: false,
@@ -4281,11 +4357,15 @@ describe('AutoTeamBuilder preset export helpers', () => {
     expect(payload.filters).toEqual({
       selectedTypes: ['DEX', 'PSY'],
       selectedClasses: ['Fighter', 'Slasher'],
+      selectedCharacterTags: [],
+      selectedCharacterNames: [],
       requiredAbilities: [],
       requiredCharacterGroups: [],
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: true,
       requireAllSelectedClassesPerCharacter: false,
+      requireAllSelectedCharacterTagsInTeam: false,
+      requireAllSelectedCharacterNamesInTeam: false,
       requireAllSlotsInLeaderSuperEffectScope: false,
       requireFullCaptainAbilityCoverage: false,
       requireBothLeadersFullCaptainAbilityCoverage: false,
@@ -4316,6 +4396,87 @@ describe('AutoTeamBuilder preset export helpers', () => {
         leaderAssignment: 'friendCaptain',
       }),
     ]);
+  });
+
+  it('round-trips character tag and name filters through preset export/import', () => {
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      selectedCharacterTags: ['Straw Hat Pirates'],
+      selectedCharacterNames: ['Zoro', 'luffy'],
+      requiredAbilities: [],
+      requiredCharacterGroups: [],
+      enemyMechanics: [],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSelectedCharacterTagsInTeam: true,
+      requireAllSelectedCharacterNamesInTeam: true,
+      requireAllSlotsInLeaderSuperEffectScope: false,
+      requireUniqueBaseCharacterNames: true,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      manualSlots: createManualSlots(),
+      lockedCharacterIds: [],
+      lockedCharacters: [],
+      selectedLeaderIds: [],
+      captainLeaderId: null,
+      friendCaptainLeaderId: null,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+    const result = sanitizeAutoTeamSelectionImportPayload(payload, {
+      availableTypes: ['DEX', 'PSY'],
+      availableClasses: ['Fighter'],
+      abilityCatalogItems: [],
+      availableLockedCharacters: [],
+    });
+
+    expect(payload.schemaVersion).toBe(30);
+    expect(payload.filters.selectedCharacterTags).toEqual(['Straw Hat Pirates']);
+    expect(payload.filters.selectedCharacterNames).toEqual(['zoro', 'luffy']);
+    expect(result.state.selectedCharacterTags).toEqual(['Straw Hat Pirates']);
+    expect(result.state.selectedCharacterNames).toEqual(['zoro', 'luffy']);
+    expect(result.state.requireAllSelectedCharacterTagsInTeam).toBe(true);
+    expect(result.state.requireAllSelectedCharacterNamesInTeam).toBe(true);
+  });
+
+  it('defaults missing character tag and name preset fields for legacy imports', () => {
+    const legacyPayload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [],
+      requiredCharacterGroups: [],
+      enemyMechanics: [],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
+      requireUniqueBaseCharacterNames: true,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      manualSlots: createManualSlots(),
+      lockedCharacterIds: [],
+      lockedCharacters: [],
+      selectedLeaderIds: [],
+      captainLeaderId: null,
+      friendCaptainLeaderId: null,
+    });
+
+    legacyPayload.schemaVersion = 29;
+    delete legacyPayload.filters.selectedCharacterTags;
+    delete legacyPayload.filters.selectedCharacterNames;
+    delete legacyPayload.filters.requireAllSelectedCharacterTagsInTeam;
+    delete legacyPayload.filters.requireAllSelectedCharacterNamesInTeam;
+
+    const result = sanitizeAutoTeamSelectionImportPayload(legacyPayload, {
+      availableTypes: ['DEX', 'PSY'],
+      availableClasses: ['Fighter'],
+      abilityCatalogItems: [],
+      availableLockedCharacters: [],
+    });
+
+    expect(result.state.selectedCharacterTags).toEqual([]);
+    expect(result.state.selectedCharacterNames).toEqual([]);
+    expect(result.state.requireAllSelectedCharacterTagsInTeam).toBe(false);
+    expect(result.state.requireAllSelectedCharacterNamesInTeam).toBe(false);
   });
 
   it('marks a single selected leader as dual in the preset snapshot', () => {
@@ -4385,7 +4546,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       exportedAt: '2026-03-25T10:00:00.000Z',
     });
 
-    expect(payload.schemaVersion).toBe(29);
+    expect(payload.schemaVersion).toBe(30);
     expect(payload.filters.leaderBoostRanges).toEqual({
       ATK: { min: 5, max: 6 },
       HP: { min: 1.25, max: 1.5 },
@@ -4883,7 +5044,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       availableLockedCharacters: [createCharacterRecord(101)],
     });
 
-    expect(payload.schemaVersion).toBe(29);
+    expect(payload.schemaVersion).toBe(30);
     expect(result.state.requiredAbilities).toEqual([
       {
         abilityKey: 'remove_bind',
@@ -6059,11 +6220,15 @@ function createAutoBuildResult(
   const input: AutoBuildResult['input'] = {
     types: ['DEX', 'PSY'],
     selectedClasses: ['Fighter', 'Slasher'],
+    selectedCharacterTags: [],
+    selectedCharacterNames: [],
     requiredAbilities: [],
     requiredCharacterGroups: [],
     enemyMechanics: [],
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
+    requireAllSelectedCharacterTagsInTeam: false,
+    requireAllSelectedCharacterNamesInTeam: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
     requireFullCaptainAbilityCoverage: false,
     requireBothLeadersFullCaptainAbilityCoverage: false,
@@ -6139,6 +6304,8 @@ function createAutoBuildResult(
       usedFallback: false,
       droppedTypes: [],
       droppedClasses: [],
+      droppedCharacterTags: [],
+      droppedCharacterNames: [],
       minimumLeaderSuperEffectMatchingSlots: null,
       allowedLeadersWithSuperEffects: false,
       ignoredLeaderSuperEffectScope: false,
@@ -6186,10 +6353,16 @@ function createAutoBuildResult(
       utility: ['Bind clear'],
       coveredSelectedClasses: ['Fighter', 'Slasher'],
       coveredSelectedTypes: ['DEX', 'PSY'],
+      coveredSelectedCharacterTags: [],
+      coveredSelectedCharacterNames: [],
       coversAllSelectedClasses: true,
       coversAllSelectedTypes: true,
+      coversAllSelectedCharacterTags: true,
+      coversAllSelectedCharacterNames: true,
       selectedClassMatches: 6,
       selectedTypeMatches: 6,
+      selectedCharacterTagMatches: 0,
+      selectedCharacterNameMatches: 0,
     },
     slots,
   };
@@ -6203,6 +6376,7 @@ async function createPage(
     getDatasetManifest: ReturnType<typeof vi.fn>;
     getAutoBuilderAbilityCatalog: ReturnType<typeof vi.fn>;
     getAutoBuilderCandidates: ReturnType<typeof vi.fn>;
+    getAvailableCharacterTags: ReturnType<typeof vi.fn>;
     getShips: ReturnType<typeof vi.fn>;
     getCharactersByIds: ReturnType<typeof vi.fn>;
     searchDetailedCharacters: ReturnType<typeof vi.fn>;
@@ -6325,6 +6499,9 @@ async function createPage(
       ],
     }),
     getAutoBuilderCandidates: vi.fn().mockResolvedValue([]),
+    getAvailableCharacterTags: vi
+      .fn()
+      .mockResolvedValue(['Straw Hat Pirates', 'Minks', 'Worst Generation']),
     getShips: vi.fn().mockResolvedValue([createShipRecord(9001), createShipRecord(9002)]),
     getCharactersByIds: vi
       .fn()

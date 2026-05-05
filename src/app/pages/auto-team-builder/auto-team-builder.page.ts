@@ -165,6 +165,10 @@ import {
   MAX_AUTO_BUILD_BATTLE_COUNT,
   normalizeBattleRequirementsWithLegacyFallback,
 } from '../../core/services/auto-team-builder-battle.utils';
+import {
+  extractAutoBuildCharacterRequirementFilters,
+  hasAutoBuildCharacterRequirementFilters,
+} from '../../core/services/auto-team-builder-character-filter.utils';
 import { MAX_REQUIRED_CHARACTER_GROUPS } from '../../core/services/required-character-groups.utils';
 import {
   AbilityFilterRailComponent,
@@ -310,6 +314,13 @@ interface ExcludedCharacterCardView {
   selectionSupportLabel: string | null;
 }
 
+interface RequirementSourceCharacterCardView {
+  character: CharacterDetailRecord;
+  subtitle: string;
+  characterTags: string[];
+  characterNames: string[];
+}
+
 type PresetImportFeedbackTone = 'success' | 'warning' | 'error';
 
 interface PresetImportFeedback {
@@ -343,6 +354,8 @@ interface ShipPickerPanelState {
 interface AutoTeamBuilderDefaultFilterState {
   selectedTypes: AutoTeamBuilderType[];
   selectedClasses: string[];
+  selectedCharacterTags: string[];
+  selectedCharacterNames: string[];
   leaderBoostFilters: AutoBuildLeaderBoostFilter[];
   leaderBoostRanges: AutoBuildLeaderBoostRanges;
   leaderCostRange: AutoBuildCostRange;
@@ -350,6 +363,8 @@ interface AutoTeamBuilderDefaultFilterState {
   maxTotalCost: number | null;
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
+  requireAllSelectedCharacterTagsInTeam: boolean;
+  requireAllSelectedCharacterNamesInTeam: boolean;
   requireAllSlotsInLeaderSuperEffectScope: boolean;
   requireFullCaptainAbilityCoverage: boolean;
   requireBothLeadersFullCaptainAbilityCoverage: boolean;
@@ -403,6 +418,8 @@ function buildDefaultAutoTeamBuilderFilterState(
   return {
     selectedTypes: [...AUTO_TEAM_BUILDER_TYPES],
     selectedClasses: [...availableClasses],
+    selectedCharacterTags: [],
+    selectedCharacterNames: [],
     leaderBoostFilters: [...AUTO_BUILD_LEADER_BOOST_FILTERS],
     leaderBoostRanges: createEmptyAutoBuildLeaderBoostRanges(),
     leaderCostRange: createEmptyAutoBuildCostRange(),
@@ -410,6 +427,8 @@ function buildDefaultAutoTeamBuilderFilterState(
     maxTotalCost: null,
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
+    requireAllSelectedCharacterTagsInTeam: false,
+    requireAllSelectedCharacterNamesInTeam: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
     requireFullCaptainAbilityCoverage: true,
     requireBothLeadersFullCaptainAbilityCoverage: false,
@@ -500,6 +519,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly ships = signal<ShipRecord[]>([]);
   public readonly selectedTypes = signal<AutoTeamBuilderType[]>([]);
   public readonly selectedClasses = signal<string[]>([]);
+  public readonly availableCharacterTags = signal<string[]>([]);
+  public readonly selectedCharacterTags = signal<string[]>([]);
+  public readonly selectedCharacterNames = signal<string[]>([]);
+  public readonly characterNameDraft = signal('');
   public readonly leaderBoostFilters = signal<AutoBuildLeaderBoostFilter[]>([
     ...AUTO_BUILD_LEADER_BOOST_FILTERS,
   ]);
@@ -528,6 +551,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     signal<RequiredCharacterAbilityCategory>('special');
   public readonly requiredCharacterAbilityPickerOpen = signal(false);
   public readonly manualSearchTerm = signal('');
+  public readonly requirementSourceSearchTerm = signal('');
   public readonly manualShipSearchTerm = signal('');
   public readonly excludeCharacterSearchTerm = signal('');
   public readonly excludeShipSearchTerm = signal('');
@@ -557,6 +581,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly excludedCandidatesHasMore = computed(
     () => this.excludedCandidatePanelState().hasMore,
   );
+  public readonly requirementSourceCandidates = signal<CharacterDetailRecord[]>([]);
+  public readonly requirementSourceCandidatesLoading = signal(false);
   private readonly manualShipPanelState = signal<ShipPickerPanelState>(
     createShipPickerPanelState(),
   );
@@ -577,6 +603,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly excludePickerMode = signal<'characters' | 'ships'>('characters');
   public readonly manualPickerModalOpen = signal(false);
   public readonly excludePickerModalOpen = signal(false);
+  public readonly requirementSourceModalOpen = signal(false);
   public readonly fixedManualTeamPickerModalOpen = signal(false);
   public readonly manualSlots = signal<AutoBuildManualSlotSelection[]>(
     createEmptyAutoBuildManualSlots(),
@@ -603,6 +630,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly excludedShipIds = signal<number[]>([]);
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
+  public readonly requireAllSelectedCharacterTagsInTeam = signal(false);
+  public readonly requireAllSelectedCharacterNamesInTeam = signal(false);
   public readonly requireAllSlotsInLeaderSuperEffectScope = signal(false);
   public readonly requireFullCaptainAbilityCoverage = signal(true);
   public readonly requireBothLeadersFullCaptainAbilityCoverage = signal(false);
@@ -707,6 +736,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   );
   public readonly hasSelectedClasses = computed(() => this.selectedClasses().length > 0);
   public readonly hasSelectedTypes = computed(() => this.selectedTypes().length > 0);
+  public readonly hasSelectedCharacterTags = computed(() => this.selectedCharacterTags().length > 0);
+  public readonly hasSelectedCharacterNames = computed(
+    () => this.selectedCharacterNames().length > 0,
+  );
   public readonly hasRequiredAbilities = computed(() => this.pageRequiredAbilities().length > 0);
   public readonly specialFilterCharacterIds = computed(() =>
     resolveSpecialAbilityMatchingCharacterIds(
@@ -1139,6 +1172,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     () =>
       this.requireAllSelectedTypesInTeam() ||
       this.requireAllSelectedClassesPerCharacter() ||
+      this.requireAllSelectedCharacterTagsInTeam() ||
+      this.requireAllSelectedCharacterNamesInTeam() ||
       this.requireAllSlotsInLeaderSuperEffectScope() ||
       this.requireFullCaptainAbilityCoverage() ||
       this.requireBothLeadersFullCaptainAbilityCoverage() ||
@@ -1261,6 +1296,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.requireAllSelectedClassesPerCharacter()
       ? this.t('filters.classes.support.strict')
       : this.t('filters.classes.support.flexible'),
+  );
+  public readonly characterTagSupportLabel = computed(() =>
+    this.requireAllSelectedCharacterTagsInTeam()
+      ? this.t('filters.characterTags.support.strict')
+      : this.t('filters.characterTags.support.flexible'),
+  );
+  public readonly characterNameSupportLabel = computed(() =>
+    this.requireAllSelectedCharacterNamesInTeam()
+      ? this.t('filters.characterNames.support.strict')
+      : this.t('filters.characterNames.support.flexible'),
   );
   public readonly leaderSuperEffectScopeSupportLabel = computed(() =>
     this.requireAllSlotsInLeaderSuperEffectScope()
@@ -1425,6 +1470,24 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.manualCandidateFilters().requiredAbilities,
     ),
   );
+  public readonly requirementSourceCandidateCards = computed<RequirementSourceCharacterCardView[]>(
+    () =>
+      this.requirementSourceCandidates().map((character) => {
+        const requirements = extractAutoBuildCharacterRequirementFilters(character);
+
+        return {
+          character,
+          subtitle: this.buildCharacterSubtitle(character),
+          characterTags: requirements.characterTags,
+          characterNames: requirements.characterNames,
+        };
+      }),
+  );
+  public readonly requirementSourceCandidatesSummaryLabel = computed(() =>
+    this.t('filters.characterRequirements.modal.count', {
+      count: this.requirementSourceCandidateCards().length,
+    }),
+  );
   public readonly excludedCharacterCards = computed<ExcludedCharacterCardView[]>(() =>
     this.buildExcludedCharacterCards(
       this.excludedCandidates(),
@@ -1541,6 +1604,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   });
   public readonly typeStrictToggleLabel = computed(() => this.t('filters.types.toggle'));
   public readonly classStrictToggleLabel = computed(() => this.t('filters.classes.toggle'));
+  public readonly characterTagStrictToggleLabel = computed(() =>
+    this.t('filters.characterTags.toggle'),
+  );
+  public readonly characterNameStrictToggleLabel = computed(() =>
+    this.t('filters.characterNames.toggle'),
+  );
   public readonly leaderSuperEffectScopeToggleLabel = computed(() =>
     this.t('filters.leaderSuperEffectScope.toggle'),
   );
@@ -1605,6 +1674,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly selectedTypesLabel = computed(() =>
     this.formatSelectedTypes(this.selectedTypes()),
   );
+  public readonly selectedCharacterTagsLabel = computed(() =>
+    this.formatSelectedValues(this.selectedCharacterTags()),
+  );
+  public readonly selectedCharacterNamesLabel = computed(() =>
+    this.formatSelectedValues(this.selectedCharacterNames()),
+  );
   public readonly strictModeLabel = computed(() => {
     const strictModes: string[] = [];
 
@@ -1614,6 +1689,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     if (this.requireAllSelectedClassesPerCharacter()) {
       strictModes.push(this.t('hero.strictModes.perCharacterClasses'));
+    }
+
+    if (this.requireAllSelectedCharacterTagsInTeam()) {
+      strictModes.push(this.t('hero.strictModes.characterTags'));
+    }
+
+    if (this.requireAllSelectedCharacterNamesInTeam()) {
+      strictModes.push(this.t('hero.strictModes.characterNames'));
     }
 
     if (this.requireAllSlotsInLeaderSuperEffectScope()) {
@@ -1824,9 +1907,27 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly effectiveResultTypesLabel = computed(() =>
     this.formatResultValues(this.result()?.input.types ?? []),
   );
+  public readonly requestedResultCharacterTagsLabel = computed(() =>
+    this.formatResultValues(this.result()?.requestedInput.selectedCharacterTags ?? []),
+  );
+  public readonly effectiveResultCharacterTagsLabel = computed(() =>
+    this.formatResultValues(this.result()?.input.selectedCharacterTags ?? []),
+  );
+  public readonly requestedResultCharacterNamesLabel = computed(() =>
+    this.formatResultValues(this.result()?.requestedInput.selectedCharacterNames ?? []),
+  );
+  public readonly effectiveResultCharacterNamesLabel = computed(() =>
+    this.formatResultValues(this.result()?.input.selectedCharacterNames ?? []),
+  );
   public readonly droppedResultTypes = computed(() => this.result()?.relaxation.droppedTypes ?? []);
   public readonly droppedResultClasses = computed(
     () => this.result()?.relaxation.droppedClasses ?? [],
+  );
+  public readonly droppedResultCharacterTags = computed(
+    () => this.result()?.relaxation.droppedCharacterTags ?? [],
+  );
+  public readonly droppedResultCharacterNames = computed(
+    () => this.result()?.relaxation.droppedCharacterNames ?? [],
   );
   public readonly resultAllowedLeadersWithSuperEffects = computed(
     () => this.result()?.relaxation.allowedLeadersWithSuperEffects ?? false,
@@ -1909,6 +2010,54 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           covered: current.coverage.coveredSelectedTypes.length,
           total: current.input.types.length,
           matchingSlots: current.coverage.selectedTypeMatches,
+        });
+  });
+  public readonly selectedCharacterTagSummaryLabel = computed(() => {
+    const current = this.result();
+
+    if (!current) {
+      return this.requireAllSelectedCharacterTagsInTeam()
+        ? this.t('results.selectedCharacterTagSummary.strictPending')
+        : this.t('results.selectedCharacterTagSummary.flexiblePending');
+    }
+
+    if (current.input.selectedCharacterTags.length === 0) {
+      return this.t('results.selectedCharacterTagSummary.noRequirement');
+    }
+
+    return current.input.requireAllSelectedCharacterTagsInTeam
+      ? this.t('results.selectedCharacterTagSummary.strictResolved', {
+          covered: current.coverage.coveredSelectedCharacterTags.length,
+          total: current.input.selectedCharacterTags.length,
+        })
+      : this.t('results.selectedCharacterTagSummary.coverage', {
+          covered: current.coverage.coveredSelectedCharacterTags.length,
+          total: current.input.selectedCharacterTags.length,
+          matchingSlots: current.coverage.selectedCharacterTagMatches,
+        });
+  });
+  public readonly selectedCharacterNameSummaryLabel = computed(() => {
+    const current = this.result();
+
+    if (!current) {
+      return this.requireAllSelectedCharacterNamesInTeam()
+        ? this.t('results.selectedCharacterNameSummary.strictPending')
+        : this.t('results.selectedCharacterNameSummary.flexiblePending');
+    }
+
+    if (current.input.selectedCharacterNames.length === 0) {
+      return this.t('results.selectedCharacterNameSummary.noRequirement');
+    }
+
+    return current.input.requireAllSelectedCharacterNamesInTeam
+      ? this.t('results.selectedCharacterNameSummary.strictResolved', {
+          covered: current.coverage.coveredSelectedCharacterNames.length,
+          total: current.input.selectedCharacterNames.length,
+        })
+      : this.t('results.selectedCharacterNameSummary.coverage', {
+          covered: current.coverage.coveredSelectedCharacterNames.length,
+          total: current.input.selectedCharacterNames.length,
+          matchingSlots: current.coverage.selectedCharacterNameMatches,
         });
   });
   public readonly leaderCriteriaSourceLabel = computed(() => {
@@ -2060,12 +2209,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       !this.building() &&
       (this.hasSelectedTypes() ||
         this.hasSelectedClasses() ||
+        this.hasSelectedCharacterTags() ||
+        this.hasSelectedCharacterNames() ||
         this.pageEnemyMechanics().length > 0 ||
         this.hasRequiredAbilities() ||
         this.hasActiveCostRanges() ||
         this.hasActiveMaxTotalCost() ||
         this.requireAllSelectedTypesInTeam() ||
         this.requireAllSelectedClassesPerCharacter() ||
+        this.requireAllSelectedCharacterTagsInTeam() ||
+        this.requireAllSelectedCharacterNamesInTeam() ||
         this.favoritesOnly() ||
         this.favoriteShipsOnly() ||
         this.hasSelectedManualShip() ||
@@ -2232,14 +2385,20 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       typeof this.repository.getShips === 'function'
         ? this.repository.getShips()
         : Promise.resolve([]);
-    const [summary, abilityCatalog, ships] = await Promise.all([
+    const characterTagsPromise =
+      typeof this.repository.getAvailableCharacterTags === 'function'
+        ? this.repository.getAvailableCharacterTags()
+        : Promise.resolve([]);
+    const [summary, abilityCatalog, ships, characterTags] = await Promise.all([
       this.repository.getDatasetManifest(),
       this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
       shipsPromise,
+      characterTagsPromise,
     ]);
     this.summary.set(summary);
     this.abilityCatalog.set(abilityCatalog);
     this.ships.set(ships);
+    this.availableCharacterTags.set(characterTags);
     await this.resetPageState();
   }
 
@@ -2252,6 +2411,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.cancelBuild();
     this.closeManualPickerModal();
     this.closeExcludePickerModal();
+    this.closeRequirementSourceModal();
     this.closeFixedManualTeamPickerModal();
   }
 
@@ -2308,6 +2468,47 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.selectedTypes.set(this.resolveSelectedTypes(event.detail.value));
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
+  }
+
+  public onCharacterTagChange(
+    event: CustomEvent<{ value?: string[] | string | null }>,
+  ): void {
+    this.selectedCharacterTags.set(this.resolveSelectedCharacterTags(event.detail.value));
+    this.resetBuildState();
+  }
+
+  public onCharacterNameDraftChange(event: CustomEvent<{ value?: string | null }>): void {
+    this.characterNameDraft.set((event.detail.value ?? '').toString());
+  }
+
+  public addCharacterNameFilter(): void {
+    const nextName = this.normalizeCharacterNameFilter(this.characterNameDraft());
+
+    if (nextName.length === 0) {
+      return;
+    }
+
+    this.selectedCharacterNames.update((currentNames) =>
+      currentNames.some((currentName) => currentName.toLowerCase() === nextName.toLowerCase())
+        ? currentNames
+        : [...currentNames, nextName],
+    );
+    this.characterNameDraft.set('');
+    this.resetBuildState();
+  }
+
+  public removeSelectedCharacterTag(characterTag: string): void {
+    this.selectedCharacterTags.set(
+      this.selectedCharacterTags().filter((selectedTag) => selectedTag !== characterTag),
+    );
+    this.resetBuildState();
+  }
+
+  public removeSelectedCharacterName(characterName: string): void {
+    this.selectedCharacterNames.set(
+      this.selectedCharacterNames().filter((selectedName) => selectedName !== characterName),
+    );
+    this.resetBuildState();
   }
 
   public onLeaderBoostFilterChange(
@@ -2566,6 +2767,35 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public closeExcludePickerModal(): void {
     this.excludePickerModalOpen.set(false);
+  }
+
+  public async openRequirementSourceModal(): Promise<void> {
+    if (this.building()) {
+      return;
+    }
+
+    this.requirementSourceModalOpen.set(true);
+    await this.refreshRequirementSourceCandidates();
+  }
+
+  public closeRequirementSourceModal(): void {
+    this.requirementSourceModalOpen.set(false);
+  }
+
+  public async onRequirementSourceSearchChange(
+    event: CustomEvent<{ value?: string | null }>,
+  ): Promise<void> {
+    this.requirementSourceSearchTerm.set((event.detail.value ?? '').trim());
+    await this.refreshRequirementSourceCandidates();
+  }
+
+  public applyRequirementSourceCharacter(character: CharacterDetailRecord): void {
+    const requirements = extractAutoBuildCharacterRequirementFilters(character);
+
+    this.mergeSelectedCharacterTags(requirements.characterTags);
+    this.mergeSelectedCharacterNames(requirements.characterNames);
+    this.resetBuildState();
+    this.closeRequirementSourceModal();
   }
 
   public onExcludeShipSearchChange(event: CustomEvent<{ value?: string | null }>): void {
@@ -2840,6 +3070,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public onRequireAllSelectedClassesToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.requireAllSelectedClassesPerCharacter.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
+  public onRequireAllSelectedCharacterTagsToggle(event: CustomEvent<{ checked: boolean }>): void {
+    this.requireAllSelectedCharacterTagsInTeam.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
+  public onRequireAllSelectedCharacterNamesToggle(event: CustomEvent<{ checked: boolean }>): void {
+    this.requireAllSelectedCharacterNamesInTeam.set(event.detail.checked);
     this.resetBuildState();
   }
 
@@ -3631,8 +3871,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         this.selectedTypes(),
         {
           candidateCharacterIds: this.effectiveAutoBuildCandidateIds(),
+          selectedCharacterTags: this.selectedCharacterTags(),
+          selectedCharacterNames: this.selectedCharacterNames(),
           requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
           requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
+          requireAllSelectedCharacterTagsInTeam: this.requireAllSelectedCharacterTagsInTeam(),
+          requireAllSelectedCharacterNamesInTeam: this.requireAllSelectedCharacterNamesInTeam(),
           requireAllSlotsInLeaderSuperEffectScope: this.requireAllSlotsInLeaderSuperEffectScope(),
           requireFullCaptainAbilityCoverage: this.requireFullCaptainAbilityCoverage(),
           requireBothLeadersFullCaptainAbilityCoverage:
@@ -3745,12 +3989,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     return buildAutoTeamSelectionExportPayload({
       selectedTypes: this.selectedTypes(),
       selectedClasses: this.selectedClasses(),
+      selectedCharacterTags: this.selectedCharacterTags(),
+      selectedCharacterNames: this.selectedCharacterNames(),
       requiredAbilities: this.pageRequiredAbilities(),
       requiredCharacterGroups: [],
       battleRequirements: this.pageBattleRequirements(),
       enemyMechanics: this.pageEnemyMechanics(),
       requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
       requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
+      requireAllSelectedCharacterTagsInTeam: this.requireAllSelectedCharacterTagsInTeam(),
+      requireAllSelectedCharacterNamesInTeam: this.requireAllSelectedCharacterNamesInTeam(),
       requireAllSlotsInLeaderSuperEffectScope: this.requireAllSlotsInLeaderSuperEffectScope(),
       requireFullCaptainAbilityCoverage: this.requireFullCaptainAbilityCoverage(),
       requireBothLeadersFullCaptainAbilityCoverage:
@@ -3936,6 +4184,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.activeRequiredCharacterGroupId.set(null);
     this.selectedTypes.set(defaultFilters.selectedTypes);
     this.selectedClasses.set(defaultFilters.selectedClasses);
+    this.selectedCharacterTags.set(defaultFilters.selectedCharacterTags);
+    this.selectedCharacterNames.set(defaultFilters.selectedCharacterNames);
+    this.characterNameDraft.set('');
     this.leaderBoostFilters.set(defaultFilters.leaderBoostFilters);
     this.leaderBoostRanges.set(this.cloneLeaderBoostRanges(defaultFilters.leaderBoostRanges));
     this.leaderCostRange.set({ ...defaultFilters.leaderCostRange });
@@ -3950,6 +4201,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.battleRequirements.set([createEmptyBattleRequirement(0)]);
     this.lockedCharacterRecords.set({});
     this.manualSearchTerm.set('');
+    this.requirementSourceSearchTerm.set('');
     this.manualShipSearchTerm.set('');
     this.excludeCharacterSearchTerm.set('');
     this.excludeShipSearchTerm.set('');
@@ -3957,12 +4209,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.manualCandidatePanelState.set(createCharacterPickerPanelState());
     this.excludedCandidates.set([]);
     this.excludedCandidatePanelState.set(createCharacterPickerPanelState());
+    this.requirementSourceCandidates.set([]);
+    this.requirementSourceCandidatesLoading.set(false);
     this.manualShipPanelState.set(createShipPickerPanelState());
     this.excludedShipPanelState.set(createShipPickerPanelState());
     this.shipPickerMode.set('characters');
     this.excludePickerMode.set('characters');
     this.manualPickerModalOpen.set(false);
     this.excludePickerModalOpen.set(false);
+    this.requirementSourceModalOpen.set(false);
     this.fixedManualTeamPickerModalOpen.set(false);
     this.manualSlots.set(createEmptyAutoBuildManualSlots());
     this.activeManualSlotRole.set('captain');
@@ -3981,6 +4236,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.requireAllSelectedTypesInTeam.set(defaultFilters.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(
       defaultFilters.requireAllSelectedClassesPerCharacter,
+    );
+    this.requireAllSelectedCharacterTagsInTeam.set(
+      defaultFilters.requireAllSelectedCharacterTagsInTeam,
+    );
+    this.requireAllSelectedCharacterNamesInTeam.set(
+      defaultFilters.requireAllSelectedCharacterNamesInTeam,
     );
     this.requireAllSlotsInLeaderSuperEffectScope.set(
       defaultFilters.requireAllSlotsInLeaderSuperEffectScope,
@@ -4079,6 +4340,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     this.selectedTypes.set([...state.selectedTypes]);
     this.selectedClasses.set([...state.selectedClasses]);
+    this.selectedCharacterTags.set(
+      this.resolveSelectedCharacterTags(state.selectedCharacterTags ?? []),
+    );
+    this.mergeSelectedCharacterNames(state.selectedCharacterNames ?? []);
     this.leaderBoostFilters.set([...state.leaderBoostFilters]);
     this.leaderBoostRanges.set(this.cloneLeaderBoostRanges(state.leaderBoostRanges));
     this.leaderCostRange.set({ ...state.leaderCostRange });
@@ -4128,6 +4393,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.excludedShipIds.set([...state.excludedShipIds]);
     this.requireAllSelectedTypesInTeam.set(state.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(state.requireAllSelectedClassesPerCharacter);
+    this.requireAllSelectedCharacterTagsInTeam.set(state.requireAllSelectedCharacterTagsInTeam);
+    this.requireAllSelectedCharacterNamesInTeam.set(state.requireAllSelectedCharacterNamesInTeam);
     this.requireAllSlotsInLeaderSuperEffectScope.set(state.requireAllSlotsInLeaderSuperEffectScope);
     this.requireFullCaptainAbilityCoverage.set(state.requireFullCaptainAbilityCoverage);
     this.requireBothLeadersFullCaptainAbilityCoverage.set(
@@ -4244,6 +4511,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     if (this.requireAllSelectedClassesPerCharacter()) {
       activeRequirements.push(this.t('errors.requirements.classCoverage'));
+    }
+
+    if (this.requireAllSelectedCharacterTagsInTeam()) {
+      activeRequirements.push(this.t('errors.requirements.characterTagCoverage'));
+    }
+
+    if (this.requireAllSelectedCharacterNamesInTeam()) {
+      activeRequirements.push(this.t('errors.requirements.characterNameCoverage'));
     }
 
     if (this.requireSuperSpecialCriteriaCoverage()) {
@@ -4373,6 +4648,29 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     this.fixedManualTeamCandidates.set(this.dedupeCharacterRecords(candidates));
     this.cacheCharacterRecords(candidates);
+  }
+
+  private async refreshRequirementSourceCandidates(): Promise<void> {
+    this.requirementSourceCandidatesLoading.set(true);
+
+    try {
+      const candidates = await this.repository.searchDetailedCharacters({
+        searchTerm: this.requirementSourceSearchTerm().trim(),
+        selectedTypes: [],
+        selectedClasses: [],
+        sortMode: 'powerFirst',
+        limit: 10_000,
+        offset: 0,
+      });
+      const sourceCandidates = this.dedupeCharacterRecords(candidates).filter((character) =>
+        hasAutoBuildCharacterRequirementFilters(character),
+      );
+
+      this.requirementSourceCandidates.set(sourceCandidates);
+      this.cacheCharacterRecords(sourceCandidates);
+    } finally {
+      this.requirementSourceCandidatesLoading.set(false);
+    }
   }
 
   private async refreshCharacterPickerPanel(panel: CharacterPickerPanelKey): Promise<void> {
@@ -5307,6 +5605,49 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     return uniqueValues.filter((type): type is AutoTeamBuilderType =>
       this.availableTypes.includes(type),
     );
+  }
+
+  private resolveSelectedCharacterTags(value: string[] | string | null | undefined): string[] {
+    const nextValues = Array.isArray(value) ? value : value ? [value] : [];
+    const availableTagByKey = new Map(
+      this.availableCharacterTags().map((tag) => [tag.toLowerCase(), tag] as const),
+    );
+    const uniqueTags = new Map<string, string>();
+
+    for (const value of nextValues) {
+      const normalizedTag = value.trim().replace(/\s+/g, ' ');
+      const canonicalTag = availableTagByKey.get(normalizedTag.toLowerCase());
+
+      if (canonicalTag && !uniqueTags.has(canonicalTag.toLowerCase())) {
+        uniqueTags.set(canonicalTag.toLowerCase(), canonicalTag);
+      }
+    }
+
+    return [...uniqueTags.values()];
+  }
+
+  private normalizeCharacterNameFilter(value: string): string {
+    return value.trim().replace(/\s+/g, ' ').toLowerCase();
+  }
+
+  private mergeSelectedCharacterTags(tags: string[]): void {
+    const nextTags = this.resolveSelectedCharacterTags([...this.selectedCharacterTags(), ...tags]);
+
+    this.selectedCharacterTags.set(nextTags);
+  }
+
+  private mergeSelectedCharacterNames(names: string[]): void {
+    const mergedNames = new Map<string, string>();
+
+    for (const name of [...this.selectedCharacterNames(), ...names]) {
+      const normalizedName = this.normalizeCharacterNameFilter(name);
+
+      if (normalizedName.length > 0 && !mergedNames.has(normalizedName)) {
+        mergedNames.set(normalizedName, normalizedName);
+      }
+    }
+
+    this.selectedCharacterNames.set([...mergedNames.values()]);
   }
 
   private resolveLeaderBoostFilters(

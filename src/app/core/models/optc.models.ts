@@ -322,12 +322,16 @@ export interface SavedEnemy {
   imageDataUrl: string | null;
   selectedTypes: string[];
   selectedClasses: string[];
+  selectedCharacterTags?: string[];
+  selectedCharacterNames?: string[];
   requiredAbilities: AutoBuildAbilityRequirement[];
   requiredCharacterGroups?: AutoBuildRequiredCharacterGroup[];
   battleRequirements?: AutoBuildBattleRequirement[];
   enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
+  requireAllSelectedCharacterTagsInTeam?: boolean;
+  requireAllSelectedCharacterNamesInTeam?: boolean;
   createdAt: string;
   updatedAt: string;
 }

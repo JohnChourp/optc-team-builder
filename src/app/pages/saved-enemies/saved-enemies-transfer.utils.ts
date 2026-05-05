@@ -261,6 +261,8 @@ function cloneSavedEnemy(enemy: SavedEnemy): SavedEnemy {
     ...enemy,
     selectedTypes: [...enemy.selectedTypes],
     selectedClasses: [...enemy.selectedClasses],
+    selectedCharacterTags: [...(enemy.selectedCharacterTags ?? [])],
+    selectedCharacterNames: [...(enemy.selectedCharacterNames ?? [])],
     requiredAbilities: enemy.requiredAbilities.map((requirement) => ({
       ...requirement,
       slotTokens: [...requirement.slotTokens],
@@ -337,6 +339,12 @@ export function parseSavedEnemiesImportPayloadValue(
           imageDataUrl: normalizeEnemyImageDataUrl(enemy["imageDataUrl"]),
           selectedTypes: Array.isArray(enemy["selectedTypes"]) ? enemy["selectedTypes"] : [],
           selectedClasses: Array.isArray(enemy["selectedClasses"]) ? enemy["selectedClasses"] : [],
+          selectedCharacterTags: Array.isArray(enemy["selectedCharacterTags"])
+            ? enemy["selectedCharacterTags"]
+            : [],
+          selectedCharacterNames: Array.isArray(enemy["selectedCharacterNames"])
+            ? enemy["selectedCharacterNames"]
+            : [],
           requiredAbilities: Array.isArray(enemy["requiredAbilities"])
             ? enemy["requiredAbilities"]
             : [],
@@ -350,6 +358,12 @@ export function parseSavedEnemiesImportPayloadValue(
           requireAllSelectedTypesInTeam: Boolean(enemy["requireAllSelectedTypesInTeam"]),
           requireAllSelectedClassesPerCharacter: Boolean(
             enemy["requireAllSelectedClassesPerCharacter"],
+          ),
+          requireAllSelectedCharacterTagsInTeam: Boolean(
+            enemy["requireAllSelectedCharacterTagsInTeam"],
+          ),
+          requireAllSelectedCharacterNamesInTeam: Boolean(
+            enemy["requireAllSelectedCharacterNamesInTeam"],
           ),
           createdAt: exportedAt,
           updatedAt: exportedAt,
@@ -421,6 +435,10 @@ export function sanitizeSavedEnemiesImportPayload(
         mapValue: (value) => value.toUpperCase(),
       }),
       selectedClasses: normalizeStringArray(enemy["selectedClasses"]),
+      selectedCharacterTags: normalizeStringArray(enemy["selectedCharacterTags"]),
+      selectedCharacterNames: normalizeStringArray(enemy["selectedCharacterNames"], {
+        mapValue: (value) => value.toLowerCase(),
+      }),
       requiredAbilities,
       requiredCharacterGroups,
       battleRequirements: normalizeBattleRequirementsWithLegacyFallback({
@@ -434,6 +452,12 @@ export function sanitizeSavedEnemiesImportPayload(
       requireAllSelectedTypesInTeam: Boolean(enemy["requireAllSelectedTypesInTeam"]),
       requireAllSelectedClassesPerCharacter: Boolean(
         enemy["requireAllSelectedClassesPerCharacter"],
+      ),
+      requireAllSelectedCharacterTagsInTeam: Boolean(
+        enemy["requireAllSelectedCharacterTagsInTeam"],
+      ),
+      requireAllSelectedCharacterNamesInTeam: Boolean(
+        enemy["requireAllSelectedCharacterNamesInTeam"],
       ),
       createdAt: normalizeTimestamp(enemy["createdAt"], fallbackTimestamp),
       updatedAt: normalizeTimestamp(enemy["updatedAt"], fallbackTimestamp),

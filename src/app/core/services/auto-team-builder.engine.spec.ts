@@ -120,12 +120,11 @@ describe('runAutoTeamBuildSearch', () => {
       'exactAttempt',
       'fallbackAttempt',
       'fallbackAttempt',
-      'fallbackAttempt',
       'completed',
     ]);
     expect(snapshots[1]).toMatchObject({
       completedAttempts: 0,
-      totalAttempts: 6,
+      totalAttempts: 7,
       attemptCountFinal: false,
       elapsedMs: expect.any(Number),
       estimatedRemainingMs: null,
@@ -138,7 +137,7 @@ describe('runAutoTeamBuildSearch', () => {
     });
     expect(snapshots[2]).toMatchObject({
       completedAttempts: 1,
-      totalAttempts: 6,
+      totalAttempts: 7,
       attemptCountFinal: true,
       elapsedMs: expect.any(Number),
       estimatedRemainingMs: null,
@@ -151,34 +150,21 @@ describe('runAutoTeamBuildSearch', () => {
     });
     expect(snapshots[3]).toMatchObject({
       completedAttempts: 2,
-      totalAttempts: 6,
+      totalAttempts: 7,
       attemptCountFinal: true,
       elapsedMs: expect.any(Number),
       estimatedRemainingMs: expect.any(Number),
       averageFallbackAttemptMs: expect.any(Number),
       completedFallbackAttempts: 1,
-      currentDroppedTypes: [],
-      currentDroppedClasses: ['Fighter'],
-      currentAllowedLeadersWithSuperEffects: true,
-      currentIgnoredLeaderSuperSpecialCriteria: false,
-    });
-    expect(snapshots[4]).toMatchObject({
-      completedAttempts: 3,
-      totalAttempts: 6,
-      attemptCountFinal: true,
-      elapsedMs: expect.any(Number),
-      estimatedRemainingMs: expect.any(Number),
-      averageFallbackAttemptMs: expect.any(Number),
-      completedFallbackAttempts: 2,
       currentDroppedTypes: ['INT'],
       currentDroppedClasses: [],
       currentAllowedLeadersWithSuperEffects: true,
       currentIgnoredLeaderSuperSpecialCriteria: false,
     });
-    expect(snapshots[5]).toMatchObject({
+    expect(snapshots[4]).toMatchObject({
       stage: 'completed',
       attemptCountFinal: true,
-      totalAttempts: 6,
+      totalAttempts: 7,
     });
   });
 
@@ -233,6 +219,8 @@ describe('runAutoTeamBuildSearch', () => {
       usedFallback: true,
       droppedTypes: ['INT'],
       droppedClasses: [],
+      droppedCharacterTags: [],
+      droppedCharacterNames: [],
       minimumLeaderSuperEffectMatchingSlots: null,
       allowedLeadersWithSuperEffects: true,
       ignoredLeaderSuperEffectScope: false,
@@ -374,6 +362,8 @@ describe('runAutoTeamBuildSearch', () => {
         usedFallback: true,
         droppedTypes: [],
         droppedClasses: [],
+        droppedCharacterTags: [],
+        droppedCharacterNames: [],
         minimumLeaderSuperEffectMatchingSlots: null,
         allowedLeadersWithSuperEffects: false,
         ignoredLeaderSuperEffectScope: false,
@@ -425,10 +415,16 @@ describe('runAutoTeamBuildSearch', () => {
         utility: [],
         coveredSelectedClasses: [],
         coveredSelectedTypes: [],
+        coveredSelectedCharacterTags: [],
+        coveredSelectedCharacterNames: [],
         coversAllSelectedClasses: true,
         coversAllSelectedTypes: true,
+        coversAllSelectedCharacterTags: true,
+        coversAllSelectedCharacterNames: true,
         selectedClassMatches: 0,
         selectedTypeMatches: 0,
+        selectedCharacterTagMatches: 0,
+        selectedCharacterNameMatches: 0,
       },
     } satisfies AutoBuildResult;
 
@@ -755,12 +751,12 @@ describe('runAutoTeamBuildSearch', () => {
       })),
     ).toEqual([
       {
-        droppedTypes: [],
-        droppedClasses: ['Fighter'],
-      },
-      {
         droppedTypes: ['INT'],
         droppedClasses: [],
+      },
+      {
+        droppedTypes: [],
+        droppedClasses: ['Fighter'],
       },
       {
         droppedTypes: ['DEX'],
@@ -786,6 +782,51 @@ describe('runAutoTeamBuildSearch', () => {
         category: 'meta',
       }),
     ]);
+  });
+
+  it('schedules relaxed character tag and name drops in fallback attempts', () => {
+    const planner = createAutoTeamBuildFallbackPlanner(
+      createInput(['DEX'], ['Fighter'], {
+        selectedCharacterTags: ['Minks'],
+        selectedCharacterNames: ['zoro'],
+      }),
+      createSingleTypeRecords(),
+    );
+
+    planner.scheduleInitialFallbackAttempts();
+
+    const attempts = collectScheduledAttempts(planner);
+
+    expect(attempts.some((attempt) => attempt.droppedCharacterTags.includes('Minks'))).toBe(true);
+    expect(attempts.some((attempt) => attempt.droppedCharacterNames.includes('zoro'))).toBe(true);
+    expect(
+      attempts.some(
+        (attempt) =>
+          attempt.droppedCharacterTags.includes('Minks') &&
+          attempt.droppedCharacterNames.includes('zoro'),
+      ),
+    ).toBe(true);
+  });
+
+  it('does not create character tag/name drop attempts when strict coverage is enabled', () => {
+    const planner = createAutoTeamBuildFallbackPlanner(
+      createInput(['DEX'], ['Fighter'], {
+        selectedCharacterTags: ['Minks'],
+        selectedCharacterNames: ['zoro'],
+        requireAllSelectedCharacterTagsInTeam: true,
+        requireAllSelectedCharacterNamesInTeam: true,
+      }),
+      createSingleTypeRecords(),
+    );
+
+    planner.scheduleInitialFallbackAttempts();
+
+    expect(
+      collectScheduledAttempts(planner).every(
+        (attempt) =>
+          attempt.droppedCharacterTags.length === 0 && attempt.droppedCharacterNames.length === 0,
+      ),
+    ).toBe(true);
   });
 });
 
@@ -815,6 +856,10 @@ function createInput(
       AutoBuildInput,
       | 'requireAllSelectedTypesInTeam'
       | 'requireAllSelectedClassesPerCharacter'
+      | 'selectedCharacterTags'
+      | 'selectedCharacterNames'
+      | 'requireAllSelectedCharacterTagsInTeam'
+      | 'requireAllSelectedCharacterNamesInTeam'
       | 'requireAllSlotsInLeaderSuperEffectScope'
       | 'requireFullCaptainAbilityCoverage'
       | 'requireBothLeadersFullCaptainAbilityCoverage'
@@ -851,11 +896,17 @@ function createInput(
   return {
     types,
     selectedClasses,
+    selectedCharacterTags: overrides.selectedCharacterTags ?? [],
+    selectedCharacterNames: overrides.selectedCharacterNames ?? [],
     requiredAbilities: [],
     requiredCharacterGroups: [],
     enemyMechanics: [],
     requireAllSelectedTypesInTeam: overrides.requireAllSelectedTypesInTeam ?? false,
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
+    requireAllSelectedCharacterTagsInTeam:
+      overrides.requireAllSelectedCharacterTagsInTeam ?? false,
+    requireAllSelectedCharacterNamesInTeam:
+      overrides.requireAllSelectedCharacterNamesInTeam ?? false,
     requireAllSlotsInLeaderSuperEffectScope:
       overrides.requireAllSlotsInLeaderSuperEffectScope ?? false,
     requireFullCaptainAbilityCoverage: overrides.requireFullCaptainAbilityCoverage ?? false,

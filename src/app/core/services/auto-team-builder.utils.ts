@@ -136,6 +136,8 @@ interface TeamCoverageState {
   utility: Set<AutoBuildUtilityRole>;
   selectedClasses: Set<string>;
   selectedTypes: Set<AutoTeamBuilderType>;
+  selectedCharacterTags: Set<string>;
+  selectedCharacterNames: Set<string>;
 }
 
 interface ActiveLeaderCriteria extends Omit<
@@ -434,7 +436,7 @@ function resolveCandidatePartyConflictKeys(candidate: AutoBuildCandidate): strin
   return resolveCharacterPartyConflictKeys(candidate.character);
 }
 
-function normalizeSuperCriteriaKey(value: string): string {
+export function normalizeAutoBuildCharacterMatchKey(value: string): string {
   return normalizePartyConflictKey(
     value
       .replace(/^\[([^\]]+)\]$/, '$1')
@@ -443,23 +445,27 @@ function normalizeSuperCriteriaKey(value: string): string {
   );
 }
 
-function resolveCandidateSuperCriteriaKeys(candidate: AutoBuildCandidate): string[] {
-  const characterTags = Array.isArray(candidate.character.detail.characterTags)
-    ? candidate.character.detail.characterTags
+function normalizeSuperCriteriaKey(value: string): string {
+  return normalizeAutoBuildCharacterMatchKey(value);
+}
+
+function resolveCharacterSuperCriteriaKeys(character: CharacterDetailRecord): string[] {
+  const characterTags = Array.isArray(character.detail.characterTags)
+    ? character.detail.characterTags
     : [];
   const searchableText = [
-    candidate.character.name,
-    candidate.character.searchText ?? '',
-    candidate.character.primaryClass,
-    candidate.character.secondaryClass ?? '',
-    candidate.character.type,
-    ...candidate.character.classes,
+    character.name,
+    character.searchText ?? '',
+    character.primaryClass,
+    character.secondaryClass ?? '',
+    character.type,
+    ...character.classes,
     ...characterTags,
   ];
 
   return [
     ...new Set(
-      [...resolveCandidatePartyConflictKeys(candidate), ...searchableText]
+      [...resolveCharacterPartyConflictKeys(character), ...searchableText]
         .flatMap((value) =>
           String(value ?? '')
             .split(',')
@@ -468,6 +474,10 @@ function resolveCandidateSuperCriteriaKeys(candidate: AutoBuildCandidate): strin
         .filter((value) => value.length > 0),
     ),
   ];
+}
+
+function resolveCandidateSuperCriteriaKeys(candidate: AutoBuildCandidate): string[] {
+  return resolveCharacterSuperCriteriaKeys(candidate.character);
 }
 
 function candidateMatchesSuperCriteriaCharacterOption(
@@ -484,6 +494,22 @@ function candidateMatchesSuperCriteriaCharacterOption(
         candidateKey === normalizedAcceptedKey || candidateKey.includes(normalizedAcceptedKey),
     );
   });
+}
+
+function candidateMatchesSelectedCharacterName(
+  candidate: AutoBuildCandidate,
+  selectedName: string,
+): boolean {
+  const normalizedSelectedName = normalizeAutoBuildCharacterMatchKey(selectedName);
+
+  if (!normalizedSelectedName) {
+    return false;
+  }
+
+  return resolveCandidateSuperCriteriaKeys(candidate).some(
+    (candidateKey) =>
+      candidateKey === normalizedSelectedName || candidateKey.includes(normalizedSelectedName),
+  );
 }
 
 function candidateMatchesSuperCriteriaClassOrTypeBranch(
@@ -1623,6 +1649,20 @@ export function buildAutoTeamResultFromPreparedContext(
           continue;
         }
 
+        if (
+          input.requireAllSelectedCharacterTagsInTeam &&
+          !coverage.coversAllSelectedCharacterTags
+        ) {
+          continue;
+        }
+
+        if (
+          input.requireAllSelectedCharacterNamesInTeam &&
+          !coverage.coversAllSelectedCharacterNames
+        ) {
+          continue;
+        }
+
         if (!areActiveActivationCriteriaSatisfied(leaderSlots, teamCandidates, input)) {
           continue;
         }
@@ -2206,6 +2246,14 @@ function buildAutoBuildCandidateFromPreparedRecord(
   const matchedSelectedClasses = resolveMatchedSelectedClasses(record, input.selectedClasses);
   const matchesAllSelectedClasses = resolveMatchesAllSelectedClasses(record, input.selectedClasses);
   const matchedSelectedTypes = resolveMatchedSelectedTypes(record, input.types);
+  const matchedSelectedCharacterTags = resolveMatchedSelectedCharacterTags(
+    record,
+    input.selectedCharacterTags ?? [],
+  );
+  const matchedSelectedCharacterNames = resolveMatchedSelectedCharacterNames(
+    record,
+    input.selectedCharacterNames ?? [],
+  );
   const tags = parseEffectTags(input, captainText, specialText, sailorText);
 
   return {
@@ -2218,8 +2266,16 @@ function buildAutoBuildCandidateFromPreparedRecord(
     matchesAllSelectedClasses,
     matchedSelectedClasses,
     matchedSelectedTypes,
+    matchedSelectedCharacterTags,
+    matchedSelectedCharacterNames,
     tags,
-    reasonChips: buildReasonChips(input, tags, matchedSelectedClasses.length > 0),
+    reasonChips: buildReasonChips(
+      input,
+      tags,
+      matchedSelectedClasses.length > 0,
+      matchedSelectedCharacterTags.length > 0,
+      matchedSelectedCharacterNames.length > 0,
+    ),
     recencyScore: total <= 1 ? 1 : 1 - index / (total - 1),
   };
 }
@@ -2405,6 +2461,20 @@ function selectSubs(
     }
 
     if (input.requireAllSelectedTypesInTeam && !nextCoverage.coversAllSelectedTypes) {
+      return false;
+    }
+
+    if (
+      input.requireAllSelectedCharacterTagsInTeam &&
+      !nextCoverage.coversAllSelectedCharacterTags
+    ) {
+      return false;
+    }
+
+    if (
+      input.requireAllSelectedCharacterNamesInTeam &&
+      !nextCoverage.coversAllSelectedCharacterNames
+    ) {
       return false;
     }
 
@@ -2946,6 +3016,8 @@ function resolveSubSelectedFilterScore(
   return (
     candidate.matchedSelectedTypes.length +
     candidate.matchedSelectedClasses.length +
+    candidate.matchedSelectedCharacterTags.length +
+    candidate.matchedSelectedCharacterNames.length +
     (input.requireAllSelectedClassesPerCharacter && candidate.matchesAllSelectedClasses ? 1 : 0)
   );
 }
@@ -3138,11 +3210,21 @@ function buildReasonChips(
   input: AutoBuildInput,
   tags: AutoBuildEffectTags,
   matchesSelectedClass: boolean,
+  matchesSelectedCharacterTag: boolean,
+  matchesSelectedCharacterName: boolean,
 ): string[] {
   const chips: string[] = [];
 
   if (matchesSelectedClass) {
     chips.push(CHIP_LABELS.matchesClass);
+  }
+
+  if (matchesSelectedCharacterTag) {
+    chips.push('Character tag match');
+  }
+
+  if (matchesSelectedCharacterName) {
+    chips.push('Character name match');
   }
 
   if (tags.captainScope.allCharacters) {
@@ -3186,6 +3268,7 @@ function summarizeCoverage(
   const utility = new Set<AutoBuildUtilityRole>();
   const coveredSelectedClasses = new Set<string>();
   const coveredSelectedTypes = new Set<AutoTeamBuilderType>();
+  const coveredSelectedCharacterTags = new Set<string>();
 
   candidates.forEach((candidate) => {
     candidate.tags.burstRoles.forEach((role) => burst.add(role));
@@ -3195,12 +3278,22 @@ function summarizeCoverage(
       coveredSelectedClasses.add(selectedClass),
     );
     candidate.matchedSelectedTypes.forEach((type) => coveredSelectedTypes.add(type));
+    candidate.matchedSelectedCharacterTags.forEach((tag) => coveredSelectedCharacterTags.add(tag));
   });
 
   const coveredClassesList = input.selectedClasses.filter((selectedClass) =>
     coveredSelectedClasses.has(selectedClass),
   );
   const coveredTypesList = input.types.filter((type) => coveredSelectedTypes.has(type));
+  const selectedCharacterTags = input.selectedCharacterTags ?? [];
+  const selectedCharacterNames = input.selectedCharacterNames ?? [];
+  const coveredCharacterTagsList = selectedCharacterTags.filter((selectedTag) =>
+    coveredSelectedCharacterTags.has(selectedTag),
+  );
+  const coveredCharacterNamesList = resolveCoveredSelectedCharacterNames(
+    candidates,
+    selectedCharacterNames,
+  );
   const abilityRequirements = resolveAbilityCoverage(
     candidates,
     input.requiredAbilities,
@@ -3228,15 +3321,76 @@ function summarizeCoverage(
     utility: [...utility].map((role) => CHIP_LABELS[role]),
     coveredSelectedClasses: coveredClassesList,
     coveredSelectedTypes: coveredTypesList,
+    coveredSelectedCharacterTags: coveredCharacterTagsList,
+    coveredSelectedCharacterNames: coveredCharacterNamesList,
     coversAllSelectedClasses:
       input.selectedClasses.length === 0 ||
       coveredClassesList.length === input.selectedClasses.length,
     coversAllSelectedTypes:
       input.types.length === 0 || coveredTypesList.length === input.types.length,
+    coversAllSelectedCharacterTags:
+      selectedCharacterTags.length === 0 ||
+      coveredCharacterTagsList.length === selectedCharacterTags.length,
+    coversAllSelectedCharacterNames:
+      selectedCharacterNames.length === 0 ||
+      coveredCharacterNamesList.length === selectedCharacterNames.length,
     selectedClassMatches: candidates.filter((candidate) => candidate.matchesSelectedClass).length,
     selectedTypeMatches: candidates.filter((candidate) => candidate.matchedSelectedTypes.length > 0)
       .length,
+    selectedCharacterTagMatches: candidates.filter(
+      (candidate) => candidate.matchedSelectedCharacterTags.length > 0,
+    ).length,
+    selectedCharacterNameMatches: candidates.filter(
+      (candidate) => candidate.matchedSelectedCharacterNames.length > 0,
+    ).length,
   };
+}
+
+function resolveCoveredSelectedCharacterNames(
+  candidates: AutoBuildCandidate[],
+  selectedCharacterNames: string[],
+): string[] {
+  if (!selectedCharacterNames.length) {
+    return [];
+  }
+
+  const candidateIdsBySelectedName = selectedCharacterNames.map((selectedName) =>
+    candidates
+      .filter((candidate) => candidate.matchedSelectedCharacterNames.includes(selectedName))
+      .map((candidate) => candidate.character.id),
+  );
+  const matchedCandidateByNameIndex = new Map<number, number>();
+  const matchedNameByCandidateId = new Map<number, number>();
+
+  const tryAssignName = (nameIndex: number, visitedCandidateIds: Set<number>): boolean => {
+    for (const candidateId of candidateIdsBySelectedName[nameIndex] ?? []) {
+      if (visitedCandidateIds.has(candidateId)) {
+        continue;
+      }
+
+      visitedCandidateIds.add(candidateId);
+      const currentNameIndex = matchedNameByCandidateId.get(candidateId);
+
+      if (
+        currentNameIndex === undefined ||
+        tryAssignName(currentNameIndex, visitedCandidateIds)
+      ) {
+        matchedNameByCandidateId.set(candidateId, nameIndex);
+        matchedCandidateByNameIndex.set(nameIndex, candidateId);
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  selectedCharacterNames.forEach((_selectedName, nameIndex) => {
+    tryAssignName(nameIndex, new Set<number>());
+  });
+
+  return selectedCharacterNames.filter((_selectedName, nameIndex) =>
+    matchedCandidateByNameIndex.has(nameIndex),
+  );
 }
 
 function resolveTypeCaptainLabel(
@@ -3254,6 +3408,8 @@ function createTeamCoverageState(leaders: AutoBuildCandidate[]): TeamCoverageSta
     utility: new Set<AutoBuildUtilityRole>(),
     selectedClasses: new Set<string>(),
     selectedTypes: new Set<AutoTeamBuilderType>(),
+    selectedCharacterTags: new Set<string>(),
+    selectedCharacterNames: new Set<string>(),
   };
 
   leaders.forEach((leader) => applyCandidateCoverage(coverage, leader));
@@ -3267,6 +3423,8 @@ function cloneTeamCoverageState(coverage: TeamCoverageState): TeamCoverageState 
     utility: new Set(coverage.utility),
     selectedClasses: new Set(coverage.selectedClasses),
     selectedTypes: new Set(coverage.selectedTypes),
+    selectedCharacterTags: new Set(coverage.selectedCharacterTags),
+    selectedCharacterNames: new Set(coverage.selectedCharacterNames),
   };
 }
 
@@ -3282,6 +3440,10 @@ function applyCandidateCoverage(coverage: TeamCoverageState, candidate: AutoBuil
     coverage.selectedClasses.add(selectedClass),
   );
   candidate.matchedSelectedTypes.forEach((type) => coverage.selectedTypes.add(type));
+  candidate.matchedSelectedCharacterTags.forEach((tag) => coverage.selectedCharacterTags.add(tag));
+  candidate.matchedSelectedCharacterNames.forEach((name) =>
+    coverage.selectedCharacterNames.add(name),
+  );
 }
 
 function resolveMatchedSelectedClasses(
@@ -3319,6 +3481,46 @@ function resolveMatchedSelectedTypes(
   const recordTypes = resolveCharacterTypeTokens(record.type);
 
   return selectedTypes.filter((type) => recordTypes.includes(type));
+}
+
+function resolveMatchedSelectedCharacterTags(
+  record: CharacterDetailRecord,
+  selectedCharacterTags: string[],
+): string[] {
+  if (!selectedCharacterTags.length) {
+    return [];
+  }
+
+  const characterTagKeys = (record.detail.characterTags ?? []).map((tag) =>
+    normalizeCaptainTagKey(tag),
+  );
+
+  return selectedCharacterTags.filter((selectedTag) =>
+    characterTagKeys.includes(normalizeCaptainTagKey(selectedTag)),
+  );
+}
+
+function resolveMatchedSelectedCharacterNames(
+  record: CharacterDetailRecord,
+  selectedCharacterNames: string[],
+): string[] {
+  if (!selectedCharacterNames.length) {
+    return [];
+  }
+
+  const characterKeys = resolveCharacterSuperCriteriaKeys(record);
+
+  return selectedCharacterNames.filter((selectedName) => {
+    const normalizedSelectedName = normalizeAutoBuildCharacterMatchKey(selectedName);
+
+    return (
+      normalizedSelectedName.length > 0 &&
+      characterKeys.some(
+        (characterKey) =>
+          characterKey === normalizedSelectedName || characterKey.includes(normalizedSelectedName),
+      )
+    );
+  });
 }
 
 export function resolveCharacterTypeTokens(typeValue: string): AutoTeamBuilderType[] {

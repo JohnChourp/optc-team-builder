@@ -96,6 +96,7 @@
 
 .fixed-type-card,
 .class-select-card,
+.character-filter-card,
 .summary-card {
   display: grid;
   gap: 6px;
@@ -107,6 +108,7 @@
 
 .fixed-type-card span,
 .class-select-card span,
+.character-filter-card span,
 .summary-card span,
 .coverage-groups span {
   color: rgba(248, 251, 255, 0.62);
@@ -117,6 +119,7 @@
 }
 
 .fixed-type-card strong,
+.character-filter-card strong,
 .summary-card strong {
   color: #ffffff;
   font-size: 1.4rem;
@@ -202,7 +205,8 @@
 
 @media (max-width: 520px) {
   .leader-boost-range-grid,
-  .cost-range-grid {
+  .cost-range-grid,
+  .character-name-filter-row {
     grid-template-columns: 1fr;
   }
 }
@@ -215,6 +219,18 @@
 .control-action-row {
   display: flex;
   justify-content: flex-start;
+}
+
+.character-name-filter-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.character-name-filter-row ion-button {
+  margin: 0;
+  min-height: 48px;
 }
 
 .selected-values-row {
@@ -1352,6 +1368,7 @@
 
 .fixed-type-card small,
 .class-select-card small,
+.character-filter-card small,
 .summary-card small {
   color: rgba(248, 251, 255, 0.62);
 }

@@ -574,6 +574,23 @@ export class OptcRepositoryService {
     return this.decorateCharacterRows(rows);
   }
 
+  public async getAvailableCharacterTags(): Promise<string[]> {
+    const records = await this.getAllDetailedCharacters();
+    const tags = records.flatMap((record) => record.detail.characterTags ?? []);
+    const tagByKey = new Map<string, string>();
+
+    for (const tag of tags) {
+      const normalizedTag = tag.trim().replace(/\s+/g, ' ');
+      const key = normalizedTag.toLowerCase();
+
+      if (normalizedTag.length > 0 && !tagByKey.has(key)) {
+        tagByKey.set(key, normalizedTag);
+      }
+    }
+
+    return [...tagByKey.values()].sort((left, right) => left.localeCompare(right));
+  }
+
   public async searchDetailedCharacters(
     query: DetailedCharacterSearchQuery,
   ): Promise<CharacterDetailRecord[]> {

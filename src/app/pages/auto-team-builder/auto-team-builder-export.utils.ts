@@ -114,19 +114,24 @@ export interface AutoTeamSelectionExportPayload {
     | 26
     | 27
     | 28
-    | 29;
+    | 29
+    | 30;
   exportedAt: string;
   source: 'auto-team-builder';
   exportType: 'preset';
   filters: {
     selectedTypes: AutoBuildResult['input']['types'];
     selectedClasses: AutoBuildResult['input']['selectedClasses'];
+    selectedCharacterTags?: string[];
+    selectedCharacterNames?: string[];
     requiredAbilities: AutoBuildResult['input']['requiredAbilities'];
     requiredCharacterGroups?: AutoBuildRequiredCharacterGroup[];
     battleRequirements?: AutoBuildBattleRequirement[];
     enemyMechanics?: AutoBuildEnemyMechanicRequirement[];
     requireAllSelectedTypesInTeam: boolean;
     requireAllSelectedClassesPerCharacter: boolean;
+    requireAllSelectedCharacterTagsInTeam?: boolean;
+    requireAllSelectedCharacterNamesInTeam?: boolean;
     requireAllSlotsInLeaderSuperEffectScope?: boolean;
     requireFullCaptainAbilityCoverage?: boolean;
     requireBothLeadersFullCaptainAbilityCoverage?: boolean;
@@ -164,12 +169,16 @@ export interface AutoTeamSelectionExportPayload {
 export interface AutoTeamSelectionImportState {
   selectedTypes: AutoTeamBuilderType[];
   selectedClasses: string[];
+  selectedCharacterTags: string[];
+  selectedCharacterNames: string[];
   requiredAbilities: AutoBuildAbilityRequirement[];
   requiredCharacterGroups?: AutoBuildRequiredCharacterGroup[];
   battleRequirements?: AutoBuildBattleRequirement[];
   enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
+  requireAllSelectedCharacterTagsInTeam: boolean;
+  requireAllSelectedCharacterNamesInTeam: boolean;
   requireAllSlotsInLeaderSuperEffectScope: boolean;
   requireFullCaptainAbilityCoverage: boolean;
   requireBothLeadersFullCaptainAbilityCoverage: boolean;
@@ -224,12 +233,16 @@ interface SanitizeAutoTeamSelectionImportOptions {
 interface BuildAutoTeamSelectionExportPayloadOptions {
   selectedTypes: AutoBuildResult['input']['types'];
   selectedClasses: AutoBuildResult['input']['selectedClasses'];
+  selectedCharacterTags?: string[];
+  selectedCharacterNames?: string[];
   requiredAbilities: AutoBuildResult['input']['requiredAbilities'];
   requiredCharacterGroups?: AutoBuildRequiredCharacterGroup[];
   battleRequirements?: AutoBuildBattleRequirement[];
   enemyMechanics: AutoBuildResult['input']['enemyMechanics'];
   requireAllSelectedTypesInTeam: boolean;
   requireAllSelectedClassesPerCharacter: boolean;
+  requireAllSelectedCharacterTagsInTeam?: boolean;
+  requireAllSelectedCharacterNamesInTeam?: boolean;
   requireAllSlotsInLeaderSuperEffectScope: boolean;
   requireFullCaptainAbilityCoverage?: boolean;
   requireBothLeadersFullCaptainAbilityCoverage?: boolean;
@@ -421,6 +434,28 @@ function collectPositiveIntegers(values: unknown[]): number[] {
 
     seen.add(normalizedValue);
     normalizedValues.push(normalizedValue);
+  }
+
+  return normalizedValues;
+}
+
+function normalizeStringFilters(value: unknown, options: { lowercase?: boolean } = {}): string[] {
+  const seen = new Set<string>();
+  const normalizedValues: string[] = [];
+
+  for (const entry of Array.isArray(value) ? value : []) {
+    if (typeof entry !== 'string') {
+      continue;
+    }
+
+    const normalizedValue = entry.trim().replace(/\s+/g, ' ');
+    const outputValue = options.lowercase ? normalizedValue.toLowerCase() : normalizedValue;
+    const key = outputValue.toLowerCase();
+
+    if (outputValue.length > 0 && !seen.has(key)) {
+      seen.add(key);
+      normalizedValues.push(outputValue);
+    }
   }
 
   return normalizedValues;
@@ -736,7 +771,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload['schemaVersion'] !== 26 &&
       parsedPayload['schemaVersion'] !== 27 &&
       parsedPayload['schemaVersion'] !== 28 &&
-      parsedPayload['schemaVersion'] !== 29) ||
+      parsedPayload['schemaVersion'] !== 29 &&
+      parsedPayload['schemaVersion'] !== 30) ||
     parsedPayload['source'] !== 'auto-team-builder' ||
     parsedPayload['exportType'] !== 'preset'
   ) {
@@ -755,6 +791,16 @@ export function parseAutoTeamSelectionImportPayload(
     !filters['selectedTypes'].every((type) => typeof type === 'string') ||
     !Array.isArray(filters['selectedClasses']) ||
     !filters['selectedClasses'].every((characterClass) => typeof characterClass === 'string') ||
+    !(
+      filters['selectedCharacterTags'] === undefined ||
+      (Array.isArray(filters['selectedCharacterTags']) &&
+        filters['selectedCharacterTags'].every((tag) => typeof tag === 'string'))
+    ) ||
+    !(
+      filters['selectedCharacterNames'] === undefined ||
+      (Array.isArray(filters['selectedCharacterNames']) &&
+        filters['selectedCharacterNames'].every((name) => typeof name === 'string'))
+    ) ||
     !Array.isArray(filters['requiredAbilities']) ||
     !filters['requiredAbilities'].every((requirement) => isRecord(requirement)) ||
     !(
@@ -791,6 +837,14 @@ export function parseAutoTeamSelectionImportPayload(
     ) ||
     typeof filters['requireAllSelectedTypesInTeam'] !== 'boolean' ||
     typeof filters['requireAllSelectedClassesPerCharacter'] !== 'boolean' ||
+    !(
+      filters['requireAllSelectedCharacterTagsInTeam'] === undefined ||
+      typeof filters['requireAllSelectedCharacterTagsInTeam'] === 'boolean'
+    ) ||
+    !(
+      filters['requireAllSelectedCharacterNamesInTeam'] === undefined ||
+      typeof filters['requireAllSelectedCharacterNamesInTeam'] === 'boolean'
+    ) ||
     !(
       filters['requireAllSlotsInLeaderSuperEffectScope'] === undefined ||
       typeof filters['requireAllSlotsInLeaderSuperEffectScope'] === 'boolean'
@@ -960,6 +1014,11 @@ export function sanitizeAutoTeamSelectionImportPayload(
   if (classWarning) {
     warnings.push(classWarning);
   }
+
+  const selectedCharacterTags = normalizeStringFilters(payload.filters.selectedCharacterTags);
+  const selectedCharacterNames = normalizeStringFilters(payload.filters.selectedCharacterNames, {
+    lowercase: true,
+  });
 
   let invalidAbilityCount = 0;
   let adjustedAbilityCount = 0;
@@ -1344,12 +1403,18 @@ export function sanitizeAutoTeamSelectionImportPayload(
     state: {
       selectedTypes,
       selectedClasses,
+      selectedCharacterTags,
+      selectedCharacterNames,
       requiredAbilities,
       requiredCharacterGroups: normalizedBattleRequirements.length ? [] : requiredCharacterGroups,
       battleRequirements: normalizedBattleRequirements,
       enemyMechanics,
       requireAllSelectedTypesInTeam: payload.filters.requireAllSelectedTypesInTeam,
       requireAllSelectedClassesPerCharacter: payload.filters.requireAllSelectedClassesPerCharacter,
+      requireAllSelectedCharacterTagsInTeam:
+        payload.filters.requireAllSelectedCharacterTagsInTeam === true,
+      requireAllSelectedCharacterNamesInTeam:
+        payload.filters.requireAllSelectedCharacterNamesInTeam === true,
       requireAllSlotsInLeaderSuperEffectScope,
       requireFullCaptainAbilityCoverage: payload.filters.requireFullCaptainAbilityCoverage === true,
       requireBothLeadersFullCaptainAbilityCoverage:
@@ -1424,12 +1489,16 @@ export function buildAutoTeamExportPayload(
 export function buildAutoTeamSelectionExportPayload({
   selectedTypes,
   selectedClasses,
+  selectedCharacterTags = [],
+  selectedCharacterNames = [],
   requiredAbilities,
   requiredCharacterGroups = [],
   battleRequirements = [],
   enemyMechanics,
   requireAllSelectedTypesInTeam,
   requireAllSelectedClassesPerCharacter,
+  requireAllSelectedCharacterTagsInTeam = false,
+  requireAllSelectedCharacterNamesInTeam = false,
   requireAllSlotsInLeaderSuperEffectScope,
   requireFullCaptainAbilityCoverage = false,
   requireBothLeadersFullCaptainAbilityCoverage = false,
@@ -1472,13 +1541,15 @@ export function buildAutoTeamSelectionExportPayload({
   const normalizedBattleRequirements = cloneBattleRequirements(battleRequirements);
 
   return {
-    schemaVersion: 29,
+    schemaVersion: 30,
     exportedAt,
     source: 'auto-team-builder',
     exportType: 'preset',
     filters: {
       selectedTypes: [...selectedTypes],
       selectedClasses: [...selectedClasses],
+      selectedCharacterTags: normalizeStringFilters(selectedCharacterTags),
+      selectedCharacterNames: normalizeStringFilters(selectedCharacterNames, { lowercase: true }),
       requiredAbilities: requiredAbilities.map((requirement) => ({
         ...requirement,
         slotTokens: [...requirement.slotTokens],
@@ -1495,6 +1566,8 @@ export function buildAutoTeamSelectionExportPayload({
       })),
       requireAllSelectedTypesInTeam,
       requireAllSelectedClassesPerCharacter,
+      requireAllSelectedCharacterTagsInTeam,
+      requireAllSelectedCharacterNamesInTeam,
       requireAllSlotsInLeaderSuperEffectScope,
       requireFullCaptainAbilityCoverage,
       requireBothLeadersFullCaptainAbilityCoverage,
