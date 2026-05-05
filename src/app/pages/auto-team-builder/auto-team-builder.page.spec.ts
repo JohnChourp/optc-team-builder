@@ -2964,6 +2964,41 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         tone: 'primary',
       },
       {
+        key: 'currentStepElapsed',
+        text: '',
+        displayText: '\u00A0',
+        visible: false,
+        tone: 'secondary',
+      },
+      {
+        key: 'leaderPair',
+        text: '',
+        displayText: '\u00A0',
+        visible: false,
+        tone: 'secondary',
+      },
+      {
+        key: 'attemptWork',
+        text: '',
+        displayText: '\u00A0',
+        visible: false,
+        tone: 'secondary',
+      },
+      {
+        key: 'candidateChecks',
+        text: '',
+        displayText: '\u00A0',
+        visible: false,
+        tone: 'secondary',
+      },
+      {
+        key: 'activeWorkers',
+        text: '',
+        displayText: '\u00A0',
+        visible: false,
+        tone: 'secondary',
+      },
+      {
         key: 'searchPasses',
         text: '31,744 scheduled search passes so far over the same pool of 1,200 candidates',
         displayText: '31,744 scheduled search passes so far over the same pool of 1,200 candidates',
@@ -3058,6 +3093,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       estimatedRemainingMs: 61000,
       averageFallbackAttemptMs: 15000,
       completedFallbackAttempts: 1,
+      completedWorkUnits: 1,
+      totalWorkUnits: 1,
       currentDroppedTypes: [],
       currentDroppedClasses: ['Fighter'],
       currentAllowedLeadersWithSuperEffects: false,
@@ -3071,6 +3108,116 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
     expect(page.buildOverallProgressPercent()).toBe(50);
     expect(page.buildOverallProgressLabel()).toBe('Overall progress: 50%');
+  });
+
+  it('does not show 100 percent while the final fallback attempt is still running', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.buildProgress.set({
+      stage: 'fallbackAttempt',
+      candidateCount: 1161,
+      completedAttempts: 1,
+      totalAttempts: 2,
+      attemptCountFinal: true,
+      elapsedMs: 91_000,
+      estimatedRemainingMs: null,
+      averageFallbackAttemptMs: null,
+      completedFallbackAttempts: 1,
+      currentDroppedTypes: [],
+      currentDroppedClasses: [],
+      currentAllowedLeadersWithSuperEffects: false,
+      currentIgnoredLeaderSuperSpecialCriteria: false,
+      messageKey: 'progress.fallbackAttempt',
+      messageParams: {
+        current: 2,
+        total: 2,
+      },
+    });
+
+    expect(page.buildOverallProgressPercent()).toBe(50);
+    expect(page.buildOverallProgressLabel()).toBe('Overall progress: 50%');
+
+    const completedProgress = {
+      ...page.buildProgress()!,
+      stage: 'completed',
+      completedAttempts: 2,
+      messageKey: 'progress.completed',
+    } satisfies AutoBuildProgressSnapshot;
+
+    delete completedProgress.messageParams;
+    page.buildProgress.set(completedProgress);
+
+    expect(page.buildOverallProgressPercent()).toBe(100);
+    expect(page.buildOverallProgressLabel()).toBe('Overall progress: 100%');
+  });
+
+  it('shows inner attempt progress, active workers, and elapsed step rows', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page['currentBuildStepStartedAtMs'].set(1_000);
+    page['buildProgressNowMs'].set(65_000);
+    page.buildProgress.set({
+      stage: 'fallbackAttempt',
+      candidateCount: 1161,
+      completedAttempts: 1,
+      totalAttempts: 2,
+      attemptCountFinal: true,
+      elapsedMs: 91_000,
+      estimatedRemainingMs: 61_000,
+      averageFallbackAttemptMs: 30_500,
+      completedFallbackAttempts: 1,
+      completedWorkUnits: 32,
+      totalWorkUnits: 128,
+      checkedCandidates: 32,
+      totalCandidatesToCheck: 1161,
+      activeWorkerCount: 7,
+      currentCaptainId: 4556,
+      currentCaptainName: 'Monkey D. Luffy - Future Pirate King',
+      currentFriendCaptainId: 4549,
+      currentFriendCaptainName: 'Eustass Kid - Whole Quest',
+      currentDroppedTypes: [],
+      currentDroppedClasses: [],
+      currentAllowedLeadersWithSuperEffects: false,
+      currentIgnoredLeaderSuperSpecialCriteria: false,
+      messageKey: 'progress.fallbackAttempt',
+      messageParams: {
+        current: 2,
+        total: 2,
+      },
+    });
+
+    expect(page.loadingProgressRows()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'currentStepElapsed',
+          text: 'Current step live: 1m 4s',
+          visible: true,
+        }),
+        expect.objectContaining({
+          key: 'leaderPair',
+          text:
+            'Trying leaders: Captain Monkey D. Luffy - Future Pirate King (#4556) / Friend Eustass Kid - Whole Quest (#4549)',
+          visible: true,
+        }),
+        expect.objectContaining({
+          key: 'attemptWork',
+          text: 'Current attempt work: 32 / 128 work units',
+          visible: true,
+        }),
+        expect.objectContaining({
+          key: 'candidateChecks',
+          text: '32 / 1,161 candidate checks in the current attempt',
+          visible: true,
+        }),
+        expect.objectContaining({
+          key: 'activeWorkers',
+          text: 'Active workers: 7',
+          visible: true,
+        }),
+      ]),
+    );
   });
 
   it('formats short, minute, and hour fallback eta durations', async () => {

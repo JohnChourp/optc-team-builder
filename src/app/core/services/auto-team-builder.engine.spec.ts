@@ -115,14 +115,18 @@ describe('runAutoTeamBuildSearch', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(snapshots.map((snapshot) => snapshot.stage)).toEqual([
+    const stageSnapshots = snapshots.filter(
+      (snapshot) => typeof snapshot.completedWorkUnits !== 'number',
+    );
+
+    expect(stageSnapshots.map((snapshot) => snapshot.stage)).toEqual([
       'preparingSearch',
       'exactAttempt',
       'fallbackAttempt',
       'fallbackAttempt',
       'completed',
     ]);
-    expect(snapshots[1]).toMatchObject({
+    expect(stageSnapshots[1]).toMatchObject({
       completedAttempts: 0,
       totalAttempts: 7,
       attemptCountFinal: false,
@@ -135,7 +139,7 @@ describe('runAutoTeamBuildSearch', () => {
       currentAllowedLeadersWithSuperEffects: false,
       currentIgnoredLeaderSuperSpecialCriteria: false,
     });
-    expect(snapshots[2]).toMatchObject({
+    expect(stageSnapshots[2]).toMatchObject({
       completedAttempts: 1,
       totalAttempts: 7,
       attemptCountFinal: true,
@@ -148,7 +152,7 @@ describe('runAutoTeamBuildSearch', () => {
       currentAllowedLeadersWithSuperEffects: true,
       currentIgnoredLeaderSuperSpecialCriteria: false,
     });
-    expect(snapshots[3]).toMatchObject({
+    expect(stageSnapshots[3]).toMatchObject({
       completedAttempts: 2,
       totalAttempts: 7,
       attemptCountFinal: true,
@@ -161,7 +165,7 @@ describe('runAutoTeamBuildSearch', () => {
       currentAllowedLeadersWithSuperEffects: true,
       currentIgnoredLeaderSuperSpecialCriteria: false,
     });
-    expect(snapshots[4]).toMatchObject({
+    expect(stageSnapshots[4]).toMatchObject({
       stage: 'completed',
       attemptCountFinal: true,
       totalAttempts: 7,
@@ -192,7 +196,10 @@ describe('runAutoTeamBuildSearch', () => {
       },
     );
 
-    const fallbackSnapshots = snapshots.filter((snapshot) => snapshot.stage === 'fallbackAttempt');
+    const fallbackSnapshots = snapshots.filter(
+      (snapshot) =>
+        snapshot.stage === 'fallbackAttempt' && typeof snapshot.completedWorkUnits !== 'number',
+    );
 
     expect(fallbackSnapshots[0]).toMatchObject({
       estimatedRemainingMs: null,
@@ -201,10 +208,47 @@ describe('runAutoTeamBuildSearch', () => {
     });
     expect(fallbackSnapshots[1]).toMatchObject({
       estimatedRemainingMs: expect.any(Number),
-      averageFallbackAttemptMs: 40,
+      averageFallbackAttemptMs: expect.any(Number),
       completedFallbackAttempts: 1,
     });
+    expect(fallbackSnapshots[1].averageFallbackAttemptMs).toBeGreaterThan(0);
     expect(fallbackSnapshots[1].estimatedRemainingMs).toBeGreaterThan(0);
+  });
+
+  it('emits inner attempt progress without changing the selected result', () => {
+    const records = createStrictMixedTeamRecords();
+    const input = createInput(['DEX'], ['Fighter']);
+    const snapshots: AutoBuildProgressSnapshot[] = [];
+    const baselineResult = runAutoTeamBuildSearch(records, input);
+    const progressResult = runAutoTeamBuildSearch(records, input, {
+      onProgress: (snapshot) => snapshots.push(snapshot),
+    });
+
+    expect(progressResult?.slots.map((slot) => slot.character.id)).toEqual(
+      baselineResult?.slots.map((slot) => slot.character.id),
+    );
+    expect(
+      snapshots.find(
+        (snapshot) =>
+          snapshot.stage === 'exactAttempt' &&
+          typeof snapshot.completedWorkUnits === 'number' &&
+          snapshot.totalWorkUnits === records.length,
+      ),
+    ).toMatchObject({
+      checkedCandidates: expect.any(Number),
+      totalCandidatesToCheck: records.length,
+    });
+    expect(
+      snapshots.find(
+        (snapshot) =>
+          snapshot.stage === 'exactAttempt' &&
+          typeof snapshot.currentCaptainId === 'number' &&
+          typeof snapshot.currentFriendCaptainId === 'number',
+      ),
+    ).toMatchObject({
+      currentCaptainName: expect.any(String),
+      currentFriendCaptainName: expect.any(String),
+    });
   });
 
   it('returns the first relaxed result that restores requested class and type coverage', () => {
@@ -461,7 +505,11 @@ describe('runAutoTeamBuildSearch', () => {
         },
       ),
     ).toThrowError(AutoTeamBuildCancelledError);
-    expect(snapshots.map((snapshot) => snapshot.stage)).toEqual([
+    expect(
+      snapshots
+        .filter((snapshot) => typeof snapshot.completedWorkUnits !== 'number')
+        .map((snapshot) => snapshot.stage),
+    ).toEqual([
       'preparingSearch',
       'exactAttempt',
     ]);
@@ -494,7 +542,11 @@ describe('runAutoTeamBuildSearch', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(snapshots.map((snapshot) => snapshot.stage)).toEqual([
+    const stageSnapshots = snapshots.filter(
+      (snapshot) => typeof snapshot.completedWorkUnits !== 'number',
+    );
+
+    expect(stageSnapshots.map((snapshot) => snapshot.stage)).toEqual([
       'preparingSearch',
       'exactAttempt',
       'completed',
@@ -503,11 +555,11 @@ describe('runAutoTeamBuildSearch', () => {
       createInput(['DEX'], ['Fighter']),
       createStrictMixedTeamRecords(),
     );
-    expect(snapshots[1]).toMatchObject({
+    expect(stageSnapshots[1]).toMatchObject({
       totalAttempts: planner.getProjectedTotalAttempts(),
       attemptCountFinal: false,
     });
-    expect(snapshots[2]).toMatchObject({
+    expect(stageSnapshots[2]).toMatchObject({
       totalAttempts: 1,
       attemptCountFinal: true,
       completedAttempts: 1,

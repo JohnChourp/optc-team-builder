@@ -2,6 +2,7 @@ import {
   AUTO_BUILD_TOTAL_SLOT_COUNT,
   AUTO_TEAM_BUILDER_CLASSES,
   AUTO_TEAM_BUILDER_TYPES,
+  type AutoBuildAttemptProgressSnapshot,
   type AutoBuildInput,
   type AutoBuildProgressSnapshot,
   type AutoBuildResult,
@@ -30,6 +31,10 @@ export interface AutoTeamBuildSearchOptions {
   leaderAutoFillCharacterIds?: number[];
   subAutoFillCharacterIds?: number[];
   maxScheduledFallbackAttempts?: number;
+}
+
+export interface AutoTeamBuildAttemptExecutionOptions {
+  onProgress?: (progress: AutoBuildAttemptProgressSnapshot) => void;
 }
 
 export interface AutoTeamBuildPlannedAttempt {
@@ -152,7 +157,7 @@ export function runAutoTeamBuildSearch(
   });
 
   assertNotCancelled(options);
-  emitProgress(options, timingState, {
+  const exactProgressBase: AutoBuildProgressSnapshotBase = {
     stage: 'exactAttempt',
     candidateCount: records.length,
     completedAttempts: 0,
@@ -167,7 +172,9 @@ export function runAutoTeamBuildSearch(
       current: 1,
       total: projectedTotalAttempts,
     },
-  });
+  };
+
+  emitProgress(options, timingState, exactProgressBase);
 
   const exactResult = runAutoTeamBuildAttempt(
     records,
@@ -180,6 +187,13 @@ export function runAutoTeamBuildSearch(
     options.subAutoFillCharacterIds,
     preparedContext,
     friendCaptainContext,
+    {
+      onProgress: (progress) =>
+        emitProgress(options, timingState, {
+          ...exactProgressBase,
+          ...progress,
+        }),
+    },
   );
 
   if (satisfiesRequestedAutoTeamBuildCoverage(exactResult)) {
@@ -202,17 +216,20 @@ export function runAutoTeamBuildSearch(
     plannedAttempt = planner.takeNextScheduledAttempt()
   ) {
     assertNotCancelled(options);
-    const remainingCategories: AutoTeamBuildFallbackAttemptCategory[] = [
-      plannedAttempt.category,
-      ...planner.getPendingScheduledFallbackAttemptCategories(),
-    ];
-    emitProgress(options, timingState, {
+    const fallbackStartedAt = timingState.now();
+    const fallbackProgressBase: AutoBuildProgressSnapshotBase = {
       stage: 'fallbackAttempt',
       candidateCount: records.length,
       completedAttempts,
       totalAttempts: planner.getTotalAttempts(),
       attemptCountFinal: planner.isAttemptCountFinal(),
-      remainingFallbackCategories: remainingCategories,
+      remainingFallbackCategories: planner.getPendingScheduledFallbackAttemptCategories(),
+      inFlightFallbackTimings: [
+        {
+          category: plannedAttempt.category,
+          startedAt: fallbackStartedAt,
+        },
+      ],
       currentDroppedTypes: plannedAttempt.droppedTypes,
       currentDroppedClasses: plannedAttempt.droppedClasses,
       currentAllowedLeadersWithSuperEffects: plannedAttempt.allowedLeadersWithSuperEffects,
@@ -224,9 +241,9 @@ export function runAutoTeamBuildSearch(
         current: plannedAttempt.sequence + 2,
         total: planner.getTotalAttempts(),
       },
-    });
+    };
 
-    const fallbackStartedAt = timingState.now();
+    emitProgress(options, timingState, fallbackProgressBase);
     const relaxedResult = runAutoTeamBuildAttempt(
       records,
       plannedAttempt.input,
@@ -238,6 +255,13 @@ export function runAutoTeamBuildSearch(
       options.subAutoFillCharacterIds,
       preparedContext,
       friendCaptainContext,
+      {
+        onProgress: (progress) =>
+          emitProgress(options, timingState, {
+            ...fallbackProgressBase,
+            ...progress,
+          }),
+      },
     );
     const fallbackEndedAt = timingState.now();
 
@@ -307,7 +331,7 @@ function emitProgress(
     ...progressSnapshot
   } = snapshot;
 
-  options.onProgress?.({
+  const nextSnapshot: AutoBuildProgressSnapshot = {
     ...buildAutoTeamBuildTimingSnapshot(
       timingState,
       progressSnapshot.totalAttempts,
@@ -321,7 +345,13 @@ function emitProgress(
     ...progressSnapshot,
     currentDroppedTypes: [...progressSnapshot.currentDroppedTypes],
     currentDroppedClasses: [...progressSnapshot.currentDroppedClasses],
-  });
+  };
+
+  if (typeof activeWorkerCount === 'number') {
+    nextSnapshot.activeWorkerCount = activeWorkerCount;
+  }
+
+  options.onProgress?.(nextSnapshot);
 }
 
 function assertNotCancelled(options: AutoTeamBuildSearchOptions): void {
@@ -467,6 +497,7 @@ export function runAutoTeamBuildAttempt(
   subAutoFillCharacterIds?: number[],
   preparedContext: PreparedAutoTeamBuildContext = prepareAutoTeamBuildContext(records),
   friendCaptainContext?: PreparedAutoTeamBuildContext,
+  executionOptions: AutoTeamBuildAttemptExecutionOptions = {},
 ): AutoBuildResult | null {
   const attempt = buildAutoTeamResultFromPreparedContext(preparedContext, input, {
     requireLeadersWithoutSuperEffects,
@@ -479,6 +510,7 @@ export function runAutoTeamBuildAttempt(
     subAutoFillCharacterIds: input.allowPartialCaptainAbilityCoverage
       ? autoFillCharacterIds
       : subAutoFillCharacterIds,
+    onProgress: executionOptions.onProgress,
   });
 
   if (!attempt) {

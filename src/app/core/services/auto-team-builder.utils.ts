@@ -1,6 +1,7 @@
 import {
   type AutoBuildAbilityCoverageBreakdown,
   type AutoBuildAbilityCoverageBreakdownItem,
+  type AutoBuildAttemptProgressSnapshot,
   AUTO_BUILD_MANUAL_SUB_SLOT_ROLES,
   AUTO_TEAM_BUILDER_CLASSES,
   AUTO_TEAM_BUILDER_TYPES,
@@ -91,6 +92,7 @@ const CHIP_LABELS = {
 } as const;
 const TEAM_SUB_SLOT_COUNT = 4;
 const AUTO_FILL_LEADER_OPTION_LIMIT = 8;
+const AUTO_BUILD_ATTEMPT_PROGRESS_EMIT_INTERVAL = 64;
 const MANUAL_PICK_REASON_CHIP = 'Manual pick';
 const EXTRA_DROP_LEADER_ABILITY_KEY_SET = new Set(['extra_drop_any', 'extra_drop_guaranteed']);
 const CHARACTER_NAME_KEY_ALIASES: Record<string, string[]> = {
@@ -173,7 +175,13 @@ interface AutoTeamBuildAttemptOptions {
   leaderAutoFillCharacterIds?: number[];
   subAutoFillCharacterIds?: number[];
   battleRequirementAssignmentMode?: BattleRequirementAssignmentMode;
+  onProgress?: (progress: AutoBuildAttemptProgressSnapshot) => void;
 }
+
+type AutoBuildLeaderPairProgress = Pick<
+  AutoBuildAttemptProgressSnapshot,
+  'currentCaptainId' | 'currentCaptainName' | 'currentFriendCaptainId' | 'currentFriendCaptainName'
+>;
 
 interface SubAbilityDemandContext {
   requirements: AutoBuildAbilityRequirement[];
@@ -200,6 +208,39 @@ export interface PreparedAutoTeamBuildContext {
 
 type PartyConflictCharacter = Pick<CharacterListItem, 'id' | 'name'> &
   Partial<Pick<CharacterDetailRecord, 'detail'>>;
+
+function emitAttemptProgress(
+  onProgress: AutoTeamBuildAttemptOptions['onProgress'] | undefined,
+  progress: AutoBuildAttemptProgressSnapshot,
+  force = false,
+): void {
+  if (!onProgress) {
+    return;
+  }
+
+  if (
+    force ||
+    progress.completedWorkUnits === 0 ||
+    progress.completedWorkUnits >= progress.totalWorkUnits ||
+    progress.completedWorkUnits % AUTO_BUILD_ATTEMPT_PROGRESS_EMIT_INTERVAL === 0
+  ) {
+    const normalizedProgress: AutoBuildAttemptProgressSnapshot = {
+      ...progress,
+      completedWorkUnits: Math.max(0, progress.completedWorkUnits),
+      totalWorkUnits: Math.max(1, progress.totalWorkUnits),
+    };
+
+    if (typeof progress.checkedCandidates === 'number') {
+      normalizedProgress.checkedCandidates = Math.max(0, progress.checkedCandidates);
+    }
+
+    if (typeof progress.totalCandidatesToCheck === 'number') {
+      normalizedProgress.totalCandidatesToCheck = Math.max(1, progress.totalCandidatesToCheck);
+    }
+
+    onProgress(normalizedProgress);
+  }
+}
 
 const PARTY_CONFLICT_KEY_OVERRIDES = new Map<number, string[]>(
   Object.entries(conflictOverrideCatalog).map(([characterId, keys]) => [
@@ -1447,9 +1488,30 @@ export function buildAutoTeamResultFromPreparedContext(
     return null;
   }
 
-  const candidates = usableRecords.map((record, index) =>
-    buildAutoBuildCandidateFromPreparedRecord(record, input, index, usableRecords.length),
+  emitAttemptProgress(
+    options.onProgress,
+    {
+      completedWorkUnits: 0,
+      totalWorkUnits: usableRecords.length,
+      checkedCandidates: 0,
+      totalCandidatesToCheck: usableRecords.length,
+    },
+    true,
   );
+
+  const candidates: AutoBuildCandidate[] = [];
+
+  usableRecords.forEach((record, index) => {
+    candidates.push(
+      buildAutoBuildCandidateFromPreparedRecord(record, input, index, usableRecords.length),
+    );
+    emitAttemptProgress(options.onProgress, {
+      completedWorkUnits: index + 1,
+      totalWorkUnits: usableRecords.length,
+      checkedCandidates: index + 1,
+      totalCandidatesToCheck: usableRecords.length,
+    });
+  });
   const candidateById = new Map(candidates.map((candidate) => [candidate.character.id, candidate]));
   const manualSlotCandidateMap = resolveManualSlotCandidateMap(input.manualSlots, candidateById);
   const requiredManualSlotCandidateMap = resolveRequiredManualSlotCandidateMap(
@@ -1533,9 +1595,31 @@ export function buildAutoTeamResultFromPreparedContext(
     preserveFriendCaptainOrder: manualFriendCaptainCandidates.length > 0,
   });
   const battleRequirementAssignmentModes = resolveBattleRequirementAssignmentModes(input, options);
+  const totalLeaderPairWorkUnits = Math.max(
+    1,
+    battleRequirementAssignmentModes.length * leaderPairOptions.length,
+  );
+  let checkedLeaderPairWorkUnits = 0;
 
   for (const battleRequirementAssignmentMode of battleRequirementAssignmentModes) {
     for (const leaderPair of leaderPairOptions) {
+      checkedLeaderPairWorkUnits += 1;
+      const currentLeaderPairProgress: AutoBuildLeaderPairProgress = {
+        currentCaptainId: leaderPair.captain.character.id,
+        currentCaptainName: leaderPair.captain.character.name,
+        currentFriendCaptainId: leaderPair.friendCaptain.character.id,
+        currentFriendCaptainName: leaderPair.friendCaptain.character.name,
+      };
+      emitAttemptProgress(
+        options.onProgress,
+        {
+          completedWorkUnits: checkedLeaderPairWorkUnits,
+          totalWorkUnits: totalLeaderPairWorkUnits,
+          ...currentLeaderPairProgress,
+        },
+        true,
+      );
+
       const leaderSlots = [leaderPair.captain, leaderPair.friendCaptain];
       const leaders = resolveUniqueCandidates(leaderSlots);
       const leaderCriteria = resolveActiveLeaderCriteria(
@@ -1607,6 +1691,8 @@ export function buildAutoTeamResultFromPreparedContext(
           leaderSuperEffectScope,
           battleRequirementAssignmentMode,
           constrainedSubs,
+          currentLeaderPairProgress,
+          options.onProgress,
         );
 
         if (selectedSubs.length < TEAM_SUB_SLOT_COUNT) {
@@ -1870,21 +1956,21 @@ function compareAutoFillLeaderCandidates(
     return leaderRequirementDifference;
   }
 
-  const boostDifference =
-    resolveLeaderBoostPriorityScore(right, input.leaderBoostFilters) -
-    resolveLeaderBoostPriorityScore(left, input.leaderBoostFilters);
-
-  if (boostDifference !== 0) {
-    return boostDifference;
-  }
-
   const idDifference = compareCandidatesByNewestId(left, right);
 
   if (idDifference !== 0) {
     return idDifference;
   }
 
-  return compareCandidatesByHighestCost(left, right);
+  const costDifference = compareCandidatesByHighestCost(left, right);
+
+  if (costDifference !== 0) {
+    return costDifference;
+  }
+
+  return left.character.name.localeCompare(right.character.name, undefined, {
+    sensitivity: 'base',
+  });
 }
 
 function resolveLeaderRequirementPriorityScore(
@@ -1925,31 +2011,6 @@ function comparePreferredLeaderIdOrder(
   }
 
   return leftIndex - rightIndex;
-}
-
-function resolveLeaderBoostPriorityScore(
-  candidate: AutoBuildCandidate,
-  filters: AutoBuildInput['leaderBoostFilters'],
-): number {
-  const selectedFilters = filters.length ? filters : ['HP', 'ATK'];
-
-  if (selectedFilters.includes('HP') && selectedFilters.includes('ATK')) {
-    return normalizeBoostScore(candidate.character.captainAverageBoost);
-  }
-
-  if (selectedFilters.includes('HP')) {
-    return normalizeBoostScore(candidate.character.captainHpBoost);
-  }
-
-  if (selectedFilters.includes('ATK')) {
-    return normalizeBoostScore(candidate.character.captainAtkBoost);
-  }
-
-  return normalizeBoostScore(candidate.character.captainAverageBoost);
-}
-
-function normalizeBoostScore(value: number): number {
-  return Number.isFinite(value) ? value : 0;
 }
 
 function candidateMatchesLeaderBoostRanges(
@@ -2297,6 +2358,8 @@ function selectSubs(
   leaderSuperEffectScope: ActiveLeaderSuperEffectScope,
   battleRequirementAssignmentMode: BattleRequirementAssignmentMode,
   lockedSubs: AutoBuildCandidate[] = [],
+  leaderPairProgress: AutoBuildLeaderPairProgress = {},
+  onProgress?: AutoTeamBuildAttemptOptions['onProgress'],
 ): AutoBuildCandidate[] {
   const selected = resolveUniqueCandidates(lockedSubs);
   const leaderCandidates = resolveUniqueCandidates(leaders);
@@ -2427,6 +2490,33 @@ function selectSubs(
     .sort((left, right) =>
       compareAutoFillSubCandidates(left, right, input, subAbilityDemandContext, leaderCriteria),
     );
+  let subSearchWorkUnits = 0;
+  const estimatedSubSearchWorkUnits = Math.max(
+    1,
+    pool.length * Math.max(1, TEAM_SUB_SLOT_COUNT - selected.length),
+  );
+  const emitSubSearchProgress = (currentSelectionLength: number, force = false): void => {
+    const totalWorkUnits = Math.max(
+      estimatedSubSearchWorkUnits,
+      subSearchWorkUnits + Math.max(1, pool.length),
+    );
+
+    emitAttemptProgress(
+      onProgress,
+      {
+        completedWorkUnits: subSearchWorkUnits,
+        totalWorkUnits,
+        checkedCandidates: Math.min(subSearchWorkUnits, pool.length),
+        totalCandidatesToCheck: Math.max(1, pool.length),
+        currentSlot: Math.min(currentSelectionLength + 1, TEAM_SUB_SLOT_COUNT),
+        totalSlots: TEAM_SUB_SLOT_COUNT,
+        ...leaderPairProgress,
+      },
+      force,
+    );
+  };
+
+  emitSubSearchProgress(selected.length, true);
 
   const isCompleteSelectionValid = (nextSelection: AutoBuildCandidate[]): boolean => {
     const teamCandidates = [...leaderSlots, ...nextSelection];
@@ -2514,6 +2604,8 @@ function selectSubs(
 
     for (let index = startIndex; index < pool.length; index += 1) {
       const candidate = pool[index];
+      subSearchWorkUnits += 1;
+      emitSubSearchProgress(currentSelection.length);
 
       if (!candidate) {
         continue;
@@ -2696,6 +2788,9 @@ function selectSubs(
         }
 
         for (const candidate of battleAssignmentCandidates) {
+          subSearchWorkUnits += 1;
+          emitSubSearchProgress(nextSelection.length);
+
           const characterId = candidate.character.id;
 
           if (

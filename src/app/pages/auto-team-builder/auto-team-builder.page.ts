@@ -180,6 +180,11 @@ type LoadingProgressRowTone = 'primary' | 'secondary' | 'fallback';
 interface LoadingProgressRow {
   key:
     | 'message'
+    | 'currentStepElapsed'
+    | 'leaderPair'
+    | 'attemptWork'
+    | 'candidateChecks'
+    | 'activeWorkers'
     | 'searchPasses'
     | 'workEstimate'
     | 'searchMeaning'
@@ -515,6 +520,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private buildAbortController: AbortController | null = null;
   private resetAfterBuildCancellation = false;
   private destroyed = false;
+  private readonly buildProgressNowMs = signal(0);
+  private readonly currentBuildStepStartedAtMs = signal<number | null>(null);
+  private progressTicker: ReturnType<typeof globalThis.setInterval> | null = null;
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly ships = signal<ShipRecord[]>([]);
@@ -1798,13 +1806,84 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return 100;
     }
 
-    const currentAttempt = Math.min(progress.completedAttempts + 1, progress.totalAttempts);
+    const innerProgress =
+      typeof progress.completedWorkUnits === 'number' &&
+      typeof progress.totalWorkUnits === 'number' &&
+      progress.totalWorkUnits > 0
+        ? Math.max(0, Math.min(1, progress.completedWorkUnits / progress.totalWorkUnits))
+        : 0;
+    const activeSearchProgress =
+      progress.stage === 'exactAttempt' || progress.stage === 'fallbackAttempt'
+        ? progress.completedAttempts + innerProgress
+        : progress.completedAttempts;
+    const percent = Math.round((activeSearchProgress / progress.totalAttempts) * 100);
 
-    return Math.max(0, Math.min(100, Math.round((currentAttempt / progress.totalAttempts) * 100)));
+    return Math.max(0, Math.min(99, percent));
   });
   public readonly buildOverallProgressLabel = computed(() =>
     this.t('progress.overallProgressPercent', { percent: this.buildOverallProgressPercent() }),
   );
+  public readonly buildCurrentStepElapsedLabel = computed(() => {
+    const progress = this.buildProgress();
+    const startedAt = this.currentBuildStepStartedAtMs();
+
+    if (!progress || startedAt === null || progress.stage === 'completed') {
+      return '';
+    }
+
+    return this.t('progress.currentStepElapsed', {
+      duration: this.formatLiveDuration(Math.max(0, this.buildProgressNowMs() - startedAt)),
+    });
+  });
+  public readonly buildCurrentLeaderPairLabel = computed(() => {
+    const progress = this.buildProgress();
+    const captain = this.formatProgressLeaderLabel(
+      progress?.currentCaptainName,
+      progress?.currentCaptainId,
+    );
+    const friendCaptain = this.formatProgressLeaderLabel(
+      progress?.currentFriendCaptainName,
+      progress?.currentFriendCaptainId,
+    );
+
+    return captain || friendCaptain
+      ? this.t('progress.leaderPair', {
+          captain: captain || '-',
+          friendCaptain: friendCaptain || '-',
+        })
+      : '';
+  });
+  public readonly buildAttemptWorkLabel = computed(() => {
+    const progress = this.buildProgress();
+
+    return typeof progress?.completedWorkUnits === 'number' &&
+      typeof progress.totalWorkUnits === 'number' &&
+      progress.totalWorkUnits > 0
+      ? this.t('progress.attemptWork', {
+          completed: progress.completedWorkUnits.toLocaleString(),
+          total: progress.totalWorkUnits.toLocaleString(),
+        })
+      : '';
+  });
+  public readonly buildCandidateChecksLabel = computed(() => {
+    const progress = this.buildProgress();
+
+    return typeof progress?.checkedCandidates === 'number' &&
+      typeof progress.totalCandidatesToCheck === 'number' &&
+      progress.totalCandidatesToCheck > 0
+      ? this.t('progress.candidateChecks', {
+          checked: progress.checkedCandidates.toLocaleString(),
+          total: progress.totalCandidatesToCheck.toLocaleString(),
+        })
+      : '';
+  });
+  public readonly buildActiveWorkersLabel = computed(() => {
+    const activeWorkerCount = this.buildProgress()?.activeWorkerCount;
+
+    return typeof activeWorkerCount === 'number'
+      ? this.t('progress.activeWorkers', { count: activeWorkerCount.toLocaleString() })
+      : '';
+  });
   public readonly buildCandidateProgressLabel = computed(() => {
     const progress = this.buildProgress();
 
@@ -1865,6 +1944,31 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         key: 'message',
         text: this.loadingLabel(),
         tone: 'primary',
+      },
+      {
+        key: 'currentStepElapsed',
+        text: this.buildCurrentStepElapsedLabel(),
+        tone: 'secondary',
+      },
+      {
+        key: 'leaderPair',
+        text: this.buildCurrentLeaderPairLabel(),
+        tone: 'secondary',
+      },
+      {
+        key: 'attemptWork',
+        text: this.buildAttemptWorkLabel(),
+        tone: 'secondary',
+      },
+      {
+        key: 'candidateChecks',
+        text: this.buildCandidateChecksLabel(),
+        tone: 'secondary',
+      },
+      {
+        key: 'activeWorkers',
+        text: this.buildActiveWorkersLabel(),
+        tone: 'secondary',
       },
       {
         key: 'searchPasses',
@@ -2434,6 +2538,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.abilityPickerOpen.set(false);
     this.crewmateAbilityPickerOpen.set(false);
     this.cancelBuild();
+    this.stopBuildProgressTicker();
     this.closeManualPickerModal();
     this.closeExcludePickerModal();
     this.closeRequirementSourceModal();
@@ -3900,6 +4005,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.buildAbortController = abortController;
     this.building.set(true);
     this.resetBuildState();
+    this.startBuildProgressTicker();
     void this.scrollToBottom();
 
     try {
@@ -3981,6 +4087,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     } finally {
       this.buildAbortController = null;
       this.buildProgress.set(null);
+      this.stopBuildProgressTicker();
       this.building.set(false);
     }
   }
@@ -4211,7 +4318,42 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   private handleBuildProgressSnapshot(snapshot: AutoBuildProgressSnapshot): void {
+    const previous = this.buildProgress();
+
+    if (
+      !previous ||
+      this.resolveBuildProgressStepKey(previous) !== this.resolveBuildProgressStepKey(snapshot)
+    ) {
+      this.currentBuildStepStartedAtMs.set(Date.now());
+    }
+
     this.buildProgress.set(snapshot);
+  }
+
+  private resolveBuildProgressStepKey(snapshot: AutoBuildProgressSnapshot): string {
+    const current = snapshot.messageParams?.['current'] ?? '';
+    const total = snapshot.messageParams?.['total'] ?? '';
+
+    return `${snapshot.stage}:${snapshot.messageKey}:${current}:${total}`;
+  }
+
+  private startBuildProgressTicker(): void {
+    this.stopBuildProgressTicker();
+    this.currentBuildStepStartedAtMs.set(Date.now());
+    this.buildProgressNowMs.set(Date.now());
+    this.progressTicker = globalThis.setInterval(
+      () => this.buildProgressNowMs.set(Date.now()),
+      1000,
+    );
+  }
+
+  private stopBuildProgressTicker(): void {
+    if (this.progressTicker) {
+      globalThis.clearInterval(this.progressTicker);
+      this.progressTicker = null;
+    }
+
+    this.currentBuildStepStartedAtMs.set(null);
   }
 
   private async resetPageState(): Promise<void> {
@@ -6158,6 +6300,31 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const minutes = totalMinutes % 60;
 
     return `~${hours}h ${minutes}m`;
+  }
+
+  private formatLiveDuration(durationMs: number): string {
+    const totalSeconds = Math.max(0, Math.floor(durationMs / 1000));
+
+    if (totalSeconds < 60) {
+      return `${totalSeconds}s`;
+    }
+
+    const totalMinutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${totalMinutes}m ${seconds}s`;
+  }
+
+  private formatProgressLeaderLabel(name: string | undefined, id: number | undefined): string {
+    if (name && typeof id === 'number') {
+      return `${name} (#${id})`;
+    }
+
+    if (name) {
+      return name;
+    }
+
+    return typeof id === 'number' ? `#${id}` : '';
   }
 
   private t(

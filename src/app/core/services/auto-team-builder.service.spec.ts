@@ -38,6 +38,16 @@ const INPUT = createInput();
 type AutoTeamBuilderServiceWithWorkerFactory = AutoTeamBuilderService & {
   createWorker: () => Worker | null;
 };
+type PreferredLeaderAutoFillResolver = {
+  resolvePreferredLeaderAutoFillCharacterIds: (
+    records: CharacterDetailRecord[],
+    allowedCharacterIds: number[] | undefined,
+    input: Pick<
+      AutoBuildInput,
+      'leaderCostRange' | 'leaderBoostFilters' | 'leaderBoostRanges' | 'requiredAbilities'
+    >,
+  ) => number[] | undefined;
+};
 const BIG_MOM_CAPTAIN_ABILITY =
   '<b>Always Active: </b>Boosts HP of [STR], [DEX] and [QCK] characters by 1.3x and changes [RCV] orbs into [SEMLA] orbs.. <b>Standard Captain: </b>Boosts ATK of [STR], [DEX] and [QCK] characters by 3.5x. <b>Powered Up Captain: </b>Boosts ATK of this character by 4.25x, boosts ATK of [STR], [DEX] and [QCK] characters by 4x and reduces damage received by 15%. <b>Rampage Captain: </b>Boosts ATK of this character by 12x and own attacks will ignore damage reducing Barriers and Buffs, boosts ATK of [STR], [DEX] and [QCK] characters by 3.75x and boosts chances of getting [SEMLA] orbs.';
 const BROOK_CAPTAIN_ABILITY =
@@ -2373,7 +2383,7 @@ describe('Auto team builder', () => {
     expect(result?.slots[1]?.character.id).toBe(6101);
   });
 
-  it('prefers higher average leader boost before newer id for automatic captains', () => {
+  it('prefers newer captain id over higher average leader boost without a range', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderPriorityCaptainRecord({
@@ -2398,11 +2408,11 @@ describe('Auto team builder', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(6200);
-    expect(result?.slots[1]?.character.id).toBe(6200);
+    expect(result?.slots[0]?.character.id).toBe(6201);
+    expect(result?.slots[1]?.character.id).toBe(6201);
   });
 
-  it('keeps boost priority ahead of newer id for automatic captains', () => {
+  it('keeps newest captain priority ahead of boost values without a range', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderPriorityCaptainRecord({
@@ -2427,8 +2437,8 @@ describe('Auto team builder', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(6300);
-    expect(result?.slots[1]?.character.id).toBe(6300);
+    expect(result?.slots[0]?.character.id).toBe(6305);
+    expect(result?.slots[1]?.character.id).toBe(6305);
   });
 
   it('prefers newer id over captain score when leader boost ties', () => {
@@ -2509,7 +2519,7 @@ describe('Auto team builder', () => {
     expect(result?.slots[1]?.character.id).toBe(6500);
   });
 
-  it('uses selected HP boost priority for automatic leader selection', () => {
+  it('keeps newest leader priority when HP boost is selected without a range', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderPriorityCaptainRecord({
@@ -2537,11 +2547,11 @@ describe('Auto team builder', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(6401);
-    expect(result?.slots[1]?.character.id).toBe(6401);
+    expect(result?.slots[0]?.character.id).toBe(6600);
+    expect(result?.slots[1]?.character.id).toBe(6600);
   });
 
-  it('uses selected ATK boost priority for automatic leader selection', () => {
+  it('keeps newest leader priority when ATK boost is selected without a range', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderPriorityCaptainRecord({
@@ -2569,11 +2579,11 @@ describe('Auto team builder', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(6402);
-    expect(result?.slots[1]?.character.id).toBe(6402);
+    expect(result?.slots[0]?.character.id).toBe(6601);
+    expect(result?.slots[1]?.character.id).toBe(6601);
   });
 
-  it('uses selected HP and ATK average boost priority for automatic leader selection', () => {
+  it('keeps newest leader priority when HP and ATK boosts are selected without ranges', () => {
     const result = buildAutoTeamResult(
       [
         createLeaderPriorityCaptainRecord({
@@ -2601,8 +2611,8 @@ describe('Auto team builder', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(6403);
-    expect(result?.slots[1]?.character.id).toBe(6403);
+    expect(result?.slots[0]?.character.id).toBe(6602);
+    expect(result?.slots[1]?.character.id).toBe(6602);
   });
 
   it('filters auto-filled leaders by ATK captain boost range before priority sorting', () => {
@@ -5386,6 +5396,136 @@ describe('Auto team builder', () => {
     expect(result?.slots[1]?.character.id).toBe(4556);
   });
 
+  it('keeps excluded newest favorites out and does not promote older higher-boost leaders', async () => {
+    const excludedNewestLeader = createLeaderPriorityCaptainRecord({
+      id: 4306,
+      name: 'Bartholomew Kuma - Selfless Impulse',
+      cost: 65,
+      atkMultiplier: 6,
+      hpMultiplier: 1.6,
+      universal: true,
+    });
+    const newestEligibleLeader = createLeaderPriorityCaptainRecord({
+      id: 4302,
+      name: 'Belo Betty - Welcoming Army Captain',
+      cost: 55,
+      atkMultiplier: 4.25,
+      hpMultiplier: 1,
+      universal: true,
+    });
+    const olderHigherBoostLeader = createLeaderPriorityCaptainRecord({
+      id: 4233,
+      name: 'Dorry & Broggy - Retaliating Against the Threat to the Homeland',
+      cost: 65,
+      atkMultiplier: 5.5,
+      hpMultiplier: 1.6,
+      universal: true,
+    });
+    const records = [
+      excludedNewestLeader,
+      newestEligibleLeader,
+      olderHigherBoostLeader,
+      createAtkSubRecord(),
+      createAffinitySubRecord(),
+      createUtilitySubRecord(),
+      createConsistencySubRecord(),
+    ];
+    const favoriteCharacterIds = records.map((record) => record.id);
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockImplementation(async (_types, _limit, query) => {
+        const allowedIds = Array.isArray(query?.allowedCharacterIds)
+          ? new Set<number>(query.allowedCharacterIds)
+          : null;
+        const excludedIds = new Set<number>(query?.excludedCharacterIds ?? []);
+
+        return records.filter(
+          (record) =>
+            (!allowedIds || allowedIds.has(record.id)) && !excludedIds.has(record.id),
+        );
+      }),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      favoritesOnly: true,
+      favoriteCharacterIds,
+      excludedCharacterIds: [4306],
+      leaderBoostFilters: ['ATK'],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(4302);
+    expect(result?.slots[1]?.character.id).toBe(4302);
+    expect(result?.slots.some((slot) => slot.character.id === 4306)).toBe(false);
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      ['DEX'],
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        selectedClasses: ['Fighter'],
+        allowedCharacterIds: favoriteCharacterIds,
+        lockedCharacterIds: [],
+        excludedCharacterIds: [4306],
+      },
+    );
+  });
+
+  it('preselects preferred leader ids by newest eligible favorites before applying the limit', () => {
+    const leaders = [
+      createLeaderPriorityCaptainRecord({
+        id: 4311,
+        name: 'Newest Low Boost Leader',
+        cost: 55,
+        atkMultiplier: 4.25,
+        hpMultiplier: 1.1,
+        universal: true,
+      }),
+      ...[4310, 4309, 4308, 4307, 4306, 4302, 4301, 4300].map((id) =>
+        createLeaderPriorityCaptainRecord({
+          id,
+          name: `Eligible Favorite Leader ${id}`,
+          cost: 55,
+          atkMultiplier: 4.25,
+          hpMultiplier: 1.1,
+          universal: true,
+        }),
+      ),
+      createLeaderPriorityCaptainRecord({
+        id: 4233,
+        name: 'Older Higher Boost Leader',
+        cost: 65,
+        atkMultiplier: 6.5,
+        hpMultiplier: 1.8,
+        universal: true,
+      }),
+      createCharacterRecord({
+        id: 9999,
+        name: 'Newest Non-Leader Favorite',
+        primaryClass: 'Fighter',
+        detail: {
+          specialText: 'Boosts ATK of Fighter characters by 2.5x for 1 turn.',
+        },
+      }),
+    ];
+    const allowedCharacterIds = leaders
+      .map((record) => record.id)
+      .filter((characterId) => characterId !== 4306);
+    const service = new AutoTeamBuilderService({} as never);
+    const resolver = service as unknown as PreferredLeaderAutoFillResolver;
+
+    const rankedIds = resolver.resolvePreferredLeaderAutoFillCharacterIds(
+      leaders,
+      allowedCharacterIds,
+      createInput(['DEX'], ['Fighter'], {
+        leaderBoostFilters: ['ATK'],
+      }),
+    );
+
+    expect(rankedIds).toEqual([4311, 4310, 4309, 4308, 4307, 4302, 4301, 4300]);
+    expect(rankedIds).not.toContain(4306);
+    expect(rankedIds).not.toContain(4233);
+    expect(rankedIds).not.toContain(9999);
+  });
+
   it('prioritizes auto-filled leaders that match selected Captain Ability effects', async () => {
     const newestFavoriteLeader = createLeaderPriorityCaptainRecord({
       id: 4556,
@@ -7972,6 +8112,85 @@ describe('Auto team builder', () => {
     expect(progressSnapshots.at(-1)?.attemptCountFinal).toBe(true);
     expect(progressSnapshots.at(-1)?.stage).toBe('completed');
     expect(progressSnapshots.at(-1)?.totalAttempts).toBeLessThan(31_744);
+  });
+
+  it('composes initialized pooled worker attempt progress into UI snapshots', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const progressSnapshots: AutoBuildProgressSnapshot[] = [];
+    const emitAttemptProgressThenMiss = (
+      worker: PooledFakeWorker,
+      request: AutoTeamBuilderWorkerRequest,
+    ): void => {
+      if (request.type === 'init') {
+        worker.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (request.type === 'runAttempt') {
+        worker.emitMessage({
+          type: 'attemptProgress',
+          runId: request.runId,
+          progress: {
+            completedWorkUnits: 32,
+            totalWorkUnits: 128,
+            checkedCandidates: 32,
+            totalCandidatesToCheck: 1161,
+            currentCaptainId: 4556,
+            currentCaptainName: 'Captain Test',
+            currentFriendCaptainId: 4549,
+            currentFriendCaptainName: 'Friend Test',
+          },
+        });
+        worker.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: null,
+        });
+      }
+    };
+    const workerA = new PooledFakeWorker((request) =>
+      emitAttemptProgressThenMiss(workerA, request),
+    );
+    const workerB = new PooledFakeWorker((request) =>
+      emitAttemptProgressThenMiss(workerB, request),
+    );
+    const createWorkerSpy = vi.spyOn(
+      service as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
+
+    await service.buildTeam(
+      ['Fighter'],
+      ['DEX', 'INT'],
+      { requireFullCaptainAbilityCoverage: false },
+      {
+        workerCount: 2,
+        onProgress: (snapshot) => progressSnapshots.push(snapshot),
+      },
+    );
+
+    expect(
+      progressSnapshots.find(
+        (snapshot) =>
+          (snapshot.stage === 'exactAttempt' || snapshot.stage === 'fallbackAttempt') &&
+          snapshot.completedWorkUnits === 32 &&
+          snapshot.totalWorkUnits === 128,
+      ),
+    ).toMatchObject({
+      checkedCandidates: 32,
+      totalCandidatesToCheck: 1161,
+      activeWorkerCount: 2,
+      currentCaptainId: 4556,
+      currentCaptainName: 'Captain Test',
+      currentFriendCaptainId: 4549,
+      currentFriendCaptainName: 'Friend Test',
+      messageKey: expect.stringMatching(/^progress\.(exactAttempt|fallbackAttempt)$/),
+    });
   });
 
   it('throttles deep pooled fallback searches and keeps the preferred leader attempt set bounded', async () => {

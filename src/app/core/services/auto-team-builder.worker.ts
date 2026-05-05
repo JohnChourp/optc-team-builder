@@ -65,6 +65,17 @@ addEventListener('message', ({ data }: MessageEvent<AutoTeamBuilderWorkerRequest
         data.friendCaptainRecords
           ? prepareAutoTeamBuildContext(data.friendCaptainRecords)
           : cachedFriendCaptainContext,
+        {
+          onProgress: (progress) => {
+            const response: AutoTeamBuilderWorkerResponse = {
+              type: 'attemptProgress',
+              runId: data.runId,
+              progress,
+            };
+
+            postMessage(response);
+          },
+        },
       );
       const response: AutoTeamBuilderWorkerResponse = {
         type: 'result',

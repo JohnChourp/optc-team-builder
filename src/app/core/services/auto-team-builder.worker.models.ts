@@ -1,4 +1,5 @@
 import {
+  type AutoBuildAttemptProgressSnapshot,
   type AutoBuildInput,
   type AutoBuildProgressSnapshot,
   type AutoBuildResult,
@@ -48,6 +49,12 @@ export interface AutoTeamBuilderWorkerProgressResponse {
   snapshot: AutoBuildProgressSnapshot;
 }
 
+export interface AutoTeamBuilderWorkerAttemptProgressResponse {
+  type: 'attemptProgress';
+  runId: string;
+  progress: AutoBuildAttemptProgressSnapshot;
+}
+
 export interface AutoTeamBuilderWorkerResultResponse {
   type: 'result';
   runId: string;
@@ -67,5 +74,6 @@ export type AutoTeamBuilderWorkerRequest =
 export type AutoTeamBuilderWorkerResponse =
   | AutoTeamBuilderWorkerReadyResponse
   | AutoTeamBuilderWorkerProgressResponse
+  | AutoTeamBuilderWorkerAttemptProgressResponse
   | AutoTeamBuilderWorkerResultResponse
   | AutoTeamBuilderWorkerErrorResponse;

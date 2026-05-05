@@ -590,7 +590,10 @@
   },
   "progress": {
     "attemptProgress": "Attempt {{current}} / {{total}}",
+    "activeWorkers": "Active workers: {{count}}",
+    "attemptWork": "Current attempt work: {{completed}} / {{total}} work units",
     "candidatePool": "{{count}} candidates in the current search pool",
+    "candidateChecks": "{{checked}} / {{total}} candidate checks in the current attempt",
     "completed": "Search completed.",
     "currentStepElapsed": "Current step live: {{duration}}",
     "exactAttempt": "Exact attempt {{current}} / {{total}}",
@@ -599,6 +602,7 @@
     "ignoringClasses": "Ignoring classes: {{classes}}",
     "ignoringLeaderSuperSpecialCriteria": "Ignoring Super Special criteria",
     "ignoringTypes": "Ignoring types: {{types}}",
+    "leaderPair": "Trying leaders: Captain {{captain}} / Friend {{friendCaptain}}",
     "loadingCandidates": "Loading candidates from the local dataset...",
     "overallProgressPercent": "Overall progress: {{percent}}%",
     "preparingSearch": "Preparing search permutations...",

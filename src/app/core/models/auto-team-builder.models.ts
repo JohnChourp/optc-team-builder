@@ -390,6 +390,30 @@ export interface AutoBuildProgressSnapshot {
   currentIgnoredLeaderSuperSpecialCriteria: boolean;
   messageKey: string;
   messageParams?: Record<string, number | string>;
+  completedWorkUnits?: number;
+  totalWorkUnits?: number;
+  currentSlot?: number;
+  totalSlots?: number;
+  checkedCandidates?: number;
+  totalCandidatesToCheck?: number;
+  activeWorkerCount?: number;
+  currentCaptainId?: number;
+  currentCaptainName?: string;
+  currentFriendCaptainId?: number;
+  currentFriendCaptainName?: string;
+}
+
+export interface AutoBuildAttemptProgressSnapshot {
+  completedWorkUnits: number;
+  totalWorkUnits: number;
+  currentSlot?: number;
+  totalSlots?: number;
+  checkedCandidates?: number;
+  totalCandidatesToCheck?: number;
+  currentCaptainId?: number;
+  currentCaptainName?: string;
+  currentFriendCaptainId?: number;
+  currentFriendCaptainName?: string;
 }
 
 export interface AutoBuildCoreResult {

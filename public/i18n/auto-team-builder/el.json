@@ -590,7 +590,10 @@
   },
   "progress": {
     "attemptProgress": "Attempt {{current}} / {{total}}",
+    "activeWorkers": "Ενεργοί workers: {{count}}",
+    "attemptWork": "Work στο current attempt: {{completed}} / {{total}} work units",
     "candidatePool": "{{count}} candidates στο current search pool",
+    "candidateChecks": "{{checked}} / {{total}} candidate checks στο current attempt",
     "completed": "Η αναζήτηση ολοκληρώθηκε.",
     "currentStepElapsed": "Το current step τρέχει εδώ και {{duration}}",
     "exactAttempt": "Exact attempt {{current}} / {{total}}",
@@ -599,6 +602,7 @@
     "ignoringClasses": "Ignoring classes: {{classes}}",
     "ignoringLeaderSuperSpecialCriteria": "Αγνόησε τα Super Special criteria",
     "ignoringTypes": "Ignoring types: {{types}}",
+    "leaderPair": "Δοκιμάζει leaders: Captain {{captain}} / Friend {{friendCaptain}}",
     "loadingCandidates": "Φόρτωση candidates από το local dataset...",
     "overallProgressPercent": "Συνολικό progress: {{percent}}%",
     "preparingSearch": "Προετοιμασία search permutations...",
