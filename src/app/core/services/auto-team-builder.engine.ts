@@ -13,6 +13,7 @@ import {
   prepareAutoTeamBuildContext,
   resolveCharacterTypeTokens,
   resolveUnsatisfiedSuperSpecialCriteriaCharacterNames,
+  resolveUnsatisfiedSuperTandemCriteriaCharacterNames,
   type PreparedAutoTeamBuildContext,
 } from './auto-team-builder.utils';
 
@@ -490,6 +491,12 @@ export function runAutoTeamBuildAttempt(
   const ignoredSuperSpecialCriteriaCharacterNames = ignoredLeaderSuperSpecialCriteria
     ? resolveUnsatisfiedSuperSpecialCriteriaCharacterNames(attempt.slots, requestedInput)
     : [];
+  const ignoredSuperTandemCriteria = Boolean(
+    requestedInput.requireSuperTandemCriteria && !input.requireSuperTandemCriteria,
+  );
+  const ignoredSuperTandemCriteriaCharacterNames = ignoredSuperTandemCriteria
+    ? resolveUnsatisfiedSuperTandemCriteriaCharacterNames(attempt.slots, requestedInput)
+    : [];
 
   return {
     ...attempt,
@@ -520,6 +527,10 @@ export function runAutoTeamBuildAttempt(
       ignoredLeaderSuperSpecialCriteria,
       ...(ignoredSuperSpecialCriteriaCharacterNames.length
         ? { ignoredSuperSpecialCriteriaCharacterNames }
+        : {}),
+      ignoredSuperTandemCriteria,
+      ...(ignoredSuperTandemCriteriaCharacterNames.length
+        ? { ignoredSuperTandemCriteriaCharacterNames }
         : {}),
     },
     shipSelection: null,
@@ -552,20 +563,30 @@ export class AutoTeamBuildFallbackPlanner {
       requestedInput.requireLeaderSuperSpecialCriteria &&
       !requestedInput.strictSuperSpecialCriteriaCoverage &&
       exactLeaderSuperEffectSlots === null;
+    const canRelaxSuperTandemCriteria =
+      requestedInput.requireSuperTandemCriteria &&
+      !requestedInput.strictSuperTandemCriteriaCoverage;
 
     this.zeroDropAttempts = buildZeroDropFallbackAttempts(
       requestedInput,
       exactLeaderSuperEffectSlots,
       exactAttemptRequiresNoSuperLeaders,
       canRelaxLeaderSuperSpecialCriteria,
+      canRelaxSuperTandemCriteria,
     );
     this.hasStrictConstraints = hasStrictAutoTeamBuildConstraints(requestedInput);
-    this.baseSubsetInput = canRelaxLeaderSuperSpecialCriteria
-      ? {
-          ...requestedInput,
-          requireLeaderSuperSpecialCriteria: false,
-        }
-      : requestedInput;
+    this.baseSubsetInput =
+      canRelaxLeaderSuperSpecialCriteria || canRelaxSuperTandemCriteria
+        ? {
+            ...requestedInput,
+            requireLeaderSuperSpecialCriteria: canRelaxLeaderSuperSpecialCriteria
+              ? false
+              : requestedInput.requireLeaderSuperSpecialCriteria,
+            requireSuperTandemCriteria: canRelaxSuperTandemCriteria
+              ? false
+              : requestedInput.requireSuperTandemCriteria,
+          }
+        : requestedInput;
     this.subsetCandidates = this.hasStrictConstraints
       ? []
       : buildSubsetCandidates(requestedInput, this.baseSubsetInput, records);
@@ -734,10 +755,15 @@ function buildZeroDropFallbackAttempts(
   exactLeaderSuperEffectSlots: number | null,
   exactAttemptRequiresNoSuperLeaders: boolean,
   canRelaxLeaderSuperSpecialCriteria: boolean,
+  canRelaxSuperTandemCriteria: boolean,
 ): AutoTeamBuildPlannedAttempt[] {
   const fixedAttempts: AutoTeamBuildPlannedAttempt[] = [];
 
-  if (exactLeaderSuperEffectSlots !== null) {
+  if (
+    exactLeaderSuperEffectSlots !== null &&
+    !canRelaxLeaderSuperSpecialCriteria &&
+    !canRelaxSuperTandemCriteria
+  ) {
     return fixedAttempts;
   }
 
@@ -760,6 +786,37 @@ function buildZeroDropFallbackAttempts(
       input: {
         ...requestedInput,
         requireLeaderSuperSpecialCriteria: false,
+      },
+      requireLeadersWithoutSuperEffects: false,
+      allowedLeadersWithSuperEffects: true,
+      droppedTypes: [],
+      droppedClasses: [],
+      ignoredLeaderSuperEffectScope: false,
+      ignoredLeaderSuperSpecialCriteria: true,
+    });
+  }
+
+  if (canRelaxSuperTandemCriteria) {
+    fixedAttempts.push({
+      input: {
+        ...requestedInput,
+        requireSuperTandemCriteria: false,
+      },
+      requireLeadersWithoutSuperEffects: false,
+      allowedLeadersWithSuperEffects: exactAttemptRequiresNoSuperLeaders,
+      droppedTypes: [],
+      droppedClasses: [],
+      ignoredLeaderSuperEffectScope: false,
+      ignoredLeaderSuperSpecialCriteria: false,
+    });
+  }
+
+  if (canRelaxLeaderSuperSpecialCriteria && canRelaxSuperTandemCriteria) {
+    fixedAttempts.push({
+      input: {
+        ...requestedInput,
+        requireLeaderSuperSpecialCriteria: false,
+        requireSuperTandemCriteria: false,
       },
       requireLeadersWithoutSuperEffects: false,
       allowedLeadersWithSuperEffects: true,
@@ -889,6 +946,7 @@ function buildSubsetAttempt(
       requireAllSlotsInLeaderSuperEffectScope: baseInput.requireAllSlotsInLeaderSuperEffectScope,
       minimumLeaderSuperEffectMatchingSlots: baseInput.minimumLeaderSuperEffectMatchingSlots,
       requireLeaderSuperSpecialCriteria: baseInput.requireLeaderSuperSpecialCriteria,
+      requireSuperTandemCriteria: baseInput.requireSuperTandemCriteria,
     },
     requireLeadersWithoutSuperEffects: false,
     allowedLeadersWithSuperEffects: !requestedInput.requireAllSlotsInLeaderSuperEffectScope,
@@ -1060,6 +1118,10 @@ function buildFallbackAttemptKey(attempt: AutoTeamBuildPlannedAttempt): string {
     attempt.input.strictSuperSpecialCriteriaCoverage
       ? 'strict-super-special'
       : 'best-effort-super-special',
+    attempt.input.requireSuperTandemCriteria ? '1' : '0',
+    attempt.input.strictSuperTandemCriteriaCoverage
+      ? 'strict-super-tandem'
+      : 'best-effort-super-tandem',
     attempt.input.requireAllSlotsInLeaderSuperEffectScope ? '1' : '0',
     attempt.input.requireFullCaptainAbilityCoverage ? 'full-captain' : 'simple-captain',
     attempt.input.requireBothLeadersFullCaptainAbilityCoverage
@@ -1095,6 +1157,8 @@ function inputsMatch(left: AutoBuildInput, right: AutoBuildInput): boolean {
     left.minimumLeaderSuperEffectMatchingSlots === right.minimumLeaderSuperEffectMatchingSlots &&
     left.requireLeaderSuperSpecialCriteria === right.requireLeaderSuperSpecialCriteria &&
     left.strictSuperSpecialCriteriaCoverage === right.strictSuperSpecialCriteriaCoverage &&
+    left.requireSuperTandemCriteria === right.requireSuperTandemCriteria &&
+    left.strictSuperTandemCriteriaCoverage === right.strictSuperTandemCriteriaCoverage &&
     left.leaderCostRange.min === right.leaderCostRange.min &&
     left.leaderCostRange.max === right.leaderCostRange.max &&
     left.subCostRange.min === right.subCostRange.min &&

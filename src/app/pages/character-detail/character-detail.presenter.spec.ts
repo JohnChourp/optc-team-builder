@@ -367,6 +367,24 @@ describe('character-detail presenter', () => {
                 effect: 'Applies ATK Boost (Tandem) of 2.5x to DEX and STR characters for 1 turn.',
               },
             ],
+            criteria: {
+              rawText: 'At final battle and any 2 listed characters are on the crew',
+              requiresCaptain: false,
+              excludesSelf: false,
+              rosterBranches: [
+                {
+                  branchType: 'character_count_any',
+                  requiredCount: 2,
+                  matchMode: 'unique_options',
+                  options: [
+                    { label: 'Roronoa Zoro', acceptedKeys: ['roronoa zoro', 'zoro'] },
+                    { label: 'Nami', acceptedKeys: ['nami'] },
+                  ],
+                },
+              ],
+              hasNonRosterBranches: false,
+              parserStatus: 'roster_only',
+            },
           },
           finalTapData: {
             requirement: 'On the turn Special is launched during final Battle',
@@ -434,6 +452,21 @@ describe('character-detail presenter', () => {
       viewModel.groups.flatMap((group) => group.cards.map((card) => card.titleKey)),
     ).not.toContain('sections.teamSynergy');
     expect(viewModel.captainAbilitySummary?.characterTags).toEqual(['Straw Hat Pirates', 'Giant']);
+    const superTandemCard = viewModel.groups
+      .flatMap((group) => group.cards)
+      .find((card) => card.titleKey === 'sections.superTandemData');
+    expect(superTandemCard?.rows).toContainEqual(
+      expect.objectContaining({
+        labelKey: 'fields.requirement',
+        value: 'At final battle and any 2 listed characters are on the crew',
+      }),
+    );
+    expect(superTandemCard?.entries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ title: 'Lv 5' }),
+        expect.objectContaining({ titleKey: 'fields.parsedCriteria' }),
+      ]),
+    );
   });
 
   it('renders captain variants and notes in the top summary without duplicating a detail card', () => {

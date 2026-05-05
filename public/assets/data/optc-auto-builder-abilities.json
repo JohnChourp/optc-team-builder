@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-05T14:29:41.104Z",
+  "generatedAt": "2026-05-05T15:25:20.447Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -33267,12 +33267,13 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "potentialAbilities"
+        "potentialAbilities",
+        "superTandemData"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 110,
+      "matchCount": 112,
       "matchingCharacterIds": [
         575,
         1595,
@@ -33336,9 +33337,11 @@
         4187,
         4193,
         4202,
+        4211,
         4213,
         4216,
         4221,
+        4231,
         4233,
         4240,
         4253,
@@ -33394,11 +33397,11 @@
         3621
       ],
       "sampleTexts": [
-        "Reduces Slot Bind duration by 5 turns on this character. Reduce Slot Bind duration. Reduces damage taken from [PSY] characters by 5%. [PSY] Damage Reduction. Obtain Super Tandem Lv.5. Super Tandem",
-        "Reduces damage taken from [INT] characters by 5%. [INT] Damage Reduction. Reduces No Healing duration by 10 turns. Reduce No Healing duration. Obtain Super Tandem Lv.5. Super Tandem",
-        "If HP is below 50% at the start of the turn, recovers 1.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character. Pinch Healing. Reduces Slot Bind duration by 10 turns on this character. Reduce Slot Bind duration. Super Tandem Ability Lv.5. Super Tandem",
-        "If you hit a PERFECT with this character, there is a 100% chance to deal 10% of this character's attack in extra damage. Critical Hit. Reduces Slot Bind duration by 10 turns on this character. Reduce Slot Bind duration. Super Tandem Ability Lv.5. Super Tandem",
-        "Reduces No Healing duration by 10 turns. Reduce No Healing duration. Super Tandem Ability Lv.5. Super Tandem. If HP is below 50% at the start of the turn, recovers 1.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character. Pinch Healing"
+        "Reduces Slot Bind duration by 5 turns on this character. Reduce Slot Bind duration. Reduces damage taken from [PSY] characters by 5%. [PSY] Damage Reduction. Obtain Super Tandem Lv.5. Super Tandem. On the last stage. Your crew must consist of any 2 of the following, excluding supports and counting only 1 per unit: Borsalino (Kizaru), Sakazuki (Akainu), Sengoku, Monkey D. Garp. Boosts Tandem ATK of [Navy] characters by 2.25x for 1 turn.. On the last stage. Your crew must consist of any 2 of the following, excluding supports and counting only 1 per unit: Borsalino (Kizaru), Sakazuki (Akainu), Sengoku, Monkey D. Garp. character_count_any. unique_options. Borsalino (Kizaru). borsalino kizaru. borsalino. kizaru. Sakazuki (Akainu). sakazuki akainu. sakazuki. akainu. Sengoku. sengoku. Monkey D. Garp. monkey d garp. garp. mixed",
+        "Reduces Slot Bind duration by 5 turns on this character. Reduce Slot Bind duration. Reduces damage taken from [PSY] characters by 5%. [PSY] Damage Reduction. Obtain Super Tandem Lv.5. Super Tandem. On the last stage. Your crew must consist of any 2 of the following, excluding supports and counting only 1 per unit: Borsalino (Kizaru), Sakazuki (Akainu), Sengoku, Monkey D. Garp. Boosts Tandem ATK of [Navy] characters by 2.25x for 1 turn.. On the last stage. Your crew must consist of any 2 of the following, excluding supports and counting only 1 per unit: Borsalino (Kizaru), Sakazuki (Akainu), Sengoku, Monkey D. Garp. character_count_any. unique_options. Borsalino (Kizaru). borsalino kizaru. borsalino. kizaru. Sakazuki (Akainu). sakazuki akainu. sakazuki. akainu. Sengoku. sengoku. Monkey D. Garp. monkey d garp. garp. mixed",
+        "Reduces damage taken from [INT] characters by 5%. [INT] Damage Reduction. Reduces No Healing duration by 10 turns. Reduce No Healing duration. Obtain Super Tandem Lv.5. Super Tandem. On the last stage. Your crew must consist of any 2 of the following, excluding supports and counting only 1 per unit: Borsalino (Kizaru), Kuzan (Aokiji), Sakazuki (Akainu), Aramaki (Ryokugyu), Sengoku, Monkey D. Garp, Roronoa Zoro. Boosts Tandem ATK of Powerhouse and Slasher characters by 2x for 1 turn.. On the last stage. Your crew must consist of any 2 of the following, excluding supports and counting only 1 per unit: Borsalino (Kizaru), Kuzan (Aokiji), Sakazuki (Akainu), Aramaki (Ryokugyu), Sengoku, Monkey D. Garp, Roronoa Zoro. character_count_any. unique_options. Borsalino (Kizaru). borsalino kizaru. borsalino. kizaru. Kuzan (Aokiji). kuzan aokiji. kuzan. aokiji. Sakazuki (Akainu). sakazuki akainu. sakazuki. akainu. Aramaki (Ryokugyu). aramaki ryokugyu. aramaki. ryokugyu. Sengoku. sengoku. Monkey D. Garp. monkey d garp. garp. Roronoa Zoro. roronoa zoro. zoro. mixed",
+        "Reduces damage taken from [INT] characters by 5%. [INT] Damage Reduction. Reduces No Healing duration by 10 turns. Reduce No Healing duration. Obtain Super Tandem Lv.5. Super Tandem. On the last stage. Your crew must consist of any 2 of the following, excluding supports and counting only 1 per unit: Borsalino (Kizaru), Kuzan (Aokiji), Sakazuki (Akainu), Aramaki (Ryokugyu), Sengoku, Monkey D. Garp, Roronoa Zoro. Boosts Tandem ATK of Powerhouse and Slasher characters by 2x for 1 turn.. On the last stage. Your crew must consist of any 2 of the following, excluding supports and counting only 1 per unit: Borsalino (Kizaru), Kuzan (Aokiji), Sakazuki (Akainu), Aramaki (Ryokugyu), Sengoku, Monkey D. Garp, Roronoa Zoro. character_count_any. unique_options. Borsalino (Kizaru). borsalino kizaru. borsalino. kizaru. Kuzan (Aokiji). kuzan aokiji. kuzan. aokiji. Sakazuki (Akainu). sakazuki akainu. sakazuki. akainu. Aramaki (Ryokugyu). aramaki ryokugyu. aramaki. ryokugyu. Sengoku. sengoku. Monkey D. Garp. monkey d garp. garp. Roronoa Zoro. roronoa zoro. zoro. mixed",
+        "If HP is below 50% at the start of the turn, recovers 1.5x this character's RCV at the end of the turn for each time you hit a PERFECT with this character. Pinch Healing. Reduces Slot Bind duration by 10 turns on this character. Reduce Slot Bind duration. Super Tandem Ability Lv.5. Super Tandem. Any 2 of the following, excluding Supports and counting only 1 per unit: Roronoa Zoro, Vinsmoke Sanji, Usopp, Nami, Tony Tony Chopper, Nico Robin, Franky, Brook or Jinbe. 1 of the following is required: Roronoa Zoro or Vinsmoke Sanji.. Boosts Tandem ATK of Free Spirit characters by 2.5x for 1 turn, and makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for all characters for 1 turn.. Any 2 of the following, excluding Supports and counting only 1 per unit: Roronoa Zoro, Vinsmoke Sanji, Usopp, Nami, Tony Tony Chopper, Nico Robin, Franky, Brook or Jinbe. 1 of the following is required: Roronoa Zoro or Vinsmoke Sanji.. non_roster_only"
       ]
     },
     {
@@ -37057,7 +37060,7 @@
         4472
       ],
       "sampleTexts": [
-        "Boosts base ATK by 300 the turn after taking damage and reduces Increase Damage Taken duration by 3 turns. Enrage/Increase Damage Taken. Boosts Damage Limit Break effect based on number of Powerhouse characters on the crew (except as Support Characters): +0.2 for 1, +.0.3 for 2, +0.4 for 3, +0.5 for 4, +0.6 for 5, +0.75 for 6. Damage Limit Break: Class. Obtain Super Tandem Lv.5. Super Tandem",
+        "Boosts base ATK by 300 the turn after taking damage and reduces Increase Damage Taken duration by 3 turns. Enrage/Increase Damage Taken. Boosts Damage Limit Break effect based on number of Powerhouse characters on the crew (except as Support Characters): +0.2 for 1, +.0.3 for 2, +0.4 for 3, +0.5 for 4, +0.6 for 5, +0.75 for 6. Damage Limit Break: Class. Obtain Super Tandem Lv.5. Super Tandem. Your crew must consist of any 3 of the following, excluding Supports and counting only 1 per unit: Roronoa Zoro, Sanji, Nami, Usopp, Tony Tony Chopper, Nico Robin, Franky, Brook, Jinbe, Jewelry Bonney, Dr. Vegapunk (Stella), Dr. Vegapunk \"Shaka the Good\", Dr. Vegapunk \"Lilith the Evil\", Dr. Vegapunk \"Edison the Thinker\", Dr. Vegapunk \"Pythagoras the Wise\", Dr. Vegapunk \"Atlas the Violent\", S-Snake, Bartholomew Kuma, Portgas D. Ace, Sabo, Monkey D. Garp, Shanks, Makino, Curly Dadan, Monkey D. Dragon, Dorry, Broggy, Kashii, Oimo. Ignores Debuff Protection and reduces the defense of all enemies by 100% for 1 turn, boosts Tandem ATK of [QCK] and Powerhouse characters by 3x for 1 turn, and boosts base ATK of Last Tap character by +700 for 1 turn.. Your crew must consist of any 3 of the following, excluding Supports and counting only 1 per unit: Roronoa Zoro, Sanji, Nami, Usopp, Tony Tony Chopper, Nico Robin, Franky, Brook, Jinbe, Jewelry Bonney, Dr. Vegapunk (Stella), Dr. Vegapunk \"Shaka the Good\", Dr. Vegapunk \"Lilith the Evil\", Dr. Vegapunk \"Edison the Thinker\", Dr. Vegapunk \"Pythagoras the Wise\", Dr. Vegapunk \"Atlas the Violent\", S-Snake, Bartholomew Kuma, Portgas D. Ace, Sabo, Monkey D. Garp, Shanks, Makino, Curly Dadan, Monkey D. Dragon, Dorry, Broggy, Kashii, Oimo. character_count_any. unique_options. Roronoa Zoro. roronoa zoro. zoro. Sanji. sanji. Nami. nami. Usopp. usopp. Tony Tony Chopper. tony tony chopper. chopper. Nico Robin. nico robin. robin. Franky. franky. Brook. brook. Jinbe. jinbe. Jewelry Bonney. jewelry bonney. bonney. Dr. Vegapunk (Stella). dr vegapunk stella. dr vegapunk. stella. vegapunk. Dr. Vegapunk \"Shaka the Good\". dr vegapunk shaka the good. good. Dr. Vegapunk \"Lilith the Evil\". dr vegapunk lilith the evil. evil. Dr. Vegapunk \"Edison the Thinker\". dr vegapunk edison the thinker. thinker. Dr. Vegapunk \"Pythagoras the Wise\". dr vegapunk pythagoras the wise. wise. Dr. Vegapunk \"Atlas the Violent\". dr vegapunk atlas the violent. violent. S-Snake. s snake. Bartholomew Kuma. bartholomew kuma. kuma. Portgas D. Ace. portgas d ace. ace. Sabo. sabo. Monkey D. Garp. monkey d garp. garp. Shanks. shanks. Makino. makino. Curly Dadan. curly dadan. dadan. Monkey D. Dragon. monkey d dragon. dragon. Dorry. dorry. Broggy. broggy. Kashii. kashii. Oimo. oimo. roster_only",
         "Boosts base ATK by 500 the turn after taking damage and reduces Increase Damage Taken duration by 5 turns. Enrage/Increase Damage Taken. Obtain Super Tandem Boost Lv.5. Super Tandem Boost. Boosts Damage Limit Break effect based on number of Driven characters on the crew (except as Support Characters): +0.2 for 1, +.0.3 for 2, +0.4 for 3, +0.5 for 4, +0.6 for 5, +0.75 for 6. Damage Limit Break: Class",
         "Boosts base ATK by 500 the turn after taking damage and reduces Increase Damage Taken duration by 5 turns. Enrage/Increase Damage Taken. Obtain Super Tandem Boost Lv.5. Super Tandem Boost. Boosts Damage Limit Break effect based on number of Driven characters on the crew (except as Support Characters): +0.2 for 1, +.0.3 for 2, +0.4 for 3, +0.5 for 4, +0.6 for 5, +0.75 for 6. Damage Limit Break: Class",
         "Boosts Damage Limit Break effect based on number of Powerhouse characters on the crew (except as Support Characters): +0.2 for 1, +.0.3 for 2, +0.4 for 3, +0.5 for 4, +0.6 for 5, +0.75 for 6. Damage Limit Break: Class. Reduces Special Use Limit duration by 3 turns. Special Use Limit. Once per adventure, reduces Special Cooldown of this character completely after the first time this special is used. Double Special Activation",

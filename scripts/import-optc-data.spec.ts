@@ -548,6 +548,52 @@ describe('import-optc-data ship thumbnail pack', () => {
     });
   });
 
+  it('imports only max-level Super Tandem data with parsed activation criteria', () => {
+    const detail = normalizeCharacterDetail(
+      {
+        superTandem: {
+          characterCondition: [
+            'Your crew must consist of any 1 of the following, excluding supports and counting only 1 per unit: Roronoa Zoro.',
+            'Your crew must consist of any 1 of the following, excluding supports and counting only 1 per unit: Roronoa Zoro.',
+            'Your crew must consist of any 1 of the following, excluding supports and counting only 1 per unit: Roronoa Zoro.',
+            'Your crew must consist of any 1 of the following, excluding supports and counting only 1 per unit: Roronoa Zoro.',
+            'Your crew must consist of any 2 of the following, excluding supports and counting only 1 per unit: Roronoa Zoro, Nami, Usopp.',
+          ],
+          description: [
+            'Reduces Special Cooldown of Monkey D. Luffy characters by 1 turn.',
+            'Reduces Special Cooldown of Monkey D. Luffy characters by 1 turn.',
+            'Reduces Special Cooldown of Monkey D. Luffy characters by 1 turn.',
+            'Reduces Special Cooldown of Monkey D. Luffy characters by 2 turns.',
+            'Reduces Special Cooldown of Monkey D. Luffy and Jewelry Bonney characters by 2 turns, and boosts Tandem ATK of Free Spirit and Cerebral characters by 3x for 1 turn.',
+          ],
+        },
+      },
+      4490,
+    );
+
+    expect(detail.superTandemData).toEqual({
+      requirement:
+        'Your crew must consist of any 2 of the following, excluding supports and counting only 1 per unit: Roronoa Zoro, Nami, Usopp.',
+      levels: [
+        {
+          level: 5,
+          effect:
+            'Reduces Special Cooldown of Monkey D. Luffy and Jewelry Bonney characters by 2 turns, and boosts Tandem ATK of Free Spirit and Cerebral characters by 3x for 1 turn.',
+        },
+      ],
+      criteria: expect.objectContaining({
+        parserStatus: 'roster_only',
+        requiresCaptain: false,
+        rosterBranches: [
+          expect.objectContaining({
+            branchType: 'character_count_any',
+            requiredCount: 2,
+          }),
+        ],
+      }),
+    });
+  });
+
   it('imports upstream character tags into normalized details and search text', () => {
     const characters = normalizeCharacters(
       {

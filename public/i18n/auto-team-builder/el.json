@@ -14,7 +14,8 @@
       "leaderSuperEffectScope": "match στο leader super effect scope",
       "captainAbilityCoverage": "πλήρες captain ability coverage",
       "bothLeadersCaptainCoverage": "captain ability coverage και από τους δύο leaders",
-      "superSpecialCriteriaCoverage": "κάλυψη Super Special criteria"
+      "superSpecialCriteriaCoverage": "κάλυψη Super Special criteria",
+      "superTandemCriteriaCoverage": "κάλυψη Super Tandem criteria"
     },
     "strictMode": {
       "flexible": "με flexible fallback",
@@ -93,6 +94,13 @@
       "support": {
         "flexible": "Ο builder προσπαθεί πρώτα να ενεργοποιεί όλα τα Super Special Criteria της ομάδας και δείχνει warning αν χρειαστεί να τα χαλαρώσει.",
         "strict": "Κάθε final unit με Super Special Criteria πρέπει να μπορεί να ενεργοποιηθεί στο battle."
+      }
+    },
+    "superTandemCriteriaCoverage": {
+      "toggle": "Απαίτησε κάλυψη Super Tandem",
+      "support": {
+        "flexible": "Ο builder προσπαθεί πρώτα να ενεργοποιεί όλα τα Super Tandem της ομάδας και δείχνει warning αν χρειαστεί να τα χαλαρώσει.",
+        "strict": "Κάθε final unit με Super Tandem criteria πρέπει να μπορεί να ενεργοποιηθεί στο battle."
       }
     },
     "leaderBoost": {
@@ -574,6 +582,8 @@
     "ignoredLeaderSuperSpecialCriteria": "Αγνόησε τα Super Special criteria",
     "ignoredSuperSpecialCriteria": "Το Super Special δεν θα ενεργοποιηθεί για το final team.",
     "ignoredSuperSpecialCriteriaWithNames": "Το Super Special δεν θα ενεργοποιηθεί για: {{names}}",
+    "ignoredSuperTandemCriteria": "Το Super Tandem δεν θα ενεργοποιηθεί για το final team.",
+    "ignoredSuperTandemCriteriaWithNames": "Το Super Tandem δεν θα ενεργοποιηθεί για: {{names}}",
     "title": "Χρησιμοποιήθηκε relaxed fallback"
   },
   "summary": {
@@ -719,6 +729,7 @@
       "flexible": "Δεν βρέθηκε flexible ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
       "separator": " και ",
       "superSpecialCriteria": "κάλυψη των Super Special criteria",
+      "superTandemCriteria": "κάλυψη των Super Tandem criteria",
       "strict": "Δεν βρέθηκε strict ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
       "typeCoverage": "κάλυψη types στην ομάδα",
       "uniqueCharacterNames": "μοναδικές in-game character identities σε όλη την ομάδα εκτός Friend Captain"

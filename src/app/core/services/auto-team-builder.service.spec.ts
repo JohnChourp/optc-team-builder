@@ -3753,6 +3753,164 @@ describe('Auto team builder', () => {
     expect(result).toBeNull();
   });
 
+  it('builds a team satisfying a manual sub Super Tandem criteria branch', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 7410,
+          name: 'Super Tandem Captain',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of all characters by 5x and their HP by 1.3x.',
+            specialText: 'Boosts orb effects of crew by 2.25x for 1 turn.',
+          },
+        }),
+        createSuperTandemSubRecord(
+          7411,
+          'Luffy & Bonney',
+          createRosterSuperCriteria(2, ['Roronoa Zoro', 'Nami']),
+        ),
+        createCharacterRecord({
+          id: 7412,
+          name: 'Roronoa Zoro',
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Boosts ATK of crew by 2x for 1 turn.' },
+        }),
+        createCharacterRecord({
+          id: 7413,
+          name: 'Nami',
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Reduces Bind duration by 5 turns.' },
+        }),
+        createCharacterRecord({
+          id: 7414,
+          name: 'Utility Filler',
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Reduces Paralysis duration by 5 turns.' },
+        }),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireSuperTandemCriteria: true,
+        manualSlots: createManualSlots({
+          captain: [7410],
+          friendCaptain: [7410],
+          sub1: [7411],
+        }),
+        lockedCharacterIds: [7410, 7411],
+        captainCharacterId: 7410,
+        friendCaptainCharacterId: 7410,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.name === 'Roronoa Zoro')).toBe(true);
+    expect(result?.slots.some((slot) => slot.character.name === 'Nami')).toBe(true);
+  });
+
+  it('keeps required unsupported Super Tandem manual subs available to relaxed fallback attempts', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue([
+        createCharacterRecord({
+          id: 7420,
+          name: 'Fallback Tandem Captain',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of all characters by 5x and their HP by 1.3x.',
+            specialText: 'Boosts orb effects of crew by 2.25x for 1 turn.',
+          },
+        }),
+        createNonRosterSuperTandemSubRecord(7421),
+        createCharacterRecord({
+          id: 7422,
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Boosts ATK of crew by 2x for 1 turn.' },
+        }),
+        createCharacterRecord({
+          id: 7423,
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Reduces Bind duration by 5 turns.' },
+        }),
+        createCharacterRecord({
+          id: 7424,
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Reduces Paralysis duration by 5 turns.' },
+        }),
+      ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      manualSlots: createManualSlots(
+        {
+          captain: [7420],
+          friendCaptain: [7420],
+          sub1: [7421],
+        },
+        {
+          sub1: 7421,
+        },
+      ),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.requestedInput.requireSuperTandemCriteria).toBe(true);
+    expect(result?.input.requireSuperTandemCriteria).toBe(false);
+    expect(result?.relaxation.ignoredSuperTandemCriteria).toBe(true);
+    expect(result?.relaxation.ignoredSuperTandemCriteriaCharacterNames).toEqual([
+      'Non-roster Super Tandem 7421',
+    ]);
+    expect(result?.slots.some((slot) => slot.character.id === 7421)).toBe(true);
+  });
+
+  it('rejects unsupported Super Tandem manual subs when strict criteria coverage is enabled', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue([
+        createCharacterRecord({
+          id: 7420,
+          name: 'Fallback Tandem Captain',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of all characters by 5x and their HP by 1.3x.',
+            specialText: 'Boosts orb effects of crew by 2.25x for 1 turn.',
+          },
+        }),
+        createNonRosterSuperTandemSubRecord(7421),
+        createCharacterRecord({
+          id: 7422,
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Boosts ATK of crew by 2x for 1 turn.' },
+        }),
+        createCharacterRecord({
+          id: 7423,
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Reduces Bind duration by 5 turns.' },
+        }),
+        createCharacterRecord({
+          id: 7424,
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Reduces Paralysis duration by 5 turns.' },
+        }),
+      ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      strictSuperTandemCriteriaCoverage: true,
+      manualSlots: createManualSlots(
+        {
+          captain: [7420],
+          friendCaptain: [7420],
+          sub1: [7421],
+        },
+        {
+          sub1: 7421,
+        },
+      ),
+    });
+
+    expect(result).toBeNull();
+  });
+
   it('accepts a mixed super special criteria leader when the roster branch is satisfied', () => {
     const result = buildAutoTeamResult(
       [
@@ -5806,6 +5964,7 @@ describe('Auto team builder', () => {
       allowedLeadersWithSuperEffects: false,
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
+      ignoredSuperTandemCriteria: false,
     });
   });
 
@@ -5846,6 +6005,7 @@ describe('Auto team builder', () => {
       allowedLeadersWithSuperEffects: true,
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: true,
+      ignoredSuperTandemCriteria: false,
       ignoredSuperSpecialCriteriaCharacterNames: ['Monkey D. Luffy'],
     });
   });
@@ -6007,7 +6167,10 @@ describe('Auto team builder', () => {
     };
     const service = new AutoTeamBuilderService(repository as never);
 
-    const result = await service.buildTeam(['Fighter'], ['DEX', 'INT']);
+    const result = await service.buildTeam(['Fighter'], ['DEX', 'INT'], {
+      requireFullCaptainAbilityCoverage: false,
+      requireSuperTandemCriteria: false,
+    });
 
     expect(result).not.toBeNull();
     expect(result?.relaxation.usedFallback).toBe(true);
@@ -6045,7 +6208,10 @@ describe('Auto team builder', () => {
     };
     const service = new AutoTeamBuilderService(repository as never);
 
-    const result = await service.buildTeam(['Fighter', 'Shooter'], ['DEX']);
+    const result = await service.buildTeam(['Fighter', 'Shooter'], ['DEX'], {
+      requireFullCaptainAbilityCoverage: false,
+      requireSuperTandemCriteria: false,
+    });
 
     expect(result).not.toBeNull();
     expect(result?.requestedInput.selectedClasses).toEqual(['Fighter', 'Shooter']);
@@ -6058,6 +6224,7 @@ describe('Auto team builder', () => {
       allowedLeadersWithSuperEffects: true,
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: true,
+      ignoredSuperTandemCriteria: false,
     });
   });
 
@@ -6080,7 +6247,10 @@ describe('Auto team builder', () => {
     };
     const service = new AutoTeamBuilderService(repository as never);
 
-    const result = await service.buildTeam(['Fighter'], ['DEX', 'INT']);
+    const result = await service.buildTeam(['Fighter'], ['DEX', 'INT'], {
+      requireFullCaptainAbilityCoverage: false,
+      requireSuperTandemCriteria: false,
+    });
 
     expect(result).not.toBeNull();
     expect(result?.requestedInput.types).toEqual(['DEX', 'INT']);
@@ -6093,6 +6263,7 @@ describe('Auto team builder', () => {
       allowedLeadersWithSuperEffects: true,
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: true,
+      ignoredSuperTandemCriteria: false,
     });
   });
 
@@ -6454,7 +6625,11 @@ describe('Auto team builder', () => {
       .buildTeam(
         ['Fighter'],
         ['DEX', 'INT'],
-        { requireLeaderSuperSpecialCriteria: false },
+        {
+          requireFullCaptainAbilityCoverage: false,
+          requireLeaderSuperSpecialCriteria: false,
+          requireSuperTandemCriteria: false,
+        },
         { workerCount: 2 },
       )
       .then((result) => {
@@ -6524,7 +6699,11 @@ describe('Auto team builder', () => {
       .buildTeam(
         ['Fighter'],
         ['DEX', 'INT'],
-        { requireLeaderSuperSpecialCriteria: false },
+        {
+          requireFullCaptainAbilityCoverage: false,
+          requireLeaderSuperSpecialCriteria: false,
+          requireSuperTandemCriteria: false,
+        },
         { workerCount: 2 },
       )
       .then((result) => {
@@ -7086,7 +7265,11 @@ describe('Auto team builder', () => {
       .buildTeam(
         ['Fighter'],
         ['DEX', 'INT'],
-        { requireLeaderSuperSpecialCriteria: false },
+        {
+          requireFullCaptainAbilityCoverage: false,
+          requireLeaderSuperSpecialCriteria: false,
+          requireSuperTandemCriteria: false,
+        },
         { workerCount: 2 },
       )
       .then((result) => {
@@ -7562,7 +7745,12 @@ describe('Auto team builder', () => {
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
 
-    const result = await service.buildTeam(['Fighter'], ['DEX', 'INT'], {}, { workerCount: 2 });
+    const result = await service.buildTeam(
+      ['Fighter'],
+      ['DEX', 'INT'],
+      { requireFullCaptainAbilityCoverage: false },
+      { workerCount: 2 },
+    );
 
     expect(result).toBeNull();
     expect(workerA.terminated).toBe(true);
@@ -7786,7 +7974,15 @@ describe('Auto team builder', () => {
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
 
-    const result = await service.buildTeam(['Fighter'], ['DEX', 'INT'], {}, { workerCount: 2 });
+    const result = await service.buildTeam(
+      ['Fighter'],
+      ['DEX', 'INT'],
+      {
+        requireFullCaptainAbilityCoverage: false,
+        requireSuperTandemCriteria: false,
+      },
+      { workerCount: 2 },
+    );
 
     expect(result).not.toBeNull();
     expect(result?.input.types).toEqual(['DEX']);
@@ -8018,6 +8214,8 @@ function createInput(
       | 'minimumLeaderSuperEffectMatchingSlots'
       | 'requireLeaderSuperSpecialCriteria'
       | 'strictSuperSpecialCriteriaCoverage'
+      | 'requireSuperTandemCriteria'
+      | 'strictSuperTandemCriteriaCoverage'
       | 'requireUniqueBaseCharacterNames'
       | 'favoritesOnly'
       | 'allowAnyFriendCaptainAutoFill'
@@ -8047,6 +8245,8 @@ function createInput(
     requireBothLeadersFullCaptainAbilityCoverage: false,
     requireLeaderSuperSpecialCriteria: false,
     strictSuperSpecialCriteriaCoverage: false,
+    requireSuperTandemCriteria: false,
+    strictSuperTandemCriteriaCoverage: false,
     requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
     allowAnyFriendCaptainAutoFill: false,
@@ -8089,6 +8289,8 @@ function createInput(
       : null,
     requireLeaderSuperSpecialCriteria: overrides.requireLeaderSuperSpecialCriteria ?? false,
     strictSuperSpecialCriteriaCoverage: overrides.strictSuperSpecialCriteriaCoverage ?? false,
+    requireSuperTandemCriteria: overrides.requireSuperTandemCriteria ?? false,
+    strictSuperTandemCriteriaCoverage: overrides.strictSuperTandemCriteriaCoverage ?? false,
     requireUniqueBaseCharacterNames: overrides.requireUniqueBaseCharacterNames ?? false,
     favoritesOnly: overrides.favoritesOnly ?? false,
     allowAnyFriendCaptainAutoFill: overrides.allowAnyFriendCaptainAutoFill ?? false,
@@ -8761,6 +8963,7 @@ function buildWorkerResult(
       allowedLeadersWithSuperEffects: false,
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
+      ignoredSuperTandemCriteria: false,
     },
     shipSelection: null,
   };
@@ -10033,6 +10236,7 @@ function createCharacterRecord(
       swapData: overrides.detail?.swapData ?? null,
       vsSpecial: overrides.detail?.vsSpecial ?? null,
       superType: overrides.detail?.superType ?? null,
+      superTandemData: overrides.detail?.superTandemData ?? null,
       superClass: overrides.detail?.superClass ?? null,
       rumbleData: overrides.detail?.rumbleData ?? null,
     },
@@ -10057,6 +10261,43 @@ function createLeaderWithSuperCriteriaRecord(
       superSpecialText: 'Transforms Fighter characters into a Super class.',
       superSpecialCriteriaText: superSpecialCriteria.rawText,
       superSpecialCriteria,
+    },
+  });
+}
+
+function createSuperTandemData(
+  criteria: NonNullable<CharacterDetailRecord['detail']['superSpecialCriteria']>,
+): NonNullable<CharacterDetailRecord['detail']['superTandemData']> {
+  return {
+    requirement: criteria.rawText,
+    levels: [
+      {
+        level: 5,
+        effect: 'Boosts Tandem ATK of Free Spirit and Cerebral characters by 3x for 1 turn.',
+      },
+    ],
+    criteria,
+  };
+}
+
+function createSuperTandemSubRecord(
+  id: number,
+  name: string,
+  superTandemCriteria: NonNullable<CharacterDetailRecord['detail']['superSpecialCriteria']>,
+): CharacterDetailRecord {
+  const criteria = {
+    ...superTandemCriteria,
+    requiresCaptain: false,
+  };
+
+  return createCharacterRecord({
+    id,
+    name,
+    primaryClass: 'Fighter',
+    secondaryClass: 'Free Spirit',
+    detail: {
+      specialText: 'Boosts ATK of crew by 2x for 1 turn.',
+      superTandemData: createSuperTandemData(criteria),
     },
   });
 }
@@ -10254,6 +10495,20 @@ function createNonRosterSuperSpecialSubRecord(id: number): CharacterDetailRecord
       superSpecialText: 'Transforms Fighter characters into a Super class.',
       superSpecialCriteriaText: createNonRosterSuperCriteria().rawText,
       superSpecialCriteria: createNonRosterSuperCriteria(),
+    },
+  });
+}
+
+function createNonRosterSuperTandemSubRecord(id: number): CharacterDetailRecord {
+  const criteria = createNonRosterSuperCriteria();
+
+  return createCharacterRecord({
+    id,
+    name: `Non-roster Super Tandem ${id}`,
+    primaryClass: 'Fighter',
+    detail: {
+      specialText: 'Boosts ATK of crew by 2x for 1 turn.',
+      superTandemData: createSuperTandemData(criteria),
     },
   });
 }

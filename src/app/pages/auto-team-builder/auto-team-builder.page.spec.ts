@@ -231,6 +231,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       expect.objectContaining({
         requireFullCaptainAbilityCoverage: true,
         strictSuperSpecialCriteriaCoverage: false,
+        strictSuperTandemCriteriaCoverage: false,
       }),
       expect.any(Object),
     );
@@ -304,6 +305,26 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.resultIgnoredLeaderSuperSpecialCriteria()).toBe(true);
     expect(page.ignoredSuperSpecialCriteriaLabel()).toBe(
       'Super Special will not activate for: Luffy & Bonney',
+    );
+  });
+
+  it('formats relaxed Super Tandem warnings with character names', async () => {
+    const { page } = await createPage();
+    const result = createAutoBuildResult();
+
+    page.result.set({
+      ...result,
+      relaxation: {
+        ...result.relaxation,
+        usedFallback: true,
+        ignoredSuperTandemCriteria: true,
+        ignoredSuperTandemCriteriaCharacterNames: ['Luffy & Bonney'],
+      },
+    });
+
+    expect(page.resultIgnoredSuperTandemCriteria()).toBe(true);
+    expect(page.ignoredSuperTandemCriteriaLabel()).toBe(
+      'Super Tandem will not activate for: Luffy & Bonney',
     );
   });
 
@@ -522,6 +543,30 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       ['DEX'],
       expect.objectContaining({
         strictSuperSpecialCriteriaCoverage: true,
+      }),
+      expect.objectContaining({
+        onProgress: expect.any(Function),
+        signal: expect.any(AbortSignal),
+      }),
+    );
+  });
+
+  it('passes the strict Super Tandem coverage toggle to the builder service', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.onRequireSuperTandemCriteriaCoverageToggle({
+      detail: { checked: true },
+    } as CustomEvent<{ checked: boolean }>);
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({
+        strictSuperTandemCriteriaCoverage: true,
       }),
       expect.objectContaining({
         onProgress: expect.any(Function),
@@ -2393,6 +2438,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain('onRequireBothLeadersFullCaptainAbilityCoverageToggle($event)');
     expect(template).toContain('superSpecialCriteriaCoverageToggleLabel()');
     expect(template).toContain('onRequireSuperSpecialCriteriaCoverageToggle($event)');
+    expect(template).toContain('superTandemCriteriaCoverageToggleLabel()');
+    expect(template).toContain('onRequireSuperTandemCriteriaCoverageToggle($event)');
+    expect(template).toContain('ignoredSuperTandemCriteriaLabel()');
     expect(template).toContain('captainAbilityCoverageReportLabel()');
     expect(template).toContain('slot.characterTags');
     expect(template).toContain('clearRequiredCharacterAbilityCategory(');
@@ -4125,7 +4173,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 28,
+      schemaVersion: 29,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -4148,6 +4196,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
         requireFullCaptainAbilityCoverage: true,
         requireBothLeadersFullCaptainAbilityCoverage: true,
         requireSuperSpecialCriteriaCoverage: false,
+        requireSuperTandemCriteriaCoverage: false,
         requireUniqueBaseCharacterNames: true,
         favoritesOnly: true,
         allowAnyFriendCaptainAutoFill: true,
@@ -4212,6 +4261,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       requireFullCaptainAbilityCoverage: false,
       requireBothLeadersFullCaptainAbilityCoverage: false,
       requireSuperSpecialCriteriaCoverage: false,
+      requireSuperTandemCriteriaCoverage: true,
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: true,
       allowAnyFriendCaptainAutoFill: false,
@@ -4240,6 +4290,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       requireFullCaptainAbilityCoverage: false,
       requireBothLeadersFullCaptainAbilityCoverage: false,
       requireSuperSpecialCriteriaCoverage: false,
+      requireSuperTandemCriteriaCoverage: true,
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: true,
       allowAnyFriendCaptainAutoFill: false,
@@ -4334,7 +4385,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       exportedAt: '2026-03-25T10:00:00.000Z',
     });
 
-    expect(payload.schemaVersion).toBe(28);
+    expect(payload.schemaVersion).toBe(29);
     expect(payload.filters.leaderBoostRanges).toEqual({
       ATK: { min: 5, max: 6 },
       HP: { min: 1.25, max: 1.5 },
@@ -4832,7 +4883,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       availableLockedCharacters: [createCharacterRecord(101)],
     });
 
-    expect(payload.schemaVersion).toBe(28);
+    expect(payload.schemaVersion).toBe(29);
     expect(result.state.requiredAbilities).toEqual([
       {
         abilityKey: 'remove_bind',
@@ -5422,6 +5473,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
       requireFullCaptainAbilityCoverage: true,
       requireBothLeadersFullCaptainAbilityCoverage: true,
       requireSuperSpecialCriteriaCoverage: true,
+      requireSuperTandemCriteriaCoverage: true,
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: true,
       allowAnyFriendCaptainAutoFill: true,
@@ -5531,6 +5583,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
     expect(page.requireFullCaptainAbilityCoverage()).toBe(true);
     expect(page.requireBothLeadersFullCaptainAbilityCoverage()).toBe(true);
     expect(page.requireSuperSpecialCriteriaCoverage()).toBe(true);
+    expect(page.requireSuperTandemCriteriaCoverage()).toBe(true);
     expect(page.requireUniqueBaseCharacterNames()).toBe(true);
     expect(page.favoritesOnly()).toBe(true);
     expect(page.allowAnyFriendCaptainAutoFill()).toBe(true);
@@ -6017,6 +6070,8 @@ function createAutoBuildResult(
     minimumLeaderSuperEffectMatchingSlots: null,
     requireLeaderSuperSpecialCriteria: false,
     strictSuperSpecialCriteriaCoverage: false,
+    requireSuperTandemCriteria: false,
+    strictSuperTandemCriteriaCoverage: false,
     requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
     allowAnyFriendCaptainAutoFill: false,
@@ -6088,6 +6143,7 @@ function createAutoBuildResult(
       allowedLeadersWithSuperEffects: false,
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
+      ignoredSuperTandemCriteria: false,
     },
     shipSelection: null,
     candidateCount: 32,

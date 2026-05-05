@@ -241,6 +241,19 @@
             ></ion-toggle>
           </div>
 
+          <div class="strict-toggle-row strict-toggle-row--filter">
+            <div class="strict-toggle-copy">
+              <strong>{{ superTandemCriteriaCoverageToggleLabel() }}</strong>
+              <small>{{ superTandemCriteriaCoverageSupportLabel() }}</small>
+            </div>
+            <ion-toggle
+              color="warning"
+              [checked]="requireSuperTandemCriteriaCoverage()"
+              [disabled]="building()"
+              (ionChange)="onRequireSuperTandemCriteriaCoverageToggle($event)"
+            ></ion-toggle>
+          </div>
+
           <div class="strict-toggle-row strict-toggle-row--select">
             <div class="strict-toggle-copy">
               <strong>{{ t('filters.characterBox.label') }}</strong>
@@ -2145,6 +2158,11 @@
               @if (resultIgnoredLeaderSuperSpecialCriteria()) {
                 <div>
                   <span>{{ ignoredSuperSpecialCriteriaLabel() }}</span>
+                </div>
+              }
+              @if (resultIgnoredSuperTandemCriteria()) {
+                <div>
+                  <span>{{ ignoredSuperTandemCriteriaLabel() }}</span>
                 </div>
               }
             </div>

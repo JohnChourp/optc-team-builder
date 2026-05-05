@@ -14,7 +14,8 @@
       "leaderSuperEffectScope": "leader super effect scope",
       "captainAbilityCoverage": "full captain ability coverage",
       "bothLeadersCaptainCoverage": "both leaders captain coverage",
-      "superSpecialCriteriaCoverage": "Super Special criteria coverage"
+      "superSpecialCriteriaCoverage": "Super Special criteria coverage",
+      "superTandemCriteriaCoverage": "Super Tandem criteria coverage"
     },
     "strictMode": {
       "flexible": "flexible fallback enabled",
@@ -93,6 +94,13 @@
       "support": {
         "flexible": "The builder tries to activate every team's Super Special Criteria first and warns if it must relax them.",
         "strict": "Every final unit with Super Special Criteria must be activatable in battle."
+      }
+    },
+    "superTandemCriteriaCoverage": {
+      "toggle": "Require Super Tandem coverage",
+      "support": {
+        "flexible": "The builder tries to activate every team's Super Tandem first and warns if it must relax them.",
+        "strict": "Every final unit with Super Tandem criteria must be activatable in battle."
       }
     },
     "leaderBoost": {
@@ -574,6 +582,8 @@
     "ignoredLeaderSuperSpecialCriteria": "Ignored Super Special criteria",
     "ignoredSuperSpecialCriteria": "Super Special will not activate for the final team.",
     "ignoredSuperSpecialCriteriaWithNames": "Super Special will not activate for: {{names}}",
+    "ignoredSuperTandemCriteria": "Super Tandem will not activate for the final team.",
+    "ignoredSuperTandemCriteriaWithNames": "Super Tandem will not activate for: {{names}}",
     "title": "Relaxed fallback used"
   },
   "summary": {
@@ -719,6 +729,7 @@
       "flexible": "No flexible team matched {{types}} while keeping {{requirements}}{{favoritesScope}}.",
       "separator": " and ",
       "superSpecialCriteria": "Super Special criteria coverage",
+      "superTandemCriteria": "Super Tandem criteria coverage",
       "strict": "No strict team matched {{types}} while keeping {{requirements}}{{favoritesScope}}.",
       "typeCoverage": "team-wide type coverage",
       "uniqueCharacterNames": "unique in-game character identities across the team except Friend Captain"

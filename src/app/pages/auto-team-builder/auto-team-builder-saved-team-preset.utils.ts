@@ -47,6 +47,7 @@ export function buildAutoTeamBuilderStateFromSavedTeam(
     requireFullCaptainAbilityCoverage: false,
     requireBothLeadersFullCaptainAbilityCoverage: false,
     requireSuperSpecialCriteriaCoverage: false,
+    requireSuperTandemCriteriaCoverage: false,
     requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
     allowAnyFriendCaptainAutoFill: false,

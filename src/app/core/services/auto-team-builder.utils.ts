@@ -31,7 +31,12 @@ import {
   type AutoBuildRequiredCharacterGroup,
 } from '../models/auto-team-builder-ability.models';
 import conflictOverrideCatalog from '../data/auto-team-builder-party-conflict-overrides.json';
-import { type CharacterDetailRecord, type CharacterListItem } from '../models/optc.models';
+import {
+  type CharacterDetailRecord,
+  type CharacterListItem,
+  type NormalizedSuperSpecialCriteria,
+  type SuperCriteriaBranch,
+} from '../models/optc.models';
 import { matchesAbilityRequirement } from './auto-team-builder-ability-match.utils';
 import {
   captainTagBranchesSatisfied,
@@ -512,10 +517,7 @@ function candidateMatchesSuperCriteriaClassOrTypeBranch(
 
 function countSatisfiedCharacterOptions(
   candidates: AutoBuildCandidate[],
-  branch: Extract<
-    NonNullable<CharacterDetailRecord['detail']['superSpecialCriteria']>['rosterBranches'][number],
-    { branchType: 'character_count_any' }
-  >,
+  branch: Extract<SuperCriteriaBranch, { branchType: 'character_count_any' }>,
 ): number {
   const options = branch.options;
 
@@ -546,10 +548,7 @@ function countSatisfiedCharacterOptions(
 
 function countMatchingSuperCriteriaBranchCandidates(
   candidates: AutoBuildCandidate[],
-  branch: Extract<
-    NonNullable<CharacterDetailRecord['detail']['superSpecialCriteria']>['rosterBranches'][number],
-    { branchType: 'class_or_type_count_any' }
-  >,
+  branch: Extract<SuperCriteriaBranch, { branchType: 'class_or_type_count_any' }>,
 ): number {
   return candidates.filter((candidate) =>
     candidateMatchesSuperCriteriaClassOrTypeBranch(candidate, branch),
@@ -558,10 +557,7 @@ function countMatchingSuperCriteriaBranchCandidates(
 
 function countSatisfiedPresenceRequirements(
   candidates: AutoBuildCandidate[],
-  branch: Extract<
-    NonNullable<CharacterDetailRecord['detail']['superSpecialCriteria']>['rosterBranches'][number],
-    { branchType: 'class_or_type_presence_all' }
-  >,
+  branch: Extract<SuperCriteriaBranch, { branchType: 'class_or_type_presence_all' }>,
 ): number {
   const satisfiedClasses = new Set<string>();
   const satisfiedTypes = new Set<string>();
@@ -598,9 +594,7 @@ function countSatisfiedPresenceRequirements(
 }
 
 function branchSatisfiedByCandidates(
-  branch: NonNullable<
-    CharacterDetailRecord['detail']['superSpecialCriteria']
-  >['rosterBranches'][number],
+  branch: SuperCriteriaBranch,
   candidates: AutoBuildCandidate[],
 ): boolean {
   if (branch.branchType === 'character_count_any') {
@@ -624,7 +618,7 @@ function superCriteriaSatisfied(
 ): boolean {
   const criteria = superUnit.character.detail.superSpecialCriteria;
 
-  if (!canCandidateSatisfyResolvableSuperCriteriaInSlot(superUnit, isLeader)) {
+  if (!canCriteriaBeSatisfiedInSlot(criteria, isLeader)) {
     return false;
   }
 
@@ -632,21 +626,45 @@ function superCriteriaSatisfied(
     return true;
   }
 
+  const uniqueCandidates = resolveUniqueCandidates(candidates);
   const eligibleCandidates = criteria.excludesSelf
-    ? candidates.filter((candidate) => candidate.character.id !== superUnit.character.id)
-    : candidates;
+    ? uniqueCandidates.filter((candidate) => candidate.character.id !== superUnit.character.id)
+    : uniqueCandidates;
 
   return criteria.rosterBranches.some((branch) =>
     branchSatisfiedByCandidates(branch, eligibleCandidates),
   );
 }
 
-function canCandidateSatisfyResolvableSuperCriteriaInSlot(
-  candidate: AutoBuildCandidate,
+function superTandemCriteriaSatisfied(
+  superUnit: AutoBuildCandidate,
+  candidates: AutoBuildCandidate[],
   isLeader: boolean,
 ): boolean {
-  const criteria = candidate.character.detail.superSpecialCriteria;
+  const criteria = superUnit.character.detail.superTandemData?.criteria ?? null;
 
+  if (!canCriteriaBeSatisfiedInSlot(criteria, isLeader)) {
+    return false;
+  }
+
+  if (!criteria) {
+    return true;
+  }
+
+  const uniqueCandidates = resolveUniqueCandidates(candidates);
+  const eligibleCandidates = criteria.excludesSelf
+    ? uniqueCandidates.filter((candidate) => candidate.character.id !== superUnit.character.id)
+    : uniqueCandidates;
+
+  return criteria.rosterBranches.some((branch) =>
+    branchSatisfiedByCandidates(branch, eligibleCandidates),
+  );
+}
+
+function canCriteriaBeSatisfiedInSlot(
+  criteria: NormalizedSuperSpecialCriteria | null | undefined,
+  isLeader: boolean,
+): boolean {
   if (!criteria) {
     return true;
   }
@@ -673,7 +691,43 @@ function canCandidateJoinStrictSuperCriteriaSearch(
 
   const isLeader = leaderSlots.some((leader) => leader.character.id === candidate.character.id);
 
-  return canCandidateSatisfyResolvableSuperCriteriaInSlot(candidate, isLeader);
+  return canCriteriaBeSatisfiedInSlot(candidate.character.detail.superSpecialCriteria, isLeader);
+}
+
+function canCandidateJoinStrictSuperTandemCriteriaSearch(
+  candidate: AutoBuildCandidate,
+  leaderSlots: AutoBuildCandidate[],
+  enabled: boolean,
+): boolean {
+  if (!enabled || !hasCandidateSuperTandemCriteria(candidate)) {
+    return true;
+  }
+
+  const isLeader = leaderSlots.some((leader) => leader.character.id === candidate.character.id);
+
+  return canCriteriaBeSatisfiedInSlot(
+    candidate.character.detail.superTandemData?.criteria,
+    isLeader,
+  );
+}
+
+function canCandidateJoinStrictActivationCriteriaSearch(
+  candidate: AutoBuildCandidate,
+  leaderSlots: AutoBuildCandidate[],
+  input: AutoBuildInput,
+): boolean {
+  return (
+    canCandidateJoinStrictSuperCriteriaSearch(
+      candidate,
+      leaderSlots,
+      input.requireLeaderSuperSpecialCriteria,
+    ) &&
+    canCandidateJoinStrictSuperTandemCriteriaSearch(
+      candidate,
+      leaderSlots,
+      input.requireSuperTandemCriteria,
+    )
+  );
 }
 
 function areActiveSuperCriteriaSatisfied(
@@ -692,6 +746,47 @@ function areActiveSuperCriteriaSatisfied(
     .every((candidate) =>
       superCriteriaSatisfied(candidate, teamCandidates, leaderIds.has(candidate.character.id)),
     );
+}
+
+function areActiveSuperTandemCriteriaSatisfied(
+  leaderSlots: AutoBuildCandidate[],
+  teamCandidates: AutoBuildCandidate[],
+  enabled: boolean,
+): boolean {
+  if (!enabled) {
+    return true;
+  }
+
+  const leaderIds = new Set(leaderSlots.map((leader) => leader.character.id));
+
+  return resolveUniqueCandidates(teamCandidates)
+    .filter((candidate) => hasCandidateSuperTandemCriteria(candidate))
+    .every((candidate) =>
+      superTandemCriteriaSatisfied(
+        candidate,
+        teamCandidates,
+        leaderIds.has(candidate.character.id),
+      ),
+    );
+}
+
+function areActiveActivationCriteriaSatisfied(
+  leaderSlots: AutoBuildCandidate[],
+  teamCandidates: AutoBuildCandidate[],
+  input: AutoBuildInput,
+): boolean {
+  return (
+    areActiveSuperCriteriaSatisfied(
+      leaderSlots,
+      teamCandidates,
+      input.requireLeaderSuperSpecialCriteria,
+    ) &&
+    areActiveSuperTandemCriteriaSatisfied(
+      leaderSlots,
+      teamCandidates,
+      input.requireSuperTandemCriteria,
+    )
+  );
 }
 
 export function resolveUnsatisfiedSuperSpecialCriteriaCharacterNames(
@@ -714,6 +809,36 @@ export function resolveUnsatisfiedSuperSpecialCriteriaCharacterNames(
         .filter(
           (candidate) =>
             !superCriteriaSatisfied(candidate, candidates, leaderIds.has(candidate.character.id)),
+        )
+        .map((candidate) => candidate.character.name),
+    ),
+  ];
+}
+
+export function resolveUnsatisfiedSuperTandemCriteriaCharacterNames(
+  slots: AutoBuildSlot[],
+  input: AutoBuildInput,
+): string[] {
+  const candidates = slots.map((slot, index) =>
+    buildAutoBuildCandidate(slot.character, input, index, slots.length),
+  );
+  const leaderIds = new Set(
+    slots
+      .filter((slot) => slot.role === 'captain' || slot.role === 'friendCaptain')
+      .map((slot) => slot.character.id),
+  );
+
+  return [
+    ...new Set(
+      resolveUniqueCandidates(candidates)
+        .filter((candidate) => hasCandidateSuperTandemCriteria(candidate))
+        .filter(
+          (candidate) =>
+            !superTandemCriteriaSatisfied(
+              candidate,
+              candidates,
+              leaderIds.has(candidate.character.id),
+            ),
         )
         .map((candidate) => candidate.character.name),
     ),
@@ -1498,14 +1623,7 @@ export function buildAutoTeamResultFromPreparedContext(
           continue;
         }
 
-        if (
-          input.requireLeaderSuperSpecialCriteria &&
-          !areActiveSuperCriteriaSatisfied(
-            leaderSlots,
-            teamCandidates,
-            input.requireLeaderSuperSpecialCriteria,
-          )
-        ) {
+        if (!areActiveActivationCriteriaSatisfied(leaderSlots, teamCandidates, input)) {
           continue;
         }
 
@@ -1938,11 +2056,7 @@ function* resolveConstrainedSubSelectionOptions(
               hasAnyPartyConflictKey(candidate, selectedPartyConflictKeys))) ||
           (input.requireAllSelectedClassesPerCharacter && !candidate.matchesAllSelectedClasses) ||
           !matchesLeaderBuildScopeForAttempt(candidate, leaderCriteria, input) ||
-          !canCandidateJoinStrictSuperCriteriaSearch(
-            candidate,
-            leaderSlots,
-            input.requireLeaderSuperSpecialCriteria,
-          ) ||
+          !canCandidateJoinStrictActivationCriteriaSearch(candidate, leaderSlots, input) ||
           !canAddSubWithinTeamCostBudget(input, leaderSlots[0], selectedSubs, candidate) ||
           !matchesActiveSuperEffectScopePrefix(
             nextTeamPrefix,
@@ -2182,12 +2296,7 @@ function selectSubs(
 
   if (
     selected.some(
-      (candidate) =>
-        !canCandidateJoinStrictSuperCriteriaSearch(
-          candidate,
-          leaderSlots,
-          input.requireLeaderSuperSpecialCriteria,
-        ),
+      (candidate) => !canCandidateJoinStrictActivationCriteriaSearch(candidate, leaderSlots, input),
     )
   ) {
     return [];
@@ -2244,11 +2353,7 @@ function selectSubs(
           (!hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) &&
             !hasAnyPartyConflictKey(candidate, selectedPartyConflictKeys))) &&
         matchesLeaderBuildScopeForAttempt(candidate, leaderCriteria, input) &&
-        canCandidateJoinStrictSuperCriteriaSearch(
-          candidate,
-          leaderSlots,
-          input.requireLeaderSuperSpecialCriteria,
-        ) &&
+        canCandidateJoinStrictActivationCriteriaSearch(candidate, leaderSlots, input) &&
         (!shouldEnforceCaptainAbilityCoverage(input) ||
           canStillReachLeaderTagConditions(
             [...leaderSlots, ...selected, candidate],
@@ -2303,14 +2408,7 @@ function selectSubs(
       return false;
     }
 
-    if (
-      input.requireLeaderSuperSpecialCriteria &&
-      !areActiveSuperCriteriaSatisfied(
-        leaderSlots,
-        teamCandidates,
-        input.requireLeaderSuperSpecialCriteria,
-      )
-    ) {
+    if (!areActiveActivationCriteriaSatisfied(leaderSlots, teamCandidates, input)) {
       return false;
     }
 
@@ -2370,11 +2468,7 @@ function selectSubs(
           [...leaderSlots, ...currentSelection, candidate],
           requiredLeaderSuperEffectMatchingSlots,
         ) ||
-        !canCandidateJoinStrictSuperCriteriaSearch(
-          candidate,
-          leaderSlots,
-          input.requireLeaderSuperSpecialCriteria,
-        ) ||
+        !canCandidateJoinStrictActivationCriteriaSearch(candidate, leaderSlots, input) ||
         !canAddSubWithinTeamCostBudget(input, leaderSlots[0], currentSelection, candidate) ||
         (input.requireUniqueBaseCharacterNames &&
           (hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) ||
@@ -2432,11 +2526,7 @@ function selectSubs(
         [...leaderSlots, ...currentSelection, candidate],
         requiredLeaderSuperEffectMatchingSlots,
       ) &&
-      canCandidateJoinStrictSuperCriteriaSearch(
-        candidate,
-        leaderSlots,
-        input.requireLeaderSuperSpecialCriteria,
-      ) &&
+      canCandidateJoinStrictActivationCriteriaSearch(candidate, leaderSlots, input) &&
       canAddSubWithinTeamCostBudget(input, leaderSlots[0], currentSelection, candidate) &&
       (!input.requireUniqueBaseCharacterNames ||
         (!hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) &&
@@ -3776,6 +3866,10 @@ function hasCandidateSuperEffects(candidate: AutoBuildCandidate): boolean {
 
 function hasCandidateSuperSpecialCriteria(candidate: AutoBuildCandidate): boolean {
   return candidate.character.detail.superSpecialCriteria !== null;
+}
+
+function hasCandidateSuperTandemCriteria(candidate: AutoBuildCandidate): boolean {
+  return candidate.character.detail.superTandemData?.criteria != null;
 }
 
 function extractCostUpperBound(text: string): number | null {

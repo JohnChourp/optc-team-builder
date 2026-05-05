@@ -198,6 +198,8 @@ export class AutoTeamBuilderService {
       constraints.requireBothLeadersFullCaptainAbilityCoverage ?? false;
     const strictSuperSpecialCriteriaCoverage =
       constraints.strictSuperSpecialCriteriaCoverage ?? false;
+    const strictSuperTandemCriteriaCoverage =
+      constraints.strictSuperTandemCriteriaCoverage ?? false;
     const normalizedTypes = normalizeSelectedTypes(selectedTypes);
     const normalizedClasses: string[] = [];
 
@@ -284,6 +286,8 @@ export class AutoTeamBuilderService {
         : null,
       requireLeaderSuperSpecialCriteria: constraints.requireLeaderSuperSpecialCriteria ?? true,
       strictSuperSpecialCriteriaCoverage,
+      requireSuperTandemCriteria: constraints.requireSuperTandemCriteria ?? true,
+      strictSuperTandemCriteriaCoverage,
       requireUniqueBaseCharacterNames: constraints.requireUniqueBaseCharacterNames ?? false,
       requiredAbilities,
       requiredCharacterGroups: hasBattleRequirementInput ? [] : requiredCharacterGroups,
@@ -1871,6 +1875,8 @@ export class AutoTeamBuilderService {
         : null,
       requireLeaderSuperSpecialCriteria: rosterInput.requireLeaderSuperSpecialCriteria ?? true,
       strictSuperSpecialCriteriaCoverage: rosterInput.strictSuperSpecialCriteriaCoverage ?? false,
+      requireSuperTandemCriteria: rosterInput.requireSuperTandemCriteria ?? true,
+      strictSuperTandemCriteriaCoverage: rosterInput.strictSuperTandemCriteriaCoverage ?? false,
       requireUniqueBaseCharacterNames: rosterInput.requireUniqueBaseCharacterNames ?? false,
       requiredAbilities: rosterInput.requiredAbilities.map((requirement) => ({
         ...requirement,

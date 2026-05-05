@@ -113,7 +113,8 @@ export interface AutoTeamSelectionExportPayload {
     | 25
     | 26
     | 27
-    | 28;
+    | 28
+    | 29;
   exportedAt: string;
   source: 'auto-team-builder';
   exportType: 'preset';
@@ -130,6 +131,7 @@ export interface AutoTeamSelectionExportPayload {
     requireFullCaptainAbilityCoverage?: boolean;
     requireBothLeadersFullCaptainAbilityCoverage?: boolean;
     requireSuperSpecialCriteriaCoverage?: boolean;
+    requireSuperTandemCriteriaCoverage?: boolean;
     requireUniqueBaseCharacterNames: boolean;
     favoritesOnly: boolean;
     allowAnyFriendCaptainAutoFill?: boolean;
@@ -172,6 +174,7 @@ export interface AutoTeamSelectionImportState {
   requireFullCaptainAbilityCoverage: boolean;
   requireBothLeadersFullCaptainAbilityCoverage: boolean;
   requireSuperSpecialCriteriaCoverage: boolean;
+  requireSuperTandemCriteriaCoverage: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
   allowAnyFriendCaptainAutoFill: boolean;
@@ -231,6 +234,7 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   requireFullCaptainAbilityCoverage?: boolean;
   requireBothLeadersFullCaptainAbilityCoverage?: boolean;
   requireSuperSpecialCriteriaCoverage?: boolean;
+  requireSuperTandemCriteriaCoverage?: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
   allowAnyFriendCaptainAutoFill?: boolean;
@@ -731,7 +735,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload['schemaVersion'] !== 25 &&
       parsedPayload['schemaVersion'] !== 26 &&
       parsedPayload['schemaVersion'] !== 27 &&
-      parsedPayload['schemaVersion'] !== 28) ||
+      parsedPayload['schemaVersion'] !== 28 &&
+      parsedPayload['schemaVersion'] !== 29) ||
     parsedPayload['source'] !== 'auto-team-builder' ||
     parsedPayload['exportType'] !== 'preset'
   ) {
@@ -801,6 +806,10 @@ export function parseAutoTeamSelectionImportPayload(
     !(
       filters['requireSuperSpecialCriteriaCoverage'] === undefined ||
       typeof filters['requireSuperSpecialCriteriaCoverage'] === 'boolean'
+    ) ||
+    !(
+      filters['requireSuperTandemCriteriaCoverage'] === undefined ||
+      typeof filters['requireSuperTandemCriteriaCoverage'] === 'boolean'
     ) ||
     !(
       filters['requireLeadersWithoutSuperEffects'] === undefined ||
@@ -1347,6 +1356,8 @@ export function sanitizeAutoTeamSelectionImportPayload(
         payload.filters.requireBothLeadersFullCaptainAbilityCoverage === true,
       requireSuperSpecialCriteriaCoverage:
         payload.filters.requireSuperSpecialCriteriaCoverage === true,
+      requireSuperTandemCriteriaCoverage:
+        payload.filters.requireSuperTandemCriteriaCoverage === true,
       requireUniqueBaseCharacterNames: payload.filters.requireUniqueBaseCharacterNames === true,
       favoritesOnly: payload.filters.favoritesOnly,
       allowAnyFriendCaptainAutoFill: payload.filters.allowAnyFriendCaptainAutoFill === true,
@@ -1423,6 +1434,7 @@ export function buildAutoTeamSelectionExportPayload({
   requireFullCaptainAbilityCoverage = false,
   requireBothLeadersFullCaptainAbilityCoverage = false,
   requireSuperSpecialCriteriaCoverage = false,
+  requireSuperTandemCriteriaCoverage = false,
   requireUniqueBaseCharacterNames,
   favoritesOnly,
   allowAnyFriendCaptainAutoFill = false,
@@ -1460,7 +1472,7 @@ export function buildAutoTeamSelectionExportPayload({
   const normalizedBattleRequirements = cloneBattleRequirements(battleRequirements);
 
   return {
-    schemaVersion: 28,
+    schemaVersion: 29,
     exportedAt,
     source: 'auto-team-builder',
     exportType: 'preset',
@@ -1487,6 +1499,7 @@ export function buildAutoTeamSelectionExportPayload({
       requireFullCaptainAbilityCoverage,
       requireBothLeadersFullCaptainAbilityCoverage,
       requireSuperSpecialCriteriaCoverage,
+      requireSuperTandemCriteriaCoverage,
       requireUniqueBaseCharacterNames,
       favoritesOnly,
       allowAnyFriendCaptainAutoFill,

@@ -1,3 +1,4 @@
+import '@angular/compiler';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
@@ -92,6 +93,67 @@ describe('OptcRepositoryService', () => {
     });
 
     expect(result.map((record) => record.id)).toEqual([3200, 2700]);
+  });
+
+  it('preserves normalized Super Tandem criteria on character details', async () => {
+    const service = createRepositoryService([
+      createCharacterRow({
+        id: 4490,
+        detail: {
+          superTandemData: {
+            requirement:
+              'Your crew must consist of any 2 of the following, excluding supports and counting only 1 per unit: Roronoa Zoro, Nami.',
+            levels: [
+              {
+                level: 5,
+                effect: 'Boosts Tandem ATK of Free Spirit and Cerebral characters by 3x.',
+              },
+            ],
+            criteria: {
+              rawText:
+                'Your crew must consist of any 2 of the following, excluding supports and counting only 1 per unit: Roronoa Zoro, Nami.',
+              requiresCaptain: false,
+              excludesSelf: false,
+              rosterBranches: [
+                {
+                  branchType: 'character_count_any',
+                  requiredCount: 2,
+                  matchMode: 'unique_options',
+                  options: [
+                    { label: 'Roronoa Zoro', acceptedKeys: ['roronoa zoro', 'zoro'] },
+                    { label: 'Nami', acceptedKeys: ['nami'] },
+                  ],
+                },
+              ],
+              hasNonRosterBranches: false,
+              parserStatus: 'roster_only',
+            },
+          },
+        },
+      }),
+    ]);
+
+    const result = await service.getCharacterById(4490);
+
+    expect(result?.detail.superTandemData).toMatchObject({
+      requirement:
+        'Your crew must consist of any 2 of the following, excluding supports and counting only 1 per unit: Roronoa Zoro, Nami.',
+      levels: [
+        {
+          level: 5,
+          effect: 'Boosts Tandem ATK of Free Spirit and Cerebral characters by 3x.',
+        },
+      ],
+      criteria: {
+        parserStatus: 'roster_only',
+        rosterBranches: [
+          {
+            branchType: 'character_count_any',
+            requiredCount: 2,
+          },
+        ],
+      },
+    });
   });
 
   it('returns the full filtered pool when the candidate limit is null', async () => {

@@ -514,11 +514,15 @@ function buildLeveledBattleModeCard(
   }
 
   const requirement = sanitizeText(record['requirement']);
-  const entries = Array.isArray(record['levels'])
+  const levelEntries = Array.isArray(record['levels'])
     ? record['levels']
         .map((level, index) => buildFinalTapLevelEntry(level, index))
         .filter((entry): entry is DetailDisplayEntry => entry !== null)
     : [];
+  const criteriaEntries = record['criteria']
+    ? buildStructuredEntries('Parsed Criteria', record['criteria'], 'fields.parsedCriteria')
+    : [];
+  const entries = [...levelEntries, ...criteriaEntries];
 
   if (!requirement && !entries.length) {
     return null;

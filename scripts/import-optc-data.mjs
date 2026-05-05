@@ -1135,6 +1135,47 @@ function normalizePotentialAbilities(rawPotentialAbilities) {
     .filter((entry) => Boolean(entry));
 }
 
+function normalizeSuperTandemData(rawSuperTandemData, rawSuperTandem) {
+  if (rawSuperTandemData && typeof rawSuperTandemData === 'object') {
+    return rawSuperTandemData;
+  }
+
+  if (!rawSuperTandem || typeof rawSuperTandem !== 'object') {
+    return null;
+  }
+
+  const characterConditions = Array.isArray(rawSuperTandem.characterCondition)
+    ? rawSuperTandem.characterCondition
+        .map((entry) => normalizeLegacyAbilityText(entry))
+        .filter((entry) => entry.length > 0)
+    : [];
+  const descriptions = Array.isArray(rawSuperTandem.description)
+    ? rawSuperTandem.description
+        .map((entry) => normalizeLegacyAbilityText(entry))
+        .filter((entry) => entry.length > 0)
+    : [];
+  const requirement = characterConditions.at(-1) ?? null;
+  const effect = descriptions.at(-1) ?? null;
+  const level = Math.max(characterConditions.length, descriptions.length);
+
+  if (!requirement && !effect) {
+    return null;
+  }
+
+  return {
+    requirement,
+    levels: effect
+      ? [
+          {
+            level: level > 0 ? level : 1,
+            effect,
+          },
+        ]
+      : [],
+    criteria: requirement ? parseSuperSpecialCriteria(requirement) : null,
+  };
+}
+
 const CAPTAIN_VARIANT_ORDER = [
   'base',
   'level1',
@@ -1314,10 +1355,7 @@ export function normalizeCharacterDetail(
     swapData: detail.swap ?? null,
     vsSpecial: detail.vsSpecial ?? null,
     superType: detail.superType ?? null,
-    superTandemData:
-      detail.superTandemData && typeof detail.superTandemData === 'object'
-        ? detail.superTandemData
-        : null,
+    superTandemData: normalizeSuperTandemData(detail.superTandemData, detail.superTandem),
     finalTapData:
       detail.finalTapData && typeof detail.finalTapData === 'object' ? detail.finalTapData : null,
     rushSugoSpecialData:

@@ -74,6 +74,17 @@ export interface NormalizedSuperSpecialCriteria {
   parserStatus: 'roster_only' | 'mixed' | 'non_roster_only' | 'unsupported';
 }
 
+export interface NormalizedSuperTandemLevel extends Record<string, unknown> {
+  level: number;
+  effect: string;
+}
+
+export interface NormalizedSuperTandemData extends Record<string, unknown> {
+  requirement?: string | null;
+  levels?: NormalizedSuperTandemLevel[];
+  criteria?: NormalizedSuperSpecialCriteria | null;
+}
+
 export interface CharacterAssets {
   exactLocal: string | null;
   thumbnailLocal?: string | null;
@@ -125,7 +136,7 @@ export interface CharacterDetail {
   vsSpecial: Record<string, unknown> | null;
   exSuperData?: Record<string, unknown> | null;
   superType: Record<string, unknown> | null;
-  superTandemData?: Record<string, unknown> | null;
+  superTandemData?: NormalizedSuperTandemData | null;
   finalTapData?: Record<string, unknown> | null;
   rushSugoSpecialData?: Record<string, unknown> | null;
   superClass: Record<string, unknown> | null;

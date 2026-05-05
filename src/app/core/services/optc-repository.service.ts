@@ -17,6 +17,8 @@ import {
   type CharacterSearchQuery,
   type DatasetManifest,
   type NormalizedSuperSpecialCriteria,
+  type NormalizedSuperTandemData,
+  type NormalizedSuperTandemLevel,
   type CharacterIdOrder,
   type OfflinePackSummary,
   type RegionAvailability,
@@ -291,6 +293,52 @@ function normalizeSuperSpecialCriteria(value: unknown): NormalizedSuperSpecialCr
     rosterBranches,
     hasNonRosterBranches: Boolean(record['hasNonRosterBranches']),
     parserStatus: normalizedParserStatus,
+  };
+}
+
+function normalizeSuperTandemData(value: unknown): NormalizedSuperTandemData | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const requirement =
+    typeof record['requirement'] === 'string' && record['requirement'].trim().length
+      ? record['requirement'].trim()
+      : null;
+  const levels = (Array.isArray(record['levels']) ? record['levels'] : [])
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+        return null;
+      }
+
+      const levelRecord = entry as Record<string, unknown>;
+      const level = Number(levelRecord['level']);
+      const effect =
+        typeof levelRecord['effect'] === 'string' && levelRecord['effect'].trim().length
+          ? levelRecord['effect'].trim()
+          : '';
+
+      return Number.isInteger(level) && level > 0 && effect.length
+        ? {
+            ...levelRecord,
+            level,
+            effect,
+          }
+        : null;
+    })
+    .filter((entry): entry is NormalizedSuperTandemLevel => Boolean(entry));
+  const criteria = normalizeSuperSpecialCriteria(record['criteria']);
+
+  if (!requirement && !levels.length && !criteria) {
+    return null;
+  }
+
+  return {
+    ...record,
+    requirement,
+    levels,
+    criteria,
   };
 }
 
@@ -1508,12 +1556,7 @@ export class OptcRepositoryService {
             .map((value) => String(value ?? '').trim())
             .filter((value) => value.length > 0)
         : [],
-      superTandemData:
-        normalizedDetail.superTandemData &&
-        typeof normalizedDetail.superTandemData === 'object' &&
-        !Array.isArray(normalizedDetail.superTandemData)
-          ? normalizedDetail.superTandemData
-          : null,
+      superTandemData: normalizeSuperTandemData(normalizedDetail.superTandemData),
       finalTapData:
         normalizedDetail.finalTapData &&
         typeof normalizedDetail.finalTapData === 'object' &&

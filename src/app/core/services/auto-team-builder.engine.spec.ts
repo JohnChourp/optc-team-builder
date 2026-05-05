@@ -237,6 +237,7 @@ describe('runAutoTeamBuildSearch', () => {
       allowedLeadersWithSuperEffects: true,
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
+      ignoredSuperTandemCriteria: false,
     });
   });
 
@@ -377,6 +378,7 @@ describe('runAutoTeamBuildSearch', () => {
         allowedLeadersWithSuperEffects: false,
         ignoredLeaderSuperEffectScope: false,
         ignoredLeaderSuperSpecialCriteria: false,
+        ignoredSuperTandemCriteria: false,
       },
       coverage: {
         leaderCriteria: {
@@ -686,6 +688,42 @@ describe('runAutoTeamBuildSearch', () => {
     ]);
   });
 
+  it('relaxes Super Tandem criteria only when strict coverage is off', () => {
+    const flexiblePlanner = createAutoTeamBuildFallbackPlanner(
+      createInput([...AUTO_TEAM_BUILDER_TYPES], [...AUTO_TEAM_BUILDER_CLASSES], {
+        requireSuperTandemCriteria: true,
+      }),
+      createSingleTypeRecords(),
+    );
+    const strictPlanner = createAutoTeamBuildFallbackPlanner(
+      createInput([...AUTO_TEAM_BUILDER_TYPES], [...AUTO_TEAM_BUILDER_CLASSES], {
+        requireSuperTandemCriteria: true,
+        strictSuperTandemCriteriaCoverage: true,
+      }),
+      createSingleTypeRecords(),
+    );
+
+    flexiblePlanner.scheduleInitialFallbackAttempts();
+    strictPlanner.scheduleInitialFallbackAttempts();
+
+    expect(collectScheduledAttempts(flexiblePlanner)).toEqual([
+      expect.objectContaining({
+        category: 'meta',
+        input: expect.objectContaining({ requireSuperTandemCriteria: true }),
+      }),
+      expect.objectContaining({
+        category: 'meta',
+        input: expect.objectContaining({ requireSuperTandemCriteria: false }),
+      }),
+    ]);
+    expect(collectScheduledAttempts(strictPlanner)).toEqual([
+      expect.objectContaining({
+        category: 'meta',
+        input: expect.objectContaining({ requireSuperTandemCriteria: true }),
+      }),
+    ]);
+  });
+
   it('orders single-filter drops by ascending pool support', () => {
     const planner = createAutoTeamBuildFallbackPlanner(
       createInput(['DEX', 'INT'], ['Fighter'], {
@@ -783,6 +821,8 @@ function createInput(
       | 'minimumLeaderSuperEffectMatchingSlots'
       | 'requireLeaderSuperSpecialCriteria'
       | 'strictSuperSpecialCriteriaCoverage'
+      | 'requireSuperTandemCriteria'
+      | 'strictSuperTandemCriteriaCoverage'
       | 'requireUniqueBaseCharacterNames'
       | 'favoritesOnly'
       | 'allowAnyFriendCaptainAutoFill'
@@ -826,6 +866,8 @@ function createInput(
       : null,
     requireLeaderSuperSpecialCriteria: overrides.requireLeaderSuperSpecialCriteria ?? false,
     strictSuperSpecialCriteriaCoverage: overrides.strictSuperSpecialCriteriaCoverage ?? false,
+    requireSuperTandemCriteria: overrides.requireSuperTandemCriteria ?? false,
+    strictSuperTandemCriteriaCoverage: overrides.strictSuperTandemCriteriaCoverage ?? false,
     requireUniqueBaseCharacterNames: overrides.requireUniqueBaseCharacterNames ?? false,
     favoritesOnly: overrides.favoritesOnly ?? false,
     allowAnyFriendCaptainAutoFill: overrides.allowAnyFriendCaptainAutoFill ?? false,
@@ -1186,6 +1228,7 @@ function createCharacterRecord(
       swapData: overrides.detail?.swapData ?? null,
       vsSpecial: overrides.detail?.vsSpecial ?? null,
       superType: overrides.detail?.superType ?? null,
+      superTandemData: overrides.detail?.superTandemData ?? null,
       superClass: overrides.detail?.superClass ?? null,
       rumbleData: overrides.detail?.rumbleData ?? null,
     },

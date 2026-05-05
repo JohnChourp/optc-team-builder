@@ -200,6 +200,8 @@ function createResult(
     minimumLeaderSuperEffectMatchingSlots: null,
     requireLeaderSuperSpecialCriteria: false,
     strictSuperSpecialCriteriaCoverage: false,
+    requireSuperTandemCriteria: false,
+    strictSuperTandemCriteriaCoverage: false,
     requireUniqueBaseCharacterNames: false,
     requiredAbilities: [],
     requiredCharacterGroups: [],

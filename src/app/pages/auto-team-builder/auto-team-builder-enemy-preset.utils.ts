@@ -30,16 +30,17 @@ export function buildAutoTeamBuilderStateFromSavedEnemy(
       ...requirement,
       slotTokens: [...requirement.slotTokens],
     })),
-    requiredCharacterGroups: (enemy.requiredCharacterGroups?.length ?? 0)
-      ? enemy.requiredCharacterGroups!.map((group) => ({
-          id: group.id,
-          abilities: group.abilities.map((requirement) => ({
-            ...requirement,
-            slotTokens: [...requirement.slotTokens],
-            requiredCharacterCount: 1,
-          })),
-        }))
-      : expandRequiredAbilitiesToCharacterGroups(enemy.requiredAbilities).groups,
+    requiredCharacterGroups:
+      (enemy.requiredCharacterGroups?.length ?? 0)
+        ? enemy.requiredCharacterGroups!.map((group) => ({
+            id: group.id,
+            abilities: group.abilities.map((requirement) => ({
+              ...requirement,
+              slotTokens: [...requirement.slotTokens],
+              requiredCharacterCount: 1,
+            })),
+          }))
+        : expandRequiredAbilitiesToCharacterGroups(enemy.requiredAbilities).groups,
     battleRequirements: normalizeBattleRequirementsWithLegacyFallback({
       battles: enemy.battleRequirements,
       requiredAbilities: manualRequiredAbilities,
@@ -58,6 +59,7 @@ export function buildAutoTeamBuilderStateFromSavedEnemy(
     requireFullCaptainAbilityCoverage: false,
     requireBothLeadersFullCaptainAbilityCoverage: false,
     requireSuperSpecialCriteriaCoverage: false,
+    requireSuperTandemCriteriaCoverage: false,
     requireUniqueBaseCharacterNames: false,
     favoritesOnly: false,
     allowAnyFriendCaptainAutoFill: false,

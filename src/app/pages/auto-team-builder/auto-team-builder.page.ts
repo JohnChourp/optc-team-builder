@@ -354,6 +354,7 @@ interface AutoTeamBuilderDefaultFilterState {
   requireFullCaptainAbilityCoverage: boolean;
   requireBothLeadersFullCaptainAbilityCoverage: boolean;
   requireSuperSpecialCriteriaCoverage: boolean;
+  requireSuperTandemCriteriaCoverage: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
   allowAnyFriendCaptainAutoFill: boolean;
@@ -413,6 +414,7 @@ function buildDefaultAutoTeamBuilderFilterState(
     requireFullCaptainAbilityCoverage: true,
     requireBothLeadersFullCaptainAbilityCoverage: false,
     requireSuperSpecialCriteriaCoverage: false,
+    requireSuperTandemCriteriaCoverage: false,
     requireUniqueBaseCharacterNames: true,
     favoritesOnly: true,
     allowAnyFriendCaptainAutoFill: false,
@@ -605,6 +607,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly requireFullCaptainAbilityCoverage = signal(true);
   public readonly requireBothLeadersFullCaptainAbilityCoverage = signal(false);
   public readonly requireSuperSpecialCriteriaCoverage = signal(false);
+  public readonly requireSuperTandemCriteriaCoverage = signal(false);
   public readonly requireUniqueBaseCharacterNames = signal(true);
   public readonly selectedCharacterBoxId = signal<string | null>(null);
   public readonly selectedExcludeCharacterBoxId = signal<string | null>(null);
@@ -1139,7 +1142,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.requireAllSlotsInLeaderSuperEffectScope() ||
       this.requireFullCaptainAbilityCoverage() ||
       this.requireBothLeadersFullCaptainAbilityCoverage() ||
-      this.requireSuperSpecialCriteriaCoverage(),
+      this.requireSuperSpecialCriteriaCoverage() ||
+      this.requireSuperTandemCriteriaCoverage(),
   );
   public readonly allClassesSelected = computed(
     () =>
@@ -1277,6 +1281,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.requireSuperSpecialCriteriaCoverage()
       ? this.t('filters.superSpecialCriteriaCoverage.support.strict')
       : this.t('filters.superSpecialCriteriaCoverage.support.flexible'),
+  );
+  public readonly superTandemCriteriaCoverageSupportLabel = computed(() =>
+    this.requireSuperTandemCriteriaCoverage()
+      ? this.t('filters.superTandemCriteriaCoverage.support.strict')
+      : this.t('filters.superTandemCriteriaCoverage.support.flexible'),
   );
   public readonly favoritesOnlySupportLabel = computed(() =>
     this.hasFavoriteCharacters()
@@ -1544,6 +1553,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly superSpecialCriteriaCoverageToggleLabel = computed(() =>
     this.t('filters.superSpecialCriteriaCoverage.toggle'),
   );
+  public readonly superTandemCriteriaCoverageToggleLabel = computed(() =>
+    this.t('filters.superTandemCriteriaCoverage.toggle'),
+  );
   public readonly favoritesOnlyToggleLabel = computed(() => this.t('filters.favoritesOnly.toggle'));
   public readonly allowAnyFriendCaptainAutoFillToggleLabel = computed(() =>
     this.t('filters.allowAnyFriendCaptainAutoFill.toggle'),
@@ -1618,6 +1630,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     if (this.requireSuperSpecialCriteriaCoverage()) {
       strictModes.push(this.t('hero.strictModes.superSpecialCriteriaCoverage'));
+    }
+
+    if (this.requireSuperTandemCriteriaCoverage()) {
+      strictModes.push(this.t('hero.strictModes.superTandemCriteriaCoverage'));
     }
 
     return strictModes.length > 0
@@ -1829,6 +1845,21 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           names: names.join(', '),
         })
       : this.t('fallback.ignoredSuperSpecialCriteria');
+  });
+  public readonly resultIgnoredSuperTandemCriteria = computed(
+    () => this.result()?.relaxation.ignoredSuperTandemCriteria ?? false,
+  );
+  public readonly ignoredSuperTandemCriteriaCharacterNames = computed(
+    () => this.result()?.relaxation.ignoredSuperTandemCriteriaCharacterNames ?? [],
+  );
+  public readonly ignoredSuperTandemCriteriaLabel = computed(() => {
+    const names = this.ignoredSuperTandemCriteriaCharacterNames();
+
+    return names.length
+      ? this.t('fallback.ignoredSuperTandemCriteriaWithNames', {
+          names: names.join(', '),
+        })
+      : this.t('fallback.ignoredSuperTandemCriteria');
   });
   public readonly selectedClassSummaryLabel = computed(() => {
     const current = this.result();
@@ -2838,6 +2869,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.resetBuildState();
   }
 
+  public onRequireSuperTandemCriteriaCoverageToggle(
+    event: CustomEvent<{ checked: boolean }>,
+  ): void {
+    this.requireSuperTandemCriteriaCoverage.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
   public onFavoritesOnlyToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.favoritesOnly.set(event.detail.checked);
     this.resetBuildState();
@@ -3600,6 +3638,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           requireBothLeadersFullCaptainAbilityCoverage:
             this.requireBothLeadersFullCaptainAbilityCoverage(),
           strictSuperSpecialCriteriaCoverage: this.requireSuperSpecialCriteriaCoverage(),
+          strictSuperTandemCriteriaCoverage: this.requireSuperTandemCriteriaCoverage(),
           requireUniqueBaseCharacterNames: true,
           requiredAbilities: this.pageRequiredAbilities(),
           requiredCharacterGroups: [],
@@ -3717,6 +3756,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       requireBothLeadersFullCaptainAbilityCoverage:
         this.requireBothLeadersFullCaptainAbilityCoverage(),
       requireSuperSpecialCriteriaCoverage: this.requireSuperSpecialCriteriaCoverage(),
+      requireSuperTandemCriteriaCoverage: this.requireSuperTandemCriteriaCoverage(),
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: this.favoritesOnly(),
       allowAnyFriendCaptainAutoFill: this.allowAnyFriendCaptainAutoFill(),
@@ -3952,6 +3992,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.requireSuperSpecialCriteriaCoverage.set(
       defaultFilters.requireSuperSpecialCriteriaCoverage,
     );
+    this.requireSuperTandemCriteriaCoverage.set(defaultFilters.requireSuperTandemCriteriaCoverage);
     this.requireUniqueBaseCharacterNames.set(true);
     this.selectedCharacterBoxId.set(null);
     this.selectedExcludeCharacterBoxId.set(null);
@@ -4093,6 +4134,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       state.requireBothLeadersFullCaptainAbilityCoverage,
     );
     this.requireSuperSpecialCriteriaCoverage.set(state.requireSuperSpecialCriteriaCoverage);
+    this.requireSuperTandemCriteriaCoverage.set(state.requireSuperTandemCriteriaCoverage);
     this.requireUniqueBaseCharacterNames.set(true);
     this.selectedCharacterBoxId.set(null);
     this.selectedExcludeCharacterBoxId.set(null);
@@ -4202,6 +4244,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     if (this.requireAllSelectedClassesPerCharacter()) {
       activeRequirements.push(this.t('errors.requirements.classCoverage'));
+    }
+
+    if (this.requireSuperSpecialCriteriaCoverage()) {
+      activeRequirements.push(this.t('errors.requirements.superSpecialCriteria'));
+    }
+
+    if (this.requireSuperTandemCriteriaCoverage()) {
+      activeRequirements.push(this.t('errors.requirements.superTandemCriteria'));
     }
 
     activeRequirements.push(this.t('errors.requirements.uniqueCharacterNames'));
