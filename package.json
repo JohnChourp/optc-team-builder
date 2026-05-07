@@ -1,6 +1,6 @@
 {
   "name": "optc-team-builder",
-  "version": "0.0.25",
+  "version": "0.0.26",
   "scripts": {
     "config:app": "node ./scripts/write-app-config.mjs",
     "config:app:web-strict": "node ./scripts/write-app-config.mjs --require-google-web-client-id",
