@@ -287,6 +287,19 @@
 
             <div class="strict-toggle-row">
               <div class="strict-toggle-copy">
+                <strong>{{ allowAnyFriendCaptainAutoFillToggleLabel() }}</strong>
+                <small>{{ allowAnyFriendCaptainAutoFillSupportLabel() }}</small>
+              </div>
+              <ion-toggle
+                color="warning"
+                [checked]="allowAnyFriendCaptainAutoFill()"
+                [disabled]="building()"
+                (ionChange)="onAllowAnyFriendCaptainAutoFillToggle($event)"
+              ></ion-toggle>
+            </div>
+
+            <div class="strict-toggle-row">
+              <div class="strict-toggle-copy">
                 <strong>{{ favoriteShipsOnlyToggleLabel() }}</strong>
                 <small>{{ favoriteShipsOnlySupportLabel() }}</small>
               </div>

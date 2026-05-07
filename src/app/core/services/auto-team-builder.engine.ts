@@ -517,8 +517,9 @@ export function runAutoTeamBuildAttempt(
     return null;
   }
 
-  const allowedLeadersWithSuperEffects = Boolean(
-    !requestedInput.requireAllSlotsInLeaderSuperEffectScope && !requireLeadersWithoutSuperEffects,
+  const allowedLeadersWithSuperEffects = shouldReportAllowedLeadersWithSuperEffects(
+    requestedInput,
+    requireLeadersWithoutSuperEffects,
   );
   const ignoredLeaderSuperSpecialCriteria = Boolean(
     requestedInput.requireLeaderSuperSpecialCriteria && !input.requireLeaderSuperSpecialCriteria,
@@ -1022,7 +1023,10 @@ function buildSubsetAttempt(
       requireSuperTandemCriteria: baseInput.requireSuperTandemCriteria,
     },
     requireLeadersWithoutSuperEffects: false,
-    allowedLeadersWithSuperEffects: !requestedInput.requireAllSlotsInLeaderSuperEffectScope,
+    allowedLeadersWithSuperEffects: shouldReportAllowedLeadersWithSuperEffects(
+      requestedInput,
+      false,
+    ),
     droppedTypes: requestedInput.types.filter((type) => !nextTypes.includes(type)),
     droppedClasses: requestedInput.selectedClasses.filter(
       (selectedClass) => !nextClasses.includes(selectedClass),
@@ -1245,7 +1249,22 @@ export function hasStrictAutoTeamBuildConstraints(input: AutoBuildInput): boolea
 }
 
 function resolveExactAttemptRequiresNoSuperLeaders(input: AutoBuildInput): boolean {
-  return !input.requireAllSlotsInLeaderSuperEffectScope;
+  return !input.requireAllSlotsInLeaderSuperEffectScope && !hasStrictSuperCriteriaCoverage(input);
+}
+
+function hasStrictSuperCriteriaCoverage(input: AutoBuildInput): boolean {
+  return Boolean(input.strictSuperSpecialCriteriaCoverage || input.strictSuperTandemCriteriaCoverage);
+}
+
+function shouldReportAllowedLeadersWithSuperEffects(
+  input: AutoBuildInput,
+  requireLeadersWithoutSuperEffects: boolean,
+): boolean {
+  return Boolean(
+    !input.requireAllSlotsInLeaderSuperEffectScope &&
+      !requireLeadersWithoutSuperEffects &&
+      !hasStrictSuperCriteriaCoverage(input),
+  );
 }
 
 function inputsMatch(left: AutoBuildInput, right: AutoBuildInput): boolean {

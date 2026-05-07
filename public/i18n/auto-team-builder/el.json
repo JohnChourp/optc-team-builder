@@ -130,14 +130,14 @@
       "toggle": "Απαίτησε κάλυψη Super Special Criteria",
       "support": {
         "flexible": "Ο builder προσπαθεί πρώτα να ενεργοποιεί όλα τα Super Special Criteria της ομάδας και δείχνει warning αν χρειαστεί να τα χαλαρώσει.",
-        "strict": "Κάθε final unit με Super Special Criteria πρέπει να μπορεί να ενεργοποιηθεί στο battle."
+        "strict": "Αν ένα final unit έχει Super Special Criteria, πρέπει να μπορεί να ενεργοποιηθεί στο battle· αυτό δεν επιβάλλει Super Special leader."
       }
     },
     "superTandemCriteriaCoverage": {
       "toggle": "Απαίτησε κάλυψη Super Tandem",
       "support": {
         "flexible": "Ο builder προσπαθεί πρώτα να ενεργοποιεί όλα τα Super Tandem της ομάδας και δείχνει warning αν χρειαστεί να τα χαλαρώσει.",
-        "strict": "Κάθε final unit με Super Tandem criteria πρέπει να μπορεί να ενεργοποιηθεί στο battle."
+        "strict": "Αν ένα final unit έχει Super Tandem criteria, πρέπει να μπορεί να ενεργοποιηθεί στο battle· αυτό δεν επιβάλλει Super Tandem leader."
       }
     },
     "leaderBoost": {

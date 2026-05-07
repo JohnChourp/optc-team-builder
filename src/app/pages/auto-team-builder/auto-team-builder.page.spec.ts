@@ -2542,8 +2542,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).not.toContain('<app-special-ability-picker');
     expect(template).not.toContain('<app-ship-picker');
     expect(template).not.toContain('leaderSuperEffectScopeToggleLabel()');
-    expect(template).not.toContain('allowAnyFriendCaptainAutoFillToggleLabel()');
-    expect(template).not.toContain('(ionChange)="onAllowAnyFriendCaptainAutoFillToggle($event)"');
+    expect(template).toContain('allowAnyFriendCaptainAutoFillToggleLabel()');
+    expect(template).toContain('(ionChange)="onAllowAnyFriendCaptainAutoFillToggle($event)"');
     expect(template).toContain('favoriteShipsOnlyToggleLabel()');
     expect(template).toContain('[value]="manualShipSearchTerm()"');
     expect(template).toContain('(ionInput)="onManualShipSearchChange($event)"');

@@ -2206,7 +2206,7 @@ ion-toggle {
 
   .favorite-scope-grid {
     grid-column: 1 / -1;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   }
 
   .strict-toggle-row--cost {

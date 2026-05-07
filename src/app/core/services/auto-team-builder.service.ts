@@ -2214,7 +2214,7 @@ export class AutoTeamBuilderService {
 
     const friendCaptainCharacterIds = this.resolvePreferredLeaderAutoFillCharacterIds(
       friendCaptainRecords,
-      allowedCharacterIds,
+      undefined,
       input,
     );
 

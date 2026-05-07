@@ -130,14 +130,14 @@
       "toggle": "Require Super Special Criteria coverage",
       "support": {
         "flexible": "The builder tries to activate every team's Super Special Criteria first and warns if it must relax them.",
-        "strict": "Every final unit with Super Special Criteria must be activatable in battle."
+        "strict": "If a final unit has Super Special Criteria, it must be activatable in battle; this does not force a Super Special leader."
       }
     },
     "superTandemCriteriaCoverage": {
       "toggle": "Require Super Tandem coverage",
       "support": {
         "flexible": "The builder tries to activate every team's Super Tandem first and warns if it must relax them.",
-        "strict": "Every final unit with Super Tandem criteria must be activatable in battle."
+        "strict": "If a final unit has Super Tandem criteria, it must be activatable in battle; this does not force a Super Tandem leader."
       }
     },
     "leaderBoost": {

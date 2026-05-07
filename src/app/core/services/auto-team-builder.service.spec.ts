@@ -3921,6 +3921,158 @@ describe('Auto team builder', () => {
     expect(result).toBeNull();
   });
 
+  it('does not require a Super Special leader when strict criteria coverage is enabled', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue([
+        createLeaderWithSuperCriteriaRecord(
+          7435,
+          'Unsupported Super Special Captain',
+          createNonRosterSuperCriteria(),
+        ),
+        createLeaderPriorityCaptainRecord({
+          id: 7434,
+          name: 'Normal Coverage Captain',
+          cost: 55,
+          atkMultiplier: 5,
+        }),
+        createCharacterRecord({
+          id: 7433,
+          name: 'Roronoa Zoro',
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Boosts ATK of crew by 2x for 1 turn.' },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+      ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      strictSuperSpecialCriteriaCoverage: true,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(7434);
+    expect(result?.slots[1]?.character.id).toBe(7434);
+    expect(result?.slots.some((slot) => slot.character.id === 7435)).toBe(false);
+    expect(result?.relaxation.ignoredLeaderSuperSpecialCriteria).toBe(false);
+  });
+
+  it('keeps normal leader ranking when a newer Super Special leader satisfies strict criteria', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue([
+        createLeaderWithSuperCriteriaRecord(
+          7445,
+          'Valid Super Special Captain',
+          createRosterSuperCriteria(1, ['Roronoa Zoro']),
+        ),
+        createLeaderPriorityCaptainRecord({
+          id: 7444,
+          name: 'Older Normal Captain',
+          cost: 55,
+          atkMultiplier: 5,
+        }),
+        createCharacterRecord({
+          id: 7443,
+          name: 'Roronoa Zoro',
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Boosts ATK of crew by 2x for 1 turn.' },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+      ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      strictSuperSpecialCriteriaCoverage: true,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(7445);
+    expect(result?.slots[1]?.character.id).toBe(7445);
+    expect(result?.slots.some((slot) => slot.character.name === 'Roronoa Zoro')).toBe(true);
+    expect(result?.relaxation.usedFallback).toBe(false);
+  });
+
+  it('does not require a Super Tandem leader when strict criteria coverage is enabled', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue([
+        createLeaderWithSuperTandemCriteriaRecord(
+          7455,
+          'Unsupported Super Tandem Captain',
+          createNonRosterSuperCriteria(),
+        ),
+        createLeaderPriorityCaptainRecord({
+          id: 7454,
+          name: 'Normal Tandem Coverage Captain',
+          cost: 55,
+          atkMultiplier: 5,
+        }),
+        createCharacterRecord({
+          id: 7453,
+          name: 'Nami',
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Reduces Bind duration by 5 turns.' },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+      ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      strictSuperTandemCriteriaCoverage: true,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(7454);
+    expect(result?.slots[1]?.character.id).toBe(7454);
+    expect(result?.slots.some((slot) => slot.character.id === 7455)).toBe(false);
+    expect(result?.relaxation.ignoredSuperTandemCriteria).toBe(false);
+  });
+
+  it('keeps normal leader ranking when a newer Super Tandem leader satisfies strict criteria', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue([
+        createLeaderWithSuperTandemCriteriaRecord(
+          7465,
+          'Valid Super Tandem Captain',
+          createRosterSuperCriteria(1, ['Nami']),
+        ),
+        createLeaderPriorityCaptainRecord({
+          id: 7464,
+          name: 'Older Normal Tandem Captain',
+          cost: 55,
+          atkMultiplier: 5,
+        }),
+        createCharacterRecord({
+          id: 7463,
+          name: 'Nami',
+          primaryClass: 'Fighter',
+          detail: { specialText: 'Reduces Bind duration by 5 turns.' },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+      ]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      strictSuperTandemCriteriaCoverage: true,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(7465);
+    expect(result?.slots[1]?.character.id).toBe(7465);
+    expect(result?.slots.some((slot) => slot.character.name === 'Nami')).toBe(true);
+    expect(result?.relaxation.usedFallback).toBe(false);
+  });
+
   it('accepts a mixed super special criteria leader when the roster branch is satisfied', () => {
     const result = buildAutoTeamResult(
       [
@@ -5645,7 +5797,7 @@ describe('Auto team builder', () => {
     ).toBe(true);
   });
 
-  it('keeps auto-filled friend captain inside favorites when favorites mode is enabled', async () => {
+  it('allows a non-favorite auto-filled friend captain while keeping favorites for other slots', async () => {
     const favoriteCharacterIds = [5900, 5890, 5880, 5870, 5860];
     const broadFriendCaptain = createLeaderPriorityCaptainRecord({
       id: 9000,
@@ -5670,10 +5822,12 @@ describe('Auto team builder', () => {
 
     expect(result).not.toBeNull();
     expect(result?.slots[1]?.role).toBe('friendCaptain');
-    expect(result?.slots[1]?.character.id).toBe(5900);
-    expect(result?.slots.every((slot) => favoriteCharacterIds.includes(slot.character.id))).toBe(
-      true,
-    );
+    expect(result?.slots[1]?.character.id).toBe(9000);
+    expect(
+      result?.slots
+        .filter((slot) => slot.role !== 'friendCaptain')
+        .every((slot) => favoriteCharacterIds.includes(slot.character.id)),
+    ).toBe(true);
     expect(repository.getAutoBuilderCandidates).toHaveBeenNthCalledWith(
       1,
       ['DEX'],
@@ -10669,6 +10823,29 @@ function createSuperTandemSubRecord(
     detail: {
       specialText: 'Boosts ATK of crew by 2x for 1 turn.',
       superTandemData: createSuperTandemData(criteria),
+    },
+  });
+}
+
+function createLeaderWithSuperTandemCriteriaRecord(
+  id: number,
+  name: string,
+  superTandemCriteria: NonNullable<CharacterDetailRecord['detail']['superSpecialCriteria']>,
+): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    name,
+    primaryClass: 'Fighter',
+    secondaryClass: 'Free Spirit',
+    detail: {
+      captainAbility:
+        'Boosts ATK of DEX and Fighter characters by 5.25x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.',
+      specialText:
+        'Boosts orb effects of DEX and Fighter characters by 2.25x for 1 turn and changes orbs into Matching Orbs.',
+      superClass: {
+        specialEffect: 'Transforms Fighter characters into Super Fighter characters.',
+      },
+      superTandemData: createSuperTandemData(superTandemCriteria),
     },
   });
 }

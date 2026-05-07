@@ -767,7 +767,7 @@ describe('runAutoTeamBuildSearch', () => {
     ]);
   });
 
-  it('does not relax Super Special criteria when strict coverage is on', () => {
+  it('does not relax Super Special criteria or schedule hidden super-leader fallback when strict coverage is on', () => {
     const planner = createAutoTeamBuildFallbackPlanner(
       createInput([...AUTO_TEAM_BUILDER_TYPES], [...AUTO_TEAM_BUILDER_CLASSES], {
         requireLeaderSuperSpecialCriteria: true,
@@ -778,14 +778,7 @@ describe('runAutoTeamBuildSearch', () => {
 
     planner.scheduleInitialFallbackAttempts();
 
-    expect(collectScheduledAttempts(planner)).toEqual([
-      expect.objectContaining({
-        category: 'meta',
-        droppedTypes: [],
-        droppedClasses: [],
-        ignoredLeaderSuperSpecialCriteria: false,
-      }),
-    ]);
+    expect(collectScheduledAttempts(planner)).toEqual([]);
   });
 
   it('relaxes Super Tandem criteria only when strict coverage is off', () => {
@@ -816,12 +809,7 @@ describe('runAutoTeamBuildSearch', () => {
         input: expect.objectContaining({ requireSuperTandemCriteria: false }),
       }),
     ]);
-    expect(collectScheduledAttempts(strictPlanner)).toEqual([
-      expect.objectContaining({
-        category: 'meta',
-        input: expect.objectContaining({ requireSuperTandemCriteria: true }),
-      }),
-    ]);
+    expect(collectScheduledAttempts(strictPlanner)).toEqual([]);
   });
 
   it('orders single-filter drops by ascending pool support', () => {
