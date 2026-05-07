@@ -72,16 +72,16 @@ export class HomePage {
   public readonly shieldIcon = shieldCheckmarkOutline;
   public readonly heroCharacters: readonly HomeHeroCharacter[] = [
     {
-      alt: 'Kozuki Hiyori - Graveside Prayer character artwork',
-      src: 'assets/exact-character-images/4208.png',
+      alt: 'Portgas D. Ace - The Man Who Came for an Emperor of the Sea',
+      src: 'assets/offline-packs/thumbnails-glo/4/500/4556.png',
     },
     {
-      alt: 'Kozuki Hiyori - Resounding Shamisen character artwork',
-      src: 'assets/exact-character-images/4209.png',
+      alt: 'Dr. Vegapunk - Intense Worldwide Broadcast',
+      src: 'assets/offline-packs/thumbnails-glo/4/500/4554.png',
     },
     {
-      alt: 'Kid & Killer DEX character artwork',
-      src: 'assets/exact-character-images/5601.png',
+      alt: 'Burgess & Shiryu - Leading Might and Invisibility',
+      src: 'assets/offline-packs/thumbnails-glo/4/500/4551.png',
     },
   ];
   public readonly actions: readonly HomeAction[] = [

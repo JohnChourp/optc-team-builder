@@ -5,28 +5,58 @@
     </ion-toolbar>
   </ion-header>
 
-  <ion-content class="tabs-menu__content">
+  <ion-content class="tabs-menu__content" [scrollY]="false">
     <div class="tabs-menu__shell">
-      <ion-list lines="none" class="tabs-menu__list" [attr.aria-label]="'tabs.navigationAriaLabel' | transloco">
-        @for (item of navigationItems; track item.route) {
-          <ion-menu-toggle autoHide="true">
-            <ion-item
-              button
-              detail="false"
-              class="menu-item"
-              [routerLink]="[item.route]"
-              routerLinkActive="menu-item--active"
-              [routerLinkActiveOptions]="navItemActiveMatchOptions"
-              routerDirection="root"
-            >
-              <ion-icon slot="start" [icon]="item.icon"></ion-icon>
-              <ion-label>{{ item.labelKey | transloco }}</ion-label>
-            </ion-item>
-          </ion-menu-toggle>
-        }
-      </ion-list>
+      <nav class="tabs-menu__nav-panel" [attr.aria-label]="'tabs.navigationAriaLabel' | transloco">
+        <ion-accordion-group class="tabs-menu__accordion-group" [multiple]="false" value="browse">
+          @for (group of navigationGroups; track group.id) {
+            <ion-accordion class="tabs-menu__accordion" [value]="group.id">
+              <ion-item slot="header" lines="none" class="tabs-menu__group-header">
+                <ion-icon slot="start" [icon]="group.icon"></ion-icon>
+                <ion-label>{{ group.labelKey | transloco }}</ion-label>
+              </ion-item>
+
+              <div slot="content" class="tabs-menu__group-content">
+                <ion-list lines="none" class="tabs-menu__list">
+                  @for (item of group.items; track item.route) {
+                    <ion-menu-toggle autoHide="true">
+                      <ion-item
+                        button
+                        detail="false"
+                        class="menu-item"
+                        [routerLink]="[item.route]"
+                        routerLinkActive="menu-item--active"
+                        [routerLinkActiveOptions]="navItemActiveMatchOptions"
+                        routerDirection="root"
+                      >
+                        <ion-icon slot="start" [icon]="item.icon"></ion-icon>
+                        <ion-label>{{ item.labelKey | transloco }}</ion-label>
+                      </ion-item>
+                    </ion-menu-toggle>
+                  }
+                </ion-list>
+              </div>
+            </ion-accordion>
+          }
+        </ion-accordion-group>
+      </nav>
 
       <div class="tabs-menu__footer">
+        <ion-menu-toggle autoHide="true">
+          <ion-item
+            button
+            detail="false"
+            class="menu-item menu-item--settings"
+            [routerLink]="[settingsNavItem.route]"
+            routerLinkActive="menu-item--active"
+            [routerLinkActiveOptions]="navItemActiveMatchOptions"
+            routerDirection="root"
+          >
+            <ion-icon slot="start" [icon]="settingsNavItem.icon"></ion-icon>
+            <ion-label>{{ settingsNavItem.labelKey | transloco }}</ion-label>
+          </ion-item>
+        </ion-menu-toggle>
+
         <div
           class="tabs-menu__language-switcher"
           [attr.aria-label]="'tabs.languageSwitcherAriaLabel' | transloco"

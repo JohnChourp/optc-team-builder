@@ -406,6 +406,11 @@
     "crewForge": "Crew Forge",
     "home": "Αρχική",
     "driveSync": "Drive Sync",
+    "groups": {
+      "browse": "Περιήγηση",
+      "build": "Χτίσιμο",
+      "savedSync": "Αποθήκευση & Sync"
+    },
     "languageSwitcherAriaLabel": "Εναλλαγή γλώσσας",
     "languageSwitchTo": "Αλλαγή γλώσσας σε {{ language }}",
     "menuTitle": "Μενού",

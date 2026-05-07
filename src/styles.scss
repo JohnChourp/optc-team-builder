@@ -147,19 +147,18 @@ img {
   :root {
     --app-bottom-bar-extra-offset: 18px;
   }
+}
 
-  @supports (height: 100dvh) {
-    :root {
-      --app-mobile-sheet-height: calc(100dvh - 16px);
-      --app-modal-max-height: min(760px, calc(100dvh - 32px));
-    }
+@supports (height: 100dvh) {
+  :root {
+    --app-mobile-sheet-height: calc(100dvh - 16px);
+    --app-modal-max-height: min(760px, calc(100dvh - 32px));
+  }
 
-    html,
-    body,
-    ion-app,
-    ion-router-outlet,
-    ion-menu {
-      min-height: 100dvh;
-    }
+  html,
+  body,
+  ion-app,
+  ion-menu {
+    min-height: 100dvh;
   }
 }

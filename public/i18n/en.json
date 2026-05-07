@@ -406,6 +406,11 @@
     "crewForge": "Crew Forge",
     "home": "Home",
     "driveSync": "Drive Sync",
+    "groups": {
+      "browse": "Browse",
+      "build": "Build",
+      "savedSync": "Saved & Sync"
+    },
     "languageSwitcherAriaLabel": "Language switcher",
     "languageSwitchTo": "Switch language to {{ language }}",
     "menuTitle": "Menu",
