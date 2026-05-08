@@ -117,20 +117,41 @@
                 }
               </div>
 
-              <div class="favorites-bulk-action">
-                <div class="favorites-bulk-action__copy">
-                  <span>{{ t('editor.addFavoritesLabel') }}</span>
-                  <small>{{ t('editor.addFavoritesCopy') }}</small>
+              <div class="bulk-actions-grid">
+                <div class="favorites-bulk-action">
+                  <div class="favorites-bulk-action__copy">
+                    <span>{{ t('editor.addFavoritesLabel') }}</span>
+                    <small>{{ t('editor.addFavoritesCopy') }}</small>
+                  </div>
+
+                  <ion-button
+                    fill="outline"
+                    color="light"
+                    [disabled]="!canAddFavoritesToSelectedBox()"
+                    (click)="addFavoritesToSelectedBox()"
+                  >
+                    {{ t('editor.addFavorites', { count: missingFavoriteCount() }) }}
+                  </ion-button>
                 </div>
 
-                <ion-button
-                  fill="outline"
-                  color="light"
-                  [disabled]="!canAddFavoritesToSelectedBox()"
-                  (click)="addFavoritesToSelectedBox()"
-                >
-                  {{ t('editor.addFavorites', { count: missingFavoriteCount() }) }}
-                </ion-button>
+                <div class="favorites-bulk-action">
+                  <div class="favorites-bulk-action__copy">
+                    <span>{{ t('editor.selectAllFilteredLabel') }}</span>
+                    <small>{{ t('editor.selectAllFilteredCopy') }}</small>
+                  </div>
+
+                  <ion-button
+                    fill="outline"
+                    color="light"
+                    [disabled]="!canSelectAllFilteredCharacters()"
+                    (click)="selectAllFilteredCharacters()"
+                  >
+                    @if (selectingFilteredCharacters()) {
+                      <ion-spinner slot="start" name="crescent"></ion-spinner>
+                    }
+                    {{ t('editor.selectAllFiltered') }}
+                  </ion-button>
+                </div>
               </div>
 
               <div class="filters-grid">
@@ -177,6 +198,30 @@
                     {{ t('filters.favoritesOptions.hideFavorites') }}
                   </ion-select-option>
                 </ion-select>
+
+                <ion-input
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  step="1"
+                  fill="outline"
+                  [label]="t('filters.cost.from')"
+                  labelPlacement="stacked"
+                  [value]="costRange().min"
+                  (ionInput)="onCostRangeChange('min', $event)"
+                ></ion-input>
+
+                <ion-input
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  step="1"
+                  fill="outline"
+                  [label]="t('filters.cost.to')"
+                  labelPlacement="stacked"
+                  [value]="costRange().max"
+                  (ionInput)="onCostRangeChange('max', $event)"
+                ></ion-input>
 
                 <ion-select
                   interface="popover"
@@ -243,6 +288,10 @@
                   {{ 'common.actions.clear' | transloco }}
                 </ion-button>
               </div>
+
+              @if (costRangeValidationMessage()) {
+                <small class="validation-message">{{ costRangeValidationMessage() }}</small>
+              }
 
               <ion-searchbar
                 class="box-search"

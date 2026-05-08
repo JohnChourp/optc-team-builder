@@ -411,6 +411,16 @@ function normalizeCandidateCostRangeBound(value: unknown): number | null {
   return Number.isInteger(parsedValue) && parsedValue >= 0 ? parsedValue : null;
 }
 
+function normalizeDetailedCharacterCostRange(range: DetailedCharacterSearchQuery['costRange']): {
+  min: number | null;
+  max: number | null;
+} {
+  return {
+    min: normalizeCandidateCostRangeBound(range?.min),
+    max: normalizeCandidateCostRangeBound(range?.max),
+  };
+}
+
 function recordMatchesCandidateCostRange(
   record: Pick<CharacterDetailRecord, 'cost'>,
   range: { min: number | null; max: number | null },
@@ -621,6 +631,7 @@ export class OptcRepositoryService {
       ];
       const whereClauses: string[] = [];
       const queryParams: Array<string | number> = [];
+      const costRange = normalizeDetailedCharacterCostRange(query.costRange);
 
       if (normalizedSearchTerm.length > 0) {
         whereClauses.push(`c.search_text LIKE '%' || ? || '%'`);
@@ -661,6 +672,16 @@ export class OptcRepositoryService {
       if (excludedCharacterIds.length > 0) {
         whereClauses.push(`c.id NOT IN (${excludedCharacterIds.map(() => '?').join(',')})`);
         queryParams.push(...excludedCharacterIds);
+      }
+
+      if (costRange.min !== null) {
+        whereClauses.push('c.cost >= ?');
+        queryParams.push(costRange.min);
+      }
+
+      if (costRange.max !== null) {
+        whereClauses.push('c.cost <= ?');
+        queryParams.push(costRange.max);
       }
 
       const orderByClause = buildDetailedCharacterOrderByClause(
@@ -730,6 +751,7 @@ export class OptcRepositoryService {
         (characterId) => Number.isInteger(characterId) && characterId > 0,
       ),
     );
+    const costRange = normalizeDetailedCharacterCostRange(query.costRange);
     const filteredRecords = this.sortDetailedRecords(
       records.filter((record) => {
         if (allowedCharacterIdSet && !allowedCharacterIdSet.has(record.id)) {
@@ -757,6 +779,10 @@ export class OptcRepositoryService {
             query.selectedClassesMatchMode ?? 'all',
           )
         ) {
+          return false;
+        }
+
+        if (!recordMatchesCandidateCostRange(record, costRange)) {
           return false;
         }
 

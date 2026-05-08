@@ -24,6 +24,9 @@
     "addFavorites": "Add missing favorites ({{count}})",
     "addFavoritesLabel": "Favorites bulk add",
     "addFavoritesCopy": "Merge every favorited character you have not already placed in this box.",
+    "selectAllFiltered": "Select all filtered",
+    "selectAllFilteredLabel": "Filtered bulk add",
+    "selectAllFilteredCopy": "Add every character matching the active filters, including results not loaded yet.",
     "nameLabel": "Box name",
     "namePlaceholder": "Enter a clear box name",
     "nameRequired": "A box name is required before it can be saved.",
@@ -38,6 +41,11 @@
     "classPlaceholder": "Filter by class",
     "favoritesPlaceholder": "Filter by favorites",
     "membershipPlaceholder": "Filter by box membership",
+    "cost": {
+      "from": "Cost from",
+      "to": "Cost to",
+      "invalidRange": "Cost from cannot be greater than Cost to."
+    },
     "favoritesOptions": {
       "all": "All characters",
       "favorites": "Favorites only",

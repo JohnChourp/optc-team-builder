@@ -370,6 +370,25 @@ describe('OptcRepositoryService', () => {
     expect(result.map((record) => record.id)).toEqual([900005, 4529]);
   });
 
+  it('filters detailed character search results by cost range', async () => {
+    const service = createRepositoryService([
+      createCharacterRow({ id: 4111, cost: 65 }),
+      createCharacterRow({ id: 4110, cost: 40 }),
+      createCharacterRow({ id: 4109, cost: 10 }),
+    ]);
+
+    const result = await service.searchDetailedCharacters({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      costRange: { min: 20, max: 50 },
+      limit: 10,
+      offset: 0,
+    });
+
+    expect(result.map((record) => record.id)).toEqual([4110]);
+  });
+
   it('applies local override names, types, and classes to detailed search filtering', async () => {
     const service = createRepositoryService([createCharacterRow({ id: 4101, type: 'DEX' })], {
       overrides: [
@@ -397,6 +416,30 @@ describe('OptcRepositoryService', () => {
       primaryClass: 'Shooter',
       secondaryClass: 'Free Spirit',
     });
+  });
+
+  it('filters overridden detailed character records by override cost range', async () => {
+    const service = createRepositoryService(
+      [
+        createCharacterRow({ id: 4103, cost: 70 }),
+        createCharacterRow({ id: 4102, cost: 40 }),
+        createCharacterRow({ id: 4101, cost: 10 }),
+      ],
+      {
+        overrides: [createOverride({ characterId: 4103, cost: 45 })],
+      },
+    );
+
+    const result = await service.searchDetailedCharacters({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: [],
+      costRange: { min: 20, max: 50 },
+      limit: 10,
+      offset: 0,
+    });
+
+    expect(result.map((record) => record.id)).toEqual([4103, 4102]);
   });
 
   it('sorts overridden detailed character records by the local override name', async () => {
@@ -1607,6 +1650,20 @@ function filterCharacterRowsForQuery(
     );
 
     filteredRows = filteredRows.filter((row) => !excludedIds.has(Number(row['id'] ?? 0)));
+    paramIndex += excludedCount;
+  }
+
+  if (query.includes('LIMIT ? OFFSET ?') && query.includes('c.cost >= ?')) {
+    const minCost = Number(params[paramIndex]);
+
+    filteredRows = filteredRows.filter((row) => Number(row['cost'] ?? 0) >= minCost);
+    paramIndex += 1;
+  }
+
+  if (query.includes('LIMIT ? OFFSET ?') && query.includes('c.cost <= ?')) {
+    const maxCost = Number(params[paramIndex]);
+
+    filteredRows = filteredRows.filter((row) => Number(row['cost'] ?? 0) <= maxCost);
   }
 
   return applyOrderingAndWindow(filteredRows, query, params);

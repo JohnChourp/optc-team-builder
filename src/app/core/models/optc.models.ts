@@ -393,6 +393,10 @@ export interface DetailedCharacterSearchQuery {
   selectedClassesMatchMode?: 'all' | 'any';
   allowedCharacterIds?: number[];
   excludedCharacterIds?: number[];
+  costRange?: {
+    min?: number | null;
+    max?: number | null;
+  } | null;
   sortMode?: CharacterSortMode;
   idOrder?: CharacterIdOrder;
   limit: number;

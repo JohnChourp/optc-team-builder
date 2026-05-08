@@ -409,6 +409,127 @@ describe('CharacterBoxesPage', () => {
     });
   });
 
+  it('passes cost range filters to repository searches', async () => {
+    const { page, repository } = createPage();
+
+    await page.onCostRangeChange('min', {
+      detail: {
+        value: '20',
+      },
+    } as CustomEvent<{ value?: string | number | null }>);
+    await page.onCostRangeChange('max', {
+      detail: {
+        value: '60',
+      },
+    } as CustomEvent<{ value?: string | number | null }>);
+
+    expect(page.costRange()).toEqual({ min: 20, max: 60 });
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: [],
+      selectedClassesMatchMode: 'any',
+      allowedCharacterIds: undefined,
+      excludedCharacterIds: undefined,
+      sortMode: 'catalog',
+      idOrder: 'newest',
+      costRange: { min: 20, max: 60 },
+      limit: 48,
+      offset: 0,
+    });
+  });
+
+  it('selects every filtered character across result pages into the selected box', async () => {
+    const favoriteIds = [1000, 1001, 202];
+    const { page, repository, userState } = createPage(undefined, favoriteIds);
+    const firstPage = Array.from({ length: 500 }, (_, index) =>
+      createCharacter(1000 + index, `Filtered ${index}`),
+    );
+    const secondPage = [createCharacter(202), createCharacter(1000)];
+
+    page.selectBox('box-1');
+    page.searchTerm.set('Luffy');
+    page.selectedType.set('DEX');
+    page.selectedClass.set('Fighter');
+    page.selectedFavoriteFilter.set('favorites');
+    page.selectedMembershipFilter.set('notInBox');
+    page.selectedSortMode.set('nameAsc');
+    page.selectedIdOrder.set('oldest');
+    page.costRange.set({ min: 20, max: 60 });
+    repository.searchDetailedCharacters
+      .mockResolvedValueOnce(firstPage)
+      .mockResolvedValueOnce(secondPage);
+
+    await page.selectAllFilteredCharacters();
+
+    expect(repository.searchDetailedCharacters).toHaveBeenNthCalledWith(1, {
+      searchTerm: 'Luffy',
+      selectedTypes: ['DEX'],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: ['Fighter'],
+      selectedClassesMatchMode: 'any',
+      allowedCharacterIds: favoriteIds,
+      excludedCharacterIds: [101],
+      sortMode: 'nameAsc',
+      idOrder: 'oldest',
+      costRange: { min: 20, max: 60 },
+      limit: 500,
+      offset: 0,
+    });
+    expect(repository.searchDetailedCharacters).toHaveBeenNthCalledWith(2, {
+      searchTerm: 'Luffy',
+      selectedTypes: ['DEX'],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: ['Fighter'],
+      selectedClassesMatchMode: 'any',
+      allowedCharacterIds: favoriteIds,
+      excludedCharacterIds: [101],
+      sortMode: 'nameAsc',
+      idOrder: 'oldest',
+      costRange: { min: 20, max: 60 },
+      limit: 500,
+      offset: 500,
+    });
+    expect(userState.saveCharacterBox).toHaveBeenCalledOnce();
+
+    const savedInput = userState.saveCharacterBox.mock.calls[0]?.[0];
+
+    expect(savedInput).toMatchObject({
+      id: 'box-1',
+      name: 'Box 1',
+    });
+    expect(savedInput?.characterIds).toHaveLength(502);
+    expect(new Set(savedInput?.characterIds).size).toBe(savedInput?.characterIds.length);
+    expect(savedInput?.characterIds).toEqual(expect.arrayContaining([101, 1000, 1499, 202]));
+    expect(page.selectedBox()?.characterIds).toEqual(savedInput?.characterIds);
+  });
+
+  it('blocks selecting all filtered characters when the cost range is invalid', async () => {
+    const { page, userState } = createPage();
+
+    page.selectBox('box-1');
+    await page.onCostRangeChange('min', {
+      detail: {
+        value: '60',
+      },
+    } as CustomEvent<{ value?: string | number | null }>);
+    await page.onCostRangeChange('max', {
+      detail: {
+        value: '20',
+      },
+    } as CustomEvent<{ value?: string | number | null }>);
+    userState.saveCharacterBox.mockClear();
+
+    expect(page.hasInvalidCostRange()).toBe(true);
+    expect(page.costRangeValidationMessage()).toBe('filters.cost.invalidRange');
+    expect(page.canSelectAllFilteredCharacters()).toBe(false);
+
+    await page.selectAllFilteredCharacters();
+
+    expect(userState.saveCharacterBox).not.toHaveBeenCalled();
+  });
+
   it('clears the favorites filter together with the rest of the filters', async () => {
     const { page, repository } = createPage(undefined, [101]);
 
@@ -437,12 +558,23 @@ describe('CharacterBoxesPage', () => {
         value: 'oldest',
       },
     } as CustomEvent<{ value?: string | null }>);
+    await page.onCostRangeChange('min', {
+      detail: {
+        value: '20',
+      },
+    } as CustomEvent<{ value?: string | number | null }>);
+    await page.onCostRangeChange('max', {
+      detail: {
+        value: '60',
+      },
+    } as CustomEvent<{ value?: string | number | null }>);
     await page.clearFilters();
 
     expect(page.selectedFavoriteFilter()).toBe('all');
     expect(page.selectedMembershipFilter()).toBe('all');
     expect(page.selectedSortMode()).toBe('catalog');
     expect(page.selectedIdOrder()).toBe('newest');
+    expect(page.costRange()).toEqual({ min: null, max: null });
     expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
       selectedTypes: [],
@@ -469,10 +601,17 @@ describe('CharacterBoxesPage', () => {
     expect(template).toContain("t('empty.noCharacters.title')");
     expect(template).toContain("t('editor.delete')");
     expect(template).toContain("t('editor.addFavorites'");
+    expect(template).toContain("t('editor.selectAllFiltered'");
+    expect(template).toContain('selectAllFilteredCharacters()');
     expect(template).toContain("t('filters.favoritesPlaceholder')");
     expect(template).toContain("t('filters.favoritesOptions.favorites')");
     expect(template).toContain("t('filters.favoritesOptions.hideFavorites')");
     expect(template).toContain("t('filters.membershipPlaceholder')");
+    expect(template).toContain("t('filters.cost.from')");
+    expect(template).toContain("t('filters.cost.to')");
+    expect(template).toContain('costRangeValidationMessage()');
+    expect(template).toContain("onCostRangeChange('min', $event)");
+    expect(template).toContain("onCostRangeChange('max', $event)");
     expect(template).toContain("t('sort.placeholder')");
     expect(template).toContain('selectedSortMode()');
     expect(template).toContain('onSortModeChange($event)');

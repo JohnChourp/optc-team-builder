@@ -34,6 +34,7 @@ import {
   type CharacterListItem,
   type CharacterSortMode,
   type DatasetManifest,
+  type DetailedCharacterSearchQuery,
 } from '../../core/models/optc.models';
 import { type AutoBuildAbilityCatalog } from '../../core/models/auto-team-builder-ability.models';
 import { AppI18nService } from '../../core/services/app-i18n.service';
@@ -53,9 +54,15 @@ import {
 import { UserStateService } from '../../core/services/user-state.service';
 
 const PAGE_SIZE = 48;
+const FILTERED_SELECT_PAGE_SIZE = 500;
 type CharacterBoxesFavoriteFilter = 'all' | 'favorites' | 'hideFavorites';
 type CharacterBoxesMembershipFilter = 'all' | 'inBox' | 'notInBox';
 type CharacterBoxesDisplayMode = 'list' | 'compact';
+
+interface CharacterBoxesCostRange {
+  min: number | null;
+  max: number | null;
+}
 
 interface CharacterBoxCharacterCardView {
   character: CharacterDetailRecord;
@@ -104,6 +111,7 @@ export class CharacterBoxesPage implements OnInit {
   public readonly selectedMembershipFilter = signal<CharacterBoxesMembershipFilter>('all');
   public readonly selectedSortMode = signal<CharacterSortMode>('catalog');
   public readonly selectedIdOrder = signal<CharacterIdOrder>('newest');
+  public readonly costRange = signal<CharacterBoxesCostRange>({ min: null, max: null });
   public readonly specialAbilityPickerOpen = signal(false);
   public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly crewmateAbilityPickerOpen = signal(false);
@@ -116,6 +124,7 @@ export class CharacterBoxesPage implements OnInit {
   public readonly characters = signal<CharacterDetailRecord[]>([]);
   public readonly loading = signal(true);
   public readonly loadingMore = signal(false);
+  public readonly selectingFilteredCharacters = signal(false);
   public readonly hasMore = signal(true);
 
   public readonly selectedBox = computed(
@@ -224,6 +233,20 @@ export class CharacterBoxesPage implements OnInit {
   public readonly missingFavoriteCount = computed(() => this.missingFavoriteIds().length);
   public readonly canAddFavoritesToSelectedBox = computed(
     () => Boolean(this.selectedBox()) && this.missingFavoriteCount() > 0,
+  );
+  public readonly hasInvalidCostRange = computed(() => {
+    const range = this.costRange();
+
+    return range.min !== null && range.max !== null && range.min > range.max;
+  });
+  public readonly costRangeValidationMessage = computed(() =>
+    this.hasInvalidCostRange() ? this.t('filters.cost.invalidRange') : '',
+  );
+  public readonly canSelectAllFilteredCharacters = computed(
+    () =>
+      Boolean(this.selectedBox()) &&
+      !this.hasInvalidCostRange() &&
+      !this.selectingFilteredCharacters(),
   );
   public readonly boxNameValidationMessage = computed(() =>
     this.selectedBox() && this.boxNameDraft().trim().length === 0
@@ -359,6 +382,42 @@ export class CharacterBoxesPage implements OnInit {
     this.selectBox(savedBox.id);
   }
 
+  public async selectAllFilteredCharacters(): Promise<void> {
+    const currentBox = this.selectedBox();
+
+    if (!currentBox || this.hasInvalidCostRange() || this.selectingFilteredCharacters()) {
+      return;
+    }
+
+    this.selectingFilteredCharacters.set(true);
+
+    try {
+      const filteredCharacterIds = await this.fetchAllFilteredCharacterIds();
+      const currentCharacterIds = new Set(currentBox.characterIds);
+      const missingCharacterIds = filteredCharacterIds.filter(
+        (characterId) => !currentCharacterIds.has(characterId),
+      );
+
+      if (missingCharacterIds.length === 0) {
+        return;
+      }
+
+      const savedBox = await this.userState.saveCharacterBox({
+        id: currentBox.id,
+        name: currentBox.name,
+        characterIds: [...currentBox.characterIds, ...missingCharacterIds],
+      });
+
+      if (!savedBox) {
+        return;
+      }
+
+      this.selectBox(savedBox.id);
+    } finally {
+      this.selectingFilteredCharacters.set(false);
+    }
+  }
+
   public async onSearchChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
     this.searchTerm.set((event.detail.value ?? '').trim());
     await this.loadCharacters(true);
@@ -403,6 +462,19 @@ export class CharacterBoxesPage implements OnInit {
 
   public async onIdOrderChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
     this.selectedIdOrder.set(this.normalizeIdOrder(event.detail.value));
+    await this.loadCharacters(true);
+  }
+
+  public async onCostRangeChange(
+    bound: keyof CharacterBoxesCostRange,
+    event: CustomEvent<{ value?: string | number | null }>,
+  ): Promise<void> {
+    const currentRange = this.costRange();
+
+    this.costRange.set({
+      ...currentRange,
+      [bound]: this.resolveCostRangeBound(event.detail.value),
+    });
     await this.loadCharacters(true);
   }
 
@@ -556,6 +628,7 @@ export class CharacterBoxesPage implements OnInit {
     this.selectedMembershipFilter.set('all');
     this.selectedSortMode.set('catalog');
     this.selectedIdOrder.set('newest');
+    this.costRange.set({ min: null, max: null });
     this.specialAbilityPickerOpen.set(false);
     this.specialAbilityDrafts.set([]);
     this.crewmateAbilityPickerOpen.set(false);
@@ -613,7 +686,46 @@ export class CharacterBoxesPage implements OnInit {
       this.loading.set(true);
     }
 
-    const nextOffset = reset ? 0 : this.characters().length;
+    const nextCharacters = await this.repository.searchDetailedCharacters(
+      this.buildFilteredCharacterSearchQuery({
+        limit: PAGE_SIZE,
+        offset: reset ? 0 : this.characters().length,
+      }),
+    );
+
+    this.characters.set(reset ? nextCharacters : [...this.characters(), ...nextCharacters]);
+    this.hasMore.set(nextCharacters.length === PAGE_SIZE);
+    this.loading.set(false);
+  }
+
+  private async fetchAllFilteredCharacterIds(): Promise<number[]> {
+    const filteredCharacterIds: number[] = [];
+    let offset = 0;
+
+    while (true) {
+      const nextCharacters = await this.repository.searchDetailedCharacters(
+        this.buildFilteredCharacterSearchQuery({
+          limit: FILTERED_SELECT_PAGE_SIZE,
+          offset,
+        }),
+      );
+
+      filteredCharacterIds.push(...nextCharacters.map((character) => character.id));
+
+      if (nextCharacters.length < FILTERED_SELECT_PAGE_SIZE) {
+        break;
+      }
+
+      offset += FILTERED_SELECT_PAGE_SIZE;
+    }
+
+    return [...new Set(filteredCharacterIds)];
+  }
+
+  private buildFilteredCharacterSearchQuery(input: {
+    limit: number;
+    offset: number;
+  }): DetailedCharacterSearchQuery {
     const selectedBoxCharacterIds = this.selectedBox()?.characterIds ?? [];
     const favoriteCharacterIds =
       this.selectedFavoriteFilter() === 'favorites' ? this.favoriteCharacterIds() : undefined;
@@ -635,7 +747,8 @@ export class CharacterBoxesPage implements OnInit {
       ...(this.selectedMembershipFilter() === 'notInBox' ? selectedBoxCharacterIds : []),
       ...(this.selectedFavoriteFilter() === 'hideFavorites' ? this.favoriteCharacterIds() : []),
     ];
-    const nextCharacters = await this.repository.searchDetailedCharacters({
+
+    return {
       searchTerm: this.searchTerm(),
       selectedTypes: this.selectedType() ? [this.selectedType()] : [],
       selectedTypesMatchMode: 'any',
@@ -647,17 +760,28 @@ export class CharacterBoxesPage implements OnInit {
         : undefined,
       sortMode: this.selectedSortMode(),
       idOrder: this.selectedIdOrder(),
-      limit: PAGE_SIZE,
-      offset: nextOffset,
-    });
-
-    this.characters.set(reset ? nextCharacters : [...this.characters(), ...nextCharacters]);
-    this.hasMore.set(nextCharacters.length === PAGE_SIZE);
-    this.loading.set(false);
+      ...(this.hasActiveCostRange(this.costRange()) ? { costRange: { ...this.costRange() } } : {}),
+      limit: input.limit,
+      offset: input.offset,
+    };
   }
 
   private normalizeOptions(values: string[]): string[] {
     return [...new Set(values.map((value) => value.trim()).filter((value) => value.length > 0))];
+  }
+
+  private resolveCostRangeBound(value: string | number | null | undefined): number | null {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    const nextValue = Number(value);
+
+    return Number.isInteger(nextValue) && nextValue >= 0 ? nextValue : null;
+  }
+
+  private hasActiveCostRange(range: CharacterBoxesCostRange): boolean {
+    return range.min !== null || range.max !== null;
   }
 
   private normalizeSortMode(value: string | null | undefined): CharacterSortMode {

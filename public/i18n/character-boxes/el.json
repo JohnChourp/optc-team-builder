@@ -24,6 +24,9 @@
     "addFavorites": "Πρόσθεσε favorites που λείπουν ({{count}})",
     "addFavoritesLabel": "Μαζική προσθήκη favorites",
     "addFavoritesCopy": "Κάνε merge όλων των favorited χαρακτήρων που δεν υπάρχουν ήδη σε αυτό το box.",
+    "selectAllFiltered": "Επίλεξε όλα τα filtered",
+    "selectAllFilteredLabel": "Μαζική προσθήκη filtered",
+    "selectAllFilteredCopy": "Πρόσθεσε κάθε χαρακτήρα που ταιριάζει στα ενεργά φίλτρα, ακόμα κι αν δεν έχει φορτωθεί ακόμα.",
     "nameLabel": "Όνομα box",
     "namePlaceholder": "Δώσε ένα καθαρό όνομα στο box",
     "nameRequired": "Το box χρειάζεται όνομα για να αποθηκευτεί.",
@@ -38,6 +41,11 @@
     "classPlaceholder": "Φίλτρο ανά class",
     "favoritesPlaceholder": "Φίλτρο favorites",
     "membershipPlaceholder": "Φίλτρο συμμετοχής στο box",
+    "cost": {
+      "from": "Cost από",
+      "to": "Cost έως",
+      "invalidRange": "Το Cost από δεν μπορεί να είναι μεγαλύτερο από το Cost έως."
+    },
     "favoritesOptions": {
       "all": "Όλοι οι χαρακτήρες",
       "favorites": "Μόνο favorites",
