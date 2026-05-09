@@ -102,7 +102,7 @@ export class CharacterDetailPage implements OnInit {
       return;
     }
 
-    await this.userState.ready();
+    await this.userState.readyFavoriteCharacterIds();
     const [abilityCatalog] = await Promise.all([
       this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
       this.loadCharacter(characterId, true),

@@ -290,7 +290,10 @@ export class CharacterBoxesPage implements OnInit {
   }
 
   public async ngOnInit(): Promise<void> {
-    await this.userState.ready();
+    await Promise.all([
+      this.userState.readyCharacterBoxes(),
+      this.userState.readyFavoriteCharacterIds(),
+    ]);
     const [summary, abilityCatalog] = await Promise.all([
       this.repository.getDatasetManifest(),
       this.repository.getAutoBuilderAbilityCatalog().catch(() => null),

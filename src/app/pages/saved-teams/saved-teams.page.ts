@@ -134,12 +134,12 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
   }
 
   public async ngOnInit(): Promise<void> {
-    await this.userState.ready();
+    await Promise.all([this.userState.readySavedTeams(), this.i18n.preloadScope('saved-teams')]);
     await this.refreshSavedTeamCards();
   }
 
   public async ionViewWillEnter(): Promise<void> {
-    await this.userState.ready();
+    await Promise.all([this.userState.readySavedTeams(), this.i18n.preloadScope('saved-teams')]);
     await this.refreshSavedTeamCards();
   }
 

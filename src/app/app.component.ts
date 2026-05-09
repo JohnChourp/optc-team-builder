@@ -1,13 +1,21 @@
 import { App } from '@capacitor/app';
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { IonApp, IonButton, IonRouterOutlet } from '@ionic/angular/standalone';
-import { NavigationEnd, Router, RouterLink, type Routes } from '@angular/router';
+import {
+  NavigationCancel,
+  NavigationEnd,
+  NavigationError,
+  NavigationStart,
+  Router,
+  RouterLink,
+  type Routes,
+} from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { filter } from 'rxjs';
 import packageJson from '../../package.json';
 import { AnalyticsConsentService } from './core/services/analytics-consent.service';
+import { CharacterCatalogCacheService } from './core/services/character-catalog-cache.service';
 import { GoogleAnalyticsService } from './core/services/google-analytics.service';
 import { ToolbarBackNavigationService } from './core/services/toolbar-back-navigation.service';
 
@@ -34,6 +42,12 @@ const defaultSeo: RouteSeoData = {
   imports: [IonApp, IonButton, IonRouterOutlet, RouterLink, TranslocoPipe],
   template: `
     <ion-app class="app-shell">
+      @if (routeLoading()) {
+        <div class="app-route-progress" aria-hidden="true">
+          <span></span>
+        </div>
+      }
+
       <div class="app-shell__content">
         <ion-router-outlet></ion-router-outlet>
       </div>
@@ -112,11 +126,13 @@ export class AppComponent {
   private readonly analyticsConsentService = inject(AnalyticsConsentService);
   private readonly analytics = inject(GoogleAnalyticsService);
   private readonly toolbarBackNavigation = inject(ToolbarBackNavigationService);
+  private readonly characterCatalogCache = inject(CharacterCatalogCacheService);
   private lastTrackedUrl: string | null = null;
 
   public readonly appVersion = signal(packageJson.version);
   public readonly creditLabel = computed(() => `powered by johnChourp v.${this.appVersion()}`);
   public readonly currentUrl = signal(this.router.url);
+  public readonly routeLoading = signal(false);
   public readonly analyticsConsent = this.analyticsConsentService.consent;
   public readonly showAnalyticsConsentBanner = computed(
     () => this.analyticsConsent() === 'unknown',
@@ -124,13 +140,28 @@ export class AppComponent {
 
   public constructor() {
     void this.loadAppVersion();
+    afterNextRender(() => {
+      this.scheduleCatalogWarmup();
+    });
 
     this.router.events
-      .pipe(
-        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-        takeUntilDestroyed(this.destroyRef),
-      )
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((event) => {
+        if (event instanceof NavigationStart) {
+          this.routeLoading.set(true);
+          return;
+        }
+
+        if (event instanceof NavigationCancel || event instanceof NavigationError) {
+          this.routeLoading.set(false);
+          return;
+        }
+
+        if (!(event instanceof NavigationEnd)) {
+          return;
+        }
+
+        this.routeLoading.set(false);
         this.currentUrl.set(event.urlAfterRedirects);
         this.toolbarBackNavigation.recordNavigation(event.urlAfterRedirects);
         this.updateRouteMetadata(event.urlAfterRedirects);
@@ -166,6 +197,22 @@ export class AppComponent {
     } catch {
       return;
     }
+  }
+
+  private scheduleCatalogWarmup(): void {
+    const warmup = () => {
+      this.characterCatalogCache.kickoffPreload();
+    };
+    const runtime = globalThis as typeof globalThis & {
+      requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+    };
+
+    if (typeof runtime.requestIdleCallback === 'function') {
+      runtime.requestIdleCallback(() => warmup(), { timeout: 3000 });
+      return;
+    }
+
+    runtime.setTimeout(warmup, 750);
   }
 
   private trackPageView(url: string): void {

@@ -33,6 +33,9 @@ let analyticsStub: {
 let toolbarBackNavigationStub: {
   recordNavigation: ReturnType<typeof vi.fn>;
 };
+let characterCatalogCacheStub: {
+  kickoffPreload: ReturnType<typeof vi.fn>;
+};
 
 vi.mock('@capacitor/app', () => ({
   App: {
@@ -77,10 +80,13 @@ vi.mock('@angular/core', async () => {
           return analyticsStub;
         case 'ToolbarBackNavigationService':
           return toolbarBackNavigationStub;
+        case 'CharacterCatalogCacheService':
+          return characterCatalogCacheStub;
         default:
           throw new Error(`Unexpected inject token: ${token.name ?? 'unknown'}`);
       }
     },
+    afterNextRender: vi.fn(),
   };
 });
 
@@ -104,6 +110,9 @@ describe('AppComponent', () => {
     };
     toolbarBackNavigationStub = {
       recordNavigation: vi.fn(),
+    };
+    characterCatalogCacheStub = {
+      kickoffPreload: vi.fn(),
     };
   });
 

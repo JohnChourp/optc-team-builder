@@ -850,6 +850,7 @@ function createPage(overrides: { savedEnemies?: SavedEnemy[] } = {}) {
   const savedEnemies = signal<SavedEnemy[]>(overrides.savedEnemies ?? buildSavedEnemies());
   const userState = {
     ready: vi.fn().mockResolvedValue(undefined),
+    readySavedEnemies: vi.fn().mockResolvedValue(undefined),
     savedEnemies,
     getSavedEnemyById: vi.fn(
       (enemyId: string) => savedEnemies().find((enemy) => enemy.id === enemyId) ?? null,

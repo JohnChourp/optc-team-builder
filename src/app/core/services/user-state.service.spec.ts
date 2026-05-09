@@ -19,6 +19,55 @@ describe('UserStateService saved teams', () => {
     vi.unstubAllGlobals();
   });
 
+  it('hydrates only requested domains until full ready is requested', async () => {
+    const store = new Map<string, string>([
+      ['favoriteCharacterIds', JSON.stringify([101])],
+      ['favoriteShipIds', JSON.stringify([9001])],
+      ['recentCharacterIds', JSON.stringify([202])],
+      ['characterBoxes', JSON.stringify([])],
+      ['savedTeams', JSON.stringify([createTeam('team-1', 'Team 1')])],
+      ['savedEnemies', JSON.stringify([createEnemy('enemy-1', 'Enemy 1')])],
+      ['savedRumbleTeams', JSON.stringify([])],
+      ['crewForgeImageProfiles', JSON.stringify([])],
+      ['crewForgeLastImageProfileId', JSON.stringify(null)],
+      ['autoTeamBuilderWorkerPreference', JSON.stringify({ mode: 'auto', manualCount: 7 })],
+    ]);
+    const i18n = {
+      translate: vi.fn((key: string) => key),
+    };
+
+    vi.mocked(Preferences.get).mockImplementation(async ({ key }) => ({
+      value: store.get(key) ?? null,
+    }));
+
+    const service = new UserStateService(i18n as never);
+
+    await service.readySavedEnemies();
+    expect(service.savedEnemies().map((enemy) => enemy.id)).toEqual(['enemy-1']);
+    expect(vi.mocked(Preferences.get).mock.calls.map(([call]) => call.key)).toEqual([
+      'savedEnemies',
+    ]);
+
+    vi.mocked(Preferences.get).mockClear();
+    await service.ready();
+    expect(vi.mocked(Preferences.get).mock.calls.map(([call]) => call.key)).toEqual(
+      expect.arrayContaining([
+        'favoriteCharacterIds',
+        'favoriteShipIds',
+        'recentCharacterIds',
+        'characterBoxes',
+        'savedTeams',
+        'savedRumbleTeams',
+        'crewForgeImageProfiles',
+        'crewForgeLastImageProfileId',
+        'autoTeamBuilderWorkerPreference',
+      ]),
+    );
+    expect(vi.mocked(Preferences.get).mock.calls.map(([call]) => call.key)).not.toContain(
+      'savedEnemies',
+    );
+  });
+
   it('toggles favorite ships and persists the normalized order', async () => {
     const { service, setCalls } = await createService([], [], [9001]);
 
@@ -838,6 +887,7 @@ async function createService(
     ['characterBoxes', JSON.stringify(storedCharacterBoxes)],
     ['savedTeams', JSON.stringify(storedTeams)],
     ['savedEnemies', JSON.stringify(storedEnemies)],
+    ['savedRumbleTeams', JSON.stringify([])],
     ['crewForgeImageProfiles', JSON.stringify(storedCrewForgeImageProfiles)],
     ['crewForgeLastImageProfileId', JSON.stringify(storedCrewForgeLastImageProfileId)],
     ['autoTeamBuilderWorkerPreference', JSON.stringify(storedAutoTeamBuilderWorkerPreference)],

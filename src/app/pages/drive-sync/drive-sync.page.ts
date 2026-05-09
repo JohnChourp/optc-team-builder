@@ -215,6 +215,10 @@ export class DriveSyncPage {
     );
   }
 
+  public async ngOnInit(): Promise<void> {
+    await this.driveBackup.ready();
+  }
+
   public async confirmReview(): Promise<void> {
     const draft = this.reviewDraft();
 

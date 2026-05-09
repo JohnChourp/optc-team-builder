@@ -206,7 +206,10 @@ export class RumbleCharactersPage implements OnInit {
     this.errorMessage.set('');
 
     try {
-      await Promise.all([this.i18n.preloadScope('rumble-characters'), this.userState.ready()]);
+      await Promise.all([
+        this.i18n.preloadScope('rumble-characters'),
+        this.userState.readyFavoriteCharacterIds(),
+      ]);
       const [summary, candidates] = await Promise.all([
         this.repository.getDatasetManifest(),
         this.repository.getRumbleBuilderCandidates(),

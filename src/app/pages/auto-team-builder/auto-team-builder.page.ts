@@ -2462,8 +2462,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   public async ngOnInit(): Promise<void> {
-    await this.userState.ready();
     await Promise.all([
+      this.userState.readyFavoriteCharacterIds(),
+      this.userState.readyFavoriteShipIds(),
+      this.userState.readyCharacterBoxes(),
+      this.userState.readyAutoTeamBuilderWorkerPreference(),
       this.i18n.preloadScope('auto-team-builder'),
       this.i18n.preloadScope('ability-picker'),
       this.i18n.preloadScope('enemy-mechanics-picker'),
@@ -2472,20 +2475,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       typeof this.repository.getShips === 'function'
         ? this.repository.getShips()
         : Promise.resolve([]);
-    const characterTagsPromise =
-      typeof this.repository.getAvailableCharacterTags === 'function'
-        ? this.repository.getAvailableCharacterTags()
-        : Promise.resolve([]);
-    const [summary, abilityCatalog, ships, characterTags] = await Promise.all([
+    const [summary, abilityCatalog, ships] = await Promise.all([
       this.repository.getDatasetManifest(),
       this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
       shipsPromise,
-      characterTagsPromise,
     ]);
     this.summary.set(summary);
     this.abilityCatalog.set(abilityCatalog);
     this.ships.set(ships);
-    this.availableCharacterTags.set(characterTags);
+    void this.loadAvailableCharacterTags();
     await this.resetPageState();
   }
 
@@ -2717,33 +2715,49 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public setShipPickerMode(mode: 'characters' | 'ships'): void {
     this.shipPickerMode.set(mode);
     this.syncShipPickerPanelState('manual', { reset: true });
+
+    if (mode === 'characters' && this.manualPickerModalOpen()) {
+      void this.refreshAppliedManualCandidates({ force: true });
+    }
   }
 
   public setExcludePickerMode(mode: 'characters' | 'ships'): void {
     this.excludePickerMode.set(mode);
     this.syncShipPickerPanelState('excluded', { reset: true });
+
+    if (mode === 'characters' && this.excludePickerModalOpen()) {
+      void this.refreshAppliedExcludedCandidates({ force: true });
+    }
   }
 
-  public openManualPickerModal(): void {
+  public async openManualPickerModal(): Promise<void> {
     if (this.building()) {
       return;
     }
 
     this.syncShipPickerPanelState('manual', { reset: true });
     this.manualPickerModalOpen.set(true);
+
+    if (this.shipPickerMode() === 'characters') {
+      await this.refreshAppliedManualCandidates({ force: true });
+    }
   }
 
   public closeManualPickerModal(): void {
     this.manualPickerModalOpen.set(false);
   }
 
-  public openExcludePickerModal(): void {
+  public async openExcludePickerModal(): Promise<void> {
     if (this.building()) {
       return;
     }
 
     this.syncShipPickerPanelState('excluded', { reset: true });
     this.excludePickerModalOpen.set(true);
+
+    if (this.excludePickerMode() === 'characters') {
+      await this.refreshAppliedExcludedCandidates({ force: true });
+    }
   }
 
   public closeExcludePickerModal(): void {
@@ -4474,6 +4488,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.buildProgressSnapshotReceivedAtMs.set(null);
   }
 
+  private async loadAvailableCharacterTags(): Promise<void> {
+    if (typeof this.repository.getAvailableCharacterTags !== 'function') {
+      return;
+    }
+
+    try {
+      this.availableCharacterTags.set(await this.repository.getAvailableCharacterTags());
+    } catch {
+      this.availableCharacterTags.set([]);
+    }
+  }
+
   private async resetPageState(): Promise<void> {
     const defaultFilters = buildDefaultAutoTeamBuilderFilterState(this.availableClasses());
 
@@ -4561,7 +4587,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.loadedEnemyPresetName.set(null);
     this.resetBuildState();
     this.syncShipPickerPanelStates();
-    await this.refreshCharacterPickPanels();
   }
 
   private async importSelectionPreset(file: File): Promise<void> {
@@ -4849,6 +4874,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return false;
     }
 
+    await this.userState.readySavedTeams();
     const team = this.userState.getSavedTeamById(teamId);
 
     if (!team) {
@@ -4881,6 +4907,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return;
     }
 
+    await this.userState.readySavedEnemies();
     const enemy = this.userState.getSavedEnemyById(enemyId);
 
     if (!enemy) {
@@ -5050,11 +5077,25 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     });
   }
 
-  private async refreshAppliedManualCandidates(): Promise<void> {
+  private async refreshAppliedManualCandidates(options: { force?: boolean } = {}): Promise<void> {
+    if (
+      (!options.force && !this.manualPickerModalOpen()) ||
+      this.shipPickerMode() !== 'characters'
+    ) {
+      return;
+    }
+
     await this.refreshCharacterPickerPanel('manual');
   }
 
-  private async refreshAppliedExcludedCandidates(): Promise<void> {
+  private async refreshAppliedExcludedCandidates(options: { force?: boolean } = {}): Promise<void> {
+    if (
+      (!options.force && !this.excludePickerModalOpen()) ||
+      this.excludePickerMode() !== 'characters'
+    ) {
+      return;
+    }
+
     await this.refreshCharacterPickerPanel('excluded');
   }
 

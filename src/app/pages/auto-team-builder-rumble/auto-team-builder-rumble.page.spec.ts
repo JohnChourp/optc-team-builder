@@ -1346,6 +1346,10 @@ function createPage(
   };
   const userState = {
     ready: vi.fn().mockResolvedValue(undefined),
+    readyFavoriteCharacterIds: vi.fn().mockResolvedValue(undefined),
+    readyCharacterBoxes: vi.fn().mockResolvedValue(undefined),
+    readyAutoTeamBuilderWorkerPreference: vi.fn().mockResolvedValue(undefined),
+    readySavedRumbleTeams: vi.fn().mockResolvedValue(undefined),
     favoriteCharacterIds: vi.fn(() => [1001, 1002]),
     characterBoxes: vi.fn(() => options.characterBoxes ?? []),
     autoTeamBuilderWorkerPreference: vi.fn(() => ({ mode: 'auto', manualCount: 2 })),

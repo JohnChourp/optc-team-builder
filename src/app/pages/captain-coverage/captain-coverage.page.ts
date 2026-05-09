@@ -435,7 +435,7 @@ export class CaptainCoveragePage implements OnInit {
 
     try {
       const [, summary, abilityCatalog, records] = await Promise.all([
-        this.userState.ready(),
+        this.userState.readyFavoriteCharacterIds(),
         this.repository.getDatasetManifest(),
         this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
         this.repository.searchDetailedCharacters({

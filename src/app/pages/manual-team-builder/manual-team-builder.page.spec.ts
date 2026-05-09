@@ -245,6 +245,7 @@ function createPage(
   const userState = {
     favoriteShipIds,
     ready: vi.fn().mockResolvedValue(undefined),
+    readyFavoriteShipIds: vi.fn().mockResolvedValue(undefined),
     saveTeam: vi.fn().mockResolvedValue({ id: 'saved-manual-team' }),
     toggleShipFavorite: vi.fn().mockImplementation(async (shipId: number) => {
       favoriteShipIds.set(

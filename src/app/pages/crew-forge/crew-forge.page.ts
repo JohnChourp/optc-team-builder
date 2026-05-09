@@ -169,7 +169,10 @@ export class CrewForgePage implements OnInit {
   }
 
   public async ngOnInit(): Promise<void> {
-    await this.userState.ready();
+    await Promise.all([
+      this.userState.readyCrewForgeImageProfiles(),
+      this.userState.readyAutoTeamBuilderWorkerPreference(),
+    ]);
     await this.characterCatalogCache.ensureLoaded();
     this.selectedImageProfileId.set(this.crewForgeLastImageProfileId());
   }

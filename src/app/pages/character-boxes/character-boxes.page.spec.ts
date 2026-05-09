@@ -650,6 +650,8 @@ function createPage(
   const favoriteCharacterIds = signal(favoriteIds);
   const userState = {
     ready: vi.fn().mockResolvedValue(undefined),
+    readyCharacterBoxes: vi.fn().mockResolvedValue(undefined),
+    readyFavoriteCharacterIds: vi.fn().mockResolvedValue(undefined),
     characterBoxes: boxes,
     favoriteCharacterIds,
     toggleFavorite: vi.fn().mockImplementation(async (characterId: number) => {

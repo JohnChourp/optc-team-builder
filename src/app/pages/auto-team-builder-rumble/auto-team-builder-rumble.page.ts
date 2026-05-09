@@ -652,7 +652,12 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   }
 
   public async ngOnInit(): Promise<void> {
-    await Promise.all([this.i18n.preloadScope('auto-team-builder-rumble'), this.userState.ready()]);
+    await Promise.all([
+      this.i18n.preloadScope('auto-team-builder-rumble'),
+      this.userState.readyFavoriteCharacterIds(),
+      this.userState.readyCharacterBoxes(),
+      this.userState.readyAutoTeamBuilderWorkerPreference(),
+    ]);
     const manifest = await this.repository.getDatasetManifest();
 
     this.availableClasses.set([...manifest.availableClasses]);
@@ -1292,6 +1297,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       return;
     }
 
+    await this.userState.readySavedRumbleTeams();
     const savedRumbleTeam = this.userState.getSavedRumbleTeamById(savedRumbleTeamId);
 
     if (!savedRumbleTeam) {

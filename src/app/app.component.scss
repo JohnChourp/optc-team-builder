@@ -16,6 +16,35 @@
   position: relative;
 }
 
+.app-route-progress {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 1000;
+  height: 3px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.app-route-progress span {
+  display: block;
+  width: 42%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, #f5c84c, transparent);
+  animation: app-route-progress-sweep 900ms ease-in-out infinite;
+}
+
+@keyframes app-route-progress-sweep {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  100% {
+    transform: translateX(260%);
+  }
+}
+
 @supports (height: 100dvh) {
   .app-shell {
     height: 100dvh;

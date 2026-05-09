@@ -201,7 +201,7 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
 
   public async ngOnInit(): Promise<void> {
     await Promise.all([
-      this.userState.ready(),
+      this.userState.readyFavoriteShipIds(),
       this.i18n.preloadScope('manual-team-builder'),
       this.i18n.preloadScope('ship-picker'),
     ]);
@@ -210,7 +210,7 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   }
 
   public async ionViewWillEnter(): Promise<void> {
-    await this.userState.ready();
+    await this.userState.readyFavoriteShipIds();
 
     if (!this.ships().length) {
       await this.refreshShips();

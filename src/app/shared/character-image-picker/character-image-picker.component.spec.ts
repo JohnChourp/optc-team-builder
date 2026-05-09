@@ -341,6 +341,7 @@ function createComponent({ favoriteIds = [] }: { favoriteIds?: number[] } = {}) 
   const userState = {
     favoriteCharacterIds: vi.fn(() => favoriteIds),
     ready: vi.fn().mockResolvedValue(undefined),
+    readyFavoriteCharacterIds: vi.fn().mockResolvedValue(undefined),
   };
   const component = new CharacterImagePickerComponent(
     repository as never,

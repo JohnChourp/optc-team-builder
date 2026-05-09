@@ -476,7 +476,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   public async ngOnInit(): Promise<void> {
-    await this.userState.ready();
+    await this.userState.readySavedEnemies();
     await Promise.all([
       this.i18n.preloadScope('ability-picker'),
       this.i18n.preloadScope('character-image-picker'),
@@ -493,7 +493,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   public async ionViewWillEnter(): Promise<void> {
-    await this.userState.ready();
+    await this.userState.readySavedEnemies();
     this.loading.set(false);
   }
 

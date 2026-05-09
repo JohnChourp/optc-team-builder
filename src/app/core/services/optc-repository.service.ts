@@ -43,6 +43,15 @@ const FALLBACK_CHARACTER_IMAGE = 'assets/placeholders/character-card.svg';
 const INVALID_CLASS_PATTERN = /^Class\d+$/i;
 const SHIP_THUMBNAIL_PACK_ID = 'ship-thumbnails';
 const SHIP_THUMBNAIL_PACK_KEY = 'shipThumbnails';
+const SQL_EXECUTION_YIELD_INTERVAL = 250;
+const CHARACTER_DECORATION_YIELD_INTERVAL = 500;
+const DETAIL_DECORATION_YIELD_INTERVAL = 250;
+
+function yieldToMainThread(): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
 
 function buildCharacterPowerFirstOrderByClause(alias: string): string {
   const prefix = alias ? `${alias}.` : '';
@@ -442,6 +451,12 @@ export class OptcRepositoryService {
   private readonly databasePromise: Promise<Database>;
   private manifestPromise?: Promise<DatasetManifest>;
   private autoBuilderAbilityCatalogPromise?: Promise<AutoBuildAbilityCatalog>;
+  private detailedCatalogPromise?: Promise<CharacterDetailRecord[]>;
+  private detailedCatalogOverrideRevision = -1;
+  private rumbleBuilderCandidatesPromise?: Promise<CharacterDetailRecord[]>;
+  private rumbleBuilderCandidatesOverrideRevision = -1;
+  private availableCharacterTagsPromise?: Promise<string[]>;
+  private availableCharacterTagsOverrideRevision = -1;
 
   public constructor(private readonly characterOverrides: CharacterOverridesService) {
     this.sqlPromise = import('sql.js').then((module) =>
@@ -584,21 +599,68 @@ export class OptcRepositoryService {
     return this.decorateCharacterRows(rows);
   }
 
-  public async getAvailableCharacterTags(): Promise<string[]> {
-    const records = await this.getAllDetailedCharacters();
-    const tags = records.flatMap((record) => record.detail.characterTags ?? []);
-    const tagByKey = new Map<string, string>();
+  public async getDetailedCharacterCatalog(): Promise<CharacterDetailRecord[]> {
+    await this.characterOverrides.ready();
+    const overrideRevision = this.characterOverrides.revision();
 
-    for (const tag of tags) {
-      const normalizedTag = tag.trim().replace(/\s+/g, ' ');
-      const key = normalizedTag.toLowerCase();
-
-      if (normalizedTag.length > 0 && !tagByKey.has(key)) {
-        tagByKey.set(key, normalizedTag);
-      }
+    if (
+      this.detailedCatalogPromise &&
+      this.detailedCatalogOverrideRevision === overrideRevision
+    ) {
+      return this.detailedCatalogPromise;
     }
 
-    return [...tagByKey.values()].sort((left, right) => left.localeCompare(right));
+    this.detailedCatalogOverrideRevision = overrideRevision;
+    this.detailedCatalogPromise = this.loadAllDetailedCharacters().catch((error: unknown) => {
+      if (this.detailedCatalogOverrideRevision === overrideRevision) {
+        this.detailedCatalogPromise = undefined;
+        this.detailedCatalogOverrideRevision = -1;
+      }
+
+      throw error;
+    });
+
+    return this.detailedCatalogPromise;
+  }
+
+  public async getAvailableCharacterTags(): Promise<string[]> {
+    await this.characterOverrides.ready();
+    const overrideRevision = this.characterOverrides.revision();
+
+    if (
+      this.availableCharacterTagsPromise &&
+      this.availableCharacterTagsOverrideRevision === overrideRevision
+    ) {
+      return this.availableCharacterTagsPromise;
+    }
+
+    this.availableCharacterTagsOverrideRevision = overrideRevision;
+    this.availableCharacterTagsPromise = this.getDetailedCharacterCatalog()
+      .then((records) => {
+        const tags = records.flatMap((record) => record.detail.characterTags ?? []);
+        const tagByKey = new Map<string, string>();
+
+        for (const tag of tags) {
+          const normalizedTag = tag.trim().replace(/\s+/g, ' ');
+          const key = normalizedTag.toLowerCase();
+
+          if (normalizedTag.length > 0 && !tagByKey.has(key)) {
+            tagByKey.set(key, normalizedTag);
+          }
+        }
+
+        return [...tagByKey.values()].sort((left, right) => left.localeCompare(right));
+      })
+      .catch((error: unknown) => {
+        if (this.availableCharacterTagsOverrideRevision === overrideRevision) {
+          this.availableCharacterTagsPromise = undefined;
+          this.availableCharacterTagsOverrideRevision = -1;
+        }
+
+        throw error;
+      });
+
+    return this.availableCharacterTagsPromise;
   }
 
   public async searchDetailedCharacters(
@@ -731,7 +793,7 @@ export class OptcRepositoryService {
       return this.decorateCharacterDetailRows(rows);
     }
 
-    const records = await this.getAllDetailedCharacters();
+    const records = await this.getDetailedCharacterCatalog();
     const normalizedSelectedTypes = [
       ...new Set(query.selectedTypes.map((type) => type.trim().toUpperCase())),
     ].filter((type) => type.length > 0);
@@ -988,7 +1050,7 @@ export class OptcRepositoryService {
       });
     } else {
       const detailedRecords = this.sortDetailedRecords(
-        await this.getAllDetailedCharacters(),
+        await this.getDetailedCharacterCatalog(),
         'powerFirst',
       );
       filteredRecords = detailedRecords.filter((record) => {
@@ -1131,9 +1193,31 @@ export class OptcRepositoryService {
   }
 
   public async getRumbleBuilderCandidates(): Promise<CharacterDetailRecord[]> {
-    const records = await this.getAllDetailedCharacters();
+    await this.characterOverrides.ready();
+    const overrideRevision = this.characterOverrides.revision();
 
-    return records.filter((record) => this.hasUsableRumbleData(record.detail.rumbleData));
+    if (
+      this.rumbleBuilderCandidatesPromise &&
+      this.rumbleBuilderCandidatesOverrideRevision === overrideRevision
+    ) {
+      return this.rumbleBuilderCandidatesPromise;
+    }
+
+    this.rumbleBuilderCandidatesOverrideRevision = overrideRevision;
+    this.rumbleBuilderCandidatesPromise = this.getDetailedCharacterCatalog()
+      .then((records) =>
+        records.filter((record) => this.hasUsableRumbleData(record.detail.rumbleData)),
+      )
+      .catch((error: unknown) => {
+        if (this.rumbleBuilderCandidatesOverrideRevision === overrideRevision) {
+          this.rumbleBuilderCandidatesPromise = undefined;
+          this.rumbleBuilderCandidatesOverrideRevision = -1;
+        }
+
+        throw error;
+      });
+
+    return this.rumbleBuilderCandidatesPromise;
   }
 
   public async getShips(): Promise<ShipRecord[]> {
@@ -1169,8 +1253,12 @@ export class OptcRepositoryService {
       .map((statement) => statement.trim())
       .filter(Boolean);
 
-    for (const statement of statements) {
+    for (const [index, statement] of statements.entries()) {
       database.run(`${statement};`);
+
+      if (index > 0 && index % SQL_EXECUTION_YIELD_INTERVAL === 0) {
+        await yieldToMainThread();
+      }
     }
 
     return database;
@@ -1200,7 +1288,13 @@ export class OptcRepositoryService {
     const installedPacks = new Map(manifest.packs.map((pack) => [pack.key, pack]));
     const overridesByCharacterId = this.characterOverrides.overridesByCharacterId();
 
-    return rows.map((row) => {
+    const decoratedRows: CharacterListItem[] = [];
+
+    for (const [index, row] of rows.entries()) {
+      if (index > 0 && index % CHARACTER_DECORATION_YIELD_INTERVAL === 0) {
+        await yieldToMainThread();
+      }
+
       const assets = this.parseJson<CharacterAssets>(row['assets_json'], {
         exactLocal: null,
         thumbnailLocal: null,
@@ -1248,11 +1342,12 @@ export class OptcRepositoryService {
         imageUrl: this.resolveImageUrl(assets, { preferExactLocal: false, installedPacks }),
       };
 
-      return applyOverrideToCharacterListItem(
-        record,
-        overridesByCharacterId.get(record.id) ?? null,
+      decoratedRows.push(
+        applyOverrideToCharacterListItem(record, overridesByCharacterId.get(record.id) ?? null),
       );
-    });
+    }
+
+    return decoratedRows;
   }
 
   private async decorateCharacterDetailRows(rows: SqlRow[]): Promise<CharacterDetailRecord[]> {
@@ -1261,28 +1356,38 @@ export class OptcRepositoryService {
     const installedPacks = new Map(manifest.packs.map((pack) => [pack.key, pack]));
     const overridesByCharacterId = this.characterOverrides.overridesByCharacterId();
 
-    return records.map((record, index) =>
-      applyOverrideToCharacterDetailRecord(
-        {
-          ...record,
-          detail: this.normalizeCharacterDetail(
-            this.parseJson<CharacterDetail>(
-              rows[index]['detail_json'],
-              this.emptyDetail(record.id),
+    const decoratedRows: CharacterDetailRecord[] = [];
+
+    for (const [index, record] of records.entries()) {
+      if (index > 0 && index % DETAIL_DECORATION_YIELD_INTERVAL === 0) {
+        await yieldToMainThread();
+      }
+
+      decoratedRows.push(
+        applyOverrideToCharacterDetailRecord(
+          {
+            ...record,
+            detail: this.normalizeCharacterDetail(
+              this.parseJson<CharacterDetail>(
+                rows[index]?.['detail_json'] ?? null,
+                this.emptyDetail(record.id),
+              ),
+              record.id,
             ),
-            record.id,
-          ),
-          detailImageUrl: this.resolveImageUrl(record.assets, {
-            preferExactLocal: true,
-            installedPacks,
-          }),
-        },
-        overridesByCharacterId.get(record.id) ?? null,
-      ),
-    );
+            detailImageUrl: this.resolveImageUrl(record.assets, {
+              preferExactLocal: true,
+              installedPacks,
+            }),
+          },
+          overridesByCharacterId.get(record.id) ?? null,
+        ),
+      );
+    }
+
+    return decoratedRows;
   }
 
-  private async getAllDetailedCharacters(): Promise<CharacterDetailRecord[]> {
+  private async loadAllDetailedCharacters(): Promise<CharacterDetailRecord[]> {
     const rows = await this.selectAll(
       `
         SELECT

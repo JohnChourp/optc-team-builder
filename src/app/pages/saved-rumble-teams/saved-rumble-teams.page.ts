@@ -80,12 +80,12 @@ export class SavedRumbleTeamsPage implements OnInit, ViewWillEnter {
   }
 
   public async ngOnInit(): Promise<void> {
-    await this.userState.ready();
+    await this.userState.readySavedRumbleTeams();
     await this.refreshSavedRumbleTeamCards();
   }
 
   public async ionViewWillEnter(): Promise<void> {
-    await this.userState.ready();
+    await this.userState.readySavedRumbleTeams();
     await this.refreshSavedRumbleTeamCards();
   }
 

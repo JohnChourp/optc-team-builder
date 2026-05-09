@@ -78,6 +78,17 @@ export interface ResolvedAutoTeamBuilderWorkerPreference extends AutoTeamBuilder
   manualMaxPercent: number;
 }
 
+type UserStateHydrationDomain =
+  | 'favorites'
+  | 'favoriteShips'
+  | 'recents'
+  | 'characterBoxes'
+  | 'savedTeams'
+  | 'savedEnemies'
+  | 'savedRumbleTeams'
+  | 'crewForgeImageProfiles'
+  | 'autoTeamBuilderWorkerPreference';
+
 @Injectable({ providedIn: 'root' })
 export class UserStateService {
   public readonly favoriteCharacterIds = signal<number[]>([]);
@@ -96,22 +107,121 @@ export class UserStateService {
     AUTO_TEAM_BUILDER_DEFAULT_WORKER_PREFERENCE,
   );
 
-  private readonly hydratePromise: Promise<void>;
+  private readonly hydratedDomains = new Set<UserStateHydrationDomain>();
+  private readonly hydrationPromises = new Map<UserStateHydrationDomain, Promise<void>>();
   private readonly userCrewForgeImageProfiles = signal<CrewForgeImageProfile[]>([]);
 
   public constructor(
     private readonly i18n: AppI18nService,
     @Optional() private readonly driveSyncState?: DriveSyncStateService,
-  ) {
-    this.hydratePromise = this.hydrate();
-  }
+  ) {}
 
   public async ready(): Promise<void> {
-    await this.hydratePromise;
+    await Promise.all([
+      this.readyFavoriteCharacterIds(),
+      this.readyFavoriteShipIds(),
+      this.readyRecentCharacterIds(),
+      this.readyCharacterBoxes(),
+      this.readySavedTeams(),
+      this.readySavedEnemies(),
+      this.readySavedRumbleTeams(),
+      this.readyCrewForgeImageProfiles(),
+      this.readyAutoTeamBuilderWorkerPreference(),
+    ]);
+  }
+
+  public async readyFavoriteCharacterIds(): Promise<void> {
+    await this.ensureHydrated('favorites', async () => {
+      this.favoriteCharacterIds.set(await this.readJson<number[]>(FAVORITES_KEY, []));
+    });
+  }
+
+  public async readyFavoriteShipIds(): Promise<void> {
+    await this.ensureHydrated('favoriteShips', async () => {
+      this.favoriteShipIds.set(await this.readJson<number[]>(FAVORITE_SHIPS_KEY, []));
+    });
+  }
+
+  public async readyRecentCharacterIds(): Promise<void> {
+    await this.ensureHydrated('recents', async () => {
+      this.recentCharacterIds.set(await this.readJson<number[]>(RECENTS_KEY, []));
+    });
+  }
+
+  public async readyCharacterBoxes(): Promise<void> {
+    await this.ensureHydrated('characterBoxes', async () => {
+      const characterBoxes = await this.readJson<CharacterBox[]>(CHARACTER_BOXES_KEY, []);
+      this.characterBoxes.set(
+        characterBoxes
+          .map((box) => this.normalizeCharacterBox(box))
+          .filter((box): box is CharacterBox => Boolean(box)),
+      );
+    });
+  }
+
+  public async readySavedTeams(): Promise<void> {
+    await this.ensureHydrated('savedTeams', async () => {
+      const teams = await this.readJson<SavedTeam[]>(SAVED_TEAMS_KEY, []);
+      this.savedTeams.set(teams.map((team) => this.normalizeSavedTeam(team)));
+    });
+  }
+
+  public async readySavedEnemies(): Promise<void> {
+    await this.ensureHydrated('savedEnemies', async () => {
+      const enemies = await this.readJson<SavedEnemy[]>(SAVED_ENEMIES_KEY, []);
+      this.savedEnemies.set(enemies.map((enemy) => this.normalizeSavedEnemy(enemy)));
+    });
+  }
+
+  public async readySavedRumbleTeams(): Promise<void> {
+    await this.ensureHydrated('savedRumbleTeams', async () => {
+      const rumbleTeams = await this.readJson<SavedRumbleTeam[]>(SAVED_RUMBLE_TEAMS_KEY, []);
+      this.savedRumbleTeams.set(
+        rumbleTeams.map((rumbleTeam) => this.normalizeSavedRumbleTeam(rumbleTeam)),
+      );
+    });
+  }
+
+  public async readyCrewForgeImageProfiles(): Promise<void> {
+    await this.ensureHydrated('crewForgeImageProfiles', async () => {
+      const [crewForgeImageProfiles, crewForgeLastImageProfileId] = await Promise.all([
+        this.readJson<CrewForgeImageProfile[]>(CREW_FORGE_IMAGE_PROFILES_KEY, []),
+        this.readJson<string | null>(CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY, null),
+      ]);
+      this.userCrewForgeImageProfiles.set(
+        crewForgeImageProfiles
+          .map((profile) => this.normalizeCrewForgeImageProfile(profile))
+          .filter((profile): profile is CrewForgeImageProfile => {
+            if (!profile) {
+              return false;
+            }
+
+            return (
+              profile.source === 'user' && !BUILT_IN_CREW_FORGE_IMAGE_PROFILE_IDS.has(profile.id)
+            );
+          }),
+      );
+      this.crewForgeLastImageProfileId.set(
+        this.getCrewForgeImageProfileById(crewForgeLastImageProfileId ?? '')?.id ?? null,
+      );
+    });
+  }
+
+  public async readyAutoTeamBuilderWorkerPreference(): Promise<void> {
+    await this.ensureHydrated('autoTeamBuilderWorkerPreference', async () => {
+      const autoTeamBuilderWorkerPreference =
+        await this.readJson<AutoTeamBuilderWorkerPreference>(
+          AUTO_TEAM_BUILDER_WORKER_PREFERENCE_KEY,
+          AUTO_TEAM_BUILDER_DEFAULT_WORKER_PREFERENCE,
+        );
+      this.autoTeamBuilderWorkerPreference.set(
+        this.normalizeAutoTeamBuilderWorkerPreference(autoTeamBuilderWorkerPreference),
+      );
+    });
   }
 
   public async toggleFavorite(characterId: number): Promise<void> {
-    await this.ready();
+    await this.readyFavoriteCharacterIds();
     const current = this.favoriteCharacterIds();
     const next = current.includes(characterId)
       ? current.filter((value) => value !== characterId)
@@ -122,7 +232,7 @@ export class UserStateService {
   }
 
   public async setFavoriteCharacterIds(characterIds: number[]): Promise<void> {
-    await this.ready();
+    await this.readyFavoriteCharacterIds();
     const next = [...new Set(characterIds.filter((value) => Number.isInteger(value) && value > 0))];
 
     this.favoriteCharacterIds.set(next);
@@ -134,7 +244,7 @@ export class UserStateService {
   }
 
   public async toggleShipFavorite(shipId: number): Promise<void> {
-    await this.ready();
+    await this.readyFavoriteShipIds();
     const current = this.favoriteShipIds();
     const next = current.includes(shipId)
       ? current.filter((value) => value !== shipId)
@@ -145,7 +255,7 @@ export class UserStateService {
   }
 
   public async setFavoriteShipIds(shipIds: number[]): Promise<void> {
-    await this.ready();
+    await this.readyFavoriteShipIds();
     const next = [...new Set(shipIds.filter((value) => Number.isInteger(value) && value > 0))];
 
     this.favoriteShipIds.set(next);
@@ -159,7 +269,7 @@ export class UserStateService {
   public async saveCharacterBox(
     input: Omit<CharacterBox, 'id' | 'createdAt' | 'updatedAt'> & { id?: string },
   ): Promise<CharacterBox | null> {
-    await this.ready();
+    await this.readyCharacterBoxes();
 
     const existing = this.characterBoxes().find((box) => box.id === input.id);
     const normalizedBox = this.normalizeCharacterBox(
@@ -184,7 +294,7 @@ export class UserStateService {
   }
 
   public async deleteCharacterBox(boxId: string): Promise<void> {
-    await this.ready();
+    await this.readyCharacterBoxes();
     const normalizedBoxId = this.normalizeEntityId(boxId);
 
     if (!normalizedBoxId) {
@@ -201,7 +311,7 @@ export class UserStateService {
   }
 
   public async clearAllCharacterBoxes(): Promise<void> {
-    await this.ready();
+    await this.readyCharacterBoxes();
     await this.replaceCharacterBoxes([]);
   }
 
@@ -218,7 +328,7 @@ export class UserStateService {
   public async mergeImportedCharacterBoxes(
     boxes: CharacterBox[],
   ): Promise<{ addedCount: number; updatedCount: number; boxes: CharacterBox[] }> {
-    await this.ready();
+    await this.readyCharacterBoxes();
 
     const currentBoxes = this.characterBoxes();
     const currentBoxMap = new Map(currentBoxes.map((box) => [box.id, box] as const));
@@ -309,7 +419,7 @@ export class UserStateService {
     input: Omit<CrewForgeImageProfile, 'id' | 'source' | 'createdAt' | 'updatedAt'> &
       Partial<Pick<CrewForgeImageProfile, 'id' | 'source' | 'createdAt' | 'updatedAt'>>,
   ): Promise<CrewForgeImageProfile | null> {
-    await this.ready();
+    await this.readyCrewForgeImageProfiles();
 
     const requestedId =
       typeof input.id === 'string' && BUILT_IN_CREW_FORGE_IMAGE_PROFILE_IDS.has(input.id)
@@ -345,7 +455,7 @@ export class UserStateService {
   }
 
   public async deleteCrewForgeImageProfile(profileId: string): Promise<void> {
-    await this.ready();
+    await this.readyCrewForgeImageProfiles();
     const normalizedProfileId = this.normalizeEntityId(profileId);
 
     if (!normalizedProfileId || BUILT_IN_CREW_FORGE_IMAGE_PROFILE_IDS.has(normalizedProfileId)) {
@@ -372,7 +482,7 @@ export class UserStateService {
   }
 
   public async setCrewForgeLastImageProfileId(profileId: string | null): Promise<void> {
-    await this.ready();
+    await this.readyCrewForgeImageProfiles();
     const normalizedProfileId =
       profileId === null ? null : (this.getCrewForgeImageProfileById(profileId)?.id ?? null);
 
@@ -384,7 +494,7 @@ export class UserStateService {
     profileId: string,
     input: Omit<CrewForgeImageExample, 'id' | 'createdAt' | 'updatedAt'> & { id?: string },
   ): Promise<CrewForgeImageProfile | null> {
-    await this.ready();
+    await this.readyCrewForgeImageProfiles();
     const profile = await this.resolveCrewForgeImageProfileForMutation(profileId);
 
     if (!profile) {
@@ -419,7 +529,7 @@ export class UserStateService {
     profileId: string,
     input: Omit<CrewForgeImageExemplar, 'id' | 'createdAt' | 'updatedAt'> & { id?: string },
   ): Promise<CrewForgeImageProfile | null> {
-    await this.ready();
+    await this.readyCrewForgeImageProfiles();
     const profile = await this.resolveCrewForgeImageProfileForMutation(profileId);
 
     if (!profile) {
@@ -508,7 +618,7 @@ export class UserStateService {
   public async setAutoTeamBuilderWorkerPreference(
     preference: AutoTeamBuilderWorkerPreference,
   ): Promise<void> {
-    await this.ready();
+    await this.readyAutoTeamBuilderWorkerPreference();
     const normalizedPreference = this.normalizeAutoTeamBuilderWorkerPreference(preference);
 
     this.autoTeamBuilderWorkerPreference.set(normalizedPreference);
@@ -516,7 +626,7 @@ export class UserStateService {
   }
 
   public async markRecent(characterId: number): Promise<void> {
-    await this.ready();
+    await this.readyRecentCharacterIds();
     const next = [
       characterId,
       ...this.recentCharacterIds().filter((value) => value !== characterId),
@@ -529,7 +639,7 @@ export class UserStateService {
   public async saveTeam(
     input: Omit<SavedTeam, 'id' | 'createdAt' | 'updatedAt'> & { id?: string },
   ): Promise<SavedTeam> {
-    await this.ready();
+    await this.readySavedTeams();
 
     const existing = this.savedTeams().find((team) => team.id === input.id);
     const savedTeam = this.normalizeSavedTeam(
@@ -554,7 +664,7 @@ export class UserStateService {
   }
 
   public async deleteTeams(teamIds: string[]): Promise<void> {
-    await this.ready();
+    await this.readySavedTeams();
     const targetTeamIds = new Set(
       teamIds.map((teamId) => teamId.trim()).filter((teamId) => teamId.length > 0),
     );
@@ -573,7 +683,7 @@ export class UserStateService {
   }
 
   public async clearAllSavedTeams(): Promise<void> {
-    await this.ready();
+    await this.readySavedTeams();
     await this.replaceSavedTeams([]);
   }
 
@@ -604,7 +714,7 @@ export class UserStateService {
     > &
       Partial<Pick<SavedEnemy, 'requiredCharacterGroups' | 'battleRequirements'>> & { id?: string },
   ): Promise<SavedEnemy> {
-    await this.ready();
+    await this.readySavedEnemies();
 
     const existing = this.savedEnemies().find((enemy) => enemy.id === input.id);
     const savedEnemy = this.normalizeSavedEnemy(
@@ -629,7 +739,7 @@ export class UserStateService {
   }
 
   public async deleteEnemies(enemyIds: string[]): Promise<void> {
-    await this.ready();
+    await this.readySavedEnemies();
     const targetEnemyIds = new Set(
       enemyIds
         .map((enemyId) => this.normalizeEntityId(enemyId))
@@ -650,14 +760,14 @@ export class UserStateService {
   }
 
   public async clearAllSavedEnemies(): Promise<void> {
-    await this.ready();
+    await this.readySavedEnemies();
     await this.replaceSavedEnemies([]);
   }
 
   public async mergeImportedTeams(
     teams: SavedTeam[],
   ): Promise<{ addedCount: number; updatedCount: number; teams: SavedTeam[] }> {
-    await this.ready();
+    await this.readySavedTeams();
 
     const currentTeams = this.savedTeams();
     const currentTeamMap = new Map(currentTeams.map((team) => [team.id, team] as const));
@@ -698,7 +808,7 @@ export class UserStateService {
   public async mergeImportedEnemies(
     enemies: SavedEnemy[],
   ): Promise<{ addedCount: number; updatedCount: number; enemies: SavedEnemy[] }> {
-    await this.ready();
+    await this.readySavedEnemies();
 
     const currentEnemies = this.savedEnemies();
     const currentEnemyMap = new Map(currentEnemies.map((enemy) => [enemy.id, enemy] as const));
@@ -764,7 +874,7 @@ export class UserStateService {
   public async saveRumbleTeam(
     input: Omit<SavedRumbleTeam, 'id' | 'createdAt' | 'updatedAt'> & { id?: string },
   ): Promise<SavedRumbleTeam> {
-    await this.ready();
+    await this.readySavedRumbleTeams();
 
     const existing = this.savedRumbleTeams().find((rumbleTeam) => rumbleTeam.id === input.id);
     const savedRumbleTeam = this.normalizeSavedRumbleTeam(
@@ -786,7 +896,7 @@ export class UserStateService {
   }
 
   public async deleteRumbleTeam(rumbleTeamId: string): Promise<void> {
-    await this.ready();
+    await this.readySavedRumbleTeams();
     const normalizedRumbleTeamId = this.normalizeEntityId(rumbleTeamId);
 
     if (!normalizedRumbleTeamId) {
@@ -805,14 +915,14 @@ export class UserStateService {
   }
 
   public async clearAllSavedRumbleTeams(): Promise<void> {
-    await this.ready();
+    await this.readySavedRumbleTeams();
     await this.replaceSavedRumbleTeams([]);
   }
 
   public async mergeImportedRumbleTeams(
     rumbleTeams: SavedRumbleTeam[],
   ): Promise<{ addedCount: number; updatedCount: number; rumbleTeams: SavedRumbleTeam[] }> {
-    await this.ready();
+    await this.readySavedRumbleTeams();
 
     const currentRumbleTeams = this.savedRumbleTeams();
     const currentRumbleTeamMap = new Map(
@@ -865,66 +975,31 @@ export class UserStateService {
     };
   }
 
-  private async hydrate(): Promise<void> {
-    const [
-      favorites,
-      favoriteShips,
-      recents,
-      characterBoxes,
-      teams,
-      enemies,
-      rumbleTeams,
-      crewForgeImageProfiles,
-      crewForgeLastImageProfileId,
-      autoTeamBuilderWorkerPreference,
-    ] = await Promise.all([
-      this.readJson<number[]>(FAVORITES_KEY, []),
-      this.readJson<number[]>(FAVORITE_SHIPS_KEY, []),
-      this.readJson<number[]>(RECENTS_KEY, []),
-      this.readJson<CharacterBox[]>(CHARACTER_BOXES_KEY, []),
-      this.readJson<SavedTeam[]>(SAVED_TEAMS_KEY, []),
-      this.readJson<SavedEnemy[]>(SAVED_ENEMIES_KEY, []),
-      this.readJson<SavedRumbleTeam[]>(SAVED_RUMBLE_TEAMS_KEY, []),
-      this.readJson<CrewForgeImageProfile[]>(CREW_FORGE_IMAGE_PROFILES_KEY, []),
-      this.readJson<string | null>(CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY, null),
-      this.readJson<AutoTeamBuilderWorkerPreference>(
-        AUTO_TEAM_BUILDER_WORKER_PREFERENCE_KEY,
-        AUTO_TEAM_BUILDER_DEFAULT_WORKER_PREFERENCE,
-      ),
-    ]);
+  private async ensureHydrated(
+    domain: UserStateHydrationDomain,
+    loader: () => Promise<void>,
+  ): Promise<void> {
+    if (this.hydratedDomains.has(domain)) {
+      return;
+    }
 
-    this.favoriteCharacterIds.set(favorites);
-    this.favoriteShipIds.set(favoriteShips);
-    this.recentCharacterIds.set(recents);
-    this.characterBoxes.set(
-      characterBoxes
-        .map((box) => this.normalizeCharacterBox(box))
-        .filter((box): box is CharacterBox => Boolean(box)),
-    );
-    this.savedTeams.set(teams.map((team) => this.normalizeSavedTeam(team)));
-    this.savedEnemies.set(enemies.map((enemy) => this.normalizeSavedEnemy(enemy)));
-    this.savedRumbleTeams.set(
-      rumbleTeams.map((rumbleTeam) => this.normalizeSavedRumbleTeam(rumbleTeam)),
-    );
-    this.userCrewForgeImageProfiles.set(
-      crewForgeImageProfiles
-        .map((profile) => this.normalizeCrewForgeImageProfile(profile))
-        .filter((profile): profile is CrewForgeImageProfile => {
-          if (!profile) {
-            return false;
-          }
+    const existingPromise = this.hydrationPromises.get(domain);
 
-          return (
-            profile.source === 'user' && !BUILT_IN_CREW_FORGE_IMAGE_PROFILE_IDS.has(profile.id)
-          );
-        }),
-    );
-    this.crewForgeLastImageProfileId.set(
-      this.getCrewForgeImageProfileById(crewForgeLastImageProfileId ?? '')?.id ?? null,
-    );
-    this.autoTeamBuilderWorkerPreference.set(
-      this.normalizeAutoTeamBuilderWorkerPreference(autoTeamBuilderWorkerPreference),
-    );
+    if (existingPromise) {
+      await existingPromise;
+      return;
+    }
+
+    const hydrationPromise = loader()
+      .then(() => {
+        this.hydratedDomains.add(domain);
+      })
+      .finally(() => {
+        this.hydrationPromises.delete(domain);
+      });
+
+    this.hydrationPromises.set(domain, hydrationPromise);
+    await hydrationPromise;
   }
 
   private async readJson<T>(key: string, fallback: T): Promise<T> {

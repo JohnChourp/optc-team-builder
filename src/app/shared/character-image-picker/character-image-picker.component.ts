@@ -496,7 +496,7 @@ export class CharacterImagePickerComponent implements OnChanges {
 
     try {
       const [, summary, abilityCatalog] = await Promise.all([
-        this.userState.ready(),
+        this.userState.readyFavoriteCharacterIds(),
         this.repository.getDatasetManifest(),
         typeof this.repository.getAutoBuilderAbilityCatalog === 'function'
           ? this.repository.getAutoBuilderAbilityCatalog().catch(() => null)
@@ -531,7 +531,10 @@ export class CharacterImagePickerComponent implements OnChanges {
     }
 
     try {
-      await Promise.all([this.userState.ready(), this.characterCatalogCache.ensureLoaded()]);
+      await Promise.all([
+        this.userState.readyFavoriteCharacterIds(),
+        this.characterCatalogCache.ensureLoaded(),
+      ]);
       const nextOffset = reset ? 0 : this.characters().length;
       const allowedCharacterIds = intersectAbilityMatchingCharacterIds([
         this.specialFilterCharacterIds(),

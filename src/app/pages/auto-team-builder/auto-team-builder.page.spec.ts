@@ -1032,6 +1032,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     repository.searchDetailedCharacters.mockResolvedValue([regularLeader, matchingLeader]);
 
     await page.ngOnInit();
+    await page.openManualPickerModal();
+    repository.searchDetailedCharacters.mockClear();
     await page.saveAbilityPicker([
       {
         draftId: 'bind-1',
@@ -1193,9 +1195,11 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     const { page, repository } = await createPage();
 
     await page.ngOnInit();
-    repository.searchDetailedCharacters.mockClear();
     page.selectedClasses.set(['Fighter']);
     page.selectedTypes.set(['DEX']);
+    await page.openManualPickerModal();
+    await page.openExcludePickerModal();
+    repository.searchDetailedCharacters.mockClear();
 
     await page.saveAbilityPicker([
       {
@@ -1274,6 +1278,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     const { page, repository } = await createPage();
 
     await page.ngOnInit();
+    await page.openManualPickerModal();
+    await page.openExcludePickerModal();
     repository.searchDetailedCharacters.mockClear();
 
     await page.saveEnemyMechanicPicker([
@@ -3568,6 +3574,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
 
     await page.ngOnInit();
+    await page.openManualPickerModal();
+    await page.openExcludePickerModal();
     repository.searchDetailedCharacters.mockClear();
 
     await page.onTypeChange({ detail: { value: ['DEX', 'PSY'] } } as CustomEvent<{
@@ -3652,6 +3660,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     repository.searchDetailedCharacters.mockResolvedValue([bindSpecialist, barrierSpecialist]);
 
     await page.ngOnInit();
+    await page.openManualPickerModal();
+    await page.openExcludePickerModal();
     repository.searchDetailedCharacters.mockClear();
 
     await page.saveAbilityPicker([
@@ -3680,7 +3690,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     ).toEqual([301, 302]);
   });
 
-  it('rebuilds manual candidates with the full catalog after page reset', async () => {
+  it('clears hidden manual candidates without rebuilding them after page reset', async () => {
     const { page, repository } = await createPage();
     const dexFighter = createCharacterRecord(401, 'Reset DEX Fighter');
     const psySlasher = createCharacterRecord(402, 'Reset PSY Slasher');
@@ -3700,28 +3710,21 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
 
     await page.ngOnInit();
+    await page.openManualPickerModal();
     await page.onTypeChange({ detail: { value: ['DEX'] } } as CustomEvent<{ value: string[] }>);
 
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
       [402, 401],
     );
 
+    repository.searchDetailedCharacters.mockClear();
     await page.ionViewWillEnter();
 
-    expect(repository.searchDetailedCharacters).toHaveBeenCalledWith({
-      searchTerm: '',
-      selectedTypes: [],
-      selectedClasses: [],
-      sortMode: 'powerFirst',
-      limit: 10,
-      offset: 0,
-    });
-    expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
-      [402, 401],
-    );
+    expect(repository.searchDetailedCharacters).not.toHaveBeenCalled();
+    expect(page.manualCandidates()).toEqual([]);
   });
 
-  it('loads only the first 10 manual and excluded character matches on initial render', async () => {
+  it('does not load hidden picker matches on initial render and pages them when opened', async () => {
     const { page, repository } = await createPage();
     const records = Array.from({ length: 26 }, (_, index) =>
       createCharacterRecord(600 + index, `Paged Candidate ${index + 1}`),
@@ -3732,6 +3735,10 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
 
     await page.ngOnInit();
+    expect(repository.searchDetailedCharacters).not.toHaveBeenCalled();
+
+    await page.openManualPickerModal();
+    await page.openExcludePickerModal();
 
     const characterPickerCalls = repository.searchDetailedCharacters.mock.calls.filter(
       ([query]) => query.limit === 10,
@@ -3800,6 +3807,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
 
     await page.ngOnInit();
+    await page.openManualPickerModal();
+    await page.openExcludePickerModal();
 
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
       [706, 705, 704, 703, 702, 701],
@@ -3849,6 +3858,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
 
     await page.ngOnInit();
+    await page.openManualPickerModal();
+    await page.openExcludePickerModal();
 
     const nearBottomScrollEvent = {
       target: {
@@ -3941,6 +3952,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     });
 
     await page.ngOnInit();
+    await page.openManualPickerModal();
 
     const loadPromise = page.onManualCharacterListScroll({
       target: {
@@ -3970,6 +3982,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
 
     await page.ngOnInit();
+    await page.openManualPickerModal();
     await page.onManualCharacterListScroll({
       target: {
         scrollTop: 340,
@@ -4001,6 +4014,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     const { page, repository } = await createPage();
 
     await page.ngOnInit();
+    await page.openManualPickerModal();
 
     let resolveFirstRequest: ((value: CharacterDetailRecord[]) => void) | undefined;
     let resolveSecondRequest: ((value: CharacterDetailRecord[]) => void) | undefined;
@@ -6256,6 +6270,7 @@ describe('AutoTeamBuilderPage preset import state', () => {
     expect(page.requireUniqueBaseCharacterNames()).toBe(true);
     expect(page.favoritesOnly()).toBe(true);
     expect(page.allowAnyFriendCaptainAutoFill()).toBe(true);
+    await page.openManualPickerModal();
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
       [702, 701],
     );
@@ -7214,6 +7229,12 @@ async function createPage(
       (enemyId: string) => savedEnemies().find((enemy) => enemy.id === enemyId) ?? null,
     ),
     ready: vi.fn().mockResolvedValue(undefined),
+    readyFavoriteCharacterIds: vi.fn().mockResolvedValue(undefined),
+    readyFavoriteShipIds: vi.fn().mockResolvedValue(undefined),
+    readyCharacterBoxes: vi.fn().mockResolvedValue(undefined),
+    readyAutoTeamBuilderWorkerPreference: vi.fn().mockResolvedValue(undefined),
+    readySavedTeams: vi.fn().mockResolvedValue(undefined),
+    readySavedEnemies: vi.fn().mockResolvedValue(undefined),
     autoTeamBuilderWorkerPreference,
     resolveAutoTeamBuilderWorkerCount: vi.fn().mockReturnValue(7),
     resolveAutoTeamBuilderWorkerPreference: vi.fn(resolveWorkerRuntime),

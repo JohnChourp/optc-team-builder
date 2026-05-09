@@ -350,6 +350,7 @@ function createPage(overrides: { savedTeams?: ReturnType<typeof buildSavedTeams>
   const savedTeams = signal(overrides.savedTeams ?? buildSavedTeams());
   const userState = {
     ready: vi.fn().mockResolvedValue(undefined),
+    readySavedTeams: vi.fn().mockResolvedValue(undefined),
     savedTeams,
     deleteTeam: vi.fn().mockImplementation(async (teamId: string) => {
       savedTeams.set(savedTeams().filter((team) => team.id !== teamId));
@@ -449,6 +450,7 @@ function createPage(overrides: { savedTeams?: ReturnType<typeof buildSavedTeams>
       ]),
   };
   const i18n = {
+    preloadScope: vi.fn().mockResolvedValue(undefined),
     translate: vi.fn((key: string, params?: Record<string, string | number>) => {
       if (key === 'confirm.deleteSingle') {
         return `Delete ${params?.['name'] ?? ''}`;

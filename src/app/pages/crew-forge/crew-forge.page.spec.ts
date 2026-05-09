@@ -421,6 +421,8 @@ function createPage(options: {
   };
   const userState = {
     ready: vi.fn().mockResolvedValue(undefined),
+    readyCrewForgeImageProfiles: vi.fn().mockResolvedValue(undefined),
+    readyAutoTeamBuilderWorkerPreference: vi.fn().mockResolvedValue(undefined),
     crewForgeImageProfiles: signal([
       options.selectedProfile ?? createProfileStub('profile-1', 'Main Profile', 'user', 1080, 1920),
     ]),

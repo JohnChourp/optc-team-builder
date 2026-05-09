@@ -706,6 +706,7 @@ function createPage({
   const userState = {
     favoriteCharacterIds: signal(favoriteIds),
     ready: vi.fn().mockResolvedValue(undefined),
+    readyFavoriteCharacterIds: vi.fn().mockResolvedValue(undefined),
   };
   const i18n = {
     translate: vi.fn((key: string, params?: Record<string, string | number>) =>

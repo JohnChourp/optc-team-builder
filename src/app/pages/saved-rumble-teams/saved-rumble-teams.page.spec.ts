@@ -106,6 +106,7 @@ function createPage() {
   const userState = {
     savedRumbleTeams,
     ready: vi.fn().mockResolvedValue(undefined),
+    readySavedRumbleTeams: vi.fn().mockResolvedValue(undefined),
     saveRumbleTeam: vi.fn().mockImplementation(async (input: SavedRumbleTeam) => {
       const nextTeam = {
         ...savedRumbleTeams()[0]!,

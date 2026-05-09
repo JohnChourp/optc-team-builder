@@ -289,6 +289,46 @@ describe('OptcRepositoryService', () => {
     expect(result.map((record) => record.id)).toEqual([4105, 4104]);
   });
 
+  it('reuses full detailed catalog consumers until the override revision changes', async () => {
+    let overrideRevision = 0;
+    const service = createRepositoryService(
+      [
+        createCharacterRow({
+          id: 4104,
+          detail: {
+            characterTags: ['Boosts Orbs', 'Slasher'],
+            rumbleData: { ability: [{ effects: ['buff'] }] },
+          },
+        }),
+        createCharacterRow({
+          id: 4105,
+          detail: {
+            characterTags: [' boosts   orbs '],
+            rumbleData: null,
+          },
+        }),
+      ],
+      { overrideRevision: () => overrideRevision },
+    );
+    const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
+
+    await expect(service.getDetailedCharacterCatalog()).resolves.toHaveLength(2);
+    await expect(service.getDetailedCharacterCatalog()).resolves.toHaveLength(2);
+    await expect(service.getRumbleBuilderCandidates()).resolves.toEqual([
+      expect.objectContaining({ id: 4104 }),
+    ]);
+    await expect(service.getRumbleBuilderCandidates()).resolves.toEqual([
+      expect.objectContaining({ id: 4104 }),
+    ]);
+    await expect(service.getAvailableCharacterTags()).resolves.toEqual(['boosts orbs', 'Slasher']);
+    await expect(service.getAvailableCharacterTags()).resolves.toEqual(['boosts orbs', 'Slasher']);
+    expect(selectAllMock).toHaveBeenCalledTimes(1);
+
+    overrideRevision = 1;
+    await expect(service.getDetailedCharacterCatalog()).resolves.toHaveLength(2);
+    expect(selectAllMock).toHaveBeenCalledTimes(2);
+  });
+
   it('returns linked variants when searching by a shared canonical id', async () => {
     const service = createRepositoryService([]);
     const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
@@ -1042,8 +1082,8 @@ describe('OptcRepositoryService', () => {
 
   it('queries detailed search directly without materializing the full catalog when no overrides exist', async () => {
     const service = createRepositoryService([createCharacterRow({ id: 4101, type: 'DEX' })]);
-    const getAllDetailedCharactersSpy = vi
-      .spyOn(service as never, 'getAllDetailedCharacters')
+    const getDetailedCharacterCatalogSpy = vi
+      .spyOn(service, 'getDetailedCharacterCatalog')
       .mockRejectedValue(
         new Error('searchDetailedCharacters should not materialize the full catalog'),
       );
@@ -1058,7 +1098,7 @@ describe('OptcRepositoryService', () => {
         offset: 0,
       }),
     ).resolves.toEqual([expect.objectContaining({ id: 4101 })]);
-    expect(getAllDetailedCharactersSpy).not.toHaveBeenCalled();
+    expect(getDetailedCharacterCatalogSpy).not.toHaveBeenCalled();
   });
 
   it('orders auto-builder candidates by newest character id regardless of cost', async () => {
@@ -1078,8 +1118,8 @@ describe('OptcRepositoryService', () => {
 
   it('queries auto-builder candidates directly without materializing the full catalog when no overrides exist', async () => {
     const service = createRepositoryService([createCharacterRow({ id: 5101, type: 'DEX' })]);
-    const getAllDetailedCharactersSpy = vi
-      .spyOn(service as never, 'getAllDetailedCharacters')
+    const getDetailedCharacterCatalogSpy = vi
+      .spyOn(service, 'getDetailedCharacterCatalog')
       .mockRejectedValue(
         new Error('getAutoBuilderCandidates should not materialize the full catalog'),
       );
@@ -1087,7 +1127,7 @@ describe('OptcRepositoryService', () => {
     await expect(service.getAutoBuilderCandidates(['DEX'], 1200)).resolves.toEqual([
       expect.objectContaining({ id: 5101 }),
     ]);
-    expect(getAllDetailedCharactersSpy).not.toHaveBeenCalled();
+    expect(getDetailedCharacterCatalogSpy).not.toHaveBeenCalled();
   });
 
   it('returns precomputed builder abilities from detail_json for auto-builder candidates', async () => {
@@ -1213,6 +1253,7 @@ function createRepositoryService(
   options: {
     manifest?: DatasetManifest;
     overrides?: LocalCharacterOverride[];
+    overrideRevision?: number | (() => number);
     shipRows?: TestSqlRow[];
   } = {},
 ): OptcRepositoryService {
@@ -1224,6 +1265,11 @@ function createRepositoryService(
   Object.assign(service, {
     characterOverrides: {
       ready: vi.fn().mockResolvedValue(undefined),
+      revision: vi.fn(() =>
+        typeof options.overrideRevision === 'function'
+          ? options.overrideRevision()
+          : (options.overrideRevision ?? 0),
+      ),
       overridesByCharacterId: vi.fn(() => overridesByCharacterId),
     },
     getDatasetManifest: vi.fn().mockResolvedValue(options.manifest ?? createManifest()),
