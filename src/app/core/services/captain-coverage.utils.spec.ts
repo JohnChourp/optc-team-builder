@@ -10,6 +10,10 @@ import {
 describe('resolveCaptainCoverage', () => {
   const kidAimedDamnedPunkCaptainAbility =
     'Reduces Special Cooldown of all characters by 1 turn and reduces Special Cooldown of this character by 4 turns at the start of the fight, boosts ATK of [STR], Striker and Driven characters by 5x, boosts HP of [STR], Striker and Driven characters by 1.3x, and makes [STR] and [INT] orbs beneficial for all characters. If HP is below 50% at the start of the turn, boosts ATK of [STR], Striker and Driven characters by 6x instead, and reduces damage received by 25%. If your crew has 4+ [Kid Pirates], [Worst Generation] or [Land of Wano Arc] characters or your crew has 6 [Kid Pirates], [Worst Generation] or [Egghead Arc] characters, reduces Despair duration by 10 turns, and boosts base ATK of [Paramythia-type] characters by 500.';
+  const zoroVsLucciCharacter1CaptainAbility =
+    "Reduces Switch Effect of all characters by 3 and reduces VS Gauge of all characters by 6 at the start of the fight, changes all orbs into [TND] orbs at the start of the fight, boosts ATK of [INT], Slasher and Free Spirit characters by 5.5x, by 6x instead after the 3rd PERFECTs in a row, boosts ATK of all other characters by 3.5x, boosts HP of [INT], Slasher and Free Spirit characters by 1.35x, and makes [INT] and [TND] orbs beneficial for all characters. If crew uses a special to reduce enemies' Increased Defense, reduces the duration by 2 additional turns.";
+  const zoroVsLucciCharacter2CaptainAbility =
+    "Reduces Switch Effect of all characters by 3 and reduces VS Gauge of all characters by 6 at the start of the fight, changes all orbs into [RCV] orbs at the start of the fight, boosts ATK of [STR], Driven and Cerebral characters by 5.5x, by 6x instead after the 3rd PERFECTs in a row, boosts ATK of all other characters by 3.5x, boosts HP of [STR], Driven and Cerebral characters by 1.35x, and makes [STR] and [RCV] orbs beneficial for all characters. If crew uses a special to reduce enemies' Threshold Damage Reduction, reduces the duration by 2 additional turns.";
 
   it('treats all-character captain clauses as universal coverage', () => {
     const captain = createCharacter({
@@ -253,6 +257,82 @@ describe('resolveCaptainCoverage', () => {
     expect(coverage.matches).toBe(true);
     expect(coverage.coveredClauses).toHaveLength(1);
     expect(coverage.uncoveredClauses).toEqual([]);
+  });
+
+  it('uses primary VS captain boost scopes without fallback or inline conditional boosts', () => {
+    const character1Summary = summarizeCaptainAbilityCoverageText(
+      zoroVsLucciCharacter1CaptainAbility,
+    );
+    const character2Summary = summarizeCaptainAbilityCoverageText(
+      zoroVsLucciCharacter2CaptainAbility,
+    );
+
+    expect(character1Summary.captainCoverageClauses).toEqual([
+      'boosts ATK of [INT], Slasher and Free Spirit characters by 5.5x',
+      'boosts HP of [INT], Slasher and Free Spirit characters by 1.35x',
+    ]);
+    expect(character1Summary.fullCoverageClauses).toEqual(character1Summary.captainCoverageClauses);
+    expect(character2Summary.captainCoverageClauses).toEqual([
+      'boosts ATK of [STR], Driven and Cerebral characters by 5.5x',
+      'boosts HP of [STR], Driven and Cerebral characters by 1.35x',
+    ]);
+    expect(character2Summary.fullCoverageClauses).toEqual(character2Summary.captainCoverageClauses);
+  });
+
+  it('matches either branch for VS dual-character captain coverage', () => {
+    const captain = createCharacter({
+      id: 4469,
+      name: 'Zoro VS Lucci - Battling Swords and Hand Pistols',
+      captainAbility: zoroVsLucciCharacter1CaptainAbility,
+      captainAbilityVariants: [
+        {
+          key: 'character1',
+          label: 'Captain Ability (Character 1)',
+          text: zoroVsLucciCharacter1CaptainAbility,
+        },
+        {
+          key: 'character2',
+          label: 'Captain Ability (Character 2)',
+          text: zoroVsLucciCharacter2CaptainAbility,
+        },
+      ],
+    });
+    const character1Target = createCharacter({
+      id: 4470,
+      type: 'INT',
+      classes: ['Shooter', 'Powerhouse'],
+    });
+    const character2Target = createCharacter({
+      id: 4471,
+      type: 'STR',
+      classes: ['Shooter', 'Powerhouse'],
+    });
+    const fallbackOnlyTarget = createCharacter({
+      id: 4472,
+      type: 'QCK',
+      classes: ['Shooter', 'Powerhouse'],
+    });
+
+    const character1Coverage = resolveCaptainCoverage(captain, character1Target);
+    const character2Coverage = resolveCaptainCoverage(captain, character2Target);
+    const fallbackOnlyCoverage = resolveCaptainCoverage(captain, fallbackOnlyTarget);
+
+    expect(character1Coverage.matches).toBe(true);
+    expect(character1Coverage.boosts).toEqual({ hp: 1.35, atk: 5.5 });
+    expect(character1Coverage.coveredClauses).toEqual([
+      'boosts ATK of [INT], Slasher and Free Spirit characters by 5.5x',
+      'boosts HP of [INT], Slasher and Free Spirit characters by 1.35x',
+    ]);
+    expect(character1Coverage.uncoveredClauses).toEqual([]);
+    expect(character2Coverage.matches).toBe(true);
+    expect(character2Coverage.boosts).toEqual({ hp: 1.35, atk: 5.5 });
+    expect(fallbackOnlyCoverage.matches).toBe(false);
+    expect(fallbackOnlyCoverage.uncoveredClauses).toEqual(
+      expect.arrayContaining([
+        'boosts ATK of [INT], Slasher and Free Spirit characters by 5.5x',
+        'boosts ATK of [STR], Driven and Cerebral characters by 5.5x',
+      ]),
+    );
   });
 
   it('requires both non-combined dual captain branches for coverage', () => {

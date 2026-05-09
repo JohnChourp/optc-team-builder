@@ -3531,6 +3531,29 @@ describe('Auto team builder', () => {
     ).toBe(true);
   });
 
+  it('allows either base branch of a VS dual-character leader before filling subs', () => {
+    const result = buildAutoTeamResult(createVsEitherBranchLeaderRecords(), {
+      ...createInput(
+        ['DEX', 'QCK', 'PSY', 'STR', 'INT'],
+        ['Cerebral', 'Driven', 'Free Spirit', 'Powerhouse', 'Shooter', 'Slasher'],
+        {
+          requireFullCaptainAbilityCoverage: true,
+          requireBothLeadersFullCaptainAbilityCoverage: true,
+          lockedCharacterIds: [4469],
+          captainCharacterId: 4469,
+          friendCaptainCharacterId: 4469,
+        },
+      ),
+    });
+
+    const slotIds = result?.slots.map((slot) => slot.character.id) ?? [];
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
+    expect(slotIds).toEqual(expect.arrayContaining([4470, 4471, 4472, 4473]));
+    expect(slotIds).not.toContain(4474);
+  });
+
   it('rejects a type-only captain that does not cover every base type of a required dual friend captain', () => {
     const result = buildAutoTeamResult(createStrictDualTargetCaptainPairRecords(), {
       ...createInput(['DEX', 'STR', 'QCK', 'PSY'], ['Fighter', 'Powerhouse'], {
@@ -10340,6 +10363,85 @@ function createStrictDualCharacterLeaderRecords(): CharacterDetailRecord[] {
       secondaryClass: 'Slasher',
       detail: {
         specialText: 'Reduces Special Cooldown by 1 turn.',
+      },
+    }),
+  ];
+}
+
+function createVsEitherBranchLeaderRecords(): CharacterDetailRecord[] {
+  const character1Text =
+    "Reduces Switch Effect of all characters by 3 and reduces VS Gauge of all characters by 6 at the start of the fight, changes all orbs into [TND] orbs at the start of the fight, boosts ATK of [INT], Slasher and Free Spirit characters by 5.5x, by 6x instead after the 3rd PERFECTs in a row, boosts ATK of all other characters by 3.5x, boosts HP of [INT], Slasher and Free Spirit characters by 1.35x, and makes [INT] and [TND] orbs beneficial for all characters. If crew uses a special to reduce enemies' Increased Defense, reduces the duration by 2 additional turns.";
+  const character2Text =
+    "Reduces Switch Effect of all characters by 3 and reduces VS Gauge of all characters by 6 at the start of the fight, changes all orbs into [RCV] orbs at the start of the fight, boosts ATK of [STR], Driven and Cerebral characters by 5.5x, by 6x instead after the 3rd PERFECTs in a row, boosts ATK of all other characters by 3.5x, boosts HP of [STR], Driven and Cerebral characters by 1.35x, and makes [STR] and [RCV] orbs beneficial for all characters. If crew uses a special to reduce enemies' Threshold Damage Reduction, reduces the duration by 2 additional turns.";
+
+  return [
+    createCharacterRecord({
+      id: 4469,
+      name: 'Zoro VS Lucci - Battling Swords and Hand Pistols',
+      type: 'INT,STR',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Driven',
+      detail: {
+        captainAbility: character1Text,
+        captainAbilityVariants: [
+          {
+            key: 'character1',
+            label: 'Captain Ability (Character 1)',
+            text: character1Text,
+          },
+          {
+            key: 'character2',
+            label: 'Captain Ability (Character 2)',
+            text: character2Text,
+          },
+        ],
+        specialText:
+          "Reduces enemies' Increased Defense and Threshold Damage Reduction by 7 turns.",
+      },
+    }),
+    createCharacterRecord({
+      id: 4470,
+      type: 'INT',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Powerhouse',
+      detail: {
+        specialText: 'Boosts orb effects of [INT] characters by 2.25x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4471,
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Shooter',
+      detail: {
+        specialText: 'Boosts ATK of Slasher characters by 2.25x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4472,
+      type: 'STR',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Powerhouse',
+      detail: {
+        specialText: 'Boosts color affinity of [STR] characters by 2x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4473,
+      type: 'QCK',
+      primaryClass: 'Driven',
+      secondaryClass: 'Shooter',
+      detail: {
+        specialText: 'Reduces Bind and Despair duration by 5 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 4474,
+      type: 'QCK',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Powerhouse',
+      detail: {
+        specialText: 'Changes crew orbs into Matching Orbs.',
       },
     }),
   ];

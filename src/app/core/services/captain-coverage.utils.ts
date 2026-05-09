@@ -68,6 +68,7 @@ export interface CaptainCoverageBranchText {
 }
 
 const UNIVERSAL_SCOPE_PATTERN = /\b(?:all|all characters|all units|all crewmates|crew)\b/i;
+const FALLBACK_OTHER_SCOPE_PATTERN = /\ball other (?:characters|units|crewmates)\b/i;
 const SELF_SCOPE_PATTERN = /\b(?:this character|own attacks|their own attacks)\b/i;
 const BRANCH_LABEL_PATTERN =
   /\b(?:Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
@@ -86,6 +87,8 @@ const CONDITIONAL_CAPTAIN_BOOST_PREFIX_PATTERN =
   /^(?:(?:and|or|also|additionally|furthermore|then|otherwise)\b,?\s*)*(?:if|when)\b/i;
 const CAPTAIN_MULTIPLIER_PATTERN =
   /\bby\s+(?:a\s+further\s+|an?\s+additional\s+|another\s+)?\d+(?:\.\d+)?x\b/i;
+const INLINE_CONDITIONAL_BOOST_RIDER_PATTERN =
+  /,\s*(?:or\s+)?by\s+\d+(?:\.\d+)?x\s+instead\b[^,.;]*/gi;
 const BRACKETED_LABEL_PATTERN = /\[([^\]]+)\]/g;
 const BOOST_TARGET_FRAGMENT_PATTERNS = [
   /\b(?:of|for)\s+([^.;]{1,220}?)\s+(?:characters|units)\b/gi,
@@ -169,6 +172,10 @@ export function resolveCaptainCoverage(
 
   if (branchResults.length === 1) {
     return branchResults[0]!;
+  }
+
+  if (shouldUseAlternativeCaptainCoverageBranches(captain, branches)) {
+    return mergeCaptainCoverageAlternativeBranchResults(branchResults);
   }
 
   return mergeCaptainCoverageBranchResults(branchResults);
@@ -301,12 +308,63 @@ function mergeCaptainCoverageBranchResults(
   };
 }
 
+function mergeCaptainCoverageAlternativeBranchResults(
+  branchResults: readonly CaptainCoverageResult[],
+): CaptainCoverageResult {
+  const matchingBranchResults = branchResults.filter((result) => result.matches);
+  const selectedBranchResults = matchingBranchResults.length
+    ? matchingBranchResults
+    : branchResults;
+  const clauses = selectedBranchResults.flatMap((result) => result.clauses);
+  const targetableClauses = clauses.filter((clause) => clause.status !== 'neutral');
+
+  return {
+    boosts: matchingBranchResults.length
+      ? mergeCaptainCoverageAlternativeBranchBoosts(matchingBranchResults)
+      : { hp: 0, atk: 0 },
+    captainText: branchResults.map((result) => result.captainText).join('. '),
+    chips: dedupeCoverageChips(targetableClauses.flatMap((clause) => clause.chips)),
+    clauses,
+    coveredClauses: selectedBranchResults.flatMap((result) => result.coveredClauses),
+    matches: matchingBranchResults.length > 0,
+    neutralNotes: selectedBranchResults.flatMap((result) => result.neutralNotes),
+    targetableClauseCount: targetableClauses.length,
+    uncoveredClauses: matchingBranchResults.length
+      ? []
+      : selectedBranchResults.flatMap((result) => result.uncoveredClauses),
+  };
+}
+
+function shouldUseAlternativeCaptainCoverageBranches(
+  captain: CharacterDetailRecord,
+  branches: readonly CaptainCoverageBranchText[],
+): boolean {
+  if (branches.length < 2) {
+    return false;
+  }
+
+  const identityText = [captain.name, captain.searchText, ...branches.map((branch) => branch.text)]
+    .filter(Boolean)
+    .join(' ');
+
+  return /\bvs\b/i.test(identityText) || /\bVS Gauge\b/i.test(identityText);
+}
+
 function mergeCaptainCoverageBranchBoosts(
   branchResults: readonly CaptainCoverageResult[],
 ): CaptainCoverageBoosts {
   return {
     hp: resolveLowestPositiveBranchBoost(branchResults.map((result) => result.boosts.hp)),
     atk: resolveLowestPositiveBranchBoost(branchResults.map((result) => result.boosts.atk)),
+  };
+}
+
+function mergeCaptainCoverageAlternativeBranchBoosts(
+  branchResults: readonly CaptainCoverageResult[],
+): CaptainCoverageBoosts {
+  return {
+    hp: Math.max(0, ...branchResults.map((result) => result.boosts.hp)),
+    atk: Math.max(0, ...branchResults.map((result) => result.boosts.atk)),
   };
 }
 
@@ -441,11 +499,13 @@ function extractDefaultCaptainBoostClauses(text: string): string[] {
 }
 
 function extractCaptainBoostScopeClauses(text: string, includeConditional: boolean): string[] {
-  return splitCaptainEffectClauses(text.replace(BRANCH_LABEL_PATTERN, '. ')).filter(
-    (clause) =>
-      (includeConditional || !isConditionalCaptainBoostClause(clause)) &&
-      isCaptainBoostScopeClause(clause),
-  );
+  return splitCaptainEffectClauses(text.replace(BRANCH_LABEL_PATTERN, '. '))
+    .map(stripInlineConditionalBoostRiders)
+    .filter(
+      (clause) =>
+        (includeConditional || !isConditionalCaptainBoostClause(clause)) &&
+        isCaptainBoostScopeClause(clause),
+    );
 }
 
 function isCaptainBoostScopeClause(clause: string): boolean {
@@ -456,11 +516,16 @@ function isCaptainBoostScopeClause(clause: string): boolean {
     /\b(?:atk|hp)\b/i.test(normalizedClause) &&
     CAPTAIN_MULTIPLIER_PATTERN.test(normalizedClause) &&
     !SELF_SCOPE_PATTERN.test(normalizedClause) &&
+    !FALLBACK_OTHER_SCOPE_PATTERN.test(normalizedClause) &&
     (boostClauseHasUniversalScope(normalizedClause) ||
       extractAllowedTypesFromBoostClause(normalizedClause).length > 0 ||
       extractAllowedClassesFromBoostClause(normalizedClause).length > 0 ||
       extractAllowedCharacterTagsFromBoostClause(normalizedClause).length > 0)
   );
+}
+
+function stripInlineConditionalBoostRiders(clause: string): string {
+  return normalizeCoverageClause(clause.replace(INLINE_CONDITIONAL_BOOST_RIDER_PATTERN, ''));
 }
 
 function splitCaptainEffectClauses(text: string): string[] {
@@ -634,6 +699,10 @@ function extractBoostTargetFragments(clause: string): string[] {
 }
 
 function boostClauseHasUniversalScope(clause: string): boolean {
+  if (FALLBACK_OTHER_SCOPE_PATTERN.test(clause)) {
+    return false;
+  }
+
   return extractBoostTargetFragments(clause).some((fragment) =>
     UNIVERSAL_SCOPE_PATTERN.test(fragment),
   );
