@@ -10,6 +10,7 @@ describe('TabsPage', () => {
     expect(template).toContain('<ion-menu');
     expect(template).toContain('id="tabs-menu-content"');
     expect(template).toContain('<ion-accordion-group');
+    expect(template).toContain('[animated]="false"');
     expect(template).toContain('[multiple]="false"');
     expect(template).toContain('value="browse"');
     expect(template).toContain('[routerLink]="[item.route]"');

@@ -5,17 +5,16 @@
 .tabs-menu {
   --width: min(320px, calc(100vw - 28px));
   --max-width: calc(100vw - 20px);
-  --background: linear-gradient(180deg, rgba(15, 20, 36, 0.98), rgba(8, 11, 24, 0.98));
+  --background: #0b1020;
 }
 
 .tabs-menu::part(backdrop) {
-  background: rgba(7, 11, 23, 0.52);
-  backdrop-filter: blur(8px);
+  background: rgba(7, 11, 23, 0.46);
 }
 
 .tabs-menu::part(container) {
   border-right: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 24px 0 60px rgba(0, 0, 0, 0.42);
+  box-shadow: 8px 0 24px rgba(0, 0, 0, 0.28);
 }
 
 .tabs-menu__toolbar {
@@ -27,46 +26,23 @@
 
 .tabs-menu__content {
   --background: transparent;
-  --overflow: hidden;
 }
 
 .tabs-menu__shell {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  height: 100%;
   min-height: 100%;
-  grid-template-rows: minmax(0, 1fr) auto;
   padding: 8px 12px
     calc(var(--app-footer-bar-height) + 18px + env(safe-area-inset-bottom));
-  background:
-    radial-gradient(circle at top left, rgba(245, 200, 76, 0.14), transparent 34%),
-    radial-gradient(circle at top right, rgba(76, 201, 240, 0.08), transparent 28%);
 }
 
 .tabs-menu__nav-panel {
   position: relative;
-  min-height: 0;
   padding: 6px;
-  overflow-y: auto;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 18px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015)),
-    rgba(4, 8, 18, 0.28);
-  box-shadow:
-    inset 0 18px 20px -24px rgba(255, 248, 221, 0.86),
-    inset 0 -24px 24px -22px rgba(245, 200, 76, 0.56);
-  scrollbar-width: thin;
-  scrollbar-color: rgba(245, 200, 76, 0.38) rgba(255, 255, 255, 0.04);
-}
-
-.tabs-menu__nav-panel::-webkit-scrollbar {
-  width: 6px;
-}
-
-.tabs-menu__nav-panel::-webkit-scrollbar-thumb {
-  border-radius: 999px;
-  background: rgba(245, 200, 76, 0.38);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
 }
 
 .tabs-menu__accordion-group {
@@ -76,11 +52,9 @@
 
 .tabs-menu__accordion {
   overflow: hidden;
-  border-radius: 16px;
-  background:
-    linear-gradient(135deg, rgba(245, 200, 76, 0.055), rgba(76, 201, 240, 0.035)),
-    rgba(255, 255, 255, 0.025);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
 }
 
 .tabs-menu__group-header {
@@ -104,7 +78,7 @@
 
 .tabs-menu__accordion.accordion-expanded .tabs-menu__group-header {
   --color: #fff8dd;
-  background: rgba(255, 255, 255, 0.025);
+  --background: rgba(255, 255, 255, 0.03);
 }
 
 .tabs-menu__group-content {
@@ -132,9 +106,9 @@
   justify-content: center;
   gap: 10px;
   padding: 10px 10px 14px;
-  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
   background: rgba(255, 255, 255, 0.03);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
 .language-flag-button {
@@ -154,14 +128,12 @@
   transition:
     transform 150ms ease,
     background-color 150ms ease,
-    box-shadow 150ms ease,
     opacity 150ms ease;
 }
 
 .language-flag-button:hover:not(:disabled),
 .language-flag-button:focus-visible:not(:disabled) {
   background: rgba(255, 255, 255, 0.09);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
   transform: translateY(-1px);
   outline: none;
 }
@@ -175,12 +147,8 @@
 }
 
 .language-flag-button--active {
-  background:
-    linear-gradient(135deg, rgba(245, 200, 76, 0.22), rgba(76, 201, 240, 0.14)),
-    rgba(255, 255, 255, 0.08);
-  box-shadow:
-    inset 0 0 0 1px rgba(245, 200, 76, 0.22),
-    0 14px 28px rgba(0, 0, 0, 0.24);
+  background: rgba(245, 200, 76, 0.18);
+  outline: 1px solid rgba(245, 200, 76, 0.24);
   opacity: 1;
 }
 
@@ -209,19 +177,13 @@
 }
 
 .menu-item--settings {
-  --background:
-    linear-gradient(135deg, rgba(245, 200, 76, 0.11), rgba(76, 201, 240, 0.07)),
-    rgba(255, 255, 255, 0.035);
+  --background: rgba(245, 200, 76, 0.08);
   --color: rgba(255, 248, 221, 0.9);
-  box-shadow: inset 0 0 0 1px rgba(245, 200, 76, 0.12);
+  outline: 1px solid rgba(245, 200, 76, 0.12);
 }
 
 .menu-item--active {
-  --background:
-    linear-gradient(135deg, rgba(245, 200, 76, 0.12), rgba(76, 201, 240, 0.08)),
-    rgba(255, 255, 255, 0.03);
+  --background: rgba(245, 200, 76, 0.12);
   --color: #fff8dd;
-  box-shadow:
-    inset 0 0 0 1px rgba(245, 200, 76, 0.1),
-    0 10px 18px rgba(0, 0, 0, 0.14);
+  outline: 1px solid rgba(245, 200, 76, 0.14);
 }

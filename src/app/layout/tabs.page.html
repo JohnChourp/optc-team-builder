@@ -1,14 +1,25 @@
-<ion-menu contentId="tabs-menu-content" menuId="tabs-navigation-menu" side="start" type="overlay" class="tabs-menu">
+<ion-menu
+  contentId="tabs-menu-content"
+  menuId="tabs-navigation-menu"
+  side="start"
+  type="overlay"
+  class="tabs-menu"
+>
   <ion-header class="ion-no-border">
     <ion-toolbar class="tabs-menu__toolbar">
-      <ion-title>{{ "tabs.menuTitle" | transloco }}</ion-title>
+      <ion-title>{{ 'tabs.menuTitle' | transloco }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
-  <ion-content class="tabs-menu__content" [scrollY]="false">
+  <ion-content class="tabs-menu__content">
     <div class="tabs-menu__shell">
       <nav class="tabs-menu__nav-panel" [attr.aria-label]="'tabs.navigationAriaLabel' | transloco">
-        <ion-accordion-group class="tabs-menu__accordion-group" [multiple]="false" value="browse">
+        <ion-accordion-group
+          class="tabs-menu__accordion-group"
+          [animated]="true"
+          [multiple]="false"
+          value="browse"
+        >
           @for (group of navigationGroups; track group.id) {
             <ion-accordion class="tabs-menu__accordion" [value]="group.id">
               <ion-item slot="header" lines="none" class="tabs-menu__group-header">
@@ -68,7 +79,10 @@
               class="language-flag-button"
               [class.language-flag-button--active]="activeLanguage() === language.id"
               [disabled]="activeLanguage() === language.id"
-              [attr.aria-label]="'tabs.languageSwitchTo' | transloco: { language: ('common.languages.' + language.id | transloco) }"
+              [attr.aria-label]="
+                'tabs.languageSwitchTo'
+                  | transloco: { language: ('common.languages.' + language.id | transloco) }
+              "
               (click)="onLanguageSelect(language.id)"
             >
               <span aria-hidden="true">{{ language.flag }}</span>
