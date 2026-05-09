@@ -1242,26 +1242,31 @@
                                   }
                                 </div>
                                 <div class="manual-candidate-actions">
-                                  @for (
-                                    branchAction of candidateCard.branchActions;
-                                    track branchAction.mode
-                                  ) {
-                                    <ion-button
-                                      size="small"
-                                      fill="outline"
-                                      [color]="branchAction.selected ? 'warning' : 'light'"
-                                      class="manual-candidate-action-button"
-                                      [disabled]="branchAction.disabled"
-                                      (click)="
-                                        selectCaptainBranchInActiveManualSlot(
-                                          candidateCard.character,
-                                          branchAction.mode,
-                                          $event
-                                        )
-                                      "
-                                    >
-                                      {{ branchAction.label }}
-                                    </ion-button>
+                                  @if (candidateCard.branchActions.length) {
+                                    <div class="manual-candidate-branch-actions">
+                                      @for (
+                                        branchAction of candidateCard.branchActions;
+                                        track branchAction.mode
+                                      ) {
+                                        <ion-button
+                                          size="small"
+                                          fill="outline"
+                                          [color]="branchAction.selected ? 'warning' : 'light'"
+                                          class="manual-candidate-branch-button"
+                                          [disabled]="branchAction.disabled"
+                                          [attr.aria-pressed]="branchAction.selected"
+                                          (click)="
+                                            selectCaptainBranchInActiveManualSlot(
+                                              candidateCard.character,
+                                              branchAction.mode,
+                                              $event
+                                            )
+                                          "
+                                        >
+                                          {{ branchAction.label }}
+                                        </ion-button>
+                                      }
+                                    </div>
                                   }
                                   <ion-button
                                     size="small"
@@ -1735,7 +1740,7 @@
                               track candidateCard.character.id
                             ) {
                               <article
-                                class="manual-candidate-card manual-candidate-card--detailed manual-candidate-card--sidebar"
+                                class="manual-candidate-card manual-candidate-card--detailed manual-candidate-card--sidebar manual-candidate-card--exclude"
                                 [class.manual-candidate-card--selected]="candidateCard.isExcluded"
                                 [class.manual-candidate-card--blocked]="
                                   !candidateCard.isExcluded && !candidateCard.isSelectable
@@ -1791,7 +1796,9 @@
                                     </div>
                                   }
                                 </div>
-                                <div class="manual-candidate-actions">
+                                <div
+                                  class="manual-candidate-actions manual-candidate-actions--exclude"
+                                >
                                   <ion-button
                                     size="small"
                                     fill="outline"

@@ -1052,6 +1052,10 @@
   min-height: 132px;
 }
 
+.manual-candidate-card--exclude {
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+}
+
 .manual-candidate-card--selected {
   border-color: rgba(245, 200, 76, 0.42);
   background: rgba(245, 200, 76, 0.09);
@@ -1326,16 +1330,54 @@
 }
 
 .manual-candidate-actions {
-  display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: minmax(0, 1fr);
+  display: flex;
+  grid-column: 2 / -1;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
-  justify-items: stretch;
+  min-width: 0;
+}
+
+.manual-candidate-branch-actions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
 }
 
 .manual-candidate-action-button {
   margin: 0;
   width: 100%;
+}
+
+.manual-candidate-actions .manual-candidate-action-button,
+.manual-candidate-branch-button {
+  flex: 0 0 auto;
+  width: auto;
+  margin: 0;
+  min-height: 30px;
+  text-transform: none;
+  letter-spacing: 0;
+  --border-radius: 8px;
+  --padding-start: 12px;
+  --padding-end: 12px;
+}
+
+.manual-candidate-actions--exclude {
+  grid-column: 3;
+  grid-row: 1;
+  align-self: center;
+  justify-self: end;
+  justify-content: flex-end;
+}
+
+.manual-candidate-branch-button {
+  min-width: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  --padding-start: 10px;
+  --padding-end: 10px;
 }
 
 .ship-candidate-card > ion-button {
@@ -2209,6 +2251,17 @@ ion-toggle {
 
   .manual-candidate-list--sidebar {
     max-height: 58vh;
+  }
+
+  .manual-candidate-card--exclude {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .manual-candidate-actions--exclude {
+    grid-column: 2 / -1;
+    grid-row: auto;
+    justify-self: start;
+    justify-content: flex-start;
   }
 
   .ability-requirements-actions {
