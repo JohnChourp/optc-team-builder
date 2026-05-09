@@ -262,6 +262,9 @@ ensure_branch_push_state
 commit_uncommitted_changes
 ensure_release_signing_env
 
+echo "[release] Installing npm dependencies." >&2
+npm install
+
 echo "[release] Refreshing OPTC data before version bump." >&2
 npm run data:import:all
 

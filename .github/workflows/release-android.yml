@@ -129,7 +129,7 @@ jobs:
           RELEASE_BUMP_INPUT: ${{ inputs.bump }}
           RELEASE_VERSION_INPUT: ${{ inputs.version }}
           RELEASE_CODE_INPUT: ${{ inputs.code }}
-          BUILD_MOBILE_COMMAND: npm run build && npx cap sync android
+          BUILD_MOBILE_COMMAND: npm run build:ionic && npx cap sync android
         run: |
           export GH_TOKEN="${RELEASE_AUTH_TOKEN}"
 
