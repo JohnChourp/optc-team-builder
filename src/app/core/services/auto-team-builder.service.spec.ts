@@ -3607,6 +3607,50 @@ describe('Auto team builder', () => {
     expect(slotIds).not.toContain(4611);
   });
 
+  it('builds a strict favorites team when a locked VS branch has combined-card metadata', async () => {
+    const records = createVsManualBranchSelectionRecordsWithEmptyCombinedLeaderClasses();
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(records),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        favoritesOnly: true,
+        favoriteCharacterIds: records.map((record) => record.id),
+        requireFullCaptainAbilityCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        manualSlots: [
+          {
+            role: 'captain',
+            characterIds: [4469],
+            requiredCharacterId: 4469,
+            branchSelections: [{ characterId: 4469, mode: 'character1' }],
+          },
+          { role: 'friendCaptain', characterIds: [], requiredCharacterId: null },
+          { role: 'sub1', characterIds: [], requiredCharacterId: null },
+          { role: 'sub2', characterIds: [], requiredCharacterId: null },
+          { role: 'sub3', characterIds: [], requiredCharacterId: null },
+          { role: 'sub4', characterIds: [], requiredCharacterId: null },
+        ],
+      },
+      { workerCount: 1 },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(4469);
+    expect(result?.slots[1]?.character.id).toBe(4469);
+    expect(result?.slots[0]?.captainBranchSelection).toMatchObject({
+      mode: 'character1',
+      displayName: 'Zoro',
+      source: 'manual',
+    });
+    expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
+  });
+
   it('rejects a type-only captain that does not cover every base type of a required dual friend captain', () => {
     const result = buildAutoTeamResult(createStrictDualTargetCaptainPairRecords(), {
       ...createInput(['DEX', 'STR', 'QCK', 'PSY'], ['Fighter', 'Powerhouse'], {
@@ -10536,6 +10580,21 @@ function createVsManualBranchSelectionRecords(): CharacterDetailRecord[] {
       secondaryClass: 'Powerhouse',
       detail: { specialText: 'Boosts color affinity by 2x.' },
     }),
+  ];
+}
+
+function createVsManualBranchSelectionRecordsWithEmptyCombinedLeaderClasses(): CharacterDetailRecord[] {
+  const [captain, ...records] = createVsManualBranchSelectionRecords();
+
+  return [
+    {
+      ...captain!,
+      type: 'INT,STR',
+      classes: [],
+      primaryClass: '',
+      secondaryClass: null,
+    },
+    ...records,
   ];
 }
 

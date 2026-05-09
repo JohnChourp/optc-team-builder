@@ -454,9 +454,9 @@ function buildDefaultAutoTeamBuilderFilterState(
     requireAllSelectedCharacterNamesInTeam: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
     requireFullCaptainAbilityCoverage: true,
-    requireBothLeadersFullCaptainAbilityCoverage: false,
-    requireSuperSpecialCriteriaCoverage: false,
-    requireSuperTandemCriteriaCoverage: false,
+    requireBothLeadersFullCaptainAbilityCoverage: true,
+    requireSuperSpecialCriteriaCoverage: true,
+    requireSuperTandemCriteriaCoverage: true,
     requireUniqueBaseCharacterNames: true,
     favoritesOnly: true,
     allowAnyFriendCaptainAutoFill: false,
@@ -652,9 +652,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly requireAllSelectedCharacterNamesInTeam = signal(false);
   public readonly requireAllSlotsInLeaderSuperEffectScope = signal(false);
   public readonly requireFullCaptainAbilityCoverage = signal(true);
-  public readonly requireBothLeadersFullCaptainAbilityCoverage = signal(false);
-  public readonly requireSuperSpecialCriteriaCoverage = signal(false);
-  public readonly requireSuperTandemCriteriaCoverage = signal(false);
+  public readonly requireBothLeadersFullCaptainAbilityCoverage = signal(true);
+  public readonly requireSuperSpecialCriteriaCoverage = signal(true);
+  public readonly requireSuperTandemCriteriaCoverage = signal(true);
   public readonly requireUniqueBaseCharacterNames = signal(true);
   public readonly selectedCharacterBoxId = signal<string | null>(null);
   public readonly selectedExcludeCharacterBoxId = signal<string | null>(null);

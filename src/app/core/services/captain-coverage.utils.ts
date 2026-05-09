@@ -178,11 +178,19 @@ export function resolveCaptainCoverage(
   const forcedBranch = resolveCaptainCoverageBranchForMode(branches, options.branchMode);
 
   if (forcedBranch) {
-    return resolveCaptainCoverageForText(forcedBranch.text, target, options);
+    return resolveCaptainCoverageForText(
+      forcedBranch.text,
+      resolveCaptainCoverageTargetForBranch(captain, target, branches, forcedBranch),
+      options,
+    );
   }
 
   const branchResults = branches.map((branch) =>
-    resolveCaptainCoverageForText(branch.text, target, options),
+    resolveCaptainCoverageForText(
+      branch.text,
+      resolveCaptainCoverageTargetForBranch(captain, target, branches, branch),
+      options,
+    ),
   );
 
   if (branchResults.length === 1) {
@@ -356,6 +364,47 @@ function resolveCaptainCoverageBranchForMode(
   }
 
   return branches[mode === 'character1' ? 0 : 1] ?? null;
+}
+
+function resolveCaptainCoverageTargetForBranch(
+  captain: CharacterDetailRecord,
+  target: CharacterListItem,
+  branches: readonly CaptainCoverageBranchText[],
+  branch: CaptainCoverageBranchText,
+): CharacterListItem {
+  if (branches.length !== 2 || captain.id !== target.id) {
+    return target;
+  }
+
+  const branchScope = resolveCaptainBoostScope(branch.text, 'fullAbilityCoverage');
+  const branchTypes = branchScope.allowedTypes.length
+    ? branchScope.allowedTypes.join(',')
+    : target.type;
+  const branchClasses = branchScope.allowedClasses.length
+    ? [...branchScope.allowedClasses]
+    : [...target.classes];
+  const branchTarget = {
+    ...target,
+    type: branchTypes,
+    classes: branchClasses,
+    primaryClass: branchClasses[0] ?? target.primaryClass,
+    secondaryClass: branchClasses[1] ?? null,
+  } as CharacterListItem & { detail?: { characterTags?: string[] } };
+
+  if (branchScope.allowedCharacterTags.length > 0) {
+    const existingDetail = (target as CharacterListItem & { detail?: { characterTags?: string[] } })
+      .detail;
+
+    branchTarget.detail = {
+      ...existingDetail,
+      characterTags: mergeUniqueValues(
+        existingDetail?.characterTags ?? [],
+        branchScope.allowedCharacterTags,
+      ),
+    };
+  }
+
+  return branchTarget;
 }
 
 function isDualBaseCaptainAbilityVariant(

@@ -302,7 +302,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.captainFilterSummaryChips()).toEqual([]);
   });
 
-  it('uses full Captain Ability coverage by default when building', async () => {
+  it('uses strict leader and criteria coverage by default when building', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
     await page.ngOnInit();
@@ -316,8 +316,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       ['DEX'],
       expect.objectContaining({
         requireFullCaptainAbilityCoverage: true,
-        strictSuperSpecialCriteriaCoverage: false,
-        strictSuperTandemCriteriaCoverage: false,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
       }),
       expect.any(Object),
     );
@@ -817,7 +818,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         captainCharacterId: 901,
         friendCaptainCharacterId: 901,
         requireFullCaptainAbilityCoverage: true,
-        requireBothLeadersFullCaptainAbilityCoverage: false,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
       },
     );
     expect(userState.saveCharacterBox).toHaveBeenCalledWith({
@@ -4679,8 +4680,8 @@ describe('AutoTeamBuilderPage preset export state', () => {
         requireAllSlotsInLeaderSuperEffectScope: true,
         requireFullCaptainAbilityCoverage: true,
         requireBothLeadersFullCaptainAbilityCoverage: true,
-        requireSuperSpecialCriteriaCoverage: false,
-        requireSuperTandemCriteriaCoverage: false,
+        requireSuperSpecialCriteriaCoverage: true,
+        requireSuperTandemCriteriaCoverage: true,
         requireUniqueBaseCharacterNames: true,
         favoritesOnly: true,
         allowAnyFriendCaptainAutoFill: true,
@@ -6572,6 +6573,9 @@ describe('AutoTeamBuilder enemy preset handoff', () => {
     ]);
     expect(page.requireAllSelectedTypesInTeam()).toBe(true);
     expect(page.requireAllSelectedClassesPerCharacter()).toBe(false);
+    expect(page.requireBothLeadersFullCaptainAbilityCoverage()).toBe(true);
+    expect(page.requireSuperSpecialCriteriaCoverage()).toBe(true);
+    expect(page.requireSuperTandemCriteriaCoverage()).toBe(true);
     expect(page.loadedEnemyPresetName()).toBe('Forest Boss');
     expect(page.result()).toBeNull();
     expect(page.currentTeamId()).toBeNull();
@@ -6623,6 +6627,9 @@ describe('AutoTeamBuilder enemy preset handoff', () => {
         ],
         requireAllSelectedTypesInTeam: true,
         requireAllSelectedClassesPerCharacter: false,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
       }),
       expect.objectContaining({
         onProgress: expect.any(Function),

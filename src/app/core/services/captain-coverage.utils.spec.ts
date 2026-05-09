@@ -372,6 +372,60 @@ describe('resolveCaptainCoverage', () => {
     expect(resolveCaptainCoverageBranchDisplay(captain, 'character2').displayName).toBe('Lucci');
   });
 
+  it('treats the selected VS branch as the active side when covering the same card', () => {
+    const captain = createCharacter({
+      id: 4469,
+      name: 'Zoro VS Lucci - Battling Swords and Hand Pistols',
+      type: 'INT,STR',
+      classes: [],
+      captainAbility: zoroVsLucciCharacter1CaptainAbility,
+      captainAbilityVariants: [
+        {
+          key: 'character1',
+          label: 'Captain Ability (Character 1)',
+          text: zoroVsLucciCharacter1CaptainAbility,
+        },
+        {
+          key: 'character2',
+          label: 'Captain Ability (Character 2)',
+          text: zoroVsLucciCharacter2CaptainAbility,
+        },
+      ],
+    });
+    const unrelatedFallbackTarget = createCharacter({
+      id: 4471,
+      type: 'STR',
+      classes: ['Shooter', 'Powerhouse'],
+    });
+
+    const zoroSelfCoverage = resolveCaptainCoverage(captain, captain, {
+      branchMode: 'character1',
+    });
+    const lucciSelfCoverage = resolveCaptainCoverage(captain, captain, {
+      branchMode: 'character2',
+    });
+    const automaticVsSelfCoverage = resolveCaptainCoverage(captain, captain);
+    const fallbackTargetCoverage = resolveCaptainCoverage(captain, unrelatedFallbackTarget, {
+      branchMode: 'character1',
+    });
+
+    expect(zoroSelfCoverage.matches).toBe(true);
+    expect(zoroSelfCoverage.boosts).toEqual({ hp: 1.35, atk: 5.5 });
+    expect(lucciSelfCoverage.matches).toBe(true);
+    expect(lucciSelfCoverage.boosts).toEqual({ hp: 1.35, atk: 5.5 });
+    expect(automaticVsSelfCoverage.matches).toBe(true);
+    expect(fallbackTargetCoverage.matches).toBe(false);
+    expect(fallbackTargetCoverage.uncoveredClauses).toEqual(
+      expect.arrayContaining([
+        'boosts ATK of [INT], Slasher and Free Spirit characters by 5.5x',
+        'boosts HP of [INT], Slasher and Free Spirit characters by 1.35x',
+      ]),
+    );
+    expect(fallbackTargetCoverage.clauses.map((clause) => clause.text)).not.toContain(
+      'boosts ATK of all other characters by 3.5x',
+    );
+  });
+
   it('requires both non-combined dual captain branches for coverage', () => {
     const character1Text =
       'Boosts ATK of [QCK], Fighter and Powerhouse characters by 4.75x, boosts ATK of all other characters by 3.5x, and boosts HP of [QCK], Fighter and Powerhouse characters by 1.35x.';
@@ -479,6 +533,24 @@ describe('resolveCaptainCoverage', () => {
     expect(resolveCaptainCoverage(captain, fighterTarget, { branchMode: 'both' }).matches).toBe(
       false,
     );
+
+    const combinedSelfTargetCaptain = createCharacter({
+      id: 4521,
+      name: 'Garp & Coby - Combined Fists',
+      type: 'QCK,DEX',
+      classes: [],
+      captainAbility: character1Text,
+      captainAbilityVariants: [
+        { key: 'character1', label: 'Captain Ability (Character 1)', text: character1Text },
+        { key: 'character2', label: 'Captain Ability (Character 2)', text: character2Text },
+      ],
+    });
+
+    expect(
+      resolveCaptainCoverage(combinedSelfTargetCaptain, combinedSelfTargetCaptain, {
+        branchMode: 'both',
+      }).matches,
+    ).toBe(true);
   });
 
   it('ignores self-only boost clauses', () => {
