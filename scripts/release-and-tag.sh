@@ -262,6 +262,9 @@ ensure_branch_push_state
 commit_uncommitted_changes
 ensure_release_signing_env
 
+echo "[release] Refreshing OPTC data before version bump." >&2
+npm run data:import:all
+
 PREVIOUS_TAG="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"
 
 VERSION_INFO="$("${PROJECT_ROOT}/scripts/bump-version.sh" --print-only "${BUMP_ARGS[@]}")"
