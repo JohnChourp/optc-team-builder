@@ -42,6 +42,7 @@ import {
   expandRequiredAbilitiesToCharacterGroups,
   MAX_REQUIRED_CHARACTER_GROUPS,
 } from '../../core/services/required-character-groups.utils';
+import { type SavedTeamsTransferPayload } from '../saved-teams/saved-teams-transfer.utils';
 
 type AutoTeamExportRole = AutoBuildResult['slots'][number]['role'];
 type AutoTeamExportLeaderAssignment = 'captain' | 'friendCaptain' | 'dual' | null;
@@ -115,7 +116,8 @@ export interface AutoTeamSelectionExportPayload {
     | 27
     | 28
     | 29
-    | 30;
+    | 30
+    | 31;
   exportedAt: string;
   source: 'auto-team-builder';
   exportType: 'preset';
@@ -164,6 +166,8 @@ export interface AutoTeamSelectionExportPayload {
     excludedCharacters: AutoTeamSelectionCharacterSummary[];
     excludedShips: AutoTeamSelectionShipSummary[];
   };
+  generatedTeamExport?: AutoTeamExportPayload;
+  savedTeamImport?: SavedTeamsTransferPayload;
 }
 
 export interface AutoTeamSelectionImportState {
@@ -274,6 +278,8 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   manualShip?: ShipRecord | null;
   excludedShipIds?: number[];
   excludedShips?: ShipRecord[];
+  generatedTeamExport?: AutoTeamExportPayload | null;
+  savedTeamImport?: SavedTeamsTransferPayload | null;
   exportedAt?: string;
 }
 
@@ -772,7 +778,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload['schemaVersion'] !== 27 &&
       parsedPayload['schemaVersion'] !== 28 &&
       parsedPayload['schemaVersion'] !== 29 &&
-      parsedPayload['schemaVersion'] !== 30) ||
+      parsedPayload['schemaVersion'] !== 30 &&
+      parsedPayload['schemaVersion'] !== 31) ||
     parsedPayload['source'] !== 'auto-team-builder' ||
     parsedPayload['exportType'] !== 'preset'
   ) {
@@ -1528,6 +1535,8 @@ export function buildAutoTeamSelectionExportPayload({
   manualShip = null,
   excludedShipIds = [],
   excludedShips = [],
+  generatedTeamExport = null,
+  savedTeamImport = null,
   exportedAt = new Date().toISOString(),
 }: BuildAutoTeamSelectionExportPayloadOptions): AutoTeamSelectionExportPayload {
   const normalizedManualSlots = manualSlots.map((slot) => ({
@@ -1541,7 +1550,7 @@ export function buildAutoTeamSelectionExportPayload({
   const normalizedBattleRequirements = cloneBattleRequirements(battleRequirements);
 
   return {
-    schemaVersion: 30,
+    schemaVersion: 31,
     exportedAt,
     source: 'auto-team-builder',
     exportType: 'preset',
@@ -1638,6 +1647,39 @@ export function buildAutoTeamSelectionExportPayload({
         description: ship.description,
       })),
     },
+    ...(generatedTeamExport
+      ? { generatedTeamExport: cloneAutoTeamExportPayload(generatedTeamExport) }
+      : {}),
+    ...(savedTeamImport ? { savedTeamImport: cloneSavedTeamImportPayload(savedTeamImport) } : {}),
+  };
+}
+
+function cloneAutoTeamExportPayload(payload: AutoTeamExportPayload): AutoTeamExportPayload {
+  return {
+    ...payload,
+    shipSelection: payload.shipSelection
+      ? {
+          ...payload.shipSelection,
+          ship: { ...payload.shipSelection.ship },
+          reasonChips: [...payload.shipSelection.reasonChips],
+        }
+      : null,
+    team: payload.team.map((slot) => ({
+      ...slot,
+      character: slot.character,
+    })),
+  };
+}
+
+function cloneSavedTeamImportPayload(
+  payload: SavedTeamsTransferPayload,
+): SavedTeamsTransferPayload {
+  return {
+    ...payload,
+    teams: payload.teams.map((team) => ({
+      ...team,
+      slots: [...team.slots],
+    })),
   };
 }
 

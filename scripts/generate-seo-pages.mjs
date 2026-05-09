@@ -59,7 +59,7 @@ const publicRoutes = [
     heading: 'OPTC Team Builder for One Piece Treasure Cruise',
     paragraphs: [
       'OPTC Team Builder is a fan-made workspace for One Piece Treasure Cruise players who want a faster way to find characters, compare abilities, check Rumble rankings and captain coverage, plan crews, and keep useful setups organized. The app combines a searchable character catalog, manual and automatic team building, Pirate Rumble tools, Crew Forge screenshot imports, saved teams, saved enemies, character boxes, Drive sync, and settings for import/export and backups.',
-      'Use Characters to search by name, type, class, favorites, and ability data before opening detailed character pages. Rumble Characters ranks Pirate Rumble units, Captain Coverage finds leaders that fully cover a chosen unit, and Auto Team Builder can fill fixed manual crew slots or match enemy mechanics and ability requirements against the local catalog.',
+      'Use Characters to search by name, type, class, favorites, and ability data before opening detailed character pages. Rumble Characters ranks Pirate Rumble units, Captain Coverage finds leaders that fully cover a chosen unit, Manual Team Builder saves fixed crews, and Auto Team Builder matches enemy mechanics and ability requirements against the local catalog.',
       'Auto Team Rumble Builder scores rumble-capable units and fills active and bench slots. Crew Forge can import a crew screenshot and match recognized slots back to editable OPTC character data. Saved Teams, Saved Rumble Teams, Character Boxes, and Saved Enemies keep recurring planning data available in your browser, while Settings and Drive Sync cover language, backups, analytics consent, and data transfer tools.',
       'The project is not an official Bandai Namco tool. It exists to make OPTC planning easier with clear links, readable character summaries, and generated pages that describe the same tools available in the web app.',
     ],
@@ -68,6 +68,7 @@ const publicRoutes = [
       { label: 'Rank Pirate Rumble characters', path: 'tabs/rumble-characters' },
       { label: 'Check captain coverage', path: 'tabs/captain-coverage' },
       { label: 'Build an OPTC team', path: 'tabs/auto-team-builder' },
+      { label: 'Build a manual OPTC team', path: 'tabs/manual-team-builder' },
       { label: 'Build a Pirate Rumble team', path: 'tabs/auto-team-builder-rumble' },
       { label: 'Import crew screenshots', path: 'tabs/crew-forge' },
       { label: 'OPTC team builder tool', path: 'tools/optc-team-builder' },
@@ -112,15 +113,32 @@ const publicRoutes = [
     path: 'tabs/auto-team-builder',
     title: 'Auto Team Builder | OPTC Team Builder',
     description:
-      'Build OPTC teams manually or find candidates by enemy mechanics, character abilities, type filters, and team-building requirements.',
+      'Find OPTC team candidates by enemy mechanics, character abilities, type filters, manual locks, and team-building requirements.',
     heading: 'OPTC Auto Team Builder',
     paragraphs: [
-      'Auto Team Builder helps build One Piece Treasure Cruise crews manually with fixed slots or automatically by enemy mechanics, character abilities, type filters, class filters, and team-building requirements.',
-      'Fill the crew yourself when you already know the team, or enter the mechanics and requirements you need covered to review matching character candidates from the local OPTC data.',
+      'Auto Team Builder helps find One Piece Treasure Cruise crew candidates by enemy mechanics, character abilities, type filters, class filters, manual locks, and team-building requirements.',
+      'Lock known units when you already have part of the team, or enter the mechanics and requirements you need covered to review matching character candidates from the local OPTC data.',
     ],
     links: [
+      { label: 'Build a manual OPTC team', path: 'tabs/manual-team-builder' },
       { label: 'Read how to build an OPTC team', path: 'guides/how-to-build-an-optc-team' },
       { label: 'Browse OPTC characters', path: 'tabs/characters' },
+    ],
+  },
+  {
+    path: 'tabs/manual-team-builder',
+    title: 'Manual Team Builder | OPTC Team Builder',
+    description:
+      'Build and save fixed One Piece Treasure Cruise crews manually with character slots, an optional ship, and a local cost budget.',
+    heading: 'OPTC Manual Team Builder',
+    paragraphs: [
+      'Manual Team Builder is the fixed crew workspace for One Piece Treasure Cruise players who already know the exact characters they want to save.',
+      'Choose six character slots, attach an optional ship, add notes, and use the local max-cost control to keep future character picks inside the budget before saving the team.',
+    ],
+    links: [
+      { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },
+      { label: 'Browse OPTC characters', path: 'tabs/characters' },
+      { label: 'Open saved teams', path: 'tabs/saved-teams' },
     ],
   },
   {
@@ -177,11 +195,12 @@ const publicRoutes = [
     schemaType: 'SoftwareApplication',
     paragraphs: [
       'OPTC Team Builder is a fan-made One Piece Treasure Cruise crew planner for finding characters, comparing abilities, checking captain coverage, and moving quickly from unit search to team planning.',
-      'The tool connects a searchable OPTC character database with Auto Team Builder, Pirate Rumble tools, Crew Forge screenshot imports, saved teams, saved enemies, character boxes, and Drive sync.',
+      'The tool connects a searchable OPTC character database with Manual Team Builder, Auto Team Builder, Pirate Rumble tools, Crew Forge screenshot imports, saved teams, saved enemies, character boxes, and Drive sync.',
       'Use it when you need a practical OPTC team builder rather than a static list of characters or a general game guide.',
     ],
     links: [
       { label: 'Browse OPTC characters', path: 'tabs/characters' },
+      { label: 'Open Manual Team Builder', path: 'tabs/manual-team-builder' },
       { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },
       { label: 'Check captain coverage', path: 'tabs/captain-coverage' },
     ],

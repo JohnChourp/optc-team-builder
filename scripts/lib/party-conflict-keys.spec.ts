@@ -43,7 +43,7 @@ describe('party conflict keys', () => {
 
   it('applies manual override keys for General Franky composite conflicts', () => {
     const overrideMap = normalizePartyConflictOverrideMap({
-      3574: ['franky', 'tony tony chopper'],
+      3574: ['franky', 'tony tony chopper', 'chopper'],
     });
     const [character] = applyPartyConflictKeys(
       [
@@ -60,6 +60,7 @@ describe('party conflict keys', () => {
       'general franky',
       'franky',
       'tony tony chopper',
+      'chopper',
     ]);
   });
 });

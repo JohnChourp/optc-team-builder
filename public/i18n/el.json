@@ -347,7 +347,7 @@
       },
       "autoBuilder": {
         "title": "Auto Team Builder",
-        "copy": "Φτιάξε ομάδα χειροκίνητα με σταθερά slots ή ταίριαξε enemy mechanics, ability requirements, classes, types, locked και excluded units με πιθανούς team candidates."
+        "copy": "Ταίριαξε enemy mechanics, ability requirements, classes, types, manual locks και excluded units με πιθανούς team candidates."
       },
       "captainCoverage": {
         "title": "Captain Coverage",
@@ -392,7 +392,7 @@
       "copy": "Ξεκίνα από έναν χαρακτήρα ή από requirement quest, χτίσε την ομάδα με manual ή automatic εργαλεία και κράτα το χρήσιμο αποτέλεσμα για την επόμενη φορά.",
       "steps": {
         "find": "Βρες χαρακτήρες με όνομα, ability, type, class, favorites ή enemy mechanics.",
-        "plan": "Φτιάξε την ομάδα χειροκίνητα μέσα στο Auto Team Builder, ζήτησε candidates ή εισήγαγε υπάρχον screenshot.",
+        "plan": "Φτιάξε την ομάδα χειροκίνητα, ζήτησε candidates από το Auto Team Builder ή εισήγαγε υπάρχον screenshot.",
         "save": "Αποθήκευσε teams, boxes, enemies και settings τοπικά, με import/export εργαλεία όταν χρειάζεται να μεταφέρεις δεδομένα."
       }
     }
@@ -413,6 +413,7 @@
     },
     "languageSwitcherAriaLabel": "Εναλλαγή γλώσσας",
     "languageSwitchTo": "Αλλαγή γλώσσας σε {{ language }}",
+    "manualTeamBuilder": "Manual Team Builder",
     "menuTitle": "Μενού",
     "navigationAriaLabel": "Κύρια πλοήγηση",
     "offline": "Offline",

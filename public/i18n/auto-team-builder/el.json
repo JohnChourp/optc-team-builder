@@ -333,7 +333,13 @@
     "downloadPresetJson": "Λήψη preset JSON",
     "downloadSavedTeamImportJson": "Λήψη Settings import JSON",
     "downloadTeamJson": "Λήψη team JSON",
-    "importPresetJson": "Εισαγωγή preset JSON"
+    "importPresetJson": "Εισαγωγή preset JSON",
+    "pauseBuild": "Παύση build",
+    "resumeBuild": "Συνέχεια build"
+  },
+  "paused": {
+    "title": "Το build είναι paused",
+    "copy": "Το current search σταμάτησε. Κατέβασε τώρα το preset JSON ή κάνε resume για restart με τα ίδια settings."
   },
   "performance": {
     "title": "Live worker scaling",
@@ -363,46 +369,6 @@
     "saveFailedDescription": "Δοκίμασε ξανά αφού αλλάξεις τα current filters ή τα saved character boxes.",
     "defaults": {
       "name": "Auto Builder Pool {{count}}"
-    }
-  },
-  "manualTeam": {
-    "title": "Χειροκίνητη ομάδα",
-    "copy": "Χρησιμοποίησε αυτά τα έξι σταθερά slots όταν ξέρεις ήδη την ομάδα και θέλεις να την αποθηκεύσεις χωρίς αυτόματο build.",
-    "fields": {
-      "name": "Όνομα πληρώματος",
-      "notes": "Σημειώσεις"
-    },
-    "ship": {
-      "label": "Ship",
-      "none": "Δεν έχει επιλεγεί ship",
-      "selected": "{{name}}"
-    },
-    "costBudget": {
-      "label": "Cost budget",
-      "default": "Χωρίς max team cost",
-      "active": "{{used}} / {{max}} cost. Μένουν {{remaining}}."
-    },
-    "slots": {
-      "empty": "Κενό slot",
-      "emptyAlt": "Κενό character slot",
-      "label": "Slot {{slot}}"
-    },
-    "picker": {
-      "assignedElsewhere": "Χρησιμοποιείται ήδη σε άλλο fixed slot.",
-      "copy": "Αναζήτησε στο catalog και βάλε χαρακτήρα στο active fixed slot.",
-      "empty": "Δεν βρέθηκαν χαρακτήρες για αυτό το manual team search.",
-      "searchPlaceholder": "Αναζήτηση χαρακτήρων για fixed team",
-      "title": "Assign slot {{slot}}"
-    },
-    "modal": {
-      "close": "Κλείσιμο manual team picker",
-      "eyebrow": "Fixed slot picker"
-    },
-    "actions": {
-      "assign": "Assign",
-      "assigned": "Assigned",
-      "editSlot": "Edit slot {{slot}}",
-      "save": "Αποθήκευση manual team"
     }
   },
   "manual": {
@@ -598,6 +564,7 @@
     "completed": "Η αναζήτηση ολοκληρώθηκε.",
     "currentStepElapsed": "Το current step τρέχει εδώ και {{duration}}",
     "exactAttempt": "Exact attempt {{current}} / {{total}}",
+    "estimatedFinish": "Εκτιμώμενο τέλος: {{time}} (μένουν {{duration}})",
     "fallbackAttempt": "Fallback attempt {{current}} / {{total}}",
     "allowingLeadersWithSuperEffects": "Επιτρέπονται leaders με super effects",
     "ignoringClasses": "Ignoring classes: {{classes}}",

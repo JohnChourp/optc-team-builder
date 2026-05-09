@@ -1,3 +1,4 @@
+import '@angular/compiler';
 import { type Route } from '@angular/router';
 import { describe, expect, it } from 'vitest';
 
@@ -74,6 +75,19 @@ describe('app routes', () => {
     expect(seo?.['title']).toBe('Auto Team Rumble Builder | OPTC Team Builder');
   });
 
+  it('registers the Manual Team Builder route inside tabs', () => {
+    const tabsRoute = findRouteByPath(routes, 'tabs');
+    const manualTeamBuilderRoute = tabsRoute?.children?.find(
+      (route) => route.path === 'manual-team-builder',
+    );
+    const seo = manualTeamBuilderRoute?.data?.['seo'] as Record<string, unknown> | undefined;
+
+    expect(manualTeamBuilderRoute).toBeDefined();
+    expect(manualTeamBuilderRoute?.loadComponent).toBeTypeOf('function');
+    expect(seo?.['title']).toBe('Manual Team Builder | OPTC Team Builder');
+    expect(seo?.['canonicalPath']).toBe('tabs/manual-team-builder');
+  });
+
   it('registers the Captain Coverage route inside tabs', () => {
     const tabsRoute = findRouteByPath(routes, 'tabs');
     const coverageRoute = tabsRoute?.children?.find((route) => route.path === 'captain-coverage');
@@ -134,6 +148,7 @@ describe('app routes', () => {
     const publicRoutePaths = [
       'characters',
       'auto-team-builder',
+      'manual-team-builder',
       'captain-coverage',
       'auto-team-builder-rumble',
       'rumble-characters',

@@ -16,7 +16,6 @@ vi.mock('./saved-teams-transfer.utils', async () => {
 });
 
 import { downloadSavedTeamsExport } from './saved-teams-transfer.utils';
-import { SavedTeamsPage } from './saved-teams.page';
 
 vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
@@ -34,6 +33,10 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonTitle: class {},
   IonToolbar: class {},
 }));
+
+vi.mock('@ionic/angular', () => ({}));
+
+import { SavedTeamsPage } from './saved-teams.page';
 
 describe('SavedTeamsPage', () => {
   afterEach(() => {

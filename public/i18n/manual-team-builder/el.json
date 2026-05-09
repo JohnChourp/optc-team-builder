@@ -1,0 +1,73 @@
+{
+  "actions": {
+    "assign": "Assign",
+    "assigned": "Assigned",
+    "editSlot": "Επεξεργασία slot {{slot}}",
+    "save": "Αποθήκευση manual team"
+  },
+  "builder": {
+    "copy": "Διάλεξε fixed slots, όρισε προαιρετικά ship και αποθήκευσε την ομάδα απευθείας στα Saved Teams.",
+    "title": "Χειροκίνητη ομάδα"
+  },
+  "condition": {
+    "roles": {
+      "captain": "Captain",
+      "friendCaptain": "Friend Captain"
+    },
+    "slotLabel": "Slot {{slot}}"
+  },
+  "costBudget": {
+    "label": "Cost budget",
+    "range": {
+      "max": "Max team cost",
+      "overBudget": "{{used}} / {{max}} cost. Καθάρισε slot ή αύξησε το max cost."
+    },
+    "support": {
+      "active": "{{used}} / {{max}} cost. Μένουν {{remaining}}.",
+      "default": "Χωρίς max team cost."
+    }
+  },
+  "fields": {
+    "name": "Όνομα πληρώματος",
+    "notes": "Σημειώσεις"
+  },
+  "hero": {
+    "copy": "Φτιάξε και αποθήκευσε μια γνωστή ομάδα χωρίς να τρέξεις automatic builder.",
+    "eyebrow": "Fixed crew builder",
+    "title": "Manual Team Builder"
+  },
+  "loading": "Φόρτωση manual team builder...",
+  "picker": {
+    "assignedElsewhere": "Χρησιμοποιείται ήδη σε άλλο fixed slot.",
+    "close": "Κλείσιμο character picker",
+    "copy": "Αναζήτησε στο catalog και βάλε χαρακτήρα στο active fixed slot.",
+    "empty": "Δεν βρέθηκαν χαρακτήρες για αυτό το manual team search.",
+    "eyebrow": "Slot picker",
+    "searchPlaceholder": "Αναζήτηση χαρακτήρων για fixed team",
+    "title": "Assign slot {{slot}}"
+  },
+  "save": {
+    "error": "Δεν ήταν δυνατή η αποθήκευση του manual team.",
+    "savingLabel": "Αποθήκευση...",
+    "success": "Το manual team αποθηκεύτηκε."
+  },
+  "ship": {
+    "actions": {
+      "change": "Επιλογή ship",
+      "confirm": "Εφαρμογή ship"
+    },
+    "emptyCopy": "Άφησε κενό ship για αυτό το saved team.",
+    "label": "Ship",
+    "none": "Δεν έχει επιλεγεί ship",
+    "picker": {
+      "copy": "Διάλεξε το ship που θα αποθηκευτεί με αυτό το manual team.",
+      "title": "Επιλογή manual team ship"
+    }
+  },
+  "slots": {
+    "empty": "Κενό slot",
+    "emptyAlt": "Κενό character slot",
+    "label": "Slot {{slot}}"
+  },
+  "title": "Manual Team Builder"
+}

@@ -58,6 +58,21 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'manual-team-builder',
+            data: {
+              seo: {
+                title: 'Manual Team Builder | OPTC Team Builder',
+                description:
+                  'Build and save fixed OPTC crews manually with character slots, an optional ship, and a local cost budget.',
+                canonicalPath: 'tabs/manual-team-builder',
+              },
+            },
+            loadComponent: () =>
+              import('./pages/manual-team-builder/manual-team-builder.page').then(
+                (module) => module.ManualTeamBuilderPage,
+              ),
+          },
+          {
             path: 'captain-coverage',
             data: {
               seo: {

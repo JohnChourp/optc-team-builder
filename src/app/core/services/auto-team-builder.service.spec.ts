@@ -1606,6 +1606,52 @@ describe('Auto team builder', () => {
     expect(result?.slots.some((slot) => slot.character.id === 2797)).toBe(false);
   });
 
+  it('relaxes a manual sub with a composite in-game conflict like General Franky and Law & Chopper', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 3574,
+          name: 'General Franky - Dream Docking',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.5x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 5830,
+          name: 'Portgas D. Ace',
+          primaryClass: 'Fighter',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Fighter characters by 5.25x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 3330,
+          name: 'Law & Chopper - Dynamic Doctor Duo',
+          primaryClass: 'Fighter',
+          detail: {
+            specialText: 'Reduces Paralysis duration by 3 turns.',
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requireUniqueBaseCharacterNames: true,
+        manualSlots: createManualSlots({
+          captain: [3574],
+          friendCaptain: [5830],
+          sub1: [3330],
+        }),
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 3330)).toBe(false);
+  });
+
   it('allows a composite in-game conflict when the unique-name toggle is off', () => {
     const result = buildAutoTeamResult(
       [

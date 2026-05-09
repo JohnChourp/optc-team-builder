@@ -1881,6 +1881,13 @@
 
 .loading-card__action {
   margin: 0;
+}
+
+.loading-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
   align-self: start;
   justify-self: end;
 }
@@ -1929,137 +1936,6 @@
 .build-submit-button.button-disabled {
   --box-shadow: none;
   opacity: 0.64;
-}
-
-.fixed-manual-team-card {
-  display: grid;
-  gap: 14px;
-  margin-top: 16px;
-  padding: 14px;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.fixed-manual-team-fields,
-.fixed-manual-team-picker,
-.fixed-manual-team-candidates {
-  display: grid;
-  gap: 10px;
-  min-width: 0;
-}
-
-.fixed-manual-team-ship {
-  display: grid;
-  gap: 4px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.fixed-manual-team-ship span {
-  color: rgba(248, 251, 255, 0.62);
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.fixed-manual-team-ship strong {
-  color: #ffffff;
-  line-height: 1.35;
-}
-
-.fixed-manual-team-slots {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.fixed-manual-team-slot {
-  display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  min-height: 74px;
-  padding: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  color: #f8fbff;
-  cursor: pointer;
-  font: inherit;
-  text-align: left;
-}
-
-.fixed-manual-team-slot:focus-visible {
-  outline: 2px solid rgba(245, 200, 76, 0.72);
-  outline-offset: 2px;
-}
-
-.fixed-manual-team-slot--empty {
-  cursor: default;
-}
-
-.fixed-manual-team-slot--active {
-  border-color: rgba(245, 200, 76, 0.46);
-  background: rgba(245, 200, 76, 0.1);
-}
-
-.fixed-manual-team-slot img {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  object-fit: cover;
-}
-
-.fixed-manual-team-slot span {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-}
-
-.fixed-manual-team-slot strong,
-.fixed-manual-team-slot small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.fixed-manual-team-slot small {
-  color: rgba(248, 251, 255, 0.68);
-}
-
-.fixed-manual-team-slot__edit {
-  align-self: start;
-  justify-self: end;
-  min-height: 34px;
-  margin: -4px -4px 0 0;
-  --padding-start: 8px;
-  --padding-end: 8px;
-}
-
-.fixed-manual-team-slot__clear {
-  grid-column: 1 / -1;
-  justify-self: start;
-  margin: 0;
-}
-
-.fixed-manual-team-candidates {
-  max-height: min(58vh, 520px);
-  overflow-y: auto;
-  padding-right: 2px;
-}
-
-.fixed-manual-team-candidate--assigned-other {
-  border-color: rgba(255, 255, 255, 0.16);
-}
-
-.fixed-manual-team-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 10px;
 }
 
 .download-preset-button {
@@ -2176,14 +2052,6 @@ ion-toggle {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .fixed-manual-team-fields {
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-  }
-
-  .fixed-manual-team-slots {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   .manual-copy-modal__shell {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: start;
@@ -2287,6 +2155,11 @@ ion-toggle {
   }
 
   .loading-card__action {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .loading-card__actions {
     width: 100%;
     justify-self: stretch;
   }

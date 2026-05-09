@@ -10,16 +10,16 @@ describe('TabsPage', () => {
     expect(template).toContain('<ion-menu');
     expect(template).toContain('id="tabs-menu-content"');
     expect(template).toContain('<ion-accordion-group');
-    expect(template).toContain('[animated]="false"');
+    expect(template).toContain('[animated]="true"');
     expect(template).toContain('[multiple]="false"');
     expect(template).toContain('value="browse"');
     expect(template).toContain('[routerLink]="[item.route]"');
     expect(template).toContain('[routerLink]="[settingsNavItem.route]"');
-    expect(template).toContain('"tabs.menuTitle" | transloco');
+    expect(template).toContain("'tabs.menuTitle' | transloco");
     expect(template).toContain("'tabs.navigationAriaLabel' | transloco");
     expect(template).toContain('class="tabs-menu__footer"');
     expect(template).toContain("'tabs.languageSwitcherAriaLabel' | transloco");
-    expect(template).toContain("'tabs.languageSwitchTo' | transloco");
+    expect(template).toContain("'tabs.languageSwitchTo'");
     expect(template).not.toContain('"tabs.menuCopy" | transloco');
     expect(template).not.toContain('<ion-tab-bar');
   });
@@ -41,6 +41,8 @@ describe('TabsPage', () => {
     expect(component).not.toContain("'tabs.team'");
     expect(component).toContain("'tabs.auto'");
     expect(component).toContain("route: '/tabs/auto-team-builder'");
+    expect(component).toContain("'tabs.manualTeamBuilder'");
+    expect(component).toContain("route: '/tabs/manual-team-builder'");
     expect(component).toContain("'tabs.captainCoverage'");
     expect(component).toContain("route: '/tabs/captain-coverage'");
     expect(component).toContain("'tabs.autoRumble'");
@@ -51,6 +53,12 @@ describe('TabsPage', () => {
     expect(component.indexOf("id: 'build'")).toBeLessThan(component.indexOf("id: 'saved-sync'"));
     expect(component.indexOf("'tabs.home'")).toBeLessThan(
       component.indexOf("'tabs.rumbleCharacters'"),
+    );
+    expect(component.indexOf("'tabs.auto'")).toBeLessThan(
+      component.indexOf("'tabs.manualTeamBuilder'"),
+    );
+    expect(component.indexOf("'tabs.manualTeamBuilder'")).toBeLessThan(
+      component.indexOf("'tabs.captainCoverage'"),
     );
     expect(component.indexOf("'tabs.auto'")).toBeLessThan(
       component.indexOf("'tabs.crewForge'"),

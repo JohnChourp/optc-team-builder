@@ -85,6 +85,7 @@ import {
   type CharacterListItem,
   type CharacterBox,
   type DatasetManifest,
+  type SavedTeam,
   type ShipRecord,
 } from '../../core/models/optc.models';
 import {
@@ -125,6 +126,7 @@ import { buildAutoTeamBuilderStateFromSavedTeam } from './auto-team-builder-save
 import {
   buildSavedTeamsTransferPayload,
   downloadSavedTeamsExport,
+  type SavedTeamsTransferPayload,
 } from '../saved-teams/saved-teams-transfer.utils';
 import {
   AbilityRequirementPickerComponent,
@@ -261,14 +263,6 @@ type ManualSlotSelectedCharacterView = CharacterListItem & {
   isRequiredInManualSlot: boolean;
 };
 
-interface FixedManualTeamCandidateCardView {
-  character: CharacterDetailRecord;
-  subtitle: string;
-  isAssignedToActiveSlot: boolean;
-  isAssignedToAnotherSlot: boolean;
-  actionLabel: string;
-}
-
 interface ShipCandidateCardView {
   ship: ShipRecord;
   subtitle: string;
@@ -392,7 +386,6 @@ interface AutoTeamBuilderDefaultFilterState {
 }
 
 const AUTO_TEAM_BUILD_BUTTON_LABEL = 'Auto Team Build';
-const FIXED_MANUAL_TEAM_SLOT_COUNT = 6;
 const CHARACTER_TAG_SUGGESTION_LIMIT = 12;
 const CHARACTER_PICKER_PAGE_SIZE = 10;
 const CHARACTER_PICKER_SCROLL_LOAD_THRESHOLD_PX = 144;
@@ -405,10 +398,6 @@ const EXTRA_DROP_ABILITY_KEY_SET = new Set([
   EXTRA_DROP_ANY_ABILITY_KEY,
   EXTRA_DROP_GUARANTEED_ABILITY_KEY,
 ]);
-
-function createEmptyFixedManualTeamSlots(): Array<CharacterDetailRecord | null> {
-  return Array.from({ length: FIXED_MANUAL_TEAM_SLOT_COUNT }, () => null);
-}
 
 function createCharacterPickerPanelState(): CharacterPickerPanelState {
   return {
@@ -529,8 +518,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   private buildAbortController: AbortController | null = null;
   private resetAfterBuildCancellation = false;
+  private pauseAfterBuildCancellation = false;
   private destroyed = false;
   private readonly buildProgressNowMs = signal(0);
+  private readonly buildProgressSnapshotReceivedAtMs = signal<number | null>(null);
   private readonly currentBuildStepStartedAtMs = signal<number | null>(null);
   private readonly buildProgressFloorPercent = signal(0);
   private progressTicker: ReturnType<typeof globalThis.setInterval> | null = null;
@@ -625,7 +616,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly manualPickerModalOpen = signal(false);
   public readonly excludePickerModalOpen = signal(false);
   public readonly requirementSourceModalOpen = signal(false);
-  public readonly fixedManualTeamPickerModalOpen = signal(false);
   public readonly manualSlots = signal<AutoBuildManualSlotSelection[]>(
     createEmptyAutoBuildManualSlots(),
   );
@@ -634,17 +624,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly manualCopySourceRole = signal<AutoBuildManualSlotRole>('captain');
   public readonly manualCopySelectedCharacterIds = signal<number[]>([]);
   public readonly manualCopyTargetRoles = signal<AutoBuildManualSlotRole[]>([]);
-  public readonly fixedManualTeamSlots = signal<Array<CharacterDetailRecord | null>>(
-    createEmptyFixedManualTeamSlots(),
-  );
-  public readonly fixedManualTeamSelectedSlotIndex = signal(0);
-  public readonly fixedManualTeamSearchTerm = signal('');
-  public readonly fixedManualTeamCandidates = signal<CharacterDetailRecord[]>([]);
-  public readonly fixedManualTeamName = signal('');
-  public readonly fixedManualTeamNotes = signal('');
-  public readonly fixedManualTeamCurrentTeamId = signal<string | null>(null);
-  public readonly fixedManualTeamSaveUiLocked = signal(false);
-  public readonly fixedManualTeamSaveFeedbackError = signal('');
   public readonly lockedCharacterRecords = signal<Record<number, CharacterListItem>>({});
   public readonly excludedCharacterIds = signal<number[]>([]);
   public readonly selectedManualShipId = signal<number | null>(null);
@@ -667,6 +646,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly teamName = signal('');
   public readonly notes = signal('');
   public readonly building = signal(false);
+  public readonly buildPaused = signal(false);
   public readonly buildProgress = signal<AutoBuildProgressSnapshot | null>(null);
   public readonly result = signal<AutoBuildResult | null>(null);
   public readonly errorMessage = signal('');
@@ -1063,68 +1043,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.manualCopySourceCharacters().length === 0 ||
       this.manualCopySelectedCharacterIds().length === 0 ||
       this.manualCopyTargetRoles().length === 0,
-  );
-  public readonly fixedManualTeamFilledSlotCount = computed(
-    () => this.fixedManualTeamSlots().filter(Boolean).length,
-  );
-  public readonly fixedManualTeamSaveDisabled = computed(
-    () => this.fixedManualTeamSaveUiLocked() || this.fixedManualTeamFilledSlotCount() === 0,
-  );
-  public readonly fixedManualTeamSelectedSlot = computed(
-    () => this.fixedManualTeamSlots()[this.fixedManualTeamSelectedSlotIndex()] ?? null,
-  );
-  public readonly fixedManualTeamSelectedShipLabel = computed(() => {
-    const selectedShip = this.selectedManualShip();
-
-    return selectedShip
-      ? this.t('manualTeam.ship.selected', { name: selectedShip.name })
-      : this.t('manualTeam.ship.none');
-  });
-  public readonly fixedManualTeamBudgetCost = computed(() =>
-    this.fixedManualTeamSlots().reduce((total, character, index) => {
-      if (!character || index === 1) {
-        return total;
-      }
-
-      return total + character.cost;
-    }, 0),
-  );
-  public readonly fixedManualTeamRemainingCost = computed(() =>
-    this.resolveRemainingCostValue(this.fixedManualTeamBudgetCost()),
-  );
-  public readonly fixedManualTeamCostBudgetLabel = computed(() =>
-    this.hasActiveMaxTotalCost()
-      ? this.t('manualTeam.costBudget.active', {
-          used: this.fixedManualTeamBudgetCost(),
-          remaining: this.fixedManualTeamRemainingCost(),
-          max: this.maxTotalCost() ?? 0,
-        })
-      : this.t('manualTeam.costBudget.default'),
-  );
-  public readonly fixedManualTeamCandidateCards = computed<FixedManualTeamCandidateCardView[]>(
-    () => {
-      const activeIndex = this.fixedManualTeamSelectedSlotIndex();
-      const slots = this.fixedManualTeamSlots();
-
-      return this.fixedManualTeamCandidates()
-        .filter((character) => this.canAssignFixedManualTeamCharacter(character))
-        .map((character) => {
-          const assignedSlotIndex = slots.findIndex((slot) => slot?.id === character.id);
-
-          return {
-            character,
-            subtitle: [character.type, character.primaryClass, character.secondaryClass]
-              .filter((value): value is string => Boolean(value))
-              .join(' • '),
-            isAssignedToActiveSlot: assignedSlotIndex === activeIndex,
-            isAssignedToAnotherSlot: assignedSlotIndex !== -1 && assignedSlotIndex !== activeIndex,
-            actionLabel:
-              assignedSlotIndex === activeIndex
-                ? this.t('manualTeam.actions.assigned')
-                : this.t('manualTeam.actions.assign'),
-          };
-        });
-    },
   );
   public readonly clearAllButtonDisabled = computed(
     () =>
@@ -1966,11 +1884,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     return progress ? this.t('progress.searchMeaning') : '';
   });
-  public readonly buildWorstCaseEtaLabel = computed(() => {
-    const estimatedRemainingMs = this.buildProgress()?.estimatedRemainingMs;
+  public readonly buildEstimatedFinishLabel = computed(() => {
+    const progress = this.buildProgress();
+    const estimatedRemainingMs = progress ? this.resolveBuildEstimatedRemainingMs(progress) : null;
 
-    return typeof estimatedRemainingMs === 'number'
-      ? this.t('progress.worstCaseEta', {
+    return typeof estimatedRemainingMs === 'number' && estimatedRemainingMs > 0
+      ? this.t('progress.estimatedFinish', {
+          time: this.formatEtaClockTime(this.resolveBuildEtaNowMs() + estimatedRemainingMs),
           duration: this.formatApproximateDuration(estimatedRemainingMs),
         })
       : '';
@@ -2049,7 +1969,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       },
       {
         key: 'eta',
-        text: this.buildWorstCaseEtaLabel(),
+        text: this.buildEstimatedFinishLabel(),
         tone: 'fallback',
       },
       {
@@ -2066,6 +1986,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }));
   });
   public readonly cancelBuildButtonLabel = computed(() => this.t('actions.cancelBuild'));
+  public readonly pauseBuildButtonLabel = computed(() => this.t('actions.pauseBuild'));
+  public readonly resumeBuildButtonLabel = computed(() => this.t('actions.resumeBuild'));
+  public readonly pausedBuildTitle = computed(() => this.t('paused.title'));
+  public readonly pausedBuildCopy = computed(() => this.t('paused.copy'));
   public readonly candidatePoolLabel = computed(() => {
     const isFavoritesOnly = this.result()?.input.favoritesOnly ?? this.favoritesOnly();
 
@@ -2395,28 +2319,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.formatAbilityRequirement(requirement),
     ),
   );
-  public readonly canDownloadSelectionJson = computed(
-    () =>
-      !this.building() &&
-      (this.hasSelectedTypes() ||
-        this.hasSelectedClasses() ||
-        this.hasSelectedCharacterTags() ||
-        this.hasSelectedCharacterNames() ||
-        this.pageEnemyMechanics().length > 0 ||
-        this.hasRequiredAbilities() ||
-        this.hasActiveCostRanges() ||
-        this.hasActiveMaxTotalCost() ||
-        this.requireAllSelectedTypesInTeam() ||
-        this.requireAllSelectedClassesPerCharacter() ||
-        this.requireAllSelectedCharacterTagsInTeam() ||
-        this.requireAllSelectedCharacterNamesInTeam() ||
-        this.favoritesOnly() ||
-        this.favoriteShipsOnly() ||
-        this.hasSelectedManualShip() ||
-        this.hasLockedCharacters() ||
-        this.hasExcludedCharacters() ||
-        this.hasExcludedShips()),
-  );
+  public readonly canDownloadSelectionJson = computed(() => true);
   public readonly canDownloadAbilityCatalogJson = computed(
     () => !this.building() && this.availableAbilityCatalogItems().length > 0,
   );
@@ -2465,40 +2368,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       slots: slots.map((slot) => slot.character),
     });
   });
-  public readonly fixedManualTeamConditionStatus = computed<CaptainTeamConditionStatus | null>(
-    () => {
-      const slots = this.fixedManualTeamSlots();
-
-      if (!slots.some(Boolean)) {
-        return null;
-      }
-
-      return resolveCaptainTeamConditionStatus({
-        expectedSlotCount: FIXED_MANUAL_TEAM_SLOT_COUNT,
-        coverageMode:
-          this.requireFullCaptainAbilityCoverage() ||
-          this.requireBothLeadersFullCaptainAbilityCoverage()
-            ? 'fullAbilityCoverage'
-            : 'simpleBoostScope',
-        leaders: [
-          {
-            role: 'captain',
-            label: this.t('results.teamSlots.roles.captain'),
-            character: slots[0] ?? null,
-          },
-          {
-            role: 'friendCaptain',
-            label: this.t('results.teamSlots.roles.friendCaptain'),
-            character: slots[1] ?? null,
-          },
-        ],
-        slotLabels: slots.map((_slot, index) =>
-          this.t('manualTeam.slots.label', { slot: index + 1 }),
-        ),
-        slots,
-      });
-    },
-  );
   public readonly teamSlots = computed<TeamSlotViewModel[]>(() => {
     const currentResult = this.result();
     let subSlotIndex = 0;
@@ -2565,7 +2434,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       ),
     );
     this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
-    this.fixedManualTeamName.set(this.i18n.translate('common.defaults.newCrew'));
   }
 
   public async ngOnInit(): Promise<void> {
@@ -2607,7 +2475,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.closeManualPickerModal();
     this.closeExcludePickerModal();
     this.closeRequirementSourceModal();
-    this.closeFixedManualTeamPickerModal();
   }
 
   public async ionViewWillEnter(): Promise<void> {
@@ -2820,130 +2687,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public onNotesChange(event: CustomEvent<{ value?: string | null }>): void {
     this.notes.set((event.detail.value ?? '').toString());
-  }
-
-  public onFixedManualTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {
-    this.fixedManualTeamName.set((event.detail.value ?? '').trimStart());
-  }
-
-  public onFixedManualTeamNotesChange(event: CustomEvent<{ value?: string | null }>): void {
-    this.fixedManualTeamNotes.set((event.detail.value ?? '').toString());
-  }
-
-  public async onFixedManualTeamSearchChange(
-    event: CustomEvent<{ value?: string | null }>,
-  ): Promise<void> {
-    this.fixedManualTeamSearchTerm.set((event.detail.value ?? '').trim());
-    await this.refreshFixedManualTeamCandidates();
-  }
-
-  public selectFixedManualTeamSlot(index: number): void {
-    if (index < 0 || index >= FIXED_MANUAL_TEAM_SLOT_COUNT) {
-      return;
-    }
-
-    this.fixedManualTeamSelectedSlotIndex.set(index);
-  }
-
-  public async openFixedManualTeamPickerModal(index: number): Promise<void> {
-    if (index < 0 || index >= FIXED_MANUAL_TEAM_SLOT_COUNT) {
-      return;
-    }
-
-    this.fixedManualTeamSelectedSlotIndex.set(index);
-    await this.refreshFixedManualTeamCandidates();
-    this.fixedManualTeamPickerModalOpen.set(true);
-  }
-
-  public closeFixedManualTeamPickerModal(): void {
-    this.fixedManualTeamPickerModalOpen.set(false);
-  }
-
-  public async openFixedManualTeamSlotDetail(index: number): Promise<void> {
-    if (index < 0 || index >= FIXED_MANUAL_TEAM_SLOT_COUNT) {
-      return;
-    }
-
-    const character = this.fixedManualTeamSlots()[index];
-    const detailLink = this.getCharacterDetailLink(character);
-
-    if (!detailLink) {
-      return;
-    }
-
-    await this.router.navigate(detailLink);
-  }
-
-  public assignFixedManualTeamCharacter(character: CharacterDetailRecord): void {
-    const selectedSlotIndex = this.fixedManualTeamSelectedSlotIndex();
-
-    if (!this.canAssignFixedManualTeamCharacter(character)) {
-      return;
-    }
-
-    this.fixedManualTeamSlots.update((currentSlots) =>
-      currentSlots.map((slot, index) => (index === selectedSlotIndex ? character : slot)),
-    );
-    this.fixedManualTeamCurrentTeamId.set(null);
-    this.fixedManualTeamSaveFeedbackError.set('');
-    this.closeFixedManualTeamPickerModal();
-  }
-
-  public clearFixedManualTeamSlot(index: number, event?: Event): void {
-    event?.stopPropagation();
-
-    if (index < 0 || index >= FIXED_MANUAL_TEAM_SLOT_COUNT) {
-      return;
-    }
-
-    this.fixedManualTeamSlots.update((currentSlots) =>
-      currentSlots.map((slot, slotIndex) => (slotIndex === index ? null : slot)),
-    );
-    this.fixedManualTeamCurrentTeamId.set(null);
-    this.fixedManualTeamSaveFeedbackError.set('');
-  }
-
-  public async saveFixedManualTeam(): Promise<void> {
-    if (this.fixedManualTeamSaveDisabled()) {
-      return;
-    }
-
-    this.fixedManualTeamSaveUiLocked.set(true);
-    this.fixedManualTeamSaveFeedbackError.set('');
-
-    try {
-      const saved = await this.userState.saveTeam({
-        id: this.fixedManualTeamCurrentTeamId() ?? undefined,
-        name: this.fixedManualTeamName(),
-        notes: this.fixedManualTeamNotes(),
-        shipId: this.selectedManualShipId(),
-        slots: this.fixedManualTeamSlots().map((character) => character?.id ?? null),
-      });
-
-      this.fixedManualTeamCurrentTeamId.set(saved.id);
-    } catch (error) {
-      console.error(error);
-
-      if (this.destroyed) {
-        return;
-      }
-
-      this.fixedManualTeamSaveFeedbackError.set(this.t('save.error'));
-    } finally {
-      if (!this.destroyed) {
-        this.fixedManualTeamSaveUiLocked.set(false);
-      }
-    }
-  }
-
-  public resetFixedManualTeam(): void {
-    this.closeFixedManualTeamPickerModal();
-    this.fixedManualTeamSlots.set(createEmptyFixedManualTeamSlots());
-    this.fixedManualTeamSelectedSlotIndex.set(0);
-    this.fixedManualTeamName.set(this.i18n.translate('common.defaults.newCrew'));
-    this.fixedManualTeamNotes.set('');
-    this.fixedManualTeamCurrentTeamId.set(null);
-    this.fixedManualTeamSaveFeedbackError.set('');
   }
 
   public setShipPickerMode(mode: 'characters' | 'ships'): void {
@@ -4068,6 +3811,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const abortController = new AbortController();
 
     this.buildAbortController = abortController;
+    this.buildPaused.set(false);
+    this.pauseAfterBuildCancellation = false;
     this.building.set(true);
     this.resetBuildState();
     this.startBuildProgressTicker();
@@ -4134,6 +3879,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           return;
         }
 
+        if (this.pauseAfterBuildCancellation) {
+          this.result.set(previousResult);
+          this.currentTeamId.set(previousTeamId);
+          this.errorMessage.set('');
+          this.buildPaused.set(true);
+          this.pauseAfterBuildCancellation = false;
+          return;
+        }
+
         this.result.set(previousResult);
         this.currentTeamId.set(previousTeamId);
         this.errorMessage.set('');
@@ -4158,7 +3912,28 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   public cancelBuild(): void {
+    this.pauseAfterBuildCancellation = false;
+    this.buildPaused.set(false);
     this.buildAbortController?.abort();
+  }
+
+  public pauseBuild(): void {
+    if (!this.building()) {
+      return;
+    }
+
+    this.pauseAfterBuildCancellation = true;
+    this.buildAbortController?.abort();
+  }
+
+  public async resumeBuild(): Promise<void> {
+    if (!this.buildPaused()) {
+      return;
+    }
+
+    this.buildPaused.set(false);
+    this.pauseAfterBuildCancellation = false;
+    await this.buildTeam();
   }
 
   public async resetPage(): Promise<void> {
@@ -4228,6 +4003,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return null;
     }
 
+    const generatedTeamExport = this.buildTeamExportPayload(exportedAt);
+    const savedTeamImport = this.buildSavedTeamImportPayload(exportedAt);
+
     return buildAutoTeamSelectionExportPayload({
       selectedTypes: this.selectedTypes(),
       selectedClasses: this.selectedClasses(),
@@ -4270,6 +4048,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       manualShip: this.selectedManualShip(),
       excludedShipIds: this.excludedShipIds(),
       excludedShips: this.excludedShips(),
+      generatedTeamExport,
+      savedTeamImport,
       exportedAt,
     });
   }
@@ -4447,6 +4227,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   private resetBuildState(): void {
+    this.buildPaused.set(false);
     this.buildProgress.set(null);
     this.buildProgressFloorPercent.set(0);
     this.result.set(null);
@@ -4458,12 +4239,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   private handleBuildProgressSnapshot(snapshot: AutoBuildProgressSnapshot): void {
     const previous = this.buildProgress();
+    const receivedAt = Date.now();
 
     if (
       !previous ||
       this.resolveBuildProgressStepKey(previous) !== this.resolveBuildProgressStepKey(snapshot)
     ) {
-      this.currentBuildStepStartedAtMs.set(Date.now());
+      this.currentBuildStepStartedAtMs.set(receivedAt);
     }
 
     this.buildProgressFloorPercent.set(
@@ -4471,6 +4253,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         ? 100
         : Math.max(this.buildProgressFloorPercent(), this.resolveBuildProgressPercent(snapshot)),
     );
+    this.buildProgressSnapshotReceivedAtMs.set(receivedAt);
     this.buildProgress.set(snapshot);
   }
 
@@ -4485,6 +4268,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.stopBuildProgressTicker();
     this.currentBuildStepStartedAtMs.set(Date.now());
     this.buildProgressNowMs.set(Date.now());
+    this.buildProgressSnapshotReceivedAtMs.set(null);
     this.progressTicker = globalThis.setInterval(
       () => this.buildProgressNowMs.set(Date.now()),
       1000,
@@ -4498,6 +4282,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     this.currentBuildStepStartedAtMs.set(null);
+    this.buildProgressSnapshotReceivedAtMs.set(null);
   }
 
   private async resetPageState(): Promise<void> {
@@ -4548,18 +4333,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.manualPickerModalOpen.set(false);
     this.excludePickerModalOpen.set(false);
     this.requirementSourceModalOpen.set(false);
-    this.fixedManualTeamPickerModalOpen.set(false);
     this.manualSlots.set(createEmptyAutoBuildManualSlots());
     this.activeManualSlotRole.set('captain');
-    this.fixedManualTeamSlots.set(createEmptyFixedManualTeamSlots());
-    this.fixedManualTeamSelectedSlotIndex.set(0);
-    this.fixedManualTeamSearchTerm.set('');
-    this.fixedManualTeamCandidates.set([]);
-    this.fixedManualTeamName.set(this.i18n.translate('common.defaults.newCrew'));
-    this.fixedManualTeamNotes.set('');
-    this.fixedManualTeamCurrentTeamId.set(null);
-    this.fixedManualTeamSaveUiLocked.set(false);
-    this.fixedManualTeamSaveFeedbackError.set('');
     this.excludedCharacterIds.set([]);
     this.selectedManualShipId.set(null);
     this.excludedShipIds.set([]);
@@ -4597,28 +4372,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.loadedEnemyPresetName.set(null);
     this.resetBuildState();
     this.syncShipPickerPanelStates();
-    await Promise.all([this.refreshCharacterPickPanels(), this.refreshFixedManualTeamCandidates()]);
+    await this.refreshCharacterPickPanels();
   }
 
   private async importSelectionPreset(file: File): Promise<void> {
     try {
       const rawContent = await file.text();
       const payload = parseAutoTeamSelectionImportPayload(rawContent);
-      const importedCharacterIds = [
-        ...new Set([
-          ...payload.manualSelection.lockedCharacterIds.filter((characterId) => characterId > 0),
-          ...(Array.isArray(payload.manualSelection.excludedCharacterIds)
-            ? payload.manualSelection.excludedCharacterIds.filter((characterId) => characterId > 0)
-            : []),
-          ...(Array.isArray(payload.manualSelection.manualSlots)
-            ? payload.manualSelection.manualSlots.flatMap((slot) =>
-                Array.isArray(slot.characterIds)
-                  ? slot.characterIds.filter((characterId) => characterId > 0)
-                  : [],
-              )
-            : []),
-        ]),
-      ];
+      const importedCharacterIds = this.collectSelectionPresetImportCharacterIds(payload);
       const availableLockedCharacters =
         await this.repository.getCharactersByIds(importedCharacterIds);
       const importResult = sanitizeAutoTeamSelectionImportPayload(payload, {
@@ -4629,7 +4390,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         availableShips: this.ships(),
       });
 
-      await this.applyImportedSelectionPreset(importResult, availableLockedCharacters, file.name);
+      await this.applyImportedSelectionPreset(
+        importResult,
+        availableLockedCharacters,
+        file.name,
+        payload,
+      );
     } catch (error) {
       this.presetImportFeedback.set({
         tone: 'error',
@@ -4639,12 +4405,145 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
   }
 
+  private collectSelectionPresetImportCharacterIds(
+    payload: AutoTeamSelectionExportPayload,
+  ): number[] {
+    const characterIds = new Set<number>();
+    const addCharacterId = (characterId: unknown): void => {
+      if (typeof characterId === 'number' && Number.isInteger(characterId) && characterId > 0) {
+        characterIds.add(characterId);
+      }
+    };
+
+    payload.manualSelection.lockedCharacterIds.forEach(addCharacterId);
+
+    if (Array.isArray(payload.manualSelection.excludedCharacterIds)) {
+      payload.manualSelection.excludedCharacterIds.forEach(addCharacterId);
+    }
+
+    if (Array.isArray(payload.manualSelection.manualSlots)) {
+      payload.manualSelection.manualSlots.forEach((slot) => {
+        if (Array.isArray(slot.characterIds)) {
+          slot.characterIds.forEach(addCharacterId);
+        }
+      });
+    }
+
+    if (Array.isArray(payload.generatedTeamExport?.team)) {
+      payload.generatedTeamExport.team.forEach((slot) => addCharacterId(slot.character?.id));
+    }
+
+    this.resolveEmbeddedPresetSavedTeam(payload)?.slots.forEach(addCharacterId);
+
+    return [...characterIds];
+  }
+
+  private applyEmbeddedPresetTeam(
+    payload: AutoTeamSelectionExportPayload,
+    availableCharacters: CharacterListItem[],
+    warnings: AutoTeamSelectionImportMessage[],
+  ): void {
+    const savedTeam = this.resolveEmbeddedPresetSavedTeam(payload);
+    const generatedTeamSlotIds = Array.isArray(payload.generatedTeamExport?.team)
+      ? payload.generatedTeamExport.team
+          .slice()
+          .sort((left, right) => left.slotIndex - right.slotIndex)
+          .map((slot) => slot.character?.id)
+      : null;
+    const embeddedSlotIds = savedTeam?.slots ?? generatedTeamSlotIds;
+
+    if (!embeddedSlotIds) {
+      return;
+    }
+
+    const availableCharacterIdSet = new Set(availableCharacters.map((character) => character.id));
+    const manualSlots = createEmptyAutoBuildManualSlots();
+    let missingCharacterCount = 0;
+
+    embeddedSlotIds.forEach((characterId, index) => {
+      const role = AUTO_BUILD_MANUAL_SLOT_ROLES[index];
+
+      if (!role || typeof characterId !== 'number' || characterId <= 0) {
+        return;
+      }
+
+      if (!availableCharacterIdSet.has(characterId)) {
+        missingCharacterCount += 1;
+        return;
+      }
+
+      const manualSlot = manualSlots.find((slot) => slot.role === role);
+
+      if (manualSlot) {
+        manualSlot.characterIds = [characterId];
+      }
+    });
+
+    if (missingCharacterCount > 0) {
+      warnings.push({
+        key: 'preset.warnings.missingLockedCharacters',
+        params: { count: missingCharacterCount },
+      });
+    }
+
+    this.cacheCharacterRecords(availableCharacters);
+    this.manualSlots.set(manualSlots);
+    this.activeManualSlotRole.set(this.resolveInitialManualSlotRole(manualSlots));
+    this.applyEmbeddedPresetTeamShip(payload, savedTeam, warnings);
+
+    if (savedTeam) {
+      this.teamName.set(savedTeam.name);
+      this.notes.set(savedTeam.notes);
+    }
+  }
+
+  private applyEmbeddedPresetTeamShip(
+    payload: AutoTeamSelectionExportPayload,
+    savedTeam: SavedTeam | null,
+    warnings: AutoTeamSelectionImportMessage[],
+  ): void {
+    const embeddedShipId =
+      savedTeam?.shipId ?? payload.generatedTeamExport?.shipSelection?.ship.id ?? null;
+
+    if (typeof embeddedShipId !== 'number') {
+      this.selectedManualShipId.set(null);
+      return;
+    }
+
+    const shipExists = this.ships().some((ship) => ship.id === embeddedShipId);
+
+    if (shipExists) {
+      this.selectedManualShipId.set(embeddedShipId);
+      return;
+    }
+
+    this.selectedManualShipId.set(null);
+    warnings.push({
+      key: 'preset.warnings.missingManualShip',
+      params: { count: 1 },
+    });
+  }
+
+  private resolveEmbeddedPresetSavedTeam(
+    payload: AutoTeamSelectionExportPayload,
+  ): SavedTeam | null {
+    if (!Array.isArray(payload.savedTeamImport?.teams)) {
+      return null;
+    }
+
+    const team = payload.savedTeamImport.teams[0];
+
+    return team && Array.isArray(team.slots) ? team : null;
+  }
+
   private async applyImportedSelectionPreset(
     importResult: AutoTeamSelectionImportResult,
     availableLockedCharacters: CharacterListItem[],
     fileName: string,
+    payload: AutoTeamSelectionExportPayload,
   ): Promise<void> {
     await this.applySelectionPresetState(importResult.state, availableLockedCharacters);
+    this.applyEmbeddedPresetTeam(payload, availableLockedCharacters, importResult.warnings);
 
     this.presetImportFeedback.set({
       tone: importResult.warnings.length > 0 ? 'warning' : 'success',
@@ -4964,20 +4863,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.refreshAppliedManualCandidates(),
       this.refreshAppliedExcludedCandidates(),
     ]);
-  }
-
-  private async refreshFixedManualTeamCandidates(): Promise<void> {
-    const candidates = await this.repository.searchDetailedCharacters({
-      searchTerm: this.fixedManualTeamSearchTerm().trim(),
-      selectedTypes: [],
-      selectedClasses: [],
-      sortMode: 'powerFirst',
-      limit: 24,
-      offset: 0,
-    });
-
-    this.fixedManualTeamCandidates.set(this.dedupeCharacterRecords(candidates));
-    this.cacheCharacterRecords(candidates);
   }
 
   private async refreshRequirementSourceCandidates(): Promise<void> {
@@ -6196,27 +6081,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     return this.manualTeamBudgetCost() + character.cost <= maxTotalCost;
   }
 
-  private canAssignFixedManualTeamCharacter(
-    character: Pick<CharacterDetailRecord, 'id' | 'cost'>,
-  ): boolean {
-    const maxTotalCost = this.maxTotalCost();
-
-    if (maxTotalCost === null) {
-      return true;
-    }
-
-    const activeIndex = this.fixedManualTeamSelectedSlotIndex();
-
-    if (activeIndex === 1) {
-      return true;
-    }
-
-    const currentSlot = this.fixedManualTeamSlots()[activeIndex];
-    const currentSlotCost = currentSlot?.cost ?? 0;
-
-    return this.fixedManualTeamBudgetCost() - currentSlotCost + character.cost <= maxTotalCost;
-  }
-
   private buildCharacterSubtitle(character: CharacterDetailRecord): string {
     const typeLabel = character.type
       .split(',')
@@ -6444,6 +6308,48 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const minutes = totalMinutes % 60;
 
     return `~${hours}h ${minutes}m`;
+  }
+
+  private resolveBuildEstimatedRemainingMs(progress: AutoBuildProgressSnapshot): number | null {
+    const snapshotReceivedAtMs = this.buildProgressSnapshotReceivedAtMs();
+    const elapsedSinceSnapshotMs =
+      snapshotReceivedAtMs === null
+        ? 0
+        : Math.max(0, this.resolveBuildEtaNowMs() - snapshotReceivedAtMs);
+
+    if (typeof progress.estimatedRemainingMs === 'number' && progress.estimatedRemainingMs > 0) {
+      return Math.max(0, progress.estimatedRemainingMs - elapsedSinceSnapshotMs);
+    }
+
+    if (
+      typeof progress.completedWorkUnits !== 'number' ||
+      typeof progress.totalWorkUnits !== 'number' ||
+      progress.completedWorkUnits <= 0 ||
+      progress.totalWorkUnits <= progress.completedWorkUnits ||
+      progress.elapsedMs <= 0
+    ) {
+      return null;
+    }
+
+    const totalEstimatedMs =
+      (progress.elapsedMs / progress.completedWorkUnits) * progress.totalWorkUnits;
+    const currentElapsedMs = progress.elapsedMs + elapsedSinceSnapshotMs;
+
+    return Math.max(0, totalEstimatedMs - currentElapsedMs);
+  }
+
+  private resolveBuildEtaNowMs(): number {
+    const currentTickerValue = this.buildProgressNowMs();
+
+    return currentTickerValue > 0 ? currentTickerValue : Date.now();
+  }
+
+  private formatEtaClockTime(timestampMs: number): string {
+    const date = new Date(timestampMs);
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${hours}:${minutes}`;
   }
 
   private formatLiveDuration(durationMs: number): string {

@@ -333,7 +333,13 @@
     "downloadPresetJson": "Download preset JSON",
     "downloadSavedTeamImportJson": "Download Settings import JSON",
     "downloadTeamJson": "Download team JSON",
-    "importPresetJson": "Import preset JSON"
+    "importPresetJson": "Import preset JSON",
+    "pauseBuild": "Pause build",
+    "resumeBuild": "Resume build"
+  },
+  "paused": {
+    "title": "Build paused",
+    "copy": "The current search was stopped. Download the preset JSON now, or resume to restart with the same settings."
   },
   "performance": {
     "title": "Live worker scaling",
@@ -363,46 +369,6 @@
     "saveFailedDescription": "Try again after adjusting the current filters or saved character boxes.",
     "defaults": {
       "name": "Auto Builder Pool {{count}}"
-    }
-  },
-  "manualTeam": {
-    "title": "Manual team",
-    "copy": "Use these six fixed slots when you already know the team and want to save it without running the automatic builder.",
-    "fields": {
-      "name": "Crew name",
-      "notes": "Notes"
-    },
-    "ship": {
-      "label": "Ship",
-      "none": "No ship selected",
-      "selected": "{{name}}"
-    },
-    "costBudget": {
-      "label": "Cost budget",
-      "default": "No max team cost",
-      "active": "{{used}} / {{max}} cost used. {{remaining}} remaining."
-    },
-    "slots": {
-      "empty": "Empty slot",
-      "emptyAlt": "Empty character slot",
-      "label": "Slot {{slot}}"
-    },
-    "picker": {
-      "assignedElsewhere": "Already used in another fixed slot.",
-      "copy": "Search the catalog and assign a character to the active fixed slot.",
-      "empty": "No characters matched this manual team search.",
-      "searchPlaceholder": "Search characters for the fixed team",
-      "title": "Assign slot {{slot}}"
-    },
-    "modal": {
-      "close": "Close manual team picker",
-      "eyebrow": "Fixed slot picker"
-    },
-    "actions": {
-      "assign": "Assign",
-      "assigned": "Assigned",
-      "editSlot": "Edit slot {{slot}}",
-      "save": "Save manual team"
     }
   },
   "manual": {
@@ -598,6 +564,7 @@
     "completed": "Search completed.",
     "currentStepElapsed": "Current step live: {{duration}}",
     "exactAttempt": "Exact attempt {{current}} / {{total}}",
+    "estimatedFinish": "Estimated finish: {{time}} ({{duration}} left)",
     "fallbackAttempt": "Fallback attempt {{current}} / {{total}}",
     "allowingLeadersWithSuperEffects": "Allowing leaders with super effects",
     "ignoringClasses": "Ignoring classes: {{classes}}",

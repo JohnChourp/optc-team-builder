@@ -2491,8 +2491,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain("'common.actions.reset' | transloco");
     expect(template).not.toContain('common.actions.viewDetails');
     expect(template).not.toContain('detail-link-button');
-    expect(template.match(/class="character-detail-thumb-link/g)).toHaveLength(5);
-    expect(template.match(/class="character-detail-name-link/g)).toHaveLength(5);
+    expect(template.match(/class="character-detail-thumb-link/g)).toHaveLength(4);
+    expect(template.match(/class="character-detail-name-link/g)).toHaveLength(4);
     expect(template).toContain('[routerLink]="getCharacterDetailLink(candidateCard.character)"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(slot.character)"');
     expect(template).toContain('(click)="saveTeam()"');
@@ -2501,6 +2501,11 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain('{{ saveButtonLabel() }}');
     expect(template).toContain('class="build-submit-button"');
     expect(template).toContain('{{ buildButtonLabel() }}');
+    expect(template).toContain('(click)="pauseBuild()"');
+    expect(template).toContain('(click)="resumeBuild()"');
+    expect(template).toContain('(click)="downloadSelectionJson()"');
+    expect(template).not.toContain('(click)="downloadTeamJson()"');
+    expect(template).not.toContain('(click)="downloadSavedTeamImportJson()"');
     expect(template).not.toContain('slot.abilityChips');
     expect(template).not.toContain('slot.snippet');
     expect(template).toContain('<app-ability-filter-rail');
@@ -2535,7 +2540,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain('<app-character-ability-groups');
     expect(template).toContain('<app-captain-team-condition-status');
     expect(template).toContain('resultTeamConditionStatus()');
-    expect(template).toContain('fixedManualTeamConditionStatus()');
+    expect(template).toContain('manual-locks-card');
+    expect(template).not.toContain('fixedManualTeamConditionStatus()');
+    expect(template).not.toContain('fixed-manual-team-card');
     expect(template).toContain('captain-condition-panel--full');
     expect(template).toContain('captain-condition-panel--partial');
     expect(template).not.toContain('<app-enemy-mechanic-picker');
@@ -2746,21 +2753,6 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.resultTeamConditionStatus()?.failedLeaderLabels).toEqual(['Friend Captain']);
   });
 
-  it('reports full captain condition status for fixed manual teams', async () => {
-    const { page } = await createPage();
-    const slots = [101, 102, 103, 104, 105, 106].map((id) => createCharacterRecord(id));
-
-    slots[0]!.detail.captainAbility = 'Boosts ATK of all characters by 5x.';
-    slots[1]!.detail.captainAbility = 'Boosts HP of all characters by 1.3x.';
-    page.fixedManualTeamSlots.set(slots);
-
-    expect(page.fixedManualTeamConditionStatus()?.state).toBe('full');
-    expect(page.fixedManualTeamConditionStatus()?.passedLeaderLabels).toEqual([
-      'Captain',
-      'Friend Captain',
-    ]);
-  });
-
   it('resets the full page state through resetPage', async () => {
     const { page } = await createPage();
 
@@ -2929,6 +2921,30 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.errorMessage()).toContain('in-game character conflict');
   });
 
+  it('shows a dedicated manual conflict message for General Franky and Law & Chopper', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.manualSlots.set(
+      createManualSlots({
+        captain: [3574],
+        sub1: [3330],
+      }),
+    );
+    page.lockedCharacterRecords.set({
+      3330: createCharacterRecord(3330, 'Law & Chopper - Dynamic Doctor Duo'),
+      3574: createCharacterRecord(3574, 'General Franky - Dream Docking'),
+    });
+
+    await page.buildTeam();
+
+    expect(page.errorMessage()).toContain('General Franky - Dream Docking');
+    expect(page.errorMessage()).toContain('Law & Chopper - Dynamic Doctor Duo');
+    expect(page.errorMessage()).toContain('in-game character conflict');
+  });
+
   it('exposes stable loading progress rows with placeholder slots', async () => {
     const { page } = await createPage();
 
@@ -3073,10 +3089,11 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     ]);
   });
 
-  it('shows the worst-case fallback eta row when an estimate is available', async () => {
+  it('shows the estimated finish row when a service estimate is available', async () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
+    page['buildProgressNowMs'].set(new Date(2026, 2, 25, 10, 0, 0).getTime());
     page.buildProgress.set({
       stage: 'fallbackAttempt',
       candidateCount: 1200,
@@ -3098,17 +3115,55 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       },
     });
 
-    expect(page.buildWorstCaseEtaLabel()).toBe(
-      'Estimated time to check the remaining fallbacks: ~1m 1s',
-    );
+    expect(page.buildEstimatedFinishLabel()).toBe('Estimated finish: 10:01 (~1m 1s left)');
     expect(page.loadingProgressRows()).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           key: 'eta',
-          text: 'Estimated time to check the remaining fallbacks: ~1m 1s',
-          displayText: 'Estimated time to check the remaining fallbacks: ~1m 1s',
+          text: 'Estimated finish: 10:01 (~1m 1s left)',
+          displayText: 'Estimated finish: 10:01 (~1m 1s left)',
           visible: true,
           tone: 'fallback',
+        }),
+      ]),
+    );
+  });
+
+  it('estimates exact attempt finish time from recursive work units', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page['buildProgressNowMs'].set(new Date(2026, 2, 25, 10, 0, 0).getTime());
+    page.buildProgress.set({
+      stage: 'exactAttempt',
+      candidateCount: 1200,
+      completedAttempts: 0,
+      totalAttempts: 1,
+      attemptCountFinal: true,
+      elapsedMs: 60_000,
+      estimatedRemainingMs: null,
+      averageFallbackAttemptMs: null,
+      completedFallbackAttempts: 0,
+      completedWorkUnits: 60,
+      totalWorkUnits: 120,
+      currentDroppedTypes: [],
+      currentDroppedClasses: [],
+      currentAllowedLeadersWithSuperEffects: false,
+      currentIgnoredLeaderSuperSpecialCriteria: false,
+      messageKey: 'progress.exactAttempt',
+      messageParams: {
+        current: 1,
+        total: 1,
+      },
+    });
+
+    expect(page.buildEstimatedFinishLabel()).toBe('Estimated finish: 10:01 (~1m 0s left)');
+    expect(page.loadingProgressRows()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'eta',
+          text: 'Estimated finish: 10:01 (~1m 0s left)',
+          visible: true,
         }),
       ]),
     );
@@ -3944,6 +3999,69 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.building()).toBe(false);
   });
 
+  it('pauses the active build and resumes by starting a fresh run with the same inputs', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    const previousResult = createAutoBuildResult();
+    const resumedResult = createAutoBuildResult([
+      { role: 'captain', character: createCharacterRecord(201), reasonChips: ['Captain slot'] },
+      {
+        role: 'friendCaptain',
+        character: createCharacterRecord(202),
+        reasonChips: ['Friend captain slot'],
+      },
+      { role: 'sub', character: createCharacterRecord(203), reasonChips: [] },
+      { role: 'sub', character: createCharacterRecord(204), reasonChips: [] },
+      { role: 'sub', character: createCharacterRecord(205), reasonChips: [] },
+      { role: 'sub', character: createCharacterRecord(206), reasonChips: [] },
+    ]);
+
+    autoTeamBuilder.buildTeam
+      .mockImplementationOnce(
+        async (
+          _selectedClasses: string[],
+          _selectedTypes: string[],
+          _constraints: unknown,
+          executionOptions?: { signal?: AbortSignal },
+        ) =>
+          new Promise<null>((_resolve, reject) => {
+            executionOptions?.signal?.addEventListener(
+              'abort',
+              () => reject(new AutoTeamBuildCancelledError()),
+              { once: true },
+            );
+          }),
+      )
+      .mockResolvedValueOnce(resumedResult);
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.result.set(previousResult);
+
+    const buildPromise = page.buildTeam();
+
+    page.pauseBuild();
+    await buildPromise;
+
+    expect(page.buildPaused()).toBe(true);
+    expect(page.result()).toEqual(previousResult);
+    expect(page.building()).toBe(false);
+
+    await page.resumeBuild();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledTimes(2);
+    expect(autoTeamBuilder.buildTeam).toHaveBeenLastCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.any(Object),
+      expect.objectContaining({
+        signal: expect.any(AbortSignal),
+      }),
+    );
+    expect(page.buildPaused()).toBe(false);
+    expect(page.result()).toEqual(resumedResult);
+  });
+
   it('cancels the active build before resetPage and does not restore the previous result', async () => {
     const { page, autoTeamBuilder } = await createPage();
     const previousResult = createAutoBuildResult();
@@ -3994,189 +4112,6 @@ describe('AutoTeamBuilderPage offline save', () => {
     await page.saveTeam();
 
     expect(userState.saveTeam).not.toHaveBeenCalled();
-  });
-
-  it('does not save a manual fixed team with zero selected slots', async () => {
-    const { page, userState } = await createPage();
-
-    await page.ngOnInit();
-    await page.saveFixedManualTeam();
-
-    expect(userState.saveTeam).not.toHaveBeenCalled();
-  });
-
-  it('saves a manual fixed team with six id or null slots and the selected ship id', async () => {
-    const { page, userState } = await createPage();
-
-    await page.ngOnInit();
-    page.fixedManualTeamName.set('Manual Crew');
-    page.fixedManualTeamNotes.set('Built by hand');
-    page.selectedManualShipId.set(9001);
-    page.fixedManualTeamSlots.set([
-      createCharacterRecord(201, 'Manual Captain'),
-      null,
-      createCharacterRecord(203, 'Manual Sub 1'),
-      null,
-      null,
-      createCharacterRecord(206, 'Manual Sub 4'),
-    ]);
-
-    await page.saveFixedManualTeam();
-
-    expect(userState.saveTeam).toHaveBeenCalledWith({
-      id: undefined,
-      name: 'Manual Crew',
-      notes: 'Built by hand',
-      shipId: 9001,
-      slots: [201, null, 203, null, null, 206],
-    });
-    expect(page.fixedManualTeamCurrentTeamId()).toBe('saved-auto-team');
-    expect(page.fixedManualTeamSaveUiLocked()).toBe(false);
-    expect(page.fixedManualTeamSaveFeedbackError()).toBe('');
-  });
-
-  it('ignores repeated manual fixed team save clicks while the save request is active', async () => {
-    const { page, userState } = await createPage();
-    let resolveSave: (value: { id: string }) => void = () => undefined;
-
-    userState.saveTeam.mockReturnValueOnce(
-      new Promise<{ id: string }>((resolve) => {
-        resolveSave = resolve;
-      }),
-    );
-
-    await page.ngOnInit();
-    page.fixedManualTeamSlots.set([createCharacterRecord(201), null, null, null, null, null]);
-
-    const firstSavePromise = page.saveFixedManualTeam();
-    await Promise.resolve();
-
-    await page.saveFixedManualTeam();
-
-    expect(userState.saveTeam).toHaveBeenCalledTimes(1);
-    expect(page.fixedManualTeamSaveUiLocked()).toBe(true);
-
-    resolveSave({ id: 'manual-team-id' });
-    await firstSavePromise;
-
-    expect(page.fixedManualTeamSaveUiLocked()).toBe(false);
-  });
-
-  it('clears the current manual fixed team id when fixed slots change', async () => {
-    const { page } = await createPage();
-
-    await page.ngOnInit();
-    page.fixedManualTeamCurrentTeamId.set('manual-team-id');
-
-    page.assignFixedManualTeamCharacter(createCharacterRecord(201, 'Manual Captain'));
-
-    expect(page.fixedManualTeamCurrentTeamId()).toBeNull();
-  });
-
-  it('opens and closes the manual fixed team slot picker modal for a slot', async () => {
-    const { page } = await createPage();
-
-    await page.ngOnInit();
-    await page.openFixedManualTeamPickerModal(2);
-
-    expect(page.fixedManualTeamSelectedSlotIndex()).toBe(2);
-    expect(page.fixedManualTeamPickerModalOpen()).toBe(true);
-
-    page.closeFixedManualTeamPickerModal();
-
-    expect(page.fixedManualTeamPickerModalOpen()).toBe(false);
-  });
-
-  it('opens character detail from a filled manual fixed team slot without opening the picker modal', async () => {
-    const { page, router } = await createPage();
-
-    await page.ngOnInit();
-    page.fixedManualTeamSlots.set([createCharacterRecord(201), null, null, null, null, null]);
-
-    await page.openFixedManualTeamSlotDetail(0);
-
-    expect(router.navigate).toHaveBeenCalledWith(['/characters', '201']);
-    expect(page.fixedManualTeamPickerModalOpen()).toBe(false);
-  });
-
-  it('does not navigate or open the picker modal from an empty manual fixed team slot', async () => {
-    const { page, router } = await createPage();
-
-    await page.ngOnInit();
-
-    await page.openFixedManualTeamSlotDetail(1);
-
-    expect(router.navigate).not.toHaveBeenCalled();
-    expect(page.fixedManualTeamPickerModalOpen()).toBe(false);
-  });
-
-  it('keeps the fixed manual team search handler functional inside the picker modal', async () => {
-    const { page, repository } = await createPage();
-    const matchingCharacter = createCharacterRecord(905, 'Manual Search Result');
-
-    await page.ngOnInit();
-    repository.searchDetailedCharacters
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([matchingCharacter]);
-    await page.openFixedManualTeamPickerModal(1);
-    await page.onFixedManualTeamSearchChange({
-      detail: { value: 'Manual Search' },
-    } as CustomEvent<{ value: string }>);
-
-    expect(page.fixedManualTeamPickerModalOpen()).toBe(true);
-    expect(page.fixedManualTeamSearchTerm()).toBe('Manual Search');
-    expect(page.fixedManualTeamCandidates()).toEqual([matchingCharacter]);
-  });
-
-  it('assigns a manual fixed team modal candidate to the active slot and closes the modal', async () => {
-    const { page } = await createPage();
-    const candidate = createCharacterRecord(906, 'Modal Candidate');
-
-    await page.ngOnInit();
-    await page.openFixedManualTeamPickerModal(3);
-
-    page.assignFixedManualTeamCharacter(candidate);
-
-    expect(page.fixedManualTeamSlots()[3]).toBe(candidate);
-    expect(page.fixedManualTeamSlots().filter(Boolean)).toEqual([candidate]);
-    expect(page.fixedManualTeamPickerModalOpen()).toBe(false);
-  });
-
-  it('clears a manual fixed team compact slot without opening the picker modal', async () => {
-    const { page } = await createPage();
-    const stopPropagation = vi.fn();
-
-    await page.ngOnInit();
-    page.fixedManualTeamSlots.set([createCharacterRecord(201), null, null, null, null, null]);
-
-    page.clearFixedManualTeamSlot(0, { stopPropagation } as unknown as Event);
-
-    expect(stopPropagation).toHaveBeenCalled();
-    expect(page.fixedManualTeamSlots()[0]).toBeNull();
-    expect(page.fixedManualTeamPickerModalOpen()).toBe(false);
-  });
-
-  it('filters fixed manual team candidates by remaining max total cost when replacing a slot', async () => {
-    const { page } = await createPage();
-    const captain = createCharacterRecord(901, 'Fixed Captain');
-    const currentSub = createCharacterRecord(902, 'Current Sub');
-    const fittingReplacement = createCharacterRecord(903, 'Fitting Replacement');
-    const expensiveReplacement = createCharacterRecord(904, 'Expensive Replacement');
-
-    captain.cost = 80;
-    currentSub.cost = 20;
-    fittingReplacement.cost = 20;
-    expensiveReplacement.cost = 21;
-
-    await page.ngOnInit();
-    page.onMaxTotalCostChange({
-      detail: { value: '100' },
-    } as CustomEvent<{ value: string }>);
-    page.fixedManualTeamSlots.set([captain, null, currentSub, null, null, null]);
-    page.fixedManualTeamSelectedSlotIndex.set(2);
-    page.fixedManualTeamCandidates.set([fittingReplacement, expensiveReplacement]);
-
-    expect(page.fixedManualTeamCandidateCards().map((card) => card.character.id)).toEqual([903]);
   });
 
   it('saves immediately and unlocks after the save finishes', async () => {
@@ -4503,7 +4438,7 @@ describe('AutoTeamBuilderPage leader scope labels', () => {
 });
 
 describe('AutoTeamBuilderPage preset export state', () => {
-  it('is disabled when the page has no selected filters or manual picks', async () => {
+  it('is available even when the page has no selected filters or manual picks', async () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
@@ -4513,8 +4448,15 @@ describe('AutoTeamBuilderPage preset export state', () => {
     page.favoritesOnly.set(false);
     page.favoriteShipsOnly.set(false);
 
-    expect(page.canDownloadSelectionJson()).toBe(false);
-    expect(page.buildSelectionExportPayload()).toBeNull();
+    expect(page.canDownloadSelectionJson()).toBe(true);
+    expect(page.buildSelectionExportPayload()).toMatchObject({
+      source: 'auto-team-builder',
+      exportType: 'preset',
+      filters: {
+        selectedTypes: [],
+        selectedClasses: [],
+      },
+    });
   });
 
   it('is enabled when the page only has filters, manual picks, or leader state', async () => {
@@ -4535,6 +4477,21 @@ describe('AutoTeamBuilderPage preset export state', () => {
     await page.ionViewWillEnter();
     page.excludedCharacterIds.set([303]);
     expect(page.canDownloadSelectionJson()).toBe(true);
+  });
+
+  it('keeps preset download available while building and paused', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+
+    page.building.set(true);
+    expect(page.canDownloadSelectionJson()).toBe(true);
+    expect(page.buildSelectionExportPayload()).not.toBeNull();
+
+    page.building.set(false);
+    page.buildPaused.set(true);
+    expect(page.canDownloadSelectionJson()).toBe(true);
+    expect(page.buildSelectionExportPayload()).not.toBeNull();
   });
 
   it('builds the preset export payload from the current page selections', async () => {
@@ -4599,7 +4556,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 30,
+      schemaVersion: 31,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -4674,6 +4631,45 @@ describe('AutoTeamBuilderPage preset export state', () => {
         id: 9002,
       }),
     ]);
+  });
+
+  it('embeds generated team and saved-team import data in the preset export', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.result.set(createAutoBuildResult());
+    page.teamName.set('Importable Auto Team');
+    page.notes.set('Use on the current quest.');
+
+    const payload = page.buildSelectionExportPayload('2026-05-05T20:14:45.183Z');
+
+    expect(payload?.schemaVersion).toBe(31);
+    expect(payload?.generatedTeamExport).toMatchObject({
+      source: 'auto-team-builder',
+      team: [
+        expect.objectContaining({ slotIndex: 0, character: expect.objectContaining({ id: 101 }) }),
+        expect.objectContaining({ slotIndex: 1, character: expect.objectContaining({ id: 102 }) }),
+        expect.objectContaining({ slotIndex: 2, character: expect.objectContaining({ id: 103 }) }),
+        expect.objectContaining({ slotIndex: 3, character: expect.objectContaining({ id: 104 }) }),
+        expect.objectContaining({ slotIndex: 4, character: expect.objectContaining({ id: 105 }) }),
+        expect.objectContaining({ slotIndex: 5, character: expect.objectContaining({ id: 106 }) }),
+      ],
+    });
+    expect(payload?.savedTeamImport).toMatchObject({
+      schemaVersion: 1,
+      source: 'saved-teams',
+      teams: [
+        {
+          id: 'auto-team-builder-2026-05-05T20-14-45-183Z',
+          name: 'Importable Auto Team',
+          notes: 'Use on the current quest.',
+          shipId: null,
+          slots: [101, 102, 103, 104, 105, 106],
+          createdAt: '2026-05-05T20:14:45.183Z',
+          updatedAt: '2026-05-05T20:14:45.183Z',
+        },
+      ],
+    });
   });
 });
 
@@ -4788,7 +4784,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       availableLockedCharacters: [],
     });
 
-    expect(payload.schemaVersion).toBe(30);
+    expect(payload.schemaVersion).toBe(31);
     expect(payload.filters.selectedCharacterTags).toEqual(['Straw Hat Pirates']);
     expect(payload.filters.selectedCharacterNames).toEqual(['zoro', 'luffy']);
     expect(result.state.selectedCharacterTags).toEqual(['Straw Hat Pirates']);
@@ -4904,7 +4900,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       exportedAt: '2026-03-25T10:00:00.000Z',
     });
 
-    expect(payload.schemaVersion).toBe(30);
+    expect(payload.schemaVersion).toBe(31);
     expect(payload.filters.leaderBoostRanges).toEqual({
       ATK: { min: 5, max: 6 },
       HP: { min: 1.25, max: 1.5 },
@@ -5402,7 +5398,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       availableLockedCharacters: [createCharacterRecord(101)],
     });
 
-    expect(payload.schemaVersion).toBe(30);
+    expect(payload.schemaVersion).toBe(31);
     expect(result.state.requiredAbilities).toEqual([
       {
         abilityKey: 'remove_bind',
@@ -6119,6 +6115,77 @@ describe('AutoTeamBuilderPage preset import state', () => {
         'Loaded settings from favorite-preset.json.',
         'Ignored 1 ability requirements with unsupported turns, slot tokens, or character count.',
       ],
+    });
+  });
+
+  it('imports v31 embedded generated team into AutoTeamBuilder slots and restores settings', async () => {
+    const { page } = await createPage();
+    const exportedAt = '2026-05-05T20:14:45.183Z';
+    const result = createAutoBuildResult();
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [],
+      enemyMechanics: [],
+      requireAllSelectedTypesInTeam: true,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
+      requireUniqueBaseCharacterNames: false,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      manualSlots: createManualSlots(),
+      lockedCharacterIds: [],
+      lockedCharacters: [],
+      selectedLeaderIds: [],
+      captainLeaderId: null,
+      friendCaptainLeaderId: null,
+      generatedTeamExport: buildAutoTeamExportPayload(result, [], 101, 102, exportedAt),
+      savedTeamImport: {
+        schemaVersion: 1,
+        source: 'saved-teams',
+        exportedAt,
+        teams: [
+          {
+            id: 'auto-team-builder-2026-05-05T20-14-45-183Z',
+            name: 'Imported Auto Team',
+            notes: 'Bring these slots back.',
+            shipId: 9001,
+            slots: [101, 102, 103, 104, 105, 106],
+            createdAt: exportedAt,
+            updatedAt: exportedAt,
+          },
+        ],
+      },
+      exportedAt,
+    });
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['PSY']);
+    page.manualSlots.set(createManualSlots({ captain: [201] }));
+    await page['importSelectionPreset'](
+      new File([JSON.stringify(payload)], 'team-preset.json', { type: 'application/json' }),
+    );
+
+    expect(page.selectedTypes()).toEqual(['DEX']);
+    expect(page.selectedClasses()).toEqual(['Fighter']);
+    expect(page.requireAllSelectedTypesInTeam()).toBe(true);
+    expect(page.manualSlots()).toEqual(
+      createManualSlots({
+        captain: [101],
+        friendCaptain: [102],
+        sub1: [103],
+        sub2: [104],
+        sub3: [105],
+        sub4: [106],
+      }),
+    );
+    expect(page.selectedManualShipId()).toBe(9001);
+    expect(page.teamName()).toBe('Imported Auto Team');
+    expect(page.notes()).toBe('Bring these slots back.');
+    expect(page.presetImportFeedback()).toEqual({
+      tone: 'success',
+      title: 'Preset applied.',
+      details: ['Loaded settings from team-preset.json.'],
     });
   });
 

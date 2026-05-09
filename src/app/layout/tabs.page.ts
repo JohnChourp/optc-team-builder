@@ -25,6 +25,7 @@ import {
   flashOutline,
   gridOutline,
   homeOutline,
+  peopleOutline,
   saveOutline,
   shieldCheckmarkOutline,
   shieldHalfOutline,
@@ -120,6 +121,11 @@ export class TabsPage {
           icon: flashOutline,
           labelKey: 'tabs.auto',
           route: '/tabs/auto-team-builder',
+        },
+        {
+          icon: peopleOutline,
+          labelKey: 'tabs.manualTeamBuilder',
+          route: '/tabs/manual-team-builder',
         },
         {
           icon: shieldCheckmarkOutline,

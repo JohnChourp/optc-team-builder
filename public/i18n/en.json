@@ -347,7 +347,7 @@
       },
       "autoBuilder": {
         "title": "Auto Team Builder",
-        "copy": "Build teams manually with fixed slots, or match enemy mechanics, ability requirements, classes, types, locks, and excluded units against candidate crews."
+        "copy": "Match enemy mechanics, ability requirements, classes, types, manual locks, and excluded units against candidate crews."
       },
       "captainCoverage": {
         "title": "Captain Coverage",
@@ -392,7 +392,7 @@
       "copy": "Start with a unit or quest requirement, shape the crew with manual or automatic tools, then keep the useful result for the next run.",
       "steps": {
         "find": "Find characters by name, ability, type, class, favorites, or enemy mechanics.",
-        "plan": "Build the crew manually inside Auto Team Builder, ask it for candidates, or import an existing screenshot.",
+        "plan": "Build the crew manually, ask Auto Team Builder for candidates, or import an existing screenshot.",
         "save": "Save teams, boxes, enemies, and settings locally, with import/export tools when you need to move data."
       }
     }
@@ -413,6 +413,7 @@
     },
     "languageSwitcherAriaLabel": "Language switcher",
     "languageSwitchTo": "Switch language to {{ language }}",
+    "manualTeamBuilder": "Manual Team Builder",
     "menuTitle": "Menu",
     "navigationAriaLabel": "Main navigation",
     "offline": "Offline",

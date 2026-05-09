@@ -230,6 +230,11 @@ describe('AppComponent', () => {
         canonicalUrl: 'https://optcteambuilder.com/tabs/auto-team-builder/',
       },
       {
+        url: '/tabs/manual-team-builder',
+        title: 'Manual Team Builder | OPTC Team Builder',
+        canonicalUrl: 'https://optcteambuilder.com/tabs/manual-team-builder/',
+      },
+      {
         url: '/tabs/captain-coverage',
         title: 'Captain Coverage | OPTC Team Builder',
         canonicalUrl: 'https://optcteambuilder.com/tabs/captain-coverage/',

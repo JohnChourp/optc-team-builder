@@ -1,0 +1,73 @@
+{
+  "actions": {
+    "assign": "Assign",
+    "assigned": "Assigned",
+    "editSlot": "Edit slot {{slot}}",
+    "save": "Save manual team"
+  },
+  "builder": {
+    "copy": "Pick fixed slots, set an optional ship, and save the crew directly to Saved Teams.",
+    "title": "Manual team"
+  },
+  "condition": {
+    "roles": {
+      "captain": "Captain",
+      "friendCaptain": "Friend Captain"
+    },
+    "slotLabel": "Slot {{slot}}"
+  },
+  "costBudget": {
+    "label": "Cost budget",
+    "range": {
+      "max": "Max team cost",
+      "overBudget": "{{used}} / {{max}} cost used. Clear a slot or raise the max cost."
+    },
+    "support": {
+      "active": "{{used}} / {{max}} cost used. {{remaining}} remaining.",
+      "default": "No max team cost."
+    }
+  },
+  "fields": {
+    "name": "Crew name",
+    "notes": "Notes"
+  },
+  "hero": {
+    "copy": "Build and save a known crew without running the automatic builder.",
+    "eyebrow": "Fixed crew builder",
+    "title": "Manual Team Builder"
+  },
+  "loading": "Loading manual team builder...",
+  "picker": {
+    "assignedElsewhere": "Already used in another fixed slot.",
+    "close": "Close character picker",
+    "copy": "Search the catalog and assign a character to the active fixed slot.",
+    "empty": "No characters matched this manual team search.",
+    "eyebrow": "Slot picker",
+    "searchPlaceholder": "Search characters for the fixed team",
+    "title": "Assign slot {{slot}}"
+  },
+  "save": {
+    "error": "Manual team could not be saved.",
+    "savingLabel": "Saving...",
+    "success": "Manual team saved."
+  },
+  "ship": {
+    "actions": {
+      "change": "Choose ship",
+      "confirm": "Apply ship"
+    },
+    "emptyCopy": "Leave ship empty for this saved team.",
+    "label": "Ship",
+    "none": "No ship selected",
+    "picker": {
+      "copy": "Choose the ship to save with this manual team.",
+      "title": "Choose manual team ship"
+    }
+  },
+  "slots": {
+    "empty": "Empty slot",
+    "emptyAlt": "Empty character slot",
+    "label": "Slot {{slot}}"
+  },
+  "title": "Manual Team Builder"
+}
