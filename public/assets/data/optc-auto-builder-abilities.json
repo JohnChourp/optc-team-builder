@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-05T15:25:20.447Z",
+  "generatedAt": "2026-05-09T05:34:06.457Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -3115,7 +3115,7 @@
         "Boosts ATK of Driven and Powerhouse characters by 4x, their HP by 1.75x, reduces RCV of Driven and Powerhouse characters by 50%, increases damage received by 1.5x and reduces Special Cooldown of this character by 2 turns after each turn you take damage. If a crew member uses a special with a Percent Damage Reduction, Threshold Damage Reduction or Damage Nullification buff, replaces those buffs with an ATK boost that will overwrite ATK boosts in the same special: Boosts ATK of Driven and Powerhouse characters by 2x for 1 turn.",
         "Deals 20% of enemies' current HP in True damage, ignoring Normal Attack Only, to all enemies and boosts Orb Effects of [DEX], Striker and Powerhouse characters by 2.75x for 1 turn. If your crew has Orb Amplification when the special is activated, boosts ATK of [DEX] Striker and Powerhouse characters by 2.5x for 2 turns. If HP is below 50% when the special is activated, reduces damage received by 90% for 1 turn and increases boost effects of ATK UP and Orb Amplification buffs by +0.25x, including effects activated in the same Ability; reduces damage received by 70% for 1 turn otherwise.",
         "Deals 20% of enemies' current HP in True damage, ignoring Normal Attack Only, to all enemies and boosts Orb Effects of [DEX], Striker and Powerhouse characters by 2.75x for 1 turn. If your crew has Orb Amplification when the special is activated, boosts ATK of [DEX] Striker and Powerhouse characters by 2.5x for 2 turns. If HP is below 50% when the special is activated, reduces damage received by 90% for 1 turn and increases boost effects of ATK UP and Orb Amplification buffs by +0.25x, including effects activated in the same Ability; reduces damage received by 70% for 1 turn otherwise.",
-        "Applies Territory: Powerhouse class to the field, boosts ATK by 1x-1.5x and reduces damage received by 0%-25% based on number of characters matching the territory, for 3 turns, boosts Base ATK of Powerhouse characters by 1,500-3,000 for 1 turn depending on the outcome of Action Special, increases boost effects of ATK Up buffs to 3.5x, and boosts ATK of Powerhouse characters by 3x-4x for 1 turn depending on the crew's current HP. If your crew has 6 Powerhouse characters and HP is below 25% when the special is activated, up to 1 time per adventure, deals 30% of enemies' current HP in True damage, ignoring Normal Attack Only, to all enemies. Reduces crew's current HP by 60%.. Ignores Debuff Protection and reduces the defense of all enemies by 100% for 2 turns. If your crew has Orb Amplification when the special is activated, boosts ATK of Striker characters by 3.25x for 2 turns, and allows HP Overfill up to 2x MAX HP for 2 turns. If your crew has Final Tap ATK when the special is activated, boosts Orb Effects of Striker characters by 3.5x, can be enhanced up to 2 times, for 2 turns; boosts Orb Effects of Striker characters by 3.25x for 1 turn otherwise. If you have used 7+ Special Abilities when the special is activated, increases duration of any Orb Amplification buffs by 1 turn, and increases boost effects of Orb Amplification buffs by +0.3x, including effects activated in the same Ability. If your crew has 6 Striker characters, swaps middle-right character with your Captain for 1 turn, up to 1 time per adventure reduces Special Cooldown of Captain character by 20 turns, and recovers 60% of crew's MAX HP."
+        "Applies Territory: Powerhouse to the field for 3 turns, boosts Base ATK of Powerhouse characters by 1,500-3,000 for 1 turn depending on the outcome of Action Special, increases boost effects of ATK Up buffs to 3.5x, and boosts ATK of Powerhouse characters by 3x-4x for 1 turn depending on the crew's current HP. If your crew has 6 Powerhouse characters and HP is below 25% when the special is activated, up to 1 time per adventure, deals 30% of enemies' current HP in True damage, ignoring Normal Attack Only, to all enemies. Reduces crew's current HP by 60%.. Ignores Debuff Protection and reduces the defense of all enemies by 100% for 2 turns. If your crew has Orb Amplification when the special is activated, boosts ATK of Striker characters by 3.25x for 2 turns, and allows HP Overfill up to 2x MAX HP for 2 turns. If your crew has Final Tap ATK when the special is activated, boosts Orb Effects of Striker characters by 3.5x, can be enhanced up to 2 times, for 2 turns; boosts Orb Effects of Striker characters by 3.25x for 1 turn otherwise. If you have used 7+ Special Abilities when the special is activated, increases duration of any Orb Amplification buffs by 1 turn, and increases boost effects of Orb Amplification buffs by +0.3x, including effects activated in the same Ability. If your crew has 6 Striker characters, swaps middle-right character with your Captain for 1 turn, up to 1 time per adventure reduces Special Cooldown of Captain character by 20 turns, and recovers 60% of crew's MAX HP."
       ]
     },
     {
@@ -3134,7 +3134,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1331,
+      "matchCount": 1322,
       "matchingCharacterIds": [
         209,
         210,
@@ -4298,7 +4298,6 @@
         4196,
         4198,
         4203,
-        4206,
         4208,
         4209,
         4210,
@@ -4320,8 +4319,6 @@
         4240,
         4241,
         4242,
-        4249,
-        4250,
         4254,
         4255,
         4256,
@@ -4341,14 +4338,11 @@
         4288,
         4289,
         4290,
-        4291,
-        4292,
         4293,
         4302,
         4303,
         4307,
         4313,
-        4314,
         4319,
         4320,
         4325,
@@ -4366,22 +4360,17 @@
         4353,
         4354,
         4365,
-        4366,
         4368,
         4372,
-        4375,
         4376,
         4379,
         4380,
         4381,
         4386,
-        4387,
-        4388,
         4389,
         4393,
         4394,
         4396,
-        4399,
         4400,
         4401,
         4406,
@@ -4390,12 +4379,10 @@
         4413,
         4414,
         4418,
-        4419,
         4420,
         4422,
         4425,
         4428,
-        4432,
         4433,
         4435,
         4436,
@@ -4410,7 +4397,6 @@
         4453,
         4455,
         4456,
-        4459,
         4462,
         4463,
         4464,
@@ -4427,8 +4413,6 @@
         4483,
         4487,
         4490,
-        4491,
-        4492,
         4493,
         4494,
         4500,
@@ -4436,7 +4420,6 @@
         4502,
         4505,
         4509,
-        4511,
         4515,
         4518,
         4520,
@@ -4463,8 +4446,16 @@
         4550,
         4551,
         4552,
-        4554,
         4556,
+        4559,
+        4560,
+        4561,
+        4562,
+        4563,
+        4564,
+        4569,
+        4570,
+        4571,
         5013,
         5014
       ],
@@ -4501,7 +4492,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 791,
+      "matchCount": 795,
       "matchingCharacterIds": [
         263,
         305,
@@ -5292,6 +5283,10 @@
         4549,
         4550,
         4553,
+        4557,
+        4558,
+        4569,
+        4570,
         5029,
         5030
       ],
@@ -5430,7 +5425,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 9,
+      "matchCount": 10,
       "matchingCharacterIds": [
         3176,
         3177,
@@ -5440,7 +5435,8 @@
         4125,
         4126,
         4127,
-        4128
+        4128,
+        4565
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -5475,7 +5471,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 450,
+      "matchCount": 452,
       "matchingCharacterIds": [
         1233,
         1234,
@@ -5926,7 +5922,9 @@
         4529,
         4539,
         4549,
-        4553
+        4553,
+        4561,
+        4562
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -6680,7 +6678,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 167,
+      "matchCount": 169,
       "matchingCharacterIds": [
         2535,
         2536,
@@ -6848,7 +6846,9 @@
         4532,
         4537,
         4544,
-        4549
+        4549,
+        4572,
+        4573
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -6883,7 +6883,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 301,
+      "matchCount": 304,
       "matchingCharacterIds": [
         3365,
         3371,
@@ -7185,7 +7185,10 @@
         4543,
         4544,
         4545,
-        4546
+        4546,
+        4559,
+        4560,
+        4569
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -7323,7 +7326,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 948,
+      "matchCount": 927,
       "matchingCharacterIds": [
         9,
         11,
@@ -8129,13 +8132,9 @@
         4195,
         4202,
         4204,
-        4206,
-        4209,
         4210,
         4211,
         4216,
-        4218,
-        4219,
         4222,
         4229,
         4230,
@@ -8159,15 +8158,12 @@
         4270,
         4273,
         4274,
-        4277,
         4282,
         4283,
         4284,
         4286,
         4287,
         4290,
-        4291,
-        4292,
         4293,
         4300,
         4302,
@@ -8176,7 +8172,6 @@
         4310,
         4311,
         4312,
-        4314,
         4316,
         4324,
         4338,
@@ -8189,68 +8184,46 @@
         4355,
         4356,
         4364,
-        4365,
-        4366,
         4370,
         4371,
         4372,
-        4375,
         4376,
-        4379,
-        4380,
         4384,
         4385,
         4387,
         4388,
         4389,
         4393,
-        4399,
-        4401,
         4404,
         4405,
-        4414,
-        4419,
-        4422,
         4425,
         4431,
-        4432,
         4433,
         4434,
         4436,
-        4440,
-        4441,
-        4442,
-        4443,
         4445,
         4446,
         4449,
         4454,
         4457,
         4458,
-        4459,
         4461,
         4462,
         4469,
         4471,
         4473,
-        4476,
         4479,
         4486,
         4487,
-        4490,
-        4491,
-        4492,
         4493,
         4496,
         4497,
         4502,
         4503,
         4508,
-        4511,
         4515,
         4519,
         4520,
-        4521,
         4528,
         4529,
         4530,
@@ -8263,12 +8236,21 @@
         4544,
         4545,
         4547,
-        4548,
         4549,
-        4551,
         4552,
         4553,
-        4554,
+        4557,
+        4558,
+        4563,
+        4564,
+        4565,
+        4566,
+        4569,
+        4570,
+        4572,
+        4573,
+        4574,
+        4575,
         5013,
         5014,
         5054,
@@ -8654,7 +8636,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 959,
+      "matchCount": 975,
       "matchingCharacterIds": [
         389,
         390,
@@ -9614,7 +9596,23 @@
         4552,
         4553,
         4554,
-        4556
+        4556,
+        4557,
+        4558,
+        4559,
+        4560,
+        4561,
+        4562,
+        4563,
+        4564,
+        4565,
+        4566,
+        4569,
+        4570,
+        4572,
+        4573,
+        4574,
+        4575
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -11998,7 +11996,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 499,
+      "matchCount": 505,
       "matchingCharacterIds": [
         228,
         265,
@@ -12496,6 +12494,12 @@
         4544,
         4553,
         4556,
+        4559,
+        4560,
+        4569,
+        4571,
+        4572,
+        4573,
         5031,
         5032,
         5056
@@ -12905,7 +12909,8 @@
             4500,
             4526,
             4527,
-            4544
+            4544,
+            4569
           ]
         },
         {
@@ -12968,7 +12973,10 @@
             4470,
             4503,
             4553,
-            4556
+            4556,
+            4569,
+            4572,
+            4573
           ]
         },
         {
@@ -13046,7 +13054,9 @@
             4443,
             4492,
             4506,
-            4544
+            4544,
+            4559,
+            4560
           ]
         },
         {
@@ -13071,7 +13081,8 @@
             4267,
             4329,
             4449,
-            4478
+            4478,
+            4571
           ]
         }
       ],
@@ -13108,7 +13119,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 456,
+      "matchCount": 463,
       "matchingCharacterIds": [
         354,
         355,
@@ -13565,7 +13576,14 @@
         4548,
         4549,
         4551,
-        4554
+        4554,
+        4563,
+        4564,
+        4571,
+        4572,
+        4573,
+        4574,
+        4575
       ],
       "turnMatchingCharacterIds": [
         {
@@ -13985,7 +14003,11 @@
             4496,
             4497,
             4508,
-            4514
+            4514,
+            4572,
+            4573,
+            4574,
+            4575
           ]
         },
         {
@@ -14064,7 +14086,9 @@
             4490,
             4532,
             4549,
-            4551
+            4551,
+            4563,
+            4564
           ]
         },
         {
@@ -14106,7 +14130,8 @@
             4292,
             4329,
             4449,
-            4478
+            4478,
+            4571
           ]
         }
       ],
@@ -14143,7 +14168,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 553,
+      "matchCount": 555,
       "matchingCharacterIds": [
         73,
         251,
@@ -14694,6 +14719,8 @@
         4529,
         4538,
         4551,
+        4565,
+        4571,
         5031,
         5032,
         5046,
@@ -15192,7 +15219,8 @@
             4461,
             4475,
             4486,
-            4538
+            4538,
+            4565
           ]
         },
         {
@@ -15268,7 +15296,8 @@
             4418,
             4491,
             4507,
-            4522
+            4522,
+            4571
           ]
         },
         {
@@ -15367,7 +15396,8 @@
             4489,
             4510,
             4511,
-            4512
+            4512,
+            4571
           ]
         }
       ],
@@ -15404,7 +15434,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 450,
+      "matchCount": 451,
       "matchingCharacterIds": [
         709,
         949,
@@ -15854,6 +15884,7 @@
         4545,
         4547,
         4551,
+        4571,
         5031,
         5032
       ],
@@ -16395,7 +16426,8 @@
             4483,
             4492,
             4529,
-            4547
+            4547,
+            4571
           ]
         },
         {
@@ -16482,7 +16514,8 @@
             4393,
             4449,
             4475,
-            4478
+            4478,
+            4571
           ]
         }
       ],
@@ -16519,7 +16552,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 176,
+      "matchCount": 177,
       "matchingCharacterIds": [
         2237,
         2238,
@@ -16696,7 +16729,8 @@
         4525,
         4533,
         4535,
-        4537
+        4537,
+        4571
       ],
       "turnMatchingCharacterIds": [
         {
@@ -16924,7 +16958,8 @@
             4292,
             4366,
             4381,
-            4394
+            4394,
+            4571
           ]
         },
         {
@@ -17137,7 +17172,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 331,
+      "matchCount": 334,
       "matchingCharacterIds": [
         1823,
         1824,
@@ -17468,6 +17503,9 @@
         4537,
         4550,
         4554,
+        4557,
+        4558,
+        4566,
         5046,
         5047
       ],
@@ -17496,7 +17534,8 @@
             4496,
             4497,
             4500,
-            4554
+            4554,
+            4566
           ]
         },
         {
@@ -17792,7 +17831,8 @@
             4484,
             4531,
             4532,
-            4535
+            4535,
+            4566
           ]
         },
         {
@@ -17852,7 +17892,9 @@
             4395,
             4491,
             4537,
-            4550
+            4550,
+            4557,
+            4558
           ]
         },
         {
@@ -17913,7 +17955,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 111,
+      "matchCount": 113,
       "matchingCharacterIds": [
         1699,
         1700,
@@ -18025,7 +18067,9 @@
         4510,
         4511,
         4518,
-        4533
+        4533,
+        4574,
+        4575
       ],
       "turnMatchingCharacterIds": [
         {
@@ -18144,7 +18188,9 @@
             4419,
             4428,
             4511,
-            4533
+            4533,
+            4574,
+            4575
           ]
         },
         {
@@ -19034,7 +19080,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 256,
+      "matchCount": 258,
       "matchingCharacterIds": [
         1411,
         1412,
@@ -19291,7 +19337,9 @@
         4546,
         4548,
         4552,
-        4556
+        4556,
+        4561,
+        4562
       ],
       "turnMatchingCharacterIds": [
         {
@@ -19582,7 +19630,9 @@
             4231,
             4239,
             4240,
-            4405
+            4405,
+            4561,
+            4562
           ]
         },
         {
@@ -20047,7 +20097,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 320,
+      "matchCount": 322,
       "matchingCharacterIds": [
         1311,
         1312,
@@ -20367,6 +20417,8 @@
         4529,
         4546,
         4550,
+        4565,
+        4570,
         5031,
         5032
       ],
@@ -20389,7 +20441,8 @@
             4297,
             4326,
             4327,
-            4505
+            4505,
+            4565
           ]
         },
         {
@@ -20431,7 +20484,8 @@
             4298,
             4323,
             4357,
-            4486
+            4486,
+            4570
           ]
         },
         {
@@ -20692,7 +20746,9 @@
             4457,
             4469,
             4495,
-            4519
+            4519,
+            4565,
+            4570
           ]
         },
         {
@@ -21463,7 +21519,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 108,
+      "matchCount": 111,
       "matchingCharacterIds": [
         1189,
         1190,
@@ -21572,7 +21628,10 @@
         4493,
         4512,
         4515,
-        4543
+        4543,
+        4561,
+        4562,
+        4569
       ],
       "turnMatchingCharacterIds": [
         {
@@ -21673,7 +21732,8 @@
             4455,
             4480,
             4512,
-            4543
+            4543,
+            4569
           ]
         },
         {
@@ -21701,7 +21761,9 @@
         {
           "minTurns": 5,
           "characterIds": [
-            4282
+            4282,
+            4561,
+            4562
           ]
         },
         {
@@ -22180,7 +22242,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 198,
+      "matchCount": 206,
       "matchingCharacterIds": [
         2049,
         2050,
@@ -22379,7 +22441,15 @@
         4538,
         4543,
         4544,
-        4545
+        4545,
+        4557,
+        4558,
+        4559,
+        4560,
+        4565,
+        4566,
+        4574,
+        4575
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -22554,7 +22624,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 23,
+      "matchCount": 25,
       "matchingCharacterIds": [
         4110,
         4111,
@@ -22578,7 +22648,9 @@
         4527,
         4529,
         4539,
-        4547
+        4547,
+        4563,
+        4564
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -22607,24 +22679,28 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "captainAbility"
+        "captainAbility",
+        "specialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 2,
+      "matchCount": 3,
       "matchingCharacterIds": [
         3895,
-        3896
+        3896,
+        4566
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
         3895,
-        3896
+        3896,
+        4566
       ],
       "sampleTexts": [
         "Always Active: Boosts HP of Slasher and Free Spirit characters by 1.5x. Sheathed Captain: Reduces Special Cooldown of [STR], [DEX], [QCK] characters by 2 turns at the start of the fight, reduces Special Cooldown of Slasher and Free Spirit characters by 1 turn at the start of the fight, boosts ATK of Slasher and Free Spirit characters by 5.25x and makes [TND] orbs beneficial for Slasher and Free Spirit characters. Characters who attack with a Type advantage and with a [RCV] or [TND] orb will gain a [WANO] orb after attacking. Enma Captain: Boosts ATK of Slasher and Free Spirit characters by 5.5x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character and changes [RCV] orbs into [WANO] orbs. Characters who attack with a Type advantage will gain a [WANO] orb after attacking. Reduces crew's current HP by 15% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Enma Unleashed Captain: Boosts ATK of Slasher and Free Spirit characters by 5.75x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character, changes [RCV] orbs into [WANO] orbs, makes this character's normal attacks count as Type Effective against all Types and increases enemies' Damage Limiter limit up to 2x. If this character has a [TND] or [WANO] orb and you attack with this character, ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 1.5x for 1 turn. Reduces crew's current HP by 60% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Weakened Captain: Boosts ATK of Slasher and Free Spirit characters by 2x. Action: Based on how full Enma Gauge is, transforms Zoro. At any Enma level, changes between Sheathed and Enma freely. If Enma is full, changes into Enma Unleashed. This can be used an unlimited number of times per turn.",
-        "Always Active: Boosts HP of Slasher and Free Spirit characters by 1.5x. Sheathed Captain: Reduces Special Cooldown of [STR], [DEX], [QCK] characters by 2 turns at the start of the fight, reduces Special Cooldown of Slasher and Free Spirit characters by 1 turn at the start of the fight, boosts ATK of Slasher and Free Spirit characters by 5.25x and makes [TND] orbs beneficial for Slasher and Free Spirit characters. Characters who attack with a Type advantage and with a [RCV] or [TND] orb will gain a [WANO] orb after attacking. Enma Captain: Boosts ATK of Slasher and Free Spirit characters by 5.5x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character and changes [RCV] orbs into [WANO] orbs. Characters who attack with a Type advantage will gain a [WANO] orb after attacking. Reduces crew's current HP by 15% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Enma Unleashed Captain: Boosts ATK of Slasher and Free Spirit characters by 5.75x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character, changes [RCV] orbs into [WANO] orbs, makes this character's normal attacks count as Type Effective against all Types and increases enemies' Damage Limiter limit up to 2x. If this character has a [TND] or [WANO] orb and you attack with this character, ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 1.5x for 1 turn. Reduces crew's current HP by 60% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Weakened Captain: Boosts ATK of Slasher and Free Spirit characters by 2x. Action: Based on how full Enma Gauge is, transforms Zoro. At any Enma level, changes between Sheathed and Enma freely. If Enma is full, changes into Enma Unleashed. This can be used an unlimited number of times per turn."
+        "Always Active: Boosts HP of Slasher and Free Spirit characters by 1.5x. Sheathed Captain: Reduces Special Cooldown of [STR], [DEX], [QCK] characters by 2 turns at the start of the fight, reduces Special Cooldown of Slasher and Free Spirit characters by 1 turn at the start of the fight, boosts ATK of Slasher and Free Spirit characters by 5.25x and makes [TND] orbs beneficial for Slasher and Free Spirit characters. Characters who attack with a Type advantage and with a [RCV] or [TND] orb will gain a [WANO] orb after attacking. Enma Captain: Boosts ATK of Slasher and Free Spirit characters by 5.5x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character and changes [RCV] orbs into [WANO] orbs. Characters who attack with a Type advantage will gain a [WANO] orb after attacking. Reduces crew's current HP by 15% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Enma Unleashed Captain: Boosts ATK of Slasher and Free Spirit characters by 5.75x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character, changes [RCV] orbs into [WANO] orbs, makes this character's normal attacks count as Type Effective against all Types and increases enemies' Damage Limiter limit up to 2x. If this character has a [TND] or [WANO] orb and you attack with this character, ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 1.5x for 1 turn. Reduces crew's current HP by 60% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Weakened Captain: Boosts ATK of Slasher and Free Spirit characters by 2x. Action: Based on how full Enma Gauge is, transforms Zoro. At any Enma level, changes between Sheathed and Enma freely. If Enma is full, changes into Enma Unleashed. This can be used an unlimited number of times per turn.",
+        "Reduces damage taken by 90% for 1 turn, reduces crew's ATK Down duration by 6 turns, and applies Weakened status (increase damage taken by 1.3x for all enemies, damage further increased by 1.2x if enemy has Increase Damage Taken) to all enemies for 1 turn. If 3 or more [Navy] [SWORD] characters or 5 or more [Egghead Arc] characters are on the crew, applies \"Territory: Cerebral class\" to the field (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory) for 1 turn, and this Special's Weakened effect will ignore immunity to status effects"
       ]
     },
     {
@@ -22710,7 +22786,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 969,
+      "matchCount": 985,
       "matchingCharacterIds": [
         452,
         453,
@@ -23680,7 +23756,23 @@
         4550,
         4551,
         4553,
-        4556
+        4556,
+        4557,
+        4558,
+        4559,
+        4560,
+        4561,
+        4562,
+        4563,
+        4564,
+        4565,
+        4566,
+        4569,
+        4570,
+        4571,
+        4573,
+        4574,
+        4575
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -24591,7 +24683,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 82,
+      "matchCount": 84,
       "matchingCharacterIds": [
         871,
         872,
@@ -24674,7 +24766,9 @@
         4527,
         4529,
         4539,
-        4547
+        4547,
+        4563,
+        4564
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -25301,7 +25395,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 175,
+      "matchCount": 177,
       "matchingCharacterIds": [
         668,
         669,
@@ -25477,7 +25571,9 @@
         4517,
         4528,
         4530,
-        4531
+        4531,
+        4574,
+        4575
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -25534,14 +25630,31 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 6,
+      "matchCount": 23,
       "matchingCharacterIds": [
         3339,
         3661,
         3721,
         3980,
         4081,
-        4082
+        4082,
+        4206,
+        4209,
+        4218,
+        4219,
+        4230,
+        4231,
+        4249,
+        4250,
+        4365,
+        4387,
+        4432,
+        4565,
+        4566,
+        4569,
+        4570,
+        4572,
+        4573
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -25660,18 +25773,21 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "captainAbility"
+        "captainAbility",
+        "specialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 5,
+      "matchCount": 7,
       "matchingCharacterIds": [
         3176,
         3177,
         3786,
         4057,
-        4058
+        4058,
+        4572,
+        4573
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -25706,7 +25822,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 9,
+      "matchCount": 10,
       "matchingCharacterIds": [
         4061,
         4062,
@@ -25715,6 +25831,7 @@
         4216,
         4239,
         4240,
+        4293,
         4372,
         4477
       ],
@@ -25773,7 +25890,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 46,
+      "matchCount": 61,
       "matchingCharacterIds": [
         4206,
         4209,
@@ -25820,7 +25937,22 @@
         4548,
         4550,
         4551,
-        4554
+        4554,
+        4557,
+        4558,
+        4559,
+        4560,
+        4561,
+        4562,
+        4563,
+        4564,
+        4565,
+        4566,
+        4569,
+        4570,
+        4571,
+        4572,
+        4573
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -25831,11 +25963,11 @@
         4218
       ],
       "sampleTexts": [
-        "Reduces Special Cooldown of [QCK], Free Spirit and Powerhouse characters by 1 turn, reduces Paralysis duration by 6 turns, inflicts all enemies with Burn that will deal 50x enemies' ATK in damage for 3 turns, applies Territory: Free Spirit class to the field, boosts ATK by 1x-1.5x and reduces damage received by 0%-25% based on number of characters matching the territory, for 1 turn, and boosts Color Affinity of [QCK], Free Spirit and Powerhouse characters by 2x for 3 turns. If HP is below 50% when the special is activated, increases duration of any Chain Lock buffs by 2 turns, and increases boost effects of Chain Lock and Color Affinity buffs by +0.25x, including effects activated in the same Ability.",
-        "Reduces Despair and ATK Down duration by 3 turns. If your crew has Auto Slot Change buff when the special is activated, recovers 15,000 HP, adds 1.2x to Chain Multiplier for 1 turn, and applies Territory: Cerebral class to the field, boosts ATK by 1x-1.5x and reduces damage received by 0%-25% based on number of characters matching the territory, for 1 turn; boosts ATK of [INT], Cerebral and Free Spirit characters by 2.25x for 1 turn, and changes [PSY] orbs into [WANO] orbs for 1 turn otherwise.",
-        "Applies Territory: Free Spirit class to the field, boosts ATK by 1x-1.5x and reduces damage received by 0%-25% based on number of characters matching the territory, for 3 turns, reduces ATK Down duration by 10 turns, and boosts ATK against enemies inflicted with Increase Damage Taken and enemies with reduced defense by 2.5x-3x for 2 turns depending on the outcome of Action Special. If your crew has ATK Up, Orb Amplification and Chain Lock when the special is activated, increases duration of any ATK Up, Orb Amplification and Chain Lock buffs by 2 turns. Sets Chain Boundaries to 3.0x and 35.0x for 1 turn. If your crew has 6 Free Spirit characters, increases boost effects of Status ATK Boost and Chain Lock buffs by +0.25x, including effects activated in the same Ability.. Deals 10% of enemies' current HP in damage to all enemies, changes all orbs, including [BLOCK] orbs, of right column characters into [TND] orbs, changes all orbs, including [BLOCK] orbs, of left column characters into [WANO] orbs, increases boost effects of ATK Up buffs to 3.5x, and boosts ATK of Driven characters by 3x-4x for 1 turn depending on the number of Status Effects applied on enemy when Special is activated. If your crew has 6 Driven characters, reduces enemies' Threshold Damage Reduction and Percent Damage Reduction duration by 10 turns, and ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 2.25x for 1 turn; reduces enemies' Threshold Damage Reduction and Percent Damage Reduction by 6 turns, and inflicts all enemies with Increase Damage Taken by 2x for 1 turn otherwise.",
+        "Reduces Special Cooldown of [QCK], Free Spirit and Powerhouse characters by 1 turn, reduces Paralysis duration by 6 turns, inflicts all enemies with Burn that will deal 50x enemies' ATK in damage for 3 turns, applies Territory: Free Spirit to the field for 1 turn, and boosts Color Affinity of [QCK], Free Spirit and Powerhouse characters by 2x for 3 turns. If HP is below 50% when the special is activated, increases duration of any Chain Lock buffs by 2 turns, and increases boost effects of Chain Lock and Color Affinity buffs by +0.25x, including effects activated in the same Ability.",
+        "Reduces Despair and ATK Down duration by 3 turns. If your crew has Auto Slot Change buff when the special is activated, recovers 15,000 HP, adds 1.2x to Chain Multiplier for 1 turn, and applies Territory: Cerebral to the field for 1 turn; boosts ATK of [INT], Cerebral and Free Spirit characters by 2.25x for 1 turn, and changes [PSY] orbs into [WANO] orbs for 1 turn otherwise.",
+        "Applies Territory: Free Spirit to the field for 3 turns, reduces ATK Down duration by 10 turns, and boosts ATK against enemies inflicted with Increase Damage Taken and enemies with reduced defense by 2.5x-3x for 2 turns depending on the outcome of Action Special. If your crew has ATK Up, Orb Amplification and Chain Lock when the special is activated, increases duration of any ATK Up, Orb Amplification and Chain Lock buffs by 2 turns. Sets Chain Boundaries to 3.0x and 35.0x for 1 turn. If your crew has 6 Free Spirit characters, increases boost effects of Status ATK Boost and Chain Lock buffs by +0.25x, including effects activated in the same Ability.. Deals 10% of enemies' current HP in damage to all enemies, changes all orbs, including [BLOCK] orbs, of right column characters into [TND] orbs, changes all orbs, including [BLOCK] orbs, of left column characters into [WANO] orbs, increases boost effects of ATK Up buffs to 3.5x, and boosts ATK of Driven characters by 3x-4x for 1 turn depending on the number of Status Effects applied on enemy when Special is activated. If your crew has 6 Driven characters, reduces enemies' Threshold Damage Reduction and Percent Damage Reduction duration by 10 turns, and ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 2.25x for 1 turn; reduces enemies' Threshold Damage Reduction and Percent Damage Reduction by 6 turns, and inflicts all enemies with Increase Damage Taken by 2x for 1 turn otherwise.",
         "Boosts ATK of all characters by 5x-6x depending on the number of Free Spirit characters on the crew, boosts HP of all characters by 1.3x, and makes [QCK] and [RCV] orbs beneficial for all characters. If crew uses a special with an ATK Up buff, increases boost effects of ATK Up buff by +0.25x. If your crew has 4+ Free Spirit characters, reduces Burn and Bind duration by 10 turns. If your crew has 6 Free Spirit characters and field has Territory: Free Spirit, boosts ATK of Free Spirit characters by 6.5x. If your crew has 6 Free Spirit characters and crew uses a Special to reduce enemies' Resilience, Percent Damage Reduction, Threshold Damage Reduction or Increased Defense, reduces the duration by 1 additional turn. If this character is your Captain and performs EXCELLENT with their Action Special, the following effects are added to this character's Captain Ability for 3 turns: if crew uses a special with an Orb Amplification buff, increases boost effects of Orb Amplification buff by +0.25x; if your crew has 6 Free Spirit characters and crew uses a Special to reduce enemies' Resilience, Percent Damage Reduction, Threshold Damage Reduction or Increased Defense, reduces the duration by 2 additional turns.",
-        "Applies Territory: Free Spirit class to the field, boosts ATK by 1x-1.5x and reduces damage received by 0%-25% based on number of characters matching the territory, for 3 turns, reduces ATK Down duration by 10 turns, and boosts ATK against enemies inflicted with Increase Damage Taken and enemies with reduced defense by 2.5x-3x for 2 turns depending on the outcome of Action Special. If your crew has ATK Up, Orb Amplification and Chain Lock when the special is activated, increases duration of any ATK Up, Orb Amplification and Chain Lock buffs by 2 turns. Sets Chain Boundaries to 3.0x and 35.0x for 1 turn. If your crew has 6 Free Spirit characters, increases boost effects of Status ATK Boost and Chain Lock buffs by +0.25x, including effects activated in the same Ability.. Deals 10% of enemies' current HP in damage to all enemies, changes all orbs, including [BLOCK] orbs, of right column characters into [TND] orbs, changes all orbs, including [BLOCK] orbs, of left column characters into [WANO] orbs, increases boost effects of ATK Up buffs to 3.5x, and boosts ATK of Driven characters by 3x-4x for 1 turn depending on the number of Status Effects applied on enemy when Special is activated. If your crew has 6 Driven characters, reduces enemies' Threshold Damage Reduction and Percent Damage Reduction duration by 10 turns, and ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 2.25x for 1 turn; reduces enemies' Threshold Damage Reduction and Percent Damage Reduction by 6 turns, and inflicts all enemies with Increase Damage Taken by 2x for 1 turn otherwise."
+        "Applies Territory: Free Spirit to the field for 3 turns, reduces ATK Down duration by 10 turns, and boosts ATK against enemies inflicted with Increase Damage Taken and enemies with reduced defense by 2.5x-3x for 2 turns depending on the outcome of Action Special. If your crew has ATK Up, Orb Amplification and Chain Lock when the special is activated, increases duration of any ATK Up, Orb Amplification and Chain Lock buffs by 2 turns. Sets Chain Boundaries to 3.0x and 35.0x for 1 turn. If your crew has 6 Free Spirit characters, increases boost effects of Status ATK Boost and Chain Lock buffs by +0.25x, including effects activated in the same Ability.. Deals 10% of enemies' current HP in damage to all enemies, changes all orbs, including [BLOCK] orbs, of right column characters into [TND] orbs, changes all orbs, including [BLOCK] orbs, of left column characters into [WANO] orbs, increases boost effects of ATK Up buffs to 3.5x, and boosts ATK of Driven characters by 3x-4x for 1 turn depending on the number of Status Effects applied on enemy when Special is activated. If your crew has 6 Driven characters, reduces enemies' Threshold Damage Reduction and Percent Damage Reduction duration by 10 turns, and ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 2.25x for 1 turn; reduces enemies' Threshold Damage Reduction and Percent Damage Reduction by 6 turns, and inflicts all enemies with Increase Damage Taken by 2x for 1 turn otherwise."
       ]
     },
     {
@@ -25986,7 +26118,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 333,
+      "matchCount": 334,
       "matchingCharacterIds": [
         709,
         995,
@@ -26319,6 +26451,7 @@
         4532,
         4545,
         4547,
+        4571,
         5031,
         5032
       ],
@@ -26708,7 +26841,8 @@
             4267,
             4387,
             4475,
-            4478
+            4478,
+            4571
           ]
         }
       ],
@@ -26743,11 +26877,20 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 0,
-      "matchingCharacterIds": [],
+      "matchCount": 2,
+      "matchingCharacterIds": [
+        4572,
+        4573
+      ],
       "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [],
-      "sampleTexts": []
+      "sampleCharacterIds": [
+        4572,
+        4573
+      ],
+      "sampleTexts": [
+        "Boosts crew's base stats by 100. Reduces character's Special Reverse by 2 turns",
+        "Boosts crew's base stats by 100. Reduces character's Special Reverse by 2 turns"
+      ]
     },
     {
       "key": "crewmate_recover_remove_sfx",
@@ -26787,7 +26930,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 181,
+      "matchCount": 182,
       "matchingCharacterIds": [
         73,
         251,
@@ -26968,6 +27111,7 @@
         4478,
         4510,
         4511,
+        4571,
         5046,
         5047
       ],
@@ -27182,7 +27326,8 @@
             4475,
             4478,
             4510,
-            4511
+            4511,
+            4571
           ]
         }
       ],
@@ -27424,7 +27569,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1098,
+      "matchCount": 1110,
       "matchingCharacterIds": [
         4,
         12,
@@ -28523,6 +28668,18 @@
         4550,
         4551,
         4554,
+        4557,
+        4558,
+        4559,
+        4560,
+        4561,
+        4562,
+        4563,
+        4564,
+        4565,
+        4566,
+        4569,
+        4570,
         5014
       ],
       "turnMatchingCharacterIds": [],
@@ -28928,7 +29085,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 355,
+      "matchCount": 356,
       "matchingCharacterIds": [
         20,
         22,
@@ -29283,6 +29440,7 @@
         4549,
         4552,
         4556,
+        4566,
         5054,
         5055
       ],
@@ -29759,7 +29917,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 83,
+      "matchCount": 85,
       "matchingCharacterIds": [
         418,
         553,
@@ -29843,7 +30001,9 @@
         4331,
         4347,
         4363,
-        4477
+        4477,
+        4563,
+        4564
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -30069,7 +30229,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 112,
+      "matchCount": 114,
       "matchingCharacterIds": [
         669,
         833,
@@ -30182,7 +30342,9 @@
         4513,
         4514,
         4516,
-        4554
+        4554,
+        4561,
+        4562
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -30351,7 +30513,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 121,
+      "matchCount": 123,
       "matchingCharacterIds": [
         311,
         312,
@@ -30473,7 +30635,9 @@
         4499,
         4500,
         4509,
-        4548
+        4548,
+        4559,
+        4560
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -31280,7 +31444,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 32,
+      "matchCount": 34,
       "matchingCharacterIds": [
         1018,
         1233,
@@ -31313,7 +31477,9 @@
         4185,
         4257,
         4334,
-        4477
+        4477,
+        4563,
+        4564
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -31486,7 +31652,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 77,
+      "matchCount": 79,
       "matchingCharacterIds": [
         669,
         1045,
@@ -31564,7 +31730,9 @@
         4490,
         4507,
         4513,
-        4514
+        4514,
+        4561,
+        4562
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -31689,7 +31857,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 80,
+      "matchCount": 82,
       "matchingCharacterIds": [
         872,
         1573,
@@ -31770,7 +31938,9 @@
         4498,
         4499,
         4509,
-        4517
+        4517,
+        4559,
+        4560
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -32497,7 +32667,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 38,
+      "matchCount": 40,
       "matchingCharacterIds": [
         418,
         718,
@@ -32536,7 +32706,9 @@
         4177,
         4231,
         4257,
-        4477
+        4477,
+        4563,
+        4564
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -32721,7 +32893,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 80,
+      "matchCount": 82,
       "matchingCharacterIds": [
         669,
         882,
@@ -32802,7 +32974,9 @@
         4490,
         4507,
         4513,
-        4514
+        4514,
+        4561,
+        4562
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -32943,7 +33117,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 87,
+      "matchCount": 89,
       "matchingCharacterIds": [
         872,
         1571,
@@ -33031,7 +33205,9 @@
         4491,
         4498,
         4499,
-        4509
+        4509,
+        4559,
+        4560
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -33273,7 +33449,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 112,
+      "matchCount": 117,
       "matchingCharacterIds": [
         575,
         1595,
@@ -33386,7 +33562,12 @@
         4497,
         4499,
         4523,
-        4536
+        4536,
+        4559,
+        4560,
+        4565,
+        4574,
+        4575
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -33464,7 +33645,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 41,
+      "matchCount": 46,
       "matchingCharacterIds": [
         4364,
         4365,
@@ -33506,7 +33687,12 @@
         4547,
         4550,
         4551,
-        4556
+        4556,
+        4561,
+        4562,
+        4563,
+        4564,
+        4566
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -36280,7 +36466,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 674,
+      "matchCount": 689,
       "matchingCharacterIds": [
         8,
         77,
@@ -36955,6 +37141,21 @@
         4549,
         4550,
         4551,
+        4557,
+        4558,
+        4559,
+        4560,
+        4561,
+        4562,
+        4563,
+        4564,
+        4569,
+        4570,
+        4571,
+        4572,
+        4573,
+        4574,
+        4575,
         5014
       ],
       "turnMatchingCharacterIds": [],
@@ -36989,7 +37190,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 11,
+      "matchCount": 14,
       "matchingCharacterIds": [
         4436,
         4447,
@@ -37001,7 +37202,10 @@
         4511,
         4518,
         4526,
-        4527
+        4527,
+        4571,
+        4572,
+        4573
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -37035,7 +37239,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 13,
+      "matchCount": 21,
       "matchingCharacterIds": [
         4432,
         4441,
@@ -37049,7 +37253,15 @@
         4496,
         4497,
         4502,
-        4506
+        4506,
+        4557,
+        4558,
+        4559,
+        4560,
+        4561,
+        4562,
+        4563,
+        4564
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -37689,7 +37901,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 15,
+      "matchCount": 16,
       "matchingCharacterIds": [
         846,
         3717,
@@ -37705,7 +37917,8 @@
         4353,
         4366,
         4381,
-        4419
+        4419,
+        4569
       ],
       "turnMatchingCharacterIds": [
         {
@@ -37718,7 +37931,8 @@
             4196,
             4221,
             4366,
-            4419
+            4419,
+            4569
           ]
         }
       ],
@@ -38032,7 +38246,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 30,
+      "matchCount": 34,
       "matchingCharacterIds": [
         2391,
         2507,
@@ -38063,7 +38277,11 @@
         4479,
         4496,
         4497,
-        4544
+        4544,
+        4565,
+        4566,
+        4569,
+        4570
       ],
       "turnMatchingCharacterIds": [
         {
@@ -38079,7 +38297,9 @@
             4479,
             4496,
             4497,
-            4544
+            4544,
+            4569,
+            4570
           ]
         }
       ],
@@ -38461,7 +38681,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 56,
+      "matchCount": 57,
       "matchingCharacterIds": [
         367,
         1001,
@@ -38518,7 +38738,8 @@
         4389,
         4418,
         4425,
-        4491
+        4491,
+        4567
       ],
       "turnMatchingCharacterIds": [
         {
@@ -38545,7 +38766,8 @@
             4243,
             4270,
             4346,
-            4361
+            4361,
+            4567
           ]
         },
         {
@@ -38945,7 +39167,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 50,
+      "matchCount": 51,
       "matchingCharacterIds": [
         1316,
         1652,
@@ -38996,7 +39218,8 @@
         4491,
         4523,
         4532,
-        4534
+        4534,
+        4567
       ],
       "turnMatchingCharacterIds": [
         {
@@ -39023,7 +39246,8 @@
             4285,
             4331,
             4354,
-            4394
+            4394,
+            4567
           ]
         },
         {
@@ -39087,7 +39311,7 @@
       "groupLabel": "Status Effect Recovery",
       "groupOrder": 3,
       "effectOrder": 9,
-      "supportsTurns": false,
+      "supportsTurns": true,
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
@@ -39096,11 +39320,28 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 0,
-      "matchingCharacterIds": [],
-      "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [],
-      "sampleTexts": []
+      "matchCount": 2,
+      "matchingCharacterIds": [
+        4574,
+        4575
+      ],
+      "turnMatchingCharacterIds": [
+        {
+          "minTurns": 1,
+          "characterIds": [
+            4574,
+            4575
+          ]
+        }
+      ],
+      "sampleCharacterIds": [
+        4574,
+        4575
+      ],
+      "sampleTexts": [
+        "Characters with the following Character Tag: [World Government], [Five Elders]: Once per quest, if supported character uses a Special, reduces crew's decrease chain multiplier growth rate duration by 1 turn and reduces supported character's Special charge time by 1 turn",
+        "Characters with the following Character Tag: [World Government], [Five Elders]: Once per quest, if supported character uses a Special, reduces crew's decrease chain multiplier growth rate duration by 1 turn and reduces supported character's Special charge time by 1 turn"
+      ]
     },
     {
       "key": "support_status_effect_recovery_lock_chain_multiplier",
@@ -40968,7 +41209,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 805,
+      "matchCount": 814,
       "matchingCharacterIds": [
         4,
         16,
@@ -41774,6 +42015,15 @@
         4541,
         4543,
         4549,
+        4557,
+        4558,
+        4559,
+        4560,
+        4561,
+        4562,
+        4563,
+        4564,
+        4571,
         5055
       ],
       "turnMatchingCharacterIds": [],
@@ -42686,7 +42936,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 86,
+      "matchCount": 88,
       "matchingCharacterIds": [
         73,
         416,
@@ -42773,7 +43023,9 @@
         4517,
         4525,
         4545,
-        4552
+        4552,
+        4572,
+        4573
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -42970,7 +43222,7 @@
         "Yamato: Once per adventure, when you reach the final stage, reduces crew's current HP by 20%, boosts Orb Effects of all characters by 1.75x for 1 turn and changes the orb of the supported character into a [RCV] orb.",
         "Yamato: Once per adventure, when you reach the final stage, reduces crew's current HP by 20%, boosts base ATK of all characters by 500 for 1 turn and changes the orb of the supported character into a [RCV] orb.",
         "Izo, Dogstorm, Cat Viper, Raizo, Kozuki Hiyori (Komurasaki), Okiku, Otama, Ashura Doji (Shutenmaru), Kozuki Sukiyaki (Tenguyama Hitetsu), Kozuki Oden, Kawamatsu, Shinobu, Yamato, Toki: Once per adventure, when the supported character uses their special, reduces crew's current HP by 50%, changes orbs of adjacent characters into [WANO] orbs, and increases boost effects of Base ATK Boost buffs by +250.",
-        "Usopp, Tony Tony Chopper, Shanks, Dorry, Broggy: Once per adventure, when an enemy inflicts you with Bind, reduces crew's current HP by 20%, reduces Bind duration by 2 turns, allows crew to perform Super Tandem with [INT] and [RCV] orbs for 1 turn, and reduces Switch Effect of all characters by 2.",
+        "Usopp, Tony Tony Chopper, Shanks, Dorry, Broggy: Once per adventure, when an enemy inflicts you with Bind, reduces crew's current HP by 20%, reduces Bind duration by 2 turns, allows all characters to perform Super Tandem with [INT] and [RCV] orbs for 1 turn, and reduces Switch Effect of all characters by 2.",
         "Dr. Vegapunk (Stella): Once per adventure, when you reach the final stage, reduces crew's current HP by 90%, and boosts Base ATK of Cerebral characters by 1,000 for 1 turn."
       ]
     },
