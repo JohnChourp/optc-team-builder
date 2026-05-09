@@ -1,4 +1,7 @@
-import { type AutoBuildCaptainAbilityCoverageMode } from '../models/auto-team-builder.models';
+import {
+  type AutoBuildCaptainAbilityCoverageMode,
+  type AutoBuildCaptainBranchMode,
+} from '../models/auto-team-builder.models';
 import { type CharacterDetailRecord, type CharacterListItem } from '../models/optc.models';
 import {
   captainTagBranchesSatisfied,
@@ -17,6 +20,7 @@ export interface CaptainTeamConditionLeaderInput {
   role: CaptainTeamConditionLeaderRole;
   label: string;
   character: CharacterDetailRecord | null;
+  branchMode?: AutoBuildCaptainBranchMode | null;
 }
 
 export interface CaptainTeamConditionStatusOptions {
@@ -87,7 +91,7 @@ function resolveLeaderTeamConditionStatus(
   coverageMode: AutoBuildCaptainAbilityCoverageMode,
 ): CaptainTeamConditionLeaderStatus {
   const captainBranches = leader.character
-    ? resolveRequiredCaptainCoverageBranchTexts(leader.character)
+    ? resolveRequiredCaptainCoverageBranchTextsForMode(leader.character, leader.branchMode ?? null)
     : [];
   const tagConditionBranches =
     coverageMode === 'fullAbilityCoverage'
@@ -97,6 +101,7 @@ function resolveLeaderTeamConditionStatus(
     ? slots.map((slot) =>
         resolveCaptainCoverage(leader.character!, slot as CharacterListItem, {
           coverageMode,
+          branchMode: leader.branchMode ?? null,
           targetCharacterTags: slot.detail.characterTags,
           includeTeamTagClauses: false,
         }),
@@ -126,6 +131,19 @@ function resolveLeaderTeamConditionStatus(
     ).length,
     passed: hasCaptainAbility && missingSlotLabels.length === 0 && tagConditionsSatisfied,
   };
+}
+
+function resolveRequiredCaptainCoverageBranchTextsForMode(
+  captain: CharacterDetailRecord,
+  branchMode: AutoBuildCaptainBranchMode | null,
+) {
+  const branches = resolveRequiredCaptainCoverageBranchTexts(captain);
+
+  if ((branchMode === 'character1' || branchMode === 'character2') && branches.length === 2) {
+    return [branches[branchMode === 'character1' ? 0 : 1]!];
+  }
+
+  return branches;
 }
 
 function resolveTeamConditionState(

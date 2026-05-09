@@ -411,6 +411,10 @@
       "addChoice": "Add OR",
       "addResult": "Add"
     },
+    "branches": {
+      "both": "Both",
+      "side": "{{name}}"
+    },
     "similar": {
       "actions": {
         "add": "Find similar OR pick",
@@ -673,6 +677,9 @@
       "scopePending": "Leader scope will be calculated after a successful build.",
       "sourceDual": "Derived from both selected leaders",
       "sourceSingle": "Derived from the active captain"
+    },
+    "branches": {
+      "startsAs": "Starts as {{name}}"
     },
     "captainAbilityCoverage": {
       "full": "Full Captain Ability coverage passed.",

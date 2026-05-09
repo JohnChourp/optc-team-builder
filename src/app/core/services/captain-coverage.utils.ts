@@ -2,6 +2,7 @@ import {
   AUTO_TEAM_BUILDER_CLASSES,
   AUTO_TEAM_BUILDER_TYPES,
   type AutoBuildCaptainAbilityCoverageMode,
+  type AutoBuildCaptainBranchMode,
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
 import {
@@ -57,6 +58,7 @@ export interface CaptainBoostScopeSummary {
 
 export interface CaptainCoverageOptions {
   coverageMode?: AutoBuildCaptainAbilityCoverageMode;
+  branchMode?: AutoBuildCaptainBranchMode | null;
   targetCharacterTags?: readonly string[];
   includeTeamTagClauses?: boolean;
 }
@@ -65,6 +67,13 @@ export interface CaptainCoverageBranchText {
   key: string;
   label: string;
   text: string;
+}
+
+export type CaptainCoverageSingleBranchMode = Exclude<AutoBuildCaptainBranchMode, 'both'>;
+
+export interface CaptainCoverageBranchOption extends CaptainCoverageBranchText {
+  mode: CaptainCoverageSingleBranchMode;
+  displayName: string;
 }
 
 const UNIVERSAL_SCOPE_PATTERN = /\b(?:all|all characters|all units|all crewmates|crew)\b/i;
@@ -166,6 +175,12 @@ export function resolveCaptainCoverage(
     return createEmptyCoverageResult('');
   }
 
+  const forcedBranch = resolveCaptainCoverageBranchForMode(branches, options.branchMode);
+
+  if (forcedBranch) {
+    return resolveCaptainCoverageForText(forcedBranch.text, target, options);
+  }
+
   const branchResults = branches.map((branch) =>
     resolveCaptainCoverageForText(branch.text, target, options),
   );
@@ -174,7 +189,10 @@ export function resolveCaptainCoverage(
     return branchResults[0]!;
   }
 
-  if (shouldUseAlternativeCaptainCoverageBranches(captain, branches)) {
+  if (
+    options.branchMode !== 'both' &&
+    shouldUseAlternativeCaptainCoverageBranches(captain, branches)
+  ) {
     return mergeCaptainCoverageAlternativeBranchResults(branchResults);
   }
 
@@ -238,8 +256,63 @@ export function resolveRequiredCaptainCoverageBranchTexts(
     : [];
 }
 
-export function hasSelfOnlyCaptainCoverageText(captain: CharacterDetailRecord): boolean {
-  return resolveRequiredCaptainCoverageBranchTexts(captain).some((branch) =>
+export function resolveCaptainCoverageBranchOptions(
+  captain: CharacterDetailRecord,
+): CaptainCoverageBranchOption[] {
+  const branches = resolveDualBaseCaptainAbilityVariants(captain.detail.captainAbilityVariants);
+
+  return branches.map((branch, index) => {
+    const mode = index === 0 ? 'character1' : 'character2';
+
+    return {
+      ...branch,
+      mode,
+      displayName: resolveCaptainCoverageBranchDisplayName(captain, mode, branch.label),
+    };
+  });
+}
+
+export function hasCaptainCoverageBranchOptions(captain: CharacterDetailRecord): boolean {
+  return resolveCaptainCoverageBranchOptions(captain).length === 2;
+}
+
+export function isVsCaptainCoverageBranchCaptain(captain: CharacterDetailRecord): boolean {
+  const branches = resolveRequiredCaptainCoverageBranchTexts(captain);
+
+  return shouldUseAlternativeCaptainCoverageBranches(captain, branches);
+}
+
+export function resolveCaptainCoverageBranchDisplay(
+  captain: CharacterDetailRecord,
+  mode: AutoBuildCaptainBranchMode,
+): { label: string; displayName: string } {
+  if (mode === 'both') {
+    return {
+      label: 'Both Captain Ability branches',
+      displayName: 'Both',
+    };
+  }
+
+  const branch = resolveCaptainCoverageBranchOptions(captain).find(
+    (option) => option.mode === mode,
+  );
+
+  return {
+    label: branch?.label ?? resolveCaptainCoverageBranchFallbackLabel(mode),
+    displayName:
+      branch?.displayName ?? resolveCaptainCoverageBranchDisplayName(captain, mode, branch?.label),
+  };
+}
+
+export function hasSelfOnlyCaptainCoverageText(
+  captain: CharacterDetailRecord,
+  options: Pick<CaptainCoverageOptions, 'branchMode'> = {},
+): boolean {
+  const branches = resolveRequiredCaptainCoverageBranchTexts(captain);
+  const forcedBranch = resolveCaptainCoverageBranchForMode(branches, options.branchMode);
+  const targetBranches = forcedBranch ? [forcedBranch] : branches;
+
+  return targetBranches.some((branch) =>
     splitCaptainEffectClauses(branch.text).some((clause) => {
       const normalizedClause = normalizeCoverageClause(clause);
 
@@ -274,6 +347,17 @@ function resolveDualBaseCaptainAbilityVariants(
   return branches.length === 2 ? branches : [];
 }
 
+function resolveCaptainCoverageBranchForMode(
+  branches: readonly CaptainCoverageBranchText[],
+  mode: AutoBuildCaptainBranchMode | null | undefined,
+): CaptainCoverageBranchText | null {
+  if (!mode || mode === 'both' || branches.length !== 2) {
+    return null;
+  }
+
+  return branches[mode === 'character1' ? 0 : 1] ?? null;
+}
+
 function isDualBaseCaptainAbilityVariant(
   variant: CharacterCaptainAbilityVariant,
   characterNumber: 1 | 2,
@@ -287,6 +371,73 @@ function isDualBaseCaptainAbilityVariant(
 
 function normalizeVariantIdentity(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function resolveCaptainCoverageBranchDisplayName(
+  captain: CharacterDetailRecord,
+  mode: CaptainCoverageSingleBranchMode,
+  fallbackLabel: string | undefined,
+): string {
+  const sideNames = resolveCaptainCoverageSideNames(captain);
+  const sideName = sideNames[mode === 'character1' ? 0 : 1];
+
+  if (sideName) {
+    return sideName;
+  }
+
+  return (
+    normalizeCaptainCoverageBranchLabel(fallbackLabel) ??
+    resolveCaptainCoverageBranchFallbackLabel(mode)
+  );
+}
+
+function resolveCaptainCoverageSideNames(captain: CharacterDetailRecord): string[] {
+  const baseName = captain.name
+    .split(/\s+-\s+/)[0]
+    ?.trim()
+    .replace(/\s+/g, ' ');
+
+  if (!baseName) {
+    return [];
+  }
+
+  const vsNames = baseName
+    .split(/\s+VS\s+/i)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (vsNames.length === 2) {
+    return vsNames;
+  }
+
+  const pairedNames = baseName
+    .split(/\s+(?:&|\+|\/)\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  return pairedNames.length === 2 ? pairedNames : [];
+}
+
+function normalizeCaptainCoverageBranchLabel(label: string | undefined): string | null {
+  if (!label) {
+    return null;
+  }
+
+  if (/\bcharacter\s*1\b/i.test(label)) {
+    return 'Character 1';
+  }
+
+  if (/\bcharacter\s*2\b/i.test(label)) {
+    return 'Character 2';
+  }
+
+  const normalizedLabel = label.trim().replace(/\s+/g, ' ');
+
+  return normalizedLabel || null;
+}
+
+function resolveCaptainCoverageBranchFallbackLabel(mode: CaptainCoverageSingleBranchMode): string {
+  return mode === 'character1' ? 'Character 1' : 'Character 2';
 }
 
 function mergeCaptainCoverageBranchResults(

@@ -3550,8 +3550,61 @@ describe('Auto team builder', () => {
 
     expect(result).not.toBeNull();
     expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
+    expect(result?.slots[0]?.captainBranchSelection).toMatchObject({
+      mode: 'character1',
+      displayName: 'Zoro',
+      source: 'auto',
+    });
     expect(slotIds).toEqual(expect.arrayContaining([4470, 4471, 4472, 4473]));
     expect(slotIds).not.toContain(4474);
+  });
+
+  it('uses the manually selected VS captain branch for strict coverage', () => {
+    const result = buildAutoTeamResult(createVsManualBranchSelectionRecords(), {
+      ...createInput(
+        ['DEX', 'QCK', 'PSY', 'STR', 'INT'],
+        ['Cerebral', 'Driven', 'Free Spirit', 'Powerhouse', 'Shooter', 'Slasher'],
+        {
+          requireFullCaptainAbilityCoverage: true,
+          lockedCharacterIds: [4469],
+          captainCharacterId: 4469,
+          friendCaptainCharacterId: 4469,
+          manualSlots: [
+            {
+              role: 'captain',
+              characterIds: [4469],
+              branchSelections: [{ characterId: 4469, mode: 'character1' }],
+            },
+            {
+              role: 'friendCaptain',
+              characterIds: [4469],
+              branchSelections: [{ characterId: 4469, mode: 'character2' }],
+            },
+            { role: 'sub1', characterIds: [] },
+            { role: 'sub2', characterIds: [] },
+            { role: 'sub3', characterIds: [] },
+            { role: 'sub4', characterIds: [] },
+          ],
+        },
+      ),
+    });
+
+    const slotIds = result?.slots.map((slot) => slot.character.id) ?? [];
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
+    expect(result?.slots[0]?.captainBranchSelection).toMatchObject({
+      mode: 'character1',
+      displayName: 'Zoro',
+      source: 'manual',
+    });
+    expect(result?.slots[1]?.captainBranchSelection).toMatchObject({
+      mode: 'character2',
+      displayName: 'Lucci',
+      source: 'manual',
+    });
+    expect(slotIds).toEqual(expect.arrayContaining([4601, 4602, 4603, 4604]));
+    expect(slotIds).not.toContain(4611);
   });
 
   it('rejects a type-only captain that does not cover every base type of a required dual friend captain', () => {
@@ -4727,10 +4780,7 @@ describe('Auto team builder', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result?.coverage.coveredSelectedCharacterTags).toEqual([
-      'Straw Hat Pirates',
-      'Driven',
-    ]);
+    expect(result?.coverage.coveredSelectedCharacterTags).toEqual(['Straw Hat Pirates', 'Driven']);
     expect(result?.coverage.coversAllSelectedCharacterTags).toBe(true);
   });
 
@@ -5660,8 +5710,7 @@ describe('Auto team builder', () => {
         const excludedIds = new Set<number>(query?.excludedCharacterIds ?? []);
 
         return records.filter(
-          (record) =>
-            (!allowedIds || allowedIds.has(record.id)) && !excludedIds.has(record.id),
+          (record) => (!allowedIds || allowedIds.has(record.id)) && !excludedIds.has(record.id),
         );
       }),
     };
@@ -8869,8 +8918,7 @@ function createInput(
     enemyMechanics: [],
     requireAllSelectedTypesInTeam: overrides.requireAllSelectedTypesInTeam ?? false,
     requireAllSelectedClassesPerCharacter: overrides.requireAllSelectedClassesPerCharacter ?? false,
-    requireAllSelectedCharacterTagsInTeam:
-      overrides.requireAllSelectedCharacterTagsInTeam ?? false,
+    requireAllSelectedCharacterTagsInTeam: overrides.requireAllSelectedCharacterTagsInTeam ?? false,
     requireAllSelectedCharacterNamesInTeam:
       overrides.requireAllSelectedCharacterNamesInTeam ?? false,
     requireAllSlotsInLeaderSuperEffectScope:
@@ -9516,6 +9564,7 @@ function buildWorkerResult(
         friendCaptainLeaderId: null,
         leaderIds: [],
         leaderNames: [],
+        leaderBranchSelections: [],
         dualLeaderMode: 'single',
         derivedAllowedClasses: [],
         derivedAllowedTypes: [],
@@ -10443,6 +10492,49 @@ function createVsEitherBranchLeaderRecords(): CharacterDetailRecord[] {
       detail: {
         specialText: 'Changes crew orbs into Matching Orbs.',
       },
+    }),
+  ];
+}
+
+function createVsManualBranchSelectionRecords(): CharacterDetailRecord[] {
+  const [captain] = createVsEitherBranchLeaderRecords();
+
+  return [
+    captain!,
+    createCharacterRecord({
+      id: 4601,
+      type: 'INT',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Powerhouse',
+      detail: { specialText: 'Boosts orb effects by 2x.' },
+    }),
+    createCharacterRecord({
+      id: 4602,
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Shooter',
+      detail: { specialText: 'Boosts ATK by 2x.' },
+    }),
+    createCharacterRecord({
+      id: 4603,
+      type: 'DEX',
+      primaryClass: 'Free Spirit',
+      secondaryClass: 'Shooter',
+      detail: { specialText: 'Reduces Bind duration by 5 turns.' },
+    }),
+    createCharacterRecord({
+      id: 4604,
+      type: 'QCK',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Cerebral',
+      detail: { specialText: 'Changes crew orbs into Matching Orbs.' },
+    }),
+    createCharacterRecord({
+      id: 4611,
+      type: 'STR',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Powerhouse',
+      detail: { specialText: 'Boosts color affinity by 2x.' },
     }),
   ];
 }

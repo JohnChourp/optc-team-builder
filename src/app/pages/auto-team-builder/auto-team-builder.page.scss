@@ -922,6 +922,20 @@
   text-overflow: ellipsis;
 }
 
+.manual-lock-chip__text {
+  display: grid;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.manual-lock-chip__branch {
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(245, 200, 76, 0.9);
+  font-size: 0.66rem;
+  text-overflow: ellipsis;
+}
+
 .manual-lock-chip__actions {
   display: inline-flex;
   align-items: center;
@@ -1720,6 +1734,10 @@
   justify-content: flex-start;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.result-branch-row {
+  margin-top: 2px;
 }
 
 .loading-card {

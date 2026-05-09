@@ -3,6 +3,8 @@ import {
   AUTO_BUILD_MANUAL_SLOT_ROLES,
   AUTO_BUILD_MANUAL_SUB_SLOT_ROLES,
   type AutoBuildCostRange,
+  type AutoBuildCaptainBranchMode,
+  type AutoBuildCaptainBranchSelection,
   type AutoBuildLeaderBoostFilter,
   type AutoBuildLeaderBoostRange,
   type AutoBuildLeaderBoostRanges,
@@ -54,6 +56,7 @@ export interface AutoTeamExportSlot {
   leaderAssignment: AutoTeamExportLeaderAssignment;
   isFavorite: boolean;
   character: CharacterDetailRecord;
+  captainBranchSelection?: AutoBuildCaptainBranchSelection | null;
 }
 
 export interface AutoTeamExportPayload {
@@ -117,7 +120,8 @@ export interface AutoTeamSelectionExportPayload {
     | 28
     | 29
     | 30
-    | 31;
+    | 31
+    | 32;
   exportedAt: string;
   source: 'auto-team-builder';
   exportType: 'preset';
@@ -445,6 +449,42 @@ function collectPositiveIntegers(values: unknown[]): number[] {
   return normalizedValues;
 }
 
+function isAutoBuildCaptainBranchMode(value: unknown): value is AutoBuildCaptainBranchMode {
+  return value === 'character1' || value === 'character2' || value === 'both';
+}
+
+function normalizeManualSlotBranchSelections(
+  value: unknown,
+  characterIds: readonly number[],
+): NonNullable<AutoBuildManualSlotSelection['branchSelections']> {
+  const selectedIdSet = new Set(characterIds);
+  const seenIds = new Set<number>();
+  const normalizedSelections: NonNullable<AutoBuildManualSlotSelection['branchSelections']> = [];
+
+  for (const rawSelection of Array.isArray(value) ? value : []) {
+    if (!isRecord(rawSelection)) {
+      continue;
+    }
+
+    const characterId = collectPositiveIntegers([rawSelection['characterId']])[0] ?? null;
+    const mode = rawSelection['mode'];
+
+    if (
+      characterId === null ||
+      !selectedIdSet.has(characterId) ||
+      seenIds.has(characterId) ||
+      !isAutoBuildCaptainBranchMode(mode)
+    ) {
+      continue;
+    }
+
+    seenIds.add(characterId);
+    normalizedSelections.push({ characterId, mode });
+  }
+
+  return normalizedSelections;
+}
+
 function normalizeStringFilters(value: unknown, options: { lowercase?: boolean } = {}): string[] {
   const seen = new Set<string>();
   const normalizedValues: string[] = [];
@@ -647,7 +687,11 @@ function sanitizeManualSlots(
   const manualSlots = createEmptyAutoBuildManualSlots();
   const roleMap = new Map<
     AutoBuildManualSlotRole,
-    { characterIds: number[]; requiredCharacterId: number | null }
+    {
+      characterIds: number[];
+      requiredCharacterId: number | null;
+      branchSelections: NonNullable<AutoBuildManualSlotSelection['branchSelections']>;
+    }
   >();
   let duplicateCount = 0;
   let unknownCount = 0;
@@ -674,11 +718,17 @@ function sanitizeManualSlots(
     const currentSelection = roleMap.get(role as AutoBuildManualSlotRole) ?? {
       characterIds: [],
       requiredCharacterId: null,
+      branchSelections: [],
     };
+    const combinedIds = [...currentSelection.characterIds, ...normalizedIds];
 
     roleMap.set(role as AutoBuildManualSlotRole, {
-      characterIds: [...currentSelection.characterIds, ...normalizedIds],
+      characterIds: combinedIds,
       requiredCharacterId: normalizedRequiredCharacterId ?? currentSelection.requiredCharacterId,
+      branchSelections: [
+        ...currentSelection.branchSelections,
+        ...normalizeManualSlotBranchSelections(rawSlot['branchSelections'], combinedIds),
+      ],
     });
   }
 
@@ -706,6 +756,11 @@ function sanitizeManualSlots(
       roleSelection?.requiredCharacterId && nextIds.includes(roleSelection.requiredCharacterId)
         ? roleSelection.requiredCharacterId
         : null;
+    const branchSelections = normalizeManualSlotBranchSelections(
+      roleSelection?.branchSelections,
+      nextIds,
+    );
+    slot.branchSelections = branchSelections.length ? branchSelections : undefined;
   }
 
   return {
@@ -779,7 +834,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload['schemaVersion'] !== 28 &&
       parsedPayload['schemaVersion'] !== 29 &&
       parsedPayload['schemaVersion'] !== 30 &&
-      parsedPayload['schemaVersion'] !== 31) ||
+      parsedPayload['schemaVersion'] !== 31 &&
+      parsedPayload['schemaVersion'] !== 32) ||
     parsedPayload['source'] !== 'auto-team-builder' ||
     parsedPayload['exportType'] !== 'preset'
   ) {
@@ -1304,6 +1360,14 @@ export function sanitizeAutoTeamSelectionImportPayload(
       slot.requiredCharacterId != null && slot.characterIds.includes(slot.requiredCharacterId)
         ? slot.requiredCharacterId
         : null,
+    ...(normalizeManualSlotBranchSelections(slot.branchSelections, slot.characterIds).length
+      ? {
+          branchSelections: normalizeManualSlotBranchSelections(
+            slot.branchSelections,
+            slot.characterIds,
+          ),
+        }
+      : {}),
   }));
   const derivedManualSelection = deriveLegacyManualSelectionFromManualSlots(normalizedManualSlots);
 
@@ -1488,6 +1552,7 @@ export function buildAutoTeamExportPayload(
         leaderAssignment,
         isFavorite: favoriteCharacterIdSet.has(slot.character.id),
         character: slot.character,
+        captainBranchSelection: slot.captainBranchSelection ?? null,
       };
     }),
   };
@@ -1546,11 +1611,19 @@ export function buildAutoTeamSelectionExportPayload({
       slot.requiredCharacterId != null && slot.characterIds.includes(slot.requiredCharacterId)
         ? slot.requiredCharacterId
         : null,
+    ...(normalizeManualSlotBranchSelections(slot.branchSelections, slot.characterIds).length
+      ? {
+          branchSelections: normalizeManualSlotBranchSelections(
+            slot.branchSelections,
+            slot.characterIds,
+          ),
+        }
+      : {}),
   }));
   const normalizedBattleRequirements = cloneBattleRequirements(battleRequirements);
 
   return {
-    schemaVersion: 31,
+    schemaVersion: 32,
     exportedAt,
     source: 'auto-team-builder',
     exportType: 'preset',

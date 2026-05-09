@@ -56,6 +56,7 @@ import {
   type AutoBuildLeaderBoostFilter,
   type AutoBuildLeaderBoostRange,
   type AutoBuildLeaderBoostRanges,
+  type AutoBuildCaptainBranchMode,
   type AutoBuildManualSlotRole,
   type AutoBuildManualSlotSelection,
   type AutoBuildProgressExclusionCounts,
@@ -101,6 +102,11 @@ import {
   resolveCaptainTeamConditionStatus,
   type CaptainTeamConditionStatus,
 } from '../../core/services/captain-team-condition-status.utils';
+import {
+  isVsCaptainCoverageBranchCaptain,
+  resolveCaptainCoverageBranchDisplay,
+  resolveCaptainCoverageBranchOptions,
+} from '../../core/services/captain-coverage.utils';
 import { resolveCharacterPartyConflictKeys } from '../../core/services/auto-team-builder.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import {
@@ -257,11 +263,22 @@ interface ManualCharacterCardView {
   isSelectableInActiveSlot: boolean;
   actionLabel: string;
   selectionSupportLabel: string | null;
+  selectedBranchLabel: string | null;
+  branchActions: ManualCaptainBranchActionView[];
 }
 
 type ManualSlotSelectedCharacterView = CharacterListItem & {
   isRequiredInManualSlot: boolean;
+  branchLabel: string | null;
 };
+
+interface ManualCaptainBranchActionView {
+  mode: AutoBuildCaptainBranchMode;
+  label: string;
+  displayName: string;
+  selected: boolean;
+  disabled: boolean;
+}
 
 interface ShipCandidateCardView {
   ship: ShipRecord;
@@ -304,6 +321,7 @@ type TeamSlotViewModel = AutoBuildResult['slots'][number] & {
   roleLabel: string;
   manualSlotRole: AutoBuildManualSlotRole | null;
   characterTags: string[];
+  captainBranchLabel: string | null;
 };
 
 interface AppliedManualCharacterFilters {
@@ -992,6 +1010,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         .map((character) => ({
           ...character,
           isRequiredInManualSlot: character.id === slot.requiredCharacterId,
+          branchLabel: this.resolveManualSlotCharacterBranchLabel(slot.role, character),
         })),
       isLeaderSlot: this.isLeaderManualSlotRole(slot.role),
       isActive: slot.role === this.activeManualSlotRole(),
@@ -2357,11 +2376,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           role: 'captain',
           label: this.t('results.teamSlots.roles.captain'),
           character: slots.find((slot) => slot.role === 'captain')?.character ?? null,
+          branchMode:
+            slots.find((slot) => slot.role === 'captain')?.captainBranchSelection?.mode ?? null,
         },
         {
           role: 'friendCaptain',
           label: this.t('results.teamSlots.roles.friendCaptain'),
           character: slots.find((slot) => slot.role === 'friendCaptain')?.character ?? null,
+          branchMode:
+            slots.find((slot) => slot.role === 'friendCaptain')?.captainBranchSelection?.mode ??
+            null,
         },
       ],
       slotLabels: this.resolveResultTeamConditionSlotLabels(slots),
@@ -2391,6 +2415,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           characterTags: (slot.character.detail.characterTags ?? []).filter(
             (tag) => tag.trim().length > 0,
           ),
+          captainBranchLabel: slot.captainBranchSelection?.displayName ?? null,
         };
       }) ?? []
     );
@@ -2975,9 +3000,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return;
     }
 
-    const sourceCharacterIds = this.resolveManualSlotSelection(
-      this.manualCopySourceRole(),
-    ).characterIds;
+    const sourceSlot = this.resolveManualSlotSelection(this.manualCopySourceRole());
+    const sourceCharacterIds = sourceSlot.characterIds;
     const selectedCharacterIdSet = new Set(this.manualCopySelectedCharacterIds());
     const copiedCharacterIds = sourceCharacterIds.filter((characterId) =>
       selectedCharacterIdSet.has(characterId),
@@ -2992,6 +3016,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
         const existingIdSet = new Set(slot.characterIds);
         const nextCharacterIds = [...slot.characterIds];
+        let nextBranchSelections = slot.branchSelections ?? [];
 
         for (const characterId of copiedCharacterIds) {
           const character = this.lockedCharacterRecords()[characterId];
@@ -3003,6 +3028,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           ) {
             existingIdSet.add(characterId);
             nextCharacterIds.push(characterId);
+            const sourceBranchMode = sourceSlot.branchSelections?.find(
+              (selection) => selection.characterId === characterId,
+            )?.mode;
+
+            if (sourceBranchMode) {
+              nextBranchSelections =
+                this.resolveNextManualSlotBranchSelections(
+                  { ...slot, branchSelections: nextBranchSelections },
+                  characterId,
+                  sourceBranchMode,
+                ) ?? [];
+            }
           }
         }
 
@@ -3012,6 +3049,19 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           requiredCharacterId: nextCharacterIds.includes(slot.requiredCharacterId ?? -1)
             ? slot.requiredCharacterId
             : null,
+          ...(this.normalizeManualSlotBranchSelections({
+            ...slot,
+            characterIds: nextCharacterIds,
+            branchSelections: nextBranchSelections,
+          }).length
+            ? {
+                branchSelections: this.normalizeManualSlotBranchSelections({
+                  ...slot,
+                  characterIds: nextCharacterIds,
+                  branchSelections: nextBranchSelections,
+                }),
+              }
+            : {}),
         };
       }),
     );
@@ -3515,9 +3565,61 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
               ...slot,
               characterIds: [...slot.characterIds, character.id],
               requiredCharacterId: slot.requiredCharacterId ?? null,
+              branchSelections: this.resolveNextManualSlotBranchSelections(
+                slot,
+                character.id,
+                null,
+              ),
             }
           : slot,
       ),
+    );
+    this.resetBuildState();
+  }
+
+  public selectCaptainBranchInActiveManualSlot(
+    character: CharacterDetailRecord,
+    mode: AutoBuildCaptainBranchMode,
+    event?: Event,
+  ): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+
+    const activeRole = this.activeManualSlotRole();
+
+    if (
+      !this.isLeaderManualSlotRole(activeRole) ||
+      !this.canUseCaptainBranchMode(character, mode)
+    ) {
+      return;
+    }
+
+    const isSelected = this.isCharacterSelectedInManualSlot(activeRole, character.id);
+
+    if (!isSelected && !this.canAssignCharacterToManualSlot(activeRole, character)) {
+      return;
+    }
+
+    this.cacheCharacterRecord(character);
+    this.manualSlots.update((currentSlots) =>
+      currentSlots.map((slot) => {
+        if (slot.role !== activeRole) {
+          return slot;
+        }
+
+        const characterIds = isSelected ? slot.characterIds : [...slot.characterIds, character.id];
+
+        return {
+          ...slot,
+          characterIds,
+          requiredCharacterId: slot.requiredCharacterId ?? null,
+          branchSelections: this.resolveNextManualSlotBranchSelections(
+            { ...slot, characterIds },
+            character.id,
+            mode,
+          ),
+        };
+      }),
     );
     this.resetBuildState();
   }
@@ -3537,6 +3639,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
               ...manualSlot,
               characterIds: [...manualSlot.characterIds, slot.character.id],
               requiredCharacterId: manualSlot.requiredCharacterId ?? null,
+              branchSelections: this.resolveNextManualSlotBranchSelections(
+                {
+                  ...manualSlot,
+                  characterIds: [...manualSlot.characterIds, slot.character.id],
+                },
+                slot.character.id,
+                slot.captainBranchSelection?.mode ?? null,
+              ),
             }
           : manualSlot,
       ),
@@ -3620,6 +3730,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
               ...slot,
               characterIds: [],
               requiredCharacterId: null,
+              branchSelections: undefined,
             }
           : slot,
       ),
@@ -3634,18 +3745,30 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   ): void {
     event?.stopPropagation();
     this.manualSlots.update((currentSlots) =>
-      currentSlots.map((slot) =>
-        slot.role === role
-          ? {
-              ...slot,
-              characterIds: slot.characterIds.filter(
-                (selectedCharacterId) => selectedCharacterId !== characterId,
-              ),
-              requiredCharacterId:
-                slot.requiredCharacterId === characterId ? null : slot.requiredCharacterId,
-            }
-          : slot,
-      ),
+      currentSlots.map((slot) => {
+        if (slot.role !== role) {
+          return slot;
+        }
+
+        const characterIds = slot.characterIds.filter(
+          (selectedCharacterId) => selectedCharacterId !== characterId,
+        );
+        const branchSelections = this.normalizeManualSlotBranchSelections({
+          ...slot,
+          characterIds,
+          branchSelections: slot.branchSelections?.filter(
+            (selection) => selection.characterId !== characterId,
+          ),
+        });
+
+        return {
+          ...slot,
+          characterIds,
+          requiredCharacterId:
+            slot.requiredCharacterId === characterId ? null : slot.requiredCharacterId,
+          ...(branchSelections.length ? { branchSelections } : { branchSelections: undefined }),
+        };
+      }),
     );
     this.resetBuildState();
   }
@@ -3711,6 +3834,72 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       !this.isEffectivelyExcludedCharacter(character.id) &&
       this.characterFitsManualTeamBudget(role, character)
     );
+  }
+
+  private canUseCaptainBranchMode(
+    character: CharacterDetailRecord,
+    mode: AutoBuildCaptainBranchMode,
+  ): boolean {
+    const branchOptionCount = resolveCaptainCoverageBranchOptions(character).length;
+
+    if (branchOptionCount !== 2) {
+      return false;
+    }
+
+    return mode !== 'both' || !isVsCaptainCoverageBranchCaptain(character);
+  }
+
+  private resolveNextManualSlotBranchSelections(
+    slot: AutoBuildManualSlotSelection,
+    characterId: number,
+    mode: AutoBuildCaptainBranchMode | null,
+  ): AutoBuildManualSlotSelection['branchSelections'] {
+    const nextSelections = (slot.branchSelections ?? []).filter(
+      (selection) => selection.characterId !== characterId,
+    );
+
+    if (mode) {
+      nextSelections.push({ characterId, mode });
+    }
+
+    const normalizedSelections = this.normalizeManualSlotBranchSelections({
+      ...slot,
+      branchSelections: nextSelections,
+    });
+
+    return normalizedSelections.length ? normalizedSelections : undefined;
+  }
+
+  private normalizeManualSlotBranchSelections(
+    slot: Pick<AutoBuildManualSlotSelection, 'characterIds' | 'branchSelections'>,
+  ): NonNullable<AutoBuildManualSlotSelection['branchSelections']> {
+    const selectedIdSet = new Set(slot.characterIds);
+    const seenIds = new Set<number>();
+    const normalizedSelections: NonNullable<AutoBuildManualSlotSelection['branchSelections']> = [];
+
+    for (const selection of slot.branchSelections ?? []) {
+      if (
+        !selectedIdSet.has(selection.characterId) ||
+        seenIds.has(selection.characterId) ||
+        !this.isAutoBuildCaptainBranchMode(selection.mode)
+      ) {
+        continue;
+      }
+
+      seenIds.add(selection.characterId);
+      normalizedSelections.push({
+        characterId: selection.characterId,
+        mode: selection.mode,
+      });
+    }
+
+    return normalizedSelections;
+  }
+
+  private isAutoBuildCaptainBranchMode(
+    value: string | null | undefined,
+  ): value is AutoBuildCaptainBranchMode {
+    return value === 'character1' || value === 'character2' || value === 'both';
   }
 
   public canExcludeCharacter(characterId: number): boolean {
@@ -4607,14 +4796,25 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.lockedCharacterRecords.set({});
     for (const character of availableLockedCharacters) this.cacheCharacterRecord(character);
     this.manualSlots.set(
-      state.manualSlots.map((slot) => ({
-        role: slot.role,
-        characterIds: [...slot.characterIds],
-        requiredCharacterId:
-          slot.requiredCharacterId != null && slot.characterIds.includes(slot.requiredCharacterId)
-            ? slot.requiredCharacterId
-            : null,
-      })),
+      state.manualSlots.map((slot) => {
+        const normalizedSlot: AutoBuildManualSlotSelection = {
+          role: slot.role,
+          characterIds: [...slot.characterIds],
+          requiredCharacterId:
+            slot.requiredCharacterId != null && slot.characterIds.includes(slot.requiredCharacterId)
+              ? slot.requiredCharacterId
+              : null,
+        };
+        const branchSelections = this.normalizeManualSlotBranchSelections({
+          ...normalizedSlot,
+          branchSelections: slot.branchSelections,
+        });
+
+        return {
+          ...normalizedSlot,
+          ...(branchSelections.length ? { branchSelections } : {}),
+        };
+      }),
     );
     this.activeManualSlotRole.set(this.resolveInitialManualSlotRole(state.manualSlots));
     this.excludedCharacterIds.set([...state.excludedCharacterIds]);
@@ -5463,6 +5663,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         slot.requiredCharacterId != null && slot.characterIds.includes(slot.requiredCharacterId)
           ? slot.requiredCharacterId
           : null,
+      ...(this.normalizeManualSlotBranchSelections(slot).length
+        ? { branchSelections: this.normalizeManualSlotBranchSelections(slot) }
+        : {}),
     }));
   }
 
@@ -5995,6 +6198,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     return visibleCharacters.map((character) => {
       const isSelectedInActiveSlot = this.isCharacterSelectedInManualSlot(activeRole, character.id);
+      const selectedBranchLabel = this.resolveManualSlotCharacterBranchLabel(activeRole, character);
 
       return {
         character,
@@ -6014,8 +6218,94 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           character.id,
           activeRole,
         ),
+        selectedBranchLabel,
+        branchActions: this.resolveManualCandidateBranchActions(character, activeRole),
       };
     });
+  }
+
+  private resolveManualCandidateBranchActions(
+    character: CharacterDetailRecord,
+    role: AutoBuildManualSlotRole,
+  ): ManualCaptainBranchActionView[] {
+    if (!this.isLeaderManualSlotRole(role)) {
+      return [];
+    }
+
+    const branchOptions = resolveCaptainCoverageBranchOptions(character);
+
+    if (branchOptions.length !== 2) {
+      return [];
+    }
+
+    const currentMode = this.resolveManualSlotCharacterBranchMode(role, character.id);
+    const modes: AutoBuildCaptainBranchMode[] = isVsCaptainCoverageBranchCaptain(character)
+      ? ['character1', 'character2']
+      : ['character1', 'character2', 'both'];
+
+    return modes.map((mode) => {
+      const display = resolveCaptainCoverageBranchDisplay(character, mode);
+
+      return {
+        mode,
+        label:
+          mode === 'both'
+            ? this.t('manual.branches.both')
+            : this.t('manual.branches.side', { name: display.displayName }),
+        displayName: display.displayName,
+        selected: currentMode === mode,
+        disabled:
+          this.building() ||
+          (!this.isCharacterSelectedInManualSlot(role, character.id) &&
+            !this.canAssignCharacterToManualSlot(role, character)),
+      };
+    });
+  }
+
+  private resolveManualSlotCharacterBranchLabel(
+    role: AutoBuildManualSlotRole,
+    character: CharacterListItem,
+  ): string | null {
+    if (!this.isLeaderManualSlotRole(role)) {
+      return null;
+    }
+
+    const mode = this.resolveManualSlotCharacterBranchMode(role, character.id);
+
+    if (!mode) {
+      return null;
+    }
+
+    if (this.isDetailedCharacterRecord(character)) {
+      return resolveCaptainCoverageBranchDisplay(character, mode).displayName;
+    }
+
+    return this.resolveFallbackCaptainBranchDisplayName(mode);
+  }
+
+  private resolveManualSlotCharacterBranchMode(
+    role: AutoBuildManualSlotRole,
+    characterId: number,
+  ): AutoBuildCaptainBranchMode | null {
+    const mode = this.resolveManualSlotSelection(role).branchSelections?.find(
+      (selection) => selection.characterId === characterId,
+    )?.mode;
+
+    return this.isAutoBuildCaptainBranchMode(mode) ? mode : null;
+  }
+
+  private resolveFallbackCaptainBranchDisplayName(mode: AutoBuildCaptainBranchMode): string {
+    switch (mode) {
+      case 'character1': {
+        return 'Character 1';
+      }
+      case 'character2': {
+        return 'Character 2';
+      }
+      default: {
+        return this.t('manual.branches.both');
+      }
+    }
   }
 
   private buildExcludedCharacterCards(

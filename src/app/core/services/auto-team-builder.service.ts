@@ -12,6 +12,7 @@ import {
   type AutoBuildAttemptProgressSnapshot,
   type AutoBuildConstraints,
   type AutoBuildCostRange,
+  type AutoBuildCaptainBranchMode,
   type AutoBuildRankedResult,
   type AutoBuildRankedResults,
   type AutoBuildRosterInput,
@@ -19,6 +20,7 @@ import {
   type AutoBuildLeaderBoostFilter,
   type AutoBuildLeaderBoostRange,
   type AutoBuildLeaderBoostRanges,
+  type AutoBuildLeaderSlotRole,
   type AutoBuildManualSlotRole,
   type AutoBuildManualSlotSelection,
   type AutoBuildProgressSnapshot,
@@ -109,6 +111,7 @@ export interface AutoTeamBuildCaptainCoverageScopeOptions {
   friendCaptainCharacterId?: number | null;
   requireFullCaptainAbilityCoverage?: boolean;
   requireBothLeadersFullCaptainAbilityCoverage?: boolean;
+  manualSlots?: AutoBuildManualSlotSelection[];
 }
 
 export class AutoTeamBuildSearchTooLargeError extends Error {
@@ -134,31 +137,12 @@ export class AutoTeamBuilderService {
     records: CharacterDetailRecord[],
     options: AutoTeamBuildCaptainCoverageScopeOptions,
   ): CharacterDetailRecord[] {
-    const leaderIds = [
-      options.captainCharacterId ?? null,
-      options.friendCaptainCharacterId ?? null,
-    ].filter(
-      (characterId, index, values): characterId is number =>
-        characterId !== null &&
-        Number.isInteger(characterId) &&
-        characterId > 0 &&
-        values.indexOf(characterId) === index,
-    );
+    const leaderEntries = this.resolveCaptainCoverageLeaderEntries(records, options);
 
-    if (!leaderIds.length || !records.length) {
+    if (!leaderEntries.length || !records.length) {
       return records;
     }
-
-    const recordById = new Map(records.map((record) => [record.id, record] as const));
-    const leaders = leaderIds
-      .map((characterId) => recordById.get(characterId))
-      .filter((record): record is CharacterDetailRecord => Boolean(record));
-
-    if (!leaders.length) {
-      return records;
-    }
-
-    const retainedLeaderIds = new Set(leaders.map((leader) => leader.id));
+    const retainedLeaderIds = new Set(leaderEntries.map((leader) => leader.character.id));
     const coverageMode =
       options.requireFullCaptainAbilityCoverage ||
       options.requireBothLeadersFullCaptainAbilityCoverage
@@ -170,17 +154,72 @@ export class AutoTeamBuilderService {
         return true;
       }
 
-      return leaders.every((leader) => {
-        const coverage = resolveCaptainCoverage(leader, record, {
+      return leaderEntries.every((leader) => {
+        const coverage = resolveCaptainCoverage(leader.character, record, {
           coverageMode,
+          branchMode: leader.branchMode,
           targetCharacterTags: record.detail.characterTags ?? [],
           includeTeamTagClauses: false,
         });
 
         return coverage.targetableClauseCount === 0 && coverageMode === 'simpleBoostScope'
-          ? !hasSelfOnlyCaptainCoverageText(leader)
+          ? !hasSelfOnlyCaptainCoverageText(leader.character, { branchMode: leader.branchMode })
           : coverage.matches;
       });
+    });
+  }
+
+  private resolveCaptainCoverageLeaderEntries(
+    records: CharacterDetailRecord[],
+    options: AutoTeamBuildCaptainCoverageScopeOptions,
+  ): Array<{
+    role: AutoBuildLeaderSlotRole;
+    character: CharacterDetailRecord;
+    branchMode: AutoBuildCaptainBranchMode | null;
+  }> {
+    const recordById = new Map(records.map((record) => [record.id, record] as const));
+    const entries = (['captain', 'friendCaptain'] as const)
+      .map((role) => {
+        const characterId =
+          role === 'captain'
+            ? (options.captainCharacterId ?? null)
+            : (options.friendCaptainCharacterId ?? null);
+
+        if (characterId === null || !Number.isInteger(characterId) || characterId <= 0) {
+          return null;
+        }
+
+        const character = recordById.get(characterId);
+
+        if (!character) {
+          return null;
+        }
+
+        return {
+          role,
+          character,
+          branchMode: this.resolveManualLeaderBranchMode(
+            options.manualSlots ?? [],
+            role,
+            characterId,
+          ),
+        };
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
+
+    if (options.requireBothLeadersFullCaptainAbilityCoverage) {
+      return entries;
+    }
+
+    const seenIds = new Set<number>();
+
+    return entries.filter((entry) => {
+      if (seenIds.has(entry.character.id)) {
+        return false;
+      }
+
+      seenIds.add(entry.character.id);
+      return true;
     });
   }
 
@@ -359,6 +398,14 @@ export class AutoTeamBuilderService {
         role: slot.role,
         characterIds: [...slot.characterIds],
         requiredCharacterId: slot.requiredCharacterId,
+        ...(slot.branchSelections?.length
+          ? {
+              branchSelections: slot.branchSelections.map((selection) => ({
+                characterId: selection.characterId,
+                mode: selection.mode,
+              })),
+            }
+          : {}),
       })),
       lockedCharacterIds: [...input.lockedCharacterIds],
       excludedCharacterIds: [...input.excludedCharacterIds],
@@ -434,6 +481,7 @@ export class AutoTeamBuilderService {
       friendCaptainCharacterId,
       requireFullCaptainAbilityCoverage,
       requireBothLeadersFullCaptainAbilityCoverage,
+      manualSlots,
     });
     const captainCoveredFriendCaptainRecords = friendCaptainRecords
       ? this.resolveCaptainCoveredCandidateRecords(friendCaptainRecords, {
@@ -441,6 +489,7 @@ export class AutoTeamBuilderService {
           friendCaptainCharacterId,
           requireFullCaptainAbilityCoverage,
           requireBothLeadersFullCaptainAbilityCoverage,
+          manualSlots,
         })
       : undefined;
     const scopedAutoFillCharacterIds = {
@@ -1808,11 +1857,15 @@ export class AutoTeamBuilderService {
       ? this.resolveBoundedSubsetCount(characterNameCount, false)
       : 1;
 
-    return [typeSubsetCount, classSubsetCount, characterTagSubsetCount, characterNameSubsetCount]
-      .reduce(
-        (total, current) => this.multiplyWithCap(total, current, MAX_DYNAMIC_TOTAL_ATTEMPTS),
-        1,
-      );
+    return [
+      typeSubsetCount,
+      classSubsetCount,
+      characterTagSubsetCount,
+      characterNameSubsetCount,
+    ].reduce(
+      (total, current) => this.multiplyWithCap(total, current, MAX_DYNAMIC_TOTAL_ATTEMPTS),
+      1,
+    );
   }
 
   private shouldTreatSelectedTypesAsNeutral(input: AutoBuildInput): boolean {
@@ -2150,7 +2203,9 @@ export class AutoTeamBuilderService {
     const normalizedValues: string[] = [];
 
     for (const value of values ?? []) {
-      const normalizedValue = String(value ?? '').trim().replace(/\s+/g, ' ');
+      const normalizedValue = String(value ?? '')
+        .trim()
+        .replace(/\s+/g, ' ');
 
       if (
         normalizedValue.length === 0 ||
@@ -2437,7 +2492,11 @@ export class AutoTeamBuilderService {
   ): AutoBuildManualSlotSelection[] {
     const roleMap = new Map<
       AutoBuildManualSlotRole,
-      { characterIds: number[]; requiredCharacterId: number | null }
+      {
+        characterIds: number[];
+        requiredCharacterId: number | null;
+        branchSelections: Array<{ characterId: number; mode: AutoBuildCaptainBranchMode }>;
+      }
     >();
 
     for (const slot of manualSlots ?? []) {
@@ -2453,6 +2512,10 @@ export class AutoTeamBuilderService {
         ),
       ];
       const requiredCharacterId = this.normalizeCharacterId(slot.requiredCharacterId);
+      const branchSelections = this.normalizeManualSlotBranchSelections(
+        slot.branchSelections,
+        normalizedCharacterIds,
+      );
 
       roleMap.set(slot.role, {
         characterIds: normalizedCharacterIds,
@@ -2460,6 +2523,7 @@ export class AutoTeamBuilderService {
           requiredCharacterId !== null && normalizedCharacterIds.includes(requiredCharacterId)
             ? requiredCharacterId
             : null,
+        branchSelections,
       });
     }
 
@@ -2470,9 +2534,59 @@ export class AutoTeamBuilderService {
 
       slot.characterIds = [...new Set(roleSelection?.characterIds ?? [])];
       slot.requiredCharacterId = roleSelection?.requiredCharacterId ?? null;
+      slot.branchSelections = roleSelection?.branchSelections.length
+        ? [...roleSelection.branchSelections]
+        : undefined;
     }
 
     return normalizedSlots;
+  }
+
+  private normalizeManualSlotBranchSelections(
+    value: AutoBuildManualSlotSelection['branchSelections'],
+    characterIds: readonly number[],
+  ): Array<{ characterId: number; mode: AutoBuildCaptainBranchMode }> {
+    const selectedIds = new Set(characterIds);
+    const seenIds = new Set<number>();
+    const normalizedSelections: Array<{ characterId: number; mode: AutoBuildCaptainBranchMode }> =
+      [];
+
+    for (const selection of Array.isArray(value) ? value : []) {
+      const characterId = this.normalizeCharacterId(selection?.characterId);
+      const mode = selection?.mode;
+
+      if (
+        characterId === null ||
+        !selectedIds.has(characterId) ||
+        seenIds.has(characterId) ||
+        !this.isAutoBuildCaptainBranchMode(mode)
+      ) {
+        continue;
+      }
+
+      seenIds.add(characterId);
+      normalizedSelections.push({ characterId, mode });
+    }
+
+    return normalizedSelections;
+  }
+
+  private resolveManualLeaderBranchMode(
+    manualSlots: readonly AutoBuildManualSlotSelection[],
+    role: AutoBuildLeaderSlotRole,
+    characterId: number,
+  ): AutoBuildCaptainBranchMode | null {
+    const mode = manualSlots
+      .find((slot) => slot.role === role)
+      ?.branchSelections?.find((selection) => selection.characterId === characterId)?.mode;
+
+    return this.isAutoBuildCaptainBranchMode(mode) ? mode : null;
+  }
+
+  private isAutoBuildCaptainBranchMode(
+    value: string | null | undefined,
+  ): value is AutoBuildCaptainBranchMode {
+    return value === 'character1' || value === 'character2' || value === 'both';
   }
 
   private normalizeLegacyManualSelection(

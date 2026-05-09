@@ -932,7 +932,14 @@
                             class="selected-value-chip manual-lock-chip manual-lock-chip--static"
                           >
                             <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
-                            <span class="manual-lock-chip__label">{{ character.name }}</span>
+                            <span class="manual-lock-chip__text">
+                              <span class="manual-lock-chip__label">{{ character.name }}</span>
+                              @if (character.branchLabel) {
+                                <small class="manual-lock-chip__branch">
+                                  {{ character.branchLabel }}
+                                </small>
+                              }
+                            </span>
                             <button
                               type="button"
                               class="manual-lock-chip__icon-button"
@@ -1062,7 +1069,14 @@
                                   [alt]="character.name"
                                   loading="lazy"
                                 />
-                                <span class="manual-lock-chip__label">{{ character.name }}</span>
+                                <span class="manual-lock-chip__text">
+                                  <span class="manual-lock-chip__label">{{ character.name }}</span>
+                                  @if (character.branchLabel) {
+                                    <small class="manual-lock-chip__branch">
+                                      {{ character.branchLabel }}
+                                    </small>
+                                  }
+                                </span>
                                 <span class="manual-lock-chip__actions">
                                   <span
                                     role="button"
@@ -1221,8 +1235,34 @@
                                       {{ candidateCard.selectionSupportLabel }}
                                     </small>
                                   }
+                                  @if (candidateCard.selectedBranchLabel) {
+                                    <small class="manual-candidate-role">
+                                      {{ candidateCard.selectedBranchLabel }}
+                                    </small>
+                                  }
                                 </div>
                                 <div class="manual-candidate-actions">
+                                  @for (
+                                    branchAction of candidateCard.branchActions;
+                                    track branchAction.mode
+                                  ) {
+                                    <ion-button
+                                      size="small"
+                                      fill="outline"
+                                      [color]="branchAction.selected ? 'warning' : 'light'"
+                                      class="manual-candidate-action-button"
+                                      [disabled]="branchAction.disabled"
+                                      (click)="
+                                        selectCaptainBranchInActiveManualSlot(
+                                          candidateCard.character,
+                                          branchAction.mode,
+                                          $event
+                                        )
+                                      "
+                                    >
+                                      {{ branchAction.label }}
+                                    </ion-button>
+                                  }
                                   <ion-button
                                     size="small"
                                     fill="outline"
@@ -2000,7 +2040,6 @@
             {{ buildButtonLabel() }}
           </ion-button>
         </div>
-
       </section>
 
       @if (building()) {
@@ -2594,6 +2633,13 @@
                       • {{ slot.character.secondaryClass }}
                     }
                   </span>
+                  @if (slot.captainBranchLabel) {
+                    <div class="chip-row result-branch-row">
+                      <small class="coverage-chip reason-chip">
+                        {{ t('results.branches.startsAs', { name: slot.captainBranchLabel }) }}
+                      </small>
+                    </div>
+                  }
                   @if (slot.characterTags.length) {
                     <div class="chip-row result-character-tag-row">
                       @for (tag of slot.characterTags; track tag) {

@@ -411,6 +411,10 @@
       "addChoice": "Προσθήκη OR",
       "addResult": "Add"
     },
+    "branches": {
+      "both": "Και οι δύο",
+      "side": "{{name}}"
+    },
     "similar": {
       "actions": {
         "add": "Βρες παρόμοιο OR pick",
@@ -673,6 +677,9 @@
       "scopePending": "Το leader scope θα υπολογιστεί μετά από επιτυχημένο build.",
       "sourceDual": "Προέκυψε από τους δύο selected leaders",
       "sourceSingle": "Προέκυψε από τον active captain"
+    },
+    "branches": {
+      "startsAs": "Ξεκινά ως {{name}}"
     },
     "captainAbilityCoverage": {
       "full": "Το full Captain Ability coverage περνάει.",

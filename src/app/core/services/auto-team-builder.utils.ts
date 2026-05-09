@@ -6,6 +6,8 @@ import {
   AUTO_TEAM_BUILDER_CLASSES,
   AUTO_TEAM_BUILDER_TYPES,
   type AutoBuildCaptainAbilityCoverageMode,
+  type AutoBuildCaptainBranchMode,
+  type AutoBuildCaptainBranchSelection,
   type AutoBuildAbilityCoverageState,
   type AutoBuildBurstRole,
   type AutoBuildCandidate,
@@ -15,6 +17,7 @@ import {
   type AutoBuildEffectTags,
   type AutoBuildInput,
   type AutoBuildLeaderCriteriaSummary,
+  type AutoBuildLeaderSlotRole,
   type AutoBuildLeaderTagConditionBranch,
   type AutoBuildLeaderTagConditionSet,
   type AutoBuildManualSlotRole,
@@ -48,7 +51,10 @@ import {
 } from './captain-tag-conditions.utils';
 import {
   hasSelfOnlyCaptainCoverageText,
+  isVsCaptainCoverageBranchCaptain,
   resolveCaptainBoostScope,
+  resolveCaptainCoverageBranchDisplay,
+  resolveCaptainCoverageBranchOptions,
   resolveCaptainCoverage,
   resolveRequiredCaptainCoverageBranchTexts,
 } from './captain-coverage.utils';
@@ -147,7 +153,14 @@ interface ActiveLeaderCriteria extends Omit<
   AutoBuildLeaderCriteriaSummary,
   'matchingSlots' | 'totalSlots' | 'allSlotsMatch'
 > {
-  leaders: AutoBuildCandidate[];
+  leaders: ActiveLeaderCriteriaLeader[];
+}
+
+interface ActiveLeaderCriteriaLeader {
+  role: AutoBuildLeaderSlotRole;
+  candidate: AutoBuildCandidate;
+  branchMode: AutoBuildCaptainBranchMode | null;
+  branchSource: AutoBuildCaptainBranchSelection['source'] | null;
 }
 
 interface ActiveLeaderSuperEffectScope {
@@ -1673,7 +1686,7 @@ export function buildAutoTeamResultFromPreparedContext(
       const leaderSlots = [leaderPair.captain, leaderPair.friendCaptain];
       const leaders = resolveUniqueCandidates(leaderSlots);
       const leaderCriteria = resolveActiveLeaderCriteria(
-        leaders,
+        leaderSlots,
         leaderPair.captain.character.id,
         leaderPair.friendCaptain.character.id,
         input,
@@ -1819,6 +1832,11 @@ export function buildAutoTeamResultFromPreparedContext(
               leaderPair.captain.reasonChips,
               manualCharacterIdSet.has(leaderPair.captain.character.id),
             ),
+            captainBranchSelection: resolveLeaderBranchSelection(
+              resolveLeaderCriteriaEntryForSlot('captain', leaderPair.captain, input),
+              teamCandidates,
+              leaderCriteria.coverageMode,
+            ),
           },
           {
             role: 'friendCaptain',
@@ -1826,6 +1844,11 @@ export function buildAutoTeamResultFromPreparedContext(
             reasonChips: resolveSlotReasonChips(
               leaderPair.friendCaptain.reasonChips,
               manualCharacterIdSet.has(leaderPair.friendCaptain.character.id),
+            ),
+            captainBranchSelection: resolveLeaderBranchSelection(
+              resolveLeaderCriteriaEntryForSlot('friendCaptain', leaderPair.friendCaptain, input),
+              teamCandidates,
+              leaderCriteria.coverageMode,
             ),
           },
           ...orderedSubs.map((candidate) => ({
@@ -3809,12 +3832,15 @@ export function resolveCharacterTypeTokens(typeValue: string): AutoTeamBuilderTy
 }
 
 function resolveActiveLeaderCriteria(
-  leaders: AutoBuildCandidate[],
+  leaderSlots: AutoBuildCandidate[],
   captainLeaderId: number | null,
   friendCaptainLeaderId: number | null,
   input: AutoBuildInput,
 ): ActiveLeaderCriteria {
-  const uniqueLeaders = resolveUniqueCandidates(leaders);
+  const activeLeaderEntries = resolveActiveLeaderCriteriaEntries(leaderSlots, input);
+  const uniqueLeaders = resolveUniqueCandidates(
+    activeLeaderEntries.map((entry) => entry.candidate),
+  );
   const coverageMode = resolveCaptainAbilityCoverageMode(input);
   const classScope = resolveIntersectedLeaderDimension(
     uniqueLeaders,
@@ -3835,7 +3861,7 @@ function resolveActiveLeaderCriteria(
     (leader) => leader.tags.captainScope.hasCharacterTagRestriction,
   );
   const tagConditionSets = input.requireBothLeadersFullCaptainAbilityCoverage
-    ? resolveLeaderTagConditionSets(uniqueLeaders)
+    ? resolveLeaderTagConditionSets(activeLeaderEntries)
     : [];
 
   return {
@@ -3843,10 +3869,13 @@ function resolveActiveLeaderCriteria(
     coverageMode,
     captainLeaderId,
     friendCaptainLeaderId,
-    leaders: uniqueLeaders,
+    leaders: activeLeaderEntries,
     leaderIds: uniqueLeaders.map((leader) => leader.character.id),
     leaderNames: uniqueLeaders.map((leader) => leader.character.name),
-    dualLeaderMode: uniqueLeaders.length > 1 ? 'intersection' : 'single',
+    leaderBranchSelections: activeLeaderEntries
+      .map((entry) => resolveLeaderBranchSelection(entry, [], coverageMode))
+      .filter((selection): selection is NonNullable<typeof selection> => Boolean(selection)),
+    dualLeaderMode: activeLeaderEntries.length > 1 ? 'intersection' : 'single',
     derivedAllowedClasses: classScope.values,
     derivedAllowedTypes: typeScope.values,
     derivedAllowedCharacterTags: characterTagScope.values,
@@ -3859,20 +3888,174 @@ function resolveActiveLeaderCriteria(
   };
 }
 
+function resolveActiveLeaderCriteriaEntries(
+  leaderSlots: AutoBuildCandidate[],
+  input: AutoBuildInput,
+): ActiveLeaderCriteriaLeader[] {
+  const entries = leaderSlots.slice(0, 2).map((candidate, index): ActiveLeaderCriteriaLeader => {
+    const role: AutoBuildLeaderSlotRole = index === 0 ? 'captain' : 'friendCaptain';
+    return resolveLeaderCriteriaEntryForSlot(role, candidate, input);
+  });
+
+  return input.requireBothLeadersFullCaptainAbilityCoverage
+    ? entries
+    : dedupeActiveLeaderCriteriaEntriesByCharacter(entries);
+}
+
+function dedupeActiveLeaderCriteriaEntriesByCharacter(
+  entries: readonly ActiveLeaderCriteriaLeader[],
+): ActiveLeaderCriteriaLeader[] {
+  const seenIds = new Set<number>();
+  const dedupedEntries: ActiveLeaderCriteriaLeader[] = [];
+
+  for (const entry of entries) {
+    if (seenIds.has(entry.candidate.character.id)) {
+      continue;
+    }
+
+    seenIds.add(entry.candidate.character.id);
+    dedupedEntries.push(entry);
+  }
+
+  return dedupedEntries;
+}
+
+function resolveLeaderCriteriaEntryForSlot(
+  role: AutoBuildLeaderSlotRole,
+  candidate: AutoBuildCandidate,
+  input: AutoBuildInput,
+): ActiveLeaderCriteriaLeader {
+  const branchMode = resolveManualLeaderBranchMode(input.manualSlots, role, candidate.character.id);
+
+  return {
+    role,
+    candidate,
+    branchMode,
+    branchSource: branchMode ? 'manual' : null,
+  };
+}
+
+function resolveManualLeaderBranchMode(
+  manualSlots: readonly AutoBuildManualSlotSelection[],
+  role: AutoBuildLeaderSlotRole,
+  characterId: number,
+): AutoBuildCaptainBranchMode | null {
+  const slot = manualSlots.find((entry) => entry.role === role);
+  const mode = slot?.branchSelections?.find(
+    (selection) => selection.characterId === characterId,
+  )?.mode;
+
+  return isAutoBuildCaptainBranchMode(mode) ? mode : null;
+}
+
+function isAutoBuildCaptainBranchMode(
+  value: string | null | undefined,
+): value is AutoBuildCaptainBranchMode {
+  return value === 'character1' || value === 'character2' || value === 'both';
+}
+
+function resolveRequiredCaptainCoverageBranchTextsForMode(
+  captain: CharacterDetailRecord,
+  branchMode: AutoBuildCaptainBranchMode | null,
+) {
+  const branches = resolveRequiredCaptainCoverageBranchTexts(captain);
+
+  if ((branchMode === 'character1' || branchMode === 'character2') && branches.length === 2) {
+    return [branches[branchMode === 'character1' ? 0 : 1]!];
+  }
+
+  return branches;
+}
+
+function resolveLeaderBranchSelection(
+  leader: ActiveLeaderCriteriaLeader,
+  candidates: readonly AutoBuildCandidate[],
+  coverageMode: AutoBuildCaptainAbilityCoverageMode,
+): (AutoBuildCaptainBranchSelection & { role: AutoBuildLeaderSlotRole }) | null {
+  const mode =
+    leader.branchMode ??
+    resolveAutomaticCaptainBranchMode(leader.candidate.character, candidates, coverageMode);
+
+  if (!mode) {
+    return null;
+  }
+
+  const display = resolveCaptainCoverageBranchDisplay(leader.candidate.character, mode);
+
+  return {
+    role: leader.role,
+    characterId: leader.candidate.character.id,
+    mode,
+    label: display.label,
+    displayName: display.displayName,
+    source: leader.branchSource ?? 'auto',
+  };
+}
+
+function resolveAutomaticCaptainBranchMode(
+  captain: CharacterDetailRecord,
+  candidates: readonly AutoBuildCandidate[],
+  coverageMode: AutoBuildCaptainAbilityCoverageMode,
+): AutoBuildCaptainBranchMode | null {
+  const branchOptions = resolveCaptainCoverageBranchOptions(captain);
+
+  if (branchOptions.length !== 2) {
+    return null;
+  }
+
+  if (!isVsCaptainCoverageBranchCaptain(captain)) {
+    return 'both';
+  }
+
+  return resolveBestCaptainBranchMode(captain, candidates, coverageMode);
+}
+
+function resolveBestCaptainBranchMode(
+  captain: CharacterDetailRecord,
+  candidates: readonly AutoBuildCandidate[],
+  coverageMode: AutoBuildCaptainAbilityCoverageMode,
+): AutoBuildCaptainBranchMode {
+  const branchOptions = resolveCaptainCoverageBranchOptions(captain);
+  const scoredBranches = branchOptions.map((branch, index) => ({
+    mode: branch.mode,
+    index,
+    matchedSlots: candidates.filter(
+      (candidate) =>
+        resolveCaptainCoverage(captain, candidate.character, {
+          coverageMode,
+          branchMode: branch.mode,
+          targetCharacterTags: candidate.character.detail.characterTags ?? [],
+          includeTeamTagClauses: false,
+        }).matches,
+    ).length,
+  }));
+
+  return (
+    scoredBranches.sort((left, right) => {
+      if (left.matchedSlots !== right.matchedSlots) {
+        return right.matchedSlots - left.matchedSlots;
+      }
+
+      return left.index - right.index;
+    })[0]?.mode ?? 'character1'
+  );
+}
+
 function resolveLeaderTagConditionSets(
-  leaders: readonly AutoBuildCandidate[],
+  leaders: readonly ActiveLeaderCriteriaLeader[],
 ): AutoBuildLeaderTagConditionSet[] {
   return leaders
     .map((leader) => {
       const branches = dedupeLeaderTagConditionBranches(
-        resolveRequiredCaptainCoverageBranchTexts(leader.character).flatMap((branch) =>
-          parseCaptainTagConditionBranches(branch.text),
-        ),
+        resolveRequiredCaptainCoverageBranchTextsForMode(
+          leader.candidate.character,
+          leader.branchMode,
+        ).flatMap((branch) => parseCaptainTagConditionBranches(branch.text)),
       );
 
       return {
-        leaderId: leader.character.id,
-        leaderName: leader.character.name,
+        leaderId: leader.candidate.character.id,
+        leaderName: leader.candidate.character.name,
         branches,
       };
     })
@@ -4057,6 +4240,9 @@ function summarizeLeaderCriteria(
   const matchingSlots = candidates.filter((candidate) =>
     matchesActiveLeaderCriteria(candidate, leaderCriteria),
   ).length;
+  const leaderBranchSelections = leaderCriteria.leaders
+    .map((leader) => resolveLeaderBranchSelection(leader, candidates, leaderCriteria.coverageMode))
+    .filter((selection): selection is NonNullable<typeof selection> => Boolean(selection));
 
   return {
     source: leaderCriteria.source,
@@ -4065,6 +4251,7 @@ function summarizeLeaderCriteria(
     friendCaptainLeaderId: leaderCriteria.friendCaptainLeaderId,
     leaderIds: [...leaderCriteria.leaderIds],
     leaderNames: [...leaderCriteria.leaderNames],
+    leaderBranchSelections,
     dualLeaderMode: leaderCriteria.dualLeaderMode,
     derivedAllowedClasses: [...leaderCriteria.derivedAllowedClasses],
     derivedAllowedTypes: [...leaderCriteria.derivedAllowedTypes],
@@ -4093,8 +4280,9 @@ function matchesActiveLeaderCriteria(
   leaderCriteria: ActiveLeaderCriteria,
 ): boolean {
   const branchAwareCoverageResults = leaderCriteria.leaders.map((leader) =>
-    resolveCaptainCoverage(leader.character, candidate.character, {
+    resolveCaptainCoverage(leader.candidate.character, candidate.character, {
       coverageMode: leaderCriteria.coverageMode,
+      branchMode: leader.branchMode,
       targetCharacterTags: candidate.character.detail.characterTags ?? [],
       includeTeamTagClauses: false,
     }),
@@ -4106,7 +4294,9 @@ function matchesActiveLeaderCriteria(
 
   const simpleCoverageResults = leaderCriteria.leaders.map((leader, index) => ({
     coverage: branchAwareCoverageResults[index]!,
-    hasSelfOnlyCoverage: hasSelfOnlyCaptainCoverageText(leader.character),
+    hasSelfOnlyCoverage: hasSelfOnlyCaptainCoverageText(leader.candidate.character, {
+      branchMode: leader.branchMode,
+    }),
   }));
 
   if (simpleCoverageResults.some((result) => result.coverage.targetableClauseCount > 0)) {

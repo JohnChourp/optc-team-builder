@@ -1590,6 +1590,58 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.manualSlots().find((slot) => slot.role === 'captain')?.characterIds).toEqual([412]);
   });
 
+  it('selects one VS captain branch in manual leader picks and hides Both', async () => {
+    const { page } = await createPage();
+    const vsCaptain = createBranchCaptainRecord(
+      4469,
+      'Zoro VS Lucci - Battling Swords and Hand Pistols',
+      true,
+    );
+
+    await page.ngOnInit();
+    page.manualCandidates.set([vsCaptain]);
+    page.activeManualSlotRole.set('captain');
+
+    expect(page.manualCandidateCards()[0]?.branchActions.map((action) => action.mode)).toEqual([
+      'character1',
+      'character2',
+    ]);
+
+    page.selectCaptainBranchInActiveManualSlot(vsCaptain, 'character2');
+
+    expect(page.manualSlots().find((slot) => slot.role === 'captain')).toMatchObject({
+      characterIds: [4469],
+      branchSelections: [{ characterId: 4469, mode: 'character2' }],
+    });
+    expect(
+      page.manualSlotCards().find((slot) => slot.role === 'captain')?.selectedCharacters[0]
+        ?.branchLabel,
+    ).toBe('Lucci');
+    expect(page.manualCandidateCards()[0]?.selectedBranchLabel).toBe('Lucci');
+  });
+
+  it('offers Both for non-VS dual captain manual picks', async () => {
+    const { page } = await createPage();
+    const dualCaptain = createBranchCaptainRecord(4521, 'Garp & Coby - Combined Fists', false);
+
+    await page.ngOnInit();
+    page.manualCandidates.set([dualCaptain]);
+    page.activeManualSlotRole.set('captain');
+
+    expect(page.manualCandidateCards()[0]?.branchActions.map((action) => action.mode)).toEqual([
+      'character1',
+      'character2',
+      'both',
+    ]);
+
+    page.selectCaptainBranchInActiveManualSlot(dualCaptain, 'both');
+
+    expect(page.manualSlots().find((slot) => slot.role === 'captain')).toMatchObject({
+      characterIds: [4521],
+      branchSelections: [{ characterId: 4521, mode: 'both' }],
+    });
+  });
+
   it('copies all manual picks from Captain to Friend Captain', async () => {
     const { page } = await createPage();
 
@@ -2208,6 +2260,51 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.result()).toBe(currentResult);
     expect(page.currentTeamId()).toBeNull();
     expect(page.saveFeedbackError()).toBe('');
+  });
+
+  it('preserves a generated leader branch when adding the result to manual picks', async () => {
+    const { page } = await createPage();
+    const captain = createBranchCaptainRecord(
+      4469,
+      'Zoro VS Lucci - Battling Swords and Hand Pistols',
+      true,
+    );
+    const currentResult = createAutoBuildResult([
+      {
+        role: 'captain',
+        character: captain,
+        reasonChips: ['Captain slot'],
+        captainBranchSelection: {
+          characterId: 4469,
+          mode: 'character1',
+          label: 'Captain Ability (Character 1)',
+          displayName: 'Zoro',
+          source: 'auto',
+        },
+      },
+      {
+        role: 'friendCaptain',
+        character: createCharacterRecord(102),
+        reasonChips: ['Friend captain slot'],
+      },
+      { role: 'sub', character: createCharacterRecord(103), reasonChips: ['Burst'] },
+      { role: 'sub', character: createCharacterRecord(104), reasonChips: ['Utility'] },
+      { role: 'sub', character: createCharacterRecord(105), reasonChips: ['Consistency'] },
+      { role: 'sub', character: createCharacterRecord(106), reasonChips: ['Damage'] },
+    ]);
+
+    await page.ngOnInit();
+    page.result.set(currentResult);
+
+    page.addResultCharacterToManualSlot(page.teamSlots()[0]!);
+
+    expect(page.manualSlots().find((slot) => slot.role === 'captain')).toMatchObject({
+      characterIds: [4469],
+      branchSelections: [{ characterId: 4469, mode: 'character1' }],
+    });
+    expect(
+      page.manualSlotCards().find((slot) => slot.role === 'captain')?.selectedCharacters[0],
+    ).toMatchObject({ branchLabel: 'Zoro' });
   });
 
   it('adds generated subs to their matching manual sub slots', async () => {
@@ -4556,7 +4653,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 31,
+      schemaVersion: 32,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -4643,7 +4740,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     const payload = page.buildSelectionExportPayload('2026-05-05T20:14:45.183Z');
 
-    expect(payload?.schemaVersion).toBe(31);
+    expect(payload?.schemaVersion).toBe(32);
     expect(payload?.generatedTeamExport).toMatchObject({
       source: 'auto-team-builder',
       team: [
@@ -4752,6 +4849,62 @@ describe('AutoTeamBuilder preset export helpers', () => {
     ]);
   });
 
+  it('round-trips manual leader branch selections through schema 32 presets', () => {
+    const captain = createBranchCaptainRecord(
+      4469,
+      'Zoro VS Lucci - Battling Swords and Hand Pistols',
+      true,
+    );
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['INT'],
+      selectedClasses: ['Slasher'],
+      selectedCharacterTags: [],
+      selectedCharacterNames: [],
+      requiredAbilities: [],
+      requiredCharacterGroups: [],
+      enemyMechanics: [],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
+      requireUniqueBaseCharacterNames: true,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      manualSlots: [
+        {
+          role: 'captain',
+          characterIds: [4469],
+          requiredCharacterId: null,
+          branchSelections: [{ characterId: 4469, mode: 'character2' }],
+        },
+        ...createManualSlots().filter((slot) => slot.role !== 'captain'),
+      ],
+      lockedCharacterIds: [4469],
+      lockedCharacters: [captain],
+      selectedLeaderIds: [4469],
+      captainLeaderId: 4469,
+      friendCaptainLeaderId: 4469,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+    const result = sanitizeAutoTeamSelectionImportPayload(payload, {
+      availableTypes: ['INT'],
+      availableClasses: ['Slasher'],
+      abilityCatalogItems: [],
+      availableLockedCharacters: [captain],
+    });
+
+    expect(payload.schemaVersion).toBe(32);
+    expect(
+      payload.manualSelection.manualSlots.find((slot) => slot.role === 'captain'),
+    ).toMatchObject({
+      characterIds: [4469],
+      branchSelections: [{ characterId: 4469, mode: 'character2' }],
+    });
+    expect(result.state.manualSlots.find((slot) => slot.role === 'captain')).toMatchObject({
+      characterIds: [4469],
+      branchSelections: [{ characterId: 4469, mode: 'character2' }],
+    });
+  });
+
   it('round-trips character tag and name filters through preset export/import', () => {
     const payload = buildAutoTeamSelectionExportPayload({
       selectedTypes: ['DEX'],
@@ -4784,7 +4937,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       availableLockedCharacters: [],
     });
 
-    expect(payload.schemaVersion).toBe(31);
+    expect(payload.schemaVersion).toBe(32);
     expect(payload.filters.selectedCharacterTags).toEqual(['Straw Hat Pirates']);
     expect(payload.filters.selectedCharacterNames).toEqual(['zoro', 'luffy']);
     expect(result.state.selectedCharacterTags).toEqual(['Straw Hat Pirates']);
@@ -4900,7 +5053,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       exportedAt: '2026-03-25T10:00:00.000Z',
     });
 
-    expect(payload.schemaVersion).toBe(31);
+    expect(payload.schemaVersion).toBe(32);
     expect(payload.filters.leaderBoostRanges).toEqual({
       ATK: { min: 5, max: 6 },
       HP: { min: 1.25, max: 1.5 },
@@ -5398,7 +5551,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       availableLockedCharacters: [createCharacterRecord(101)],
     });
 
-    expect(payload.schemaVersion).toBe(31);
+    expect(payload.schemaVersion).toBe(32);
     expect(result.state.requiredAbilities).toEqual([
       {
         abilityKey: 'remove_bind',
@@ -6565,6 +6718,36 @@ function createCharacterRecord(
   };
 }
 
+function createBranchCaptainRecord(
+  id: number,
+  name: string,
+  vsCaptain: boolean,
+): CharacterDetailRecord {
+  const character1Text = vsCaptain
+    ? 'Boosts ATK of [INT], Slasher and Free Spirit characters by 5.5x and boosts HP of [INT], Slasher and Free Spirit characters by 1.35x. Reduces VS Gauge of all characters by 6.'
+    : 'Boosts ATK of [QCK], Fighter and Powerhouse characters by 5x and boosts HP of [QCK], Fighter and Powerhouse characters by 1.35x.';
+  const character2Text = vsCaptain
+    ? 'Boosts ATK of [STR], Driven and Cerebral characters by 5.5x and boosts HP of [STR], Driven and Cerebral characters by 1.35x. Reduces VS Gauge of all characters by 6.'
+    : 'Boosts ATK of [DEX], Fighter and Powerhouse characters by 5x and boosts HP of [DEX], Fighter and Powerhouse characters by 1.35x.';
+  const character = createCharacterRecord(id, name);
+
+  character.detail.captainAbility = character1Text;
+  character.detail.captainAbilityVariants = [
+    {
+      key: 'character1',
+      label: 'Captain Ability (Character 1)',
+      text: character1Text,
+    },
+    {
+      key: 'character2',
+      label: 'Captain Ability (Character 2)',
+      text: character2Text,
+    },
+  ];
+
+  return character;
+}
+
 function filterCharactersForManualQuery(
   records: CharacterDetailRecord[],
   query: {
@@ -6747,6 +6930,7 @@ function createAutoBuildResult(
         friendCaptainLeaderId: 102,
         leaderIds: [101, 102],
         leaderNames: ['Character 101', 'Character 102'],
+        leaderBranchSelections: [],
         dualLeaderMode: 'intersection',
         derivedAllowedClasses: ['Fighter', 'Slasher'],
         derivedAllowedTypes: ['DEX', 'PSY'],

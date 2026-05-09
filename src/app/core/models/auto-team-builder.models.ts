@@ -41,6 +41,9 @@ export type AutoTeamBuilderClass = (typeof AUTO_TEAM_BUILDER_CLASSES)[number];
 export type AutoBuildManualSlotRole = (typeof AUTO_BUILD_MANUAL_SLOT_ROLES)[number];
 export type AutoBuildLeaderBoostFilter = (typeof AUTO_BUILD_LEADER_BOOST_FILTERS)[number];
 export type AutoBuildCaptainAbilityCoverageMode = 'simpleBoostScope' | 'fullAbilityCoverage';
+export type AutoBuildCaptainBranchMode = 'character1' | 'character2' | 'both';
+export type AutoBuildCaptainBranchSelectionSource = 'manual' | 'auto';
+export type AutoBuildLeaderSlotRole = 'captain' | 'friendCaptain';
 
 export interface AutoBuildLeaderBoostRange {
   min: number | null;
@@ -61,6 +64,24 @@ export interface AutoBuildManualSlotSelection {
   role: AutoBuildManualSlotRole;
   characterIds: number[];
   requiredCharacterId?: number | null;
+  branchSelections?: AutoBuildManualSlotBranchSelection[];
+}
+
+export interface AutoBuildManualSlotBranchSelection {
+  characterId: number;
+  mode: AutoBuildCaptainBranchMode;
+}
+
+export interface AutoBuildCaptainBranchSelection {
+  characterId: number;
+  mode: AutoBuildCaptainBranchMode;
+  label: string;
+  displayName: string;
+  source: AutoBuildCaptainBranchSelectionSource;
+}
+
+export interface AutoBuildLeaderBranchSelection extends AutoBuildCaptainBranchSelection {
+  role: AutoBuildLeaderSlotRole;
 }
 
 export function createEmptyAutoBuildLeaderBoostRanges(): AutoBuildLeaderBoostRanges {
@@ -275,6 +296,7 @@ export interface AutoBuildLeaderCriteriaSummary {
   friendCaptainLeaderId: number | null;
   leaderIds: number[];
   leaderNames: string[];
+  leaderBranchSelections: AutoBuildLeaderBranchSelection[];
   dualLeaderMode: 'single' | 'intersection';
   derivedAllowedClasses: string[];
   derivedAllowedTypes: AutoTeamBuilderType[];
@@ -311,6 +333,7 @@ export interface AutoBuildSlot {
   role: 'captain' | 'friendCaptain' | 'sub';
   character: CharacterDetailRecord;
   reasonChips: string[];
+  captainBranchSelection?: AutoBuildCaptainBranchSelection | null;
 }
 
 export interface AutoBuildCoverageSummary {

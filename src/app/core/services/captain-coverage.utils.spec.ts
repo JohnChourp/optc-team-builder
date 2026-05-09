@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { type CharacterDetailRecord } from '../models/optc.models';
 import {
   resolveCaptainBoostScope,
+  resolveCaptainCoverageBranchDisplay,
   resolveCaptainCoverage,
   summarizeCaptainAbilityCoverageText,
 } from './captain-coverage.utils';
@@ -73,14 +74,8 @@ describe('resolveCaptainCoverage', () => {
         'Boosts ATK of [STR] and [DEX] characters by 5x, boosts HP of [STR] and [DEX] characters by 2x.',
     });
 
-    const dexCoverage = resolveCaptainCoverage(
-      captain,
-      createCharacter({ id: 4307, type: 'DEX' }),
-    );
-    const strCoverage = resolveCaptainCoverage(
-      captain,
-      createCharacter({ id: 4308, type: 'STR' }),
-    );
+    const dexCoverage = resolveCaptainCoverage(captain, createCharacter({ id: 4307, type: 'DEX' }));
+    const strCoverage = resolveCaptainCoverage(captain, createCharacter({ id: 4308, type: 'STR' }));
     const strDexCoverage = resolveCaptainCoverage(
       captain,
       createCharacter({ id: 4309, type: 'STR,DEX' }),
@@ -335,6 +330,48 @@ describe('resolveCaptainCoverage', () => {
     );
   });
 
+  it('honors forced VS captain branch coverage and display names', () => {
+    const captain = createCharacter({
+      id: 4469,
+      name: 'Zoro VS Lucci - Battling Swords and Hand Pistols',
+      captainAbility: zoroVsLucciCharacter1CaptainAbility,
+      captainAbilityVariants: [
+        {
+          key: 'character1',
+          label: 'Captain Ability (Character 1)',
+          text: zoroVsLucciCharacter1CaptainAbility,
+        },
+        {
+          key: 'character2',
+          label: 'Captain Ability (Character 2)',
+          text: zoroVsLucciCharacter2CaptainAbility,
+        },
+      ],
+    });
+    const intTarget = createCharacter({
+      id: 4470,
+      type: 'INT',
+      classes: ['Shooter', 'Powerhouse'],
+    });
+    const strTarget = createCharacter({
+      id: 4471,
+      type: 'STR',
+      classes: ['Shooter', 'Powerhouse'],
+    });
+
+    expect(resolveCaptainCoverage(captain, intTarget, { branchMode: 'character1' }).matches).toBe(
+      true,
+    );
+    expect(resolveCaptainCoverage(captain, strTarget, { branchMode: 'character1' }).matches).toBe(
+      false,
+    );
+    expect(resolveCaptainCoverage(captain, strTarget, { branchMode: 'character2' }).matches).toBe(
+      true,
+    );
+    expect(resolveCaptainCoverageBranchDisplay(captain, 'character1').displayName).toBe('Zoro');
+    expect(resolveCaptainCoverageBranchDisplay(captain, 'character2').displayName).toBe('Lucci');
+  });
+
   it('requires both non-combined dual captain branches for coverage', () => {
     const character1Text =
       'Boosts ATK of [QCK], Fighter and Powerhouse characters by 4.75x, boosts ATK of all other characters by 3.5x, and boosts HP of [QCK], Fighter and Powerhouse characters by 1.35x.';
@@ -403,6 +440,45 @@ describe('resolveCaptainCoverage', () => {
     );
     expect(combinedOnlyCoverage.matches).toBe(false);
     expect(combinedOnlyCoverage.captainText).not.toContain('5.75x');
+  });
+
+  it('allows a forced non-VS dual branch to cover only that branch', () => {
+    const character1Text =
+      'Boosts ATK of [QCK], Fighter and Powerhouse characters by 4.75x, boosts HP of [QCK], Fighter and Powerhouse characters by 1.35x.';
+    const character2Text =
+      'Boosts ATK of [DEX], Cerebral and Slasher characters by 4.75x, boosts HP of [DEX], Cerebral and Slasher characters by 1.35x.';
+    const captain = createCharacter({
+      id: 4521,
+      name: 'Garp & Coby - Combined Fists',
+      captainAbility: character1Text,
+      captainAbilityVariants: [
+        { key: 'character1', label: 'Captain Ability (Character 1)', text: character1Text },
+        { key: 'character2', label: 'Captain Ability (Character 2)', text: character2Text },
+      ],
+    });
+    const fighterTarget = createCharacter({
+      id: 4522,
+      type: 'PSY',
+      classes: ['Fighter', 'Shooter'],
+    });
+    const cerebralTarget = createCharacter({
+      id: 4523,
+      type: 'INT',
+      classes: ['Cerebral', 'Shooter'],
+    });
+
+    expect(
+      resolveCaptainCoverage(captain, fighterTarget, { branchMode: 'character1' }).matches,
+    ).toBe(true);
+    expect(
+      resolveCaptainCoverage(captain, cerebralTarget, { branchMode: 'character1' }).matches,
+    ).toBe(false);
+    expect(
+      resolveCaptainCoverage(captain, cerebralTarget, { branchMode: 'character2' }).matches,
+    ).toBe(true);
+    expect(resolveCaptainCoverage(captain, fighterTarget, { branchMode: 'both' }).matches).toBe(
+      false,
+    );
   });
 
   it('ignores self-only boost clauses', () => {
