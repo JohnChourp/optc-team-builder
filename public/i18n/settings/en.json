@@ -8,6 +8,14 @@
     "label": "Language",
     "helper": "Change the app language live and keep it persisted on this device."
   },
+  "account": {
+    "avatarAlt": "{{ name }} Google profile image",
+    "eyebrow": "Google account",
+    "signedOutCopy": "Sign in to connect your Google account and manage Drive sync from this profile page.",
+    "signedOutTitle": "Log in to your account",
+    "title": "Account",
+    "unavailableCopy": "Google sign-in is not configured for this build."
+  },
   "analytics": {
     "title": "Analytics & cookies",
     "copy": "Google Analytics stays off until you allow optional analytics cookies for this browser.",

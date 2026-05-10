@@ -14,6 +14,42 @@
   <ion-content class="tabs-menu__content">
     <div class="tabs-menu__shell">
       <nav class="tabs-menu__nav-panel" [attr.aria-label]="'tabs.navigationAriaLabel' | transloco">
+        <div class="tabs-menu__account-entry">
+          @if (googleAccountSignedIn()) {
+            <ion-menu-toggle autoHide="true">
+              <ion-item
+                button
+                detail="false"
+                class="menu-item menu-item--account"
+                [routerLink]="[accountRoute]"
+                routerLinkActive="menu-item--active"
+                [routerLinkActiveOptions]="navItemActiveMatchOptions"
+                routerDirection="root"
+              >
+                <ion-icon slot="start" [icon]="accountIcon"></ion-icon>
+                <ion-label>
+                  @if (accountDisplayName()) {
+                    {{ accountDisplayName() }}
+                  } @else {
+                    {{ 'tabs.account' | transloco }}
+                  }
+                </ion-label>
+              </ion-item>
+            </ion-menu-toggle>
+          } @else {
+            <ion-item
+              button
+              detail="false"
+              class="menu-item menu-item--account"
+              [disabled]="!googleAccountAvailable() || googleAccountStatus() === 'signing-in'"
+              (click)="signInWithGoogle()"
+            >
+              <ion-icon slot="start" [icon]="loginIcon"></ion-icon>
+              <ion-label>{{ 'tabs.login' | transloco }}</ion-label>
+            </ion-item>
+          }
+        </div>
+
         <ion-accordion-group
           class="tabs-menu__accordion-group"
           [animated]="true"

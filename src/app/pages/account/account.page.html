@@ -4,12 +4,83 @@
       <ion-buttons slot="start">
         <ion-menu-button menu="tabs-navigation-menu" autoHide="false"></ion-menu-button>
       </ion-buttons>
-      <ion-title>{{ t('driveSync.title') }}</ion-title>
+      <ion-title>{{ t('account.title') }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
   <ion-content [fullscreen]="true">
-    <div class="page-shell drive-sync-shell">
+    <div class="page-shell account-shell drive-sync-shell">
+      <section class="glass-card account-hero">
+        @if (googleAccountProfile(); as profile) {
+          <div class="account-identity">
+            @if (profile.imageUrl) {
+              <img
+                class="account-avatar"
+                [src]="profile.imageUrl"
+                [alt]="t('account.avatarAlt', { name: getProfileDisplayName(profile) })"
+                referrerpolicy="no-referrer"
+              />
+            } @else {
+              <span class="account-avatar account-avatar--fallback" aria-hidden="true">
+                {{ getProfileInitials(profile) }}
+              </span>
+            }
+            <div>
+              <div class="section-label">
+                <ion-icon [icon]="accountIcon"></ion-icon>
+                <span>{{ t('account.eyebrow') }}</span>
+              </div>
+              <h1 class="section-title">{{ getProfileDisplayName(profile) }}</h1>
+              @if (profile.email) {
+                <p class="section-copy">{{ profile.email }}</p>
+              }
+            </div>
+          </div>
+          <div class="account-actions">
+            <ion-button fill="outline" color="warning" (click)="syncDriveNow()">
+              {{ t('driveSync.actions.syncNow') }}
+            </ion-button>
+            <ion-button fill="outline" color="medium" (click)="signOutGoogle()">
+              {{ t('driveSync.actions.signOut') }}
+            </ion-button>
+          </div>
+        } @else {
+          <div class="account-identity">
+            <span class="account-avatar account-avatar--icon" aria-hidden="true">
+              <ion-icon [icon]="accountIcon"></ion-icon>
+            </span>
+            <div>
+              <div class="section-label">
+                <ion-icon [icon]="accountIcon"></ion-icon>
+                <span>{{ t('account.eyebrow') }}</span>
+              </div>
+              <h1 class="section-title">{{ t('account.signedOutTitle') }}</h1>
+              <p class="section-copy">
+                {{
+                  googleAccountAvailable()
+                    ? t('account.signedOutCopy')
+                    : t('account.unavailableCopy')
+                }}
+              </p>
+            </div>
+          </div>
+          <div class="account-actions">
+            <ion-button
+              fill="solid"
+              color="warning"
+              [disabled]="!googleAccountAvailable()"
+              (click)="signInWithGoogle()"
+            >
+              {{
+                googleAccountAvailable()
+                  ? t('driveSync.actions.signIn')
+                  : t('driveSync.actions.unavailable')
+              }}
+            </ion-button>
+          </div>
+        }
+      </section>
+
       <section class="glass-card drive-sync-hero">
         <div>
           <div class="section-label">

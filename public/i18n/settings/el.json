@@ -8,6 +8,14 @@
     "label": "Γλώσσα",
     "helper": "Άλλαξε live τη γλώσσα του app και κράτησέ την αποθηκευμένη σε αυτή τη συσκευή."
   },
+  "account": {
+    "avatarAlt": "Εικόνα Google profile για {{ name }}",
+    "eyebrow": "Google account",
+    "signedOutCopy": "Συνδέσου για να ενώσεις το Google account και να διαχειρίζεσαι το Drive sync από αυτή τη σελίδα profile.",
+    "signedOutTitle": "Σύνδεση στον λογαριασμό",
+    "title": "Λογαριασμός",
+    "unavailableCopy": "Η σύνδεση Google δεν έχει ρυθμιστεί σε αυτό το build."
+  },
   "analytics": {
     "title": "Analytics και cookies",
     "copy": "Το Google Analytics μένει κλειστό μέχρι να επιτρέψεις τα προαιρετικά analytics cookies για αυτόν τον browser.",

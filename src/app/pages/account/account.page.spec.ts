@@ -3,18 +3,24 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-describe('DriveSyncPage', () => {
-  it('renders drawer access, Drive status, and reviewed sync modal controls', () => {
+describe('AccountPage', () => {
+  it('renders drawer access, Google account states, Drive status, and reviewed sync modal controls', () => {
     const template = readFileSync(
-      resolve(process.cwd(), 'src/app/pages/drive-sync/drive-sync.page.html'),
+      resolve(process.cwd(), 'src/app/pages/account/account.page.html'),
       'utf8',
     );
 
     expect(template).toContain(
       '<ion-menu-button menu="tabs-navigation-menu" autoHide="false"></ion-menu-button>',
     );
-    expect(template).toContain("t('driveSync.title')");
+    expect(template).toContain("t('account.title')");
+    expect(template).toContain('googleAccountProfile(); as profile');
+    expect(template).toContain("t('account.signedOutTitle')");
+    expect(template).toContain("t('account.unavailableCopy')");
+    expect(template).toContain('getProfileDisplayName(profile)');
+    expect(template).toContain('getProfileInitials(profile)');
     expect(template).toContain("t('driveSync.actions.syncNow')");
+    expect(template).toContain("t('driveSync.actions.signOut')");
     expect(template).toContain("openReviewedSync('merge-and-upload')");
     expect(template).toContain("openReviewedSync('replace-cloud')");
     expect(template).toContain("openReviewedSync('replace-local')");
@@ -29,10 +35,13 @@ describe('DriveSyncPage', () => {
 
   it('uses the reviewed Drive service path instead of direct destructive prompt resolution', () => {
     const component = readFileSync(
-      resolve(process.cwd(), 'src/app/pages/drive-sync/drive-sync.page.ts'),
+      resolve(process.cwd(), 'src/app/pages/account/account.page.ts'),
       'utf8',
     );
 
+    expect(component).toContain('export class AccountPage');
+    expect(component).toContain('getProfileDisplayName(profile: GoogleAccountProfile)');
+    expect(component).toContain('getProfileInitials(profile: GoogleAccountProfile)');
     expect(component).toContain('prepareReviewedManualSync(action)');
     expect(component).toContain('commitReviewedManualSync(');
     expect(component).toContain('buildDriveSyncReviewDraft(');

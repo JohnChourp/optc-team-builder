@@ -50,6 +50,10 @@
   gap: 8px;
 }
 
+.tabs-menu__account-entry {
+  margin-bottom: 8px;
+}
+
 .tabs-menu__accordion {
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.055);
@@ -180,6 +184,12 @@
   --background: rgba(245, 200, 76, 0.08);
   --color: rgba(255, 248, 221, 0.9);
   outline: 1px solid rgba(245, 200, 76, 0.12);
+}
+
+.menu-item--account {
+  --background: rgba(76, 201, 240, 0.1);
+  --color: #eefbff;
+  outline: 1px solid rgba(76, 201, 240, 0.16);
 }
 
 .menu-item--active {

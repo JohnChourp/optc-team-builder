@@ -129,6 +129,11 @@ Google OAuth setup for the web client must include at least these authorized Jav
 - `http://localhost:8400`
 - `https://optcteambuilder.com`
 
+It must also include these authorized redirect URIs because the web OAuth popup returns to a stable root URL:
+
+- `http://localhost:8400/`
+- `https://optcteambuilder.com/`
+
 ## GitHub Pages deploy
 
 This repo publishes Pages through the `Deploy GitHub Pages` GitHub Actions workflow only.

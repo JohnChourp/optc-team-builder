@@ -47,6 +47,63 @@
         </div>
       </section>
 
+      <section class="home-account glass-card">
+        @if (googleAccountProfile(); as profile) {
+          <a class="home-account__body" [routerLink]="[accountRoute]">
+            @if (profile.imageUrl) {
+              <img
+                class="home-account__avatar"
+                [src]="profile.imageUrl"
+                [alt]="t('account.avatarAlt', { name: getProfileDisplayName(profile) })"
+                referrerpolicy="no-referrer"
+                loading="lazy"
+              />
+            } @else {
+              <span class="home-account__avatar home-account__avatar--fallback" aria-hidden="true">
+                {{ getProfileInitials(profile) }}
+              </span>
+            }
+            <div>
+              <span>{{ t('account.signedInEyebrow') }}</span>
+              <strong>{{ getProfileDisplayName(profile) }}</strong>
+              @if (profile.email) {
+                <small>{{ profile.email }}</small>
+              }
+            </div>
+          </a>
+        } @else {
+          <div class="home-account__body">
+            <span class="home-account__avatar home-account__avatar--icon" aria-hidden="true">
+              <ion-icon [icon]="accountIcon"></ion-icon>
+            </span>
+            <div>
+              <span>{{ t('account.signedOutEyebrow') }}</span>
+              <strong>{{ t('account.signedOutTitle') }}</strong>
+              <small>
+                {{
+                  googleAccountAvailable()
+                    ? t('account.signedOutCopy')
+                    : t('account.unavailableCopy')
+                }}
+              </small>
+            </div>
+            <ion-button
+              fill="outline"
+              color="warning"
+              [disabled]="!googleAccountAvailable() || googleAccountStatus() === 'signing-in'"
+              (click)="signInWithGoogle()"
+            >
+              <ion-icon slot="start" [icon]="loginIcon"></ion-icon>
+              {{
+                googleAccountAvailable()
+                  ? t('account.actions.signIn')
+                  : t('account.actions.unavailable')
+              }}
+            </ion-button>
+          </div>
+        }
+      </section>
+
       <section class="home-highlight-grid" [attr.aria-label]="t('highlights.ariaLabel')">
         @for (highlightKey of highlights; track highlightKey) {
           <article class="home-highlight glass-card">

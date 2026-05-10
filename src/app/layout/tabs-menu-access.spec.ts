@@ -12,7 +12,7 @@ const tabPageTemplates = [
   'src/app/pages/saved-teams/saved-teams.page.html',
   'src/app/pages/character-boxes/character-boxes.page.html',
   'src/app/pages/saved-enemies/saved-enemies.page.html',
-  'src/app/pages/drive-sync/drive-sync.page.html',
+  'src/app/pages/account/account.page.html',
   'src/app/pages/settings/settings.page.html',
 ];
 

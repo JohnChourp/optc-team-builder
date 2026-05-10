@@ -252,6 +252,16 @@ export class GoogleAccountService {
     };
   }
 
+  private getWebRedirectUrl(): string | undefined {
+    if (Capacitor.getPlatform() !== 'web') {
+      return undefined;
+    }
+
+    const origin = globalThis.location?.origin;
+
+    return origin ? `${origin}/` : undefined;
+  }
+
   private hasPlatformConfig(): boolean {
     if (Capacitor.getPlatform() === 'ios') {
       return this.config.googleIosClientId.length > 0;
@@ -272,6 +282,7 @@ export class GoogleAccountService {
           iOSClientId: this.config.googleIosClientId || undefined,
           iOSServerClientId: this.config.googleWebClientId || undefined,
           mode: 'online',
+          redirectUrl: this.getWebRedirectUrl(),
           webClientId: this.config.googleWebClientId || undefined,
         },
       });

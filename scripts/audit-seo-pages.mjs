@@ -21,6 +21,7 @@ const publicToolPaths = new Set([
   'tabs/captain-coverage',
   'tabs/auto-team-builder-rumble',
   'tabs/crew-forge',
+  'tabs/account',
   'tools/optc-team-builder',
   'tools/optc-auto-team-builder',
   'tools/optc-rumble-team-builder',

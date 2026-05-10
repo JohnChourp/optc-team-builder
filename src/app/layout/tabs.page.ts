@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, type IsActiveMatchOptions } from '@angular/router';
 import {
   IonAccordion,
@@ -19,19 +19,21 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import {
   albumsOutline,
   archiveOutline,
-  cloudDoneOutline,
   cogOutline,
   constructOutline,
   flashOutline,
   gridOutline,
   homeOutline,
+  logInOutline,
   peopleOutline,
+  personCircleOutline,
   saveOutline,
   shieldCheckmarkOutline,
   shieldHalfOutline,
 } from 'ionicons/icons';
 import { type SupportedLanguage } from '../core/i18n/app-i18n.types';
 import { AppI18nService } from '../core/services/app-i18n.service';
+import { GoogleAccountService } from '../core/services/google-account.service';
 
 interface NavigationItem {
   icon: string | readonly string[];
@@ -77,8 +79,16 @@ interface NavigationGroup {
 })
 export class TabsPage {
   private readonly i18n = inject(AppI18nService);
+  private readonly googleAccount = inject(GoogleAccountService);
 
+  public readonly accountIcon = personCircleOutline;
+  public readonly accountRoute = '/tabs/account';
   public readonly activeLanguage = this.i18n.activeLanguage;
+  public readonly googleAccountAvailable = this.googleAccount.isAvailable;
+  public readonly googleAccountProfile = this.googleAccount.profile;
+  public readonly googleAccountSignedIn = this.googleAccount.isSignedIn;
+  public readonly googleAccountStatus = this.googleAccount.status;
+  public readonly loginIcon = logInOutline;
   public readonly navItemActiveMatchOptions: IsActiveMatchOptions = {
     paths: 'exact',
     queryParams: 'subset',
@@ -169,11 +179,6 @@ export class TabsPage {
           labelKey: 'tabs.savedEnemies',
           route: '/tabs/saved-enemies',
         },
-        {
-          icon: cloudDoneOutline,
-          labelKey: 'tabs.driveSync',
-          route: '/tabs/drive-sync',
-        },
       ],
     },
   ];
@@ -182,6 +187,11 @@ export class TabsPage {
     labelKey: 'tabs.settings',
     route: '/tabs/settings',
   };
+  public readonly accountDisplayName = computed(() => {
+    const profile = this.googleAccountProfile();
+
+    return profile?.name ?? profile?.email ?? '';
+  });
 
   public async onLanguageSelect(language: SupportedLanguage): Promise<void> {
     if (language === this.activeLanguage()) {
@@ -189,5 +199,17 @@ export class TabsPage {
     }
 
     await this.i18n.setLanguage(language);
+  }
+
+  public async signInWithGoogle(): Promise<void> {
+    if (!this.googleAccountAvailable()) {
+      return;
+    }
+
+    try {
+      await this.googleAccount.signIn(false);
+    } catch {
+      return;
+    }
   }
 }

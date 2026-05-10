@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   IonButton,
@@ -17,16 +17,21 @@ import {
   archiveOutline,
   cameraOutline,
   checkmarkCircleOutline,
-  cloudDoneOutline,
   cogOutline,
   flashOutline,
   gridOutline,
+  logInOutline,
   saveOutline,
   searchOutline,
   shieldCheckmarkOutline,
   shieldHalfOutline,
   sparklesOutline,
+  personCircleOutline,
 } from 'ionicons/icons';
+import {
+  GoogleAccountService,
+  type GoogleAccountProfile,
+} from '../../core/services/google-account.service';
 
 interface HomeAction {
   color: 'light' | 'warning';
@@ -67,6 +72,15 @@ interface HomeHeroCharacter {
   styleUrl: './home.page.scss',
 })
 export class HomePage {
+  private readonly googleAccount = inject(GoogleAccountService);
+
+  public readonly accountIcon = personCircleOutline;
+  public readonly accountRoute = '/tabs/account';
+  public readonly googleAccountAvailable = this.googleAccount.isAvailable;
+  public readonly googleAccountProfile = this.googleAccount.profile;
+  public readonly googleAccountSignedIn = this.googleAccount.isSignedIn;
+  public readonly googleAccountStatus = this.googleAccount.status;
+  public readonly loginIcon = logInOutline;
   public readonly sparklesIcon = sparklesOutline;
   public readonly searchIcon = searchOutline;
   public readonly shieldIcon = shieldCheckmarkOutline;
@@ -108,12 +122,6 @@ export class HomePage {
       fill: 'outline',
       labelKey: 'actions.crewForge',
       route: '/tabs/crew-forge',
-    },
-    {
-      color: 'light',
-      fill: 'outline',
-      labelKey: 'actions.driveSync',
-      route: '/tabs/drive-sync',
     },
   ];
   public readonly highlights = [
@@ -183,12 +191,6 @@ export class HomePage {
       route: '/tabs/crew-forge',
     },
     {
-      icon: cloudDoneOutline,
-      titleKey: 'features.driveSync.title',
-      copyKey: 'features.driveSync.copy',
-      route: '/tabs/drive-sync',
-    },
-    {
       icon: cogOutline,
       titleKey: 'features.settings.title',
       copyKey: 'features.settings.copy',
@@ -201,4 +203,32 @@ export class HomePage {
     'workflow.steps.save',
   ];
   public readonly checkIcon = checkmarkCircleOutline;
+
+  public getProfileDisplayName(profile: GoogleAccountProfile): string {
+    return profile.name ?? profile.email ?? profile.id;
+  }
+
+  public getProfileInitials(profile: GoogleAccountProfile): string {
+    const source = this.getProfileDisplayName(profile);
+    const initials = source
+      .split(/[\s@._-]+/u)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toLocaleUpperCase())
+      .join('');
+
+    return initials || '?';
+  }
+
+  public async signInWithGoogle(): Promise<void> {
+    if (!this.googleAccountAvailable()) {
+      return;
+    }
+
+    try {
+      await this.googleAccount.signIn(false);
+    } catch {
+      return;
+    }
+  }
 }

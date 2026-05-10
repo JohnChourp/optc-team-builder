@@ -16,11 +16,16 @@ describe('HomePage', () => {
     expect(template).toContain("t('hero.title')");
     expect(template).toContain("t('features.title')");
     expect(template).toContain("t('workflow.title')");
+    expect(template).toContain('class="home-account glass-card"');
+    expect(template).toContain('googleAccountProfile(); as profile');
+    expect(template).toContain("t('account.signedOutTitle')");
+    expect(template).toContain('(click)="signInWithGoogle()"');
     expect(template).toContain('[routerLink]="[action.route]"');
     expect(template).toContain('[routerLink]="[feature.route]"');
+    expect(template).toContain('[routerLink]="[accountRoute]"');
   });
 
-  it('defines homepage actions and feature links for the main app pages', () => {
+  it('defines homepage actions, account access, and feature links for the main app pages', () => {
     const component = readFileSync(
       resolve(process.cwd(), 'src/app/pages/home/home.page.ts'),
       'utf8',
@@ -36,7 +41,10 @@ describe('HomePage', () => {
     expect(component).toContain("route: '/tabs/saved-teams'");
     expect(component).toContain("route: '/tabs/character-boxes'");
     expect(component).toContain("route: '/tabs/saved-enemies'");
-    expect(component).toContain("route: '/tabs/drive-sync'");
+    expect(component).toContain("public readonly accountRoute = '/tabs/account'");
+    expect(component).toContain('this.googleAccount.signIn(false)');
+    expect(component).not.toContain("route: '/tabs/drive-sync'");
+    expect(component).not.toContain('features.driveSync.title');
     expect(component).toContain("route: '/tabs/settings'");
     expect(component).not.toContain("route: '/tabs/team-builder'");
   });
@@ -55,8 +63,8 @@ describe('HomePage', () => {
     expect(template).not.toContain('alt=""');
     expect(template).toContain('alt="OPTC Team Builder logo"');
     expect(template).toContain('[alt]="characterImage.alt"');
-    expect(component).toContain('Kozuki Hiyori - Graveside Prayer character artwork');
-    expect(component).toContain('Kozuki Hiyori - Resounding Shamisen character artwork');
-    expect(component).toContain('Kid & Killer DEX character artwork');
+    expect(component).toContain('Portgas D. Ace - The Man Who Came for an Emperor of the Sea');
+    expect(component).toContain('Dr. Vegapunk - Intense Worldwide Broadcast');
+    expect(component).toContain('Burgess & Shiryu - Leading Might and Invisibility');
   });
 });

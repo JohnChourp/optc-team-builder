@@ -1,13 +1,61 @@
+.account-shell,
 .drive-sync-shell {
   display: grid;
   gap: 18px;
 }
 
+.account-hero,
 .drive-sync-hero,
 .drive-sync-card {
   display: grid;
   gap: 16px;
   padding: 18px;
+}
+
+.account-hero {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.account-identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.account-identity > div {
+  min-width: 0;
+}
+
+.account-avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 76px;
+  aspect-ratio: 1;
+  flex: 0 0 auto;
+  border: 1px solid rgba(245, 200, 76, 0.28);
+  border-radius: 18px;
+  background: rgba(245, 200, 76, 0.12);
+  color: #fff8dd;
+  font-size: 1.25rem;
+  font-weight: 800;
+  object-fit: cover;
+}
+
+.account-avatar--icon ion-icon {
+  font-size: 2.3rem;
+}
+
+.account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.account-actions ion-button {
+  margin: 0;
 }
 
 .drive-sync-hero {
@@ -290,9 +338,14 @@
   }
 
   .drive-sync-hero,
+  .account-hero,
   .section-head,
   .drive-review-row {
     grid-template-columns: 1fr;
+  }
+
+  .account-actions {
+    justify-content: flex-start;
   }
 
   .section-head {

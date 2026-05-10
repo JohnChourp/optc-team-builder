@@ -117,14 +117,23 @@ describe('app routes', () => {
     expect(savedEnemiesRoute?.loadComponent).toBeTypeOf('function');
   });
 
-  it('registers the Drive sync route inside tabs', () => {
+  it('registers the account route inside tabs', () => {
+    const tabsRoute = findRouteByPath(routes, 'tabs');
+    const accountRoute = tabsRoute?.children?.find((route) => route.path === 'account');
+    const seo = accountRoute?.data?.['seo'] as Record<string, unknown> | undefined;
+
+    expect(accountRoute).toBeDefined();
+    expect(accountRoute?.loadComponent).toBeTypeOf('function');
+    expect(seo?.['canonicalPath']).toBe('tabs/account');
+  });
+
+  it('redirects the legacy Drive sync route to account', () => {
     const tabsRoute = findRouteByPath(routes, 'tabs');
     const driveSyncRoute = tabsRoute?.children?.find((route) => route.path === 'drive-sync');
-    const seo = driveSyncRoute?.data?.['seo'] as Record<string, unknown> | undefined;
 
-    expect(driveSyncRoute).toBeDefined();
-    expect(driveSyncRoute?.loadComponent).toBeTypeOf('function');
-    expect(seo?.['canonicalPath']).toBe('tabs/drive-sync');
+    expect(driveSyncRoute?.redirectTo).toBe('account');
+    expect(driveSyncRoute?.pathMatch).toBe('full');
+    expect(driveSyncRoute?.loadComponent).toBeUndefined();
   });
 
   it('redirects the legacy collection tab route to saved teams', () => {

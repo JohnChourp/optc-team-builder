@@ -18,6 +18,7 @@ import {
   cloudOfflineOutline,
   cloudUploadOutline,
   gitCompareOutline,
+  personCircleOutline,
 } from 'ionicons/icons';
 
 import { type CharacterListItem } from '../../core/models/optc.models';
@@ -27,7 +28,10 @@ import {
   type DriveManualSyncPromptAction,
   type DriveReviewedSyncAction,
 } from '../../core/services/drive-backup.service';
-import { GoogleAccountService } from '../../core/services/google-account.service';
+import {
+  GoogleAccountService,
+  type GoogleAccountProfile,
+} from '../../core/services/google-account.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserDataTransferService } from '../../core/services/user-data-transfer.service';
 import {
@@ -40,10 +44,10 @@ import {
   type DriveSyncReviewSection,
   type DriveSyncReviewSectionKey,
   updateDriveSyncReviewRowChoice,
-} from './drive-sync-review.utils';
+} from '../drive-sync/drive-sync-review.utils';
 
 @Component({
-  selector: 'app-drive-sync-page',
+  selector: 'app-account-page',
   standalone: true,
   imports: [
     CommonModule,
@@ -59,14 +63,15 @@ import {
     IonToolbar,
     TranslocoDirective,
   ],
-  templateUrl: './drive-sync.page.html',
-  styleUrl: './drive-sync.page.scss',
+  templateUrl: './account.page.html',
+  styleUrl: './account.page.scss',
 })
-export class DriveSyncPage {
+export class AccountPage {
   public readonly cloudDoneIcon = cloudDoneOutline;
   public readonly cloudOfflineIcon = cloudOfflineOutline;
   public readonly cloudUploadIcon = cloudUploadOutline;
   public readonly compareIcon = gitCompareOutline;
+  public readonly accountIcon = personCircleOutline;
 
   public readonly driveManualSyncPrompt;
   public readonly driveSyncMetadata;
@@ -313,6 +318,22 @@ export class DriveSyncPage {
     }
 
     return this.i18n.translate('driveSync.summary.remoteReady', undefined, 'settings');
+  }
+
+  public getProfileDisplayName(profile: GoogleAccountProfile): string {
+    return profile.name ?? profile.email ?? profile.id;
+  }
+
+  public getProfileInitials(profile: GoogleAccountProfile): string {
+    const source = this.getProfileDisplayName(profile);
+    const initials = source
+      .split(/[\s@._-]+/u)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toLocaleUpperCase())
+      .join('');
+
+    return initials || '?';
   }
 
   public getReviewActionLabelKey(action: DriveReviewedSyncAction): string {

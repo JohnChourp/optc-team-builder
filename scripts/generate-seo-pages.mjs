@@ -187,6 +187,23 @@ const publicRoutes = [
     ],
   },
   {
+    path: 'tabs/account',
+    title: 'Account and Drive Sync | OPTC Team Builder',
+    description:
+      'Manage optional Google sign-in, Google Drive backup, reviewed sync, restore, and local OPTC Team Builder data transfer.',
+    heading: 'OPTC Team Builder Account and Drive Sync',
+    paragraphs: [
+      'The account page manages optional Google sign-in and Google Drive sync for OPTC Team Builder.',
+      'Use it to connect a Google account, create or review a Drive backup, restore data on another device, and keep local browser data under your control.',
+    ],
+    links: [
+      { label: 'Browse OPTC characters', path: 'tabs/characters' },
+      { label: 'Open saved teams', path: 'tabs/saved-teams' },
+      { label: 'Open character boxes', path: 'tabs/character-boxes' },
+    ],
+    aliases: ['tabs/drive-sync'],
+  },
+  {
     path: 'tools/optc-team-builder',
     title: 'OPTC Team Builder Tool | One Piece Treasure Cruise Crew Planner',
     description:

@@ -324,8 +324,19 @@
       "characters": "Browse Characters",
       "autoBuilder": "Open Auto Team Builder",
       "autoRumble": "Open Auto Team Rumble Builder",
-      "crewForge": "Open Crew Forge",
-      "driveSync": "Open Drive Sync"
+      "crewForge": "Open Crew Forge"
+    },
+    "account": {
+      "actions": {
+        "signIn": "Sign in with Google",
+        "unavailable": "Google sign-in unavailable"
+      },
+      "avatarAlt": "{{ name }} Google profile image",
+      "signedInEyebrow": "Signed in",
+      "signedOutCopy": "Sign in to manage your profile and Google Drive backup from one place.",
+      "signedOutEyebrow": "Google account",
+      "signedOutTitle": "Log in for Drive sync",
+      "unavailableCopy": "Google sign-in is not configured for this build."
     },
     "highlights": {
       "ariaLabel": "OPTC Team Builder highlights",
@@ -377,10 +388,6 @@
         "title": "Saved Enemies",
         "copy": "Store enemy presets and mechanics so Auto Team Builder can reuse quest requirements later."
       },
-      "driveSync": {
-        "title": "Google Drive Sync",
-        "copy": "Review exactly what changes before merging, replacing this device, or replacing the visible Drive backup."
-      },
       "settings": {
         "title": "Settings",
         "copy": "Change language, manage imports and exports, configure backups, Google Drive sync, and analytics consent."
@@ -404,8 +411,10 @@
     "characterBoxes": "Character Boxes",
     "characters": "Characters",
     "crewForge": "Crew Forge",
+    "account": "Account",
     "home": "Home",
     "driveSync": "Drive Sync",
+    "login": "Log in",
     "groups": {
       "browse": "Browse",
       "build": "Build",

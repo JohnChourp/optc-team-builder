@@ -324,8 +324,19 @@
       "characters": "Άνοιγμα χαρακτήρων",
       "autoBuilder": "Auto Team Builder",
       "autoRumble": "Auto Team Rumble Builder",
-      "crewForge": "Crew Forge",
-      "driveSync": "Drive Sync"
+      "crewForge": "Crew Forge"
+    },
+    "account": {
+      "actions": {
+        "signIn": "Σύνδεση με Google",
+        "unavailable": "Η σύνδεση Google δεν είναι διαθέσιμη"
+      },
+      "avatarAlt": "Εικόνα Google profile για {{ name }}",
+      "signedInEyebrow": "Συνδεδεμένος",
+      "signedOutCopy": "Συνδέσου για να διαχειρίζεσαι profile και Google Drive backup από ένα σημείο.",
+      "signedOutEyebrow": "Google account",
+      "signedOutTitle": "Σύνδεση για Drive sync",
+      "unavailableCopy": "Η σύνδεση Google δεν έχει ρυθμιστεί σε αυτό το build."
     },
     "highlights": {
       "ariaLabel": "Κύρια πλεονεκτήματα του OPTC Team Builder",
@@ -377,10 +388,6 @@
         "title": "Αποθηκευμένοι εχθροί",
         "copy": "Κράτα enemy presets και mechanics ώστε το Auto Team Builder να ξαναχρησιμοποιεί quest requirements αργότερα."
       },
-      "driveSync": {
-        "title": "Google Drive Sync",
-        "copy": "Δες ακριβώς τι αλλάζει πριν κάνεις merge, αντικατάσταση συσκευής ή αντικατάσταση του Drive backup."
-      },
       "settings": {
         "title": "Ρυθμίσεις",
         "copy": "Άλλαξε γλώσσα, διαχειρίσου imports και exports, backups, Google Drive sync και analytics consent."
@@ -404,8 +411,10 @@
     "characterBoxes": "Boxes χαρακτήρων",
     "characters": "Χαρακτήρες",
     "crewForge": "Crew Forge",
+    "account": "Λογαριασμός",
     "home": "Αρχική",
     "driveSync": "Drive Sync",
+    "login": "Σύνδεση",
     "groups": {
       "browse": "Περιήγηση",
       "build": "Χτίσιμο",

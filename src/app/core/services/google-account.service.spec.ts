@@ -26,8 +26,10 @@ vi.mock('@capgo/capacitor-social-login', () => ({
 
 describe('GoogleAccountService', () => {
   beforeEach(() => {
+    vi.unstubAllGlobals();
     vi.clearAllMocks();
     getPlatform.mockReturnValue('web');
+    vi.stubGlobal('location', { origin: 'https://optcteambuilder.com' });
   });
 
   it('restores a signed-in session from the stored authorization state', async () => {
@@ -53,6 +55,14 @@ describe('GoogleAccountService', () => {
     await service.ready();
 
     expect(socialLogin.initialize).toHaveBeenCalledOnce();
+    expect(socialLogin.initialize).toHaveBeenCalledWith(
+      expect.objectContaining({
+        google: expect.objectContaining({
+          redirectUrl: expect.stringMatching(/\/$/u),
+          webClientId: '123456.apps.googleusercontent.com',
+        }),
+      }),
+    );
     expect(service.isSignedIn()).toBe(true);
     expect(service.profile()).toMatchObject({
       email: 'captain@example.com',

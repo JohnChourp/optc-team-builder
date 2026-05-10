@@ -14,6 +14,10 @@ describe('TabsPage', () => {
     expect(template).toContain('[multiple]="false"');
     expect(template).toContain('value="browse"');
     expect(template).toContain('[routerLink]="[item.route]"');
+    expect(template).toContain('class="tabs-menu__account-entry"');
+    expect(template).toContain('[routerLink]="[accountRoute]"');
+    expect(template).toContain('(click)="signInWithGoogle()"');
+    expect(template).toContain("'tabs.login' | transloco");
     expect(template).toContain('[routerLink]="[settingsNavItem.route]"');
     expect(template).toContain("'tabs.menuTitle' | transloco");
     expect(template).toContain("'tabs.navigationAriaLabel' | transloco");
@@ -28,6 +32,9 @@ describe('TabsPage', () => {
     const component = readFileSync(resolve(process.cwd(), 'src/app/layout/tabs.page.ts'), 'utf8');
 
     expect(component).toContain('public readonly navigationGroups');
+    expect(component).toContain("public readonly accountRoute = '/tabs/account'");
+    expect(component).toContain('public readonly accountDisplayName');
+    expect(component).toContain('this.googleAccount.signIn(false)');
     expect(component).toContain("id: 'browse'");
     expect(component).toContain("'tabs.groups.browse'");
     expect(component).toContain("id: 'build'");
@@ -75,8 +82,8 @@ describe('TabsPage', () => {
     expect(component).toContain("'tabs.savedTeams'");
     expect(component).toContain("'tabs.characterBoxes'");
     expect(component).toContain("'tabs.savedEnemies'");
-    expect(component).toContain("'tabs.driveSync'");
-    expect(component).toContain("route: '/tabs/drive-sync'");
+    expect(component).not.toContain("'tabs.driveSync'");
+    expect(component).not.toContain("route: '/tabs/drive-sync'");
     expect(component).toContain("'tabs.settings'");
     expect(component.indexOf('public readonly settingsNavItem')).toBeGreaterThan(
       component.indexOf('public readonly navigationGroups'),
