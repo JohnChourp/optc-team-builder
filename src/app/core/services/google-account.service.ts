@@ -259,7 +259,7 @@ export class GoogleAccountService {
 
     const origin = globalThis.location?.origin;
 
-    return origin ? `${origin}/` : undefined;
+    return origin || undefined;
   }
 
   private hasPlatformConfig(): boolean {

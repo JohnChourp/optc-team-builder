@@ -58,7 +58,7 @@ describe('GoogleAccountService', () => {
     expect(socialLogin.initialize).toHaveBeenCalledWith(
       expect.objectContaining({
         google: expect.objectContaining({
-          redirectUrl: expect.stringMatching(/\/$/u),
+          redirectUrl: 'https://optcteambuilder.com',
           webClientId: '123456.apps.googleusercontent.com',
         }),
       }),
