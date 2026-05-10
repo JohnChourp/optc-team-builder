@@ -125,6 +125,79 @@ describe('GoogleAccountService', () => {
     expect(service.sessionRevision()).toBe(1);
   });
 
+  it('finishes a Google OAuth popup callback and posts the login result to the opener', async () => {
+    const postMessage = vi.fn();
+    const close = vi.fn();
+    const removeItem = vi.fn();
+    const idToken = buildIdToken({
+      email: 'captain@example.com',
+      family_name: 'D.',
+      given_name: 'Monkey',
+      name: 'Monkey D. Luffy',
+      sub: 'google-user-1',
+    });
+
+    vi.stubGlobal('window', {
+      close,
+      location: {
+        hash: `#state=popup&access_token=popup-access-token&id_token=${idToken}`,
+        origin: 'https://optcteambuilder.com',
+      },
+      localStorage: {
+        getItem: vi.fn(() =>
+          JSON.stringify({
+            nonce: 'popup-nonce',
+            provider: 'google',
+          }),
+        ),
+        removeItem,
+      },
+      opener: {
+        postMessage,
+      },
+    });
+
+    class BroadcastChannelStub {
+      public static readonly messages: unknown[] = [];
+
+      public constructor(public readonly name: string) {}
+
+      public close(): void {}
+
+      public postMessage(message: unknown): void {
+        BroadcastChannelStub.messages.push({ message, name: this.name });
+      }
+    }
+
+    vi.stubGlobal('BroadcastChannel', BroadcastChannelStub);
+
+    const service = new GoogleAccountService({
+      googleDriveFolderName: 'OPTC Team Builder',
+      googleIosClientId: '',
+      googleWebClientId: '123456.apps.googleusercontent.com',
+    });
+    await service.ready();
+
+    expect(socialLogin.initialize).not.toHaveBeenCalled();
+    expect(postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        accessToken: { token: 'popup-access-token' },
+        idToken,
+        provider: 'google',
+        responseType: 'online',
+        type: 'oauth-response',
+      }),
+      'https://optcteambuilder.com',
+    );
+    expect(BroadcastChannelStub.messages).toEqual([
+      expect.objectContaining({
+        name: 'google_oauth_popup-nonce',
+      }),
+    ]);
+    expect(removeItem).toHaveBeenCalledWith('social_login_oauth_pending');
+    expect(close).toHaveBeenCalledOnce();
+  });
+
   it('requires reconnect when the stored token cannot be refreshed silently', async () => {
     socialLogin.initialize.mockResolvedValue(undefined);
     socialLogin.isLoggedIn.mockResolvedValue({ isLoggedIn: true });

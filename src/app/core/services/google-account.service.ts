@@ -10,6 +10,7 @@ import { APP_SYNC_CONFIG, type AppSyncConfig } from '../sync/app-sync.config';
 
 const GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 const GOOGLE_DEFAULT_SCOPES = ['email', 'profile', GOOGLE_DRIVE_SCOPE];
+const SOCIAL_LOGIN_OAUTH_STATE_KEY = 'social_login_oauth_pending';
 
 export interface GoogleAccountProfile {
   email: string | null;
@@ -108,6 +109,15 @@ function mapProfileFromLoginResult(result: GoogleLoginResponseOnline): GoogleAcc
     imageUrl: normalizeOptionalString(result.profile.imageUrl),
     name: normalizeOptionalString(result.profile.name),
   };
+}
+
+function isGooglePopupRedirect(windowRef: Window): boolean {
+  const params = new URLSearchParams(windowRef.location.hash.replace(/^#/u, ''));
+
+  return (
+    params.get('state') === 'popup' &&
+    (params.has('access_token') || params.has('id_token') || params.has('error'))
+  );
 }
 
 @Injectable({ providedIn: 'root' })
@@ -262,6 +272,61 @@ export class GoogleAccountService {
     return origin || undefined;
   }
 
+  private completeGooglePopupRedirectIfNeeded(): boolean {
+    if (Capacitor.getPlatform() !== 'web' || typeof window === 'undefined') {
+      return false;
+    }
+
+    const windowRef = window;
+
+    if (!isGooglePopupRedirect(windowRef)) {
+      return false;
+    }
+
+    const params = new URLSearchParams(windowRef.location.hash.replace(/^#/u, ''));
+    const pendingState = this.readPendingPopupState();
+
+    if (!windowRef.opener && !pendingState?.nonce) {
+      return false;
+    }
+
+    const message = this.buildPopupRedirectMessage(params);
+
+    if (!message) {
+      return false;
+    }
+
+    try {
+      windowRef.opener?.postMessage(message, windowRef.location.origin);
+    } catch {
+      // BroadcastChannel below handles same-origin popup delivery when opener is unavailable.
+    }
+
+    if (pendingState?.nonce && typeof BroadcastChannel !== 'undefined') {
+      try {
+        const channel = new BroadcastChannel(`google_oauth_${pendingState.nonce}`);
+        channel.postMessage(message);
+        channel.close();
+      } catch {
+        // If BroadcastChannel is blocked, the opener postMessage path may still succeed.
+      }
+    }
+
+    try {
+      windowRef.localStorage.removeItem(SOCIAL_LOGIN_OAUTH_STATE_KEY);
+    } catch {
+      // Ignore storage failures during popup shutdown.
+    }
+
+    try {
+      windowRef.close();
+    } catch {
+      // Some browsers may refuse to close windows they do not consider script-opened.
+    }
+
+    return true;
+  }
+
   private hasPlatformConfig(): boolean {
     if (Capacitor.getPlatform() === 'ios') {
       return this.config.googleIosClientId.length > 0;
@@ -271,6 +336,10 @@ export class GoogleAccountService {
   }
 
   private async initialize(): Promise<void> {
+    if (this.completeGooglePopupRedirectIfNeeded()) {
+      return;
+    }
+
     if (!this.isAvailable()) {
       this.status.set('unavailable');
       return;
@@ -348,5 +417,55 @@ export class GoogleAccountService {
     }
 
     return 'Google sign-in failed.';
+  }
+
+  private readPendingPopupState(): { nonce?: string } | null {
+    try {
+      const rawState = window.localStorage.getItem(SOCIAL_LOGIN_OAUTH_STATE_KEY);
+
+      if (!rawState) {
+        return null;
+      }
+
+      const parsedState = JSON.parse(rawState) as Record<string, unknown>;
+      const nonce = normalizeOptionalString(parsedState['nonce']);
+
+      return nonce ? { nonce } : {};
+    } catch {
+      return null;
+    }
+  }
+
+  private buildPopupRedirectMessage(
+    params: URLSearchParams,
+  ): Record<string, unknown> | null {
+    const error = params.get('error');
+
+    if (error) {
+      return {
+        error: params.get('error_description') || error,
+        provider: 'google',
+        type: 'oauth-error',
+      };
+    }
+
+    const accessToken = normalizeOptionalString(params.get('access_token'));
+    const idToken = normalizeOptionalString(params.get('id_token'));
+    const profile = mapProfileFromJwt(idToken);
+
+    if (!accessToken || !idToken || !profile) {
+      return null;
+    }
+
+    return {
+      accessToken: {
+        token: accessToken,
+      },
+      idToken,
+      profile,
+      provider: 'google',
+      responseType: 'online',
+      type: 'oauth-response',
+    };
   }
 }
