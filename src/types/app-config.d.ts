@@ -3,6 +3,7 @@ declare global {
     __appConfig?: {
       ga4MeasurementId?: string;
       googleDriveFolderName?: string;
+      googleDriveBackendUrl?: string;
       googleIosClientId?: string;
       googleWebClientId?: string;
     };

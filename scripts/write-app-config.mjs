@@ -11,11 +11,13 @@ const requiredFlags = parseRequiredFlags(process.argv.slice(2));
 await loadEnvFiles(envFilePaths);
 
 const ga4MeasurementId = normalizeGa4MeasurementId(process.env["APP_GA4_MEASUREMENT_ID"]);
+const googleDriveBackendUrl = normalizeOptionalUrl(process.env["APP_GOOGLE_DRIVE_BACKEND_URL"]);
 const googleDriveFolderName = normalizeDriveFolderName(process.env["APP_GOOGLE_DRIVE_FOLDER_NAME"]);
 const googleIosClientId = normalizeGoogleClientId(process.env["APP_GOOGLE_IOS_CLIENT_ID"]);
 const googleWebClientId = normalizeGoogleClientId(process.env["APP_GOOGLE_WEB_CLIENT_ID"]);
 
 reportMissingGoogleConfig({
+  googleDriveBackendUrl,
   googleIosClientId,
   googleWebClientId,
   requireGoogleIosClientId: requiredFlags.requireGoogleIosClientId,
@@ -28,6 +30,7 @@ await writeFile(
   `window.__appConfig = ${JSON.stringify(
     {
       ga4MeasurementId,
+      googleDriveBackendUrl,
       googleDriveFolderName,
       googleIosClientId,
       googleWebClientId,
@@ -126,6 +129,7 @@ function parseBooleanEnv(value) {
 }
 
 function reportMissingGoogleConfig({
+  googleDriveBackendUrl,
   googleIosClientId,
   googleWebClientId,
   requireGoogleIosClientId,
@@ -133,7 +137,7 @@ function reportMissingGoogleConfig({
 }) {
   const missingKeys = [];
 
-  if (googleWebClientId.length === 0) {
+  if (googleWebClientId.length === 0 && googleDriveBackendUrl.length === 0) {
     missingKeys.push("APP_GOOGLE_WEB_CLIENT_ID");
   }
 
@@ -153,7 +157,9 @@ function reportMissingGoogleConfig({
   console.warn(message);
 
   if (
-    (requireGoogleWebClientId && googleWebClientId.length === 0) ||
+    (requireGoogleWebClientId &&
+      googleWebClientId.length === 0 &&
+      googleDriveBackendUrl.length === 0) ||
     (requireGoogleIosClientId && googleIosClientId.length === 0)
   ) {
     throw new Error(
@@ -194,4 +200,24 @@ function normalizeDriveFolderName(value) {
   const normalizedValue = value.trim();
 
   return normalizedValue.length > 0 ? normalizedValue : "OPTC Team Builder";
+}
+
+function normalizeOptionalUrl(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  const normalizedValue = value.trim();
+
+  if (normalizedValue.length === 0) {
+    return "";
+  }
+
+  try {
+    const url = new URL(normalizedValue);
+
+    return url.origin;
+  } catch {
+    return "";
+  }
 }

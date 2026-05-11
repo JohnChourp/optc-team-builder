@@ -34,6 +34,13 @@ interface GoogleAuthorizationState {
   idToken: string | null;
 }
 
+interface GoogleBackendStatusResponse {
+  authenticated?: boolean;
+  message?: string;
+  profile?: GoogleAccountProfile | null;
+  status?: 'reconnect-required' | 'signed-in' | 'signed-out';
+}
+
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   const tokenParts = token.split('.');
 
@@ -48,7 +55,10 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
       return null;
     }
 
-    const paddedPayload = normalizedPayload.padEnd(Math.ceil(normalizedPayload.length / 4) * 4, '=');
+    const paddedPayload = normalizedPayload.padEnd(
+      Math.ceil(normalizedPayload.length / 4) * 4,
+      '=',
+    );
     const decodedPayload =
       typeof globalThis.atob === 'function' ? globalThis.atob(paddedPayload) : null;
 
@@ -127,8 +137,11 @@ export class GoogleAccountService {
   public readonly sessionRevision = signal(0);
   public readonly status = signal<GoogleAccountStatus>('initializing');
   public readonly isAvailable = computed(() => this.hasPlatformConfig());
-  public readonly isSignedIn = computed(() => this.status() === 'signed-in' && this.profile() !== null);
+  public readonly isSignedIn = computed(
+    () => this.status() === 'signed-in' && this.profile() !== null,
+  );
   public readonly needsReconnect = computed(() => this.status() === 'reconnect-required');
+  public readonly usesBackendSession = computed(() => this.isBackendSessionEnabled());
 
   private authorizationState: GoogleAuthorizationState | null = null;
   private initialized = false;
@@ -146,6 +159,22 @@ export class GoogleAccountService {
     await this.ready();
 
     if (!this.isAvailable()) {
+      return null;
+    }
+
+    if (this.isBackendSessionEnabled()) {
+      const status = await this.refreshBackendSession();
+
+      if (status === 'signed-in') {
+        return null;
+      }
+
+      if (options.interactive) {
+        await this.signIn(true);
+      } else {
+        this.status.set('reconnect-required');
+      }
+
       return null;
     }
 
@@ -172,6 +201,10 @@ export class GoogleAccountService {
       return false;
     }
 
+    if (this.isBackendSessionEnabled()) {
+      return (await this.refreshBackendSession()) === 'signed-in';
+    }
+
     const authorizationState = await this.refreshAuthorizationState();
 
     if (!authorizationState) {
@@ -192,6 +225,11 @@ export class GoogleAccountService {
 
     this.lastError.set(null);
     this.status.set('signing-in');
+
+    if (this.isBackendSessionEnabled()) {
+      this.startBackendSignIn(forcePrompt);
+      return null;
+    }
 
     try {
       const result = await SocialLogin.login({
@@ -238,6 +276,23 @@ export class GoogleAccountService {
       return;
     }
 
+    if (this.isBackendSessionEnabled()) {
+      try {
+        await this.fetchBackend('/auth/google/sign-out', {
+          method: 'POST',
+        });
+      } catch {
+        // Clear local account state even if the backend session has already expired.
+      } finally {
+        this.authorizationState = null;
+        this.profile.set(null);
+        this.lastError.set(null);
+        this.status.set('signed-out');
+        this.sessionRevision.update((value) => value + 1);
+      }
+      return;
+    }
+
     try {
       await SocialLogin.logout({ provider: 'google' });
     } catch {
@@ -249,6 +304,14 @@ export class GoogleAccountService {
       this.status.set('signed-out');
       this.sessionRevision.update((value) => value + 1);
     }
+  }
+
+  public requireReconnect(message: string | null = null): void {
+    this.authorizationState = null;
+    this.profile.set(null);
+    this.lastError.set(message);
+    this.status.set('reconnect-required');
+    this.sessionRevision.update((value) => value + 1);
   }
 
   private buildLoginOptions(forcePrompt: boolean): GoogleLoginOptions {
@@ -328,6 +391,10 @@ export class GoogleAccountService {
   }
 
   private hasPlatformConfig(): boolean {
+    if (this.isBackendSessionEnabled()) {
+      return true;
+    }
+
     if (Capacitor.getPlatform() === 'ios') {
       return this.config.googleIosClientId.length > 0;
     }
@@ -342,6 +409,11 @@ export class GoogleAccountService {
 
     if (!this.isAvailable()) {
       this.status.set('unavailable');
+      return;
+    }
+
+    if (this.isBackendSessionEnabled()) {
+      await this.refreshBackendSession();
       return;
     }
 
@@ -370,6 +442,108 @@ export class GoogleAccountService {
     }
 
     this.status.set('signed-out');
+  }
+
+  private isBackendSessionEnabled(): boolean {
+    return Capacitor.getPlatform() === 'web' && this.getBackendUrl().length > 0;
+  }
+
+  private async refreshBackendSession(): Promise<GoogleAccountStatus> {
+    try {
+      const response = await this.fetchBackend('/auth/google/status');
+      const statusResponse = (await response.json()) as GoogleBackendStatusResponse;
+
+      if (!statusResponse.authenticated || statusResponse.status === 'signed-out') {
+        this.authorizationState = null;
+        this.profile.set(null);
+        this.status.set('signed-out');
+        this.lastError.set(null);
+        return 'signed-out';
+      }
+
+      if (statusResponse.status === 'reconnect-required') {
+        this.authorizationState = null;
+        this.profile.set(statusResponse.profile ?? null);
+        this.status.set('reconnect-required');
+        this.lastError.set(statusResponse.message ?? 'Google Drive reconnect required.');
+        return 'reconnect-required';
+      }
+
+      if (statusResponse.profile) {
+        this.authorizationState = null;
+        this.profile.set(statusResponse.profile);
+        this.status.set('signed-in');
+        this.lastError.set(null);
+        return 'signed-in';
+      }
+
+      this.authorizationState = null;
+      this.profile.set(null);
+      this.status.set('signed-out');
+      return 'signed-out';
+    } catch (error) {
+      this.authorizationState = null;
+      this.profile.set(null);
+      this.status.set('reconnect-required');
+      this.lastError.set(this.resolveErrorMessage(error));
+      return 'reconnect-required';
+    }
+  }
+
+  private startBackendSignIn(forcePrompt: boolean): void {
+    const startUrl = this.buildBackendUrl('/auth/google/start');
+    const returnTo = globalThis.location?.href ?? globalThis.location?.origin ?? '/';
+
+    startUrl.searchParams.set('return_to', returnTo);
+
+    if (forcePrompt) {
+      startUrl.searchParams.set('force', '1');
+    }
+
+    globalThis.location.assign(startUrl.toString());
+  }
+
+  private async fetchBackend(path: string, init: RequestInit = {}): Promise<Response> {
+    const headers = new Headers(init.headers);
+
+    if (init.body) {
+      headers.set('Content-Type', 'application/json');
+    }
+
+    const response = await fetch(this.buildBackendUrl(path), {
+      ...init,
+      credentials: 'include',
+      headers,
+    });
+
+    if (response.ok) {
+      return response;
+    }
+
+    throw new Error(await this.readBackendError(response));
+  }
+
+  private buildBackendUrl(path: string): URL {
+    return new URL(path, `${this.getBackendUrl()}/`);
+  }
+
+  private getBackendUrl(): string {
+    return this.config.googleDriveBackendUrl ?? '';
+  }
+
+  private async readBackendError(response: Response): Promise<string> {
+    try {
+      const payload = (await response.json()) as { message?: unknown };
+      const message = normalizeOptionalString(payload.message);
+
+      if (message) {
+        return message;
+      }
+    } catch {
+      // Fall through to a generic message below.
+    }
+
+    return `Google Drive backend request failed with ${response.status}.`;
   }
 
   private async refreshAuthorizationState(): Promise<GoogleAuthorizationState | null> {
@@ -436,9 +610,7 @@ export class GoogleAccountService {
     }
   }
 
-  private buildPopupRedirectMessage(
-    params: URLSearchParams,
-  ): Record<string, unknown> | null {
+  private buildPopupRedirectMessage(params: URLSearchParams): Record<string, unknown> | null {
     const error = params.get('error');
 
     if (error) {

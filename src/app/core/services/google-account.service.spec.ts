@@ -112,11 +112,7 @@ describe('GoogleAccountService', () => {
       expect.objectContaining({
         provider: 'google',
         options: expect.objectContaining({
-          scopes: [
-            'email',
-            'profile',
-            'https://www.googleapis.com/auth/drive.file',
-          ],
+          scopes: ['email', 'profile', 'https://www.googleapis.com/auth/drive.file'],
         }),
       }),
     );
@@ -213,6 +209,85 @@ describe('GoogleAccountService', () => {
     expect(service.needsReconnect()).toBe(true);
     expect(service.lastError()).toBe('Token expired');
     await expect(service.ensureAccessToken()).resolves.toBeNull();
+  });
+
+  it('restores a backend Google session without initializing browser social login', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            authenticated: true,
+            profile: {
+              email: 'captain@example.com',
+              familyName: null,
+              givenName: null,
+              id: 'google-user-1',
+              imageUrl: null,
+              name: 'Monkey D. Luffy',
+            },
+            status: 'signed-in',
+          }),
+          {
+            status: 200,
+          },
+        ),
+      ),
+    );
+
+    const service = new GoogleAccountService({
+      googleDriveBackendUrl: 'http://localhost:8787',
+      googleDriveFolderName: 'OPTC Team Builder',
+      googleIosClientId: '',
+      googleWebClientId: '',
+    });
+    await service.ready();
+
+    expect(socialLogin.initialize).not.toHaveBeenCalled();
+    expect(service.isAvailable()).toBe(true);
+    expect(service.isSignedIn()).toBe(true);
+    expect(service.profile()?.id).toBe('google-user-1');
+  });
+
+  it('starts backend OAuth with a redirect instead of exposing a browser access token', async () => {
+    const assign = vi.fn();
+
+    vi.stubGlobal('location', {
+      assign,
+      href: 'https://optcteambuilder.com/tabs/account',
+      origin: 'https://optcteambuilder.com',
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            authenticated: false,
+            status: 'signed-out',
+          }),
+          {
+            status: 200,
+          },
+        ),
+      ),
+    );
+
+    const service = new GoogleAccountService({
+      googleDriveBackendUrl: 'http://localhost:8787',
+      googleDriveFolderName: 'OPTC Team Builder',
+      googleIosClientId: '',
+      googleWebClientId: '',
+    });
+    await service.ready();
+    await service.signIn(true);
+
+    expect(socialLogin.login).not.toHaveBeenCalled();
+    expect(assign).toHaveBeenCalledOnce();
+    expect(String(assign.mock.calls[0]?.[0])).toContain('/auth/google/start');
+    expect(String(assign.mock.calls[0]?.[0])).toContain('force=1');
+    expect(String(assign.mock.calls[0]?.[0])).toContain(
+      encodeURIComponent('https://optcteambuilder.com/tabs/account'),
+    );
   });
 });
 
