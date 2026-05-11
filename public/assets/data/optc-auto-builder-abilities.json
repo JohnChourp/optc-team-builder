@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-09T20:23:52.208Z",
+  "generatedAt": "2026-05-11T20:21:54.496Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -3134,7 +3134,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1322,
+      "matchCount": 1323,
       "matchingCharacterIds": [
         209,
         210,
@@ -4453,6 +4453,7 @@
         4562,
         4563,
         4564,
+        4565,
         4569,
         4570,
         4571,
@@ -5425,7 +5426,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 10,
+      "matchCount": 9,
       "matchingCharacterIds": [
         3176,
         3177,
@@ -5435,8 +5436,7 @@
         4125,
         4126,
         4127,
-        4128,
-        4565
+        4128
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -6883,7 +6883,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 304,
+      "matchCount": 303,
       "matchingCharacterIds": [
         3365,
         3371,
@@ -7187,8 +7187,7 @@
         4545,
         4546,
         4559,
-        4560,
-        4569
+        4560
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -7326,7 +7325,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 927,
+      "matchCount": 925,
       "matchingCharacterIds": [
         9,
         11,
@@ -8245,8 +8244,6 @@
         4564,
         4565,
         4566,
-        4569,
-        4570,
         4572,
         4573,
         4574,
@@ -20097,7 +20094,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 322,
+      "matchCount": 321,
       "matchingCharacterIds": [
         1311,
         1312,
@@ -20417,7 +20414,6 @@
         4529,
         4546,
         4550,
-        4565,
         4570,
         5031,
         5032
@@ -20441,8 +20437,7 @@
             4297,
             4326,
             4327,
-            4505,
-            4565
+            4505
           ]
         },
         {
@@ -20747,7 +20742,6 @@
             4469,
             4495,
             4519,
-            4565,
             4570
           ]
         },
@@ -22679,28 +22673,24 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "captainAbility",
-        "specialText"
+        "captainAbility"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 3,
+      "matchCount": 2,
       "matchingCharacterIds": [
         3895,
-        3896,
-        4566
+        3896
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
         3895,
-        3896,
-        4566
+        3896
       ],
       "sampleTexts": [
         "Always Active: Boosts HP of Slasher and Free Spirit characters by 1.5x. Sheathed Captain: Reduces Special Cooldown of [STR], [DEX], [QCK] characters by 2 turns at the start of the fight, reduces Special Cooldown of Slasher and Free Spirit characters by 1 turn at the start of the fight, boosts ATK of Slasher and Free Spirit characters by 5.25x and makes [TND] orbs beneficial for Slasher and Free Spirit characters. Characters who attack with a Type advantage and with a [RCV] or [TND] orb will gain a [WANO] orb after attacking. Enma Captain: Boosts ATK of Slasher and Free Spirit characters by 5.5x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character and changes [RCV] orbs into [WANO] orbs. Characters who attack with a Type advantage will gain a [WANO] orb after attacking. Reduces crew's current HP by 15% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Enma Unleashed Captain: Boosts ATK of Slasher and Free Spirit characters by 5.75x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character, changes [RCV] orbs into [WANO] orbs, makes this character's normal attacks count as Type Effective against all Types and increases enemies' Damage Limiter limit up to 2x. If this character has a [TND] or [WANO] orb and you attack with this character, ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 1.5x for 1 turn. Reduces crew's current HP by 60% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Weakened Captain: Boosts ATK of Slasher and Free Spirit characters by 2x. Action: Based on how full Enma Gauge is, transforms Zoro. At any Enma level, changes between Sheathed and Enma freely. If Enma is full, changes into Enma Unleashed. This can be used an unlimited number of times per turn.",
-        "Always Active: Boosts HP of Slasher and Free Spirit characters by 1.5x. Sheathed Captain: Reduces Special Cooldown of [STR], [DEX], [QCK] characters by 2 turns at the start of the fight, reduces Special Cooldown of Slasher and Free Spirit characters by 1 turn at the start of the fight, boosts ATK of Slasher and Free Spirit characters by 5.25x and makes [TND] orbs beneficial for Slasher and Free Spirit characters. Characters who attack with a Type advantage and with a [RCV] or [TND] orb will gain a [WANO] orb after attacking. Enma Captain: Boosts ATK of Slasher and Free Spirit characters by 5.5x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character and changes [RCV] orbs into [WANO] orbs. Characters who attack with a Type advantage will gain a [WANO] orb after attacking. Reduces crew's current HP by 15% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Enma Unleashed Captain: Boosts ATK of Slasher and Free Spirit characters by 5.75x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character, changes [RCV] orbs into [WANO] orbs, makes this character's normal attacks count as Type Effective against all Types and increases enemies' Damage Limiter limit up to 2x. If this character has a [TND] or [WANO] orb and you attack with this character, ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 1.5x for 1 turn. Reduces crew's current HP by 60% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Weakened Captain: Boosts ATK of Slasher and Free Spirit characters by 2x. Action: Based on how full Enma Gauge is, transforms Zoro. At any Enma level, changes between Sheathed and Enma freely. If Enma is full, changes into Enma Unleashed. This can be used an unlimited number of times per turn.",
-        "Reduces damage taken by 90% for 1 turn, reduces crew's ATK Down duration by 6 turns, and applies Weakened status (increase damage taken by 1.3x for all enemies, damage further increased by 1.2x if enemy has Increase Damage Taken) to all enemies for 1 turn. If 3 or more [Navy] [SWORD] characters or 5 or more [Egghead Arc] characters are on the crew, applies \"Territory: Cerebral class\" to the field (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory) for 1 turn, and this Special's Weakened effect will ignore immunity to status effects"
+        "Always Active: Boosts HP of Slasher and Free Spirit characters by 1.5x. Sheathed Captain: Reduces Special Cooldown of [STR], [DEX], [QCK] characters by 2 turns at the start of the fight, reduces Special Cooldown of Slasher and Free Spirit characters by 1 turn at the start of the fight, boosts ATK of Slasher and Free Spirit characters by 5.25x and makes [TND] orbs beneficial for Slasher and Free Spirit characters. Characters who attack with a Type advantage and with a [RCV] or [TND] orb will gain a [WANO] orb after attacking. Enma Captain: Boosts ATK of Slasher and Free Spirit characters by 5.5x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character and changes [RCV] orbs into [WANO] orbs. Characters who attack with a Type advantage will gain a [WANO] orb after attacking. Reduces crew's current HP by 15% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Enma Unleashed Captain: Boosts ATK of Slasher and Free Spirit characters by 5.75x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character, changes [RCV] orbs into [WANO] orbs, makes this character's normal attacks count as Type Effective against all Types and increases enemies' Damage Limiter limit up to 2x. If this character has a [TND] or [WANO] orb and you attack with this character, ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 1.5x for 1 turn. Reduces crew's current HP by 60% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Weakened Captain: Boosts ATK of Slasher and Free Spirit characters by 2x. Action: Based on how full Enma Gauge is, transforms Zoro. At any Enma level, changes between Sheathed and Enma freely. If Enma is full, changes into Enma Unleashed. This can be used an unlimited number of times per turn."
       ]
     },
     {
@@ -25630,7 +25620,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 23,
+      "matchCount": 19,
       "matchingCharacterIds": [
         3339,
         3661,
@@ -25649,10 +25639,6 @@
         4365,
         4387,
         4432,
-        4565,
-        4566,
-        4569,
-        4570,
         4572,
         4573
       ],
@@ -29085,7 +29071,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 356,
+      "matchCount": 355,
       "matchingCharacterIds": [
         20,
         22,
@@ -29440,7 +29426,6 @@
         4549,
         4552,
         4556,
-        4566,
         5054,
         5055
       ],
@@ -29820,7 +29805,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 62,
+      "matchCount": 63,
       "matchingCharacterIds": [
         410,
         450,
@@ -29883,7 +29868,8 @@
         4515,
         4523,
         4533,
-        4556
+        4556,
+        4565
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -29917,7 +29903,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 85,
+      "matchCount": 86,
       "matchingCharacterIds": [
         418,
         553,
@@ -30003,7 +29989,8 @@
         4363,
         4477,
         4563,
-        4564
+        4564,
+        4569
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -30378,7 +30365,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 100,
+      "matchCount": 101,
       "matchingCharacterIds": [
         219,
         838,
@@ -30479,7 +30466,8 @@
         4458,
         4472,
         4473,
-        4482
+        4482,
+        4570
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -30513,7 +30501,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 123,
+      "matchCount": 124,
       "matchingCharacterIds": [
         311,
         312,
@@ -30637,7 +30625,8 @@
         4509,
         4548,
         4559,
-        4560
+        4560,
+        4566
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -31391,7 +31380,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 18,
+      "matchCount": 19,
       "matchingCharacterIds": [
         671,
         1029,
@@ -31410,7 +31399,8 @@
         4511,
         4515,
         4523,
-        4556
+        4556,
+        4565
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -31444,7 +31434,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 34,
+      "matchCount": 35,
       "matchingCharacterIds": [
         1018,
         1233,
@@ -31479,7 +31469,8 @@
         4334,
         4477,
         4563,
-        4564
+        4564,
+        4569
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -31766,7 +31757,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 56,
+      "matchCount": 57,
       "matchingCharacterIds": [
         219,
         838,
@@ -31823,7 +31814,8 @@
         4440,
         4441,
         4473,
-        4482
+        4482,
+        4570
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -31857,7 +31849,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 82,
+      "matchCount": 83,
       "matchingCharacterIds": [
         872,
         1573,
@@ -31940,7 +31932,8 @@
         4509,
         4517,
         4559,
-        4560
+        4560,
+        4566
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -32602,7 +32595,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 30,
+      "matchCount": 31,
       "matchingCharacterIds": [
         253,
         410,
@@ -32633,7 +32626,8 @@
         4510,
         4511,
         4523,
-        4556
+        4556,
+        4565
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -32667,7 +32661,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 40,
+      "matchCount": 41,
       "matchingCharacterIds": [
         418,
         718,
@@ -32708,7 +32702,8 @@
         4257,
         4477,
         4563,
-        4564
+        4564,
+        4569
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -33010,7 +33005,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 72,
+      "matchCount": 73,
       "matchingCharacterIds": [
         219,
         838,
@@ -33083,7 +33078,8 @@
         4440,
         4441,
         4473,
-        4482
+        4482,
+        4570
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -33117,7 +33113,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 89,
+      "matchCount": 90,
       "matchingCharacterIds": [
         872,
         1571,
@@ -33207,7 +33203,8 @@
         4499,
         4509,
         4559,
-        4560
+        4560,
+        4566
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -37901,7 +37898,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 16,
+      "matchCount": 15,
       "matchingCharacterIds": [
         846,
         3717,
@@ -37917,8 +37914,7 @@
         4353,
         4366,
         4381,
-        4419,
-        4569
+        4419
       ],
       "turnMatchingCharacterIds": [
         {
@@ -37931,8 +37927,7 @@
             4196,
             4221,
             4366,
-            4419,
-            4569
+            4419
           ]
         }
       ],
@@ -38246,7 +38241,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 34,
+      "matchCount": 32,
       "matchingCharacterIds": [
         2391,
         2507,
@@ -38279,9 +38274,7 @@
         4497,
         4544,
         4565,
-        4566,
-        4569,
-        4570
+        4566
       ],
       "turnMatchingCharacterIds": [
         {
@@ -38297,9 +38290,7 @@
             4479,
             4496,
             4497,
-            4544,
-            4569,
-            4570
+            4544
           ]
         }
       ],
@@ -41209,7 +41200,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 814,
+      "matchCount": 818,
       "matchingCharacterIds": [
         4,
         16,
@@ -42023,6 +42014,10 @@
         4562,
         4563,
         4564,
+        4567,
+        4568,
+        4569,
+        4570,
         4571,
         5055
       ],
@@ -43202,13 +43197,14 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 5,
+      "matchCount": 6,
       "matchingCharacterIds": [
         3962,
         3964,
         4213,
         4438,
-        4544
+        4544,
+        4570
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
