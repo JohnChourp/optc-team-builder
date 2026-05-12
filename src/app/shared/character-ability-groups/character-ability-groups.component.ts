@@ -81,6 +81,7 @@ export class CharacterAbilityGroupsComponent {
       turns: (count) => this.t('metadata.turns', { count }),
       sources: {
         specialText: this.t('sources.specialText'),
+        superSpecialText: this.t('sources.superSpecialText'),
         captainAbility: this.t('sources.captainAbility'),
         sailorAbilities: this.t('sources.sailorAbilities'),
         potentialAbilities: this.t('sources.potentialAbilities'),

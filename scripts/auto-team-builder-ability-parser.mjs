@@ -13,6 +13,9 @@ const POTENTIAL_ABILITY_DEFINITIONS = JSON.parse(
 const SUPPORT_ABILITY_DEFINITIONS = JSON.parse(
   readFileSync(new URL('./data/support-ability-definitions.json', import.meta.url), 'utf8'),
 );
+const SPECIAL_UNIQUE_ABILITY_SOURCES = {
+  territory: ['specialText', 'superSpecialText'],
+};
 const POTENTIAL_UNIQUE_ABILITY_SOURCES = {
   potential_super_tandem: ['superTandemData'],
   potential_final_tap_sugo_special: ['finalTapData'],
@@ -23,7 +26,7 @@ const STRUCTURED_ABILITY_DEFINITIONS = [
   ...SPECIAL_ABILITY_DEFINITIONS.map((definition) => ({
     ...definition,
     category: 'special',
-    availableSources: ['specialText'],
+    availableSources: SPECIAL_UNIQUE_ABILITY_SOURCES[definition.key] ?? ['specialText'],
   })),
   ...CREWMATE_ABILITY_DEFINITIONS.map((definition) => ({
     ...definition,
@@ -163,6 +166,10 @@ const EXPLICIT_BUILDER_ABILITIES = [
 const EXPLICIT_BUILDER_ABILITY_KEY_SET = new Set(
   EXPLICIT_BUILDER_ABILITIES.map((ability) => ability.key),
 );
+const TERRITORY_PROVIDER_PATTERNS = [
+  /\bapplies\b[^.;]{0,120}\b["“]?\s*Territory\s*:\s*(?:\[[^\]]+\]|[A-Za-z][A-Za-z ]*)\s*["”]?[^.;]{0,120}\b(?:field|crew)\b/i,
+  /\bapplies\b[^.;]{0,120}\b(?:field|crew)[^.;]{0,120}\b["“]?\s*Territory\s*:\s*(?:\[[^\]]+\]|[A-Za-z][A-Za-z ]*)\s*["”]?/i,
+];
 const SPECIAL_ABILITY_MATCHERS = [
   ['special_damage', [/\bdeals?\b[^.]{0,160}\bdamage\b/i]],
   ['special_damage_other', [/\bdeals?\b[^.]{0,160}\btypeless damage\b/i]],
@@ -310,7 +317,7 @@ const SPECIAL_ABILITY_MATCHERS = [
   ['remove_beneficial_effect', [/\bremoves?\b[^.]{0,120}\bbeneficial effects?\b/i]],
   ['class_change', [/\bclass change\b/i, /\bchanges?\b[^.]{0,120}\bclass\b/i]],
   ['critical_hit_chance_boost', [/\bcritical hit chance\b/i]],
-  ['territory', [/\bterritory\b/i]],
+  ['territory', TERRITORY_PROVIDER_PATTERNS],
 ].map(([key, patterns]) => ({
   key,
   patterns,
@@ -877,6 +884,12 @@ export function analyzeBuilderAbilityText(value, source) {
   const abilities = [];
   const seen = new Set();
 
+  if (source === 'superSpecialText') {
+    addSpecialAbilityMatches(abilities, seen, normalizedText, source, new Set(['territory']));
+
+    return abilities;
+  }
+
   TURN_PATTERNS.forEach(({ pattern, resolveTurns, isCompleteRemoval }) => {
     for (const match of normalizedText.matchAll(pattern)) {
       const rawTarget = String(match[1] ?? '').trim();
@@ -945,27 +958,7 @@ export function analyzeBuilderAbilityText(value, source) {
   });
 
   if (source === 'specialText' || source === 'captainAbility') {
-    SPECIAL_ABILITY_MATCHERS.forEach(({ key, patterns }) => {
-      const definition = STRUCTURED_ABILITY_METADATA_BY_KEY.get(key);
-
-      if (
-        !definition ||
-        (source === 'captainAbility' && CAPTAIN_ABILITY_SPECIAL_MATCHER_EXCLUDED_KEYS.has(key)) ||
-        !patterns.some((pattern) => pattern.test(normalizedText))
-      ) {
-        return;
-      }
-
-      addAbility(abilities, seen, {
-        key,
-        label: definition.label,
-        minTurns: resolveStructuredTurnMinTurns(key, normalizedText),
-        isCompleteRemoval: false,
-        slotTokens: [],
-        source,
-        coverageMode: DEFAULT_COVERAGE_MODE,
-      });
-    });
+    addSpecialAbilityMatches(abilities, seen, normalizedText, source);
   }
 
   if (source === 'sailorAbilities') {
@@ -989,6 +982,31 @@ export function analyzeBuilderAbilityText(value, source) {
   }
 
   return abilities;
+}
+
+function addSpecialAbilityMatches(abilities, seen, normalizedText, source, allowedKeys = null) {
+  SPECIAL_ABILITY_MATCHERS.forEach(({ key, patterns }) => {
+    const definition = STRUCTURED_ABILITY_METADATA_BY_KEY.get(key);
+
+    if (
+      !definition ||
+      (allowedKeys && !allowedKeys.has(key)) ||
+      (source === 'captainAbility' && CAPTAIN_ABILITY_SPECIAL_MATCHER_EXCLUDED_KEYS.has(key)) ||
+      !patterns.some((pattern) => pattern.test(normalizedText))
+    ) {
+      return;
+    }
+
+    addAbility(abilities, seen, {
+      key,
+      label: definition.label,
+      minTurns: resolveStructuredTurnMinTurns(key, normalizedText),
+      isCompleteRemoval: false,
+      slotTokens: [],
+      source,
+      coverageMode: DEFAULT_COVERAGE_MODE,
+    });
+  });
 }
 
 export function analyzeSpecialText(value) {
@@ -1655,6 +1673,10 @@ export async function enrichCharactersWithBuilderAbilities(
       const sailorAbilityText = resolveSailorAbilityText(character);
       const derivedBuilderAbilities = [
         ...analyzeBuilderAbilityText(character.detail?.specialText ?? null, 'specialText'),
+        ...analyzeBuilderAbilityText(
+          character.detail?.superSpecialText ?? null,
+          'superSpecialText',
+        ),
         ...captainAbilityTexts.flatMap((text) => analyzeBuilderAbilityText(text, 'captainAbility')),
         ...analyzeBuilderAbilityText(sailorAbilityText, 'sailorAbilities'),
         ...extractPotentialBuilderAbilities(character),
@@ -1703,16 +1725,18 @@ export async function enrichCharactersWithBuilderAbilities(
         const sampleText =
           ability.source === 'captainAbility'
             ? (captainAbilityTexts[0] ?? character.detail?.captainAbility)
-            : ability.source === 'sailorAbilities'
-              ? sailorAbilityText
-              : ability.source === 'potentialAbilities' ||
-                  ability.source === 'superTandemData' ||
-                  ability.source === 'finalTapData' ||
-                  ability.source === 'rushSugoSpecialData'
-                ? resolvePotentialSampleText(character)
-                : ability.source === 'supportData'
-                  ? resolveSupportSampleText(character)
-                  : character.detail?.specialText;
+            : ability.source === 'superSpecialText'
+              ? character.detail?.superSpecialText
+              : ability.source === 'sailorAbilities'
+                ? sailorAbilityText
+                : ability.source === 'potentialAbilities' ||
+                    ability.source === 'superTandemData' ||
+                    ability.source === 'finalTapData' ||
+                    ability.source === 'rushSugoSpecialData'
+                  ? resolvePotentialSampleText(character)
+                  : ability.source === 'supportData'
+                    ? resolveSupportSampleText(character)
+                    : character.detail?.specialText;
 
         if (current.sampleTexts.length < 5 && typeof sampleText === 'string' && sampleText.length) {
           current.sampleTexts.push(sampleText);
@@ -1869,19 +1893,21 @@ function normalizeExistingBuilderAbility(value) {
     source:
       value.source === 'captainAbility'
         ? 'captainAbility'
-        : value.source === 'sailorAbilities'
-          ? 'sailorAbilities'
-          : value.source === 'potentialAbilities'
-            ? 'potentialAbilities'
-            : value.source === 'supportData'
-              ? 'supportData'
-              : value.source === 'superTandemData'
-                ? 'superTandemData'
-                : value.source === 'finalTapData'
-                  ? 'finalTapData'
-                  : value.source === 'rushSugoSpecialData'
-                    ? 'rushSugoSpecialData'
-                    : 'specialText',
+        : value.source === 'superSpecialText'
+          ? 'superSpecialText'
+          : value.source === 'sailorAbilities'
+            ? 'sailorAbilities'
+            : value.source === 'potentialAbilities'
+              ? 'potentialAbilities'
+              : value.source === 'supportData'
+                ? 'supportData'
+                : value.source === 'superTandemData'
+                  ? 'superTandemData'
+                  : value.source === 'finalTapData'
+                    ? 'finalTapData'
+                    : value.source === 'rushSugoSpecialData'
+                      ? 'rushSugoSpecialData'
+                      : 'specialText',
     coverageMode:
       value.coverageMode === 'selectedDebuff' ? 'selectedDebuff' : DEFAULT_COVERAGE_MODE,
   };

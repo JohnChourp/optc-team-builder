@@ -115,6 +115,7 @@ const labels: CharacterAbilityGroupLabels = {
   turns: (count) => `${count} turns`,
   sources: {
     specialText: 'Special',
+    superSpecialText: 'Super Special',
     captainAbility: 'Captain',
     sailorAbilities: 'Crewmate',
     potentialAbilities: 'Potential',

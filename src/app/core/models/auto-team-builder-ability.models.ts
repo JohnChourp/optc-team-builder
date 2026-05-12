@@ -1,5 +1,6 @@
 export type AutoBuildAbilitySource =
   | 'specialText'
+  | 'superSpecialText'
   | 'captainAbility'
   | 'sailorAbilities'
   | 'potentialAbilities'

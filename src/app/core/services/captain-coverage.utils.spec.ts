@@ -15,6 +15,8 @@ describe('resolveCaptainCoverage', () => {
     "Reduces Switch Effect of all characters by 3 and reduces VS Gauge of all characters by 6 at the start of the fight, changes all orbs into [TND] orbs at the start of the fight, boosts ATK of [INT], Slasher and Free Spirit characters by 5.5x, by 6x instead after the 3rd PERFECTs in a row, boosts ATK of all other characters by 3.5x, boosts HP of [INT], Slasher and Free Spirit characters by 1.35x, and makes [INT] and [TND] orbs beneficial for all characters. If crew uses a special to reduce enemies' Increased Defense, reduces the duration by 2 additional turns.";
   const zoroVsLucciCharacter2CaptainAbility =
     "Reduces Switch Effect of all characters by 3 and reduces VS Gauge of all characters by 6 at the start of the fight, changes all orbs into [RCV] orbs at the start of the fight, boosts ATK of [STR], Driven and Cerebral characters by 5.5x, by 6x instead after the 3rd PERFECTs in a row, boosts ATK of all other characters by 3.5x, boosts HP of [STR], Driven and Cerebral characters by 1.35x, and makes [STR] and [RCV] orbs beneficial for all characters. If crew uses a special to reduce enemies' Threshold Damage Reduction, reduces the duration by 2 additional turns.";
+  const blackbeardEmperorCaptainAbility =
+    'Launches the following effect at start of fight: reduces Special Cooldown of [Blackbeard Pirates], [Four Emperors] and [Worst Generation] characters by 5 turns, reduces Special Cooldown of [QCK] and Free Spirit characters by 2 turns. Boosts ATK of [QCK] and Free Spirit characters by 6x, boosts HP of [QCK] and Free Spirit characters by 1.3x. If your crew has 6+ Free Spirit characters and field has Territory: [QCK], boosts ATK of Free Spirit characters by 7x instead.';
 
   it('treats all-character captain clauses as universal coverage', () => {
     const captain = createCharacter({
@@ -237,6 +239,63 @@ describe('resolveCaptainCoverage', () => {
       hp: 1.2,
       atk: 6,
     });
+  });
+
+  it('keeps Blackbeard simple coverage at the base scope and normalizes full coverage wording', () => {
+    expect(summarizeCaptainAbilityCoverageText(blackbeardEmperorCaptainAbility)).toEqual({
+      captainCoverageClauses: [
+        'Boosts ATK of [QCK] and Free Spirit characters by 6x',
+        'boosts HP of [QCK] and Free Spirit characters by 1.3x',
+      ],
+      fullCoverageClauses: [
+        'Boosts ATK of [QCK] and Free Spirit characters by 6x',
+        'boosts HP of [QCK] and Free Spirit characters by 1.3x',
+        'If your crew has 6+ Free Spirit characters and field has Territory: [QCK], boosts ATK of Free Spirit characters by 7x',
+        'reduces Special Cooldown of [Blackbeard Pirates], [Four Emperors] and [Worst Generation] characters by 5 turns',
+      ],
+    });
+  });
+
+  it('requires Blackbeard full coverage targets to be Free Spirit and tag-covered', () => {
+    const captain = createCharacter({
+      id: 4561,
+      captainAbility: blackbeardEmperorCaptainAbility,
+      type: 'QCK',
+      classes: ['Free Spirit', 'Driven'],
+      characterTags: ['Blackbeard Pirates', 'Four Emperors'],
+    });
+    const freeSpiritTaggedTarget = createCharacter({
+      id: 456101,
+      type: 'DEX',
+      classes: ['Free Spirit', 'Striker'],
+      characterTags: ['Worst Generation'],
+    });
+    const freeSpiritUntaggedTarget = createCharacter({
+      id: 456102,
+      type: 'DEX',
+      classes: ['Free Spirit', 'Striker'],
+      characterTags: [],
+    });
+    const qckTaggedNonFreeSpiritTarget = createCharacter({
+      id: 456103,
+      type: 'QCK',
+      classes: ['Driven', 'Powerhouse'],
+      characterTags: ['Blackbeard Pirates'],
+    });
+
+    expect(
+      resolveCaptainCoverage(captain, qckTaggedNonFreeSpiritTarget, {
+        coverageMode: 'simpleBoostScope',
+      }).matches,
+    ).toBe(true);
+
+    expect(resolveCaptainCoverage(captain, freeSpiritTaggedTarget).matches).toBe(true);
+    expect(resolveCaptainCoverage(captain, freeSpiritUntaggedTarget).uncoveredClauses).toEqual([
+      'reduces Special Cooldown of [Blackbeard Pirates], [Four Emperors] and [Worst Generation] characters by 5 turns',
+    ]);
+    expect(resolveCaptainCoverage(captain, qckTaggedNonFreeSpiritTarget).uncoveredClauses).toEqual([
+      'If your crew has 6+ Free Spirit characters and field has Territory: [QCK], boosts ATK of Free Spirit characters by 7x',
+    ]);
   });
 
   it('ignores non-boost captain target clauses for coverage', () => {

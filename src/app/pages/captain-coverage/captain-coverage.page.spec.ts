@@ -732,6 +732,7 @@ function formatTranslation(key: string, params?: Record<string, string | number>
   const translations: Record<string, string> = {
     'characterAbilityGroups.metadata.turns': '{{count}} turns',
     'characterAbilityGroups.sources.specialText': 'Special',
+    'characterAbilityGroups.sources.superSpecialText': 'Super Special',
     'characterAbilityGroups.sources.captainAbility': 'Captain',
     'characterAbilityGroups.sources.sailorAbilities': 'Crewmate',
     'characterAbilityGroups.sources.potentialAbilities': 'Potential',

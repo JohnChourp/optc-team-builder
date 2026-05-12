@@ -303,6 +303,85 @@ describe('resolveCaptainTeamConditionStatus', () => {
     expect(status.leaderStatuses[0]?.passed).toBe(false);
   });
 
+  it('requires Blackbeard full coverage slots to satisfy Free Spirit and tag cooldown scopes', () => {
+    const captainAbility =
+      'Launches the following effect at start of fight: reduces Special Cooldown of [Blackbeard Pirates], [Four Emperors] and [Worst Generation] characters by 5 turns, reduces Special Cooldown of [QCK] and Free Spirit characters by 2 turns. Boosts ATK of [QCK] and Free Spirit characters by 6x, boosts HP of [QCK] and Free Spirit characters by 1.3x. If your crew has 6+ Free Spirit characters and field has Territory: [QCK], boosts ATK of Free Spirit characters by 7x instead.';
+    const captain = createCharacter({
+      id: 4561,
+      type: 'QCK',
+      classes: ['Free Spirit', 'Driven'],
+      captainAbility,
+      characterTags: ['Blackbeard Pirates'],
+    });
+    const baseSlots = [
+      captain,
+      createCharacter({
+        id: 456101,
+        classes: ['Free Spirit', 'Striker'],
+        characterTags: ['Worst Generation'],
+      }),
+      createCharacter({
+        id: 456102,
+        classes: ['Free Spirit', 'Cerebral'],
+        characterTags: ['Four Emperors'],
+      }),
+      createCharacter({
+        id: 456103,
+        classes: ['Free Spirit', 'Shooter'],
+        characterTags: ['Blackbeard Pirates'],
+      }),
+      createCharacter({
+        id: 456104,
+        classes: ['Free Spirit', 'Powerhouse'],
+        characterTags: ['Worst Generation'],
+      }),
+      createCharacter({
+        id: 456105,
+        classes: ['Free Spirit', 'Slasher'],
+        characterTags: ['Four Emperors'],
+      }),
+    ];
+    const slotLabels = ['Captain', 'Sub 1', 'Sub 2', 'Sub 3', 'Sub 4', 'Sub 5'];
+
+    const passingStatus = resolveCaptainTeamConditionStatus({
+      expectedSlotCount: 6,
+      leaders: [{ role: 'captain', label: 'Captain', character: captain }],
+      slotLabels,
+      slots: baseSlots,
+    });
+    const untaggedStatus = resolveCaptainTeamConditionStatus({
+      expectedSlotCount: 6,
+      leaders: [{ role: 'captain', label: 'Captain', character: captain }],
+      slotLabels,
+      slots: [
+        ...baseSlots.slice(0, 3),
+        createCharacter({ id: 456106, classes: ['Free Spirit', 'Shooter'] }),
+        ...baseSlots.slice(4),
+      ],
+    });
+    const nonFreeSpiritStatus = resolveCaptainTeamConditionStatus({
+      expectedSlotCount: 6,
+      leaders: [{ role: 'captain', label: 'Captain', character: captain }],
+      slotLabels,
+      slots: [
+        ...baseSlots.slice(0, 4),
+        createCharacter({
+          id: 456107,
+          type: 'QCK',
+          classes: ['Driven', 'Powerhouse'],
+          characterTags: ['Blackbeard Pirates'],
+        }),
+        ...baseSlots.slice(5),
+      ],
+    });
+
+    expect(passingStatus.state).toBe('full');
+    expect(untaggedStatus.state).toBe('none');
+    expect(untaggedStatus.leaderStatuses[0]?.missingSlotLabels).toEqual(['Sub 3']);
+    expect(nonFreeSpiritStatus.state).toBe('none');
+    expect(nonFreeSpiritStatus.leaderStatuses[0]?.missingSlotLabels).toEqual(['Sub 4']);
+  });
+
   it('keeps incomplete teams pending even when the filled slots are covered', () => {
     const captain = createCharacter({
       id: 1001,

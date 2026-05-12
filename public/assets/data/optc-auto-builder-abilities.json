@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-11T20:21:54.496Z",
+  "generatedAt": "2026-05-12T18:45:28.461Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -25870,13 +25870,13 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "captainAbility",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 61,
+      "matchCount": 71,
       "matchingCharacterIds": [
         4206,
         4209,
@@ -25888,12 +25888,16 @@
         4231,
         4249,
         4250,
+        4266,
         4277,
         4290,
         4291,
         4292,
         4293,
+        4297,
+        4298,
         4314,
+        4354,
         4365,
         4366,
         4375,
@@ -25912,18 +25916,24 @@
         4441,
         4442,
         4443,
+        4447,
+        4448,
         4459,
         4476,
         4490,
         4491,
         4492,
+        4493,
         4511,
+        4514,
+        4518,
         4521,
         4541,
+        4547,
         4548,
-        4550,
         4551,
         4554,
+        4556,
         4557,
         4558,
         4559,
@@ -25952,8 +25962,8 @@
         "Reduces Special Cooldown of [QCK], Free Spirit and Powerhouse characters by 1 turn, reduces Paralysis duration by 6 turns, inflicts all enemies with Burn that will deal 50x enemies' ATK in damage for 3 turns, applies Territory: Free Spirit to the field for 1 turn, and boosts Color Affinity of [QCK], Free Spirit and Powerhouse characters by 2x for 3 turns. If HP is below 50% when the special is activated, increases duration of any Chain Lock buffs by 2 turns, and increases boost effects of Chain Lock and Color Affinity buffs by +0.25x, including effects activated in the same Ability.",
         "Reduces Despair and ATK Down duration by 3 turns. If your crew has Auto Slot Change buff when the special is activated, recovers 15,000 HP, adds 1.2x to Chain Multiplier for 1 turn, and applies Territory: Cerebral to the field for 1 turn; boosts ATK of [INT], Cerebral and Free Spirit characters by 2.25x for 1 turn, and changes [PSY] orbs into [WANO] orbs for 1 turn otherwise.",
         "Applies Territory: Free Spirit to the field for 3 turns, reduces ATK Down duration by 10 turns, and boosts ATK against enemies inflicted with Increase Damage Taken and enemies with reduced defense by 2.5x-3x for 2 turns depending on the outcome of Action Special. If your crew has ATK Up, Orb Amplification and Chain Lock when the special is activated, increases duration of any ATK Up, Orb Amplification and Chain Lock buffs by 2 turns. Sets Chain Boundaries to 3.0x and 35.0x for 1 turn. If your crew has 6 Free Spirit characters, increases boost effects of Status ATK Boost and Chain Lock buffs by +0.25x, including effects activated in the same Ability.. Deals 10% of enemies' current HP in damage to all enemies, changes all orbs, including [BLOCK] orbs, of right column characters into [TND] orbs, changes all orbs, including [BLOCK] orbs, of left column characters into [WANO] orbs, increases boost effects of ATK Up buffs to 3.5x, and boosts ATK of Driven characters by 3x-4x for 1 turn depending on the number of Status Effects applied on enemy when Special is activated. If your crew has 6 Driven characters, reduces enemies' Threshold Damage Reduction and Percent Damage Reduction duration by 10 turns, and ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 2.25x for 1 turn; reduces enemies' Threshold Damage Reduction and Percent Damage Reduction by 6 turns, and inflicts all enemies with Increase Damage Taken by 2x for 1 turn otherwise.",
-        "Boosts ATK of all characters by 5x-6x depending on the number of Free Spirit characters on the crew, boosts HP of all characters by 1.3x, and makes [QCK] and [RCV] orbs beneficial for all characters. If crew uses a special with an ATK Up buff, increases boost effects of ATK Up buff by +0.25x. If your crew has 4+ Free Spirit characters, reduces Burn and Bind duration by 10 turns. If your crew has 6 Free Spirit characters and field has Territory: Free Spirit, boosts ATK of Free Spirit characters by 6.5x. If your crew has 6 Free Spirit characters and crew uses a Special to reduce enemies' Resilience, Percent Damage Reduction, Threshold Damage Reduction or Increased Defense, reduces the duration by 1 additional turn. If this character is your Captain and performs EXCELLENT with their Action Special, the following effects are added to this character's Captain Ability for 3 turns: if crew uses a special with an Orb Amplification buff, increases boost effects of Orb Amplification buff by +0.25x; if your crew has 6 Free Spirit characters and crew uses a Special to reduce enemies' Resilience, Percent Damage Reduction, Threshold Damage Reduction or Increased Defense, reduces the duration by 2 additional turns.",
-        "Applies Territory: Free Spirit to the field for 3 turns, reduces ATK Down duration by 10 turns, and boosts ATK against enemies inflicted with Increase Damage Taken and enemies with reduced defense by 2.5x-3x for 2 turns depending on the outcome of Action Special. If your crew has ATK Up, Orb Amplification and Chain Lock when the special is activated, increases duration of any ATK Up, Orb Amplification and Chain Lock buffs by 2 turns. Sets Chain Boundaries to 3.0x and 35.0x for 1 turn. If your crew has 6 Free Spirit characters, increases boost effects of Status ATK Boost and Chain Lock buffs by +0.25x, including effects activated in the same Ability.. Deals 10% of enemies' current HP in damage to all enemies, changes all orbs, including [BLOCK] orbs, of right column characters into [TND] orbs, changes all orbs, including [BLOCK] orbs, of left column characters into [WANO] orbs, increases boost effects of ATK Up buffs to 3.5x, and boosts ATK of Driven characters by 3x-4x for 1 turn depending on the number of Status Effects applied on enemy when Special is activated. If your crew has 6 Driven characters, reduces enemies' Threshold Damage Reduction and Percent Damage Reduction duration by 10 turns, and ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 2.25x for 1 turn; reduces enemies' Threshold Damage Reduction and Percent Damage Reduction by 6 turns, and inflicts all enemies with Increase Damage Taken by 2x for 1 turn otherwise."
+        "Applies Territory: Free Spirit to the field for 3 turns, reduces ATK Down duration by 10 turns, and boosts ATK against enemies inflicted with Increase Damage Taken and enemies with reduced defense by 2.5x-3x for 2 turns depending on the outcome of Action Special. If your crew has ATK Up, Orb Amplification and Chain Lock when the special is activated, increases duration of any ATK Up, Orb Amplification and Chain Lock buffs by 2 turns. Sets Chain Boundaries to 3.0x and 35.0x for 1 turn. If your crew has 6 Free Spirit characters, increases boost effects of Status ATK Boost and Chain Lock buffs by +0.25x, including effects activated in the same Ability.. Deals 10% of enemies' current HP in damage to all enemies, changes all orbs, including [BLOCK] orbs, of right column characters into [TND] orbs, changes all orbs, including [BLOCK] orbs, of left column characters into [WANO] orbs, increases boost effects of ATK Up buffs to 3.5x, and boosts ATK of Driven characters by 3x-4x for 1 turn depending on the number of Status Effects applied on enemy when Special is activated. If your crew has 6 Driven characters, reduces enemies' Threshold Damage Reduction and Percent Damage Reduction duration by 10 turns, and ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 2.25x for 1 turn; reduces enemies' Threshold Damage Reduction and Percent Damage Reduction by 6 turns, and inflicts all enemies with Increase Damage Taken by 2x for 1 turn otherwise.",
+        "Applies Territory: Powerhouse to the field for 3 turns, boosts Base ATK of Powerhouse characters by 1,500-3,000 for 1 turn depending on the outcome of Action Special, increases boost effects of ATK Up buffs to 3.5x, and boosts ATK of Powerhouse characters by 3x-4x for 1 turn depending on the crew's current HP. If your crew has 6 Powerhouse characters and HP is below 25% when the special is activated, up to 1 time per adventure, deals 30% of enemies' current HP in True damage, ignoring Normal Attack Only, to all enemies. Reduces crew's current HP by 60%.. Ignores Debuff Protection and reduces the defense of all enemies by 100% for 2 turns. If your crew has Orb Amplification when the special is activated, boosts ATK of Striker characters by 3.25x for 2 turns, and allows HP Overfill up to 2x MAX HP for 2 turns. If your crew has Final Tap ATK when the special is activated, boosts Orb Effects of Striker characters by 3.5x, can be enhanced up to 2 times, for 2 turns; boosts Orb Effects of Striker characters by 3.25x for 1 turn otherwise. If you have used 7+ Special Abilities when the special is activated, increases duration of any Orb Amplification buffs by 1 turn, and increases boost effects of Orb Amplification buffs by +0.3x, including effects activated in the same Ability. If your crew has 6 Striker characters, swaps middle-right character with your Captain for 1 turn, up to 1 time per adventure reduces Special Cooldown of Captain character by 20 turns, and recovers 60% of crew's MAX HP."
       ]
     },
     {
