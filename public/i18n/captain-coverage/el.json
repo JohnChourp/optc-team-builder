@@ -99,6 +99,14 @@
       "copy": "Διάλεξε χαρακτήρα που χωράει στο remaining team cost."
     },
     "selectedCaptain": "Επιλεγμένος Captain",
+    "save": {
+      "action": "Αποθήκευση team",
+      "error": "Η αποθήκευση της ομάδας δεν ολοκληρώθηκε. Δοκίμασε ξανά.",
+      "nameLabel": "Όνομα πληρώματος",
+      "savingLabel": "Αποθήκευση...",
+      "success": "Το team αποθηκεύτηκε στα Saved Teams.",
+      "viewSavedTeams": "Άνοιγμα Saved Teams"
+    },
     "slots": {
       "captain": "Captain",
       "sub": "Sub {{index}}"

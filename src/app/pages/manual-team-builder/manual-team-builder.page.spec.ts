@@ -57,6 +57,82 @@ describe('ManualTeamBuilderPage', () => {
     expect(page.ships().map((ship) => ship.id)).toEqual([9001, 9002]);
   });
 
+  it('loads a saved team from the route with all six slots, ship, name, and notes', async () => {
+    const team = createSavedTeam({
+      id: 'team-1',
+      name: 'Loaded Manual Crew',
+      notes: 'From saved teams',
+      shipId: 9002,
+      slots: [701, 702, null, 704, 705, 706],
+    });
+    const { page, router, userState } = createPage({
+      routeTeamId: 'team-1',
+      savedTeams: [team],
+      characters: [701, 702, 704, 705, 706].map((id) => createCharacterRecord(id)),
+    });
+
+    await page.ngOnInit();
+    await page.ionViewWillEnter();
+
+    expect(userState.readySavedTeams).toHaveBeenCalledOnce();
+    expect(page.slots().map((slot) => slot?.id ?? null)).toEqual([701, 702, null, 704, 705, 706]);
+    expect(page.selectedShipId()).toBe(9002);
+    expect(page.teamName()).toBe('Loaded Manual Crew');
+    expect(page.notes()).toBe('From saved teams');
+    expect(page.currentTeamId()).toBe('team-1');
+    expect(router.navigate).toHaveBeenCalledWith([], {
+      relativeTo: expect.any(Object),
+      queryParams: { teamId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  });
+
+  it('clears missing saved team characters and unavailable ships during route load', async () => {
+    const team = createSavedTeam({
+      id: 'team-with-missing-data',
+      shipId: 9999,
+      slots: [801, 9999, null, 804, null, null],
+    });
+    const { page } = createPage({
+      routeTeamId: 'team-with-missing-data',
+      savedTeams: [team],
+      characters: [801, 804].map((id) => createCharacterRecord(id)),
+    });
+
+    await page.ngOnInit();
+    await page.ionViewWillEnter();
+
+    expect(page.slots().map((slot) => slot?.id ?? null)).toEqual([
+      801,
+      null,
+      null,
+      804,
+      null,
+      null,
+    ]);
+    expect(page.selectedShipId()).toBeNull();
+  });
+
+  it('clears an unknown saved team route id without changing the manual draft', async () => {
+    const { page, router } = createPage({ routeTeamId: 'missing-team' });
+
+    await page.ngOnInit();
+    page.teamName.set('Existing Draft');
+    page.slots.set([createCharacterRecord(901), null, null, null, null, null]);
+
+    await page.ionViewWillEnter();
+
+    expect(page.teamName()).toBe('Existing Draft');
+    expect(page.slots().map((slot) => slot?.id ?? null)).toEqual([901, null, null, null, null, null]);
+    expect(router.navigate).toHaveBeenCalledWith([], {
+      relativeTo: expect.any(Object),
+      queryParams: { teamId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  });
+
   it('blocks save when no slots are selected', async () => {
     const { page, userState } = createPage();
 
@@ -214,13 +290,20 @@ describe('ManualTeamBuilderPage', () => {
 });
 
 function createPage(
-  options: { characters?: CharacterDetailRecord[]; ships?: ShipRecord[] } = {},
+  options: {
+    characters?: CharacterDetailRecord[];
+    routeTeamId?: string | null;
+    savedTeams?: Array<ReturnType<typeof createSavedTeam>>;
+    ships?: ShipRecord[];
+  } = {},
 ): {
   page: ManualTeamBuilderPage;
   repository: {
     getShips: ReturnType<typeof vi.fn>;
+    getDetailedCharactersByIds: ReturnType<typeof vi.fn>;
     searchDetailedCharacters: ReturnType<typeof vi.fn>;
   };
+  route: { snapshot: { queryParamMap: { get: ReturnType<typeof vi.fn> } } };
   router: { navigate: ReturnType<typeof vi.fn> };
   userState: {
     favoriteShipIds: {
@@ -228,6 +311,8 @@ function createPage(
       set(value: number[]): void;
     };
     ready: ReturnType<typeof vi.fn>;
+    getSavedTeamById: ReturnType<typeof vi.fn>;
+    readySavedTeams: ReturnType<typeof vi.fn>;
     saveTeam: ReturnType<typeof vi.fn>;
     toggleShipFavorite: ReturnType<typeof vi.fn>;
   };
@@ -241,11 +326,16 @@ function createPage(
     createCharacterRecord(102, 'Roronoa Zoro'),
   ];
   const ships = options.ships ?? [createShipRecord(9001), createShipRecord(9002)];
+  const savedTeams = signal(options.savedTeams ?? []);
   const favoriteShipIds = signal<number[]>([9001]);
   const userState = {
     favoriteShipIds,
     ready: vi.fn().mockResolvedValue(undefined),
     readyFavoriteShipIds: vi.fn().mockResolvedValue(undefined),
+    readySavedTeams: vi.fn().mockResolvedValue(undefined),
+    getSavedTeamById: vi.fn(
+      (teamId: string) => savedTeams().find((team) => team.id === teamId) ?? null,
+    ),
     saveTeam: vi.fn().mockResolvedValue({ id: 'saved-manual-team' }),
     toggleShipFavorite: vi.fn().mockImplementation(async (shipId: number) => {
       favoriteShipIds.set(
@@ -257,6 +347,11 @@ function createPage(
   };
   const repository = {
     getShips: vi.fn().mockResolvedValue(ships),
+    getDetailedCharactersByIds: vi
+      .fn()
+      .mockImplementation(async (ids: number[]) =>
+        ids.map((id) => characters.find((character) => character.id === id)).filter(Boolean),
+      ),
     searchDetailedCharacters: vi
       .fn()
       .mockImplementation(async (query: { searchTerm: string; limit?: number; offset?: number }) => {
@@ -331,18 +426,47 @@ function createPage(
   const router = {
     navigate: vi.fn().mockResolvedValue(true),
   };
+  const route = {
+    snapshot: {
+      queryParamMap: {
+        get: vi.fn((key: string) => (key === 'teamId' ? (options.routeTeamId ?? null) : null)),
+      },
+    },
+  };
 
   return {
     page: new ManualTeamBuilderPage(
       userState as never,
       repository as never,
       i18n as never,
+      route as never,
       router as never,
     ),
     repository,
+    route,
     router,
     userState,
     i18n,
+  };
+}
+
+function createSavedTeam(
+  overrides: Partial<{
+    id: string;
+    name: string;
+    notes: string;
+    shipId: number | null;
+    slots: Array<number | null>;
+  }> = {},
+) {
+  return {
+    id: overrides.id ?? 'team-1',
+    name: overrides.name ?? 'Saved Team',
+    notes: overrides.notes ?? '',
+    shipId: overrides.shipId ?? null,
+    slots: overrides.slots ?? [101, null, null, null, null, null],
+    createdAt: '2026-05-10T10:00:00.000Z',
+    updatedAt: '2026-05-10T10:00:00.000Z',
   };
 }
 

@@ -1,5 +1,5 @@
 import { Component, type OnInit, computed, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
   IonButton,
@@ -18,8 +18,10 @@ import {
   IonToolbar,
 } from '@ionic/angular/standalone';
 import {
+  alertCircleOutline,
   checkmarkCircleOutline,
   peopleOutline,
+  saveOutline,
   searchOutline,
   shieldCheckmarkOutline,
 } from 'ionicons/icons';
@@ -45,6 +47,7 @@ import {
   type CharacterListItem,
   type CharacterSortMode,
   type DatasetManifest,
+  type SavedTeam,
 } from '../../core/models/optc.models';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
@@ -140,6 +143,10 @@ export class CaptainCoveragePage implements OnInit {
     signal<Array<CharacterListItem | null>>(createEmptyTeamSlots());
   public readonly activeTeamSlotIndex = signal(0);
   public readonly teamPickerOpen = signal(false);
+  public readonly teamName = signal('');
+  public readonly currentTeamId = signal<string | null>(null);
+  public readonly saveUiLocked = signal(false);
+  public readonly saveFeedbackError = signal('');
   public readonly maxTotalCost = signal<number | null>(null);
   public readonly allCaptains = signal<CharacterDetailRecord[]>([]);
   public readonly loading = signal(true);
@@ -283,9 +290,9 @@ export class CaptainCoveragePage implements OnInit {
       .filter(({ coverage }) => coverage.matches)
       .filter(({ character }) => !this.hasPartyConflict(character, selectedConflictKeys))
       .map(({ character, coverage }) => {
-        const abilities = (characterDetailsById.get(character.id)?.detail.builderAbilities ?? []).filter(
-          (ability) => ability.source !== 'captainAbility',
-        );
+        const abilities = (
+          characterDetailsById.get(character.id)?.detail.builderAbilities ?? []
+        ).filter((ability) => ability.source !== 'captainAbility');
         const abilityMatchCount = this.countMatchedAbilityRequirements(
           abilities,
           selectedAbilityRequirements,
@@ -347,6 +354,15 @@ export class CaptainCoveragePage implements OnInit {
   });
 
   public readonly totalMatchingCharacters = computed(() => this.resultCards().length);
+  public readonly filledTeamSlotCount = computed(
+    () => this.selectedTeamSlots().filter(Boolean).length,
+  );
+  public readonly saveDisabled = computed(
+    () => this.saveUiLocked() || this.filledTeamSlotCount() === 0,
+  );
+  public readonly saveButtonLabel = computed(() =>
+    this.saveUiLocked() ? this.t('team.save.savingLabel') : this.t('team.save.action'),
+  );
   public readonly teamBudgetCost = computed(() =>
     this.selectedTeamSlots().reduce((total, character) => total + (character?.cost ?? 0), 0),
   );
@@ -419,6 +435,8 @@ export class CaptainCoveragePage implements OnInit {
   public readonly coverageIcon = shieldCheckmarkOutline;
   public readonly targetIcon = peopleOutline;
   public readonly checkIcon = checkmarkCircleOutline;
+  public readonly errorIcon = alertCircleOutline;
+  public readonly saveIcon = saveOutline;
   public readonly searchIcon = searchOutline;
 
   public constructor(
@@ -426,8 +444,11 @@ export class CaptainCoveragePage implements OnInit {
     private readonly characterCatalogCache: CharacterCatalogCacheService,
     private readonly userState: UserStateService,
     private readonly i18n: AppI18nService,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
   ) {
     this.favoriteIds = this.userState.favoriteCharacterIds;
+    this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
   }
 
   public async ngOnInit(): Promise<void> {
@@ -463,9 +484,18 @@ export class CaptainCoveragePage implements OnInit {
             record.detail.captainAbility.trim().length > 0,
         ),
       );
+      await this.applySavedTeamFromRoute();
     } finally {
       this.loading.set(false);
     }
+  }
+
+  public async ionViewWillEnter(): Promise<void> {
+    if (this.loading()) {
+      return;
+    }
+
+    await this.applySavedTeamFromRoute();
   }
 
   public openTeamSlotPicker(index: number): void {
@@ -495,6 +525,7 @@ export class CaptainCoveragePage implements OnInit {
     this.selectedTeamSlots.update((slots) =>
       slots.map((slot, slotIndex) => (slotIndex === index ? character : slot)),
     );
+    this.clearSavedTeamDraftState();
     this.teamPickerOpen.set(false);
 
     if (index === 0) {
@@ -514,6 +545,7 @@ export class CaptainCoveragePage implements OnInit {
     this.selectedTeamSlots.update((slots) =>
       slots.map((slot, index) => (index === slotIndex ? card.character : slot)),
     );
+    this.clearSavedTeamDraftState();
   }
 
   public clearTeamSlot(index: number, event?: Event): void {
@@ -526,10 +558,41 @@ export class CaptainCoveragePage implements OnInit {
     this.selectedTeamSlots.update((slots) =>
       slots.map((slot, slotIndex) => (slotIndex === index ? null : slot)),
     );
+    this.clearSavedTeamDraftState();
 
     if (index === 0) {
       this.selectedCaptainDetail.set(null);
       this.searchTerm.set('');
+    }
+  }
+
+  public onTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {
+    this.teamName.set((event.detail.value ?? '').trimStart());
+  }
+
+  public async saveTeam(): Promise<void> {
+    if (this.saveDisabled()) {
+      return;
+    }
+
+    this.saveUiLocked.set(true);
+    this.saveFeedbackError.set('');
+
+    try {
+      const saved = await this.userState.saveTeam({
+        id: this.currentTeamId() ?? undefined,
+        name: this.teamName(),
+        notes: '',
+        shipId: null,
+        slots: this.buildSavedTeamSlots(),
+      });
+
+      this.currentTeamId.set(saved.id);
+    } catch (error) {
+      console.error(error);
+      this.saveFeedbackError.set(this.t('team.save.error'));
+    } finally {
+      this.saveUiLocked.set(false);
     }
   }
 
@@ -812,6 +875,74 @@ export class CaptainCoveragePage implements OnInit {
     return this.selectedTeamSlots().map((slot) =>
       slot ? (characterDetailsById.get(slot.id) ?? null) : null,
     );
+  }
+
+  private async applySavedTeamFromRoute(): Promise<void> {
+    const teamId = this.route.snapshot.queryParamMap.get('teamId')?.trim() ?? '';
+
+    if (!teamId.length) {
+      return;
+    }
+
+    await this.userState.readySavedTeams();
+    const team = this.userState.getSavedTeamById(teamId);
+
+    if (!team) {
+      await this.clearSavedTeamQueryParam();
+      return;
+    }
+
+    this.loadSavedTeamDraft(team);
+    await this.clearSavedTeamQueryParam();
+  }
+
+  private loadSavedTeamDraft(team: SavedTeam): void {
+    const characterDetailsById = this.allCharacterDetailsById();
+    const sourceSlotIndexes = [0, 2, 3, 4, 5];
+    const selectedSlots = sourceSlotIndexes.map((slotIndex) => {
+      const characterId = team.slots[slotIndex];
+
+      return typeof characterId === 'number' ? (characterDetailsById.get(characterId) ?? null) : null;
+    });
+    const captain = selectedSlots[0] ?? null;
+
+    this.closeTeamSlotPicker();
+    this.selectedTeamSlots.set(selectedSlots);
+    this.activeTeamSlotIndex.set(0);
+    this.teamName.set(team.name);
+    this.currentTeamId.set(null);
+    this.saveFeedbackError.set('');
+    this.saveUiLocked.set(false);
+    this.searchTerm.set('');
+    this.selectedCaptainDetail.set(captain);
+  }
+
+  private async clearSavedTeamQueryParam(): Promise<void> {
+    await this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { teamId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  private buildSavedTeamSlots(): Array<number | null> {
+    const slots = this.selectedTeamSlots();
+    const captainId = slots[0]?.id ?? null;
+
+    return [
+      captainId,
+      captainId,
+      slots[1]?.id ?? null,
+      slots[2]?.id ?? null,
+      slots[3]?.id ?? null,
+      slots[4]?.id ?? null,
+    ];
+  }
+
+  private clearSavedTeamDraftState(): void {
+    this.currentTeamId.set(null);
+    this.saveFeedbackError.set('');
   }
 
   private buildMatchedAbilityBadges(

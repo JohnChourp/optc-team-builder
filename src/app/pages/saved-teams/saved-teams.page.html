@@ -100,10 +100,9 @@
                     <ion-button
                       fill="outline"
                       color="warning"
-                      [routerLink]="['/tabs/auto-team-builder']"
-                      [queryParams]="getTeamBuilderQueryParams(teamCard.team)"
+                      (click)="openTeamDestinationModal(teamCard.team)"
                     >
-                      {{ t('actions.openBuilder') }}
+                      {{ t('actions.openTeam') }}
                     </ion-button>
                     <ion-button fill="clear" color="light" (click)="exportTeam(teamCard.team)">
                       {{ t('actions.exportSingle') }}
@@ -176,6 +175,85 @@
         </section>
       }
     </div>
+
+    <ion-modal
+      [isOpen]="openTeamModalOpen()"
+      cssClass="saved-teams-open-modal"
+      (didDismiss)="resetOpenTeamModal()"
+    >
+      <ng-template>
+        <div class="open-team-modal-shell">
+          <div class="import-modal-head">
+            <div>
+              <div class="section-label">{{ t('openTeam.eyebrow') }}</div>
+              <h2>{{ t('openTeam.title') }}</h2>
+              @if (openingTeam(); as team) {
+                <p>{{ t('openTeam.copy', { name: team.name }) }}</p>
+              }
+            </div>
+
+            <ion-button fill="clear" color="light" (click)="resetOpenTeamModal()">
+              <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+            </ion-button>
+          </div>
+
+          @if (openingTeam(); as team) {
+            <div class="open-team-destinations">
+              <ion-button
+                class="open-team-destination"
+                fill="outline"
+                color="warning"
+                [routerLink]="['/tabs/auto-team-builder']"
+                [queryParams]="getTeamBuilderQueryParams(team)"
+                (click)="closeOpenTeamModal()"
+              >
+                <ion-icon slot="start" [icon]="autoBuilderIcon"></ion-icon>
+                <span>
+                  <strong>{{ t('openTeam.destinations.auto.title') }}</strong>
+                  <small>{{ t('openTeam.destinations.auto.copy') }}</small>
+                </span>
+              </ion-button>
+
+              <ion-button
+                class="open-team-destination"
+                fill="outline"
+                color="warning"
+                [routerLink]="['/tabs/captain-coverage']"
+                [queryParams]="getTeamBuilderQueryParams(team)"
+                (click)="closeOpenTeamModal()"
+              >
+                <ion-icon slot="start" [icon]="captainCoverageIcon"></ion-icon>
+                <span>
+                  <strong>{{ t('openTeam.destinations.captainCoverage.title') }}</strong>
+                  <small>{{ t('openTeam.destinations.captainCoverage.copy') }}</small>
+                </span>
+              </ion-button>
+
+              <ion-button
+                class="open-team-destination"
+                fill="outline"
+                color="warning"
+                [routerLink]="['/tabs/manual-team-builder']"
+                [queryParams]="getTeamBuilderQueryParams(team)"
+                (click)="closeOpenTeamModal()"
+              >
+                <ion-icon slot="start" [icon]="manualBuilderIcon"></ion-icon>
+                <span>
+                  <strong>{{ t('openTeam.destinations.manual.title') }}</strong>
+                  <small>{{ t('openTeam.destinations.manual.copy') }}</small>
+                </span>
+              </ion-button>
+            </div>
+          }
+
+          <div class="import-modal-actions">
+            <ion-button fill="clear" color="light" (click)="resetOpenTeamModal()">
+              {{ 'common.actions.cancel' | transloco }}
+            </ion-button>
+          </div>
+        </div>
+      </ng-template>
+    </ion-modal>
 
     <ion-modal
       [isOpen]="editModalOpen()"

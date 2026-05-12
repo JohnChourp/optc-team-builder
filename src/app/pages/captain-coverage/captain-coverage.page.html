@@ -109,6 +109,42 @@
           ></app-captain-team-condition-status>
         }
 
+        <div class="coverage-save-team">
+          <ion-input
+            [label]="t('team.save.nameLabel')"
+            labelPlacement="stacked"
+            fill="outline"
+            [value]="teamName()"
+            (ionInput)="onTeamNameChange($event)"
+          ></ion-input>
+
+          <ion-button color="warning" [disabled]="saveDisabled()" (click)="saveTeam()">
+            <ion-icon slot="start" [icon]="saveIcon"></ion-icon>
+            {{ saveButtonLabel() }}
+          </ion-button>
+        </div>
+
+        @if (currentTeamId() && !saveFeedbackError()) {
+          <section class="coverage-save-feedback coverage-save-feedback--success">
+            <ion-icon [icon]="checkIcon"></ion-icon>
+            <div>
+              <strong>{{ t('team.save.success') }}</strong>
+              <ion-button fill="clear" color="warning" [routerLink]="['/tabs/saved-teams']">
+                {{ t('team.save.viewSavedTeams') }}
+              </ion-button>
+            </div>
+          </section>
+        }
+
+        @if (saveFeedbackError()) {
+          <section class="coverage-save-feedback coverage-save-feedback--error" role="alert">
+            <ion-icon [icon]="errorIcon"></ion-icon>
+            <div>
+              <strong>{{ saveFeedbackError() }}</strong>
+            </div>
+          </section>
+        }
+
         @if (selectedCaptain(); as captain) {
           <a
             class="selected-target"

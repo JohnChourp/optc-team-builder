@@ -1,5 +1,5 @@
 import { Component, type OnInit, computed, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { type ViewWillEnter } from '@ionic/angular';
 import {
   IonButton,
@@ -26,7 +26,11 @@ import {
   peopleOutline,
 } from 'ionicons/icons';
 
-import { type CharacterDetailRecord, type ShipRecord } from '../../core/models/optc.models';
+import {
+  type CharacterDetailRecord,
+  type SavedTeam,
+  type ShipRecord,
+} from '../../core/models/optc.models';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import {
   resolveCaptainTeamConditionStatus,
@@ -193,6 +197,7 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     private readonly userState: UserStateService,
     private readonly repository: OptcRepositoryService,
     private readonly i18n: AppI18nService,
+    private readonly route: ActivatedRoute,
     private readonly router: Router,
   ) {
     this.favoriteShipIds = this.userState.favoriteShipIds;
@@ -215,6 +220,8 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     if (!this.ships().length) {
       await this.refreshShips();
     }
+
+    await this.applySavedTeamFromRoute();
   }
 
   public onTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {
@@ -358,6 +365,71 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
 
   private async refreshShips(): Promise<void> {
     this.ships.set(await this.repository.getShips());
+  }
+
+  private async applySavedTeamFromRoute(): Promise<void> {
+    const teamId = this.route.snapshot.queryParamMap.get('teamId')?.trim() ?? '';
+
+    if (!teamId.length) {
+      return;
+    }
+
+    await this.userState.readySavedTeams();
+    const team = this.userState.getSavedTeamById(teamId);
+
+    if (!team) {
+      await this.clearSavedTeamQueryParam();
+      return;
+    }
+
+    await this.loadSavedTeam(team);
+    await this.clearSavedTeamQueryParam();
+  }
+
+  private async loadSavedTeam(team: SavedTeam): Promise<void> {
+    const characterIds = [
+      ...new Set(
+        team.slots.filter((characterId): characterId is number => typeof characterId === 'number'),
+      ),
+    ];
+    const availableCharacters = characterIds.length
+      ? await this.repository.getDetailedCharactersByIds(characterIds)
+      : [];
+    const characterMap = new Map(
+      availableCharacters.map((character) => [character.id, character] as const),
+    );
+    const availableShipIds = new Set(this.ships().map((ship) => ship.id));
+
+    this.closeCharacterPicker();
+    this.closeShipPicker();
+    this.slots.set(
+      Array.from({ length: MANUAL_TEAM_SLOT_COUNT }, (_value, index) => {
+        const characterId = team.slots[index];
+
+        return typeof characterId === 'number' ? (characterMap.get(characterId) ?? null) : null;
+      }),
+    );
+    this.selectedSlotIndex.set(0);
+    this.searchTerm.set('');
+    this.candidates.set([]);
+    this.selectedShipId.set(
+      typeof team.shipId === 'number' && availableShipIds.has(team.shipId) ? team.shipId : null,
+    );
+    this.maxTotalCost.set(null);
+    this.teamName.set(team.name);
+    this.notes.set(team.notes);
+    this.currentTeamId.set(team.id);
+    this.saveFeedbackError.set('');
+    this.saveUiLocked.set(false);
+  }
+
+  private async clearSavedTeamQueryParam(): Promise<void> {
+    await this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { teamId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   private async refreshCandidates(): Promise<void> {

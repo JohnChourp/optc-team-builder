@@ -209,7 +209,22 @@ describe('SavedTeamsPage', () => {
     expect(page.getCharacterDetailLink(null)).toBeNull();
   });
 
-  it('builds the correct auto team builder query params for a saved team', () => {
+  it('opens and closes the team destination modal for a saved team', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    page.openTeamDestinationModal(page.savedTeams()[0]!);
+
+    expect(page.openTeamModalOpen()).toBe(true);
+    expect(page.openingTeam()?.id).toBe('team-1');
+
+    page.resetOpenTeamModal();
+
+    expect(page.openTeamModalOpen()).toBe(false);
+    expect(page.openingTeam()).toBeNull();
+  });
+
+  it('builds the shared team handoff query params for destination routes', () => {
     const { page } = createPage();
 
     expect(page.getTeamBuilderQueryParams(page.savedTeams()[0]!)).toEqual({
@@ -224,7 +239,13 @@ describe('SavedTeamsPage', () => {
     );
 
     expect(template).toContain("t('title')");
-    expect(template).toContain("t('actions.openBuilder')");
+    expect(template).toContain("t('actions.openTeam')");
+    expect(template).toContain('openTeamDestinationModal(teamCard.team)');
+    expect(template).toContain('[isOpen]="openTeamModalOpen()"');
+    expect(template).toContain('(didDismiss)="resetOpenTeamModal()"');
+    expect(template).toContain("t('openTeam.destinations.auto.title')");
+    expect(template).toContain("t('openTeam.destinations.captainCoverage.copy')");
+    expect(template).toContain("t('openTeam.destinations.manual.title')");
     expect(template).toContain("t('actions.exportSingle')");
     expect(template).toContain("'common.actions.reset' | transloco");
     expect(template).toContain("t('tools.export')");
@@ -246,7 +267,9 @@ describe('SavedTeamsPage', () => {
     expect(template).toContain("t('ship.thumbnailAlt'");
     expect(template).toContain('[icon]="shipIcon"');
     expect(template).toContain('[routerLink]="[\'/tabs/auto-team-builder\']"');
-    expect(template).toContain('[queryParams]="getTeamBuilderQueryParams(teamCard.team)"');
+    expect(template).toContain('[routerLink]="[\'/tabs/captain-coverage\']"');
+    expect(template).toContain('[routerLink]="[\'/tabs/manual-team-builder\']"');
+    expect(template).toContain('[queryParams]="getTeamBuilderQueryParams(team)"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(currentSlot)"');
     expect(template).not.toContain('openImportModal()');
     expect(template).not.toContain("t('hero.savedEnemiesCta')");
@@ -276,6 +299,8 @@ describe('SavedTeamsPage', () => {
     page.selectedTeamIds.set(['team-1']);
     page.editModalOpen.set(true);
     page.importModalOpen.set(true);
+    page.openTeamModalOpen.set(true);
+    page.openingTeam.set(page.savedTeams()[0]!);
     page.editTeamName.set('Edited team');
     page.editNotes.set('Edited notes');
     page.importFileName.set('teams.json');
@@ -290,6 +315,8 @@ describe('SavedTeamsPage', () => {
     expect(page.selectedTeamIds()).toEqual([]);
     expect(page.editModalOpen()).toBe(false);
     expect(page.importModalOpen()).toBe(false);
+    expect(page.openTeamModalOpen()).toBe(false);
+    expect(page.openingTeam()).toBeNull();
     expect(page.editingTeam()).toBeNull();
     expect(page.editTeamName()).toBe('');
     expect(page.editNotes()).toBe('');

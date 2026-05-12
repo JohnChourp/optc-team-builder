@@ -99,6 +99,14 @@
       "copy": "Choose a character that fits the remaining team cost."
     },
     "selectedCaptain": "Selected Captain",
+    "save": {
+      "action": "Save team",
+      "error": "The team could not be saved. Please try again.",
+      "nameLabel": "Crew name",
+      "savingLabel": "Saving...",
+      "success": "Team saved to Saved Teams.",
+      "viewSavedTeams": "Open Saved Teams"
+    },
     "slots": {
       "captain": "Captain",
       "sub": "Sub {{index}}"

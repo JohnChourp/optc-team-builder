@@ -257,12 +257,14 @@
 }
 
 :host ion-modal.saved-teams-import-modal::part(backdrop),
-:host ion-modal.saved-teams-edit-modal::part(backdrop) {
+:host ion-modal.saved-teams-edit-modal::part(backdrop),
+:host ion-modal.saved-teams-open-modal::part(backdrop) {
   background: rgba(7, 11, 23, 0.68);
 }
 
 :host ion-modal.saved-teams-import-modal::part(content),
-:host ion-modal.saved-teams-edit-modal::part(content) {
+:host ion-modal.saved-teams-edit-modal::part(content),
+:host ion-modal.saved-teams-open-modal::part(content) {
   width: min(720px, calc(100vw - 24px));
   max-height: var(--app-modal-max-height);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -272,13 +274,18 @@
 }
 
 .edit-modal-shell,
-.import-modal-shell {
+.import-modal-shell,
+.open-team-modal-shell {
   display: grid;
   gap: 18px;
   color: #f8fbff;
 }
 
 .edit-modal-shell {
+  padding: 22px;
+}
+
+.open-team-modal-shell {
   padding: 22px;
 }
 
@@ -444,6 +451,45 @@
   border: 1px solid rgba(255, 107, 107, 0.26);
 }
 
+.open-team-destinations {
+  display: grid;
+  gap: 12px;
+}
+
+.open-team-destination {
+  width: 100%;
+  min-height: 78px;
+  --border-radius: 18px;
+  --border-color: rgba(245, 200, 76, 0.34);
+  --background: rgba(245, 200, 76, 0.07);
+  --background-hover: rgba(245, 200, 76, 0.12);
+  --padding-start: 16px;
+  --padding-end: 16px;
+  text-align: start;
+}
+
+.open-team-destination ion-icon {
+  align-self: center;
+  font-size: 1.35rem;
+}
+
+.open-team-destination span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  white-space: normal;
+}
+
+.open-team-destination strong {
+  color: #ffffff;
+  line-height: 1.25;
+}
+
+.open-team-destination small {
+  color: rgba(248, 251, 255, 0.68);
+  line-height: 1.45;
+}
+
 @media (max-width: 640px) {
   .saved-teams-selection,
   .saved-team-head,
@@ -472,6 +518,10 @@
 
   .edit-modal-shell {
     padding: 18px 16px 0;
+  }
+
+  .open-team-modal-shell {
+    padding: 18px 16px;
   }
 
   .import-modal-head {

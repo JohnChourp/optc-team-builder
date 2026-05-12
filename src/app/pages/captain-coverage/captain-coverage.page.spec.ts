@@ -601,6 +601,127 @@ describe('CaptainCoveragePage', () => {
     ]);
   });
 
+  it('saves the selected coverage team to shared saved teams with the Captain mirrored as friend captain', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Coverage Leader',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const subs = [2001, 2002, 2003, 2004].map((id) => createCharacter({ id }));
+    const { page, userState } = createPage({
+      captains: [leader],
+      characters: [leader, ...subs],
+    });
+
+    await page.ngOnInit();
+    page.onTeamNameChange({ detail: { value: 'Captain Coverage Crew' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+    await page.saveTeamSlotSelection(leader);
+
+    for (const [index, sub] of subs.entries()) {
+      page.openTeamSlotPicker(index + 1);
+      await page.saveTeamSlotSelection(sub);
+    }
+
+    await page.saveTeam();
+
+    expect(userState.saveTeam).toHaveBeenCalledWith({
+      id: undefined,
+      name: 'Captain Coverage Crew',
+      notes: '',
+      shipId: null,
+      slots: [1001, 1001, 2001, 2002, 2003, 2004],
+    });
+    expect(page.currentTeamId()).toBe('saved-captain-coverage-team');
+    expect(page.saveUiLocked()).toBe(false);
+    expect(page.saveFeedbackError()).toBe('');
+
+    page.clearTeamSlot(4);
+    expect(page.currentTeamId()).toBeNull();
+  });
+
+  it('loads a saved team route as a captain coverage draft and ignores Friend Captain', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Saved Leader',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const friendCaptain = createCharacter({
+      id: 1002,
+      name: 'Ignored Friend Captain',
+      captainAbility: 'Boosts HP of all characters by 1.3x.',
+    });
+    const subs = [2001, 2002, 2003, 2004].map((id) => createCharacter({ id }));
+    const { page, router, userState } = createPage({
+      routeTeamId: 'team-1',
+      savedTeams: [
+        createSavedTeam({
+          id: 'team-1',
+          name: 'Coverage Import',
+          slots: [1001, 1002, 2001, 2002, 2003, 2004],
+        }),
+      ],
+      captains: [leader, friendCaptain],
+      characters: [leader, friendCaptain, ...subs],
+    });
+
+    await page.ngOnInit();
+
+    expect(userState.readySavedTeams).toHaveBeenCalledOnce();
+    expect(page.selectedTeamSlots().map((slot) => slot?.id ?? null)).toEqual([
+      1001,
+      2001,
+      2002,
+      2003,
+      2004,
+    ]);
+    expect(page.selectedCaptainDetail()?.id).toBe(1001);
+    expect(page.teamName()).toBe('Coverage Import');
+    expect(page.currentTeamId()).toBeNull();
+    expect(page.saveFeedbackError()).toBe('');
+    expect(router.navigate).toHaveBeenCalledWith([], {
+      relativeTo: expect.any(Object),
+      queryParams: { teamId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  });
+
+  it('clears an unknown saved team route id without replacing the captain coverage draft', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Existing Leader',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const { page, router } = createPage({
+      routeTeamId: 'missing-team',
+      captains: [leader],
+      characters: [leader],
+    });
+
+    page.teamName.set('Existing Coverage Draft');
+    page.selectedTeamSlots.set([leader, null, null, null, null]);
+    page.selectedCaptainDetail.set(leader);
+
+    await page.ngOnInit();
+
+    expect(page.teamName()).toBe('Existing Coverage Draft');
+    expect(page.selectedTeamSlots().map((slot) => slot?.id ?? null)).toEqual([
+      1001,
+      null,
+      null,
+      null,
+      null,
+    ]);
+    expect(router.navigate).toHaveBeenCalledWith([], {
+      relativeTo: expect.any(Object),
+      queryParams: { teamId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  });
+
   it('keeps the leader-driven picker, ability filters, and result surfaces wired in the template', () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/captain-coverage/captain-coverage.page.html'),
@@ -625,6 +746,12 @@ describe('CaptainCoveragePage', () => {
     expect(template).toContain('teamConditionStatus()');
     expect(template).toContain('captain-condition-panel--full');
     expect(template).toContain('assignCharacterFromResult(card)');
+    expect(template).toContain('teamName()');
+    expect(template).toContain('onTeamNameChange($event)');
+    expect(template).toContain('(click)="saveTeam()"');
+    expect(template).toContain('saveDisabled()');
+    expect(template).toContain('currentTeamId()');
+    expect(template).toContain('[routerLink]="[\'/tabs/saved-teams\']"');
     expect(template).toContain('[routerLink]="[\'/characters\', captain.id]"');
     expect(template).toContain('class="selected-target"');
     expect(template).toContain('class="captain-result__boosts"');
@@ -661,11 +788,15 @@ function createPage({
   characters = [],
   favoriteIds = [],
   abilityCatalog = createAbilityCatalog(),
+  routeTeamId = null,
+  savedTeams = [],
 }: {
   captains?: CharacterDetailRecord[];
   characters?: Array<CharacterDetailRecord & CharacterListItem>;
   favoriteIds?: number[];
   abilityCatalog?: AutoBuildAbilityCatalog;
+  routeTeamId?: string | null;
+  savedTeams?: Array<ReturnType<typeof createSavedTeam>>;
 } = {}): {
   page: CaptainCoveragePage;
   repository: {
@@ -680,8 +811,13 @@ function createPage({
   };
   userState: {
     favoriteCharacterIds: ReturnType<typeof signal<number[]>>;
+    getSavedTeamById: ReturnType<typeof vi.fn>;
     ready: ReturnType<typeof vi.fn>;
+    readySavedTeams: ReturnType<typeof vi.fn>;
+    saveTeam: ReturnType<typeof vi.fn>;
   };
+  route: { snapshot: { queryParamMap: { get: ReturnType<typeof vi.fn> } } };
+  router: { navigate: ReturnType<typeof vi.fn> };
   i18n: {
     translate: ReturnType<typeof vi.fn>;
   };
@@ -705,13 +841,28 @@ function createPage({
   };
   const userState = {
     favoriteCharacterIds: signal(favoriteIds),
+    getSavedTeamById: vi.fn(
+      (teamId: string) => savedTeams.find((team) => team.id === teamId) ?? null,
+    ),
     ready: vi.fn().mockResolvedValue(undefined),
     readyFavoriteCharacterIds: vi.fn().mockResolvedValue(undefined),
+    readySavedTeams: vi.fn().mockResolvedValue(undefined),
+    saveTeam: vi.fn().mockResolvedValue({ id: 'saved-captain-coverage-team' }),
   };
   const i18n = {
     translate: vi.fn((key: string, params?: Record<string, string | number>) =>
       formatTranslation(key, params),
     ),
+  };
+  const route = {
+    snapshot: {
+      queryParamMap: {
+        get: vi.fn((key: string) => (key === 'teamId' ? routeTeamId : null)),
+      },
+    },
+  };
+  const router = {
+    navigate: vi.fn().mockResolvedValue(true),
   };
 
   return {
@@ -720,16 +871,41 @@ function createPage({
       characterCatalogCache as never,
       userState as never,
       i18n as never,
+      route as never,
+      router as never,
     ),
     repository,
     characterCatalogCache,
+    route,
+    router,
     userState,
     i18n,
   };
 }
 
+function createSavedTeam(
+  overrides: Partial<{
+    id: string;
+    name: string;
+    notes: string;
+    shipId: number | null;
+    slots: Array<number | null>;
+  }> = {},
+) {
+  return {
+    id: overrides.id ?? 'team-1',
+    name: overrides.name ?? 'Saved Coverage Team',
+    notes: overrides.notes ?? '',
+    shipId: overrides.shipId ?? null,
+    slots: overrides.slots ?? [1001, 1001, null, null, null, null],
+    createdAt: '2026-05-10T10:00:00.000Z',
+    updatedAt: '2026-05-10T10:00:00.000Z',
+  };
+}
+
 function formatTranslation(key: string, params?: Record<string, string | number>): string {
   const translations: Record<string, string> = {
+    'common.defaults.newCrew': 'New Crew',
     'characterAbilityGroups.metadata.turns': '{{count}} turns',
     'characterAbilityGroups.sources.specialText': 'Special',
     'characterAbilityGroups.sources.superSpecialText': 'Super Special',
