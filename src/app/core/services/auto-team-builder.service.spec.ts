@@ -1843,6 +1843,65 @@ describe('Auto team builder', () => {
     expect(slotIds).not.toContain(2802);
   });
 
+  it('treats titled Monkey D. Luffy variants as duplicate with Luffy dual units', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 4233,
+          name: 'Dorry & Broggy - Retaliating Against the Threat to the Homeland',
+          primaryClass: 'Free Spirit',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Free Spirit characters by 5.5x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 4550,
+          name: 'Crocodile & Mihawk - Powers Needed to Build Their Utopia',
+          primaryClass: 'Free Spirit',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Free Spirit characters by 5.25x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 3065,
+          name: 'Luffy & Sanji - A Joint Struggle Underpinned by Trust',
+          primaryClass: 'Free Spirit',
+          detail: {
+            specialText: 'Boosts ATK of Free Spirit characters by 2.5x for 1 turn.',
+          },
+        }),
+        createCharacterRecord({
+          id: 1916,
+          name: 'Monkey D. Luffy: Gear Four - Enemy of the Gods',
+          primaryClass: 'Free Spirit',
+          detail: {
+            partyConflictKeys: ['monkey d. luffy: gear four', 'four'],
+            specialText: 'Boosts Orb Effects of Free Spirit characters by 2.5x for 1 turn.',
+          },
+        }),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+        createAtkSubRecord(),
+      ],
+      createInput(['DEX'], ['Free Spirit'], {
+        requireUniqueBaseCharacterNames: true,
+        manualSlots: createManualSlots({
+          captain: [4233],
+          friendCaptain: [4550],
+          sub1: [3065],
+          sub2: [1916],
+        }),
+      }),
+    );
+
+    const slotIds = result?.slots.map((slot) => slot.character.id) ?? [];
+
+    expect(result).not.toBeNull();
+    expect(slotIds).toContain(3065);
+    expect(slotIds).not.toContain(1916);
+  });
+
   it('normalizes straw hat alter egos into canonical party conflict keys', () => {
     const conflictKeys = [
       ...resolveCharacterPartyConflictKeys({ id: 2802, name: 'Luffytaro & Zorojuro' }),
@@ -1856,6 +1915,15 @@ describe('Auto team builder', () => {
     expect(conflictKeys).toEqual(
       expect.arrayContaining(['luffy', 'zoro', 'nami', 'usopp', 'franky', 'robin', 'sanji']),
     );
+  });
+
+  it('normalizes titled canonical names into simple party conflict keys', () => {
+    expect(
+      resolveCharacterPartyConflictKeys({
+        id: 1916,
+        name: 'Monkey D. Luffy: Gear Four - Enemy of the Gods',
+      }),
+    ).toEqual(expect.arrayContaining(['monkey d. luffy', 'luffy']));
   });
 
   it('treats distinct normalized base names like Chef Sanji and Sanji as unique', () => {

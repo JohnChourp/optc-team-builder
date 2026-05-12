@@ -502,6 +502,25 @@ export function resolveNameDerivedPartyConflictKeys(name: string): string[] {
       .forEach((value) => keys.add(value));
   }
 
+  const titledNameParts = [primaryKey, ...primaryKey.split('&')]
+    .map((value) => value.split(':', 1)[0] ?? '')
+    .map((value) => normalizePartyConflictKey(value))
+    .filter((value) => value.length > 0 && value !== primaryKey);
+
+  for (const titledNamePart of titledNameParts) {
+    keys.add(titledNamePart);
+
+    const titledNameTokens = titledNamePart
+      .split(' ')
+      .map((value) => normalizePartyConflictKey(value))
+      .filter((value) => value.length > 1);
+    const [lastTitledNameToken = ''] = titledNameTokens.slice(-1);
+
+    if (titledNameTokens.length >= 2 && lastTitledNameToken.length > 1) {
+      keys.add(lastTitledNameToken);
+    }
+  }
+
   const baseNameParts = baseNameWithoutParentheses
     .split(' ')
     .map((value) => normalizePartyConflictKey(value))
