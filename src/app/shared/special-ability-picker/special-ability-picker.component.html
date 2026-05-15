@@ -1,5 +1,10 @@
 <ng-container *transloco="let t; scope: 'ability-picker'; read: 'ability-picker'">
-  <ion-modal [isOpen]="isOpen" cssClass="special-ability-picker-modal" (didDismiss)="onModalDidDismiss()">
+  <ion-modal
+    #specialAbilityPickerModal
+    [isOpen]="isOpen"
+    cssClass="special-ability-picker-modal"
+    (didDismiss)="onModalDidDismiss()"
+  >
     <ng-template>
       <ion-header class="special-ability-picker-header ion-no-border">
         <ion-toolbar>
@@ -15,7 +20,11 @@
           </div>
 
           <ion-buttons slot="end">
-            <ion-button fill="clear" color="light" (click)="cancel()">
+            <ion-button
+              fill="clear"
+              color="light"
+              (click)="cancel(); specialAbilityPickerModal.dismiss(null, 'cancel')"
+            >
               <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
             </ion-button>
           </ion-buttons>
@@ -61,7 +70,9 @@
                   <section class="special-ability-section">
                     <div class="special-ability-section__head">
                       <strong>{{ section.groupLabel }}</strong>
-                      <small>{{ t('catalog.sectionCount', { count: section.items.length }) }}</small>
+                      <small>{{
+                        t('catalog.sectionCount', { count: section.items.length })
+                      }}</small>
                     </div>
 
                     <div class="special-ability-tile-grid">
@@ -76,7 +87,9 @@
                           <span class="special-ability-tile__copy">
                             <strong>{{ tile.item.label }}</strong>
                             <span class="special-ability-tile__meta">
-                              <small>{{ t('catalog.matchCount', { count: tile.item.matchCount }) }}</small>
+                              <small>{{
+                                t('catalog.matchCount', { count: tile.item.matchCount })
+                              }}</small>
                               @if (tile.item.supportsTurns) {
                                 <small>{{ t('catalog.hints.turns') }}</small>
                               }
@@ -144,7 +157,11 @@
 
       <footer class="special-ability-picker-footer">
         <div class="special-ability-picker-footer__actions">
-          <ion-button fill="clear" color="light" (click)="cancel()">
+          <ion-button
+            fill="clear"
+            color="light"
+            (click)="cancel(); specialAbilityPickerModal.dismiss(null, 'cancel')"
+          >
             {{ 'common.actions.cancel' | transloco }}
           </ion-button>
           <ion-button color="warning" (click)="save()">

@@ -205,6 +205,7 @@
     </div>
 
     <ion-modal
+      #savedEnemyEditorModal
       [isOpen]="editorOpen()"
       cssClass="saved-enemies-editor-modal"
       (didDismiss)="closeEditor()"
@@ -226,8 +227,7 @@
               <ion-button
                 fill="clear"
                 color="light"
-                [disabled]="savingEnemy()"
-                (click)="closeEditor()"
+                (click)="closeEditor(); savedEnemyEditorModal.dismiss(null, 'cancel')"
               >
                 <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
               </ion-button>
@@ -549,7 +549,9 @@
                                   color="danger"
                                   size="small"
                                   [disabled]="savingEnemy()"
-                                  (click)="removeRequiredCharacterGroup(view.battleId, view.group.id)"
+                                  (click)="
+                                    removeRequiredCharacterGroup(view.battleId, view.group.id)
+                                  "
                                 >
                                   {{ 'common.actions.remove' | transloco }}
                                 </ion-button>
@@ -601,6 +603,7 @@
             ></app-ability-requirement-picker>
 
             <ion-modal
+              #parsedAbilitySelectionModal
               [isOpen]="parsedAbilitySelectionOpen()"
               cssClass="saved-enemies-editor-modal"
               (didDismiss)="closeParsedAbilitySelection()"
@@ -622,8 +625,10 @@
                       <ion-button
                         fill="clear"
                         color="light"
-                        [disabled]="savingEnemy()"
-                        (click)="closeParsedAbilitySelection()"
+                        (click)="
+                          closeParsedAbilitySelection();
+                          parsedAbilitySelectionModal.dismiss(null, 'cancel')
+                        "
                       >
                         <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
                       </ion-button>
@@ -639,7 +644,9 @@
                           <div>
                             <h3>{{ formatParsedAbilityCategoryLabel(section.category) }}</h3>
                             <span>{{
-                              t('editor.paste.selection.count', { count: section.candidates.length })
+                              t('editor.paste.selection.count', {
+                                count: section.candidates.length,
+                              })
                             }}</span>
                           </div>
 
@@ -676,9 +683,14 @@
                                 <ion-checkbox
                                   [checked]="isParsedAbilityCandidateSelected(candidate.identity)"
                                   [attr.aria-label]="candidate.label"
-                                  (ionChange)="toggleParsedAbilityCandidate(candidate.identity, $event)"
+                                  (ionChange)="
+                                    toggleParsedAbilityCandidate(candidate.identity, $event)
+                                  "
                                 ></ion-checkbox>
-                                <span class="editor-ability-chip__icon" [attr.data-tone]="candidate.visual.tone">
+                                <span
+                                  class="editor-ability-chip__icon"
+                                  [attr.data-tone]="candidate.visual.tone"
+                                >
                                   <ion-icon [icon]="candidate.visual.icon"></ion-icon>
                                   <small>{{ candidate.visual.badge }}</small>
                                 </span>
@@ -701,8 +713,10 @@
                       <ion-button
                         fill="outline"
                         color="light"
-                        [disabled]="savingEnemy()"
-                        (click)="closeParsedAbilitySelection()"
+                        (click)="
+                          closeParsedAbilitySelection();
+                          parsedAbilitySelectionModal.dismiss(null, 'cancel')
+                        "
                       >
                         {{ 'common.actions.cancel' | transloco }}
                       </ion-button>
@@ -727,8 +741,7 @@
               <ion-button
                 fill="outline"
                 color="light"
-                [disabled]="savingEnemy()"
-                (click)="closeEditor()"
+                (click)="closeEditor(); savedEnemyEditorModal.dismiss(null, 'cancel')"
               >
                 {{ 'common.actions.cancel' | transloco }}
               </ion-button>

@@ -179,7 +179,12 @@
           }
 
           <div class="manual-team-actions">
-            <ion-button fill="outline" color="light" [disabled]="saveUiLocked()" (click)="resetPage()">
+            <ion-button
+              fill="outline"
+              color="light"
+              [disabled]="saveUiLocked()"
+              (click)="resetPage()"
+            >
               {{ 'common.actions.reset' | transloco }}
             </ion-button>
             <ion-button color="warning" [disabled]="saveDisabled()" (click)="saveTeam()">
@@ -191,6 +196,7 @@
     </div>
 
     <ion-modal
+      #characterPickerModal
       [isOpen]="pickerModalOpen()"
       cssClass="pick-editor-modal"
       (didDismiss)="closeCharacterPicker()"
@@ -214,7 +220,7 @@
                 fill="clear"
                 color="light"
                 [attr.aria-label]="t('picker.close')"
-                (click)="closeCharacterPicker()"
+                (click)="closeCharacterPicker(); characterPickerModal.dismiss(null, 'cancel')"
               >
                 <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
               </ion-button>

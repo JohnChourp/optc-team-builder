@@ -349,6 +349,7 @@
   </ion-content>
 
   <ion-modal
+    #driveReviewModal
     class="drive-review-modal"
     [isOpen]="reviewDraft() !== null"
     (didDismiss)="closeReview()"
@@ -365,8 +366,7 @@
             <ion-button
               fill="clear"
               color="light"
-              [disabled]="reviewSubmitting()"
-              (click)="closeReview()"
+              (click)="closeReview(); driveReviewModal.dismiss(null, 'cancel')"
             >
               {{ t('driveSync.review.close') }}
             </ion-button>
@@ -455,8 +455,7 @@
               <ion-button
                 fill="outline"
                 color="medium"
-                [disabled]="reviewSubmitting()"
-                (click)="closeReview()"
+                (click)="closeReview(); driveReviewModal.dismiss(null, 'cancel')"
               >
                 {{ t('driveSync.prompt.actions.cancel') }}
               </ion-button>

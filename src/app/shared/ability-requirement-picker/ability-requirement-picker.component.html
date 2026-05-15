@@ -1,5 +1,10 @@
 <ng-container *transloco="let t; scope: 'ability-picker'; read: 'ability-picker'">
-  <ion-modal [isOpen]="isOpen" cssClass="ability-picker-modal" (didDismiss)="onModalDidDismiss()">
+  <ion-modal
+    #abilityPickerModal
+    [isOpen]="isOpen"
+    cssClass="ability-picker-modal"
+    (didDismiss)="onModalDidDismiss()"
+  >
     <ng-template>
       <ion-header class="ability-picker-header ion-no-border">
         <ion-toolbar>
@@ -15,7 +20,11 @@
           </div>
 
           <ion-buttons slot="end">
-            <ion-button fill="clear" color="light" (click)="cancel()">
+            <ion-button
+              fill="clear"
+              color="light"
+              (click)="cancel(); abilityPickerModal.dismiss(null, 'cancel')"
+            >
               <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
             </ion-button>
           </ion-buttons>
@@ -351,14 +360,14 @@
       <ion-footer class="ability-picker-footer">
         <ion-toolbar>
           <div class="ability-picker-footer__actions">
-            <ion-button fill="clear" color="light" (click)="cancel()">
+            <ion-button
+              fill="clear"
+              color="light"
+              (click)="cancel(); abilityPickerModal.dismiss(null, 'cancel')"
+            >
               {{ 'common.actions.cancel' | transloco }}
             </ion-button>
-            <ion-button
-              color="warning"
-              [disabled]="hasInvalidLeaderBoostRanges()"
-              (click)="save()"
-            >
+            <ion-button color="warning" [disabled]="hasInvalidLeaderBoostRanges()" (click)="save()">
               {{ 'common.actions.save' | transloco }}
             </ion-button>
           </div>

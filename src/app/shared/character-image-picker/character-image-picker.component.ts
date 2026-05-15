@@ -474,10 +474,6 @@ export class CharacterImagePickerComponent implements OnChanges {
   }
 
   public cancel(): void {
-    if (this.applyingSelection) {
-      return;
-    }
-
     this.dismissReason = 'cancel';
     this.dismiss.emit();
   }

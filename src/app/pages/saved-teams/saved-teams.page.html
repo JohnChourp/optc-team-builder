@@ -177,6 +177,7 @@
     </div>
 
     <ion-modal
+      #openTeamModal
       [isOpen]="openTeamModalOpen()"
       cssClass="saved-teams-open-modal"
       (didDismiss)="resetOpenTeamModal()"
@@ -192,7 +193,11 @@
               }
             </div>
 
-            <ion-button fill="clear" color="light" (click)="resetOpenTeamModal()">
+            <ion-button
+              fill="clear"
+              color="light"
+              (click)="resetOpenTeamModal(); openTeamModal.dismiss(null, 'cancel')"
+            >
               <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
             </ion-button>
           </div>
@@ -205,7 +210,7 @@
                 color="warning"
                 [routerLink]="['/tabs/auto-team-builder']"
                 [queryParams]="getTeamBuilderQueryParams(team)"
-                (click)="closeOpenTeamModal()"
+                (click)="closeOpenTeamModal(); openTeamModal.dismiss(null, 'confirm')"
               >
                 <ion-icon slot="start" [icon]="autoBuilderIcon"></ion-icon>
                 <span>
@@ -220,7 +225,7 @@
                 color="warning"
                 [routerLink]="['/tabs/captain-coverage']"
                 [queryParams]="getTeamBuilderQueryParams(team)"
-                (click)="closeOpenTeamModal()"
+                (click)="closeOpenTeamModal(); openTeamModal.dismiss(null, 'confirm')"
               >
                 <ion-icon slot="start" [icon]="captainCoverageIcon"></ion-icon>
                 <span>
@@ -235,7 +240,7 @@
                 color="warning"
                 [routerLink]="['/tabs/manual-team-builder']"
                 [queryParams]="getTeamBuilderQueryParams(team)"
-                (click)="closeOpenTeamModal()"
+                (click)="closeOpenTeamModal(); openTeamModal.dismiss(null, 'confirm')"
               >
                 <ion-icon slot="start" [icon]="manualBuilderIcon"></ion-icon>
                 <span>
@@ -247,7 +252,11 @@
           }
 
           <div class="import-modal-actions">
-            <ion-button fill="clear" color="light" (click)="resetOpenTeamModal()">
+            <ion-button
+              fill="clear"
+              color="light"
+              (click)="resetOpenTeamModal(); openTeamModal.dismiss(null, 'cancel')"
+            >
               {{ 'common.actions.cancel' | transloco }}
             </ion-button>
           </div>
@@ -256,6 +265,7 @@
     </ion-modal>
 
     <ion-modal
+      #savedTeamEditModal
       [isOpen]="editModalOpen()"
       cssClass="saved-teams-edit-modal"
       (didDismiss)="closeEditModal()"
@@ -275,8 +285,7 @@
               <ion-button
                 fill="clear"
                 color="light"
-                [disabled]="savingEdit()"
-                (click)="closeEditModal()"
+                (click)="closeEditModal(); savedTeamEditModal.dismiss(null, 'cancel')"
               >
                 <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
               </ion-button>
@@ -313,8 +322,7 @@
               <ion-button
                 fill="outline"
                 color="light"
-                [disabled]="savingEdit()"
-                (click)="closeEditModal()"
+                (click)="closeEditModal(); savedTeamEditModal.dismiss(null, 'cancel')"
               >
                 {{ 'common.actions.cancel' | transloco }}
               </ion-button>
@@ -332,6 +340,7 @@
     </ion-modal>
 
     <ion-modal
+      #savedTeamsImportModal
       [isOpen]="importModalOpen()"
       cssClass="saved-teams-import-modal"
       (didDismiss)="closeImportModal()"
@@ -345,7 +354,11 @@
               <p>{{ t('import.copy') }}</p>
             </div>
 
-            <ion-button fill="clear" color="light" (click)="closeImportModal()">
+            <ion-button
+              fill="clear"
+              color="light"
+              (click)="closeImportModal(); savedTeamsImportModal.dismiss(null, 'cancel')"
+            >
               <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
             </ion-button>
           </div>
@@ -415,8 +428,7 @@
             <ion-button
               fill="clear"
               color="light"
-              [disabled]="importing()"
-              (click)="closeImportModal()"
+              (click)="closeImportModal(); savedTeamsImportModal.dismiss(null, 'cancel')"
             >
               {{ 'common.actions.close' | transloco }}
             </ion-button>

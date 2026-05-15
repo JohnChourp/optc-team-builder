@@ -1,5 +1,6 @@
 <ng-container *transloco="let t; scope: 'enemy-mechanics-picker'; read: 'enemy-mechanics-picker'">
   <ion-modal
+    #enemyMechanicPickerModal
     [isOpen]="isOpen"
     cssClass="enemy-mechanic-picker-modal"
     (didDismiss)="onModalDidDismiss()"
@@ -19,7 +20,11 @@
           </div>
 
           <ion-buttons slot="end">
-            <ion-button fill="clear" color="light" (click)="cancel()">
+            <ion-button
+              fill="clear"
+              color="light"
+              (click)="cancel(); enemyMechanicPickerModal.dismiss(null, 'cancel')"
+            >
               <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
             </ion-button>
           </ion-buttons>
@@ -35,7 +40,10 @@
                   <strong>{{ t('catalog.title') }}</strong>
                   <small>{{
                     t('catalog.count', {
-                      count: filteredCatalogSections().reduce((total, section) => total + section.items.length, 0),
+                      count: filteredCatalogSections().reduce(
+                        (total, section) => total + section.items.length,
+                        0
+                      ),
                       total: catalogItemsState().length,
                     })
                   }}</small>
@@ -252,7 +260,11 @@
       <ion-footer class="enemy-mechanic-picker-footer">
         <ion-toolbar>
           <div class="enemy-mechanic-picker-footer__actions">
-            <ion-button fill="clear" color="light" (click)="cancel()">
+            <ion-button
+              fill="clear"
+              color="light"
+              (click)="cancel(); enemyMechanicPickerModal.dismiss(null, 'cancel')"
+            >
               {{ 'common.actions.cancel' | transloco }}
             </ion-button>
             <ion-button color="warning" (click)="save()">
