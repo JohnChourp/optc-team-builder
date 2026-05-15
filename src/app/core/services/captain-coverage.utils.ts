@@ -44,8 +44,8 @@ export interface CaptainCoverageResult {
 }
 
 export interface CaptainAbilityCoverageSummary {
-  captainCoverageClauses: string[];
-  fullCoverageClauses: string[];
+  firstCoverageClauses: string[];
+  secondCoverageClauses: string[];
 }
 
 export interface CaptainBoostScopeSummary {
@@ -80,9 +80,9 @@ const UNIVERSAL_SCOPE_PATTERN = /\b(?:all|all characters|all units|all crewmates
 const FALLBACK_OTHER_SCOPE_PATTERN = /\ball other (?:characters|units|crewmates)\b/i;
 const SELF_SCOPE_PATTERN = /\b(?:this character|own attacks|their own attacks)\b/i;
 const BRANCH_LABEL_PATTERN =
-  /\b(?:Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
+  /(?<!Special\s)\b(?:Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
 const CAPTAIN_BRANCH_PATTERN =
-  /\b(Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
+  /(?<!Special\s)\b(Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
 const DEFAULT_CAPTAIN_BRANCH_LABELS = new Set([
   'always active',
   'standard captain',
@@ -119,23 +119,23 @@ export function summarizeCaptainAbilityCoverageText(
 
   if (!normalizedCaptainText) {
     return {
-      captainCoverageClauses: [],
-      fullCoverageClauses: [],
+      firstCoverageClauses: [],
+      secondCoverageClauses: [],
     };
   }
 
-  const captainCoverageClauses = resolveCaptainBoostScope(
+  const firstCoverageClauses = resolveCaptainBoostScope(
     normalizedCaptainText,
     'simpleBoostScope',
   ).clauses;
-  const fullCoverageClauses = resolveCaptainBoostScope(
+  const secondCoverageClauses = resolveCaptainBoostScope(
     normalizedCaptainText,
     'fullAbilityCoverage',
   ).clauses;
 
   return {
-    captainCoverageClauses,
-    fullCoverageClauses,
+    firstCoverageClauses,
+    secondCoverageClauses,
   };
 }
 

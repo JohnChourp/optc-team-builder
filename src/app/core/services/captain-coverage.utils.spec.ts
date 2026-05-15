@@ -229,7 +229,7 @@ describe('resolveCaptainCoverage', () => {
       characterTags: ['Straw Hat Pirates'],
     });
 
-    expect(summarizeCaptainAbilityCoverageText(captainAbility).captainCoverageClauses).toEqual([
+    expect(summarizeCaptainAbilityCoverageText(captainAbility).firstCoverageClauses).toEqual([
       'Boosts ATK of [INT], Free Spirit and Cerebral characters by 6x',
       'boosts HP of [INT], Free Spirit and Cerebral characters by 1.2x',
     ]);
@@ -241,13 +241,13 @@ describe('resolveCaptainCoverage', () => {
     });
   });
 
-  it('keeps Blackbeard simple coverage at the base scope and normalizes full coverage wording', () => {
+  it('keeps Blackbeard First Coverage at the base scope and normalizes Second Coverage wording', () => {
     expect(summarizeCaptainAbilityCoverageText(blackbeardEmperorCaptainAbility)).toEqual({
-      captainCoverageClauses: [
+      firstCoverageClauses: [
         'Boosts ATK of [QCK] and Free Spirit characters by 6x',
         'boosts HP of [QCK] and Free Spirit characters by 1.3x',
       ],
-      fullCoverageClauses: [
+      secondCoverageClauses: [
         'Boosts ATK of [QCK] and Free Spirit characters by 6x',
         'boosts HP of [QCK] and Free Spirit characters by 1.3x',
         'If your crew has 6+ Free Spirit characters and field has Territory: [QCK], boosts ATK of Free Spirit characters by 7x',
@@ -256,7 +256,7 @@ describe('resolveCaptainCoverage', () => {
     });
   });
 
-  it('requires Blackbeard full coverage targets to be Free Spirit and tag-covered', () => {
+  it('requires Blackbeard Second Coverage targets to be Free Spirit and tag-covered', () => {
     const captain = createCharacter({
       id: 4561,
       captainAbility: blackbeardEmperorCaptainAbility,
@@ -321,16 +321,16 @@ describe('resolveCaptainCoverage', () => {
       zoroVsLucciCharacter2CaptainAbility,
     );
 
-    expect(character1Summary.captainCoverageClauses).toEqual([
+    expect(character1Summary.firstCoverageClauses).toEqual([
       'boosts ATK of [INT], Slasher and Free Spirit characters by 5.5x',
       'boosts HP of [INT], Slasher and Free Spirit characters by 1.35x',
     ]);
-    expect(character1Summary.fullCoverageClauses).toEqual(character1Summary.captainCoverageClauses);
-    expect(character2Summary.captainCoverageClauses).toEqual([
+    expect(character1Summary.secondCoverageClauses).toEqual(character1Summary.firstCoverageClauses);
+    expect(character2Summary.firstCoverageClauses).toEqual([
       'boosts ATK of [STR], Driven and Cerebral characters by 5.5x',
       'boosts HP of [STR], Driven and Cerebral characters by 1.35x',
     ]);
-    expect(character2Summary.fullCoverageClauses).toEqual(character2Summary.captainCoverageClauses);
+    expect(character2Summary.secondCoverageClauses).toEqual(character2Summary.firstCoverageClauses);
   });
 
   it('matches either branch for VS dual-character captain coverage', () => {

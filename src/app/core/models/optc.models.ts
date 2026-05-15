@@ -35,6 +35,17 @@ export interface CharacterCaptainAbilityVariant {
   text: string;
 }
 
+export interface CharacterCaptainAbilityCoverageEntry {
+  key: string;
+  label: string;
+  firstCoverageClauses: string[];
+  secondCoverageClauses: string[];
+}
+
+export interface CharacterCaptainAbilityCoverage {
+  entries: CharacterCaptainAbilityCoverageEntry[];
+}
+
 export interface SuperCriteriaCharacterOption {
   label: string;
   acceptedKeys: string[];
@@ -117,6 +128,7 @@ export interface CharacterDetail {
   characterId: number;
   captainAbility: string | null;
   captainAbilityVariants: CharacterCaptainAbilityVariant[];
+  captainAbilityCoverage?: CharacterCaptainAbilityCoverage;
   captainNotes: string | null;
   specialName: string | null;
   specialText: string | null;

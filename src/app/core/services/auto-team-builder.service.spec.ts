@@ -934,7 +934,7 @@ describe('Auto team builder', () => {
     ]);
   });
 
-  it('does not turn full Captain Ability coverage into selected captain-source requirements', () => {
+  it('does not turn Second Coverage into selected captain-source requirements', () => {
     const result = buildAutoTeamResult(
       [
         createCaptainAbilityBindLeaderRecord(6820),
@@ -3445,7 +3445,7 @@ describe('Auto team builder', () => {
     ).toBeGreaterThanOrEqual(4);
   });
 
-  it('requires Captain and Friend Captain to match captain ability coverage', () => {
+  it('requires Captain and Friend Captain to match Second Coverage', () => {
     const records = [
       createCharacterRecord({
         id: 8200,
@@ -5210,7 +5210,7 @@ describe('Auto team builder', () => {
     expect(pruned.map((record) => record.id)).toEqual([8300, 8301, 8302, 8303, 8304]);
   });
 
-  it('uses full per-slot captain ability coverage for pool pruning without requiring team tag clauses per character', () => {
+  it('uses Second Coverage for pool pruning without requiring team tag clauses per character', () => {
     const service = new AutoTeamBuilderService({} as never);
     const captain = createCharacterRecord({
       id: 8310,

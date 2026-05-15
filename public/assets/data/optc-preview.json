@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-12T20:30:44.208Z",
+  "generatedAt": "2026-05-15T15:29:30.812Z",
   "characters": [
     {
       "id": 1,
@@ -41,6 +41,9 @@
         "characterId": 1,
         "captainAbility": null,
         "captainAbilityVariants": [],
+        "captainAbilityCoverage": {
+          "entries": []
+        },
         "captainNotes": null,
         "specialName": "Spinning Gum Punch",
         "specialText": "Deals 5x character's ATK in [STR] damage to one enemy",
@@ -142,6 +145,20 @@
             "text": "Boosts ATK of all characters by 1.5x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [
+                "Boosts ATK of all characters by 1.5x"
+              ],
+              "secondCoverageClauses": [
+                "Boosts ATK of all characters by 1.5x"
+              ]
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Gum-Gum Pistol",
         "specialText": "Deals 7x character's ATK in [STR] damage to one enemy",
@@ -243,6 +260,20 @@
             "text": "Boosts ATK of all characters by 1.5x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [
+                "Boosts ATK of all characters by 1.5x"
+              ],
+              "secondCoverageClauses": [
+                "Boosts ATK of all characters by 1.5x"
+              ]
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Gum-Gum Bazooka",
         "specialText": "Deals 15x character's ATK in [STR] damage to one enemy",
@@ -345,6 +376,20 @@
             "text": "Boosts ATK of [STR] characters by 2x and ATK of all others by 1.5x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [
+                "Boosts ATK of [STR] characters by 2x and ATK of all others by 1.5x"
+              ],
+              "secondCoverageClauses": [
+                "Boosts ATK of [STR] characters by 2x and ATK of all others by 1.5x"
+              ]
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Gum-Gum Twin Jet Pistol",
         "specialText": "Deals 25x character's ATK in [STR] damage to one enemy",
@@ -495,6 +540,20 @@
             "text": "Boosts ATK of [DEX] characters by 1.5x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [
+                "Boosts ATK of [DEX] characters by 1.5x"
+              ],
+              "secondCoverageClauses": [
+                "Boosts ATK of [DEX] characters by 1.5x"
+              ]
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Oni Giri",
         "specialText": "Deals 7x character's ATK in [DEX] damage to one enemy",
@@ -597,6 +656,20 @@
             "text": "Boosts ATK of [DEX] characters by 1.5x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [
+                "Boosts ATK of [DEX] characters by 1.5x"
+              ],
+              "secondCoverageClauses": [
+                "Boosts ATK of [DEX] characters by 1.5x"
+              ]
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Three Thousand Worlds",
         "specialText": "Deals 10x character's ATK in [DEX] damage to all enemies",
@@ -699,6 +772,20 @@
             "text": "Boosts ATK of [DEX] characters by 1.5x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [
+                "Boosts ATK of [DEX] characters by 1.5x"
+              ],
+              "secondCoverageClauses": [
+                "Boosts ATK of [DEX] characters by 1.5x"
+              ]
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "108 Pound Phoenix",
         "specialText": "Deals 10x character's ATK in [DEX] damage to all enemies",
@@ -801,6 +888,20 @@
             "text": "Boosts ATK and HP of [DEX] characters by 2x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [
+                "Boosts ATK and HP of [DEX] characters by 2x"
+              ],
+              "secondCoverageClauses": [
+                "Boosts ATK and HP of [DEX] characters by 2x"
+              ]
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Ashura Ichibugin",
         "specialText": "Deals 15x character's ATK in [DEX] damage to all enemies",
@@ -960,6 +1061,16 @@
             "text": "Reduces damage received from [INT] enemies by 20%"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [],
+              "secondCoverageClauses": []
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Cat Burglar",
         "specialText": "Recovers 1,000 HP",
@@ -1070,6 +1181,20 @@
             "text": "Boosts ATK of [INT] characters by 1.5x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [
+                "Boosts ATK of [INT] characters by 1.5x"
+              ],
+              "secondCoverageClauses": [
+                "Boosts ATK of [INT] characters by 1.5x"
+              ]
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Tornado Tempo",
         "specialText": "Deals 15x character's ATK in [INT] damage to one enemy",
@@ -1171,6 +1296,20 @@
             "text": "Boosts ATK of [INT] characters by 1.5x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [
+                "Boosts ATK of [INT] characters by 1.5x"
+              ],
+              "secondCoverageClauses": [
+                "Boosts ATK of [INT] characters by 1.5x"
+              ]
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Mirage Tempo",
         "specialText": "Reduces damage received from [INT] enemies by 100% for 1 turn",
@@ -1272,6 +1411,20 @@
             "text": "Boosts ATK and HP of [INT] characters by 1.5x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [
+                "Boosts ATK and HP of [INT] characters by 1.5x"
+              ],
+              "secondCoverageClauses": [
+                "Boosts ATK and HP of [INT] characters by 1.5x"
+              ]
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Thunderbolt Tempo",
         "specialText": "Deals 15x character's ATK in [INT] damage to all enemies",
@@ -1439,6 +1592,20 @@
             "text": "Boosts ATK of Shooter characters by 1.2x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [
+                "Boosts ATK of Shooter characters by 1.2x"
+              ],
+              "secondCoverageClauses": [
+                "Boosts ATK of Shooter characters by 1.2x"
+              ]
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Liar",
         "specialText": "Delays all enemies by 1 turn",
@@ -1607,6 +1774,20 @@
             "text": "Boosts ATK of [PSY] characters by 1.5x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [
+                "Boosts ATK of [PSY] characters by 1.5x"
+              ],
+              "secondCoverageClauses": [
+                "Boosts ATK of [PSY] characters by 1.5x"
+              ]
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Tabasco Star",
         "specialText": "Delays all enemies by 2 turns",
@@ -1775,6 +1956,20 @@
             "text": "Boosts ATK of [PSY] characters by 1.5x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [
+                "Boosts ATK of [PSY] characters by 1.5x"
+              ],
+              "secondCoverageClauses": [
+                "Boosts ATK of [PSY] characters by 1.5x"
+              ]
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Usopp Golden Pound",
         "specialText": "Delays all enemies by 3 turns",
@@ -1943,6 +2138,20 @@
             "text": "Boosts ATK and HP of [PSY] characters by 1.5x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [
+                "Boosts ATK and HP of [PSY] characters by 1.5x"
+              ],
+              "secondCoverageClauses": [
+                "Boosts ATK and HP of [PSY] characters by 1.5x"
+              ]
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Fire Bird Star",
         "specialText": "Delays all enemies by 3 turns, deals 15x character's ATK in [PSY] damage to all enemies",
@@ -2251,6 +2460,20 @@
             "text": "Boosts ATK of [QCK] characters by 1.5x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [
+                "Boosts ATK of [QCK] characters by 1.5x"
+              ],
+              "secondCoverageClauses": [
+                "Boosts ATK of [QCK] characters by 1.5x"
+              ]
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Special Fried Rice",
         "specialText": "Recovers 10x character's RCV in HP",
@@ -2352,6 +2575,20 @@
             "text": "Boosts HP of [QCK] characters by 1.5x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [
+                "Boosts HP of [QCK] characters by 1.5x"
+              ],
+              "secondCoverageClauses": [
+                "Boosts HP of [QCK] characters by 1.5x"
+              ]
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Plastic Surgery Shot",
         "specialText": "Reduces the defense of all enemies by 50% for 2 turns",
@@ -2443,6 +2680,20 @@
             "text": "Boosts ATK of [QCK] characters by 1.5x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [
+                "Boosts ATK of [QCK] characters by 1.5x"
+              ],
+              "secondCoverageClauses": [
+                "Boosts ATK of [QCK] characters by 1.5x"
+              ]
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Hot Rock Stew",
         "specialText": "Recovers 10x character's RCV in HP",
@@ -2545,6 +2796,20 @@
             "text": "Boosts ATK and HP of [QCK] characters by 1.5x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [
+                "Boosts ATK and HP of [QCK] characters by 1.5x"
+              ],
+              "secondCoverageClauses": [
+                "Boosts ATK and HP of [QCK] characters by 1.5x"
+              ]
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Diable Jambe",
         "specialText": "Deals 5,000 Fixed damage to all enemies",
@@ -2748,6 +3013,16 @@
             "text": "Boosts RCV of [PSY] characters by 1.2x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [],
+              "secondCoverageClauses": []
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Hearty Yell",
         "specialText": "Changes orbs of adjacent characters into [RCV] orbs",
@@ -2850,6 +3125,16 @@
             "text": "Boosts RCV of [PSY] characters by 1.5x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [],
+              "secondCoverageClauses": []
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Heavy Gong",
         "specialText": "Deals 15x character's ATK in [PSY] damage to one enemy",
@@ -3046,6 +3331,16 @@
             "text": "Boosts RCV of [INT] characters by 1.5x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [],
+              "secondCoverageClauses": []
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Scope",
         "specialText": "Changes orbs of adjacent characters into [RCV] orbs",
@@ -3148,6 +3443,16 @@
             "text": "Boosts RCV of [STR] characters by 1.5x"
           }
         ],
+        "captainAbilityCoverage": {
+          "entries": [
+            {
+              "key": "captain",
+              "label": "Captain Ability",
+              "firstCoverageClauses": [],
+              "secondCoverageClauses": []
+            }
+          ]
+        },
         "captainNotes": null,
         "specialName": "Hoofprint Roseo",
         "specialText": "Reduces the defense of all enemies by 50% for 2 turns",

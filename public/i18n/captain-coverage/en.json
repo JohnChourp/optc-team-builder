@@ -26,10 +26,10 @@
     "abilityRailLabel": "Ability filters",
     "bestAbilityMatchesFirst": "Best ability matches first",
     "captainAbilityCoverage": {
-      "toggle": "Full Captain Ability coverage",
+      "toggle": "Second Coverage",
       "support": {
-        "simple": "Showing units covered by the Captain's standard HP/ATK boost scope.",
-        "full": "Showing only units covered by every targetable Captain Ability clause."
+        "simple": "Showing First Coverage: units covered by the Captain's standard HP/ATK boost scope.",
+        "full": "Showing Second Coverage: units covered by every targetable Captain Ability clause."
       }
     },
     "crewmateCopy": "Filter covered character results by Crewmate Ability tags.",

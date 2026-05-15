@@ -185,6 +185,42 @@ function normalizeSupportData(value: unknown): CharacterSupportEntry[] {
     .filter((entry): entry is CharacterSupportEntry => Boolean(entry));
 }
 
+function normalizeCaptainAbilityCoverage(value: unknown): CharacterDetail['captainAbilityCoverage'] {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return { entries: [] };
+  }
+
+  const record = value as Record<string, unknown>;
+  const rawEntries = Array.isArray(record['entries']) ? record['entries'] : [];
+
+  return {
+    entries: rawEntries
+      .map((entry) => {
+        if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+          return null;
+        }
+
+        const entryRecord = entry as Record<string, unknown>;
+        const key = String(entryRecord['key'] ?? '').trim();
+        const label = String(entryRecord['label'] ?? '').trim();
+        const firstCoverageClauses = normalizeStringList(entryRecord['firstCoverageClauses']);
+        const secondCoverageClauses = normalizeStringList(entryRecord['secondCoverageClauses']);
+
+        if (!key.length || !label.length) {
+          return null;
+        }
+
+        return {
+          key,
+          label,
+          firstCoverageClauses,
+          secondCoverageClauses,
+        };
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry)),
+  };
+}
+
 function normalizeSuperCriteriaBranch(value: unknown): SuperCriteriaBranch | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return null;
@@ -1618,6 +1654,7 @@ export class OptcRepositoryService {
       characterId,
       captainAbility: null,
       captainAbilityVariants: [],
+      captainAbilityCoverage: { entries: [] },
       captainNotes: null,
       specialName: null,
       specialText: null,
@@ -1681,6 +1718,9 @@ export class OptcRepositoryService {
             })
             .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
         : [],
+      captainAbilityCoverage: normalizeCaptainAbilityCoverage(
+        normalizedDetail.captainAbilityCoverage,
+      ),
       captainNotes:
         typeof normalizedDetail.captainNotes === 'string' &&
         normalizedDetail.captainNotes.trim().length

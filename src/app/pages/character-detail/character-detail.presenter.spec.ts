@@ -547,14 +547,14 @@ describe('character-detail presenter', () => {
       expect.objectContaining({
         label: 'Base Captain Ability',
         text: 'Base effect.',
-        captainCoverageClauses: [],
-        fullCoverageClauses: [],
+        firstCoverageClauses: [],
+        secondCoverageClauses: [],
       }),
       expect.objectContaining({
         label: 'Limit Break Level 1 Captain Ability',
         text: 'Level 1 effect.',
-        captainCoverageClauses: [],
-        fullCoverageClauses: [],
+        firstCoverageClauses: [],
+        secondCoverageClauses: [],
       }),
     ]);
     expect(viewModel.captainAbilitySummary?.captainNotes).toBe(
@@ -608,14 +608,14 @@ describe('character-detail presenter', () => {
       expect.objectContaining({
         label: 'Base Captain Ability',
         text: 'Boosts ATK of DEX characters by 5x.',
-        captainCoverageClauses: ['Boosts ATK of DEX characters by 5x'],
-        fullCoverageClauses: [],
+        firstCoverageClauses: ['Boosts ATK of DEX characters by 5x'],
+        secondCoverageClauses: [],
       }),
       expect.objectContaining({
         label: 'Limit Break Level 1 Captain Ability',
         text: 'Boosts ATK of DEX characters by 5x and HP by 1.3x. Reduces Bind duration by 10 turns.',
-        captainCoverageClauses: ['Boosts ATK of DEX characters by 5x and HP by 1.3x'],
-        fullCoverageClauses: [],
+        firstCoverageClauses: ['Boosts ATK of DEX characters by 5x and HP by 1.3x'],
+        secondCoverageClauses: [],
       }),
     ]);
     expect(viewModel.captainAbilitySummary?.recognizedAbilities).toEqual([
@@ -649,8 +649,8 @@ describe('character-detail presenter', () => {
           expect.objectContaining({
             label: 'Captain Ability',
             text: 'Boosts ATK of crew by 5x.',
-            captainCoverageClauses: ['Boosts ATK of crew by 5x'],
-            fullCoverageClauses: [],
+            firstCoverageClauses: ['Boosts ATK of crew by 5x'],
+            secondCoverageClauses: [],
           }),
         ],
         captainNotes: null,
@@ -658,6 +658,41 @@ describe('character-detail presenter', () => {
         characterTags: [],
       }),
     );
+  });
+
+  it('prefers generated First and Second Coverage entries when they are present', () => {
+    const viewModel = buildCharacterDetailViewModel(
+      createCharacterDetailRecord({
+        detail: {
+          captainAbility: 'Legacy captain text.',
+          captainAbilityVariants: [
+            {
+              key: 'captain',
+              label: 'Captain Ability',
+              text: 'Legacy captain text.',
+            },
+          ],
+          captainAbilityCoverage: {
+            entries: [
+              {
+                key: 'captain',
+                label: 'Captain Ability',
+                firstCoverageClauses: ['generated first clause'],
+                secondCoverageClauses: ['generated first clause', 'generated second clause'],
+              },
+            ],
+          },
+          builderAbilities: [],
+        },
+      }),
+    );
+
+    expect(viewModel.captainAbilitySummary?.coverageEntries).toEqual([
+      expect.objectContaining({
+        firstCoverageClauses: ['generated first clause'],
+        secondCoverageClauses: ['generated first clause', 'generated second clause'],
+      }),
+    ]);
   });
 
   it('keeps character tags in the top summary even without captain ability data', () => {

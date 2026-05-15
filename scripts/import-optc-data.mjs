@@ -16,6 +16,7 @@ import {
   pruneManualCharactersCoveredByImport,
 } from './lib/manual-character-prune.mjs';
 import { loadBuilderAbilityCorrections } from './lib/builder-ability-corrections.mjs';
+import { buildCaptainAbilityCoverage } from './lib/captain-ability-coverage.mjs';
 import {
   buildAutoBuilderAbilityCatalog,
   buildManifest,
@@ -1335,6 +1336,7 @@ export function normalizeCharacterDetail(
     characterId,
     captainAbility: normalizedCaptainAbility,
     captainAbilityVariants: normalizedCaptainAbilityVariants,
+    captainAbilityCoverage: buildCaptainAbilityCoverage(normalizedCaptainAbilityVariants),
     captainNotes: normalizedCaptainNotes,
     specialName: detail.specialName ?? null,
     specialText: normalizedSpecialText,
