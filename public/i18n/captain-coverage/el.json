@@ -32,6 +32,19 @@
         "full": "Δείχνει Second Coverage: units που καλύπτονται από όλα τα targetable Captain Ability clauses."
       }
     },
+    "characterBox": {
+      "label": "Character box",
+      "placeholder": "Επίλεξε character box",
+      "options": {
+        "all": "Όλοι οι χαρακτήρες"
+      },
+      "support": {
+        "all": "Χρησιμοποίησε όλους τους covered χαρακτήρες του local dataset.",
+        "noBoxes": "Δημιούργησε character box για να περιορίσεις τα Captain Coverage αποτελέσματα σε αυτό το box.",
+        "withCount": "Περιόρισε τα αποτελέσματα σε {{count}} χαρακτήρα/ες αυτού του box.",
+        "withFavorites": "{{count}} από {{total}} χαρακτήρα/ες αυτού του box είναι favorites."
+      }
+    },
     "crewmateCopy": "Φίλτραρε τα καλυπτόμενα character results με Crewmate Ability tags.",
     "crewmateEyebrow": "Crewmate Ability",
     "crewmateTitle": "Crewmate Ability filters",

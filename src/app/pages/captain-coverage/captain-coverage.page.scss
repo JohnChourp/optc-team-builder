@@ -348,6 +348,24 @@
   font-weight: 800;
 }
 
+.character-box-filter {
+  display: grid;
+  flex: 1 1 260px;
+  gap: 5px;
+  min-width: min(100%, 240px);
+}
+
+.character-box-filter ion-select {
+  min-width: 0;
+}
+
+.character-box-filter small {
+  color: rgba(248, 251, 255, 0.6);
+  font-size: 0.74rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
 .coverage-search {
   --background: rgba(255, 255, 255, 0.08);
   --border-radius: 16px;

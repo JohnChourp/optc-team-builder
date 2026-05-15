@@ -293,6 +293,31 @@
               {{ t('filters.hideFavorites') }}
             </ion-button>
 
+            <div class="character-box-filter">
+              <ion-select
+                interface="popover"
+                fill="outline"
+                [placeholder]="t('filters.characterBox.placeholder')"
+                [value]="selectedCharacterBoxId() ?? ''"
+                [selectedText]="
+                  selectedCharacterBox()?.name ?? t('filters.characterBox.options.all')
+                "
+                [disabled]="!selectedCaptainDetail() || !characterBoxes().length"
+                [attr.aria-label]="t('filters.characterBox.label')"
+                (ionChange)="onCharacterBoxChange($event)"
+              >
+                <ion-select-option value="">
+                  {{ t('filters.characterBox.options.all') }}
+                </ion-select-option>
+                @for (box of characterBoxes(); track box.id) {
+                  <ion-select-option [value]="box.id">
+                    {{ box.name }} ({{ box.characterIds.length }})
+                  </ion-select-option>
+                }
+              </ion-select>
+              <small>{{ characterBoxSupportLabel() }}</small>
+            </div>
+
             <ion-searchbar
               class="coverage-search"
               [debounce]="150"

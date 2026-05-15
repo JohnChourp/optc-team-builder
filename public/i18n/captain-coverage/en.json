@@ -32,6 +32,19 @@
         "full": "Showing Second Coverage: units covered by every targetable Captain Ability clause."
       }
     },
+    "characterBox": {
+      "label": "Character box",
+      "placeholder": "Select character box",
+      "options": {
+        "all": "All characters"
+      },
+      "support": {
+        "all": "Use every covered character in the local dataset.",
+        "noBoxes": "Create a character box to limit Captain Coverage results to that box.",
+        "withCount": "Limit results to {{count}} character(s) in this box.",
+        "withFavorites": "{{count}} of {{total}} character(s) in this box are currently favorites."
+      }
+    },
     "crewmateCopy": "Filter covered character results by Crewmate Ability tags.",
     "crewmateEyebrow": "Crewmate Ability",
     "crewmateTitle": "Crewmate Ability filters",

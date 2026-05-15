@@ -42,6 +42,7 @@ import {
   type CaptainTeamConditionStatus,
 } from '../../core/services/captain-team-condition-status.utils';
 import {
+  type CharacterBox,
   type CharacterDetailRecord,
   type CharacterIdOrder,
   type CharacterListItem,
@@ -166,8 +167,27 @@ export class CaptainCoveragePage implements OnInit {
   public readonly supportAbilityPickerOpen = signal(false);
   public readonly supportAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly favoriteIds;
+  public readonly characterBoxes;
+  public readonly selectedCharacterBoxId = signal<string | null>(null);
 
   public readonly selectedCaptain = computed(() => this.selectedTeamSlots()[0] ?? null);
+  public readonly selectedCharacterBox = computed<CharacterBox | null>(() =>
+    this.resolveCharacterBoxById(this.selectedCharacterBoxId()),
+  );
+  public readonly selectedCharacterBoxIds = computed(
+    () => this.selectedCharacterBox()?.characterIds ?? [],
+  );
+  public readonly selectedCharacterBoxFavoriteCount = computed(() => {
+    const selectedBox = this.selectedCharacterBox();
+
+    if (!selectedBox) {
+      return 0;
+    }
+
+    const favoriteIdSet = new Set(this.favoriteIds());
+
+    return selectedBox.characterIds.filter((characterId) => favoriteIdSet.has(characterId)).length;
+  });
   public readonly selectedCaptainSubtitle = computed(() => {
     const captain = this.selectedCaptain();
 
@@ -236,6 +256,28 @@ export class CaptainCoveragePage implements OnInit {
       ? this.t('filters.captainAbilityCoverage.support.full')
       : this.t('filters.captainAbilityCoverage.support.simple'),
   );
+  public readonly characterBoxSupportLabel = computed(() => {
+    const selectedBox = this.selectedCharacterBox();
+
+    if (!this.characterBoxes().length) {
+      return this.t('filters.characterBox.support.noBoxes');
+    }
+
+    if (!selectedBox) {
+      return this.t('filters.characterBox.support.all');
+    }
+
+    if (this.favoritesOnly()) {
+      return this.t('filters.characterBox.support.withFavorites', {
+        count: this.selectedCharacterBoxFavoriteCount(),
+        total: selectedBox.characterIds.length,
+      });
+    }
+
+    return this.t('filters.characterBox.support.withCount', {
+      count: selectedBox.characterIds.length,
+    });
+  });
   public readonly abilityFilterRailItems = computed<AbilityFilterRailItem[]>(() => [
     {
       category: 'special',
@@ -272,10 +314,16 @@ export class CaptainCoveragePage implements OnInit {
 
     const normalizedSearchTerm = this.searchTerm().trim().toLowerCase();
     const favoriteIdSet = new Set(this.favoriteIds());
+    const selectedCharacterBoxIdSet = this.selectedCharacterBox()
+      ? new Set(this.selectedCharacterBoxIds())
+      : null;
     const selectedAbilityRequirements = this.selectedAbilityRequirements();
     const characterDetailsById = this.allCharacterDetailsById();
     const selectedConflictKeys = this.resolveSelectedTeamConflictKeys();
     const matchingCharacters = this.allCharacters()
+      .filter((character) =>
+        selectedCharacterBoxIdSet ? selectedCharacterBoxIdSet.has(character.id) : true,
+      )
       .map((character) => {
         const characterDetail = characterDetailsById.get(character.id);
 
@@ -448,6 +496,7 @@ export class CaptainCoveragePage implements OnInit {
     private readonly router: Router,
   ) {
     this.favoriteIds = this.userState.favoriteCharacterIds;
+    this.characterBoxes = this.userState.characterBoxes;
     this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
   }
 
@@ -455,8 +504,9 @@ export class CaptainCoveragePage implements OnInit {
     this.loading.set(true);
 
     try {
-      const [, summary, abilityCatalog, records] = await Promise.all([
+      const [, , summary, abilityCatalog, records] = await Promise.all([
         this.userState.readyFavoriteCharacterIds(),
+        this.userState.readyCharacterBoxes(),
         this.repository.getDatasetManifest(),
         this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
         this.repository.searchDetailedCharacters({
@@ -484,6 +534,7 @@ export class CaptainCoveragePage implements OnInit {
             record.detail.captainAbility.trim().length > 0,
         ),
       );
+      this.clearMissingSelectedCharacterBox();
       await this.applySavedTeamFromRoute();
     } finally {
       this.loading.set(false);
@@ -495,6 +546,7 @@ export class CaptainCoveragePage implements OnInit {
       return;
     }
 
+    this.clearMissingSelectedCharacterBox();
     await this.applySavedTeamFromRoute();
   }
 
@@ -642,6 +694,10 @@ export class CaptainCoveragePage implements OnInit {
     event: CustomEvent<{ checked?: boolean | null }>,
   ): void {
     this.requireFullCaptainAbilityCoverage.set(Boolean(event.detail.checked));
+  }
+
+  public onCharacterBoxChange(event: CustomEvent<{ value?: string | null }>): void {
+    this.selectedCharacterBoxId.set(this.normalizeCharacterBoxId(event.detail.value));
   }
 
   public openSpecialAbilityPicker(): void {
@@ -877,6 +933,30 @@ export class CaptainCoveragePage implements OnInit {
     );
   }
 
+  private resolveCharacterBoxById(characterBoxId: string | null): CharacterBox | null {
+    if (!characterBoxId) {
+      return null;
+    }
+
+    return this.characterBoxes().find((box) => box.id === characterBoxId) ?? null;
+  }
+
+  private normalizeCharacterBoxId(value: string | null | undefined): string | null {
+    const normalizedBoxId = typeof value === 'string' ? value.trim() : '';
+
+    if (!normalizedBoxId) {
+      return null;
+    }
+
+    return this.resolveCharacterBoxById(normalizedBoxId)?.id ?? null;
+  }
+
+  private clearMissingSelectedCharacterBox(): void {
+    if (this.selectedCharacterBoxId() && !this.selectedCharacterBox()) {
+      this.selectedCharacterBoxId.set(null);
+    }
+  }
+
   private async applySavedTeamFromRoute(): Promise<void> {
     const teamId = this.route.snapshot.queryParamMap.get('teamId')?.trim() ?? '';
 
@@ -902,7 +982,9 @@ export class CaptainCoveragePage implements OnInit {
     const selectedSlots = sourceSlotIndexes.map((slotIndex) => {
       const characterId = team.slots[slotIndex];
 
-      return typeof characterId === 'number' ? (characterDetailsById.get(characterId) ?? null) : null;
+      return typeof characterId === 'number'
+        ? (characterDetailsById.get(characterId) ?? null)
+        : null;
     });
     const captain = selectedSlots[0] ?? null;
 

@@ -10,7 +10,11 @@ import {
   type AutoBuildAbilitySource,
   type NormalizedBuilderAbility,
 } from '../../core/models/auto-team-builder-ability.models';
-import { type CharacterDetailRecord, type CharacterListItem } from '../../core/models/optc.models';
+import {
+  type CharacterBox,
+  type CharacterDetailRecord,
+  type CharacterListItem,
+} from '../../core/models/optc.models';
 import { type AbilityRequirementDraft } from '../../core/services/ability-requirement-draft.utils';
 import { CaptainCoveragePage } from './captain-coverage.page';
 
@@ -199,6 +203,111 @@ describe('CaptainCoveragePage', () => {
     page.toggleHideFavorites();
     expect(page.favoritesOnly()).toBe(false);
     expect(page.resultCards().map((card) => card.character.name)).toEqual(['Luffy Candidate']);
+  });
+
+  it('limits covered character results to the selected character box', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Box Scope',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const inBoxCharacter = createCharacter({ id: 2001, name: 'In Box Candidate' });
+    const outsideBoxCharacter = createCharacter({ id: 2002, name: 'Outside Box Candidate' });
+    const { page, userState } = createPage({
+      captains: [leader],
+      characters: [leader, inBoxCharacter, outsideBoxCharacter],
+      characterBoxes: [createCharacterBox('box-1', 'Coverage Box', [2001])],
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+
+    expect(userState.readyCharacterBoxes).toHaveBeenCalledOnce();
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'Outside Box Candidate',
+      'In Box Candidate',
+    ]);
+
+    page.onCharacterBoxChange({
+      detail: { value: 'box-1' },
+    } as CustomEvent<{ value?: string | null }>);
+
+    expect(page.selectedCharacterBox()?.name).toBe('Coverage Box');
+    expect(page.selectedCharacterBoxIds()).toEqual([2001]);
+    expect(page.resultCards().map((card) => card.character.name)).toEqual(['In Box Candidate']);
+    expect(page.characterBoxSupportLabel()).toBe(
+      'captain-coverage.filters.characterBox.support.withCount',
+    );
+  });
+
+  it('intersects favorites-only results with the selected character box', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Favorite Box',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const favoriteInBox = createCharacter({ id: 2001, name: 'Favorite Candidate' });
+    const nonFavoriteInBox = createCharacter({ id: 2002, name: 'Plain Candidate' });
+    const favoriteOutsideBox = createCharacter({ id: 2003, name: 'Outside Favorite' });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, favoriteInBox, nonFavoriteInBox, favoriteOutsideBox],
+      favoriteIds: [2001, 2003],
+      characterBoxes: [createCharacterBox('box-1', 'Favorite Box', [2001, 2002])],
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+    page.onCharacterBoxChange({
+      detail: { value: 'box-1' },
+    } as CustomEvent<{ value?: string | null }>);
+    page.toggleFavoritesOnly();
+
+    expect(page.selectedCharacterBoxFavoriteCount()).toBe(1);
+    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Favorite Candidate']);
+    expect(page.characterBoxSupportLabel()).toBe(
+      'captain-coverage.filters.characterBox.support.withFavorites',
+    );
+  });
+
+  it('returns no covered results when the selected character box is empty', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Empty Box',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const coveredCharacter = createCharacter({ id: 2001, name: 'Covered Candidate' });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, coveredCharacter],
+      characterBoxes: [createCharacterBox('empty-box', 'Empty Box', [])],
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+
+    expect(page.resultCards()).toHaveLength(1);
+
+    page.onCharacterBoxChange({
+      detail: { value: 'empty-box' },
+    } as CustomEvent<{ value?: string | null }>);
+
+    expect(page.selectedCharacterBox()?.name).toBe('Empty Box');
+    expect(page.resultCards()).toEqual([]);
+    expect(page.totalMatchingCharacters()).toBe(0);
+  });
+
+  it('clears missing selected character box ids when character boxes are loaded', async () => {
+    const { page } = createPage({
+      characterBoxes: [createCharacterBox('box-1', 'Available Box', [2001])],
+    });
+
+    page.selectedCharacterBoxId.set('deleted-box');
+
+    await page.ngOnInit();
+
+    expect(page.selectedCharacterBoxId()).toBeNull();
+    expect(page.selectedCharacterBox()).toBeNull();
   });
 
   it('excludes covered characters that conflict with the selected team or cannot fit the cost budget', async () => {
@@ -670,11 +779,7 @@ describe('CaptainCoveragePage', () => {
 
     expect(userState.readySavedTeams).toHaveBeenCalledOnce();
     expect(page.selectedTeamSlots().map((slot) => slot?.id ?? null)).toEqual([
-      1001,
-      2001,
-      2002,
-      2003,
-      2004,
+      1001, 2001, 2002, 2003, 2004,
     ]);
     expect(page.selectedCaptainDetail()?.id).toBe(1001);
     expect(page.teamName()).toBe('Coverage Import');
@@ -741,6 +846,11 @@ describe('CaptainCoveragePage', () => {
     expect(template).toContain('resultCards()');
     expect(template).toContain('toggleFavoritesOnly()');
     expect(template).toContain('toggleHideFavorites()');
+    expect(template).toContain("t('filters.characterBox.label')");
+    expect(template).toContain('selectedCharacterBoxId()');
+    expect(template).toContain('characterBoxes()');
+    expect(template).toContain('characterBoxSupportLabel()');
+    expect(template).toContain('onCharacterBoxChange($event)');
     expect(template).toContain('onMaxTotalCostChange($event)');
     expect(template).toContain('<app-captain-team-condition-status');
     expect(template).toContain('teamConditionStatus()');
@@ -790,6 +900,7 @@ function createPage({
   abilityCatalog = createAbilityCatalog(),
   routeTeamId = null,
   savedTeams = [],
+  characterBoxes = [],
 }: {
   captains?: CharacterDetailRecord[];
   characters?: Array<CharacterDetailRecord & CharacterListItem>;
@@ -797,6 +908,7 @@ function createPage({
   abilityCatalog?: AutoBuildAbilityCatalog;
   routeTeamId?: string | null;
   savedTeams?: Array<ReturnType<typeof createSavedTeam>>;
+  characterBoxes?: CharacterBox[];
 } = {}): {
   page: CaptainCoveragePage;
   repository: {
@@ -810,9 +922,11 @@ function createPage({
     ensureLoaded: ReturnType<typeof vi.fn>;
   };
   userState: {
+    characterBoxes: ReturnType<typeof signal<CharacterBox[]>>;
     favoriteCharacterIds: ReturnType<typeof signal<number[]>>;
     getSavedTeamById: ReturnType<typeof vi.fn>;
     ready: ReturnType<typeof vi.fn>;
+    readyCharacterBoxes: ReturnType<typeof vi.fn>;
     readySavedTeams: ReturnType<typeof vi.fn>;
     saveTeam: ReturnType<typeof vi.fn>;
   };
@@ -840,11 +954,13 @@ function createPage({
     ensureLoaded: vi.fn().mockResolvedValue(undefined),
   };
   const userState = {
+    characterBoxes: signal(characterBoxes),
     favoriteCharacterIds: signal(favoriteIds),
     getSavedTeamById: vi.fn(
       (teamId: string) => savedTeams.find((team) => team.id === teamId) ?? null,
     ),
     ready: vi.fn().mockResolvedValue(undefined),
+    readyCharacterBoxes: vi.fn().mockResolvedValue(undefined),
     readyFavoriteCharacterIds: vi.fn().mockResolvedValue(undefined),
     readySavedTeams: vi.fn().mockResolvedValue(undefined),
     saveTeam: vi.fn().mockResolvedValue({ id: 'saved-captain-coverage-team' }),
@@ -898,6 +1014,16 @@ function createSavedTeam(
     notes: overrides.notes ?? '',
     shipId: overrides.shipId ?? null,
     slots: overrides.slots ?? [1001, 1001, null, null, null, null],
+    createdAt: '2026-05-10T10:00:00.000Z',
+    updatedAt: '2026-05-10T10:00:00.000Z',
+  };
+}
+
+function createCharacterBox(id: string, name: string, characterIds: number[]): CharacterBox {
+  return {
+    id,
+    name,
+    characterIds,
     createdAt: '2026-05-10T10:00:00.000Z',
     updatedAt: '2026-05-10T10:00:00.000Z',
   };
