@@ -11,6 +11,8 @@ import {
   IonMenuButton,
   IonModal,
   IonSearchbar,
+  IonSelect,
+  IonSelectOption,
   IonSpinner,
   IonTextarea,
   IonTitle,
@@ -23,11 +25,19 @@ import {
   checkmarkCircleOutline,
   closeOutline,
   createOutline,
+  funnelOutline,
   peopleOutline,
+  trashOutline,
 } from 'ionicons/icons';
 
 import {
+  type AutoBuildAbilityCatalog,
+  type AutoBuildAbilityRequirement,
+} from '../../core/models/auto-team-builder-ability.models';
+import { type AutoBuildCaptainBranchMode } from '../../core/models/auto-team-builder.models';
+import {
   type CharacterDetailRecord,
+  type DatasetManifest,
   type SavedTeam,
   type ShipRecord,
 } from '../../core/models/optc.models';
@@ -36,9 +46,15 @@ import {
   resolveCaptainTeamConditionStatus,
   type CaptainTeamConditionStatus,
 } from '../../core/services/captain-team-condition-status.utils';
+import {
+  isVsCaptainCoverageBranchCaptain,
+  resolveCaptainCoverageBranchDisplay,
+  resolveCaptainCoverageBranchOptions,
+} from '../../core/services/captain-coverage.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
+import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
 import { ShipPickerComponent } from '../../shared/ship-picker/ship-picker.component';
 
 const MANUAL_TEAM_SLOT_COUNT = 6;
@@ -49,7 +65,39 @@ interface ManualTeamCandidateCardView {
   subtitle: string;
   isAssignedToActiveSlot: boolean;
   isAssignedToAnotherSlot: boolean;
+  isAssignableToActiveSlot: boolean;
   actionLabel: string;
+  supportLabel: string | null;
+}
+
+interface ManualTeamSummaryMetricView {
+  key: string;
+  label: string;
+  value: string;
+  support: string | null;
+}
+
+interface ManualTeamValidationMessageView {
+  key: string;
+  title: string;
+  copy: string;
+  tone: 'warning' | 'error';
+}
+
+interface ManualTeamCaptainBranchOptionView {
+  mode: AutoBuildCaptainBranchMode;
+  label: string;
+  selected: boolean;
+}
+
+interface ManualTeamCaptainScopeChipView {
+  key: string;
+  label: string;
+}
+
+interface ManualTeamDragState {
+  characterId: number;
+  sourceSlotIndex: number | null;
 }
 
 function createEmptyManualTeamSlots(): Array<CharacterDetailRecord | null> {
@@ -69,11 +117,14 @@ function createEmptyManualTeamSlots(): Array<CharacterDetailRecord | null> {
     IonMenuButton,
     IonModal,
     IonSearchbar,
+    IonSelect,
+    IonSelectOption,
     IonSpinner,
     IonTextarea,
     IonTitle,
     IonToolbar,
     CaptainTeamConditionStatusComponent,
+    CharacterAbilityGroupsComponent,
     RouterLink,
     ShipPickerComponent,
     TranslocoDirective,
@@ -98,8 +149,43 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   public readonly selectedShipId = signal<number | null>(null);
   public readonly maxTotalCost = signal<number | null>(null);
   public readonly ships = signal<ShipRecord[]>([]);
+  public readonly summary = signal<DatasetManifest | null>(null);
+  public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
+  public readonly availableCharacterTags = signal<string[]>([]);
+  public readonly selectedTypeFilter = signal('');
+  public readonly selectedClassFilter = signal('');
+  public readonly selectedCharacterTagFilter = signal('');
+  public readonly candidateMinCost = signal<number | null>(null);
+  public readonly candidateMaxCost = signal<number | null>(null);
+  public readonly candidatesLoading = signal(false);
+  public readonly dragState = signal<ManualTeamDragState | null>(null);
+  public readonly activeDropSlotIndex = signal<number | null>(null);
+  public readonly invalidDropSlotIndex = signal<number | null>(null);
+  public readonly dragFeedbackMessage = signal('');
+  public readonly captainBranchModes = signal<Record<number, AutoBuildCaptainBranchMode | null>>({
+    0: null,
+    1: null,
+  });
   public readonly favoriteShipIds;
 
+  public readonly availableTypes = computed(() => this.summary()?.availableTypes ?? []);
+  public readonly availableClasses = computed(() => this.summary()?.availableClasses ?? []);
+  public readonly hasActiveCandidateFilters = computed(
+    () =>
+      this.selectedTypeFilter().length > 0 ||
+      this.selectedClassFilter().length > 0 ||
+      this.selectedCharacterTagFilter().length > 0 ||
+      this.candidateMinCost() !== null ||
+      this.candidateMaxCost() !== null,
+  );
+  public readonly candidateFilterErrorLabel = computed(() => {
+    const min = this.candidateMinCost();
+    const max = this.candidateMaxCost();
+
+    return min !== null && max !== null && min > max
+      ? this.t('picker.filters.costError', { min, max })
+      : '';
+  });
   public readonly filledSlotCount = computed(() => this.slots().filter(Boolean).length);
   public readonly saveDisabled = computed(
     () => this.saveUiLocked() || this.filledSlotCount() === 0,
@@ -121,11 +207,58 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
       return total + character.cost;
     }, 0),
   );
+  public readonly totalHp = computed(() => this.sumSlotStat('hp'));
+  public readonly totalAtk = computed(() => this.sumSlotStat('atk'));
+  public readonly totalRcv = computed(() => this.sumSlotStat('rcv'));
   public readonly remainingCost = computed(() => {
     const maxTotalCost = this.maxTotalCost();
 
     return maxTotalCost === null ? 0 : Math.max(0, maxTotalCost - this.budgetCost());
   });
+  public readonly teamSummaryMetrics = computed<ManualTeamSummaryMetricView[]>(() => [
+    {
+      key: 'filled',
+      label: this.t('summary.metrics.filled.label'),
+      value: this.t('summary.metrics.filled.value', {
+        filled: this.filledSlotCount(),
+        total: MANUAL_TEAM_SLOT_COUNT,
+      }),
+      support: null,
+    },
+    {
+      key: 'hp',
+      label: this.t('summary.metrics.hp.label'),
+      value: this.formatNumber(this.totalHp()),
+      support: this.t('summary.metrics.hp.support'),
+    },
+    {
+      key: 'atk',
+      label: this.t('summary.metrics.atk.label'),
+      value: this.formatNumber(this.totalAtk()),
+      support: this.t('summary.metrics.atk.support'),
+    },
+    {
+      key: 'rcv',
+      label: this.t('summary.metrics.rcv.label'),
+      value: this.formatNumber(this.totalRcv()),
+      support: this.t('summary.metrics.rcv.support'),
+    },
+    {
+      key: 'cost',
+      label: this.t('summary.metrics.cost.label'),
+      value:
+        this.maxTotalCost() === null
+          ? this.formatNumber(this.budgetCost())
+          : this.t('summary.metrics.cost.valueWithMax', {
+              used: this.budgetCost(),
+              max: this.maxTotalCost() ?? 0,
+            }),
+      support:
+        this.maxTotalCost() === null
+          ? this.t('summary.metrics.cost.supportNoMax')
+          : this.t('summary.metrics.cost.supportWithMax', { remaining: this.remainingCost() }),
+    },
+  ]);
   public readonly costBudgetSupportLabel = computed(() =>
     this.maxTotalCost() === null
       ? this.t('costBudget.support.default')
@@ -147,22 +280,23 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     const activeIndex = this.selectedSlotIndex();
     const slots = this.slots();
 
-    return this.candidates()
-      .filter((character) => this.canAssignCharacter(character))
-      .map((character) => {
-        const assignedSlotIndex = slots.findIndex((slot) => slot?.id === character.id);
+    return this.candidates().map((character) => {
+      const assignedSlotIndex = slots.findIndex((slot) => slot?.id === character.id);
+      const isAssignableToActiveSlot = this.canAssignCharacterToSlot(activeIndex, character);
 
-        return {
-          character,
-          subtitle: this.buildCharacterSubtitle(character),
-          isAssignedToActiveSlot: assignedSlotIndex === activeIndex,
-          isAssignedToAnotherSlot: assignedSlotIndex !== -1 && assignedSlotIndex !== activeIndex,
-          actionLabel:
-            assignedSlotIndex === activeIndex
-              ? this.t('actions.assigned')
-              : this.t('actions.assign'),
-        };
-      });
+      return {
+        character,
+        subtitle: this.buildCharacterSubtitle(character),
+        isAssignedToActiveSlot: assignedSlotIndex === activeIndex,
+        isAssignedToAnotherSlot: assignedSlotIndex !== -1 && assignedSlotIndex !== activeIndex,
+        isAssignableToActiveSlot,
+        actionLabel:
+          assignedSlotIndex === activeIndex ? this.t('actions.assigned') : this.t('actions.assign'),
+        supportLabel: isAssignableToActiveSlot
+          ? null
+          : this.t('picker.costBlocked', { max: this.maxTotalCost() ?? 0 }),
+      };
+    });
   });
   public readonly conditionStatus = computed<CaptainTeamConditionStatus>(() =>
     resolveCaptainTeamConditionStatus({
@@ -172,11 +306,13 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
           role: 'captain',
           label: this.t('condition.roles.captain'),
           character: this.slots()[0] ?? null,
+          branchMode: this.captainBranchModes()[0] ?? null,
         },
         {
           role: 'friendCaptain',
           label: this.t('condition.roles.friendCaptain'),
           character: this.slots()[1] ?? null,
+          branchMode: this.captainBranchModes()[1] ?? null,
         },
       ],
       slotLabels: this.slots().map((_slot, index) =>
@@ -185,13 +321,74 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
       slots: this.slots(),
     }),
   );
+  public readonly validationMessages = computed<ManualTeamValidationMessageView[]>(() => {
+    const messages: ManualTeamValidationMessageView[] = [];
+    const costError = this.costBudgetErrorLabel();
+
+    if (costError) {
+      messages.push({
+        key: 'cost',
+        title: this.t('validation.cost.title'),
+        copy: costError,
+        tone: 'error',
+      });
+    }
+
+    for (const leaderStatus of this.conditionStatus().leaderStatuses) {
+      if (!leaderStatus.characterId) {
+        messages.push({
+          key: `${leaderStatus.role}:missing`,
+          title: this.t('validation.captain.missing.title', { role: leaderStatus.label }),
+          copy: this.t('validation.captain.missing.copy'),
+          tone: 'warning',
+        });
+        continue;
+      }
+
+      if (!leaderStatus.hasCaptainAbility) {
+        messages.push({
+          key: `${leaderStatus.role}:ability`,
+          title: this.t('validation.captain.ability.title', { role: leaderStatus.label }),
+          copy: this.t('validation.captain.ability.copy', {
+            name: leaderStatus.characterName ?? leaderStatus.label,
+          }),
+          tone: 'warning',
+        });
+        continue;
+      }
+
+      if (leaderStatus.missingSlotLabels.length) {
+        messages.push({
+          key: `${leaderStatus.role}:coverage`,
+          title: this.t('validation.captain.coverage.title', { role: leaderStatus.label }),
+          copy: this.t('validation.captain.coverage.copy', {
+            slots: leaderStatus.missingSlotLabels.join(', '),
+          }),
+          tone: 'error',
+        });
+      }
+
+      if (!leaderStatus.tagConditionsSatisfied) {
+        messages.push({
+          key: `${leaderStatus.role}:tags`,
+          title: this.t('validation.captain.tags.title', { role: leaderStatus.label }),
+          copy: this.t('validation.captain.tags.copy'),
+          tone: 'error',
+        });
+      }
+    }
+
+    return messages;
+  });
 
   public readonly closeIcon = closeOutline;
   public readonly editIcon = createOutline;
+  public readonly filterIcon = funnelOutline;
   public readonly pageIcon = peopleOutline;
   public readonly shipIcon = boatOutline;
   public readonly successIcon = checkmarkCircleOutline;
   public readonly errorIcon = alertCircleOutline;
+  public readonly trashIcon = trashOutline;
 
   public constructor(
     private readonly userState: UserStateService,
@@ -210,7 +407,17 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
       this.i18n.preloadScope('manual-team-builder'),
       this.i18n.preloadScope('ship-picker'),
     ]);
-    await this.refreshShips();
+    const [ships, summary, abilityCatalog, availableCharacterTags] = await Promise.all([
+      this.repository.getShips(),
+      this.repository.getDatasetManifest(),
+      this.repository.getAutoBuilderAbilityCatalog(),
+      this.repository.getAvailableCharacterTags().catch(() => []),
+    ]);
+
+    this.ships.set(ships);
+    this.summary.set(summary);
+    this.abilityCatalog.set(abilityCatalog);
+    this.availableCharacterTags.set(availableCharacterTags);
     this.loading.set(false);
   }
 
@@ -241,6 +448,46 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     await this.refreshCandidates();
   }
 
+  public async onTypeFilterChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
+    this.selectedTypeFilter.set((event.detail.value ?? '').trim());
+    await this.refreshCandidates();
+  }
+
+  public async onClassFilterChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
+    this.selectedClassFilter.set((event.detail.value ?? '').trim());
+    await this.refreshCandidates();
+  }
+
+  public async onCharacterTagFilterChange(
+    event: CustomEvent<{ value?: string | null }>,
+  ): Promise<void> {
+    this.selectedCharacterTagFilter.set((event.detail.value ?? '').trim());
+    await this.refreshCandidates();
+  }
+
+  public async onCandidateMinCostChange(
+    event: CustomEvent<{ value?: string | number | null }>,
+  ): Promise<void> {
+    this.candidateMinCost.set(this.resolveCostBound(event.detail.value));
+    await this.refreshCandidates();
+  }
+
+  public async onCandidateMaxCostChange(
+    event: CustomEvent<{ value?: string | number | null }>,
+  ): Promise<void> {
+    this.candidateMaxCost.set(this.resolveCostBound(event.detail.value));
+    await this.refreshCandidates();
+  }
+
+  public async clearCandidateFilters(): Promise<void> {
+    this.selectedTypeFilter.set('');
+    this.selectedClassFilter.set('');
+    this.selectedCharacterTagFilter.set('');
+    this.candidateMinCost.set(null);
+    this.candidateMaxCost.set(null);
+    await this.refreshCandidates();
+  }
+
   public async openCharacterPicker(index: number): Promise<void> {
     if (!this.isValidSlotIndex(index)) {
       return;
@@ -253,6 +500,14 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
 
   public closeCharacterPicker(): void {
     this.pickerModalOpen.set(false);
+  }
+
+  public selectSlot(index: number): void {
+    if (!this.isValidSlotIndex(index)) {
+      return;
+    }
+
+    this.selectedSlotIndex.set(index);
   }
 
   public openShipPicker(): void {
@@ -288,16 +543,10 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   }
 
   public assignCharacter(character: CharacterDetailRecord): void {
-    if (!this.canAssignCharacter(character)) {
+    if (!this.assignCharacterToSlot(this.selectedSlotIndex(), character)) {
       return;
     }
 
-    const selectedSlotIndex = this.selectedSlotIndex();
-    this.slots.update((currentSlots) =>
-      currentSlots.map((slot, index) => (index === selectedSlotIndex ? character : slot)),
-    );
-    this.currentTeamId.set(null);
-    this.saveFeedbackError.set('');
     this.closeCharacterPicker();
   }
 
@@ -311,8 +560,139 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     this.slots.update((currentSlots) =>
       currentSlots.map((slot, slotIndex) => (slotIndex === index ? null : slot)),
     );
+    this.clearCaptainBranchMode(index);
     this.currentTeamId.set(null);
     this.saveFeedbackError.set('');
+  }
+
+  public onCaptainBranchModeChange(
+    index: number,
+    event: CustomEvent<{ value?: string | null }>,
+  ): void {
+    const mode = this.normalizeCaptainBranchMode(event.detail.value);
+
+    if (!this.isValidSlotIndex(index) || !mode) {
+      return;
+    }
+
+    this.setCaptainBranchMode(index, mode);
+    this.currentTeamId.set(null);
+  }
+
+  public onCandidateDragStart(event: DragEvent, character: CharacterDetailRecord): void {
+    this.dragState.set({ characterId: character.id, sourceSlotIndex: null });
+    this.dragFeedbackMessage.set('');
+    event.dataTransfer?.setData('text/plain', character.id.toString());
+    event.dataTransfer?.setDragImage?.(event.currentTarget as Element, 24, 24);
+
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'copy';
+    }
+  }
+
+  public onSlotDragStart(event: DragEvent, index: number): void {
+    const character = this.slots()[index];
+
+    if (!character) {
+      return;
+    }
+
+    this.dragState.set({ characterId: character.id, sourceSlotIndex: index });
+    this.dragFeedbackMessage.set('');
+    event.dataTransfer?.setData('text/plain', character.id.toString());
+
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+    }
+  }
+
+  public onDragEnd(): void {
+    this.dragState.set(null);
+    this.activeDropSlotIndex.set(null);
+    this.invalidDropSlotIndex.set(null);
+  }
+
+  public onSlotDragOver(event: DragEvent, index: number): void {
+    const character = this.resolveDraggedCharacter();
+
+    if (!character || !this.isValidSlotIndex(index)) {
+      return;
+    }
+
+    event.preventDefault();
+    const canDrop = this.canDropCharacterToSlot(
+      index,
+      character,
+      this.dragState()?.sourceSlotIndex,
+    );
+    this.activeDropSlotIndex.set(index);
+    this.invalidDropSlotIndex.set(canDrop ? null : index);
+
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = canDrop
+        ? this.dragState()?.sourceSlotIndex === null
+          ? 'copy'
+          : 'move'
+        : 'none';
+    }
+  }
+
+  public onSlotDragLeave(index: number): void {
+    if (this.activeDropSlotIndex() === index) {
+      this.activeDropSlotIndex.set(null);
+    }
+
+    if (this.invalidDropSlotIndex() === index) {
+      this.invalidDropSlotIndex.set(null);
+    }
+  }
+
+  public onSlotDrop(event: DragEvent, index: number): void {
+    event.preventDefault();
+    const character = this.resolveDraggedCharacter();
+    const dragState = this.dragState();
+
+    if (!character || !dragState || !this.isValidSlotIndex(index)) {
+      this.onDragEnd();
+      return;
+    }
+
+    if (!this.canDropCharacterToSlot(index, character, dragState.sourceSlotIndex)) {
+      this.dragFeedbackMessage.set(this.t('drag.invalidCost', { max: this.maxTotalCost() ?? 0 }));
+      this.onDragEnd();
+      return;
+    }
+
+    if (dragState.sourceSlotIndex === null) {
+      this.assignCharacterToSlot(index, character);
+    } else {
+      this.swapSlotCharacters(dragState.sourceSlotIndex, index);
+    }
+
+    this.onDragEnd();
+  }
+
+  public onClearDropZoneDragOver(event: DragEvent): void {
+    if (this.dragState()?.sourceSlotIndex === null || this.dragState() === null) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+  }
+
+  public onClearDropZoneDrop(event: DragEvent): void {
+    event.preventDefault();
+    const sourceSlotIndex = this.dragState()?.sourceSlotIndex;
+
+    if (sourceSlotIndex !== null && sourceSlotIndex !== undefined) {
+      this.clearSlot(sourceSlotIndex);
+    }
+
+    this.onDragEnd();
   }
 
   public async saveTeam(): Promise<void> {
@@ -348,8 +728,15 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     this.selectedSlotIndex.set(0);
     this.searchTerm.set('');
     this.candidates.set([]);
+    this.selectedTypeFilter.set('');
+    this.selectedClassFilter.set('');
+    this.selectedCharacterTagFilter.set('');
+    this.candidateMinCost.set(null);
+    this.candidateMaxCost.set(null);
     this.selectedShipId.set(null);
     this.maxTotalCost.set(null);
+    this.captainBranchModes.set({ 0: null, 1: null });
+    this.onDragEnd();
     this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
     this.notes.set('');
     this.currentTeamId.set(null);
@@ -361,6 +748,147 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     character: Pick<CharacterDetailRecord, 'id'> | null | undefined,
   ): string[] | null {
     return character ? ['/characters', character.id.toString()] : null;
+  }
+
+  public slotIsDropTarget(index: number): boolean {
+    return this.activeDropSlotIndex() === index;
+  }
+
+  public slotIsInvalidDropTarget(index: number): boolean {
+    return this.invalidDropSlotIndex() === index;
+  }
+
+  public slotHasValidation(index: number): boolean {
+    if (this.costBudgetErrorLabel() && index !== MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX) {
+      return Boolean(this.slots()[index]);
+    }
+
+    const label = this.t('condition.slotLabel', { slot: index + 1 });
+
+    return this.conditionStatus().leaderStatuses.some((status) =>
+      status.missingSlotLabels.includes(label),
+    );
+  }
+
+  public slotStatLabel(character: CharacterDetailRecord, stat: 'hp' | 'atk' | 'rcv'): string {
+    return this.formatNumber(character.stats.max[stat] ?? 0);
+  }
+
+  public slotAbilityPreview(character: CharacterDetailRecord): string {
+    return (
+      character.detail.captainAbility ??
+      character.detail.specialText ??
+      character.detail.specialName ??
+      this.t('slots.noAbilityPreview')
+    );
+  }
+
+  public captainBranchOptions(index: number): ManualTeamCaptainBranchOptionView[] {
+    const character = this.slots()[index];
+
+    if (!this.isLeaderSlotIndex(index) || !character) {
+      return [];
+    }
+
+    const branchOptions = resolveCaptainCoverageBranchOptions(character);
+
+    if (branchOptions.length !== 2) {
+      return [];
+    }
+
+    const modes: AutoBuildCaptainBranchMode[] = isVsCaptainCoverageBranchCaptain(character)
+      ? ['character1', 'character2']
+      : ['character1', 'character2', 'both'];
+    const currentMode =
+      this.captainBranchModes()[index] ?? this.resolveDefaultCaptainBranchMode(character);
+
+    return modes.map((mode) => ({
+      mode,
+      label:
+        mode === 'both'
+          ? this.t('captainHelper.branches.both')
+          : this.t('captainHelper.branches.side', {
+              name: resolveCaptainCoverageBranchDisplay(character, mode).displayName,
+            }),
+      selected: currentMode === mode,
+    }));
+  }
+
+  public captainScopeChips(index: number): ManualTeamCaptainScopeChipView[] {
+    const character = this.slots()[index];
+
+    if (!this.isLeaderSlotIndex(index) || !character) {
+      return [];
+    }
+
+    const entries = character.detail.captainAbilityCoverage?.entries ?? [];
+    const mode =
+      this.captainBranchModes()[index] ?? this.resolveDefaultCaptainBranchMode(character);
+
+    if (entries.length) {
+      return entries.flatMap((entry) => {
+        if (mode === 'character1') {
+          return [
+            {
+              key: `${entry.key}:first`,
+              label: this.t('captainHelper.scopeChip', {
+                label: entry.label,
+                scope: this.t(`captainHelper.scopes.${entry.firstCoverageScope}`),
+              }),
+            },
+          ];
+        }
+
+        if (mode === 'character2') {
+          return [
+            {
+              key: `${entry.key}:second`,
+              label: this.t('captainHelper.scopeChip', {
+                label: entry.label,
+                scope: this.t(`captainHelper.scopes.${entry.secondCoverageScope}`),
+              }),
+            },
+          ];
+        }
+
+        return [
+          {
+            key: `${entry.key}:first`,
+            label: this.t('captainHelper.scopeChip', {
+              label: entry.label,
+              scope: this.t(`captainHelper.scopes.${entry.firstCoverageScope}`),
+            }),
+          },
+          {
+            key: `${entry.key}:second`,
+            label: this.t('captainHelper.scopeChip', {
+              label: entry.label,
+              scope: this.t(`captainHelper.scopes.${entry.secondCoverageScope}`),
+            }),
+          },
+        ];
+      });
+    }
+
+    return character.detail.captainAbility
+      ? [
+          {
+            key: `${character.id}:raw`,
+            label: this.t('captainHelper.rawScope'),
+          },
+        ]
+      : [];
+  }
+
+  public highlightedRequirementsForCharacter(
+    character: CharacterDetailRecord,
+  ): AutoBuildAbilityRequirement[] {
+    return character.detail.builderAbilities.map((ability) => ({
+      abilityKey: ability.key,
+      minTurns: ability.minTurns,
+      requiredCharacterCount: 1,
+      slotTokens: ability.slotTokens,
+    }));
   }
 
   private async refreshShips(): Promise<void> {
@@ -412,6 +940,7 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     this.selectedSlotIndex.set(0);
     this.searchTerm.set('');
     this.candidates.set([]);
+    this.captainBranchModes.set(this.resolveCaptainBranchModesForSlots(this.slots()));
     this.selectedShipId.set(
       typeof team.shipId === 'number' && availableShipIds.has(team.shipId) ? team.shipId : null,
     );
@@ -433,35 +962,269 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   }
 
   private async refreshCandidates(): Promise<void> {
-    const candidates = await this.repository.searchDetailedCharacters({
-      searchTerm: this.searchTerm().trim(),
-      selectedTypes: [],
-      selectedClasses: [],
-      sortMode: 'powerFirst',
-      limit: 24,
-      offset: 0,
-    });
+    if (this.candidateFilterErrorLabel()) {
+      this.candidates.set([]);
+      return;
+    }
 
-    this.candidates.set(this.dedupeCharacterRecords(candidates));
+    this.candidatesLoading.set(true);
+
+    try {
+      const candidates = this.selectedCharacterTagFilter()
+        ? await this.loadTagFilteredCandidates()
+        : await this.repository.searchDetailedCharacters({
+            searchTerm: this.searchTerm().trim(),
+            selectedTypes: this.selectedTypeFilter() ? [this.selectedTypeFilter()] : [],
+            selectedTypesMatchMode: 'any',
+            selectedClasses: this.selectedClassFilter() ? [this.selectedClassFilter()] : [],
+            selectedClassesMatchMode: 'any',
+            costRange: {
+              min: this.candidateMinCost(),
+              max: this.candidateMaxCost(),
+            },
+            sortMode: 'powerFirst',
+            limit: 48,
+            offset: 0,
+          });
+
+      this.candidates.set(this.dedupeCharacterRecords(candidates));
+    } finally {
+      this.candidatesLoading.set(false);
+    }
   }
 
-  private canAssignCharacter(character: Pick<CharacterDetailRecord, 'cost'>): boolean {
+  private canAssignCharacterToSlot(
+    slotIndex: number,
+    character: Pick<CharacterDetailRecord, 'cost'>,
+  ): boolean {
     const maxTotalCost = this.maxTotalCost();
 
     if (maxTotalCost === null) {
       return true;
     }
 
-    const activeIndex = this.selectedSlotIndex();
-
-    if (activeIndex === MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX) {
+    if (slotIndex === MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX) {
       return true;
     }
 
-    const currentSlot = this.slots()[activeIndex];
+    const currentSlot = this.slots()[slotIndex];
     const currentSlotCost = currentSlot?.cost ?? 0;
 
     return this.budgetCost() - currentSlotCost + character.cost <= maxTotalCost;
+  }
+
+  private assignCharacterToSlot(index: number, character: CharacterDetailRecord): boolean {
+    if (!this.isValidSlotIndex(index)) {
+      return false;
+    }
+
+    if (!this.canAssignCharacterToSlot(index, character)) {
+      this.dragFeedbackMessage.set(this.t('drag.invalidCost', { max: this.maxTotalCost() ?? 0 }));
+      return false;
+    }
+
+    this.slots.update((currentSlots) =>
+      currentSlots.map((slot, slotIndex) => (slotIndex === index ? character : slot)),
+    );
+    this.setDefaultCaptainBranchMode(index, character);
+    this.currentTeamId.set(null);
+    this.saveFeedbackError.set('');
+    this.dragFeedbackMessage.set('');
+
+    return true;
+  }
+
+  private swapSlotCharacters(sourceIndex: number, targetIndex: number): void {
+    if (
+      !this.isValidSlotIndex(sourceIndex) ||
+      !this.isValidSlotIndex(targetIndex) ||
+      sourceIndex === targetIndex
+    ) {
+      return;
+    }
+
+    const slots = [...this.slots()];
+    const sourceCharacter = slots[sourceIndex] ?? null;
+    const targetCharacter = slots[targetIndex] ?? null;
+    slots[sourceIndex] = targetCharacter;
+    slots[targetIndex] = sourceCharacter;
+    this.slots.set(slots);
+    this.captainBranchModes.set(this.resolveCaptainBranchModesForSlots(slots));
+    this.currentTeamId.set(null);
+    this.saveFeedbackError.set('');
+    this.dragFeedbackMessage.set('');
+  }
+
+  private canDropCharacterToSlot(
+    targetIndex: number,
+    character: CharacterDetailRecord,
+    sourceSlotIndex: number | null | undefined,
+  ): boolean {
+    if (!this.isValidSlotIndex(targetIndex)) {
+      return false;
+    }
+
+    const maxTotalCost = this.maxTotalCost();
+
+    if (maxTotalCost === null) {
+      return true;
+    }
+
+    const nextSlots = [...this.slots()];
+
+    if (
+      sourceSlotIndex !== null &&
+      sourceSlotIndex !== undefined &&
+      this.isValidSlotIndex(sourceSlotIndex)
+    ) {
+      const targetCharacter = nextSlots[targetIndex] ?? null;
+      nextSlots[sourceSlotIndex] = targetCharacter;
+    }
+
+    nextSlots[targetIndex] = character;
+
+    return this.resolveBudgetCost(nextSlots) <= maxTotalCost;
+  }
+
+  private resolveDraggedCharacter(): CharacterDetailRecord | null {
+    const dragState = this.dragState();
+
+    if (!dragState) {
+      return null;
+    }
+
+    if (dragState.sourceSlotIndex !== null && this.isValidSlotIndex(dragState.sourceSlotIndex)) {
+      return this.slots()[dragState.sourceSlotIndex] ?? null;
+    }
+
+    return this.candidates().find((candidate) => candidate.id === dragState.characterId) ?? null;
+  }
+
+  private async loadTagFilteredCandidates(): Promise<CharacterDetailRecord[]> {
+    const searchTerm = this.searchTerm().trim().toLowerCase();
+    const selectedType = this.selectedTypeFilter().trim().toUpperCase();
+    const selectedClass = this.selectedClassFilter().trim();
+    const selectedTag = this.selectedCharacterTagFilter().trim().toLowerCase();
+    const minCost = this.candidateMinCost();
+    const maxCost = this.candidateMaxCost();
+    const records = await this.repository.getDetailedCharacterCatalog();
+
+    return records
+      .filter((character) => {
+        if (
+          searchTerm.length > 0 &&
+          !`${character.searchText ?? ''} ${character.name} ${character.id}`
+            .toLowerCase()
+            .includes(searchTerm)
+        ) {
+          return false;
+        }
+
+        if (
+          selectedType.length > 0 &&
+          !character.type
+            .split(',')
+            .map((type) => type.trim().toUpperCase())
+            .includes(selectedType)
+        ) {
+          return false;
+        }
+
+        if (selectedClass.length > 0 && !character.classes.includes(selectedClass)) {
+          return false;
+        }
+
+        if (selectedTag.length > 0) {
+          const characterTags = (character.detail.characterTags ?? []).map((tag) =>
+            tag.trim().toLowerCase(),
+          );
+
+          if (!characterTags.includes(selectedTag)) {
+            return false;
+          }
+        }
+
+        if (minCost !== null && character.cost < minCost) {
+          return false;
+        }
+
+        if (maxCost !== null && character.cost > maxCost) {
+          return false;
+        }
+
+        return true;
+      })
+      .sort((left, right) => right.id - left.id)
+      .slice(0, 48);
+  }
+
+  private resolveBudgetCost(slots: readonly (CharacterDetailRecord | null)[]): number {
+    return slots.reduce((total, character, index) => {
+      if (!character || index === MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX) {
+        return total;
+      }
+
+      return total + character.cost;
+    }, 0);
+  }
+
+  private sumSlotStat(stat: 'hp' | 'atk' | 'rcv'): number {
+    return this.slots().reduce((total, character) => total + (character?.stats.max[stat] ?? 0), 0);
+  }
+
+  private formatNumber(value: number): string {
+    return Number.isFinite(value) ? value.toLocaleString() : '0';
+  }
+
+  private setDefaultCaptainBranchMode(index: number, character: CharacterDetailRecord): void {
+    if (!this.isLeaderSlotIndex(index)) {
+      this.clearCaptainBranchMode(index);
+      return;
+    }
+
+    this.setCaptainBranchMode(index, this.resolveDefaultCaptainBranchMode(character));
+  }
+
+  private setCaptainBranchMode(index: number, mode: AutoBuildCaptainBranchMode | null): void {
+    this.captainBranchModes.update((currentModes) => ({
+      ...currentModes,
+      [index]: mode,
+    }));
+  }
+
+  private clearCaptainBranchMode(index: number): void {
+    this.setCaptainBranchMode(index, null);
+  }
+
+  private resolveCaptainBranchModesForSlots(
+    slots: readonly (CharacterDetailRecord | null)[],
+  ): Record<number, AutoBuildCaptainBranchMode | null> {
+    return {
+      0: slots[0] ? this.resolveDefaultCaptainBranchMode(slots[0]) : null,
+      1: slots[1] ? this.resolveDefaultCaptainBranchMode(slots[1]) : null,
+    };
+  }
+
+  private resolveDefaultCaptainBranchMode(
+    character: CharacterDetailRecord,
+  ): AutoBuildCaptainBranchMode | null {
+    const branchOptions = resolveCaptainCoverageBranchOptions(character);
+
+    if (branchOptions.length !== 2) {
+      return null;
+    }
+
+    return isVsCaptainCoverageBranchCaptain(character) ? 'character1' : 'both';
+  }
+
+  private normalizeCaptainBranchMode(
+    value: string | null | undefined,
+  ): AutoBuildCaptainBranchMode | null {
+    return value === 'character1' || value === 'character2' || value === 'both' ? value : null;
+  }
+
+  private isLeaderSlotIndex(index: number): boolean {
+    return index === 0 || index === MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX;
   }
 
   private buildCharacterSubtitle(character: CharacterDetailRecord): string {

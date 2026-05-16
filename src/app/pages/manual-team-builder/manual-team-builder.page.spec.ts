@@ -4,7 +4,12 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { type CharacterDetailRecord, type ShipRecord } from '../../core/models/optc.models';
+import { type AutoBuildAbilityCatalog } from '../../core/models/auto-team-builder-ability.models';
+import {
+  type CharacterDetailRecord,
+  type DatasetManifest,
+  type ShipRecord,
+} from '../../core/models/optc.models';
 
 vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
@@ -17,6 +22,8 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonMenuButton: class {},
   IonModal: class {},
   IonSearchbar: class {},
+  IonSelect: class {},
+  IonSelectOption: class {},
   IonSpinner: class {},
   IonTextarea: class {},
   IonTitle: class {},
@@ -39,9 +46,15 @@ describe('ManualTeamBuilderPage', () => {
     );
 
     expect(template).toContain('manual-team-builder-shell');
+    expect(template).toContain('manual-team-workbench');
     expect(template).toContain('manual-team-slots');
+    expect(template).toContain('manual-team-summary-card');
+    expect(template).toContain('manual-team-picker__filters');
+    expect(template).toContain('manual-team-picker-slot-rail');
+    expect(template).toContain('manual-team-clear-zone');
     expect(template).toContain('<app-ship-picker');
     expect(template).toContain('<app-captain-team-condition-status');
+    expect(template).toContain('<app-character-ability-groups');
     expect(template).not.toContain('auto-team-builder');
   });
 
@@ -53,8 +66,13 @@ describe('ManualTeamBuilderPage', () => {
     expect(i18n.preloadScope).toHaveBeenCalledWith('manual-team-builder');
     expect(i18n.preloadScope).toHaveBeenCalledWith('ship-picker');
     expect(repository.getShips).toHaveBeenCalledOnce();
+    expect(repository.getDatasetManifest).toHaveBeenCalledOnce();
+    expect(repository.getAutoBuilderAbilityCatalog).toHaveBeenCalledOnce();
+    expect(repository.getAvailableCharacterTags).toHaveBeenCalledOnce();
     expect(page.loading()).toBe(false);
     expect(page.ships().map((ship) => ship.id)).toEqual([9001, 9002]);
+    expect(page.availableTypes()).toEqual(['DEX', 'STR', 'QCK', 'PSY', 'INT']);
+    expect(page.availableCharacterTags()).toEqual(['orb boost', 'utility']);
   });
 
   it('loads a saved team from the route with all six slots, ship, name, and notes', async () => {
@@ -124,7 +142,14 @@ describe('ManualTeamBuilderPage', () => {
     await page.ionViewWillEnter();
 
     expect(page.teamName()).toBe('Existing Draft');
-    expect(page.slots().map((slot) => slot?.id ?? null)).toEqual([901, null, null, null, null, null]);
+    expect(page.slots().map((slot) => slot?.id ?? null)).toEqual([
+      901,
+      null,
+      null,
+      null,
+      null,
+      null,
+    ]);
     expect(router.navigate).toHaveBeenCalledWith([], {
       relativeTo: expect.any(Object),
       queryParams: { teamId: null },
@@ -244,11 +269,16 @@ describe('ManualTeamBuilderPage', () => {
 
     expect(page.budgetCost()).toBe(70);
     expect(page.remainingCost()).toBe(30);
-    expect(page.candidateCards().map((card) => card.character.id)).toEqual([503]);
+    expect(page.candidateCards().map((card) => card.character.id)).toEqual([503, 504]);
+    expect(page.candidateCards().map((card) => card.isAssignableToActiveSlot)).toEqual([
+      true,
+      false,
+    ]);
 
     page.selectedSlotIndex.set(1);
 
     expect(page.candidateCards().map((card) => card.character.id)).toEqual([503, 504]);
+    expect(page.candidateCards().every((card) => card.isAssignableToActiveSlot)).toBe(true);
   });
 
   it('uses ship picker events to set, clear, and favorite ships', async () => {
@@ -287,6 +317,151 @@ describe('ManualTeamBuilderPage', () => {
     expect(page.conditionStatus().state).toBe('full');
     expect(page.conditionStatus().passedLeaderLabels).toEqual(['Captain', 'Friend Captain']);
   });
+
+  it('computes live summary totals and cost validation messages', async () => {
+    const { page } = createPage();
+    const captain = createCharacterRecord(701, 'Budget Captain');
+    const friendCaptain = createCharacterRecord(702, 'Budget Friend Captain');
+    const sub = createCharacterRecord(703, 'Budget Sub');
+
+    captain.cost = 60;
+    friendCaptain.cost = 999;
+    sub.cost = 45;
+    captain.stats.max = { hp: 100, atk: 40, rcv: 10 };
+    friendCaptain.stats.max = { hp: 200, atk: 50, rcv: 20 };
+    sub.stats.max = { hp: 300, atk: 60, rcv: 30 };
+
+    await page.ngOnInit();
+    page.maxTotalCost.set(100);
+    page.slots.set([captain, friendCaptain, sub, null, null, null]);
+
+    expect(page.filledSlotCount()).toBe(3);
+    expect(page.budgetCost()).toBe(105);
+    expect(page.totalHp()).toBe(600);
+    expect(page.totalAtk()).toBe(150);
+    expect(page.totalRcv()).toBe(60);
+    expect(page.teamSummaryMetrics().find((metric) => metric.key === 'filled')?.value).toBe(
+      '3 / 6',
+    );
+    expect(page.teamSummaryMetrics().find((metric) => metric.key === 'cost')?.value).toBe(
+      '105 / 100',
+    );
+    expect(page.validationMessages().some((message) => message.key === 'cost')).toBe(true);
+  });
+
+  it('applies type, class, and cost picker filters through repository search', async () => {
+    const { page, repository } = createPage();
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.onTypeFilterChange(createValueEvent('STR'));
+    await page.onClassFilterChange(createValueEvent('Shooter'));
+    await page.onCandidateMinCostChange(createValueEvent('20'));
+    await page.onCandidateMaxCostChange(createValueEvent('60'));
+
+    const calls = repository.searchDetailedCharacters.mock.calls;
+    const lastQuery = calls[calls.length - 1]?.[0];
+
+    expect(lastQuery).toEqual(
+      expect.objectContaining({
+        selectedTypes: ['STR'],
+        selectedTypesMatchMode: 'any',
+        selectedClasses: ['Shooter'],
+        selectedClassesMatchMode: 'any',
+        costRange: { min: 20, max: 60 },
+        sortMode: 'powerFirst',
+        limit: 48,
+      }),
+    );
+  });
+
+  it('uses the detailed catalog for local character tag filtering', async () => {
+    const tagged = createCharacterRecord(801, 'Tagged Utility');
+    const untagged = createCharacterRecord(802, 'Untagged Utility');
+
+    tagged.type = 'STR';
+    tagged.classes = ['Shooter'];
+    tagged.detail.characterTags = ['orb boost', 'utility'];
+    untagged.type = 'STR';
+    untagged.classes = ['Shooter'];
+    untagged.detail.characterTags = ['defense'];
+
+    const { page, repository } = createPage({ characters: [tagged, untagged] });
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.onTypeFilterChange(createValueEvent('STR'));
+    await page.onClassFilterChange(createValueEvent('Shooter'));
+    await page.onCharacterTagFilterChange(createValueEvent('orb boost'));
+
+    expect(repository.getDetailedCharacterCatalog).toHaveBeenCalled();
+    expect(page.candidates().map((character) => character.id)).toEqual([801]);
+  });
+
+  it('supports drag/drop assign, swap, clear, and invalid cost feedback', async () => {
+    const { page } = createPage();
+    const candidate = createCharacterRecord(901, 'Dragged Candidate');
+    const swapTarget = createCharacterRecord(902, 'Swap Target');
+    const expensiveCaptain = createCharacterRecord(903, 'Expensive Captain');
+
+    candidate.cost = 10;
+    swapTarget.cost = 20;
+    expensiveCaptain.cost = 45;
+
+    await page.ngOnInit();
+    page.maxTotalCost.set(100);
+    page.candidates.set([candidate]);
+
+    page.onCandidateDragStart(createDragEvent(), candidate);
+    page.onSlotDrop(createDragEvent(), 2);
+
+    expect(page.slots()[2]?.id).toBe(901);
+
+    page.slots.set([null, null, candidate, swapTarget, null, null]);
+    page.onSlotDragStart(createDragEvent(), 2);
+    page.onSlotDrop(createDragEvent(), 3);
+
+    expect(page.slots()[2]?.id).toBe(902);
+    expect(page.slots()[3]?.id).toBe(901);
+
+    page.onSlotDragStart(createDragEvent(), 3);
+    page.onClearDropZoneDrop(createDragEvent());
+
+    expect(page.slots()[3]).toBeNull();
+
+    page.maxTotalCost.set(50);
+    page.slots.set([expensiveCaptain, null, null, null, null, null]);
+    page.candidates.set([candidate]);
+    page.onCandidateDragStart(createDragEvent(), candidate);
+    page.onSlotDrop(createDragEvent(), 2);
+
+    expect(page.slots()[2]).toBeNull();
+    expect(page.dragFeedbackMessage()).toBe('Cannot drop with max cost 50.');
+  });
+
+  it('resolves captain branch selector options and scope chips', async () => {
+    const { page } = createPage();
+    const captain = createDualCaptainRecord();
+
+    await page.ngOnInit();
+    page.slots.set([captain, null, null, null, null, null]);
+    page.captainBranchModes.set({ 0: 'both', 1: null });
+
+    expect(page.captainBranchOptions(0).map((option) => option.mode)).toEqual([
+      'character1',
+      'character2',
+      'both',
+    ]);
+    expect(page.captainScopeChips(0).map((chip) => chip.label)).toEqual([
+      'ATK boost: Crew-wide',
+      'ATK boost: Subset',
+    ]);
+
+    page.onCaptainBranchModeChange(0, createValueEvent('character2'));
+
+    expect(page.captainBranchModes()[0]).toBe('character2');
+    expect(page.captainScopeChips(0).map((chip) => chip.label)).toEqual(['ATK boost: Subset']);
+  });
 });
 
 function createPage(
@@ -299,6 +474,10 @@ function createPage(
 ): {
   page: ManualTeamBuilderPage;
   repository: {
+    getAutoBuilderAbilityCatalog: ReturnType<typeof vi.fn>;
+    getAvailableCharacterTags: ReturnType<typeof vi.fn>;
+    getDatasetManifest: ReturnType<typeof vi.fn>;
+    getDetailedCharacterCatalog: ReturnType<typeof vi.fn>;
     getShips: ReturnType<typeof vi.fn>;
     getDetailedCharactersByIds: ReturnType<typeof vi.fn>;
     searchDetailedCharacters: ReturnType<typeof vi.fn>;
@@ -347,6 +526,10 @@ function createPage(
   };
   const repository = {
     getShips: vi.fn().mockResolvedValue(ships),
+    getDatasetManifest: vi.fn().mockResolvedValue(createManifest()),
+    getAutoBuilderAbilityCatalog: vi.fn().mockResolvedValue(createAbilityCatalog()),
+    getAvailableCharacterTags: vi.fn().mockResolvedValue(['orb boost', 'utility']),
+    getDetailedCharacterCatalog: vi.fn().mockResolvedValue(characters),
     getDetailedCharactersByIds: vi
       .fn()
       .mockImplementation(async (ids: number[]) =>
@@ -354,16 +537,18 @@ function createPage(
       ),
     searchDetailedCharacters: vi
       .fn()
-      .mockImplementation(async (query: { searchTerm: string; limit?: number; offset?: number }) => {
-        const searchTerm = query.searchTerm.trim().toLowerCase();
-        const filteredCharacters = searchTerm
-          ? characters.filter((character) => character.name.toLowerCase().includes(searchTerm))
-          : characters;
-        const offset = query.offset ?? 0;
-        const limit = query.limit ?? filteredCharacters.length;
+      .mockImplementation(
+        async (query: { searchTerm: string; limit?: number; offset?: number }) => {
+          const searchTerm = query.searchTerm.trim().toLowerCase();
+          const filteredCharacters = searchTerm
+            ? characters.filter((character) => character.name.toLowerCase().includes(searchTerm))
+            : characters;
+          const offset = query.offset ?? 0;
+          const limit = query.limit ?? filteredCharacters.length;
 
-        return filteredCharacters.slice(offset, offset + limit);
-      }),
+          return filteredCharacters.slice(offset, offset + limit);
+        },
+      ),
   };
   const i18n = {
     preloadScope: vi.fn().mockResolvedValue(undefined),
@@ -413,6 +598,66 @@ function createPage(
 
         if (key === 'costBudget.range.overBudget') {
           return `${params?.['used'] ?? 0} / ${params?.['max'] ?? 0} cost used.`;
+        }
+
+        if (key === 'summary.metrics.filled.value') {
+          return `${params?.['filled'] ?? 0} / ${params?.['total'] ?? 0}`;
+        }
+
+        if (key === 'summary.metrics.cost.valueWithMax') {
+          return `${params?.['used'] ?? 0} / ${params?.['max'] ?? 0}`;
+        }
+
+        if (key === 'summary.metrics.cost.supportWithMax') {
+          return `${params?.['remaining'] ?? 0} cost remaining.`;
+        }
+
+        if (key === 'summary.metrics.cost.supportNoMax') {
+          return 'Friend Captain cost is excluded.';
+        }
+
+        if (key === 'picker.costBlocked') {
+          return `Max cost ${params?.['max'] ?? 0} exceeded.`;
+        }
+
+        if (key === 'picker.filters.costError') {
+          return `Min ${params?.['min'] ?? 0} cannot exceed max ${params?.['max'] ?? 0}.`;
+        }
+
+        if (key === 'drag.invalidCost') {
+          return `Cannot drop with max cost ${params?.['max'] ?? 0}.`;
+        }
+
+        if (key === 'captainHelper.branches.both') {
+          return 'Both branches';
+        }
+
+        if (key === 'captainHelper.branches.side') {
+          return `${params?.['name'] ?? ''} branch`;
+        }
+
+        if (key === 'captainHelper.scopeChip') {
+          return `${params?.['label'] ?? ''}: ${params?.['scope'] ?? ''}`;
+        }
+
+        if (key === 'captainHelper.scopes.crew-wide') {
+          return 'Crew-wide';
+        }
+
+        if (key === 'captainHelper.scopes.subset') {
+          return 'Subset';
+        }
+
+        if (key === 'captainHelper.scopes.captain-only') {
+          return 'Captain only';
+        }
+
+        if (key === 'captainHelper.scopes.none') {
+          return 'No coverage';
+        }
+
+        if (key === 'captainHelper.rawScope') {
+          return 'Captain ability text available';
         }
 
         if (key === 'save.error') {
@@ -470,10 +715,51 @@ function createSavedTeam(
   };
 }
 
-function createCharacterRecord(
-  id: number,
-  name = `Character ${id}`,
-): CharacterDetailRecord {
+function createManifest(overrides: Partial<DatasetManifest> = {}): DatasetManifest {
+  return {
+    schemaVersion: 1,
+    generatedAt: '2026-05-16T00:00:00.000Z',
+    sourceVersion: 'test',
+    characterCount: 2,
+    detailCount: 2,
+    shipCount: 2,
+    rumbleCount: 0,
+    availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+    availableClasses: ['Fighter', 'Slasher'],
+    packs: [],
+    ...overrides,
+  };
+}
+
+function createAbilityCatalog(
+  overrides: Partial<AutoBuildAbilityCatalog> = {},
+): AutoBuildAbilityCatalog {
+  return {
+    generatedAt: '2026-05-16T00:00:00.000Z',
+    sourceVersion: 'test',
+    abilityCount: 1,
+    abilities: [
+      {
+        key: 'remove_bind',
+        label: 'Remove Bind',
+        category: 'special',
+        groupLabel: 'Debuff removal',
+        groupOrder: 1,
+        effectOrder: 1,
+        supportsTurns: true,
+        supportsSlotTokens: true,
+        availableSlotTokens: ['crew'],
+        availableSources: ['specialText'],
+        matchCount: 1,
+        sampleCharacterIds: [101],
+        sampleTexts: ['Removes Bind by 5 turns.'],
+      },
+    ],
+    ...overrides,
+  };
+}
+
+function createCharacterRecord(id: number, name = `Character ${id}`): CharacterDetailRecord {
   return {
     id,
     name,
@@ -535,6 +821,41 @@ function createCharacterRecord(
   };
 }
 
+function createDualCaptainRecord(): CharacterDetailRecord {
+  const captain = createCharacterRecord(1001, 'Dual Captain');
+  const firstText = 'Boosts ATK of [STR] characters by 5x.';
+  const secondText = 'Boosts ATK of [DEX] characters by 5x.';
+
+  captain.type = 'STR,DEX';
+  captain.detail.captainAbility = firstText;
+  captain.detail.captainAbilityVariants = [
+    {
+      key: 'character1',
+      label: 'Captain Ability (Character 1)',
+      text: firstText,
+    },
+    {
+      key: 'character2',
+      label: 'Captain Ability (Character 2)',
+      text: secondText,
+    },
+  ];
+  captain.detail.captainAbilityCoverage = {
+    entries: [
+      {
+        key: 'atk',
+        label: 'ATK boost',
+        firstCoverageScope: 'crew-wide',
+        secondCoverageScope: 'subset',
+        firstCoverageClauses: ['Boosts ATK of [STR] characters by 5x'],
+        secondCoverageClauses: ['Boosts ATK of [DEX] characters by 5x'],
+      },
+    ],
+  };
+
+  return captain;
+}
+
 function createShipRecord(id: number): ShipRecord {
   return {
     id,
@@ -543,4 +864,23 @@ function createShipRecord(id: number): ShipRecord {
     thumbUrl: null,
     description: 'Boosts ATK by 1.5x.',
   };
+}
+
+function createValueEvent(value: string | null): CustomEvent<{ value: string | null }> {
+  return {
+    detail: { value },
+  } as CustomEvent<{ value: string | null }>;
+}
+
+function createDragEvent(): DragEvent {
+  return {
+    preventDefault: vi.fn(),
+    currentTarget: {},
+    dataTransfer: {
+      dropEffect: 'none',
+      effectAllowed: 'all',
+      setData: vi.fn(),
+      setDragImage: vi.fn(),
+    },
+  } as unknown as DragEvent;
 }

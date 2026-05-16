@@ -25,173 +25,306 @@
           <span>{{ t('loading') }}</span>
         </section>
       } @else {
-        <section
-          class="glass-card manual-team-card captain-condition-panel"
-          [class.captain-condition-panel--full]="conditionStatus().state === 'full'"
-          [class.captain-condition-panel--partial]="conditionStatus().state === 'partial'"
-          [class.captain-condition-panel--none]="conditionStatus().state === 'none'"
-        >
-          <div class="section-head">
-            <div>
-              <h2>{{ t('builder.title') }}</h2>
-              <span>{{ t('builder.copy') }}</span>
-            </div>
-          </div>
-
-          <div class="manual-team-fields">
-            <ion-input
-              [label]="t('fields.name')"
-              labelPlacement="stacked"
-              fill="outline"
-              [value]="teamName()"
-              [disabled]="saveUiLocked()"
-              (ionInput)="onTeamNameChange($event)"
-            ></ion-input>
-            <ion-textarea
-              [label]="t('fields.notes')"
-              labelPlacement="stacked"
-              fill="outline"
-              autoGrow="true"
-              [value]="notes()"
-              [disabled]="saveUiLocked()"
-              (ionInput)="onNotesChange($event)"
-            ></ion-textarea>
-          </div>
-
-          <div class="manual-team-controls">
-            <div class="manual-team-control">
+        <div class="manual-team-workbench">
+          <section
+            class="glass-card manual-team-card captain-condition-panel"
+            [class.captain-condition-panel--full]="conditionStatus().state === 'full'"
+            [class.captain-condition-panel--partial]="conditionStatus().state === 'partial'"
+            [class.captain-condition-panel--none]="conditionStatus().state === 'none'"
+          >
+            <div class="section-head">
               <div>
-                <span>{{ t('ship.label') }}</span>
-                <strong>{{ selectedShipLabel() }}</strong>
+                <h2>{{ t('builder.title') }}</h2>
+                <span>{{ t('builder.copy') }}</span>
               </div>
-              <ion-button fill="outline" color="light" (click)="openShipPicker()">
-                <ion-icon slot="start" [icon]="shipIcon"></ion-icon>
-                {{ t('ship.actions.change') }}
-              </ion-button>
             </div>
 
-            <div class="manual-team-control manual-team-control--cost">
-              <div>
-                <span>{{ t('costBudget.label') }}</span>
-                <strong>{{ costBudgetSupportLabel() }}</strong>
-              </div>
+            <div class="manual-team-fields">
               <ion-input
-                type="number"
-                inputmode="numeric"
-                min="0"
-                step="1"
-                fill="outline"
-                [label]="t('costBudget.range.max')"
+                [label]="t('fields.name')"
                 labelPlacement="stacked"
-                [value]="maxTotalCost()"
-                (ionInput)="onMaxTotalCostChange($event)"
+                fill="outline"
+                [value]="teamName()"
+                [disabled]="saveUiLocked()"
+                (ionInput)="onTeamNameChange($event)"
               ></ion-input>
-              @if (costBudgetErrorLabel()) {
-                <small class="manual-team-cost-error">{{ costBudgetErrorLabel() }}</small>
+              <ion-textarea
+                [label]="t('fields.notes')"
+                labelPlacement="stacked"
+                fill="outline"
+                autoGrow="true"
+                [value]="notes()"
+                [disabled]="saveUiLocked()"
+                (ionInput)="onNotesChange($event)"
+              ></ion-textarea>
+            </div>
+
+            <div class="manual-team-controls">
+              <div class="manual-team-control">
+                <div>
+                  <span>{{ t('ship.label') }}</span>
+                  <strong>{{ selectedShipLabel() }}</strong>
+                </div>
+                <ion-button fill="outline" color="light" (click)="openShipPicker()">
+                  <ion-icon slot="start" [icon]="shipIcon"></ion-icon>
+                  {{ t('ship.actions.change') }}
+                </ion-button>
+              </div>
+
+              <div class="manual-team-control manual-team-control--cost">
+                <div>
+                  <span>{{ t('costBudget.label') }}</span>
+                  <strong>{{ costBudgetSupportLabel() }}</strong>
+                </div>
+                <ion-input
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  step="1"
+                  fill="outline"
+                  [label]="t('costBudget.range.max')"
+                  labelPlacement="stacked"
+                  [value]="maxTotalCost()"
+                  (ionInput)="onMaxTotalCostChange($event)"
+                ></ion-input>
+                @if (costBudgetErrorLabel()) {
+                  <small class="manual-team-cost-error">{{ costBudgetErrorLabel() }}</small>
+                }
+              </div>
+            </div>
+
+            <div class="manual-team-slots">
+              @for (slot of slots(); track index; let index = $index) {
+                <article
+                  class="manual-team-slot"
+                  [class.manual-team-slot--active]="selectedSlotIndex() === index"
+                  [class.manual-team-slot--empty]="!slot"
+                  [class.manual-team-slot--drop-target]="slotIsDropTarget(index)"
+                  [class.manual-team-slot--drop-invalid]="slotIsInvalidDropTarget(index)"
+                  [class.manual-team-slot--validation]="slotHasValidation(index)"
+                  [attr.role]="slot ? 'link' : null"
+                  [attr.tabindex]="slot ? '0' : null"
+                  [attr.draggable]="slot ? 'true' : null"
+                  (click)="openSlotDetail(index)"
+                  (keydown.enter)="openSlotDetail(index)"
+                  (keydown.space)="$event.preventDefault(); openSlotDetail(index)"
+                  (dragstart)="onSlotDragStart($event, index)"
+                  (dragend)="onDragEnd()"
+                  (dragover)="onSlotDragOver($event, index)"
+                  (dragleave)="onSlotDragLeave(index)"
+                  (drop)="onSlotDrop($event, index)"
+                >
+                  @if (slot) {
+                    <div class="manual-team-slot__media">
+                      <img [src]="slot.imageUrl" [alt]="slot.name" loading="lazy" />
+                      <span class="type-pill">{{ slot.type }}</span>
+                    </div>
+                    <div class="manual-team-slot__body">
+                      <div class="manual-team-slot__head">
+                        <span>
+                          <strong>{{ t('slots.label', { slot: index + 1 }) }}</strong>
+                          <small>{{ slot.name }}</small>
+                        </span>
+                        <div class="manual-team-slot__actions">
+                          <ion-button
+                            fill="clear"
+                            size="small"
+                            color="light"
+                            class="manual-team-slot__edit"
+                            [title]="t('actions.editSlot', { slot: index + 1 })"
+                            [attr.aria-label]="t('actions.editSlot', { slot: index + 1 })"
+                            (click)="$event.stopPropagation(); openCharacterPicker(index)"
+                          >
+                            <ion-icon slot="icon-only" [icon]="editIcon"></ion-icon>
+                          </ion-button>
+                          <ion-button
+                            fill="clear"
+                            size="small"
+                            color="warning"
+                            class="manual-team-slot__clear"
+                            (click)="clearSlot(index, $event)"
+                          >
+                            {{ 'common.actions.clear' | transloco }}
+                          </ion-button>
+                        </div>
+                      </div>
+
+                      <div class="manual-team-slot__meta">
+                        <small>{{ slot.primaryClass }}</small>
+                        @if (slot.secondaryClass) {
+                          <small>{{ slot.secondaryClass }}</small>
+                        }
+                        <small>{{ t('slots.cost', { cost: slot.cost }) }}</small>
+                      </div>
+
+                      <div class="manual-team-slot__stats">
+                        <span
+                          >{{ t('summary.metrics.hp.label') }} {{ slotStatLabel(slot, 'hp') }}</span
+                        >
+                        <span
+                          >{{ t('summary.metrics.atk.label') }}
+                          {{ slotStatLabel(slot, 'atk') }}</span
+                        >
+                        <span
+                          >{{ t('summary.metrics.rcv.label') }}
+                          {{ slotStatLabel(slot, 'rcv') }}</span
+                        >
+                      </div>
+
+                      <p class="manual-team-slot__ability">{{ slotAbilityPreview(slot) }}</p>
+
+                      @if (captainBranchOptions(index).length) {
+                        <div class="manual-team-branch-control" (click)="$event.stopPropagation()">
+                          <span>{{ t('captainHelper.branchLabel') }}</span>
+                          <ion-select
+                            interface="popover"
+                            fill="outline"
+                            [value]="captainBranchModes()[index]"
+                            (ionChange)="onCaptainBranchModeChange(index, $event)"
+                          >
+                            @for (branch of captainBranchOptions(index); track branch.mode) {
+                              <ion-select-option [value]="branch.mode">
+                                {{ branch.label }}
+                              </ion-select-option>
+                            }
+                          </ion-select>
+                        </div>
+                      }
+
+                      @if (captainScopeChips(index).length) {
+                        <div class="manual-team-scope-chip-row">
+                          @for (chip of captainScopeChips(index); track chip.key) {
+                            <small>{{ chip.label }}</small>
+                          }
+                        </div>
+                      }
+
+                      <app-character-ability-groups
+                        [abilities]="slot.detail.builderAbilities"
+                        [catalogItems]="abilityCatalog()?.abilities ?? []"
+                        [highlightedRequirements]="highlightedRequirementsForCharacter(slot)"
+                        displayMode="collapsed"
+                      ></app-character-ability-groups>
+                    </div>
+                  } @else {
+                    <img
+                      src="assets/placeholders/character-card.svg"
+                      [alt]="t('slots.emptyAlt')"
+                      loading="lazy"
+                    />
+                    <span>
+                      <strong>{{ t('slots.label', { slot: index + 1 }) }}</strong>
+                      <small>{{ t('slots.empty') }}</small>
+                    </span>
+                    <ion-button
+                      fill="clear"
+                      size="small"
+                      color="light"
+                      class="manual-team-slot__edit"
+                      [title]="t('actions.editSlot', { slot: index + 1 })"
+                      [attr.aria-label]="t('actions.editSlot', { slot: index + 1 })"
+                      (click)="$event.stopPropagation(); openCharacterPicker(index)"
+                    >
+                      <ion-icon slot="icon-only" [icon]="editIcon"></ion-icon>
+                    </ion-button>
+                  }
+                </article>
               }
             </div>
-          </div>
 
-          <div class="manual-team-slots">
-            @for (slot of slots(); track index; let index = $index) {
-              <article
-                class="manual-team-slot"
-                [class.manual-team-slot--active]="selectedSlotIndex() === index"
-                [class.manual-team-slot--empty]="!slot"
-                [attr.role]="slot ? 'link' : null"
-                [attr.tabindex]="slot ? '0' : null"
-                (click)="openSlotDetail(index)"
-                (keydown.enter)="openSlotDetail(index)"
-                (keydown.space)="$event.preventDefault(); openSlotDetail(index)"
-              >
-                @if (slot) {
-                  <img [src]="slot.imageUrl" [alt]="slot.name" loading="lazy" />
-                  <span>
-                    <strong>{{ t('slots.label', { slot: index + 1 }) }}</strong>
-                    <small>{{ slot.name }}</small>
-                  </span>
-                  <ion-button
-                    fill="clear"
-                    size="small"
-                    color="light"
-                    class="manual-team-slot__edit"
-                    [title]="t('actions.editSlot', { slot: index + 1 })"
-                    [attr.aria-label]="t('actions.editSlot', { slot: index + 1 })"
-                    (click)="$event.stopPropagation(); openCharacterPicker(index)"
-                  >
-                    <ion-icon slot="icon-only" [icon]="editIcon"></ion-icon>
-                  </ion-button>
-                  <ion-button
-                    fill="clear"
-                    size="small"
-                    color="warning"
-                    class="manual-team-slot__clear"
-                    (click)="clearSlot(index, $event)"
-                  >
-                    {{ 'common.actions.clear' | transloco }}
-                  </ion-button>
-                } @else {
-                  <img
-                    src="assets/placeholders/character-card.svg"
-                    [alt]="t('slots.emptyAlt')"
-                    loading="lazy"
-                  />
-                  <span>
-                    <strong>{{ t('slots.label', { slot: index + 1 }) }}</strong>
-                    <small>{{ t('slots.empty') }}</small>
-                  </span>
-                  <ion-button
-                    fill="clear"
-                    size="small"
-                    color="light"
-                    class="manual-team-slot__edit"
-                    [title]="t('actions.editSlot', { slot: index + 1 })"
-                    [attr.aria-label]="t('actions.editSlot', { slot: index + 1 })"
-                    (click)="$event.stopPropagation(); openCharacterPicker(index)"
-                  >
-                    <ion-icon slot="icon-only" [icon]="editIcon"></ion-icon>
-                  </ion-button>
-                }
-              </article>
-            }
-          </div>
-
-          <app-captain-team-condition-status
-            [status]="conditionStatus()"
-          ></app-captain-team-condition-status>
-
-          @if (currentTeamId()) {
-            <section class="manual-team-feedback manual-team-feedback--success">
-              <ion-icon [icon]="successIcon"></ion-icon>
-              <div>
-                <strong>{{ t('save.success') }}</strong>
-              </div>
-            </section>
-          }
-
-          @if (saveFeedbackError()) {
-            <section class="manual-team-feedback manual-team-feedback--error" role="alert">
-              <ion-icon [icon]="errorIcon"></ion-icon>
-              <div>
-                <strong>{{ t('save.error') }}</strong>
-              </div>
-            </section>
-          }
-
-          <div class="manual-team-actions">
-            <ion-button
-              fill="outline"
-              color="light"
-              [disabled]="saveUiLocked()"
-              (click)="resetPage()"
+            <div
+              class="manual-team-clear-zone"
+              [class.manual-team-clear-zone--active]="
+                dragState() && dragState()?.sourceSlotIndex !== null
+              "
+              (dragover)="onClearDropZoneDragOver($event)"
+              (drop)="onClearDropZoneDrop($event)"
             >
-              {{ 'common.actions.reset' | transloco }}
-            </ion-button>
-            <ion-button color="warning" [disabled]="saveDisabled()" (click)="saveTeam()">
-              {{ saveUiLocked() ? t('save.savingLabel') : t('actions.save') }}
-            </ion-button>
-          </div>
-        </section>
+              <ion-icon [icon]="trashIcon"></ion-icon>
+              <span>{{ t('drag.clearZone') }}</span>
+            </div>
+
+            @if (dragFeedbackMessage()) {
+              <section class="manual-team-feedback manual-team-feedback--error" role="alert">
+                <ion-icon [icon]="errorIcon"></ion-icon>
+                <div>
+                  <strong>{{ dragFeedbackMessage() }}</strong>
+                </div>
+              </section>
+            }
+
+            @if (currentTeamId()) {
+              <section class="manual-team-feedback manual-team-feedback--success">
+                <ion-icon [icon]="successIcon"></ion-icon>
+                <div>
+                  <strong>{{ t('save.success') }}</strong>
+                </div>
+              </section>
+            }
+
+            @if (saveFeedbackError()) {
+              <section class="manual-team-feedback manual-team-feedback--error" role="alert">
+                <ion-icon [icon]="errorIcon"></ion-icon>
+                <div>
+                  <strong>{{ t('save.error') }}</strong>
+                </div>
+              </section>
+            }
+
+            <div class="manual-team-actions">
+              <ion-button
+                fill="outline"
+                color="light"
+                [disabled]="saveUiLocked()"
+                (click)="resetPage()"
+              >
+                {{ 'common.actions.reset' | transloco }}
+              </ion-button>
+              <ion-button color="warning" [disabled]="saveDisabled()" (click)="saveTeam()">
+                {{ saveUiLocked() ? t('save.savingLabel') : t('actions.save') }}
+              </ion-button>
+            </div>
+          </section>
+
+          <aside class="glass-card manual-team-summary-card">
+            <div class="section-head">
+              <div>
+                <h2>{{ t('summary.title') }}</h2>
+                <span>{{ t('summary.copy') }}</span>
+              </div>
+            </div>
+
+            <div class="manual-team-summary-grid">
+              @for (metric of teamSummaryMetrics(); track metric.key) {
+                <div class="manual-team-summary-metric">
+                  <span>{{ metric.label }}</span>
+                  <strong>{{ metric.value }}</strong>
+                  @if (metric.support) {
+                    <small>{{ metric.support }}</small>
+                  }
+                </div>
+              }
+            </div>
+
+            <app-captain-team-condition-status
+              [status]="conditionStatus()"
+            ></app-captain-team-condition-status>
+
+            @if (validationMessages().length) {
+              <div class="manual-team-validation-list">
+                @for (message of validationMessages(); track message.key) {
+                  <section
+                    class="manual-team-validation"
+                    [class.manual-team-validation--error]="message.tone === 'error'"
+                  >
+                    <strong>{{ message.title }}</strong>
+                    <span>{{ message.copy }}</span>
+                  </section>
+                }
+              </div>
+            }
+          </aside>
+        </div>
       }
     </div>
 
@@ -235,6 +368,43 @@
                 <strong>{{ t('picker.title', { slot: selectedSlotIndex() + 1 }) }}</strong>
                 <small>{{ t('picker.copy') }}</small>
               </div>
+              <div class="manual-team-picker-slot-rail">
+                @for (slot of slots(); track index; let index = $index) {
+                  <button
+                    type="button"
+                    class="manual-team-picker-slot-drop"
+                    [class.manual-team-picker-slot-drop--active]="selectedSlotIndex() === index"
+                    [class.manual-team-picker-slot-drop--empty]="!slot"
+                    [class.manual-team-picker-slot-drop--target]="slotIsDropTarget(index)"
+                    [class.manual-team-picker-slot-drop--invalid]="slotIsInvalidDropTarget(index)"
+                    [attr.draggable]="slot ? 'true' : null"
+                    (click)="selectSlot(index)"
+                    (dragstart)="onSlotDragStart($event, index)"
+                    (dragend)="onDragEnd()"
+                    (dragover)="onSlotDragOver($event, index)"
+                    (dragleave)="onSlotDragLeave(index)"
+                    (drop)="onSlotDrop($event, index)"
+                  >
+                    @if (slot) {
+                      <img [src]="slot.imageUrl" [alt]="slot.name" loading="lazy" />
+                      <span>
+                        <strong>{{ t('slots.label', { slot: index + 1 }) }}</strong>
+                        <small>{{ slot.name }}</small>
+                      </span>
+                    } @else {
+                      <img
+                        src="assets/placeholders/character-card.svg"
+                        [alt]="t('slots.emptyAlt')"
+                        loading="lazy"
+                      />
+                      <span>
+                        <strong>{{ t('slots.label', { slot: index + 1 }) }}</strong>
+                        <small>{{ t('slots.empty') }}</small>
+                      </span>
+                    }
+                  </button>
+                }
+              </div>
               <ion-searchbar
                 [debounce]="150"
                 [placeholder]="t('picker.searchPlaceholder')"
@@ -242,7 +412,103 @@
                 (ionInput)="onSearchChange($event)"
               ></ion-searchbar>
 
-              @if (!candidateCards().length) {
+              <div class="manual-team-picker__filters">
+                <label class="manual-team-picker-filter">
+                  <span>{{ t('picker.filters.type') }}</span>
+                  <ion-select
+                    interface="popover"
+                    fill="outline"
+                    [value]="selectedTypeFilter()"
+                    (ionChange)="onTypeFilterChange($event)"
+                  >
+                    <ion-select-option value="">{{
+                      t('picker.filters.anyType')
+                    }}</ion-select-option>
+                    @for (type of availableTypes(); track type) {
+                      <ion-select-option [value]="type">{{ type }}</ion-select-option>
+                    }
+                  </ion-select>
+                </label>
+
+                <label class="manual-team-picker-filter">
+                  <span>{{ t('picker.filters.class') }}</span>
+                  <ion-select
+                    interface="popover"
+                    fill="outline"
+                    [value]="selectedClassFilter()"
+                    (ionChange)="onClassFilterChange($event)"
+                  >
+                    <ion-select-option value="">{{
+                      t('picker.filters.anyClass')
+                    }}</ion-select-option>
+                    @for (characterClass of availableClasses(); track characterClass) {
+                      <ion-select-option [value]="characterClass">
+                        {{ characterClass }}
+                      </ion-select-option>
+                    }
+                  </ion-select>
+                </label>
+
+                <label class="manual-team-picker-filter">
+                  <span>{{ t('picker.filters.tag') }}</span>
+                  <ion-select
+                    interface="popover"
+                    fill="outline"
+                    [value]="selectedCharacterTagFilter()"
+                    (ionChange)="onCharacterTagFilterChange($event)"
+                  >
+                    <ion-select-option value="">{{ t('picker.filters.anyTag') }}</ion-select-option>
+                    @for (tag of availableCharacterTags(); track tag) {
+                      <ion-select-option [value]="tag">{{ tag }}</ion-select-option>
+                    }
+                  </ion-select>
+                </label>
+
+                <ion-input
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  step="1"
+                  fill="outline"
+                  [label]="t('picker.filters.minCost')"
+                  labelPlacement="stacked"
+                  [value]="candidateMinCost()"
+                  (ionInput)="onCandidateMinCostChange($event)"
+                ></ion-input>
+
+                <ion-input
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  step="1"
+                  fill="outline"
+                  [label]="t('picker.filters.maxCost')"
+                  labelPlacement="stacked"
+                  [value]="candidateMaxCost()"
+                  (ionInput)="onCandidateMaxCostChange($event)"
+                ></ion-input>
+
+                <ion-button
+                  fill="outline"
+                  color="light"
+                  [disabled]="!hasActiveCandidateFilters()"
+                  (click)="clearCandidateFilters()"
+                >
+                  <ion-icon slot="start" [icon]="filterIcon"></ion-icon>
+                  {{ t('picker.filters.clear') }}
+                </ion-button>
+              </div>
+
+              @if (candidateFilterErrorLabel()) {
+                <div class="manual-team-empty manual-team-empty--error">
+                  {{ candidateFilterErrorLabel() }}
+                </div>
+              } @else if (candidatesLoading()) {
+                <div class="manual-team-empty">
+                  <ion-spinner name="crescent"></ion-spinner>
+                  {{ t('picker.loading') }}
+                </div>
+              } @else if (!candidateCards().length) {
                 <div class="manual-team-empty">
                   {{ t('picker.empty') }}
                 </div>
@@ -255,6 +521,12 @@
                       [class.manual-team-candidate--assigned-other]="
                         candidateCard.isAssignedToAnotherSlot
                       "
+                      [class.manual-team-candidate--blocked]="
+                        !candidateCard.isAssignableToActiveSlot
+                      "
+                      draggable="true"
+                      (dragstart)="onCandidateDragStart($event, candidateCard.character)"
+                      (dragend)="onDragEnd()"
                     >
                       <a
                         class="character-detail-thumb-link"
@@ -278,13 +550,19 @@
                         @if (candidateCard.isAssignedToAnotherSlot) {
                           <small>{{ t('picker.assignedElsewhere') }}</small>
                         }
+                        @if (candidateCard.supportLabel) {
+                          <small>{{ candidateCard.supportLabel }}</small>
+                        }
                       </div>
                       <div class="manual-team-candidate__actions">
                         <ion-button
                           size="small"
                           fill="outline"
                           color="light"
-                          [disabled]="candidateCard.isAssignedToActiveSlot"
+                          [disabled]="
+                            candidateCard.isAssignedToActiveSlot ||
+                            !candidateCard.isAssignableToActiveSlot
+                          "
                           (click)="assignCharacter(candidateCard.character)"
                         >
                           {{ candidateCard.actionLabel }}

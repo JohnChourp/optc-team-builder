@@ -40,11 +40,44 @@
   "picker": {
     "assignedElsewhere": "Already used in another fixed slot.",
     "close": "Close character picker",
+    "costBlocked": "This character would exceed the max team cost of {{max}} for the active slot.",
     "copy": "Search the catalog and assign a character to the active fixed slot.",
     "empty": "No characters matched this manual team search.",
     "eyebrow": "Slot picker",
+    "filters": {
+      "anyClass": "Any class",
+      "anyTag": "Any tag",
+      "anyType": "Any type",
+      "class": "Class",
+      "clear": "Clear filters",
+      "costError": "Minimum cost {{min}} cannot be higher than maximum cost {{max}}.",
+      "maxCost": "Max cost",
+      "minCost": "Min cost",
+      "tag": "Tag",
+      "type": "Type"
+    },
+    "loading": "Loading matching characters...",
     "searchPlaceholder": "Search characters for the fixed team",
     "title": "Assign slot {{slot}}"
+  },
+  "captainHelper": {
+    "branchLabel": "Captain branch",
+    "branches": {
+      "both": "Both branches",
+      "side": "{{name}} branch"
+    },
+    "rawScope": "Captain ability text available",
+    "scopeChip": "{{label}}: {{scope}}",
+    "scopes": {
+      "captain-only": "Captain only",
+      "crew-wide": "Crew-wide",
+      "none": "No coverage",
+      "subset": "Subset"
+    }
+  },
+  "drag": {
+    "clearZone": "Drop a filled slot here to clear it",
+    "invalidCost": "Drop blocked because the team would exceed max cost {{max}}."
   },
   "save": {
     "error": "Manual team could not be saved.",
@@ -65,9 +98,62 @@
     }
   },
   "slots": {
+    "cost": "Cost {{cost}}",
     "empty": "Empty slot",
     "emptyAlt": "Empty character slot",
-    "label": "Slot {{slot}}"
+    "label": "Slot {{slot}}",
+    "noAbilityPreview": "No captain or special text available."
+  },
+  "summary": {
+    "copy": "Live totals for the visible fixed slots and current cost budget.",
+    "metrics": {
+      "atk": {
+        "label": "ATK",
+        "support": "Max attack across filled slots"
+      },
+      "cost": {
+        "label": "Cost",
+        "supportNoMax": "Friend Captain cost is excluded",
+        "supportWithMax": "{{remaining}} cost remaining",
+        "valueWithMax": "{{used}} / {{max}}"
+      },
+      "filled": {
+        "label": "Filled",
+        "value": "{{filled}} / {{total}}"
+      },
+      "hp": {
+        "label": "HP",
+        "support": "Max health across filled slots"
+      },
+      "rcv": {
+        "label": "RCV",
+        "support": "Max recovery across filled slots"
+      }
+    },
+    "title": "Team summary"
+  },
+  "validation": {
+    "captain": {
+      "ability": {
+        "copy": "{{name}} is missing captain ability data, so coverage cannot be verified.",
+        "title": "{{role}} data missing"
+      },
+      "coverage": {
+        "copy": "Not covered: {{slots}}.",
+        "title": "{{role}} does not cover every slot"
+      },
+      "missing": {
+        "copy": "Add both leader slots to validate captain coverage.",
+        "title": "{{role}} missing"
+      },
+      "tags": {
+        "copy": "One or more captain tag conditions are not satisfied.",
+        "title": "{{role}} conditions not met"
+      }
+    },
+    "cost": {
+      "title": "Cost budget exceeded"
+    }
   },
   "title": "Manual Team Builder"
 }
