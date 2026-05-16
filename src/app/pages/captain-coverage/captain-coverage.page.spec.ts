@@ -184,6 +184,46 @@ describe('CaptainCoveragePage', () => {
     );
   });
 
+  it('can disable Captain Coverage while keeping other result filters active', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Captain Coverage Toggle',
+      type: 'STR',
+      captainAbility: 'Boosts ATK of [DEX] characters by 5x.',
+    });
+    const coveredCharacter = createCharacter({
+      id: 2001,
+      name: 'Covered DEX Candidate',
+      type: 'DEX',
+    });
+    const uncoveredCharacter = createCharacter({
+      id: 2002,
+      name: 'Uncovered QCK Candidate',
+      type: 'QCK',
+    });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, coveredCharacter, uncoveredCharacter],
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+
+    expect(page.requireCaptainCoverage()).toBe(true);
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'Covered DEX Candidate',
+    ]);
+
+    page.onRequireCaptainCoverageChange({
+      detail: { checked: false },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'Uncovered QCK Candidate',
+      'Covered DEX Candidate',
+    ]);
+  });
+
   it('filters covered character results by search text and favorite state', async () => {
     const leader = createCharacter({
       id: 1001,
@@ -395,7 +435,7 @@ describe('CaptainCoveragePage', () => {
       'Bind Reducer',
     ]);
     expect(page.resultCards().map((card) => card.abilityMatchCount)).toEqual([1, 1]);
-    expect(page.abilityFilterRailItems()[0]).toMatchObject({
+    expect(page.abilityFilterRailItems()[1]).toMatchObject({
       category: 'special',
       count: 2,
     });
@@ -442,7 +482,56 @@ describe('CaptainCoveragePage', () => {
     ]);
   });
 
-  it('adds Captain Ability to the rail and opens or clears its picker', async () => {
+  it('filters covered results to characters with Super Type or Super Class data when enabled', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Super Types Classes Filter',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const superTypeCandidate = createCharacter({
+      id: 2001,
+      name: 'Structured Super Type',
+      superType: { specialEffect: 'Changes DEX characters to Super DEX.' },
+    });
+    const superClassCandidate = createCharacter({
+      id: 2002,
+      name: 'Structured Super Class',
+      superClass: { specialEffect: 'Transforms Fighter characters into Super Fighter characters.' },
+    });
+    const noSuperTypesClassesCandidate = createCharacter({
+      id: 2003,
+      name: 'No Super Types Classes',
+    });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [
+        leader,
+        superTypeCandidate,
+        superClassCandidate,
+        noSuperTypesClassesCandidate,
+      ],
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'No Super Types Classes',
+      'Structured Super Class',
+      'Structured Super Type',
+    ]);
+
+    page.onRequireSuperTypesClassesPresenceChange({
+      detail: { checked: true },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'Structured Super Class',
+      'Structured Super Type',
+    ]);
+  });
+
+  it('adds Required to the rail and opens or clears its picker', async () => {
     const { page } = createPage({
       abilityCatalog: createAbilityCatalog([
         createAbilityCatalogItem(
@@ -458,14 +547,15 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
 
     expect(page.abilityFilterRailItems().map((item) => item.category)).toEqual([
-      'special',
       'captainAbility',
+      'special',
       'crewmate',
       'potential',
       'support',
     ]);
-    expect(page.abilityFilterRailItems()[1]).toMatchObject({
+    expect(page.abilityFilterRailItems()[0]).toMatchObject({
       category: 'captainAbility',
+      label: 'Required',
       count: 0,
       disabled: false,
     });
@@ -475,7 +565,7 @@ describe('CaptainCoveragePage', () => {
 
     page.saveCaptainAbilityPicker([createAbilityDraft('remove_despair')]);
     expect(page.captainAbilityDrafts()).toHaveLength(1);
-    expect(page.abilityFilterRailItems()[1]).toMatchObject({
+    expect(page.abilityFilterRailItems()[0]).toMatchObject({
       category: 'captainAbility',
       count: 1,
     });
@@ -778,7 +868,7 @@ describe('CaptainCoveragePage', () => {
 
     expect(page.selectedCaptainDetail()).toBeNull();
     expect(page.resultCards()).toEqual([]);
-    expect(page.abilityFilterRailItems()[0]).toMatchObject({
+    expect(page.abilityFilterRailItems()[1]).toMatchObject({
       category: 'special',
       disabled: false,
     });
@@ -1092,9 +1182,19 @@ describe('CaptainCoveragePage', () => {
     expect(template).toContain('abilityMatchRankingDisabled()');
     expect(template).toContain('onAbilityMatchRankingChange($event)');
     expect(template).toContain("t('filters.bestAbilityMatchesFirst')");
+    expect(template).toContain('requireCaptainCoverage()');
+    expect(template).toContain("t('filters.captainCoverage.toggle')");
+    expect(template).toContain('captainCoverageSupportLabel()');
+    expect(template).toContain('onRequireCaptainCoverageChange($event)');
+    expect(template).toContain('requireFullCaptainAbilityCoverage()');
+    expect(template).toContain("t('filters.captainAbilityCoverage.toggle')");
+    expect(template).toContain('onRequireFullCaptainAbilityCoverageChange($event)');
     expect(template).toContain('requireSuperTandemPresence()');
     expect(template).toContain("t('filters.superTandemPresence.toggle')");
     expect(template).toContain('onRequireSuperTandemPresenceChange($event)');
+    expect(template).toContain('requireSuperTypesClassesPresence()');
+    expect(template).toContain("t('filters.superTypesClassesPresence.toggle')");
+    expect(template).toContain('onRequireSuperTypesClassesPresenceChange($event)');
     expect(template).toContain('<app-ability-requirement-picker');
     expect(template).toContain('captainAbilityPickerOpen()');
     expect(template).toContain('captainAbilityDrafts()');
@@ -1147,6 +1247,31 @@ describe('CaptainCoveragePage', () => {
     expect(template).not.toContain('card.coverage.chips');
     expect(template).not.toContain('coverage-chip');
     expect(template).toContain("t('results.openCharacterDetails')");
+  });
+
+  it('keeps Captain Coverage filter labels exact in English and Greek', () => {
+    for (const locale of ['en', 'el']) {
+      const translations = JSON.parse(
+        readFileSync(
+          resolve(process.cwd(), `public/i18n/captain-coverage/${locale}.json`),
+          'utf8',
+        ),
+      );
+
+      expect([
+        translations.filters.captainAbilityEyebrow,
+        translations.filters.superTandemPresence.toggle,
+        translations.filters.superTypesClassesPresence.toggle,
+        translations.filters.captainCoverage.toggle,
+        translations.filters.captainAbilityCoverage.toggle,
+      ]).toEqual([
+        'Required',
+        'Super Tandem',
+        'Super Types/Classes',
+        'Captain Coverage',
+        'Full Coverage',
+      ]);
+    }
   });
 });
 
@@ -1299,6 +1424,11 @@ function formatTranslation(key: string, params?: Record<string, string | number>
     'characterAbilityGroups.sources.superTandemData': 'Super Tandem',
     'characterAbilityGroups.sources.finalTapData': 'Final Tap',
     'characterAbilityGroups.sources.rushSugoSpecialData': 'Rush Sugo',
+    'captain-coverage.filters.captainAbilityEyebrow': 'Required',
+    'captain-coverage.filters.superTandemPresence.toggle': 'Super Tandem',
+    'captain-coverage.filters.superTypesClassesPresence.toggle': 'Super Types/Classes',
+    'captain-coverage.filters.captainCoverage.toggle': 'Captain Coverage',
+    'captain-coverage.filters.captainAbilityCoverage.toggle': 'Full Coverage',
   };
   const translation = translations[key] ?? key;
 
@@ -1365,7 +1495,9 @@ function createCharacter(
     classes?: string[];
     id: number;
     partyConflictKeys?: string[];
+    superClass?: CharacterDetailRecord['detail']['superClass'];
     superTandemData?: CharacterDetailRecord['detail']['superTandemData'];
+    superType?: CharacterDetailRecord['detail']['superType'];
     type?: string;
     characterTags?: string[];
   },
@@ -1426,9 +1558,9 @@ function createCharacter(
       supportData: [],
       swapData: null,
       vsSpecial: null,
-      superType: null,
+      superType: overrides.superType ?? null,
       superTandemData: overrides.superTandemData ?? null,
-      superClass: null,
+      superClass: overrides.superClass ?? null,
       captainShiftData: null,
       rumbleData: null,
     },

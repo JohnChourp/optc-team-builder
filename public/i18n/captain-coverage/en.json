@@ -25,16 +25,23 @@
   "filters": {
     "abilityRailLabel": "Ability filters",
     "bestAbilityMatchesFirst": "Best ability matches first",
-    "captainAbilityCopy": "Required filters narrow covered character results by tags parsed from each result character's own Captain Ability. This does not change the selected Captain.",
+    "captainAbilityCopy": "Required narrows results by tags parsed from each result character's own Captain Ability. This does not change the selected Captain.",
     "captainAbilityCoverage": {
-      "toggle": "Second Coverage",
+      "toggle": "Full Coverage",
       "support": {
-        "simple": "Showing First Coverage: units covered by the Captain's standard HP/ATK boost scope.",
-        "full": "Showing Second Coverage: units covered by every targetable Captain Ability clause and matching crew tag conditions."
+        "simple": "Using the Captain's standard HP/ATK boost scope.",
+        "full": "Using every targetable Captain Ability clause and matching crew tag conditions."
       }
     },
-    "captainAbilityEyebrow": "Captain Ability",
-    "captainAbilityTitle": "Captain Ability filters",
+    "captainAbilityEyebrow": "Required",
+    "captainAbilityTitle": "Required",
+    "captainCoverage": {
+      "toggle": "Captain Coverage",
+      "support": {
+        "enabled": "Require each result to be covered by the selected Captain.",
+        "disabled": "Bypass selected Captain coverage while keeping other filters active."
+      }
+    },
     "characterBox": {
       "label": "Character box",
       "placeholder": "Select character box",
@@ -60,8 +67,12 @@
     "specialEyebrow": "Special",
     "specialTitle": "Special filters",
     "superTandemPresence": {
-      "toggle": "Super Tandem only",
+      "toggle": "Super Tandem",
       "support": "Show only covered characters with structured Super Tandem data."
+    },
+    "superTypesClassesPresence": {
+      "toggle": "Super Types/Classes",
+      "support": "Show only covered characters with structured Super Type or Super Class data."
     },
     "supportCopy": "Filter covered character results by Support Ability tags.",
     "supportEyebrow": "Support Ability",

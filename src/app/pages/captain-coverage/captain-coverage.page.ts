@@ -33,10 +33,12 @@ import {
   type NormalizedBuilderAbility,
 } from '../../core/models/auto-team-builder-ability.models';
 import { type AutoBuildCaptainAbilityCoverageMode } from '../../core/models/auto-team-builder.models';
+import { type CaptainCoverageResult } from '../../core/services/captain-coverage.utils';
 import {
-  type CaptainCoverageResult,
-  resolveCaptainCoverage,
-} from '../../core/services/captain-coverage.utils';
+  createCaptainCoverageFilterState,
+  type CaptainCoverageFilterState,
+  resolveCaptainCoverageFilterResult,
+} from '../../core/services/captain-coverage-filter.utils';
 import {
   resolveCaptainTeamConditionStatus,
   type CaptainTeamConditionStatus,
@@ -160,8 +162,10 @@ export class CaptainCoveragePage implements OnInit {
   public readonly selectedSortMode = signal<CaptainCoverageSortMode>('catalog');
   public readonly selectedIdOrder = signal<CharacterIdOrder>('newest');
   public readonly abilityMatchRankingEnabled = signal(false);
+  public readonly requireCaptainCoverage = signal(true);
   public readonly requireFullCaptainAbilityCoverage = signal(false);
   public readonly requireSuperTandemPresence = signal(false);
+  public readonly requireSuperTypesClassesPresence = signal(false);
   public readonly favoritesOnly = signal(false);
   public readonly hideFavorites = signal(false);
   public readonly captainAbilityPickerOpen = signal(false);
@@ -276,6 +280,20 @@ export class CaptainCoveragePage implements OnInit {
       ? this.t('filters.captainAbilityCoverage.support.full')
       : this.t('filters.captainAbilityCoverage.support.simple'),
   );
+  public readonly captainCoverageSupportLabel = computed(() =>
+    this.requireCaptainCoverage()
+      ? this.t('filters.captainCoverage.support.enabled')
+      : this.t('filters.captainCoverage.support.disabled'),
+  );
+  public readonly captainCoverageFilterState = computed<CaptainCoverageFilterState>(() =>
+    createCaptainCoverageFilterState({
+      requiredAbilityRequirements: this.captainAbilityRequirements(),
+      requireSuperTandem: this.requireSuperTandemPresence(),
+      requireSuperTypesClasses: this.requireSuperTypesClassesPresence(),
+      requireCaptainCoverage: this.requireCaptainCoverage(),
+      requireFullCoverage: this.requireFullCaptainAbilityCoverage(),
+    }),
+  );
   public readonly characterBoxSupportLabel = computed(() => {
     const selectedBox = this.selectedCharacterBox();
 
@@ -300,16 +318,16 @@ export class CaptainCoveragePage implements OnInit {
   });
   public readonly abilityFilterRailItems = computed<AbilityFilterRailItem[]>(() => [
     {
-      category: 'special',
-      label: this.t('filters.specialEyebrow'),
-      count: this.specialAbilityDrafts().length,
-      disabled: !this.availableSpecialAbilityCatalogItems().length,
-    },
-    {
       category: CAPTAIN_ABILITY_FILTER_CATEGORY,
       label: this.t('filters.captainAbilityEyebrow'),
       count: this.captainAbilityDrafts().length,
       disabled: !this.availableCaptainAbilityCatalogItems().length,
+    },
+    {
+      category: 'special',
+      label: this.t('filters.specialEyebrow'),
+      count: this.specialAbilityDrafts().length,
+      disabled: !this.availableSpecialAbilityCatalogItems().length,
     },
     {
       category: 'crewmate',
@@ -345,35 +363,35 @@ export class CaptainCoveragePage implements OnInit {
       : null;
     const selectedAbilityRequirements = this.selectedAbilityRequirements();
     const captainAbilityRequirements = this.captainAbilityRequirements();
+    const captainCoverageFilterState = this.captainCoverageFilterState();
     const characterDetailsById = this.allCharacterDetailsById();
     const selectedConflictKeys = this.resolveSelectedTeamConflictKeys();
-    const requiresFullCoverage = this.requireFullCaptainAbilityCoverage();
     const matchingCharacters = this.allCharacters()
       .filter((character) =>
         selectedCharacterBoxIdSet ? selectedCharacterBoxIdSet.has(character.id) : true,
       )
       .map((character) => {
         const characterDetail = characterDetailsById.get(character.id);
+        const filterResult = resolveCaptainCoverageFilterResult(
+          captain,
+          {
+            character,
+            detail: characterDetail,
+          },
+          captainCoverageFilterState,
+        );
 
         return {
           character,
-          coverage: resolveCaptainCoverage(captain, character, {
-            coverageMode: this.captainAbilityCoverageMode(),
-            includeTeamTagClauses: requiresFullCoverage,
-            targetCharacterTags: characterDetail?.detail.characterTags ?? [],
-          }),
+          characterDetail,
+          coverage: filterResult.coverage,
+          matchesCaptainCoverageFilters: filterResult.matches,
         };
       })
-      .filter(({ coverage }) => coverage.matches)
+      .filter(({ matchesCaptainCoverageFilters }) => matchesCaptainCoverageFilters)
       .filter(({ character }) => !this.hasPartyConflict(character, selectedConflictKeys))
-      .filter(
-        ({ character }) =>
-          !this.requireSuperTandemPresence() ||
-          this.characterHasSuperTandemData(character, characterDetailsById),
-      )
-      .map(({ character, coverage }) => {
-        const detailAbilities =
-          characterDetailsById.get(character.id)?.detail.builderAbilities ?? [];
+      .map(({ character, characterDetail, coverage }) => {
+        const detailAbilities = characterDetail?.detail.builderAbilities ?? [];
         const abilities = detailAbilities.filter((ability) => ability.source !== 'captainAbility');
         const captainAbilities = detailAbilities.filter(
           (ability) => ability.source === 'captainAbility',
@@ -386,8 +404,6 @@ export class CaptainCoveragePage implements OnInit {
           captainAbilities,
           captainAbilityRequirements,
         );
-        const matchesRequiredCaptainAbilityFilters =
-          this.matchesRequiredCaptainAbilityFilters(captainAbilities, captainAbilityRequirements);
 
         return {
           character,
@@ -395,7 +411,6 @@ export class CaptainCoveragePage implements OnInit {
           assignableSlotIndex: this.findAssignableSubSlotIndex(character),
           abilityMatchCount,
           captainAbilityMatchCount,
-          matchesRequiredCaptainAbilityFilters,
           selectedAbilityCount:
             selectedAbilityRequirements.length + captainAbilityRequirements.length,
           matchedAbilityBadges: [
@@ -404,11 +419,11 @@ export class CaptainCoveragePage implements OnInit {
           ],
         };
       })
-      .filter(({ abilityMatchCount, matchesRequiredCaptainAbilityFilters }) => {
+      .filter(({ abilityMatchCount }) => {
         const matchesSelectedAbilities =
           selectedAbilityRequirements.length === 0 ? true : abilityMatchCount > 0;
 
-        return matchesSelectedAbilities && matchesRequiredCaptainAbilityFilters;
+        return matchesSelectedAbilities;
       })
       .filter(({ assignableSlotIndex }) => assignableSlotIndex !== null)
       .filter(({ character }) => {
@@ -740,6 +755,10 @@ export class CaptainCoveragePage implements OnInit {
     this.abilityMatchRankingEnabled.set(Boolean(event.detail.checked));
   }
 
+  public onRequireCaptainCoverageChange(event: CustomEvent<{ checked?: boolean | null }>): void {
+    this.requireCaptainCoverage.set(Boolean(event.detail.checked));
+  }
+
   public onRequireFullCaptainAbilityCoverageChange(
     event: CustomEvent<{ checked?: boolean | null }>,
   ): void {
@@ -750,6 +769,12 @@ export class CaptainCoveragePage implements OnInit {
     event: CustomEvent<{ checked?: boolean | null }>,
   ): void {
     this.requireSuperTandemPresence.set(Boolean(event.detail.checked));
+  }
+
+  public onRequireSuperTypesClassesPresenceChange(
+    event: CustomEvent<{ checked?: boolean | null }>,
+  ): void {
+    this.requireSuperTypesClassesPresence.set(Boolean(event.detail.checked));
   }
 
   public onCharacterBoxChange(event: CustomEvent<{ value?: string | null }>): void {
@@ -1175,30 +1200,6 @@ export class CaptainCoveragePage implements OnInit {
     }
 
     return matchedRequirementIds.size;
-  }
-
-  private matchesRequiredCaptainAbilityFilters(
-    captainAbilities: readonly NormalizedBuilderAbility[],
-    captainAbilityRequirements: readonly AutoBuildAbilityRequirement[],
-  ): boolean {
-    if (!captainAbilityRequirements.length) {
-      return true;
-    }
-
-    return captainAbilities.some((ability) =>
-      captainAbilityRequirements.some((requirement) =>
-        matchesAbilityRequirement(ability, requirement),
-      ),
-    );
-  }
-
-  private characterHasSuperTandemData(
-    character: CharacterListItem,
-    characterDetailsById: ReadonlyMap<number, CharacterDetailRecord>,
-  ): boolean {
-    const superTandemData = characterDetailsById.get(character.id)?.detail.superTandemData;
-
-    return typeof superTandemData === 'object' && superTandemData !== null;
   }
 
   private formatAbilityBadgeLabel(ability: NormalizedBuilderAbility): string {
