@@ -5,7 +5,7 @@ import { type AutoBuildAbilityCategory } from '../../core/models/auto-team-build
 export type AbilityFilterRailCategory = Extract<
   AutoBuildAbilityCategory,
   'special' | 'crewmate' | 'potential' | 'support'
->;
+> | 'captainAbility';
 
 export interface AbilityFilterRailItem {
   category: AbilityFilterRailCategory;

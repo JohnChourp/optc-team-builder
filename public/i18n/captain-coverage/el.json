@@ -25,13 +25,16 @@
   "filters": {
     "abilityRailLabel": "Ability filters",
     "bestAbilityMatchesFirst": "Πρώτα τα καλύτερα ability matches",
+    "captainAbilityCopy": "Τα Required filters περιορίζουν τα καλυπτόμενα character results με tags που έχουν γίνει parse από το Captain Ability κάθε result χαρακτήρα. Αυτό δεν αλλάζει τον επιλεγμένο Captain.",
     "captainAbilityCoverage": {
       "toggle": "Second Coverage",
       "support": {
         "simple": "Δείχνει First Coverage: units που καλύπτονται από το standard HP/ATK boost scope του Captain.",
-        "full": "Δείχνει Second Coverage: units που καλύπτονται από όλα τα targetable Captain Ability clauses."
+        "full": "Δείχνει Second Coverage: units που καλύπτονται από όλα τα targetable Captain Ability clauses και ταιριάζουν στα crew tag conditions."
       }
     },
+    "captainAbilityEyebrow": "Captain Ability",
+    "captainAbilityTitle": "Captain Ability filters",
     "characterBox": {
       "label": "Character box",
       "placeholder": "Επίλεξε character box",
@@ -56,6 +59,10 @@
     "specialCopy": "Φίλτραρε τα καλυπτόμενα character results με Special tags.",
     "specialEyebrow": "Special",
     "specialTitle": "Special filters",
+    "superTandemPresence": {
+      "toggle": "Μόνο Super Tandem",
+      "support": "Δείξε μόνο καλυπτόμενους χαρακτήρες με structured Super Tandem δεδομένα."
+    },
     "supportCopy": "Φίλτραρε τα καλυπτόμενα character results με Support Ability tags.",
     "supportEyebrow": "Support Ability",
     "supportTitle": "Support Ability filters"

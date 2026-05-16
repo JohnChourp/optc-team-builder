@@ -193,6 +193,17 @@
             (clearCategory)="clearAbilityFilterCategory($event)"
           ></app-ability-filter-rail>
 
+          <app-ability-requirement-picker
+            [isOpen]="captainAbilityPickerOpen()"
+            [title]="t('filters.captainAbilityTitle')"
+            [copy]="t('filters.captainAbilityCopy')"
+            [drafts]="captainAbilityDrafts()"
+            [catalogItems]="availableCaptainAbilityCatalogItems()"
+            [showCharacterCount]="false"
+            (dismiss)="closeCaptainAbilityPicker()"
+            (saveDrafts)="saveCaptainAbilityPicker($event)"
+          ></app-ability-requirement-picker>
+
           <label
             class="ability-rank-toggle"
             [class.ability-rank-toggle--active]="abilityMatchRankingEnabled()"
@@ -219,6 +230,22 @@
               [checked]="requireFullCaptainAbilityCoverage()"
               [disabled]="!selectedCaptainDetail()"
               (ionChange)="onRequireFullCaptainAbilityCoverageChange($event)"
+            ></ion-toggle>
+          </label>
+
+          <label
+            class="ability-rank-toggle"
+            [class.ability-rank-toggle--active]="requireSuperTandemPresence()"
+          >
+            <div class="ability-rank-toggle__copy">
+              <span>{{ t('filters.superTandemPresence.toggle') }}</span>
+              <small>{{ t('filters.superTandemPresence.support') }}</small>
+            </div>
+            <ion-toggle
+              justify="space-between"
+              [checked]="requireSuperTandemPresence()"
+              [disabled]="!selectedCaptainDetail()"
+              (ionChange)="onRequireSuperTandemPresenceChange($event)"
             ></ion-toggle>
           </label>
 

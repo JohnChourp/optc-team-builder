@@ -185,6 +185,7 @@ import {
 import { MAX_REQUIRED_CHARACTER_GROUPS } from '../../core/services/required-character-groups.utils';
 import {
   AbilityFilterRailComponent,
+  type AbilityFilterRailCategory,
   type AbilityFilterRailItem,
 } from '../../shared/ability-filter-rail/ability-filter-rail.component';
 
@@ -232,6 +233,17 @@ interface AbilityRequirementSummaryChipView {
 }
 
 type RequiredCharacterAbilityCategory = 'special' | 'crewmate' | 'potential' | 'support';
+
+function isRequiredCharacterAbilityCategory(
+  category: AbilityFilterRailCategory,
+): category is RequiredCharacterAbilityCategory {
+  return (
+    category === 'special' ||
+    category === 'crewmate' ||
+    category === 'potential' ||
+    category === 'support'
+  );
+}
 
 interface RequiredCharacterGroupView {
   battleId: string;
@@ -3442,9 +3454,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public openRequiredCharacterAbilityPicker(
     battleId: string,
     groupId: string,
-    category: RequiredCharacterAbilityCategory,
+    category: AbilityFilterRailCategory,
   ): void {
-    if (this.building()) {
+    if (this.building() || !isRequiredCharacterAbilityCategory(category)) {
       return;
     }
 
@@ -3468,9 +3480,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public async clearRequiredCharacterAbilityCategory(
     battleId: string,
     groupId: string,
-    category: RequiredCharacterAbilityCategory,
+    category: AbilityFilterRailCategory,
   ): Promise<void> {
-    if (this.building()) {
+    if (this.building() || !isRequiredCharacterAbilityCategory(category)) {
       return;
     }
 

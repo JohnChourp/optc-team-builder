@@ -675,6 +675,44 @@ describe('resolveCaptainCoverage', () => {
     );
   });
 
+  it('can require full coverage candidates to match crew tag conditions', () => {
+    const captain = createCharacter({
+      id: 4549,
+      captainAbility: kidAimedDamnedPunkCaptainAbility,
+      type: 'STR',
+      classes: ['Striker', 'Driven'],
+    });
+    const taggedBoostedTarget = createCharacter({
+      id: 3005,
+      type: 'STR',
+      classes: ['Shooter', 'Free Spirit'],
+      characterTags: ['Land of Wano Arc'],
+    });
+    const untaggedBoostedTarget = createCharacter({
+      id: 3006,
+      type: 'STR',
+      classes: ['Shooter', 'Free Spirit'],
+    });
+
+    const taggedCoverage = resolveCaptainCoverage(captain, taggedBoostedTarget, {
+      includeTeamTagClauses: true,
+    });
+    const untaggedCoverage = resolveCaptainCoverage(captain, untaggedBoostedTarget, {
+      includeTeamTagClauses: true,
+    });
+
+    expect(taggedCoverage.matches).toBe(true);
+    expect(taggedCoverage.coveredClauses).toContain(
+      'crew tag condition: [Kid Pirates] / [Worst Generation] / [Land of Wano Arc] / [Egghead Arc] characters',
+    );
+    expect(untaggedCoverage.matches).toBe(false);
+    expect(untaggedCoverage.uncoveredClauses).toEqual(
+      expect.arrayContaining([
+        'crew tag condition: [Kid Pirates] / [Worst Generation] / [Land of Wano Arc] / [Egghead Arc] characters',
+      ]),
+    );
+  });
+
   it('keeps neutral captain notes from excluding an otherwise covered captain', () => {
     const captain = createCharacter({
       id: 1005,

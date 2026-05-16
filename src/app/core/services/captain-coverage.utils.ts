@@ -10,7 +10,10 @@ import {
   type CharacterDetailRecord,
   type CharacterListItem,
 } from '../models/optc.models';
-import { normalizeCaptainTagKey } from './captain-tag-conditions.utils';
+import {
+  normalizeCaptainTagKey,
+  parseCaptainTagConditionBranches,
+} from './captain-tag-conditions.utils';
 import { normalizeHtmlToText } from './html-text.utils';
 
 export type CaptainCoverageChipKind = 'class' | 'tag' | 'type';
@@ -110,6 +113,10 @@ const BOOST_TARGET_FRAGMENT_PATTERNS = [
 ] as const;
 const SPECIAL_COOLDOWN_TARGET_FRAGMENT_PATTERNS = [
   /\breduces?\s+Special Cooldown\s+of\s+([^.;]{1,220}?)\s+(?:characters|units)\s+by\s+\d+\s+turns?\b/gi,
+] as const;
+const TEAM_TAG_CONDITION_TARGET_FRAGMENT_PATTERNS = [
+  /\bcrew\s+has\s+\d+\s*(?:\+|or\s+more)?\s+(.{1,240}?)\s+(?:characters|units)\b/gi,
+  /\bcrew tag condition:\s+(.{1,240}?)\s+(?:characters|units)\b/gi,
 ] as const;
 
 export function summarizeCaptainAbilityCoverageText(
@@ -219,8 +226,14 @@ function resolveCaptainCoverageForText(
   options: CaptainCoverageOptions = {},
 ): CaptainCoverageResult {
   const coverageMode = options.coverageMode ?? 'fullAbilityCoverage';
-  const resolvedClauses = resolveCaptainBoostScope(captainText, coverageMode).clauses.map(
-    (clause) => resolveCaptainCoverageClause(target, clause, options),
+  const coverageClauses = [
+    ...resolveCaptainBoostScope(captainText, coverageMode).clauses,
+    ...(coverageMode === 'fullAbilityCoverage' && options.includeTeamTagClauses
+      ? extractCaptainTeamTagConditionClauses(captainText)
+      : []),
+  ];
+  const resolvedClauses = coverageClauses.map((clause) =>
+    resolveCaptainCoverageClause(target, clause, options),
   );
   const clauses = resolvedClauses;
   const targetableClauses = clauses.filter((clause) => clause.status !== 'neutral');
@@ -760,6 +773,36 @@ function extractCaptainStartOfFightCooldownTagClauses(text: string): string[] {
   ];
 }
 
+function extractCaptainTeamTagConditionClauses(text: string): string[] {
+  return [
+    ...new Set(
+      splitCaptainSentences(text.replace(BRANCH_LABEL_PATTERN, '. '))
+        .map((sentence) => formatCaptainTeamTagConditionClause(sentence))
+        .filter((clause): clause is string => clause !== null),
+    ),
+  ];
+}
+
+function formatCaptainTeamTagConditionClause(sentence: string): string | null {
+  const labelMap = new Map<string, string>();
+
+  parseCaptainTagConditionBranches(sentence).forEach((branch) =>
+    branch.labels.forEach((label) => {
+      const normalizedLabel = normalizeCaptainTagKey(label);
+
+      if (!labelMap.has(normalizedLabel)) {
+        labelMap.set(normalizedLabel, label);
+      }
+    }),
+  );
+
+  const labels = [...labelMap.values()];
+
+  return labels.length
+    ? `crew tag condition: ${labels.map((label) => `[${label}]`).join(' / ')} characters`
+    : null;
+}
+
 function stripCooldownClausePrefix(clause: string): string {
   const cooldownStart = clause.search(/\breduces?\s+Special Cooldown\b/i);
 
@@ -949,6 +992,7 @@ function extractCoverageTargetFragments(clause: string): string[] {
     ...new Set([
       ...extractBoostTargetFragments(clause),
       ...extractSpecialCooldownTargetFragments(clause),
+      ...extractTeamTagConditionTargetFragments(clause),
     ]),
   ];
 }
@@ -967,6 +1011,16 @@ function extractSpecialCooldownTargetFragments(clause: string): string[] {
   return [
     ...new Set(
       SPECIAL_COOLDOWN_TARGET_FRAGMENT_PATTERNS.flatMap((pattern) =>
+        [...clause.matchAll(pattern)].map((match) => normalizeCoverageClause(match[1] ?? '')),
+      ).filter(Boolean),
+    ),
+  ];
+}
+
+function extractTeamTagConditionTargetFragments(clause: string): string[] {
+  return [
+    ...new Set(
+      TEAM_TAG_CONDITION_TARGET_FRAGMENT_PATTERNS.flatMap((pattern) =>
         [...clause.matchAll(pattern)].map((match) => normalizeCoverageClause(match[1] ?? '')),
       ).filter(Boolean),
     ),

@@ -59,7 +59,7 @@ const publicRoutes = [
     heading: 'OPTC Team Builder for One Piece Treasure Cruise',
     paragraphs: [
       'OPTC Team Builder is a fan-made workspace for One Piece Treasure Cruise players who want a faster way to find characters, compare abilities, check Rumble rankings and captain coverage, plan crews, and keep useful setups organized. The app combines a searchable character catalog, manual and automatic team building, Pirate Rumble tools, Crew Forge screenshot imports, saved teams, saved enemies, character boxes, Drive sync, and settings for import/export and backups.',
-      'Use Characters to search by name, type, class, favorites, and ability data before opening detailed character pages. Rumble Characters ranks Pirate Rumble units, Captain Coverage finds leaders that fully cover a chosen unit, Manual Team Builder saves fixed crews, and Auto Team Builder matches enemy mechanics and ability requirements against the local catalog.',
+      'Use Characters to search by name, type, class, favorites, and ability data before opening detailed character pages. Rumble Characters ranks Pirate Rumble units, Captain Coverage starts from a chosen Captain and lists units covered by that Captain ability, Manual Team Builder saves fixed crews, and Auto Team Builder matches enemy mechanics and ability requirements against the local catalog.',
       'Auto Team Rumble Builder scores rumble-capable units and fills active and bench slots. Crew Forge can import a crew screenshot and match recognized slots back to editable OPTC character data. Saved Teams, Saved Rumble Teams, Character Boxes, and Saved Enemies keep recurring planning data available in your browser, while Settings and Drive Sync cover language, backups, analytics consent, and data transfer tools.',
       'The project is not an official Bandai Namco tool. It exists to make OPTC planning easier with clear links, readable character summaries, and generated pages that describe the same tools available in the web app.',
     ],
@@ -145,11 +145,11 @@ const publicRoutes = [
     path: 'tabs/captain-coverage',
     title: 'Captain Coverage | OPTC Team Builder',
     description:
-      'Pick an OPTC character and find captain abilities that fully cover that character under strict type, class, cost, universal, and self-scope matching.',
+      'Choose an OPTC Captain and find characters covered by that Captain Ability under strict type, class, cost, universal, and self-scope matching.',
     heading: 'OPTC Captain Coverage',
     paragraphs: [
-      'Captain Coverage helps pick an OPTC character and find captain abilities that fully cover it under strict type, class, cost, universal, and self-scope matching.',
-      'Use this page when you want to verify which leaders naturally include a target character before committing to a crew plan.',
+      'Captain Coverage starts from a selected OPTC Captain and shows characters covered by that Captain Ability under strict type, class, cost, universal, and self-scope matching.',
+      'Use this page when you want to build from a known Captain and verify which characters naturally fit that Captain ability before committing to a crew plan.',
     ],
     links: [
       { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },

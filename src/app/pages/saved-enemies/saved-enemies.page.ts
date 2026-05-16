@@ -43,6 +43,7 @@ import { UserStateService } from '../../core/services/user-state.service';
 import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
 import {
   AbilityFilterRailComponent,
+  type AbilityFilterRailCategory,
   type AbilityFilterRailItem,
 } from '../../shared/ability-filter-rail/ability-filter-rail.component';
 import { CharacterImagePickerComponent } from '../../shared/character-image-picker/character-image-picker.component';
@@ -111,6 +112,17 @@ interface SavedEnemyMechanicSummaryChipView {
 }
 
 type RequiredCharacterAbilityCategory = 'special' | 'crewmate' | 'potential' | 'support';
+
+function isRequiredCharacterAbilityCategory(
+  category: AbilityFilterRailCategory,
+): category is RequiredCharacterAbilityCategory {
+  return (
+    category === 'special' ||
+    category === 'crewmate' ||
+    category === 'potential' ||
+    category === 'support'
+  );
+}
 
 interface SavedEnemyRequiredCharacterGroupView {
   battleId: string;
@@ -917,9 +929,9 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public openRequiredCharacterAbilityPicker(
     battleId: string,
     groupId: string,
-    category: RequiredCharacterAbilityCategory,
+    category: AbilityFilterRailCategory,
   ): void {
-    if (this.savingEnemy()) {
+    if (this.savingEnemy() || !isRequiredCharacterAbilityCategory(category)) {
       return;
     }
 
@@ -943,9 +955,9 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public clearRequiredCharacterAbilityCategory(
     battleId: string,
     groupId: string,
-    category: RequiredCharacterAbilityCategory,
+    category: AbilityFilterRailCategory,
   ): void {
-    if (this.savingEnemy()) {
+    if (this.savingEnemy() || !isRequiredCharacterAbilityCategory(category)) {
       return;
     }
 
