@@ -7309,6 +7309,7 @@ async function createPage(
 
 function createManifest(): DatasetManifest {
   return {
+    schemaVersion: 1,
     generatedAt: '2026-03-25T10:00:00.000Z',
     sourceVersion: 'test',
     characterCount: 10,

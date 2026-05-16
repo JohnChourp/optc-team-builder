@@ -688,6 +688,7 @@ function createPage(
   };
   const repository = {
     getDatasetManifest: vi.fn().mockResolvedValue({
+      schemaVersion: 1,
       characterCount: 100,
       availableTypes: ['DEX', 'STR'],
       availableClasses: ['Fighter', 'Slasher'],

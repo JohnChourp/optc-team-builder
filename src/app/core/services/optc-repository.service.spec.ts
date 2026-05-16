@@ -1364,6 +1364,7 @@ function parseSqlStringLiteral(
 
 function createManifest(overrides: Partial<DatasetManifest> = {}): DatasetManifest {
   return {
+    schemaVersion: 1,
     generatedAt: '2026-03-25T00:00:00.000Z',
     sourceVersion: 'test',
     characterCount: 0,

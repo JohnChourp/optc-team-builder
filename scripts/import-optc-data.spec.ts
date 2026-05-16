@@ -749,6 +749,8 @@ describe('import-optc-data ship thumbnail pack', () => {
         {
           key: 'captain',
           label: 'Captain Ability',
+          firstCoverageScope: 'crew-wide',
+          secondCoverageScope: 'crew-wide',
           firstCoverageClauses: ['boosts HP of all characters by 1.5x'],
           secondCoverageClauses: ['boosts HP of all characters by 1.5x'],
         },

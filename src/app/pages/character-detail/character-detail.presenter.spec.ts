@@ -685,6 +685,8 @@ describe('character-detail presenter', () => {
               {
                 key: 'captain',
                 label: 'Captain Ability',
+                firstCoverageScope: 'crew-wide',
+                secondCoverageScope: 'crew-wide',
                 firstCoverageClauses: ['generated first clause'],
                 secondCoverageClauses: ['generated first clause', 'generated second clause'],
               },

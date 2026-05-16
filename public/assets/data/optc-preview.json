@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-15T15:35:09.865Z",
+  "generatedAt": "2026-05-16T18:22:24.066Z",
   "characters": [
     {
       "id": 1,
@@ -150,6 +150,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "crew-wide",
+              "secondCoverageScope": "crew-wide",
               "firstCoverageClauses": [
                 "Boosts ATK of all characters by 1.5x"
               ],
@@ -265,6 +267,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "crew-wide",
+              "secondCoverageScope": "crew-wide",
               "firstCoverageClauses": [
                 "Boosts ATK of all characters by 1.5x"
               ],
@@ -381,6 +385,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "subset",
+              "secondCoverageScope": "subset",
               "firstCoverageClauses": [
                 "Boosts ATK of [STR] characters by 2x and ATK of all others by 1.5x"
               ],
@@ -545,6 +551,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "subset",
+              "secondCoverageScope": "subset",
               "firstCoverageClauses": [
                 "Boosts ATK of [DEX] characters by 1.5x"
               ],
@@ -661,6 +669,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "subset",
+              "secondCoverageScope": "subset",
               "firstCoverageClauses": [
                 "Boosts ATK of [DEX] characters by 1.5x"
               ],
@@ -777,6 +787,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "subset",
+              "secondCoverageScope": "subset",
               "firstCoverageClauses": [
                 "Boosts ATK of [DEX] characters by 1.5x"
               ],
@@ -893,6 +905,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "subset",
+              "secondCoverageScope": "subset",
               "firstCoverageClauses": [
                 "Boosts ATK and HP of [DEX] characters by 2x"
               ],
@@ -1066,6 +1080,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "none",
+              "secondCoverageScope": "none",
               "firstCoverageClauses": [],
               "secondCoverageClauses": []
             }
@@ -1186,6 +1202,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "subset",
+              "secondCoverageScope": "subset",
               "firstCoverageClauses": [
                 "Boosts ATK of [INT] characters by 1.5x"
               ],
@@ -1301,6 +1319,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "subset",
+              "secondCoverageScope": "subset",
               "firstCoverageClauses": [
                 "Boosts ATK of [INT] characters by 1.5x"
               ],
@@ -1416,6 +1436,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "subset",
+              "secondCoverageScope": "subset",
               "firstCoverageClauses": [
                 "Boosts ATK and HP of [INT] characters by 1.5x"
               ],
@@ -1597,6 +1619,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "subset",
+              "secondCoverageScope": "subset",
               "firstCoverageClauses": [
                 "Boosts ATK of Shooter characters by 1.2x"
               ],
@@ -1779,6 +1803,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "subset",
+              "secondCoverageScope": "subset",
               "firstCoverageClauses": [
                 "Boosts ATK of [PSY] characters by 1.5x"
               ],
@@ -1961,6 +1987,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "subset",
+              "secondCoverageScope": "subset",
               "firstCoverageClauses": [
                 "Boosts ATK of [PSY] characters by 1.5x"
               ],
@@ -2143,6 +2171,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "subset",
+              "secondCoverageScope": "subset",
               "firstCoverageClauses": [
                 "Boosts ATK and HP of [PSY] characters by 1.5x"
               ],
@@ -2465,6 +2495,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "subset",
+              "secondCoverageScope": "subset",
               "firstCoverageClauses": [
                 "Boosts ATK of [QCK] characters by 1.5x"
               ],
@@ -2580,6 +2612,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "subset",
+              "secondCoverageScope": "subset",
               "firstCoverageClauses": [
                 "Boosts HP of [QCK] characters by 1.5x"
               ],
@@ -2685,6 +2719,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "subset",
+              "secondCoverageScope": "subset",
               "firstCoverageClauses": [
                 "Boosts ATK of [QCK] characters by 1.5x"
               ],
@@ -2801,6 +2837,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "subset",
+              "secondCoverageScope": "subset",
               "firstCoverageClauses": [
                 "Boosts ATK and HP of [QCK] characters by 1.5x"
               ],
@@ -3018,6 +3056,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "none",
+              "secondCoverageScope": "none",
               "firstCoverageClauses": [],
               "secondCoverageClauses": []
             }
@@ -3130,6 +3170,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "none",
+              "secondCoverageScope": "none",
               "firstCoverageClauses": [],
               "secondCoverageClauses": []
             }
@@ -3336,6 +3378,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "none",
+              "secondCoverageScope": "none",
               "firstCoverageClauses": [],
               "secondCoverageClauses": []
             }
@@ -3448,6 +3492,8 @@
             {
               "key": "captain",
               "label": "Captain Ability",
+              "firstCoverageScope": "none",
+              "secondCoverageScope": "none",
               "firstCoverageClauses": [],
               "secondCoverageClauses": []
             }

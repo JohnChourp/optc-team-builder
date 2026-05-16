@@ -203,6 +203,10 @@ function normalizeCaptainAbilityCoverage(value: unknown): CharacterDetail['capta
         const entryRecord = entry as Record<string, unknown>;
         const key = String(entryRecord['key'] ?? '').trim();
         const label = String(entryRecord['label'] ?? '').trim();
+        const firstCoverageScope = normalizeCaptainAbilityScope(entryRecord['firstCoverageScope']);
+        const secondCoverageScope = normalizeCaptainAbilityScope(
+          entryRecord['secondCoverageScope'],
+        );
         const firstCoverageClauses = normalizeStringList(entryRecord['firstCoverageClauses']);
         const secondCoverageClauses = normalizeStringList(entryRecord['secondCoverageClauses']);
 
@@ -213,12 +217,25 @@ function normalizeCaptainAbilityCoverage(value: unknown): CharacterDetail['capta
         return {
           key,
           label,
+          firstCoverageScope,
+          secondCoverageScope,
           firstCoverageClauses,
           secondCoverageClauses,
         };
       })
       .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry)),
   };
+}
+
+function normalizeCaptainAbilityScope(
+  value: unknown,
+): NonNullable<CharacterDetail['captainAbilityCoverage']>['entries'][number]['firstCoverageScope'] {
+  return value === 'crew-wide' ||
+    value === 'captain-only' ||
+    value === 'subset' ||
+    value === 'none'
+    ? value
+    : 'none';
 }
 
 function normalizeSuperCriteriaBranch(value: unknown): SuperCriteriaBranch | null {
@@ -1808,6 +1825,9 @@ export class OptcRepositoryService {
   private normalizeManifest(manifest: DatasetManifest): DatasetManifest {
     return {
       ...manifest,
+      schemaVersion: Number.isInteger(Number(manifest.schemaVersion))
+        ? Number(manifest.schemaVersion)
+        : 1,
       availableTypes: this.normalizeManifestValues(manifest.availableTypes),
       availableClasses: this.normalizeManifestValues(
         manifest.availableClasses,

@@ -1016,6 +1016,7 @@ function createPage() {
   };
   const repository = {
     getDatasetManifest: vi.fn().mockResolvedValue({
+      schemaVersion: 1,
       packs: [],
     }),
     getCharactersByIds: vi.fn().mockImplementation(async (ids: number[]) =>

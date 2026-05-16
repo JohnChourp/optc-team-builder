@@ -38,9 +38,13 @@ export interface CharacterCaptainAbilityVariant {
 export interface CharacterCaptainAbilityCoverageEntry {
   key: string;
   label: string;
+  firstCoverageScope: CharacterCaptainAbilityScope;
+  secondCoverageScope: CharacterCaptainAbilityScope;
   firstCoverageClauses: string[];
   secondCoverageClauses: string[];
 }
+
+export type CharacterCaptainAbilityScope = 'crew-wide' | 'captain-only' | 'subset' | 'none';
 
 export interface CharacterCaptainAbilityCoverage {
   entries: CharacterCaptainAbilityCoverageEntry[];
@@ -359,6 +363,7 @@ export interface OfflinePackSummary {
 }
 
 export interface DatasetManifest {
+  schemaVersion: number;
   generatedAt: string;
   sourceVersion: string;
   characterCount: number;

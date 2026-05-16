@@ -954,6 +954,7 @@ function createPage(overrides: { savedEnemies?: SavedEnemy[] } = {}) {
   };
   const repository = {
     getDatasetManifest: vi.fn().mockResolvedValue({
+      schemaVersion: 1,
       generatedAt: '2026-03-30T10:00:00.000Z',
       sourceVersion: 'test',
       characterCount: 10,

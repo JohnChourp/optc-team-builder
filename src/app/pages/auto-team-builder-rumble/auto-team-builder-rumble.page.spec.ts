@@ -1341,6 +1341,7 @@ function createPage(
   };
   const repository = {
     getDatasetManifest: vi.fn().mockResolvedValue({
+      schemaVersion: 1,
       availableClasses: ['Fighter', 'Slasher'],
     }),
     getRumbleBuilderCandidates: vi.fn().mockResolvedValue(defaultCandidates),

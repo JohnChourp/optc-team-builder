@@ -1310,6 +1310,7 @@ function createPage({
   const repository = {
     getAutoBuilderAbilityCatalog: vi.fn().mockResolvedValue(abilityCatalog),
     getDatasetManifest: vi.fn().mockResolvedValue({
+      schemaVersion: 1,
       characterCount: characters.length,
     }),
     getCharacterById: vi.fn((characterId: number) =>

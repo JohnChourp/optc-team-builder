@@ -48,6 +48,12 @@ const BOOST_TARGET_FRAGMENT_PATTERNS = [
 const SPECIAL_COOLDOWN_TARGET_FRAGMENT_PATTERNS = [
   /\breduces?\s+Special Cooldown\s+of\s+([^.;]{1,220}?)\s+(?:characters|units)\s+by\s+\d+\s+turns?\b/gi,
 ];
+const CAPTAIN_SCOPE_ORDER = new Map([
+  ['none', 0],
+  ['captain-only', 1],
+  ['subset', 2],
+  ['crew-wide', 3],
+]);
 
 export function buildCaptainAbilityCoverage(captainAbilityVariants) {
   const entries = Array.isArray(captainAbilityVariants)
@@ -66,6 +72,8 @@ export function buildCaptainAbilityCoverage(captainAbilityVariants) {
           return {
             key,
             label,
+            firstCoverageScope: coverage.firstCoverageScope,
+            secondCoverageScope: coverage.secondCoverageScope,
             firstCoverageClauses: coverage.firstCoverageClauses,
             secondCoverageClauses: coverage.secondCoverageClauses,
           };
@@ -81,18 +89,74 @@ export function summarizeCaptainAbilityCoverageText(captainText) {
 
   if (!normalizedCaptainText) {
     return {
+      firstCoverageScope: 'none',
+      secondCoverageScope: 'none',
       firstCoverageClauses: [],
       secondCoverageClauses: [],
     };
   }
 
+  const defaultCaptainText = extractDefaultCaptainBoostText(normalizedCaptainText);
+
   return {
-    firstCoverageClauses: resolveCaptainBoostScopeClauses(
-      extractDefaultCaptainBoostText(normalizedCaptainText),
-      false,
-    ),
+    firstCoverageScope: resolveCaptainAbilityScope(defaultCaptainText, false),
+    secondCoverageScope: resolveCaptainAbilityScope(normalizedCaptainText, true),
+    firstCoverageClauses: resolveCaptainBoostScopeClauses(defaultCaptainText, false),
     secondCoverageClauses: resolveCaptainBoostScopeClauses(normalizedCaptainText, true),
   };
+}
+
+export function resolveCaptainAbilityScope(captainText, includeConditional = false) {
+  const normalizedCaptainText = normalizeHtmlToText(captainText);
+
+  if (!normalizedCaptainText.length) {
+    return 'none';
+  }
+
+  return splitCaptainEffectClauses(normalizedCaptainText.replace(BRANCH_LABEL_PATTERN, '. '))
+    .map(stripInlineConditionalBoostRiders)
+    .map(stripBoostInsteadSuffix)
+    .filter((clause) => includeConditional || !isConditionalCaptainBoostClause(clause))
+    .reduce((scope, clause) => {
+      return higherCaptainScope(scope, resolveCaptainClauseScope(clause));
+    }, 'none');
+}
+
+function resolveCaptainClauseScope(clause) {
+  const normalizedClause = normalizeCoverageClause(clause);
+
+  if (!isCaptainScopedEffectClause(normalizedClause)) {
+    return 'none';
+  }
+
+  if (boostClauseHasUniversalScope(normalizedClause)) {
+    return 'crew-wide';
+  }
+
+  if (
+    extractAllowedTypesFromCoverageClause(normalizedClause).length > 0 ||
+    extractAllowedClassesFromCoverageClause(normalizedClause).length > 0 ||
+    extractAllowedCharacterTagsFromCoverageClause(normalizedClause).length > 0
+  ) {
+    return 'subset';
+  }
+
+  return SELF_SCOPE_PATTERN.test(normalizedClause) ? 'captain-only' : 'none';
+}
+
+function isCaptainScopedEffectClause(clause) {
+  return (
+    /\bboosts?\b/i.test(clause) &&
+    /\b(?:atk|hp)\b/i.test(clause) &&
+    CAPTAIN_MULTIPLIER_PATTERN.test(clause) &&
+    !FALLBACK_OTHER_SCOPE_PATTERN.test(clause)
+  );
+}
+
+function higherCaptainScope(left, right) {
+  return (CAPTAIN_SCOPE_ORDER.get(right) ?? 0) > (CAPTAIN_SCOPE_ORDER.get(left) ?? 0)
+    ? right
+    : left;
 }
 
 function resolveCaptainBoostScopeClauses(captainText, includeConditional) {

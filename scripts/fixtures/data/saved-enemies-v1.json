@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "source": "saved-enemies",
+  "exportedAt": "2026-05-16T00:00:00.000Z",
+  "enemies": [
+    {
+      "id": "fixture-enemy-1",
+      "name": "Fixture Forest Boss",
+      "notes": "Bring bind removal and ATK boost.",
+      "rawEnemyText": "Battle 3: 5 turn Bind. Battle 4: Enemy Damage Reduction 3 turns.",
+      "imageDataUrl": null,
+      "selectedTypes": ["STR", "DEX"],
+      "selectedClasses": ["Fighter"],
+      "selectedCharacterTags": ["Straw Hat Pirates"],
+      "selectedCharacterNames": [],
+      "requiredAbilities": [
+        {
+          "abilityKey": "remove_bind",
+          "minTurns": 5,
+          "slotTokens": [],
+          "requiredCharacterCount": 1
+        }
+      ],
+      "requiredCharacterGroups": [
+        {
+          "id": "fixture-battle-3",
+          "abilities": [
+            {
+              "abilityKey": "remove_bind",
+              "minTurns": 5,
+              "slotTokens": [],
+              "requiredCharacterCount": 1
+            }
+          ]
+        }
+      ],
+      "battleRequirements": [
+        {
+          "id": "battle-3",
+          "title": "Battle 3",
+          "enemyMechanics": [
+            {
+              "mechanicKey": "crew_bind",
+              "category": "crewDebuff",
+              "minTurns": 5,
+              "requiredCharacterCount": 1,
+              "triggerTags": [],
+              "responseTags": [],
+              "conditionTags": [],
+              "derivedAbilityKey": "remove_bind"
+            }
+          ],
+          "requiredCharacterGroups": [
+            {
+              "id": "fixture-battle-3",
+              "abilities": [
+                {
+                  "abilityKey": "remove_bind",
+                  "minTurns": 5,
+                  "slotTokens": [],
+                  "requiredCharacterCount": 1
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "enemyMechanics": [
+        {
+          "mechanicKey": "crew_bind",
+          "category": "crewDebuff",
+          "minTurns": 5,
+          "requiredCharacterCount": 1,
+          "triggerTags": [],
+          "responseTags": [],
+          "conditionTags": [],
+          "derivedAbilityKey": "remove_bind"
+        },
+        {
+          "mechanicKey": "enemy_damage_reduction",
+          "category": "enemyDefense",
+          "minTurns": 3,
+          "requiredCharacterCount": 1,
+          "triggerTags": [],
+          "responseTags": [],
+          "conditionTags": [],
+          "derivedAbilityKey": "remove_damage_reduction"
+        }
+      ],
+      "requireAllSelectedTypesInTeam": false,
+      "requireAllSelectedClassesPerCharacter": false,
+      "requireAllSelectedCharacterTagsInTeam": false,
+      "requireAllSelectedCharacterNamesInTeam": false,
+      "createdAt": "2026-05-16T00:00:00.000Z",
+      "updatedAt": "2026-05-16T00:00:00.000Z"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "source": "saved-teams",
+  "exportedAt": "2026-05-16T00:00:00.000Z",
+  "teams": [
+    {
+      "id": "fixture-team-1",
+      "name": "Fixture Crew",
+      "slots": [101, 102, null, null, null, null],
+      "shipId": 1,
+      "notes": "Small fixture team for import/export tests.",
+      "createdAt": "2026-05-16T00:00:00.000Z",
+      "updatedAt": "2026-05-16T00:00:00.000Z"
+    }
+  ]
+}
