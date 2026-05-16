@@ -35,7 +35,7 @@ import {
 import { type AutoTeamBuilderWorkerRequest } from './auto-team-builder.worker.models';
 
 const INPUT = createInput();
-type AutoTeamBuilderServiceWithWorkerFactory = AutoTeamBuilderService & {
+type AutoTeamBuilderServiceWithWorkerFactory = {
   createWorker: () => Worker | null;
 };
 type PreferredLeaderAutoFillResolver = {
@@ -6948,6 +6948,10 @@ describe('Auto team builder', () => {
     };
     const service = new AutoTeamBuilderService(repository as never);
     const worker = new FakeWorker((request) => {
+      if (request.type !== 'run') {
+        throw new Error(`Unexpected request type: ${request.type}`);
+      }
+
       worker.emitMessage({
         type: 'progress',
         runId: request.runId,
@@ -6981,7 +6985,7 @@ describe('Auto team builder', () => {
     const progressSnapshots: AutoBuildProgressSnapshot[] = [];
 
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValue(worker as never);
@@ -7029,7 +7033,7 @@ describe('Auto team builder', () => {
     const abortController = new AbortController();
 
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValue(worker as never);
@@ -7056,7 +7060,7 @@ describe('Auto team builder', () => {
     };
     const service = new AutoTeamBuilderService(repository as never);
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValue(null);
@@ -7086,7 +7090,7 @@ describe('Auto team builder', () => {
       });
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValue(worker as never);
@@ -7186,7 +7190,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy
@@ -7277,7 +7281,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -7351,7 +7355,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -7429,7 +7433,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy
@@ -7522,7 +7526,7 @@ describe('Auto team builder', () => {
       deferredWorkerCRunId ??= request.runId;
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy
@@ -7648,7 +7652,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy
@@ -7752,7 +7756,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy
@@ -7917,7 +7921,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -8025,7 +8029,7 @@ describe('Auto team builder', () => {
     });
 
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -8165,7 +8169,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -8302,7 +8306,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -8402,7 +8406,7 @@ describe('Auto team builder', () => {
       });
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -8465,7 +8469,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -8543,7 +8547,7 @@ describe('Auto team builder', () => {
       emitAttemptProgressThenMiss(workerB, request),
     );
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -8620,7 +8624,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -8669,7 +8673,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -8710,7 +8714,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -9648,10 +9652,16 @@ function buildWorkerResult(
     requestedInput?: AutoBuildInput;
     coveredSelectedClasses?: string[];
     coveredSelectedTypes?: AutoTeamBuilderType[];
+    coveredSelectedCharacterTags?: string[];
+    coveredSelectedCharacterNames?: string[];
     coversAllSelectedClasses?: boolean;
     coversAllSelectedTypes?: boolean;
+    coversAllSelectedCharacterTags?: boolean;
+    coversAllSelectedCharacterNames?: boolean;
     selectedClassMatches?: number;
     selectedTypeMatches?: number;
+    selectedCharacterTagMatches?: number;
+    selectedCharacterNameMatches?: number;
     abilityRequirements?: Partial<AutoBuildResult['coverage']['abilityRequirements']>;
   } = {},
 ): AutoBuildResult {
@@ -9705,15 +9715,27 @@ function buildWorkerResult(
       utility: [],
       coveredSelectedClasses: overrides.coveredSelectedClasses ?? [...input.selectedClasses],
       coveredSelectedTypes: overrides.coveredSelectedTypes ?? [...input.types],
+      coveredSelectedCharacterTags:
+        overrides.coveredSelectedCharacterTags ?? [...input.selectedCharacterTags],
+      coveredSelectedCharacterNames:
+        overrides.coveredSelectedCharacterNames ?? [...input.selectedCharacterNames],
       coversAllSelectedClasses: overrides.coversAllSelectedClasses ?? true,
       coversAllSelectedTypes: overrides.coversAllSelectedTypes ?? true,
+      coversAllSelectedCharacterTags: overrides.coversAllSelectedCharacterTags ?? true,
+      coversAllSelectedCharacterNames: overrides.coversAllSelectedCharacterNames ?? true,
       selectedClassMatches: overrides.selectedClassMatches ?? input.selectedClasses.length,
       selectedTypeMatches: overrides.selectedTypeMatches ?? input.types.length,
+      selectedCharacterTagMatches:
+        overrides.selectedCharacterTagMatches ?? input.selectedCharacterTags.length,
+      selectedCharacterNameMatches:
+        overrides.selectedCharacterNameMatches ?? input.selectedCharacterNames.length,
     },
     relaxation: {
       usedFallback: true,
       droppedTypes: ['INT'],
       droppedClasses: [],
+      droppedCharacterTags: [],
+      droppedCharacterNames: [],
       minimumLeaderSuperEffectMatchingSlots: null,
       allowedLeadersWithSuperEffects: false,
       ignoredLeaderSuperEffectScope: false,

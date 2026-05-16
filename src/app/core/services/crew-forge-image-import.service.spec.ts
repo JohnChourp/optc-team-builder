@@ -198,6 +198,9 @@ function createCharacter(id: number): CharacterListItem {
     stars: 6,
     cost: 55,
     combo: 5,
+    captainHpBoost: 1,
+    captainAtkBoost: 1,
+    captainAverageBoost: 1,
     stats: {
       min: { hp: 1, atk: 1, rcv: 1 },
       max: { hp: 1, atk: 1, rcv: 1 },

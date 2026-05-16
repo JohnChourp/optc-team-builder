@@ -4,18 +4,11 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('./saved-teams-transfer.utils', async () => {
-  const actual = await vi.importActual<typeof import('./saved-teams-transfer.utils')>(
-    './saved-teams-transfer.utils',
-  );
-
-  return {
-    ...actual,
-    downloadSavedTeamsExport: vi.fn(),
-  };
-});
-
-import { downloadSavedTeamsExport } from './saved-teams-transfer.utils';
+import {
+  captureJsonDownloads,
+  readJsonDownloadPayload,
+  restoreJsonDownloadCapture,
+} from '../../testing/download-capture';
 
 vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
@@ -40,6 +33,7 @@ import { SavedTeamsPage } from './saved-teams.page';
 
 describe('SavedTeamsPage', () => {
   afterEach(() => {
+    restoreJsonDownloadCapture();
     vi.clearAllMocks();
     vi.unstubAllGlobals();
   });
@@ -279,17 +273,16 @@ describe('SavedTeamsPage', () => {
 
   it('exports a single saved team with the shared saved-teams payload', async () => {
     const { page } = createPage();
+    const downloads = captureJsonDownloads();
 
     await page.ngOnInit();
     page.exportTeam(page.savedTeams()[0]!);
 
-    expect(vi.mocked(downloadSavedTeamsExport)).toHaveBeenCalledWith(
-      expect.objectContaining({
-        schemaVersion: 1,
-        source: 'saved-teams',
-        teams: [expect.objectContaining({ id: 'team-1' })],
-      }),
-    );
+    await expect(readJsonDownloadPayload(downloads)).resolves.toMatchObject({
+      schemaVersion: 1,
+      source: 'saved-teams',
+      teams: [expect.objectContaining({ id: 'team-1' })],
+    });
   });
 
   it('resets page-local selection and edit modal state without touching saved teams', async () => {

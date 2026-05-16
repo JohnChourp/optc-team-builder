@@ -22,10 +22,12 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
   IonButtons: class {},
   IonContent: class {},
+  IonFooter: class {},
   IonHeader: class {},
   IonIcon: class {},
   IonInput: class {},
   IonMenuButton: class {},
+  IonModal: class {},
   IonSearchbar: class {},
   IonSelect: class {},
   IonSelectOption: class {},
@@ -33,22 +35,6 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonTitle: class {},
   IonToggle: class {},
   IonToolbar: class {},
-}));
-
-vi.mock('../../shared/ability-filter-rail/ability-filter-rail.component', () => ({
-  AbilityFilterRailComponent: class {},
-}));
-
-vi.mock('../../shared/ability-requirement-picker/ability-requirement-picker.component', () => ({
-  AbilityRequirementPickerComponent: class {},
-}));
-
-vi.mock('../../shared/character-image-picker/character-image-picker.component', () => ({
-  CharacterImagePickerComponent: class {},
-}));
-
-vi.mock('../../shared/special-ability-picker/special-ability-picker.component', () => ({
-  SpecialAbilityPickerComponent: class {},
 }));
 
 describe('CaptainCoveragePage', () => {

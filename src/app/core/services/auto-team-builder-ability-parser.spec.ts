@@ -34,7 +34,7 @@ let enrichCharactersWithBuilderAbilities: (
       superTandemData?: Record<string, unknown> | null;
       finalTapData?: Record<string, unknown> | null;
       rushSugoSpecialData?: Record<string, unknown> | null;
-      builderAbilities: Array<Record<string, unknown>>;
+      builderAbilities: Array<Record<string, unknown> & { key?: string }>;
     };
   }>,
   options?: {
@@ -42,7 +42,18 @@ let enrichCharactersWithBuilderAbilities: (
     logger?: ((message: string) => void) | null;
     abilityCorrections?: Map<number | string, Record<string, unknown>> | null;
   },
-) => Promise<Array<Record<string, unknown> & { key: string; label: string }>>;
+) => Promise<
+  Array<
+    Record<string, unknown> & {
+      key: string;
+      label: string;
+      category: 'special' | 'crewmate' | 'potential' | 'support';
+      groupLabel: string;
+    }
+  >
+>;
+
+type ParserCharacters = Parameters<typeof enrichCharactersWithBuilderAbilities>[0];
 
 beforeAll(async () => {
   ({
@@ -811,7 +822,7 @@ describe('auto team builder ability parser', () => {
   });
 
   it('indexes matching character ids for Special catalog entries', async () => {
-    const characters = [
+    const characters: ParserCharacters = [
       {
         id: 910001,
         detail: {
@@ -940,7 +951,7 @@ describe('auto team builder ability parser', () => {
   });
 
   it('derives captain abilities from structured captain variants without duplicate extra-drop matches', async () => {
-    const characters = [
+    const characters: ParserCharacters = [
       {
         id: 2035,
         detail: {
@@ -995,7 +1006,7 @@ describe('auto team builder ability parser', () => {
     const groupCounts = new Map<string, number>();
 
     crewmateCatalog.forEach((item) => {
-      groupCounts.set(item.groupLabel ?? '', (groupCounts.get(item.groupLabel ?? '') ?? 0) + 1);
+      groupCounts.set(item.groupLabel, (groupCounts.get(item.groupLabel) ?? 0) + 1);
     });
 
     expect(crewmateCatalog).toHaveLength(75);
@@ -1163,7 +1174,7 @@ describe('auto team builder ability parser', () => {
     const groupCounts = new Map<string, number>();
 
     potentialCatalog.forEach((item) => {
-      groupCounts.set(item.groupLabel ?? '', (groupCounts.get(item.groupLabel ?? '') ?? 0) + 1);
+      groupCounts.set(item.groupLabel, (groupCounts.get(item.groupLabel) ?? 0) + 1);
     });
 
     expect(potentialCatalog).toHaveLength(26);
@@ -1337,7 +1348,7 @@ describe('auto team builder ability parser', () => {
     const groupCounts = new Map<string, number>();
 
     supportCatalog.forEach((item) => {
-      groupCounts.set(item.groupLabel ?? '', (groupCounts.get(item.groupLabel ?? '') ?? 0) + 1);
+      groupCounts.set(item.groupLabel, (groupCounts.get(item.groupLabel) ?? 0) + 1);
     });
 
     expect(supportCatalog).toHaveLength(67);

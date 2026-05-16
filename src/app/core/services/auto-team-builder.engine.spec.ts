@@ -477,6 +477,7 @@ describe('runAutoTeamBuildSearch', () => {
           friendCaptainLeaderId: null,
           leaderIds: [],
           leaderNames: [],
+          leaderBranchSelections: [],
           dualLeaderMode: 'single',
           derivedAllowedClasses: [],
           derivedAllowedTypes: [],

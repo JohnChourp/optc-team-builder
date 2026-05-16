@@ -190,5 +190,5 @@ function createSlot(
       reasonChips: ['Damage'],
       conflictKeys: [`character:${id}`],
     },
-  } as RumbleTeamResult['activeSlots'][number];
+  } as unknown as RumbleTeamResult['activeSlots'][number];
 }

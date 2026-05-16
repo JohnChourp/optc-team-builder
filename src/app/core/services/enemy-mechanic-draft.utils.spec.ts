@@ -106,10 +106,10 @@ describe('enemy-mechanic-draft utils', () => {
         ],
         [
           {
-            mechanicKey: 'enemy_barrier',
-            category: 'enemyDefense',
-            minTurns: 3,
-            triggerTags: [],
+          mechanicKey: 'enemy_barrier',
+          category: 'enemyDefense',
+          minTurns: 3,
+          triggerTags: [],
             responseTags: [],
             conditionTags: [],
             derivedAbilityKey: 'remove_enemy_barrier',
@@ -141,8 +141,10 @@ describe('enemy-mechanic-draft utils', () => {
         () => 'Interrupt on Special',
         {
           formatTurns: (count) => `${count} turns`,
-          resolveTriggerTag: (tag) => ({ onSpecial: 'On special' })[tag] ?? tag,
-          resolveResponseTag: (tag) => ({ removeBuffs: 'Remove buffs' })[tag] ?? tag,
+          resolveTriggerTag: (tag) =>
+            ({ onSpecial: 'On special' } as Partial<Record<typeof tag, string>>)[tag] ?? tag,
+          resolveResponseTag: (tag) =>
+            ({ removeBuffs: 'Remove buffs' } as Partial<Record<typeof tag, string>>)[tag] ?? tag,
           resolveConditionTag: (tag) => tag,
         },
       ),

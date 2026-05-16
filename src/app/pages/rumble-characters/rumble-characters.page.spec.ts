@@ -291,5 +291,5 @@ function createUnit(overrides: {
     },
     reasonChips: ['Rumble Data'],
     conflictKeys: [],
-  } as RumbleUnitScore;
+  } as unknown as RumbleUnitScore;
 }
