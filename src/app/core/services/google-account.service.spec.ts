@@ -3,9 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GoogleAccountService } from './google-account.service';
 
-const { getPlatform, isNativePlatform, socialLogin } = vi.hoisted(() => ({
+const { getPlatform, socialLogin } = vi.hoisted(() => ({
   getPlatform: vi.fn(() => 'web'),
-  isNativePlatform: vi.fn(() => false),
   socialLogin: {
     getAuthorizationCode: vi.fn(),
     initialize: vi.fn(),
@@ -18,16 +17,7 @@ const { getPlatform, isNativePlatform, socialLogin } = vi.hoisted(() => ({
 vi.mock('@capacitor/core', () => ({
   Capacitor: {
     getPlatform,
-    isNativePlatform,
   },
-  WebPlugin: class WebPluginStub {
-    addListener() {
-      return { remove: () => undefined };
-    }
-    notifyListeners() {}
-    removeAllListeners() {}
-  },
-  registerPlugin: vi.fn(() => socialLogin),
 }));
 
 vi.mock('@capgo/capacitor-social-login', () => ({
