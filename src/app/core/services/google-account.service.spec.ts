@@ -1,34 +1,16 @@
 import '@angular/compiler';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { SocialLogin } from '@capgo/capacitor-social-login';
+
 import { GoogleAccountService } from './google-account.service';
 
-const { getPlatform, socialLogin } = vi.hoisted(() => ({
-  getPlatform: vi.fn(() => 'web'),
-  socialLogin: {
-    getAuthorizationCode: vi.fn(),
-    initialize: vi.fn(),
-    isLoggedIn: vi.fn(),
-    login: vi.fn(),
-    logout: vi.fn(),
-  },
-}));
-
-vi.mock('@capacitor/core', () => ({
-  Capacitor: {
-    getPlatform,
-  },
-}));
-
-vi.mock('@capgo/capacitor-social-login', () => ({
-  SocialLogin: socialLogin,
-}));
+const socialLogin = vi.mocked(SocialLogin);
 
 describe('GoogleAccountService', () => {
   beforeEach(() => {
     vi.unstubAllGlobals();
     vi.clearAllMocks();
-    getPlatform.mockReturnValue('web');
     vi.stubGlobal('location', {
       assign: vi.fn(),
       hash: '',
