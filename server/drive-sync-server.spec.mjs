@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createDriveSyncServer } from './drive-sync-server.mjs';
+import { createDriveSyncServer, createRateLimiter } from './drive-sync-server.mjs';
 
 const tempDirs = [];
 
@@ -221,6 +221,56 @@ describe('drive sync backend', () => {
     }
   });
 
+  it('returns 429 with Retry-After when the per-client request limit is exceeded', async () => {
+    const { baseUrl, server } = await startTestServer({
+      rateLimitGlobalPerMinute: 2,
+      rateLimitWritePerMinute: 0,
+    });
+
+    try {
+      const first = await fetch(`${baseUrl}/auth/google/status`);
+      const second = await fetch(`${baseUrl}/auth/google/status`);
+      const third = await fetch(`${baseUrl}/auth/google/status`);
+
+      expect(first.status).toBe(200);
+      expect(second.status).toBe(200);
+      expect(third.status).toBe(429);
+      expect(Number(third.headers.get('retry-after'))).toBeGreaterThan(0);
+
+      const payload = await third.json();
+
+      expect(payload).toMatchObject({ error: 'rate_limited' });
+      expect(payload.retryAfterSeconds).toBeGreaterThan(0);
+    } finally {
+      server.close();
+    }
+  });
+
+  it('applies a stricter limit to write requests independently of the global window', async () => {
+    let now = 0;
+    const limiter = createRateLimiter({
+      globalPerMinute: 100,
+      writePerMinute: 2,
+      now: () => now,
+    });
+
+    expect(limiter.consume('client-a', true).allowed).toBe(true);
+    now += 100;
+    expect(limiter.consume('client-a', true).allowed).toBe(true);
+    now += 100;
+
+    const rejected = limiter.consume('client-a', true);
+
+    expect(rejected.allowed).toBe(false);
+    expect(rejected.retryAfterSeconds).toBeGreaterThan(0);
+
+    expect(limiter.consume('client-a', false).allowed).toBe(true);
+    expect(limiter.consume('client-b', true).allowed).toBe(true);
+
+    now += 60 * 1000 + 1;
+    expect(limiter.consume('client-a', true).allowed).toBe(true);
+  });
+
   it('treats invalid sync payloads as remote checks without enqueueing an upload', async () => {
     const fetchImpl = vi
       .fn()
@@ -316,6 +366,8 @@ async function startTestServer(options = {}) {
       googleRedirectUri: 'http://127.0.0.1:8787/auth/google/callback',
       maxJsonBytes: 1024 * 1024,
       publicBaseUrl: 'http://127.0.0.1:8787',
+      rateLimitGlobalPerMinute: options.rateLimitGlobalPerMinute ?? 0,
+      rateLimitWritePerMinute: options.rateLimitWritePerMinute ?? 0,
       sessionCookieName: 'optc_drive_session',
       sessionSecret: 'session-secret',
       sessionTtlMs: 30 * 24 * 60 * 60 * 1000,

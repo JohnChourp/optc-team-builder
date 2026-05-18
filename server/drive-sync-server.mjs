@@ -16,6 +16,9 @@ const DEFAULT_PORT = 8787;
 const DEFAULT_SESSION_DAYS = 30;
 const DEFAULT_WORKER_INTERVAL_MS = 15 * 60 * 1000;
 const DEFAULT_MAX_JSON_BYTES = 20 * 1024 * 1024;
+const DEFAULT_RATE_LIMIT_GLOBAL_PER_MINUTE = 120;
+const DEFAULT_RATE_LIMIT_WRITE_PER_MINUTE = 20;
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const BACKUP_FILE_NAME = 'optc-all-data.latest.json';
 const DRIVE_FILES_ENDPOINT = 'https://www.googleapis.com/drive/v3/files';
 const DRIVE_UPLOAD_ENDPOINT = 'https://www.googleapis.com/upload/drive/v3/files';
@@ -100,6 +103,14 @@ export function resolveDriveSyncConfig(env = process.env) {
     googleRedirectUri: redirectUri,
     maxJsonBytes: parseInteger(env.DRIVE_SYNC_MAX_JSON_BYTES, DEFAULT_MAX_JSON_BYTES),
     port: parseInteger(env.PORT, DEFAULT_PORT),
+    rateLimitGlobalPerMinute: parseNonNegativeInteger(
+      env.DRIVE_SYNC_RATE_LIMIT_PER_MINUTE,
+      DEFAULT_RATE_LIMIT_GLOBAL_PER_MINUTE,
+    ),
+    rateLimitWritePerMinute: parseNonNegativeInteger(
+      env.DRIVE_SYNC_RATE_LIMIT_WRITE_PER_MINUTE,
+      DEFAULT_RATE_LIMIT_WRITE_PER_MINUTE,
+    ),
     publicBaseUrl,
     sessionCookieName: env.DRIVE_SYNC_SESSION_COOKIE || 'optc_drive_session',
     sessionSecret: normalizeRequiredString(
@@ -145,13 +156,18 @@ export function createDriveSyncServer(options = {}) {
   };
 }
 
-export function createDriveSyncApp({ config, fetchImpl, store }) {
+export function createDriveSyncApp({ config, fetchImpl, store, now = () => Date.now() }) {
   if (typeof fetchImpl !== 'function') {
     throw new Error('A fetch implementation is required for Google OAuth and Drive calls.');
   }
 
   const signer = createCookieSigner(config.sessionSecret);
   const cipher = createJsonCipher(config.tokenEncryptionKey);
+  const rateLimiter = createRateLimiter({
+    globalPerMinute: config.rateLimitGlobalPerMinute,
+    writePerMinute: config.rateLimitWritePerMinute,
+    now,
+  });
 
   async function handle(request, response) {
     applyCorsHeaders(response, config);
@@ -159,6 +175,20 @@ export function createDriveSyncApp({ config, fetchImpl, store }) {
     if (request.method === 'OPTIONS') {
       response.writeHead(204);
       response.end();
+      return;
+    }
+
+    const clientKey = resolveClientKey(request);
+    const isWrite = request.method !== 'GET' && request.method !== 'HEAD';
+    const rateDecision = rateLimiter.consume(clientKey, isWrite);
+
+    if (!rateDecision.allowed) {
+      response.setHeader('Retry-After', String(rateDecision.retryAfterSeconds));
+      sendJson(response, 429, {
+        error: 'rate_limited',
+        message: 'Too many requests. Slow down and try again shortly.',
+        retryAfterSeconds: rateDecision.retryAfterSeconds,
+      });
       return;
     }
 
@@ -1313,6 +1343,104 @@ function parseInteger(value, fallbackValue) {
   const parsedValue = Number.parseInt(String(value ?? ''), 10);
 
   return Number.isInteger(parsedValue) && parsedValue > 0 ? parsedValue : fallbackValue;
+}
+
+function parseNonNegativeInteger(value, fallbackValue) {
+  if (value === undefined || value === null || String(value).trim() === '') {
+    return fallbackValue;
+  }
+
+  const parsedValue = Number.parseInt(String(value), 10);
+
+  return Number.isInteger(parsedValue) && parsedValue >= 0 ? parsedValue : fallbackValue;
+}
+
+export function createRateLimiter({ globalPerMinute, writePerMinute, now = () => Date.now() }) {
+  const buckets = new Map();
+
+  function getBucket(key) {
+    let bucket = buckets.get(key);
+
+    if (!bucket) {
+      bucket = { global: [], write: [] };
+      buckets.set(key, bucket);
+    }
+
+    return bucket;
+  }
+
+  function trim(timestamps, current) {
+    const cutoff = current - RATE_LIMIT_WINDOW_MS;
+    let drop = 0;
+
+    while (drop < timestamps.length && timestamps[drop] <= cutoff) {
+      drop += 1;
+    }
+
+    if (drop > 0) {
+      timestamps.splice(0, drop);
+    }
+  }
+
+  return {
+    consume(key, isWrite) {
+      const current = now();
+      const bucket = getBucket(key);
+
+      trim(bucket.global, current);
+      trim(bucket.write, current);
+
+      if (globalPerMinute > 0 && bucket.global.length >= globalPerMinute) {
+        const oldest = bucket.global[0];
+        const retryAfterSeconds = Math.max(
+          1,
+          Math.ceil((oldest + RATE_LIMIT_WINDOW_MS - current) / 1000),
+        );
+
+        return { allowed: false, retryAfterSeconds };
+      }
+
+      if (isWrite && writePerMinute > 0 && bucket.write.length >= writePerMinute) {
+        const oldest = bucket.write[0];
+        const retryAfterSeconds = Math.max(
+          1,
+          Math.ceil((oldest + RATE_LIMIT_WINDOW_MS - current) / 1000),
+        );
+
+        return { allowed: false, retryAfterSeconds };
+      }
+
+      bucket.global.push(current);
+
+      if (isWrite) {
+        bucket.write.push(current);
+      }
+
+      return { allowed: true, retryAfterSeconds: 0 };
+    },
+    snapshot() {
+      return {
+        clientCount: buckets.size,
+        globalPerMinute,
+        writePerMinute,
+      };
+    },
+  };
+}
+
+function resolveClientKey(request) {
+  const forwarded = request.headers['x-forwarded-for'];
+  const raw = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+
+  if (typeof raw === 'string') {
+    const first = raw.split(',')[0]?.trim();
+
+    if (first) {
+      return first;
+    }
+  }
+
+  return request.socket?.remoteAddress ?? 'unknown';
 }
 
 function randomToken(size = 24) {
