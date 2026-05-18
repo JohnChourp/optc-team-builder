@@ -1,20 +1,14 @@
 import '@angular/compiler';
 import { JSDOM } from 'jsdom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { Capacitor } from '@capacitor/core';
 
 import { GoogleAnalyticsService } from './google-analytics.service';
 
-vi.mock('@capacitor/core', () => ({
-  Capacitor: {
-    isNativePlatform: vi.fn(() => false),
-  },
-}));
-
 describe('GoogleAnalyticsService', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('does not inject the GA script when the measurement id is missing', () => {
@@ -88,7 +82,7 @@ describe('GoogleAnalyticsService', () => {
   });
 
   it('stays disabled on native platforms', () => {
-    vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
+    vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
     const { document } = createDom();
     const service = new GoogleAnalyticsService(document, {
       ga4MeasurementId: 'G-NATIVE1',
